@@ -1,0 +1,14 @@
+{
+  "rule": "totalDistanceParts",
+  "description": "A date range's total distance (meters) in the account's units (system): one decimal below 10, so a short history never reads as a flat 0, and whole units, grouped, from 10 up. Expected: { value, minDecimals, maxDecimals, grouping, unit (km or mi) }, the number each platform writes in its language with that many decimals, thousands grouped or not.",
+  "tolerance": 1e-9,
+  "cases": [
+    { "name": "a short total keeps a decimal", "input": { "meters": 500, "system": "metric" }, "expected": { "value": 0.5, "minDecimals": 0, "maxDecimals": 1, "grouping": true, "unit": "km" } },
+    { "name": "nothing is 0 with a decimal at most", "input": { "meters": 0, "system": "metric" }, "expected": { "value": 0, "minDecimals": 0, "maxDecimals": 1, "grouping": true, "unit": "km" } },
+    { "name": "just below 10 keeps a decimal", "input": { "meters": 9999, "system": "metric" }, "expected": { "value": 9.999, "minDecimals": 0, "maxDecimals": 1, "grouping": true, "unit": "km" } },
+    { "name": "from 10 up, whole units", "input": { "meters": 10000, "system": "metric" }, "expected": { "value": 10, "minDecimals": 0, "maxDecimals": 0, "grouping": true, "unit": "km" } },
+    { "name": "a large total is grouped", "input": { "meters": 1234567.8, "system": "metric" }, "expected": { "value": 1234.5678, "minDecimals": 0, "maxDecimals": 0, "grouping": true, "unit": "km" } },
+    { "name": "miles for imperial, a decimal below 10", "input": { "meters": 8046.72, "system": "imperial" }, "expected": { "value": 5, "minDecimals": 0, "maxDecimals": 1, "grouping": true, "unit": "mi" } },
+    { "name": "miles for imperial, whole from 10", "input": { "meters": 160934.4, "system": "imperial" }, "expected": { "value": 100, "minDecimals": 0, "maxDecimals": 0, "grouping": true, "unit": "mi" } }
+  ]
+}

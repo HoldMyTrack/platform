@@ -35,6 +35,8 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `photoZoom` | `view` (`{ scale, x, y }`), `factor`, `point`, `fitted`, `stage` | a view |
 | `photoPan` | `view`, `dx`, `dy`, `fitted`, `stage` | a view |
 | `photoClamp` | `view`, `fitted`, `stage` | a view |
+| `distanceParts`, `totalDistanceParts` | `meters`, `system` (`metric`, `imperial`) | `{ value, minDecimals, maxDecimals, grouping, unit }` |
+| `durationParts` | `seconds` | `{ key, args }` |
 | `editTrackFold` | `base` (an edit or `null`), `ops` | an edit `{ keep, remove, drop, move }` |
 | `editTrackApply` | `points` (`[lon, lat, t]`), `edit` | points |
 | `editTrackChop`, `editTrackCut` | `visible` (points), `lo`, `hi` | an op or `null` |

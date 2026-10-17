@@ -8,6 +8,7 @@ import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitI
 import { pendingChange } from '../src/map/pending.ts';
 import { clusterPoints, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
+import { distanceParts, durationParts, totalDistanceParts } from '../src/ui/formatParts.ts';
 import { fractionAt, photoTrack, pointAt, startFraction } from '../src/ui/photoTrack.ts';
 import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
 import { shiftRange } from '../src/ui/rangeShift.ts';
@@ -48,6 +49,9 @@ const rules = {
   photoZoom: ({ view, factor, point, fitted, stage }) => zoomAt(view, factor, point, fitted, stage),
   photoPan: ({ view, dx, dy, fitted, stage }) => panBy(view, dx, dy, fitted, stage),
   photoClamp: ({ view, fitted, stage }) => clampView(view, fitted, stage),
+  distanceParts: ({ meters, system }) => distanceParts(meters, system),
+  totalDistanceParts: ({ meters, system }) => totalDistanceParts(meters, system),
+  durationParts: ({ seconds }) => durationParts(seconds),
   editTrackFold: ({ base, ops }) => foldEdit(base ?? null, ops),
   editTrackApply: ({ points, edit }) => applyEdit(points, edit),
   editTrackChop: ({ visible, lo, hi }) => chopOp(visible, lo, hi),

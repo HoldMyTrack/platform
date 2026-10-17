@@ -1,0 +1,13 @@
+{
+  "rule": "durationParts",
+  "description": "An activity's duration (seconds) as a message: { key: \"duration.hm\", args: { h, m } } (\"3h 52m\") from an hour up, { key: \"duration.m\", args: { m } } (\"43m\") from a minute, else { key: \"duration.s\", args: { s } } (\"20s\"). The keys are the web's catalog; Android maps them to panel_duration_hm, _m and _s.",
+  "cases": [
+    { "name": "seconds under a minute", "input": { "seconds": 20 }, "expected": { "key": "duration.s", "args": { "s": 20 } } },
+    { "name": "nothing is 0 seconds", "input": { "seconds": 0 }, "expected": { "key": "duration.s", "args": { "s": 0 } } },
+    { "name": "a minute", "input": { "seconds": 60 }, "expected": { "key": "duration.m", "args": { "m": 1 } } },
+    { "name": "minutes drop the seconds", "input": { "seconds": 2599 }, "expected": { "key": "duration.m", "args": { "m": 43 } } },
+    { "name": "an hour is hours and minutes", "input": { "seconds": 3600 }, "expected": { "key": "duration.hm", "args": { "h": 1, "m": 0 } } },
+    { "name": "hours and minutes drop the seconds", "input": { "seconds": 13959 }, "expected": { "key": "duration.hm", "args": { "h": 3, "m": 52 } } },
+    { "name": "a day is 24 hours", "input": { "seconds": 86400 }, "expected": { "key": "duration.hm", "args": { "h": 24, "m": 0 } } }
+  ]
+}

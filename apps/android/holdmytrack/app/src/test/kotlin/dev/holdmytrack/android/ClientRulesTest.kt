@@ -15,8 +15,11 @@ import dev.holdmytrack.android.panel.ActivityFacets
 import dev.holdmytrack.android.panel.ActivityZone
 import dev.holdmytrack.android.panel.DistanceKnob
 import dev.holdmytrack.android.panel.DistanceRange
+import dev.holdmytrack.android.panel.DistanceParts
+import dev.holdmytrack.android.panel.DurationParts
 import dev.holdmytrack.android.panel.EditOp
 import dev.holdmytrack.android.panel.EditTrackOps
+import dev.holdmytrack.android.panel.FormatParts
 import dev.holdmytrack.android.panel.PanelRules
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.photos.PhotoClusters
@@ -167,6 +170,16 @@ class ClientRulesTest {
             viewJson(PhotoZoom.panBy(view(input), input.number("dx").toFloat(), input.number("dy").toFloat(), size(input["fitted"]), size(input["stage"])))
         },
         "photoClamp" to { input -> viewJson(PhotoZoom.clamp(view(input), size(input["fitted"]), size(input["stage"]))) },
+        "distanceParts" to { input -> partsJson(FormatParts.distance(input.number("meters"), input.string("system") == "imperial")) },
+        "totalDistanceParts" to { input -> partsJson(FormatParts.totalDistance(input.number("meters"), input.string("system") == "imperial")) },
+        "durationParts" to { input ->
+            val (key, args) = when (val parts = FormatParts.duration(input["seconds"]!!.jsonPrimitive.long)) {
+                is DurationParts.HoursMinutes -> "duration.hm" to buildJsonObject { put("h", parts.h); put("m", parts.m) }
+                is DurationParts.Minutes -> "duration.m" to buildJsonObject { put("m", parts.m) }
+                is DurationParts.Seconds -> "duration.s" to buildJsonObject { put("s", parts.s) }
+            }
+            buildJsonObject { put("key", key); put("args", args) }
+        },
         "editTrackFold" to { input -> editJson(EditTrackOps.fold(edit(input["base"]), ops(input))) },
         "editTrackApply" to { input -> buildJsonArray { EditTrackOps.apply(points(input["points"]), edit(input["edit"])!!).forEach { add(pointJson(it)) } } },
         "editTrackChop" to { input -> opJson(EditTrackOps.chop(points(input["visible"]), input.int("lo"), input.int("hi"))) },
@@ -220,6 +233,14 @@ class ClientRulesTest {
     private fun JsonObject.int(key: String): Int = this[key]!!.jsonPrimitive.int
 
     private fun JsonObject.number(key: String): Double = this[key]!!.jsonPrimitive.double
+
+    private fun partsJson(parts: DistanceParts) = buildJsonObject {
+        put("value", parts.value)
+        put("minDecimals", parts.minDecimals)
+        put("maxDecimals", parts.maxDecimals)
+        put("grouping", parts.grouping)
+        put("unit", parts.unit.name.lowercase())
+    }
 
     private fun distance(json: JsonElement?): DistanceRange? = (json as? JsonObject)?.let { DistanceRange(it.number("min"), it.number("max")) }
 
