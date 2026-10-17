@@ -1,0 +1,10 @@
+{
+  "rule": "photoFit",
+  "description": "The photo viewer's picture at scale 1: as large as fits the stage, never larger than it is.",
+  "cases": [
+    { "name": "a landscape picture fits the stage width", "input": { "image": { "width": 2048, "height": 1536 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "width": 1000, "height": 750 } },
+    { "name": "a portrait picture fits the stage height", "input": { "image": { "width": 1536, "height": 2048 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "width": 600, "height": 800 } },
+    { "name": "a small picture is never blown up", "input": { "image": { "width": 400, "height": 300 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "width": 400, "height": 300 } },
+    { "name": "a picture with no size has none", "input": { "image": { "width": 0, "height": 300 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "width": 0, "height": 0 } }
+  ]
+}

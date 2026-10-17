@@ -13,10 +13,11 @@ data class ScreenPoint(val id: String, val x: Float, val y: Float)
 data class PhotoCluster(val ids: List<String>, val x: Float, val y: Float)
 
 /**
- * Grouping photo markers that would overlap on screen (`apps/android/docs/SPEC.md` FR-2.10), the web's
- * `apps/web/src/map/photoClusters.ts` — the photos of a whole trip seen zoomed out, or several
- * taken at one spot. Done in screen pixels after each move of the map, since what overlaps
- * depends on the zoom; tens of photos per route make that cheap.
+ * Grouping photo markers that would overlap on screen (`apps/android/docs/SPEC.md` FR-2.10) — the
+ * photos of a whole trip seen zoomed out, or several taken at one spot. Done in screen pixels after
+ * each move of the map, since what overlaps depends on the zoom; tens of photos per route make that
+ * cheap. The web's `photoClusters.ts`; both run `testdata/client-rules/photo-clusters.json` and
+ * `photo-marker-size.json`.
  */
 object PhotoClusters {
 
@@ -31,7 +32,7 @@ object PhotoClusters {
      *  lines across a whole region at that scale — still show under the photos. */
     const val FULL_ZOOM = 10.0
 
-    /** How photo markers are drawn at [zoom], as the web's `photoMarkerSize`: not at all where
+    /** How photo markers are drawn at [zoom]: not at all where
      *  tracks aren't either (below [MapOverlays.TRACKS_MIN_ZOOM]) — a photo would sit over a
      *  continent with no route under it — small below [FULL_ZOOM], full size from it. */
     fun markerSize(zoom: Double): MarkerSize = when {

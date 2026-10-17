@@ -11,11 +11,11 @@ import kotlin.math.sqrt
 data class TimedPoint(val lon: Double, val lat: Double, val t: Long)
 
 /**
- * A track as the Photos tab's slider walks it, the web's `apps/web/src/ui/photoTrack.ts`
- * (`apps/android/docs/SPEC.md` FR-2.10): the display points with their moments
- * (`GET /v1/activities/track-metrics/{id}`'s `time_s`), measured along their length. The slider
- * runs by distance, not time, so a long stop doesn't take up half its travel; a photo's place is
- * still kept as a moment (`route_at`), which is what the server stores.
+ * A track as the Photos tab's slider walks it (`apps/android/docs/SPEC.md` FR-2.10): the display
+ * points with their moments (`GET /v1/activities/track-metrics/{id}`'s `time_s`), measured along
+ * their length. The slider runs by distance, not time, so a long stop doesn't take up half its
+ * travel; a photo's place is still kept as a moment (`route_at`), which is what the server stores.
+ * The web's `photoTrack.ts`; both run `testdata/client-rules/photo-track-*.json`.
  */
 class PhotoTrack(val points: List<TimedPoint>) {
 

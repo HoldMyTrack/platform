@@ -1,8 +1,9 @@
 /**
  * The photo viewer's zoom and pan (PhotoViewer.tsx), as plain math over a view: the
  * picture fitted to the stage and centered is scale 1 at (0, 0); `scale` multiplies that and
- * `x`/`y` move its center, in CSS pixels from the stage's center. Kept apart from the component
- * so it can be tested without a browser.
+ * `x`/`y` move its center, in CSS pixels from the stage's center. Android's `PhotoZoom.kt` runs
+ * the same cases, `testdata/client-rules/photo-fit.json`, `photo-zoom.json`, `photo-pan.json` and
+ * `photo-clamp.json`.
  */
 export interface ZoomView {
   scale: number;

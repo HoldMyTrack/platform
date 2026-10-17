@@ -1,0 +1,12 @@
+{
+  "rule": "photoMarkerSize",
+  "description": "How photo markers are drawn at a map zoom: hidden where tracks are (below zoom 4), small below zoom 10, full size from it.",
+  "cases": [
+    { "name": "hidden zoomed right out", "input": { "zoom": 0 }, "expected": "hidden" },
+    { "name": "hidden just below the tracks", "input": { "zoom": 3.99 }, "expected": "hidden" },
+    { "name": "small where the tracks start", "input": { "zoom": 4 }, "expected": "small" },
+    { "name": "small just below 10", "input": { "zoom": 9.99 }, "expected": "small" },
+    { "name": "full from 10", "input": { "zoom": 10 }, "expected": "full" },
+    { "name": "full zoomed in", "input": { "zoom": 18 }, "expected": "full" }
+  ]
+}

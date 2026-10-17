@@ -19,7 +19,13 @@ import dev.holdmytrack.android.panel.EditOp
 import dev.holdmytrack.android.panel.EditTrackOps
 import dev.holdmytrack.android.panel.PanelRules
 import dev.holdmytrack.android.panel.PanelState
+import dev.holdmytrack.android.photos.PhotoClusters
 import dev.holdmytrack.android.photos.PhotoMarkerScope
+import dev.holdmytrack.android.photos.PhotoTrack
+import dev.holdmytrack.android.photos.PhotoZoom
+import dev.holdmytrack.android.photos.PlaceAnchor
+import dev.holdmytrack.android.photos.ScreenPoint
+import dev.holdmytrack.android.photos.TimedPoint
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -62,7 +68,8 @@ class ClientRulesTest {
 
     private fun JsonObject.strings(key: String): List<String> = (this[key] as? JsonArray)?.map { it.jsonPrimitive.content }.orEmpty()
 
-    private fun ids(values: Collection<String>): JsonArray = buildJsonArray { values.sorted().forEach { add(JsonPrimitive(it)) } }
+    private fun ids(values: Collection<String>, sort: Boolean = true): JsonArray =
+        buildJsonArray { (if (sort) values.sorted() else values).forEach { add(JsonPrimitive(it)) } }
 
     /** Each rule, from a case's input to the JSON its expected value is written in. */
     private val rules: Map<String, (JsonObject) -> JsonElement> = mapOf(
@@ -132,6 +139,34 @@ class ClientRulesTest {
         "satelliteRoads" to { input ->
             JsonPrimitive(roadsHiddenOverImagery(input["satellite"]!!.jsonPrimitive.booleanOrNull!!, MapMode.valueOf(input.string("mode")!!.uppercase())))
         },
+        "photoClusters" to { input ->
+            val points = input["points"]!!.jsonArray.map { it.jsonObject }.map { ScreenPoint(it.string("id")!!, it.number("x").toFloat(), it.number("y").toFloat()) }
+            buildJsonArray {
+                PhotoClusters.cluster(points, input.number("radius").toFloat()).forEach { group ->
+                    add(buildJsonObject { put("ids", ids(group.ids, sort = false)); put("x", group.x); put("y", group.y) })
+                }
+            }
+        },
+        "photoMarkerSize" to { input -> JsonPrimitive(PhotoClusters.markerSize(input.number("zoom")).name.lowercase()) },
+        "photoTrackPoint" to { input ->
+            val point = photoTrack(input).pointAt(input.number("fraction"))
+            buildJsonObject { put("lon", point.lon); put("lat", point.lat); put("t", point.t) }
+        },
+        "photoTrackFraction" to { input -> JsonPrimitive(photoTrack(input).fractionAt(input["t"]!!.jsonPrimitive.long)) },
+        "photoTrackStart" to { input ->
+            val placed = input["placed"]!!.jsonObject.mapValues { (it.value as? JsonPrimitive)?.takeIf { v -> v !is JsonNull }?.double }
+            val anchors = input["anchors"]!!.jsonObject.mapValues { anchor(it.value) }
+            JsonPrimitive(photoTrack(input).startFraction(anchor(input["anchor"]), placed, anchors))
+        },
+        "photoFit" to { input -> sizeJson(PhotoZoom.fitSize(size(input["image"]), size(input["stage"]))) },
+        "photoZoom" to { input ->
+            val point = input["point"]!!.jsonObject
+            viewJson(PhotoZoom.zoomAt(view(input), input.number("factor").toFloat(), point.number("x").toFloat(), point.number("y").toFloat(), size(input["fitted"]), size(input["stage"])))
+        },
+        "photoPan" to { input ->
+            viewJson(PhotoZoom.panBy(view(input), input.number("dx").toFloat(), input.number("dy").toFloat(), size(input["fitted"]), size(input["stage"])))
+        },
+        "photoClamp" to { input -> viewJson(PhotoZoom.clamp(view(input), size(input["fitted"]), size(input["stage"]))) },
         "editTrackFold" to { input -> editJson(EditTrackOps.fold(edit(input["base"]), ops(input))) },
         "editTrackApply" to { input -> buildJsonArray { EditTrackOps.apply(points(input["points"]), edit(input["edit"])!!).forEach { add(pointJson(it)) } } },
         "editTrackChop" to { input -> opJson(EditTrackOps.chop(points(input["visible"]), input.int("lo"), input.int("hi"))) },
@@ -197,6 +232,22 @@ class ClientRulesTest {
         distanceMeters = (json["distanceMeters"] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.double,
         isPrivate = json["private"]?.jsonPrimitive?.booleanOrNull ?: false,
     )
+
+    private fun photoTrack(input: JsonObject) = PhotoTrack(
+        input["points"]!!.jsonArray.map { it.jsonObject }.map { TimedPoint(it.number("lon"), it.number("lat"), it["t"]!!.jsonPrimitive.long) },
+    )
+
+    private fun anchor(json: JsonElement?): PlaceAnchor? = (json as? JsonObject)?.let {
+        it.string("waiting")?.let(PlaceAnchor::Waiting) ?: PlaceAnchor.At(it["t"]!!.jsonPrimitive.long)
+    }
+
+    private fun size(json: JsonElement?) = json!!.jsonObject.let { PhotoZoom.Size(it.number("width").toFloat(), it.number("height").toFloat()) }
+
+    private fun sizeJson(size: PhotoZoom.Size) = buildJsonObject { put("width", size.width); put("height", size.height) }
+
+    private fun view(input: JsonObject) = input["view"]!!.jsonObject.let { PhotoZoom.View(it.number("scale").toFloat(), it.number("x").toFloat(), it.number("y").toFloat()) }
+
+    private fun viewJson(view: PhotoZoom.View) = buildJsonObject { put("scale", view.scale); put("x", view.x); put("y", view.y) }
 
     private fun points(json: JsonElement?): List<TrackPoint> = json!!.jsonArray.map { point ->
         val (lon, lat, t) = point.jsonArray.map { it.jsonPrimitive }

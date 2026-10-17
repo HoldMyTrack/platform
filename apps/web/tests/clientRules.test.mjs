@@ -6,7 +6,10 @@ import { defaultRange } from '../src/map/defaultRange.ts';
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
 import { pendingChange } from '../src/map/pending.ts';
+import { clusterPoints, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
+import { fractionAt, photoTrack, pointAt, startFraction } from '../src/ui/photoTrack.ts';
+import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
 import { shiftRange } from '../src/ui/rangeShift.ts';
 import { roadsHiddenOverImagery } from '../src/map/satelliteRoads.ts';
 import { activityTimeZone } from '../src/ui/timeZone.ts';
@@ -35,6 +38,16 @@ const rules = {
   passesFilters: ({ activity, excludedTypes, distanceFilter }) => passesFilters(activity, new Set(excludedTypes), distanceFilter ?? null),
   activityZone: ({ own, account }) => activityTimeZone(own ?? undefined, account ?? undefined) ?? null,
   satelliteRoads: ({ satellite, mode }) => roadsHiddenOverImagery(satellite, mode),
+  photoClusters: ({ points, radius }) => clusterPoints(points, radius),
+  photoMarkerSize: ({ zoom }) => photoMarkerSize(zoom),
+  photoTrackPoint: ({ points, fraction }) => pointAt(photoTrack(points), fraction),
+  photoTrackFraction: ({ points, t }) => fractionAt(photoTrack(points), t),
+  photoTrackStart: ({ points, anchor, placed, anchors }) =>
+    startFraction(photoTrack(points), anchor ?? null, new Map(Object.entries(placed)), new Map(Object.entries(anchors))),
+  photoFit: ({ image, stage }) => fitSize(image, stage),
+  photoZoom: ({ view, factor, point, fitted, stage }) => zoomAt(view, factor, point, fitted, stage),
+  photoPan: ({ view, dx, dy, fitted, stage }) => panBy(view, dx, dy, fitted, stage),
+  photoClamp: ({ view, fitted, stage }) => clampView(view, fitted, stage),
   editTrackFold: ({ base, ops }) => foldEdit(base ?? null, ops),
   editTrackApply: ({ points, edit }) => applyEdit(points, edit),
   editTrackChop: ({ visible, lo, hi }) => chopOp(visible, lo, hi),

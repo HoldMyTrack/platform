@@ -26,6 +26,15 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
 | `activityZone` | `own`, `account` (zone ids) | a zone id, or `null` for the device's |
 | `satelliteRoads` | `satellite`, `mode` | boolean |
+| `photoClusters` | `points` (`{ id, x, y }`), `radius` | `[{ ids, x, y }]` |
+| `photoMarkerSize` | `zoom` | `"hidden"`, `"small"` or `"full"` |
+| `photoTrackPoint` | `points` (`{ lon, lat, t }`), `fraction` | `{ lon, lat, t }` |
+| `photoTrackFraction` | `points`, `t` | a fraction |
+| `photoTrackStart` | `points`, `anchor` (`{ t }`, `{ waiting }` or `null`), `placed`, `anchors` | a fraction |
+| `photoFit` | `image`, `stage` (`{ width, height }`) | `{ width, height }` |
+| `photoZoom` | `view` (`{ scale, x, y }`), `factor`, `point`, `fitted`, `stage` | a view |
+| `photoPan` | `view`, `dx`, `dy`, `fitted`, `stage` | a view |
+| `photoClamp` | `view`, `fitted`, `stage` | a view |
 | `editTrackFold` | `base` (an edit or `null`), `ops` | an edit `{ keep, remove, drop, move }` |
 | `editTrackApply` | `points` (`[lon, lat, t]`), `edit` | points |
 | `editTrackChop`, `editTrackCut` | `visible` (points), `lo`, `hi` | an op or `null` |
