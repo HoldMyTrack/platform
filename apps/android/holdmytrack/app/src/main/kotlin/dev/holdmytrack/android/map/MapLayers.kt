@@ -180,7 +180,9 @@ object MapLayers {
             val layer = style.getLayer(spec.id) ?: continue
             val props = view[spec.id].orEmpty()
             layer.setProperties(*props.filterKeys { it != "visibility" }.mapNotNull { (k, v) -> property(k, v) }.toTypedArray())
-            val base = ((props["visibility"] as? JsonPrimitive)?.content ?: if (spec.hidden) Property.NONE else Property.VISIBLE) == Property.VISIBLE
+            // What a layer is added with holds until this first runs; from then the view, the
+            // switch and the hidden groups decide.
+            val base = ((props["visibility"] as? JsonPrimitive)?.content ?: Property.VISIBLE) == Property.VISIBLE
             val shown = base && (spec.toggle == null || state.toggles[spec.toggle] == true) && group.id !in state.hiddenGroups
             layer.setProperties(PropertyFactory.visibility(if (shown) Property.VISIBLE else Property.NONE))
             spec.vars.forEach { (name, names) ->

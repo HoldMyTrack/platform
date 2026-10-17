@@ -105,3 +105,29 @@ test('the heat radius doubles across each zoom and drops back at the next', () =
   assert.equal(prev[0], max);
   assert.equal(last[1] / prev[1], 2 ** (last[0] - prev[0]));
 });
+
+test('the bike paths lift the basemap trails, each kind behind its Layers menu switch', () => {
+  const bike = groupOf(doc, 'bike-paths');
+  assert.deepEqual(bike.lifts, ['paths_trail', 'paths_track', 'paths_bridges_trail', 'paths_bridges_track']);
+  assert.deepEqual(
+    bike.layers.map((l) => [l.id, l.metadata['holdmytrack:toggle']]),
+    [
+      ['bike-paths-mtb', 'mtbTrails'],
+      ['bike-paths-shared', 'sharedPaths'],
+      ['bike-paths-cycleway', 'bikePaths'],
+    ],
+  );
+  for (const layer of bike.layers) assert.equal(layer.layout.visibility, 'none');
+  assert.equal(bike.sources['bike-paths'].minzoom, 9);
+  assert.ok(doc.groups.indexOf(bike) > doc.groups.indexOf(coverage), 'over Fog and Heatmap');
+});
+
+test('the legend gives every path its color, and a dash where the map dashes it', () => {
+  const { legend } = groupOf(doc, 'bike-paths');
+  assert.deepEqual(Object.keys(legend).sort(), ['bikePaths', 'mtbTrails', 'sharedPaths', 'tracks', 'trails']);
+  assert.deepEqual(legend.bikePaths, { color: '#0b5a85' });
+  assert.deepEqual(legend.trails.dash, [2, 1]);
+  const white = groupOf(buildLayers({ flavor: 'white', dark: false, labelIds: [], tileVersion: '' }), 'bike-paths');
+  assert.deepEqual(white.legend.sharedPaths.dash, [2, 1]);
+  assert.deepEqual(white.layers.find((l) => l.id === 'bike-paths-shared').paint['line-dasharray'], ['literal', [2, 1]]);
+});

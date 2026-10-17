@@ -511,11 +511,11 @@ flowchart LR
     BI -->|if changed| V
 ```
 
-**Trails and dirt tracks are in the basemap's `roads` layer**, which the stock Protomaps style draws faintly. `buildStyle` splices `PATH_LAYER_IDS` right after that layer, always on, so the served documents carry them; **their ids are part of the served style's contract**, since both clients find them to lift them over the veil.
+**Trails and dirt tracks are in the basemap's `roads` layer**, which the stock Protomaps style draws faintly. `buildStyle` splices `PATH_LAYER_IDS` right after that layer, always on, so the served documents carry them; **their ids are part of the served style's contract**, since the layers document's `bike-paths` group lifts them over the veil by id.
 
-**The bike kinds come from their own import** because the basemap has no paths below z13. **The extract keeps every way with one of the tags and `Kind` narrows it, so a new kind changes both.** A planet run deletes unseen rows behind the same too-many guard as Spots. Below z13 a way shorter than a pixel is dropped. The web and Android share the z9 minimum.
+**The bike kinds come from their own import** because the basemap has no paths below z13. **The extract keeps every way with one of the tags and `Kind` narrows it, so a new kind changes both.** A planet run deletes unseen rows behind the same too-many guard as Spots. Below z13 a way shorter than a pixel is dropped. A Go test holds the document's z9 minimum and source layer to the tile handler's.
 
-**Every path paints over Fog and Heatmap**: `raisePathLayers` moves the basemap path layers above the coverage layer, and the bike layers and tracks go on top, in every mode and in the export; under the veil, unridden paths showed at a fifth of their colour. It moves only a layer still below, and visibility is diffed before it's set, because both run on every `styledata` and each change fires another (`DEVELOPMENT.md`).
+**Every path paints over Fog and Heatmap**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and in the export; under the veil, unridden paths showed at a fifth of their colour. A client moves only a layer still below, and the web diffs every property before setting it, because each change fires another `styledata` (`DEVELOPMENT.md`).
 
 ### 4.25 Spots (FR-15, ADR-0021)
 

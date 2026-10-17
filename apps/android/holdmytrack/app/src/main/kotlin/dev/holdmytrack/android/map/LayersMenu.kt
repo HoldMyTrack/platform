@@ -1,7 +1,6 @@
 package dev.holdmytrack.android.map
 
 import android.annotation.SuppressLint
-import android.content.res.Configuration
 import android.os.SystemClock
 import android.view.Gravity
 import android.view.LayoutInflater
@@ -39,6 +38,8 @@ class LayersMenu(
     private val onShown: (Boolean) -> Unit,
     private val satellite: () -> Boolean?,
     private val onSatellite: (Boolean) -> Unit,
+    /** The layers document's path legend, by entry (`bike-paths`), or empty before it's loaded. */
+    private val legend: () -> Map<String, MapLayersDoc.Legend>,
 ) {
     private val res = button.resources
     private var popup: PopupWindow? = null
@@ -120,19 +121,20 @@ class LayersMenu(
         bind(R.id.layers_mtb_trails, current.mtbTrails) { p, on -> p.copy(mtbTrails = on) }
 
         // The legend: each bike entry's line at its end, and the trails and tracks the map always
-        // draws, in the flavor's colors.
-        val night = (res.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES
+        // draws, as the layers document draws them.
+        val entries = legend()
         val density = res.displayMetrics.density
-        fun TextView.swatch(color: String, dash: FloatArray?, atEnd: Boolean) {
-            val drawable = PathSwatch(color, dash, density)
+        fun TextView.swatch(key: String, atEnd: Boolean) {
+            val entry = entries[key] ?: return
+            val drawable = PathSwatch(entry.color, entry.dash, density)
             if (atEnd) setCompoundDrawablesRelativeWithIntrinsicBounds(null, null, drawable, null)
             else setCompoundDrawablesRelativeWithIntrinsicBounds(drawable, null, null, null)
         }
-        content.findViewById<TextView>(R.id.layers_bike_paths).swatch(MapBikePaths.cyclewayColor(night), null, atEnd = true)
-        content.findViewById<TextView>(R.id.layers_shared_paths).swatch(MapBikePaths.sharedColor(night), null, atEnd = true)
-        content.findViewById<TextView>(R.id.layers_mtb_trails).swatch(MapBikePaths.mtbColor(night), null, atEnd = true)
-        content.findViewById<TextView>(R.id.layers_key_trails).swatch(MapPaths.trailColor(night), MapPaths.TRAIL_DASH, atEnd = false)
-        content.findViewById<TextView>(R.id.layers_key_tracks).swatch(MapPaths.trackColor(night), MapPaths.TRACK_DASH, atEnd = false)
+        content.findViewById<TextView>(R.id.layers_bike_paths).swatch("bikePaths", atEnd = true)
+        content.findViewById<TextView>(R.id.layers_shared_paths).swatch("sharedPaths", atEnd = true)
+        content.findViewById<TextView>(R.id.layers_mtb_trails).swatch("mtbTrails", atEnd = true)
+        content.findViewById<TextView>(R.id.layers_key_trails).swatch("trails", atEnd = false)
+        content.findViewById<TextView>(R.id.layers_key_tracks).swatch("tracks", atEnd = false)
 
         for ((category, id) in SPOT_BOXES) {
             content.findViewById<CheckBox>(id).apply {

@@ -178,7 +178,9 @@ function applyState(map: MapLibreMap, doc: MapLayers, state: LayerState, groups:
     for (const [property, value] of Object.entries(layout)) if (property !== 'visibility') setLayout(map, id, property, value);
     for (const [property, value] of Object.entries(view.paint[id] ?? {})) setPaint(map, id, property, value);
 
-    const base = (layout.visibility ?? ('layout' in layer ? layer.layout?.visibility : undefined) ?? 'visible') === 'visible';
+    // What a layer is added with holds until this first runs; from then the view, the switch
+    // and the hidden groups decide.
+    const base = (layout.visibility ?? 'visible') === 'visible';
     const toggle = layerToggle(layer);
     const shown = base && (toggle === undefined || state.toggles[toggle] === true) && !state.hiddenGroups.has(group.id);
     setLayout(map, id, 'visibility', shown ? 'visible' : 'none');

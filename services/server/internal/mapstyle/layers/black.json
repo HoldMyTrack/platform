@@ -1,5 +1,5 @@
 {
-  "styleBuild": "f7d055cf61e2",
+  "styleBuild": "bc026532cb6b",
   "flavor": "black",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -870,6 +870,197 @@
           }
         }
       ]
+    },
+    {
+      "id": "bike-paths",
+      "placement": "beneath-labels",
+      "lifts": [
+        "paths_trail",
+        "paths_track",
+        "paths_bridges_trail",
+        "paths_bridges_track"
+      ],
+      "sources": {
+        "bike-paths": {
+          "type": "vector",
+          "tiles": "/tiles/v1/bike-paths/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
+          "minzoom": 9,
+          "maxzoom": 14
+        }
+      },
+      "layers": [
+        {
+          "id": "bike-paths-mtb",
+          "type": "line",
+          "source": "bike-paths",
+          "source-layer": "bike_paths",
+          "minzoom": 9,
+          "filter": [
+            "==",
+            [
+              "get",
+              "kind"
+            ],
+            "mtb"
+          ],
+          "layout": {
+            "visibility": "none",
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#b8b8b8",
+            "line-dasharray": [
+              "literal",
+              [
+                1,
+                1
+              ]
+            ],
+            "line-width": [
+              "interpolate",
+              [
+                "exponential",
+                1.6
+              ],
+              [
+                "zoom"
+              ],
+              9,
+              1.5,
+              13,
+              2,
+              18,
+              4.5
+            ]
+          },
+          "metadata": {
+            "holdmytrack:toggle": "mtbTrails"
+          }
+        },
+        {
+          "id": "bike-paths-shared",
+          "type": "line",
+          "source": "bike-paths",
+          "source-layer": "bike_paths",
+          "minzoom": 9,
+          "filter": [
+            "==",
+            [
+              "get",
+              "kind"
+            ],
+            "shared"
+          ],
+          "layout": {
+            "visibility": "none"
+          },
+          "paint": {
+            "line-color": "#a8a8a8",
+            "line-dasharray": [
+              "literal",
+              [
+                2,
+                1
+              ]
+            ],
+            "line-width": [
+              "interpolate",
+              [
+                "exponential",
+                1.6
+              ],
+              [
+                "zoom"
+              ],
+              9,
+              1.5,
+              13,
+              2,
+              18,
+              4.5
+            ]
+          },
+          "metadata": {
+            "holdmytrack:toggle": "sharedPaths"
+          }
+        },
+        {
+          "id": "bike-paths-cycleway",
+          "type": "line",
+          "source": "bike-paths",
+          "source-layer": "bike_paths",
+          "minzoom": 9,
+          "filter": [
+            "==",
+            [
+              "get",
+              "kind"
+            ],
+            "cycleway"
+          ],
+          "layout": {
+            "visibility": "none",
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#c4c4c4",
+            "line-width": [
+              "interpolate",
+              [
+                "exponential",
+                1.6
+              ],
+              [
+                "zoom"
+              ],
+              9,
+              1.8,
+              13,
+              2.4,
+              18,
+              5.5
+            ]
+          },
+          "metadata": {
+            "holdmytrack:toggle": "bikePaths"
+          }
+        }
+      ],
+      "legend": {
+        "bikePaths": {
+          "color": "#c4c4c4"
+        },
+        "sharedPaths": {
+          "color": "#a8a8a8",
+          "dash": [
+            2,
+            1
+          ]
+        },
+        "mtbTrails": {
+          "color": "#b8b8b8",
+          "dash": [
+            1,
+            1
+          ]
+        },
+        "trails": {
+          "color": "#9a9a9a",
+          "dash": [
+            2,
+            1
+          ]
+        },
+        "tracks": {
+          "color": "#b0b0b0",
+          "dash": [
+            3,
+            1.5
+          ]
+        }
+      }
     }
   ]
 }

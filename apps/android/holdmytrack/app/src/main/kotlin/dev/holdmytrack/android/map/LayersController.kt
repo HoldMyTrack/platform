@@ -40,6 +40,7 @@ class LayersController(
             onShown = ::setShown,
             satellite = { if (satelliteAvailable) MapSatellite.isOn(context) else null },
             onSatellite = ::setSatellite,
+            legend = { style()?.let(MapLayers::doc)?.group("bike-paths")?.legend.orEmpty() },
         )
     }
 

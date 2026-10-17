@@ -545,7 +545,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val loaded = style ?: return
         val doc = layersDoc?.takeIf { it.styleBuild == StyleMetadata.build(loaded) } ?: return
         if (!overlaysAttached) {
-            MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), layers.isNight(), storyId)
+            MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), storyId)
             // The bike-path layers attach just added start hidden.
             layers.applyPaths(loaded)
             MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
@@ -704,7 +704,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         layers.applyPaths(loaded)
         MapSatellite.apply(loaded, layers.satelliteOn, mode)
         val doc = layersDoc ?: return
-        MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), layers.isNight(), storyId, EXPORT_EXCLUDED)
+        MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), storyId, EXPORT_EXCLUDED)
         layers.applyPaths(loaded)
         MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
     }

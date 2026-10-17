@@ -50,9 +50,8 @@ class CoverageController(
             style()?.let {
                 refetchLayers()
                 MapOverlays.refreshTracks(it, range())
-                // Loading places or bike paths bumps the version too.
+                // Loading places bumps the version too.
                 MapSpots.refresh(it)
-                MapBikePaths.refresh(it)
             }
         }
     }

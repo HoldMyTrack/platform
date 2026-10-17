@@ -7,13 +7,12 @@ import { basemapOrigin, satelliteSource } from './config';
 import { withApiCredentials } from './requestCredentials';
 import { applyLayers, INITIAL_LAYER_STATE } from './applyLayers';
 import { getTileVersion } from './coverageVersion';
-import { ensureBikePathLayers, setBikePathsVisible } from './bikePaths';
-import { raisePathLayers } from './paths';
 import { labelInsertionPoint } from './layers';
 import { webLayers } from './webLayers';
 import { setMapMode, type MapMode } from './mapMode';
 import { setSatelliteVisible } from './satellite';
-import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor, type PathOverlays } from './style';
+import type { BikePathOverlays } from './bikePathsGroup';
+import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
 import { ensureTrackLayer, setHiddenTracks } from './tracks';
 
 /**
@@ -63,7 +62,7 @@ export interface ExportViewState {
   activityQuery: ActivityQuery;
   hiddenIds: string[];
   /** The Layers menu's paths (overlays.ts), so the image shows what the screen does. */
-  paths: PathOverlays;
+  paths: BikePathOverlays;
   /** The Satellite button (FR-4.14): satellite imagery, when the deployment has any. */
   satellite: boolean;
 }
@@ -361,13 +360,11 @@ async function renderOffscreen(
       ...INITIAL_LAYER_STATE,
       mode: state.mode,
       satellite: state.satellite,
+      toggles: { ...state.paths },
       // No Spots or pace bands, as on Android.
       excludedGroups: new Set(['spots', 'track-bands']),
     });
     const beforeId = labelInsertionPoint(instance);
-    raisePathLayers(instance, beforeId);
-    ensureBikePathLayers(instance, beforeId, state.flavor);
-    setBikePathsVisible(instance, state.paths);
     ensureTrackLayer(instance, beforeId, state.activityQuery);
     setMapMode(instance, state.mode, state.satellite);
     setSatelliteVisible(instance, state.satellite, state.mode);

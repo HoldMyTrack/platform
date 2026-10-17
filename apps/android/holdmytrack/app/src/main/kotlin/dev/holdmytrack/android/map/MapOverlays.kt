@@ -159,7 +159,6 @@ object MapOverlays {
         mode: MapMode,
         range: DateRange?,
         satellite: Boolean,
-        night: Boolean,
         story: String?,
         excluded: Set<String> = emptySet(),
     ) {
@@ -167,9 +166,6 @@ object MapOverlays {
         MapLayers.update(null) { it.copy(mode = mode, satellite = satellite) }
         MapLayers.attach(style, doc, excluded)
         val beforeId = labelInsertionPoint(style)
-        // Every path over the veil and the heat, under the tracks (`docs/SPEC.md` FR-4.13).
-        MapPaths.raise(style, beforeId)
-        MapBikePaths.add(style, beforeId, night)
         addTracks(style, beforeId, range)
         addBands(style, beforeId)
         setMode(style, mode)

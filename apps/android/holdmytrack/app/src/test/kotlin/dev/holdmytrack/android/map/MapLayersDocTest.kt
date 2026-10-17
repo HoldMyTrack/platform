@@ -86,6 +86,19 @@ class MapLayersDocTest {
     }
 
     @Test
+    fun theBikePathsLiftTheTrailsEachBehindItsSwitch() {
+        val bike = light.group("bike-paths")!!
+        assertEquals(listOf("paths_trail", "paths_track", "paths_bridges_trail", "paths_bridges_track"), bike.lifts)
+        assertEquals(listOf("mtbTrails", "sharedPaths", "bikePaths"), bike.layers.map { it.toggle })
+        assertTrue(bike.layers.all { it.hidden })
+        assertEquals("#0b5a85", bike.legend.getValue("bikePaths").color)
+        assertTrue(floatArrayOf(2f, 1f).contentEquals(bike.legend.getValue("trails").dash))
+        assertNull(bike.legend.getValue("bikePaths").dash)
+        val beneath = MapLayersDoc.order(light.groups, MapLayersDoc.Placement.BENEATH_LABELS)
+        assertTrue(beneath.indexOf("paths_trail") > beneath.indexOf("heat-points-circles"))
+    }
+
+    @Test
     fun tiersSwitchWhereTheFillsHandOver() {
         assertEquals(ZoomTier.COUNTRY, MapLayersDoc.tier(light.tiers, 2.99))
         assertEquals(ZoomTier.REGION, MapLayersDoc.tier(light.tiers, 3.0))

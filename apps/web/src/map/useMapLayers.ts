@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { ensureBikePathLayers, setBikePathsVisible, type BikePathOverlays } from './bikePaths';
 import { basemapOrigin, satelliteSource } from './config';
-import { applyLayers, currentLayerState } from './applyLayers';
+import { applyLayers, currentLayerState, setLayerToggles } from './applyLayers';
+import type { BikePathOverlays } from './bikePathsGroup';
 import { getTileVersion } from './coverageVersion';
 import { labelInsertionPoint } from './layers';
 import { webLayers } from './webLayers';
 import { setMapMode, type MapMode } from './mapMode';
-import { raisePathLayers } from './paths';
 import { setSatelliteVisible } from './satellite';
 import { ensureSpotsLayer, type SpotCategory } from './spots';
 import { buildStyle, type Flavor } from './style';
@@ -49,12 +48,11 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
   const reattach = useCallback(
     (instance: MapLibreMap) => {
       // Layer order matters: MapLibre paints later layers on top, all beneath the basemap labels
-      // (layers.ts). Fog and heatmap first, so tracks show through the veil.
-      applyLayers(instance, webLayers(flavor, getTileVersion()), { ...currentLayerState(instance), mode, satellite });
+      // (layers.ts). Fog and heatmap first, so tracks show through the veil, then the trails and
+      // bike paths, under the activity tracks.
+      const state = currentLayerState(instance);
+      applyLayers(instance, webLayers(flavor, getTileVersion()), { ...state, mode, satellite, toggles: { ...state.toggles, ...paths } });
       const beforeId = labelInsertionPoint(instance);
-      // Trails and paths over the veil and under the activity tracks (paths.ts, bikePaths.ts).
-      raisePathLayers(instance, beforeId);
-      ensureBikePathLayers(instance, beforeId, flavor);
       ensureTrackLayer(instance, beforeId, activityQuery);
       // A recreated source has no feature-state, the focused track's `selected` included.
       setSelectedTracks(instance, focusedId !== null ? [focusedId] : []);
@@ -66,7 +64,6 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       // mid-mode would drop to Normal and un-hide every hidden track. Both diff against the layer's
       // current value first (docs/DEVELOPMENT.md, the setFilter/setLayoutProperty gotcha).
       setMapMode(instance, mode, satellite, editingTrack);
-      setBikePathsVisible(instance, paths);
       setSatelliteVisible(instance, satellite, mode);
       setHiddenTracks(instance, [...mapHiddenIds]);
       // The band source is recreated empty.
@@ -108,7 +105,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
 
   useEffect(() => {
     if (!map) return;
-    setBikePathsVisible(map, paths);
+    setLayerToggles(map, paths);
   }, [map, paths]);
 
   useEffect(() => {

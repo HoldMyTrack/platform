@@ -1,4 +1,5 @@
 import type { LayerSpecification } from 'maplibre-gl';
+import { bikePathsGroup } from './bikePathsGroup.ts';
 import { coverageGroup } from './coverageGroup.ts';
 import type { MapMode } from './mapMode';
 import type { Flavor } from './style';
@@ -21,8 +22,9 @@ import type { Flavor } from './style';
  * - Runtime hooks travel as layer metadata, never as values: TOGGLE_METADATA names the Layers
  *   menu switch that shows a layer, VARS_METADATA the properties (or `filter`) that read one of
  *   the document's `vars` through `["var", name]`, which the client binds with `let`.
- * - Every view sets the same properties, so a switch never undoes one; a layer a view doesn't
- *   list keeps the visibility it was added with.
+ * - Every view sets the same properties, so a switch never undoes one. A layer is shown when its
+ *   view shows it or doesn't list it, its switch is on and the client hasn't hidden its group; it
+ *   is added hidden, or as the plain Normal view leaves it, until the client first applies that.
  * - Every array in a filter, layout or paint is an expression, since MapLibre Native reads them
  *   as expressions.
  */
@@ -129,7 +131,7 @@ export interface BuildLayersOptions {
 /** The layers document for `flavor` at `tileVersion`. Satellite imagery reads dark under any
  *  flavor, so its views take the dark ones. */
 export function buildLayers({ flavor, dark, labelIds, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
-  const parts = [coverageGroup(dark, tileVersion, labelIds)];
+  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion)];
   const views = (base: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,

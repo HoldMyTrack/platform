@@ -98,7 +98,7 @@ The shared client's interceptors apply to the map's requests too:
 
 The style is `GET /v1/map/style/{flavor}?lang=`, unmodified, fetched beside `GET /v1/map/layers` (root `docs/ARCHITECTURE.md` §2.1), whose groups `MapLayers` builds by type and property name: MapLibre Native can't add a layer from JSON. Another build's document reloads the style once.
 
-**A style reload discards every custom layer and image**, so everything that adds to the style is idempotent and re-adds on each load: `MapOverlays`, `MapPaths`/`MapBikePaths`, `MapSatellite`, `MapSpots` with its badge bitmaps, the Sync candidates and the Private location circles. `syncSession()` attaches them once the session is verified.
+**A style reload discards every custom layer and image**, so everything that adds to the style is idempotent and re-adds on each load: `MapLayers`, `MapOverlays`, `MapSatellite`, `MapSpots` with its badge bitmaps, the Sync candidates and the Private location circles. `syncSession()` attaches them once the session is verified.
 
 **Order, bottom to top, matches the web's layer by layer**: Fog or Heatmap coverage, the trails and tracks lifted out of the basemap's roads, the bike paths, the account's tracks, all under the basemap's first symbol layer; Spots over everything. MapLibre Native has no `moveLayer`, so lifting a layer is remove and re-add, as is a coverage refresh.
 
@@ -112,7 +112,7 @@ Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATIO
 
 ### 3.3 Logic ported from the web
 
-Where the web has a rule, the app ports it as a pure Kotlin class. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PhotoMarkerScope`, `RangeShift`, `EditTrackOps`, `ActivityFacets`, `ActivityZone`, `SatelliteRoads`, `PhotoClusters`, `PhotoTrack`, `PhotoZoom` and `FormatParts` run the shared JSON cases (`testdata/client-rules`). The rest copy the web's cases; a change to one side needs the other: `PanelState`, `ActivityDays`, `DateRangeSlider`, `TrackBands`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round. `MapPaths`' legend colors and dashes must match the web's `style.ts`.
+Where the web has a rule, the app ports it as a pure Kotlin class. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PhotoMarkerScope`, `RangeShift`, `EditTrackOps`, `ActivityFacets`, `ActivityZone`, `SatelliteRoads`, `PhotoClusters`, `PhotoTrack`, `PhotoZoom` and `FormatParts` run the shared JSON cases (`testdata/client-rules`). The rest copy the web's cases; a change to one side needs the other: `PanelState`, `ActivityDays`, `DateRangeSlider`, `TrackBands`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
 
 ### 3.4 The panel, editors and touches
 

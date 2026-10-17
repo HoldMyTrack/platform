@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { BikePathOverlays } from './bikePaths';
+import type { BikePathOverlays } from './bikePathsGroup';
 import { satelliteSource } from './config';
 import { loadOverlays, saveOverlays, type Overlays } from './overlays';
 
