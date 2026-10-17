@@ -1,15 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { roadsHiddenOverImagery, satelliteRoadLayerIds } from '../src/map/satelliteRoads.ts';
-
-test('roads come off only over imagery, in Fog and Heatmap', () => {
-  assert.equal(roadsHiddenOverImagery(true, 'fog'), true);
-  assert.equal(roadsHiddenOverImagery(true, 'heatmap'), true);
-  assert.equal(roadsHiddenOverImagery(true, 'normal'), false);
-  assert.equal(roadsHiddenOverImagery(false, 'fog'), false);
-  assert.equal(roadsHiddenOverImagery(false, 'heatmap'), false);
-  assert.equal(roadsHiddenOverImagery(false, 'normal'), false);
-});
+import { satelliteRoadLayerIds } from '../src/map/satelliteRoads.ts';
 
 test('the road layers are the basemap roads_* ones, labels included, trails left', () => {
   const layers = [

@@ -25,6 +25,7 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `typeFacets` | `activities`, `distanceFilter` | `[{ type, count }]` |
 | `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
 | `activityZone` | `own`, `account` (zone ids) | a zone id, or `null` for the device's |
+| `satelliteRoads` | `satellite`, `mode` | boolean |
 | `editTrackFold` | `base` (an edit or `null`), `ops` | an edit `{ keep, remove, drop, move }` |
 | `editTrackApply` | `points` (`[lon, lat, t]`), `edit` | points |
 | `editTrackChop`, `editTrackCut` | `visible` (points), `lo`, `hi` | an op or `null` |

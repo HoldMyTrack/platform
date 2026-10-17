@@ -6,6 +6,7 @@ import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.MapSession
 import dev.holdmytrack.android.map.PendingDiff
 import dev.holdmytrack.android.map.RangeShift
+import dev.holdmytrack.android.map.roadsHiddenOverImagery
 import dev.holdmytrack.android.map.shiftRange
 import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.TrackEdit
@@ -127,6 +128,9 @@ class ClientRulesTest {
             // A phone zone no case names, so falling through to it reads as null.
             val phone = ZoneId.of("Pacific/Kiritimati")
             JsonPrimitive(ActivityZone.of(input.string("own"), input.string("account"), phone).takeIf { it != phone }?.id)
+        },
+        "satelliteRoads" to { input ->
+            JsonPrimitive(roadsHiddenOverImagery(input["satellite"]!!.jsonPrimitive.booleanOrNull!!, MapMode.valueOf(input.string("mode")!!.uppercase())))
         },
         "editTrackFold" to { input -> editJson(EditTrackOps.fold(edit(input["base"]), ops(input))) },
         "editTrackApply" to { input -> buildJsonArray { EditTrackOps.apply(points(input["points"]), edit(input["edit"])!!).forEach { add(pointJson(it)) } } },

@@ -4,7 +4,8 @@ import type { MapMode } from './mapMode';
  * Whether the basemap's roads come off the map: over satellite imagery in Fog and Heatmap. There
  * the picture is the ground and what the user covered of it, and roads drawn over both, veil
  * or no veil, read as a second map on top. Normal keeps them, see-through, as the way through
- * the imagery (style.ts's `SATELLITE_ROAD_OPACITY`).
+ * the imagery (style.ts's `SATELLITE_ROAD_OPACITY`). Android's `SatelliteRoads.kt` runs the same
+ * cases, `testdata/client-rules/satellite-roads.json`.
  */
 export function roadsHiddenOverImagery(satellite: boolean, mode: MapMode): boolean {
   return satellite && mode !== 'normal';

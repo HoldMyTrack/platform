@@ -8,6 +8,7 @@ import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitI
 import { pendingChange } from '../src/map/pending.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
 import { shiftRange } from '../src/ui/rangeShift.ts';
+import { roadsHiddenOverImagery } from '../src/map/satelliteRoads.ts';
 import { activityTimeZone } from '../src/ui/timeZone.ts';
 import { toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
@@ -33,6 +34,7 @@ const rules = {
   typeFacets: ({ activities, distanceFilter }) => typeFacets(activities, distanceFilter ?? null),
   passesFilters: ({ activity, excludedTypes, distanceFilter }) => passesFilters(activity, new Set(excludedTypes), distanceFilter ?? null),
   activityZone: ({ own, account }) => activityTimeZone(own ?? undefined, account ?? undefined) ?? null,
+  satelliteRoads: ({ satellite, mode }) => roadsHiddenOverImagery(satellite, mode),
   editTrackFold: ({ base, ops }) => foldEdit(base ?? null, ops),
   editTrackApply: ({ points, edit }) => applyEdit(points, edit),
   editTrackChop: ({ visible, lo, hi }) => chopOp(visible, lo, hi),
