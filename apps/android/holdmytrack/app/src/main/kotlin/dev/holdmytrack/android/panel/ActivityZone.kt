@@ -5,7 +5,8 @@ import java.time.ZoneId
 /**
  * The zone an activity's times are shown in (`docs/IMPLEMENTATION.md` §4.30): the one it was
  * recorded in, else the account's, else the phone's. A zone the phone's tz data doesn't know yet
- * falls through to the next rather than failing to format — the web's `knownTimeZone`.
+ * falls through to the next rather than failing to format. The web's `activityTimeZone`; both run
+ * `testdata/client-rules/activity-zone.json`.
  */
 object ActivityZone {
     fun of(own: String?, account: String?, phone: ZoneId = ZoneId.systemDefault()): ZoneId =

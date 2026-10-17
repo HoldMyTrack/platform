@@ -3,6 +3,7 @@ import { t } from './i18n';
 import { getCurrentUser, type SessionUser } from './api';
 import { AuthProvider } from './auth/AuthContext';
 import { MapView } from './map/MapView';
+import { setAccountTimeZone } from './ui/timeZone';
 import { VersionBanner } from './ui/VersionBanner';
 
 /**
@@ -70,7 +71,10 @@ export function App() {
         // the page that says so (the map has nothing to show it yet).
         if (!user) window.location.replace('/signin');
         else if ('email' in user && !user.emailVerified) window.location.replace('/verify-pending');
-        else setAuth(user);
+        else {
+          setAccountTimeZone(user.timezone);
+          setAuth(user);
+        }
       })
       .catch((err: unknown) =>
         // fetch rejects with a TypeError ("Failed to fetch") when the server can't be reached at all.

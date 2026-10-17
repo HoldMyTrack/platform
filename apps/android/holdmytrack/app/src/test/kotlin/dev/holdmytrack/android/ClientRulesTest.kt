@@ -11,6 +11,7 @@ import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.TrackEdit
 import dev.holdmytrack.android.net.TrackPoint
 import dev.holdmytrack.android.panel.ActivityFacets
+import dev.holdmytrack.android.panel.ActivityZone
 import dev.holdmytrack.android.panel.DistanceKnob
 import dev.holdmytrack.android.panel.DistanceRange
 import dev.holdmytrack.android.panel.EditOp
@@ -39,6 +40,7 @@ import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.time.ZoneId
 
 /**
  * The rules every client implements alike, run against the shared cases in
@@ -120,6 +122,11 @@ class ClientRulesTest {
         },
         "passesFilters" to { input ->
             JsonPrimitive(ActivityFacets.passesFilters(facetActivity(input["activity"]!!.jsonObject), input.strings("excludedTypes").toSet(), distance(input["distanceFilter"])))
+        },
+        "activityZone" to { input ->
+            // A phone zone no case names, so falling through to it reads as null.
+            val phone = ZoneId.of("Pacific/Kiritimati")
+            JsonPrimitive(ActivityZone.of(input.string("own"), input.string("account"), phone).takeIf { it != phone }?.id)
         },
         "editTrackFold" to { input -> editJson(EditTrackOps.fold(edit(input["base"]), ops(input))) },
         "editTrackApply" to { input -> buildJsonArray { EditTrackOps.apply(points(input["points"]), edit(input["edit"])!!).forEach { add(pointJson(it)) } } },

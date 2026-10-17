@@ -1,6 +1,6 @@
 import type { UnitSystem } from './units';
 import { lang, t, tMaybe } from '../i18n';
-import { knownTimeZone } from './timeZone';
+import { activityTimeZone } from './timeZone';
 
 /**
  * Display formatting for real activity rows and totals. Kept apart from api.ts so the
@@ -60,14 +60,14 @@ export function formatStartedAt(iso: string, timeZone: string): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: knownTimeZone(timeZone),
+    timeZone: activityTimeZone(timeZone),
   });
 }
 
 /** The time of day of `ms` (epoch milliseconds) in `timeZone`, an activity's own: the times of
  *  its points and photos in the Edit window. */
 export function formatClockTime(ms: number, timeZone: string): string {
-  return new Date(ms).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: knownTimeZone(timeZone) });
+  return new Date(ms).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: activityTimeZone(timeZone) });
 }
 
 /** `distanceValue` returns just the number (no unit suffix) — for the one place
