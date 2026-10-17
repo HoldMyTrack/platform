@@ -10,7 +10,8 @@ import { setMapMode, type MapMode } from './mapMode';
 import { setSatelliteVisible } from './satellite';
 import { ensureSpotsLayer, type SpotCategory } from './spots';
 import { buildStyle, type Flavor } from './style';
-import { ensureBandLayer, setTrackBands } from './trackBands';
+import { BANDS_LAYER_ID } from './bandsGroup';
+import { setTrackBands } from './trackBands';
 import { ensureTrackLayer, refreshTrackLayer, setHiddenTracks, setSelectedTracks } from './tracks';
 import type { ActivityQuery, ActivityTrackMetrics } from '../api';
 import { lang } from '../i18n';
@@ -52,12 +53,11 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       // bike paths, under the activity tracks.
       const state = currentLayerState(instance);
       applyLayers(instance, webLayers(flavor, getTileVersion()), { ...state, mode, satellite, toggles: { ...state.toggles, ...paths } });
-      const beforeId = labelInsertionPoint(instance);
+      // Under the bands, which paint over the one track they apply to.
+      const beforeId = instance.getLayer(BANDS_LAYER_ID) ? BANDS_LAYER_ID : labelInsertionPoint(instance);
       ensureTrackLayer(instance, beforeId, activityQuery);
       // A recreated source has no feature-state, the focused track's `selected` included.
       setSelectedTracks(instance, focusedId !== null ? [focusedId] : []);
-      // Bands after tracks, to paint over the one track they apply to (trackBands.ts).
-      ensureBandLayer(instance, beforeId);
       // Spots last, above the basemap's labels too (spots.ts).
       ensureSpotsLayer(instance, spotsShown);
       // Re-applied because new layers start hidden or unfiltered: without these, a style load
@@ -67,7 +67,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       setSatelliteVisible(instance, satellite, mode);
       setHiddenTracks(instance, [...mapHiddenIds]);
       // The band source is recreated empty.
-      if (bands) setTrackBands(instance, bands.points);
+      if (bands) setTrackBands(instance, bands);
     },
     [flavor, satellite, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, focusedId],
   );

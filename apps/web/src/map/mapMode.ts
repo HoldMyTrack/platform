@@ -1,6 +1,5 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { updateLayers } from './applyLayers';
-import { BAND_LAYER_ID } from './trackBands';
 import { TRACKS_CASING_LAYER_ID, TRACKS_LAYER_ID } from './tracks';
 
 /**
@@ -22,13 +21,12 @@ export type MapMode = 'normal' | 'fog' | 'heatmap';
  * shared tracks layer and its bands are hidden outright rather than filtered.
  */
 export function setMapMode(map: MapLibreMap, mode: MapMode, satellite: boolean, editingTrack = false): void {
-  updateLayers(map, { mode, satellite });
+  // FR-4.8: a focused activity's pace-colored segments are their own group over the tracks
+  // (bandsGroup.ts), which the mode's view hides and an edit steps aside.
+  updateLayers(map, { mode, satellite, hiddenGroups: new Set(editingTrack ? ['track-bands'] : []) });
   const tracks = mode === 'normal' && !editingTrack;
   setVisible(map, TRACKS_LAYER_ID, tracks);
   setVisible(map, TRACKS_CASING_LAYER_ID, tracks);
-  // FR-4.8: a focused activity's pace-colored segments are a second layer over the shared
-  // tracks layer (trackBands.ts), so leaving Normal has to hide it too.
-  setVisible(map, BAND_LAYER_ID, tracks);
 }
 
 function setVisible(map: MapLibreMap, layerId: string, visible: boolean): void {

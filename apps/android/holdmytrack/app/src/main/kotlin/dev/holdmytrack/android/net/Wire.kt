@@ -160,9 +160,13 @@ internal data class TrackMetricPointJson(
 )
 
 @Serializable
+internal data class PaceBandJson(val band: Int, val start: Int, val end: Int)
+
+@Serializable
 internal data class TrackMetricsJson(
     @SerialName("activity_id") val activityId: String,
     val points: List<TrackMetricPointJson>,
+    val bands: List<PaceBandJson>,
 )
 
 /** A track edit both ways: what the editor opens with and what Apply sends. Times are Unix ms; a

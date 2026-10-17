@@ -112,7 +112,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         panelState,
         style = { style?.takeIf { overlaysAttached } },
         onSyncTab = { ::panel.isInitialized && panel.tab == PanelTab.SYNC },
-        onShown = { panel.setBandsShown(it) },
+        onShown = { panel.setBands(it) },
         // A reprocess can move a photo along its track, or take its stretch away.
         onRefetch = { photos.refresh(force = true) },
     )

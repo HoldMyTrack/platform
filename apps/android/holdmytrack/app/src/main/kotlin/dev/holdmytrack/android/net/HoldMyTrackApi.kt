@@ -193,11 +193,17 @@ data class TrackMetricPoint(
     val timeS: Long = 0,
 )
 
-/** What the selected activity's pace bands are drawn from. */
+/** What the selected activity's pace bands are drawn from: its points, and the server's runs of
+ *  them by band. */
 data class TrackMetrics(
     val activityId: String,
     val points: List<TrackMetricPoint>,
+    val bands: List<PaceBand> = emptyList(),
 )
+
+/** Points [start]..[end] (inclusive) all in [band], slowest 0; neighbouring runs share their
+ *  boundary point, so the coloured pieces join up without a gap. */
+data class PaceBand(val band: Int, val start: Int, val end: Int)
 
 /** One recorded point of an activity, as `GET /v1/activities/track-points` returns it — its
  *  time ([t], Unix ms) is what a track edit names it by. */
@@ -1022,7 +1028,11 @@ object HoldMyTrackApi {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/track-metrics/" + id).build()
         call(request, { text ->
             val json = decode<TrackMetricsJson>(text)
-            TrackMetrics(json.activityId, json.points.map { TrackMetricPoint(it.lon, it.lat, it.speedMps, it.timeS) })
+            TrackMetrics(
+                json.activityId,
+                json.points.map { TrackMetricPoint(it.lon, it.lat, it.speedMps, it.timeS) },
+                json.bands.map { PaceBand(it.band, it.start, it.end) },
+            )
         }, onResult)
     }
 

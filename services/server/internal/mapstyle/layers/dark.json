@@ -1,5 +1,5 @@
 {
-  "styleBuild": "bc026532cb6b",
+  "styleBuild": "eaad4caa88d0",
   "flavor": "dark",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -37,6 +37,9 @@
           },
           "heat-points-circles": {
             "visibility": "none"
+          },
+          "track-bands-line": {
+            "visibility": "visible"
           }
         },
         "paint": {
@@ -136,6 +139,9 @@
             "visibility": "visible"
           },
           "heat-points-circles": {
+            "visibility": "none"
+          },
+          "track-bands-line": {
             "visibility": "none"
           }
         },
@@ -237,6 +243,9 @@
           },
           "heat-points-circles": {
             "visibility": "visible"
+          },
+          "track-bands-line": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -339,6 +348,9 @@
           },
           "heat-points-circles": {
             "visibility": "none"
+          },
+          "track-bands-line": {
+            "visibility": "visible"
           }
         },
         "paint": {
@@ -438,6 +450,9 @@
             "visibility": "visible"
           },
           "heat-points-circles": {
+            "visibility": "none"
+          },
+          "track-bands-line": {
             "visibility": "none"
           }
         },
@@ -539,6 +554,9 @@
           },
           "heat-points-circles": {
             "visibility": "visible"
+          },
+          "track-bands-line": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -1061,6 +1079,64 @@
             3,
             1.5
           ]
+        }
+      }
+    },
+    {
+      "id": "track-bands",
+      "placement": "beneath-labels",
+      "sources": {
+        "track-bands": {
+          "type": "geojson"
+        }
+      },
+      "layers": [
+        {
+          "id": "track-bands-line",
+          "type": "line",
+          "source": "track-bands",
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": [
+              "at",
+              [
+                "get",
+                "band"
+              ],
+              [
+                "literal",
+                [
+                  "#2b6cb0",
+                  "#38a169",
+                  "#d69e2e",
+                  "#dd6b20",
+                  "#c53030"
+                ]
+              ]
+            ],
+            "line-width": 6,
+            "line-opacity": 0.95
+          }
+        }
+      ],
+      "legend": {
+        "band-0": {
+          "color": "#2b6cb0"
+        },
+        "band-1": {
+          "color": "#38a169"
+        },
+        "band-2": {
+          "color": "#d69e2e"
+        },
+        "band-3": {
+          "color": "#dd6b20"
+        },
+        "band-4": {
+          "color": "#c53030"
         }
       }
     }

@@ -1,4 +1,5 @@
 import type { LayerSpecification } from 'maplibre-gl';
+import { bandsGroup } from './bandsGroup.ts';
 import { bikePathsGroup } from './bikePathsGroup.ts';
 import { coverageGroup } from './coverageGroup.ts';
 import type { MapMode } from './mapMode';
@@ -131,7 +132,7 @@ export interface BuildLayersOptions {
 /** The layers document for `flavor` at `tileVersion`. Satellite imagery reads dark under any
  *  flavor, so its views take the dark ones. */
 export function buildLayers({ flavor, dark, labelIds, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
-  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion)];
+  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), bandsGroup()];
   const views = (base: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,

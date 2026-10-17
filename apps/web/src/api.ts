@@ -327,9 +327,17 @@ export interface TrackMetricPoint {
   timeS: number;
 }
 
+/** A run of points in one pace band, slowest 0, by index into the points, `end` inclusive. */
+export interface PaceBand {
+  band: number;
+  start: number;
+  end: number;
+}
+
 export interface ActivityTrackMetrics {
   activityId: string;
   points: TrackMetricPoint[];
+  bands: PaceBand[];
 }
 
 /**
@@ -353,6 +361,7 @@ export async function getActivityTrackMetrics(
   return {
     activityId: body.activity_id,
     points: body.points.map((p) => ({ lon: p.lon, lat: p.lat, speedMps: p.speed_mps, timeS: p.time_s })),
+    bands: body.bands,
   };
 }
 

@@ -3,7 +3,9 @@ package dev.holdmytrack.android.map
 import android.net.Uri
 import dev.holdmytrack.android.BuildConfig
 import dev.holdmytrack.android.net.Session
+import dev.holdmytrack.android.net.PaceBand
 import dev.holdmytrack.android.net.TrackMetricPoint
+import dev.holdmytrack.android.net.TrackMetrics
 import dev.holdmytrack.android.recording.RecordedPoint
 import org.maplibre.android.maps.Style
 import org.maplibre.android.style.expressions.Expression
@@ -90,12 +92,10 @@ object MapOverlays {
     const val CASING_COLOR = "#202b25"
     const val CASING_OPACITY = 0.95f
 
-    /** The selected activity's pace bands (`TrackBands`), the web's `track-bands`:
-     *  one coloured line per run, over its track, under the labels. */
+    /** The selected activity's pace bands, the layers document's `track-bands` group: one line
+     *  per run, over its track, under the labels. */
     private const val BAND_SOURCE_ID = "track-bands"
-    private const val BAND_LAYER_ID = "track-bands-line"
-    const val BAND_WIDTH = 6f
-    const val BAND_OPACITY = 0.95f
+    const val BAND_LAYER_ID = "track-bands-line"
 
     /** The track layers' ids, in paint order — what mode and recording show and hide together. */
     private val TRACK_LAYER_IDS = listOf(TRACKS_CASING_LAYER_ID, TRACKS_LAYER_ID, TRACKS_SELECTED_LAYER_ID)
@@ -127,8 +127,8 @@ object MapOverlays {
      *  what's on offer (`SyncCandidatesOverlay`), not a slice of what's already synced. */
     private var syncing = false
 
-    /** The tracks and their bands — what [setRecording] hides with the overlays. */
-    private val USER_LAYER_IDS = TRACK_LAYER_IDS + BAND_LAYER_ID
+    /** A recording is in progress ([setRecording]). */
+    private var recording = false
 
     private const val LIVE_TRACK_SOURCE_ID = "live-track"
     private const val LIVE_TRACK_LAYER_ID = "live-track-line"
@@ -165,45 +165,29 @@ object MapOverlays {
         trackStory = story
         MapLayers.update(null) { it.copy(mode = mode, satellite = satellite) }
         MapLayers.attach(style, doc, excluded)
-        val beforeId = labelInsertionPoint(style)
-        addTracks(style, beforeId, range)
-        addBands(style, beforeId)
+        // Under the bands, which paint over the one track they apply to.
+        addTracks(style, if (style.getLayer(BAND_LAYER_ID) != null) BAND_LAYER_ID else labelInsertionPoint(style), range)
         setMode(style, mode)
     }
 
-    private fun addBands(style: Style, beforeId: String?) {
-        if (style.getSource(BAND_SOURCE_ID) == null) style.addSource(GeoJsonSource(BAND_SOURCE_ID))
-        if (style.getLayer(BAND_LAYER_ID) == null) {
-            val layer = LineLayer(BAND_LAYER_ID, BAND_SOURCE_ID).withProperties(
-                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
-                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
-                PropertyFactory.lineColor(Expression.get("color")),
-                PropertyFactory.lineWidth(BAND_WIDTH),
-                PropertyFactory.lineOpacity(BAND_OPACITY),
-            )
-            insert(style, layer, beforeId)
-        }
-    }
-
     /**
-     * Colours [points] — the selected activity's track, `GET /v1/activities/track-metrics` —
-     * by pace, one line per band run; an empty list clears it. The web's `setTrackBands`.
+     * Draws [metrics]' pace bands — the selected activity's, `GET /v1/activities/track-metrics` —
+     * one line per run the server worked out, each with its `band` for the layer to colour. The
+     * web's `setTrackBands`.
      */
-    fun setTrackBands(style: Style, points: List<TrackMetricPoint>) {
-        val source = style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID) ?: return
-        source.setGeoJson(FeatureCollection.fromFeatures(bandFeatures(points)))
+    fun setTrackBands(style: Style, metrics: TrackMetrics) {
+        style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(bandFeatures(metrics.points, metrics.bands)))
     }
 
-    /** [points]' band runs as lines, each with its `color` — none under two points. */
-    fun bandFeatures(points: List<TrackMetricPoint>): List<Feature> {
-        if (points.size < 2) return emptyList()
-        return TrackBands.runs(points, TrackBands.scale(points)).map { run ->
-            val line = LineString.fromLngLats(points.subList(run.startIndex, run.endIndex + 1).map { Point.fromLngLat(it.lon, it.lat) })
-            Feature.fromGeometry(line).apply { addStringProperty("color", TrackBands.COLORS[run.band]) }
-        }
+    /** [bands]' runs of [points] as lines, each with its `band`. */
+    fun bandFeatures(points: List<TrackMetricPoint>, bands: List<PaceBand>): List<Feature> = bands.map { run ->
+        val line = LineString.fromLngLats(points.subList(run.start, run.end + 1).map { Point.fromLngLat(it.lon, it.lat) })
+        Feature.fromGeometry(line).apply { addNumberProperty("band", run.band) }
     }
 
-    fun clearTrackBands(style: Style) = setTrackBands(style, emptyList())
+    fun clearTrackBands(style: Style) {
+        style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
+    }
 
     /** The tracks tiles fetched again for [range] — after a delete, or a reprocess landing. */
     fun refreshTracks(style: Style, range: DateRange?) {
@@ -278,10 +262,10 @@ object MapOverlays {
     /** [mode]'s view of Fog and Heatmap, labels included ([MapLayers]), and the tracks,
      *  which only Normal draws. */
     fun setMode(style: Style, mode: MapMode) {
-        MapLayers.update(style) { it.copy(mode = mode) }
-        val tracks = mode == MapMode.NORMAL && !editingTrack && !syncing
+        val aside = editingTrack || syncing || recording
+        MapLayers.update(style) { it.copy(mode = if (recording) MapMode.NORMAL else mode, hiddenGroups = if (aside) setOf("track-bands") else emptySet()) }
+        val tracks = mode == MapMode.NORMAL && !aside
         TRACK_LAYER_IDS.forEach { setVisible(style, it, tracks) }
-        setVisible(style, BAND_LAYER_ID, tracks)
     }
 
     /**
@@ -291,12 +275,8 @@ object MapOverlays {
      * on and simply empty when nothing is recording.
      */
     fun setRecording(style: Style, recording: Boolean, mode: MapMode) {
-        if (recording) {
-            USER_LAYER_IDS.forEach { setVisible(style, it, false) }
-            MapLayers.update(style) { it.copy(mode = MapMode.NORMAL) }
-        } else {
-            setMode(style, mode)
-        }
+        this.recording = recording
+        setMode(style, mode)
     }
 
     /**

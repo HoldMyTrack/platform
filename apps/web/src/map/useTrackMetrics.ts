@@ -4,7 +4,7 @@ import { clearTrackBands, setTrackBands } from './trackBands';
 import { getActivityTrackMetrics, type ActivityTrackMetrics } from '../api';
 
 /**
- * The focused activity's pace-colored segments (trackBands.ts). The metrics are fetched when the
+ * The focused activity's pace-colored segments (trackBands.ts, bandsGroup.ts). The metrics are fetched when the
  * focus moves, or [version] changes after a reprocess; until they land the previous activity's may
  * be in hand, so drawing checks `activityId` against the focus. Not drawn while the track is hidden
  * (the bands are a layer above it and would keep painting it) or Pending (they'd paint the old
@@ -39,7 +39,7 @@ export function useTrackMetrics(
   }, [metrics, focusedId, mapHiddenIds, pendingIds]);
   useEffect(() => {
     if (!map) return;
-    if (bands) setTrackBands(map, bands.points);
+    if (bands) setTrackBands(map, bands);
     else clearTrackBands(map);
   }, [map, bands]);
   return bands;

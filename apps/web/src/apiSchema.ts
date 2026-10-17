@@ -1528,7 +1528,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** The stored track's points with their speed, for the speed chart */
+        /** The stored track's points with their speed, and its pace bands */
         get: {
             parameters: {
                 query?: never;
@@ -1555,6 +1555,14 @@ export interface paths {
                                 speed_mps: number;
                                 /** @description Unix seconds. */
                                 time_s: number;
+                            }[];
+                            /** @description Runs of points by pace band, slowest 0 to fastest 4, over the track's own speeds; neighbouring runs share their boundary point. */
+                            bands: {
+                                band: number;
+                                /** @description The run's first point's index. */
+                                start: number;
+                                /** @description Its last point's index, inclusive. */
+                                end: number;
                             }[];
                         };
                     };

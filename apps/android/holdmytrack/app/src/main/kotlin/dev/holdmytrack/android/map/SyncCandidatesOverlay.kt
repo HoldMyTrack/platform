@@ -20,7 +20,7 @@ import org.maplibre.geojson.Point
  * The Sync tab's candidates on the map (`docs/SPEC.md` FR-3.6): every activity listed there,
  * drawn dashed from the phone's own data — none of it is on the server yet — and the one picked
  * on the list or the map as the Map tab draws a selected activity: solid and wider over a dark
- * halo, coloured by pace ([Candidate.metrics], [MapOverlays.bandFeatures]). One GeoJSON source
+ * halo, coloured by pace ([Candidate.metrics], [TrackBands]). One GeoJSON source
  * whose layers filter on a `role` property, and one for the bands, all under the basemap's
  * labels, as [TrackEditOverlay] is. The lines are the candidates' simplified ones ([Candidate.line]).
  */
@@ -78,15 +78,8 @@ object SyncCandidatesOverlay {
                 PropertyFactory.lineOpacity(1f),
             ),
         )
-        add(
-            LineLayer(BAND_LAYER_ID, BAND_SOURCE_ID).withProperties(
-                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
-                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
-                PropertyFactory.lineColor(Expression.get("color")),
-                PropertyFactory.lineWidth(MapOverlays.BAND_WIDTH),
-                PropertyFactory.lineOpacity(MapOverlays.BAND_OPACITY),
-            ),
-        )
+        // Drawn as the layers document draws the selected activity's bands.
+        add(LineLayer(BAND_LAYER_ID, BAND_SOURCE_ID).withProperties(*MapLayers.propertiesOf(style, MapOverlays.BAND_LAYER_ID)))
     }
 
     /** Draws [candidates], [highlight] (a [Candidate.key]) picked out over the rest, in its pace bands. */
@@ -102,7 +95,8 @@ object SyncCandidatesOverlay {
             }
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
-        val bands = candidates.firstOrNull { it.key == highlight }?.let { MapOverlays.bandFeatures(it.metrics) }.orEmpty()
+        val bands = candidates.firstOrNull { it.key == highlight }
+            ?.let { MapOverlays.bandFeatures(it.metrics, TrackBands.runs(it.metrics.map { point -> point.speedMps })) }.orEmpty()
         style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(bands))
     }
 

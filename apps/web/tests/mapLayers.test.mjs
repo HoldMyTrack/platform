@@ -25,7 +25,7 @@ test('each mode shows only its own layers', () => {
       .filter(([, props]) => props.visibility === 'visible')
       .map(([id]) => id)
       .sort();
-  assert.deepEqual(visible('normal'), []);
+  assert.deepEqual(visible('normal'), ['track-bands-line']);
   assert.deepEqual(visible('fog'), ['country-fog-fill', 'fog-edge', 'fog-veil', 'region-fog-fill']);
   assert.deepEqual(visible('heatmap'), ['heat-points-circles', 'heatmap-dim']);
 });
@@ -104,6 +104,17 @@ test('the heat radius doubles across each zoom and drops back at the next', () =
   const [prev, last] = all.slice(-2);
   assert.equal(prev[0], max);
   assert.equal(last[1] / prev[1], 2 ** (last[0] - prev[0]));
+});
+
+test('the pace bands color each run by its band, shown in Normal only', () => {
+  const bands = groupOf(doc, 'track-bands');
+  assert.deepEqual(bands.sources, { 'track-bands': { type: 'geojson' } });
+  const [line] = bands.layers;
+  assert.deepEqual(line.paint['line-color'].slice(0, 2), ['at', ['get', 'band']]);
+  assert.deepEqual(Object.keys(bands.legend), ['band-0', 'band-1', 'band-2', 'band-3', 'band-4']);
+  assert.equal(viewFor(doc, 'normal', false).layout['track-bands-line'].visibility, 'visible');
+  assert.equal(viewFor(doc, 'fog', false).layout['track-bands-line'].visibility, 'none');
+  assert.ok(doc.groups.indexOf(bands) > doc.groups.indexOf(groupOf(doc, 'bike-paths')));
 });
 
 test('the bike paths lift the basemap trails, each kind behind its Layers menu switch', () => {

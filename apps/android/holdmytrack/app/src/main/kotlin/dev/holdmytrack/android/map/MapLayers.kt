@@ -195,6 +195,16 @@ object MapLayers {
         }
     }
 
+    /** Every property the document gives layer [id] on [style], for an overlay of the app's own
+     *  to draw as it does (the Sync tab's candidates); none before [attach]. */
+    fun propertiesOf(style: Style, id: String): Array<PropertyValue<*>> {
+        val doc = applied[style]?.doc ?: return emptyArray()
+        val spec = doc.groups.firstNotNullOfOrNull { group -> group.layers.firstOrNull { it.id == id } } ?: return emptyArray()
+        return spec.properties.filterKeys { it != "visibility" }
+            .mapNotNull { (name, value) -> property(name, MapLayersDoc.bind(value, spec.vars[name].orEmpty(), state.vars, doc.vars)) }
+            .toTypedArray()
+    }
+
     private fun layer(spec: MapLayersDoc.Layer, doc: MapLayersDoc.Doc): Layer? {
         val layer = when (spec.type) {
             "background" -> BackgroundLayer(spec.id)
