@@ -8,7 +8,7 @@ import dev.holdmytrack.android.net.Photo
 
 /**
  * Which photos the map shows and what a marker's tap does (`apps/android/docs/SPEC.md` FR-2.10).
- * The web's `photoMarkerItems.ts`; both run `testdata/map-session`.
+ * The web's `photoMarkerItems.ts`; both run `testdata/client-rules`.
  */
 object PhotoMarkerScope {
     /** A group spread wider than this, in metres, zooms in to split; a tighter one opens its popup. */

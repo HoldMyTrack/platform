@@ -342,7 +342,7 @@ One ride synced from a watch and uploaded as its `.fit` has two `external_id`s, 
 
 **One filter parser** (`parseActivityFilter`) serves the list, its totals, the day histogram and the tracks tiles, so the panel and the map can't disagree. **No pagination**: Type and Distance filter client-side over the whole range, and the map draws every match anyway; a future cursor must be `(started_at, id)`, since two sources' copies of a ride share a start time. **`bbox` is computed, the short way round**: PostGIS keeps the box in the geometry header, and one wider than 180° is recomputed from `ST_ShiftLongitude` with the narrower kept. **Every day is the activity's local day** (§4.30); the account's zone decides only what "today" is. The histogram pages by activity-day, since the slider packs only days with activity. `activity_type` is the source's free text, never normalized. A name is only ever typed by a person, and sorting never reads it.
 
-**The map's state rules are one set on every client**: the web's `map/session.ts` and Android's `MapSession` (range or Story, selection, the camera's next flight) and their pure rules run the same cases in `testdata/map-session`, so a rule can't change on one platform alone.
+**Device rules are one set on every client**: the web's `map/session.ts` and Android's `MapSession` (range or Story, selection, the camera's next flight) and the other rules its README lists run the same cases in `testdata/client-rules`, so a rule can't change on one platform alone.
 
 #### 4.7.5 Delete an activity — a full purge (FR-5.11)
 

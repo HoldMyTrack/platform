@@ -8,9 +8,9 @@ sealed interface RangeShift {
 }
 
 /**
- * Where the date slider's range-shift buttons move a selection — the
- * web's `apps/web/src/ui/rangeShift.ts`, line for line: the same number of activity days,
- * packed right up against the old range on the side it moves toward.
+ * Where the date slider's range-shift buttons move a selection: the same number of activity days,
+ * packed right up against the old range on the side it moves toward. The web's `rangeShift.ts`;
+ * both run `testdata/client-rules/range-shift.json`.
  *
  * [days] is the loaded run of activity days (YYYY-MM-DD, ascending, ending at the newest);
  * [hasEarlier] says whether more history sits before it, unloaded. Near either end of the

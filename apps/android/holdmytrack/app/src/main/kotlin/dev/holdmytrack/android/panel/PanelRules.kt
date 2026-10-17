@@ -1,6 +1,6 @@
 package dev.holdmytrack.android.panel
 
-/** The toolbar's rules [PanelState] applies, as the web's `selection.ts`; both run `testdata/map-session`. */
+/** The toolbar's rules [PanelState] applies, as the web's `selection.ts`; both run `testdata/client-rules`. */
 object PanelRules {
     /** What the toolbar acts on: the checked group whenever anything is checked, else the
      *  selected row alone, else nothing. Checked wins so an action never reaches past what was ticked. */

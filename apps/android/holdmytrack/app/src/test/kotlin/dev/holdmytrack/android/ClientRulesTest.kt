@@ -1,5 +1,12 @@
-package dev.holdmytrack.android.map
+package dev.holdmytrack.android
 
+import dev.holdmytrack.android.map.DateRange
+import dev.holdmytrack.android.map.DefaultRange
+import dev.holdmytrack.android.map.MapMode
+import dev.holdmytrack.android.map.MapSession
+import dev.holdmytrack.android.map.PendingDiff
+import dev.holdmytrack.android.map.RangeShift
+import dev.holdmytrack.android.map.shiftRange
 import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.panel.PanelRules
 import dev.holdmytrack.android.panel.PanelState
@@ -14,27 +21,31 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.double
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 
 /**
- * The map rules every client implements alike, run against the shared cases in
- * `testdata/map-session` (its README has the format), so a rule can't change here without the
+ * The rules every client implements alike, run against the shared cases in
+ * `testdata/client-rules` (its README has the format), so a rule can't change here without the
  * web's failing too.
  */
-class MapRulesTest {
+class ClientRulesTest {
 
     private val dir: File = run {
         var at: File? = File(System.getProperty("user.dir")).absoluteFile
-        while (at != null && !File(at, "testdata/map-session").isDirectory) at = at.parentFile
-        File(at ?: error("testdata/map-session not found above ${System.getProperty("user.dir")}"), "testdata/map-session")
+        while (at != null && !File(at, "testdata/client-rules").isDirectory) at = at.parentFile
+        File(at ?: error("testdata/client-rules not found above ${System.getProperty("user.dir")}"), "testdata/client-rules")
     }
+
+    private val files: List<File> by lazy { dir.listFiles { file -> file.extension == "json" }.orEmpty().sortedBy { it.name } }
 
     private fun JsonObject.string(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content
 
@@ -80,6 +91,13 @@ class MapRulesTest {
                 buildJsonObject { put("fit", buildJsonArray { box.forEach { add(JsonPrimitive(it)) } }) }
             } ?: JsonPrimitive("open")
         },
+        "rangeShift" to { input ->
+            when (val shift = shiftRange(input.strings("days"), input["hasEarlier"]!!.jsonPrimitive.booleanOrNull!!, range(input["range"]!!.jsonObject), input["dir"]!!.jsonPrimitive.int)) {
+                is RangeShift.Shifted -> rangeJson(shift.range)
+                RangeShift.None -> JsonNull
+                RangeShift.Load -> JsonPrimitive("load")
+            }
+        },
         "session" to { input ->
             val state = input["state"]!!.jsonObject
             val panel = PanelState()
@@ -104,7 +122,7 @@ class MapRulesTest {
                 else -> error("no Android event $type")
             }
             buildJsonObject {
-                session.range?.let { put("range", buildJsonObject { put("from", it.from); put("to", it.to) }) }
+                session.range?.let { put("range", rangeJson(it)) }
                 put("userPicked", session.userPicked)
                 session.storyId?.let { put("storyId", it) }
                 put("checked", ids(panel.checked))
@@ -117,29 +135,72 @@ class MapRulesTest {
 
     private fun range(json: JsonObject) = DateRange(json.string("from")!!, json.string("to")!!)
 
+    private fun rangeJson(range: DateRange) = buildJsonObject {
+        put("from", range.from)
+        put("to", range.to)
+    }
+
     private fun activity(id: String) = Activity(
         id = id, startedAt = "2026-10-01T08:00:00Z", activityType = "walking", name = null, distanceMeters = 1000.0,
         durationSeconds = 600, description = null, bbox = listOf(0.0, 0.0, 1.0, 1.0), pending = false, edited = false,
     )
 
-    /** Numbers compared as numbers, so 24.75 and 24.750 agree. */
+    /** Numbers compared as numbers, so 24.75 and 24.750 agree; a missing field means the same as null. */
     private fun normalized(element: JsonElement): JsonElement = when (element) {
-        is JsonObject -> JsonObject(element.mapValues { normalized(it.value) })
+        is JsonObject -> JsonObject(element.filterValues { it !is JsonNull }.mapValues { normalized(it.value) })
         is JsonArray -> JsonArray(element.map(::normalized))
         is JsonPrimitive -> if (element.isString || element.booleanOrNull != null || element is JsonNull) element else JsonPrimitive(element.double)
     }
 
+    /** Equal as JSON, numbers within [tolerance]. */
+    private fun assertClose(message: String, expected: JsonElement, actual: JsonElement, tolerance: Double) {
+        when {
+            expected is JsonPrimitive && !expected.isString && expected !is JsonNull && expected.booleanOrNull == null -> {
+                val value = (actual as? JsonPrimitive)?.takeIf { !it.isString && it !is JsonNull && it.booleanOrNull == null }
+                    ?: throw AssertionError("$message: $actual is not a number")
+                assertTrue("$message: ${value.double} is not within $tolerance of ${expected.double}", kotlin.math.abs(value.double - expected.double) <= tolerance)
+            }
+            expected is JsonArray -> {
+                val items = actual as? JsonArray
+                assertTrue("$message: $actual is not $expected", items != null && items.size == expected.size)
+                expected.forEachIndexed { i, item -> assertClose("$message[$i]", item, items!![i], tolerance) }
+            }
+            expected is JsonObject -> {
+                val fields = actual as? JsonObject ?: throw AssertionError("$message: $actual is not an object")
+                for (key in expected.keys + fields.keys) assertClose("$message.$key", expected[key] ?: JsonNull, fields[key] ?: JsonNull, tolerance)
+            }
+            else -> assertEquals(message, expected, actual)
+        }
+    }
+
+    private fun JsonElement?.double(): Double? = (this as? JsonPrimitive)?.takeIf { it !is JsonNull }?.double
+
+    @Test
+    fun `every shared rule file has an Android implementation`() {
+        assertTrue("no cases in $dir", files.isNotEmpty())
+        for (file in files) {
+            val rule = Json.parseToJsonElement(file.readText()).jsonObject.string("rule")
+            assertTrue("${file.name}: no Android implementation of $rule", rule in rules)
+        }
+    }
+
     @Test
     fun `every shared case holds`() {
-        val files = dir.listFiles { file -> file.extension == "json" }.orEmpty().sortedBy { it.name }
-        assertTrue("no cases in $dir", files.isNotEmpty())
         for (file in files) {
             val doc = Json.parseToJsonElement(file.readText()).jsonObject
             val rule = doc.string("rule")!!
-            val run = rules[rule] ?: error("${file.name}: no Android implementation of $rule")
+            val run = rules[rule] ?: continue
             for (case in doc["cases"]!!.jsonArray.map { it.jsonObject }) {
+                val message = "$rule: ${case.string("name")}"
                 val expected = case["expected"] ?: JsonNull
-                assertEquals("$rule: ${case.string("name")}", normalized(expected), normalized(run(case["input"]!!.jsonObject)))
+                val input = case["input"]!!.jsonObject
+                if ((expected as? JsonObject)?.get("throws")?.jsonPrimitive?.booleanOrNull == true) {
+                    assertThrows(message, Throwable::class.java) { run(input) }
+                    continue
+                }
+                val tolerance = case["tolerance"].double() ?: doc["tolerance"].double()
+                if (tolerance == null) assertEquals(message, normalized(expected), normalized(run(input)))
+                else assertClose(message, normalized(expected), normalized(run(input)), tolerance)
             }
         }
     }

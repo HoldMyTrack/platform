@@ -3,7 +3,7 @@ package dev.holdmytrack.android.map
 /**
  * The default date range (`docs/SPEC.md` FR-6.1): the most recent [DAYS] activity days in the
  * slider's window, through today. With no days in the window it starts at the earliest
- * activity, else today. The web's `defaultRange.ts`; both run `testdata/map-session`.
+ * activity, else today. The web's `defaultRange.ts`; both run `testdata/client-rules`.
  */
 object DefaultRange {
     const val DAYS = 5

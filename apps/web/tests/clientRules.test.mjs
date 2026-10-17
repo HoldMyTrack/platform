@@ -5,12 +5,13 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { defaultRange } from '../src/map/defaultRange.ts';
 import { pendingChange } from '../src/map/pending.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
+import { shiftRange } from '../src/ui/rangeShift.ts';
 import { toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
 
-// The cases every client runs (testdata/map-session/README.md). Mounted at /testdata in the
+// The cases every client runs (testdata/client-rules/README.md). Mounted at /testdata in the
 // web container, which this path also reaches.
-const dir = new URL('../../../testdata/map-session/', import.meta.url);
+const dir = new URL('../../../testdata/client-rules/', import.meta.url);
 const sorted = (set) => [...set].sort();
 
 const rules = {
@@ -23,6 +24,7 @@ const rules = {
   targetVisibility: ({ hidden, target }) => sorted(toggledVisibility(new Set(hidden), new Set(target))),
   photoScope: ({ mode, editWindowIds, focused, storyId }) => photoScopeFor(mode, editWindowIds ?? null, focused ?? null, storyId ?? null),
   photoGroup: ({ photos }) => photoGroupAction(photos),
+  rangeShift: ({ days, hasEarlier, range, dir }) => shiftRange(days, hasEarlier, range, dir),
   session: ({ state, event }) => {
     const start = {
       ...initialSession(state.storyId ?? null),
@@ -43,6 +45,24 @@ const rules = {
   },
 };
 
+/** Equal as JSON, numbers within `tolerance`. */
+function assertClose(actual, expected, tolerance, path = '') {
+  if (typeof expected === 'number' && typeof actual === 'number') {
+    assert.ok(Math.abs(actual - expected) <= tolerance, `${path || 'value'}: ${actual} is not within ${tolerance} of ${expected}`);
+  } else if (Array.isArray(expected)) {
+    assert.ok(Array.isArray(actual) && actual.length === expected.length, `${path || 'value'}: ${JSON.stringify(actual)} is not ${JSON.stringify(expected)}`);
+    expected.forEach((item, i) => assertClose(actual[i], item, tolerance, `${path}[${i}]`));
+  } else if (expected !== null && typeof expected === 'object') {
+    assert.ok(actual !== null && typeof actual === 'object' && !Array.isArray(actual), `${path || 'value'}: ${JSON.stringify(actual)} is not an object`);
+    // A missing field means the same as null.
+    for (const key of new Set([...Object.keys(expected), ...Object.keys(actual)])) {
+      assertClose(actual[key] ?? null, expected[key] ?? null, tolerance, `${path}.${key}`);
+    }
+  } else {
+    assert.equal(actual, expected, path || 'value');
+  }
+}
+
 const files = readdirSync(dir).filter((name) => name.endsWith('.json'));
 
 test('every shared rule file has a web implementation', () => {
@@ -53,10 +73,17 @@ test('every shared rule file has a web implementation', () => {
 });
 
 for (const name of files) {
-  const { rule, cases } = JSON.parse(readFileSync(new URL(name, dir), 'utf8'));
-  for (const { name: caseName, input, expected } of cases) {
+  const { rule, cases, tolerance: fileTolerance } = JSON.parse(readFileSync(new URL(name, dir), 'utf8'));
+  for (const { name: caseName, input, expected, tolerance } of cases) {
     test(`${rule}: ${caseName}`, () => {
-      assert.deepEqual(rules[rule](input), expected);
+      if (expected?.throws === true) {
+        assert.throws(() => rules[rule](input));
+        return;
+      }
+      const actual = rules[rule](input);
+      const within = tolerance ?? fileTolerance;
+      if (within === undefined) assert.deepEqual(actual, expected);
+      else assertClose(actual, expected, within);
     });
   }
 }

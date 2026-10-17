@@ -13,7 +13,7 @@ import type { DateRange } from './dateMath';
  *
  * Returns the shifted range; `null` when there's nothing further that way; `'load'` when the
  * days it needs are older than what's loaded — the caller fetches the next page and asks
- * again.
+ * again. Android's `RangeShift.kt` runs the same cases, `testdata/client-rules/range-shift.json`.
  */
 export function shiftRange(
   days: readonly string[],
