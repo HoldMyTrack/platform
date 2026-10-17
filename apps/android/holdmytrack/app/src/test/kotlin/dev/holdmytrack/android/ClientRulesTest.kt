@@ -10,6 +10,9 @@ import dev.holdmytrack.android.map.shiftRange
 import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.TrackEdit
 import dev.holdmytrack.android.net.TrackPoint
+import dev.holdmytrack.android.panel.ActivityFacets
+import dev.holdmytrack.android.panel.DistanceKnob
+import dev.holdmytrack.android.panel.DistanceRange
 import dev.holdmytrack.android.panel.EditOp
 import dev.holdmytrack.android.panel.EditTrackOps
 import dev.holdmytrack.android.panel.PanelRules
@@ -103,6 +106,21 @@ class ClientRulesTest {
                 RangeShift.Load -> JsonPrimitive("load")
             }
         },
+        "distanceBounds" to { input -> distanceJson(ActivityFacets.distanceBounds(activities(input["activities"]))) },
+        "distanceFilter" to { input ->
+            val knob = DistanceKnob.valueOf(input.string("knob")!!.uppercase())
+            distanceJson(ActivityFacets.nextDistanceFilter(distance(input["bounds"])!!, distance(input["current"])!!, knob, input.number("value")))
+        },
+        "typeFacets" to { input ->
+            buildJsonArray {
+                ActivityFacets.typeFacets(activities(input["activities"]), distance(input["distanceFilter"])).forEach { facet ->
+                    add(buildJsonObject { put("type", facet.type); put("count", facet.count) })
+                }
+            }
+        },
+        "passesFilters" to { input ->
+            JsonPrimitive(ActivityFacets.passesFilters(facetActivity(input["activity"]!!.jsonObject), input.strings("excludedTypes").toSet(), distance(input["distanceFilter"])))
+        },
         "editTrackFold" to { input -> editJson(EditTrackOps.fold(edit(input["base"]), ops(input))) },
         "editTrackApply" to { input -> buildJsonArray { EditTrackOps.apply(points(input["points"]), edit(input["edit"])!!).forEach { add(pointJson(it)) } } },
         "editTrackChop" to { input -> opJson(EditTrackOps.chop(points(input["visible"]), input.int("lo"), input.int("hi"))) },
@@ -156,6 +174,18 @@ class ClientRulesTest {
     private fun JsonObject.int(key: String): Int = this[key]!!.jsonPrimitive.int
 
     private fun JsonObject.number(key: String): Double = this[key]!!.jsonPrimitive.double
+
+    private fun distance(json: JsonElement?): DistanceRange? = (json as? JsonObject)?.let { DistanceRange(it.number("min"), it.number("max")) }
+
+    private fun distanceJson(range: DistanceRange?): JsonElement = range?.let { buildJsonObject { put("min", it.min); put("max", it.max) } } ?: JsonNull
+
+    private fun activities(json: JsonElement?) = json!!.jsonArray.map { facetActivity(it.jsonObject) }
+
+    private fun facetActivity(json: JsonObject) = activity("a").copy(
+        activityType = json.string("activityType")!!,
+        distanceMeters = (json["distanceMeters"] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.double,
+        isPrivate = json["private"]?.jsonPrimitive?.booleanOrNull ?: false,
+    )
 
     private fun points(json: JsonElement?): List<TrackPoint> = json!!.jsonArray.map { point ->
         val (lon, lat, t) = point.jsonArray.map { it.jsonPrimitive }

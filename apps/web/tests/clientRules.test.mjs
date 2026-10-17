@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 // Plain .mjs so tsc leaves it alone; Node strips the types from the imported .ts modules itself.
 import { defaultRange } from '../src/map/defaultRange.ts';
+import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
 import { pendingChange } from '../src/map/pending.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
@@ -26,6 +27,10 @@ const rules = {
   photoScope: ({ mode, editWindowIds, focused, storyId }) => photoScopeFor(mode, editWindowIds ?? null, focused ?? null, storyId ?? null),
   photoGroup: ({ photos }) => photoGroupAction(photos),
   rangeShift: ({ days, hasEarlier, range, dir }) => shiftRange(days, hasEarlier, range, dir),
+  distanceBounds: ({ activities }) => distanceBounds(activities),
+  distanceFilter: ({ bounds, current, knob, value }) => nextDistanceFilter(bounds, current, knob, value),
+  typeFacets: ({ activities, distanceFilter }) => typeFacets(activities, distanceFilter ?? null),
+  passesFilters: ({ activity, excludedTypes, distanceFilter }) => passesFilters(activity, new Set(excludedTypes), distanceFilter ?? null),
   editTrackFold: ({ base, ops }) => foldEdit(base ?? null, ops),
   editTrackApply: ({ points, edit }) => applyEdit(points, edit),
   editTrackChop: ({ visible, lo, hi }) => chopOp(visible, lo, hi),

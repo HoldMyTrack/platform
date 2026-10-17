@@ -1,0 +1,11 @@
+{
+  "rule": "distanceBounds",
+  "description": "The Distance filter's ends (docs/SPEC.md FR-5.3): the shortest and longest distance among the activities, or null when none has one. Activities are { activityType, distanceMeters (null for none), private }.",
+  "cases": [
+    { "name": "the shortest and longest", "input": { "activities": [{ "activityType": "walking", "distanceMeters": 1200 }, { "activityType": "running", "distanceMeters": 10400 }, { "activityType": "cycling", "distanceMeters": 21000 }] }, "expected": { "min": 1200, "max": 21000 } },
+    { "name": "an activity with no distance sets no bound", "input": { "activities": [{ "activityType": "walking", "distanceMeters": 1200 }, { "activityType": "running", "distanceMeters": 10400 }, { "activityType": "cycling", "distanceMeters": 21000 }, { "activityType": "walking", "distanceMeters": null }] }, "expected": { "min": 1200, "max": 21000 } },
+    { "name": "nothing to bound by with no distances", "input": { "activities": [{ "activityType": "walking", "distanceMeters": null }] }, "expected": null },
+    { "name": "a private activity has no distance to bound by", "input": { "activities": [{ "activityType": "walking", "distanceMeters": 967.55 }, { "activityType": "walking", "distanceMeters": 0, "private": true }] }, "expected": { "min": 967.55, "max": 967.55 } },
+    { "name": "nothing to bound by with only a private activity", "input": { "activities": [{ "activityType": "walking", "distanceMeters": 0, "private": true }] }, "expected": null }
+  ]
+}

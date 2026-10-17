@@ -1,0 +1,13 @@
+{
+  "rule": "distanceFilter",
+  "description": "The Distance filter after one knob (min or max) moved to value, given the bounds and the current band ({ min, max }, the bounds when no filter is on). The other knob holds, the two never cross, and both knobs at the bounds is null, no filter.",
+  "cases": [
+    { "name": "the max knob moved in narrows the filter", "input": { "bounds": { "min": 1200.35, "max": 16093.44 }, "current": { "min": 1200.35, "max": 16093.44 }, "knob": "max", "value": 12000 }, "expected": { "min": 1200.35, "max": 12000 } },
+    { "name": "the min knob moved in narrows the filter", "input": { "bounds": { "min": 1200.35, "max": 16093.44 }, "current": { "min": 1200.35, "max": 16093.44 }, "knob": "min", "value": 5000 }, "expected": { "min": 5000, "max": 16093.44 } },
+    { "name": "both knobs back at the bounds is no filter", "input": { "bounds": { "min": 1200.35, "max": 16093.44 }, "current": { "min": 1200.35, "max": 15000 }, "knob": "max", "value": 16093.44 }, "expected": null },
+    { "name": "a knob moved past its bound is back at it", "input": { "bounds": { "min": 1200.35, "max": 16093.44 }, "current": { "min": 1200.35, "max": 15000 }, "knob": "max", "value": 17000 }, "expected": null },
+    { "name": "one knob back at its end keeps the other one filtering", "input": { "bounds": { "min": 1200.35, "max": 16093.44 }, "current": { "min": 5000, "max": 15000 }, "knob": "max", "value": 16093.44 }, "expected": { "min": 5000, "max": 16093.44 } },
+    { "name": "the max knob stops at the min one", "input": { "bounds": { "min": 1200.35, "max": 16093.44 }, "current": { "min": 5000, "max": 8000 }, "knob": "max", "value": 3000 }, "expected": { "min": 5000, "max": 5000 } },
+    { "name": "the min knob stops at the max one", "input": { "bounds": { "min": 1200.35, "max": 16093.44 }, "current": { "min": 5000, "max": 8000 }, "knob": "min", "value": 9000 }, "expected": { "min": 8000, "max": 8000 } }
+  ]
+}

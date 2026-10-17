@@ -20,6 +20,10 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `photoGroup` | `photos` (`{ lat, lon }`) | `"open"` or `{ fit: [west, south, east, north] }` |
 | `session` | `state` (`range`, `userPicked`, `storyId`, `checked`, `hidden`, `excludedTypes`), `event` | the state after it, with `flyRequest` |
 | `rangeShift` | `days` (ascending dates), `hasEarlier`, `range`, `dir` (`-1`, `1`) | `{ from, to }`, `null` or `"load"` |
+| `distanceBounds` | `activities` (`{ activityType, distanceMeters, private }`) | `{ min, max }` or `null` |
+| `distanceFilter` | `bounds`, `current` (`{ min, max }`), `knob` (`min`, `max`), `value` | `{ min, max }` or `null` |
+| `typeFacets` | `activities`, `distanceFilter` | `[{ type, count }]` |
+| `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
 | `editTrackFold` | `base` (an edit or `null`), `ops` | an edit `{ keep, remove, drop, move }` |
 | `editTrackApply` | `points` (`[lon, lat, t]`), `edit` | points |
 | `editTrackChop`, `editTrackCut` | `visible` (points), `lo`, `hi` | an op or `null` |

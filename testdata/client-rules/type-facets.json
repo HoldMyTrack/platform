@@ -1,0 +1,9 @@
+{
+  "rule": "typeFacets",
+  "description": "The Type filter's rows (docs/SPEC.md FR-5.2): each type among the activities the distance filter ({ min, max } or null) lets through, with its count, busiest first and ties in list order. Activities are { activityType, distanceMeters (null for none), private }.",
+  "cases": [
+    { "name": "every type, busiest first", "input": { "activities": [{ "activityType": "running", "distanceMeters": 10400 }, { "activityType": "walking", "distanceMeters": 1200 }, { "activityType": "cycling", "distanceMeters": 21000 }, { "activityType": "walking", "distanceMeters": null }], "distanceFilter": null }, "expected": [{ "type": "walking", "count": 2 }, { "type": "running", "count": 1 }, { "type": "cycling", "count": 1 }] },
+    { "name": "counted after the distance filter", "input": { "activities": [{ "activityType": "walking", "distanceMeters": 1200 }, { "activityType": "running", "distanceMeters": 10400 }, { "activityType": "walking", "distanceMeters": null }], "distanceFilter": { "min": 0, "max": 5000 } }, "expected": [{ "type": "walking", "count": 1 }] },
+    { "name": "none with no activities", "input": { "activities": [], "distanceFilter": null }, "expected": [] }
+  ]
+}

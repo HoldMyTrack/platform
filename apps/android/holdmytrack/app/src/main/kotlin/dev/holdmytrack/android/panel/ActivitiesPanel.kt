@@ -248,7 +248,9 @@ class ActivitiesPanel(
                 abs(value - bounds.max) < SNAP_METERS -> bounds.max
                 else -> value.toDouble()
             }
-            state.setDistanceFilter(DistanceRange(snap(slider.values[0]), snap(slider.values[1])))
+            // The slider reports both knobs; the rule takes them one at a time, so both at the ends is no filter.
+            val min = ActivityFacets.nextDistanceFilter(bounds, state.distanceFilter ?: bounds, DistanceKnob.MIN, snap(slider.values[0]))
+            state.setDistanceFilter(ActivityFacets.nextDistanceFilter(bounds, min ?: bounds, DistanceKnob.MAX, snap(slider.values[1])))
             changed()
         }
         resetFilters.setOnClickListener {
