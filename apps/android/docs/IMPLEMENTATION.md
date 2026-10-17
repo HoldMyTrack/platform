@@ -112,7 +112,7 @@ Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATIO
 
 ### 3.3 Logic ported from the web
 
-Where the web has a rule, the app ports it as a pure Kotlin class with the web's test cases, and a change to one side needs the other: `PanelState` and `ActivityFacets`, `ActivityDays`, `DateRangeSlider`, `TrackBands`, `EditTrackOps`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, the `photos/` rules, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PhotoMarkerScope` and `RangeShift` run the shared JSON cases (`testdata/client-rules`). `MapPaths`' legend colors and dashes must match the web's `style.ts`.
+Where the web has a rule, the app ports it as a pure Kotlin class with the web's test cases, and a change to one side needs the other: `PanelState` and `ActivityFacets`, `ActivityDays`, `DateRangeSlider`, `TrackBands`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, the `photos/` rules, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PhotoMarkerScope`, `RangeShift` and `EditTrackOps` run the shared JSON cases (`testdata/client-rules`). `MapPaths`' legend colors and dashes must match the web's `style.ts`.
 
 ### 3.4 The panel, editors and touches
 

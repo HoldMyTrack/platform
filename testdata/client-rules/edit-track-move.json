@@ -1,0 +1,9 @@
+{
+  "rule": "editTrackMove",
+  "description": "The op a Move point drag commits: the point at time t dropped at lon/lat, rounded to the 1e-6 degrees the server sends points in.",
+  "cases": [
+    { "name": "rounded to 1e-6 degrees", "input": { "t": 1788249601000, "lon": 13.12345678, "lat": 52.98765432 }, "expected": { "kind": "move", "t": 1788249601000, "to": [13.123457, 52.987654] } },
+    { "name": "rounded west and south too", "input": { "t": 1788249601000, "lon": -3.7037912, "lat": -33.8688197 }, "expected": { "kind": "move", "t": 1788249601000, "to": [-3.703791, -33.86882] } },
+    { "name": "a round position stays", "input": { "t": 1788249603000, "lon": 13.5, "lat": 52.5 }, "expected": { "kind": "move", "t": 1788249603000, "to": [13.5, 52.5] } }
+  ]
+}

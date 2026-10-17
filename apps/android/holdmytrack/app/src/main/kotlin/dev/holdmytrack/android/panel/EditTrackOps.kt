@@ -31,11 +31,11 @@ sealed interface EditOp {
 }
 
 /**
- * The track editor's rules, a port of the web's `apps/web/src/ui/editTrackOps.ts`
- * (`docs/SPEC.md` FR-5.14): the saved edit and the session's steps fold into one [TrackEdit],
- * which is what's sent, and replaying it over the recorded points is what's drawn. Points are
- * named by their time rather than their index, so a deleted point never shifts what an
- * earlier step meant.
+ * The track editor's rules (`docs/SPEC.md` FR-5.14): the saved edit and the session's steps
+ * fold into one [TrackEdit], which is what's sent, and replaying it over the recorded points is
+ * what's drawn. Points are named by their time rather than their index, so a deleted point never
+ * shifts what an earlier step meant. The web's `editTrackOps.ts`; both run
+ * `testdata/client-rules/edit-track-*.json`.
  */
 object EditTrackOps {
 

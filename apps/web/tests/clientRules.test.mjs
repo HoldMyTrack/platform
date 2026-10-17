@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 // Plain .mjs so tsc leaves it alone; Node strips the types from the imported .ts modules itself.
 import { defaultRange } from '../src/map/defaultRange.ts';
+import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
 import { pendingChange } from '../src/map/pending.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
 import { shiftRange } from '../src/ui/rangeShift.ts';
@@ -25,6 +26,14 @@ const rules = {
   photoScope: ({ mode, editWindowIds, focused, storyId }) => photoScopeFor(mode, editWindowIds ?? null, focused ?? null, storyId ?? null),
   photoGroup: ({ photos }) => photoGroupAction(photos),
   rangeShift: ({ days, hasEarlier, range, dir }) => shiftRange(days, hasEarlier, range, dir),
+  editTrackFold: ({ base, ops }) => foldEdit(base ?? null, ops),
+  editTrackApply: ({ points, edit }) => applyEdit(points, edit),
+  editTrackChop: ({ visible, lo, hi }) => chopOp(visible, lo, hi),
+  editTrackCut: ({ visible, lo, hi }) => cutOp(visible, lo, hi),
+  editTrackSplitIndex: ({ visible, lo, hi }) => splitIndex(visible, lo, hi),
+  editTrackSplitPoint: ({ ops }) => splitPoint(ops),
+  editTrackMove: ({ t, lon, lat }) => moveOp(t, lon, lat),
+  editTrackDistances: ({ points }) => cumulativeDistances(points),
   session: ({ state, event }) => {
     const start = {
       ...initialSession(state.storyId ?? null),

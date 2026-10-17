@@ -1,0 +1,8 @@
+{
+  "rule": "editTrackSplitPoint",
+  "description": "The time an edit session's op stack (editTrackFold's ops) splits the activity at, or null.",
+  "cases": [
+    { "name": "the split op", "input": { "ops": [{ "kind": "chop", "keep": [1788249601000, 1788249609000] }, { "kind": "split", "t": 1788249605000 }] }, "expected": 1788249605000 },
+    { "name": "none without a split op", "input": { "ops": [{ "kind": "chop", "keep": [1788249601000, 1788249609000] }] }, "expected": null }
+  ]
+}

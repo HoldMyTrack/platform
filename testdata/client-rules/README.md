@@ -20,5 +20,12 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `photoGroup` | `photos` (`{ lat, lon }`) | `"open"` or `{ fit: [west, south, east, north] }` |
 | `session` | `state` (`range`, `userPicked`, `storyId`, `checked`, `hidden`, `excludedTypes`), `event` | the state after it, with `flyRequest` |
 | `rangeShift` | `days` (ascending dates), `hasEarlier`, `range`, `dir` (`-1`, `1`) | `{ from, to }`, `null` or `"load"` |
+| `editTrackFold` | `base` (an edit or `null`), `ops` | an edit `{ keep, remove, drop, move }` |
+| `editTrackApply` | `points` (`[lon, lat, t]`), `edit` | points |
+| `editTrackChop`, `editTrackCut` | `visible` (points), `lo`, `hi` | an op or `null` |
+| `editTrackSplitIndex` | `visible` (points), `lo`, `hi` | an index or `null` |
+| `editTrackSplitPoint` | `ops` | a time or `null` |
+| `editTrackMove` | `t`, `lon`, `lat` | a `move` op |
+| `editTrackDistances` | `points` | meters at each point |
 
 A rule only one platform has, or one where the platforms differ on purpose, is tested on that platform alone.

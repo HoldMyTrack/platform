@@ -8,6 +8,10 @@ import dev.holdmytrack.android.map.PendingDiff
 import dev.holdmytrack.android.map.RangeShift
 import dev.holdmytrack.android.map.shiftRange
 import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.TrackEdit
+import dev.holdmytrack.android.net.TrackPoint
+import dev.holdmytrack.android.panel.EditOp
+import dev.holdmytrack.android.panel.EditTrackOps
 import dev.holdmytrack.android.panel.PanelRules
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.photos.PhotoMarkerScope
@@ -25,6 +29,7 @@ import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
@@ -98,6 +103,14 @@ class ClientRulesTest {
                 RangeShift.Load -> JsonPrimitive("load")
             }
         },
+        "editTrackFold" to { input -> editJson(EditTrackOps.fold(edit(input["base"]), ops(input))) },
+        "editTrackApply" to { input -> buildJsonArray { EditTrackOps.apply(points(input["points"]), edit(input["edit"])!!).forEach { add(pointJson(it)) } } },
+        "editTrackChop" to { input -> opJson(EditTrackOps.chop(points(input["visible"]), input.int("lo"), input.int("hi"))) },
+        "editTrackCut" to { input -> opJson(EditTrackOps.cut(points(input["visible"]), input.int("lo"), input.int("hi"))) },
+        "editTrackSplitIndex" to { input -> JsonPrimitive(EditTrackOps.splitIndex(points(input["visible"]), input.int("lo"), input.int("hi"))) },
+        "editTrackSplitPoint" to { input -> JsonPrimitive(EditTrackOps.splitPoint(ops(input))) },
+        "editTrackMove" to { input -> opJson(EditTrackOps.move(input["t"]!!.jsonPrimitive.long, input.number("lon"), input.number("lat"))) },
+        "editTrackDistances" to { input -> buildJsonArray { EditTrackOps.cumulativeDistances(points(input["points"])).forEach { add(JsonPrimitive(it)) } } },
         "session" to { input ->
             val state = input["state"]!!.jsonObject
             val panel = PanelState()
@@ -138,6 +151,73 @@ class ClientRulesTest {
     private fun rangeJson(range: DateRange) = buildJsonObject {
         put("from", range.from)
         put("to", range.to)
+    }
+
+    private fun JsonObject.int(key: String): Int = this[key]!!.jsonPrimitive.int
+
+    private fun JsonObject.number(key: String): Double = this[key]!!.jsonPrimitive.double
+
+    private fun points(json: JsonElement?): List<TrackPoint> = json!!.jsonArray.map { point ->
+        val (lon, lat, t) = point.jsonArray.map { it.jsonPrimitive }
+        TrackPoint(lon.double, lat.double, t.long)
+    }
+
+    private fun pointJson(point: TrackPoint) = buildJsonArray {
+        add(JsonPrimitive(point.lon))
+        add(JsonPrimitive(point.lat))
+        add(JsonPrimitive(point.t))
+    }
+
+    private fun span(json: JsonElement): Pair<Long, Long> = json.jsonArray.let { it[0].jsonPrimitive.long to it[1].jsonPrimitive.long }
+
+    private fun spanJson(span: Pair<Long, Long>) = buildJsonArray {
+        add(JsonPrimitive(span.first))
+        add(JsonPrimitive(span.second))
+    }
+
+    private fun edit(json: JsonElement?): TrackEdit? = (json as? JsonObject)?.let { edit ->
+        TrackEdit(
+            keep = (edit["keep"] as? JsonArray)?.let(::span),
+            remove = (edit["remove"] as? JsonArray)?.map(::span).orEmpty(),
+            drop = (edit["drop"] as? JsonArray)?.map { it.jsonPrimitive.long }.orEmpty(),
+            move = (edit["move"] as? JsonObject)?.entries?.associate { (t, to) -> t.toLong() to (to.jsonArray[0].jsonPrimitive.double to to.jsonArray[1].jsonPrimitive.double) }.orEmpty(),
+        )
+    }
+
+    /** The edit with its empty fields left out, as the web folds it. */
+    private fun editJson(edit: TrackEdit) = buildJsonObject {
+        edit.keep?.let { put("keep", spanJson(it)) }
+        if (edit.remove.isNotEmpty()) put("remove", buildJsonArray { edit.remove.forEach { add(spanJson(it)) } })
+        if (edit.drop.isNotEmpty()) put("drop", buildJsonArray { edit.drop.forEach { add(JsonPrimitive(it)) } })
+        if (edit.move.isNotEmpty()) {
+            put("move", buildJsonObject { edit.move.forEach { (t, to) -> put(t.toString(), buildJsonArray { add(JsonPrimitive(to.first)); add(JsonPrimitive(to.second)) }) } })
+        }
+    }
+
+    private fun ops(input: JsonObject): List<EditOp> = input["ops"]!!.jsonArray.map { it.jsonObject }.map { op ->
+        when (val kind = op.string("kind")) {
+            "chop" -> EditOp.Chop(span(op["keep"]!!))
+            "cut" -> EditOp.Cut(span(op["remove"]!!))
+            "drop" -> EditOp.Drop(op["t"]!!.jsonPrimitive.long)
+            "move" -> op["to"]!!.jsonArray.let { EditOp.Move(op["t"]!!.jsonPrimitive.long, it[0].jsonPrimitive.double, it[1].jsonPrimitive.double) }
+            "reset" -> EditOp.Reset
+            "split" -> EditOp.Split(op["t"]!!.jsonPrimitive.long)
+            else -> error("no Android op $kind")
+        }
+    }
+
+    private fun opJson(op: EditOp?): JsonElement = when (op) {
+        null -> JsonNull
+        is EditOp.Chop -> buildJsonObject { put("kind", "chop"); put("keep", spanJson(op.keep)) }
+        is EditOp.Cut -> buildJsonObject { put("kind", "cut"); put("remove", spanJson(op.remove)) }
+        is EditOp.Drop -> buildJsonObject { put("kind", "drop"); put("t", op.t) }
+        is EditOp.Move -> buildJsonObject {
+            put("kind", "move")
+            put("t", op.t)
+            put("to", buildJsonArray { add(JsonPrimitive(op.lon)); add(JsonPrimitive(op.lat)) })
+        }
+        EditOp.Reset -> buildJsonObject { put("kind", "reset") }
+        is EditOp.Split -> buildJsonObject { put("kind", "split"); put("t", op.t) }
     }
 
     private fun activity(id: String) = Activity(
