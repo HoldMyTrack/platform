@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built for Fog of War and Heatmap: their sources, layers, per-mode views and zoom tiers travel in the served style's metadata (`ARCHITECTURE.md` §2.1, `IMPLEMENTATION.md` §4.2).
+Accepted. Built for Fog of War and Heatmap: their sources, layers, per-mode views and zoom tiers travel in the served style's metadata (`ARCHITECTURE.md` §2.1, `IMPLEMENTATION.md` §4.2). Where the overlays travel, the "separate overlays route" alternative and the "only grow" consequence are superseded by ADR-0048.
 
 ## Context
 

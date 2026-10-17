@@ -7,7 +7,6 @@ import type {
   StyleSpecification,
 } from 'maplibre-gl';
 import { GLYPHS_PATH, PMTILES_PATH, SPRITE_BASE_PATH } from './config';
-import { buildOverlays, OVERLAYS_METADATA } from './coverageStyle';
 import { globeProjection } from './globe';
 import { satelliteRoadLayerIds } from './satelliteRoads';
 
@@ -37,14 +36,18 @@ export function isDarkFlavor(flavor: Flavor): boolean {
 }
 
 /** The flavors drawn light-on-dark, or satellite imagery under any flavor: it reads dark, so it
- *  gets the same watermark colors a dark flavor does, as the overlays' satellite views take the
- *  dark veil (coverageStyle.ts, docs/SPEC.md FR-4.14). */
+ *  gets the same watermark colors a dark flavor does, as the layers' satellite views take the
+ *  dark veil (mapLayers.ts, docs/SPEC.md FR-4.14). */
 export function isDarkBase(flavor: Flavor, satellite: boolean): boolean {
   return satellite || isDarkFlavor(flavor);
 }
 
 /** The source id every basemap layer is bound to; fog and track layers will not reuse it. */
 export const BASEMAP_SOURCE = 'protomaps';
+
+/** The style `metadata` key holding the build it came from, which the layers document carries
+ *  too (mapLayers.ts): a client holding the two from different builds fetches the style again. */
+export const STYLE_BUILD_METADATA = 'holdmytrack:style-build';
 
 /**
  * Satellite mode (docs/SPEC.md FR-4.14): a raster imagery source under the vector basemap's
@@ -266,6 +269,17 @@ function withPathLayers(base: LayerSpecification[], flavor: Flavor): LayerSpecif
   });
 }
 
+function basemapLayers(flavor: Flavor, lang: string): LayerSpecification[] {
+  return withPathLayers(layers(BASEMAP_SOURCE, namedFlavor(flavor), { lang }), flavor);
+}
+
+/** The basemap's label layers, the same ids in every language: what Fog mutes (mapLayers.ts). */
+export function basemapLabelIds(flavor: Flavor): string[] {
+  return basemapLayers(flavor, 'en')
+    .filter((layer) => layer.type === 'symbol')
+    .map((layer) => layer.id);
+}
+
 export function buildStyle(options: BuildStyleOptions): StyleSpecification {
   const {
     flavor,
@@ -280,7 +294,7 @@ export function buildStyle(options: BuildStyleOptions): StyleSpecification {
   } = options;
 
   const base = origin.replace(/\/$/, '');
-  const vector = withPathLayers(layers(BASEMAP_SOURCE, namedFlavor(flavor), { lang }), flavor);
+  const vector = basemapLayers(flavor, lang);
   const hidden = satellite ? satelliteHiddenLayerIds(vector) : [];
   const dimmed = satellite ? satelliteDimmedLayerIds(vector) : [];
 
@@ -302,11 +316,6 @@ export function buildStyle(options: BuildStyleOptions): StyleSpecification {
       ...(satellite && { [SATELLITE_SOURCE]: satelliteSourceSpec(satellite) }),
     },
     metadata: {
-      // Fog and Heatmap, for every client to apply as they come (coverageStyle.ts).
-      [OVERLAYS_METADATA]: buildOverlays(
-        isDarkFlavor(flavor),
-        vector.filter((layer) => layer.type === 'symbol').map((layer) => layer.id),
-      ),
       ...(satellite && {
         [SATELLITE_HIDES_METADATA]: hidden,
         [SATELLITE_DIMS_METADATA]: dimmed,
@@ -330,7 +339,7 @@ function satelliteSourceSpec(satellite: SatelliteSource): RasterSourceSpecificat
 }
 
 /** The imagery right above the background, so everything the vector basemap draws after it —
- *  and every overlay inserted at the first symbol layer — stacks over it. */
+ *  and every layer group inserted at the first symbol layer — stacks over it. */
 function withSatelliteLayer(
   base: LayerSpecification[],
   hidden: string[],

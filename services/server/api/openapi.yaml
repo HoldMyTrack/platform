@@ -89,6 +89,8 @@ paths:
     $ref: "paths/activities.yaml#/activities_track-merge"
   /map/style/{flavor}:
     $ref: "paths/map.yaml#/map_style_flavor"
+  /map/layers:
+    $ref: "paths/map.yaml#/map_layers"
   /photos:
     $ref: "paths/photos.yaml#/photos"
   /photos/place:

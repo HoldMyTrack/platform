@@ -2,8 +2,10 @@ import { useCallback, useEffect, useRef } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { ensureBikePathLayers, setBikePathsVisible, type BikePathOverlays } from './bikePaths';
 import { basemapOrigin, satelliteSource } from './config';
-import { ensureCoverageLayers } from './coverageLayers';
+import { applyLayers, currentLayerState } from './applyLayers';
+import { getTileVersion } from './coverageVersion';
 import { labelInsertionPoint } from './layers';
+import { webLayers } from './webLayers';
 import { setMapMode, type MapMode } from './mapMode';
 import { raisePathLayers } from './paths';
 import { setSatelliteVisible } from './satellite';
@@ -46,10 +48,10 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
 
   const reattach = useCallback(
     (instance: MapLibreMap) => {
-      const beforeId = labelInsertionPoint(instance);
       // Layer order matters: MapLibre paints later layers on top, all beneath the basemap labels
       // (layers.ts). Fog and heatmap first, so tracks show through the veil.
-      ensureCoverageLayers(instance, beforeId);
+      applyLayers(instance, webLayers(flavor, getTileVersion()), { ...currentLayerState(instance), mode, satellite });
+      const beforeId = labelInsertionPoint(instance);
       // Trails and paths over the veil and under the activity tracks (paths.ts, bikePaths.ts).
       raisePathLayers(instance, beforeId);
       ensureBikePathLayers(instance, beforeId, flavor);

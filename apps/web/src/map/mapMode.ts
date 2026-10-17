@@ -1,12 +1,12 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { setCoverageView } from './coverageLayers';
+import { updateLayers } from './applyLayers';
 import { BAND_LAYER_ID } from './trackBands';
 import { TRACKS_CASING_LAYER_ID, TRACKS_LAYER_ID } from './tracks';
 
 /**
  * The three mutually exclusive views (docs/SPEC.md FR-4.4) — not
  * independent checkboxes, a single toggle. What Fog and Heatmap show, and how they quiet the
- * basemap, is the served style's (coverageStyle.ts); this adds the app's own layers, which
+ * basemap, is the layers document's (mapLayers.ts); this adds the app's own layers, which
  * both modes hide: the coverage already shows where, and the drawn lines on top of either one
  * read as visual noise rather than adding information, reported live as ruining the effect.
  */
@@ -22,7 +22,7 @@ export type MapMode = 'normal' | 'fog' | 'heatmap';
  * shared tracks layer and its bands are hidden outright rather than filtered.
  */
 export function setMapMode(map: MapLibreMap, mode: MapMode, satellite: boolean, editingTrack = false): void {
-  setCoverageView(map, mode, satellite);
+  updateLayers(map, { mode, satellite });
   const tracks = mode === 'normal' && !editingTrack;
   setVisible(map, TRACKS_LAYER_ID, tracks);
   setVisible(map, TRACKS_CASING_LAYER_ID, tracks);

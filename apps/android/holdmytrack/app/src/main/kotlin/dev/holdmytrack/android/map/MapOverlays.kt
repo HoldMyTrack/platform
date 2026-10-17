@@ -34,7 +34,7 @@ enum class ZoomTier { COUNTRY, REGION, CITY }
 
 /**
  * The user layers on top of the served basemap: the live tracks MVT layer, and Fog's veil and
- * Heatmap's points as the style describes them ([CoverageLayers]).
+ * Heatmap's points as the layers document describes them ([MapLayers]).
  *
  * All three are behind `requireAuth` (`services/server/internal/httpapi/server.go`), which is
  * why they are attached only once the stored session is verified rather than at style load —
@@ -149,20 +149,29 @@ object MapOverlays {
      * (`docs/SPEC.md` FR-4.2, FR-4.3). The Activities panel's TYPE/DISTANCE filters, hidden
      * set and selection are applied on the client, as layer filters ([setTrackFilter]).
      *
-     * Fog and Heatmap are the served style's ([CoverageLayers]); [satellite] says imagery is
-     * drawn, which picks their view over it. [story] is the open Story, or null ([setTrackStory]).
+     * Fog and Heatmap are [doc]'s ([MapLayers]), without the groups [excluded]; [satellite] says
+     * imagery is drawn, which picks their view over it. [story] is the open Story, or null
+     * ([setTrackStory]).
      */
-    fun attach(style: Style, mode: MapMode, range: DateRange?, satellite: Boolean, night: Boolean, story: String?) {
+    fun attach(
+        style: Style,
+        doc: MapLayersDoc.Doc,
+        mode: MapMode,
+        range: DateRange?,
+        satellite: Boolean,
+        night: Boolean,
+        story: String?,
+        excluded: Set<String> = emptySet(),
+    ) {
         trackStory = story
+        MapLayers.update(null) { it.copy(mode = mode, satellite = satellite) }
+        MapLayers.attach(style, doc, excluded)
         val beforeId = labelInsertionPoint(style)
-        CoverageLayers.load(style)
-        CoverageLayers.add(style, beforeId)
         // Every path over the veil and the heat, under the tracks (`docs/SPEC.md` FR-4.13).
         MapPaths.raise(style, beforeId)
         MapBikePaths.add(style, beforeId, night)
         addTracks(style, beforeId, range)
         addBands(style, beforeId)
-        CoverageLayers.apply(style, mode, satellite)
         setMode(style, mode)
     }
 
@@ -270,10 +279,10 @@ object MapOverlays {
         setMode(style, mode)
     }
 
-    /** [mode]'s view of Fog and Heatmap, labels included ([CoverageLayers]), and the tracks,
+    /** [mode]'s view of Fog and Heatmap, labels included ([MapLayers]), and the tracks,
      *  which only Normal draws. */
     fun setMode(style: Style, mode: MapMode) {
-        CoverageLayers.apply(style, mode)
+        MapLayers.update(style) { it.copy(mode = mode) }
         val tracks = mode == MapMode.NORMAL && !editingTrack && !syncing
         TRACK_LAYER_IDS.forEach { setVisible(style, it, tracks) }
         setVisible(style, BAND_LAYER_ID, tracks)
@@ -288,7 +297,7 @@ object MapOverlays {
     fun setRecording(style: Style, recording: Boolean, mode: MapMode) {
         if (recording) {
             USER_LAYER_IDS.forEach { setVisible(style, it, false) }
-            CoverageLayers.apply(style, MapMode.NORMAL)
+            MapLayers.update(style) { it.copy(mode = MapMode.NORMAL) }
         } else {
             setMode(style, mode)
         }

@@ -935,6 +935,33 @@ object HoldMyTrackApi {
         }, onResult)
     }
 
+    /**
+     * `GET /v1/map/layers` (ADR-0048) — every layer drawn over the basemap, at the account's tile
+     * version: the document's text and ETag, or null while [etag] is still current (`304`).
+     */
+    fun mapLayers(flavor: String, etag: String?, onResult: (Result<MapLayersResponse?>) -> Unit) {
+        val url = (BuildConfig.API_BASE_URL + API_V1 + "/map/layers").toHttpUrl().newBuilder()
+            .addQueryParameter("flavor", flavor)
+            .build()
+        val request = Request.Builder().url(url).apply { etag?.let { header("If-None-Match", it) } }.build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                main.post { onResult(Result.failure(e)) }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val body = response.use { it.body?.string().orEmpty() }
+                if (refusedBuild(response)) return
+                val result = when {
+                    response.code == 304 -> Result.success(null)
+                    response.isSuccessful -> Result.success(MapLayersResponse(body, response.header("ETag")))
+                    else -> Result.failure(ApiException.from(response.code, body))
+                }
+                main.post { onResult(result) }
+            }
+        })
+    }
+
     /** `GET /v1/spots` (`docs/IMPLEMENTATION.md` §4.25) — [categories]' places whose anchor is
      *  inside the box, named first, up to the server's 2,000. */
     fun spotsInArea(
@@ -1404,6 +1431,9 @@ object HoldMyTrackApi {
         })
     }
 }
+
+/** What `GET /v1/map/layers` answered: the document, and its ETag to revalidate with. */
+data class MapLayersResponse(val text: String, val etag: String?)
 
 /** One time span asked about in [HoldMyTrackApi.activityOverlaps], under the caller's [key]. */
 data class OverlapSpan(val key: String, val start: Instant, val end: Instant)

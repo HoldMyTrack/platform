@@ -28,7 +28,7 @@ export function setSatelliteVisible(map: MapLibreMap, on: boolean, mode: MapMode
   set(SATELLITE_LAYER_ID, on);
   const metadata = map.getStyle().metadata as Record<string, unknown> | undefined;
   // From the metadata, not satelliteHiddenLayerIds over the live map: that would take every
-  // background layer, Heatmap's wash among them (coverageStyle.ts), and show it in every mode.
+  // background layer, Heatmap's wash among them (coverageGroup.ts), and show it in every mode.
   const hidden = metadata?.[SATELLITE_HIDES_METADATA];
   for (const id of Array.isArray(hidden) ? (hidden as string[]) : []) {
     if (map.getLayer(id)) set(id, !on);

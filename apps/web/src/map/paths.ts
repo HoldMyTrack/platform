@@ -1,5 +1,6 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { firstCoverageLayerId } from './coverageLayers';
+import { currentLayers } from './applyLayers';
+import { groupOf } from './mapLayers';
 import { PATH_LAYER_IDS } from './style';
 
 /**
@@ -14,7 +15,8 @@ import { PATH_LAYER_IDS } from './style';
  * is that a path paints over a road bridge crossing it.
  */
 export function raisePathLayers(map: MapLibreMap, beforeId: string | undefined): void {
-  const first = firstCoverageLayerId(map);
+  const doc = currentLayers(map);
+  const first = doc ? groupOf(doc, 'coverage')?.layers[0]?.id : undefined;
   const order = map.getStyle().layers.map((layer) => layer.id);
   const fog = first === undefined ? -1 : order.indexOf(first);
   if (fog < 0) return;

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built in the Android app: Settings, Activity graph & trends, Sync history and About are the site's pages in a WebView (`SPEC.md` FR-10.8, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1). The iOS app isn't started; it is built this way from the start.
+Accepted. Built in the Android app: Settings, Activity graph & trends, Sync history and About are the site's pages in a WebView (`SPEC.md` FR-10.8, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1). The iOS app isn't started; it is built this way from the start. ADR-0048 keeps the map native, closing the measurement below.
 
 ## Context
 

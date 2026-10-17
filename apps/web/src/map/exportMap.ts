@@ -5,10 +5,12 @@ import logoOnDarkUrl from '../assets/logo-on-dark.png';
 import logoOnLightUrl from '../assets/logo-on-light.png';
 import { basemapOrigin, satelliteSource } from './config';
 import { withApiCredentials } from './requestCredentials';
-import { ensureCoverageLayers } from './coverageLayers';
+import { applyLayers, INITIAL_LAYER_STATE } from './applyLayers';
+import { getTileVersion } from './coverageVersion';
 import { ensureBikePathLayers, setBikePathsVisible } from './bikePaths';
 import { raisePathLayers } from './paths';
 import { labelInsertionPoint } from './layers';
+import { webLayers } from './webLayers';
 import { setMapMode, type MapMode } from './mapMode';
 import { setSatelliteVisible } from './satellite';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor, type PathOverlays } from './style';
@@ -355,8 +357,14 @@ async function renderOffscreen(
       instance.once('error', (e) => reject(e.error ?? new Error('export map failed to load')));
     });
 
+    applyLayers(instance, webLayers(state.flavor, getTileVersion()), {
+      ...INITIAL_LAYER_STATE,
+      mode: state.mode,
+      satellite: state.satellite,
+      // No Spots or pace bands, as on Android.
+      excludedGroups: new Set(['spots', 'track-bands']),
+    });
     const beforeId = labelInsertionPoint(instance);
-    ensureCoverageLayers(instance, beforeId);
     raisePathLayers(instance, beforeId);
     ensureBikePathLayers(instance, beforeId, state.flavor);
     setBikePathsVisible(instance, state.paths);

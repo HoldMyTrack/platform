@@ -14,12 +14,14 @@ import dev.holdmytrack.android.map.BoxUnion
 import dev.holdmytrack.android.map.CameraFramer
 import dev.holdmytrack.android.map.ChromeInsets
 import dev.holdmytrack.android.map.CoverageController
-import dev.holdmytrack.android.map.CoverageLayers
 import dev.holdmytrack.android.map.DataRefresh
 import dev.holdmytrack.android.map.DateRange
 import dev.holdmytrack.android.map.LayersController
 import dev.holdmytrack.android.map.LocateController
 import dev.holdmytrack.android.map.MapChromeRules
+import dev.holdmytrack.android.map.MapLayers
+import dev.holdmytrack.android.map.MapLayersDoc
+import dev.holdmytrack.android.map.MapLayersSource
 import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.MapNotice
 import dev.holdmytrack.android.map.MapOverlays
@@ -32,6 +34,7 @@ import dev.holdmytrack.android.map.PaceBands
 import dev.holdmytrack.android.map.RangeController
 import dev.holdmytrack.android.map.SheetChrome
 import dev.holdmytrack.android.map.SpotsController
+import dev.holdmytrack.android.map.StyleMetadata
 import dev.holdmytrack.android.map.TrackEditOverlay
 import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.Session
@@ -100,6 +103,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private val coverage = CoverageController(
         style = { style?.takeIf { overlaysAttached } },
         range = { selectedRange },
+        refetchLayers = ::fetchLayers,
         onRenderingChanged = { if (::modes.isInitialized) modes.renderCoverage() },
     )
 
@@ -142,6 +146,13 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /** Whether the user layers are on the style (`syncSession`). */
     private var overlaysAttached = false
+
+    /** The layers document for the style's flavor ([MapLayersSource]), once there is one. */
+    private var layersDoc: MapLayersDoc.Doc? = null
+
+    /** The style was loaded again because the layers document named another build: once, so a
+     *  server answering two builds can't loop. */
+    private var styleReloaded = false
 
     /** Whether the map view is coming back from a recreation (rotation, theme, language) with
      *  the camera MapLibre saved, which the opening world view mustn't replace. */
@@ -440,7 +451,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             spots.onMapReady(view, instance, layers.shownSpots())
             instance.addOnCameraIdleListener { spots.onCameraIdle() }
             instance.addOnCameraIdleListener {
-                style?.let { modes.onCameraIdle(CoverageLayers.tier(it, instance.cameraPosition.zoom)) }
+                style?.let { modes.onCameraIdle(MapLayers.tier(it, instance.cameraPosition.zoom)) }
             }
             loadStyle()
         }
@@ -455,6 +466,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val instance = map ?: return
         style = null
         overlaysAttached = false
+        // The layers document is fetched beside the style, so only the overlays wait for it.
+        layersDoc = layersDoc?.takeIf { it.flavor == layers.flavor() } ?: MapLayersSource.last(requireContext(), layers.flavor())
+        fetchLayers()
         instance.setStyle(Style.Builder().fromUri(layers.styleUrl())) { loaded ->
             style = loaded
             notices.hide(MapNotice.MAP_FAILED)
@@ -463,6 +477,32 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             syncSession()
             recording.render()
         }
+    }
+
+    /** Asks for the layers document again: at style load, and when the account's tile version
+     *  moved ([CoverageController]). */
+    private fun fetchLayers() {
+        if (!Session.isSignedIn) return
+        MapLayersSource.fetch(requireContext(), layers.flavor(), ::onLayers)
+    }
+
+    /**
+     * A layers document arrived: applied in place of the one on the map, or kept for [syncSession]
+     * to attach. One from another build than the style's means a deploy landed between the two
+     * fetches, and the style is fetched again.
+     */
+    private fun onLayers(doc: MapLayersDoc.Doc) {
+        if (map == null || doc.flavor != layers.flavor()) return
+        layersDoc = doc
+        val loaded = style ?: return
+        if (doc.styleBuild != StyleMetadata.build(loaded)) {
+            if (!styleReloaded) {
+                styleReloaded = true
+                loadStyle()
+            }
+            return
+        }
+        if (overlaysAttached) MapLayers.replace(loaded, doc) else syncSession()
     }
 
     /** A new intent to the host (`MainActivity.onNewIntent`): the notification's Stop, or the
@@ -503,8 +543,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         }
 
         val loaded = style ?: return
+        val doc = layersDoc?.takeIf { it.styleBuild == StyleMetadata.build(loaded) } ?: return
         if (!overlaysAttached) {
-            MapOverlays.attach(loaded, mode, selectedRange, layers.satelliteDrawn(loaded), layers.isNight(), storyId)
+            MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), layers.isNight(), storyId)
             // The bike-path layers attach just added start hidden.
             layers.applyPaths(loaded)
             MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
@@ -662,7 +703,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun prepareExportStyle(loaded: Style) {
         layers.applyPaths(loaded)
         MapSatellite.apply(loaded, layers.satelliteOn, mode)
-        MapOverlays.attach(loaded, mode, selectedRange, layers.satelliteDrawn(loaded), layers.isNight(), storyId)
+        val doc = layersDoc ?: return
+        MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), layers.isNight(), storyId, EXPORT_EXCLUDED)
         layers.applyPaths(loaded)
         MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
     }
@@ -785,5 +827,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
         private const val STATE_MODE = "mode"
         private const val STATE_FRAMED = "framed"
+
+        /** What the export leaves out, as on the web: the places and the pace bands. */
+        private val EXPORT_EXCLUDED = setOf("spots", "track-bands")
     }
 }
