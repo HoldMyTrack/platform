@@ -1,0 +1,12 @@
+{
+  "rule": "layerInsertion",
+  "description": "Where a layers document's layer goes in, or a lifted basemap layer moves to, among the map's current layers (bottom to top). Input: current, order (the placement's ids in paint order, lifts included), id, own (the document's layer ids), fallback. Expected: the id to insert under, or null to append.",
+  "cases": [
+    { "name": "the first layer goes under the labels", "input": { "current": ["earth", "roads", "paths_trail", "places"], "order": ["dim", "veil", "paths_trail", "bike"], "id": "dim", "own": ["dim", "veil", "bike"], "fallback": "places" }, "expected": "places" },
+    { "name": "a basemap layer not yet lifted is no anchor", "input": { "current": ["earth", "roads", "paths_trail", "dim", "places"], "order": ["dim", "veil", "paths_trail", "bike"], "id": "veil", "own": ["dim", "veil", "bike"], "fallback": "places" }, "expected": "places" },
+    { "name": "a lifted basemap layer is an anchor", "input": { "current": ["earth", "roads", "dim", "paths_trail", "places"], "order": ["dim", "veil", "paths_trail", "bike"], "id": "veil", "own": ["dim", "veil", "bike"], "fallback": "places" }, "expected": "paths_trail" },
+    { "name": "a re-added layer goes back under the next one in place", "input": { "current": ["earth", "dim", "veil", "paths_trail", "cycleway", "places"], "order": ["dim", "veil", "paths_trail", "mtb", "cycleway"], "id": "mtb", "own": ["dim", "veil", "mtb", "cycleway"], "fallback": "places" }, "expected": "cycleway" },
+    { "name": "a lift goes under the next own layer after it", "input": { "current": ["earth", "paths_trail", "dim", "bike", "places"], "order": ["dim", "paths_trail", "bike"], "id": "paths_trail", "own": ["dim", "bike"], "fallback": "places" }, "expected": "bike" },
+    { "name": "on top with nothing after it, appended", "input": { "current": ["earth", "places", "spots-fill"], "order": ["spots-fill", "spots-icons"], "id": "spots-icons", "own": ["spots-fill", "spots-icons"], "fallback": null }, "expected": null }
+  ]
+}

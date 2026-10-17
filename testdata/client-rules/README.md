@@ -44,5 +44,7 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `editTrackSplitPoint` | `ops` | a time or `null` |
 | `editTrackMove` | `t`, `lon`, `lat` | a `move` op |
 | `editTrackDistances` | `points` | meters at each point |
+| `layerInsertion` | `current` (layer ids, bottom to top), `order`, `id`, `own`, `fallback` | the id to insert under, or `null` to append |
+| `layerLift` | `current`, `id`, `own` | boolean |
 
 A rule only one platform has, or one where the platforms differ on purpose, is tested on that platform alone.

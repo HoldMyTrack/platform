@@ -2,6 +2,7 @@ package dev.holdmytrack.android
 
 import dev.holdmytrack.android.map.DateRange
 import dev.holdmytrack.android.map.DefaultRange
+import dev.holdmytrack.android.map.MapLayersDoc
 import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.MapSession
 import dev.holdmytrack.android.map.PendingDiff
@@ -188,6 +189,11 @@ class ClientRulesTest {
         "editTrackSplitPoint" to { input -> JsonPrimitive(EditTrackOps.splitPoint(ops(input))) },
         "editTrackMove" to { input -> opJson(EditTrackOps.move(input["t"]!!.jsonPrimitive.long, input.number("lon"), input.number("lat"))) },
         "editTrackDistances" to { input -> buildJsonArray { EditTrackOps.cumulativeDistances(points(input["points"])).forEach { add(JsonPrimitive(it)) } } },
+        "layerInsertion" to { input ->
+            MapLayersDoc.insertionPoint(input.strings("current"), input.strings("order"), input.string("id")!!, input.strings("own").toSet(), input.string("fallback"))
+                ?.let(::JsonPrimitive) ?: JsonNull
+        },
+        "layerLift" to { input -> JsonPrimitive(MapLayersDoc.needsLift(input.strings("current"), input.string("id")!!, input.strings("own").toSet())) },
         "session" to { input ->
             val state = input["state"]!!.jsonObject
             val panel = PanelState()

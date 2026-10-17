@@ -5,6 +5,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { defaultRange } from '../src/map/defaultRange.ts';
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
+import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
 import { pendingChange } from '../src/map/pending.ts';
 import { clusterPoints, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
@@ -60,6 +61,8 @@ const rules = {
   editTrackSplitPoint: ({ ops }) => splitPoint(ops),
   editTrackMove: ({ t, lon, lat }) => moveOp(t, lon, lat),
   editTrackDistances: ({ points }) => cumulativeDistances(points),
+  layerInsertion: ({ current, order, id, own, fallback }) => insertionPoint(current, order, id, new Set(own), fallback ?? undefined) ?? null,
+  layerLift: ({ current, id, own }) => needsLift(current, id, new Set(own)),
   session: ({ state, event }) => {
     const start = {
       ...initialSession(state.storyId ?? null),
