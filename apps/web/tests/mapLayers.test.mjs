@@ -25,7 +25,7 @@ test('each mode shows only its own layers', () => {
       .filter(([, props]) => props.visibility === 'visible')
       .map(([id]) => id)
       .sort();
-  assert.deepEqual(visible('normal'), ['track-bands-line']);
+  assert.deepEqual(visible('normal'), ['track-bands-line', 'tracks-casing', 'tracks-focused', 'tracks-hover', 'tracks-line']);
   assert.deepEqual(visible('fog'), ['country-fog-fill', 'fog-edge', 'fog-veil', 'region-fog-fill']);
   assert.deepEqual(visible('heatmap'), ['heat-points-circles', 'heatmap-dim']);
 });
@@ -110,7 +110,7 @@ test('the pace bands color each run by its band, shown in Normal only', () => {
   const bands = groupOf(doc, 'track-bands');
   assert.deepEqual(bands.sources, { 'track-bands': { type: 'geojson' } });
   const [line] = bands.layers;
-  assert.deepEqual(line.paint['line-color'].slice(0, 2), ['at', ['get', 'band']]);
+  assert.deepEqual(line.paint['line-color'].slice(0, 4), ['match', ['get', 'band'], 0, '#2b6cb0']);
   assert.deepEqual(Object.keys(bands.legend), ['band-0', 'band-1', 'band-2', 'band-3', 'band-4']);
   assert.equal(viewFor(doc, 'normal', false).layout['track-bands-line'].visibility, 'visible');
   assert.equal(viewFor(doc, 'fog', false).layout['track-bands-line'].visibility, 'none');
@@ -141,4 +141,21 @@ test('the legend gives every path its color, and a dash where the map dashes it'
   const white = groupOf(buildLayers({ flavor: 'white', dark: false, labelIds: [], tileVersion: '' }), 'bike-paths');
   assert.deepEqual(white.legend.sharedPaths.dash, [2, 1]);
   assert.deepEqual(white.layers.find((l) => l.id === 'bike-paths-shared').paint['line-dasharray'], ['literal', [2, 1]]);
+});
+
+test('the tracks draw the focused and hovered ids from vars the client binds, never a hidden one', () => {
+  const tracks = groupOf(doc, 'tracks');
+  assert.deepEqual(tracks.layers.map((l) => l.id), ['tracks-casing', 'tracks-line', 'tracks-focused', 'tracks-hover']);
+  assert.deepEqual(doc.vars, { hidden: [], focused: [], hovered: [] });
+  const focused = tracks.layers.find((l) => l.id === 'tracks-focused');
+  assert.deepEqual(focused.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden'] });
+  const bound = boundLayer(focused, { focused: ['a'], hidden: ['a'] }, doc.vars).filter;
+  assert.deepEqual(bound.slice(0, 5), ['let', 'focused', ['literal', ['a']], 'hidden', ['literal', ['a']]]);
+  assert.equal(tracks.layers.find((l) => l.id === 'tracks-line').metadata['holdmytrack:role'], 'track');
+  assert.equal(tracks.sources.tracks.tiles, '/tiles/v1/tracks/{z}/{x}/{y}.mvt?cv=abcd1234.7');
+  assert.ok(doc.groups.indexOf(tracks) < doc.groups.indexOf(groupOf(doc, 'track-bands')), 'under the bands');
+  for (const id of ['tracks-casing', 'tracks-line']) {
+    assert.equal(viewFor(doc, 'normal', false).layout[id].visibility, 'visible');
+    assert.equal(viewFor(doc, 'heatmap', false).layout[id].visibility, 'none');
+  }
 });

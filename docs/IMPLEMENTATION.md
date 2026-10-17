@@ -318,7 +318,7 @@ On the wire the version is prefixed with the start of the account id, so two acc
 
 **Tracks are a live query** (`handleTracksTile`), `ST_AsMVT` over the account's non-Pending activities, because they follow filters that can't be precomputed. A track stored past ±180 is drawn through `geo.WrappedSQL`, a part each side, since PROJ would rejoin the parts round the world; a tile on the far side matches it through its envelope shifted 360°.
 
-**The filter is the list's** (`parseActivityFilter`, §4.7), and the layer always sends `from`/`to`, since an absent bound means unrestricted. Type and Distance are layer filters in the client. **Every refresh gets a new URL** (the per-page `v`): MapLibre caches overzoomed slices by URL, and an unchanged one kept a track's pre-edit shape past z14.
+**The filter is the list's** (`parseActivityFilter`, §4.7), and the client always appends `from`/`to` to the document's tile path, since an absent bound means unrestricted. Type, Distance, hidden, focused and hovered are id sets the `tracks` group's filters bind (ADR-0048): measured, a change refetches no tile and drops no frame. **Every refresh gets a new URL** (the per-page `v`): MapLibre caches overzoomed slices by URL, and an unchanged one kept a track's pre-edit shape past z14.
 
 #### 4.3.1 Pace-colored segments
 
@@ -515,7 +515,7 @@ flowchart LR
 
 **The bike kinds come from their own import** because the basemap has no paths below z13. **The extract keeps every way with one of the tags and `Kind` narrows it, so a new kind changes both.** A planet run deletes unseen rows behind the same too-many guard as Spots. Below z13 a way shorter than a pixel is dropped. A Go test holds the document's z9 minimum and source layer to the tile handler's.
 
-**Every path paints over Fog and Heatmap**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and in the export; under the veil, unridden paths showed at a fifth of their colour. A client moves only a layer still below, and the web diffs every property before setting it, because each change fires another `styledata` (`DEVELOPMENT.md`).
+**Every path paints over Fog and Heatmap**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and the export; under the veil, unridden paths showed at a fifth of their colour. Clients move only a layer still below; the web diffs every property first, since each change fires another `styledata` (`DEVELOPMENT.md`).
 
 ### 4.25 Spots (FR-15, ADR-0021)
 

@@ -99,6 +99,19 @@ class MapLayersDocTest {
     }
 
     @Test
+    fun theTracksFilterByTheIdSetsTheAppBinds() {
+        val tracks = light.group("tracks")!!
+        assertEquals(listOf("tracks-casing", MapOverlays.TRACKS_LAYER_ID, "tracks-focused", "tracks-hover"), tracks.layers.map { it.id })
+        assertEquals(listOf("casing", "track", "focused", null), tracks.layers.map { it.role })
+        assertEquals(listOf("focused", "hidden"), tracks.layers.first { it.id == "tracks-focused" }.vars.getValue("filter"))
+        assertEquals(setOf("hidden", "focused", "hovered"), light.vars.keys)
+        assertEquals(MapOverlays.BAND_LAYER_ID, light.group("track-bands")!!.layers.single().id)
+        assertEquals(MapOverlays.TRACKS_MIN_ZOOM, tracks.layers.first().minZoom)
+        val beneath = MapLayersDoc.order(light.groups, MapLayersDoc.Placement.BENEATH_LABELS)
+        assertTrue(beneath.indexOf(MapOverlays.TRACKS_LAYER_ID) < beneath.indexOf(MapOverlays.BAND_LAYER_ID))
+    }
+
+    @Test
     fun tiersSwitchWhereTheFillsHandOver() {
         assertEquals(ZoomTier.COUNTRY, MapLayersDoc.tier(light.tiers, 2.99))
         assertEquals(ZoomTier.REGION, MapLayersDoc.tier(light.tiers, 3.0))

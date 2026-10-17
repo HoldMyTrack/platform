@@ -195,15 +195,25 @@ object MapLayers {
         }
     }
 
-    /** Every property the document gives layer [id] on [style], for an overlay of the app's own
-     *  to draw as it does (the Sync tab's candidates); none before [attach]. */
-    fun propertiesOf(style: Style, id: String): Array<PropertyValue<*>> {
+    /** Every property the document gives the layer of [role] on [style], for an overlay of the
+     *  app's own to draw as it does (the Sync tab's candidates); none before [attach]. */
+    fun propertiesOf(style: Style, role: String): Array<PropertyValue<*>> {
         val doc = applied[style]?.doc ?: return emptyArray()
-        val spec = doc.groups.firstNotNullOfOrNull { group -> group.layers.firstOrNull { it.id == id } } ?: return emptyArray()
+        val spec = layerOf(doc, role) ?: return emptyArray()
         return spec.properties.filterKeys { it != "visibility" }
             .mapNotNull { (name, value) -> property(name, MapLayersDoc.bind(value, spec.vars[name].orEmpty(), state.vars, doc.vars)) }
             .toTypedArray()
     }
+
+    /** The line color of the layer of [role] on [style] (the live recording takes the tracks'),
+     *  from the document applied or, before that, the one kept on disk ([MapLayersSource]). */
+    fun color(style: Style, role: String): String? {
+        val doc = applied[style]?.doc ?: MapLayersSource.lastAny() ?: return null
+        return (layerOf(doc, role)?.properties?.get("line-color") as? JsonPrimitive)?.takeIf { it.isString }?.content
+    }
+
+    private fun layerOf(doc: MapLayersDoc.Doc, role: String): MapLayersDoc.Layer? =
+        doc.groups.firstNotNullOfOrNull { group -> group.layers.firstOrNull { it.role == role } }
 
     private fun layer(spec: MapLayersDoc.Layer, doc: MapLayersDoc.Doc): Layer? {
         val layer = when (spec.type) {

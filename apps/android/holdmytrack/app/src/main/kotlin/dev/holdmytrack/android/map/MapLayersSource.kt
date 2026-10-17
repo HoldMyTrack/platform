@@ -29,6 +29,9 @@ object MapLayersSource {
         return entry?.doc?.takeIf { it.tileVersion.isNotEmpty() && it.tileVersion == Session.tileVersion }
     }
 
+    /** Any document this process has read, at whatever tile version: for colors only. */
+    fun lastAny(): MapLayersDoc.Doc? = kept.values.firstOrNull()?.doc
+
     /** Asks for [flavor]'s document; [onDoc] gets it when it's new, and nothing on a `304` or a
      *  failure, which leaves the map with what it has. */
     fun fetch(context: Context, flavor: String, onDoc: (MapLayersDoc.Doc) -> Unit) {

@@ -7,13 +7,12 @@ import { basemapOrigin, satelliteSource } from './config';
 import { withApiCredentials } from './requestCredentials';
 import { applyLayers, INITIAL_LAYER_STATE } from './applyLayers';
 import { getTileVersion } from './coverageVersion';
-import { labelInsertionPoint } from './layers';
 import { webLayers } from './webLayers';
-import { setMapMode, type MapMode } from './mapMode';
+import type { MapMode } from './mapMode';
 import { setSatelliteVisible } from './satellite';
 import type { BikePathOverlays } from './bikePathsGroup';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
-import { ensureTrackLayer, setHiddenTracks } from './tracks';
+import { trackQuery } from './tracks';
 
 /**
  * `VISION.md` §4.2's "print-grade... export", rendered in the browser (`IMPLEMENTATION.md`
@@ -361,14 +360,12 @@ async function renderOffscreen(
       mode: state.mode,
       satellite: state.satellite,
       toggles: { ...state.paths },
+      vars: { hidden: state.hiddenIds },
+      queries: { tracks: trackQuery(state.activityQuery) },
       // No Spots or pace bands, as on Android.
       excludedGroups: new Set(['spots', 'track-bands']),
     });
-    const beforeId = labelInsertionPoint(instance);
-    ensureTrackLayer(instance, beforeId, state.activityQuery);
-    setMapMode(instance, state.mode, state.satellite);
     setSatelliteVisible(instance, state.satellite, state.mode);
-    setHiddenTracks(instance, state.hiddenIds);
 
     await waitForIdle(instance);
 

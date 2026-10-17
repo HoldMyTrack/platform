@@ -1,5 +1,5 @@
 import type { MapMode } from './mapMode';
-import type { GroupPart } from './mapLayers.ts';
+import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
 
 /**
  * The focused activity's pace-colored segments (docs/SPEC.md FR-4.8) as the layers document's
@@ -29,9 +29,12 @@ export function bandsGroup(): GroupPart {
           id: BANDS_LAYER_ID,
           type: 'line',
           source: 'track-bands',
+          metadata: { [ROLE_METADATA]: 'pace-bands' },
           layout: { 'line-cap': 'round', 'line-join': 'round' },
           paint: {
-            'line-color': ['at', ['get', 'band'], ['literal', BAND_COLORS]] as never,
+            // A match, not ["at", …, ["literal", colors]]: a literal array of strings is typed
+            // array<string>, which a color property refuses.
+            'line-color': ['match', ['get', 'band'], ...BAND_COLORS.flatMap((color, band) => [band, color]), BAND_COLORS[0]] as never,
             'line-width': BAND_WIDTH,
             'line-opacity': 0.95,
           },

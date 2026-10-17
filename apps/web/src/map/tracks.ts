@@ -1,29 +1,16 @@
-import type { FilterSpecification, Map as MapLibreMap, VectorTileSource } from 'maplibre-gl';
-import { API_BASE_URL, TILES_V1, type ActivityQuery } from '../api';
-import { TRACKS_MIN_ZOOM } from './config';
-import { getTileVersion } from './coverageVersion';
+import type { Map as MapLibreMap } from 'maplibre-gl';
+import type { ActivityQuery } from '../api';
+import { setLayerVars, updateLayers } from './applyLayers';
 import { PHOTO_MARKER_CLASS } from './photos';
 import { spotAt } from './spots';
+import { TRACKS_LAYER_ID } from './tracksGroup';
 
 /**
- * The live tracks MVT layer (IMPLEMENTATION.md §4.3). Unlike the basemap —
- * and unlike fog, once that exists — this is never precomputed: the backend runs a live
- * PostGIS query per tile, so the source points straight at the API rather than a pmtiles
- * archive.
+ * The live tracks MVT layer on the map (IMPLEMENTATION.md §4.3): the layers document draws it
+ * (tracksGroup.ts), and this keeps what the client decides — the tiles' query, which ids are
+ * hidden, focused and hovered, and the clicks and hovers on it. Unlike the basemap the tiles are
+ * never precomputed: the backend runs a live PostGIS query per tile.
  */
-export const TRACKS_SOURCE_ID = 'tracks';
-export const TRACKS_LAYER_ID = 'tracks-line';
-// The halo drawn under the selected (focused) track — see ensureTrackLayer.
-export const TRACKS_CASING_LAYER_ID = 'tracks-casing';
-const TRACKS_SOURCE_LAYER = 'tracks'; // must match ST_AsMVT(t, 'tracks', ...) in the backend query
-
-const NORMAL_WIDTH = 2.5;
-const EMPHASIS_WIDTH = 4.5; // selected (focused), plus the halo below
-const HOVER_WIDTH = 5; // hovered: the widest, in HOVER_COLOR, with no halo of its own
-// 1.5px of halo showing on each side of an EMPHASIS_WIDTH line.
-const CASING_WIDTH = EMPHASIS_WIDTH + 3;
-const TRACK_COLOR = '#b07e2e'; // --fm-accent
-const HOVER_COLOR = '#93691f'; // --fm-accent-strong
 
 // Half-width, in screen pixels, of the box a click's hit-test is queried against — see the
 // click handler below for why this can't just be the bare click pixel.
@@ -39,131 +26,36 @@ type TrackDateRange = Pick<ActivityQuery, 'from' | 'to' | 'story'>;
 
 /**
  * Bumped by every refreshTrackLayer, and sent as `v` (the handler ignores it) so each refresh
- * is a new tile URL — see refreshTrackLayer for why the same URL isn't enough. Module-level,
- * like coverageVersion.ts, so a source re-created by a theme swap starts at the current one.
- * Sent alongside the tile version (`cv`, coverageVersion.ts), which is what lets the browser
- * keep a tracks tile: this one only tells refreshes apart within the page, so a refresh after
- * a change the page hasn't read a new tile version for yet (a type edit) still asks again.
- * Prefixed with when the page loaded: the server marks a tile with the caller's own `cv`
- * cacheable for good, so a bare counter, which every page starts again from 1, would have one
- * tab's refresh hit the tile another tab cached under the same `cv` and `v` before the change.
+ * is a new tile URL — see refreshTrackLayer for why the same URL isn't enough. Module-level so a
+ * source re-created by a theme swap starts at the current one. Sent alongside the tile version
+ * (`cv`, in the document's tile path), which is what lets the browser keep a tracks tile: this
+ * one only tells refreshes apart within the page, so a refresh after a change the page hasn't
+ * read a new tile version for yet (a type edit) still asks again. Prefixed with when the page
+ * loaded: the server marks a tile with the caller's own `cv` cacheable for good, so a bare
+ * counter, which every page starts again from 1, would have one tab's refresh hit the tile
+ * another tab cached under the same `cv` and `v` before the change.
  */
 let tracksVersion = 0;
 const pageLoaded = Date.now().toString(36);
 
 /**
- * `GET /tiles/v1/tracks/{z}/{x}/{y}.mvt?from=&to=` — the backend already applies this
- * filter (§4.3 shares `parseActivityFilter` with §4.7's list endpoints), but until this
- * function actually sent the params, the map drew every track ever uploaded regardless of
- * the selected date range: an omitted filter means "no restriction," so a bare tile request
- * silently asked for everything. Confirmed live — the Activities list and the map disagreed
- * about what was in view until this was wired up.
+ * The query the client appends to the tracks tiles: `from`/`to`, or a Story. An omitted filter
+ * means "no restriction" to the server, so a bare tile request asks for every track ever
+ * uploaded; the Activities list and the map disagreed about what was in view until this was sent.
  */
-function trackTileURL(range: TrackDateRange): string {
+export function trackQuery(range: TrackDateRange): string {
   const params = new URLSearchParams();
   if (range.from) params.set('from', range.from);
   if (range.to) params.set('to', range.to);
   if (range.story) params.set('story', range.story);
-  if (getTileVersion()) params.set('cv', getTileVersion());
   if (tracksVersion > 0) params.set('v', `${pageLoaded}.${tracksVersion}`);
-  const qs = params.toString();
-  return `${API_BASE_URL}${TILES_V1}/tracks/{z}/{x}/{y}.mvt${qs ? `?${qs}` : ''}`;
+  return params.toString();
 }
 
-// Map instances that already have hover/click handlers attached. A plain module-level
-// WeakSet, not a per-call guard inside ensureTrackLayer: setStyle discards and re-adds the
-// layer on every theme swap (styledata fires, ensureTrackLayer re-runs), but the *map
-// instance* survives across that, and map.on('click', LAYER_ID, ...) is a layer-id-scoped
-// delegated listener that keeps matching a layer re-added under the same id — re-attaching
-// here on every styledata would silently stack duplicate handlers, firing a click N times
-// after N theme toggles.
+// Map instances that already have hover/click handlers attached. A layer-id-scoped delegated
+// listener keeps matching a layer re-added under the same id after a theme swap, so attaching on
+// every styledata would stack duplicate handlers, firing a click N times after N theme toggles.
 const interactiveMaps = new WeakSet<MapLibreMap>();
-
-/**
- * Adds the tracks source and layer if they aren't already on the map. Idempotent on
- * purpose: `styledata` fires on every `setStyle` (theme swap), which discards custom
- * layers, so this runs every time and has to be a safe no-op when they're already there.
- *
- * `beforeId` keeps the line layer beneath basemap labels — see layers.ts for why painting
- * over labels reads as a rendering bug rather than a design choice.
- *
- * `range` seeds the *initial* tiles URL for a source created here — the common case is a
- * `styledata`-triggered re-creation after a theme swap discards the old one, so this has to
- * reflect whatever range is current at that moment, not always the unfiltered default.
- * Changing the range on an already-existing source is `refreshTrackLayer`'s job instead.
- */
-export function ensureTrackLayer(map: MapLibreMap, beforeId: string | undefined, range: TrackDateRange): void {
-  if (!map.getSource(TRACKS_SOURCE_ID)) {
-    map.addSource(TRACKS_SOURCE_ID, {
-      type: 'vector',
-      tiles: [trackTileURL(range)],
-      // MapLibre overzooms a vector source past its declared maxzoom, so tiles stop at 14
-      // while the map zooms further.
-      minzoom: 0,
-      maxzoom: 14,
-      // Feature-state (hover/selected below) is keyed by whatever id setFeatureState is
-      // called with; promoteId is what tells MapLibre to use the tile's own `id` property
-      // (the real activity UUID — see the tracks SQL's `id` column) as that key, instead
-      // of the tile-internal numeric feature id that resets per tile and means nothing
-      // across tiles the same activity spans.
-      promoteId: 'id',
-    });
-  }
-  // Hovered and selected (focused — see MapView's setSelectedTracks effect) tracks are both
-  // widened, but differently: a hovered one is the widest and a darker gold, a selected one
-  // keeps the track color and gets this dark halo underneath, so it still reads as selected
-  // while the pointer moves over other tracks (SPEC.md FR-4.1's state table).
-  // Hovering a selected track shows both: the hover line over its halo. Feature-state can't drive line-sort-key (a
-  // layout property), so a selected track isn't raised above its neighbours; the halo is what
-  // separates it where tracks overlap. Added before the line layer so it always sits beneath
-  // it, including when only the line layer already exists.
-  if (!map.getLayer(TRACKS_CASING_LAYER_ID)) {
-    map.addLayer(
-      {
-        id: TRACKS_CASING_LAYER_ID,
-        type: 'line',
-        source: TRACKS_SOURCE_ID,
-        'source-layer': TRACKS_SOURCE_LAYER,
-        minzoom: TRACKS_MIN_ZOOM,
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          // Ink, not white: tracks mostly run along the basemap's white streets, where a white
-          // halo disappears into the road it sits on.
-          'line-color': '#202b25',
-          'line-width': CASING_WIDTH,
-          'line-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.95, 0],
-        },
-      },
-      map.getLayer(TRACKS_LAYER_ID) ? TRACKS_LAYER_ID : beforeId,
-    );
-  }
-  if (!map.getLayer(TRACKS_LAYER_ID)) {
-    map.addLayer(
-      {
-        id: TRACKS_LAYER_ID,
-        type: 'line',
-        source: TRACKS_SOURCE_ID,
-        'source-layer': TRACKS_SOURCE_LAYER,
-        minzoom: TRACKS_MIN_ZOOM,
-        layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: {
-          'line-color': ['case', ['boolean', ['feature-state', 'hover'], false], HOVER_COLOR, TRACK_COLOR],
-          'line-width': [
-            'case',
-            ['boolean', ['feature-state', 'hover'], false],
-            HOVER_WIDTH,
-            ['boolean', ['feature-state', 'selected'], false],
-            EMPHASIS_WIDTH,
-            NORMAL_WIDTH,
-          ],
-          'line-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 1, 0.9],
-        },
-      },
-      beforeId,
-    );
-  }
-  attachTrackInteractivity(map);
-}
 
 export interface TrackInteractivityHandlers {
   /** A track was clicked — the caller decides what "selected" means (see MapView). */
@@ -184,30 +76,28 @@ export interface TrackInteractivityHandlers {
 let handlers: TrackInteractivityHandlers | null = null;
 
 /** Set once from MapView; attachTrackInteractivity reads it indirectly so it isn't a
- *  parameter that would need re-passing (and re-checking against the WeakSet) on every
- *  ensureTrackLayer call. */
+ *  parameter that would need re-passing on every `styledata`. */
 export function setTrackInteractivityHandlers(next: TrackInteractivityHandlers): void {
   handlers = next;
 }
 
 /**
- * Wires hover (reported up via onHover — see setHoveredTrack for where the feature-state
- * actually gets applied) and click (calls back into MapView, which owns what "selected"
- * persists as) on the tracks layer. Attached once per map instance — see the interactiveMaps
- * comment above for why not once per ensureTrackLayer call.
+ * Wires hover (reported up via onHover — see setHoveredTrack for where it's drawn) and click
+ * (calls back into MapView, which owns what "selected" persists as) on the tracks layer. Attached once per map instance (interactiveMaps above).
  */
-function attachTrackInteractivity(map: MapLibreMap): void {
+export function attachTrackInteractivity(map: MapLibreMap): void {
   if (interactiveMaps.has(map)) return;
   interactiveMaps.add(map);
 
-  let hoveredId: string | number | null = null;
+  let hoveredId: string | null = null;
 
   map.on('mousemove', TRACKS_LAYER_ID, (e) => {
     map.getCanvas().style.cursor = 'pointer';
-    const id = e.features?.[0]?.id;
+    // The activity's id as the tile carries it (the tracks query's `id` column).
+    const id = e.features?.[0]?.properties?.id as string | undefined;
     if (id === undefined || id === hoveredId) return;
     hoveredId = id;
-    handlers?.onHover(String(id));
+    handlers?.onHover(id);
   });
 
   map.on('mouseleave', TRACKS_LAYER_ID, () => {
@@ -226,20 +116,19 @@ function attachTrackInteractivity(map: MapLibreMap): void {
   // tracks-layer feature, so checking the tracks layer alone is sufficient to tell "on a
   // track" from "not."
   //
-  // Queries a small box around the click, not the bare pixel: NORMAL_WIDTH is 2.5px, which
+  // Queries a small box around the click, not the bare pixel: a track is 2.5px wide, which
   // leaves almost no room for error — a click landing a couple of pixels off the rendered
   // line (easy to do aiming at something this thin) used to just do nothing (harmless), but
   // once a miss started clearing the current focus (onClickAway), the same near-miss became
   // destructive instead. Found live: clicking within 3px of a second activity's track, while
   // a first one was already focused, cleared the first activity's focus and never applied a
   // new one — the exact-pixel query saw neither track under the cursor. CLICK_TOLERANCE_PX
-  // is deliberately larger than half of HOVER_WIDTH so a hover-widened line is still
+  // is larger than half the hover width (tracksGroup.ts) so a hover-widened line is still
   // comfortably inside its own tolerance box, not just barely.
   map.on('click', (e) => {
-    // Same "layer might not exist yet" guard setSelectedTracks/setHiddenTracks already have —
     // queryRenderedFeatures throws for a layer id the current style doesn't have, which is
-    // real during the brief window between a styledata-triggered setStyle and reattachOverlays
-    // re-adding this layer.
+    // real during the brief window between a styledata-triggered setStyle and the layers
+    // document going back on.
     if (!map.getLayer(TRACKS_LAYER_ID)) return;
     // A spot's icon sits on top of the tracks; a click on one opens its popup (spots.ts) and
     // means nothing to the track underneath.
@@ -268,129 +157,40 @@ function isTouch(event: MouseEvent): boolean {
   return window.matchMedia('(pointer: coarse)').matches;
 }
 
-// The hovered and selected ids the tracks source's feature-state holds, so setHoveredTrack and
-// setSelectedTracks can clear exactly those features' state — MapLibre has no id-less
-// removeFeatureState: tried removeFeatureState({source, sourceLayer}, 'selected') against the
-// installed maplibre-gl 6.9.0, it throws "A feature id is required to remove its specific state
-// property". Kept per source object, not per module: a theme swap's setStyle, or a new map,
-// brings a fresh source with no feature-state at all, and ids remembered from the old one would
-// make a later call skip setting state the new one never had.
-const trackStates = new WeakMap<object, { hovered: string | null; selected: Set<string> }>();
-
-function trackState(map: MapLibreMap) {
-  const source = map.getSource(TRACKS_SOURCE_ID);
-  if (!source) return null;
-  let state = trackStates.get(source);
-  if (!state) {
-    state = { hovered: null, selected: new Set() };
-    trackStates.set(source, state);
-  }
-  return state;
-}
-
 /**
- * Applies the transient "hover" feature-state to at most one track — the single source of
- * truth for it, fed by both directions: the map's own mousemove/mouseleave above (via
- * onHover) and ActivitiesPanel's row onMouseEnter/onMouseLeave (via MapView's
- * hoveredActivityId state). Centralizing it here is what lets a row hover and a map hover
- * share one piece of state without either clobbering state the other one owns.
+ * The one hovered track, drawn widest: fed by both directions, the map's own mousemove and
+ * mouseleave above (via onHover) and ActivitiesPanel's row hover (via MapView's hoveredActivityId),
+ * so a row hover and a map hover share one piece of state.
  */
 export function setHoveredTrack(map: MapLibreMap, activityId: string | null): void {
-  const state = trackState(map); // null before the source exists: see setSelectedTracks
-  if (!state || activityId === state.hovered) return;
-  if (state.hovered !== null) {
-    map.setFeatureState(
-      { source: TRACKS_SOURCE_ID, sourceLayer: TRACKS_SOURCE_LAYER, id: state.hovered },
-      { hover: false },
-    );
-  }
-  if (activityId !== null) {
-    map.setFeatureState({ source: TRACKS_SOURCE_ID, sourceLayer: TRACKS_SOURCE_LAYER, id: activityId }, { hover: true });
-  }
-  state.hovered = activityId;
+  setLayerVars(map, { hovered: activityId !== null ? [activityId] : [] });
 }
 
-/**
- * Applies the persistent "selected" feature-state to every id in `activityIds`, clearing it
- * from whatever was selected before but no longer is. MapView passes at most one id today — the
- * focused (selected) activity; checked rows aren't bolded — but the diff below works for any
- * number.
- */
+/** The focused tracks, drawn bold over their halo. MapView passes at most one id: the focused
+ *  activity; checked rows aren't bolded. */
 export function setSelectedTracks(map: MapLibreMap, activityIds: readonly string[]): void {
-  // MapView's effect calling this can fire before ensureTrackLayer has added the source —
-  // React commits effects in declaration order, and this one is declared ahead of the
-  // effect that calls reattachOverlays on the same `map`-becomes-non-null commit. Confirmed
-  // directly: without this guard, mounting throws "source 'tracks' does not exist" every
-  // time, not occasionally. A missing source has nothing selected on it by definition, so a
-  // no-op is the correct behavior here, not a workaround.
-  const state = trackState(map);
-  if (!state) return;
-  const next = new Set(activityIds);
-  for (const id of state.selected) {
-    if (!next.has(id)) {
-      map.removeFeatureState({ source: TRACKS_SOURCE_ID, sourceLayer: TRACKS_SOURCE_LAYER, id }, 'selected');
-    }
-  }
-  for (const id of next) {
-    if (!state.selected.has(id)) {
-      map.setFeatureState({ source: TRACKS_SOURCE_ID, sourceLayer: TRACKS_SOURCE_LAYER, id }, { selected: true });
-    }
-  }
-  state.selected = next;
+  setLayerVars(map, { focused: [...activityIds] });
 }
 
 /**
- * Forces MapLibre to refetch every currently-loaded tracks tile — either because a track
- * that didn't exist yet when a tile was first fetched should now show up (a finished
- * upload), or because `range` itself changed and the previously-loaded tiles were built
- * from the old `from`/`to` and would otherwise keep showing activities outside it.
+ * Forces MapLibre to refetch every tracks tile — a finished upload's track should now show up, or
+ * `range` changed and the loaded tiles were built from the old `from`/`to`.
  *
- * `setTiles` works as a refresh primitive (same URL or not) because it calls the source's
- * internal `load(true)` unconditionally — verified directly against the installed
- * maplibre-gl 6.9.0 bundle, not assumed from the type declarations alone, since a naive
- * implementation could plausibly skip reloading when the value hasn't changed.
- *
- * It refetches, but beyond the source's maxzoom that isn't enough: the worker slices each
- * overzoomed tile out of its z14 parent and caches the slice keyed on the tile ids and the
- * request URL (maplibre-gl 6.9.0's `_getOverzoomTile`). With the URL unchanged, the fresh z14
- * tile is fetched and then ignored for every zoom already sliced — an edited track kept its
- * old shape close in until the next zoom level (found live). So every refresh bumps
- * `tracksVersion`, making the URL, and with it the cache key, new.
+ * Every refresh bumps `tracksVersion`, making the URL new: beyond the source's maxzoom the worker
+ * slices each overzoomed tile out of its z14 parent and caches the slice keyed on the tile ids and
+ * the request URL (maplibre-gl 6.9.0's `_getOverzoomTile`), so with the URL unchanged an edited
+ * track kept its old shape close in until the next zoom level (found live).
  */
 export function refreshTrackLayer(map: MapLibreMap, range: TrackDateRange): void {
   tracksVersion += 1;
-  const source = map.getSource(TRACKS_SOURCE_ID) as VectorTileSource | undefined;
-  source?.setTiles([trackTileURL(range)]);
+  updateLayers(map, { queries: { tracks: trackQuery(range) } });
 }
 
 /**
- * Per-activity show/hide (the list's eye icon), client-side only — no backend filter, no
- * refetch. The tracks endpoint already returns everything in range; hiding a track is a
- * question of which already-fetched features get painted, which is exactly what a layer
- * filter is for. A dozen or so hidden ids inlined into `in`/`literal` is not something worth
- * a round trip over.
- *
- * Same "layer might not exist yet" guard as setSelectedTracks, for the same reason: the
- * effect calling this can commit before ensureTrackLayer has run.
+ * Per-activity show/hide (the list's eye icon), Type and Distance, and Pending, client-side only:
+ * the tracks endpoint already returns everything in range, and hiding a track is a question of
+ * which fetched features get painted, which is what a layer filter is for.
  */
 export function setHiddenTracks(map: MapLibreMap, hiddenIds: string[]): void {
-  if (!map.getLayer(TRACKS_LAYER_ID)) return;
-  const next: FilterSpecification | null = hiddenIds.length
-    ? ['!', ['in', ['get', 'id'], ['literal', hiddenIds]]]
-    : null;
-  // map.setFilter (unlike the style-internal one) calls _update(true) unconditionally —
-  // marking sources dirty and forcing the live tracks vector-tile source to be re-checked
-  // on the next render frame — even when the filter is unchanged. reattachOverlays calls
-  // this on every 'styledata' event, so a bare pass-through self-sustains forever: each
-  // re-render re-fires 'styledata', which calls this again, which dirties again, which
-  // never lets isStyleLoaded() settle (confirmed: this is what hung verify:map's second
-  // isStyleLoaded() check). Comparing against the layer's current filter first breaks it.
-  // The halo layer takes the same filter, or a hidden-but-checked track would leave its halo
-  // drawn with no line on it.
-  for (const layerId of [TRACKS_LAYER_ID, TRACKS_CASING_LAYER_ID]) {
-    if (!map.getLayer(layerId)) continue;
-    const current = map.getFilter(layerId) ?? null;
-    if (JSON.stringify(current) === JSON.stringify(next)) continue;
-    map.setFilter(layerId, next);
-  }
+  setLayerVars(map, { hidden: hiddenIds });
 }

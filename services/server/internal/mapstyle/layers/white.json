@@ -1,5 +1,5 @@
 {
-  "styleBuild": "eaad4caa88d0",
+  "styleBuild": "75746b4c670a",
   "flavor": "white",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -15,7 +15,11 @@
       "tier": "city"
     }
   ],
-  "vars": {},
+  "vars": {
+    "hidden": [],
+    "focused": [],
+    "hovered": []
+  },
   "views": {
     "plain": {
       "normal": {
@@ -37,6 +41,18 @@
           },
           "heat-points-circles": {
             "visibility": "none"
+          },
+          "tracks-casing": {
+            "visibility": "visible"
+          },
+          "tracks-line": {
+            "visibility": "visible"
+          },
+          "tracks-focused": {
+            "visibility": "visible"
+          },
+          "tracks-hover": {
+            "visibility": "visible"
           },
           "track-bands-line": {
             "visibility": "visible"
@@ -137,6 +153,18 @@
           "heat-points-circles": {
             "visibility": "none"
           },
+          "tracks-casing": {
+            "visibility": "none"
+          },
+          "tracks-line": {
+            "visibility": "none"
+          },
+          "tracks-focused": {
+            "visibility": "none"
+          },
+          "tracks-hover": {
+            "visibility": "none"
+          },
           "track-bands-line": {
             "visibility": "none"
           }
@@ -235,6 +263,18 @@
           },
           "heat-points-circles": {
             "visibility": "visible"
+          },
+          "tracks-casing": {
+            "visibility": "none"
+          },
+          "tracks-line": {
+            "visibility": "none"
+          },
+          "tracks-focused": {
+            "visibility": "none"
+          },
+          "tracks-hover": {
+            "visibility": "none"
           },
           "track-bands-line": {
             "visibility": "none"
@@ -337,6 +377,18 @@
           "heat-points-circles": {
             "visibility": "none"
           },
+          "tracks-casing": {
+            "visibility": "visible"
+          },
+          "tracks-line": {
+            "visibility": "visible"
+          },
+          "tracks-focused": {
+            "visibility": "visible"
+          },
+          "tracks-hover": {
+            "visibility": "visible"
+          },
           "track-bands-line": {
             "visibility": "visible"
           }
@@ -434,6 +486,18 @@
             "visibility": "visible"
           },
           "heat-points-circles": {
+            "visibility": "none"
+          },
+          "tracks-casing": {
+            "visibility": "none"
+          },
+          "tracks-line": {
+            "visibility": "none"
+          },
+          "tracks-focused": {
+            "visibility": "none"
+          },
+          "tracks-hover": {
             "visibility": "none"
           },
           "track-bands-line": {
@@ -534,6 +598,18 @@
           },
           "heat-points-circles": {
             "visibility": "visible"
+          },
+          "tracks-casing": {
+            "visibility": "none"
+          },
+          "tracks-line": {
+            "visibility": "none"
+          },
+          "tracks-focused": {
+            "visibility": "none"
+          },
+          "tracks-hover": {
+            "visibility": "none"
           },
           "track-bands-line": {
             "visibility": "none"
@@ -1081,6 +1157,215 @@
       }
     },
     {
+      "id": "tracks",
+      "placement": "beneath-labels",
+      "sources": {
+        "tracks": {
+          "type": "vector",
+          "tiles": "/tiles/v1/tracks/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
+          "minzoom": 0,
+          "maxzoom": 14
+        }
+      },
+      "layers": [
+        {
+          "id": "tracks-casing",
+          "type": "line",
+          "source": "tracks",
+          "source-layer": "tracks",
+          "minzoom": 4,
+          "filter": [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "id"
+              ],
+              [
+                "var",
+                "focused"
+              ]
+            ],
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "id"
+                ],
+                [
+                  "var",
+                  "hidden"
+                ]
+              ]
+            ]
+          ],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#202b25",
+            "line-width": 7.5,
+            "line-opacity": 0.95
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "focused",
+                "hidden"
+              ]
+            },
+            "holdmytrack:role": "casing"
+          }
+        },
+        {
+          "id": "tracks-line",
+          "type": "line",
+          "source": "tracks",
+          "source-layer": "tracks",
+          "minzoom": 4,
+          "filter": [
+            "!",
+            [
+              "in",
+              [
+                "get",
+                "id"
+              ],
+              [
+                "var",
+                "hidden"
+              ]
+            ]
+          ],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#b07e2e",
+            "line-width": 2.5,
+            "line-opacity": 0.9
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "hidden"
+              ]
+            },
+            "holdmytrack:role": "track"
+          }
+        },
+        {
+          "id": "tracks-focused",
+          "type": "line",
+          "source": "tracks",
+          "source-layer": "tracks",
+          "minzoom": 4,
+          "filter": [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "id"
+              ],
+              [
+                "var",
+                "focused"
+              ]
+            ],
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "id"
+                ],
+                [
+                  "var",
+                  "hidden"
+                ]
+              ]
+            ]
+          ],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#b07e2e",
+            "line-width": 4.5,
+            "line-opacity": 1
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "focused",
+                "hidden"
+              ]
+            },
+            "holdmytrack:role": "focused"
+          }
+        },
+        {
+          "id": "tracks-hover",
+          "type": "line",
+          "source": "tracks",
+          "source-layer": "tracks",
+          "minzoom": 4,
+          "filter": [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "id"
+              ],
+              [
+                "var",
+                "hovered"
+              ]
+            ],
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "id"
+                ],
+                [
+                  "var",
+                  "hidden"
+                ]
+              ]
+            ]
+          ],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#93691f",
+            "line-width": 5
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "hovered",
+                "hidden"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "id": "track-bands",
       "placement": "beneath-labels",
       "sources": {
@@ -1093,27 +1378,31 @@
           "id": "track-bands-line",
           "type": "line",
           "source": "track-bands",
+          "metadata": {
+            "holdmytrack:role": "pace-bands"
+          },
           "layout": {
             "line-cap": "round",
             "line-join": "round"
           },
           "paint": {
             "line-color": [
-              "at",
+              "match",
               [
                 "get",
                 "band"
               ],
-              [
-                "literal",
-                [
-                  "#2b6cb0",
-                  "#38a169",
-                  "#d69e2e",
-                  "#dd6b20",
-                  "#c53030"
-                ]
-              ]
+              0,
+              "#2b6cb0",
+              1,
+              "#38a169",
+              2,
+              "#d69e2e",
+              3,
+              "#dd6b20",
+              4,
+              "#c53030",
+              "#2b6cb0"
             ],
             "line-width": 6,
             "line-opacity": 0.95

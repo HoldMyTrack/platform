@@ -2,6 +2,7 @@ import type { LayerSpecification } from 'maplibre-gl';
 import { bandsGroup } from './bandsGroup.ts';
 import { bikePathsGroup } from './bikePathsGroup.ts';
 import { coverageGroup } from './coverageGroup.ts';
+import { tracksGroup } from './tracksGroup.ts';
 import type { MapMode } from './mapMode';
 import type { Flavor } from './style';
 
@@ -22,7 +23,10 @@ import type { Flavor } from './style';
  *   client fills.
  * - Runtime hooks travel as layer metadata, never as values: TOGGLE_METADATA names the Layers
  *   menu switch that shows a layer, VARS_METADATA the properties (or `filter`) that read one of
- *   the document's `vars` through `["var", name]`, which the client binds with `let`.
+ *   the document's `vars` through `["var", name]`, which the client binds with `let`, and
+ *   ROLE_METADATA what a layer is for. Selection is by id sets bound this way: measured on the
+ *   web, a filter change re-requests no tile and drops no frame, settling a frame or two later
+ *   than feature-state, which MapLibre Native Android lacks.
  * - Every view sets the same properties, so a switch never undoes one. A layer is shown when its
  *   view shows it or doesn't list it, its switch is on and the client hasn't hidden its group; it
  *   is added hidden, or as the plain Normal view leaves it, until the client first applies that.
@@ -35,6 +39,9 @@ export const TILES = '/tiles/v1';
 
 export const TOGGLE_METADATA = 'holdmytrack:toggle';
 export const VARS_METADATA = 'holdmytrack:vars';
+/** What a layer is for, so a client can draw something of its own to match it (Android's live
+ *  recording line takes the `track` layer's color). */
+export const ROLE_METADATA = 'holdmytrack:role';
 
 export type Placement = 'beneath-labels' | 'top';
 
@@ -132,7 +139,7 @@ export interface BuildLayersOptions {
 /** The layers document for `flavor` at `tileVersion`. Satellite imagery reads dark under any
  *  flavor, so its views take the dark ones. */
 export function buildLayers({ flavor, dark, labelIds, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
-  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), bandsGroup()];
+  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), tracksGroup(tileVersion), bandsGroup()];
   const views = (base: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,

@@ -115,7 +115,13 @@ export function applyLayers(map: MapLibreMap, doc: MapLayers, state: LayerState)
     const fallback = group.placement === 'top' ? undefined : labels;
     for (const id of group.lifts ?? []) liftLayer(map, beneath, ownIds, id, labels);
     for (const layer of group.layers) {
-      if (!map.getLayer(layer.id)) map.addLayer(boundLayer(layer, state.vars, doc.vars), beforeIdFor(map, order, layer.id, ownIds, fallback));
+      if (map.getLayer(layer.id)) continue;
+      // A layer this renderer refuses is skipped, so one family degrades instead of the map.
+      try {
+        map.addLayer(boundLayer(layer, state.vars, doc.vars), beforeIdFor(map, order, layer.id, ownIds, fallback));
+      } catch (err) {
+        console.error(`layers document: ${layer.id} skipped`, err);
+      }
     }
   }
   applyState(map, doc, state, groups);
