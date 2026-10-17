@@ -2,6 +2,7 @@ import type { LayerSpecification } from 'maplibre-gl';
 import { bandsGroup } from './bandsGroup.ts';
 import { bikePathsGroup } from './bikePathsGroup.ts';
 import { coverageGroup } from './coverageGroup.ts';
+import { spotsGroup } from './spotsGroup.ts';
 import { tracksGroup } from './tracksGroup.ts';
 import type { MapMode } from './mapMode';
 import type { Flavor } from './style';
@@ -42,6 +43,8 @@ export const VARS_METADATA = 'holdmytrack:vars';
 /** What a layer is for, so a client can draw something of its own to match it (Android's live
  *  recording line takes the `track` layer's color). */
 export const ROLE_METADATA = 'holdmytrack:role';
+/** The images a symbol layer draws, by name, each a badge the client draws in the colors given. */
+export const IMAGES_METADATA = 'holdmytrack:images';
 
 export type Placement = 'beneath-labels' | 'top';
 
@@ -139,7 +142,7 @@ export interface BuildLayersOptions {
 /** The layers document for `flavor` at `tileVersion`. Satellite imagery reads dark under any
  *  flavor, so its views take the dark ones. */
 export function buildLayers({ flavor, dark, labelIds, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
-  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), tracksGroup(tileVersion), bandsGroup()];
+  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), tracksGroup(tileVersion), bandsGroup(), spotsGroup(tileVersion)];
   const views = (base: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,

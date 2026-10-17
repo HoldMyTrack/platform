@@ -12,8 +12,8 @@ import (
 // the tiles it draws: each source's first zoom to the handler's, and each source layer to a
 // layer the handler's ST_AsMVT names. Fog and Heatmap are internal/fog's to check.
 func TestLayersMatchTheTileHandlers(t *testing.T) {
-	minZooms := map[string]int{"bike-paths": bikePathsMinZoom}
-	queries := map[string]string{"bike-paths": bikePathsQuery}
+	minZooms := map[string]int{"bike-paths": bikePathsMinZoom, "spots": spotsMinZoom}
+	queries := map[string]string{"bike-paths": bikePathsQuery, "spots": spotsQuery, "tracks": tracksQuery}
 	for _, flavor := range mapstyle.Flavors() {
 		doc, err := mapstyle.Layers(flavor, "abcd1234.1")
 		if err != nil {

@@ -146,7 +146,7 @@ test('the legend gives every path its color, and a dash where the map dashes it'
 test('the tracks draw the focused and hovered ids from vars the client binds, never a hidden one', () => {
   const tracks = groupOf(doc, 'tracks');
   assert.deepEqual(tracks.layers.map((l) => l.id), ['tracks-casing', 'tracks-line', 'tracks-focused', 'tracks-hover']);
-  assert.deepEqual(doc.vars, { hidden: [], focused: [], hovered: [] });
+  assert.deepEqual([doc.vars.hidden, doc.vars.focused, doc.vars.hovered], [[], [], []]);
   const focused = tracks.layers.find((l) => l.id === 'tracks-focused');
   assert.deepEqual(focused.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden'] });
   const bound = boundLayer(focused, { focused: ['a'], hidden: ['a'] }, doc.vars).filter;
@@ -158,4 +158,20 @@ test('the tracks draw the focused and hovered ids from vars the client binds, ne
     assert.equal(viewFor(doc, 'normal', false).layout[id].visibility, 'visible');
     assert.equal(viewFor(doc, 'heatmap', false).layout[id].visibility, 'none');
   }
+});
+
+test('the spots go on top, behind one switch, their badges named with the colors to draw them in', () => {
+  const spots = groupOf(doc, 'spots');
+  assert.equal(spots.placement, 'top');
+  assert.equal(doc.groups.at(-1), spots);
+  assert.deepEqual(spots.layers.map((l) => l.id), ['spots-area-fill', 'spots-area-line', 'spots-circle-line', 'spots-in-area-icons', 'spots-icons']);
+  for (const layer of spots.layers) assert.equal(layer.metadata['holdmytrack:toggle'], 'spots');
+  assert.deepEqual(spots.sources['spots-in-area'], { type: 'geojson' });
+  const icons = spots.layers.find((l) => l.id === 'spots-icons');
+  assert.deepEqual(icons.metadata['holdmytrack:images']['spot-dog_park-captured'], { category: 'dog_park', fill: '#b07e2e', ring: '#7d5820', ink: '#ffffff' });
+  assert.equal(Object.keys(icons.metadata['holdmytrack:images']).length, 10);
+  assert.deepEqual(icons.metadata['holdmytrack:vars']['icon-image'], ['captured']);
+  assert.equal(doc.vars.captureTarget, -1);
+  // Fog mutes labels, never the badges.
+  for (const base of ['plain', 'satellite']) for (const mode of MODES) assert.equal(doc.views[base][mode].paint['spots-icons'], undefined);
 });

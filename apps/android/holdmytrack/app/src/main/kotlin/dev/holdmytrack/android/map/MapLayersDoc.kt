@@ -24,6 +24,7 @@ object MapLayersDoc {
     const val TOGGLE_METADATA = "holdmytrack:toggle"
     const val VARS_METADATA = "holdmytrack:vars"
     const val ROLE_METADATA = "holdmytrack:role"
+    const val IMAGES_METADATA = "holdmytrack:images"
 
     enum class Placement { BENEATH_LABELS, TOP }
 
@@ -45,10 +46,15 @@ object MapLayersDoc {
         /** By property name, or `filter`, the vars it reads. */
         val vars: Map<String, List<String>>,
         val role: String?,
+        /** By name, the badge images a symbol layer draws, for the app to draw and register. */
+        val images: Map<String, Badge> = emptyMap(),
     ) {
         /** Drawn hidden until a view or a switch shows it. */
         val hidden: Boolean get() = (properties["visibility"] as? JsonPrimitive)?.content == "none"
     }
+
+    /** A badge image: [category]'s icon in [ink] on [fill], ringed in [ring]. */
+    data class Badge(val category: String, val fill: String, val ring: String, val ink: String)
 
     /** A Layers menu legend line; [dash] in line widths, null for a solid line. */
     data class Legend(val color: String, val dash: FloatArray?)
@@ -193,6 +199,10 @@ object MapLayersDoc {
             toggle = metadata?.string(TOGGLE_METADATA),
             vars = (metadata?.get(VARS_METADATA) as? JsonObject)?.mapValues { (_, names) -> names.jsonArray.map { it.jsonPrimitive.content } }.orEmpty(),
             role = metadata?.string(ROLE_METADATA),
+            images = (metadata?.get(IMAGES_METADATA) as? JsonObject)?.mapValues { (_, b) ->
+                val badge = b.jsonObject
+                Badge(badge.string("category")!!, badge.string("fill")!!, badge.string("ring")!!, badge.string("ink")!!)
+            }.orEmpty(),
         )
     }
 

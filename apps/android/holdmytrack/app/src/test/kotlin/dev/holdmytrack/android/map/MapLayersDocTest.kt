@@ -104,11 +104,28 @@ class MapLayersDocTest {
         assertEquals(listOf("tracks-casing", MapOverlays.TRACKS_LAYER_ID, "tracks-focused", "tracks-hover"), tracks.layers.map { it.id })
         assertEquals(listOf("casing", "track", "focused", null), tracks.layers.map { it.role })
         assertEquals(listOf("focused", "hidden"), tracks.layers.first { it.id == "tracks-focused" }.vars.getValue("filter"))
-        assertEquals(setOf("hidden", "focused", "hovered"), light.vars.keys)
+        assertTrue(light.vars.keys.containsAll(setOf("hidden", "focused", "hovered")))
         assertEquals(MapOverlays.BAND_LAYER_ID, light.group("track-bands")!!.layers.single().id)
         assertEquals(MapOverlays.TRACKS_MIN_ZOOM, tracks.layers.first().minZoom)
         val beneath = MapLayersDoc.order(light.groups, MapLayersDoc.Placement.BENEATH_LABELS)
         assertTrue(beneath.indexOf(MapOverlays.TRACKS_LAYER_ID) < beneath.indexOf(MapOverlays.BAND_LAYER_ID))
+    }
+
+    @Test
+    fun theSpotsGoOnTopWithTheBadgesToDraw() {
+        val spots = light.group("spots")!!
+        assertEquals(MapLayersDoc.Placement.TOP, spots.placement)
+        assertTrue(spots.layers.all { it.toggle == "spots" })
+        val icons = spots.layers.first { it.id == "spots-icons" }
+        assertEquals("symbol", icons.type)
+        assertEquals(MapLayersDoc.Badge("playground", "#b07e2e", "#7d5820", "#ffffff"), icons.images.getValue("spot-playground-captured"))
+        assertEquals(10, icons.images.size)
+        assertTrue(MapSpots.Category.entries.all { "spot-${it.wire}" in icons.images })
+        assertNull(spots.sources.getValue("spots-in-area").tiles)
+        assertEquals(JsonPrimitive(-1), light.vars["captureTarget"])
+        val inArea = spots.layers.first { it.id == "spots-in-area-icons" }
+        assertEquals(10f, inArea.minZoom)
+        assertEquals(13f, inArea.maxZoom)
     }
 
     @Test

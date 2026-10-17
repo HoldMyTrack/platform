@@ -38,7 +38,7 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 ### After launch
 
 - [ ] Review how long original uploads are kept (today, until the activity is deleted) once real accounts show what they cost. They're the most sensitive thing held (`DPIA.md` R2) and likely the largest storage line; an expired one can't be re-clipped, rebuilt or exported (`IMPLEMENTATION.md` §5.7).
-- [ ] The iOS app (`VISION.md` §4.1 Path 2, `ARCHITECTURE.md` §2), no date set: first confirm `HKWorkoutRoute` access with a throwaway app; then HealthKit sync with `HKWorkoutRoute` geometry on Android's payload and pick-what-to-send design (`SPEC.md` FR-3.6), with the site's pages in a `WKWebView` for Settings, Profile, the Sync page and About (ADR-0042); then in-app GPS recording on Android's wire shape and `source` convention (`SPEC.md` FR-3.8, ADR-0007).
+- [ ] The iOS app (`VISION.md` §4.1 Path 2, `ARCHITECTURE.md` §2), no date set: first confirm `HKWorkoutRoute` access with a throwaway app; then HealthKit sync with `HKWorkoutRoute` geometry on Android's payload and pick-what-to-send design (`SPEC.md` FR-3.6), with the site's pages in a `WKWebView` for Settings, Profile, the Sync page and About (ADR-0042); then in-app GPS recording on Android's wire shape and `source` convention (`SPEC.md` FR-3.8, ADR-0007). Its map applies `/v1/map/layers` (ADR-0048), and `testdata/client-rules` is the test spec for its device rules.
 
 ---
 

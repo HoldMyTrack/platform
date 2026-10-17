@@ -50,8 +50,6 @@ class CoverageController(
             style()?.let {
                 refetchLayers()
                 MapOverlays.refreshTracks(it, range())
-                // Loading places bumps the version too.
-                MapSpots.refresh(it)
             }
         }
     }

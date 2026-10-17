@@ -1,5 +1,5 @@
 {
-  "styleBuild": "75746b4c670a",
+  "styleBuild": "8cbe7b5fa24d",
   "flavor": "dark",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -18,7 +18,10 @@
   "vars": {
     "hidden": [],
     "focused": [],
-    "hovered": []
+    "hovered": [],
+    "spotCategories": [],
+    "captured": [],
+    "captureTarget": -1
   },
   "views": {
     "plain": {
@@ -1428,6 +1431,672 @@
           "color": "#c53030"
         }
       }
+    },
+    {
+      "id": "spots",
+      "placement": "top",
+      "sources": {
+        "spots": {
+          "type": "vector",
+          "tiles": "/tiles/v1/spots/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
+          "minzoom": 13,
+          "maxzoom": 14
+        },
+        "spots-in-area": {
+          "type": "geojson"
+        }
+      },
+      "layers": [
+        {
+          "id": "spots-area-fill",
+          "type": "fill",
+          "source": "spots",
+          "source-layer": "spot_areas",
+          "minzoom": 13,
+          "filter": [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "category"
+              ],
+              [
+                "var",
+                "spotCategories"
+              ]
+            ],
+            [
+              "any",
+              [
+                "!",
+                [
+                  "to-boolean",
+                  [
+                    "get",
+                    "retired"
+                  ]
+                ]
+              ],
+              [
+                "in",
+                [
+                  "to-number",
+                  [
+                    "get",
+                    "id"
+                  ]
+                ],
+                [
+                  "var",
+                  "captured"
+                ]
+              ]
+            ]
+          ],
+          "layout": {
+            "visibility": "none"
+          },
+          "paint": {
+            "fill-color": "#b07e2e",
+            "fill-opacity": [
+              "case",
+              [
+                "==",
+                [
+                  "var",
+                  "captureTarget"
+                ],
+                -1
+              ],
+              0.15,
+              [
+                "==",
+                [
+                  "to-number",
+                  [
+                    "get",
+                    "id"
+                  ]
+                ],
+                [
+                  "var",
+                  "captureTarget"
+                ]
+              ],
+              0.55,
+              0.35
+            ]
+          },
+          "metadata": {
+            "holdmytrack:toggle": "spots",
+            "holdmytrack:vars": {
+              "filter": [
+                "spotCategories",
+                "captured"
+              ],
+              "fill-opacity": [
+                "captureTarget"
+              ]
+            }
+          }
+        },
+        {
+          "id": "spots-area-line",
+          "type": "line",
+          "source": "spots",
+          "source-layer": "spot_areas",
+          "minzoom": 13,
+          "filter": [
+            "all",
+            [
+              "!",
+              [
+                "to-boolean",
+                [
+                  "get",
+                  "circle"
+                ]
+              ]
+            ],
+            [
+              "all",
+              [
+                "in",
+                [
+                  "get",
+                  "category"
+                ],
+                [
+                  "var",
+                  "spotCategories"
+                ]
+              ],
+              [
+                "any",
+                [
+                  "!",
+                  [
+                    "to-boolean",
+                    [
+                      "get",
+                      "retired"
+                    ]
+                  ]
+                ],
+                [
+                  "in",
+                  [
+                    "to-number",
+                    [
+                      "get",
+                      "id"
+                    ]
+                  ],
+                  [
+                    "var",
+                    "captured"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "layout": {
+            "visibility": "none",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#b07e2e",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              13,
+              [
+                "case",
+                [
+                  "==",
+                  [
+                    "to-number",
+                    [
+                      "get",
+                      "id"
+                    ]
+                  ],
+                  [
+                    "var",
+                    "captureTarget"
+                  ]
+                ],
+                2,
+                1
+              ],
+              17,
+              [
+                "case",
+                [
+                  "==",
+                  [
+                    "to-number",
+                    [
+                      "get",
+                      "id"
+                    ]
+                  ],
+                  [
+                    "var",
+                    "captureTarget"
+                  ]
+                ],
+                4,
+                2
+              ]
+            ]
+          },
+          "metadata": {
+            "holdmytrack:toggle": "spots",
+            "holdmytrack:vars": {
+              "filter": [
+                "spotCategories",
+                "captured"
+              ],
+              "line-width": [
+                "captureTarget"
+              ]
+            },
+            "holdmytrack:role": "spot-area"
+          }
+        },
+        {
+          "id": "spots-circle-line",
+          "type": "line",
+          "source": "spots",
+          "source-layer": "spot_areas",
+          "minzoom": 13,
+          "filter": [
+            "all",
+            [
+              "to-boolean",
+              [
+                "get",
+                "circle"
+              ]
+            ],
+            [
+              "all",
+              [
+                "in",
+                [
+                  "get",
+                  "category"
+                ],
+                [
+                  "var",
+                  "spotCategories"
+                ]
+              ],
+              [
+                "any",
+                [
+                  "!",
+                  [
+                    "to-boolean",
+                    [
+                      "get",
+                      "retired"
+                    ]
+                  ]
+                ],
+                [
+                  "in",
+                  [
+                    "to-number",
+                    [
+                      "get",
+                      "id"
+                    ]
+                  ],
+                  [
+                    "var",
+                    "captured"
+                  ]
+                ]
+              ]
+            ]
+          ],
+          "layout": {
+            "visibility": "none",
+            "line-join": "round"
+          },
+          "paint": {
+            "line-color": "#b07e2e",
+            "line-width": [
+              "interpolate",
+              [
+                "linear"
+              ],
+              [
+                "zoom"
+              ],
+              13,
+              [
+                "case",
+                [
+                  "==",
+                  [
+                    "to-number",
+                    [
+                      "get",
+                      "id"
+                    ]
+                  ],
+                  [
+                    "var",
+                    "captureTarget"
+                  ]
+                ],
+                2,
+                1
+              ],
+              17,
+              [
+                "case",
+                [
+                  "==",
+                  [
+                    "to-number",
+                    [
+                      "get",
+                      "id"
+                    ]
+                  ],
+                  [
+                    "var",
+                    "captureTarget"
+                  ]
+                ],
+                4,
+                2
+              ]
+            ],
+            "line-dasharray": [
+              "literal",
+              [
+                2,
+                2
+              ]
+            ]
+          },
+          "metadata": {
+            "holdmytrack:toggle": "spots",
+            "holdmytrack:vars": {
+              "filter": [
+                "spotCategories",
+                "captured"
+              ],
+              "line-width": [
+                "captureTarget"
+              ]
+            }
+          }
+        },
+        {
+          "id": "spots-in-area-icons",
+          "type": "symbol",
+          "source": "spots-in-area",
+          "minzoom": 10,
+          "maxzoom": 13,
+          "filter": [
+            "in",
+            [
+              "get",
+              "category"
+            ],
+            [
+              "var",
+              "spotCategories"
+            ]
+          ],
+          "layout": {
+            "visibility": "none",
+            "icon-image": [
+              "case",
+              [
+                "in",
+                [
+                  "to-number",
+                  [
+                    "get",
+                    "id"
+                  ]
+                ],
+                [
+                  "var",
+                  "captured"
+                ]
+              ],
+              [
+                "concat",
+                "spot-",
+                [
+                  "get",
+                  "category"
+                ],
+                "-captured"
+              ],
+              [
+                "concat",
+                "spot-",
+                [
+                  "get",
+                  "category"
+                ]
+              ]
+            ],
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true
+          },
+          "metadata": {
+            "holdmytrack:toggle": "spots",
+            "holdmytrack:vars": {
+              "filter": [
+                "spotCategories"
+              ],
+              "icon-image": [
+                "captured"
+              ]
+            },
+            "holdmytrack:images": {
+              "spot-playground": {
+                "category": "playground",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-playground-captured": {
+                "category": "playground",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-dog_park": {
+                "category": "dog_park",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-dog_park-captured": {
+                "category": "dog_park",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-monument": {
+                "category": "monument",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-monument-captured": {
+                "category": "monument",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-viewpoint": {
+                "category": "viewpoint",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-viewpoint-captured": {
+                "category": "viewpoint",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-history": {
+                "category": "history",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-history-captured": {
+                "category": "history",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              }
+            }
+          }
+        },
+        {
+          "id": "spots-icons",
+          "type": "symbol",
+          "source": "spots",
+          "source-layer": "spots",
+          "minzoom": 13,
+          "maxzoom": 24,
+          "filter": [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "category"
+              ],
+              [
+                "var",
+                "spotCategories"
+              ]
+            ],
+            [
+              "any",
+              [
+                "!",
+                [
+                  "to-boolean",
+                  [
+                    "get",
+                    "retired"
+                  ]
+                ]
+              ],
+              [
+                "in",
+                [
+                  "to-number",
+                  [
+                    "get",
+                    "id"
+                  ]
+                ],
+                [
+                  "var",
+                  "captured"
+                ]
+              ]
+            ]
+          ],
+          "layout": {
+            "visibility": "none",
+            "icon-image": [
+              "case",
+              [
+                "in",
+                [
+                  "to-number",
+                  [
+                    "get",
+                    "id"
+                  ]
+                ],
+                [
+                  "var",
+                  "captured"
+                ]
+              ],
+              [
+                "concat",
+                "spot-",
+                [
+                  "get",
+                  "category"
+                ],
+                "-captured"
+              ],
+              [
+                "concat",
+                "spot-",
+                [
+                  "get",
+                  "category"
+                ]
+              ]
+            ],
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true
+          },
+          "metadata": {
+            "holdmytrack:toggle": "spots",
+            "holdmytrack:vars": {
+              "filter": [
+                "spotCategories",
+                "captured"
+              ],
+              "icon-image": [
+                "captured"
+              ]
+            },
+            "holdmytrack:images": {
+              "spot-playground": {
+                "category": "playground",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-playground-captured": {
+                "category": "playground",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-dog_park": {
+                "category": "dog_park",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-dog_park-captured": {
+                "category": "dog_park",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-monument": {
+                "category": "monument",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-monument-captured": {
+                "category": "monument",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-viewpoint": {
+                "category": "viewpoint",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-viewpoint-captured": {
+                "category": "viewpoint",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-history": {
+                "category": "history",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-history-captured": {
+                "category": "history",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              }
+            }
+          }
+        }
+      ]
     }
   ]
 }

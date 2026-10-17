@@ -12,8 +12,7 @@ import java.text.NumberFormat
 
 /**
  * "Show in this area" (`docs/SPEC.md` FR-15.5), the web's `ui/ShowInArea.tsx`: the Spots tiles
- * start at [MapSpots.MIN_ZOOM], and between [MapSpots.IN_AREA_MIN_ZOOM] (a metro area in view)
- * and there a view holds too many places to load on every pan. So there they load on request,
+ * start where [MapSpots.inAreaZooms] ends, and between there and a metro area in view a view holds too many places to load on every pan. So there they load on request,
  * for the visible map and the ticked categories, and stay drawn until the next request
  * ([MapSpots.setInArea]).
  *
@@ -97,7 +96,8 @@ class ShowInArea(private val view: TextView, private val map: MapLibreMap, priva
     }
 
     private fun render() {
-        val inRange = categories.isNotEmpty() && zoom >= MapSpots.IN_AREA_MIN_ZOOM && zoom < MapSpots.MIN_ZOOM
+        val zooms = map.style?.let(MapSpots::inAreaZooms)
+        val inRange = categories.isNotEmpty() && zooms != null && zoom >= zooms.start && zoom < zooms.endInclusive
         view.isVisible = inRange
         if (!inRange) return
         val line = status()

@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Supersedes ADR-0047's "a separate overlays route" alternative and its consequence that the overlays only grow, and closes ADR-0042's open question of a WebView map. Built for Fog and Heatmap, the bike paths, the pace bands and the track lines (`ARCHITECTURE.md` §2.1).
+Accepted. Supersedes ADR-0047's "a separate overlays route" alternative and its consequence that the overlays only grow, and closes ADR-0042's open question of a WebView map. Built for every layer HoldMyTrack draws: Fog and Heatmap, the bike paths, the track lines, the pace bands and Spots (`ARCHITECTURE.md` §2.1).
 
 ## Context
 
