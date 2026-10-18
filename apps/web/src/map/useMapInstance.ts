@@ -9,6 +9,7 @@ import {
 import { registerPmtilesProtocol } from './protocol';
 import { configureMapLibreWorker } from './worker';
 import { buildStyle, type Flavor } from './style';
+import { globeMinZoom } from './globe';
 import { basemapOrigin, satelliteSource } from './config';
 import { withApiCredentials } from './requestCredentials';
 import type { ViewState } from './viewState';
@@ -120,6 +121,14 @@ export function useMapInstance({
       new AttributionControl({ compact: false }),
       'bottom-right',
     );
+
+    // Out past the globe's floor it shrinks to a dot (globe.ts), so the floor follows the container.
+    const holdGlobeFloor = () => {
+      const el = instance.getContainer();
+      instance.setMinZoom(globeMinZoom(el.clientWidth, el.clientHeight, instance.getVerticalFieldOfView()));
+    };
+    holdGlobeFloor();
+    instance.on('resize', holdGlobeFloor);
 
     instance.once('load', () => {
       if (cancelled) return;

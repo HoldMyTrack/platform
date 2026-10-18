@@ -263,7 +263,7 @@ Exactly one of Normal, Fog of War and Heatmap shows at a time.
 - A self-hosted vector base map covering the whole planet at every zoom, light or dark with the theme (FR-4.12). A URL can pin `white`, `black` or `grayscale` until the theme changes.
 - The camera is kept in the URL (`#map=<zoom>/<lat>/<lon>`); an incomplete or out-of-range one is ignored.
 - The opening view: the URL's camera; else the most recent activity; else the account's Country; else a world view. It never asks for the browser's location, and a new session doesn't inherit an earlier one's camera.
-- The web map is a globe out to zoom 3 and flat from 4; Android's is flat.
+- The web map is a globe out to zoom 3 and flat from 4; Android's is flat. Zoomed all the way out, the globe fills 80% of the map's shorter side.
 
 ### FR-4.7 Find my location
 
