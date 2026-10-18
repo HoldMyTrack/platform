@@ -205,6 +205,10 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/spots/{id}"), s.requireVerified(s.handleSpotDetail))
 	s.mux.HandleFunc(route("POST", "/spots/{id}/captures"), s.requireNotDemo(s.handleCaptureSpot))
 	// §4.2.4's Country/Region zoom tiers: live MVT, not precomputed (admin_country_tiles.go).
+	s.tile("/country-veil/{z}/{x}/{y}", s.handleCountryFogTile)
+	s.tile("/region-veil/{z}/{x}/{y}", s.handleRegionFogTile)
+	// The paths before the veil took in the sea, for a page loaded before this release. A browser
+	// keeps their tiles under its old tile version; the new paths start a cache of their own.
 	s.tile("/country-fog/{z}/{x}/{y}", s.handleCountryFogTile)
 	s.tile("/region-fog/{z}/{x}/{y}", s.handleRegionFogTile)
 	// §4.2.2's Heatmap: weighted points made from the stored count tiles.

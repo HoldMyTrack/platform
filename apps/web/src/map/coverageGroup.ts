@@ -127,8 +127,8 @@ export function coverageGroup(dark: boolean, tileVersion: string, labelIds: read
       placement: 'beneath-labels',
       sources: {
         [FOG_SOURCE]: { type: 'vector', tiles: tilePath('fog-vector', tileVersion), minzoom: 0, maxzoom: FOG_MAX_ZOOM },
-        [COUNTRY_FOG_SOURCE]: { type: 'vector', tiles: tilePath('country-fog', tileVersion), minzoom: 0, maxzoom: COUNTRY_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION },
-        [REGION_FOG_SOURCE]: { type: 'vector', tiles: tilePath('region-fog', tileVersion), minzoom: COUNTRY_MAX_ZOOM, maxzoom: REGION_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION },
+        [COUNTRY_FOG_SOURCE]: { type: 'vector', tiles: tilePath('country-veil', tileVersion), minzoom: 0, maxzoom: COUNTRY_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION },
+        [REGION_FOG_SOURCE]: { type: 'vector', tiles: tilePath('region-veil', tileVersion), minzoom: COUNTRY_MAX_ZOOM, maxzoom: REGION_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION },
         [HEAT_POINTS_SOURCE]: { type: 'vector', tiles: tilePath('heat-points', tileVersion), minzoom: 0, maxzoom: HEAT_POINTS_MAX_ZOOM },
       },
       layers: [

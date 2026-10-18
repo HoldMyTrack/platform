@@ -31,6 +31,12 @@ Every new account picks a Country on the first-run screen (`SPEC.md` FR-1.7) fro
 * The per-account limits (ADR-0043) leave one view reading up to 50,000 activities; this bounds it.
 * Verify on a load-test account over 500 activities (`docs/PERFORMANCE.md`): the all-time list returns 500 rows with `total` the full count, summary `count: 500`, an all-time z4 tile holds only those ids, and a two-week range is unchanged.
 
+### Clear seas and lakes in Fog's zoomed-out tiers
+
+At zoom 0–6 Fog veils the water, since a track on it counts in no country (`SPEC.md` FR-4.2), so a sailing or kayaking trip stays veiled there.
+
+* Match activities to sea areas (IHO's, or Overture's water) at ingest, as countries are, and cut the visited ones out of the tile's sea (`IMPLEMENTATION.md` §4.2.4).
+
 ### Elevation map layer
 
 A layer showing terrain height under your tracks. Elevation stays in the data as route information (ADR-0017); this would show it as exploration instead of a per-activity chart.
