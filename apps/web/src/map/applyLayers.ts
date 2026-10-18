@@ -22,8 +22,9 @@ export interface LayerState {
   toggles: Readonly<Record<string, boolean>>;
   /** By var name, the value bound in place of the document's default. */
   vars: Readonly<Record<string, unknown>>;
-  /** Groups the client steps aside, drawn hidden (a track being edited hides the tracks). */
-  hiddenGroups: ReadonlySet<string>;
+  /** Groups the client steps aside, drawn hidden, by who hides them (the track editor hides the
+   *  tracks): each caller sets only its own, and a group hidden by any is hidden. */
+  hiddenGroups: Readonly<Record<string, readonly string[]>>;
   /** By source id, the client's own query appended to its tiles (the tracks' range). */
   queries: Readonly<Record<string, string>>;
   /** Groups never added to this map (the export's has no Spots). */
@@ -35,7 +36,7 @@ export const INITIAL_LAYER_STATE: LayerState = {
   satellite: false,
   toggles: {},
   vars: {},
-  hiddenGroups: new Set(),
+  hiddenGroups: {},
   queries: {},
 };
 
@@ -140,6 +141,11 @@ export function setLayerVars(map: MapLibreMap, vars: Readonly<Record<string, unk
   updateLayers(map, { vars: { ...currentLayerState(map).vars, ...vars } });
 }
 
+/** The groups `by` hides on `map`, in place of the ones it hid before; others' stay hidden. */
+export function setHiddenGroups(map: MapLibreMap, by: string, groups: readonly string[]): void {
+  updateLayers(map, { hiddenGroups: { ...currentLayerState(map).hiddenGroups, [by]: groups } });
+}
+
 /** `toggles` merged into the switches last applied to `map`. */
 export function setLayerToggles(map: MapLibreMap, toggles: Readonly<Record<string, boolean>>): void {
   updateLayers(map, { toggles: { ...currentLayerState(map).toggles, ...toggles } });
@@ -165,6 +171,7 @@ function setPaint(map: MapLibreMap, id: string, property: string, value: unknown
 
 function applyState(map: MapLibreMap, doc: MapLayers, state: LayerState, groups: readonly LayerGroup[]): void {
   const view = viewFor(doc, state.mode, state.satellite && map.getLayer(SATELLITE_LAYER_ID) !== undefined);
+  const hidden = new Set(Object.values(state.hiddenGroups).flat());
   const own = new Map<string, { layer: LayerSpecification; group: LayerGroup }>();
   for (const group of groups) for (const layer of group.layers) own.set(layer.id, { layer, group });
 
@@ -188,7 +195,7 @@ function applyState(map: MapLibreMap, doc: MapLayers, state: LayerState, groups:
     // and the hidden groups decide.
     const base = (layout.visibility ?? 'visible') === 'visible';
     const toggle = layerToggle(layer);
-    const shown = base && (toggle === undefined || state.toggles[toggle] === true) && !state.hiddenGroups.has(group.id);
+    const shown = base && (toggle === undefined || state.toggles[toggle] === true) && !hidden.has(group.id);
     setLayout(map, id, 'visibility', shown ? 'visible' : 'none');
 
     for (const [property, names] of Object.entries(layerVars(layer))) {

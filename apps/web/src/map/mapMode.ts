@@ -1,5 +1,5 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { updateLayers } from './applyLayers';
+import { setHiddenGroups, updateLayers } from './applyLayers';
 
 /**
  * The three mutually exclusive views (docs/SPEC.md FR-4.4) — not independent checkboxes, a single
@@ -19,5 +19,6 @@ export type MapMode = 'normal' | 'fog' | 'heatmap';
 export function setMapMode(map: MapLibreMap, mode: MapMode, satellite: boolean, editingTrack = false): void {
   // The mode's view hides the tracks and their pace bands (FR-4.8) outside Normal; an edit steps
   // them aside.
-  updateLayers(map, { mode, satellite, hiddenGroups: new Set(editingTrack ? ['tracks', 'track-bands'] : []) });
+  updateLayers(map, { mode, satellite });
+  setHiddenGroups(map, 'editingTrack', editingTrack ? ['tracks', 'track-bands'] : []);
 }

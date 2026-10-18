@@ -187,7 +187,7 @@ object MapOverlays {
      *  edited, the Sync tab shows or a recording runs. */
     fun setMode(style: Style, mode: MapMode) {
         val aside = editingTrack || syncing || recording
-        MapLayers.update(style) { it.copy(mode = if (recording) MapMode.NORMAL else mode, hiddenGroups = if (aside) TRACK_GROUPS else emptySet()) }
+        MapLayers.update(style) { it.copy(mode = if (recording) MapMode.NORMAL else mode, hiddenGroups = it.hiddenGroups + ("tracksAside" to if (aside) TRACK_GROUPS else emptySet())) }
     }
 
     /**

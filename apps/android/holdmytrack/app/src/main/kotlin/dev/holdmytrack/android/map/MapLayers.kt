@@ -43,8 +43,9 @@ object MapLayers {
         val toggles: Map<String, Boolean> = emptyMap(),
         /** By var name, the value bound in place of the document's default. */
         val vars: Map<String, JsonElement> = emptyMap(),
-        /** Groups the app steps aside, drawn hidden (a track being edited hides the tracks). */
-        val hiddenGroups: Set<String> = emptySet(),
+        /** Groups the app steps aside, drawn hidden, by who hides them (the track editor hides the
+         *  tracks): each caller sets only its own, and a group hidden by any is hidden. */
+        val hiddenGroups: Map<String, Set<String>> = emptyMap(),
         /** By source id, the app's own query appended to its tiles (the tracks' range). */
         val queries: Map<String, String> = emptyMap(),
     )
@@ -171,6 +172,7 @@ object MapLayers {
         val doc = entry.doc
         val view = MapLayersDoc.view(doc, state.mode, state.satellite)?.properties.orEmpty()
         val own = entry.groups.flatMap { group -> group.layers.map { it to group } }.associateBy { it.first.id }
+        val hidden = state.hiddenGroups.values.flatten().toSet()
         // The basemap's own layers a view sets: its labels, which Fog mutes.
         view.forEach { (id, props) ->
             if (id in own) return@forEach
@@ -183,7 +185,7 @@ object MapLayers {
             // What a layer is added with holds until this first runs; from then the view, the
             // switch and the hidden groups decide.
             val base = ((props["visibility"] as? JsonPrimitive)?.content ?: Property.VISIBLE) == Property.VISIBLE
-            val shown = base && (spec.toggle == null || state.toggles[spec.toggle] == true) && group.id !in state.hiddenGroups
+            val shown = base && (spec.toggle == null || state.toggles[spec.toggle] == true) && group.id !in hidden
             layer.setProperties(PropertyFactory.visibility(if (shown) Property.VISIBLE else Property.NONE))
             spec.vars.forEach { (name, names) ->
                 if (name == "filter") {
