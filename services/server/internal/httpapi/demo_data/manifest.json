@@ -395,6 +395,36 @@
           "height": 1536
         }
       ]
+    },
+    "2026-10-18 Lake to Lake Trail.gpx": {
+      "name": "Lake to Lake Trail",
+      "type": "walking",
+      "photos": [
+        {
+          "file": "2026-10-18 Lake to Lake Trail 1.webp",
+          "thumb": "2026-10-18 Lake to Lake Trail 1-thumb.webp",
+          "taken_at": "2026-10-18T17:39:07Z",
+          "route_at": "2026-10-18T18:29:46Z",
+          "width": 2048,
+          "height": 1536
+        },
+        {
+          "file": "2026-10-18 Lake to Lake Trail 2.webp",
+          "thumb": "2026-10-18 Lake to Lake Trail 2-thumb.webp",
+          "taken_at": "2026-10-18T17:19:01Z",
+          "route_at": "2026-10-18T18:40:44Z",
+          "width": 2048,
+          "height": 1536
+        },
+        {
+          "file": "2026-10-18 Lake to Lake Trail 3.webp",
+          "thumb": "2026-10-18 Lake to Lake Trail 3-thumb.webp",
+          "taken_at": "2026-10-18T19:11:27Z",
+          "route_at": "2026-10-18T19:11:27Z",
+          "width": 2048,
+          "height": 1536
+        }
+      ]
     }
   },
   "stories": [
@@ -429,7 +459,8 @@
         "2026-10-05 Evening loop.gpx",
         "2026-10-06 Mill Creek Falls.gpx",
         "2026-10-10 Solowheel.gpx",
-        "2026-10-11 Solowheel.gpx"
+        "2026-10-11 Solowheel.gpx",
+        "2026-10-18 Lake to Lake Trail.gpx"
       ]
     },
     {
@@ -538,6 +569,17 @@
       "osm_id": 2141917791,
       "name": "Tinker's Creek Gorge Scenic Overlook",
       "captured_at": "2026-10-10T20:48:17.15636Z"
+    },
+    {
+      "osm_type": "node",
+      "osm_id": 11771811490,
+      "captured_at": "2026-10-18T18:40:52.198596Z"
+    },
+    {
+      "osm_type": "node",
+      "osm_id": 2986138417,
+      "name": "Mastadon Play Pit Play Area",
+      "captured_at": "2026-10-18T19:15:34.184357Z"
     }
   ]
 }
