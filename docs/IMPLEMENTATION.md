@@ -293,9 +293,9 @@ Both rasters are composited from per-activity masks (§3.11), drawn at ingest fr
 
 Below exact coverage, Fog reveals whole countries, then regions (FR-4.2). The tiers switch only by layer `minzoom`/`maxzoom`, never blended. The layers document carries the bands, for the layers and the level notice alike.
 
-**Boundaries**: `scripts/boundaries-extract.sh` cuts countries, dependencies and regions from a pinned Overture release with DuckDB, off the server, dropping the code-less duplicate drawing of a disputed region. `seed-admin-boundaries` replaces them in one transaction, re-matches every activity and bumps every account's tile version. It refuses a file with too few countries or regions, which would erase the rest of the world. Simplification stays under a pixel at each tier, and a country it would erase (Vatican City) keeps its full outline. Matching runs once per activity at ingest (`geo.MatchActivity`) against the full-detail pieces, the trajectory wrapped into −180…180.
+**Boundaries**: `scripts/boundaries-extract.sh` cuts countries, dependencies and regions from a pinned Overture release with DuckDB, off the server, dropping the code-less duplicate drawing of a disputed region. `seed-admin-boundaries` replaces them in one transaction, re-matches every activity and bumps every account's tile version. Matching runs once per activity at ingest (`geo.MatchActivity`) against the full-detail pieces, the trajectory wrapped into −180…180.
 
-**Served as live MVT, not a precomputed pyramid**: the cost scales with a fixed boundary set, not with history, so there's no dirty machinery to keep. Fog's query returns the locked set (no non-Pending membership row), filled in the veil's colour so nothing shifts crossing the zoom boundary. A tile's clipped outlines are stored on its first request (§3.26), the built mark inserted first with `ON CONFLICT DO NOTHING` so a concurrent build waits; only tiles up to each tier's maxzoom are kept, and the seed empties them last in its transaction.
+**Served as live MVT, not a precomputed pyramid**: the cost scales with a fixed boundary set, not with history, so there's no dirty machinery to keep. Fog's query returns the locked set (no non-Pending membership row) and the tile's sea, its frame minus every outline, in the veil's colour so nothing shifts crossing a tier. A tile's clipped outlines and sea are stored on its first request (§3.26), the built mark inserted first with `ON CONFLICT DO NOTHING` so a concurrent build waits; only tiles up to each tier's maxzoom are kept, and the seed empties them last in its transaction. Cutting visited outlines out per request took 0.5 s at z0.
 
 #### 4.2.5 Pending activities drop out of every map read (FR-5.15)
 
@@ -311,6 +311,8 @@ Every per-user tile is cacheable for good under the account's **tile version** (
 - the worker, after every render pass that stored anything, a failed one included;
 - changes with no render behind them: enqueueing a reprocess, deleting or editing an activity, a timezone change, a Story membership change, the demo reset;
 - the Spots and bike-path imports and `seed-admin-boundaries`, for every account.
+
+A release that changes what a tile kind draws gives it a new path (`country-veil`): a migration's bump runs while the previous release still serves.
 
 On the wire the version is prefixed with the start of the account id, so two accounts on one device never share a key. The tracks layer adds a per-page `v` (load time, then a counter), so a change the page made before a new version arrives isn't served from cache, not even another tab's. One upload invalidates every tile of the account; a per-tile key is the next step if measurements call for it.
 

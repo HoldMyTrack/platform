@@ -53,8 +53,8 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 		queries adminTileQueries
 	}
 	cases := []tileCase{
-		{"country-fog", countryLayer, countryFogQueries},
-		{"region-fog", regionLayer, regionFogQueries},
+		{"country-veil", countryLayer, countryFogQueries},
+		{"region-veil", regionLayer, regionFogQueries},
 	}
 	coords := func(l adminLayer) (int, int, int) {
 		x, y := tilemath.LonLatToTile(at[0], at[1], l.cacheMaxZoom)
@@ -65,7 +65,7 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 			z, x, y := coords(l)
 			for _, table := range []string{"admin_tiles_built", "admin_tile_geoms"} {
 				if _, err := d.pool.Exec(context.Background(),
-					`DELETE FROM `+table+` WHERE layer = $1 AND zoom = $2 AND tile_x = $3 AND tile_y = $4`, l.name, z, x, y); err != nil {
+					`DELETE FROM `+table+` WHERE layer = $1 AND zoom = $2 AND tile_x = $3 AND tile_y = $4`, l.cache, z, x, y); err != nil {
 					t.Error(err)
 				}
 			}
@@ -115,14 +115,60 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 		}
 	}
 
+	// The sea is veiled with the locked outlines: with them it covers the tile, it overlaps no
+	// land, and it is wound as they are, so the tile draws it as ground rather than as a hole.
+	for _, c := range cases {
+		z, x, y := coords(c.layer)
+		var gap, overlap float64
+		var wound bool
+		if err := d.pool.QueryRow(ctx, `
+			SELECT ST_Area(ST_Difference(ST_MakeEnvelope(0, 0, 4096, 4096, 3857), ST_Union(s.geom, ST_Union(o.geom)))),
+			       ST_Area(ST_Intersection(s.geom, ST_Union(o.geom))),
+			       ST_IsPolygonCCW(s.geom)
+			FROM admin_tile_geoms s JOIN admin_tile_geoms o USING (layer, zoom, tile_x, tile_y)
+			WHERE s.layer = $1 AND s.zoom = $2 AND s.tile_x = $3 AND s.tile_y = $4
+			  AND s.admin_id = $5 AND o.admin_id <> $5
+			GROUP BY s.geom`, c.layer.cache, z, x, y, seaID).Scan(&gap, &overlap, &wound); err != nil {
+			t.Fatalf("%s sea: %v", c.path, err)
+		}
+		if gap > 1 || overlap > 1 || !wound {
+			t.Errorf("%s: the sea leaves %.0f units of the tile bare, overlaps %.0f of land, wound like the outlines %v", c.path, gap, overlap, wound)
+		}
+	}
+
 	// Built once: with its outlines taken away behind its back, the tile is read back empty
 	// rather than drawn again.
 	z, x, y := coords(countryLayer)
 	if _, err := d.pool.Exec(ctx,
-		`DELETE FROM admin_tile_geoms WHERE layer = 'countries' AND zoom = $1 AND tile_x = $2 AND tile_y = $3`, z, x, y); err != nil {
+		`DELETE FROM admin_tile_geoms WHERE layer = 'country-veil' AND zoom = $1 AND tile_x = $2 AND tile_y = $3`, z, x, y); err != nil {
 		t.Fatal(err)
 	}
 	if n := len(get(cases[0])); n != 0 {
 		t.Errorf("a built tile was drawn again: %d bytes", n)
+	}
+}
+
+// Past the world's top and bottom edges the globe draws a tile's sea over the pole, once per tile
+// in the row, so there the sea stops at the edge; elsewhere it reaches just past the tile.
+func TestAdminTileSeaStopsAtTheWorldsEdge(t *testing.T) {
+	d := newDBTest(t)
+	for _, c := range []struct {
+		z, x, y     int
+		top, bottom float64
+	}{
+		{0, 0, 0, 0, 4096},
+		{2, 1, 0, 0, 4098},
+		{2, 1, 1, -2, 4098},
+		{2, 1, 3, -2, 4096},
+	} {
+		var top, bottom float64
+		if err := d.pool.QueryRow(context.Background(), `
+			SELECT ST_YMin(g.geom), ST_YMax(g.geom) FROM (`+countryLayer.liveGeoms()+`) g WHERE g.admin_id = $4`,
+			c.z, c.x, c.y, seaID).Scan(&top, &bottom); err != nil {
+			t.Fatalf("tile %d/%d/%d: %v", c.z, c.x, c.y, err)
+		}
+		if top != c.top || bottom != c.bottom {
+			t.Errorf("tile %d/%d/%d: the sea spans y %v to %v, want %v to %v", c.z, c.x, c.y, top, bottom, c.top, c.bottom)
+		}
 	}
 }
