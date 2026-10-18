@@ -1,0 +1,15 @@
+{
+  "rule": "passesFilters",
+  "description": "Whether an activity survives the Type filter's excludedTypes and the distance filter ({ min, max }, inclusive, or null): what the list shows, the map draws and the count counts. Activities are { activityType, distanceMeters (null for none), private }.",
+  "cases": [
+    { "name": "no filter passes everything", "input": { "activity": { "activityType": "walking", "distanceMeters": null }, "excludedTypes": [], "distanceFilter": null }, "expected": true },
+    { "name": "inside the band", "input": { "activity": { "activityType": "walking", "distanceMeters": 1200 }, "excludedTypes": [], "distanceFilter": { "min": 1000, "max": 5000 } }, "expected": true },
+    { "name": "the band is inclusive", "input": { "activity": { "activityType": "walking", "distanceMeters": 5000 }, "excludedTypes": [], "distanceFilter": { "min": 1000, "max": 5000 } }, "expected": true },
+    { "name": "outside the band", "input": { "activity": { "activityType": "running", "distanceMeters": 10400 }, "excludedTypes": [], "distanceFilter": { "min": 1000, "max": 5000 } }, "expected": false },
+    { "name": "no distance never lies inside a band", "input": { "activity": { "activityType": "walking", "distanceMeters": null }, "excludedTypes": [], "distanceFilter": { "min": 1000, "max": 5000 } }, "expected": false },
+    { "name": "a private activity is left out once a band is on", "input": { "activity": { "activityType": "walking", "distanceMeters": 0, "private": true }, "excludedTypes": [], "distanceFilter": { "min": 0, "max": 5000 } }, "expected": false },
+    { "name": "a private activity passes with no band", "input": { "activity": { "activityType": "walking", "distanceMeters": 0, "private": true }, "excludedTypes": [], "distanceFilter": null }, "expected": true },
+    { "name": "an excluded type", "input": { "activity": { "activityType": "walking", "distanceMeters": 1200 }, "excludedTypes": ["walking"], "distanceFilter": null }, "expected": false },
+    { "name": "another type excluded", "input": { "activity": { "activityType": "walking", "distanceMeters": 1200 }, "excludedTypes": ["running"], "distanceFilter": { "min": 1000, "max": 5000 } }, "expected": true }
+  ]
+}

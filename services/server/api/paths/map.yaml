@@ -34,11 +34,35 @@ map_style_flavor:
                   items: { type: object }
                 metadata:
                   type: object
-                  required: ["holdmytrack:overlays"]
+                  required: ["holdmytrack:style-build"]
                   properties:
-                    "holdmytrack:overlays": { $ref: "../components/schemas.yaml#/CoverageOverlays" }
+                    "holdmytrack:style-build": { type: string, description: "The build it came from; the layers document carries the same." }
       "304":
         description: Unchanged since the If-None-Match ETag
+      "404": { $ref: "../components/responses.yaml#/Error" }
+map_layers:
+  get:
+    summary: Every layer drawn over the basemap, at the account's tile version
+    description: Fetched beside the style and applied over it (ADR-0048). Changes with a deploy or the account's tile version.
+    parameters:
+      - name: flavor
+        in: query
+        required: true
+        description: The style's flavor, whose colors the layers take.
+        schema: { type: string }
+    responses:
+      "200":
+        description: The layers; revalidate with its ETag
+        headers:
+          ETag:
+            schema: { type: string }
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/MapLayers" }
+      "304":
+        description: Unchanged since the If-None-Match ETag
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
       "404": { $ref: "../components/responses.yaml#/Error" }
 coverage_status:
   get:

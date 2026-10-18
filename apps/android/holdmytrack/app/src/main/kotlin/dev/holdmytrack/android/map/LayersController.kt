@@ -40,19 +40,20 @@ class LayersController(
             onShown = ::setShown,
             satellite = { if (satelliteAvailable) MapSatellite.isOn(context) else null },
             onSatellite = ::setSatellite,
+            legend = { style()?.let(MapLayers::doc)?.group("bike-paths")?.legend.orEmpty() },
         )
     }
 
     fun dismiss() = menu.dismiss()
 
-    /**
-     * The style URL: `light` or `dark` following the app's night mode (`AppTheme`), labels in the
-     * app's language (`?lang=`, root `docs/SPEC.md` FR-13.1).
-     */
+    /** `light` or `dark`, following the app's night mode (`AppTheme`): the style's flavor, and
+     *  the layers document's. */
+    fun flavor(): String = if (isNight()) "dark" else "light"
+
+    /** The style URL: [flavor], labels in the app's language (`?lang=`, root `docs/SPEC.md` FR-13.1). */
     fun styleUrl(): String {
-        val flavor = if (isNight()) "dark" else "light"
         val lang = fragment.resources.configuration.locales[0].language
-        return "${BuildConfig.API_BASE_URL}/v1/map/style/$flavor?lang=$lang"
+        return "${BuildConfig.API_BASE_URL}/v1/map/style/${flavor()}?lang=$lang"
     }
 
     fun isNight(): Boolean =
@@ -99,6 +100,6 @@ class LayersController(
         MapSatellite.set(context, on)
         val loaded = style() ?: return
         MapSatellite.apply(loaded, on, mode())
-        if (attached()) CoverageLayers.setSatellite(loaded, satelliteDrawn(loaded))
+        if (attached()) MapLayers.update(loaded) { it.copy(satellite = satelliteDrawn(loaded)) }
     }
 }

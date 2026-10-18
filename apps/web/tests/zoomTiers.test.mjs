@@ -2,10 +2,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs, like bbox.test.mjs: Node strips the types from the imported .ts module itself.
-import { buildOverlays, zoomTier } from '../src/map/coverageStyle.ts';
+import { buildLayers, zoomTier } from '../src/map/mapLayers.ts';
 import { levelNoticeKey } from '../src/map/zoomTiers.ts';
 
-const { tiers } = buildOverlays(false, []);
+const { tiers } = buildLayers({ flavor: 'light', dark: false, labelIds: [], tileVersion: '' });
 
 test('Fog names the tier in view', () => {
   assert.equal(levelNoticeKey('fog', zoomTier(tiers, 1)), 'map.level.fog.country');

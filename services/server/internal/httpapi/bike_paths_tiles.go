@@ -6,8 +6,8 @@ import (
 
 // bikePathsMinZoom is the lowest zoom the bike-path tiles carry anything at: a region of
 // ~200 km on a screen, far enough out to see which side of town is still unridden, where the
-// basemap has no paths at all (IMPLEMENTATION.md §4.24). Must match BIKE_PATHS_MIN_ZOOM in
-// apps/web/src/map/bikePaths.ts and MapBikePaths.MIN_ZOOM on Android.
+// basemap has no paths at all (IMPLEMENTATION.md §4.24). The layers document's source starts
+// there too (TestLayersMatchTheTileHandlers).
 const bikePathsMinZoom = 9
 
 // bikePathsDetailZoom is the zoom from which every way is in the tile however short. Below it a

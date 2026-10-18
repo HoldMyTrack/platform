@@ -5,6 +5,8 @@ import type { Activity } from '../api';
  * over the activities already fetched for the current date range — no backend involvement,
  * since §4.7's list endpoint doesn't paginate and the panel always holds the full range's
  * rows already. "Reset filters" is instant for the same reason: there is nothing to refetch.
+ * Android's `ActivityFacets.kt` runs the same cases, `testdata/client-rules`' `distance-bounds`,
+ * `distance-filter`, `type-facets` and `passes-filters`.
  */
 
 export interface DistanceRange {

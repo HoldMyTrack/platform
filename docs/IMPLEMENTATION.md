@@ -265,7 +265,7 @@ flowchart LR
 
 The inversion is the server's because MapLibre can't invert a raster (no `raster-color`), and a shader would otherwise be written twice.
 
-**Veils** (`coverageStyle.ts`) are each opposite in lightness to their basemap, at 0.82 opacity: at 0.6 the cream veil left satellite imagery too clear to tell fogged ground from revealed. The fog is designed over the vector basemap, with imagery optional (§4.26). The clients draw the veil, the Country/Region fills and Heatmap as the served style's overlays (`ARCHITECTURE.md` §2.1), beneath the first symbol layer, so labels stay on top.
+**Veils** (`coverageGroup.ts`) are each opposite in lightness to their basemap, at 0.82 opacity: at 0.6 the cream veil left satellite imagery too clear to tell fogged ground from revealed. The fog is designed over the vector basemap, with imagery optional (§4.26). The veil, the Country/Region fills and Heatmap are the layers document's `coverage` group (`ARCHITECTURE.md` §2.1), beneath the first symbol layer, so labels stay on top.
 
 #### 4.2.2 Heatmap mode
 
@@ -275,7 +275,7 @@ Heatmap shares Fog's masks, `fog_tiles` row, dirty flag and render; the server s
 
 **Served** as MapLibre heatmap circles from `/tiles/v1/heat-points/`: a point per non-empty cell, 64 to a tile side, weighted `log1p(count) / log1p(scale)`, log because most ground is crossed once or twice and a few places a hundred times. Up to z8 (`fog.HeatActivityMaxZoom`) a cell is a z14 tile or larger and counts distinct activities, read live from the mask rows; from z9 it counts the busiest pixel of the count tile one zoom up, since per-pixel counts can't be added up into a larger area's activities. Zooms up to z8 scale against their own busiest cell (`users.heat_point_caps`, stored by every render), never below `heatmap_cap`; finer zooms against `heatmap_cap`.
 
-**Each point is weighted for its neighbours** (`weighNeighbours`). MapLibre adds overlapping circles and its kernel peaks at about 0.4 of a weight, so a lone place read faint and a route hot. Dividing by what the neighbours add under MapLibre's kernel, `exp(-½ (3d/r)²)` at the clients' radius of 1.6 cells, with the clients' intensity of 2.5, makes each circle peak at its own weight. **The radius and intensity are the served style's (`coverageStyle.ts`), and a test in `internal/fog` holds the radius to `heatRadiusCells`.**
+**Each point is weighted for its neighbours** (`weighNeighbours`). MapLibre adds overlapping circles and its kernel peaks at about 0.4 of a weight, so a lone place read faint and a route hot. Dividing by what the neighbours add under MapLibre's kernel, `exp(-½ (3d/r)²)` at the clients' radius of 1.6 cells, with the clients' intensity of 2.5, makes each circle peak at its own weight. **The radius and intensity are the layers document's, and a test in `internal/fog` holds the radius to `heatRadiusCells`.**
 
 **One query a tile**: up to z8 a grouped read of the account's own mask rows; from z9 the row and one object read, counted against the R2 budget. The MVT is encoded in Go, saving a round trip on the database the load tests found to be the bottleneck.
 
@@ -291,7 +291,7 @@ Both rasters are composited from per-activity masks (§3.11), drawn at ingest fr
 
 #### 4.2.4 Country/Region zoom tiers
 
-Below exact coverage, Fog reveals whole countries, then regions (FR-4.2). The tiers switch only by layer `minzoom`/`maxzoom`, never blended. The served style's overlays carry the bands, for the layers and the level notice alike.
+Below exact coverage, Fog reveals whole countries, then regions (FR-4.2). The tiers switch only by layer `minzoom`/`maxzoom`, never blended. The layers document carries the bands, for the layers and the level notice alike.
 
 **Boundaries**: `scripts/boundaries-extract.sh` cuts countries, dependencies and regions from a pinned Overture release with DuckDB, off the server, dropping the code-less duplicate drawing of a disputed region. `seed-admin-boundaries` replaces them in one transaction, re-matches every activity and bumps every account's tile version. It refuses a file with too few countries or regions, which would erase the rest of the world. Simplification stays under a pixel at each tier, and a country it would erase (Vatican City) keeps its full outline. Matching runs once per activity at ingest (`geo.MatchActivity`) against the full-detail pieces, the trajectory wrapped into −180…180.
 
@@ -305,7 +305,7 @@ An activity is Pending (`edit_pending`) while an Edit track or Private location 
 
 #### 4.2.6 Caching: one tile version per account
 
-Every per-user tile is cacheable for good under the account's **tile version** (`tile_version` from `/v1/coverage/status`): `private, max-age=31536000, immutable` when asked with the account's own version, `private, no-cache` otherwise. None passes a shared cache: the origin isn't behind Cloudflare (`ARCHITECTURE.md` §1.2), and a tile points at where its owner lives.
+Every per-user tile is cacheable for good under the account's **tile version** (`tile_version` from `/v1/coverage/status`, and in every tile path of `/v1/map/layers`): `private, max-age=31536000, immutable` when asked with the account's own version, `private, no-cache` otherwise. None passes a shared cache: the origin isn't behind Cloudflare (`ARCHITECTURE.md` §1.2), and a tile points at where its owner lives.
 
 **The version is a counter, `users.map_version`**, not a timestamp: the latest `rendered_at` goes backwards when tiles are deleted, and a key must never return for different content. **Every change to tile content is followed by a bump**, the change first, so a tile fetched in between is newer than its label, never older:
 - the worker, after every render pass that stored anything, a failed one included;
@@ -318,17 +318,17 @@ On the wire the version is prefixed with the start of the account id, so two acc
 
 **Tracks are a live query** (`handleTracksTile`), `ST_AsMVT` over the account's non-Pending activities, because they follow filters that can't be precomputed. A track stored past ±180 is drawn through `geo.WrappedSQL`, a part each side, since PROJ would rejoin the parts round the world; a tile on the far side matches it through its envelope shifted 360°.
 
-**The filter is the list's** (`parseActivityFilter`, §4.7), and the layer always sends `from`/`to`, since an absent bound means unrestricted. Type and Distance are layer filters in the client. **Every refresh gets a new URL** (the per-page `v`): MapLibre caches overzoomed slices by URL, and an unchanged one kept a track's pre-edit shape past z14.
+**The filter is the list's** (`parseActivityFilter`, §4.7), and the client always appends `from`/`to` to the document's tile path, since an absent bound means unrestricted. Type, Distance, hidden, focused and hovered are id sets the `tracks` group's filters bind (ADR-0048): measured, a change refetches no tile and drops no frame. **Every refresh gets a new URL** (the per-page `v`): MapLibre caches overzoomed slices by URL, and an unchanged one kept a track's pre-edit shape past z14.
 
 #### 4.3.1 Pace-colored segments
 
-A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/track-metrics/{id}` computes speeds from `trajectory`'s vertices and their M times. The web (`trackBands.ts`) and Android (`TrackBands.kt`) apply the same band rule and change together. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix would be re-parsing the raw payload for the focused activity, as Edit track does.
+A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/track-metrics/{id}` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix would be re-parsing the raw payload for the focused activity, as Edit track does.
 
 #### 4.3.3 Map image export
 
 Client-side (§5.5); Android follows the same design (`apps/android/docs/IMPLEMENTATION.md` §3.5). The output's pixel size is chosen apart from the viewfinder, so a phone exports as large an image as a desktop. The largest size offered is the smaller of the GPU's render-buffer limit and MapLibre's 4096 px canvas cap (`maxExportSide`), since past either MapLibre draws smaller without saying so.
 
-**Capture renders a second, hidden map** at the window's CSS size and the live camera, with the resolution from `pixelRatio`, so labels and lines keep their on-screen proportions. It replays the live map's overlay calls (`reattachOverlays`), so **a change to how the live map attaches overlays reaches the export too**. Attribution (§5.6) and the watermark are drawn into the final canvas at the exact output size.
+**Capture renders a second, hidden map** at the window's CSS size and the live camera, with the resolution from `pixelRatio`, so labels and lines keep their on-screen proportions. It applies the same layers document without Spots and bands, so **a change to how the live map attaches layers reaches the export too**. Attribution (§5.6) and the watermark are drawn into the final canvas at the exact output size.
 
 ### 4.5 Per-activity pace, and distance trends
 
@@ -342,7 +342,7 @@ One ride synced from a watch and uploaded as its `.fit` has two `external_id`s, 
 
 **One filter parser** (`parseActivityFilter`) serves the list, its totals, the day histogram and the tracks tiles, so the panel and the map can't disagree. **No pagination**: Type and Distance filter client-side over the whole range, and the map draws every match anyway; a future cursor must be `(started_at, id)`, since two sources' copies of a ride share a start time. **`bbox` is computed, the short way round**: PostGIS keeps the box in the geometry header, and one wider than 180° is recomputed from `ST_ShiftLongitude` with the narrower kept. **Every day is the activity's local day** (§4.30); the account's zone decides only what "today" is. The histogram pages by activity-day, since the slider packs only days with activity. `activity_type` is the source's free text, never normalized. A name is only ever typed by a person, and sorting never reads it.
 
-**The map's state rules are one set on every client**: the web's `map/session.ts` and Android's `MapSession` (range or Story, selection, the camera's next flight) and their pure rules run the same cases in `testdata/map-session`, so a rule can't change on one platform alone.
+**Device rules are one set on every client**: the web's `map/session.ts` and Android's `MapSession` (range or Story, selection, the camera's next flight) and the other rules its README lists run the same cases in `testdata/client-rules`, so a rule can't change on one platform alone.
 
 #### 4.7.5 Delete an activity — a full purge (FR-5.11)
 
@@ -511,11 +511,11 @@ flowchart LR
     BI -->|if changed| V
 ```
 
-**Trails and dirt tracks are in the basemap's `roads` layer**, which the stock Protomaps style draws faintly. `buildStyle` splices `PATH_LAYER_IDS` right after that layer, always on, so the served documents carry them; **their ids are part of the served style's contract**, since both clients find them to lift them over the veil.
+**Trails and dirt tracks are in the basemap's `roads` layer**, which the stock Protomaps style draws faintly. `buildStyle` splices `PATH_LAYER_IDS` right after that layer, always on, so the served documents carry them; **their ids are part of the served style's contract**, since the layers document's `bike-paths` group lifts them over the veil by id.
 
-**The bike kinds come from their own import** because the basemap has no paths below z13. **The extract keeps every way with one of the tags and `Kind` narrows it, so a new kind changes both.** A planet run deletes unseen rows behind the same too-many guard as Spots. Below z13 a way shorter than a pixel is dropped. The web and Android share the z9 minimum.
+**The bike kinds come from their own import** because the basemap has no paths below z13. **The extract keeps every way with one of the tags and `Kind` narrows it, so a new kind changes both.** A planet run deletes unseen rows behind the same too-many guard as Spots. Below z13 a way shorter than a pixel is dropped. A Go test holds the document's z9 minimum and source layer to the tile handler's.
 
-**Every path paints over Fog and Heatmap**: `raisePathLayers` moves the basemap path layers above the coverage layer, and the bike layers and tracks go on top, in every mode and in the export; under the veil, unridden paths showed at a fifth of their colour. It moves only a layer still below, and visibility is diffed before it's set, because both run on every `styledata` and each change fires another (`DEVELOPMENT.md`).
+**Every path paints over Fog and Heatmap**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and the export; under the veil, unridden paths showed at a fifth of their colour. Clients move only a layer still below; the web diffs every property first, since each change fires another `styledata` (`DEVELOPMENT.md`).
 
 ### 4.25 Spots (FR-15, ADR-0021)
 

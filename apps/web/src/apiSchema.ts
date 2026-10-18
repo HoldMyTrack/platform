@@ -1528,7 +1528,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** The stored track's points with their speed, for the speed chart */
+        /** The stored track's points with their speed, and its pace bands */
         get: {
             parameters: {
                 query?: never;
@@ -1555,6 +1555,14 @@ export interface paths {
                                 speed_mps: number;
                                 /** @description Unix seconds. */
                                 time_s: number;
+                            }[];
+                            /** @description Runs of points by pace band, slowest 0 to fastest 4, over the track's own speeds; neighbouring runs share their boundary point. */
+                            bands: {
+                                band: number;
+                                /** @description The run's first point's index. */
+                                start: number;
+                                /** @description Its last point's index, inclusive. */
+                                end: number;
                             }[];
                         };
                     };
@@ -1784,7 +1792,8 @@ export interface paths {
                             sources: Record<string, never>;
                             layers: Record<string, never>[];
                             metadata: {
-                                "holdmytrack:overlays": components["schemas"]["CoverageOverlays"];
+                                /** @description The build it came from; the layers document carries the same. */
+                                "holdmytrack:style-build": string;
                             };
                         };
                     };
@@ -1796,6 +1805,59 @@ export interface paths {
                     };
                     content?: never;
                 };
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/map/layers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Every layer drawn over the basemap, at the account's tile version
+         * @description Fetched beside the style and applied over it (ADR-0048). Changes with a deploy or the account's tile version.
+         */
+        get: {
+            parameters: {
+                query: {
+                    /** @description The style's flavor, whose colors the layers take. */
+                    flavor: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The layers; revalidate with its ETag */
+                200: {
+                    headers: {
+                        ETag?: string;
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["MapLayers"];
+                    };
+                };
+                /** @description Unchanged since the If-None-Match ETag */
+                304: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
                 404: components["responses"]["Error"];
             };
         };
@@ -3382,42 +3444,77 @@ export interface components {
                 ];
             };
         };
-        CoverageView: {
+        LayerView: {
             /** @description By layer id, the layout properties to set. */
             layout: Record<string, never>;
             /** @description By layer id, the paint properties to set. */
             paint: Record<string, never>;
         };
-        CoverageViews: {
-            normal: components["schemas"]["CoverageView"];
-            fog: components["schemas"]["CoverageView"];
-            heatmap: components["schemas"]["CoverageView"];
+        LayerViews: {
+            normal: components["schemas"]["LayerView"];
+            fog: components["schemas"]["LayerView"];
+            heatmap: components["schemas"]["LayerView"];
         };
-        /** @description Fog of War and Heatmap (IMPLEMENTATION.md §4.2), for the client to apply as they come. Every view sets the same properties, so switching views never undoes one. */
-        CoverageOverlays: {
-            /** @description By source id, each a vector source of this account's tiles. */
+        LayerGroup: {
+            id: string;
+            /**
+             * @description Beneath the basemap's first label layer, or over everything.
+             * @enum {string}
+             */
+            placement: "beneath-labels" | "top";
+            /** @description Basemap layers moved up to the group's place, beneath its own layers. */
+            lifts?: string[];
+            /** @description By source id. */
             sources: {
                 [key: string]: {
-                    /** @description A path on the API's origin with {z}/{x}/{y}; the client adds its base URL and the tile version as cv. */
+                    /** @enum {string} */
+                    type: "vector";
+                    /** @description A path on the API's origin with {z}/{x}/{y} and the tile version; the client adds its base URL, and its own query where it keeps one. */
                     tiles: string;
                     minzoom: number;
                     maxzoom: number;
                     attribution?: string;
+                } | {
+                    /**
+                     * @description Filled by the client.
+                     * @enum {string}
+                     */
+                    type: "geojson";
                 };
             };
-            /** @description MapLibre layers in paint order, inserted beneath the first symbol layer. Every array in a filter, layout or paint value is an expression. */
+            /** @description MapLibre layers in paint order. Every array in a filter, layout or paint value is an expression. Metadata `holdmytrack:toggle` names the Layers menu switch that shows a layer; `holdmytrack:vars` the properties, or `filter`, that read vars. */
             layers: Record<string, never>[];
-            /** @description The layout and paint every overlay and label layer takes in each mode, over satellite imagery or not. */
-            views: {
-                plain: components["schemas"]["CoverageViews"];
-                satellite: components["schemas"]["CoverageViews"];
+            /** @description By Layers menu entry, the line its legend draws. */
+            legend?: {
+                [key: string]: {
+                    color: string;
+                    /** @description In line widths; none for a solid line. */
+                    dash?: number[];
+                };
             };
+        };
+        /** @description Every layer drawn over the basemap (IMPLEMENTATION.md §4.2, ADR-0048), for the client to apply as it comes. Every view sets the same properties, so switching views never undoes one. */
+        MapLayers: {
+            /** @description The build it came from; a style naming another is fetched again. */
+            styleBuild: string;
+            flavor: string;
+            /** @description The account's tile version, already in every tile path. */
+            tileVersion: string;
             /** @description The zoom tiers Fog draws at, in order; a tier is in view below its `below`, the last at every zoom past. */
             tiers: {
                 /** @enum {string} */
                 tier: "country" | "region" | "city";
                 below?: number;
             }[];
+            /** @description By name, the default of each value a layer reads as ["var", name]; the client binds its own with let. */
+            vars: Record<string, never>;
+            /** @description The layout and paint the document's layers and the basemap's label layers take in each mode, over satellite imagery or not. */
+            views: {
+                plain: components["schemas"]["LayerViews"];
+                satellite: components["schemas"]["LayerViews"];
+            };
+            /** @description In paint order within each placement. */
+            groups: components["schemas"]["LayerGroup"][];
         };
         Photo: {
             /** Format: uuid */

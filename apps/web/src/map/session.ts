@@ -3,7 +3,7 @@
  * the list and the tracks show (a date range or a Story), the selection over them, the mode, and
  * whether the next loaded list moves the camera. Features read it and change it only through
  * events; side effects (flights, the URL) stay with them. Android: `map/MapSession.kt`; both run
- * `testdata/map-session`.
+ * `testdata/client-rules`.
  */
 import type { DistanceRange } from '../ui/activityFacets';
 import type { DateRange } from '../ui/dateMath';

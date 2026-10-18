@@ -1,0 +1,13 @@
+{
+  "rule": "photoTrackStart",
+  "description": "Where a waiting photo's slider starts: 0.01 past the photo picked before it (anchor), never past 1. An anchor is { t } (a photo the server placed), { waiting: key } (one that waited too) or null (the first of its batch). placed maps a waiting key to where the user put it, or null when it was removed; anchors maps a waiting key to its own anchor. Points are { lon, lat, t }, t in epoch seconds.",
+  "tolerance": 1e-9,
+  "cases": [
+    { "name": "the first of a batch starts at the beginning", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "anchor": null, "placed": {}, "anchors": {} }, "expected": 0 },
+    { "name": "just after a photo the server placed", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "anchor": { "t": 1780000050 }, "placed": {}, "anchors": {} }, "expected": 0.26 },
+    { "name": "just after where a waiting one was put", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "anchor": { "waiting": "a" }, "placed": { "a": 0.6 }, "anchors": { "a": null } }, "expected": 0.61 },
+    { "name": "past a removed one, to what came before it", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "anchor": { "waiting": "b" }, "placed": { "a": null, "b": null }, "anchors": { "a": { "t": 1780000450 }, "b": { "waiting": "a" } } }, "expected": 0.76 },
+    { "name": "past a removed one to the start when nothing came before", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "anchor": { "waiting": "a" }, "placed": { "a": null }, "anchors": { "a": null } }, "expected": 0 },
+    { "name": "never past the end", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "anchor": { "t": 1780000500 }, "placed": {}, "anchors": {} }, "expected": 1 }
+  ]
+}

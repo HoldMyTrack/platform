@@ -32,7 +32,6 @@ import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Story
-import dev.holdmytrack.android.map.TrackBands
 import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.ui.LargeText
 import kotlin.math.abs
@@ -157,6 +156,9 @@ class ActivitiesPanel(
      *  only then. */
     private var bandsShown = false
 
+    /** The legend's steps as last drawn ([setBands]). */
+    private var bandColors: List<String>? = null
+
     private val adapter = RowAdapter()
     var tab = PanelTab.ACTIVITIES
         private set
@@ -248,7 +250,9 @@ class ActivitiesPanel(
                 abs(value - bounds.max) < SNAP_METERS -> bounds.max
                 else -> value.toDouble()
             }
-            state.setDistanceFilter(DistanceRange(snap(slider.values[0]), snap(slider.values[1])))
+            // The slider reports both knobs; the rule takes them one at a time, so both at the ends is no filter.
+            val min = ActivityFacets.nextDistanceFilter(bounds, state.distanceFilter ?: bounds, DistanceKnob.MIN, snap(slider.values[0]))
+            state.setDistanceFilter(ActivityFacets.nextDistanceFilter(bounds, min ?: bounds, DistanceKnob.MAX, snap(slider.values[1])))
             changed()
         }
         resetFilters.setOnClickListener {
@@ -281,18 +285,6 @@ class ActivitiesPanel(
         distance.setOnClickListener { showDistanceFilter() }
         selectionClose.setOnClickListener { endSelecting() }
         sheet.findViewById<View>(R.id.card_close).setOnClickListener { clearFocus() }
-        // The legend's five steps, slowest to fastest, in the map's own band colours.
-        sheet.findViewById<LinearLayout>(R.id.card_band_steps).apply {
-            val gap = res.getDimensionPixelSize(R.dimen.hmt_space_2)
-            TrackBands.COLORS.forEachIndexed { i, color ->
-                addView(View(context).apply {
-                    setBackgroundResource(R.drawable.bg_pace_band)
-                    backgroundTintList = ColorStateList.valueOf(Color.parseColor(color))
-                }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
-                    if (i > 0) marginStart = gap
-                })
-            }
-        }
         render()
     }
 
@@ -448,10 +440,26 @@ class ActivitiesPanel(
     /** Whether the selected activity's card is at the sheet's head, in the range's place. */
     val showsCard: Boolean get() = tab == PanelTab.ACTIVITIES && state.focused != null && !state.selecting
 
-    /** The map draws the selected activity's pace bands, or stopped: the card's legend follows. */
-    fun setBandsShown(shown: Boolean) {
-        if (bandsShown == shown) return
-        bandsShown = shown
+    /** The map draws the selected activity's pace bands in [colors], slowest first, or stopped
+     *  (null): the card's legend follows. */
+    fun setBands(colors: List<String>?) {
+        if (colors != null && colors != bandColors) {
+            bandColors = colors
+            sheet.findViewById<LinearLayout>(R.id.card_band_steps).apply {
+                removeAllViews()
+                val gap = res.getDimensionPixelSize(R.dimen.hmt_space_2)
+                colors.forEachIndexed { i, color ->
+                    addView(View(context).apply {
+                        setBackgroundResource(R.drawable.bg_pace_band)
+                        backgroundTintList = ColorStateList.valueOf(Color.parseColor(color))
+                    }, LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, 1f).apply {
+                        if (i > 0) marginStart = gap
+                    })
+                }
+            }
+        }
+        if (bandsShown == (colors != null)) return
+        bandsShown = colors != null
         renderCard()
     }
 

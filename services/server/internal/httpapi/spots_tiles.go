@@ -6,8 +6,9 @@ import (
 
 // spotsMinZoom is the lowest zoom the spots tiles carry anything at: a neighbourhood or two in
 // view. Below it a city's playgrounds and memorials would be one pile of icons. It's the zoom
-// the basemap's trails start at too (apps/web/src/map/style.ts's PATHS_MIN_ZOOM),
-// so places and paths come and go together. Must match SPOTS_MIN_ZOOM in apps/web/src/map/spots.ts.
+// the basemap's trails start at too (apps/web/src/map/pathColors.ts's PATHS_MIN_ZOOM),
+// so places and paths come and go together. The layers document's source starts there too
+// (TestLayersMatchTheTileHandlers).
 const spotsMinZoom = 13
 
 // spotsQuery is §4.25's tile, two layers over the same spots:

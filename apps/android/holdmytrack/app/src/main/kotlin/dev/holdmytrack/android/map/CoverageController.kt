@@ -13,6 +13,8 @@ class CoverageController(
     /** The style once the user layers are on it. */
     private val style: () -> Style?,
     private val range: () -> DateRange?,
+    /** Asks for the layers document again, which carries the new tile version ([MapLayersSource]). */
+    private val refetchLayers: () -> Unit,
     /** [rendering] changed: the notice that Fog and Heatmap are still being updated follows. */
     private val onRenderingChanged: () -> Unit,
 ) {
@@ -25,7 +27,7 @@ class CoverageController(
             rendering = it
             onRenderingChanged()
         },
-        onRefetch = { style()?.let(CoverageLayers::refresh) },
+        onRefetch = { if (style() != null) refetchLayers() },
     )
 
     /** Watches the account's re-render until it's done, then refetches Fog and Heatmap and runs [onDone]. */
@@ -34,8 +36,8 @@ class CoverageController(
     fun stop() = coverage.stop()
 
     /**
-     * The overlays attach at the stored tile version ([Session.tileVersion]), so cached tiles draw
-     * at once. This reads the current version and refetches every tile only if it moved while the
+     * The overlays attach at the stored tile version ([Session.tileVersion]) and its kept layers
+     * document, so cached tiles draw at once. This reads the current version and refetches every tile only if it moved while the
      * app was away.
      */
     fun checkTileVersion() {
@@ -46,11 +48,8 @@ class CoverageController(
             if (status.tileVersion.isEmpty() || status.tileVersion == Session.tileVersion) return@coverageStatus
             Session.tileVersion = status.tileVersion
             style()?.let {
-                CoverageLayers.refresh(it)
+                refetchLayers()
                 MapOverlays.refreshTracks(it, range())
-                // Loading places or bike paths bumps the version too.
-                MapSpots.refresh(it)
-                MapBikePaths.refresh(it)
             }
         }
     }

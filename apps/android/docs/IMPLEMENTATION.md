@@ -96,23 +96,23 @@ The shared client's interceptors apply to the map's requests too:
 
 ### 3.1 Layers and the style
 
-The style is `GET /v1/map/style/{flavor}?lang=`, unmodified (root `docs/ARCHITECTURE.md` §2.1). Fog and Heatmap are its overlays, which `CoverageLayers` builds by type and property name: MapLibre Native can't add a layer from JSON.
+The style is `GET /v1/map/style/{flavor}?lang=`, unmodified, fetched beside `GET /v1/map/layers` (root `docs/ARCHITECTURE.md` §2.1), whose groups `MapLayers` builds by type and property name: MapLibre Native can't add a layer from JSON. Another build's document reloads the style once.
 
-**A style reload discards every custom layer and image**, so everything that adds to the style is idempotent and re-adds on each load: `MapOverlays`, `MapPaths`/`MapBikePaths`, `MapSatellite`, `MapSpots` with its badge bitmaps, the Sync candidates and the Private location circles. `syncSession()` attaches them once the session is verified.
+**A style reload discards every custom layer and image**, so everything that adds to the style is idempotent and re-adds on each load: `MapLayers`, `MapOverlays`, `MapSatellite`, `MapSpots` with its badge bitmaps, the Sync candidates and the Private location circles. `syncSession()` attaches them once the session is verified.
 
 **Order, bottom to top, matches the web's layer by layer**: Fog or Heatmap coverage, the trails and tracks lifted out of the basemap's roads, the bike paths, the account's tracks, all under the basemap's first symbol layer; Spots over everything. MapLibre Native has no `moveLayer`, so lifting a layer is remove and re-add, as is a coverage refresh.
 
-- **`setMode` applies the style's view**, properties only, so a switch is instant and a reload re-applies it.
-- **Only the tracks URL carries a filter**: the date range or the open Story. Type, Distance and the hidden set are layer filters. `VectorSource` can't change its URL, so a range change replaces the layer and source, carrying visibility over.
-- **The selected track is two extra layers** filtered to the selected or checked ids, since MapLibre Native Android has no feature-state.
+- **`setMode` applies the document's view**, properties only, so a switch is instant and a reload re-applies it.
+- **Only the tracks URL carries a filter**: the date range or the open Story, appended to the document's path. `VectorSource` can't change its URL, so a range change replaces the source and its layers.
+- **The hidden, selected and checked ids are vars** the document's filters bind. The live recording and the Sync candidates draw like the layers whose role they share.
 
 ### 3.2 Tile versions
 
-Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The account's tile version is kept on disk: a cold start attaches at the last one and MapLibre's cache draws at once, then the status is read on attach and every resume, and sources are re-pointed only if it moved. The bike-path and Spots sources move with it; without that the app kept tiles cached before an import. Tracks also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed.
+Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them and MapLibre's cache draws at once, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The bike-path and Spots sources move with it. Tracks also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed.
 
 ### 3.3 Logic ported from the web
 
-Where the web has a rule, the app ports it as a pure Kotlin class with the web's test cases, and a change to one side needs the other: `PanelState` and `ActivityFacets`, `ActivityDays`, `DateRangeSlider`, `RangeShift`, `TrackBands`, `EditTrackOps`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, the `photos/` rules, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules` and `PhotoMarkerScope` run the web's own JSON cases (`testdata/map-session`). `MapPaths`' legend colors and dashes must match the web's `style.ts`.
+Where the web has a rule, the app ports it as a pure Kotlin class. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PhotoMarkerScope`, `RangeShift`, `EditTrackOps`, `ActivityFacets`, `ActivityZone`, `SatelliteRoads`, `PhotoClusters`, `PhotoTrack`, `PhotoZoom` and `FormatParts` run the shared JSON cases (`testdata/client-rules`), and `TrackBands` the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `PanelState`, `ActivityDays`, `DateRangeSlider`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
 
 ### 3.4 The panel, editors and touches
 

@@ -1,8 +1,8 @@
 import type { TrackEdit, TrackPoint } from '../api';
 
 /**
- * The Edit track session's history (§4.7.7) — pure functions, no React, so the replay/fold
- * logic is unit-testable on its own (tests/editTrackOps.test.ts).
+ * The Edit track session's history (§4.7.7) — pure functions, no React. Android's
+ * `EditTrackOps.kt` runs the same cases, `testdata/client-rules/edit-track-*.json`.
  *
  * A session is the edit the track already had when the editor opened (`base`) plus a stack of
  * ops committed since. What the map shows is always a replay of the whole stack on top of the

@@ -1,0 +1,14 @@
+{
+  "rule": "activityZone",
+  "description": "The zone an activity's times are shown in (docs/SPEC.md FR-3.11): its own (own), else the account's (account), else null, the device's. A zone the device's tz data doesn't know is skipped rather than failing to format.",
+  "cases": [
+    { "name": "an activity's own zone wins", "input": { "own": "Asia/Tokyo", "account": "America/New_York" }, "expected": "Asia/Tokyo" },
+    { "name": "a fixed-offset zone passes through", "input": { "own": "Etc/GMT+3", "account": "America/New_York" }, "expected": "Etc/GMT+3" },
+    { "name": "without its own, the account's", "input": { "own": "", "account": "America/New_York" }, "expected": "America/New_York" },
+    { "name": "a missing own zone is the account's", "input": { "own": null, "account": "America/New_York" }, "expected": "America/New_York" },
+    { "name": "one the device doesn't know, the account's", "input": { "own": "Mars/Olympus_Mons", "account": "America/New_York" }, "expected": "America/New_York" },
+    { "name": "without either, the device's", "input": { "own": "", "account": "" }, "expected": null },
+    { "name": "neither known, the device's", "input": { "own": "Mars/Olympus_Mons", "account": "Moon/Tranquility" }, "expected": null },
+    { "name": "nothing at all, the device's", "input": { "own": null, "account": null }, "expected": null }
+  ]
+}

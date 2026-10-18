@@ -1,0 +1,11 @@
+{
+  "rule": "photoClamp",
+  "description": "A photo viewer view held where the picture can be: no smaller than fitted, no larger than 8x, no edge pulled in past the stage's. Views are { scale, x, y }: scale 1 at (0, 0) is the picture fitted to the stage and centered, x/y move its center in pixels from the stage's center. Sizes are { width, height }.",
+  "tolerance": 1e-3,
+  "cases": [
+    { "name": "a view within the edges stays", "input": { "view": { "scale": 4, "x": 1500, "y": 0 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 4, "x": 1500, "y": 0 } },
+    { "name": "a view past the edge is pulled back", "input": { "view": { "scale": 2, "x": 1500, "y": -800 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 2, "x": 500, "y": -350 } },
+    { "name": "the scale is held between 1 and 8", "input": { "view": { "scale": 20, "x": 0, "y": 0 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 8, "x": 0, "y": 0 } },
+    { "name": "below fitted is fitted", "input": { "view": { "scale": 0.5, "x": 30, "y": 30 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 1, "x": 0, "y": 0 } }
+  ]
+}

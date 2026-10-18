@@ -1,0 +1,19 @@
+{
+  "rule": "editTrackFold",
+  "description": "The track editor's saved edit (base, or null) and its op stack (ops) folded into the one edit Save sends. Ops: {kind: chop, keep: [t, t]}, {kind: cut, remove: [t, t]}, {kind: drop, t}, {kind: move, t, to: [lon, lat]}, {kind: reset}, {kind: split, t}; times in epoch ms. An edit is {keep, remove, drop, move}, move keyed by the time as a string, with no empty field.",
+  "cases": [
+    { "name": "an unedited track folds to nothing", "input": { "base": null, "ops": [] }, "expected": {} },
+    { "name": "the fold never carries empty arrays", "input": { "base": null, "ops": [{ "kind": "cut", "remove": [1788249601000, 1788249602000] }] }, "expected": { "remove": [[1788249601000, 1788249602000]] } },
+    { "name": "the saved edit is where the fold starts", "input": { "base": { "keep": [1788249602000, 1788249609000] }, "ops": [] }, "expected": { "keep": [1788249602000, 1788249609000] } },
+    { "name": "steps add to the saved edit", "input": { "base": { "drop": [1788249604000] }, "ops": [{ "kind": "drop", "t": 1788249605000 }] }, "expected": { "drop": [1788249604000, 1788249605000] } },
+    { "name": "a reset discards the saved edit and every step before it", "input": { "base": { "keep": [1788249602000, 1788249609000] }, "ops": [{ "kind": "drop", "t": 1788249605000 }, { "kind": "reset" }] }, "expected": {} },
+    { "name": "steps after a reset count", "input": { "base": { "keep": [1788249602000, 1788249609000] }, "ops": [{ "kind": "drop", "t": 1788249605000 }, { "kind": "reset" }, { "kind": "drop", "t": 1788249606000 }] }, "expected": { "drop": [1788249606000] } },
+    { "name": "a second chop narrows the first rather than replacing it", "input": { "base": null, "ops": [{ "kind": "chop", "keep": [1788249601000, 1788249608000] }, { "kind": "chop", "keep": [1788249603000, 1788249609000] }] }, "expected": { "keep": [1788249603000, 1788249608000] } },
+    { "name": "a chop, a cut and two deletes, each from what was visible", "input": { "base": null, "ops": [{ "kind": "chop", "keep": [1788249601000, 1788249608000] }, { "kind": "cut", "remove": [1788249604000, 1788249605000] }, { "kind": "drop", "t": 1788249601000 }, { "kind": "drop", "t": 1788249608000 }] }, "expected": { "keep": [1788249601000, 1788249608000], "remove": [[1788249604000, 1788249605000]], "drop": [1788249601000, 1788249608000] } },
+    { "name": "a move keeps the point and changes where it is", "input": { "base": null, "ops": [{ "kind": "move", "t": 1788249603000, "to": [13.5, 52.5] }] }, "expected": { "move": { "1788249603000": [13.5, 52.5] } } },
+    { "name": "a point moved twice ends where it was dropped last", "input": { "base": null, "ops": [{ "kind": "move", "t": 1788249603000, "to": [13.5, 52.5] }, { "kind": "move", "t": 1788249603000, "to": [13.6, 52.6] }] }, "expected": { "move": { "1788249603000": [13.6, 52.6] } } },
+    { "name": "a moved point that is then deleted keeps both", "input": { "base": null, "ops": [{ "kind": "move", "t": 1788249603000, "to": [13.5, 52.5] }, { "kind": "drop", "t": 1788249603000 }] }, "expected": { "drop": [1788249603000], "move": { "1788249603000": [13.5, 52.5] } } },
+    { "name": "a reset clears the saved moves", "input": { "base": { "move": { "1788249603000": [13.5, 52.5] } }, "ops": [{ "kind": "reset" }] }, "expected": {} },
+    { "name": "a split rides beside the edit, not in it", "input": { "base": null, "ops": [{ "kind": "chop", "keep": [1788249601000, 1788249609000] }, { "kind": "split", "t": 1788249605000 }] }, "expected": { "keep": [1788249601000, 1788249609000] } }
+  ]
+}

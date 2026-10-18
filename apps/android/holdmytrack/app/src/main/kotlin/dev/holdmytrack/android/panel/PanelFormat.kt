@@ -14,11 +14,9 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 /**
- * The Activities panel's numbers and dates, the web's `apps/web/src/ui/format.ts` rules in the
- * app's language, so a row reads the same in both clients: one decimal for an activity's own
- * distance, a total rounded to whole units from 10 up, `1h 2m` / `42m` / `30s` durations, and a
- * start time as a medium date with a short time. Units follow the account's Country
- * (`RecordingFormat.imperial`).
+ * The Activities panel's numbers and dates in the app's language: [FormatParts]' decisions
+ * written out, and a start time as a medium date with a short time, as the web's `format.ts`
+ * does. Units follow the account's Country (`RecordingFormat.imperial`).
  */
 object PanelFormat {
 
@@ -47,43 +45,33 @@ object PanelFormat {
     /** A count, grouped in the app's language, as the web's `toLocaleString`. */
     fun count(res: Resources, n: Int): String = NumberFormat.getIntegerInstance(locale(res)).format(n)
 
-    fun unit(res: Resources): String =
-        res.getString(if (RecordingFormat.imperial()) R.string.panel_unit_mi else R.string.panel_unit_km)
+    fun unit(res: Resources): String = unit(res, if (RecordingFormat.imperial()) DistanceUnit.MI else DistanceUnit.KM)
 
-    private fun converted(meters: Double) =
-        if (RecordingFormat.imperial()) meters / METERS_PER_MILE else meters / 1000
+    private fun unit(res: Resources, unit: DistanceUnit): String =
+        res.getString(if (unit == DistanceUnit.MI) R.string.panel_unit_mi else R.string.panel_unit_km)
 
-    /** The web's `distanceValue`: the number alone, one decimal, no grouping. */
-    fun distanceValue(res: Resources, meters: Double): String =
+    private fun written(res: Resources, parts: DistanceParts): String =
         NumberFormat.getNumberInstance(locale(res)).apply {
-            minimumFractionDigits = 1
-            maximumFractionDigits = 1
-            isGroupingUsed = false
-        }.format(converted(meters))
+            minimumFractionDigits = parts.minDecimals
+            maximumFractionDigits = parts.maxDecimals
+            isGroupingUsed = parts.grouping
+        }.format(parts.value)
+
+    private fun withUnit(res: Resources, parts: DistanceParts): String = "${written(res, parts)} ${unit(res, parts.unit)}"
+
+    /** The web's `distanceValue`: the number alone. */
+    fun distanceValue(res: Resources, meters: Double): String = written(res, FormatParts.distance(meters, RecordingFormat.imperial()))
 
     fun distance(res: Resources, meters: Double?): String =
-        if (meters == null) EM_DASH else "${distanceValue(res, meters)} ${unit(res)}"
+        if (meters == null) EM_DASH else withUnit(res, FormatParts.distance(meters, RecordingFormat.imperial()))
 
-    /** The web's `formatTotalDistance`: a small total keeps a decimal, so a short history
-     *  never reads as "0 km". */
-    fun totalDistance(res: Resources, meters: Double): String {
-        val value = converted(meters)
-        val number = NumberFormat.getNumberInstance(locale(res)).apply {
-            minimumFractionDigits = 0
-            maximumFractionDigits = if (value < 10) 1 else 0
-        }.format(value)
-        return "$number ${unit(res)}"
-    }
+    fun totalDistance(res: Resources, meters: Double): String = withUnit(res, FormatParts.totalDistance(meters, RecordingFormat.imperial()))
 
-    fun duration(res: Resources, seconds: Long?): String {
-        if (seconds == null) return EM_DASH
-        val h = seconds / 3600
-        val m = (seconds % 3600) / 60
-        return when {
-            h > 0 -> res.getString(R.string.panel_duration_hm, h, m)
-            m > 0 -> res.getString(R.string.panel_duration_m, m)
-            else -> res.getString(R.string.panel_duration_s, seconds)
-        }
+    fun duration(res: Resources, seconds: Long?): String = when (val parts = seconds?.let(FormatParts::duration)) {
+        null -> EM_DASH
+        is DurationParts.HoursMinutes -> res.getString(R.string.panel_duration_hm, parts.h, parts.m)
+        is DurationParts.Minutes -> res.getString(R.string.panel_duration_m, parts.m)
+        is DurationParts.Seconds -> res.getString(R.string.panel_duration_s, parts.s)
     }
 
     /** The selected activity's third number: pace on foot ("8:47 /mi"), speed otherwise

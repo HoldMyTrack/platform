@@ -347,36 +347,15 @@ SpotCapture:
   properties:
     spot_id: { type: integer }
     captured_at: { type: string, format: date-time }
-CoverageOverlays:
+MapLayers:
   type: object
-  description: Fog of War and Heatmap (IMPLEMENTATION.md §4.2), for the client to apply as they come. Every view sets the same properties, so switching views never undoes one.
-  required: [sources, layers, views, tiers]
+  description: Every layer drawn over the basemap (IMPLEMENTATION.md §4.2, ADR-0048), for the client to apply as it comes. Every view sets the same properties, so switching views never undoes one.
+  required: [styleBuild, flavor, tileVersion, tiers, vars, views, groups]
   additionalProperties: false
   properties:
-    sources:
-      type: object
-      description: By source id, each a vector source of this account's tiles.
-      additionalProperties:
-        type: object
-        required: [tiles, minzoom, maxzoom]
-        additionalProperties: false
-        properties:
-          tiles: { type: string, description: "A path on the API's origin with {z}/{x}/{y}; the client adds its base URL and the tile version as cv." }
-          minzoom: { type: integer }
-          maxzoom: { type: integer }
-          attribution: { type: string }
-    layers:
-      type: array
-      description: MapLibre layers in paint order, inserted beneath the first symbol layer. Every array in a filter, layout or paint value is an expression.
-      items: { type: object, required: [id, type] }
-    views:
-      type: object
-      description: The layout and paint every overlay and label layer takes in each mode, over satellite imagery or not.
-      required: [plain, satellite]
-      additionalProperties: false
-      properties:
-        plain: { $ref: "#/CoverageViews" }
-        satellite: { $ref: "#/CoverageViews" }
+    styleBuild: { type: string, description: "The build it came from; a style naming another is fetched again." }
+    flavor: { type: string }
+    tileVersion: { type: string, description: "The account's tile version, already in every tile path." }
     tiers:
       type: array
       description: The zoom tiers Fog draws at, in order; a tier is in view below its `below`, the last at every zoom past.
@@ -387,15 +366,74 @@ CoverageOverlays:
         properties:
           tier: { type: string, enum: [country, region, city] }
           below: { type: number }
-CoverageViews:
+    vars:
+      type: object
+      description: "By name, the default of each value a layer reads as [\"var\", name]; the client binds its own with let."
+    views:
+      type: object
+      description: The layout and paint the document's layers and the basemap's label layers take in each mode, over satellite imagery or not.
+      required: [plain, satellite]
+      additionalProperties: false
+      properties:
+        plain: { $ref: "#/LayerViews" }
+        satellite: { $ref: "#/LayerViews" }
+    groups:
+      type: array
+      description: In paint order within each placement.
+      items: { $ref: "#/LayerGroup" }
+LayerGroup:
+  type: object
+  required: [id, placement, sources, layers]
+  additionalProperties: false
+  properties:
+    id: { type: string }
+    placement: { type: string, enum: [beneath-labels, top], description: "Beneath the basemap's first label layer, or over everything." }
+    lifts:
+      type: array
+      description: Basemap layers moved up to the group's place, beneath its own layers.
+      items: { type: string }
+    sources:
+      type: object
+      description: By source id.
+      additionalProperties:
+        oneOf:
+          - type: object
+            required: [type, tiles, minzoom, maxzoom]
+            additionalProperties: false
+            properties:
+              type: { type: string, enum: [vector] }
+              tiles: { type: string, description: "A path on the API's origin with {z}/{x}/{y} and the tile version; the client adds its base URL, and its own query where it keeps one." }
+              minzoom: { type: integer }
+              maxzoom: { type: integer }
+              attribution: { type: string }
+          - type: object
+            required: [type]
+            additionalProperties: false
+            properties:
+              type: { type: string, enum: [geojson], description: "Filled by the client." }
+    layers:
+      type: array
+      description: "MapLibre layers in paint order. Every array in a filter, layout or paint value is an expression. Metadata `holdmytrack:toggle` names the Layers menu switch that shows a layer; `holdmytrack:vars` the properties, or `filter`, that read vars."
+      items: { type: object, required: [id, type] }
+    legend:
+      type: object
+      description: By Layers menu entry, the line its legend draws.
+      additionalProperties:
+        type: object
+        required: [color]
+        additionalProperties: false
+        properties:
+          color: { type: string }
+          dash: { type: array, items: { type: number }, description: "In line widths; none for a solid line." }
+LayerViews:
   type: object
   required: [normal, fog, heatmap]
   additionalProperties: false
   properties:
-    normal: { $ref: "#/CoverageView" }
-    fog: { $ref: "#/CoverageView" }
-    heatmap: { $ref: "#/CoverageView" }
-CoverageView:
+    normal: { $ref: "#/LayerView" }
+    fog: { $ref: "#/LayerView" }
+    heatmap: { $ref: "#/LayerView" }
+LayerView:
   type: object
   required: [layout, paint]
   additionalProperties: false

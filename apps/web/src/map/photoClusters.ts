@@ -5,6 +5,8 @@ import { TRACKS_MIN_ZOOM } from './config.ts';
  * Grouping photo markers that would overlap on screen — the photos of a whole trip
  * seen zoomed out, or several taken at one spot. Done in screen pixels, after each move of the
  * map, since what overlaps depends on the zoom; tens of photos per route make that cheap.
+ * Android's `PhotoClusters.kt` runs the same cases, `testdata/client-rules/photo-clusters.json`
+ * and `photo-marker-size.json`.
  */
 
 export interface ScreenPoint {

@@ -7,7 +7,7 @@ import dev.holdmytrack.android.panel.PanelState
  * that scope, the panel's selection ([panel]) and the camera: a picked range or a Story resets the
  * selection, the default never replaces a picked range, and only a picked range or an opened Story
  * moves the camera onto the next list ([consumeFly]). The web's `session.ts`; both run
- * `testdata/map-session`.
+ * `testdata/client-rules`.
  */
 class MapSession(private val panel: PanelState) {
 

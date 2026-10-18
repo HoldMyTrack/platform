@@ -5,14 +5,14 @@ import logoOnDarkUrl from '../assets/logo-on-dark.png';
 import logoOnLightUrl from '../assets/logo-on-light.png';
 import { basemapOrigin, satelliteSource } from './config';
 import { withApiCredentials } from './requestCredentials';
-import { ensureCoverageLayers } from './coverageLayers';
-import { ensureBikePathLayers, setBikePathsVisible } from './bikePaths';
-import { raisePathLayers } from './paths';
-import { labelInsertionPoint } from './layers';
-import { setMapMode, type MapMode } from './mapMode';
+import { applyLayers, INITIAL_LAYER_STATE } from './applyLayers';
+import { getTileVersion } from './coverageVersion';
+import { webLayers } from './webLayers';
+import type { MapMode } from './mapMode';
 import { setSatelliteVisible } from './satellite';
-import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor, type PathOverlays } from './style';
-import { ensureTrackLayer, setHiddenTracks } from './tracks';
+import type { BikePathOverlays } from './bikePathsGroup';
+import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
+import { trackQuery } from './tracks';
 
 /**
  * `VISION.md` §4.2's "print-grade... export", rendered in the browser (`IMPLEMENTATION.md`
@@ -61,7 +61,7 @@ export interface ExportViewState {
   activityQuery: ActivityQuery;
   hiddenIds: string[];
   /** The Layers menu's paths (overlays.ts), so the image shows what the screen does. */
-  paths: PathOverlays;
+  paths: BikePathOverlays;
   /** The Satellite button (FR-4.14): satellite imagery, when the deployment has any. */
   satellite: boolean;
 }
@@ -355,15 +355,17 @@ async function renderOffscreen(
       instance.once('error', (e) => reject(e.error ?? new Error('export map failed to load')));
     });
 
-    const beforeId = labelInsertionPoint(instance);
-    ensureCoverageLayers(instance, beforeId);
-    raisePathLayers(instance, beforeId);
-    ensureBikePathLayers(instance, beforeId, state.flavor);
-    setBikePathsVisible(instance, state.paths);
-    ensureTrackLayer(instance, beforeId, state.activityQuery);
-    setMapMode(instance, state.mode, state.satellite);
+    applyLayers(instance, webLayers(state.flavor, getTileVersion()), {
+      ...INITIAL_LAYER_STATE,
+      mode: state.mode,
+      satellite: state.satellite,
+      toggles: { ...state.paths },
+      vars: { hidden: state.hiddenIds },
+      queries: { tracks: trackQuery(state.activityQuery) },
+      // No Spots or pace bands, as on Android.
+      excludedGroups: new Set(['spots', 'track-bands']),
+    });
     setSatelliteVisible(instance, state.satellite, state.mode);
-    setHiddenTracks(instance, state.hiddenIds);
 
     await waitForIdle(instance);
 

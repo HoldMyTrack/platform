@@ -149,7 +149,7 @@ type satelliteStyle struct {
 		Hides       []string `json:"holdmytrack:satellite-hides"`
 		Dims        []string `json:"holdmytrack:satellite-dims"`
 		RoadOpacity float64  `json:"holdmytrack:satellite-road-opacity"`
-		Overlays    any      `json:"holdmytrack:overlays"`
+		StyleBuild  string   `json:"holdmytrack:style-build"`
 	} `json:"metadata"`
 	Layers []struct {
 		ID     string         `json:"id"`
@@ -237,8 +237,8 @@ func TestDocumentStripsSatelliteUnconfigured(t *testing.T) {
 		}
 		if m := s.Metadata; m == nil || m.Hides != nil || m.Dims != nil || m.RoadOpacity != 0 {
 			t.Errorf("%s: metadata = %v, want the satellite keys gone", flavor, s.Metadata)
-		} else if m.Overlays == nil {
-			t.Errorf("%s: the overlays went with the satellite keys", flavor)
+		} else if m.StyleBuild != StyleBuild() {
+			t.Errorf("%s: the style build went with the satellite keys", flavor)
 		}
 		for _, l := range s.Layers {
 			if l.ID == "satellite" {
@@ -258,5 +258,34 @@ func TestETagVariesWithSatellite(t *testing.T) {
 	b, _ := Document("light", "en", "https://a.example.com", Satellite{Tiles: "https://t/{z}/{x}/{y}", TileSize: 512, MaxZoom: 18})
 	if ETag(a) == ETag(b) {
 		t.Error("same ETag with and without imagery — a client would keep a style missing the switch")
+	}
+}
+
+func TestLayersFillTheTileVersion(t *testing.T) {
+	for _, flavor := range Flavors() {
+		doc, err := Layers(flavor, "abcd1234.9")
+		if err != nil {
+			t.Fatalf("Layers(%q): %v", flavor, err)
+		}
+		if strings.Contains(string(doc), tileVersionPlaceholder) {
+			t.Errorf("%s: the tile version placeholder survived", flavor)
+		}
+		var head struct {
+			StyleBuild  string `json:"styleBuild"`
+			Flavor      string `json:"flavor"`
+			TileVersion string `json:"tileVersion"`
+		}
+		if err := json.Unmarshal(doc, &head); err != nil {
+			t.Fatalf("%s: not valid JSON: %v", flavor, err)
+		}
+		if head.StyleBuild != StyleBuild() || head.Flavor != flavor || head.TileVersion != "abcd1234.9" {
+			t.Errorf("%s: head = %+v", flavor, head)
+		}
+	}
+	if _, err := Layers("neon", "x"); !errors.Is(err, ErrUnknownFlavor) {
+		t.Errorf("err = %v, want ErrUnknownFlavor", err)
+	}
+	if LayersETag("light", "a.1") == LayersETag("light", "a.2") || LayersETag("light", "a.1") == LayersETag("dark", "a.1") {
+		t.Error("the layers ETag doesn't vary with the tile version and flavor")
 	}
 }

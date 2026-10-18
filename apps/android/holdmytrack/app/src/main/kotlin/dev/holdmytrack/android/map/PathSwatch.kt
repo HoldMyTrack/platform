@@ -9,8 +9,8 @@ import android.graphics.drawable.Drawable
 import androidx.core.graphics.toColorInt
 
 /**
- * A short sample of a kind of path, in the color and dash the map draws it with: the Layers
- * menu's legend ([LayersMenu]), the web's `PathSwatch` in `ui/OverlaysMenu.tsx`. [dash] is in
+ * A short sample of a kind of path, in the color and dash the layers document's legend gives
+ * ([MapLayersDoc.Legend]): the Layers menu's ([LayersMenu]). [dash] is in
  * line widths, as MapLibre's `line-dasharray` takes it, or null for a solid line.
  */
 class PathSwatch(color: String, private val dash: FloatArray?, density: Float) : Drawable() {

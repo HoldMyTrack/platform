@@ -3,7 +3,8 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { getCoverageStatus } from '../api';
 import { coveragePollDelay } from './coveragePoll';
 import { getTileVersion, setTileVersion } from './coverageVersion';
-import { refreshCoverageLayers } from './coverageLayers';
+import { applyLayers, currentLayerState, currentLayers } from './applyLayers';
+import { webLayers } from './webLayers';
 
 /**
  * Keeps the Fog/Heatmap layers current after an upload or delete (IMPLEMENTATION.md §4.2.3).
@@ -56,7 +57,8 @@ export function useCoverageRefresh(map: MapLibreMap | null): CoverageRefresh {
     const refetch = (version: number, tileVersion: string) => {
       shownVersionRef.current = version;
       setTileVersion(tileVersion);
-      refreshCoverageLayers(map);
+      const doc = currentLayers(map);
+      if (doc) applyLayers(map, webLayers(doc.flavor, tileVersion), currentLayerState(map));
     };
     const check = () => {
       getCoverageStatus(controller.signal)

@@ -1,21 +1,13 @@
-// Covers docs/SPEC.md FR-3.11 (an activity's own timezone).
+// Covers docs/SPEC.md FR-3.11 (an activity's own timezone); the rule runs from
+// testdata/client-rules/activity-zone.json in clientRules.test.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-// Plain .mjs, like rangeShift.test.mjs: Node strips the types from the imported .ts module itself.
-import { knownTimeZone } from '../src/ui/timeZone.ts';
+// Plain .mjs, like editTrackOps.test.mjs: Node strips the types from the imported .ts module itself.
+import { activityTimeZone } from '../src/ui/timeZone.ts';
 
-test('a zone the runtime knows is passed through', () => {
-  assert.equal(knownTimeZone('Asia/Tokyo'), 'Asia/Tokyo');
-  assert.equal(knownTimeZone('Etc/GMT+3'), 'Etc/GMT+3');
-});
-
-test('an unknown or missing zone falls back to the runtime\'s own rather than throwing', () => {
-  assert.equal(knownTimeZone('Mars/Olympus_Mons'), undefined);
-  assert.equal(knownTimeZone(''), undefined);
-  assert.equal(knownTimeZone(undefined), undefined);
-  // What a caller does with it: format in the activity's zone, or the browser's.
+test('the zone formats in the activity\'s wall clock, and an unknown one in the browser\'s without throwing', () => {
   const at = new Date('2026-03-09T22:30:00Z');
-  const tokyo = at.toLocaleString('en-GB', { timeZone: knownTimeZone('Asia/Tokyo'), dateStyle: 'medium', timeStyle: 'short' });
+  const tokyo = at.toLocaleString('en-GB', { timeZone: activityTimeZone('Asia/Tokyo', undefined), dateStyle: 'medium', timeStyle: 'short' });
   assert.equal(tokyo, '10 Mar 2026, 07:30');
-  assert.doesNotThrow(() => at.toLocaleString('en-GB', { timeZone: knownTimeZone('Mars/Olympus_Mons') }));
+  assert.doesNotThrow(() => at.toLocaleString('en-GB', { timeZone: activityTimeZone('Mars/Olympus_Mons', undefined) }));
 });

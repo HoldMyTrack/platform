@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/HoldMyTrack/platform/services/server/internal/fog"
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/mapstyle"
 )
@@ -67,5 +68,44 @@ func (s *Server) handleMapStyle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	if _, err := w.Write(doc); err != nil {
 		s.log.Warn("map style write", "err", err)
+	}
+}
+
+// handleMapLayers serves `GET /v1/map/layers?flavor=` (ADR-0048): every layer HoldMyTrack draws
+// over the basemap, at the account's tile version, for a native client to apply beside the style.
+// Per account, so private and behind the session; it changes with a deploy or the tile version,
+// and the ETag is built from those alone, so a client revalidating it costs one query and no body.
+func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
+	flavor := r.URL.Query().Get("flavor")
+	userID := userIDFromContext(r.Context())
+	var mapVersion int64
+	if err := s.pool.QueryRow(r.Context(), `SELECT map_version FROM users WHERE id = $1`, userID).Scan(&mapVersion); err != nil {
+		s.log.Error("map layers: map version", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	tileVersion := fog.TileVersion(userID, mapVersion)
+
+	doc, err := mapstyle.Layers(flavor, tileVersion)
+	if errors.Is(err, mapstyle.ErrUnknownFlavor) {
+		writeAPIError(w, "unknown flavor; expected one of "+strings.Join(mapstyle.Flavors(), ", "), http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		s.log.Error("map layers", "err", err)
+		writeAPIError(w, "failed to build layers", http.StatusInternalServerError)
+		return
+	}
+
+	etag := mapstyle.LayersETag(flavor, tileVersion)
+	w.Header().Set("ETag", etag)
+	w.Header().Set("Cache-Control", "private, no-cache")
+	if match := r.Header.Get("If-None-Match"); match != "" && strings.Contains(match, etag) {
+		w.WriteHeader(http.StatusNotModified)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if _, err := w.Write(doc); err != nil {
+		s.log.Warn("map layers write", "err", err)
 	}
 }

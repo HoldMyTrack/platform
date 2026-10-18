@@ -7,8 +7,9 @@ TEST    := $(COMPOSE) --profile test run --rm test
 # A throwaway Go toolchain for services/server's unit tests, so `make test` needs Docker and
 # nothing else, like every other target here. Named volumes keep the module and build
 # caches between runs. It shares compose's db container's network namespace, so the
-# database tests reach their holdmytrack_test database at localhost:5432.
-GO      := docker run --rm -v $(CURDIR)/services/server:/src -w /src \
+# database tests reach their holdmytrack_test database at localhost:5432, and testdata is
+# mounted where the shared cases' relative paths land.
+GO      := docker run --rm -v $(CURDIR)/services/server:/src -w /src -v $(CURDIR)/testdata:/testdata:ro \
              -v holdmytrack-go-mod:/go/pkg/mod -v holdmytrack-go-build:/root/.cache/go-build \
              --network container:$$($(COMPOSE) ps -q db) \
              -e TEST_DATABASE_URL=postgres://holdmytrack:holdmytrack@localhost:5432/holdmytrack_test \
@@ -47,7 +48,7 @@ test-go: ## Go tests (services/server), one package at a time, against compose's
 	$(GO) go test -p 1 ./...
 
 # verify:style compares against services/server/internal/mapstyle/styles, and verify:api-types
-# against the API contract in services/server/api, and the map rule cases read testdata/; the web
+# against the API contract in services/server/api, and the client rule cases read testdata/; the web
 # container sees none of these otherwise, so each is mounted where the relative paths land.
 test-unit: ## Web unit tests and drift checks (fix: npm run build:style / gen:api-types)
 	$(COMPOSE) run --rm -v $(CURDIR)/services/server/internal/mapstyle/styles:/services/server/internal/mapstyle/styles:ro \

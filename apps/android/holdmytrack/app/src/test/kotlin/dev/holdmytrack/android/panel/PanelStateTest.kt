@@ -27,31 +27,8 @@ class PanelStateTest {
     private val walk = activity("a", "walking", 1200.0)
     private val run = activity("b", "running", 10400.0)
     private val ride = activity("c", "cycling", 21000.0)
-    private val noDistance = activity("d", "walking", null)
 
     private fun state(vararg activities: Activity) = PanelState().apply { setActivities(activities.toList()) }
-
-    @Test
-    fun `distance bounds skip activities with no distance`() {
-        assertEquals(DistanceRange(1200.0, 21000.0), ActivityFacets.distanceBounds(listOf(walk, run, ride, noDistance)))
-        assertNull(ActivityFacets.distanceBounds(listOf(noDistance)))
-    }
-
-    @Test
-    fun `an active distance band drops activities with no distance`() {
-        val band = DistanceRange(1000.0, 5000.0)
-        assertTrue(ActivityFacets.passesDistance(walk, band))
-        assertFalse(ActivityFacets.passesDistance(run, band))
-        assertFalse(ActivityFacets.passesDistance(noDistance, band))
-        assertTrue(ActivityFacets.passesDistance(noDistance, null))
-    }
-
-    @Test
-    fun `type facets are counted after the distance band, busiest first`() {
-        val facets = ActivityFacets.typeFacets(listOf(walk, run, ride, noDistance), null)
-        assertEquals(listOf(TypeFacet("walking", 2), TypeFacet("running", 1), TypeFacet("cycling", 1)), facets)
-        assertEquals(listOf(TypeFacet("walking", 1)), ActivityFacets.typeFacets(listOf(walk, run, noDistance), DistanceRange(0.0, 5000.0)))
-    }
 
     @Test
     fun `the toolbar acts on the checked group, else the selected row`() {

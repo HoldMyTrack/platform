@@ -324,7 +324,7 @@ activities_track-metrics_id:
   parameters:
     - $ref: "../components/parameters.yaml#/ActivityID"
   get:
-    summary: The stored track's points with their speed, for the speed chart
+    summary: The stored track's points with their speed, and its pace bands
     responses:
       "200":
         description: The points, in order
@@ -332,7 +332,7 @@ activities_track-metrics_id:
           application/json:
             schema:
               type: object
-              required: [activity_id, points]
+              required: [activity_id, points, bands]
               additionalProperties: false
               properties:
                 activity_id: { type: string, format: uuid }
@@ -349,6 +349,17 @@ activities_track-metrics_id:
                       time_s:
                         type: integer
                         description: Unix seconds.
+                bands:
+                  type: array
+                  description: Runs of points by pace band, slowest 0 to fastest 4, over the track's own speeds; neighbouring runs share their boundary point.
+                  items:
+                    type: object
+                    required: [band, start, end]
+                    additionalProperties: false
+                    properties:
+                      band: { type: integer, minimum: 0, maximum: 4 }
+                      start: { type: integer, description: "The run's first point's index." }
+                      end: { type: integer, description: "Its last point's index, inclusive." }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
       "404": { $ref: "../components/responses.yaml#/Error" }

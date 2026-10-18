@@ -1,0 +1,10 @@
+{
+  "rule": "photoPan",
+  "description": "The photo viewer's view after a pan by dx/dy, held where the picture can be: an edge never pulled in past the stage's, and a side narrower than the stage centered. Views are { scale, x, y }: scale 1 at (0, 0) is the picture fitted to the stage and centered, x/y move its center in pixels from the stage's center. Sizes are { width, height }.",
+  "tolerance": 1e-3,
+  "cases": [
+    { "name": "panning stops at the picture's edges, and a side narrower than the stage stays centered", "input": { "view": { "scale": 1.5, "x": 0, "y": 0 }, "dx": 500, "dy": -500, "fitted": { "width": 600, "height": 800 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 1.5, "x": 0, "y": -200 } },
+    { "name": "a pan within the edges moves the picture", "input": { "view": { "scale": 4, "x": 0, "y": 0 }, "dx": -300, "dy": 200, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 4, "x": -300, "y": 200 } },
+    { "name": "a fitted picture does not move", "input": { "view": { "scale": 1, "x": 0, "y": 0 }, "dx": 100, "dy": 100, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 1, "x": 0, "y": 0 } }
+  ]
+}

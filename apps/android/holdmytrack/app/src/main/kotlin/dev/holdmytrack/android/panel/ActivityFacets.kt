@@ -5,14 +5,17 @@ import dev.holdmytrack.android.net.Activity
 /** A DISTANCE band in meters, both ends inclusive. */
 data class DistanceRange(val min: Double, val max: Double)
 
+/** The DISTANCE slider's two knobs. */
+enum class DistanceKnob { MIN, MAX }
+
 /** One TYPE the listed activities use, and how many of them do. */
 data class TypeFacet(val type: String, val count: Int)
 
 /**
- * The Activities panel's two client-side filters, TYPE and DISTANCE — a port of the web's
- * `apps/web/src/ui/activityFacets.ts`, rule for rule, so the two clients list the same rows for
- * the same choices (`docs/SPEC.md` FR-5.2, FR-5.3). Both narrow a list already fetched for the
- * date range; neither is sent to the server.
+ * The Activities panel's two client-side filters, TYPE and DISTANCE (`docs/SPEC.md` FR-5.2,
+ * FR-5.3). Both narrow a list already fetched for the date range; neither is sent to the server.
+ * The web's `activityFacets.ts`; both run `testdata/client-rules`' `distance-bounds.json`,
+ * `distance-filter.json`, `type-facets.json` and `passes-filters.json`.
  */
 object ActivityFacets {
 
@@ -22,6 +25,17 @@ object ActivityFacets {
         val distances = activities.filterNot { it.isPrivate }.mapNotNull { it.distanceMeters }
         if (distances.isEmpty()) return null
         return DistanceRange(distances.min(), distances.max())
+    }
+
+    /** The DISTANCE filter after [knob] moved to [value]: the other knob held, the two never
+     *  crossing, and null — no filter — once both are back at [bounds], so a knob dragged away
+     *  and back leaves nothing filtered out. */
+    fun nextDistanceFilter(bounds: DistanceRange, current: DistanceRange, knob: DistanceKnob, value: Double): DistanceRange? {
+        val next = when (knob) {
+            DistanceKnob.MIN -> DistanceRange(minOf(value, current.max), current.max)
+            DistanceKnob.MAX -> DistanceRange(current.min, maxOf(value, current.min))
+        }
+        return next.takeUnless { it.min <= bounds.min && it.max >= bounds.max }
     }
 
     /** An activity with no distance never passes an active band — it can't be placed on it —

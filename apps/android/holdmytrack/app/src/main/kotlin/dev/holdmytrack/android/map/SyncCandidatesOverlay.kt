@@ -20,7 +20,7 @@ import org.maplibre.geojson.Point
  * The Sync tab's candidates on the map (`docs/SPEC.md` FR-3.6): every activity listed there,
  * drawn dashed from the phone's own data — none of it is on the server yet — and the one picked
  * on the list or the map as the Map tab draws a selected activity: solid and wider over a dark
- * halo, coloured by pace ([Candidate.metrics], [MapOverlays.bandFeatures]). One GeoJSON source
+ * halo, coloured by pace ([Candidate.metrics], [TrackBands]). One GeoJSON source
  * whose layers filter on a `role` property, and one for the bands, all under the basemap's
  * labels, as [TrackEditOverlay] is. The lines are the candidates' simplified ones ([Candidate.line]).
  */
@@ -32,8 +32,6 @@ object SyncCandidatesOverlay {
     private const val LINE_LAYER_ID = "sync-candidates-line"
     private const val HIGHLIGHT_LAYER_ID = "sync-candidates-highlight"
     private const val BAND_LAYER_ID = "sync-candidates-bands"
-
-    private const val COLOR = MapOverlays.TRACK_COLOR
 
     /** How far from a tap a line still counts as tapped — the tracks' own tolerance, in dp. */
     private const val TAP_TOLERANCE_DP = 14f
@@ -49,44 +47,20 @@ object SyncCandidatesOverlay {
             if (beforeId != null) style.addLayerBelow(layer, beforeId) else style.addLayer(layer)
         }
         fun role(name: String) = Expression.eq(Expression.get("role"), name)
-        // Halo first, then the dashed lines, then the picked line and its bands over them.
-        add(
-            LineLayer(HALO_LAYER_ID, SOURCE_ID).withFilter(role("highlight")).withProperties(
-                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
-                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
-                PropertyFactory.lineColor(MapOverlays.CASING_COLOR),
-                PropertyFactory.lineWidth(MapOverlays.CASING_WIDTH),
-                PropertyFactory.lineOpacity(MapOverlays.CASING_OPACITY),
-            ),
-        )
+        // Halo first, then the dashed lines, then the picked line and its bands over them: the
+        // halo, picked line and bands as the layers document draws a selected activity's.
+        add(LineLayer(HALO_LAYER_ID, SOURCE_ID).withFilter(role("highlight")).withProperties(*MapLayers.propertiesOf(style, "casing")))
         add(
             LineLayer(LINE_LAYER_ID, SOURCE_ID).withFilter(role("line")).withProperties(
                 PropertyFactory.lineCap(Property.LINE_CAP_BUTT),
                 PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
-                PropertyFactory.lineColor(COLOR),
                 PropertyFactory.lineWidth(3f),
                 PropertyFactory.lineOpacity(0.85f),
                 PropertyFactory.lineDasharray(arrayOf(1.5f, 1.5f)),
-            ),
+            ).apply { MapLayers.color(style, "track")?.let { setProperties(PropertyFactory.lineColor(it)) } },
         )
-        add(
-            LineLayer(HIGHLIGHT_LAYER_ID, SOURCE_ID).withFilter(role("highlight")).withProperties(
-                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
-                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
-                PropertyFactory.lineColor(COLOR),
-                PropertyFactory.lineWidth(MapOverlays.SELECTED_WIDTH),
-                PropertyFactory.lineOpacity(1f),
-            ),
-        )
-        add(
-            LineLayer(BAND_LAYER_ID, BAND_SOURCE_ID).withProperties(
-                PropertyFactory.lineCap(Property.LINE_CAP_ROUND),
-                PropertyFactory.lineJoin(Property.LINE_JOIN_ROUND),
-                PropertyFactory.lineColor(Expression.get("color")),
-                PropertyFactory.lineWidth(MapOverlays.BAND_WIDTH),
-                PropertyFactory.lineOpacity(MapOverlays.BAND_OPACITY),
-            ),
-        )
+        add(LineLayer(HIGHLIGHT_LAYER_ID, SOURCE_ID).withFilter(role("highlight")).withProperties(*MapLayers.propertiesOf(style, "focused")))
+        add(LineLayer(BAND_LAYER_ID, BAND_SOURCE_ID).withProperties(*MapLayers.propertiesOf(style, "pace-bands")))
     }
 
     /** Draws [candidates], [highlight] (a [Candidate.key]) picked out over the rest, in its pace bands. */
@@ -102,7 +76,8 @@ object SyncCandidatesOverlay {
             }
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
-        val bands = candidates.firstOrNull { it.key == highlight }?.let { MapOverlays.bandFeatures(it.metrics) }.orEmpty()
+        val bands = candidates.firstOrNull { it.key == highlight }
+            ?.let { MapOverlays.bandFeatures(it.metrics, TrackBands.runs(it.metrics.map { point -> point.speedMps })) }.orEmpty()
         style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(bands))
     }
 

@@ -2,25 +2,30 @@ import { useEffect, useRef, useState } from 'react';
 import { pickedCount, type Overlays } from '../map/overlays';
 import { ChevronDown, Layers } from 'lucide-react';
 import { SPOT_CATEGORIES, type SpotCategory } from '../map/spots';
-import { PATH_COLORS, pathDash, type Flavor } from '../map/style';
+import { getTileVersion } from '../map/coverageVersion';
+import { groupOf, type LegendEntry } from '../map/mapLayers';
+import type { Flavor } from '../map/style';
+import { webLayers } from '../map/webLayers';
 import { t } from '../i18n';
 import type { MessageKey } from '../i18n/en';
 
 export interface OverlaysMenuProps {
   overlays: Overlays;
   onChange: (next: Overlays) => void;
-  /** The basemap's flavor, whose path colors the legend shows. */
+  /** The basemap's flavor, whose layers document gives the legend. */
   flavor: Flavor;
 }
 
-type PathKind = keyof (typeof PATH_COLORS)[Flavor];
+/** The bike-paths group's legend entries (bikePathsGroup.ts). */
+type PathKind = 'bikePaths' | 'sharedPaths' | 'mtbTrails' | 'trails' | 'tracks';
 
 /** How wide the legend draws a line; the dash scales with it, as on the map. */
 const SWATCH_WIDTH = 3;
 
-/** A short sample of a kind of path, in the color and dash the map draws it with. */
-function PathSwatch({ flavor, kind }: { flavor: Flavor; kind: PathKind }) {
-  const dash = pathDash(flavor, kind);
+/** A short sample of a kind of path, in the color and dash the layers document's legend gives. */
+function PathSwatch({ entry }: { entry: LegendEntry | undefined }) {
+  if (!entry) return null;
+  const { color, dash } = entry;
   return (
     <svg className="overlays-menu__swatch" width="24" height="8" viewBox="0 0 24 8" aria-hidden="true">
       <line
@@ -28,7 +33,7 @@ function PathSwatch({ flavor, kind }: { flavor: Flavor; kind: PathKind }) {
         y1="4"
         x2="22"
         y2="4"
-        stroke={PATH_COLORS[flavor][kind]}
+        stroke={color}
         strokeWidth={SWATCH_WIDTH}
         strokeLinecap={dash ? 'butt' : 'round'}
         strokeDasharray={dash?.map((d) => d * SWATCH_WIDTH).join(' ')}
@@ -81,6 +86,7 @@ export function OverlaysMenu({ overlays, onChange, flavor }: OverlaysMenuProps) 
     change({ spots: SPOT_CATEGORIES.filter((c) => (c === category ? !on : overlays.spots.includes(c))) }, !on);
   };
   const togglePath = (kind: 'bikePaths' | 'sharedPaths' | 'mtbTrails') => change({ [kind]: !overlays[kind] }, !overlays[kind]);
+  const legend = groupOf(webLayers(flavor, getTileVersion()), 'bike-paths')?.legend ?? {};
   const count = pickedCount(overlays);
   const shown = overlays.enabled && count > 0;
 
@@ -88,7 +94,7 @@ export function OverlaysMenu({ overlays, onChange, flavor }: OverlaysMenuProps) 
     <label key={id} htmlFor={id} className="overlays-menu__item">
       <input id={id} type="checkbox" checked={checked} onChange={onToggle} />
       <span>{label}</span>
-      {swatch && <PathSwatch flavor={flavor} kind={swatch} />}
+      {swatch && <PathSwatch entry={legend[swatch]} />}
     </label>
   );
 
@@ -120,18 +126,18 @@ export function OverlaysMenu({ overlays, onChange, flavor }: OverlaysMenuProps) 
         <div className="overlays-menu__panel" role="dialog" aria-label={t('map.overlays')}>
           <fieldset className="overlays-menu__group">
             <legend>{t('overlays.paths')}</legend>
-            {item('overlay-bike-paths', t('overlays.bike_paths'), overlays.bikePaths, () => togglePath('bikePaths'), 'cycleway')}
-            {item('overlay-shared-paths', t('overlays.shared_paths'), overlays.sharedPaths, () => togglePath('sharedPaths'), 'shared')}
-            {item('overlay-mtb-trails', t('overlays.mtb_trails'), overlays.mtbTrails, () => togglePath('mtbTrails'), 'mtb')}
+            {item('overlay-bike-paths', t('overlays.bike_paths'), overlays.bikePaths, () => togglePath('bikePaths'), 'bikePaths')}
+            {item('overlay-shared-paths', t('overlays.shared_paths'), overlays.sharedPaths, () => togglePath('sharedPaths'), 'sharedPaths')}
+            {item('overlay-mtb-trails', t('overlays.mtb_trails'), overlays.mtbTrails, () => togglePath('mtbTrails'), 'mtbTrails')}
             {/* Trails and tracks have no entry: they're part of the map (FR-4.13), and this says so. */}
             <p className="overlays-menu__always" data-testid="overlays-always">
               {t('overlays.always_shown')}
               <span className="overlays-menu__key">
-                <PathSwatch flavor={flavor} kind="trail" />
+                <PathSwatch entry={legend.trails} />
                 {t('overlays.trails')}
               </span>
               <span className="overlays-menu__key">
-                <PathSwatch flavor={flavor} kind="track" />
+                <PathSwatch entry={legend.tracks} />
                 {t('overlays.dirt_tracks')}
               </span>
             </p>

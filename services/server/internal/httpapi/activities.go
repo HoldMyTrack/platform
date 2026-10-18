@@ -1090,10 +1090,11 @@ type trackMetricPoint struct {
 type trackMetricsResponse struct {
 	ActivityID string             `json:"activity_id"`
 	Points     []trackMetricPoint `json:"points"`
+	Bands      []paceBand         `json:"bands"`
 }
 
 // handleActivityTrackMetrics serves `GET /v1/activities/track-metrics/{id}` — per-simplified-
-// vertex speed, for the pace-colored bands the web and Android clients draw over whichever
+// vertex speed, and the pace bands (paceBands) the web and Android clients draw over whichever
 // single activity is selected. Pace only: HoldMyTrack keeps no heart rate (VISION.md §1.1).
 // Scoped to the caller's user_id in the query itself, same as every other per-activity lookup
 // here: a non-owned or nonexistent id is indistinguishable from "not found," nothing new to
@@ -1136,5 +1137,5 @@ func (s *Server) handleActivityTrackMetrics(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, trackMetricsResponse{ActivityID: activityID, Points: points})
+	writeJSON(w, http.StatusOK, trackMetricsResponse{ActivityID: activityID, Points: points, Bands: paceBands(speed)})
 }

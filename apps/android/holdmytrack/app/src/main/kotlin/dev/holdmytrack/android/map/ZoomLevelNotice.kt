@@ -7,7 +7,7 @@ import dev.holdmytrack.android.R
 /**
  * Names the level Fog draws at (`docs/SPEC.md` FR-4.2), the web's `ui/ZoomLevelNotice.tsx`: whole
  * countries, then whole states or provinces, then exactly where you've been
- * (the served style's tiers, [CoverageLayers.tier]). Nothing else on the map says which is in view, and a veil lifted from
+ * (the served style's tiers, [MapLayers.tier]). Nothing else on the map says which is in view, and a veil lifted from
  * a whole country reads as a bug when you don't know that's the level you're at. Heatmap reads the
  * same way at every zoom, so it gets one message ([levelNoticeText]).
  *

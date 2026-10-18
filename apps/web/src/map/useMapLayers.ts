@@ -1,16 +1,16 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { ensureBikePathLayers, setBikePathsVisible, type BikePathOverlays } from './bikePaths';
 import { basemapOrigin, satelliteSource } from './config';
-import { ensureCoverageLayers } from './coverageLayers';
-import { labelInsertionPoint } from './layers';
+import { applyLayers, currentLayerState, setLayerToggles } from './applyLayers';
+import type { BikePathOverlays } from './bikePathsGroup';
+import { getTileVersion } from './coverageVersion';
+import { webLayers } from './webLayers';
 import { setMapMode, type MapMode } from './mapMode';
-import { raisePathLayers } from './paths';
 import { setSatelliteVisible } from './satellite';
 import { ensureSpotsLayer, type SpotCategory } from './spots';
 import { buildStyle, type Flavor } from './style';
-import { ensureBandLayer, setTrackBands } from './trackBands';
-import { ensureTrackLayer, refreshTrackLayer, setHiddenTracks, setSelectedTracks } from './tracks';
+import { setTrackBands } from './trackBands';
+import { attachTrackInteractivity, refreshTrackLayer, trackQuery } from './tracks';
 import type { ActivityQuery, ActivityTrackMetrics } from '../api';
 import { lang } from '../i18n';
 
@@ -38,37 +38,32 @@ export interface MapLayersInputs {
 export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): void {
   const { initialFlavor, flavor, satellite, mode, editingTrack, paths, spotsShown, activityQuery, mapHiddenIds, focusedId, bands } = inputs;
 
-  // Points the existing tracks source at the new query. Trap: `ensureTrackLayer` only seeds a new
-  // source, so it can't do this.
+  // Points the tracks source at the new query, as a new URL.
   useEffect(() => {
     if (map) refreshTrackLayer(map, activityQuery);
   }, [map, activityQuery]);
 
   const reattach = useCallback(
     (instance: MapLibreMap) => {
-      const beforeId = labelInsertionPoint(instance);
-      // Layer order matters: MapLibre paints later layers on top, all beneath the basemap labels
-      // (layers.ts). Fog and heatmap first, so tracks show through the veil.
-      ensureCoverageLayers(instance, beforeId);
-      // Trails and paths over the veil and under the activity tracks (paths.ts, bikePaths.ts).
-      raisePathLayers(instance, beforeId);
-      ensureBikePathLayers(instance, beforeId, flavor);
-      ensureTrackLayer(instance, beforeId, activityQuery);
-      // A recreated source has no feature-state, the focused track's `selected` included.
-      setSelectedTracks(instance, focusedId !== null ? [focusedId] : []);
-      // Bands after tracks, to paint over the one track they apply to (trackBands.ts).
-      ensureBandLayer(instance, beforeId);
+      // Everything the layers document draws, in its order (mapLayers.ts), with the state the
+      // last style had: a style load mid-mode would otherwise drop to Normal and un-hide every
+      // hidden track.
+      const state = currentLayerState(instance);
+      applyLayers(instance, webLayers(flavor, getTileVersion()), {
+        ...state,
+        mode,
+        satellite,
+        toggles: { ...state.toggles, ...paths },
+        vars: { ...state.vars, hidden: [...mapHiddenIds], focused: focusedId !== null ? [focusedId] : [] },
+        queries: { ...state.queries, tracks: trackQuery(activityQuery) },
+      });
+      attachTrackInteractivity(instance);
       // Spots last, above the basemap's labels too (spots.ts).
       ensureSpotsLayer(instance, spotsShown);
-      // Re-applied because new layers start hidden or unfiltered: without these, a style load
-      // mid-mode would drop to Normal and un-hide every hidden track. Both diff against the layer's
-      // current value first (docs/DEVELOPMENT.md, the setFilter/setLayoutProperty gotcha).
       setMapMode(instance, mode, satellite, editingTrack);
-      setBikePathsVisible(instance, paths);
       setSatelliteVisible(instance, satellite, mode);
-      setHiddenTracks(instance, [...mapHiddenIds]);
       // The band source is recreated empty.
-      if (bands) setTrackBands(instance, bands.points);
+      if (bands) setTrackBands(instance, bands);
     },
     [flavor, satellite, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, focusedId],
   );
@@ -106,7 +101,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
 
   useEffect(() => {
     if (!map) return;
-    setBikePathsVisible(map, paths);
+    setLayerToggles(map, paths);
   }, [map, paths]);
 
   useEffect(() => {

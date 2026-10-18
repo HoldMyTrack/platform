@@ -1,0 +1,17 @@
+{
+  "rule": "photoTrackPoint",
+  "description": "The place a fraction (0-1, clamped) of the way along a track is, with its moment rounded to the second: the Photos tab's slider, which runs by distance, so a stop takes up none of it. A track with no length goes by time. Points are { lon, lat, t }, t in epoch seconds.",
+  "tolerance": 1e-9,
+  "cases": [
+    { "name": "the start", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "fraction": 0 }, "expected": { "lon": 10, "lat": 50, "t": 1780000000 } },
+    { "name": "a quarter of the way is halfway through the first leg", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "fraction": 0.25 }, "expected": { "lon": 10, "lat": 50.0044965, "t": 1780000050 } },
+    { "name": "past the stop, the second leg goes on from its last moment", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "fraction": 0.6 }, "expected": { "lon": 10, "lat": 50.0107916, "t": 1780000420 } },
+    { "name": "three quarters is halfway through the second leg", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "fraction": 0.75 }, "expected": { "lon": 10, "lat": 50.0134895, "t": 1780000450 } },
+    { "name": "the end", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "fraction": 1 }, "expected": { "lon": 10, "lat": 50.017986, "t": 1780000500 } },
+    { "name": "below 0 is the start", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "fraction": -0.5 }, "expected": { "lon": 10, "lat": 50, "t": 1780000000 } },
+    { "name": "above 1 is the end", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "fraction": 1.5 }, "expected": { "lon": 10, "lat": 50.017986, "t": 1780000500 } },
+    { "name": "a track with no length goes by time", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50, "t": 1780000100 }], "fraction": 0.5 }, "expected": { "lon": 10, "lat": 50, "t": 1780000050 } },
+    { "name": "one point is the point", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }], "fraction": 0.5 }, "expected": { "lon": 10, "lat": 50, "t": 1780000000 } },
+    { "name": "no points is no place", "input": { "points": [], "fraction": 0.5 }, "expected": { "throws": true } }
+  ]
+}

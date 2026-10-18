@@ -1,0 +1,10 @@
+{
+  "rule": "layerLift",
+  "description": "Whether a basemap layer a group lifts still sits below the lowest of the document's own layers, so has to move. Input: current (bottom to top), id, own. Expected: boolean.",
+  "cases": [
+    { "name": "below the document's layers", "input": { "current": ["roads", "paths_trail", "dim", "places"], "id": "paths_trail", "own": ["dim"] }, "expected": true },
+    { "name": "already above them", "input": { "current": ["roads", "dim", "paths_trail", "places"], "id": "paths_trail", "own": ["dim"] }, "expected": false },
+    { "name": "none of the document's layers yet", "input": { "current": ["roads", "paths_trail", "places"], "id": "paths_trail", "own": ["dim"] }, "expected": true },
+    { "name": "not on the map", "input": { "current": ["roads", "dim"], "id": "paths_trail", "own": ["dim"] }, "expected": false }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "rule": "photoZoom",
+  "description": "The photo viewer's view after scaling by factor about point (from the stage's center), so what is under it stays there, held between fitted and 8x with no edge pulled in past the stage's. Views are { scale, x, y }: scale 1 at (0, 0) is the picture fitted to the stage and centered, x/y move its center in pixels from the stage's center. Sizes are { width, height }.",
+  "tolerance": 1e-3,
+  "cases": [
+    { "name": "the point under the pointer stays under it", "input": { "view": { "scale": 1, "x": 0, "y": 0 }, "factor": 2, "point": { "x": 200, "y": -100 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 2, "x": -200, "y": 100 } },
+    { "name": "no smaller than fitted", "input": { "view": { "scale": 1, "x": 0, "y": 0 }, "factor": 0.5, "point": { "x": 0, "y": 0 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 1, "x": 0, "y": 0 } },
+    { "name": "no larger than 8x", "input": { "view": { "scale": 1, "x": 0, "y": 0 }, "factor": 100, "point": { "x": 0, "y": 0 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 8, "x": 0, "y": 0 } },
+    { "name": "zooming out pulls a panned picture back in", "input": { "view": { "scale": 4, "x": 1500, "y": 0 }, "factor": 0.5, "point": { "x": 0, "y": 0 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 2, "x": 500, "y": 0 } },
+    { "name": "zooming out to fitted centers it", "input": { "view": { "scale": 4, "x": 1500, "y": 0 }, "factor": 0.25, "point": { "x": 0, "y": 0 }, "fitted": { "width": 1000, "height": 750 }, "stage": { "width": 1000, "height": 800 } }, "expected": { "scale": 1, "x": 0, "y": 0 } }
+  ]
+}

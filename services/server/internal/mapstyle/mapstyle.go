@@ -1,19 +1,19 @@
-// Package mapstyle serves the basemap style document ARCHITECTURE.md §2.1 calls for:
-// "Serve the style as a document from the API rather than reimplementing it per client —
-// three hand-maintained copies of a 71-layer style would diverge."
+// Package mapstyle serves the two map documents ARCHITECTURE.md §2.1 calls for: the basemap
+// style, the same for every account, and the layers document, every layer HoldMyTrack draws over
+// it at one account's tile version (ADR-0048).
 //
-// The style is *not* defined here. It is defined once in apps/web/src/map/style.ts, and
-// apps/web/scripts/build-style.mjs renders that function to the JSON files embedded below,
-// one per label language and flavor (styles/<lang>/<flavor>.json).
-// Nothing in this package knows what a layer is, which is the point: a Go definition of the
-// style would be the second hand-maintained copy `ARCHITECTURE.md` §2.1 exists to prevent. Regenerate with
-// `npm run build:style` in apps/web; `npm run verify:style` fails the build if the committed
-// JSON has drifted from style.ts.
+// Neither is defined here. Both are defined once in apps/web/src/map (style.ts, mapLayers.ts),
+// and apps/web/scripts/build-style.mjs renders them to the JSON files embedded below: a style
+// per label language and flavor (styles/<lang>/<flavor>.json) and a layers template per flavor
+// (layers/<flavor>.json). Nothing in this package knows what a layer is, which is the point: a
+// Go definition would be the second hand-maintained copy `ARCHITECTURE.md` §2.1 exists to
+// prevent. Regenerate with `npm run build:style` in apps/web; `npm run verify:style` fails the
+// build if the committed JSON has drifted.
 //
-// Consumers: MapLibre Native on Android (docs/ARCHITECTURE.md §3) and
-// eventually the headless export renderer (IMPLEMENTATION.md §5.5). The web client still
-// calls buildStyle() in-process — it already has the function, and fetching a document it
-// can construct locally would add a round trip to first paint for no gain.
+// Consumers: MapLibre Native on Android (docs/ARCHITECTURE.md §3) and eventually the headless
+// export renderer (IMPLEMENTATION.md §5.5). The web client builds both in-process: it already
+// has the functions, and fetching documents it can construct locally would add round trips to
+// first paint for no gain.
 package mapstyle
 
 import (
@@ -32,6 +32,14 @@ import (
 
 //go:embed styles/*/*.json
 var styles embed.FS
+
+//go:embed layers/*.json
+var layerTemplates embed.FS
+
+// tileVersionPlaceholder stands in the layers templates for the account's tile version, in the
+// document's tileVersion and in every source's `cv`. Must match TILE_VERSION_PLACEHOLDER in
+// apps/web/scripts/build-style.mjs.
+const tileVersionPlaceholder = "__HOLDMYTRACK_TILE_VERSION__"
 
 // originPlaceholder is baked into the generated JSON in place of a real host, because one
 // built artifact has to serve every deployment — dev resolves basemap assets against the
@@ -77,6 +85,8 @@ var (
 	flavors   []string
 	languages []string
 	rendered  map[string]map[string][]byte // lang → flavor → document, placeholder still in place
+	layers    map[string][]byte            // flavor → layers template
+	build     string                       // the styleBuild every document carries
 )
 
 func load() {
@@ -112,7 +122,47 @@ func load() {
 			flavors = append(flavors, flavor)
 		}
 		sort.Strings(flavors)
+
+		layers = make(map[string][]byte)
+		for _, flavor := range flavors {
+			b, err := layerTemplates.ReadFile(path.Join("layers", flavor+".json"))
+			if err != nil {
+				panic("mapstyle: no layers template for " + flavor + ": " + err.Error())
+			}
+			layers[flavor] = b
+		}
+		var head struct {
+			StyleBuild string `json:"styleBuild"`
+		}
+		if err := json.Unmarshal(layers[flavors[0]], &head); err != nil || head.StyleBuild == "" {
+			panic("mapstyle: layers template has no styleBuild")
+		}
+		build = head.StyleBuild
 	})
+}
+
+// StyleBuild is the build the embedded documents came from, the same in all of them.
+func StyleBuild() string {
+	load()
+	return build
+}
+
+// Layers returns the layers document for one flavor at an account's tileVersion
+// (fog.TileVersion), which contains nothing that needs escaping in a URL or in JSON.
+func Layers(flavor, tileVersion string) ([]byte, error) {
+	load()
+	b, ok := layers[flavor]
+	if !ok {
+		return nil, fmt.Errorf("%w: %q", ErrUnknownFlavor, flavor)
+	}
+	return bytes.ReplaceAll(b, []byte(tileVersionPlaceholder), []byte(tileVersion)), nil
+}
+
+// LayersETag is the layers document's validator, from what it varies by, so a 304 needs no
+// document built.
+func LayersETag(flavor, tileVersion string) string {
+	sum := sha256.Sum256([]byte(StyleBuild() + "\x00" + flavor + "\x00" + tileVersion))
+	return `"` + hex.EncodeToString(sum[:16]) + `"`
 }
 
 // Flavors lists the embedded flavors, sorted. Mirrors FLAVORS in apps/web/src/map/style.ts.
@@ -151,7 +201,7 @@ func Document(flavor, lang, origin string, sat Satellite) ([]byte, error) {
 }
 
 // withSatellite replaces the generated placeholder source with sat, or drops the source, its
-// layer and the satellite metadata keys, keeping the rest (the Fog and Heatmap overlays). It edits the document structurally rather than
+// layer and the satellite metadata keys, keeping the rest (the style build). It edits the document structurally rather than
 // by string replacement: the tile URL and credit are arbitrary text that needs JSON escaping,
 // and removing a layer is not a substitution at all. Layers other than the satellite one pass
 // through as raw JSON, untouched.

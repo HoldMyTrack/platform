@@ -1,6 +1,7 @@
 import type { UnitSystem } from './units';
 import { lang, t, tMaybe } from '../i18n';
-import { knownTimeZone } from './timeZone';
+import { distanceParts, durationParts, totalDistanceParts, type DistanceParts } from './formatParts';
+import { activityTimeZone } from './timeZone';
 
 /**
  * Display formatting for real activity rows and totals. Kept apart from api.ts so the
@@ -18,13 +19,13 @@ import { knownTimeZone } from './timeZone';
  * unnoticed (see useMapInstance.ts) — a formatter that owns its own suffix can't drift that
  * way, since there's nowhere else for the unit to be decided.
  *
- * services/server/internal/web/format.go ports these for the server-rendered pages, so a change
- * here changes there too.
+ * What each number formatter decides is formatParts.ts, shared with Android; this file writes it
+ * in the language. services/server/internal/web/format.go ports these for the server-rendered
+ * pages, so a change here changes there too.
  */
 
 const EM_DASH = '—';
 
-const METERS_PER_MILE = 1609.344;
 const METERS_PER_FOOT = 0.3048;
 
 export function unitLabel(system: UnitSystem): string {
@@ -60,14 +61,14 @@ export function formatStartedAt(iso: string, timeZone: string): string {
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
-    timeZone: knownTimeZone(timeZone),
+    timeZone: activityTimeZone(timeZone),
   });
 }
 
 /** The time of day of `ms` (epoch milliseconds) in `timeZone`, an activity's own: the times of
  *  its points and photos in the Edit window. */
 export function formatClockTime(ms: number, timeZone: string): string {
-  return new Date(ms).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: knownTimeZone(timeZone) });
+  return new Date(ms).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: activityTimeZone(timeZone) });
 }
 
 /** `distanceValue` returns just the number (no unit suffix) — for the one place
@@ -75,23 +76,27 @@ export function formatClockTime(ms: number, timeZone: string): string {
  *  of a range ("5 – 20 km") rather than one per value. Every other caller wants
  *  `formatDistance`, which includes its own suffix. */
 export function distanceValue(meters: number, system: UnitSystem): string {
-  const converted = system === 'imperial' ? meters / METERS_PER_MILE : meters / 1000;
-  return converted.toLocaleString(lang, { minimumFractionDigits: 1, maximumFractionDigits: 1, useGrouping: false });
+  return written(distanceParts(meters, system));
+}
+
+function written(parts: DistanceParts): string {
+  return parts.value.toLocaleString(lang, { minimumFractionDigits: parts.minDecimals, maximumFractionDigits: parts.maxDecimals, useGrouping: parts.grouping });
+}
+
+function withUnit(parts: DistanceParts): string {
+  return `${written(parts)} ${t(`unit.${parts.unit}`)}`;
 }
 
 export function formatDistance(meters: number | null, system: UnitSystem): string {
   if (meters === null) return EM_DASH;
-  return `${distanceValue(meters, system)} ${unitLabel(system)}`;
+  return withUnit(distanceParts(meters, system));
 }
 
 /** "3h 52m" / "43m" / "20s". */
 export function formatDuration(seconds: number | null): string {
   if (seconds === null) return EM_DASH;
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  if (h > 0) return t('duration.hm', { h, m });
-  if (m > 0) return t('duration.m', { m });
-  return t('duration.s', { s: seconds });
+  const { key, args } = durationParts(seconds);
+  return t(key, args);
 }
 
 /**
@@ -102,8 +107,7 @@ export function formatDuration(seconds: number | null): string {
  * flat "0 km" reads as broken, where "0.5 km" reads as a short one.
  */
 export function formatTotalDistance(meters: number, system: UnitSystem): string {
-  const converted = system === 'imperial' ? meters / METERS_PER_MILE : meters / 1000;
-  return `${converted.toLocaleString(lang, { maximumFractionDigits: converted < 10 ? 1 : 0 })} ${unitLabel(system)}`;
+  return withUnit(totalDistanceParts(meters, system));
 }
 
 /** "9 MAR 2026" — the date slider's labels (DateRangeSlider.tsx), per main-screen-v6.png. Takes

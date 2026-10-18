@@ -1,0 +1,14 @@
+{
+  "rule": "photoTrackFraction",
+  "description": "How far along a track (0-1) the moment t (epoch seconds) is, pointAt's inverse: where a photo's slider starts. A moment before or after the track is at its end. Points are { lon, lat, t }, t in epoch seconds.",
+  "tolerance": 1e-9,
+  "cases": [
+    { "name": "halfway through the first leg is a quarter of the way", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "t": 1780000050 }, "expected": 0.25 },
+    { "name": "halfway through the second leg is three quarters", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "t": 1780000450 }, "expected": 0.75 },
+    { "name": "anywhere in the stop is the stop", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "t": 1780000250 }, "expected": 0.5 },
+    { "name": "before the track is its start", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "t": 1779999940 }, "expected": 0 },
+    { "name": "after the track is its end", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50.008993, "t": 1780000100 }, { "lon": 10, "lat": 50.008993, "t": 1780000400 }, { "lon": 10, "lat": 50.017986, "t": 1780000500 }], "t": 1780009999 }, "expected": 1 },
+    { "name": "a track with no length goes by time", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }, { "lon": 10, "lat": 50, "t": 1780000100 }], "t": 1780000025 }, "expected": 0.25 },
+    { "name": "one point is the start", "input": { "points": [{ "lon": 10, "lat": 50, "t": 1780000000 }], "t": 1780000025 }, "expected": 0 }
+  ]
+}

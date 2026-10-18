@@ -17,7 +17,7 @@ data class PendingChange(
 )
 
 /**
- * The web's `pending.ts`; both run `testdata/map-session`. Trap: a job often finishes before
+ * The web's `pending.ts`; both run `testdata/client-rules`. Trap: a job often finishes before
  * the reload after a save answers, so its row is never seen Pending. An edit saved here
  * (`awaiting`) therefore also counts as finished the first time a list shows it not pending.
  */

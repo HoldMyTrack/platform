@@ -412,9 +412,9 @@ describe('basemap foundation', () => {
     await page.locator('#overlay-spots-playground').uncheck();
   });
 
-  // Fog and Heatmap come from the style's own overlays (coverageStyle.ts, FR-4.2 to FR-4.4): each
-  // mode applies its view as the style describes it, here on a live map.
-  it('11. Fog and Heatmap apply the views the style carries', async () => {
+  // Fog and Heatmap come from the layers document (mapLayers.ts, FR-4.2 to FR-4.4): each
+  // mode applies its view as the document describes it, here on a live map.
+  it('11. Fog and Heatmap apply the views the layers document carries', async () => {
     const state = () =>
       page.evaluate(() => {
         const m = window.__holdmytrack;

@@ -7,8 +7,8 @@ import type {
   StyleSpecification,
 } from 'maplibre-gl';
 import { GLYPHS_PATH, PMTILES_PATH, SPRITE_BASE_PATH } from './config';
-import { buildOverlays, OVERLAYS_METADATA } from './coverageStyle';
 import { globeProjection } from './globe';
+import { PATH_COLORS, pathDash, PATHS_MIN_ZOOM } from './pathColors.ts';
 import { satelliteRoadLayerIds } from './satelliteRoads';
 
 /**
@@ -37,14 +37,18 @@ export function isDarkFlavor(flavor: Flavor): boolean {
 }
 
 /** The flavors drawn light-on-dark, or satellite imagery under any flavor: it reads dark, so it
- *  gets the same watermark colors a dark flavor does, as the overlays' satellite views take the
- *  dark veil (coverageStyle.ts, docs/SPEC.md FR-4.14). */
+ *  gets the same watermark colors a dark flavor does, as the layers' satellite views take the
+ *  dark veil (mapLayers.ts, docs/SPEC.md FR-4.14). */
 export function isDarkBase(flavor: Flavor, satellite: boolean): boolean {
   return satellite || isDarkFlavor(flavor);
 }
 
 /** The source id every basemap layer is bound to; fog and track layers will not reuse it. */
 export const BASEMAP_SOURCE = 'protomaps';
+
+/** The style `metadata` key holding the build it came from, which the layers document carries
+ *  too (mapLayers.ts): a client holding the two from different builds fetches the style again. */
+export const STYLE_BUILD_METADATA = 'holdmytrack:style-build';
 
 /**
  * Satellite mode (docs/SPEC.md FR-4.14): a raster imagery source under the vector basemap's
@@ -148,29 +152,6 @@ export interface BuildStyleOptions {
   globe?: boolean;
 }
 
-/**
- * The trail and track layers (docs/SPEC.md FR-4.13), part of the map itself rather than the
- * Layers menu. Protomaps already carries every OSM path in the `roads` layer (`kind=path`,
- * sorted by `kind_detail`), but the stock style draws them all through `roads_other` as one
- * hairline grey from z14, which reads as no paths at all. These draw trails and tracks over that
- * same geometry from further out. Clients find them by id to lift them over Fog's veil
- * (paths.ts, Android's `MapPaths`), so the ids are part of the served style's contract.
- */
-export const PATH_LAYER_IDS = ['paths_trail', 'paths_track', 'paths_bridges_trail', 'paths_bridges_track'] as const;
-
-/** The zoom the trail and track layers start at: the first the basemap carries tracks at. It
- *  has trails only from z13, so they join a zoom later. Bike and shared paths start further out,
- *  from their own tiles (bikePaths.ts). */
-export const PATHS_MIN_ZOOM = 12;
-
-/** Which of the Layers menu's paths are showing: bikePaths.ts's cycleways, shared paths and
- *  mountain-bike trails. */
-export interface PathOverlays {
-  bikePaths: boolean;
-  sharedPaths: boolean;
-  mtbTrails: boolean;
-}
-
 /** Sidewalks, crossings, steps and pedestrian areas stay on the stock grey on purpose: in a
  *  city they outnumber real paths and would bury them. Tracks — OSM's `highway=track`, dirt,
  *  farm and forest roads — are their own layer: vehicle-width, often the very thing a rider
@@ -178,44 +159,6 @@ export interface PathOverlays {
  *  more of them than trails. */
 const TRAIL_DETAILS = ['path', 'footway', 'bridleway'];
 const TRACK_DETAIL = 'track';
-
-/** Blue for cycleways, teal for shared paths, purple for mountain-bike trails (bikePaths.ts),
- *  green for trails, brown for tracks, all clear of the ochre activity tracks (tracks.ts). Teal sits between the cycleway blue and
- *  the trail green, so a shared path reads as a bike route people walk too, and the hue alone
- *  tells it from a cycleway when the map is zoomed out too far for a dash to show. On the light
- *  flavors the two bike colors are dark enough to hold up on Fog's grey veil; on the dark ones
- *  they stay bright against the dark map. The monochrome flavors stay monochrome; there the
- *  kinds differ by weight and dash. */
-export const PATH_COLORS: Record<Flavor, { cycleway: string; shared: string; mtb: string; trail: string; track: string }> = {
-  light: { cycleway: '#0b5a85', shared: '#0b7f74', mtb: '#7d3a96', trail: '#4f7a3a', track: '#8a5a2b' },
-  dark: { cycleway: '#5cbfe0', shared: '#4fd6c2', mtb: '#d29bef', trail: '#8fbf6a', track: '#c9955e' },
-  white: { cycleway: '#262626', shared: '#404040', mtb: '#333333', trail: '#6e6e6e', track: '#5c5c5c' },
-  grayscale: { cycleway: '#1f1f1f', shared: '#383838', mtb: '#2b2b2b', trail: '#666666', track: '#555555' },
-  black: { cycleway: '#c4c4c4', shared: '#a8a8a8', mtb: '#b8b8b8', trail: '#9a9a9a', track: '#b0b0b0' },
-};
-
-/** Each kind's dash, in line widths as MapLibre's `line-dasharray` takes it, or none for a solid
- *  line: the map's layers and the Layers menu's legend (OverlaysMenu.tsx) both draw from it.
- *  Shared paths and mountain-bike trails are solid in every flavor but the monochrome ones, where
- *  only a dash tells them from a cycleway. */
-export function pathDash(flavor: Flavor, kind: keyof (typeof PATH_COLORS)[Flavor]): number[] | undefined {
-  switch (kind) {
-    case 'cycleway':
-      return undefined;
-    case 'shared':
-      return isMonochrome(flavor) ? [2, 1] : undefined;
-    case 'mtb':
-      return isMonochrome(flavor) ? [1, 1] : undefined;
-    case 'trail':
-      return [2, 1];
-    case 'track':
-      return [3, 1.5];
-  }
-}
-
-function isMonochrome(flavor: Flavor): boolean {
-  return flavor === 'white' || flavor === 'grayscale' || flavor === 'black';
-}
 
 function pathLayers(flavor: Flavor, bridges: boolean): LineLayerSpecification[] {
   const colors = PATH_COLORS[flavor];
@@ -266,6 +209,17 @@ function withPathLayers(base: LayerSpecification[], flavor: Flavor): LayerSpecif
   });
 }
 
+function basemapLayers(flavor: Flavor, lang: string): LayerSpecification[] {
+  return withPathLayers(layers(BASEMAP_SOURCE, namedFlavor(flavor), { lang }), flavor);
+}
+
+/** The basemap's label layers, the same ids in every language: what Fog mutes (mapLayers.ts). */
+export function basemapLabelIds(flavor: Flavor): string[] {
+  return basemapLayers(flavor, 'en')
+    .filter((layer) => layer.type === 'symbol')
+    .map((layer) => layer.id);
+}
+
 export function buildStyle(options: BuildStyleOptions): StyleSpecification {
   const {
     flavor,
@@ -280,7 +234,7 @@ export function buildStyle(options: BuildStyleOptions): StyleSpecification {
   } = options;
 
   const base = origin.replace(/\/$/, '');
-  const vector = withPathLayers(layers(BASEMAP_SOURCE, namedFlavor(flavor), { lang }), flavor);
+  const vector = basemapLayers(flavor, lang);
   const hidden = satellite ? satelliteHiddenLayerIds(vector) : [];
   const dimmed = satellite ? satelliteDimmedLayerIds(vector) : [];
 
@@ -302,11 +256,6 @@ export function buildStyle(options: BuildStyleOptions): StyleSpecification {
       ...(satellite && { [SATELLITE_SOURCE]: satelliteSourceSpec(satellite) }),
     },
     metadata: {
-      // Fog and Heatmap, for every client to apply as they come (coverageStyle.ts).
-      [OVERLAYS_METADATA]: buildOverlays(
-        isDarkFlavor(flavor),
-        vector.filter((layer) => layer.type === 'symbol').map((layer) => layer.id),
-      ),
       ...(satellite && {
         [SATELLITE_HIDES_METADATA]: hidden,
         [SATELLITE_DIMS_METADATA]: dimmed,
@@ -330,7 +279,7 @@ function satelliteSourceSpec(satellite: SatelliteSource): RasterSourceSpecificat
 }
 
 /** The imagery right above the background, so everything the vector basemap draws after it —
- *  and every overlay inserted at the first symbol layer — stacks over it. */
+ *  and every layer group inserted at the first symbol layer — stacks over it. */
 function withSatelliteLayer(
   base: LayerSpecification[],
   hidden: string[],

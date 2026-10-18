@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-// Plain .mjs, like rangeShift.test.mjs: Node strips the types from the imported .ts module itself.
+// Plain .mjs, like editTrackOps.test.mjs: Node strips the types from the imported .ts module itself.
 import { unionBBox } from '../src/map/bbox.ts';
 
 const round = (b) => b && b.map((v) => Math.round(v * 1000) / 1000);
