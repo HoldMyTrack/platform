@@ -108,7 +108,7 @@ The style is `GET /v1/map/style/{flavor}?lang=`, unmodified, fetched beside `GET
 
 ### 3.2 Tile versions
 
-Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them and MapLibre's cache draws at once, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The bike-path and Spots sources move with it. Tracks also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed.
+Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The status is read only once attached, so a `304` hands back the kept document even at another stored version. Tracks also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed.
 
 ### 3.3 Logic ported from the web
 
