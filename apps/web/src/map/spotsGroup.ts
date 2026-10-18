@@ -12,8 +12,8 @@ import { IMAGES_METADATA, ROLE_METADATA, tilePath, TOGGLE_METADATA, VARS_METADAT
  * icon. Fog's label dimming leaves the badges alone, since the views don't list them.
  *
  * The client binds the categories shown, the ids the account captured (FR-15.6) and capture
- * mode's target (Android's, FR-2.8) as vars, and draws each badge image the layers name in the
- * colors given: the icon shapes are the client's.
+ * mode's target (`apps/android/docs/SPEC.md` FR-2.8) as vars, and draws each badge image the
+ * layers name in the colors given: the icon shapes are the client's.
  */
 
 /** The server sends nothing below it (internal/httpapi's spotsMinZoom). */
