@@ -52,7 +52,7 @@ const CATEGORY_LABELS: Record<SpotCategory, MessageKey> = {
 
 /**
  * The Layers dropdown beside the map-mode toggle (IMPLEMENTATION.md §4.24, §4.25): layers picked
- * over any mode, in two groups — Paths (Bike paths, Shared paths and Mountain bike trails, FR-4.13) and Points of interest
+ * over any mode, in three groups — Map (Roads, FR-4.15), Paths (Bike paths, Shared paths and Mountain bike trails, FR-4.13) and Points of interest
  * (each Spots category, FR-15.2). The same open/close rules as the Activities panel's Type
  * dropdown: the button toggles it, and a press outside or Escape closes it. The button shows how
  * many are picked, and the checkbox before it shows or hides all of them at once, keeping the
@@ -124,6 +124,10 @@ export function OverlaysMenu({ overlays, onChange, flavor }: OverlaysMenuProps) 
       </button>
       {open && (
         <div className="overlays-menu__panel" role="dialog" aria-label={t('map.overlays')}>
+          <fieldset className="overlays-menu__group">
+            <legend>{t('overlays.map')}</legend>
+            {item('overlay-roads', t('overlays.roads'), overlays.roads, () => change({ roads: !overlays.roads }, !overlays.roads))}
+          </fieldset>
           <fieldset className="overlays-menu__group">
             <legend>{t('overlays.paths')}</legend>
             {item('overlay-bike-paths', t('overlays.bike_paths'), overlays.bikePaths, () => togglePath('bikePaths'), 'bikePaths')}

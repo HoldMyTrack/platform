@@ -223,12 +223,14 @@ describe('basemap foundation', () => {
     assert.ok(true);
   });
 
-  it('8. Trails and tracks always drawn from zoom 12; Layers menu: bike paths, shared paths and mountain-bike trails off by default, each shown on its own, all hidden by the checkbox, remembered across reload', async () => {
+  it('8. Trails and tracks always drawn from zoom 12; Layers menu: roads on and bike paths, shared paths and mountain-bike trails off by default, each shown on its own, all hidden by the checkbox, remembered across reload', async () => {
     const BASE_PATHS = ['paths_trail', 'paths_bridges_trail', 'paths_track', 'paths_bridges_track'];
     const BIKES = ['bike-paths-cycleway'];
     const SHARED = ['bike-paths-shared'];
     const MTB = ['bike-paths-mtb'];
     const PICKS = [...BIKES, ...SHARED, ...MTB];
+    // A sample of the basemap's road layers (FR-4.17): a line, rail and the street names.
+    const ROADS = ['roads_major', 'roads_rail', 'roads_labels_minor'];
     const visibility = (ids) =>
       page.evaluate((ids) => ids.map((id) => window.__holdmytrack.getLayoutProperty(id, 'visibility')), ids);
     const minzoom = (ids) => page.evaluate((ids) => ids.map((id) => window.__holdmytrack.getLayer(id).minzoom), ids);
@@ -245,6 +247,7 @@ describe('basemap foundation', () => {
     assert.equal(await page.locator('#overlay-trails, #overlay-tracks').count(), 0, 'no Trails or Tracks entries');
     assert.deepEqual(await visibility(PICKS), PICKS.map(() => 'none'), 'bike-path layers hidden until ticked');
     assert.deepEqual(await minzoom(PICKS), PICKS.map(() => 9), 'bike-path layers from zoom 9');
+    assert.deepEqual(await visibility(ROADS), ROADS.map(() => 'visible'), 'roads drawn by default');
 
     // The Olentangy Trail, Columbus: trails in the extract at z14.
     await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [-83.02, 39.99], zoom: 14 }));
@@ -305,16 +308,19 @@ describe('basemap foundation', () => {
     assert.equal(await master.isChecked(), true, 'checkbox on while picks show');
     await master.uncheck();
     assert.deepEqual(await visibility(PICKS), PICKS.map(() => 'none'), 'all hidden by the checkbox');
+    assert.deepEqual(await visibility(ROADS), ROADS.map(() => 'none'), 'roads hidden by the checkbox too');
     assert.deepEqual(await visibility(BASE_PATHS), BASE_PATHS.map(() => undefined), 'trails and tracks stay');
     await openMenu();
     assert.equal(await page.locator('#overlay-bike-paths').isChecked(), true, 'picks kept while hidden');
-    assert.equal(await menu.locator('.overlays-menu__count--off').textContent(), '3', 'count greyed, not cleared');
+    assert.equal(await page.locator('#overlay-roads').isChecked(), true, 'roads kept while hidden');
+    assert.equal(await menu.locator('.overlays-menu__count--off').textContent(), '4', 'count greyed, not cleared');
     await page.reload();
     await styleLoaded();
     assert.equal(await master.isChecked(), false, 'checkbox remembered across reload');
     assert.deepEqual(await visibility(PICKS), PICKS.map(() => 'none'), 'still hidden after reload');
     await master.check();
     assert.deepEqual(await visibility(PICKS), PICKS.map(() => 'visible'), 'all back with the checkbox');
+    assert.deepEqual(await visibility(ROADS), ROADS.map(() => 'visible'), 'roads back with the checkbox');
     // Picking something while it's off turns it back on, or the pick would seem to do nothing.
     await master.uncheck();
     await openMenu();
@@ -328,12 +334,18 @@ describe('basemap foundation', () => {
     await page.locator('#overlay-shared-paths').uncheck();
     await page.locator('#overlay-mtb-trails').uncheck();
     assert.deepEqual(await visibility(PICKS), PICKS.map(() => 'none'), 'hidden again once unticked');
+    assert.equal(await master.isDisabled(), false, 'roads still picked');
+    await page.locator('#overlay-roads').uncheck();
+    assert.deepEqual(await visibility(ROADS), ROADS.map(() => 'none'), 'roads hidden once unticked');
     assert.equal(await master.isDisabled(), true, 'nothing picked: nothing for the checkbox to show');
     assert.equal(await page.locator('#overlay-all, #overlay-spots-all').count(), 0, 'no All checkboxes');
     // The legend: each bike entry's line, and the trails and tracks the map always draws.
     assert.equal(await menu.locator('.overlays-menu__item .overlays-menu__swatch').count(), 3, 'a line sample on each bike entry');
     assert.ok(await page.getByTestId('overlays-always').isVisible(), 'the always-shown note');
     assert.equal(await page.getByTestId('overlays-always').locator('.overlays-menu__swatch').count(), 2, 'trails and tracks in the note');
+    // Back to the default for the steps after, which expect roads drawn.
+    await page.locator('#overlay-roads').check();
+    assert.deepEqual(await visibility(ROADS), ROADS.map(() => 'visible'), 'roads back once ticked');
     await page.screenshot({ path: new URL('layers-menu.png', SHOTS).pathname });
   });
 

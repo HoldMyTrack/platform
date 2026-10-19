@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { satelliteRoadLayerIds } from '../src/map/satelliteRoads.ts';
+import { roadLayerIds } from '../src/map/roads.ts';
 
 test('the road layers are the basemap roads_* ones, labels included, trails left', () => {
   const layers = [
@@ -15,7 +15,7 @@ test('the road layers are the basemap roads_* ones, labels included, trails left
     { id: 'places_locality', source: 'protomaps' },
     { id: 'roads_of_some_overlay', source: 'bike-paths' },
   ];
-  assert.deepEqual(satelliteRoadLayerIds(layers, 'protomaps'), [
+  assert.deepEqual(roadLayerIds(layers, 'protomaps'), [
     'roads_minor_casing',
     'roads_bridges_highway',
     'roads_rail',

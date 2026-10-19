@@ -292,12 +292,12 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - Bike paths, shared paths and mountain-bike trails come from an OSM import of their own (FR-4.16), are off until ticked in Layers, drawn from zoom 9; the choice is kept by the browser or phone.
 - From OSM tags, the first that fits: **mountain-bike trail**, a cycleway, path, footway or bridleway with `mtb:scale`, or a cycleway or shared path of rough ground (`surface=ground`, `dirt`, `earth`, `mud`, `sand`, `grass`, `rock`, `woodchips`, `unpaved`); **bike path**, `highway=cycleway`; **shared path**, `highway=path`, `footway` or `bridleway` with `bicycle=designated`. Separately, **trail**: `highway=path`, `footway` or `bridleway`; **dirt track**: `highway=track`.
 - A street's painted bike lane and untagged singletrack are none of these. Sidewalks, crossings, steps and named route networks aren't drawn.
-- Paths draw over Fog and Heatmap at full strength, under the tracks, in every mode and in exports. One switch hides every ticked path and place (FR-15.2) and keeps the picks.
+- Paths draw over Fog and Heatmap at full strength, under the tracks, in every mode and in exports. One switch hides every ticked road (FR-4.17), path and place (FR-15.2) and keeps the picks.
 
 ### FR-4.14 Satellite mode
 
 - Only where the deployment configures imagery (`IMPLEMENTATION.md` §4.26); otherwise no option, and a saved choice shows the map. The choice is kept by the browser or phone.
-- Roads stay over the imagery at 40% opacity, and go altogether in Fog and Heatmap. Over imagery Fog uses the light veil.
+- Roads stay over the imagery at 40% opacity. Over imagery Fog uses the light veil.
 - The provider's credit shows while it's on and is drawn into exports.
 - On a quota-capped plan such as MapTiler's Free plan, imagery stops for the rest of the month once the quota is used; roads and labels still draw.
 
@@ -322,6 +322,11 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 ### FR-4.16 Bike-path tiles
 
 The same paths for every account, behind the session and cached like every map tile; a load that changes them moves every account's tile version. Empty below zoom 9; below 13 a path shorter than a pixel is left out.
+
+### FR-4.17 Roads
+
+- Roads is a Layers pick, on until unticked, kept by the browser or phone, for every base map and mode. The switch that hides ticked paths and places (FR-4.13) hides roads too.
+- It covers the base map's roads, rail, street names and shields. Trails, dirt tracks, bike kinds and place names stay. Exports draw what the screen does.
 
 ## 7. FR-5 — Activities Panel
 

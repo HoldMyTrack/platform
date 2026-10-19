@@ -23,7 +23,8 @@ import dev.holdmytrack.android.R
  * counting them, greyed while they're hidden. The menu opens with a switch that shows or hides
  * every pick at once and keeps them ([shown]) — picking an entry while it's off turns it back on,
  * or the pick would seem to do nothing; with nothing picked it can't be changed — and, where the
- * served style has imagery ([satellite] isn't null), Satellite (`MapSatellite`). A tap on the
+ * served style has imagery ([satellite] isn't null), Satellite (`MapSatellite`). Roads
+ * (`MapRoads`) is a pick like the paths, on until unpicked. A tap on the
  * button toggles the menu, and a tap outside it or Back closes it, like the Activities panel's
  * Type dropdown.
  */
@@ -38,6 +39,9 @@ class LayersMenu(
     private val onShown: (Boolean) -> Unit,
     private val satellite: () -> Boolean?,
     private val onSatellite: (Boolean) -> Unit,
+    /** Roads is picked ([MapRoads]). */
+    private val roads: () -> Boolean,
+    private val onRoads: (Boolean) -> Unit,
     /** The layers document's path legend, by entry (`bike-paths`), or empty before it's loaded. */
     private val legend: () -> Map<String, MapLayersDoc.Legend>,
 ) {
@@ -62,7 +66,7 @@ class LayersMenu(
 
     /** The filled look, the badge and the open menu's switch, from the saved choice. */
     fun render() {
-        val picked = paths().count + spots().size
+        val picked = (if (roads()) 1 else 0) + paths().count + spots().size
         val on = shown()
         master?.let {
             it.isChecked = on
@@ -103,6 +107,14 @@ class LayersMenu(
             isVisible = on != null
             isChecked = on == true
             setOnClickListener { onSatellite(isChecked) }
+        }
+        content.findViewById<CheckBox>(R.id.layers_roads).apply {
+            isChecked = roads()
+            setOnCheckedChangeListener { _, on ->
+                picked(on)
+                onRoads(on)
+                render()
+            }
         }
 
         val current = paths()

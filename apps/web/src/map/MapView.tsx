@@ -67,7 +67,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const [session, dispatch] = useReducer(mapSessionReducer, null, () => initialSession(storyParam(window.location.search)));
   const { range: selectedRange, storyId, mode: mapMode } = session;
   const { checked: checkedActivityIds, focused: focusedActivityId, hidden: hiddenActivityIds, excludedTypes, distanceFilter } = session.selection;
-  const { overlays, change: changeOverlays, paths, satelliteAvailable, satellite } = useOverlays();
+  const { overlays, change: changeOverlays, paths, roads, satelliteAvailable, satellite } = useOverlays();
 
   const today = useMemo(() => todayLocal(), []);
 
@@ -148,8 +148,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   });
 
   const exportScene = useMemo(
-    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], paths, satellite }),
-    [flavor, mapMode, activityQuery, mapHiddenIds, paths, satellite],
+    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], paths, satellite, roads }),
+    [flavor, mapMode, activityQuery, mapHiddenIds, paths, satellite, roads],
   );
   const exporter = useExportFlow(map, container, exportScene);
 
@@ -283,6 +283,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     initialFlavor: initial.flavor,
     flavor,
     satellite,
+    roads,
     mode: mapMode,
     editingTrack,
     paths,
