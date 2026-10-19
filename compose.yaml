@@ -7,6 +7,15 @@ name: holdmytrack
 # No custom `networks:` block: Compose's default network already gives service-name DNS, so
 # `api`/`worker` reach `db:5432` and `rustfs:9000` by service name.
 
+# Satellite imagery (docs/SPEC.md FR-4.14) for the web client, from the same root .env lines
+# as the api's SATELLITE_* below, so one setting reaches every client. Real env vars outrank
+# apps/web/.env.local, so VITE_SATELLITE_* there is ignored.
+x-web-satellite-env: &web-satellite-env
+  VITE_SATELLITE_TILES: ${SATELLITE_TILES:-}
+  VITE_SATELLITE_TILE_SIZE: ${SATELLITE_TILE_SIZE:-512}
+  VITE_SATELLITE_MAXZOOM: ${SATELLITE_MAXZOOM:-18}
+  VITE_SATELLITE_ATTRIBUTION: ${SATELLITE_ATTRIBUTION:-}
+
 services:
   web:
     build: { context: ./apps/web, target: dev }
@@ -20,6 +29,7 @@ services:
       - ./apps/web:/app
       - web-node-modules:/app/node_modules   # MUST shadow the host's darwin binaries
     environment:
+      <<: *web-satellite-env
       VITE_DEV_HOST: "0.0.0.0"
       # Where Vite's dev proxy sends the server-rendered pages (/about, /static/…) — the Go
       # server, by service name (apps/web/vite.config.ts's pageRoutes).
@@ -55,6 +65,7 @@ services:
       - ./apps/web:/app
       - web-node-modules:/app/node_modules
     environment:
+      <<: *web-satellite-env
       VITE_DEV_HOST: "0.0.0.0"
       # Pinned because the bind mount above also exposes a developer's apps/web/.env.local,
       # and Vite reads it: an API base pointed elsewhere leaves the suite stuck on the
@@ -139,8 +150,8 @@ services:
       # pointed at the API's own origin (http://localhost:8080/v1/auth/google/callback), since
       # here Vite and the API are two origins; see .env.example.
       # Satellite imagery (docs/SPEC.md FR-4.14) in the style document native clients fetch —
-      # off unless SATELLITE_TILES is set, like GOOGLE_CLIENT_ID. The web client reads its own
-      # VITE_SATELLITE_* from apps/web/.env.local; see .env.example.
+      # off unless SATELLITE_TILES is set, like GOOGLE_CLIENT_ID. The web gets the same values
+      # (x-web-satellite-env above).
       SATELLITE_TILES: ${SATELLITE_TILES:-}
       SATELLITE_TILE_SIZE: ${SATELLITE_TILE_SIZE:-512}
       SATELLITE_MAXZOOM: ${SATELLITE_MAXZOOM:-18}
