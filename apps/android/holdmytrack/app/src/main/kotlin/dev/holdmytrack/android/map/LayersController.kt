@@ -9,7 +9,7 @@ import org.maplibre.android.maps.Style
 
 /**
  * What the map draws under and beside the user's history: the served style's flavor and
- * language, and the Layers menu's paths, places and satellite imagery, each remembered on the
+ * language, and the Layers menu's roads, paths, places and satellite imagery, each remembered on the
  * device. Show layers hides every pick at once and keeps them.
  */
 class LayersController(
@@ -40,6 +40,8 @@ class LayersController(
             onShown = ::setShown,
             satellite = { if (satelliteAvailable) MapSatellite.isOn(context) else null },
             onSatellite = ::setSatellite,
+            roads = { MapRoads.isOn(context) },
+            onRoads = ::setRoads,
             legend = { style()?.let(MapLayers::doc)?.group("bike-paths")?.legend.orEmpty() },
         )
     }
@@ -72,8 +74,18 @@ class LayersController(
     fun onStyleLoaded(loaded: Style) {
         applyPaths(loaded)
         satelliteAvailable = MapSatellite.isAvailable(loaded)
-        MapSatellite.apply(loaded, MapSatellite.isOn(context), mode())
+        MapSatellite.apply(loaded, MapSatellite.isOn(context))
+        applyRoads(loaded)
     }
+
+    /** Satellite and the roads onto the export's map. */
+    fun applyBasemap(loaded: Style) {
+        MapSatellite.apply(loaded, satelliteOn)
+        applyRoads(loaded)
+    }
+
+    /** The roads drawn: picked, while Show layers is on. */
+    private fun applyRoads(loaded: Style) = MapRoads.apply(loaded, MapLayersSwitch.isOn(context) && MapRoads.isOn(context))
 
     /** The path picks onto [loaded], all hidden while Show layers is off. */
     fun applyPaths(loaded: Style) = MapPaths.apply(loaded, shownPaths(MapPaths.get(context)))
@@ -92,14 +104,22 @@ class LayersController(
     /** Show layers: shows or hides every pick, keeping them. A capture in progress carries on. */
     private fun setShown(on: Boolean) {
         MapLayersSwitch.set(context, on)
-        style()?.let(::applyPaths)
+        style()?.let {
+            applyPaths(it)
+            applyRoads(it)
+        }
         spots.show(shownSpots())
     }
 
     private fun setSatellite(on: Boolean) {
         MapSatellite.set(context, on)
         val loaded = style() ?: return
-        MapSatellite.apply(loaded, on, mode())
+        MapSatellite.apply(loaded, on)
         if (attached()) MapLayers.update(loaded) { it.copy(satellite = satelliteDrawn(loaded)) }
+    }
+
+    private fun setRoads(on: Boolean) {
+        MapRoads.set(context, on)
+        style()?.let(::applyRoads)
     }
 }

@@ -9,6 +9,7 @@ import { applyLayers, INITIAL_LAYER_STATE } from './applyLayers';
 import { getTileVersion } from './coverageVersion';
 import { webLayers } from './webLayers';
 import type { MapMode } from './mapMode';
+import { setRoadsVisible } from './mapRoads';
 import { setSatelliteVisible } from './satellite';
 import type { BikePathOverlays } from './bikePathsGroup';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
@@ -64,6 +65,8 @@ export interface ExportViewState {
   paths: BikePathOverlays;
   /** The Satellite button (FR-4.14): satellite imagery, when the deployment has any. */
   satellite: boolean;
+  /** The Layers menu's roads (overlays.ts). */
+  roads: boolean;
 }
 
 export interface ExportFrameCapture {
@@ -365,7 +368,8 @@ async function renderOffscreen(
       // No Spots or pace bands, as on Android.
       excludedGroups: new Set(['spots', 'track-bands']),
     });
-    setSatelliteVisible(instance, state.satellite, state.mode);
+    setSatelliteVisible(instance, state.satellite);
+    setRoadsVisible(instance, state.roads);
 
     await waitForIdle(instance);
 

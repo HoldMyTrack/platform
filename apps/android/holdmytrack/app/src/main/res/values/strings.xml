@@ -59,8 +59,10 @@
     <string name="map_level_heatmap">The more often you go somewhere, the hotter it glows</string>
     <string name="layers_button">Layers</string>
     <string name="layers_master">Show layers</string>
-    <string name="layers_master_empty">Pick paths or places first</string>
+    <string name="layers_master_empty">Pick roads, paths or places first</string>
     <string name="layers_satellite">Satellite</string>
+    <string name="layers_map">Map</string>
+    <string name="layers_roads">Roads</string>
     <string name="layers_paths">Paths</string>
     <string name="layers_bike_paths">Bike paths</string>
     <string name="layers_shared_paths">Shared paths</string>

@@ -6,6 +6,7 @@ import type { BikePathOverlays } from './bikePathsGroup';
 import { getTileVersion } from './coverageVersion';
 import { webLayers } from './webLayers';
 import { setMapMode, type MapMode } from './mapMode';
+import { setRoadsVisible } from './mapRoads';
 import { setSatelliteVisible } from './satellite';
 import { ensureSpotsLayer, type SpotCategory } from './spots';
 import { buildStyle, type Flavor } from './style';
@@ -18,6 +19,8 @@ export interface MapLayersInputs {
   initialFlavor: Flavor;
   flavor: Flavor;
   satellite: boolean;
+  /** The basemap's roads are drawn (overlays.ts). */
+  roads: boolean;
   mode: MapMode;
   /** The Edit window's Track tab has the map. */
   editingTrack: boolean;
@@ -32,11 +35,11 @@ export interface MapLayersInputs {
 
 /**
  * The app's own layers over the basemap: added on every style load, since `setStyle` keeps the
- * camera but drops custom layers, and kept in step with the mode, paths, satellite and the
+ * camera but drops custom layers, and kept in step with the mode, paths, satellite, roads and the
  * tracks' query between loads. A theme change swaps the style in place.
  */
 export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): void {
-  const { initialFlavor, flavor, satellite, mode, editingTrack, paths, spotsShown, activityQuery, mapHiddenIds, focusedId, bands } = inputs;
+  const { initialFlavor, flavor, satellite, roads, mode, editingTrack, paths, spotsShown, activityQuery, mapHiddenIds, focusedId, bands } = inputs;
 
   // Points the tracks source at the new query, as a new URL.
   useEffect(() => {
@@ -61,11 +64,12 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       // Spots last, above the basemap's labels too (spots.ts).
       ensureSpotsLayer(instance, spotsShown);
       setMapMode(instance, mode, satellite, editingTrack);
-      setSatelliteVisible(instance, satellite, mode);
+      setSatelliteVisible(instance, satellite);
+      setRoadsVisible(instance, roads);
       // The band source is recreated empty.
       if (bands) setTrackBands(instance, bands);
     },
-    [flavor, satellite, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, focusedId],
+    [flavor, satellite, roads, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, focusedId],
   );
 
   useEffect(() => {
@@ -93,7 +97,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
     // Only a flavor change swaps the style; the Satellite button flips layers in place (below).
   }, [map, flavor]);
 
-  // Mode, paths and satellite changes between style loads flip the layers in place.
+  // Mode, paths, satellite and roads changes between style loads flip the layers in place.
   useEffect(() => {
     if (!map) return;
     setMapMode(map, mode, satellite, editingTrack);
@@ -106,6 +110,11 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
 
   useEffect(() => {
     if (!map) return;
-    setSatelliteVisible(map, satellite, mode);
-  }, [map, satellite, mode]);
+    setSatelliteVisible(map, satellite);
+  }, [map, satellite]);
+
+  useEffect(() => {
+    if (!map) return;
+    setRoadsVisible(map, roads);
+  }, [map, roads]);
 }

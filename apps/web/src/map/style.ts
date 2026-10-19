@@ -9,7 +9,7 @@ import type {
 import { GLYPHS_PATH, PMTILES_PATH, SPRITE_BASE_PATH } from './config';
 import { globeProjection } from './globe';
 import { PATH_COLORS, pathDash, PATHS_MIN_ZOOM } from './pathColors.ts';
-import { satelliteRoadLayerIds } from './satelliteRoads';
+import { roadLayerIds } from './roads';
 
 /**
  * Style construction, kept pure and DOM-free on purpose.
@@ -81,9 +81,10 @@ export const SATELLITE_HIDES_METADATA = 'holdmytrack:satellite-hides';
 export const SATELLITE_DIMS_METADATA = 'holdmytrack:satellite-dims';
 export const SATELLITE_ROAD_OPACITY_METADATA = 'holdmytrack:satellite-road-opacity';
 
-/** The style `metadata` key listing the road layers that come off over imagery in Fog and
- *  Heatmap (satelliteRoads.ts), for Android's `MapSatellite` to read rather than re-derive. */
-export const SATELLITE_ROADS_METADATA = 'holdmytrack:satellite-roads';
+/** The style `metadata` key listing the road layers the Layers menu's Roads shows and hides
+ *  (roads.ts), for Android's `MapRoads` to read rather than re-derive. In every style, imagery
+ *  or not, so the server keeps it (it strips only `holdmytrack:satellite-*`). */
+export const ROADS_METADATA = 'holdmytrack:roads';
 
 /** Over imagery the roads are drawn see-through, so they mark the way without painting over the
  *  ground they cross — the flavors' road colors are made for a flat background, not a photo. */
@@ -256,11 +257,11 @@ export function buildStyle(options: BuildStyleOptions): StyleSpecification {
       ...(satellite && { [SATELLITE_SOURCE]: satelliteSourceSpec(satellite) }),
     },
     metadata: {
+      [ROADS_METADATA]: roadLayerIds(vector, BASEMAP_SOURCE),
       ...(satellite && {
         [SATELLITE_HIDES_METADATA]: hidden,
         [SATELLITE_DIMS_METADATA]: dimmed,
         [SATELLITE_ROAD_OPACITY_METADATA]: SATELLITE_ROAD_OPACITY,
-        [SATELLITE_ROADS_METADATA]: satelliteRoadLayerIds(vector, BASEMAP_SOURCE),
       }),
     },
     layers: satellite ? withSatelliteLayer(vector, hidden, dimmed, satelliteOn) : vector,
