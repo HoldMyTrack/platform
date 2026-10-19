@@ -40,6 +40,18 @@
       "name": "Day #5 – Miami Beach to Madeira Beach",
       "type": "driving"
     },
+    "2026-06-08 Grand Canyon rim to rim.gpx": {
+      "name": "Day #1 – Las Vegas to the South Rim",
+      "type": "driving"
+    },
+    "2026-06-09 Grand Canyon rim to rim.gpx": {
+      "name": "Day #2 – rim to rim: South Kaibab to North Kaibab",
+      "type": "hiking"
+    },
+    "2026-06-10 Grand Canyon rim to rim.gpx": {
+      "name": "Day #3 – North Rim to Las Vegas",
+      "type": "driving"
+    },
     "2026-07-01 Emerald Necklace Trail.gpx": {
       "name": "Day #1",
       "type": "Solowheel"
@@ -531,6 +543,15 @@
       "activities": [
         "2026-05-19 Florida road trip.gpx",
         "2026-05-23 Florida road trip.gpx"
+      ]
+    },
+    {
+      "name": "Grand Canyon rim to rim",
+      "description": "A drive from Las Vegas to the South Rim, a day crossing the Grand Canyon on foot from the South Kaibab Trail to the North Kaibab Trail by way of Phantom Ranch, and the long drive home from the North Rim.",
+      "activities": [
+        "2026-06-08 Grand Canyon rim to rim.gpx",
+        "2026-06-09 Grand Canyon rim to rim.gpx",
+        "2026-06-10 Grand Canyon rim to rim.gpx"
       ]
     }
   ],
