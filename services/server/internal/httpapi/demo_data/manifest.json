@@ -32,6 +32,14 @@
       "name": "Day #3 – along the sea to Pirita",
       "type": "walking"
     },
+    "2026-05-19 Florida road trip.gpx": {
+      "name": "Day #1 – Orlando to Miami Beach",
+      "type": "driving"
+    },
+    "2026-05-23 Florida road trip.gpx": {
+      "name": "Day #5 – Miami Beach to Madeira Beach",
+      "type": "driving"
+    },
     "2026-07-01 Emerald Necklace Trail.gpx": {
       "name": "Day #1",
       "type": "Solowheel"
@@ -515,6 +523,14 @@
         "2026-01-22 Vietnam.gpx",
         "2026-01-23 Vietnam.gpx",
         "2026-01-24 Vietnam.gpx"
+      ]
+    },
+    {
+      "name": "Florida road trip",
+      "description": "A drive down to Miami Beach from Orlando, four days by the ocean, then across the state to the Gulf at Madeira Beach.",
+      "activities": [
+        "2026-05-19 Florida road trip.gpx",
+        "2026-05-23 Florida road trip.gpx"
       ]
     }
   ],
