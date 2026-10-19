@@ -61,8 +61,10 @@
     <string name="map_level_heatmap">Чем чаще вы где-то бываете, тем ярче это место</string>
     <string name="layers_button">Слои</string>
     <string name="layers_master">Показывать слои</string>
-    <string name="layers_master_empty">Сначала выберите тропы или места</string>
+    <string name="layers_master_empty">Сначала выберите дороги, тропы или места</string>
     <string name="layers_satellite">Спутник</string>
+    <string name="layers_map">Карта</string>
+    <string name="layers_roads">Дороги</string>
     <string name="layers_paths">Тропы и дорожки</string>
     <string name="layers_bike_paths">Велодорожки</string>
     <string name="layers_shared_paths">Велопешеходные дорожки</string>

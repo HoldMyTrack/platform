@@ -25,7 +25,6 @@ import dev.holdmytrack.android.map.MapLayersSource
 import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.MapNotice
 import dev.holdmytrack.android.map.MapOverlays
-import dev.holdmytrack.android.map.MapSatellite
 import dev.holdmytrack.android.map.MapSession
 import dev.holdmytrack.android.map.ModeBar
 import dev.holdmytrack.android.map.ModeBarState
@@ -690,7 +689,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         mode = next
         modes.check(next)
         style?.takeIf { overlaysAttached }?.let { MapOverlays.setMode(it, next) }
-        style?.let { MapSatellite.apply(it, layers.satelliteOn, next) }
         modes.renderNotices()
         renderDateFooter()
         photos.refresh(force = false)
@@ -702,7 +700,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
      */
     private fun prepareExportStyle(loaded: Style) {
         layers.applyPaths(loaded)
-        MapSatellite.apply(loaded, layers.satelliteOn, mode)
+        layers.applyBasemap(loaded)
         val doc = layersDoc ?: return
         MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), storyId, EXPORT_EXCLUDED)
         layers.applyPaths(loaded)

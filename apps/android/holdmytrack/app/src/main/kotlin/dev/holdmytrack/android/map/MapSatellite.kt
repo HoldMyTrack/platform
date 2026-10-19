@@ -12,10 +12,10 @@ import org.maplibre.android.style.layers.PropertyFactory
 /**
  * Satellite, a switch in the Layers menu (`docs/SPEC.md` FR-4.14):
  * Satellite shows the served style's imagery layer, hides the basemap's background and area fills
- * over it and draws the roads see-through, so roads, boundaries and labels stay on top; in Fog and
- * Heatmap it takes the roads off instead ([roadsHiddenOverImagery]). The served style has the
- * imagery only when the deployment configures some ([isAvailable]); which fills to hide, which
- * roads to dim or take off and how far all come from the style's own metadata, so they're defined
+ * over it and draws the roads see-through, so roads, boundaries and labels stay on top; whether
+ * the roads show at all is [MapRoads]'s. The served style has the imagery only when the
+ * deployment configures some ([isAvailable]); which fills to hide, which roads to dim and how
+ * far all come from the style's own metadata, so they're defined
  * once, in apps/web/src/map/style.ts. A per-device choice, off
  * until turned on, kept in SharedPreferences like [MapPaths].
  */
@@ -28,7 +28,6 @@ object MapSatellite {
     private const val HIDES_METADATA = "holdmytrack:satellite-hides"
     private const val DIMS_METADATA = "holdmytrack:satellite-dims"
     private const val ROAD_OPACITY_METADATA = "holdmytrack:satellite-road-opacity"
-    private const val ROADS_METADATA = "holdmytrack:satellite-roads"
 
     private const val PREFS = "map_satellite"
     private const val KEY = "show"
@@ -44,7 +43,7 @@ object MapSatellite {
     fun isAvailable(style: Style): Boolean = style.getSource(SOURCE_ID) != null
 
     /** A no-op on a style without imagery. */
-    fun apply(style: Style, on: Boolean, mode: MapMode) {
+    fun apply(style: Style, on: Boolean) {
         if (!isAvailable(style)) return
         style.getLayer(LAYER_ID)?.setProperties(PropertyFactory.visibility(if (on) Property.VISIBLE else Property.NONE))
         val metadata = StyleMetadata.of(style)
@@ -53,8 +52,6 @@ object MapSatellite {
         // Off is the default opacity, 1: the dimmed roads are the ones that set none of their own.
         val opacity = if (on) (metadata[ROAD_OPACITY_METADATA] as? JsonPrimitive)?.doubleOrNull?.toFloat() ?: 1f else 1f
         ids(metadata, DIMS_METADATA).forEach { id -> style.getLayer(id)?.setProperties(PropertyFactory.lineOpacity(opacity)) }
-        val roads = PropertyFactory.visibility(if (roadsHiddenOverImagery(on, mode)) Property.NONE else Property.VISIBLE)
-        ids(metadata, ROADS_METADATA).forEach { id -> style.getLayer(id)?.setProperties(roads) }
     }
 
     private fun ids(metadata: JsonObject, key: String): List<String> =

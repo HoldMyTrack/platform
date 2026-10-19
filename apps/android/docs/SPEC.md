@@ -115,7 +115,7 @@ The web's three exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.4), from the same 
 - The map reads only the server. It never reads Health Connect, and an activity appears only once synced and ingested.
 - The mode survives a theme or language change.
 - While recording (FR-5.1) the mode toggle goes and no mode's layers are drawn, only the recording; the mode comes back when it stops.
-- The Layers menu (`docs/SPEC.md` FR-4.13) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.14), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8). Each is off by default and kept on the phone, not the account. Layers stays while recording.
+- The Layers menu (`docs/SPEC.md` FR-4.13) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.14), Roads (`docs/SPEC.md` FR-4.17), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8). Each is kept on the phone, not the account, and all but Roads start off. Layers stays while recording.
 - Fog and Heatmap say when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
 
 ### FR-2.3 Initial camera framing
@@ -200,7 +200,7 @@ The web's photos (`docs/SPEC.md` FR-16, ADR-0024) on the map and in the Edit win
 The web's export (`docs/SPEC.md` FR-4.10) as a viewfinder over the map, not offered while recording.
 
 - A platform preset keeps its shape when cropped; Custom fixes the long side at 1,920, 2,560 or 3,840 px.
-- The image is exactly the window at the current zoom, rotation, theme, mode, paths, Satellite, range or open Story, filters and hidden activities. Spots, photos and pace bands aren't drawn; the map's credit and the HoldMyTrack mark are.
+- The image is exactly the window at the current zoom, rotation, theme, mode, paths, Satellite, Roads, range or open Story, filters and hidden activities. Spots, photos and pace bands aren't drawn; the map's credit and the HoldMyTrack mark are.
 - It's saved to Pictures/HoldMyTrack and offered to Android's share sheet. A failure keeps the viewfinder as it was.
 
 ## 5. FR-3 — Sync and Imports

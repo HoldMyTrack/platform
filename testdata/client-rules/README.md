@@ -25,7 +25,6 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `typeFacets` | `activities`, `distanceFilter` | `[{ type, count }]` |
 | `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
 | `activityZone` | `own`, `account` (zone ids) | a zone id, or `null` for the device's |
-| `satelliteRoads` | `satellite`, `mode` | boolean |
 | `photoClusters` | `points` (`{ id, x, y }`), `radius` | `[{ ids, x, y }]` |
 | `photoMarkerSize` | `zoom` | `"hidden"`, `"small"` or `"full"` |
 | `photoTrackPoint` | `points` (`{ lon, lat, t }`), `fraction` | `{ lon, lat, t }` |

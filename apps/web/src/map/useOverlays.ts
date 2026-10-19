@@ -8,13 +8,15 @@ export interface OverlayChoices {
   change: (next: Overlays) => void;
   /** The paths drawn: each picked, while the Layers checkbox is on. */
   paths: BikePathOverlays;
+  /** The basemap's roads are drawn: picked, while the Layers checkbox is on. */
+  roads: boolean;
   /** The deployment configures satellite imagery (FR-4.14). */
   satelliteAvailable: boolean;
   /** Imagery is drawn: available and picked, whatever was saved. */
   satellite: boolean;
 }
 
-/** The Satellite button and the Layers menu's paths and Spots categories, remembered per browser (overlays.ts). */
+/** The Satellite button and the Layers menu's roads, paths and Spots categories, remembered per browser (overlays.ts). */
 export function useOverlays(): OverlayChoices {
   const [overlays, setOverlays] = useState<Overlays>(loadOverlays);
   const change = useCallback((next: Overlays) => {
@@ -30,5 +32,5 @@ export function useOverlays(): OverlayChoices {
     [overlays.enabled, overlays.bikePaths, overlays.sharedPaths, overlays.mtbTrails],
   );
   const satelliteAvailable = satelliteSource() !== null;
-  return { overlays, change, paths, satelliteAvailable, satellite: satelliteAvailable && overlays.satellite };
+  return { overlays, change, paths, roads: overlays.enabled && overlays.roads, satelliteAvailable, satellite: satelliteAvailable && overlays.satellite };
 }

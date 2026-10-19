@@ -13,7 +13,6 @@ import { distanceParts, durationParts, totalDistanceParts } from '../src/ui/form
 import { fractionAt, photoTrack, pointAt, startFraction } from '../src/ui/photoTrack.ts';
 import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
 import { shiftRange } from '../src/ui/rangeShift.ts';
-import { roadsHiddenOverImagery } from '../src/map/satelliteRoads.ts';
 import { activityTimeZone } from '../src/ui/timeZone.ts';
 import { toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
@@ -39,7 +38,6 @@ const rules = {
   typeFacets: ({ activities, distanceFilter }) => typeFacets(activities, distanceFilter ?? null),
   passesFilters: ({ activity, excludedTypes, distanceFilter }) => passesFilters(activity, new Set(excludedTypes), distanceFilter ?? null),
   activityZone: ({ own, account }) => activityTimeZone(own ?? undefined, account ?? undefined) ?? null,
-  satelliteRoads: ({ satellite, mode }) => roadsHiddenOverImagery(satellite, mode),
   photoClusters: ({ points, radius }) => clusterPoints(points, radius),
   photoMarkerSize: ({ zoom }) => photoMarkerSize(zoom),
   photoTrackPoint: ({ points, fraction }) => pointAt(photoTrack(points), fraction),
