@@ -65,13 +65,13 @@ The Android app shows Settings, Profile, Sync and About as these pages in a WebV
 
 ### Dev uses the planet basemap from `tiles.holdmytrack.com`
 
-Set `VITE_BASEMAP_ORIGIN=https://tiles.holdmytrack.com/<YYYYMMDD>` (production's dated prefix, `docs/DEPLOY.md` §5) in `apps/web/.env.local`, which is gitignored, and restart `web`. This works because the zone answers basemap responses with `Access-Control-Allow-Origin: *` and the bucket's CORS policy lists `http://localhost:5173` for preflights; the zone refuses every other `Origin`, so a dev server on another port gets `403`. Each tile counts as a production R2 request.
+Set `VITE_BASEMAP_ORIGIN=https://tiles.holdmytrack.com/<YYYYMMDD>` (production's dated prefix, `docs/DEPLOY.md` §5) in `apps/web/.env.local`, which is gitignored, and restart `web`. The zone answers with `Access-Control-Allow-Origin: *` and the bucket's CORS lists `http://localhost:5173` for preflights; any other `Origin` gets `403`. Each tile counts as a production R2 request.
 
 The Playwright suites use a regional extract, `apps/web/public/basemap/basemap.pmtiles` (Ohio, z0–14, cut by `make basemap`). The `test` service bind-mounts `apps/web`, so Vite would read `.env.local` there; `compose.yaml` pins `VITE_BASEMAP_ORIGIN` (empty) and `VITE_API_BASE_URL` on that service, and real env vars outrank `.env` files.
 
 ### Satellite imagery in dev
 
-Off unless configured (`docs/SPEC.md` FR-4.14). For the web, add `VITE_SATELLITE_TILES`, `VITE_SATELLITE_TILE_SIZE`, `VITE_SATELLITE_MAXZOOM` and `VITE_SATELLITE_ATTRIBUTION` to `apps/web/.env.local` and restart `web`; for Android's style document, set `SATELLITE_*` in the root `.env` and recreate `api`. A MapTiler key needs `http://localhost:5173` in its allowed origins. For a keyless local check (never a deployment), use Esri World Imagery: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`, tile size 256. `tests/smoke.mjs` step 9 tests the switch when `VITE_SATELLITE_TILES` is set and its absence otherwise.
+Off unless configured (`docs/SPEC.md` FR-4.14). Set `SATELLITE_*` in the root `.env` and recreate `web` and `api`; `compose.yaml` passes the web the same values as `VITE_SATELLITE_*`, which outrank `apps/web/.env.local`. A MapTiler key must allow `http://localhost:5173`. For a keyless local check (never a deployment), use Esri World Imagery: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`, tile size 256. `tests/smoke.mjs` step 9 tests the switch when `VITE_SATELLITE_TILES` is set and its absence otherwise.
 
 ## Verification
 
