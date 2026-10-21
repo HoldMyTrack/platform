@@ -8,22 +8,17 @@ import org.junit.Test
 class ActivityKindTest {
 
     @Test
-    fun typesAreReadByTheirWords() {
-        assertEquals(ActivityKind.FOOT, ActivityKind.of("walking"))
-        assertEquals(ActivityKind.FOOT, ActivityKind.of("Trail_Running"))
-        assertEquals(ActivityKind.WHEELS, ActivityKind.of("gravel_cycling"))
-        assertEquals(ActivityKind.WHEELS, ActivityKind.of("e_biking"))
-        assertEquals(ActivityKind.WHEELS, ActivityKind.of("Solowheel"))
-        assertEquals(ActivityKind.MOTOR, ActivityKind.of("driving"))
-        assertEquals(ActivityKind.MOTOR, ActivityKind.of("motorcycling"))
-        assertEquals(ActivityKind.OTHER, ActivityKind.of("kayaking"))
-        assertEquals(ActivityKind.OTHER, ActivityKind.of("unknown"))
+    fun kindsAreTheServersWireNames() {
+        assertEquals(ActivityKind.FOOT, ActivityKind.fromWire("foot"))
+        assertEquals(ActivityKind.SOLOWHEEL, ActivityKind.fromWire("solowheel"))
+        assertEquals(ActivityKind.E_SCOOTER, ActivityKind.fromWire("e_scooter"))
+        assertEquals(ActivityKind.OTHER, ActivityKind.fromWire("hovercraft"))
     }
 
     @Test
     fun onlyFootShowsPace() {
         assertTrue(ActivityKind.FOOT.showsPace)
-        assertEquals(listOf(false, false, false), listOf(ActivityKind.WHEELS, ActivityKind.MOTOR, ActivityKind.OTHER).map { it.showsPace })
+        assertEquals(ActivityKind.entries - ActivityKind.FOOT, ActivityKind.entries.filterNot { it.showsPace })
     }
 
     @Test

@@ -1,40 +1,32 @@
 package dev.holdmytrack.android.panel
 
 /**
- * What kind of moving an activity type is, for what its row and card show: an icon, and pace or
- * speed. Types are free text (`RecordingTypes`), so this reads the words in them rather than a
- * fixed list — "gravel_cycling" and "e_biking" are on wheels, "trail_running" on foot.
+ * What kind of moving an activity type is, as the server says (`ActivityTypes`, root
+ * `docs/SPEC.md` FR-5.1): its row's and card's icon, and pace or speed.
  */
-enum class ActivityKind {
+enum class ActivityKind(val wire: String) {
     /** Walking, hiking, running: pace, minutes per km or mile. */
-    FOOT,
+    FOOT("foot"),
 
-    /** Cycling, skating, a solowheel: speed. */
-    WHEELS,
+    /** Cycling, skating: speed. */
+    WHEELS("wheels"),
 
     /** Driving, motorcycling: speed. */
-    MOTOR,
+    MOTOR("motor"),
 
-    /** Everything else — paddling, skiing, an untyped activity: speed, the safer reading. */
-    OTHER;
+    /** On wheels, with an icon of their own. */
+    SOLOWHEEL("solowheel"),
+    E_SCOOTER("e_scooter"),
+
+    /** Everything else, and a type the server hasn't described yet: speed, the safer reading. */
+    OTHER("other");
 
     /** Pace reads naturally only on foot; everything faster reads as a speed. */
     val showsPace: Boolean get() = this == FOOT
 
     companion object {
-        private val FOOT_WORDS = listOf("walk", "hik", "run", "jog", "trek", "stroll", "march")
-        private val MOTOR_WORDS = listOf("driv", "motor", "car")
-        private val WHEEL_WORDS = listOf("cycl", "bik", "skat", "wheel", "scoot", "board")
-
-        fun of(type: String): ActivityKind {
-            val t = type.lowercase()
-            return when {
-                MOTOR_WORDS.any { it in t } -> MOTOR
-                WHEEL_WORDS.any { it in t } -> WHEELS
-                FOOT_WORDS.any { it in t } -> FOOT
-                else -> OTHER
-            }
-        }
+        /** A kind the app doesn't know, from a newer server, is [OTHER]. */
+        fun fromWire(value: String): ActivityKind = entries.firstOrNull { it.wire == value } ?: OTHER
     }
 }
 

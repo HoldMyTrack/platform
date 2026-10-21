@@ -13,12 +13,15 @@ activities:
           application/json:
             schema:
               type: object
-              required: [activities]
+              required: [activities, types]
               additionalProperties: false
               properties:
                 activities:
                   type: array
                   items: { $ref: "../components/schemas.yaml#/ActivityRow" }
+                types:
+                  description: Every type the rows use, once each.
+                  allOf: [{ $ref: "../components/schemas.yaml#/ActivityTypes" }]
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
@@ -470,3 +473,28 @@ activities_track-merge:
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/Forbidden" }
       "409": { $ref: "../components/responses.yaml#/Error" }
+activity_types:
+  get:
+    summary: What a client shows for the catalog's activity types and any others it names
+    description: >-
+      For the Type picker's suggestions and for types not in a list response, such as a phone's
+      unsent recordings.
+    parameters:
+      - name: types
+        in: query
+        description: Comma-separated types to describe besides the catalog's; at most 100, each at most 50 characters.
+        schema: { type: string }
+    responses:
+      "200":
+        description: The types
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [types]
+              additionalProperties: false
+              properties:
+                types: { $ref: "../components/schemas.yaml#/ActivityTypes" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }

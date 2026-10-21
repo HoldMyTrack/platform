@@ -10,6 +10,8 @@ import android.os.Looper
 import dev.holdmytrack.android.BuildConfig
 import dev.holdmytrack.android.map.GeoPoint
 import dev.holdmytrack.android.map.SpotArea
+import dev.holdmytrack.android.panel.ActivityKind
+import dev.holdmytrack.android.panel.ActivityTypes
 import java.io.IOException
 import java.time.Duration
 import java.time.ZoneId
@@ -922,8 +924,22 @@ object HoldMyTrackApi {
             .apply { if (to != null) addQueryParameter("to", to) }
             .apply { if (story != null) addQueryParameter("story", story) }
             .build()
-        call(Request.Builder().url(url).build(), { body -> decode<ActivitiesJson>(body).activities.map { it.toActivity() } }, onResult)
+        call(Request.Builder().url(url).build(), { body ->
+            val decoded = decode<ActivitiesJson>(body)
+            ActivityTypes.merge(decoded.types.kinds())
+            decoded.activities.map { it.toActivity() }
+        }, onResult)
     }
+
+    /** `GET /v1/activity-types`: what to show for the catalog's types and [types] (`panel/ActivityTypes`). */
+    fun activityTypes(types: List<String>, onResult: (Result<Map<String, ActivityKind>>) -> Unit) {
+        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activity-types").toHttpUrl().newBuilder()
+            .apply { if (types.isNotEmpty()) addQueryParameter("types", types.joinToString(",")) }
+            .build()
+        call(Request.Builder().url(url).build(), { body -> decode<ActivityTypesJson>(body).types.kinds() }, onResult)
+    }
+
+    private fun Map<String, ActivityTypeJson>.kinds(): Map<String, ActivityKind> = mapValues { ActivityKind.fromWire(it.value.kind) }
 
     /**
      * `PATCH /v1/activities/{id}` — a full replace of the three fields a person can set
@@ -1399,8 +1415,10 @@ object HoldMyTrackApi {
     fun activityTypeCounts(onResult: (Result<Map<String, Int>>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities").build()
         call(request, { body ->
+            val decoded = decode<ActivitiesJson>(body)
+            ActivityTypes.merge(decoded.types.kinds())
             buildMap {
-                for (row in decode<ActivitiesJson>(body).activities) {
+                for (row in decoded.activities) {
                     if (row.activityType.isNotEmpty()) merge(row.activityType, 1, Int::plus)
                 }
             }

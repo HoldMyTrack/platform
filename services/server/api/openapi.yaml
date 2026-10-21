@@ -63,6 +63,8 @@ paths:
     $ref: "paths/account.yaml#/account_exports_id_parts_n"
   /activities:
     $ref: "paths/activities.yaml#/activities"
+  /activity-types:
+    $ref: "paths/activities.yaml#/activity_types"
   /activities/upload:
     $ref: "paths/activities.yaml#/activities_upload"
   /activities/{id}:

@@ -64,6 +64,18 @@ ActivityRow:
         properties:
           id: { type: string, format: uuid }
           name: { type: string }
+ActivityTypes:
+  type: object
+  description: What a client shows for each activity type, keyed by the type as stored (docs/SPEC.md FR-5.1).
+  additionalProperties:
+    type: object
+    required: [kind]
+    additionalProperties: false
+    properties:
+      kind:
+        type: string
+        enum: [foot, wheels, motor, solowheel, e_scooter, other]
+        description: Picks the icon; foot reads as a pace, every other kind as a speed.
 PrivateLocationInput:
   type: object
   required: [lon, lat, radius_m]

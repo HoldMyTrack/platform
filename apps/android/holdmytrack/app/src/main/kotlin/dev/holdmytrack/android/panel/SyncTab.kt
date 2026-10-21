@@ -161,7 +161,11 @@ class SyncTab(
     /** A row on its way landed — it leaves the list — or failed: it's back, and says so. */
     private val progressListener = SyncProgress.Listener(onChange = ::progressed, onLanded = {})
 
+    /** A type described after the rows showed changes their icons ([ActivityTypes]). */
+    private val onTypes: () -> Unit = { list.post { render() } }
+
     init {
+        ActivityTypes.addListener(onTypes)
         list.adapter = ConcatAdapter(ViewAdapter(head), rows, ViewAdapter(foot))
         ItemTouchHelper(SwipeToHide()).attachToRecyclerView(list)
         syncNow.setOnClickListener { startSync() }
@@ -356,6 +360,7 @@ class SyncTab(
 
     private fun render() {
         if (!showing) return
+        ActivityTypes.refresh(all().map { it.activityType })
         val demo = Session.isDemo
         accountNotice.text = if (demo) res.getString(R.string.sync_demo_read_only) else null
         accountNotice.visibility = if (demo) View.VISIBLE else View.GONE

@@ -127,7 +127,17 @@ internal data class ActivityRowJson(
 )
 
 @Serializable
-internal data class ActivitiesJson(val activities: List<ActivityRowJson>)
+internal data class ActivitiesJson(
+    val activities: List<ActivityRowJson>,
+    val types: Map<String, ActivityTypeJson> = emptyMap(),
+)
+
+/** What a client shows for one activity type (`panel/ActivityTypes`). */
+@Serializable
+internal data class ActivityTypeJson(val kind: String)
+
+@Serializable
+internal data class ActivityTypesJson(val types: Map<String, ActivityTypeJson>)
 
 @Serializable
 internal data class ActivityPatchJson(

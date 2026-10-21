@@ -14,6 +14,8 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/fog"
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/activitytype"
 )
 
 // activityFilter is the from/to/types/story filter shape shared by §4.3's tracks tiles and
@@ -244,6 +246,8 @@ func scanActivityRow(row rowScanner) (activityRow, error) {
 
 type activitiesResponse struct {
 	Activities []activityRow `json:"activities"`
+	// Types is what a client shows for each type the rows use, once per type rather than per row.
+	Types map[string]activitytype.Info `json:"types"`
 }
 
 // handleListActivities serves IMPLEMENTATION.md §4.7's
@@ -283,8 +287,12 @@ func (s *Server) handleListActivities(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	types := make([]string, 0, len(list))
+	for _, a := range list {
+		types = append(types, a.ActivityType)
+	}
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, activitiesResponse{Activities: list})
+	writeJSON(w, http.StatusOK, activitiesResponse{Activities: list, Types: activitytype.Describe(types)})
 }
 
 // maxActivityTypeLen matches activities.activity_type's own VARCHAR(50) — rejecting an

@@ -1017,6 +1017,55 @@ export interface paths {
                     content: {
                         "application/json": {
                             activities: components["schemas"]["ActivityRow"][];
+                            /** @description Every type the rows use, once each. */
+                            types: components["schemas"]["ActivityTypes"];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/activity-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * What a client shows for the catalog's activity types and any others it names
+         * @description For the Type picker's suggestions and for types not in a list response, such as a phone's unsent recordings.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Comma-separated types to describe besides the catalog's; at most 100, each at most 50 characters. */
+                    types?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The types */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            types: components["schemas"]["ActivityTypes"];
                         };
                     };
                 };
@@ -3418,6 +3467,16 @@ export interface components {
                 id: string;
                 name: string;
             }[];
+        };
+        /** @description What a client shows for each activity type, keyed by the type as stored (docs/SPEC.md FR-5.1). */
+        ActivityTypes: {
+            [key: string]: {
+                /**
+                 * @description Picks the icon; foot reads as a pace, every other kind as a speed.
+                 * @enum {string}
+                 */
+                kind: "foot" | "wheels" | "motor" | "solowheel" | "e_scooter" | "other";
+            };
         };
         UploadResult: {
             /** @enum {string} */
