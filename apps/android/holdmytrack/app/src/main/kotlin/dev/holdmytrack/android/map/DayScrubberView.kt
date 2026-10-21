@@ -3,41 +3,39 @@ package dev.holdmytrack.android.map
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.RectF
 import android.graphics.Typeface
-import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewConfiguration
+import androidx.core.graphics.ColorUtils
 import dev.holdmytrack.android.R
 import java.time.Month
 import java.time.format.TextStyle
 import kotlin.math.roundToInt
 
 /**
- * The sheet's date scrubber: one bar per activity day in the window, as tall as the day's distance
- * ([ScrubberBars.levels]), its day of the month under it — and its month too where a new one
- * starts — with the selection a soft accent window over its days, a handle at each end.
+ * The sheet's date scrubber, the web's slider track drawn natively (root `docs/SPEC.md` FR-6): a
+ * thin track with the selection filled in the accent between two pill knobs, a tick on every
+ * boundary between activity days, tall where a month starts, and the month's name under it
+ * ([SliderRules.ticks]).
  *
- * Like the track it replaced, it knows [slots] and two slot *boundaries*, [start] and [end]
- * (0..slots, or -1 / slots + 1 for a handle off either side of the window, which isn't drawn), and
- * nothing about dates; `DateRangeSlider` turns those into a selection. The whole view is the touch
- * target, and a touch is one of three gestures:
+ * It knows [slots] and two slot *boundaries*, [start] and [end] (0..slots, or -1 / slots + 1 for a
+ * knob off either side of the window, which isn't drawn), and nothing about dates;
+ * `DateRangeSlider` turns those into a selection. The whole view is the touch target, and a touch
+ * is one of three gestures:
  *
- * - **A handle dragged.** A press within [HANDLE_GRAB_DP] of a drawn handle goes to [onPress] with
+ * - **A knob dragged.** A press within [HANDLE_GRAB_DP] of a drawn knob goes to [onPress] with
  *   its boundary, the drag to [onDrag] — unclamped, so a finger held past an edge can pull the
  *   window along — and the release to [onRelease].
  * - **A swipe.** A press anywhere else that moves sideways past the touch slop scrolls the window
  *   instead: [onSwipe] gets each whole slot the finger has moved, positive toward the past (the
  *   days follow the finger, as a list does), and the selection stays as it was.
  * - **A tap.** A press elsewhere let go without moving is [onPress] at the nearest boundary, then
- *   [onRelease] — the nearer handle moves there.
- *
- * A small ‹ in the left padding says the window can scroll further into the past, and a › in the
- * right padding further toward the present ([earlier], [later]); at the first or most recent
- * activity day it's gone.
+ *   [onRelease] — the nearer knob moves there.
  */
 class DayScrubberView @JvmOverloads constructor(
     context: Context,
@@ -50,17 +48,12 @@ class DayScrubberView @JvmOverloads constructor(
         private set
     var end = 0
         private set
-    private var earlier = false
-    private var later = false
-    private var levels: List<Float> = emptyList()
-    private var labels: List<ScrubberBars.Label> = emptyList()
+    private var ticks: List<SliderRules.Tick> = emptyList()
 
     var onPress: ((boundary: Int) -> Unit)? = null
     var onDrag: ((boundary: Int) -> Unit)? = null
     var onRelease: (() -> Unit)? = null
     var onSwipe: ((days: Int) -> Unit)? = null
-    /** The view's width changed, in dp: the slider sizes its window to it. */
-    var onWidth: ((dp: Int) -> Unit)? = null
 
     private enum class Gesture { HANDLE, UNDECIDED, SWIPE }
     private var gesture: Gesture? = null
@@ -70,57 +63,44 @@ class DayScrubberView @JvmOverloads constructor(
     private val touchSlop = ViewConfiguration.get(context).scaledTouchSlop
 
     private val density = resources.displayMetrics.density
-    private val barAreaHeight = 38 * density
-    private val barMaxWidth = 10 * density
-    private val barMinHeight = 4 * density
-    private val barMaxHeight = 26 * density
-    private val barBottomGap = 5 * density
-    private val barRadius = 3 * density
-    private val windowRadius = resources.getDimension(R.dimen.hmt_radius_lg)
-    private val handleWidth = 5 * density
-    private val handleHeight = 28 * density
+    private val trackArea = TRACK_AREA_DP * density
+    private val lineHeight = 4 * density
+    private val dayTick = 8 * density
+    private val monthTick = 16 * density
+    private val knobHeight = 28 * density
+    private val knobRadius = 6 * density
+    private val knobBorder = 2 * density
     private val handleGrab = HANDLE_GRAB_DP * density
-    private val labelSize = 10 * resources.displayMetrics.scaledDensity
+    private val labelSize = 11 * resources.displayMetrics.scaledDensity
 
     private val accent = context.getColor(R.color.hmt_accent)
-    private val accentStrong = context.getColor(R.color.hmt_accent_strong)
-    private val windowPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.getColor(R.color.hmt_accent_container) }
-    private val barPaint = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val handlePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = accentStrong }
-    private val inkColor = context.getColor(R.color.hmt_ink)
-    private val mutedColor = context.getColor(R.color.hmt_ink_muted)
-    private val outsideBarColor = context.getColor(R.color.hmt_border_strong)
+    private val ink = context.getColor(R.color.hmt_ink)
+    private val linePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.getColor(R.color.hmt_border_strong) }
+    private val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = accent }
+    private val tickPaint = Paint().apply { strokeWidth = density }
+    private val knobFill = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = context.getColor(R.color.hmt_surface)
+        setShadowLayer(3 * density, 0f, density, Color.argb(48, 0, 0, 0))
+    }
+    private val knobStroke = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        style = Paint.Style.STROKE
+        strokeWidth = knobBorder
+        color = accent
+    }
     private val labelPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         textSize = labelSize
-        textAlign = Paint.Align.CENTER
+        color = context.getColor(R.color.hmt_ink_muted)
+        typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
     }
-    private val monthTypeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
-    private val dayTypeface = Typeface.DEFAULT
-    private val chevronSize = (CHEVRON_DP * density).roundToInt()
-    private val chevronLeft = context.getDrawable(R.drawable.ic_chevron_left)!!.mutate().apply { setTint(mutedColor) }
-    private val chevronRight = context.getDrawable(R.drawable.ic_chevron_right)!!.mutate().apply { setTint(mutedColor) }
     private val rect = RectF()
     private val locale = resources.configuration.locales[0]
 
-    fun set(
-        slots: Int,
-        start: Int,
-        end: Int,
-        levels: List<Float>,
-        labels: List<ScrubberBars.Label>,
-        earlier: Boolean,
-        later: Boolean,
-    ) {
-        if (slots == this.slots && start == this.start && end == this.end && levels == this.levels &&
-            labels == this.labels && earlier == this.earlier && later == this.later
-        ) return
+    fun set(slots: Int, start: Int, end: Int, ticks: List<SliderRules.Tick>) {
+        if (slots == this.slots && start == this.start && end == this.end && ticks == this.ticks) return
         this.slots = slots
         this.start = start
         this.end = end
-        this.levels = levels
-        this.labels = labels
-        this.earlier = earlier
-        this.later = later
+        this.ticks = ticks
         invalidate()
     }
 
@@ -134,47 +114,39 @@ class DayScrubberView @JvmOverloads constructor(
 
     override fun onDraw(canvas: Canvas) {
         if (slots == 0) return
-        val top = paddingTop.toFloat()
+        val cy = paddingTop + trackArea / 2
+        val right = width - paddingRight.toFloat()
+        rect.set(left, cy - lineHeight / 2, right, cy + lineHeight / 2)
+        canvas.drawRoundRect(rect, lineHeight / 2, lineHeight / 2, linePaint)
         val s = start.coerceIn(0, slots)
         val e = end.coerceIn(0, slots)
         if (e > s) {
-            rect.set(xOf(s), top, xOf(e), top + barAreaHeight)
-            canvas.drawRoundRect(rect, windowRadius, windowRadius, windowPaint)
+            rect.set(xOf(s), cy - lineHeight / 2, xOf(e), cy + lineHeight / 2)
+            canvas.drawRoundRect(rect, lineHeight / 2, lineHeight / 2, fillPaint)
         }
-        val barWidth = minOf(barMaxWidth, slotWidth * 0.5f)
-        val baseline = top + barAreaHeight - barBottomGap
-        for (i in 0 until slots) {
-            val inside = i >= s && i < e
-            val cx = left + (i + 0.5f) * slotWidth
-            val level = levels.getOrElse(i) { ScrubberBars.MIN_LEVEL }
-            val height = barMinHeight + level * (barMaxHeight - barMinHeight)
-            barPaint.color = if (inside) accent else outsideBarColor
-            rect.set(cx - barWidth / 2, baseline - height, cx + barWidth / 2, baseline)
-            canvas.drawRoundRect(rect, barRadius, barRadius, barPaint)
-            val label = labels.getOrNull(i) ?: continue
-            val month = label.month
-            labelPaint.typeface = if (month != null) monthTypeface else dayTypeface
-            labelPaint.color = if (inside) inkColor else mutedColor
-            val text = if (month != null) Month.of(month).getDisplayName(TextStyle.SHORT_STANDALONE, locale) else label.day.toString()
-            canvas.drawText(text, cx, top + barAreaHeight + labelSize + 2 * density, labelPaint)
+        val labelY = paddingTop + trackArea + 2 * density - labelPaint.ascent()
+        for (tick in ticks) {
+            val x = xOf(tick.boundary)
+            val half = (if (tick.monthStart) monthTick else dayTick) / 2
+            tickPaint.color = when {
+                tick.boundary in s..e && e > s -> accent
+                tick.monthStart -> ColorUtils.setAlphaComponent(ink, 128)
+                else -> ColorUtils.setAlphaComponent(ink, 71)
+            }
+            canvas.drawLine(x, cy - half, x, cy + half, tickPaint)
+            val month = tick.month ?: continue
+            val text = Month.of(month).getDisplayName(TextStyle.SHORT_STANDALONE, locale)
+            canvas.drawText(text, if (tick.boundary == 0) left else x + 3 * density, labelY, labelPaint)
         }
-        val cy = top + barAreaHeight / 2
-        if (earlier) drawChevron(canvas, chevronLeft, paddingLeft / 2f, cy)
-        if (later) drawChevron(canvas, chevronRight, width - paddingRight / 2f, cy)
+        val knobWidth = (if (slotWidth < 18 * density) 12 else 16) * density
         for (boundary in intArrayOf(start, end)) {
             if (boundary < 0 || boundary > slots) continue
-            val x = xOf(boundary).coerceIn(left + handleWidth / 2, width - paddingRight - handleWidth / 2)
-            rect.set(x - handleWidth / 2, cy - handleHeight / 2, x + handleWidth / 2, cy + handleHeight / 2)
-            canvas.drawRoundRect(rect, handleWidth / 2, handleWidth / 2, handlePaint)
+            val x = xOf(boundary)
+            rect.set(x - knobWidth / 2, cy - knobHeight / 2, x + knobWidth / 2, cy + knobHeight / 2)
+            canvas.drawRoundRect(rect, knobRadius, knobRadius, knobFill)
+            rect.inset(knobBorder / 2, knobBorder / 2)
+            canvas.drawRoundRect(rect, knobRadius, knobRadius, knobStroke)
         }
-    }
-
-    /** [chevron] centred on ([cx], [cy]) — the icon's box, its stroke only the middle of it. */
-    private fun drawChevron(canvas: Canvas, chevron: Drawable, cx: Float, cy: Float) {
-        val l = (cx - chevronSize / 2f).roundToInt()
-        val t = (cy - chevronSize / 2f).roundToInt()
-        chevron.setBounds(l, t, l + chevronSize, t + chevronSize)
-        chevron.draw(canvas)
     }
 
     /** The drawn handle within reach of [x], if any — the nearer of the two. */
@@ -183,8 +155,8 @@ class DayScrubberView @JvmOverloads constructor(
             .filter { it in 0..slots && Math.abs(xOf(it) - x) <= handleGrab }
             .minByOrNull { Math.abs(xOf(it) - x) }
 
-    // A drag is a gesture over the whole scrubber, not a click; the ‹ › buttons beside the range
-    // and the range written above it are what TalkBack reads.
+    // A drag is a gesture over the whole scrubber, not a click; the buttons beside it and the
+    // range written above it are what TalkBack reads.
     @SuppressLint("ClickableViewAccessibility")
     override fun onTouchEvent(event: MotionEvent): Boolean {
         if (!isEnabled || slots == 0) return false
@@ -239,23 +211,18 @@ class DayScrubberView @JvmOverloads constructor(
         onSwipe?.invoke(moved)
     }
 
-    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
-        super.onSizeChanged(w, h, oldw, oldh)
-        if (w != oldw) onWidth?.invoke((w / density).toInt())
-    }
-
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-        val wanted = (paddingTop + barAreaHeight + labelSize + 6 * density + paddingBottom).toInt()
+        // The track area, and the month labels under it.
+        val wanted = (paddingTop + trackArea + 2 * density + labelPaint.descent() - labelPaint.ascent() + paddingBottom).toInt()
         setMeasuredDimension(MeasureSpec.getSize(widthMeasureSpec), resolveSize(wanted, heightMeasureSpec))
     }
 
     private companion object {
-        /** How near a handle a press grabs it rather than starting a swipe or a tap — 24dp, half
-         *  a 48dp target either side of a 5dp handle. */
+        /** How near a knob a press grabs it rather than starting a swipe or a tap — 24dp, half a
+         *  48dp target either side. */
         const val HANDLE_GRAB_DP = 24f
 
-        /** The ‹ ›'s icon box: Lucide's chevron is the middle quarter of it, about 4 × 8dp in the
-         *  12dp padding beside the bars. */
-        const val CHEVRON_DP = 16f
+        /** The track's touch band, the knobs and ticks centred in it. */
+        const val TRACK_AREA_DP = 40f
     }
 }

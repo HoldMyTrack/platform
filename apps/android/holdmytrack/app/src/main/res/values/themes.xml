@@ -342,6 +342,26 @@
         <item name="iconSize">20dp</item>
     </style>
 
+    <!-- The date slider's « » beside the scrubber: 22 × 40 drawn, 48dp tall to touch, tinted while
+         the window can move that way, faint while it can't. -->
+    <style name="Widget.HoldMyTrack.Button.SheetPage" parent="Widget.Material3.Button.IconButton.Outlined">
+        <item name="android:minWidth">0dp</item>
+        <item name="android:minHeight">48dp</item>
+        <!-- Drawn level with the scrubber's 40dp track area; the touch target runs on below it. -->
+        <item name="android:insetTop">0dp</item>
+        <item name="android:insetBottom">8dp</item>
+        <item name="android:paddingStart">0dp</item>
+        <item name="android:paddingEnd">0dp</item>
+        <item name="backgroundTint">@color/sheet_page_bg</item>
+        <item name="iconTint">@color/sheet_shift_icon</item>
+        <item name="iconGravity">textStart</item>
+        <item name="iconPadding">0dp</item>
+        <item name="strokeColor">@color/hmt_border</item>
+        <item name="strokeWidth">1dp</item>
+        <item name="iconSize">14dp</item>
+        <item name="cornerRadius">6dp</item>
+    </style>
+
     <!-- One of the selected activity's numbers (include_activity_card): a tinted box, its label
          over its value. -->
     <style name="Widget.HoldMyTrack.CardStat" parent="">

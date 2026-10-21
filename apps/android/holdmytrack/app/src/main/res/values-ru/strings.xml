@@ -134,6 +134,8 @@
     <string name="export_saved">Сохранено в «Изображения»</string>
     <string name="export_share_title">Поделиться картой</string>
     <string name="date_range_shift_earlier">Сдвинуть диапазон раньше</string>
+    <string name="date_range_page_earlier">На 5 активных дней раньше</string>
+    <string name="date_range_page_later">На 5 активных дней позже</string>
     <string name="date_range_shift_later">Сдвинуть диапазон позже</string>
     <string name="locate_needs_location">HoldMyTrack нужен доступ к местоположению, чтобы показать, где вы.</string>
     <string name="nav_map">Карта</string>

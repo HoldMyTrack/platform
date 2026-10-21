@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The date slider's « » (Widget.HoldMyTrack.Button.SheetPage) fill: the accent container while
+     the window can move that way, the plain surface while it can't. -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:color="@color/hmt_surface" android:state_enabled="false" />
+    <item android:color="@color/hmt_accent_container" />
+</selector>

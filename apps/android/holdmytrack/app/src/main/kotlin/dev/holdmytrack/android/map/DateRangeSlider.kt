@@ -1,10 +1,13 @@
 package dev.holdmytrack.android.map
 
 import android.annotation.SuppressLint
+import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
+import android.view.TouchDelegate
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.ActivityDay
@@ -12,8 +15,8 @@ import java.time.LocalDate
 
 /**
  * The map's date-range control, at the top of the Activities sheet: the selected range as a
- * heading, ‹ › beside it, and under them the day scrubber ([DayScrubberView]) — the web's phone
- * slider (`apps/web/src/ui/DateRangeSlider.tsx`) redrawn as a bar per day.
+ * heading, ‹ › beside it, and under them « scrubber » ([DayScrubberView]) — the web's slider
+ * (`apps/web/src/ui/DateRangeSlider.tsx`), the « » shown only where the row has room for them.
  *
  * **Activity days, not calendar days.** The scrubber is a window of consecutive days that have
  * activity ([ActivityDays]), as many as its width holds ([SliderRules.layout]); the days between
@@ -27,9 +30,9 @@ import java.time.LocalDate
  * slot the finger moves, the selection left as it is ([onSwipe]): handles scroll out of view and
  * back like any day, their dates staying in the heading.
  *
- * **Paging.** A handle held past the scrubber's edge moves the window [STEP_DAYS] that way,
- * repeating while it's held there, and pulls the handle along with it — how a selection grows
- * past the window. The far handle may scroll out of view; its date stays in the heading. The pull
+ * **Paging.** « » move the window [STEP_DAYS] a tap, repeating while held, and so does a handle
+ * held past the scrubber's edge, which is pulled along — how a selection grows past the window.
+ * A handle parked on the edge « » move toward is pulled along too. The far handle may scroll out of view; its date stays in the heading. The pull
  * lands once the moved window is in (the days before it may still be loading), so a gesture's
  * commit waits for that too.
  *
@@ -52,6 +55,9 @@ class DateRangeSlider(
     private val track: DayScrubberView = root.findViewById(R.id.date_range_track)
     private val shiftEarlier: View = root.findViewById(R.id.date_range_shift_earlier)
     private val shiftLater: View = root.findViewById(R.id.date_range_shift_later)
+    private val row: View = root.findViewById(R.id.date_range_row)
+    private val pageEarlier: View = root.findViewById(R.id.date_range_page_earlier)
+    private val pageLater: View = root.findViewById(R.id.date_range_page_later)
     private val label: TextView = root.findViewById(R.id.date_range_label)
 
     private var days: List<ActivityDay> = emptyList()
@@ -110,9 +116,42 @@ class DateRangeSlider(
         track.onDrag = ::onTrackDrag
         track.onRelease = ::onTrackRelease
         track.onSwipe = ::onSwipe
-        track.onWidth = { dp ->
-            waitingDays = SliderRules.layout(dp, finePointer = false).days
-            flushWindowDays()
+        setUpRepeatButton(pageEarlier) { step(-1) }
+        setUpRepeatButton(pageLater) { step(1) }
+        row.addOnLayoutChangeListener { _, l, _, r, _, oldL, _, oldR, _ ->
+            if (r - l != oldR - oldL) onRowWidth(r - l)
+        }
+    }
+
+    /** The row's width decides whether « » show and how many days the window holds. */
+    private fun onRowWidth(px: Int) {
+        val layout = SliderRules.layout((px / row.resources.displayMetrics.density).toInt(), finePointer = false)
+        val visibility = if (layout.buttons) View.VISIBLE else View.GONE
+        // Not from inside the layout pass that measured the row.
+        row.post {
+            pageEarlier.visibility = visibility
+            pageLater.visibility = visibility
+            row.post(::extendPageTargets)
+        }
+        waitingDays = layout.days
+        flushWindowDays()
+    }
+
+    /** « » are 22dp wide; each one's touch target runs on outward over the row's margin, while
+     *  its inner side stays at the button's edge, so a press beside it still grabs a knob parked
+     *  on the track's edge. One delegate per view, so the two share a composite. */
+    private fun extendPageTargets() {
+        val parent = row.parent as? View ?: return
+        val margin = (row.layoutParams as? ViewGroup.MarginLayoutParams)?.marginStart ?: 0
+        val delegates = listOf(pageEarlier to -1, pageLater to 1).filter { it.first.visibility == View.VISIBLE }.map { (button, side) ->
+            val area = Rect()
+            button.getHitRect(area)
+            area.offset(row.left, row.top)
+            if (side < 0) area.left -= margin else area.right += margin
+            TouchDelegate(area, button)
+        }
+        parent.touchDelegate = if (delegates.isEmpty()) null else object : TouchDelegate(Rect(), row) {
+            override fun onTouchEvent(event: MotionEvent) = delegates.any { it.onTouchEvent(event) }
         }
     }
 
@@ -296,23 +335,17 @@ class DateRangeSlider(
 
     private fun render() {
         val sel = current
+        pageEarlier.isEnabled = canPanEarlier
+        pageLater.isEnabled = canPanLater
         if (sel == null) {
-            track.set(0, 0, 0, emptyList(), emptyList(), earlier = false, later = false)
+            track.set(0, 0, 0, emptyList())
             label.text = null
             shiftEarlier.isEnabled = false
             shiftLater.isEnabled = false
             return
         }
-        track.set(
-            days.size,
-            startOf(sel.from),
-            endOf(sel.to),
-            ScrubberBars.levels(days.map { it.distanceMeters }),
-            ScrubberBars.labels(days.map { it.date }),
-            earlier = canPanEarlier,
-            later = canPanLater,
-        )
-        label.text = ScrubberBars.rangeLabel(LocalDate.parse(sel.from), LocalDate.parse(sel.to), locale)
+        track.set(days.size, startOf(sel.from), endOf(sel.to), SliderRules.ticks(days.map { it.date }))
+        label.text = RangeLabel.of(LocalDate.parse(sel.from), LocalDate.parse(sel.to), locale)
         shiftEarlier.isEnabled = canShift(sel, -1)
         shiftLater.isEnabled = canShift(sel, 1)
     }
