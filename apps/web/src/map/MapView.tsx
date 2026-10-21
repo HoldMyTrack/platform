@@ -3,7 +3,9 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { activityQuery as queryFor } from './activityQuery';
 import { flyToBBox, unionBBox } from './bbox';
 import { defaultRange } from './defaultRange';
+import { mapTapsAct } from './exportFlow';
 import type { MapMode } from './mapMode';
+import { setMapTapsActive } from './mapTaps';
 import { initialSession, mapSessionReducer } from './session';
 import { toolbarTarget } from './selection';
 import { initialPanelTab, storyParam } from './storyUrl';
@@ -152,6 +154,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     [flavor, mapMode, activityQuery, mapHiddenIds, paths, satellite, roads],
   );
   const exporter = useExportFlow(map, container, exportScene);
+  const tapsAct = mapTapsAct(exporter.flow);
+  useEffect(() => setMapTapsActive(tapsAct), [tapsAct]);
 
   // A Story's photos change with its members too.
   const storyMembers = storyState.story?.activityIds.join(',') ?? '';
@@ -201,7 +205,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const spots = useSpots(map, spotsShown);
   useSelectionLayers(map, {
     focusedId: focusedActivityId,
-    hoveredId: hoveredActivityId,
+    // Hover isn't exported, and framing doesn't preview.
+    hoveredId: tapsAct ? hoveredActivityId : null,
     mapHiddenIds,
     editOpen,
     onFocus: focusActivity,

@@ -1,6 +1,7 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { ActivityQuery } from '../api';
 import { setLayerVars, updateLayers } from './applyLayers';
+import { mapTapsActive } from './mapTaps';
 import { PHOTO_MARKER_CLASS } from './photos';
 import { spotAt } from './spots';
 import { TRACKS_LAYER_ID } from './tracksGroup';
@@ -92,6 +93,7 @@ export function attachTrackInteractivity(map: MapLibreMap): void {
   let hoveredId: string | null = null;
 
   map.on('mousemove', TRACKS_LAYER_ID, (e) => {
+    if (!mapTapsActive()) return;
     map.getCanvas().style.cursor = 'pointer';
     // The activity's id as the tile carries it (the tracks query's `id` column).
     const id = e.features?.[0]?.properties?.id as string | undefined;
@@ -129,7 +131,7 @@ export function attachTrackInteractivity(map: MapLibreMap): void {
     // queryRenderedFeatures throws for a layer id the current style doesn't have, which is
     // real during the brief window between a styledata-triggered setStyle and the layers
     // document going back on.
-    if (!map.getLayer(TRACKS_LAYER_ID)) return;
+    if (!map.getLayer(TRACKS_LAYER_ID) || !mapTapsActive()) return;
     // A spot's icon sits on top of the tracks; a click on one opens its popup (spots.ts) and
     // means nothing to the track underneath.
     if (spotAt(map, e.point)) return;

@@ -1234,6 +1234,12 @@ button.activities-panel__story-badge:hover {
   visibility: hidden;
 }
 
+/* Framing only pans and zooms (exportFlow.ts's mapTapsAct): a photo's marker stays in sight, as
+   it's in the image, but a tap or drag on it goes to the map. */
+.map-root--exporting .photo-marker {
+  pointer-events: none;
+}
+
 .export-viewfinder {
   position: absolute;
   inset: 0;

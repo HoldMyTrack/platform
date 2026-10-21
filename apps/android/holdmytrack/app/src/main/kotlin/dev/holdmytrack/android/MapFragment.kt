@@ -631,6 +631,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
      * to hit) is selected and flown to; empty map clears the selection. The sheet stays as it was.
      */
     private fun onMapTap(instance: MapLibreMap, point: LatLng): Boolean {
+        // Framing only pans and zooms (`docs/SPEC.md` FR-4.10).
+        if (export.isOpen) return true
         // A spot's badge first, in every mode, unless an editor has the map; a tap elsewhere
         // closes its popup.
         if (!edit.privacy.isShowing && !editWindow.isOpen && spots.tap(instance, point)) return true
