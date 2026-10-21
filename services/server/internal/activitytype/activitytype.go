@@ -1,11 +1,18 @@
 // Package activitytype says what the clients show for an activity type (docs/SPEC.md FR-5.1):
-// which kind of moving it is, for a row's icon and whether its card reads pace or speed. Types
+// its label in the request's language, and which kind of moving it is, for a row's icon and
+// whether its card reads pace or speed. Types
 // are free text, so a kind comes from the words in one ("gravel_cycling" is on wheels,
 // "trail_running" on foot), never from a fixed list. Display only: nothing here changes an
 // activity (ADR-0039).
 package activitytype
 
-import "strings"
+import (
+	"strings"
+	"unicode"
+	"unicode/utf8"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
+)
 
 // Kind is what kind of moving a type is.
 type Kind string
@@ -62,14 +69,36 @@ var Catalog = []string{
 
 // Info is what a client shows for one type.
 type Info struct {
-	Kind Kind `json:"kind"`
+	Kind  Kind   `json:"kind"`
+	Label string `json:"label"`
 }
 
-// Describe is Info for each of types, keyed by the type as given.
-func Describe(types []string) map[string]Info {
+// Describe is Info for each of types in lang, keyed by the type as given.
+func Describe(types []string, lang string) map[string]Info {
 	out := make(map[string]Info, len(types))
 	for _, t := range types {
-		out[t] = Info{Kind: KindOf(t)}
+		out[t] = Info{Kind: KindOf(t), Label: Label(t, lang)}
 	}
 	return out
+}
+
+// Label is activityType's name in lang: the catalog's (`activity_type.*` in the locales),
+// matched case-insensitively, else the type itself, spaced out from snake_case and title-cased.
+// Never a remapping of what the value means.
+func Label(activityType, lang string) string {
+	if msg, ok := i18n.Raw(lang, "activity_type."+strings.ToLower(activityType)); ok {
+		return msg
+	}
+	if msg, ok := i18n.Raw(i18n.Default, "activity_type."+strings.ToLower(activityType)); ok {
+		return msg
+	}
+	words := strings.Split(activityType, "_")
+	out := words[:0]
+	for _, w := range words {
+		if w != "" {
+			r, size := utf8.DecodeRuneInString(w)
+			out = append(out, string(unicode.ToUpper(r))+w[size:])
+		}
+	}
+	return strings.Join(out, " ")
 }

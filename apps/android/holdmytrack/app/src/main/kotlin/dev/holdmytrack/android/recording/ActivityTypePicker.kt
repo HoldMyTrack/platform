@@ -17,6 +17,7 @@ import android.widget.ListView
 import android.widget.TextView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.panel.ActivityTypes
 import java.text.Normalizer
 
 /** One type the account already uses, and how many activities use it — the same facet the
@@ -110,7 +111,7 @@ object ActivityTypePicker {
     }
 
     private fun option(res: Resources, type: String, count: Int?) =
-        Option(value = type, label = RecordingTypes.format(res, type).ifEmpty { type }, detail = count?.takeIf { it > 0 }?.toString().orEmpty())
+        Option(value = type, label = ActivityTypes.label(type).ifEmpty { type }, detail = count?.takeIf { it > 0 }?.toString().orEmpty())
 
     /** `SearchPicker.tsx`'s ranking: an exact whole-label match first ("walk" → Walk before
      *  Dog Walk), then labels with a word starting with the query, then anything containing it,

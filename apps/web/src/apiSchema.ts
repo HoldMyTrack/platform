@@ -3471,6 +3471,8 @@ export interface components {
         /** @description What a client shows for each activity type, keyed by the type as stored (docs/SPEC.md FR-5.1). */
         ActivityTypes: {
             [key: string]: {
+                /** @description The type's name in the request's language: the catalog's, else the type spaced out from snake_case and title-cased. */
+                label: string;
                 /**
                  * @description Picks the icon; foot reads as a pace, every other kind as a speed.
                  * @enum {string}
@@ -3649,6 +3651,8 @@ export interface components {
                 /** @description The same per activity type, most frequent first. */
                 by_type: {
                     activity_type: string;
+                    /** @description The type's name in the request's language. */
+                    label: string;
                     count: number;
                     distance_meters: number;
                     moving_seconds: number;

@@ -444,7 +444,7 @@ class SyncTab(
 
     /** One chip per type listed, when there's more than one to choose between. */
     private fun renderTypes(everything: List<Candidate>) {
-        val listedTypes = everything.map { it.activityType }.distinct().sortedBy { RecordingTypes.format(res, it) }
+        val listedTypes = everything.map { it.activityType }.distinct().sortedBy { ActivityTypes.label(it) }
         types.retainAll(listedTypes.toSet())
         typeChips.visibility = if (listedTypes.size > 1) View.VISIBLE else View.GONE
         val current = (0 until typeChips.childCount).map { typeChips.getChildAt(it).tag as String }
@@ -454,7 +454,7 @@ class SyncTab(
                 val chip = LayoutInflater.from(activity).inflate(R.layout.item_sync_type_chip, typeChips, false) as Chip
                 typeChips.addView(chip.apply {
                     tag = type
-                    text = RecordingTypes.format(res, type)
+                    text = ActivityTypes.label(type)
                     setOnCheckedChangeListener { _, checked ->
                         if (checked) types += type else types -= type
                         render()
@@ -599,7 +599,7 @@ class SyncTab(
         val failed = SyncProgress.takeFailed()
         if (failed.isEmpty()) return false
         val format = DATE_FORMAT.withZone(ZoneId.systemDefault())
-        val lines = failed.map { res.getString(R.string.sync_row_failed, format.format(it.startedAt), RecordingTypes.format(res, it.activityType)) }
+        val lines = failed.map { res.getString(R.string.sync_row_failed, format.format(it.startedAt), ActivityTypes.label(it.activityType)) }
         val earlier = problems.text.takeIf { problems.visibility == View.VISIBLE && it.isNotEmpty() }?.toString()
         showProblems(listOfNotNull(earlier) + lines)
         known = known - failed.map { it.externalId }.toSet()
@@ -622,7 +622,7 @@ class SyncTab(
             results.visibility = View.VISIBLE
         }
         val trouble = report.rejected.map {
-            res.getString(R.string.sync_rejected_row, DATE_FORMAT.withZone(ZoneId.systemDefault()).format(it.startedAt), RecordingTypes.format(res, it.activityType), it.reason)
+            res.getString(R.string.sync_rejected_row, DATE_FORMAT.withZone(ZoneId.systemDefault()).format(it.startedAt), ActivityTypes.label(it.activityType), it.reason)
         }.toMutableList()
         report.stoppedBecause?.let { trouble += res.getString(R.string.sync_stopped, it) }
         showProblems(trouble)
@@ -639,7 +639,7 @@ class SyncTab(
         val meta = listOfNotNull(
             date.takeIf { named },
             PanelFormat.distance(res, candidate.distanceM),
-            RecordingTypes.format(res, candidate.activityType),
+            ActivityTypes.label(candidate.activityType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
         val processing = processing(candidate)

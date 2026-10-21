@@ -34,5 +34,5 @@ func (s *Server) handleActivityTypes(w http.ResponseWriter, r *http.Request) {
 		}
 		types = append(types, named...)
 	}
-	writeJSON(w, http.StatusOK, activityTypesResponse{Types: activitytype.Describe(types)})
+	writeJSON(w, http.StatusOK, activityTypesResponse{Types: activitytype.Describe(types, requestLang(r))})
 }

@@ -1,8 +1,7 @@
 /**
  * The map app's English messages — the source of truth for every other catalog (ru.ts is typed
  * against these keys). A key ending .one/.other is one plural form of a count's message (tn).
- * activity_type.* are the common activity types' display names; a type without one shows
- * as its raw value, underscores to spaces (format.ts's formatActivityType).
+ * Activity types' names come from the server (ui/activityTypes.ts).
  */
 export const en = {
   'app.load_failed': "Couldn't load your account: {message}",
@@ -318,52 +317,6 @@ export const en = {
   'photos.zoom_out': 'Zoom out',
   'photos.zoom_fit': 'Fit to screen',
   'photos.close_viewer': 'Close',
-  'activity_type.alpine_skiing': 'Alpine Skiing',
-  'activity_type.biking': 'Biking',
-  'activity_type.biking_stationary': 'Stationary Biking',
-  'activity_type.bus': 'Bus',
-  'activity_type.cross_country_skiing': 'Cross-Country Skiing',
-  'activity_type.cycling': 'Cycling',
-  'activity_type.driving': 'Driving',
-  'activity_type.e_biking': 'E-Biking',
-  'activity_type.ferry': 'Ferry',
-  'activity_type.flying': 'Flying',
-  'activity_type.generic': 'Generic',
-  'activity_type.golf': 'Golf',
-  'activity_type.gravel_cycling': 'Gravel Cycling',
-  'activity_type.hiking': 'Hiking',
-  'activity_type.horseback_riding': 'Horseback Riding',
-  'activity_type.ice_skating': 'Ice Skating',
-  'activity_type.inline_skating': 'Inline Skating',
-  'activity_type.kayaking': 'Kayaking',
-  'activity_type.motorcycling': 'Motorcycling',
-  'activity_type.mountain_biking': 'Mountain Biking',
-  'activity_type.other_workout': 'Other Workout',
-  'activity_type.paddling': 'Paddling',
-  'activity_type.road_cycling': 'Road Cycling',
-  'activity_type.rock_climbing': 'Rock Climbing',
-  'activity_type.rowing': 'Rowing',
-  'activity_type.rowing_machine': 'Rowing Machine',
-  'activity_type.running': 'Running',
-  'activity_type.running_treadmill': 'Treadmill Running',
-  'activity_type.sailing': 'Sailing',
-  'activity_type.skating': 'Skating',
-  'activity_type.skiing': 'Skiing',
-  'activity_type.snowboarding': 'Snowboarding',
-  'activity_type.stand_up_paddleboarding': 'Stand Up Paddleboarding',
-  'activity_type.subway': 'Subway',
-  'activity_type.surfing': 'Surfing',
-  'activity_type.swimming': 'Swimming',
-  'activity_type.swimming_open_water': 'Open Water Swimming',
-  'activity_type.swimming_pool': 'Pool Swimming',
-  'activity_type.tennis': 'Tennis',
-  'activity_type.trail_running': 'Trail Running',
-  'activity_type.train': 'Train',
-  'activity_type.tram': 'Tram',
-  'activity_type.unknown': 'Unknown',
-  'activity_type.walk': 'Walk',
-  'activity_type.walking': 'Walking',
-  'activity_type.yoga': 'Yoga',
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -134,7 +134,7 @@ internal data class ActivitiesJson(
 
 /** What a client shows for one activity type (`panel/ActivityTypes`). */
 @Serializable
-internal data class ActivityTypeJson(val kind: String)
+internal data class ActivityTypeJson(val kind: String, val label: String)
 
 @Serializable
 internal data class ActivityTypesJson(val types: Map<String, ActivityTypeJson>)
@@ -288,6 +288,7 @@ internal data class PrivateLocationInputJson(
 @Serializable
 internal data class StoryTypeStatsJson(
     @SerialName("activity_type") val activityType: String,
+    val label: String = "",
     val count: Int,
     @SerialName("distance_meters") val distanceMeters: Double,
     @SerialName("moving_seconds") val movingSeconds: Long,

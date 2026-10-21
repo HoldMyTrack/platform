@@ -25,7 +25,8 @@ func TestActivityTypes(t *testing.T) {
 
 	var described activityTypesResponse
 	d.decode(d.do(me, http.MethodGet, "/v1/activity-types?types=evening_jog,kite", nil), http.StatusOK, &described)
-	if described.Types["walking"].Kind != activitytype.Foot || described.Types["evening_jog"].Kind != activitytype.Foot || described.Types["kite"].Kind != activitytype.Other {
+	if described.Types["walking"].Kind != activitytype.Foot || described.Types["evening_jog"].Kind != activitytype.Foot || described.Types["kite"].Kind != activitytype.Other ||
+		described.Types["evening_jog"].Label != "Evening Jog" || described.Types["walking"].Label != "Walking" {
 		t.Fatalf("described %+v", described.Types)
 	}
 	for _, bad := range []string{"a,,b", strings.Repeat("x", 51), strings.Repeat("a,", 100) + "a"} {

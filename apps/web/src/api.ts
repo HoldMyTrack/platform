@@ -1,4 +1,5 @@
 import { t } from './i18n';
+import { rememberTypeLabels } from './ui/activityTypes';
 import { parseErrorBody } from './apiError';
 import type { components, paths } from './apiSchema';
 import type { SpotCategory, SpotInArea } from './map/spots';
@@ -219,6 +220,7 @@ export async function listActivities(query: ActivityQuery = {}, signal?: AbortSi
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
   const body = (await res.json()) as ResponseJson<'/activities', 'get'>;
+  rememberTypeLabels(Object.entries(body.types).map(([type, info]) => [type, info.label]));
   return body.activities.map(toActivity);
 }
 
@@ -529,7 +531,10 @@ function toStory(body: Schema<'Story'>): Story {
     activityIds: body.activity_ids,
     stats: {
       ...toStoryTotals(body.stats),
-      byType: body.stats.by_type.map((t) => ({ ...toStoryTotals(t), activityType: t.activity_type })),
+      byType: body.stats.by_type.map((t) => {
+        rememberTypeLabels([[t.activity_type, t.label]]);
+        return { ...toStoryTotals(t), activityType: t.activity_type };
+      }),
     },
   };
 }

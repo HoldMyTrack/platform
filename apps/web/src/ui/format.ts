@@ -1,5 +1,6 @@
 import type { UnitSystem } from './units';
-import { lang, t, tMaybe } from '../i18n';
+import { lang, t } from '../i18n';
+import { typeLabel } from './activityTypes';
 import { distanceParts, durationParts, totalDistanceParts, type DistanceParts } from './formatParts';
 import { activityTimeZone } from './timeZone';
 
@@ -119,20 +120,7 @@ export function formatDayLabel(date: string): string {
   return `${d.getUTCDate()} ${month} ${d.getUTCFullYear()}`;
 }
 
-/**
- * Humanizes an `activity_type` value for display — spaces out `snake_case` and title-cases
- * each word — without remapping its meaning. §4.7 resolved `activity_type` as "whatever the
- * source reports, not a controlled vocabulary": a fixed cosmetic mapping (e.g. treating
- * "gravel_cycling" as a synonym for "Ride") would quietly reintroduce the vocabulary this
- * app deliberately doesn't have. "unknown" formats the same as any other value on purpose —
- * it is itself a real value a parser can report, not a special case.
- */
+/** An `activity_type`'s name, as the server gave it (activityTypes.ts). */
 export function formatActivityType(activityType: string): string {
-  const translated = tMaybe(`activity_type.${activityType.toLowerCase()}`);
-  if (translated) return translated;
-  return activityType
-    .split('_')
-    .filter(Boolean)
-    .map((word) => word[0]!.toUpperCase() + word.slice(1))
-    .join(' ');
+  return typeLabel(activityType);
 }

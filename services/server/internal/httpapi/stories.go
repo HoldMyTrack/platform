@@ -11,6 +11,8 @@ import (
 	"github.com/jackc/pgx/v5"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/fog"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/activitytype"
 )
 
 // Stories (IMPLEMENTATION.md §4.23) — hand-picked, private sets of activities, each
@@ -39,7 +41,10 @@ var (
 // back to duration_seconds per activity, as Trends does (activityTrendsQuery), for activities
 // ingested before moving_seconds was populated.
 type storyTypeStats struct {
-	ActivityType   string  `json:"activity_type"`
+	ActivityType string `json:"activity_type"`
+	// Label is the type's name in the request's language (internal/activitytype), set as the
+	// Story is written out (withTypeLabels).
+	Label          string  `json:"label"`
 	Count          int64   `json:"count"`
 	DistanceMeters float64 `json:"distance_meters"`
 	MovingSeconds  int64   `json:"moving_seconds"`
@@ -69,6 +74,13 @@ type story struct {
 	// boxes from without a request per Story.
 	ActivityIDs []string   `json:"activity_ids"`
 	Stats       storyStats `json:"stats"`
+}
+
+// withTypeLabels names each of the Story's types in lang.
+func (st *story) withTypeLabels(lang string) {
+	for i := range st.Stats.ByType {
+		st.Stats.ByType[i].Label = activitytype.Label(st.Stats.ByType[i].ActivityType, lang)
+	}
 }
 
 type storiesResponse struct {
@@ -150,6 +162,9 @@ func (s *Server) handleListStories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
+	for i := range stories {
+		stories[i].withTypeLabels(requestLang(r))
+	}
 	writeJSON(w, http.StatusOK, storiesResponse{Stories: stories})
 }
 
@@ -164,6 +179,7 @@ func (s *Server) handleGetStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
+	st.withTypeLabels(requestLang(r))
 	writeJSON(w, http.StatusOK, st)
 }
 
@@ -210,6 +226,7 @@ func (s *Server) handleCreateStory(w http.ResponseWriter, r *http.Request) {
 	if s.writeStoryError(w, err) {
 		return
 	}
+	created.withTypeLabels(requestLang(r))
 	writeJSON(w, http.StatusCreated, created)
 }
 
@@ -244,6 +261,7 @@ func (s *Server) handleUpdateStory(w http.ResponseWriter, r *http.Request) {
 	if s.writeStoryError(w, err) {
 		return
 	}
+	st.withTypeLabels(requestLang(r))
 	writeJSON(w, http.StatusOK, st)
 }
 
@@ -349,6 +367,7 @@ func (s *Server) changeStoryActivities(w http.ResponseWriter, r *http.Request,
 	if s.writeStoryError(w, err) {
 		return
 	}
+	updated.withTypeLabels(requestLang(r))
 	writeJSON(w, http.StatusOK, updated)
 }
 

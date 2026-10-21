@@ -926,20 +926,21 @@ object HoldMyTrackApi {
             .build()
         call(Request.Builder().url(url).build(), { body ->
             val decoded = decode<ActivitiesJson>(body)
-            ActivityTypes.merge(decoded.types.kinds())
+            ActivityTypes.merge(decoded.types.described())
             decoded.activities.map { it.toActivity() }
         }, onResult)
     }
 
     /** `GET /v1/activity-types`: what to show for the catalog's types and [types] (`panel/ActivityTypes`). */
-    fun activityTypes(types: List<String>, onResult: (Result<Map<String, ActivityKind>>) -> Unit) {
+    fun activityTypes(types: List<String>, onResult: (Result<Map<String, ActivityTypes.Info>>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V1 + "/activity-types").toHttpUrl().newBuilder()
             .apply { if (types.isNotEmpty()) addQueryParameter("types", types.joinToString(",")) }
             .build()
-        call(Request.Builder().url(url).build(), { body -> decode<ActivityTypesJson>(body).types.kinds() }, onResult)
+        call(Request.Builder().url(url).build(), { body -> decode<ActivityTypesJson>(body).types.described() }, onResult)
     }
 
-    private fun Map<String, ActivityTypeJson>.kinds(): Map<String, ActivityKind> = mapValues { ActivityKind.fromWire(it.value.kind) }
+    private fun Map<String, ActivityTypeJson>.described(): Map<String, ActivityTypes.Info> =
+        mapValues { ActivityTypes.Info(ActivityKind.fromWire(it.value.kind), it.value.label) }
 
     /**
      * `PATCH /v1/activities/{id}` — a full replace of the three fields a person can set
@@ -1337,7 +1338,12 @@ object HoldMyTrackApi {
         call(request, { }, onResult)
     }
 
-    private fun StoryJson.toStory() = Story(
+    private fun StoryJson.toStory(): Story {
+        ActivityTypes.merge(stats.byType.filter { it.label.isNotEmpty() }.associate { it.activityType to ActivityTypes.Info(null, it.label) })
+        return toStoryOnly()
+    }
+
+    private fun StoryJson.toStoryOnly() = Story(
         id = id,
         name = name,
         description = description.orEmpty(),
@@ -1416,7 +1422,7 @@ object HoldMyTrackApi {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities").build()
         call(request, { body ->
             val decoded = decode<ActivitiesJson>(body)
-            ActivityTypes.merge(decoded.types.kinds())
+            ActivityTypes.merge(decoded.types.described())
             buildMap {
                 for (row in decoded.activities) {
                     if (row.activityType.isNotEmpty()) merge(row.activityType, 1, Int::plus)

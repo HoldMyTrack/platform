@@ -16,6 +16,7 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.panel.ActivityTypes
 import dev.holdmytrack.android.recording.db.RecordedActivityStore
 import dev.holdmytrack.android.recording.db.toGpx
 import kotlinx.coroutines.Dispatchers
@@ -102,7 +103,7 @@ class RecordingActivity : AppCompatActivity() {
 
     private fun setType(type: String) {
         selectedType = type
-        typeField.text = RecordingTypes.format(resources, type).ifEmpty { type }
+        typeField.text = ActivityTypes.label(type).ifEmpty { type }
     }
 
     private fun openTypePicker() {

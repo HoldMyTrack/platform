@@ -292,7 +292,7 @@ func (s *Server) handleListActivities(w http.ResponseWriter, r *http.Request) {
 		types = append(types, a.ActivityType)
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, activitiesResponse{Activities: list, Types: activitytype.Describe(types)})
+	writeJSON(w, http.StatusOK, activitiesResponse{Activities: list, Types: activitytype.Describe(types, requestLang(r))})
 }
 
 // maxActivityTypeLen matches activities.activity_type's own VARCHAR(50) — rejecting an

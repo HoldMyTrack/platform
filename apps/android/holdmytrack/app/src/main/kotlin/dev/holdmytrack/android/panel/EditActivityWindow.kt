@@ -227,7 +227,7 @@ class EditActivityWindow(
         } else {
             res.getString(R.string.edit_multi_subtitle)
         }
-        typeField.setText(if (activityType.isEmpty()) "" else RecordingTypes.format(res, activityType))
+        typeField.setText(if (activityType.isEmpty()) "" else ActivityTypes.label(activityType))
         // "Mixed types" stands in the empty field, shown without focus, until a type is picked.
         typeLayout.isExpandedHintEnabled = !mixedTypes
         typeLayout.placeholderText = if (mixedTypes) res.getString(R.string.edit_type_mixed) else null
@@ -288,7 +288,7 @@ class EditActivityWindow(
         if (saving) return
         ActivityTypePicker.show(context, activityType, known) { picked ->
             activityType = picked
-            typeField.setText(RecordingTypes.format(res, picked))
+            typeField.setText(ActivityTypes.label(picked))
             showError(null)
         }
     }

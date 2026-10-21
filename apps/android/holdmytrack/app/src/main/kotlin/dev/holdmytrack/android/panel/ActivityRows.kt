@@ -99,7 +99,7 @@ class ActivityRowHolder(view: View) : RecyclerView.ViewHolder(view) {
                 append(PanelFormat.distance(res, activity.distanceMeters)).append(" · ")
                 append(PanelFormat.duration(res, activity.durationSeconds)).append(" · ")
             }
-            append(RecordingTypes.format(res, activity.activityType))
+            append(ActivityTypes.label(activity.activityType))
         }
         val dim = when {
             activity.pending -> PENDING_ALPHA
