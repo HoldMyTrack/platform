@@ -33,6 +33,11 @@ export function shapeWindow(preset: ExportPreset | 'custom', container: Containe
   return fitWindow(preset === 'custom' ? null : preset.widthPx / preset.heightPx, viewfinderArea(container.width, container.height));
 }
 
+/** Whether taps on the map act: only with the viewfinder closed, so framing only pans and zooms. */
+export function mapTapsAct(flow: ExportFlow): boolean {
+  return flow.stage === 'idle';
+}
+
 export function exportFlowReducer(flow: ExportFlow, event: ExportEvent): ExportFlow {
   switch (event.type) {
     case 'toggle':

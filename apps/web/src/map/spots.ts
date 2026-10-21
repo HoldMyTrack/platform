@@ -7,6 +7,7 @@ import { Binoculars, Castle, createLucideIcon, Dog, Landmark, type LucideProps }
 import type { components } from '../apiSchema';
 import { currentLayers, setLayerToggles, setLayerVars } from './applyLayers';
 import { IMAGES_METADATA } from './mapLayers';
+import { mapTapsActive } from './mapTaps';
 import { SPOT_CATEGORY_WIRE, SPOTS_IN_AREA_LAYER_ID, SPOTS_IN_AREA_SOURCE_ID, SPOTS_LAYER_ID } from './spotsGroup';
 
 /**
@@ -244,7 +245,7 @@ function attachSpotInteractivity(map: MapLibreMap): void {
   interactiveMaps.add(map);
   for (const id of [SPOTS_LAYER_ID, SPOTS_IN_AREA_LAYER_ID]) {
     map.on('mouseenter', id, () => {
-      map.getCanvas().style.cursor = 'pointer';
+      if (mapTapsActive()) map.getCanvas().style.cursor = 'pointer';
     });
     map.on('mouseleave', id, () => {
       map.getCanvas().style.cursor = '';
@@ -253,5 +254,7 @@ function attachSpotInteractivity(map: MapLibreMap): void {
   // One map-wide handler deciding both, rather than a layer click plus the popup's own
   // closeOnClick: those two fire on the same click, and a click on a second spot while one
   // popup was open opened the new one and closed it again.
-  map.on('click', (e) => onSpotClick?.(spotAt(map, e.point)));
+  map.on('click', (e) => {
+    if (mapTapsActive()) onSpotClick?.(spotAt(map, e.point));
+  });
 }

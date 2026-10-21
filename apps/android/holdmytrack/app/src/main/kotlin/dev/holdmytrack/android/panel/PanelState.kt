@@ -41,9 +41,9 @@ class PanelState {
     val selecting: Boolean
         get() = checked.isNotEmpty()
 
-    /** What the map draws bold: the checked group while selecting, else the selected one. */
+    /** What the map draws bold ([PanelRules.boldIds]). */
     val highlighted: Set<String>
-        get() = if (selecting) checked else setOfNotNull(focused)
+        get() = PanelRules.boldIds(checked, focused)
 
     /** A fresh list for the same range — after a sync or an edit. Selection, the group and the
      *  hidden set keep whatever of theirs still exists. */

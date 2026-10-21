@@ -1,5 +1,5 @@
 import { Map as MapLibreMap } from 'maplibre-gl';
-import { API_BASE_URL, type ActivityQuery } from '../api';
+import { API_BASE_URL, type ActivityQuery, type ActivityTrackMetrics } from '../api';
 import { lang } from '../i18n';
 import logoOnDarkUrl from '../assets/logo-on-dark.png';
 import logoOnLightUrl from '../assets/logo-on-light.png';
@@ -12,7 +12,10 @@ import type { MapMode } from './mapMode';
 import { setRoadsVisible } from './mapRoads';
 import { setSatelliteVisible } from './satellite';
 import type { BikePathOverlays } from './bikePathsGroup';
+import { drawPhotoMarkers, type ExportPhotos } from './exportPhotos';
+import { photoMarkerLayout } from './photoClusters';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
+import { setTrackBands } from './trackBands';
 import { trackQuery } from './tracks';
 
 /**
@@ -61,12 +64,18 @@ export interface ExportViewState {
   mode: MapMode;
   activityQuery: ActivityQuery;
   hiddenIds: string[];
+  /** The tracks drawn bold (selection.ts's boldTracks). */
+  boldIds: readonly string[];
+  /** The focused activity's pace bands as the live map draws them (useTrackMetrics), or null. */
+  bands: ActivityTrackMetrics | null;
   /** The Layers menu's paths (overlays.ts), so the image shows what the screen does. */
   paths: BikePathOverlays;
   /** The Satellite button (FR-4.14): satellite imagery, when the deployment has any. */
   satellite: boolean;
   /** The Layers menu's roads (overlays.ts). */
   roads: boolean;
+  /** The photo markers on screen, drawn onto the image (exportPhotos.ts). */
+  photos: ExportPhotos;
 }
 
 export interface ExportFrameCapture {
@@ -113,17 +122,26 @@ export async function exportFramedImage(
   const cssWidth = Math.max(1, Math.round(widthPx));
   const cssHeight = Math.max(1, Math.round(heightPx));
 
-  const { canvas, cleanup } = await renderOffscreen(liveMap, state, {
+  const scale = outWidth / cssWidth;
+  const { instance, cleanup } = await renderOffscreen(liveMap, state, {
     center,
     width: cssWidth,
     height: cssHeight,
-    pixelRatio: outWidth / cssWidth,
+    pixelRatio: scale,
   });
   try {
     // Always redrawn onto a canvas of the exact output size: the backing canvas can land a
     // pixel off after rounding (and a preset frame's ratio can differ from its target by a
     // rounding pixel too), and attribution must go onto a 2D canvas regardless.
-    const finalCanvas = scaleCanvas(canvas, outWidth, outHeight);
+    const finalCanvas = scaleCanvas(instance.getCanvas(), outWidth, outHeight);
+    // Placed by the hidden map's own projection, grouped and sized as on screen.
+    const { items, activeId, loneId } = state.photos;
+    const points = items.map((item) => {
+      const p = instance.project([item.lon, item.lat]);
+      return { id: item.id, x: p.x, y: p.y };
+    });
+    const markers = photoMarkerLayout(points, instance.getZoom(), activeId, loneId, { width: cssWidth, height: cssHeight }, scale);
+    await drawPhotoMarkers(finalCanvas, markers, items, scale);
     const stripBottom = drawAttribution(finalCanvas, attributionText(state.satellite));
     await drawWatermark(finalCanvas, stripBottom, isDarkBase(state.flavor, state.satellite));
 
@@ -297,8 +315,8 @@ interface OffscreenView {
 
 /**
  * The offscreen-instance/overlay-replay machinery — kept apart from `exportFramedImage` above
- * so that function reads as the geometry alone. Attribution and watermark bake-in
- * (`drawAttribution`/`drawWatermark` above) belongs on the *final* canvas in
+ * so that function reads as the geometry alone. Photo markers, attribution and watermark
+ * (`drawPhotoMarkers`, `drawAttribution`/`drawWatermark` above) belong on the *final* canvas in
  * `exportFramedImage` (post-scale — the one actually encoded to PNG), not on the canvas this
  * returns.
  */
@@ -306,7 +324,7 @@ async function renderOffscreen(
   liveMap: MapLibreMap,
   state: ExportViewState,
   view: OffscreenView,
-): Promise<{ canvas: HTMLCanvasElement; cleanup: () => void }> {
+): Promise<{ instance: MapLibreMap; cleanup: () => void }> {
   const { width, height } = view;
   const container = document.createElement('div');
   // Off-screen via position, not display:none — a display:none element has no real layout
@@ -363,17 +381,19 @@ async function renderOffscreen(
       mode: state.mode,
       satellite: state.satellite,
       toggles: { ...state.paths },
-      vars: { hidden: state.hiddenIds },
+      vars: { hidden: state.hiddenIds, focused: [...state.boldIds] },
       queries: { tracks: trackQuery(state.activityQuery) },
-      // No Spots or pace bands, as on Android.
-      excludedGroups: new Set(['spots', 'track-bands']),
+      // No Spots, as on Android.
+      excludedGroups: new Set(['spots']),
     });
+    // The band source is added empty.
+    if (state.bands) setTrackBands(instance, state.bands);
     setSatelliteVisible(instance, state.satellite);
     setRoadsVisible(instance, state.roads);
 
     await waitForIdle(instance);
 
-    return { canvas: instance.getCanvas(), cleanup };
+    return { instance, cleanup };
   } catch (err) {
     cleanup();
     throw err;

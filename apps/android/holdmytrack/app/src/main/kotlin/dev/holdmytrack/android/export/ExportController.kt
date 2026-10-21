@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import androidx.activity.OnBackPressedCallback
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.LayersController
+import dev.holdmytrack.android.map.PhotoMarkers
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 
@@ -22,6 +23,8 @@ class ExportController(
     private val layers: LayersController,
     /** Makes the export's hidden map look like this one. */
     prepare: (Style) -> Unit,
+    /** The photo markers on screen, drawn into the image. */
+    photos: () -> PhotoMarkers.Snapshot,
     /** The chrome that steps aside while the viewfinder shows. */
     private val chrome: List<View>,
     /** The viewfinder opened or closed: popups close, and the mode chip follows. */
@@ -34,6 +37,7 @@ class ExportController(
         prepare = prepare,
         darkBase = { style()?.let(layers::darkBase) ?: layers.isNight() },
         satelliteOn = { layers.satelliteOn },
+        photos = photos,
         onShown = ::render,
     )
 

@@ -28,7 +28,8 @@ export interface MapLayersInputs {
   spotsShown: readonly SpotCategory[];
   activityQuery: ActivityQuery;
   mapHiddenIds: ReadonlySet<string>;
-  focusedId: string | null;
+  /** The tracks drawn bold (selection.ts's boldTracks). */
+  boldIds: readonly string[];
   /** The focused activity's metrics, if its bands are drawn. */
   bands: ActivityTrackMetrics | null;
 }
@@ -39,7 +40,7 @@ export interface MapLayersInputs {
  * tracks' query between loads. A theme change swaps the style in place.
  */
 export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): void {
-  const { initialFlavor, flavor, satellite, roads, mode, editingTrack, paths, spotsShown, activityQuery, mapHiddenIds, focusedId, bands } = inputs;
+  const { initialFlavor, flavor, satellite, roads, mode, editingTrack, paths, spotsShown, activityQuery, mapHiddenIds, boldIds, bands } = inputs;
 
   // Points the tracks source at the new query, as a new URL.
   useEffect(() => {
@@ -57,7 +58,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
         mode,
         satellite,
         toggles: { ...state.toggles, ...paths },
-        vars: { ...state.vars, hidden: [...mapHiddenIds], focused: focusedId !== null ? [focusedId] : [] },
+        vars: { ...state.vars, hidden: [...mapHiddenIds], focused: [...boldIds] },
         queries: { ...state.queries, tracks: trackQuery(activityQuery) },
       });
       attachTrackInteractivity(instance);
@@ -69,7 +70,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       // The band source is recreated empty.
       if (bands) setTrackBands(instance, bands);
     },
-    [flavor, satellite, roads, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, focusedId],
+    [flavor, satellite, roads, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, boldIds],
   );
 
   useEffect(() => {

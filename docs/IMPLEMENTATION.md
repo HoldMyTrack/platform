@@ -324,13 +324,15 @@ On the wire the version is prefixed with the start of the account id, so two acc
 
 #### 4.3.1 Pace-colored segments
 
-A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/track-metrics/{id}` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix would be re-parsing the raw payload for the focused activity, as Edit track does.
+A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/track-metrics/{id}` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused activity's raw payload, as Edit track does.
 
 #### 4.3.3 Map image export
 
-Client-side (§5.5); Android follows the same design (`apps/android/docs/IMPLEMENTATION.md` §3.5). The output's pixel size is chosen apart from the viewfinder, so a phone exports as large an image as a desktop. The largest size offered is the smaller of the GPU's render-buffer limit and MapLibre's 4096 px canvas cap (`maxExportSide`), since past either MapLibre draws smaller without saying so.
+Client-side (§5.5); Android follows the same design (`apps/android/docs/IMPLEMENTATION.md` §3.5). The largest size offered is the smaller of the GPU's render-buffer limit and MapLibre's 4096 px canvas cap (`maxExportSide`), since past either MapLibre silently draws smaller.
 
-**Capture renders a second, hidden map** at the window's CSS size and the live camera, with the resolution from `pixelRatio`, so labels and lines keep their on-screen proportions. It applies the same layers document without Spots and bands, so **a change to how the live map attaches layers reaches the export too**. Attribution (§5.6) and the watermark are drawn into the final canvas at the exact output size.
+**Capture renders a second, hidden map** at the window's CSS size and the live camera, with the resolution from `pixelRatio`, so labels and lines keep their on-screen proportions. It applies the same layers document without Spots, with the live map's hidden and bold ids and bands, so **a change to how the live map attaches layers reaches the export too**.
+
+**Photo markers are drawn onto the final canvas**, beside attribution (§5.6) and the watermark, by the shared `photoMarkerLayout` cases and the live markers' constants (`photoMarkerLook.ts`, `PhotoMarkerLook`); a symbol layer would put every thumbnail in the style.
 
 ### 4.5 Per-activity pace, and distance trends
 

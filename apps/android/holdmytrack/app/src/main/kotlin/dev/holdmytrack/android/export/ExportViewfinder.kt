@@ -26,8 +26,12 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.button.MaterialButton
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.map.PhotoMarkers
+import dev.holdmytrack.android.photos.PhotoClusters
+import dev.holdmytrack.android.photos.ScreenPoint
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
+import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.Style
 import org.json.JSONObject
@@ -38,7 +42,8 @@ import java.util.concurrent.Executors
 /**
  * The map image export (`apps/android/docs/SPEC.md` FR-2.11, `IMPLEMENTATION.md` §3.5): the
  * viewfinder over the map, and what Capture does — draw the window on a hidden map
- * ([MapImageRenderer]), bake in the credit and the logo ([ImageMarks]), save it to Pictures and
+ * ([MapImageRenderer]), draw the photo markers on it ([ExportPhotos]), bake in the credit and the
+ * logo ([ImageMarks]), save it to Pictures and
  * open the share sheet on it. The geometry is [Viewfinder]'s.
  *
  * [host] is the map's own container, which the viewfinder covers whole; [prepare] puts the app's
@@ -52,6 +57,8 @@ class ExportViewfinder(
     private val prepare: (Style) -> Unit,
     private val darkBase: () -> Boolean,
     private val satelliteOn: () -> Boolean,
+    /** The photo markers on screen, drawn into the image as they're shown. */
+    private val photos: () -> PhotoMarkers.Snapshot,
     private val onShown: (Boolean) -> Unit,
 ) {
     private val context: Context = host.context
@@ -281,6 +288,24 @@ class ExportViewfinder(
             widthPx = widthPx,
             heightPx = heightPx,
         )
+        // The markers where the screen shows them, in dp from the window's corner; the hidden map
+        // draws the same extent at the same zoom, only at [unit] pixels per dp.
+        val unit = widthPx / (box.w / density)
+        val shown = photos()
+        val markers = PhotoClusters.layout(
+            shown.items.map {
+                val p = instance.projection.toScreenLocation(LatLng(it.lat, it.lon))
+                ScreenPoint(it.id, (p.x - box.x) / density, (p.y - box.y) / density)
+            },
+            camera.zoom, shown.activeId, shown.loneId, box.w / density, box.h / density, unit,
+        )
+        // The map's picture and the thumbnails load side by side; the image is made when both are in.
+        var thumbs: Map<String, Bitmap>? = null
+        var picture: (() -> Unit)? = null
+        ExportPhotos.loadThumbs(markers, shown.items) { loaded ->
+            thumbs = loaded
+            picture?.invoke()
+        }
         var rendered: Style? = null
         val dark = darkBase()
         val satellite = satelliteOn()
@@ -301,7 +326,8 @@ class ExportViewfinder(
                         sourceAttribution(json, BASEMAP_SOURCE_ID),
                         if (satellite) sourceAttribution(json, SATELLITE_SOURCE_ID) else null,
                     )
-                    finish(bitmap, widthPx, heightPx, credit, dark)
+                    picture = { finish(bitmap, widthPx, heightPx, credit, dark) { image -> ExportPhotos.draw(context, image, markers, thumbs.orEmpty(), unit) } }
+                    if (thumbs != null) picture?.invoke()
                 },
                 onFailure = { error -> fail(error) },
             )
@@ -314,7 +340,7 @@ class ExportViewfinder(
 
     /** The marks baked in, the image saved and the share sheet opened, off the main thread for
      *  the heavy part. */
-    private fun finish(snapshot: Bitmap, widthPx: Int, heightPx: Int, credit: String, dark: Boolean) {
+    private fun finish(snapshot: Bitmap, widthPx: Int, heightPx: Int, credit: String, dark: Boolean, drawPhotos: (Bitmap) -> Unit) {
         io.execute {
             val saved = runCatching {
                 val image = if (snapshot.width == widthPx && snapshot.height == heightPx && snapshot.isMutable) {
@@ -322,6 +348,7 @@ class ExportViewfinder(
                 } else {
                     snapshot.scale(widthPx, heightPx).copy(Bitmap.Config.ARGB_8888, true)
                 }
+                drawPhotos(image)
                 ImageMarks.draw(context, image, credit, dark)
                 save(image)
             }

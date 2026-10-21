@@ -1,7 +1,11 @@
 package dev.holdmytrack.android.panel
 
-/** The toolbar's rules [PanelState] applies, as the web's `selection.ts`; both run `testdata/client-rules`. */
+/** The selection's rules [PanelState] applies, as the web's `selection.ts`; both run `testdata/client-rules`. */
 object PanelRules {
+    /** The tracks drawn bold, on the map and in its exported image: the checked group and the
+     *  selected one. */
+    fun boldIds(checked: Set<String>, focused: String?): Set<String> = checked + setOfNotNull(focused)
+
     /** What the toolbar acts on: the checked group whenever anything is checked, else the
      *  selected row alone, else nothing. Checked wins so an action never reaches past what was ticked. */
     fun targetIds(checked: Set<String>, focused: String?): Set<String> = when {

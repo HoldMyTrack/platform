@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { MapMode } from './mapMode';
 import { GROUP_MAX_ZOOM, photoGroupAction, photoMarkerItems, photoScopeFor } from './photoMarkerItems';
+import type { ExportPhotos } from './exportPhotos';
 import { usePhotoMarkers, type PhotoMarkerItem, type PhotoMarkerOverlay } from './photos';
 import { API_BASE_URL, type Photo } from '../api';
 import { usePhotos, type PhotosState } from '../ui/usePhotos';
@@ -28,6 +29,8 @@ export interface PhotoLayer {
   closePopup: () => void;
   /** The Photos tab's unsaved changes as they alter the markers (PhotosTab.tsx). */
   setOverlay: (overlay: PhotoMarkerOverlay | null) => void;
+  /** The markers as drawn, for the image export. */
+  exportPhotos: ExportPhotos;
 }
 
 /** Photos on the map (FR-16): the scope's photos as markers on their routes, and the popup a
@@ -65,11 +68,10 @@ export function usePhotoLayer(map: MapLibreMap | null, inputs: PhotoLayerInputs)
   );
   const index = openGroup && openPhotos.length > 0 ? Math.min(openGroup.index, openPhotos.length - 1) : 0;
   const openPhotoId = openGroup && openPhotos.length > 0 ? openPhotos[index]!.id : null;
-  usePhotoMarkers(map, markers, {
-    onOpen: openMarker,
-    activeId: overlay?.activeId ?? openPhotoId,
-    loneId: overlay?.activeId ?? null,
-  });
+  const activeId = overlay?.activeId ?? openPhotoId;
+  const loneId = overlay?.activeId ?? null;
+  usePhotoMarkers(map, markers, { onOpen: openMarker, activeId, loneId });
+  const exportPhotos = useMemo(() => ({ items: markers, activeId, loneId }), [markers, activeId, loneId]);
 
   return {
     photos,
@@ -77,5 +79,6 @@ export function usePhotoLayer(map: MapLibreMap | null, inputs: PhotoLayerInputs)
     showPopupIndex: (next) => setOpenGroup((group) => (group ? { ...group, index: next } : group)),
     closePopup: () => setOpenGroup(null),
     setOverlay,
+    exportPhotos,
   };
 }

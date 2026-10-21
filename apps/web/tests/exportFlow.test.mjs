@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { exportFlowReducer, shapeWindow } from '../src/map/exportFlow.ts';
+import { exportFlowReducer, mapTapsAct, shapeWindow } from '../src/map/exportFlow.ts';
 
 const container = { width: 1280, height: 800 };
 const square = { widthPx: 1080, heightPx: 1080 };
@@ -37,4 +37,10 @@ test('a failed capture returns to framing with the same window', () => {
 
 test('a window change outside framing is ignored', () => {
   assert.deepEqual(exportFlowReducer({ stage: 'idle' }, { type: 'window', window: { x: 0, y: 0, w: 1, h: 1 } }), { stage: 'idle' });
+});
+
+test('taps on the map act only with the viewfinder closed', () => {
+  assert.equal(mapTapsAct({ stage: 'idle' }), true);
+  assert.equal(mapTapsAct(framing), false);
+  assert.equal(mapTapsAct(exportFlowReducer(framing, { type: 'capture' })), false);
 });

@@ -3,9 +3,11 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { activityQuery as queryFor } from './activityQuery';
 import { flyToBBox, unionBBox } from './bbox';
 import { defaultRange } from './defaultRange';
+import { mapTapsAct } from './exportFlow';
 import type { MapMode } from './mapMode';
+import { setMapTapsActive } from './mapTaps';
 import { initialSession, mapSessionReducer } from './session';
-import { toolbarTarget } from './selection';
+import { boldTracks, toolbarTarget } from './selection';
 import { initialPanelTab, storyParam } from './storyUrl';
 import type { SpotCategory } from './spots';
 import { useCoverageRefresh } from './useCoverageRefresh';
@@ -88,6 +90,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const storyState = useStory(storyId);
   const storiesList = useStories(panelTab === 'stories');
 
+  const boldIds = useMemo(() => boldTracks(checkedActivityIds, focusedActivityId), [checkedActivityIds, focusedActivityId]);
   const toolbarTargetIds = useMemo(() => toolbarTarget(checkedActivityIds, focusedActivityId), [checkedActivityIds, focusedActivityId]);
   const changeSelectedRange = useCallback((range: DateRange) => dispatch({ type: 'rangePicked', range }), []);
 
@@ -147,12 +150,6 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     scaleUnit: unitSystem,
   });
 
-  const exportScene = useMemo(
-    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], paths, satellite, roads }),
-    [flavor, mapMode, activityQuery, mapHiddenIds, paths, satellite, roads],
-  );
-  const exporter = useExportFlow(map, container, exportScene);
-
   // A Story's photos change with its members too.
   const storyMembers = storyState.story?.activityIds.join(',') ?? '';
   const photoLayer = usePhotoLayer(map, {
@@ -199,16 +196,24 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   });
 
   const spots = useSpots(map, spotsShown);
+  const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
+  const exportScene = useMemo(
+    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite, roads, photos: photoLayer.exportPhotos }),
+    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, bands, paths, satellite, roads, photoLayer.exportPhotos],
+  );
+  const exporter = useExportFlow(map, container, exportScene);
+  const tapsAct = mapTapsAct(exporter.flow);
+  useEffect(() => setMapTapsActive(tapsAct), [tapsAct]);
   useSelectionLayers(map, {
-    focusedId: focusedActivityId,
-    hoveredId: hoveredActivityId,
+    boldIds,
+    // Hover isn't exported, and framing doesn't preview.
+    hoveredId: tapsAct ? hoveredActivityId : null,
     mapHiddenIds,
     editOpen,
     onFocus: focusActivity,
     onHover: setHoveredActivityId,
     onClickAway: clearFocus,
   });
-  const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
 
   // Fog and Heatmap are re-rendered by queued jobs, so after an upload or delete this waits for the
   // account's jobs to drain and then refetches both (useCoverageRefresh.ts). `coverageRendering`
@@ -290,7 +295,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     spotsShown,
     activityQuery,
     mapHiddenIds,
-    focusedId: focusedActivityId,
+    boldIds,
     bands,
   });
   useHashSync(map, pinned);

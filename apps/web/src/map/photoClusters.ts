@@ -1,5 +1,6 @@
 // With its extension, so the unit tests' Node can load it too (tsconfig's allowImportingTsExtensions).
 import { TRACKS_MIN_ZOOM } from './config.ts';
+import { PHOTO_MARKER_LOOK } from './photoMarkerLook.ts';
 
 /**
  * Grouping photo markers that would overlap on screen — the photos of a whole trip
@@ -57,4 +58,57 @@ export function clusterPoints(points: readonly ScreenPoint[], radius = CLUSTER_R
     else clusters.push({ ids: [p.id], x: p.x, y: p.y });
   }
   return clusters;
+}
+
+/** The markers at a size: the points grouped as they'd overlap, except [loneId], which keeps a
+ *  marker of its own after the rest. The live map's markers (photos.ts) and the export's
+ *  (photoMarkerLayout) both come from here. */
+export function photoMarkerGroups(points: readonly ScreenPoint[], size: 'small' | 'full', loneId: string | null): PhotoCluster[] {
+  const groups = clusterPoints(
+    points.filter((p) => p.id !== loneId),
+    size === 'small' ? SMALL_CLUSTER_RADIUS_PX : CLUSTER_RADIUS_PX,
+  );
+  const lone = points.find((p) => p.id === loneId);
+  if (lone) groups.push({ ids: [lone.id], x: lone.x, y: lone.y });
+  return groups;
+}
+
+/** One marker in an exported image, in output pixels. */
+export interface PhotoMarkerPlacement {
+  ids: string[];
+  x: number;
+  y: number;
+  diameter: number;
+  active: boolean;
+  small: boolean;
+}
+
+/**
+ * The markers an exported image draws (FR-4.10): grouped and sized as the screen does at [zoom],
+ * from [points] in CSS pixels from the frame's top-left, then scaled to the image by [scale]. A
+ * marker wholly outside the frame is left out; the active one comes last, to be drawn on top.
+ */
+export function photoMarkerLayout(
+  points: readonly ScreenPoint[],
+  zoom: number,
+  activeId: string | null,
+  loneId: string | null,
+  frame: { width: number; height: number },
+  scale: number,
+): PhotoMarkerPlacement[] {
+  const size = photoMarkerSize(zoom);
+  if (size === 'hidden') return [];
+  const look = PHOTO_MARKER_LOOK[size];
+  const placed = photoMarkerGroups(points, size, loneId)
+    .map(({ ids, x, y }) => {
+      const active = activeId !== null && ids.includes(activeId);
+      return { ids, x, y, diameter: active ? look.activeDiameter : look.diameter, active, small: size === 'small' };
+    })
+    .filter(({ x, y, diameter }) => x + diameter / 2 >= 0 && x - diameter / 2 <= frame.width && y + diameter / 2 >= 0 && y - diameter / 2 <= frame.height);
+  return [...placed.filter((m) => !m.active), ...placed.filter((m) => m.active)].map((m) => ({
+    ...m,
+    x: m.x * scale,
+    y: m.y * scale,
+    diameter: m.diameter * scale,
+  }));
 }

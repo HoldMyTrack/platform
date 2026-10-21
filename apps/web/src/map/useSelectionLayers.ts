@@ -3,7 +3,8 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { setHiddenTracks, setHoveredTrack, setSelectedTracks, setTrackInteractivityHandlers } from './tracks';
 
 export interface SelectionLayerInputs {
-  focusedId: string | null;
+  /** The tracks drawn bold (selection.ts's boldTracks). */
+  boldIds: readonly string[];
   hoveredId: string | null;
   mapHiddenIds: ReadonlySet<string>;
   /** The Edit window is open: its group and focus must stay, and a track session's clicks aim at points. */
@@ -14,13 +15,13 @@ export interface SelectionLayerInputs {
 }
 
 /**
- * The selection on the tracks layer: only the focused track is bold (checked ones aren't), the
- * hovered one is previewed, and hidden, filtered and Pending tracks aren't drawn. A click on a
+ * The selection on the tracks layer: the checked and focused tracks are bold, the hovered one is
+ * previewed, and hidden, filtered and Pending tracks aren't drawn. A click on a
  * track focuses it as a row click does; a click away clears the focus and keeps the checked group.
  * While the Edit window is open the handlers go quiet.
  */
 export function useSelectionLayers(map: MapLibreMap | null, inputs: SelectionLayerInputs): void {
-  const { focusedId, hoveredId, mapHiddenIds, editOpen, onFocus, onHover, onClickAway } = inputs;
+  const { boldIds, hoveredId, mapHiddenIds, editOpen, onFocus, onHover, onClickAway } = inputs;
   useEffect(() => {
     setTrackInteractivityHandlers(
       editOpen ? { onSelect: () => {}, onHover: () => {}, onClickAway: () => {} } : { onSelect: onFocus, onHover, onClickAway },
@@ -28,8 +29,8 @@ export function useSelectionLayers(map: MapLibreMap | null, inputs: SelectionLay
   }, [onFocus, onClickAway, editOpen]);
 
   useEffect(() => {
-    if (map) setSelectedTracks(map, focusedId !== null ? [focusedId] : []);
-  }, [map, focusedId]);
+    if (map) setSelectedTracks(map, boldIds);
+  }, [map, boldIds]);
 
   useEffect(() => {
     if (map) setHoveredTrack(map, hoveredId);

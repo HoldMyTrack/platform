@@ -278,7 +278,8 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 ### FR-4.10 Map image export
 
 - Any framed view as a PNG, on the web and Android: Custom with a long side of 1920, 2560 or 3840 px, or an Instagram, Facebook or X preset. A size the browser can't draw isn't offered.
-- The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story, Fog's all-time coverage, Heatmap's window. Private location circles and pace bands are never drawn.
+- While the frame is open the map only pans and zooms: a tap selects, opens and clears nothing.
+- The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story with its bold tracks, pace bands and photo markers as on screen, Fog's all-time coverage, Heatmap's window. Spots and Private location circles are never drawn.
 - OpenStreetMap's attribution, the imagery credit with Satellite on, and a HoldMyTrack watermark are drawn in and can't be removed: the basemap is an ODbL Produced Work (`IMPLEMENTATION.md` §5.6).
 
 ### FR-4.12 Light and dark theme
@@ -335,7 +336,7 @@ The same paths for every account, behind the session and cached like every map t
 - Lists every activity in the date range (FR-6) passing the Type and Distance filters, always newest first by start time, not paginated. Count and total distance cover the whole range.
 - A row shows the activity's name, which exists only once a person types one (FR-5.10), else its local start time.
 - Badges: Pending and Hidden (FR-5.15); Story, naming its Stories; Private, for an activity entirely inside Private locations (FR-8.1), which has no track, distance or duration and can't have its track or photos edited.
-- One activity is focused at a time, by clicking its row or track; any number can be checked. The toolbar's actions act on the checked activities when any are, else on the focused one, never both. Checking never moves the camera, and camera fits skip Hidden activities.
+- One activity is focused at a time, by clicking its row or track; any number can be checked. The checked activities and the focused one are drawn bold, on the map and in its image (FR-4.10). The toolbar's actions act on the checked activities when any are, else on the focused one, never both. Checking never moves the camera, and camera fits skip Hidden activities.
 
 ### FR-5.2 TYPE filter
 

@@ -61,4 +61,35 @@ object PhotoClusters {
         }
         return anchors.mapIndexed { i, a -> PhotoCluster(members[i], a.x, a.y) }
     }
+
+    /** The markers at [size]: [points] grouped as they'd overlap, [radius] scaled by [unit] (pixels
+     *  per dp), except [loneId], which keeps a marker of its own after the rest. The live map's
+     *  markers and the export's ([layout]) both come from here. */
+    fun groups(points: List<ScreenPoint>, size: MarkerSize, loneId: String?, unit: Float = 1f): List<PhotoCluster> {
+        val radius = (if (size == MarkerSize.SMALL) SMALL_RADIUS_DP else RADIUS_DP) * unit
+        val groups = cluster(points.filter { it.id != loneId }, radius).toMutableList()
+        points.firstOrNull { it.id == loneId }?.let { groups += PhotoCluster(listOf(it.id), it.x, it.y) }
+        return groups
+    }
+
+    /**
+     * The markers an exported image draws (root `docs/SPEC.md` FR-4.10): grouped and sized as the
+     * screen does at [zoom], from [points] in dp from the frame's top-left, then scaled to the image
+     * by [scale] (pixels per dp). A marker wholly outside the [width] × [height] frame is left out;
+     * the active one comes last, to be drawn on top. The web's `photoMarkerLayout`.
+     */
+    fun layout(points: List<ScreenPoint>, zoom: Double, activeId: String?, loneId: String?, width: Float, height: Float, scale: Float): List<PhotoMarkerPlacement> {
+        val size = markerSize(zoom)
+        if (size == MarkerSize.HIDDEN) return emptyList()
+        val small = size == MarkerSize.SMALL
+        val look = PhotoMarkerLook.of(small)
+        val placed = groups(points, size, loneId).map { group ->
+            val active = activeId != null && activeId in group.ids
+            PhotoMarkerPlacement(group.ids, group.x, group.y, if (active) look.activeDiameter else look.diameter, active, small)
+        }.filter { m -> m.x + m.diameter / 2 >= 0 && m.x - m.diameter / 2 <= width && m.y + m.diameter / 2 >= 0 && m.y - m.diameter / 2 <= height }
+        return (placed.filter { !it.active } + placed.filter { it.active }).map { it.copy(x = it.x * scale, y = it.y * scale, diameter = it.diameter * scale) }
+    }
 }
+
+/** One marker in an exported image, in its pixels ([PhotoClusters.layout]). */
+data class PhotoMarkerPlacement(val ids: List<String>, val x: Float, val y: Float, val diameter: Float, val active: Boolean, val small: Boolean)

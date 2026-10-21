@@ -93,6 +93,7 @@ class ClientRulesTest {
                 put("awaiting", ids(change.awaiting))
             }
         },
+        "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
         "toolbarTarget" to { input -> ids(PanelRules.targetIds(input.strings("checked").toSet(), input.string("focused"))) },
         "targetVisibility" to { input -> ids(PanelRules.toggledVisibility(input.strings("hidden").toSet(), input.strings("target").toSet())) },
         "photoScope" to { input ->
@@ -148,6 +149,21 @@ class ClientRulesTest {
             }
         },
         "photoMarkerSize" to { input -> JsonPrimitive(PhotoClusters.markerSize(input.number("zoom")).name.lowercase()) },
+        "photoMarkerLayout" to { input ->
+            val points = input["points"]!!.jsonArray.map { it.jsonObject }.map { ScreenPoint(it.string("id")!!, it.number("x").toFloat(), it.number("y").toFloat()) }
+            val placed = PhotoClusters.layout(
+                points, input.number("zoom"), input.string("activeId"), input.string("loneId"),
+                input.number("width").toFloat(), input.number("height").toFloat(), input.number("scale").toFloat(),
+            )
+            buildJsonArray {
+                placed.forEach { m ->
+                    add(buildJsonObject {
+                        put("ids", ids(m.ids, sort = false)); put("x", m.x); put("y", m.y); put("diameter", m.diameter)
+                        put("active", m.active); put("small", m.small)
+                    })
+                }
+            }
+        },
         "photoTrackPoint" to { input ->
             val point = photoTrack(input).pointAt(input.number("fraction"))
             buildJsonObject { put("lon", point.lon); put("lat", point.lat); put("t", point.t) }

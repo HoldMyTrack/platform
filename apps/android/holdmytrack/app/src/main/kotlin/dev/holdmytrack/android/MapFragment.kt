@@ -273,9 +273,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             style = { style },
             layers = layers,
             prepare = ::prepareExportStyle,
-            chrome = listOf(topChrome, sheet, findViewById(R.id.photo_markers)),
+            photos = photos::markersSnapshot,
+            chrome = listOf(topChrome, sheet),
             onShown = { shown ->
                 modes.renderChip()
+                // In sight, as they're in the image, but a tap on one goes to the map.
+                photos.setMarkersInteractive(!shown)
                 if (shown) {
                     spots.closePopup()
                     photos.closePopup()
@@ -631,6 +634,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
      * to hit) is selected and flown to; empty map clears the selection. The sheet stays as it was.
      */
     private fun onMapTap(instance: MapLibreMap, point: LatLng): Boolean {
+        // Framing only pans and zooms (`docs/SPEC.md` FR-4.10).
+        if (export.isOpen) return true
         // A spot's badge first, in every mode, unless an editor has the map; a tap elsewhere
         // closes its popup.
         if (!edit.privacy.isShowing && !editWindow.isOpen && spots.tap(instance, point)) return true
@@ -696,7 +701,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /**
      * Makes the export's hidden map (`export/MapImageRenderer`) look like this one, with the calls
-     * [loadStyle] and [syncSession] make. No Spots, photos or recording, as on the web.
+     * [loadStyle] and [syncSession] make. No Spots or recording, as on the web; the viewfinder draws the photo markers onto the picture.
      */
     private fun prepareExportStyle(loaded: Style) {
         layers.applyPaths(loaded)
@@ -705,6 +710,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), storyId, EXPORT_EXCLUDED)
         layers.applyPaths(loaded)
         MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
+        bands.drawn?.let { MapOverlays.setTrackBands(loaded, it) }
     }
 
     /** What [CameraFramer.frameLatest] found. An account with no geometry stays at the world view,
@@ -826,7 +832,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         private const val STATE_MODE = "mode"
         private const val STATE_FRAMED = "framed"
 
-        /** What the export leaves out, as on the web: the places and the pace bands. */
-        private val EXPORT_EXCLUDED = setOf("spots", "track-bands")
+        /** What the export leaves out, as on the web: the places. */
+        private val EXPORT_EXCLUDED = setOf("spots")
     }
 }
