@@ -115,13 +115,46 @@
                     app:icon="@drawable/ic_chevron_right" />
             </LinearLayout>
 
-            <dev.holdmytrack.android.map.DayScrubberView
-                android:id="@+id/date_range_track"
+            <!-- « track »: the « » show only where the width leaves the track room for them
+                 (SliderRules.layout). -->
+            <LinearLayout
+                android:id="@+id/date_range_row"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginStart="@dimen/hmt_space_16"
                 android:layout_marginTop="@dimen/hmt_space_10"
-                android:paddingStart="@dimen/hmt_space_12"
-                android:paddingEnd="@dimen/hmt_space_12" />
+                android:layout_marginEnd="@dimen/hmt_space_16"
+                android:gravity="top"
+                android:orientation="horizontal">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/date_range_page_earlier"
+                    style="@style/Widget.HoldMyTrack.Button.SheetPage"
+                    android:layout_width="22dp"
+                    android:layout_height="48dp"
+                    android:layout_marginEnd="6dp"
+                    android:contentDescription="@string/date_range_page_earlier"
+                    android:visibility="gone"
+                    app:icon="@drawable/ic_chevrons_left" />
+
+                <dev.holdmytrack.android.map.DayScrubberView
+                    android:id="@+id/date_range_track"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:paddingStart="8dp"
+                    android:paddingEnd="8dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/date_range_page_later"
+                    style="@style/Widget.HoldMyTrack.Button.SheetPage"
+                    android:layout_width="22dp"
+                    android:layout_height="48dp"
+                    android:layout_marginStart="6dp"
+                    android:contentDescription="@string/date_range_page_later"
+                    android:visibility="gone"
+                    app:icon="@drawable/ic_chevrons_right" />
+            </LinearLayout>
         </LinearLayout>
 
         <!-- The selected activity, in the range's place while one is selected. -->

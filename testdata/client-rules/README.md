@@ -29,6 +29,12 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
 | `activityZone` | `own`, `account` (zone ids) | a zone id, or `null` for the device's |
 | `photoClusters` | `points` (`{ id, x, y }`), `radius` | `[{ ids, x, y }]` |
+| `sliderLayout` | `width`, `finePointer` | `{ buttons, days }` |
+| `sliderBoundaries` | `days` (ascending dates), `canPanEarlier`, `canPanLater`, `range` | `{ start, end }`, each -1..n + 1 |
+| `sliderMoveKnob` | the same, `knob` (`start`, `end`), `boundary` | `{ from, to }` |
+| `sliderTicks` | `days` | `[{ boundary, kind, month }]`, `kind` `day` or `month` |
+| `sliderPanLand` | `days` (the new window), `range`, `start`, `end` (knobs pulled) | `{ from, to }` |
+| `sliderWindowFit` | `count`, `windowDays`, `left`, `first`, `last` (indices), `dir` | the new `left` |
 | `photoMarkerSize` | `zoom` | `"hidden"`, `"small"` or `"full"` |
 | `photoMarkerLayout` | `points` (`{ id, x, y }`), `zoom`, `activeId`, `loneId`, `width`, `height`, `scale` | `[{ ids, x, y, diameter, active, small }]` |
 | `photoTrackPoint` | `points` (`{ lon, lat, t }`), `fraction` | `{ lon, lat, t }` |

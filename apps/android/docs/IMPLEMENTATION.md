@@ -112,7 +112,7 @@ Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATIO
 
 ### 3.3 Logic ported from the web
 
-Where the web has a rule, the app ports it as a pure Kotlin class. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PanelState`, `PhotoMarkerScope`, `RangeShift`, `EditTrackOps`, `ActivityFacets`, `ActivityZone`, `PhotoClusters`, `PhotoTrack`, `PhotoZoom` and `FormatParts` run the shared JSON cases (`testdata/client-rules`), and `TrackBands` the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `ActivityDays`, `DateRangeSlider`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
+Where the web has a rule, the app ports it as a pure Kotlin class. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PanelState`, `PhotoMarkerScope`, `RangeShift`, `SliderRules`, `EditTrackOps`, `ActivityFacets`, `ActivityZone`, `PhotoClusters`, `PhotoTrack`, `PhotoZoom` and `FormatParts` run the shared JSON cases (`testdata/client-rules`), and `TrackBands` the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
 
 ### 3.4 The panel, editors and touches
 

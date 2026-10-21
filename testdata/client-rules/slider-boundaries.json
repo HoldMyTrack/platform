@@ -1,0 +1,14 @@
+{
+  "rule": "sliderBoundaries",
+  "description": "Where a range's knobs sit on the window's slot boundaries (0..n, days ascending): start where its first day begins, end where its last one ends. A knob before the window is -1 and after it n + 1, unless there's no history that way (canPanEarlier, canPanLater), where it sits on the edge.",
+  "cases": [
+    {"name": "a one-day selection's knobs are a slot apart", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-10-01", "to": "2026-10-01"}}, "expected": {"start": 2, "end": 3}},
+    {"name": "the whole window", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-09-28", "to": "2026-10-07"}}, "expected": {"start": 0, "end": 6}},
+    {"name": "knobs off either side", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-09-01", "to": "2026-10-20"}}, "expected": {"start": -1, "end": 7}},
+    {"name": "no history on either side: the knobs sit on the edges", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": false, "canPanLater": false, "range": {"from": "2026-09-01", "to": "2026-10-20"}}, "expected": {"start": 0, "end": 6}},
+    {"name": "dates in gaps between activity-days", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-09-29", "to": "2026-10-04"}}, "expected": {"start": 1, "end": 4}},
+    {"name": "a range wholly before the window", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-08-01", "to": "2026-08-05"}}, "expected": {"start": -1, "end": -1}},
+    {"name": "a range wholly after the window", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-11-01", "to": "2026-11-05"}}, "expected": {"start": 7, "end": 7}},
+    {"name": "an empty window", "input": {"days": [], "canPanEarlier": false, "canPanLater": false, "range": {"from": "2026-10-01", "to": "2026-10-01"}}, "expected": {"start": 0, "end": 0}}
+  ]
+}

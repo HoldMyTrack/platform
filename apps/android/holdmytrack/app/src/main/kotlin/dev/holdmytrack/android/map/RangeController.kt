@@ -33,13 +33,14 @@ class RangeController(
     private val onDaysChanged: () -> Unit,
     private val fly: (List<Activity>) -> Unit,
 ) {
-    val days = ActivityDays(DateRangeSlider.WINDOW_DAYS, ::onActivityDaysChanged)
+    val days = ActivityDays(DateRangeSlider.INITIAL_WINDOW_DAYS, ::onActivityDaysChanged)
 
     private val slider = DateRangeSlider(
         dateFooter,
         onPan = days::panBy,
         onShift = days::shift,
         canShift = days::canShift,
+        onWindowDays = { size -> days.resize(size, session.range) },
     ) { range ->
         session.pickRange(range)
         showRange(reset = true)

@@ -39,7 +39,7 @@ import { PhotoPopup } from '../ui/PhotoPopup';
 import { SpotPopup } from '../ui/SpotPopup';
 import { todayLocal, type DateRange } from '../ui/dateMath';
 import { useUnitSystem } from '../ui/units';
-import { useActivityDays } from '../ui/useActivityDays';
+import { INITIAL_WINDOW_DAYS, useActivityDays } from '../ui/useActivityDays';
 import { useActivityList } from '../ui/useActivityList';
 import { useStories } from '../ui/useStories';
 import { useStory } from '../ui/useStory';
@@ -68,6 +68,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   // The range or Story shown, the selection over it and the mode (session.ts).
   const [session, dispatch] = useReducer(mapSessionReducer, null, () => initialSession(storyParam(window.location.search)));
   const { range: selectedRange, storyId, mode: mapMode } = session;
+  // How many activity-days the slider has room for, as it measured its row.
+  const [windowDays, setWindowDays] = useState(INITIAL_WINDOW_DAYS);
   const { checked: checkedActivityIds, focused: focusedActivityId, hidden: hiddenActivityIds, excludedTypes, distanceFilter } = session.selection;
   const { overlays, change: changeOverlays, paths, roads, satelliteAvailable, satellite } = useOverlays();
 
@@ -123,7 +125,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     canShift,
     reload: reloadDays,
     generation: historyGeneration,
-  } = useActivityDays();
+  } = useActivityDays(windowDays, selectedRange);
 
   const edit = useEditWindow(activities, activitiesLoading);
   const editOpen = edit.open;
@@ -356,6 +358,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
                 canShift,
                 value: selectedRange ?? { from: today, to: today },
                 onChange: changeSelectedRange,
+                onWindowDays: setWindowDays,
               }}
             />
           </div>

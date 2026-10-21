@@ -132,6 +132,8 @@
     <string name="export_saved">Saved to Pictures</string>
     <string name="export_share_title">Share map image</string>
     <string name="date_range_shift_earlier">Move the range earlier</string>
+    <string name="date_range_page_earlier">5 active days earlier</string>
+    <string name="date_range_page_later">5 active days later</string>
     <string name="date_range_shift_later">Move the range later</string>
     <string name="locate_needs_location">HoldMyTrack needs location access to show where you are.</string>
     <string name="nav_map">Map</string>

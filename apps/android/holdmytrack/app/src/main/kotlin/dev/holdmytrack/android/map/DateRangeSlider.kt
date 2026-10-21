@@ -1,10 +1,13 @@
 package dev.holdmytrack.android.map
 
 import android.annotation.SuppressLint
+import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
 import android.view.MotionEvent
+import android.view.TouchDelegate
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.ActivityDay
@@ -12,11 +15,12 @@ import java.time.LocalDate
 
 /**
  * The map's date-range control, at the top of the Activities sheet: the selected range as a
- * heading, ‹ › beside it, and under them the day scrubber ([DayScrubberView]) — the web's phone
- * slider (`apps/web/src/ui/DateRangeSlider.tsx`) redrawn as a bar per day.
+ * heading, ‹ › beside it, and under them « scrubber » ([DayScrubberView]) — the web's slider
+ * (`apps/web/src/ui/DateRangeSlider.tsx`), the « » shown only where the row has room for them.
  *
- * **Activity days, not calendar days.** The scrubber is a window of [WINDOW_DAYS] consecutive
- * days that have activity ([ActivityDays]); the days between take no room.
+ * **Activity days, not calendar days.** The scrubber is a window of consecutive days that have
+ * activity ([ActivityDays]), as many as its width holds ([SliderRules.layout]); the days between
+ * take no room.
  *
  * **Handles sit on slot boundaries.** The start handle marks where the first selected day begins
  * and the end handle where the last one ends, so a one-day selection has its handles one slot
@@ -26,9 +30,9 @@ import java.time.LocalDate
  * slot the finger moves, the selection left as it is ([onSwipe]): handles scroll out of view and
  * back like any day, their dates staying in the heading.
  *
- * **Paging.** A handle held past the scrubber's edge moves the window [STEP_DAYS] that way,
- * repeating while it's held there, and pulls the handle along with it — how a selection grows
- * past the window. The far handle may scroll out of view; its date stays in the heading. The pull
+ * **Paging.** « » move the window [STEP_DAYS] a tap, repeating while held, and so does a handle
+ * held past the scrubber's edge, which is pulled along — how a selection grows past the window.
+ * A handle parked on the edge « » move toward is pulled along too. The far handle may scroll out of view; its date stays in the heading. The pull
  * lands once the moved window is in (the days before it may still be loading), so a gesture's
  * commit waits for that too.
  *
@@ -43,11 +47,17 @@ class DateRangeSlider(
     private val onPan: (delta: Int) -> Unit,
     private val onShift: (range: DateRange, dir: Int) -> DateRange?,
     private val canShift: (range: DateRange, dir: Int) -> Boolean,
+    /** How many activity days the scrubber has room for ([SliderRules.layout]), each time that
+     *  changes. */
+    private val onWindowDays: (Int) -> Unit,
     private val onChange: (DateRange) -> Unit,
 ) {
     private val track: DayScrubberView = root.findViewById(R.id.date_range_track)
     private val shiftEarlier: View = root.findViewById(R.id.date_range_shift_earlier)
     private val shiftLater: View = root.findViewById(R.id.date_range_shift_later)
+    private val row: View = root.findViewById(R.id.date_range_row)
+    private val pageEarlier: View = root.findViewById(R.id.date_range_page_earlier)
+    private val pageLater: View = root.findViewById(R.id.date_range_page_later)
     private val label: TextView = root.findViewById(R.id.date_range_label)
 
     private var days: List<ActivityDay> = emptyList()
@@ -106,6 +116,56 @@ class DateRangeSlider(
         track.onDrag = ::onTrackDrag
         track.onRelease = ::onTrackRelease
         track.onSwipe = ::onSwipe
+        setUpRepeatButton(pageEarlier) { step(-1) }
+        setUpRepeatButton(pageLater) { step(1) }
+        row.addOnLayoutChangeListener { _, l, _, r, _, oldL, _, oldR, _ ->
+            if (r - l != oldR - oldL) onRowWidth(r - l)
+        }
+    }
+
+    /** The row's width decides whether « » show and how many days the window holds. */
+    private fun onRowWidth(px: Int) {
+        val layout = SliderRules.layout((px / row.resources.displayMetrics.density).toInt(), finePointer = false)
+        val visibility = if (layout.buttons) View.VISIBLE else View.GONE
+        // Not from inside the layout pass that measured the row.
+        row.post {
+            pageEarlier.visibility = visibility
+            pageLater.visibility = visibility
+            row.post(::extendPageTargets)
+        }
+        waitingDays = layout.days
+        flushWindowDays()
+    }
+
+    /** « » are 22dp wide; each one's touch target runs on outward over the row's margin, while
+     *  its inner side stays at the button's edge, so a press beside it still grabs a knob parked
+     *  on the track's edge. One delegate per view, so the two share a composite. */
+    private fun extendPageTargets() {
+        val parent = row.parent as? View ?: return
+        val margin = (row.layoutParams as? ViewGroup.MarginLayoutParams)?.marginStart ?: 0
+        val delegates = listOf(pageEarlier to -1, pageLater to 1).filter { it.first.visibility == View.VISIBLE }.map { (button, side) ->
+            val area = Rect()
+            button.getHitRect(area)
+            area.offset(row.left, row.top)
+            if (side < 0) area.left -= margin else area.right += margin
+            TouchDelegate(area, button)
+        }
+        parent.touchDelegate = if (delegates.isEmpty()) null else object : TouchDelegate(Rect(), row) {
+            override fun onTouchEvent(event: MotionEvent) = delegates.any { it.onTouchEvent(event) }
+        }
+    }
+
+    // ---- Size ---------------------------------------------------------------------------
+    // The scrubber's width decides how many activity days the window holds. A new size
+    // mid-gesture would move the boundaries under the finger, so it waits for the release.
+
+    private var waitingDays: Int? = null
+
+    private fun flushWindowDays() {
+        val next = waitingDays ?: return
+        if (dragging != null || repeatAction != null || pan != null) return
+        waitingDays = null
+        onWindowDays(next)
     }
 
     /** The window has changed — paged, loaded further back, or reloaded. */
@@ -119,50 +179,16 @@ class DateRangeSlider(
         render()
     }
 
-    // ---- Dates ↔ slot boundaries --------------------------------------------------------
-    // Boundary b is where slot b begins (0..n). A date before the window is -1 and one after
-    // it is n + 1 — off-screen — unless there's no history on that side, where it sits on the
-    // edge: today with nothing recorded yet today still has its end knob on the right edge.
+    // ---- Dates ↔ slot boundaries ([SliderRules]) ----------------------------------------
 
-    private fun startOf(from: String): Int {
-        val first = days.firstOrNull()?.date ?: return 0
-        val n = days.size
-        if (from < first) return if (canPanEarlier) -1 else 0
-        val index = days.indexOfFirst { it.date >= from }
-        return if (index == -1) (if (canPanLater) n + 1 else n) else index
-    }
+    private val window get() = SliderRules.Window(days.map { it.date }, canPanEarlier, canPanLater)
 
-    private fun endOf(to: String): Int {
-        val first = days.firstOrNull()?.date ?: return 0
-        val last = days.last().date
-        val n = days.size
-        if (to > last) return if (canPanLater) n + 1 else n
-        if (to < first) return if (canPanEarlier) -1 else 0
-        return days.count { it.date <= to }
-    }
+    private fun startOf(from: String) = SliderRules.boundaries(window, DateRange(from, from)).start
 
-    /** Moves one knob to boundary [b], a slot from the other (pushing it if needed). A knob
-     *  that ends up where it already was keeps its own date, which may lie off-screen or in a
-     *  gap between activity days — only a knob that actually moved takes a slot's date. */
-    private fun moveKnob(knob: Knob, b: Int, sel: DateRange): DateRange {
-        val n = days.size
-        if (n == 0) return sel
-        val s0 = startOf(sel.from)
-        val e0 = endOf(sel.to)
-        var s = s0
-        var e = e0
-        if (knob == Knob.START) {
-            s = b.coerceIn(0, n - 1)
-            e = maxOf(e0, s + 1)
-        } else {
-            e = b.coerceIn(1, n)
-            s = minOf(s0, e - 1)
-        }
-        return DateRange(
-            from = if (s == s0) sel.from else days[s].date,
-            to = if (e == e0) sel.to else days[e - 1].date,
-        )
-    }
+    private fun endOf(to: String) = SliderRules.boundaries(window, DateRange(to, to)).end
+
+    private fun moveKnob(knob: Knob, b: Int, sel: DateRange): DateRange =
+        SliderRules.moveKnob(window, sel, if (knob == Knob.START) SliderRules.Knob.START else SliderRules.Knob.END, b)
 
     private fun commit(next: DateRange?) {
         draft = null
@@ -181,13 +207,15 @@ class DateRangeSlider(
      *  gesture that asked for it is already over. */
     private fun landPan() {
         val pending = pan ?: return
-        val first = days.firstOrNull()?.date ?: return
-        val last = days.last().date
-        var next = current ?: return
-        if (pending.start) next = DateRange(first, if (next.to < first) first else next.to)
-        if (pending.end) next = DateRange(if (next.from > last) last else next.from, last)
+        if (days.isEmpty()) return
+        val next = SliderRules.panLand(days.map { it.date }, current ?: return, pending.start, pending.end)
         pan = null
-        if (pending.commit) commit(next) else draft = next
+        if (pending.commit) {
+            commit(next)
+            flushWindowDays()
+        } else {
+            draft = next
+        }
     }
 
     /** Moves the window [STEP_DAYS]; a knob on the edge being moved toward is pulled along once
@@ -219,6 +247,7 @@ class DateRangeSlider(
     private fun finish() {
         val pending = pan
         if (pending != null) pending.commit = true else commit(current)
+        flushWindowDays()
     }
 
     private fun stopRepeat() {
@@ -306,23 +335,17 @@ class DateRangeSlider(
 
     private fun render() {
         val sel = current
+        pageEarlier.isEnabled = canPanEarlier
+        pageLater.isEnabled = canPanLater
         if (sel == null) {
-            track.set(0, 0, 0, emptyList(), emptyList(), earlier = false, later = false)
+            track.set(0, 0, 0, emptyList())
             label.text = null
             shiftEarlier.isEnabled = false
             shiftLater.isEnabled = false
             return
         }
-        track.set(
-            days.size,
-            startOf(sel.from),
-            endOf(sel.to),
-            ScrubberBars.levels(days.map { it.distanceMeters }),
-            ScrubberBars.labels(days.map { it.date }),
-            earlier = canPanEarlier,
-            later = canPanLater,
-        )
-        label.text = ScrubberBars.rangeLabel(LocalDate.parse(sel.from), LocalDate.parse(sel.to), locale)
+        track.set(days.size, startOf(sel.from), endOf(sel.to), SliderRules.ticks(days.map { it.date }))
+        label.text = RangeLabel.of(LocalDate.parse(sel.from), LocalDate.parse(sel.to), locale)
         shiftEarlier.isEnabled = canShift(sel, -1)
         shiftLater.isEnabled = canShift(sel, 1)
     }
@@ -336,9 +359,8 @@ class DateRangeSlider(
     }
 
     companion object {
-        /** How many activity days the scrubber shows edge to edge — about 30dp a day on a
-         *  412dp-wide phone, room for a bar and its day's number. */
-        const val WINDOW_DAYS = 12
+        /** The window's size until the scrubber has measured itself ([SliderRules.layout]). */
+        const val INITIAL_WINDOW_DAYS = 14
 
         /** How far the window moves for each step of a handle held past an edge, in activity
          *  days. */

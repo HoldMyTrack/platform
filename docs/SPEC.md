@@ -421,7 +421,11 @@ An activity is split in two at a point on its track; the parts can be merged bac
 
 ## 8. FR-6 — Date Range Slider
 
-The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of 15 such days, the most recent on load.
+The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load. A resize keeps the selection in view.
+
+- The same slider on the web and Android: two knobs on a track, a tick between activity days, taller with the month's name where a month starts.
+- Dragging a knob, tapping the track to bring the nearer knob there, swiping it to scroll the window, and holding a knob past an edge to page that way work on both.
+- « » page the window 5 activity days, pulling a knob parked on that edge along, where the width leaves the track room for them, and always with a mouse. ‹ › move the selection its own length.
 
 ### FR-6.1 Default selection
 

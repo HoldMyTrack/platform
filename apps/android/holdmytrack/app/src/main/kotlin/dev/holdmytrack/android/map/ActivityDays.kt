@@ -21,7 +21,11 @@ data class DateRange(val from: String, val to: String)
  *
  * Nothing here touches the selection: panning changes which days are in view and that is all.
  */
-class ActivityDays(private val windowDays: Int, private val onChange: (reloaded: Boolean) -> Unit) {
+class ActivityDays(windowDays: Int, private val onChange: (reloaded: Boolean) -> Unit) {
+
+    /** How many activity days the slider has room for ([SliderRules.layout]); see [resize]. */
+    var windowDays = windowDays
+        private set
 
     private var days: List<ActivityDay> = emptyList()
 
@@ -87,16 +91,8 @@ class ActivityDays(private val windowDays: Int, private val onChange: (reloaded:
         }
         // Move the window only as far as it takes to show the new range; one longer than the
         // window shows its leading edge, the end it moved toward.
-        val first = dates.indexOf(next.from)
-        val last = dates.indexOf(next.to)
         val start = start
-        var left = when {
-            last - first + 1 > windowDays -> if (dir < 0) first else last - windowDays + 1
-            first < start -> first
-            last >= start + windowDays -> last - windowDays + 1
-            else -> start
-        }
-        left = left.coerceIn(0, maxStart)
+        val left = SliderRules.windowFit(dates.size, windowDays, start, dates.indexOf(next.from), dates.indexOf(next.to), dir)
         if (left != start) {
             anchor = if (left >= maxStart) null else dates[left]
             changed(reloaded = false)
@@ -127,6 +123,23 @@ class ActivityDays(private val windowDays: Int, private val onChange: (reloaded:
                 changed(reloaded = true)
             }.onFailure { Log.w(TAG, "could not load activity days", it) }
         }
+    }
+
+    /** A new window size: pinned to the newest end, the window stays there; elsewhere it keeps
+     *  [selection] in view, its end day where it was. */
+    fun resize(size: Int, selection: DateRange?) {
+        if (size == windowDays) return
+        val left = start
+        windowDays = size
+        if (anchor != null && selection != null) {
+            val first = days.indexOfFirst { it.date >= selection.from }
+            val last = days.count { it.date <= selection.to } - 1
+            if (first != -1 && last >= first) {
+                val next = SliderRules.windowFit(days.size, size, left, first, last, 1)
+                anchor = if (next >= maxStart) null else days[next].date
+            }
+        }
+        changed(reloaded = false)
     }
 
     /** Moves the window by whole activity days — negative is toward the past. */

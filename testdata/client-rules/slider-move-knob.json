@@ -1,0 +1,14 @@
+{
+  "rule": "sliderMoveKnob",
+  "description": "One knob (start or end) moved to a boundary, a slot from the other, pushing it if needed. A knob that ends up where it was keeps its own date; only a moved knob takes its slot's date.",
+  "cases": [
+    {"name": "the start knob moves to a slot's date", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-10-01", "to": "2026-10-05"}, "knob": "start", "boundary": 1}, "expected": {"from": "2026-09-30", "to": "2026-10-05"}},
+    {"name": "the end knob moves to a slot's date", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-10-01", "to": "2026-10-02"}, "knob": "end", "boundary": 5}, "expected": {"from": "2026-10-01", "to": "2026-10-05"}},
+    {"name": "dragged onto the other knob, it pushes it a slot along", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-09-30", "to": "2026-10-01"}, "knob": "start", "boundary": 3}, "expected": {"from": "2026-10-02", "to": "2026-10-02"}},
+    {"name": "the end knob pushes the start knob back", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-10-02", "to": "2026-10-05"}, "knob": "end", "boundary": 1}, "expected": {"from": "2026-09-28", "to": "2026-09-28"}},
+    {"name": "a knob that doesn't move keeps its own date, in a gap", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-09-29", "to": "2026-10-04"}, "knob": "end", "boundary": 6}, "expected": {"from": "2026-09-29", "to": "2026-10-07"}},
+    {"name": "the other knob off-screen keeps its date", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-09-01", "to": "2026-10-02"}, "knob": "end", "boundary": 2}, "expected": {"from": "2026-09-01", "to": "2026-09-30"}},
+    {"name": "past the edge, a knob stops on it", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "canPanEarlier": true, "canPanLater": true, "range": {"from": "2026-10-01", "to": "2026-10-02"}, "knob": "start", "boundary": -3}, "expected": {"from": "2026-09-28", "to": "2026-10-02"}},
+    {"name": "an empty window changes nothing", "input": {"days": [], "canPanEarlier": false, "canPanLater": false, "range": {"from": "2026-10-01", "to": "2026-10-02"}, "knob": "start", "boundary": 0}, "expected": {"from": "2026-10-01", "to": "2026-10-02"}}
+  ]
+}
