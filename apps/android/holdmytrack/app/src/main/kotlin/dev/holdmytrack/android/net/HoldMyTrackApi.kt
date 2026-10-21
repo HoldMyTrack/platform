@@ -11,10 +11,10 @@ import dev.holdmytrack.android.BuildConfig
 import dev.holdmytrack.android.map.GeoPoint
 import dev.holdmytrack.android.map.SpotArea
 import java.io.IOException
+import java.time.Duration
 import java.time.ZoneId
 import java.time.Instant
 import java.time.OffsetDateTime
-import java.util.concurrent.TimeUnit
 import okhttp3.Call
 import okhttp3.Callback
 import okhttp3.Dispatcher
@@ -380,6 +380,17 @@ object HoldMyTrackApi {
     private val JSON = "application/json; charset=utf-8".toMediaType()
     private val main = Handler(Looper.getMainLooper())
 
+    /** Opening a connection to the server or a tile host, TLS included. */
+    private val CONNECT_TIMEOUT = Duration.ofSeconds(10)
+    /** The longest wait for the next bytes of a response, the first included: a slow server query ends here. */
+    private val READ_TIMEOUT = Duration.ofSeconds(10)
+    /** The longest wait for one write of the request body to go out. */
+    private val WRITE_TIMEOUT = Duration.ofSeconds(10)
+    /** [uploadClient]'s write timeout: a 16 MiB file over a slow connection. */
+    private val UPLOAD_WRITE_TIMEOUT = Duration.ofMinutes(2)
+    /** [uploadClient]'s read timeout: the wait for the answer once the file has gone out. */
+    private val UPLOAD_READ_TIMEOUT = Duration.ofMinutes(10)
+
     /**
      * One client for the app's own calls *and* for MapLibre Native's tile fetching — handed to
      * the map SDK by `HoldMyTrackApplication` via `HttpRequestUtil.setOkHttpClient`. Sharing one
@@ -397,6 +408,9 @@ object HoldMyTrackApi {
 
     val client: OkHttpClient = OkHttpClient.Builder()
         .dispatcher(Dispatcher().apply { maxRequestsPerHost = 20 })
+        .connectTimeout(CONNECT_TIMEOUT)
+        .readTimeout(READ_TIMEOUT)
+        .writeTimeout(WRITE_TIMEOUT)
         .addInterceptor(BearerInterceptor)
         .addInterceptor(UserAgentInterceptor)
         .addInterceptor(LanguageInterceptor)
@@ -586,13 +600,13 @@ object HoldMyTrackApi {
 
     /**
      * Uploads take as long as sending the file does, up to 16 MiB, which over a slow connection
-     * takes longer than the default ten seconds.
+     * takes longer than [WRITE_TIMEOUT].
      * The same client otherwise, so the same interceptors.
      */
     private val uploadClient: OkHttpClient by lazy {
         client.newBuilder()
-            .writeTimeout(2, TimeUnit.MINUTES)
-            .readTimeout(10, TimeUnit.MINUTES)
+            .writeTimeout(UPLOAD_WRITE_TIMEOUT)
+            .readTimeout(UPLOAD_READ_TIMEOUT)
             .build()
     }
 
