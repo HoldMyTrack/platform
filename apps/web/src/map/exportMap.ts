@@ -1,5 +1,5 @@
 import { Map as MapLibreMap } from 'maplibre-gl';
-import { API_BASE_URL, type ActivityQuery } from '../api';
+import { API_BASE_URL, type ActivityQuery, type ActivityTrackMetrics } from '../api';
 import { lang } from '../i18n';
 import logoOnDarkUrl from '../assets/logo-on-dark.png';
 import logoOnLightUrl from '../assets/logo-on-light.png';
@@ -13,6 +13,7 @@ import { setRoadsVisible } from './mapRoads';
 import { setSatelliteVisible } from './satellite';
 import type { BikePathOverlays } from './bikePathsGroup';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
+import { setTrackBands } from './trackBands';
 import { trackQuery } from './tracks';
 
 /**
@@ -63,6 +64,8 @@ export interface ExportViewState {
   hiddenIds: string[];
   /** The tracks drawn bold (selection.ts's boldTracks). */
   boldIds: readonly string[];
+  /** The focused activity's pace bands as the live map draws them (useTrackMetrics), or null. */
+  bands: ActivityTrackMetrics | null;
   /** The Layers menu's paths (overlays.ts), so the image shows what the screen does. */
   paths: BikePathOverlays;
   /** The Satellite button (FR-4.14): satellite imagery, when the deployment has any. */
@@ -367,9 +370,11 @@ async function renderOffscreen(
       toggles: { ...state.paths },
       vars: { hidden: state.hiddenIds, focused: [...state.boldIds] },
       queries: { tracks: trackQuery(state.activityQuery) },
-      // No Spots or pace bands, as on Android.
-      excludedGroups: new Set(['spots', 'track-bands']),
+      // No Spots, as on Android.
+      excludedGroups: new Set(['spots']),
     });
+    // The band source is added empty.
+    if (state.bands) setTrackBands(instance, state.bands);
     setSatelliteVisible(instance, state.satellite);
     setRoadsVisible(instance, state.roads);
 

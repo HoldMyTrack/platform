@@ -707,6 +707,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), storyId, EXPORT_EXCLUDED)
         layers.applyPaths(loaded)
         MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
+        bands.drawn?.let { MapOverlays.setTrackBands(loaded, it) }
     }
 
     /** What [CameraFramer.frameLatest] found. An account with no geometry stays at the world view,
@@ -828,7 +829,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         private const val STATE_MODE = "mode"
         private const val STATE_FRAMED = "framed"
 
-        /** What the export leaves out, as on the web: the places and the pace bands. */
-        private val EXPORT_EXCLUDED = setOf("spots", "track-bands")
+        /** What the export leaves out, as on the web: the places. */
+        private val EXPORT_EXCLUDED = setOf("spots")
     }
 }

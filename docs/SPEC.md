@@ -279,7 +279,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 
 - Any framed view as a PNG, on the web and Android: Custom with a long side of 1920, 2560 or 3840 px, or an Instagram, Facebook or X preset. A size the browser can't draw isn't offered.
 - While the frame is open the map only pans and zooms: a tap selects, opens and clears nothing.
-- The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story, Fog's all-time coverage, Heatmap's window. Private location circles and pace bands are never drawn.
+- The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story, Fog's all-time coverage, Heatmap's window. The focused track's pace bands are drawn as on screen; Private location circles never are.
 - OpenStreetMap's attribution, the imagery credit with Satellite on, and a HoldMyTrack watermark are drawn in and can't be removed: the basemap is an ODbL Produced Work (`IMPLEMENTATION.md` §5.6).
 
 ### FR-4.12 Light and dark theme

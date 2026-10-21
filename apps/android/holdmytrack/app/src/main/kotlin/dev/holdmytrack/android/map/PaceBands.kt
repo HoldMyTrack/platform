@@ -53,9 +53,13 @@ class PaceBands(
         }
     }
 
+    /** The bands the map draws, or null: the export's hidden map draws the same. */
+    val drawn: TrackMetrics?
+        get() = metrics?.takeIf { val focused = panelState.focused; focused == it.activityId && focused !in panelState.mapHidden && !onSyncTab() }
+
     fun render() {
         val loaded = style() ?: return
-        val drawn = metrics?.takeIf { val focused = panelState.focused; focused == it.activityId && focused !in panelState.mapHidden && !onSyncTab() }
+        val drawn = drawn
         if (drawn != null) MapOverlays.setTrackBands(loaded, drawn) else MapOverlays.clearTrackBands(loaded)
         onShown(drawn?.let { MapLayers.doc(loaded)?.group("track-bands")?.let(::bandColors) })
     }

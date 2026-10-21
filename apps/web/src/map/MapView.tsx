@@ -150,14 +150,6 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     scaleUnit: unitSystem,
   });
 
-  const exportScene = useMemo(
-    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, paths, satellite, roads }),
-    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, paths, satellite, roads],
-  );
-  const exporter = useExportFlow(map, container, exportScene);
-  const tapsAct = mapTapsAct(exporter.flow);
-  useEffect(() => setMapTapsActive(tapsAct), [tapsAct]);
-
   // A Story's photos change with its members too.
   const storyMembers = storyState.story?.activityIds.join(',') ?? '';
   const photoLayer = usePhotoLayer(map, {
@@ -204,6 +196,14 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   });
 
   const spots = useSpots(map, spotsShown);
+  const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
+  const exportScene = useMemo(
+    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite, roads }),
+    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, bands, paths, satellite, roads],
+  );
+  const exporter = useExportFlow(map, container, exportScene);
+  const tapsAct = mapTapsAct(exporter.flow);
+  useEffect(() => setMapTapsActive(tapsAct), [tapsAct]);
   useSelectionLayers(map, {
     boldIds,
     // Hover isn't exported, and framing doesn't preview.
@@ -214,7 +214,6 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     onHover: setHoveredActivityId,
     onClickAway: clearFocus,
   });
-  const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
 
   // Fog and Heatmap are re-rendered by queued jobs, so after an upload or delete this waits for the
   // account's jobs to drain and then refetches both (useCoverageRefresh.ts). `coverageRendering`
