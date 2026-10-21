@@ -1,7 +1,7 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, a new date
- * range clearing the selection, a Story opened and closed by Back, a track edit's reprocess, and
- * a delete. Each run signs up a fresh account, uploads the tester page's sample files, and
+ * range clearing the selection, a Story opened and closed by Back, a track edit's reprocess, a
+ * delete, and the date slider fitting a phone. Each run signs up a fresh account, uploads the tester page's sample files, and
  * deletes the account at the end.
  *
  *   npm run verify:map
@@ -186,5 +186,25 @@ describe('map flows', () => {
     assert.equal(await checkedBoxes().count(), 0);
     const { activities } = await call('GET', '/activities');
     assert.equal(activities.some((a) => a.id === id), false);
+  });
+
+  it("6. the date slider's « » show with a mouse and stay hidden on a narrow touch screen", async () => {
+    assert.equal(await page.getByTestId('date-range-slider-earlier').count(), 1);
+    // The same session on a phone: a coarse pointer and no room for « » beside the track.
+    const phone = await browser.newContext({
+      storageState: await context.storageState(),
+      viewport: { width: 360, height: 780 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    try {
+      const narrow = await phone.newPage();
+      await narrow.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
+      await narrow.getByTestId('date-range-slider-track').waitFor({ timeout: 60_000 });
+      assert.equal(await narrow.getByTestId('date-range-slider-earlier').count(), 0);
+      assert.equal(await narrow.getByTestId('date-range-slider-shift-earlier').count(), 1);
+    } finally {
+      await phone.close();
+    }
   });
 });

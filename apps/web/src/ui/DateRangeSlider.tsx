@@ -4,8 +4,8 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 import type { HistogramBucket } from '../api';
 import { formatDayLabel } from './format';
 import type { DateRange } from './dateMath';
-import { sliderBoundaries, sliderLayout, sliderMoveKnob, sliderPanLand, type SliderWindow } from './sliderRules';
-import { t, tn } from '../i18n';
+import { sliderBoundaries, sliderLayout, sliderMoveKnob, sliderPanLand, sliderTicks, type SliderWindow } from './sliderRules';
+import { lang, t, tn } from '../i18n';
 
 export interface DateRangeSliderProps {
   /** The window: consecutive days-with-activity, ascending — useActivityDays' `visibleDays`. */
@@ -26,20 +26,23 @@ export interface DateRangeSliderProps {
 
 type Knob = 'start' | 'end';
 
-type Tick = 'day' | 'gap' | 'month';
-
-const DAY_MS = 86_400_000;
-
-/** The kind of tick on each slot boundary, 0..days.length — the two outer edges are plain. */
-function ticksOf(days: HistogramBucket[]): Tick[] {
-  return Array.from({ length: days.length + 1 }, (_, b) => {
-    const before = days[b - 1]?.date;
-    const after = days[b]?.date;
-    if (!before || !after) return 'day';
-    if (before.slice(0, 7) !== after.slice(0, 7)) return 'month';
-    return Date.parse(after) - Date.parse(before) > DAY_MS ? 'gap' : 'day';
-  });
+/** A month's short name in the page's language, under its tall tick. */
+function monthName(month: number): string {
+  return new Date(Date.UTC(2026, month - 1, 1)).toLocaleDateString(lang, { month: 'short', timeZone: 'UTC' });
 }
+
+/** How near a knob, in px, a press grabs it rather than starting a swipe or a tap: half a 48px
+ *  target either side. */
+const KNOB_GRAB_PX = 24;
+
+/** How far a press away from the knobs moves before it's a swipe rather than a tap. */
+const SWIPE_SLOP_PX = 8;
+
+/** How often a knob held past an edge steps the window again. */
+const EDGE_REPEAT_MS = 500;
+
+/** Under this many px a slot, the knobs narrow so neighbours stay apart. */
+const NARROW_SLOT_PX = 18;
 
 /** The room ‹ › take in the row beside « track »: two 28px buttons and their 6px gaps. */
 const SHIFT_PAIR_PX = 2 * (28 + 6);
@@ -52,45 +55,40 @@ const REPEAT_DELAY_MS = 400;
 const REPEAT_INTERVAL_MS = 180;
 
 /**
- * The date-range control (`SPEC.md` FR-6), on the Activities tab alone: a plain two-knob slider
- * in one row, « ‹ track › », with the selected dates under it — the look of the Activities
- * panel's DistanceFilter.tsx (its `.activity-filters__track`/`__fill` rules) with finger-height
- * knobs. The same control on a desktop and a phone; only where it sits differs (index.css).
+ * The date-range control (`SPEC.md` FR-6), on the Activities tab alone: a two-knob slider in one
+ * row, « ‹ track › », with the selected dates under it. The same control as Android's
+ * (`DayScrubberView`); the rules both share are sliderRules.ts.
  *
  * **Activity-days, not calendar days**: one slot per day the user recorded something, none for
  * the days between, so a quiet month costs no track. The window, its paging and the history
- * fetches behind them are useActivityDays'.
+ * fetches behind them are useActivityDays'; how many days it holds, and whether « » show, follow
+ * the row's width and the pointer (sliderLayout).
  *
  * **Knobs sit on slot boundaries, not on slots.** The start knob marks where the first selected
  * day begins and the end knob where the last one ends, so a one-day selection has its knobs one
- * slot apart and the two can never be dragged closer than that — there's no zero-width
- * selection to reach, and the knobs never sit on top of each other.
+ * slot apart and the two can never be dragged closer than that.
  *
- * **Paging.** Earlier/Later move the window STEP_DAYS per tap (repeating while held). A knob
- * sitting on the edge the window moves toward is pulled along with it, which is how a selection
- * grows past the window: park the start knob on the left edge and tap Earlier. The knob on the
- * side being moved toward therefore never scrolls out of view; only the far one can, and it
- * simply isn't drawn until the window comes back to it, its date still in the label under the
- * track. The pull lands once the moved window has rendered (the days before it may still be
- * loading), so a tap's commit waits for that too.
+ * **Gestures.** A press near a knob carries it; held past the edge it's moving toward, it pages
+ * the window that way every EDGE_REPEAT_MS, pulled along. A press elsewhere is a swipe once it
+ * moves, scrolling the window a day per slot, or a tap that brings the nearer knob to it. Each
+ * knob is also a focusable `role="slider"`.
  *
- * Hand-rolled pointer handling on the whole track rather than two stacked native range inputs
- * (which always hand a drag to whichever input is on top): a press moves whichever knob is
- * nearer — jumping it to the pressed boundary if the press is on bare track — and a drag
- * carries it. Each knob is also a focusable `role="slider"`.
+ * **Paging.** « » move the window STEP_DAYS per tap (repeating while held). A knob sitting on the
+ * edge the window moves toward is pulled along with it, which is how a selection grows past the
+ * window. Only the far knob can scroll out of view; its date stays in the label under the track.
+ * The pull lands once the moved window has rendered (the days before it may still be loading), so
+ * a gesture's commit waits for that too.
  *
- * Knob drags and held buttons render from a local draft and commit only on release, so the
- * activity list isn't refetched for every day passed.
+ * Drags and held buttons render from a local draft and commit only on release, so the activity
+ * list isn't refetched for every day passed.
  *
- * **Range shift.** The inner pair, ‹ ›, move the whole selection by its own length in
- * activity-days, packed against the old range (rangeShift.ts), and the window follows — the
- * outer pair, « » (Earlier/Later), move the scale. A tap commits;
- * a hold repeats like Earlier/Later and commits on release.
+ * **Range shift.** ‹ › move the whole selection by its own length in activity-days, packed against
+ * the old range (rangeShift.ts), and the window follows. A tap commits; a hold repeats and commits
+ * on release.
  *
- * **Day marks.** A tick on every slot boundary — where a knob can land — taller where the month
- * changes, and doubled (an axis break) where the two neighbouring activity-days aren't
- * consecutive calendar days, so packed slots don't pass for an unbroken run. Ticks inside the
- * selection take the accent.
+ * **Day marks.** A tick on every slot boundary, tall where a month starts, with the month's name
+ * under it and the first month in view at the left edge (sliderTicks). Ticks inside the selection
+ * take the accent.
  */
 export function DateRangeSlider({
   days,
@@ -105,7 +103,13 @@ export function DateRangeSlider({
 }: DateRangeSliderProps) {
   const rowRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-  const dragRef = useRef<{ pointerId: number; knob: Knob } | null>(null);
+  /** The press on the track, until release: a knob carried, or one not yet a swipe or a tap. */
+  const gestureRef = useRef<
+    | { pointerId: number; kind: 'knob'; knob: Knob; edge: -1 | 0 | 1; edgeTimer: number }
+    | { pointerId: number; kind: 'undecided' | 'swipe'; downX: number; anchorX: number }
+    | null
+  >(null);
+  const [buttons, setButtons] = useState(true);
   const repeatRef = useRef<{ timer: number } | null>(null);
   /** A pan asked for and not yet rendered, the knobs it pulls along, and whether the gesture
    *  has ended and should commit once it lands. */
@@ -197,7 +201,7 @@ export function DateRangeSlider({
   const sizeRef = useRef<{ reported: number | null; waiting: number | null }>({ reported: null, waiting: null });
   const onWindowDaysRef = useRef(onWindowDays);
   onWindowDaysRef.current = onWindowDays;
-  const busy = () => dragRef.current !== null || repeatRef.current !== null || panRef.current !== null;
+  const busy = () => gestureRef.current !== null || repeatRef.current !== null || panRef.current !== null;
   const flushWindowDays = () => {
     const size = sizeRef.current;
     if (size.waiting === null || busy()) return;
@@ -215,7 +219,9 @@ export function DateRangeSlider({
     if (!row) return;
     const fine = window.matchMedia('(pointer: fine)');
     const measure = () => {
-      sizeRef.current.waiting = sliderLayout(row.clientWidth - SHIFT_PAIR_PX, fine.matches).days;
+      const layout = sliderLayout(row.clientWidth - SHIFT_PAIR_PX, fine.matches);
+      setButtons(layout.buttons);
+      sizeRef.current.waiting = layout.days;
       flushRef.current();
     };
     const observer = new ResizeObserver(measure);
@@ -254,7 +260,7 @@ export function DateRangeSlider({
   const pageButton = (dir: -1 | 1) => (
     <button
       type="button"
-      className="date-range-slider__page"
+      className="date-range-slider__page date-range-slider__page--window"
       data-testid={dir < 0 ? 'date-range-slider-earlier' : 'date-range-slider-later'}
       aria-label={dir < 0 ? tn('slider.days_earlier', STEP_DAYS) : tn('slider.days_later', STEP_DAYS)}
       title={dir < 0 ? t('slider.earlier') : t('slider.later')}
@@ -269,7 +275,7 @@ export function DateRangeSlider({
         finish();
       }}
     >
-      {dir < 0 ? <ChevronsLeft size={16} /> : <ChevronsRight size={16} />}
+      {dir < 0 ? <ChevronsLeft size={14} /> : <ChevronsRight size={14} />}
     </button>
   );
 
@@ -296,35 +302,96 @@ export function DateRangeSlider({
 
   // ---- The track ------------------------------------------------------------------------
 
-  /** The slot boundary nearest a clientX. */
-  const boundaryAt = (clientX: number) => {
+  /** The slot boundary nearest a clientX, not clamped to the window, and the track's geometry. */
+  const geometry = (clientX: number) => {
     const rect = trackRef.current!.getBoundingClientRect();
-    return clamp(Math.round(((clientX - rect.left) / rect.width) * n));
+    const slot = n === 0 ? 0 : rect.width / n;
+    return { x: clientX - rect.left, slot, boundary: slot === 0 ? 0 : Math.round((clientX - rect.left) / slot) };
   };
+
+  // A press is one of three gestures, as on Android: near a drawn knob it carries the knob; away
+  // from them, a move past the slop is a swipe that scrolls the window a day per slot (the days
+  // follow the pointer) and a release without moving is a tap that brings the nearer knob there.
 
   const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!trackRef.current || n === 0) return;
     event.preventDefault();
     event.currentTarget.setPointerCapture(event.pointerId);
-    const b = boundaryAt(event.clientX);
-    // An off-screen knob counts as sitting on the edge it went past.
-    const knob: Knob = Math.abs(b - clamp(start)) <= Math.abs(b - clamp(end)) ? 'start' : 'end';
-    dragRef.current = { pointerId: event.pointerId, knob };
-    setDraft(moveKnob(knob, b, current));
+    const { x, slot, boundary } = geometry(event.clientX);
+    const near = (['start', 'end'] as const)
+      .map((which) => ({ which, at: which === 'start' ? start : end }))
+      .filter(({ at }) => at >= 0 && at <= n && Math.abs(at * slot - x) <= KNOB_GRAB_PX)
+      .sort((a, b) => Math.abs(a.at * slot - x) - Math.abs(b.at * slot - x))[0];
+    if (near) {
+      gestureRef.current = { pointerId: event.pointerId, kind: 'knob', knob: near.which, edge: 0, edgeTimer: 0 };
+      setDraft(moveKnob(near.which, clamp(boundary), current));
+    } else {
+      gestureRef.current = { pointerId: event.pointerId, kind: 'undecided', downX: x, anchorX: x };
+    }
+  };
+
+  const stopEdge = () => {
+    const gesture = gestureRef.current;
+    if (gesture?.kind !== 'knob' || gesture.edge === 0) return;
+    window.clearInterval(gesture.edgeTimer);
+    gesture.edge = 0;
   };
 
   const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag || drag.pointerId !== event.pointerId || !draft) return;
-    setDraft(moveKnob(drag.knob, boundaryAt(event.clientX), draft));
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    const { x, slot, boundary } = geometry(event.clientX);
+    if (gesture.kind === 'knob') {
+      // Held past the edge it's moving toward, a knob pages the window that way.
+      const past: -1 | 0 | 1 =
+        gesture.knob === 'start' && boundary < 0 && canPanEarlier ? -1 : gesture.knob === 'end' && boundary > n && canPanLater ? 1 : 0;
+      if (past !== gesture.edge) {
+        stopEdge();
+        if (past !== 0) {
+          gesture.edge = past;
+          step(past);
+          gesture.edgeTimer = window.setInterval(() => {
+            if (!step(past)) stopEdge();
+          }, EDGE_REPEAT_MS);
+        }
+      }
+      if (past === 0 && draft) setDraft(moveKnob(gesture.knob, clamp(boundary), draft));
+      return;
+    }
+    if (gesture.kind === 'undecided') {
+      if (Math.abs(x - gesture.downX) <= SWIPE_SLOP_PX) return;
+      gestureRef.current = { ...gesture, kind: 'swipe' };
+    }
+    const swipe = gestureRef.current;
+    if (swipe?.kind !== 'swipe' || slot === 0) return;
+    const moved = Math.trunc((x - swipe.anchorX) / slot);
+    if (moved === 0) return;
+    swipe.anchorX += moved * slot;
+    // Toward the right is toward the past: the days follow the pointer, as a list does.
+    if ((moved > 0 && canPanEarlier) || (moved < 0 && canPanLater)) onPan(-moved);
   };
 
   const onPointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    if (dragRef.current?.pointerId !== event.pointerId) return;
-    dragRef.current = null;
-    commit(draft);
-    flushWindowDays();
+    const gesture = gestureRef.current;
+    if (!gesture || gesture.pointerId !== event.pointerId) return;
+    stopEdge();
+    gestureRef.current = null;
+    if (gesture.kind === 'knob') {
+      live.current.current = draft ?? current;
+      finish();
+    } else if (gesture.kind === 'undecided' && event.type === 'pointerup') {
+      const b = clamp(geometry(event.clientX).boundary);
+      // An off-screen knob counts as sitting on the edge it went past.
+      const knob: Knob = Math.abs(b - clamp(start)) <= Math.abs(b - clamp(end)) ? 'start' : 'end';
+      commit(moveKnob(knob, b, current));
+      flushWindowDays();
+    } else flushWindowDays();
   };
+
+  useEffect(() => () => {
+    const gesture = gestureRef.current;
+    if (gesture?.kind === 'knob') window.clearInterval(gesture.edgeTimer);
+  }, []);
 
   const onKnobKeyDown = (knob: Knob, event: KeyboardEvent) => {
     const at = knob === 'start' ? start : end;
@@ -360,14 +427,17 @@ export function DateRangeSlider({
     );
   };
 
+  const ticks = sliderTicks(slider.days);
+  const narrow = n > 0 && (trackRef.current?.clientWidth ?? Infinity) / n < NARROW_SLOT_PX;
+
   return (
     <div className="date-range-slider" data-testid="date-range-slider">
       <div ref={rowRef} className="date-range-slider__row">
-        {pageButton(-1)}
+        {buttons && pageButton(-1)}
         {shiftButton(-1)}
         <div
           ref={trackRef}
-          className="date-range-slider__track"
+          className={`date-range-slider__track${narrow ? ' date-range-slider__track--narrow' : ''}`}
           data-testid="date-range-slider-track"
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
@@ -375,15 +445,27 @@ export function DateRangeSlider({
           onPointerCancel={onPointerUp}
         >
           <div className="activity-filters__track" />
-          {ticksOf(days).map((tick, b) => (
+          {ticks.map((tick) => (
             <span
-              key={b}
-              className={`date-range-slider__tick date-range-slider__tick--${tick}${
-                b >= clamp(start) && b <= clamp(end) ? ' date-range-slider__tick--selected' : ''
+              key={tick.boundary}
+              className={`date-range-slider__tick date-range-slider__tick--${tick.kind}${
+                clamp(end) > clamp(start) && tick.boundary >= clamp(start) && tick.boundary <= clamp(end) ? ' date-range-slider__tick--selected' : ''
               }`}
-              style={{ left: `${percent(b)}%` }}
+              style={{ left: `${percent(tick.boundary)}%` }}
             />
           ))}
+          {ticks.map(
+            (tick) =>
+              tick.month !== null && (
+                <span
+                  key={`month-${tick.boundary}`}
+                  className={`date-range-slider__month${tick.boundary === 0 ? ' date-range-slider__month--first' : ''}`}
+                  style={{ left: `${percent(tick.boundary)}%` }}
+                >
+                  {monthName(tick.month)}
+                </span>
+              ),
+          )}
           {n > 0 && clamp(end) > clamp(start) && (
             <div
               className="activity-filters__fill"
@@ -394,7 +476,7 @@ export function DateRangeSlider({
           {knob('end')}
         </div>
         {shiftButton(1)}
-        {pageButton(1)}
+        {buttons && pageButton(1)}
       </div>
       <div className="date-range-slider__labels" data-testid="date-range-slider-labels">
         <span>{formatDayLabel(current.from)}</span>
