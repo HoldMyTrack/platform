@@ -7,6 +7,7 @@ import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.MapSession
 import dev.holdmytrack.android.map.PendingDiff
 import dev.holdmytrack.android.map.RangeShift
+import dev.holdmytrack.android.map.SliderRules
 import dev.holdmytrack.android.map.shiftRange
 import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.TrackEdit
@@ -35,6 +36,7 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -248,6 +250,36 @@ class ClientRulesTest {
                 put("distanceFilter", distanceJson(panel.distanceFilter))
             }
         },
+        "sliderLayout" to { input ->
+            val layout = SliderRules.layout(input.int("width"), input["finePointer"]!!.jsonPrimitive.boolean)
+            buildJsonObject { put("buttons", layout.buttons); put("days", layout.days) }
+        },
+        "sliderBoundaries" to { input ->
+            val (start, end) = SliderRules.boundaries(sliderWindow(input), range(input["range"]!!.jsonObject))
+            buildJsonObject { put("start", start); put("end", end) }
+        },
+        "sliderMoveKnob" to { input ->
+            val knob = if (input.string("knob") == "start") SliderRules.Knob.START else SliderRules.Knob.END
+            rangeJson(SliderRules.moveKnob(sliderWindow(input), range(input["range"]!!.jsonObject), knob, input.int("boundary")))
+        },
+        "sliderTicks" to { input ->
+            buildJsonArray {
+                SliderRules.ticks(input.strings("days")).forEach { tick ->
+                    add(buildJsonObject {
+                        put("boundary", tick.boundary)
+                        put("kind", if (tick.monthStart) "month" else "day")
+                        put("month", tick.month?.let(::JsonPrimitive) ?: JsonNull)
+                    })
+                }
+            }
+        },
+        "sliderPanLand" to { input ->
+            val pulled = { key: String -> input[key]!!.jsonPrimitive.boolean }
+            rangeJson(SliderRules.panLand(input.strings("days"), range(input["range"]!!.jsonObject), pulled("start"), pulled("end")))
+        },
+        "sliderWindowFit" to { input ->
+            JsonPrimitive(SliderRules.windowFit(input.int("count"), input.int("windowDays"), input.int("left"), input.int("first"), input.int("last"), input.int("dir")))
+        },
         "session" to { input ->
             val state = input["state"]!!.jsonObject
             val panel = PanelState()
@@ -284,6 +316,12 @@ class ClientRulesTest {
     )
 
     private fun range(json: JsonObject) = DateRange(json.string("from")!!, json.string("to")!!)
+
+    private fun sliderWindow(input: JsonObject) = SliderRules.Window(
+        input.strings("days"),
+        input["canPanEarlier"]!!.jsonPrimitive.boolean,
+        input["canPanLater"]!!.jsonPrimitive.boolean,
+    )
 
     private fun rangeJson(range: DateRange) = buildJsonObject {
         put("from", range.from)

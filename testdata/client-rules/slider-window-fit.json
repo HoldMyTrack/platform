@@ -1,0 +1,13 @@
+{
+  "rule": "sliderWindowFit",
+  "description": "Where a window of windowDays over count loaded days, its left edge at left, moves to show the days first..last (indices): as little as it takes; for a run longer than the window, its start moving back (dir -1) or its end moving on (dir 1). Clamped to 0..count - windowDays.",
+  "cases": [
+    {"name": "already in view: the window stays", "input": {"count": 100, "windowDays": 15, "left": 50, "first": 55, "last": 60, "dir": 1}, "expected": 50},
+    {"name": "before the window: its first day becomes the left edge", "input": {"count": 100, "windowDays": 15, "left": 50, "first": 40, "last": 45, "dir": -1}, "expected": 40},
+    {"name": "after the window: its last day becomes the right edge", "input": {"count": 100, "windowDays": 15, "left": 50, "first": 62, "last": 70, "dir": 1}, "expected": 56},
+    {"name": "longer than the window, moving back: its start shows", "input": {"count": 100, "windowDays": 15, "left": 50, "first": 20, "last": 60, "dir": -1}, "expected": 20},
+    {"name": "longer than the window, moving on: its end shows", "input": {"count": 100, "windowDays": 15, "left": 50, "first": 20, "last": 60, "dir": 1}, "expected": 46},
+    {"name": "clamped to the newest end", "input": {"count": 100, "windowDays": 15, "left": 50, "first": 95, "last": 99, "dir": 1}, "expected": 85},
+    {"name": "fewer days than the window", "input": {"count": 5, "windowDays": 15, "left": 0, "first": 2, "last": 4, "dir": 1}, "expected": 0}
+  ]
+}

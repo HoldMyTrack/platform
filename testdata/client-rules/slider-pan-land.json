@@ -1,0 +1,13 @@
+{
+  "rule": "sliderPanLand",
+  "description": "A pan has landed on the window days: each knob it was carrying (start, end) moves onto that edge, pushing the other if they'd cross.",
+  "cases": [
+    {"name": "the start knob pulled onto the new left edge", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "range": {"from": "2026-10-07", "to": "2026-10-20"}, "start": true, "end": false}, "expected": {"from": "2026-09-28", "to": "2026-10-20"}},
+    {"name": "the end knob pulled onto the new right edge", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "range": {"from": "2026-09-01", "to": "2026-09-10"}, "start": false, "end": true}, "expected": {"from": "2026-09-01", "to": "2026-10-07"}},
+    {"name": "a pulled start knob pushes an end knob before it", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "range": {"from": "2026-10-20", "to": "2026-10-21"}, "start": true, "end": false}, "expected": {"from": "2026-09-28", "to": "2026-10-21"}},
+    {"name": "a pulled start knob drags an end knob left behind", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "range": {"from": "2026-09-01", "to": "2026-09-02"}, "start": true, "end": false}, "expected": {"from": "2026-09-28", "to": "2026-09-28"}},
+    {"name": "a pulled end knob drags a start knob ahead of it", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "range": {"from": "2026-11-01", "to": "2026-11-02"}, "start": false, "end": true}, "expected": {"from": "2026-10-07", "to": "2026-10-07"}},
+    {"name": "nothing pulled", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "range": {"from": "2026-10-01", "to": "2026-10-02"}, "start": false, "end": false}, "expected": {"from": "2026-10-01", "to": "2026-10-02"}},
+    {"name": "an empty window changes nothing", "input": {"days": [], "range": {"from": "2026-10-01", "to": "2026-10-02"}, "start": true, "end": true}, "expected": {"from": "2026-10-01", "to": "2026-10-02"}}
+  ]
+}

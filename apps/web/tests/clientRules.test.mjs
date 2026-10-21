@@ -13,6 +13,7 @@ import { distanceParts, durationParts, totalDistanceParts } from '../src/ui/form
 import { fractionAt, photoTrack, pointAt, startFraction } from '../src/ui/photoTrack.ts';
 import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
 import { shiftRange } from '../src/ui/rangeShift.ts';
+import { sliderBoundaries, sliderLayout, sliderMoveKnob, sliderPanLand, sliderTicks, sliderWindowFit } from '../src/ui/sliderRules.ts';
 import { activityTimeZone } from '../src/ui/timeZone.ts';
 import { boldTracks, invertedChecks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
@@ -92,6 +93,13 @@ const rules = {
       distanceFilter: next.distanceFilter,
     };
   },
+  sliderLayout: ({ width, finePointer }) => sliderLayout(width, finePointer),
+  sliderBoundaries: ({ days, canPanEarlier, canPanLater, range }) => sliderBoundaries({ days, canPanEarlier, canPanLater }, range),
+  sliderMoveKnob: ({ days, canPanEarlier, canPanLater, range, knob, boundary }) =>
+    sliderMoveKnob({ days, canPanEarlier, canPanLater }, range, knob, boundary),
+  sliderTicks: ({ days }) => sliderTicks(days),
+  sliderPanLand: ({ days, range, start, end }) => sliderPanLand(days, range, start, end),
+  sliderWindowFit: ({ count, windowDays, left, first, last, dir }) => sliderWindowFit(count, windowDays, left, first, last, dir),
   session: ({ state, event }) => {
     const start = {
       ...initialSession(state.storyId ?? null),

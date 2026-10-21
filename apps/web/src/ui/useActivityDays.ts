@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getActivityDayPage, type HistogramBucket } from '../api';
 import type { DateRange } from './dateMath';
 import { shiftRange } from './rangeShift';
+import { sliderWindowFit } from './sliderRules';
 
 /**
  * The date slider's data and pan position, paged by *days that have activity*.
@@ -200,13 +201,7 @@ export function useActivityDays(): ActivityDaysState {
       if (next === null) return null;
       // Move the window only as far as it takes to show the new range; one longer than the
       // window shows its leading edge, the end it moved toward.
-      const first = dates.indexOf(next.from);
-      const last = dates.indexOf(next.to);
-      let left = start;
-      if (last - first + 1 > WINDOW_DAYS) left = dir < 0 ? first : last - WINDOW_DAYS + 1;
-      else if (first < start) left = first;
-      else if (last >= start + WINDOW_DAYS) left = last - WINDOW_DAYS + 1;
-      left = Math.min(Math.max(left, 0), maxStart);
+      const left = sliderWindowFit(dates.length, WINDOW_DAYS, start, dates.indexOf(next.from), dates.indexOf(next.to), dir);
       if (left !== start) setAnchor(left >= maxStart ? null : dates[left]!);
       return next;
     },

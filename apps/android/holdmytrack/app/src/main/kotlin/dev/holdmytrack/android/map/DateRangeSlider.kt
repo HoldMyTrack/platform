@@ -119,50 +119,16 @@ class DateRangeSlider(
         render()
     }
 
-    // ---- Dates ↔ slot boundaries --------------------------------------------------------
-    // Boundary b is where slot b begins (0..n). A date before the window is -1 and one after
-    // it is n + 1 — off-screen — unless there's no history on that side, where it sits on the
-    // edge: today with nothing recorded yet today still has its end knob on the right edge.
+    // ---- Dates ↔ slot boundaries ([SliderRules]) ----------------------------------------
 
-    private fun startOf(from: String): Int {
-        val first = days.firstOrNull()?.date ?: return 0
-        val n = days.size
-        if (from < first) return if (canPanEarlier) -1 else 0
-        val index = days.indexOfFirst { it.date >= from }
-        return if (index == -1) (if (canPanLater) n + 1 else n) else index
-    }
+    private val window get() = SliderRules.Window(days.map { it.date }, canPanEarlier, canPanLater)
 
-    private fun endOf(to: String): Int {
-        val first = days.firstOrNull()?.date ?: return 0
-        val last = days.last().date
-        val n = days.size
-        if (to > last) return if (canPanLater) n + 1 else n
-        if (to < first) return if (canPanEarlier) -1 else 0
-        return days.count { it.date <= to }
-    }
+    private fun startOf(from: String) = SliderRules.boundaries(window, DateRange(from, from)).start
 
-    /** Moves one knob to boundary [b], a slot from the other (pushing it if needed). A knob
-     *  that ends up where it already was keeps its own date, which may lie off-screen or in a
-     *  gap between activity days — only a knob that actually moved takes a slot's date. */
-    private fun moveKnob(knob: Knob, b: Int, sel: DateRange): DateRange {
-        val n = days.size
-        if (n == 0) return sel
-        val s0 = startOf(sel.from)
-        val e0 = endOf(sel.to)
-        var s = s0
-        var e = e0
-        if (knob == Knob.START) {
-            s = b.coerceIn(0, n - 1)
-            e = maxOf(e0, s + 1)
-        } else {
-            e = b.coerceIn(1, n)
-            s = minOf(s0, e - 1)
-        }
-        return DateRange(
-            from = if (s == s0) sel.from else days[s].date,
-            to = if (e == e0) sel.to else days[e - 1].date,
-        )
-    }
+    private fun endOf(to: String) = SliderRules.boundaries(window, DateRange(to, to)).end
+
+    private fun moveKnob(knob: Knob, b: Int, sel: DateRange): DateRange =
+        SliderRules.moveKnob(window, sel, if (knob == Knob.START) SliderRules.Knob.START else SliderRules.Knob.END, b)
 
     private fun commit(next: DateRange?) {
         draft = null
@@ -181,11 +147,8 @@ class DateRangeSlider(
      *  gesture that asked for it is already over. */
     private fun landPan() {
         val pending = pan ?: return
-        val first = days.firstOrNull()?.date ?: return
-        val last = days.last().date
-        var next = current ?: return
-        if (pending.start) next = DateRange(first, if (next.to < first) first else next.to)
-        if (pending.end) next = DateRange(if (next.from > last) last else next.from, last)
+        if (days.isEmpty()) return
+        val next = SliderRules.panLand(days.map { it.date }, current ?: return, pending.start, pending.end)
         pan = null
         if (pending.commit) commit(next) else draft = next
     }

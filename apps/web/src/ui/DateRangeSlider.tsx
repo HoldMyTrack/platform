@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 import type { HistogramBucket } from '../api';
 import { formatDayLabel } from './format';
 import type { DateRange } from './dateMath';
+import { sliderBoundaries, sliderMoveKnob, sliderPanLand, type SliderWindow } from './sliderRules';
 import { t, tn } from '../i18n';
 
 export interface DateRangeSliderProps {
@@ -111,50 +112,18 @@ export function DateRangeSlider({
   const firstDay = days[0]?.date;
   const lastDay = days[n - 1]?.date;
 
-  // ---- Dates ↔ slot boundaries ----------------------------------------------------------
-  // Boundary b is where slot b begins (0..n). A date before the window is -1 and one after it
-  // is n + 1 — off-screen — unless there's no history on that side, where it sits on the edge:
-  // today with nothing recorded yet today still has its end knob on the right edge.
+  // ---- Dates ↔ slot boundaries (sliderRules.ts) -----------------------------------------
 
-  const startOf = (from: string) => {
-    if (!firstDay || !lastDay) return 0;
-    if (from < firstDay) return canPanEarlier ? -1 : 0;
-    const i = days.findIndex((d) => d.date >= from);
-    return i === -1 ? (canPanLater ? n + 1 : n) : i;
-  };
-  const endOf = (to: string) => {
-    if (!firstDay || !lastDay) return 0;
-    if (to > lastDay) return canPanLater ? n + 1 : n;
-    if (to < firstDay) return canPanEarlier ? -1 : 0;
-    return days.filter((d) => d.date <= to).length;
-  };
+  const slider: SliderWindow = { days: days.map((d) => d.date), canPanEarlier, canPanLater };
+  const startOf = (from: string) => sliderBoundaries(slider, { from, to: from }).start;
+  const endOf = (to: string) => sliderBoundaries(slider, { from: to, to }).end;
 
   const start = startOf(current.from);
   const end = endOf(current.to);
   const clamp = (b: number) => Math.min(Math.max(b, 0), n);
   const percent = (b: number) => (n === 0 ? 0 : (clamp(b) / n) * 100);
 
-  /** Moves one knob to boundary `b`, a slot from the other (pushing it if needed). A knob
-   *  that ends up where it already was keeps its own date, which may lie off-screen or in a
-   *  gap between activity-days — only a knob that actually moved takes a slot's date. */
-  const moveKnob = (knob: Knob, b: number, sel: DateRange): DateRange => {
-    if (n === 0) return sel;
-    const s0 = startOf(sel.from);
-    const e0 = endOf(sel.to);
-    let s = s0;
-    let e = e0;
-    if (knob === 'start') {
-      s = Math.min(Math.max(b, 0), n - 1);
-      e = Math.max(e0, s + 1);
-    } else {
-      e = Math.min(Math.max(b, 1), n);
-      s = Math.min(s0, e - 1);
-    }
-    return {
-      from: s === s0 ? sel.from : days[s]!.date,
-      to: e === e0 ? sel.to : days[e - 1]!.date,
-    };
-  };
+  const moveKnob = (knob: Knob, b: number, sel: DateRange): DateRange => sliderMoveKnob(slider, sel, knob, b);
 
   // Latest values for the press-and-hold timer and the pull effect, which outlive the render
   // that started them.
@@ -174,9 +143,7 @@ export function DateRangeSlider({
   useEffect(() => {
     const pan = panRef.current;
     if (!pan || !firstDay || !lastDay) return;
-    let next = live.current.current;
-    if (pan.start) next = { from: firstDay, to: next.to < firstDay ? firstDay : next.to };
-    if (pan.end) next = { from: next.from > lastDay ? lastDay : next.from, to: lastDay };
+    const next = sliderPanLand(slider.days, live.current.current, pan.start, pan.end);
     live.current.current = next;
     panRef.current = null;
     if (pan.commit) commit(next);

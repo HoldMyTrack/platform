@@ -1,0 +1,16 @@
+{
+  "rule": "sliderLayout",
+  "description": "How many activity-days the slider's window holds at width (CSS px or dp left for \u00ab track \u00bb), and whether \u00ab \u00bb show: always with a fine pointer (finePointer, a mouse or trackpad), otherwise only when the track still holds 12 days beside them. 24 a day, 7 to 31 days.",
+  "cases": [
+    {"name": "phone portrait", "input": {"width": 358, "finePointer": false}, "expected": {"buttons": false, "days": 14}},
+    {"name": "phone landscape", "input": {"width": 700, "finePointer": false}, "expected": {"buttons": true, "days": 26}},
+    {"name": "tablet", "input": {"width": 900, "finePointer": false}, "expected": {"buttons": true, "days": 31}},
+    {"name": "web desktop panel with a mouse", "input": {"width": 330, "finePointer": true}, "expected": {"buttons": true, "days": 10}},
+    {"name": "web on a phone", "input": {"width": 260, "finePointer": false}, "expected": {"buttons": false, "days": 10}},
+    {"name": "exactly BUTTONS_FROM days beside « »", "input": {"width": 360, "finePointer": false}, "expected": {"buttons": true, "days": 12}},
+    {"name": "one pixel short of BUTTONS_FROM", "input": {"width": 359, "finePointer": false}, "expected": {"buttons": false, "days": 14}},
+    {"name": "clamped at MIN_DAYS", "input": {"width": 100, "finePointer": false}, "expected": {"buttons": false, "days": 7}},
+    {"name": "clamped at MAX_DAYS", "input": {"width": 2000, "finePointer": false}, "expected": {"buttons": true, "days": 31}},
+    {"name": "a mouse always gets « », even when narrow", "input": {"width": 200, "finePointer": true}, "expected": {"buttons": true, "days": 7}}
+  ]
+}
