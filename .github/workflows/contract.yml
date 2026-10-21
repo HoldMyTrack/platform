@@ -1,0 +1,32 @@
+# Fails a pull request whose API contract change would break an installed client
+# (scripts/check-contract-break.sh). Its own workflow so that adding or removing the
+# contract-break label reruns this check alone.
+name: Contract
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+    paths: ["services/server/api/**", "scripts/check-contract-break.sh", ".github/workflows/contract.yml"]
+
+concurrency:
+  group: contract-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  breaking:
+    name: Breaking API changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/server/go.mod
+          cache: false
+      # An intended break ships with a new Android build and a raised MIN_ANDROID_BUILD
+      # (docs/DEPLOY.md §10); the label records that the author decided so.
+      - if: ${{ !contains(github.event.pull_request.labels.*.name, 'contract-break') }}
+        run: scripts/check-contract-break.sh "origin/${{ github.base_ref }}"
+      - if: ${{ contains(github.event.pull_request.labels.*.name, 'contract-break') }}
+        run: scripts/check-contract-break.sh "origin/${{ github.base_ref }}" || echo "::warning title=Contract break::labelled contract-break; ship it with a raised MIN_ANDROID_BUILD"

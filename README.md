@@ -29,9 +29,11 @@ holdmytrack/
 ├── Makefile                     # thin wrapper over compose; `make help`, `make test`
 ├── codecov.yml                  # Go, TypeScript and Kotlin coverage reporting; informational, never a merge gate
 ├── .github/workflows/ci.yml     # every test suite on push and PR (docs/DEVELOPMENT.md, "CI")
+├── .github/workflows/contract.yml # fails a PR whose API contract change breaks installed clients
 ├── ops/alloy/config.alloy       # the alloy service's log and metrics shipping to Grafana Cloud (docs/DEPLOY.md §13)
 ├── ops/grafana/                 # alert rules (apply.py) and dashboard pushed to the Grafana stack (docs/DEPLOY.md §13)
 ├── scripts/backup.sh            # nightly Postgres dump and object sync to the backup bucket (docs/DEPLOY.md §11)
+├── scripts/check-contract-break.sh # the breaking-change check contract.yml runs (docs/DEVELOPMENT.md, "CI")
 ├── scripts/maintenance.sh       # flips the deployment's maintenance page (docs/DEPLOY.md §7)
 ├── scripts/restore-drill.sh     # restores the newest backup into a throwaway container and checks it (docs/DEPLOY.md §11)
 ├── scripts/spots-extract.sh     # downloads OSM data and filters it into the Spots places file, off the server (docs/DEPLOY.md §6)
