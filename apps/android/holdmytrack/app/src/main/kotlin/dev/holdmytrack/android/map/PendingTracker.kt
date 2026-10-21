@@ -2,11 +2,13 @@ package dev.holdmytrack.android.map
 
 import android.view.View
 import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.HoldMyTrackApi
 
 /**
  * Pending rows (a reprocess running, from here or another client): each list read says which
- * started or finished ([PendingDiff]), and while any is Pending the list is read again every
- * [POLL_MS]. A failed read keeps polling: a Pending row still has to be seen finishing.
+ * started or finished ([PendingDiff]). While any is Pending, or an edit saved here is awaited, the
+ * small Pending check runs every [POLL_MS] and the list is read again once it says one finished.
+ * A failed check or read keeps polling: a Pending row still has to be seen finishing.
  */
 class PendingTracker(
     /** The view whose handler runs the poll. */
@@ -23,7 +25,16 @@ class PendingTracker(
      */
     private val awaiting = HashSet<String>()
 
-    private val poll = Runnable { reload() }
+    private val poll = Runnable { check() }
+
+    private fun check() {
+        val watched = PendingDiff.watched(pendingIds, awaiting)
+        if (watched.isEmpty()) return
+        HoldMyTrackApi.pendingActivities(watched) { result ->
+            val still = result.getOrNull()
+            if (still != null && PendingDiff.moved(watched, still)) reload() else schedule()
+        }
+    }
 
     fun awaitEdit(id: String) {
         awaiting += id
@@ -48,7 +59,7 @@ class PendingTracker(
     private fun schedule() {
         val view = host() ?: return
         view.removeCallbacks(poll)
-        if (pendingIds.isNotEmpty()) view.postDelayed(poll, POLL_MS)
+        if (pendingIds.isNotEmpty() || awaiting.isNotEmpty()) view.postDelayed(poll, POLL_MS)
     }
 
     private companion object {

@@ -498,3 +498,31 @@ activity_types:
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
+activities_pending:
+  get:
+    summary: Which of the given activities are still Pending
+    description: >-
+      What a client polls while it watches a reprocess, reading the whole list again only once
+      the answer changes. An id that isn't the account's, or no longer exists, isn't Pending.
+    parameters:
+      - name: ids
+        in: query
+        required: true
+        description: Comma-separated activity ids, at most 200.
+        schema: { type: string }
+    responses:
+      "200":
+        description: The ids still Pending
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pending]
+              additionalProperties: false
+              properties:
+                pending:
+                  type: array
+                  items: { type: string, format: uuid }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }

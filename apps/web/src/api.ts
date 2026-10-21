@@ -354,6 +354,18 @@ export interface ActivityTrackMetrics {
  * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
  * focus.
  */
+/** `GET /v1/activities/pending`: which of [ids] are still Pending (IMPLEMENTATION.md §4.2.5). */
+export async function pendingActivities(ids: readonly string[], signal?: AbortSignal): Promise<string[]> {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/pending?ids=${ids.map(encodeURIComponent).join(',')}`, {
+    ...(signal ? { signal } : {}),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
+  }
+  return ((await res.json()) as ResponseJson<'/activities/pending', 'get'>).pending;
+}
+
 export async function getActivityTrackMetrics(
   activityId: string,
   signal?: AbortSignal,

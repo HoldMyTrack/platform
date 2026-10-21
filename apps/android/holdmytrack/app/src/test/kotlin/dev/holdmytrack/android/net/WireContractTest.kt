@@ -54,6 +54,7 @@ class WireContractTest {
 
         response(ActivitiesJson.serializer().descriptor, "/activities", "get")
         response(ActivityTypesJson.serializer().descriptor, "/activity-types", "get")
+        response(PendingJson.serializer().descriptor, "/activities/pending", "get")
         response(ActivityRowJson.serializer().descriptor, "/activities/{id}", "patch")
         request(ActivityPatchJson.serializer().descriptor, "/activities/{id}", "patch")
         response(HistogramJson.serializer().descriptor, "/activities/histogram", "get")

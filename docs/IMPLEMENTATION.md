@@ -179,7 +179,6 @@ flowchart LR
 
 - **Path 1** is a design only (`VISION.md` §4.1): webhook receivers answer at once and enqueue, and the backfill at connect is a separate, resumable, rate-limited job (§5.1).
 - **Path 2** on Android: Health Connect routes written by other apps can't be read in the background (`ConsentRequired` even with "Always allow", checked on a device), so sync is foreground-only. Don't build a background route sync: it would bring in activities with nothing to draw. Samsung Health exposes no routes at all.
-- **Path 3** needs no provider's permission, which makes it the unconditional path.
 
 **All three are idempotent on `(user_id, source, external_id)`**, under concurrent duplicates too. The check at receive time is a fast path; the guarantee is `idx_activities_dedupe` plus the persist step's `ON CONFLICT DO NOTHING` (§4.1 step 6).
 
@@ -301,7 +300,7 @@ Below exact coverage, Fog reveals whole countries, then regions (FR-4.2). The ti
 
 An activity is Pending (`edit_pending`) while an Edit track or Private location reprocess is queued or running, its geometry and masks stale or half-rewritten. **Every map read filters `AND NOT edit_pending`**: tracks tiles, Fog and Heatmap composites at every level, the heatmap cap and Country/Region. A new map read needs it too.
 
-**Two renders per reprocess, inside the job**: enqueueing sets the flag and dirties the activities' current tiles in one transaction; the job renders (dropping them), reprocesses, clears the flag (unless a later `reprivacy` still covers the activity) and renders again. A failed edit clears the flag and renders, restoring the old masks. Pending clears before the rasters are current, so clients refetch on `/v1/coverage/status`, not on the badge (§4.2.3). The web hides a Pending track itself as soon as the list shows it, apart from the user's hidden set.
+**Two renders per reprocess, inside the job**: enqueueing sets the flag and dirties the activities' current tiles in one transaction; the job renders (dropping them), reprocesses, clears the flag (unless a later `reprivacy` still covers the activity) and renders again. A failed edit clears the flag and renders, restoring the old masks. Pending clears before the rasters are current, so clients refetch on `/v1/coverage/status`, not on the badge (§4.2.3). The web hides a Pending track itself as soon as the list shows it, apart from the user's hidden set. Clients then poll `GET /v1/activities/pending` for their ids, rereading the list once one finishes (`pendingCheck`).
 
 #### 4.2.6 Caching: one tile version per account
 

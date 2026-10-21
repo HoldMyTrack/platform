@@ -931,6 +931,14 @@ object HoldMyTrackApi {
         }, onResult)
     }
 
+    /** `GET /v1/activities/pending`: which of [ids] are still Pending (`map/PendingTracker`). */
+    fun pendingActivities(ids: List<String>, onResult: (Result<List<String>>) -> Unit) {
+        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities/pending").toHttpUrl().newBuilder()
+            .addQueryParameter("ids", ids.joinToString(","))
+            .build()
+        call(Request.Builder().url(url).build(), { body -> decode<PendingJson>(body).pending }, onResult)
+    }
+
     /** `GET /v1/activity-types`: what to show for the catalog's types and [types] (`panel/ActivityTypes`). */
     fun activityTypes(types: List<String>, onResult: (Result<Map<String, ActivityTypes.Info>>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V1 + "/activity-types").toHttpUrl().newBuilder()

@@ -1289,6 +1289,53 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities/pending": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Which of the given activities are still Pending
+         * @description What a client polls while it watches a reprocess, reading the whole list again only once the answer changes. An id that isn't the account's, or no longer exists, isn't Pending.
+         */
+        get: {
+            parameters: {
+                query: {
+                    /** @description Comma-separated activity ids, at most 200. */
+                    ids: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The ids still Pending */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            pending: string[];
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/activities/summary": {
         parameters: {
             query?: never;

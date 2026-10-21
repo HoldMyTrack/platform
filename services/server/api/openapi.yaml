@@ -71,6 +71,8 @@ paths:
     $ref: "paths/activities.yaml#/activities_id"
   /activities/overlaps:
     $ref: "paths/activities.yaml#/activities_overlaps"
+  /activities/pending:
+    $ref: "paths/activities.yaml#/activities_pending"
   /activities/summary:
     $ref: "paths/activities.yaml#/activities_summary"
   /activities/histogram:

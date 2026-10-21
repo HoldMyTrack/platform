@@ -120,7 +120,7 @@ The split follows the web's: `MapSession` holds the range or Story shown and the
 
 - **Touch order**: a tap asks `MapSpots.spotAt` first unless an editor holds the map, so a spot's tap never selects a track under it. The track editor's point drags and the Private location handle are taken in a touch listener on the `MapView`, which runs before MapLibre's gestures (the web's `dragPan.disable()`). Photo markers are views, so their taps never reach the map.
 - **Edits run one request at a time**: parallel deletes raced each other's coverage re-render. A group edit resends each activity's own name and description, since the endpoint replaces them, and skips saves already sent on a retry.
-- **Pending**: a row entering or leaving Pending refetches the tracks and starts the coverage watch, and the list is polled while any row is Pending.
+- **Pending**: a row entering or leaving Pending refetches the tracks and starts the coverage watch, and while one is, the Pending check is polled (root `docs/IMPLEMENTATION.md` §4.2.5).
 - **A Private location change reprocesses whole activities**, so the editor hands the coverage watch a callback that re-reads tracks, list, days and metrics once the server has drained.
 
 ### 3.5 Map image export

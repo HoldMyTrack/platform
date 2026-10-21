@@ -132,6 +132,10 @@ internal data class ActivitiesJson(
     val types: Map<String, ActivityTypeJson> = emptyMap(),
 )
 
+/** `GET /v1/activities/pending`. */
+@Serializable
+internal data class PendingJson(val pending: List<String>)
+
 /** What a client shows for one activity type (`panel/ActivityTypes`). */
 @Serializable
 internal data class ActivityTypeJson(val kind: String, val label: String)

@@ -14,6 +14,7 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | :-- | :-- | :-- |
 | `defaultRange` | `visibleDays` (ascending dates), `earliest`, `today` | `{ from, to }` |
 | `pendingChange` | `previous`, `now`, `awaiting` (id sets) | `{ started, finished, left, landed, awaiting }` |
+| `pendingCheck` | `listed`, `awaiting`, `stillPending` (ids) | `{ watched, moved }` |
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
 | `boldTracks` | `checked` (ids), `focused` | ids |
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |

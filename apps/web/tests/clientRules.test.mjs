@@ -6,7 +6,7 @@ import { defaultRange } from '../src/map/defaultRange.ts';
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
 import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
-import { pendingChange } from '../src/map/pending.ts';
+import { pendingChange, pendingMoved, pendingWatched } from '../src/map/pending.ts';
 import { clusterPoints, photoMarkerLayout, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
 import { distanceParts, durationParts, totalDistanceParts } from '../src/ui/formatParts.ts';
@@ -24,6 +24,10 @@ const sorted = (set) => [...set].sort();
 
 const rules = {
   defaultRange: ({ visibleDays, earliest, today }) => defaultRange(visibleDays.map((date) => ({ date })), earliest ?? null, today),
+  pendingCheck: ({ listed, awaiting, stillPending }) => {
+    const watched = pendingWatched(listed, new Set(awaiting));
+    return { watched, moved: pendingMoved(watched, stillPending) };
+  },
   pendingChange: ({ previous, now, awaiting }) => {
     const change = pendingChange(new Set(previous), now, new Set(awaiting));
     return { started: change.started, finished: change.finished, left: sorted(change.left), landed: sorted(change.landed), awaiting: sorted(change.awaiting) };

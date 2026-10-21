@@ -94,6 +94,13 @@ class ClientRulesTest {
             }
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
+        "pendingCheck" to { input ->
+            val watched = PendingDiff.watched(input.strings("listed"), input.strings("awaiting"))
+            buildJsonObject {
+                put("watched", ids(watched, sort = false))
+                put("moved", PendingDiff.moved(watched, input.strings("stillPending")))
+            }
+        },
         "toolbarTarget" to { input -> ids(PanelRules.targetIds(input.strings("checked").toSet(), input.string("focused"))) },
         "targetVisibility" to { input -> ids(PanelRules.toggledVisibility(input.strings("hidden").toSet(), input.strings("target").toSet())) },
         "photoScope" to { input ->
