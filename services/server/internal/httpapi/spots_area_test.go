@@ -61,6 +61,29 @@ func TestSpotsInArea(t *testing.T) {
 		t.Errorf("monuments only: %+v", one)
 	}
 
+	// A view across the antimeridian finds places on both sides of it, given either way round.
+	var across []int64
+	for i, lon := range []float64{179.5, -179.5} {
+		var id int64
+		if err := d.pool.QueryRow(ctx, `
+			INSERT INTO spots (category, name, geom, osm_type, osm_id)
+			VALUES ('viewpoint', 'Test Dateline', ST_Multi(ST_Buffer(ST_SetSRID(ST_MakePoint($1, -40.5), 4326)::geography, 30)::geometry), 'node', $2)
+			RETURNING id
+		`, lon, base+10+int64(i)).Scan(&id); err != nil {
+			t.Fatalf("create spot: %v", err)
+		}
+		across = append(across, id)
+	}
+	t.Cleanup(func() { d.pool.Exec(context.Background(), `DELETE FROM spots WHERE id = ANY($1)`, across) })
+	for _, bbox := range []string{"179,-41,181,-40", "179,-41,-179,-40"} {
+		if got := get("bbox=" + bbox + "&categories=viewpoint"); got.Total != 2 {
+			t.Errorf("bbox=%s: %d places, want 2: %+v", bbox, got.Total, got.Spots)
+		}
+	}
+	if got := get("bbox=179,-41,180,-40&categories=viewpoint"); got.Total != 1 {
+		t.Errorf("east of the antimeridian only: %d places, want 1", got.Total)
+	}
+
 	for _, bad := range []string{
 		"categories=playground",
 		box,

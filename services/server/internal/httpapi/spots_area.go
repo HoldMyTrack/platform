@@ -15,33 +15,33 @@ const spotsAreaLimit = 2000
 
 var spotCategories = []string{"playground", "dog_park", "monument", "viewpoint", "history"}
 
-// spotsAreaQuery is the places in an area, in the chosen categories, at most $6 of them,
-// leaving out a retired place (docs/SPEC.md FR-15.1) unless the account $7 captured it. The area is one or
-// two boxes (spotArea, $1–$4): two when the view crosses the antimeridian. Named places first — the ones worth a popup — then by a hash of the id: a stable order that's
+// spotsAreaQuery is the places in an area, in the chosen categories, at most $8 of them,
+// leaving out a retired place (docs/SPEC.md FR-15.1) unless the account $9 captured it. The area is two
+// boxes (spotsInAreaSQL, $1–$6). Named places first — the ones worth a popup — then by a hash of the id: a stable order that's
 // spread evenly over the area, so a cut-off leaves a thinner map rather than an empty corner.
 var spotsAreaQuery = `
 SELECT s.id, s.category, s.name, s.address, s.description, s.inscription, s.memorial,
        s.start_date, s.wikipedia, ST_X(p.pt), ST_Y(p.pt)
 FROM spots s
 CROSS JOIN LATERAL (SELECT ST_PointOnSurface(s.geom) AS pt) p
-WHERE ` + spotsInAreaSQL + ` AND s.category = ANY($5)
-  AND (s.retired_at IS NULL OR EXISTS (SELECT 1 FROM spot_captures c WHERE c.spot_id = s.id AND c.user_id = $7))
+WHERE ` + spotsInAreaSQL + ` AND s.category = ANY($7)
+  AND (s.retired_at IS NULL OR EXISTS (SELECT 1 FROM spot_captures c WHERE c.spot_id = s.id AND c.user_id = $9))
 ORDER BY s.name IS NULL, md5(s.id::text)
-LIMIT $6`
+LIMIT $8`
 
 var spotsAreaCountQuery = `
 SELECT count(*) FROM spots s
 CROSS JOIN LATERAL (SELECT ST_PointOnSurface(s.geom) AS pt) p
-WHERE ` + spotsInAreaSQL + ` AND s.category = ANY($5)
-  AND (s.retired_at IS NULL OR EXISTS (SELECT 1 FROM spot_captures c WHERE c.spot_id = s.id AND c.user_id = $6))`
+WHERE ` + spotsInAreaSQL + ` AND s.category = ANY($7)
+  AND (s.retired_at IS NULL OR EXISTS (SELECT 1 FROM spot_captures c WHERE c.spot_id = s.id AND c.user_id = $8))`
 
-// spotsInAreaSQL is "s's point p.pt lies in one of the area's boxes": $1 south, $2 north, and
-// the boxes' west and east edges as two float8 arrays, $3 and $4. Each box is its own && test,
-// so both stay index lookups — one envelope around both would span the whole world.
-const spotsInAreaSQL = `EXISTS (
-    SELECT 1 FROM unnest($3::float8[], $4::float8[]) AS e(w, x)
-    WHERE s.geom && ST_MakeEnvelope(e.w, $1, e.x, $2, 4326)
-      AND ST_Intersects(p.pt, ST_MakeEnvelope(e.w, $1, e.x, $2, 4326)))`
+// spotsInAreaSQL is "s's point p.pt lies in one of the area's two boxes": $1 south, $2 north,
+// the first box from $3 west to $4 east, the second from $5 to $6 (spotArea.boxes). Each box is
+// its own && against constant parameters, so the planner answers the OR with two index scans on
+// idx_spots_geom; an envelope built from rows (unnest) or one around both boxes scans the table.
+const spotsInAreaSQL = `(
+       (s.geom && ST_MakeEnvelope($3, $1, $4, $2, 4326) AND ST_Intersects(p.pt, ST_MakeEnvelope($3, $1, $4, $2, 4326)))
+    OR (s.geom && ST_MakeEnvelope($5, $1, $6, $2, 4326) AND ST_Intersects(p.pt, ST_MakeEnvelope($5, $1, $6, $2, 4326))))`
 
 // spotJSON is one place as "Show in this area" returns it — the tiles' `spots` layer's
 // properties (§4.25), with a field absent when OSM has none.
@@ -89,12 +89,13 @@ func (s *Server) handleSpotsInArea(w http.ResponseWriter, r *http.Request) {
 	resp := spotsAreaResponse{Spots: []spotJSON{}}
 	ctx := r.Context()
 	userID := userIDFromContext(ctx)
-	if err := s.pool.QueryRow(ctx, spotsAreaCountQuery, area.south, area.north, area.west, area.east, categories, userID).Scan(&resp.Total); err != nil {
+	w1, e1, w2, e2 := area.boxes()
+	if err := s.pool.QueryRow(ctx, spotsAreaCountQuery, area.south, area.north, w1, e1, w2, e2, categories, userID).Scan(&resp.Total); err != nil {
 		s.log.Error("spots area count failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	rows, err := s.pool.Query(ctx, spotsAreaQuery, area.south, area.north, area.west, area.east, categories, spotsAreaLimit, userID)
+	rows, err := s.pool.Query(ctx, spotsAreaQuery, area.south, area.north, w1, e1, w2, e2, categories, spotsAreaLimit, userID)
 	if err != nil {
 		s.log.Error("spots area query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
@@ -125,6 +126,13 @@ func (s *Server) handleSpotsInArea(w http.ResponseWriter, r *http.Request) {
 type spotArea struct {
 	south, north float64
 	west, east   []float64
+}
+
+// boxes is the area as spotsInAreaSQL's two boxes, west and east edges each: a single box is
+// sent twice.
+func (a spotArea) boxes() (w1, e1, w2, e2 float64) {
+	last := len(a.west) - 1
+	return a.west[0], a.east[0], a.west[last], a.east[last]
 }
 
 // parseBBox reads "west,south,east,north" into the boxes it covers. A view across the
