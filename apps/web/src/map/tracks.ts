@@ -168,8 +168,7 @@ export function setHoveredTrack(map: MapLibreMap, activityId: string | null): vo
   setLayerVars(map, { hovered: activityId !== null ? [activityId] : [] });
 }
 
-/** The focused tracks, drawn bold over their halo. MapView passes at most one id: the focused
- *  activity; checked rows aren't bolded. */
+/** The tracks drawn bold over their halo (selection.ts's boldTracks). */
 export function setSelectedTracks(map: MapLibreMap, activityIds: readonly string[]): void {
   setLayerVars(map, { focused: [...activityIds] });
 }

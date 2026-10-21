@@ -1,0 +1,11 @@
+{
+  "rule": "boldTracks",
+  "description": "The tracks drawn bold, on the live map and in the exported image: the checked group and the focused activity.",
+  "cases": [
+    { "name": "nothing", "input": { "checked": [] }, "expected": [] },
+    { "name": "focus alone", "input": { "checked": [], "focused": "c" }, "expected": ["c"] },
+    { "name": "checked alone", "input": { "checked": ["b", "a"] }, "expected": ["a", "b"] },
+    { "name": "checked and a focus outside them", "input": { "checked": ["a", "b"], "focused": "c" }, "expected": ["a", "b", "c"] },
+    { "name": "a focus among the checked", "input": { "checked": ["a", "b"], "focused": "a" }, "expected": ["a", "b"] }
+  ]
+}

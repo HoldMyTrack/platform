@@ -336,7 +336,7 @@ The same paths for every account, behind the session and cached like every map t
 - Lists every activity in the date range (FR-6) passing the Type and Distance filters, always newest first by start time, not paginated. Count and total distance cover the whole range.
 - A row shows the activity's name, which exists only once a person types one (FR-5.10), else its local start time.
 - Badges: Pending and Hidden (FR-5.15); Story, naming its Stories; Private, for an activity entirely inside Private locations (FR-8.1), which has no track, distance or duration and can't have its track or photos edited.
-- One activity is focused at a time, by clicking its row or track; any number can be checked. The toolbar's actions act on the checked activities when any are, else on the focused one, never both. Checking never moves the camera, and camera fits skip Hidden activities.
+- One activity is focused at a time, by clicking its row or track; any number can be checked. The checked activities and the focused one are drawn bold, on the map and in its image (FR-4.10). The toolbar's actions act on the checked activities when any are, else on the focused one, never both. Checking never moves the camera, and camera fits skip Hidden activities.
 
 ### FR-5.2 TYPE filter
 

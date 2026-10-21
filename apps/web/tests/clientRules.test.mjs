@@ -14,7 +14,7 @@ import { fractionAt, photoTrack, pointAt, startFraction } from '../src/ui/photoT
 import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
 import { shiftRange } from '../src/ui/rangeShift.ts';
 import { activityTimeZone } from '../src/ui/timeZone.ts';
-import { toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
+import { boldTracks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
 
 // The cases every client runs (testdata/client-rules/README.md). Mounted at /testdata in the
@@ -28,6 +28,7 @@ const rules = {
     const change = pendingChange(new Set(previous), now, new Set(awaiting));
     return { started: change.started, finished: change.finished, left: sorted(change.left), landed: sorted(change.landed), awaiting: sorted(change.awaiting) };
   },
+  boldTracks: ({ checked, focused }) => boldTracks(new Set(checked), focused ?? null),
   toolbarTarget: ({ checked, focused }) => sorted(toolbarTarget(new Set(checked), focused ?? null)),
   targetVisibility: ({ hidden, target }) => sorted(toggledVisibility(new Set(hidden), new Set(target))),
   photoScope: ({ mode, editWindowIds, focused, storyId }) => photoScopeFor(mode, editWindowIds ?? null, focused ?? null, storyId ?? null),

@@ -16,6 +16,14 @@ export function toggled<T>(set: ReadonlySet<T>, item: T): Set<T> {
   return next;
 }
 
+/** The tracks drawn bold: the checked group and the focused activity, sorted. Android:
+ *  `PanelRules.boldIds`. */
+export function boldTracks(checked: ReadonlySet<string>, focused: string | null): string[] {
+  const ids = new Set(checked);
+  if (focused !== null) ids.add(focused);
+  return [...ids].sort();
+}
+
 /** What the toolbar acts on: the checked group if anything is checked, else the focused row.
  *  Checked wins over a union so a Delete never reaches past what was ticked. */
 export function toolbarTarget<S extends ReadonlySet<string>>(checked: S, focused: string | null): S | Set<string> {

@@ -7,7 +7,7 @@ import { mapTapsAct } from './exportFlow';
 import type { MapMode } from './mapMode';
 import { setMapTapsActive } from './mapTaps';
 import { initialSession, mapSessionReducer } from './session';
-import { toolbarTarget } from './selection';
+import { boldTracks, toolbarTarget } from './selection';
 import { initialPanelTab, storyParam } from './storyUrl';
 import type { SpotCategory } from './spots';
 import { useCoverageRefresh } from './useCoverageRefresh';
@@ -90,6 +90,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const storyState = useStory(storyId);
   const storiesList = useStories(panelTab === 'stories');
 
+  const boldIds = useMemo(() => boldTracks(checkedActivityIds, focusedActivityId), [checkedActivityIds, focusedActivityId]);
   const toolbarTargetIds = useMemo(() => toolbarTarget(checkedActivityIds, focusedActivityId), [checkedActivityIds, focusedActivityId]);
   const changeSelectedRange = useCallback((range: DateRange) => dispatch({ type: 'rangePicked', range }), []);
 
@@ -150,8 +151,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   });
 
   const exportScene = useMemo(
-    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], paths, satellite, roads }),
-    [flavor, mapMode, activityQuery, mapHiddenIds, paths, satellite, roads],
+    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, paths, satellite, roads }),
+    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, paths, satellite, roads],
   );
   const exporter = useExportFlow(map, container, exportScene);
   const tapsAct = mapTapsAct(exporter.flow);
@@ -204,7 +205,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
 
   const spots = useSpots(map, spotsShown);
   useSelectionLayers(map, {
-    focusedId: focusedActivityId,
+    boldIds,
     // Hover isn't exported, and framing doesn't preview.
     hoveredId: tapsAct ? hoveredActivityId : null,
     mapHiddenIds,
@@ -295,7 +296,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     spotsShown,
     activityQuery,
     mapHiddenIds,
-    focusedId: focusedActivityId,
+    boldIds,
     bands,
   });
   useHashSync(map, pinned);

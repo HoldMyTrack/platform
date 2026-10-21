@@ -93,6 +93,7 @@ class ClientRulesTest {
                 put("awaiting", ids(change.awaiting))
             }
         },
+        "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
         "toolbarTarget" to { input -> ids(PanelRules.targetIds(input.strings("checked").toSet(), input.string("focused"))) },
         "targetVisibility" to { input -> ids(PanelRules.toggledVisibility(input.strings("hidden").toSet(), input.strings("target").toSet())) },
         "photoScope" to { input ->

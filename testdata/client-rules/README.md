@@ -15,6 +15,7 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `defaultRange` | `visibleDays` (ascending dates), `earliest`, `today` | `{ from, to }` |
 | `pendingChange` | `previous`, `now`, `awaiting` (id sets) | `{ started, finished, left, landed, awaiting }` |
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
+| `boldTracks` | `checked` (ids), `focused` | ids |
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |
 | `photoScope` | `mode` (`normal`, `fog`, `heatmap`), `editWindowIds`, `focused`, `storyId` | `{ activity }`, `{ story }` or `null` |
 | `photoGroup` | `photos` (`{ lat, lon }`) | `"open"` or `{ fit: [west, south, east, north] }` |

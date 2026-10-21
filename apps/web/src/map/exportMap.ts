@@ -61,6 +61,8 @@ export interface ExportViewState {
   mode: MapMode;
   activityQuery: ActivityQuery;
   hiddenIds: string[];
+  /** The tracks drawn bold (selection.ts's boldTracks). */
+  boldIds: readonly string[];
   /** The Layers menu's paths (overlays.ts), so the image shows what the screen does. */
   paths: BikePathOverlays;
   /** The Satellite button (FR-4.14): satellite imagery, when the deployment has any. */
@@ -363,7 +365,7 @@ async function renderOffscreen(
       mode: state.mode,
       satellite: state.satellite,
       toggles: { ...state.paths },
-      vars: { hidden: state.hiddenIds },
+      vars: { hidden: state.hiddenIds, focused: [...state.boldIds] },
       queries: { tracks: trackQuery(state.activityQuery) },
       // No Spots or pace bands, as on Android.
       excludedGroups: new Set(['spots', 'track-bands']),
