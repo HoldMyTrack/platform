@@ -87,14 +87,19 @@ object SliderRules {
     }
 
     /** A tick on [boundary]: tall where a month starts ([monthStart]), and the month (1..12)
-     *  labelled from it — each month start, and the first month in view at the left edge. */
+     *  labelled from it — each month start, and the first month in view at the left edge, unless
+     *  the next label is too close ([LABEL_SLOTS]). */
     data class Tick(val boundary: Int, val monthStart: Boolean, val month: Int?)
+
+    /** The slots a month's name needs before the next one: about 30dp of text in two 18dp slots.
+     *  Where the next starts sooner, the earlier name is dropped. */
+    private const val LABEL_SLOTS = 2
 
     /** A tick on every boundary 0..n; the outer two are plain. */
     fun ticks(days: List<String>): List<Tick> {
         if (days.isEmpty()) return emptyList()
         fun month(date: String) = date.substring(5, 7).toInt()
-        return (0..days.size).map { b ->
+        val ticks = (0..days.size).map { b ->
             val before = days.getOrNull(b - 1)
             val after = days.getOrNull(b)
             when {
@@ -102,7 +107,13 @@ object SliderRules {
                 after == null || before.take(7) == after.take(7) -> Tick(b, false, null)
                 else -> Tick(b, true, month(after))
             }
+        }.toMutableList()
+        var next = Int.MAX_VALUE
+        for (b in ticks.indices.reversed()) {
+            if (ticks[b].month == null) continue
+            if (next - b < LABEL_SLOTS) ticks[b] = ticks[b].copy(month = null) else next = b
         }
+        return ticks
     }
 
     /** A pan has landed on the window [days]: the knobs it was carrying ([start], [end]) move onto

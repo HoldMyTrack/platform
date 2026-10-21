@@ -82,21 +82,33 @@ export interface SliderTick {
   /** Tall where a month starts. */
   kind: 'day' | 'month';
   /** The month (1..12) labelled from this boundary: each month start, and the first month in
-   *  view at the left edge. */
+   *  view at the left edge, unless the next label is too close (LABEL_SLOTS). */
   month: number | null;
 }
+
+/** The slots a month's name needs before the next one: about 30px of text in two 18px slots.
+ *  Where the next starts sooner, the earlier name is dropped. */
+const LABEL_SLOTS = 2;
 
 /** A tick on every boundary 0..n; the outer two are plain. */
 export function sliderTicks(days: readonly string[]): SliderTick[] {
   if (days.length === 0) return [];
-  return Array.from({ length: days.length + 1 }, (_, b) => {
+  const month = (date: string) => Number(date.slice(5, 7));
+  const ticks: SliderTick[] = Array.from({ length: days.length + 1 }, (_, b) => {
     const before = days[b - 1];
     const after = days[b];
-    const month = (date: string) => Number(date.slice(5, 7));
-    if (before === undefined) return { boundary: b, kind: 'day' as const, month: month(after!) };
-    if (after === undefined || before.slice(0, 7) === after.slice(0, 7)) return { boundary: b, kind: 'day' as const, month: null };
-    return { boundary: b, kind: 'month' as const, month: month(after) };
+    if (before === undefined) return { boundary: b, kind: 'day', month: month(after!) };
+    if (after === undefined || before.slice(0, 7) === after.slice(0, 7)) return { boundary: b, kind: 'day', month: null };
+    return { boundary: b, kind: 'month', month: month(after) };
   });
+  let next = Infinity;
+  for (let b = ticks.length - 1; b >= 0; b--) {
+    const tick = ticks[b]!;
+    if (tick.month === null) continue;
+    if (next - b < LABEL_SLOTS) tick.month = null;
+    else next = b;
+  }
+  return ticks;
 }
 
 /** A pan has landed on the window `days`: the knobs it was carrying (`start`, `end`) move onto
