@@ -105,6 +105,11 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     reload: reloadActivities,
     loadedKey: activitiesLoadedKey,
   } = useActivityList(activityQuery);
+  // A row a fresh list no longer has (deleted elsewhere, or left the Story) leaves the selection;
+  // only a list read for the query shown says so.
+  useEffect(() => {
+    if (activitiesLoadedKey === JSON.stringify(activityQuery)) dispatch({ type: 'listLoaded', ids: activities.map((a) => a.id) });
+  }, [activities, activitiesLoadedKey, activityQuery]);
   // The slider's window of activity-days and its pan position, independent of the selection.
   const {
     visibleDays,

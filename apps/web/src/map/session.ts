@@ -58,6 +58,8 @@ export type MapSessionEvent =
   | { type: 'typeToggled'; activityType: string }
   | { type: 'distanceSet'; filter: DistanceRange | null }
   | { type: 'filtersReset' }
+  /** A list was read for the range or Story shown: a row it no longer has leaves the selection. */
+  | { type: 'listLoaded'; ids: Iterable<string> }
   /** Activities left the account (deleted, or taken out of the open Story): their ids leave the selection. */
   | { type: 'activitiesRemoved'; ids: Iterable<string>; unfocusOnly?: boolean };
 
@@ -113,6 +115,12 @@ export function mapSessionReducer(state: MapSession, event: MapSessionEvent): Ma
       return state.selection.distanceFilter === event.filter ? state : select({ distanceFilter: event.filter });
     case 'filtersReset':
       return select({ excludedTypes: new Set(), distanceFilter: null });
+    case 'listLoaded': {
+      const kept = new Set(event.ids);
+      const { checked, focused, hidden } = state.selection;
+      const gone = new Set([...checked, ...hidden, ...(focused !== null ? [focused] : [])].filter((id) => !kept.has(id)));
+      return gone.size === 0 ? state : mapSessionReducer(state, { type: 'activitiesRemoved', ids: gone });
+    }
     case 'activitiesRemoved': {
       const ids = new Set(event.ids);
       const { checked, focused, hidden } = state.selection;

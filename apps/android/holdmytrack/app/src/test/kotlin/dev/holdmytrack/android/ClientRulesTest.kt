@@ -213,6 +213,41 @@ class ClientRulesTest {
                 ?.let(::JsonPrimitive) ?: JsonNull
         },
         "layerLift" to { input -> JsonPrimitive(MapLayersDoc.needsLift(input.strings("current"), input.string("id")!!, input.strings("own").toSet())) },
+        "panelState" to { input ->
+            val all = input["activities"]!!.jsonArray.map { it.jsonObject }.map { facetActivity(it).copy(id = it.string("id")!!) }
+            val state = input["state"]!!.jsonObject
+            val panel = PanelState()
+            panel.setActivities(all)
+            // Hidden first: hiding goes through the toolbar's target, the checked group.
+            state.strings("hidden").forEach { panel.toggleChecked(it) }
+            panel.toggleTargetVisibility()
+            panel.clearChecked()
+            state.strings("checked").forEach { panel.toggleChecked(it) }
+            state.string("focused")?.let(panel::focus)
+            state.strings("excludedTypes").forEach(panel::toggleType)
+            panel.setDistanceFilter(distance(state["distanceFilter"]))
+            val event = input["event"]!!.jsonObject
+            when (val type = event.string("type")) {
+                "checkToggled" -> panel.toggleChecked(event.string("id")!!)
+                "checkAll" -> panel.checkAll()
+                "checksCleared" -> panel.clearChecked()
+                "checksInverted" -> panel.invertChecked()
+                "visibilityToggled" -> panel.toggleTargetVisibility()
+                "typeToggled" -> panel.toggleType(event.string("activityType")!!)
+                "distanceSet" -> panel.setDistanceFilter(distance(event["filter"]))
+                "filtersReset" -> panel.resetFilters()
+                "listLoaded" -> event.strings("ids").toSet().let { ids -> panel.setActivities(all.filter { it.id in ids }) }
+                "rangePicked" -> panel.resetForNewRange()
+                else -> error("no Android event $type")
+            }
+            buildJsonObject {
+                put("checked", ids(panel.checked))
+                put("focused", panel.focused?.let(::JsonPrimitive) ?: JsonNull)
+                put("hidden", ids(panel.hidden))
+                put("excludedTypes", ids(panel.excludedTypes))
+                put("distanceFilter", distanceJson(panel.distanceFilter))
+            }
+        },
         "session" to { input ->
             val state = input["state"]!!.jsonObject
             val panel = PanelState()

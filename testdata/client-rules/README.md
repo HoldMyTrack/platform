@@ -16,6 +16,7 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `pendingChange` | `previous`, `now`, `awaiting` (id sets) | `{ started, finished, left, landed, awaiting }` |
 | `pendingCheck` | `listed`, `awaiting`, `stillPending` (ids) | `{ watched, moved }` |
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
+| `panelState` | `activities` (`{ id, activityType, distanceMeters }`), `state` (`checked`, `focused`, `hidden`, `excludedTypes`, `distanceFilter`), `event` | the state after it |
 | `boldTracks` | `checked` (ids), `focused` | ids |
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |
 | `photoScope` | `mode` (`normal`, `fog`, `heatmap`), `editWindowIds`, `focused`, `storyId` | `{ activity }`, `{ story }` or `null` |

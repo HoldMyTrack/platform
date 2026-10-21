@@ -14,7 +14,7 @@ import { fractionAt, photoTrack, pointAt, startFraction } from '../src/ui/photoT
 import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
 import { shiftRange } from '../src/ui/rangeShift.ts';
 import { activityTimeZone } from '../src/ui/timeZone.ts';
-import { boldTracks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
+import { boldTracks, invertedChecks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
 
 // The cases every client runs (testdata/client-rules/README.md). Mounted at /testdata in the
@@ -68,6 +68,30 @@ const rules = {
   editTrackDistances: ({ points }) => cumulativeDistances(points),
   layerInsertion: ({ current, order, id, own, fallback }) => insertionPoint(current, order, id, new Set(own), fallback ?? undefined) ?? null,
   layerLift: ({ current, id, own }) => needsLift(current, id, new Set(own)),
+  panelState: ({ activities, state, event }) => {
+    const selection = {
+      checked: new Set(state.checked ?? []),
+      focused: state.focused ?? null,
+      hidden: new Set(state.hidden ?? []),
+      excludedTypes: new Set(state.excludedTypes ?? []),
+      distanceFilter: state.distanceFilter ?? null,
+    };
+    const listed = activities.filter((a) => passesFilters(a, selection.excludedTypes, selection.distanceFilter));
+    // The master checkbox's and Invert's events, as useSelectionActions.ts sends them.
+    const sent = {
+      checkAll: () => ({ type: 'checkedSet', ids: listed.map((a) => a.id) }),
+      checksCleared: () => ({ type: 'checkedSet', ids: [] }),
+      checksInverted: () => ({ type: 'checkedSet', ids: invertedChecks(listed, selection.checked) }),
+    }[event.type]?.() ?? event;
+    const next = mapSessionReducer({ ...initialSession(null), selection }, sent).selection;
+    return {
+      checked: sorted(next.checked),
+      focused: next.focused,
+      hidden: sorted(next.hidden),
+      excludedTypes: sorted(next.excludedTypes),
+      distanceFilter: next.distanceFilter,
+    };
+  },
   session: ({ state, event }) => {
     const start = {
       ...initialSession(state.storyId ?? null),
