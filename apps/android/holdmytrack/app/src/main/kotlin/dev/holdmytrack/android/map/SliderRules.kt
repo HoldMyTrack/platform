@@ -19,7 +19,7 @@ object SliderRules {
     private const val PAD = 8
 
     /** The narrowest activity day: two knobs a day apart stay apart. */
-    private const val MIN_SLOT = 24
+    private const val MIN_SLOT = 18
     const val MIN_DAYS = 7
     const val MAX_DAYS = 31
 

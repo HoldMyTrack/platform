@@ -15,7 +15,7 @@ const PAGE = 22;
 const GAP = 6;
 const PAD = 8;
 /** The narrowest activity-day: two knobs a day apart stay apart. */
-const MIN_SLOT = 24;
+const MIN_SLOT = 18;
 export const MIN_DAYS = 7;
 export const MAX_DAYS = 31;
 /** « » show only if the track still holds this many days beside them. */
