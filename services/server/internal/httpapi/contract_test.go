@@ -184,6 +184,7 @@ func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptes
 		IncludeResponseStatus: true,
 		MultiError:            true,
 	}
+	recordContractHit(req.Method, route.Path, rec.Code)
 	in := &openapi3filter.RequestValidationInput{Request: probe, PathParams: params, Route: route, Options: opts}
 	if rec.Code < 400 {
 		if err := openapi3filter.ValidateRequest(context.Background(), in); err != nil {
