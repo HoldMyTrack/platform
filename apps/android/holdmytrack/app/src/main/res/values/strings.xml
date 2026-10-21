@@ -450,7 +450,8 @@
     <string name="edit_tab_track">Track</string>
     <string name="edit_track_check_one">Check exactly one activity to edit its track</string>
     <string name="edit_track_processing">This track is still being processed</string>
-    <string name="edit_track_no_track">No track recorded for this activity</string>
+    <string name="edit_track_no_original">This activity\'s original recording isn\'t stored, so its track can\'t be edited</string>
+    <string name="edit_track_bad_times">This track\'s points have no usable times, so it can\'t be edited</string>
     <string name="edit_track_chop">Chop</string>
     <string name="edit_track_chop_title">Keep only the part between the knobs</string>
     <string name="edit_track_cut">Cut</string>
@@ -652,44 +653,4 @@
     </plurals>
 
     <!-- Activity types' display names, the web's activity_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
-    <string name="activity_type_alpine_skiing">Alpine Skiing</string>
-    <string name="activity_type_biking">Biking</string>
-    <string name="activity_type_biking_stationary">Stationary Biking</string>
-    <string name="activity_type_cross_country_skiing">Cross-Country Skiing</string>
-    <string name="activity_type_cycling">Cycling</string>
-    <string name="activity_type_driving">Driving</string>
-    <string name="activity_type_e_biking">E-Biking</string>
-    <string name="activity_type_generic">Generic</string>
-    <string name="activity_type_golf">Golf</string>
-    <string name="activity_type_gravel_cycling">Gravel Cycling</string>
-    <string name="activity_type_hiking">Hiking</string>
-    <string name="activity_type_horseback_riding">Horseback Riding</string>
-    <string name="activity_type_ice_skating">Ice Skating</string>
-    <string name="activity_type_inline_skating">Inline Skating</string>
-    <string name="activity_type_kayaking">Kayaking</string>
-    <string name="activity_type_motorcycling">Motorcycling</string>
-    <string name="activity_type_mountain_biking">Mountain Biking</string>
-    <string name="activity_type_other_workout">Other Workout</string>
-    <string name="activity_type_paddling">Paddling</string>
-    <string name="activity_type_road_cycling">Road Cycling</string>
-    <string name="activity_type_rock_climbing">Rock Climbing</string>
-    <string name="activity_type_rowing">Rowing</string>
-    <string name="activity_type_rowing_machine">Rowing Machine</string>
-    <string name="activity_type_running">Running</string>
-    <string name="activity_type_running_treadmill">Treadmill Running</string>
-    <string name="activity_type_sailing">Sailing</string>
-    <string name="activity_type_skating">Skating</string>
-    <string name="activity_type_skiing">Skiing</string>
-    <string name="activity_type_snowboarding">Snowboarding</string>
-    <string name="activity_type_stand_up_paddleboarding">Stand Up Paddleboarding</string>
-    <string name="activity_type_surfing">Surfing</string>
-    <string name="activity_type_swimming">Swimming</string>
-    <string name="activity_type_swimming_open_water">Open Water Swimming</string>
-    <string name="activity_type_swimming_pool">Pool Swimming</string>
-    <string name="activity_type_tennis">Tennis</string>
-    <string name="activity_type_trail_running">Trail Running</string>
-    <string name="activity_type_unknown">Unknown</string>
-    <string name="activity_type_walk">Walk</string>
-    <string name="activity_type_walking">Walking</string>
-    <string name="activity_type_yoga">Yoga</string>
 </resources>

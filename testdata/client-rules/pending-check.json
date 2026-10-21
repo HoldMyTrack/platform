@@ -1,0 +1,11 @@
+{
+  "rule": "pendingCheck",
+  "description": "While a reprocess runs, the client asks the Pending check (GET /v1/activities/pending) about the rows its list shows Pending and the edits it saved, and reads the list again once one of them is no longer Pending. Expected: watched (the ids asked about, once each, listed first) and moved (whether the list is read again), given the check's answer stillPending.",
+  "cases": [
+    { "name": "nothing to watch", "input": { "listed": [], "awaiting": [], "stillPending": [] }, "expected": { "watched": [], "moved": false } },
+    { "name": "every watched row still Pending", "input": { "listed": ["a", "b"], "awaiting": [], "stillPending": ["a", "b"] }, "expected": { "watched": ["a", "b"], "moved": false } },
+    { "name": "a row finished", "input": { "listed": ["a", "b"], "awaiting": [], "stillPending": ["b"] }, "expected": { "watched": ["a", "b"], "moved": true } },
+    { "name": "an edit saved here is watched too, once", "input": { "listed": ["a"], "awaiting": ["a", "c"], "stillPending": ["a", "c"] }, "expected": { "watched": ["a", "c"], "moved": false } },
+    { "name": "an edit that landed before the list saw it Pending", "input": { "listed": [], "awaiting": ["c"], "stillPending": [] }, "expected": { "watched": ["c"], "moved": true } }
+  ]
+}

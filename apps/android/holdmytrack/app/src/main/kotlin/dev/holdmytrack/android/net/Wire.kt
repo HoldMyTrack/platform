@@ -121,11 +121,27 @@ internal data class ActivityRowJson(
     val pending: Boolean,
     val edited: Boolean,
     val private: Boolean,
+    @SerialName("track_edit") val trackEdit: String? = null,
+    val photos: String? = null,
     val stories: List<StoryRefJson>,
 )
 
 @Serializable
-internal data class ActivitiesJson(val activities: List<ActivityRowJson>)
+internal data class ActivitiesJson(
+    val activities: List<ActivityRowJson>,
+    val types: Map<String, ActivityTypeJson> = emptyMap(),
+)
+
+/** `GET /v1/activities/pending`. */
+@Serializable
+internal data class PendingJson(val pending: List<String>)
+
+/** What a client shows for one activity type (`panel/ActivityTypes`). */
+@Serializable
+internal data class ActivityTypeJson(val kind: String, val label: String)
+
+@Serializable
+internal data class ActivityTypesJson(val types: Map<String, ActivityTypeJson>)
 
 @Serializable
 internal data class ActivityPatchJson(
@@ -276,6 +292,7 @@ internal data class PrivateLocationInputJson(
 @Serializable
 internal data class StoryTypeStatsJson(
     @SerialName("activity_type") val activityType: String,
+    val label: String = "",
     val count: Int,
     @SerialName("distance_meters") val distanceMeters: Double,
     @SerialName("moving_seconds") val movingSeconds: Long,

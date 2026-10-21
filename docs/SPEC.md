@@ -335,6 +335,7 @@ The same paths for every account, behind the session and cached like every map t
 
 - Lists every activity in the date range (FR-6) passing the Type and Distance filters, always newest first by start time, not paginated. Count and total distance cover the whole range.
 - A row shows the activity's name, which exists only once a person types one (FR-5.10), else its local start time.
+- How a type shows is the server's to say, in the app's language, and never changes the activity: its name, from a catalog of common types, else the type spaced out and capitalized; and its kind (on foot, on wheels, motor, solowheel, e-scooter or other), from the words in it, which picks the row's icon and whether pace or speed shows.
 - Badges: Pending and Hidden (FR-5.15); Story, naming its Stories; Private, for an activity entirely inside Private locations (FR-8.1), which has no track, distance or duration and can't have its track or photos edited.
 - One activity is focused at a time, by clicking its row or track; any number can be checked. The checked activities and the focused one are drawn bold, on the map and in its image (FR-4.10). The toolbar's actions act on the checked activities when any are, else on the focused one, never both. Checking never moves the camera, and camera fits skip Hidden activities.
 
@@ -372,7 +373,7 @@ Lists the types present in the date range; types are free text, not a fixed voca
 
 Chop (keep the part between two points), Cut (remove it and join the ends), Delete point and Move point. The original is never changed, so Reset always returns the track as recorded.
 
-- Needs a real account and one non-Pending activity with a stored original and a track whose timestamps exist and run forward.
+- Needs a real account and one non-Pending activity with a stored original and a track whose timestamps exist and run forward. The activity list says which of these an activity lacks, and whether photos can be added (FR-16.1).
 - The editor gets the points already clipped against Private locations, so hidden ends never reach the client; an activity entirely inside them can't be edited.
 - A moved point keeps its time and elevation. No edit can leave fewer than two points.
 - Saving reprocesses the activity from its original: distance, duration, moving time, elevation gain, start time, track, coverage, country and region matches. A Cut's join counts toward distance, and its time toward elapsed but not moving time.

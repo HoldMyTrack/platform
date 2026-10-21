@@ -7,24 +7,17 @@ import org.junit.Test
 class TypeIconTest {
 
     @Test
-    fun `a solowheel or monowheel type has its own icon, any case, within the type`() {
-        assertEquals(R.drawable.ic_monowheel, typeIcon("Solowheel"))
-        assertEquals(R.drawable.ic_monowheel, typeIcon("monowheel_commute"))
+    fun `each kind has its icon`() {
+        assertEquals(R.drawable.ic_footprints, kindIcon(ActivityKind.FOOT))
+        assertEquals(R.drawable.ic_bike, kindIcon(ActivityKind.WHEELS))
+        assertEquals(R.drawable.ic_car, kindIcon(ActivityKind.MOTOR))
+        assertEquals(R.drawable.ic_monowheel, kindIcon(ActivityKind.SOLOWHEEL))
+        assertEquals(R.drawable.ic_electric_scooter, kindIcon(ActivityKind.E_SCOOTER))
+        assertEquals(R.drawable.ic_route, kindIcon(ActivityKind.OTHER))
     }
 
     @Test
-    fun `an e-scooter type has its own icon, any case, within the type`() {
-        assertEquals(R.drawable.ic_electric_scooter, typeIcon("E_Scooter"))
-        assertEquals(R.drawable.ic_electric_scooter, typeIcon("escooter_commute"))
-    }
-
-    @Test
-    fun `every other type takes its kind's icon`() {
-        assertEquals(R.drawable.ic_footprints, typeIcon("walking"))
-        assertEquals(R.drawable.ic_bike, typeIcon("onewheel"))
-        assertEquals(R.drawable.ic_bike, typeIcon("unicycle"))
-        assertEquals(R.drawable.ic_bike, typeIcon("kick_scooter"))
-        assertEquals(R.drawable.ic_car, typeIcon("driving"))
-        assertEquals(R.drawable.ic_route, typeIcon("kayaking"))
+    fun `a type the server hasn't described takes the other kind's icon`() {
+        assertEquals(R.drawable.ic_route, typeIcon("never_described_here"))
     }
 }

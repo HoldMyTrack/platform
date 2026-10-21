@@ -179,7 +179,6 @@ flowchart LR
 
 - **Path 1** is a design only (`VISION.md` §4.1): webhook receivers answer at once and enqueue, and the backfill at connect is a separate, resumable, rate-limited job (§5.1).
 - **Path 2** on Android: Health Connect routes written by other apps can't be read in the background (`ConsentRequired` even with "Always allow", checked on a device), so sync is foreground-only. Don't build a background route sync: it would bring in activities with nothing to draw. Samsung Health exposes no routes at all.
-- **Path 3** needs no provider's permission, which makes it the unconditional path.
 
 **All three are idempotent on `(user_id, source, external_id)`**, under concurrent duplicates too. The check at receive time is a fast path; the guarantee is `idx_activities_dedupe` plus the persist step's `ON CONFLICT DO NOTHING` (§4.1 step 6).
 
@@ -301,7 +300,7 @@ Below exact coverage, Fog reveals whole countries, then regions (FR-4.2). The ti
 
 An activity is Pending (`edit_pending`) while an Edit track or Private location reprocess is queued or running, its geometry and masks stale or half-rewritten. **Every map read filters `AND NOT edit_pending`**: tracks tiles, Fog and Heatmap composites at every level, the heatmap cap and Country/Region. A new map read needs it too.
 
-**Two renders per reprocess, inside the job**: enqueueing sets the flag and dirties the activities' current tiles in one transaction; the job renders (dropping them), reprocesses, clears the flag (unless a later `reprivacy` still covers the activity) and renders again. A failed edit clears the flag and renders, restoring the old masks. Pending clears before the rasters are current, so clients refetch on `/v1/coverage/status`, not on the badge (§4.2.3). The web hides a Pending track itself as soon as the list shows it, apart from the user's hidden set.
+**Two renders per reprocess, inside the job**: enqueueing sets the flag and dirties the activities' current tiles in one transaction; the job renders (dropping them), reprocesses, clears the flag (unless a later `reprivacy` still covers the activity) and renders again. A failed edit clears the flag and renders, restoring the old masks. Pending clears before the rasters are current, so clients refetch on `/v1/coverage/status`, not on the badge (§4.2.3). The web hides a Pending track itself as soon as the list shows it, apart from the user's hidden set. Clients then poll `GET /v1/activities/pending` for their ids, rereading the list once one finishes (`pendingCheck`).
 
 #### 4.2.6 Caching: one tile version per account
 
@@ -344,9 +343,9 @@ One ride synced from a watch and uploaded as its `.fit` has two `external_id`s, 
 
 ### 4.7 Activity listing and filtering
 
-**One filter parser** (`parseActivityFilter`) serves the list, its totals, the day histogram and the tracks tiles, so the panel and the map can't disagree. **No pagination**: Type and Distance filter client-side over the whole range, and the map draws every match anyway; a future cursor must be `(started_at, id)`, since two sources' copies of a ride share a start time. **`bbox` is computed, the short way round**: PostGIS keeps the box in the geometry header, and one wider than 180° is recomputed from `ST_ShiftLongitude` with the narrower kept. **Every day is the activity's local day** (§4.30); the account's zone decides only what "today" is. The histogram pages by activity-day, since the slider packs only days with activity. `activity_type` is the source's free text, never normalized. A name is only ever typed by a person, and sorting never reads it.
+**One filter parser** (`parseActivityFilter`) serves the list, its totals, the day histogram and the tracks tiles, so the panel and the map can't disagree. **No pagination**: Type and Distance filter client-side over the whole range, and the map draws every match anyway; a future cursor must be `(started_at, id)`, since two sources' copies of a ride share a start time. **`bbox` is computed, the short way round**: PostGIS keeps the box in the geometry header, and one wider than 180° is recomputed from `ST_ShiftLongitude` with the narrower kept. **Every day is the activity's local day** (§4.30); the account's zone decides only what "today" is. The histogram pages by activity-day, since the slider packs only days with activity. `activity_type` is the source's free text, never normalized; how to show one (`internal/activitytype`) comes beside the rows, once per type, in `requestLang`'s language.
 
-**Device rules are one set on every client**: the web's `map/session.ts` and Android's `MapSession` (range or Story, selection, the camera's next flight) and the other rules its README lists run the same cases in `testdata/client-rules`, so a rule can't change on one platform alone.
+**Device rules are one set on every client**: the web and Android run the same cases for each rule `testdata/client-rules/README.md` lists, so a rule can't change on one platform alone.
 
 #### 4.7.5 Delete an activity — a full purge (FR-5.11)
 
@@ -375,9 +374,9 @@ flowchart TD
 
 **The edit is a spec replayed over the raw payload** (`activities.track_edit`, `ingest.TrackEdit`): keep, remove, drop and move, every point named by its unix-ms timestamp. The original is untouched, so Reset is a NULL spec. Timestamps rather than indices, since indices into the clipped list shift when a Private location changes and `reprivacy` replays the stored edit over a differently clipped list; so a track without forward-running timestamps can't be edited.
 
-**Reprocessing is ingest's own pipeline ending in an UPDATE** (`reprocessActivity`, shared by the `edit_track` and `reprivacy` jobs): the same load and clip (§4.1 steps 2–3), the edit, and **a second clip**, because chopping away the first point outside a zone would otherwise expose the points behind it. It clears region rows before re-matching, since matching only inserts, and overwrites masks in place so a tile the track still crosses never lacks one. `edit_pending` is set with the enqueue, guarded by `AND NOT edit_pending` so an activity can't be edited twice at once, and cleared on any failure, leaving the previous track. A job whose activity was deleted succeeds as a no-op.
+**Reprocessing is ingest's own pipeline ending in an UPDATE** (`reprocessActivity`, shared by the `edit_track` and `reprivacy` jobs): the same load and clip (§4.1 steps 2–3), the edit, and **a second clip**, because chopping away the first point outside a zone would otherwise expose the points behind it. It clears region rows before re-matching, since matching only inserts, and overwrites masks in place so a tile the track still crosses never lacks one. `edit_pending` is set with the enqueue, guarded by `AND NOT edit_pending` so an activity can't be edited twice at once, and cleared on any failure, leaving the previous track.
 
-**The editor's points** (`GET /v1/activities/track-points/{id}`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The routes are `/activities/track-*/{id}` because `ServeMux` rejects `/activities/{id}/…` beside `/activities/track-metrics/{id}`. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`).
+**The editor's points** (`GET /v1/activities/track-points/{id}`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The routes are `/activities/track-*/{id}` because `ServeMux` rejects `/activities/{id}/…` beside `/activities/track-metrics/{id}`. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, before `backfill-editable-times`, passes.
 
 #### 4.7.8 Split an activity, and merge it back (FR-5.17)
 

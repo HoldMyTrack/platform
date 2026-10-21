@@ -10,6 +10,7 @@ import android.widget.TextView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.ActivityOverlap
+import dev.holdmytrack.android.panel.ActivityTypes
 import dev.holdmytrack.android.panel.PanelFormat
 import dev.holdmytrack.android.panel.typeIcon
 import dev.holdmytrack.android.recording.RecordingTypes
@@ -61,7 +62,7 @@ object SimilarTracksDialog {
         if (onMap != null) {
             val started = PanelFormat.startedAt(res, onMap.startedAt, onMap.timezone)
             val named = onMap.name.isNotBlank()
-            val meta = listOfNotNull(started.takeIf { named }, RecordingTypes.format(res, onMap.activityType)).joinToString(" · ")
+            val meta = listOfNotNull(started.takeIf { named }, ActivityTypes.label(onMap.activityType)).joinToString(" · ")
             onMapList.addView(row(context, onMapList, onMap.activityType, if (named) onMap.name.trim() else started, meta) {
                 dialog.dismiss()
                 onOpen(onMap)
@@ -91,7 +92,7 @@ object SimilarTracksDialog {
         return listOfNotNull(
             dateTime(candidate).takeIf { candidate.name.isNotBlank() },
             PanelFormat.distance(res, candidate.distanceM),
-            RecordingTypes.format(res, candidate.activityType),
+            ActivityTypes.label(candidate.activityType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
     }

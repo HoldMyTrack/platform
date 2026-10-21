@@ -465,7 +465,8 @@
     <string name="edit_tab_track">Трек</string>
     <string name="edit_track_check_one">Отметьте ровно одно занятие, чтобы редактировать его трек</string>
     <string name="edit_track_processing">Этот трек ещё обрабатывается</string>
-    <string name="edit_track_no_track">Для этого занятия нет записанного трека</string>
+    <string name="edit_track_no_original">Исходная запись этого занятия не сохранена, поэтому трек нельзя редактировать</string>
+    <string name="edit_track_bad_times">У точек этого трека нет пригодного времени, поэтому его нельзя редактировать</string>
     <string name="edit_track_chop">Обрезать</string>
     <string name="edit_track_chop_title">Оставить только часть между ручками</string>
     <string name="edit_track_cut">Вырезать</string>
@@ -683,44 +684,4 @@
     </plurals>
 
     <!-- Activity types' display names, the web's activity_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
-    <string name="activity_type_alpine_skiing">Горные лыжи</string>
-    <string name="activity_type_biking">Велосипед</string>
-    <string name="activity_type_biking_stationary">Велотренажёр</string>
-    <string name="activity_type_cross_country_skiing">Беговые лыжи</string>
-    <string name="activity_type_cycling">Велосипед</string>
-    <string name="activity_type_driving">Поездка на машине</string>
-    <string name="activity_type_e_biking">Электровелосипед</string>
-    <string name="activity_type_generic">Занятие</string>
-    <string name="activity_type_golf">Гольф</string>
-    <string name="activity_type_gravel_cycling">Гревел</string>
-    <string name="activity_type_hiking">Поход</string>
-    <string name="activity_type_horseback_riding">Верховая езда</string>
-    <string name="activity_type_ice_skating">Коньки</string>
-    <string name="activity_type_inline_skating">Ролики</string>
-    <string name="activity_type_kayaking">Каяк</string>
-    <string name="activity_type_motorcycling">Мотоцикл</string>
-    <string name="activity_type_mountain_biking">Горный велосипед</string>
-    <string name="activity_type_other_workout">Другая тренировка</string>
-    <string name="activity_type_paddling">Гребля</string>
-    <string name="activity_type_road_cycling">Шоссейный велосипед</string>
-    <string name="activity_type_rock_climbing">Скалолазание</string>
-    <string name="activity_type_rowing">Академическая гребля</string>
-    <string name="activity_type_rowing_machine">Гребной тренажёр</string>
-    <string name="activity_type_running">Бег</string>
-    <string name="activity_type_running_treadmill">Беговая дорожка</string>
-    <string name="activity_type_sailing">Парусный спорт</string>
-    <string name="activity_type_skating">Катание на коньках</string>
-    <string name="activity_type_skiing">Лыжи</string>
-    <string name="activity_type_snowboarding">Сноуборд</string>
-    <string name="activity_type_stand_up_paddleboarding">Сапбординг</string>
-    <string name="activity_type_surfing">Сёрфинг</string>
-    <string name="activity_type_swimming">Плавание</string>
-    <string name="activity_type_swimming_open_water">Плавание на открытой воде</string>
-    <string name="activity_type_swimming_pool">Плавание в бассейне</string>
-    <string name="activity_type_tennis">Теннис</string>
-    <string name="activity_type_trail_running">Трейлраннинг</string>
-    <string name="activity_type_unknown">Неизвестно</string>
-    <string name="activity_type_walk">Прогулка</string>
-    <string name="activity_type_walking">Ходьба</string>
-    <string name="activity_type_yoga">Йога</string>
 </resources>

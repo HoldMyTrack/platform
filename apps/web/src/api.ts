@@ -1,4 +1,5 @@
 import { t } from './i18n';
+import { rememberTypeLabels } from './ui/activityTypes';
 import { parseErrorBody } from './apiError';
 import type { components, paths } from './apiSchema';
 import type { SpotCategory, SpotInArea } from './map/spots';
@@ -151,6 +152,10 @@ export interface Activity {
   /** Entirely inside the account's Private locations (FR-8.1): kept with no track, so its
    *  distance and duration mean nothing — the row shows a Private badge instead. */
   private: boolean;
+  /** Why Edit track can't open for it (`docs/SPEC.md` FR-5.14), or null when it can. */
+  trackEdit: Schema<'ActivityRow'>['track_edit'] | null;
+  /** Why photos can't be added to it (FR-16.1), or null when they can. */
+  photos: Schema<'ActivityRow'>['photos'] | null;
   /** The Stories it's in, newest first — the Activities panel's Story badge. */
   stories: { id: string; name: string }[];
 }
@@ -193,6 +198,8 @@ function toActivity(a: Schema<'ActivityRow'>): Activity {
     pending: a.pending,
     edited: a.edited,
     private: a.private,
+    trackEdit: a.track_edit ?? null,
+    photos: a.photos ?? null,
     stories: a.stories,
   };
 }
@@ -213,6 +220,7 @@ export async function listActivities(query: ActivityQuery = {}, signal?: AbortSi
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
   const body = (await res.json()) as ResponseJson<'/activities', 'get'>;
+  rememberTypeLabels(Object.entries(body.types).map(([type, info]) => [type, info.label]));
   return body.activities.map(toActivity);
 }
 
@@ -346,6 +354,18 @@ export interface ActivityTrackMetrics {
  * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
  * focus.
  */
+/** `GET /v1/activities/pending`: which of [ids] are still Pending (IMPLEMENTATION.md §4.2.5). */
+export async function pendingActivities(ids: readonly string[], signal?: AbortSignal): Promise<string[]> {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/pending?ids=${ids.map(encodeURIComponent).join(',')}`, {
+    ...(signal ? { signal } : {}),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
+  }
+  return ((await res.json()) as ResponseJson<'/activities/pending', 'get'>).pending;
+}
+
 export async function getActivityTrackMetrics(
   activityId: string,
   signal?: AbortSignal,
@@ -523,7 +543,10 @@ function toStory(body: Schema<'Story'>): Story {
     activityIds: body.activity_ids,
     stats: {
       ...toStoryTotals(body.stats),
-      byType: body.stats.by_type.map((t) => ({ ...toStoryTotals(t), activityType: t.activity_type })),
+      byType: body.stats.by_type.map((t) => {
+        rememberTypeLabels([[t.activity_type, t.label]]);
+        return { ...toStoryTotals(t), activityType: t.activity_type };
+      }),
     },
   };
 }

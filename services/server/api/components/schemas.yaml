@@ -38,6 +38,14 @@ ActivityRow:
     pending: { type: boolean }
     edited: { type: boolean }
     private: { type: boolean }
+    track_edit:
+      type: string
+      enum: [pending, private, no_original, bad_times]
+      description: Why Edit track can't open for this activity (docs/SPEC.md FR-5.14); absent when it can.
+    photos:
+      type: string
+      enum: [private]
+      description: Why photos can't be added to it (docs/SPEC.md FR-16.1); absent when they can.
     split:
       type: object
       nullable: true
@@ -56,6 +64,23 @@ ActivityRow:
         properties:
           id: { type: string, format: uuid }
           name: { type: string }
+ActivityTypes:
+  type: object
+  description: What a client shows for each activity type, keyed by the type as stored (docs/SPEC.md FR-5.1).
+  additionalProperties:
+    type: object
+    required: [kind, label]
+    additionalProperties: false
+    properties:
+      label:
+        type: string
+        description: >-
+          The type's name in the request's language: the catalog's, else the type spaced out
+          from snake_case and title-cased.
+      kind:
+        type: string
+        enum: [foot, wheels, motor, solowheel, e_scooter, other]
+        description: Picks the icon; foot reads as a pace, every other kind as a speed.
 PrivateLocationInput:
   type: object
   required: [lon, lat, radius_m]
@@ -136,10 +161,13 @@ Story:
           description: The same per activity type, most frequent first.
           items:
             type: object
-            required: [activity_type, count, distance_meters, moving_seconds, elapsed_seconds]
+            required: [activity_type, label, count, distance_meters, moving_seconds, elapsed_seconds]
             additionalProperties: false
             properties:
               activity_type: { type: string }
+              label:
+                type: string
+                description: The type's name in the request's language.
               count: { type: integer }
               distance_meters: { type: number }
               moving_seconds: { type: integer }

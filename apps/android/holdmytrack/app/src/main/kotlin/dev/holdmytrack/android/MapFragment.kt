@@ -39,6 +39,7 @@ import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.SessionGate
 import dev.holdmytrack.android.panel.ActivitiesPanel
+import dev.holdmytrack.android.panel.ActivityTypes
 import dev.holdmytrack.android.panel.EditActivityWindow
 import dev.holdmytrack.android.panel.EditController
 import dev.holdmytrack.android.panel.PanelState
@@ -528,6 +529,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** Brings the map in line with the stored credential ([SessionGate]), on style load and on every resume. */
     private fun syncSession() {
         if (!gate.passes()) return
+        ActivityTypes.refresh()
 
         modeBarReady = true
         renderModeBar()

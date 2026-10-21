@@ -34,4 +34,12 @@ object PendingDiff {
             awaiting = awaiting intersect now,
         )
     }
+
+    /** The ids to ask the Pending check about: the rows the list shows Pending and the edits
+     *  saved here, once each, listed first. Empty means there's nothing to watch. */
+    fun watched(listed: Collection<String>, awaiting: Collection<String>): List<String> = (listed + awaiting).distinct()
+
+    /** Whether the Pending check's answer means the list should be read again: one of the
+     *  watched ids is no longer Pending. */
+    fun moved(watched: Collection<String>, stillPending: Collection<String>): Boolean = watched.any { it !in stillPending }
 }

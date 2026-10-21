@@ -112,7 +112,7 @@ Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATIO
 
 ### 3.3 Logic ported from the web
 
-Where the web has a rule, the app ports it as a pure Kotlin class. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PhotoMarkerScope`, `RangeShift`, `EditTrackOps`, `ActivityFacets`, `ActivityZone`, `PhotoClusters`, `PhotoTrack`, `PhotoZoom` and `FormatParts` run the shared JSON cases (`testdata/client-rules`), and `TrackBands` the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `PanelState`, `ActivityDays`, `DateRangeSlider`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
+Where the web has a rule, the app ports it as a pure Kotlin class. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PanelState`, `PhotoMarkerScope`, `RangeShift`, `EditTrackOps`, `ActivityFacets`, `ActivityZone`, `PhotoClusters`, `PhotoTrack`, `PhotoZoom` and `FormatParts` run the shared JSON cases (`testdata/client-rules`), and `TrackBands` the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `ActivityDays`, `DateRangeSlider`, `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
 
 ### 3.4 The panel, editors and touches
 
@@ -120,7 +120,7 @@ The split follows the web's: `MapSession` holds the range or Story shown and the
 
 - **Touch order**: a tap asks `MapSpots.spotAt` first unless an editor holds the map, so a spot's tap never selects a track under it. The track editor's point drags and the Private location handle are taken in a touch listener on the `MapView`, which runs before MapLibre's gestures (the web's `dragPan.disable()`). Photo markers are views, so their taps never reach the map.
 - **Edits run one request at a time**: parallel deletes raced each other's coverage re-render. A group edit resends each activity's own name and description, since the endpoint replaces them, and skips saves already sent on a retry.
-- **Pending**: a row entering or leaving Pending refetches the tracks and starts the coverage watch, and the list is polled while any row is Pending.
+- **Pending**: a row entering or leaving Pending refetches the tracks and starts the coverage watch, and while one is, the Pending check is polled (root `docs/IMPLEMENTATION.md` §4.2.5).
 - **A Private location change reprocesses whole activities**, so the editor hands the coverage watch a callback that re-reads tracks, list, days and metrics once the server has drained.
 
 ### 3.5 Map image export

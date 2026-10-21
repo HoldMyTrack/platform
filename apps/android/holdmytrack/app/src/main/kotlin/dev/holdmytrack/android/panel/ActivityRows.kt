@@ -26,27 +26,18 @@ data class ActivityRowItem(
     val selecting: Boolean = false,
 )
 
-/** The icon for an activity's type, on its row's tile and its card: a solowheel's or an
- *  e-scooter's own, matched case-insensitively within the type ("Solowheel", "e_scooter_commute"),
- *  else its kind's. */
+/** The icon for an activity's type, on its row's tile and its card: its kind's
+ *  ([ActivityTypes]). */
 @DrawableRes
-fun typeIcon(type: String): Int {
-    val t = type.lowercase()
-    return when {
-        MONOWHEEL_WORDS.any { it in t } -> R.drawable.ic_monowheel
-        E_SCOOTER_WORDS.any { it in t } -> R.drawable.ic_electric_scooter
-        else -> kindIcon(ActivityKind.of(type))
-    }
-}
-
-private val MONOWHEEL_WORDS = listOf("solowheel", "monowheel")
-private val E_SCOOTER_WORDS = listOf("e_scooter", "escooter")
+fun typeIcon(type: String): Int = kindIcon(ActivityTypes.kind(type))
 
 @DrawableRes
-private fun kindIcon(kind: ActivityKind): Int = when (kind) {
+fun kindIcon(kind: ActivityKind): Int = when (kind) {
     ActivityKind.FOOT -> R.drawable.ic_footprints
     ActivityKind.WHEELS -> R.drawable.ic_bike
     ActivityKind.MOTOR -> R.drawable.ic_car
+    ActivityKind.SOLOWHEEL -> R.drawable.ic_monowheel
+    ActivityKind.E_SCOOTER -> R.drawable.ic_electric_scooter
     ActivityKind.OTHER -> R.drawable.ic_route
 }
 
@@ -108,7 +99,7 @@ class ActivityRowHolder(view: View) : RecyclerView.ViewHolder(view) {
                 append(PanelFormat.distance(res, activity.distanceMeters)).append(" · ")
                 append(PanelFormat.duration(res, activity.durationSeconds)).append(" · ")
             }
-            append(RecordingTypes.format(res, activity.activityType))
+            append(ActivityTypes.label(activity.activityType))
         }
         val dim = when {
             activity.pending -> PENDING_ALPHA

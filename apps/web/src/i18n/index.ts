@@ -66,9 +66,3 @@ export function tn(key: PluralBase, n: number, vars?: Vars): string {
   const msg = messages[`${key}.${form}`] ?? messages[`${key}.other`] ?? fallback[`${key}.${form === 'one' ? 'one' : 'other'}`] ?? key;
   return fill(msg, { n, ...vars });
 }
-
-/** A message that may not exist — for a free-form value with translations for its common cases
- *  (an activity type): the translation, or `undefined` to fall back on something else. */
-export function tMaybe(key: string): string | undefined {
-  return messages[key] ?? fallback[key];
-}

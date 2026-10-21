@@ -796,14 +796,14 @@ class ActivitiesPanel(
         val shown = showsCard && activity != null
         card.visibility = if (shown) View.VISIBLE else View.GONE
         if (!shown || activity == null) return
-        val kind = ActivityKind.of(activity.activityType)
+        val kind = ActivityTypes.kind(activity.activityType)
         cardIcon.setImageResource(typeIcon(activity.activityType))
         cardTitle.text = PanelFormat.rowLabel(res, activity)
         // The start moves under the title once a name has taken it, as on a row.
         val named = activity.name?.trim()?.isNotEmpty() == true
         cardMeta.text = listOfNotNull(
             PanelFormat.startedAt(res, activity.startedAt, activity.timezone).takeIf { named },
-            RecordingTypes.format(res, activity.activityType),
+            ActivityTypes.label(activity.activityType),
         ).joinToString(" · ")
         // A private activity has no stats worth showing (FR-5.1): what it is stands in for them.
         cardStats.visibility = if (activity.isPrivate) View.GONE else View.VISIBLE
@@ -869,7 +869,7 @@ class ActivitiesPanel(
         val inflater = LayoutInflater.from(context)
         for (facet in facets) {
             val row = inflater.inflate(R.layout.item_type_filter, rows, false)
-            val label = RecordingTypes.format(res, facet.type)
+            val label = ActivityTypes.label(facet.type)
             val shown = facet.type !in state.excludedTypes
             row.findViewById<MaterialCheckBox>(R.id.type_filter_check).isChecked = shown
             row.findViewById<TextView>(R.id.type_filter_label).text = label

@@ -48,8 +48,8 @@ func TestStoriesLifecycle(t *testing.T) {
 	}
 	wantStats := storyStats{Count: 3, DistanceMeters: 84000, MovingSeconds: 1800 + 2400 + 2700, ElapsedSeconds: 2000 + 2600 + 2700,
 		ByType: []storyTypeStats{
-			{ActivityType: "driving", Count: 2, DistanceMeters: 81000, MovingSeconds: 5100, ElapsedSeconds: 5300},
-			{ActivityType: "walking", Count: 1, DistanceMeters: 3000, MovingSeconds: 1800, ElapsedSeconds: 2000},
+			{ActivityType: "driving", Label: "Driving", Count: 2, DistanceMeters: 81000, MovingSeconds: 5100, ElapsedSeconds: 5300},
+			{ActivityType: "walking", Label: "Walking", Count: 1, DistanceMeters: 3000, MovingSeconds: 1800, ElapsedSeconds: 2000},
 		}}
 	if !storyStatsEqual(got.Stats, wantStats) {
 		t.Errorf("stats %+v, want %+v", got.Stats, wantStats)

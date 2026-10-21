@@ -29,3 +29,16 @@ export function pendingChange(previous: ReadonlySet<string>, pendingIds: Iterabl
   const stillAwaiting = new Set([...awaiting].filter((id) => now.has(id)));
   return { now, started, finished: left.size > 0 || landed.size > 0, left, landed, awaiting: stillAwaiting };
 }
+
+/** The ids to ask the Pending check about: the rows the list shows Pending and the edits applied
+ *  here, once each. None means there's nothing to watch. */
+export function pendingWatched(listed: readonly string[], awaiting: ReadonlySet<string>): string[] {
+  return [...new Set([...listed, ...awaiting])];
+}
+
+/** Whether the Pending check's answer means the list should be read again: one of the watched
+ *  ids is no longer Pending. */
+export function pendingMoved(watched: readonly string[], stillPending: readonly string[]): boolean {
+  const still = new Set(stillPending);
+  return watched.some((id) => !still.has(id));
+}

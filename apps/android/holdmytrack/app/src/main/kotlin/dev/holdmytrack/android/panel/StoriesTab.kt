@@ -282,7 +282,7 @@ class StoriesTab(
         val gap = res.getDimensionPixelSize(R.dimen.hmt_space_12)
         for (type in story.byType) {
             val row = TableRow(context)
-            row.addView(typeCell(RecordingTypes.format(res, type.activityType)).apply { setPadding(0, 0, gap, 0) })
+            row.addView(typeCell(ActivityTypes.label(type.activityType)).apply { setPadding(0, 0, gap, 0) })
             row.addView(typeCell(statsLine(type)))
             types.addView(row)
         }
