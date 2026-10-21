@@ -30,16 +30,15 @@ import { sliderWindowFit } from './sliderRules';
  * leaves it exactly as it was.
  */
 
-/** How many activity-days the slider's track shows edge to edge — ~18px a day on a phone, wide
- *  enough for two knobs one day apart to sit clearly side by side. */
-export const WINDOW_DAYS = 15;
+/** The window's size until the slider has measured its row (sliderRules.ts's sliderLayout). */
+export const INITIAL_WINDOW_DAYS = 13;
 
 /** How many days-with-activity one request asks for — plenty of slack past one window, so
  *  paging back through history rarely has to wait on a round trip of its own. */
 const PAGE_SIZE = 240;
 
 export interface ActivityDaysState {
-  /** The days currently in the slider's window: WINDOW_DAYS consecutive days-with-activity. */
+  /** The days currently in the slider's window: `windowDays` consecutive days-with-activity. */
   visibleDays: HistogramBucket[];
   /** This user's first activity's UTC day, or null until the first page lands — and
    *  permanently null for a user who has no activities at all. */
@@ -75,7 +74,10 @@ export interface ActivityDaysState {
   generation: number;
 }
 
-export function useActivityDays(): ActivityDaysState {
+/** `windowDays` is how many activity-days the slider has room for (sliderLayout); when it changes
+ *  the window stays pinned to the newest end if it was, else keeps `selection` in view, its end
+ *  day where it was. */
+export function useActivityDays(windowDays: number, selection: DateRange | null): ActivityDaysState {
   const [days, setDays] = useState<HistogramBucket[]>([]);
   const [earliest, setEarliest] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
@@ -110,7 +112,7 @@ export function useActivityDays(): ActivityDaysState {
     return () => controller.abort();
   }, [nonce]);
 
-  const maxStart = Math.max(0, days.length - WINDOW_DAYS);
+  const maxStart = Math.max(0, days.length - windowDays);
   // The anchor resolved against the current array. `>=` rather than an exact match so an
   // anchor day that somehow isn't in `days` still lands next to where it belongs.
   const start = useMemo(() => {
@@ -119,7 +121,24 @@ export function useActivityDays(): ActivityDaysState {
     return Math.min(index === -1 ? maxStart : index, maxStart);
   }, [days, anchor, maxStart]);
 
-  const visibleDays = useMemo(() => days.slice(start, start + WINDOW_DAYS), [days, start]);
+  const visibleDays = useMemo(() => days.slice(start, start + windowDays), [days, start, windowDays]);
+
+  // A new size: a window pinned to the newest end stays there by itself; one elsewhere keeps the
+  // selection in view. Keyed on the size alone: a moved selection doesn't move the window.
+  const selectionRef = useRef(selection);
+  selectionRef.current = selection;
+  const sizedRef = useRef(windowDays);
+  useEffect(() => {
+    if (sizedRef.current === windowDays) return;
+    sizedRef.current = windowDays;
+    const sel = selectionRef.current;
+    if (anchor === null || sel === null) return;
+    const first = days.findIndex((day) => day.date >= sel.from);
+    const last = days.filter((day) => day.date <= sel.to).length - 1;
+    if (first === -1 || last < first) return;
+    const left = sliderWindowFit(days.length, windowDays, start, first, last, 1);
+    setAnchor(left >= Math.max(0, days.length - windowDays) ? null : days[left]!.date);
+  }, [windowDays]);
 
   // Whether there is any history at all behind what's loaded. Derived rather than tracked as
   // a flag: a short page is what running out looks like, and then days[0] *is* `earliest`.
@@ -144,8 +163,8 @@ export function useActivityDays(): ActivityDaysState {
   // Start loading more history once the window is within one window's width of the loaded
   // edge, so Earlier normally lands on days that are already here.
   useEffect(() => {
-    if (hasEarlier && start <= WINDOW_DAYS) extendEarlier();
-  }, [hasEarlier, start, extendEarlier]);
+    if (hasEarlier && start <= windowDays) extendEarlier();
+  }, [hasEarlier, start, windowDays, extendEarlier]);
 
   const panBy = useCallback(
     (deltaDays: number) => {
@@ -183,10 +202,10 @@ export function useActivityDays(): ActivityDaysState {
     }
     let index = days.findIndex((day) => day.date >= revealing);
     if (index === -1) index = days.length - 1;
-    const next = Math.min(Math.max(index - Math.floor(WINDOW_DAYS / 2), 0), maxStart);
+    const next = Math.min(Math.max(index - Math.floor(windowDays / 2), 0), maxStart);
     setAnchor(next >= maxStart ? null : days[next]!.date);
     setRevealing(null);
-  }, [revealing, ready, days, hasEarlier, extendEarlier, maxStart]);
+  }, [revealing, ready, days, hasEarlier, extendEarlier, maxStart, windowDays]);
   const reveal = useCallback((day: string) => setRevealing(day), []);
 
   const dates = useMemo(() => days.map((day) => day.date), [days]);
@@ -201,11 +220,11 @@ export function useActivityDays(): ActivityDaysState {
       if (next === null) return null;
       // Move the window only as far as it takes to show the new range; one longer than the
       // window shows its leading edge, the end it moved toward.
-      const left = sliderWindowFit(dates.length, WINDOW_DAYS, start, dates.indexOf(next.from), dates.indexOf(next.to), dir);
+      const left = sliderWindowFit(dates.length, windowDays, start, dates.indexOf(next.from), dates.indexOf(next.to), dir);
       if (left !== start) setAnchor(left >= maxStart ? null : dates[left]!);
       return next;
     },
-    [dates, hasEarlier, extendEarlier, start, maxStart],
+    [dates, hasEarlier, extendEarlier, start, windowDays],
   );
 
   const canShift = useCallback(

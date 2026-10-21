@@ -15,8 +15,9 @@ import java.time.LocalDate
  * heading, ‹ › beside it, and under them the day scrubber ([DayScrubberView]) — the web's phone
  * slider (`apps/web/src/ui/DateRangeSlider.tsx`) redrawn as a bar per day.
  *
- * **Activity days, not calendar days.** The scrubber is a window of [WINDOW_DAYS] consecutive
- * days that have activity ([ActivityDays]); the days between take no room.
+ * **Activity days, not calendar days.** The scrubber is a window of consecutive days that have
+ * activity ([ActivityDays]), as many as its width holds ([SliderRules.layout]); the days between
+ * take no room.
  *
  * **Handles sit on slot boundaries.** The start handle marks where the first selected day begins
  * and the end handle where the last one ends, so a one-day selection has its handles one slot
@@ -43,6 +44,9 @@ class DateRangeSlider(
     private val onPan: (delta: Int) -> Unit,
     private val onShift: (range: DateRange, dir: Int) -> DateRange?,
     private val canShift: (range: DateRange, dir: Int) -> Boolean,
+    /** How many activity days the scrubber has room for ([SliderRules.layout]), each time that
+     *  changes. */
+    private val onWindowDays: (Int) -> Unit,
     private val onChange: (DateRange) -> Unit,
 ) {
     private val track: DayScrubberView = root.findViewById(R.id.date_range_track)
@@ -106,6 +110,23 @@ class DateRangeSlider(
         track.onDrag = ::onTrackDrag
         track.onRelease = ::onTrackRelease
         track.onSwipe = ::onSwipe
+        track.onWidth = { dp ->
+            waitingDays = SliderRules.layout(dp, finePointer = false).days
+            flushWindowDays()
+        }
+    }
+
+    // ---- Size ---------------------------------------------------------------------------
+    // The scrubber's width decides how many activity days the window holds. A new size
+    // mid-gesture would move the boundaries under the finger, so it waits for the release.
+
+    private var waitingDays: Int? = null
+
+    private fun flushWindowDays() {
+        val next = waitingDays ?: return
+        if (dragging != null || repeatAction != null || pan != null) return
+        waitingDays = null
+        onWindowDays(next)
     }
 
     /** The window has changed — paged, loaded further back, or reloaded. */
@@ -150,7 +171,12 @@ class DateRangeSlider(
         if (days.isEmpty()) return
         val next = SliderRules.panLand(days.map { it.date }, current ?: return, pending.start, pending.end)
         pan = null
-        if (pending.commit) commit(next) else draft = next
+        if (pending.commit) {
+            commit(next)
+            flushWindowDays()
+        } else {
+            draft = next
+        }
     }
 
     /** Moves the window [STEP_DAYS]; a knob on the edge being moved toward is pulled along once
@@ -182,6 +208,7 @@ class DateRangeSlider(
     private fun finish() {
         val pending = pan
         if (pending != null) pending.commit = true else commit(current)
+        flushWindowDays()
     }
 
     private fun stopRepeat() {
@@ -299,9 +326,8 @@ class DateRangeSlider(
     }
 
     companion object {
-        /** How many activity days the scrubber shows edge to edge — about 30dp a day on a
-         *  412dp-wide phone, room for a bar and its day's number. */
-        const val WINDOW_DAYS = 12
+        /** The window's size until the scrubber has measured itself ([SliderRules.layout]). */
+        const val INITIAL_WINDOW_DAYS = 14
 
         /** How far the window moves for each step of a handle held past an edge, in activity
          *  days. */

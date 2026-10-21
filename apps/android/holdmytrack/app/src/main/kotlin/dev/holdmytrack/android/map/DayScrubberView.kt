@@ -59,6 +59,8 @@ class DayScrubberView @JvmOverloads constructor(
     var onDrag: ((boundary: Int) -> Unit)? = null
     var onRelease: (() -> Unit)? = null
     var onSwipe: ((days: Int) -> Unit)? = null
+    /** The view's width changed, in dp: the slider sizes its window to it. */
+    var onWidth: ((dp: Int) -> Unit)? = null
 
     private enum class Gesture { HANDLE, UNDECIDED, SWIPE }
     private var gesture: Gesture? = null
@@ -235,6 +237,11 @@ class DayScrubberView @JvmOverloads constructor(
         if (moved == 0) return
         swipeAnchorX += moved * slotWidth
         onSwipe?.invoke(moved)
+    }
+
+    override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
+        super.onSizeChanged(w, h, oldw, oldh)
+        if (w != oldw) onWidth?.invoke((w / density).toInt())
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

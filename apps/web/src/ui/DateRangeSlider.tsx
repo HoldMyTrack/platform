@@ -4,12 +4,11 @@ import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight } from 'lucide-r
 import type { HistogramBucket } from '../api';
 import { formatDayLabel } from './format';
 import type { DateRange } from './dateMath';
-import { sliderBoundaries, sliderMoveKnob, sliderPanLand, type SliderWindow } from './sliderRules';
+import { sliderBoundaries, sliderLayout, sliderMoveKnob, sliderPanLand, type SliderWindow } from './sliderRules';
 import { t, tn } from '../i18n';
 
 export interface DateRangeSliderProps {
-  /** The window: WINDOW_DAYS consecutive days-with-activity, ascending — useActivityDays'
-   *  `visibleDays`. */
+  /** The window: consecutive days-with-activity, ascending — useActivityDays' `visibleDays`. */
   days: HistogramBucket[];
   /** Moves the window by whole activity-days — negative is toward the past. */
   onPan: (deltaDays: number) => void;
@@ -21,6 +20,8 @@ export interface DateRangeSliderProps {
   canShift: (range: DateRange, dir: -1 | 1) => boolean;
   value: DateRange;
   onChange: (next: DateRange) => void;
+  /** How many activity-days the row has room for (sliderLayout), each time that changes. */
+  onWindowDays: (days: number) => void;
 }
 
 type Knob = 'start' | 'end';
@@ -39,6 +40,9 @@ function ticksOf(days: HistogramBucket[]): Tick[] {
     return Date.parse(after) - Date.parse(before) > DAY_MS ? 'gap' : 'day';
   });
 }
+
+/** The room ‹ › take in the row beside « track »: two 28px buttons and their 6px gaps. */
+const SHIFT_PAIR_PX = 2 * (28 + 6);
 
 /** How far one Earlier/Later tap moves the window, in activity-days. */
 const STEP_DAYS = 5;
@@ -97,7 +101,9 @@ export function DateRangeSlider({
   canShift,
   value,
   onChange,
+  onWindowDays,
 }: DateRangeSliderProps) {
+  const rowRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ pointerId: number; knob: Knob } | null>(null);
   const repeatRef = useRef<{ timer: number } | null>(null);
@@ -146,8 +152,10 @@ export function DateRangeSlider({
     const next = sliderPanLand(slider.days, live.current.current, pan.start, pan.end);
     live.current.current = next;
     panRef.current = null;
-    if (pan.commit) commit(next);
-    else setDraft(next);
+    if (pan.commit) {
+      commit(next);
+      flushRef.current();
+    } else setDraft(next);
   }, [firstDay, lastDay]);
 
   /** Moves the window STEP_DAYS; a knob on the edge being moved toward is pulled along once
@@ -179,7 +187,45 @@ export function DateRangeSlider({
   const finish = () => {
     if (panRef.current) panRef.current.commit = true;
     else commit(live.current.current);
+    flushWindowDays();
   };
+
+  // ---- Size -----------------------------------------------------------------------------
+  // The row's width decides how many activity-days the window holds (sliderLayout). A new size
+  // mid-gesture would move the boundaries under the pointer, so it waits for the release.
+
+  const sizeRef = useRef<{ reported: number | null; waiting: number | null }>({ reported: null, waiting: null });
+  const onWindowDaysRef = useRef(onWindowDays);
+  onWindowDaysRef.current = onWindowDays;
+  const busy = () => dragRef.current !== null || repeatRef.current !== null || panRef.current !== null;
+  const flushWindowDays = () => {
+    const size = sizeRef.current;
+    if (size.waiting === null || busy()) return;
+    const next = size.waiting;
+    size.waiting = null;
+    if (next === size.reported) return;
+    size.reported = next;
+    onWindowDaysRef.current(next);
+  };
+  const flushRef = useRef(flushWindowDays);
+  flushRef.current = flushWindowDays;
+
+  useEffect(() => {
+    const row = rowRef.current;
+    if (!row) return;
+    const fine = window.matchMedia('(pointer: fine)');
+    const measure = () => {
+      sizeRef.current.waiting = sliderLayout(row.clientWidth - SHIFT_PAIR_PX, fine.matches).days;
+      flushRef.current();
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(row);
+    fine.addEventListener('change', measure);
+    return () => {
+      observer.disconnect();
+      fine.removeEventListener('change', measure);
+    };
+  }, []);
 
   const stopRepeat = () => {
     const repeat = repeatRef.current;
@@ -277,6 +323,7 @@ export function DateRangeSlider({
     if (dragRef.current?.pointerId !== event.pointerId) return;
     dragRef.current = null;
     commit(draft);
+    flushWindowDays();
   };
 
   const onKnobKeyDown = (knob: Knob, event: KeyboardEvent) => {
@@ -315,7 +362,7 @@ export function DateRangeSlider({
 
   return (
     <div className="date-range-slider" data-testid="date-range-slider">
-      <div className="date-range-slider__row">
+      <div ref={rowRef} className="date-range-slider__row">
         {pageButton(-1)}
         {shiftButton(-1)}
         <div
