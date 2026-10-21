@@ -50,6 +50,8 @@ export const en = {
   'activities.edit_one': 'Edit {target}: type, name, description, and track',
   'activities.edit_track_check_one': 'Check exactly one activity to edit its track',
   'activities.edit_track_processing': 'This track is still being processed',
+  'activities.edit_track_no_original': "This activity's original recording isn't stored, so its track can't be edited",
+  'activities.edit_track_bad_times': "This track's points have no usable times, so it can't be edited",
   'activities.filter_by_type': 'Filter by type',
   'activities.fly_to': 'Fly to {label}',
   'activities.focus_target': 'Focus the map on {target}',

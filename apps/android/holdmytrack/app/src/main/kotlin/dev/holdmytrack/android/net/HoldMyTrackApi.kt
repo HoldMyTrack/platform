@@ -135,6 +135,10 @@ data class Activity(
     val pending: Boolean,
     val edited: Boolean,
     val isPrivate: Boolean = false,
+    /** Why Edit track or photos can't be used for it, as the server's code, or null when they
+     *  can (`panel/EditAvailability`). */
+    val trackEdit: String? = null,
+    val photos: String? = null,
     /** The Stories it's in, newest first — what its row's Story badge names. */
     val stories: List<StoryRef> = emptyList(),
 )
@@ -1340,6 +1344,8 @@ object HoldMyTrackApi {
         pending = pending,
         edited = edited,
         isPrivate = private,
+        trackEdit = trackEdit,
+        photos = photos,
         stories = stories.map { StoryRef(it.id, it.name) },
     )
 

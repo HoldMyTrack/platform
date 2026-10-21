@@ -121,6 +121,8 @@ internal data class ActivityRowJson(
     val pending: Boolean,
     val edited: Boolean,
     val private: Boolean,
+    @SerialName("track_edit") val trackEdit: String? = null,
+    val photos: String? = null,
     val stories: List<StoryRefJson>,
 )
 

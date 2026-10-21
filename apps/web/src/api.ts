@@ -151,6 +151,10 @@ export interface Activity {
   /** Entirely inside the account's Private locations (FR-8.1): kept with no track, so its
    *  distance and duration mean nothing — the row shows a Private badge instead. */
   private: boolean;
+  /** Why Edit track can't open for it (`docs/SPEC.md` FR-5.14), or null when it can. */
+  trackEdit: Schema<'ActivityRow'>['track_edit'] | null;
+  /** Why photos can't be added to it (FR-16.1), or null when they can. */
+  photos: Schema<'ActivityRow'>['photos'] | null;
   /** The Stories it's in, newest first — the Activities panel's Story badge. */
   stories: { id: string; name: string }[];
 }
@@ -193,6 +197,8 @@ function toActivity(a: Schema<'ActivityRow'>): Activity {
     pending: a.pending,
     edited: a.edited,
     private: a.private,
+    trackEdit: a.track_edit ?? null,
+    photos: a.photos ?? null,
     stories: a.stories,
   };
 }

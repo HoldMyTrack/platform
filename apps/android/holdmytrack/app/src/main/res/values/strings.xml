@@ -450,7 +450,8 @@
     <string name="edit_tab_track">Track</string>
     <string name="edit_track_check_one">Check exactly one activity to edit its track</string>
     <string name="edit_track_processing">This track is still being processed</string>
-    <string name="edit_track_no_track">No track recorded for this activity</string>
+    <string name="edit_track_no_original">This activity\'s original recording isn\'t stored, so its track can\'t be edited</string>
+    <string name="edit_track_bad_times">This track\'s points have no usable times, so it can\'t be edited</string>
     <string name="edit_track_chop">Chop</string>
     <string name="edit_track_chop_title">Keep only the part between the knobs</string>
     <string name="edit_track_cut">Cut</string>

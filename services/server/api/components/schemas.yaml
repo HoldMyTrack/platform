@@ -38,6 +38,14 @@ ActivityRow:
     pending: { type: boolean }
     edited: { type: boolean }
     private: { type: boolean }
+    track_edit:
+      type: string
+      enum: [pending, private, no_original, bad_times]
+      description: Why Edit track can't open for this activity (docs/SPEC.md FR-5.14); absent when it can.
+    photos:
+      type: string
+      enum: [private]
+      description: Why photos can't be added to it (docs/SPEC.md FR-16.1); absent when they can.
     split:
       type: object
       nullable: true

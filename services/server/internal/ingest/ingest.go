@@ -106,7 +106,8 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 				activity_type, distance_meters, duration_seconds, moving_seconds,
 				elevation_gain_m, avg_speed_mps, started_at,
 				trajectory, raw_payload_key, name, description, ingest_complete,
-				in_heatmap_window, timezone, recorded_started_at, recorded_ended_at, raw_bytes
+				in_heatmap_window, timezone, recorded_started_at, recorded_ended_at, raw_bytes,
+				editable_times
 			) VALUES (
 				$1, $2, $3, $4,
 				$5, $6, $7, $8,
@@ -115,7 +116,8 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 				$15, NULLIF($16, ''), NULLIF($17, ''), $18,
 				$11 >= NOW() - make_interval(days => $19),
 				`+geo.TimezoneAtSQL("$20::float8", "$21::float8", "$1")+`,
-				$22, $23, NULLIF($24::bigint, 0)
+				$22, $23, NULLIF($24::bigint, 0),
+				$25
 			)
 			ON CONFLICT (user_id, source, external_id) WHERE external_id IS NOT NULL DO NOTHING -- $15 = raw_payload_key
 			RETURNING id
@@ -135,6 +137,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		fog.HeatmapWindowDays,
 		act.Points[0].Lon, act.Points[0].Lat,
 		recStart, recEnd, job.RawBytes,
+		EditableTimestamps(points) == nil,
 	).Scan(&activityID, &inserted, &complete)
 	if err != nil {
 		return Result{}, fmt.Errorf("ingest: persist activity: %w", err)

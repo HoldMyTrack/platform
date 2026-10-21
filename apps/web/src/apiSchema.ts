@@ -3395,6 +3395,16 @@ export interface components {
             pending: boolean;
             edited: boolean;
             private: boolean;
+            /**
+             * @description Why Edit track can't open for this activity (docs/SPEC.md FR-5.14); absent when it can.
+             * @enum {string}
+             */
+            track_edit?: "pending" | "private" | "no_original" | "bad_times";
+            /**
+             * @description Why photos can't be added to it (docs/SPEC.md FR-16.1); absent when they can.
+             * @enum {string}
+             */
+            photos?: "private";
             split: {
                 /** Format: uuid */
                 group: string;

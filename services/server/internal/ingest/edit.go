@@ -314,6 +314,8 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 			points = nil // this piece lies entirely inside Private locations
 		}
 	}
+	// The points the editor would get (handleActivityTrackPoints), before the edit.
+	editable := EditableTimestamps(points) == nil
 	var editJSON []byte
 	if edit != nil && !edit.IsEmpty() {
 		if points != nil {
@@ -371,7 +373,8 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 			track_edit = CASE WHEN $14 THEN $12::jsonb ELSE track_edit END,
 			in_heatmap_window = ($8 >= NOW() - make_interval(days => $13)),
 			timezone = `+geo.TimezoneAtSQL("$15::float8", "$16::float8", "$2")+`,
-			recorded_started_at = $17, recorded_ended_at = $18
+			recorded_started_at = $17, recorded_ended_at = $18,
+			editable_times = $19
 		WHERE id = $1 AND user_id = $2
 	`, activityID, userID,
 		m.distanceM, m.durationS, m.movingS, m.elevationGainM, m.avgSpeedMps, startedAt,
@@ -379,6 +382,7 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 		editJSON, fog.HeatmapWindowDays, userEdit,
 		zonePoint.Lon, zonePoint.Lat,
 		recStart, recEnd,
+		editable,
 	); err != nil {
 		return fmt.Errorf("update activity: %w", err)
 	}

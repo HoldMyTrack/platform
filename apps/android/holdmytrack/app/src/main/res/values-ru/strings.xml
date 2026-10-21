@@ -465,7 +465,8 @@
     <string name="edit_tab_track">Трек</string>
     <string name="edit_track_check_one">Отметьте ровно одно занятие, чтобы редактировать его трек</string>
     <string name="edit_track_processing">Этот трек ещё обрабатывается</string>
-    <string name="edit_track_no_track">Для этого занятия нет записанного трека</string>
+    <string name="edit_track_no_original">Исходная запись этого занятия не сохранена, поэтому трек нельзя редактировать</string>
+    <string name="edit_track_bad_times">У точек этого трека нет пригодного времени, поэтому его нельзя редактировать</string>
     <string name="edit_track_chop">Обрезать</string>
     <string name="edit_track_chop_title">Оставить только часть между ручками</string>
     <string name="edit_track_cut">Вырезать</string>

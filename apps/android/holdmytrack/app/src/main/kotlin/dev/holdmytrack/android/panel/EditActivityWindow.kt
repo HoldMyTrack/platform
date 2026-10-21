@@ -236,22 +236,8 @@ class EditActivityWindow(
         nameLayout.isEnabled = single != null
         descriptionLayout.isEnabled = single != null
         multiNote.visibility = if (single == null) View.VISIBLE else View.GONE
-        // The Track tab edits one activity's points, so it needs exactly one — with a
-        // finished track.
-        trackUnavailable = when {
-            single == null -> res.getString(R.string.edit_track_check_one)
-            single.pending -> res.getString(R.string.edit_track_processing)
-            single.isPrivate -> res.getString(R.string.activity_private_note)
-            single.bbox == null -> res.getString(R.string.edit_track_no_track)
-            else -> null
-        }
-        // Photos belong to one activity, each with a place on its track.
-        photosUnavailable = when {
-            single == null -> res.getString(R.string.photos_check_one)
-            single.isPrivate -> res.getString(R.string.activity_private_note)
-            single.bbox == null -> res.getString(R.string.photos_no_track)
-            else -> null
-        }
+        trackUnavailable = EditAvailability.track(group)?.let { res.getString(blockMessage(it, R.string.edit_track_check_one)) }
+        photosUnavailable = EditAvailability.photos(group)?.let { res.getString(blockMessage(it, R.string.photos_check_one)) }
         trackStarted = false
         tab = Tab.ACTIVITY
         showError(null)
@@ -262,6 +248,15 @@ class EditActivityWindow(
             (res.displayMetrics.heightPixels * MAX_HEIGHT_FRACTION).toInt()
         card.visibility = View.VISIBLE
         bar.visibility = View.VISIBLE
+    }
+
+    /** [block]'s message; [checkOne] is the tab's own for a group. */
+    private fun blockMessage(block: EditBlock, checkOne: Int): Int = when (block) {
+        EditBlock.CHECK_ONE -> checkOne
+        EditBlock.PENDING -> R.string.edit_track_processing
+        EditBlock.PRIVATE -> R.string.activity_private_note
+        EditBlock.NO_ORIGINAL -> R.string.edit_track_no_original
+        EditBlock.BAD_TIMES -> R.string.edit_track_bad_times
     }
 
     /** The saved photos of the one activity the window is open on, or why they couldn't be read

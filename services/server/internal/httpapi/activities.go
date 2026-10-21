@@ -134,7 +134,8 @@ const activityStoriesColumn = `COALESCE((
 var listActivitiesQuery = `
 SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds, description,
        ` + activityBBoxColumns + `,
-       edit_pending, track_edit IS NOT NULL, trajectory IS NULL, split_group, split_from, split_to,
+       edit_pending, track_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
+       split_group, split_from, split_to,
        ` + activityStoriesColumn + `
 FROM activities
 WHERE user_id = $1
@@ -183,6 +184,10 @@ type activityRow struct {
 	// with no track, so no distance or duration worth showing — the panel badges it instead.
 	// A NULL trajectory has no other cause (§3.3).
 	Private bool `json:"private"`
+	// TrackEdit and Photos say why the Edit window's Track or Photos tab can't be used for this
+	// activity (activity_availability.go), omitted when it can.
+	TrackEdit string `json:"track_edit,omitempty"`
+	Photos    string `json:"photos,omitempty"`
 	// Split is set on a piece of a split activity (§4.7.8): which split, and the stretch of the
 	// recording it covers — what the Activities panel's Merge checks a group against.
 	Split *splitRef `json:"split"`
@@ -219,10 +224,14 @@ func scanActivityRow(row rowScanner) (activityRow, error) {
 	var minLon, minLat, maxLon, maxLat *float64
 	var splitGroup *string
 	var split splitRef
+	var avail activityAvailability
 	if err := row.Scan(&a.ID, &a.StartedAt, &a.Timezone, &a.ActivityType, &a.Name, &a.DistanceMeters, &a.DurationSeconds, &a.Description,
-		&minLon, &minLat, &maxLon, &maxLat, &a.Pending, &a.Edited, &a.Private, &splitGroup, &split.From, &split.To, &a.Stories); err != nil {
+		&minLon, &minLat, &maxLon, &maxLat, &a.Pending, &a.Edited, &a.Private, &avail.hasOriginal, &avail.editableTimes,
+		&splitGroup, &split.From, &split.To, &a.Stories); err != nil {
 		return activityRow{}, err
 	}
+	avail.pending, avail.private = a.Pending, a.Private
+	a.TrackEdit, a.Photos = avail.trackEdit(), avail.photos()
 	if splitGroup != nil {
 		split.Group = *splitGroup
 		a.Split = &split
@@ -298,7 +307,8 @@ const maxActivityNameLen = 200
 var activityByIDQuery = `
 SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds, description,
        ` + activityBBoxColumns + `,
-       edit_pending, track_edit IS NOT NULL, trajectory IS NULL, split_group, split_from, split_to,
+       edit_pending, track_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
+       split_group, split_from, split_to,
        ` + activityStoriesColumn + `
 FROM activities
 WHERE id = $1 AND user_id = $2`

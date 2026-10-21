@@ -55,6 +55,8 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'activities.edit_one': 'Изменить тип, название, описание и трек: {target}',
   'activities.edit_track_check_one': 'Отметьте ровно одно занятие, чтобы редактировать его трек',
   'activities.edit_track_processing': 'Этот трек ещё обрабатывается',
+  'activities.edit_track_no_original': 'Исходная запись этого занятия не сохранена, поэтому трек нельзя редактировать',
+  'activities.edit_track_bad_times': 'У точек этого трека нет пригодного времени, поэтому его нельзя редактировать',
   'activities.filter_by_type': 'Фильтр по типу',
   'activities.fly_to': 'Перейти к «{label}»',
   'activities.focus_target': 'Приблизить карту: {target}',

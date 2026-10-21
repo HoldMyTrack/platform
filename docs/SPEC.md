@@ -372,7 +372,7 @@ Lists the types present in the date range; types are free text, not a fixed voca
 
 Chop (keep the part between two points), Cut (remove it and join the ends), Delete point and Move point. The original is never changed, so Reset always returns the track as recorded.
 
-- Needs a real account and one non-Pending activity with a stored original and a track whose timestamps exist and run forward.
+- Needs a real account and one non-Pending activity with a stored original and a track whose timestamps exist and run forward. The activity list says which of these an activity lacks, and whether photos can be added (FR-16.1).
 - The editor gets the points already clipped against Private locations, so hidden ends never reach the client; an activity entirely inside them can't be edited.
 - A moved point keeps its time and elevation. No edit can leave fewer than two points.
 - Saving reprocesses the activity from its original: distance, duration, moving time, elevation gain, start time, track, coverage, country and region matches. A Cut's join counts toward distance, and its time toward elapsed but not moving time.

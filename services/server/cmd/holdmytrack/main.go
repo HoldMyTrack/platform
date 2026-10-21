@@ -54,7 +54,7 @@ func main() {
 	slog.SetDefault(log)
 
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-activities|seed-admin-boundaries|seed-timezones|rerender-coverage|backfill-recorded-spans|backfill-object-bytes|import-spots|import-bike-paths|set-admin|stats>")
+		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-activities|seed-admin-boundaries|seed-timezones|rerender-coverage|backfill-recorded-spans|backfill-editable-times|backfill-object-bytes|import-spots|import-bike-paths|set-admin|stats>")
 		os.Exit(2)
 	}
 
@@ -280,6 +280,20 @@ func main() {
 		}
 		if err := ingest.BackfillRecordedSpans(ctx, pool, store, log); err != nil {
 			log.Error("backfill-recorded-spans", "err", err)
+			os.Exit(1)
+		}
+
+	case "backfill-editable-times":
+		// One-off, on deploying migration 0044 (docs/DEPLOY.md): fills whether each older
+		// activity's track can be edited, which the activity list reports. Idempotent. See
+		// internal/ingest.BackfillEditableTimes's doc comment.
+		store, err := storage.New(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket)
+		if err != nil {
+			log.Error("storage", "err", err)
+			os.Exit(1)
+		}
+		if err := ingest.BackfillEditableTimes(ctx, pool, store, log); err != nil {
+			log.Error("backfill-editable-times", "err", err)
 			os.Exit(1)
 		}
 
