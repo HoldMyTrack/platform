@@ -200,7 +200,7 @@ The web's photos (`docs/SPEC.md` FR-16, ADR-0024) on the map and in the Edit win
 The web's export (`docs/SPEC.md` FR-4.10) as a viewfinder over the map, not offered while recording.
 
 - A platform preset keeps its shape when cropped; Custom fixes the long side at 1,920, 2,560 or 3,840 px.
-- The image is exactly the window at the current zoom, rotation, theme, mode, paths, Satellite, Roads, range or open Story, filters and hidden activities. Spots and photos aren't drawn; the map's credit and the HoldMyTrack mark are.
+- The image is exactly the window at the current zoom and rotation, with what `docs/SPEC.md` FR-4.10 draws, paths, Satellite and Roads included, and the map's credit and the HoldMyTrack mark.
 - It's saved to Pictures/HoldMyTrack and offered to Android's share sheet. A failure keeps the viewfinder as it was.
 
 ## 5. FR-3 — Sync and Imports

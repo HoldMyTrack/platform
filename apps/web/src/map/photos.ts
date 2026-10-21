@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Marker, type Map as MapLibreMap } from 'maplibre-gl';
-import { clusterPoints, CLUSTER_RADIUS_PX, photoMarkerSize, SMALL_CLUSTER_RADIUS_PX } from './photoClusters';
+import { photoMarkerGroups, photoMarkerSize } from './photoClusters';
+import { photoMarkerCssVars } from './photoMarkerLook';
 
 /**
  * Photo markers (FR-16, IMPLEMENTATION.md §4.27): each photo of the selected activity or the
@@ -17,6 +18,9 @@ import { clusterPoints, CLUSTER_RADIUS_PX, photoMarkerSize, SMALL_CLUSTER_RADIUS
  */
 
 export const PHOTO_MARKER_CLASS = 'photo-marker';
+
+// The sizes index.css's .photo-marker rules read, from the module the export draws with.
+for (const [name, value] of Object.entries(photoMarkerCssVars())) document.documentElement.style.setProperty(name, value);
 
 /** One marker: a saved photo, or one being placed in the Photos tab before it's uploaded. */
 export interface PhotoMarkerItem {
@@ -100,16 +104,17 @@ export function usePhotoMarkers(
     const size = photoMarkerSize(map.getZoom());
     const shown = size === 'hidden' ? [] : items;
     const byId = new Map(shown.map((item) => [item.id, item]));
-    const grouped = clusterPoints(
-      shown
-        .filter((item) => item.id !== loneId)
-        .map((item) => {
-          const p = map.project([item.lon, item.lat]);
-          return { id: item.id, x: p.x, y: p.y };
-        }),
-      size === 'small' ? SMALL_CLUSTER_RADIUS_PX : CLUSTER_RADIUS_PX,
-    ).map((c) => c.ids);
-    if (loneId !== null && byId.has(loneId)) grouped.push([loneId]);
+    const grouped =
+      size === 'hidden'
+        ? []
+        : photoMarkerGroups(
+            shown.map((item) => {
+              const p = map.project([item.lon, item.lat]);
+              return { id: item.id, x: p.x, y: p.y };
+            }),
+            size,
+            loneId,
+          ).map((c) => c.ids);
 
     const current = markers.current;
     const wanted = new Map(grouped.map((ids) => [ids.join('|'), ids]));

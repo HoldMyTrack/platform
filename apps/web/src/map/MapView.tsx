@@ -198,8 +198,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const spots = useSpots(map, spotsShown);
   const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
   const exportScene = useMemo(
-    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite, roads }),
-    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, bands, paths, satellite, roads],
+    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite, roads, photos: photoLayer.exportPhotos }),
+    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, bands, paths, satellite, roads, photoLayer.exportPhotos],
   );
   const exporter = useExportFlow(map, container, exportScene);
   const tapsAct = mapTapsAct(exporter.flow);

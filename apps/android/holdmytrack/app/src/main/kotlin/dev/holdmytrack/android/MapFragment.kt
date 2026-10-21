@@ -273,9 +273,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             style = { style },
             layers = layers,
             prepare = ::prepareExportStyle,
-            chrome = listOf(topChrome, sheet, findViewById(R.id.photo_markers)),
+            photos = photos::markersSnapshot,
+            chrome = listOf(topChrome, sheet),
             onShown = { shown ->
                 modes.renderChip()
+                // In sight, as they're in the image, but a tap on one goes to the map.
+                photos.setMarkersInteractive(!shown)
                 if (shown) {
                     spots.closePopup()
                     photos.closePopup()
@@ -698,7 +701,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /**
      * Makes the export's hidden map (`export/MapImageRenderer`) look like this one, with the calls
-     * [loadStyle] and [syncSession] make. No Spots, photos or recording, as on the web.
+     * [loadStyle] and [syncSession] make. No Spots or recording, as on the web; the viewfinder draws the photo markers onto the picture.
      */
     private fun prepareExportStyle(loaded: Style) {
         layers.applyPaths(loaded)

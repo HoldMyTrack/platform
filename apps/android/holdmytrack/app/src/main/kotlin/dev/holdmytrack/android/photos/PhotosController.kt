@@ -89,6 +89,12 @@ class PhotosController(
 
     fun closePopup() = popup.close()
 
+    /** See [PhotoMarkers.setInteractive]. */
+    fun setMarkersInteractive(on: Boolean) = markers.setInteractive(on)
+
+    /** The markers as drawn, for the image export. */
+    fun markersSnapshot(): PhotoMarkers.Snapshot = markers.snapshot()
+
     /**
      * The photos for the scope now: read when the scope moves, or with [force] when they may have
      * changed (a Photos tab save, a reprocess, a Story's members). A new scope starts empty rather

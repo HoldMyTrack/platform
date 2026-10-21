@@ -28,6 +28,7 @@ The format is platform-neutral: dates are ISO strings, sets are arrays (compared
 | `activityZone` | `own`, `account` (zone ids) | a zone id, or `null` for the device's |
 | `photoClusters` | `points` (`{ id, x, y }`), `radius` | `[{ ids, x, y }]` |
 | `photoMarkerSize` | `zoom` | `"hidden"`, `"small"` or `"full"` |
+| `photoMarkerLayout` | `points` (`{ id, x, y }`), `zoom`, `activeId`, `loneId`, `width`, `height`, `scale` | `[{ ids, x, y, diameter, active, small }]` |
 | `photoTrackPoint` | `points` (`{ lon, lat, t }`), `fraction` | `{ lon, lat, t }` |
 | `photoTrackFraction` | `points`, `t` | a fraction |
 | `photoTrackStart` | `points`, `anchor` (`{ t }`, `{ waiting }` or `null`), `placed`, `anchors` | a fraction |

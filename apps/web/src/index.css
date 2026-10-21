@@ -1732,12 +1732,13 @@ button.activities-panel__story-badge:hover {
 
 /* A photo's marker on the map (map/photos.ts): its thumbnail in a round white frame. The one
    the viewer has open is larger, ringed in the accent and above the rest. */
+/* Sizes from photoMarkerLook.ts (--photo-marker-*, set by photos.ts), which the export draws with. */
 .photo-marker {
   display: block;
-  width: 36px;
-  height: 36px;
+  width: var(--photo-marker-full-diameter);
+  height: var(--photo-marker-full-diameter);
   padding: 0;
-  border: 2px solid var(--fm-surface);
+  border: var(--photo-marker-full-border) solid var(--fm-surface);
   border-radius: var(--fm-radius-pill);
   overflow: hidden;
   background: var(--fm-surface-tint-strong);
@@ -1763,12 +1764,13 @@ button.activities-panel__story-badge:hover {
 /* A group of photos that would overlap: its first photo, with two cards' edges showing behind it
    and the count on its corner. */
 .photo-marker--group {
+  --photo-marker-stack: var(--photo-marker-full-stack);
   overflow: visible;
   box-shadow:
-    3px -3px 0 -1px var(--fm-surface),
-    3px -3px 0 0 rgb(var(--fm-shadow-rgb) / 25%),
-    6px -6px 0 -1px var(--fm-surface),
-    6px -6px 0 0 rgb(var(--fm-shadow-rgb) / 25%),
+    var(--photo-marker-stack) calc(-1 * var(--photo-marker-stack)) 0 -1px var(--fm-surface),
+    var(--photo-marker-stack) calc(-1 * var(--photo-marker-stack)) 0 0 rgb(var(--fm-shadow-rgb) / 25%),
+    calc(2 * var(--photo-marker-stack)) calc(-2 * var(--photo-marker-stack)) 0 -1px var(--fm-surface),
+    calc(2 * var(--photo-marker-stack)) calc(-2 * var(--photo-marker-stack)) 0 0 rgb(var(--fm-shadow-rgb) / 25%),
     var(--fm-shadow-md);
 }
 
@@ -1778,57 +1780,50 @@ button.activities-panel__story-badge:hover {
 
 .photo-marker__count {
   position: absolute;
-  top: -8px;
-  right: -10px;
-  min-width: 18px;
-  padding: 0 var(--fm-space-4);
+  top: calc(-1 * var(--photo-marker-full-count-top));
+  right: calc(-1 * var(--photo-marker-full-count-right));
+  min-width: var(--photo-marker-full-count-height);
+  padding: 0 var(--photo-marker-full-count-pad);
   border-radius: var(--fm-radius-pill);
   background: var(--fm-accent);
   color: var(--fm-on-accent);
-  font-size: var(--fm-text-xs);
+  font-size: var(--photo-marker-full-count-font);
   font-weight: var(--fm-weight-bold);
-  line-height: 18px;
+  line-height: var(--photo-marker-full-count-height);
   text-align: center;
   box-sizing: border-box;
 }
 
 .photo-marker--active {
   z-index: 1;
-  width: 52px;
-  height: 52px;
+  width: var(--photo-marker-full-active-diameter);
+  height: var(--photo-marker-full-active-diameter);
+  border-width: var(--photo-marker-full-active-border);
   border-color: var(--fm-accent);
 }
 
 /* Zoomed out (photoClusters.ts's photoMarkerSize): smaller, so the tracks show under the photos.
    The stack and the count shrink with it; the one open or in hand is the full size. */
 .photo-marker--small {
-  width: 22px;
-  height: 22px;
-  border-width: 1.5px;
-}
-
-.photo-marker--small.photo-marker--group {
-  box-shadow:
-    2px -2px 0 -1px var(--fm-surface),
-    2px -2px 0 0 rgb(var(--fm-shadow-rgb) / 25%),
-    4px -4px 0 -1px var(--fm-surface),
-    4px -4px 0 0 rgb(var(--fm-shadow-rgb) / 25%),
-    var(--fm-shadow-md);
+  --photo-marker-stack: var(--photo-marker-small-stack);
+  width: var(--photo-marker-small-diameter);
+  height: var(--photo-marker-small-diameter);
+  border-width: var(--photo-marker-small-border);
 }
 
 .photo-marker--small .photo-marker__count {
-  top: -7px;
-  right: -9px;
-  min-width: 14px;
-  padding: 0 3px;
-  font-size: 10px;
-  line-height: 14px;
+  top: calc(-1 * var(--photo-marker-small-count-top));
+  right: calc(-1 * var(--photo-marker-small-count-right));
+  min-width: var(--photo-marker-small-count-height);
+  padding: 0 var(--photo-marker-small-count-pad);
+  font-size: var(--photo-marker-small-count-font);
+  line-height: var(--photo-marker-small-count-height);
 }
 
 .photo-marker--small.photo-marker--active {
-  width: 36px;
-  height: 36px;
-  border-width: 2px;
+  width: var(--photo-marker-small-active-diameter);
+  height: var(--photo-marker-small-active-diameter);
+  border-width: var(--photo-marker-small-active-border);
 }
 
 /* PhotoPopup.tsx: a photo's popup at its marker — the spot popup's frame (.spot-popup), with

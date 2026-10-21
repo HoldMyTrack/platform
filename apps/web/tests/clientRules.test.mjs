@@ -7,7 +7,7 @@ import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '.
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
 import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
 import { pendingChange } from '../src/map/pending.ts';
-import { clusterPoints, photoMarkerSize } from '../src/map/photoClusters.ts';
+import { clusterPoints, photoMarkerLayout, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
 import { distanceParts, durationParts, totalDistanceParts } from '../src/ui/formatParts.ts';
 import { fractionAt, photoTrack, pointAt, startFraction } from '../src/ui/photoTrack.ts';
@@ -41,6 +41,8 @@ const rules = {
   activityZone: ({ own, account }) => activityTimeZone(own ?? undefined, account ?? undefined) ?? null,
   photoClusters: ({ points, radius }) => clusterPoints(points, radius),
   photoMarkerSize: ({ zoom }) => photoMarkerSize(zoom),
+  photoMarkerLayout: ({ points, zoom, activeId, loneId, width, height, scale }) =>
+    photoMarkerLayout(points, zoom, activeId ?? null, loneId ?? null, { width, height }, scale),
   photoTrackPoint: ({ points, fraction }) => pointAt(photoTrack(points), fraction),
   photoTrackFraction: ({ points, t }) => fractionAt(photoTrack(points), t),
   photoTrackStart: ({ points, anchor, placed, anchors }) =>

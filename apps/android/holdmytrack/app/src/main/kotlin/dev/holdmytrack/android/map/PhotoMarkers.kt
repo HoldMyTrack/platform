@@ -3,14 +3,8 @@ package dev.holdmytrack.android.map
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapShader
 import android.graphics.Canvas
-import android.graphics.Matrix
 import android.graphics.Outline
-import android.graphics.Paint
-import android.graphics.RectF
-import android.graphics.Shader
-import android.graphics.Typeface
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewOutlineProvider
@@ -66,6 +60,8 @@ class PhotoMarkers(private val layer: FrameLayout, private val onOpen: (List<Str
     private var items: List<PhotoMarkerItem> = emptyList()
     private var activeId: String? = null
     private var loneId: String? = null
+    /** Off while the export frames the map: the markers stay in sight, and a tap goes to the map. */
+    private var interactive = true
 
     /** One view per group, keyed by its photos' ids. */
     private val markers = LinkedHashMap<String, PhotoMarkerView>()
@@ -91,14 +87,15 @@ class PhotoMarkers(private val layer: FrameLayout, private val onOpen: (List<Str
         val small = size == MarkerSize.SMALL
         val projection = instance.projection
         val byId = items.associateBy { it.id }
-        val groups = PhotoClusters.cluster(
-            items.filter { it.id != loneId }.map {
+        val groups = PhotoClusters.groups(
+            items.map {
                 val p = projection.toScreenLocation(LatLng(it.lat, it.lon))
                 ScreenPoint(it.id, p.x, p.y)
             },
-            (if (small) PhotoClusters.SMALL_RADIUS_DP else PhotoClusters.RADIUS_DP) * density,
-        ).map { it.ids }.toMutableList()
-        loneId?.takeIf { it in byId }?.let { groups += listOf(it) }
+            size,
+            loneId,
+            density,
+        ).map { it.ids }
 
         val wanted = groups.associateBy { it.joinToString("|") }
         markers.keys.filter { it !in wanted }.forEach { key -> markers.remove(key)?.let(layer::removeView) }
@@ -107,6 +104,7 @@ class PhotoMarkers(private val layer: FrameLayout, private val onOpen: (List<Str
             val view = markers.getOrPut(key) {
                 PhotoMarkerView(context).also { view ->
                     view.setOnClickListener { onOpen(view.ids) }
+                    view.isClickable = interactive
                     layer.addView(view, FrameLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT))
                 }
             }
@@ -133,21 +131,27 @@ class PhotoMarkers(private val layer: FrameLayout, private val onOpen: (List<Str
         markers.values.forEach(layer::removeView)
         markers.clear()
     }
+
+    fun setInteractive(on: Boolean) {
+        interactive = on
+        markers.values.forEach { it.isClickable = on }
+    }
+
+    /** What [set] last showed, for the image export to draw the same. */
+    fun snapshot(): Snapshot = Snapshot(items, activeId, loneId)
+
+    data class Snapshot(val items: List<PhotoMarkerItem>, val activeId: String?, val loneId: String?)
 }
 
 /**
- * One marker, drawn: the photo's thumbnail cropped into a 36dp circle (52dp while open or in
- * hand) in a 2dp ring — the surface's colour, the accent's when active — and, for a group, two
- * cards' edges showing behind it and the count on its corner (the web's `.photo-marker--group`
- * and `.photo-marker__count`). Small, zoomed out (the web's `.photo-marker--small`), the circle
- * is 22dp (36dp while open or in hand), and the ring, the stack and the count shrink with it.
- * The view is a square [side] wide with room around the circle for those, so its touch target
- * is never under 48dp.
+ * One marker, drawn by [PhotoMarkerPainter]. The view is a square [side] wide with room around
+ * the circle for the stack and the count, so its touch target is never under 48dp.
  */
 @SuppressLint("ViewConstructor")
 private class PhotoMarkerView(context: Context) : View(context) {
 
     private val density = resources.displayMetrics.density
+    private val painter = PhotoMarkerPainter(context)
     var item: PhotoMarkerItem? = null
         private set
     var ids: List<String> = emptyList()
@@ -157,27 +161,8 @@ private class PhotoMarkerView(context: Context) : View(context) {
     private var small = false
     private var bitmap: Bitmap? = null
 
-    private val ring = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE }
-    private val fill = Paint(Paint.ANTI_ALIAS_FLAG)
-    private val edge = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.STROKE; strokeWidth = density }
-    private val image = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private val badge = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = context.getColor(R.color.hmt_accent) }
-    private val count = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-        color = context.getColor(R.color.hmt_on_accent)
-        textSize = resources.getDimension(R.dimen.hmt_text_xs)
-        typeface = Typeface.DEFAULT_BOLD
-        textAlign = Paint.Align.CENTER
-    }
-
     private val diameter: Float
-        get() = when {
-            small -> if (active) MARKER_DP else SMALL_DP
-            else -> if (active) ACTIVE_DP else MARKER_DP
-        } * density
-
-    /** How much the ring, the stack and the count are scaled: a small marker's against a full one's. */
-    private val scale: Float
-        get() = if (small) SMALL_DP / MARKER_DP else 1f
+        get() = painter.diameter(active, small, density)
 
     /** The view's width and height: the circle and room for the stack and the count, and never
      *  under a 48dp touch target. */
@@ -201,7 +186,6 @@ private class PhotoMarkerView(context: Context) : View(context) {
     fun bind(next: PhotoMarkerItem, groupIds: List<String>, isActive: Boolean, isSmall: Boolean) {
         val resized = isActive != active || isSmall != small
         small = isSmall
-        count.textSize = resources.getDimension(R.dimen.hmt_text_xs) * scale
         val sameImage = item?.let { it.thumbPath == next.thumbPath && it.thumb === next.thumb } == true
         item = next
         ids = groupIds
@@ -234,54 +218,10 @@ private class PhotoMarkerView(context: Context) : View(context) {
 
     override fun onDraw(canvas: Canvas) {
         val c = side / 2f
-        val r = diameter / 2
-        val surface = context.getColor(R.color.hmt_surface)
-        if (ids.size > 1) {
-            // Two cards behind, up and to the right, as the web's stacked box-shadows.
-            for (step in intArrayOf(2, 1)) {
-                val d = STACK_DP * scale * step * density
-                fill.color = surface
-                canvas.drawCircle(c + d, c - d, r, fill)
-                edge.color = context.getColor(R.color.hmt_border_strong)
-                canvas.drawCircle(c + d, c - d, r, edge)
-            }
-        }
-        val ringWidth = (if (small && !active) SMALL_RING_DP else RING_DP) * density
-        fill.color = context.getColor(R.color.hmt_surface_tint_strong)
-        canvas.drawCircle(c, c, r, fill)
-        bitmap?.let { b ->
-            val inner = r - ringWidth
-            val scale = (2 * inner) / minOf(b.width, b.height)
-            val matrix = Matrix().apply {
-                setScale(scale, scale)
-                postTranslate(c - b.width * scale / 2, c - b.height * scale / 2)
-            }
-            image.shader = BitmapShader(b, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).apply { setLocalMatrix(matrix) }
-            canvas.drawCircle(c, c, inner, image)
-        }
-        ring.strokeWidth = ringWidth
-        ring.color = if (active) context.getColor(R.color.hmt_accent) else surface
-        canvas.drawCircle(c, c, r - ringWidth / 2, ring)
-        if (ids.size > 1) {
-            val text = ids.size.toString()
-            val h = BADGE_DP * scale * density
-            val w = maxOf(h, count.measureText(text) + 8 * scale * density)
-            // The web's top: -8px, right: -10px, from the circle's box (-7, -9 small).
-            val right = c + r + (if (small) 9 else 10) * density
-            val top = c - r - (if (small) 7 else 8) * density
-            canvas.drawRoundRect(RectF(right - w, top, right, top + h), h / 2, h / 2, badge)
-            canvas.drawText(text, right - w / 2, top + h / 2 - (count.descent() + count.ascent()) / 2, count)
-        }
+        painter.draw(canvas, c, c, ids.size, bitmap, active, small, density)
     }
 
     private companion object {
-        const val MARKER_DP = 36f
-        const val ACTIVE_DP = 52f
-        const val SMALL_DP = 22f
-        const val RING_DP = 2f
-        const val SMALL_RING_DP = 1.5f
-        const val STACK_DP = 3f
-        const val BADGE_DP = 18f
         /** Room around the circle: the stack's 6dp and the badge's overhang, and a 48dp target. */
         const val PAD_DP = 12f
         const val TARGET_DP = 48f
