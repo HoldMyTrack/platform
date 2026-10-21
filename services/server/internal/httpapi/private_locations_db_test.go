@@ -203,3 +203,19 @@ func TestPrivateLocationReprocessesActivities(t *testing.T) {
 	}
 	whole("deleted", walk)
 }
+
+func TestListPrivateLocations(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	var none []privateLocation
+	d.decode(d.do(me, "GET", "/v1/private-locations", nil), http.StatusOK, &none)
+	if len(none) != 0 {
+		t.Fatalf("new account has %d, want none", len(none))
+	}
+	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 200}), http.StatusCreated, nil)
+	var got []privateLocation
+	d.decode(d.do(me, "GET", "/v1/private-locations", nil), http.StatusOK, &got)
+	if len(got) != 1 || got[0].Name != "Home" {
+		t.Fatalf("got %+v, want Home", got)
+	}
+}
