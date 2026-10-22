@@ -6,7 +6,7 @@
 
 ## 3. Database Schema
 
-The migrations in `services/server/migrations/` are the authority on columns, keys and indexes. A schema change is a new numbered file, never an edit to an existing one, and each file's header names the section it serves. Each entry below is what the migration doesn't show.
+The migrations in `services/server/migrations/` are the authority on columns, keys and indexes. `0045_baseline.sql` is the schema the first 45 built; a schema change is a new numbered file after it, never an edit to an existing one, and each file's header names the section it serves. Each entry below is what the migration doesn't show.
 
 ```mermaid
 erDiagram
