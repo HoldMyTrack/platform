@@ -47,7 +47,6 @@ When `VISION.md` or an ADR changes a position, scan the other documents, the And
 | `docs/DEPLOY.md` | 5,500 |
 | `docs/DEVELOPMENT.md` | 2,750 |
 | `docs/DPIA.md` | 2,750 |
-| `docs/PERFORMANCE.md` | 2,200 |
 | `docs/ROADMAP.md`, `docs/BRAINSTORM.md`, `docs/KNOWN_ISSUES.md` together | 3,000 |
 | `testing.html` | 3,000 |
 | A new ADR | 600 |
