@@ -1,12 +1,13 @@
-# Fails a pull request whose API contract change would break an installed client
-# (scripts/check-contract-break.sh). Its own workflow so that adding or removing the
-# contract-break label reruns this check alone.
+# Fails a pull request whose API contract change would break an installed client: against the
+# base branch (scripts/check-contract-break.sh), and against every Android release production
+# still lets in (scripts/check-contract-release.sh). Its own workflow so that adding or removing
+# the contract-break label reruns these checks alone.
 name: Contract
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, labeled, unlabeled]
-    paths: ["services/server/api/**", "scripts/check-contract-break.sh", ".github/workflows/contract.yml"]
+    paths: ["services/server/api/**", "scripts/check-contract-break.sh", "scripts/check-contract-release.sh", ".github/workflows/contract.yml"]
 
 concurrency:
   group: contract-${{ github.ref }}
@@ -30,3 +31,7 @@ jobs:
         run: scripts/check-contract-break.sh "origin/${{ github.base_ref }}"
       - if: ${{ contains(github.event.pull_request.labels.*.name, 'contract-break') }}
         run: scripts/check-contract-break.sh "origin/${{ github.base_ref }}" || echo "::warning title=Contract break::labelled contract-break; ship it with a raised MIN_ANDROID_BUILD"
+      - if: ${{ !contains(github.event.pull_request.labels.*.name, 'contract-break') }}
+        run: scripts/check-contract-release.sh "origin/${{ github.base_ref }}"
+      - if: ${{ contains(github.event.pull_request.labels.*.name, 'contract-break') }}
+        run: scripts/check-contract-release.sh "origin/${{ github.base_ref }}" || echo "::warning title=Release break::labelled contract-break; ship it with a raised MIN_ANDROID_BUILD"

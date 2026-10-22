@@ -84,3 +84,14 @@ func TestServeHTTPRefusesAnOutdatedAppOnV1Only(t *testing.T) {
 		}
 	}
 }
+
+func TestHealthzReportsTheOldestAndroidBuild(t *testing.T) {
+	d := newDBTest(t)
+	d.srv.SetMinAndroidBuild(1323)
+	rec := httptest.NewRecorder()
+	d.srv.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
+	var got healthzResponse
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil || rec.Code != http.StatusOK || got.MinAndroidBuild != 1323 {
+		t.Fatalf("got %d %s", rec.Code, rec.Body.String())
+	}
+}
