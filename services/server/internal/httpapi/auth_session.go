@@ -88,14 +88,12 @@ type contextKey string
 
 const authContextKey contextKey = "authInfo"
 
-// authInfo is what requireAuth resolves a session down to, in one query, and attaches to the
-// request context — userID for every handler that used to read the old PlaceholderUserID
-// constant, isDemo/emailVerified for the two gates layered on top (requireVerified,
-// requireNotDemo), and timezone for handlers that need the account's own setting
-// (day-bucketing) without a second round trip each; locale likewise, for the language of a
-// request's messages (requestLang) — "" when the account follows its browser. isAdmin is read only by pageAccount, for
-// the admin panel's pages (admin_pages.go); requireAuth leaves it false, since no JSON endpoint
-// is admin-only.
+// authInfo is what requireAuth resolves a session to, in one query, and attaches to the request
+// context: isDemo and emailVerified for the gates layered on top (requireVerified,
+// requireNotDemo), timezone for day-bucketing without a second query, and locale for the
+// language of a request's messages (requestLang), "" when the account follows its browser.
+// isAdmin is read only by pageAccount, for the admin pages (admin_pages.go); requireAuth leaves
+// it false, since no JSON endpoint is admin-only.
 type authInfo struct {
 	userID        string
 	isDemo        bool
@@ -110,9 +108,7 @@ func authInfoFromContext(ctx context.Context) authInfo {
 	return info
 }
 
-// userIDFromContext reads the user id requireAuth already resolved and attached to the
-// request context — every handler that used to read the PlaceholderUserID constant reads
-// this instead now.
+// userIDFromContext is the account requireAuth resolved for this request.
 func userIDFromContext(ctx context.Context) string {
 	return authInfoFromContext(ctx).userID
 }
@@ -136,14 +132,10 @@ func locationFromContext(ctx context.Context) *time.Location {
 	return loc
 }
 
-// requireAuth wraps a handler that needs an authenticated user, threading the resolved
-// authInfo through the request context rather than changing every wrapped handler's own
-// signature — the mechanical diff (replacing PlaceholderUserID with
-// userIDFromContext(r.Context()) at each call site) is far smaller than re-plumbing a new
-// parameter through every handler and every server.go registration. Deliberately the only one
-// of the three auth middlewares that never rejects on isDemo/emailVerified — used directly by
-// handleResendVerification and handleChangeEmail, which exist specifically to help an account
-// that hasn't verified yet.
+// requireAuth wraps a handler that needs a signed-in account, passing the resolved authInfo in
+// the request context. The only one of the three auth middlewares that never refuses on
+// isDemo or emailVerified: handleResendVerification and handleChangeEmail use it directly, to
+// help an account that hasn't verified yet.
 func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		sessionID, ok := sessionIDFromRequest(r)

@@ -464,18 +464,11 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// handleDemoStart serves `POST /v1/auth/demo` — VISION.md §8.2's "no-signup,
-// drag-a-file-in, see-your-fog-map page," revised per docs/ROADMAP.md's "Email verification +
-// demo without real ingest": a demo account no longer gets real upload/sync access at all
-// (requireNotDemo rejects those regardless of what a client attempts). Every visitor's session
-// here is pointed at the same persistent, pre-seeded DemoCustomerUserID (demo_presets.go) —
-// not a fresh row created and re-ingested per visitor, which would be far too slow at that
-// account's real activity-history size. handleSignup never reuses this row (a demo account
-// can't become a real one in place), so many concurrent demo sessions safely sharing one
-// read-only user id is the whole point. Rate-limited per IP: this is the one auth endpoint
-// reachable with no session or credentials at all, so it's the one auth.go's own "no rate
-// limiting" gap couldn't be left alone — cheap now that it only creates a session row, but
-// still worth capping.
+// handleDemoStart serves `POST /v1/auth/demo`, VISION.md §8.2's no-signup look around: a
+// session on the one shared, pre-seeded DemoCustomerUserID (demo_presets.go), read-only
+// (requireNotDemo). One shared row rather than one per visitor, which would re-ingest the demo's
+// whole history each time; handleSignup never reuses it, so a demo account can't become a real
+// one in place. Rate-limited per address, being reachable with no credentials at all.
 func (s *Server) handleDemoStart(w http.ResponseWriter, r *http.Request) {
 	if err := allowDemo(r); err != nil {
 		s.writeAccountError(w, r, "demo start", err)
