@@ -750,23 +750,10 @@ func (s *Server) writeHistogramError(w http.ResponseWriter, err error) {
 // LIMIT and are reversed here, so every response this endpoint sends is in ascending date
 // order regardless of which mode produced it — a client should not have to check.
 func (s *Server) activityDayPage(r *http.Request, q url.Values, story *string) ([]histogramBucket, error) {
-	limit, err := strconv.Atoi(q.Get("days"))
-	if err != nil || limit < 1 {
-		return nil, badRequest{errors.New(`invalid "days", want a positive integer`)}
+	limit, before, err := parseDayPage(q)
+	if err != nil {
+		return nil, err
 	}
-	if limit > maxHistogramDays {
-		limit = maxHistogramDays
-	}
-
-	// nil, not "": the query's "$2::date IS NULL OR ..." is what makes the anchor optional.
-	var before *string
-	if v := q.Get("before"); v != "" {
-		if _, err := time.Parse(dateLayout, v); err != nil {
-			return nil, badRequest{errors.New(`invalid "before" date, want YYYY-MM-DD`)}
-		}
-		before = &v
-	}
-
 	buckets, err := s.scanHistogramBuckets(r.Context(), activityDayPageQuery, userIDFromContext(r.Context()), before, limit, story)
 	if err != nil {
 		return nil, err
@@ -777,31 +764,53 @@ func (s *Server) activityDayPage(r *http.Request, q url.Values, story *string) (
 	return buckets, nil
 }
 
-// activityCalendarWindow is the original `?from=&to=` mode, unchanged in behaviour: one
-// bucket per day that has activity within the window, and the window itself echoed back so
-// the caller can lay out the days that have none.
-func (s *Server) activityCalendarWindow(r *http.Request, q url.Values, loc *time.Location, story *string) ([]histogramBucket, string, string, error) {
-	today := time.Now().In(loc)
-	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, loc)
-
-	last := today
-	if v := q.Get("to"); v != "" {
-		t, err := time.ParseInLocation(dateLayout, v, loc)
-		if err != nil {
-			return nil, "", "", badRequest{errors.New(`invalid "to" date, want YYYY-MM-DD`)}
-		}
-		last = t
+// parseDayPage reads the activity-day mode's `days`, capped at maxHistogramDays, and its
+// optional `before` anchor, nil when absent so the query's "$2::date IS NULL OR …" applies.
+func parseDayPage(q url.Values) (int, *string, error) {
+	limit, err := strconv.Atoi(q.Get("days"))
+	if err != nil || limit < 1 {
+		return 0, nil, badRequest{errors.New(`invalid "days", want a positive integer`)}
 	}
-	first := last.AddDate(0, -histogramWindowMonths, 0)
-	if v := q.Get("from"); v != "" {
-		t, err := time.ParseInLocation(dateLayout, v, loc)
-		if err != nil {
-			return nil, "", "", badRequest{errors.New(`invalid "from" date, want YYYY-MM-DD`)}
+	limit = min(limit, maxHistogramDays)
+	var before *string
+	if v := q.Get("before"); v != "" {
+		if _, err := time.Parse(dateLayout, v); err != nil {
+			return 0, nil, badRequest{errors.New(`invalid "before" date, want YYYY-MM-DD`)}
 		}
-		first = t
+		before = &v
+	}
+	return limit, before, nil
+}
+
+// dateWindow is the calendar window a `from`/`to` query asks for, both inclusive local dates in
+// loc: `to` defaults to today, `from` to histogramWindowMonths before `to`. The histogram's
+// calendar mode and Trends share it.
+func dateWindow(q url.Values, now time.Time, loc *time.Location) (first, last time.Time, err error) {
+	now = now.In(loc)
+	last = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	if v := q.Get("to"); v != "" {
+		if last, err = time.ParseInLocation(dateLayout, v, loc); err != nil {
+			return first, last, badRequest{errors.New(`invalid "to" date, want YYYY-MM-DD`)}
+		}
+	}
+	first = last.AddDate(0, -histogramWindowMonths, 0)
+	if v := q.Get("from"); v != "" {
+		if first, err = time.ParseInLocation(dateLayout, v, loc); err != nil {
+			return first, last, badRequest{errors.New(`invalid "from" date, want YYYY-MM-DD`)}
+		}
 	}
 	if first.After(last) {
-		return nil, "", "", badRequest{errors.New(`"from" must not be after "to"`)}
+		return first, last, badRequest{errors.New(`"from" must not be after "to"`)}
+	}
+	return first, last, nil
+}
+
+// activityCalendarWindow is the `?from=&to=` mode: one bucket per day with activity in the
+// window, and the window echoed back so the caller can lay out the days that have none.
+func (s *Server) activityCalendarWindow(r *http.Request, q url.Values, loc *time.Location, story *string) ([]histogramBucket, string, string, error) {
+	first, last, err := dateWindow(q, time.Now(), loc)
+	if err != nil {
+		return nil, "", "", err
 	}
 	end := last.AddDate(0, 0, 1) // exclusive upper bound for the query
 
@@ -908,6 +917,19 @@ type activityGraphStatsResponse struct {
 	AllTime activityStatsBlock `json:"all_time"`
 }
 
+// graphStatsYear is the `year` asked for, or now's when there is none.
+func graphStatsYear(q url.Values, now time.Time) (int, error) {
+	v := q.Get("year")
+	if v == "" {
+		return now.Year(), nil
+	}
+	y, err := strconv.Atoi(v)
+	if err != nil || y < 1 {
+		return 0, errors.New(`invalid "year", want a 4-digit year`)
+	}
+	return y, nil
+}
+
 // handleActivityGraphStats serves §4.8's `GET /v1/activities/graph-stats?year=YYYY`: the four
 // stat-card numbers (count, distance, active days, longest streak) for one calendar year and
 // for all time. The grid's cells themselves need no new endpoint — they are exactly
@@ -919,15 +941,10 @@ type activityGraphStatsResponse struct {
 // from the graph's first paint (before it knows what to ask for) still gets something
 // sensible back.
 func (s *Server) handleActivityGraphStats(w http.ResponseWriter, r *http.Request) {
-	loc := locationFromContext(r.Context())
-	year := time.Now().In(loc).Year()
-	if v := r.URL.Query().Get("year"); v != "" {
-		y, err := strconv.Atoi(v)
-		if err != nil || y < 1 {
-			writeAPIError(w, `invalid "year", want a 4-digit year`, http.StatusBadRequest)
-			return
-		}
-		year = y
+	year, err := graphStatsYear(r.URL.Query(), time.Now().In(locationFromContext(r.Context())))
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
+		return
 	}
 
 	yearStart := sqlDate(time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC))
@@ -1022,46 +1039,31 @@ func (s *Server) activityTrends(ctx context.Context, userID, bucket string, firs
 	return periods, rows.Err()
 }
 
+// trendBucket is the `bucket` asked for, "week" when there is none.
+func trendBucket(q url.Values) (string, error) {
+	switch b := q.Get("bucket"); b {
+	case "":
+		return "week", nil
+	case "week", "month":
+		return b, nil
+	}
+	return "", errors.New(`invalid "bucket", want "week" or "month"`)
+}
+
 // handleActivityTrends serves `GET /v1/activities/trends?bucket=week|month&from=&to=`.
 // `from`/`to` default to the trailing histogramWindowMonths months, the same default the
 // calendar-window histogram mode already uses — there's no reason a trend line's default
 // window should be a different length than the graph's.
 func (s *Server) handleActivityTrends(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-
-	bucket := q.Get("bucket")
-	if bucket == "" {
-		bucket = "week"
-	}
-	if bucket != "week" && bucket != "month" {
-		writeAPIError(w, `invalid "bucket", want "week" or "month"`, http.StatusBadRequest)
+	bucket, err := trendBucket(q)
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-
-	loc := locationFromContext(r.Context())
-	today := time.Now().In(loc)
-	today = time.Date(today.Year(), today.Month(), today.Day(), 0, 0, 0, 0, loc)
-
-	last := today
-	if v := q.Get("to"); v != "" {
-		t, err := time.ParseInLocation(dateLayout, v, loc)
-		if err != nil {
-			writeAPIError(w, `invalid "to" date, want YYYY-MM-DD`, http.StatusBadRequest)
-			return
-		}
-		last = t
-	}
-	first := last.AddDate(0, -histogramWindowMonths, 0)
-	if v := q.Get("from"); v != "" {
-		t, err := time.ParseInLocation(dateLayout, v, loc)
-		if err != nil {
-			writeAPIError(w, `invalid "from" date, want YYYY-MM-DD`, http.StatusBadRequest)
-			return
-		}
-		first = t
-	}
-	if first.After(last) {
-		writeAPIError(w, `"from" must not be after "to"`, http.StatusBadRequest)
+	first, last, err := dateWindow(q, time.Now(), locationFromContext(r.Context()))
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 	end := last.AddDate(0, 0, 1) // exclusive upper bound, matching activityCalendarWindow
@@ -1110,6 +1112,22 @@ type trackMetricsResponse struct {
 	Bands      []paceBand         `json:"bands"`
 }
 
+// pointSpeeds is each point's speed from the one before it, in m/s: 0 across no time, and the
+// first point takes the second's. ms is the M ordinate, epoch seconds, read in whole seconds.
+func pointSpeeds(lons, lats, ms []float64) []float64 {
+	n := len(lons)
+	speed := make([]float64, n)
+	for i := 1; i < n; i++ {
+		if dt := float64(int64(ms[i]) - int64(ms[i-1])); dt > 0 {
+			speed[i] = ingest.HaversineM(lats[i-1], lons[i-1], lats[i], lons[i]) / dt
+		}
+	}
+	if n > 1 {
+		speed[0] = speed[1]
+	}
+	return speed
+}
+
 // handleActivityTrackMetrics serves `GET /v1/activities/track-metrics/{id}` — per-simplified-
 // vertex speed, and the pace bands (paceBands) the web and Android clients draw over whichever
 // single activity is selected. Pace only: HoldMyTrack keeps no heart rate (VISION.md §1.1).
@@ -1135,20 +1153,8 @@ func (s *Server) handleActivityTrackMetrics(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	n := len(lons)
-	speed := make([]float64, n)
-	for i := 1; i < n; i++ {
-		// Whole seconds, as the M ordinate's clock has always been read here.
-		dt := float64(int64(ms[i]) - int64(ms[i-1]))
-		if dt > 0 {
-			speed[i] = ingest.HaversineM(lats[i-1], lons[i-1], lats[i], lons[i]) / dt
-		}
-	}
-	if n > 1 {
-		speed[0] = speed[1]
-	}
-
-	points := make([]trackMetricPoint, n)
+	speed := pointSpeeds(lons, lats, ms)
+	points := make([]trackMetricPoint, len(lons))
 	for i := range points {
 		points[i] = trackMetricPoint{Lon: lons[i], Lat: lats[i], SpeedMps: speed[i], TimeS: int64(ms[i])}
 	}
