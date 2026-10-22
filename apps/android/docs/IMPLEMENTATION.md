@@ -112,7 +112,7 @@ Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATIO
 
 ### 3.3 Logic ported from the web
 
-Where the web has a rule, the app ports it as a pure Kotlin class. `MapSession`, `DefaultRange`, `PendingDiff`, `PanelRules`, `PanelState`, `PhotoMarkerScope`, `RangeShift`, `SliderRules`, `EditTrackOps`, `ActivityFacets`, `ActivityZone`, `PhotoClusters`, `PhotoTrack`, `PhotoZoom` and `FormatParts` run the shared JSON cases (`testdata/client-rules`), and `TrackBands` the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
+Where the web has a rule, the app ports it as a pure Kotlin class running the shared cases (`testdata/client-rules/`, ADR-0049); `TrackBands` runs the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
 
 ### 3.4 The panel, editors and touches
 
@@ -178,7 +178,7 @@ A foreground service survives the screen going away, not the process. So each fi
 
 ### 5.3 The store
 
-`recording/db/RecordedActivityStore` is a plain `SQLiteOpenHelper`: Room's KSP had no release for this project's Kotlin. Rows are scoped per account (§2.3). Upgrades drop and recreate except tables holding unsynced recordings, the only copy anywhere. The database is in WAL mode, because the journal commits on every fix while screens read.
+`recording/db/RecordedActivityStore` (its KDoc says why not Room) scopes rows per account (§2.3). Upgrades drop and recreate except tables holding unsynced recordings, the only copy anywhere.
 
 ## 6. Build traps
 

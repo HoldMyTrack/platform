@@ -226,18 +226,11 @@ The order matters:
 6. **Persist** with `ON CONFLICT DO NOTHING`, then draw masks, mark tiles dirty and match regions. The row commits with `ingest_complete = false` and is flagged complete at the end. A conflict on an incomplete row is an earlier run cut off, so the job carries on with it (every step is safe to repeat) and step 1 doesn't count it as stored.
 7. **Render** in a `render_fog` job (§4.2), not added while the account has one waiting unclaimed, since that job reads the dirty flags only once claimed. A bulk import queues one render.
 
-**Clipping** (`ingest.ClipEnds`) drops the leading points inside any zone and then a further stretch past the edge, and the same at the end. Ends exactly on the edge would give the place away: three of them fix the circle and its center. The stretch is between 0 and the radius, drawn from a hash of the last hidden point and the salts of the zones it lies in, and the cut falls on a recorded point, so ends scatter over a band. The draw must be:
-- fixed per end, since fresh draws over several reprocesses would average back to the edge;
-- secret, since with the code public the hidden point alone would let someone try candidate times;
-- within a radius past the edge, the bound `reprivacy`'s search relies on (§7). So a point farther out is passed over for the one before it, and a sparse recording's long first segment is cut on the segment.
-
-The edge is found by bisecting the leaving segment against "inside any zone", so overlapping circles need no special case. Clipping a clipped track changes nothing, which a track edit's second clip relies on (§4.7.7). A track entirely inside zones is stored with a NULL `trajectory`, zero metrics and no masks instead of being dropped, so it comes back when the zone goes.
+**Clipping** (`ingest.ClipEnds`) drops the leading points inside any zone and then a further stretch past the edge, and the same at the end, since three ends on the edge would fix the circle and its center. The stretch is fixed per end, secret and at most a radius, the bound `reprivacy`'s search relies on (§7); `clip.go` says how it is drawn. Clipping a clipped track changes nothing, which a track edit's second clip relies on (§4.7.7). A track entirely inside zones is stored with a NULL `trajectory`, zero metrics and no masks instead of being dropped, so it comes back when the zone goes.
 
 **Antimeridian.** Each longitude moves by whole turns to within 180° of the one before (`unwrapLons`), so 179.95 → −179.98 is stored as 179.95 → 180.02; otherwise the segment ran round the world, with masks in every z14 column. Everything that meets −180…180 wraps back: masks (`tilemath.SegmentTilesBuffered`, `fog.projectToTile`), tracks tiles and region matching (`geo.WrappedSQL`), written GPX (`parse.WrapLon`) and track edits (`TrackEdit.Apply` unwraps again, and `Validate` accepts ±540).
 
-**The queue** (`internal/worker`, whose comments cover the claim, attempts, panics and shutdown). A claim stamps `locked_at` in one short transaction and runs the job outside it, so a fresh `locked_at` keeps other loops off and a stale one (past `claimLease`) means its worker died; long jobs refresh it (`keepClaimed`).
-- **Three lanes**: render (`render_fog`, `WORKER_RENDER_CONCURRENCY` loops), long (`export`, one loop) and main (every other kind, `WORKER_CONCURRENCY`), so a minutes-long render or export never holds up an upload. The pool is sized to the loops (`db.OpenSized`).
-- **Fair per lane** (`claimQuery`): one job per account is considered, none from an account that has one of that lane claimed, and accounts go in order of when that lane last served them, never-served first. A new user's upload goes ahead of someone's thousandth file.
+**The queue** (`internal/worker`, whose package comment covers the claim, the three lanes and fairness): a render or export never holds up an upload, and a new user's upload goes ahead of someone's thousandth file.
 - One account's lanes run side by side. That is safe because of `dirty_gen` (§3.6), `EnqueueRenderFog` queuing behind a claimed render, and Pending activities staying out of composites (§4.2.5). Renders inside a job (track edit, reprivacy) take a per-account advisory lock (`lockRenders`), since a stale pass storing after a fresher one would leave its tile stale.
 - A deleted account's jobs are never claimed (§4.28). `worker_test.go` pins the fairness and lane rules.
 
@@ -252,11 +245,11 @@ flowchart LR
     P --> V["served: traced vector<br/>or tinted PNG"]
 ```
 
-**Storage.** Coverage is a bitmap, one single-channel 128 px PNG (~19 m a pixel) per touched z14 tile, because a per-request `ST_Union` of thousands of polygons is the scaling wall (ADR-0003). At 512 px pixels were most of a render's work and bytes for little visible gain; 64 px merges nearby tracks from z13 out; 256 px doubles the mask bytes for detail finer than GPS. Masks and tiles share the size, so compositing needs no resampling.
+**Storage.** Coverage is a bitmap, one single-channel 128 px PNG (~19 m a pixel) per touched z14 tile, because a per-request `ST_Union` of thousands of polygons is the scaling wall (ADR-0003); `internal/fog`'s package comment says why that size.
 
 **Stroke.** Each track is stroked about 48 m either side: wide enough that a walked neighbourhood clears between its streets (blocks are often 100–150 m deep), narrow enough not to merge parallel streets. The stroke needs the raw points, which is why masks are drawn per activity at ingest (§4.2.3). A tile counts as touched when the stroke reaches it, not only the line (`tilemath.SegmentTilesBuffered`, walked a column at a time over exact pixel coordinates); otherwise `gg` clipped the overflow without a sign.
 
-**Pyramid.** Each level up takes the brightest of four children, not their mean, so a place visited once stays clear at every zoom. Storing a tile marks its parent dirty in the same transaction. `RenderUser` renders z14 and then each level up, starting a level only once the one below is stored, so a pass cut off leaves parents dirty for the next. A render is mostly object-store round trips, so it runs them side by side (`PERFORMANCE.md`, 2026-10-08). A new activity dirties a few tiles, so the cost doesn't grow with history.
+**Pyramid.** Each level up takes the brightest of four children, not their mean, so a place visited once stays clear at every zoom. A new activity dirties a few tiles, so a render's cost doesn't grow with history.
 
 **After a drawing change** a deploy runs `rerender-coverage` (`DEPLOY.md`), which marks tiles dirty and queues a render per account instead of rendering, so it never races the worker. A change to the stroke, the tiles a track reaches or `TileSize` also needs `--masks`, which redraws masks from `DisplayedPoints` in tile order so concurrent redraws don't deadlock. Until then a tile of the wrong size is refused when read.
 
@@ -270,11 +263,11 @@ The inversion is the server's because MapLibre can't invert a raster (no `raster
 
 Heatmap shares Fog's masks, `fog_tiles` row, dirty flag and render; the server stores pass counts and the clients draw them (ADR-0046).
 
-**Stored**: per z14 tile, a 16-bit PNG counting the in-window, non-Pending activities whose stroke covers each pixel (`fog.heatCounts`). The stroke is narrowed by a pixel, to about 60 m, since Fog's width reads as smeared heat, and narrowed within its tile with edge pixels repeated so a track isn't cut short at a tile edge. Counted per activity, so a loop or an idle stop counts once. The pyramid keeps each block's busiest pixel. A tile with no passes stores nothing and its old object is removed (`storeTilePair`), so a deleted or aged-out activity doesn't linger.
+**Stored**: per z14 tile, a 16-bit PNG counting the in-window, non-Pending activities whose stroke covers each pixel (`fog.heatCounts`), so a loop or an idle stop counts once.
 
 **Served** as MapLibre heatmap circles from `/tiles/v1/heat-points/`: a point per non-empty cell, 64 to a tile side, weighted `log1p(count) / log1p(scale)`, log because most ground is crossed once or twice and a few places a hundred times. Up to z8 (`fog.HeatActivityMaxZoom`) a cell is a z14 tile or larger and counts distinct activities, read live from the mask rows; from z9 it counts the busiest pixel of the count tile one zoom up, since per-pixel counts can't be added up into a larger area's activities. Zooms up to z8 scale against their own busiest cell (`users.heat_point_caps`, stored by every render), never below `heatmap_cap`; finer zooms against `heatmap_cap`.
 
-**Each point is weighted for its neighbours** (`weighNeighbours`). MapLibre adds overlapping circles and its kernel peaks at about 0.4 of a weight, so a lone place read faint and a route hot. Dividing by what the neighbours add under MapLibre's kernel, `exp(-½ (3d/r)²)` at the clients' radius of 1.6 cells, with the clients' intensity of 2.5, makes each circle peak at its own weight. **The radius and intensity are the layers document's, and a test in `internal/fog` holds the radius to `heatRadiusCells`.**
+**Each point is weighted for its neighbours** (`weighNeighbours`), so that MapLibre's overlapping circles each peak at their own weight. **The radius and intensity are the layers document's, and a test in `internal/fog` holds the radius to `heatRadiusCells`.**
 
 **One query a tile**: up to z8 a grouped read of the account's own mask rows; from z9 the row and one object read, counted against the R2 budget. The MVT is encoded in Go, saving a round trip on the database the load tests found to be the bottleneck.
 
@@ -420,7 +413,7 @@ sequenceDiagram
 
 **The web flow** (`oauth.go`, shared by `google_auth.go` and `facebook_auth.go`) is the authorization-code flow run server-side with no provider script or library (ADR-0009); in a browser the callback sets the session cookie instead of the handoff. Round-trip state is one `SameSite=Lax` cookie. Every failure shows one generic message, the cause only in the log.
 
-**Google** adds PKCE. `resolveGoogleUser`, in one transaction: the `('google', sub)` identity; else a non-demo account with that email, linked, and if it was unverified also marked verified with its password, other identities, sessions and links removed, which closes pre-account takeover; else a new verified account. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`).
+**Google** adds PKCE, and is linked by verified email: `resolveGoogleUser` says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`).
 
 **Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook account made under a victim's address first is cleaned up by Google's unverified branch. On Android the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser`, `resolveGoogleUser` and the handoff SQL have no automated test, since the OAuth tests have no database harness.
 
@@ -432,11 +425,11 @@ sequenceDiagram
 
 **A real, read-only account**, so the demo runs the real auth, ingest and fog pipeline instead of a second one in the browser. **One shared account, recognized by its fixed id** (`DemoCustomerUserID`): the session lookup compares against it, which makes it read-only and exempt from verification, and every query that must skip the demo (password reset, Google's email match, Story recipients, `set-admin`) excludes the same id. `requireNotDemo` enforces read-only; disabled controls are a courtesy.
 
-**Seeded at deploy through the real ingest** (`seed-demo-customer`), since seeding per visitor would take minutes. `demo_data/manifest.json` carries what a file can't (names, photos, Stories, captures) and is applied on every run. Its keys are stable across deployments: a capture names its place by OSM type and id, not `spots.id`. `--reset` exists because the idempotent skip is blind to edits; it quiesces the worker for the account first, since a queued render rewrote tiles just deleted.
+**Seeded at deploy through the real ingest** (`seed-demo-customer`), since seeding per visitor would take minutes. `demo_data/manifest.json` carries what a file can't (names, photos, Stories, captures) and is applied on every run. Its keys are stable across deployments: a capture names its place by OSM type and id, not `spots.id`. `--reset` exists because the idempotent skip is blind to edits.
 
 **The export** (`export-demo-activities`) writes `DisplayedPoints`, never the original, because `demo_data/` is in a public repository: what zones and edits removed must be absent from the file. Captures are those between the run's first and last point, except places reaching into the owner's Private locations. Traps: the demo's own Private locations clip again when seeding, and two people's recordings of one outing both stay (§4.6), so export one.
 
-**Per-address limits key on `clientIP`**: the last `X-Forwarded-For` entry, believed only from a private or loopback peer, since Caddy replaces a client's own value. Keying on the peer behind Caddy was one limit for the whole site.
+**Per-address limits key on `clientIP`**, which reads Caddy's `X-Forwarded-For`.
 
 ### 4.19 Server-rendered pages (ADR-0012)
 
@@ -513,13 +506,13 @@ flowchart LR
 
 **Trails and dirt tracks are in the basemap's `roads` layer**, which the stock Protomaps style draws faintly. `buildStyle` splices `PATH_LAYER_IDS` right after that layer, always on, so the served documents carry them; **their ids are part of the served style's contract**, since the layers document's `bike-paths` group lifts them over the veil by id.
 
-**The bike kinds come from their own import** because the basemap has no paths below z13. **The extract keeps every way with one of the tags and `Kind` narrows it, so a new kind changes both.** A planet run deletes unseen rows behind the same too-many guard as Spots. Below z13 a way shorter than a pixel is dropped. A Go test holds the document's z9 minimum and source layer to the tile handler's.
+**The bike kinds come from their own import** because the basemap has no paths below z13. **The extract keeps every way with one of the tags and `Kind` narrows it, so a new kind changes both.** Below z13 a way shorter than a pixel is dropped. A Go test holds the document's z9 minimum and source layer to the tile handler's.
 
 **Every path paints over Fog and Heatmap**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and the export; under the veil, unridden paths showed at a fifth of their colour. Clients move only a layer still below; the web diffs every property first, since each change fires another `styledata` (`DEVELOPMENT.md`).
 
 ### 4.25 Spots (FR-15, ADR-0021)
 
-**The import** (`internal/spots`) maps osmium's area ids back to OSM's, so the upsert key is OSM's own. Each run stamps the rows it writes with `clock_timestamp()` (`now()` is shared within a transaction) and clears their retirement; a planet run retires unstamped places unless they are over 1% of the live ones, and then fails. **No row is ever deleted, so captures' cascade never fires on a refresh.** The version is bumped only if the upsert changed something, counted in the same statement.
+**The import** (`internal/spots`) retires the places a planet run didn't see, refusing to retire too many. **No row is ever deleted, so captures' cascade never fires on a refresh.** The version is bumped only if the upsert changed something.
 
 **The tiles are the same for every account.** A retired place is flagged and hidden unless captured, and the captured badge is styled from the account's capture list rather than baked in, which would need a bump per capture. **Show in this area** splits a view across the antimeridian into two boxes, whether its bounds come unwrapped (web) or wrapped (Android), and orders results named first, then by `md5(id)`, so the result limit thins the map evenly.
 
@@ -561,7 +554,7 @@ The routes are under `/v1/photos` because the mux rejects `/v1/activities/{id}/p
 
 ### 4.29 Downloading your data (FR-1.12)
 
-A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each track is written from `DisplayedPoints` and each raw payload once. **Each part goes to a temporary file and uploads with its size known**: given an unknown length, minio-go buffers about 537 MB per part. The archive is never reachable by a link alone: the email links to Settings, and a part is served only to its account, through `http.ServeContent` so a Range request resumes it. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
+A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each track is written from `DisplayedPoints` and each raw payload once. The archive is never reachable by a link alone: the email links to Settings, and a part is served only to its account, through `http.ServeContent` so a Range request resumes it. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
 
 ### 4.30 Each activity's own timezone (ADR-0035)
 
@@ -576,7 +569,7 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 ### 4.32 Service statistics
 
-**A daily snapshot, because past state can't be rebuilt**: `last_seen_at` holds only the latest visit, and a deleted account's row is gone. Once per UTC day the worker (`internal/stats`) stores each value in `daily_stats`; Grafana keeps about 14 days, so Postgres is the record. It takes only yesterday, so a missed day stays a gap. **Aggregates only**: the demo account is left out, and a country group standing for fewer than 5 accounts folds into `other`, judged by the accounts behind a value, not the value. Photo bytes count each `image_key` once. Object sizes are recorded as each object is written (`activities.raw_bytes`, `fog_tiles.bytes`), since asking R2 costs a request per object; mask sizes come from `pg_column_size`.
+**A daily snapshot, because past state can't be rebuilt**: `last_seen_at` holds only the latest visit, and a deleted account's row is gone. Once per UTC day the worker (`internal/stats`) stores each value in `daily_stats`; Grafana keeps about 14 days, so Postgres is the record. It takes only yesterday, so a missed day stays a gap. **Aggregates only**: the demo account is left out, and a country group standing for fewer than 5 accounts folds into `other`, judged by the accounts behind a value, not the value. Object sizes are recorded as each object is written (`activities.raw_bytes`, `fog_tiles.bytes`), since asking R2 costs a request per object.
 
 **Visits**: an account's first authenticated request each UTC day writes `last_seen_at` (never the demo's), and `web_seen_at` or `android_seen_at` with `android_build`, again when the build changes; the app's WebView marks neither. `android_builds_30d` shows when `MIN_ANDROID_BUILD` (§4.33) can rise.
 
@@ -617,7 +610,7 @@ Costs scale with users and donations with goodwill (`VISION.md` §4.3), so the s
 - **Raw payloads are kept as long as their activity**, since `reprivacy` and track edits re-parse them.
 - **Rate limits** (`httpapi/rate_limits.go`) are per account, except on the shared demo account, which counts per address. Tiles count per minute with a high ceiling, since pans and exports burst and one refused tile fails an export. Phone sync counts activities as well as requests, which bounds a sync-delete-sync loop that renders each time. The counts are in memory, per `api` process.
 - **Per-account limits** (ADR-0043, `account_limits.go`) count waiting ingest jobs by their size, so a queued import can't slip under, and count an original shared by split pieces once. The check takes no lock: a slight overshoot is harmless, and a lock would serialize an import. A Story copy is checked when accepted. `fitWithinLimits` lets a sync batch take what fits.
-- **The daily R2 budget** (ADR-0044, `internal/budget`) counts requests in `internal/storage`'s HTTP transport, since the bill counts what the client library sends underneath (listing pages, multipart parts, range reads). Each process adds its count to `r2_ops` every 30 s; the gate keeps its last answer when a read fails, so a database hiccup never stops the service. The API wraps the routes that touch the bucket (`httpapi/budget.go`), shared account cores return the refusal as their error, and the worker stops claiming the render lane, then the long lane. The basemap is outside it.
+- **The daily R2 budget** (ADR-0044, `internal/budget`) counts requests in `internal/storage`'s HTTP transport, since the bill counts what the client library sends underneath (listing pages, multipart parts, range reads). The API wraps the routes that touch the bucket (`httpapi/budget.go`), shared account cores return the refusal as their error, and the worker stops claiming the render lane, then the long lane. The basemap is outside it.
 - **Cost per active user** is measured from day one (`VISION.md` §5), from `last_seen_at` (§4.32).
 
 ### 5.8 Minimal deployment topology

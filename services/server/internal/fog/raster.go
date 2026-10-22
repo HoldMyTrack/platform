@@ -1,6 +1,3 @@
-// Package fog implements IMPLEMENTATION.md §4.2's precomputed raster
-// coverage mask, §4.1 steps 4 (the rendering half — dirty-marking lives in internal/ingest,
-// which has raw points in memory already) and 7 (re-rendering dirty tiles).
 package fog
 
 import (
