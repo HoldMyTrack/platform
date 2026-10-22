@@ -338,7 +338,7 @@ Recordings are candidates on the Sync tab (FR-3.2), sent only when ticked.
 - Any type syncs, `unknown` included; the overlap hint compares time, not type.
 - Edit sets name, description and type. The type picker lists the account's types, most used first, server's and phone's together, then the common ones not yet used; a new type is kept as typed, up to 50 characters. The type set becomes the account's default for the next recording.
 - Download GPX saves the track as GPX 1.1, with no storage permission.
-- A recording the server takes is deleted from the phone; a refused one stays listed and ticked.
+- A recording the server takes leaves the list but stays on the phone until it is on the map; if its ingest fails it is listed again, even after a restart. A refused one stays listed and ticked.
 - Delete asks first, since the copy is the only one.
 - The demo account can record, edit and delete, not send.
 

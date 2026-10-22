@@ -68,7 +68,7 @@ object Session {
     /** The one client-side signal for "this is the read-only demo account" — the same
      *  emptiness [email] already carries, named so every caller that needs to gate a mutating
      *  action (sync, in particular — `requireNotDemo`, `services/server/internal/httpapi/
-     *  auth.go`, rejects it server-side regardless) doesn't re-derive the check its own way. */
+     *  auth_session.go`, rejects it server-side regardless) doesn't re-derive the check its own way. */
     val isDemo: Boolean get() = isSignedIn && email.isEmpty()
 
     /**

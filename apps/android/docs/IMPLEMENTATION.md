@@ -151,7 +151,7 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 ### 4.3 Sending and landing
 
 - **`sync/SyncRunner.send`** sends sessions in batches below the server's cap, then each recording alone, deleting it from the phone once taken. The JSON is built from the route as read, never the simplified line. A failed request stops the run, leaving the rest ticked.
-- **`sync/SyncProgress` is process-wide**: it reads nothing from Health Connect, so it outlives the tab. While it holds anything and has a listener it polls `/v1/sync/known`: still processing stays, known and not processing has landed, neither has failed and a failed recording goes back into the phone's store. **A landing refetches the tracks tile at once**, since the tile version moves only after the coverage render that follows ingest.
+- **`sync/SyncProgress` is process-wide**: it reads nothing from Health Connect, so it outlives the tab. While it holds anything and has a listener it polls `/v1/sync/known` (`syncOutcome`). A sent recording stays in the store, marked, until it lands or fails; `resume` takes marked rows back after a restart. **A landing refetches the tracks tile at once**, since the tile version moves only after the coverage render that follows ingest.
 - **The candidates on the map**: the account's tracks step aside on the Sync tab. `map/Simplify` thins each route for drawing only, with speeds by the server's track-metrics rule on the coarser line, so a candidate's pace bands are smoother than the synced activity's.
 
 ### 4.4 File upload

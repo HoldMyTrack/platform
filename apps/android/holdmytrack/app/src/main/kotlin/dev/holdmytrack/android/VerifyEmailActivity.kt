@@ -19,7 +19,7 @@ import dev.holdmytrack.android.net.Session
  * "Check your email" — what a signed-in account whose address isn't confirmed yet sees instead
  * of the map, the app's counterpart of the web's `/verify-pending`. The server answers every
  * tile and sync request of such an account with `403 email_not_verified` (`requireVerified`,
- * `services/server/internal/httpapi/auth.go`), so the map would open with nothing on it and
+ * `services/server/internal/httpapi/auth_session.go`), so the map would open with nothing on it and
  * nothing on screen saying why.
  *
  * The link in the email is clicked in a browser, which the app never hears about, so this

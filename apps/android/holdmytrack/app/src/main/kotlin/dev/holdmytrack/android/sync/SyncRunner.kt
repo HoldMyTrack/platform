@@ -33,8 +33,7 @@ data class SyncReport(
  * Sends what the user ticked on the Sync tab (`docs/SPEC.md` FR-3.6, FR-3.8) to
  * `POST /v1/sync/activities`, and nothing else: an unticked candidate never reaches the server.
  * Health Connect sessions go in batches under `healthconnect`; each recording in a request of its
- * own under `recorded`, and is deleted from the phone once the server has it — it lives in the
- * account from then on.
+ * own under `recorded`, kept on the phone until its ingest lands ([SyncProgress]).
  *
  * Interrupting a run is safe: the server is idempotent on `(user_id, source, external_id)`, so
  * whatever was sent before the cut is simply known next time the list is read (`POST
@@ -102,11 +101,12 @@ class SyncRunner(
         return null
     }
 
-    /** Each ticked recording on its own; one that lands is deleted from the phone. */
+    /** Each ticked recording on its own; one the server takes is marked sent, and stays on the
+     *  phone until its ingest lands (`SyncProgress`). */
     private suspend fun sendRecordings(recordings: List<Candidate>, onProgress: (Int) -> Unit): String? {
         for (candidate in recordings) {
             flush(listOf(candidate), HoldMyTrackApi.SOURCE_RECORDED)?.let { return it }
-            if (candidate.key in landed) store.delete(candidate.externalId)
+            if (candidate.key in landed) store.markSent(candidate.externalId)
             onProgress(landed.size)
         }
         return null

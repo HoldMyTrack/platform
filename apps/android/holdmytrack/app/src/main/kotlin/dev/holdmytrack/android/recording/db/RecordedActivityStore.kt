@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
  * `FusedLocationProviderClient`, plain `OkHttp` over Retrofit).
  */
 internal class RecordingDbHelper(context: Context) :
-    SQLiteOpenHelper(context.applicationContext, "holdmytrack-recordings.db", null, 5) {
+    SQLiteOpenHelper(context.applicationContext, "holdmytrack-recordings.db", null, 6) {
 
     init {
         // `LiveRecordingJournal` writes on every GPS fix while other screens read the finished
@@ -40,7 +40,8 @@ internal class RecordingDbHelper(context: Context) :
                 distance_meters REAL NOT NULL,
                 duration_seconds INTEGER NOT NULL,
                 points_json TEXT NOT NULL,
-                created_at_ms INTEGER NOT NULL
+                created_at_ms INTEGER NOT NULL,
+                sent_at_ms INTEGER
             )
             """.trimIndent(),
         )
@@ -81,7 +82,7 @@ internal class RecordingDbHelper(context: Context) :
     // Version 3 changed no columns: a synced row is now deleted rather than kept with a
     // `synced` status, so upgrading clears the rows that status left behind — and keeps the
     // unsynced ones, which exist nowhere else. Version 4 added the journal's tables. Version 5
-    // dropped `sync_status`: a row is deleted once sent, so there is nothing left to mark.
+    // dropped `sync_status`. Version 6 added `sent_at_ms`: a sent row stays until its ingest lands.
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) {
             db.execSQL("DROP TABLE IF EXISTS $TABLE")
@@ -91,6 +92,7 @@ internal class RecordingDbHelper(context: Context) :
         if (oldVersion < 3) db.execSQL("DELETE FROM $TABLE WHERE sync_status = 'synced'")
         if (oldVersion < 4) createJournal(db)
         if (oldVersion < 5) db.execSQL("ALTER TABLE $TABLE DROP COLUMN sync_status")
+        if (oldVersion < 6) db.execSQL("ALTER TABLE $TABLE ADD COLUMN sent_at_ms INTEGER")
     }
 
     companion object {
@@ -102,9 +104,11 @@ internal class RecordingDbHelper(context: Context) :
 
 /**
  * Every local GPS recording not yet on the server — inserted by `RecordingService` on Stop,
- * listed, edited and sent from the Sync tab (`panel/SyncTab`, `sync/SyncRunner`), each row
- * deleted once the server has it. One instance per
- * caller is fine; `SQLiteOpenHelper` itself keeps the single underlying connection.
+ * listed, edited and sent from the Sync tab (`panel/SyncTab`, `sync/SyncRunner`). A sent row is
+ * marked rather than deleted, and deleted once its ingest lands (`sync/SyncProgress`): until then
+ * the phone holds the only copy, which a failed ingest has to be able to give back, even after
+ * the app was killed. One instance per caller is fine; `SQLiteOpenHelper` itself keeps the
+ * single underlying connection.
  *
  * **Every read and write is scoped to the currently signed-in account.** Recording works
  * whether or not anyone is signed in, and the app supports switching accounts on one device
@@ -142,10 +146,28 @@ class RecordedActivityStore(context: Context) {
         ).use { if (it.moveToFirst()) it.toRecord() else null }
     }
 
-    suspend fun all(): List<RecordedActivityRecord> = withContext(Dispatchers.IO) {
+    /** The recordings waiting to be sent, newest first. */
+    suspend fun all(): List<RecordedActivityRecord> = query("sent_at_ms IS NULL")
+
+    /** The recordings sent whose ingest hasn't been seen to land or fail. */
+    suspend fun sent(): List<RecordedActivityRecord> = query("sent_at_ms IS NOT NULL")
+
+    private suspend fun query(where: String) = withContext(Dispatchers.IO) {
         helper.readableDatabase.query(
-            RecordingDbHelper.TABLE, null, "account = ?", arrayOf(account()), null, null, "started_at_ms DESC",
+            RecordingDbHelper.TABLE, null, "account = ? AND $where", arrayOf(account()), null, null, "started_at_ms DESC",
         ).use { cursor -> buildList { while (cursor.moveToNext()) add(cursor.toRecord()) } }
+    }
+
+    /** The server took [id]: off the waiting list, kept until its ingest lands. */
+    suspend fun markSent(id: String) = setSent(id, System.currentTimeMillis())
+
+    /** [id]'s ingest failed: waiting to be sent again. */
+    suspend fun unmarkSent(id: String) = setSent(id, null)
+
+    private suspend fun setSent(id: String, at: Long?) = withContext(Dispatchers.IO) {
+        val values = ContentValues().apply { if (at == null) putNull("sent_at_ms") else put("sent_at_ms", at) }
+        helper.writableDatabase.update(RecordingDbHelper.TABLE, values, "id = ? AND account = ?", arrayOf(id, account()))
+        Unit
     }
 
     /** Removes every recording of the signed-in account — its account was just deleted
@@ -156,9 +178,8 @@ class RecordedActivityStore(context: Context) {
         Unit
     }
 
-    /** Removes a row — the user's Delete on the Sync tab (the only copy, since nothing here has
-     *  synced), or `SyncRunner` once the server has accepted it and the activity lives there
-     *  instead. */
+    /** Removes a row — the user's Delete on the Sync tab, or `SyncProgress` once its ingest has
+     *  landed and the activity lives on the server instead. */
     suspend fun delete(id: String) = withContext(Dispatchers.IO) {
         helper.writableDatabase.delete(RecordingDbHelper.TABLE, "id = ? AND account = ?", arrayOf(id, account()))
         Unit

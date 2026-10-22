@@ -18,9 +18,10 @@ import kotlinx.coroutines.launch
  * queues each activity and answers at once, and until the worker has done it the activity is
  * neither on the phone's list nor on the map. Each stays here, and on the Sync tab as "Adding to
  * your map…", until `POST /v1/sync/known` says its job has ended: known and not processing, it
- * has landed — [addListener]'s map reads its list and tiles again; in neither, its job failed —
- * it goes back on the list, a recording back in the phone's store, since the phone held its only
- * copy.
+ * has landed — [addListener]'s map reads its list and tiles again, and a recording leaves the
+ * phone's store; in neither, its job failed — it goes back on the list, a recording back among
+ * the store's unsent ones, since the phone holds its only copy. A recording sent before the app
+ * was killed is picked up again from the store ([resume]).
  *
  * Process-wide rather than the tab's, like `imports/FileImports`: the tab's reads and sends stop
  * when it leaves the screen (Health Connect's routes can't be read in the background), but this
@@ -79,6 +80,30 @@ object SyncProgress {
         }
     }
 
+    /** The account [resume] last read the store's sent recordings for. */
+    private var resumedFor: String? = null
+
+    /** Takes back the recordings the store says were sent, once per account: what a killed
+     *  process was tracking. */
+    fun resume(context: Context) {
+        val email = Session.email
+        if (email == null || resumedFor == email) return
+        resumedFor = email
+        val store = RecordedActivityStore(context.applicationContext)
+        scope.launch {
+            val sent = try {
+                store.sent()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "could not read the sent recordings", e)
+                resumedFor = null
+                return@launch
+            }
+            add(context, sent.map { SyncCandidates.fromRecording(it) })
+        }
+    }
+
     /** What failed since this was last asked — once each. */
     fun takeFailed(): List<Candidate> {
         if (!forThisAccount()) return emptyList()
@@ -124,14 +149,16 @@ object SyncProgress {
                 continue
             }
             for (candidate in sent) {
-                if (candidate.externalId in answer.processing) continue
+                val outcome = syncOutcome(candidate.externalId, answer.known, answer.processing) ?: continue
                 inFlight.remove(candidate.key)
                 changed = true
-                if (candidate.externalId in answer.known) {
+                val recording = (candidate.origin as? Recording)?.record?.id
+                if (outcome == Outcome.LANDED) {
                     landed = true
+                    recording?.let { settle(it) { store?.delete(it) } }
                 } else {
                     failed += candidate
-                    (candidate.origin as? Recording)?.let { restore(it) }
+                    recording?.let { settle(it) { store?.unmarkSent(it) } }
                 }
             }
         }
@@ -139,14 +166,25 @@ object SyncProgress {
         if (changed) changed()
     }
 
-    /** A recording the server couldn't take is the phone's again: it was deleted once sent. */
-    private suspend fun restore(recording: Recording) {
+    /** Applies a recording's outcome to the store. A write that fails leaves the row marked sent,
+     *  for the next [resume] to settle. */
+    private suspend fun settle(id: String, write: suspend () -> Unit) {
         try {
-            store?.insert(recording.record)
+            write()
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.w(TAG, "could not put a failed recording back", e)
+            Log.w(TAG, "could not settle sent recording $id", e)
         }
     }
+}
+
+enum class Outcome { LANDED, FAILED }
+
+/** What `POST /v1/sync/known`'s answer means for one sent activity: still at work (null), landed,
+ *  or failed — known and not processing is on the map, in neither its job ended without one. */
+fun syncOutcome(externalId: String, known: Collection<String>, processing: Collection<String>): Outcome? = when (externalId) {
+    in processing -> null
+    in known -> Outcome.LANDED
+    else -> Outcome.FAILED
 }

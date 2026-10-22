@@ -1,7 +1,10 @@
 package httpapi
 
 import (
+	"net"
 	"net/http"
+	"strings"
+	"sync"
 	"sync/atomic"
 	"time"
 )
@@ -91,4 +94,118 @@ func (s *Server) SetSignupsPerHour(n int) {
 // every account's count afresh.
 func (s *Server) SetTilesPerMinute(n int) {
 	s.tileLimiter = newFixedWindowLimiter(n, time.Minute)
+}
+
+type fixedWindowLimiter struct {
+	mu     sync.Mutex
+	limit  int
+	window time.Duration
+	counts map[string]*windowCount
+}
+
+type windowCount struct {
+	count      int
+	windowFrom time.Time
+}
+
+func newFixedWindowLimiter(limit int, window time.Duration) *fixedWindowLimiter {
+	return &fixedWindowLimiter{limit: limit, window: window, counts: make(map[string]*windowCount)}
+}
+
+// allow counts one request against key and reports whether it is within the limit — the
+// limit on every request, for the endpoints that mail or create something.
+func (l *fixedWindowLimiter) allow(key string) bool {
+	if rateLimitsOff.Load() {
+		return true
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	c := l.current(key)
+	if c.count >= l.limit {
+		return false
+	}
+	c.count++
+	return true
+}
+
+// allowN is allow for n at once: it counts all n and reports true when they fit in what's left
+// of key's window, and counts nothing and reports false when they don't.
+func (l *fixedWindowLimiter) allowN(key string, n int) bool {
+	if rateLimitsOff.Load() {
+		return true
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	c := l.current(key)
+	if c.count+n > l.limit {
+		return false
+	}
+	c.count += n
+	return true
+}
+
+// exceeded and hit split allow for a limit on failures only (sign-in): exceeded checks
+// without counting, hit counts one.
+func (l *fixedWindowLimiter) exceeded(key string) bool {
+	if rateLimitsOff.Load() {
+		return false
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.current(key).count >= l.limit
+}
+
+func (l *fixedWindowLimiter) hit(key string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.current(key).count++
+}
+
+// current is key's count in its live window, starting a fresh one if it has none. It also
+// sweeps every stale entry on each call, so the map stays bounded by recently active callers
+// rather than growing forever from one-off addresses that never return. The caller holds mu.
+func (l *fixedWindowLimiter) current(key string) *windowCount {
+	now := time.Now()
+	for k, c := range l.counts {
+		if now.Sub(c.windowFrom) > l.window {
+			delete(l.counts, k)
+		}
+	}
+	c, ok := l.counts[key]
+	if !ok {
+		c = &windowCount{windowFrom: now}
+		l.counts[key] = c
+	}
+	return c
+}
+
+// clientIP is the address a per-caller limit keys on. In production every request arrives
+// through Caddy (apps/web/docker/Caddyfile; api publishes no port), so RemoteAddr is Caddy's
+// container address for every visitor, and a limit keyed on it was one limit shared by the
+// whole site. Caddy, trusting no proxy ahead of it, discards any X-Forwarded-For a client
+// sends and sets its own, the address it was connected from; the last entry is taken, so a
+// proxy that appends instead would still be read correctly. The header is believed only from
+// a private or loopback peer — the proxy on the container network; a caller reaching this
+// server directly gets its own RemoteAddr and can't claim a different one.
+func clientIP(r *http.Request) string {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	peer := net.ParseIP(host)
+	if peer == nil || !(peer.IsPrivate() || peer.IsLoopback()) {
+		return host
+	}
+	values := r.Header.Values("X-Forwarded-For")
+	if len(values) == 0 {
+		return host
+	}
+	last := values[len(values)-1]
+	if i := strings.LastIndex(last, ","); i >= 0 {
+		last = last[i+1:]
+	}
+	if ip := net.ParseIP(strings.TrimSpace(last)); ip != nil {
+		return ip.String()
+	}
+	return host
 }

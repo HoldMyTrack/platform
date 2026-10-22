@@ -199,8 +199,7 @@ class ActivitiesPanel(
 
     /** Add to story's menu while it's open, and the target it was opened over — a different
      *  target closes it, as on the web. */
-    private var storyPopup: PopupWindow? = null
-    private var storyPopupTarget: List<String> = emptyList()
+    private val storyMenu = AddToStoryMenu(context, onStoryCreated, onStoriesChanged)
 
     init {
         list.layoutManager = LinearLayoutManager(context)
@@ -279,7 +278,7 @@ class ActivitiesPanel(
                 onFly(state.targets.filter { it.id !in hidden })
             }
             actions.edit.setOnClickListener { state.targets.takeIf { it.isNotEmpty() }?.let(onEdit) }
-            actions.addToStory.setOnClickListener { anchor -> if (storyPopup == null) showAddToStory(anchor) else storyPopup?.dismiss() }
+            actions.addToStory.setOnClickListener { anchor -> if (storyMenu.target == null) showAddToStory(anchor) else storyMenu.dismiss() }
             actions.delete.setOnClickListener { confirmDelete() }
         }
         distance.setOnClickListener { showDistanceFilter() }
@@ -430,7 +429,7 @@ class ActivitiesPanel(
 
     fun dismissPopups() {
         typePopup?.dismiss()
-        storyPopup?.dismiss()
+        storyMenu.dismiss()
         distancePopup?.dismiss()
     }
 
@@ -514,7 +513,7 @@ class ActivitiesPanel(
             PanelFormat.totalDistance(res, targets.sumOf { it.distanceMeters ?: 0.0 }),
         )
         typePopup?.let { renderTypeRows(it.contentView) }
-        if (storyPopup != null && targets.map { it.id } != storyPopupTarget) storyPopup?.dismiss()
+        if (storyMenu.target.let { it != null && it != targets.map { t -> t.id } }) storyMenu.dismiss()
     }
 
     /** "6 activities · 74.8 km · 9h 6m", what's listed under the range. */
@@ -564,15 +563,14 @@ class ActivitiesPanel(
     }
 
     private fun renderToolbar(listed: List<Activity>) {
-        val checkedCount = listed.count { it.id in state.checked }
-        val allChecked = listed.isNotEmpty() && checkedCount == listed.size
+        val all = ToolbarRules.checkAll(listed.size, listed.count { it.id in state.checked })
         checkAll.isEnabled = listed.isNotEmpty()
-        checkAll.checkedState = when {
-            allChecked -> MaterialCheckBox.STATE_CHECKED
-            checkedCount > 0 -> MaterialCheckBox.STATE_INDETERMINATE
-            else -> MaterialCheckBox.STATE_UNCHECKED
+        checkAll.checkedState = when (all) {
+            ToolbarRules.CheckAll.ALL -> MaterialCheckBox.STATE_CHECKED
+            ToolbarRules.CheckAll.SOME -> MaterialCheckBox.STATE_INDETERMINATE
+            ToolbarRules.CheckAll.NONE -> MaterialCheckBox.STATE_UNCHECKED
         }
-        checkAll.contentDescription = res.getString(if (allChecked) R.string.panel_uncheck_all else R.string.panel_check_all)
+        checkAll.contentDescription = res.getString(if (all == ToolbarRules.CheckAll.ALL) R.string.panel_uncheck_all else R.string.panel_check_all)
         selectMenu.isEnabled = listed.isNotEmpty()
 
         // The toolbar names its target, so which of the group and the selected row it acts on
@@ -591,45 +589,31 @@ class ActivitiesPanel(
         for (actions in listOf(toolbarActions, cardActions)) describeActions(actions, targets, targetName, noTarget, anyHidden)
     }
 
+    /** Each action says what it would do, or why it can't (as the web's do): disabled actions
+     *  stay visible. */
     private fun describeActions(actions: Actions, targets: List<Activity>, targetName: String?, noTarget: String, anyHidden: Boolean) {
+        val use = ToolbarRules.actions(targets.size, targets.any { it.pending }, Session.isDemo)
+        fun text(of: ToolbarRules.Use, demo: Int, ready: () -> String) = when (of) {
+            ToolbarRules.Use.DEMO -> res.getString(demo)
+            ToolbarRules.Use.NO_TARGET -> noTarget
+            ToolbarRules.Use.READY, ToolbarRules.Use.PENDING -> ready()
+        }
+        fun ToolbarRules.Use.enabled() = this == ToolbarRules.Use.READY
         describe(
             actions.visibility,
-            targetName?.let { res.getString(if (anyHidden) R.string.panel_show_target else R.string.panel_hide_target, it) } ?: noTarget,
-            enabled = targetName != null,
+            text(use.visibility, 0) { res.getString(if (anyHidden) R.string.panel_show_target else R.string.panel_hide_target, targetName) },
+            use.visibility.enabled(),
         )
-        // The demo account can look but not change (the server's requireNotDemo): both stay
-        // visible, disabled, saying why — as the web's do.
-        val demo = Session.isDemo
         describe(
             actions.edit,
-            when {
-                demo -> res.getString(R.string.panel_demo_edit)
-                targetName == null -> noTarget
-                targets.size == 1 -> res.getString(R.string.panel_edit_one, targetName)
-                else -> res.getString(R.string.panel_edit_many, targetName)
+            text(use.edit, R.string.panel_demo_edit) {
+                res.getString(if (targets.size == 1) R.string.panel_edit_one else R.string.panel_edit_many, targetName)
             },
-            enabled = !demo && targetName != null,
+            use.edit.enabled(),
         )
-        describe(
-            actions.addToStory,
-            when {
-                demo -> res.getString(R.string.story_demo_add)
-                targetName == null -> noTarget
-                else -> res.getString(R.string.story_add_target, targetName)
-            },
-            enabled = !demo && targetName != null,
-        )
-        // A Pending row can't be deleted until its reprocess lands: the job would race it.
-        describe(
-            actions.delete,
-            when {
-                demo -> res.getString(R.string.panel_demo_delete)
-                targetName == null -> noTarget
-                else -> res.getString(R.string.panel_delete_target, targetName)
-            },
-            enabled = !demo && targetName != null && targets.none { it.pending },
-        )
-        describe(actions.focus, targetName?.let { res.getString(R.string.panel_focus_target, it) } ?: noTarget, enabled = targetName != null)
+        describe(actions.addToStory, text(use.addToStory, R.string.story_demo_add) { res.getString(R.string.story_add_target, targetName) }, use.addToStory.enabled())
+        describe(actions.delete, text(use.delete, R.string.panel_demo_delete) { res.getString(R.string.panel_delete_target, targetName) }, use.delete.enabled())
+        describe(actions.focus, text(use.focus, 0) { res.getString(R.string.panel_focus_target, targetName) }, use.focus.enabled())
     }
 
     /** The master checkbox's ▾ (the web's `.select-menu`): All, None and Invert over the listed
@@ -664,80 +648,11 @@ class ActivitiesPanel(
         return res.getString(R.string.panel_group_summary, name, PanelFormat.totalDistance(res, targets.sumOf { it.distanceMeters ?: 0.0 }))
     }
 
-    /**
-     * Add to story's menu under its button (`docs/SPEC.md` FR-14): New story…, then every
-     * Story, newest first — read each time the menu opens — with how many activities it holds.
-     * One that already holds all of the target is ticked and can't be picked. Picking a Story
-     * adds the target to it in one request and closes the menu; a failure stays in the menu.
-     */
-    @SuppressLint("InflateParams") // A popup's content has no parent to inflate against.
+    /** Opens Add to story's menu ([AddToStoryMenu]) over the toolbar's target. */
     private fun showAddToStory(anchor: View) {
         val targets = state.targets
         if (targets.isEmpty() || Session.isDemo) return
-        val ids = targets.map { it.id }
-        val content = LayoutInflater.from(context).inflate(R.layout.popup_story_menu, null)
-        val rows = content.findViewById<LinearLayout>(R.id.story_menu_rows)
-        val note = content.findViewById<TextView>(R.id.story_menu_note)
-        fun showNote(text: String, failed: Boolean) {
-            note.text = text
-            note.setTextColor(context.getColor(if (failed) R.color.hmt_danger else R.color.hmt_ink_meta))
-            note.visibility = View.VISIBLE
-        }
-        val popup = PopupWindow(content, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        content.findViewById<View>(R.id.story_menu_new).setOnClickListener {
-            popup.dismiss()
-            StoryDialog.create(context, targetSummary(targets), ids, onStoryCreated)
-        }
-        showNote(res.getString(R.string.panel_loading), failed = false)
-        HoldMyTrackApi.stories { result ->
-            if (storyPopup !== popup) return@stories
-            result.onSuccess { stories ->
-                note.visibility = View.GONE
-                content.findViewById<View>(R.id.story_menu_divider).visibility = if (stories.isEmpty()) View.GONE else View.VISIBLE
-                for (story in stories) {
-                    val row = LayoutInflater.from(context).inflate(R.layout.item_type_filter, rows, false)
-                    val holdsAll = story.activityIds.containsAll(ids)
-                    val count = row.findViewById<TextView>(R.id.type_filter_count)
-                    row.findViewById<MaterialCheckBox>(R.id.type_filter_check).isChecked = holdsAll
-                    row.findViewById<TextView>(R.id.type_filter_label).text = story.name
-                    count.text = PanelFormat.count(res, story.activityIds.size)
-                    row.isEnabled = !holdsAll
-                    row.alpha = if (holdsAll) DISABLED_ROW_ALPHA else 1f
-                    row.contentDescription = if (holdsAll) "${story.name}, ${res.getString(R.string.story_holds_all)}" else story.name
-                    row.setOnClickListener {
-                        count.setText(R.string.story_adding)
-                        HoldMyTrackApi.changeStoryActivities(story.id, ids, add = true) { added ->
-                            if (storyPopup !== popup) return@changeStoryActivities
-                            added.onSuccess {
-                                popup.dismiss()
-                                onStoriesChanged()
-                            }.onFailure { failure ->
-                                count.text = PanelFormat.count(res, story.activityIds.size)
-                                showNote(failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.story_save_failed), failed = true)
-                            }
-                        }
-                    }
-                    rows.addView(row)
-                }
-                // About twelve rows, then the list scrolls, as the Type dropdown's does.
-                val scroll = content.findViewById<ScrollView>(R.id.story_menu_scroll)
-                rows.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
-                val max = (TYPE_LIST_MAX_DP * res.displayMetrics.density).toInt()
-                scroll.layoutParams = scroll.layoutParams.apply {
-                    height = if (rows.measuredHeight > max) max else ViewGroup.LayoutParams.WRAP_CONTENT
-                }
-            }.onFailure { failure ->
-                showNote(failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.story_load_failed), failed = true)
-            }
-        }
-        popup.elevation = res.getDimension(R.dimen.hmt_space_8)
-        popup.setOnDismissListener {
-            storyPopup = null
-            storyPopupTarget = emptyList()
-        }
-        storyPopup = popup
-        storyPopupTarget = ids
-        popup.showAsDropDown(anchor, 0, res.getDimensionPixelSize(R.dimen.hmt_space_8))
+        storyMenu.show(anchor, targets.map { it.id }, targetSummary(targets))
     }
 
     /**
@@ -995,7 +910,8 @@ class ActivitiesPanel(
         onOpenStory(id)
     }
 
-    private companion object {
+    internal companion object {
+        /** About twelve rows, then a dropdown's list scrolls. */
         const val TYPE_LIST_MAX_DP = 192
         const val DISTANCE_POPUP_DP = 288
         const val SNAP_METERS = 1.0
@@ -1004,7 +920,6 @@ class ActivitiesPanel(
             BottomSheetBehavior.STATE_HALF_EXPANDED,
             BottomSheetBehavior.STATE_EXPANDED,
         )
-        const val DISABLED_ROW_ALPHA = 0.5f
         const val SELECT_ALL = 1
         const val SELECT_NONE = 2
         const val SELECT_INVERT = 3

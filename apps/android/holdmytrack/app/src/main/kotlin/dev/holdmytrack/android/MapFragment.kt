@@ -747,6 +747,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         super.onStart()
         mapView.onStart()
         SyncProgress.addListener(syncProgressListener)
+        SyncProgress.resume(requireContext())
         recording.start()
     }
 
