@@ -12,11 +12,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Several Migrate calls at once on an empty database all succeed, each migration applied
-// once: the advisory lock makes them take turns. Reads TEST_DATABASE_URL and skips without
-// it, like the other database tests (docs/DEVELOPMENT.md), and works in a database of its
-// own, created and dropped here, so every migration is new to it.
-func TestMigrateConcurrent(t *testing.T) {
+// scratchDatabase creates an empty database for one test and drops it afterwards; it reads
+// TEST_DATABASE_URL and skips without it.
+func scratchDatabase(t *testing.T) *pgxpool.Config {
+	t.Helper()
 	url := os.Getenv("TEST_DATABASE_URL")
 	if url == "" {
 		t.Skip("TEST_DATABASE_URL not set")
@@ -42,6 +41,14 @@ func TestMigrateConcurrent(t *testing.T) {
 		t.Fatalf("parse url: %v", err)
 	}
 	cfg.ConnConfig.Database = name
+	return cfg
+}
+
+// Several Migrate calls at once on an empty database all succeed, each migration applied
+// once: the advisory lock makes them take turns.
+func TestMigrateConcurrent(t *testing.T) {
+	ctx := context.Background()
+	cfg := scratchDatabase(t)
 
 	const callers = 4
 	errs := make([]error, callers)
@@ -49,7 +56,7 @@ func TestMigrateConcurrent(t *testing.T) {
 	for i := range callers {
 		pool, err := pgxpool.NewWithConfig(ctx, cfg)
 		if err != nil {
-			t.Fatalf("open %s: %v", name, err)
+			t.Fatalf("open %s: %v", cfg.ConnConfig.Database, err)
 		}
 		t.Cleanup(pool.Close)
 		wg.Add(1)
@@ -63,5 +70,33 @@ func TestMigrateConcurrent(t *testing.T) {
 		if err != nil {
 			t.Errorf("caller %d: %v", i, err)
 		}
+	}
+}
+
+// A database the replaced migrations built gets the baseline recorded, not run.
+func TestMigrateRecordsTheBaselineOverItsMigrations(t *testing.T) {
+	ctx := context.Background()
+	pool, err := pgxpool.NewWithConfig(ctx, scratchDatabase(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(pool.Close)
+	for _, q := range []string{
+		`CREATE TABLE schema_migrations (filename TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`,
+		`INSERT INTO schema_migrations (filename) VALUES ('0001_users_and_auth.sql'), ('` + baselineCovers + `')`,
+	} {
+		if _, err := pool.Exec(ctx, q); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := Migrate(ctx, pool); err != nil {
+		t.Fatalf("migrate: %v", err)
+	}
+	var recorded, ran bool
+	if err := pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE filename = $1), to_regclass('users') IS NOT NULL`, baselineFile).Scan(&recorded, &ran); err != nil {
+		t.Fatal(err)
+	}
+	if !recorded || ran {
+		t.Errorf("baseline recorded %v, ran %v; want recorded and not run", recorded, ran)
 	}
 }

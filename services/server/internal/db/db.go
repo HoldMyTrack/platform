@@ -1,10 +1,7 @@
-// Package db owns the Postgres pool and a small embedded migration runner.
-//
-// Open decision recorded in services/server/README.md: golang-migrate / goose / tern vs a
-// small embedded runner. Chose the embedded runner — at two migration files, a dependency
-// whose entire job is "read embedded SQL files in order, skip the ones already applied" is
-// not worth pulling in a library for. The one hard requirement from the README (works from
-// go:embed, runs as `holdmytrack migrate`) is satisfied without one.
+// Package db owns the Postgres pool and a small embedded migration runner: what a migration
+// library does, reading embedded SQL files in order and skipping the applied ones, fits in a page
+// here (services/server/README.md). The runner also knows the baseline, which replaced the first
+// 45 migrations: a database they built records it without running it.
 package db
 
 import (
@@ -13,6 +10,7 @@ import (
 	"io/fs"
 	"sort"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/HoldMyTrack/platform/services/server/migrations"
@@ -92,14 +90,22 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 	sort.Strings(names) // 0001_..., 0002_..., ... — filename order is application order.
 
-	for _, name := range names {
-		var already bool
-		if err := conn.QueryRow(ctx,
-			`SELECT EXISTS (SELECT 1 FROM schema_migrations WHERE filename = $1)`, name,
-		).Scan(&already); err != nil {
-			return fmt.Errorf("db: check %s: %w", name, err)
+	recorded, err := recordedMigrations(ctx, conn)
+	if err != nil {
+		return err
+	}
+	switch baselineStep(recorded) {
+	case baselineRecord:
+		if _, err := conn.Exec(ctx, `INSERT INTO schema_migrations (filename) VALUES ($1)`, baselineFile); err != nil {
+			return fmt.Errorf("db: record %s: %w", baselineFile, err)
 		}
-		if already {
+		recorded[baselineFile] = true
+	case baselineRefuse:
+		return fmt.Errorf("db: the database stopped partway through the migrations %s replaced; migrate it with a build from before %s first", baselineFile, baselineFile)
+	}
+
+	for _, name := range names {
+		if recorded[name] {
 			continue
 		}
 
@@ -127,4 +133,47 @@ func Migrate(ctx context.Context, pool *pgxpool.Pool) error {
 		}
 	}
 	return nil
+}
+
+// baselineFile holds the schema the migrations up to baselineCovers built, which it replaced.
+const (
+	baselineFile   = "0045_baseline.sql"
+	baselineCovers = "0045_activity_pending_index.sql"
+)
+
+type baselineAction int
+
+const (
+	baselineRun    baselineAction = iota // a new database, or one that has it already
+	baselineRecord                       // the schema exists: mark the baseline applied
+	baselineRefuse                       // part of the replaced migrations: no file can finish them
+)
+
+// baselineStep says what Migrate does about the baseline, given the filenames a database has
+// recorded.
+func baselineStep(recorded map[string]bool) baselineAction {
+	switch {
+	case recorded[baselineFile] || len(recorded) == 0:
+		return baselineRun
+	case recorded[baselineCovers]:
+		return baselineRecord
+	default:
+		return baselineRefuse
+	}
+}
+
+func recordedMigrations(ctx context.Context, conn *pgxpool.Conn) (map[string]bool, error) {
+	rows, err := conn.Query(ctx, `SELECT filename FROM schema_migrations`)
+	if err != nil {
+		return nil, fmt.Errorf("db: read schema_migrations: %w", err)
+	}
+	names, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, fmt.Errorf("db: read schema_migrations: %w", err)
+	}
+	recorded := make(map[string]bool, len(names))
+	for _, n := range names {
+		recorded[n] = true
+	}
+	return recorded, nil
 }
