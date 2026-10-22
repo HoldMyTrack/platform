@@ -22,14 +22,14 @@ Production requires a verified email (`SPEC.md` FR-1.8), so test accounts are cr
 For the run, the same kind of override raises three limits, which go back to their defaults afterwards:
 - `UPLOADS_PER_HOUR` (say to 100000): `seed` and `import` send far more than an account's 100 files an hour (`SPEC.md` FR-3.1).
 - `TILES_PER_MINUTE`: `browse` runs several visitors per account, past one account's 1,200 tiles a minute (`SPEC.md` FR-4.15).
-- `R2_DAILY_BUDGET_USD`: the run's R2 requests count toward the daily budget (`DEPLOY.md` §4), whose stages would pause renders and refuse uploads mid-test.
+- `R2_DAILY_BUDGET_USD`, on `api` and `worker`, which both apply it: the run's R2 requests count toward the daily budget (`DEPLOY.md` §4), whose stages would pause renders and refuse uploads mid-test. Restore it after midnight UTC: the run's requests stay in that day's spend, and a lower budget the same day puts every account under the stages it crosses (`SPEC.md` FR-17.1).
 
 Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATION.md` §4.28) removes their rows and objects. Check that no test row or pending job is left.
 
 ### Scenarios
 
 - **Seed**: `seed` uploads the 45 demo tracks (`internal/httpapi/demo_data`) to every account, about 945 jobs, and the queue is timed to empty. Three tracks cross 200+ z14 tiles each (the "2026-01-22 Vietnam" drive 756).
-- **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal, Fog and Heatmap and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A view costs 2.3–4 requests with the cache, about 7.5 cold.
+- **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal, Fog and Heatmap and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A Spots visitor at z10–12 asks "Show in this area" on one view in three (`SPEC.md` FR-15.5), reported as `spots-area`. A view costs 2.3–4 requests with the cache, about 7.5 cold.
 - **Import**: `gen 5 1000` then `import 5`: five accounts each upload a 1,000-track set at once, one file at a time as the web's Upload menu does. Two minutes in, and again deep into the backlog, `probe` uploads one track from another account and times it to processed, the fairness check. A 12-person `browse` runs meanwhile.
 - **Stop** a step on more than 2% errors, a p95 over 5 s on two consecutive steps, under 10% memory available, or an out-of-memory kill.
 
