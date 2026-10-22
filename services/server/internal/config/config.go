@@ -132,7 +132,7 @@ func Load() (Config, error) {
 	c.SkipEmailVerification = env("SKIP_EMAIL_VERIFICATION", "") == "true"
 	if c.BasemapOrigin = env("BASEMAP_ORIGIN", ""); c.BasemapOrigin == "" {
 		// Deliberately derived from AppBaseURL rather than given its own default, for the
-		// same reason auth.go derives the session cookie's Secure flag from it: two env
+		// same reason auth_session.go derives the session cookie's Secure flag from it: two env
 		// vars that must agree are two env vars that can disagree.
 		c.BasemapOrigin = c.AppBaseURL
 	}

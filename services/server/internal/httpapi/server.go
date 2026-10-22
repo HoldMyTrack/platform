@@ -133,7 +133,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/auth/google/token"), s.handleGoogleToken)
 	s.mux.HandleFunc(route("POST", "/auth/handoff"), s.handleAuthHandoff)
 	// Plain requireAuth, not requireVerified — these two exist specifically to help an
-	// account that hasn't verified yet (auth.go's own doc comments on each).
+	// account that hasn't verified yet (auth_email.go's own doc comments on each).
 	s.mux.HandleFunc(route("POST", "/auth/resend-verification"), s.requireAuth(s.handleResendVerification))
 	s.mux.HandleFunc(route("PATCH", "/auth/email"), s.requireAuth(s.handleChangeEmail))
 	// requireNotDemo below: account/activity mutations docs/ROADMAP.md's "Email verification

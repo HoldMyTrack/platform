@@ -10,7 +10,7 @@ import (
 
 // The sign-in, sign-up, password-reset and email-verification pages (ADR-0012,
 // IMPLEMENTATION.md §4.19). Each form calls the same account core its JSON endpoint does
-// (auth.go: checkPassword, createAccount, resetPassword, verifyEmail, …), so the two can't
+// (auth.go, auth_email.go: checkPassword, createAccount, resetPassword, verifyEmail, …), so the two can't
 // drift; what differs is only the answer — a redirect and a cookie here, instead of JSON. A
 // failed form is rendered again with the message and the email kept, at the failure's own
 // status. Every form POST is behind sameOrigin.
