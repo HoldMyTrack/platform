@@ -62,6 +62,8 @@ The server decides what the map shows, how it looks and every rule about the dat
 
 New code puts what it decides (which screen a session goes to, whether a day is in range, where a link leads) in functions that take values and return values, with no View, `Context`, map, network or timer in them, and unit-tests them in the same change. Code touched for another reason gets the same treatment. The wiring around them stays thin, covered by a few end-to-end flows instead of mocks.
 
+A rule every client applies has its cases in `testdata/client-rules/` (ADR-0049): change the cases first, then every client's implementation, in the same pull request, and fix a bug in a rule by adding the failing case.
+
 A file past about 600 lines is a split candidate: when adding to one, move the touched feature out first. This is not a blocker, and an API client or a parser can stay long; `scripts/check-file-size.sh` flags growth on a pull request without failing it.
 
 ## Commits and pull requests
