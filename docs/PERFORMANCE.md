@@ -60,7 +60,7 @@ Earlier findings behind current choices:
 
 ### Render round trips — 2026-10-10, dev stack
 
-A tile's object-store round trips run side by side (`IMPLEMENTATION.md` §4.2 "Invalidation"): its Fog and Heatmap PUTs together, a pyramid tile's children read in one query and fetched together. With `delayproxy` and two render loops, re-rendering two 1,000-track accounts in full (7,813 and 8,134 z14 tiles plus pyramid) took 152 / 180 s against 365 / 423 s before. Served tiles were byte-identical between builds.
+A tile's object-store round trips run side by side (`internal/fog`'s package comment, Rendering): its Fog and Heatmap PUTs together, a pyramid tile's children read in one query and fetched together. With `delayproxy` and two render loops, re-rendering two 1,000-track accounts in full (7,813 and 8,134 z14 tiles plus pyramid) took 152 / 180 s against 365 / 423 s before. Served tiles were byte-identical between builds.
 - 2026-10-09: rendering sixteen tiles at a time took the Vietnam track's render from 780 s to 52 s. Redrawing a 1,000-activity account's masks in parallel took 37 s against 311 s, and purging it 36 s against 225 s.
 - 2026-10-10: moving masks into Postgres alone made a full render about 10% faster; the tile's own round trips were the rest.
 
@@ -75,7 +75,7 @@ The choice of 128 px Fog and Heatmap tiles (`IMPLEMENTATION.md` §4.2). One seed
 | A stored mask, average | about 275 bytes | 616 bytes |
 
 - At zoom 10 the 64 px tracks merged where they ran close; at 128 px they stayed apart. At zoom 13 the 128 px lines followed their roads where 64 px drew a staircase.
-- 300 random jittery walks all drew at 128 px with `minStepPx` at half a pixel; without that skip, GPS jitter while standing still made segments too short to stroke (`IMPLEMENTATION.md` §4.2 "Rendering a tile").
+- 300 random jittery walks all drew at 128 px with `minStepPx` at half a pixel; without that skip, GPS jitter while standing still made segments too short to stroke (`fog.minStepPx`).
 - 512 px composited Fog in 1.1 ms and Heatmap in 3.3 ms and stored about 5 times the bytes of 128 px; 256 px looked the same as 512.
 
 ### Country and Region tiles — 2026-10-09, dev stack
@@ -113,7 +113,7 @@ Encoding heat-points tiles in Go in place of `ST_AsMVT` (`IMPLEMENTATION.md` §4
 
 ### Fog as vector tiles — 2026-10-15, dev stack
 
-Tracing Fog into vector tiles at request time (`IMPLEMENTATION.md` §4.2, Vector serving) against the PNG route, which only rewrites the stored bytes' header. `browse -mode fog` over 5 seeded accounts, vector or `-fog-png`, same build.
+Tracing Fog into vector tiles at request time (`IMPLEMENTATION.md` §4.2, Serving) against the PNG route, which only rewrites the stored bytes' header. `browse -mode fog` over 5 seeded accounts, vector or `-fog-png`, same build.
 
 | Fog-only browse | p50 / p95, PNG → vector | API CPU mean (max), PNG → vector | Database CPU, PNG → vector |
 | :-- | :-- | :-- | :-- |
