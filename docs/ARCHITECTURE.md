@@ -111,7 +111,7 @@ The API, track and fog tiles and every page come from one origin through Caddy. 
 
 The Android app is Path 2 (ADR-0001), reading Health Connect in the foreground; a map viewer on the same accounts and style document as the web; and GPS recording that submits straight to the server (ADR-0007). It is one Gradle module on the platform SDK: Views styled with Material 3 and hand-built `OkHttp` calls, with no Compose, Retrofit, ORM or dependency-injection library. A handful of screens and endpoints don't amortize a framework. How it is built is `apps/android/docs/IMPLEMENTATION.md`.
 
-**Sync and display are separate one-way pipes.** The sync engine reads Health Connect and posts to `POST /v1/sync/activities`; the map draws the account from the server's tiles. The only lines drawn from the phone's own data are the Sync tab's candidates and a recording in progress, and once synced an activity carries no trace of its source. The phone holds two things the server lacks: unsynced recordings, deleted once the server takes them, and what the last Health Connect read found.
+**Sync and display are separate one-way pipes.** The sync engine reads Health Connect and posts to `POST /v1/sync/activities`; the map draws the account from the server's tiles. The only lines drawn from the phone's own data are the Sync tab's candidates and a recording in progress, and once synced an activity carries no trace of its source. The phone holds two things the server lacks: unsynced recordings, deleted once their activity lands, and what the last Health Connect read found.
 
 ### 3.1 Key decisions
 
