@@ -95,13 +95,8 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 	if err != nil {
 		return err
 	}
-	ready := 0
-	for _, src := range sources {
-		if !src.pending {
-			ready++
-		}
-	}
-	if ready == 0 && len(sources) > 0 {
+	ready, retry := plan(sources)
+	if ready == 0 && retry {
 		// Everything left to copy waits on an edit: no Story until there's something in it.
 		return Enqueue(ctx, pool, job, retryAfter)
 	}
@@ -110,7 +105,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		return err
 	}
 
-	retry, added := ready < len(sources), false
+	added := false
 	for _, src := range sources {
 		if src.pending {
 			continue
@@ -134,6 +129,17 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		return Enqueue(ctx, pool, job, retryAfter)
 	}
 	return nil
+}
+
+// plan is how many of sources this run copies, and whether the job has to run again for the
+// rest: an activity whose owner has an edit still being applied waits for it.
+func plan(sources []source) (ready int, retry bool) {
+	for _, src := range sources {
+		if !src.pending {
+			ready++
+		}
+	}
+	return ready, ready < len(sources)
 }
 
 // sourcesToCopy lists the Story's live activities with a track, and a raw payload to rebuild it
@@ -196,6 +202,15 @@ func targetStory(ctx context.Context, pool *pgxpool.Pool, job Job, name string, 
 	return target, nil
 }
 
+// sourceDetail is the file name a copy is listed under: its name, or its type when it has none.
+func sourceDetail(src source) string {
+	label := src.activityType
+	if src.name != nil && *src.name != "" {
+		label = *src.name
+	}
+	return export.Slug(label) + ".gpx"
+}
+
 // copyActivity makes the recipient's copy of src in target, reporting whether it added one. An
 // activity whose track the sender's Private locations hide entirely adds nothing.
 func copyActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, recipientID, target string, src source) (bool, error) {
@@ -214,14 +229,10 @@ func copyActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.Store,
 	if err := store.Put(ctx, rawKey, bytes.NewReader(gpx.Bytes()), int64(gpx.Len())); err != nil {
 		return false, err
 	}
-	label := src.activityType
-	if src.name != nil && *src.name != "" {
-		label = *src.name
-	}
 	res, err := ingest.Process(ctx, pool, store, ingest.Job{
 		UserID:        recipientID,
 		Source:        Source,
-		SourceDetail:  export.Slug(label) + ".gpx",
+		SourceDetail:  sourceDetail(src),
 		ExternalID:    src.origin,
 		RawPayloadKey: rawKey,
 		RawBytes:      int64(gpx.Len()),
