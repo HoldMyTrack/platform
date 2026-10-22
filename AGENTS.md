@@ -39,15 +39,15 @@ When `VISION.md` or an ADR changes a position, scan the other documents, the And
 | Document | Budget (words) |
 | :-- | --: |
 | `docs/SPEC.md` | 10,000 |
-| `apps/android/docs/SPEC.md` | 5,000 |
+| `apps/android/docs/SPEC.md` | 5,500 |
 | `docs/IMPLEMENTATION.md` | 11,000 |
-| `apps/android/docs/IMPLEMENTATION.md` | 3,500 |
-| `docs/ARCHITECTURE.md` | 2,500 |
-| `docs/VISION.md` | 3,500 |
-| `docs/DEPLOY.md` | 5,000 |
-| `docs/DEVELOPMENT.md` | 2,500 |
-| `docs/DPIA.md` | 2,500 |
-| `docs/PERFORMANCE.md` | 2,000 |
+| `apps/android/docs/IMPLEMENTATION.md` | 3,800 |
+| `docs/ARCHITECTURE.md` | 2,750 |
+| `docs/VISION.md` | 3,850 |
+| `docs/DEPLOY.md` | 5,500 |
+| `docs/DEVELOPMENT.md` | 2,750 |
+| `docs/DPIA.md` | 2,750 |
+| `docs/PERFORMANCE.md` | 2,200 |
 | `docs/ROADMAP.md`, `docs/BRAINSTORM.md`, `docs/KNOWN_ISSUES.md` together | 3,000 |
 | `testing.html` | 3,000 |
 | A new ADR | 600 |
