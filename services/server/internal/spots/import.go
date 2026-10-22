@@ -1,5 +1,10 @@
 // Package spots is Spots (IMPLEMENTATION.md §3.20, §4.25, ADR-0021): outdoor places imported
 // from OpenStreetMap and refreshed from it, shown on the map behind the Show POI toggle.
+//
+// The import maps osmium's area ids back to OSM's, so the upsert key is OSM's own. Each run
+// stamps the rows it writes with clock_timestamp(), since now() is shared within a transaction,
+// and clears their retirement; a planet run then retires the places it didn't stamp. Whether the
+// upsert changed anything is counted in the same statement.
 package spots
 
 import (
