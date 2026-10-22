@@ -481,7 +481,8 @@ class ClientRulesTest {
             val doc = Json.parseToJsonElement(file.readText()).jsonObject
             val rule = doc.string("rule")!!
             val run = rules[rule] ?: continue
-            for (case in doc["cases"]!!.jsonArray.map { it.jsonObject }) {
+            val cases = doc["cases"]!!.jsonArray + (doc["generated"]?.jsonArray ?: JsonArray(emptyList()))
+            for (case in cases.map { it.jsonObject }) {
                 val message = "$rule: ${case.string("name")}"
                 val expected = case["expected"] ?: JsonNull
                 val input = case["input"]!!.jsonObject
