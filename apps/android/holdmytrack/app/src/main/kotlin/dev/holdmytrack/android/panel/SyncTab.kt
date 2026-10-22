@@ -196,6 +196,7 @@ class SyncTab(
         results.visibility = View.GONE
         problems.visibility = View.GONE
         SyncProgress.addListener(progressListener)
+        SyncProgress.resume(activity)
         showFailed()
         restore()
     }
@@ -573,7 +574,7 @@ class SyncTab(
     }
 
     /** What the server has now is on its way to the map ([SyncProgress]): listed as that until
-     *  it lands, no longer as something to tick — a session is known, a recording is gone. */
+     *  it lands, no longer as something to tick — a session is known, a recording marked sent. */
     private fun landed(report: SyncReport, sent: List<Candidate>) {
         val landedSessions = sessions.filter { it.key in report.landed }
         known = known + landedSessions.map { it.externalId }
@@ -586,7 +587,7 @@ class SyncTab(
     }
 
     /** [SyncProgress] moved on. A failed one is offered again: a session no longer counts as
-     *  known, and a recording is back in the store, so the list is read again. */
+     *  known, and a recording is unsent in the store again, so the list is read again. */
     private fun progressed() {
         if (!showing) return
         if (showFailed()) restore()

@@ -215,7 +215,7 @@ The Android app records GPS-only activities on the phone; nothing reaches the se
 
 - Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. A type over 50 characters is refused with the reason.
 - It is the only path that sets a name and description at ingest.
-- A recording the server takes is deleted from the phone; a refused one stays. It isn't on the map until synced.
+- A recording the server takes is deleted from the phone once it is on the map, and listed again if its ingest fails; a refused one stays.
 
 ### FR-3.9 The Sync page
 
