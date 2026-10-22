@@ -165,7 +165,6 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/activities/{id}/track-metrics"), s.requireVerified(s.handleActivityTrackMetrics))
 	s.mux.HandleFunc(route("GET", "/activities/{id}/track-points"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleActivityTrackPoints)))
 	s.mux.HandleFunc(route("POST", "/activities/{id}/track-edit"), s.requireNotDemo(s.handleActivityTrackEdit))
-	s.mux.HandleFunc(route("POST", "/activities/merge"), s.requireNotDemo(s.handleActivityTrackMerge))
 	s.mux.HandleFunc(route("GET", "/private-locations"), s.requireVerified(s.handleListPrivateLocations))
 	s.mux.HandleFunc(route("POST", "/private-locations"), s.requireNotDemo(s.handleCreatePrivateLocation))
 	s.mux.HandleFunc(route("PATCH", "/private-locations/{id}"), s.requireNotDemo(s.handleUpdatePrivateLocation))

@@ -1747,56 +1747,6 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/merge": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Join adjacent pieces of one split back into one activity */
-        post: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path?: never;
-                cookie?: never;
-            };
-            requestBody: {
-                content: {
-                    "application/json": {
-                        ids: string[];
-                    };
-                };
-            };
-            responses: {
-                /** @description The activity they became, which reads pending until its track is rebuilt, and the ids now gone */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** Format: uuid */
-                            id: string;
-                            removed: string[];
-                        };
-                    };
-                };
-                400: components["responses"]["Error"];
-                401: components["responses"]["Unauthenticated"];
-                403: components["responses"]["Forbidden"];
-                409: components["responses"]["Error"];
-            };
-        };
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/map/style/{flavor}": {
         parameters: {
             query?: never;

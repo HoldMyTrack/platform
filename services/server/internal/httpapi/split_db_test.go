@@ -47,10 +47,9 @@ func (d *dbTest) listActivities(as account) []activityRow {
 	return resp.Activities
 }
 
-// Split one activity in two and merge it back (§4.7.8): each piece is a full activity with its
-// own numbers and track, the original file still counts as imported, and merging restores the
-// one activity it was.
-func TestSplitAndMerge(t *testing.T) {
+// Split one activity in two (§4.7.8): each piece is a full activity with its own numbers and
+// track, and the original file still counts as imported.
+func TestSplit(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me := d.newAccount(false)
 	ctx := context.Background()
@@ -135,37 +134,6 @@ func TestSplitAndMerge(t *testing.T) {
 		t.Errorf("re-upload after a split: %q", resp.Status)
 	}
 
-	// Merge: a lone piece, or a stranger's, is refused.
-	if rec := d.do(me, "POST", "/v1/activities/merge", map[string]any{"ids": []string{orig}}); rec.Code != http.StatusConflict {
-		t.Errorf("merge of one piece: %d, want 409", rec.Code)
-	}
-	other := d.newAccount(false)
-	if rec := d.do(other, "POST", "/v1/activities/merge", map[string]any{"ids": []string{orig, second.ID}}); rec.Code != http.StatusConflict {
-		t.Errorf("merge of someone else's pieces: %d, want 409", rec.Code)
-	}
-	var merged trackMergeResponse
-	d.decode(d.do(me, "POST", "/v1/activities/merge", map[string]any{"ids": []string{second.ID, orig}}), http.StatusOK, &merged)
-	if merged.ID != orig || len(merged.Removed) != 1 || merged.Removed[0] != second.ID {
-		t.Fatalf("merge: %+v", merged)
-	}
-	d.runEditJob(me)
-
-	list = d.listActivities(me)
-	if len(list) != 1 {
-		t.Fatalf("after merge: %d activities", len(list))
-	}
-	a := list[0]
-	if a.ID != orig || a.Split != nil || a.Pending || a.DurationSeconds == nil || *a.DurationSeconds != 240 || len(a.Stories) != 1 {
-		t.Errorf("merged %+v, want the original back, 10:00–10:04 (the Chop kept), in the Story", a)
-	}
-	var edit []byte
-	if err := d.pool.QueryRow(ctx, `SELECT track_edit FROM activities WHERE id = $1`, orig).Scan(&edit); err != nil {
-		t.Fatal(err)
-	}
-	var e ingest.TrackEdit
-	if err := json.Unmarshal(edit, &e); err != nil || e.Keep == nil || e.Keep[1] != at(4) || len(e.Remove) != 0 {
-		t.Errorf("merged spec %s, want just the Chop", edit)
-	}
 }
 
 // A walk ending inside a Private location with a stray fix outside it as its last point, the

@@ -362,7 +362,6 @@ A group delete runs one request at a time, so several don't mark the same tiles 
 flowchart TD
     E[Edit track save] --> P
     S["Split: track edit<br/>plus new piece row"] --> P
-    M["Merge: others deleted,<br/>survivor narrowed"] --> P
     Z[Private location change] --> P
     P["one transaction: edit_pending,<br/>current tiles dirty, version bump,<br/>edit_track or reprivacy job"] --> R1["render: Pending dropped"]
     R1 --> RE["reprocess from raw: clip,<br/>narrow to piece, apply edit, clip again"]
@@ -378,13 +377,11 @@ flowchart TD
 
 **The editor's points** (`GET /v1/activities/{id}/track-points`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, before `backfill-editable-times`, passes.
 
-#### 4.7.8 Split an activity, and merge it back (FR-5.17)
+#### 4.7.8 Split an activity (FR-5.17)
 
 **A piece is a row over the same raw payload, narrowed to a stretch** (`split_group`, `split_from`, `split_to`, inclusive, so pieces share the point they meet at). Everything that turns a raw payload into points narrows through `LoadPiecePoints`, after the Private location clip and before the edit (the reprocess, `DisplayedPoints`, the editor), and clips the narrowed ends again, since a split made at home leaves an end inside a zone. The range sits outside `track_edit`, so Reset returns a piece to its own stretch.
 
-**Split rides on the track edit**: one request and job, with the new piece Pending from its insert. Its `external_id` is the original's plus `#split:<ms>`, so a re-import still matches the original row and pieces never collide. If the job fails the new piece has no geometry, which Merge can fold back in.
-
-**Merge** (`ingest.MergePieces`, one transaction) keeps the earliest piece (the original row when included, which keeps its `external_id`), moves the others' photos and Story memberships to it, marks every piece's tiles dirty while their masks still exist, deletes the others and queues an `edit_track`. `MergeEdits` folds the specs into one that shows what the pieces showed: each is narrowed to its piece's range, a piece's Keep becomes Remove over what it cut away, and an open end is 2⁵³−1, since the browser replays the spec; Neither client offers Merge.
+**Split rides on the track edit**: one request and job, with the new piece Pending from its insert. Its `external_id` is the original's plus `#split:<ms>`, so a re-import still matches the original row and pieces never collide. If the job fails, the new piece has no geometry.
 
 ### 4.8 Activity graph — a private, per-user contribution grid
 

@@ -418,41 +418,6 @@ activities_id_track-edit:
                 - { $ref: "../components/schemas.yaml#/Error" }
                 - properties:
                     error: { enum: [split_hides_part] }
-activities_merge:
-  post:
-    summary: Join adjacent pieces of one split back into one activity
-    requestBody:
-      required: true
-      content:
-        application/json:
-          schema:
-            type: object
-            additionalProperties: false
-            required: [ids]
-            properties:
-              ids:
-                type: array
-                minItems: 1
-                maxItems: 100
-                items: { type: string, format: uuid }
-    responses:
-      "200":
-        description: The activity they became, which reads pending until its track is rebuilt, and the ids now gone
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [id, removed]
-              additionalProperties: false
-              properties:
-                id: { type: string, format: uuid }
-                removed:
-                  type: array
-                  items: { type: string, format: uuid }
-      "400": { $ref: "../components/responses.yaml#/Error" }
-      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
-      "403": { $ref: "../components/responses.yaml#/Forbidden" }
-      "409": { $ref: "../components/responses.yaml#/Error" }
 activity_types:
   get:
     summary: What a client shows for the catalog's activity types and any others it names

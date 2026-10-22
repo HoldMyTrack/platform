@@ -188,7 +188,7 @@ type activityRow struct {
 	TrackEdit string `json:"track_edit,omitempty"`
 	Photos    string `json:"photos,omitempty"`
 	// Split is set on a piece of a split activity (§4.7.8): which split, and the stretch of the
-	// recording it covers — what the Activities panel's Merge checks a group against.
+	// recording it covers.
 	Split *splitRef `json:"split"`
 	// Stories are the Stories it's in, newest first — the Activities panel's Story badge.
 	Stories []storyRef `json:"stories"`

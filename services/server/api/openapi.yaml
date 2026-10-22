@@ -87,8 +87,6 @@ paths:
     $ref: "paths/activities.yaml#/activities_id_track-points"
   /activities/{id}/track-edit:
     $ref: "paths/activities.yaml#/activities_id_track-edit"
-  /activities/merge:
-    $ref: "paths/activities.yaml#/activities_merge"
   /map/style/{flavor}:
     $ref: "paths/map.yaml#/map_style_flavor"
   /map/layers:
