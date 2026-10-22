@@ -4,8 +4,6 @@ package httpapi
 
 import (
 	"context"
-	"io"
-	"log/slog"
 	"net/http"
 	"testing"
 	"time"
@@ -129,20 +127,5 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 	}
 	if o := overlaps(); len(o) != 1 || o[0].ActivityID != res.ActivityID {
 		t.Fatalf("overlaps %+v, want the recorded walk", o)
-	}
-
-	// Stored before the columns existed, it's compared by its clipped track and missed...
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET recorded_started_at = NULL, recorded_ended_at = NULL WHERE id = $1`, res.ActivityID); err != nil {
-		t.Fatal(err)
-	}
-	if o := overlaps(); len(o) != 0 {
-		t.Fatalf("overlaps %+v before the backfill, want none", o)
-	}
-	// ...until the backfill reads its span back from the upload.
-	if err := ingest.BackfillRecordedSpans(ctx, d.pool, d.srv.store, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
-		t.Fatal(err)
-	}
-	if o := overlaps(); len(o) != 1 || o[0].ActivityID != res.ActivityID {
-		t.Fatalf("overlaps %+v after the backfill, want the recorded walk", o)
 	}
 }

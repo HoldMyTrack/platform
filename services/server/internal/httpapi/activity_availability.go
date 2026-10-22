@@ -11,8 +11,8 @@ const (
 )
 
 // activityAvailability is what the list reports from a row's stored state. editableTimes is
-// NULL until ingest, a reprocess or `backfill-editable-times` has looked (migration 0044): an
-// unknown is allowed, and the points request still refuses.
+// NULL until ingest or a reprocess has looked: an unknown is allowed, and the points request
+// still refuses.
 type activityAvailability struct {
 	pending, private, hasOriginal bool
 	editableTimes                 *bool

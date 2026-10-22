@@ -31,7 +31,7 @@ type accountUsage struct {
 }
 
 // usageQuery reads accountUsage. An original shared by split pieces counts once; one whose
-// size isn't recorded (before migration 0039's backfill) counts nothing. idx_jobs_user serves
+// size isn't recorded counts nothing. idx_jobs_user serves
 // the jobs half, the activities' user index the rest.
 const usageQuery = `
 	SELECT

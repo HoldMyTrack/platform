@@ -141,9 +141,6 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
 - A new `geo.TimezonesKey`: steps 2, 3's `seed-timezones` and 4; a couple of minutes. It logs and skips any zone the database's tz data doesn't know yet: after a newer `postgis/postgis` image, `seed-timezones --force` brings those in. Check: `select count(*) from tz_parts` is non-zero.
 - A change to `services/server/internal/httpapi/demo_data/`: `… run --rm api seed-demo-customer --reset`. A plain re-run leaves seeded activities as they were.
 - A change to how Fog/Heatmap tiles are drawn (`internal/fog`, `IMPLEMENTATION.md` §4.2): `… run --rm api rerender-coverage`. Add `--masks` when the stroke width, `fog.TileSize` or which tiles a track reaches (`internal/tilemath`) changed; that redraws every stored mask first and takes a while. It only queues renders, so the worker must be up.
-- Migration 0033: `… run --rm api backfill-recorded-spans` once after `up -d`, a few minutes (`IMPLEMENTATION.md` §4.6). Until then the Sync tab's overlap hint misses activities a Private location cut.
-- Migration 0044: `… run --rm api backfill-editable-times` once after `up -d`, a few minutes (`IMPLEMENTATION.md` §4.7.7). Until then a track that can't be edited opens its Track tab and fails there, as before.
-- Migration 0039: `… run --rm api backfill-object-bytes` once after `up -d` (`IMPLEMENTATION.md` §4.32); safe beside the worker. Check: the next snapshot's `storage_bytes_unmeasured_rows` reads 0.
 
 **Copy demo activities out of a deployment.** With activity ids from the admin panel:
 
