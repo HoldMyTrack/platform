@@ -95,7 +95,7 @@ After a change to ingest, the queue or tiles, check against a live stack:
 
 ### Go database tests
 
-Go tests that need PostGIS use the database `TEST_DATABASE_URL` names (`internal/httpapi/dbtest_test.go`) and skip without it. They migrate it (under an advisory lock) and delete the accounts they create. `make test-go` creates `holdmytrack_test` in compose's `db` and runs the suite. With the stack up, the same from `services/server`, after a one-time `docker compose exec db createdb -U holdmytrack holdmytrack_test`:
+Go tests that need PostGIS use the database `TEST_DATABASE_URL` names (`internal/httpapi/dbtest_test.go`) and skip without it. They migrate it and delete the accounts they create. `make test-go` creates `holdmytrack_test` in compose's `db` and runs the suite. With the stack up, the same from `services/server`, after a one-time `docker compose exec db createdb -U holdmytrack holdmytrack_test`:
 
 ```bash
 TEST_DATABASE_URL=postgres://holdmytrack:holdmytrack@localhost:5432/holdmytrack_test go test -p 1 ./...
@@ -103,7 +103,7 @@ TEST_DATABASE_URL=postgres://holdmytrack:holdmytrack@localhost:5432/holdmytrack_
 
 Several packages share that database, so the suite runs one package at a time (`-p 1`, in `make test-go` and CI): the worker's tests claim any runnable job, another package's included. A test that reads back stored objects uses `internal/storage/storagetest`'s in-memory S3.
 
-Every request `internal/httpapi`'s tests send through `dbTest.do`, `dbTest.send` or `serveChecked` is checked against the API contract in `services/server/api/` (`IMPLEMENTATION.md` §4.31). A failure names the exchange; fix whichever side is wrong. A new endpoint fails `TestContractCoversEveryRoute` until its operations are in `api/paths/` and its path in `openapi.yaml`'s index, and a full database run fails while no test produces a response it describes; `testdata/contract-unexercised.txt` lists the existing gaps. Mark every object `additionalProperties: false`. `go test -run TestContract ./internal/httpapi` runs without a database. After a contract change, run `npm run gen:api-types` in `apps/web` (CI's `verify:api-types` fails while `src/apiSchema.ts` is stale) and the Android tests, whose `WireContractTest` checks `net/Wire.kt`.
+Every request `internal/httpapi`'s tests send through `dbTest.do`, `dbTest.send` or `serveChecked` is checked against the API contract in `services/server/api/` (`IMPLEMENTATION.md` §4.31). A new endpoint fails `TestContractCoversEveryRoute` until its operations are in `api/paths/` and its path in `openapi.yaml`'s index, and a full database run fails while no test produces a response it describes; `testdata/contract-unexercised.txt` lists the existing gaps. Mark every object `additionalProperties: false`. `go test -run TestContract ./internal/httpapi` runs without a database. After a contract change, run `npm run gen:api-types` in `apps/web` (CI's `verify:api-types` fails while `src/apiSchema.ts` is stale) and the Android tests, whose `WireContractTest` checks `net/Wire.kt`.
 
 ### Android verification
 
@@ -113,7 +113,7 @@ The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` 
 
 `.github/workflows/ci.yml` runs on every push to `main` and every pull request: `scripts/check-doc-refs.sh`, `scripts/check-file-size.sh` (a warning only), the Go tests with a PostGIS service, the web `typecheck`, `test:coverage`, `verify:style` and `verify:api-types`, the Android JUnit tests, and `make verify verify-build`. That last job caches the basemap extract keyed on `apps/web/scripts/build-basemap.sh` and cuts it on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script.
 
-`.github/workflows/contract.yml` runs `scripts/check-contract-break.sh` on a pull request that touches `services/server/api/`, failing on a change an installed client can't follow, such as a response field removed or made optional. Additive changes pass. An intended break carries the `contract-break` label and ships with a raised `MIN_ANDROID_BUILD` (`DEPLOY.md` §10).
+`.github/workflows/contract.yml` fails a pull request touching `services/server/api/` on a change an installed client can't follow, such as a response field removed: against the base branch (`scripts/check-contract-break.sh`), and against each release tag `android/<versionCode>` from the `min_android_build` production's `/healthz` reports, counting only breaks the pull request adds (`scripts/check-contract-release.sh`). An intended break carries the `contract-break` label and ships with a raised `MIN_ANDROID_BUILD` (`DEPLOY.md` §10).
 
 The Go, web and Android jobs upload unit-test coverage to Codecov, informational only (`codecov.yml`) and low by design: c8's `all` counts untested files. CI never deploys (`docs/DEPLOY.md` §6).
 

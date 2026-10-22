@@ -108,6 +108,8 @@ cd apps/android/holdmytrack    # not apps/android
 
 Check `curl -sI https://holdmytrack.com/download/holdmytrack.apk` — singular `/download/`; the server directory is plural `downloads/`, and `/downloads/…` is a misleading 404. This sideloaded APK is apart from the Play release, which is still built and uploaded separately.
 
+Tag the deployed commit as a release, so the contract check keeps covering it (DEPLOY.md §10): `git tag android/<versionCode> <deployed sha>` and `git push origin android/<versionCode>`; skip it when the tag exists.
+
 Then ask the user whether this release should turn older builds away (`MIN_ANDROID_BUILD`, DEPLOY.md §4 and §10) — say yes when `ROADMAP.md` has a route waiting on it. It's raised only once the Play release is live, which is usually after the deploy: until then, give the user the value (`git rev-list --count <deployed sha>`) and DEPLOY.md §10's command for later.
 
 ## 5. Report and record

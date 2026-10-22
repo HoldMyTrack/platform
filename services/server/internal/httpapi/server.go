@@ -444,9 +444,12 @@ func (s *Server) crossSiteAPIWrite(r *http.Request) bool {
 	return !corsAllowedOrigins[origin] && !s.isSameOrigin(r)
 }
 
+// healthzResponse carries MinAndroidBuild for scripts/check-contract-release.sh: the contract
+// has to keep serving every Android release from that build on.
 type healthzResponse struct {
-	Status  string `json:"status"`
-	Version string `json:"version"`
+	Status          string `json:"status"`
+	Version         string `json:"version"`
+	MinAndroidBuild int    `json:"min_android_build"`
 }
 
 func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
@@ -454,7 +457,7 @@ func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "db unreachable", http.StatusServiceUnavailable)
 		return
 	}
-	writeJSON(w, http.StatusOK, healthzResponse{Status: "ok", Version: s.version})
+	writeJSON(w, http.StatusOK, healthzResponse{Status: "ok", Version: s.version, MinAndroidBuild: s.minAndroidBuild})
 }
 
 type uploadResponse struct {
