@@ -123,7 +123,13 @@ func main() {
 
 // ---- accounts
 
+// signup refuses to run over an existing tokens.json: its accounts' sessions and password are
+// only there, and losing them leaves accounts cleanup can't delete.
 func signup(n int) {
+	if _, err := os.Stat(inDir("tokens.json")); err == nil {
+		fmt.Fprintln(os.Stderr, "signup: tokens.json exists; run cleanup and remove it first")
+		os.Exit(1)
+	}
 	var out []acct
 	secret := make([]byte, 12)
 	_, err := rand.Read(secret)
