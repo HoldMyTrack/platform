@@ -61,9 +61,6 @@ type authRequest struct {
 	// signup over it — auto-detection is a convenience default, not something worth blocking
 	// account creation over (users.timezone is always editable in Settings).
 	Timezone string `json:"timezone"`
-	// Locale is the account's language (migrations/0001_users_and_auth.sql), "" for automatic —
-	// the web app then follows the browser's.
-	Locale string `json:"locale"`
 }
 
 // normalizeTimezone validates raw against the IANA tz database via time.LoadLocation, and

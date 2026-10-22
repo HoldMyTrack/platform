@@ -57,6 +57,11 @@ func (s *Server) handleActivityOverlaps(w http.ResponseWriter, r *http.Request) 
 			writeAPIError(w, fmt.Sprintf(`invalid "key", want 1 to %d characters`, maxOverlapKeyLen), http.StatusBadRequest)
 			return
 		}
+		// A missing time decodes as the zero time, which no activity starts at.
+		if sp.Start.IsZero() || sp.End.IsZero() {
+			writeAPIError(w, `a span needs "start" and "end"`, http.StatusBadRequest)
+			return
+		}
 		spans = append(spans, ingest.Span{Key: sp.Key, Start: sp.Start, End: sp.End})
 	}
 	ctx := r.Context()

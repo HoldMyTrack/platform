@@ -102,6 +102,7 @@ photos_place:
           schema:
             type: object
             additionalProperties: false
+            required: [activity_id]
             properties:
               activity_id: { type: string }
               taken_at:

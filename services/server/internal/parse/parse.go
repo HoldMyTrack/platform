@@ -3,6 +3,7 @@
 package parse
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -70,6 +71,31 @@ type JSONPoint struct {
 	Lon        float64   `json:"lon"`
 	ElevationM *float32  `json:"elevation_m,omitempty"`
 	Time       time.Time `json:"time"`
+}
+
+// ErrPointIncomplete is a JSONPoint without lat, lon or time, which would otherwise read as
+// 0, 0 at the zero time.
+var ErrPointIncomplete = errors.New(`a point needs "lat", "lon" and "time"`)
+
+// UnmarshalJSON refuses an incomplete point (ErrPointIncomplete) and a field JSONPoint doesn't
+// declare.
+func (p *JSONPoint) UnmarshalJSON(b []byte) error {
+	var raw struct {
+		Lat        *float64   `json:"lat"`
+		Lon        *float64   `json:"lon"`
+		ElevationM *float32   `json:"elevation_m"`
+		Time       *time.Time `json:"time"`
+	}
+	dec := json.NewDecoder(bytes.NewReader(b))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&raw); err != nil {
+		return err
+	}
+	if raw.Lat == nil || raw.Lon == nil || raw.Time == nil {
+		return ErrPointIncomplete
+	}
+	*p = JSONPoint{Lat: *raw.Lat, Lon: *raw.Lon, ElevationM: raw.ElevationM, Time: *raw.Time}
+	return nil
 }
 
 // JSONActivity is one activity's worth of JSONPoint, the unit both the sync request body and

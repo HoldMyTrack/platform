@@ -120,7 +120,7 @@ activities_overlaps:
                 items:
                   type: object
                   additionalProperties: false
-                  required: [key]
+                  required: [key, start, end]
                   properties:
                     key:
                       type: string
@@ -455,10 +455,11 @@ activities_track-merge:
           schema:
             type: object
             additionalProperties: false
+            required: [ids]
             properties:
               ids:
                 type: array
-                nullable: true
+                minItems: 1
                 maxItems: 100
                 items: { type: string, format: uuid }
     responses:

@@ -124,6 +124,7 @@ stories_id_send:
           schema:
             type: object
             additionalProperties: false
+            required: [email]
             properties:
               email: { type: string }
     responses:

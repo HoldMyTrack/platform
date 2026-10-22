@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -96,7 +97,11 @@ func (s *Server) handleSyncActivities(w http.ResponseWriter, r *http.Request) {
 
 	var req syncActivitiesRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
-		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
+		msg := bodyError(err, "invalid request body")
+		if errors.Is(err, parse.ErrPointIncomplete) {
+			msg = err.Error()
+		}
+		writeAPIError(w, msg, http.StatusBadRequest)
 		return
 	}
 	if !syncSources[req.Source] {

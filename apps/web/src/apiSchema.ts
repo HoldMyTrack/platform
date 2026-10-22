@@ -197,7 +197,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        email?: string;
+                        email: string;
                     };
                 };
             };
@@ -233,8 +233,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        token?: string;
-                        password?: string;
+                        token: string;
+                        password: string;
                     };
                 };
             };
@@ -269,7 +269,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        token?: string;
+                        token: string;
                     };
                 };
             };
@@ -483,7 +483,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        id_token?: string;
+                        id_token: string;
                         /** @description The device's IANA zone, for a new account. */
                         tz?: string;
                     };
@@ -522,8 +522,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        code?: string;
-                        verifier?: string;
+                        code: string;
+                        verifier: string;
                     };
                 };
             };
@@ -594,7 +594,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        email?: string;
+                        email: string;
                     };
                 };
             };
@@ -641,7 +641,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @description The account's address, typed again to confirm. */
-                        email?: string;
+                        email: string;
                     };
                 };
             };
@@ -690,9 +690,9 @@ export interface paths {
                         /** @description Trimmed; empty clears it. */
                         display_name?: string;
                         /** @description ISO 3166-1 alpha-2; required. */
-                        country?: string;
+                        country: string;
                         /** @description An IANA zone; required. */
-                        timezone?: string;
+                        timezone: string;
                         /** @description A supported language, or empty for automatic; missing or null keeps it. */
                         locale?: string | null;
                     };
@@ -1250,9 +1250,9 @@ export interface paths {
                             /** @description The client's own name for the span, echoed back on an overlap. */
                             key: string;
                             /** Format: date-time */
-                            start?: string;
+                            start: string;
                             /** Format: date-time */
-                            end?: string;
+                            end: string;
                         }[] | null;
                     };
                 };
@@ -1816,7 +1816,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        ids?: string[] | null;
+                        ids: string[];
                     };
                 };
             };
@@ -2110,7 +2110,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        activity_id?: string;
+                        activity_id: string;
                         /** @description RFC 3339; missing or empty when unknown. */
                         taken_at?: string;
                         /** @description 2006-01-02T15:04:05; missing or empty when unknown. */
@@ -2703,7 +2703,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        email?: string;
+                        email: string;
                     };
                 };
             };
@@ -3054,19 +3054,19 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        source?: components["schemas"]["SyncSource"];
+                        source: components["schemas"]["SyncSource"];
                         activities?: {
                             /** @description The source's own id; one that doesn't match SyncExternalID rejects that activity, not the request. */
-                            external_id?: string;
+                            external_id: string;
                             activity_type?: string;
                             name?: string;
                             description?: string;
                             points?: {
-                                lat?: number;
-                                lon?: number;
+                                lat: number;
+                                lon: number;
                                 elevation_m?: number | null;
                                 /** Format: date-time */
-                                time?: string;
+                                time: string;
                             }[] | null;
                         }[] | null;
                     };
@@ -3123,7 +3123,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        source?: components["schemas"]["SyncSource"];
+                        source: components["schemas"]["SyncSource"];
                         external_ids?: components["schemas"]["SyncExternalID"][] | null;
                     };
                 };
@@ -3397,9 +3397,9 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         Credentials: {
-            email?: string;
+            email: string;
             /** @description A password shorter than the minimum or longer than the maximum is a 400. */
-            password?: string;
+            password: string;
             /** @description The browser's IANA zone, for a new account; anything invalid falls back to UTC. */
             timezone?: string;
         };

@@ -267,6 +267,7 @@ Photo:
     thumb_url: { type: string }
 Credentials:
   type: object
+  required: [email, password]
   additionalProperties: false
   properties:
     email: { type: string }
