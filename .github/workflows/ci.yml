@@ -126,6 +126,10 @@ jobs:
     name: Map verification (make verify, verify-build)
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    # A stand-in imagery host, so tests/smoke.mjs's step 9 checks satellite mode rather than
+    # its absence; the test answers the tiles itself.
+    env:
+      SATELLITE_TILES: https://imagery.invalid/{z}/{x}/{y}.png
     steps:
       - uses: actions/checkout@v4
       # The basemap extract is gitignored and cut from a dated Protomaps build that the

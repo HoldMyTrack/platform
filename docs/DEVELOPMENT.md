@@ -71,7 +71,7 @@ The Playwright suites use a regional extract, `apps/web/public/basemap/basemap.p
 
 ### Satellite imagery in dev
 
-Off unless configured (`docs/SPEC.md` FR-4.14). Set `SATELLITE_*` in the root `.env` and recreate `web` and `api`; `compose.yaml` passes the web the same values as `VITE_SATELLITE_*`, which outrank `apps/web/.env.local`. A MapTiler key must allow `http://localhost:5173`. For a keyless local check (never a deployment), use Esri World Imagery: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`, tile size 256. `tests/smoke.mjs` step 9 tests the switch when `VITE_SATELLITE_TILES` is set and its absence otherwise.
+Off unless configured (`docs/SPEC.md` FR-4.14). Set `SATELLITE_*` in the root `.env` and recreate `web` and `api`; `compose.yaml` passes the web the same values as `VITE_SATELLITE_*`, which outrank `apps/web/.env.local`. A MapTiler key must allow `http://localhost:5173`. For a keyless local check (never a deployment), use Esri World Imagery: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`, tile size 256. `tests/smoke.mjs` step 9 tests the switch over stub tiles; CI sets a stand-in host.
 
 ## Verification
 

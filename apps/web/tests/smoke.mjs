@@ -20,6 +20,8 @@ const PORT = 5180;
 const BASE = `http://localhost:${PORT}`;
 const OHIO_BOUNDS = { minLon: -84.85, minLat: 38.35, maxLon: -80.5, maxLat: 42.35 };
 const SHOTS = new URL('./screenshots/', import.meta.url);
+// A 1×1 green PNG, the imagery tile step 9 answers with.
+const STUB_TILE = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGOIynMDAAI0AQ/sFyVCAAAAAElFTkSuQmCC', 'base64');
 
 // App.tsx sends a signed-out visit to the sign-in page (services/server/internal/httpapi/
 // auth_pages.go) — a fresh browser context has no session cookie, so MapView (and window.__holdmytrack) would
@@ -367,8 +369,13 @@ describe('basemap foundation', () => {
     const KEPT = ['roads_major', 'places_locality'];
 
     // Imagery tiles fetched from the configured host once it's on — the raster has no features
-    // to query, so the responses are the evidence it drew.
+    // to query, so the responses are the evidence it drew. They are answered here, not by the
+    // host: a key restricted to the developer's own origins refuses this page's, and CI's host
+    // doesn't exist.
     const host = await page.evaluate(() => new URL(window.__holdmytrack.getStyle().sources.satellite.tiles[0]).host);
+    const stubImagery = (route) => route.fulfill({ status: 200, contentType: 'image/png', body: STUB_TILE });
+    const isImagery = (url) => url.host === host;
+    await page.route(isImagery, stubImagery);
     let imageryTiles = 0;
     const countImagery = (res) => {
       if (res.status() === 200 && new URL(res.url()).host === host) imageryTiles += 1;
@@ -400,6 +407,7 @@ describe('basemap foundation', () => {
     assert.deepEqual(await visibility(['satellite']), ['none'], 'imagery off again');
     assert.deepEqual(await visibility(FILLS), FILLS.map(() => 'visible'), 'fills back');
     assert.deepEqual(await roadOpacity(), [undefined, undefined, 0.5], 'roads opaque again');
+    await page.unroute(isImagery, stubImagery);
   });
 
   // Points of interest (docs/SPEC.md FR-15.2, FR-15.5): nothing below zoom 10, "Show in this area"
