@@ -48,7 +48,7 @@ activities_upload:
           application/json:
             schema: { $ref: "../components/schemas.yaml#/UploadResult" }
       "202":
-        description: Queued for import; GET /activities/status/{external_id} says how it went
+        description: Queued for import; GET /uploads/{external_id} says how it went
         content:
           application/json:
             schema: { $ref: "../components/schemas.yaml#/UploadResult" }
@@ -300,34 +300,7 @@ activities_trends:
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
-activities_status_external_id:
-  parameters:
-    - name: external_id
-      in: path
-      required: true
-      description: What the upload answered with.
-      schema: { type: string }
-  get:
-    summary: How the caller's latest import of this file went
-    responses:
-      "200":
-        description: Its state
-        content:
-          application/json:
-            schema:
-              type: object
-              required: [status]
-              additionalProperties: false
-              properties:
-                status:
-                  type: string
-                  description: processing, done, failed, or unknown when the caller never uploaded it.
-                error:
-                  type: string
-                  description: Why it failed, in the request's language; only with failed.
-      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
-      "403": { $ref: "../components/responses.yaml#/NotVerified" }
-activities_track-metrics_id:
+activities_id_track-metrics:
   parameters:
     - $ref: "../components/parameters.yaml#/ActivityID"
   get:
@@ -370,7 +343,7 @@ activities_track-metrics_id:
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
       "404": { $ref: "../components/responses.yaml#/Error" }
-activities_track-points_id:
+activities_id_track-points:
   parameters:
     - $ref: "../components/parameters.yaml#/ActivityID"
   get:
@@ -403,7 +376,7 @@ activities_track-points_id:
       "409": { $ref: "../components/responses.yaml#/Error" }
       "429": { $ref: "../components/responses.yaml#/Error" }
       "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
-activities_track-edit_id:
+activities_id_track-edit:
   parameters:
     - $ref: "../components/parameters.yaml#/ActivityID"
   post:
@@ -445,7 +418,7 @@ activities_track-edit_id:
                 - { $ref: "../components/schemas.yaml#/Error" }
                 - properties:
                     error: { enum: [split_hides_part] }
-activities_track-merge:
+activities_merge:
   post:
     summary: Join adjacent pieces of one split back into one activity
     requestBody:

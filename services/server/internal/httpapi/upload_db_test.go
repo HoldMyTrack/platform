@@ -184,8 +184,8 @@ func TestActivityStatusIsPerAccount(t *testing.T) {
 	resp := d.uploadFile(me, "ride.gpx", []byte(resumeGPX))
 
 	var mine, theirs statusResponse
-	d.decode(d.do(me, http.MethodGet, "/v1/activities/status/"+resp.ExternalID, nil), http.StatusOK, &mine)
-	d.decode(d.do(other, http.MethodGet, "/v1/activities/status/"+resp.ExternalID, nil), http.StatusOK, &theirs)
+	d.decode(d.do(me, http.MethodGet, "/v1/uploads/"+resp.ExternalID, nil), http.StatusOK, &mine)
+	d.decode(d.do(other, http.MethodGet, "/v1/uploads/"+resp.ExternalID, nil), http.StatusOK, &theirs)
 	if mine.Status != "processing" || theirs.Status != "unknown" {
 		t.Fatalf("owner sees %q, another account %q; want processing, unknown", mine.Status, theirs.Status)
 	}
@@ -244,9 +244,9 @@ func TestActivityRoutesRefuseMalformedIDs(t *testing.T) {
 	for _, tc := range []struct{ method, path string }{
 		{http.MethodPatch, "/v1/activities/not-a-uuid"},
 		{http.MethodDelete, "/v1/activities/not-a-uuid"},
-		{http.MethodGet, "/v1/activities/track-metrics/not-a-uuid"},
-		{http.MethodGet, "/v1/activities/track-points/not-a-uuid"},
-		{http.MethodPost, "/v1/activities/track-edit/not-a-uuid"},
+		{http.MethodGet, "/v1/activities/not-a-uuid/track-metrics"},
+		{http.MethodGet, "/v1/activities/not-a-uuid/track-points"},
+		{http.MethodPost, "/v1/activities/not-a-uuid/track-edit"},
 	} {
 		if rec := d.do(me, tc.method, tc.path, map[string]any{}); rec.Code != http.StatusNotFound {
 			t.Errorf("%s %s: %d, want 404", tc.method, tc.path, rec.Code)

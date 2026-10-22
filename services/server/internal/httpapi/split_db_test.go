@@ -72,7 +72,7 @@ func TestSplitAndMerge(t *testing.T) {
 	}
 
 	at := func(min int) int64 { return time.Date(2026, 5, 1, 10, min, 0, 0, time.UTC).UnixMilli() }
-	editPath := "/v1/activities/track-edit/" + orig
+	editPath := "/v1/activities/" + orig + "/track-edit"
 
 	// One point on a side isn't a track.
 	for _, m := range []int{0, 5} {
@@ -125,7 +125,7 @@ func TestSplitAndMerge(t *testing.T) {
 
 	// The editor opens on the piece's own points: 10:02 to 10:05, the Chop still in its spec.
 	var pts trackPointsResponse
-	d.decode(d.do(me, "GET", "/v1/activities/track-points/"+second.ID, nil), http.StatusOK, &pts)
+	d.decode(d.do(me, "GET", "/v1/activities/"+second.ID+"/track-points", nil), http.StatusOK, &pts)
 	if len(pts.Points) != 4 || int64(pts.Points[0][2]) != at(2) || pts.Edit == nil || pts.Edit.Keep == nil {
 		t.Errorf("second piece's points %v edit %+v", pts.Points, pts.Edit)
 	}
@@ -136,15 +136,15 @@ func TestSplitAndMerge(t *testing.T) {
 	}
 
 	// Merge: a lone piece, or a stranger's, is refused.
-	if rec := d.do(me, "POST", "/v1/activities/track-merge", map[string]any{"ids": []string{orig}}); rec.Code != http.StatusConflict {
+	if rec := d.do(me, "POST", "/v1/activities/merge", map[string]any{"ids": []string{orig}}); rec.Code != http.StatusConflict {
 		t.Errorf("merge of one piece: %d, want 409", rec.Code)
 	}
 	other := d.newAccount(false)
-	if rec := d.do(other, "POST", "/v1/activities/track-merge", map[string]any{"ids": []string{orig, second.ID}}); rec.Code != http.StatusConflict {
+	if rec := d.do(other, "POST", "/v1/activities/merge", map[string]any{"ids": []string{orig, second.ID}}); rec.Code != http.StatusConflict {
 		t.Errorf("merge of someone else's pieces: %d, want 409", rec.Code)
 	}
 	var merged trackMergeResponse
-	d.decode(d.do(me, "POST", "/v1/activities/track-merge", map[string]any{"ids": []string{second.ID, orig}}), http.StatusOK, &merged)
+	d.decode(d.do(me, "POST", "/v1/activities/merge", map[string]any{"ids": []string{second.ID, orig}}), http.StatusOK, &merged)
 	if merged.ID != orig || len(merged.Removed) != 1 || merged.Removed[0] != second.ID {
 		t.Fatalf("merge: %+v", merged)
 	}
@@ -198,7 +198,7 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 		t.Fatalf("ingest: %+v, %v", res, err)
 	}
 	at := func(min int) int64 { return time.Date(2026, 5, 1, 10, min, 0, 0, time.UTC).UnixMilli() }
-	path := "/v1/activities/track-edit/" + res.ActivityID
+	path := "/v1/activities/" + res.ActivityID + "/track-edit"
 	dropStray := map[string]any{"drop": []int64{at(6)}}
 
 	rec := d.do(me, "POST", path, map[string]any{"edit": dropStray, "split_at": at(4)})

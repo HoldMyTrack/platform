@@ -1120,7 +1120,7 @@ export interface paths {
                         "application/json": components["schemas"]["UploadResult"];
                     };
                 };
-                /** @description Queued for import; GET /activities/status/{external_id} says how it went */
+                /** @description Queued for import; GET /uploads/{external_id} says how it went */
                 202: {
                     headers: {
                         [name: string]: unknown;
@@ -1566,56 +1566,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/status/{external_id}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                /** @description What the upload answered with. */
-                external_id: string;
-            };
-            cookie?: never;
-        };
-        /** How the caller's latest import of this file went */
-        get: {
-            parameters: {
-                query?: never;
-                header?: never;
-                path: {
-                    /** @description What the upload answered with. */
-                    external_id: string;
-                };
-                cookie?: never;
-            };
-            requestBody?: never;
-            responses: {
-                /** @description Its state */
-                200: {
-                    headers: {
-                        [name: string]: unknown;
-                    };
-                    content: {
-                        "application/json": {
-                            /** @description processing, done, failed, or unknown when the caller never uploaded it. */
-                            status: string;
-                            /** @description Why it failed, in the request's language; only with failed. */
-                            error?: string;
-                        };
-                    };
-                };
-                401: components["responses"]["Unauthenticated"];
-                403: components["responses"]["NotVerified"];
-            };
-        };
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/activities/track-metrics/{id}": {
+    "/activities/{id}/track-metrics": {
         parameters: {
             query?: never;
             header?: never;
@@ -1676,7 +1627,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/track-points/{id}": {
+    "/activities/{id}/track-points": {
         parameters: {
             query?: never;
             header?: never;
@@ -1730,7 +1681,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/track-edit/{id}": {
+    "/activities/{id}/track-edit": {
         parameters: {
             query?: never;
             header?: never;
@@ -1796,7 +1747,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/track-merge": {
+    "/activities/merge": {
         parameters: {
             query?: never;
             header?: never;
@@ -2978,6 +2929,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/uploads/{external_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /** @description What the upload answered with. */
+                external_id: string;
+            };
+            cookie?: never;
+        };
+        /** How the caller's latest import of this file went */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    /** @description What the upload answered with. */
+                    external_id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description Its state */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            /** @description processing, done, failed, or unknown when the caller never uploaded it. */
+                            status: string;
+                            /** @description Why it failed, in the request's language; only with failed. */
+                            error?: string;
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/coverage/status": {
         parameters: {
             query?: never;
@@ -3519,7 +3519,7 @@ export interface components {
         UploadResult: {
             /** @enum {string} */
             status: "enqueued" | "already_processed";
-            /** @description The file's SHA-256, what GET /activities/status/{external_id} takes. */
+            /** @description The file's SHA-256, what GET /uploads/{external_id} takes. */
             external_id: string;
             filename: string;
         };

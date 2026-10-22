@@ -210,7 +210,7 @@ object SyncCandidates {
 
     /**
      * The [kept] vertices of a route with their speed, by the server's own rule for a synced
-     * activity's (`GET /v1/activities/track-metrics`): the distance from the vertex before over
+     * activity's (`GET /v1/activities/{id}/track-metrics`): the distance from the vertex before over
      * the whole seconds between them ([times] are Unix ms), 0 where no second passed, and the
      * first vertex taking the second's. The phone simplifies more coarsely than the server does
      * ([Simplify] at 15 m, the server about 3 m), so the speeds are a little smoother than the

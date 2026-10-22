@@ -24,7 +24,7 @@ type trackPointsResponse struct {
 	Edit   *ingest.TrackEdit `json:"edit"`
 }
 
-// handleActivityTrackPoints serves `GET /v1/activities/track-points/{id}`. The points come
+// handleActivityTrackPoints serves `GET /v1/activities/{id}/track-points`. The points come
 // from the raw payload — the only place full-resolution positions survive (§4.1 step 6) — and
 // are clipped against the account's current Private locations before they leave the server:
 // the raw payload still holds the hidden ends, and returning them would hand the client the
@@ -114,7 +114,7 @@ const splitHidesPartCode = "split_hides_part"
 // Move point one per point dragged, so this is far past any real editing session while still rejecting an absurd payload.
 const maxTrackEditEntries = 10000
 
-// handleActivityTrackEdit serves `POST /v1/activities/track-edit/{id}`: validate the spec,
+// handleActivityTrackEdit serves `POST /v1/activities/{id}/track-edit`: validate the spec,
 // mark the activity pending, and enqueue an `edit_track` job to reprocess it (§4.7.7). The
 // reprocessing itself — reparse, metrics, masks, fog/heatmap invalidation — is the same heavy
 // work ingest does, so it goes through the job queue, never inline. Responds 202; the
@@ -226,7 +226,7 @@ type trackMergeResponse struct {
 // maxMergeIDs bounds the request: a split is a handful of pieces cut by hand.
 const maxMergeIDs = 100
 
-// handleActivityTrackMerge serves `POST /v1/activities/track-merge` (§4.7.8): join adjacent
+// handleActivityTrackMerge serves `POST /v1/activities/merge` (§4.7.8): join adjacent
 // pieces of one split back into one activity. The joining itself is a row update and deletes
 // (ingest.MergePieces); the rebuilt track comes from the same `edit_track` job an edit uses,
 // so the survivor reads Pending until it lands. Responds 200 with the survivor and the

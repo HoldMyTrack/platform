@@ -19,7 +19,7 @@ const maxUploadsLimit = 50
 
 // uploadRow is one entry in the persistent upload history (IMPLEMENTATION.md §4.0),
 // distinct from live in-flight status
-// (handleActivityStatus): this answers "what happened to every upload ever, including ones
+// (handleUploadStatus): this answers "what happened to every upload ever, including ones
 // whose tab is long closed," which nothing before this endpoint could answer at all.
 type uploadRow struct {
 	Filename   string `json:"filename"`
@@ -175,7 +175,7 @@ func (s *Server) handleListUploads(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
-		// Same three-way mapping as handleActivityStatus, duplicated rather than shared:
+		// Same three-way mapping as handleUploadStatus, duplicated rather than shared:
 		// that function reads one job by external_id, this one reads a page of jobs, and
 		// factoring out a two-line switch across both would cost more to read than it saves.
 		switch state {

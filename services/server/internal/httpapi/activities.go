@@ -559,7 +559,7 @@ func pointSpeeds(lons, lats, ms []float64) []float64 {
 	return speed
 }
 
-// handleActivityTrackMetrics serves `GET /v1/activities/track-metrics/{id}` — per-simplified-
+// handleActivityTrackMetrics serves `GET /v1/activities/{id}/track-metrics` — per-simplified-
 // vertex speed, and the pace bands (paceBands) the web and Android clients draw over whichever
 // single activity is selected. Pace only: HoldMyTrack keeps no heart rate (VISION.md §1.1).
 // Scoped to the caller's user_id in the query itself, same as every other per-activity lookup

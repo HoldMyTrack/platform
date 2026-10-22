@@ -87,3 +87,30 @@ uploads_active:
                 unseen_failures: { type: integer }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
+uploads_external_id:
+  parameters:
+    - name: external_id
+      in: path
+      required: true
+      description: What the upload answered with.
+      schema: { type: string }
+  get:
+    summary: How the caller's latest import of this file went
+    responses:
+      "200":
+        description: Its state
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              additionalProperties: false
+              properties:
+                status:
+                  type: string
+                  description: processing, done, failed, or unknown when the caller never uploaded it.
+                error:
+                  type: string
+                  description: Why it failed, in the request's language; only with failed.
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }

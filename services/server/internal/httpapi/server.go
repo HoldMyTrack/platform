@@ -162,11 +162,10 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/activities/histogram"), s.requireVerified(s.handleActivityHistogram))
 	s.mux.HandleFunc(route("GET", "/activities/graph-stats"), s.requireVerified(s.handleActivityGraphStats))
 	s.mux.HandleFunc(route("GET", "/activities/trends"), s.requireVerified(s.handleActivityTrends))
-	s.mux.HandleFunc(route("GET", "/activities/status/{external_id}"), s.requireVerified(s.handleActivityStatus))
-	s.mux.HandleFunc(route("GET", "/activities/track-metrics/{id}"), s.requireVerified(s.handleActivityTrackMetrics))
-	s.mux.HandleFunc(route("GET", "/activities/track-points/{id}"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleActivityTrackPoints)))
-	s.mux.HandleFunc(route("POST", "/activities/track-edit/{id}"), s.requireNotDemo(s.handleActivityTrackEdit))
-	s.mux.HandleFunc(route("POST", "/activities/track-merge"), s.requireNotDemo(s.handleActivityTrackMerge))
+	s.mux.HandleFunc(route("GET", "/activities/{id}/track-metrics"), s.requireVerified(s.handleActivityTrackMetrics))
+	s.mux.HandleFunc(route("GET", "/activities/{id}/track-points"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleActivityTrackPoints)))
+	s.mux.HandleFunc(route("POST", "/activities/{id}/track-edit"), s.requireNotDemo(s.handleActivityTrackEdit))
+	s.mux.HandleFunc(route("POST", "/activities/merge"), s.requireNotDemo(s.handleActivityTrackMerge))
 	s.mux.HandleFunc(route("GET", "/private-locations"), s.requireVerified(s.handleListPrivateLocations))
 	s.mux.HandleFunc(route("POST", "/private-locations"), s.requireNotDemo(s.handleCreatePrivateLocation))
 	s.mux.HandleFunc(route("PATCH", "/private-locations/{id}"), s.requireNotDemo(s.handleUpdatePrivateLocation))
@@ -183,8 +182,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/story-sends"), s.requireVerified(s.handleListStorySends))
 	s.mux.HandleFunc(route("POST", "/story-sends/{id}/accept"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleAcceptStorySend)))
 	s.mux.HandleFunc(route("DELETE", "/story-sends/{id}"), s.requireNotDemo(s.handleDeclineStorySend))
-	// Activity photos (photos.go) — under /photos rather than /activities/{id}/photos, which
-	// would collide with /activities/track-points/{id} and the other fixed segments above.
+	// Activity photos (photos.go).
 	s.mux.HandleFunc(route("GET", "/photos"), s.requireVerified(s.handleListPhotos))
 	s.mux.HandleFunc(route("POST", "/photos"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUploadPhoto)))
 	s.mux.HandleFunc(route("POST", "/photos/place"), s.requireNotDemo(s.handlePlacePhoto))
@@ -194,6 +192,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("DELETE", "/photos/{id}"), s.requireNotDemo(s.handleDeletePhoto))
 	s.mux.HandleFunc(route("GET", "/uploads"), s.requireVerified(s.handleListUploads))
 	s.mux.HandleFunc(route("GET", "/uploads/active"), s.requireVerified(s.handleActiveUploads))
+	s.mux.HandleFunc(route("GET", "/uploads/{external_id}"), s.requireVerified(s.handleUploadStatus))
 	s.mux.HandleFunc(route("GET", "/coverage/status"), s.requireVerified(s.handleCoverageStatus))
 	s.mux.HandleFunc(route("GET", "/map/layers"), s.requireVerified(s.handleMapLayers))
 	s.mux.HandleFunc(route("POST", "/sync/activities"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleSyncActivities)))

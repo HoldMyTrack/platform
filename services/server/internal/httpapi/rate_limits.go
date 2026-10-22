@@ -45,7 +45,7 @@ const syncActivitiesPerHour = 1000
 // test creating its accounts.
 const defaultSignupsPerHour = 5
 
-// trackPointsPerHour bounds `GET /v1/activities/track-points/{id}` per account: each request
+// trackPointsPerHour bounds `GET /v1/activities/{id}/track-points` per account: each request
 // reads an original upload from object storage and parses it, and a person opens the track
 // editor a few times an hour at most.
 const trackPointsPerHour = 120

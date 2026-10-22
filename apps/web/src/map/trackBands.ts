@@ -3,7 +3,7 @@ import type { ActivityTrackMetrics } from '../api';
 
 /**
  * Fills the layers document's `track-bands` source (bandsGroup.ts) with the focused activity's
- * pace bands: one line per run the server worked out (`GET /v1/activities/track-metrics`), each
+ * pace bands: one line per run the server worked out (`GET /v1/activities/{id}/track-metrics`), each
  * with its `band` index for the layer to color. Neighbouring runs share their boundary point, so
  * the pieces join without a gap.
  */

@@ -182,7 +182,7 @@ flowchart LR
 
 **All three are idempotent on `(user_id, source, external_id)`**, under concurrent duplicates too. The check at receive time is a fast path; the guarantee is `idx_activities_dedupe` plus the persist step's `ON CONFLICT DO NOTHING` (§4.1 step 6).
 
-**The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced activity is a job carrying its file name, source, state and error, so the Upload menu, `/sync` and the Android Sync history read one history with no uploads table (`imports.go`, `uploads.go`). `GET /v1/activities/status/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
+**The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced activity is a job carrying its file name, source, state and error, so the Upload menu, `/sync` and the Android Sync history read one history with no uploads table (`imports.go`, `uploads.go`). `GET /v1/uploads/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
 
 #### 4.0.3 `POST /v1/sync/activities`
 
@@ -323,7 +323,7 @@ On the wire the version is prefixed with the start of the account id, so two acc
 
 #### 4.3.1 Pace-colored segments
 
-A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/track-metrics/{id}` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused activity's raw payload, as Edit track does.
+A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/{id}/track-metrics` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused activity's raw payload, as Edit track does.
 
 #### 4.3.3 Map image export
 
@@ -376,7 +376,7 @@ flowchart TD
 
 **Reprocessing is ingest's own pipeline ending in an UPDATE** (`reprocessActivity`, shared by the `edit_track` and `reprivacy` jobs): the same load and clip (§4.1 steps 2–3), the edit, and **a second clip**, because chopping away the first point outside a zone would otherwise expose the points behind it. It clears region rows before re-matching, since matching only inserts, and overwrites masks in place so a tile the track still crosses never lacks one. `edit_pending` is set with the enqueue, guarded by `AND NOT edit_pending` so an activity can't be edited twice at once, and cleared on any failure, leaving the previous track.
 
-**The editor's points** (`GET /v1/activities/track-points/{id}`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The routes are `/activities/track-*/{id}` because `ServeMux` rejects `/activities/{id}/…` beside `/activities/track-metrics/{id}`. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, before `backfill-editable-times`, passes.
+**The editor's points** (`GET /v1/activities/{id}/track-points`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, before `backfill-editable-times`, passes.
 
 #### 4.7.8 Split an activity, and merge it back (FR-5.17)
 

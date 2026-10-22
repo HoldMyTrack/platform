@@ -172,7 +172,7 @@ func TestPhotoEditsAndTrackChanges(t *testing.T) {
 
 	// The slider's track: the display points with their moments.
 	var metrics trackMetricsResponse
-	d.decode(d.do(me, "GET", "/v1/activities/track-metrics/"+walk, nil), http.StatusOK, &metrics)
+	d.decode(d.do(me, "GET", "/v1/activities/"+walk+"/track-metrics", nil), http.StatusOK, &metrics)
 	if len(metrics.Points) != 2 || metrics.Points[0].TimeS != photoTrackStart.Unix() || metrics.Points[1].TimeS != photoTrackStart.Unix()+60 {
 		t.Errorf("track metrics %+v, want the two points' moments", metrics.Points)
 	}

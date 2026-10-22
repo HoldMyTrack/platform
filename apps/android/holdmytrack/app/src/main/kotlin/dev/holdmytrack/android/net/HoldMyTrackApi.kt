@@ -738,10 +738,10 @@ object HoldMyTrackApi {
 
     private fun SpotJson.toSpot() = Spot(id, category, name, address, description, inscription, memorial, startDate, wikipedia, lon, lat)
 
-    /** `GET /v1/activities/track-metrics/{id}` (`docs/IMPLEMENTATION.md` §4.3.1) — see
+    /** `GET /v1/activities/{id}/track-metrics` (`docs/IMPLEMENTATION.md` §4.3.1) — see
      *  [TrackMetrics]. */
     fun trackMetrics(id: String, onResult: (Result<TrackMetrics>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/track-metrics/" + id).build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id + "/track-metrics").build()
         call(request, { text ->
             val json = decode<TrackMetricsJson>(text)
             TrackMetrics(
@@ -752,11 +752,11 @@ object HoldMyTrackApi {
         }, onResult)
     }
 
-    /** `GET /v1/activities/track-points/{id}` — the recorded points, unedited and with any
+    /** `GET /v1/activities/{id}/track-points` — the recorded points, unedited and with any
      *  Private location already clipped off, and the saved edit. A refusal (`409`: no
      *  recording kept, points without times) is the server's own wording. */
     fun trackPoints(id: String, onResult: (Result<TrackPoints>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/track-points/" + id).build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id + "/track-points").build()
         call(request, { text ->
             val json = decode<TrackPointsJson>(text)
             TrackPoints(json.points.map { TrackPoint(it[0], it[1], it[2].toLong()) }, json.edit?.toTrackEdit())
@@ -764,7 +764,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `POST /v1/activities/track-edit/{id}` — the whole new edit, or null (or an empty one) to
+     * `POST /v1/activities/{id}/track-edit` — the whole new edit, or null (or an empty one) to
      * go back to the track as recorded, and [splitAt], a point's time, to also split the activity
      * there (`docs/SPEC.md` FR-5.17). The server answers `202` and reprocesses it in the
      * background, the activity Pending meanwhile; `409` when a reprocess is already running; a
@@ -774,7 +774,7 @@ object HoldMyTrackApi {
     fun trackEdit(id: String, edit: TrackEdit?, splitAt: Long? = null, allowHidden: Boolean = false, onResult: (Result<Unit>) -> Unit) {
         val body = TrackEditRequestJson(edit?.toJson(), splitAt, allowHidden = splitAt != null && allowHidden)
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/activities/track-edit/" + id)
+            .url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id + "/track-edit")
             .post(jsonBody(body))
             .build()
         call(request, { }, onResult)
