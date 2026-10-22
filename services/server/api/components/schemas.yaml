@@ -84,6 +84,7 @@ ActivityTypes:
 PrivateLocationInput:
   type: object
   required: [lon, lat, radius_m]
+  additionalProperties: false
   properties:
     name:
       type: string
@@ -105,6 +106,7 @@ PrivateLocation:
 StoryInput:
   type: object
   required: [name]
+  additionalProperties: false
   properties:
     name:
       type: string
@@ -112,6 +114,15 @@ StoryInput:
     description:
       type: string
       description: Trimmed; missing or empty leaves the Story without one. Longer than 2000 characters is a 400.
+StoryCreateInput:
+  type: object
+  required: [name]
+  additionalProperties: false
+  description: StoryInput, and the Story's first activities.
+  properties:
+    name: { $ref: "#/StoryInput/properties/name" }
+    description: { $ref: "#/StoryInput/properties/description" }
+    activity_ids: { $ref: "#/ActivityIDs" }
 ActivityIDs:
   type: array
   nullable: true
@@ -121,6 +132,7 @@ ActivityIDs:
 StoryActivitiesInput:
   type: object
   required: [activity_ids]
+  additionalProperties: false
   properties:
     activity_ids:
       type: array
@@ -255,6 +267,7 @@ Photo:
     thumb_url: { type: string }
 Credentials:
   type: object
+  additionalProperties: false
   properties:
     email: { type: string }
     password:

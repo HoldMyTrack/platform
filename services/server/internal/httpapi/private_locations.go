@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"math"
 	"net/http"
@@ -61,8 +60,8 @@ func (req *privateLocationRequest) validate() error {
 
 func decodePrivateLocation(w http.ResponseWriter, r *http.Request) (privateLocationRequest, bool) {
 	var req privateLocationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return req, false
 	}
 	if err := req.validate(); err != nil {

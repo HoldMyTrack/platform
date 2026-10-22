@@ -6,7 +6,6 @@ import (
 	"crypto/sha256"
 	"crypto/subtle"
 	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -174,8 +173,8 @@ func (s *Server) handleAuthHandoff(w http.ResponseWriter, r *http.Request) {
 		Code     string `json:"code"`
 		Verifier string `json:"verifier"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid JSON body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid JSON body"), http.StatusBadRequest)
 		return
 	}
 	invalid := func(msg string) {

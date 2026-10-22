@@ -38,6 +38,7 @@ photos:
         multipart/form-data:
           schema:
             type: object
+            additionalProperties: false
             required: [activity_id, file, thumb]
             properties:
               activity_id: { type: string }
@@ -101,6 +102,7 @@ photos_place:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               activity_id: { type: string }
               taken_at:
@@ -148,6 +150,7 @@ photos_id:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               caption:
                 type: string

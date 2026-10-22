@@ -23,12 +23,7 @@ stories:
       required: true
       content:
         application/json:
-          schema:
-            allOf:
-              - { $ref: "../components/schemas.yaml#/StoryInput" }
-              - type: object
-                properties:
-                  activity_ids: { $ref: "../components/schemas.yaml#/ActivityIDs" }
+          schema: { $ref: "../components/schemas.yaml#/StoryCreateInput" }
     responses:
       "201":
         description: The new Story
@@ -128,6 +123,7 @@ stories_id_send:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               email: { type: string }
     responses:

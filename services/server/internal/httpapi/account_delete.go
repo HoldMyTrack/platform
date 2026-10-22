@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"strings"
@@ -20,8 +19,8 @@ type deleteAccountRequest struct {
 // deleted too.
 func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 	var req deleteAccountRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	info := authInfoFromContext(r.Context())

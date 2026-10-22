@@ -8,6 +8,7 @@ account:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               email:
                 type: string
@@ -27,6 +28,7 @@ account_settings:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               display_name:
                 type: string
@@ -108,6 +110,7 @@ account_avatar:
         multipart/form-data:
           schema:
             type: object
+            additionalProperties: false
             required: [file]
             properties:
               file:

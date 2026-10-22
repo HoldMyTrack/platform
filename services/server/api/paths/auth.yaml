@@ -62,6 +62,7 @@ auth_forgot-password:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               email: { type: string }
     responses:
@@ -78,6 +79,7 @@ auth_reset-password:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               token: { type: string }
               password: { type: string }
@@ -94,6 +96,7 @@ auth_verify-email:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               token: { type: string }
     responses:
@@ -170,6 +173,7 @@ auth_google_token:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               id_token: { type: string }
               tz:
@@ -190,6 +194,7 @@ auth_handoff:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               code: { type: string }
               verifier: { type: string }
@@ -214,6 +219,7 @@ auth_email:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               email: { type: string }
     responses:

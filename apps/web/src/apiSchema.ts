@@ -2474,9 +2474,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["StoryInput"] & {
-                        activity_ids?: components["schemas"]["ActivityIDs"];
-                    };
+                    "application/json": components["schemas"]["StoryCreateInput"];
                 };
             };
             responses: {
@@ -3707,14 +3705,24 @@ export interface components {
                 }[];
             };
         };
+        /** @description Trimmed; blank or longer than 200 characters is a 400. */
+        name: string;
+        /** @description Trimmed; missing or empty leaves the Story without one. Longer than 2000 characters is a 400. */
+        description: string;
+        /** @description Duplicates are ignored; missing or null adds none. */
+        ActivityIDs: string[] | null;
+        /** @description StoryInput, and the Story's first activities. */
+        StoryCreateInput: {
+            name: components["schemas"]["name"];
+            description?: components["schemas"]["description"];
+            activity_ids?: components["schemas"]["ActivityIDs"];
+        };
         StoryInput: {
             /** @description Trimmed; blank or longer than 200 characters is a 400. */
             name: string;
             /** @description Trimmed; missing or empty leaves the Story without one. Longer than 2000 characters is a 400. */
             description?: string;
         };
-        /** @description Duplicates are ignored; missing or null adds none. */
-        ActivityIDs: string[] | null;
         StoryActivitiesInput: {
             /** @description Duplicates are ignored. */
             activity_ids: string[];

@@ -126,8 +126,8 @@ func (s *Server) handleActivityTrackEdit(w http.ResponseWriter, r *http.Request)
 	userID := userIDFromContext(r.Context())
 
 	var req trackEditRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	if req.Edit != nil {
@@ -235,7 +235,11 @@ func (s *Server) handleActivityTrackMerge(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 
 	var req trackMergeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.IDs) > maxMergeIDs {
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
+		return
+	}
+	if len(req.IDs) > maxMergeIDs {
 		writeAPIError(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
