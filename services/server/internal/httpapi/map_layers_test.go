@@ -100,3 +100,15 @@ func TestStyleCarriesNoAccountData(t *testing.T) {
 		}
 	}
 }
+
+// TestEveryLayersDocumentMatchesContract fetches every flavor's layers document through the
+// contract check: each is its own embedded file.
+func TestEveryLayersDocumentMatchesContract(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	for _, flavor := range mapstyle.Flavors() {
+		if rec := d.do(me, "GET", "/v1/map/layers?flavor="+flavor, nil); rec.Code != http.StatusOK {
+			t.Errorf("%s: status %d", flavor, rec.Code)
+		}
+	}
+}

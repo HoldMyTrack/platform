@@ -389,6 +389,53 @@ SpotCapture:
   properties:
     spot_id: { type: integer }
     captured_at: { type: string, format: date-time }
+MapStyle:
+  description: "A MapLibre style (its own specification), described only where a client reads it beside MapLibre: with imagery when the deployment has some, without otherwise."
+  oneOf:
+    - { $ref: "#/MapStyleWithImagery" }
+    - { $ref: "#/MapStylePlain" }
+MapStyleWithImagery:
+  type: object
+  required: [version, sources, layers, metadata]
+  properties:
+    version: { type: integer, enum: [8] }
+    sources:
+      type: object
+      required: [protomaps, satellite]
+      additionalProperties: false
+      properties:
+        protomaps: { type: object, description: "The basemap; a client reaches it by this id." }
+        satellite: { type: object, description: "The imagery; a client toggles it, and its layer, by this id." }
+    layers: { type: array, items: { type: object, required: [id, type] } }
+    metadata:
+      type: object
+      required: ["holdmytrack:style-build", "holdmytrack:roads", "holdmytrack:satellite-hides", "holdmytrack:satellite-dims", "holdmytrack:satellite-road-opacity"]
+      additionalProperties: false
+      properties:
+        "holdmytrack:style-build": { type: string, description: "The build it came from; the layers document carries the same." }
+        "holdmytrack:roads": { type: array, items: { type: string }, description: "The road layers the Layers menu's Roads shows and hides." }
+        "holdmytrack:satellite-hides": { type: array, items: { type: string }, description: "The layers satellite mode hides." }
+        "holdmytrack:satellite-dims": { type: array, items: { type: string }, description: "The road layers satellite mode draws at holdmytrack:satellite-road-opacity." }
+        "holdmytrack:satellite-road-opacity": { type: number, minimum: 0, maximum: 1 }
+MapStylePlain:
+  type: object
+  required: [version, sources, layers, metadata]
+  properties:
+    version: { $ref: "#/MapStyleWithImagery/properties/version" }
+    sources:
+      type: object
+      required: [protomaps]
+      additionalProperties: false
+      properties:
+        protomaps: { $ref: "#/MapStyleWithImagery/properties/sources/properties/protomaps" }
+    layers: { $ref: "#/MapStyleWithImagery/properties/layers" }
+    metadata:
+      type: object
+      required: ["holdmytrack:style-build", "holdmytrack:roads"]
+      additionalProperties: false
+      properties:
+        "holdmytrack:style-build": { $ref: "#/MapStyleWithImagery/properties/metadata/properties/holdmytrack:style-build" }
+        "holdmytrack:roads": { $ref: "#/MapStyleWithImagery/properties/metadata/properties/holdmytrack:roads" }
 MapLayers:
   type: object
   description: Every layer drawn over the basemap (IMPLEMENTATION.md §4.2, ADR-0048), for the client to apply as it comes. Every view sets the same properties, so switching views never undoes one.
@@ -455,8 +502,12 @@ LayerGroup:
               type: { type: string, enum: [geojson], description: "Filled by the client." }
     layers:
       type: array
-      description: "MapLibre layers in paint order. Every array in a filter, layout or paint value is an expression. Metadata `holdmytrack:toggle` names the Layers menu switch that shows a layer; `holdmytrack:vars` the properties, or `filter`, that read vars."
-      items: { type: object, required: [id, type] }
+      description: MapLibre layers in paint order. Every array in a filter, layout or paint value is an expression.
+      items:
+        type: object
+        required: [id, type]
+        properties:
+          metadata: { $ref: "#/LayerMetadata" }
     legend:
       type: object
       description: By Layers menu entry, the line its legend draws.
@@ -467,6 +518,29 @@ LayerGroup:
         properties:
           color: { type: string }
           dash: { type: array, items: { type: number }, description: "In line widths; none for a solid line." }
+LayerMetadata:
+  type: object
+  description: What a client reads from a layer beside MapLibre.
+  additionalProperties: false
+  properties:
+    "holdmytrack:toggle": { type: string, enum: [bikePaths, mtbTrails, sharedPaths, spots], description: "The Layers menu switch that shows the layer." }
+    "holdmytrack:vars":
+      type: object
+      description: "By property, or `filter`, the vars it reads."
+      additionalProperties: { type: array, items: { type: string } }
+    "holdmytrack:role": { type: string, enum: [casing, focused, pace-bands, spot-area, track], description: "What the layer is for, so a client can draw something of its own to match it." }
+    "holdmytrack:images":
+      type: object
+      description: By image name, the badge a symbol layer draws.
+      additionalProperties:
+        type: object
+        required: [category, fill, ring, ink]
+        additionalProperties: false
+        properties:
+          category: { type: string }
+          fill: { type: string }
+          ring: { type: string }
+          ink: { type: string }
 LayerViews:
   type: object
   required: [normal, fog, heatmap]

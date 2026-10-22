@@ -1882,16 +1882,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            /** @enum {integer} */
-                            version: 8;
-                            sources: Record<string, never>;
-                            layers: Record<string, never>[];
-                            metadata: {
-                                /** @description The build it came from; the layers document carries the same. */
-                                "holdmytrack:style-build": string;
-                            };
-                        };
+                        "application/json": components["schemas"]["MapStyle"];
                     };
                 };
                 /** @description Unchanged since the If-None-Match ETag */
@@ -3560,6 +3551,50 @@ export interface components {
                 ];
             };
         };
+        MapStyleWithImagery: {
+            /** @enum {integer} */
+            version: 8;
+            sources: {
+                /** @description The basemap; a client reaches it by this id. */
+                protomaps: Record<string, never>;
+                /** @description The imagery; a client toggles it, and its layer, by this id. */
+                satellite: Record<string, never>;
+            };
+            layers: Record<string, never>[];
+            metadata: {
+                /** @description The build it came from; the layers document carries the same. */
+                "holdmytrack:style-build": string;
+                /** @description The road layers the Layers menu's Roads shows and hides. */
+                "holdmytrack:roads": string[];
+                /** @description The layers satellite mode hides. */
+                "holdmytrack:satellite-hides": string[];
+                /** @description The road layers satellite mode draws at holdmytrack:satellite-road-opacity. */
+                "holdmytrack:satellite-dims": string[];
+                "holdmytrack:satellite-road-opacity": number;
+            };
+        };
+        /** @enum {integer} */
+        version: 8;
+        /** @description The basemap; a client reaches it by this id. */
+        protomaps: Record<string, never>;
+        layers: Record<string, never>[];
+        /** @description The build it came from; the layers document carries the same. */
+        "holdmytrack:style-build": string;
+        /** @description The road layers the Layers menu's Roads shows and hides. */
+        "holdmytrack:roads": string[];
+        MapStylePlain: {
+            version: components["schemas"]["version"];
+            sources: {
+                protomaps: components["schemas"]["protomaps"];
+            };
+            layers: components["schemas"]["layers"];
+            metadata: {
+                "holdmytrack:style-build": components["schemas"]["holdmytrack:style-build"];
+                "holdmytrack:roads": components["schemas"]["holdmytrack:roads"];
+            };
+        };
+        /** @description A MapLibre style (its own specification), described only where a client reads it beside MapLibre: with imagery when the deployment has some, without otherwise. */
+        MapStyle: components["schemas"]["MapStyleWithImagery"] | components["schemas"]["MapStylePlain"];
         LayerView: {
             /** @description By layer id, the layout properties to set. */
             layout: Record<string, never>;
@@ -3570,6 +3605,32 @@ export interface components {
             normal: components["schemas"]["LayerView"];
             fog: components["schemas"]["LayerView"];
             heatmap: components["schemas"]["LayerView"];
+        };
+        /** @description What a client reads from a layer beside MapLibre. */
+        LayerMetadata: {
+            /**
+             * @description The Layers menu switch that shows the layer.
+             * @enum {string}
+             */
+            "holdmytrack:toggle"?: "bikePaths" | "mtbTrails" | "sharedPaths" | "spots";
+            /** @description By property, or `filter`, the vars it reads. */
+            "holdmytrack:vars"?: {
+                [key: string]: string[];
+            };
+            /**
+             * @description What the layer is for, so a client can draw something of its own to match it.
+             * @enum {string}
+             */
+            "holdmytrack:role"?: "casing" | "focused" | "pace-bands" | "spot-area" | "track";
+            /** @description By image name, the badge a symbol layer draws. */
+            "holdmytrack:images"?: {
+                [key: string]: {
+                    category: string;
+                    fill: string;
+                    ring: string;
+                    ink: string;
+                };
+            };
         };
         LayerGroup: {
             id: string;
@@ -3598,8 +3659,10 @@ export interface components {
                     type: "geojson";
                 };
             };
-            /** @description MapLibre layers in paint order. Every array in a filter, layout or paint value is an expression. Metadata `holdmytrack:toggle` names the Layers menu switch that shows a layer; `holdmytrack:vars` the properties, or `filter`, that read vars. */
-            layers: Record<string, never>[];
+            /** @description MapLibre layers in paint order. Every array in a filter, layout or paint value is an expression. */
+            layers: {
+                metadata?: components["schemas"]["LayerMetadata"];
+            }[];
             /** @description By Layers menu entry, the line its legend draws. */
             legend?: {
                 [key: string]: {
