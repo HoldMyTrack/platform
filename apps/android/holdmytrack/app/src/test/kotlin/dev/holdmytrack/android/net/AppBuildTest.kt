@@ -34,6 +34,6 @@ class AppBuildTest {
 
     @Test
     fun `the User-Agent carries the versionCode the server compares`() {
-        assertEquals("HoldMyTrack-Android/0.16 (62da50b; 812)", AppBuild.userAgent("0.16", "62da50b", 812))
+        assertEquals("HoldMyTrack-Android/0.17 (62da50b; 812)", AppBuild.userAgent("0.17", "62da50b", 812))
     }
 }
