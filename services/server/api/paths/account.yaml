@@ -110,7 +110,6 @@ account_avatar:
         multipart/form-data:
           schema:
             type: object
-            additionalProperties: false
             required: [file]
             properties:
               file:
