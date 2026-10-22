@@ -12,6 +12,8 @@ Each file holds one rule:
 
 The format is platform-neutral: dates are ISO strings, sets are arrays (compared sorted), ids are strings, field names are camelCase, and a missing field means the same as `null`. Timestamps are epoch milliseconds where the rule works in them, ISO strings otherwise. A union is plain JSON: `null`, a string tag such as `"load"`, or an object. A file or a case may set `"tolerance": 1e-6`, and numbers anywhere in the expected value then match within it. `"expected": { "throws": true }` means the rule rejects its input.
 
+The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayout`, `photoTrack*`, `slider*`) also have a `generated` list, run like `cases`: seeded random inputs with the web implementation's answers, written by `npm run gen:rule-cases` in `apps/web`. They catch rounding and boundary differences no hand-written case reaches. `cases` stay the reviewed spec; regenerate only after a deliberate rule change, and review the diff, since the script writes whatever the web code answers. CI never runs it.
+
 | Rule | Input | Expected |
 | :-- | :-- | :-- |
 | `defaultRange` | `visibleDays` (ascending dates), `earliest`, `today` | `{ from, to }` |
