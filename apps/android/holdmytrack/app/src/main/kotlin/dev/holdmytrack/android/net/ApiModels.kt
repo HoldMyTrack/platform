@@ -158,7 +158,7 @@ data class Story(
 )
 
 /**
- * One vertex of an activity's display track, as `GET /v1/activities/track-metrics/{id}`
+ * One vertex of an activity's display track, as `GET /v1/activities/{id}/track-metrics`
  * measures it: its speed from the vertex before, and its moment ([timeS], epoch seconds) —
  * what the Photos tab's slider turns a place on the track into (`docs/SPEC.md` FR-16.4).
  */
@@ -181,7 +181,7 @@ data class TrackMetrics(
  *  boundary point, so the coloured pieces join up without a gap. */
 data class PaceBand(val band: Int, val start: Int, val end: Int)
 
-/** One recorded point of an activity, as `GET /v1/activities/track-points` returns it — its
+/** One recorded point of an activity, as `GET /v1/activities/{id}/track-points` returns it — its
  *  time ([t], Unix ms) is what a track edit names it by. */
 data class TrackPoint(val lon: Double, val lat: Double, val t: Long)
 

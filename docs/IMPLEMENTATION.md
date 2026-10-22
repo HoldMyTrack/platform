@@ -182,7 +182,7 @@ flowchart LR
 
 **All three are idempotent on `(user_id, source, external_id)`**, under concurrent duplicates too. The check at receive time is a fast path; the guarantee is `idx_activities_dedupe` plus the persist step's `ON CONFLICT DO NOTHING` (§4.1 step 6).
 
-**The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced activity is a job carrying its file name, source, state and error, so the Upload menu, `/sync` and the Android Sync history read one history with no uploads table (`imports.go`, `uploads.go`). `GET /v1/activities/status/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
+**The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced activity is a job carrying its file name, source, state and error, so the Upload menu, `/sync` and the Android Sync history read one history with no uploads table (`imports.go`, `uploads.go`). `GET /v1/uploads/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
 
 #### 4.0.3 `POST /v1/sync/activities`
 
@@ -323,7 +323,7 @@ On the wire the version is prefixed with the start of the account id, so two acc
 
 #### 4.3.1 Pace-colored segments
 
-A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/track-metrics/{id}` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused activity's raw payload, as Edit track does.
+A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/{id}/track-metrics` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused activity's raw payload, as Edit track does.
 
 #### 4.3.3 Map image export
 
@@ -362,7 +362,6 @@ A group delete runs one request at a time, so several don't mark the same tiles 
 flowchart TD
     E[Edit track save] --> P
     S["Split: track edit<br/>plus new piece row"] --> P
-    M["Merge: others deleted,<br/>survivor narrowed"] --> P
     Z[Private location change] --> P
     P["one transaction: edit_pending,<br/>current tiles dirty, version bump,<br/>edit_track or reprivacy job"] --> R1["render: Pending dropped"]
     R1 --> RE["reprocess from raw: clip,<br/>narrow to piece, apply edit, clip again"]
@@ -376,15 +375,13 @@ flowchart TD
 
 **Reprocessing is ingest's own pipeline ending in an UPDATE** (`reprocessActivity`, shared by the `edit_track` and `reprivacy` jobs): the same load and clip (§4.1 steps 2–3), the edit, and **a second clip**, because chopping away the first point outside a zone would otherwise expose the points behind it. It clears region rows before re-matching, since matching only inserts, and overwrites masks in place so a tile the track still crosses never lacks one. `edit_pending` is set with the enqueue, guarded by `AND NOT edit_pending` so an activity can't be edited twice at once, and cleared on any failure, leaving the previous track.
 
-**The editor's points** (`GET /v1/activities/track-points/{id}`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The routes are `/activities/track-*/{id}` because `ServeMux` rejects `/activities/{id}/…` beside `/activities/track-metrics/{id}`. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, before `backfill-editable-times`, passes.
+**The editor's points** (`GET /v1/activities/{id}/track-points`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, before `backfill-editable-times`, passes.
 
-#### 4.7.8 Split an activity, and merge it back (FR-5.17)
+#### 4.7.8 Split an activity (FR-5.17)
 
 **A piece is a row over the same raw payload, narrowed to a stretch** (`split_group`, `split_from`, `split_to`, inclusive, so pieces share the point they meet at). Everything that turns a raw payload into points narrows through `LoadPiecePoints`, after the Private location clip and before the edit (the reprocess, `DisplayedPoints`, the editor), and clips the narrowed ends again, since a split made at home leaves an end inside a zone. The range sits outside `track_edit`, so Reset returns a piece to its own stretch.
 
-**Split rides on the track edit**: one request and job, with the new piece Pending from its insert. Its `external_id` is the original's plus `#split:<ms>`, so a re-import still matches the original row and pieces never collide. If the job fails the new piece has no geometry, which Merge can fold back in.
-
-**Merge** (`ingest.MergePieces`, one transaction) keeps the earliest piece (the original row when included, which keeps its `external_id`), moves the others' photos and Story memberships to it, marks every piece's tiles dirty while their masks still exist, deletes the others and queues an `edit_track`. `MergeEdits` folds the specs into one that shows what the pieces showed: each is narrowed to its piece's range, a piece's Keep becomes Remove over what it cut away, and an open end is 2⁵³−1, since the browser replays the spec; Neither client offers Merge.
+**Split rides on the track edit**: one request and job, with the new piece Pending from its insert. Its `external_id` is the original's plus `#split:<ms>`, so a re-import still matches the original row and pieces never collide. If the job fails, the new piece has no geometry.
 
 ### 4.8 Activity graph — a private, per-user contribution grid
 

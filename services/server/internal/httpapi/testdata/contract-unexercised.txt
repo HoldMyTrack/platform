@@ -8,9 +8,9 @@ GET /account/avatar 503                  # untested: needs a failing object stor
 GET /account/exports/{id}/parts/{n} 206  # untested: byte-range read
 GET /account/exports/{id}/parts/{n} 503  # untested: needs a failing object store or a spent daily budget
 GET /activities/graph-stats 400          # untested: refusal
-GET /activities/track-points/{id} 409    # untested: refusal
-GET /activities/track-points/{id} 429    # untested: needs the rate limit spent
-GET /activities/track-points/{id} 503    # untested: needs a failing object store or a spent daily budget
+GET /activities/{id}/track-points 409    # untested: refusal
+GET /activities/{id}/track-points 429    # untested: needs the rate limit spent
+GET /activities/{id}/track-points 503    # untested: needs a failing object store or a spent daily budget
 GET /activities/trends 400               # untested: refusal
 GET /auth/facebook/callback 404          # untested: sign-in provider switched off
 GET /auth/facebook/start 404             # untested: sign-in provider switched off
@@ -33,7 +33,7 @@ POST /account/avatar 400                 # untested: refusal
 POST /account/avatar 413                 # untested: oversized or wrong-type upload
 POST /account/avatar 415                 # untested: oversized or wrong-type upload
 POST /account/avatar 503                 # untested: needs a failing object store or a spent daily budget
-POST /activities/track-edit/{id} 409     # untested: refusal
+POST /activities/{id}/track-edit 409     # untested: refusal
 POST /activities/upload 400              # untested: refusal
 POST /auth/demo 429                      # untested: needs the rate limit spent
 POST /auth/forgot-password 400           # untested: refusal

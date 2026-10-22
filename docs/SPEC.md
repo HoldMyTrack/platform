@@ -409,14 +409,13 @@ stateDiagram-v2
 
 ### FR-5.17 Split an activity
 
-An activity is split in two at a point on its track; the parts can be merged back. Each part is a full activity, and the original is never changed.
+An activity is split in two at a point on its track. Each part is a full activity, and the original is never changed.
 
 - A split needs what Edit track needs (FR-5.14). The split point belongs to both parts, each needing at least two points. One split per edit session, whose edit applies to both.
 - The activity keeps the part before the point. A new activity gets the rest with the same type, name, description and edit, joins the original's Stories, and takes the photos after the point.
 - Both parts are Pending until reprocessed; each starts at its first point.
 - A split point inside a Private location leaves both parts ending outside it. A split leaving a part entirely inside Private locations is refused unless the client confirms; that part is then kept with no track (FR-8.1).
 - A part is edited like any activity, split again included; Reset returns its own stretch.
-- Merging (API only) takes two or more parts of one split that meet end to end, none Pending: the earliest is kept, the others deleted, their photos, Stories and edits combined into it. Merging every part gives back an unsplit activity.
 - The original is still recognized on re-import (FR-3.5) and counts once against the limits.
 
 ## 8. FR-6 — Date Range Slider

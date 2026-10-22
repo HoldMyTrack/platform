@@ -124,7 +124,7 @@ object MapOverlays {
     }
 
     /**
-     * Draws [metrics]' pace bands — the selected activity's, `GET /v1/activities/track-metrics` —
+     * Draws [metrics]' pace bands — the selected activity's, `GET /v1/activities/{id}/track-metrics` —
      * one line per run the server worked out, each with its `band` for the layer to colour. The
      * web's `setTrackBands`.
      */

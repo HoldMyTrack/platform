@@ -14,19 +14,12 @@ type statusResponse struct {
 	Error  string `json:"error,omitempty"`
 }
 
-// handleActivityStatus lets the frontend find out what handleUpload's "enqueued" response
-// actually resolved to. That response is necessarily optimistic — the ingest job runs
-// asynchronously in cmd/holdmytrack work — so without this, a failed job (a GPX with no track
-// points, say) looked identical in the UI to a successful one: the widget just said
-// "enqueued" and the map silently never updated, with no signal that anything went wrong.
-//
-// Looks at the caller's own most recent ingest job for this external_id, not the activities
-// table directly, so "failed" is distinguishable from "never existed" — a failed job never
-// persists an activities row, so that table alone can't tell the two apart. Only the caller's:
-// a file's external_id is its SHA-256, so across accounts this told anyone holding a file
-// whether someone else had uploaded it, and showed two accounts uploading the same file each
-// other's job.
-func (s *Server) handleActivityStatus(w http.ResponseWriter, r *http.Request) {
+// handleUploadStatus serves `GET /v1/uploads/{external_id}`: what an upload's "enqueued" answer
+// resolved to, from the caller's own latest ingest job for that id. The job, not the activities
+// table, since a failed job leaves no activity, so "failed" and "never uploaded" would read alike.
+// Only the caller's: an upload's id is its file's SHA-256, which would otherwise tell anyone
+// holding a file whether another account uploaded it.
+func (s *Server) handleUploadStatus(w http.ResponseWriter, r *http.Request) {
 	externalID := r.PathValue("external_id")
 	if externalID == "" {
 		writeAPIError(w, "missing external_id", http.StatusBadRequest)

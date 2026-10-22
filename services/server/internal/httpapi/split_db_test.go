@@ -47,10 +47,9 @@ func (d *dbTest) listActivities(as account) []activityRow {
 	return resp.Activities
 }
 
-// Split one activity in two and merge it back (§4.7.8): each piece is a full activity with its
-// own numbers and track, the original file still counts as imported, and merging restores the
-// one activity it was.
-func TestSplitAndMerge(t *testing.T) {
+// Split one activity in two (§4.7.8): each piece is a full activity with its own numbers and
+// track, and the original file still counts as imported.
+func TestSplit(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me := d.newAccount(false)
 	ctx := context.Background()
@@ -72,7 +71,7 @@ func TestSplitAndMerge(t *testing.T) {
 	}
 
 	at := func(min int) int64 { return time.Date(2026, 5, 1, 10, min, 0, 0, time.UTC).UnixMilli() }
-	editPath := "/v1/activities/track-edit/" + orig
+	editPath := "/v1/activities/" + orig + "/track-edit"
 
 	// One point on a side isn't a track.
 	for _, m := range []int{0, 5} {
@@ -125,7 +124,7 @@ func TestSplitAndMerge(t *testing.T) {
 
 	// The editor opens on the piece's own points: 10:02 to 10:05, the Chop still in its spec.
 	var pts trackPointsResponse
-	d.decode(d.do(me, "GET", "/v1/activities/track-points/"+second.ID, nil), http.StatusOK, &pts)
+	d.decode(d.do(me, "GET", "/v1/activities/"+second.ID+"/track-points", nil), http.StatusOK, &pts)
 	if len(pts.Points) != 4 || int64(pts.Points[0][2]) != at(2) || pts.Edit == nil || pts.Edit.Keep == nil {
 		t.Errorf("second piece's points %v edit %+v", pts.Points, pts.Edit)
 	}
@@ -135,37 +134,6 @@ func TestSplitAndMerge(t *testing.T) {
 		t.Errorf("re-upload after a split: %q", resp.Status)
 	}
 
-	// Merge: a lone piece, or a stranger's, is refused.
-	if rec := d.do(me, "POST", "/v1/activities/track-merge", map[string]any{"ids": []string{orig}}); rec.Code != http.StatusConflict {
-		t.Errorf("merge of one piece: %d, want 409", rec.Code)
-	}
-	other := d.newAccount(false)
-	if rec := d.do(other, "POST", "/v1/activities/track-merge", map[string]any{"ids": []string{orig, second.ID}}); rec.Code != http.StatusConflict {
-		t.Errorf("merge of someone else's pieces: %d, want 409", rec.Code)
-	}
-	var merged trackMergeResponse
-	d.decode(d.do(me, "POST", "/v1/activities/track-merge", map[string]any{"ids": []string{second.ID, orig}}), http.StatusOK, &merged)
-	if merged.ID != orig || len(merged.Removed) != 1 || merged.Removed[0] != second.ID {
-		t.Fatalf("merge: %+v", merged)
-	}
-	d.runEditJob(me)
-
-	list = d.listActivities(me)
-	if len(list) != 1 {
-		t.Fatalf("after merge: %d activities", len(list))
-	}
-	a := list[0]
-	if a.ID != orig || a.Split != nil || a.Pending || a.DurationSeconds == nil || *a.DurationSeconds != 240 || len(a.Stories) != 1 {
-		t.Errorf("merged %+v, want the original back, 10:00–10:04 (the Chop kept), in the Story", a)
-	}
-	var edit []byte
-	if err := d.pool.QueryRow(ctx, `SELECT track_edit FROM activities WHERE id = $1`, orig).Scan(&edit); err != nil {
-		t.Fatal(err)
-	}
-	var e ingest.TrackEdit
-	if err := json.Unmarshal(edit, &e); err != nil || e.Keep == nil || e.Keep[1] != at(4) || len(e.Remove) != 0 {
-		t.Errorf("merged spec %s, want just the Chop", edit)
-	}
 }
 
 // A walk ending inside a Private location with a stray fix outside it as its last point, the
@@ -198,7 +166,7 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 		t.Fatalf("ingest: %+v, %v", res, err)
 	}
 	at := func(min int) int64 { return time.Date(2026, 5, 1, 10, min, 0, 0, time.UTC).UnixMilli() }
-	path := "/v1/activities/track-edit/" + res.ActivityID
+	path := "/v1/activities/" + res.ActivityID + "/track-edit"
 	dropStray := map[string]any{"drop": []int64{at(6)}}
 
 	rec := d.do(me, "POST", path, map[string]any{"edit": dropStray, "split_at": at(4)})

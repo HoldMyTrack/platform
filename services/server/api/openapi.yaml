@@ -81,16 +81,12 @@ paths:
     $ref: "paths/activities.yaml#/activities_graph-stats"
   /activities/trends:
     $ref: "paths/activities.yaml#/activities_trends"
-  /activities/status/{external_id}:
-    $ref: "paths/activities.yaml#/activities_status_external_id"
-  /activities/track-metrics/{id}:
-    $ref: "paths/activities.yaml#/activities_track-metrics_id"
-  /activities/track-points/{id}:
-    $ref: "paths/activities.yaml#/activities_track-points_id"
-  /activities/track-edit/{id}:
-    $ref: "paths/activities.yaml#/activities_track-edit_id"
-  /activities/track-merge:
-    $ref: "paths/activities.yaml#/activities_track-merge"
+  /activities/{id}/track-metrics:
+    $ref: "paths/activities.yaml#/activities_id_track-metrics"
+  /activities/{id}/track-points:
+    $ref: "paths/activities.yaml#/activities_id_track-points"
+  /activities/{id}/track-edit:
+    $ref: "paths/activities.yaml#/activities_id_track-edit"
   /map/style/{flavor}:
     $ref: "paths/map.yaml#/map_style_flavor"
   /map/layers:
@@ -125,6 +121,8 @@ paths:
     $ref: "paths/uploads.yaml#/uploads"
   /uploads/active:
     $ref: "paths/uploads.yaml#/uploads_active"
+  /uploads/{external_id}:
+    $ref: "paths/uploads.yaml#/uploads_external_id"
   /coverage/status:
     $ref: "paths/map.yaml#/coverage_status"
   /sync/activities:

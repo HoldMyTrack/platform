@@ -3,10 +3,8 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math"
 	"net/http"
-	"strings"
 
 	"github.com/jackc/pgx/v5"
 
@@ -24,7 +22,7 @@ type trackPointsResponse struct {
 	Edit   *ingest.TrackEdit `json:"edit"`
 }
 
-// handleActivityTrackPoints serves `GET /v1/activities/track-points/{id}`. The points come
+// handleActivityTrackPoints serves `GET /v1/activities/{id}/track-points`. The points come
 // from the raw payload — the only place full-resolution positions survive (§4.1 step 6) — and
 // are clipped against the account's current Private locations before they leave the server:
 // the raw payload still holds the hidden ends, and returning them would hand the client the
@@ -114,7 +112,7 @@ const splitHidesPartCode = "split_hides_part"
 // Move point one per point dragged, so this is far past any real editing session while still rejecting an absurd payload.
 const maxTrackEditEntries = 10000
 
-// handleActivityTrackEdit serves `POST /v1/activities/track-edit/{id}`: validate the spec,
+// handleActivityTrackEdit serves `POST /v1/activities/{id}/track-edit`: validate the spec,
 // mark the activity pending, and enqueue an `edit_track` job to reprocess it (§4.7.7). The
 // reprocessing itself — reparse, metrics, masks, fog/heatmap invalidation — is the same heavy
 // work ingest does, so it goes through the job queue, never inline. Responds 202; the
@@ -210,57 +208,4 @@ func (s *Server) checkSplit(r *http.Request, userID, activityID string, edit *in
 		return http.StatusBadRequest, "error.split_in_private"
 	}
 	return 0, ""
-}
-
-// trackMergeRequest names the pieces of one split to join back up.
-type trackMergeRequest struct {
-	IDs []string `json:"ids"`
-}
-
-// trackMergeResponse is the activity the pieces were joined into, and the ids that are gone.
-type trackMergeResponse struct {
-	ID      string   `json:"id"`
-	Removed []string `json:"removed"`
-}
-
-// maxMergeIDs bounds the request: a split is a handful of pieces cut by hand.
-const maxMergeIDs = 100
-
-// handleActivityTrackMerge serves `POST /v1/activities/track-merge` (§4.7.8): join adjacent
-// pieces of one split back into one activity. The joining itself is a row update and deletes
-// (ingest.MergePieces); the rebuilt track comes from the same `edit_track` job an edit uses,
-// so the survivor reads Pending until it lands. Responds 200 with the survivor and the
-// deleted ids.
-func (s *Server) handleActivityTrackMerge(w http.ResponseWriter, r *http.Request) {
-	userID := userIDFromContext(r.Context())
-	ctx := r.Context()
-
-	var req trackMergeRequest
-	if err := decodeJSON(r.Body, &req); err != nil {
-		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
-		return
-	}
-	if len(req.IDs) == 0 || len(req.IDs) > maxMergeIDs {
-		writeAPIError(w, fmt.Sprintf(`"ids" needs 1 to %d ids`, maxMergeIDs), http.StatusBadRequest)
-		return
-	}
-	for i, id := range req.IDs {
-		if !uuidPattern.MatchString(id) {
-			writeAPIError(w, "invalid request body", http.StatusBadRequest)
-			return
-		}
-		req.IDs[i] = strings.ToLower(id)
-	}
-
-	survivor, removed, err := ingest.MergePieces(ctx, s.pool, userID, req.IDs)
-	if errors.Is(err, ingest.ErrSplitConflict) {
-		httpErrorT(w, r, http.StatusConflict, "error.merge_not_pieces")
-		return
-	}
-	if err != nil {
-		s.log.Error("track merge failed", "err", err)
-		writeAPIError(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	writeJSON(w, http.StatusOK, trackMergeResponse{ID: survivor, Removed: removed})
 }

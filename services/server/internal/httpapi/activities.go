@@ -188,7 +188,7 @@ type activityRow struct {
 	TrackEdit string `json:"track_edit,omitempty"`
 	Photos    string `json:"photos,omitempty"`
 	// Split is set on a piece of a split activity (§4.7.8): which split, and the stretch of the
-	// recording it covers — what the Activities panel's Merge checks a group against.
+	// recording it covers.
 	Split *splitRef `json:"split"`
 	// Stories are the Stories it's in, newest first — the Activities panel's Story badge.
 	Stories []storyRef `json:"stories"`
@@ -559,7 +559,7 @@ func pointSpeeds(lons, lats, ms []float64) []float64 {
 	return speed
 }
 
-// handleActivityTrackMetrics serves `GET /v1/activities/track-metrics/{id}` — per-simplified-
+// handleActivityTrackMetrics serves `GET /v1/activities/{id}/track-metrics` — per-simplified-
 // vertex speed, and the pace bands (paceBands) the web and Android clients draw over whichever
 // single activity is selected. Pace only: HoldMyTrack keeps no heart rate (VISION.md §1.1).
 // Scoped to the caller's user_id in the query itself, same as every other per-activity lookup

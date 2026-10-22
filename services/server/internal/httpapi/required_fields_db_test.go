@@ -28,8 +28,6 @@ func TestMissingRequiredFieldsAreRefused(t *testing.T) {
 		{"sync point without lat", "POST", "/v1/sync/activities", point(`{"lon": 1, "time": "2026-01-01T12:00:00Z"}`), `needs \"lat\"`},
 		{"sync point without time", "POST", "/v1/sync/activities", point(`{"lat": 1, "lon": 1}`), `needs \"lat\"`},
 		{"overlap span without end", "POST", "/v1/activities/overlaps", map[string]any{"spans": []any{map[string]any{"key": "a", "start": "2026-01-01T12:00:00Z"}}}, `needs \"start\" and \"end\"`},
-		{"merge without ids", "POST", "/v1/activities/track-merge", map[string]any{}, `\"ids\" needs`},
-		{"merge with no ids", "POST", "/v1/activities/track-merge", map[string]any{"ids": []string{}}, `\"ids\" needs`},
 	} {
 		rec := d.do(me, tc.method, tc.path, tc.body)
 		if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), tc.want) {

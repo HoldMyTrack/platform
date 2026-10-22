@@ -315,7 +315,7 @@ func probe() {
 	}
 	t0 := time.Now()
 	for {
-		req, _ := http.NewRequest("GET", *base+"/v1/activities/status/"+r.ExternalID, nil)
+		req, _ := http.NewRequest("GET", *base+"/v1/uploads/"+r.ExternalID, nil)
 		req.Header.Set("Authorization", "Bearer "+a.Token)
 		resp, err := client.Do(req)
 		if err == nil {

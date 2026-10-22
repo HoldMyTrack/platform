@@ -349,7 +349,7 @@ export interface ActivityTrackMetrics {
 }
 
 /**
- * `GET /v1/activities/track-metrics/{id}` — per-simplified-vertex speed for one activity's own
+ * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one activity's own
  * track, matching the exact vertex sequence its display trajectory already renders. Backs
  * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
  * focus.
@@ -370,14 +370,14 @@ export async function getActivityTrackMetrics(
   activityId: string,
   signal?: AbortSignal,
 ): Promise<ActivityTrackMetrics> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/track-metrics/${activityId}`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${activityId}/track-metrics`, {
     ...(signal ? { signal } : {}),
     credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  const body = (await res.json()) as ResponseJson<'/activities/track-metrics/{id}', 'get'>;
+  const body = (await res.json()) as ResponseJson<'/activities/{id}/track-metrics', 'get'>;
   return {
     activityId: body.activity_id,
     points: body.points.map((p) => ({ lon: p.lon, lat: p.lat, speedMps: p.speed_mps, timeS: p.time_s })),
@@ -403,16 +403,16 @@ export interface ActivityTrackPoints {
   edit: TrackEdit | null;
 }
 
-/** `GET /v1/activities/track-points/{id}` — what the track editor opens with. */
+/** `GET /v1/activities/{id}/track-points` — what the track editor opens with. */
 export async function getActivityTrackPoints(activityId: string, signal?: AbortSignal): Promise<ActivityTrackPoints> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/track-points/${activityId}`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${activityId}/track-points`, {
     ...(signal ? { signal } : {}),
     credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return (await res.json()) as ResponseJson<'/activities/track-points/{id}', 'get'>;
+  return (await res.json()) as ResponseJson<'/activities/{id}/track-points', 'get'>;
 }
 
 /** A split would leave one part entirely inside a Private location (`split_hides_part`,
@@ -421,7 +421,7 @@ export async function getActivityTrackPoints(activityId: string, signal?: AbortS
 export class SplitHidesPartError extends Error {}
 
 /**
- * `POST /v1/activities/track-edit/{id}` — the editor's Apply. Sends the complete new edit
+ * `POST /v1/activities/{id}/track-edit` — the editor's Apply. Sends the complete new edit
  * (null resets to the original track), and `splitAt`, a point's unix ms, to also split the
  * activity there (§4.7.8); the server marks the activity — both pieces, for a split — pending
  * and reprocesses it in the background, so this resolves as soon as that's queued (`202`).
@@ -433,7 +433,7 @@ export async function saveActivityTrackEdit(
   splitAt: number | null = null,
   allowHidden = false,
 ): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/track-edit/${activityId}`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${activityId}/track-edit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

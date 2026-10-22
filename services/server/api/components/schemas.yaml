@@ -192,7 +192,7 @@ UploadResult:
     status: { type: string, enum: [enqueued, already_processed] }
     external_id:
       type: string
-      description: The file's SHA-256, what GET /activities/status/{external_id} takes.
+      description: The file's SHA-256, what GET /uploads/{external_id} takes.
     filename: { type: string }
 ActivityStatsBlock:
   type: object
