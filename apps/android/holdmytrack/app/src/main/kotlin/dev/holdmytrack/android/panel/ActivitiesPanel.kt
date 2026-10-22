@@ -564,15 +564,14 @@ class ActivitiesPanel(
     }
 
     private fun renderToolbar(listed: List<Activity>) {
-        val checkedCount = listed.count { it.id in state.checked }
-        val allChecked = listed.isNotEmpty() && checkedCount == listed.size
+        val all = ToolbarRules.checkAll(listed.size, listed.count { it.id in state.checked })
         checkAll.isEnabled = listed.isNotEmpty()
-        checkAll.checkedState = when {
-            allChecked -> MaterialCheckBox.STATE_CHECKED
-            checkedCount > 0 -> MaterialCheckBox.STATE_INDETERMINATE
-            else -> MaterialCheckBox.STATE_UNCHECKED
+        checkAll.checkedState = when (all) {
+            ToolbarRules.CheckAll.ALL -> MaterialCheckBox.STATE_CHECKED
+            ToolbarRules.CheckAll.SOME -> MaterialCheckBox.STATE_INDETERMINATE
+            ToolbarRules.CheckAll.NONE -> MaterialCheckBox.STATE_UNCHECKED
         }
-        checkAll.contentDescription = res.getString(if (allChecked) R.string.panel_uncheck_all else R.string.panel_check_all)
+        checkAll.contentDescription = res.getString(if (all == ToolbarRules.CheckAll.ALL) R.string.panel_uncheck_all else R.string.panel_check_all)
         selectMenu.isEnabled = listed.isNotEmpty()
 
         // The toolbar names its target, so which of the group and the selected row it acts on
@@ -591,45 +590,31 @@ class ActivitiesPanel(
         for (actions in listOf(toolbarActions, cardActions)) describeActions(actions, targets, targetName, noTarget, anyHidden)
     }
 
+    /** Each action says what it would do, or why it can't (as the web's do): disabled actions
+     *  stay visible. */
     private fun describeActions(actions: Actions, targets: List<Activity>, targetName: String?, noTarget: String, anyHidden: Boolean) {
+        val use = ToolbarRules.actions(targets.size, targets.any { it.pending }, Session.isDemo)
+        fun text(of: ToolbarRules.Use, demo: Int, ready: () -> String) = when (of) {
+            ToolbarRules.Use.DEMO -> res.getString(demo)
+            ToolbarRules.Use.NO_TARGET -> noTarget
+            ToolbarRules.Use.READY, ToolbarRules.Use.PENDING -> ready()
+        }
+        fun ToolbarRules.Use.enabled() = this == ToolbarRules.Use.READY
         describe(
             actions.visibility,
-            targetName?.let { res.getString(if (anyHidden) R.string.panel_show_target else R.string.panel_hide_target, it) } ?: noTarget,
-            enabled = targetName != null,
+            text(use.visibility, 0) { res.getString(if (anyHidden) R.string.panel_show_target else R.string.panel_hide_target, targetName) },
+            use.visibility.enabled(),
         )
-        // The demo account can look but not change (the server's requireNotDemo): both stay
-        // visible, disabled, saying why — as the web's do.
-        val demo = Session.isDemo
         describe(
             actions.edit,
-            when {
-                demo -> res.getString(R.string.panel_demo_edit)
-                targetName == null -> noTarget
-                targets.size == 1 -> res.getString(R.string.panel_edit_one, targetName)
-                else -> res.getString(R.string.panel_edit_many, targetName)
+            text(use.edit, R.string.panel_demo_edit) {
+                res.getString(if (targets.size == 1) R.string.panel_edit_one else R.string.panel_edit_many, targetName)
             },
-            enabled = !demo && targetName != null,
+            use.edit.enabled(),
         )
-        describe(
-            actions.addToStory,
-            when {
-                demo -> res.getString(R.string.story_demo_add)
-                targetName == null -> noTarget
-                else -> res.getString(R.string.story_add_target, targetName)
-            },
-            enabled = !demo && targetName != null,
-        )
-        // A Pending row can't be deleted until its reprocess lands: the job would race it.
-        describe(
-            actions.delete,
-            when {
-                demo -> res.getString(R.string.panel_demo_delete)
-                targetName == null -> noTarget
-                else -> res.getString(R.string.panel_delete_target, targetName)
-            },
-            enabled = !demo && targetName != null && targets.none { it.pending },
-        )
-        describe(actions.focus, targetName?.let { res.getString(R.string.panel_focus_target, it) } ?: noTarget, enabled = targetName != null)
+        describe(actions.addToStory, text(use.addToStory, R.string.story_demo_add) { res.getString(R.string.story_add_target, targetName) }, use.addToStory.enabled())
+        describe(actions.delete, text(use.delete, R.string.panel_demo_delete) { res.getString(R.string.panel_delete_target, targetName) }, use.delete.enabled())
+        describe(actions.focus, text(use.focus, 0) { res.getString(R.string.panel_focus_target, targetName) }, use.focus.enabled())
     }
 
     /** The master checkbox's ▾ (the web's `.select-menu`): All, None and Invert over the listed
