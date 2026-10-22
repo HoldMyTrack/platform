@@ -180,8 +180,7 @@ var catalogue = []stat{
 				WHERE a.raw_payload_key IS NOT NULL GROUP BY a.user_id, a.raw_payload_key
 			) k GROUP BY user_id
 		) per`},
-	// Rows naming an object whose size isn't recorded yet; 0 once backfill-object-bytes has
-	// run (docs/DEPLOY.md).
+	// Rows naming an object whose size isn't recorded: 0 unless a write failed to record one.
 	{key: "storage_bytes_unmeasured_rows", kind: state, query: `
 		SELECT (SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id
 		        WHERE a.raw_payload_key IS NOT NULL AND a.raw_bytes IS NULL)

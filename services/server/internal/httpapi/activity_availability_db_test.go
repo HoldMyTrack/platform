@@ -2,8 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"io"
-	"log/slog"
 	"net/http"
 	"testing"
 	"time"
@@ -90,18 +88,5 @@ func TestEditableTimesStored(t *testing.T) {
 	}
 	if got := d.activity(me, backward).TrackEdit; got != blockedBadTimes {
 		t.Fatalf("backward: track_edit %q, want %q", got, blockedBadTimes)
-	}
-
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET editable_times = NULL WHERE id = ANY($1)`, []string{forward, backward}); err != nil {
-		t.Fatal(err)
-	}
-	if err := ingest.BackfillEditableTimes(ctx, d.pool, d.srv.store, slog.New(slog.NewTextHandler(io.Discard, nil))); err != nil {
-		t.Fatal(err)
-	}
-	if v := stored(forward); v == nil || !*v {
-		t.Fatalf("forward after the backfill: editable_times %v, want true", v)
-	}
-	if v := stored(backward); v == nil || *v {
-		t.Fatalf("backward after the backfill: editable_times %v, want false", v)
 	}
 }

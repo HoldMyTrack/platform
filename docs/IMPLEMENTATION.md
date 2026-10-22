@@ -368,7 +368,7 @@ flowchart TD
 
 **Reprocessing is ingest's own pipeline ending in an UPDATE** (`reprocessActivity`, shared by the `edit_track` and `reprivacy` jobs): the same load and clip (§4.1 steps 2–3), the edit, and **a second clip**, because chopping away the first point outside a zone would otherwise expose the points behind it. It clears region rows before re-matching, since matching only inserts, and overwrites masks in place so a tile the track still crosses never lacks one. `edit_pending` is set with the enqueue, guarded by `AND NOT edit_pending` so an activity can't be edited twice at once, and cleared on any failure, leaving the previous track.
 
-**The editor's points** (`GET /v1/activities/{id}/track-points`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, before `backfill-editable-times`, passes.
+**The editor's points** (`GET /v1/activities/{id}/track-points`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, not yet looked at, passes.
 
 #### 4.7.8 Split an activity (FR-5.17)
 
