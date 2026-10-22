@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"time"
@@ -37,8 +36,8 @@ func (s *Server) handleSendStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req storySendRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	email, err := normalizeEmail(req.Email)

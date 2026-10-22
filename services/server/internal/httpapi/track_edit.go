@@ -3,6 +3,7 @@ package httpapi
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"net/http"
 	"strings"
@@ -126,8 +127,8 @@ func (s *Server) handleActivityTrackEdit(w http.ResponseWriter, r *http.Request)
 	userID := userIDFromContext(r.Context())
 
 	var req trackEditRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	if req.Edit != nil {
@@ -235,8 +236,12 @@ func (s *Server) handleActivityTrackMerge(w http.ResponseWriter, r *http.Request
 	ctx := r.Context()
 
 	var req trackMergeRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || len(req.IDs) > maxMergeIDs {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
+		return
+	}
+	if len(req.IDs) == 0 || len(req.IDs) > maxMergeIDs {
+		writeAPIError(w, fmt.Sprintf(`"ids" needs 1 to %d ids`, maxMergeIDs), http.StatusBadRequest)
 		return
 	}
 	for i, id := range req.IDs {

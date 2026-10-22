@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
@@ -189,8 +188,8 @@ func (s *Server) handleGetStory(w http.ResponseWriter, r *http.Request) {
 // with a 404 and creates nothing.
 func (s *Server) handleCreateStory(w http.ResponseWriter, r *http.Request) {
 	var req storyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	if !validateStoryFields(w, r, &req.Name, &req.Description) {
@@ -238,8 +237,8 @@ func (s *Server) handleUpdateStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req storyRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	if !validateStoryFields(w, r, &req.Name, &req.Description) {
@@ -328,8 +327,8 @@ func (s *Server) changeStoryActivities(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	var req storyActivitiesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	ids, ok := validateActivityIDs(w, req.ActivityIDs, true)

@@ -184,6 +184,7 @@ func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptes
 		IncludeResponseStatus: true,
 		MultiError:            true,
 	}
+	recordContractHit(req.Method, route.Path, rec.Code)
 	in := &openapi3filter.RequestValidationInput{Request: probe, PathParams: params, Route: route, Options: opts}
 	if rec.Code < 400 {
 		if err := openapi3filter.ValidateRequest(context.Background(), in); err != nil {
@@ -200,5 +201,42 @@ func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptes
 	if err := openapi3filter.ValidateResponse(context.Background(), out); err != nil {
 		t.Errorf("contract: %d response to %s %s doesn't match %s:\n%v\nbody: %s",
 			rec.Code, req.Method, req.URL.Path, contractPath, err, strings.TrimSpace(rec.Body.String()))
+	}
+}
+
+// TestRequestBodiesAreClosed fails on a JSON request object, at any depth, that would accept a
+// field it doesn't declare: decodeJSON refuses one, so the contract has to say so.
+func TestRequestBodiesAreClosed(t *testing.T) {
+	doc, err := newContractLoader().LoadFromFile(contractPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, op := range contractOperations(doc) {
+		if op.op.RequestBody == nil || op.op.RequestBody.Value == nil {
+			continue
+		}
+		media := op.op.RequestBody.Value.Content.Get("application/json")
+		if media == nil || media.Schema == nil {
+			continue
+		}
+		var walk func(s *openapi3.Schema, at string)
+		walk = func(s *openapi3.Schema, at string) {
+			if s == nil {
+				return
+			}
+			if len(s.Properties) > 0 && (s.AdditionalProperties.Has == nil || *s.AdditionalProperties.Has) {
+				t.Errorf("%s %s request%s: an object without additionalProperties: false", op.method, op.path, at)
+			}
+			for name, p := range s.Properties {
+				walk(p.Value, at+"."+name)
+			}
+			if s.Items != nil {
+				walk(s.Items.Value, at+"[]")
+			}
+			for _, sub := range s.AllOf {
+				walk(sub.Value, at)
+			}
+		}
+		walk(media.Schema.Value, "")
 	}
 }

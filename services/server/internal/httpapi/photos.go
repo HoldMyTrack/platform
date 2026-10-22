@@ -453,8 +453,8 @@ type placeResponse struct {
 func (s *Server) handlePlacePhoto(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())
 	var req placeRequest
-	if err := json.NewDecoder(io.LimitReader(r.Body, 16<<10)).Decode(&req); err != nil {
-		writeAPIError(w, errPhotoInvalidJSON.Error(), http.StatusBadRequest)
+	if err := decodeJSON(io.LimitReader(r.Body, 16<<10), &req); err != nil {
+		writeAPIError(w, bodyError(err, errPhotoInvalidJSON.Error()), http.StatusBadRequest)
 		return
 	}
 	if ok, err := s.ownsActivity(r.Context(), userID, req.ActivityID); err != nil {
@@ -699,6 +699,10 @@ func (s *Server) handleUpdatePhoto(w http.ResponseWriter, r *http.Request) {
 	var req map[string]json.RawMessage
 	if err := json.NewDecoder(io.LimitReader(r.Body, 64<<10)).Decode(&req); err != nil {
 		writeAPIError(w, errPhotoInvalidJSON.Error(), http.StatusBadRequest)
+		return
+	}
+	if msg, ok := unknownField(req, "caption", "route_at"); ok {
+		writeAPIError(w, msg, http.StatusBadRequest)
 		return
 	}
 

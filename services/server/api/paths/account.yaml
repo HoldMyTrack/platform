@@ -8,6 +8,8 @@ account:
         application/json:
           schema:
             type: object
+            additionalProperties: false
+            required: [email]
             properties:
               email:
                 type: string
@@ -27,6 +29,8 @@ account_settings:
         application/json:
           schema:
             type: object
+            additionalProperties: false
+            required: [country, timezone]
             properties:
               display_name:
                 type: string

@@ -157,8 +157,8 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 		IDToken string `json:"id_token"`
 		TZ      string `json:"tz"`
 	}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid JSON body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid JSON body"), http.StatusBadRequest)
 		return
 	}
 	fail := func(msg string, err error) {

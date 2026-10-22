@@ -197,7 +197,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        email?: string;
+                        email: string;
                     };
                 };
             };
@@ -233,8 +233,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        token?: string;
-                        password?: string;
+                        token: string;
+                        password: string;
                     };
                 };
             };
@@ -269,7 +269,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        token?: string;
+                        token: string;
                     };
                 };
             };
@@ -483,7 +483,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        id_token?: string;
+                        id_token: string;
                         /** @description The device's IANA zone, for a new account. */
                         tz?: string;
                     };
@@ -522,8 +522,8 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        code?: string;
-                        verifier?: string;
+                        code: string;
+                        verifier: string;
                     };
                 };
             };
@@ -594,7 +594,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        email?: string;
+                        email: string;
                     };
                 };
             };
@@ -641,7 +641,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @description The account's address, typed again to confirm. */
-                        email?: string;
+                        email: string;
                     };
                 };
             };
@@ -690,9 +690,9 @@ export interface paths {
                         /** @description Trimmed; empty clears it. */
                         display_name?: string;
                         /** @description ISO 3166-1 alpha-2; required. */
-                        country?: string;
+                        country: string;
                         /** @description An IANA zone; required. */
-                        timezone?: string;
+                        timezone: string;
                         /** @description A supported language, or empty for automatic; missing or null keeps it. */
                         locale?: string | null;
                     };
@@ -1250,9 +1250,9 @@ export interface paths {
                             /** @description The client's own name for the span, echoed back on an overlap. */
                             key: string;
                             /** Format: date-time */
-                            start?: string;
+                            start: string;
                             /** Format: date-time */
-                            end?: string;
+                            end: string;
                         }[] | null;
                     };
                 };
@@ -1816,7 +1816,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        ids?: string[] | null;
+                        ids: string[];
                     };
                 };
             };
@@ -1882,16 +1882,7 @@ export interface paths {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": {
-                            /** @enum {integer} */
-                            version: 8;
-                            sources: Record<string, never>;
-                            layers: Record<string, never>[];
-                            metadata: {
-                                /** @description The build it came from; the layers document carries the same. */
-                                "holdmytrack:style-build": string;
-                            };
-                        };
+                        "application/json": components["schemas"]["MapStyle"];
                     };
                 };
                 /** @description Unchanged since the If-None-Match ETag */
@@ -2110,7 +2101,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        activity_id?: string;
+                        activity_id: string;
                         /** @description RFC 3339; missing or empty when unknown. */
                         taken_at?: string;
                         /** @description 2006-01-02T15:04:05; missing or empty when unknown. */
@@ -2474,9 +2465,7 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["StoryInput"] & {
-                        activity_ids?: components["schemas"]["ActivityIDs"];
-                    };
+                    "application/json": components["schemas"]["StoryCreateInput"];
                 };
             };
             responses: {
@@ -2705,7 +2694,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        email?: string;
+                        email: string;
                     };
                 };
             };
@@ -3056,19 +3045,19 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        source?: components["schemas"]["SyncSource"];
+                        source: components["schemas"]["SyncSource"];
                         activities?: {
                             /** @description The source's own id; one that doesn't match SyncExternalID rejects that activity, not the request. */
-                            external_id?: string;
+                            external_id: string;
                             activity_type?: string;
                             name?: string;
                             description?: string;
                             points?: {
-                                lat?: number;
-                                lon?: number;
+                                lat: number;
+                                lon: number;
                                 elevation_m?: number | null;
                                 /** Format: date-time */
-                                time?: string;
+                                time: string;
                             }[] | null;
                         }[] | null;
                     };
@@ -3125,7 +3114,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        source?: components["schemas"]["SyncSource"];
+                        source: components["schemas"]["SyncSource"];
                         external_ids?: components["schemas"]["SyncExternalID"][] | null;
                     };
                 };
@@ -3399,9 +3388,9 @@ export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
         Credentials: {
-            email?: string;
+            email: string;
             /** @description A password shorter than the minimum or longer than the maximum is a 400. */
-            password?: string;
+            password: string;
             /** @description The browser's IANA zone, for a new account; anything invalid falls back to UTC. */
             timezone?: string;
         };
@@ -3562,6 +3551,50 @@ export interface components {
                 ];
             };
         };
+        MapStyleWithImagery: {
+            /** @enum {integer} */
+            version: 8;
+            sources: {
+                /** @description The basemap; a client reaches it by this id. */
+                protomaps: Record<string, never>;
+                /** @description The imagery; a client toggles it, and its layer, by this id. */
+                satellite: Record<string, never>;
+            };
+            layers: Record<string, never>[];
+            metadata: {
+                /** @description The build it came from; the layers document carries the same. */
+                "holdmytrack:style-build": string;
+                /** @description The road layers the Layers menu's Roads shows and hides. */
+                "holdmytrack:roads": string[];
+                /** @description The layers satellite mode hides. */
+                "holdmytrack:satellite-hides": string[];
+                /** @description The road layers satellite mode draws at holdmytrack:satellite-road-opacity. */
+                "holdmytrack:satellite-dims": string[];
+                "holdmytrack:satellite-road-opacity": number;
+            };
+        };
+        /** @enum {integer} */
+        version: 8;
+        /** @description The basemap; a client reaches it by this id. */
+        protomaps: Record<string, never>;
+        layers: Record<string, never>[];
+        /** @description The build it came from; the layers document carries the same. */
+        "holdmytrack:style-build": string;
+        /** @description The road layers the Layers menu's Roads shows and hides. */
+        "holdmytrack:roads": string[];
+        MapStylePlain: {
+            version: components["schemas"]["version"];
+            sources: {
+                protomaps: components["schemas"]["protomaps"];
+            };
+            layers: components["schemas"]["layers"];
+            metadata: {
+                "holdmytrack:style-build": components["schemas"]["holdmytrack:style-build"];
+                "holdmytrack:roads": components["schemas"]["holdmytrack:roads"];
+            };
+        };
+        /** @description A MapLibre style (its own specification), described only where a client reads it beside MapLibre: with imagery when the deployment has some, without otherwise. */
+        MapStyle: components["schemas"]["MapStyleWithImagery"] | components["schemas"]["MapStylePlain"];
         LayerView: {
             /** @description By layer id, the layout properties to set. */
             layout: Record<string, never>;
@@ -3572,6 +3605,32 @@ export interface components {
             normal: components["schemas"]["LayerView"];
             fog: components["schemas"]["LayerView"];
             heatmap: components["schemas"]["LayerView"];
+        };
+        /** @description What a client reads from a layer beside MapLibre. */
+        LayerMetadata: {
+            /**
+             * @description The Layers menu switch that shows the layer.
+             * @enum {string}
+             */
+            "holdmytrack:toggle"?: "bikePaths" | "mtbTrails" | "sharedPaths" | "spots";
+            /** @description By property, or `filter`, the vars it reads. */
+            "holdmytrack:vars"?: {
+                [key: string]: string[];
+            };
+            /**
+             * @description What the layer is for, so a client can draw something of its own to match it.
+             * @enum {string}
+             */
+            "holdmytrack:role"?: "casing" | "focused" | "pace-bands" | "spot-area" | "track";
+            /** @description By image name, the badge a symbol layer draws. */
+            "holdmytrack:images"?: {
+                [key: string]: {
+                    category: string;
+                    fill: string;
+                    ring: string;
+                    ink: string;
+                };
+            };
         };
         LayerGroup: {
             id: string;
@@ -3600,8 +3659,10 @@ export interface components {
                     type: "geojson";
                 };
             };
-            /** @description MapLibre layers in paint order. Every array in a filter, layout or paint value is an expression. Metadata `holdmytrack:toggle` names the Layers menu switch that shows a layer; `holdmytrack:vars` the properties, or `filter`, that read vars. */
-            layers: Record<string, never>[];
+            /** @description MapLibre layers in paint order. Every array in a filter, layout or paint value is an expression. */
+            layers: {
+                metadata?: components["schemas"]["LayerMetadata"];
+            }[];
             /** @description By Layers menu entry, the line its legend draws. */
             legend?: {
                 [key: string]: {
@@ -3707,14 +3768,24 @@ export interface components {
                 }[];
             };
         };
+        /** @description Trimmed; blank or longer than 200 characters is a 400. */
+        name: string;
+        /** @description Trimmed; missing or empty leaves the Story without one. Longer than 2000 characters is a 400. */
+        description: string;
+        /** @description Duplicates are ignored; missing or null adds none. */
+        ActivityIDs: string[] | null;
+        /** @description StoryInput, and the Story's first activities. */
+        StoryCreateInput: {
+            name: components["schemas"]["name"];
+            description?: components["schemas"]["description"];
+            activity_ids?: components["schemas"]["ActivityIDs"];
+        };
         StoryInput: {
             /** @description Trimmed; blank or longer than 200 characters is a 400. */
             name: string;
             /** @description Trimmed; missing or empty leaves the Story without one. Longer than 2000 characters is a 400. */
             description?: string;
         };
-        /** @description Duplicates are ignored; missing or null adds none. */
-        ActivityIDs: string[] | null;
         StoryActivitiesInput: {
             /** @description Duplicates are ignored. */
             activity_ids: string[];

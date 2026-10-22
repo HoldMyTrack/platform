@@ -8,6 +8,8 @@ sync_activities:
         application/json:
           schema:
             type: object
+            additionalProperties: false
+            required: [source]
             properties:
               source: { $ref: "../components/schemas.yaml#/SyncSource" }
               activities:
@@ -16,6 +18,8 @@ sync_activities:
                 maxItems: 100
                 items:
                   type: object
+                  additionalProperties: false
+                  required: [external_id]
                   properties:
                     external_id:
                       type: string
@@ -28,6 +32,8 @@ sync_activities:
                       nullable: true
                       items:
                         type: object
+                        additionalProperties: false
+                        required: [lat, lon, time]
                         properties:
                           lat: { type: number }
                           lon: { type: number }
@@ -69,6 +75,8 @@ sync_known:
         application/json:
           schema:
             type: object
+            additionalProperties: false
+            required: [source]
             properties:
               source: { $ref: "../components/schemas.yaml#/SyncSource" }
               external_ids:

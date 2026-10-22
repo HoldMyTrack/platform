@@ -1,7 +1,6 @@
 package httpapi
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -44,8 +43,8 @@ type overlapsResponse struct {
 func (s *Server) handleActivityOverlaps(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxSyncBodyBytes)
 	var req overlapsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	if len(req.Spans) > maxOverlapSpans {
@@ -56,6 +55,11 @@ func (s *Server) handleActivityOverlaps(w http.ResponseWriter, r *http.Request) 
 	for _, sp := range req.Spans {
 		if sp.Key == "" || len(sp.Key) > maxOverlapKeyLen {
 			writeAPIError(w, fmt.Sprintf(`invalid "key", want 1 to %d characters`, maxOverlapKeyLen), http.StatusBadRequest)
+			return
+		}
+		// A missing time decodes as the zero time, which no activity starts at.
+		if sp.Start.IsZero() || sp.End.IsZero() {
+			writeAPIError(w, `a span needs "start" and "end"`, http.StatusBadRequest)
 			return
 		}
 		spans = append(spans, ingest.Span{Key: sp.Key, Start: sp.Start, End: sp.End})

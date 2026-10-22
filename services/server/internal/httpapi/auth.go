@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
@@ -62,9 +61,6 @@ type authRequest struct {
 	// signup over it — auto-detection is a convenience default, not something worth blocking
 	// account creation over (users.timezone is always editable in Settings).
 	Timezone string `json:"timezone"`
-	// Locale is the account's language (migrations/0001_users_and_auth.sql), "" for automatic —
-	// the web app then follows the browser's.
-	Locale string `json:"locale"`
 }
 
 // normalizeTimezone validates raw against the IANA tz database via time.LoadLocation, and
@@ -168,8 +164,8 @@ func (s *Server) loadAuthResponse(ctx context.Context, userID string) (authRespo
 
 func decodeAuthRequest(r *http.Request) (authRequest, error) {
 	var req authRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		return authRequest{}, errors.New("invalid request body")
+	if err := decodeJSON(r.Body, &req); err != nil {
+		return authRequest{}, errors.New(bodyError(err, "invalid request body"))
 	}
 	return req, nil
 }
@@ -517,8 +513,8 @@ type forgotPasswordRequest struct {
 // all that has a real-world side effect (sending mail) a script could otherwise abuse.
 func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 	var req forgotPasswordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	if err := s.requestPasswordReset(r, req.Email); err != nil {
@@ -596,8 +592,8 @@ type resetPasswordRequest struct {
 // browser completing the reset, same as signup/login already do.
 func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 	var req resetPasswordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	userID, err := s.resetPassword(r.Context(), req.Token, req.Password)
@@ -659,8 +655,8 @@ type verifyEmailRequest struct {
 // more than it needs to know" reasoning as reset-password.
 func (s *Server) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	var req verifyEmailRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	userID, err := s.verifyEmail(r.Context(), req.Token)
@@ -785,8 +781,8 @@ type changeEmailRequest struct {
 func (s *Server) handleChangeEmail(w http.ResponseWriter, r *http.Request) {
 	info := authInfoFromContext(r.Context())
 	var req changeEmailRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	if err := s.changeEmail(r.Context(), info, req.Email, requestLang(r)); err != nil {

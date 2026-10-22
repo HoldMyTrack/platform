@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"math"
 	"net/http"
@@ -38,11 +37,12 @@ type privateLocation struct {
 
 // privateLocationRequest is a full replace for PATCH as for POST — the map editor always
 // sends the circle's whole current state, the same one-form shape handleUpdateSettings uses.
+// Lon and Lat are pointers so a missing one is refused rather than read as 0.
 type privateLocationRequest struct {
-	Name    string  `json:"name"`
-	Lon     float64 `json:"lon"`
-	Lat     float64 `json:"lat"`
-	RadiusM int     `json:"radius_m"`
+	Name    string   `json:"name"`
+	Lon     *float64 `json:"lon"`
+	Lat     *float64 `json:"lat"`
+	RadiusM int      `json:"radius_m"`
 }
 
 func (req *privateLocationRequest) validate() error {
@@ -50,7 +50,10 @@ func (req *privateLocationRequest) validate() error {
 	if len([]rune(req.Name)) > maxPrivateLocationNameLen {
 		return accountFailure(http.StatusBadRequest, "error.location_name_too_long", "max", maxPrivateLocationNameLen)
 	}
-	if math.IsNaN(req.Lat) || math.IsNaN(req.Lon) || req.Lat < -85 || req.Lat > 85 || req.Lon < -180 || req.Lon > 180 {
+	if req.Lat == nil || req.Lon == nil {
+		return accountFailure(http.StatusBadRequest, "error.location_position")
+	}
+	if lat, lon := *req.Lat, *req.Lon; math.IsNaN(lat) || math.IsNaN(lon) || lat < -85 || lat > 85 || lon < -180 || lon > 180 {
 		return accountFailure(http.StatusBadRequest, "error.location_position")
 	}
 	if req.RadiusM < minPrivateLocationRadiusM || req.RadiusM > maxPrivateLocationRadiusM {
@@ -61,8 +64,8 @@ func (req *privateLocationRequest) validate() error {
 
 func decodePrivateLocation(w http.ResponseWriter, r *http.Request) (privateLocationRequest, bool) {
 	var req privateLocationRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return req, false
 	}
 	if err := req.validate(); err != nil {
@@ -134,8 +137,8 @@ func (s *Server) handleCreatePrivateLocation(w http.ResponseWriter, r *http.Requ
 			INSERT INTO privacy_zones (user_id, name, center, radius_m)
 			VALUES ($1, NULLIF($2, ''), ST_SetSRID(ST_MakePoint($3, $4), 4326)::geography, $5)
 			RETURNING id, COALESCE(name, ''), ST_X(center::geometry), ST_Y(center::geometry), radius_m
-		`, userID, req.Name, req.Lon, req.Lat, req.RadiusM))
-		return []circle{{req.Lat, req.Lon, req.RadiusM}}, err
+		`, userID, req.Name, *req.Lon, *req.Lat, req.RadiusM))
+		return []circle{{*req.Lat, *req.Lon, req.RadiusM}}, err
 	})
 	if s.writeLocationError(w, r, err) {
 		return
@@ -170,7 +173,7 @@ func (s *Server) handleUpdatePrivateLocation(w http.ResponseWriter, r *http.Requ
 			SET name = NULLIF($3, ''), center = ST_SetSRID(ST_MakePoint($4, $5), 4326)::geography, radius_m = $6
 			WHERE id = $1 AND user_id = $2
 			RETURNING id, COALESCE(name, ''), ST_X(center::geometry), ST_Y(center::geometry), radius_m
-		`, id, userID, req.Name, req.Lon, req.Lat, req.RadiusM))
+		`, id, userID, req.Name, *req.Lon, *req.Lat, req.RadiusM))
 		if err != nil {
 			return nil, err
 		}

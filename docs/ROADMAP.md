@@ -54,4 +54,6 @@ Public pages, followers and the rest (`VISION.md` §5.7, §5.8). No steps: the f
 - [x] One error shape for the JSON API (ADR-0045), described in the contract.
 - [x] Generate the web client's types from the contract (`apps/web/src/apiSchema.ts`).
 - [x] Typed Android wire classes (`net/Wire.kt`) checked against the contract (`WireContractTest`).
+- [x] Fail a pull request whose contract change breaks an installed client (`scripts/check-contract-break.sh`).
+- [ ] Make `apps/web/scripts/build-basemap.sh` resolve the newest Protomaps build from `https://build-metadata.protomaps.dev/builds.json` when `BUILD` is unset, so CI's basemap cache miss stops failing once the pinned build ages out (`DEVELOPMENT.md`, "CI").
 - [ ] Turn on Sign in with Facebook (`SPEC.md` FR-1.10): Meta publishes the app only after Business Verification, which needs a business document such as an EIN letter or a DBA filing (`docs/DEPLOY.md` §4). Not a launch gate.

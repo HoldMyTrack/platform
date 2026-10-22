@@ -146,8 +146,11 @@ func (s *Server) handleCaptureSpot(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var req spotCaptureRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil || req.Lat == nil || req.Lon == nil ||
-		math.Abs(*req.Lat) > 90 || math.Abs(*req.Lon) > 180 {
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "lat and lon must be a position in degrees"), http.StatusBadRequest)
+		return
+	}
+	if req.Lat == nil || req.Lon == nil || math.Abs(*req.Lat) > 90 || math.Abs(*req.Lon) > 180 {
 		writeAPIError(w, "lat and lon must be a position in degrees", http.StatusBadRequest)
 		return
 	}

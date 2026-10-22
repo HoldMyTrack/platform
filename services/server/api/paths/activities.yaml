@@ -34,6 +34,7 @@ activities_upload:
         multipart/form-data:
           schema:
             type: object
+            additionalProperties: false
             required: [file]
             properties:
               file:
@@ -70,6 +71,7 @@ activities_id:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             required: [activity_type]
             properties:
               activity_type:
@@ -109,6 +111,7 @@ activities_overlaps:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               spans:
                 type: array
@@ -116,7 +119,8 @@ activities_overlaps:
                 maxItems: 5000
                 items:
                   type: object
-                  required: [key]
+                  additionalProperties: false
+                  required: [key, start, end]
                   properties:
                     key:
                       type: string
@@ -410,6 +414,7 @@ activities_track-edit_id:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             properties:
               edit:
                 description: The complete new edit, not a delta; null or empty resets to the original track.
@@ -449,10 +454,12 @@ activities_track-merge:
         application/json:
           schema:
             type: object
+            additionalProperties: false
+            required: [ids]
             properties:
               ids:
                 type: array
-                nullable: true
+                minItems: 1
                 maxItems: 100
                 items: { type: string, format: uuid }
     responses:

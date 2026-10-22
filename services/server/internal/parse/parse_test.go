@@ -119,7 +119,7 @@ func TestParseTCX(t *testing.T) {
 const sampleSyncJSON = `{
   "activity_type": "run",
   "points": [
-    {"lat": 39.9612, "lon": -82.9988, "elevation_m": 240.1, "time": "2026-01-01T12:00:00Z", "heart_rate": 140},
+    {"lat": 39.9612, "lon": -82.9988, "elevation_m": 240.1, "time": "2026-01-01T12:00:00Z"},
     {"lat": 39.9620, "lon": -82.9990, "time": "2026-01-01T12:00:10Z"}
   ]
 }`
@@ -154,6 +154,25 @@ func TestParseJSONNoType(t *testing.T) {
 	}
 	if act.ActivityType != "unknown" {
 		t.Fatalf("want activity type unknown (no activity_type in this fixture), got %q", act.ActivityType)
+	}
+}
+
+// A point missing a field would read as 0, 0 at the zero time; one with a field JSONPoint
+// doesn't declare, a heart rate among them (ADR-0017), is refused too.
+func TestParseJSONRefusesIncompleteOrUnknownPointFields(t *testing.T) {
+	for name, point := range map[string]string{
+		"no lat":     `{"lon": 2, "time": "2026-01-01T12:00:00Z"}`,
+		"no lon":     `{"lat": 1, "time": "2026-01-01T12:00:00Z"}`,
+		"no time":    `{"lat": 1, "lon": 2}`,
+		"null":       `null`,
+		"heart rate": `{"lat": 1, "lon": 2, "time": "2026-01-01T12:00:00Z", "heart_rate": 140}`,
+	} {
+		if _, err := ParseJSON(strings.NewReader(`{"points": [` + point + `]}`)); err == nil {
+			t.Errorf("%s: parsed, want refused", name)
+		}
+	}
+	if _, err := ParseJSON(strings.NewReader(`{"points": [{"lat": 0, "lon": 0, "time": "2026-01-01T12:00:00Z"}]}`)); err != nil {
+		t.Errorf("0, 0 is a position: %v", err)
 	}
 }
 

@@ -3,7 +3,6 @@ package httpapi
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"regexp"
@@ -37,8 +36,8 @@ type updateSettingsRequest struct {
 // update its local state directly from this response instead of a follow-up GET.
 func (s *Server) handleUpdateSettings(w http.ResponseWriter, r *http.Request) {
 	var req updateSettingsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeAPIError(w, "invalid request body", http.StatusBadRequest)
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
 	s.writeProfile(w, r, "update settings", s.saveSettings(r.Context(), userIDFromContext(r.Context()), req.DisplayName, req.Country, req.Timezone, req.Locale))

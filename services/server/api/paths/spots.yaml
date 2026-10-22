@@ -117,6 +117,7 @@ spots_id_captures:
         application/json:
           schema:
             type: object
+            additionalProperties: false
             required: [lat, lon]
             properties:
               lat: { type: number, minimum: -90, maximum: 90 }
