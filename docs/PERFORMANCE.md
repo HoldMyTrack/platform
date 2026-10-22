@@ -22,7 +22,7 @@ Production requires a verified email (`SPEC.md` FR-1.8), so test accounts are cr
 For the run, the same kind of override raises three limits, which go back to their defaults afterwards:
 - `UPLOADS_PER_HOUR` (say to 100000): `seed` and `import` send far more than an account's 100 files an hour (`SPEC.md` FR-3.1).
 - `TILES_PER_MINUTE`: `browse` runs several visitors per account, past one account's 1,200 tiles a minute (`SPEC.md` FR-4.15).
-- `R2_DAILY_BUDGET_USD`: the run's R2 requests count toward the daily budget (`DEPLOY.md` §4), whose stages would pause renders and refuse uploads mid-test.
+- `R2_DAILY_BUDGET_USD`, on `api` and `worker`, which both apply it: the run's R2 requests count toward the daily budget (`DEPLOY.md` §4), whose stages would pause renders and refuse uploads mid-test. Restore it after midnight UTC: the run's requests stay in that day's spend, and a lower budget the same day puts every account under the stages it crosses (`SPEC.md` FR-17.1).
 
 Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATION.md` §4.28) removes their rows and objects. Check that no test row or pending job is left.
 
