@@ -23,8 +23,8 @@
 //	                at a time as the web's Upload menu sends them
 //	browse VUS DUR  VUS people at the map for DUR, each in Normal, Fog or Heatmap mode (or all in
 //	                -mode), panning and zooming and requesting the tiles the web client would;
-//	                each keeps a browser-like tile cache unless -cold. Latency per tile layer
-//	                every 30 s
+//	                each keeps a browser-like tile cache unless -cold; Spots visitors at z10-12
+//	                also ask "Show in this area". Latency per tile layer and spots-area every 30 s
 //	probe           upload one new track from the last account and time it until it's processed
 //	cleanup         delete every account in tokens.json
 //
@@ -409,6 +409,35 @@ func layers(mode string, spots bool, z int) ([]string, int) {
 	return out, tz
 }
 
+// Below spotsMinZoom the web draws places only when asked, "Show in this area" (SPEC.md
+// FR-15.5): a live query over the window's box rather than a tile. A Spots visitor at those
+// zooms asks on one view in areaShare.
+const (
+	spotsInAreaMinZoom = 10
+	areaShare          = 3
+	areaCategories     = "playground,dog_park,monument,viewpoint,history"
+)
+
+func asksArea(spots bool, z, roll int) bool {
+	return spots && z >= spotsInAreaMinZoom && z < spotsMinZoom && roll%areaShare == 0
+}
+
+// windowBBox is the window's west, south, east and north in degrees, centred on c at zoom z.
+// East can exceed 180 and west fall below -180 where the window crosses the antimeridian; the
+// server's parseBBox takes either.
+func windowBBox(c pt, z int) [4]float64 {
+	n := math.Exp2(float64(z))
+	hw, hh := float64(viewW)/512/2, float64(viewH)/512/2
+	fx := (c.lon + 180) / 360 * n
+	lr := c.lat * math.Pi / 180
+	fy := (1 - math.Log(math.Tan(lr)+1/math.Cos(lr))/math.Pi) / 2 * n
+	lat := func(y float64) float64 {
+		y = math.Max(0, math.Min(n, y))
+		return math.Atan(math.Sinh(math.Pi*(1-2*y/n))) * 180 / math.Pi
+	}
+	return [4]float64{(fx-hw)/n*360 - 180, lat(fy + hh), (fx+hw)/n*360 - 180, lat(fy - hh)}
+}
+
 // visitor is one simulated person at the map: one account, one mode at a time, and — unless
 // -cold — a tile cache like a browser's, which keeps every tile it has fetched for good (they
 // carry the account's tile version and are served immutable, IMPLEMENTATION.md §4.2.6).
@@ -579,6 +608,23 @@ func view(ctx context.Context, st *stats, v *visitor) int {
 		}
 	}
 	wg.Wait()
+	if asksArea(v.spots, v.z, v.r.Intn(areaShare)) {
+		b := windowBBox(v.c, v.z)
+		url := fmt.Sprintf("%s/v1/spots?bbox=%.5f,%.5f,%.5f,%.5f&categories=%s", *base, b[0], b[1], b[2], b[3], areaCategories)
+		req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+		req.Header.Set("Authorization", "Bearer "+v.tok)
+		t := time.Now()
+		resp, err := client.Do(req)
+		code := 0
+		if err == nil {
+			io.Copy(io.Discard, resp.Body)
+			resp.Body.Close()
+			code = resp.StatusCode
+		}
+		if ctx.Err() == nil {
+			st.add("spots-area", code, time.Since(t), err)
+		}
+	}
 	return skipped
 }
 
