@@ -35,28 +35,34 @@ Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATIO
 
 ## Results
 
-### Production load test — 2026-10-10, `535cec9`
+### Production load test — 2026-10-22, `9a298d5a`
 
-The production VPS (2 vCPU, 4 GB) with two render loops beside four main ones (`IMPLEMENTATION.md` §4.1), masks in Postgres (`IMPLEMENTATION.md` §3.11), 128 px tiles, Country and Region outlines kept per tile (`IMPLEMENTATION.md` §4.2.4) and Postgres's cache at 1 GB (`DEPLOY.md` §6). All three scenarios, 21 accounts.
+The production VPS (2 vCPU, 4 GB), two render loops beside four main ones (`IMPLEMENTATION.md` §4.1), Fog traced into vector tiles per request (`IMPLEMENTATION.md` §4.2), Heatmap as pass counts (`IMPLEMENTATION.md` §4.2.2), and 2.4 million Spots places. All three scenarios, 21 accounts, driven from a laptop about 45 ms from the server, which every p50 below includes.
 
-| People | Views/s | Fog p95 | Heatmap p95 | Tracks p95 | Region p95 | Country p95 | Errors |
-| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| 10 | 3.4 | 0.17 s | 0.12 s | 0.07 s | 0.51 s | 0.22 s | 0 |
-| 50 | 17.4 | 0.15 s | 0.15 s | 0.09 s | 0.22 s | 0.20 s | 0 |
-| 100 | 35.2 | 0.21 s | 0.20 s | 0.13 s | 0.10 s | 0.08 s | 0 |
-| 200 | 69.6 | 0.67 s | 0.62 s | 0.51 s | 0.13 s | 0.11 s | 0 |
+| People | Views/s | Fog p95 | Heatmap p95 | Tracks p95 | Region p95 | Country p95 | Show in this area p95 | Errors |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| 10 | 3.4 | 0.19 s | 0.47 s | 0.13 s | 0.91 s | 0.14 s | 0.13 s | 0 |
+| 25 | 8.6 | 0.19 s | 0.15 s | 0.17 s | 1.53 s | 0.13 s | 0.24 s | 0 |
+| 50 | 17.5 | 0.17 s | 0.16 s | 0.08 s | 0.27 s | 0.13 s | 0.13 s | 0 |
+| 100 | 35.0 | 0.20 s | 0.17 s | 0.11 s | 0.16 s | 0.12 s | 0.17 s | 0 |
+| 200 | 69.6 | 0.82 s | 0.32 s | 0.44 s | 0.12 s | 0.12 s | 0.14 s | 0 |
+| 200, Fog only | 69.6 | 0.49 s | – | – | 0.24 s | 0.37 s | 0.49 s | 0 |
 
-- Views rose in step with people to 200; nothing saturated. Postgres averaged 39% CPU at 200 people, the API under 50%; at least 2.2 GB of memory stayed free.
-- Seed: accepted in 25 s, queue drained in 21 minutes. Import: 5,000 files sent in about 2 minutes without a failure, ingested in 11, renders done 25 minutes later.
-- Fairness: a `probe` upload was processed in 5 s both times, once with two renders running and five queued.
-- Browsing during the import: every p95 under 374 ms, no failed request.
-- The purge removed the 21 accounts in about 9 minutes, leaving no pending job or orphaned tile.
+- Views rose in step with people to 200; nothing saturated. Postgres averaged 18–39% CPU over the mixed steps and 56% Fog-only, with bursts to 193% at 25 people while its cache warmed, which is the Region p95 at 10 and 25. The API averaged 15% at 200 people and 21% Fog-only, peaking at 88% while many first views traced Fog at once. At least 2.3 GB of memory stayed free.
+- "Show in this area" (`SPEC.md` FR-15.5) stayed under 0.5 s p95 at every step.
+- Seed: 1,113 uploads accepted in 32 s, ingested in about 6.5 minutes; the renders' end went unrecorded.
+- Import: 5,000 files sent in 2 min 40 s without a failure, ingested in about 17 minutes (about 300 a minute), renders done 33 minutes later. Each importing account went through two or three renders, as more of its activities landed while one ran.
+- Fairness: a `probe` upload was processed in 5 s both times, once with 3,363 ingests queued and once with eight renders waiting.
+- Browsing during the import: every 30-second p95 under 309 ms and no server error; 42 requests failed in one 30-second drop of the laptop's network.
+- The purge removed the 21 accounts in 22 minutes, about 3–4 minutes for each 1,000-activity account, leaving no row, pending job or object. Its worker sat under 1% CPU, waiting on object deletes sent one at a time.
+- The run's object-store requests cost about $2.33, past the default daily budget, which `R2_DAILY_BUDGET_USD` was raised over.
 
 Earlier findings behind current choices:
 - 2026-10-08: the API saturated at about 6 views/s decoding, colouring and encoding each Fog and Heatmap tile per request, which led to serving stored bytes. One first-in-first-out worker left another account's upload waiting over 55 minutes, which led to the fair worker (`IMPLEMENTATION.md` §4.1). Renders ran at about 1.3 tiles/s on sequential object-store round trips, which led to running them side by side (`IMPLEMENTATION.md` §4.2).
 - 2026-10-09, `c040021`: once tiles were served from stored bytes, Postgres ran out first, at 110–145% CPU on the live Country, Region and Tracks tiles.
 - 2026-10-09, `7d013f0`: redrawing 835 activities' masks one at a time took about 0.4 s each, nearly all R2 round trips, which led to masks in Postgres and redraws side by side.
 - 2026-10-09, `f3f28d2`: a probe sent while four accounts' renders held all four worker loops waited 7 min 35 s, which led to the render lane.
+- 2026-10-10, `535cec9`: the same three scenarios before Fog vector tiles and Heatmap counts: Fog p95 0.67 s at 200 people, import ingested in 11 minutes and rendered 25 minutes later.
 
 ### Render round trips — 2026-10-10, dev stack
 
