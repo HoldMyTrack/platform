@@ -390,8 +390,7 @@
             </LinearLayout>
         </LinearLayout>
 
-        <!-- The web's own pages, in a browser tab: Donate only where BuildConfig.DONATE_LINK
-             allows it, which the Play build doesn't (YouFragment). -->
+        <!-- The web's own pages: About in the app, Help and Contacts in a browser tab (YouFragment). -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -404,7 +403,7 @@
                 android:layout_marginBottom="@dimen/hmt_space_8"
                 android:text="@string/app_name" />
 
-            <!-- Two pairs side by side, or one above the other at a large font size
+            <!-- About and Help beside Contacts, or one above the other at a large font size
                  (YouFragment.stackWhenLarge). -->
             <LinearLayout
                 android:id="@+id/you_web_row"
@@ -442,33 +441,14 @@
                         android:text="@string/menu_help" />
                 </LinearLayout>
 
-                <LinearLayout
+                <TextView
+                    android:id="@+id/you_contacts"
+                    style="@style/Widget.HoldMyTrack.WebTile"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:baselineAligned="false"
-                    android:orientation="horizontal">
-
-                    <TextView
-                        android:id="@+id/you_contacts"
-                        style="@style/Widget.HoldMyTrack.WebTile"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        app:drawableTopCompat="@drawable/ic_mail"
-                        android:text="@string/menu_contacts" />
-
-                    <TextView
-                        android:id="@+id/you_donate"
-                        style="@style/Widget.HoldMyTrack.WebTile"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="@dimen/hmt_space_8"
-                        android:layout_weight="1"
-                        app:drawableTopCompat="@drawable/ic_heart"
-                        android:text="@string/menu_donate"
-                        android:visibility="gone" />
-                </LinearLayout>
+                    app:drawableTopCompat="@drawable/ic_mail"
+                    android:text="@string/menu_contacts" />
             </LinearLayout>
         </LinearLayout>
 

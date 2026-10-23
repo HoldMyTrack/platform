@@ -312,7 +312,7 @@ scp app/build/outputs/apk/debug/app-debug.apk <vps>:/srv/holdmytrack/downloads/h
 
 Check: `curl -sI https://<your-domain>/download/holdmytrack.apk` (singular `/download/`) returns `200`.
 
-No page links to it; it's for testers handed the URL, while the public route is Google Play's closed test. It is debug-signed and keeps Donate; the Play build is the release-signed bundle (`apps/android/holdmytrack/README.md`, Release build), and the two don't install over each other. Google sign-in works in it only if its debug key has an Android OAuth client (§4). The `versionCode` is the commit count, so a newer build installs over an older one (`apps/android/docs/IMPLEMENTATION.md` §6).
+No page links to it; it's for testers handed the URL, while the public route is Google Play's closed test. It is debug-signed; the Play build is the release-signed bundle (`apps/android/holdmytrack/README.md`, Release build), and the two don't install over each other. Google sign-in works in it only if its debug key has an Android OAuth client (§4). The `versionCode` is the commit count, so a newer build installs over an older one (`apps/android/docs/IMPLEMENTATION.md` §6).
 
 **Tagging.** Tag every build that reaches Play or `/download/`, for the release contract check (`DEVELOPMENT.md`, "CI"): `git tag android/<versionCode> <sha>`, then `git push origin android/<versionCode>`.
 
