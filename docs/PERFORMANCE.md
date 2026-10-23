@@ -7,7 +7,7 @@ How to run a load test or benchmark, then the latest result per area and the fin
 ### Tools
 
 - `services/server/cmd/loadtest`: the driver. Its package comment lists the subcommands and flags. The target is `-base`; tokens and track sets go in `-dir`, outside the repo.
-- `scripts/loadtest-sampler.sh`: run on the server during a test. Every 5 s it records host load and memory, each container's CPU and memory, the job queue by kind and state, and database size and connections.
+- `scripts/loadtest-sampler.sh`: run on the server during a test, writing to a file there; its header has the commands. Every 5 s it records host load and memory, each container's CPU and memory, the job queue by kind and state, and database size and connections.
 - `services/server/cmd/delayproxy`: adds latency in front of the dev stack's object store, so a render on a laptop pays per object what production pays to R2. Sessions below use 80 ms a round trip.
 - `go test -bench` in `services/server/internal/fog`: per-tile costs (`tilecost_bench_test.go`).
 
@@ -16,19 +16,19 @@ How to run a load test or benchmark, then the latest result per area and the fin
 Production requires a verified email (`SPEC.md` FR-1.8), so test accounts are created while `api` runs with `SKIP_EMAIL_VERIFICATION=true` from a throwaway Compose override; `compose.prod.yml` doesn't pass that variable through.
 
 1. On the server, write `/tmp/lt-override.yml` adding `SKIP_EMAIL_VERIFICATION: "true"` and `SIGNUPS_PER_HOUR: "100"` to `api`'s environment, and recreate `api` with `-f compose.prod.yml -f /tmp/lt-override.yml … up -d --no-deps api`.
-2. `loadtest signup 21` (20 load accounts, the last one for `probe`).
+2. `loadtest signup 21` (20 load accounts, the last one for `probe`) into a fresh `-dir`. Its `tokens.json` is the only copy of the accounts' sessions until `cleanup`, so `signup` refuses to run over one.
 3. Recreate `api` without the override straight away and delete the file. Check that no account other than the test ones was created while the bypass was on.
 
 For the run, the same kind of override raises three limits, which go back to their defaults afterwards:
 - `UPLOADS_PER_HOUR` (say to 100000): `seed` and `import` send far more than an account's 100 files an hour (`SPEC.md` FR-3.1).
 - `TILES_PER_MINUTE`: `browse` runs several visitors per account, past one account's 1,200 tiles a minute (`SPEC.md` FR-4.15).
-- `R2_DAILY_BUDGET_USD`, on `api` and `worker`, which both apply it: the run's R2 requests count toward the daily budget (`DEPLOY.md` §4), whose stages would pause renders and refuse uploads mid-test. Restore it after midnight UTC: the run's requests stay in that day's spend, and a lower budget the same day puts every account under the stages it crosses (`SPEC.md` FR-17.1).
+- `R2_DAILY_BUDGET_USD`, on `api` and `worker`, which both apply it: the run's R2 requests count toward the daily budget (`DEPLOY.md` §4), whose stages would pause renders and refuse uploads mid-test. Restore it once the current UTC day's spend (`r2_ops`) is under 70% of the default, usually after midnight UTC: the run's requests stay in that day's spend, and a lower budget the same day puts every account under the stages it crosses (`SPEC.md` FR-17.1).
 
 Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATION.md` §4.28) removes their rows and objects. Check that no test row or pending job is left.
 
 ### Scenarios
 
-- **Seed**: `seed` uploads the 45 demo tracks (`internal/httpapi/demo_data`) to every account, about 945 jobs, and the queue is timed to empty. Three tracks cross 200+ z14 tiles each (the "2026-01-22 Vietnam" drive 756).
+- **Seed**: `seed` uploads the 53 demo tracks (`internal/httpapi/demo_data`) to every account, 1,113 jobs, and the queue is timed to empty. Three tracks cross 200+ z14 tiles each (the "2026-01-22 Vietnam" drive 756).
 - **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal, Fog and Heatmap and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A Spots visitor at z10–12 asks "Show in this area" on one view in three (`SPEC.md` FR-15.5), reported as `spots-area`. A view costs 2.3–4 requests with the cache, about 7.5 cold.
 - **Import**: `gen 5 1000` then `import 5`: five accounts each upload a 1,000-track set at once, one file at a time as the web's Upload menu does. Two minutes in, and again deep into the backlog, `probe` uploads one track from another account and times it to processed, the fairness check. A 12-person `browse` runs meanwhile.
 - **Stop** a step on more than 2% errors, a p95 over 5 s on two consecutive steps, under 10% memory available, or an out-of-memory kill.
