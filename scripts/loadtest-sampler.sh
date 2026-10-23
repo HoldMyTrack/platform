@@ -2,9 +2,12 @@
 # Samples a deployment every 5 s while a load test runs (docs/PERFORMANCE.md "Running a
 # session"): host load and memory, each container's CPU and memory, the job queue by kind and
 # state, and the database's size and connections. Copy it to the server and run it there,
-# keeping the output on your machine:
+# writing to a file on the server: an ssh session streaming it home can stall without
+# closing, leaving a log that silently stops.
 #
-#   scp scripts/loadtest-sampler.sh holdmytrack:/tmp/ && ssh holdmytrack 'bash /tmp/loadtest-sampler.sh' > sampler.log
+#   scp scripts/loadtest-sampler.sh holdmytrack:/tmp/
+#   ssh holdmytrack 'nohup bash /tmp/loadtest-sampler.sh > /tmp/lt-sampler.log 2>&1 < /dev/null &'
+#   scp holdmytrack:/tmp/lt-sampler.log .    # afterwards
 #
 # Stop it with `pkill -f "^bash /tmp/loadtest-sampler.sh"`: a bare `pkill -f loadtest-sampler.sh`
 # over ssh also matches the remote shell running that very command and kills it.
