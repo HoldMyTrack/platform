@@ -98,7 +98,7 @@ This is the repository's only layout tree; other documents point here.
 | [`docs/DEPLOY.md`](docs/DEPLOY.md) | Standing up a deployment. |
 | [`docs/PERFORMANCE.md`](docs/PERFORMANCE.md) | Measured performance: how to run a load test or benchmark, and the latest result per area. A session you run updates its area. |
 | [`docs/DPIA.md`](docs/DPIA.md) | The data protection impact assessment: the personal data processed, its legal basis, the risks to users and the measures against them. |
-| [`services/server/api/`](services/server/api/) | The JSON API's contract: `openapi.yaml` indexes every path, `paths/` holds each area's operations and `components/` the shared shapes. The server's tests and Android's `WireContractTest` hold the code to it. |
+| [`services/server/api/`](services/server/api/) | The JSON API's contract: `openapi.yaml` indexes every path, `paths/` holds each area's operations and `components/` the shared shapes. The server's tests and the apps' wire contract tests hold the code to it. |
 | [`apps/android/docs/`](apps/android/docs/) | The Android app's own `ARCHITECTURE.md` (shape, decisions, stack), `SPEC.md`, `IMPLEMENTATION.md` and `ROADMAP.md`. |
 | [`apps/ios/docs/`](apps/ios/docs/) | The iOS app's own four documents, the same as Android's. Its `ROADMAP.md` is the plan from here to the App Store: read it before any iOS work. |
 | [`AGENTS.md`](AGENTS.md) | You are a coding agent: the product's boundaries and the documentation, commit and Markdown conventions. |
