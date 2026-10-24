@@ -19,3 +19,7 @@ CODE_SIGN_STYLE = Automatic
 ALWAYS_SEARCH_USER_PATHS = NO
 CLANG_ENABLE_MODULES = YES
 ENABLE_STRICT_OBJC_MSGSEND = YES
+
+// UIColor(resource: .accent), UIImage(resource: .info): the asset catalog's names as Swift
+// symbols, so a missing color or icon fails the build (scripts/make-design.py writes both).
+ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOLS = YES

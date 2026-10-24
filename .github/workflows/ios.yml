@@ -1,5 +1,6 @@
 # Builds the iOS app and runs its unit tests (apps/ios/docs/ROADMAP.md, 3.4) when a change touches
-# the app, the shared rule cases it implements or the API contract its wire models follow. Its
+# the app, the shared rule cases it implements, the API contract its wire models follow, or the
+# web and Android files its palette, fonts and icons are made from. Its
 # own workflow, not a job in ci.yml, so the path filter keeps the macOS runner off every other
 # pull request.
 name: iOS
@@ -11,12 +12,22 @@ on:
       - apps/ios/**
       - testdata/client-rules/**
       - services/server/api/**
+      # What scripts/make-design.py reads.
+      - services/server/internal/web/static/tokens.css
+      - apps/android/holdmytrack/app/src/main/res/drawable/**
+      - apps/android/holdmytrack/app/src/main/res/font/**
+      - apps/android/holdmytrack/app/src/main/assets/licenses/**
       - .github/workflows/ios.yml
   pull_request:
     paths:
       - apps/ios/**
       - testdata/client-rules/**
       - services/server/api/**
+      # What scripts/make-design.py reads.
+      - services/server/internal/web/static/tokens.css
+      - apps/android/holdmytrack/app/src/main/res/drawable/**
+      - apps/android/holdmytrack/app/src/main/res/font/**
+      - apps/android/holdmytrack/app/src/main/assets/licenses/**
       - .github/workflows/ios.yml
 
 concurrency:
@@ -41,6 +52,9 @@ jobs:
         with:
           path: ~/spm
           key: spm-${{ hashFiles('apps/ios/HoldMyTrack.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      # The palette, scales, fonts and icons are written from the web's and Android's files.
+      - name: Design files up to date
+        run: scripts/make-design.py --check
       # The runner's simulator names change with each image, so take its newest iOS's last iPhone.
       - name: Pick a simulator
         id: sim

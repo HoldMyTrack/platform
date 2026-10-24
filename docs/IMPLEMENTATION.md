@@ -447,7 +447,7 @@ sequenceDiagram
 - A new page path goes in `registerPages` and `vite.config.ts`'s `pageRoutes`, whose patterns end `(\?|$)` because Vite matches them with the query string.
 - Pages that quote the system change with it: Help's numbers; the privacy policy's processors, cookies, session lifetimes and backup window, in both language files with their date; `testing.html`, which quotes `strings.xml` and the server catalog word for word (FR-10.7). `cmd/make-testing-files` generates its sample files from `demo_data/`, and its test fails on any byte of drift.
 - Screenshots committed to the public repository have the account photo, name, email and file lists painted over.
-- `tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded first by the page layout and the map shell alike; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there.
+- `tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded first by the page layout and the map shell alike; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there. The iOS app's are written from these files and Android's by `apps/ios/scripts/make-design.py`, which CI runs with `--check`.
 
 ### 4.20 Admin panel (FR-12)
 

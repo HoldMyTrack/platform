@@ -16,4 +16,6 @@ A Debug build talks to `http://localhost:8080`, compose's API port on this Mac, 
 
 Signing for a device or an archive needs a team: copy `Config/Signing.xcconfig.example` to `Config/Signing.xcconfig`.
 
+The palette and scales come from the web's `tokens.css`, and the fonts and icons from the Android app's resources: `scripts/make-design.py` writes them into the project, and CI fails when they're out of date. Edit the source, never the asset catalog's Palette or Icons folders, then run the script.
+
 The build number is the commit count and the short commit is baked in, as on Android (`scripts/stamp-build.sh`). MapLibre comes through Swift Package Manager at an exact version, pinned in the project.
