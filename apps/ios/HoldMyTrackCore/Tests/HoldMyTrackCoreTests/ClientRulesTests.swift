@@ -28,7 +28,7 @@ struct ClientRulesTests {
         "photoScope", "photoGroup", "photoClusters", "photoMarkerSize", "photoMarkerLayout",
         "photoTrackPoint", "photoTrackFraction", "photoTrackStart", "photoFit", "photoZoom", "photoPan", "photoClamp",
         "editTrackFold", "editTrackApply", "editTrackChop", "editTrackCut", "editTrackSplitIndex", "editTrackSplitPoint",
-        "editTrackMove", "editTrackDistances", "layerInsertion", "layerLift", "webPageRoute",
+        "editTrackMove", "editTrackDistances",
     ]
 
     @Test func everyRuleFileHasASwiftImplementation() {
@@ -190,6 +190,28 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
             "checked": .ids(session.panel.checked), "hidden": .ids(session.panel.hidden), "excludedTypes": .ids(session.panel.excludedTypes),
             "flyRequest": .bool(session.flyRequest),
         ]
+    },
+    "layerInsertion": { input in
+        .opt(MapLayers.insertionPoint(current: input.strings("current"), order: input.strings("order"), id: input["id"].string!, own: Set(input.strings("own")), fallback: input["fallback"].string))
+    },
+    "layerLift": { input in .bool(MapLayers.needsLift(current: input.strings("current"), id: input["id"].string!, own: Set(input.strings("own")))) },
+    "webPageRoute": { input in
+        let link = input["link"]
+        let base = input["base"]
+        let route = WebRoute.of(
+            scheme: link["scheme"].string, authority: link["authority"].string, path: link["path"].string,
+            activity: link["activity"].string, day: link["day"].string,
+            baseScheme: base["scheme"].string, baseAuthority: base["authority"].string, page: input["page"].string!,
+            leaving: input["leaving"].bool ?? false, onboarding: input["onboarding"].bool ?? false
+        )
+        switch route {
+        case .stay: return "stay"
+        case .outside: return "outside"
+        case .ignore: return "ignore"
+        case .close: return "close"
+        case .onboarded: return "onboarded"
+        case .viewOnMap(let activity, let day): return ["viewOnMap": ["activity": .string(activity), "day": .string(day)]]
+        }
     },
     "activityZone": { input in .opt(ActivityZone.of(own: input["own"].string, account: input["account"].string)) },
     "distanceParts": { input in partsJSON(FormatParts.distance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
