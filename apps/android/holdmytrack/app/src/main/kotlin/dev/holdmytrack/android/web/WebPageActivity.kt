@@ -155,49 +155,44 @@ class WebPageActivity : AppCompatActivity() {
     }
 
     /**
-     * Where a navigation to [uri] goes, reporting whether this screen took it away from the
-     * WebView. Checked as a link is followed and again as a page starts, since a form's redirect
-     * (Settings' first run, saved, goes on to `/`) isn't always offered as a link.
+     * Acts on where a navigation to [uri] goes ([WebRoute]), reporting whether this screen took it
+     * away from the WebView. Checked as a link is followed and again as a page starts, since a
+     * form's redirect (Settings' first run, saved, goes on to `/`) isn't always offered as a link.
      */
     private fun route(uri: Uri): Boolean {
         val base = Uri.parse(BuildConfig.API_BASE_URL)
-        if (uri.scheme != base.scheme || uri.authority != base.authority) {
-            openOutside(uri)
-            return true
-        }
-        val path = uri.path.orEmpty().ifEmpty { "/" }
-        if (path == page.path) return false
-        if (leaving) return true
-        // The session has ended, or the account isn't the map's yet: the app's own session
-        // check, back on the map, knows what to do.
-        if (path == "/signin" || path == "/verify-pending") {
-            leaving = true
-            finish()
-            return true
-        }
-        if (path == "/") {
-            leaving = true
-            val activity = uri.getQueryParameter("activity")
-            val day = uri.getQueryParameter("day")
-            when {
-                activity != null && day != null -> MainActivity.viewOnMap(this, activity, day)
-                // The first run's save: the map gates on Session.country, which only the
-                // server has heard about so far, so it's read before the map opens.
-                onboarding -> {
-                    HoldMyTrackApi.verifySession { result ->
-                        result.onSuccess { Session.update(it) }
-                        startActivity(
-                            Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
-                        )
-                        finish()
-                    }
-                    return true
+        val route = WebRoute.of(
+            uri.scheme, uri.authority, uri.path, uri.getQueryParameter("activity"), uri.getQueryParameter("day"),
+            base.scheme, base.authority, page.path, leaving, onboarding,
+        )
+        when (route) {
+            WebRoute.Route.Stay -> return false
+            WebRoute.Route.Ignore -> {}
+            WebRoute.Route.Outside -> openOutside(uri)
+            // The session has ended, or the account isn't the map's yet: the app's own session
+            // check, back on the map, knows what to do.
+            WebRoute.Route.Close -> {
+                leaving = true
+                finish()
+            }
+            is WebRoute.Route.ViewOnMap -> {
+                leaving = true
+                MainActivity.viewOnMap(this, route.activity, route.day)
+                finish()
+            }
+            // The map gates on Session.country, which only the server has heard about so far,
+            // so it's read before the map opens.
+            WebRoute.Route.Onboarded -> {
+                leaving = true
+                HoldMyTrackApi.verifySession { result ->
+                    result.onSuccess { Session.update(it) }
+                    startActivity(
+                        Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                    )
+                    finish()
                 }
             }
-            finish()
-            return true
         }
-        openOutside(uri)
         return true
     }
 
