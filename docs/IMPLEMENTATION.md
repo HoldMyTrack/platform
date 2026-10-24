@@ -108,7 +108,7 @@ Same shape as `password_resets`. `email` is the address the link confirms; a cha
 
 ### 3.17 `user_identities`
 
-Google and Facebook links (ADR-0015), keyed by the provider's stable `subject`, never the email. `UNIQUE (user_id, provider)` allows one identity per provider.
+Google, Facebook and Apple links (ADR-0015), keyed by the provider's stable `subject`, never the email. `UNIQUE (user_id, provider)` allows one identity per provider. An Apple link also keeps its `refresh_token` and the `client_id` it was issued to, the only way to revoke it when the account is deleted (§4.9).
 
 ### 3.18 `auth_handoffs`
 
@@ -413,9 +413,9 @@ sequenceDiagram
 
 **The web flow** (`oauth.go`, shared by `google_auth.go` and `facebook_auth.go`) is the authorization-code flow run server-side with no provider script or library (ADR-0009); in a browser the callback sets the session cookie instead of the handoff. Round-trip state is one `SameSite=Lax` cookie. Every failure shows one generic message, the cause only in the log.
 
-**Google** adds PKCE, and is linked by verified email: `resolveGoogleUser` says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`).
+**Google** adds PKCE, and is linked by verified email: `resolveVerifiedUser`, shared with Apple, says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`).
 
-**Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook account made under a victim's address first is cleaned up by Google's unverified branch. On Android the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser`, `resolveGoogleUser` and the handoff SQL have no automated test, since the OAuth tests have no database harness.
+**Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook account made under a victim's address first is cleaned up by Google's unverified branch. On Android the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser` has no automated test.
 
 **Credentials**: a deployment serves app and API from one origin, so `corsAllowedOrigins` lists only dev and test origins. MapLibre's tile fetches bypass `api.ts`, so `requestCredentials.ts` adds credentials only for the API's own origin; the basemap CDN and imagery would refuse a credentialed request. The test suites' cookie trap is in `DEVELOPMENT.md`.
 

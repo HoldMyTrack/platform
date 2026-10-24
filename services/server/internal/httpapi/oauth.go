@@ -7,6 +7,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -241,6 +242,86 @@ func (s *Server) setOAuthCookie(w http.ResponseWriter, path, value string, maxAg
 		SameSite: http.SameSiteLaxMode,
 		MaxAge:   seconds,
 	})
+}
+
+// resolveVerifiedUser maps the identity of a provider that vouches for the email (Google,
+// FR-1.9; Apple, FR-1.14) to a HoldMyTrack account, in one transaction:
+//
+//  1. An account already linked to this provider's subject signs in — whatever its email is now.
+//  2. Otherwise a real (non-demo) account with the same email gets linked. The provider has just
+//     vouched that this person controls that mailbox. If the account's own email was never
+//     verified, its password is also cleared, its sessions ended and any other identity it
+//     links removed: whoever set that password or linked that identity never proved they own
+//     the address, and leaving either would let someone pre-register a victim's email and keep
+//     a way in after the victim signs in. An account already linked to a *different* subject
+//     of this provider is refused rather than silently relinked.
+//  3. Otherwise a new, already-verified account is created.
+func (s *Server) resolveVerifiedUser(ctx context.Context, provider, subject, email, name, tz string) (string, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer tx.Rollback(ctx)
+
+	var userID string
+	err = tx.QueryRow(ctx, `SELECT user_id FROM user_identities WHERE provider = $1 AND subject = $2`, provider, subject).Scan(&userID)
+	if err == nil {
+		return userID, tx.Commit(ctx)
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return "", err
+	}
+
+	var verified, linked bool
+	err = tx.QueryRow(ctx, `
+		SELECT id, email_verified,
+		       EXISTS (SELECT 1 FROM user_identities i WHERE i.user_id = users.id AND i.provider = $3)
+		FROM users
+		WHERE email = $1 AND id <> $2
+		FOR UPDATE
+	`, email, DemoCustomerUserID, provider).Scan(&userID, &verified, &linked)
+	switch {
+	case err == nil:
+		if linked {
+			return "", fmt.Errorf("email already linked to a different %s account", provider)
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, $2, $3)`, userID, provider, subject); err != nil {
+			return "", err
+		}
+		if !verified {
+			if _, err := tx.Exec(ctx, `UPDATE users SET email_verified = true, password_hash = NULL WHERE id = $1`, userID); err != nil {
+				return "", err
+			}
+			if _, err := tx.Exec(ctx, `DELETE FROM user_identities WHERE user_id = $1 AND provider <> $2`, userID, provider); err != nil {
+				return "", err
+			}
+			for _, q := range []string{
+				`DELETE FROM sessions WHERE user_id = $1`,
+				`DELETE FROM password_resets WHERE user_id = $1`,
+				`DELETE FROM email_verifications WHERE user_id = $1`,
+			} {
+				if _, err := tx.Exec(ctx, q, userID); err != nil {
+					return "", err
+				}
+			}
+		}
+	case errors.Is(err, pgx.ErrNoRows):
+		if tz == "" {
+			tz = "UTC"
+		}
+		if err := tx.QueryRow(ctx, `
+			INSERT INTO users (email, email_verified, display_name, timezone)
+			VALUES ($1, true, $2, $3) RETURNING id
+		`, email, newAccountDisplayName(name), tz).Scan(&userID); err != nil {
+			return "", err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, $2, $3)`, userID, provider, subject); err != nil {
+			return "", err
+		}
+	default:
+		return "", err
+	}
+	return userID, tx.Commit(ctx)
 }
 
 // newAccountDisplayName is a provider profile's name as a new account's display_name: trimmed,

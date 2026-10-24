@@ -13,8 +13,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/jackc/pgx/v5"
-
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
@@ -132,7 +130,7 @@ func (s *Server) handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 		fail("code exchange", err)
 		return
 	}
-	userID, err := s.resolveGoogleUser(ctx, claims, rt.tz)
+	userID, err := s.resolveVerifiedUser(ctx, "google", claims.Sub, claims.Email, claims.Name, rt.tz)
 	if err != nil {
 		fail("account resolution", err)
 		return
@@ -172,7 +170,7 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	tz, _ := normalizeTimezone(req.TZ)
-	userID, err := s.resolveGoogleUser(ctx, claims, tz)
+	userID, err := s.resolveVerifiedUser(ctx, "google", claims.Sub, claims.Email, claims.Name, tz)
 	if err != nil {
 		fail("account resolution", err)
 		return
@@ -237,7 +235,7 @@ func (s *Server) exchangeGoogleCode(ctx context.Context, code, verifier string) 
 // parseGoogleIDToken decodes an id_token's payload and applies the checks of
 // OpenID Connect Core §3.1.3.7 that still apply when the token came straight from the token
 // endpoint over TLS: issuer, audience, expiry — plus email_verified, since the email is what an existing
-// account gets linked by (resolveGoogleUser) and an unverified one proves nothing.
+// account gets linked by (resolveVerifiedUser) and an unverified one proves nothing.
 func parseGoogleIDToken(idToken, clientID string, now time.Time) (googleClaims, error) {
 	segs := strings.Split(idToken, ".")
 	if len(segs) != 3 {
@@ -269,79 +267,4 @@ func parseGoogleIDToken(idToken, clientID string, now time.Time) (googleClaims, 
 	}
 	c.Email = email
 	return c, nil
-}
-
-// resolveGoogleUser maps a Google identity to a HoldMyTrack account, in one transaction:
-//
-//  1. An account already linked to this Google sub signs in — whatever its email is now.
-//  2. Otherwise a real (non-demo) account with the same email gets linked. Google has just
-//     vouched that this person controls that mailbox. If the account's own email was never
-//     verified, its password is also cleared, its sessions ended and any other identity it
-//     links (Facebook, FR-1.10) removed: whoever set that password or linked that identity
-//     never proved they own the address, and leaving either would let someone pre-register a
-//     victim's email and keep a way in after the victim signs in with Google. An account
-//     already linked to a *different* Google sub is refused rather than silently relinked.
-//  3. Otherwise a new, already-verified account is created.
-func (s *Server) resolveGoogleUser(ctx context.Context, c googleClaims, tz string) (string, error) {
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return "", err
-	}
-	defer tx.Rollback(ctx)
-
-	var userID string
-	err = tx.QueryRow(ctx, `SELECT user_id FROM user_identities WHERE provider = 'google' AND subject = $1`, c.Sub).Scan(&userID)
-	if err == nil {
-		return userID, tx.Commit(ctx)
-	}
-	if !errors.Is(err, pgx.ErrNoRows) {
-		return "", err
-	}
-
-	var verified, linked bool
-	err = tx.QueryRow(ctx, `
-		SELECT id, email_verified,
-		       EXISTS (SELECT 1 FROM user_identities i WHERE i.user_id = users.id AND i.provider = 'google')
-		FROM users
-		WHERE email = $1 AND id <> $2
-		FOR UPDATE
-	`, c.Email, DemoCustomerUserID).Scan(&userID, &verified, &linked)
-	switch {
-	case err == nil:
-		if linked {
-			return "", errors.New("email already linked to a different google account")
-		}
-		if _, err := tx.Exec(ctx, `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, 'google', $2)`, userID, c.Sub); err != nil {
-			return "", err
-		}
-		if !verified {
-			for _, q := range []string{
-				`UPDATE users SET email_verified = true, password_hash = NULL WHERE id = $1`,
-				`DELETE FROM user_identities WHERE user_id = $1 AND provider <> 'google'`,
-				`DELETE FROM sessions WHERE user_id = $1`,
-				`DELETE FROM password_resets WHERE user_id = $1`,
-				`DELETE FROM email_verifications WHERE user_id = $1`,
-			} {
-				if _, err := tx.Exec(ctx, q, userID); err != nil {
-					return "", err
-				}
-			}
-		}
-	case errors.Is(err, pgx.ErrNoRows):
-		if tz == "" {
-			tz = "UTC"
-		}
-		if err := tx.QueryRow(ctx, `
-			INSERT INTO users (email, email_verified, display_name, timezone)
-			VALUES ($1, true, $2, $3) RETURNING id
-		`, c.Email, newAccountDisplayName(c.Name), tz).Scan(&userID); err != nil {
-			return "", err
-		}
-		if _, err := tx.Exec(ctx, `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, 'google', $2)`, userID, c.Sub); err != nil {
-			return "", err
-		}
-	default:
-		return "", err
-	}
-	return userID, tx.Commit(ctx)
 }
