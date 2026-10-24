@@ -1,3 +1,4 @@
+import HoldMyTrackCore
 import UIKit
 
 /// The project's first screen until the app has its own (apps/ios/docs/ROADMAP.md, phase 5): the
@@ -67,7 +68,7 @@ final class BuildInfoViewController: UIViewController {
         }
 
         Task { [app, server] in
-            let status = await ServerCheck.run(app)
+            let status = await ServerCheck.run(app, language: AppLanguage.current)
             server.text = "\(app.apiBaseURL.absoluteString): \(Self.describe(status))"
         }
     }

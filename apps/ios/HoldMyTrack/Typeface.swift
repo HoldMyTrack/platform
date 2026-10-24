@@ -1,7 +1,8 @@
+import HoldMyTrackCore
 import UIKit
 
-/// The web's typefaces: Inter for text, Fraunces for headings, and Source Serif 4 for Russian
-/// headings, since Fraunces has no Cyrillic (tokens.css's :lang(ru) rule). All three are
+/// The web's typefaces: Inter for text, and Fraunces or Source Serif 4 for headings by language
+/// (AppLanguage.headingFamily). All three are
 /// variable fonts: a weight is a point on their wght axis (DesignTokens.Weight), and the optical
 /// size follows the point size, as the web's browsers set it. Sizes scale with Dynamic Type.
 enum Typeface {
@@ -17,12 +18,7 @@ enum Typeface {
         language: String? = AppLanguage.current,
         relativeTo style: UIFont.TextStyle = .title2
     ) -> UIFont {
-        font(family: serifFamily(language: language), size: size, weight: weight, style: style)
-    }
-
-    /// The heading family for a language code: Source Serif 4 for Russian, Fraunces otherwise.
-    static func serifFamily(language: String?) -> String {
-        language?.lowercased().hasPrefix("ru") == true ? "Source Serif 4" : "Fraunces"
+        font(family: AppLanguage.headingFamily(language), size: size, weight: weight, style: style)
     }
 
     private static func font(family: String, size: CGFloat, weight: CGFloat, style: UIFont.TextStyle) -> UIFont {

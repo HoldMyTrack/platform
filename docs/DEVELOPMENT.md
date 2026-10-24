@@ -115,9 +115,9 @@ The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` 
 
 `.github/workflows/contract.yml` fails a pull request touching `services/server/api/` on a change an installed client can't follow, such as a response field removed: against the base branch (`scripts/check-contract-break.sh`), and against each release tag `android/<versionCode>` or `ios/<build>` from the minimum production's `/healthz` reports for that app, counting only breaks the pull request adds (`scripts/check-contract-release.sh`). An intended break carries the `contract-break` label and ships with a raised `MIN_ANDROID_BUILD` (`DEPLOY.md` §10).
 
-`.github/workflows/ios.yml` builds the iOS app and runs its unit tests on a macOS runner, for a push or pull request touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`. It is its own workflow so that path filter keeps the macOS runner off every other pull request; the runner's Xcode can trail the newest one by a release.
+`.github/workflows/ios.yml` runs the `HoldMyTrackCore` package's tests with `swift test`, then builds the iOS app and runs its unit tests on a macOS runner, for a push or pull request touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`. It is its own workflow so that path filter keeps the macOS runner off every other pull request; the runner's Xcode can trail the newest one by a release.
 
-The Go, web and Android jobs upload unit-test coverage to Codecov, informational only (`codecov.yml`) and low by design: c8's `all` counts untested files. CI never deploys (`docs/DEPLOY.md` §6).
+The Go, web, Android and iOS package jobs upload unit-test coverage to Codecov, informational only (`codecov.yml`) and low by design: c8's `all` counts untested files. CI never deploys (`docs/DEPLOY.md` §6).
 
 ## Writing a migration
 
