@@ -1,5 +1,5 @@
 #!/bin/sh
-# Xcode's last build phase for the app (apps/ios/docs/ROADMAP.md, D9): writes the build number,
+# Xcode's last build phase for the app (apps/ios/docs/ARCHITECTURE.md §1, D9): writes the build number,
 # the commit count as Android's versionCode is, and the short commit into the built Info.plist,
 # so the User-Agent and /healthz name the same commit. Outside a checkout the build is 1. A Debug
 # build also gets plain HTTP to local addresses, for a dev stack; Release never does.

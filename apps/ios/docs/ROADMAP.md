@@ -14,22 +14,7 @@ The iOS app's plan, from the first commit to the App Store. Nothing is built yet
 
 ## Decisions
 
-Settled by the owner on 2026-10-24. A change is made here first.
-
-| # | Decision | Choice |
-| :-- | :-- | :-- |
-| D1 | UI toolkit | UIKit for the shell and the map (`UITabBarController`, so the map's camera and layers survive a tab switch, as Android's tabs do); SwiftUI allowed for leaf screens hosted in `UIHostingController`. MapLibre's map is a UIKit view, and SwiftUI would host it through a representable with its lifecycle forwarded by hand. |
-| D2 | Minimum iOS | 17: interactive Live Activities, `CLBackgroundActivitySession` for recording (7d.2), `@Observable`, and the String Catalog tooling. |
-| D3 | Devices | iPhone only. The iPad runs it in compatibility mode, so no iPad layouts or screenshots. |
-| D4 | Project | One Xcode project with folder-synchronized groups and Swift Package Manager; no CocoaPods, XcodeGen or Tuist. |
-| D5 | Bundle ID (permanent) | `dev.holdmytrack.ios`, beside Android's `dev.holdmytrack.android`. |
-| D6 | Developer account | The same holder as the Play account (personal), unless a legal entity exists by then: the seller name shown on the App Store follows the account. |
-| D7 | Sign-in | Email and password, Sign in with Apple, and Google and Facebook through the server's own flow in `ASWebAuthenticationSession`, as Android does Facebook. No Google or Meta SDK, and no change to Google's token audience. |
-| D8 | Local storage | Session token in the Keychain; recordings and the last HealthKit read in SQLite through the system `sqlite3`, no ORM (as Android, `docs/ARCHITECTURE.md` §3.1); small settings in `UserDefaults`. |
-| D9 | Build number | `git rev-list --count`, as Android's `versionCode`, so one tag scheme and one contract check serve both. |
-| D10 | Apple Watch | No watch app: a watch's workouts reach the phone's HealthKit and are read there. |
-| D11 | App language | iOS sets an app's language in the system's Settings, not in the app. The You tab's Language opens that setting; the account's language follows the app's on each session check unless set to automatic. |
-| D12 | Crash reports | Xcode Organizer's, from users who share analytics with developers. No third-party SDK. |
+Settled by the owner on 2026-10-24: D1–D12 in `apps/ios/docs/ARCHITECTURE.md` §1, which the steps below cite by number.
 
 ## Order
 
@@ -86,7 +71,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 - [x] **2.1 An iOS User-Agent and a minimum iOS build**
   - Recognize `HoldMyTrack-iOS/<version> (<sha>; <build>)` beside the Android agent (`app_outdated.go`), with `MIN_IOS_BUILD` refusing older builds with `426 app_outdated`, `/healthz` reporting `min_ios_build`, and the admin stats counting iOS builds as they count Android's. Extend `scripts/check-contract-release.sh` to `ios/<build>` tags.
-  - Docs: root `IMPLEMENTATION.md` §4.33 covers both platforms; `docs/DEPLOY.md` §10 gets the iOS procedure.
+  - Docs: root `docs/IMPLEMENTATION.md` §4.33 covers both platforms; `docs/DEPLOY.md` §10 gets the iOS procedure.
   - Done when: a request with an iOS agent below the minimum gets `426`, and the server tests cover it.
 - [ ] **2.2 Sign in with Apple**
   - Built (root `docs/SPEC.md` FR-1.14): the web flow, `POST /v1/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
@@ -107,7 +92,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Done when: a Release archive validates in Xcode's Organizer, and a Debug build on the simulator reaches a dev stack's `/healthz`.
   - Built, with MapLibre 6.31.0; the simulator half is met. Left: the archive, once 0.1 gives a team.
 - [x] **3.2 Visual language**
-  - The web's `--fm-*` tokens as an asset catalog of named colors with light and dark values, Inter and Fraunces bundled with Source Serif 4 for Russian headings, and the Lucide icons as template images (`docs/ARCHITECTURE.md` §1.1). Root `IMPLEMENTATION.md` §4.19's "Keep in step" adds iOS.
+  - The web's `--fm-*` tokens as an asset catalog of named colors with light and dark values, Inter and Fraunces bundled with Source Serif 4 for Russian headings, and the Lucide icons as template images (`docs/ARCHITECTURE.md` §1.1). Root `docs/IMPLEMENTATION.md` §4.19's "Keep in step" adds iOS.
   - Done when: a sample screen matches Android's in both themes.
 - [x] **3.3 Languages**
   - One String Catalog with English and Russian. Russian counts written as "label: N", as Android's. Accept-Language sent from the app's resolved language.
@@ -115,16 +100,16 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [x] **3.4 CI**
   - `.github/workflows/ios.yml` builds the app and runs its unit tests on a macOS runner for pull requests touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`; its own workflow, so the path filter spares every other pull request. Documented in `docs/DEVELOPMENT.md` ("CI").
   - Done when: a failing unit test fails the pull request.
-- [ ] **3.5 Documents**
-  - `apps/ios/docs/SPEC.md` and `IMPLEMENTATION.md` started on Android's outline; root `docs/ARCHITECTURE.md` gets a section for the iOS app (shape, key decisions D1–D12 with reasons, stack); `AGENTS.md` adds iOS to "Android documents" and word budgets; the root `README.md` lists the folder; `apps/ios/README.md` says how to build and run.
+- [x] **3.5 Documents**
+  - `apps/ios/docs/` has its own `ARCHITECTURE.md` (shape, D1–D12 with reasons, stack), `SPEC.md` and `IMPLEMENTATION.md` on Android's outline and numbers; Android's shape, decisions and stack moved the same way to `apps/android/docs/ARCHITECTURE.md`, leaving root `docs/ARCHITECTURE.md` §3 and §4 a paragraph each. `AGENTS.md` covers both apps' documents and budgets; the root `README.md` lists the folder; `apps/ios/README.md` says how to build and run.
   - Done when: `scripts/check-doc-refs.sh` passes.
 
 ## Phase 4 — Shared code under test
 
 - [ ] **4.0 A package for what needs no device**
   - `apps/ios/HoldMyTrackCore`, a local Swift package the app depends on, holding the code with no UIKit in it: the wire models (4.1), the client rules (4.2) and every other decision made over plain values, starting with the build info and `/healthz` reading 3.1 put in the app. Its tests run with `swift test` on the Mac in seconds, with no simulator to boot and no app to build; the app keeps what needs UIKit, and the UI tests.
-  - CI's iOS job runs `swift test` before the simulator tests, so a broken rule fails in seconds.
-  - Done when: the package's tests pass with `swift test`, CI runs them, and the app's test target holds only tests that need the app.
+  - CI's iOS job runs `swift test` before the simulator tests, so a broken rule fails in seconds. It runs them with coverage and uploads `llvm-cov`'s lcov export to Codecov under a `swift` flag; `codecov.yml` sets that flag to carry forward, since the iOS workflow skips changes outside its paths, and the README gets a Swift coverage badge beside Go's, TypeScript's and Kotlin's.
+  - Done when: the package's tests pass with `swift test`, CI runs them and the Swift badge shows their coverage, and the app's test target holds only tests that need the app.
 - [ ] **4.1 Wire models**
   - In the package (4.0), `Codable` types for every request and response the app uses, held to `services/server/api/` by a Swift `WireContractTest`, as Android's is: every model reached by a check, unknown fields refused in the test.
   - Done when: renaming a field in the contract fails the iOS suite.
@@ -152,7 +137,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 6 — The site's pages
 
-`apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1 and About (ADR-0042, root `IMPLEMENTATION.md` §4.19).
+`apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1 and About (ADR-0042, root `docs/IMPLEMENTATION.md` §4.19).
 
 - [ ] **6.1 `WKWebView` signed in**
   - Set the session cookie and `hmt_app=ios` in the web view's `WKHTTPCookieStore` before the first load. Where a link goes is the `webPageRoute` rule (`testdata/client-rules/web-page-route.json`), shared with Android. Read the session again on leaving a page, since a page may change units, the name or the language.
@@ -248,4 +233,4 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 ## Phase 10 — Release
 
 - [ ] **10.1 Submit for review**: manual release, phased over 7 days. A rejection is answered in Resolution Center or fixed in a new build, and the reason goes into this plan's phase 8 for next time. Done when: approved.
-- [ ] **10.2 Release**: tag the commit `ios/<build>`; `MIN_IOS_BUILD` stays 0 until a contract break needs it (`docs/DEPLOY.md` §10). Root `docs/ROADMAP.md` drops the iOS item; Android's `SPEC.md` §9 drops "No iOS app". Done when: the app is on the App Store in every storefront chosen, and this file holds only what remains.
+- [ ] **10.2 Release**: tag the commit `ios/<build>`; `MIN_IOS_BUILD` stays 0 until a contract break needs it (`docs/DEPLOY.md` §10). Root `docs/ROADMAP.md` drops the iOS item; `apps/android/docs/SPEC.md` §9 drops "No iOS app". Done when: the app is on the App Store in every storefront chosen, and this file holds only what remains.

@@ -73,7 +73,7 @@ Everything server-side runs as one binary in two modes (`serve` and `work`) agai
 
 The API, track and fog tiles and every page come from one origin through Caddy. That origin is not proxied through Cloudflare, whose proxy caps uploads at 100 MB, so each browser or phone caches the app's tiles itself under a per-account version that moves whenever any of them may have changed (`IMPLEMENTATION.md` §4.2.6). The CDN serves only the basemap, and its free plan edge-caches only fonts and sprites; range reads into the archive reach R2 (`IMPLEMENTATION.md` §5.4). Postgres stores keys for object-storage items, never their bytes. Local dev reads the same planet basemap, with RustFS standing in for the private bucket (`docs/DEVELOPMENT.md`).
 
-**All ingest paths converge on one pipeline.** They differ only in how bytes arrive; from `IMPLEMENTATION.md` §4.1 step 2 on the code is shared, so each added path is cheap to maintain. Path 1 cloud connectors and the iOS app are not built yet (`docs/ROADMAP.md`).
+**All ingest paths converge on one pipeline.** They differ only in how bytes arrive; from `IMPLEMENTATION.md` §4.1 step 2 on the code is shared, so each added path is cheap to maintain. Path 1 cloud connectors aren't built yet, and the iOS app is a skeleton (`docs/ROADMAP.md`).
 
 ### 1.3 Deferred
 
@@ -93,7 +93,7 @@ The API, track and fog tiles and every page come from one origin through Caddy. 
 * **Database**: PostgreSQL 16 + PostGIS 3.4.
 * **Job queue**: Postgres table with `FOR UPDATE SKIP LOCKED`.
 * **Frontend (web)**: server-rendered pages with Go's `html/template` (`services/server/internal/web`), one layout and header, `<details>` menus and plain form POSTs, no JavaScript by default (ADR-0012). The map page is the one React app: React 19, TypeScript, Vite 8, **MapLibre GL JS** driven directly because the layer stack is imperatively ordered; no SSR framework, since the map has no SEO surface. Verified versions (2026-09): `maplibre-gl` 6.9.0, `pmtiles` 4.5.0, `@protomaps/basemaps` 5.7.2. The web app is also an ingest client: it owns Path 3 and the no-signup demo.
-* **Mobile**: native **Kotlin** on Android (§3) and **Swift** on iOS, not started. Health Connect's and HealthKit's route APIs are native-only, so a cross-platform framework would need native modules for what matters most. Android came first as the more constrained platform (`VISION.md` §4.1), so the sync contract iOS inherits is designed against the harder case. Client rules are written in each language, held equal by shared test cases (ADR-0049).
+* **Mobile**: native **Kotlin** on Android (§3) and **Swift** on iOS (§4). Health Connect's and HealthKit's route APIs are native-only, so a cross-platform framework would need native modules for what matters most. Android came first as the more constrained platform (`VISION.md` §4.1), so the sync contract iOS inherits is designed against the harder case. Client rules are written in each language, held equal by shared test cases (ADR-0049).
 * **Basemap**: self-hosted **Protomaps** planet build, served from `tiles.holdmytrack.com` to Production and local dev alike (`IMPLEMENTATION.md` §5.4, `docs/DEPLOY.md` §5). Self-hosting is three artifacts: the `.pmtiles` archive, the font glyph PBFs and the sprite sheet; production must not hotlink the last two from `protomaps.github.io`. **Satellite imagery** is the one tile source not self-hosted: optional, off unless a deployment configures a provider (`IMPLEMENTATION.md` §4.26).
 * **Object storage**: Cloudflare **R2**, for zero egress: the basemap and its assets, raw ingest payloads, fog rasters, avatars, and photos as a resized copy and a thumbnail, never the original (ADR-0024). Locally **RustFS** stands in, reached through `minio-go/v7`, which is built for S3-compatible endpoints and pulls in far less than the AWS SDK.
 
@@ -109,36 +109,8 @@ The API, track and fog tiles and every page come from one origin through Caddy. 
 
 ## 3. Android app
 
-The Android app is Path 2 (ADR-0001), reading Health Connect in the foreground; a map viewer on the same accounts and style document as the web; and GPS recording that submits straight to the server (ADR-0007). It is one Gradle module on the platform SDK: Views styled with Material 3 and hand-built `OkHttp` calls, with no Compose, Retrofit, ORM or dependency-injection library. A handful of screens and endpoints don't amortize a framework. How it is built is `apps/android/docs/IMPLEMENTATION.md`.
+Path 2 for Health Connect (ADR-0001), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (ADR-0007): one Gradle module on the platform SDK. Its shape, key decisions, stack and what is deferred are `apps/android/docs/ARCHITECTURE.md`.
 
-**Sync and display are separate one-way pipes.** The sync engine reads Health Connect and posts to `POST /v1/sync/activities`; the map draws the account from the server's tiles. The only lines drawn from the phone's own data are the Sync tab's candidates and a recording in progress, and once synced an activity carries no trace of its source. The phone holds two things the server lacks: unsynced recordings, deleted once their activity lands, and what the last Health Connect read found.
+## 4. iOS app
 
-### 3.1 Key decisions
-
-| Decision | Reason |
-| :--- | :--- |
-| Material 3 on Views, not Compose, without dynamic color | Compose would rewrite every screen and host the `MapView` through `AndroidView` with its lifecycle forwarded by hand. Material supplies the color and type roles the web's tokens map onto, 48 dp targets and TalkBack support. Dynamic color would replace the brand palette with the wallpaper's |
-| Main screens are tabs of one Activity | Tabs are shown and hidden, so the map's camera and layers survive a trip to another tab; an Activity per tab makes every switch a window change and splits the bar's state across windows |
-| Bearer token, not a cookie jar | MapLibre Native's tile fetcher never sees a cookie jar; one interceptor on the `OkHttpClient` the app shares with MapLibre reaches both |
-| The web's Settings, Activity graph, Sync history and About in a WebView | ADR-0042; signed in by cookie, since WebView requests skip the app's client |
-| Foreground-only Health Connect sync, no background job | A background read gets no routes whatever was granted (`IMPLEMENTATION.md` §4.0), so it would send activities with nothing to draw |
-| Session token in plain `SharedPreferences` | The file is private to the app, and an attacker who can read it has everything else the app holds. Revocation bounds a leaked token: sign-out deletes the server's row |
-| API calls use OkHttp's callbacks; only sync and upload calls suspend | Health Connect's API is `suspend` and each sync or upload request waits for the last; elsewhere a coroutine layer over OkHttp's async API buys nothing |
-| `minSdk` 34 | Health Connect is part of the platform from Android 14; below it, it is a Play-installed app to detect and install, a second state machine never measured on a device |
-
-### 3.2 Stack
-
-* **Build**: Kotlin through AGP 9.4.0's built-in support (compiler 2.2), Gradle 9.7.1 through the wrapper, JDK 17 or 21, `compileSdk` and `targetSdk` 37. On the host, not in a container: the SDK, `adb` and the physical device Health Connect testing needs live there (`apps/android/README.md`).
-* **Map**: MapLibre Native 13.7.1, which reads `pmtiles://` natively (since 11.8.0), so the served style (§2.1) is consumed unmodified, archive URL included, with no client-side PMTiles reader. Fog arrives as veil polygons the server traced (`IMPLEMENTATION.md` §4.2), so this client has no shader either.
-* **Network**: OkHttp 4.12.0, declared directly because the app hands its own client to MapLibre, and pinned to what MapLibre resolves. Bodies are `kotlinx.serialization` classes held to the API contract by a unit test.
-* **Health data**: `androidx.health.connect:connect-client` 1.1.0, the version the device measurements ran against.
-* **UI**: Material Components 1.13.0.
-* **Local storage**: `SharedPreferences`, two SQLite databases (unsynced recordings with the live journal, and the last Health Connect read) and MapLibre's tile cache.
-
-### 3.3 Deferred
-
-| Component | Add it when |
-| :--- | :--- |
-| Compose | The app outgrows a handful of screens; Views/Compose interop allows moving one screen at a time |
-| An encrypted token store | A threat beyond access to the device's private storage is identified |
-| Instrumentation tests | Manual device checks stop being enough; JUnit covers the pure logic (`docs/DEVELOPMENT.md`) |
+Path 2 for HealthKit (ADR-0001), and the same map viewer and GPS recording as Android, in Swift. So far a skeleton: the project, the visual language, both languages and CI (`apps/ios/docs/ROADMAP.md`). Its shape, key decisions and stack are `apps/ios/docs/ARCHITECTURE.md`.

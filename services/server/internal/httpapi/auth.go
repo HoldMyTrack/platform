@@ -113,7 +113,7 @@ type authResponseWithSession struct {
 	// response — a browser client can ignore this field entirely, it already has the
 	// credential via Set-Cookie. A native client with no shared cookie jar (or one that needs
 	// to inject the credential into MapLibre Native's own tile requests, which bypass the
-	// app's own HTTP client — docs/ARCHITECTURE.md §3's bearer-token
+	// app's own HTTP client — apps/android/docs/ARCHITECTURE.md §1's bearer-token
 	// decision) stores this and sends it back as `Authorization: Bearer <SessionToken>`.
 	SessionToken string `json:"session_token"`
 }
