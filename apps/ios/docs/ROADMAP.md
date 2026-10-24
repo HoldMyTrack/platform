@@ -113,7 +113,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [x] **4.1 Wire models**
   - In the package (4.0), `Codable` types for every request and response the app uses, held to `services/server/api/` by `WireContractTests`, as Android's is: every model reached by a check, unknown fields refused in the test.
   - Done when: renaming a field in the contract fails the iOS suite.
-- [ ] **4.2 Client rules**
+- [x] **4.2 Client rules**
   - In the package (4.0), a test that runs every file in `testdata/client-rules/` and fails on one with no Swift implementation (ADR-0049); then implement each rule as a pure function, `cases` and `generated` alike.
   - Done when: every file passes, and adding an empty rule file fails the suite.
 

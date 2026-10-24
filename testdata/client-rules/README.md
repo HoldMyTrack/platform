@@ -1,6 +1,6 @@
 # Shared client rule cases
 
-Test cases for the rules that every client implements the same way. The web (`apps/web/tests/clientRules.test.mjs`) and Android (`ClientRulesTest.kt`) suites both run every file here and fail on a file they have no implementation for, so a rule cannot change on one platform without the other failing; they are the iOS app's test spec. ADR-0049 says why each platform implements them natively.
+Test cases for the rules that every client implements the same way. The web (`apps/web/tests/clientRules.test.mjs`), Android (`ClientRulesTest.kt`) and iOS (`ClientRulesTests.swift`) suites each run every file here and fail on a file they have no implementation for, so a rule cannot change on one platform without the others failing. ADR-0049 says why each platform implements them natively.
 
 A rule changes in its file first, then in every implementation, in the same pull request. A bug in a rule is fixed by adding the case that fails.
 
