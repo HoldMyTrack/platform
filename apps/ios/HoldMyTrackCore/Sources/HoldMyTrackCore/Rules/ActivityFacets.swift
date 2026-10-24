@@ -6,12 +6,15 @@ public struct ActivitySummary: Equatable, Sendable {
     public let activityType: String
     public let distanceMeters: Double?
     public let isPrivate: Bool
+    /// Its track is being reprocessed.
+    public let isPending: Bool
 
-    public init(id: String, activityType: String, distanceMeters: Double?, isPrivate: Bool) {
+    public init(id: String, activityType: String, distanceMeters: Double?, isPrivate: Bool, isPending: Bool = false) {
         self.id = id
         self.activityType = activityType
         self.distanceMeters = distanceMeters
         self.isPrivate = isPrivate
+        self.isPending = isPending
     }
 }
 

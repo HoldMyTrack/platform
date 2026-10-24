@@ -28,8 +28,7 @@ struct ClientRulesTests {
         "photoScope", "photoGroup", "photoClusters", "photoMarkerSize", "photoMarkerLayout",
         "photoTrackPoint", "photoTrackFraction", "photoTrackStart", "photoFit", "photoZoom", "photoPan", "photoClamp",
         "editTrackFold", "editTrackApply", "editTrackChop", "editTrackCut", "editTrackSplitIndex", "editTrackSplitPoint",
-        "editTrackMove", "editTrackDistances", "layerInsertion", "layerLift", "webPageRoute", "panelState",
-        "session",
+        "editTrackMove", "editTrackDistances", "layerInsertion", "layerLift", "webPageRoute",
     ]
 
     @Test func everyRuleFileHasASwiftImplementation() {
@@ -126,6 +125,72 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "sliderWindowFit": { input in
         .num(SliderRules.windowFit(count: input.int("count"), windowDays: input.int("windowDays"), left: input.int("left"), first: input.int("first"), last: input.int("last"), dir: input.int("dir")))
     },
+    "panelState": { input in
+        let all = (input["activities"].list ?? []).map { activity($0) }
+        let state = input["state"]
+        var panel = PanelState()
+        panel.setActivities(all)
+        // Hidden first: hiding goes through the toolbar's target, the checked group.
+        for id in state.strings("hidden") { panel.toggleChecked(id) }
+        panel.toggleTargetVisibility()
+        panel.clearChecked()
+        for id in state.strings("checked") { panel.toggleChecked(id) }
+        if let focused = state["focused"].string { panel.focus(focused) }
+        for type in state.strings("excludedTypes") { panel.toggleType(type) }
+        panel.distanceFilter = distance(state["distanceFilter"])
+        let event = input["event"]
+        switch event["type"].string {
+        case "checkToggled": panel.toggleChecked(event["id"].string!)
+        case "checkAll": panel.checkAll()
+        case "checksCleared": panel.clearChecked()
+        case "checksInverted": panel.invertChecked()
+        case "visibilityToggled": panel.toggleTargetVisibility()
+        case "typeToggled": panel.toggleType(event["activityType"].string!)
+        case "distanceSet": panel.distanceFilter = distance(event["filter"])
+        case "filtersReset": panel.resetFilters()
+        case "listLoaded":
+            let ids = Set(event.strings("ids"))
+            panel.setActivities(all.filter { ids.contains($0.id) })
+        case "rangePicked": panel.resetForNewRange()
+        case let type: throw RuleError("no iOS event \(type ?? "?")")
+        }
+        return [
+            "checked": .ids(panel.checked), "focused": .opt(panel.focused), "hidden": .ids(panel.hidden),
+            "excludedTypes": .ids(panel.excludedTypes), "distanceFilter": distanceJSON(panel.distanceFilter),
+        ]
+    },
+    "session": { input in
+        let state = input["state"]
+        var session = MapSession()
+        if state["range"].object != nil { session.restore(range(state["range"]), picked: state["userPicked"].bool ?? false) }
+        // The Story first: opening one resets the selection set up below.
+        if let story = state["storyId"].string {
+            session.enterStory(story)
+            _ = session.consumeFly()
+        }
+        var seen = Set<String>()
+        let ids = (state.strings("checked") + state.strings("hidden")).filter { seen.insert($0).inserted }
+        session.panel.setActivities(ids.map { ActivitySummary(id: $0, activityType: "walking", distanceMeters: 1000, isPrivate: false) })
+        // Hidden first: hiding goes through the toolbar's target, the checked group.
+        for id in state.strings("hidden") { session.panel.toggleChecked(id) }
+        session.panel.toggleTargetVisibility()
+        session.panel.clearChecked()
+        for id in state.strings("checked") { session.panel.toggleChecked(id) }
+        for type in state.strings("excludedTypes") { session.panel.toggleType(type) }
+        let event = input["event"]
+        switch event["type"].string {
+        case "rangePicked": session.pickRange(range(event["range"]))
+        case "defaultRange": session.offerDefault(range(event["range"]), editOpen: event["editOpen"].bool ?? false)
+        case "storyEntered": session.enterStory(event["id"].string!)
+        case "storyExited": session.exitStory()
+        case let type: throw RuleError("no iOS event \(type ?? "?")")
+        }
+        return [
+            "range": session.range.map(rangeJSON) ?? nil, "userPicked": .bool(session.userPicked), "storyId": .opt(session.storyID),
+            "checked": .ids(session.panel.checked), "hidden": .ids(session.panel.hidden), "excludedTypes": .ids(session.panel.excludedTypes),
+            "flyRequest": .bool(session.flyRequest),
+        ]
+    },
     "activityZone": { input in .opt(ActivityZone.of(own: input["own"].string, account: input["account"].string)) },
     "distanceParts": { input in partsJSON(FormatParts.distance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
     "totalDistanceParts": { input in partsJSON(FormatParts.totalDistance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
@@ -137,6 +202,11 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         }
     },
 ]
+
+struct RuleError: Error, CustomStringConvertible {
+    let description: String
+    init(_ description: String) { self.description = description }
+}
 
 func sliderWindow(_ input: RuleJSON) -> SliderRules.Window {
     SliderRules.Window(days: input.strings("days"), canPanEarlier: input["canPanEarlier"].bool!, canPanLater: input["canPanLater"].bool!)
