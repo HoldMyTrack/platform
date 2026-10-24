@@ -3,7 +3,8 @@
    header.css, pages.css and the React app's index.css all draw on it and define none of their
    own (ADR-0012). A value off its scales is a design decision: add a step or take the
    nearest. The Android theme carries the same palette, fonts and scales (IMPLEMENTATION.md
-   §4.19), so a change here needs the matching change in its res/values.
+   §4.19), so a change here needs the matching change in its res/values; the iOS app's are
+   written from this file by apps/ios/scripts/make-design.py.
 
    Two palettes: the light one below, and a dark one further down that replaces only the
    colors. Which one applies is data-theme on <html> — "light" or "dark", set by theme.html's
