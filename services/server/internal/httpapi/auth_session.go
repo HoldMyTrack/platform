@@ -13,7 +13,7 @@ import (
 // startSession returns the new session id, alongside setting it as the holdmytrack_session
 // cookie — a browser client needs nothing more, but the four callers that mint a fresh
 // session (signup, login, demo-start, reset-password) also thread this value into
-// authResponseWithSession.SessionToken, docs/ARCHITECTURE.md §3's
+// authResponseWithSession.SessionToken, apps/android/docs/ARCHITECTURE.md §1's
 // bearer-token path for a native client with no browser-style cookie handling.
 func (s *Server) startSession(w http.ResponseWriter, ctx context.Context, userID string, ttl time.Duration) (string, error) {
 	expiresAt := time.Now().Add(ttl)
@@ -51,7 +51,7 @@ const bearerPrefix = "Bearer "
 // `Authorization: Bearer <session-id>` for a native client. This is not a second credential
 // system — it's the same sessions.id value, just presented a second way, because a mobile
 // app needs to inject it into MapLibre Native's own tile requests via a per-request header
-// hook (docs/ARCHITECTURE.md §3's bearer-token decision), which a cookie
+// hook (apps/android/docs/ARCHITECTURE.md §1's bearer-token decision), which a cookie
 // sitting in the app's own cookie jar wouldn't reach.
 func sessionIDFromRequest(r *http.Request) (string, bool) {
 	if cookie, err := r.Cookie(sessionCookieName); err == nil && cookie.Value != "" {

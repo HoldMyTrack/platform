@@ -6,7 +6,7 @@ SLASH = /
 SDKROOT = iphoneos
 SUPPORTED_PLATFORMS = iphoneos iphonesimulator
 IPHONEOS_DEPLOYMENT_TARGET = 17.0
-// iPhone only: an iPad runs the app in compatibility mode (apps/ios/docs/ROADMAP.md, D3).
+// iPhone only: an iPad runs the app in compatibility mode (apps/ios/docs/ARCHITECTURE.md §1, D3).
 TARGETED_DEVICE_FAMILY = 1
 SWIFT_VERSION = 6.0
 

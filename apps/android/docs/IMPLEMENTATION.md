@@ -1,6 +1,6 @@
 # HoldMyTrack for Android: Implementation
 
-> **Scope note.** How the Android app is built where the code can't say it: flows across files, invariants, reasons for a design that isn't the obvious one, and traps. The app's shape and stack are root `docs/ARCHITECTURE.md` §3, its behavior `apps/android/docs/SPEC.md`, and the server side of every call root `docs/IMPLEMENTATION.md`. Detail confined to one class is in that class's KDoc.
+> **Scope note.** How the Android app is built where the code can't say it: flows across files, invariants, reasons for a design that isn't the obvious one, and traps. The app's shape and stack are `apps/android/docs/ARCHITECTURE.md`, its behavior `apps/android/docs/SPEC.md`, and the server side of every call root `docs/IMPLEMENTATION.md`. Detail confined to one class is in that class's KDoc.
 
 ---
 
