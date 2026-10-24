@@ -101,7 +101,7 @@ func (s *Server) handleProfilePage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	s.pages.Render(w, http.StatusOK, "profile", web.PageData{Title: l.T("meta.profile_title"), Path: "/profile", NoIndex: true, User: acct.user, Page: view, Lang: lang, InApp: inApp(r)})
+	s.pages.Render(w, http.StatusOK, "profile", web.PageData{Title: l.T("meta.profile_title"), Path: "/profile", NoIndex: true, User: acct.user, Page: view, Lang: lang, App: appPlatform(r)})
 }
 
 func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *pageAccount, shade, bucket string, now time.Time) (profileView, error) {

@@ -441,7 +441,7 @@ sequenceDiagram
 
 **The React shell** (`templates/app/app.html`) is `/` for a signed-in account. The handler redirects first (no session, unverified, no Country), so the first-run gate is the server's. Every sign-in, demo start and sign-out redirects to a bare `/`, so no session inherits another's camera. The Go image never sees Vite's manifest, so `vite.config.ts` gives the entry and its stylesheet fixed names, which the shell links with the build version and Caddy serves `no-cache`.
 
-**For the Android app** a page is the same page marked by the `hmt_app` cookie (FR-10.8, ADR-0042), set in the WebView's cookie store, because a header reaches only the first request and a query parameter wouldn't survive links and redirects. Traps: the public cache key includes it, and a WebView form POST carries the API's origin, so the app's `API_BASE_URL` must be `APP_BASE_URL`'s origin.
+**For the apps** a page is the same page marked by the `hmt_app` cookie (FR-10.8, ADR-0042), set in the WebView's cookie store, because a header reaches only the first request and a query parameter wouldn't survive links and redirects. Its value, `android` or `ios`, is `PageData.App`, for wording that names a platform. Traps: the public cache key includes the value, and a WebView form POST carries the API's origin, so the app's `API_BASE_URL` must be `APP_BASE_URL`'s origin.
 
 **Keep in step:**
 - A new page path goes in `registerPages` and `vite.config.ts`'s `pageRoutes`, whose patterns end `(\?|$)` because Vite matches them with the query string.
@@ -573,11 +573,11 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 **A daily snapshot, because past state can't be rebuilt**: `last_seen_at` holds only the latest visit, and a deleted account's row is gone. Once per UTC day the worker (`internal/stats`) stores each value in `daily_stats`; Grafana keeps about 14 days, so Postgres is the record. It takes only yesterday, so a missed day stays a gap. **Aggregates only**: the demo account is left out, and a country group standing for fewer than 5 accounts folds into `other`, judged by the accounts behind a value, not the value. Object sizes are recorded as each object is written (`activities.raw_bytes`, `fog_tiles.bytes`), since asking R2 costs a request per object.
 
-**Visits**: an account's first authenticated request each UTC day writes `last_seen_at` (never the demo's), and `web_seen_at` or `android_seen_at` with `android_build`, again when the build changes; the app's WebView marks neither. `android_builds_30d` shows when `MIN_ANDROID_BUILD` (§4.33) can rise.
+**Visits**: an account's first authenticated request each UTC day writes `last_seen_at` (never the demo's), and `web_seen_at`, or an app's `android_seen_at` or `ios_seen_at` with its build, again when the build changes; an app's WebView marks neither. `android_builds_30d` and `ios_builds_30d` show when each app's minimum (§4.33) can rise.
 
-### 4.33 Turning away old Android builds
+### 4.33 Turning away old app builds
 
-`MIN_ANDROID_BUILD` lets a route kept for old installs be retired: builds below it get `426 app_outdated` on every `/v1` request before any handler (`app_outdated.go`). The build is the `versionCode` (the commit count) in the app's User-Agent; one with no number counts as 0, which is exactly the builds from before the gate. Play's in-app updates would miss sideloaded APKs and leave the decision on the phone. Tiles and pages keep answering, so an old build's map doesn't blank out. Nothing else is ever refused, since anyone could claim to be an old build.
+`MIN_ANDROID_BUILD` and `MIN_IOS_BUILD` let a route kept for old installs be retired: an app's builds below its minimum get `426 app_outdated` on every `/v1` request before any handler (`app_outdated.go`). The build is the commit count in the app's User-Agent (`HoldMyTrack-Android/` or `HoldMyTrack-iOS/`); one with no number counts as 0, which is exactly the Android builds from before the gate. Play's in-app updates would miss sideloaded APKs and leave the decision on the phone. Tiles and pages keep answering, so an old build's map doesn't blank out. Nothing else is ever refused, since anyone could claim to be an old build.
 
 ## 5. Engineering Risks & Mitigations
 

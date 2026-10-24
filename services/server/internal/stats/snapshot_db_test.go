@@ -145,12 +145,14 @@ func TestTake(t *testing.T) {
 
 	exec(`INSERT INTO r2_ops (day, class, count) VALUES ($1, 'A', 70), ($1, 'B', 900)`, day)
 
-	// Clients: one account on both, one on the web only, one on the app 29 days before (still in
-	// the 30 days), one on the app 30 days before (out of them); the deleted account counts nowhere.
+	// Clients: one account on both, one on the web only, one on the Android app 29 days before
+	// (still in the 30 days), one on it 30 days before (out of them), one on the iOS app only; the
+	// deleted account counts nowhere.
 	exec(`UPDATE users SET web_seen_at = $2, android_seen_at = $2, android_build = 9001 WHERE id = $1`, qq[0], at(time.Hour))
 	exec(`UPDATE users SET web_seen_at = $2 WHERE id = $1`, qq[1], at(-6*24*time.Hour))
 	exec(`UPDATE users SET android_seen_at = $2, android_build = 9000 WHERE id = $1`, qq[2], at(-29*24*time.Hour))
 	exec(`UPDATE users SET android_seen_at = $2, android_build = 9000 WHERE id = $1`, qq[3], at(-30*24*time.Hour))
+	exec(`UPDATE users SET ios_seen_at = $2, ios_build = 1400 WHERE id = $1`, qq[4], at(time.Hour))
 	exec(`UPDATE users SET android_seen_at = $2, android_build = 9001 WHERE id = $1`, deleted, at(time.Hour))
 
 	after, err := compute(ctx, tx, day)
@@ -188,6 +190,8 @@ func TestTake(t *testing.T) {
 		"clients_30d.both":                   1,
 		"clients_30d.web_only":               1,
 		"clients_30d.android_only":           1,
+		"clients_30d.ios_only":               1,
+		"ios_builds_30d.1400":                1,
 		"android_builds_30d.9001":            1,
 		"android_builds_30d.9000":            1,
 	} {

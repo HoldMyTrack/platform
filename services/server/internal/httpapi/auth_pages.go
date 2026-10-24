@@ -76,10 +76,21 @@ func (s *Server) pageAccount(r *http.Request) *pageAccount {
 // native screens of its own (web.PageData.InApp).
 const appCookieName = "hmt_app"
 
-func inApp(r *http.Request) bool {
+// appPlatform is the app whose WebView sent r, from appCookieName's value: "ios" for the iOS
+// app, and "android" for any other value, which is what the Android app sets; "" for a browser.
+func appPlatform(r *http.Request) string {
 	c, err := r.Cookie(appCookieName)
-	return err == nil && c.Value != ""
+	switch {
+	case err != nil || c.Value == "":
+		return ""
+	case c.Value == "ios":
+		return "ios"
+	default:
+		return "android"
+	}
 }
+
+func inApp(r *http.Request) bool { return appPlatform(r) != "" }
 
 // pageLang is the language a page renders in for acct (nil when signed out): the account's own
 // setting, else the browser's (i18n.Resolve).

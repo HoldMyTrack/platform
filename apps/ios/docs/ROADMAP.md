@@ -14,9 +14,9 @@ The iOS app's plan, from the first commit to the App Store. Nothing is built yet
 
 ## Decisions
 
-Settle these before phase 2. A recommendation stands unless the owner changes it here.
+Settled by the owner on 2026-10-24. A change is made here first.
 
-| # | Decision | Recommendation |
+| # | Decision | Choice |
 | :-- | :-- | :-- |
 | D1 | UI toolkit | UIKit for the shell and the map (`UITabBarController`, so the map's camera and layers survive a tab switch, as Android's tabs do); SwiftUI allowed for leaf screens hosted in `UIHostingController`. MapLibre's map is a UIKit view, and SwiftUI would host it through a representable with its lifecycle forwarded by hand. |
 | D2 | Minimum iOS | 17: interactive Live Activities, `CLBackgroundActivitySession` for recording (7d.2), `@Observable`, and the String Catalog tooling. |
@@ -84,14 +84,14 @@ Confirm on a real device what HealthKit gives and how a recording survives the a
 
 Server changes the app depends on, deployed before any iOS build reaches a tester. Each updates `services/server/api/` and runs `npm run gen:api-types` where the contract changes (`AGENTS.md`).
 
-- [ ] **2.1 An iOS User-Agent and a minimum iOS build**
+- [x] **2.1 An iOS User-Agent and a minimum iOS build**
   - Recognize `HoldMyTrack-iOS/<version> (<sha>; <build>)` beside the Android agent (`app_outdated.go`), with `MIN_IOS_BUILD` refusing older builds with `426 app_outdated`, `/healthz` reporting `min_ios_build`, and the admin stats counting iOS builds as they count Android's. Extend `scripts/check-contract-release.sh` to `ios/<build>` tags.
   - Docs: root `IMPLEMENTATION.md` §4.33 covers both platforms; `docs/DEPLOY.md` §10 gets the iOS procedure.
   - Done when: a request with an iOS agent below the minimum gets `426`, and the server tests cover it.
 - [ ] **2.2 Sign in with Apple**
   - Built (root `docs/SPEC.md` FR-1.14): the web flow, `POST /v1/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
   - Done when: a new account, an existing verified email and a relay email each sign in on the web, and deleting the account revokes the token.
-- [ ] **2.3 Pages tell the platforms apart**
+- [x] **2.3 Pages tell the platforms apart**
   - Set `hmt_app` to `android` or `ios` and let a page say the platform's words: Health Connect or Health, Google Play or the App Store. Audit Help, About, Privacy and the in-app pages for Android-only wording.
   - Done when: each in-app page read with `hmt_app=ios` has no Android wording, and the public cache key still separates the values.
 - [ ] **2.4 The native OAuth round trip from iOS**

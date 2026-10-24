@@ -127,6 +127,8 @@ type Config struct {
 	// SetMinAndroidBuild, docs/DEPLOY.md §4); 0, the default, answers every build. Only read
 	// by `serve`.
 	MinAndroidBuild int
+	// MinIOSBuild is the same for the iOS app's build number (SetMinIOSBuild).
+	MinIOSBuild int
 }
 
 func Load() (Config, error) {
@@ -186,6 +188,11 @@ func Load() (Config, error) {
 	if v := env("MIN_ANDROID_BUILD", ""); v != "" {
 		if c.MinAndroidBuild, err = strconv.Atoi(v); err != nil || c.MinAndroidBuild < 0 {
 			return c, fmt.Errorf("config: MIN_ANDROID_BUILD must be a versionCode, 0 or more, got %q", v)
+		}
+	}
+	if v := env("MIN_IOS_BUILD", ""); v != "" {
+		if c.MinIOSBuild, err = strconv.Atoi(v); err != nil || c.MinIOSBuild < 0 {
+			return c, fmt.Errorf("config: MIN_IOS_BUILD must be a build number, 0 or more, got %q", v)
 		}
 	}
 	c.WebDevDir = env("WEB_DEV_DIR", "")

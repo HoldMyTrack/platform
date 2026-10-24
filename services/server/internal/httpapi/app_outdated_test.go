@@ -10,6 +10,24 @@ import (
 	"testing"
 )
 
+func TestIOSBuild(t *testing.T) {
+	for _, tc := range []struct {
+		ua    string
+		build int
+		ios   bool
+	}{
+		{"HoldMyTrack-iOS/0.1 (62da50b; 1400)", 1400, true},
+		{"HoldMyTrack-iOS/0.1", 0, true},
+		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 0, false},
+		{"Mozilla/5.0 (iPhone; CPU iPhone OS 27_0 like Mac OS X) AppleWebKit/605.1.15", 0, false},
+	} {
+		build, ios := iosBuild(tc.ua)
+		if build != tc.build || ios != tc.ios {
+			t.Errorf("iosBuild(%q) = %d, %v, want %d, %v", tc.ua, build, ios, tc.build, tc.ios)
+		}
+	}
+}
+
 func TestAndroidBuild(t *testing.T) {
 	for _, tc := range []struct {
 		ua      string
@@ -33,19 +51,23 @@ func TestAndroidBuild(t *testing.T) {
 
 func TestAppOutdated(t *testing.T) {
 	for _, tc := range []struct {
-		ua   string
-		min  int
-		want bool
+		ua                 string
+		minAndroid, minIOS int
+		want               bool
 	}{
-		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 0, false},
-		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 812, false},
-		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 813, true},
-		{"HoldMyTrack-Android/0.13 (62da50b)", 1, true},
-		{"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", 813, false},
-		{"", 813, false},
+		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 0, 0, false},
+		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 812, 0, false},
+		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 813, 0, true},
+		{"HoldMyTrack-Android/0.13 (62da50b)", 1, 0, true},
+		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 0, 5000, false},
+		{"HoldMyTrack-iOS/0.1 (62da50b; 1400)", 0, 1400, false},
+		{"HoldMyTrack-iOS/0.1 (62da50b; 1400)", 0, 1401, true},
+		{"HoldMyTrack-iOS/0.1 (62da50b; 1400)", 5000, 0, false},
+		{"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)", 813, 813, false},
+		{"", 813, 813, false},
 	} {
-		if got := appOutdated(tc.ua, tc.min); got != tc.want {
-			t.Errorf("appOutdated(%q, %d) = %v, want %v", tc.ua, tc.min, got, tc.want)
+		if got := appOutdated(tc.ua, tc.minAndroid, tc.minIOS); got != tc.want {
+			t.Errorf("appOutdated(%q, %d, %d) = %v, want %v", tc.ua, tc.minAndroid, tc.minIOS, got, tc.want)
 		}
 	}
 }
@@ -56,6 +78,7 @@ func TestServeHTTPRefusesAnOutdatedAppOnV1Only(t *testing.T) {
 	s.mux.HandleFunc("GET /tiles/v1/test", func(w http.ResponseWriter, r *http.Request) {})
 	s.mux.HandleFunc("GET /help", func(w http.ResponseWriter, r *http.Request) {})
 	s.SetMinAndroidBuild(813)
+	s.SetMinIOSBuild(1401)
 
 	get := func(path, ua string) *httptest.ResponseRecorder {
 		req := httptest.NewRequest("GET", path, nil)
@@ -73,8 +96,12 @@ func TestServeHTTPRefusesAnOutdatedAppOnV1Only(t *testing.T) {
 	if w.Code != http.StatusUpgradeRequired || body.Error != "app_outdated" || body.Message == "" {
 		t.Errorf("an old build on /v1/ got %d %+v, want 426 app_outdated with a message", w.Code, body)
 	}
+	if w := get("/v1/test", "HoldMyTrack-iOS/0.1 (62da50b; 1400)"); w.Code != http.StatusUpgradeRequired {
+		t.Errorf("an old iOS build on /v1/ got %d, want 426", w.Code)
+	}
 	for _, tc := range []struct{ path, ua string }{
 		{"/v1/test", "HoldMyTrack-Android/0.14 (62da50b; 813)"},
+		{"/v1/test", "HoldMyTrack-iOS/0.1 (62da50b; 1401)"},
 		{"/v1/test", "Mozilla/5.0"},
 		{"/tiles/v1/test", old},
 		{"/help", old},
@@ -85,13 +112,14 @@ func TestServeHTTPRefusesAnOutdatedAppOnV1Only(t *testing.T) {
 	}
 }
 
-func TestHealthzReportsTheOldestAndroidBuild(t *testing.T) {
+func TestHealthzReportsTheOldestBuilds(t *testing.T) {
 	d := newDBTest(t)
 	d.srv.SetMinAndroidBuild(1323)
+	d.srv.SetMinIOSBuild(1400)
 	rec := httptest.NewRecorder()
 	d.srv.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/healthz", nil))
 	var got healthzResponse
-	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil || rec.Code != http.StatusOK || got.MinAndroidBuild != 1323 {
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil || rec.Code != http.StatusOK || got.MinAndroidBuild != 1323 || got.MinIOSBuild != 1400 {
 		t.Fatalf("got %d %s", rec.Code, rec.Body.String())
 	}
 }

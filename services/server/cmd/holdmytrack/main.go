@@ -137,6 +137,7 @@ func main() {
 			log.Warn("serve: RATE_LIMITS=off, no request limits apply")
 		}
 		srv.SetMinAndroidBuild(cfg.MinAndroidBuild)
+		srv.SetMinIOSBuild(cfg.MinIOSBuild)
 		// No ReadTimeout or WriteTimeout: a 16 MiB upload, a data export's download or a photo
 		// over a slow uplink is a legitimate request that takes minutes. ReadHeaderTimeout and IdleTimeout still free a connection
 		// that sends nothing useful.

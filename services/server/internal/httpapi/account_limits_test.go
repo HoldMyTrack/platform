@@ -157,12 +157,12 @@ func TestSettingsShowsTheAccountsLimits(t *testing.T) {
 		`UPDATE activities SET raw_payload_key = 'raw/' || id, raw_bytes = 250000 WHERE user_id = $1`, me.id); err != nil {
 		t.Fatal(err)
 	}
-	body := getPage(d.srv, "/settings", me.session, false).Body.String()
+	body := getPage(d.srv, "/settings", me.session, "").Body.String()
 	if want := "1,240 of 50,000 activities · 310 MB of 5 GB of original files"; !strings.Contains(body, want) {
 		t.Errorf("/settings: %q missing", want)
 	}
 	demo := d.newAccount(true)
-	if strings.Contains(getPage(d.srv, "/settings", demo.session, false).Body.String(), `id="account-limits"`) {
+	if strings.Contains(getPage(d.srv, "/settings", demo.session, "").Body.String(), `id="account-limits"`) {
 		t.Error("/settings for the demo: the limits shown")
 	}
 }

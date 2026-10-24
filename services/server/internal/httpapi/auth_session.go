@@ -147,11 +147,11 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 		var was seen
 		err := s.pool.QueryRow(r.Context(), `
 			SELECT u.id, u.email_verified, u.timezone, COALESCE(u.locale, ''), u.last_seen_at,
-			       u.web_seen_at, u.android_seen_at, u.android_build
+			       u.web_seen_at, u.android_seen_at, u.android_build, u.ios_seen_at, u.ios_build
 			FROM sessions se JOIN users u ON u.id = se.user_id
 			WHERE se.id = $1 AND se.expires_at > NOW()
 		`, sessionID).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &was.last,
-			&was.web, &was.android, &was.androidBuild)
+			&was.web, &was.android, &was.androidBuild, &was.ios, &was.iosBuild)
 		if err != nil {
 			writeAPIError(w, "authentication required", http.StatusUnauthorized)
 			return

@@ -8,8 +8,8 @@ import (
 	"time"
 )
 
-// An authenticated request marks the client it came from: the website, or the Android app with
-// its build. The app's WebView marks neither.
+// An authenticated request marks the client it came from: the website, or an app with its build.
+// An app's WebView marks neither.
 func TestRequestsMarkTheirClient(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
@@ -52,5 +52,15 @@ func TestRequestsMarkTheirClient(t *testing.T) {
 	get("HoldMyTrack-Android/0.15 (aaaaaaaa; 1260)", false)
 	if _, _, build := read(); build == nil || *build != 1260 {
 		t.Fatalf("after an update the build is %v, want 1260", build)
+	}
+	get("HoldMyTrack-iOS/0.1 (aaaaaaaa; 1400)", false)
+	var ios *time.Time
+	var iosBuild *int
+	if err := d.pool.QueryRow(context.Background(),
+		`SELECT ios_seen_at, ios_build FROM users WHERE id = $1`, me.id).Scan(&ios, &iosBuild); err != nil {
+		t.Fatal(err)
+	}
+	if ios == nil || iosBuild == nil || *iosBuild != 1400 {
+		t.Fatalf("the iOS app marked %v with build %v, want today with 1400", ios, iosBuild)
 	}
 }

@@ -117,6 +117,8 @@ services:
       R2_DAILY_BUDGET_USD: ${R2_DAILY_BUDGET_USD:-2}
       # The oldest Android versionCode /v1/ answers, empty for every build (docs/DEPLOY.md §4).
       MIN_ANDROID_BUILD: ${MIN_ANDROID_BUILD:-}
+      # The oldest iOS build number /v1/ answers, empty for every build (docs/DEPLOY.md §4).
+      MIN_IOS_BUILD: ${MIN_IOS_BUILD:-}
       # Sign in with Google (docs/SPEC.md FR-1.9, docs/DEPLOY.md) — optional; empty turns it
       # off. The redirect URL defaults to APP_BASE_URL + /v1/auth/google/callback (config.go),
       # which is right here because Caddy serves the app and the API from one origin.

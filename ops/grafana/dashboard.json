@@ -1214,12 +1214,12 @@
           "mode": "multi"
         }
       },
-      "description": "Accounts that used only the website, only the Android app, or both, in the last 30 days, as of the snapshot's day."
+      "description": "Accounts that used only the website, only the Android app, only the iOS app, or the website and an app, in the last 30 days, as of the snapshot's day."
     },
     {
       "id": 25,
       "type": "timeseries",
-      "title": "Android builds (30 days)",
+      "title": "App builds (30 days)",
       "datasource": {
         "type": "prometheus",
         "uid": "${PROM}"
@@ -1239,6 +1239,15 @@
           },
           "expr": "holdmytrack_stat{deployment=\"${DEPLOYMENT}\", key=~\"android_builds_30d\\\\..+\"}",
           "legendFormat": "{{key}}"
+        },
+        {
+          "refId": "B",
+          "datasource": {
+            "type": "prometheus",
+            "uid": "${PROM}"
+          },
+          "expr": "holdmytrack_stat{deployment=\"${DEPLOYMENT}\", key=~\"ios_builds_30d\\\\..+\"}",
+          "legendFormat": "{{key}}"
         }
       ],
       "fieldConfig": {
@@ -1256,7 +1265,7 @@
           "mode": "multi"
         }
       },
-      "description": "Accounts by the Android build they last used, among those that used the app in the last 30 days. MIN_ANDROID_BUILD is safe to raise past a build once its line is at 0."
+      "description": "Accounts by the Android or iOS build they last used, among those that used that app in the last 30 days. MIN_ANDROID_BUILD or MIN_IOS_BUILD is safe to raise past a build once its line is at 0."
     }
   ]
 }

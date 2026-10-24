@@ -14,6 +14,7 @@ func TestRequestClient(t *testing.T) {
 		build       int
 	}{
 		{"the app", "HoldMyTrack-Android/0.14 (9537c263; 1255)", false, clientAndroid, 1255},
+		{"the iOS app", "HoldMyTrack-iOS/0.1 (9537c263; 1400)", false, clientIOS, 1400},
 		{"an app from before the build in the agent", "HoldMyTrack-Android/0.9", false, clientAndroid, 0},
 		{"a browser", "Mozilla/5.0 (X11; Linux x86_64) Chrome/140.0", false, clientWeb, 0},
 		{"no agent", "", false, clientWeb, 0},
@@ -50,6 +51,12 @@ func TestSeenDue(t *testing.T) {
 		{"a new day in the app", seen{last: &yesterday, android: &yesterday, androidBuild: build(1255)}, clientAndroid, 1255,
 			seenWrite{last: true, android: true, build: 1255}},
 		{"the app's WebView marks only the visit", seen{last: &yesterday}, clientNone, 0, seenWrite{last: true}},
+		{"the iOS app after the Android app the same day", seen{last: &today, android: &today, androidBuild: build(1255)}, clientIOS, 1400,
+			seenWrite{ios: true, build: 1400}},
+		{"the iOS app again the same day", seen{last: &today, ios: &today, iosBuild: build(1400)}, clientIOS, 1400,
+			seenWrite{build: 1400}},
+		{"the iOS app updated during the day", seen{last: &today, ios: &today, iosBuild: build(1390)}, clientIOS, 1400,
+			seenWrite{ios: true, build: 1400}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := seenDue(tc.was, tc.client, tc.build, now); got != tc.want {
@@ -71,6 +78,8 @@ func TestSeenWriteUpdate(t *testing.T) {
 			"UPDATE users SET last_seen_at = NOW(), web_seen_at = NOW() WHERE id = $1", nil},
 		{"the app and its build", seenWrite{android: true, build: 1255},
 			"UPDATE users SET android_seen_at = NOW(), android_build = $2 WHERE id = $1", []any{1255}},
+		{"the iOS app and its build", seenWrite{last: true, ios: true, build: 1400},
+			"UPDATE users SET last_seen_at = NOW(), ios_seen_at = NOW(), ios_build = $2 WHERE id = $1", []any{1400}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			query, args := tc.w.update()
