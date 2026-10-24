@@ -519,6 +519,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 
 - The Android app shows Settings, Profile, the Sync page and About as web pages; the `hmt_app` cookie drops their header and footer.
 - For the app, Settings leaves out Theme, Download your data and Delete account, which the app has natively, and About has no demo link. Signed out, the app's About is cached apart from the browser's.
+- The cookie's value names the app, `android` or `ios`, and a page names that platform's app and health store; any value but `ios` counts as Android. An empty Sync page points to the app's Sync tab.
 
 ## 13. FR-11 — Donations
 

@@ -342,6 +342,7 @@
   "sync.subtext_app": "Everything you've imported, once it's finished: files you uploaded and activities synced from your phone, newest first.",
   "sync.demo": "The demo account's imports. Create an account to import your own.",
   "sync.empty": "Nothing imported yet. Upload files from the header, or sync from the Android app.",
+  "sync.empty_app": "Nothing imported yet. Upload files or sync your workouts from the app's Sync tab.",
   "sync.ready": "Ready",
   "sync.failed": "Failed",
   "sync.view_on_map": "View on map",

@@ -35,7 +35,7 @@
     </nav>
     {{end}}
     {{else}}
-    <p class="sync__empty">{{t "sync.empty"}}</p>
+    <p class="sync__empty">{{if $.InApp}}{{t "sync.empty_app"}}{{else}}{{t "sync.empty"}}{{end}}</p>
     {{end}}
   </section>
 </main>

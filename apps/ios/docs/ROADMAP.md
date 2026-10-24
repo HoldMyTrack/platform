@@ -91,7 +91,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [ ] **2.2 Sign in with Apple**
   - Built (root `docs/SPEC.md` FR-1.14): the web flow, `POST /v1/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
   - Done when: a new account, an existing verified email and a relay email each sign in on the web, and deleting the account revokes the token.
-- [ ] **2.3 Pages tell the platforms apart**
+- [x] **2.3 Pages tell the platforms apart**
   - Set `hmt_app` to `android` or `ios` and let a page say the platform's words: Health Connect or Health, Google Play or the App Store. Audit Help, About, Privacy and the in-app pages for Android-only wording.
   - Done when: each in-app page read with `hmt_app=ios` has no Android wording, and the public cache key still separates the values.
 - [ ] **2.4 The native OAuth round trip from iOS**

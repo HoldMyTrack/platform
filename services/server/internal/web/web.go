@@ -17,7 +17,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"strconv"
 	"strings"
 	"sync"
 
@@ -96,8 +95,10 @@ type PageData struct {
 	User          *User
 	// Lang is the language the page renders in (i18n.Resolve) — "" is English.
 	Lang string
-	// InApp is a page shown inside a native app's WebView (httpapi's appCookieName): no site
+	// App is the app whose WebView shows the page, "android" or "ios" (httpapi's appCookieName),
+	// for a page that names the platform's own apps and stores. InApp is then set too: no site
 	// header, footer or Back to map, and none of what the app has native screens for.
+	App   string
 	InApp bool
 	// Page holds whatever a single page needs beyond the shared fields.
 	Page any
@@ -301,6 +302,7 @@ func (r *Renderer) current(w http.ResponseWriter, lang string) (*templateSet, bo
 
 // fill sets the fields every page's header and head share.
 func (r *Renderer) fill(data *PageData) {
+	data.InApp = data.InApp || data.App != ""
 	if !i18n.IsSupported(data.Lang) {
 		data.Lang = i18n.Default
 	}
@@ -344,7 +346,7 @@ func (r *Renderer) execute(w http.ResponseWriter, status int, t *template.Templa
 // from handing one language's copy to a browser that asked for another.
 func (r *Renderer) RenderPublic(w http.ResponseWriter, page string, data PageData) {
 	r.fill(&data)
-	key := page + "|" + data.Path + "|" + data.Lang + "|" + strconv.FormatBool(data.InApp)
+	key := page + "|" + data.Path + "|" + data.Lang + "|" + data.App
 	if cached, ok := r.public.Load(key); ok && !r.reload {
 		writePublic(w, cached.([]byte))
 		return
