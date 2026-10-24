@@ -27,8 +27,6 @@ struct ClientRulesTests {
     static let unported: Set<String> = [
         "photoScope", "photoGroup", "photoClusters", "photoMarkerSize", "photoMarkerLayout",
         "photoTrackPoint", "photoTrackFraction", "photoTrackStart", "photoFit", "photoZoom", "photoPan", "photoClamp",
-        "editTrackFold", "editTrackApply", "editTrackChop", "editTrackCut", "editTrackSplitIndex", "editTrackSplitPoint",
-        "editTrackMove", "editTrackDistances",
     ]
 
     @Test func everyRuleFileHasASwiftImplementation() {
@@ -213,6 +211,14 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         case .viewOnMap(let activity, let day): return ["viewOnMap": ["activity": .string(activity), "day": .string(day)]]
         }
     },
+    "editTrackFold": { input in editJSON(EditTrackOps.fold(edit(input["base"]), try ops(input["ops"]))) },
+    "editTrackApply": { input in .array(EditTrackOps.apply(points(input["points"]), edit(input["edit"])!).map(pointJSON)) },
+    "editTrackChop": { input in opJSON(EditTrackOps.chop(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi"))) },
+    "editTrackCut": { input in opJSON(EditTrackOps.cut(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi"))) },
+    "editTrackSplitIndex": { input in EditTrackOps.splitIndex(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi")).map { .num($0) } ?? nil },
+    "editTrackSplitPoint": { input in try EditTrackOps.splitPoint(ops(input["ops"])).map { .num($0) } ?? nil },
+    "editTrackMove": { input in opJSON(EditTrackOps.move(t: input.int("t"), lon: input.number("lon"), lat: input.number("lat"))) },
+    "editTrackDistances": { input in .array(EditTrackOps.cumulativeDistances(points(input["points"])).map { .num($0) }) },
     "activityZone": { input in .opt(ActivityZone.of(own: input["own"].string, account: input["account"].string)) },
     "distanceParts": { input in partsJSON(FormatParts.distance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
     "totalDistanceParts": { input in partsJSON(FormatParts.totalDistance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
@@ -224,6 +230,64 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         }
     },
 ]
+
+func points(_ json: RuleJSON) -> [TrackPoint] {
+    (json.list ?? []).map { p in
+        let v = p.list!.map { $0.double! }
+        return TrackPoint(lon: v[0], lat: v[1], t: Int(v[2]))
+    }
+}
+
+func pointJSON(_ p: TrackPoint) -> RuleJSON { [.num(p.lon), .num(p.lat), .num(p.t)] }
+
+func span(_ json: RuleJSON) -> TimeSpan { TimeSpan(Int(json.list![0].double!), Int(json.list![1].double!)) }
+func spanJSON(_ span: TimeSpan) -> RuleJSON { [.num(span.from), .num(span.to)] }
+
+func edit(_ json: RuleJSON) -> TrackEdit? {
+    guard json.object != nil else { return nil }
+    return TrackEdit(
+        keep: json["keep"].list == nil ? nil : span(json["keep"]),
+        remove: (json["remove"].list ?? []).map(span),
+        drop: (json["drop"].list ?? []).map { Int($0.double!) },
+        move: Dictionary(uniqueKeysWithValues: (json["move"].object ?? [:]).map { (Int($0.key)!, $0.value.list!.map { $0.double! }) })
+    )
+}
+
+/// The edit with its empty fields left out, as the web folds it.
+func editJSON(_ edit: TrackEdit) -> RuleJSON {
+    var out: [String: RuleJSON] = [:]
+    if let keep = edit.keep { out["keep"] = spanJSON(keep) }
+    if !edit.remove.isEmpty { out["remove"] = .array(edit.remove.map(spanJSON)) }
+    if !edit.drop.isEmpty { out["drop"] = .array(edit.drop.map { .num($0) }) }
+    if !edit.move.isEmpty { out["move"] = .object(Dictionary(uniqueKeysWithValues: edit.move.map { (String($0.key), .array($0.value.map { .num($0) })) })) }
+    return .object(out)
+}
+
+func ops(_ json: RuleJSON) throws -> [EditOp] {
+    try (json.list ?? []).map { op in
+        switch op["kind"].string {
+        case "chop": .chop(keep: span(op["keep"]))
+        case "cut": .cut(remove: span(op["remove"]))
+        case "drop": .drop(t: op.int("t"))
+        case "move": .move(t: op.int("t"), lon: op["to"].list![0].double!, lat: op["to"].list![1].double!)
+        case "reset": .reset
+        case "split": .split(t: op.int("t"))
+        case let kind: throw RuleError("no iOS op \(kind ?? "?")")
+        }
+    }
+}
+
+func opJSON(_ op: EditOp?) -> RuleJSON {
+    switch op {
+    case nil: nil
+    case .chop(let keep): ["kind": "chop", "keep": spanJSON(keep)]
+    case .cut(let remove): ["kind": "cut", "remove": spanJSON(remove)]
+    case .drop(let t): ["kind": "drop", "t": .num(t)]
+    case .move(let t, let lon, let lat): ["kind": "move", "t": .num(t), "to": [.num(lon), .num(lat)]]
+    case .reset: ["kind": "reset"]
+    case .split(let t): ["kind": "split", "t": .num(t)]
+    }
+}
 
 struct RuleError: Error, CustomStringConvertible {
     let description: String
