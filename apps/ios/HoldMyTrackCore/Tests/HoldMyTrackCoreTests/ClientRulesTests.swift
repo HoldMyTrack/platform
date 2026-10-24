@@ -29,7 +29,7 @@ struct ClientRulesTests {
         "photoTrackPoint", "photoTrackFraction", "photoTrackStart", "photoFit", "photoZoom", "photoPan", "photoClamp",
         "editTrackFold", "editTrackApply", "editTrackChop", "editTrackCut", "editTrackSplitIndex", "editTrackSplitPoint",
         "editTrackMove", "editTrackDistances", "layerInsertion", "layerLift", "webPageRoute", "panelState",
-        "sliderLayout", "sliderBoundaries", "sliderMoveKnob", "sliderTicks", "sliderPanLand", "sliderWindowFit", "session",
+        "session",
     ]
 
     @Test func everyRuleFileHasASwiftImplementation() {
@@ -103,6 +103,29 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "passesFilters": { input in
         .bool(ActivityFacets.passesFilters(activity(input["activity"]), excludedTypes: Set(input.strings("excludedTypes")), distanceFilter: distance(input["distanceFilter"])))
     },
+    "sliderLayout": { input in
+        let layout = SliderRules.layout(width: input.int("width"), finePointer: input["finePointer"].bool!)
+        return ["buttons": .bool(layout.buttons), "days": .num(layout.days)]
+    },
+    "sliderBoundaries": { input in
+        let (start, end) = SliderRules.boundaries(sliderWindow(input), range(input["range"]))
+        return ["start": .num(start), "end": .num(end)]
+    },
+    "sliderMoveKnob": { input in
+        let knob: SliderRules.Knob = input["knob"].string == "start" ? .start : .end
+        return rangeJSON(SliderRules.moveKnob(sliderWindow(input), range(input["range"]), knob: knob, to: input.int("boundary")))
+    },
+    "sliderTicks": { input in
+        .array(SliderRules.ticks(input.strings("days")).map { tick in
+            ["boundary": .num(tick.boundary), "kind": tick.monthStart ? "month" : "day", "month": tick.month.map { .num($0) } ?? nil]
+        })
+    },
+    "sliderPanLand": { input in
+        rangeJSON(SliderRules.panLand(days: input.strings("days"), range: range(input["range"]), start: input["start"].bool!, end: input["end"].bool!))
+    },
+    "sliderWindowFit": { input in
+        .num(SliderRules.windowFit(count: input.int("count"), windowDays: input.int("windowDays"), left: input.int("left"), first: input.int("first"), last: input.int("last"), dir: input.int("dir")))
+    },
     "activityZone": { input in .opt(ActivityZone.of(own: input["own"].string, account: input["account"].string)) },
     "distanceParts": { input in partsJSON(FormatParts.distance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
     "totalDistanceParts": { input in partsJSON(FormatParts.totalDistance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
@@ -114,6 +137,10 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         }
     },
 ]
+
+func sliderWindow(_ input: RuleJSON) -> SliderRules.Window {
+    SliderRules.Window(days: input.strings("days"), canPanEarlier: input["canPanEarlier"].bool!, canPanLater: input["canPanLater"].bool!)
+}
 
 func range(_ json: RuleJSON) -> DateRange { DateRange(from: json["from"].string!, to: json["to"].string!) }
 func rangeJSON(_ range: DateRange) -> RuleJSON { ["from": .string(range.from), "to": .string(range.to)] }
