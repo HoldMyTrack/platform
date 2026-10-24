@@ -14,9 +14,9 @@ The iOS app's plan, from the first commit to the App Store. Nothing is built yet
 
 ## Decisions
 
-Settle these before phase 2. A recommendation stands unless the owner changes it here.
+Settled by the owner on 2026-10-24. A change is made here first.
 
-| # | Decision | Recommendation |
+| # | Decision | Choice |
 | :-- | :-- | :-- |
 | D1 | UI toolkit | UIKit for the shell and the map (`UITabBarController`, so the map's camera and layers survive a tab switch, as Android's tabs do); SwiftUI allowed for leaf screens hosted in `UIHostingController`. MapLibre's map is a UIKit view, and SwiftUI would host it through a representable with its lifecycle forwarded by hand. |
 | D2 | Minimum iOS | 17: interactive Live Activities, `CLBackgroundActivitySession` for recording (7d.2), `@Observable`, and the String Catalog tooling. |
