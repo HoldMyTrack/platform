@@ -113,7 +113,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - One String Catalog with English and Russian. Russian counts written as "label: N", as Android's. Accept-Language sent from the app's resolved language.
   - Done when: the build fails on a string missing its Russian.
 - [ ] **3.4 CI**
-  - A macOS job in `.github/workflows/ci.yml` building the app and running its unit tests on pull requests touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`. Document it in `docs/DEVELOPMENT.md` ("CI").
+  - `.github/workflows/ios.yml` builds the app and runs its unit tests on a macOS runner for pull requests touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`; its own workflow, so the path filter spares every other pull request. Documented in `docs/DEVELOPMENT.md` ("CI").
   - Done when: a failing unit test fails the pull request.
 - [ ] **3.5 Documents**
   - `apps/ios/docs/SPEC.md` and `IMPLEMENTATION.md` started on Android's outline; root `docs/ARCHITECTURE.md` gets a section for the iOS app (shape, key decisions D1–D12 with reasons, stack); `AGENTS.md` adds iOS to "Android documents" and word budgets; the root `README.md` lists the folder; `apps/ios/README.md` says how to build and run.
