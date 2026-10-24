@@ -60,7 +60,7 @@ holdmytrack/
 ├── brand/                       # logo.svg, the mark's master; make_icons.py renders every logo and icon from it, the README's included
 ├── apps/
 │   ├── android/                 # Kotlin. Health Connect sync + in-app GPS recording; own docs/
-│   ├── ios/                     # Swift, HealthKit ingest. Placeholder
+│   ├── ios/                     # Swift, HealthKit ingest. Not started; docs/ROADMAP.md is its plan
 │   └── web/                     # the React map app (pages are server-rendered by services/server)
 │       ├── Dockerfile  .dockerignore  docker/entrypoint.sh
 │       ├── package.json  tsconfig.json  vite.config.ts
@@ -100,6 +100,7 @@ This is the repository's only layout tree; other documents point here.
 | [`docs/DPIA.md`](docs/DPIA.md) | The data protection impact assessment: the personal data processed, its legal basis, the risks to users and the measures against them. |
 | [`services/server/api/`](services/server/api/) | The JSON API's contract: `openapi.yaml` indexes every path, `paths/` holds each area's operations and `components/` the shared shapes. The server's tests and Android's `WireContractTest` hold the code to it. |
 | [`apps/android/docs/`](apps/android/docs/) | The Android app's own `SPEC.md`, `IMPLEMENTATION.md` and `ROADMAP.md`. Its shape, decisions and stack are `docs/ARCHITECTURE.md` §3. |
+| [`apps/ios/docs/ROADMAP.md`](apps/ios/docs/ROADMAP.md) | The iOS app's plan, phase by phase, from the first commit to the App Store. Read before any iOS work. |
 | [`AGENTS.md`](AGENTS.md) | You are a coding agent: the product's boundaries and the documentation, commit and Markdown conventions. |
 
 ## License
