@@ -4,9 +4,9 @@ is copied by hand (apps/ios/docs/ROADMAP.md, 3.2):
 
 - the palette, light and dark, from the web's tokens.css as named colors in the asset catalog;
 - the spacing, radius and type scales from the same file as HoldMyTrack/DesignTokens.swift;
-- the icons from the Android app's Lucide vector drawables, as template SVGs, with Lucide's
-  license, which the app ships as Android's does;
-- the fonts, Inter, Fraunces and Source Serif 4, the same files the Android app bundles.
+- the icons from the Android app's Lucide vector drawables, as template SVGs;
+- the fonts, Inter, Fraunces and Source Serif 4, the same files the Android app bundles;
+- the licenses of the fonts and the icons, which the app ships as Android's does.
 
 `--check` writes nothing and fails when any of it differs from what is committed; CI runs it.
 Usage, from anywhere: apps/ios/scripts/make-design.py [--check]
@@ -27,7 +27,7 @@ SWIFT = os.path.join(APP, 'DesignTokens.swift')
 ANDROID_FONTS = os.path.join(ROOT, 'apps/android/holdmytrack/app/src/main/res/font')
 FONTS = os.path.join(APP, 'Fonts')
 FONT_FILES = ['inter.ttf', 'fraunces.ttf', 'source_serif_4.ttf']
-ANDROID_LUCIDE_LICENSE = os.path.join(ROOT, 'apps/android/holdmytrack/app/src/main/assets/licenses/lucide-LICENSE.txt')
+ANDROID_LICENSES = os.path.join(ROOT, 'apps/android/holdmytrack/app/src/main/assets/licenses')
 LICENSES = os.path.join(APP, 'Licenses')
 
 # Drawables that aren't one-color Lucide-style icons: the sign-in brand marks keep their own
@@ -168,7 +168,8 @@ def wanted():
     files = {SWIFT: swift_tokens(css)}
     for name in FONT_FILES:
         files[os.path.join(FONTS, name)] = open(os.path.join(ANDROID_FONTS, name), 'rb').read()
-    files[os.path.join(LICENSES, 'lucide-LICENSE.txt')] = open(ANDROID_LUCIDE_LICENSE, 'rb').read()
+    for name in sorted(os.listdir(ANDROID_LICENSES)):
+        files[os.path.join(LICENSES, name)] = open(os.path.join(ANDROID_LICENSES, name), 'rb').read()
     folder = {'info': CATALOG_INFO, 'properties': {'provides-namespace': False}}
     files[os.path.join(PALETTE, 'Contents.json')] = json.dumps(folder, indent=2) + '\n'
     for name, contents in palette(css).items():
