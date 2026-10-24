@@ -891,11 +891,13 @@ code {
 }
 
 /* A year is wider than a phone: the grid scrolls sideways inside its own box, the page
-   doesn't. */
+   doesn't. A phone draws its scrollbar over the box's bottom edge while it scrolls, so the
+   padding keeps it off the last row. */
 .year-grid__body {
   display: flex;
   gap: 6px;
   overflow-x: auto;
+  padding-bottom: 10px;
 }
 
 .year-grid__row-labels {
