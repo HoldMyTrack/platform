@@ -23,17 +23,11 @@ struct ClientRulesTests {
         return RuleJSON(try! JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]))
     }
 
-    /// Rules not ported yet; empty once every one is.
-    static let unported: Set<String> = [
-        "photoScope", "photoGroup", "photoClusters", "photoMarkerSize", "photoMarkerLayout",
-        "photoTrackPoint", "photoTrackFraction", "photoTrackStart", "photoFit", "photoZoom", "photoPan", "photoClamp",
-    ]
-
     @Test func everyRuleFileHasASwiftImplementation() {
         #expect(!Self.files.isEmpty, "no cases in \(Self.dir.path)")
         for name in Self.files {
             let rule = Self.load(name)["rule"].string ?? "?"
-            #expect(rules[rule] != nil || Self.unported.contains(rule), "\(name): no Swift implementation of \(rule)")
+            #expect(rules[rule] != nil, "\(name): no Swift implementation of \(rule)")
         }
     }
 
@@ -219,6 +213,46 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "editTrackSplitPoint": { input in try EditTrackOps.splitPoint(ops(input["ops"])).map { .num($0) } ?? nil },
     "editTrackMove": { input in opJSON(EditTrackOps.move(t: input.int("t"), lon: input.number("lon"), lat: input.number("lat"))) },
     "editTrackDistances": { input in .array(EditTrackOps.cumulativeDistances(points(input["points"])).map { .num($0) }) },
+    "photoScope": { input in
+        let scope = PhotoMarkers.scope(mode: MapMode(rawValue: input["mode"].string!)!, editWindowIDs: input["editWindowIds"].list?.compactMap(\.string), focused: input["focused"].string, storyID: input["storyId"].string)
+        switch scope {
+        case .activity(let id): return ["activity": .string(id)]
+        case .story(let id): return ["story": .string(id)]
+        case nil: return nil
+        }
+    },
+    "photoGroup": { input in
+        let photos = (input["photos"].list ?? []).map { (lon: $0.number("lon"), lat: $0.number("lat")) }
+        return PhotoMarkers.groupFit(photos).map { ["fit": .array($0.map { .num($0) })] } ?? "open"
+    },
+    "photoClusters": { input in
+        .array(PhotoMarkers.cluster(screenPoints(input["points"]), radius: input.number("radius")).map { ["ids": .list($0.ids), "x": .num($0.x), "y": .num($0.y)] })
+    },
+    "photoMarkerSize": { input in .string(PhotoMarkers.size(zoom: input.number("zoom")).rawValue) },
+    "photoMarkerLayout": { input in
+        let placed = PhotoMarkers.layout(
+            screenPoints(input["points"]), zoom: input.number("zoom"), activeID: input["activeId"].string, loneID: input["loneId"].string,
+            width: input.number("width"), height: input.number("height"), scale: input.number("scale")
+        )
+        return .array(placed.map { ["ids": .list($0.ids), "x": .num($0.x), "y": .num($0.y), "diameter": .num($0.diameter), "active": .bool($0.active), "small": .bool($0.small)] })
+    },
+    "photoTrackPoint": { input in
+        let point = try photoTrack(input).point(at: input.number("fraction"))
+        return ["lon": .num(point.lon), "lat": .num(point.lat), "t": .num(point.t)]
+    },
+    "photoTrackFraction": { input in .num(photoTrack(input).fraction(at: input.number("t"))) },
+    "photoTrackStart": { input in
+        let placed = (input["placed"].object ?? [:]).mapValues { $0.double }
+        let anchors = (input["anchors"].object ?? [:]).mapValues(anchor)
+        return .num(photoTrack(input).startFraction(anchor: anchor(input["anchor"]), placed: placed, anchors: anchors))
+    },
+    "photoFit": { input in sizeJSON(PhotoZoom.fitSize(image: size(input["image"]), stage: size(input["stage"]))) },
+    "photoZoom": { input in
+        let point = input["point"]
+        return viewJSON(PhotoZoom.zoom(view(input), by: input.number("factor"), at: (point.number("x"), point.number("y")), fitted: size(input["fitted"]), stage: size(input["stage"])))
+    },
+    "photoPan": { input in viewJSON(PhotoZoom.pan(view(input), dx: input.number("dx"), dy: input.number("dy"), fitted: size(input["fitted"]), stage: size(input["stage"]))) },
+    "photoClamp": { input in viewJSON(PhotoZoom.clamp(view(input), fitted: size(input["fitted"]), stage: size(input["stage"]))) },
     "activityZone": { input in .opt(ActivityZone.of(own: input["own"].string, account: input["account"].string)) },
     "distanceParts": { input in partsJSON(FormatParts.distance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
     "totalDistanceParts": { input in partsJSON(FormatParts.totalDistance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
@@ -230,6 +264,28 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         }
     },
 ]
+
+func screenPoints(_ json: RuleJSON) -> [ScreenPoint] {
+    (json.list ?? []).map { ScreenPoint(id: $0["id"].string!, x: $0.number("x"), y: $0.number("y")) }
+}
+
+func photoTrack(_ input: RuleJSON) -> PhotoTrack {
+    PhotoTrack((input["points"].list ?? []).map { TimedPoint(lon: $0.number("lon"), lat: $0.number("lat"), t: $0.number("t")) })
+}
+
+func anchor(_ json: RuleJSON) -> PlaceAnchor? {
+    if let key = json["waiting"].string { return .waiting(key) }
+    if let t = json["t"].double { return .at(t: t) }
+    return nil
+}
+
+func size(_ json: RuleJSON) -> PhotoZoom.Size { PhotoZoom.Size(width: json.number("width"), height: json.number("height")) }
+func sizeJSON(_ size: PhotoZoom.Size) -> RuleJSON { ["width": .num(size.width), "height": .num(size.height)] }
+func view(_ input: RuleJSON) -> PhotoZoom.View {
+    let v = input["view"]
+    return PhotoZoom.View(scale: v.number("scale"), x: v.number("x"), y: v.number("y"))
+}
+func viewJSON(_ view: PhotoZoom.View) -> RuleJSON { ["scale": .num(view.scale), "x": .num(view.x), "y": .num(view.y)] }
 
 func points(_ json: RuleJSON) -> [TrackPoint] {
     (json.list ?? []).map { p in
