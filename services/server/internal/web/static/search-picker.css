@@ -24,6 +24,13 @@
   cursor: pointer;
 }
 
+/* As .settings__input:disabled (pages.css): the demo account's fieldset disables it. */
+.search-picker__trigger:disabled {
+  background: var(--fm-surface-tint);
+  color: rgb(var(--fm-ink-rgb) / 55%);
+  cursor: default;
+}
+
 .search-picker__trigger:focus-visible,
 .search-picker__trigger--open {
   outline: 2px solid var(--fm-accent);

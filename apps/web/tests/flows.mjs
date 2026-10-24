@@ -1,7 +1,7 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, a new date
  * range clearing the selection, a Story opened and closed by Back, a track edit's reprocess, a
- * delete, and the date slider fitting a phone and its footer. Each run signs up a fresh account, uploads the tester page's sample files, and
+ * delete, the date slider fitting a phone and its footer, and the header's menus closing. Each run signs up a fresh account, uploads the tester page's sample files, and
  * deletes the account at the end.
  *
  *   npm run verify:map
@@ -238,5 +238,19 @@ describe('map flows', () => {
     } finally {
       await phone.close();
     }
+  });
+  it("8. the header's menus close on another menu, a click on the map and Escape", async () => {
+    await page.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
+    await page.waitForFunction(() => Boolean(window.__holdmytrack));
+    const open = () => page.evaluate(() => [...document.querySelectorAll('.page-header details[open]')].map((d) => d.className));
+    await page.locator('.user-menu > summary').click();
+    assert.deepEqual(await open(), ['header-menu user-menu']);
+    await page.locator('.info-menu > summary').click();
+    assert.deepEqual(await open(), ['header-menu info-menu']);
+    await page.locator('.maplibregl-canvas').click({ position: { x: 400, y: 400 } });
+    assert.deepEqual(await open(), []);
+    await page.locator('.user-menu > summary').click();
+    await page.keyboard.press('Escape');
+    assert.deepEqual(await open(), []);
   });
 });
