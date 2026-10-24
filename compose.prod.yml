@@ -128,6 +128,14 @@ services:
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       FACEBOOK_REDIRECT_URL: ${FACEBOOK_REDIRECT_URL:-}
+      # Sign in with Apple (docs/SPEC.md FR-1.14, docs/DEPLOY.md) — keyed on APPLE_SERVICES_ID;
+      # its redirect URL defaults to APP_BASE_URL + /v1/auth/apple/callback.
+      APPLE_SERVICES_ID: ${APPLE_SERVICES_ID:-}
+      APPLE_BUNDLE_ID: ${APPLE_BUNDLE_ID:-}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APPLE_KEY_ID: ${APPLE_KEY_ID:-}
+      APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+      APPLE_REDIRECT_URL: ${APPLE_REDIRECT_URL:-}
       # GET /metrics for the `alloy` service (internal/metrics), on the Docker network only:
       # nothing publishes 9100, and Caddy only ever proxies to 8080.
       METRICS_ADDR: ":9100"

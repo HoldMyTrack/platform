@@ -49,7 +49,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 
 | Data | Source | Stored at | Kept for |
 | --- | --- | --- | --- |
-| Email, password hash, Google/Facebook id and name | User, sign-in provider | Database (DigitalOcean, US) | Until the account is deleted |
+| Email, password hash, Google/Facebook/Apple id and name; Apple's refresh token, kept only to revoke the link | User, sign-in provider | Database (DigitalOcean, US) | Until the account is deleted |
 | Display name, avatar, country, timezone, language | User | Database; avatar image in R2 | Until the account is deleted |
 | Activity tracks: points, times, elevation, derived stats | Uploads, Health Connect, recording | Database, map tiles in R2 | Until the activity or account is deleted |
 | Original uploads, unclipped, points inside Private locations included | Uploads, Health Connect, recording | Cloudflare R2 | Until the activity or account is deleted; no expiry yet |
@@ -71,7 +71,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 - **The operator:** through the admin panel, every account's list of activities (dates, names, countries), but not their tracks.
 - **Processors:** DigitalOcean (servers), Cloudflare (R2 storage), Grafana Labs (monitoring) and an email delivery provider that isn't named yet.
 
-Google Fonts, MapTiler (Satellite only) and Google/Facebook sign-in receive the user's IP address from their browser directly.
+Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser directly.
 
 ## 3. Legal basis, necessity and proportionality
 

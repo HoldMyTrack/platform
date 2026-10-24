@@ -311,6 +311,7 @@ export interface paths {
                         "application/json": {
                             google: boolean;
                             facebook: boolean;
+                            apple: boolean;
                             /** @description The web client id a native app asks Google for an id_token with; only when google is true. */
                             google_client_id?: string;
                         };
@@ -463,6 +464,131 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/apple/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Start Sign in with Apple in a browser
+         * @description A page navigation, not a fetch.
+         */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description The browser's IANA zone, for a new account; anything invalid is ignored. */
+                    tz?: components["parameters"]["OAuthTZ"];
+                    /** @description A native app's S256 PKCE challenge; the round trip then ends in the app with a one-time code. */
+                    app_challenge?: components["parameters"]["OAuthAppChallenge"];
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                302: components["responses"]["Redirect"];
+                400: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/apple/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Where Apple posts the browser back; redirects as Google's callback does
+         * @description Apple's own site posts this form, so it's the one write that may carry a foreign Origin, Apple's.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/x-www-form-urlencoded": {
+                        code?: string;
+                        state?: string;
+                        /** @description JSON with the person's name, sent only on their first authorization. */
+                        user?: string;
+                        error?: string;
+                    };
+                };
+            };
+            responses: {
+                302: components["responses"]["Redirect"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/apple/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apple's server-to-server notifications about Sign in with Apple
+         * @description Apple posts these to the URL registered on the App ID; the payload is a JWT Apple signs.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        payload: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Received */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/google/token": {
         parameters: {
             query?: never;
@@ -484,6 +610,47 @@ export interface paths {
                 content: {
                     "application/json": {
                         id_token: string;
+                        /** @description The device's IANA zone, for a new account. */
+                        tz?: string;
+                    };
+                };
+            };
+            responses: {
+                200: components["responses"]["Session"];
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/apple/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign in with an authorization code the iOS app got from Sign in with Apple */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        authorization_code: string;
+                        /** @description The name the platform gave the app, sent on the first authorization only; for a new account. */
+                        name?: string;
                         /** @description The device's IANA zone, for a new account. */
                         tz?: string;
                     };

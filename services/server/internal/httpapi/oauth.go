@@ -7,6 +7,7 @@ import (
 	"crypto/subtle"
 	"encoding/base64"
 	"errors"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strings"
@@ -82,7 +83,8 @@ func (s *Server) beginOAuth(w http.ResponseWriter, r *http.Request, cookiePath s
 
 // readOAuthCallback checks a callback against the cookie beginOAuth set — clearing the cookie
 // first, whatever the outcome, so a round trip is single-use — and returns the authorization
-// code plus what the cookie carried. Any error means the round trip must not continue: the
+// code plus what the cookie carried. The provider's answer is read from the query, or from a
+// form post's body as Apple sends it. Any error means the round trip must not continue: the
 // provider reported one (the user cancelled, most often), the cookie is missing, or state
 // doesn't match. The round trip's appChallenge is filled in even then, whenever the cookie was
 // readable, so failOAuth can still send a native round trip back to its app.
@@ -99,20 +101,19 @@ func (s *Server) readOAuthCallback(w http.ResponseWriter, r *http.Request, cooki
 			rt.appChallenge = parts[3]
 		}
 	}
-	q := r.URL.Query()
-	if e := q.Get("error"); e != "" {
+	if e := r.FormValue("error"); e != "" {
 		return rt, errors.New("provider returned an error: " + e)
 	}
 	if cookieErr != nil {
 		return rt, errors.New("missing oauth cookie")
 	}
-	if len(parts) < 3 || subtle.ConstantTimeCompare([]byte(parts[0]), []byte(q.Get("state"))) != 1 {
+	if len(parts) < 3 || subtle.ConstantTimeCompare([]byte(parts[0]), []byte(r.FormValue("state"))) != 1 {
 		return rt, errors.New("state mismatch")
 	}
-	if q.Get("code") == "" {
+	if r.FormValue("code") == "" {
 		return rt, errors.New("no code in callback")
 	}
-	rt.code, rt.verifier, rt.tz = q.Get("code"), parts[1], parts[2]
+	rt.code, rt.verifier, rt.tz = r.FormValue("code"), parts[1], parts[2]
 	return rt, nil
 }
 
@@ -224,6 +225,7 @@ func validPKCEValue(v string) bool {
 
 // setOAuthCookie sets the round-trip cookie, or deletes it for a negative maxAge.
 func (s *Server) setOAuthCookie(w http.ResponseWriter, path, value string, maxAge time.Duration) {
+	secure := strings.HasPrefix(s.appBaseURL, "https://") // same derivation as startSession
 	seconds := int(maxAge / time.Second)
 	if maxAge < 0 {
 		// Max-Age<=0 deletes; http.Cookie spells that -1 (its 0 means "no Max-Age", a
@@ -235,12 +237,102 @@ func (s *Server) setOAuthCookie(w http.ResponseWriter, path, value string, maxAg
 		Value:    value,
 		Path:     path,
 		HttpOnly: true,
-		Secure:   strings.HasPrefix(s.appBaseURL, "https://"), // same derivation as startSession
-		// Lax, not Strict: the callback is a top-level cross-site GET navigation from the
-		// provider's own site, which Lax still sends the cookie on and Strict would not.
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+		SameSite: oauthCookieSameSite(path, secure),
 		MaxAge:   seconds,
 	})
+}
+
+// oauthCookieSameSite is Lax, not Strict, for a callback that is a top-level cross-site GET
+// navigation from the provider's own site, which Lax still sends the cookie on and Strict would
+// not. Apple's callback is a cross-site POST, which only None sends it on, and None needs
+// Secure: without HTTPS Apple's flow can't complete anyway, since Apple refuses a plain-HTTP
+// return URL.
+func oauthCookieSameSite(path string, secure bool) http.SameSite {
+	if path == appleCookiePath && secure {
+		return http.SameSiteNoneMode
+	}
+	return http.SameSiteLaxMode
+}
+
+// resolveVerifiedUser maps the identity of a provider that vouches for the email (Google,
+// FR-1.9; Apple, FR-1.14) to a HoldMyTrack account, in one transaction:
+//
+//  1. An account already linked to this provider's subject signs in — whatever its email is now.
+//  2. Otherwise a real (non-demo) account with the same email gets linked. The provider has just
+//     vouched that this person controls that mailbox. If the account's own email was never
+//     verified, its password is also cleared, its sessions ended and any other identity it
+//     links removed: whoever set that password or linked that identity never proved they own
+//     the address, and leaving either would let someone pre-register a victim's email and keep
+//     a way in after the victim signs in. An account already linked to a *different* subject
+//     of this provider is refused rather than silently relinked.
+//  3. Otherwise a new, already-verified account is created.
+func (s *Server) resolveVerifiedUser(ctx context.Context, provider, subject, email, name, tz string) (string, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer tx.Rollback(ctx)
+
+	var userID string
+	err = tx.QueryRow(ctx, `SELECT user_id FROM user_identities WHERE provider = $1 AND subject = $2`, provider, subject).Scan(&userID)
+	if err == nil {
+		return userID, tx.Commit(ctx)
+	}
+	if !errors.Is(err, pgx.ErrNoRows) {
+		return "", err
+	}
+
+	var verified, linked bool
+	err = tx.QueryRow(ctx, `
+		SELECT id, email_verified,
+		       EXISTS (SELECT 1 FROM user_identities i WHERE i.user_id = users.id AND i.provider = $3)
+		FROM users
+		WHERE email = $1 AND id <> $2
+		FOR UPDATE
+	`, email, DemoCustomerUserID, provider).Scan(&userID, &verified, &linked)
+	switch {
+	case err == nil:
+		if linked {
+			return "", fmt.Errorf("email already linked to a different %s account", provider)
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, $2, $3)`, userID, provider, subject); err != nil {
+			return "", err
+		}
+		if !verified {
+			if _, err := tx.Exec(ctx, `UPDATE users SET email_verified = true, password_hash = NULL WHERE id = $1`, userID); err != nil {
+				return "", err
+			}
+			if _, err := tx.Exec(ctx, `DELETE FROM user_identities WHERE user_id = $1 AND provider <> $2`, userID, provider); err != nil {
+				return "", err
+			}
+			for _, q := range []string{
+				`DELETE FROM sessions WHERE user_id = $1`,
+				`DELETE FROM password_resets WHERE user_id = $1`,
+				`DELETE FROM email_verifications WHERE user_id = $1`,
+			} {
+				if _, err := tx.Exec(ctx, q, userID); err != nil {
+					return "", err
+				}
+			}
+		}
+	case errors.Is(err, pgx.ErrNoRows):
+		if tz == "" {
+			tz = "UTC"
+		}
+		if err := tx.QueryRow(ctx, `
+			INSERT INTO users (email, email_verified, display_name, timezone)
+			VALUES ($1, true, $2, $3) RETURNING id
+		`, email, newAccountDisplayName(name), tz).Scan(&userID); err != nil {
+			return "", err
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, $2, $3)`, userID, provider, subject); err != nil {
+			return "", err
+		}
+	default:
+		return "", err
+	}
+	return userID, tx.Commit(ctx)
 }
 
 // newAccountDisplayName is a provider profile's name as a new account's display_name: trimmed,

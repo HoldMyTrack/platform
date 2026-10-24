@@ -3,7 +3,7 @@
   <div class="auth-card">
     <h1 class="auth-card__title">{{t "signin.title"}}</h1>
     {{with .Notice}}<p class="auth-card__notice" role="status">{{.}}</p>{{end}}
-    {{if or .Google .Facebook}}{{template "providers" .}}{{end}}
+    {{if or .Google .Facebook .Apple}}{{template "providers" .}}{{end}}
     <form class="auth-card__form" method="post" action="/signin">
       <label class="auth-card__field"><span>{{t "auth.email"}}</span><input type="email" name="email" value="{{.Email}}" required autocomplete="email" /></label>
       <div class="auth-card__field"><label for="password">{{t "auth.password"}}</label><span class="auth-card__password"><input type="password" id="password" name="password" required minlength="8" autocomplete="current-password" />{{template "password-reveal"}}</span></div>

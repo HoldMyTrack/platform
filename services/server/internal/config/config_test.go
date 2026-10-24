@@ -1,6 +1,15 @@
 package config
 
-import "testing"
+import (
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
+	"strings"
+	"testing"
+)
 
 func TestRateLimitsOff(t *testing.T) {
 	t.Setenv("S3_ENDPOINT", "http://rustfs:9000")
@@ -28,5 +37,47 @@ func TestRateLimitsOff(t *testing.T) {
 		if err == nil && cfg.RateLimitsOff != c.off {
 			t.Errorf("RATE_LIMITS=%q at %s: off %v, want %v", c.value, c.baseURL, cfg.RateLimitsOff, c.off)
 		}
+	}
+}
+
+func TestApplePrivateKey(t *testing.T) {
+	key, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+	der, err := x509.MarshalPKCS8PrivateKey(key)
+	if err != nil {
+		t.Fatal(err)
+	}
+	p8 := string(pem.EncodeToMemory(&pem.Block{Type: "PRIVATE KEY", Bytes: der}))
+	for name, v := range map[string]string{
+		"the .p8 file":     p8,
+		"newlines as \\n":  strings.ReplaceAll(p8, "\n", `\n`),
+		"the base64 alone": base64.StdEncoding.EncodeToString(der),
+	} {
+		got, err := applePrivateKey(v)
+		if err != nil || !got.Equal(key) {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+	for name, v := range map[string]string{"empty": "", "garbage": "not a key"} {
+		if _, err := applePrivateKey(v); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+}
+
+func TestAppleNeedsItsKey(t *testing.T) {
+	t.Setenv("S3_ENDPOINT", "http://rustfs:9000")
+	t.Setenv("APPLE_SERVICES_ID", "com.holdmytrack.web")
+	t.Setenv("APPLE_TEAM_ID", "TEAM123456")
+	t.Setenv("APPLE_KEY_ID", "KEY1234567")
+	if _, err := Load(); err == nil {
+		t.Fatal("loaded without APPLE_PRIVATE_KEY")
+	}
+	t.Setenv("APPLE_SERVICES_ID", "")
+	t.Setenv("APPLE_BUNDLE_ID", "dev.holdmytrack.ios")
+	if _, err := Load(); err == nil {
+		t.Fatal("loaded a bundle id without a services id")
 	}
 }

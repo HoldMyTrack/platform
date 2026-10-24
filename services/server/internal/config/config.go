@@ -4,10 +4,15 @@
 package config
 
 import (
+	"crypto/ecdsa"
+	"crypto/x509"
+	"encoding/base64"
+	"encoding/pem"
 	"fmt"
 	"net/url"
 	"os"
 	"strconv"
+	"strings"
 )
 
 // Config is everything serve/work/migrate need to reach Postgres and the object store.
@@ -75,6 +80,17 @@ type Config struct {
 	FacebookAppID       string
 	FacebookAppSecret   string
 	FacebookRedirectURL string
+	// Apple* configure "Sign in with Apple" (docs/SPEC.md FR-1.14). An empty AppleServicesID,
+	// the web's client id, turns it off; AppleBundleID, the iOS app's, adds the native
+	// endpoint. Either needs the team, and the Sign in with Apple key's id and private key
+	// (the .p8 file), which sign each request's client secret. AppleRedirectURL defaults to
+	// AppBaseURL's own /v1/auth/apple/callback. Only read by `serve`.
+	AppleServicesID  string
+	AppleBundleID    string
+	AppleTeamID      string
+	AppleKeyID       string
+	ApplePrivateKey  *ecdsa.PrivateKey
+	AppleRedirectURL string
 	// WebDevDir, when set, is a checkout's services/server/internal/web directory that `serve`
 	// reads page templates and their stylesheet from, re-parsing on every request, instead
 	// of the copies embedded in the binary — so editing a page in dev needs no image rebuild
@@ -189,6 +205,24 @@ func Load() (Config, error) {
 	if c.FacebookAppID != "" && c.FacebookAppSecret == "" {
 		return c, fmt.Errorf("config: FACEBOOK_APP_SECRET is required when FACEBOOK_APP_ID is set")
 	}
+	c.AppleServicesID = env("APPLE_SERVICES_ID", "")
+	c.AppleBundleID = env("APPLE_BUNDLE_ID", "")
+	c.AppleTeamID = env("APPLE_TEAM_ID", "")
+	c.AppleKeyID = env("APPLE_KEY_ID", "")
+	if c.AppleRedirectURL = env("APPLE_REDIRECT_URL", ""); c.AppleRedirectURL == "" {
+		c.AppleRedirectURL = c.AppBaseURL + "/v1/auth/apple/callback"
+	}
+	if c.AppleServicesID != "" || c.AppleBundleID != "" {
+		if c.AppleServicesID == "" {
+			return c, fmt.Errorf("config: APPLE_SERVICES_ID is required when APPLE_BUNDLE_ID is set")
+		}
+		if c.AppleTeamID == "" || c.AppleKeyID == "" {
+			return c, fmt.Errorf("config: APPLE_TEAM_ID and APPLE_KEY_ID are required when APPLE_SERVICES_ID is set")
+		}
+		if c.ApplePrivateKey, err = applePrivateKey(env("APPLE_PRIVATE_KEY", "")); err != nil {
+			return c, fmt.Errorf("config: APPLE_PRIVATE_KEY: %w", err)
+		}
+	}
 	if c.DatabaseURL == "" {
 		// Built from the POSTGRES_* Compose-interpolation vars in .env.example, the same
 		// values db's compose service is configured with, rather than requiring a second
@@ -266,4 +300,31 @@ func env(key, def string) string {
 		return v
 	}
 	return def
+}
+
+// applePrivateKey reads a Sign in with Apple key: the .p8 file's PEM, its newlines real or
+// written as \n so it fits one line of an env file, or just the base64 between its header lines.
+func applePrivateKey(v string) (*ecdsa.PrivateKey, error) {
+	v = strings.TrimSpace(strings.ReplaceAll(v, `\n`, "\n"))
+	if v == "" {
+		return nil, fmt.Errorf("required when APPLE_SERVICES_ID is set")
+	}
+	var der []byte
+	if block, _ := pem.Decode([]byte(v)); block != nil {
+		der = block.Bytes
+	} else {
+		var err error
+		if der, err = base64.StdEncoding.DecodeString(strings.Join(strings.Fields(v), "")); err != nil {
+			return nil, fmt.Errorf("neither PEM nor base64")
+		}
+	}
+	key, err := x509.ParsePKCS8PrivateKey(der)
+	if err != nil {
+		return nil, err
+	}
+	ec, ok := key.(*ecdsa.PrivateKey)
+	if !ok {
+		return nil, fmt.Errorf("not an EC key")
+	}
+	return ec, nil
 }

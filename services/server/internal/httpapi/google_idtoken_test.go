@@ -140,7 +140,7 @@ func TestGoogleKeySetRefetchesOnNewKid(t *testing.T) {
 	if got := certs.fetches.Load(); got != 1 {
 		t.Fatalf("%d fetches within the refetch gap, want 1", got)
 	}
-	later := now.Add(googleKeysRefetchGap + time.Second)
+	later := now.Add(jwksRefetchGap + time.Second)
 	if _, err := s.verifyGoogleIDToken(ctx, token, later); err != nil {
 		t.Fatalf("new kid after the gap: %v", err)
 	}
@@ -184,8 +184,8 @@ func TestAuthProviders(t *testing.T) {
 		s    *Server
 		want string
 	}{
-		"both on":  {&Server{google: testGoogleServer("").google, facebook: testFacebookServer("").facebook}, `{"google":true,"facebook":true,"google_client_id":"` + testClientID + `"}`},
-		"both off": {&Server{google: newGoogleOAuth(GoogleOAuthConfig{}), facebook: newFacebookOAuth(FacebookOAuthConfig{})}, `{"google":false,"facebook":false}`},
+		"all on":  {&Server{google: testGoogleServer("").google, facebook: testFacebookServer("").facebook, apple: testAppleServer(t, "").apple}, `{"google":true,"facebook":true,"apple":true,"google_client_id":"` + testClientID + `"}`},
+		"all off": {&Server{google: newGoogleOAuth(GoogleOAuthConfig{}), facebook: newFacebookOAuth(FacebookOAuthConfig{}), apple: newAppleOAuth(AppleOAuthConfig{})}, `{"google":false,"facebook":false,"apple":false}`},
 	} {
 		rec := serveChecked(t, tc.s.handleAuthProviders, httptest.NewRequest("GET", "/v1/auth/providers", nil))
 		if got := strings.TrimSpace(rec.Body.String()); got != tc.want {

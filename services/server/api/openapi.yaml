@@ -41,8 +41,16 @@ paths:
     $ref: "paths/auth.yaml#/auth_facebook_start"
   /auth/facebook/callback:
     $ref: "paths/auth.yaml#/auth_facebook_callback"
+  /auth/apple/start:
+    $ref: "paths/auth.yaml#/auth_apple_start"
+  /auth/apple/callback:
+    $ref: "paths/auth.yaml#/auth_apple_callback"
+  /auth/apple/notifications:
+    $ref: "paths/auth.yaml#/auth_apple_notifications"
   /auth/google/token:
     $ref: "paths/auth.yaml#/auth_google_token"
+  /auth/apple/token:
+    $ref: "paths/auth.yaml#/auth_apple_token"
   /auth/handoff:
     $ref: "paths/auth.yaml#/auth_handoff"
   /auth/resend-verification:

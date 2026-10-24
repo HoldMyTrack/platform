@@ -108,7 +108,7 @@ Same shape as `password_resets`. `email` is the address the link confirms; a cha
 
 ### 3.17 `user_identities`
 
-Google and Facebook links (ADR-0015), keyed by the provider's stable `subject`, never the email. `UNIQUE (user_id, provider)` allows one identity per provider.
+Google, Facebook and Apple links (ADR-0015), keyed by the provider's stable `subject`, never the email. `UNIQUE (user_id, provider)` allows one identity per provider. An Apple link also keeps its `refresh_token` and the `client_id` it was issued to, the only way to revoke it when the account is deleted (§4.9).
 
 ### 3.18 `auth_handoffs`
 
@@ -382,7 +382,7 @@ flowchart TD
 
 ### 4.9 Accounts and sign-in
 
-Email and password with server-side sessions, owned end to end, so no vendor can revoke sign-in (§4.0). Google and Facebook are optional extra ways into the same accounts, and every sign-in ends in one `startSession`, so nothing downstream knows how an account signed in. What each flow does is FR-1.
+Email and password with server-side sessions, owned end to end, so no vendor can revoke sign-in (§4.0). Google, Facebook and Apple are optional extra ways into the same accounts, and every sign-in ends in one `startSession`, so nothing downstream knows how an account signed in. What each flow does is FR-1.
 
 **Sessions** are an opaque cookie (§3.9) checked in SQL on every request; sign-out deletes the row. `requireAuth` puts the user and its timezone in the request context, `requireVerified` wraps every route that needs a confirmed email, and resend and change-email are only `requireAuth`. Sign-in counts failures only, per email and per address, before the password is compared. A reset ends every session and reset row, then starts one session. A verification link starts a session like a reset, so it works from any browser, but never replaces a session the browser holds for another account (§4.19).
 
@@ -413,9 +413,11 @@ sequenceDiagram
 
 **The web flow** (`oauth.go`, shared by `google_auth.go` and `facebook_auth.go`) is the authorization-code flow run server-side with no provider script or library (ADR-0009); in a browser the callback sets the session cookie instead of the handoff. Round-trip state is one `SameSite=Lax` cookie. Every failure shows one generic message, the cause only in the log.
 
-**Google** adds PKCE, and is linked by verified email: `resolveGoogleUser` says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`).
+**Google** adds PKCE, and is linked by verified email: `resolveVerifiedUser`, shared with Apple, says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`).
 
-**Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook account made under a victim's address first is cleaned up by Google's unverified branch. On Android the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser`, `resolveGoogleUser` and the handoff SQL have no automated test, since the OAuth tests have no database harness.
+**Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook account made under a victim's address first is cleaned up by Google's unverified branch. On Android the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser` has no automated test.
+
+**Apple** is linked by verified email like Google. Three traps: the client secret is an ES256 JWT this server signs per request with the Sign in with Apple key (`appleClientSecret`); asking for the name and email makes Apple answer with a cross-site `form_post`, so its round-trip cookie is `SameSite=None` and `crossSiteAPIWrite` lets Apple's origin post the callback, which only the state check then trusts; and Apple accepts only an `https://` return URL on a registered domain, so the flow can't complete against a local stack. The name arrives once, in the first authorization's `user` field. The iOS app is to post its authorization code to `POST /v1/auth/apple/token`, exchanged under the bundle ID, so no token a client sent needs its signature checked. The refresh token is kept with the client id it was issued to (§3.17), and `closeAccount` revokes it once the deletion commits; a failed revocation is only logged. Apple's notifications are JWTs checked against its published keys (`jwks.go`, shared with Google's Android tokens).
 
 **Credentials**: a deployment serves app and API from one origin, so `corsAllowedOrigins` lists only dev and test origins. MapLibre's tile fetches bypass `api.ts`, so `requestCredentials.ts` adds credentials only for the API's own origin; the basemap CDN and imagery would refuse a credentialed request. The test suites' cookie trap is in `DEVELOPMENT.md`.
 

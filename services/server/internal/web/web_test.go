@@ -110,9 +110,9 @@ func TestPagesRenderInEveryLanguage(t *testing.T) {
 	pages := map[string]any{
 		"about": nil, "help": nil, "contacts": nil, "privacy": nil, "notfound": nil,
 		"signin": struct {
-			Email, Error, Notice string
-			Google, Facebook     bool
-		}{Google: true, Facebook: true},
+			Email, Error, Notice    string
+			Google, Facebook, Apple bool
+		}{Google: true, Facebook: true, Apple: true},
 	}
 	for _, lang := range []string{"en", "ru"} {
 		for page, data := range pages {

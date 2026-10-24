@@ -24,10 +24,11 @@ type authForm struct {
 	NoticeKey string
 	Email     string
 	Token     string
-	// Google and Facebook show "Continue with Google"/"Continue with Facebook" — each only
-	// when the server can complete that flow.
+	// Google, Facebook and Apple each show a "Continue with" button only when the server can
+	// complete that flow.
 	Google   bool
 	Facebook bool
+	Apple    bool
 	// Upgrading is a demo session creating a real account (the account menu's "Create your
 	// own account"): the sign-up page offers "Back to the map" instead of another demo.
 	Upgrading bool
@@ -169,8 +170,8 @@ func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, acct.home(), http.StatusSeeOther)
 		return
 	}
-	form := authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled()}
-	// google_auth.go's and facebook_auth.go's callbacks land here on failure — with no detail
+	form := authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}
+	// The providers' callbacks (google_auth.go, facebook_auth.go, apple_auth.go) land here on failure — with no detail
 	// on purpose, except Facebook's two cases the person can do something about.
 	switch r.URL.Query().Get("error") {
 	case "google":
@@ -181,6 +182,8 @@ func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
 		form.ErrorKey = "signin.facebook_no_email"
 	case "facebook_email_in_use":
 		form.ErrorKey = "signin.facebook_email_in_use"
+	case "apple":
+		form.ErrorKey = "signin.apple_failed"
 	}
 	// handleSettingsDeleteForm's landing, once the account is gone (FR-1.11).
 	if r.URL.Query().Has("deleted") {
@@ -194,7 +197,7 @@ func (s *Server) handleSignInForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	userID, err := s.checkPassword(r.Context(), clientIP(r), email, r.PostFormValue("password"))
 	if err != nil {
-		s.renderAuthError(w, r, "sign in", "signin", "signin.title", false, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled()}, err)
+		s.renderAuthError(w, r, "sign in", "signin", "signin.title", false, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
 		return
 	}
 	s.signIn(w, r, userID)
@@ -208,7 +211,7 @@ func (s *Server) handleSignUpPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// noindex: /signin is the one sign-in-or-up page search results should show (it links here).
-	s.renderAuth(w, r, http.StatusOK, "signup", "signup.title", true, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Upgrading: acct != nil})
+	s.renderAuth(w, r, http.StatusOK, "signup", "signup.title", true, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil})
 }
 
 // POST /signup. timezone comes from a hidden field the page's one-line script fills from the
@@ -218,7 +221,7 @@ func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
 	userID, err := s.createAccountLimited(r, email, r.PostFormValue("password"), r.PostFormValue("timezone"), pageLang(s.pageAccount(r), r))
 	if err != nil {
 		acct := s.pageAccount(r)
-		s.renderAuthError(w, r, "sign up", "signup", "signup.title", true, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Upgrading: acct != nil && acct.info.isDemo}, err)
+		s.renderAuthError(w, r, "sign up", "signup", "signup.title", true, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil && acct.info.isDemo}, err)
 		return
 	}
 	s.signIn(w, r, userID)
@@ -227,7 +230,7 @@ func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
 // POST /demo — the sign-in page's "Try it now — no signup".
 func (s *Server) handleDemoForm(w http.ResponseWriter, r *http.Request) {
 	if err := allowDemo(r); err != nil {
-		s.renderAuthError(w, r, "demo start", "signin", "signin.title", false, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled()}, err)
+		s.renderAuthError(w, r, "demo start", "signin", "signin.title", false, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
 		return
 	}
 	if _, err := s.startSession(w, r.Context(), DemoCustomerUserID, demoSessionTTL); err != nil {

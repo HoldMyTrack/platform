@@ -89,10 +89,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Docs: root `IMPLEMENTATION.md` §4.33 covers both platforms; `docs/DEPLOY.md` §10 gets the iOS procedure.
   - Done when: a request with an iOS agent below the minimum gets `426`, and the server tests cover it.
 - [ ] **2.2 Sign in with Apple**
-  - Native: `POST /v1/auth/apple/token` takes the identity token and authorization code from `ASAuthorizationAppleIDProvider`, checks the token against Apple's keys with the bundle ID as audience, and exchanges the code for a refresh token kept for revocation. Web: the authorization-code flow through `oauth.go`, with the Services ID as audience, and a button on the sign-in page.
-  - Traps: Apple sends the callback as a cross-site `form_post` when name or email is asked for, so the `SameSite=Lax` round-trip cookie doesn't arrive and that flow needs its own cookie policy; the name comes only on the first authorization; the email may be a relay address (0.3). Link by email only when Apple marks it verified, as Google is (`resolveGoogleUser`).
-  - Account deletion revokes the Apple token (Apple requires it). Handle Apple's server-to-server notifications for a revoked consent or a deleted Apple ID.
-  - Docs: root `SPEC.md` gets the FR beside FR-1.9 and FR-1.10; `IMPLEMENTATION.md` §4.9; `docs/DPIA.md` names Apple as an identity provider; the privacy policy in both languages; `docs/DEPLOY.md` §4 for the configuration.
+  - Built (root `docs/SPEC.md` FR-1.14): the web flow, `POST /v1/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
   - Done when: a new account, an existing verified email and a relay email each sign in on the web, and deleting the account revokes the token.
 - [ ] **2.3 Pages tell the platforms apart**
   - Set `hmt_app` to `android` or `ios` and let a page say the platform's words: Health Connect or Health, Google Play or the App Store. Audit Help, About, Privacy and the in-app pages for Android-only wording.

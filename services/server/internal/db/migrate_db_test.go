@@ -3,7 +3,9 @@ package db
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -73,7 +75,9 @@ func TestMigrateConcurrent(t *testing.T) {
 	}
 }
 
-// A database the replaced migrations built gets the baseline recorded, not run.
+// A database the replaced migrations built gets the baseline recorded, not run. The database
+// here has none of their tables, so the migrations after the baseline are recorded as applied
+// too, or they would run against nothing.
 func TestMigrateRecordsTheBaselineOverItsMigrations(t *testing.T) {
 	ctx := context.Background()
 	pool, err := pgxpool.NewWithConfig(ctx, scratchDatabase(t))
@@ -81,11 +85,21 @@ func TestMigrateRecordsTheBaselineOverItsMigrations(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	for _, q := range []string{
-		`CREATE TABLE schema_migrations (filename TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`,
-		`INSERT INTO schema_migrations (filename) VALUES ('0001_users_and_auth.sql'), ('` + baselineCovers + `')`,
-	} {
-		if _, err := pool.Exec(ctx, q); err != nil {
+	applied := []string{"0001_users_and_auth.sql", baselineCovers}
+	entries, err := fs.ReadDir(migrationsFS, ".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, e := range entries {
+		if strings.HasSuffix(e.Name(), ".sql") && e.Name() > baselineFile {
+			applied = append(applied, e.Name())
+		}
+	}
+	if _, err := pool.Exec(ctx, `CREATE TABLE schema_migrations (filename TEXT PRIMARY KEY, applied_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range applied {
+		if _, err := pool.Exec(ctx, `INSERT INTO schema_migrations (filename) VALUES ($1)`, name); err != nil {
 			t.Fatal(err)
 		}
 	}

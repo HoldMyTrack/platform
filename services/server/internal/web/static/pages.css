@@ -339,7 +339,8 @@ code {
 .auth-card__submit,
 .auth-card__secondary,
 .auth-card__google,
-.auth-card__facebook {
+.auth-card__facebook,
+.auth-card__apple {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -375,6 +376,43 @@ code {
 .auth-card__google:hover {
   color: var(--fm-ink);
   background: rgb(var(--fm-ink-rgb) / 4%);
+}
+
+/* Black with the white Apple mark, and white on a dark page, as Apple's guidelines for Sign in
+   with Apple buttons ask. */
+.auth-card__apple {
+  border: 1px solid #000;
+  background: #000;
+  color: #fff;
+}
+
+.auth-card__apple:hover {
+  color: #fff;
+  background: #1d1d1f;
+}
+
+:root[data-theme='dark'] .auth-card__apple {
+  border-color: #fff;
+  background: #fff;
+  color: #000;
+}
+
+:root[data-theme='dark'] .auth-card__apple:hover {
+  color: #000;
+  background: #e8e8ed;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .auth-card__apple {
+    border-color: #fff;
+    background: #fff;
+    color: #000;
+  }
+
+  :root:not([data-theme='light']) .auth-card__apple:hover {
+    color: #000;
+    background: #e8e8ed;
+  }
 }
 
 /* Facebook's brand blue with its white "f", as Meta's login-button guidelines ask. */

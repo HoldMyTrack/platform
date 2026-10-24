@@ -108,7 +108,7 @@ A real account must confirm its email before using anything else. Why: a mistype
 - Offered only where the deployment configures Google; otherwise its endpoints don't exist.
 - A Google account whose email Google reports unverified is refused.
 - The account is, in order: the one linked to this Google account, even if its email changed; else a real account with the same email, which is linked and counts as verified from then on; else a new verified account, named from the Google profile, on the browser's timezone (UTC if none).
-- Linking an unverified account also removes its password and Facebook link and ends its sessions and links: whoever set them never proved they own the address.
+- Linking an unverified account also removes its password and other provider links and ends its sessions and links: whoever set them never proved they own the address.
 - An account linked to a different Google account isn't relinked; the sign-in fails. Every failure gets one generic message, the cause logged on the server only.
 - Kept from Google: the stable id, email and name. The Android app sends a Google ID token for the same checks.
 
@@ -120,12 +120,20 @@ A real account must confirm its email before using anything else. Why: a mistype
 - An account linked to the Facebook account signs in even if its email changed; otherwise a new, unverified account is made and sent a verification email (FR-1.8).
 - Kept from Facebook: the app-scoped id, email and name. The Android app runs the flow in a browser tab and gets its session with a one-time code valid for 2 minutes and tied to the app's S256 challenge; a wrong verifier uses it up.
 
-Both providers: a provider-only account has no password and can set one through FR-1.5; changing the email keeps the links; a Facebook-made account still unverified when its email signs in with Google loses its Facebook link.
+### FR-1.14 Sign in with Apple
+
+- Offered only where the deployment configures Apple.
+- The account is found as for Google (FR-1.9): the one linked to this Apple ID, else a real account with the same email, linked and verified from then on, else a new verified account. Apple vouches for the email, so one it reports unverified is refused.
+- An address hidden with Hide My Email is Apple's relay address, kept as the account's email; it never matches an existing account.
+- Kept from Apple: the stable id, the email, the name Apple sends on the first sign-in only, and a refresh token used for nothing but revoking the link. The iOS app sends the authorization code Apple gave it, for the same checks.
+- Stopping Sign in with Apple for HoldMyTrack at Apple, or deleting the Apple ID, removes the link and ends the account's sessions. The account stays, reachable with its password or a reset.
+
+Every provider: a provider-only account has no password and can set one through FR-1.5; changing the email keeps the links; a Facebook-made account still unverified when its email signs in with Google or Apple loses its Facebook link.
 
 ### FR-1.11 Delete account
 
 - A real account, verified or not, confirms by typing its email (case and surrounding spaces ignored). A demo session can't.
-- At once: every session ends, the provider links and every unused reset, verification or app sign-in link stop working, nothing can sign in, and the email is free for a new account.
+- At once: every session ends, the provider links and every unused reset, verification or app sign-in link stop working, nothing can sign in, and the email is free for a new account. An Apple link's access is revoked at Apple too (FR-1.14).
 - Within minutes: activities and originals, tiles, photos, Stories, Private locations, captures, import history, data downloads, avatar and settings are deleted. A file being processed finishes first.
 - Backups keep the data for up to 8 weeks. Story copies others accepted stay theirs (FR-14.8).
 - The Android app also clears the account's unsynced recordings on that phone. An unverified account deletes on the web by verifying first, or by email (FR-10.2).

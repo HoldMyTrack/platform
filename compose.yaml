@@ -178,6 +178,15 @@ services:
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       FACEBOOK_REDIRECT_URL: ${FACEBOOK_REDIRECT_URL:-}
+      # Sign in with Apple (docs/SPEC.md FR-1.14) — keyed on APPLE_SERVICES_ID. Apple accepts
+      # only an https:// return URL on a registered domain, so it can't complete against this
+      # stack; set it here only to see the button.
+      APPLE_SERVICES_ID: ${APPLE_SERVICES_ID:-}
+      APPLE_BUNDLE_ID: ${APPLE_BUNDLE_ID:-}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APPLE_KEY_ID: ${APPLE_KEY_ID:-}
+      APPLE_PRIVATE_KEY: ${APPLE_PRIVATE_KEY:-}
+      APPLE_REDIRECT_URL: ${APPLE_REDIRECT_URL:-}
       # GET /metrics for monitoring (internal/metrics), as in compose.prod.yml. Not published;
       # from the host: docker run --rm --network holdmytrack_default curlimages/curl api:9100/metrics
       METRICS_ADDR: ":9100"
