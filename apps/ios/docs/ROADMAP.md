@@ -19,7 +19,7 @@ Settle these before phase 2. A recommendation stands unless the owner changes it
 | # | Decision | Recommendation |
 | :-- | :-- | :-- |
 | D1 | UI toolkit | UIKit for the shell and the map (`UITabBarController`, so the map's camera and layers survive a tab switch, as Android's tabs do); SwiftUI allowed for leaf screens hosted in `UIHostingController`. MapLibre's map is a UIKit view, and SwiftUI would host it through a representable with its lifecycle forwarded by hand. |
-| D2 | Minimum iOS | 17: interactive Live Activities, `@Observable`, and the String Catalog tooling. |
+| D2 | Minimum iOS | 17: interactive Live Activities, `CLBackgroundActivitySession` for recording (7d.2), `@Observable`, and the String Catalog tooling. |
 | D3 | Devices | iPhone only. The iPad runs it in compatibility mode, so no iPad layouts or screenshots. |
 | D4 | Project | One Xcode project with folder-synchronized groups and Swift Package Manager; no CocoaPods, XcodeGen or Tuist. |
 | D5 | Bundle ID (permanent) | `dev.holdmytrack.ios`, beside Android's `dev.holdmytrack.android`. |
@@ -36,7 +36,7 @@ Settle these before phase 2. A recommendation stands unless the owner changes it
 ```mermaid
 flowchart LR
     P0[0 Accounts] --> P8[8 Store prep]
-    P1[1 HealthKit probe] --> P2[2 Server]
+    P1[1 Device probes] --> P2[2 Server]
     P2 --> P3[3 Skeleton]
     P3 --> P4[4 Shared code]
     P4 --> P5[5 Sign-in]
@@ -67,14 +67,18 @@ Phase 0 has lead times outside anyone's control, so it starts first and runs bes
   - Create the app with the name HoldMyTrack, the bundle ID and an SKU. Accept the Free Apps agreement; no banking or tax forms are needed for a free app. File the Digital Services Act trader-status declaration, which the EU storefronts need.
   - Done when: the record exists and no agreement is pending.
 
-## Phase 1 — HealthKit probe
+## Phase 1 — Device probes
 
-The root roadmap's first step: confirm on a real device what HealthKit gives before building on it. A throwaway app, not kept.
+Confirm on a real device what HealthKit gives and how a recording survives the app being swiped away, before building on either. A throwaway app, not kept.
 
 - [ ] **1.1 Probe app on an iPhone paired with an Apple Watch**
   - Request read access to workouts and workout routes only. Read 90 days of `HKWorkout`, then each one's `HKWorkoutRoute` through `HKWorkoutRouteQuery`.
   - Measure: how many workouts have a route, by source app (Apple's Workout, and any of Strava, Garmin Connect, COROS, Wahoo, Komoot, WorkOutDoors the tester uses); points per route and their spacing; whether altitude is present; time to read 90 days; what a read returns when access was denied, which HealthKit hides; and whether a read works with the phone locked.
   - Done when: the numbers are in root `docs/IMPLEMENTATION.md` §4.0 beside Android's Health Connect measurements, with the go or no-go for phase 7c.
+- [ ] **1.2 Recording after a swipe**
+  - Record with `CLLocationUpdate.liveUpdates` under a `CLBackgroundActivitySession` on When In Use access, then swipe the app away from the app switcher and keep walking. Apple describes relaunching an app the system terminated during such a session; whether a user's swipe counts is what this measures. Repeat after a reboot and with Low Power Mode on.
+  - Also measure whether `applicationWillTerminate` runs on a swipe while recording, and whether a local notification posted from it is delivered.
+  - Done when: the result (relaunched or not, and the gap from swipe to the next fix) is in `apps/ios/docs/IMPLEMENTATION.md`, with the choice of 7d.2's path.
 
 ## Phase 2 — Server prerequisites
 
@@ -203,11 +207,14 @@ Android FR-5.1–FR-5.2 (ADR-0007).
 - [ ] **7d.1 Recording**
   - `CLLocationManager` with the `location` background mode, `allowsBackgroundLocationUpdates` and the background indicator, on When In Use access only; precise location required (ask for temporary full accuracy when reduced). Pause and resume by tap, stop by a 2-second hold, the map showing only the recording.
   - A Live Activity in place of Android's notification, with Pause or Resume; its Stop opens the app to confirm.
-  - Difference: swiping the app away on iOS ends location updates, where Android's foreground service keeps going. Crash recovery (7d.2) covers it; this app's `SPEC.md` says so.
+  - Difference: swiping the app away on iOS ends location updates, where Android's foreground service keeps going. 7d.2 brings the recording back; the first recording says once that swiping the app away stops it.
   - Done when: a 30-minute walk with the screen off records every fix.
 - [ ] **7d.2 Journal and recovery**
-  - Every fix written to SQLite as it arrives; after a crash or a swipe the map offers Resume, Save or Discard (FR-5.1).
-  - Done when: killing the app mid-recording and reopening it keeps every fix up to the kill.
+  - Every fix written to SQLite as it arrives; after a crash the map offers Resume, Save or Discard (FR-5.1).
+  - After a swipe, always: post a local notification as the app terminates ("Recording paused: HoldMyTrack was closed"), whose tap resumes the recording.
+  - After a swipe, if 1.2 found the app relaunched: on a background relaunch with a recording in the journal, recreate the session and resume by itself, with no prompt.
+  - Either way the time the app was dead counts as a pause: no time or distance added, the first fix after it starting afresh. The rule choosing resume, prompt or nothing is a pure function of the journal's state and the launch reason, with tests. This app's `SPEC.md` states which path shipped.
+  - Done when: after a swipe mid-walk, the recording carries on by itself, or one tap on the notification brings it back, with every fix before the swipe kept.
 - [ ] **7d.3 Recordings on the Sync tab**
   - Edit, Download GPX through the share sheet, Delete, and sending under `recorded` (FR-5.2).
   - Done when: a recording lands on the map and leaves the phone only then.
