@@ -2781,7 +2781,7 @@ button.activities-panel__story-badge:hover {
      the other tabs there is no slider and the sheet sits on the bottom edge itself
      (`--sheet-bottom`, set per tab below). */
   :root {
-    --phone-footer-height: 76px;
+    --phone-footer-height: 94px;
     --phone-sheet-peek: 49px;
   }
 
@@ -2909,8 +2909,9 @@ button.activities-panel__story-badge:hover {
      positioning escapes its `overflow: hidden`, but only while the sheet has no `transform`,
      which would make the sheet its containing block), so it comes and goes with the Activities
      tab.
-     A fixed height (its content is one 32px row plus one label line), since the sheet is
-     anchored to its top edge by that same number. */
+     A fixed height, since the sheet is anchored to its top edge by that same number: the
+     slider's 40px band, the 18px of month names under it, a 6px gap and an 18px line of dates,
+     82px, with 6px above and below. A change to the slider's height changes this. */
   .activities-panel__dates {
     position: fixed;
     left: 0;

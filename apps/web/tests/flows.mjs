@@ -1,7 +1,7 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, a new date
  * range clearing the selection, a Story opened and closed by Back, a track edit's reprocess, a
- * delete, and the date slider fitting a phone. Each run signs up a fresh account, uploads the tester page's sample files, and
+ * delete, and the date slider fitting a phone and its footer. Each run signs up a fresh account, uploads the tester page's sample files, and
  * deletes the account at the end.
  *
  *   npm run verify:map
@@ -203,6 +203,38 @@ describe('map flows', () => {
       await narrow.getByTestId('date-range-slider-track').waitFor({ timeout: 60_000 });
       assert.equal(await narrow.getByTestId('date-range-slider-earlier').count(), 0);
       assert.equal(await narrow.getByTestId('date-range-slider-shift-earlier').count(), 1);
+    } finally {
+      await phone.close();
+    }
+  });
+
+  it('7. on a phone wide enough for « », the whole slider fits inside its footer', async () => {
+    const phone = await browser.newContext({
+      storageState: await context.storageState(),
+      viewport: { width: 412, height: 915 },
+      isMobile: true,
+      hasTouch: true,
+    });
+    try {
+      const wide = await phone.newPage();
+      await wide.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
+      await wide.getByTestId('date-range-slider-track').waitFor({ timeout: 60_000 });
+      assert.equal(await wide.getByTestId('date-range-slider-earlier').count(), 1);
+      // The footer's height is a fixed number the sheet is anchored by, so a taller slider
+      // spills over the tab row above it instead of growing the footer.
+      const { footer, content } = await wide.evaluate(() => {
+        const box = (el) => el.getBoundingClientRect();
+        const dates = document.querySelector('.activities-panel__dates');
+        const parts = [...dates.querySelectorAll('.date-range-slider, .date-range-slider *')].map(box);
+        const style = getComputedStyle(dates);
+        const outer = box(dates);
+        return {
+          footer: { top: outer.top + parseFloat(style.borderTopWidth), bottom: outer.bottom },
+          content: { top: Math.min(...parts.map((r) => r.top)), bottom: Math.max(...parts.map((r) => r.bottom)) },
+        };
+      });
+      assert.ok(content.top >= footer.top, `slider top ${content.top} above its footer's ${footer.top}`);
+      assert.ok(content.bottom <= footer.bottom, `slider bottom ${content.bottom} below its footer's ${footer.bottom}`);
     } finally {
       await phone.close();
     }
