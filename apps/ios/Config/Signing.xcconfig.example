@@ -1,0 +1,4 @@
+// Copy to Signing.xcconfig (not committed) once there is an Apple Developer team: Debug and
+// Release both read it. A simulator build needs no team.
+
+DEVELOPMENT_TEAM = ABCDE12345

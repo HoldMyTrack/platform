@@ -1,0 +1,18 @@
+// Debug: the build a developer runs against a dev stack. The API origin defaults to compose's
+// published port on this Mac, which a simulator reaches directly; Local.xcconfig, not committed,
+// sets another (Local.xcconfig.example). Plain HTTP to local addresses is allowed in this
+// configuration only (scripts/stamp-build.sh).
+
+#include "Base.xcconfig"
+
+HMT_API_BASE_URL = http:$(SLASH)$(SLASH)localhost:8080
+
+ONLY_ACTIVE_ARCH = YES
+DEBUG_INFORMATION_FORMAT = dwarf
+ENABLE_TESTABILITY = YES
+GCC_OPTIMIZATION_LEVEL = 0
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG
+
+#include? "Signing.xcconfig"
+#include? "Local.xcconfig"

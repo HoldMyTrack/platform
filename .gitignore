@@ -51,3 +51,8 @@ Thumbs.db
 
 # The deploy host's published Android APK (docs/DEPLOY.md §10) — built, not source.
 /downloads/
+
+# Xcode: per-developer state, and apps/ios's own overrides (Config/*.example say what goes in them).
+xcuserdata/
+/apps/ios/Config/Local.xcconfig
+/apps/ios/Config/Signing.xcconfig
