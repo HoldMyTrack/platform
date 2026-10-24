@@ -109,7 +109,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [x] **3.2 Visual language**
   - The web's `--fm-*` tokens as an asset catalog of named colors with light and dark values, Inter and Fraunces bundled with Source Serif 4 for Russian headings, and the Lucide icons as template images (`docs/ARCHITECTURE.md` §1.1). Root `IMPLEMENTATION.md` §4.19's "Keep in step" adds iOS.
   - Done when: a sample screen matches Android's in both themes.
-- [ ] **3.3 Languages**
+- [x] **3.3 Languages**
   - One String Catalog with English and Russian. Russian counts written as "label: N", as Android's. Accept-Language sent from the app's resolved language.
   - Done when: the build fails on a string missing its Russian.
 - [x] **3.4 CI**

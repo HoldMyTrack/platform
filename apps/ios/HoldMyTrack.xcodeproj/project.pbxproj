@@ -125,6 +125,7 @@
 			buildConfigurationList = D1A000000000000000000027 /* Build configuration list for PBXNativeTarget "HoldMyTrack" */;
 			buildPhases = (
 				D1A000000000000000000013 /* Sources */,
+				D1A000000000000000000032 /* Check translations */,
 				D1A000000000000000000014 /* Frameworks */,
 				D1A000000000000000000015 /* Resources */,
 				D1A000000000000000000016 /* Stamp build number */,
@@ -263,6 +264,25 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		D1A000000000000000000032 /* Check translations */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Check translations";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/scripts/check-strings.py\" \"$SRCROOT/HoldMyTrack/Localizable.xcstrings\" \"$OBJECT_FILE_DIR_normal\"\n";
+		};
 		D1A000000000000000000016 /* Stamp build number */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;

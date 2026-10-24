@@ -23,10 +23,11 @@ enum ServerStatus: Equatable, Sendable {
 }
 
 enum ServerCheck {
-    /// Asks app's API for `/healthz`, as app.
-    static func run(_ app: AppInfo, session: URLSession = .shared) async -> ServerStatus {
+    /// Asks app's API for `/healthz`, as app, in language.
+    static func run(_ app: AppInfo, language: String = AppLanguage.current, session: URLSession = .shared) async -> ServerStatus {
         var request = URLRequest(url: app.apiBaseURL.appending(path: "healthz"), timeoutInterval: 10)
         request.setValue(app.userAgent, forHTTPHeaderField: "User-Agent")
+        request.setValue(language, forHTTPHeaderField: "Accept-Language")
         guard let (body, response) = try? await session.data(for: request),
               let http = response as? HTTPURLResponse
         else { return .unreachable }
