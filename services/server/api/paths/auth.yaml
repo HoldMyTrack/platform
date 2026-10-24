@@ -117,11 +117,12 @@ auth_providers:
           application/json:
             schema:
               type: object
-              required: [google, facebook]
+              required: [google, facebook, apple]
               additionalProperties: false
               properties:
                 google: { type: boolean }
                 facebook: { type: boolean }
+                apple: { type: boolean }
                 google_client_id:
                   type: string
                   description: The web client id a native app asks Google for an id_token with; only when google is true.
@@ -163,6 +164,38 @@ auth_facebook_callback:
   get:
     summary: Where Facebook sends the browser back; redirects as Google's callback does
     security: []
+    responses:
+      "302": { $ref: "../components/responses.yaml#/Redirect" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_apple_start:
+  get:
+    summary: Start Sign in with Apple in a browser
+    description: A page navigation, not a fetch.
+    security: []
+    parameters:
+      - $ref: "../components/parameters.yaml#/OAuthTZ"
+      - $ref: "../components/parameters.yaml#/OAuthAppChallenge"
+    responses:
+      "302": { $ref: "../components/responses.yaml#/Redirect" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_apple_callback:
+  post:
+    summary: Where Apple posts the browser back; redirects as Google's callback does
+    description: Apple's own site posts this form, so it's the one write that may carry a foreign Origin, Apple's.
+    security: []
+    requestBody:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              code: { type: string }
+              state: { type: string }
+              user:
+                type: string
+                description: JSON with the person's name, sent only on their first authorization.
+              error: { type: string }
     responses:
       "302": { $ref: "../components/responses.yaml#/Redirect" }
       "404": { $ref: "../components/responses.yaml#/Error" }

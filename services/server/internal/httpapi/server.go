@@ -80,6 +80,7 @@ type Server struct {
 	skipEmailVerification bool
 	google                googleOAuth
 	facebook              facebookOAuth
+	apple                 appleOAuth
 	pages                 *web.Renderer
 	uploadLimiter         *fixedWindowLimiter
 	tileLimiter           *fixedWindowLimiter
@@ -97,13 +98,14 @@ type Server struct {
 // overrides it, for a load test's target.
 const defaultUploadsPerHour = 100
 
-func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail.Sender, appBaseURL, basemapOrigin string, satellite mapstyle.Satellite, version string, skipEmailVerification bool, google GoogleOAuthConfig, facebook FacebookOAuthConfig, pages *web.Renderer) *Server {
+func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail.Sender, appBaseURL, basemapOrigin string, satellite mapstyle.Satellite, version string, skipEmailVerification bool, google GoogleOAuthConfig, facebook FacebookOAuthConfig, apple AppleOAuthConfig, pages *web.Renderer) *Server {
 	s := &Server{
 		pool: pool, store: store, log: log, mux: http.NewServeMux(), mailer: mailer,
 		appBaseURL: appBaseURL, basemapOrigin: basemapOrigin, satellite: satellite, version: version,
 		skipEmailVerification: skipEmailVerification,
 		google:                newGoogleOAuth(google),
 		facebook:              newFacebookOAuth(facebook),
+		apple:                 newAppleOAuth(apple),
 		pages:                 pages,
 		uploadLimiter:         newFixedWindowLimiter(defaultUploadsPerHour, time.Hour),
 		tileLimiter:           newFixedWindowLimiter(defaultTilesPerMinute, time.Minute),
@@ -128,6 +130,9 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/auth/google/callback"), s.handleGoogleCallback)
 	s.mux.HandleFunc(route("GET", "/auth/facebook/start"), s.handleFacebookStart)
 	s.mux.HandleFunc(route("GET", "/auth/facebook/callback"), s.handleFacebookCallback)
+	// Apple posts the browser back (apple_auth.go), so its callback is the one POST here.
+	s.mux.HandleFunc(route("GET", "/auth/apple/start"), s.handleAppleStart)
+	s.mux.HandleFunc(route("POST", "/auth/apple/callback"), s.handleAppleCallback)
 	// Native clients (docs/IMPLEMENTATION.md §4.9): an id_token from Android's Credential
 	// Manager, and the one-time code a browser-tab round trip above ends with for an app.
 	s.mux.HandleFunc(route("POST", "/auth/google/token"), s.handleGoogleToken)
@@ -428,7 +433,8 @@ func setSecurityHeaders(h http.Header) {
 // shaped into valid JSON, set the attacker's session in the victim's browser, so whatever the
 // victim uploaded next went to the attacker's account. A browser always sends Origin on a
 // POST, PATCH or DELETE, so one naming a different origin than this app's (or the dev
-// allowlist's) is refused. The native apps send no Origin, and pass.
+// allowlist's) is refused. The native apps send no Origin, and pass, and so does Apple's own
+// site posting Sign in with Apple's answer back, which only the round trip's state makes count.
 func (s *Server) crossSiteAPIWrite(r *http.Request) bool {
 	switch r.Method {
 	case http.MethodGet, http.MethodHead, http.MethodOptions:
@@ -438,7 +444,7 @@ func (s *Server) crossSiteAPIWrite(r *http.Request) bool {
 		return false
 	}
 	origin := r.Header.Get("Origin")
-	if origin == "" {
+	if origin == "" || (r.URL.Path == appleCallbackPath && origin == appleIssuer) {
 		return false
 	}
 	return !corsAllowedOrigins[origin] && !s.isSameOrigin(r)

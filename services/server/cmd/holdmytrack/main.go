@@ -125,6 +125,9 @@ func main() {
 			ClientID: cfg.GoogleClientID, ClientSecret: cfg.GoogleClientSecret, RedirectURL: cfg.GoogleRedirectURL,
 		}, httpapi.FacebookOAuthConfig{
 			AppID: cfg.FacebookAppID, AppSecret: cfg.FacebookAppSecret, RedirectURL: cfg.FacebookRedirectURL,
+		}, httpapi.AppleOAuthConfig{
+			ServicesID: cfg.AppleServicesID, BundleID: cfg.AppleBundleID, TeamID: cfg.AppleTeamID,
+			KeyID: cfg.AppleKeyID, PrivateKey: cfg.ApplePrivateKey, RedirectURL: cfg.AppleRedirectURL,
 		}, pages)
 		srv.SetUploadsPerHour(cfg.UploadsPerHour)
 		srv.SetTilesPerMinute(cfg.TilesPerMinute)

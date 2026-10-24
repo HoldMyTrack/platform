@@ -382,7 +382,7 @@ flowchart TD
 
 ### 4.9 Accounts and sign-in
 
-Email and password with server-side sessions, owned end to end, so no vendor can revoke sign-in (§4.0). Google and Facebook are optional extra ways into the same accounts, and every sign-in ends in one `startSession`, so nothing downstream knows how an account signed in. What each flow does is FR-1.
+Email and password with server-side sessions, owned end to end, so no vendor can revoke sign-in (§4.0). Google, Facebook and Apple are optional extra ways into the same accounts, and every sign-in ends in one `startSession`, so nothing downstream knows how an account signed in. What each flow does is FR-1.
 
 **Sessions** are an opaque cookie (§3.9) checked in SQL on every request; sign-out deletes the row. `requireAuth` puts the user and its timezone in the request context, `requireVerified` wraps every route that needs a confirmed email, and resend and change-email are only `requireAuth`. Sign-in counts failures only, per email and per address, before the password is compared. A reset ends every session and reset row, then starts one session. A verification link starts a session like a reset, so it works from any browser, but never replaces a session the browser holds for another account (§4.19).
 
@@ -416,6 +416,8 @@ sequenceDiagram
 **Google** adds PKCE, and is linked by verified email: `resolveVerifiedUser`, shared with Apple, says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`).
 
 **Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook account made under a victim's address first is cleaned up by Google's unverified branch. On Android the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser` has no automated test.
+
+**Apple** is linked by verified email like Google. Three traps: the client secret is an ES256 JWT this server signs per request with the Sign in with Apple key (`appleClientSecret`); asking for the name and email makes Apple answer with a cross-site `form_post`, so its round-trip cookie is `SameSite=None` and `crossSiteAPIWrite` lets Apple's origin post the callback, which only the state check then trusts; and Apple accepts only an `https://` return URL on a registered domain, so the flow can't complete against a local stack. The name arrives once, in the first authorization's `user` field. The refresh token is kept with the client id it was issued to (§3.17).
 
 **Credentials**: a deployment serves app and API from one origin, so `corsAllowedOrigins` lists only dev and test origins. MapLibre's tile fetches bypass `api.ts`, so `requestCredentials.ts` adds credentials only for the API's own origin; the basemap CDN and imagery would refuse a credentialed request. The test suites' cookie trap is in `DEVELOPMENT.md`.
 

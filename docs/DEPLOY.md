@@ -58,6 +58,13 @@ Put a load test's raised values back afterwards.
 5. Set `FACEBOOK_APP_ID`/`FACEBOOK_APP_SECRET`, leave `FACEBOOK_REDIRECT_URL` empty, and run `… up -d api`. The Android app needs nothing more (`IMPLEMENTATION.md` §4.9).
 6. In Development mode only people under **App roles → Roles** can sign in; test with one. Then **Publish** to go Live. Meta checks step 4's fields and requires Business Verification of a portfolio connected to the app, whatever permissions it uses. Removing the portfolio doesn't lift this, and there is no individual-developer route. Verification takes one business document whose name matches the portfolio's; in the US, an IRS 147C letter, a business bank statement, a business tax document or a DBA filing. Until it's Live, keep `FACEBOOK_APP_ID` empty on the public site.
 
+**Sign in with Apple (optional).** Leave `APPLE_SERVICES_ID` empty to run without it. It needs an Apple Developer Program membership. Apple accepts only an `https://` return URL on a registered domain, so test it on a deployment, not a local stack.
+
+1. At developer.apple.com, under **Certificates, Identifiers & Profiles → Identifiers**, register an App ID with Sign in with Apple (the iOS app's, `dev.holdmytrack.ios`, once it exists), then a **Services ID**, for example `com.holdmytrack.web`. On the Services ID, turn on Sign in with Apple, pick the App ID as primary, and add the §3 domain and the return URL `https://<your-domain>/v1/auth/apple/callback`, exactly `APP_BASE_URL` plus that path.
+2. Under **Keys**, create a key with Sign in with Apple for the same App ID and download its `.p8` file, which Apple offers once. It is a password: `.env.prod` only; revoke it and make another if it leaks.
+3. Under **Services → Sign in with Apple for Email Communication**, register the domain and the address mail is sent from (`SMTP_FROM`), and publish SPF for it. Without it, mail to a Hide My Email address bounces.
+4. Set `APPLE_SERVICES_ID`, `APPLE_TEAM_ID` (top right of the developer site), `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY` (the `.p8` on one line, its newlines written as `\n`), leave `APPLE_REDIRECT_URL` empty, and run `… up -d api`. `api` refuses to start on a key it can't read.
+
 ## 5. Basemap
 
 The basemap is the Protomaps planet build (z0–15, ~138 GB), served unmodified from a public R2 bucket. `apps/web/.dockerignore` keeps it out of every image.

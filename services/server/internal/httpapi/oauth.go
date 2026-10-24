@@ -83,7 +83,8 @@ func (s *Server) beginOAuth(w http.ResponseWriter, r *http.Request, cookiePath s
 
 // readOAuthCallback checks a callback against the cookie beginOAuth set — clearing the cookie
 // first, whatever the outcome, so a round trip is single-use — and returns the authorization
-// code plus what the cookie carried. Any error means the round trip must not continue: the
+// code plus what the cookie carried. The provider's answer is read from the query, or from a
+// form post's body as Apple sends it. Any error means the round trip must not continue: the
 // provider reported one (the user cancelled, most often), the cookie is missing, or state
 // doesn't match. The round trip's appChallenge is filled in even then, whenever the cookie was
 // readable, so failOAuth can still send a native round trip back to its app.
@@ -100,20 +101,19 @@ func (s *Server) readOAuthCallback(w http.ResponseWriter, r *http.Request, cooki
 			rt.appChallenge = parts[3]
 		}
 	}
-	q := r.URL.Query()
-	if e := q.Get("error"); e != "" {
+	if e := r.FormValue("error"); e != "" {
 		return rt, errors.New("provider returned an error: " + e)
 	}
 	if cookieErr != nil {
 		return rt, errors.New("missing oauth cookie")
 	}
-	if len(parts) < 3 || subtle.ConstantTimeCompare([]byte(parts[0]), []byte(q.Get("state"))) != 1 {
+	if len(parts) < 3 || subtle.ConstantTimeCompare([]byte(parts[0]), []byte(r.FormValue("state"))) != 1 {
 		return rt, errors.New("state mismatch")
 	}
-	if q.Get("code") == "" {
+	if r.FormValue("code") == "" {
 		return rt, errors.New("no code in callback")
 	}
-	rt.code, rt.verifier, rt.tz = q.Get("code"), parts[1], parts[2]
+	rt.code, rt.verifier, rt.tz = r.FormValue("code"), parts[1], parts[2]
 	return rt, nil
 }
 
@@ -225,6 +225,7 @@ func validPKCEValue(v string) bool {
 
 // setOAuthCookie sets the round-trip cookie, or deletes it for a negative maxAge.
 func (s *Server) setOAuthCookie(w http.ResponseWriter, path, value string, maxAge time.Duration) {
+	secure := strings.HasPrefix(s.appBaseURL, "https://") // same derivation as startSession
 	seconds := int(maxAge / time.Second)
 	if maxAge < 0 {
 		// Max-Age<=0 deletes; http.Cookie spells that -1 (its 0 means "no Max-Age", a
@@ -236,12 +237,22 @@ func (s *Server) setOAuthCookie(w http.ResponseWriter, path, value string, maxAg
 		Value:    value,
 		Path:     path,
 		HttpOnly: true,
-		Secure:   strings.HasPrefix(s.appBaseURL, "https://"), // same derivation as startSession
-		// Lax, not Strict: the callback is a top-level cross-site GET navigation from the
-		// provider's own site, which Lax still sends the cookie on and Strict would not.
-		SameSite: http.SameSiteLaxMode,
+		Secure:   secure,
+		SameSite: oauthCookieSameSite(path, secure),
 		MaxAge:   seconds,
 	})
+}
+
+// oauthCookieSameSite is Lax, not Strict, for a callback that is a top-level cross-site GET
+// navigation from the provider's own site, which Lax still sends the cookie on and Strict would
+// not. Apple's callback is a cross-site POST, which only None sends it on, and None needs
+// Secure: without HTTPS Apple's flow can't complete anyway, since Apple refuses a plain-HTTP
+// return URL.
+func oauthCookieSameSite(path string, secure bool) http.SameSite {
+	if path == appleCookiePath && secure {
+		return http.SameSiteNoneMode
+	}
+	return http.SameSiteLaxMode
 }
 
 // resolveVerifiedUser maps the identity of a provider that vouches for the email (Google,

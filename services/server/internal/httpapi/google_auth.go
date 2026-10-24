@@ -58,8 +58,8 @@ func newGoogleOAuth(cfg GoogleOAuthConfig) googleOAuth {
 func (g googleOAuth) enabled() bool { return g.ClientID != "" }
 
 // handleAuthProviders serves `GET /v1/auth/providers` — which optional sign-in methods this
-// deployment has configured, so a client decides whether to render the Google and Facebook
-// buttons from the server's own config rather than a build-time flag that could disagree with it.
+// deployment has configured, so a client decides whether to render the Google, Facebook and
+// Apple buttons from the server's own config rather than a build-time flag that could disagree with it.
 // google_client_id is the web client's ID, which the Android app passes to Credential Manager
 // as its serverClientId so the id_token it gets back is one handleGoogleToken accepts. It's
 // public — every Google sign-in page carries it in its URL.
@@ -67,8 +67,9 @@ func (s *Server) handleAuthProviders(w http.ResponseWriter, r *http.Request) {
 	resp := struct {
 		Google         bool   `json:"google"`
 		Facebook       bool   `json:"facebook"`
+		Apple          bool   `json:"apple"`
 		GoogleClientID string `json:"google_client_id,omitempty"`
-	}{Google: s.google.enabled(), Facebook: s.facebook.enabled()}
+	}{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}
 	if resp.Google {
 		resp.GoogleClientID = s.google.ClientID
 	}

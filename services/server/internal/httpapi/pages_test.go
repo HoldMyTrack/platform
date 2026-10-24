@@ -24,7 +24,7 @@ func newPagesTestServer(t *testing.T) *Server {
 	if err != nil {
 		t.Fatalf("templates: %v", err)
 	}
-	return New(nil, nil, slog.New(slog.DiscardHandler), nil, "https://app.example", "", mapstyle.Satellite{}, "test", false, GoogleOAuthConfig{}, FacebookOAuthConfig{}, pages)
+	return New(nil, nil, slog.New(slog.DiscardHandler), nil, "https://app.example", "", mapstyle.Satellite{}, "test", false, GoogleOAuthConfig{}, FacebookOAuthConfig{}, AppleOAuthConfig{}, pages)
 }
 
 func TestPagesRenderSignedOut(t *testing.T) {
@@ -421,7 +421,7 @@ func TestSignInOffersProvidersOnlyWhenConfigured(t *testing.T) {
 	}
 	s := New(nil, nil, slog.New(slog.DiscardHandler), nil, "https://app.example", "", mapstyle.Satellite{}, "test", false,
 		GoogleOAuthConfig{ClientID: testClientID, ClientSecret: "secret", RedirectURL: "https://app.example/v1/auth/google/callback"},
-		FacebookOAuthConfig{AppID: testAppID, AppSecret: "secret", RedirectURL: "https://app.example/v1/auth/facebook/callback"}, pages)
+		FacebookOAuthConfig{AppID: testAppID, AppSecret: "secret", RedirectURL: "https://app.example/v1/auth/facebook/callback"}, AppleOAuthConfig{}, pages)
 	for _, path := range []string{"/signin", "/signup"} {
 		rec := httptest.NewRecorder()
 		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
