@@ -6,7 +6,7 @@ Not containerised, and not planned to be: Xcode, the simulator and a physical de
 
 ## Build and run
 
-Xcode 27 or later; a simulator build needs no Apple Developer account. Open `HoldMyTrack.xcodeproj`, pick the HoldMyTrack scheme and an iPhone simulator, and run. From a terminal:
+Xcode 26 or later, as CI's macOS runner has; a simulator build needs no Apple Developer account. Open `HoldMyTrack.xcodeproj`, pick the HoldMyTrack scheme and an iPhone simulator, and run. From a terminal:
 
 ```
 xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack -destination 'platform=iOS Simulator,name=iPhone 17'

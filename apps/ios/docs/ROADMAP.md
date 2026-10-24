@@ -112,7 +112,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [ ] **3.3 Languages**
   - One String Catalog with English and Russian. Russian counts written as "label: N", as Android's. Accept-Language sent from the app's resolved language.
   - Done when: the build fails on a string missing its Russian.
-- [ ] **3.4 CI**
+- [x] **3.4 CI**
   - `.github/workflows/ios.yml` builds the app and runs its unit tests on a macOS runner for pull requests touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`; its own workflow, so the path filter spares every other pull request. Documented in `docs/DEVELOPMENT.md` ("CI").
   - Done when: a failing unit test fails the pull request.
 - [ ] **3.5 Documents**
