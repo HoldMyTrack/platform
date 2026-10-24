@@ -60,7 +60,7 @@ holdmytrack/
 ├── brand/                       # logo.svg, the mark's master; make_icons.py renders every logo and icon from it, the README's included
 ├── apps/
 │   ├── android/                 # Kotlin. Health Connect sync + in-app GPS recording; own docs/
-│   ├── ios/                     # Swift, HealthKit ingest. Not started; docs/ROADMAP.md is its plan
+│   ├── ios/                     # Swift, HealthKit ingest. A skeleton; docs/ROADMAP.md is its plan
 │   └── web/                     # the React map app (pages are server-rendered by services/server)
 │       ├── Dockerfile  .dockerignore  docker/entrypoint.sh
 │       ├── package.json  tsconfig.json  vite.config.ts

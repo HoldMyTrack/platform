@@ -118,7 +118,7 @@ write(f'{main}/res/values/ic_launcher_background.xml',
 png(tile, f'{main}/ic_launcher-playstore.png', 512, opaque=True)
 
 # iOS: a single-size 1024 AppIcon (Xcode 14+), ready for the app's asset catalog.
-ios = 'apps/ios/Assets.xcassets'
+ios = 'apps/ios/HoldMyTrack/Assets.xcassets'
 png(tile, f'{ios}/AppIcon.appiconset/AppIcon-1024.png', 1024, opaque=True)
 write(f'{ios}/AppIcon.appiconset/Contents.json', json.dumps({
     'images': [{'filename': 'AppIcon-1024.png', 'idiom': 'universal', 'platform': 'ios', 'size': '1024x1024'}],

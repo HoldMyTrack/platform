@@ -105,6 +105,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Configurations: Debug reads the API origin from an `.xcconfig` the developer sets (a simulator reaches the host's `localhost:8081` directly) and allows cleartext to it alone; Release is fixed to `https://holdmytrack.com`, and no Debug value can leak into it.
   - The build number from `git rev-list --count` (D9) and the short SHA, written by a build phase; the User-Agent from phase 2.1.
   - Done when: a Release archive validates in Xcode's Organizer, and a Debug build on the simulator reaches a dev stack's `/healthz`.
+  - Built, with MapLibre 6.31.0; the simulator half is met. Left: the archive, once 0.1 gives a team.
 - [ ] **3.2 Visual language**
   - The web's `--fm-*` tokens as an asset catalog of named colors with light and dark values, Inter and Fraunces bundled with Source Serif 4 for Russian headings, and the Lucide icons as template images (`docs/ARCHITECTURE.md` §1.1). Root `IMPLEMENTATION.md` §4.19's "Keep in step" adds iOS.
   - Done when: a sample screen matches Android's in both themes.

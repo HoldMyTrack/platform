@@ -1,0 +1,4 @@
+// Copy to Local.xcconfig (not committed) to point Debug builds at another API origin: compose's
+// API_PORT when .env changes it, or this Mac's name.local for a phone on the same network.
+
+HMT_API_BASE_URL = http:$(SLASH)$(SLASH)localhost:8081

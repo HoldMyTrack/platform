@@ -1,0 +1,21 @@
+// Settings every configuration of every target shares. A value with `//` in it is written with
+// $(SLASH), since an xcconfig file reads `//` as the start of a comment.
+
+SLASH = /
+
+SDKROOT = iphoneos
+SUPPORTED_PLATFORMS = iphoneos iphonesimulator
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
+// iPhone only: an iPad runs the app in compatibility mode (apps/ios/docs/ROADMAP.md, D3).
+TARGETED_DEVICE_FAMILY = 1
+SWIFT_VERSION = 6.0
+
+// The release number, raised by hand. The build number is the commit count, written into the
+// built Info.plist by scripts/stamp-build.sh (D9).
+MARKETING_VERSION = 0.1
+CURRENT_PROJECT_VERSION = 1
+
+CODE_SIGN_STYLE = Automatic
+ALWAYS_SEARCH_USER_PATHS = NO
+CLANG_ENABLE_MODULES = YES
+ENABLE_STRICT_OBJC_MSGSEND = YES
