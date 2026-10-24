@@ -153,8 +153,8 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1 and About (ADR-0042, root `IMPLEMENTATION.md` §4.19).
 
 - [ ] **6.1 `WKWebView` signed in**
-  - Set the session cookie and `hmt_app=ios` in the web view's `WKHTTPCookieStore` before the first load. Links: to the map, the native map; within the page, the web view; anything else, the browser. Read the session again on leaving a page, since a page may change units, the name or the language.
-  - Done when: the routing is a pure function with tests, and saving Settings changes the map's units on return.
+  - Set the session cookie and `hmt_app=ios` in the web view's `WKHTTPCookieStore` before the first load. Where a link goes is the `webPageRoute` rule (`testdata/client-rules/web-page-route.json`), shared with Android. Read the session again on leaving a page, since a page may change units, the name or the language.
+  - Done when: the rule's cases pass, and saving Settings changes the map's units on return.
 - [ ] **6.2 Settings, Profile, Sync history, About**
   - First run: a verified account with no Country opens Settings, and only saving gets past it. The avatar uses the page's file input, which iOS answers with its own photo picker. Sync history's View on map opens the native map on that activity (`apps/android/docs/SPEC.md` FR-4.1).
   - Done when: each page works offline with an error and Try again, and in both languages and themes.
