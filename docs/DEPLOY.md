@@ -413,7 +413,7 @@ Grafana Cloud's free tier holds the logs, metrics, dashboard and alerts. The `al
 
 **Set it up.**
 
-1. At grafana.com, create a free account and a stack in the region closest to the server; it can't move later. Under **Alerting → Contact points**, test the default contact point, or add one that reaches you.
+1. At grafana.com, create a free account and a stack in the region closest to the server; it can't move later.
 2. Under your organisation's **Security → Access Policies**, create a policy for the stack with only `metrics:write` and `logs:write`, and add a token. It is shown once; it goes into `.env.prod` only.
 3. From the stack's details page, note the **Prometheus** remote-write URL (ending in `/api/prom/push`) with its username, and the **Loki** URL (ending in `/loki/api/v1/push`) with its username; the two differ.
 4. Fill in `.env.prod`'s monitoring values, including `COMPOSE_PROFILES=monitoring`.
@@ -436,7 +436,8 @@ Grafana Cloud's free tier holds the logs, metrics, dashboard and alerts. The `al
    GRAFANA_URL=https://<stack>.grafana.net GRAFANA_TOKEN=<service account token> ALERT_EMAIL=<address> ops/grafana/apply.py
    ```
    `ALERT_EMAIL` takes several addresses separated by `;`. It prints the dashboard's link.
-3. Start the two backup alerts by running `./scripts/backup.sh --nightly` and `./scripts/restore-drill.sh` once by hand if they haven't run since: they fire until each has recorded a success.
+3. Under **Alerting → Notification configuration**, **Test** the `holdmytrack` contact point. Then edit the **Default policy** to use it: the stack's own default contact point, `empty`, delivers nowhere, and alerts from outside the script, such as one turned on for the uptime check, go there. `apply.py` leaves the policy tree alone, so this survives its runs.
+4. Start the two backup alerts by running `./scripts/backup.sh --nightly` and `./scripts/restore-drill.sh` once by hand if they haven't run since: they fire until each has recorded a success.
 
 ## What this doesn't cover
 
