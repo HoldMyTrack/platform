@@ -544,6 +544,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/apple/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Apple's server-to-server notifications about Sign in with Apple
+         * @description Apple posts these to the URL registered on the App ID; the payload is a JWT Apple signs.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        payload: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description Received */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/google/token": {
         parameters: {
             query?: never;

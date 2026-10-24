@@ -35,11 +35,12 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 // closeAccount is account deletion's shared core — the JSON endpoint above and the Settings
 // page's form (settings_page.go) both call it. confirm must be the account's email, in any
 // case and with surrounding spaces. In one transaction it takes away every way back in —
-// sessions, Google and Facebook identities, reset, verification and app sign-in tokens, the
-// password — renames the email to a placeholder so the address can sign up again at once,
+// sessions, Google, Facebook and Apple identities, reset, verification and app sign-in tokens,
+// the password — renames the email to a placeholder so the address can sign up again at once,
 // and stamps deleted_at. The data stays until internal/worker/account_purge.go removes it,
 // within a minute or so: a job of the account's may be running, and its objects have to be
-// swept after the last one finishes, not before.
+// swept after the last one finishes, not before. An Apple link's token is revoked once the
+// transaction commits.
 func (s *Server) closeAccount(ctx context.Context, userID string, isDemo bool, confirm string) error {
 	if isDemo {
 		return accountFailure(http.StatusForbidden, "error.demo_read_only")
@@ -57,6 +58,26 @@ func (s *Server) closeAccount(ctx context.Context, userID string, isDemo bool, c
 	if strings.ToLower(strings.TrimSpace(confirm)) != email {
 		return accountFailure(http.StatusBadRequest, "error.delete_confirm_mismatch")
 	}
+	var apple []appleLink
+	rows, err := tx.Query(ctx, `
+		SELECT refresh_token, client_id FROM user_identities
+		WHERE user_id = $1 AND provider = 'apple' AND refresh_token IS NOT NULL AND client_id IS NOT NULL
+	`, userID)
+	if err != nil {
+		return fmt.Errorf("delete account: apple links: %w", err)
+	}
+	for rows.Next() {
+		var l appleLink
+		if err := rows.Scan(&l.refreshToken, &l.clientID); err != nil {
+			rows.Close()
+			return fmt.Errorf("delete account: apple links: %w", err)
+		}
+		apple = append(apple, l)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return fmt.Errorf("delete account: apple links: %w", err)
+	}
 	for _, q := range []string{
 		`DELETE FROM sessions WHERE user_id = $1`,
 		`DELETE FROM user_identities WHERE user_id = $1`,
@@ -73,5 +94,6 @@ func (s *Server) closeAccount(ctx context.Context, userID string, isDemo bool, c
 		return fmt.Errorf("delete account: commit: %w", err)
 	}
 	s.log.Info("account closed for deletion", "user_id", userID)
+	s.revokeAppleLinks(ctx, apple)
 	return nil
 }

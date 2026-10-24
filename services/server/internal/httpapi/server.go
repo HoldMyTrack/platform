@@ -133,6 +133,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	// Apple posts the browser back (apple_auth.go), so its callback is the one POST here.
 	s.mux.HandleFunc(route("GET", "/auth/apple/start"), s.handleAppleStart)
 	s.mux.HandleFunc(route("POST", "/auth/apple/callback"), s.handleAppleCallback)
+	s.mux.HandleFunc(route("POST", "/auth/apple/notifications"), s.handleAppleNotifications)
 	// Native clients (docs/IMPLEMENTATION.md §4.9): an id_token from Android's Credential
 	// Manager, and the one-time code a browser-tab round trip above ends with for an app.
 	s.mux.HandleFunc(route("POST", "/auth/google/token"), s.handleGoogleToken)

@@ -32,13 +32,15 @@ import (
 //     (response_mode=form_post), so the round-trip cookie is SameSite=None (oauthCookieSameSite)
 //     and the callback is let through ServeHTTP's cross-site check (crossSiteAPIWrite).
 //   - The refresh token is kept, with the client it was issued to, since Apple requires it
-//     revoked when the account is deleted (apple_revoke.go).
+//     revoked when the account is deleted (apple_revoke.go). Apple also tells this server when
+//     someone stops using Sign in with Apple here (apple_notifications.go).
 
 const (
 	appleIssuer    = "https://appleid.apple.com"
 	appleAuthURL   = appleIssuer + "/auth/authorize"
 	appleTokenURL  = appleIssuer + "/auth/token"
 	appleRevokeURL = appleIssuer + "/auth/revoke"
+	appleKeysURL   = appleIssuer + "/auth/keys"
 
 	// appleCookiePath scopes oauth.go's round-trip cookie to this flow alone.
 	appleCookiePath = apiPrefix + "/auth/apple"
@@ -61,17 +63,19 @@ type AppleOAuthConfig struct {
 	RedirectURL string
 }
 
-// appleOAuth is AppleOAuthConfig plus what a test needs to swap out: Apple's endpoints and the
-// HTTP client that reaches them.
+// appleOAuth is AppleOAuthConfig plus what a test needs to swap out: Apple's endpoints, the
+// HTTP client that reaches them, and the keys its notifications are signed with.
 type appleOAuth struct {
 	AppleOAuthConfig
 	tokenURL  string
 	revokeURL string
 	client    *http.Client
+	keys      *jwksKeySet
 }
 
 func newAppleOAuth(cfg AppleOAuthConfig) appleOAuth {
-	return appleOAuth{AppleOAuthConfig: cfg, tokenURL: appleTokenURL, revokeURL: appleRevokeURL, client: &http.Client{Timeout: 10 * time.Second}}
+	client := &http.Client{Timeout: 10 * time.Second}
+	return appleOAuth{AppleOAuthConfig: cfg, tokenURL: appleTokenURL, revokeURL: appleRevokeURL, client: client, keys: newJWKSKeySet(appleKeysURL, client)}
 }
 
 func (a appleOAuth) enabled() bool { return a.ServicesID != "" && a.PrivateKey != nil }

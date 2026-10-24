@@ -47,12 +47,12 @@ type googleOAuth struct {
 	GoogleOAuthConfig
 	tokenURL string
 	client   *http.Client
-	keys     *googleKeySet
+	keys     *jwksKeySet
 }
 
 func newGoogleOAuth(cfg GoogleOAuthConfig) googleOAuth {
 	client := &http.Client{Timeout: 10 * time.Second}
-	return googleOAuth{GoogleOAuthConfig: cfg, tokenURL: googleTokenURL, client: client, keys: newGoogleKeySet(client)}
+	return googleOAuth{GoogleOAuthConfig: cfg, tokenURL: googleTokenURL, client: client, keys: newJWKSKeySet(googleCertsURL, client)}
 }
 
 func (g googleOAuth) enabled() bool { return g.ClientID != "" }

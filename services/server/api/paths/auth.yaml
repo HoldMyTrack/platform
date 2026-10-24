@@ -199,6 +199,25 @@ auth_apple_callback:
     responses:
       "302": { $ref: "../components/responses.yaml#/Redirect" }
       "404": { $ref: "../components/responses.yaml#/Error" }
+auth_apple_notifications:
+  post:
+    summary: Apple's server-to-server notifications about Sign in with Apple
+    description: Apple posts these to the URL registered on the App ID; the payload is a JWT Apple signs.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [payload]
+            properties:
+              payload: { type: string }
+    responses:
+      "200": { description: Received }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
 auth_google_token:
   post:
     summary: Sign in with a Google id_token a native app got from the platform

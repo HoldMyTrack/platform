@@ -7,6 +7,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
@@ -357,5 +358,103 @@ func TestAppleTokenNeedsBundleID(t *testing.T) {
 	rec := serveChecked(t, s.handleAppleToken, httptest.NewRequest("POST", "/v1/auth/apple/token", strings.NewReader(`{"authorization_code":"x"}`)))
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status %d, want 404", rec.Code)
+	}
+}
+
+// appleNotification is a notification body for event, RS256-signed with key under kid "k1".
+func appleNotification(t *testing.T, key *rsa.PrivateKey, aud string, event map[string]any) map[string]string {
+	t.Helper()
+	events, err := json.Marshal(event)
+	if err != nil {
+		t.Fatal(err)
+	}
+	claims := map[string]any{"iss": appleIssuer, "aud": aud, "iat": time.Now().Unix(), "jti": "j1", "events": string(events)}
+	return map[string]string{"payload": signedIDToken(t, key, map[string]string{"alg": "RS256", "kid": "k1"}, claims)}
+}
+
+func TestAppleNotificationsUnlink(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	key, other := newRSAKey(t), newRSAKey(t)
+	certs := &fakeCerts{keys: map[string]*rsa.PublicKey{"k1": &key.PublicKey}}
+	d.srv.apple = testAppleServer(t, "").apple
+	d.srv.apple.keys.url = certs.serve(t).URL
+
+	me := d.newAccount(false)
+	sub := fmt.Sprintf("apple-%d", time.Now().UnixNano())
+	if _, err := d.pool.Exec(ctx, `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, 'apple', $2)`, me.id, sub); err != nil {
+		t.Fatal(err)
+	}
+	links := func() (identities, sessions int) {
+		if err := d.pool.QueryRow(ctx, `
+			SELECT (SELECT count(*) FROM user_identities WHERE user_id = $1), (SELECT count(*) FROM sessions WHERE user_id = $1)
+		`, me.id).Scan(&identities, &sessions); err != nil {
+			t.Fatal(err)
+		}
+		return
+	}
+
+	for name, body := range map[string]map[string]string{
+		"signed with another key": appleNotification(t, other, testServicesID, map[string]any{"type": "consent-revoked", "sub": sub}),
+		"for another client":      appleNotification(t, key, "com.someone.else", map[string]any{"type": "consent-revoked", "sub": sub}),
+	} {
+		if rec := d.do(account{}, "POST", "/v1/auth/apple/notifications", body); rec.Code != http.StatusBadRequest {
+			t.Fatalf("%s: status %d, want 400", name, rec.Code)
+		}
+	}
+	if rec := d.do(account{}, "POST", "/v1/auth/apple/notifications", appleNotification(t, key, testBundleID, map[string]any{"type": "email-disabled", "sub": sub})); rec.Code != http.StatusOK {
+		t.Fatalf("email-disabled: status %d", rec.Code)
+	}
+	if i, s := links(); i != 1 || s != 1 {
+		t.Fatalf("before revoking: %d identities, %d sessions", i, s)
+	}
+	if rec := d.do(account{}, "POST", "/v1/auth/apple/notifications", appleNotification(t, key, testServicesID, map[string]any{"type": "consent-revoked", "sub": sub})); rec.Code != http.StatusOK {
+		t.Fatalf("consent-revoked: status %d", rec.Code)
+	}
+	if i, s := links(); i != 0 || s != 0 {
+		t.Fatalf("after revoking: %d identities, %d sessions", i, s)
+	}
+	var exists bool
+	if err := d.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users WHERE id = $1 AND deleted_at IS NULL)`, me.id).Scan(&exists); err != nil || !exists {
+		t.Fatalf("account gone: %v", err)
+	}
+	if rec := d.do(account{}, "POST", "/v1/auth/apple/notifications", appleNotification(t, key, testServicesID, map[string]any{"type": "account-delete", "sub": "linked-to-nothing"})); rec.Code != http.StatusOK {
+		t.Fatalf("unknown subject: status %d", rec.Code)
+	}
+}
+
+func TestAppleNotificationsNeedApple(t *testing.T) {
+	s := &Server{log: slog.New(slog.DiscardHandler), apple: newAppleOAuth(AppleOAuthConfig{})}
+	rec := serveChecked(t, s.handleAppleNotifications, httptest.NewRequest("POST", "/v1/auth/apple/notifications", strings.NewReader(`{"payload":"a.b.c"}`)))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status %d, want 404", rec.Code)
+	}
+}
+
+func TestDeleteAccountRevokesApple(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	apple := &fakeApple{t: t}
+	d.srv.apple = testAppleServer(t, apple.serve().URL).apple
+
+	me := d.newAccount(false)
+	if _, err := d.pool.Exec(ctx, `
+		INSERT INTO user_identities (user_id, provider, subject, refresh_token, client_id) VALUES ($1, 'apple', $2, 'the-refresh-token', $3)
+	`, me.id, fmt.Sprintf("apple-%d", time.Now().UnixNano()), testBundleID); err != nil {
+		t.Fatal(err)
+	}
+	var email string
+	if err := d.pool.QueryRow(ctx, `SELECT email FROM users WHERE id = $1`, me.id).Scan(&email); err != nil {
+		t.Fatal(err)
+	}
+	if rec := d.do(me, "DELETE", "/v1/account", map[string]string{"email": email}); rec.Code != http.StatusNoContent {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body.String())
+	}
+	if len(apple.revoked) != 1 {
+		t.Fatalf("%d revocations, want 1", len(apple.revoked))
+	}
+	got := apple.revoked[0]
+	if got.Get("token") != "the-refresh-token" || got.Get("client_id") != testBundleID || got.Get("token_type_hint") != "refresh_token" || got.Get("client_secret") == "" {
+		t.Fatalf("revoke request %v", got)
 	}
 }

@@ -140,7 +140,7 @@ func TestGoogleKeySetRefetchesOnNewKid(t *testing.T) {
 	if got := certs.fetches.Load(); got != 1 {
 		t.Fatalf("%d fetches within the refetch gap, want 1", got)
 	}
-	later := now.Add(googleKeysRefetchGap + time.Second)
+	later := now.Add(jwksRefetchGap + time.Second)
 	if _, err := s.verifyGoogleIDToken(ctx, token, later); err != nil {
 		t.Fatalf("new kid after the gap: %v", err)
 	}
