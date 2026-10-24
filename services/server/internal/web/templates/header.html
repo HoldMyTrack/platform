@@ -2,8 +2,9 @@
      tagline, Donate, the Upload menu (signed in; static/upload.js) and Sync (signed in; the
      import history, /sync), the Info menu, the account menu. Its styles are
      static/header.css, which the app's shell loads alone and every other page alongside
-     pages.css. The two menus are
-     <details> dropdowns: they open and close with no script. Sign out is a form POST to /logout
+     pages.css. The menus are
+     <details> dropdowns: they open and close with no script, and static/header.js closes
+     them on a tap elsewhere, Escape or another menu opening. Sign out is a form POST to /logout
      (pages.go), not a link, so a GET from another site can't end someone's session.
      The language menu is a form POST to /language (language.go), signed in or not, so a
      visitor without an account can switch too. Signed out, the account menu is a Sign in link. The logo is brand/logo.svg inline, its

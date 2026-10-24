@@ -258,17 +258,6 @@
     if (menu.open) refresh();
   });
 
-  // A <details> stays open until its summary is clicked again; this one also closes on a click
-  // elsewhere or Escape, like a menu.
-  document.addEventListener('click', function (event) {
-    if (menu.open && !menu.contains(event.target)) menu.open = false;
-  });
-  document.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape' && menu.open) {
-      menu.open = false;
-      menu.querySelector('summary').focus();
-    }
-  });
   document.addEventListener('visibilitychange', function () {
     if (!document.hidden) tick();
   });
