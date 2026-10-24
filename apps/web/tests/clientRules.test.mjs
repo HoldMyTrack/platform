@@ -25,7 +25,10 @@ function assertClose(actual, expected, tolerance, path = '') {
   }
 }
 
-const files = readdirSync(dir).filter((name) => name.endsWith('.json'));
+// Every file whose `clients`, when it names any, include the web.
+const files = readdirSync(dir)
+  .filter((name) => name.endsWith('.json'))
+  .filter((name) => JSON.parse(readFileSync(new URL(name, dir), 'utf8')).clients?.includes('web') ?? true);
 
 test('every shared rule file has a web implementation', () => {
   for (const name of files) {

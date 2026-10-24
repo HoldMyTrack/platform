@@ -30,6 +30,7 @@ import dev.holdmytrack.android.photos.PhotoZoom
 import dev.holdmytrack.android.photos.PlaceAnchor
 import dev.holdmytrack.android.photos.ScreenPoint
 import dev.holdmytrack.android.photos.TimedPoint
+import dev.holdmytrack.android.web.WebRoute
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -67,7 +68,13 @@ class ClientRulesTest {
         File(at ?: error("testdata/client-rules not found above ${System.getProperty("user.dir")}"), "testdata/client-rules")
     }
 
-    private val files: List<File> by lazy { dir.listFiles { file -> file.extension == "json" }.orEmpty().sortedBy { it.name } }
+    /** Every file whose `clients`, when it names any, include Android. */
+    private val files: List<File> by lazy {
+        dir.listFiles { file -> file.extension == "json" }.orEmpty().sortedBy { it.name }.filter { file ->
+            val clients = Json.parseToJsonElement(file.readText()).jsonObject["clients"]?.jsonArray
+            clients == null || clients.any { it.jsonPrimitive.content == "android" }
+        }
+    }
 
     private fun JsonObject.string(key: String): String? = (this[key] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.content
 
@@ -213,6 +220,25 @@ class ClientRulesTest {
         "layerInsertion" to { input ->
             MapLayersDoc.insertionPoint(input.strings("current"), input.strings("order"), input.string("id")!!, input.strings("own").toSet(), input.string("fallback"))
                 ?.let(::JsonPrimitive) ?: JsonNull
+        },
+        "webPageRoute" to { input ->
+            val link = input["link"]!!.jsonObject
+            val base = input["base"]!!.jsonObject
+            val route = WebRoute.of(
+                link.string("scheme"), link.string("authority"), link.string("path"), link.string("activity"), link.string("day"),
+                base.string("scheme"), base.string("authority"), input.string("page")!!,
+                input["leaving"]?.jsonPrimitive?.booleanOrNull == true, input["onboarding"]?.jsonPrimitive?.booleanOrNull == true,
+            )
+            when (route) {
+                WebRoute.Route.Stay -> JsonPrimitive("stay")
+                WebRoute.Route.Outside -> JsonPrimitive("outside")
+                WebRoute.Route.Ignore -> JsonPrimitive("ignore")
+                WebRoute.Route.Close -> JsonPrimitive("close")
+                WebRoute.Route.Onboarded -> JsonPrimitive("onboarded")
+                is WebRoute.Route.ViewOnMap -> buildJsonObject {
+                    put("viewOnMap", buildJsonObject { put("activity", route.activity); put("day", route.day) })
+                }
+            }
         },
         "layerLift" to { input -> JsonPrimitive(MapLayersDoc.needsLift(input.strings("current"), input.string("id")!!, input.strings("own").toSet())) },
         "panelState" to { input ->
