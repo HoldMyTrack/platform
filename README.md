@@ -1,6 +1,6 @@
 # <picture><source media="(prefers-color-scheme: dark)" srcset="brand/logo-on-dark.png"><img src="brand/logo-on-light.png" alt="" height="48" align="bottom"></picture> HoldMyTrack
 
-[![Go coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=go&logo=go&logoColor=white&label=Go%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=go) [![TypeScript coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=typescript&logo=typescript&logoColor=white&label=TypeScript%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=typescript) [![Kotlin coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=kotlin&logo=kotlin&logoColor=white&label=Kotlin%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=kotlin)
+[![Go coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=go&logo=go&logoColor=white&label=Go%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=go) [![TypeScript coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=typescript&logo=typescript&logoColor=white&label=TypeScript%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=typescript) [![Kotlin coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=kotlin&logo=kotlin&logoColor=white&label=Kotlin%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=kotlin) [![Swift coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=swift&logo=swift&logoColor=white&label=Swift%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=swift)
 
 A free, community-funded platform for outdoor activities. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats: one map of every place they reached and the nearby streets, parks and trails they haven't, so the next walk, run or ride can go somewhere new, and each trip can be kept as a Story with its photos. What it is and isn't: [`docs/VISION.md` §1](docs/VISION.md#1-executive-summary).
 
@@ -27,7 +27,7 @@ holdmytrack/
 ├── compose.yaml                 # single entry point for local dev
 ├── compose.prod.yml             # minimal single-VPS production deployment
 ├── Makefile                     # thin wrapper over compose; `make help`, `make test`
-├── codecov.yml                  # Go, TypeScript and Kotlin coverage reporting; informational, never a merge gate
+├── codecov.yml                  # Go, TypeScript, Kotlin and Swift coverage reporting; informational, never a merge gate
 ├── .github/workflows/ci.yml     # every test suite on push and PR (docs/DEVELOPMENT.md, "CI")
 ├── .github/workflows/contract.yml # fails a PR whose API contract change breaks installed clients
 ├── ops/alloy/config.alloy       # the alloy service's log and metrics shipping to Grafana Cloud (docs/DEPLOY.md §13)

@@ -2,7 +2,7 @@
 
 > **Scope note.** The app's shape, the decisions that set it and its stack. Where it sits among the system's parts is root `docs/ARCHITECTURE.md` §1.2; what is left to build is `ROADMAP.md`.
 
-The iOS app is to be Path 2 for HealthKit (ADR-0001), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (ADR-0007), as the Android app is. Native where the platform is the point, and the site's own pages in a `WKWebView` for the rest (ADR-0042). So far it is one Xcode project with the app, its visual language and both languages, and a first screen that shows the build and whether the API answers.
+The iOS app is to be Path 2 for HealthKit (ADR-0001), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (ADR-0007), as the Android app is. Native where the platform is the point, and the site's own pages in a `WKWebView` for the rest (ADR-0042). So far it is one Xcode project with the app, its visual language and both languages, and the `HoldMyTrackCore` package for what needs no UIKit; a first screen that shows the build and whether the API answers.
 
 ## 1. Key decisions
 

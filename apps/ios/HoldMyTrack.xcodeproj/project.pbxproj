@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		D1A00000000000000000001D /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = D1A00000000000000000001F /* MapLibre */; };
+		D1A000000000000000000035 /* HoldMyTrackCore in Frameworks */ = {isa = PBXBuildFile; productRef = D1A000000000000000000034 /* HoldMyTrackCore */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -63,6 +64,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D1A00000000000000000001D /* MapLibre in Frameworks */,
+				D1A000000000000000000035 /* HoldMyTrackCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -140,6 +142,7 @@
 			name = HoldMyTrack;
 			packageProductDependencies = (
 				D1A00000000000000000001F /* MapLibre */,
+				D1A000000000000000000034 /* HoldMyTrackCore */,
 			);
 			productName = HoldMyTrack;
 			productReference = D1A000000000000000000008 /* HoldMyTrack.app */;
@@ -226,6 +229,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				D1A00000000000000000001E /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
+				D1A000000000000000000033 /* XCLocalSwiftPackageReference "HoldMyTrackCore" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D1A000000000000000000003 /* Products */;
@@ -477,6 +481,13 @@
 		};
 /* End XCConfigurationList section */
 
+/* Begin XCLocalSwiftPackageReference section */
+		D1A000000000000000000033 /* XCLocalSwiftPackageReference "HoldMyTrackCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = HoldMyTrackCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
 /* Begin XCRemoteSwiftPackageReference section */
 		D1A00000000000000000001E /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */ = {
 			isa = XCRemoteSwiftPackageReference;
@@ -493,6 +504,10 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D1A00000000000000000001E /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
 			productName = MapLibre;
+		};
+		D1A000000000000000000034 /* HoldMyTrackCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = HoldMyTrackCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -14,6 +14,8 @@ Xcode 26 or later, as CI's macOS runner has; a simulator build needs no Apple De
 xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack -destination 'platform=iOS Simulator,name=iPhone 17'
 ```
 
+The code with no UIKit in it is the `HoldMyTrackCore` package, and its tests need no simulator: `swift test` in `HoldMyTrackCore/`.
+
 A Debug build talks to `http://localhost:8080`, compose's API port on this Mac, which the simulator reaches directly. When `.env` sets another `API_PORT`, copy `Config/Local.xcconfig.example` to `Config/Local.xcconfig` and set it there. Release always talks to `https://holdmytrack.com`. The first screen shows the build and whether the API answers.
 
 Signing for a device or an archive needs a team: copy `Config/Signing.xcconfig.example` to `Config/Signing.xcconfig`.

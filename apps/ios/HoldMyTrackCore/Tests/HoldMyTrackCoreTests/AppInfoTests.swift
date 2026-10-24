@@ -1,7 +1,7 @@
 import Foundation
 import Testing
 
-@testable import HoldMyTrack
+import HoldMyTrackCore
 
 struct AppInfoTests {
     private let plist: [String: Any] = [
@@ -60,5 +60,14 @@ struct ServerStatusTests {
     @Test func notHealthz() {
         #expect(ServerStatus.from(statusCode: 200, body: Data("<html>".utf8)) == .unreadable)
         #expect(ServerStatus.from(statusCode: 200, body: Data(#"{"status":"down","version":"x"}"#.utf8)) == .unreadable)
+    }}
+
+struct ServerCheckTests {
+    @Test func requestNamesTheBuildAndLanguage() throws {
+        let app = try #require(AppInfo.from(["CFBundleShortVersionString": "0.1", "CFBundleVersion": "1400", "HMTCommit": "62da50b", "HMTAPIBaseURL": "http://localhost:8081/"]))
+        let request = ServerCheck.request(app, language: "ru")
+        #expect(request.url?.absoluteString == "http://localhost:8081/healthz")
+        #expect(request.value(forHTTPHeaderField: "User-Agent") == "HoldMyTrack-iOS/0.1 (62da50b; 1400)")
+        #expect(request.value(forHTTPHeaderField: "Accept-Language") == "ru")
     }
 }

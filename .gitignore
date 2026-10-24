@@ -56,3 +56,6 @@ Thumbs.db
 xcuserdata/
 /apps/ios/Config/Local.xcconfig
 /apps/ios/Config/Signing.xcconfig
+# swift test's build output for apps/ios/HoldMyTrackCore.
+/apps/ios/HoldMyTrackCore/.build/
+/apps/ios/HoldMyTrackCore/.swiftpm/

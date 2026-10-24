@@ -1,4 +1,5 @@
-# Builds the iOS app and runs its unit tests (apps/ios/docs/ROADMAP.md, 3.4) when a change touches
+# Runs the iOS package's tests, then builds the app and runs its unit tests (apps/ios/docs/ROADMAP.md,
+# 3.4 and 4.0) when a change touches
 # the app, the shared rule cases it implements, the API contract its wire models follow, or the
 # web and Android files its palette, fonts and icons are made from. Its
 # own workflow, not a job in ci.yml, so the path filter keeps the macOS runner off every other
@@ -55,6 +56,23 @@ jobs:
       # The palette, scales, fonts and icons are written from the web's and Android's files.
       - name: Design files up to date
         run: scripts/make-design.py --check
+      # The package needs no simulator, so a broken rule fails here in seconds. The test
+      # bundle's name differs between Swift releases, so it is found rather than named.
+      - name: Package tests
+        working-directory: apps/ios/HoldMyTrackCore
+        run: |
+          swift test --enable-code-coverage
+          bin=$(swift build --show-bin-path)
+          xctest=$(find "$bin" -maxdepth 1 -name '*.xctest' | head -1)
+          xcrun llvm-cov export -format=lcov "$xctest/Contents/MacOS/$(basename "$xctest" .xctest)" \
+            -instr-profile "$bin/codecov/default.profdata" -ignore-filename-regex='/(Tests|\.build)/' > coverage.lcov
+      # Under its own `swift` flag, carried forward on runs this workflow skips (codecov.yml).
+      # Informational, like the other uploads.
+      - uses: codecov/codecov-action@v5
+        with:
+          files: apps/ios/HoldMyTrackCore/coverage.lcov
+          flags: swift
+          token: ${{ secrets.CODECOV_TOKEN }}
       # The runner's simulator names change with each image, so take its newest iOS's last iPhone.
       - name: Pick a simulator
         id: sim
