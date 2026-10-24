@@ -30,7 +30,7 @@ Every built feature of the server and the web app; the Android app's own behavio
 
 ### 1.5 API errors
 
-Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-13.1); ADR-0045 and `services/server/api/` list the codes and the exceptions. With `MIN_ANDROID_BUILD` set, an older Android build gets `426` `app_outdated` from every `/v1` request before anything else is checked (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
+Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-13.1); ADR-0045 and `services/server/api/` list the codes and the exceptions. With `MIN_ANDROID_BUILD` or `MIN_IOS_BUILD` set, an older build of that app gets `426` `app_outdated` from every `/v1` request before anything else is checked (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
 
 ## 2. Actors
 

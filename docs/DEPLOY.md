@@ -39,6 +39,7 @@ The tuning values have defaults to leave alone. A change to one needs `… up -d
 | `RATE_LIMITS` | on | never here: `off` lifts every request limit for local development, and `api` refuses it unless `APP_BASE_URL` is local | `api` |
 | `R2_DAILY_BUDGET_USD` | 2 | the R2 alerts (§13) show real use nearing it, or a load test runs (`SPEC.md` FR-17, ADR-0044); a raise lifts the stages at once if the day's spend is under it | `api`, `worker` |
 | `MIN_ANDROID_BUILD` | empty | older Android builds must go (§10, `SPEC.md` §1.5) | `api` |
+| `MIN_IOS_BUILD` | empty | older iOS builds must go, as for Android (§10) | `api` |
 
 Put a load test's raised values back afterwards.
 
@@ -328,6 +329,8 @@ No page links to it; it's for testers handed the URL, while the public route is 
 1. Set `MIN_ANDROID_BUILD` in `.env.prod` to its `versionCode`, `git rev-list --count <sha>` of the commit both were built from.
 2. `docker compose -f compose.prod.yml --env-file .env.prod up -d api`
 3. Check: `curl -s -o /dev/null -w '%{http_code}\n' -A 'HoldMyTrack-Android/0.1 (x; 1)' https://<your-domain>/v1/auth/providers` prints `426`.
+
+An iOS build is turned away the same way: `MIN_IOS_BUILD` set to its build number, also the commit count, checked with `-A 'HoldMyTrack-iOS/0.1 (x; 1)'`. iOS builds are tagged `ios/<build>`.
 
 ## 11. Backups and the restore drill
 

@@ -84,7 +84,7 @@ Confirm on a real device what HealthKit gives and how a recording survives the a
 
 Server changes the app depends on, deployed before any iOS build reaches a tester. Each updates `services/server/api/` and runs `npm run gen:api-types` where the contract changes (`AGENTS.md`).
 
-- [ ] **2.1 An iOS User-Agent and a minimum iOS build**
+- [x] **2.1 An iOS User-Agent and a minimum iOS build**
   - Recognize `HoldMyTrack-iOS/<version> (<sha>; <build>)` beside the Android agent (`app_outdated.go`), with `MIN_IOS_BUILD` refusing older builds with `426 app_outdated`, `/healthz` reporting `min_ios_build`, and the admin stats counting iOS builds as they count Android's. Extend `scripts/check-contract-release.sh` to `ios/<build>` tags.
   - Docs: root `IMPLEMENTATION.md` §4.33 covers both platforms; `docs/DEPLOY.md` §10 gets the iOS procedure.
   - Done when: a request with an iOS agent below the minimum gets `426`, and the server tests cover it.

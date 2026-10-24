@@ -7,9 +7,9 @@ import (
 )
 
 // The client census (IMPLEMENTATION.md §4.32): with last_seen_at, each account keeps the day it
-// last used the website and the Android app, and the app's build, so the daily snapshot can count
-// who uses which and which builds are still around. Folded into last_seen_at's write, so an
-// account costs at most one write a day per client, plus one when the app updates.
+// last used the website and each app, and each app's build, so the daily snapshot can count who
+// uses which and which builds are still around. Folded into last_seen_at's write, so an account
+// costs at most one write a day per client, plus one when an app updates.
 
 // client is which of HoldMyTrack's clients sent a request.
 type client int
@@ -18,13 +18,17 @@ const (
 	clientNone    client = iota // the app's WebView: counted through the app's own requests
 	clientWeb                   // a browser
 	clientAndroid               // the Android app
+	clientIOS                   // the iOS app
 )
 
-// requestClient is the client behind a request with userAgent, and the Android build. inApp is
-// the app's WebView (inApp), whose pages are the website's but whose use is the app's.
+// requestClient is the client behind a request with userAgent, and the app's build. inApp is an
+// app's WebView (inApp), whose pages are the website's but whose use is the app's.
 func requestClient(userAgent string, inApp bool) (client, int) {
 	if build, ok := androidBuild(userAgent); ok {
 		return clientAndroid, build
+	}
+	if build, ok := iosBuild(userAgent); ok {
+		return clientIOS, build
 	}
 	if inApp {
 		return clientNone, 0
@@ -34,15 +38,15 @@ func requestClient(userAgent string, inApp bool) (client, int) {
 
 // seen is what an account has stored: nil for never.
 type seen struct {
-	last, web, android *time.Time
-	androidBuild       *int
+	last, web, android, ios *time.Time
+	androidBuild, iosBuild  *int
 }
 
 // seenWrite is what a request at now writes: last_seen_at and the client's own day once a UTC
-// day each, and the Android build whenever it differs.
+// day each, and an app's build whenever it differs.
 type seenWrite struct {
-	last, web, android bool
-	build              int
+	last, web, android, ios bool
+	build                   int
 }
 
 func seenDue(s seen, c client, build int, now time.Time) seenWrite {
@@ -52,6 +56,9 @@ func seenDue(s seen, c client, build int, now time.Time) seenWrite {
 		w.web = lastSeenDue(s.web, now)
 	case clientAndroid:
 		w.android = lastSeenDue(s.android, now) || s.androidBuild == nil || *s.androidBuild != build
+		w.build = build
+	case clientIOS:
+		w.ios = lastSeenDue(s.ios, now) || s.iosBuild == nil || *s.iosBuild != build
 		w.build = build
 	}
 	return w
@@ -70,6 +77,10 @@ func (w seenWrite) update() (string, []any) {
 	if w.android {
 		args = append(args, w.build)
 		set = append(set, "android_seen_at = NOW()", fmt.Sprintf("android_build = $%d", len(args)+1))
+	}
+	if w.ios {
+		args = append(args, w.build)
+		set = append(set, "ios_seen_at = NOW()", fmt.Sprintf("ios_build = $%d", len(args)+1))
 	}
 	if len(set) == 0 {
 		return "", nil

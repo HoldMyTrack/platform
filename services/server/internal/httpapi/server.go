@@ -90,6 +90,7 @@ type Server struct {
 	signupLimiter         *fixedWindowLimiter
 	budget                *budget.Gate
 	minAndroidBuild       int
+	minIOSBuild           int
 }
 
 // defaultUploadsPerHour is how many files one account may send to `POST /v1/activities/upload`
@@ -322,7 +323,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 // appClient is the User-Agent when one of HoldMyTrack's own apps sent it — the Android app's
-// "HoldMyTrack-Android/0.13 (62da50b)" — and "" for anything else. A browser's agent stays out
+// "HoldMyTrack-Android/0.13 (62da50b; 812)" or the iOS app's — and "" for anything else. A browser's agent stays out
 // of the logs: it says more about the person than the build, and the web app is the server's
 // own build anyway. Cut to a length a real one never reaches, since any client can claim it.
 func appClient(userAgent string) string {
@@ -452,12 +453,13 @@ func (s *Server) crossSiteAPIWrite(r *http.Request) bool {
 	return !corsAllowedOrigins[origin] && !s.isSameOrigin(r)
 }
 
-// healthzResponse carries MinAndroidBuild for scripts/check-contract-release.sh: the contract
-// has to keep serving every Android release from that build on.
+// healthzResponse carries MinAndroidBuild and MinIOSBuild for scripts/check-contract-release.sh:
+// the contract has to keep serving every release of each app from its minimum on.
 type healthzResponse struct {
 	Status          string `json:"status"`
 	Version         string `json:"version"`
 	MinAndroidBuild int    `json:"min_android_build"`
+	MinIOSBuild     int    `json:"min_ios_build"`
 }
 
 func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
@@ -465,7 +467,7 @@ func (s *Server) handleHealthz(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "db unreachable", http.StatusServiceUnavailable)
 		return
 	}
-	writeJSON(w, http.StatusOK, healthzResponse{Status: "ok", Version: s.version, MinAndroidBuild: s.minAndroidBuild})
+	writeJSON(w, http.StatusOK, healthzResponse{Status: "ok", Version: s.version, MinAndroidBuild: s.minAndroidBuild, MinIOSBuild: s.minIOSBuild})
 }
 
 type uploadResponse struct {
