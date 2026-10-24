@@ -14,7 +14,7 @@ enum Typeface {
     static func serif(
         _ size: CGFloat,
         weight: CGFloat = DesignTokens.Weight.semibold,
-        language: String? = Bundle.main.preferredLocalizations.first,
+        language: String? = AppLanguage.current,
         relativeTo style: UIFont.TextStyle = .title2
     ) -> UIFont {
         font(family: serifFamily(language: language), size: size, weight: weight, style: style)

@@ -109,7 +109,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [x] **3.2 Visual language**
   - The web's `--fm-*` tokens as an asset catalog of named colors with light and dark values, Inter and Fraunces bundled with Source Serif 4 for Russian headings, and the Lucide icons as template images (`docs/ARCHITECTURE.md` §1.1). Root `IMPLEMENTATION.md` §4.19's "Keep in step" adds iOS.
   - Done when: a sample screen matches Android's in both themes.
-- [ ] **3.3 Languages**
+- [x] **3.3 Languages**
   - One String Catalog with English and Russian. Russian counts written as "label: N", as Android's. Accept-Language sent from the app's resolved language.
   - Done when: the build fails on a string missing its Russian.
 - [x] **3.4 CI**
@@ -121,11 +121,15 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 4 — Shared code under test
 
+- [ ] **4.0 A package for what needs no device**
+  - `apps/ios/HoldMyTrackCore`, a local Swift package the app depends on, holding the code with no UIKit in it: the wire models (4.1), the client rules (4.2) and every other decision made over plain values, starting with the build info and `/healthz` reading 3.1 put in the app. Its tests run with `swift test` on the Mac in seconds, with no simulator to boot and no app to build; the app keeps what needs UIKit, and the UI tests.
+  - CI's iOS job runs `swift test` before the simulator tests, so a broken rule fails in seconds.
+  - Done when: the package's tests pass with `swift test`, CI runs them, and the app's test target holds only tests that need the app.
 - [ ] **4.1 Wire models**
-  - `Codable` types for every request and response the app uses, held to `services/server/api/` by a Swift `WireContractTest`, as Android's is: every model reached by a check, unknown fields refused in the test.
+  - In the package (4.0), `Codable` types for every request and response the app uses, held to `services/server/api/` by a Swift `WireContractTest`, as Android's is: every model reached by a check, unknown fields refused in the test.
   - Done when: renaming a field in the contract fails the iOS suite.
 - [ ] **4.2 Client rules**
-  - A test that runs every file in `testdata/client-rules/` and fails on one with no Swift implementation (ADR-0049); then implement each rule as a pure function, `cases` and `generated` alike.
+  - In the package (4.0), a test that runs every file in `testdata/client-rules/` and fails on one with no Swift implementation (ADR-0049); then implement each rule as a pure function, `cases` and `generated` alike.
   - Done when: every file passes, and adding an empty rule file fails the suite.
 
 ## Phase 5 — Sign-in and session

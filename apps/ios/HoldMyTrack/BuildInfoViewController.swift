@@ -79,10 +79,10 @@ final class BuildInfoViewController: UIViewController {
 
     private static func describe(_ status: ServerStatus) -> String {
         switch status {
-        case .reachable(let version): "reachable, build \(version)"
-        case .refused(let code): "answered \(code)"
-        case .unreadable: "answered something other than /healthz"
-        case .unreachable: "unreachable"
+        case .reachable(let version): String(localized: "reachable, build \(version)")
+        case .refused(let code): String(localized: "answered \(code)")
+        case .unreadable: String(localized: "answered something other than /healthz")
+        case .unreachable: String(localized: "unreachable")
         }
     }
 }

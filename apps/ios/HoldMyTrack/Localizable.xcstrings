@@ -1,0 +1,50 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "answered %lld" : {
+      "comment" : "The first screen: the API answered /healthz with this HTTP status.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ответил с кодом %lld"
+          }
+        }
+      }
+    },
+    "answered something other than /healthz" : {
+      "comment" : "The first screen: the API answered, but not with /healthz's JSON.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ответил не так, как /healthz"
+          }
+        }
+      }
+    },
+    "reachable, build %@" : {
+      "comment" : "The first screen: the API answered /healthz; the build is the server's commit.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "доступен, сборка %@"
+          }
+        }
+      }
+    },
+    "unreachable" : {
+      "comment" : "The first screen: no answer from the API.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "недоступен"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

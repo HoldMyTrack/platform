@@ -31,3 +31,10 @@ struct PaletteTests {
         return String(format: "%02X%02X%02X", Int((r * 255).rounded()), Int((g * 255).rounded()), Int((b * 255).rounded()))
     }
 }
+
+struct AppLanguageTests {
+    @Test(arguments: [(["ru"], "ru"), (["ru-RU", "en"], "ru"), (["en"], "en"), (["en", "ru"], "en"), (["de"], "en"), ([], "en")])
+    func resolvesToASupportedLanguage(preferred: [String], want: String) {
+        #expect(AppLanguage.resolve(preferred) == want)
+    }
+}
