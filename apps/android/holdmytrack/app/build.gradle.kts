@@ -70,22 +70,16 @@ android {
     buildTypes {
         // AGP's built-in JaCoCo: `createDebugUnitTestCoverageReport` runs the unit tests and
         // writes the XML report CI uploads to Codecov (.github/workflows/ci.yml).
-        // The You tab's Donate (YouFragment). The release build is the Play build,
-        // and Play's Payments policy doesn't allow pointing users at a payment method outside
-        // Play's billing (apps/android/docs/IMPLEMENTATION.md §6); the debug build is the APK the
-        // website offers (docs/DEPLOY.md), which keeps it.
         // The API origin is a build input, not a constant: the same source builds against a
         // dev stack on the host and against a deployed server. Each build type reads its own
         // property, so a release never picks up the dev stack's address. See gradle.properties.
         debug {
             enableUnitTestCoverage = true
-            buildConfigField("boolean", "DONATE_LINK", "true")
             buildConfigField("String", "API_BASE_URL", apiBaseUrl("holdmytrack.apiBaseUrl"))
         }
         release {
             isMinifyEnabled = false
             signingConfig = signingConfigs.getByName("release")
-            buildConfigField("boolean", "DONATE_LINK", "false")
             buildConfigField("String", "API_BASE_URL", apiBaseUrl("holdmytrack.releaseApiBaseUrl"))
         }
     }

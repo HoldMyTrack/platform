@@ -33,9 +33,7 @@ import java.util.Locale
  * — over its all-time numbers and the last weeks of its activity graph, one card whose halves
  * open Settings and Profile, the web's own pages shown in the app ([WebPageActivity]); then
  * Privacy; this phone's Theme ([AppTheme]) and the account's Language; the web's About, in the
- * app too, and its Help and Contacts, opened in a browser tab, with Donate where
- * `BuildConfig.DONATE_LINK` allows it, which the Play build doesn't; Sign out and Delete
- * account ([AccountDeletion]); and last the app's version, a line to read rather than an action.
+ * app too, and its Help and Contacts, opened in a browser tab; Sign out and Delete account ([AccountDeletion]); and last the app's version, a line to read rather than an action.
  *
  * Read again each time it shows: Settings, a Private location, a sync can each change what it
  * says. The demo account sees no Delete account, and its Language can't be changed — the server
@@ -83,10 +81,6 @@ class YouFragment : Fragment(R.layout.fragment_you) {
         findViewById<View>(R.id.you_language).apply {
             isEnabled = !Session.isDemo
             setOnClickListener { pickLanguage() }
-        }
-        findViewById<View>(R.id.you_donate).apply {
-            visibility = if (BuildConfig.DONATE_LINK) View.VISIBLE else View.GONE
-            setOnClickListener { openWebPage("/about#funding") }
         }
         findViewById<View>(R.id.you_about).setOnClickListener { WebPageActivity.open(context, WebPageActivity.Page.ABOUT) }
         findViewById<View>(R.id.you_help).setOnClickListener { openWebPage("/help") }
