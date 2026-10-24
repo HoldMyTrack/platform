@@ -110,8 +110,8 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - `apps/ios/HoldMyTrackCore`, a local Swift package the app depends on, holding the code with no UIKit in it: the wire models (4.1), the client rules (4.2) and every other decision made over plain values, starting with the build info and `/healthz` reading 3.1 put in the app. Its tests run with `swift test` on the Mac in seconds, with no simulator to boot and no app to build; the app keeps what needs UIKit, and the UI tests.
   - CI's iOS job runs `swift test` before the simulator tests, so a broken rule fails in seconds. It runs them with coverage and uploads `llvm-cov`'s lcov export to Codecov under a `swift` flag; `codecov.yml` sets that flag to carry forward, since the iOS workflow skips changes outside its paths, and the README gets a Swift coverage badge beside Go's, TypeScript's and Kotlin's.
   - Done when: the package's tests pass with `swift test`, CI runs them and the Swift badge shows their coverage, and the app's test target holds only tests that need the app.
-- [ ] **4.1 Wire models**
-  - In the package (4.0), `Codable` types for every request and response the app uses, held to `services/server/api/` by a Swift `WireContractTest`, as Android's is: every model reached by a check, unknown fields refused in the test.
+- [x] **4.1 Wire models**
+  - In the package (4.0), `Codable` types for every request and response the app uses, held to `services/server/api/` by `WireContractTests`, as Android's is: every model reached by a check, unknown fields refused in the test.
   - Done when: renaming a field in the contract fails the iOS suite.
 - [ ] **4.2 Client rules**
   - In the package (4.0), a test that runs every file in `testdata/client-rules/` and fails on one with no Swift implementation (ADR-0049); then implement each rule as a pure function, `cases` and `generated` alike.
