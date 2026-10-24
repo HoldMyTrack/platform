@@ -14,6 +14,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
 // Sign in with Apple (docs/SPEC.md FR-1.14) — Apple's authorization-code flow, run server-side
@@ -129,6 +131,45 @@ func (s *Server) handleAppleCallback(w http.ResponseWriter, r *http.Request) {
 	if err := s.finishOAuth(w, r, rt, userID); err != nil {
 		fail("session start", err)
 	}
+}
+
+// handleAppleToken serves `POST /v1/auth/apple/token` `{authorization_code, name, tz}` — Sign
+// in with Apple for the iOS app (docs/IMPLEMENTATION.md §4.9). The app gets the code from
+// AuthenticationServices and posts it here; the code is exchanged under the bundle ID, which
+// checks it with Apple and returns the refresh token the web flow keeps too. The platform hands
+// the app the name only on the first authorization, so the app sends it. The answer is the same
+// session JSON as a password sign-in; every failure is a 401 with the web's wording.
+func (s *Server) handleAppleToken(w http.ResponseWriter, r *http.Request) {
+	if !s.apple.enabled() || s.apple.BundleID == "" {
+		writeAPIError(w, "not found", http.StatusNotFound)
+		return
+	}
+	var req struct {
+		AuthorizationCode string `json:"authorization_code"`
+		Name              string `json:"name"`
+		TZ                string `json:"tz"`
+	}
+	if err := decodeJSON(r.Body, &req); err != nil {
+		writeAPIError(w, bodyError(err, "invalid JSON body"), http.StatusBadRequest)
+		return
+	}
+	fail := func(msg string, err error) {
+		s.log.Warn("apple sign-in failed: "+msg, "err", err)
+		writeError(w, http.StatusUnauthorized, "apple_failed", i18n.Get(requestLang(r)).T("signin.apple_failed"))
+	}
+	ctx := r.Context()
+	tok, err := s.exchangeAppleCode(ctx, s.apple.BundleID, req.AuthorizationCode, "")
+	if err != nil {
+		fail("code exchange", err)
+		return
+	}
+	tz, _ := normalizeTimezone(req.TZ)
+	userID, err := s.signInApple(ctx, tok, s.apple.BundleID, req.Name, tz)
+	if err != nil {
+		fail("account resolution", err)
+		return
+	}
+	s.writeSession(w, r, userID, sessionTTL, http.StatusOK)
 }
 
 // signInApple resolves the account for tokens exchanged under clientID and keeps the refresh

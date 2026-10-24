@@ -125,7 +125,7 @@ A real account must confirm its email before using anything else. Why: a mistype
 - Offered only where the deployment configures Apple.
 - The account is found as for Google (FR-1.9): the one linked to this Apple ID, else a real account with the same email, linked and verified from then on, else a new verified account. Apple vouches for the email, so one it reports unverified is refused.
 - An address hidden with Hide My Email is Apple's relay address, kept as the account's email; it never matches an existing account.
-- Kept from Apple: the stable id, the email, the name Apple sends on the first sign-in only, and a refresh token used for nothing but revoking the link.
+- Kept from Apple: the stable id, the email, the name Apple sends on the first sign-in only, and a refresh token used for nothing but revoking the link. The iOS app sends the authorization code Apple gave it, for the same checks.
 
 Every provider: a provider-only account has no password and can set one through FR-1.5; changing the email keeps the links; a Facebook-made account still unverified when its email signs in with Google or Apple loses its Facebook link.
 

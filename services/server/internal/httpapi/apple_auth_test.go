@@ -239,6 +239,10 @@ func (f *fakeApple) serve() *httptest.Server {
 		switch r.URL.Path {
 		case "/auth/token":
 			f.token = append(f.token, r.PostForm)
+			if r.PostForm.Get("code") == "bad" {
+				http.Error(w, `{"error":"invalid_grant"}`, http.StatusBadRequest)
+				return
+			}
 			json.NewEncoder(w).Encode(map[string]string{"id_token": fakeIDToken(f.t, f.claims), "refresh_token": "refresh-" + r.PostForm.Get("code")})
 		case "/auth/revoke":
 			f.revoked = append(f.revoked, r.PostForm)
@@ -302,5 +306,56 @@ func TestAppleCallbackSignsIn(t *testing.T) {
 	}
 	if name != "Some One" || tz != "Europe/Berlin" || refresh != "refresh-the-code" || client != testServicesID {
 		t.Fatalf("got name %q, tz %q, refresh %q, client %q", name, tz, refresh, client)
+	}
+}
+
+func TestAppleTokenStartsSession(t *testing.T) {
+	d := newDBTest(t)
+	now := time.Now()
+	email := fmt.Sprintf("apple-ios-%d@holdmytrack.invalid", now.UnixNano())
+	t.Cleanup(func() {
+		if _, err := d.pool.Exec(context.Background(), `DELETE FROM users WHERE email = $1`, email); err != nil {
+			t.Errorf("delete account: %v", err)
+		}
+	})
+	claims := validAppleClaims(now, testBundleID)
+	claims["sub"], claims["email"] = fmt.Sprintf("apple-ios-%d", now.UnixNano()), email
+	apple := &fakeApple{t: t, claims: claims}
+	d.srv.apple = testAppleServer(t, apple.serve().URL).apple
+
+	var got struct {
+		Token string `json:"session_token"`
+	}
+	d.decode(d.do(account{}, "POST", "/v1/auth/apple/token", map[string]string{"authorization_code": "ios-code", "name": "Some One", "tz": "Europe/Berlin"}), http.StatusOK, &got)
+	if got.Token == "" {
+		t.Fatal("no session token")
+	}
+	if len(apple.token) != 1 || apple.token[0].Get("client_id") != testBundleID || apple.token[0].Has("redirect_uri") {
+		t.Fatalf("token requests %v", apple.token)
+	}
+	var name, client string
+	if err := d.pool.QueryRow(context.Background(), `
+		SELECT u.display_name, i.client_id FROM users u JOIN user_identities i ON i.user_id = u.id AND i.provider = 'apple' WHERE u.email = $1
+	`, email).Scan(&name, &client); err != nil {
+		t.Fatal(err)
+	}
+	if name != "Some One" || client != testBundleID {
+		t.Fatalf("got name %q, client %q", name, client)
+	}
+
+	if rec := d.do(account{}, "POST", "/v1/auth/apple/token", map[string]string{"authorization_code": "bad"}); rec.Code != http.StatusUnauthorized || !strings.Contains(rec.Body.String(), "Apple") {
+		t.Fatalf("refused code: %d %s", rec.Code, rec.Body.String())
+	}
+	if rec := d.send(account{}, "POST", "/v1/auth/apple/token", "application/json", []byte("{")); rec.Code != http.StatusBadRequest {
+		t.Fatalf("bad body: %d", rec.Code)
+	}
+}
+
+func TestAppleTokenNeedsBundleID(t *testing.T) {
+	s := testAppleServer(t, "")
+	s.apple.BundleID = ""
+	rec := serveChecked(t, s.handleAppleToken, httptest.NewRequest("POST", "/v1/auth/apple/token", strings.NewReader(`{"authorization_code":"x"}`)))
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("status %d, want 404", rec.Code)
 	}
 }

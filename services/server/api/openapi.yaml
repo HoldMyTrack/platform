@@ -47,6 +47,8 @@ paths:
     $ref: "paths/auth.yaml#/auth_apple_callback"
   /auth/google/token:
     $ref: "paths/auth.yaml#/auth_google_token"
+  /auth/apple/token:
+    $ref: "paths/auth.yaml#/auth_apple_token"
   /auth/handoff:
     $ref: "paths/auth.yaml#/auth_handoff"
   /auth/resend-verification:

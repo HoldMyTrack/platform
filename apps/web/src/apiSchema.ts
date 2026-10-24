@@ -583,6 +583,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/apple/token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Sign in with an authorization code the iOS app got from Sign in with Apple */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        authorization_code: string;
+                        /** @description The name the platform gave the app, sent on the first authorization only; for a new account. */
+                        name?: string;
+                        /** @description The device's IANA zone, for a new account. */
+                        tz?: string;
+                    };
+                };
+            };
+            responses: {
+                200: components["responses"]["Session"];
+                400: components["responses"]["Error"];
+                401: components["responses"]["Error"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/handoff": {
         parameters: {
             query?: never;

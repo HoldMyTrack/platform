@@ -221,6 +221,31 @@ auth_google_token:
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Error" }
       "404": { $ref: "../components/responses.yaml#/Error" }
+auth_apple_token:
+  post:
+    summary: Sign in with an authorization code the iOS app got from Sign in with Apple
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [authorization_code]
+            properties:
+              authorization_code: { type: string }
+              name:
+                type: string
+                description: The name the platform gave the app, sent on the first authorization only; for a new account.
+              tz:
+                type: string
+                description: The device's IANA zone, for a new account.
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Session" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
 auth_handoff:
   post:
     summary: Redeem the one-time code a browser-tab sign-in handed an app, with the app's PKCE verifier

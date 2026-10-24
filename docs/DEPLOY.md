@@ -63,7 +63,7 @@ Put a load test's raised values back afterwards.
 1. At developer.apple.com, under **Certificates, Identifiers & Profiles → Identifiers**, register an App ID with Sign in with Apple (the iOS app's, `dev.holdmytrack.ios`, once it exists), then a **Services ID**, for example `com.holdmytrack.web`. On the Services ID, turn on Sign in with Apple, pick the App ID as primary, and add the §3 domain and the return URL `https://<your-domain>/v1/auth/apple/callback`, exactly `APP_BASE_URL` plus that path.
 2. Under **Keys**, create a key with Sign in with Apple for the same App ID and download its `.p8` file, which Apple offers once. It is a password: `.env.prod` only; revoke it and make another if it leaks.
 3. Under **Services → Sign in with Apple for Email Communication**, register the domain and the address mail is sent from (`SMTP_FROM`), and publish SPF for it. Without it, mail to a Hide My Email address bounces.
-4. Set `APPLE_SERVICES_ID`, `APPLE_TEAM_ID` (top right of the developer site), `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY` (the `.p8` on one line, its newlines written as `\n`), leave `APPLE_REDIRECT_URL` empty, and run `… up -d api`. `api` refuses to start on a key it can't read.
+4. Set `APPLE_SERVICES_ID`, `APPLE_TEAM_ID` (top right of the developer site), `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY` (the `.p8` on one line, its newlines written as `\n`), leave `APPLE_REDIRECT_URL` empty, and run `… up -d api`. `api` refuses to start on a key it can't read. Set `APPLE_BUNDLE_ID` to the App ID's bundle ID once the iOS app exists, for its endpoint.
 
 ## 5. Basemap
 
