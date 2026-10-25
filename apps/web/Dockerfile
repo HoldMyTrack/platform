@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # bookworm, not alpine: Playwright ships no musl Chromium build, and that settles it.
-FROM node:22.22.3-bookworm-slim AS base
+FROM node:26.12.1-bookworm-slim AS base
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false NPM_CONFIG_FUND=false
 WORKDIR /app
 
