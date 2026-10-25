@@ -1,15 +1,10 @@
 {{/* The page's light/dark theme, before anything paints. tokens.css follows data-theme on
      <html> when it's set and the OS's preference when it isn't; the choice is
      Settings' Theme control's (static/theme.js), kept per device (the right theme depends on the
-     screen and the room) in localStorage under hmt_theme. This
-     runs in <head>, ahead of the stylesheets, so a dark choice never flashes light first. It
+     screen and the room) in localStorage under hmt_theme. static/theme-init.js
+     runs in <head>, without defer and ahead of the stylesheets, so a dark choice never flashes light first. It
      can't be server-rendered from a cookie instead: RenderPublic's pages are one cached copy
      for every visitor. */}}
 {{define "theme-head"}}
-    <script>
-      try {
-        var theme = localStorage.getItem('hmt_theme');
-        if (theme === 'light' || theme === 'dark') document.documentElement.dataset.theme = theme;
-      } catch (e) {}
-    </script>
+    <script src="{{asset "theme-init.js"}}"></script>
 {{end}}

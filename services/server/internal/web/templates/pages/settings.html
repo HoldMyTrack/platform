@@ -12,19 +12,12 @@
     <div class="settings__avatar-row">
       <div class="settings__avatar">{{if .AvatarURL}}<img src="{{.AvatarURL}}" alt="{{t "settings.avatar_alt"}}" />{{else}}<span aria-hidden="true">⬚</span>{{end}}</div>
       <div class="settings__avatar-actions">
-        {{/* Picking a file submits the form straight away (the one line of script); without
+        {{/* Picking a file submits the form straight away (static/settings.js); without
              script, the Upload button does. */}}
         <form method="post" action="/settings/avatar" enctype="multipart/form-data" class="settings__inline-form" id="avatar-form">
           <input type="file" name="file" accept="image/png,image/jpeg,image/webp" required {{if .IsDemo}}disabled{{end}} aria-label="{{t "settings.avatar_choose"}}" />
           <button type="submit" class="settings__button" id="avatar-upload" {{if .IsDemo}}disabled{{end}}>{{t "settings.avatar_upload"}}</button>
         </form>
-        <script>
-          (function () {
-            var form = document.getElementById('avatar-form');
-            form.querySelector('input[type=file]').addEventListener('change', function () { if (this.files.length) form.submit(); });
-            document.getElementById('avatar-upload').hidden = true;
-          })();
-        </script>
         {{if .AvatarURL}}
         <form method="post" action="/settings/avatar/remove" class="settings__inline-form">
           <button type="submit" class="settings__button" {{if .IsDemo}}disabled{{end}}>{{t "settings.avatar_remove"}}</button>
@@ -57,27 +50,9 @@
         <select class="settings__input" name="timezone" id="timezone" required data-search-picker data-search-label="{{t "settings.timezone_search"}}" data-no-matches="{{t "settings.timezone_no_matches" "query" "{query}"}}">
           {{$tz := .Timezone}}{{range .Timezones}}<optgroup label="{{t (printf "tz.region.%s" .Region)}}">{{range .Options}}<option value="{{.ID}}" data-keywords="{{.ID}}" {{if eq .ID $tz}}selected{{end}}>{{.Label}}</option>{{end}}</optgroup>{{end}}
         </select>
-        {{/* Rendered for the saved zone; the script re-renders it for whichever zone is picked,
+        {{/* Rendered for the saved zone; static/settings.js re-renders it for whichever zone is picked,
              and once a minute, in the same shape as web.LocalTime. */}}
         <span class="settings__local-time" id="timezone-local-time" data-template="{{t "settings.timezone_local_time" "time" "{time}"}}" {{if not .LocalTime}}hidden{{end}}>{{with .LocalTime}}{{t "settings.timezone_local_time" "time" .}}{{end}}</span>
-        <script>
-          (function () {
-            var select = document.getElementById('timezone');
-            var out = document.getElementById('timezone-local-time');
-            function render() {
-              try {
-                var time = new Intl.DateTimeFormat(document.documentElement.lang || undefined, { timeZone: select.value, month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).format(new Date());
-                out.textContent = out.dataset.template.replace('{time}', time);
-                out.hidden = false;
-              } catch (e) {
-                out.hidden = true;
-              }
-            }
-            select.addEventListener('change', render);
-            render();
-            setInterval(render, 30000);
-          })();
-        </script>
         <span class="settings__hint">{{t "settings.timezone_hint"}}</span>
       </label>
 
@@ -153,5 +128,6 @@
   {{end}}
   <script src="{{asset "search-picker.js"}}" defer></script>
   <script src="{{asset "theme.js"}}" defer></script>
+  <script src="{{asset "settings.js"}}" defer></script>
 </main>
 {{end}}{{end}}

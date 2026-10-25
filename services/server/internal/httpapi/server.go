@@ -417,14 +417,19 @@ func setsOwnBodyLimit(r *http.Request) bool {
 		r.URL.Path == apiPrefix+"/sync/activities"
 }
 
+// contentSecurityPolicy is every response's CSP (setSecurityHeaders).
+const contentSecurityPolicy = "script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+
 // setSecurityHeaders applies to every response. No page here is meant to be framed, so none
 // may be (frame-ancestors, and X-Frame-Options for browsers without CSP): framed invisibly by
 // another site, a signed-in page's buttons could be clicked through — and the click is
 // same-origin, so neither SameSite nor the Origin checks would stop it. nosniff keeps a
-// browser from reading a response as a type other than the one it's served as. HSTS is
-// Caddy's (apps/web/docker/Caddyfile), which terminates TLS.
+// browser from reading a response as a type other than the one it's served as. Scripts load
+// only from this origin's files, never inline, so an injected <script> or handler doesn't run;
+// templates keep their scripts in static/. HSTS is Caddy's (apps/web/docker/Caddyfile), which
+// terminates TLS.
 func setSecurityHeaders(h http.Header) {
-	h.Set("Content-Security-Policy", "frame-ancestors 'none'")
+	h.Set("Content-Security-Policy", contentSecurityPolicy)
 	h.Set("X-Frame-Options", "DENY")
 	h.Set("X-Content-Type-Options", "nosniff")
 	h.Set("Referrer-Policy", "strict-origin-when-cross-origin")

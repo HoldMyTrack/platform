@@ -27,16 +27,7 @@
     <script src="{{asset "header.js"}}" defer></script>
     <script src="{{asset "upload.js"}}" defer></script>
     {{if .ViteDev}}
-    {{/* @vitejs/plugin-react's preamble, which its dev server otherwise injects into an
-         index.html it serves itself — required for Fast Refresh when the HTML comes from a
-         backend (https://vite.dev/guide/backend-integration). */}}
-    <script type="module">
-      import RefreshRuntime from '/@react-refresh';
-      RefreshRuntime.injectIntoGlobalHook(window);
-      window.$RefreshReg$ = () => {};
-      window.$RefreshSig$ = () => (type) => type;
-      window.__vite_plugin_react_preamble_installed__ = true;
-    </script>
+    <script type="module" src="{{asset "vite-preamble.js"}}"></script>
     <script type="module" src="/@vite/client"></script>
     <script type="module" src="/src/main.tsx"></script>
     {{else}}

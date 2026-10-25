@@ -23,10 +23,7 @@
 </a>
 {{end}}
 {{/* ?tz= plays the sign-up form's hidden timezone field's role for an account a provider
-     creates (FR-1.9, FR-1.10); without the script it starts on UTC, as a sign-up would. */}}
-<script>
-  try { var tz = '?tz=' + encodeURIComponent(Intl.DateTimeFormat().resolvedOptions().timeZone); document.querySelectorAll('.auth-card__provider').forEach(function (a) { a.href += tz; }); } catch (e) {}
-</script>
+     creates (FR-1.9, FR-1.10); without static/auth-timezone.js it starts on UTC, as a sign-up would. */}}
 <div class="auth-card__divider" role="separator">{{t "auth.or"}}</div>
 {{end}}
 
