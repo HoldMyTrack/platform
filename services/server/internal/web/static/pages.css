@@ -1058,27 +1058,6 @@ code {
   margin-bottom: 12px;
 }
 
-/* The Android test suite (templates/pages/testing.html), on Help's layout: each test's expected
-   result set apart, and the sample files' links. */
-.testing__expect {
-  margin: 8px 0 0;
-  padding: 10px 14px;
-  border-left: 3px solid var(--fm-accent);
-  border-radius: var(--fm-radius-md);
-  background: var(--fm-surface-tint);
-}
-
-.testing__files {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px 20px;
-}
-
-.testing__file {
-  font-weight: 600;
-  overflow-wrap: anywhere;
-}
-
 @media (max-width: 768px) {
   /* iOS Safari zooms the page in on focusing a text field under 16px and doesn't zoom back
      out; the sign-in and settings fields are 14px. The map app's own inputs get the same

@@ -5,7 +5,7 @@ The Android app's open work: testing and releasing it on Google Play. The produc
 ## Ongoing
 
 - [ ] **Testing tracks, then production**
-  - The closed test ran with testers recruited through Testers Community, pointed at `https://holdmytrack.com/testing`, the step-by-step test suite with its sample files (root `docs/SPEC.md` FR-10.7). Production access was applied for on 2026-10-24; Google answers the account owner by email, usually within 7 days. Then release in stages, after root `ROADMAP.md`'s "Before launch", since a production release is a public launch.
+  - Production access was granted on 2026-10-25 and 0.18 sent to production review, in the US, Canada, Australia, New Zealand and Ukraine, unpromoted until root `ROADMAP.md`'s "Before launch" is done. The closed test stays open for testers in other countries.
   - Recheck the release requirements against Play Console Help before each submission.
 - [ ] **The Digital Services Act trader-status declaration**, which the Play Console account needs before the app can be distributed in the EU.
 - [ ] **No donation link in the web pages the app opens, once donations open**

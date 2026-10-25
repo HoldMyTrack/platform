@@ -238,9 +238,6 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("GET /help", s.staticPage("help", "meta.help_title", "meta.help_description", ""))
 	s.mux.HandleFunc("GET /contacts", s.staticPage("contacts", "meta.contacts_title", "meta.contacts_description", ""))
 	s.mux.HandleFunc("GET /privacy", s.staticPage("privacy", "meta.privacy_title", "meta.privacy_description", ""))
-	// Step-by-step export guides, linked from the Upload menu and from Help.
-	// The Android test suite for Play's closed testers, its sample files under /static/testing/.
-	s.mux.HandleFunc("GET /testing", s.unlistedPage("testing", "meta.testing_title", "meta.testing_description"))
 	s.mux.Handle("GET /static/", s.pages.StaticHandler())
 	s.mux.HandleFunc("POST /logout", s.sameOrigin(s.handleLogoutPage))
 	s.mux.HandleFunc("POST /language", s.sameOrigin(s.handleLanguageForm)) // language.go
