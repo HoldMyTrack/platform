@@ -131,7 +131,7 @@ jobs:
           java-version: 17
       # The runner's preinstalled Android SDK (ANDROID_HOME) has its licenses accepted, so
       # AGP downloads whatever platform compileSdk names that isn't there yet.
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - run: ./gradlew :app:createDebugUnitTestCoverageReport
       # JaCoCo coverage of the JUnit tests in app/src/test, under its own `kotlin` flag so
       # the README's Kotlin badge reads it apart from Go's. Informational, like Go's.
