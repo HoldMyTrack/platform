@@ -157,7 +157,7 @@ jobs:
       # bucket only keeps for about a week (apps/web/scripts/build-basemap.sh). Keyed on
       # that script, so bumping its BUILD pin or bbox cuts a fresh one; a cache miss after
       # the pinned build has aged out fails here with a 404, and the fix is bumping BUILD.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         id: basemap
         with:
           path: apps/web/public/basemap/basemap.pmtiles
