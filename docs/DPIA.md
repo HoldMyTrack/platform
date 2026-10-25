@@ -1,14 +1,14 @@
 # HoldMyTrack: Data Protection Impact Assessment
 
-Last updated: 2026-10-17.
+Last updated: 2026-10-25.
 
 ## Summary
 
-HoldMyTrack can launch publicly once the five pre-launch actions in section 7 are done. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Four stay medium (section 6).
+HoldMyTrack can launch publicly once the pre-launch actions in section 7 are done. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Four stay medium (section 6).
 
-**Status:** draft for the controller's review, written from the product's documents and its published privacy policy (`/privacy`, last updated 17 October 2026), without an audit of the running system.
+**Status:** draft for the controller's review, written from the product's documents and its published privacy policy (`/privacy`, last updated 25 October 2026), without an audit of the running system.
 
-**Controller:** open question. HoldMyTrack runs at holdmytrack.com, contact hello@holdmytrack.com. The operator lives outside the EU; GDPR applies to a non-EU controller serving EU users (Art. 3(2)), who appoints an EU representative (Art. 27). The privacy policy names only "the HoldMyTrack project" (section 7).
+**Controller:** Nikolai Poriadin, the operator, personally, named in the privacy policy with hello@holdmytrack.com. HoldMyTrack runs at holdmytrack.com. The operator lives outside the EU; GDPR applies to a non-EU controller serving EU users (Art. 3(2)), who appoints an EU representative (Art. 27), which waits for funding (section 7).
 
 **What is assessed:** the web app, the server and its storage, and the Android app as they ship, with all the data in section 2. Planned cloud connectors and the iOS app are out of scope (section 7, review triggers).
 
@@ -149,7 +149,8 @@ R7 and R8 stay medium until the actions in section 7 are done. R2 and R9 stay me
 
 **Before launch:**
 
-- [ ] Decide who the controller is: the operator personally, with an EU representative (Art. 27); the Open Collective fiscal host, if it agrees to take the role; or a legal entity set up for the project. Then name it, with a postal address and any EU representative, in the privacy policy's "Who we are".
+- [x] Decide who the controller is: the operator personally, named in the privacy policy's "Who we are" (2026-10-25).
+- [ ] Appoint an EU representative (Art. 27) and give a postal address in "Who we are", once the project has funding and before it is listed or promoted in the EU.
 - [ ] Have DPAs on file with DigitalOcean, Cloudflare and Grafana Labs (R8).
 - [ ] Choose the email delivery provider, accept its DPA, and name it in the privacy policy (R8).
 - [ ] Decide on EU-region hosting for EU users, or write a transfer impact assessment that justifies the US (R7).
@@ -168,5 +169,5 @@ R7 and R8 stay medium until the actions in section 7 are done. R2 and R9 stay me
 
 | Role | Name | Decision | Date |
 | --- | --- | --- | --- |
-| Controller | Open question | | |
+| Controller | Nikolai Poriadin | | |
 | Reviewer with GDPR experience (recommended) | | | |
