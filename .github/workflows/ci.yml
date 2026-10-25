@@ -17,14 +17,14 @@ jobs:
     name: Document citations
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: scripts/check-doc-refs.sh
 
   file-size:
     name: File size (soft)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
       # Annotations only (scripts/check-file-size.sh always exits 0). A pull request is compared
@@ -35,10 +35,10 @@ jobs:
     name: Known vulnerabilities and secrets
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+      - uses: actions/setup-go@v7
         with:
           go-version-file: services/server/go.mod
           cache-dependency-path: services/server/go.sum
@@ -72,8 +72,8 @@ jobs:
     env:
       TEST_DATABASE_URL: postgres://holdmytrack:holdmytrack@localhost:5432/holdmytrack_test
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: services/server/go.mod
           cache-dependency-path: services/server/go.sum
@@ -83,7 +83,7 @@ jobs:
       # Coverage of the Go unit tests only: the Playwright suites exercise far more of the
       # server but aren't instrumented. Informational (codecov.yml), never a merge gate, and
       # an upload failure doesn't fail the build.
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           files: services/server/coverage.out
           flags: go
@@ -96,8 +96,8 @@ jobs:
       run:
         working-directory: apps/web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -111,7 +111,7 @@ jobs:
       - run: npm run verify:api-types
       # What ships to browsers; dev-server advisories are left to Dependabot.
       - run: npm audit --omit=dev --audit-level=high
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           files: apps/web/coverage/lcov.info
           flags: typescript
@@ -124,18 +124,18 @@ jobs:
       run:
         working-directory: apps/android/holdmytrack
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: 17
       # The runner's preinstalled Android SDK (ANDROID_HOME) has its licenses accepted, so
       # AGP downloads whatever platform compileSdk names that isn't there yet.
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - run: ./gradlew :app:createDebugUnitTestCoverageReport
       # JaCoCo coverage of the JUnit tests in app/src/test, under its own `kotlin` flag so
       # the README's Kotlin badge reads it apart from Go's. Informational, like Go's.
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@v7
         with:
           files: apps/android/holdmytrack/app/build/reports/coverage/test/debug/report.xml
           flags: kotlin
@@ -152,12 +152,12 @@ jobs:
     env:
       SATELLITE_TILES: https://imagery.invalid/{z}/{x}/{y}.png
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       # The basemap extract is gitignored and cut from a dated Protomaps build that the
       # bucket only keeps for about a week (apps/web/scripts/build-basemap.sh). Keyed on
       # that script, so bumping its BUILD pin or bbox cuts a fresh one; a cache miss after
       # the pinned build has aged out fails here with a 404, and the fix is bumping BUILD.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         id: basemap
         with:
           path: apps/web/public/basemap/basemap.pmtiles
@@ -166,7 +166,7 @@ jobs:
         run: make basemap
       - run: make verify verify-build
       - if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: screenshots
           path: apps/web/tests/screenshots/
