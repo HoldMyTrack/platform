@@ -27,8 +27,9 @@ updates:
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
       - dependency-name: androidx.fragment:fragment
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      # A Maven range: Dependabot reads Gradle versions in Maven's syntax, not as wildcards.
       - dependency-name: androidx.test.uiautomator:uiautomator
-        versions: ["2.4.x"]
+        versions: ["[2.4,2.5)"]
   - package-ecosystem: swift
     directory: /apps/ios/HoldMyTrackCore
     schedule: { interval: weekly }
