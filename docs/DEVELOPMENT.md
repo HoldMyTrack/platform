@@ -21,7 +21,7 @@ To try email verification, set `SKIP_EMAIL_VERIFICATION=false`: with no `SMTP_HO
 The Android suite's sample files (`/testing`) are generated. After changing `demo_data/` or `cmd/make-testing-files`, run this from `services/server` and commit what it writes to `internal/web/static/testing/`:
 
 ```bash
-docker run --rm -v "$PWD":/src -w /src golang:1.25-bookworm go run ./cmd/make-testing-files
+docker run --rm -v "$PWD":/src -w /src golang:1.27-bookworm go run ./cmd/make-testing-files
 ```
 
 Use the Go version `go.mod` names: another release compresses the zips and JPEGs differently, failing the Go tests.
@@ -111,7 +111,9 @@ The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` 
 
 ### CI
 
-`.github/workflows/ci.yml` runs on every push to `main` and every pull request: `scripts/check-doc-refs.sh`, `scripts/check-file-size.sh` (a warning only), the Go tests with a PostGIS service, the web `typecheck`, `test:coverage`, `verify:style` and `verify:api-types`, the Android JUnit tests, and `make verify verify-build`. That last job caches the basemap extract keyed on `apps/web/scripts/build-basemap.sh` and cuts it on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script.
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request: `scripts/check-doc-refs.sh`, `scripts/check-file-size.sh` (a warning only), the Go tests with a PostGIS service, the web `typecheck`, `test:coverage`, `verify:style`, `verify:api-types` and `npm audit --omit=dev`, `govulncheck` on the server, `gitleaks` over the whole history, the Android JUnit tests, and `make verify verify-build`. That last job caches the basemap extract keyed on `apps/web/scripts/build-basemap.sh` and cuts it on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script.
+
+`.github/dependabot.yml` opens one grouped pull request a week per ecosystem (Go, npm, Gradle, Swift, Docker, Actions), and a security update as soon as its advisory is published. A `govulncheck` failure on a pull request that changes no dependency means a new advisory: bump the module or Go itself.
 
 `.github/workflows/contract.yml` fails a pull request touching `services/server/api/` on a change an installed client can't follow, such as a response field removed: against the base branch (`scripts/check-contract-break.sh`), and against each release tag `android/<versionCode>` or `ios/<build>` from the minimum production's `/healthz` reports for that app, counting only breaks the pull request adds (`scripts/check-contract-release.sh`). An intended break carries the `contract-break` label and ships with a raised `MIN_ANDROID_BUILD` (`DEPLOY.md` §10).
 

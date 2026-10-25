@@ -13,7 +13,7 @@ GO      := docker run --rm -v $(CURDIR)/services/server:/src -w /src -v $(CURDIR
              -v holdmytrack-go-mod:/go/pkg/mod -v holdmytrack-go-build:/root/.cache/go-build \
              --network container:$$($(COMPOSE) ps -q db) \
              -e TEST_DATABASE_URL=postgres://holdmytrack:holdmytrack@localhost:5432/holdmytrack_test \
-             golang:1.25-bookworm
+             golang:1.27-bookworm
 
 .DEFAULT_GOAL := help
 .PHONY: help up down logs shell build typecheck basemap test-go test-unit verify verify-build test clean
