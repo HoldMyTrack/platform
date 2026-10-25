@@ -21,7 +21,7 @@ To try email verification, set `SKIP_EMAIL_VERIFICATION=false`: with no `SMTP_HO
 The Android suite's sample files (`/testing`) are generated. After changing `demo_data/` or `cmd/make-testing-files`, run this from `services/server` and commit what it writes to `internal/web/static/testing/`:
 
 ```bash
-docker run --rm -v "$PWD":/src -w /src golang:1.25-bookworm go run ./cmd/make-testing-files
+docker run --rm -v "$PWD":/src -w /src golang:1.27-bookworm go run ./cmd/make-testing-files
 ```
 
 Use the Go version `go.mod` names: another release compresses the zips and JPEGs differently, failing the Go tests.

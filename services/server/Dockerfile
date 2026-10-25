@@ -3,7 +3,7 @@
 # dependency cache to reconcile, no dev-vs-test split — `serve`/`work`/`migrate` are the same
 # binary, invoked with different args (compose.yaml's api/worker services), not different
 # images.
-FROM golang:1.25-bookworm AS build
+FROM golang:1.27-bookworm AS build
 ARG GIT_SHA=unknown
 WORKDIR /src
 COPY go.mod go.sum ./
