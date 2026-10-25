@@ -337,6 +337,13 @@ The same paths for every account, behind the session and cached like every map t
 - Roads is a Layers pick, on until unticked, kept by the browser or phone, for every base map and mode. The switch that hides ticked paths and places (FR-4.13) hides roads too.
 - It covers the base map's roads, rail, street names and shields. Trails, dirt tracks, bike kinds and place names stay. Exports draw what the screen does.
 
+### FR-4.18 Tour
+
+- A tour points at the web map's features in turn: the Activities panel, the date range, Stories, Layers, export, Fog of War, Heatmap and adding activities. It puts the map in the mode a step explains, restores the user's mode when it ends, and can be left at any step.
+- A demo session gets it unasked on its first map in a browser. A real account is offered it once, after it has an activity. Anyone signed in can start it from the header.
+- The first time a user opens Fog of War, Heatmap or the Stories tab outside the tour, a card says what it is for. A tour step on the same feature counts as its card.
+- What has been shown is kept by the browser, not the account.
+
 ## 7. FR-5 — Activities Panel
 
 ### FR-5.1 Activity list
