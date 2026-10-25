@@ -639,12 +639,12 @@ Accepting puts a Story and activities in the recipient's account that are theirs
 
 ## 17. FR-15 — Spots
 
-Outdoor places from OpenStreetMap in five categories, with what OSM says about each (`VISION.md` §4.2, ADR-0021), on the web and Android (`apps/android/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
+Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2, ADR-0021), on the web and Android (`apps/android/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
 
 ### FR-15.1 Places
 
-- **History** (`historic=castle`, `ruins`, `fort`, `archaeological_site`), **Monument** (`historic=monument`, `memorial`), **Mesmerizing view** (`tourism=viewpoint`), **Dog park** (`leisure=dog_park`), **Playground** (`leisure=playground`); a feature tagged for two takes the first.
-- A place keeps what OSM has of its name, address, description, inscription, memorial type, start date and Wikipedia article (`language:Title` only). Its area is its outline, or a 30 m circle for a point.
+- **History** (`historic=castle`, `ruins`, `fort`, `archaeological_site`), **Monument** (`historic=monument`, `memorial`), **Mesmerizing view** (`tourism=viewpoint`), **Waterfall** (`waterway=waterfall`, `natural=waterfall`) with no viewpoint within 120 m, **Dog park** (`leisure=dog_park`), **Playground** (`leisure=playground`); a feature tagged for two takes the first.
+- A place keeps what OSM has of its name, address, description, inscription, memorial type, start date and Wikipedia article (`language:Title` only). Its area is its outline, or a 30 m circle for a point; a waterfall's is always a 75 m circle.
 - The operator loads places with `holdmytrack import-spots [--planet] <file>` (`DEPLOY.md` §6); loading again updates.
 - A place is never deleted. A `--planet` load retires places missing from the file: only accounts that captured one still see it, and nobody can capture it. A later load that has it brings it back. A `--planet` load that would retire over 1% of live places retires none and stops with an error, after updating what it read.
 - A load moves every account's tile version only if a place changed.

@@ -16,8 +16,8 @@ const spotsMinZoom = 13
 //     spot spanning two tiles is drawn once — with what the popup shows: name, category,
 //     address, OSM's text fields and Wikipedia article, and the anchor's coordinates;
 //   - `spot_areas`, each spot's area clipped to the tile, with its category (the Overlays menu
-//     filters both layers by it) and `circle` for the 30 m circle a place mapped as a single
-//     node stands in with, rather than an outline OSM has.
+//     filters both layers by it) and `circle` for the circle a place mapped as a single node,
+//     or any waterfall, stands in with, rather than an outline OSM has.
 //
 // Both carry `retired` (docs/SPEC.md FR-15.1): a place gone from OSM is still in the tiles, which are the
 // same for every account, and each map hides it unless the account captured it.
@@ -42,7 +42,7 @@ SELECT
     ) t)
     ||
     (SELECT ST_AsMVT(t, 'spot_areas', 4096, 'geom') FROM (
-        SELECT h.id, h.category, h.osm_type = 'node' AS circle, h.retired_at IS NOT NULL AS retired,
+        SELECT h.id, h.category, (h.osm_type = 'node' OR h.category = 'waterfall') AS circle, h.retired_at IS NOT NULL AS retired,
                ST_AsMVTGeom(ST_Transform(h.geom, 3857), env.e3857, 4096, 64, true) AS geom
         FROM here h, env
     ) t);`

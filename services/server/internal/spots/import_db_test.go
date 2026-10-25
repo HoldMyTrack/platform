@@ -144,3 +144,38 @@ func TestImportRetires(t *testing.T) {
 		t.Errorf("a refused run that changed nothing moved the tile version")
 	}
 }
+
+// Waterfalls (docs/SPEC.md FR-15.1): one with a viewpoint within 120 m stays out, even when the
+// viewpoint comes later in the file, and the rest get a 75 m circle.
+func TestImportWaterfalls(t *testing.T) {
+	tx := testTx(t)
+	ctx := context.Background()
+	base := time.Now().UnixNano()
+	const deg = 1.0 / 111320
+	falls := func(n int, lat float64) string {
+		return fmt.Sprintf(`{"type":"Feature","id":"n%d","geometry":{"type":"Point","coordinates":[-42.5,%f]},"properties":{"waterway":"waterfall","name":"Falls %d"}}`,
+			base+int64(n), lat, n)
+	}
+	file := strings.Join([]string{
+		falls(1, -61.5),
+		falls(2, -61.6),
+		fmt.Sprintf(`{"type":"Feature","id":"n%d","geometry":{"type":"Point","coordinates":[-42.5,%f]},"properties":{"tourism":"viewpoint"}}`,
+			base+3, -61.6+100*deg),
+	}, "\n") + "\n"
+	stats, err := importPlaces(ctx, tx, slog.New(slog.DiscardHandler), strings.NewReader(file), false, 1)
+	if err != nil || stats.Imported != 2 || stats.NearViewpoint != 1 {
+		t.Fatalf("import: %+v, %v; want the viewpoint and one waterfall imported, one left out", stats, err)
+	}
+	var radius float64
+	if err := tx.QueryRow(ctx, `SELECT sqrt(ST_Area(geom::geography) / pi()) FROM spots
+		WHERE osm_type = 'node' AND osm_id = $1 AND category = 'waterfall'`, base+1).Scan(&radius); err != nil {
+		t.Fatalf("the waterfall far from a viewpoint: %v", err)
+	}
+	if radius < 74 || radius > 76 {
+		t.Errorf("waterfall circle radius %.1f m, want 75", radius)
+	}
+	var near int
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM spots WHERE osm_type = 'node' AND osm_id = $1`, base+2).Scan(&near); err != nil || near != 0 {
+		t.Errorf("the waterfall near a viewpoint: %d rows (%v), want none", near, err)
+	}
+}

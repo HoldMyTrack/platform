@@ -514,7 +514,7 @@ flowchart LR
 
 ### 4.25 Spots (FR-15, ADR-0021)
 
-**The import** (`internal/spots`) retires the places a planet run didn't see, refusing to retire too many. **No row is ever deleted, so captures' cascade never fires on a refresh.** The version is bumped only if the upsert changed something.
+**The import** (`internal/spots`) retires the places a planet run didn't see, refusing to retire too many. Waterfalls are held until the file ends, since a viewpoint that leaves one out can come after it; one that gains a viewpoint is retired by the next planet run like a place gone from OSM. **No row is ever deleted, so captures' cascade never fires on a refresh.** The version is bumped only if the upsert changed something.
 
 **The tiles are the same for every account.** A retired place is flagged and hidden unless captured, and the captured badge is styled from the account's capture list rather than baked in, which would need a bump per capture. **Show in this area** splits a view across the antimeridian into two boxes, whether its bounds come unwrapped (web) or wrapped (Android), and orders results named first, then by `md5(id)`, so the result limit thins the map evenly.
 

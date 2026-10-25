@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 #
 # Make the Spots places file (docs/DEPLOY.md §6, docs/SPEC.md FR-15.1): download an OpenStreetMap extract,
-# check it, and filter it down to the five Spots categories as GeoJSON lines for
+# check it, and filter it down to the Spots categories as GeoJSON lines for
 # `import-spots`. Run OFF the server, on any machine with osmium-tool, curl and the disk the
 # source needs (about 100 GB free for the planet): the server has neither the disk nor the
 # memory to filter the planet. Nothing here touches a deployment.
@@ -27,13 +27,14 @@ cd "$work"
 src=source.osm.pbf
 osm_download "$url"
 
-# Keep every node, way and relation in the five categories (spots.Category, IMPLEMENTATION.md
+# Keep every node, way and relation in the categories (spots.Category, IMPLEMENTATION.md
 # §4.25), plus the nodes the ways and relations need for their geometry.
 log "filtering"
 osmium tags-filter "$src" \
   nwr/leisure=playground,dog_park \
   nwr/historic=monument,memorial,castle,ruins,fort,archaeological_site \
   nwr/tourism=viewpoint \
+  nwr/waterway=waterfall nwr/natural=waterfall \
   --overwrite -o spots.osm.pbf
 
 # -u type_id gives each feature the OSM id the import upserts by; points and areas only.
@@ -46,6 +47,7 @@ osmium export spots.osm.pbf -f geojsonseq -u type_id --geometry-types=point,poly
 total=$(wc -l < spots.geojsonseq | tr -d ' ')
 log "done: $work/spots.geojsonseq, $total places, $(du -h spots.geojsonseq | cut -f 1)"
 for tag in '"leisure":"playground"' '"leisure":"dog_park"' '"historic":"monument"' '"historic":"memorial"' \
-  '"historic":"castle"' '"historic":"ruins"' '"historic":"fort"' '"historic":"archaeological_site"' '"tourism":"viewpoint"'; do
+  '"historic":"castle"' '"historic":"ruins"' '"historic":"fort"' '"historic":"archaeological_site"' '"tourism":"viewpoint"' \
+  '"waterway":"waterfall"' '"natural":"waterfall"'; do
   printf '  %-36s %s\n' "$tag" "$(grep -c -F "$tag" spots.geojsonseq || true)"
 done
