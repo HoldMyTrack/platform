@@ -25,3 +25,9 @@ updates:
     directory: /
     schedule: { interval: weekly }
     groups: { actions: { patterns: ["*"] } }
+  # compose.yaml and compose.prod.yml, one pull request per image. A postgis/postgis pull request is the signal to run
+  # docs/DEPLOY.md §9, never one to merge alone: a new tag changes the OS under the data, and a
+  # new Postgres major can't open it at all.
+  - package-ecosystem: docker-compose
+    directory: /
+    schedule: { interval: weekly }

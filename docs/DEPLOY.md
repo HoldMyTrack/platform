@@ -261,15 +261,11 @@ sequenceDiagram
 5. If Google sign-in is configured, "Continue with Google" lands on the map. `redirect_uri_mismatch` means §4 step 2's URI doesn't match `APP_BASE_URL` + `/v1/auth/google/callback`; "Couldn't sign in with Google" means the callback failed, and `… logs api | grep "google sign-in"` says why.
 6. Sign-in that silently returns to the sign-in screen means `APP_BASE_URL`'s scheme doesn't match the browser's connection (§4).
 
-## 9. Before upgrading the Postgres image
+## 9. Upgrading the Postgres image
 
-Before moving `db` to an image on Debian 13 or later, rewrite the old time zone names some older accounts still store (the reason is in `compose.prod.yml`'s `db` comment). While the old image still runs:
+A new `postgis/postgis` tag can bring a newer Debian, and with it glibc's text sort order and the tz data, under the same data directory. Keep the Postgres major: a new one can't open the directory (a dump and restore, §11). Rehearse on a copy of a dev volume with `compose.yaml`'s tag changed: steps 4–5, then every suite, Go's with `-count=1`, since its cache doesn't see the database.
 
-1. Open `psql`:
-   ```bash
-   docker compose -f compose.prod.yml --env-file .env.prod exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'
-   ```
-2. Run the rewrite. The list is `timezoneRenames` in `services/server/internal/web/timezones_data.go` at tzdata 2026d; if that table has been regenerated, rebuild the list from it.
+1. With the site up, `docker pull postgis/postgis:<tag>`, then in `psql` (`… exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'`) rewrite the old time zone names Debian 13 dropped. The list is `timezoneRenames` in `services/server/internal/web/timezones_data.go` at tzdata 2026d; if that table has been regenerated, rebuild the list from it.
    ```sql
    UPDATE users u SET timezone = r.current
    FROM (VALUES
@@ -306,7 +302,25 @@ Before moving `db` to an image on Debian 13 or later, rewrite the old time zone 
    ) AS r(old, current)
    WHERE u.timezone = r.old;
    ```
-3. Check: every value of `SELECT DISTINCT timezone FROM users` is in the new image's `pg_timezone_names`.
+2. Check that every `SELECT DISTINCT timezone FROM users` value is in the new image's `pg_timezone_names`.
+3. `./scripts/maintenance.sh on`, `./scripts/backup.sh`, `… stop api worker db`, then a DigitalOcean snapshot of the droplet.
+4. Pull the tag change and `… up -d db`. Its log warns of a collation version mismatch until step 5 ends. In `psql`, for the app's database:
+   ```sql
+   SELECT postgis_extensions_upgrade();
+   DO $$ DECLARE idx regclass; BEGIN
+     FOR idx IN SELECT i.indexrelid::regclass FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+       WHERE c.relnamespace = 'public'::regnamespace
+         AND EXISTS (SELECT 1 FROM unnest(i.indcollation) co WHERE co <> 0 AND co <> 'pg_catalog."C"'::regcollation)
+     LOOP EXECUTE format('REINDEX INDEX %s', idx); END LOOP;
+   END $$;
+   REINDEX SYSTEM;
+   ALTER DATABASE :"DBNAME" REFRESH COLLATION VERSION;
+   ```
+   Only text indexes follow the sort order; rebuilding the geometry ones would take far longer. After the extension upgrade the old image can't open the data.
+5. Connect (`\c`) to `postgres`, `template1` and the image's `template_postgis` in turn, and run `SELECT postgis_extensions_upgrade();` where `\dx` lists `postgis`, `REINDEX DATABASE <name>;` and `ALTER DATABASE <name> REFRESH COLLATION VERSION;`. Check: `SELECT datname FROM pg_database WHERE datcollversion <> pg_database_collation_actual_version(oid)` returns no rows.
+6. `… run --rm api seed-timezones --force` (§6), `GIT_SHA=$(git rev-parse --short HEAD) … up -d`, `./scripts/maintenance.sh off`, then §8.
+
+Something wrong before step 4's upgrade: put the old tag back and `… up -d db`. After it: restore the snapshot, or §11's dump onto the old image.
 
 ## 10. Publishing the Android APK
 
