@@ -352,11 +352,11 @@ func (s *Server) createAccount(ctx context.Context, rawEmail, password, timezone
 // account needs one (re)sent. lang is the language the email is written in.
 func (s *Server) sendVerificationEmail(ctx context.Context, userID, email, lang string) error {
 	expiresAt := time.Now().Add(emailVerificationTTL)
-	var tokenID string
-	if err := s.pool.QueryRow(ctx,
-		`INSERT INTO email_verifications (user_id, email, expires_at) VALUES ($1, $2, $3) RETURNING id`,
-		userID, email, expiresAt,
-	).Scan(&tokenID); err != nil {
+	tokenID, hash := newToken()
+	if _, err := s.pool.Exec(ctx,
+		`INSERT INTO email_verifications (token_hash, user_id, email, expires_at) VALUES ($1, $2, $3, $4)`,
+		hash, userID, email, expiresAt,
+	); err != nil {
 		return err
 	}
 
@@ -453,7 +453,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 // logout above and the pages' Sign out form (pages.go's handleLogoutPage).
 func (s *Server) endSession(w http.ResponseWriter, r *http.Request) {
 	if sessionID, ok := sessionIDFromRequest(r); ok {
-		if _, err := s.pool.Exec(r.Context(), `DELETE FROM sessions WHERE id = $1`, sessionID); err != nil {
+		if _, err := s.pool.Exec(r.Context(), `DELETE FROM sessions WHERE token_hash = $1`, tokenHash(sessionID)); err != nil {
 			s.log.Error("session delete failed", "err", err)
 		}
 	}

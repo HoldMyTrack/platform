@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -39,14 +40,32 @@ func (d *dbTest) email(a account) (email string, verified bool) {
 	return email, verified
 }
 
+// verificationToken is the token in the newest verification link a's pending address was sent.
 func (d *dbTest) verificationToken(a account) string {
 	d.t.Helper()
-	var token string
+	var to string
 	if err := d.pool.QueryRow(context.Background(),
-		`SELECT id FROM email_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, a.id).Scan(&token); err != nil {
-		d.t.Fatalf("read verification token: %v", err)
+		`SELECT email FROM email_verifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT 1`, a.id).Scan(&to); err != nil {
+		d.t.Fatalf("read verification address: %v", err)
 	}
-	return token
+	return d.mailedToken(to, "/verify")
+}
+
+// mailedToken is the token in the newest link to path mailed to an address: the database keeps
+// only its hash.
+func (d *dbTest) mailedToken(to, path string) string {
+	d.t.Helper()
+	m := d.srv.mailer.(*sentMail)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	link := regexp.MustCompile(regexp.QuoteMeta(path) + `\?token=([0-9a-f-]{36})`)
+	for i := len(m.bodies) - 1; i >= 0; i-- {
+		if found := link.FindStringSubmatch(m.bodies[i]); found != nil && m.to[i] == to {
+			return found[1]
+		}
+	}
+	d.t.Fatalf("no %s link mailed to %s", path, to)
+	return ""
 }
 
 // An email change is the account's only once the new address's owner confirms it: until then

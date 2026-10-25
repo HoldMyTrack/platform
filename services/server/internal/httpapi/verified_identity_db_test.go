@@ -84,7 +84,7 @@ func TestResolveVerifiedUser(t *testing.T) {
 		if _, err := d.pool.Exec(ctx, `INSERT INTO user_identities (user_id, provider, subject) VALUES ($1, 'facebook', $2)`, id, unique("fb")); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := d.pool.Exec(ctx, `INSERT INTO sessions (user_id, expires_at) VALUES ($1, NOW() + INTERVAL '1 hour')`, id); err != nil {
+		if _, err := d.pool.Exec(ctx, `INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '1 hour')`, tokenHash("stale"), id); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := d.srv.resolveVerifiedUser(ctx, "apple", unique("sub"), email, "", ""); err != nil {

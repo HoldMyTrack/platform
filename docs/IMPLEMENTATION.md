@@ -80,7 +80,7 @@ The queue (§4.1); there is no broker. A running job stays `pending`, with `lock
 
 ### 3.9 `sessions`
 
-The primary key, a `gen_random_uuid()`, is the cookie value, with no hashed-token layer, which is judged enough for the current threat model. Expiry is checked in SQL on every read.
+The cookie value is a random UUID (`newToken`); the row keeps only its SHA-256, `token_hash`, the primary key, so a copy of the database or a backup holds nothing that signs in. Expiry is checked in SQL on every read.
 
 ### 3.10 `password_resets`
 
@@ -112,7 +112,7 @@ Google, Facebook and Apple links (ADR-0015), keyed by the provider's stable `sub
 
 ### 3.18 `auth_handoffs`
 
-One-time codes for a native app's browser sign-in (§4.9). Redeeming deletes the row in the statement that reads it; expired rows are purged on the next insert, so there is no sweeper.
+One-time codes for a native app's browser sign-in (§4.9), hashed like `sessions`. Redeeming deletes the row in the statement that reads it; expired rows are purged on the next insert, so there is no sweeper.
 
 ### 3.19 `stories` / `story_activities`
 

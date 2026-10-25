@@ -2,11 +2,13 @@ package httpapi
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -17,11 +19,11 @@ import (
 // bearer-token path for a native client with no browser-style cookie handling.
 func (s *Server) startSession(w http.ResponseWriter, ctx context.Context, userID string, ttl time.Duration) (string, error) {
 	expiresAt := time.Now().Add(ttl)
-	var sessionID string
-	if err := s.pool.QueryRow(ctx,
-		`INSERT INTO sessions (user_id, expires_at) VALUES ($1, $2) RETURNING id`,
-		userID, expiresAt,
-	).Scan(&sessionID); err != nil {
+	sessionID, hash := newToken()
+	if _, err := s.pool.Exec(ctx,
+		`INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, $3)`,
+		hash, userID, expiresAt,
+	); err != nil {
 		return "", err
 	}
 	http.SetCookie(w, &http.Cookie{
@@ -42,6 +44,19 @@ func (s *Server) startSession(w http.ResponseWriter, ctx context.Context, userID
 	return sessionID, nil
 }
 
+// newToken makes the secret for a session, password reset, email verification or app handoff,
+// and the SHA-256 its row keeps in its place (tokenHash), so a copy of the database or a backup
+// holds nothing that signs in. A random UUID, the shape the clients and links already carry.
+func newToken() (token string, hash []byte) {
+	token = uuid.NewString()
+	return token, tokenHash(token)
+}
+
+func tokenHash(token string) []byte {
+	sum := sha256.Sum256([]byte(token))
+	return sum[:]
+}
+
 // bearerPrefix is RFC 6750's scheme name for the Authorization header value —
 // sessionIDFromRequest strips exactly this before treating the remainder as a session id.
 const bearerPrefix = "Bearer "
@@ -49,7 +64,7 @@ const bearerPrefix = "Bearer "
 // sessionIDFromRequest reads the session id a caller presented: the holdmytrack_session cookie
 // for a browser (checked first — the long-established, higher-volume path), falling back to
 // `Authorization: Bearer <session-id>` for a native client. This is not a second credential
-// system — it's the same sessions.id value, just presented a second way, because a mobile
+// system — it's the same session token, just presented a second way, because a mobile
 // app needs to inject it into MapLibre Native's own tile requests via a per-request header
 // hook (apps/android/docs/ARCHITECTURE.md §1's bearer-token decision), which a cookie
 // sitting in the app's own cookie jar wouldn't reach.
@@ -76,7 +91,7 @@ func (s *Server) currentUserID(r *http.Request) (string, bool) {
 	}
 	var userID string
 	err := s.pool.QueryRow(r.Context(),
-		`SELECT user_id FROM sessions WHERE id = $1 AND expires_at > NOW()`, sessionID,
+		`SELECT user_id FROM sessions WHERE token_hash = $1 AND expires_at > NOW()`, tokenHash(sessionID),
 	).Scan(&userID)
 	if err != nil {
 		return "", false
@@ -149,8 +164,8 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 			SELECT u.id, u.email_verified, u.timezone, COALESCE(u.locale, ''), u.last_seen_at,
 			       u.web_seen_at, u.android_seen_at, u.android_build, u.ios_seen_at, u.ios_build
 			FROM sessions se JOIN users u ON u.id = se.user_id
-			WHERE se.id = $1 AND se.expires_at > NOW()
-		`, sessionID).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &was.last,
+			WHERE se.token_hash = $1 AND se.expires_at > NOW()
+		`, tokenHash(sessionID)).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &was.last,
 			&was.web, &was.android, &was.androidBuild, &was.ios, &was.iosBuild)
 		if err != nil {
 			writeAPIError(w, "authentication required", http.StatusUnauthorized)
@@ -219,11 +234,4 @@ func (s *Server) requireNotDemo(next http.HandlerFunc) http.HandlerFunc {
 func isUniqueViolation(err error) bool {
 	var pgErr *pgconn.PgError
 	return errors.As(err, &pgErr) && pgErr.Code == "23505"
-}
-
-// isInvalidTextRepresentation catches a token that isn't even a UUID — a mangled link — which
-// Postgres rejects outright rather than matching no row; it's still just an invalid link.
-func isInvalidTextRepresentation(err error) bool {
-	var pgErr *pgconn.PgError
-	return errors.As(err, &pgErr) && pgErr.Code == "22P02"
 }

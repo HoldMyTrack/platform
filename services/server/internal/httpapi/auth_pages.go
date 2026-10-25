@@ -55,8 +55,8 @@ func (s *Server) pageAccount(r *http.Request) *pageAccount {
 	err := s.pool.QueryRow(r.Context(), `
 		SELECT u.id, u.email_verified, u.timezone, COALESCE(u.locale, ''), u.is_admin
 		FROM sessions se JOIN users u ON u.id = se.user_id
-		WHERE se.id = $1 AND se.expires_at > NOW()
-	`, sessionID).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &info.isAdmin)
+		WHERE se.token_hash = $1 AND se.expires_at > NOW()
+	`, tokenHash(sessionID)).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &info.isAdmin)
 	if err != nil {
 		return nil
 	}
