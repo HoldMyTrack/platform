@@ -1,7 +1,7 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, a new date
  * range clearing the selection, a Story opened and closed by Back, a track edit's reprocess, a
- * delete, the date slider fitting a phone and its footer, and the header's menus closing. Each run signs up a fresh account, uploads the sample files, and
+ * delete, the date slider fitting a phone and its footer, the header's menus closing, and the tour's offer and header link. Each run signs up a fresh account, uploads the sample files, and
  * deletes the account at the end.
  *
  *   npm run verify:map
@@ -252,5 +252,34 @@ describe('map flows', () => {
     await page.locator('.user-menu > summary').click();
     await page.keyboard.press('Escape');
     assert.deepEqual(await open(), []);
+  });
+
+  it("9. an account with activities is offered the tour once; the header's link starts it in place, and it puts the mode back", async () => {
+    // Loaded with activities from the start, the map offers the tour.
+    await page.reload();
+    await page.getByTestId('tour-offer').waitFor({ timeout: 60_000 });
+    await page.getByTestId('tour-offer-later').click();
+    await page.getByTestId('tour-tip').waitFor();
+    const activeMode = () => page.getByTestId('map-mode-toggle').locator('[aria-pressed="true"]').textContent();
+    // No reload: the marker set on this page survives the click.
+    await page.evaluate(() => (window.__tourMarker = true));
+    await page.locator('[data-tour-start]').click();
+    await page.getByTestId('tour').waitFor();
+    assert.equal(await page.evaluate(() => window.__tourMarker), true);
+    while ((await page.getByTestId('tour').getAttribute('data-step')) !== 'fog') await page.getByTestId('tour-next').click();
+    assert.equal(await activeMode(), 'Fog');
+    await page.keyboard.press('Escape');
+    await page.getByTestId('tour').waitFor({ state: 'detached' });
+    assert.equal(await activeMode(), 'Normal');
+    // Declined once, never offered again; from another page the link opens the map on the tour.
+    await page.goto(`${BASE}/profile`);
+    await page.locator('[data-tour-start]').click();
+    await page.getByTestId('tour').waitFor({ timeout: 60_000 });
+    assert.equal(new URL(page.url()).searchParams.has('tour'), false);
+    await page.reload();
+    await page.waitForFunction(() => Boolean(window.__holdmytrack));
+    await page.waitForTimeout(2000);
+    assert.equal(await page.getByTestId('tour').count(), 0);
+    assert.equal(await page.getByTestId('tour-offer').count(), 0);
   });
 });

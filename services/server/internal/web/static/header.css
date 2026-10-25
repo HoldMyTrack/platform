@@ -416,6 +416,12 @@
   background: rgb(var(--fm-ink-rgb) / 6%);
 }
 
+/* Take a tour: Sync's look in the accent, so it reads as an invitation rather than a page. */
+.tour-link,
+.tour-link:hover {
+  color: var(--fm-accent-strong);
+}
+
 .sync-link__alert {
   position: absolute;
   top: 6px;
