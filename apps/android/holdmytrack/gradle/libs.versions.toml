@@ -1,37 +1,38 @@
 [versions]
-agp = "9.4.0"
+agp = "9.4.1"
 # MapLibre Native for Android. 11.8.0 is where built-in `pmtiles://` support landed and
 # 13.3.0 added its ambient cache, so anything in the 13.x line already speaks the same URL
 # scheme the style document carries (docs/ARCHITECTURE.md §3).
 maplibre = "13.7.1"
-appcompat = "1.7.1"
+appcompat = "1.8.0"
 # Material Components for Android — the Material 3 theme and widgets the Views UI is styled
-# with (docs/ARCHITECTURE.md §3). 1.13.0 is the
-# version the theme was built and verified against on device.
-material = "1.13.0"
+# with (docs/ARCHITECTURE.md §3). The theme was built against 1.13.0; 1.14.0 passed the
+# emulator flows (src/androidTest) unchanged.
+material = "1.14.0"
 # The Health Connect client (Path 2's on-device read). 1.1.0 is the current stable; 1.2.0 is
 # alpha only, and the device measurements of this platform's behaviour
 # (docs/IMPLEMENTATION.md §4.0) ran against 1.1.0, so the app ships against the same API
 # surface those findings were observed on.
 healthConnect = "1.1.0"
 lifecycle = "2.9.4"
-coroutines = "1.10.2"
+coroutines = "1.11.0"
 # Declared explicitly rather than inherited transitively: the app builds its own OkHttpClient
 # (net/HoldMyTrackApi.kt) and hands that same instance to MapLibre Native, so the version is a
-# direct compile dependency here, not an implementation detail of the map SDK. 4.12.0 is the
-# version MapLibre 13.7.1's own POM already resolves to, so this pins rather than upgrades.
-okhttp = "4.12.0"
+# direct compile dependency here, not an implementation detail of the map SDK. It outranks the
+# 4.12.0 MapLibre 13.7.1's POM asks for; the emulator flows draw the map through it. From 5.5.0
+# the project lives at github.com/lysine-dev/okhttp (square/okhttp redirects there), still
+# published as com.squareup.okhttp3.
+okhttp = "5.5.1"
 # Sign in with Google (docs/IMPLEMENTATION.md §4.9): Credential Manager's account picker,
 # its Play services backend, and the Google ID-token credential type it returns.
 credentials = "1.6.0"
-# Not 1.2.1: that release is compiled with Kotlin 2.4 metadata, which this project's Kotlin
-# compiler (2.2, AGP's built-in) can't read.
-googleId = "1.2.0"
+# 1.2.1 is compiled with Kotlin 2.4 metadata, which needs the compiler `kotlin` sets.
+googleId = "1.2.1"
 # Custom Tabs, for Sign in with Facebook through the server's own web flow in a browser tab —
 # instead of Meta's SDK (docs/IMPLEMENTATION.md §4.9).
 browser = "1.10.0"
 # The map's Activities panel list (panel/ActivitiesPanel.kt) — declared rather than borrowed
-# from Material's own dependency on it, at the version Material 1.13.0 already resolves to,
+# from Material's own dependency on it, at the version Material 1.14.0 already resolves to,
 # so this pins rather than upgrades.
 recyclerview = "1.2.1"
 # The map is a Fragment in MainActivity (apps/android/docs/IMPLEMENTATION.md §1.3)
@@ -40,17 +41,21 @@ recyclerview = "1.2.1"
 fragment = "1.8.9"
 # Unit tests for the panel's pure logic (src/test).
 junit = "4.13.2"
-# The API's request and response bodies as typed classes (net/Wire.kt). The compiler plugin must
-# match the Kotlin compiler AGP builds with (2.2.10), and 1.9.0 is the last runtime built with
-# Kotlin 2.2: 1.10.0 needs 2.3's metadata, which this compiler can't read.
-kotlin = "2.2.10"
-serialization = "1.9.0"
+# `kotlin` is the app's Kotlin compiler, not only the serialization plugin's version: the plugin
+# puts the Kotlin Gradle plugin at this version on the build classpath, where it outranks AGP's
+# built-in one (2.2.10 in AGP 9.4). Change it on purpose, never as a plugin bump in passing.
+# The serialization runtime (net/Wire.kt's bodies) and googleId need a compiler at least as new
+# as the Kotlin they were built with.
+kotlin = "2.4.21"
+serialization = "1.12.0"
 # The test that holds net/Wire.kt to the API contract reads services/server/api's YAML.
-snakeyaml = "2.5"
+snakeyaml = "2.7"
 # The end-to-end flows on an emulator (src/androidTest): AndroidX Test's runner and JUnit 4
 # rules, and UI Automator to drive the app as a person does.
 androidxTestRunner = "1.6.2"
 androidxTestJunit = "1.2.1"
+# Not 2.4.0: its UiDevice.swipe no longer drags the Sync sheet open by its handle, so
+# MapFlowsTest.c_aStoppedRecordingReachesTheSyncSheet never reaches the new walk's row.
 uiautomator = "2.3.0"
 
 [libraries]
