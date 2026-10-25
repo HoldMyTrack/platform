@@ -56,7 +56,7 @@ androidxTestRunner = "1.6.2"
 androidxTestJunit = "1.2.1"
 # Not 2.4.0: its UiDevice.swipe no longer drags the Sync sheet open by its handle, so
 # MapFlowsTest.c_aStoppedRecordingReachesTheSyncSheet never reaches the new walk's row.
-uiautomator = "2.3.0"
+uiautomator = "2.4.0"
 
 [libraries]
 maplibre = { module = "org.maplibre.gl:android-sdk", version.ref = "maplibre" }
