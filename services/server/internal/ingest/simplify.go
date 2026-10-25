@@ -10,7 +10,7 @@ import (
 // simplifyXY asks Postgres to run ST_SimplifyPreserveTopology and returns the surviving
 // vertices' coordinates, in order.
 //
-// Why this isn't just "simplify the LineStringM directly": PostGIS 3.4's
+// Why this isn't just "simplify the LineStringM directly": PostGIS 3.6's
 // ST_SimplifyPreserveTopology drops the M ordinate entirely — verified directly against
 // this stack (`SELECT GeometryType(ST_SimplifyPreserveTopology(<a LineStringM>, tol))`
 // returns plain LINESTRING, not LINESTRING M), not assumed from documentation. Simplifying

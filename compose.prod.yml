@@ -28,14 +28,11 @@ x-logging: &logging
 services:
   db:
     # The server passes each account's stored zone to Postgres (AT TIME ZONE users.timezone,
-    # every per-day query), and this image reads zones from the OS's files (built
-    # --with-system-tzdata). On Debian 11 those still carry the old IANA names (Asia/Calcutta,
-    # Europe/Kiev); Debian 13 moves them to tzdata-legacy, not installed by default, so a query
-    # for an account still storing one would fail. New accounts store current names
-    # (IMPLEMENTATION.md §4.9), but accounts from before 2026-09-25 keep their browser's old
-    # spelling until they next save Settings. Before moving to an image on Debian 13 or later,
-    # rewrite them: docs/DEPLOY.md §9.
-    image: postgis/postgis:16-3.4
+    # every per-day query), and this image reads zones from Debian 13's files (built
+    # --with-system-tzdata), which leave out the old IANA names (Asia/Calcutta, Europe/Kiev), so
+    # a query for an account storing one would fail. The server stores only current names
+    # (IMPLEMENTATION.md §4.9). A new tag changes the OS or glibc under the data: docs/DEPLOY.md §9.
+    image: postgis/postgis:16-3.6
     restart: unless-stopped
     logging: *logging
     # About 25% and 65% of a 4 GB droplet's RAM, rather than the image's 128MB of cache, which
