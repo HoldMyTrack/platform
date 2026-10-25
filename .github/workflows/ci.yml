@@ -31,6 +31,25 @@ jobs:
       # with its base branch, a push with the commit before it.
       - run: scripts/check-file-size.sh "${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}"
 
+  security:
+    name: Known vulnerabilities and secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: services/server/go.mod
+          cache-dependency-path: services/server/go.sum
+      # Fails only on a vulnerability the server's code can reach, in a module or the stdlib.
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.9.0 ./...
+        working-directory: services/server
+      # The binary, not gitleaks-action, which needs a paid license on an organization's repo.
+      - run: |
+          curl -sSfL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz | tar -xz gitleaks
+          ./gitleaks git --redact --no-banner .
+
   go:
     name: Go tests
     runs-on: ubuntu-latest
@@ -90,6 +109,8 @@ jobs:
       - run: npm run verify:style
       # apiSchema.ts is generated from the API contract; a contract change regenerates it.
       - run: npm run verify:api-types
+      # What ships to browsers; dev-server advisories are left to Dependabot.
+      - run: npm audit --omit=dev --audit-level=high
       - uses: codecov/codecov-action@v5
         with:
           files: apps/web/coverage/lcov.info

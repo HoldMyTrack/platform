@@ -1,0 +1,27 @@
+# Weekly version updates, one grouped pull request per ecosystem (docs/DEVELOPMENT.md, "CI").
+# Security updates arrive on their own as soon as an advisory is published.
+version: 2
+updates:
+  - package-ecosystem: gomod
+    directory: /services/server
+    schedule: { interval: weekly }
+    groups: { go: { patterns: ["*"] } }
+  - package-ecosystem: npm
+    directory: /apps/web
+    schedule: { interval: weekly }
+    groups: { npm: { patterns: ["*"] } }
+  - package-ecosystem: gradle
+    directory: /apps/android/holdmytrack
+    schedule: { interval: weekly }
+    groups: { gradle: { patterns: ["*"] } }
+  - package-ecosystem: swift
+    directory: /apps/ios/HoldMyTrackCore
+    schedule: { interval: weekly }
+  - package-ecosystem: docker
+    directories: [/services/server, /apps/web]
+    schedule: { interval: weekly }
+    groups: { docker: { patterns: ["*"] } }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }
+    groups: { actions: { patterns: ["*"] } }
