@@ -104,7 +104,7 @@ export interface Rect {
   height: number;
 }
 
-export type Placement = { kind: 'center' } | { kind: 'sheet' } | { kind: 'float'; left: number; top: number; side: 'below' | 'above' | 'right' | 'left'; arrow: number };
+export type Placement = { kind: 'center' } | { kind: 'sheet'; edge: 'top' | 'bottom' } | { kind: 'float'; left: number; top: number; side: 'below' | 'above' | 'right' | 'left'; arrow: number };
 
 /** Below this width the popover is a bottom sheet, as the panel is (index.css's phone layer). */
 export const NARROW_WIDTH = 768;
@@ -114,10 +114,12 @@ const MARGIN = 12;
 /**
  * Where a popover of `size` goes beside `anchor` in a `viewport`: below it if it fits, else above,
  * else right or left; clamped inside the viewport, with `arrow` the anchor's center along the
- * popover's edge. No anchor centers it; a narrow screen makes it a bottom sheet.
+ * popover's edge. No anchor centers it. A narrow screen makes it a sheet across the bottom, or
+ * across the top when the anchor is in the lower half (a phone's panel strip), so it never covers
+ * what it points at.
  */
 export function placePopover(anchor: Rect | null, size: { width: number; height: number }, viewport: { width: number; height: number }): Placement {
-  if (viewport.width < NARROW_WIDTH) return { kind: 'sheet' };
+  if (viewport.width < NARROW_WIDTH) return { kind: 'sheet', edge: anchor !== null && anchor.top + anchor.height / 2 > viewport.height / 2 ? 'top' : 'bottom' };
   if (anchor === null) return { kind: 'center' };
   const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
   const cx = anchor.left + anchor.width / 2;

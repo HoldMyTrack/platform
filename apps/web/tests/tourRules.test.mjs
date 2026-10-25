@@ -76,7 +76,11 @@ test('the popover goes below its anchor, else above, else beside, clamped in the
   assert.equal(clamped.left, 1280 - 360 - 12);
   assert.equal(clamped.arrow, 1240 - clamped.left);
   assert.deepEqual(placePopover(null, size, viewport), { kind: 'center' });
-  assert.deepEqual(placePopover({ left: 0, top: 0, width: 10, height: 10 }, size, { width: 390, height: 844 }), { kind: 'sheet' });
+  const phone = { width: 390, height: 844 };
+  assert.deepEqual(placePopover({ left: 0, top: 0, width: 10, height: 10 }, size, phone), { kind: 'sheet', edge: 'bottom' });
+  assert.deepEqual(placePopover(null, size, phone), { kind: 'sheet', edge: 'bottom' });
+  // The panel's strip at the foot of a phone: the sheet goes to the top.
+  assert.deepEqual(placePopover({ left: 0, top: 790, width: 390, height: 54 }, size, phone), { kind: 'sheet', edge: 'top' });
 });
 
 test('onScreen needs a laid-out rect overlapping the viewport', () => {
