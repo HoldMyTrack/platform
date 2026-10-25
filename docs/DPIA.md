@@ -4,7 +4,7 @@ Last updated: 2026-10-25.
 
 ## Summary
 
-HoldMyTrack can launch publicly once the pre-launch actions in section 7 are done. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Four stay medium (section 6).
+HoldMyTrack can launch publicly once the pre-launch actions in section 7 are done. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Three stay medium (section 6).
 
 **Status:** draft for the controller's review, written from the product's documents and its published privacy policy (`/privacy`, last updated 25 October 2026), without an audit of the running system.
 
@@ -69,7 +69,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 - **The user:** all of their own data.
 - **A Story recipient:** the copy they accepted, with the sender's Private locations applied, theirs from then on.
 - **The operator:** through the admin panel, every account's list of activities (dates, names, countries), but not their tracks.
-- **Processors:** DigitalOcean (servers), Cloudflare (R2 storage), Grafana Labs (monitoring) and an email delivery provider that isn't named yet.
+- **Processors:** DigitalOcean (servers), Cloudflare (R2 storage), Grafana Labs (monitoring) and Zoho (email, US).
 
 Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser directly.
 
@@ -131,18 +131,18 @@ Risks to users, rated before the measures in section 6 on the ICO template's sca
 
 ## 6. Measures and residual risk
 
-R7 and R8 stay medium until the actions in section 7 are done. R2 and R9 stay medium by decision: HoldMyTrack keeps what a user brings until they delete it, with no dormancy policy, and keeps original uploads (section 3).
+R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium by decision: HoldMyTrack keeps what a user brings until they delete it, with no dormancy policy, and keeps original uploads (section 3).
 
 | # | Measures in place | Still missing | Residual |
 | --- | --- | --- | --- |
-| R1 | Private locations applied at ingest, before tracks or tiles are stored (ADR-0002). TLS everywhere through Caddy. Separate R2 token for backups, with no access to the app bucket. No public profiles, so there is nothing to scrape. | Confirmation that the VPS disk, database and both R2 buckets are encrypted at rest, and who holds server access | Low |
+| R1 | Private locations applied at ingest, before tracks or tiles are stored (ADR-0002). TLS everywhere through Caddy. Separate R2 token for backups, with no access to the app bucket. No public profiles, so there is nothing to scrape. | Encryption at rest of the VPS disk, which holds the database and the newest dumps (section 7) | Low |
 | R2 | Originals sit in a private R2 bucket, never publicly addressable. Exports and Story copies are built from clipped tracks, never from originals. | A decision on how long originals are kept, after launch (`docs/ROADMAP.md`, "After launch"); a check that the bucket has no public access | Medium |
 | R3 | The tile and API endpoints take the user from the session, never from a parameter. Server tests check handlers against the API contract. | A test that one account cannot read another's activities, tiles or photos, if none exists | Low |
 | R4 | bcrypt password hashes. HttpOnly, SameSite=Lax session cookie for up to 30 days. Sign-in rate limits. Email verification. | Optional second factor; not needed for launch | Low |
 | R5 | The admin panel never shows tracks (section 2). Admin rights can be set only from the server's own command line. The daily statistics hold only aggregates (section 2). | An audit log, needed once an admin can see or change a track | Low |
 | R6 | Exports leave out Private locations and draw only clipped tracks, whose ends stop a secret, random distance past each circle so many tracks together don't outline it. A Story copy needs the recipient to accept it and carries the sender's Private locations. The policy warns that a copy is the recipient's. | — | Low |
-| R7 | Transfers rely on the processors' Standard Contractual Clauses or EU–US Data Privacy Framework certification, stated in the privacy policy. | EU-region hosting for EU users (`docs/ROADMAP.md`, "Before launch"), or a transfer impact assessment that justifies staying in the US | Medium |
-| R8 | Processors are named in the privacy policy. Logs are scrubbed before they reach Grafana (section 3). | Signed or accepted DPAs with DigitalOcean, Cloudflare and Grafana Labs on file; the email provider chosen, named and under a DPA | Medium |
+| R7 | Transfers rely on the processors' Standard Contractual Clauses or EU–US Data Privacy Framework certification, stated in the privacy policy, and are assessed in section 8. | Nothing before launch; EU-region hosting stays an option (`docs/ROADMAP.md`, "Before launch") | Low |
+| R8 | Processors are named in the privacy policy. Logs are scrubbed before they reach Grafana (section 3). | Accepted DPAs with DigitalOcean, Cloudflare, Grafana Labs and Zoho on file | Medium |
 | R9 | Deletion is complete within minutes and reaches backups within 8 weeks; the rest expires as section 2 lists. | — | Medium |
 
 ## 7. Actions and sign-off
@@ -151,10 +151,11 @@ R7 and R8 stay medium until the actions in section 7 are done. R2 and R9 stay me
 
 - [x] Decide who the controller is: the operator personally, named in the privacy policy's "Who we are" (2026-10-25).
 - [ ] Appoint an EU representative (Art. 27) and give a postal address in "Who we are", once the project has funding and before it is listed or promoted in the EU.
-- [ ] Have DPAs on file with DigitalOcean, Cloudflare and Grafana Labs (R8).
-- [ ] Choose the email delivery provider, accept its DPA, and name it in the privacy policy (R8).
-- [ ] Decide on EU-region hosting for EU users, or write a transfer impact assessment that justifies the US (R7).
-- [ ] Confirm encryption at rest on the VPS disk, the database and both R2 buckets, and that the app bucket has no public access (R1, R2).
+- [ ] Have DPAs on file with DigitalOcean, Cloudflare, Grafana Labs and Zoho (R8).
+- [x] Assess the transfers to the US (R7, section 8).
+- [x] R2 encrypts every object and its metadata at rest with AES-256, by default (Cloudflare's R2 data security docs, checked 2026-10-25).
+- [ ] Encrypt the database at rest: DigitalOcean documents encryption at rest for Volumes, not for a Droplet's own disk, so the database and the dumps kept on the server would move to a Volume (R1).
+- [ ] Confirm in the Cloudflare dashboard that neither R2 bucket has an `r2.dev` URL or a custom domain (R2).
 
 **Soon after:**
 
@@ -171,3 +172,13 @@ R7 and R8 stay medium until the actions in section 7 are done. R2 and R9 stay me
 | --- | --- | --- | --- |
 | Controller | Nikolai Poriadin | | |
 | Reviewer with GDPR experience (recommended) | | | |
+
+## 8. Transfers to the United States
+
+All data in section 2 is stored in the US, by DigitalOcean and Cloudflare; Grafana Labs receives scrubbed logs there, and Zoho each email. Assessed 2026-10-25:
+
+- **Mechanism.** DigitalOcean and Grafana Labs state certification under the EU–US Data Privacy Framework, so the Commission's adequacy decision of 10 July 2023 covers them. Cloudflare's and Zoho's DPAs carry the Standard Contractual Clauses. Each status is to be confirmed on dataprivacyframework.gov when the DPAs are filed (section 7).
+- **US access.** As cloud providers, all four can receive orders under FISA Section 702. Executive Order 14086, which the adequacy decision relies on, limits such collection to what is necessary and proportionate and gives EU residents a redress route; Clauses transfers rely on the same safeguards.
+- **What an order could reach.** Exercise routes and photos of a small user base, with no health data, no live location and no payment data. Logs leave the server without tracks, emails or IP addresses. Provider-held encryption keys don't stop a compelled disclosure, so the protection is in what is not collected.
+
+**Conclusion:** the transfers can continue without supplementary measures. Review this section if the adequacy decision is annulled, if a processor loses its certification, or when the user base becomes large-scale (section 7).
