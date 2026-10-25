@@ -156,7 +156,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Done when: a server deploy that changes a layer's color changes it on the phone without an app release.
 - [ ] **7a.2 Modes, Layers and framing**
   - Normal, Fog of War and Heatmap; the Layers menu; first framing; the empty account's pointer to Sync; attribution kept visible; Find my location; theme and language reloading the style and keeping the camera.
-  - Done when: the tester page's (`testing.html`) checks for `apps/android/docs/SPEC.md` FR-2.2–FR-2.5 pass on iOS.
+  - Done when: `apps/android/docs/SPEC.md` FR-2.2–FR-2.5 hold on iOS.
 - [ ] **7a.3 Tab bar and date range**
   - Map, Stories, the record button, Sync and You (`apps/android/docs/SPEC.md` FR-2.9), each keeping its state. The date slider (`apps/android/docs/SPEC.md` FR-2.6) from the slider rules.
   - Done when: a picked range survives a trip to every tab and a rotation.
@@ -165,7 +165,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 `apps/android/docs/SPEC.md` FR-2.7, FR-2.8, FR-2.10 and FR-2.11.
 
-- [ ] **7b.1 Activities and Stories panel**: rows, filters, selection, checked group, toolbar, Edit, Delete, Add to story, Pending polling, the Stories tab with copies to accept or decline. Done when: the panel rules' cases drive it and the tester page's panel checks pass.
+- [ ] **7b.1 Activities and Stories panel**: rows, filters, selection, checked group, toolbar, Edit, Delete, Add to story, Pending polling, the Stories tab with copies to accept or decline. Done when: the panel rules' cases drive it and it behaves as `apps/android/docs/SPEC.md` FR-2.7 describes.
 - [ ] **7b.2 Track editor and Private location editor**. Done when: each operation matches the `edit-track-*` cases on a real track, and a Private location saves and clips.
 - [ ] **7b.3 Spots and capture**: layers per category, the popup, capture by 30 seconds within 25 m in the foreground with precise location, the screen kept awake. Done when: a capture at a real place is accepted by the server.
 - [ ] **7b.4 Photos**: `PHPickerViewController`, redrawn upright at most 2,048 px with a 320 px thumbnail, placed by the server's check or by hand. iOS's picker may keep a photo's location, unlike Android's: measure it and say so in this app's `SPEC.md`. Done when: photos added, moved and deleted through Save survive a reload.
@@ -217,7 +217,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 8 — App Store preparation
 
-- [ ] **8.1 Accessibility and layout**: VoiceOver labels on every control, 44-point targets, Dynamic Type with rows stacking at large sizes, landscape clear of the notch and home indicator, iPhone SE to Pro Max. Done when: the tester page's accessibility checks pass with VoiceOver.
+- [ ] **8.1 Accessibility and layout**: VoiceOver labels on every control, 44-point targets, Dynamic Type with rows stacking at large sizes, landscape clear of the notch and home indicator, iPhone SE to Pro Max. Done when: every screen can be used with VoiceOver alone.
 - [ ] **8.2 Privacy declarations**
   - `PrivacyInfo.xcprivacy` with the required-reason APIs the app and its packages use; App Privacy answers in App Store Connect (location, email, name, photos, user content; nothing for tracking); `ITSAppUsesNonExemptEncryption` false (HTTPS only).
   - The privacy policy, `docs/DPIA.md` and Help name HealthKit and what is read from it.
@@ -228,7 +228,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 ## Phase 9 — TestFlight
 
 - [ ] **9.1 Internal testing**: builds uploaded from Xcode's Organizer (or `xcodebuild -exportArchive` with an App Store Connect API key, documented in `docs/DEPLOY.md` §10); the owner and developers as internal testers. Done when: a build installs from TestFlight and passes phases 5–7 on a device.
-- [ ] **9.2 External testing**: a public TestFlight link after Beta App Review; `testing.html` gets an iOS section quoting the app's strings, as it quotes Android's. Apple sets no minimum number of testers or days; run until the tester page has passed on at least two iPhone models and one Apple Watch history. Done when: no open issue blocks release.
+- [ ] **9.2 External testing**: a public TestFlight link after Beta App Review. Apple sets no minimum number of testers or days; run until the app has been tested on at least two iPhone models and one Apple Watch history. Done when: no open issue blocks release.
 
 ## Phase 10 — Release
 

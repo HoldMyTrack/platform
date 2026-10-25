@@ -1,7 +1,7 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, a new date
  * range clearing the selection, a Story opened and closed by Back, a track edit's reprocess, a
- * delete, the date slider fitting a phone and its footer, and the header's menus closing. Each run signs up a fresh account, uploads the tester page's sample files, and
+ * delete, the date slider fitting a phone and its footer, and the header's menus closing. Each run signs up a fresh account, uploads the sample files, and
  * deletes the account at the end.
  *
  *   npm run verify:map
@@ -18,7 +18,7 @@ const BASE = `http://localhost:${PORT}`;
 const API_BASE = process.env.VITE_API_BASE_URL ?? 'http://localhost:8080';
 const EMAIL = `flows-${Date.now()}-${process.pid}@holdmytrack.local`;
 const PASSWORD = 'flows-test-password';
-// Served with the tester page (services/server/internal/web/static/testing), dated 1, 5 and 6 Oct 2026.
+// Served from services/server/internal/web/static/testing, dated 1, 5 and 6 Oct 2026.
 const SAMPLES = ['west-side.gpx', 'evening-loop.tcx', 'mill-creek-falls.fit'];
 
 let server;

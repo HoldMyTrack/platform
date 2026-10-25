@@ -24,7 +24,7 @@ import java.util.zip.ZipInputStream
 
 /**
  * A fresh account on the dev stack the app was built against (`BuildConfig.API_BASE_URL`),
- * with the tester page's sample activities: three in October 2026 and three from the sample
+ * with the sample activities under `/static/testing/`: three in October 2026 and three from the sample
  * zip's Italy days in August, six activity days in all, so the default range (the five most
  * recent) leaves one out and can move earlier. Deleted at the end of the run.
  */

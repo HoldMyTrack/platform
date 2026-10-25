@@ -510,11 +510,6 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 
 `/privacy`, in English and Russian, is the policy the Play Store listing and the Android app's Health Connect rationale point to. Its text is the page itself (`services/server/internal/web/templates/pages/privacy.html`, `privacy.ru.html`), which must agree with `DPIA.md` and this document: a change to what is kept, who processes it or for how long changes all three.
 
-### FR-10.7 Android test suite
-
-- `/testing`: the Android closed test's steps and expected results, with sample files under `/static/testing/`. English only, `noindex`, not in the sitemap, linked from nowhere.
-- Its expected results quote the app, so a change to what the Android app shows or says, or to a server message it shows, changes this page too.
-
 ### FR-10.8 Pages inside the Android app
 
 - The Android app shows Settings, Profile, the Sync page and About as web pages; the `hmt_app` cookie drops their header and footer.

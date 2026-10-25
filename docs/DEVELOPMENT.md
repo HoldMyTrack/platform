@@ -18,7 +18,7 @@ Every page, the map's shell included, is rendered by Go (`IMPLEMENTATION.md` §4
 
 To try email verification, set `SKIP_EMAIL_VERIFICATION=false`: with no `SMTP_HOST`, the server logs each email, link included.
 
-The Android suite's sample files (`/testing`) are generated. After changing `demo_data/` or `cmd/make-testing-files`, run this from `services/server` and commit what it writes to `internal/web/static/testing/`:
+The end-to-end suites' sample files (`/static/testing/`) are generated. After changing `demo_data/` or `cmd/make-testing-files`, run this from `services/server` and commit what it writes to `internal/web/static/testing/`:
 
 ```bash
 docker run --rm -v "$PWD":/src -w /src golang:1.27-bookworm go run ./cmd/make-testing-files

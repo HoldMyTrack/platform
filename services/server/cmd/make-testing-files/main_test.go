@@ -46,9 +46,9 @@ func TestCommittedFilesAreGenerated(t *testing.T) {
 	}
 }
 
-// TestFilesDoWhatThePageSays parses each committed file the way ingest does, and checks it
-// fails, or doesn't, the way /testing tells testers to expect.
-func TestFilesDoWhatThePageSays(t *testing.T) {
+// TestFilesIngestAsNamed parses each committed file the way ingest does, and checks it fails, or
+// doesn't, as its name says.
+func TestFilesIngestAsNamed(t *testing.T) {
 	t.Chdir("../..")
 	parseFile := func(name string) (parse.Activity, error) {
 		f, err := os.Open(filepath.Join(committed, name))

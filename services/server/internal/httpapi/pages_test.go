@@ -6,8 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
-	"path"
-	"regexp"
+	"os"
 	"strings"
 	"testing"
 
@@ -78,32 +77,25 @@ func TestPagesRenderSignedOut(t *testing.T) {
 	}
 }
 
-// TestTestingPage: the Android test suite is public but unlisted, and every sample file it
-// links to is served.
-func TestTestingPage(t *testing.T) {
+// TestSampleFiles: the sample activities the web and Android end-to-end suites upload are
+// served, and nothing else answers at /testing.
+func TestSampleFiles(t *testing.T) {
 	s := newPagesTestServer(t)
+	files, err := os.ReadDir("../web/static/testing")
+	if err != nil || len(files) == 0 {
+		t.Fatalf("no sample files: %v", err)
+	}
+	for _, f := range files {
+		rec := httptest.NewRecorder()
+		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/static/testing/"+f.Name(), nil))
+		if rec.Code != http.StatusOK {
+			t.Errorf("%s: status %d", f.Name(), rec.Code)
+		}
+	}
 	rec := httptest.NewRecorder()
 	s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/testing", nil))
-	body := rec.Body.String()
-	if rec.Code != http.StatusOK || !strings.Contains(body, "<title>Testing the Android app — HoldMyTrack") {
-		t.Fatalf("/testing: status %d", rec.Code)
-	}
-	if !strings.Contains(body, `name="robots" content="noindex"`) || strings.Contains(body, `rel="canonical"`) {
-		t.Errorf("/testing: should be noindex, without a canonical link")
-	}
-	links := regexp.MustCompile(`href="(/static/testing/[^"?]+)\?v=test" download="([^"]+)"`).FindAllStringSubmatch(body, -1)
-	if len(links) == 0 {
-		t.Fatal("/testing: no sample file links")
-	}
-	for _, m := range links {
-		if path.Base(m[1]) != m[2] {
-			t.Errorf("%s: downloads as %q", m[1], m[2])
-		}
-		rec := httptest.NewRecorder()
-		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, m[1], nil))
-		if rec.Code != http.StatusOK {
-			t.Errorf("%s: status %d", m[1], rec.Code)
-		}
+	if rec.Code != http.StatusNotFound {
+		t.Errorf("/testing: status %d, want 404", rec.Code)
 	}
 }
 

@@ -12,7 +12,7 @@ HoldMyTrack is a free, community-funded platform that keeps the outdoor journeys
 
 ## Documentation rules
 
-**Update the documents in the same change.** When a change alters something a document specifies, edit that document in the same commit. A JSON endpoint's request or response changes `services/server/api/` too, followed by `npm run gen:api-types` in `apps/web` (`IMPLEMENTATION.md` §4.31). A change to what is collected, where it is stored, who processes it or how long it is kept updates `docs/DPIA.md`. A change to anything the Android app shows or says means checking the tester page, `services/server/internal/web/templates/pages/testing.html`, which quotes it. `SPEC.md` and `IMPLEMENTATION.md` usually need a matching edit together.
+**Update the documents in the same change.** When a change alters something a document specifies, edit that document in the same commit. A JSON endpoint's request or response changes `services/server/api/` too, followed by `npm run gen:api-types` in `apps/web` (`IMPLEMENTATION.md` §4.31). A change to what is collected, where it is stored, who processes it or how long it is kept updates `docs/DPIA.md`. `SPEC.md` and `IMPLEMENTATION.md` usually need a matching edit together.
 
 **Citations.** Documents cite each other by section number: `VISION.md` §1.1, `IMPLEMENTATION.md` §4.7, `SPEC.md` FR-5.8, ADR-0039. Name the document before the number unless the citation points into the same file. `SPEC.md` cites its own requirements as FR-N.M, and its top-level section numbers do not match the FR groups, so its §8 is not FR-8. `IMPLEMENTATION.md` starts at §3 because `ARCHITECTURE.md` keeps §1 and §2. Never renumber a section or requirement: a deleted one leaves a gap. Run `scripts/check-doc-refs.sh` before committing; it fails on any citation whose heading no longer exists, in documents, code comments and templates.
 
@@ -49,7 +49,6 @@ When `VISION.md` or an ADR changes a position, scan the other documents, the And
 | `docs/DEVELOPMENT.md` | 2,750 |
 | `docs/DPIA.md` | 2,750 |
 | `docs/ROADMAP.md`, `docs/BRAINSTORM.md`, `docs/KNOWN_ISSUES.md` together | 3,000 |
-| `testing.html` | 3,000 |
 | A new ADR | 600 |
 
 ## Asking questions
