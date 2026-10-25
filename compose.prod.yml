@@ -32,7 +32,7 @@ services:
     # --with-system-tzdata), which leave out the old IANA names (Asia/Calcutta, Europe/Kiev), so
     # a query for an account storing one would fail. The server stores only current names
     # (IMPLEMENTATION.md §4.9). A new tag changes the OS or glibc under the data: docs/DEPLOY.md §9.
-    image: postgis/postgis:16-3.6
+    image: postgis/postgis:18-3.6
     restart: unless-stopped
     logging: *logging
     # About 25% and 65% of a 4 GB droplet's RAM, rather than the image's 128MB of cache, which

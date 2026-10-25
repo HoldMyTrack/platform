@@ -85,7 +85,7 @@ services:
   db:
     # A new tag changes the OS or glibc under the data: docs/DEPLOY.md §9, which a dev volume
     # needs too.
-    image: postgis/postgis:16-3.6
+    image: postgis/postgis:18-3.6
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-holdmytrack}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-holdmytrack}
