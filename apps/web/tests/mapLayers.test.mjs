@@ -169,7 +169,7 @@ test('the spots go on top, behind one switch, their badges named with the colors
   assert.deepEqual(spots.sources['spots-in-area'], { type: 'geojson' });
   const icons = spots.layers.find((l) => l.id === 'spots-icons');
   assert.deepEqual(icons.metadata['holdmytrack:images']['spot-dog_park-captured'], { category: 'dog_park', fill: '#b07e2e', ring: '#7d5820', ink: '#ffffff' });
-  assert.equal(Object.keys(icons.metadata['holdmytrack:images']).length, 10);
+  assert.equal(Object.keys(icons.metadata['holdmytrack:images']).length, 12);
   assert.deepEqual(icons.metadata['holdmytrack:vars']['icon-image'], ['captured']);
   assert.equal(doc.vars.captureTarget, -1);
   // Fog mutes labels, never the badges.

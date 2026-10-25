@@ -22,6 +22,7 @@ const CATEGORY_KEYS: Record<SpotCategory, MessageKey> = {
   dog_park: 'spots.category_dog_park',
   monument: 'spots.category_monument',
   viewpoint: 'spots.category_viewpoint',
+  waterfall: 'spots.category_waterfall',
   history: 'spots.category_history',
 };
 
