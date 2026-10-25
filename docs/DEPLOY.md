@@ -338,13 +338,13 @@ No page links to it; it's for testers handed the URL, while the public route is 
 
 **Tagging.** Tag every build that reaches Play or `/download/`, for the release contract check (`DEVELOPMENT.md`, "CI"): `git tag android/<versionCode> <sha>`, then `git push origin android/<versionCode>`.
 
-**Turning away older builds.** Needed for a pull request labelled `contract-break` (`DEVELOPMENT.md`, "CI"), and only once the release that needs it is live on Google Play and at `/download/`:
+**Turning away older builds.** Needed when `scripts/check-contract-release.sh --needed-floor <deployed sha>` raises a minimum, and only once the release it names is live on Google Play and at `/download/`:
 
-1. Set `MIN_ANDROID_BUILD` in `.env.prod` to its `versionCode`, `git rev-list --count <sha>` of the commit both were built from.
+1. Set `MIN_ANDROID_BUILD` in `.env.prod` to the value it prints.
 2. `docker compose -f compose.prod.yml --env-file .env.prod up -d api`
 3. Check: `curl -s -o /dev/null -w '%{http_code}\n' -A 'HoldMyTrack-Android/0.1 (x; 1)' https://<your-domain>/v1/auth/providers` prints `426`.
 
-An iOS build is turned away the same way: `MIN_IOS_BUILD` set to its build number, also the commit count, checked with `-A 'HoldMyTrack-iOS/0.1 (x; 1)'`. iOS builds are tagged `ios/<build>`.
+An iOS build is turned away the same way, with `MIN_IOS_BUILD`, checked with `-A 'HoldMyTrack-iOS/0.1 (x; 1)'`. iOS builds are tagged `ios/<build>`.
 
 ## 11. Backups and the restore drill
 
