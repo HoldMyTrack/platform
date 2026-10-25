@@ -18,9 +18,11 @@ lifecycle = "2.9.4"
 coroutines = "1.11.0"
 # Declared explicitly rather than inherited transitively: the app builds its own OkHttpClient
 # (net/HoldMyTrackApi.kt) and hands that same instance to MapLibre Native, so the version is a
-# direct compile dependency here, not an implementation detail of the map SDK. 4.12.0 is the
-# version MapLibre 13.7.1's own POM already resolves to, so this pins rather than upgrades.
-okhttp = "4.12.0"
+# direct compile dependency here, not an implementation detail of the map SDK. It outranks the
+# 4.12.0 MapLibre 13.7.1's POM asks for; the emulator flows draw the map through it. From 5.5.0
+# the project lives at github.com/lysine-dev/okhttp (square/okhttp redirects there), still
+# published as com.squareup.okhttp3.
+okhttp = "5.5.1"
 # Sign in with Google (docs/IMPLEMENTATION.md §4.9): Credential Manager's account picker,
 # its Play services backend, and the Google ID-token credential type it returns.
 credentials = "1.6.0"
