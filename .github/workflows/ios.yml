@@ -49,7 +49,7 @@ jobs:
           # The build number is the commit count (scripts/stamp-build.sh).
           fetch-depth: 0
       # MapLibre's binary framework, about 100 MB, fetched again only when the pin changes.
-      - uses: actions/cache@v4
+      - uses: actions/cache@v6
         with:
           path: ~/spm
           key: spm-${{ hashFiles('apps/ios/HoldMyTrack.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
