@@ -181,6 +181,7 @@ class LayersMenu(
             MapSpots.Category.DOG_PARK to R.id.layers_spots_dog_park,
             MapSpots.Category.MONUMENT to R.id.layers_spots_monument,
             MapSpots.Category.VIEWPOINT to R.id.layers_spots_viewpoint,
+            MapSpots.Category.WATERFALL to R.id.layers_spots_waterfall,
             MapSpots.Category.HISTORY to R.id.layers_spots_history,
         )
 

@@ -3273,7 +3273,7 @@ export interface paths {
                 query: {
                     /** @description west,south,east,north in degrees; west may be greater than east across the antimeridian. */
                     bbox: string;
-                    /** @description Comma-separated, from playground, dog_park, monument, viewpoint, history. */
+                    /** @description Comma-separated, from playground, dog_park, monument, viewpoint, waterfall, history. */
                     categories: string;
                 };
                 header?: never;
@@ -3915,7 +3915,7 @@ export interface components {
         Spot: {
             id: number;
             /** @enum {string} */
-            category: "playground" | "dog_park" | "monument" | "viewpoint" | "history";
+            category: "playground" | "dog_park" | "monument" | "viewpoint" | "waterfall" | "history";
             name?: string;
             address?: string;
             description?: string;

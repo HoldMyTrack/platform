@@ -49,6 +49,7 @@ object MapSpots {
         DOG_PARK("dog_park", R.drawable.ic_dog, R.string.layers_dog_parks, R.string.spots_category_dog_park),
         MONUMENT("monument", R.drawable.ic_landmark, R.string.layers_monuments, R.string.spots_category_monument),
         VIEWPOINT("viewpoint", R.drawable.ic_binoculars, R.string.layers_viewpoints, R.string.spots_category_viewpoint),
+        WATERFALL("waterfall", R.drawable.ic_waterfall, R.string.layers_waterfalls, R.string.spots_category_waterfall),
         HISTORY("history", R.drawable.ic_castle, R.string.layers_history, R.string.spots_category_history),
         ;
 

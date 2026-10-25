@@ -10,7 +10,7 @@ spots:
       - name: categories
         in: query
         required: true
-        description: Comma-separated, from playground, dog_park, monument, viewpoint, history.
+        description: Comma-separated, from playground, dog_park, monument, viewpoint, waterfall, history.
         schema: { type: string }
     responses:
       "200":

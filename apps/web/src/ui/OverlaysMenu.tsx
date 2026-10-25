@@ -47,6 +47,7 @@ const CATEGORY_LABELS: Record<SpotCategory, MessageKey> = {
   dog_park: 'overlays.dog_parks',
   monument: 'overlays.monuments',
   viewpoint: 'overlays.viewpoints',
+  waterfall: 'overlays.waterfalls',
   history: 'overlays.history',
 };
 

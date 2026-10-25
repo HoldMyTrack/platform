@@ -382,7 +382,7 @@ func main() {
 			os.Exit(1)
 		}
 		log.Info("import-spots: done", "imported", stats.Imported, "changed", stats.Changed,
-			"retired", stats.Retired, "skipped", stats.Skipped)
+			"retired", stats.Retired, "skipped", stats.Skipped, "near_viewpoint", stats.NearViewpoint)
 
 	case "import-bike-paths":
 		// The load, and each refresh, of the Bike paths and Shared paths overlay from an

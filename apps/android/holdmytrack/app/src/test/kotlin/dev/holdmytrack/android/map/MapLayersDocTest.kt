@@ -119,7 +119,7 @@ class MapLayersDocTest {
         val icons = spots.layers.first { it.id == "spots-icons" }
         assertEquals("symbol", icons.type)
         assertEquals(MapLayersDoc.Badge("playground", "#b07e2e", "#7d5820", "#ffffff"), icons.images.getValue("spot-playground-captured"))
-        assertEquals(10, icons.images.size)
+        assertEquals(12, icons.images.size)
         assertTrue(MapSpots.Category.entries.all { "spot-${it.wire}" in icons.images })
         assertNull(spots.sources.getValue("spots-in-area").tiles)
         assertEquals(JsonPrimitive(-1), light.vars["captureTarget"])

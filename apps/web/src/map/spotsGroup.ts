@@ -30,7 +30,7 @@ export const SPOTS_IN_AREA_LAYER_ID = 'spots-in-area-icons';
 export const SPOTS_IN_AREA_SOURCE_ID = 'spots-in-area';
 
 /** Every category, in the order the Layers menu lists them. */
-export const SPOT_CATEGORY_WIRE = ['playground', 'dog_park', 'monument', 'viewpoint', 'history'] as const;
+export const SPOT_CATEGORY_WIRE = ['playground', 'dog_park', 'monument', 'viewpoint', 'waterfall', 'history'] as const;
 
 // The marker: a round badge, the category icon in ink on white, ringed in the accent — or, for a
 // place the account has captured, white on the accent, ringed darker. Fixed colors, not the
@@ -92,7 +92,7 @@ function badges(id: string, source: string, sourceLayer: string | undefined, min
  * Bottom to top: every area's fill, the outlines, the circles' dashed edges, "Show in this area"'s
  * badges, the tiles' badges. The two badge layers never overlap: one stops where the other starts,
  * at SPOTS_MIN_ZOOM. Two line layers because a dash pattern can't vary per feature: the place's own
- * OSM outline solid, the 30 m circle standing in for a place mapped as a point dashed.
+ * OSM outline solid, the circle standing in for a place mapped as a point, or a waterfall, dashed.
  */
 export function spotsGroup(tileVersion: string): GroupPart {
   const area = (id: string, type: 'fill' | 'line', filter: ExpressionSpecification, paint: Record<string, unknown>, dashed = false): LayerSpecification =>

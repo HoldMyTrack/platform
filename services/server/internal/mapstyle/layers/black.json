@@ -1,5 +1,5 @@
 {
-  "styleBuild": "85072cadf600",
+  "styleBuild": "2cfd8af6bd5f",
   "flavor": "black",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -1917,6 +1917,18 @@
                 "ring": "#7d5820",
                 "ink": "#ffffff"
               },
+              "spot-waterfall": {
+                "category": "waterfall",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-waterfall-captured": {
+                "category": "waterfall",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
               "spot-history": {
                 "category": "history",
                 "fill": "#ffffff",
@@ -2075,6 +2087,18 @@
               },
               "spot-viewpoint-captured": {
                 "category": "viewpoint",
+                "fill": "#b07e2e",
+                "ring": "#7d5820",
+                "ink": "#ffffff"
+              },
+              "spot-waterfall": {
+                "category": "waterfall",
+                "fill": "#ffffff",
+                "ring": "#b07e2e",
+                "ink": "#202b25"
+              },
+              "spot-waterfall-captured": {
+                "category": "waterfall",
                 "fill": "#b07e2e",
                 "ring": "#7d5820",
                 "ink": "#ffffff"

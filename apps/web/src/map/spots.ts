@@ -34,11 +34,21 @@ const Seesaw = createLucideIcon('seesaw', [
   ['path', { d: 'M3 20h18', key: 'ground' }],
 ]);
 
+/** Lucide has no waterfall either: water bending over a brink in two strands, a third falling
+ *  beside them, and the pool under them. */
+const Waterfall = createLucideIcon('waterfall', [
+  ['path', { d: 'M2 3h9a4 4 0 0 1 4 4v8', key: 'outer' }],
+  ['path', { d: 'M2 7h5a2 2 0 0 1 2 2v6', key: 'inner' }],
+  ['path', { d: 'M19 7v8', key: 'strand' }],
+  ['path', { d: 'M2 20c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1', key: 'pool' }],
+]);
+
 const CATEGORY_ICONS: Record<SpotCategory, ComponentType<LucideProps>> = {
   playground: Seesaw,
   dog_park: Dog,
   monument: Landmark,
   viewpoint: Binoculars,
+  waterfall: Waterfall,
   history: Castle,
 };
 

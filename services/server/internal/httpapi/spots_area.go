@@ -13,7 +13,7 @@ import (
 // map, and the response says how many there were, so the client can ask the user to zoom in.
 const spotsAreaLimit = 2000
 
-var spotCategories = []string{"playground", "dog_park", "monument", "viewpoint", "history"}
+var spotCategories = []string{"playground", "dog_park", "monument", "viewpoint", "waterfall", "history"}
 
 // spotsAreaQuery is the places in an area, in the chosen categories, at most $8 of them,
 // leaving out a retired place (docs/SPEC.md FR-15.1) unless the account $9 captured it. The area is two

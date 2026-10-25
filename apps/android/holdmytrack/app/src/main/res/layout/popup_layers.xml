@@ -163,6 +163,13 @@
             android:text="@string/layers_viewpoints" />
 
         <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/layers_spots_waterfall"
+            style="@style/Widget.HoldMyTrack.LayersOption.Check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/layers_waterfalls" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
             android:id="@+id/layers_spots_history"
             style="@style/Widget.HoldMyTrack.LayersOption.Check"
             android:layout_width="match_parent"

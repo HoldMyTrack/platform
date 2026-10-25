@@ -12,6 +12,9 @@ func TestCategory(t *testing.T) {
 		{map[string]string{"historic": "monument"}, "monument"},
 		{map[string]string{"historic": "memorial"}, "monument"},
 		{map[string]string{"tourism": "viewpoint"}, "viewpoint"},
+		{map[string]string{"waterway": "waterfall"}, "waterfall"},
+		{map[string]string{"natural": "waterfall"}, "waterfall"},
+		{map[string]string{"waterway": "waterfall", "tourism": "viewpoint"}, "viewpoint"},
 		{map[string]string{"historic": "castle"}, "history"},
 		{map[string]string{"historic": "ruins"}, "history"},
 		{map[string]string{"historic": "fort"}, "history"},
@@ -57,6 +60,7 @@ func TestParseFeature(t *testing.T) {
 		id           int64
 		category     string
 		placeName    string
+		geometry     string
 		wantParseErr bool
 	}{
 		{
@@ -86,6 +90,12 @@ func TestParseFeature(t *testing.T) {
 			ok:   true, typ: "relation", id: 9, category: "history",
 		},
 		{
+			// A waterfall's area is a circle around its anchor, whatever OSM drew.
+			name: "a waterfall outlined",
+			line: `{"type":"Feature","id":"a14","geometry":{"type":"Polygon","coordinates":[[[0,0],[2,0],[2,2],[0,2]]]},"properties":{"waterway":"waterfall"}}`,
+			ok:   true, typ: "way", id: 7, category: "waterfall", geometry: `{"type":"Point","coordinates":[1,1]}`,
+		},
+		{
 			name: "none of the categories",
 			line: `{"type":"Feature","id":"n1","geometry":{"type":"Point","coordinates":[1,2]},"properties":{"amenity":"bench"}}`,
 		},
@@ -109,7 +119,8 @@ func TestParseFeature(t *testing.T) {
 			t.Errorf("%s: ok = %v, want %v", c.name, ok, c.ok)
 			continue
 		}
-		if ok && (p.osmType != c.typ || p.osmID != c.id || p.category != c.category || p.name != c.placeName) {
+		if ok && (p.osmType != c.typ || p.osmID != c.id || p.category != c.category || p.name != c.placeName ||
+			(c.geometry != "" && p.geometry != c.geometry)) {
 			t.Errorf("%s: got %+v", c.name, p)
 		}
 	}

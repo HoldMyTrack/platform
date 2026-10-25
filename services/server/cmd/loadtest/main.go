@@ -421,7 +421,7 @@ func layers(mode string, spots bool, z int) ([]string, int) {
 const (
 	spotsInAreaMinZoom = 10
 	areaShare          = 3
-	areaCategories     = "playground,dog_park,monument,viewpoint,history"
+	areaCategories     = "playground,dog_park,monument,viewpoint,waterfall,history"
 )
 
 func asksArea(spots bool, z, roll int) bool {

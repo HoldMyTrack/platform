@@ -46,6 +46,8 @@ type ImportStats struct {
 	Skipped  int // features with no category, no usable id or no geometry
 	Changed  int // of Imported, places new, different from what was stored, or back from retired
 	Retired  int // places a planet import no longer saw (docs/SPEC.md FR-15.1)
+	// NearViewpoint counts the waterfalls left out for a viewpoint within viewpointNearM.
+	NearViewpoint int
 }
 
 // ErrTooManyRetired is Import refusing to retire more than maxRetiredShare of the live places.
@@ -81,6 +83,9 @@ func importPlaces(ctx context.Context, db DB, log *slog.Logger, r io.Reader, pla
 		return stats, fmt.Errorf("spots: start: %w", err)
 	}
 	var batch []place
+	// Waterfalls wait for the whole file, since a viewpoint near one can come after it.
+	var waterfalls []place
+	viewpoints := viewpointGrid{}
 	batches := 0
 	flush := func() error {
 		if len(batch) == 0 {
@@ -108,7 +113,14 @@ func importPlaces(ctx context.Context, db DB, log *slog.Logger, r io.Reader, pla
 			if perr != nil {
 				return stats, fmt.Errorf("spots: line %d: %w", line, perr)
 			}
-			if ok {
+			if ok && p.category == "viewpoint" {
+				if at, aok := anchor(p.geometry); aok {
+					viewpoints.add(at)
+				}
+			}
+			if ok && p.category == "waterfall" {
+				waterfalls = append(waterfalls, p)
+			} else if ok {
 				batch = append(batch, p)
 			} else {
 				stats.Skipped++
@@ -124,6 +136,17 @@ func importPlaces(ctx context.Context, db DB, log *slog.Logger, r io.Reader, pla
 		}
 		if err != nil {
 			return stats, fmt.Errorf("spots: read: %w", err)
+		}
+	}
+	for _, p := range waterfalls {
+		if at, _ := anchor(p.geometry); viewpoints.near(at, viewpointNearM) {
+			stats.NearViewpoint++
+			continue
+		}
+		if batch = append(batch, p); len(batch) == importBatch {
+			if err := flush(); err != nil {
+				return stats, err
+			}
 		}
 	}
 	if err := flush(); err != nil {
@@ -209,9 +232,10 @@ type feature struct {
 	Properties map[string]any  `json:"properties"`
 }
 
-// parseFeature reads one line. ok is false for a feature Import skips: none of the five
-// categories' tags, no OSM id, or no geometry. A line that isn't JSON at all is an error — the
-// file isn't what the recipe makes.
+// parseFeature reads one line. ok is false for a feature Import skips: none of the categories'
+// tags, no OSM id, or no geometry. A line that isn't JSON at all is an error — the file isn't
+// what the recipe makes. A waterfall's geometry becomes its anchor point, so its area is a circle
+// even where OSM outlines it.
 func parseFeature(raw []byte) (place, bool, error) {
 	// RFC 8142 starts each record with a record separator; osmium writes it by default.
 	raw = bytes.TrimLeft(raw, "\x1e \t\r\n")
@@ -234,12 +258,20 @@ func parseFeature(raw []byte) (place, bool, error) {
 	if category == "" || !idOK || len(f.Geometry) == 0 || string(f.Geometry) == "null" {
 		return place{}, false, nil
 	}
+	geometry := string(f.Geometry)
+	if category == "waterfall" {
+		at, ok := anchor(geometry)
+		if !ok {
+			return place{}, false, nil
+		}
+		geometry = pointGeometry(at)
+	}
 	return place{
 		category: category,
 		name:     strings.TrimSpace(tags["name"]),
 		address:  Address(tags),
 		text:     PlaceText(tags),
-		geometry: string(f.Geometry),
+		geometry: geometry,
 		osmType:  osmType,
 		osmID:    osmID,
 	}, true, nil
@@ -257,6 +289,9 @@ func Category(tags map[string]string) string {
 	}
 	if tags["tourism"] == "viewpoint" {
 		return "viewpoint"
+	}
+	if tags["waterway"] == "waterfall" || tags["natural"] == "waterfall" {
+		return "waterfall"
 	}
 	switch tags["leisure"] {
 	case "dog_park":
@@ -336,14 +371,15 @@ func parseOSMAttributes(props map[string]any) (string, int64, bool) {
 }
 
 // pointRadiusM is the radius of the circle standing in for the area of a place OSM maps as a
-// single point: roughly a small playground or a memorial with the ground around it.
+// single point: roughly a small playground or a memorial with the ground around it. A waterfall's
+// is waterfallRadiusM (radiusM).
 const pointRadiusM = 30
 
 // upsertPlaces inserts one batch, stamping each place with run, and reports how many rows it
 // wrote and how many of those changed: a place new, back from retired, or different in any
 // column from what was stored. The geometry becomes the spot's area: an outline as it is (made
 // valid, polygons only), anything else — a point, or the odd place mapped as a line — a
-// pointRadiusM circle around a point on it. A feature whose outline doesn't survive ST_MakeValid
+// radiusM circle around a point on it. A feature whose outline doesn't survive ST_MakeValid
 // is dropped. DISTINCT ON because one batch can't upsert the same row twice. `changed` reads
 // spots as they were before the statement: every part of one statement sees the same snapshot.
 func upsertPlaces(ctx context.Context, db DB, batch []place, run time.Time) (written, changed int, err error) {
@@ -352,11 +388,13 @@ func upsertPlaces(ctx context.Context, db DB, batch []place, run time.Time) (wri
 	descriptions, inscriptions, memorials := make([]string, n), make([]string, n), make([]string, n)
 	startDates, wikipedias := make([]string, n), make([]string, n)
 	geometries, osmTypes, osmIDs := make([]string, n), make([]string, n), make([]int64, n)
+	radii := make([]float64, n)
 	for i, p := range batch {
 		categories[i], names[i], addresses[i] = p.category, p.name, p.address
 		descriptions[i], inscriptions[i], memorials[i] = p.text.Description, p.text.Inscription, p.text.Memorial
 		startDates[i], wikipedias[i] = p.text.StartDate, p.text.Wikipedia
 		geometries[i], osmTypes[i], osmIDs[i] = p.geometry, p.osmType, p.osmID
+		radii[i] = radiusM(p.category)
 	}
 	err = db.QueryRow(ctx, `
 		WITH incoming AS (
@@ -369,12 +407,12 @@ func upsertPlaces(ctx context.Context, db DB, batch []place, run time.Time) (wri
 				       r.osm_type, r.osm_id,
 				       CASE WHEN ST_Dimension(g) = 2
 				            THEN ST_Multi(ST_CollectionExtract(ST_MakeValid(g), 3))
-				            ELSE ST_Multi(ST_Buffer(ST_PointOnSurface(g)::geography, $12)::geometry)
+				            ELSE ST_Multi(ST_Buffer(ST_PointOnSurface(g)::geography, r.radius)::geometry)
 				       END AS area
 				FROM unnest($1::text[], $2::text[], $3::text[], $4::text[], $5::text[], $6::text[],
-				            $7::text[], $8::text[], $9::text[], $10::text[], $11::bigint[])
+				            $7::text[], $8::text[], $9::text[], $10::text[], $11::bigint[], $12::float8[])
 				         AS r(category, name, address, description, inscription, memorial, start_date,
-				              wikipedia, geojson, osm_type, osm_id)
+				              wikipedia, geojson, osm_type, osm_id, radius)
 				CROSS JOIN LATERAL (SELECT ST_SetSRID(ST_GeomFromGeoJSON(r.geojson), 4326) AS g) geo
 			) rows
 			WHERE NOT ST_IsEmpty(area)
@@ -407,7 +445,7 @@ func upsertPlaces(ctx context.Context, db DB, batch []place, run time.Time) (wri
 		)
 		SELECT (SELECT count(*) FROM written), (SELECT n FROM changed)
 	`, categories, names, addresses, descriptions, inscriptions, memorials, startDates, wikipedias,
-		geometries, osmTypes, osmIDs, float64(pointRadiusM), run).Scan(&written, &changed)
+		geometries, osmTypes, osmIDs, radii, run).Scan(&written, &changed)
 	if err != nil {
 		return 0, 0, fmt.Errorf("spots: upsert places: %w", err)
 	}
