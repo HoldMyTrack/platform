@@ -18,7 +18,7 @@ Gates the public launch (`VISION.md` §7, §8.3).
 - [ ] Post concept renders to r/running, r/cycling, r/Garmin, r/Strava, r/FogOfWorld (`VISION.md` §8.1, §8.3).
 - [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 pre-launch actions and the controller's sign-off.
 - [ ] EU-region hosting for EU users.
-- [x] A privacy policy page, `/privacy` (`SPEC.md` FR-10.6). It names the email delivery provider only generically; name it once settled, and update the policy when EU-region hosting moves the data.
+- [x] A privacy policy page, `/privacy` (`SPEC.md` FR-10.6). Update it when EU-region hosting moves the data.
 - [x] Account deletion and data export, on the web and Android (`SPEC.md` FR-1.11, FR-1.12).
 - [x] Health Connect data-type declarations in the Play Console, scoped to what's used; filed 2026-10-07.
 
