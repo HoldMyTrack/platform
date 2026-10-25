@@ -75,12 +75,14 @@
     <string name="layers_dog_parks">Dog parks</string>
     <string name="layers_monuments">Monuments</string>
     <string name="layers_viewpoints">Mesmerizing views</string>
+    <string name="layers_waterfalls">Waterfalls</string>
     <string name="layers_history">Historic sites</string>
 
     <string name="spots_category_playground">Playground</string>
     <string name="spots_category_dog_park">Dog park</string>
     <string name="spots_category_monument">Monument</string>
     <string name="spots_category_viewpoint">Mesmerizing view</string>
+    <string name="spots_category_waterfall">Waterfall</string>
     <string name="spots_category_history">History</string>
     <string name="spots_since">Since %1$s</string>
     <string name="spots_copy_address">Copy address</string>

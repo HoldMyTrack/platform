@@ -77,12 +77,14 @@
     <string name="layers_dog_parks">Площадки для собак</string>
     <string name="layers_monuments">Памятники</string>
     <string name="layers_viewpoints">Завораживающие виды</string>
+    <string name="layers_waterfalls">Водопады</string>
     <string name="layers_history">Исторические места</string>
 
     <string name="spots_category_playground">Детская площадка</string>
     <string name="spots_category_dog_park">Площадка для собак</string>
     <string name="spots_category_monument">Памятник</string>
     <string name="spots_category_viewpoint">Завораживающий вид</string>
+    <string name="spots_category_waterfall">Водопад</string>
     <string name="spots_category_history">История</string>
     <string name="spots_since">С %1$s</string>
     <string name="spots_copy_address">Скопировать адрес</string>

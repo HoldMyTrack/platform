@@ -266,7 +266,7 @@ data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVer
 /**
  * One Spots place (`docs/SPEC.md` FR-15), as a tile's `spots` feature or `GET /v1/spots` carries
  * it: [category] is the wire name (`playground`, `dog_park`, `monument`, `viewpoint`,
- * `history`), [lon]/[lat] its anchor, and each text null when OSM has none. [wikipedia] is OSM's
+ * `waterfall`, `history`), [lon]/[lat] its anchor, and each text null when OSM has none. [wikipedia] is OSM's
  * tag in its "lang:Article title" form, the only one the server keeps.
  */
 data class Spot(
