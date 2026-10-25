@@ -9,6 +9,10 @@
 #   ./scripts/maintenance.sh off     # resume normal routing, recreate `web`
 #   ./scripts/maintenance.sh status  # print the current value
 #
+# `web` alone (--no-deps): a plain `up -d web` also recreates each service `web` depends on
+# whose definition changed, so after a pull, maintenance on would swap in the new release, run
+# its migrations and start a new `db` image ahead of the backup and steps that follow it.
+#
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -31,7 +35,7 @@ set_mode() {
   else
     echo "MAINTENANCE_MODE=${value}" >> "$ENV_FILE"
   fi
-  "${COMPOSE[@]}" up -d web
+  "${COMPOSE[@]}" up -d --no-deps web
 }
 
 case "$1" in
