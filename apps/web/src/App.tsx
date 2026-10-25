@@ -14,7 +14,7 @@ import { VersionBanner } from './ui/VersionBanner';
  */
 function AuthenticatedApp() {
   return (
-    <MapView initialPrivateLocationsOpen={openPrivateLocations} initialActivity={openActivity} />
+    <MapView initialPrivateLocationsOpen={openPrivateLocations} initialActivity={openActivity} initialTour={openTour} />
   );
 }
 
@@ -22,12 +22,15 @@ function AuthenticatedApp() {
  *  during a render — reading also strips it (so a refresh doesn't reopen the window), and a
  *  render can run more than once (StrictMode does exactly that in dev), which would see it
  *  already gone. */
-const openPrivateLocations = takePrivateLocationsParam();
+const openPrivateLocations = takeFlagParam('private-locations');
 
 /** `?activity=<id>&day=<YYYY-MM-DD>` is the map arriving on one activity — the /sync page's
  *  "View on map" (`SPEC.md` FR-3.9), which works out the activity's day on the server. Taken
  *  once and stripped, like `?private-locations`, so a refresh doesn't narrow the range again. */
 const openActivity = takeActivityParam();
+
+/** `?tour` is the map arriving to start the tour: the header's Take a tour from any other page (`SPEC.md` FR-4.18). Taken once and stripped, so a refresh doesn't start it again. */
+const openTour = takeFlagParam('tour');
 
 function takeActivityParam(): { id: string; day: string } | null {
   const params = new URLSearchParams(window.location.search);
@@ -41,10 +44,10 @@ function takeActivityParam(): { id: string; day: string } | null {
   return day !== null && /^\d{4}-\d{2}-\d{2}$/.test(day) ? { id, day } : null;
 }
 
-function takePrivateLocationsParam(): boolean {
+function takeFlagParam(name: string): boolean {
   const params = new URLSearchParams(window.location.search);
-  if (!params.has('private-locations')) return false;
-  params.delete('private-locations');
+  if (!params.has(name)) return false;
+  params.delete(name);
   const rest = params.toString();
   window.history.replaceState(null, '', window.location.pathname + (rest ? `?${rest}` : '') + window.location.hash);
   return true;

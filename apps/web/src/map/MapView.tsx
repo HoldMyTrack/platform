@@ -43,6 +43,8 @@ import { INITIAL_WINDOW_DAYS, useActivityDays } from '../ui/useActivityDays';
 import { useActivityList } from '../ui/useActivityList';
 import { useStories } from '../ui/useStories';
 import { useStory } from '../ui/useStory';
+import { TourLayer } from '../ui/tour/Tour';
+import { useTour } from '../ui/tour/useTour';
 import { t } from '../i18n';
 
 export interface MapViewProps {
@@ -50,6 +52,8 @@ export interface MapViewProps {
   initialPrivateLocationsOpen?: boolean;
   /** Mount on one activity, its day selected and it focused: `/?activity=&day=`, the /sync page's "View on map". */
   initialActivity?: { id: string; day: string } | null;
+  /** Start the tour once the map is ready: `/?tour`, the header's Take a tour from another page. */
+  initialTour?: boolean;
 }
 
 /**
@@ -57,7 +61,7 @@ export interface MapViewProps {
  * export and the popups over it. It composes the map's state (session.ts) with each feature's
  * hook; the hooks are called in the order their effects must run.
  */
-export function MapView({ initialPrivateLocationsOpen = false, initialActivity = null }: MapViewProps) {
+export function MapView({ initialPrivateLocationsOpen = false, initialActivity = null, initialTour = false }: MapViewProps) {
   // A demo account is read-only (docs/SPEC.md FR-2.1); `'email' in user` tells a DemoUser from an AuthUser.
   const { user } = useAuth();
   const isDemo = !('email' in user);
@@ -181,7 +185,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   );
 
   // A mode change never moves the camera.
-  const changeMapMode = useCallback((mode: MapMode) => dispatch({ type: 'modeChanged', mode }), []);
+  const setMapMode = useCallback((mode: MapMode) => dispatch({ type: 'modeChanged', mode }), []);
   const select = useSelectionActions(dispatch, activities, filteredActivities, checkedActivityIds, toolbarTargetIds, mapHiddenIds, fitToSelection);
   const focusActivity = select.focus;
   const clearFocus = select.clearFocus;
@@ -291,6 +295,30 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     [edit.close, awaitEdit, reloadActivities, photoLayer.photos.reload],
   );
 
+  const tour = useTour({
+    isDemo,
+    hasActivities: daysReady && map !== null ? earliest !== null : null,
+    requested: initialTour,
+    mode: mapMode,
+    setMode: setMapMode,
+    blocked: editOpen,
+  });
+  // The user's own picks, which may earn a first-time card; the tour's own mode changes don't.
+  const changeMapMode = useCallback(
+    (mode: MapMode) => {
+      setMapMode(mode);
+      tour.notice({ kind: 'mode', mode });
+    },
+    [setMapMode, tour.notice],
+  );
+  const changePanelTab = useCallback(
+    (tab: PanelTab) => {
+      stories.changePanelTab(tab);
+      tour.notice({ kind: 'tab', tab });
+    },
+    [stories.changePanelTab, tour.notice],
+  );
+
   useMapLayers(map, {
     initialFlavor: initial.flavor,
     flavor,
@@ -346,7 +374,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               onStoryAdded={stories.handleStoryAdded}
               stories={stories.storiesPanel}
               tab={panelTab}
-              onTabChange={stories.changePanelTab}
+              onTabChange={changePanelTab}
               map={map}
               onPrivateLocationsChanged={refresh.afterPrivateLocations}
               dateRange={{
@@ -412,6 +440,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
           )}
           {map && spots.openSpot && <SpotPopup map={map} spot={spots.openSpot} capturedAt={spots.capturedAt(spots.openSpot.id)} onClose={spots.closeSpot} />}
         </div>
+        {!editOpen && <TourLayer tour={tour} />}
       </div>
     </div>
   );

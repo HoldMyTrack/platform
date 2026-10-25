@@ -1,0 +1,271 @@
+/* The tour, its offer and tip, and the first-time cards (Tour.tsx). Fixed to the viewport, over
+   the header too: the tour points at the header's Upload menu and Take a tour link. */
+
+.tour {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.tour__blocker {
+  position: absolute;
+  inset: 0;
+}
+
+.tour__blocker--dim {
+  background: rgb(var(--fm-shadow-rgb) / 45%);
+}
+
+/* The ring around the anchor, and the dimmed screen as its shadow. */
+.tour__spotlight {
+  position: absolute;
+  border-radius: var(--fm-radius-lg);
+  box-shadow: 0 0 0 3px var(--fm-accent), 0 0 0 9999px rgb(var(--fm-shadow-rgb) / 45%);
+  pointer-events: none;
+  transition: left 0.2s ease, top 0.2s ease, width 0.2s ease, height 0.2s ease;
+}
+
+/* On a phone the step's subject has to stay readable around the sheet. */
+.tour--narrow .tour__blocker--dim {
+  background: rgb(var(--fm-shadow-rgb) / 25%);
+}
+
+.tour--narrow .tour__spotlight {
+  box-shadow: 0 0 0 3px var(--fm-accent), 0 0 0 9999px rgb(var(--fm-shadow-rgb) / 25%);
+}
+
+.tour-popover,
+.tour-card {
+  position: fixed;
+  z-index: 1001;
+  box-sizing: border-box;
+  padding: var(--fm-space-16) var(--fm-space-20);
+  border-radius: var(--fm-radius-lg);
+  background: var(--fm-surface);
+  color: var(--fm-ink);
+}
+
+.tour-popover {
+  width: min(22.5rem, calc(100vw - 24px));
+  box-shadow: var(--fm-shadow-xl);
+}
+
+.tour-card {
+  width: min(19rem, calc(100vw - 24px));
+  border-top: 3px solid var(--fm-accent);
+  box-shadow: var(--fm-shadow-lg);
+  z-index: 20;
+}
+
+.tour-popover--center {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.tour-popover--sheet,
+.tour-card--sheet {
+  left: 0;
+  right: 0;
+  width: auto;
+}
+
+.tour-popover--sheet-bottom,
+.tour-card--sheet-bottom {
+  bottom: 0;
+  border-radius: var(--fm-radius-lg) var(--fm-radius-lg) 0 0;
+  padding-bottom: var(--fm-space-24);
+}
+
+/* Under the header, which stays readable: the tour can point at it. */
+.tour-popover--sheet-top,
+.tour-card--sheet-top {
+  top: 56px;
+  margin: 0 var(--fm-space-8);
+}
+
+.tour-popover__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--fm-space-12);
+  margin-bottom: var(--fm-space-8);
+}
+
+.tour-popover__title {
+  margin: 0;
+  font-size: var(--fm-text-xl);
+  font-weight: var(--fm-weight-semibold);
+}
+
+.tour-popover__progress {
+  flex: none;
+  font-size: var(--fm-text-sm);
+  color: var(--fm-ink-muted);
+}
+
+.tour-popover__body {
+  margin: 0;
+  font-size: var(--fm-text-lg);
+  line-height: 1.5;
+  color: var(--fm-ink-secondary);
+}
+
+.tour-popover__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--fm-space-8);
+  margin-top: var(--fm-space-16);
+}
+
+.tour-button {
+  padding: var(--fm-space-6) var(--fm-space-12);
+  border: 1px solid var(--fm-border-strong);
+  border-radius: var(--fm-radius-md);
+  background: var(--fm-surface);
+  color: var(--fm-ink);
+  font: inherit;
+  font-size: var(--fm-text-md);
+  cursor: pointer;
+}
+
+.tour-button:hover {
+  background: rgb(var(--fm-ink-rgb) / 6%);
+}
+
+.tour-button--primary {
+  border-color: var(--fm-accent);
+  background: var(--fm-accent);
+  color: var(--fm-on-accent);
+  font-weight: var(--fm-weight-semibold);
+}
+
+.tour-button--primary:hover {
+  border-color: var(--fm-accent-hover);
+  background: var(--fm-accent-hover);
+}
+
+/* Skip sits apart, at the start of the row. */
+.tour-button--quiet {
+  margin-right: auto;
+  border-color: transparent;
+  color: var(--fm-ink-muted);
+}
+
+.tour-button--link {
+  border-color: transparent;
+  color: var(--fm-accent-strong);
+}
+
+.tour-card__close {
+  padding: 0 var(--fm-space-4);
+  border: 0;
+  background: none;
+  color: var(--fm-ink-muted);
+  font-size: var(--fm-text-xl);
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tour-arrow {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: -6px;
+  background: var(--fm-surface);
+  transform: rotate(45deg);
+}
+
+.tour-arrow--below {
+  top: 0;
+}
+
+.tour-arrow--above {
+  bottom: 0;
+}
+
+.tour-arrow--right {
+  left: 0;
+}
+
+.tour-arrow--left {
+  right: 0;
+}
+
+.tour-card .tour-arrow--below {
+  top: -2px;
+  background: var(--fm-accent);
+}
+
+.tour-offer {
+  position: fixed;
+  left: 50%;
+  bottom: var(--fm-space-24);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-16);
+  max-width: calc(100vw - 24px);
+  box-sizing: border-box;
+  padding: var(--fm-space-12) var(--fm-space-12) var(--fm-space-12) var(--fm-space-16);
+  border-left: 4px solid var(--fm-accent);
+  border-radius: var(--fm-radius-lg);
+  background: var(--fm-surface);
+  color: var(--fm-ink);
+  box-shadow: var(--fm-shadow-lg);
+  font-size: var(--fm-text-lg);
+  transform: translateX(-50%);
+}
+
+.tour-offer__actions {
+  display: flex;
+  flex: none;
+  gap: var(--fm-space-8);
+}
+
+.tour-tip {
+  position: fixed;
+  z-index: 1001;
+  width: 13.75rem;
+  box-sizing: border-box;
+  padding: var(--fm-space-10) var(--fm-space-12);
+  border-radius: var(--fm-radius-md);
+  background: var(--fm-ink);
+  color: var(--fm-surface);
+  box-shadow: var(--fm-shadow-lg);
+  font-size: var(--fm-text-md);
+}
+
+.tour-tip__arrow {
+  position: absolute;
+  top: -6px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  background: var(--fm-ink);
+  transform: rotate(45deg);
+}
+
+/* On a phone the offer stacks, above the panel's peek strip. */
+@media (max-width: 768px) {
+  .tour-offer {
+    left: 12px;
+    right: 12px;
+    bottom: auto;
+    top: 72px;
+    flex-direction: column;
+    align-items: stretch;
+    transform: none;
+  }
+
+  .tour-offer__actions {
+    justify-content: flex-end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tour__spotlight {
+    transition: none;
+  }
+}
