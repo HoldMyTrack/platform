@@ -42,7 +42,7 @@ func TestRenderApp(t *testing.T) {
 	rec = httptest.NewRecorder()
 	r.RenderApp(rec, AppPage{PageData: PageData{Title: "Map", Path: "/", User: user}, ViteDev: true})
 	body = rec.Body.String()
-	for _, want := range []string{`src="/@vite/client"`, `src="/src/main.tsx"`, "/@react-refresh"} {
+	for _, want := range []string{`src="/@vite/client"`, `src="/src/main.tsx"`, `src="/static/vite-preamble.js`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("dev: missing %q", want)
 		}

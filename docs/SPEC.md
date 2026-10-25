@@ -57,7 +57,7 @@ On the web, sign-in, sign-up, password reset and verification are server-rendere
 
 ### FR-1.2 Sign in
 
-- An unknown email, an account with no password and a wrong password get the same error, so sign-in can't reveal which emails have accounts.
+- An unknown email, an account with no password and a wrong password get the same error in the same time, so sign-in can't reveal which emails have accounts.
 - After 10 failed sign-ins for one email, or 50 from one address, within 15 minutes, sign-in is refused before the password is checked, even the right one, until the window passes.
 
 ### FR-1.3 Sign out

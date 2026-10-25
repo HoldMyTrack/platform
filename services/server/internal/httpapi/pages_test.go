@@ -170,7 +170,7 @@ func TestAuthPagesRenderSignedOut(t *testing.T) {
 	}{
 		{"/signin", []string{`action="/signin"`, `action="/demo"`, `href="/forgot"`, `href="/signup"`, `data-password-reveal hidden`, "password.js"}, []string{"Continue with Google", `role="alert"`}},
 		{"/signin?error=google", []string{"Couldn&#39;t sign in with Google. Please try again."}, nil},
-		{"/signup", []string{`action="/signup"`, `name="timezone"`, "Intl.DateTimeFormat", `data-password-reveal hidden`, "password.js"}, []string{"Back to the map"}},
+		{"/signup", []string{`action="/signup"`, `name="timezone"`, "auth-timezone.js", `data-password-reveal hidden`, "password.js"}, []string{"Back to the map"}},
 		{"/forgot", []string{`action="/forgot"`, "Send reset link"}, nil},
 		{"/reset?token=abc", []string{`action="/reset"`, `name="token" value="abc"`, `data-password-reveal hidden`, "password.js"}, nil},
 		{"/reset", []string{"This reset link is invalid or has expired.", `href="/forgot"`}, []string{`action="/reset"`, `data-password-reveal`}},
@@ -245,13 +245,13 @@ func TestAuthFormsRequireSameOrigin(t *testing.T) {
 }
 
 // Every response forbids framing — a framed page's buttons could be clicked through from
-// another site — and type sniffing.
+// another site — inline scripts and type sniffing.
 func TestResponsesCarrySecurityHeaders(t *testing.T) {
 	s := newPagesTestServer(t)
 	for _, path := range []string{"/signin", "/v1/auth/me", "/no-such-page"} {
 		rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodGet, path, nil))
 		h := rec.Header()
-		if h.Get("Content-Security-Policy") != "frame-ancestors 'none'" || h.Get("X-Frame-Options") != "DENY" || h.Get("X-Content-Type-Options") != "nosniff" {
+		if !strings.Contains(h.Get("Content-Security-Policy"), "script-src 'self';") || !strings.Contains(h.Get("Content-Security-Policy"), "frame-ancestors 'none'") || h.Get("X-Frame-Options") != "DENY" || h.Get("X-Content-Type-Options") != "nosniff" {
 			t.Errorf("%s: headers %v", path, h)
 		}
 	}
@@ -433,7 +433,7 @@ func TestSignInOffersProvidersOnlyWhenConfigured(t *testing.T) {
 			t.Errorf("%s: no Facebook button with Facebook configured", path)
 		}
 		// The browser's timezone rides along for an account a provider creates (FR-1.9, FR-1.10).
-		if !strings.Contains(body, "'?tz=' + encodeURIComponent") {
+		if !strings.Contains(body, "auth-timezone.js") {
 			t.Errorf("%s: provider links don't add ?tz=", path)
 		}
 	}

@@ -119,9 +119,11 @@ func (d *dbTest) newAccount(demo bool) account {
 			}
 		})
 	}
-	if err := d.pool.QueryRow(ctx,
-		`INSERT INTO sessions (user_id, expires_at) VALUES ($1, NOW() + INTERVAL '1 hour') RETURNING id`,
-		a.id).Scan(&a.session); err != nil {
+	var hash []byte
+	a.session, hash = newToken()
+	if _, err := d.pool.Exec(ctx,
+		`INSERT INTO sessions (token_hash, user_id, expires_at) VALUES ($1, $2, NOW() + INTERVAL '1 hour')`,
+		hash, a.id); err != nil {
 		d.t.Fatalf("create session: %v", err)
 	}
 	return a

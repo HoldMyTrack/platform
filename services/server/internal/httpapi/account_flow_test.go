@@ -85,10 +85,7 @@ func TestAccountFlow(t *testing.T) {
 	d.decode(d.do(account{}, "POST", "/v1/auth/login", map[string]any{"email": email, "password": password}), http.StatusOK, nil)
 
 	d.decode(d.do(account{}, "POST", "/v1/auth/forgot-password", map[string]any{"email": email}), http.StatusOK, nil)
-	var token string
-	if err := d.pool.QueryRow(ctx, `SELECT id FROM password_resets WHERE user_id = $1`, me.id).Scan(&token); err != nil {
-		t.Fatal(err)
-	}
+	token := d.mailedToken(email, "/reset")
 	d.decode(d.do(account{}, "POST", "/v1/auth/reset-password", map[string]any{"token": token, "password": "another long password"}), http.StatusOK, nil)
 	if rec := d.do(account{}, "POST", "/v1/auth/login", map[string]any{"email": email, "password": password}); rec.Code != http.StatusUnauthorized {
 		t.Fatalf("old password after reset: %d", rec.Code)
@@ -102,7 +99,7 @@ func TestDemoStart(t *testing.T) {
 	var demo authResponseWithSession
 	d.decode(d.do(account{}, "POST", "/v1/auth/demo", nil), http.StatusCreated, &demo)
 	t.Cleanup(func() {
-		if _, err := d.pool.Exec(context.Background(), `DELETE FROM sessions WHERE id = $1`, demo.SessionToken); err != nil {
+		if _, err := d.pool.Exec(context.Background(), `DELETE FROM sessions WHERE token_hash = $1`, tokenHash(demo.SessionToken)); err != nil {
 			t.Errorf("delete demo session: %v", err)
 		}
 	})

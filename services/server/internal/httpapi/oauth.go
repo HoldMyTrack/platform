@@ -156,10 +156,10 @@ func (s *Server) createHandoff(ctx context.Context, userID, challenge string) (s
 	if _, err := s.pool.Exec(ctx, `DELETE FROM auth_handoffs WHERE expires_at < NOW()`); err != nil {
 		return "", err
 	}
-	var code string
-	err := s.pool.QueryRow(ctx, `
-		INSERT INTO auth_handoffs (user_id, challenge, expires_at) VALUES ($1, $2, $3) RETURNING id
-	`, userID, challenge, time.Now().Add(handoffTTL)).Scan(&code)
+	code, hash := newToken()
+	_, err := s.pool.Exec(ctx, `
+		INSERT INTO auth_handoffs (token_hash, user_id, challenge, expires_at) VALUES ($1, $2, $3, $4)
+	`, hash, userID, challenge, time.Now().Add(handoffTTL))
 	return code, err
 }
 
@@ -189,8 +189,8 @@ func (s *Server) handleAuthHandoff(w http.ResponseWriter, r *http.Request) {
 	var userID, challenge string
 	var expiresAt time.Time
 	err := s.pool.QueryRow(r.Context(), `
-		DELETE FROM auth_handoffs WHERE id = $1 RETURNING user_id, challenge, expires_at
-	`, req.Code).Scan(&userID, &challenge, &expiresAt)
+		DELETE FROM auth_handoffs WHERE token_hash = $1 RETURNING user_id, challenge, expires_at
+	`, tokenHash(req.Code)).Scan(&userID, &challenge, &expiresAt)
 	if errors.Is(err, pgx.ErrNoRows) {
 		invalid("unknown or already used code")
 		return

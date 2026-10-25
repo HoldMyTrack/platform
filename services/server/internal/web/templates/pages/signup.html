@@ -7,11 +7,8 @@
       <label class="auth-card__field"><span>{{t "auth.email"}}</span><input type="email" name="email" value="{{.Email}}" required autocomplete="email" /></label>
       <div class="auth-card__field"><label for="password">{{t "auth.password"}}</label><span class="auth-card__password"><input type="password" id="password" name="password" required minlength="8" autocomplete="new-password" />{{template "password-reveal"}}</span></div>
       {{/* The account's starting timezone (FR-1.7) — the browser knows it, the server can't.
-           Without the script the account starts on UTC and Settings asks anyway. */}}
+           Without static/auth-timezone.js the account starts on UTC and Settings asks anyway. */}}
       <input type="hidden" name="timezone" id="signup-timezone" />
-      <script>
-        try { document.getElementById('signup-timezone').value = Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (e) {}
-      </script>
       {{with .Error}}<p class="auth-card__error" role="alert">{{.}}</p>{{end}}
       <button type="submit" class="auth-card__submit">{{t "signup.submit"}}</button>
     </form>
@@ -20,4 +17,5 @@
   </div>
 </main>
 <script src="{{asset "password.js"}}" defer></script>
+<script src="{{asset "auth-timezone.js"}}" defer></script>
 {{end}}{{end}}

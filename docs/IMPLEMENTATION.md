@@ -80,7 +80,7 @@ The queue (§4.1); there is no broker. A running job stays `pending`, with `lock
 
 ### 3.9 `sessions`
 
-The primary key, a `gen_random_uuid()`, is the cookie value, with no hashed-token layer, which is judged enough for the current threat model. Expiry is checked in SQL on every read.
+The cookie value is a random UUID (`newToken`); the row keeps only its SHA-256, `token_hash`, the primary key, so a copy of the database or a backup holds nothing that signs in. Expiry is checked in SQL on every read.
 
 ### 3.10 `password_resets`
 
@@ -112,7 +112,7 @@ Google, Facebook and Apple links (ADR-0015), keyed by the provider's stable `sub
 
 ### 3.18 `auth_handoffs`
 
-One-time codes for a native app's browser sign-in (§4.9). Redeeming deletes the row in the statement that reads it; expired rows are purged on the next insert, so there is no sweeper.
+One-time codes for a native app's browser sign-in (§4.9), hashed like `sessions`. Redeeming deletes the row in the statement that reads it; expired rows are purged on the next insert, so there is no sweeper.
 
 ### 3.19 `stories` / `story_activities`
 
@@ -437,7 +437,7 @@ sequenceDiagram
 
 `internal/web` renders; `httpapi` decides the page, the user (`pageAccount`, an optional-auth lookup) and the language. Signed-out pages are cached per page, path, language and `hmt_app` cookie (`RenderPublic`) and sent with `Vary: Cookie, Accept-Language`; the rest are `no-store`.
 
-**Security.** No page may be framed (`frame-ancestors 'none'`), since a framed signed-in page's clicks are same-origin. Page forms require `Origin`, or `Referer` when the browser omits it, to match `APP_BASE_URL`; `/v1` writes refuse a foreign `Origin` and accept none, as the native apps send none. This stops an auto-submitted `text/plain` form from signing a victim's browser into an attacker's account through `/v1/auth/login`, which `SameSite=Lax` doesn't. Auth pages and JSON endpoints call the same cores, which return an `accountError` (a status and a catalog key) for what a person should see.
+**Security.** No page may be framed (`frame-ancestors 'none'`), since a framed signed-in page's clicks are same-origin. Scripts run only from this origin's files (`script-src 'self'`), so a template keeps its script in `static/`, never inline; `internal/web`'s tests refuse an inline one. Page forms require `Origin`, or `Referer` when the browser omits it, to match `APP_BASE_URL`; `/v1` writes refuse a foreign `Origin` and accept none, as the native apps send none. This stops an auto-submitted `text/plain` form from signing a victim's browser into an attacker's account through `/v1/auth/login`, which `SameSite=Lax` doesn't. Auth pages and JSON endpoints call the same cores, which return an `accountError` (a status and a catalog key) for what a person should see.
 
 **The React shell** (`templates/app/app.html`) is `/` for a signed-in account. The handler redirects first (no session, unverified, no Country), so the first-run gate is the server's. Every sign-in, demo start and sign-out redirects to a bare `/`, so no session inherits another's camera. The Go image never sees Vite's manifest, so `vite.config.ts` gives the entry and its stylesheet fixed names, which the shell links with the build version and Caddy serves `no-cache`.
 

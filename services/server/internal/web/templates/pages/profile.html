@@ -44,33 +44,7 @@
     {{/* A day's numbers are its cell's hover tooltip, which a touch screen never shows: a tap
          (or click) shows the cell's own title under its year and rings the cell, one day at
          a time; tapping it again hides it. Today's cell is scrolled into view. */}}
-    <script>
-      (function () {
-        var current = null;
-        function select(cell) {
-          if (current) {
-            current.classList.remove('year-grid__cell--selected');
-            current.closest('.year-grid').querySelector('.year-grid__detail').hidden = true;
-          }
-          current = cell;
-          if (!cell) return;
-          cell.classList.add('year-grid__cell--selected');
-          var detail = cell.closest('.year-grid').querySelector('.year-grid__detail');
-          detail.textContent = cell.title;
-          detail.hidden = false;
-        }
-        document.querySelectorAll('.year-grid__cell[title]').forEach(function (cell) {
-          cell.addEventListener('click', function () { select(current === cell ? null : cell); });
-        });
-        // A year is wider than a phone: open this year's on today rather than on January.
-        var today = document.querySelector('.year-grid__cell[data-today]');
-        if (today) {
-          var body = today.closest('.year-grid__body');
-          var past = today.getBoundingClientRect().right - body.getBoundingClientRect().right;
-          if (past > 0) body.scrollLeft += past + 24;
-        }
-      })();
-    </script>
+    <script src="{{asset "profile.js"}}" defer></script>
 
     <p class="profile__legend">
       <span>{{.Legend}}</span>
@@ -104,18 +78,6 @@
          line is the tap (or click) fallback: the bar's own title, shown under the chart;
          tapping the same bar again hides it. */}}
     <p class="trends__detail" id="trends-detail" role="status" hidden></p>
-    <script>
-      (function () {
-        var detail = document.getElementById('trends-detail'), current = null;
-        document.querySelectorAll('.trends__bar').forEach(function (bar) {
-          bar.addEventListener('click', function () {
-            current = current === bar ? null : bar;
-            detail.textContent = current ? bar.title : '';
-            detail.hidden = !current;
-          });
-        });
-      })();
-    </script>
     {{else}}
     <p class="profile__subtext">{{t "profile.trends_empty"}}</p>
     {{end}}

@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/mail"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jackc/pgx/v5"
@@ -351,11 +352,11 @@ func (s *Server) createAccount(ctx context.Context, rawEmail, password, timezone
 // account needs one (re)sent. lang is the language the email is written in.
 func (s *Server) sendVerificationEmail(ctx context.Context, userID, email, lang string) error {
 	expiresAt := time.Now().Add(emailVerificationTTL)
-	var tokenID string
-	if err := s.pool.QueryRow(ctx,
-		`INSERT INTO email_verifications (user_id, email, expires_at) VALUES ($1, $2, $3) RETURNING id`,
-		userID, email, expiresAt,
-	).Scan(&tokenID); err != nil {
+	tokenID, hash := newToken()
+	if _, err := s.pool.Exec(ctx,
+		`INSERT INTO email_verifications (token_hash, user_id, email, expires_at) VALUES ($1, $2, $3, $4)`,
+		hash, userID, email, expiresAt,
+	); err != nil {
 		return err
 	}
 
@@ -401,13 +402,32 @@ func (s *Server) checkPassword(ctx context.Context, ip, rawEmail, password strin
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
 		return "", err
 	}
-	if errors.Is(err, pgx.ErrNoRows) || hash == nil || bcrypt.CompareHashAndPassword(hash, []byte(password)) != nil {
+	if !passwordMatches(hash, password) {
 		signInFailuresByEmail.hit(email)
 		signInFailuresByIP.hit(ip)
 		return "", accountFailure(http.StatusUnauthorized, "error.invalid_credentials")
 	}
 	return userID, nil
 }
+
+// passwordMatches reports whether password matches hash. A nil hash (no such email, or a row
+// with no password) is compared against dummyPasswordHash and fails, so a caller can't tell a
+// registered email from the time an answer takes.
+func passwordMatches(hash []byte, password string) bool {
+	if hash == nil {
+		bcrypt.CompareHashAndPassword(dummyPasswordHash(), []byte(password)) //nolint:errcheck // timing only
+		return false
+	}
+	return bcrypt.CompareHashAndPassword(hash, []byte(password)) == nil
+}
+
+var dummyPasswordHash = sync.OnceValue(func() []byte {
+	hash, err := bcrypt.GenerateFromPassword([]byte("not anyone's password"), bcrypt.DefaultCost)
+	if err != nil {
+		panic(err)
+	}
+	return hash
+})
 
 // signInFailuresByEmail and signInFailuresByIP count failed sign-ins (checkPassword). Per
 // email, 10 in 15 minutes: guessing one account's password from many addresses stays at
@@ -433,7 +453,7 @@ func (s *Server) handleLogout(w http.ResponseWriter, r *http.Request) {
 // logout above and the pages' Sign out form (pages.go's handleLogoutPage).
 func (s *Server) endSession(w http.ResponseWriter, r *http.Request) {
 	if sessionID, ok := sessionIDFromRequest(r); ok {
-		if _, err := s.pool.Exec(r.Context(), `DELETE FROM sessions WHERE id = $1`, sessionID); err != nil {
+		if _, err := s.pool.Exec(r.Context(), `DELETE FROM sessions WHERE token_hash = $1`, tokenHash(sessionID)); err != nil {
 			s.log.Error("session delete failed", "err", err)
 		}
 	}

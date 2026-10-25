@@ -16,10 +16,8 @@ func TestAuthHandoffStartsSession(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	verifier := "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8" // 32 bytes, base64url: PKCE's 43 characters
-	var code string
-	if err := d.pool.QueryRow(context.Background(), `
-		INSERT INTO auth_handoffs (user_id, challenge, expires_at) VALUES ($1, $2, NOW() + INTERVAL '1 minute') RETURNING id
-	`, me.id, testChallenge(verifier)).Scan(&code); err != nil {
+	code, err := d.srv.createHandoff(context.Background(), me.id, testChallenge(verifier))
+	if err != nil {
 		t.Fatal(err)
 	}
 	var got struct {

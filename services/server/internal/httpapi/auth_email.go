@@ -80,11 +80,11 @@ func (s *Server) sendPasswordReset(r *http.Request, email string) error {
 	}
 
 	expiresAt := time.Now().Add(passwordResetTTL)
-	var tokenID string
-	if err := s.pool.QueryRow(ctx,
-		`INSERT INTO password_resets (user_id, expires_at) VALUES ($1, $2) RETURNING id`,
-		userID, expiresAt,
-	).Scan(&tokenID); err != nil {
+	tokenID, hash := newToken()
+	if _, err := s.pool.Exec(ctx,
+		`INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES ($1, $2, $3)`,
+		hash, userID, expiresAt,
+	); err != nil {
 		return err
 	}
 
@@ -127,9 +127,9 @@ func (s *Server) resetPassword(ctx context.Context, token, password string) (str
 	}
 	var userID string
 	err := s.pool.QueryRow(ctx,
-		`SELECT user_id FROM password_resets WHERE id = $1 AND expires_at > NOW()`, token,
+		`SELECT user_id FROM password_resets WHERE token_hash = $1 AND expires_at > NOW()`, tokenHash(token),
 	).Scan(&userID)
-	if errors.Is(err, pgx.ErrNoRows) || isInvalidTextRepresentation(err) {
+	if errors.Is(err, pgx.ErrNoRows) {
 		return "", accountFailure(http.StatusBadRequest, "error.reset_link_invalid")
 	}
 	if err != nil {
@@ -200,10 +200,10 @@ func (s *Server) verifyEmail(ctx context.Context, token string) (string, error) 
 	err = tx.QueryRow(ctx, `
 		SELECT ev.user_id, ev.email, u.email
 		FROM email_verifications ev JOIN users u ON u.id = ev.user_id
-		WHERE ev.id = $1 AND ev.expires_at > NOW()
+		WHERE ev.token_hash = $1 AND ev.expires_at > NOW()
 		FOR UPDATE OF u
-	`, token).Scan(&userID, &email, &current)
-	if errors.Is(err, pgx.ErrNoRows) || isInvalidTextRepresentation(err) {
+	`, tokenHash(token)).Scan(&userID, &email, &current)
+	if errors.Is(err, pgx.ErrNoRows) {
 		return "", accountFailure(http.StatusBadRequest, "error.verify_link_invalid")
 	}
 	if err != nil {
