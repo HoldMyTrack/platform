@@ -24,9 +24,8 @@ okhttp = "4.12.0"
 # Sign in with Google (docs/IMPLEMENTATION.md §4.9): Credential Manager's account picker,
 # its Play services backend, and the Google ID-token credential type it returns.
 credentials = "1.6.0"
-# Not 1.2.1: that release is compiled with Kotlin 2.4 metadata, which this project's Kotlin
-# compiler (2.2, AGP's built-in) can't read.
-googleId = "1.2.0"
+# 1.2.1 is compiled with Kotlin 2.4 metadata, which needs the compiler `kotlin` sets.
+googleId = "1.2.1"
 # Custom Tabs, for Sign in with Facebook through the server's own web flow in a browser tab —
 # instead of Meta's SDK (docs/IMPLEMENTATION.md §4.9).
 browser = "1.10.0"
@@ -40,11 +39,13 @@ recyclerview = "1.2.1"
 fragment = "1.8.9"
 # Unit tests for the panel's pure logic (src/test).
 junit = "4.13.2"
-# The API's request and response bodies as typed classes (net/Wire.kt). The compiler plugin must
-# match the Kotlin compiler AGP builds with (2.2.10), and 1.9.0 is the last runtime built with
-# Kotlin 2.2: 1.10.0 needs 2.3's metadata, which this compiler can't read.
-kotlin = "2.2.10"
-serialization = "1.9.0"
+# `kotlin` is the app's Kotlin compiler, not only the serialization plugin's version: the plugin
+# puts the Kotlin Gradle plugin at this version on the build classpath, where it outranks AGP's
+# built-in one (2.2.10 in AGP 9.4). Change it on purpose, never as a plugin bump in passing.
+# The serialization runtime (net/Wire.kt's bodies) and googleId need a compiler at least as new
+# as the Kotlin they were built with.
+kotlin = "2.4.21"
+serialization = "1.12.0"
 # The test that holds net/Wire.kt to the API contract reads services/server/api's YAML.
 snakeyaml = "2.7"
 # The end-to-end flows on an emulator (src/androidTest): AndroidX Test's runner and JUnit 4

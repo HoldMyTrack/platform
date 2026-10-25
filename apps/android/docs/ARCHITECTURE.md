@@ -21,7 +21,7 @@ The Android app is Path 2 (ADR-0001), reading Health Connect in the foreground; 
 
 ## 2. Stack
 
-* **Build**: Kotlin through AGP 9.4.1's built-in support (compiler 2.2), Gradle 9.8.2 through the wrapper, JDK 17 or 21, `compileSdk` and `targetSdk` 37. On the host, not in a container: the SDK, `adb` and the physical device Health Connect testing needs live there (`apps/android/README.md`).
+* **Build**: Kotlin through AGP 9.4.1's built-in support, compiler 2.4 (set by the serialization plugin's version), Gradle 9.8.2 through the wrapper, JDK 17 or 21, `compileSdk` and `targetSdk` 37. On the host, not in a container: the SDK, `adb` and the physical device Health Connect testing needs live there (`apps/android/README.md`).
 * **Map**: MapLibre Native 13.7.1, which reads `pmtiles://` natively (since 11.8.0), so the served style (root `docs/ARCHITECTURE.md` §2.1) is consumed unmodified, archive URL included, with no client-side PMTiles reader. Fog arrives as veil polygons the server traced (root `docs/IMPLEMENTATION.md` §4.2), so this client has no shader either.
 * **Network**: OkHttp 4.12.0, declared directly because the app hands its own client to MapLibre, and pinned to what MapLibre resolves. Bodies are `kotlinx.serialization` classes held to the API contract by a unit test.
 * **Health data**: `androidx.health.connect:connect-client` 1.1.0, the version the device measurements ran against.
