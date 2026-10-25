@@ -1,5 +1,6 @@
 # Weekly version updates, one grouped pull request per ecosystem (docs/DEVELOPMENT.md, "CI").
-# Security updates arrive on their own as soon as an advisory is published.
+# A group takes minor and patch updates only, so a major version arrives as its own pull
+# request. Security updates arrive on their own as soon as an advisory is published.
 version: 2
 updates:
   - package-ecosystem: gomod
@@ -9,10 +10,9 @@ updates:
   - package-ecosystem: npm
     directory: /apps/web
     schedule: { interval: weekly }
-    groups: { npm: { patterns: ["*"] } }
-  # The group takes minor and patch updates only, so a major version arrives as its own pull
-  # request. The serialization plugin sets the app's Kotlin compiler (libs.versions.toml), so it
-  # always does. The ignored ones are pinned on purpose there, each with its reason; patches and
+    groups: { npm: { patterns: ["*"], update-types: [minor, patch] } }
+  # The serialization plugin sets the app's Kotlin compiler (libs.versions.toml), so it always
+  # arrives on its own. The ignored ones are pinned on purpose there, each with its reason; patches and
   # security fixes still come.
   - package-ecosystem: gradle
     directory: /apps/android/holdmytrack
@@ -35,14 +35,18 @@ updates:
   - package-ecosystem: docker
     directories: [/services/server, /apps/web]
     schedule: { interval: weekly }
-    groups: { docker: { patterns: ["*"] } }
+    groups: { docker: { patterns: ["*"], update-types: [minor, patch] } }
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
-    groups: { actions: { patterns: ["*"] } }
-  # compose.yaml and compose.prod.yml, one pull request per image. A postgis/postgis pull request is the signal to run
-  # docs/DEPLOY.md §9, never one to merge alone: a new tag changes the OS under the data, and a
-  # new Postgres major can't open it at all.
+    groups: { actions: { patterns: ["*"], update-types: [minor, patch] } }
+  # compose.yaml and compose.prod.yml, one pull request per image. A postgis/postgis pull request
+  # is the signal to run docs/DEPLOY.md §9, never one to merge alone: a new tag changes the OS
+  # under the data. A new Postgres major can't open the data directory at all, which is a dump
+  # and restore, so those aren't proposed.
   - package-ecosystem: docker-compose
     directory: /
     schedule: { interval: weekly }
+    ignore:
+      - dependency-name: postgis/postgis
+        update-types: ["version-update:semver-major"]
