@@ -232,7 +232,7 @@ services:
   # Docker socket to find and tail the containers, which makes it as trusted as root here, so
   # its image is pinned.
   alloy:
-    image: grafana/alloy:v1.20.1
+    image: grafana/alloy:v1.21.1
     profiles: ["monitoring"]
     restart: unless-stopped
     logging: *logging
@@ -275,7 +275,7 @@ services:
   # token, and `backup:`, the backup bucket with a token scoped to it alone. NO_CHECK_BUCKET
   # because a bucket-scoped R2 token can't list or create buckets.
   rclone:
-    image: rclone/rclone:1.75.1
+    image: rclone/rclone:1.75.2
     profiles: ["ops"]
     environment:
       RCLONE_CONFIG: /dev/null
