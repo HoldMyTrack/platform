@@ -136,7 +136,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 | # | Measures in place | Still missing | Residual |
 | --- | --- | --- | --- |
 | R1 | Private locations applied at ingest, before tracks or tiles are stored (ADR-0002). TLS everywhere through Caddy. Separate R2 token for backups, with no access to the app bucket. No public profiles, so there is nothing to scrape. | Encryption at rest of the VPS disk, which holds the database and the newest dumps (section 7) | Low |
-| R2 | Originals sit in a private R2 bucket, never publicly addressable. Exports and Story copies are built from clipped tracks, never from originals. | A decision on how long originals are kept, after launch (`docs/ROADMAP.md`, "After launch"); a check that the bucket has no public access | Medium |
+| R2 | Originals sit in a private R2 bucket, never publicly addressable. Exports and Story copies are built from clipped tracks, never from originals. | A decision on how long originals are kept, after launch (`docs/ROADMAP.md`, "After launch") | Medium |
 | R3 | The tile and API endpoints take the user from the session, never from a parameter. Server tests check handlers against the API contract. | A test that one account cannot read another's activities, tiles or photos, if none exists | Low |
 | R4 | bcrypt password hashes. HttpOnly, SameSite=Lax session cookie for up to 30 days. Sign-in rate limits. Email verification. | Optional second factor; not needed for launch | Low |
 | R5 | The admin panel never shows tracks (section 2). Admin rights can be set only from the server's own command line. The daily statistics hold only aggregates (section 2). | An audit log, needed once an admin can see or change a track | Low |
@@ -155,7 +155,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 - [x] Assess the transfers to the US (R7, section 8).
 - [x] R2 encrypts every object and its metadata at rest with AES-256, by default (Cloudflare's R2 data security docs, checked 2026-10-25).
 - [ ] Encrypt the database at rest: DigitalOcean documents encryption at rest for Volumes, not for a Droplet's own disk, so the database and the dumps kept on the server would move to a Volume (R1).
-- [ ] Confirm in the Cloudflare dashboard that neither R2 bucket has an `r2.dev` URL or a custom domain (R2).
+- [x] Neither R2 bucket has an `r2.dev` URL or a custom domain (Cloudflare dashboard, checked 2026-10-25) (R2).
 
 **Soon after:**
 
