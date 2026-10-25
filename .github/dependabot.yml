@@ -10,10 +10,25 @@ updates:
     directory: /apps/web
     schedule: { interval: weekly }
     groups: { npm: { patterns: ["*"] } }
+  # The group takes minor and patch updates only, so a major version arrives as its own pull
+  # request. The serialization plugin sets the app's Kotlin compiler (libs.versions.toml), so it
+  # always does. The ignored ones are pinned on purpose there, each with its reason; patches and
+  # security fixes still come.
   - package-ecosystem: gradle
     directory: /apps/android/holdmytrack
     schedule: { interval: weekly }
-    groups: { gradle: { patterns: ["*"] } }
+    groups:
+      gradle:
+        patterns: ["*"]
+        exclude-patterns: ["org.jetbrains.kotlin.plugin.serialization"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: androidx.recyclerview:recyclerview
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: androidx.fragment:fragment
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
+      - dependency-name: androidx.test.uiautomator:uiautomator
+        versions: ["2.4.x"]
   - package-ecosystem: swift
     directory: /apps/ios/HoldMyTrackCore
     schedule: { interval: weekly }
