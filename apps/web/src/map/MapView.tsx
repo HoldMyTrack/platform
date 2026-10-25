@@ -296,6 +296,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   );
 
   const tour = useTour({
+    map,
     isDemo,
     hasActivities: daysReady && map !== null ? earliest !== null : null,
     requested: initialTour,

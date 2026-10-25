@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { MapMode } from '../../map/mapMode';
-import { cardFor, isPlainClick, nextStep, onScreen, stepsFor, tourStart, withCard, type CardId, type TourSeen, type TourStep, type UserEvent } from './tourRules.ts';
+import { cameraFor, cardFor, isPlainClick, nextStep, onScreen, sameView, stepsFor, tourStart, withCard, type CardId, type TourSeen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
 import { loadTourSeen, saveTourSeen } from './tourStore.ts';
 
 export interface TourOptions {
+  map: MapLibreMap | null;
   isDemo: boolean;
   /** Null until the account's history and the map are both ready, so every step has something to point at. */
   hasActivities: boolean | null;
@@ -53,7 +55,7 @@ function shownNow(step: TourStep, mode: MapMode): boolean {
 }
 
 /** The tour, its offer and the first-time cards (docs/SPEC.md FR-4.18): the state around tourRules.ts. */
-export function useTour({ isDemo, hasActivities, requested, mode, setMode, blocked }: TourOptions): Tour {
+export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, blocked }: TourOptions): Tour {
   const [seen, setSeen] = useState<TourSeen>(loadTourSeen);
   const [running, setRunning] = useState<Running | null>(null);
   const [offer, setOffer] = useState(false);
@@ -123,6 +125,7 @@ export function useTour({ isDemo, hasActivities, requested, mode, setMode, block
   }, [requested, isDemo, hasActivities, seen, start]);
 
   useTourStartLink(start);
+  useTourCamera(map, running?.steps[running.index] ?? null);
 
   const takeOffer = useCallback(() => start(), [start]);
   const declineOffer = useCallback(() => {
@@ -178,4 +181,59 @@ function useTourStartLink(start: () => void) {
     document.addEventListener('click', onClick);
     return () => document.removeEventListener('click', onClick);
   }, [start]);
+}
+
+
+/** How long the globe takes over each leg of a step's `turn`. */
+const TURN_LEG_MS = 5000;
+
+/**
+ * Moves the camera to each step's view (tourRules.ts's cameraFor): a flight to a step's own view,
+ * then its turn, and back to the view from before the first flight for a step without one and when
+ * the tour ends. That view is read at the first flight, not at the start, since the map's own first
+ * flight to the account's activities may still be under way then. A real account's steps have no
+ * view, so its camera never moves. Reduced motion jumps and skips the turn.
+ */
+function useTourCamera(map: MapLibreMap | null, step: TourStep | null) {
+  const start = useRef<TourView | null>(null);
+  const shown = useRef<TourView | null>(null);
+  useEffect(() => {
+    if (!map) return;
+    if (step === null) {
+      if (start.current && shown.current && !sameView(shown.current, start.current)) moveTo(map, start.current);
+      start.current = shown.current = null;
+      return;
+    }
+    if (start.current === null && step.view !== null) {
+      const c = map.getCenter();
+      start.current = shown.current = { center: [c.lng, c.lat], zoom: map.getZoom() };
+    }
+    const target = cameraFor(step, start.current);
+    if (target === null || (shown.current && sameView(shown.current, target))) return;
+    shown.current = target;
+    moveTo(map, target);
+    const legs = [...(target.turn ?? [])];
+    if (legs.length === 0 || reducedMotion()) return;
+    const turn = () => {
+      const leg = legs.shift();
+      if (!leg) return;
+      map.easeTo({ center: [leg[0], leg[1]], duration: TURN_LEG_MS, easing: (t) => t });
+      map.once('moveend', turn);
+    };
+    map.once('moveend', turn);
+    return () => {
+      map.off('moveend', turn);
+    };
+  }, [map, step]);
+}
+
+function reducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function moveTo(map: MapLibreMap, view: TourView) {
+  map.stop();
+  const camera = { center: [view.center[0], view.center[1]] as [number, number], zoom: view.zoom };
+  if (reducedMotion()) map.jumpTo(camera);
+  else map.flyTo({ ...camera, duration: 2000, essential: false });
 }

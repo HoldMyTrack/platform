@@ -9,7 +9,14 @@ import type { PanelTab } from '../ActivitiesPanel';
 /** A first-time card: the feature's own explanation, shown once per browser. */
 export type CardId = 'fog' | 'heatmap' | 'stories';
 
-export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'export' | 'fog' | 'heatmap' | 'add' | 'done';
+export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'export' | 'fog' | 'fog_regions' | 'fog_countries' | 'heatmap' | 'add' | 'done';
+
+/** Where a step puts the camera: `center` and `zoom`, then a slow turn of the globe through each point of `turn`, if any. */
+export interface TourView {
+  center: readonly [longitude: number, latitude: number];
+  zoom: number;
+  turn?: readonly (readonly [longitude: number, latitude: number])[];
+}
 
 export interface TourStep {
   id: StepId;
@@ -21,26 +28,71 @@ export interface TourStep {
   card: CardId | null;
   /** The i18n key prefix: `<text>.title` and `<text>.body`. */
   text: string;
+  /** The camera for the step; null keeps the view the tour started on. */
+  view: TourView | null;
 }
 
 const MODES = '[data-testid="map-mode-toggle"]';
 
-/** The tour's steps in order. The Normal-mode steps come first, so the panel is never torn down and rebuilt in the middle. */
+/**
+ * The demo's views, over its fixed history (services/server/internal/httpapi/demo_data): Cleveland,
+ * where most of it is; the US, where Fog clears states (zoom 3–6, SPEC.md FR-4.2); and the globe,
+ * where it clears countries (zoom 0–2), turning from the US over Europe (Estonia, Italy) to
+ * Vietnam because a globe shows one side of the Earth at a time. Each leg is under 180°, so the
+ * turn goes east.
+ */
+export const DEMO_VIEWS = {
+  city: { center: [-81.72, 41.42], zoom: 9 },
+  // East of the middle: a phone's narrow view still holds Ohio, New York and Florida, a desktop's Arizona too.
+  regions: { center: [-82, 36], zoom: 3.6 },
+  countries: { center: [-80, 38], zoom: 1.5, turn: [[15, 45], [106, 25]] },
+  heatmapCity: { center: [-81.72, 41.42], zoom: 10 },
+} as const satisfies Record<string, TourView>;
+
+/**
+ * The tour's steps in order. The Normal-mode steps come first, so the panel is never torn down and
+ * rebuilt in the middle. A demo's Fog is three steps, city, states and countries, and its Fog and
+ * Heatmap fly to the demo's history; a real account's map stays where it is.
+ */
 export function stepsFor({ isDemo }: { isDemo: boolean }): TourStep[] {
-  const step = (id: StepId, anchor: string | null, mode: MapMode = 'normal', card: CardId | null = null, text = `tour.${id}`): TourStep => ({ id, anchor, mode, card, text });
+  const step = (id: StepId, anchor: string | null, more: Partial<Omit<TourStep, 'id' | 'anchor'>> = {}): TourStep => ({
+    id,
+    anchor,
+    mode: 'normal',
+    card: null,
+    text: `tour.${id}`,
+    view: null,
+    ...more,
+  });
+  const fog = isDemo
+    ? [
+        step('fog', MODES, { mode: 'fog', card: 'fog', text: 'tour.fog_city', view: DEMO_VIEWS.city }),
+        step('fog_regions', MODES, { mode: 'fog', view: DEMO_VIEWS.regions }),
+        step('fog_countries', MODES, { mode: 'fog', view: DEMO_VIEWS.countries }),
+      ]
+    : [step('fog', MODES, { mode: 'fog', card: 'fog' })];
   return [
     step('welcome', null),
     step('activities', '[data-testid="activities-panel"]'),
     step('range', '[data-testid="date-range-slider"]'),
-    step('stories', '[data-testid="activities-panel-tab-stories"]', 'normal', 'stories'),
+    step('stories', '[data-testid="activities-panel-tab-stories"]', { card: 'stories' }),
     step('layers', '[data-testid="map-overlays"]'),
     step('export', '[data-testid="export-button"]'),
-    step('fog', MODES, 'fog', 'fog'),
-    step('heatmap', MODES, 'heatmap', 'heatmap'),
+    ...fog,
+    step('heatmap', MODES, { mode: 'heatmap', card: 'heatmap', view: isDemo ? DEMO_VIEWS.heatmapCity : null }),
     // The header's Upload menu; the demo's is a disabled button that says what an account adds.
-    step('add', '.page-header .upload-menu', 'normal', null, isDemo ? 'tour.add_demo' : 'tour.add'),
+    step('add', '.page-header .upload-menu', { text: isDemo ? 'tour.add_demo' : 'tour.add' }),
     step('done', '[data-tour-start]'),
   ];
+}
+
+/** The camera a step wants: its own view, or the one before the tour's first move; null while nothing has moved. Equal views mean no move. */
+export function cameraFor(step: TourStep, start: TourView | null): TourView | null {
+  return step.view ?? start;
+}
+
+export function sameView(a: TourView, b: TourView): boolean {
+  return a.center[0] === b.center[0] && a.center[1] === b.center[1] && a.zoom === b.zoom;
 }
 
 export interface TourSeen {

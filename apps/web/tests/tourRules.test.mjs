@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { NOTHING_SEEN, cardFor, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
+import { DEMO_VIEWS, NOTHING_SEEN, cameraFor, cardFor, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
 
 const start = (over) => tourStart({ requested: false, isDemo: false, hasActivities: true, seen: NOTHING_SEEN, ...over });
 
@@ -45,6 +45,38 @@ test('the steps keep Normal together before Fog and Heatmap, and the demo gets i
   assert.ok(steps.slice(0, firstOther).every((s) => s.mode === 'normal'));
   assert.equal(steps.find((s) => s.id === 'add').text, 'tour.add');
   assert.equal(stepsFor({ isDemo: true }).find((s) => s.id === 'add').text, 'tour.add_demo');
+});
+
+test("a demo's Fog is city, states and countries at Fog's own zoom tiers, and only the demo moves the camera", () => {
+  const demo = stepsFor({ isDemo: true });
+  const fog = demo.filter((s) => s.mode === 'fog');
+  assert.deepEqual(fog.map((s) => s.id), ['fog', 'fog_regions', 'fog_countries']);
+  // Exact coverage from zoom 7, regions 3–6, countries 0–2 (SPEC.md FR-4.2).
+  assert.ok(fog[0].view.zoom >= 7);
+  assert.ok(fog[1].view.zoom >= 3 && fog[1].view.zoom < 7);
+  assert.ok(fog[2].view.zoom < 3);
+  assert.equal(demo.find((s) => s.id === 'heatmap').view, DEMO_VIEWS.heatmapCity);
+  // The fog card goes with the first Fog step only.
+  assert.deepEqual(demo.filter((s) => s.card === 'fog').map((s) => s.id), ['fog']);
+  assert.ok(stepsFor({ isDemo: false }).every((s) => s.view === null));
+});
+
+test('a step without a view goes back to the view before the first move, or stays put', () => {
+  const start = { center: [10, 50], zoom: 12 };
+  const [welcome] = stepsFor({ isDemo: true });
+  assert.equal(cameraFor(welcome, start), start);
+  const city = stepsFor({ isDemo: true }).find((s) => s.id === 'fog');
+  assert.equal(cameraFor(city, start), DEMO_VIEWS.city);
+  assert.equal(cameraFor(welcome, null), null);
+});
+
+test("the globe's turn goes east in legs under 180°, from the US to Vietnam", () => {
+  const { center, turn } = DEMO_VIEWS.countries;
+  const points = [center, ...turn];
+  for (let i = 1; i < points.length; i++) {
+    const leg = points[i][0] - points[i - 1][0];
+    assert.ok(leg > 0 && leg < 180, `leg ${i}: ${leg}°`);
+  }
 });
 
 test('nextStep skips steps off screen and stops at either end', () => {
