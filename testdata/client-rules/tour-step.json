@@ -1,0 +1,14 @@
+{
+  "rule": "tourStep",
+  "clients": ["web", "android"],
+  "description": "What a tour step changes, or the tour's end (step null) puts back (docs/SPEC.md FR-4.18): from now (the map's mode and the panel's or bottom bar's tab), the step's mode, tab and card, and restore (the user's mode and tab from before the tour). mode and tab are what to change to, null where they already are; card is the step's card, seen by showing the step, null at the end.",
+  "cases": [
+    { "name": "a step on the map as it is changes nothing", "input": { "now": { "mode": "normal", "tab": "activities" }, "step": { "mode": "normal", "tab": "activities", "card": null }, "restore": { "mode": "normal", "tab": "activities" } }, "expected": { "mode": null, "tab": null, "card": null } },
+    { "name": "Fog's step puts the map in Fog and counts its card", "input": { "now": { "mode": "normal", "tab": "activities" }, "step": { "mode": "fog", "tab": "activities", "card": "fog" }, "restore": { "mode": "normal", "tab": "activities" } }, "expected": { "mode": "fog", "tab": null, "card": "fog" } },
+    { "name": "Heatmap's after Fog's changes the mode only", "input": { "now": { "mode": "fog", "tab": "activities" }, "step": { "mode": "heatmap", "tab": "activities", "card": "heatmap" }, "restore": { "mode": "normal", "tab": "activities" } }, "expected": { "mode": "heatmap", "tab": null, "card": "heatmap" } },
+    { "name": "the Stories step opens the tab", "input": { "now": { "mode": "normal", "tab": "activities" }, "step": { "mode": "normal", "tab": "stories", "card": "stories" }, "restore": { "mode": "normal", "tab": "activities" } }, "expected": { "mode": null, "tab": "stories", "card": "stories" } },
+    { "name": "a step from Fog back to the panel returns to Normal", "input": { "now": { "mode": "fog", "tab": "activities" }, "step": { "mode": "normal", "tab": "activities", "card": null }, "restore": { "mode": "fog", "tab": "activities" } }, "expected": { "mode": "normal", "tab": null, "card": null } },
+    { "name": "the end puts back the user's mode and tab", "input": { "now": { "mode": "heatmap", "tab": "activities" }, "step": null, "restore": { "mode": "fog", "tab": "stories" } }, "expected": { "mode": "fog", "tab": "stories", "card": null } },
+    { "name": "the end changes nothing already back", "input": { "now": { "mode": "normal", "tab": "activities" }, "step": null, "restore": { "mode": "normal", "tab": "activities" } }, "expected": { "mode": null, "tab": null, "card": null } }
+  ]
+}

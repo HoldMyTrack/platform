@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEMO_VIEWS, NOTHING_SEEN, cameraFor, cardFor, movesCamera, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
+import { CAMERA_UNMOVED, DEMO_VIEWS, NOTHING_SEEN, cameraStep, cardFor, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
 
 const start = (over) => tourStart({ requested: false, isDemo: false, hasActivities: true, seen: NOTHING_SEEN, ...over });
 
@@ -61,13 +61,30 @@ test("a demo's Fog is city, states and countries at Fog's own zoom tiers, and on
   assert.ok(stepsFor({ isDemo: false }).every((s) => s.view === null));
 });
 
-test('a step without a view goes back to the view before the first move, or stays put', () => {
-  const start = { center: [10, 50], zoom: 12 };
-  const [welcome] = stepsFor({ isDemo: true });
-  assert.equal(cameraFor(welcome, start), start);
-  const city = stepsFor({ isDemo: true }).find((s) => s.id === 'fog');
-  assert.equal(cameraFor(city, start), DEMO_VIEWS.city);
-  assert.equal(cameraFor(welcome, null), null);
+test("the demo's steps fly through its views and back; a real account's never move", () => {
+  const current = { center: [-81.8, 41.4], zoom: 13 };
+  const walk = (steps) => {
+    let camera = CAMERA_UNMOVED;
+    return steps.map((step) => {
+      const { camera: next, move } = cameraStep(camera, step, current);
+      camera = next;
+      return move;
+    });
+  };
+  const demo = stepsFor({ isDemo: true });
+  const moves = walk(demo);
+  const at = (id) => moves[demo.findIndex((s) => s.id === id)];
+  assert.equal(at('welcome'), null);
+  assert.equal(at('fog'), DEMO_VIEWS.city);
+  assert.equal(at('heatmap'), DEMO_VIEWS.heatmapCity);
+  // The step after Heatmap goes back to the view before the tour's first move, the Stories tab's.
+  assert.deepEqual(at('add'), current);
+  // A real account's Stories step lets the map frame its Story, and the next step brings it back.
+  const real = stepsFor({ isDemo: false });
+  const realMoves = walk(real);
+  assert.equal(realMoves[real.findIndex((s) => s.id === 'stories')], null);
+  assert.deepEqual(realMoves[real.findIndex((s) => s.id === 'layers')], current);
+  for (const move of realMoves.filter((m) => m !== null)) assert.deepEqual(move, current);
 });
 
 test("countries are a flat world on a wide screen and a turning globe on a phone", () => {
@@ -97,8 +114,6 @@ test('a step opens what it explains: the Stories tab, the sheet, Layers, and Upl
   assert.equal(steps(true).add.open.upload, undefined);
   // Every other step is on the Activities tab, which the tour leaves for the Stories step alone.
   assert.ok(Object.values(real).filter((s) => s.id !== 'stories').every((s) => s.tab === 'activities'));
-  assert.ok(movesCamera(real.stories));
-  assert.ok(!movesCamera(real.layers));
 });
 
 test('nextStep skips steps off screen and stops at either end', () => {

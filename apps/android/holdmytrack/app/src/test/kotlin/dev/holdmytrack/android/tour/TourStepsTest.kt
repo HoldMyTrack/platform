@@ -3,7 +3,6 @@ package dev.holdmytrack.android.tour
 import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.map.MapMode
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -50,8 +49,33 @@ class TourStepsTest {
         assertEquals(MainActivity.Tab.SYNC, steps.getValue("sync").tab)
         assertEquals(MainActivity.Tab.YOU, TourSteps.of(isDemo = false).last().tab)
         assertEquals("tour_sync_demo", TourSteps.of(isDemo = true).single { it.id == "sync" }.text)
-        assertTrue(TourSteps.movesCamera(steps.getValue("stories")))
-        assertFalse(TourSteps.movesCamera(steps.getValue("layers")))
+    }
+
+    @Test
+    fun `every step and card has its text`() {
+        val keys = (TourSteps.of(isDemo = true) + TourSteps.of(isDemo = false)).map { it.text } + TourCard.entries.map { TourSteps.card(it).first }
+        val missing = keys.toSet() - TourText.ALL.keys
+        assertTrue("no text for $missing", missing.isEmpty())
+    }
+
+    @Test
+    fun `a step holds the sheet and the Layers menu it says, and the end gives the sheet back`() {
+        val steps = TourSteps.of(isDemo = false).associateBy { it.id }
+        assertEquals(true to false, TourSteps.held(steps.getValue("activities"), restoreSheet = false))
+        assertEquals(false to true, TourSteps.held(steps.getValue("layers"), restoreSheet = true))
+        assertEquals(true to false, TourSteps.held(null, restoreSheet = true))
+        assertEquals(false to false, TourSteps.held(null, restoreSheet = false))
+    }
+
+    @Test
+    fun `a first-time card goes under a target in the upper half, else over it, never above the inset`() {
+        // The mode bar near the top.
+        assertEquals(330, TourSteps.cardTop(targetTop = 180, targetBottom = 300, cardHeight = 500, height = 2000, topInset = 100, gap = 30))
+        // The sheet near the bottom.
+        assertEquals(1270, TourSteps.cardTop(targetTop = 1800, targetBottom = 1900, cardHeight = 500, height = 2000, topInset = 100, gap = 30))
+        // Over a low target with no room above: held at the inset.
+        assertEquals(100, TourSteps.cardTop(targetTop = 1100, targetBottom = 1900, cardHeight = 1500, height = 2000, topInset = 100, gap = 30))
+        assertEquals(100, TourSteps.cardTop(targetTop = null, targetBottom = null, cardHeight = 500, height = 2000, topInset = 100, gap = 30))
     }
 
     @Test

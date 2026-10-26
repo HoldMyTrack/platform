@@ -120,27 +120,25 @@ class TourController(private val activity: AppCompatActivity, private val host: 
     }
 
     private fun go(run: Running, index: Int?) {
-        if (index == null) {
-            host.setLayersOpen(false)
+        val step = index?.let { run.steps[it] }
+        val changes = TourRules.changes(host.mode ?: MapMode.NORMAL, host.tab, step, run.mode, run.tab)
+        val (sheet, layers) = TourSteps.held(step, run.sheet)
+        host.setLayersOpen(layers)
+        changes.tab?.let(host::showTab)
+        changes.mode?.let(host::setMode)
+        host.setSheetOpen(sheet)
+        changes.card?.let { save(seen.copy(cards = seen.cards + it)) }
+        if (step == null || index == null) {
             camera.end()
-            if (host.mode != run.mode) host.setMode(run.mode)
-            if (host.tab != run.tab) host.showTab(run.tab)
-            host.setSheetOpen(run.sheet)
             overlay?.let { content().removeView(it) }
             overlay = null
             running = null
             return
         }
-        val step = run.steps[index]
         run.index = index
-        if (host.tab != step.tab) host.showTab(step.tab)
-        if (host.mode != step.mode) host.setMode(step.mode)
-        host.setSheetOpen(step.sheet)
-        host.setLayersOpen(step.layers)
-        step.card?.let { save(seen.copy(cards = seen.cards + it)) }
         camera.show(step)
         val view = overlay ?: return
-        val (title, body) = text(step.text)
+        val (title, body) = TourText.of(step.text)
         view.title.setText(title)
         view.body.setText(body)
         view.progress.text = activity.getString(R.string.tour_progress, index + 1, run.steps.size)
@@ -152,9 +150,6 @@ class TourController(private val activity: AppCompatActivity, private val host: 
         view.pointAt(targets = { if (target == null) emptyList() else host.targets(target) }, onMissing = { move(dir) })
         view.next.post { view.next.requestFocus() }
     }
-
-    /** A step's or card's title and body. */
-    private fun text(key: String): Pair<Int, Int> = TEXT.getValue(key)
 
     private fun content(): ViewGroup = activity.findViewById(android.R.id.content)
 
@@ -181,12 +176,8 @@ class TourController(private val activity: AppCompatActivity, private val host: 
         closeCard()
         if (earned == null) return
         save(seen.copy(cards = seen.cards + earned))
-        val (key, target) = when (earned) {
-            TourCard.FOG -> "tour_fog" to TourTarget.MODES
-            TourCard.HEATMAP -> "tour_heatmap" to TourTarget.MODES
-            TourCard.STORIES -> "tour_stories" to TourTarget.SHEET
-        }
-        val (title, body) = text(key)
+        val (key, target) = TourSteps.card(earned)
+        val (title, body) = TourText.of(key)
         showCard(
             title = activity.getString(title),
             body = activity.getString(body),
@@ -230,38 +221,27 @@ class TourController(private val activity: AppCompatActivity, private val host: 
     private val camera = Camera()
 
     /**
-     * The camera for each step ([TourSteps.movesCamera]): a flight to a step's own view, then its
-     * pan; back to the view from before the first move for a step without one and at the end.
-     * That view is read at the first move, since the map's own first flight may still be under way
-     * at the start. The Stories tab frames its Story itself, so the camera after it is unknown.
+     * The camera as [TourRules.camera] and [TourRules.cameraEnd] say, then a target's pan.
      * Animations off on the phone jump, and make the pan a jump to each of its points in turn.
      */
     private inner class Camera {
-        private var start: TourView? = null
-        private var shown: TourView? = null
+        private var state = TourCamera()
         private val handler = Handler(Looper.getMainLooper())
 
         fun show(step: TourStep) {
             val map = host.map ?: return
             handler.removeCallbacksAndMessages(null)
-            if (start == null && TourSteps.movesCamera(step)) start = current(map).also { shown = it }
-            if (step.view == null && step.tab == MainActivity.Tab.STORIES) {
-                shown = null
-                return
-            }
-            val target = step.view ?: start ?: return
-            if (shown?.sameSpot(target) == true) return
-            shown = target
-            moveTo(map, target) { pan(map, target.pan) }
+            val (next, target) = TourRules.camera(state, step.view, step.tab, current(map))
+            state = next
+            if (target != null) moveTo(map, target) { pan(map, target.pan) }
         }
 
         fun end() {
             handler.removeCallbacksAndMessages(null)
             val map = host.map
-            val back = start
-            if (map != null && back != null && shown?.sameSpot(back) != true) moveTo(map, back) {}
-            start = null
-            shown = null
+            val back = TourRules.cameraEnd(state)
+            if (map != null && back != null) moveTo(map, back) {}
+            state = TourCamera()
         }
 
         private fun current(map: MapLibreMap): TourView {
@@ -308,24 +288,5 @@ class TourController(private val activity: AppCompatActivity, private val host: 
     private companion object {
         const val FLY_MS = 2000
         const val PAN_LEG_MS = 5000
-
-        /** Each [TourStep.text] key's title and body. */
-        val TEXT = mapOf(
-            "tour_welcome" to (R.string.tour_welcome_title to R.string.tour_welcome_body),
-            "tour_activities" to (R.string.tour_activities_title to R.string.tour_activities_body),
-            "tour_range" to (R.string.tour_range_title to R.string.tour_range_body),
-            "tour_stories" to (R.string.tour_stories_title to R.string.tour_stories_body),
-            "tour_layers" to (R.string.tour_layers_title to R.string.tour_layers_body),
-            "tour_export" to (R.string.tour_export_title to R.string.tour_export_body),
-            "tour_fog" to (R.string.tour_fog_title to R.string.tour_fog_body),
-            "tour_fog_city" to (R.string.tour_fog_title to R.string.tour_fog_city_body),
-            "tour_fog_regions" to (R.string.tour_fog_regions_title to R.string.tour_fog_regions_body),
-            "tour_fog_countries" to (R.string.tour_fog_countries_title to R.string.tour_fog_countries_body),
-            "tour_heatmap" to (R.string.tour_heatmap_title to R.string.tour_heatmap_body),
-            "tour_record" to (R.string.tour_record_title to R.string.tour_record_body),
-            "tour_sync" to (R.string.tour_sync_title to R.string.tour_sync_body),
-            "tour_sync_demo" to (R.string.tour_sync_title to R.string.tour_sync_demo_body),
-            "tour_done" to (R.string.tour_done_title to R.string.tour_done_body),
-        )
     }
 }

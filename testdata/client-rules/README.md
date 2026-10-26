@@ -64,6 +64,8 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `tourStart` (web and Android) | `requested`, `isDemo`, `hasActivities` (or `null`), `seen` (`tour`, `cards`) | `"start"`, `"offer"`, `"none"` or `"wait"` |
 | `tourCard` (web and Android) | `event` (`{ kind: "mode", mode }` or `{ kind: "tab", tab }`), `seen`, `touring` | `"fog"`, `"heatmap"`, `"stories"` or `null` |
 | `tourNextStep` (web and Android) | `shown` (a flag per step), `from`, `dir` (`-1`, `1`) | an index or `null` |
+| `tourCamera` (web and Android) | `start`, `shown` (views `{ lon, lat, zoom }` or `null`), `current`, `step` (`{ view, tab }` or `null` for the end) | `{ start, shown, move }` |
+| `tourStep` (web and Android) | `now` (`mode`, `tab`), `step` (`mode`, `tab`, `card`, or `null` for the end), `restore` (`mode`, `tab`) | `{ mode, tab, card }` |
 | `webPageRoute` (Android and iOS) | `link` (`scheme`, `authority`, `path`, the `activity` and `day` query parameters), `base` (`scheme`, `authority`), `page`, `leaving`, `onboarding` | `"stay"`, `"outside"`, `"ignore"`, `"close"`, `"onboarded"` or `{ viewOnMap: { activity, day } }` |
 
 A rule only one platform has, or one where the platforms differ on purpose, has no file and is tested on that platform alone.

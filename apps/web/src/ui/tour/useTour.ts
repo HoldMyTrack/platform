@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { MapMode } from '../../map/mapMode';
 import type { PanelTab } from '../ActivitiesPanel';
-import { NARROW_WIDTH, cameraFor, cardFor, isPlainClick, movesCamera, nextStep, onScreen, sameView, stepsFor, tourStart, withCard, type CardId, type TourSeen, type TourOpen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
+import { CAMERA_UNMOVED, NARROW_WIDTH, cameraEnd, cameraStep, cardFor, isPlainClick, nextStep, onScreen, stepChanges, stepsFor, tourStart, withCard, type TourCamera, type CardId, type TourSeen, type TourOpen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
 import { loadTourSeen, saveTourSeen } from './tourStore.ts';
 
 export interface TourOptions {
@@ -80,17 +80,12 @@ export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, 
 
   const go = useCallback(
     (run: Running, index: number | null) => {
-      if (index === null) {
-        setMode(run.restore);
-        if (latest.current.tab !== run.restoreTab) setTab(run.restoreTab);
-        setRunning(null);
-        return;
-      }
-      const step = run.steps[index]!;
-      setMode(step.mode);
-      if (latest.current.tab !== step.tab) setTab(step.tab);
-      if (step.card !== null) setSeen((s) => withCard(s, step.card!));
-      setRunning({ ...run, index });
+      const step = index === null ? null : run.steps[index]!;
+      const changes = stepChanges(latest.current, step, { mode: run.restore, tab: run.restoreTab });
+      if (changes.mode !== null) setMode(changes.mode);
+      if (changes.tab !== null) setTab(changes.tab);
+      if (changes.card !== null) setSeen((s) => withCard(s, changes.card!));
+      setRunning(index === null ? null : { ...run, index });
     },
     [setMode, setTab],
   );
@@ -200,37 +195,26 @@ function useTourStartLink(start: () => void) {
 const TURN_LEG_MS = 5000;
 
 /**
- * Moves the camera to each step's view (tourRules.ts's cameraFor): a flight to a step's own view,
- * then its turn, and back to the view from before the first flight for a step without one and when
- * the tour ends. That view is read at the first step that moves the camera (tourRules.ts's
- * movesCamera), not at the start, since the map's own first flight to the account's activities may
- * still be under way then. A real account's steps have no
- * view, so its camera never moves. Reduced motion jumps, and makes the turn a jump to each of its
- * points in turn, since the turn is how the step shows every side of the globe. A flat view sets
- * the projection and the zoom floor (useMapInstance.ts's globe floor) aside for its step only.
+ * Moves the camera as tourRules.ts's cameraStep and cameraEnd say, then a target's turn. A real
+ * account's steps have no view, so its camera never moves. Reduced motion jumps, and makes the
+ * turn a jump to each of its points in turn, since the turn is how the step shows every side of
+ * the globe. A flat view sets the projection and the zoom floor (useMapInstance.ts's globe floor)
+ * aside for its step only.
  */
 function useTourCamera(map: MapLibreMap | null, step: TourStep | null) {
-  const start = useRef<TourView | null>(null);
-  const shown = useRef<TourView | null>(null);
+  const camera = useRef<TourCamera>(CAMERA_UNMOVED);
   useEffect(() => {
     if (!map) return;
     if (step === null) {
-      if (start.current && (shown.current === null || !sameView(shown.current, start.current))) moveTo(map, start.current);
-      start.current = shown.current = null;
+      const back = cameraEnd(camera.current);
+      if (back !== null) moveTo(map, back);
+      camera.current = CAMERA_UNMOVED;
       return;
     }
-    if (start.current === null && movesCamera(step)) {
-      const c = map.getCenter();
-      start.current = shown.current = { center: [c.lng, c.lat], zoom: map.getZoom() };
-    }
-    // The Stories tab's Story moves the camera itself (the list's flight), so where it ends up is unknown.
-    if (step.view === null && step.tab === 'stories') {
-      shown.current = null;
-      return;
-    }
-    const target = cameraFor(step, start.current);
-    if (target === null || (shown.current && sameView(shown.current, target))) return;
-    shown.current = target;
+    const c = map.getCenter();
+    const { camera: next, move: target } = cameraStep(camera.current, step, { center: [c.lng, c.lat], zoom: map.getZoom() });
+    camera.current = next;
+    if (target === null) return;
     const restoreGlobe = target.flat ? flatten(map) : null;
     moveTo(map, target);
     const legs = [...(target.turn ?? [])];

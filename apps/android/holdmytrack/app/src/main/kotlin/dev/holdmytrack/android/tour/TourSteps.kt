@@ -72,8 +72,15 @@ object TourSteps {
         )
     }
 
-    /** Whether a step moves the camera: its own view, or the Stories tab, whose Story the map frames. */
-    fun movesCamera(step: TourStep) = step.view != null || step.tab == MainActivity.Tab.STORIES
+    /** Whether the panel's sheet and the Layers menu are open for [step], or at the end (null), the sheet as the user had it ([restoreSheet]). */
+    fun held(step: TourStep?, restoreSheet: Boolean): Pair<Boolean, Boolean> = (step?.sheet ?: restoreSheet) to (step?.layers ?: false)
+
+    /** A first-time card's text and what it points at. */
+    fun card(card: TourCard): Pair<String, TourTarget> = when (card) {
+        TourCard.FOG -> "tour_fog" to TourTarget.MODES
+        TourCard.HEATMAP -> "tour_heatmap" to TourTarget.MODES
+        TourCard.STORIES -> "tour_stories" to TourTarget.SHEET
+    }
 
     enum class Edge { TOP, BOTTOM }
 
@@ -84,4 +91,14 @@ object TourSteps {
      */
     fun edge(targetTop: Int?, cardHeight: Int, topInset: Int, gap: Int): Edge =
         if (targetTop != null && targetTop - topInset >= cardHeight + gap) Edge.TOP else Edge.BOTTOM
+
+    /**
+     * A first-time card's or the offer's top, in a screen [height] tall: under the target when it's
+     * in the upper half, else over it but never above [topInset]; at [topInset] with no target.
+     */
+    fun cardTop(targetTop: Int?, targetBottom: Int?, cardHeight: Int, height: Int, topInset: Int, gap: Int): Int = when {
+        targetTop == null || targetBottom == null -> topInset
+        (targetTop + targetBottom) / 2 < height / 2 -> targetBottom + gap
+        else -> (targetTop - gap - cardHeight).coerceAtLeast(topInset)
+    }
 }
