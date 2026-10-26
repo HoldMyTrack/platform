@@ -27,7 +27,8 @@ import dev.holdmytrack.android.R
  * - **A card** (a first-time card or the offer): no dim, under or over its target, touches
  *   outside it passing through to the map, the first of them closing it.
  *
- * The target is the union of the views [targets] returns, read every frame, since the sheet
+ * Each view [targets] returns is lit on its own, so a button's neighbours between it and its menu
+ * stay dim; the card is placed beside their union. They're read every frame, since the sheet
  * slides, the Layers menu opens in a window of its own and the bottom bar switches tabs.
  * [onMissing] is called once if the target hasn't appeared within [MISSING_FRAMES] frames.
  */
@@ -47,6 +48,8 @@ class TourOverlay(context: Context, private val dim: Boolean) : FrameLayout(cont
 
     private var targets: () -> List<View> = { emptyList() }
     private var onMissing: (() -> Unit)? = null
+    /** The lit views' rects, and their union for placing the card. */
+    private var holes: List<RectF> = emptyList()
     private var hole: RectF? = null
     private var absent = 0
     private var tracking = false
@@ -64,6 +67,8 @@ class TourOverlay(context: Context, private val dim: Boolean) : FrameLayout(cont
     }
     private val path = Path()
     private val ringRect = RectF()
+    private val at = IntArray(2)
+    private val own = IntArray(2)
 
     init {
         setWillNotDraw(false)
@@ -78,6 +83,7 @@ class TourOverlay(context: Context, private val dim: Boolean) : FrameLayout(cont
         this.targets = targets
         this.onMissing = onMissing
         absent = 0
+        holes = emptyList()
         hole = null
         card.visibility = View.INVISIBLE
         if (!tracking) {
@@ -102,14 +108,15 @@ class TourOverlay(context: Context, private val dim: Boolean) : FrameLayout(cont
     private fun follow() {
         val views = targets().filter { it.isAttachedToWindow && it.isShown && it.width > 0 && it.height > 0 }
         val wanted = targets().isNotEmpty()
-        val next = if (views.isEmpty()) null else union(views)
-        if (wanted && next == null) {
+        val rects = rects(views)
+        if (wanted && rects.isEmpty()) {
             if (++absent == MISSING_FRAMES) onMissing?.invoke()
             return
         }
         absent = 0
-        if (next != hole) {
-            hole = next
+        if (rects != holes) {
+            holes = rects
+            hole = rects.reduceOrNull { a, b -> RectF(a).apply { union(b) } }
             place()
             invalidate()
         } else if (!card.isVisible) {
@@ -117,17 +124,15 @@ class TourOverlay(context: Context, private val dim: Boolean) : FrameLayout(cont
         }
     }
 
-    /** The views' screen rects, as one rect in this view's coordinates. */
-    private fun union(views: List<View>): RectF {
-        val own = IntArray(2).also { getLocationOnScreen(it) }
-        val box = Rect()
-        val at = IntArray(2)
-        views.forEachIndexed { i, view ->
+    /** The views' screen rects, in this view's coordinates. */
+    private fun rects(views: List<View>): List<RectF> {
+        getLocationOnScreen(own)
+        return views.map { view ->
             view.getLocationOnScreen(at)
-            val r = Rect(at[0] - own[0], at[1] - own[1], at[0] - own[0] + view.width, at[1] - own[1] + view.height)
-            if (i == 0) box.set(r) else box.union(r)
+            val left = (at[0] - own[0]).toFloat()
+            val top = (at[1] - own[1]).toFloat()
+            RectF(left, top, left + view.width, top + view.height)
         }
-        return RectF(box)
     }
 
     /** The card across the top or bottom for a step; under or over the target for a card. */
@@ -159,17 +164,19 @@ class TourOverlay(context: Context, private val dim: Boolean) : FrameLayout(cont
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         if (!dim) return
-        val target = hole
+        // The holes are clipped out together, so two that overlap stay open.
         path.reset()
-        path.fillType = Path.FillType.EVEN_ODD
-        path.addRect(0f, 0f, width.toFloat(), height.toFloat(), Path.Direction.CW)
-        if (target != null) {
+        for (target in holes) {
             ringRect.set(target.left - pad, target.top - pad, target.right + pad, target.bottom + pad)
             path.addRoundRect(ringRect, radius, radius, Path.Direction.CW)
-            canvas.drawPath(path, scrim)
+        }
+        canvas.save()
+        canvas.clipOutPath(path)
+        canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), scrim)
+        canvas.restore()
+        for (target in holes) {
+            ringRect.set(target.left - pad, target.top - pad, target.right + pad, target.bottom + pad)
             canvas.drawRoundRect(ringRect, radius, radius, ring)
-        } else {
-            canvas.drawPath(path, scrim)
         }
     }
 
