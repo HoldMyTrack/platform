@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { MapMode } from '../../map/mapMode';
-import { NARROW_WIDTH, cameraFor, cardFor, isPlainClick, nextStep, onScreen, sameView, stepsFor, tourStart, withCard, type CardId, type TourSeen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
+import type { PanelTab } from '../ActivitiesPanel';
+import { NARROW_WIDTH, cameraFor, cardFor, isPlainClick, movesCamera, nextStep, onScreen, sameView, stepsFor, tourStart, withCard, type CardId, type TourSeen, type TourOpen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
 import { loadTourSeen, saveTourSeen } from './tourStore.ts';
 
 export interface TourOptions {
@@ -13,6 +14,9 @@ export interface TourOptions {
   requested: boolean;
   mode: MapMode;
   setMode: (mode: MapMode) => void;
+  tab: PanelTab;
+  /** Changes the panel's tab for the tour, its Story's URL replaced rather than pushed. */
+  setTab: (tab: PanelTab) => void;
   /** The Edit window is open: its lock holds the panel, and the map's controls are gone. */
   blocked: boolean;
 }
@@ -20,12 +24,15 @@ export interface TourOptions {
 interface Running {
   steps: TourStep[];
   index: number;
-  /** The mode to put back when the tour ends. */
+  /** The mode and tab to put back when the tour ends. */
   restore: MapMode;
+  restoreTab: PanelTab;
 }
 
 export interface Tour {
   step: TourStep | null;
+  /** What the step has open; nothing outside the tour. */
+  open: TourOpen;
   index: number;
   total: number;
   next: () => void;
@@ -45,6 +52,8 @@ export interface Tour {
   notice: (event: UserEvent) => void;
 }
 
+const NOTHING_OPEN: TourOpen = {};
+
 const viewport = () => ({ width: window.innerWidth, height: window.innerHeight });
 
 /** Whether a step can be pointed at now. A step in another mode can't be checked until the map is in it, so it counts as shown; Tour.tsx reports it missing if it isn't. */
@@ -55,7 +64,7 @@ function shownNow(step: TourStep, mode: MapMode): boolean {
 }
 
 /** The tour, its offer and the first-time cards (docs/SPEC.md FR-4.18): the state around tourRules.ts. */
-export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, blocked }: TourOptions): Tour {
+export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, tab, setTab, blocked }: TourOptions): Tour {
   const [seen, setSeen] = useState<TourSeen>(loadTourSeen);
   const [running, setRunning] = useState<Running | null>(null);
   const [offer, setOffer] = useState(false);
@@ -66,33 +75,35 @@ export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, 
   useEffect(() => saveTourSeen(seen), [seen]);
 
   // The latest values for callbacks the header's link and timers hold on to.
-  const latest = useRef({ mode, blocked, isDemo, running });
-  latest.current = { mode, blocked, isDemo, running };
+  const latest = useRef({ mode, tab, blocked, isDemo, running });
+  latest.current = { mode, tab, blocked, isDemo, running };
 
   const go = useCallback(
     (run: Running, index: number | null) => {
       if (index === null) {
         setMode(run.restore);
+        if (latest.current.tab !== run.restoreTab) setTab(run.restoreTab);
         setRunning(null);
         return;
       }
       const step = run.steps[index]!;
       setMode(step.mode);
+      if (latest.current.tab !== step.tab) setTab(step.tab);
       if (step.card !== null) setSeen((s) => withCard(s, step.card!));
       setRunning({ ...run, index });
     },
-    [setMode],
+    [setMode, setTab],
   );
 
   const start = useCallback(() => {
-    const { mode: current, blocked: isBlocked, isDemo: demo, running: already } = latest.current;
+    const { mode: current, tab: currentTab, blocked: isBlocked, isDemo: demo, running: already } = latest.current;
     if (isBlocked || already !== null) return;
     setOffer(false);
     setTip(false);
     setCard(null);
     setSeen((s) => ({ ...s, tour: true }));
     dir.current = 1;
-    const run: Running = { steps: stepsFor({ isDemo: demo, narrow: window.innerWidth < NARROW_WIDTH }), index: -1, restore: current };
+    const run: Running = { steps: stepsFor({ isDemo: demo, narrow: window.innerWidth < NARROW_WIDTH }), index: -1, restore: current, restoreTab: currentTab };
     go(run, nextStep(run.steps, -1, 1, (s) => shownNow(s, current)));
   }, [go]);
 
@@ -147,6 +158,7 @@ export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, 
 
   return {
     step: running?.steps[running.index] ?? null,
+    open: running?.steps[running.index]?.open ?? NOTHING_OPEN,
     index: running?.index ?? 0,
     total: running?.steps.length ?? 0,
     next,
@@ -190,8 +202,9 @@ const TURN_LEG_MS = 5000;
 /**
  * Moves the camera to each step's view (tourRules.ts's cameraFor): a flight to a step's own view,
  * then its turn, and back to the view from before the first flight for a step without one and when
- * the tour ends. That view is read at the first flight, not at the start, since the map's own first
- * flight to the account's activities may still be under way then. A real account's steps have no
+ * the tour ends. That view is read at the first step that moves the camera (tourRules.ts's
+ * movesCamera), not at the start, since the map's own first flight to the account's activities may
+ * still be under way then. A real account's steps have no
  * view, so its camera never moves. Reduced motion jumps, and makes the turn a jump to each of its
  * points in turn, since the turn is how the step shows every side of the globe. A flat view sets
  * the projection and the zoom floor (useMapInstance.ts's globe floor) aside for its step only.
@@ -202,13 +215,18 @@ function useTourCamera(map: MapLibreMap | null, step: TourStep | null) {
   useEffect(() => {
     if (!map) return;
     if (step === null) {
-      if (start.current && shown.current && !sameView(shown.current, start.current)) moveTo(map, start.current);
+      if (start.current && (shown.current === null || !sameView(shown.current, start.current))) moveTo(map, start.current);
       start.current = shown.current = null;
       return;
     }
-    if (start.current === null && step.view !== null) {
+    if (start.current === null && movesCamera(step)) {
       const c = map.getCenter();
       start.current = shown.current = { center: [c.lng, c.lat], zoom: map.getZoom() };
+    }
+    // The Stories tab's Story moves the camera itself (the list's flight), so where it ends up is unknown.
+    if (step.view === null && step.tab === 'stories') {
+      shown.current = null;
+      return;
     }
     const target = cameraFor(step, start.current);
     if (target === null || (shown.current && sameView(shown.current, target))) return;

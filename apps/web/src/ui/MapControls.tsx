@@ -21,16 +21,18 @@ export interface MapControlsProps {
   /** Fog and Heatmap are being re-rendered: their notice shows under the toggles. */
   coverageRendering: boolean;
   spotsShown: readonly SpotCategory[];
+  /** The tour holds the Layers menu open (docs/SPEC.md FR-4.18). */
+  layersOpen?: boolean;
 }
 
 /** The controls over the map's top edge: the mode toggle, Layers, Satellite, their notices, and Show in this area. */
-export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, spotsShown }: MapControlsProps) {
+export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, spotsShown, layersOpen = false }: MapControlsProps) {
   return (
     <>
       <div className="map-toggles">
         <MapModeToggle mode={mode} onChange={onModeChange} />
         {/* Layers switch on and off over any mode; they're not a fourth mode. */}
-        <OverlaysMenu overlays={overlays} onChange={onOverlaysChange} flavor={flavor} />
+        <OverlaysMenu overlays={overlays} onChange={onOverlaysChange} flavor={flavor} forceOpen={layersOpen} />
         {satelliteAvailable && <BasemapToggle satellite={overlays.satellite} onChange={(on) => onOverlaysChange({ ...overlays, satellite: on })} />}
         {/* On lines of their own under the toggles, however many rows they wrap to. */}
         {mode !== 'normal' && coverageRendering && (

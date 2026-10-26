@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DEMO_VIEWS, NOTHING_SEEN, cameraFor, cardFor, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
+import { DEMO_VIEWS, NOTHING_SEEN, cameraFor, cardFor, movesCamera, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
 
 const start = (over) => tourStart({ requested: false, isDemo: false, hasActivities: true, seen: NOTHING_SEEN, ...over });
 
@@ -87,6 +87,20 @@ test("the globe's turn goes east in legs under 180°, from the US to Vietnam", (
   }
 });
 
+test('a step opens what it explains: the Stories tab, the sheet, Layers, and Upload for an account that can upload', () => {
+  const steps = (isDemo) => Object.fromEntries(stepsFor({ isDemo }).map((s) => [s.id, s]));
+  const real = steps(false);
+  assert.equal(real.stories.tab, 'stories');
+  assert.ok(real.stories.open.sheet && real.activities.open.sheet);
+  assert.ok(real.layers.open.layers);
+  assert.ok(real.add.open.upload);
+  assert.equal(steps(true).add.open.upload, undefined);
+  // Every other step is on the Activities tab, which the tour leaves for the Stories step alone.
+  assert.ok(Object.values(real).filter((s) => s.id !== 'stories').every((s) => s.tab === 'activities'));
+  assert.ok(movesCamera(real.stories));
+  assert.ok(!movesCamera(real.layers));
+});
+
 test('nextStep skips steps off screen and stops at either end', () => {
   const steps = stepsFor({ isDemo: false });
   const hidden = new Set(['range', 'stories']);
@@ -121,6 +135,8 @@ test('the popover goes below its anchor, else above, else beside, clamped in the
   assert.deepEqual(placePopover(null, size, phone), { kind: 'sheet', edge: 'bottom' });
   // The panel's strip at the foot of a phone: the sheet goes to the top.
   assert.deepEqual(placePopover({ left: 0, top: 790, width: 390, height: 54 }, size, phone), { kind: 'sheet', edge: 'top' });
+  // The panel's open sheet fills the screen below its tabs: no room above, so the bottom.
+  assert.deepEqual(placePopover({ left: 0, top: 170, width: 390, height: 674 }, size, phone), { kind: 'sheet', edge: 'bottom' });
 });
 
 test('onScreen needs a laid-out rect overlapping the viewport', () => {

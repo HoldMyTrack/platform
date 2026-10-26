@@ -23,9 +23,16 @@ export interface TourView {
   flat?: boolean;
 }
 
+/** What a step opens so the user sees the feature it explains: the panel's sheet on a phone, the Layers menu, the header's Upload menu. Each closes again after the step. */
+export interface TourOpen {
+  sheet?: boolean;
+  layers?: boolean;
+  upload?: boolean;
+}
+
 export interface TourStep {
   id: StepId;
-  /** A CSS selector for the element the step points at; null centers the popover. */
+  /** A CSS selector for what the step points at, null to center the popover. Every on-screen match is lit, so a button and its open menu light together. */
   anchor: string | null;
   /** The mode the map is put in for the step. The panel's steps need Normal, which is the only mode that shows it. */
   mode: MapMode;
@@ -35,6 +42,9 @@ export interface TourStep {
   text: string;
   /** The camera for the step; null keeps the view the tour started on. */
   view: TourView | null;
+  /** The panel's tab for the step; the user's comes back when the tour ends. */
+  tab: PanelTab;
+  open: TourOpen;
 }
 
 const MODES = '[data-testid="map-mode-toggle"]';
@@ -70,6 +80,8 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
     card: null,
     text: `tour.${id}`,
     view: null,
+    tab: 'activities',
+    open: {},
     ...more,
   });
   const fog = isDemo
@@ -81,15 +93,17 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
     : [step('fog', MODES, { mode: 'fog', card: 'fog' })];
   return [
     step('welcome', null),
-    step('activities', '[data-testid="activities-panel"]'),
+    step('activities', '[data-testid="activities-panel"]', { open: { sheet: true } }),
     step('range', '[data-testid="date-range-slider"]'),
-    step('stories', '[data-testid="activities-panel-tab-stories"]', { card: 'stories' }),
-    step('layers', '[data-testid="map-overlays"]'),
+    step('stories', '[data-testid="activities-panel"]', { card: 'stories', tab: 'stories', open: { sheet: true } }),
+    step('layers', '[data-testid="map-overlays"], .overlays-menu__panel', { open: { layers: true } }),
     step('export', '[data-testid="export-button"]'),
     ...fog,
     step('heatmap', MODES, { mode: 'heatmap', card: 'heatmap', view: isDemo ? DEMO_VIEWS.heatmapCity : null }),
-    // The header's Upload menu; the demo's is a disabled button that says what an account adds.
-    step('add', '.page-header .upload-menu', { text: isDemo ? 'tour.add_demo' : 'tour.add' }),
+    // The header's Upload menu, open; the demo's is a disabled button that says what an account adds.
+    isDemo
+      ? step('add', '.page-header .upload-menu', { text: 'tour.add_demo' })
+      : step('add', '.page-header .upload-menu, .page-header .upload-menu__dropdown', { open: { upload: true } }),
     step('done', '[data-tour-start]'),
   ];
 }
@@ -97,6 +111,11 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
 /** The camera a step wants: its own view, or the one before the tour's first move; null while nothing has moved. Equal views mean no move. */
 export function cameraFor(step: TourStep, start: TourView | null): TourView | null {
   return step.view ?? start;
+}
+
+/** Whether a step moves the camera: its own view, or the Stories tab, whose Story the map flies to (SPEC.md FR-14.6). */
+export function movesCamera(step: TourStep): boolean {
+  return step.view !== null || step.tab === 'stories';
 }
 
 export function sameView(a: TourView, b: TourView): boolean {
@@ -169,17 +188,20 @@ export type Placement = { kind: 'center' } | { kind: 'sheet'; edge: 'top' | 'bot
 /** Below this width the popover is a bottom sheet, as the panel is (index.css's phone layer). */
 export const NARROW_WIDTH = 768;
 const GAP = 14;
+/** The page header's height (header.css): a top sheet sits under it. */
+const HEADER_HEIGHT = 56;
 const MARGIN = 12;
 
 /**
  * Where a popover of `size` goes beside `anchor` in a `viewport`: below it if it fits, else above,
  * else right or left; clamped inside the viewport, with `arrow` the anchor's center along the
  * popover's edge. No anchor centers it. A narrow screen makes it a sheet across the bottom, or
- * across the top when the anchor is in the lower half (a phone's panel strip), so it never covers
- * what it points at.
+ * across the top, under the header, when it fits above the anchor (a phone's collapsed panel
+ * strip). An anchor that fills the screen, the panel's open sheet, keeps it at the bottom, over the
+ * end of the list rather than the tabs.
  */
 export function placePopover(anchor: Rect | null, size: { width: number; height: number }, viewport: { width: number; height: number }): Placement {
-  if (viewport.width < NARROW_WIDTH) return { kind: 'sheet', edge: anchor !== null && anchor.top + anchor.height / 2 > viewport.height / 2 ? 'top' : 'bottom' };
+  if (viewport.width < NARROW_WIDTH) return { kind: 'sheet', edge: anchor !== null && anchor.top - HEADER_HEIGHT >= size.height + GAP ? 'top' : 'bottom' };
   if (anchor === null) return { kind: 'center' };
   const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(v, max));
   const cx = anchor.left + anchor.width / 2;

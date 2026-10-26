@@ -30,7 +30,8 @@ export interface StoryNavInputs {
 
 export interface StoryNavigation {
   enterStory: (id: string, nav?: StoryNav) => void;
-  changePanelTab: (tab: PanelTab) => void;
+  /** `nav` is how opening or leaving the tab's Story moves the URL: the tour replaces, so Back skips its steps. */
+  changePanelTab: (tab: PanelTab, nav?: StoryNav) => void;
   /** A Story just made with Add to story's "New story…" opens on the Stories tab. */
   openCreatedStory: (story: Story) => void;
   /** Activities added to an existing Story with Add to story. */
@@ -61,10 +62,13 @@ export function useStoryNav(inputs: StoryNavInputs): StoryNavigation {
     },
     [dispatch],
   );
-  // Leaving the Stories tab closes its Story; opening it opens the newest (the effect below).
+  // Leaving the Stories tab closes its Story; opening it opens the newest (the effect below), with
+  // the history move the tab change asked for.
+  const openingNav = useRef<StoryNav>('push');
   const changePanelTab = useCallback(
-    (next: PanelTab) => {
-      if (next !== 'stories' && storyId !== null) exitStory();
+    (next: PanelTab, nav: StoryNav = 'push') => {
+      if (next !== 'stories' && storyId !== null) exitStory(nav);
+      openingNav.current = nav;
       setPanelTab(next);
     },
     [storyId, exitStory, setPanelTab],
@@ -80,7 +84,7 @@ export function useStoryNav(inputs: StoryNavInputs): StoryNavigation {
   useEffect(() => {
     if (panelTab !== 'stories' || storyId !== null || !stories.ready) return;
     const newest = stories.stories[0];
-    if (newest) enterStory(newest.id);
+    if (newest) enterStory(newest.id, openingNav.current);
   }, [panelTab, storyId, stories.ready, stories.stories, enterStory]);
 
   const navRef = useRef({ storyId, enterStory, exitStory, setPanelTab });

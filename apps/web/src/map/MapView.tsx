@@ -295,6 +295,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     [edit.close, awaitEdit, reloadActivities, photoLayer.photos.reload],
   );
 
+  // The tour's tab changes replace the Story's URL, so Back doesn't walk through its steps.
+  const tourTab = useCallback((tab: PanelTab) => stories.changePanelTab(tab, 'replace'), [stories.changePanelTab]);
   const tour = useTour({
     map,
     isDemo,
@@ -302,6 +304,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     requested: initialTour,
     mode: mapMode,
     setMode: setMapMode,
+    tab: panelTab,
+    setTab: tourTab,
     blocked: editOpen,
   });
   // The user's own picks, which may earn a first-time card; the tour's own mode changes don't.
@@ -376,6 +380,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               stories={stories.storiesPanel}
               tab={panelTab}
               onTabChange={changePanelTab}
+              sheetOpen={tour.open.sheet === true}
               map={map}
               onPrivateLocationsChanged={refresh.afterPrivateLocations}
               dateRange={{
@@ -437,6 +442,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               satelliteAvailable={satelliteAvailable}
               coverageRendering={coverageRendering}
               spotsShown={spotsShown}
+              layersOpen={tour.open.layers === true}
             />
           )}
           {map && spots.openSpot && <SpotPopup map={map} spot={spots.openSpot} capturedAt={spots.capturedAt(spots.openSpot.id)} onClose={spots.closeSpot} />}

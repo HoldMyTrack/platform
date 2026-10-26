@@ -32,10 +32,24 @@ function sameRect(a: Rect | null, b: Rect | null): boolean {
   return a === b || (a !== null && b !== null && a.left === b.left && a.top === b.top && a.width === b.width && a.height === b.height);
 }
 
+/** The smallest rect holding every on-screen element `selector` matches: a button and its open menu. */
+function unionRect(selector: string): Rect | null {
+  const viewport = { width: window.innerWidth, height: window.innerHeight };
+  let box: { left: number; top: number; right: number; bottom: number } | null = null;
+  for (const el of document.querySelectorAll(selector)) {
+    const r = el.getBoundingClientRect();
+    if (!onScreen(r, viewport)) continue;
+    box = box
+      ? { left: Math.min(box.left, r.left), top: Math.min(box.top, r.top), right: Math.max(box.right, r.right), bottom: Math.max(box.bottom, r.bottom) }
+      : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  }
+  return box && { left: box.left, top: box.top, width: box.right - box.left, height: box.bottom - box.top };
+}
+
 /**
- * The on-screen rect of the element `selector` matches, followed every frame (the panel resizes,
- * the map's controls wrap, a mode change mounts and unmounts the panel). `onMissing` is called
- * once if it hasn't appeared within MISSING_FRAMES.
+ * The on-screen rect of what `selector` matches (unionRect), followed every frame (the panel
+ * resizes, the map's controls wrap, a menu opens, a mode change mounts and unmounts the panel).
+ * `onMissing` is called once if it hasn't appeared within MISSING_FRAMES.
  */
 function useAnchorRect(selector: string | null, onMissing?: () => void): Rect | null {
   const [rect, setRect] = useState<Rect | null>(null);
@@ -48,9 +62,7 @@ function useAnchorRect(selector: string | null, onMissing?: () => void): Rect | 
     let absent = 0;
     let last: Rect | null = null;
     const tick = () => {
-      const el = document.querySelector(selector);
-      const r = el?.getBoundingClientRect();
-      const next = r && onScreen(r, { width: window.innerWidth, height: window.innerHeight }) ? { left: r.left, top: r.top, width: r.width, height: r.height } : null;
+      const next = unionRect(selector);
       if (next === null && ++absent === MISSING_FRAMES) {
         missing.current?.();
         return;
@@ -122,6 +134,7 @@ function TourStepView({ tour }: { tour: Tour }) {
   const last = tour.index === tour.total - 1;
 
   useEffect(() => primary.current?.focus(), [step.id]);
+  useHeaderMenuOpen('.page-header details.upload-menu', tour.open.upload === true);
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
       if (event.key === 'Escape') tour.end();
@@ -241,4 +254,21 @@ function TourTip({ onClose }: { onClose: () => void }) {
       {t('tour.tip')}
     </div>
   );
+}
+
+
+/**
+ * Holds one of the header's menus (a `<details>`, templates/header.html) open while `open`. The
+ * header is the server's markup, outside this app, so this sets its `open` and closes it after.
+ */
+function useHeaderMenuOpen(selector: string, open: boolean) {
+  useEffect(() => {
+    if (!open) return;
+    const menu = document.querySelector<HTMLDetailsElement>(selector);
+    if (!menu) return;
+    menu.open = true;
+    return () => {
+      menu.open = false;
+    };
+  }, [selector, open]);
 }
