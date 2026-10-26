@@ -1,0 +1,15 @@
+{
+  "rule": "tourCard",
+  "clients": ["web", "android"],
+  "description": "The first-time card a user's own pick earns (docs/SPEC.md FR-4.18): \"fog\" or \"heatmap\" for that mode, \"stories\" for the Stories tab; null for Normal, any other tab, a card already seen (seen.cards), or while the tour runs (touring), whose steps say the same.",
+  "cases": [
+    { "name": "Fog", "input": { "event": { "kind": "mode", "mode": "fog" }, "seen": { "tour": false, "cards": [] }, "touring": false }, "expected": "fog" },
+    { "name": "Heatmap", "input": { "event": { "kind": "mode", "mode": "heatmap" }, "seen": { "tour": false, "cards": [] }, "touring": false }, "expected": "heatmap" },
+    { "name": "Normal earns nothing", "input": { "event": { "kind": "mode", "mode": "normal" }, "seen": { "tour": false, "cards": [] }, "touring": false }, "expected": null },
+    { "name": "the Stories tab", "input": { "event": { "kind": "tab", "tab": "stories" }, "seen": { "tour": false, "cards": [] }, "touring": false }, "expected": "stories" },
+    { "name": "another tab earns nothing", "input": { "event": { "kind": "tab", "tab": "activities" }, "seen": { "tour": false, "cards": [] }, "touring": false }, "expected": null },
+    { "name": "a card seen once isn't shown again", "input": { "event": { "kind": "mode", "mode": "fog" }, "seen": { "tour": true, "cards": ["fog"] }, "touring": false }, "expected": null },
+    { "name": "another card still shows", "input": { "event": { "kind": "mode", "mode": "heatmap" }, "seen": { "tour": true, "cards": ["fog"] }, "touring": false }, "expected": "heatmap" },
+    { "name": "nothing while the tour runs", "input": { "event": { "kind": "mode", "mode": "fog" }, "seen": { "tour": true, "cards": [] }, "touring": true }, "expected": null }
+  ]
+}

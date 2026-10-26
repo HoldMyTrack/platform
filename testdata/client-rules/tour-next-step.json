@@ -1,0 +1,14 @@
+{
+  "rule": "tourNextStep",
+  "clients": ["web", "android"],
+  "description": "The tour's step after `from` in direction `dir` (1 or -1) whose target is on screen (`shown`, one flag per step; a step that points at nothing is always shown), or null past either end. A phone's collapsed panel or a control that isn't there drops its step.",
+  "cases": [
+    { "name": "the next one", "input": { "shown": [true, true, true], "from": 0, "dir": 1 }, "expected": 1 },
+    { "name": "the first, from before the start", "input": { "shown": [true, true], "from": -1, "dir": 1 }, "expected": 0 },
+    { "name": "skips steps off screen", "input": { "shown": [true, true, false, false, true], "from": 1, "dir": 1 }, "expected": 4 },
+    { "name": "skips them going back", "input": { "shown": [true, true, false, false, true], "from": 4, "dir": -1 }, "expected": 1 },
+    { "name": "past the end", "input": { "shown": [true, true, true], "from": 2, "dir": 1 }, "expected": null },
+    { "name": "past the end over hidden steps", "input": { "shown": [true, false, false], "from": 0, "dir": 1 }, "expected": null },
+    { "name": "before the start", "input": { "shown": [true, true], "from": 0, "dir": -1 }, "expected": null }
+  ]
+}

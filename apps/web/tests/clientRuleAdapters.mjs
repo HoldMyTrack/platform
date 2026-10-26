@@ -16,11 +16,18 @@ import { sliderBoundaries, sliderLayout, sliderMoveKnob, sliderPanLand, sliderTi
 import { activityTimeZone } from '../src/ui/timeZone.ts';
 import { boldTracks, invertedChecks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
+import { cardFor, nextStep, tourStart } from '../src/ui/tour/tourRules.ts';
 
 
 const sorted = (set) => [...set].sort();
 
 export const rules = {
+  tourStart: ({ requested, isDemo, hasActivities, seen }) => tourStart({ requested, isDemo, hasActivities: hasActivities ?? null, seen }),
+  tourCard: ({ event, seen, touring }) => cardFor(event, seen, touring),
+  tourNextStep: ({ shown, from, dir }) => {
+    const steps = shown.map(() => ({ anchor: 'shared' }));
+    return nextStep(steps, from, dir, (step) => shown[steps.indexOf(step)]);
+  },
   defaultRange: ({ visibleDays, earliest, today }) => defaultRange(visibleDays.map((date) => ({ date })), earliest ?? null, today),
   pendingCheck: ({ listed, awaiting, stillPending }) => {
     const watched = pendingWatched(listed, new Set(awaiting));
