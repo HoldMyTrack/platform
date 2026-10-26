@@ -254,6 +254,16 @@ export function placePopover(anchor: Rect | null, size: { width: number; height:
   return { kind: 'center' };
 }
 
+/** The smallest rect holding all of `rects`, which the popover is placed beside; null for none. */
+export function unionOf(rects: readonly Rect[]): Rect | null {
+  if (rects.length === 0) return null;
+  const left = Math.min(...rects.map((r) => r.left));
+  const top = Math.min(...rects.map((r) => r.top));
+  const right = Math.max(...rects.map((r) => r.left + r.width));
+  const bottom = Math.max(...rects.map((r) => r.top + r.height));
+  return { left, top, width: right - left, height: bottom - top };
+}
+
 /** Whether `rect` is something to point at: laid out, and at least partly in the viewport. */
 export function onScreen(rect: Rect, viewport: { width: number; height: number }): boolean {
   return rect.width > 0 && rect.height > 0 && rect.left < viewport.width && rect.top < viewport.height && rect.left + rect.width > 0 && rect.top + rect.height > 0;

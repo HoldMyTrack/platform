@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CAMERA_UNMOVED, DEMO_VIEWS, NOTHING_SEEN, cameraStep, cardFor, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
+import { CAMERA_UNMOVED, DEMO_VIEWS, NOTHING_SEEN, cameraStep, cardFor, unionOf, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
 
 const start = (over) => tourStart({ requested: false, isDemo: false, hasActivities: true, seen: NOTHING_SEEN, ...over });
 
@@ -152,6 +152,14 @@ test('the popover goes below its anchor, else above, else beside, clamped in the
   assert.deepEqual(placePopover({ left: 0, top: 790, width: 390, height: 54 }, size, phone), { kind: 'sheet', edge: 'top' });
   // The panel's open sheet fills the screen below its tabs: no room above, so the bottom.
   assert.deepEqual(placePopover({ left: 0, top: 170, width: 390, height: 674 }, size, phone), { kind: 'sheet', edge: 'bottom' });
+});
+
+test('unionOf holds every rect, for placing the popover beside a button and its menu', () => {
+  const button = { left: 1065, top: 50, width: 95, height: 36 };
+  const menu = { left: 790, top: 95, width: 370, height: 115 };
+  assert.deepEqual(unionOf([button, menu]), { left: 790, top: 50, width: 370, height: 160 });
+  assert.deepEqual(unionOf([button]), button);
+  assert.equal(unionOf([]), null);
 });
 
 test('onScreen needs a laid-out rect overlapping the viewport', () => {

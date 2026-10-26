@@ -1,14 +1,15 @@
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
 import { t } from '../../i18n';
 import type { MessageKey } from '../../i18n/en';
-import { onScreen, placePopover, type CardId, type Placement, type Rect } from './tourRules.ts';
+import { onScreen, placePopover, unionOf, type CardId, type Placement, type Rect } from './tourRules.ts';
 import type { Tour } from './useTour';
 import './tour.css';
 
 /** The frames a step's anchor gets to appear after a mode change before the step is skipped. */
 const MISSING_FRAMES = 20;
-/** Room around the anchor inside the spotlight's ring. */
+/** Room around the anchor inside the spotlight's ring, and the ring's corners (tour.css's --fm-radius-lg). */
 const PAD = 6;
+const RADIUS = 12;
 
 const CARD_ANCHORS: Record<CardId, string> = {
   fog: '[data-testid="map-mode-toggle"]',
@@ -28,53 +29,48 @@ export function TourLayer({ tour }: { tour: Tour }) {
   );
 }
 
-function sameRect(a: Rect | null, b: Rect | null): boolean {
-  return a === b || (a !== null && b !== null && a.left === b.left && a.top === b.top && a.width === b.width && a.height === b.height);
-}
-
-/** The smallest rect holding every on-screen element `selector` matches: a button and its open menu. */
-function unionRect(selector: string): Rect | null {
+/** The on-screen rects of every element `selector` matches: a button and its open menu are two. */
+function anchorRects(selector: string): Rect[] {
   const viewport = { width: window.innerWidth, height: window.innerHeight };
-  let box: { left: number; top: number; right: number; bottom: number } | null = null;
-  for (const el of document.querySelectorAll(selector)) {
-    const r = el.getBoundingClientRect();
-    if (!onScreen(r, viewport)) continue;
-    box = box
-      ? { left: Math.min(box.left, r.left), top: Math.min(box.top, r.top), right: Math.max(box.right, r.right), bottom: Math.max(box.bottom, r.bottom) }
-      : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
-  }
-  return box && { left: box.left, top: box.top, width: box.right - box.left, height: box.bottom - box.top };
+  return [...document.querySelectorAll(selector)]
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => onScreen(r, viewport))
+    .map((r) => ({ left: r.left, top: r.top, width: r.width, height: r.height }));
 }
 
 /**
- * The on-screen rect of what `selector` matches (unionRect), followed every frame (the panel
- * resizes, the map's controls wrap, a menu opens, a mode change mounts and unmounts the panel).
- * `onMissing` is called once if it hasn't appeared within MISSING_FRAMES.
+ * What `selector` matches, each rect lit on its own and their union for placing beside, followed
+ * every frame (the panel resizes, the map's controls wrap, a menu opens, a mode change mounts and
+ * unmounts the panel). `onMissing` is called once if nothing has appeared within MISSING_FRAMES.
  */
-function useAnchorRect(selector: string | null, onMissing?: () => void): Rect | null {
-  const [rect, setRect] = useState<Rect | null>(null);
+function useAnchor(selector: string | null, onMissing?: () => void): { rects: Rect[]; rect: Rect | null } {
+  const [rects, setRects] = useState<Rect[]>([]);
   const missing = useRef(onMissing);
   missing.current = onMissing;
   useEffect(() => {
-    setRect(null);
+    setRects([]);
     if (selector === null) return;
     let frame = 0;
     let absent = 0;
-    let last: Rect | null = null;
+    let last = '[]';
     const tick = () => {
-      const next = unionRect(selector);
-      if (next === null && ++absent === MISSING_FRAMES) {
+      const next = anchorRects(selector);
+      if (next.length === 0 && ++absent === MISSING_FRAMES) {
         missing.current?.();
         return;
       }
-      if (next !== null) absent = 0;
-      if (!sameRect(next, last)) setRect((last = next));
+      if (next.length > 0) absent = 0;
+      const key = JSON.stringify(next);
+      if (key !== last) {
+        last = key;
+        setRects(next);
+      }
       frame = requestAnimationFrame(tick);
     };
     tick();
     return () => cancelAnimationFrame(frame);
   }, [selector]);
-  return rect;
+  return { rects, rect: useMemo(() => unionOf(rects), [rects]) };
 }
 
 /** A popover's placement beside `rect`, from its own measured size. Hidden until measured. */
@@ -128,7 +124,7 @@ function trapTab(event: KeyboardEvent<HTMLElement>) {
 
 function TourStepView({ tour }: { tour: Tour }) {
   const step = tour.step!;
-  const rect = useAnchorRect(step.anchor, tour.missing);
+  const { rects, rect } = useAnchor(step.anchor, tour.missing);
   const { ref, placement } = usePlacement(rect);
   const primary = useRef<HTMLButtonElement>(null);
   const last = tour.index === tour.total - 1;
@@ -146,8 +142,22 @@ function TourStepView({ tour }: { tour: Tour }) {
   return (
     <div className={placement?.kind === 'sheet' ? 'tour tour--narrow' : 'tour'} data-testid="tour" data-step={step.id}>
       {/* Takes every click, so nothing under the tour changes while it runs. */}
-      <div className={rect ? 'tour__blocker' : 'tour__blocker tour__blocker--dim'} />
-      {rect && <div className="tour__spotlight" style={{ left: rect.left - PAD, top: rect.top - PAD, width: rect.width + PAD * 2, height: rect.height + PAD * 2 }} />}
+      <div className="tour__blocker" />
+      {/* The dim screen with a hole for each lit rect, so a menu's neighbours stay dim. */}
+      <svg className="tour__dim" aria-hidden="true">
+        <defs>
+          <mask id="tour-holes">
+            <rect width="100%" height="100%" fill="white" />
+            {rects.map((r, i) => (
+              <rect key={i} x={r.left - PAD} y={r.top - PAD} width={r.width + PAD * 2} height={r.height + PAD * 2} rx={RADIUS} fill="black" />
+            ))}
+          </mask>
+        </defs>
+        <rect width="100%" height="100%" mask="url(#tour-holes)" />
+      </svg>
+      {rects.map((r, i) => (
+        <div key={i} className="tour__ring" style={{ left: r.left - PAD, top: r.top - PAD, width: r.width + PAD * 2, height: r.height + PAD * 2 }} />
+      ))}
       <div ref={ref} className={popoverClass('tour-popover', placement)} style={popoverStyle(placement)} role="dialog" aria-modal="true" aria-labelledby="tour-title" onKeyDown={trapTab}>
         <Arrow placement={placement} />
         <div className="tour-popover__head">
@@ -176,7 +186,7 @@ function TourStepView({ tour }: { tour: Tour }) {
 }
 
 function FeatureCard({ card, onClose, onTour }: { card: CardId; onClose: () => void; onTour: () => void }) {
-  const rect = useAnchorRect(CARD_ANCHORS[card]);
+  const { rect } = useAnchor(CARD_ANCHORS[card]);
   const { ref, placement } = usePlacement(rect);
   // A hint, not a dialog: the user's next press anywhere else puts it away.
   useEffect(() => {
@@ -235,7 +245,7 @@ function TourOffer({ onTake, onLater }: { onTake: () => void; onLater: () => voi
 
 /** Points at the header's Take a tour once the offer is declined; any click or a few seconds closes it. */
 function TourTip({ onClose }: { onClose: () => void }) {
-  const rect = useAnchorRect('[data-tour-start]');
+  const { rect } = useAnchor('[data-tour-start]');
   useEffect(() => {
     const timer = window.setTimeout(onClose, 6000);
     // Not the click that declined the offer: that one is still being dispatched.
