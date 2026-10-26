@@ -32,17 +32,23 @@ holdmytrack/
 ├── .github/workflows/contract.yml # fails a PR whose API contract change breaks installed clients
 ├── ops/alloy/config.alloy       # the alloy service's log and metrics shipping to Grafana Cloud (docs/DEPLOY.md §13)
 ├── ops/grafana/                 # alert rules (apply.py) and dashboard pushed to the Grafana stack (docs/DEPLOY.md §13)
-├── scripts/backup.sh            # nightly Postgres dump and object sync to the backup bucket (docs/DEPLOY.md §11)
-├── scripts/check-contract-break.sh # the breaking-change check contract.yml runs (docs/DEVELOPMENT.md, "CI")
-├── scripts/maintenance.sh       # flips the deployment's maintenance page (docs/DEPLOY.md §7)
-├── scripts/restore-drill.sh     # restores the newest backup into a throwaway container and checks it (docs/DEPLOY.md §11)
-├── scripts/spots-extract.sh     # downloads OSM data and filters it into the Spots places file, off the server (docs/DEPLOY.md §6)
-├── scripts/bike-paths-extract.sh # the same for the bike paths file (docs/DEPLOY.md §6)
-├── scripts/lib/osm-download.sh  # the OSM download and checksum both extract scripts share
-├── scripts/loadtest-sampler.sh  # samples a deployment's CPU, memory and job queue during a load test (docs/PERFORMANCE.md)
 ├── .env.example                 # Compose interpolation only — never VITE_*
 ├── .env.prod.example            # compose.prod.yml's own env template
 ├── .editorconfig
+├── scripts/
+│   ├── backup.sh                # nightly Postgres dump and object sync to the backup bucket (docs/DEPLOY.md §11)
+│   ├── restore-drill.sh         # restores the newest backup into a throwaway container and checks it (docs/DEPLOY.md §11)
+│   ├── maintenance.sh           # flips the deployment's maintenance page (docs/DEPLOY.md §7)
+│   ├── spots-extract.sh         # downloads OSM data and filters it into the Spots places file, off the server (docs/DEPLOY.md §6)
+│   ├── bike-paths-extract.sh    # the same for the bike paths file (docs/DEPLOY.md §6)
+│   ├── boundaries-extract.sh    # cuts the country and region outlines file from Overture with DuckDB, off the server (docs/DEPLOY.md §6)
+│   ├── boundaries-extract.sql   # the query boundaries-extract.sh runs
+│   ├── lib/osm-download.sh      # the OSM download and checksum both OSM extract scripts share
+│   ├── check-doc-refs.sh        # fails on a citation whose heading no longer exists (AGENTS.md)
+│   ├── check-file-size.sh       # warns when a change grows a file past the soft size limit
+│   ├── check-contract-break.sh  # the breaking-change check against the base branch contract.yml runs (docs/DEVELOPMENT.md, "CI")
+│   ├── check-contract-release.sh # the same against each release production still lets in (docs/DEPLOY.md §10)
+│   └── loadtest-sampler.sh      # samples a deployment's CPU, memory and job queue during a load test (docs/PERFORMANCE.md)
 ├── docs/
 │   ├── VISION.md                # product, market, funding, milestones
 │   ├── ARCHITECTURE.md          # system architecture, key decisions, stack, the Android app's shape
