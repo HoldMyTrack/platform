@@ -192,7 +192,8 @@ const TURN_LEG_MS = 5000;
  * then its turn, and back to the view from before the first flight for a step without one and when
  * the tour ends. That view is read at the first flight, not at the start, since the map's own first
  * flight to the account's activities may still be under way then. A real account's steps have no
- * view, so its camera never moves. Reduced motion jumps and skips the turn.
+ * view, so its camera never moves. Reduced motion jumps, and makes the turn a jump to each of its
+ * points in turn, since the turn is how the step shows every side of the globe.
  */
 function useTourCamera(map: MapLibreMap | null, step: TourStep | null) {
   const start = useRef<TourView | null>(null);
@@ -213,7 +214,11 @@ function useTourCamera(map: MapLibreMap | null, step: TourStep | null) {
     shown.current = target;
     moveTo(map, target);
     const legs = [...(target.turn ?? [])];
-    if (legs.length === 0 || reducedMotion()) return;
+    if (legs.length === 0) return;
+    if (reducedMotion()) {
+      const timers = legs.map((leg, i) => window.setTimeout(() => map.jumpTo({ center: [leg[0], leg[1]] }), TURN_LEG_MS * (i + 1)));
+      return () => timers.forEach((timer) => window.clearTimeout(timer));
+    }
     const turn = () => {
       const leg = legs.shift();
       if (!leg) return;
