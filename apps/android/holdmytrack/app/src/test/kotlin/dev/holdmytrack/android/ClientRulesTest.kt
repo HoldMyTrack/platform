@@ -32,10 +32,13 @@ import dev.holdmytrack.android.photos.PlaceAnchor
 import dev.holdmytrack.android.photos.ScreenPoint
 import dev.holdmytrack.android.photos.TimedPoint
 import dev.holdmytrack.android.web.WebRoute
+import dev.holdmytrack.android.tour.TourCamera
 import dev.holdmytrack.android.tour.TourCard
 import dev.holdmytrack.android.tour.TourEvent
 import dev.holdmytrack.android.tour.TourRules
 import dev.holdmytrack.android.tour.TourSeen
+import dev.holdmytrack.android.tour.TourStep
+import dev.holdmytrack.android.tour.TourView
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -87,6 +90,9 @@ class ClientRulesTest {
 
     private fun JsonObject.bool(key: String): Boolean = (this[key] as? JsonPrimitive)?.booleanOrNull ?: false
 
+    /** A case's tab: the web's panel tabs, Android's bottom bar, whose Map shows the Activities tab. */
+    private fun tourTab(name: String) = if (name == "activities") MainActivity.Tab.MAP else MainActivity.Tab.valueOf(name.uppercase())
+
     private fun tourSeen(seen: JsonObject) = TourSeen(seen.bool("tour"), seen.strings("cards").map { TourCard.valueOf(it.uppercase()) }.toSet())
 
     private fun ids(values: Collection<String>, sort: Boolean = true): JsonArray =
@@ -105,6 +111,34 @@ class ClientRulesTest {
                 else -> TourEvent.Tab(PanelTab.valueOf(event.string("tab")!!.uppercase()))
             }
             JsonPrimitive(TourRules.card(tourEvent, tourSeen(input["seen"]!!.jsonObject), input.bool("touring"))?.name?.lowercase())
+        },
+        "tourCamera" to { input ->
+            fun view(element: JsonElement?): TourView? = (element as? JsonObject)?.let { TourView(it.number("lon"), it.number("lat"), it.number("zoom")) }
+            fun json(v: TourView?): JsonElement = v?.let { buildJsonObject { put("lon", it.lon); put("lat", it.lat); put("zoom", it.zoom) } } ?: JsonNull
+            val camera = TourCamera(view(input["start"]), view(input["shown"]))
+            val step = input["step"] as? JsonObject
+            if (step == null) {
+                buildJsonObject { put("start", JsonNull); put("shown", JsonNull); put("move", json(TourRules.cameraEnd(camera))) }
+            } else {
+                val (next, move) = TourRules.camera(camera, view(step["view"]), tourTab(step.string("tab")!!), view(input["current"])!!)
+                buildJsonObject { put("start", json(next.start)); put("shown", json(next.shown)); put("move", json(move)) }
+            }
+        },
+        "tourStep" to { input ->
+            val now = input["now"]!!.jsonObject
+            val restore = input["restore"]!!.jsonObject
+            val step = (input["step"] as? JsonObject)?.let {
+                TourStep("case", null, tab = tourTab(it.string("tab")!!), mode = MapMode.valueOf(it.string("mode")!!.uppercase()), card = it.string("card")?.let { c -> TourCard.valueOf(c.uppercase()) })
+            }
+            val changes = TourRules.changes(
+                MapMode.valueOf(now.string("mode")!!.uppercase()), tourTab(now.string("tab")!!), step,
+                MapMode.valueOf(restore.string("mode")!!.uppercase()), tourTab(restore.string("tab")!!),
+            )
+            buildJsonObject {
+                put("mode", changes.mode?.name?.lowercase())
+                put("tab", changes.tab?.let { if (it == MainActivity.Tab.MAP) "activities" else it.name.lowercase() })
+                put("card", changes.card?.name?.lowercase())
+            }
         },
         "tourNextStep" to { input ->
             JsonPrimitive(TourRules.nextStep(input["shown"]!!.jsonArray.map { it.jsonPrimitive.boolean }, input.number("from").toInt(), input.number("dir").toInt()))

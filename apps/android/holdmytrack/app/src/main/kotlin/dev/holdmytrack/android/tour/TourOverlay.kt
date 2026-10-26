@@ -149,14 +149,8 @@ class TourOverlay(context: Context, private val dim: Boolean) : FrameLayout(cont
             params.topMargin = if (edge == TourSteps.Edge.TOP) top else 0
             params.bottomMargin = if (edge == TourSteps.Edge.BOTTOM) bottom else 0
         } else {
-            // Under the target when it's in the upper half, else over it.
-            val below = target == null || target.centerY() < height / 2
             params.gravity = Gravity.TOP
-            params.topMargin = when {
-                target == null -> top
-                below -> (target.bottom + gap).toInt()
-                else -> (target.top - gap - card.height).toInt().coerceAtLeast(top)
-            }
+            params.topMargin = TourSteps.cardTop(target?.top?.toInt(), target?.bottom?.toInt(), card.height, height, top, gap)
         }
         card.layoutParams = params
         card.visibility = View.VISIBLE

@@ -108,18 +108,47 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
   ];
 }
 
-/** The camera a step wants: its own view, or the one before the tour's first move; null while nothing has moved. Equal views mean no move. */
-export function cameraFor(step: TourStep, start: TourView | null): TourView | null {
-  return step.view ?? start;
-}
-
-/** Whether a step moves the camera: its own view, or the Stories tab, whose Story the map flies to (SPEC.md FR-14.6). */
-export function movesCamera(step: TourStep): boolean {
-  return step.view !== null || step.tab === 'stories';
-}
-
 export function sameView(a: TourView, b: TourView): boolean {
   return a.center[0] === b.center[0] && a.center[1] === b.center[1] && a.zoom === b.zoom;
+}
+
+/** The camera's state through the tour: the view before its first move, and the one it last moved to, null where the map took it somewhere unknown. */
+export interface TourCamera {
+  start: TourView | null;
+  shown: TourView | null;
+}
+
+export const CAMERA_UNMOVED: TourCamera = { start: null, shown: null };
+
+/**
+ * Where the camera goes for `step` (`testdata/client-rules/tour-camera.json`). The view before the
+ * tour's first move (`current`, read then) is kept, since the map's own first flight may still be
+ * under way when the tour starts. The Stories tab frames its Story itself, so the camera after it
+ * is unknown and the next step moves it whatever it is. `move` is null for no move.
+ */
+export function cameraStep(camera: TourCamera, step: Pick<TourStep, 'view' | 'tab'>, current: TourView): { camera: TourCamera; move: TourView | null } {
+  let { start, shown } = camera;
+  if (start === null && (step.view !== null || step.tab === 'stories')) start = shown = current;
+  if (step.view === null && step.tab === 'stories') return { camera: { start, shown: null }, move: null };
+  const target = step.view ?? start;
+  if (target === null || (shown !== null && sameView(shown, target))) return { camera: { start, shown }, move: null };
+  return { camera: { start, shown: target }, move: target };
+}
+
+/** Where the camera goes when the tour ends: back to the view before its first move, unless it's there. */
+export function cameraEnd(camera: TourCamera): TourView | null {
+  const { start, shown } = camera;
+  return start !== null && (shown === null || !sameView(shown, start)) ? start : null;
+}
+
+/** What a step changes, or the tour's end (`step` null) puts back (`testdata/client-rules/tour-step.json`): the mode and tab when they differ, else null, and the card the step counts as seen. */
+export function stepChanges(
+  now: { mode: MapMode; tab: PanelTab },
+  step: Pick<TourStep, 'mode' | 'tab' | 'card'> | null,
+  restore: { mode: MapMode; tab: PanelTab },
+): { mode: MapMode | null; tab: PanelTab | null; card: CardId | null } {
+  const want = step ?? restore;
+  return { mode: want.mode === now.mode ? null : want.mode, tab: want.tab === now.tab ? null : want.tab, card: step?.card ?? null };
 }
 
 export interface TourSeen {

@@ -16,7 +16,7 @@ import { sliderBoundaries, sliderLayout, sliderMoveKnob, sliderPanLand, sliderTi
 import { activityTimeZone } from '../src/ui/timeZone.ts';
 import { boldTracks, invertedChecks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
-import { cardFor, nextStep, tourStart } from '../src/ui/tour/tourRules.ts';
+import { cameraEnd, cameraStep, cardFor, nextStep, stepChanges, tourStart } from '../src/ui/tour/tourRules.ts';
 
 
 const sorted = (set) => [...set].sort();
@@ -24,6 +24,15 @@ const sorted = (set) => [...set].sort();
 export const rules = {
   tourStart: ({ requested, isDemo, hasActivities, seen }) => tourStart({ requested, isDemo, hasActivities: hasActivities ?? null, seen }),
   tourCard: ({ event, seen, touring }) => cardFor(event, seen, touring),
+  tourCamera: ({ start, shown, current, step }) => {
+    const toView = (v) => (v ? { center: [v.lon, v.lat], zoom: v.zoom } : null);
+    const fromView = (v) => (v ? { lon: v.center[0], lat: v.center[1], zoom: v.zoom } : null);
+    const camera = { start: toView(start), shown: toView(shown) };
+    if (!step) return { start: null, shown: null, move: fromView(cameraEnd(camera)) };
+    const { camera: next, move } = cameraStep(camera, { view: toView(step.view), tab: step.tab }, toView(current));
+    return { start: fromView(next.start), shown: fromView(next.shown), move: fromView(move) };
+  },
+  tourStep: ({ now, step, restore }) => stepChanges(now, step ?? null, restore),
   tourNextStep: ({ shown, from, dir }) => {
     const steps = shown.map(() => ({ anchor: 'shared' }));
     return nextStep(steps, from, dir, (step) => shown[steps.indexOf(step)]);
