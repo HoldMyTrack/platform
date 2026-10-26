@@ -14,6 +14,8 @@ export interface OverlaysMenuProps {
   onChange: (next: Overlays) => void;
   /** The basemap's flavor, whose layers document gives the legend. */
   flavor: Flavor;
+  /** Held open from outside, whatever the button says: the tour's Layers step. */
+  forceOpen?: boolean;
 }
 
 /** The bike-paths group's legend entries (bikePathsGroup.ts). */
@@ -59,8 +61,9 @@ const CATEGORY_LABELS: Record<SpotCategory, MessageKey> = {
  * many are picked, and the checkbox before it shows or hides all of them at once, keeping the
  * picks; picking one while it's off turns it back on, or the pick would seem to do nothing.
  */
-export function OverlaysMenu({ overlays, onChange, flavor }: OverlaysMenuProps) {
-  const [open, setOpen] = useState(false);
+export function OverlaysMenu({ overlays, onChange, flavor, forceOpen = false }: OverlaysMenuProps) {
+  const [picked, setOpen] = useState(false);
+  const open = picked || forceOpen;
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

@@ -145,6 +145,8 @@ export interface ActivitiesPanelProps {
   stories: StoriesPanel;
   tab: PanelTab;
   onTabChange: (tab: PanelTab) => void;
+  /** Holds a phone's sheet open from outside: the tour's panel steps. */
+  sheetOpen?: boolean;
   /** The Privacy tab's map, for its overlay — null until MapView's map has loaded. */
   map: MapLibreMap | null;
   /** A saved or deleted Private location — MapView's handlePrivateLocationsChanged. */
@@ -204,6 +206,7 @@ export function ActivitiesPanel({
   stories,
   tab,
   onTabChange: setTab,
+  sheetOpen = false,
   map,
   onPrivateLocationsChanged,
   dateRange,
@@ -280,7 +283,8 @@ export function ActivitiesPanel({
   // `--sheet-expanded` modifier class this drives, so toggling it there is an inert no-op,
   // not a behavior change — safe to leave wired unconditionally rather than gated behind a JS
   // media-query check.
-  const [sheetExpanded, setSheetExpanded] = useState(false);
+  const [sheetPicked, setSheetExpanded] = useState(false);
+  const sheetExpanded = sheetPicked || sheetOpen;
   // A tab tap on a phone opens the sheet onto the tab just chosen: collapsed, the tab row is
   // all there is of it.
   const selectTab = (next: PanelTab) => {
