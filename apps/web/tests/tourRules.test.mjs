@@ -70,8 +70,16 @@ test('a step without a view goes back to the view before the first move, or stay
   assert.equal(cameraFor(welcome, null), null);
 });
 
+test("countries are a flat world on a wide screen and a turning globe on a phone", () => {
+  const countries = (narrow) => stepsFor({ isDemo: true, narrow }).find((s) => s.id === 'fog_countries').view;
+  assert.equal(countries(false), DEMO_VIEWS.countries);
+  assert.equal(countries(false).flat, true);
+  assert.equal(countries(true), DEMO_VIEWS.countriesNarrow);
+  assert.ok(countries(true).turn.length > 0);
+});
+
 test("the globe's turn goes east in legs under 180°, from the US to Vietnam", () => {
-  const { center, turn } = DEMO_VIEWS.countries;
+  const { center, turn } = DEMO_VIEWS.countriesNarrow;
   const points = [center, ...turn];
   for (let i = 1; i < points.length; i++) {
     const leg = points[i][0] - points[i - 1][0];

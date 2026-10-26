@@ -11,11 +11,16 @@ export type CardId = 'fog' | 'heatmap' | 'stories';
 
 export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'export' | 'fog' | 'fog_regions' | 'fog_countries' | 'heatmap' | 'add' | 'done';
 
-/** Where a step puts the camera: `center` and `zoom`, then a slow turn of the globe through each point of `turn`, if any. */
+/**
+ * Where a step puts the camera: `center` and `zoom`, then a slow turn of the globe through each
+ * point of `turn`, if any. `flat` draws a flat world for the step instead of the globe, below the
+ * globe's zoom floor, and puts the globe back after it.
+ */
 export interface TourView {
   center: readonly [longitude: number, latitude: number];
   zoom: number;
   turn?: readonly (readonly [longitude: number, latitude: number])[];
+  flat?: boolean;
 }
 
 export interface TourStep {
@@ -36,25 +41,28 @@ const MODES = '[data-testid="map-mode-toggle"]';
 
 /**
  * The demo's views, over its fixed history (services/server/internal/httpapi/demo_data): Cleveland,
- * where most of it is; the US, where Fog clears states (zoom 3–6, SPEC.md FR-4.2); and the globe,
- * where it clears countries (zoom 0–2), turning from the US over Europe (Estonia, Italy) to
- * Vietnam because a globe shows one side of the Earth at a time. Each leg is under 180°, so the
- * turn goes east.
+ * where most of it is; the US, where Fog clears states (zoom 3–6, SPEC.md FR-4.2); and the world,
+ * where it clears countries (zoom 0–2). A globe shows one side of the Earth, never the US, Europe
+ * (Estonia, Italy) and Vietnam together, so a wide screen gets a flat world with all of them, and a
+ * phone, too narrow for a readable flat world, a globe turning from one to the next. Each leg of
+ * the turn is under 180°, so it goes east.
  */
 export const DEMO_VIEWS = {
   city: { center: [-81.72, 41.42], zoom: 9 },
   // East of the middle: a phone's narrow view still holds Ohio, New York and Florida, a desktop's Arizona too.
   regions: { center: [-82, 36], zoom: 3.6 },
-  countries: { center: [-80, 38], zoom: 1.5, turn: [[15, 45], [106, 25]] },
+  countries: { center: [-5, 30], zoom: 1.3, flat: true },
+  countriesNarrow: { center: [-80, 38], zoom: 1.5, turn: [[15, 45], [106, 25]] },
   heatmapCity: { center: [-81.72, 41.42], zoom: 10 },
 } as const satisfies Record<string, TourView>;
 
 /**
  * The tour's steps in order. The Normal-mode steps come first, so the panel is never torn down and
  * rebuilt in the middle. A demo's Fog is three steps, city, states and countries, and its Fog and
- * Heatmap fly to the demo's history; a real account's map stays where it is.
+ * Heatmap fly to the demo's history; a real account's map stays where it is. `narrow` is a phone's
+ * width (NARROW_WIDTH).
  */
-export function stepsFor({ isDemo }: { isDemo: boolean }): TourStep[] {
+export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?: boolean }): TourStep[] {
   const step = (id: StepId, anchor: string | null, more: Partial<Omit<TourStep, 'id' | 'anchor'>> = {}): TourStep => ({
     id,
     anchor,
@@ -68,7 +76,7 @@ export function stepsFor({ isDemo }: { isDemo: boolean }): TourStep[] {
     ? [
         step('fog', MODES, { mode: 'fog', card: 'fog', text: 'tour.fog_city', view: DEMO_VIEWS.city }),
         step('fog_regions', MODES, { mode: 'fog', view: DEMO_VIEWS.regions }),
-        step('fog_countries', MODES, { mode: 'fog', view: DEMO_VIEWS.countries }),
+        step('fog_countries', MODES, { mode: 'fog', view: narrow ? DEMO_VIEWS.countriesNarrow : DEMO_VIEWS.countries }),
       ]
     : [step('fog', MODES, { mode: 'fog', card: 'fog' })];
   return [

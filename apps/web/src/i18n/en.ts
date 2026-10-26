@@ -344,7 +344,7 @@ export const en = {
   'tour.fog_regions.title': 'Fog of War: states and regions',
   'tour.fog_regions.body': "Zoomed out, a whole state or region clears once any activity is in it. Every fogged one is a place you haven't been yet.",
   'tour.fog_countries.title': 'Fog of War: countries',
-  'tour.fog_countries.body': 'Further out, a whole country clears. What stays fogged on the globe is the world still ahead of you.',
+  'tour.fog_countries.body': 'Further out, a whole country clears. What stays fogged is the world still ahead of you.',
   'tour.heatmap.title': 'Heatmap',
   'tour.heatmap.body': 'Where you go most, over the last 365 days. A route you take every week glows; one you stopped taking cools off.',
   'tour.add.title': 'Add your activities',

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { MapMode } from '../../map/mapMode';
-import { cameraFor, cardFor, isPlainClick, nextStep, onScreen, sameView, stepsFor, tourStart, withCard, type CardId, type TourSeen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
+import { NARROW_WIDTH, cameraFor, cardFor, isPlainClick, nextStep, onScreen, sameView, stepsFor, tourStart, withCard, type CardId, type TourSeen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
 import { loadTourSeen, saveTourSeen } from './tourStore.ts';
 
 export interface TourOptions {
@@ -92,7 +92,7 @@ export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, 
     setCard(null);
     setSeen((s) => ({ ...s, tour: true }));
     dir.current = 1;
-    const run: Running = { steps: stepsFor({ isDemo: demo }), index: -1, restore: current };
+    const run: Running = { steps: stepsFor({ isDemo: demo, narrow: window.innerWidth < NARROW_WIDTH }), index: -1, restore: current };
     go(run, nextStep(run.steps, -1, 1, (s) => shownNow(s, current)));
   }, [go]);
 
@@ -193,7 +193,8 @@ const TURN_LEG_MS = 5000;
  * the tour ends. That view is read at the first flight, not at the start, since the map's own first
  * flight to the account's activities may still be under way then. A real account's steps have no
  * view, so its camera never moves. Reduced motion jumps, and makes the turn a jump to each of its
- * points in turn, since the turn is how the step shows every side of the globe.
+ * points in turn, since the turn is how the step shows every side of the globe. A flat view sets
+ * the projection and the zoom floor (useMapInstance.ts's globe floor) aside for its step only.
  */
 function useTourCamera(map: MapLibreMap | null, step: TourStep | null) {
   const start = useRef<TourView | null>(null);
@@ -212,8 +213,10 @@ function useTourCamera(map: MapLibreMap | null, step: TourStep | null) {
     const target = cameraFor(step, start.current);
     if (target === null || (shown.current && sameView(shown.current, target))) return;
     shown.current = target;
+    const restoreGlobe = target.flat ? flatten(map) : null;
     moveTo(map, target);
     const legs = [...(target.turn ?? [])];
+    if (restoreGlobe) return restoreGlobe;
     if (legs.length === 0) return;
     if (reducedMotion()) {
       const timers = legs.map((leg, i) => window.setTimeout(() => map.jumpTo({ center: [leg[0], leg[1]] }), TURN_LEG_MS * (i + 1)));
@@ -230,6 +233,18 @@ function useTourCamera(map: MapLibreMap | null, step: TourStep | null) {
       map.off('moveend', turn);
     };
   }, [map, step]);
+}
+
+/** Draws the world flat and lifts the globe's zoom floor; returns what puts both back. */
+function flatten(map: MapLibreMap): () => void {
+  const projection = map.getProjection();
+  const floor = map.getMinZoom();
+  map.setProjection({ type: 'mercator' });
+  map.setMinZoom(0);
+  return () => {
+    map.setMinZoom(floor);
+    map.setProjection(projection);
+  };
 }
 
 function reducedMotion(): boolean {
