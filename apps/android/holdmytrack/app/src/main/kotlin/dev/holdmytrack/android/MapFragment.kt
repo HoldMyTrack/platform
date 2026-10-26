@@ -52,6 +52,7 @@ import dev.holdmytrack.android.recording.RecordingController
 import dev.holdmytrack.android.recording.RecordingService
 import dev.holdmytrack.android.sync.SyncCandidatesController
 import dev.holdmytrack.android.sync.SyncProgress
+import dev.holdmytrack.android.tour.TourEvent
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
@@ -236,6 +237,18 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** Which panel tab shows, for the bottom bar's Stories mark. Null before the panel is built. */
     val panelTab: PanelTab? get() = if (::panel.isInitialized) panel.tab else null
 
+    // What the tour (tour/TourController, through MainActivity) reads and holds on the map.
+    val tourMode: MapMode? get() = if (modeBarReady) mode else null
+    fun setTourMode(next: MapMode) = setMode(next)
+    val sheetOpen: Boolean get() = ::panel.isInitialized && panel.expanded
+    fun setSheetOpen(open: Boolean) {
+        if (::panel.isInitialized) panel.setExpanded(open)
+    }
+    fun holdLayers(open: Boolean) = layers.hold(open)
+    val layersMenu: View? get() = layers.menuContent
+    val mapLibre: MapLibreMap? get() = map
+    val tourBlocked: Boolean get() = !modeBarReady || isRecording() || (::edit.isInitialized && (editWindow.isOpen || edit.privacyEditing))
+
     /** The fragment's own views, found the way an Activity finds its own. */
     private fun <T : View> findViewById(id: Int): T = requireView().findViewById(id)
 
@@ -249,7 +262,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onSync = { ::panel.isInitialized && panel.tab == PanelTab.SYNC },
         )
         gate = SessionGate(this, notices, onChecked = ::syncSession)
-        modes = ModeBar(view, onPick = ::setMode) {
+        modes = ModeBar(view, onPick = { picked ->
+            setMode(picked)
+            host?.tour?.notice(TourEvent.Mode(picked))
+        }) {
             ModeBarState(
                 mode = mode,
                 sessionReady = modeBarReady,
@@ -719,6 +735,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
      *  with a notice pointing at Sync, re-checked on every resume. Not for a demo, which has history
      *  and can't sync. */
     private fun onEmptyChecked(empty: Boolean) {
+        host?.tour?.historyKnown(!empty)
         if (!empty) {
             notices.hide(MapNotice.EMPTY)
         } else if (!Session.isDemo) {

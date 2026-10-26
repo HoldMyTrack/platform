@@ -29,6 +29,8 @@
     <color name="hmt_border_panel">#E2DCC8</color>
 
     <color name="hmt_accent">#B07E2E</color>
+    <!-- The tour's dimmed screen (tour/TourOverlay): the web's 45% shadow ink. -->
+    <color name="hmt_tour_scrim">#73202B25</color>
     <color name="hmt_accent_strong">#93691F</color>
     <color name="hmt_accent_container">#F3E6CE</color>
 

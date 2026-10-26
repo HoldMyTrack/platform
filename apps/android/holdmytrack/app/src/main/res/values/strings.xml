@@ -656,4 +656,47 @@
     </plurals>
 
     <!-- Activity types' display names, the web's activity_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
+
+    <!-- The tour (tour/TourController), its offer and its first-time cards. -->
+    <string name="you_tour">Take a tour</string>
+    <string name="tour_next">Next</string>
+    <string name="tour_back">Back</string>
+    <string name="tour_skip">Skip</string>
+    <string name="tour_finish">Done</string>
+    <string name="tour_progress">%1$d of %2$d</string>
+    <string name="tour_welcome_title">Welcome to HoldMyTrack</string>
+    <string name="tour_welcome_body">It keeps the journeys you choose and turns them into maps. This tour shows where everything is, in about a minute.</string>
+    <string name="tour_activities_title">Your activities</string>
+    <string name="tour_activities_body">Everything in the date range, newest first. Tap one to fly to it; tick several to edit, hide or export them together.</string>
+    <string name="tour_range_title">Date range</string>
+    <string name="tour_range_body">Drag the ends to choose the days the list and the map show. Normal mode draws only these.</string>
+    <string name="tour_stories_title">Stories</string>
+    <string name="tour_stories_body">Group activities into a trip or a season. A Story shows its own activities instead of the date range, and you can send someone a copy.</string>
+    <string name="tour_layers_title">Layers</string>
+    <string name="tour_layers_body">Roads, bike paths, trails and places such as waterfalls, viewpoints and historic sites, over any mode.</string>
+    <string name="tour_export_title">Export</string>
+    <string name="tour_export_body">Save the map as an image with your tracks on it, framed the way you choose.</string>
+    <string name="tour_fog_title">Fog of War</string>
+    <string name="tour_fog_body">Everywhere you\'ve ever been, for all time: the date range and filters don\'t apply here. Zoomed out, a whole country clears once you\'ve been in it, then each region. The fog that\'s left is what you haven\'t explored yet.</string>
+    <string name="tour_fog_city_body">Everywhere you\'ve ever been, for all time: the date range and filters don\'t apply here. Zoomed in to a city, the fog lifts exactly along your tracks. The rest is still to explore.</string>
+    <string name="tour_fog_regions_title">Fog of War: states and regions</string>
+    <string name="tour_fog_regions_body">Zoomed out, a whole state or region clears once any activity is in it. Every fogged one is a place you haven\'t been yet.</string>
+    <string name="tour_fog_countries_title">Fog of War: countries</string>
+    <string name="tour_fog_countries_body">Further out, a whole country clears. What stays fogged is the world still ahead of you.</string>
+    <string name="tour_heatmap_title">Heatmap</string>
+    <string name="tour_heatmap_body">Where you go most, over the last 365 days. A route you take every week glows; one you stopped taking cools off.</string>
+    <string name="tour_record_title">Record</string>
+    <string name="tour_record_body">Tap to record a walk or a ride with the phone\'s GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync.</string>
+    <string name="tour_sync_title">Sync</string>
+    <string name="tour_sync_body">Bring in activities from Health Connect and this phone\'s recordings. Nothing is ticked to start with: only what you tick is sent.</string>
+    <string name="tour_sync_demo_body">In your own account, activities from Health Connect and your recordings come in here. The demo can\'t send: create an account from You to start yours.</string>
+    <string name="tour_done_title">That\'s the tour</string>
+    <string name="tour_done_body">Take it again any time from Take a tour, here on the You tab.</string>
+    <string name="tour_card_got_it">Got it</string>
+    <string name="tour_card_full_tour">Take the full tour</string>
+    <string name="tour_offer_title">New here?</string>
+    <string name="tour_offer_text">See what HoldMyTrack can do in a one-minute tour.</string>
+    <string name="tour_offer_take">Take the tour</string>
+    <string name="tour_offer_later">Not now</string>
+    <string name="tour_tip">The tour is always on the You tab.</string>
 </resources>

@@ -202,6 +202,14 @@ The web's export (`docs/SPEC.md` FR-4.10) as a viewfinder over the map, not offe
 - The image is exactly the window at the current zoom and rotation, with what `docs/SPEC.md` FR-4.10 draws, paths, Satellite and Roads included, and the map's credit and the HoldMyTrack mark.
 - It's saved to Pictures/HoldMyTrack and offered to Android's share sheet. A failure keeps the viewfinder as it was.
 
+### FR-2.12 Tour
+
+The web's tour (`docs/SPEC.md` FR-4.18) over the app's own screens, with its start, offer and card rules (`testdata/client-rules/tour-*.json`).
+
+- Its steps: the Activities sheet, the date range, Stories, Layers, export, Fog of War, Heatmap, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
+- In a demo session Fog takes three steps, at city, state and country level, with the camera over the demo's history, and the camera comes back when the tour ends.
+- What has been shown is kept by the phone, not the account.
+
 ## 5. FR-3 — Sync and Imports
 
 Sync needs a verified session; the demo account can't send. **The gate rule** (ADR-0039, `docs/SPEC.md` FR-3.6): nothing is ticked when the list shows, only ticked candidates are sent, and nothing is hidden, merged or changed on the user's behalf.
