@@ -23,6 +23,7 @@ import dev.holdmytrack.android.panel.EditTrackOps
 import dev.holdmytrack.android.panel.FormatParts
 import dev.holdmytrack.android.panel.PanelRules
 import dev.holdmytrack.android.panel.PanelState
+import dev.holdmytrack.android.panel.PanelTab
 import dev.holdmytrack.android.photos.PhotoClusters
 import dev.holdmytrack.android.photos.PhotoMarkerScope
 import dev.holdmytrack.android.photos.PhotoTrack
@@ -31,6 +32,10 @@ import dev.holdmytrack.android.photos.PlaceAnchor
 import dev.holdmytrack.android.photos.ScreenPoint
 import dev.holdmytrack.android.photos.TimedPoint
 import dev.holdmytrack.android.web.WebRoute
+import dev.holdmytrack.android.tour.TourCard
+import dev.holdmytrack.android.tour.TourEvent
+import dev.holdmytrack.android.tour.TourRules
+import dev.holdmytrack.android.tour.TourSeen
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -80,11 +85,30 @@ class ClientRulesTest {
 
     private fun JsonObject.strings(key: String): List<String> = (this[key] as? JsonArray)?.map { it.jsonPrimitive.content }.orEmpty()
 
+    private fun JsonObject.bool(key: String): Boolean = (this[key] as? JsonPrimitive)?.booleanOrNull ?: false
+
+    private fun tourSeen(seen: JsonObject) = TourSeen(seen.bool("tour"), seen.strings("cards").map { TourCard.valueOf(it.uppercase()) }.toSet())
+
     private fun ids(values: Collection<String>, sort: Boolean = true): JsonArray =
         buildJsonArray { (if (sort) values.sorted() else values).forEach { add(JsonPrimitive(it)) } }
 
     /** Each rule, from a case's input to the JSON its expected value is written in. */
     private val rules: Map<String, (JsonObject) -> JsonElement> = mapOf(
+        "tourStart" to { input ->
+            val hasActivities = (input["hasActivities"] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.boolean
+            JsonPrimitive(TourRules.start(input.bool("requested"), input.bool("isDemo"), hasActivities, tourSeen(input["seen"]!!.jsonObject)).name.lowercase())
+        },
+        "tourCard" to { input ->
+            val event = input["event"]!!.jsonObject
+            val tourEvent = when (event.string("kind")) {
+                "mode" -> TourEvent.Mode(MapMode.valueOf(event.string("mode")!!.uppercase()))
+                else -> TourEvent.Tab(PanelTab.valueOf(event.string("tab")!!.uppercase()))
+            }
+            JsonPrimitive(TourRules.card(tourEvent, tourSeen(input["seen"]!!.jsonObject), input.bool("touring"))?.name?.lowercase())
+        },
+        "tourNextStep" to { input ->
+            JsonPrimitive(TourRules.nextStep(input["shown"]!!.jsonArray.map { it.jsonPrimitive.boolean }, input.number("from").toInt(), input.number("dir").toInt()))
+        },
         "defaultRange" to { input ->
             val range = DefaultRange.of(input.strings("visibleDays"), input.string("earliest"), input.string("today")!!)
             buildJsonObject {

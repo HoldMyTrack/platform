@@ -1,0 +1,16 @@
+{
+  "rule": "tourStart",
+  "clients": ["web", "android"],
+  "description": "What the map does about the tour when it opens (docs/SPEC.md FR-4.18): \"wait\" until the account's history is known (hasActivities null), then \"start\" when asked for (the web's /?tour or Take a tour), \"none\" once the tour was started or its offer answered on this browser or phone (seen.tour), \"start\" for a demo, \"offer\" to an account with activities and \"none\" to one without.",
+  "cases": [
+    { "name": "waits for the history", "input": { "requested": false, "isDemo": false, "hasActivities": null, "seen": { "tour": false, "cards": [] } }, "expected": "wait" },
+    { "name": "a request waits for the history too", "input": { "requested": true, "isDemo": false, "hasActivities": null, "seen": { "tour": false, "cards": [] } }, "expected": "wait" },
+    { "name": "a demo starts it unasked", "input": { "requested": false, "isDemo": true, "hasActivities": true, "seen": { "tour": false, "cards": [] } }, "expected": "start" },
+    { "name": "an account with activities is offered it", "input": { "requested": false, "isDemo": false, "hasActivities": true, "seen": { "tour": false, "cards": [] } }, "expected": "offer" },
+    { "name": "an empty account gets nothing", "input": { "requested": false, "isDemo": false, "hasActivities": false, "seen": { "tour": false, "cards": [] } }, "expected": "none" },
+    { "name": "seen, it never starts by itself", "input": { "requested": false, "isDemo": true, "hasActivities": true, "seen": { "tour": true, "cards": [] } }, "expected": "none" },
+    { "name": "seen, it isn't offered again", "input": { "requested": false, "isDemo": false, "hasActivities": true, "seen": { "tour": true, "cards": [] } }, "expected": "none" },
+    { "name": "a request starts it however often it was seen", "input": { "requested": true, "isDemo": false, "hasActivities": true, "seen": { "tour": true, "cards": [] } }, "expected": "start" },
+    { "name": "a request starts it on an empty account", "input": { "requested": true, "isDemo": false, "hasActivities": false, "seen": { "tour": false, "cards": [] } }, "expected": "start" }
+  ]
+}

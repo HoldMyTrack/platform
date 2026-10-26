@@ -82,6 +82,7 @@ class YouFragment : Fragment(R.layout.fragment_you) {
             isEnabled = !Session.isDemo
             setOnClickListener { pickLanguage() }
         }
+        findViewById<View>(R.id.you_tour).setOnClickListener { (activity as? MainActivity)?.startTour() }
         findViewById<View>(R.id.you_about).setOnClickListener { WebPageActivity.open(context, WebPageActivity.Page.ABOUT) }
         findViewById<View>(R.id.you_help).setOnClickListener { openWebPage("/help") }
         findViewById<View>(R.id.you_contacts).setOnClickListener { openWebPage("/contacts") }

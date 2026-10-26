@@ -687,4 +687,47 @@
     </plurals>
 
     <!-- Activity types' display names, the web's activity_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
+
+    <!-- Тур (tour/TourController), его предложение и карточки. -->
+    <string name="you_tour">Пройти тур</string>
+    <string name="tour_next">Далее</string>
+    <string name="tour_back">Назад</string>
+    <string name="tour_skip">Пропустить</string>
+    <string name="tour_finish">Готово</string>
+    <string name="tour_progress">%1$d из %2$d</string>
+    <string name="tour_welcome_title">Добро пожаловать в HoldMyTrack</string>
+    <string name="tour_welcome_body">Здесь хранятся маршруты, которые вы выбрали, и из них получаются карты. Тур покажет, что где находится, примерно за минуту.</string>
+    <string name="tour_activities_title">Ваши занятия</string>
+    <string name="tour_activities_body">Всё за выбранный период, сначала новые. Нажмите на занятие, чтобы перейти к нему на карте; отметьте несколько, чтобы изменить, скрыть или экспортировать их вместе.</string>
+    <string name="tour_range_title">Период</string>
+    <string name="tour_range_body">Перетаскивайте края, чтобы выбрать дни, которые показывают список и карта. Обычный режим рисует только их.</string>
+    <string name="tour_stories_title">Истории</string>
+    <string name="tour_stories_body">Соберите занятия в поездку или сезон. История показывает свои занятия вместо периода, а её копию можно отправить другому человеку.</string>
+    <string name="tour_layers_title">Слои</string>
+    <string name="tour_layers_body">Дороги, велодорожки, тропы и интересные места — водопады, смотровые площадки, исторические места — поверх любого режима.</string>
+    <string name="tour_export_title">Экспорт</string>
+    <string name="tour_export_body">Сохраните карту картинкой со своими маршрутами в той рамке, какую выберете.</string>
+    <string name="tour_fog_title">Туман</string>
+    <string name="tour_fog_body">Все места, где вы когда-либо были, за всё время: период и фильтры здесь не действуют. При отдалении целая страна открывается, как только вы в ней побывали, затем каждый регион. Оставшийся туман — то, что вы ещё не исследовали.</string>
+    <string name="tour_fog_city_body">Все места, где вы когда-либо были, за всё время: период и фильтры здесь не действуют. На уровне города туман рассеивается точно вдоль ваших маршрутов. Остальное ещё предстоит исследовать.</string>
+    <string name="tour_fog_regions_title">Туман: штаты и регионы</string>
+    <string name="tour_fog_regions_body">При отдалении целый штат или регион открывается, как только в нём есть хоть одно занятие. Каждый затуманенный — место, где вы ещё не были.</string>
+    <string name="tour_fog_countries_title">Туман: страны</string>
+    <string name="tour_fog_countries_body">Ещё дальше открывается целая страна. То, что осталось в тумане, — мир, который ещё впереди.</string>
+    <string name="tour_heatmap_title">Тепловая карта</string>
+    <string name="tour_heatmap_body">Где вы бываете чаще всего за последние 365 дней. Маршрут, по которому вы ходите каждую неделю, светится; заброшенный остывает.</string>
+    <string name="tour_record_title">Запись</string>
+    <string name="tour_record_body">Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. Записи ждут на телефоне, пока вы не отправите их из Синхронизации.</string>
+    <string name="tour_sync_title">Синхронизация</string>
+    <string name="tour_sync_body">Занятия из Health Connect и записи с этого телефона. Сначала ничего не отмечено: отправляется только то, что вы отметите.</string>
+    <string name="tour_sync_demo_body">В своём аккаунте сюда приходят занятия из Health Connect и ваши записи. Демо не может отправлять: создайте аккаунт на вкладке «Вы», чтобы начать свой.</string>
+    <string name="tour_done_title">Вот и весь тур</string>
+    <string name="tour_done_body">Пройти его снова можно в любой момент — «Пройти тур» здесь, на вкладке «Вы».</string>
+    <string name="tour_card_got_it">Понятно</string>
+    <string name="tour_card_full_tour">Пройти весь тур</string>
+    <string name="tour_offer_title">Впервые здесь?</string>
+    <string name="tour_offer_text">Посмотрите, что умеет HoldMyTrack, — тур на одну минуту.</string>
+    <string name="tour_offer_take">Пройти тур</string>
+    <string name="tour_offer_later">Не сейчас</string>
+    <string name="tour_tip">Тур всегда на вкладке «Вы».</string>
 </resources>

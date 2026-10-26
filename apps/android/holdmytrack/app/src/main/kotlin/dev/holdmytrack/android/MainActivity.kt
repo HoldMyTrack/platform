@@ -2,6 +2,7 @@ package dev.holdmytrack.android
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Rect
 import android.os.Bundle
 import android.view.View
 import androidx.activity.OnBackPressedCallback
@@ -11,10 +12,15 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.panel.PanelTab
 import dev.holdmytrack.android.recording.RecordingService
+import dev.holdmytrack.android.tour.TourController
+import dev.holdmytrack.android.tour.TourEvent
+import dev.holdmytrack.android.tour.TourHost
+import dev.holdmytrack.android.tour.TourTarget
 
 /**
  * The app's main window: the bottom bar — Map, Stories, Record, Sync, You — and the tab above it
@@ -38,6 +44,10 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var nav: BottomNavigationView
     private var tab = Tab.MAP
+
+    /** The tour, its offer and its first-time cards (`apps/android/docs/SPEC.md` FR-2.12). */
+    lateinit var tour: TourController
+        private set
 
     /** Set while the bar's selection is moved in code, so its listener doesn't act on it. */
     private var selectingInCode = false
@@ -66,9 +76,15 @@ class MainActivity : AppCompatActivity() {
         // stop on under the button.
         nav.findViewById<View>(R.id.nav_record)?.importantForAccessibility = View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
         nav.setOnItemSelectedListener { item ->
-            if (!selectingInCode) tabOf(item.itemId)?.let(::showTab)
+            if (!selectingInCode) {
+                tabOf(item.itemId)?.let { picked ->
+                    showTab(picked)
+                    if (picked == Tab.STORIES) tour.notice(TourEvent.Tab(PanelTab.STORIES))
+                }
+            }
             true
         }
+        tour = TourController(this, tourHost)
         // The bar pads itself clear of the gesture bar, so the tabs above it get no bottom inset
         // — the map's own chrome adds the one it's given (`MapFragment.insetSystemBars`). At the
         // sides — a landscape phone's navigation bar or its camera cutout — the tabs are padded
@@ -214,6 +230,46 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun map() = supportFragmentManager.findFragmentByTag(TAG_MAP) as? MapFragment
+
+    /** The You tab's Take a tour. */
+    fun startTour() = tour.request()
+
+    private val tourHost = object : TourHost {
+        override val isDemo get() = Session.isDemo
+        override val tab get() = this@MainActivity.tab
+        override fun showTab(tab: Tab) = this@MainActivity.showTab(tab)
+        override val mode get() = map()?.tourMode
+        override fun setMode(mode: MapMode) {
+            map()?.setTourMode(mode)
+        }
+        override val sheetOpen get() = map()?.sheetOpen ?: false
+        override fun setSheetOpen(open: Boolean) {
+            map()?.setSheetOpen(open)
+        }
+        override fun setLayersOpen(open: Boolean) {
+            map()?.holdLayers(open)
+        }
+        override val map get() = map()?.mapLibre
+        override val blocked get() = map()?.tourBlocked ?: true
+        override fun targets(target: TourTarget): List<View> {
+            fun mapView(id: Int) = listOfNotNull(map()?.view?.findViewById<View>(id))
+            return when (target) {
+                TourTarget.SHEET -> mapView(R.id.activities_sheet)
+                TourTarget.RANGE -> mapView(R.id.date_range_row)
+                TourTarget.LAYERS -> mapView(R.id.layers_panel) + listOfNotNull(map()?.layersMenu)
+                TourTarget.EXPORT -> mapView(R.id.export_panel)
+                TourTarget.MODES -> mapView(R.id.mode_bar)
+                TourTarget.RECORD -> listOfNotNull(findViewById(R.id.record_button))
+                TourTarget.YOU_TOUR -> listOfNotNull(youTourRow())
+            }
+        }
+        override fun reveal(target: TourTarget) {
+            if (target != TourTarget.YOU_TOUR) return
+            val row = youTourRow() ?: return
+            row.requestRectangleOnScreen(Rect(0, 0, row.width, row.height), false)
+        }
+        private fun youTourRow(): View? = supportFragmentManager.findFragmentByTag(TAG_YOU)?.view?.findViewById(R.id.you_tour)
+    }
 
     private fun tagOf(tab: Tab) = when (tab) {
         Tab.MAP, Tab.STORIES, Tab.SYNC -> TAG_MAP

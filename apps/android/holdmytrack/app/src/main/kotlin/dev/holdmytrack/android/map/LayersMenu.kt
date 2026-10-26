@@ -90,8 +90,26 @@ class LayersMenu(
         popup?.dismiss()
     }
 
+    /** The open menu's content, for the tour's spotlight. */
+    val content: View? get() = popup?.contentView
+
+    /** The open menu is the tour's, view-only ([hold]). */
+    private var held = false
+
+    /**
+     * Holds the menu open for the tour to point at (`tour/TourController`), or closes it. Held,
+     * it takes no touches and no focus, so the tour's own buttons under it keep working.
+     */
+    fun hold(open: Boolean) {
+        if (!open) {
+            if (held) dismiss()
+            return
+        }
+        if (popup == null) show(interactive = false)
+    }
+
     @SuppressLint("InflateParams") // A popup's content has no parent to inflate against.
-    private fun show() {
+    private fun show(interactive: Boolean = true) {
         if (popup != null) return
         val content = LayoutInflater.from(button.context).inflate(R.layout.popup_layers, null)
 
@@ -162,11 +180,16 @@ class LayersMenu(
 
         // A fixed width, the web panel's 14rem.
         val width = (MENU_WIDTH_DP * res.displayMetrics.density).toInt()
-        val window = PopupWindow(content, width, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+        // Held for the tour, it's capped so the tour's card below it stays in view; it scrolls.
+        val height = if (interactive) ViewGroup.LayoutParams.WRAP_CONTENT else (res.displayMetrics.heightPixels * HELD_HEIGHT).toInt()
+        val window = PopupWindow(content, width, height, interactive)
+        window.isTouchable = interactive
         window.elevation = res.getDimension(R.dimen.hmt_space_8)
+        held = !interactive
         window.setOnDismissListener {
             popup = null
             master = null
+            held = false
             closedAt = SystemClock.uptimeMillis()
         }
         popup = window
@@ -187,6 +210,9 @@ class LayersMenu(
 
         const val REOPEN_GUARD_MS = 300L
         const val MENU_WIDTH_DP = 224
+
+        /** The share of the screen's height the tour's held menu takes. */
+        const val HELD_HEIGHT = 0.4f
 
         /** The badge while the checkbox is off: the web's greyed count. */
         const val OFF_ALPHA = 0.55f

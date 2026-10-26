@@ -131,6 +131,13 @@ The web's design (root `docs/IMPLEMENTATION.md` §4.3.3).
 - **It's read on map idle with `TextureView.getBitmap`**: "fully rendered" never comes when a tile fails, and `MapLibreMap.snapshot` never answered for a 4K image.
 - **The credit comes from the style document**: a loaded source reports its archive's attribution, which leaves Protomaps out.
 
+### 3.6 The tour
+
+`tour/TourController` runs the tour from `MainActivity`, which implements `TourHost` over its tabs and `MapFragment`'s mode, sheet, Layers menu and camera; `TourSteps` and the shared `TourRules` decide, and `TourOverlay` draws over the whole window and follows its target's views every frame.
+
+- **The Layers menu is a `PopupWindow`, a window above the overlay**: held for the tour it's shown neither focusable nor touchable, or the tap on the tour's Next would only dismiss it, and capped at 40% of the screen so it can't cover the card.
+- **A tab or a sheet still settling has no target yet**: a step whose views don't appear within 30 frames is skipped in the direction of travel.
+
 ## 4. Sync engine
 
 The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Connect hands routes only to a foreground read (root `docs/IMPLEMENTATION.md` §4.0), and the app enforces that by cancelling: the Sync tab's reads and sends run in the map's `lifecycleScope`, and leaving the tab, the app stopping or the You tab covering the map cancels them.

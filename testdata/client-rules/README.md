@@ -61,6 +61,9 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `editTrackDistances` | `points` | meters at each point |
 | `layerInsertion` | `current` (layer ids, bottom to top), `order`, `id`, `own`, `fallback` | the id to insert under, or `null` to append |
 | `layerLift` | `current`, `id`, `own` | boolean |
+| `tourStart` (web and Android) | `requested`, `isDemo`, `hasActivities` (or `null`), `seen` (`tour`, `cards`) | `"start"`, `"offer"`, `"none"` or `"wait"` |
+| `tourCard` (web and Android) | `event` (`{ kind: "mode", mode }` or `{ kind: "tab", tab }`), `seen`, `touring` | `"fog"`, `"heatmap"`, `"stories"` or `null` |
+| `tourNextStep` (web and Android) | `shown` (a flag per step), `from`, `dir` (`-1`, `1`) | an index or `null` |
 | `webPageRoute` (Android and iOS) | `link` (`scheme`, `authority`, `path`, the `activity` and `day` query parameters), `base` (`scheme`, `authority`), `page`, `leaving`, `onboarding` | `"stay"`, `"outside"`, `"ignore"`, `"close"`, `"onboarded"` or `{ viewOnMap: { activity, day } }` |
 
 A rule only one platform has, or one where the platforms differ on purpose, has no file and is tested on that platform alone.

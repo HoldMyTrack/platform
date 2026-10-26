@@ -48,6 +48,11 @@ class LayersController(
 
     fun dismiss() = menu.dismiss()
 
+    /** The tour holds the menu open, view-only ([LayersMenu.hold]). */
+    fun hold(open: Boolean) = menu.hold(open)
+
+    val menuContent: View? get() = menu.content
+
     /** `light` or `dark`, following the app's night mode (`AppTheme`): the style's flavor, and
      *  the layers document's. */
     fun flavor(): String = if (isNight()) "dark" else "light"

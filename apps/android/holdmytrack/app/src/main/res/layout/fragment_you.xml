@@ -387,6 +387,30 @@
                     style="@style/Widget.HoldMyTrack.RowChevron"
                     android:contentDescription="@null" />
                 </LinearLayout>
+
+                <!-- The tour (tour/TourController): the map, step by step. -->
+                <LinearLayout
+                    android:id="@+id/you_tour"
+                    style="@style/Widget.HoldMyTrack.CardRow"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content">
+
+                    <ImageView
+                        style="@style/Widget.HoldMyTrack.IconTile"
+                        android:contentDescription="@null"
+                        android:src="@drawable/ic_circle_help" />
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/you_tour"
+                        android:textAppearance="@style/TextAppearance.HoldMyTrack.CardRowTitle" />
+
+                    <ImageView
+                    style="@style/Widget.HoldMyTrack.RowChevron"
+                    android:contentDescription="@null" />
+                </LinearLayout>
             </LinearLayout>
         </LinearLayout>
 
