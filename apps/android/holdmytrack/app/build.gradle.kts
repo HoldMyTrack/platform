@@ -77,8 +77,14 @@ android {
             enableUnitTestCoverage = true
             buildConfigField("String", "API_BASE_URL", apiBaseUrl("holdmytrack.apiBaseUrl"))
         }
+        // R8 shrinks and optimizes the release, which Play requires of a release's DEX. Every
+        // library ships its own keep rules and the app reflects on nothing, so the default
+        // optimizing rules are all it needs. The bundle carries the mapping file, which Play
+        // deobfuscates crash reports with.
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"))
             signingConfig = signingConfigs.getByName("release")
             buildConfigField("String", "API_BASE_URL", apiBaseUrl("holdmytrack.releaseApiBaseUrl"))
         }

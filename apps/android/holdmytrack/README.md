@@ -55,6 +55,8 @@ holdmytrack.uploadKeyPassword=…
 ./gradlew bundleRelease   # app/build/outputs/bundle/release/app-release.aab
 ```
 
+R8 shrinks and obfuscates the release build. A crash that only a release build has is most likely a class R8 removed or renamed that something reaches by name; it needs a keep rule in `app/build.gradle.kts`'s `proguardFiles`.
+
 Without the properties, `bundleRelease` stops at `validateSigningRelease` ("Keystore file not set for signing config release"); debug builds don't need them. Keep a copy of the keystore and its password somewhere other than this machine: a lost upload key can be replaced only by asking Google to reset it from Play Console.
 
 ## Sign in with Google and Facebook
