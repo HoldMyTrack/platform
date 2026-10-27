@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"log/slog"
 	"net/http"
@@ -102,6 +103,10 @@ func TestServeHTTPLogsTheAppBuildOnAFailure(t *testing.T) {
 		s.ServeHTTP(httptest.NewRecorder(), req)
 	}
 	s.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/v1/test/teapot", nil))
+	// A client that went away isn't a failure.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	s.ServeHTTP(httptest.NewRecorder(), httptest.NewRequest("GET", "/v1/test/fail", nil).WithContext(ctx))
 
 	lines := strings.Split(strings.TrimSpace(buf.String()), "\n")
 	if len(lines) != 2 {

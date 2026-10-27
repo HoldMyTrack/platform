@@ -34,6 +34,9 @@ func (s *Server) handleActivitiesPending(w http.ResponseWriter, r *http.Request)
 		SELECT id::text FROM activities WHERE user_id = $1 AND edit_pending AND id = ANY($2::uuid[])
 	`, userIDFromContext(r.Context()), ids)
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("pending check failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -43,6 +46,9 @@ func (s *Server) handleActivitiesPending(w http.ResponseWriter, r *http.Request)
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
+			if clientGone(w, r) {
+				return
+			}
 			s.log.Error("pending check scan failed", "err", err)
 			writeAPIError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -50,6 +56,9 @@ func (s *Server) handleActivitiesPending(w http.ResponseWriter, r *http.Request)
 		resp.Pending = append(resp.Pending, id)
 	}
 	if err := rows.Err(); err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("pending check read failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return

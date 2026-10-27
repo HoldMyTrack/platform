@@ -150,6 +150,9 @@ func (s *Server) handleListStorySends(w http.ResponseWriter, r *http.Request) {
 		ORDER BY ss.sent_at DESC, ss.id DESC
 	`, userID)
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("story sends list failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -160,6 +163,9 @@ func (s *Server) handleListStorySends(w http.ResponseWriter, r *http.Request) {
 		return v, err
 	})
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("story sends list failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -176,6 +182,9 @@ func (s *Server) handleListStorySends(w http.ResponseWriter, r *http.Request) {
 		ORDER BY j.id
 	`, userID)
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("story copies list failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -186,6 +195,9 @@ func (s *Server) handleListStorySends(w http.ResponseWriter, r *http.Request) {
 		return v, err
 	})
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("story copies list failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return

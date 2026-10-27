@@ -115,6 +115,9 @@ func (s *Server) handleListSpotCaptures(w http.ResponseWriter, r *http.Request) 
 		ORDER BY captured_at DESC, spot_id`,
 		userIDFromContext(r.Context()), since)
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("spot captures query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -126,6 +129,9 @@ func (s *Server) handleListSpotCaptures(w http.ResponseWriter, r *http.Request) 
 		return c, err
 	})
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("spot captures scan failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return

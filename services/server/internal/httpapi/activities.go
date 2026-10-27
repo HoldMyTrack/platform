@@ -261,6 +261,9 @@ func (s *Server) handleListActivities(w http.ResponseWriter, r *http.Request) {
 
 	rows, err := s.pool.Query(r.Context(), listActivitiesQuery, userIDFromContext(r.Context()), filter.From, filter.To, filter.Types, filter.Story)
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("activity list query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -272,6 +275,9 @@ func (s *Server) handleListActivities(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		a, err := scanActivityRow(rows)
 		if err != nil {
+			if clientGone(w, r) {
+				return
+			}
 			s.log.Error("activity list scan failed", "err", err)
 			writeAPIError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -279,6 +285,9 @@ func (s *Server) handleListActivities(w http.ResponseWriter, r *http.Request) {
 		list = append(list, a)
 	}
 	if err := rows.Err(); err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("activity list read failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -577,6 +586,9 @@ func (s *Server) handleActivityTrackMetrics(w http.ResponseWriter, r *http.Reque
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeAPIError(w, "activity not found", http.StatusNotFound)
+			return
+		}
+		if clientGone(w, r) {
 			return
 		}
 		s.log.Error("track metrics query failed", "err", err)

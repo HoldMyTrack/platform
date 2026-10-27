@@ -91,12 +91,18 @@ func (s *Server) handleSpotsInArea(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(ctx)
 	w1, e1, w2, e2 := area.boxes()
 	if err := s.pool.QueryRow(ctx, spotsAreaCountQuery, area.south, area.north, w1, e1, w2, e2, categories, userID).Scan(&resp.Total); err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("spots area count failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 	rows, err := s.pool.Query(ctx, spotsAreaQuery, area.south, area.north, w1, e1, w2, e2, categories, spotsAreaLimit, userID)
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("spots area query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -106,6 +112,9 @@ func (s *Server) handleSpotsInArea(w http.ResponseWriter, r *http.Request) {
 		var sp spotJSON
 		if err := rows.Scan(&sp.ID, &sp.Category, &sp.Name, &sp.Address, &sp.Description, &sp.Inscription,
 			&sp.Memorial, &sp.StartDate, &sp.Wikipedia, &sp.Lon, &sp.Lat); err != nil {
+			if clientGone(w, r) {
+				return
+			}
 			s.log.Error("spots area scan failed", "err", err)
 			writeAPIError(w, "internal error", http.StatusInternalServerError)
 			return
@@ -113,6 +122,9 @@ func (s *Server) handleSpotsInArea(w http.ResponseWriter, r *http.Request) {
 		resp.Spots = append(resp.Spots, sp)
 	}
 	if err := rows.Err(); err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("spots area rows failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return

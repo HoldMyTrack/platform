@@ -90,6 +90,9 @@ func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Reque
 	rows, err := s.pool.Query(r.Context(), selectPrivateLocation+` WHERE user_id = $1 ORDER BY created_at, id`,
 		userIDFromContext(r.Context()))
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("private locations query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -98,6 +101,9 @@ func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Reque
 		return scanPrivateLocation(row)
 	})
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("private locations scan failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return

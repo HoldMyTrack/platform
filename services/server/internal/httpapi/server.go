@@ -307,6 +307,11 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		if status == 0 {
 			status = http.StatusOK
 		}
+		// A handler without its own clientGone check answers a cancelled query with a 500;
+		// counted as the 499 it is, with no "request failed" line.
+		if status == http.StatusInternalServerError && p == nil && r.Context().Err() != nil {
+			status = statusClientClosedRequest
+		}
 		// Any other 500, whoever logged its cause: the handler's own error line doesn't know
 		// which build of the app made the call, and a fault only old installs hit looks
 		// different. A 503 is left out: the daily-capacity gate and /healthz answer it on purpose.

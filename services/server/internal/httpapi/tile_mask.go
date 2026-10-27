@@ -29,9 +29,10 @@ func loadMaskPNG(ctx context.Context, store *storage.Store, objectKey *string) (
 const statusClientClosedRequest = 499
 
 // clientGone reports whether r's client has already disconnected, and if so answers 499. A
-// map drops in-flight tile requests whenever it's zoomed or panned past them, so a cancelled
-// query or object fetch there is routine, not a server fault: it isn't logged, and the 499
-// keeps it out of the request metrics' 5xx count.
+// map drops in-flight tile requests whenever it's zoomed or panned past them, and the web
+// app aborts a read when its filter or screen changes, so a cancelled query or object fetch
+// is routine, not a server fault: it isn't logged, and the 499 keeps it out of the request
+// metrics' 5xx count.
 func clientGone(w http.ResponseWriter, r *http.Request) bool {
 	if r.Context().Err() == nil {
 		return false
