@@ -28,8 +28,7 @@ class UpdateAppActivity : AppCompatActivity() {
             override fun handleOnBackPressed() = finishAffinity()
         })
         findViewById<TextView>(R.id.update_version).text = getString(R.string.menu_version, HoldMyTrackApi.appVersion)
-        val installer = runCatching { packageManager.getInstallSourceInfo(packageName).installingPackageName }.getOrNull()
-        val link = AppBuild.updateLink(installer, BuildConfig.API_BASE_URL, packageName)
+        val link = AppBuild.updateLink(packageName)
         findViewById<Button>(R.id.update_open).setOnClickListener {
             try {
                 startActivity(Intent(Intent.ACTION_VIEW, link.toUri()))

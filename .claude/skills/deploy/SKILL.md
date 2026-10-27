@@ -1,12 +1,12 @@
 ---
 name: deploy
-description: Deploy HoldMyTrack's current origin/main to production (holdmytrack.com) — build with the site up, backup when there are migrations and maintenance mode only for one that needs it, verify, and republish the Android APK when the app changed. Use only when the user asks to deploy.
+description: Deploy HoldMyTrack's current origin/main to production (holdmytrack.com) — build with the site up, backup when there are migrations and maintenance mode only for one that needs it, verify, and tag the Android release when the app changed. Use only when the user asks to deploy.
 disable-model-invocation: true
 ---
 
 # Deploy HoldMyTrack to production
 
-Production is holdmytrack.com: one droplet, reached as `ssh holdmytrack` (root), repo checked out at `/srv/holdmytrack` tracking `main`, Compose project `holdmytrack`, config in `.env.prod`. `holdmytrack` is an alias in the operator's own `~/.ssh/config`, so the server's address isn't written here. `docs/DEPLOY.md` is the authority (§6 bring it up, §7 maintenance mode, §8 verify, §10 APK); this skill is the routine path through it.
+Production is holdmytrack.com: one droplet, reached as `ssh holdmytrack` (root), repo checked out at `/srv/holdmytrack` tracking `main`, Compose project `holdmytrack`, config in `.env.prod`. `holdmytrack` is an alias in the operator's own `~/.ssh/config`, so the server's address isn't written here. `docs/DEPLOY.md` is the authority (§6 bring it up, §7 maintenance mode, §8 verify, §10 app releases); this skill is the routine path through it.
 
 Every compose call on the server is `docker compose -f compose.prod.yml --env-file .env.prod …` — never drop `--env-file`. `.env.prod` can't be shell-sourced (unquoted multi-word values), so read DB credentials inside the `db` container.
 
@@ -99,22 +99,14 @@ Then the one-time steps the plan found, each from DEPLOY.md §6, after maintenan
 - **Changed `demo_data/`**: `run --rm api seed-demo-customer --reset`.
 - **Changed `internal/fog` or `internal/tilemath`**: `run --rm api rerender-coverage`, with `--masks` when the stroke or which tiles a track reaches changed (`DEPLOY.md` §6). Say which commits touched it and what they change, so the user can decide whether existing tiles look different.
 
-## 4. Android APK (only if the app changed)
+## 4. Android release (only if the app changed)
 
-From the deployed commit, so the APK's SHA matches `/healthz`:
+The app ships only through Google Play: the release bundle is built from the deployed commit and uploaded separately (`apps/android/holdmytrack/README.md`, Release build).
 
-```
-cd apps/android/holdmytrack    # not apps/android
-./gradlew :app:assembleDebug -Pholdmytrack.apiBaseUrl=https://holdmytrack.com
-! scp app/build/outputs/apk/debug/app-debug.apk holdmytrack:/srv/holdmytrack/downloads/holdmytrack.apk
-```
-
-Check `curl -sI https://holdmytrack.com/download/holdmytrack.apk` — singular `/download/`; the server directory is plural `downloads/`, and `/downloads/…` is a misleading 404. This sideloaded APK is apart from the Play release, which is still built and uploaded separately.
-
-Tag the deployed commit as a release, so the contract check keeps covering it (DEPLOY.md §10): `git tag android/<versionCode> <deployed sha>` and `git push origin android/<versionCode>`; skip it when the tag exists.
+When the user uploads that build to Play, tag the deployed commit as a release, so the contract check keeps covering it (DEPLOY.md §10): `git tag android/<versionCode> <deployed sha>` and `git push origin android/<versionCode>`; skip it when the tag exists.
 
 Then run `scripts/check-contract-release.sh --needed-floor <deployed sha>` again, now that the tag exists. When it raises `MIN_ANDROID_BUILD`, the value is applied only once that release is live on Play, which is usually after the deploy: until then, give the user the value and DEPLOY.md §10's steps for later. When `ROADMAP.md` has a route waiting on older builds going away, say so too.
 
 ## 5. Report and record
 
-Tell the user the deployed SHA, whether migrations ran (and the backup's name, and whether the site went into maintenance mode), which one-time steps ran or were skipped and why, whether `versionName` was bumped, whether the APK was republished and at which `versionName`, and what was verified. If you keep notes on the deployment's state between sessions, record the deployed SHA there.
+Tell the user the deployed SHA, whether migrations ran (and the backup's name, and whether the site went into maintenance mode), which one-time steps ran or were skipped and why, whether `versionName` was bumped, whether a release was tagged, and what was verified. If you keep notes on the deployment's state between sessions, record the deployed SHA there.

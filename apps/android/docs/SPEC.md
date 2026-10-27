@@ -95,7 +95,7 @@ The web's `/profile` page, the activity graph and Trends (`docs/SPEC.md` FR-7, F
 When any `/v1` request answers `426` `app_outdated` (`docs/SPEC.md` §1.5), signed in or not, the Update screen opens over whatever showed.
 
 - Several refusals at once open it once; a refused request's own screen says nothing.
-- Update opens the Play listing for a Play install and the deployment's APK download (`docs/DEPLOY.md` §10) for any other.
+- Update opens the app's Play listing.
 - Back closes the app, and it opens on the Update screen for as long as the server refuses the build.
 - Nothing on the phone changes: what waits on the Sync tab stays to be sent from the updated app, and a recording under way carries on.
 
