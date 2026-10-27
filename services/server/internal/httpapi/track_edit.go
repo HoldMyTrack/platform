@@ -52,6 +52,9 @@ func (s *Server) handleActivityTrackPoints(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("track points lookup failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -63,6 +66,9 @@ func (s *Server) handleActivityTrackPoints(w http.ResponseWriter, r *http.Reques
 
 	points, _, err := ingest.LoadPiecePoints(ctx, s.pool, s.store, userID, sourceDetail, *rawKey, rng)
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("track points load failed", "activity_id", activityID, "err", err)
 		httpErrorT(w, r, http.StatusConflict, "error.track_unreadable")
 		return

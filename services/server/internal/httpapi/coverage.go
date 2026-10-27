@@ -43,6 +43,9 @@ func (s *Server) handleCoverageStatus(w http.ResponseWriter, r *http.Request) {
 	var resp coverageStatusResponse
 	userID := userIDFromContext(r.Context())
 	if err := s.pool.QueryRow(r.Context(), coverageRenderingQuery, userID).Scan(&resp.Rendering, &resp.Version); err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("coverage status query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return

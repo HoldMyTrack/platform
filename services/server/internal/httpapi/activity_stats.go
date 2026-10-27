@@ -180,7 +180,7 @@ func (s *Server) handleActivityHistogram(w http.ResponseWriter, r *http.Request)
 		buckets, from, to, err = s.activityCalendarWindow(r, q, loc, story)
 	}
 	if err != nil {
-		s.writeHistogramError(w, err)
+		s.writeHistogramError(w, r, err)
 		return
 	}
 	if q.Get("days") != "" && len(buckets) > 0 {
@@ -189,6 +189,9 @@ func (s *Server) handleActivityHistogram(w http.ResponseWriter, r *http.Request)
 
 	earliest, err := s.earliestActivity(r.Context(), userIDFromContext(r.Context()), story)
 	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
 		s.log.Error("activity earliest-date query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -228,10 +231,13 @@ func (s *Server) dailyTotals(ctx context.Context, userID string, first, end time
 // errors and let one caller decide the status code.
 type badRequest struct{ error }
 
-func (s *Server) writeHistogramError(w http.ResponseWriter, err error) {
+func (s *Server) writeHistogramError(w http.ResponseWriter, r *http.Request, err error) {
 	var bad badRequest
 	if errors.As(err, &bad) {
 		writeAPIError(w, bad.Error(), http.StatusBadRequest)
+		return
+	}
+	if clientGone(w, r) {
 		return
 	}
 	s.log.Error("activity histogram query failed", "err", err)

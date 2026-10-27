@@ -157,7 +157,7 @@ func storyIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 // handleListStories serves `GET /v1/stories`, newest first.
 func (s *Server) handleListStories(w http.ResponseWriter, r *http.Request) {
 	stories, err := s.loadStories(r.Context(), s.pool, userIDFromContext(r.Context()), nil)
-	if s.writeStoryError(w, err) {
+	if s.writeStoryError(w, r, err) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
@@ -174,7 +174,7 @@ func (s *Server) handleGetStory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	st, err := s.loadStory(r.Context(), s.pool, userIDFromContext(r.Context()), id)
-	if s.writeStoryError(w, err) {
+	if s.writeStoryError(w, r, err) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
@@ -222,7 +222,7 @@ func (s *Server) handleCreateStory(w http.ResponseWriter, r *http.Request) {
 		created, err = s.loadStory(r.Context(), tx, userID, id)
 		return err
 	})
-	if s.writeStoryError(w, err) {
+	if s.writeStoryError(w, r, err) {
 		return
 	}
 	created.withTypeLabels(requestLang(r))
@@ -253,11 +253,11 @@ func (s *Server) handleUpdateStory(w http.ResponseWriter, r *http.Request) {
 	if err == nil && tag.RowsAffected() == 0 {
 		err = errStoryNotFound
 	}
-	if s.writeStoryError(w, err) {
+	if s.writeStoryError(w, r, err) {
 		return
 	}
 	st, err := s.loadStory(r.Context(), s.pool, userID, id)
-	if s.writeStoryError(w, err) {
+	if s.writeStoryError(w, r, err) {
 		return
 	}
 	st.withTypeLabels(requestLang(r))
@@ -271,7 +271,7 @@ func (s *Server) handleDeleteStory(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if s.writeStoryError(w, s.deleteStory(r.Context(), userIDFromContext(r.Context()), id)) {
+	if s.writeStoryError(w, r, s.deleteStory(r.Context(), userIDFromContext(r.Context()), id)) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -363,7 +363,7 @@ func (s *Server) changeStoryActivities(w http.ResponseWriter, r *http.Request,
 		updated, err = s.loadStory(ctx, tx, userID, storyID)
 		return err
 	})
-	if s.writeStoryError(w, err) {
+	if s.writeStoryError(w, r, err) {
 		return
 	}
 	updated.withTypeLabels(requestLang(r))
@@ -520,12 +520,13 @@ func (s *Server) loadStories(ctx context.Context, q querier, userID string, stor
 }
 
 // writeStoryError maps a Story handler's error to a response, reporting whether it wrote one.
-func (s *Server) writeStoryError(w http.ResponseWriter, err error) bool {
+func (s *Server) writeStoryError(w http.ResponseWriter, r *http.Request, err error) bool {
 	switch {
 	case err == nil:
 		return false
 	case errors.Is(err, errStoryNotFound), errors.Is(err, errActivityNotFound):
 		writeAPIError(w, err.Error(), http.StatusNotFound)
+	case clientGone(w, r):
 	default:
 		s.log.Error("story request failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
