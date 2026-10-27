@@ -26,6 +26,9 @@
     <div class="page-actions">
       {{if not .InApp}}<a class="page-button" href="/signin">Попробовать демо без регистрации</a>{{end}}
       <a class="page-button page-button--quiet" href="https://github.com/HoldMyTrack/platform">Открыть на GitHub</a>
+      {{/* Google's badge, unmodified but for its transparent margin, and self-hosted: the site
+           loads nothing from third parties. Its trademark line is at the foot of the page. */}}
+      {{if not .InApp}}<a class="page-store" href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android"><img src="{{asset "google-play-badge.ru.png"}}" alt="Скачать из Google Play" width="134" height="40" /></a>{{end}}
     </div>
   </section>
 
@@ -112,6 +115,7 @@
   <section class="page-section">
     <h2>Связаться с нами</h2>
     <p>Вопросам, сообщениям об ошибках и идеям мы всегда рады — см. <a href="/contacts">Контакты</a>.</p>
+    {{if not .InApp}}<p class="page-fineprint">Google Play и логотип Google Play являются товарными знаками Google LLC.</p>{{end}}
   </section>
 </main>
 {{end}}
