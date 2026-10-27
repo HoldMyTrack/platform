@@ -5,7 +5,7 @@ import { ROLE_METADATA, tilePath, VARS_METADATA, type GroupPart } from './mapLay
 
 /**
  * The account's track lines (IMPLEMENTATION.md §4.3) as the layers document's `tracks` group:
- * every line, the focused one bold over a dark halo, and the hovered one widest, each its own
+ * every line, the focused one bold over a halo, and the hovered one widest, each its own
  * layer filtered by id set, since MapLibre Native Android has no feature-state. The client binds
  * the sets as vars and appends its own query (the range or Story) to the tiles.
  */
@@ -17,9 +17,11 @@ const TRACKS_SOURCE_LAYER = 'tracks';
 
 const TRACK_COLOR = '#b07e2e'; // --fm-accent
 const HOVER_COLOR = '#93691f'; // --fm-accent-strong
-// Ink, not white: tracks mostly run along the basemap's white streets, where a white halo
-// disappears into the road it sits on.
-const CASING_COLOR = '#202b25';
+// The opposite of the basemap: ink over a light map, whose white streets a white halo disappears
+// into; a muted grey over a dark map or imagery, where ink does and cream glares.
+const LIGHT_CASING = '#202b25';
+const DARK_CASING = '#a39e93';
+const casingColor = (dark: boolean) => (dark ? DARK_CASING : LIGHT_CASING);
 const NORMAL_WIDTH = 2.5;
 const FOCUSED_WIDTH = 4.5;
 const HOVER_WIDTH = 5;
@@ -48,7 +50,7 @@ function line(id: string, filter: unknown[], vars: string[], paint: Record<strin
 /** Bottom to top: the focused track's halo, every track, the focused one, the hovered one. A
  *  focused track isn't raised above its neighbours; the halo is what separates it where tracks
  *  overlap. */
-export function tracksGroup(tileVersion: string): GroupPart {
+export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
   return {
     group: {
       id: 'tracks',
@@ -57,16 +59,16 @@ export function tracksGroup(tileVersion: string): GroupPart {
       // zooms further.
       sources: { tracks: { type: 'vector', tiles: tilePath('tracks', tileVersion), minzoom: 0, maxzoom: 14 } },
       layers: [
-        line('tracks-casing', among('focused'), ['focused', 'hidden'], { 'line-color': CASING_COLOR, 'line-width': CASING_WIDTH, 'line-opacity': 0.95 }, 'casing'),
+        line('tracks-casing', among('focused'), ['focused', 'hidden'], { 'line-color': casingColor(dark), 'line-width': CASING_WIDTH, 'line-opacity': 0.95 }, 'casing'),
         line(TRACKS_LAYER_ID, notHidden, ['hidden'], { 'line-color': TRACK_COLOR, 'line-width': NORMAL_WIDTH, 'line-opacity': 0.9 }, 'track'),
         line('tracks-focused', among('focused'), ['focused', 'hidden'], { 'line-color': TRACK_COLOR, 'line-width': FOCUSED_WIDTH, 'line-opacity': 1 }, 'focused'),
         line('tracks-hover', among('hovered'), ['hovered', 'hidden'], { 'line-color': HOVER_COLOR, 'line-width': HOVER_WIDTH }),
       ],
     },
     // Fog and Heatmap already show where; lines over either read as noise.
-    view: (mode: MapMode) => ({
+    view: (mode: MapMode, dark: boolean) => ({
       layout: Object.fromEntries(LAYER_IDS.map((id) => [id, { visibility: mode === 'normal' ? 'visible' : 'none' }])),
-      paint: {},
+      paint: { 'tracks-casing': { 'line-color': casingColor(dark) } },
     }),
     vars: { hidden: [], focused: [], hovered: [] },
   };

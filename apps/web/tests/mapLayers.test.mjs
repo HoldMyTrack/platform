@@ -160,6 +160,13 @@ test('the tracks draw the focused and hovered ids from vars the client binds, ne
   }
 });
 
+test('the focused halo is the opposite of the map under it', () => {
+  const casing = (d, satellite) => viewFor(d, 'normal', satellite).paint['tracks-casing']['line-color'];
+  const dark = buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' });
+  assert.deepEqual([casing(doc, false), casing(doc, true), casing(dark, false)], ['#202b25', '#a39e93', '#a39e93']);
+  assert.equal(groupOf(dark, 'tracks').layers.find((l) => l.id === 'tracks-casing').paint['line-color'], '#a39e93');
+});
+
 test('the spots go on top, behind one switch, their badges named with the colors to draw them in', () => {
   const spots = groupOf(doc, 'spots');
   assert.equal(spots.placement, 'top');

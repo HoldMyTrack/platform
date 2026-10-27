@@ -1,5 +1,5 @@
 {
-  "styleBuild": "2cfd8af6bd5f",
+  "styleBuild": "d6d756175ce5",
   "flavor": "grayscale",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -133,6 +133,9 @@
           "places_country": {
             "text-opacity": 1,
             "icon-opacity": 1
+          },
+          "tracks-casing": {
+            "line-color": "#202b25"
           }
         }
       },
@@ -244,6 +247,9 @@
           "places_country": {
             "text-opacity": 0.4,
             "icon-opacity": 0.4
+          },
+          "tracks-casing": {
+            "line-color": "#202b25"
           }
         }
       },
@@ -355,6 +361,9 @@
           "places_country": {
             "text-opacity": 1,
             "icon-opacity": 1
+          },
+          "tracks-casing": {
+            "line-color": "#202b25"
           }
         }
       }
@@ -468,6 +477,9 @@
           "places_country": {
             "text-opacity": 1,
             "icon-opacity": 1
+          },
+          "tracks-casing": {
+            "line-color": "#a39e93"
           }
         }
       },
@@ -579,6 +591,9 @@
           "places_country": {
             "text-opacity": 0.4,
             "icon-opacity": 0.4
+          },
+          "tracks-casing": {
+            "line-color": "#a39e93"
           }
         }
       },
@@ -690,6 +705,9 @@
           "places_country": {
             "text-opacity": 1,
             "icon-opacity": 1
+          },
+          "tracks-casing": {
+            "line-color": "#a39e93"
           }
         }
       }

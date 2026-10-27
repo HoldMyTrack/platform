@@ -67,6 +67,15 @@ class MapLayersDocTest {
     }
 
     @Test
+    fun theFocusedHaloIsTheOppositeOfTheMap() {
+        fun casing(doc: MapLayersDoc.Doc, satellite: Boolean) = MapLayersDoc.view(doc, MapMode.NORMAL, satellite)!!.properties.getValue("tracks-casing").getValue("line-color")
+        val black = MapLayersDoc.parse(served("layers/black.json"))!!
+        assertEquals(JsonPrimitive("#202b25"), casing(light, false))
+        assertEquals(JsonPrimitive("#a39e93"), casing(light, true))
+        assertEquals(JsonPrimitive("#a39e93"), casing(black, false))
+    }
+
+    @Test
     fun layersCarryExpressionsAsJson() {
         val heat = coverage.layers.first { it.id == "heat-points-circles" }
         assertEquals("heatmap", heat.type)
