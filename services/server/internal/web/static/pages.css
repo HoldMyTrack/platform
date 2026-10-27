@@ -56,8 +56,19 @@ code {
 .page-actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
   margin-top: 28px;
+}
+
+.page-store img {
+  display: block;
+}
+
+.page-section .page-fineprint {
+  margin-top: 24px;
+  font-size: 12px;
+  color: var(--fm-ink-secondary);
 }
 
 .page-section {

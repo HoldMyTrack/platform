@@ -27,6 +27,9 @@
            link and spend the demo's per-address budget. */}}
       {{if not .InApp}}<a class="page-button" href="/signin">Try the demo — no signup</a>{{end}}
       <a class="page-button page-button--quiet" href="https://github.com/HoldMyTrack/platform">View on GitHub</a>
+      {{/* Google's badge, unmodified but for its transparent margin, and self-hosted: the site
+           loads nothing from third parties. Its trademark line is at the foot of the page. */}}
+      {{if not .InApp}}<a class="page-store" href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android"><img src="{{asset "google-play-badge.png"}}" alt="Get it on Google Play" width="134" height="40" /></a>{{end}}
     </div>
   </section>
 
@@ -113,6 +116,7 @@
   <section class="page-section">
     <h2>Get in touch</h2>
     <p>Questions, bug reports and ideas are all welcome — see <a href="/contacts">Contacts</a>.</p>
+    {{if not .InApp}}<p class="page-fineprint">Google Play and the Google Play logo are trademarks of Google LLC.</p>{{end}}
   </section>
 </main>
 {{end}}
