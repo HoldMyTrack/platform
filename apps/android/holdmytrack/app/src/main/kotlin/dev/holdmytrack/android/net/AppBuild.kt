@@ -7,7 +7,7 @@ package dev.holdmytrack.android.net
  */
 object AppBuild {
 
-    /** What the User-Agent names this build — `HoldMyTrack-Android/0.19 (62da50b; 812)`: the
+    /** What the User-Agent names this build — `HoldMyTrack-Android/0.20 (62da50b; 812)`: the
      *  release number, the commit and the versionCode, which the server compares against its
      *  minimum. */
     fun userAgent(versionName: String, gitSha: String, versionCode: Int): String =
