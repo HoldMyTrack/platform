@@ -25,7 +25,7 @@ test('each mode shows only its own layers', () => {
       .filter(([, props]) => props.visibility === 'visible')
       .map(([id]) => id)
       .sort();
-  assert.deepEqual(visible('normal'), ['track-bands-line', 'tracks-casing', 'tracks-focused', 'tracks-hover', 'tracks-line']);
+  assert.deepEqual(visible('normal'), ['track-bands-arrows', 'track-bands-line', 'tracks-casing', 'tracks-focused', 'tracks-hover', 'tracks-line']);
   assert.deepEqual(visible('fog'), ['country-fog-fill', 'fog-edge', 'fog-veil', 'region-fog-fill']);
   assert.deepEqual(visible('heatmap'), ['heat-points-circles', 'heatmap-dim']);
 });
@@ -165,6 +165,19 @@ test('the focused halo is the opposite of the map under it', () => {
   const dark = buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' });
   assert.deepEqual([casing(doc, false), casing(doc, true), casing(dark, false)], ['#202b25', '#a39e93', '#a39e93']);
   assert.equal(groupOf(dark, 'tracks').layers.find((l) => l.id === 'tracks-casing').paint['line-color'], '#a39e93');
+});
+
+test('arrows ride the route line over the bands, never a band run, in the halo color', () => {
+  const bands = groupOf(doc, 'track-bands');
+  assert.deepEqual(bands.layers.map((l) => l.id), ['track-bands-line', 'track-bands-arrows']);
+  const [line, arrows] = bands.layers;
+  assert.deepEqual([line.filter, arrows.filter], [['has', 'band'], ['has', 'route']]);
+  assert.equal(arrows.layout['symbol-placement'], 'line');
+  assert.equal(arrows.layout['icon-image'], 'track-arrow');
+  const dark = buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' });
+  const color = (d, satellite) => viewFor(d, 'normal', satellite).paint['track-bands-arrows']['icon-color'];
+  assert.deepEqual([color(doc, false), color(doc, true), color(dark, false)], ['#202b25', '#a39e93', '#a39e93']);
+  assert.equal(viewFor(doc, 'fog', false).layout['track-bands-arrows'].visibility, 'none');
 });
 
 test('the spots go on top, behind one switch, their badges named with the colors to draw them in', () => {

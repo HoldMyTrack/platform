@@ -1,5 +1,5 @@
 {
-  "styleBuild": "d6d756175ce5",
+  "styleBuild": "85ff8de1a5f5",
   "flavor": "light",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -59,6 +59,9 @@
           },
           "track-bands-line": {
             "visibility": "visible"
+          },
+          "track-bands-arrows": {
+            "visibility": "visible"
           }
         },
         "paint": {
@@ -140,6 +143,9 @@
           },
           "tracks-casing": {
             "line-color": "#202b25"
+          },
+          "track-bands-arrows": {
+            "icon-color": "#202b25"
           }
         }
       },
@@ -177,6 +183,9 @@
           },
           "track-bands-line": {
             "visibility": "none"
+          },
+          "track-bands-arrows": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -258,6 +267,9 @@
           },
           "tracks-casing": {
             "line-color": "#202b25"
+          },
+          "track-bands-arrows": {
+            "icon-color": "#202b25"
           }
         }
       },
@@ -295,6 +307,9 @@
           },
           "track-bands-line": {
             "visibility": "none"
+          },
+          "track-bands-arrows": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -376,6 +391,9 @@
           },
           "tracks-casing": {
             "line-color": "#202b25"
+          },
+          "track-bands-arrows": {
+            "icon-color": "#202b25"
           }
         }
       }
@@ -415,6 +433,9 @@
           },
           "track-bands-line": {
             "visibility": "visible"
+          },
+          "track-bands-arrows": {
+            "visibility": "visible"
           }
         },
         "paint": {
@@ -496,6 +517,9 @@
           },
           "tracks-casing": {
             "line-color": "#a39e93"
+          },
+          "track-bands-arrows": {
+            "icon-color": "#a39e93"
           }
         }
       },
@@ -533,6 +557,9 @@
           },
           "track-bands-line": {
             "visibility": "none"
+          },
+          "track-bands-arrows": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -614,6 +641,9 @@
           },
           "tracks-casing": {
             "line-color": "#a39e93"
+          },
+          "track-bands-arrows": {
+            "icon-color": "#a39e93"
           }
         }
       },
@@ -651,6 +681,9 @@
           },
           "track-bands-line": {
             "visibility": "none"
+          },
+          "track-bands-arrows": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -732,6 +765,9 @@
           },
           "tracks-casing": {
             "line-color": "#a39e93"
+          },
+          "track-bands-arrows": {
+            "icon-color": "#a39e93"
           }
         }
       }
@@ -1401,6 +1437,10 @@
           "id": "track-bands-line",
           "type": "line",
           "source": "track-bands",
+          "filter": [
+            "has",
+            "band"
+          ],
           "metadata": {
             "holdmytrack:role": "pace-bands"
           },
@@ -1429,6 +1469,27 @@
             ],
             "line-width": 6,
             "line-opacity": 0.95
+          }
+        },
+        {
+          "id": "track-bands-arrows",
+          "type": "symbol",
+          "source": "track-bands",
+          "filter": [
+            "has",
+            "route"
+          ],
+          "layout": {
+            "symbol-placement": "line",
+            "symbol-spacing": 70,
+            "icon-image": "track-arrow",
+            "icon-rotation-alignment": "map",
+            "icon-pitch-alignment": "map",
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true
+          },
+          "paint": {
+            "icon-color": "#202b25"
           }
         }
       ],

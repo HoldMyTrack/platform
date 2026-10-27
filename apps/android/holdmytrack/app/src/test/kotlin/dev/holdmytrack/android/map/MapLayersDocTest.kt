@@ -76,6 +76,14 @@ class MapLayersDocTest {
     }
 
     @Test
+    fun theArrowsRideTheRouteOverTheBands() {
+        val bands = light.group("track-bands")!!
+        assertEquals(listOf("track-bands-line", "track-bands-arrows"), bands.layers.map { it.id })
+        assertEquals("""["has","route"]""", bands.layers[1].filter.toString())
+        assertEquals("symbol", bands.layers[1].type)
+    }
+
+    @Test
     fun layersCarryExpressionsAsJson() {
         val heat = coverage.layers.first { it.id == "heat-points-circles" }
         assertEquals("heatmap", heat.type)
@@ -114,7 +122,7 @@ class MapLayersDocTest {
         assertEquals(listOf("casing", "track", "focused", null), tracks.layers.map { it.role })
         assertEquals(listOf("focused", "hidden"), tracks.layers.first { it.id == "tracks-focused" }.vars.getValue("filter"))
         assertTrue(light.vars.keys.containsAll(setOf("hidden", "focused", "hovered")))
-        assertEquals(MapOverlays.BAND_LAYER_ID, light.group("track-bands")!!.layers.single().id)
+        assertEquals(MapOverlays.BAND_LAYER_ID, light.group("track-bands")!!.layers.first().id)
         assertEquals(MapOverlays.TRACKS_MIN_ZOOM, tracks.layers.first().minZoom)
         val beneath = MapLayersDoc.order(light.groups, MapLayersDoc.Placement.BENEATH_LABELS)
         assertTrue(beneath.indexOf(MapOverlays.TRACKS_LAYER_ID) < beneath.indexOf(MapOverlays.BAND_LAYER_ID))
