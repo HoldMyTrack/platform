@@ -322,23 +322,13 @@ A new `postgis/postgis` tag can bring a newer Debian, and with it glibc's text s
 
 Something wrong before step 4's upgrade: put the old tag back and `… up -d db`. After it: restore the snapshot, or §11's dump onto the old image.
 
-## 10. Publishing the Android APK
+## 10. App releases
 
-`https://<your-domain>/download/*` serves `/srv/holdmytrack/downloads/` on the host (`compose.prod.yml`), so publishing is a copy with no restart. From the deployed commit, so the app's SHA matches `/healthz`:
+The Android app ships only through Google Play, as the release-signed bundle built from a deployed commit (`apps/android/holdmytrack/README.md`, Release build).
 
-```
-cd apps/android/holdmytrack
-./gradlew :app:assembleDebug -Pholdmytrack.apiBaseUrl=https://<your-domain>
-scp app/build/outputs/apk/debug/app-debug.apk <vps>:/srv/holdmytrack/downloads/holdmytrack.apk
-```
+**Tagging.** Tag every build that reaches Play, for the release contract check (`DEVELOPMENT.md`, "CI"): `git tag android/<versionCode> <sha>`, then `git push origin android/<versionCode>`.
 
-Check: `curl -sI https://<your-domain>/download/holdmytrack.apk` (singular `/download/`) returns `200`.
-
-No page links to it; it's for testers handed the URL, while the public route is Google Play. It is debug-signed; the Play build is the release-signed bundle (`apps/android/holdmytrack/README.md`, Release build), and the two don't install over each other. Google sign-in works in it only if its debug key has an Android OAuth client (§4). The `versionCode` is the commit count, so a newer build installs over an older one (`apps/android/docs/IMPLEMENTATION.md` §6).
-
-**Tagging.** Tag every build that reaches Play or `/download/`, for the release contract check (`DEVELOPMENT.md`, "CI"): `git tag android/<versionCode> <sha>`, then `git push origin android/<versionCode>`.
-
-**Turning away older builds.** Needed when `scripts/check-contract-release.sh --needed-floor <deployed sha>` raises a minimum, and only once the release it names is live on Google Play and at `/download/`:
+**Turning away older builds.** Needed when `scripts/check-contract-release.sh --needed-floor <deployed sha>` raises a minimum, and only once the release it names is live on Google Play:
 
 1. Set `MIN_ANDROID_BUILD` in `.env.prod` to the value it prints.
 2. `docker compose -f compose.prod.yml --env-file .env.prod up -d api`

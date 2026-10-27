@@ -23,13 +23,11 @@ class AppBuildTest {
     }
 
     @Test
-    fun `a Play install updates from its listing, any other from the deployment's APK`() {
+    fun `Update leads to the app's Play listing`() {
         assertEquals(
             "https://play.google.com/store/apps/details?id=dev.holdmytrack.android",
-            AppBuild.updateLink("com.android.vending", api, "dev.holdmytrack.android"),
+            AppBuild.updateLink("dev.holdmytrack.android"),
         )
-        assertEquals("$api/download/holdmytrack.apk", AppBuild.updateLink("com.google.android.packageinstaller", api, "dev.holdmytrack.android"))
-        assertEquals("$api/download/holdmytrack.apk", AppBuild.updateLink(null, api, "dev.holdmytrack.android"))
     }
 
     @Test

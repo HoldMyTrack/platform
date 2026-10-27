@@ -577,7 +577,7 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 ### 4.33 Turning away old app builds
 
-`MIN_ANDROID_BUILD` and `MIN_IOS_BUILD` let a route kept for old installs be retired: an app's builds below its minimum get `426 app_outdated` on every `/v1` request before any handler (`app_outdated.go`). The build is the commit count in the app's User-Agent (`HoldMyTrack-Android/` or `HoldMyTrack-iOS/`); one with no number counts as 0, which is exactly the Android builds from before the gate. Play's in-app updates would miss sideloaded APKs and leave the decision on the phone. Tiles and pages keep answering, so an old build's map doesn't blank out. Nothing else is ever refused, since anyone could claim to be an old build.
+`MIN_ANDROID_BUILD` and `MIN_IOS_BUILD` let a route kept for old installs be retired: an app's builds below its minimum get `426 app_outdated` on every `/v1` request before any handler (`app_outdated.go`). The build is the commit count in the app's User-Agent (`HoldMyTrack-Android/` or `HoldMyTrack-iOS/`); one with no number counts as 0, which is exactly the Android builds from before the gate. Play's in-app updates would leave the decision on the phone. Tiles and pages keep answering, so an old build's map doesn't blank out. Nothing else is ever refused, since anyone could claim to be an old build.
 
 ## 5. Engineering Risks & Mitigations
 

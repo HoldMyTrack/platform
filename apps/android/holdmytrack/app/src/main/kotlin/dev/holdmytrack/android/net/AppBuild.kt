@@ -7,8 +7,6 @@ package dev.holdmytrack.android.net
  */
 object AppBuild {
 
-    private const val PLAY_INSTALLER = "com.android.vending"
-
     /** What the User-Agent names this build — `HoldMyTrack-Android/0.18 (62da50b; 812)`: the
      *  release number, the commit and the versionCode, which the server compares against its
      *  minimum. */
@@ -20,12 +18,7 @@ object AppBuild {
     fun isRefusal(url: String, apiBaseUrl: String, code: Int): Boolean =
         code == 426 && url.startsWith("$apiBaseUrl/v1/")
 
-    /**
-     * Where Update leads: the app's Play listing for a Play install, otherwise the sideloaded
-     * APK the deployment serves at `/download/` (root `docs/DEPLOY.md` §10), which is the only
-     * other way the app is handed out.
-     */
-    fun updateLink(installer: String?, apiBaseUrl: String, packageName: String): String =
-        if (installer == PLAY_INSTALLER) "https://play.google.com/store/apps/details?id=$packageName"
-        else "$apiBaseUrl/download/holdmytrack.apk"
+    /** Where Update leads: the app's Play listing, the only way the app is handed out. */
+    fun updateLink(packageName: String): String =
+        "https://play.google.com/store/apps/details?id=$packageName"
 }
