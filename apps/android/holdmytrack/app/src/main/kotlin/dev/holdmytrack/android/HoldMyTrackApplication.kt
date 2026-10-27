@@ -1,6 +1,10 @@
 package dev.holdmytrack.android
 
+import android.app.Activity
 import android.app.Application
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.enableEdgeToEdge
 import dev.holdmytrack.android.net.AppOutdated
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
@@ -36,5 +40,20 @@ class HoldMyTrackApplication : Application() {
         // asks for immediately, so no Activity has to remember to do it first.
         MapLibre.getInstance(this)
         HttpRequestUtil.setOkHttpClient(HoldMyTrackApi.client)
+        // Every screen edge-to-edge on Android 14 too, as Android 15 and later draw it at this
+        // targetSdk: each one pads itself for the system bars. Transparent bars with icons for the
+        // theme's day or night, before the screen's own onCreate inflates anything.
+        registerActivityLifecycleCallbacks(object : ActivityLifecycleCallbacks {
+            override fun onActivityPreCreated(activity: Activity, savedInstanceState: Bundle?) {
+                (activity as? ComponentActivity)?.enableEdgeToEdge()
+            }
+            override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
+            override fun onActivityStarted(activity: Activity) = Unit
+            override fun onActivityResumed(activity: Activity) = Unit
+            override fun onActivityPaused(activity: Activity) = Unit
+            override fun onActivityStopped(activity: Activity) = Unit
+            override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
+            override fun onActivityDestroyed(activity: Activity) = Unit
+        })
     }
 }
