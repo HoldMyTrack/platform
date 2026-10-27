@@ -35,10 +35,6 @@
         <item name="colorOutline">@color/hmt_border_strong</item>
         <item name="colorOutlineVariant">@color/hmt_border</item>
 
-        <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:windowLightStatusBar">@bool/hmt_light_system_bars</item>
-        <item name="android:windowLightNavigationBar">@bool/hmt_light_system_bars</item>
-
         <!-- The web's radius scale: inputs at sm, buttons and map toggles at md, menus, sheets
              and dialogs at lg — rather than Material's 4dp fields, pill buttons and 28dp dialogs. -->
         <item name="shapeAppearanceCornerExtraSmall">@style/ShapeAppearance.HoldMyTrack.ExtraSmall</item>

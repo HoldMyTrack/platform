@@ -52,7 +52,7 @@ Map, Stories and Sync are one `MapFragment` whose panel switches tabs; You is `Y
 
 What survives a recreation is chosen item by item, and each was a bug: the fragment is added only on a first create; the once-per-process camera fit, the map mode and the logo's and attribution's base margins go into the saved state. Without the mode, the buttons restored their own checked state and showed Heatmap over a map in Normal; without the margins, MapLibre's restored values were lifted a second time.
 
-At `targetSdk` 35+ the system draws edge-to-edge and ignores the opt-out, so the map's chrome adds the bottom inset to each view's padding (`insetSystemBars`) and passes the insets on unconsumed; the side insets are applied once, on the tabs' container.
+Every screen draws edge-to-edge: Android 15+ does at `targetSdk` 35+, and `HoldMyTrackApplication` calls `enableEdgeToEdge()` before each activity's `onCreate` so Android 14 matches. The map's chrome adds the bottom inset to each view's padding (`insetSystemBars`) and passes the insets on unconsumed; the side insets are applied once, on the tabs' container.
 
 ### 1.4 The web's pages in a WebView
 
