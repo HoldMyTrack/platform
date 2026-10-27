@@ -1,6 +1,12 @@
 package dev.holdmytrack.android.map
 
+import android.content.res.Resources
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Path
 import android.net.Uri
+import androidx.core.graphics.createBitmap
 import dev.holdmytrack.android.net.PaceBand
 import dev.holdmytrack.android.net.TrackMetricPoint
 import dev.holdmytrack.android.net.TrackMetrics
@@ -125,17 +131,55 @@ object MapOverlays {
 
     /**
      * Draws [metrics]' pace bands — the selected activity's, `GET /v1/activities/{id}/track-metrics` —
-     * one line per run the server worked out, each with its `band` for the layer to colour. The
-     * web's `setTrackBands`.
+     * one line per run the server worked out, each with its `band` for the layer to colour, then
+     * [routeFeature] for the group's direction arrows. The web's `setTrackBands`.
      */
     fun setTrackBands(style: Style, metrics: TrackMetrics) {
-        style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(bandFeatures(metrics.points, metrics.bands)))
+        // A style reload drops the image with the layers, and every reload draws the bands again.
+        if (style.getImage(ARROW_IMAGE) == null) style.addImage(ARROW_IMAGE, arrowBitmap(), true)
+        val features = bandFeatures(metrics.points, metrics.bands) + listOfNotNull(routeFeature(metrics.points))
+        style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(features))
+    }
+
+    /** [points] as one line in recording order, marked `route`, or null with too few to have a
+     *  direction. The Sync tab's candidates draw no arrows, so only [setTrackBands] adds it. */
+    fun routeFeature(points: List<TrackMetricPoint>): Feature? {
+        if (points.size < 2) return null
+        return Feature.fromGeometry(LineString.fromLngLats(points.map { Point.fromLngLat(it.lon, it.lat) })).apply { addBooleanProperty("route", true) }
     }
 
     /** [bands]' runs of [points] as lines, each with its `band`. */
     fun bandFeatures(points: List<TrackMetricPoint>, bands: List<PaceBand>): List<Feature> = bands.map { run ->
         val line = LineString.fromLngLats(points.subList(run.start, run.end + 1).map { Point.fromLngLat(it.lon, it.lat) })
         Feature.fromGeometry(line).apply { addNumberProperty("band", run.band) }
+    }
+
+    /** The chevron the document's `track-bands-arrows` layer names (the web's bandsGroup.ts). */
+    private const val ARROW_IMAGE = "track-arrow"
+
+    /** The chevron's box in dp. The chevron itself stays inside the 6 dp band it rides. */
+    private const val ARROW_DP = 8
+
+    /** A white chevron pointing along +x, for the layer to colour: the web's `arrowImage`. Drawn
+     *  thicker than it shows, since an SDF image's edge sits at three quarters of its alpha. */
+    private fun arrowBitmap(): android.graphics.Bitmap {
+        val metrics = Resources.getSystem().displayMetrics
+        val px = (ARROW_DP * metrics.density).toInt()
+        val bitmap = createBitmap(px, px).apply { density = metrics.densityDpi }
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = Color.WHITE
+            style = Paint.Style.STROKE
+            strokeWidth = px * 0.25f
+            strokeCap = Paint.Cap.ROUND
+            strokeJoin = Paint.Join.ROUND
+        }
+        val chevron = Path().apply {
+            moveTo(px * 0.35f, px * 0.25f)
+            lineTo(px * 0.65f, px * 0.5f)
+            lineTo(px * 0.35f, px * 0.75f)
+        }
+        Canvas(bitmap).drawPath(chevron, paint)
+        return bitmap
     }
 
     fun clearTrackBands(style: Style) {

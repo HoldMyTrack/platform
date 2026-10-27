@@ -316,7 +316,7 @@ On the wire the version is prefixed with the start of the account id, so two acc
 
 #### 4.3.1 Pace-colored segments
 
-A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/{id}/track-metrics` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused activity's raw payload, as Edit track does.
+A GeoJSON layer over the tracks for the focused activity, since a vector tile can't carry per-vertex colour; `GET /v1/activities/{id}/track-metrics` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Each client adds the whole line in recording order, marked `route`, for the direction chevrons; on the runs they would bunch wherever the pace changes. The chevron is an SDF image each client draws as `track-arrow`, which the layers document names and colours. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused activity's raw payload, as Edit track does.
 
 #### 4.3.3 Map image export
 

@@ -1,5 +1,5 @@
 {
-  "styleBuild": "d6d756175ce5",
+  "styleBuild": "6ead97023bbe",
   "flavor": "light",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -58,6 +58,9 @@
             "visibility": "visible"
           },
           "track-bands-line": {
+            "visibility": "visible"
+          },
+          "track-bands-arrows": {
             "visibility": "visible"
           }
         },
@@ -177,6 +180,9 @@
           },
           "track-bands-line": {
             "visibility": "none"
+          },
+          "track-bands-arrows": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -294,6 +300,9 @@
             "visibility": "none"
           },
           "track-bands-line": {
+            "visibility": "none"
+          },
+          "track-bands-arrows": {
             "visibility": "none"
           }
         },
@@ -415,6 +424,9 @@
           },
           "track-bands-line": {
             "visibility": "visible"
+          },
+          "track-bands-arrows": {
+            "visibility": "visible"
           }
         },
         "paint": {
@@ -533,6 +545,9 @@
           },
           "track-bands-line": {
             "visibility": "none"
+          },
+          "track-bands-arrows": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -650,6 +665,9 @@
             "visibility": "none"
           },
           "track-bands-line": {
+            "visibility": "none"
+          },
+          "track-bands-arrows": {
             "visibility": "none"
           }
         },
@@ -1401,6 +1419,10 @@
           "id": "track-bands-line",
           "type": "line",
           "source": "track-bands",
+          "filter": [
+            "has",
+            "band"
+          ],
           "metadata": {
             "holdmytrack:role": "pace-bands"
           },
@@ -1429,6 +1451,27 @@
             ],
             "line-width": 6,
             "line-opacity": 0.95
+          }
+        },
+        {
+          "id": "track-bands-arrows",
+          "type": "symbol",
+          "source": "track-bands",
+          "filter": [
+            "has",
+            "route"
+          ],
+          "layout": {
+            "symbol-placement": "line",
+            "symbol-spacing": 50,
+            "icon-image": "track-arrow",
+            "icon-rotation-alignment": "map",
+            "icon-pitch-alignment": "map",
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true
+          },
+          "paint": {
+            "icon-color": "#202b25"
           }
         }
       ],
