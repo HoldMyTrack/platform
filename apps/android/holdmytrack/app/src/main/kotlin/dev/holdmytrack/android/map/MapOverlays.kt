@@ -157,8 +157,8 @@ object MapOverlays {
     /** The chevron the document's `track-bands-arrows` layer names (the web's bandsGroup.ts). */
     private const val ARROW_IMAGE = "track-arrow"
 
-    /** The chevron's box in dp, a little wider than the band it rides. */
-    private const val ARROW_DP = 14
+    /** The chevron's box in dp. The chevron itself stays inside the 6 dp band it rides. */
+    private const val ARROW_DP = 8
 
     /** A white chevron pointing along +x, for the layer to colour: the web's `arrowImage`. Drawn
      *  thicker than it shows, since an SDF image's edge sits at three quarters of its alpha. */
@@ -169,14 +169,14 @@ object MapOverlays {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             color = Color.WHITE
             style = Paint.Style.STROKE
-            strokeWidth = px * 0.3f
+            strokeWidth = px * 0.25f
             strokeCap = Paint.Cap.ROUND
             strokeJoin = Paint.Join.ROUND
         }
         val chevron = Path().apply {
-            moveTo(px * 0.3f, px * 0.18f)
-            lineTo(px * 0.7f, px * 0.5f)
-            lineTo(px * 0.3f, px * 0.82f)
+            moveTo(px * 0.35f, px * 0.25f)
+            lineTo(px * 0.65f, px * 0.5f)
+            lineTo(px * 0.35f, px * 0.75f)
         }
         Canvas(bitmap).drawPath(chevron, paint)
         return bitmap

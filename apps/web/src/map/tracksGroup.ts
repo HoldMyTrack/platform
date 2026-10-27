@@ -21,9 +21,7 @@ const HOVER_COLOR = '#93691f'; // --fm-accent-strong
 // into; a muted grey over a dark map or imagery, where ink does and cream glares.
 const LIGHT_CASING = '#202b25';
 const DARK_CASING = '#a39e93';
-/** The focused track's halo color over a basemap drawn `dark`; its direction arrows take it too
- *  (bandsGroup.ts). */
-export const casingColor = (dark: boolean) => (dark ? DARK_CASING : LIGHT_CASING);
+const casingColor = (dark: boolean) => (dark ? DARK_CASING : LIGHT_CASING);
 const NORMAL_WIDTH = 2.5;
 const FOCUSED_WIDTH = 4.5;
 const HOVER_WIDTH = 5;

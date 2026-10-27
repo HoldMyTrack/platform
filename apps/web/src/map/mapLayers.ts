@@ -142,7 +142,7 @@ export interface BuildLayersOptions {
 /** The layers document for `flavor` at `tileVersion`. Satellite imagery reads dark under any
  *  flavor, so its views take the dark ones. */
 export function buildLayers({ flavor, dark, labelIds, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
-  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(dark), spotsGroup(tileVersion)];
+  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(), spotsGroup(tileVersion)];
   const views = (base: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,

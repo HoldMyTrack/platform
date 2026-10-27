@@ -1,5 +1,5 @@
 {
-  "styleBuild": "85ff8de1a5f5",
+  "styleBuild": "6ead97023bbe",
   "flavor": "grayscale",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -139,9 +139,6 @@
           },
           "tracks-casing": {
             "line-color": "#202b25"
-          },
-          "track-bands-arrows": {
-            "icon-color": "#202b25"
           }
         }
       },
@@ -259,9 +256,6 @@
           },
           "tracks-casing": {
             "line-color": "#202b25"
-          },
-          "track-bands-arrows": {
-            "icon-color": "#202b25"
           }
         }
       },
@@ -379,9 +373,6 @@
           },
           "tracks-casing": {
             "line-color": "#202b25"
-          },
-          "track-bands-arrows": {
-            "icon-color": "#202b25"
           }
         }
       }
@@ -501,9 +492,6 @@
           },
           "tracks-casing": {
             "line-color": "#a39e93"
-          },
-          "track-bands-arrows": {
-            "icon-color": "#a39e93"
           }
         }
       },
@@ -621,9 +609,6 @@
           },
           "tracks-casing": {
             "line-color": "#a39e93"
-          },
-          "track-bands-arrows": {
-            "icon-color": "#a39e93"
           }
         }
       },
@@ -741,9 +726,6 @@
           },
           "tracks-casing": {
             "line-color": "#a39e93"
-          },
-          "track-bands-arrows": {
-            "icon-color": "#a39e93"
           }
         }
       }
@@ -1479,7 +1461,7 @@
           ],
           "layout": {
             "symbol-placement": "line",
-            "symbol-spacing": 70,
+            "symbol-spacing": 50,
             "icon-image": "track-arrow",
             "icon-rotation-alignment": "map",
             "icon-pitch-alignment": "map",

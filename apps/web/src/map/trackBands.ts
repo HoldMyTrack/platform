@@ -32,8 +32,8 @@ export function setTrackBands(map: MapLibreMap, metrics: ActivityTrackMetrics): 
 }
 
 const ARROW_PIXEL_RATIO = 2;
-/** The chevron's box in CSS px, a little wider than the band it rides. */
-const ARROW_SIZE = 14;
+/** The chevron's box in CSS px. The chevron itself stays inside the band it rides, BAND_WIDTH (6). */
+const ARROW_SIZE = 8;
 
 /** A white chevron pointing along +x, for the layer to color (bandsGroup.ts). Drawn thicker than it
  *  shows: an SDF image's edge sits at three quarters of its alpha. */
@@ -43,13 +43,13 @@ function arrowImage(): ImageData {
   canvas.width = canvas.height = px;
   const ctx = canvas.getContext('2d')!;
   ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = px * 0.3;
+  ctx.lineWidth = px * 0.25;
   ctx.lineCap = 'round';
   ctx.lineJoin = 'round';
   ctx.beginPath();
-  ctx.moveTo(px * 0.3, px * 0.18);
-  ctx.lineTo(px * 0.7, px * 0.5);
-  ctx.lineTo(px * 0.3, px * 0.82);
+  ctx.moveTo(px * 0.35, px * 0.25);
+  ctx.lineTo(px * 0.65, px * 0.5);
+  ctx.lineTo(px * 0.35, px * 0.75);
   ctx.stroke();
   return ctx.getImageData(0, 0, px, px);
 }

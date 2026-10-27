@@ -167,16 +167,15 @@ test('the focused halo is the opposite of the map under it', () => {
   assert.equal(groupOf(dark, 'tracks').layers.find((l) => l.id === 'tracks-casing').paint['line-color'], '#a39e93');
 });
 
-test('arrows ride the route line over the bands, never a band run, in the halo color', () => {
+test('arrows ride the route line over the bands, never a band run, in ink on every flavor', () => {
   const bands = groupOf(doc, 'track-bands');
   assert.deepEqual(bands.layers.map((l) => l.id), ['track-bands-line', 'track-bands-arrows']);
   const [line, arrows] = bands.layers;
   assert.deepEqual([line.filter, arrows.filter], [['has', 'band'], ['has', 'route']]);
   assert.equal(arrows.layout['symbol-placement'], 'line');
   assert.equal(arrows.layout['icon-image'], 'track-arrow');
-  const dark = buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' });
-  const color = (d, satellite) => viewFor(d, 'normal', satellite).paint['track-bands-arrows']['icon-color'];
-  assert.deepEqual([color(doc, false), color(doc, true), color(dark, false)], ['#202b25', '#a39e93', '#a39e93']);
+  const dark = groupOf(buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' }), 'track-bands');
+  assert.deepEqual([arrows.paint['icon-color'], dark.layers[1].paint['icon-color']], ['#202b25', '#202b25']);
   assert.equal(viewFor(doc, 'fog', false).layout['track-bands-arrows'].visibility, 'none');
 });
 
