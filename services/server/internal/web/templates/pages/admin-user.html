@@ -8,7 +8,7 @@
     {{if .IsAdmin}}<span class="admin__badge">{{t "admin.badge_admin"}}</span>{{end}}
     {{if .IsDemo}}<span class="admin__badge">{{t "admin.badge_demo"}}</span>{{else if not .Verified}}<span class="admin__badge admin__badge--warn">{{t "admin.badge_unverified"}}</span>{{end}}
   </p>
-  <p class="profile__subtext">{{tn "admin.live_activities" .ActivityCount}} · {{.Distance}}{{if .First}} · {{.First}} – {{.Last}}{{end}}. {{t "admin.times_note"}}</p>
+  <p class="profile__subtext">{{tn "admin.live_activities" .ActivityCount}} · {{.Distance}}. {{t "admin.times_note"}}</p>
   {{end}}
 
   {{if .Range}}

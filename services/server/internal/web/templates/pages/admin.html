@@ -7,7 +7,7 @@
   <div class="admin__scroll">
     <table class="admin__table">
       <thead>
-        <tr><th>{{t "admin.col_account"}}</th><th>{{t "admin.col_signed_up"}}</th><th>{{t "settings.country"}}</th><th>{{t "settings.timezone"}}</th><th class="admin__num">{{t "admin.col_activities"}}</th><th>{{t "admin.col_first_last"}}</th><th class="admin__num">{{t "admin.col_distance"}}</th></tr>
+        <tr><th>{{t "admin.col_account"}}</th><th>{{t "admin.col_signed_up"}}</th><th>{{t "settings.country"}}</th><th>{{t "settings.timezone"}}</th><th class="admin__num">{{t "admin.col_activities"}}</th><th class="admin__num">{{t "admin.col_distance"}}</th><th>{{t "admin.col_last_seen"}}</th></tr>
       </thead>
       <tbody>
         {{range .Users}}
@@ -22,8 +22,8 @@
           <td>{{.Country}}</td>
           <td>{{.Timezone}}</td>
           <td class="admin__num">{{.Activities}}</td>
-          <td>{{if .First}}{{.First}} – {{.Last}}{{end}}</td>
           <td class="admin__num">{{.Distance}}</td>
+          <td>{{or .LastSeen "—"}}</td>
         </tr>
         {{end}}
       </tbody>
