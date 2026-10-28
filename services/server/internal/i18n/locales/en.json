@@ -178,7 +178,7 @@
   "admin.col_account": "Account",
   "admin.col_signed_up": "Signed up",
   "admin.col_activities": "Activities",
-  "admin.col_first_last": "First – last",
+  "admin.col_last_seen": "Last seen",
   "admin.col_distance": "Distance",
   "admin.col_activity_id": "Activity ID",
   "admin.col_started": "Started",

@@ -181,7 +181,7 @@
   "admin.col_account": "Аккаунт",
   "admin.col_signed_up": "Регистрация",
   "admin.col_activities": "Занятия",
-  "admin.col_first_last": "Первое – последнее",
+  "admin.col_last_seen": "Последний визит",
   "admin.col_distance": "Расстояние",
   "admin.col_activity_id": "ID занятия",
   "admin.col_started": "Начало",

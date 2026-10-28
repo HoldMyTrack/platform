@@ -542,7 +542,7 @@ A read-only view of every account and its activities for the operators, at `/adm
 
 ### FR-12.2 Accounts
 
-`/admin` lists every account, demo included, newest first: email, name, admin, demo and unverified badges, signup date, country, timezone, activity count, first and last activity dates and total distance.
+`/admin` lists every account, demo included, newest first: email, name, admin, demo and unverified badges, signup date, country, timezone, activity count, total distance and the last day the account was seen.
 
 ### FR-12.3 An account's activities
 

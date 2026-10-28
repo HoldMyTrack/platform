@@ -40,8 +40,9 @@ type adminUserRow struct {
 	Activities  string
 	// ActivityCount is Activities as a number, for its plural form.
 	ActivityCount int64
-	First, Last   string // "" when the account has no activities
-	Distance      string
+	// LastSeen is the last UTC day the account made a signed-in request; "" when never recorded.
+	LastSeen string
+	Distance string
 }
 
 // adminUserView is what templates/pages/admin-user.html reads from PageData.Page.
@@ -143,7 +144,7 @@ func (s *Server) adminUsers(ctx context.Context, l *i18n.Localizer, userID strin
 	rows, err := s.pool.Query(ctx, `
 		SELECT u.id, u.email, COALESCE(u.display_name, ''), u.created_at, COALESCE(u.country, ''),
 		       u.timezone, u.is_admin, u.email_verified,
-		       count(a.id), min((a.started_at AT TIME ZONE a.timezone)::date), max((a.started_at AT TIME ZONE a.timezone)::date),
+		       u.last_seen_at, count(a.id),
 		       COALESCE(sum(a.distance_meters), 0)::float8
 		FROM users u
 		LEFT JOIN activities a ON a.user_id = u.id
@@ -159,12 +160,12 @@ func (s *Server) adminUsers(ctx context.Context, l *i18n.Localizer, userID strin
 	for rows.Next() {
 		var u adminUserRow
 		var created time.Time
-		var first, last *time.Time
+		var lastSeen *time.Time
 		var count int64
 		var meters float64
 		if err := rows.Scan(&u.ID, &u.Email, &u.DisplayName, &created, &u.Country,
 			&u.Timezone, &u.IsAdmin, &u.Verified,
-			&count, &first, &last, &meters); err != nil {
+			&lastSeen, &count, &meters); err != nil {
 			return nil, fmt.Errorf("admin: scan user: %w", err)
 		}
 		u.IsDemo = u.ID == DemoCustomerUserID
@@ -173,8 +174,8 @@ func (s *Server) adminUsers(ctx context.Context, l *i18n.Localizer, userID strin
 		u.ActivityCount = count
 		u.Activities = l.Int(count)
 		u.Distance = web.FormatTotalDistance(l, meters, imperial)
-		if first != nil && last != nil {
-			u.First, u.Last = first.Format("2006-01-02"), last.Format("2006-01-02")
+		if lastSeen != nil {
+			u.LastSeen = lastSeen.In(loc).Format("2006-01-02")
 		}
 		users = append(users, u)
 	}
