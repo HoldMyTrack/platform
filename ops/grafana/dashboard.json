@@ -777,7 +777,7 @@
             "type": "loki",
             "uid": "${LOKI}"
           },
-          "expr": "{deployment=\"${DEPLOYMENT}\", service=\"db\"} |~ \"ERROR|FATAL|PANIC\""
+          "expr": "{deployment=\"${DEPLOYMENT}\", service=\"db\"} |~ \"ERROR|FATAL|PANIC\" !~ \"canceling statement due to user request\""
         }
       ],
       "options": {
