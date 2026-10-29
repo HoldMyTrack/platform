@@ -52,7 +52,7 @@ On the web, sign-in, sign-up, password reset and verification are server-rendere
 - The email must be a bare address: a display name or comment (`Name <a@b.c>`) is refused. An email another real account has is refused.
 - The password is 8 characters to 72 bytes (bcrypt's limit), stored as a bcrypt hash, never stored or logged in plain text.
 - The browser's IANA timezone comes with the form; a missing or invalid one starts the account on UTC and never refuses the signup.
-- At most 5 accounts from one address in an hour. Failed signups and Google or Facebook sign-ins don't count; the count restarts with the server.
+- At most 5 accounts from one address in an hour. Failed signups and Google or Facebook sign-ins don't count.
 - Signing up always makes a new account, also from a demo session (FR-2.3), starts a 30-day session and sends a verification email (FR-1.8).
 
 ### FR-1.2 Sign in
@@ -183,7 +183,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 - `.gpx`, `.fit` or `.tcx`, at most 16 MiB. A `.zip` isn't imported: the clients refuse it by name and the server with its own message.
 - The clients send at most 20 files at a time and refuse a larger selection whole.
 - Each file is processed on its own; one failing doesn't affect the others.
-- At most 100 files an hour per account, refused and duplicate ones included, checked before the file is read; the count restarts with the server.
+- At most 100 files an hour per account, refused and duplicate ones included, checked before the file is read.
 - An empty file, another type, a file too large or one past the account's limits (FR-1.13) is refused at once.
 - A file that can't be read, has no timestamps (a planned route), has no positioned point or has fewer than 2 points fails in processing, with the reason on the Sync page. Untimed points inside a timed track are dropped.
 - The activity reaches the list, map and totals without a reload; Fog and Heatmap follow once redrawn (FR-4.2).
@@ -206,7 +206,7 @@ The Android app sends the Health Connect sessions and recordings (FR-3.8) the us
 - Only a session with a route is offered (not an indoor workout, nor any Samsung Galaxy Watch session). Routes can only be read in the foreground, a Health Connect constraint. Only the session and its positions, times and altitudes are read; no other health permission is requested.
 - The server says which Health Connect records the account already has (in any state, or queued) and which are still processing. The phone keeps no record of what it sent, so a reinstall or second phone agrees, and a record whose activity was deleted is offered again.
 - Each activity is idempotent on its source and id. Types map onto HoldMyTrack's names (`biking` becomes `cycling`).
-- Per account: at most 60 sync requests and 1,000 activities sent an hour (every activity sent counts, taken or not; a refused request counts none). The counts restart with the server.
+- Per account: at most 60 sync requests and 1,000 activities sent an hour (every activity sent counts, taken or not; a refused request counts none).
 - Activities past the account's limits are refused one by one in the order sent; what fits is taken.
 
 ### FR-3.7 Overlap hint
@@ -272,6 +272,7 @@ Exactly one of Normal, Fog of War and Heatmap shows at a time.
 - The camera is kept in the URL (`#map=<zoom>/<lat>/<lon>`); an incomplete or out-of-range one is ignored.
 - The opening view: the URL's camera; else the most recent activity; else the account's Country; else a world view. It never asks for the browser's location, and a new session doesn't inherit an earlier one's camera.
 - The web map is a globe out to zoom 3 and flat from 4; Android's is flat. Zoomed all the way out, the globe fills 80% of the map's shorter side.
+- If no base map tile arrives within 15 seconds on screen, or one fails first, the map says its tile server is unreachable until one arrives.
 
 ### FR-4.7 Find my location
 
@@ -309,7 +310,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - Only where the deployment configures imagery (`IMPLEMENTATION.md` §4.26); otherwise no option, and a saved choice shows the map. The choice is kept by the browser or phone.
 - Roads stay over the imagery at 40% opacity. Over imagery Fog uses the light veil.
 - The provider's credit shows while it's on and is drawn into exports.
-- On a quota-capped plan such as MapTiler's Free plan, imagery stops for the rest of the month once the quota is used; roads and labels still draw.
+- On a quota-capped plan, imagery stops for the rest of the month once the quota is used; roads and labels still draw.
 
 ### FR-4.15 What the map draws
 
@@ -327,7 +328,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - Each band runs up to the next band's first zoom. The Android app follows the same bands.
 - Bottom to top: base map or imagery, Fog or Heatmap, paths, tracks and pace bands, labels, Spots, photos.
 - Past the deepest stored level the map enlarges it: tracks, Fog, bike kinds and Spots past zoom 14, Heatmap and the base map past 15, imagery past the deployment's deepest level (18 on holdmytrack.com).
-- At most 1,200 tile requests a minute per account across every layer (per address for the demo account); past that a tile is refused for the minute and an export that meets one fails. The count restarts with the server. Caching is `IMPLEMENTATION.md` §4.2.6.
+- At most 1,200 tile requests a minute per account across every layer (per address for the demo account); past that a tile is refused for the minute and an export that meets one fails. Caching is `IMPLEMENTATION.md` §4.2.6.
 
 ### FR-4.16 Bike-path tiles
 
@@ -396,7 +397,7 @@ Chop (keep the part between two points), Cut (remove it and join the ends), Dele
 - The result is clipped against Private locations again, so an edit can't uncover an end inside one; the editor's preview doesn't show that clip.
 - Pending until reprocessed; on failure it keeps its previous track and numbers.
 - An edit is stored by recording time, so it keeps meaning the same points when a Private location changes.
-- At most 120 editor openings an hour per account; the count restarts with the server.
+- At most 120 editor openings an hour per account.
 
 ### FR-5.15 Activity states
 

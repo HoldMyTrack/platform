@@ -2060,7 +2060,8 @@ button.activities-panel__story-badge:hover {
 }
 
 /* MapView.tsx's "still being updated" notice (FR-4.2) — the same pill as ZoomLevelNotice's, on a
-   line of its own above it, shown for as long as the account's coverage is still being worked on. */
+   line of its own above it, shown for as long as the account's coverage is still being worked on.
+   The basemap-unreachable notice (FR-4.5) takes the same pill in the failure color. */
 .coverage-notice {
   flex-basis: 100%;
   display: flex;
@@ -2075,6 +2076,10 @@ button.activities-panel__story-badge:hover {
   font-size: var(--fm-text-sm);
   line-height: 1.35;
   color: var(--fm-ink);
+}
+
+.coverage-notice__pill--failed {
+  color: var(--fm-danger);
 }
 
 /* A spot's popup (SpotPopup.tsx, FR-15.3) — MapLibre's own popup, restyled as the app's cards. */

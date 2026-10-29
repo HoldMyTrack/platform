@@ -8,7 +8,8 @@ import {
 } from 'maplibre-gl';
 import { registerPmtilesProtocol } from './protocol';
 import { configureMapLibreWorker } from './worker';
-import { buildStyle, type Flavor } from './style';
+import { BASEMAP_SOURCE, buildStyle, type Flavor } from './style';
+import { basemapStatus, type BasemapStatus } from './basemapStatus';
 import { globeMinZoom } from './globe';
 import { basemapOrigin, satelliteSource } from './config';
 import { withApiCredentials } from './requestCredentials';
@@ -43,14 +44,21 @@ export interface UseMapInstanceOptions {
   scaleUnit: 'metric' | 'imperial';
 }
 
+export interface MapInstance {
+  /** Set once MapLibre's `load` fires, which a basemap request that never answers holds back. */
+  map: MapLibreMap | null;
+  basemap: BasemapStatus;
+}
+
 export function useMapInstance({
   container,
   initialView,
   initialFlavor,
   initialSatellite,
   scaleUnit,
-}: UseMapInstanceOptions): MapLibreMap | null {
+}: UseMapInstanceOptions): MapInstance {
   const [map, setMap] = useState<MapLibreMap | null>(null);
+  const [basemap, setBasemap] = useState<BasemapStatus>('loading');
   const scaleControlRef = useRef<ScaleControl | null>(null);
 
   // Captured once so the effect below can keep an empty dependency list without
@@ -130,6 +138,39 @@ export function useMapInstance({
     holdGlobeFloor();
     instance.on('resize', holdGlobeFloor);
 
+    // Watched on the instance, not `map`: a stalled basemap keeps `load` from firing. Only time
+    // with the page shown counts, since a hidden tab requests no tiles.
+    let loaded = false;
+    let failed = false;
+    let waitedMs = 0;
+    let shownSince = document.hidden ? null : performance.now();
+    const reportBasemap = () => {
+      const shown = shownSince === null ? 0 : performance.now() - shownSince;
+      setBasemap(basemapStatus(loaded, failed, waitedMs + shown));
+      if (loaded) clearInterval(basemapTimer);
+    };
+    const basemapTimer = setInterval(reportBasemap, 1000);
+    const onVisibility = () => {
+      if (document.hidden && shownSince !== null) {
+        waitedMs += performance.now() - shownSince;
+        shownSince = null;
+      } else if (!document.hidden && shownSince === null) {
+        shownSince = performance.now();
+      }
+    };
+    document.addEventListener('visibilitychange', onVisibility);
+    instance.on('sourcedata', (e) => {
+      if (loaded || e.sourceId !== BASEMAP_SOURCE || !e.tile) return;
+      loaded = true;
+      reportBasemap();
+    });
+    instance.on('error', (e) => {
+      // The style tags a source's errors with its id; MapLibre's types leave it out.
+      if (loaded || (e as { sourceId?: string }).sourceId !== BASEMAP_SOURCE) return;
+      failed = true;
+      reportBasemap();
+    });
+
     instance.once('load', () => {
       if (cancelled) return;
       setMap(instance);
@@ -142,7 +183,10 @@ export function useMapInstance({
 
     return () => {
       cancelled = true;
+      clearInterval(basemapTimer);
+      document.removeEventListener('visibilitychange', onVisibility);
       setMap(null);
+      setBasemap('loading');
       instance.remove();
     };
   }, [container]);
@@ -155,5 +199,5 @@ export function useMapInstance({
     scaleControlRef.current?.setUnit(scaleUnit);
   }, [scaleUnit]);
 
-  return map;
+  return { map, basemap };
 }

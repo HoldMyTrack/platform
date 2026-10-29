@@ -153,7 +153,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const { pendingIds, distanceBounds: activityDistanceBounds, facets, listed: filteredActivities, mapHiddenIds } = useListView(activities, session.selection, dispatch);
 
   const unitSystem = useUnitSystem();
-  const map = useMapInstance({
+  const { map, basemap } = useMapInstance({
     container,
     initialView: initial.view,
     initialFlavor: initial.flavor,
@@ -441,6 +441,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               flavor={flavor}
               satelliteAvailable={satelliteAvailable}
               coverageRendering={coverageRendering}
+              basemapUnreachable={basemap === 'unreachable'}
               spotsShown={spotsShown}
               layersOpen={tour.open.layers === true}
             />
