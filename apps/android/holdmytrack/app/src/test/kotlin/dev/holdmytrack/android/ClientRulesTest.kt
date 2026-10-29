@@ -1,5 +1,6 @@
 package dev.holdmytrack.android
 
+import dev.holdmytrack.android.map.BasemapStatus
 import dev.holdmytrack.android.map.DateRange
 import dev.holdmytrack.android.map.DefaultRange
 import dev.holdmytrack.android.map.MapLayersDoc
@@ -222,6 +223,7 @@ class ClientRulesTest {
                 }
             }
         },
+        "basemapStatus" to { input -> JsonPrimitive(BasemapStatus.of(input.bool("loaded"), input.bool("failed"), input.number("waitedMs").toLong()).name.lowercase()) },
         "photoMarkerSize" to { input -> JsonPrimitive(PhotoClusters.markerSize(input.number("zoom")).name.lowercase()) },
         "photoMarkerLayout" to { input ->
             val points = input["points"]!!.jsonArray.map { it.jsonObject }.map { ScreenPoint(it.string("id")!!, it.number("x").toFloat(), it.number("y").toFloat()) }

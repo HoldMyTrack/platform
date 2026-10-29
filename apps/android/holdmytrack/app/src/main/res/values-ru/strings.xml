@@ -6,6 +6,7 @@
 <resources>
     <string name="map_load_failed">Не удалось загрузить карту.</string>
     <string name="map_unreachable">Не удалось связаться с HoldMyTrack, поэтому ваших треков пока нет на карте.</string>
+    <string name="map_basemap_unreachable">Карта не может связаться со своим сервером. Возможно, его блокирует ваша сеть.</string>
     <string name="map_empty">На карте пока ничего нет. Синхронизируйте занятия из Health Connect или запишите прогулку кнопкой внизу.</string>
     <string name="retry">Повторить</string>
     <string name="web_page_failed">Не удалось загрузить страницу. Проверьте подключение и попробуйте снова.</string>

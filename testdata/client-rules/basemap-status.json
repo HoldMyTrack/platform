@@ -1,6 +1,6 @@
 {
   "rule": "basemapStatus",
-  "clients": ["web"],
+  "clients": ["web", "android"],
   "description": "Whether the map says its basemap can't be reached (docs/SPEC.md FR-4.5): \"loaded\" once any basemap tile has arrived, \"unreachable\" when a basemap request failed before that or 15 seconds of the map on screen passed without one, \"loading\" otherwise. A tile arriving later takes the notice down.",
   "cases": [
     { "name": "loading at first", "input": { "loaded": false, "failed": false, "waitedMs": 0 }, "expected": "loading" },
