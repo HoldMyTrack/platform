@@ -61,6 +61,7 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `editTrackDistances` | `points` | meters at each point |
 | `layerInsertion` | `current` (layer ids, bottom to top), `order`, `id`, `own`, `fallback` | the id to insert under, or `null` to append |
 | `layerLift` | `current`, `id`, `own` | boolean |
+| `basemapStatus` (web and Android) | `loaded`, `failed`, `waitedMs` (on screen) | `"loading"`, `"loaded"` or `"unreachable"` |
 | `tourStart` (web and Android) | `requested`, `isDemo`, `hasActivities` (or `null`), `seen` (`tour`, `cards`) | `"start"`, `"offer"`, `"none"` or `"wait"` |
 | `tourCard` (web and Android) | `event` (`{ kind: "mode", mode }` or `{ kind: "tab", tab }`), `seen`, `touring` | `"fog"`, `"heatmap"`, `"stories"` or `null` |
 | `tourNextStep` (web and Android) | `shown` (a flag per step), `from`, `dir` (`-1`, `1`) | an index or `null` |

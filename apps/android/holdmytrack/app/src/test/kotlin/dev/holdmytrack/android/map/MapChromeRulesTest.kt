@@ -59,6 +59,8 @@ class MapChromeRulesTest {
         assertTrue(MapChromeRules.noticeReplaces(MapNotice.EMPTY, MapNotice.MAP_FAILED))
         assertTrue(MapChromeRules.noticeReplaces(MapNotice.CHECKING, MapNotice.CHECKING))
         assertFalse(MapChromeRules.noticeReplaces(MapNotice.UNREACHABLE, MapNotice.EMPTY))
+        assertTrue(MapChromeRules.noticeReplaces(MapNotice.EMPTY, MapNotice.BASEMAP_UNREACHABLE))
+        assertFalse(MapChromeRules.noticeReplaces(MapNotice.MAP_FAILED, MapNotice.BASEMAP_UNREACHABLE))
     }
 
     @Test

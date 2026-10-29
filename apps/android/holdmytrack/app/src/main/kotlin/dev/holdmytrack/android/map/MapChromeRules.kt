@@ -3,7 +3,7 @@ package dev.holdmytrack.android.map
 import dev.holdmytrack.android.panel.PanelTab
 
 /** The map's notices, most important first: when two apply, the earlier stays up. */
-enum class MapNotice { MAP_FAILED, UNREACHABLE, CHECKING, EMPTY }
+enum class MapNotice { MAP_FAILED, UNREACHABLE, BASEMAP_UNREACHABLE, CHECKING, EMPTY }
 
 /**
  * Which of the map's controls and notices show, as plain values `MapFragment` renders.

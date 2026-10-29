@@ -3,6 +3,7 @@
     <string name="app_name" translatable="false">HoldMyTrack</string>
     <string name="map_load_failed">The map couldn\'t load.</string>
     <string name="map_unreachable">Couldn\'t reach HoldMyTrack, so your tracks aren\'t on the map yet.</string>
+    <string name="map_basemap_unreachable">The map can\'t reach its tile server. Your network may be blocking it.</string>
     <string name="map_empty">Nothing on your map yet. Sync from Health Connect, or record a walk with the button below.</string>
     <string name="retry">Try again</string>
     <string name="web_page_failed">Couldn\'t load this page. Check your connection and try again.</string>

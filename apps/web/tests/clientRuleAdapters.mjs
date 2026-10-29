@@ -1,6 +1,7 @@
 // Each shared rule (testdata/client-rules/README.md) as a function of a case's input, for the
 // suite and for scripts/generate-rule-cases.mjs. Plain .mjs so tsc leaves it alone; Node strips
 // the types from the imported .ts modules itself.
+import { basemapStatus } from '../src/map/basemapStatus.ts';
 import { defaultRange } from '../src/map/defaultRange.ts';
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
@@ -59,6 +60,7 @@ export const rules = {
   activityZone: ({ own, account }) => activityTimeZone(own ?? undefined, account ?? undefined) ?? null,
   photoClusters: ({ points, radius }) => clusterPoints(points, radius),
   photoMarkerSize: ({ zoom }) => photoMarkerSize(zoom),
+  basemapStatus: ({ loaded, failed, waitedMs }) => basemapStatus(loaded, failed, waitedMs),
   photoMarkerLayout: ({ points, zoom, activeId, loneId, width, height, scale }) =>
     photoMarkerLayout(points, zoom, activeId ?? null, loneId ?? null, { width, height }, scale),
   photoTrackPoint: ({ points, fraction }) => pointAt(photoTrack(points), fraction),

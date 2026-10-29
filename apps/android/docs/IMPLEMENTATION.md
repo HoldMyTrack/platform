@@ -105,6 +105,7 @@ The style is `GET /v1/map/style/{flavor}?lang=`, unmodified, fetched beside `GET
 - **`setMode` applies the document's view**, properties only, so a switch is instant and a reload re-applies it.
 - **Only the tracks URL carries a filter**: the date range or the open Story, appended to the document's path. `VectorSource` can't change its URL, so a range change replaces the source and its layers.
 - **The hidden, selected and checked ids are vars** the document's filters bind. The live recording and the Sync candidates draw like the layers whose role they share.
+- **An unreachable basemap is caught by the clock** (`BasemapWatch`, root `docs/IMPLEMENTATION.md` §5.4): a failed PMTiles header fails the source, not a tile, so no tile `Error` arrives.
 
 ### 3.2 Tile versions
 

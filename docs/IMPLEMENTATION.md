@@ -597,6 +597,8 @@ Fog's pyramid makes a z3 tile the size of a z14 one, and `ST_AsMVTGeom`'s 4096-u
 
 Self-hosted Protomaps, the planet build unmodified (~138 GB, a couple of dollars a month on R2, no egress), because metered tiles charge per pan and a regional extract blanks the map everywhere else. Pin a dated build, since Protomaps keeps about a week of them; each has its own prefix with its fonts and sprites, so a client never sees a half-swap. Serving needs range requests and CORS; behind Cloudflare a response rule sets `Access-Control-Allow-Origin: *`, since one cached copy serves every origin. **Every range read is a billed R2 GET**, as the free plan doesn't edge-cache the archive, so Cloudflare refuses any `Origin` but the site's and local dev's and rate-limits per IP (`DEPLOY.md` §5). That stops other sites; a determined script is what the rate rule and a budget alert are for. The Playwright suites use a small Ohio extract under the same name.
 
+A network that throttles the tile host stalls range reads instead of failing them, so each client times its first basemap tile (`SPEC.md` FR-4.5, the `basemapStatus` rule). On the web a stalled basemap also holds back MapLibre's `load`, which every overlay waits on: `useMapInstance.ts` watches the raw instance, and no track draws until a tile arrives.
+
 ### 5.5 Export rendering
 
 The export renders in the browser (§4.3.3): the map is already drawn there, and a server renderer would be new infrastructure and a cost per export. Its ceiling is one tab's canvas and GPU. A print product would need a headless MapLibre render at print DPI in the worker pool, asynchronous, driven by the shared style (`ARCHITECTURE.md` §2.1) and rate-limited per user.

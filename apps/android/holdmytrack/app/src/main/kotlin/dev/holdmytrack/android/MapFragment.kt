@@ -10,6 +10,8 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import dev.holdmytrack.android.export.ExportController
+import dev.holdmytrack.android.map.BasemapStatus
+import dev.holdmytrack.android.map.BasemapWatch
 import dev.holdmytrack.android.map.BoxUnion
 import dev.holdmytrack.android.map.CameraFramer
 import dev.holdmytrack.android.map.ChromeInsets
@@ -132,6 +134,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private lateinit var refresh: DataRefresh
     private lateinit var camera: CameraFramer
     private val selectedRange: DateRange? get() = session.range
+    private lateinit var basemap: BasemapWatch
     private val storyId: String? get() = session.storyId
 
     /** Set on every resume, since Sync or a recording may have added days; `syncSession`
@@ -445,6 +448,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         // Failures are reported here rather than only in logcat: a style or tile fetch that
         // 404s leaves a plausible-looking blank map behind, with nothing on screen to say so.
         mapView.addOnDidFailLoadingMapListener { error -> reportFailure(error) }
+        basemap = BasemapWatch(mapView, ::onBasemap)
 
         mapView.getMapAsync { instance ->
             map = instance
@@ -747,6 +751,14 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /** The style or its sources failed: a plain sentence, the origin and MapLibre's error in
      *  small print, and Try again. */
+    private fun onBasemap(status: BasemapStatus) {
+        when (status) {
+            BasemapStatus.UNREACHABLE -> notices.show(MapNotice.BASEMAP_UNREACHABLE, getString(R.string.map_basemap_unreachable), failed = true)
+            BasemapStatus.LOADED -> notices.hide(MapNotice.BASEMAP_UNREACHABLE)
+            BasemapStatus.LOADING -> Unit
+        }
+    }
+
     private fun reportFailure(error: String) {
         Log.e(TAG, "map failed to load: $error")
         notices.show(
@@ -763,6 +775,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     override fun onStart() {
         super.onStart()
         mapView.onStart()
+        basemap.start()
         SyncProgress.addListener(syncProgressListener)
         SyncProgress.resume(requireContext())
         recording.start()
@@ -807,6 +820,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         range.pending.stop()
         SyncProgress.removeListener(syncProgressListener)
         recording.stop()
+        basemap.stop()
         mapView.onStop()
         super.onStop()
     }

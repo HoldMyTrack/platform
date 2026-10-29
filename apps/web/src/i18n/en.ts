@@ -131,6 +131,7 @@ export const en = {
   'slider.shift_later': 'Move the range later',
   'slider.start': 'Start date',
   'map.drop_files': 'Drop to upload: .gpx, .fit or .tcx, up to 20',
+  'map.basemap_unreachable': 'The map can\'t reach its tile server. Your network may be blocking it.',
   'map.coverage_updating': 'Your map is still being updated, so Fog and Heatmap may be incomplete for now. They\'ll refresh on their own.',
   'map.level.fog.city': 'City view — cleared exactly where you\'ve been',
   'map.level.fog.country': 'Country view — a whole country clears once you\'ve been anywhere in it',
