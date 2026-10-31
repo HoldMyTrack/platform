@@ -405,7 +405,7 @@ Chop (keep the part between two points), Cut (remove it and join the ends), Dele
 stateDiagram-v2
     [*] --> Normal: ingested
     Normal --> Pending: track edit, split, merge, privacy change
-    Pending --> Normal: reprocess done or failed
+    Pending --> Normal: reprocess done, or an edit failed
     Normal --> Deleted: delete, or merged away
     Deleted --> [*]
     state "Visibility, this tab only" as Visibility {
@@ -421,7 +421,7 @@ stateDiagram-v2
 | Hidden | Not drawn | Counted | Dimmed, badge | No |
 
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden activity stays hidden after Pending clears.
-- Entering or leaving Pending never moves the camera; leaving it brings the track back at once and Fog and Heatmap once redrawn.
+- Leaving Pending brings the track back at once, and Fog and Heatmap once redrawn.
 - An activity entirely inside Private locations is Normal with no geometry.
 
 ### FR-5.17 Split an activity
@@ -474,7 +474,7 @@ Circles a user marks so tracks don't reveal where they start and end. The part o
 - An end the stretch carries back inside a Private location is cut again where the track next leaves it. The same clip runs on an edited track (FR-5.14).
 - Distance, duration, elevation gain, pace, coverage and country and region matches come from the visible part.
 - An activity left with fewer than two points is kept with no geometry and a Private badge (FR-5.1); moving or deleting the location brings it back.
-- Every change is retroactive: activities whose track comes within twice the radius of the old or new center go Pending and are reprocessed from their originals.
+- Every change is retroactive: activities whose track comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure.
 - Circles are drawn only on the Privacy tab, from zoom 4, and never in an export.
 - Originals stay unclipped and are in the data download (FR-1.12). A Story copy carries the sender's clipped track (FR-14.8).
 - An activity ingested before Private locations existed keeps its fixed 100 m endpoint trim until reprocessed.

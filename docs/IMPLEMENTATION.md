@@ -297,7 +297,7 @@ Below exact coverage, Fog reveals whole countries, then regions (FR-4.2). The ti
 
 An activity is Pending (`edit_pending`) while an Edit track or Private location reprocess is queued or running, its geometry and masks stale or half-rewritten. **Every map read filters `AND NOT edit_pending`**: tracks tiles, Fog and Heatmap composites at every level, the heatmap cap and Country/Region. A new map read needs it too.
 
-**Two renders per reprocess, inside the job**: enqueueing sets the flag and dirties the activities' current tiles in one transaction; the job renders (dropping them), reprocesses, clears the flag (unless a later `reprivacy` still covers the activity) and renders again. A failed edit clears the flag and renders, restoring the old masks. Pending clears before the rasters are current, so clients refetch on `/v1/coverage/status`, not on the badge (§4.2.3). The web hides a Pending track itself as soon as the list shows it, apart from the user's hidden set. Clients then poll `GET /v1/activities/pending` for their ids, rereading the list once one finishes (`pendingCheck`).
+**Two renders per reprocess, inside the job**: enqueueing sets the flag and dirties the activities' current tiles in one transaction; the job renders (dropping them), reprocesses, clears the flag (unless a later `reprivacy` still covers the activity) and renders again. A failed edit clears the flag and renders, restoring the old masks. A failed `reprivacy` activity keeps the flag, since its old masks ignore the new location, and a rerun of it is queued after a growing delay; a waiting rerun doesn't count as rendering. Pending clears before the rasters are current, so clients refetch on `/v1/coverage/status`, not on the badge (§4.2.3). The web hides a Pending track itself as soon as the list shows it, apart from the user's hidden set. Clients then poll `GET /v1/activities/pending` for their ids, rereading the list once one finishes (`pendingCheck`).
 
 #### 4.2.6 Caching: one tile version per account
 
@@ -364,7 +364,8 @@ flowchart TD
     R1 --> RE["reprocess from raw: clip,<br/>narrow to piece, apply edit, clip again"]
     RE --> U["UPDATE row, overwrite masks,<br/>rematch regions, old and new tiles dirty"]
     U --> C[clear edit_pending]
-    RE -.->|failure| C
+    RE -.->|edit failed| C
+    RE -.->|reprivacy failed| Q["stays Pending,<br/>rerun after a delay"]
     C --> R2["render: back with new masks"]
 ```
 
