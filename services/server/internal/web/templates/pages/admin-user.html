@@ -1,6 +1,6 @@
 {{define "content"}}{{with .Page}}
 <main class="page-main admin">
-  <a class="settings__back" href="/admin">{{t "admin.all_accounts"}}</a>
+  <a class="settings__back" href="/admin/users">{{t "admin.all_accounts"}}</a>
   {{with .User}}
   <h1 class="settings__title">{{if .DisplayName}}{{.DisplayName}}{{else}}{{.Email}}{{end}}</h1>
   <p class="profile__subtext">

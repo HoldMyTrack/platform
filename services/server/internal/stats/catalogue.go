@@ -65,6 +65,9 @@ var catalogue = []stat{
 	{key: "active_1d", kind: state, query: `SELECT count(*) FROM acct WHERE ` + activeSince(1)},
 	{key: "active_7d", kind: state, query: `SELECT count(*) FROM acct WHERE ` + activeSince(7)},
 	{key: "active_30d", kind: state, query: `SELECT count(*) FROM acct WHERE ` + activeSince(30)},
+	// Unique web visitors, signed in or not (internal/httpapi's visitors.go); Take deletes the
+	// day's hashes once this is stored.
+	{key: "visitors", kind: flow, query: `SELECT count(*) FROM visitor_days v, p WHERE v.day = (p.d0 AT TIME ZONE 'UTC')::date`},
 
 	// Clients: who used the website, an app or both in the last 30 days — someone on both apps
 	// counts as Android — and which builds of each app, so MIN_ANDROID_BUILD and MIN_IOS_BUILD

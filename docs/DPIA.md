@@ -61,6 +61,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 | The day an account last used the service, the website and the Android app, and the app's version | System | Database | Until the account is deleted |
 | Server logs with account ids, no tracks or emails | System | Server, then Grafana Cloud (US) | Rotated on the server; 14 days at Grafana |
 | Daily service statistics: counts, sums and percentiles across all accounts, never one account's; country groups under 5 accounts folded into one | System | Database; the newest day also at Grafana Cloud (US) | Indefinitely; 14 days at Grafana |
+| A web visitor's hash of address and browser under a random daily salt, for the unique-visitor count | System | Database | Deleted with the salt once that day's statistics are taken, within 2 days |
 | Nightly backups: database dump, originals, photos, avatars | System | Cloudflare R2 | Up to 8 weeks after deletion; newest 3 dumps also on the server |
 | Data download archive | User's request | Cloudflare R2 | 7 days |
 
@@ -79,7 +80,7 @@ Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receiv
 | --- | --- |
 | Account, activities, Private locations, Stories, photos, captures | (1)(b) contract: the service the user signed up for |
 | Reading Health Connect and the phone's location | (1)(a) consent, withdrawable in Android settings or Health Connect |
-| Server logs, backups, sign-in rate limits | (1)(f) legitimate interest in a working, secure service |
+| Server logs, backups, sign-in rate limits, the visitor count | (1)(f) legitimate interest in a working, secure service |
 | Account emails (confirm address, reset password, data download, Story copy) | (1)(b) contract |
 
 No Article 9 special-category data is processed. Heart rate and other body data inside an uploaded file is never read out of it (ADR-0017).

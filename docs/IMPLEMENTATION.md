@@ -158,6 +158,10 @@ One row per UTC day and stat key, written once and never updated. No account id,
 
 Object-store requests per UTC day and billing class, which every process adds to (§5.7).
 
+### 3.30 `visitor_salts` / `visitor_days`
+
+A random salt per UTC day, and the hash of each web visitor seen under it. Both are deleted for a day once its snapshot is stored (§4.32).
+
 ## 4. Core Technical Workflows
 
 ### 4.0 The three ingest paths
@@ -451,7 +455,7 @@ sequenceDiagram
 
 ### 4.20 Admin panel (FR-12)
 
-In the app, reusing sessions, renderer and formatting, and showing the product's view of an account instead of raw tables. `is_admin` is written only by `set-admin`, so the web is never an escalation path; an email allowlist (admin is whoever registers the address first) and a promotion page (a stolen admin session escalates) were rejected. Access is read per page and fails as a 404, so a revoke applies on the next load.
+In the app, reusing sessions, renderer and formatting, and showing the product's view of an account instead of raw tables. `is_admin` is written only by `set-admin`, so the web is never an escalation path; an email allowlist (admin is whoever registers the address first) and a promotion page (a stolen admin session escalates) were rejected. Access is read per page and fails as a 404, so a revoke applies on the next load. `/admin` charts `daily_stats` (§4.32) as server-drawn SVG, since Grafana keeps about 14 days.
 
 ### 4.21 Localization (FR-13)
 
@@ -574,6 +578,8 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 **A daily snapshot, because past state can't be rebuilt**: `last_seen_at` holds only the latest visit, and a deleted account's row is gone. Once per UTC day the worker (`internal/stats`) stores each value in `daily_stats`; Grafana keeps about 14 days, so Postgres is the record. It takes only yesterday, so a missed day stays a gap. **Aggregates only**: the demo account is left out, and a country group standing for fewer than 5 accounts folds into `other`, judged by the accounts behind a value, not the value. Object sizes are recorded as each object is written (`activities.raw_bytes`, `fog_tiles.bytes`), since asking R2 costs a request per object.
 
 **Visits**: an account's first authenticated request each UTC day writes `last_seen_at` (never the demo's), and `web_seen_at`, or an app's `android_seen_at` or `ios_seen_at` with its build, again when the build changes; an app's WebView marks neither. `android_builds_30d` and `ios_builds_30d` show when each app's minimum (§4.33) can rise.
+
+**Web visitors** are counted without an account: a page view from a browser (not an app's WebView, not a crawler) stores `sha256(salt ‖ address ‖ User-Agent)` under the day's salt, once per process a day. The salt lives in `visitor_salts` so every api process and a restarted one hash a visitor alike, and the snapshot deletes it with the day's hashes once `visitors` is stored, after which no hash can be matched to an address or to another day. A missed snapshot leaves its day's rows until the next one deletes them.
 
 ### 4.33 Turning away old app builds
 

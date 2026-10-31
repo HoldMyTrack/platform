@@ -341,7 +341,7 @@ The same paths for every account, behind the session and cached like every map t
 
 ### FR-4.18 Tour
 
-- A tour points at the web map's features in turn: the Activities panel, date range, Stories, Layers, export, Fog of War, Heatmap and adding activities. It puts the map in each step's mode and opens what the step explains; in a demo session it also flies over the demo's history to show Fog at city, state and country level. It can be left at any step, and restores the mode and camera when it ends.
+- A tour points at the web map's features in turn, putting the map in each step's mode; in a demo session it also flies over the demo's history to show Fog at city, state and country level. It can be left at any step and restores the mode and camera.
 - A demo session gets it unasked on its first map in a browser. A real account is offered it once, after it has an activity. Anyone signed in can start it from the header.
 - The first time a user opens Fog of War, Heatmap or the Stories tab outside the tour, a card says what it is for. A tour step on the same feature counts as its card.
 - What has been shown is kept by the browser, not the account.
@@ -533,22 +533,26 @@ Donate opens the configured Open Collective's donation page in a new tab (`VISIO
 
 ## 14. FR-12 — Admin panel
 
-A read-only view of every account and its activities for the operators, at `/admin` and `/admin/users/{id}`, `noindex`.
+A read-only view of every account, its activities and the service's daily statistics for the operators, at `/admin` (the statistics), `/admin/users` and `/admin/users/{id}`, `noindex`.
 
 ### FR-12.1 Access
 
 - Admin is granted or revoked only from the command line: `holdmytrack set-admin <email> true|false`, which fails for an unknown email or the demo account.
-- To anyone else, signed out or in a demo session, both pages answer the ordinary "Page not found".
+- To anyone else, signed out or in a demo session, every admin page answers the ordinary "Page not found".
 - An admin still goes through verification and first-run Settings. Revoking applies on the next page load without ending the session.
 
 ### FR-12.2 Accounts
 
-`/admin` lists every account, demo included, newest first: email, name, admin, demo and unverified badges, signup date, country, timezone, activity count, total distance and the last day the account was seen.
+`/admin/users` lists every account, demo included, newest first, with its signup date, country, timezone, activity count, total distance and last day seen.
 
 ### FR-12.3 An account's activities
 
 - `/admin/users/{id}` lists the account's activities, newest first, 100 per page: id, local start time and zone, type, name, distance, duration, source, countries and regions.
 - Activities entirely inside a Private location are included and badged; edited tracks are badged. Nothing on either page changes anything.
+
+### FR-12.4 Service statistics
+
+`/admin` charts the daily statistics (`IMPLEMENTATION.md` §4.32), unique web visitors among them, per UTC day over 30, 90 or 365 days, leaving a gap for a day without a snapshot. A web visitor is a browser and address that opened a page that day, signed in or not, apps and crawlers aside; nothing that tells visitors apart outlives the day's snapshot.
 
 ## 15. FR-13 — Language
 
@@ -693,7 +697,7 @@ A place is captured by staying inside it for 30 seconds with the Android app's c
 
 ## 19. Mobile Browser Support
 
-The web app works in a phone browser. Below about 768 px the Activities panel is a bottom sheet over the map, collapsed to its tab row, and the date slider sits at the bottom of the screen. Taps stand in for hover on Trends and the activity grid, and a tap within about 14 px of a track focuses it. Hovering a track to underline its row stays mouse-only. Everything else works as on a desktop.
+The web app works in a phone browser as on a desktop. Taps stand in for hover on Trends and the activity grid, a tap within about 14 px of a track focuses it, and hovering a track to underline its row stays mouse-only.
 
 ## 20. Deliberate limits
 
