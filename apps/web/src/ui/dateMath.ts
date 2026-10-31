@@ -1,3 +1,5 @@
+import { knownTimeZone } from './timeZone.ts';
+
 /**
  * Plain YYYY-MM-DD day strings: the date range the Activities tab's slider selects, and "today".
  * The strings sort lexicographically in chronological order, so comparing and clamping dates
@@ -12,12 +14,16 @@ export interface DateRange {
   to: string;
 }
 
-/** "What day is it" for the caller's own browser — the local calendar day, matching what a
- *  person looking at the app understands "today" to mean. Only ever the *fallback* `today` a
- *  zero-activity account's degenerate range collapses to (MapView.tsx) — real activity data,
- *  whose days the server gives in each activity's own zone, always takes precedence once
- *  there is any. */
-export function todayLocal(): string {
-  const now = new Date();
-  return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+/** The calendar day at [now] in [zone], the account's, which decides "today" (docs/SPEC.md
+ *  FR-1.7); the browser's own when the zone is missing or this browser doesn't know it. Asked
+ *  each time it's needed, not once: a tab left open runs past midnight. */
+export function todayIn(zone: string | undefined, now: Date = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: knownTimeZone(zone),
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).formatToParts(now);
+  const part = (type: string) => parts.find((p) => p.type === type)?.value ?? '';
+  return `${part('year')}-${part('month')}-${part('day')}`;
 }

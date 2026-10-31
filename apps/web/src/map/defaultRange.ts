@@ -4,12 +4,14 @@ import type { DateRange } from '../ui/dateMath';
 export const DEFAULT_RANGE_DAYS = 5;
 
 /**
- * The default date range: the most recent activity-days in the slider's window, through today.
- * What opening the map asks about, quick to draw, and both knobs inside the window. With no days
- * in the window it starts at the earliest activity, else today. `visibleDays` is ascending.
- * Android: `map/DefaultRange.kt`.
+ * The default date range: the most recent activity-days in the slider's window, through today,
+ * the account's (`todayIn`). What opening the map asks about, quick to draw, and both knobs inside
+ * the window. With no days in the window it starts at the earliest activity, else today. An
+ * activity-day is in its own zone, so one recorded east of the account's can be later than
+ * today; the range then runs to it. `visibleDays` is ascending. Android: `map/DefaultRange.kt`.
  */
 export function defaultRange(visibleDays: readonly { date: string }[], earliest: string | null, today: string): DateRange {
   const recent = visibleDays.slice(-DEFAULT_RANGE_DAYS);
-  return { from: recent[0]?.date ?? earliest ?? today, to: today };
+  const last = recent[recent.length - 1]?.date;
+  return { from: recent[0]?.date ?? earliest ?? today, to: last && last > today ? last : today };
 }

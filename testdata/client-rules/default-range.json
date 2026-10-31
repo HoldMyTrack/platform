@@ -1,6 +1,6 @@
 {
   "rule": "defaultRange",
-  "description": "The default date range: the five most recent activity-days in the slider's window, through today; with none, from the earliest activity, else today (docs/SPEC.md FR-6.1).",
+  "description": "The default date range: the five most recent activity-days in the slider's window, through today (the account's, FR-1.7), or through the latest of them when it is later, an activity recorded in a zone ahead; with none, from the earliest activity, else today (docs/SPEC.md FR-6.1).",
   "cases": [
     {
       "name": "five most recent of more",
@@ -16,6 +16,11 @@
       "name": "no days in the window starts at the earliest activity",
       "input": { "visibleDays": [], "earliest": "2026-07-14", "today": "2026-09-12" },
       "expected": { "from": "2026-07-14", "to": "2026-09-12" }
+    },
+    {
+      "name": "a day ahead of today, recorded in a zone east of the account's, stays in",
+      "input": { "visibleDays": ["2026-09-10", "2026-09-13"], "earliest": "2026-09-10", "today": "2026-09-12" },
+      "expected": { "from": "2026-09-10", "to": "2026-09-13" }
     },
     {
       "name": "no history at all is today alone",

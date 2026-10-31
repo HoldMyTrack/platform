@@ -19,8 +19,12 @@ public enum DefaultRange {
     public static let days = 5
 
     /// visibleDates ascending.
+    /// An activity day is in its own zone, so one recorded east of the account's can be later
+    /// than today; the range then runs to it.
     public static func of(_ visibleDates: [String], earliest: String?, today: String) -> DateRange {
-        DateRange(from: visibleDates.suffix(days).first ?? earliest ?? today, to: today)
+        let recent = visibleDates.suffix(days)
+        let to = recent.last.map { $0 > today ? $0 : today } ?? today
+        return DateRange(from: recent.first ?? earliest ?? today, to: to)
     }
 }
 
