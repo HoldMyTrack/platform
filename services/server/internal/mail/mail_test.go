@@ -1,9 +1,11 @@
 package mail
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"log/slog"
+	"net"
 	"strings"
 	"testing"
 )
@@ -40,5 +42,49 @@ func TestLogSenderKeepsBodiesOutOfARealDeploymentsLog(t *testing.T) {
 		if got := strings.Contains(buf.String(), "secret"); got != logBodies {
 			t.Errorf("logBodies %v: body in log = %v\n%s", logBodies, got, buf.String())
 		}
+	}
+}
+
+// A rejected recipient's error keeps the SMTP code but not the server's text, which quotes the
+// address and would reach the logs.
+func TestSendErrorLeavesOutTheReplyText(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		r := bufio.NewReader(conn)
+		conn.Write([]byte("220 test ESMTP\r\n"))
+		for {
+			line, err := r.ReadString('\n')
+			if err != nil {
+				return
+			}
+			switch cmd := strings.ToUpper(strings.TrimSpace(line)); {
+			case strings.HasPrefix(cmd, "EHLO"), strings.HasPrefix(cmd, "HELO"), strings.HasPrefix(cmd, "MAIL"):
+				conn.Write([]byte("250 ok\r\n"))
+			case strings.HasPrefix(cmd, "RCPT"):
+				conn.Write([]byte("550 5.1.1 <user@example.com>: Recipient address rejected\r\n"))
+			default:
+				conn.Write([]byte("221 bye\r\n"))
+				return
+			}
+		}
+	}()
+
+	host, port, _ := net.SplitHostPort(ln.Addr().String())
+	s := New(host, port, "", "", "from@holdmytrack.app", false, slog.New(slog.DiscardHandler))
+	err = s.Send(context.Background(), "user@example.com", "subject", "body")
+	if err == nil {
+		t.Fatal("rejected recipient: want an error")
+	}
+	if msg := err.Error(); strings.Contains(msg, "@") || !strings.Contains(msg, "RCPT TO") || !strings.Contains(msg, "550") {
+		t.Errorf("error %q: want the step and code without the address", msg)
 	}
 }

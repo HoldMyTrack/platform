@@ -53,6 +53,13 @@ loki.process "scrub" {
 			drop_counter_reason = "mail"
 		}
 
+		// No line is meant to carry an email address; one in an error from elsewhere (a
+		// provider's reply quoting it) is redacted rather than shipped.
+		stage.replace {
+			expression = "([A-Za-z0-9._%+-]+@(?:[A-Za-z0-9-]+\\.)+[A-Za-z]{2,})"
+			replace    = "redacted"
+		}
+
 		stage.labels {
 			values = {level = ""}
 		}
