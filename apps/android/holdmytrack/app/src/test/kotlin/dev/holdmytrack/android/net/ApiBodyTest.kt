@@ -51,4 +51,12 @@ class ApiBodyTest {
         }
         assertTrue(readBody(response(cut)).exceptionOrNull() is IOException)
     }
+
+    @Test
+    fun `a delete's 404 is done, its other refusals and failures are not`() {
+        assertTrue(deleteDone(Result.success(Unit)).isSuccess)
+        assertTrue(deleteDone(Result.failure(ApiException(404, ""))).isSuccess)
+        assertTrue(deleteDone(Result.failure(ApiException(403, ""))).isFailure)
+        assertTrue(deleteDone(Result.failure(IOException("offline"))).isFailure)
+    }
 }

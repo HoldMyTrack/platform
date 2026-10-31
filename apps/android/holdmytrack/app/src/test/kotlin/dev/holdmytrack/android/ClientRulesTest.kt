@@ -10,6 +10,7 @@ import dev.holdmytrack.android.map.PendingDiff
 import dev.holdmytrack.android.map.RangeShift
 import dev.holdmytrack.android.map.SliderRules
 import dev.holdmytrack.android.map.shiftRange
+import dev.holdmytrack.android.net.deleteDone
 import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.TrackEdit
 import dev.holdmytrack.android.net.TrackPoint
@@ -162,6 +163,7 @@ class ClientRulesTest {
             }
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
+        "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
         "pendingBatches" to { input ->
             JsonArray(PendingDiff.batches(input.strings("ids"), input.int("size")).map { ids(it, sort = false) })
         },

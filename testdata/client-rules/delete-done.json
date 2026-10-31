@@ -1,0 +1,12 @@
+{
+  "rule": "deleteDone",
+  "description": "Whether a DELETE's HTTP status means the thing is gone: deleted now (2xx), or already (404, removed on another client), so a group delete or a retry moves on past it. Anything else is a failure to show. Expected: true when done.",
+  "cases": [
+    { "name": "deleted", "input": { "status": 204 }, "expected": true },
+    { "name": "deleted, with a body", "input": { "status": 200 }, "expected": true },
+    { "name": "already gone", "input": { "status": 404 }, "expected": true },
+    { "name": "not allowed", "input": { "status": 403 }, "expected": false },
+    { "name": "refused for now", "input": { "status": 409 }, "expected": false },
+    { "name": "server error", "input": { "status": 500 }, "expected": false }
+  ]
+}

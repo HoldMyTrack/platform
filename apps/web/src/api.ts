@@ -1,6 +1,6 @@
 import { t } from './i18n';
 import { rememberTypeLabels } from './ui/activityTypes';
-import { parseErrorBody } from './apiError';
+import { deleteDone, parseErrorBody } from './apiError';
 import type { components, paths } from './apiSchema';
 import type { SpotCategory, SpotInArea } from './map/spots';
 
@@ -260,7 +260,7 @@ export async function deleteActivity(id: string): Promise<void> {
     method: 'DELETE',
     credentials: 'include',
   });
-  if (!res.ok) {
+  if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
 }
@@ -498,7 +498,7 @@ export async function savePrivateLocation(input: PrivateLocationInput, id?: stri
 
 export async function deletePrivateLocation(id: string): Promise<void> {
   const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations/${id}`, { method: 'DELETE', credentials: 'include' });
-  if (!res.ok) {
+  if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
 }
@@ -904,7 +904,7 @@ export async function updatePhoto(id: string, change: { caption?: string | undef
 /** `DELETE /v1/photos/{id}`. */
 export async function deletePhoto(id: string): Promise<void> {
   const res = await fetch(`${API_BASE_URL}${API_V1}/photos/${id}`, { method: 'DELETE', credentials: 'include' });
-  if (!res.ok) {
+  if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
 }
