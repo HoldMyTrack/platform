@@ -186,7 +186,7 @@ flowchart LR
 
 **All three are idempotent on `(user_id, source, external_id)`**, under concurrent duplicates too. The check at receive time is a fast path; the guarantee is `idx_activities_dedupe` plus the persist step's `ON CONFLICT DO NOTHING` (§4.1 step 6).
 
-**The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced activity is a job carrying its file name, source, state and error, so the Upload menu, `/sync` and the Android Sync history read one history with no uploads table (`imports.go`, `uploads.go`). `GET /v1/uploads/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
+**The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced activity is a job carrying its file name, source, state and error, so the Upload menu, `/sync` and the Android Sync history read one history with no uploads table (`imports.go`, `uploads.go`). A daily sweep deletes every finished job 90 days after it finishes, pending ones never (`worker/job_history.go`). `GET /v1/uploads/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
 
 #### 4.0.3 `POST /v1/sync/activities`
 
