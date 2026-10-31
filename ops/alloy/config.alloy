@@ -76,7 +76,7 @@ loki.process "scrub" {
 		}
 	}
 
-	// Caddy's error logs carry the client's address.
+	// Caddy's error logs carry the client's address, IPv4 or IPv6.
 	stage.match {
 		selector = "{service=\"web\"}"
 
@@ -87,6 +87,14 @@ loki.process "scrub" {
 
 		stage.replace {
 			expression = "(\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3})"
+			replace    = "redacted"
+		}
+
+		// IPv6, outside those fields too: `http: TLS handshake error from [2a01:…]:51234`. Full
+		// form or with `::`, so a time such as 10:00:00 is left alone; after IPv4, which leaves
+		// a mapped address's `::ffff:` for this one.
+		stage.replace {
+			expression = "((?:[0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}|(?:[0-9a-fA-F]{1,4}:)*[0-9a-fA-F]{0,4}::(?:[0-9a-fA-F]{1,4}:)*[0-9a-fA-F]{0,4})"
 			replace    = "redacted"
 		}
 	}
