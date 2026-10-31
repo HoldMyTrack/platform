@@ -14,7 +14,7 @@ import (
 
 func TestAdminPagesSignedOutAreNotFound(t *testing.T) {
 	s := newPagesTestServer(t)
-	for _, path := range []string{"/admin", "/admin/users/b123028b-354d-4838-bb84-b31213269791"} {
+	for _, path := range []string{"/admin", "/admin/users", "/admin/users/b123028b-354d-4838-bb84-b31213269791"} {
 		rec := httptest.NewRecorder()
 		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 		if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "Page not found") {
@@ -29,9 +29,9 @@ func TestAdminPagesRender(t *testing.T) {
 	user := adminUserRow{ID: "u-1", Email: "rider@example.com", DisplayName: "Rider", SignedUp: "2026-08-01", Timezone: "Europe/Rome", Verified: true, Activities: "2", Distance: "12 km", LastSeen: "2026-09-20"}
 
 	rec := httptest.NewRecorder()
-	s.pages.Render(rec, http.StatusOK, "admin", web.PageData{Title: "Admin", Path: "/admin", NoIndex: true, User: admin, Page: adminUsersView{Users: []adminUserRow{user}}})
+	s.pages.Render(rec, http.StatusOK, "admin", web.PageData{Title: "Accounts", Path: "/admin/users", NoIndex: true, User: admin, Page: adminUsersView{Users: []adminUserRow{user}}})
 	body := rec.Body.String()
-	for _, want := range []string{`href="/admin/users/u-1"`, "rider@example.com", "Europe/Rome", "2026-09-20", `href="/admin">Admin</a>`} {
+	for _, want := range []string{`href="/admin/users/u-1"`, "rider@example.com", "Europe/Rome", "2026-09-20", `href="/admin">Admin</a>`, `href="/admin">← Statistics</a>`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("admin page: missing %q", want)
 		}

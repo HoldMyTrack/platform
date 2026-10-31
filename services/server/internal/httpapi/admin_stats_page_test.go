@@ -24,9 +24,9 @@ func TestParseStatsRange(t *testing.T) {
 func TestStatsRangesMarkCurrentAndDropDefaultFromHref(t *testing.T) {
 	got := statsRanges(30)
 	want := []adminStatsRange{
-		{Days: 30, Href: "/admin/stats?days=30", Current: true},
-		{Days: 90, Href: "/admin/stats"},
-		{Days: 365, Href: "/admin/stats?days=365"},
+		{Days: 30, Href: "/admin?days=30", Current: true},
+		{Days: 90, Href: "/admin"},
+		{Days: 365, Href: "/admin?days=365"},
 	}
 	if len(got) != len(want) {
 		t.Fatalf("got %v", got)
@@ -99,6 +99,26 @@ func TestBarLayout(t *testing.T) {
 	}
 }
 
+func TestLineLayout(t *testing.T) {
+	points := []statsPoint{{Value: 10, Has: true}, {Value: 5, Has: true}, {}, {Value: 0, Has: true}, {}}
+	line, days := lineLayout(points, 10, 500, 100)
+	if line != "M50.00 0.00L150.00 50.00M350.00 100.00" {
+		t.Errorf("line = %q, want a break at the missing day", line)
+	}
+	if len(days) != 5 || days[2].Dot || !days[3].Dot || days[3].CY != 100 {
+		t.Fatalf("days = %+v", days)
+	}
+	if days[0].Alone || days[1].Alone || !days[3].Alone {
+		t.Errorf("alone: %v %v %v, want only the day between gaps", days[0].Alone, days[1].Alone, days[3].Alone)
+	}
+	if days[4].X != 400 || days[4].W != 100 {
+		t.Errorf("hit area of a gap at %v width %v", days[4].X, days[4].W)
+	}
+	if l, d := lineLayout(nil, 1, 500, 100); l != "" || d != nil {
+		t.Error("no points, no line")
+	}
+}
+
 func TestStatsChartView(t *testing.T) {
 	l := i18n.Get("")
 	from := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
@@ -112,20 +132,23 @@ func TestStatsChartView(t *testing.T) {
 		t.Errorf("flow chart dates/labels = %q %q %q %q", flow.First, flow.Last, flow.Bars[1].Label, flow.Bars[2].Label)
 	}
 
-	if empty := statsChartView(l, adminStatsChart{titleKey: "admin.stats_accounts"}, buildSeries(nil, from, 2)); empty.Latest != "—" {
-		t.Errorf("no snapshot: Latest = %q, want —", empty.Latest)
+	if empty := statsChartView(l, adminStatsChart{titleKey: "admin.stats_visitors", flow: true}, buildSeries(nil, from, 2)); empty.Latest != "—" || empty.Total != "—" {
+		t.Errorf("no snapshot: Latest %q, Total %q, want —", empty.Latest, empty.Total)
 	}
 
-	state := statsChartView(l, adminStatsChart{titleKey: "admin.stats_accounts", key: "accounts"}, points[:2])
-	if state.Total != "" || state.Latest != "4" || state.Max != "5" {
-		t.Errorf("state chart = %+v", state)
+	state := statsChartView(l, adminStatsChart{titleKey: "admin.stats_accounts", key: "accounts", line: true}, points[:2])
+	if state.Total != "" || state.Latest != "4" || state.Max != "5" || state.Line == "" || state.Bars[0].Path != "" || !state.Bars[0].Dot {
+		t.Errorf("line chart = %+v", state)
+	}
+	if flow.Line != "" || flow.Bars[0].Path == "" {
+		t.Errorf("bar chart drew a line: %+v", flow)
 	}
 }
 
 func TestAdminStatsPageSignedOutIsNotFound(t *testing.T) {
 	s := newPagesTestServer(t)
 	rec := httptest.NewRecorder()
-	s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/admin/stats", nil))
+	s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/admin", nil))
 	if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "Page not found") {
 		t.Errorf("status %d, want the ordinary 404 page", rec.Code)
 	}
@@ -137,10 +160,10 @@ func TestAdminStatsPageRenders(t *testing.T) {
 	from := time.Date(2026, 10, 1, 0, 0, 0, 0, time.UTC)
 	chart := statsChartView(l, adminStatsChart{titleKey: "admin.stats_signups", key: "signups", flow: true}, buildSeries(map[time.Time]float64{from: 3}, from, 2))
 	rec := httptest.NewRecorder()
-	s.pages.Render(rec, http.StatusOK, "admin-stats", web.PageData{Title: "Statistics", Path: "/admin/stats", NoIndex: true, User: &web.User{Email: "admin@example.com", IsAdmin: true},
+	s.pages.Render(rec, http.StatusOK, "admin-stats", web.PageData{Title: "Statistics", Path: "/admin", NoIndex: true, User: &web.User{Email: "admin@example.com", IsAdmin: true},
 		Page: adminStatsView{Ranges: statsRanges(90), Charts: []adminStatsChartView{chart}}})
 	body := rec.Body.String()
-	for _, want := range []string{"Signups", "<title>2026-10-01: 3</title>", "<strong>90 days</strong>", `href="/admin/stats?days=30"`, `href="/admin"`, `viewBox="0 0 720 160"`} {
+	for _, want := range []string{"Signups", "<title>2026-10-01: 3</title>", "<strong>90 days</strong>", `href="/admin?days=30"`, `href="/admin/users"`, `viewBox="0 0 720 160"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("stats page: missing %q", want)
 		}

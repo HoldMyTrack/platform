@@ -533,7 +533,7 @@ Donate opens the configured Open Collective's donation page in a new tab (`VISIO
 
 ## 14. FR-12 — Admin panel
 
-A read-only view of every account, its activities and the service's daily statistics for the operators, at `/admin`, `/admin/users/{id}` and `/admin/stats`, `noindex`.
+A read-only view of every account, its activities and the service's daily statistics for the operators, at `/admin` (the statistics), `/admin/users` and `/admin/users/{id}`, `noindex`.
 
 ### FR-12.1 Access
 
@@ -543,7 +543,7 @@ A read-only view of every account, its activities and the service's daily statis
 
 ### FR-12.2 Accounts
 
-`/admin` lists every account, demo included, newest first, with its signup date, country, timezone, activity count, total distance and last day seen.
+`/admin/users` lists every account, demo included, newest first, with its signup date, country, timezone, activity count, total distance and last day seen.
 
 ### FR-12.3 An account's activities
 
@@ -552,7 +552,7 @@ A read-only view of every account, its activities and the service's daily statis
 
 ### FR-12.4 Service statistics
 
-`/admin/stats` charts the daily statistics (`IMPLEMENTATION.md` §4.32), unique web visitors among them, one bar per UTC day over 30, 90 or 365 days, none for a day without a snapshot. A web visitor is a browser and address that opened a page that day, signed in or not, apps and crawlers aside; nothing that tells visitors apart outlives the day's snapshot.
+`/admin` charts the daily statistics (`IMPLEMENTATION.md` §4.32), unique web visitors among them, per UTC day over 30, 90 or 365 days, leaving a gap for a day without a snapshot. A web visitor is a browser and address that opened a page that day, signed in or not, apps and crawlers aside; nothing that tells visitors apart outlives the day's snapshot.
 
 ## 15. FR-13 — Language
 

@@ -85,7 +85,7 @@ func (s *Server) adminAccount(w http.ResponseWriter, r *http.Request) *pageAccou
 	return acct
 }
 
-// GET /admin.
+// GET /admin/users.
 func (s *Server) handleAdminPage(w http.ResponseWriter, r *http.Request) {
 	acct := s.adminAccount(w, r)
 	if acct == nil {
@@ -99,7 +99,7 @@ func (s *Server) handleAdminPage(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	s.pages.Render(w, http.StatusOK, "admin", web.PageData{Title: l.T("meta.admin_title"), Path: "/admin", NoIndex: true, User: acct.user, Page: adminUsersView{Users: users}, Lang: lang})
+	s.pages.Render(w, http.StatusOK, "admin", web.PageData{Title: l.T("meta.admin_accounts_title"), Path: "/admin/users", NoIndex: true, User: acct.user, Page: adminUsersView{Users: users}, Lang: lang})
 }
 
 // GET /admin/users/{id}.

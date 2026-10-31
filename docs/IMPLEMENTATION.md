@@ -455,7 +455,7 @@ sequenceDiagram
 
 ### 4.20 Admin panel (FR-12)
 
-In the app, reusing sessions, renderer and formatting, and showing the product's view of an account instead of raw tables. `is_admin` is written only by `set-admin`, so the web is never an escalation path; an email allowlist (admin is whoever registers the address first) and a promotion page (a stolen admin session escalates) were rejected. Access is read per page and fails as a 404, so a revoke applies on the next load. `/admin/stats` charts `daily_stats` (§4.32) as server-drawn SVG, since Grafana keeps about 14 days.
+In the app, reusing sessions, renderer and formatting, and showing the product's view of an account instead of raw tables. `is_admin` is written only by `set-admin`, so the web is never an escalation path; an email allowlist (admin is whoever registers the address first) and a promotion page (a stolen admin session escalates) were rejected. Access is read per page and fails as a 404, so a revoke applies on the next load. `/admin` charts `daily_stats` (§4.32) as server-drawn SVG, since Grafana keeps about 14 days.
 
 ### 4.21 Localization (FR-13)
 

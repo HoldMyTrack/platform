@@ -6,31 +6,34 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
 )
 
-// The admin panel's statistics page (docs/SPEC.md FR-12.4): a bar chart per daily_stats key
+// The admin panel's home, its statistics (docs/SPEC.md FR-12.4): a chart per daily_stats key
 // (IMPLEMENTATION.md §4.32), drawn on the server as inline SVG. Postgres is the record, so the
 // page reaches past the ~14 days Grafana keeps.
 
 // adminStatsChart is one chart: a daily_stats key and its title. flow is a stat counted over
-// each day (internal/stats' flow kind), whose days add up to a total over the range.
+// each day (internal/stats' flow kind), whose days add up to a total over the range. line
+// draws a running total as a line instead of bars.
 type adminStatsChart struct {
 	titleKey string
 	key      string
 	flow     bool
+	line     bool
 }
 
 var adminStatsCharts = []adminStatsChart{
 	{titleKey: "admin.stats_signups", key: "signups", flow: true},
 	{titleKey: "admin.stats_visitors", key: "visitors", flow: true},
 	{titleKey: "admin.stats_active_1d", key: "active_1d"},
-	{titleKey: "admin.stats_accounts", key: "accounts"},
-	{titleKey: "admin.stats_active_30d", key: "active_30d"},
 	{titleKey: "admin.stats_activities_added", key: "activities_added", flow: true},
+	{titleKey: "admin.stats_accounts", key: "accounts", line: true},
+	{titleKey: "admin.stats_active_30d", key: "active_30d", line: true},
 }
 
 // adminStatsRanges are the page's ?days= choices, adminStatsDefaultDays when there's none.
@@ -58,14 +61,16 @@ type adminStatsRange struct {
 
 type adminStatsChartView struct {
 	Title string
-	// Latest is the newest snapshot's value in the range, "—" when there's none; Total is the
-	// sum over the range for a flow stat, "" otherwise.
+	// Latest is the newest snapshot's value in the range; Total is the sum over the range for a
+	// flow stat, "" otherwise. Both are "—" when the range has no snapshot.
 	Latest string
 	Total  string
 	// Max and Half label the top and middle grid lines.
-	Max   string
-	Half  string
-	Bars  []adminStatsBar
+	Max  string
+	Half string
+	Bars []adminStatsBar
+	// Line is a line chart's path, "" for bars.
+	Line  string
 	First string
 	Last  string
 	Width float64
@@ -75,11 +80,15 @@ type adminStatsChartView struct {
 }
 
 // adminStatsBar is one day: a hit area the full height of the plot carrying the tooltip, and
-// the bar's path, "" on a day with no snapshot.
+// the bar's path, "" on a day with no snapshot. On a line chart the day is a dot at (CX, CY)
+// instead, shown on hover, or always when Alone (no snapshot either side, so no line reaches it).
 type adminStatsBar struct {
-	X, W  float64
-	Path  string
-	Label string
+	X, W   float64
+	Path   string
+	Label  string
+	Dot    bool
+	Alone  bool
+	CX, CY float64
 }
 
 // statsPoint is one day of a series; Has is false on a day without a snapshot.
@@ -89,7 +98,7 @@ type statsPoint struct {
 	Has   bool
 }
 
-// GET /admin/stats.
+// GET /admin.
 func (s *Server) handleAdminStatsPage(w http.ResponseWriter, r *http.Request) {
 	acct := s.adminAccount(w, r)
 	if acct == nil {
@@ -110,7 +119,7 @@ func (s *Server) handleAdminStatsPage(w http.ResponseWriter, r *http.Request) {
 	for _, c := range adminStatsCharts {
 		view.Charts = append(view.Charts, statsChartView(l, c, buildSeries(values[c.key], from, days)))
 	}
-	s.pages.Render(w, http.StatusOK, "admin-stats", web.PageData{Title: l.T("meta.admin_stats_title"), Path: "/admin/stats", NoIndex: true, User: acct.user, Page: view, Lang: lang})
+	s.pages.Render(w, http.StatusOK, "admin-stats", web.PageData{Title: l.T("meta.admin_title"), Path: "/admin", NoIndex: true, User: acct.user, Page: view, Lang: lang})
 }
 
 // adminStatsValues reads every chart's values from from on, by key and day.
@@ -157,7 +166,7 @@ func parseStatsRange(q string) int {
 func statsRanges(current int) []adminStatsRange {
 	out := make([]adminStatsRange, 0, len(adminStatsRanges))
 	for _, d := range adminStatsRanges {
-		href := "/admin/stats"
+		href := "/admin"
 		if d != adminStatsDefaultDays {
 			href += "?days=" + strconv.Itoa(d)
 		}
@@ -230,6 +239,35 @@ func barPath(x, y, w, h float64) string {
 		x, y+h, y+r, r, r, x+r, y, x+w-r, r, r, x+w, y+r, y+h)
 }
 
+// lineLayout places a day's dot at the middle of its step across width, scaled to scaleMax over
+// height, and joins the dots of consecutive snapshots; a missing day breaks the line.
+func lineLayout(points []statsPoint, scaleMax, width, height float64) (string, []adminStatsBar) {
+	if len(points) == 0 {
+		return "", nil
+	}
+	step := width / float64(len(points))
+	bars := make([]adminStatsBar, len(points))
+	var path strings.Builder
+	for i, p := range points {
+		b := adminStatsBar{X: float64(i) * step, W: step}
+		if p.Has {
+			b.Dot = true
+			b.CX = b.X + step/2
+			b.CY = height - p.Value/scaleMax*height
+			prev := i > 0 && points[i-1].Has
+			next := i < len(points)-1 && points[i+1].Has
+			b.Alone = !prev && !next
+			cmd := "L"
+			if !prev {
+				cmd = "M"
+			}
+			fmt.Fprintf(&path, "%s%.2f %.2f", cmd, b.CX, b.CY)
+		}
+		bars[i] = b
+	}
+	return path.String(), bars
+}
+
 // statsChartView is chart c over points, labelled in l's language.
 func statsChartView(l *i18n.Localizer, c adminStatsChart, points []statsPoint) adminStatsChartView {
 	count := func(v float64) string { return l.Int(int64(math.Round(v))) }
@@ -246,10 +284,14 @@ func statsChartView(l *i18n.Localizer, c adminStatsChart, points []statsPoint) a
 		Latest: "—",
 		Max:    count(scaleMax),
 		Half:   l.Float(scaleMax/2, 0),
-		Bars:   barLayout(points, scaleMax, adminChartWidth, adminChartHeight),
 		Width:  adminChartWidth,
 		Height: adminChartHeight,
 		MidY:   adminChartHeight / 2,
+	}
+	if c.line {
+		v.Line, v.Bars = lineLayout(points, scaleMax, adminChartWidth, adminChartHeight)
+	} else {
+		v.Bars = barLayout(points, scaleMax, adminChartWidth, adminChartHeight)
 	}
 	if scaleMax/2 != math.Trunc(scaleMax/2) {
 		v.Half = l.Float(scaleMax/2, 1)
@@ -265,7 +307,10 @@ func statsChartView(l *i18n.Localizer, c adminStatsChart, points []statsPoint) a
 		}
 	}
 	if c.flow {
-		v.Total = count(total)
+		v.Total = "—"
+		if v.Latest != "—" {
+			v.Total = count(total)
+		}
 	}
 	for i, p := range points {
 		value := "—"

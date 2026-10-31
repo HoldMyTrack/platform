@@ -1277,6 +1277,27 @@ code {
   fill: rgb(var(--fm-accent-rgb) / 75%);
 }
 
+.admin-stats__line {
+  fill: none;
+  stroke: var(--fm-accent);
+  stroke-width: 2;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-stats__dot {
+  fill: var(--fm-accent);
+  stroke: var(--fm-surface);
+  stroke-width: 2;
+  opacity: 0;
+}
+
+.admin-stats__dot--alone,
+.admin-stats__day:hover .admin-stats__dot {
+  opacity: 1;
+}
+
 .admin-stats__dates {
   display: flex;
   justify-content: space-between;
