@@ -56,8 +56,15 @@ class SyncRunner(
     private var synced = 0
     private var alreadyPresent = 0
     private val rejected = mutableListOf<Rejection>()
+    private var onLanded: (List<Candidate>) -> Unit = {}
 
-    suspend fun send(ticked: List<Candidate>, onProgress: (sent: Int) -> Unit): SyncReport {
+    /**
+     * Sends [ticked]. [onLanded] hears each batch the account has now as it lands — a recording
+     * once marked sent — so a run cancelled or failing part-way (the tab leaving, a bad answer)
+     * keeps what landed before it.
+     */
+    suspend fun send(ticked: List<Candidate>, onLanded: (List<Candidate>) -> Unit, onProgress: (sent: Int) -> Unit): SyncReport {
+        this.onLanded = onLanded
         val stopped = sendSessions(ticked.filter { it.source == HoldMyTrackApi.SOURCE_HEALTH_CONNECT }, onProgress)
             ?: sendRecordings(ticked.filter { it.origin is Recording }, onProgress)
         return SyncReport(landed.toSet(), synced, alreadyPresent, rejected.toList(), stopped)
@@ -105,18 +112,22 @@ class SyncRunner(
      *  phone until its ingest lands (`SyncProgress`). */
     private suspend fun sendRecordings(recordings: List<Candidate>, onProgress: (Int) -> Unit): String? {
         for (candidate in recordings) {
-            flush(listOf(candidate), HoldMyTrackApi.SOURCE_RECORDED)?.let { return it }
-            if (candidate.key in landed) store.markSent(candidate.externalId)
+            flush(listOf(candidate), HoldMyTrackApi.SOURCE_RECORDED, report = false)?.let { return it }
+            if (candidate.key in landed) {
+                store.markSent(candidate.externalId)
+                onLanded(listOf(candidate))
+            }
             onProgress(landed.size)
         }
         return null
     }
 
     /**
-     * Sends [batch] and sorts the server's verdicts. Returns null when the run may go on, or the
+     * Sends [batch] and sorts the server's verdicts ([SyncVerdicts]), telling [onLanded] what
+     * landed unless the caller does ([report] false). Returns null when the run may go on, or the
      * reason to stop: a failed request decided nothing, so the batch stays ticked on the list.
      */
-    private suspend fun flush(batch: List<Candidate>, source: String): String? {
+    private suspend fun flush(batch: List<Candidate>, source: String, report: Boolean = true): String? {
         if (batch.isEmpty()) return null
         val results = try {
             HoldMyTrackApi.syncActivities(batch.map { prepare(it) }, source)
@@ -124,26 +135,16 @@ class SyncRunner(
             Log.w(TAG, "sync batch failed", e)
             return e.message ?: res.getString(R.string.sync_request_failed)
         }
-        val byId = results.associateBy { it.externalId }
-        for (candidate in batch) {
-            val result = byId[candidate.externalId]
-            when (result?.status) {
-                "enqueued" -> {
-                    synced++
-                    landed += candidate.key
-                }
-                "already_processed" -> {
-                    alreadyPresent++
-                    landed += candidate.key
-                }
-                else -> rejected += Rejection(
-                    candidate.key,
-                    candidate.startedAt,
-                    candidate.activityType,
-                    result?.error?.ifBlank { null } ?: res.getString(R.string.sync_no_report, result?.status ?: "missing"),
-                )
-            }
+        val verdicts = SyncVerdicts.of(batch, results)
+        synced += verdicts.enqueued.size
+        alreadyPresent += verdicts.alreadyPresent.size
+        val now = verdicts.enqueued + verdicts.alreadyPresent
+        landed += now.map { it.key }
+        for ((candidate, result) in verdicts.refused) {
+            val reason = result?.error?.ifBlank { null } ?: res.getString(R.string.sync_no_report, result?.status ?: "missing")
+            rejected += Rejection(candidate.key, candidate.startedAt, candidate.activityType, reason)
         }
+        if (report && now.isNotEmpty()) onLanded(now)
         return null
     }
 
