@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/HoldMyTrack/platform/services/server/internal/avatar"
 	"github.com/HoldMyTrack/platform/services/server/internal/budget"
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
@@ -142,13 +143,21 @@ func (s *Server) setAvatar(w http.ResponseWriter, r *http.Request, userID string
 	}
 	defer file.Close()
 
-	data, err := io.ReadAll(io.LimitReader(file, maxAvatarBytes))
+	// One byte past the limit tells a file that fits from one cut short to fit.
+	data, err := io.ReadAll(io.LimitReader(file, maxAvatarBytes+1))
 	if err != nil {
 		return accountFailure(http.StatusBadRequest, "error.avatar_read")
 	}
-	contentType := http.DetectContentType(data)
-	if !allowedAvatarContentType[contentType] {
-		return accountFailure(http.StatusUnsupportedMediaType, "error.avatar_type", "type", strconv.Quote(contentType))
+	if len(data) > maxAvatarBytes {
+		return accountFailure(http.StatusRequestEntityTooLarge, "error.avatar_too_large")
+	}
+	if sniffed := http.DetectContentType(data); !allowedAvatarContentType[sniffed] {
+		return accountFailure(http.StatusUnsupportedMediaType, "error.avatar_type", "type", strconv.Quote(sniffed))
+	}
+	// Stored re-encoded, never as uploaded: a phone photo's EXIF holds where it was taken.
+	data, contentType, err := avatar.Normalize(data)
+	if err != nil {
+		return accountFailure(http.StatusUnsupportedMediaType, "error.avatar_read")
 	}
 
 	ctx := r.Context()

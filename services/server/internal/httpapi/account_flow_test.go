@@ -68,8 +68,13 @@ func TestAccountFlow(t *testing.T) {
 	if saved.AvatarURL == "" {
 		t.Fatalf("avatar upload: %+v", saved)
 	}
-	if rec := d.do(me, "GET", "/v1/account/avatar", nil); rec.Code != http.StatusOK || !bytes.Equal(rec.Body.Bytes(), img.Bytes()) {
-		t.Fatalf("avatar read: %d", rec.Code)
+	// Stored re-encoded (internal/avatar), so the same picture, not the same bytes.
+	rec := d.do(me, "GET", "/v1/account/avatar", nil)
+	if rec.Code != http.StatusOK || rec.Header().Get("Content-Type") != "image/png" {
+		t.Fatalf("avatar read: %d %s", rec.Code, rec.Header().Get("Content-Type"))
+	}
+	if read, err := png.Decode(rec.Body); err != nil || read.Bounds() != image.Rect(0, 0, 8, 8) {
+		t.Fatalf("avatar read back: %v", err)
 	}
 	d.decode(d.do(me, "DELETE", "/v1/account/avatar", nil), http.StatusOK, &saved)
 	if saved.AvatarURL != "" {
