@@ -258,7 +258,10 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Verify an address with a verification link's token, and sign in */
+        /**
+         * Verify an address with a verification link's token, and sign in
+         * @description An account's first verification signs in only a caller already signed in to it, and ends the account's other sessions; any other caller gets 204 and signs in with the password (SPEC FR-1.8).
+         */
         post: {
             parameters: {
                 query?: never;
@@ -275,6 +278,13 @@ export interface paths {
             };
             responses: {
                 200: components["responses"]["Session"];
+                /** @description Verified, not signed in */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
                 400: components["responses"]["Error"];
                 409: components["responses"]["Error"];
             };

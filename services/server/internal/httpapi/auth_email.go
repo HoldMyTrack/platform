@@ -174,9 +174,15 @@ func (s *Server) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
-	userID, err := s.verifyEmail(r.Context(), req.Token)
+	sessionID, _ := sessionIDFromRequest(r)
+	userID, signIn, err := s.verifyEmail(r.Context(), req.Token, sessionID)
 	if err != nil {
 		s.writeAccountError(w, r, "verify-email", err)
+		return
+	}
+	if !signIn {
+		// Verified, and signing in is up to whoever knows the password (verifyEmail).
+		w.WriteHeader(http.StatusNoContent)
 		return
 	}
 	s.writeSession(w, r, userID, sessionTTL, http.StatusOK)
@@ -184,51 +190,70 @@ func (s *Server) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 
 // verifyEmail is the verification core (the JSON endpoint and the /verify page): confirms the
 // address the token was sent to, makes it the account's own if it was a pending change, and
-// returns the account id, for the caller to start a session.
+// returns the account id and whether the caller may start a session for it.
 //
 // One transaction with the account row locked, the token's address applied rather than just a
 // flag set: a token sent to the account's old address can't confirm a new one changed to
 // meanwhile, however the two requests interleave.
-func (s *Server) verifyEmail(ctx context.Context, token string) (string, error) {
+//
+// An account's first verification proves who owns the address, not who chose the password:
+// anyone can sign up with someone else's email (SPEC FR-1.8). So it ends every session but the
+// one the request carries (sessionID, the browser's own), and signs in only a browser already
+// signed in to the account; anyone else signs in with the password, or resets it. Confirming a
+// changed address of a verified account signs in as before.
+func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (string, bool, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 
 	var userID, email, current string
+	var wasVerified bool
 	err = tx.QueryRow(ctx, `
-		SELECT ev.user_id, ev.email, u.email
+		SELECT ev.user_id, ev.email, u.email, u.email_verified
 		FROM email_verifications ev JOIN users u ON u.id = ev.user_id
 		WHERE ev.token_hash = $1 AND ev.expires_at > NOW()
 		FOR UPDATE OF u
-	`, tokenHash(token)).Scan(&userID, &email, &current)
+	`, tokenHash(token)).Scan(&userID, &email, &current, &wasVerified)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", accountFailure(http.StatusBadRequest, "error.verify_link_invalid")
+		return "", false, accountFailure(http.StatusBadRequest, "error.verify_link_invalid")
 	}
 	if err != nil {
-		return "", err
+		return "", false, err
 	}
 	if _, err := tx.Exec(ctx, `UPDATE users SET email = $2, email_verified = true WHERE id = $1`, userID, email); err != nil {
 		if isUniqueViolation(err) {
 			// Another account took the address while this change was pending.
-			return "", accountFailure(http.StatusConflict, "error.email_taken")
+			return "", false, accountFailure(http.StatusConflict, "error.email_taken")
 		}
-		return "", err
+		return "", false, err
 	}
 	// Every outstanding token for this account, not just the one used — mirrors
 	// resetPassword's own "close every other still-live link too" reasoning, applied to a
 	// resend that arrived after this one was already clicked.
 	if _, err := tx.Exec(ctx, `DELETE FROM email_verifications WHERE user_id = $1`, userID); err != nil {
-		return "", err
+		return "", false, err
 	}
 	// A reset link mailed to the address the account just left must stop working with it.
 	if email != current {
 		if _, err := tx.Exec(ctx, `DELETE FROM password_resets WHERE user_id = $1`, userID); err != nil {
-			return "", err
+			return "", false, err
 		}
 	}
-	return userID, tx.Commit(ctx)
+	signIn := wasVerified
+	if !wasVerified {
+		mine := tokenHash(sessionID)
+		if err := tx.QueryRow(ctx, `
+			SELECT EXISTS (SELECT 1 FROM sessions WHERE user_id = $1 AND token_hash = $2 AND expires_at > NOW())
+		`, userID, mine).Scan(&signIn); err != nil {
+			return "", false, err
+		}
+		if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2`, userID, mine); err != nil {
+			return "", false, err
+		}
+	}
+	return userID, signIn, tx.Commit(ctx)
 }
 
 // pendingEmail is the address the account's newest live verification link went to — a
