@@ -84,7 +84,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 
 ### FR-1.7 Account settings
 
-- **Avatar**: PNG, JPEG or WebP up to 5 MB, applied on upload.
+- **Avatar**: PNG, JPEG or WebP up to 5 MB, stored upright without its metadata.
 - **Name**: an optional label; not unique, and nothing signs in with it.
 - **Country** (required in every save) decides the units everywhere: imperial for the United States, Liberia and Myanmar, metric for every other country and for an account that has never saved one.
 - **Timezone** (IANA, UTC until changed, a former name stored under its current one) decides "today": where the date slider's and Trends' default windows end and the activity graph's current year. It stands in for an activity's zone where that isn't known (FR-3.11).

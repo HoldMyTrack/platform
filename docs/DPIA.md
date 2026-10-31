@@ -50,7 +50,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 | Data | Source | Stored at | Kept for |
 | --- | --- | --- | --- |
 | Email, password hash, Google/Facebook/Apple id and name; Apple's refresh token, kept only to revoke the link | User, sign-in provider | Database (DigitalOcean, US) | Until the account is deleted |
-| Display name, avatar, country, timezone, language | User | Database; avatar image in R2 | Until the account is deleted |
+| Display name, avatar re-encoded without EXIF, country, timezone, language | User | Database; avatar image in R2 | Until the account is deleted |
 | Activity tracks: points, times, elevation, derived stats | Uploads, Health Connect, recording | Database, map tiles in R2 | Until the activity or account is deleted |
 | Original uploads, unclipped, points inside Private locations included | Uploads, Health Connect, recording | Cloudflare R2 | Until the activity or account is deleted; no expiry yet |
 | Private locations (circles around home, work) | User | Database | Until deleted |
@@ -180,6 +180,6 @@ All data in section 2 is stored in the US, by DigitalOcean and Cloudflare; Grafa
 
 - **Mechanism.** DigitalOcean and Grafana Labs state certification under the EU–US Data Privacy Framework, so the Commission's adequacy decision of 10 July 2023 covers them. Cloudflare's and Zoho's DPAs carry the Standard Contractual Clauses. Each status is to be confirmed on dataprivacyframework.gov when the DPAs are filed (section 7).
 - **US access.** As cloud providers, all four can receive orders under FISA Section 702. Executive Order 14086, which the adequacy decision relies on, limits such collection to what is necessary and proportionate and gives EU residents a redress route; Clauses transfers rely on the same safeguards.
-- **What an order could reach.** Exercise routes and photos of a small user base, with no health data, no live location and no payment data. Logs leave the server without tracks, emails or IP addresses. Provider-held encryption keys don't stop a compelled disclosure, so the protection is in what is not collected.
+- **What an order could reach.** Exercise routes and photos of a small user base, with no health data, no live location and no payment data. Provider-held encryption keys don't stop a compelled disclosure, so the protection is in what is not collected.
 
 **Conclusion:** the transfers can continue without supplementary measures. Review this section if the adequacy decision is annulled, if a processor loses its certification, or when the user base becomes large-scale (section 7).
