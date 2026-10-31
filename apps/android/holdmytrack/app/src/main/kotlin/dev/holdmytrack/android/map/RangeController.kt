@@ -9,7 +9,7 @@ import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.panel.ActivitiesPanel
 import dev.holdmytrack.android.panel.PanelState
 import org.maplibre.android.maps.Style
-import java.time.LocalDate
+import dev.holdmytrack.android.net.Session
 
 /**
  * What the list and the tracks show, bound to the views: the slider over the account's activity
@@ -65,7 +65,7 @@ class RangeController(
      *  picked a range; held while the Edit window is open, and offered again when it closes. */
     fun offerDefault() {
         if (!days.ready) return
-        val range = DefaultRange.of(days.visibleDays.map { it.date }, days.earliest, LocalDate.now().toString())
+        val range = DefaultRange.of(days.visibleDays.map { it.date }, days.earliest, DefaultRange.today(Session.timezone))
         if (session.offerDefault(range, editOpen = editOpen())) showRange(reset = false)
     }
 

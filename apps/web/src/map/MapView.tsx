@@ -37,7 +37,7 @@ import { MapControls } from '../ui/MapControls';
 import { MapExport } from '../ui/MapExport';
 import { PhotoPopup } from '../ui/PhotoPopup';
 import { SpotPopup } from '../ui/SpotPopup';
-import { todayLocal, type DateRange } from '../ui/dateMath';
+import { todayIn, type DateRange } from '../ui/dateMath';
 import { useUnitSystem } from '../ui/units';
 import { INITIAL_WINDOW_DAYS, useActivityDays } from '../ui/useActivityDays';
 import { useActivityList } from '../ui/useActivityList';
@@ -77,7 +77,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const { checked: checkedActivityIds, focused: focusedActivityId, hidden: hiddenActivityIds, excludedTypes, distanceFilter } = session.selection;
   const { overlays, change: changeOverlays, paths, roads, satelliteAvailable, satellite } = useOverlays();
 
-  const today = useMemo(() => todayLocal(), []);
+  // The account's today (FR-1.7), read again on every render: a tab left open runs past midnight.
+  const today = todayIn(user.timezone);
 
   // The row or track under the pointer, from either surface, so one effect owns the map's hover
   // feature-state. A preview only: it never moves the camera.
@@ -146,9 +147,9 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   // Held while the Edit window is open; it catches up when the window closes.
   useEffect(() => {
     if (session.userPicked || !daysReady) return;
-    dispatch({ type: 'defaultRange', range: defaultRange(visibleDays, earliest, today), editOpen });
-    // visibleDays isn't a dependency; see above.
-  }, [session.userPicked, daysReady, earliest, historyGeneration, today, editOpen]);
+    dispatch({ type: 'defaultRange', range: defaultRange(visibleDays, earliest, todayIn(user.timezone)), editOpen });
+    // visibleDays and today aren't dependencies: today is read as the range is derived.
+  }, [session.userPicked, daysReady, earliest, historyGeneration, user.timezone, editOpen]);
 
   const { pendingIds, distanceBounds: activityDistanceBounds, facets, listed: filteredActivities, mapHiddenIds } = useListView(activities, session.selection, dispatch);
 
