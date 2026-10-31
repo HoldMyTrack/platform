@@ -8,11 +8,13 @@ package mail
 import (
 	"context"
 	"crypto/tls"
+	"errors"
 	"fmt"
 	"log/slog"
 	"mime"
 	"net"
 	"net/smtp"
+	"net/textproto"
 )
 
 type Sender interface {
@@ -67,40 +69,54 @@ func (s *smtpSender) Send(ctx context.Context, to, subject, body string) error {
 
 	client, err := smtp.NewClient(conn, s.host)
 	if err != nil {
-		return fmt.Errorf("mail: new client: %w", err)
+		return replyError("new client", err)
 	}
 	defer client.Close()
 
 	if ok, _ := client.Extension("STARTTLS"); ok {
 		if err := client.StartTLS(&tls.Config{ServerName: s.host}); err != nil {
-			return fmt.Errorf("mail: starttls: %w", err)
+			return replyError("starttls", err)
 		}
 	}
 
 	if s.username != "" {
 		if err := client.Auth(smtp.PlainAuth("", s.username, s.password, s.host)); err != nil {
-			return fmt.Errorf("mail: auth: %w", err)
+			return replyError("auth", err)
 		}
 	}
 
 	if err := client.Mail(s.from); err != nil {
-		return fmt.Errorf("mail: MAIL FROM: %w", err)
+		return replyError("MAIL FROM", err)
 	}
 	if err := client.Rcpt(to); err != nil {
-		return fmt.Errorf("mail: RCPT TO: %w", err)
+		return replyError("RCPT TO", err)
 	}
 
 	w, err := client.Data()
 	if err != nil {
-		return fmt.Errorf("mail: DATA: %w", err)
+		return replyError("DATA", err)
 	}
 	if _, err := w.Write(message(s.from, to, subject, body)); err != nil {
-		return fmt.Errorf("mail: write body: %w", err)
+		return replyError("write body", err)
 	}
 	if err := w.Close(); err != nil {
-		return fmt.Errorf("mail: close body: %w", err)
+		return replyError("close body", err)
 	}
-	return client.Quit()
+	return replyError("QUIT", client.Quit())
+}
+
+// replyError is err from step for the logs, nil for nil. An SMTP reply keeps only its code: a
+// server's reply text often quotes the recipient (`550 5.1.1 <user@example.com>: Recipient
+// address rejected`), and the caller logs the error, which ships to Grafana Cloud.
+func replyError(step string, err error) error {
+	if err == nil {
+		return nil
+	}
+	var reply *textproto.Error
+	if errors.As(err, &reply) {
+		return fmt.Errorf("mail: %s: SMTP reply %d", step, reply.Code)
+	}
+	return fmt.Errorf("mail: %s: %w", step, err)
 }
 
 // message is the whole email as sent. The subject is RFC 2047-encoded: a header may only
