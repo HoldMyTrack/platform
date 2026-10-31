@@ -529,25 +529,36 @@ object HoldMyTrackApi {
 
             override fun onResponse(call: Call, response: Response) {
                 if (refusedBuild(response)) return response.close()
-                val result = response.use {
-                    if (!it.isSuccessful) return@use Result.failure(ApiException(it.code, ""))
-                    val bytes = it.body?.bytes() ?: ByteArray(0)
-                    val options = BitmapFactory.Options()
-                    if (maxSide != null) {
-                        options.inJustDecodeBounds = true
-                        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
-                        val longSide = maxOf(options.outWidth, options.outHeight)
-                        var sample = 1
-                        while (longSide / (sample * 2) >= maxSide) sample *= 2
-                        options.inJustDecodeBounds = false
-                        options.inSampleSize = sample
-                    }
-                    BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)?.let { bitmap -> Result.success(bitmap) }
-                        ?: Result.failure(IOException("not an image"))
+                // A body cut off, or an image too big to decode, is this call's failure: thrown
+                // from here, OkHttp would never call back, or would take the app down.
+                val result = try {
+                    decodeImage(response, maxSide)
+                } catch (e: Exception) {
+                    Result.failure(e)
+                } catch (e: OutOfMemoryError) {
+                    Result.failure(IOException("image too large to show", e))
                 }
                 main.post { onResult(result) }
             }
         })
+    }
+
+    /** [response]'s image, decoded at a reduction still at least [maxSide] on its long side. */
+    private fun decodeImage(response: Response, maxSide: Int?): Result<Bitmap> = response.use {
+        if (!it.isSuccessful) return@use Result.failure(ApiException(it.code, ""))
+        val bytes = it.body?.bytes() ?: ByteArray(0)
+        val options = BitmapFactory.Options()
+        if (maxSide != null) {
+            options.inJustDecodeBounds = true
+            BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)
+            val longSide = maxOf(options.outWidth, options.outHeight)
+            var sample = 1
+            while (longSide / (sample * 2) >= maxSide) sample *= 2
+            options.inJustDecodeBounds = false
+            options.inSampleSize = sample
+        }
+        BitmapFactory.decodeByteArray(bytes, 0, bytes.size, options)?.let { bitmap -> Result.success(bitmap) }
+            ?: Result.failure(IOException("not an image"))
     }
 
     /**
@@ -678,7 +689,10 @@ object HoldMyTrackApi {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                val body = response.use { it.body?.string().orEmpty() }
+                val body = readBody(response).getOrElse {
+                    main.post { onResult(Result.failure(it)) }
+                    return
+                }
                 if (refusedBuild(response)) return
                 val result = when {
                     response.code == 304 -> Result.success(null)
@@ -1158,7 +1172,10 @@ object HoldMyTrackApi {
             }
 
             override fun onResponse(call: Call, response: Response) {
-                val body = response.use { it.body?.string().orEmpty() }
+                val body = readBody(response).getOrElse {
+                    deliver(Result.failure(it))
+                    return
+                }
                 if (refusedBuild(response)) return
                 deliver(
                     if (response.isSuccessful) runCatching { parse(body) }
