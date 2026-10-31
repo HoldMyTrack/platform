@@ -555,10 +555,9 @@ class SyncTab(
         problems.visibility = View.GONE
         runJob = scope().launch {
             try {
-                val report = SyncRunner(store, res, HealthConnect.clientOrNull(activity)).send(sending) { sent ->
+                val report = SyncRunner(store, res, HealthConnect.clientOrNull(activity)).send(sending, ::landed) { sent ->
                     tickedLine.text = res.getString(R.string.sync_progress, sent, sending.size)
                 }
-                landed(report, sending)
                 show(report)
                 if (report.landed.isNotEmpty()) onSynced()
             } catch (e: CancellationException) {
@@ -573,17 +572,20 @@ class SyncTab(
         render()
     }
 
-    /** What the server has now is on its way to the map ([SyncProgress]): listed as that until
-     *  it lands, no longer as something to tick — a session is known, a recording marked sent. */
-    private fun landed(report: SyncReport, sent: List<Candidate>) {
-        val landedSessions = sessions.filter { it.key in report.landed }
+    /** A batch the server has now is on its way to the map ([SyncProgress]): listed as that until
+     *  it lands, no longer as something to tick — a session is known, a recording marked sent.
+     *  Called as each batch lands, so a run cut short keeps what it sent. */
+    private fun landed(batch: List<Candidate>) {
+        val keys = batch.mapTo(HashSet()) { it.key }
+        val landedSessions = batch.filter { it.source == HoldMyTrackApi.SOURCE_HEALTH_CONNECT }
         known = known + landedSessions.map { it.externalId }
-        // The account has them: off the kept list too, or a restart would offer them again.
-        if (landedSessions.isNotEmpty()) scope().launch { waiting.remove(landedSessions.map { it.key }) }
-        recordings = recordings.filterNot { it.key in report.landed }
-        ticked -= report.landed
-        if (highlight in report.landed) highlight = null
-        SyncProgress.add(activity, sent.filter { it.key in report.landed })
+        // The account has them: off the kept list too, or a restart would offer them again. Not
+        // on the tab's scope, which a pause cancels.
+        if (landedSessions.isNotEmpty()) SyncProgress.forget(waiting, landedSessions.map { it.key })
+        recordings = recordings.filterNot { it.key in keys }
+        ticked -= keys
+        if (highlight in keys) highlight = null
+        SyncProgress.add(activity, batch)
     }
 
     /** [SyncProgress] moved on. A failed one is offered again: a session no longer counts as

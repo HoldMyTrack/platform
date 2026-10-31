@@ -141,7 +141,7 @@ The web's design (root `docs/IMPLEMENTATION.md` §4.3.3).
 
 ## 4. Sync engine
 
-The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Connect hands routes only to a foreground read (root `docs/IMPLEMENTATION.md` §4.0), and the app enforces that by cancelling: the Sync tab's reads and sends run in the map's `lifecycleScope`, and leaving the tab, the app stopping or the You tab covering the map cancels them.
+The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Connect hands routes only to a foreground read (root `docs/IMPLEMENTATION.md` §4.0), and the app enforces that by cancelling: the Sync tab's reads and sends run in the map's `lifecycleScope`, and leaving the tab, the app stopping or the You tab covering the map cancels them. So `SyncRunner` hands each batch to `SyncProgress` as it lands, not when the run ends: a cancelled run keeps what it sent.
 
 ### 4.1 Permissions
 

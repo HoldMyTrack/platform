@@ -80,6 +80,20 @@ object SyncProgress {
         }
     }
 
+    /** Takes [keys] off the Sync tab's kept list on this object's own scope, which outlives the
+     *  tab's: a session the account has must not be offered again after a restart. */
+    fun forget(waiting: WaitingStore, keys: List<String>) {
+        scope.launch {
+            try {
+                waiting.remove(keys)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "could not drop sent sessions from the kept list", e)
+            }
+        }
+    }
+
     /** The account [resume] last read the store's sent recordings for. */
     private var resumedFor: String? = null
 
