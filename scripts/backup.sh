@@ -70,6 +70,9 @@ REFERENCE_TABLES=(spots bike_paths admin_countries admin_country_parts admin_reg
   admin_boundaries_source tz_parts tz_boundaries_source)
 # Left out of every dump: rebuilt on demand (the tile cache) or by `rerender-coverage --masks`.
 REBUILT_TABLES=(admin_tile_geoms admin_tiles_built activity_tile_mask_data)
+# Left out of every dump: the visitor salts and hashes, deleted within 2 days (docs/DPIA.md), which
+# a dump kept for weeks would otherwise outlive.
+SHORT_LIVED_TABLES=(visitor_salts visitor_days)
 
 nightly=false
 case "${1:-}" in
@@ -164,7 +167,7 @@ record_time holdmytrack_backup_reference_timestamp_seconds backup_reference \
   "Unix time the reference dump in the bucket was taken." "$ref_time"
 
 log "dumping Postgres to $BACKUP_DIR/postgres/$name"
-"${COMPOSE[@]}" exec -T db sh -c 'pg_dump -Fc '"$(printf -- '--exclude-table-data=%s ' "${REFERENCE_TABLES[@]}" "${REBUILT_TABLES[@]}")"' -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$partial"
+"${COMPOSE[@]}" exec -T db sh -c 'pg_dump -Fc '"$(printf -- '--exclude-table-data=%s ' "${REFERENCE_TABLES[@]}" "${REBUILT_TABLES[@]}" "${SHORT_LIVED_TABLES[@]}")"' -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$partial"
 # A dump whose table of contents pg_restore can't read is no backup — fail here, not at the drill.
 "${COMPOSE[@]}" exec -T db pg_restore --list < "$partial" > /dev/null
 mv "$partial" "$BACKUP_DIR/postgres/$name"
