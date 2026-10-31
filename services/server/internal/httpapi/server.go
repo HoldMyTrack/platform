@@ -413,25 +413,34 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	if s.refuseOutdatedApp(w, r) {
 		return
 	}
-	if strings.HasPrefix(r.URL.Path, apiPrefix+"/") && !setsOwnBodyLimit(r) {
+	if !setsOwnBodyLimit(r) {
 		r.Body = http.MaxBytesReader(w, r.Body, maxJSONBodyBytes)
 	}
 	s.mux.ServeHTTP(w, r)
 }
 
-// maxJSONBodyBytes bounds every /v1/ request body that doesn't set a limit of its own. The
-// handlers decode JSON straight from the body and check lengths after, so without it one huge
-// "name", or a track edit's list of millions of point indexes, was held whole in memory first.
+// maxJSONBodyBytes bounds every request body that doesn't set a limit of its own. The handlers
+// decode JSON or a form straight from the body and check lengths after, so without it one huge
+// "name", or a track edit's list of millions of point indexes, is held whole in memory first.
 // The largest legitimate body, a Story's 10,000 activity ids or a 10,000-entry track edit, is a
 // few hundred KB.
 const maxJSONBodyBytes = 1 << 20
 
-// setsOwnBodyLimit reports the requests whose handler bounds the body itself, at a size above
-// maxJSONBodyBytes: every multipart upload (a file, an archive, a photo, an avatar) and a
-// phone sync's batch of activities.
+// ownBodyLimitRoutes are the routes whose handler bounds the body itself, at a size above
+// maxJSONBodyBytes: the multipart uploads (an activity file, a photo, an avatar) and a phone
+// sync's batch of activities. Matched by route, never by the client's Content-Type, which any
+// caller can set to skip the cap on a JSON route.
+var ownBodyLimitRoutes = map[string]bool{
+	"POST " + apiPrefix + "/activities/upload": true,
+	"POST " + apiPrefix + "/photos":            true,
+	"POST " + apiPrefix + "/account/avatar":    true,
+	"POST " + apiPrefix + "/sync/activities":   true,
+	"POST /settings/avatar":                    true,
+}
+
+// setsOwnBodyLimit reports whether r's handler bounds the body itself (ownBodyLimitRoutes).
 func setsOwnBodyLimit(r *http.Request) bool {
-	return strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") ||
-		r.URL.Path == apiPrefix+"/sync/activities"
+	return ownBodyLimitRoutes[r.Method+" "+r.URL.Path]
 }
 
 // contentSecurityPolicy is every response's CSP (setSecurityHeaders).
