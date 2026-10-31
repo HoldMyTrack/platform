@@ -172,6 +172,8 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 	defer exportSweepTicker.Stop()
 	statsTicker := time.NewTicker(statsInterval)
 	defer statsTicker.Stop()
+	jobHistoryTicker := time.NewTicker(jobHistoryInterval)
+	defer jobHistoryTicker.Stop()
 
 	// A ticker's first tick is a whole interval away, so the daily sweeps also run once at
 	// start: a worker restarted more often than daily (every deploy) would otherwise never
@@ -186,6 +188,9 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 		log.Error("export sweep error", "err", err)
 	}
 	takeStats(ctx, pool, log)
+	if err := sweepJobHistory(ctx, pool, log); err != nil {
+		log.Error("job history sweep error", "err", err)
+	}
 
 	for {
 		select {
@@ -209,6 +214,10 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 			}
 		case <-statsTicker.C:
 			takeStats(ctx, pool, log)
+		case <-jobHistoryTicker.C:
+			if err := sweepJobHistory(ctx, pool, log); err != nil {
+				log.Error("job history sweep error", "err", err)
+			}
 		}
 	}
 }

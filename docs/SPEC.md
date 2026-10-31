@@ -190,7 +190,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 
 ### FR-3.4 Import status
 
-- Files, Health Connect sessions and recordings are one history: the web's Upload menu shows what's in progress, the Sync page (FR-3.9) and the Android app's Sync history what finished.
+- Files, Health Connect sessions and recordings are one history: the web's Upload menu shows what's in progress, the Sync page (FR-3.9) and the Android app's Sync history what finished, for 90 days.
 - A phone sync of several activities is one import. The web can't start a phone sync.
 
 ### FR-3.5 Duplicate detection

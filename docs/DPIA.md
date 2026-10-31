@@ -57,7 +57,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 | Stories, names, descriptions | User | Database | Until deleted |
 | Photos, resized and stripped of EXIF | User | Cloudflare R2 | Until deleted |
 | Spot captures (place and time, not position) | Android app | Database | Until deleted |
-| Import records | System | Database | Until the account is deleted |
+| Import records | System | Database | 90 days after the import finishes |
 | The day an account last used the service, the website and the Android app, and the app's version | System | Database | Until the account is deleted |
 | Server logs with account ids, no tracks or emails | System | Server, then Grafana Cloud (US) | Rotated on the server; 14 days at Grafana |
 | Daily service statistics: counts, sums and percentiles across all accounts, never one account's; country groups under 5 accounts folded into one | System | Database; the newest day also at Grafana Cloud (US) | Indefinitely; 14 days at Grafana |
