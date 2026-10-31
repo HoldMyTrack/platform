@@ -6,6 +6,7 @@ import (
 	"net/url"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/jackc/pgx/v5"
 
@@ -302,7 +303,9 @@ func (s *Server) handleListActivities(w http.ResponseWriter, r *http.Request) {
 }
 
 // maxActivityTypeLen matches activities.activity_type's own VARCHAR(50) — rejecting an
-// over-length value here is a clearer 400 than letting Postgres reject the UPDATE.
+// over-length value here is a clearer 400 than letting Postgres reject the UPDATE. These limits
+// count characters (runes), as VARCHAR and SPEC FR-5.10 do, not bytes: a Cyrillic name takes
+// two bytes a letter.
 const maxActivityTypeLen = 50
 
 // maxActivityDescriptionLen is a generous free-text bound (about the length of a couple of
@@ -377,15 +380,15 @@ func (s *Server) handleUpdateActivity(w http.ResponseWriter, r *http.Request) {
 		httpErrorT(w, r, http.StatusBadRequest, "error.activity_type_required")
 		return
 	}
-	if len(req.ActivityType) > maxActivityTypeLen {
+	if utf8.RuneCountInString(req.ActivityType) > maxActivityTypeLen {
 		httpErrorT(w, r, http.StatusBadRequest, "error.activity_type_too_long", "max", maxActivityTypeLen)
 		return
 	}
-	if len(req.Name) > maxActivityNameLen {
+	if utf8.RuneCountInString(req.Name) > maxActivityNameLen {
 		httpErrorT(w, r, http.StatusBadRequest, "error.activity_name_too_long", "max", maxActivityNameLen)
 		return
 	}
-	if len(req.Description) > maxActivityDescriptionLen {
+	if utf8.RuneCountInString(req.Description) > maxActivityDescriptionLen {
 		httpErrorT(w, r, http.StatusBadRequest, "error.activity_description_too_long", "max", maxActivityDescriptionLen)
 		return
 	}

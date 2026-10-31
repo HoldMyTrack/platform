@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"unicode/utf8"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
@@ -259,13 +260,13 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncActiv
 	// (GPS Logger's free-text type field) rather than one of a fixed vocabulary — unchecked,
 	// an over-length value would fail as a raw, unhandled column-width error at insert time
 	// deep in the worker instead of a clean rejection here.
-	if len(act.ActivityType) > maxActivityTypeLen {
+	if utf8.RuneCountInString(act.ActivityType) > maxActivityTypeLen {
 		return ingest.RawItem{}, l.T("error.activity_type_too_long", "max", maxActivityTypeLen)
 	}
-	if len(act.Name) > maxActivityNameLen {
+	if utf8.RuneCountInString(act.Name) > maxActivityNameLen {
 		return ingest.RawItem{}, l.T("error.activity_name_too_long", "max", maxActivityNameLen)
 	}
-	if len(act.Description) > maxActivityDescriptionLen {
+	if utf8.RuneCountInString(act.Description) > maxActivityDescriptionLen {
 		return ingest.RawItem{}, l.T("error.activity_description_too_long", "max", maxActivityDescriptionLen)
 	}
 
