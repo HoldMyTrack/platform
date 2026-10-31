@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net/http"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/activitytype"
 )
@@ -27,7 +28,7 @@ func (s *Server) handleActivityTypes(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		for _, t := range named {
-			if t == "" || len(t) > maxActivityTypeLen {
+			if t == "" || utf8.RuneCountInString(t) > maxActivityTypeLen {
 				writeAPIError(w, "each type must be 1 to 50 characters", http.StatusBadRequest)
 				return
 			}

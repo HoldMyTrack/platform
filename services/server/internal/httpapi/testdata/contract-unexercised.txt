@@ -24,7 +24,6 @@ GET /photos/{id}/thumb 404               # untested: refusal
 GET /photos/{id}/thumb 503               # untested: needs a failing object store or a spent daily budget
 GET /uploads 400                         # untested: refusal
 PATCH /account/settings 400              # untested: refusal
-PATCH /activities/{id} 400               # untested: refusal
 PATCH /auth/email 400                    # untested: refusal
 PATCH /auth/email 429                    # untested: needs the rate limit spent
 PATCH /photos/{id} 409                   # untested: refusal
