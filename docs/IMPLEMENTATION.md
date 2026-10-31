@@ -160,7 +160,7 @@ Object-store requests per UTC day and billing class, which every process adds to
 
 ### 3.30 `visitor_salts` / `visitor_days`
 
-A random salt per UTC day, and the hash of each web visitor seen under it. Both are deleted for a day once its snapshot is stored (§4.32).
+A random salt per UTC day, and the hash of each web visitor seen under it. Both are deleted for a day once its snapshot is stored (§4.32), and backups leave their rows out (`scripts/backup.sh`), so no dump outlives that. A restore starts the day on a new salt, counting its earlier visitors again.
 
 ## 4. Core Technical Workflows
 
