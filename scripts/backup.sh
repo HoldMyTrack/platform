@@ -63,6 +63,13 @@ KEEP_DAILY_DAYS=14
 KEEP_WEEKLY_DAYS=56
 KEEP_MANUAL_DAYS=3
 KEEP_DELETED_DAYS=30
+# The most of the objects mirror one run may move to objects-deleted/: this percentage of it, or
+# MIN_SHRINK_OBJECTS, whichever is more. A wrong or emptied app bucket would otherwise move the
+# whole mirror there in one night, to be purged KEEP_DELETED_DAYS later while every drill
+# passes. A run over it fails before syncing, which the "Backup overdue" alert reports; after a
+# deletion meant to be that large, run once with BACKUP_ALLOW_SHRINK=1.
+MAX_SHRINK_PERCENT=10
+MIN_SHRINK_OBJECTS=500
 
 # Written only by `import-spots`, `import-bike-paths`, `seed-admin-boundaries` and
 # `seed-timezones`.
@@ -183,6 +190,23 @@ else
   rclone copyto "/backups/postgres/$name" "backup:postgres/manual/$name"
 fi
 
+# How many objects rclone counts at $1 (an rclone size --json answer's "count"); 0 for a folder
+# that isn't there yet (exit 3), as on the first run.
+object_count() {
+  local out
+  out=$(rclone size "$1" --json --fast-list "${@:2}") || { [[ $? == 3 ]] && { echo 0; return; }; return 1; }
+  grep -o '"count":[0-9]*' <<<"$out" | cut -d: -f2
+}
+live_count=$(object_count data: --include '/raw/**' --include '/photos/**' --include '/avatars/**')
+mirror_count=$(object_count backup:objects)
+allowed=$(( mirror_count * MAX_SHRINK_PERCENT / 100 ))
+(( allowed < MIN_SHRINK_OBJECTS )) && allowed=$MIN_SHRINK_OBJECTS
+# An empty app bucket beside a mirror that isn't is a wrong S3_BUCKET at any size.
+if (( mirror_count - live_count > allowed || (live_count == 0 && mirror_count > 0) )) && [[ "${BACKUP_ALLOW_SHRINK:-}" != 1 ]]; then
+  log "refusing to sync: the app bucket has $live_count objects, the mirror $mirror_count; more than $allowed would move to objects-deleted/. Check S3_BUCKET, or run with BACKUP_ALLOW_SHRINK=1 if the deletions are meant."
+  exit 1
+fi
+
 log "syncing raw/, photos/ and avatars/"
 rclone sync data: backup:objects \
   --include '/raw/**' --include '/photos/**' --include '/avatars/**' \
@@ -223,7 +247,9 @@ bucket_list backup:postgres/reference | sort | unneeded_references "$weekly_cuto
 # By the folder's stamp, not --min-age: a moved object keeps its own modification time, so an
 # avatar uploaded a year ago and replaced last night would otherwise go on the next run.
 cutoff=$(date -u -d "$KEEP_DELETED_DAYS days ago" +%Y%m%d-%H%M 2>/dev/null || date -u -v-"$KEEP_DELETED_DAYS"d +%Y%m%d-%H%M)
-for dir in $(rclone lsf --dirs-only backup:objects-deleted); do
+# Listed first, so a failed listing fails the run instead of skipping the purge (3: not there yet).
+deleted_dirs=$(rclone lsf --dirs-only backup:objects-deleted) || [[ $? == 3 ]]
+for dir in $deleted_dirs; do
   if [[ "${dir%/}" < "$cutoff" ]]; then rclone purge "backup:objects-deleted/${dir%/}"; fi
 done
 
