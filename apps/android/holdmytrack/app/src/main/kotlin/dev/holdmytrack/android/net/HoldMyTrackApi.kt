@@ -85,6 +85,12 @@ object HoldMyTrackApi {
      *  and the User-Agent carries. */
     val appVersion: String = "${BuildConfig.VERSION_NAME} (${BuildConfig.GIT_SHA})"
 
+    /** The API's own base URL, parsed once for [isApi]. */
+    private val apiBase: HttpUrl by lazy { BuildConfig.API_BASE_URL.toHttpUrl() }
+
+    /** Whether [url] is a request to HoldMyTrack's own API ([ApiOrigin]). */
+    private fun isApi(url: HttpUrl): Boolean = ApiOrigin.isApi(url, apiBase)
+
     val client: OkHttpClient = OkHttpClient.Builder()
         .dispatcher(Dispatcher().apply { maxRequestsPerHost = 20 })
         .connectTimeout(CONNECT_TIMEOUT)
@@ -114,7 +120,7 @@ object HoldMyTrackApi {
 
         override fun intercept(chain: Interceptor.Chain): Response {
             val request = chain.request()
-            if (request.url.toString().startsWith(BuildConfig.API_BASE_URL) || request.header("Origin") != null) {
+            if (isApi(request.url) || request.header("Origin") != null) {
                 return chain.proceed(request)
             }
             return chain.proceed(request.newBuilder().header("Origin", origin).build())
@@ -132,7 +138,7 @@ object HoldMyTrackApi {
 
         override fun intercept(chain: Interceptor.Chain): Response {
             val request = chain.request()
-            if (!request.url.toString().startsWith(BuildConfig.API_BASE_URL)) return chain.proceed(request)
+            if (!isApi(request.url)) return chain.proceed(request)
             return chain.proceed(request.newBuilder().header("User-Agent", agent).build())
         }
     }
@@ -168,7 +174,7 @@ object HoldMyTrackApi {
     private object LanguageInterceptor : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val request = chain.request()
-            if (!request.url.toString().startsWith(BuildConfig.API_BASE_URL)) return chain.proceed(request)
+            if (!isApi(request.url)) return chain.proceed(request)
             val tags = LocaleList.getDefault().toLanguageTags()
             if (tags.isEmpty()) return chain.proceed(request)
             return chain.proceed(request.newBuilder().header("Accept-Language", tags).build())
@@ -190,7 +196,7 @@ object HoldMyTrackApi {
         override fun intercept(chain: Interceptor.Chain): Response {
             val request = chain.request()
             val token = Session.token
-            if (token == null || !request.url.toString().startsWith(BuildConfig.API_BASE_URL)) {
+            if (token == null || !isApi(request.url)) {
                 return chain.proceed(request)
             }
             return chain.proceed(request.newBuilder().header("Authorization", "Bearer $token").build())
