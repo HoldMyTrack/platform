@@ -65,6 +65,32 @@ func TestHeaderDemoMenu(t *testing.T) {
 	}
 }
 
+func TestDonateURL(t *testing.T) {
+	if got := donateURL(""); got != "" {
+		t.Errorf("no collective: %q, want no button", got)
+	}
+	if got, want := donateURL("holdmytrack"), "https://opencollective.com/holdmytrack/donate"; got != want {
+		t.Errorf("donateURL = %q, want %q", got, want)
+	}
+}
+
+func TestHeaderDonateOnlyWithAURL(t *testing.T) {
+	r, err := New(Embedded(), false, "v", "https://app.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		url  string
+		want bool
+	}{{"", false}, {"https://opencollective.com/x/donate", true}} {
+		rec := httptest.NewRecorder()
+		r.Render(rec, 200, "about", PageData{Title: "About", Path: "/about", DonateURL: tc.url})
+		if got := strings.Contains(rec.Body.String(), `class="donate-button"`); got != tc.want {
+			t.Errorf("DonateURL %q: button shown %v, want %v", tc.url, got, tc.want)
+		}
+	}
+}
+
 // RenderPublic renders a page once and serves the same bytes after, cacheable.
 func TestRenderPublicCaches(t *testing.T) {
 	r, err := New(Embedded(), false, "v", "https://app.example")

@@ -31,12 +31,18 @@ var embedded embed.FS
 func Embedded() fs.FS { return embedded }
 
 // OpenCollectiveSlug names the collective that funds the project — a fact about the project,
-// not about a deployment, so a constant rather than config. Empty until the collective exists;
-// the header's Donate then links to About's funding section instead of a 404. Launching means
-// setting it and editing About's "donations are not open yet" line by hand.
-// apps/web/src/funding.ts holds the same value for the map page's React header until that
-// header is this one too (ADR-0012's phase 5); keep the two in step.
+// not about a deployment, so a constant rather than config. Empty until the collective exists,
+// and the header shows no Donate until then. Launching means setting it and editing About's
+// "donations are not open yet" line by hand.
 const OpenCollectiveSlug = ""
+
+// donateURL is the header's Donate link for the collective slug, "" (no button) for none.
+func donateURL(slug string) string {
+	if slug == "" {
+		return ""
+	}
+	return "https://opencollective.com/" + url.PathEscape(slug) + "/donate"
+}
 
 // Link is one entry of a header menu. LabelKey is its label's catalog key (i18n), translated
 // when the page renders.
@@ -106,6 +112,7 @@ type PageData struct {
 	InfoLinks []Link
 	// Languages is the header's language menu (POST /language), in i18n.Supported's order.
 	Languages []Language
+	// DonateURL is the collective's donation page (donateURL), "" for no Donate button.
 	DonateURL string
 	Canonical string
 	// SiteURL is APP_BASE_URL — for the absolute URLs link previews and structured data need.
@@ -311,9 +318,8 @@ func (r *Renderer) fill(data *PageData) {
 	for _, code := range i18n.Supported {
 		data.Languages = append(data.Languages, Language{Code: code, Name: i18n.Names[code]})
 	}
-	data.DonateURL = "/about#funding"
-	if OpenCollectiveSlug != "" {
-		data.DonateURL = "https://opencollective.com/" + url.PathEscape(OpenCollectiveSlug) + "/donate"
+	if data.DonateURL == "" {
+		data.DonateURL = donateURL(OpenCollectiveSlug)
 	}
 	canonical := data.Path
 	if data.CanonicalPath != "" {
