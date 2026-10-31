@@ -2,6 +2,7 @@ package ingest
 
 import (
 	"errors"
+	"io"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
 )
@@ -52,4 +53,19 @@ func FailureCode(err error) string {
 	default:
 		return FailInternal
 	}
+}
+
+// objectReader passes an object's bytes to a parser and keeps the error reading the object
+// itself, if any, which tells a storage failure from a file its parser couldn't read.
+type objectReader struct {
+	r   io.Reader
+	err error
+}
+
+func (o *objectReader) Read(p []byte) (int, error) {
+	n, err := o.r.Read(p)
+	if err != nil && !errors.Is(err, io.EOF) {
+		o.err = err
+	}
+	return n, err
 }
