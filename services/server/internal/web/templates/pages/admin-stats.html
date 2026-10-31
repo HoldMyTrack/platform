@@ -1,0 +1,34 @@
+{{define "content"}}{{with .Page}}
+<main class="page-main admin">
+  <a class="settings__back" href="/admin">{{t "admin.all_accounts"}}</a>
+  <h1 class="settings__title">{{t "admin.stats_title"}}</h1>
+  <p class="profile__subtext">{{t "admin.stats_intro"}}</p>
+
+  <nav class="admin__pager" aria-label="{{t "admin.stats_range"}}">
+    {{range .Ranges}}{{if .Current}}<strong>{{tn "admin.stats_days" .Days}}</strong>{{else}}<a href="{{.Href}}">{{tn "admin.stats_days" .Days}}</a>{{end}}{{end}}
+  </nav>
+
+  <div class="admin-stats">
+    {{range .Charts}}
+    <section class="admin-stats__chart">
+      <h2 class="admin-stats__title">{{.Title}}</h2>
+      <p class="admin-stats__figures">
+        <span>{{t "admin.stats_latest"}} <strong>{{.Latest}}</strong></span>
+        {{if .Total}}<span>{{t "admin.stats_total"}} <strong>{{.Total}}</strong></span>{{end}}
+      </p>
+      <div class="admin-stats__plot">
+        <span class="admin-stats__tick admin-stats__tick--max">{{.Max}}</span>
+        <span class="admin-stats__tick admin-stats__tick--half">{{.Half}}</span>
+        <svg viewBox="0 0 {{.Width}} {{.Height}}" role="img" aria-label="{{.Title}}, {{.First}} – {{.Last}}">
+          <line class="admin-stats__grid" x1="0" x2="{{.Width}}" y1="0.5" y2="0.5"/>
+          <line class="admin-stats__grid" x1="0" x2="{{.Width}}" y1="{{.MidY}}" y2="{{.MidY}}"/>
+          <line class="admin-stats__axis" x1="0" x2="{{.Width}}" y1="{{.Height}}" y2="{{.Height}}"/>
+          {{$h := .Height}}{{range .Bars}}<g class="admin-stats__day"><title>{{.Label}}</title><rect x="{{.X}}" y="0" width="{{.W}}" height="{{$h}}"/>{{if .Path}}<path d="{{.Path}}"/>{{end}}</g>{{end}}
+        </svg>
+      </div>
+      <p class="admin-stats__dates"><span>{{.First}}</span><span>{{.Last}}</span></p>
+    </section>
+    {{end}}
+  </div>
+</main>
+{{end}}{{end}}

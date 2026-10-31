@@ -1184,6 +1184,107 @@ code {
   font-size: var(--fm-text-md);
 }
 
+/* The admin statistics page (templates/pages/admin-stats.html): one bar chart per stat; the SVG
+   scales to the column, and the tick labels are HTML so they keep their size. */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 520px), 1fr));
+  gap: var(--fm-space-16);
+  margin-top: var(--fm-space-16);
+}
+
+.admin-stats__chart {
+  padding: var(--fm-space-12) var(--fm-space-16);
+  background: var(--fm-surface);
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius-md);
+}
+
+.admin-stats__title {
+  margin: 0;
+  font-size: var(--fm-text-md);
+  font-weight: 600;
+}
+
+.admin-stats__figures {
+  display: flex;
+  gap: var(--fm-space-16);
+  margin: var(--fm-space-4) 0 var(--fm-space-12);
+  font-size: var(--fm-text-sm);
+  color: var(--fm-ink-secondary);
+}
+
+.admin-stats__figures strong {
+  color: var(--fm-ink);
+}
+
+.admin-stats__plot {
+  position: relative;
+  padding-left: 40px;
+}
+
+.admin-stats__plot svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.admin-stats__tick {
+  position: absolute;
+  left: 0;
+  width: 34px;
+  font-size: var(--fm-text-xs);
+  line-height: 1;
+  text-align: right;
+  color: var(--fm-ink-muted);
+  transform: translateY(-50%);
+}
+
+.admin-stats__tick--max {
+  top: 0;
+}
+
+.admin-stats__tick--half {
+  top: 50%;
+}
+
+.admin-stats__grid {
+  stroke: var(--fm-divider-tint);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-stats__axis {
+  stroke: var(--fm-border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.admin-stats__day rect {
+  fill: transparent;
+}
+
+.admin-stats__day path {
+  fill: var(--fm-accent);
+}
+
+.admin-stats__day:hover rect {
+  fill: rgb(var(--fm-ink-rgb) / 6%);
+}
+
+.admin-stats__day:hover path {
+  fill: rgb(var(--fm-accent-rgb) / 75%);
+}
+
+.admin-stats__dates {
+  display: flex;
+  justify-content: space-between;
+  margin: var(--fm-space-4) 0 0 40px;
+  font-size: var(--fm-text-xs);
+  color: var(--fm-ink-muted);
+}
+
 /* The Sync page (templates/pages/sync.html): the finished imports. */
 .sync {
   max-width: 760px;

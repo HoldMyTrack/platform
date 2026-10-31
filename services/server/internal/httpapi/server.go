@@ -266,6 +266,7 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("GET /sync", s.handleSyncPage)       // sync_page.go
 	s.mux.HandleFunc("GET /admin", s.handleAdminPage)     // admin_pages.go
 	s.mux.HandleFunc("GET /admin/users/{id}", s.handleAdminUserPage)
+	s.mux.HandleFunc("GET /admin/stats", s.handleAdminStatsPage) // admin_stats_page.go
 	// The React app — the map (pages.go's appShell). `/{$}` is the root alone; "/" below is
 	// everything else nothing more specific claims.
 	s.mux.HandleFunc("GET /{$}", s.appShell("meta.home_title"))
