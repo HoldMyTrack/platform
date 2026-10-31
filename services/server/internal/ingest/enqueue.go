@@ -205,3 +205,33 @@ func PromoteRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, j
 	}
 	return nil
 }
+
+// DiscardRaw drops the original of an ingest that failed: the job row's inline copy, and the
+// object at its raw key unless an activity or another pending ingest still names it. Nothing
+// else removes it before the account's purge, and with no activity the user can neither see
+// it, delete it nor find it in their data download (docs/DPIA.md keeps originals only as long
+// as their activity). The worker runs it inside the failed job, while the account's other
+// ingests wait their turn, so none can promote the same key in between.
+func DiscardRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, jobID int64, rawKey string) error {
+	if _, err := pool.Exec(ctx, `UPDATE jobs SET raw = NULL WHERE id = $1`, jobID); err != nil {
+		return fmt.Errorf("ingest: clear failed job's inline raw payload: %w", err)
+	}
+	if rawKey == "" {
+		return nil
+	}
+	var named bool
+	if err := pool.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM activities WHERE raw_payload_key = $1)
+		    OR EXISTS (SELECT 1 FROM jobs WHERE kind = 'ingest' AND state = 'pending' AND id <> $2
+		                 AND payload->>'raw_payload_key' = $1)
+	`, rawKey, jobID).Scan(&named); err != nil {
+		return fmt.Errorf("ingest: check failed job's raw payload: %w", err)
+	}
+	if named {
+		return nil
+	}
+	if err := store.Remove(ctx, rawKey); err != nil {
+		return fmt.Errorf("ingest: remove failed job's raw payload: %w", err)
+	}
+	return nil
+}
