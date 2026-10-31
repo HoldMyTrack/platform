@@ -37,26 +37,20 @@ class SessionGate(
     /** True when the map may go on; otherwise the user is sent where they need to go, or the
      *  check runs and [onChecked] follows. */
     fun passes(): Boolean {
-        if (!Session.isSignedIn) {
-            leaveFor { SignInActivity.open(it) }
-            return false
+        when (SessionRoute.of(Session.isSignedIn, Session.verified, Session.emailVerified, Session.isDemo, Session.country)) {
+            SessionRoute.SIGN_IN -> leaveFor { SignInActivity.open(it) }
+            SessionRoute.VERIFY -> verify()
+            SessionRoute.VERIFY_EMAIL -> leaveFor { VerifyEmailActivity.open(it) }
+            SessionRoute.ONBOARDING -> leaveFor { WebPageActivity.openOnboarding(it) }
+            SessionRoute.MAP -> return true
         }
-        if (!Session.verified) {
-            verify()
-            return false
-        }
-        if (!Session.emailVerified) {
-            leaveFor { VerifyEmailActivity.open(it) }
-            return false
-        }
-        // The first run, as on the web: an account with no Country goes to Settings first. The
-        // Country decides the units, and nothing else asks for it.
-        if (!Session.isDemo && Session.country.isEmpty()) {
-            leaveFor { WebPageActivity.openOnboarding(it) }
-            return false
-        }
-        return true
+        return false
     }
+
+    /** Whether the fragment can still act on an answer: a rotation or Back while the check runs
+     *  destroys it, and its replacement runs a check of its own on resume. */
+    private val attached: Boolean
+        get() = fragment.isAdded && fragment.view != null
 
     private fun leaveFor(open: (Context) -> Unit) {
         open(fragment.requireContext())
@@ -66,21 +60,27 @@ class SessionGate(
     private fun verify() {
         if (verifying) return
         verifying = true
+        val app = fragment.requireContext().applicationContext
         notices.view.postDelayed(showChecking, CHECKING_DELAY_MS)
         HoldMyTrackApi.verifySession { result ->
             verifying = false
             notices.view.removeCallbacks(showChecking)
-            notices.hide(MapNotice.CHECKING)
+            // The session's state is kept either way; only the screen's part waits for a fragment
+            // still attached.
             result.onSuccess { profile ->
                 Session.markVerified(profile)
-                AppLanguage.followAccount(fragment.requireContext().applicationContext, profile.locale)
-                notices.hide(MapNotice.UNREACHABLE)
+                AppLanguage.followAccount(app, profile.locale)
             }.onFailure { failure ->
                 // Only a 401 means the token is dead. Any other failure keeps it for the next
                 // resume, and the notice says why the map is empty.
-                if (failure is ApiException && failure.code == 401) {
-                    Session.clear()
-                } else {
+                if (failure is ApiException && failure.code == 401) Session.clear()
+            }
+            if (!attached) return@verifySession
+            notices.hide(MapNotice.CHECKING)
+            result.onSuccess {
+                notices.hide(MapNotice.UNREACHABLE)
+            }.onFailure { failure ->
+                if (failure !is ApiException || failure.code != 401) {
                     Log.w(TAG, "could not verify the stored session", failure)
                     notices.show(
                         MapNotice.UNREACHABLE,

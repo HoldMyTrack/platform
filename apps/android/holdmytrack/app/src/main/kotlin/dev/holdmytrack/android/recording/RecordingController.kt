@@ -47,6 +47,12 @@ class RecordingController(
 ) {
     private val context: Context get() = fragment.requireContext()
 
+    /** Whether a dialog can still open: the service's answers (a bind, a journal read on another
+     *  thread) can arrive after a rotation or Back destroyed the fragment, whose replacement
+     *  binds and asks again. */
+    private val attached: Boolean
+        get() = fragment.isAdded && fragment.activity?.isFinishing == false
+
     private lateinit var button: RecordButton
     private lateinit var status: View
     private lateinit var statusDot: View
@@ -249,7 +255,7 @@ class RecordingController(
             pendingStopConfirm = true
             return
         }
-        if (service.state == RecordingState.IDLE || stopDialog?.isShowing == true || fragment.requireActivity().isFinishing) return
+        if (service.state == RecordingState.IDLE || stopDialog?.isShowing == true || !attached) return
         val stats = service.currentStats()
         stopDialog = MaterialAlertDialogBuilder(context, R.style.ThemeOverlay_HoldMyTrack_Dialog_Destructive)
             .setTitle(R.string.recording_stop_confirm_title)
@@ -270,7 +276,7 @@ class RecordingController(
      *  would come back on the next bind. Resume returns paused; Save goes to the Save screen;
      *  Discard confirms first, since the journal is the only copy. */
     private fun offerLeftover(leftover: LiveRecordingJournal.Leftover) {
-        if (leftoverDialog?.isShowing == true || fragment.requireActivity().isFinishing) return
+        if (!attached || leftoverDialog?.isShowing == true) return
         leftoverDialog = MaterialAlertDialogBuilder(context)
             .setTitle(R.string.recording_leftover_title)
             .setMessage(
