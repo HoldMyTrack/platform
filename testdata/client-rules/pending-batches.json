@@ -1,0 +1,11 @@
+{
+  "rule": "pendingBatches",
+  "description": "The Pending check (GET /v1/activities/pending) takes at most 200 ids a request, so the client asks about the watched ids in consecutive batches of at most size, in order, one request each, and treats the union of the answers as one. Expected: the batches; none for no ids. The apps use size 200.",
+  "cases": [
+    { "name": "no ids, no request", "input": { "ids": [], "size": 2 }, "expected": [] },
+    { "name": "fewer than a batch", "input": { "ids": ["a"], "size": 2 }, "expected": [["a"]] },
+    { "name": "exactly a batch", "input": { "ids": ["a", "b"], "size": 2 }, "expected": [["a", "b"]] },
+    { "name": "one more than a batch", "input": { "ids": ["a", "b", "c"], "size": 2 }, "expected": [["a", "b"], ["c"]] },
+    { "name": "order kept across batches", "input": { "ids": ["e", "d", "c", "b", "a"], "size": 2 }, "expected": [["e", "d"], ["c", "b"], ["a"]] }
+  ]
+}

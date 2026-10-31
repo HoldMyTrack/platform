@@ -162,6 +162,9 @@ class ClientRulesTest {
             }
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
+        "pendingBatches" to { input ->
+            JsonArray(PendingDiff.batches(input.strings("ids"), input.int("size")).map { ids(it, sort = false) })
+        },
         "pendingCheck" to { input ->
             val watched = PendingDiff.watched(input.strings("listed"), input.strings("awaiting"))
             buildJsonObject {

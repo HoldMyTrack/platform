@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { pendingActivities } from '../api';
-import { pendingChange, pendingMoved, pendingWatched } from './pending';
+import { pendingBatches, pendingChange, pendingMoved, pendingWatched } from './pending';
 
 /** How often the Pending check runs while a reprocess is pending: one activity's ingest takes seconds. */
 const POLL_MS = 2000;
@@ -16,7 +16,8 @@ export interface PendingPollHandlers {
 /**
  * Rows with a reprocess running (a track edit, a Private location change): while any is, the small
  * Pending check runs every few seconds, and the list is read again once it says one finished; keyed
- * on each fetched list, so polling stops by itself. A failed check is tried again. An edit
+ * on each fetched list, so polling stops by itself. A failed check is tried again. The ids go in
+ * batches the endpoint accepts (`pendingBatches`). An edit
  * applied here ([awaitEdit]) counts as finished once a later list shows it not pending
  * (pending.ts). Each fetched list is a new `pendingIds` array, and Apply's fetch aborts earlier
  * ones, so every list seen after Apply was fetched after it.
@@ -33,8 +34,9 @@ export function usePendingPoll(pendingIds: string[], handlers: PendingPollHandle
     let timer = 0;
     const check = () => {
       timer = window.setTimeout(() => {
-        pendingActivities(watched, controller.signal).then(
-          (still) => (pendingMoved(watched, still) ? handlersRef.current.reload() : check()),
+        const answers = pendingBatches(watched).map((ids) => pendingActivities(ids, controller.signal));
+        Promise.all(answers).then(
+          (still) => (pendingMoved(watched, still.flat()) ? handlersRef.current.reload() : check()),
           () => {
             if (!controller.signal.aborted) check();
           },
