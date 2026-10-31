@@ -341,7 +341,7 @@ The same paths for every account, behind the session and cached like every map t
 
 ### FR-4.18 Tour
 
-- A tour points at the web map's features in turn, putting the map in each step's mode; in a demo session it also flies over the demo's history to show Fog at city, state and country level. It can be left at any step, and restores the mode and camera when it ends.
+- A tour points at the web map's features in turn, putting the map in each step's mode; in a demo session it also flies over the demo's history to show Fog at city, state and country level. It can be left at any step and restores the mode and camera.
 - A demo session gets it unasked on its first map in a browser. A real account is offered it once, after it has an activity. Anyone signed in can start it from the header.
 - The first time a user opens Fog of War, Heatmap or the Stories tab outside the tour, a card says what it is for. A tour step on the same feature counts as its card.
 - What has been shown is kept by the browser, not the account.
@@ -543,7 +543,7 @@ A read-only view of every account, its activities and the service's daily statis
 
 ### FR-12.2 Accounts
 
-`/admin` lists every account, demo included, newest first: email, name, admin, demo and unverified badges, signup date, country, timezone, activity count, total distance and the last day the account was seen.
+`/admin` lists every account, demo included, newest first, with its signup date, country, timezone, activity count, total distance and last day seen.
 
 ### FR-12.3 An account's activities
 
@@ -552,7 +552,7 @@ A read-only view of every account, its activities and the service's daily statis
 
 ### FR-12.4 Service statistics
 
-`/admin/stats` charts the daily statistics (`IMPLEMENTATION.md` §4.32) over the last 30, 90 or 365 UTC days, one bar per day: signups, accounts seen that day, accounts, accounts seen in the last 30 days and activities added. A day without a snapshot shows no bar.
+`/admin/stats` charts the daily statistics (`IMPLEMENTATION.md` §4.32), unique web visitors among them, one bar per UTC day over 30, 90 or 365 days, none for a day without a snapshot. A web visitor is a browser and address that opened a page that day, signed in or not, apps and crawlers aside; nothing that tells visitors apart outlives the day's snapshot.
 
 ## 15. FR-13 — Language
 

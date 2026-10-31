@@ -26,6 +26,7 @@ type adminStatsChart struct {
 
 var adminStatsCharts = []adminStatsChart{
 	{titleKey: "admin.stats_signups", key: "signups", flow: true},
+	{titleKey: "admin.stats_visitors", key: "visitors", flow: true},
 	{titleKey: "admin.stats_active_1d", key: "active_1d"},
 	{titleKey: "admin.stats_accounts", key: "accounts"},
 	{titleKey: "admin.stats_active_30d", key: "active_30d"},

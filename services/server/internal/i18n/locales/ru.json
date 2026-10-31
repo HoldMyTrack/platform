@@ -220,6 +220,7 @@
   "admin.stats_latest": "Последнее",
   "admin.stats_total": "Всего",
   "admin.stats_signups": "Регистрации",
+  "admin.stats_visitors": "Уникальные посетители сайта",
   "admin.stats_active_1d": "Аккаунты, заходившие за день",
   "admin.stats_accounts": "Аккаунты",
   "admin.stats_active_30d": "Аккаунты, заходившие за 30 дней",

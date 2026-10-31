@@ -236,3 +236,41 @@ func TestTake(t *testing.T) {
 		t.Errorf("after a second Take, storage_bytes.photos %v, want %v", stored, after["storage_bytes.photos"])
 	}
 }
+
+func TestTakeCountsVisitorsAndDeletesTheirHashes(t *testing.T) {
+	tx := testTx(t)
+	ctx := context.Background()
+	day := time.Date(2001, 3, 4, 0, 0, 0, 0, time.UTC)
+	next := day.AddDate(0, 0, 1)
+	for _, q := range []string{
+		`INSERT INTO visitor_salts (day, salt) VALUES ('2001-03-03', 'a'), ('2001-03-04', 'b'), ('2001-03-05', 'c')`,
+		`INSERT INTO visitor_days (day, hash) VALUES ('2001-03-03', 'x'), ('2001-03-04', 'x'), ('2001-03-04', 'y'), ('2001-03-05', 'z')`,
+	} {
+		if _, err := tx.Exec(ctx, q); err != nil {
+			t.Fatalf("%s: %v", q, err)
+		}
+	}
+	if _, err := Take(ctx, tx, day); err != nil {
+		t.Fatalf("take: %v", err)
+	}
+	var visitors float64
+	if err := tx.QueryRow(ctx, `SELECT value FROM daily_stats WHERE day = $1 AND key = 'visitors'`, day).Scan(&visitors); err != nil {
+		t.Fatalf("read visitors: %v", err)
+	}
+	if visitors != 2 {
+		t.Errorf("visitors = %v, want 2", visitors)
+	}
+	var hashes, salts int
+	if err := tx.QueryRow(ctx, `SELECT (SELECT count(*) FROM visitor_days WHERE day <= $1), (SELECT count(*) FROM visitor_salts WHERE day <= $1)`, day).Scan(&hashes, &salts); err != nil {
+		t.Fatalf("count left: %v", err)
+	}
+	if hashes != 0 || salts != 0 {
+		t.Errorf("left %d hashes and %d salts on or before the day, want none", hashes, salts)
+	}
+	if err := tx.QueryRow(ctx, `SELECT (SELECT count(*) FROM visitor_days WHERE day = $1), (SELECT count(*) FROM visitor_salts WHERE day = $1)`, next).Scan(&hashes, &salts); err != nil {
+		t.Fatalf("count next: %v", err)
+	}
+	if hashes != 1 || salts != 1 {
+		t.Errorf("the next day has %d hashes and %d salts, want it untouched", hashes, salts)
+	}
+}

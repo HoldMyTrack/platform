@@ -215,6 +215,7 @@
   "admin.stats_latest": "Latest",
   "admin.stats_total": "Total",
   "admin.stats_signups": "Signups",
+  "admin.stats_visitors": "Unique web visitors",
   "admin.stats_active_1d": "Accounts seen that day",
   "admin.stats_accounts": "Accounts",
   "admin.stats_active_30d": "Accounts seen in the last 30 days",

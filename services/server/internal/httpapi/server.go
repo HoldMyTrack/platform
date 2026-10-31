@@ -7,6 +7,7 @@
 package httpapi
 
 import (
+	"context"
 	"encoding/json"
 	"io"
 	"log/slog"
@@ -80,17 +81,19 @@ type Server struct {
 	skipEmailVerification bool
 	google                googleOAuth
 	facebook              facebookOAuth
-	apple                 appleOAuth
-	pages                 *web.Renderer
-	uploadLimiter         *fixedWindowLimiter
-	tileLimiter           *fixedWindowLimiter
-	syncLimiter           *fixedWindowLimiter
-	trackPointsLimiter    *fixedWindowLimiter
-	syncActivityLimiter   *fixedWindowLimiter
-	signupLimiter         *fixedWindowLimiter
-	budget                *budget.Gate
-	minAndroidBuild       int
-	minIOSBuild           int
+	// visitors counts unique web visitors (visitors.go); nil without a database.
+	visitors            *visitorCounter
+	apple               appleOAuth
+	pages               *web.Renderer
+	uploadLimiter       *fixedWindowLimiter
+	tileLimiter         *fixedWindowLimiter
+	syncLimiter         *fixedWindowLimiter
+	trackPointsLimiter  *fixedWindowLimiter
+	syncActivityLimiter *fixedWindowLimiter
+	signupLimiter       *fixedWindowLimiter
+	budget              *budget.Gate
+	minAndroidBuild     int
+	minIOSBuild         int
 }
 
 // defaultUploadsPerHour is how many files one account may send to `POST /v1/activities/upload`
@@ -114,6 +117,9 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		trackPointsLimiter:    newFixedWindowLimiter(trackPointsPerHour, time.Hour),
 		syncActivityLimiter:   newFixedWindowLimiter(syncActivitiesPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
+	}
+	if pool != nil {
+		s.visitors = &visitorCounter{pool: pool, log: log}
 	}
 	s.registerPages()
 	s.mux.HandleFunc(route("POST", "/auth/signup"), s.handleSignup)
@@ -321,6 +327,14 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		metrics.HTTPRequests.WithLabelValues(route, metrics.StatusClass(status)).Inc()
 		metrics.HTTPDuration.WithLabelValues(route).Observe(time.Since(start).Seconds())
+		if s.visitors != nil && countsAsVisitor(route, status, r.UserAgent(), appPlatform(r) != "") {
+			ip, ua := clientIP(r), r.UserAgent()
+			go func() {
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				s.visitors.record(ctx, time.Now(), ip, ua)
+			}()
+		}
 	}()
 	s.serve(rec, r)
 }

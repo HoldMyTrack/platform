@@ -99,6 +99,14 @@ func Take(ctx context.Context, db DB, day time.Time) (int, error) {
 	if err != nil {
 		return 0, fmt.Errorf("stats: write: %w", err)
 	}
+	// With the count stored, the day's visitor hashes and its salt go, and any older day's
+	// a missed snapshot left behind.
+	if _, err := tx.Exec(ctx, `DELETE FROM visitor_days WHERE day <= $1`, day); err != nil {
+		return 0, fmt.Errorf("stats: delete visitor hashes: %w", err)
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM visitor_salts WHERE day <= $1`, day); err != nil {
+		return 0, fmt.Errorf("stats: delete visitor salts: %w", err)
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return 0, fmt.Errorf("stats: commit: %w", err)
 	}
