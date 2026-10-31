@@ -14,7 +14,7 @@ The current milestone (`VISION.md` §5, ADR-0031). The product is shipped and de
 
 Gates the public launch (`VISION.md` §7, §8.3).
 
-- [ ] Stand up the funding page (Open Collective, public ledger, `VISION.md` §6.1) before launch. The app side is built (`SPEC.md` FR-11.1), and the `holdmytrack` collective applied to Open Source Collective as fiscal host on 2026-09-24. Once approved, set `OpenCollectiveSlug` in `services/server/internal/web/web.go` and replace the About page's "donations are not open yet" line with a link.
+- [ ] Stand up the funding page (Open Collective, public ledger, `VISION.md` §6.1) before launch. The app side is built (`SPEC.md` FR-11.1), and the `holdmytrack` collective applied to Open Source Collective as fiscal host on 2026-09-24. Once approved, set `OpenCollectiveSlug` in `services/server/internal/web/web.go`, which brings back the header's Donate, and replace the About page's "donations are not open yet" line with a link.
 - [ ] Post concept renders to r/running, r/cycling, r/Garmin, r/Strava, r/FogOfWorld (`VISION.md` §8.1, §8.3).
 - [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 pre-launch actions and the controller's sign-off.
 - [ ] EU-region hosting for EU users.
