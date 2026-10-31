@@ -366,6 +366,7 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 			return false, fmt.Errorf("worker: commit abandoned: %w", err)
 		}
 		finished(j.kind, "failed", failureCode(j.kind, nil))
+		discardFailedRaw(ctx, pool, store, log, j)
 		return true, nil
 	}
 
@@ -408,6 +409,7 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 			return true, fmt.Errorf("worker: mark failed: %w", uerr)
 		}
 		finished(j.kind, "failed", code)
+		discardFailedRaw(wctx, pool, store, log, j)
 		return true, nil // the queue made progress even though this job failed
 	}
 
@@ -417,6 +419,29 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 	log.Info("job done", "job_id", j.id, "kind", j.kind)
 	finished(j.kind, "done", nil)
 	return true, nil
+}
+
+// discardFailedRaw drops a failed or abandoned ingest's original (ingest.DiscardRaw); a job of
+// another kind has none. A job cut off by a shutdown never gets here: it is handed back with
+// its bytes.
+func discardFailedRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, j job) {
+	if j.kind != "ingest" {
+		return
+	}
+	// Cleanup after a failure the job already reported: whatever goes wrong here is logged, and
+	// never takes the worker down.
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error("failed ingest's original not discarded", "job_id", j.id, "panic", r)
+		}
+	}()
+	var ij ingest.Job
+	if err := json.Unmarshal(j.payload, &ij); err != nil {
+		return
+	}
+	if err := ingest.DiscardRaw(ctx, pool, store, j.id, ij.RawPayloadKey); err != nil {
+		log.Error("failed ingest's original not discarded", "job_id", j.id, "err", err)
+	}
 }
 
 // finished counts a job in metrics.JobsFinished. A failure with no jobs.error_code (any kind
@@ -462,6 +487,16 @@ func runJobSafely(ctx context.Context, pool *pgxpool.Pool, store *storage.Store,
 	return jobRunner(ctx, pool, store, log, j)
 }
 
+// runIngest moves an ingest job's bytes to its raw key and processes them. An already-processed
+// duplicate is a success (idempotency).
+func runIngest(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, jobID int64, ij ingest.Job) error {
+	if err := ingest.PromoteRaw(ctx, pool, store, jobID, ij.RawPayloadKey); err != nil {
+		return err
+	}
+	_, err := ingest.Process(ctx, pool, store, ij)
+	return err
+}
+
 // jobRunner is runJob; a test swaps in a job that blocks until shutdown.
 var jobRunner = runJob
 
@@ -472,17 +507,7 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		if err := json.Unmarshal(j.payload, &ij); err != nil {
 			return fmt.Errorf("unmarshal ingest job: %w", err)
 		}
-		if err := ingest.PromoteRaw(ctx, pool, store, j.id, ij.RawPayloadKey); err != nil {
-			return err
-		}
-		res, err := ingest.Process(ctx, pool, store, ij)
-		if err != nil {
-			return err
-		}
-		if !res.Persisted {
-			return nil // idempotency requirement: an already-processed duplicate is a success
-		}
-		return nil
+		return runIngest(ctx, pool, store, j.id, ij)
 	case "render_fog":
 		var rj ingest.RenderFogJob
 		if err := json.Unmarshal(j.payload, &rj); err != nil {
