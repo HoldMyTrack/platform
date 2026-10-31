@@ -69,7 +69,7 @@ Settings, Activity graph & trends, Sync history and About are the server's pages
 The app's calls and MapLibre Native's tile fetches both need the session, and MapLibre never sees a cookie jar. So the token is a bearer header added by an interceptor on the one `OkHttpClient` both use (§1.1), and `net/Session` is a process-wide `object`.
 
 The shared client's interceptors apply to the map's requests too:
-- **Bearer**, per request, so sign-in, sign-out and expiry apply to the next tile; only to the API's origin, since the basemap is on a domain HoldMyTrack doesn't own.
+- **Bearer**, per request, so sign-in, sign-out and expiry apply to the next tile; only to the API's origin, since the basemap is on a domain HoldMyTrack doesn't own. The origin is compared parsed (`net/ApiOrigin`): a string prefix of the base URL also matches `holdmytrack.app.evil.tld`.
 - **Origin**, the API's, on every request leaving it. The basemap's edge rule refuses a request without one and the satellite key accepts only the deployment's origin (root `docs/IMPLEMENTATION.md` §5.4), so without it the map draws nothing.
 - **User-Agent**, carrying the version and commit (§6) the server's minimum-build check reads.
 - **Outdated** (`net/AppOutdated`): a `426 app_outdated` on any call opens the Update screen, so no screen checks for it.
