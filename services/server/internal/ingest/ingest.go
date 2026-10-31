@@ -223,8 +223,14 @@ func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKe
 	}
 	defer obj.Close()
 
-	act, err := parseByExtensionReader(sourceDetail, obj)
+	// The store fetches lazily, so its own failure surfaces inside the parser; that one isn't
+	// the file's fault, and the worker retries it.
+	src := &objectReader{r: obj}
+	act, err := parseByExtensionReader(sourceDetail, src)
 	if err != nil {
+		if src.err != nil {
+			return parse.Activity{}, fmt.Errorf("ingest: read raw payload: %w", src.err)
+		}
 		return parse.Activity{}, parseError{err}
 	}
 	if act.Points, err = keepTimed(keepValid(act.Points)); err != nil {

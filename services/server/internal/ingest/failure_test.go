@@ -5,8 +5,10 @@ package ingest
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
+	"testing/iotest"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
 )
@@ -37,5 +39,28 @@ func TestFailureCode(t *testing.T) {
 		if got := FailureCode(c.err); got != c.want {
 			t.Errorf("%s: FailureCode(%v) = %q, want %q", c.name, c.err, got, c.want)
 		}
+	}
+}
+
+// A storage read that breaks mid-file is ours (FailInternal, so the worker retries it); a file
+// read whole that its parser can't read is the file's.
+func TestObjectReaderTellsAStorageFailureFromABadFile(t *testing.T) {
+	classify := func(r io.Reader) string {
+		src := &objectReader{r: r}
+		_, err := parseByExtensionReader("ride.gpx", src)
+		if err == nil {
+			t.Fatal("parse succeeded, want an error")
+		}
+		if src.err != nil {
+			return FailureCode(fmt.Errorf("ingest: read raw payload: %w", src.err))
+		}
+		return FailureCode(parseError{err})
+	}
+	broken := io.MultiReader(strings.NewReader(`<gpx><trk><trkseg><trkpt lat="1" lon="2">`), iotest.ErrReader(errors.New("connection reset")))
+	if got := classify(broken); got != FailInternal {
+		t.Errorf("storage failure mid-file: %s, want %s", got, FailInternal)
+	}
+	if got := classify(strings.NewReader(`<gpx><trk><trkseg><trkpt lat=`)); got != FailUnreadableFile {
+		t.Errorf("malformed file: %s, want %s", got, FailUnreadableFile)
 	}
 }

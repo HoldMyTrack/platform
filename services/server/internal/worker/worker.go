@@ -32,11 +32,12 @@ const pollInterval = 500 * time.Millisecond
 // any job should run, so a slow one isn't handed to a second worker while the first is busy.
 const claimLease = 30 * time.Minute
 
-// maxAttempts bounds how many times a job is claimed without finishing. Attempts count at
-// claim time, so a job that kills its worker every time it runs (a file that panics a parser
-// below the recover, or exhausts memory) is failed on its next claim instead of being handed
-// out first again on every restart, stalling the queue for every account behind it.
-const maxAttempts = 3
+// maxAttempts bounds how many times a job is claimed: its first run and one per retry
+// (retryDelays). Attempts count at claim time, so a job that kills its worker every time it
+// runs (a file that panics a parser below the recover, or exhausts memory) is failed on its next
+// claim instead of being handed out first again on every restart, stalling the queue for every
+// account behind it.
+var maxAttempts = len(retryDelays) + 1
 
 // accountPurgeInterval is how long a deleted account's data can outlast the request that
 // deleted it (account_purge.go), plus however long a job of its takes to finish.
@@ -407,6 +408,20 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 		return true, nil
 	}
 
+	// Something passing (a database or storage error): run it again later, still pending, its
+	// bytes and state kept (retryable).
+	if delay, ok := retryDelay(attempts + 1); runErr != nil && ok && retryable(j.kind, runErr) {
+		log.Warn("job failed, will retry", "job_id", j.id, "kind", j.kind, "attempt", attempts+1, "in", delay, "err", runErr)
+		_, uerr := pool.Exec(wctx, `
+			UPDATE jobs SET locked_at = NULL, last_error = $2, run_after = NOW() + make_interval(secs => $3)
+			WHERE id = $1 AND state = 'pending'
+		`, j.id, runErr.Error(), delay.Seconds())
+		if uerr != nil {
+			return true, fmt.Errorf("worker: schedule retry: %w", uerr)
+		}
+		return true, nil
+	}
+
 	if runErr != nil {
 		log.Error("job failed", "job_id", j.id, "kind", j.kind, "err", runErr)
 		code := failureCode(j.kind, runErr)
@@ -490,7 +505,7 @@ func runJobSafely(ctx context.Context, pool *pgxpool.Pool, store *storage.Store,
 	defer func() {
 		if r := recover(); r != nil {
 			log.Error("job panicked", "job_id", j.id, "kind", j.kind, "panic", r, "stack", string(debug.Stack()))
-			err = fmt.Errorf("panic: %v", r)
+			err = panicError{r}
 		}
 	}()
 	return jobRunner(ctx, pool, store, log, j)

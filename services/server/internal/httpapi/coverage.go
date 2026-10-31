@@ -12,8 +12,9 @@ import (
 // running jobs too. `ingest`, `edit_track`, `reprivacy` and `story_copy` are included, not just
 // `render_fog`: an upload the client has already seen accepted may not have been parsed yet, and
 // until it has, the `render_fog` job it will enqueue doesn't exist to be waited on; an accepted
-// copy of a Story is the same, one activity at a time. A `reprivacy` rerun waiting out its
-// delay (ingest.ProcessReprivacy) is left out: its activities stay off the map until it runs.
+// copy of a Story is the same, one activity at a time. A job waiting out a retry's delay
+// (internal/worker's retryDelays, or a `reprivacy` rerun) is left out: nothing renders until it
+// runs, and a reprivacy rerun's activities stay off the map meanwhile.
 //
 // The second column is the version: the account's map_version, bumped at the end of every
 // render pass and by every request-time change to what a tile returns (fog.BumpMapVersion). A
@@ -25,7 +26,7 @@ const coverageRenderingQuery = `
 SELECT EXISTS (
     SELECT 1 FROM jobs
     WHERE user_id = $1 AND state = 'pending' AND kind IN ('ingest', 'edit_track', 'reprivacy', 'render_fog', 'story_copy')
-      AND NOT (kind = 'reprivacy' AND run_after > NOW())
+      AND NOT (run_after > NOW() AND (attempts > 0 OR kind = 'reprivacy'))
 ),
 (SELECT map_version FROM users WHERE id = $1)`
 
