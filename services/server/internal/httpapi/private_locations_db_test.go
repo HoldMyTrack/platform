@@ -219,3 +219,75 @@ func TestListPrivateLocations(t *testing.T) {
 		t.Fatalf("got %+v, want Home", got)
 	}
 }
+
+// An activity the reprocess fails on stays Pending, and so off the map with its old geometry,
+// until a rerun queued after a delay succeeds; the rest of the batch comes back at once
+// (IMPLEMENTATION.md §4.2.5). The waiting rerun doesn't count as rendering.
+func TestPrivateLocationReprocessFailureKeepsActivityHidden(t *testing.T) {
+	d := newDBTestWithS3(t, newMemS3())
+	ctx := context.Background()
+	me := d.newAccount(false)
+	ok := d.ingestNorth(me, "ok.gpx", 10.0)
+	broken := d.ingestNorth(me, "broken.gpx", 10.001)
+	var rawKey string
+	if err := d.pool.QueryRow(ctx, `SELECT raw_payload_key FROM activities WHERE id = $1`, broken).Scan(&rawKey); err != nil {
+		t.Fatal(err)
+	}
+
+	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0005, "lat": 50.0, "radius_m": 250}), http.StatusCreated, nil)
+	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = 'raw/missing.gpx' WHERE id = $1`, broken); err != nil {
+		t.Fatal(err)
+	}
+	var jobID int64
+	var payload []byte
+	if err := d.pool.QueryRow(ctx,
+		`SELECT id, payload FROM jobs WHERE user_id = $1 AND kind = 'reprivacy' AND state = 'pending'`, me.id).Scan(&jobID, &payload); err != nil {
+		t.Fatal(err)
+	}
+	var j ingest.ReprivacyJob
+	if err := json.Unmarshal(payload, &j); err != nil {
+		t.Fatal(err)
+	}
+	if err := ingest.ProcessReprivacy(ctx, d.pool, d.srv.store, jobID, j); err == nil {
+		t.Fatal("job with a missing original: want an error")
+	}
+	if _, err := d.pool.Exec(ctx, `UPDATE jobs SET state = 'failed' WHERE id = $1`, jobID); err != nil {
+		t.Fatal(err)
+	}
+
+	if d.activity(me, ok).Pending {
+		t.Error("the activity that reprocessed: still Pending")
+	}
+	if !d.activity(me, broken).Pending {
+		t.Error("the activity that failed: no longer Pending, its old geometry back on the map")
+	}
+	jobs := d.reprivacyJobs(me)
+	if len(jobs) != 1 || !slices.Equal(jobs[0].ActivityIDs, []string{broken}) || jobs[0].Retry != 1 {
+		t.Fatalf("after the failure, jobs %+v, want one rerun of the failed activity", jobs)
+	}
+	var later bool
+	if err := d.pool.QueryRow(ctx,
+		`SELECT run_after > NOW() FROM jobs WHERE user_id = $1 AND kind = 'reprivacy' AND state = 'pending'`, me.id).Scan(&later); err != nil || !later {
+		t.Errorf("rerun runs after a delay: %v, %v", later, err)
+	}
+	// The test ran the ingests and renders itself; only the rerun is left.
+	if _, err := d.pool.Exec(ctx, `UPDATE jobs SET state = 'done' WHERE user_id = $1 AND kind <> 'reprivacy'`, me.id); err != nil {
+		t.Fatal(err)
+	}
+	var status coverageStatusResponse
+	d.decode(d.do(me, "GET", "/v1/coverage/status", nil), http.StatusOK, &status)
+	if status.Rendering {
+		t.Error("coverage status: rendering while only a delayed rerun waits")
+	}
+
+	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = $2 WHERE id = $1`, broken, rawKey); err != nil {
+		t.Fatal(err)
+	}
+	d.runReprivacyJob(me)
+	if d.activity(me, broken).Pending {
+		t.Error("after a successful rerun: still Pending")
+	}
+	if near := d.nearestM(broken, 10.0005, 50.0); near < 249 {
+		t.Errorf("after the rerun the track comes within %.0f m of the location", near)
+	}
+}
