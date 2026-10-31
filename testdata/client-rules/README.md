@@ -21,6 +21,7 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `defaultRange` | `visibleDays` (ascending dates), `earliest`, `today` | `{ from, to }` |
 | `pendingChange` | `previous`, `now`, `awaiting` (id sets) | `{ started, finished, left, landed, awaiting }` |
 | `pendingCheck` | `listed`, `awaiting`, `stillPending` (ids) | `{ watched, moved }` |
+| `pendingBatches` | `ids`, `size` | the ids in consecutive batches of at most `size` |
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
 | `panelState` | `activities` (`{ id, activityType, distanceMeters }`), `state` (`checked`, `focused`, `hidden`, `excludedTypes`, `distanceFilter`), `event` | the state after it |
 | `boldTracks` | `checked` (ids), `focused` | ids |

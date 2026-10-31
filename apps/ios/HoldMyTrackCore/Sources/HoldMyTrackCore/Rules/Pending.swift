@@ -38,6 +38,15 @@ public enum PendingDiff {
         return (listed + awaiting).filter { seen.insert($0).inserted }
     }
 
+    /// The most ids one Pending check request may carry (`GET /v1/activities/pending`).
+    public static let batch = 200
+
+    /// [ids] in consecutive batches of at most size, one Pending check request each; the answers
+    /// are read as one. None for no ids.
+    public static func batches(_ ids: [String], size: Int = batch) -> [[String]] {
+        stride(from: 0, to: ids.count, by: size).map { Array(ids[$0..<min($0 + size, ids.count)]) }
+    }
+
     /// Whether the Pending check's answer means the list should be read again: one of the
     /// watched ids is no longer Pending.
     public static func moved(watched: [String], stillPending: [String]) -> Bool {

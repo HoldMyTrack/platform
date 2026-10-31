@@ -76,6 +76,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         let change = PendingDiff.of(previous: Set(input.strings("previous")), now: Set(input.strings("now")), awaiting: Set(input.strings("awaiting")))
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting)]
     },
+    "pendingBatches": { input in .array(PendingDiff.batches(input.strings("ids"), size: input.int("size")).map { .list($0) }) },
     "pendingCheck": { input in
         let watched = PendingDiff.watched(listed: input.strings("listed"), awaiting: input.strings("awaiting"))
         return ["watched": .list(watched), "moved": .bool(PendingDiff.moved(watched: watched, stillPending: input.strings("stillPending")))]

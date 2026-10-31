@@ -30,9 +30,18 @@ class PendingTracker(
     private fun check() {
         val watched = PendingDiff.watched(pendingIds, awaiting)
         if (watched.isEmpty()) return
-        HoldMyTrackApi.pendingActivities(watched) { result ->
-            val still = result.getOrNull()
-            if (still != null && PendingDiff.moved(watched, still)) reload() else schedule()
+        // One request per batch the endpoint accepts; answers arrive on the main thread, and the
+        // last one decides from all of them. A failed batch means polling on.
+        val batches = PendingDiff.batches(watched)
+        val still = HashSet<String>()
+        var outstanding = batches.size
+        var failed = false
+        for (batch in batches) {
+            HoldMyTrackApi.pendingActivities(batch) { result ->
+                result.onSuccess { still += it }.onFailure { failed = true }
+                if (--outstanding > 0) return@pendingActivities
+                if (!failed && PendingDiff.moved(watched, still)) reload() else schedule()
+            }
         }
     }
 

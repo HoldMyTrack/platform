@@ -36,6 +36,17 @@ export function pendingWatched(listed: readonly string[], awaiting: ReadonlySet<
   return [...new Set([...listed, ...awaiting])];
 }
 
+/** The most ids one Pending check request may carry (`GET /v1/activities/pending`). */
+export const PENDING_BATCH = 200;
+
+/** [ids] in consecutive batches of at most [size], one Pending check request each; the answers
+ *  are read as one. None for no ids. */
+export function pendingBatches<T>(ids: readonly T[], size: number = PENDING_BATCH): T[][] {
+  const batches: T[][] = [];
+  for (let i = 0; i < ids.length; i += size) batches.push(ids.slice(i, i + size));
+  return batches;
+}
+
 /** Whether the Pending check's answer means the list should be read again: one of the watched
  *  ids is no longer Pending. */
 export function pendingMoved(watched: readonly string[], stillPending: readonly string[]): boolean {
