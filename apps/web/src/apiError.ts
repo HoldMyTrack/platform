@@ -27,3 +27,10 @@ export function parseErrorBody(text: string, fallback: string): ApiErrorBody {
   }
   return { code: null, message: text };
 }
+
+/** Whether a DELETE's [status] means the thing is gone: deleted now, or already (`404`, removed
+ *  in another tab or on the phone). A group delete or a retry then moves on past it. Android:
+ *  `net/ApiBody.kt`; iOS: `DeleteOutcome`; all run `testdata/client-rules/delete-done.json`. */
+export function deleteDone(status: number): boolean {
+  return (status >= 200 && status < 300) || status === 404;
+}

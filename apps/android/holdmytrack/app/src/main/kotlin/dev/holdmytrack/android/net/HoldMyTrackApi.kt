@@ -658,7 +658,7 @@ object HoldMyTrackApi {
      *  track and its share of fog and heatmap coverage, for good. */
     fun deleteActivity(id: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id).delete().build()
-        call(request, { }, onResult)
+        call(request, { }) { onResult(deleteDone(it)) }
     }
 
     /**
@@ -899,7 +899,7 @@ object HoldMyTrackApi {
     /** `DELETE /v1/photos/{id}` (FR-16.5) — the photo and both its images. */
     fun deletePhoto(id: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/photos/" + id).delete().build()
-        call(request, { }, onResult)
+        call(request, { }) { onResult(deleteDone(it)) }
     }
 
     /** `photo_needs_place` as its own exception, so the Photos tab can tell it from a failure. */
@@ -954,7 +954,7 @@ object HoldMyTrackApi {
     /** `DELETE /v1/private-locations/{id}`. */
     fun deletePrivateLocation(id: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/private-locations/" + id).delete().build()
-        call(request, { }, onResult)
+        call(request, { }) { onResult(deleteDone(it)) }
     }
 
     private fun PrivateLocationJson.toPrivateLocation() = PrivateLocation(id, name, lon, lat, radiusM)
@@ -994,7 +994,7 @@ object HoldMyTrackApi {
     /** `DELETE /v1/stories/{id}` — the Story alone; its activities stay. */
     fun deleteStory(id: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/stories/" + id).delete().build()
-        call(request, { }, onResult)
+        call(request, { }) { onResult(deleteDone(it)) }
     }
 
     /** `POST` ([add]) or `DELETE /v1/stories/{id}/activities` with [activityIds] (FR-14.3): puts
