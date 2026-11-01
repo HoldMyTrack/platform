@@ -92,7 +92,7 @@ No Article 9 special-category data is processed. Heart rate and other body data 
 - **Only what the user ticks comes in.** No source starts ticked, and nothing is imported in bulk (ADR-0039).
 - **No background location or continuous location log.** Recording, Health Connect reads and Spot captures happen only in the foreground.
 - **No health data.** Only exercise sessions and their routes are read from Health Connect, one declared data type.
-- **Photos are stored stripped.** They are re-encoded before upload, so no EXIF data, position included, reaches the server.
+- **Photos are stored stripped.** The file is re-encoded before upload, without EXIF. Its capture time and position are sent to place it; only the time is kept.
 - **A Spot capture sends the place and the time,** not the user's position.
 - **Logs leave the server scrubbed.** Tracks, places, names, emails and IP addresses are removed first.
 
