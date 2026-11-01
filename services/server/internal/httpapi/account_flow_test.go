@@ -42,7 +42,7 @@ func TestAccountFlow(t *testing.T) {
 	d.decode(d.do(me, "GET", "/v1/auth/me", nil), http.StatusOK, nil)
 	d.decode(d.do(me, "POST", "/v1/auth/resend-verification", nil), http.StatusOK, nil)
 	var verified authResponseWithSession
-	d.decode(d.do(account{}, "POST", "/v1/auth/verify-email", map[string]any{"token": d.verificationToken(me)}), http.StatusOK, &verified)
+	d.decode(d.do(me, "POST", "/v1/auth/verify-email", map[string]any{"token": d.verificationToken(me)}), http.StatusOK, &verified)
 	if !verified.EmailVerified {
 		t.Fatalf("verify: %+v", verified)
 	}

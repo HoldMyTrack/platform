@@ -64,6 +64,7 @@ A kept session survives a restart but isn't trusted until the server confirms it
 An unverified account (`docs/SPEC.md` FR-1.8) sees a "check your email" screen instead of the map, whose tiles the server would refuse.
 
 - The screen asks `GET /v1/auth/me` again on every resume and opens the map once the email is verified. A `401` signs out as in FR-1.2.
+- Confirming in the phone's browser ends the app's session (`docs/SPEC.md` FR-1.8), so the app returns to Sign in.
 - Resend shows the server's answer as sent, its hourly limit included.
 - Settings › Sync, which Health Connect can open without the map, shows only a notice for such an account.
 - Changing the address is web-only: the phone keeps recordings and Sync state by email (FR-5.3), which a change would orphan. A demo account is never gated.

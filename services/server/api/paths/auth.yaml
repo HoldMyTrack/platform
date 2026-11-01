@@ -91,6 +91,7 @@ auth_reset-password:
 auth_verify-email:
   post:
     summary: Verify an address with a verification link's token, and sign in
+    description: An account's first verification signs in only a caller already signed in to it, and ends the account's other sessions; any other caller gets 204 and signs in with the password (SPEC FR-1.8).
     security: []
     requestBody:
       required: true
@@ -104,6 +105,8 @@ auth_verify-email:
               token: { type: string }
     responses:
       "200": { $ref: "../components/responses.yaml#/Session" }
+      "204":
+        description: Verified, not signed in
       "400": { $ref: "../components/responses.yaml#/Error" }
       "409": { $ref: "../components/responses.yaml#/Error" }
 auth_providers:
