@@ -48,6 +48,14 @@ internal class WaitingDbHelper(context: Context) :
 
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
+    // An older build opening a newer database (a Play rollback) starts it over: it only keeps
+    // what the next Load reads from Health Connect again. The default throws on every open.
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+        db.execSQL("DROP TABLE IF EXISTS $TABLE")
+        db.execSQL("DROP TABLE IF EXISTS $CHECKED_TABLE")
+        onCreate(db)
+    }
+
     companion object {
         const val TABLE = "waiting"
         const val CHECKED_TABLE = "waiting_checked"
