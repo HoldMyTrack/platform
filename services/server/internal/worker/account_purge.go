@@ -83,8 +83,6 @@ func purgeAccount(ctx context.Context, pool *pgxpool.Pool, store *storage.Store,
 
 	prefixes := []string{
 		"raw/" + userID + "/", "fog/" + userID + "/", "heatmap/" + userID + "/", "exports/" + userID + "/",
-		// imports/: archives uploaded before .zip import was removed (ADR-0039).
-		"imports/" + userID + "/",
 	}
 	// Side by side: each prefix is a listing and a bulk delete, round trips to object storage,
 	// and a big account's fog/ and heatmap/ hold thousands of tiles.
