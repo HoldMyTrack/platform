@@ -50,7 +50,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 | Data | Source | Stored at | Kept for |
 | --- | --- | --- | --- |
 | Email, password hash, Google/Facebook/Apple id and name; Apple's refresh token, kept only to revoke the link | User, sign-in provider | Database (DigitalOcean, US) | Until the account is deleted |
-| Display name, avatar re-encoded without EXIF, country, timezone, language | User | Database; avatar image in R2 | Until the account is deleted |
+| Display name, avatar without EXIF, country, timezone, language | User | Database; avatar image in R2 | Until the account is deleted |
 | Activity tracks: points, times, elevation, derived stats | Uploads, Health Connect, recording | Database, map tiles in R2 | Until the activity or account is deleted |
 | Original uploads, unclipped, points inside Private locations included | Uploads, Health Connect, recording | Cloudflare R2 | Until the activity or account is deleted; no expiry yet |
 | Private locations (circles around home, work) | User | Database | Until deleted |
@@ -58,6 +58,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 | Photos, resized and stripped of EXIF | User | Cloudflare R2 | Until deleted |
 | Spot captures (place and time, not position) | Android app | Database | Until deleted |
 | Import records | System | Database | 90 days after the import finishes |
+| Sessions and emailed links, with a pending address | System | Database | Until expiry: 30 days, links 1 day |
 | The day an account last used the service, the website and the Android app, and the app's version | System | Database | Until the account is deleted |
 | Server logs with account ids, no tracks or emails | System | Server, then Grafana Cloud (US) | Rotated on the server; 14 days at Grafana |
 | Daily service statistics: counts, sums and percentiles across all accounts, never one account's; country groups under 5 accounts folded into one | System | Database; the newest day also at Grafana Cloud (US) | Indefinitely; 14 days at Grafana |
@@ -95,8 +96,6 @@ No Article 9 special-category data is processed. Heart rate and other body data 
 - **Photos are stored stripped.** The file is re-encoded before upload, without EXIF. Its capture time and position are sent to place it; only the time is kept.
 - **A Spot capture sends the place and the time,** not the user's position.
 - **Logs leave the server scrubbed.** Tracks, places, names, emails and IP addresses are removed first.
-
-**The one retention beyond what the map needs** is the original upload (section 2), with the points inside Private locations (R2).
 
 ## 4. Data subjects' rights
 
