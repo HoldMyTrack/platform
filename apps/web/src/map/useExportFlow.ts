@@ -5,6 +5,8 @@ import { exportFramedImage, maxExportSide, type ExportViewState } from './export
 import { DEFAULT_CUSTOM_SIZE, outputSize, usableCustomSize, type CustomSizeId, type ExportChoice } from './exportViewfinder';
 import type { Rect } from './exportViewfinder';
 import { t } from '../i18n';
+import { todayIn } from '../ui/dateMath';
+import { activityTimeZone } from '../ui/timeZone';
 
 export interface ExportControls {
   flow: ExportFlow;
@@ -63,7 +65,8 @@ export function useExportFlow(map: MapLibreMap | null, container: RefObject<HTML
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `holdmytrack-${new Date().toISOString().slice(0, 10)}.png`;
+      // Named for the account's day (FR-1.7), not UTC's: at 8 pm in New York, UTC is tomorrow.
+      a.download = `holdmytrack-${todayIn(activityTimeZone(undefined))}.png`;
       document.body.appendChild(a);
       a.click();
       a.remove();

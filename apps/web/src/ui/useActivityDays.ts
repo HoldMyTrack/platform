@@ -206,6 +206,11 @@ export function useActivityDays(windowDays: number, selection: DateRange | null)
     setAnchor(next >= maxStart ? null : days[next]!.date);
     setRevealing(null);
   }, [revealing, ready, days, hasEarlier, extendEarlier, maxStart, windowDays]);
+  // A page that failed (shown as the error) won't arrive by itself: the reveal waiting on it is
+  // dropped rather than left pending, which would hold the window where it is for good.
+  useEffect(() => {
+    if (error !== null) setRevealing(null);
+  }, [error]);
   const reveal = useCallback((day: string) => setRevealing(day), []);
 
   const dates = useMemo(() => days.map((day) => day.date), [days]);
