@@ -233,7 +233,7 @@ unneeded_references() {
 }
 oldest_local=$(ls -1 "$BACKUP_DIR/postgres"/holdmytrack-*.dump | sort | head -n 1 | xargs basename)
 oldest_local=${oldest_local#holdmytrack-}; oldest_local=${oldest_local%.dump}
-{ ls -1 "$BACKUP_DIR/postgres/reference" | grep '^holdmytrack-reference-.*\.dump$' || true; } | sort | unneeded_references "$oldest_local" |
+find "$BACKUP_DIR/postgres/reference" -maxdepth 1 -name 'holdmytrack-reference-*.dump' -exec basename {} \; | sort | unneeded_references "$oldest_local" |
   while read -r old; do rm -f -- "$BACKUP_DIR/postgres/reference/$old"; done
 prune_older() { rclone delete "$1" --min-age "$2" || [[ $? == 3 ]]; }  # 3: the folder isn't there yet
 prune_older backup:postgres/daily "${KEEP_DAILY_DAYS}d"

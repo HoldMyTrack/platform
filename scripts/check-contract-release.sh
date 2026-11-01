@@ -34,9 +34,16 @@ while (( $# )); do
   esac
 done
 
-healthz=$(curl -fsS --max-time 20 "${HEALTHZ_URL:-https://holdmytrack.com/healthz}")
-android_floor=$(jq -er '.min_android_build // 0' <<<"$healthz")
-ios_floor=$(jq -er '.min_ios_build // 0' <<<"$healthz")
+# Production down shouldn't fail an unrelated pull request: after three tries the floors are 0,
+# which checks every tagged release, stricter, so nothing slips through while it's away.
+if healthz=$(curl -fsS --retry 2 --retry-all-errors --max-time 20 "${HEALTHZ_URL:-https://holdmytrack.com/healthz}"); then
+  android_floor=$(jq -er '.min_android_build // 0' <<<"$healthz")
+  ios_floor=$(jq -er '.min_ios_build // 0' <<<"$healthz")
+else
+  echo "::warning title=Production unreachable::checking every tagged release, not only those its minimum lets in"
+  android_floor=0
+  ios_floor=0
+fi
 floor_of() { if [[ $1 == ios ]]; then echo "$ios_floor"; else echo "$android_floor"; fi; }
 
 work=$(mktemp -d)
@@ -44,7 +51,7 @@ trap 'rm -rf "$work"' EXIT
 
 # contract_at <ref> <name>: the contract at <ref>, in $work/<name>.
 contract_at() {
-  rm -rf "$work/services" "$work/$2"
+  rm -rf "${work:?}/services" "${work:?}/$2"
   git archive "$1" services/server/api | tar -x -C "$work" && mv "$work/services/server/api" "$work/$2"
 }
 
@@ -63,9 +70,8 @@ if [[ -n $target ]]; then
   for app in $apps; do
     var=MIN_$(tr '[:lower:]' '[:upper:]' <<<"$app")_BUILD
     floor=$(floor_of "$app")
-    builds=$(git tag -l "$app/*" | sed "s#^$app/##" | sort -n)
+    builds=$(git tag -l "$app/*" | sed "s#^$app/##" | grep -E '^[0-9]+$' | sort -n)
     broken=0
-    found=
     for build in $builds; do
       if (( build < floor )); then continue; fi
       contract_at "$app/$build" release
@@ -103,6 +109,8 @@ for app in $apps; do
   floor=$(floor_of "$app")
   for tag in $(git tag -l "$app/*"); do
     build=${tag#*/}
+    # A tag's text reaches arithmetic below, which would run a command substitution in it.
+    [[ $build =~ ^[0-9]+$ ]] || continue
     if (( build < floor )); then continue; fi
     contract_at "$tag" release
     added=$(comm -13 <(breaks "$work/release/openapi.yaml" "$work/base/openapi.yaml") \

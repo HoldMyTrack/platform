@@ -56,3 +56,6 @@ xcuserdata/
 # swift test's build output for apps/ios/HoldMyTrackCore.
 /apps/ios/HoldMyTrackCore/.build/
 /apps/ios/HoldMyTrackCore/.swiftpm/
+
+# Python's bytecode cache (ops/grafana/apply.py).
+__pycache__/

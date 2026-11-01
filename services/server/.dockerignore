@@ -1,0 +1,6 @@
+# Not part of the build: test binaries and coverage files left by go test, which the Dockerfile's
+# COPY . . would otherwise send to the builder on every deploy.
+*.test
+*.out
+*.prof
+coverage.*

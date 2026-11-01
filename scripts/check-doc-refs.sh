@@ -10,6 +10,7 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
 if [ "$#" -eq 0 ]; then
+  # shellcheck disable=SC2046 # one argument per tracked file
   set -- $(git ls-files | grep -vE '^docs/adr/|\.(png|jpg|jpeg|gif|webp|ico|pmtiles|pbf|woff2?|ttf|otf|jar|gz|zip|fit|tcx|gpx|keystore)$|(^|/)package-lock\.json$|^DOC_REWORK\.md$')
 fi
 

@@ -1,3 +1,4 @@
+# shellcheck shell=bash
 # Sourced by the OpenStreetMap extract scripts (spots-extract.sh, bike-paths-extract.sh), not
 # run on its own: downloads an OSM file to the current directory as source.osm.pbf and checks
 # it. Two scripts run with the same work directory share one download.
@@ -9,6 +10,7 @@
 # file a download's bytes belong to: once latest-* has moved on, resuming would append another
 # file's tail, so a download of another file stops the run instead, saying how to reuse it.
 
+# shellcheck disable=SC2034 # read by the scripts that source this
 PLANET_URL=https://planet.openstreetmap.org/pbf/planet-latest.osm.pbf
 
 log() { echo "$(date -u +%FT%TZ) $*"; }

@@ -9,6 +9,10 @@ on:
     types: [opened, synchronize, reopened, labeled, unlabeled]
     paths: ["services/server/api/**", "scripts/check-contract-break.sh", "scripts/check-contract-release.sh", ".github/workflows/contract.yml"]
 
+# The token reads the repository and nothing else; no job here writes to it.
+permissions:
+  contents: read
+
 concurrency:
   group: contract-${{ github.ref }}
   cancel-in-progress: true
