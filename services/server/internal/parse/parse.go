@@ -142,3 +142,22 @@ func WrapLon(lon float64) float64 {
 	}
 	return lon - 360*math.Floor((lon+180)/360)
 }
+
+// zonelessLayouts are the timestamp forms some exporters write without a zone; they are read as
+// UTC, the zone GPX and TCX both specify.
+var zonelessLayouts = []string{"2006-01-02T15:04:05.999999999", "2006-01-02T15:04:05"}
+
+// parseTime reads a GPX or TCX <time>: RFC 3339, else a zoneless timestamp as UTC. Pretty-printed
+// files put whitespace around it, which is trimmed.
+func parseTime(text string) (time.Time, bool) {
+	text = strings.TrimSpace(text)
+	if t, err := time.Parse(time.RFC3339Nano, text); err == nil {
+		return t, true
+	}
+	for _, layout := range zonelessLayouts {
+		if t, err := time.ParseInLocation(layout, text, time.UTC); err == nil {
+			return t, true
+		}
+	}
+	return time.Time{}, false
+}

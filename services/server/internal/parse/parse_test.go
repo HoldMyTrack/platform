@@ -237,3 +237,64 @@ func TestParseGPXRouteOnly(t *testing.T) {
 		t.Fatalf("points = %d, want 2", len(act.Points))
 	}
 }
+
+// Pretty-printed files put whitespace around <time> and <ele>, and some exporters write a time
+// with no zone, read as UTC: every point keeps its time and elevation.
+func TestParseGPXWhitespaceAndZonelessTimes(t *testing.T) {
+	gpx := `<gpx><trk><trkseg>
+<trkpt lat="50.0" lon="10.0">
+  <ele>
+    120.5
+  </ele>
+  <time>
+    2024-05-01T10:00:00Z
+  </time>
+</trkpt>
+<trkpt lat="50.001" lon="10.0"><time>2024-05-01T10:01:00</time></trkpt>
+</trkseg></trk></gpx>`
+	act, err := ParseGPX(strings.NewReader(gpx))
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []time.Time{time.Date(2024, 5, 1, 10, 0, 0, 0, time.UTC), time.Date(2024, 5, 1, 10, 1, 0, 0, time.UTC)}
+	for i, p := range act.Points {
+		if !p.Time.Equal(want[i]) {
+			t.Errorf("point %d time %v, want %v", i, p.Time, want[i])
+		}
+	}
+	if e := act.Points[0].Elevation; e == nil || *e != 120.5 {
+		t.Errorf("elevation %v, want 120.5", e)
+	}
+}
+
+// Only a <trk>'s own <type> names the activity: a waypoint's ("Summit"), even one after the
+// track, doesn't.
+func TestParseGPXWaypointTypeIsNotTheActivitys(t *testing.T) {
+	gpx := `<gpx><trk><type>Hiking</type><trkseg>
+<trkpt lat="50.0" lon="10.0"><time>2024-05-01T10:00:00Z</time></trkpt>
+</trkseg></trk>
+<wpt lat="50.0" lon="10.0"><name>Top</name><type>Summit</type></wpt></gpx>`
+	act, err := ParseGPX(strings.NewReader(gpx))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if act.ActivityType != "hiking" {
+		t.Errorf("type %q, want hiking", act.ActivityType)
+	}
+}
+
+// A Trackpoint with a latitude and no longitude is skipped, not put on the prime meridian.
+func TestParseTCXSkipsAPointMissingACoordinate(t *testing.T) {
+	tcx := `<TrainingCenterDatabase><Activities><Activity Sport="Running"><Lap><Track>
+<Trackpoint><Time>2024-05-01T10:00:00Z</Time><Position><LatitudeDegrees>50.0</LatitudeDegrees><LongitudeDegrees>10.0</LongitudeDegrees></Position></Trackpoint>
+<Trackpoint><Time>2024-05-01T10:01:00Z</Time><Position><LatitudeDegrees>50.001</LatitudeDegrees></Position></Trackpoint>
+<Trackpoint><Time>2024-05-01T10:02:00Z</Time><Position><LatitudeDegrees>0</LatitudeDegrees><LongitudeDegrees>0</LongitudeDegrees></Position></Trackpoint>
+</Track></Lap></Activity></Activities></TrainingCenterDatabase>`
+	act, err := ParseTCX(strings.NewReader(tcx))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(act.Points) != 2 || act.Points[0].Lon != 10.0 || act.Points[1].Lat != 0 {
+		t.Errorf("points %+v, want the first and the one at (0, 0), not the one missing its longitude", act.Points)
+	}
+}

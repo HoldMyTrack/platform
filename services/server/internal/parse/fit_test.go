@@ -205,3 +205,51 @@ func TestParseFITInvalidPositionIsDropped(t *testing.T) {
 		t.Fatalf("err = %v, want ErrNoPoints", err)
 	}
 }
+
+// A record with only enhanced_altitude (field 78), as many newer devices write, still has its
+// elevation; given both, the enhanced one wins.
+func TestParseFITEnhancedAltitude(t *testing.T) {
+	build := func(withAltitude bool) []byte {
+		var data bytes.Buffer
+		data.WriteByte(0x40)
+		data.Write([]byte{0x00, 0x00})
+		binary.Write(&data, binary.LittleEndian, uint16(20))
+		n := byte(4)
+		if withAltitude {
+			n = 5
+		}
+		data.WriteByte(n)
+		data.Write([]byte{0x00, 4, 0x85})
+		data.Write([]byte{0x01, 4, 0x85})
+		if withAltitude {
+			data.Write([]byte{0x02, 2, 0x84}) // altitude
+		}
+		data.Write([]byte{0x4E, 4, 0x86}) // enhanced_altitude (78)
+		data.Write([]byte{0xFD, 4, 0x86})
+		data.WriteByte(0x00)
+		binary.Write(&data, binary.LittleEndian, int32(600000000))
+		binary.Write(&data, binary.LittleEndian, int32(100000000))
+		if withAltitude {
+			binary.Write(&data, binary.LittleEndian, uint16((100+500)*5)) // 100 m
+		}
+		binary.Write(&data, binary.LittleEndian, uint32((1234+500)*5)) // 1234 m
+		binary.Write(&data, binary.LittleEndian, uint32(1000000000))
+		body := data.Bytes()
+		var hdr bytes.Buffer
+		hdr.WriteByte(12)
+		hdr.WriteByte(0x10)
+		binary.Write(&hdr, binary.LittleEndian, uint16(100))
+		binary.Write(&hdr, binary.LittleEndian, uint32(len(body)))
+		hdr.WriteString(".FIT")
+		return append(hdr.Bytes(), body...)
+	}
+	for _, withAltitude := range []bool{false, true} {
+		act, err := ParseFIT(bytes.NewReader(build(withAltitude)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if e := act.Points[0].Elevation; e == nil || math.Abs(float64(*e)-1234) > 0.01 {
+			t.Errorf("altitude field present %v: elevation %v, want 1234", withAltitude, e)
+		}
+	}
+}

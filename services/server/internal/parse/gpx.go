@@ -32,7 +32,8 @@ func ParseGPX(r io.Reader) (Activity, error) {
 	var curKind string  // "trkpt" or "rtept"
 	var curValid bool   // cur had both a readable lat and lon
 	var curField string // which child element of the current trkpt we're inside, if any
-	var inType bool     // inside <trk><type> — a sibling of trkseg, not a per-point field
+	var inType bool     // inside a <trk>'s or <rte>'s own <type>
+	var open []string   // the elements the decoder is inside, innermost last
 
 	for {
 		tok, err := dec.Token()
@@ -45,6 +46,11 @@ func ParseGPX(r io.Reader) (Activity, error) {
 
 		switch t := tok.(type) {
 		case xml.StartElement:
+			parent := ""
+			if len(open) > 0 {
+				parent = open[len(open)-1]
+			}
+			open = append(open, t.Name.Local)
 			switch t.Name.Local {
 			case "trkseg":
 				trkSegs = append(trkSegs, nil)
@@ -75,11 +81,9 @@ func ParseGPX(r io.Reader) (Activity, error) {
 			case "type":
 				// The optional GPX track type ("Hiking", "Running", ...) — IMPLEMENTATION.md
 				// §4.7: activity_type is whatever the source reports, not a controlled
-				// vocabulary. Only meaningful outside a point (cur == nil); some extension
-				// schemas add their own per-point "type"-like fields this isn't after.
-				if cur == nil {
-					inType = true
-				}
+				// vocabulary. Only a <trk>'s or <rte>'s own: a <wpt> has a <type> too
+				// ("Summit"), and extension schemas add per-point ones.
+				inType = parent == "trk" || parent == "rte"
 			}
 		case xml.CharData:
 			if inType {
@@ -94,16 +98,19 @@ func ParseGPX(r io.Reader) (Activity, error) {
 			text := string(t)
 			switch curField {
 			case "ele":
-				if v, err := strconv.ParseFloat(text, 32); err == nil {
+				if v, err := strconv.ParseFloat(strings.TrimSpace(text), 32); err == nil {
 					f := float32(v)
 					cur.Elevation = &f
 				}
 			case "time":
-				if ts, err := time.Parse(time.RFC3339, text); err == nil {
+				if ts, ok := parseTime(text); ok {
 					cur.Time = ts
 				}
 			}
 		case xml.EndElement:
+			if len(open) > 0 {
+				open = open[:len(open)-1]
+			}
 			switch t.Name.Local {
 			case "ele", "time":
 				curField = ""
