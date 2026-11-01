@@ -36,16 +36,6 @@ object FileImports {
      *  refused — or why a picked file wasn't sent. */
     data class Note(val text: String, val error: Boolean)
 
-    /** The web's cap on files picked at once (`docs/SPEC.md` FR-3.1). */
-    const val MAX_FILES = 20
-
-    /** The server's limits (`services/server/internal/httpapi/server.go`): checked here too, so
-     *  a file it would refuse isn't sent first. */
-    private const val MAX_FILE_BYTES = 16L shl 20
-
-    private val ACCEPTED = Regex("""\.(gpx|fit|tcx)$""", RegexOption.IGNORE_CASE)
-    private val ZIP = Regex("""\.zip$""", RegexOption.IGNORE_CASE)
-
     private class Pending(val uri: Uri, val transfer: Transfer)
 
     private val main = Handler(Looper.getMainLooper())
@@ -76,38 +66,31 @@ object FileImports {
     private fun changed() = listeners.toList().forEach { it() }
 
     /**
-     * Queues [uris] the way the web's `enqueue` does. More than [MAX_FILES] files are refused
-     * together; a `.zip`, a file of any other kind, or one past the server's size limit is
-     * named in a note rather than sent.
+     * Queues [uris] the way the web's upload does ([UploadPlan]): what it refuses is named in a
+     * note rather than sent.
      */
     fun enqueue(context: Context, uris: List<Uri>) {
         val res = context.resources
         _notes.clear()
-        val picked = uris.map { uri -> Picked(uri, nameOf(context, uri), sizeOf(context, uri)) }
-
-        for (other in picked.filterNot { ACCEPTED.containsMatchIn(it.name) }) {
-            val refusal = if (ZIP.containsMatchIn(other.name)) R.string.upload_zip_refused else R.string.upload_wrong_type
-            _notes += Note(res.getString(refusal, other.name), error = true)
-        }
-        var files = picked.filter { ACCEPTED.containsMatchIn(it.name) }
-        if (files.size > MAX_FILES) {
-            _notes += Note(res.getString(R.string.upload_too_many, files.size), error = true)
-            files = emptyList()
-        }
-        for (file in files) {
-            if (file.size > MAX_FILE_BYTES) {
-                _notes += Note(res.getString(R.string.upload_too_large, file.name, MAX_FILE_BYTES shr 20), error = true)
-                continue
+        val picked = uris.map { uri -> UploadPlan.Picked(nameOf(context, uri), sizeOf(context, uri)) }
+        val plan = UploadPlan.of(picked)
+        for (refusal in plan.refusals) {
+            val text = when (refusal) {
+                is UploadPlan.Refusal.Zip -> res.getString(R.string.upload_zip_refused, refusal.name)
+                is UploadPlan.Refusal.WrongType -> res.getString(R.string.upload_wrong_type, refusal.name)
+                is UploadPlan.Refusal.TooMany -> res.getString(R.string.upload_too_many, refusal.count)
+                is UploadPlan.Refusal.TooLarge -> res.getString(R.string.upload_too_large, refusal.name, UploadPlan.MAX_FILE_BYTES shr 20)
             }
-            val transfer = Transfer(file.name, file.size)
+            _notes += Note(text, error = true)
+        }
+        for (i in plan.send) {
+            val transfer = Transfer(picked[i].name, picked[i].size)
             _transfers += transfer
-            queue += Pending(file.uri, transfer)
+            queue += Pending(uris[i], transfer)
         }
         changed()
         if (!running) sendNext(context.applicationContext)
     }
-
-    private class Picked(val uri: Uri, val name: String, val size: Long)
 
     private fun sendNext(context: Context) {
         val next = queue.removeFirstOrNull()
