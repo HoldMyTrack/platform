@@ -148,18 +148,21 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 7a — The map
 
-`apps/android/docs/SPEC.md` FR-2.1–FR-2.6 and FR-2.9.
+`apps/android/docs/SPEC.md` FR-2.1–FR-2.6, FR-2.9 and FR-2.12.
 
 - [ ] **7a.1 Two documents**
   - Fetch `GET /v1/map/style/{flavor}?lang=` and `GET /v1/map/layers?flavor=` in parallel, keep both with their ETags, draw the kept pair at once on a later launch and revalidate; fetch the style again when the two carry different builds (ADR-0048). Insert the layers by `layer-insertion.json`'s rule, binding `["var", …]` from the app's state.
   - The bearer token on tile requests to the API's origin only, through MapLibre's network configuration.
   - Done when: a server deploy that changes a layer's color changes it on the phone without an app release.
 - [ ] **7a.2 Modes, Layers and framing**
-  - Normal, Fog of War and Heatmap; the Layers menu; first framing; the empty account's pointer to Sync; attribution kept visible; Find my location; theme and language reloading the style and keeping the camera.
-  - Done when: `apps/android/docs/SPEC.md` FR-2.2–FR-2.5 hold on iOS.
+  - Normal, Fog of War and Heatmap; the Layers menu; first framing; the empty account's pointer to Sync; attribution kept visible; Find my location; theme and language reloading the style and keeping the camera; the basemap's loading and unreachable notice (root `docs/SPEC.md` FR-4.5).
+  - Done when: `apps/android/docs/SPEC.md` FR-2.2–FR-2.5 hold on iOS, and `ios` is in `testdata/client-rules/basemap-status.json`'s `clients` with its cases passing.
 - [ ] **7a.3 Tab bar and date range**
   - Map, Stories, the record button, Sync and You (`apps/android/docs/SPEC.md` FR-2.9), each keeping its state. The date slider (`apps/android/docs/SPEC.md` FR-2.6) from the slider rules.
   - Done when: a picked range survives a trip to every tab and a rotation.
+- [ ] **7a.4 Tour**
+  - The first-run tour and its three cards (`apps/android/docs/SPEC.md` FR-2.12), from the `tour-*` rules: which steps show, the camera each one moves to, and what restores after.
+  - Done when: it runs as Android's on a new account and the demo, and `ios` is in every `testdata/client-rules/tour-*.json`'s `clients` with its cases passing.
 
 ## Phase 7b — Panel, editors, Spots, photos, export
 
