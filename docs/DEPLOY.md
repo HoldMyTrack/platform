@@ -338,19 +338,20 @@ An iOS build is turned away the same way, with `MIN_IOS_BUILD`, checked with `-A
 
 ## 11. Backups and the restore drill
 
-`scripts/backup.sh` runs nightly and before each deploy with migrations; `scripts/restore-drill.sh` runs monthly and proves the copies restore. Their header comments say what each dump holds and leaves out, how reference tables are dumped apart, and the backup bucket's layout and retention. An account deleted on request stays in the backups for up to 8 weeks.
+`scripts/backup.sh` runs nightly and before each deploy with migrations; `scripts/restore-drill.sh` runs monthly and proves the copies restore. Their header comments say what each dump holds and leaves out, how reference tables are dumped apart, and the backup bucket's layout and retention. An account deleted on request stays in the backups for up to 8 weeks. A run that would move more than a tenth of the objects mirror to `objects-deleted/` stops before syncing, and the backup alert fires; after a deletion meant to be that large, run it once with `BACKUP_ALLOW_SHRINK=1`.
 
 **Set up.**
 
 1. Create a second private R2 bucket (e.g. `holdmytrack-backups`) and a token with **Object Read & Write** on it alone. Never reuse the app's token, and never give this one the app bucket.
 2. Fill in `.env.prod`'s `BACKUP_*` values. Leave `BACKUP_S3_ENDPOINT` empty when both buckets are in one Cloudflare account.
-3. Run `./scripts/backup.sh --nightly`, then `./scripts/restore-drill.sh`. The drill restores the newest nightly dump, so the first run needs `--nightly`. The first backup copies every object and takes longest.
-4. Schedule both in `/etc/cron.d/holdmytrack-backup`:
+3. On the backup bucket's own **Settings** tab, in the **Bucket lock rules** card (or with `wrangler r2 bucket lock add`), add one rule per prefix, so the token on this host can't delete a copy before its time: `postgres/daily/` 13 days, `postgres/weekly/` 55, `postgres/manual/` 2, `postgres/reference/` 55, `objects-deleted/` 29. Each is a day short of `backup.sh`'s retention, which prunes at the full age. Never lock `objects/`: each sync moves from it.
+4. Run `./scripts/backup.sh --nightly`, then `./scripts/restore-drill.sh`. The drill restores the newest nightly dump, so the first run needs `--nightly`. The first backup copies every object and takes longest.
+5. Schedule both in `/etc/cron.d/holdmytrack-backup`:
    ```
    17 3 * * * root /srv/holdmytrack/scripts/backup.sh --nightly >> /var/log/holdmytrack-backup.log 2>&1
    47 4 1 * * root /srv/holdmytrack/scripts/restore-drill.sh >> /var/log/holdmytrack-backup.log 2>&1
    ```
-5. Rotate the log in `/etc/logrotate.d/holdmytrack-backup`. On Ubuntu, `su` is required, or logrotate skips the file as insecure. Check with `logrotate -d /etc/logrotate.d/holdmytrack-backup`.
+6. Rotate the log in `/etc/logrotate.d/holdmytrack-backup`. On Ubuntu, `su` is required, or logrotate skips the file as insecure. Check with `logrotate -d /etc/logrotate.d/holdmytrack-backup`.
    ```
    /var/log/holdmytrack-backup.log {
        su root root

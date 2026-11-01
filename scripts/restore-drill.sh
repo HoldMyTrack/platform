@@ -123,6 +123,14 @@ else
   : > "$work/lost"
 fi
 log "objects: $(wc -l < "$work/expected" | tr -d ' ') referenced, $(wc -l < "$work/lost" | tr -d ' ') not in the backup"
+# A day's deletions since the dump account for a few found only in objects-deleted/; many mean a
+# sync moved the mirror there (backup.sh's shrink guard), and they go once that folder is purged.
+expected_count=$(wc -l < "$work/expected" | tr -d ' ')
+rescued=$(( $(wc -l < "$work/missing" | tr -d ' ') - $(wc -l < "$work/lost" | tr -d ' ') ))
+rescue_limit=$(( expected_count / 50 ))
+(( rescue_limit < 50 )) && rescue_limit=50
+(( rescued <= rescue_limit )) ||
+  fail "$rescued objects the restored database refers to are only in objects-deleted/, which is purged after 30 days: has a sync moved the mirror? Copy them back into objects/."
 if [[ -s "$work/lost" ]]; then
   # Missing from the app bucket too means the database already pointed at nothing — a defect
   # to look into, but not one a better backup would have saved.
