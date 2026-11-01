@@ -58,10 +58,6 @@ erDiagram
 
 No `tier` column (ADR-0031). The demo account is a row recognized by its fixed id (§4.10). `password_hash` is NULL for an account that signs in only through `user_identities`. `map_version` only goes up (§4.2.6). `is_admin` is written only by `set-admin` (§4.20). `deleted_at` marks a closed account until the purge deletes the row (§4.28). A NULL `country` means Settings was never saved, which is the first-run gate (FR-1.7); a NULL `locale` means automatic.
 
-### 3.2 `connections`
-
-Path 1's OAuth state; nothing writes it yet. `UNIQUE (provider, provider_user_id)` keeps two accounts from connecting one provider account and both ingesting its webhooks. Disconnecting must delete the synced data, not only this row (§7).
-
 ### 3.3 `activities`
 
 Idempotency is `idx_activities_dedupe` on `(user_id, source, external_id)` plus the persist step's `ON CONFLICT` (§4.0). `trajectory` is simplified display geometry, and coverage never comes from it. Its M is epoch seconds, which photos are placed by (§3.22), and its longitudes continue past ±180 (§4.1). A NULL `trajectory` has one cause: the track lies entirely inside Private locations. `split_group` and `origin_id` have no foreign key: a split group outlives its first row (§4.7.8) and a copy outlives its original (§3.25). No bbox column: PostGIS has no default GiST operator class for `box2d`, and the GiST index on `trajectory` already serves `&&`.

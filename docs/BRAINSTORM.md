@@ -84,6 +84,6 @@ Garmin users come in through file upload (Path 3, `VISION.md` §4.1); no Garmin 
 No connector is planned before launch; which services to connect is decided from what people ask for after it, Wahoo and COROS being the likeliest (`VISION.md` §4.1). Any of them would take:
 
 * A partner-API application per provider, filed as soon as one is decided, since approval takes time.
-* Provider-agnostic OAuth scaffolding: authorize, callback and token refresh on the `connections` table (`IMPLEMENTATION.md` §3.2), with a picker that imports only what the user ticks (ADR-0039), which is how a connector's history would arrive.
+* Provider-agnostic OAuth scaffolding: authorize, callback and token refresh, with each provider account connectable to one account only, so two never both ingest its webhooks, and a picker that imports only what the user ticks (ADR-0039), which is how a connector's history would arrive.
 * Deauthorization deletion shipped with each connector; Wahoo and COROS require it contractually (`VISION.md` §7).
 * Connect and disconnect on the web's Sync page, `/sync` (`IMPLEMENTATION.md` §4.0), and, once token refresh runs on a schedule, a last-synced status beside Health Connect's and GPS Logger's rows.
