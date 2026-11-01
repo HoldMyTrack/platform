@@ -102,6 +102,9 @@ type authResponse struct {
 	// Locale is the account's language (migrations/0001_users_and_auth.sql), "" for automatic —
 	// the web app then follows the browser's.
 	Locale string `json:"locale"`
+	// UnitSystem is "imperial" or "metric", from Country (web.Imperial): decided here, so every
+	// client shows the units the server's own pages do (ADR-0047).
+	UnitSystem string `json:"unit_system"`
 }
 
 // authResponseWithSession wraps authResponse with the freshly minted session id, for the
@@ -157,7 +160,16 @@ func (s *Server) loadAuthResponse(ctx context.Context, userID string) (authRespo
 		AvatarURL:     avatarURL,
 		Timezone:      timezone,
 		Locale:        locale,
+		UnitSystem:    unitSystem(country),
 	}, nil
+}
+
+// unitSystem is the Account's unit_system for country.
+func unitSystem(country string) string {
+	if web.Imperial(country) {
+		return "imperial"
+	}
+	return "metric"
 }
 
 func decodeAuthRequest(r *http.Request) (authRequest, error) {

@@ -380,7 +380,7 @@ flowchart TD
 
 ### 4.8 Activity graph — a private, per-user contribution grid
 
-`/profile` (FR-7) is server-rendered from three queries however many years it shows (`profile_page.go`): the day histogram over the whole history, the earliest activity and Trends. Every year's cards are derived in Go from local-day buckets (§4.30), so they match the SQL stats. `internal/web/format.go` ports the web's `format.ts`/`units.ts` and changes with them. Shading is a count or distance quantiles of that year's active days, never a composite effort score, which would need a training-load formula. `GET /v1/activities/graph-stats` remains for API clients; its streak is a gaps-and-islands query.
+`/profile` (FR-7) is server-rendered from three queries however many years it shows (`profile_page.go`): the day histogram over the whole history, the earliest activity and Trends. Every year's cards are derived in Go from local-day buckets (§4.30), so they match the SQL stats. `internal/web/format.go` ports the web's `format.ts` and changes with it; its `Imperial` decides every client's units, sent as the Account's `unit_system`. Shading is a count or distance quantiles of that year's active days, never a composite effort score, which would need a training-load formula. `GET /v1/activities/graph-stats` remains for API clients; its streak is a gaps-and-islands query.
 
 ### 4.9 Accounts and sign-in
 

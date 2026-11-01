@@ -41,6 +41,8 @@ internal data class AccountJson(
     val timezone: String,
     val locale: String,
     @SerialName("avatar_url") val avatarUrl: String,
+    /** "imperial" or "metric", decided by the server from [country] (ADR-0047). */
+    @SerialName("unit_system") val unitSystem: String = "metric",
 )
 
 /** The token half of a session response; the account half is [AccountJson], read from the same

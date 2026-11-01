@@ -33,12 +33,15 @@ struct AccountJSON: Codable, Sendable, Equatable {
     let timezone: String
     let locale: String
     let avatarURL: String
+    /// "imperial" or "metric", decided by the server from country (ADR-0047).
+    let unitSystem: String
 
     enum CodingKeys: String, CodingKey {
         case email, isDemo, country, timezone, locale
         case emailVerified = "email_verified"
         case displayName = "display_name"
         case avatarURL = "avatar_url"
+        case unitSystem = "unit_system"
     }
 }
 
