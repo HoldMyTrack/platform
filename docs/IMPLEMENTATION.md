@@ -644,6 +644,6 @@ Privacy is applied at ingest (ADR-0002): once §4.1 step 3 drops a point, no ren
 - **Retroactive application**: each change enqueues its reprocessing in the same transaction. The affected activities are those whose `trajectory` comes within twice the old or new radius plus a margin (an end lies up to a radius past the edge, and the trajectory is simplified), and every fully hidden one. One `reprivacy` job reprocesses the batch with each stored edit, rendering once before and once after for the whole batch (§4.2.5). **Re-clipping is why privacy is applied on the server, not before upload.**
 - **The web editor**'s circles exist only while the Privacy tab is mounted, so they never reach an export.
 - **Raw payloads** keep the unclipped points: private, encrypted server-side, never publicly addressable, and the most sensitive thing held (§5.7).
-- **Provider tokens** are encrypted at rest and never logged or returned; **deauthorization deletes the synced data**, as Wahoo and COROS require.
+- **The Apple refresh token** (§3.17) is kept unencrypted, never logged or returned: it can only revoke the link.
 - **Tile authorization**: the user comes from the session, never a parameter (`?user_id=` would be an IDOR). Any shared map needs signed, expiring URLs.
 - **Operator access**: the admin panel is the one place an account sees another's data, and not its tracks; it is gated on a flag only the CLI sets and answers 404 to everyone else. Anything letting an admin see or change a track should come with an audit log.
