@@ -344,7 +344,7 @@ An iOS build is turned away the same way, with `MIN_IOS_BUILD`, checked with `-A
 
 1. Create a second private R2 bucket (e.g. `holdmytrack-backups`) and a token with **Object Read & Write** on it alone. Never reuse the app's token, and never give this one the app bucket.
 2. Fill in `.env.prod`'s `BACKUP_*` values. Leave `BACKUP_S3_ENDPOINT` empty when both buckets are in one Cloudflare account.
-3. Under the backup bucket's **Settings → Bucket lock rules**, add one rule per prefix, so the token on this host can't delete a copy before its time: `postgres/daily/` 13 days, `postgres/weekly/` 55, `postgres/manual/` 2, `postgres/reference/` 55, `objects-deleted/` 29. Each is a day short of `backup.sh`'s retention, which prunes at the full age. Never lock `objects/`: each sync moves from it.
+3. On the backup bucket's own **Settings** tab, in the **Bucket lock rules** card (or with `wrangler r2 bucket lock add`), add one rule per prefix, so the token on this host can't delete a copy before its time: `postgres/daily/` 13 days, `postgres/weekly/` 55, `postgres/manual/` 2, `postgres/reference/` 55, `objects-deleted/` 29. Each is a day short of `backup.sh`'s retention, which prunes at the full age. Never lock `objects/`: each sync moves from it.
 4. Run `./scripts/backup.sh --nightly`, then `./scripts/restore-drill.sh`. The drill restores the newest nightly dump, so the first run needs `--nightly`. The first backup copies every object and takes longest.
 5. Schedule both in `/etc/cron.d/holdmytrack-backup`:
    ```
