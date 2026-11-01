@@ -97,10 +97,11 @@ func (s *Server) SetTilesPerMinute(n int) {
 }
 
 type fixedWindowLimiter struct {
-	mu     sync.Mutex
-	limit  int
-	window time.Duration
-	counts map[string]*windowCount
+	mu        sync.Mutex
+	limit     int
+	window    time.Duration
+	counts    map[string]*windowCount
+	lastSweep time.Time
 }
 
 type windowCount struct {
@@ -161,18 +162,32 @@ func (l *fixedWindowLimiter) hit(key string) {
 	l.current(key).count++
 }
 
-// current is key's count in its live window, starting a fresh one if it has none. It also
-// sweeps every stale entry on each call, so the map stays bounded by recently active callers
-// rather than growing forever from one-off addresses that never return. The caller holds mu.
+// refund takes back one count allow made, for an attempt that turned out not to be what the
+// limit counts (a sign-in that succeeded).
+func (l *fixedWindowLimiter) refund(key string) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	if c := l.current(key); c.count > 0 {
+		c.count--
+	}
+}
+
+// current is key's count in its live window, starting a fresh one if it has none or its window
+// has passed. Stale entries are swept at most once a window, so the map stays bounded by recent
+// callers without every call walking it: the tiles limiter is hit by every tile of every
+// account, under this one lock. The caller holds mu.
 func (l *fixedWindowLimiter) current(key string) *windowCount {
 	now := time.Now()
-	for k, c := range l.counts {
-		if now.Sub(c.windowFrom) > l.window {
-			delete(l.counts, k)
+	if now.Sub(l.lastSweep) > l.window {
+		for k, c := range l.counts {
+			if now.Sub(c.windowFrom) > l.window {
+				delete(l.counts, k)
+			}
 		}
+		l.lastSweep = now
 	}
 	c, ok := l.counts[key]
-	if !ok {
+	if !ok || now.Sub(c.windowFrom) > l.window {
 		c = &windowCount{windowFrom: now}
 		l.counts[key] = c
 	}

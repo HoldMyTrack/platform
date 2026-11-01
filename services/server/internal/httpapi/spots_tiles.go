@@ -63,7 +63,7 @@ func (s *Server) handleSpotsTile(w http.ResponseWriter, r *http.Request) {
 			if clientGone(w, r) {
 				return
 			}
-			s.log.Error("spots tile query failed", "err", err, "z", z, "x", x, "y", y)
+			s.log.Error("spots tile query failed", "err", err, "z", z)
 			writeAPIError(w, "internal error", http.StatusInternalServerError)
 			return
 		}

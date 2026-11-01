@@ -31,7 +31,7 @@ func retryable(kind string, err error) bool {
 	switch kind {
 	case "ingest":
 		return ingest.FailureCode(err) == ingest.FailInternal
-	case "render_fog", "story_copy", "export", "remove_activity_objects":
+	case "render_fog", "story_copy", "export":
 		return true
 	}
 	return false

@@ -46,6 +46,6 @@ func (s *Server) fogVectorFailed(w http.ResponseWriter, r *http.Request, step st
 	if clientGone(w, r) {
 		return
 	}
-	s.log.Error("fog vector tile failed", "step", step, "err", err, "z", z, "x", x, "y", y)
+	s.log.Error("fog vector tile failed", "step", step, "err", err, "z", z)
 	writeAPIError(w, "internal error", http.StatusInternalServerError)
 }

@@ -74,14 +74,18 @@ func (s *Server) handleSendStory(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
+	// The answer goes before the email: sent first, a slow SMTP exchange for a registered
+	// address, and none for any other, would tell the sender which addresses have accounts. A
+	// failed email is logged, not answered, for the same reason; the copy waits in the inbox.
+	w.WriteHeader(http.StatusNoContent)
+	if err := http.NewResponseController(w).Flush(); err != nil {
+		s.log.Warn("story send: flush failed", "err", err)
+	}
 	if err == nil {
-		// A failed email is logged, not answered: the copy waits in the inbox either way, and
-		// a different answer would say the address has an account.
-		if err := s.sendStoryCopyEmail(ctx, userID, storyID, email, lang); err != nil {
+		if err := s.sendStoryCopyEmail(context.WithoutCancel(ctx), userID, storyID, email, lang); err != nil {
 			s.log.Error("story copy email failed", "err", err)
 		}
 	}
-	w.WriteHeader(http.StatusNoContent)
 }
 
 // sendStoryCopyEmail tells the recipient at email, in their own language (lang, or English
