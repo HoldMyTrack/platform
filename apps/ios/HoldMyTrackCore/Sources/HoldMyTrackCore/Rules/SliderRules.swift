@@ -112,7 +112,8 @@ public enum SliderRules {
     /// A tick on every boundary 0...n; the outer two are plain.
     public static func ticks(_ days: [String]) -> [Tick] {
         if days.isEmpty { return [] }
-        func month(_ date: String) -> Int { Int(date.dropFirst(5).prefix(2))! }
+        // A date the server sent malformed gets no month label rather than a crash.
+        func month(_ date: String) -> Int? { Int(date.dropFirst(5).prefix(2)) }
         var ticks = (0...days.count).map { b -> Tick in
             let before = b > 0 ? days[b - 1] : nil
             let after = b < days.count ? days[b] : nil

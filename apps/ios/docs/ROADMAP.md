@@ -176,7 +176,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 `apps/android/docs/SPEC.md` FR-3.1–FR-3.5, with HealthKit in Health Connect's place. Go only on phase 1's result. The gate rule holds: nothing ticked, nothing sent unasked, nothing guessed (ADR-0039).
 
 - [ ] **7c.1 Settings › Sync and access**
-  - A switch per account, off at first. Turning it on asks for workouts and workout routes and nothing else; never heart rate or any other body signal (ADR-0017). `NSHealthShareUsageDescription` says only the routes are read.
+  - A switch per account, off at first. Turning it on asks for workouts and workout routes and nothing else; never heart rate or any other body signal (ADR-0017). `NSHealthShareUsageDescription` says only the routes are read, with its Russian in an `InfoPlist.xcstrings` the Check translations build phase is given.
   - Readiness differs from Android's six states: HealthKit never says whether reading was denied. States: unavailable, not yet asked, asked. When asked and nothing is found, the list says where to check access (Settings › Health › Data Access & Devices).
   - Done when: the readiness rule is a pure function with tests, and no health type beyond the two is in the entitlement or the request.
 - [ ] **7c.2 Load and the list**

@@ -1,4 +1,4 @@
-# Runs the iOS package's tests, then builds the app and runs its unit tests (apps/ios/docs/ROADMAP.md,
+# Runs the iOS package's tests, then builds the app and runs its unit tests, and on main its UI tests (apps/ios/docs/ROADMAP.md,
 # 3.4 and 4.0) when a change touches
 # the app, the shared rule cases it implements, the API contract its wire models follow, or the
 # web and Android files its palette, fonts and icons are made from. Its
@@ -86,4 +86,13 @@ jobs:
           set -o pipefail
           xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
             -destination "id=${{ steps.sim.outputs.udid }}" -only-testing:HoldMyTrackTests \
+            -clonedSourcePackagesDirPath ~/spm | tail -n 100
+      # The end-to-end flows (HoldMyTrackUITests), which need no server. Slower than the unit
+      # tests, so on main only: a launch regression shows up there, not on every pull request.
+      - name: UI tests
+        if: github.event_name == 'push'
+        run: |
+          set -o pipefail
+          xcodebuild test -project HoldMyTrack.xcodeproj -scheme HoldMyTrack \
+            -destination "id=${{ steps.sim.outputs.udid }}" -only-testing:HoldMyTrackUITests \
             -clonedSourcePackagesDirPath ~/spm | tail -n 100
