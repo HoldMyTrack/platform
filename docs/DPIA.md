@@ -1,12 +1,12 @@
 # HoldMyTrack: Data Protection Impact Assessment
 
-Last updated: 2026-10-25.
+Last updated: 2026-10-31.
 
 ## Summary
 
 HoldMyTrack can launch publicly once the pre-launch actions in section 7 are done. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Three stay medium (section 6).
 
-**Status:** draft for the controller's review, written from the product's documents and its published privacy policy (`/privacy`, last updated 25 October 2026), without an audit of the running system.
+**Status:** draft for the controller's review, written from the product's documents and its published privacy policy (`/privacy`), without an audit of the running system.
 
 **Controller:** Nikolai Poriadin, the operator, personally, named in the privacy policy with hello@holdmytrack.com. HoldMyTrack runs at holdmytrack.com. The operator lives outside the EU; GDPR applies to a non-EU controller serving EU users (Art. 3(2)), who appoints an EU representative (Art. 27), which waits for funding (section 7).
 
@@ -30,7 +30,7 @@ The ICO and the CNIL also list location tracking as needing one.
 
 ## 2. The processing
 
-HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws them as private maps and stats (one map of everywhere they went, Fog of War, Stories and Spots), shown to no one but the account holder.
+HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws them as private maps and stats, shown to no one but the account holder.
 
 **Purposes:** run the service the user signed up for and keep it working and secure. No advertising, analytics, profiling or data sale. To measure cost per active user and which clients are still in use, it keeps daily counts across all accounts (`IMPLEMENTATION.md` §4.32), which describe no one.
 
@@ -70,9 +70,9 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 - **The user:** all of their own data.
 - **A Story recipient:** the copy they accepted, with the sender's Private locations applied, theirs from then on.
 - **The operator:** through the admin panel, every account's list of activities (dates, names, countries), but not their tracks.
-- **Processors:** DigitalOcean (servers), Cloudflare (R2 storage), Grafana Labs (monitoring) and Zoho (email, US).
+- **Processors:** DigitalOcean (servers), Cloudflare (R2 storage, the basemap's CDN), Grafana Labs (monitoring) and Zoho (email, US).
 
-Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser directly.
+Cloudflare's CDN (basemap tiles, so which areas are viewed), Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser or app directly.
 
 ## 3. Legal basis, necessity and proportionality
 
@@ -156,7 +156,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 - [x] Assess the transfers to the US (R7, section 8).
 - [x] R2 encrypts every object and its metadata at rest with AES-256, by default (Cloudflare's R2 data security docs, checked 2026-10-25).
 - [ ] Encrypt the database at rest: DigitalOcean documents encryption at rest for Volumes, not for a Droplet's own disk, so the database and the dumps kept on the server would move to a Volume (R1).
-- [x] Neither R2 bucket has an `r2.dev` URL or a custom domain (Cloudflare dashboard, checked 2026-10-25) (R2).
+- [x] Neither private R2 bucket has an `r2.dev` URL or a custom domain (Cloudflare dashboard, checked 2026-10-25) (R2).
 
 **Soon after:**
 
