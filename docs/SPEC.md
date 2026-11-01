@@ -162,7 +162,7 @@ Every account can keep up to 50,000 activities and 5 GB of originals, the same f
 - At most 5 demo starts an hour from one address.
 - Every demo session is on the one persistent Demo Customer account, so every visitor sees the same data. A demo session lasts 24 hours.
 - Every write (upload, sync, edit, delete, settings, avatar, Private locations, Stories, photos, captures, data download, account deletion) is refused with `demo_read_only`, whatever the client sends. On Android a demo session can record on the phone but not sync.
-- It holds a real history from a live deployment: 43 activities from 2026 around Cleveland, OH and on trips to Niagara Falls, Rome, Tallinn and Vietnam, with photos, Stories and captures; a preset profile (Demo User, United States, America/New_York); three 305 m Private locations where the history starts and ends.
+- It holds a real history from a live deployment: 54 activities from 2026 around Cleveland, OH and on trips to Niagara Falls, Rome, Tallinn and Vietnam, with photos, Stories and captures; a preset profile (Demo User, United States, America/New_York); three 305 m Private locations where the history starts and ends.
 
 ### FR-2.2 Demo account seeding and lifetime
 
