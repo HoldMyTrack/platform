@@ -12,28 +12,42 @@ struct ClientRulesTests {
     /// Every file whose clients, when it names any, include iOS.
     static let files: [String] = {
         let names = (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? []
+        // A file that can't be read stays in, so its own test fails naming it.
         return names.filter { $0.hasSuffix(".json") }.sorted().filter { name in
-            guard let clients = load(name)["clients"].list else { return true }
+            guard let doc = try? load(name), let clients = doc["clients"].list else { return true }
             return clients.contains("ios")
         }
     }()
 
-    static func load(_ name: String) -> RuleJSON {
-        let data = try! Data(contentsOf: dir.appending(path: name))
-        return RuleJSON(try! JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]))
+    /// A rule file that couldn't be read or parsed, by name: one bad file (a merge conflict left
+    /// in it) fails its own test, not the whole run.
+    struct UnreadableRuleFile: Error, CustomStringConvertible {
+        let name: String
+        let cause: any Error
+        var description: String { "\(name): \(cause)" }
+    }
+
+    static func load(_ name: String) throws -> RuleJSON {
+        do {
+            let data = try Data(contentsOf: dir.appending(path: name))
+            return RuleJSON(try JSONSerialization.jsonObject(with: data, options: [.fragmentsAllowed]))
+        } catch {
+            throw UnreadableRuleFile(name: name, cause: error)
+        }
     }
 
     @Test func everyRuleFileHasASwiftImplementation() {
         #expect(!Self.files.isEmpty, "no cases in \(Self.dir.path)")
         for name in Self.files {
-            let rule = Self.load(name)["rule"].string ?? "?"
+            guard let doc = try? Self.load(name) else { continue } // its own test reports it
+            let rule = doc["rule"].string ?? "?"
             #expect(rules[rule] != nil, "\(name): no Swift implementation of \(rule)")
         }
     }
 
     @Test(arguments: files)
     func casesHold(file: String) throws {
-        let doc = Self.load(file)
+        let doc = try Self.load(file)
         let rule = doc["rule"].string!
         guard let run = rules[rule] else { return }
         let cases = (doc["cases"].list ?? []) + (doc["generated"].list ?? [])

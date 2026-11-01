@@ -94,7 +94,8 @@ public enum EditTrackOps {
             if drop.contains(p.t) { return false }
             return !edit.remove.contains { p.t >= $0.from && p.t <= $0.to }
         }.map { p in
-            guard let to = edit.move[p.t] else { return p }
+            // A move from the server that isn't a [lon, lat] pair leaves the point where it was.
+            guard let to = edit.move[p.t], to.count >= 2 else { return p }
             return TrackPoint(lon: to[0], lat: to[1], t: p.t)
         }
     }

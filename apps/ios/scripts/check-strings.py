@@ -4,7 +4,9 @@ a placeholder (apps/ios/docs/ROADMAP.md, 3.3). Xcode itself only marks such a st
 work, and only its editor adds a new string to the catalog, so a string the compiler found in the
 code but the catalog lacks fails too, at the line that uses it. Run by the app target's "Check
 translations" build phase after the sources compile; messages use Xcode's `file:line: error:` form.
-Usage: check-strings.py <catalog.xcstrings> <compiler's Objects-normal directory>
+Usage: check-strings.py <catalog.xcstrings> <compiler's Objects-normal directory> [<catalog.xcstrings>...]
+The catalogs after the directory (InfoPlist.xcstrings, the permission prompts) are checked for
+their translations only: the compiler doesn't report Info.plist keys as used.
 """
 import glob
 import json
@@ -21,6 +23,18 @@ def placeholders(text):
     return sorted(PLACEHOLDER.findall(text))
 
 
+def units(localization, path=()):
+    """{path: stringUnit} in one language's localization: the plain one at (), and each plural or
+    device form under `variations` at its path, ('plural', 'one') and so on."""
+    out = {}
+    if 'stringUnit' in localization:
+        out[path] = localization['stringUnit']
+    for kind, forms in localization.get('variations', {}).items():
+        for form, inner in forms.items():
+            out.update(units(inner, path + (kind, form)))
+    return out
+
+
 def untranslated(catalog):
     """(key, problem) for each catalog string whose translation is missing or wrong."""
     out = []
@@ -29,13 +43,21 @@ def untranslated(catalog):
         if entry.get('shouldTranslate') is False:
             continue
         locs = entry.get('localizations', {})
-        base = locs.get(source, {}).get('stringUnit', {}).get('value', key)
+        base = units(locs.get(source, {}))
         for lang in LANGUAGES:
-            unit = locs.get(lang, {}).get('stringUnit')
-            if not unit or unit.get('state') != 'translated' or not unit.get('value', '').strip():
+            translated = units(locs.get(lang, {}))
+            if not translated:
                 out.append((key, f'"{key}" has no {lang} translation'))
-            elif placeholders(unit['value']) != placeholders(base):
-                out.append((key, f'"{key}": the {lang} translation\'s placeholders differ from the source\'s'))
+                continue
+            for path, unit in sorted(translated.items()):
+                form = f' ({" ".join(path)})' if path else ''
+                if unit.get('state') != 'translated' or not unit.get('value', '').strip():
+                    out.append((key, f'"{key}"{form} has no {lang} translation'))
+                    continue
+                # A plural form's source is the same form, else the plain string, else the key.
+                source_unit = base.get(path) or base.get(()) or {'value': key}
+                if placeholders(unit['value']) != placeholders(source_unit.get('value', key)):
+                    out.append((key, f'"{key}"{form}: the {lang} translation\'s placeholders differ from the source\'s'))
     return out
 
 
@@ -51,7 +73,7 @@ def used(objects_dir):
 
 
 def main():
-    catalog_path, objects_dir = sys.argv[1], sys.argv[2]
+    catalog_path, objects_dir, more = sys.argv[1], sys.argv[2], sys.argv[3:]
     with open(catalog_path) as f:
         catalog = json.load(f)
     keys = catalog.get('strings', {})
@@ -59,8 +81,10 @@ def main():
     for key, (source, line) in sorted(used(objects_dir).items()):
         if key not in keys:
             errors.append(f'{source}:{line}: error: "{key}" isn\'t in {os.path.basename(catalog_path)}; add it with its ru translation')
-    for _, problem in untranslated(catalog):
-        errors.append(f'{catalog_path}:1: error: {problem}')
+    for path in [catalog_path, *more]:
+        with open(path) as f:
+            for _, problem in untranslated(json.load(f)):
+                errors.append(f'{path}:1: error: {problem}')
     for e in errors:
         print(e)
     sys.exit(1 if errors else 0)
