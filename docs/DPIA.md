@@ -69,7 +69,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 **Who can see it:**
 
 - **The user:** all of their own data.
-- **A Story recipient:** the copy they accepted, with the sender's Private locations applied, theirs from then on.
+- **A Story recipient:** the sender's display name, else email address, and the copy they accepted, with the sender's Private locations applied, theirs from then on.
 - **The operator:** through the admin panel, every account's list of activities (dates, names, countries), but not their tracks.
 - **Processors:** DigitalOcean (servers), Cloudflare (R2 storage, the basemap's CDN), Grafana Labs (monitoring) and Zoho (email, US).
 
@@ -159,7 +159,6 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 
 **Soon after:**
 
-- [ ] Review how long original uploads are kept (R2; `docs/ROADMAP.md`, "After launch").
 - [ ] Add or confirm a test that one account cannot read another's activities, tiles or photos (R3).
 - [ ] Re-check that the cookies and browser storage the site sets still match the Cookies list on `/privacy`.
 - [ ] Align `VISION.md` §7 with the privacy policy's lawful basis (section 3).

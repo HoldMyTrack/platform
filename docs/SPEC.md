@@ -572,7 +572,7 @@ flowchart TD
 
 - `ru-RU` and the like count as Russian. URLs don't change with language.
 - Numbers, dates and plurals follow the language; units follow Country (FR-1.7).
-- Verification and reset emails use the account's language, else the request's; a Story copy's email the recipient's, else English.
+- Verification and reset emails use the account's language, else the request's.
 - Error codes never change; messages follow the request reading them, so an old import failure reads in today's language.
 - Map labels use the language where OpenStreetMap has it, else English, with the local name beneath when it's in another script.
 - The Android app follows its per-app language, else the phone's; its Language setting sets that and the account's together, signing in applies the account's, and it sends `Accept-Language`.
@@ -628,7 +628,7 @@ A Story's owner sends a copy to another account by email address; the recipient 
 
 - The answer is the same whether or not the address has an account. Only a verified real account, not the sender's and not being deleted, receives it; otherwise nothing is stored. The address is trimmed and compared without case.
 - Any owned Story can be sent, a received copy included. Sending again while one waits refreshes it.
-- The recipient is emailed in their language (English if none); an address that receives nothing gets no email.
+- The recipient is emailed in their language (English if none), with the sender's display name, else email address; an address that receives nothing gets no email.
 - Declining copies nothing, and the sender isn't told. Deleting the Story withdraws waiting copies; copies from an account being deleted leave the inbox.
 - At most 30 sends an hour per account. Accepting at the account's limits (FR-1.13) is refused and the copy keeps waiting.
 - A demo session's inbox is empty, and it can't send, accept or decline.
