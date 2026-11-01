@@ -1,6 +1,6 @@
 # HoldMyTrack for iOS — Roadmap
 
-The iOS app's plan, from the first commit to the App Store. Nothing is built yet; work starts after the public launch. The product's open work is root `docs/ROADMAP.md`.
+The iOS app's plan, from the first commit to the App Store. The shared code is built and nothing a user can run exists yet; the rest starts after the public launch. The product's open work is root `docs/ROADMAP.md`.
 
 ## How to work this plan
 
