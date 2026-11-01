@@ -248,7 +248,7 @@ services:
   # Docker socket to find and tail the containers, which makes it as trusted as root here, so
   # its image is pinned.
   alloy:
-    image: grafana/alloy:v1.21.1
+    image: grafana/alloy:v1.21.3
     profiles: ["monitoring"]
     restart: unless-stopped
     logging: *logging
