@@ -3,7 +3,7 @@
 # dependency cache to reconcile, no dev-vs-test split — `serve`/`work`/`migrate` are the same
 # binary, invoked with different args (compose.yaml's api/worker services), not different
 # images.
-FROM golang:1.27-bookworm AS build
+FROM golang:1.27-bookworm@sha256:d9b6a1beb9474adc2a1ce842573639b44b2a0dd49b6669f51d3821baf9ec37c9 AS build
 ARG GIT_SHA=unknown
 WORKDIR /src
 COPY go.mod go.sum ./
@@ -14,6 +14,6 @@ RUN CGO_ENABLED=0 go build -ldflags "-X main.gitSHA=${GIT_SHA}" -o /out/holdmytr
 # distroless/static: the one binary is pure Go (CGO_ENABLED=0 above) and runs nothing else,
 # so it needs no libc. No shell and no package manager. :nonroot runs it as uid 65532: it binds :8080 and
 # writes nothing but multipart temp files under /tmp, so it has no use for root.
-FROM gcr.io/distroless/static-debian12:nonroot AS dev
+FROM gcr.io/distroless/static-debian12:nonroot@sha256:afa5c872c891853ca7fcf1f12c3edb23f7eeef36189728842dd51042ff57f7ab AS dev
 COPY --from=build /out/holdmytrack /usr/local/bin/holdmytrack
 ENTRYPOINT ["/usr/local/bin/holdmytrack"]

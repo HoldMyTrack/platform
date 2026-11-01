@@ -85,7 +85,7 @@ jobs:
     # TEST_DATABASE_URL; this gives them one.
     services:
       postgres:
-        image: postgis/postgis:16-3.6
+        image: postgis/postgis:16-3.6@sha256:bdd9351e706076260ac21552cd9c1bed01582e69a902b1b5843f83fa0b4c5a9c
         env:
           POSTGRES_USER: holdmytrack
           POSTGRES_PASSWORD: holdmytrack

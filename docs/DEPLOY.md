@@ -263,9 +263,9 @@ sequenceDiagram
 
 ## 9. Upgrading the Postgres image
 
-A new `postgis/postgis` tag can bring a newer Debian, and with it glibc's text sort order and the tz data, under the same data directory. Keep the Postgres major: a new one can't open the directory (a dump and restore, §11). Rehearse on a copy of a dev volume with `compose.yaml`'s tag changed: steps 4–5, then every suite, Go's with `-count=1`, since its cache doesn't see the database.
+`postgis/postgis` is pinned by digest, as tags get rebuilt; a new one can bring a newer Debian, and with it glibc's text sort order and the tz data, under the same data directory. Keep the Postgres major: a new one can't open the directory (a dump and restore, §11). Rehearse on a copy of a dev volume with `compose.yaml`'s digest changed: steps 4–5, then every suite, Go's with `-count=1`, since its cache doesn't see the database.
 
-1. With the site up, `docker pull postgis/postgis:<tag>`, then in `psql` (`… exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'`) rewrite the old time zone names Debian 13 dropped. The list is `timezoneRenames` in `services/server/internal/web/timezones_data.go` at tzdata 2026d; if that table has been regenerated, rebuild the list from it.
+1. With the site up, `docker pull postgis/postgis:<tag>@<digest>`, then in `psql` (`… exec db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB"'`) rewrite the old time zone names Debian 13 dropped. The list is `timezoneRenames` in `services/server/internal/web/timezones_data.go` at tzdata 2026d; if that table has been regenerated, rebuild the list from it.
    ```sql
    UPDATE users u SET timezone = r.current
    FROM (VALUES
@@ -304,7 +304,7 @@ A new `postgis/postgis` tag can bring a newer Debian, and with it glibc's text s
    ```
 2. Check that every `SELECT DISTINCT timezone FROM users` value is in the new image's `pg_timezone_names`.
 3. `./scripts/maintenance.sh on`, `./scripts/backup.sh`, `… stop api worker db`, then a DigitalOcean snapshot of the droplet.
-4. Pull the tag change and `… up -d db`. Its log warns of a collation version mismatch until step 5 ends. In `psql`, for the app's database:
+4. Pull the digest change and `… up -d db`. Its log warns of a collation version mismatch until step 5 ends. In `psql`, for the app's database:
    ```sql
    SELECT postgis_extensions_upgrade();
    DO $$ DECLARE idx regclass; BEGIN

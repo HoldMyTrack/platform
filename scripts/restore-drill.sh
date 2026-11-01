@@ -93,12 +93,24 @@ restore --section=data "/drill/$latest" || fail "pg_restore of $latest's data"
 restore --section=post-data "/drill/$latest" || fail "pg_restore of $latest's indexes and constraints"
 
 newest_migration=$(ls services/server/migrations/*.sql | sort | tail -n 1 | xargs basename)
-log "newest migration: restored $(drill_psql 'SELECT max(filename) FROM schema_migrations'), checked out $newest_migration"
+restored_migration=$(drill_psql 'SELECT max(filename) FROM schema_migrations')
+log "newest migration: restored $restored_migration, checked out $newest_migration"
+# Behind is normal (a deploy since the dump); one this checkout doesn't have means the drill ran
+# from old code, or the dump's migrations table is wrong.
+[[ -n "$restored_migration" && -f "services/server/migrations/$restored_migration" ]] ||
+  fail "the restored database's newest migration, ${restored_migration:-(none)}, isn't in this checkout"
 
+# The dump is at most a day older than live, so a table restored well short of live lost rows
+# on the way: one left out of the dump by mistake (REBUILT_TABLES), or a dump cut short.
+shrunk=()
 printf '%-18s %10s %10s\n' table restored live
 for table in users activities activity_photos stories privacy_zones spot_captures spots bike_paths admin_countries tz_parts; do
-  printf '%-18s %10s %10s\n' "$table" "$(drill_psql "SELECT count(*) FROM $table")" "$(live_psql "SELECT count(*) FROM $table")"
+  restored=$(drill_psql "SELECT count(*) FROM $table")
+  live=$(live_psql "SELECT count(*) FROM $table")
+  printf '%-18s %10s %10s\n' "$table" "$restored" "$live"
+  if (( live - restored > 50 && restored * 10 < live * 9 )); then shrunk+=("$table"); fi
 done
+(( ${#shrunk[@]} == 0 )) || fail "restored far fewer rows than live in: ${shrunk[*]}"
 [[ $(drill_psql 'SELECT count(*) FROM users') -gt 0 ]] || fail "the restored database has no users"
 [[ $(drill_psql 'SELECT count(*) FROM admin_countries') -gt 0 ]] || fail "the restored database has no countries — is the reference dump empty?"
 # The masks' PNGs are left out of the dump (backup.sh) but their table isn't.
