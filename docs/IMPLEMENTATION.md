@@ -58,10 +58,6 @@ erDiagram
 
 No `tier` column (ADR-0031). The demo account is a row recognized by its fixed id (§4.10). `password_hash` is NULL for an account that signs in only through `user_identities`. `map_version` only goes up (§4.2.6). `is_admin` is written only by `set-admin` (§4.20). `deleted_at` marks a closed account until the purge deletes the row (§4.28). A NULL `country` means Settings was never saved, which is the first-run gate (FR-1.7); a NULL `locale` means automatic.
 
-### 3.2 `connections`
-
-Path 1's OAuth state; nothing writes it yet. `UNIQUE (provider, provider_user_id)` keeps two accounts from connecting one provider account and both ingesting its webhooks. Disconnecting must delete the synced data, not only this row (§7).
-
 ### 3.3 `activities`
 
 Idempotency is `idx_activities_dedupe` on `(user_id, source, external_id)` plus the persist step's `ON CONFLICT` (§4.0). `trajectory` is simplified display geometry, and coverage never comes from it. Its M is epoch seconds, which photos are placed by (§3.22), and its longitudes continue past ±180 (§4.1). A NULL `trajectory` has one cause: the track lies entirely inside Private locations. `split_group` and `origin_id` have no foreign key: a split group outlives its first row (§4.7.8) and a copy outlives its original (§3.25). No bbox column: PostGIS has no default GiST operator class for `box2d`, and the GiST index on `trajectory` already serves `&&`.
@@ -644,6 +640,6 @@ Privacy is applied at ingest (ADR-0002): once §4.1 step 3 drops a point, no ren
 - **Retroactive application**: each change enqueues its reprocessing in the same transaction. The affected activities are those whose `trajectory` comes within twice the old or new radius plus a margin (an end lies up to a radius past the edge, and the trajectory is simplified), and every fully hidden one. One `reprivacy` job reprocesses the batch with each stored edit, rendering once before and once after for the whole batch (§4.2.5). **Re-clipping is why privacy is applied on the server, not before upload.**
 - **The web editor**'s circles exist only while the Privacy tab is mounted, so they never reach an export.
 - **Raw payloads** keep the unclipped points: private, encrypted server-side, never publicly addressable, and the most sensitive thing held (§5.7).
-- **Provider tokens** are encrypted at rest and never logged or returned; **deauthorization deletes the synced data**, as Wahoo and COROS require.
+- **The Apple refresh token** (§3.17) is kept unencrypted, never logged or returned: it can only revoke the link.
 - **Tile authorization**: the user comes from the session, never a parameter (`?user_id=` would be an IDOR). Any shared map needs signed, expiring URLs.
 - **Operator access**: the admin panel is the one place an account sees another's data, and not its tracks; it is gated on a flag only the CLI sets and answers 404 to everyone else. Anything letting an admin see or change a track should come with an audit log.
