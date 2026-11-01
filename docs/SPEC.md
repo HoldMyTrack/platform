@@ -98,7 +98,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 A real account must confirm its email before using anything else. Why: a mistyped email strands an account's imported data where nobody can get it back.
 
 - Until verified, every route except `GET /v1/auth/me`, sign-out, resend and change of address is refused with a distinguishable error. A demo account is never gated.
-- A link is valid for 24 hours, works once and confirms only the address it was sent to. It works from any device and signs that browser in, unless the browser is signed in to another account.
+- A link is valid for 24 hours, works once and confirms only the address it was sent to, from any device. A first verification ends the account's other sessions and signs in only a browser already signed in to it; a later one signs the browser in unless it's signed in to another account.
 - Verifying ends every other verification link, and, when the address changed, every reset link.
 - A change of address before verifying waits for the new address's link: until then the account keeps its address and state, the new address stays free for anyone else, and earlier links stop working. If another account takes the address meanwhile, verifying is refused.
 - A change to an address another account has is refused. A resend goes to the newest link's address. Resends and changes together: at most 5 an hour per account; a demo account can do neither.
@@ -437,7 +437,7 @@ An activity is split in two at a point on its track. Each part is a full activit
 
 ## 8. FR-6 — Date Range Slider
 
-The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load. A resize keeps the selection in view.
+The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load.
 
 - The same slider on the web and Android: two knobs on a track, a tick between activity days, taller with the month's name where a month starts.
 - Dragging a knob, tapping the track to bring the nearer knob there, swiping it to scroll the window, and holding a knob past an edge to page that way work on both.
@@ -552,7 +552,7 @@ A read-only view of every account, its activities and the service's daily statis
 
 ### FR-12.4 Service statistics
 
-`/admin` charts the daily statistics (`IMPLEMENTATION.md` §4.32), unique web visitors among them, per UTC day over 30, 90 or 365 days, leaving a gap for a day without a snapshot. A web visitor is a browser and address that opened a page that day, signed in or not, apps and crawlers aside; nothing that tells visitors apart outlives the day's snapshot.
+`/admin` charts the daily statistics (`IMPLEMENTATION.md` §4.32), unique web visitors among them, per UTC day. A web visitor is a browser and address that opened a page that day, signed in or not, apps and crawlers aside; nothing that tells visitors apart outlives the day's snapshot.
 
 ## 15. FR-13 — Language
 

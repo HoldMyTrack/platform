@@ -200,6 +200,10 @@ func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Has("deleted") {
 		form.NoticeKey = "signin.account_deleted"
 	}
+	// handleVerifyPage's landing after a first verification from a browser not signed in to it.
+	if r.URL.Query().Has("verified") {
+		form.NoticeKey = "signin.email_verified"
+	}
 	s.renderAuth(w, r, http.StatusOK, "signin", "signin.title", false, form)
 }
 
@@ -297,9 +301,14 @@ func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
 // link to someone signed in here and switch them silently into the sender's account, where
 // whatever they uploaded next would land.
 func (s *Server) handleVerifyPage(w http.ResponseWriter, r *http.Request) {
-	userID, err := s.verifyEmail(r.Context(), r.URL.Query().Get("token"))
+	sessionID, _ := sessionIDFromRequest(r)
+	userID, signIn, err := s.verifyEmail(r.Context(), r.URL.Query().Get("token"), sessionID)
 	if err != nil {
 		s.renderAuthError(w, r, "verify email", "verify", "verify.title", true, authForm{}, err)
+		return
+	}
+	if !signIn {
+		http.Redirect(w, r, "/signin?verified", http.StatusSeeOther)
 		return
 	}
 	if acct := s.pageAccount(r); acct != nil && acct.info.userID != userID {

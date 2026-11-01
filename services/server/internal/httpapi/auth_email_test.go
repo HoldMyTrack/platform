@@ -208,3 +208,53 @@ func TestSignInFailuresAreLimitedPerAddress(t *testing.T) {
 		t.Fatalf("attempt 51: %d, want 429", code)
 	}
 }
+
+// An account's first verification proves who owns the address, not who chose its password
+// (SPEC FR-1.8): a link opened anywhere else verifies without signing in and ends the sessions
+// whoever signed up holds, while the signing-up browser stays signed in.
+func TestFirstVerificationSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
+	d := newDBTest(t)
+	d.srv.mailer = &sentMail{}
+	unverified := func() account {
+		a := d.newAccount(false)
+		if _, err := d.pool.Exec(context.Background(), `UPDATE users SET email_verified = false WHERE id = $1`, a.id); err != nil {
+			t.Fatal(err)
+		}
+		email, _ := d.email(a)
+		if err := d.srv.sendVerificationEmail(context.Background(), a.id, email, "en"); err != nil {
+			t.Fatal(err)
+		}
+		return a
+	}
+
+	// Someone signed up with another person's address; its owner opens the link.
+	squatter := unverified()
+	rec := d.do(account{}, http.MethodGet, "/verify?token="+d.verificationToken(squatter), nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/signin?verified" {
+		t.Fatalf("link opened elsewhere: %d to %q, want a redirect to /signin?verified", rec.Code, rec.Header().Get("Location"))
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == sessionCookieName && c.Value != "" {
+			t.Fatalf("signed the opener in: %v", c)
+		}
+	}
+	if _, verified := d.email(squatter); !verified {
+		t.Fatal("the address wasn't verified")
+	}
+	if rec := d.do(squatter, http.MethodGet, "/v1/auth/me", nil); rec.Code != http.StatusUnauthorized {
+		t.Errorf("the sign-up's own session after verification elsewhere: %d, want 401", rec.Code)
+	}
+
+	// The JSON endpoint likewise: 204, no session.
+	other := unverified()
+	if rec := d.do(account{}, http.MethodPost, "/v1/auth/verify-email", map[string]any{"token": d.verificationToken(other)}); rec.Code != http.StatusNoContent {
+		t.Errorf("verify-email from elsewhere: %d, want 204", rec.Code)
+	}
+
+	// The signing-up browser opens its own link: signed in, and its session kept.
+	owner := unverified()
+	d.decode(d.do(owner, http.MethodPost, "/v1/auth/verify-email", map[string]any{"token": d.verificationToken(owner)}), http.StatusOK, nil)
+	if rec := d.do(owner, http.MethodGet, "/v1/auth/me", nil); rec.Code != http.StatusOK {
+		t.Errorf("the verifying browser's own session: %d, want 200", rec.Code)
+	}
+}

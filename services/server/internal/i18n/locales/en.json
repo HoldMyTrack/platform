@@ -59,6 +59,7 @@
   "signin.facebook_no_email": "Your Facebook account didn't share an email address, and HoldMyTrack needs one. Try again and allow access to your email, or sign up with email and password.",
   "signin.facebook_email_in_use": "An account with this email already exists. Sign in the way you usually do, or use “Forgot password?” to set a password.",
   "signin.account_deleted": "Your account was deleted. Everything in it will be gone within a few minutes.",
+  "signin.email_verified": "Your email is confirmed. Sign in to continue, or use “Forgot password?” if you didn't choose a password.",
   "signup.title": "Create your account",
   "signup.submit": "Create account",
   "signup.to_signin": "Already have an account? Sign in",
