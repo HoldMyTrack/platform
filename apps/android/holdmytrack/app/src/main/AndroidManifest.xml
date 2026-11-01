@@ -6,10 +6,11 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <!--
-      Exactly two Health Connect permissions, and no more. HoldMyTrack keeps no health data, only
-      the geography (docs/VISION.md §1.1), so heart rate, distance, calories and the rest stay
-      out: a route needs the session and its geometry, nothing else. Declaring types the product
-      does not use is also a known Play rejection cause (docs/VISION.md §7).
+      Exactly two Health Connect data types, exercise sessions and their routes, and no more.
+      HoldMyTrack keeps no health data, only the geography (docs/VISION.md §1.1), so heart rate,
+      distance, calories and the rest stay out: a route needs the session and its geometry,
+      nothing else. Declaring types the product does not use is also a known Play rejection
+      cause (docs/VISION.md §7).
 
       READ_HEALTH_DATA_IN_BACKGROUND is deliberately absent. Measured on a device, it buys
       nothing for routes — the same 46 sessions returned 23 routes in the foreground and 0 in
@@ -21,7 +22,7 @@
       page. It is declared here because it still has to be, and SyncActivity walks the user
       there by hand.
 
-      READ_HEALTH_DATA_HISTORY is not a fourth data type — it is a time window over the ones
+      READ_HEALTH_DATA_HISTORY is not a third data type — it is a time window over the ones
       already declared. Without it Health Connect hands back only the last 30 days, which was
       not a guess: the first sync on a real device read exactly 30 days and Health Connect's
       own screen said "HoldMyTrack can read data added after August 17, 2026". A 30-day map is not

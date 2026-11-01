@@ -543,7 +543,7 @@ A read-only view of every account, its activities and the service's daily statis
 
 ### FR-12.2 Accounts
 
-`/admin/users` lists every account, demo included, newest first, with its signup date, country, timezone, activity count, total distance and last day seen.
+`/admin/users` lists every account, demo included, newest first, with its email, display name, signup date, country, timezone, activity count, total distance and last day seen.
 
 ### FR-12.3 An account's activities
 

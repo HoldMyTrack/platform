@@ -525,7 +525,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	defer r.MultipartForm.RemoveAll() //nolint:errcheck // best effort; net/http also cleans up
 	file, header, err := r.FormFile("file")
 	if err != nil {
-		httpErrorT(w, r, http.StatusBadRequest, "error.avatar_missing")
+		httpErrorT(w, r, http.StatusBadRequest, "error.upload_missing")
 		return
 	}
 	defer file.Close()
@@ -551,7 +551,7 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 	// comment for why this is a deliberate, bounded exception to "never buffer a file."
 	data, err := io.ReadAll(io.LimitReader(file, maxUploadBytes))
 	if err != nil {
-		httpErrorT(w, r, http.StatusBadRequest, "error.avatar_read")
+		httpErrorT(w, r, http.StatusBadRequest, "error.upload_read")
 		return
 	}
 	if len(data) == 0 {
