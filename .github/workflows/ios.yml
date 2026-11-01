@@ -31,9 +31,14 @@ on:
       - apps/android/holdmytrack/app/src/main/assets/licenses/**
       - .github/workflows/ios.yml
 
+# The token reads the repository and nothing else; no job here writes to it.
+permissions:
+  contents: read
+
 concurrency:
   group: ios-${{ github.ref }}
-  cancel-in-progress: true
+  # A newer push to a pull request replaces its run; every commit on main is tested.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   ios:
@@ -68,7 +73,7 @@ jobs:
             -instr-profile "$bin/codecov/default.profdata" -ignore-filename-regex='/(Tests|\.build)/' > coverage.lcov
       # Under its own `swift` flag, carried forward on runs this workflow skips (codecov.yml).
       # Informational, like the other uploads.
-      - uses: codecov/codecov-action@v5
+      - uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
         with:
           files: apps/ios/HoldMyTrackCore/coverage.lcov
           flags: swift

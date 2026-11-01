@@ -116,6 +116,10 @@ stamp=$(date -u +%Y%m%d-%H%M)
 name="holdmytrack-$stamp.dump"
 mkdir -p "$BACKUP_DIR/postgres/reference"
 chmod 700 "$BACKUP_DIR"
+# One run at a time: a manual run started during the nightly one could share its minute's stamp,
+# and each would delete the other's dump file on exit and race on the reference state file.
+exec 9>"$BACKUP_DIR/.lock"
+flock -n 9 || { echo "Another backup.sh run holds $BACKUP_DIR/.lock; try again once it ends." >&2; exit 1; }
 partial="$BACKUP_DIR/postgres/$name.partial"
 trap 'rm -f "$partial" "$BACKUP_DIR/postgres/reference/"*.partial' EXIT
 
@@ -156,7 +160,7 @@ if [[ -n "$reason" ]]; then
   ref_partial="$BACKUP_DIR/postgres/reference/$ref_name.partial"
   log "$reason: dumping them to $BACKUP_DIR/postgres/reference/$ref_name"
   "${COMPOSE[@]}" exec -T db sh -c 'pg_dump -Fc --data-only '"$(printf -- '-t %s ' "${REFERENCE_TABLES[@]}")"' -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$ref_partial"
-  "${COMPOSE[@]}" exec -T db pg_restore --list < "$ref_partial" > /dev/null
+  "${COMPOSE[@]}" exec -T db pg_restore -f /dev/null < "$ref_partial"
   mv "$ref_partial" "$BACKUP_DIR/postgres/reference/$ref_name"
   log "reference dump is $(du -h "$BACKUP_DIR/postgres/reference/$ref_name" | cut -f 1)"
   rclone copyto "/backups/postgres/reference/$ref_name" "backup:postgres/reference/$ref_name"
@@ -175,8 +179,10 @@ record_time holdmytrack_backup_reference_timestamp_seconds backup_reference \
 
 log "dumping Postgres to $BACKUP_DIR/postgres/$name"
 "${COMPOSE[@]}" exec -T db sh -c 'pg_dump -Fc '"$(printf -- '--exclude-table-data=%s ' "${REFERENCE_TABLES[@]}" "${REBUILT_TABLES[@]}" "${SHORT_LIVED_TABLES[@]}")"' -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$partial"
-# A dump whose table of contents pg_restore can't read is no backup — fail here, not at the drill.
-"${COMPOSE[@]}" exec -T db pg_restore --list < "$partial" > /dev/null
+# A dump pg_restore can't read through is no backup — fail here, not at the drill. Every data
+# block, not only the table of contents, which a dump to a pipe writes first, so a dump cut off
+# mid-data would pass a --list.
+"${COMPOSE[@]}" exec -T db pg_restore -f /dev/null < "$partial"
 mv "$partial" "$BACKUP_DIR/postgres/$name"
 log "dump is $(du -h "$BACKUP_DIR/postgres/$name" | cut -f 1)"
 
@@ -233,7 +239,7 @@ unneeded_references() {
 }
 oldest_local=$(ls -1 "$BACKUP_DIR/postgres"/holdmytrack-*.dump | sort | head -n 1 | xargs basename)
 oldest_local=${oldest_local#holdmytrack-}; oldest_local=${oldest_local%.dump}
-{ ls -1 "$BACKUP_DIR/postgres/reference" | grep '^holdmytrack-reference-.*\.dump$' || true; } | sort | unneeded_references "$oldest_local" |
+find "$BACKUP_DIR/postgres/reference" -maxdepth 1 -name 'holdmytrack-reference-*.dump' -exec basename {} \; | sort | unneeded_references "$oldest_local" |
   while read -r old; do rm -f -- "$BACKUP_DIR/postgres/reference/$old"; done
 prune_older() { rclone delete "$1" --min-age "$2" || [[ $? == 3 ]]; }  # 3: the folder isn't there yet
 prune_older backup:postgres/daily "${KEEP_DAILY_DAYS}d"

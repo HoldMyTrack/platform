@@ -7,7 +7,7 @@
 # Under GitHub Actions each warning is an annotation on the file.
 # Usage: scripts/check-file-size.sh [base-ref] (default: origin/main).
 set -uo pipefail
-cd "$(git rev-parse --show-toplevel)"
+cd "$(git rev-parse --show-toplevel)" || exit 1
 
 LIMIT=600
 base_ref="${1:-origin/main}"

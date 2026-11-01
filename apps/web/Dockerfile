@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 # bookworm, not alpine: Playwright ships no musl Chromium build, and that settles it.
-FROM node:22.22.3-bookworm-slim AS base
+FROM node:22.22.3-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752 AS base
 ENV NPM_CONFIG_UPDATE_NOTIFIER=false NPM_CONFIG_FUND=false
 WORKDIR /app
 
@@ -69,6 +69,6 @@ RUN npm run build
 # Caddy serves the built static assets *and* reverse-proxies API/tile requests to `api` —
 # one container doing both jobs, matching compose.prod.yml's minimal 4-service topology
 # (web, api, worker, db) rather than a separate reverse-proxy service.
-FROM caddy:2-alpine AS serve
+FROM caddy:2-alpine@sha256:e70b164da81ef698b3ad19af799ea6086ce6d9e48ed4079eb9fe26f6fbf14ee5 AS serve
 COPY --from=build /app/dist /srv/web
 COPY docker/Caddyfile /etc/caddy/Caddyfile
