@@ -62,7 +62,8 @@ photos:
                 description: RFC 3339, where on the track the user put it.
               caption:
                 type: string
-                description: Trimmed; empty means none. Longer than 500 characters is a 400.
+                maxLength: 500
+                description: Trimmed; empty means none.
     responses:
       "201":
         description: The new photo
@@ -155,7 +156,8 @@ photos_id:
               caption:
                 type: string
                 nullable: true
-                description: Trimmed; null or empty clears it. Longer than 500 characters is a 400.
+                maxLength: 500
+                description: Trimmed; null or empty clears it.
               route_at:
                 type: string
                 format: date-time

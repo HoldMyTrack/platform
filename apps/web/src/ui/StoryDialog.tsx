@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { createStory, STORY_MAX_DESCRIPTION_LEN, STORY_MAX_NAME_LEN, updateStory, type Story } from '../api';
+import { createStory, updateStory, type Story } from '../api';
+import { STORY_MAX_DESCRIPTION_LEN, STORY_MAX_NAME_LEN } from '../limits';
 import { t } from '../i18n';
 import { useBackdropClose } from './ConfirmDialog';
 

@@ -7,16 +7,11 @@ import type { TypeFacet } from './activityFacets';
 import { ActivityTypePicker } from './ActivityTypePicker';
 import { ConfirmDialog } from './ConfirmDialog';
 import { formatStartedAt } from './format';
-import { MAX_PHOTO_CAPTION_LEN, PhotosTab } from './PhotosTab';
+import { PhotosTab } from './PhotosTab';
 import { TrackEditor } from './TrackEditor';
 import { t, tn } from '../i18n';
+import { MAX_ACTIVITY_DESCRIPTION_LEN, MAX_ACTIVITY_NAME_LEN, MAX_ACTIVITY_TYPE_LEN, MAX_PHOTO_CAPTION_LEN } from '../limits';
 
-/** Mirrors the backend's own bounds (activities.go's maxActivityTypeLen/maxActivityNameLen/
- *  maxActivityDescriptionLen) — enforced here too so a caller sees the limit before
- *  submitting, not only after a 400 comes back. */
-const MAX_ACTIVITY_TYPE_LEN = 50;
-const MAX_NAME_LEN = 200;
-const MAX_DESCRIPTION_LEN = 2000;
 
 export type EditTab = 'activity' | 'track' | 'photos';
 
@@ -246,10 +241,10 @@ export function EditActivityWindow({
       ? t('edit.type_required')
       : trimmedType.length > MAX_ACTIVITY_TYPE_LEN
         ? t('edit.type_too_long', { max: MAX_ACTIVITY_TYPE_LEN })
-        : trimmedName.length > MAX_NAME_LEN
-          ? t('edit.name_too_long', { max: MAX_NAME_LEN })
-          : description.length > MAX_DESCRIPTION_LEN
-            ? t('edit.description_too_long', { max: MAX_DESCRIPTION_LEN })
+        : trimmedName.length > MAX_ACTIVITY_NAME_LEN
+          ? t('edit.name_too_long', { max: MAX_ACTIVITY_NAME_LEN })
+          : description.length > MAX_ACTIVITY_DESCRIPTION_LEN
+            ? t('edit.description_too_long', { max: MAX_ACTIVITY_DESCRIPTION_LEN })
             : null;
     if (invalid) {
       setError(invalid);
@@ -420,7 +415,7 @@ export function EditActivityWindow({
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            maxLength={MAX_NAME_LEN}
+            maxLength={MAX_ACTIVITY_NAME_LEN}
             placeholder={t('edit.name_placeholder')}
             disabled={!single}
           />
@@ -432,7 +427,7 @@ export function EditActivityWindow({
             className="settings-page__input edit-window__description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            maxLength={MAX_DESCRIPTION_LEN}
+            maxLength={MAX_ACTIVITY_DESCRIPTION_LEN}
             placeholder={t('edit.description_placeholder')}
             rows={4}
             disabled={!single}

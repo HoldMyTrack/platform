@@ -1373,11 +1373,11 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @description Trimmed; blank or longer than 50 bytes is a 400. */
+                        /** @description Trimmed; blank is a 400. */
                         activity_type: string;
-                        /** @description Trimmed; missing or empty clears it. Longer than 200 bytes is a 400. */
+                        /** @description Trimmed; missing or empty clears it. */
                         name?: string;
-                        /** @description Trimmed; missing or empty clears it. Longer than 2000 bytes is a 400. */
+                        /** @description Trimmed; missing or empty clears it. */
                         description?: string;
                     };
                 };
@@ -2108,7 +2108,7 @@ export interface paths {
                         lon?: number;
                         /** @description RFC 3339, where on the track the user put it. */
                         route_at?: string;
-                        /** @description Trimmed; empty means none. Longer than 500 characters is a 400. */
+                        /** @description Trimmed; empty means none. */
                         caption?: string;
                     };
                 };
@@ -2287,7 +2287,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @description Trimmed; null or empty clears it. Longer than 500 characters is a 400. */
+                        /** @description Trimmed; null or empty clears it. */
                         caption?: string | null;
                         /**
                          * Format: date-time
@@ -3905,9 +3905,9 @@ export interface components {
                 }[];
             };
         };
-        /** @description Trimmed; blank or longer than 200 characters is a 400. */
+        /** @description Trimmed; blank is a 400. */
         name: string;
-        /** @description Trimmed; missing or empty leaves the Story without one. Longer than 2000 characters is a 400. */
+        /** @description Trimmed; missing or empty leaves the Story without one. */
         description: string;
         /** @description Duplicates are ignored; missing or null adds none. */
         ActivityIDs: string[] | null;
@@ -3918,9 +3918,9 @@ export interface components {
             activity_ids?: components["schemas"]["ActivityIDs"];
         };
         StoryInput: {
-            /** @description Trimmed; blank or longer than 200 characters is a 400. */
+            /** @description Trimmed; blank is a 400. */
             name: string;
-            /** @description Trimmed; missing or empty leaves the Story without one. Longer than 2000 characters is a 400. */
+            /** @description Trimmed; missing or empty leaves the Story without one. */
             description?: string;
         };
         StoryActivitiesInput: {
