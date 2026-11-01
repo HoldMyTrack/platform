@@ -59,7 +59,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 | Spot captures (place and time, not position) | Android app | Database | Until deleted |
 | Import records | System | Database | 90 days after the import finishes |
 | Sessions and emailed links, with a pending address | System | Database | Until expiry: 30 days, links 1 day |
-| The day an account last used the service, the website and the Android app, and the app's version | System | Database | Until the account is deleted |
+| The day an account last used the service, the website and each app, and the app's version | System | Database | Until the account is deleted |
 | Server logs with account ids, no tracks or emails | System | Server, then Grafana Cloud (US) | Rotated on the server; 14 days at Grafana |
 | Daily service statistics: counts, sums and percentiles across all accounts, never one account's; country groups under 5 accounts folded into one | System | Database; the newest day also at Grafana Cloud (US) | Indefinitely; 14 days at Grafana |
 | A web visitor's hash of address and browser under a random daily salt, for the unique-visitor count | System | Database | Deleted with the salt once that day's statistics are taken, within 2 days |
@@ -70,7 +70,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 
 - **The user:** all of their own data.
 - **A Story recipient:** the sender's display name, else email address, and the copy they accepted, with the sender's Private locations applied, theirs from then on.
-- **The operator:** through the admin panel, every account's list of activities (dates, names, countries), but not their tracks.
+- **The operator:** in the admin panel, each account's email, name and activities (dates, names, types, distances, places), not their tracks.
 - **Processors:** DigitalOcean (servers), Cloudflare (R2 storage, the basemap's CDN), Grafana Labs (monitoring) and Zoho (email, US).
 
 Cloudflare's CDN (basemap tiles, so which areas are viewed), Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser or app directly.

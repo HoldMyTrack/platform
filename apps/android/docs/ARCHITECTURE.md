@@ -34,4 +34,3 @@ The Android app is Path 2 (ADR-0001), reading Health Connect in the foreground; 
 | :--- | :--- |
 | Compose | The app outgrows a handful of screens; Views/Compose interop allows moving one screen at a time |
 | An encrypted token store | A threat beyond access to the device's private storage is identified |
-| Instrumentation tests | Manual device checks stop being enough; JUnit covers the pure logic (`docs/DEVELOPMENT.md`) |

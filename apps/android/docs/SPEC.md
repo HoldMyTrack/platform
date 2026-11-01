@@ -289,7 +289,7 @@ The bottom bar's Sync is the map in Normal mode with the sheet on its Sync tab, 
 The web's upload (`docs/SPEC.md` FR-3.1, FR-3.4) as a screen, for a verified, non-demo account.
 
 - Files come from Android's picker, or are opened or shared from another app (§9).
-- The web's limits apply: `.gpx`, `.fit` or `.tcx`, up to 16 MB each, 20 at a time (more are refused whole) and 100 an hour; a `.zip` is refused by name.
+- The web's limits apply: `.gpx`, `.fit` or `.tcx`, up to 16 MiB each, 20 at a time (more are refused whole) and 100 an hour; a `.zip` is refused by name.
 - Files go one at a time and carry on when the screen is left. Finished imports are in Sync history.
 
 ## 6. FR-4 — Sync History
