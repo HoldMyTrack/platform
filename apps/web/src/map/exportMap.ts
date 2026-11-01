@@ -371,9 +371,28 @@ async function renderOffscreen(
   };
 
   try {
+    // A tile that fails (a satellite quota, one fog tile's 5xx) carries its sourceId and costs
+    // that tile only; an error without one is the style itself, which no export survives. A
+    // load that neither finishes nor fails gives up like waitForIdle does.
     await new Promise<void>((resolve, reject) => {
-      instance.once('load', () => resolve());
-      instance.once('error', (e) => reject(e.error ?? new Error('export map failed to load')));
+      const onError = (e: { error?: unknown; sourceId?: string }) => {
+        if (e.sourceId) return;
+        done();
+        reject(e.error ?? new Error('export map failed to load'));
+      };
+      const timer = window.setTimeout(() => {
+        done();
+        reject(new Error('export map timed out loading'));
+      }, EXPORT_IDLE_TIMEOUT_MS);
+      const done = () => {
+        window.clearTimeout(timer);
+        instance.off('error', onError);
+      };
+      instance.on('error', onError);
+      instance.once('load', () => {
+        done();
+        resolve();
+      });
     });
 
     applyLayers(instance, webLayers(state.flavor, getTileVersion()), {

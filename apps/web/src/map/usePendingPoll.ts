@@ -36,7 +36,12 @@ export function usePendingPoll(pendingIds: string[], handlers: PendingPollHandle
       timer = window.setTimeout(() => {
         const answers = pendingBatches(watched).map((ids) => pendingActivities(ids, controller.signal));
         Promise.all(answers).then(
-          (still) => (pendingMoved(watched, still.flat()) ? handlersRef.current.reload() : check()),
+          (still) => {
+            // Polling goes on after asking for a reload: a successful one brings a new list and
+            // restarts this, a failed one leaves the same list, and the next check asks again.
+            if (pendingMoved(watched, still.flat())) handlersRef.current.reload();
+            check();
+          },
           () => {
             if (!controller.signal.aborted) check();
           },

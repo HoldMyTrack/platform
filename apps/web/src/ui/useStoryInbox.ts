@@ -20,6 +20,8 @@ export interface StoryInboxState extends StoryInbox {
 export function useStoryInbox(enabled: boolean, onArrived: () => void): StoryInboxState {
   const [inbox, setInbox] = useState<StoryInbox>({ sends: [], copying: [] });
   const [nonce, setNonce] = useState(0);
+  // Counts failed reads, so a failure re-arms the poll below though the inbox didn't change.
+  const [failures, setFailures] = useState(0);
   const copyingRef = useRef(0);
   const readRef = useRef(false);
   const onArrivedRef = useRef(onArrived);
@@ -35,8 +37,11 @@ export function useStoryInbox(enabled: boolean, onArrived: () => void): StoryInb
         copyingRef.current = result.copying.length;
         setInbox(result);
       })
-      // The inbox is an extra on the tab: a failed read leaves the last one shown.
-      .catch(() => {});
+      // The inbox is an extra on the tab: a failed read leaves the last one shown, and a copy
+      // still arriving is asked about again.
+      .catch(() => {
+        if (!controller.signal.aborted) setFailures((n) => n + 1);
+      });
     return () => controller.abort();
   }, [enabled, nonce]);
 
@@ -45,7 +50,7 @@ export function useStoryInbox(enabled: boolean, onArrived: () => void): StoryInb
     if (!enabled || inbox.copying.length === 0) return;
     const timer = window.setTimeout(() => setNonce((n) => n + 1), COPYING_POLL_MS);
     return () => window.clearTimeout(timer);
-  }, [enabled, inbox]);
+  }, [enabled, inbox, failures]);
 
   const answer = useCallback(async (id: string, accept: boolean) => {
     await answerStorySend(id, accept);

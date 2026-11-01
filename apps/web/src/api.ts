@@ -236,7 +236,7 @@ export async function updateActivity(
   id: string,
   patch: { activityType: string; name: string; description: string },
 ): Promise<Activity> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${id}`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -256,7 +256,7 @@ export async function updateActivity(
  * return here either.
  */
 export async function deleteActivity(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${id}`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     credentials: 'include',
   });
@@ -370,7 +370,7 @@ export async function getActivityTrackMetrics(
   activityId: string,
   signal?: AbortSignal,
 ): Promise<ActivityTrackMetrics> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${activityId}/track-metrics`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(activityId)}/track-metrics`, {
     ...(signal ? { signal } : {}),
     credentials: 'include',
   });
@@ -405,7 +405,7 @@ export interface ActivityTrackPoints {
 
 /** `GET /v1/activities/{id}/track-points` — what the track editor opens with. */
 export async function getActivityTrackPoints(activityId: string, signal?: AbortSignal): Promise<ActivityTrackPoints> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${activityId}/track-points`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(activityId)}/track-points`, {
     ...(signal ? { signal } : {}),
     credentials: 'include',
   });
@@ -433,7 +433,7 @@ export async function saveActivityTrackEdit(
   splitAt: number | null = null,
   allowHidden = false,
 ): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${activityId}/track-edit`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(activityId)}/track-edit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -484,7 +484,7 @@ export async function listPrivateLocations(signal?: AbortSignal): Promise<Privat
  * soon as that's queued — the Activity List's Pending badges show the rest.
  */
 export async function savePrivateLocation(input: PrivateLocationInput, id?: string): Promise<PrivateLocation> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations${id ? `/${id}` : ''}`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations${id ? `/${encodeURIComponent(id)}` : ''}`, {
     method: id ? 'PATCH' : 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -497,7 +497,7 @@ export async function savePrivateLocation(input: PrivateLocationInput, id?: stri
 }
 
 export async function deletePrivateLocation(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations/${id}`, { method: 'DELETE', credentials: 'include' });
+  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
   if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
@@ -889,7 +889,7 @@ export async function uploadPhoto(
 /** `PATCH /v1/photos/{id}` — a field present changes. `routeAt` (RFC 3339) is the photo's new
  *  moment on its track; the server clamps it to the track. */
 export async function updatePhoto(id: string, change: { caption?: string | undefined; routeAt?: string | undefined }): Promise<Photo> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/photos/${id}`, {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/photos/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -903,7 +903,7 @@ export async function updatePhoto(id: string, change: { caption?: string | undef
 
 /** `DELETE /v1/photos/{id}`. */
 export async function deletePhoto(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/photos/${id}`, { method: 'DELETE', credentials: 'include' });
+  const res = await fetch(`${API_BASE_URL}${API_V1}/photos/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
   if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
