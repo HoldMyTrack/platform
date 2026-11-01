@@ -175,6 +175,8 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 	defer statsTicker.Stop()
 	jobHistoryTicker := time.NewTicker(jobHistoryInterval)
 	defer jobHistoryTicker.Stop()
+	authTicker := time.NewTicker(authSweepInterval)
+	defer authTicker.Stop()
 
 	// A ticker's first tick is a whole interval away, so the daily sweeps also run once at
 	// start: a worker restarted more often than daily (every deploy) would otherwise never
@@ -191,6 +193,9 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 	takeStats(ctx, pool, log)
 	if err := sweepJobHistory(ctx, pool, log); err != nil {
 		log.Error("job history sweep error", "err", err)
+	}
+	if err := sweepExpiredAuth(ctx, pool, log); err != nil {
+		log.Error("auth sweep error", "err", err)
 	}
 
 	for {
@@ -218,6 +223,10 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 		case <-jobHistoryTicker.C:
 			if err := sweepJobHistory(ctx, pool, log); err != nil {
 				log.Error("job history sweep error", "err", err)
+			}
+		case <-authTicker.C:
+			if err := sweepExpiredAuth(ctx, pool, log); err != nil {
+				log.Error("auth sweep error", "err", err)
 			}
 		}
 	}

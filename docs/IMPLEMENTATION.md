@@ -76,7 +76,7 @@ The queue (§4.1); there is no broker. A running job stays `pending`, with `lock
 
 ### 3.9 `sessions`
 
-The cookie value is a random UUID (`newToken`); the row keeps only its SHA-256, `token_hash`, the primary key, so a copy of the database or a backup holds nothing that signs in. Expiry is checked in SQL on every read.
+The cookie value is a random UUID (`newToken`); the row keeps only its SHA-256, `token_hash`, the primary key, so a copy of the database or a backup holds nothing that signs in. Expiry is checked in SQL on every read; a daily sweep deletes expired rows here, in §3.10 and in §3.16 (`worker/auth_sweep.go`).
 
 ### 3.10 `password_resets`
 
