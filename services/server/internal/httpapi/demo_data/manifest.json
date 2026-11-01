@@ -445,6 +445,44 @@
           "height": 1536
         }
       ]
+    },
+    "2026-11-01 Hemlock Creek Trail.gpx": {
+      "name": "Hemlock Creek Trail",
+      "type": "walking",
+      "photos": [
+        {
+          "file": "2026-11-01 Hemlock Creek Trail 1.webp",
+          "thumb": "2026-11-01 Hemlock Creek Trail 1-thumb.webp",
+          "taken_at": "2026-11-01T15:53:05Z",
+          "route_at": "2026-11-01T15:53:05Z",
+          "width": 2048,
+          "height": 1536
+        },
+        {
+          "file": "2026-11-01 Hemlock Creek Trail 2.webp",
+          "thumb": "2026-11-01 Hemlock Creek Trail 2-thumb.webp",
+          "taken_at": "2026-11-01T15:53:31Z",
+          "route_at": "2026-11-01T15:53:31Z",
+          "width": 1536,
+          "height": 2048
+        },
+        {
+          "file": "2026-11-01 Hemlock Creek Trail 3.webp",
+          "thumb": "2026-11-01 Hemlock Creek Trail 3-thumb.webp",
+          "taken_at": "2026-11-01T15:59:14Z",
+          "route_at": "2026-11-01T15:59:14Z",
+          "width": 1536,
+          "height": 2048
+        },
+        {
+          "file": "2026-11-01 Hemlock Creek Trail 4.webp",
+          "thumb": "2026-11-01 Hemlock Creek Trail 4-thumb.webp",
+          "taken_at": "2026-11-01T16:29:45Z",
+          "route_at": "2026-11-01T16:29:45Z",
+          "width": 1536,
+          "height": 2048
+        }
+      ]
     }
   },
   "stories": [
@@ -480,7 +518,8 @@
         "2026-10-06 Mill Creek Falls.gpx",
         "2026-10-10 Solowheel.gpx",
         "2026-10-11 Solowheel.gpx",
-        "2026-10-18 Lake to Lake Trail.gpx"
+        "2026-10-18 Lake to Lake Trail.gpx",
+        "2026-11-01 Hemlock Creek Trail.gpx"
       ]
     },
     {
