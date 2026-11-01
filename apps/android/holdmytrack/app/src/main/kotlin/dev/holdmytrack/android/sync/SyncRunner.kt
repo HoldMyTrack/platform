@@ -72,25 +72,19 @@ class SyncRunner(
 
     /** Health Connect's ticked sessions, a batch at a time. Returns why it stopped, if it did. */
     private suspend fun sendSessions(sessions: List<Candidate>, onProgress: (Int) -> Unit): String? {
-        val batch = mutableListOf<Candidate>()
-        var points = 0
+        val batches = SyncBatcher<Candidate>()
         for (ticked in sessions) {
             val candidate = withRoute(ticked) ?: continue
-            if (candidate.pointCount > MAX_POINTS_PER_ACTIVITY) {
+            if (SyncBatcher.tooLarge(candidate.pointCount)) {
                 val refusal = res.getString(R.string.sync_refusal_too_many_points, candidate.pointCount)
                 rejected += Rejection(candidate.key, candidate.startedAt, candidate.activityType, refusal)
                 continue
             }
-            batch += candidate
-            points += candidate.pointCount
-            if (batch.size >= MAX_BATCH_ACTIVITIES || points >= MAX_BATCH_POINTS) {
-                flush(batch, HoldMyTrackApi.SOURCE_HEALTH_CONNECT)?.let { return it }
-                onProgress(landed.size)
-                batch.clear()
-                points = 0
-            }
+            val full = batches.add(candidate, candidate.pointCount) ?: continue
+            flush(full, HoldMyTrackApi.SOURCE_HEALTH_CONNECT)?.let { return it }
+            onProgress(landed.size)
         }
-        val stopped = flush(batch, HoldMyTrackApi.SOURCE_HEALTH_CONNECT)
+        val stopped = flush(batches.rest(), HoldMyTrackApi.SOURCE_HEALTH_CONNECT)
         onProgress(landed.size)
         return stopped
     }
@@ -178,14 +172,5 @@ class SyncRunner(
 
     private companion object {
         const val TAG = "HoldMyTrackSync"
-
-        /** The endpoint accepts 100 per request; a smaller batch keeps one request modest on
-         *  mobile data. */
-        const val MAX_BATCH_ACTIVITIES = 25
-        const val MAX_BATCH_POINTS = 20_000
-
-        /** The server's ceiling, checked here so a route it could never accept is reported as
-         *  such instead of being sent to be refused. */
-        const val MAX_POINTS_PER_ACTIVITY = 50_000
     }
 }
