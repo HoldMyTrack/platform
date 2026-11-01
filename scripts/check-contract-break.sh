@@ -2,7 +2,8 @@
 # Fails when the API contract in services/server/api changes in a way an installed client can't
 # follow: a response field removed or made optional, a request field made required, an operation
 # removed. Additive changes pass. The contract is compared with its copy at the merge base with the
-# base ref, by oasdiff's breaking-change rules at error level.
+# base ref, by oasdiff's breaking-change rules at error level, less the entries
+# services/server/api/breaking-ignore.txt accepts, each with why no client is affected.
 # Usage: scripts/check-contract-break.sh [base-ref] (default: origin/main). Needs Go.
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
@@ -18,4 +19,5 @@ if ! git archive "$base" services/server/api | tar -x -C "$work" 2>/dev/null; th
   exit 0
 fi
 
-go run "$OASDIFF" breaking "$work/services/server/api/openapi.yaml" services/server/api/openapi.yaml --fail-on ERR
+go run "$OASDIFF" breaking "$work/services/server/api/openapi.yaml" services/server/api/openapi.yaml --fail-on ERR \
+  --err-ignore services/server/api/breaking-ignore.txt

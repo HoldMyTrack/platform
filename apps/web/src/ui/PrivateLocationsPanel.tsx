@@ -5,12 +5,11 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import {
   deletePrivateLocation,
   listPrivateLocations,
-  PRIVATE_LOCATION_MAX_RADIUS_M,
-  PRIVATE_LOCATION_MIN_RADIUS_M,
   savePrivateLocation,
   type PrivateLocation,
 } from '../api';
 import { labelInsertionPoint } from '../map/layers';
+import { PRIVATE_LOCATION_MAX_NAME_LEN, PRIVATE_LOCATION_MAX_RADIUS_M, PRIVATE_LOCATION_MIN_RADIUS_M } from '../limits';
 import {
   attachPrivateLocationsHandlers,
   clearPrivateLocations,
@@ -291,7 +290,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
                 className="settings-page__input"
                 type="text"
                 value={draft.name}
-                maxLength={100}
+                maxLength={PRIVATE_LOCATION_MAX_NAME_LEN}
                 placeholder={t('private.name_placeholder')}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value })}
               />

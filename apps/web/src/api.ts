@@ -467,8 +467,6 @@ function toPrivateLocation(body: Schema<'PrivateLocation'>): PrivateLocation {
   return { id: body.id, name: body.name, lon: body.lon, lat: body.lat, radiusM: body.radius_m };
 }
 
-export const PRIVATE_LOCATION_MIN_RADIUS_M = 50;
-export const PRIVATE_LOCATION_MAX_RADIUS_M = 2000;
 
 export async function listPrivateLocations(signal?: AbortSignal): Promise<PrivateLocation[]> {
   const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations`, {
@@ -554,10 +552,6 @@ function toStory(body: Schema<'Story'>): Story {
   };
 }
 
-/** Mirrors stories.go's maxStoryNameLen/maxStoryDescriptionLen, so a limit shows before a
- *  400 does. */
-export const STORY_MAX_NAME_LEN = 200;
-export const STORY_MAX_DESCRIPTION_LEN = 2000;
 
 /** Thrown by `getStory` for a Story that doesn't exist or isn't this account's — the two are
  *  one `404` on purpose (`SPEC.md` FR-14.5). */

@@ -7,9 +7,8 @@ import { formatClockTime } from './format';
 import { draftRows, waitingPhotos, type NewPhoto, type PhotoDraft } from './photoDraft';
 import { fractionAt, photoTrack, pointAt, startFraction, type PhotoTrack, type PlaceAnchor } from './photoTrack';
 import { preparePhoto, UnreadablePhotoError } from './photoPrep';
+import { MAX_PHOTO_CAPTION_LEN } from '../limits';
 
-/** Mirrors photos.go's maxPhotoCaptionLen. */
-export const MAX_PHOTO_CAPTION_LEN = 500;
 /** The slider's steps — fine enough that a step on a long route is a few metres. */
 const SLIDER_STEPS = 1000;
 

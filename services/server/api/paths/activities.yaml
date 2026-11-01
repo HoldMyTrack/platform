@@ -76,13 +76,16 @@ activities_id:
             properties:
               activity_type:
                 type: string
-                description: Trimmed; blank or longer than 50 bytes is a 400.
+                maxLength: 50
+                description: Trimmed; blank is a 400.
               name:
                 type: string
-                description: Trimmed; missing or empty clears it. Longer than 200 bytes is a 400.
+                maxLength: 200
+                description: Trimmed; missing or empty clears it.
               description:
                 type: string
-                description: Trimmed; missing or empty clears it. Longer than 2000 bytes is a 400.
+                maxLength: 2000
+                description: Trimmed; missing or empty clears it.
     responses:
       "200":
         description: The activity as saved

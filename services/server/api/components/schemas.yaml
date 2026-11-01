@@ -110,10 +110,12 @@ StoryInput:
   properties:
     name:
       type: string
-      description: Trimmed; blank or longer than 200 characters is a 400.
+      maxLength: 200
+      description: Trimmed; blank is a 400.
     description:
       type: string
-      description: Trimmed; missing or empty leaves the Story without one. Longer than 2000 characters is a 400.
+      maxLength: 2000
+      description: Trimmed; missing or empty leaves the Story without one.
 StoryCreateInput:
   type: object
   required: [name]

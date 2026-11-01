@@ -55,9 +55,10 @@ contract_at() {
   git archive "$1" services/server/api | tar -x -C "$work" && mv "$work/services/server/api" "$work/$2"
 }
 
-# breaks <old contract> <new contract>: one line per error-level break, without file positions.
+# breaks <old contract> <new contract>: one line per error-level break, without file positions,
+# less those services/server/api/breaking-ignore.txt accepts.
 breaks() {
-  go run "$OASDIFF" breaking "$1" "$2" --format json |
+  go run "$OASDIFF" breaking "$1" "$2" --format json --err-ignore services/server/api/breaking-ignore.txt |
     jq -r '.[] | select(.level == 3) | [.operation, .path, .id, .text] | join(" ")' | sort -u
 }
 
