@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-15.
+Last updated: 2026-10-31.
 
 ## How to read this document
 
@@ -16,9 +16,7 @@ Gates the public launch (`VISION.md` §7, §8.3).
 
 - [ ] Stand up the funding page (Open Collective, public ledger, `VISION.md` §6.1) before launch. The app side is built (`SPEC.md` FR-11.1), and the `holdmytrack` collective applied to Open Source Collective as fiscal host on 2026-09-24. Once approved, set `OpenCollectiveSlug` in `services/server/internal/web/web.go`, which brings back the header's Donate, and replace the About page's "donations are not open yet" line with a link.
 - [ ] Post concept renders to r/running, r/cycling, r/Garmin, r/Strava, r/FogOfWorld (`VISION.md` §8.1, §8.3).
-- [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 pre-launch actions and the controller's sign-off.
-- [ ] EU-region hosting for EU users.
-- [x] A privacy policy page, `/privacy` (`SPEC.md` FR-10.6). Update it when EU-region hosting moves the data.
+- [x] A privacy policy page, `/privacy` (`SPEC.md` FR-10.6).
 - [x] Account deletion and data export, on the web and Android (`SPEC.md` FR-1.11, FR-1.12).
 - [x] Health Connect data-type declarations in the Play Console, scoped to what's used; filed 2026-10-07.
 
@@ -34,6 +32,13 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] Serve the basemap as `/{z}/{x}/{y}` tiles Cloudflare can cache, with `pmtiles serve` on the droplet first: every range read reaches R2, since the free plan caches files only up to 512 MB (`IMPLEMENTATION.md` §5.4). Worth it once traffic grows: about 97,000 basemap requests in the 30 days to 2026-10-14 were under 1% of R2's free reads. The web style (`apps/web/src/map/style.ts`) and the server-built Android style (`mapstyle.go`) move from `pmtiles://` to the tile URL.
 - [ ] Re-measure the funding-model assumptions (`VISION.md` §4.3, §6.3) against real usage; they feed the exit gate.
+
+### Before promoting in the EU
+
+The app launches outside the EU; the website is open to EU users, but the app isn't promoted there until these are done.
+
+- [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 actions and the controller's sign-off.
+- [ ] EU-region hosting for EU users, with the privacy policy updated when it moves the data.
 
 ### After launch
 
