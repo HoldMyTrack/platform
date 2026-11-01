@@ -387,26 +387,36 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 //
 // Failed attempts are limited per email and per caller address (signInFailureLimits), and a
 // limited caller is refused before the password is checked, so guessing a password costs
-// more than bcrypt's own time.
+// more than bcrypt's own time. Each attempt takes its slot before the check and gives it back
+// on success: checked first and counted after, a burst of parallel guesses would all pass the
+// check while the first were still comparing.
 func (s *Server) checkPassword(ctx context.Context, ip, rawEmail, password string) (string, error) {
 	email, err := validateCredentials(rawEmail, password)
 	if err != nil {
 		return "", err
 	}
-	if signInFailuresByEmail.exceeded(email) || signInFailuresByIP.exceeded(ip) {
+	if !signInFailuresByEmail.allow(email) {
 		return "", accountFailure(http.StatusTooManyRequests, "error.rate_limited")
+	}
+	if !signInFailuresByIP.allow(ip) {
+		signInFailuresByEmail.refund(email)
+		return "", accountFailure(http.StatusTooManyRequests, "error.rate_limited")
+	}
+	notFailure := func() {
+		signInFailuresByEmail.refund(email)
+		signInFailuresByIP.refund(ip)
 	}
 	var userID string
 	var hash []byte
 	err = s.pool.QueryRow(ctx, `SELECT id, password_hash FROM users WHERE email = $1`, email).Scan(&userID, &hash)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
+		notFailure()
 		return "", err
 	}
 	if !passwordMatches(hash, password) {
-		signInFailuresByEmail.hit(email)
-		signInFailuresByIP.hit(ip)
 		return "", accountFailure(http.StatusUnauthorized, "error.invalid_credentials")
 	}
+	notFailure()
 	return userID, nil
 }
 

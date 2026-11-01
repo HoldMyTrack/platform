@@ -132,6 +132,6 @@ func (s *Server) heatPointsFailed(w http.ResponseWriter, r *http.Request, err er
 	if clientGone(w, r) {
 		return
 	}
-	s.log.Error("heat points tile failed", "err", err, "z", z, "x", x, "y", y)
+	s.log.Error("heat points tile failed", "err", err, "z", z)
 	writeAPIError(w, "internal error", http.StatusInternalServerError)
 }

@@ -569,8 +569,6 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		return storycopy.Process(ctx, pool, store, sj)
 	case "export":
 		return runExport(ctx, pool, store, log, j.id, j.payload)
-	case "remove_activity_objects":
-		return runRemoveActivityObjects(ctx, store, j.payload)
 	default:
 		return fmt.Errorf("unhandled job kind %q (export / provider_sync / retention are out of scope for this task)", j.kind)
 	}

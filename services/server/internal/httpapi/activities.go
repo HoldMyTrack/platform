@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/url"
@@ -476,24 +477,6 @@ func (s *Server) handleDeleteActivity(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("activity delete: photo lookup failed, deleting row anyway", "activity_id", activityID, "err", err)
 	}
-	if rawKey != nil {
-		// raw_payload_key is content-addressed (raw/{userID}/{sha256(bytes)}{ext}), not
-		// scoped by source — two distinct activities can share one key if their raw bytes are
-		// byte-identical (e.g. the same file uploaded twice, or an activity in a copied Story).
-		// Only remove it if this is the last activity actually pointing at
-		// it, or a sibling activity's still-referenced raw file disappears with this one.
-		var stillReferenced bool
-		if err := s.pool.QueryRow(ctx,
-			`SELECT EXISTS(SELECT 1 FROM activities WHERE raw_payload_key = $1 AND id != $2)`, *rawKey, activityID,
-		).Scan(&stillReferenced); err != nil {
-			s.log.Error("activity delete: raw key reference check failed, skipping raw cleanup", "activity_id", activityID, "err", err)
-		} else if !stillReferenced {
-			if err := s.store.Remove(ctx, *rawKey); err != nil {
-				s.log.Error("activity delete: raw payload cleanup failed, deleting row anyway", "activity_id", activityID, "err", err)
-			}
-		}
-	}
-
 	tag, err := s.pool.Exec(ctx, `DELETE FROM activities WHERE id = $1 AND user_id = $2`, activityID, userID)
 	if err != nil {
 		s.log.Error("activity delete failed", "err", err)
@@ -503,6 +486,9 @@ func (s *Server) handleDeleteActivity(w http.ResponseWriter, r *http.Request) {
 	if tag.RowsAffected() == 0 {
 		writeAPIError(w, "activity not found", http.StatusNotFound)
 		return
+	}
+	if rawKey != nil {
+		s.removeUnreferencedRaw(ctx, activityID, *rawKey)
 	}
 	s.removeUnreferencedPhotoFiles(ctx, photoKeys)
 	// The track is gone from the tracks tiles now; the render below only bumps once it runs.
@@ -607,4 +593,26 @@ func (s *Server) handleActivityTrackMetrics(w http.ResponseWriter, r *http.Reque
 
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, trackMetricsResponse{ActivityID: activityID, Points: points, Bands: paceBands(speed)})
+}
+
+// removeUnreferencedRaw removes a deleted activity's original once nothing else names it. Run
+// after the row is gone, never before: a failed DELETE would otherwise leave an activity without
+// its original, and of two pieces deleted together each would see the other and both keep it.
+// raw_payload_key is content-addressed (raw/{userID}/{sha256(bytes)}{ext}), so the same file
+// uploaded twice, a split's pieces, or a re-upload still waiting for ingest can share it.
+func (s *Server) removeUnreferencedRaw(ctx context.Context, activityID, rawKey string) {
+	var named bool
+	if err := s.pool.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM activities WHERE raw_payload_key = $1)
+		    OR EXISTS (SELECT 1 FROM jobs WHERE kind = 'ingest' AND state = 'pending' AND payload->>'raw_payload_key' = $1)
+	`, rawKey).Scan(&named); err != nil {
+		s.log.Error("activity delete: raw key reference check failed, keeping the original", "activity_id", activityID, "err", err)
+		return
+	}
+	if named {
+		return
+	}
+	if err := s.store.Remove(ctx, rawKey); err != nil {
+		s.log.Error("activity delete: raw payload cleanup failed", "activity_id", activityID, "err", err)
+	}
 }

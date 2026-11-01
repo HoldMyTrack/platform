@@ -48,7 +48,7 @@ func (s *Server) handleBikePathsTile(w http.ResponseWriter, r *http.Request) {
 			if clientGone(w, r) {
 				return
 			}
-			s.log.Error("bike paths tile query failed", "err", err, "z", z, "x", x, "y", y)
+			s.log.Error("bike paths tile query failed", "err", err, "z", z)
 			writeAPIError(w, "internal error", http.StatusInternalServerError)
 			return
 		}

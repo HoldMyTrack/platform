@@ -139,7 +139,7 @@ func (s *Server) serveAdminTile(w http.ResponseWriter, r *http.Request, l adminL
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("admin tile query failed", "err", err, "layer", l.name, "z", z, "x", x, "y", y)
+		s.log.Error("admin tile query failed", "err", err, "layer", l.name, "z", z)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}

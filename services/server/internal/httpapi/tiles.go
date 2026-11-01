@@ -91,7 +91,9 @@ func (s *Server) handleTracksTile(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("tracks tile query failed", "err", err, "z", z, "x", x, "y", y)
+		// Zoom only, here and in the other tile handlers: a tile's x and y say where its viewer
+		// was looking, which the logs that leave the server must not carry (docs/DPIA.md).
+		s.log.Error("tracks tile query failed", "err", err, "z", z)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
