@@ -4,7 +4,7 @@ Last updated: 2026-10-31.
 
 ## Summary
 
-HoldMyTrack can launch publicly once the pre-launch actions in section 7 are done. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Three stay medium (section 6).
+HoldMyTrack launches outside the EU, first in the US, Canada, Australia, New Zealand and Ukraine. Its website is open to EU users; the app is promoted in the EU only once the actions in section 7 are done and this DPIA is signed off. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Three stay medium (section 6).
 
 **Status:** draft for the controller's review, written from the product's documents and its published privacy policy (`/privacy`), without an audit of the running system.
 
@@ -86,8 +86,6 @@ Cloudflare's CDN (basemap tiles, so which areas are viewed), Google Fonts, MapTi
 
 No Article 9 special-category data is processed. Heart rate and other body data inside an uploaded file is never read out of it (ADR-0017).
 
-**One inconsistency to resolve:** `VISION.md` §7 names consent as the basis for location history; the privacy policy relies on contract, which fits better, since the map can't be drawn without the track (section 7).
-
 **Data minimisation in place:**
 
 - **Only what the user ticks comes in.** No source starts ticked, and nothing is imported in bulk (ADR-0039).
@@ -141,13 +139,13 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 | R4 | bcrypt password hashes. HttpOnly, SameSite=Lax session cookie for up to 30 days. Sign-in rate limits. Email verification. | Optional second factor; not needed for launch | Low |
 | R5 | The admin panel never shows tracks (section 2). Admin rights can be set only from the server's own command line. The daily statistics hold only aggregates (section 2). | An audit log, needed once an admin can see or change a track | Low |
 | R6 | Exports leave out Private locations and draw only clipped tracks, whose ends stop a secret, random distance past each circle so many tracks together don't outline it. A Story copy needs the recipient to accept it and carries the sender's Private locations. The policy warns that a copy is the recipient's. | — | Low |
-| R7 | Transfers rely on the processors' Standard Contractual Clauses or EU–US Data Privacy Framework certification, stated in the privacy policy, and are assessed in section 8. | Nothing before launch; EU-region hosting stays an option (`docs/ROADMAP.md`, "Before launch") | Low |
+| R7 | Transfers rely on the processors' Standard Contractual Clauses or EU–US Data Privacy Framework certification, stated in the privacy policy, and are assessed in section 8. | EU-region hosting, before the app is promoted in the EU (`docs/ROADMAP.md`, "Before promoting in the EU") | Low |
 | R8 | Processors are named in the privacy policy. Logs are scrubbed before they reach Grafana (section 3). | Accepted DPAs with DigitalOcean, Cloudflare, Grafana Labs and Zoho on file | Medium |
 | R9 | Deletion is complete within minutes and reaches backups within 8 weeks; the rest expires as section 2 lists. | — | Medium |
 
 ## 7. Actions and sign-off
 
-**Before launch:**
+**Before promoting in the EU:**
 
 - [x] Decide who the controller is: the operator personally, named in the privacy policy's "Who we are" (2026-10-25).
 - [ ] Appoint an EU representative (Art. 27) and give a postal address in "Who we are", once the project has funding and before it is listed or promoted in the EU.
@@ -161,7 +159,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 
 - [ ] Add or confirm a test that one account cannot read another's activities, tiles or photos (R3).
 - [ ] Re-check that the cookies and browser storage the site sets still match the Cookies list on `/privacy`.
-- [ ] Align `VISION.md` §7 with the privacy policy's lawful basis (section 3).
+- [x] Align `VISION.md` §7 with the privacy policy's lawful basis (section 3) (2026-10-31).
 
 **Review this DPIA** before a cloud connector or the iOS app ships, when an admin can see tracks, or when the user base becomes large-scale. At large scale, systematic monitoring as a core activity also makes a Data Protection Officer mandatory (Art. 37(1)(b)).
 

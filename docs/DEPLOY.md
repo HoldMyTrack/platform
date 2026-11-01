@@ -446,4 +446,4 @@ Grafana Cloud's free tier holds the logs, metrics, dashboard and alerts. The `al
 
 ## What this doesn't cover
 
-The compliance work a public launch needs (DPIA, EU-region hosting) is `docs/ROADMAP.md`'s "Before launch". This document gets a deployment live, not ready for the public.
+The compliance work promoting the app in the EU needs (DPIA, EU-region hosting) is `docs/ROADMAP.md`'s "Before promoting in the EU". This document gets a deployment live, not ready for the public.
