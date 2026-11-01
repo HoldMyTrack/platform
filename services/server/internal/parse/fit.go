@@ -104,6 +104,7 @@ func ParseFIT(r io.Reader) (Activity, error) {
 			// coordinate it would put the point at about (180, 180).
 			p := Point{}
 			haveLat, haveLon := false, false
+			var enhanced *float32
 			for _, f := range def.fields {
 				raw := fields[f.num]
 				switch f.num {
@@ -124,6 +125,14 @@ func ParseFIT(r io.Reader) (Activity, error) {
 							p.Elevation = &e
 						}
 					}
+				case 78: // enhanced_altitude, uint32, the same scale and offset: what many newer
+					// devices write instead of altitude, which they leave out or invalid
+					if len(raw) >= 4 {
+						if v := def.order.Uint32(raw); v != 0xFFFFFFFF {
+							e := float32(v)/5 - 500
+							enhanced = &e
+						}
+					}
 				case 253: // timestamp, uint32 seconds since FIT epoch
 					if len(raw) >= 4 {
 						if v := def.order.Uint32(raw); v != 0xFFFFFFFF {
@@ -131,6 +140,9 @@ func ParseFIT(r io.Reader) (Activity, error) {
 						}
 					}
 				}
+			}
+			if enhanced != nil {
+				p.Elevation = enhanced
 			}
 			if haveLat && haveLon {
 				act.Points = append(act.Points, p)

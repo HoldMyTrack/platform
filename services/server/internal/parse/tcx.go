@@ -6,7 +6,6 @@ import (
 	"io"
 	"strconv"
 	"strings"
-	"time"
 )
 
 // ParseTCX streams Trackpoint elements. Garmin Training Center XML nests position and
@@ -19,6 +18,7 @@ func ParseTCX(r io.Reader) (Activity, error) {
 	// inside one. path is only for the innermost element's name: scanning it for "Trackpoint"
 	// on every text token made a deeply nested file quadratic to parse.
 	var cur *Point
+	var haveLat, haveLon bool // cur had a readable latitude, longitude
 	var path []string
 
 	for {
@@ -41,7 +41,7 @@ func ParseTCX(r io.Reader) (Activity, error) {
 					}
 				}
 			case "Trackpoint":
-				cur = &Point{}
+				cur, haveLat, haveLon = &Point{}, false, false
 			}
 		case xml.CharData:
 			if cur == nil {
@@ -54,13 +54,17 @@ func ParseTCX(r io.Reader) (Activity, error) {
 			leaf := path[len(path)-1]
 			switch leaf {
 			case "Time":
-				if ts, err := time.Parse(time.RFC3339, text); err == nil {
+				if ts, ok := parseTime(text); ok {
 					cur.Time = ts
 				}
 			case "LatitudeDegrees":
-				cur.Lat, _ = strconv.ParseFloat(text, 64)
+				if v, err := strconv.ParseFloat(text, 64); err == nil {
+					cur.Lat, haveLat = v, true
+				}
 			case "LongitudeDegrees":
-				cur.Lon, _ = strconv.ParseFloat(text, 64)
+				if v, err := strconv.ParseFloat(text, 64); err == nil {
+					cur.Lon, haveLon = v, true
+				}
 			case "AltitudeMeters":
 				if v, err := strconv.ParseFloat(text, 32); err == nil {
 					f := float32(v)
@@ -72,7 +76,9 @@ func ParseTCX(r io.Reader) (Activity, error) {
 				path = path[:len(path)-1]
 			}
 			if t.Name.Local == "Trackpoint" && cur != nil {
-				if cur.Lat != 0 || cur.Lon != 0 {
+				// Both or neither: one alone would put the point on the equator or the prime
+				// meridian, a line across the map.
+				if haveLat && haveLon {
 					act.Points = append(act.Points, *cur)
 				}
 				cur = nil
