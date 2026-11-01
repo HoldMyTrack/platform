@@ -9,12 +9,13 @@ import (
 )
 
 // Units: the distance/elevation formatting the server-rendered pages need, ported from
-// apps/web/src/ui/format.ts and units.ts so a number reads the same on a page as in the map
-// app. Keep the two in step.
+// apps/web/src/ui/format.ts so a number reads the same on a page as in the map app. Keep the
+// two in step. Which system an account uses is decided here alone (Imperial).
 
 // Imperial is the account's unit system: miles and feet for the three countries where
-// everyday distance is customarily miles (units.ts's IMPERIAL_COUNTRIES), km and meters for
-// everyone else, and for an account with no country yet.
+// everyday distance is customarily miles, km and meters for everyone else, and for an account
+// with no country yet. The one copy of the rule: the API sends it to the apps as the Account's
+// unit_system.
 func Imperial(country string) bool {
 	return country == "US" || country == "LR" || country == "MM"
 }

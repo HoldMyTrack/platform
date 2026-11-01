@@ -1072,7 +1072,8 @@ object HoldMyTrackApi {
         stories = stories.map { StoryRef(it.id, it.name) },
     )
 
-    private fun AccountJson.toProfile() = Profile(email, isDemo, emailVerified, displayName, country, timezone, locale, avatarUrl)
+    private fun AccountJson.toProfile() =
+        Profile(email, isDemo, emailVerified, displayName, country, timezone, locale, avatarUrl, imperial = unitSystem == "imperial")
 
     private fun ExportStatusJson.toExportStatus() = ExportStatus(
         state = state,

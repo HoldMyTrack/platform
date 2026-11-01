@@ -55,9 +55,9 @@ async function errorMessageFromResponse(res: Response, fallback: string): Promis
 /** The Settings page's own fields (`/settings`) — carried by both `AuthUser` and
  *  `DemoUser` uniformly, since a demo account is a real `users` row with real column
  *  defaults, not a special case that skips having them. `displayName`/`country`/`avatarUrl`
- *  are `''` when unset, not `undefined` — every caller (units.ts) checks
+ *  are `''` when unset, not `undefined` — every caller checks
  *  for an empty string, never an absent field. `country` is an ISO 3166-1 alpha-2 code or
- *  `''` (defaults the whole app to metric — see `ui/units.ts`). `avatarUrl` is already a
+ *  `''`; the server derives `unitSystem` from it, metric when it's `''`. `avatarUrl` is already a
  *  full API path (`/v1/account/avatar?v=...`) — callers prefix `API_BASE_URL`. */
 export interface UserProfile {
   displayName: string;
@@ -69,6 +69,8 @@ export interface UserProfile {
    *  zone where that isn't known (IMPLEMENTATION.md §4.30); the client shows a time with no
    *  activity of its own in it (a Spot's capture). */
   timezone: string;
+  /** Miles or kilometers, as the server decides it from `country` (ADR-0047). */
+  unitSystem: 'metric' | 'imperial';
 }
 
 export interface AuthUser extends UserProfile {
@@ -96,6 +98,7 @@ function toProfile(body: Schema<'Account'>): UserProfile {
     country: body.country,
     avatarUrl: body.avatar_url,
     timezone: body.timezone,
+    unitSystem: body.unit_system,
   };
 }
 

@@ -32,6 +32,7 @@ object Session {
     private const val KEY_EMAIL = "email"
     private const val KEY_EMAIL_VERIFIED = "email_verified"
     private const val KEY_COUNTRY = "country"
+    private const val KEY_IMPERIAL = "imperial"
     private const val KEY_LOCALE = "locale"
     private const val KEY_TIMEZONE = "timezone"
     private const val KEY_TILE_VERSION = "tile_version"
@@ -89,6 +90,11 @@ object Session {
      */
     val country: String get() = prefs.getString(KEY_COUNTRY, "").orEmpty()
 
+    /** Miles and feet rather than km and meters: the server's unit_system for the account's
+     *  Country, kept from its last answer. A session stored before this was kept reads metric
+     *  until the next check, on the app's next start. */
+    val imperial: Boolean get() = prefs.getBoolean(KEY_IMPERIAL, false)
+
     /** The account's Timezone (an IANA name), which decides which day is today and stands in
      *  for an activity's own zone where that isn't known (`docs/IMPLEMENTATION.md` §4.30).
      *  Empty until the first profile that carries it. */
@@ -134,6 +140,7 @@ object Session {
         editor
             .putBoolean(KEY_EMAIL_VERIFIED, profile.emailVerified)
             .putString(KEY_COUNTRY, profile.country)
+            .putBoolean(KEY_IMPERIAL, profile.imperial)
             .putString(KEY_LOCALE, profile.locale)
             .putString(KEY_TIMEZONE, profile.timezone)
     }
@@ -148,6 +155,7 @@ object Session {
             .remove(KEY_EMAIL)
             .remove(KEY_EMAIL_VERIFIED)
             .remove(KEY_COUNTRY)
+            .remove(KEY_IMPERIAL)
             .remove(KEY_LOCALE)
             .remove(KEY_TIMEZONE)
             .remove(KEY_TILE_VERSION)

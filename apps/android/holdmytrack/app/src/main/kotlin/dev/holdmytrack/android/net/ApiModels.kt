@@ -39,6 +39,7 @@ data class Profile(
     val timezone: String,
     val locale: String,
     val avatarUrl: String,
+    val imperial: Boolean = false,
 )
 
 /** An account with a live session — what a successful sign-in, sign-up or demo start yields. */

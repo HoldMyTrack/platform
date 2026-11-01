@@ -3537,6 +3537,11 @@ export interface components {
             timezone: string;
             /** @description Empty for automatic. */
             locale: string;
+            /**
+             * @description The units distances and elevations show in, from country.
+             * @enum {string}
+             */
+            unit_system: "metric" | "imperial";
         };
         /** @description Every error the API sends (ADR-0045). A client branches on error, never on message. */
         Error: {
@@ -3558,6 +3563,11 @@ export interface components {
             timezone: string;
             /** @description Empty for automatic. */
             locale: string;
+            /**
+             * @description The units distances and elevations show in, from country.
+             * @enum {string}
+             */
+            unit_system: "metric" | "imperial";
         };
         SettingsOption: {
             value: string;

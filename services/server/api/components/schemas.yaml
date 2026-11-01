@@ -279,7 +279,7 @@ Credentials:
       description: The browser's IANA zone, for a new account; anything invalid falls back to UTC.
 Account:
   type: object
-  required: [email, isDemo, email_verified, display_name, country, avatar_url, timezone, locale]
+  required: [email, isDemo, email_verified, display_name, country, avatar_url, timezone, locale, unit_system]
   additionalProperties: false
   properties:
     email:
@@ -298,9 +298,13 @@ Account:
     locale:
       type: string
       description: Empty for automatic.
+    unit_system:
+      type: string
+      enum: [metric, imperial]
+      description: The units distances and elevations show in, from country.
 AccountWithSession:
   type: object
-  required: [session_token, email, isDemo, email_verified, display_name, country, avatar_url, timezone, locale]
+  required: [session_token, email, isDemo, email_verified, display_name, country, avatar_url, timezone, locale, unit_system]
   additionalProperties: false
   description: The Account, and the session's token.
   properties:
@@ -323,6 +327,10 @@ AccountWithSession:
     locale:
       type: string
       description: Empty for automatic.
+    unit_system:
+      type: string
+      enum: [metric, imperial]
+      description: The units distances and elevations show in, from country.
 SettingsOption:
   type: object
   required: [value, label]

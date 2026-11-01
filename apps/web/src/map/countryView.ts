@@ -260,7 +260,7 @@ export const COUNTRY_VIEWS: Record<string, ViewState> = {
 };
 
 /** `country` is `''` for an account that hasn't set one yet (UserProfile's own convention,
- *  api.ts, same as units.ts's unitSystemForCountry) — and a handful of territories in
+ *  api.ts) — and a handful of territories in
  *  the Settings page's Country list have no entry above. Both resolve to null; MapView falls
  *  back to WORLD_VIEW. */
 export function countryView(country: string): ViewState | null {

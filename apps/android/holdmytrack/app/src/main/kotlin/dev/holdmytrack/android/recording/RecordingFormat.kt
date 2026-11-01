@@ -8,16 +8,13 @@ import java.util.Locale
 /** Distances, heights and speeds as text — shared by `RecordingService`'s notification, the
  *  Edit screen, Recorded Activities and sync history, so none disagrees about how a number
  *  reads. The numbers follow the app's language (a decimal comma in Russian), and so do the
- *  units, which are string resources. The unit system is the account's Country's, as on the
- *  web (`services/server/internal/web/format.go`'s `Imperial`): miles and feet for the United
- *  States, Liberia and Myanmar, metric everywhere else, and metric until a Country is saved. */
+ *  units, which are string resources. The unit system is the server's for the account
+ *  ([Session.imperial], the Account's `unit_system`), as on the web. */
 object RecordingFormat {
 
     private const val METERS_PER_MILE = 1609.344
     private const val FEET_PER_METER = 3.28084
-    private val IMPERIAL_COUNTRIES = setOf("US", "LR", "MM")
-
-    fun imperial(country: String = Session.country): Boolean = country in IMPERIAL_COUNTRIES
+    fun imperial(): Boolean = Session.imperial
 
     fun duration(elapsedMs: Long): String {
         val totalSeconds = elapsedMs / 1000

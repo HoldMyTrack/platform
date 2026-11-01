@@ -32,7 +32,7 @@ func TestAccountFlow(t *testing.T) {
 	d.decode(d.do(account{}, "POST", "/v1/auth/signup", map[string]any{
 		"email": email, "password": password, "timezone": "Europe/Berlin",
 	}), http.StatusCreated, &signedUp)
-	if signedUp.EmailVerified || signedUp.Timezone != "Europe/Berlin" || signedUp.SessionToken == "" {
+	if signedUp.EmailVerified || signedUp.Timezone != "Europe/Berlin" || signedUp.SessionToken == "" || signedUp.UnitSystem != "metric" {
 		t.Fatalf("signup: %+v", signedUp)
 	}
 	me := account{session: signedUp.SessionToken}
@@ -51,7 +51,7 @@ func TestAccountFlow(t *testing.T) {
 	d.decode(d.do(me, "PATCH", "/v1/account/settings", map[string]any{
 		"display_name": " Sam ", "country": "us", "timezone": "America/New_York", "locale": "",
 	}), http.StatusOK, &saved)
-	if saved.DisplayName != "Sam" || saved.Country != "US" || saved.Timezone != "America/New_York" {
+	if saved.DisplayName != "Sam" || saved.Country != "US" || saved.Timezone != "America/New_York" || saved.UnitSystem != "imperial" {
 		t.Fatalf("settings: %+v", saved)
 	}
 
