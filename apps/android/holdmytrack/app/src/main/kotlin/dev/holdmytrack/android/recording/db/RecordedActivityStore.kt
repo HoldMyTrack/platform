@@ -95,6 +95,12 @@ internal class RecordingDbHelper(context: Context) :
         if (oldVersion < 6) db.execSQL("ALTER TABLE $TABLE ADD COLUMN sent_at_ms INTEGER")
     }
 
+    // An older build opening a newer database (a Play rollback, a sideloaded APK) keeps every
+    // row: the default throws, and every open would crash with the only copy of each unsynced
+    // recording inside. Columns are read by name, so ones a newer version added are left
+    // alone, which holds only while a new version adds columns and never renames or drops one.
+    override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
+
     companion object {
         const val TABLE = "recorded_activities"
         const val LIVE_TABLE = "live_recording"

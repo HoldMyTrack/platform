@@ -239,24 +239,28 @@ class SignInActivity : AppCompatActivity() {
     /**
      * Where a browser-tab round trip lands (`holdmytrack://oauth`, forwarded by
      * [OAuthRedirectActivity]): a one-time code to redeem with the stored verifier, or the
-     * server's error code. The verifier is removed either way — one round trip, one use.
+     * server's error code ([OAuthRedirectRule]). Only a code uses the verifier up: the link is
+     * exported, so another app firing `?error=` must not end a sign-in still in the browser.
      */
     private fun handleRedirect(intent: Intent?) {
         val uri = intent?.data ?: return
         if (uri.scheme != OAuthRedirectActivity.SCHEME || uri.host != OAuthRedirectActivity.HOST) return
-        awaitingBrowser = false
         val prefs = handoffPrefs()
         val verifier = prefs.getString(KEY_VERIFIER, null)
-        prefs.edit().remove(KEY_VERIFIER).apply()
-
-        val code = uri.getQueryParameter("code")
-        if (code == null || verifier == null) {
-            setBusy(false)
-            showError(getString(browserErrorMessage(uri.getQueryParameter("error"))))
-            return
+        when (val rule = OAuthRedirectRule.of(uri.getQueryParameter("code"), uri.getQueryParameter("error"), verifier != null)) {
+            OAuthRedirectRule.Ignore -> return
+            is OAuthRedirectRule.ShowError -> {
+                awaitingBrowser = false
+                setBusy(false)
+                showError(getString(browserErrorMessage(rule.error)))
+            }
+            is OAuthRedirectRule.Exchange -> {
+                awaitingBrowser = false
+                prefs.edit().remove(KEY_VERIFIER).apply()
+                setBusy(true)
+                HoldMyTrackApi.exchangeHandoff(rule.code, verifier!!, ::onResult)
+            }
         }
-        setBusy(true)
-        HoldMyTrackApi.exchangeHandoff(code, verifier, ::onResult)
     }
 
     private fun handoffPrefs() = getSharedPreferences(HANDOFF_PREFS, Context.MODE_PRIVATE)

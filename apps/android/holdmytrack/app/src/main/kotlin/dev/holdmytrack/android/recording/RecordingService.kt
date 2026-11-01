@@ -349,6 +349,24 @@ class RecordingService : Service() {
     }
 
     /**
+     * The notification's channel, set up once per service rather than on every GPS fix, where
+     * [buildNotification] runs. Default importance, silenced — not IMPORTANCE_LOW: a
+     * low-importance notification is filed under the shade's collapsed "Silent" section, which
+     * hides Pause and Stop behind an extra tap (found on an emulator). A channel's importance
+     * can't be raised once created, hence the new id and the removal of the old one.
+     */
+    private val channelReady: Unit by lazy {
+        val manager = getSystemService(NotificationManager::class.java)
+        manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
+        manager.createNotificationChannel(
+            NotificationChannel(CHANNEL_ID, getString(R.string.recording_notification_channel), NotificationManager.IMPORTANCE_DEFAULT).apply {
+                setSound(null, null)
+                enableVibration(false)
+            },
+        )
+    }
+
+    /**
      * Title says whether it's recording at all ("am I recording?" is the question this
      * notification exists to answer at a glance); the text carries the same stats the old
      * recording screen showed. While recording, elapsed time is the system's own chronometer
@@ -357,18 +375,7 @@ class RecordingService : Service() {
      * time moves into the title instead.
      */
     private fun buildNotification(): Notification {
-        val manager = getSystemService(NotificationManager::class.java)
-        // Default importance, silenced — not IMPORTANCE_LOW: a low-importance notification is
-        // filed under the shade's collapsed "Silent" section, which hides Pause and Stop behind
-        // an extra tap (found on an emulator). A channel's importance can't be raised once
-        // created, hence the new id and the removal of the old one.
-        manager.deleteNotificationChannel(LEGACY_CHANNEL_ID)
-        manager.createNotificationChannel(
-            NotificationChannel(CHANNEL_ID, getString(R.string.recording_notification_channel), NotificationManager.IMPORTANCE_DEFAULT).apply {
-                setSound(null, null)
-                enableVibration(false)
-            },
-        )
+        channelReady
         val stats = currentStats()
         val recording = state == RecordingState.RECORDING
         val details = listOfNotNull(
