@@ -14,9 +14,10 @@
 # if the frontend and API are ever split onto different origins.
 {$DOMAIN} {
 	# HSTS is set here, where TLS is terminated: every visit after the first goes straight to
-	# https. The Go server sets its own security headers (frame-ancestors, nosniff and the
-	# rest, httpapi.setSecurityHeaders); nosniff is repeated for the files served below.
-	header Strict-Transport-Security "max-age=31536000"
+	# https, on every subdomain too (www, tiles), none of which serves plain http. The Go server
+	# sets its own security headers (frame-ancestors, nosniff and the rest,
+	# httpapi.setSecurityHeaders); nosniff is repeated for the files served below.
+	header Strict-Transport-Security "max-age=31536000; includeSubDomains"
 	header @static X-Content-Type-Options "nosniff"
 
 	# Toggled via scripts/maintenance.sh (docs/DEPLOY.md), which flips MAINTENANCE_MODE in
