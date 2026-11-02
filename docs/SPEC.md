@@ -476,7 +476,7 @@ Circles a user marks so tracks don't reveal where they start and end. The part o
 - Distance, duration, elevation gain, pace, coverage and country and region matches come from the visible part.
 - An activity left with fewer than two points is kept with no geometry and a Private badge (FR-5.1), and the Privacy tab counts them; moving or deleting the location brings it back.
 - Every change is retroactive: activities whose track comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure.
-- Circles are drawn only on the Privacy tab, from zoom 4, and never in an export.
+- Circles are drawn only on the Privacy tab, from zoom 4, never in an export.
 - Originals stay unclipped and are in the data download (FR-1.12). A Story copy carries the sender's clipped track (FR-14.8).
 - An activity ingested before Private locations existed keeps its fixed 100 m endpoint trim until reprocessed.
 
