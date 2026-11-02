@@ -1,6 +1,6 @@
 # Deploying HoldMyTrack — minimal single-VPS setup
 
-One small VPS runs `compose.prod.yml` (Postgres+PostGIS, `api`, `worker`, and Caddy in front of the built frontend), with Cloudflare R2 for object storage. The cost model is `docs/VISION.md` §4.3; the launch compliance work is `docs/ROADMAP.md`'s "Before launch". Why each piece is configured as it is lives in the header comments of `compose.prod.yml`, `.env.prod.example` and `scripts/*.sh`. Redeploying holdmytrack.com is `/deploy` in Claude Code (`.claude/skills/deploy/SKILL.md`), which walks §6–§8 and §10 for the commits since the running version.
+One small VPS runs `compose.prod.yml` (Postgres+PostGIS, `api`, `worker`, and Caddy in front of the built frontend), with Cloudflare R2 for object storage. The cost model is `docs/VISION.md` §4.3. The reasons for each setting live in the header comments of `compose.prod.yml`, `.env.prod.example` and `scripts/*.sh`. Redeploying holdmytrack.com is `/deploy` in Claude Code (`.claude/skills/deploy/SKILL.md`), which walks §6–§8 and §10.
 
 Every compose command below is `docker compose -f compose.prod.yml --env-file .env.prod …`, run in the repository checkout on the server (`/srv/holdmytrack`); `…` in a command stands for that prefix. Never drop `--env-file`.
 
@@ -119,7 +119,7 @@ Check from any machine: `curl -s -o /dev/null -w '%{http_code}\n' -H 'Range: byt
 2. If the site isn't up within a couple of minutes, read `… logs web` for Caddy's certificate request.
 3. Make your own account an admin, to open `/admin` (`SPEC.md` FR-12): sign up on the site, then `… run --rm api set-admin you@example.com true` (`false` revokes). Nothing on the web can grant it.
 
-Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… logs` reaches back only that far. Postgres's memory is set for a 4 GB droplet in `compose.prod.yml`'s `db` command: scale both values on another size, and change them only under maintenance mode (§7), since it restarts `db`.
+Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… logs` reaches back only that far. Postgres's memory is set for a 4 GB droplet in `compose.prod.yml`'s `db` command: scale both values on another size, as a `db` change (§7).
 
 **Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try it now" opens an empty account (`SPEC.md` FR-2.2), Fog's Country/Region tiers draw nothing, and every activity shows its account's timezone. All three are idempotent.
 
@@ -212,15 +212,18 @@ GIT_SHA=$(git rev-parse --short HEAD) docker compose -f compose.prod.yml --env-f
 
 Never leave the migration to `up -d`: it stops `api` and `worker` while `migrate` runs. If `run --rm migrate` fails, nothing has been swapped.
 
-**A migration whose first line is `-- Deploy: maintenance — <why>`, or manual database work:**
+**A migration whose first line is `-- Deploy: maintenance — <why>`, manual database work, or a change that recreates `db` (its service in `compose.prod.yml` or the `x-logging` it uses):**
 
 ```
 ./scripts/backup.sh
 GIT_SHA=$(git rev-parse --short HEAD) docker compose -f compose.prod.yml --env-file .env.prod build
 ./scripts/maintenance.sh on
+docker compose -f compose.prod.yml --env-file .env.prod stop worker api
 GIT_SHA=$(git rev-parse --short HEAD) docker compose -f compose.prod.yml --env-file .env.prod up -d
 ./scripts/maintenance.sh off
 ```
+
+Stopping `worker` while `db` is up lets it hand back a running job, which a `db` restart under it would leave claimed for 30 minutes.
 
 Before `off`, check that `migrate` is `Exited (0)` (`… ps -a`) and `curl https://<your-domain>/healthz` returns `200`; `/healthz` is exempt from the maintenance page. If `migrate` failed, leave maintenance on and restore from the backup (§11). `./scripts/maintenance.sh status` prints the current mode.
 
@@ -244,9 +247,10 @@ sequenceDiagram
         Note over Caddy,Old: old release serves on the new schema
         Op->>New: up -d
         Note over Caddy,New: a few seconds of 502s during the swap
-    else a migration marked "Deploy: maintenance"
+    else a "Deploy: maintenance" migration or a db change
         Op->>Caddy: maintenance.sh on
         Note over Caddy: maintenance page (503), /healthz exempt
+        Op->>Old: stop worker api
         Op->>New: up -d runs migrate, starts new api + worker
         Op->>Caddy: maintenance.sh off, once /healthz is 200
     end
@@ -338,7 +342,7 @@ An iOS build is turned away the same way, with `MIN_IOS_BUILD`, checked with `-A
 
 ## 11. Backups and the restore drill
 
-`scripts/backup.sh` runs nightly and before each deploy with migrations; `scripts/restore-drill.sh` runs monthly and proves the copies restore. Their header comments say what each dump holds and leaves out, how reference tables are dumped apart, and the backup bucket's layout and retention. An account deleted on request stays in the backups for up to 8 weeks. A run that would move more than a tenth of the objects mirror to `objects-deleted/` stops before syncing, and the backup alert fires; after a deletion meant to be that large, run it once with `BACKUP_ALLOW_SHRINK=1`.
+`scripts/backup.sh` runs nightly and before each deploy with migrations; `scripts/restore-drill.sh` runs monthly and proves the copies restore. Their header comments say what each dump holds and leaves out, and the backup bucket's layout and retention. An account deleted on request stays in the backups for up to 8 weeks. A run that would move more than a tenth of the objects mirror to `objects-deleted/` stops before syncing, and the backup alert fires; after a deletion meant to be that large, run it once with `BACKUP_ALLOW_SHRINK=1`.
 
 **Set up.**
 
@@ -392,7 +396,7 @@ After changing a reference table by hand (one `backup.sh` lists), run `./scripts
 
 Only 22, 80 and 443 reachable, SSH by key only, security updates automatic. DigitalOcean's Ubuntu 24.04 image already has password login off and `unattended-upgrades` on.
 
-1. **Firewall at the provider, never `ufw`**: Docker's iptables rules bypass `ufw` for published ports. On DigitalOcean, **Networking → Firewalls → Create Firewall**: inbound SSH (TCP 22), HTTP (TCP 80) and HTTPS (TCP 443) from all IPv4 and IPv6; delete every other inbound rule the form starts with (an "All TCP" rule opens everything); keep the default outbound rules; apply it to the droplet. Check from another machine, one port per call (macOS `nc` checks only the first): `nc -z -w 3 <your-domain> <port>` connects on 22, 80 and 443, and on 5432 waits the full 3 seconds. An instant `Connection refused` means the firewall isn't applied. Restricting 22 to your own address is tighter, but a home address changes and the only fallback is the provider's web console; with keys only, an open 22 is a small risk.
+1. **Firewall at the provider, never `ufw`**: Docker's iptables rules bypass `ufw` for published ports. On DigitalOcean, **Networking → Firewalls → Create Firewall**: inbound SSH (TCP 22), HTTP (TCP 80) and HTTPS (TCP 443) from all IPv4 and IPv6; delete every other inbound rule the form starts with (an "All TCP" rule opens everything); keep the default outbound rules; apply it to the droplet. Check from another machine, one port per call (macOS `nc` checks only the first): `nc -z -w 3 <your-domain> <port>` connects on 22, 80 and 443, and on 5432 waits the full 3 seconds. An instant `Connection refused` means the firewall isn't applied. With keys only, an open 22 is a small risk.
 2. **SSH keys only, root included.** The `00-` prefix makes this file win over cloud-init's `50-`:
    ```
    printf 'PermitRootLogin prohibit-password\nPasswordAuthentication no\nKbdInteractiveAuthentication no\n' > /etc/ssh/sshd_config.d/00-holdmytrack.conf
