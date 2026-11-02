@@ -2573,6 +2573,12 @@ button.activities-panel__story-badge:hover {
   min-height: 0;
 }
 
+.private-locations__footer {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--fm-space-4);
+}
+
 .private-locations__footer-note {
   font-size: var(--fm-text-sm);
   color: rgb(var(--fm-ink-rgb) / 55%);

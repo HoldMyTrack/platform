@@ -4,6 +4,7 @@ import { Trash2 } from 'lucide-react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import {
   deletePrivateLocation,
+  hiddenActivityCount,
   listPrivateLocations,
   savePrivateLocation,
   type PrivateLocation,
@@ -21,7 +22,7 @@ import {
 import { ConfirmDialog } from './ConfirmDialog';
 import { elevationUnitLabel, metersToFeet } from './format';
 import { useUnitSystem } from './units';
-import { lang, t } from '../i18n';
+import { lang, t, tn } from '../i18n';
 
 /**
  * The Activities panel's Privacy tab (FR-8.1): the account's circles listed, each with its own
@@ -32,7 +33,9 @@ import { lang, t } from '../i18n';
  * circles are drawn, and clickable, for exactly as long as this is mounted: switching tabs, or
  * to Fog/Heatmap (which unmounts the whole panel), clears them and drops an unsaved edit. Save
  * and Delete go straight to the server, which reprocesses every activity the change could clip
- * — `onChanged` has MapView reload the list so those rows show Pending straight away.
+ * — `onChanged` has MapView reload the list so those rows show Pending straight away. The footer
+ * counts the activities they hide entirely, the list's Private rows; it's read when the tab opens,
+ * so a change shows there once reprocessing ends and the tab is opened again.
  *
  * Read-only for the demo account: its circle is listed and shown, nothing is editable.
  */
@@ -73,6 +76,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
   const system = useUnitSystem();
   const [locations, setLocations] = useState<PrivateLocation[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [hidden, setHidden] = useState<number | null>(null);
   const [draft, setDraft] = useState<Draft | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +91,8 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
       .catch((err: unknown) => {
         if (!controller.signal.aborted) setLoadError(err instanceof Error ? err.message : String(err));
       });
+    // Only a line of context: the tab works without it, so a failure leaves it out.
+    hiddenActivityCount(controller.signal).then(setHidden, () => {});
     return () => controller.abort();
   }, []);
 
@@ -204,6 +210,8 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
   const radiusDisplay = (m: number) => Math.round(system === 'imperial' ? metersToFeet(m) : m).toLocaleString(lang);
   // The map's own container: `.map-root`, which Edit track's window is positioned in too.
   const windowHost = map.getContainer().parentElement;
+  // With no locations, nothing can be hidden and the line would only be noise.
+  const showHidden = hidden !== null && (locations?.length ?? 0) > 0;
 
   return (
     <div className="private-locations" data-testid="private-locations">
@@ -264,9 +272,14 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
         })}
       </ul>
 
-      {!readOnly && (
-        <div className="activities-panel__footer">
-          <span className="private-locations__footer-note">{t('private.reprocess_note')}</span>
+      {(!readOnly || showHidden) && (
+        <div className="activities-panel__footer private-locations__footer">
+          {showHidden && (
+            <span className="private-locations__footer-note" data-testid="private-locations-hidden">
+              {hidden === 0 ? t('private.hidden_none') : tn('private.hidden', hidden)}
+            </span>
+          )}
+          {!readOnly && <span className="private-locations__footer-note">{t('private.reprocess_note')}</span>}
         </div>
       )}
 

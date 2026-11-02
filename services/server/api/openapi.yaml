@@ -109,6 +109,8 @@ paths:
     $ref: "paths/photos.yaml#/photos_id_thumb"
   /private-locations:
     $ref: "paths/private-locations.yaml#/private-locations"
+  /private-locations/hidden:
+    $ref: "paths/private-locations.yaml#/private-locations_hidden"
   /private-locations/{id}:
     $ref: "paths/private-locations.yaml#/private-locations_id"
   /stories:

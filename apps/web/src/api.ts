@@ -480,6 +480,19 @@ export async function listPrivateLocations(signal?: AbortSignal): Promise<Privat
   return ((await res.json()) as ResponseJson<'/private-locations', 'get'>).map(toPrivateLocation);
 }
 
+/** How many of the account's activities its Private locations hide entirely: the rows the list
+ *  marks private, counted across the whole account. */
+export async function hiddenActivityCount(signal?: AbortSignal): Promise<number> {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations/hidden`, {
+    ...(signal ? { signal } : {}),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
+  }
+  return ((await res.json()) as ResponseJson<'/private-locations/hidden', 'get'>).count;
+}
+
 /**
  * Creates (no `id`) or replaces a Private location. The server marks every activity the old or
  * new circle could clip as pending and reprocesses them in the background, so this resolves as

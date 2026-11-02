@@ -32,6 +32,22 @@ private-locations:
         content:
           application/json:
             schema: { $ref: "../components/schemas.yaml#/Error" }
+private-locations_hidden:
+  get:
+    summary: How many of the account's activities its Private locations hide entirely
+    responses:
+      "200":
+        description: The count, of the activities the list marks private
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [count]
+              additionalProperties: false
+              properties:
+                count: { type: integer }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
 private-locations_id:
   parameters:
     - name: id

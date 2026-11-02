@@ -291,3 +291,23 @@ func TestPrivateLocationReprocessFailureKeepsActivityHidden(t *testing.T) {
 		t.Errorf("after the rerun the track comes within %.0f m of the location", near)
 	}
 }
+
+// The hidden count is the account's own activities with no track, the rows the list marks
+// private (FR-5.1), and none of another account's.
+func TestHiddenActivitiesCount(t *testing.T) {
+	d := newDBTest(t)
+	me, other := d.newAccount(false), d.newAccount(false)
+	at := [2]float64{-81.60, 41.30}
+	d.newActivity(me, testActivity{activityType: "walking", at: &at})
+	d.newActivity(me, testActivity{activityType: "walking"})
+	d.newActivity(me, testActivity{activityType: "walking"})
+	d.newActivity(other, testActivity{activityType: "walking"})
+
+	var resp struct {
+		Count int `json:"count"`
+	}
+	d.decode(d.do(me, "GET", "/v1/private-locations/hidden", nil), http.StatusOK, &resp)
+	if resp.Count != 2 {
+		t.Errorf("count %d, want 2", resp.Count)
+	}
+}

@@ -282,6 +282,9 @@ internal data class PrivateLocationJson(
 )
 
 @Serializable
+internal data class HiddenActivitiesJson(val count: Int)
+
+@Serializable
 internal data class PrivateLocationInputJson(
     val name: String,
     val lon: Double,
