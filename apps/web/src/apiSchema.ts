@@ -3606,6 +3606,8 @@ export interface components {
             name: string | null;
             distance_meters: number | null;
             duration_seconds: number | null;
+            /** @description The time a client shows for the activity, as Stories and Trends sum it; elapsed time where the source gave no moving time. */
+            moving_seconds: number | null;
             description: string | null;
             /** @description [minLon, minLat, maxLon, maxLat], or null when the activity has no track. */
             bbox: [

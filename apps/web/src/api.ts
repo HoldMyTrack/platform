@@ -124,7 +124,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 }
 
 /**
- * One row of IMPLEMENTATION.md §4.7's activity list. `distanceMeters` and `durationSeconds`
+ * One row of IMPLEMENTATION.md §4.7's activity list. `distanceMeters` and `movingSeconds`
  * are nullable because the schema is — a file that carried no distance is not a
  * zero-distance activity, and the UI says "—" rather than "0.0 km".
  *
@@ -143,7 +143,8 @@ export interface Activity {
   activityType: string;
   name: string | null;
   distanceMeters: number | null;
-  durationSeconds: number | null;
+  /** The time a row shows: moving time, the same Stories and Trends sum, else elapsed. */
+  movingSeconds: number | null;
   description: string | null;
   /** [minLon, minLat, maxLon, maxLat], or null for a row with no trajectory. */
   bbox: BBox | null;
@@ -195,7 +196,7 @@ function toActivity(a: Schema<'ActivityRow'>): Activity {
     activityType: a.activity_type,
     name: a.name,
     distanceMeters: a.distance_meters,
-    durationSeconds: a.duration_seconds,
+    movingSeconds: a.moving_seconds,
     description: a.description,
     bbox: a.bbox ? [...a.bbox] : null,
     pending: a.pending,
