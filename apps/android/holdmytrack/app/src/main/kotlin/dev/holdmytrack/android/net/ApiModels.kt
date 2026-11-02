@@ -88,8 +88,8 @@ data class UploadOutcome(val status: String)
  * One row of `GET /v1/activities` (`docs/IMPLEMENTATION.md` §4.7) — what the map's Activities
  * panel lists, the web's `Activity`. [startedAt] is the server's RFC 3339 instant, shown in
  * [timezone], the zone it was recorded in (§4.30; empty from an older server). [name],
- * [description], [distanceMeters] and [durationSeconds] are null when the source never set
- * them; [bbox] (`[minLon, minLat, maxLon, maxLat]`) is null for an activity with no drawn
+ * [description], [distanceMeters] and [movingSeconds] are null when the source never set
+ * them; [movingSeconds] is moving time, as Stories sum it, else elapsed; [bbox] (`[minLon, minLat, maxLon, maxLat]`) is null for an activity with no drawn
  * track. [pending] is a reprocess still running (a track edit, a Private location change):
  * the tracks tile leaves such a row out until it lands (`docs/SPEC.md` FR-5.15). [isPrivate] is an
  * activity entirely inside the account's Private locations (FR-5.1): kept, with no track, so its
@@ -102,7 +102,7 @@ data class Activity(
     val timezone: String = "",
     val name: String?,
     val distanceMeters: Double?,
-    val durationSeconds: Long?,
+    val movingSeconds: Long?,
     val description: String?,
     val bbox: List<Double>?,
     val pending: Boolean,

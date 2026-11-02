@@ -104,7 +104,7 @@ export function ActivityRow({
               read as broken data rather than as hidden on purpose. Its badge says why. */}
           {!activity.private && (
             <>
-              {formatDistance(activity.distanceMeters, system)} · {formatDuration(activity.durationSeconds)} ·{' '}
+              {formatDistance(activity.distanceMeters, system)} · {formatDuration(activity.movingSeconds)} ·{' '}
             </>
           )}
           {formatActivityType(activity.activityType)}

@@ -10,7 +10,7 @@ class EditAvailabilityTest {
 
     private fun activity(id: String = "a", trackEdit: String? = null, photos: String? = null) = Activity(
         id = id, startedAt = "2026-09-24T08:00:00Z", activityType = "walking", name = null,
-        distanceMeters = 1000.0, durationSeconds = 600, description = null, bbox = listOf(0.0, 0.0, 1.0, 1.0),
+        distanceMeters = 1000.0, movingSeconds = 600, description = null, bbox = listOf(0.0, 0.0, 1.0, 1.0),
         pending = false, edited = false, trackEdit = trackEdit, photos = photos,
     )
 

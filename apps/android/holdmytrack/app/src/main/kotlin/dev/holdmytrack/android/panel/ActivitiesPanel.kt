@@ -520,7 +520,7 @@ class ActivitiesPanel(
     private fun summaryOf(listed: List<Activity>): String = listOf(
         res.getQuantityString(R.plurals.story_activity_count, listed.size, listed.size),
         PanelFormat.totalDistance(res, listed.sumOf { it.distanceMeters ?: 0.0 }),
-        PanelFormat.duration(res, listed.sumOf { it.durationSeconds ?: 0L }),
+        PanelFormat.duration(res, listed.sumOf { it.movingSeconds ?: 0L }),
     ).joinToString(" · ")
 
     /** The tab's head — the range is `MapFragment`'s to show; Stories and Sync have their
@@ -724,9 +724,9 @@ class ActivitiesPanel(
         cardStats.visibility = if (activity.isPrivate) View.GONE else View.VISIBLE
         cardPrivate.visibility = if (activity.isPrivate) View.VISIBLE else View.GONE
         cardDistance.text = PanelFormat.distance(res, activity.distanceMeters)
-        cardMoving.text = PanelFormat.duration(res, activity.durationSeconds)
+        cardMoving.text = PanelFormat.duration(res, activity.movingSeconds)
         cardPaceLabel.setText(if (kind.showsPace) R.string.card_pace else R.string.card_speed)
-        cardPace.text = PanelFormat.paceOrSpeed(res, kind, activity.distanceMeters, activity.durationSeconds)
+        cardPace.text = PanelFormat.paceOrSpeed(res, kind, activity.distanceMeters, activity.movingSeconds)
         cardBands.visibility = if (bandsShown) View.VISIBLE else View.GONE
     }
 

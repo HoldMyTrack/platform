@@ -17,7 +17,7 @@ class PanelStateTest {
             activityType = type,
             name = null,
             distanceMeters = meters,
-            durationSeconds = 600,
+            movingSeconds = 600,
             description = null,
             bbox = listOf(0.0, 0.0, 1.0, 1.0),
             pending = pending,
