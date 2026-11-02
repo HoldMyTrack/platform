@@ -2426,6 +2426,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/private-locations/hidden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** How many of the account's activities its Private locations hide entirely */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The count, of the activities the list marks private */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            count: number;
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/private-locations/{id}": {
         parameters: {
             query?: never;
