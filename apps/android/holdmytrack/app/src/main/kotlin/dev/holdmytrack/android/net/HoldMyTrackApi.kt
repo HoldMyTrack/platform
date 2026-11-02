@@ -1061,7 +1061,7 @@ object HoldMyTrackApi {
         timezone = timezone,
         name = name,
         distanceMeters = distanceMeters,
-        durationSeconds = durationSeconds,
+        movingSeconds = movingSeconds,
         description = description,
         bbox = bbox?.takeIf { it.size == 4 },
         pending = pending,
