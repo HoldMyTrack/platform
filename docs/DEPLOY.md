@@ -247,7 +247,7 @@ sequenceDiagram
         Note over Caddy,Old: old release serves on the new schema
         Op->>New: up -d
         Note over Caddy,New: a few seconds of 502s during the swap
-    else a "Deploy: maintenance" migration or a db change
+    else "Deploy: maintenance" or db change
         Op->>Caddy: maintenance.sh on
         Note over Caddy: maintenance page (503), /healthz exempt
         Op->>Old: stop worker api
