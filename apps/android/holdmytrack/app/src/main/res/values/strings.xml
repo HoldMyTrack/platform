@@ -570,6 +570,11 @@
     <string name="private_new_title">New private location</string>
     <string name="private_edit_title">Edit private location</string>
     <string name="private_editor_note">Drag the center to move it. Don\'t center it exactly on your door — a circle\'s middle is the first place anyone looks.</string>
+    <string name="private_hidden_none">No activity lies entirely inside these locations.</string>
+    <plurals name="private_hidden">
+        <item quantity="one">%1$d activity lies entirely inside these locations and shows as Private.</item>
+        <item quantity="other">%1$d activities lie entirely inside these locations and show as Private.</item>
+    </plurals>
     <string name="private_reprocess_note">Saving a change reprocesses the activities it touches — they show Pending until done.</string>
     <string name="private_delete_title">Delete this private location?</string>
     <string name="private_delete_body">Activities that start or end inside it will show those parts again once they\'re reprocessed.</string>

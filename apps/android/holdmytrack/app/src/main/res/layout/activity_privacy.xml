@@ -87,6 +87,18 @@
                 </LinearLayout>
             </LinearLayout>
 
+            <!-- How many activities they hide entirely; gone with no locations (PrivacyActivity.showHidden). -->
+            <TextView
+                android:id="@+id/privacy_hidden"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="@dimen/hmt_space_8"
+                android:paddingStart="@dimen/hmt_space_4"
+                android:paddingEnd="@dimen/hmt_space_4"
+                android:textAppearance="@style/TextAppearance.HoldMyTrack.BodySmall"
+                android:textColor="@color/hmt_ink_secondary"
+                android:visibility="gone" />
+
             <TextView
                 android:id="@+id/privacy_reprocess"
                 android:layout_width="match_parent"

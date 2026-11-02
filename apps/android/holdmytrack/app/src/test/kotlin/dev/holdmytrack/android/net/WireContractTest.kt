@@ -74,6 +74,7 @@ class WireContractTest {
 
         response(ListSerializer(PrivateLocationJson.serializer()).descriptor, "/private-locations", "get")
         response(PrivateLocationJson.serializer().descriptor, "/private-locations", "post", 201)
+        response(HiddenActivitiesJson.serializer().descriptor, "/private-locations/hidden", "get")
         response(PrivateLocationJson.serializer().descriptor, "/private-locations/{id}", "patch")
         request(PrivateLocationInputJson.serializer().descriptor, "/private-locations", "post")
         request(PrivateLocationInputJson.serializer().descriptor, "/private-locations/{id}", "patch")

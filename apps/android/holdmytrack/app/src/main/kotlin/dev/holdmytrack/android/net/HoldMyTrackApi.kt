@@ -931,6 +931,12 @@ object HoldMyTrackApi {
         call(request, { text -> decode<List<PrivateLocationJson>>(text).map { it.toPrivateLocation() } }, onResult)
     }
 
+    /** `GET /v1/private-locations/hidden` — how many of the account's activities they hide entirely. */
+    fun hiddenActivityCount(onResult: (Result<Int>) -> Unit) {
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/private-locations/hidden").build()
+        call(request, { text -> decode<HiddenActivitiesJson>(text).count }, onResult)
+    }
+
     /**
      * `POST /v1/private-locations`, or with [id] `PATCH /v1/private-locations/{id}` — the
      * whole circle either way. Answers with it as saved (the name trimmed). A refusal — a
