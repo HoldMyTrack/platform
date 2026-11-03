@@ -13,6 +13,8 @@
   "meta.import_garmin_description": "How to export an activity from Garmin Connect as GPX, TCX or FIT, or take it straight from the watch, and keep your favorite hikes, rides and runs together on one map. Free.",
   "meta.import_strava_title": "Export Strava activities to GPX and keep them on a map — HoldMyTrack",
   "meta.import_strava_description": "How to export an activity from Strava as GPX or its original file, or pick from your Strava archive, and keep your favorite hikes, rides and runs together on one map. Free.",
+  "meta.fog_of_war_title": "Fog of War map of everywhere you have been — HoldMyTrack",
+  "meta.fog_of_war_description": "See every street, park and trail you have walked, run or ridden cleared out of the fog, from GPX, FIT and TCX files or the Android app, and find somewhere new close to home. Free.",
   "meta.contacts_title": "Contacts — HoldMyTrack",
   "meta.contacts_description": "How to reach the HoldMyTrack project: email, code and issues.",
   "meta.privacy_title": "Privacy policy — HoldMyTrack",

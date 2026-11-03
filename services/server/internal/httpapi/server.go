@@ -289,6 +289,7 @@ var guidePages = []struct{ Path, Page, Key string }{
 	{"/gpx-viewer", "gpx-viewer", "gpx_viewer"},
 	{"/import/garmin", "import-garmin", "import_garmin"},
 	{"/import/strava", "import-strava", "import_strava"},
+	{"/fog-of-war", "fog-of-war", "fog_of_war"},
 }
 
 // ServeHTTP is serve with each response counted and timed for internal/metrics, and a

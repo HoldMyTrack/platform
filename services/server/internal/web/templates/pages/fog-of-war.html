@@ -1,0 +1,37 @@
+{{define "content"}}
+<main class="page-main help">
+  <section class="page-hero">
+    <h1>A Fog of War map of everywhere you have been</h1>
+    <p class="page-lede">HoldMyTrack covers the world in fog and clears it wherever your tracks go. The streets, parks and trails you know stand out, and so does everything around them you have never set foot in: your next walk is wherever the fog is.</p>
+  </section>
+
+  <section class="page-section">
+    <h2>How the fog clears</h2>
+    <ul class="page-list">
+      <li><strong>Every track clears the fog along its route</strong>, from your whole history: the date range and filters don't apply, and a place you once cleared stays clear.</li>
+      <li><strong>Close in</strong>, a state or closer, you see exactly the streets and paths you covered.</li>
+      <li><strong>Zoomed out</strong> to a country or a continent, whole states and regions clear as soon as you have an activity anywhere inside them. Out to the whole world, whole countries do.</li>
+      <li><strong>Edit or delete a track</strong> and the fog follows it.</li>
+    </ul>
+  </section>
+
+  <section class="page-section">
+    <h2>Fill it in</h2>
+    <p>More ground clears more fog, so bring in as many walks, runs, rides and trips as you like.</p>
+    <ul class="page-list">
+      <li><strong>Files:</strong> upload GPX, FIT and TCX files from any watch or app. See <a href="/gpx-viewer">opening a track file</a>, and the guides for <a href="/import/garmin">Garmin</a> and <a href="/import/strava">Strava</a>.</li>
+      <li><strong>The Android app</strong> syncs the workouts you pick from Health Connect, and can record a walk or a drive by itself when all you want is the route.</li>
+    </ul>
+  </section>
+
+  <section class="page-section">
+    <h2>Go somewhere new</h2>
+    <p>The fog shows what is left. Pick a street, a park or a trail you have never been to, go, and watch it clear the next time you bring the track in. Switch on points of interest to see playgrounds, dog parks, viewpoints, waterfalls and historic sites from OpenStreetMap; with the Android app, stand in one for 30 seconds to capture it.</p>
+    <p>Frame any view of your fog and <a href="/help#export">save it as an image</a> to share. Your map itself stays private.</p>
+    <div class="page-actions">
+      <a class="page-button" href="/signup">Create a free account</a>
+      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
+    </div>
+  </section>
+</main>
+{{end}}
