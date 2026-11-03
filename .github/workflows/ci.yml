@@ -108,7 +108,7 @@ jobs:
       # Coverage of the Go unit tests only: the Playwright suites exercise far more of the
       # server but aren't instrumented. Informational (codecov.yml), never a merge gate, and
       # an upload failure doesn't fail the build.
-      - uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: services/server/coverage.out
           flags: go
@@ -136,7 +136,7 @@ jobs:
       - run: npm run verify:api-types
       # What ships to browsers; dev-server advisories are left to Dependabot.
       - run: npm audit --omit=dev --audit-level=high
-      - uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: apps/web/coverage/lcov.info
           flags: typescript
@@ -160,7 +160,7 @@ jobs:
       - run: ./gradlew :app:createDebugUnitTestCoverageReport
       # JaCoCo coverage of the JUnit tests in app/src/test, under its own `kotlin` flag so
       # the README's Kotlin badge reads it apart from Go's. Informational, like Go's.
-      - uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5.5.5
+      - uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           files: apps/android/holdmytrack/app/build/reports/coverage/test/debug/report.xml
           flags: kotlin
