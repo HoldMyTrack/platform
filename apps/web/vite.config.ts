@@ -28,7 +28,7 @@ const pageRoutes = [
   '^/sync(\\?|$)',
   '^/admin(/|\\?|$)',
   '^/settings(/|\\?|$)',
-  '^/(about|help|contacts|privacy|gpx-viewer|fog-of-war|logout|language|signin|signup|demo|forgot|reset|verify)(\\?|$)',
+  '^/(about|help|guides|contacts|privacy|gpx-viewer|fog-of-war|logout|language|signin|signup|demo|forgot|reset|verify)(\\?|$)',
   '^/help/',
   '^/import/(garmin|strava)(\\?|$)',
   '^/verify-pending(/|\\?|$)',
