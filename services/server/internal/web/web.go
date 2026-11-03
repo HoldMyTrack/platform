@@ -62,24 +62,24 @@ type Language struct {
 var InfoLinks = []Link{
 	{Href: "/about", LabelKey: "nav.about"},
 	{Href: "/help", LabelKey: "nav.help"},
+	{Href: "/guides", LabelKey: "nav.guides"},
 	{Href: "/contacts", LabelKey: "nav.contacts"},
 	{Href: "/privacy", LabelKey: "nav.privacy"},
 }
 
 // Guide is a how-to page written for one search (SPEC.md FR-10.2). httpapi serves it from
-// templates/pages/<Page>.html with the catalog's meta.<MetaKey>_title and _description, the
-// footer links every guide, and a test checks apps/web/public/sitemap.xml lists each.
+// templates/pages/<Page>.html with the catalog's meta.<MetaKey>_title and _description. A test
+// checks that /guides links each one and apps/web/public/sitemap.xml lists it.
 type Guide struct {
-	Link
-	Page, MetaKey string
+	Href, Page, MetaKey string
 }
 
-// Guides are the guide pages, in the footer's order.
+// Guides are the guide pages.
 var Guides = []Guide{
-	{Link{"/gpx-viewer", "guide.gpx_viewer"}, "gpx-viewer", "gpx_viewer"},
-	{Link{"/import/garmin", "guide.import_garmin"}, "import-garmin", "import_garmin"},
-	{Link{"/import/strava", "guide.import_strava"}, "import-strava", "import_strava"},
-	{Link{"/fog-of-war", "guide.fog_of_war"}, "fog-of-war", "fog_of_war"},
+	{"/gpx-viewer", "gpx-viewer", "gpx_viewer"},
+	{"/import/garmin", "import-garmin", "import_garmin"},
+	{"/import/strava", "import-strava", "import_strava"},
+	{"/fog-of-war", "fog-of-war", "fog_of_war"},
 }
 
 // User is the signed-in account as the header shows it; nil when nobody is signed in.
@@ -126,7 +126,6 @@ type PageData struct {
 	Page any
 
 	InfoLinks []Link
-	Guides    []Guide
 	// Languages is the header's language menu (POST /language), in i18n.Supported's order.
 	Languages []Language
 	// DonateURL is the collective's donation page (donateURL), "" for no Donate button.
@@ -331,7 +330,6 @@ func (r *Renderer) fill(data *PageData) {
 		data.Lang = i18n.Default
 	}
 	data.InfoLinks = InfoLinks
-	data.Guides = Guides
 	data.Languages = make([]Language, 0, len(i18n.Supported))
 	for _, code := range i18n.Supported {
 		data.Languages = append(data.Languages, Language{Code: code, Name: i18n.Names[code]})

@@ -243,6 +243,7 @@ func (s *Server) registerPages() {
 	// About is the signed-out home page too (appShell), so its canonical link is `/`.
 	s.mux.HandleFunc("GET /about", s.staticPage("about", "meta.about_title", "meta.home_description", "/"))
 	s.mux.HandleFunc("GET /help", s.staticPage("help", "meta.help_title", "meta.help_description", ""))
+	s.mux.HandleFunc("GET /guides", s.staticPage("guides", "meta.guides_title", "meta.guides_description", ""))
 	s.mux.HandleFunc("GET /contacts", s.staticPage("contacts", "meta.contacts_title", "meta.contacts_description", ""))
 	s.mux.HandleFunc("GET /privacy", s.staticPage("privacy", "meta.privacy_title", "meta.privacy_description", ""))
 	for _, g := range web.Guides {

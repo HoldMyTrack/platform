@@ -1,0 +1,33 @@
+{{define "content"}}
+<main class="page-main help">
+  <section class="page-hero">
+    <h1>Руководства</h1>
+    <p class="page-lede">Как принести треки с часов, из файла или другого сервиса и что с ними делать, когда они уже на карте.</p>
+  </section>
+
+  <section class="page-section">
+    <ul class="page-cards">
+      <li>
+        <h3><a href="/gpx-viewer">Файлы GPX, FIT и TCX на карте</a></h3>
+        <p>Посмотрите маршрут из файла на карте мира и сохраните важные треки вместе.</p>
+      </li>
+      <li>
+        <h3><a href="/import/garmin">Активности из Garmin</a></h3>
+        <p>Выгрузите активность из Garmin Connect в GPX, TCX или FIT или возьмите файл прямо с часов.</p>
+      </li>
+      <li>
+        <h3><a href="/import/strava">Активности из Strava</a></h3>
+        <p>Выгрузите активность в GPX или в исходном файле или выберите нужные из архива Strava.</p>
+      </li>
+      <li>
+        <h3><a href="/fog-of-war">Карта «туман войны» всех мест, где вы побывали</a></h3>
+        <p>Туман рассеивается везде, где прошли ваши треки, и видно улицы, парки и тропы рядом с домом, где вы ещё не были.</p>
+      </li>
+    </ul>
+    {{if not .User}}<div class="page-actions">
+      <a class="page-button" href="/signup">Создать бесплатный аккаунт</a>
+      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Попробовать демо без регистрации</a>{{end}}
+    </div>{{end}}
+  </section>
+</main>
+{{end}}
