@@ -1,5 +1,5 @@
 [versions]
-agp = "9.4.1"
+agp = "9.5.0"
 # MapLibre Native for Android. 11.8.0 is where built-in `pmtiles://` support landed and
 # 13.3.0 added its ambient cache, so anything in the 13.x line already speaks the same URL
 # scheme the style document carries (docs/ARCHITECTURE.md §3).
