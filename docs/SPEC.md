@@ -498,11 +498,12 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 ### FR-10.1 About page
 
 - `/about` says what HoldMyTrack is, isn't and how it's funded. Without a session `/` is the same page, with `/` as canonical; with one, `/` is the map. It never starts a demo itself.
-- `/robots.txt` disallows `/v1/` and `/tiles/`; `/sitemap.xml` lists `/`, `/help`, `/contacts` and `/privacy`.
+- `/robots.txt` disallows `/v1/` and `/tiles/`; `/sitemap.xml` lists the indexable pages.
 
 ### FR-10.2 Help page
 
 - `/help` explains every feature. Its facts are this document's: changing a limit, a mode's window or a zoom tier it describes changes Help too.
+- Guides follow the same rule: `/gpx-viewer`.
 - It tells someone who can't sign in how to have their account deleted by email, and how to revoke Google's or Facebook's access. Its `#delete-account` anchor is the deployment's data-deletion instructions URL for Facebook (FR-1.10).
 
 ### FR-10.3 Contacts page
@@ -518,7 +519,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 
 ### FR-10.6 Privacy policy
 
-`/privacy`, in English and Russian, is the policy the Play Store listing and the Android app's Health Connect rationale point to. Its text is the page itself (`services/server/internal/web/templates/pages/privacy.html`, `privacy.ru.html`), which must agree with `DPIA.md` and this document: a change to what is kept, who processes it or for how long changes all three.
+`/privacy`, in English and Russian, is the policy the Play Store listing and the Android app's Health Connect rationale point to. Its text (`templates/pages/privacy.html`, `privacy.ru.html`) must agree with `DPIA.md` and this document: a change to what is kept, who processes it or for how long changes all three.
 
 ### FR-10.8 Pages inside the Android app
 

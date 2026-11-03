@@ -245,6 +245,9 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("GET /help", s.staticPage("help", "meta.help_title", "meta.help_description", ""))
 	s.mux.HandleFunc("GET /contacts", s.staticPage("contacts", "meta.contacts_title", "meta.contacts_description", ""))
 	s.mux.HandleFunc("GET /privacy", s.staticPage("privacy", "meta.privacy_title", "meta.privacy_description", ""))
+	for _, g := range guidePages {
+		s.mux.HandleFunc("GET "+g.Path, s.staticPage(g.Page, "meta."+g.Key+"_title", "meta."+g.Key+"_description", ""))
+	}
 	s.mux.Handle("GET /static/", s.pages.StaticHandler())
 	s.mux.HandleFunc("POST /logout", s.sameOrigin(s.handleLogoutPage))
 	s.mux.HandleFunc("POST /language", s.sameOrigin(s.handleLanguageForm)) // language.go
@@ -278,6 +281,12 @@ func (s *Server) registerPages() {
 	// everything else nothing more specific claims.
 	s.mux.HandleFunc("GET /{$}", s.appShell("meta.home_title"))
 	s.mux.HandleFunc("/", s.notFound)
+}
+
+// guidePages are the how-to pages, each written for one search (SPEC.md FR-10.2). They are
+// in the sitemap but not the Info menu; a test checks apps/web/public/sitemap.xml lists each.
+var guidePages = []struct{ Path, Page, Key string }{
+	{"/gpx-viewer", "gpx-viewer", "gpx_viewer"},
 }
 
 // ServeHTTP is serve with each response counted and timed for internal/metrics, and a
