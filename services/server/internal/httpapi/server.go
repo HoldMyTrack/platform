@@ -245,8 +245,8 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("GET /help", s.staticPage("help", "meta.help_title", "meta.help_description", ""))
 	s.mux.HandleFunc("GET /contacts", s.staticPage("contacts", "meta.contacts_title", "meta.contacts_description", ""))
 	s.mux.HandleFunc("GET /privacy", s.staticPage("privacy", "meta.privacy_title", "meta.privacy_description", ""))
-	for _, g := range guidePages {
-		s.mux.HandleFunc("GET "+g.Path, s.staticPage(g.Page, "meta."+g.Key+"_title", "meta."+g.Key+"_description", ""))
+	for _, g := range web.Guides {
+		s.mux.HandleFunc("GET "+g.Href, s.staticPage(g.Page, "meta."+g.MetaKey+"_title", "meta."+g.MetaKey+"_description", ""))
 	}
 	s.mux.Handle("GET /static/", s.pages.StaticHandler())
 	s.mux.HandleFunc("POST /logout", s.sameOrigin(s.handleLogoutPage))
@@ -281,15 +281,6 @@ func (s *Server) registerPages() {
 	// everything else nothing more specific claims.
 	s.mux.HandleFunc("GET /{$}", s.appShell("meta.home_title"))
 	s.mux.HandleFunc("/", s.notFound)
-}
-
-// guidePages are the how-to pages, each written for one search (SPEC.md FR-10.2). They are
-// in the sitemap but not the Info menu; a test checks apps/web/public/sitemap.xml lists each.
-var guidePages = []struct{ Path, Page, Key string }{
-	{"/gpx-viewer", "gpx-viewer", "gpx_viewer"},
-	{"/import/garmin", "import-garmin", "import_garmin"},
-	{"/import/strava", "import-strava", "import_strava"},
-	{"/fog-of-war", "fog-of-war", "fog_of_war"},
 }
 
 // ServeHTTP is serve with each response counted and timed for internal/metrics, and a

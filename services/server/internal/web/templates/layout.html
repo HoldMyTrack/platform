@@ -47,6 +47,10 @@
       <a href="/">{{t "footer.open_map"}}</a>
       {{range .InfoLinks}}<a href="{{.Href}}">{{t .LabelKey}}</a>{{end}}
       <a href="https://github.com/HoldMyTrack/platform">GitHub</a>
+      <nav class="page-footer__guides" aria-label="{{t "footer.guides"}}">
+        <span>{{t "footer.guides"}}:</span>
+        {{range .Guides}}<a href="{{.Href}}">{{t .LabelKey}}</a>{{end}}
+      </nav>
     </footer>{{end}}
   </body>
 </html>
