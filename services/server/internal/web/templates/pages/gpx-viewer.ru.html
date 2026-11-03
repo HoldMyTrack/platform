@@ -43,10 +43,10 @@
       <li><strong>Никаких данных о здоровье.</strong> Пульс и другие показатели тела из файла не читаются.</li>
       <li><strong>Они остаются вашими.</strong> Правьте трек, удаляйте активность или <a href="/help#download-data">скачайте всё</a> в любой момент.</li>
     </ul>
-    <div class="page-actions">
+    {{if not .User}}<div class="page-actions">
       <a class="page-button" href="/signup">Создать бесплатный аккаунт</a>
       {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Попробовать демо без регистрации</a>{{end}}
-    </div>
+    </div>{{end}}
   </section>
 </main>
 {{end}}

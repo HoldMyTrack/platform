@@ -43,10 +43,10 @@
       <li><strong>No health data.</strong> Heart rate and other body signals in a file aren't read.</li>
       <li><strong>They stay yours.</strong> Edit a track, delete an activity, or <a href="/help#download-data">download everything</a> at any time.</li>
     </ul>
-    <div class="page-actions">
+    {{if not .User}}<div class="page-actions">
       <a class="page-button" href="/signup">Create a free account</a>
       {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
-    </div>
+    </div>{{end}}
   </section>
 </main>
 {{end}}

@@ -28,10 +28,10 @@
     <h2>Go somewhere new</h2>
     <p>The fog shows what is left. Pick a street, a park or a trail you have never been to, go, and watch it clear the next time you bring the track in. Switch on points of interest to see playgrounds, dog parks, viewpoints, waterfalls and historic sites from OpenStreetMap; with the Android app, stand in one for 30 seconds to capture it.</p>
     <p>Frame any view of your fog and <a href="/help#export">save it as an image</a> to share. Your map itself stays private.</p>
-    <div class="page-actions">
+    {{if not .User}}<div class="page-actions">
       <a class="page-button" href="/signup">Create a free account</a>
       {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
-    </div>
+    </div>{{end}}
   </section>
 </main>
 {{end}}

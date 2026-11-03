@@ -40,10 +40,10 @@
       <li><strong>Отметьте дом как приватное место</strong>, и там, где трек начинается или заканчивается, эта часть скрыта. Подробнее в разделе <a href="/help#settings">«Настройки и приватность»</a>.</li>
       <li><strong>Вашу карту не видит никто другой.</strong> Нет подписчиков, лайков и рейтингов.</li>
     </ul>
-    <div class="page-actions">
+    {{if not .User}}<div class="page-actions">
       <a class="page-button" href="/signup">Создать бесплатный аккаунт</a>
       {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Попробовать демо без регистрации</a>{{end}}
-    </div>
+    </div>{{end}}
   </section>
 </main>
 {{end}}
