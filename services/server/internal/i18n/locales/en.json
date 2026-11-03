@@ -11,6 +11,8 @@
   "meta.gpx_viewer_description": "Open GPX, FIT and TCX files on a map, colored by pace, and keep the tracks you care about together on one map of everywhere you have been. Free, with every feature in every account.",
   "meta.import_garmin_title": "Export Garmin activities to GPX and keep them on a map — HoldMyTrack",
   "meta.import_garmin_description": "How to export an activity from Garmin Connect as GPX, TCX or FIT, or take it straight from the watch, and keep your favorite hikes, rides and runs together on one map. Free.",
+  "meta.import_strava_title": "Export Strava activities to GPX and keep them on a map — HoldMyTrack",
+  "meta.import_strava_description": "How to export an activity from Strava as GPX or its original file, or pick from your Strava archive, and keep your favorite hikes, rides and runs together on one map. Free.",
   "meta.contacts_title": "Contacts — HoldMyTrack",
   "meta.contacts_description": "How to reach the HoldMyTrack project: email, code and issues.",
   "meta.privacy_title": "Privacy policy — HoldMyTrack",
