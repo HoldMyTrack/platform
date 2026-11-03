@@ -213,6 +213,13 @@ code {
   color: var(--fm-ink-muted);
 }
 
+.page-footer__guides {
+  display: flex;
+  flex-basis: 100%;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
 /* The auth pages (signin/signup/forgot/reset/verify/verify-pending): one centered card, the
    same look as the React sign-in screen they replaced (index.css's former .auth-gate). */
 .auth-page {

@@ -1,0 +1,52 @@
+{{define "content"}}
+<main class="page-main help">
+  <section class="page-hero">
+    <h1>Open your GPX, FIT and TCX files on a map</h1>
+    <p class="page-lede">Drop a GPX, FIT or TCX file onto the HoldMyTrack map and its route is drawn on a map of the world. Unlike a one-off viewer, it stays: each file you add joins the ones before it, so the hikes, rides and trips you care about build up into one map of everywhere you have been. It is free, and every account has every feature.</p>
+  </section>
+
+  <section class="page-section">
+    <h2>How to open a file</h2>
+    <ol class="page-steps">
+      <li>
+        <h3>Create a free account</h3>
+        <p>Sign up with your email address or a Google account. Your tracks are kept in it, so they are there the next time you open the map, on any device.</p>
+      </li>
+      <li>
+        <h3>Drop your files on the map</h3>
+        <p>Drag GPX, FIT or TCX files anywhere onto the map, or choose them from the Upload menu: up to 20 at a time, each up to 16 MB. A .zip archive isn't opened: choose the files inside it.</p>
+      </li>
+      <li>
+        <h3>Look around</h3>
+        <p>Every track is drawn together. Click one to see it colored by pace, blue where you were slowest and red where you were fastest, or switch to Fog of War to see everywhere you have been cleared out of the fog.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="page-section">
+    <h2>Where the files come from</h2>
+    <p>Watches, bike computers and most fitness apps save or export one of three formats:</p>
+    <ul class="page-list">
+      <li><strong>GPX</strong> is the common route format, exported by most apps and route planners.</li>
+      <li><strong>FIT</strong> is what Garmin, Wahoo, Coros and other watches and bike computers record.</li>
+      <li><strong>TCX</strong> is Garmin's older format, still offered by many exports.</li>
+    </ul>
+    <p>Coming from Garmin Connect? See <a href="/import/garmin">exporting your Garmin activities</a>. From Strava? See <a href="/import/strava">exporting your Strava activities</a>.</p>
+    <p>On Android, the <a href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android">HoldMyTrack app</a> also syncs the workouts you pick from Health Connect, and opens a file from the phone's Files app.</p>
+  </section>
+
+  <section class="page-section">
+    <h2>What happens to your files</h2>
+    <ul class="page-list">
+      <li><strong>Only you see them.</strong> There is no feed and no public profile.</li>
+      <li><strong>Only what you pick comes in.</strong> The same file uploaded twice is recognized and skipped.</li>
+      <li><strong>No health data.</strong> Heart rate and other body signals in a file aren't read.</li>
+      <li><strong>They stay yours.</strong> Edit a track, delete an activity, or <a href="/help#download-data">download everything</a> at any time.</li>
+    </ul>
+    {{if not .User}}<div class="page-actions">
+      <a class="page-button" href="/signup">Create a free account</a>
+      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
+    </div>{{end}}
+  </section>
+</main>
+{{end}}

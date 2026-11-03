@@ -245,6 +245,9 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("GET /help", s.staticPage("help", "meta.help_title", "meta.help_description", ""))
 	s.mux.HandleFunc("GET /contacts", s.staticPage("contacts", "meta.contacts_title", "meta.contacts_description", ""))
 	s.mux.HandleFunc("GET /privacy", s.staticPage("privacy", "meta.privacy_title", "meta.privacy_description", ""))
+	for _, g := range web.Guides {
+		s.mux.HandleFunc("GET "+g.Href, s.staticPage(g.Page, "meta."+g.MetaKey+"_title", "meta."+g.MetaKey+"_description", ""))
+	}
 	s.mux.Handle("GET /static/", s.pages.StaticHandler())
 	s.mux.HandleFunc("POST /logout", s.sameOrigin(s.handleLogoutPage))
 	s.mux.HandleFunc("POST /language", s.sameOrigin(s.handleLanguageForm)) // language.go
