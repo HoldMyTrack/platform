@@ -522,7 +522,7 @@ func TestSignedOutHome(t *testing.T) {
 		t.Fatalf("/: status %d, want the home page", rec.Code)
 	}
 	for _, want := range []string{
-		"<title>HoldMyTrack — Every journey, mapped.</title>",
+		"<title>HoldMyTrack — Keep your GPX, FIT and TCX tracks on one map</title>",
 		"Every place you have ever run, ridden or walked", // About's own content
 		`<link rel="canonical" href="https://app.example/"`,
 		">Sign in</a>",

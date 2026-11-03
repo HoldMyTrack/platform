@@ -1,10 +1,10 @@
 {
-  "meta.home_title": "HoldMyTrack — Every journey, mapped.",
-  "meta.home_description": "HoldMyTrack is a free, community-funded place to see every outdoor activity you have ever recorded on one map — Fog of War, heatmaps and routes from your watch, phone or old exports. Free for everyone, and your data is never sold.",
+  "meta.home_title": "HoldMyTrack — Keep your GPX, FIT and TCX tracks on one map",
+  "meta.home_description": "Upload and keep your GPX, FIT and TCX tracks from Garmin, Strava or any watch or app, and see every walk, run, ride and hike on one map with Fog of War and heatmaps. Free, community-funded, and your data is never sold.",
   "meta.site_description": "HoldMyTrack is a free, community-funded place to see every outdoor activity you have ever recorded on one map — Fog of War, heatmaps and routes from your watch, phone or old exports.",
   "meta.og_image_alt": "A HoldMyTrack Fog of War map: the streets someone has walked cleared through the fog.",
   "meta.title": "{page} — HoldMyTrack",
-  "meta.about_title": "About HoldMyTrack — Every journey, mapped.",
+  "meta.about_title": "About HoldMyTrack — Keep your GPX, FIT and TCX tracks on one map",
   "meta.help_title": "Help — HoldMyTrack",
   "meta.help_description": "How HoldMyTrack works: the map and its Normal, Fog of War and Heatmap modes, importing files, Google Takeout and the Android app, exporting a map image, and privacy settings.",
   "meta.contacts_title": "Contacts — HoldMyTrack",
