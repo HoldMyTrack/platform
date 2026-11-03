@@ -502,8 +502,8 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 
 ### FR-10.2 Help page
 
-- `/help` explains every feature. Its facts are this document's: changing a limit, a mode's window or a zoom tier it describes changes Help too.
-- Guides follow the same rule: `/gpx-viewer`.
+- `/help` explains every feature. Its facts are this document's: changing a limit, a mode's window or a zoom tier changes Help too.
+- Guides follow the same rule: `/gpx-viewer`, `/import/garmin`.
 - It tells someone who can't sign in how to have their account deleted by email, and how to revoke Google's or Facebook's access. Its `#delete-account` anchor is the deployment's data-deletion instructions URL for Facebook (FR-1.10).
 
 ### FR-10.3 Contacts page

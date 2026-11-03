@@ -287,6 +287,7 @@ func (s *Server) registerPages() {
 // in the sitemap but not the Info menu; a test checks apps/web/public/sitemap.xml lists each.
 var guidePages = []struct{ Path, Page, Key string }{
 	{"/gpx-viewer", "gpx-viewer", "gpx_viewer"},
+	{"/import/garmin", "import-garmin", "import_garmin"},
 }
 
 // ServeHTTP is serve with each response counted and timed for internal/metrics, and a

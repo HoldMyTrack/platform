@@ -9,6 +9,8 @@
   "meta.help_description": "Как устроен HoldMyTrack: карта и её режимы (обычный, «туман войны», тепловая карта), импорт файлов GPX, FIT и TCX и приложение для Android, экспорт карты в картинку и настройки приватности.",
   "meta.gpx_viewer_title": "Просмотр GPX, FIT и TCX на карте, где треки остаются — HoldMyTrack",
   "meta.gpx_viewer_description": "Откройте файлы GPX, FIT и TCX на карте с раскраской по темпу и храните важные треки вместе, на одной карте всех мест, где вы побывали. Бесплатно, все возможности в каждом аккаунте.",
+  "meta.import_garmin_title": "Как выгрузить активности Garmin в GPX и сохранить их на карте — HoldMyTrack",
+  "meta.import_garmin_description": "Как выгрузить активность из Garmin Connect в GPX, TCX или FIT или взять её прямо с часов и сохранить любимые походы, поездки и пробежки вместе на одной карте. Бесплатно.",
   "meta.contacts_title": "Контакты — HoldMyTrack",
   "meta.contacts_description": "Как связаться с проектом HoldMyTrack: почта, код и задачи.",
   "meta.privacy_title": "Политика конфиденциальности — HoldMyTrack",

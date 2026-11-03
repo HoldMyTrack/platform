@@ -1,0 +1,50 @@
+{{define "content"}}
+<main class="page-main help">
+  <section class="page-hero">
+    <h1>Keep your favorite Garmin activities on one map</h1>
+    <p class="page-lede">Garmin Connect shows one activity at a time. Bring in the ones worth remembering, a long hike, a trip abroad, a race, and HoldMyTrack keeps them together on one map with everything else you have brought in. You don't need your whole history: pick the activities that matter to you.</p>
+  </section>
+
+  <section class="page-section">
+    <h2>Export an activity from Garmin Connect</h2>
+    <ol class="page-steps">
+      <li>
+        <h3>Open the activity</h3>
+        <p>On the Garmin Connect website, open Activities, then the activity you want to keep. Exporting is on the website, not in the phone app.</p>
+      </li>
+      <li>
+        <h3>Export it</h3>
+        <p>Click the gear icon at the top right and choose <strong>Export to GPX</strong> or <strong>Export to TCX</strong>. <strong>Export Original</strong> gives the watch's own FIT file inside a .zip: unzip it and keep the .fit file.</p>
+      </li>
+      <li>
+        <h3>Upload it to HoldMyTrack</h3>
+        <p>Drop the file onto the map, or choose it from the Upload menu: up to 20 files at a time, each up to 16 MB.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="page-section">
+    <h2>Straight from the watch</h2>
+    <p>Connected to a computer by its cable, many Garmin watches and bike computers show a <strong>GARMIN</strong> folder whose <strong>Activity</strong> folder holds a FIT file for each recent activity, named by its date and time. Pick the days you want and upload those files.</p>
+  </section>
+
+  <section class="page-section">
+    <h2>For your whole explored area</h2>
+    <p>Fog of War clears wherever you have been, so more ground means more cleared map. Garmin's account export has every activity: in your Garmin account, open <strong>Data Management</strong>, choose <strong>Export Your Data</strong> and request it. Garmin emails a link, which can take from two days to a month. The activity files are in more .zip archives inside it, under <strong>DI_CONNECT/DI-Connect-Uploaded-Files</strong>: unzip them and pick what to bring in, 20 files at a time.</p>
+  </section>
+
+  <section class="page-section">
+    <h2>Good to know</h2>
+    <ul class="page-list">
+      <li><strong>The same activity from two places</strong>, say Garmin and Strava, becomes two activities: keep one and delete the other.</li>
+      <li><strong>Mark home as a Private location</strong> and wherever a track starts or ends there, that part is hidden. See <a href="/help#settings">Settings and privacy</a>.</li>
+      <li><strong>No health data.</strong> Heart rate and other body signals in a Garmin file aren't read.</li>
+    </ul>
+    <p>Any other app that exports GPX, FIT or TCX works the same way: see <a href="/gpx-viewer">opening a track file</a>.</p>
+    <div class="page-actions">
+      <a class="page-button" href="/signup">Create a free account</a>
+      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
+    </div>
+  </section>
+</main>
+{{end}}
