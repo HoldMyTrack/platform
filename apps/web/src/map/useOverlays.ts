@@ -1,7 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
 import type { BikePathOverlays } from './bikePathsGroup';
 import { satelliteSource } from './config';
+import { satelliteOffered } from './imageryOffered';
 import { loadOverlays, saveOverlays, type Overlays } from './overlays';
+import { useImageryStatus } from './useImageryStatus';
 
 export interface OverlayChoices {
   overlays: Overlays;
@@ -10,9 +12,11 @@ export interface OverlayChoices {
   paths: BikePathOverlays;
   /** The basemap's roads are drawn: picked, while the Layers checkbox is on. */
   roads: boolean;
-  /** The deployment configures satellite imagery (FR-4.14). */
+  /** Satellite is offered: the deployment configures imagery and the server hasn't paused it
+   *  (FR-4.14, imageryOffered.ts). */
   satelliteAvailable: boolean;
-  /** Imagery is drawn: available and picked, whatever was saved. */
+  /** Imagery is drawn: available and picked, whatever was saved; a choice saved while it's
+   *  paused comes back with it. */
   satellite: boolean;
 }
 
@@ -31,6 +35,7 @@ export function useOverlays(): OverlayChoices {
     }),
     [overlays.enabled, overlays.bikePaths, overlays.sharedPaths, overlays.mtbTrails],
   );
-  const satelliteAvailable = satelliteSource() !== null;
+  const configured = satelliteSource() !== null;
+  const satelliteAvailable = satelliteOffered(configured, useImageryStatus(configured));
   return { overlays, change, paths, roads: overlays.enabled && overlays.roads, satelliteAvailable, satellite: satelliteAvailable && overlays.satellite };
 }
