@@ -61,6 +61,19 @@ func FormatElevation(l *i18n.Localizer, meters float64, imperial bool) string {
 	return l.T("unit.elevation.m", "v", l.Int(int64(math.Round(meters))))
 }
 
+// FormatDuration is a time as the Activities panel shows it, apps/web/src/ui/formatParts.ts's
+// durationParts: "3h 41m", "27m", "45s".
+func FormatDuration(l *i18n.Localizer, seconds int64) string {
+	h, m := seconds/3600, seconds%3600/60
+	switch {
+	case h > 0:
+		return l.T("unit.duration.hm", "h", h, "m", m)
+	case m > 0:
+		return l.T("unit.duration.m", "m", m)
+	}
+	return l.T("unit.duration.s", "s", seconds)
+}
+
 // FormatHours is a whole number of hours: "12".
 func FormatHours(l *i18n.Localizer, seconds int64) string {
 	return l.Int(int64(math.Round(float64(seconds) / 3600)))

@@ -37,6 +37,7 @@ import dev.holdmytrack.android.sync.HiddenCandidates
 import dev.holdmytrack.android.sync.Similar
 import dev.holdmytrack.android.sync.SimilarTracksDialog
 import dev.holdmytrack.android.sync.SyncCandidates
+import dev.holdmytrack.android.sync.SyncList
 import dev.holdmytrack.android.sync.SyncProgress
 import dev.holdmytrack.android.sync.SyncReport
 import dev.holdmytrack.android.sync.SyncRunner
@@ -339,25 +340,19 @@ class SyncTab(
 
     private fun healthConnectOn() = SyncSources(activity, Session.email).healthConnect
 
-    /** Everything waiting, hidden or not, and what's on its way to the map ([SyncProgress]). */
-    private fun all(): List<Candidate> = withInFlight(SyncCandidates.listed(sessions, known, recordings, hidden, showHidden = true))
+    /** The tab's lists from its state now ([SyncList]). */
+    private fun list(): SyncList =
+        SyncList.of(sessions, known, recordings, hidden, showHidden, types, SyncProgress.candidates, ticked)
 
-    /** What the list shows: hidden rows only with Show hidden, and only the chosen types. */
-    private fun shown(): List<Candidate> =
-        withInFlight(SyncCandidates.listed(sessions, known, recordings, hidden, showHidden))
-            .filter { types.isEmpty() || it.activityType in types }
+    private fun all(): List<Candidate> = list().everything
 
-    /** Sent and not landed yet: the server knows a session, a recording is off the phone, so
-     *  neither is in [SyncCandidates.listed] — they're listed from [SyncProgress] instead. */
-    private fun withInFlight(listed: List<Candidate>): List<Candidate> =
-        (listed + SyncProgress.candidates).distinctBy { it.key }.sortedByDescending { it.startedAt }
+    private fun shown(): List<Candidate> = list().shown
 
     private fun processing(candidate: Candidate) = SyncProgress.isProcessing(candidate.key)
 
-    /** What the map draws dashed: what's on its way will be drawn as itself once it lands. */
-    private fun drawn(): List<Candidate> = shown().filterNot(::processing)
+    private fun drawn(): List<Candidate> = list().drawn
 
-    private fun sendable(): List<Candidate> = shown().filter { it.key in ticked && it.key !in hidden && !processing(it) }
+    private fun sendable(): List<Candidate> = list().sendable
 
     private fun render() {
         if (!showing) return
@@ -367,8 +362,9 @@ class SyncTab(
         accountNotice.visibility = if (demo) View.VISIBLE else View.GONE
         upload.visibility = if (demo) View.GONE else View.VISIBLE
 
-        val everything = all()
-        val shown = shown()
+        val list = list()
+        val everything = list.everything
+        val shown = list.shown
         renderTypes(everything)
         // Health Connect off, or on and not set up yet, is said here and set right in Settings ›
         // Sync; read, it's the window the list reaches back over, or what went wrong.
@@ -398,14 +394,14 @@ class SyncTab(
         }
         loadUpdates.isEnabled = loadable && !loading && runJob == null
 
-        val tickable = shown.filter { it.key !in hidden && !processing(it) }
+        val tickable = list.tickable
         filters.visibility = if (everything.isEmpty()) View.GONE else View.VISIBLE
         selectAll.visibility = if (tickable.isEmpty() || demo) View.GONE else View.VISIBLE
         selectAll.setText(if (tickable.isNotEmpty() && tickable.all { it.key in ticked }) R.string.sync_select_none else R.string.sync_select_all)
 
         // Rows that can still be sent: what's on its way or hidden isn't offered, so it isn't
         // anyone's double.
-        similar = Similar.waiting(everything.filter { it.key !in hidden && !processing(it) })
+        similar = Similar.waiting(list.offered)
         rows.submitList(shown.map { row(it) })
         listNote.text = when {
             loading && everything.isEmpty() -> res.getString(R.string.sync_list_loading)
@@ -418,7 +414,7 @@ class SyncTab(
         showHiddenButton.visibility = if (hiddenCount > 0 || showHidden) View.VISIBLE else View.GONE
         showHiddenButton.text = if (showHidden) res.getString(R.string.sync_hide_hidden) else res.getString(R.string.sync_show_hidden, hiddenCount)
 
-        val sending = sendable()
+        val sending = list.sendable
         val running = runJob != null
         // Load is there even with nothing listed — greyed out, saying why, with no source set up —
         // and Sync beside it, disabled.
@@ -472,7 +468,7 @@ class SyncTab(
 
     /** Ticks every row shown, or, when they all are, unticks them. */
     private fun toggleAll() {
-        val tickable = shown().filter { it.key !in hidden && !processing(it) }.map { it.key }
+        val tickable = list().tickable.map { it.key }
         if (tickable.all { it in ticked }) ticked -= tickable.toSet() else ticked += tickable
         render()
     }

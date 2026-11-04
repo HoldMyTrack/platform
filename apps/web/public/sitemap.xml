@@ -2,6 +2,11 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://holdmytrack.com/</loc></url>
   <url><loc>https://holdmytrack.com/help</loc></url>
+  <url><loc>https://holdmytrack.com/guides</loc></url>
+  <url><loc>https://holdmytrack.com/gpx-viewer</loc></url>
+  <url><loc>https://holdmytrack.com/import/garmin</loc></url>
+  <url><loc>https://holdmytrack.com/import/strava</loc></url>
+  <url><loc>https://holdmytrack.com/fog-of-war</loc></url>
   <url><loc>https://holdmytrack.com/contacts</loc></url>
   <url><loc>https://holdmytrack.com/privacy</loc></url>
 </urlset>

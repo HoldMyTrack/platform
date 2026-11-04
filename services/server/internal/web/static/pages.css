@@ -37,6 +37,12 @@ code {
   padding: 56px 24px 32px;
 }
 
+/* A guide's link back to /guides, above its heading. */
+.page-crumb {
+  margin: 0 0 12px;
+  font-size: 14px;
+}
+
 .page-hero h1 {
   margin: 0 0 16px;
   font-family: var(--fm-font-serif);

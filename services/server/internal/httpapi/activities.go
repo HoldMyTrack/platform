@@ -133,7 +133,8 @@ const activityStoriesColumn = `COALESCE((
 // Column order here has to match scanActivityRow's Scan call exactly — activityByIDQuery
 // below shares that same order for the same reason.
 var listActivitiesQuery = `
-SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds, description,
+SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds,
+       COALESCE(moving_seconds, duration_seconds), description,
        ` + activityBBoxColumns + `,
        edit_pending, track_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
        split_group, split_from, split_to,
@@ -146,11 +147,9 @@ WHERE user_id = $1
 ORDER BY started_at DESC, id DESC`
 
 // activityRow is one row of the list. The field set is exactly what the Activities panel
-// renders, no more. Duration is `duration_seconds`, not `moving_seconds`. ingest.Process
-// populates moving_seconds now (added for Trends, docs/SPEC.md FR-9), but only for activities
-// ingested since — anything older still has it NULL, and serving a field that's populated
-// for some rows and not others in the one list every activity shares would read as broken
-// data rather than as what it is. duration_seconds has no such gap.
+// renders, no more. MovingSeconds is the time a row shows, the same time Stories and Trends
+// sum, so a Story's total is its rows added up. Like them, it falls back to the elapsed
+// DurationSeconds where moving time is unset.
 //
 // Name (migrations/0002_activities.sql) is a user-entered title, nullable — a row with
 // none has never had one set, and the client falls back to started_at for its primary line
@@ -160,7 +159,7 @@ ORDER BY started_at DESC, id DESC`
 // as a hover tooltip — a row with nothing written there has never been edited, not "an
 // empty description."
 //
-// The three metric fields are nullable in §3.3 and stay nullable here rather than being
+// The metric fields are nullable in §3.3 and stay nullable here rather than being
 // coerced to 0: a file that carried no distance is not a zero-distance activity.
 type activityRow struct {
 	ID        string    `json:"id"`
@@ -172,6 +171,7 @@ type activityRow struct {
 	Name            *string  `json:"name"`
 	DistanceMeters  *float64 `json:"distance_meters"`
 	DurationSeconds *int32   `json:"duration_seconds"`
+	MovingSeconds   *int32   `json:"moving_seconds"`
 	Description     *string  `json:"description"`
 	// [minLon, minLat, maxLon, maxLat] — GeoJSON's bbox ordering — or null when the row has
 	// no geometry. §3.3 allows a null trajectory, and a client must not fly the map nowhere.
@@ -226,7 +226,7 @@ func scanActivityRow(row rowScanner) (activityRow, error) {
 	var splitGroup *string
 	var split splitRef
 	var avail activityAvailability
-	if err := row.Scan(&a.ID, &a.StartedAt, &a.Timezone, &a.ActivityType, &a.Name, &a.DistanceMeters, &a.DurationSeconds, &a.Description,
+	if err := row.Scan(&a.ID, &a.StartedAt, &a.Timezone, &a.ActivityType, &a.Name, &a.DistanceMeters, &a.DurationSeconds, &a.MovingSeconds, &a.Description,
 		&minLon, &minLat, &maxLon, &maxLat, &a.Pending, &a.Edited, &a.Private, &avail.hasOriginal, &avail.editableTimes,
 		&splitGroup, &split.From, &split.To, &a.Stories); err != nil {
 		return activityRow{}, err
@@ -323,7 +323,8 @@ const maxActivityNameLen = 200
 // (scanActivityRow's Scan call is shared between both), scoped by id and owner exactly like
 // trackMetricsQuery — a non-owned or nonexistent id is indistinguishable from "not found."
 var activityByIDQuery = `
-SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds, description,
+SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds,
+       COALESCE(moving_seconds, duration_seconds), description,
        ` + activityBBoxColumns + `,
        edit_pending, track_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
        split_group, split_from, split_to,

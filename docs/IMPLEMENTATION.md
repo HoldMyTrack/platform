@@ -327,6 +327,8 @@ Client-side (§5.5); Android follows the same design (`apps/android/docs/IMPLEME
 
 **Photo markers are drawn onto the final canvas**, beside attribution (§5.6) and the watermark, by the shared `photoMarkerLayout` cases and the live markers' constants (`photoMarkerLook.ts`, `PhotoMarkerLook`); a symbol layer would put every thumbnail in the style.
 
+**The server draws the stats card** (`internal/statscard`) so its numbers and look have one implementation; the map stays here (§5.5). The PNG is the panel alone at the image's scale, placed above the watermark by the `statsCardPlacement` cases. Export draws the card the frame previewed.
+
 ### 4.5 Per-activity pace, and distance trends
 
 Pace is route context on one activity (§4.3.1) and trends a plain rollup per period; nothing further (`VISION.md` §1.1). Moving time is summed in ingest's distance pass (`computeMetrics`). The trends query left-joins its sums onto a `generate_series` of every bucket, so empty periods are zeroes and the chart shows its gaps; the Profile page renders it with the query `GET /v1/activities/trends` runs.
@@ -605,7 +607,7 @@ A network that throttles the tile host stalls range reads instead of failing the
 
 ### 5.5 Export rendering
 
-The export renders in the browser (§4.3.3): the map is already drawn there, and a server renderer would be new infrastructure and a cost per export. Its ceiling is one tab's canvas and GPU. A print product would need a headless MapLibre render at print DPI in the worker pool, asynchronous, driven by the shared style (`ARCHITECTURE.md` §2.1) and rate-limited per user.
+The export renders in the browser (§4.3.3): the map is already drawn there, and a server renderer would be new infrastructure and a cost per export. Its ceiling is one tab's canvas and GPU.
 
 ### 5.6 Attribution
 

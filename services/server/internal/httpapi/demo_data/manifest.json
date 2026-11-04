@@ -483,6 +483,9 @@
           "height": 2048
         }
       ]
+    },
+    "2026-11-03 Solowheel.gpx": {
+      "type": "Solowheel"
     }
   },
   "stories": [
@@ -519,7 +522,8 @@
         "2026-10-10 Solowheel.gpx",
         "2026-10-11 Solowheel.gpx",
         "2026-10-18 Lake to Lake Trail.gpx",
-        "2026-11-01 Hemlock Creek Trail.gpx"
+        "2026-11-01 Hemlock Creek Trail.gpx",
+        "2026-11-03 Solowheel.gpx"
       ]
     },
     {
@@ -656,6 +660,11 @@
       "osm_id": 2986138417,
       "name": "Mastadon Play Pit Play Area",
       "captured_at": "2026-10-18T19:15:34.184357Z"
+    },
+    {
+      "osm_type": "node",
+      "osm_id": 1913071336,
+      "captured_at": "2026-11-03T18:58:27.332234Z"
     }
   ]
 }

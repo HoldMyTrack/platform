@@ -1466,6 +1466,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities/stats-card": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The stats card a map image export carries, drawn for the image's size and theme
+         * @description One line per activity, newest first, at most five, then "+ N more" and, with more than one, a totals line, in the account's units and language. Pending activities are left out. The PNG is the card's panel alone, at the image's own pixel scale; the client places it.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        activity_ids: string[];
+                        /** @description The image's width in pixels. */
+                        width: number;
+                        /** @description The image's height in pixels. */
+                        height: number;
+                        /**
+                         * @description dark under a dark map flavor or Satellite.
+                         * @enum {string}
+                         */
+                        theme: "light" | "dark";
+                    };
+                };
+            };
+            responses: {
+                /** @description The card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "image/png": string;
+                    };
+                };
+                /** @description Every activity asked for is Pending, so there is no card */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/activities/pending": {
         parameters: {
             query?: never;
@@ -2420,6 +2486,46 @@ export interface paths {
                 };
             };
         };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/private-locations/hidden": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** How many of the account's activities its Private locations hide entirely */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The count, of the activities the list marks private */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            count: number;
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+            };
+        };
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3606,6 +3712,8 @@ export interface components {
             name: string | null;
             distance_meters: number | null;
             duration_seconds: number | null;
+            /** @description The time a client shows for the activity, as Stories and Trends sum it; elapsed time where the source gave no moving time. */
+            moving_seconds: number | null;
             description: string | null;
             /** @description [minLon, minLat, maxLon, maxLat], or null when the activity has no track. */
             bbox: [

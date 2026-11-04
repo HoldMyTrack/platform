@@ -50,6 +50,11 @@ const defaultSignupsPerHour = 5
 // editor a few times an hour at most.
 const trackPointsPerHour = 120
 
+// statsCardsPerHour bounds `POST /v1/activities/stats-card` per account. A client asks again
+// after each pause in changing the frame's size, theme or checked set, a few dozen times in one
+// export at most; each is a query and a PNG drawn in memory.
+const statsCardsPerHour = 600
+
 // rateKey is who a per-account limit counts a request against: the account, or for the demo
 // account, which every visitor shares (DemoCustomerUserID), the visitor's address, so one
 // heavy visitor doesn't use up everyone else's demo.

@@ -26,9 +26,14 @@ export function bandsData(metrics: ActivityTrackMetrics): GeoJSON.FeatureCollect
 export function setTrackBands(map: MapLibreMap, metrics: ActivityTrackMetrics): void {
   const source = map.getSource(BAND_SOURCE_ID) as GeoJSONSource | undefined;
   if (!source) return;
-  // A style reload drops the image with the layers, and every reload draws the bands again.
-  if (!map.hasImage(ARROW_IMAGE)) map.addImage(ARROW_IMAGE, arrowImage(), { pixelRatio: ARROW_PIXEL_RATIO, sdf: true });
+  addArrowImage(map);
   source.setData(bandsData(metrics));
+}
+
+/** Registers the chevron the bands' and the bold tracks' arrows draw (bandsGroup.ts,
+ *  tracksGroup.ts). A style reload drops it with the layers, so each attach adds it again. */
+export function addArrowImage(map: MapLibreMap): void {
+  if (!map.hasImage(ARROW_IMAGE)) map.addImage(ARROW_IMAGE, arrowImage(), { pixelRatio: ARROW_PIXEL_RATIO, sdf: true });
 }
 
 const ARROW_PIXEL_RATIO = 2;

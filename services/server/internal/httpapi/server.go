@@ -89,6 +89,7 @@ type Server struct {
 	tileLimiter         *fixedWindowLimiter
 	syncLimiter         *fixedWindowLimiter
 	trackPointsLimiter  *fixedWindowLimiter
+	statsCardLimiter    *fixedWindowLimiter
 	syncActivityLimiter *fixedWindowLimiter
 	signupLimiter       *fixedWindowLimiter
 	budget              *budget.Gate
@@ -115,6 +116,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		tileLimiter:           newFixedWindowLimiter(defaultTilesPerMinute, time.Minute),
 		syncLimiter:           newFixedWindowLimiter(syncRequestsPerHour, time.Hour),
 		trackPointsLimiter:    newFixedWindowLimiter(trackPointsPerHour, time.Hour),
+		statsCardLimiter:      newFixedWindowLimiter(statsCardsPerHour, time.Hour),
 		syncActivityLimiter:   newFixedWindowLimiter(syncActivitiesPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
 	}
@@ -171,6 +173,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("PATCH", "/activities/{id}"), s.requireNotDemo(s.handleUpdateActivity))
 	s.mux.HandleFunc(route("DELETE", "/activities/{id}"), s.requireNotDemo(s.handleDeleteActivity))
 	s.mux.HandleFunc(route("POST", "/activities/overlaps"), s.requireVerified(s.handleActivityOverlaps))
+	s.mux.HandleFunc(route("POST", "/activities/stats-card"), s.requireVerified(s.handleStatsCard))
 	s.mux.HandleFunc(route("GET", "/activities/pending"), s.requireVerified(s.handleActivitiesPending))
 	s.mux.HandleFunc(route("GET", "/activities/summary"), s.requireVerified(s.handleActivitySummary))
 	s.mux.HandleFunc(route("GET", "/activities/histogram"), s.requireVerified(s.handleActivityHistogram))
@@ -180,6 +183,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/activities/{id}/track-points"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleActivityTrackPoints)))
 	s.mux.HandleFunc(route("POST", "/activities/{id}/track-edit"), s.requireNotDemo(s.handleActivityTrackEdit))
 	s.mux.HandleFunc(route("GET", "/private-locations"), s.requireVerified(s.handleListPrivateLocations))
+	s.mux.HandleFunc(route("GET", "/private-locations/hidden"), s.requireVerified(s.handleHiddenActivities))
 	s.mux.HandleFunc(route("POST", "/private-locations"), s.requireNotDemo(s.handleCreatePrivateLocation))
 	s.mux.HandleFunc(route("PATCH", "/private-locations/{id}"), s.requireNotDemo(s.handleUpdatePrivateLocation))
 	s.mux.HandleFunc(route("DELETE", "/private-locations/{id}"), s.requireNotDemo(s.handleDeletePrivateLocation))
@@ -242,8 +246,12 @@ func (s *Server) registerPages() {
 	// About is the signed-out home page too (appShell), so its canonical link is `/`.
 	s.mux.HandleFunc("GET /about", s.staticPage("about", "meta.about_title", "meta.home_description", "/"))
 	s.mux.HandleFunc("GET /help", s.staticPage("help", "meta.help_title", "meta.help_description", ""))
+	s.mux.HandleFunc("GET /guides", s.staticPage("guides", "meta.guides_title", "meta.guides_description", ""))
 	s.mux.HandleFunc("GET /contacts", s.staticPage("contacts", "meta.contacts_title", "meta.contacts_description", ""))
 	s.mux.HandleFunc("GET /privacy", s.staticPage("privacy", "meta.privacy_title", "meta.privacy_description", ""))
+	for _, g := range web.Guides {
+		s.mux.HandleFunc("GET "+g.Href, s.staticPage(g.Page, "meta."+g.MetaKey+"_title", "meta."+g.MetaKey+"_description", ""))
+	}
 	s.mux.Handle("GET /static/", s.pages.StaticHandler())
 	s.mux.HandleFunc("POST /logout", s.sameOrigin(s.handleLogoutPage))
 	s.mux.HandleFunc("POST /language", s.sameOrigin(s.handleLanguageForm)) // language.go

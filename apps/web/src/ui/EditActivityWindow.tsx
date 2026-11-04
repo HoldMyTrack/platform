@@ -2,7 +2,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { deletePhoto, saveActivityTrackEdit, SplitHidesPartError, updateActivity, updatePhoto, uploadPhoto, type Activity, type Photo, type TrackEdit } from '../api';
 import type { PhotoMarkerOverlay } from '../map/photos';
-import { draftIsEmpty, draftSize, EMPTY_DRAFT, isoSeconds, waitingPhotos, type PhotoDraft } from './photoDraft';
+import { draftIsEmpty, draftSize, EMPTY_DRAFT, isoSeconds, type PhotoDraft } from './photoDraft';
+import { fieldWrites, saveProblem, type ActivityFields } from './editSave';
+import { MAX_ACTIVITY_DESCRIPTION_LEN, MAX_ACTIVITY_NAME_LEN, MAX_ACTIVITY_TYPE_LEN } from '../limits';
 import type { TypeFacet } from './activityFacets';
 import { ActivityTypePicker } from './ActivityTypePicker';
 import { ConfirmDialog } from './ConfirmDialog';
@@ -10,48 +12,12 @@ import { formatStartedAt } from './format';
 import { PhotosTab } from './PhotosTab';
 import { TrackEditor } from './TrackEditor';
 import { t, tn } from '../i18n';
-import { MAX_ACTIVITY_DESCRIPTION_LEN, MAX_ACTIVITY_NAME_LEN, MAX_ACTIVITY_TYPE_LEN, MAX_PHOTO_CAPTION_LEN } from '../limits';
 
 
 export type EditTab = 'activity' | 'track' | 'photos';
 
 /** The Track tab's unsaved session: the edit Save sends, and the point to split at, if any. */
 type TrackPending = { edit: TrackEdit | null; splitAt: number | null };
-
-/** What `updateActivity` writes — the PATCH endpoint is a full replace of all three. */
-interface ActivityFields {
-  activityType: string;
-  name: string;
-  description: string;
-}
-
-/**
- * The field writes Save has to make: one per activity whose fields, as the form now has them,
- * differ from what the server holds — what an earlier Save in this window wrote (`written`),
- * else what the window opened with. One activity takes all three fields from the form. A group
- * takes only the type, and keeps each activity's own name and description: the endpoint
- * replaces all three, so a group edit still sends them unchanged. An empty type on a group
- * ("Mixed types") keeps each activity's own type too.
- */
-function fieldWrites(
-  activities: readonly Activity[],
-  single: Activity | null,
-  type: string,
-  name: string,
-  description: string,
-  written: ReadonlyMap<string, ActivityFields>,
-): { id: string; fields: ActivityFields }[] {
-  return activities.flatMap((activity) => {
-    const held = written.get(activity.id) ?? {
-      activityType: activity.activityType,
-      name: activity.name ?? '',
-      description: activity.description ?? '',
-    };
-    const fields = single ? { activityType: type, name, description } : { ...held, activityType: type || held.activityType };
-    const same = fields.activityType === held.activityType && fields.name === held.name && fields.description === held.description;
-    return same ? [] : [{ id: activity.id, fields }];
-  });
-}
 
 /**
  * The Edit window (docs/SPEC.md FR-5.10, IMPLEMENTATION.md §4.7.7) — reached from the header toolbar's Edit button
@@ -188,7 +154,7 @@ export function EditActivityWindow({
   const unsaved =
     !draftIsEmpty(photoDraft) ||
     trackPending !== null ||
-    fieldWrites(activities, single, activityType.trim(), name.trim(), description, written.current).length > 0;
+    fieldWrites(activities, single !== null, activityType.trim(), name.trim(), description, written.current).length > 0;
   const unsavedRef = useRef(unsaved);
   unsavedRef.current = unsaved;
 
@@ -235,44 +201,22 @@ export function EditActivityWindow({
   }
 
   async function save() {
+    // Nothing is written until every tab's input passes (editSave.ts).
+    const problem = saveProblem({ activityType, name, description, mixedTypes, photoDraft });
+    if (problem) {
+      setError(t(problem.key, problem.vars));
+      openTab(problem.tab);
+      return;
+    }
     const trimmedType = activityType.trim();
     const trimmedName = name.trim();
-    const invalid = !trimmedType && !mixedTypes
-      ? t('edit.type_required')
-      : trimmedType.length > MAX_ACTIVITY_TYPE_LEN
-        ? t('edit.type_too_long', { max: MAX_ACTIVITY_TYPE_LEN })
-        : trimmedName.length > MAX_ACTIVITY_NAME_LEN
-          ? t('edit.name_too_long', { max: MAX_ACTIVITY_NAME_LEN })
-          : description.length > MAX_ACTIVITY_DESCRIPTION_LEN
-            ? t('edit.description_too_long', { max: MAX_ACTIVITY_DESCRIPTION_LEN })
-            : null;
-    if (invalid) {
-      setError(invalid);
-      openTab('activity');
-      return;
-    }
-    // Every photo needs its place before anything is written, and a caption within bounds.
-    const captions = [
-      ...photoDraft.added.map((p) => p.caption),
-      ...Object.values(photoDraft.changed).flatMap((c) => (c.caption === undefined ? [] : [c.caption])),
-    ];
-    const photosInvalid = waitingPhotos(photoDraft).length > 0
-      ? t('photos.place_first')
-      : captions.some((c) => c.trim().length > MAX_PHOTO_CAPTION_LEN)
-        ? t('photos.caption_too_long', { max: MAX_PHOTO_CAPTION_LEN })
-        : null;
-    if (photosInvalid) {
-      setError(photosInvalid);
-      openTab('photos');
-      return;
-    }
     setSaving(true);
     setError(null);
     try {
       // Sequential, not Promise.all, matching ActivitiesPanel.tsx's own group delete: a
       // hand-checked group is a handful of rows, not bulk-import scale. Each write is recorded
       // as it lands, so a failure partway leaves the rest for a retry.
-      for (const { id, fields } of fieldWrites(activities, single, trimmedType, trimmedName, description, written.current)) {
+      for (const { id, fields } of fieldWrites(activities, single !== null, trimmedType, trimmedName, description, written.current)) {
         await updateActivity(id, fields);
         written.current.set(id, fields);
       }

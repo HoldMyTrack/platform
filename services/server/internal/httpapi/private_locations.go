@@ -115,6 +115,26 @@ func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, locations)
 }
 
+// handleHiddenActivities serves `GET /v1/private-locations/hidden`: how many of the account's
+// activities its Private locations hide entirely, the rows the list badges Private (FR-5.1).
+// Account-wide, since a hidden activity keeps no track to tell which location hid it.
+func (s *Server) handleHiddenActivities(w http.ResponseWriter, r *http.Request) {
+	var count int
+	if err := s.pool.QueryRow(r.Context(), `SELECT count(*) FROM activities WHERE user_id = $1 AND trajectory IS NULL`,
+		userIDFromContext(r.Context())).Scan(&count); err != nil {
+		if clientGone(w, r) {
+			return
+		}
+		s.log.Error("hidden activities count failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, struct {
+		Count int `json:"count"`
+	}{count})
+}
+
 // handleCreatePrivateLocation serves `POST /v1/private-locations`, responding 201 with the
 // new location.
 func (s *Server) handleCreatePrivateLocation(w http.ResponseWriter, r *http.Request) {

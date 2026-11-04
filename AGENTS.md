@@ -32,6 +32,8 @@ When `VISION.md` or an ADR changes a position, scan the other documents, the And
 
 **Draw instead of describe.** A flow, sequence, state machine or set of relations is a Mermaid diagram, followed by a few lines for what it cannot show: invariants and traps.
 
+**One word per activity state.** Lifecycle, Hidden, Focused, Checked and Bold mean what `SPEC.md` FR-5.15 says; never write "selected" for any of them.
+
 **Write tight.** One statement per fact, and at most one cross-reference per paragraph unless more are load-bearing. Cut intensifiers ("deliberately", "genuinely", "actually", "simply", "just", "really"); "not X but Y" contrasts where nobody proposed X; meta-narration ("This section…", "As noted above…", "It is worth noting…"); history ("now", "no longer", "originally", "used to"); em-dash chains and stacked parentheticals; a reason restated beside the pointer to it; lists of three where one item carries the point; closing sentences that summarize the paragraph. The same applies to code comments, diagram labels, commit messages and pull request descriptions.
 
 **Word budgets.** A document past its budget is cut before anything is added to it.

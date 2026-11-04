@@ -593,6 +593,13 @@
     <string name="private_new_title">Новое приватное место</string>
     <string name="private_edit_title">Изменить приватное место</string>
     <string name="private_editor_note">Перетащите центр, чтобы сдвинуть круг. Не ставьте центр прямо на свою дверь — середину круга проверят в первую очередь.</string>
+    <string name="private_hidden_none">Ни одно занятие не находится целиком внутри этих мест.</string>
+    <plurals name="private_hidden">
+        <item quantity="one">%1$d занятие целиком внутри этих мест и отмечено «Приватное».</item>
+        <item quantity="few">%1$d занятия целиком внутри этих мест и отмечены «Приватное».</item>
+        <item quantity="many">%1$d занятий целиком внутри этих мест и отмечены «Приватное».</item>
+        <item quantity="other">%1$d занятия целиком внутри этих мест и отмечены «Приватное».</item>
+    </plurals>
     <string name="private_reprocess_note">Сохранение изменения запускает повторную обработку затронутых занятий — до её окончания они помечены «Ожидает».</string>
     <string name="private_delete_title">Удалить это приватное место?</string>
     <string name="private_delete_body">Занятия, которые начинаются или заканчиваются внутри него, снова покажут эти части после повторной обработки.</string>

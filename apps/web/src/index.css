@@ -648,7 +648,7 @@ body {
 }
 
 /* The selected (focused) row — reached by clicking the row's own text or its track on the map.
-   A checked row doesn't get this: its ticked checkbox is its only mark (docs/SPEC.md FR-5.1). */
+   A checked row doesn't get this: its ticked checkbox is its only mark (docs/SPEC.md FR-5.15). */
 .activities-panel__row--selected {
   background: rgb(var(--fm-accent-rgb) / 8%);
   box-shadow: inset 3px 0 0 var(--fm-accent-strong);
@@ -665,6 +665,19 @@ body {
 
 /* A button, because clicking it flies the map — but it has to keep looking like the row
    text it replaced, so every button default is reset here rather than styled around. */
+.activities-panel__type-icon {
+  flex: none;
+  color: rgb(var(--fm-ink-rgb) / 60%);
+}
+
+.activities-panel__row--hidden .activities-panel__type-icon {
+  opacity: 0.55;
+}
+
+.activities-panel__row--pending .activities-panel__type-icon {
+  opacity: 0.45;
+}
+
 .activities-panel__text {
   flex: 1;
   min-width: 0;
@@ -849,7 +862,7 @@ button.activities-panel__story-badge:hover {
   white-space: nowrap;
 }
 
-/* The toolbar icon buttons (docs/SPEC.md FR-5.1) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
+/* The toolbar icon buttons (docs/SPEC.md FR-5.15) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
    the checked group, else the selected row (there are no per-row action icons). One shared chip look, matching the
    mockup: a soft tinted square rather than a bare icon, so the group actions read as one
    family regardless of which one is destructive. */
@@ -1429,6 +1442,28 @@ button.activities-panel__story-badge:hover {
   width: 100%;
   opacity: 0;
   cursor: pointer;
+}
+
+.export-viewfinder__stats {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fm-space-4);
+  font-size: var(--fm-text-md);
+  color: var(--fm-ink);
+  cursor: pointer;
+}
+
+.export-viewfinder__stats:has(input:disabled) {
+  color: var(--fm-ink-muted);
+  cursor: default;
+}
+
+/* The server's card as the image will have it (ExportViewfinder.tsx's StatsCardPreview). */
+.export-viewfinder__stats-card {
+  position: absolute;
+  height: auto;
+  pointer-events: none;
 }
 
 .export-viewfinder__button {
@@ -2571,6 +2606,12 @@ button.activities-panel__story-badge:hover {
   flex: 1;
   flex-direction: column;
   min-height: 0;
+}
+
+.private-locations__footer {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--fm-space-4);
 }
 
 .private-locations__footer-note {

@@ -7,8 +7,8 @@
  *
  *   npm run verify:map
  *
- * Plain .mjs on purpose: Node 22's TypeScript stripping is still flagged, and a
- * verification script that needs its own build step is one more thing to break.
+ * Plain .mjs on purpose: a verification script that needs its own build step is one
+ * more thing to break.
  */
 import { spawn } from 'node:child_process';
 import { mkdir, writeFile } from 'node:fs/promises';

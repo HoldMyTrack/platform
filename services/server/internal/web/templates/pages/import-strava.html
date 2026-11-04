@@ -1,0 +1,50 @@
+{{define "content"}}
+<main class="page-main help">
+  <section class="page-hero">
+    <p class="page-crumb"><a href="/guides">← All guides</a></p>
+    <h1>Keep your favorite Strava activities on one map</h1>
+    <p class="page-lede">On Strava, last year's best day out sinks under everything since. Bring in the ones worth remembering, a long hike, a trip abroad, a race, and HoldMyTrack keeps them together on one map with everything else you have brought in. You don't need your whole history: pick the activities that matter to you.</p>
+  </section>
+
+  <section class="page-section">
+    <h2>Export an activity from Strava</h2>
+    <ol class="page-steps">
+      <li>
+        <h3>Open the activity</h3>
+        <p>On the Strava website, open one of your own activities. Exporting is on the website, not in the phone app, and only for activities you recorded.</p>
+      </li>
+      <li>
+        <h3>Export it</h3>
+        <p>Open the <strong>⋯</strong> menu beside the activity and choose <strong>Export GPX</strong>, or <strong>Export Original</strong> for the file your watch or app uploaded to Strava.</p>
+      </li>
+      <li>
+        <h3>Upload it to HoldMyTrack</h3>
+        <p>Drop the file onto the map, or choose it from the Upload menu: up to 20 files at a time, each up to 16 MB.</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="page-section">
+    <h2>For your whole explored area</h2>
+    <p>Fog of War clears wherever you have been, so more ground means more cleared map. Strava's account archive has every activity: in Strava's settings, open <strong>My Account</strong>, then <strong>Download or Delete Your Account</strong>, and request your archive. Strava emails a link to a .zip.</p>
+    <ul class="page-list">
+      <li><strong>Unzip it.</strong> The activities are in its <strong>activities</strong> folder, one file each.</li>
+      <li><strong>Pick with activities.csv.</strong> It lists every activity's name, date and type beside its file name, so you can find the ones you want.</li>
+      <li><strong>Unpack .gz files.</strong> Many files end in .fit.gz or .tcx.gz, which HoldMyTrack doesn't read: open each one to unpack it into a .fit or .tcx file, then upload that, 20 files at a time.</li>
+    </ul>
+  </section>
+
+  <section class="page-section">
+    <h2>Good to know</h2>
+    <ul class="page-list">
+      <li><strong>The same activity from two places</strong>, say Strava and Garmin, becomes two activities: keep one and delete the other. Coming from Garmin? See <a href="/import/garmin">exporting your Garmin activities</a>.</li>
+      <li><strong>Mark home as a Private location</strong> and wherever a track starts or ends there, that part is hidden. See <a href="/help#settings">Settings and privacy</a>.</li>
+      <li><strong>Nobody else sees your map.</strong> There are no followers, kudos or leaderboards.</li>
+    </ul>
+    {{if not .User}}<div class="page-actions">
+      <a class="page-button" href="/signup">Create a free account</a>
+      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
+    </div>{{end}}
+  </section>
+</main>
+{{end}}

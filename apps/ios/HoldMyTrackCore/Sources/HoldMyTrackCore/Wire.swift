@@ -155,7 +155,7 @@ struct ActivityRowJSON: Codable, Sendable, Equatable {
     let activityType: String
     let name: String?
     let distanceMeters: Double?
-    let durationSeconds: Int?
+    let movingSeconds: Int?
     let description: String?
     let bbox: [Double]?
     let pending: Bool
@@ -170,7 +170,7 @@ struct ActivityRowJSON: Codable, Sendable, Equatable {
         case startedAt = "started_at"
         case activityType = "activity_type"
         case distanceMeters = "distance_meters"
-        case durationSeconds = "duration_seconds"
+        case movingSeconds = "moving_seconds"
         case trackEdit = "track_edit"
     }
 }

@@ -15,7 +15,7 @@ Error:
       description: For a person, in the request's language when the server has it translated.
 ActivityRow:
   type: object
-  required: [id, started_at, timezone, activity_type, name, distance_meters, duration_seconds, description, bbox, pending, edited, private, split, stories]
+  required: [id, started_at, timezone, activity_type, name, distance_meters, duration_seconds, moving_seconds, description, bbox, pending, edited, private, split, stories]
   additionalProperties: false
   properties:
     id: { type: string, format: uuid }
@@ -27,6 +27,10 @@ ActivityRow:
     name: { type: string, nullable: true }
     distance_meters: { type: number, nullable: true }
     duration_seconds: { type: integer, nullable: true }
+    moving_seconds:
+      type: integer
+      nullable: true
+      description: The time a client shows for the activity, as Stories and Trends sum it; elapsed time where the source gave no moving time.
     description: { type: string, nullable: true }
     bbox:
       type: array

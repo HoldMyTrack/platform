@@ -24,6 +24,10 @@ export function MapExport({ map, container, exporter }: { map: MapLibreMap; cont
           onChoiceChange={exporter.changeChoice}
           onCapture={() => void exporter.capture()}
           onCancel={exporter.cancel}
+          showStats={exporter.showStats}
+          statsOffered={exporter.statsOffered}
+          onShowStatsChange={exporter.setShowStats}
+          stats={exporter.stats}
         />
       )}
     </>

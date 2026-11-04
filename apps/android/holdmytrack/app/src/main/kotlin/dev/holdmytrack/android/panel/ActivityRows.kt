@@ -97,7 +97,7 @@ class ActivityRowHolder(view: View) : RecyclerView.ViewHolder(view) {
             // read as broken data. Its badge says why instead.
             if (!activity.isPrivate) {
                 append(PanelFormat.distance(res, activity.distanceMeters)).append(" · ")
-                append(PanelFormat.duration(res, activity.durationSeconds)).append(" · ")
+                append(PanelFormat.duration(res, activity.movingSeconds)).append(" · ")
             }
             append(ActivityTypes.label(activity.activityType))
         }

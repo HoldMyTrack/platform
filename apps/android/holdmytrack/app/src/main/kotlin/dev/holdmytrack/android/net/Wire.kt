@@ -117,7 +117,7 @@ internal data class ActivityRowJson(
     @SerialName("activity_type") val activityType: String,
     val name: String?,
     @SerialName("distance_meters") val distanceMeters: Double?,
-    @SerialName("duration_seconds") val durationSeconds: Long?,
+    @SerialName("moving_seconds") val movingSeconds: Long?,
     val description: String?,
     val bbox: List<Double>?,
     val pending: Boolean,
@@ -280,6 +280,9 @@ internal data class PrivateLocationJson(
     val lat: Double,
     @SerialName("radius_m") val radiusM: Int,
 )
+
+@Serializable
+internal data class HiddenActivitiesJson(val count: Int)
 
 @Serializable
 internal data class PrivateLocationInputJson(

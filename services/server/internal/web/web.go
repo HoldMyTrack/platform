@@ -62,8 +62,24 @@ type Language struct {
 var InfoLinks = []Link{
 	{Href: "/about", LabelKey: "nav.about"},
 	{Href: "/help", LabelKey: "nav.help"},
+	{Href: "/guides", LabelKey: "nav.guides"},
 	{Href: "/contacts", LabelKey: "nav.contacts"},
 	{Href: "/privacy", LabelKey: "nav.privacy"},
+}
+
+// Guide is a how-to page written for one search (SPEC.md FR-10.2). httpapi serves it from
+// templates/pages/<Page>.html with the catalog's meta.<MetaKey>_title and _description. A test
+// checks that /guides links each one and apps/web/public/sitemap.xml lists it.
+type Guide struct {
+	Href, Page, MetaKey string
+}
+
+// Guides are the guide pages.
+var Guides = []Guide{
+	{"/gpx-viewer", "gpx-viewer", "gpx_viewer"},
+	{"/import/garmin", "import-garmin", "import_garmin"},
+	{"/import/strava", "import-strava", "import_strava"},
+	{"/fog-of-war", "fog-of-war", "fog_of_war"},
 }
 
 // User is the signed-in account as the header shows it; nil when nobody is signed in.

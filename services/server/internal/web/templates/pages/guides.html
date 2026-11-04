@@ -1,0 +1,33 @@
+{{define "content"}}
+<main class="page-main help">
+  <section class="page-hero">
+    <h1>Guides</h1>
+    <p class="page-lede">How to bring your tracks in from a watch, a file or another service, and what to do with them once they are on the map.</p>
+  </section>
+
+  <section class="page-section">
+    <ul class="page-cards">
+      <li>
+        <h3><a href="/gpx-viewer">Open GPX, FIT and TCX files on a map</a></h3>
+        <p>See a track file's route on a map of the world, and keep the ones you care about together.</p>
+      </li>
+      <li>
+        <h3><a href="/import/garmin">Bring in your Garmin activities</a></h3>
+        <p>Export an activity from Garmin Connect as GPX, TCX or FIT, or take the file straight off the watch.</p>
+      </li>
+      <li>
+        <h3><a href="/import/strava">Bring in your Strava activities</a></h3>
+        <p>Export one activity as GPX or its original file, or pick the ones you want from your Strava archive.</p>
+      </li>
+      <li>
+        <h3><a href="/fog-of-war">A Fog of War map of everywhere you have been</a></h3>
+        <p>Watch the fog clear wherever your tracks go, and find the streets, parks and trails close to home you have never been to.</p>
+      </li>
+    </ul>
+    {{if not .User}}<div class="page-actions">
+      <a class="page-button" href="/signup">Create a free account</a>
+      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
+    </div>{{end}}
+  </section>
+</main>
+{{end}}

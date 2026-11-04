@@ -524,7 +524,7 @@ class ClientRulesTest {
 
     private fun activity(id: String) = Activity(
         id = id, startedAt = "2026-10-01T08:00:00Z", activityType = "walking", name = null, distanceMeters = 1000.0,
-        durationSeconds = 600, description = null, bbox = listOf(0.0, 0.0, 1.0, 1.0), pending = false, edited = false,
+        movingSeconds = 600, description = null, bbox = listOf(0.0, 0.0, 1.0, 1.0), pending = false, edited = false,
     )
 
     /** Numbers compared as numbers, so 24.75 and 24.750 agree; a missing field means the same as null. */

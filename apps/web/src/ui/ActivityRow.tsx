@@ -3,6 +3,7 @@ import { Lock, X } from 'lucide-react';
 import type { Activity } from '../api';
 import { formatActivityType, formatDistance, formatDuration, formatStartedAt } from './format';
 import type { UnitSystem } from './units';
+import { typeIcon } from './activityKindIcon';
 import { t, tn } from '../i18n';
 
 /** A row's primary line: its user-entered name (§4.7) when it has one, else
@@ -55,6 +56,7 @@ export function ActivityRow({
   // `ORDER BY started_at DESC`, never from this label.
   const displayName = activity.name?.trim() || null;
   const label = rowLabel(activity);
+  const TypeIcon = typeIcon(activity.activityType);
   const classes = ['activities-panel__row'];
   // Only the selected row is bold on the map, so only it gets the row highlight — a checked
   // row's ticked box is its only mark.
@@ -85,6 +87,8 @@ export function ActivityRow({
           onChange={checkbox.onToggle}
         />
       )}
+      {/* Its kind's icon; the meta line names the type, so it's decoration to a screen reader. */}
+      <TypeIcon className="activities-panel__type-icon" size={18} aria-hidden="true" />
       <button
         type="button"
         className="activities-panel__text"
@@ -104,7 +108,7 @@ export function ActivityRow({
               read as broken data rather than as hidden on purpose. Its badge says why. */}
           {!activity.private && (
             <>
-              {formatDistance(activity.distanceMeters, system)} · {formatDuration(activity.durationSeconds)} ·{' '}
+              {formatDistance(activity.distanceMeters, system)} · {formatDuration(activity.movingSeconds)} ·{' '}
             </>
           )}
           {formatActivityType(activity.activityType)}

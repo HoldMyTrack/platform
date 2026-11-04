@@ -19,8 +19,9 @@ import dev.holdmytrack.android.panel.PrivateLocationEditor
  * Privacy, from the You tab: the account's Private locations (`docs/SPEC.md` FR-8.1), each a
  * row with its circle drawn small ([CirclePreviewView]) that opens the editor on the map
  * ([PrivateLocationEditor], through `MainActivity.editPrivateLocation`), and Add a location on
- * the map; then what HoldMyTrack keeps, three facts; then Download your data
- * ([DataExportActivity]) and the privacy policy. The list is read each time the screen shows.
+ * the map, and how many activities they hide entirely (the list's Private rows); then what
+ * HoldMyTrack keeps, three facts; then Download your data ([DataExportActivity]) and the privacy
+ * policy. The list and the count are read each time the screen shows.
  *
  * The demo account sees its locations but can't change them: no Add, no chevrons, rows that
  * don't open, and no download — its data is deleted within the day.
@@ -29,6 +30,7 @@ class PrivacyActivity : AppCompatActivity() {
 
     private lateinit var note: TextView
     private lateinit var rows: LinearLayout
+    private lateinit var hidden: TextView
 
     private val readOnly get() = Session.isDemo
 
@@ -41,6 +43,7 @@ class PrivacyActivity : AppCompatActivity() {
         setContentView(R.layout.activity_privacy)
         note = findViewById(R.id.privacy_note)
         rows = findViewById(R.id.privacy_rows)
+        hidden = findViewById(R.id.privacy_hidden)
         findViewById<View>(R.id.privacy_add).apply {
             visibility = if (readOnly) View.GONE else View.VISIBLE
             setOnClickListener { edit(PrivateLocationEditor.NEW) }
@@ -60,7 +63,10 @@ class PrivacyActivity : AppCompatActivity() {
         if (rows.childCount == 0) showNote(getString(R.string.panel_loading))
         HoldMyTrackApi.privateLocations { result ->
             if (isDestroyed) return@privateLocations
-            result.onSuccess(::render).onFailure {
+            result.onSuccess {
+                render(it)
+                if (it.isNotEmpty()) showHidden()
+            }.onFailure {
                 showNote(it.message?.takeIf { m -> m.isNotBlank() } ?: getString(R.string.map_unreachable), failed = true)
             }
         }
@@ -69,6 +75,7 @@ class PrivacyActivity : AppCompatActivity() {
     private fun render(locations: List<PrivateLocation>) {
         rows.removeAllViews()
         rows.visibility = if (locations.isEmpty()) View.GONE else View.VISIBLE
+        if (locations.isEmpty()) hidden.visibility = View.GONE
         if (locations.isEmpty()) showNote(getString(R.string.private_none)) else note.visibility = View.GONE
         val inflater = LayoutInflater.from(this)
         for (location in locations) {
@@ -85,6 +92,21 @@ class PrivacyActivity : AppCompatActivity() {
                 row.setOnClickListener { edit(location.id) }
             }
             rows.addView(row)
+        }
+    }
+
+    /** Only a line of context: the screen works without it, so a failure leaves it out. */
+    private fun showHidden() {
+        HoldMyTrackApi.hiddenActivityCount { result ->
+            if (isDestroyed) return@hiddenActivityCount
+            result.onSuccess { count ->
+                hidden.text = if (count == 0) {
+                    getString(R.string.private_hidden_none)
+                } else {
+                    resources.getQuantityString(R.plurals.private_hidden, count, count)
+                }
+                hidden.visibility = View.VISIBLE
+            }
         }
     }
 
