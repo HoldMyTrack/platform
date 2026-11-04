@@ -7,6 +7,34 @@ import type { Rect } from './exportViewfinder';
 import { t } from '../i18n';
 import { todayIn } from '../ui/dateMath';
 import { activityTimeZone } from '../ui/timeZone';
+import { statsCardRequest, statsOffered } from './exportStats';
+import { isDarkBase } from './style';
+import { useStatsCard, type StatsCardState } from './useStatsCard';
+
+const SHOW_STATS_KEY = 'hmt.exportShowStats';
+
+/** The Show stats choice this browser last made; off until one is made. */
+function loadShowStats(): boolean {
+  try {
+    return window.localStorage.getItem(SHOW_STATS_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function saveShowStats(show: boolean): void {
+  try {
+    window.localStorage.setItem(SHOW_STATS_KEY, show ? '1' : '0');
+  } catch {
+    // A browser that keeps nothing asks again next visit.
+  }
+}
+
+/** What the stats card is drawn from: the Activities panel's checked set and the open Story. */
+export interface ExportStatsSource {
+  checked: ReadonlySet<string>;
+  storyId: string | null;
+}
 
 export interface ExportControls {
   flow: ExportFlow;
@@ -18,17 +46,43 @@ export interface ExportControls {
   moveWindow: (window: Rect) => void;
   capture: () => Promise<void>;
   cancel: () => void;
+  /** Show stats: the box as ticked, and whether it can be (exportStats.ts's statsOffered). */
+  showStats: boolean;
+  statsOffered: boolean;
+  setShowStats: (show: boolean) => void;
+  /** The card the frame previews and Export draws. */
+  stats: StatsCardState;
 }
 
 /** The map image export (FR-4.10): the viewfinder's stages (exportFlow.ts) and the capture of
  *  what [scene] draws into a downloaded PNG. */
-export function useExportFlow(map: MapLibreMap | null, container: RefObject<HTMLDivElement | null>, scene: ExportViewState): ExportControls {
+export function useExportFlow(
+  map: MapLibreMap | null,
+  container: RefObject<HTMLDivElement | null>,
+  scene: ExportViewState,
+  source: ExportStatsSource,
+): ExportControls {
   const [flow, setFlow] = useState<ExportFlow>({ stage: 'idle' });
   const dispatch = useCallback((event: ExportEvent) => setFlow((current) => exportFlowReducer(current, event)), []);
   const [error, setError] = useState<string | null>(null);
   // The Custom size last picked, kept for the next time the viewfinder opens in this visit.
   const customSizeRef = useRef<CustomSizeId>(DEFAULT_CUSTOM_SIZE);
   const maxSidePx = useMemo(() => (map ? maxExportSide(map) : 4096), [map]);
+  const [showStats, setShowStatsState] = useState(loadShowStats);
+  const setShowStats = useCallback((show: boolean) => {
+    setShowStatsState(show);
+    saveShowStats(show);
+  }, []);
+  const offered = statsOffered(source.checked, source.storyId);
+  const target = flow.stage === 'idle' ? null : outputSize(flow.preset, flow.customSize, flow.window);
+  const widthPx = target?.widthPx ?? 0;
+  const heightPx = target?.heightPx ?? 0;
+  const dark = isDarkBase(scene.flavor, scene.satellite);
+  const request = useMemo(
+    () => (widthPx > 0 ? statsCardRequest(showStats, source.checked, source.storyId, { widthPx, heightPx }, dark) : null),
+    [showStats, source.checked, source.storyId, widthPx, heightPx, dark],
+  );
+  const stats = useStatsCard(request);
 
   const toggle = useCallback(() => {
     const el = container.current;
@@ -50,7 +104,8 @@ export function useExportFlow(map: MapLibreMap | null, container: RefObject<HTML
   const moveWindow = useCallback((window: Rect) => dispatch({ type: 'window', window }), [dispatch]);
 
   const capture = useCallback(async () => {
-    if (flow.stage !== 'framing' || !map) return;
+    // Until the card for this frame arrives, Export would draw another than the one previewed.
+    if (flow.stage !== 'framing' || !map || !stats.ready) return;
     const { preset, customSize, window: win } = flow;
     dispatch({ type: 'capture' });
     setError(null);
@@ -61,6 +116,7 @@ export function useExportFlow(map: MapLibreMap | null, container: RefObject<HTML
         widthPx: win.w,
         heightPx: win.h,
         target: outputSize(preset, customSize, win),
+        statsCard: stats.card?.image ?? null,
       });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -78,12 +134,12 @@ export function useExportFlow(map: MapLibreMap | null, container: RefObject<HTML
       setError(t('export.failed'));
       dispatch({ type: 'failed' });
     }
-  }, [flow, map, scene, dispatch]);
+  }, [flow, map, scene, dispatch, stats]);
 
   const cancel = useCallback(() => {
     dispatch({ type: 'close' });
     setError(null);
   }, [dispatch]);
 
-  return { flow, error, maxSidePx, toggle, changeChoice, moveWindow, capture, cancel };
+  return { flow, error, maxSidePx, toggle, changeChoice, moveWindow, capture, cancel, showStats, statsOffered: offered, setShowStats, stats };
 }

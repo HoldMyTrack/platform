@@ -202,6 +202,8 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'spots.wikipedia': 'Википедия',
   'export.cancel': 'Отменить экспорт',
   'export.capture': 'Сохранить снимок',
+  'export.show_stats': 'Показать статистику',
+  'export.show_stats_hint': 'Отметьте занятия, чтобы показать их статистику.',
   'export.custom': 'Свой',
   'export.custom_size': 'Свой · {name}',
   'export.custom_size_full': 'Свой · {name} ({px} пикс. по длинной стороне)',

@@ -17,6 +17,7 @@ import { shiftRange } from '../src/ui/rangeShift.ts';
 import { sliderBoundaries, sliderLayout, sliderMoveKnob, sliderPanLand, sliderTicks, sliderWindowFit } from '../src/ui/sliderRules.ts';
 import { activityTimeZone } from '../src/ui/timeZone.ts';
 import { boldTracks, invertedChecks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
+import { statsCardPlacement, statsOffered } from '../src/map/exportStats.ts';
 import { emptySelection, initialSession, mapSessionReducer } from '../src/map/session.ts';
 import { cameraEnd, cameraStep, cardFor, nextStep, stepChanges, tourStart } from '../src/ui/tour/tourRules.ts';
 
@@ -52,6 +53,8 @@ export const rules = {
   },
   boldTracks: ({ checked, focused }) => boldTracks(new Set(checked), focused ?? null),
   toolbarTarget: ({ checked, focused }) => sorted(toolbarTarget(new Set(checked), focused ?? null)),
+  statsOffered: ({ checked, storyId }) => statsOffered(new Set(checked), storyId ?? null),
+  statsCardPlacement: ({ width, height, card }) => statsCardPlacement(width, height, card),
   targetVisibility: ({ hidden, target }) => sorted(toggledVisibility(new Set(hidden), new Set(target))),
   photoScope: ({ mode, editWindowIds, focused, storyId }) => photoScopeFor(mode, editWindowIds ?? null, focused ?? null, storyId ?? null),
   photoGroup: ({ photos }) => photoGroupAction(photos),

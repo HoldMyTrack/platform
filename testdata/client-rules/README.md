@@ -24,6 +24,8 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `pendingBatches` | `ids`, `size` | the ids in consecutive batches of at most `size` |
 | `deleteDone` | `status` (a DELETE's HTTP status) | boolean |
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
+| `statsOffered` | `checked` (ids), `storyId` | boolean |
+| `statsCardPlacement` | `width`, `height` (the image), `card` (`{ width, height }`) | `{ x, y }` |
 | `panelState` | `activities` (`{ id, activityType, distanceMeters }`), `state` (`checked`, `focused`, `hidden`, `excludedTypes`, `distanceFilter`), `event` | the state after it |
 | `boldTracks` | `checked` (ids), `focused` | ids |
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |

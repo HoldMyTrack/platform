@@ -1444,6 +1444,28 @@ button.activities-panel__story-badge:hover {
   cursor: pointer;
 }
 
+.export-viewfinder__stats {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fm-space-4);
+  font-size: var(--fm-text-md);
+  color: var(--fm-ink);
+  cursor: pointer;
+}
+
+.export-viewfinder__stats:has(input:disabled) {
+  color: var(--fm-ink-muted);
+  cursor: default;
+}
+
+/* The server's card as the image will have it (ExportViewfinder.tsx's StatsCardPreview). */
+.export-viewfinder__stats-card {
+  position: absolute;
+  height: auto;
+  pointer-events: none;
+}
+
 .export-viewfinder__button {
   flex: none;
   width: 32px;

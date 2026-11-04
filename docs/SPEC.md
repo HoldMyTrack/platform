@@ -10,7 +10,7 @@
 
 ### 1.1 Purpose
 
-What HoldMyTrack does, as a user or an API client can rely on it: limits, privacy guarantees, what is kept and deleted, and the rules that cross features. Screen wording and layout live in the UI code, endpoint parameters and status codes in `services/server/api/`, reasons in `VISION.md` and the ADRs, and how each piece is built in `IMPLEMENTATION.md`.
+What HoldMyTrack does, as a user or an API client can rely on it: limits, privacy guarantees, what is kept and deleted, and the rules that cross features. Wording and layout live in the UI code, parameters and status codes in `services/server/api/`, reasons in the ADRs, design in `IMPLEMENTATION.md`.
 
 ### 1.2 Scope
 
@@ -30,7 +30,7 @@ Every built feature of the server and the web app; the Android app's own behavio
 
 ### 1.5 API errors
 
-Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-13.1); ADR-0045 and `services/server/api/` list the codes and the exceptions. With `MIN_ANDROID_BUILD` or `MIN_IOS_BUILD` set, an older build of that app gets `426` `app_outdated` from every `/v1` request before anything else is checked (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
+Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-13.1); `services/server/api/` lists the codes (ADR-0045). With `MIN_ANDROID_BUILD` or `MIN_IOS_BUILD` set, an older build of that app gets `426` `app_outdated` from every `/v1` request before anything else is checked (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
 
 ## 2. Actors
 
@@ -45,7 +45,7 @@ The admin panel is the only place an account sees another account's data (FR-8.2
 
 ## 3. FR-1 — Authentication & Account Management
 
-On the web, sign-in, sign-up, password reset and verification are server-rendered pages sharing the JSON endpoints' behavior. A page form, and any `POST`, `PATCH` or `DELETE` under `/v1/` that carries an `Origin`, is refused unless that `Origin` (for a form without one, its `Referer`) is the app's own. A request with no `Origin`, as the Android app sends, is not refused.
+On the web, sign-in, sign-up, password reset and verification are server-rendered pages sharing the JSON endpoints' behavior. A page form, and any `POST`, `PATCH` or `DELETE` under `/v1/` that carries an `Origin`, is refused unless that `Origin` (for a form without one, its `Referer`) is the app's own. A request with no `Origin`, as Android's, is not refused.
 
 ### FR-1.1 Sign up
 
@@ -167,7 +167,7 @@ Every account can keep up to 50,000 activities and 5 GB of originals, the same f
 ### FR-2.2 Demo account seeding and lifetime
 
 - Seeded at deploy time by `seed-demo-customer`, never by a request. A re-run fills in what's missing and holds the Stories to the manifest; `--reset` deletes its activities (with tiles, photos and files), Stories and captures and seeds again to match the shipped history exactly.
-- The shipped history is GPX files and a manifest in the repository, written by `export-demo-activities <out-dir> <activity-id>...`: each track as its owner sees it after Private locations and edits, never the original; photos as stored; names, types, descriptions, Stories, and captures between the first and last exported point except places reaching into a Private location.
+- The shipped history is GPX files and a manifest in the repository: each track as its owner sees it after Private locations and edits, never the original; photos as stored; names, types, descriptions, Stories, and captures between the first and last exported point except places reaching into a Private location.
 - The account is recognized by its fixed id, which keeps it read-only, and is never deleted.
 
 ### FR-2.3 Create a registered account from a demo session
@@ -241,6 +241,8 @@ An activity's times and dates are the wall clock where it was recorded, whatever
 
 ## 6. FR-4 — Map Visualization
 
+Every map and export choice is kept by the browser or phone, never by the account.
+
 ### FR-4.1 Track rendering (Normal mode)
 
 - Normal mode draws every activity in the date range (FR-6) passing the Type and Distance filters that isn't Hidden or Pending (FR-5.15); with a Story open, its activities (FR-14.6).
@@ -251,7 +253,7 @@ An activity's times and dates are the wall clock where it was recorded, whatever
 
 - Fog is all-time: everywhere any activity went is clear, whatever the date range, filters, hidden set or Stories. Only Pending activities drop out.
 - Zoomed out it clears a whole country once any activity is inside it (zoom 0–2), then a whole state or region (3–6), then exact coverage; the levels never blend. Boundaries are OpenStreetMap's on land (ADR-0034): a track on the water counts in no country, so the water stays veiled until exact coverage, and a country without regions is one region.
-- The edge of cleared ground is a smooth outline, traced to about 19 m at zoom 14 and twice that per zoom out, with no seams between tiles, on the web and Android.
+- The edge of cleared ground is a smooth outline, traced to about 19 m at zoom 14 and twice that per zoom out, with no seams between tiles.
 - While a coverage change is still being worked on, the map says Fog and Heatmap may be incomplete; the veil then updates without a reload.
 - Switching modes never moves the camera; returning to Normal restores the panel's state.
 
@@ -290,23 +292,24 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - While the frame is open the map only pans and zooms: a tap selects, opens and clears nothing.
 - The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story with its bold tracks, pace bands and photo markers as on screen, Fog's all-time coverage, Heatmap's window. Spots and Private location circles are never drawn.
 - OpenStreetMap's attribution, the imagery credit with Satellite on, and a HoldMyTrack watermark are drawn in and can't be removed: the basemap is an ODbL Produced Work (`IMPLEMENTATION.md` §5.6).
+- On the web, a stats card of the Checked activities (FR-5.15), none with a Story open: newest first, five at most and a count of the rest, each with type, distance, moving time (FR-5.1) and elevation gain, or type alone inside Private locations; with more than one, their totals.
 
 ### FR-4.12 Light and dark theme
 
-- Pages and the Android app follow the device's setting, or a Light or Dark choice kept by that browser or phone, never on the account.
+- Pages and the Android app follow the device's setting, or a Light or Dark choice.
 - The base map and Fog's veil follow the theme. A saved dark choice never flashes light first.
 
 ### FR-4.13 Trails and bike paths
 
 - Trails and dirt tracks come from the base map and are always drawn, dirt tracks from zoom 12, trails from 13.
-- Bike paths, shared paths and mountain-bike trails come from an OSM import of their own (FR-4.16), are off until ticked in Layers, drawn from zoom 9; the choice is kept by the browser or phone.
-- From OSM tags, the first that fits: **mountain-bike trail**, a cycleway, path, footway or bridleway with `mtb:scale`, or a cycleway or shared path of rough ground (`surface=ground`, `dirt`, `earth`, `mud`, `sand`, `grass`, `rock`, `woodchips`, `unpaved`); **bike path**, `highway=cycleway`; **shared path**, `highway=path`, `footway` or `bridleway` with `bicycle=designated`. Separately, **trail**: `highway=path`, `footway` or `bridleway`; **dirt track**: `highway=track`.
+- Bike paths, shared paths and mountain-bike trails come from an OSM import of their own (FR-4.16), are off until ticked in Layers, drawn from zoom 9.
+- From OSM tags, the first that fits: **mountain-bike trail**, a cycleway, path, footway or bridleway with `mtb:scale`, or a cycleway or shared path with an unpaved `surface`; **bike path**, `highway=cycleway`; **shared path**, `highway=path`, `footway` or `bridleway` with `bicycle=designated`. Separately, **trail**: `highway=path`, `footway` or `bridleway`; **dirt track**: `highway=track`.
 - A street's painted bike lane and untagged singletrack are none of these. Sidewalks, crossings, steps and named route networks aren't drawn.
-- Paths draw over Fog and Heatmap at full strength, under the tracks, in every mode and in exports. One switch hides every ticked road (FR-4.17), path and place (FR-15.2) and keeps the picks.
+- Paths draw over Fog and Heatmap at full strength, under the tracks, in every mode and export. One switch hides every ticked road (FR-4.17), path and place (FR-15.2) and keeps the picks.
 
 ### FR-4.14 Satellite mode
 
-- Only where the deployment configures imagery (`IMPLEMENTATION.md` §4.26); otherwise no option, and a saved choice shows the map. The choice is kept by the browser or phone.
+- Only where the deployment configures imagery (`IMPLEMENTATION.md` §4.26); otherwise no option, and a saved choice shows the map.
 - Roads stay over the imagery at 40% opacity. Over imagery Fog uses the light veil.
 - The provider's credit shows while it's on and is drawn into exports.
 - On a quota-capped plan, imagery stops for the rest of the month once the quota is used; roads and labels still draw.
@@ -335,7 +338,7 @@ The same paths for every account, behind the session and cached like every map t
 
 ### FR-4.17 Roads
 
-- Roads is a Layers pick, on until unticked, kept by the browser or phone, for every base map and mode. The switch that hides ticked paths and places (FR-4.13) hides roads too.
+- Roads is a Layers pick, on until unticked, for every base map and mode. The switch that hides ticked paths and places (FR-4.13) hides roads too.
 - It covers the base map's roads, rail, street names and shields. Trails, dirt tracks, bike kinds and place names stay. Exports draw what the screen does.
 
 ### FR-4.18 Tour
@@ -666,7 +669,7 @@ Outdoor places from OpenStreetMap in six categories, with what OSM says about ea
 
 ### FR-15.2 Points of interest
 
-- One Layers toggle per category, off by default, kept by the browser or phone.
+- One Layers toggle per category, off by default.
 - From zoom 13 ticked places show as badges with their areas; from 10 to 13 only on request (FR-15.5); below 10 none. A captured place's badge is filled.
 - Drawn over Fog and labels, undimmed; hidden during Edit track. A retired place shows only to an account that captured it.
 
