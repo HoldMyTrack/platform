@@ -129,7 +129,7 @@ The split follows the web's: `MapSession` holds the range or Story shown and the
 The web's design (root `docs/IMPLEMENTATION.md` §4.3.3).
 
 - **The image is drawn on a second, hidden `MapView`**: `MapSnapshotter` takes layers only before its style loads, while the overlays add to a loaded style. `MapFragment.prepareExportStyle` replays the live map's overlay calls on it, so **a change to how the live map attaches its layers has to reach the export too**.
-- **It's read on map idle with `TextureView.getBitmap`**: "fully rendered" never comes when a tile fails, and `MapLibreMap.snapshot` never answered for a 4K image.
+- **It's read on map idle with `TextureView.getBitmap`**: "fully rendered" never comes when a tile fails, and `MapLibreMap.snapshot` never answered for a 4K image. Idle can fail to come too, seen with satellite imagery refused while tracks are bold, so a map that has drawn and then drawn nothing for 2 s counts as done.
 - **The credit comes from the style document**: a loaded source reports its archive's attribution, which leaves Protomaps out.
 - **The stats card is the one previewed**: `ExportStatsCard` holds the server's PNG for the frame's size and theme, and Capture waits for it, then draws it on the image before the credit and the mark.
 
