@@ -157,6 +157,10 @@ services:
       SATELLITE_TILE_SIZE: ${SATELLITE_TILE_SIZE:-512}
       SATELLITE_MAXZOOM: ${SATELLITE_MAXZOOM:-18}
       SATELLITE_ATTRIBUTION: ${SATELLITE_ATTRIBUTION:-}
+      # The worker pauses imagery near the plan's monthly requests (docs/DEPLOY.md §5); without
+      # both it probes a tile only.
+      MAPTILER_SERVICE_TOKEN: ${MAPTILER_SERVICE_TOKEN:-}
+      SATELLITE_MONTHLY_REQUESTS: ${SATELLITE_MONTHLY_REQUESTS:-}
       # Files one account may upload an hour (docs/DEPLOY.md §4); raise it for a load test.
       UPLOADS_PER_HOUR: ${UPLOADS_PER_HOUR:-100}
       # Tile requests one account may make a minute (docs/DEPLOY.md §4); raise it for a load test.

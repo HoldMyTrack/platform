@@ -31,6 +31,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/db"
 	"github.com/HoldMyTrack/platform/services/server/internal/geo"
 	"github.com/HoldMyTrack/platform/services/server/internal/httpapi"
+	"github.com/HoldMyTrack/platform/services/server/internal/imagery"
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 	"github.com/HoldMyTrack/platform/services/server/internal/mail"
 	"github.com/HoldMyTrack/platform/services/server/internal/mapstyle"
@@ -175,7 +176,13 @@ func main() {
 		notifier := &worker.Notifier{Mailer: newMailer(cfg, log, "work"), BaseURL: cfg.AppBaseURL}
 		go budget.RunFlusher(ctx, pool, log)
 		gate := budget.NewGate(pool, cfg.R2DailyBudgetUSD, log)
-		if err := worker.Run(ctx, pool, store, log, notifier, gate, cfg.WorkerConcurrency, cfg.WorkerRenderConcurrency); err != nil {
+		watch := imagery.NewWatch(imagery.Config{
+			Tiles:   cfg.SatelliteTiles,
+			Referer: strings.TrimRight(cfg.AppBaseURL, "/") + "/",
+			Token:   cfg.MapTilerServiceToken,
+			Limit:   cfg.SatelliteMonthlyRequests,
+		}, pool, log)
+		if err := worker.Run(ctx, pool, store, log, notifier, gate, watch, cfg.WorkerConcurrency, cfg.WorkerRenderConcurrency); err != nil {
 			log.Error("work", "err", err)
 			os.Exit(1)
 		}

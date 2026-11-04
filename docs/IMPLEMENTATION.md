@@ -158,6 +158,10 @@ Object-store requests per UTC day and billing class, which every process adds to
 
 A random salt per UTC day, and the hash of each web visitor seen under it. Both are deleted for a day once its snapshot is stored (§4.32), and backups leave their rows out (`scripts/backup.sh`), so no dump outlives that. A restore starts the day on a new salt, counting its earlier visitors again.
 
+### 3.31 `imagery_status`
+
+One row: whether Satellite's imagery is offered to everyone, why not, and the usage it was decided on (§4.26). The worker writes it; a missing row means offered.
+
 ## 4. Core Technical Workflows
 
 ### 4.0 The three ingest paths
@@ -538,6 +542,8 @@ flowchart LR
 **The imagery belongs to the deployment**: an XYZ template with its key, a tile size, a max zoom and a credit, read by the web at build time and by the API at run time from the same `.env.prod` lines. holdmytrack.com uses MapTiler on a free plan that pauses instead of billing (§5.4); Sentinel-2 cloudless is free, but at 10 m a pixel it blurs at street level.
 
 **Hybrid over our own style**, a raster layer right after `background`, switched as a layer since `setStyle` reloads every overlay; a second style on another schema would need a second planet archive and rewritten path layers. **What satellite hides and dims is derived at build time and published in the style's metadata**: hidden, `background` and every fill; dimmed, road lines with no opacity of their own; and for Roads (FR-4.17), every `roads_*` layer, published with or without imagery. **Clients read the lists from the metadata**: a derivation over a live style misses roads already dimmed. The server fills in the configured source, or deletes source, layer and satellite metadata, then computes the ETag. Android sends `Origin: <API origin>` on requests outside the API (`OriginInterceptor`), since the key is restricted by origin.
+
+**The worker pauses imagery before MapTiler does** (`internal/imagery`): every 30 minutes it reads the billing period's requests from MapTiler's Analytics API with a service token, and hourly it probes the world tile; at 95% of `SATELLITE_MONTHLY_REQUESTS`, or after two failed probes in a row, it stores imagery as paused in `imagery_status` (§3.31). The probe sends the site as `Referer`, since the key only serves the site's origins and a bare request is refused whatever the plan's state. A usage read that fails keeps the stored decision. Clients don't read it yet.
 
 **Failed imagery keeps its layer** (the `satelliteStatus` rule): only the satellite look, its hidden fills and dimmed roads, goes, so a tile arriving later is noticed and brings the look back.
 
