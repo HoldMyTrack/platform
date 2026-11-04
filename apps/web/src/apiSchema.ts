@@ -2047,6 +2047,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/map/imagery": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Whether satellite imagery is offered now
+         * @description False when the deployment configures none, or while the worker has paused it near the imagery plan's monthly limit (docs/SPEC.md FR-4.14). Native clients read the same answer from the style, which leaves imagery out; the web, whose imagery is built in, reads this. Public, like the style.
+         */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The status */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            available: boolean;
+                        };
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/map/layers": {
         parameters: {
             query?: never;

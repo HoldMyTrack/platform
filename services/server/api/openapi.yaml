@@ -99,6 +99,8 @@ paths:
     $ref: "paths/activities.yaml#/activities_id_track-edit"
   /map/style/{flavor}:
     $ref: "paths/map.yaml#/map_style_flavor"
+  /map/imagery:
+    $ref: "paths/map.yaml#/map_imagery"
   /map/layers:
     $ref: "paths/map.yaml#/map_layers"
   /photos:
