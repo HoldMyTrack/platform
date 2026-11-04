@@ -299,6 +299,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             chrome = listOf(topChrome, sheet),
             onShown = { shown ->
                 modes.renderChip()
+                renderBottomBar()
                 // In sight, as they're in the image, but a tap on one goes to the map.
                 photos.setMarkersInteractive(!shown)
                 if (shown) {
@@ -606,7 +607,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun onEditWindowChanged(open: Boolean) {
         if (open) chrome.placeEditors() else range.offerDefault()
         renderDateFooter()
-        host?.setBottomBarShown(!open && !privacyEditing())
+        renderBottomBar()
         sheetChrome.renderSelectionBar()
         renderModeBar()
         sheetChrome.renderRail()
@@ -618,7 +619,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         if (open) chrome.placeEditors()
         sheetChrome.renderRail()
         renderDateFooter()
-        host?.setBottomBarShown(!open)
+        renderBottomBar()
+    }
+
+    private fun renderBottomBar() {
+        val editOpen = ::edit.isInitialized && editWindow.isOpen
+        host?.setBottomBarShown(MapChromeRules.bottomBarShown(editOpen, privacyEditing(), ::export.isInitialized && export.isOpen))
     }
 
     private fun onEditClosed(saved: Boolean, editedTrack: String?) {

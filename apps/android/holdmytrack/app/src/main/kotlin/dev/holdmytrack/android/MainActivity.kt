@@ -196,8 +196,8 @@ class MainActivity : AppCompatActivity() {
         HoldMyTrackApi.storySends { result -> result.onSuccess { setStoriesWaiting(it.sends.size) } }
     }
 
-    /** The bottom bar, and the record button over it — gone while the map's Edit window or
-     *  Private location editor has the screen. */
+    /** The bottom bar, and the record button over it, gone while something on the map has the
+     *  screen (`MapChromeRules.bottomBarShown`). */
     fun setBottomBarShown(shown: Boolean) {
         findViewById<View>(R.id.bottom_bar).visibility = if (shown) View.VISIBLE else View.GONE
     }

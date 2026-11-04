@@ -439,6 +439,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="end"
             android:layout_marginEnd="@dimen/hmt_space_12"
+            android:layout_marginBottom="@dimen/hmt_space_8"
             android:visibility="gone">
 
             <com.google.android.material.button.MaterialButton

@@ -30,6 +30,12 @@ object MapChromeRules {
     /** The rail (Layers, Find my location), hidden while an editor is open or rows are checked. */
     fun railShown(editing: Boolean, selectionShown: Boolean): Boolean = !editing && !selectionShown
 
+    /** The bottom bar and the record button over it, gone while the Edit window, the Private
+     *  location editor or the image export has the screen: a tab or a recording would start
+     *  under it. */
+    fun bottomBarShown(editOpen: Boolean, privacyEditing: Boolean, exportOpen: Boolean): Boolean =
+        !editOpen && !privacyEditing && !exportOpen
+
     /** The image export's own button under the selection bar, while rows are checked and the rail
      *  is away, so an image can show the Checked activities' stats (`docs/SPEC.md` FR-4.10). */
     fun checkedExportShown(editing: Boolean, selectionShown: Boolean): Boolean = !editing && selectionShown
