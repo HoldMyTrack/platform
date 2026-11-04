@@ -1,6 +1,5 @@
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
 import type { ActivityTrackMetrics } from '../api';
-import { ARROW_IMAGE } from './bandsGroup.ts';
 
 /**
  * Fills the layers document's `track-bands` source (bandsGroup.ts) with the focused activity's
@@ -26,37 +25,7 @@ export function bandsData(metrics: ActivityTrackMetrics): GeoJSON.FeatureCollect
 export function setTrackBands(map: MapLibreMap, metrics: ActivityTrackMetrics): void {
   const source = map.getSource(BAND_SOURCE_ID) as GeoJSONSource | undefined;
   if (!source) return;
-  addArrowImage(map);
   source.setData(bandsData(metrics));
-}
-
-/** Registers the chevron the bands' and the bold tracks' arrows draw (bandsGroup.ts,
- *  tracksGroup.ts). A style reload drops it with the layers, so each attach adds it again. */
-export function addArrowImage(map: MapLibreMap): void {
-  if (!map.hasImage(ARROW_IMAGE)) map.addImage(ARROW_IMAGE, arrowImage(), { pixelRatio: ARROW_PIXEL_RATIO, sdf: true });
-}
-
-const ARROW_PIXEL_RATIO = 2;
-/** The chevron's box in CSS px. The chevron itself stays inside the band it rides, BAND_WIDTH (6). */
-const ARROW_SIZE = 8;
-
-/** A white chevron pointing along +x, for the layer to color (bandsGroup.ts). Drawn thicker than it
- *  shows: an SDF image's edge sits at three quarters of its alpha. */
-function arrowImage(): ImageData {
-  const px = ARROW_SIZE * ARROW_PIXEL_RATIO;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = px;
-  const ctx = canvas.getContext('2d')!;
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = px * 0.25;
-  ctx.lineCap = 'round';
-  ctx.lineJoin = 'round';
-  ctx.beginPath();
-  ctx.moveTo(px * 0.35, px * 0.25);
-  ctx.lineTo(px * 0.65, px * 0.5);
-  ctx.lineTo(px * 0.35, px * 0.75);
-  ctx.stroke();
-  return ctx.getImageData(0, 0, px, px);
 }
 
 /** Called whenever the selection leaves exactly one activity. */
