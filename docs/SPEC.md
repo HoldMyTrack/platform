@@ -292,7 +292,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - While the frame is open the map only pans and zooms: a tap selects, opens and clears nothing.
 - The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story with its bold tracks, pace bands and photo markers as on screen, Fog's all-time coverage, Heatmap's window. Spots and Private location circles are never drawn.
 - OpenStreetMap's attribution, the imagery credit with Satellite on, and a HoldMyTrack watermark are drawn in and can't be removed: the basemap is an ODbL Produced Work (`IMPLEMENTATION.md` §5.6).
-- On the web, a stats card of the checked activities, none with a Story open: newest first, five at most and a count of the rest, each with type, distance, moving time (FR-5.1) and elevation gain, or type alone inside Private locations; with more than one, their totals.
+- On the web, a stats card of the Checked activities (FR-5.15), none with a Story open: newest first, five at most and a count of the rest, each with type, distance, moving time (FR-5.1) and elevation gain, or type alone inside Private locations; with more than one, their totals.
 
 ### FR-4.12 Light and dark theme
 
