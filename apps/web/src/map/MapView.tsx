@@ -14,6 +14,7 @@ import { useCoverageRefresh } from './useCoverageRefresh';
 import { useDataRefresh } from './useDataRefresh';
 import { useEditWindow } from './useEditWindow';
 import { useExportFlow } from './useExportFlow';
+import { satelliteLook } from './satelliteStatus';
 import { useFileDrop } from './useFileDrop';
 import { useHashSync, useInitialView } from './useInitialView';
 import { useListView } from './useListView';
@@ -154,13 +155,16 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const { pendingIds, distanceBounds: activityDistanceBounds, facets, listed: filteredActivities, mapHiddenIds } = useListView(activities, session.selection, dispatch);
 
   const unitSystem = useUnitSystem();
-  const { map, basemap } = useMapInstance({
+  const { map, basemap, imagery } = useMapInstance({
     container,
     initialView: initial.view,
     initialFlavor: initial.flavor,
     initialSatellite: satellite,
+    satellite,
     scaleUnit: unitSystem,
   });
+  // Failed imagery draws the map as with Satellite off, and its export too (satelliteStatus.ts).
+  const satelliteShown = satelliteLook(satellite, imagery);
 
   // A Story's photos change with its members too.
   const storyMembers = storyState.story?.activityIds.join(',') ?? '';
@@ -210,8 +214,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const spots = useSpots(map, spotsShown);
   const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
   const exportScene = useMemo(
-    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite, roads, photos: photoLayer.exportPhotos }),
-    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, bands, paths, satellite, roads, photoLayer.exportPhotos],
+    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite: satelliteShown, roads, photos: photoLayer.exportPhotos }),
+    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, bands, paths, satelliteShown, roads, photoLayer.exportPhotos],
   );
   const exportStats = useMemo(() => ({ checked: checkedActivityIds, storyId }), [checkedActivityIds, storyId]);
   const exporter = useExportFlow(map, container, exportScene, exportStats);
@@ -330,6 +334,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     initialFlavor: initial.flavor,
     flavor,
     satellite,
+    satelliteLook: satelliteShown,
     roads,
     mode: mapMode,
     editingTrack,
@@ -444,6 +449,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               satelliteAvailable={satelliteAvailable}
               coverageRendering={coverageRendering}
               basemapUnreachable={basemap === 'unreachable'}
+              satelliteFailed={satellite && imagery === 'failed'}
               spotsShown={spotsShown}
               layersOpen={tour.open.layers === true}
             />

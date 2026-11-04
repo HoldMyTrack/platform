@@ -22,13 +22,15 @@ export interface MapControlsProps {
   coverageRendering: boolean;
   /** The basemap can't be reached (basemapStatus.ts): its notice shows under the toggles. */
   basemapUnreachable: boolean;
+  /** Satellite is on and its imagery failed to load (satelliteStatus.ts): its notice shows under the toggles. */
+  satelliteFailed: boolean;
   spotsShown: readonly SpotCategory[];
   /** The tour holds the Layers menu open (docs/SPEC.md FR-4.18). */
   layersOpen?: boolean;
 }
 
 /** The controls over the map's top edge: the mode toggle, Layers, Satellite, their notices, and Show in this area. */
-export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, basemapUnreachable, spotsShown, layersOpen = false }: MapControlsProps) {
+export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false }: MapControlsProps) {
   return (
     <>
       <div className="map-toggles">
@@ -40,6 +42,11 @@ export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChang
         {basemapUnreachable && (
           <div className="coverage-notice" role="alert" data-testid="basemap-notice">
             <span className="coverage-notice__pill coverage-notice__pill--failed">{t('map.basemap_unreachable')}</span>
+          </div>
+        )}
+        {satelliteFailed && (
+          <div className="coverage-notice" role="alert" data-testid="satellite-notice">
+            <span className="coverage-notice__pill coverage-notice__pill--failed">{t('map.satellite_failed')}</span>
           </div>
         )}
         {mode !== 'normal' && coverageRendering && (

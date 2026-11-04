@@ -150,6 +150,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'slider.start': 'Дата начала',
   'map.drop_files': 'Отпустите, чтобы загрузить: .gpx, .fit или .tcx, до 20',
   'map.basemap_unreachable': 'Карта не может связаться со своим сервером. Возможно, его блокирует ваша сеть.',
+  'map.satellite_failed': 'Не удалось загрузить спутниковые снимки.',
   'map.coverage_updating': 'Карта ещё обновляется, поэтому Туман и Тепловая карта пока могут быть неполными. Они обновятся сами.',
   'map.level.fog.city': 'Город — открыто ровно там, где вы были',
   'map.level.fog.country': 'Страны — страна открывается целиком, если вы были в ней хоть раз',

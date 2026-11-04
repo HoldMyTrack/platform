@@ -539,6 +539,8 @@ flowchart LR
 
 **Hybrid over our own style**, a raster layer right after `background`, switched as a layer since `setStyle` reloads every overlay; a second style on another schema would need a second planet archive and rewritten path layers. **What satellite hides and dims is derived at build time and published in the style's metadata**: hidden, `background` and every fill; dimmed, road lines with no opacity of their own; and for Roads (FR-4.17), every `roads_*` layer, published with or without imagery. **Clients read the lists from the metadata**: a derivation over a live style misses roads already dimmed. The server fills in the configured source, or deletes source, layer and satellite metadata, then computes the ETag. Android sends `Origin: <API origin>` on requests outside the API (`OriginInterceptor`), since the key is restricted by origin.
 
+**Failed imagery keeps its layer** (the `satelliteStatus` rule): only the satellite look, its hidden fills and dimmed roads, goes, so a tile arriving later is noticed and brings the look back.
+
 ### 4.27 Photos (FR-16, ADR-0024)
 
 The routes are under `/v1/photos` because the mux rejects `/v1/activities/{id}/photos` beside the fixed segments there.

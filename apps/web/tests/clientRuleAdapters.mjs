@@ -2,6 +2,7 @@
 // suite and for scripts/generate-rule-cases.mjs. Plain .mjs so tsc leaves it alone; Node strips
 // the types from the imported .ts modules itself.
 import { basemapStatus } from '../src/map/basemapStatus.ts';
+import { satelliteLook, satelliteStatus } from '../src/map/satelliteStatus.ts';
 import { defaultRange } from '../src/map/defaultRange.ts';
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
@@ -25,6 +26,10 @@ import { cameraEnd, cameraStep, cardFor, nextStep, stepChanges, tourStart } from
 const sorted = (set) => [...set].sort();
 
 export const rules = {
+  satelliteStatus: ({ on, loaded, failed, waitedMs }) => {
+    const status = satelliteStatus(loaded, failed, waitedMs);
+    return { status, look: satelliteLook(on, status) };
+  },
   tourStart: ({ requested, isDemo, hasActivities, seen }) => tourStart({ requested, isDemo, hasActivities: hasActivities ?? null, seen }),
   tourCard: ({ event, seen, touring }) => cardFor(event, seen, touring),
   tourCamera: ({ start, shown, current, step }) => {
