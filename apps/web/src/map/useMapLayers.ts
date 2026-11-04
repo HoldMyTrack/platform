@@ -18,7 +18,10 @@ import { lang } from '../i18n';
 export interface MapLayersInputs {
   initialFlavor: Flavor;
   flavor: Flavor;
+  /** Satellite is on: its imagery layer is requested. */
   satellite: boolean;
+  /** The map looks like Satellite, which failed imagery doesn't (satelliteStatus.ts). */
+  satelliteLook: boolean;
   /** The basemap's roads are drawn (overlays.ts). */
   roads: boolean;
   mode: MapMode;
@@ -40,7 +43,7 @@ export interface MapLayersInputs {
  * tracks' query between loads. A theme change swaps the style in place.
  */
 export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): void {
-  const { initialFlavor, flavor, satellite, roads, mode, editingTrack, paths, spotsShown, activityQuery, mapHiddenIds, boldIds, bands } = inputs;
+  const { initialFlavor, flavor, satellite, satelliteLook, roads, mode, editingTrack, paths, spotsShown, activityQuery, mapHiddenIds, boldIds, bands } = inputs;
 
   // Points the tracks source at the new query, as a new URL.
   useEffect(() => {
@@ -57,7 +60,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       applyLayers(instance, webLayers(flavor, getTileVersion()), {
         ...state,
         mode,
-        satellite,
+        satellite: satelliteLook,
         toggles: { ...state.toggles, ...paths },
         vars: { ...state.vars, hidden: [...mapHiddenIds], focused: [...boldIds] },
         queries: { ...state.queries, tracks: trackQuery(activityQuery) },
@@ -65,13 +68,13 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       attachTrackInteractivity(instance);
       // Spots last, above the basemap's labels too (spots.ts).
       ensureSpotsLayer(instance, spotsShown);
-      setMapMode(instance, mode, satellite, editingTrack);
-      setSatelliteVisible(instance, satellite);
+      setMapMode(instance, mode, satelliteLook, editingTrack);
+      setSatelliteVisible(instance, satellite, satelliteLook);
       setRoadsVisible(instance, roads);
       // The band source is recreated empty.
       if (bands) setTrackBands(instance, bands);
     },
-    [flavor, satellite, roads, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, boldIds],
+    [flavor, satellite, satelliteLook, roads, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, boldIds],
   );
 
   useEffect(() => {
@@ -102,8 +105,8 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
   // Mode, paths, satellite and roads changes between style loads flip the layers in place.
   useEffect(() => {
     if (!map) return;
-    setMapMode(map, mode, satellite, editingTrack);
-  }, [map, mode, satellite, editingTrack]);
+    setMapMode(map, mode, satelliteLook, editingTrack);
+  }, [map, mode, satelliteLook, editingTrack]);
 
   useEffect(() => {
     if (!map) return;
@@ -112,8 +115,8 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
 
   useEffect(() => {
     if (!map) return;
-    setSatelliteVisible(map, satellite);
-  }, [map, satellite]);
+    setSatelliteVisible(map, satellite, satelliteLook);
+  }, [map, satellite, satelliteLook]);
 
   useEffect(() => {
     if (!map) return;

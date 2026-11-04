@@ -8,8 +8,9 @@ import {
 } from 'maplibre-gl';
 import { registerPmtilesProtocol } from './protocol';
 import { configureMapLibreWorker } from './worker';
-import { BASEMAP_SOURCE, buildStyle, type Flavor } from './style';
+import { BASEMAP_SOURCE, buildStyle, SATELLITE_SOURCE, type Flavor } from './style';
 import { basemapStatus, type BasemapStatus } from './basemapStatus';
+import { satelliteStatus, type SatelliteStatus } from './satelliteStatus';
 import { globeMinZoom } from './globe';
 import { basemapOrigin, satelliteSource } from './config';
 import { withApiCredentials } from './requestCredentials';
@@ -36,6 +37,8 @@ export interface UseMapInstanceOptions {
   /** Whether satellite imagery (FR-4.14) is on at first paint, read once like initialFlavor,
    *  so a saved choice doesn't flash the vector map first. */
   initialSatellite: boolean;
+  /** Whether Satellite is on now: its imagery's wait (satelliteStatus.ts) counts only then. */
+  satellite: boolean;
   /** ScaleControl's own unit — the one piece of map chrome that reads a distance number
    *  directly, so it has to track the account's Country setting (units.ts) the same way
    *  every other distance display in the app now does. Read on every render (not captured
@@ -48,6 +51,8 @@ export interface MapInstance {
   /** Set once MapLibre's `load` fires, which a basemap request that never answers holds back. */
   map: MapLibreMap | null;
   basemap: BasemapStatus;
+  /** Whether satellite imagery is loading on this device (satelliteStatus.ts). */
+  imagery: SatelliteStatus;
 }
 
 export function useMapInstance({
@@ -55,10 +60,14 @@ export function useMapInstance({
   initialView,
   initialFlavor,
   initialSatellite,
+  satellite,
   scaleUnit,
 }: UseMapInstanceOptions): MapInstance {
   const [map, setMap] = useState<MapLibreMap | null>(null);
   const [basemap, setBasemap] = useState<BasemapStatus>('loading');
+  const [imagery, setImagery] = useState<SatelliteStatus>('loading');
+  const satelliteOn = useRef(satellite);
+  satelliteOn.current = satellite;
   const scaleControlRef = useRef<ScaleControl | null>(null);
 
   // Captured once so the effect below can keep an empty dependency list without
@@ -171,6 +180,32 @@ export function useMapInstance({
       reportBasemap();
     });
 
+    // Satellite's imagery likewise, its wait counted only while Satellite is on and shown.
+    let imageryLoaded = false;
+    let imageryFailed = false;
+    let imageryWaitedMs = 0;
+    let imageryTick = performance.now();
+    const reportImagery = () => {
+      const now = performance.now();
+      if (satelliteOn.current && !document.hidden) imageryWaitedMs += now - imageryTick;
+      imageryTick = now;
+      setImagery(satelliteStatus(imageryLoaded, imageryFailed, imageryWaitedMs));
+    };
+    const imageryTimer = setInterval(() => {
+      reportImagery();
+      if (imageryLoaded) clearInterval(imageryTimer);
+    }, 1000);
+    instance.on('sourcedata', (e) => {
+      if (imageryLoaded || e.sourceId !== SATELLITE_SOURCE || !e.tile) return;
+      imageryLoaded = true;
+      reportImagery();
+    });
+    instance.on('error', (e) => {
+      if (imageryLoaded || (e as { sourceId?: string }).sourceId !== SATELLITE_SOURCE) return;
+      imageryFailed = true;
+      reportImagery();
+    });
+
     instance.once('load', () => {
       if (cancelled) return;
       setMap(instance);
@@ -184,9 +219,11 @@ export function useMapInstance({
     return () => {
       cancelled = true;
       clearInterval(basemapTimer);
+      clearInterval(imageryTimer);
       document.removeEventListener('visibilitychange', onVisibility);
       setMap(null);
       setBasemap('loading');
+      setImagery('loading');
       instance.remove();
     };
   }, [container]);
@@ -199,5 +236,5 @@ export function useMapInstance({
     scaleControlRef.current?.setUnit(scaleUnit);
   }, [scaleUnit]);
 
-  return { map, basemap };
+  return { map, basemap, imagery };
 }

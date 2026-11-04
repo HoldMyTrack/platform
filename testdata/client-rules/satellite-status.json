@@ -1,0 +1,14 @@
+{
+  "rule": "satelliteStatus",
+  "description": "Whether Satellite imagery is loading on this device (docs/SPEC.md FR-4.14), from whether an imagery tile has arrived, whether an imagery request failed before that, and how long Satellite has been on screen; and whether the map looks like Satellite, which failed imagery doesn't.",
+  "clients": ["web"],
+  "cases": [
+    { "name": "loading at first", "input": { "on": true, "loaded": false, "failed": false, "waitedMs": 0 }, "expected": { "status": "loading", "look": true } },
+    { "name": "loading just under the wait", "input": { "on": true, "loaded": false, "failed": false, "waitedMs": 14999 }, "expected": { "status": "loading", "look": true } },
+    { "name": "failed at the wait", "input": { "on": true, "loaded": false, "failed": false, "waitedMs": 15000 }, "expected": { "status": "failed", "look": false } },
+    { "name": "failed on a refused tile before the wait", "input": { "on": true, "loaded": false, "failed": true, "waitedMs": 2000 }, "expected": { "status": "failed", "look": false } },
+    { "name": "loaded once a tile arrived", "input": { "on": true, "loaded": true, "failed": false, "waitedMs": 1000 }, "expected": { "status": "loaded", "look": true } },
+    { "name": "loaded when a tile arrives after failing", "input": { "on": true, "loaded": true, "failed": true, "waitedMs": 30000 }, "expected": { "status": "loaded", "look": true } },
+    { "name": "Satellite off never looks like Satellite", "input": { "on": false, "loaded": true, "failed": false, "waitedMs": 0 }, "expected": { "status": "loaded", "look": false } }
+  ]
+}

@@ -313,6 +313,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - Roads stay over the imagery at 40% opacity. Over imagery Fog uses the light veil.
 - The provider's credit shows while it's on and is drawn into exports.
 - On a quota-capped plan, imagery stops for the rest of the month once the quota is used; roads and labels still draw.
+- On the web, when imagery fails before any tile arrives, or none arrives within 15 seconds on screen, the map is drawn as with Satellite off and says imagery couldn't load, until a tile arrives; exports follow the screen.
 
 ### FR-4.15 What the map draws
 
