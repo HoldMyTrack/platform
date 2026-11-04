@@ -33,6 +33,7 @@ class SheetChrome(
     private val dateFooter: View = view.findViewById(R.id.date_footer)
     private val selectionBar: View = view.findViewById(R.id.selection_bar)
     private val rail: View = view.findViewById(R.id.map_rail)
+    private val checkedExport: View = view.findViewById(R.id.checked_export_panel)
 
     /** Back closes an open sheet before it leaves the map. */
     val collapseOnBack = object : OnBackPressedCallback(false) {
@@ -79,6 +80,7 @@ class SheetChrome(
     fun renderRail() {
         val editing = editOpen() || privacyEditing()
         rail.isVisible = MapChromeRules.railShown(editing, selectionShown())
+        checkedExport.isVisible = MapChromeRules.checkedExportShown(editing, selectionShown())
         if (editing) dismissLayers()
     }
 

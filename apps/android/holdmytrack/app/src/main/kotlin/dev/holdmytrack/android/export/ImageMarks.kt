@@ -28,8 +28,8 @@ object ImageMarks {
     private const val MIN_FONT_PX = 12f
     private const val MAX_FONT_PX = 28f
     private const val MARGIN_FRACTION = 0.014f
-    private const val WATERMARK_FONT_SCALE = 1.15f
-    private const val WATERMARK_LOGO_SCALE = 1.7f
+    const val WATERMARK_FONT_SCALE = 1.15f
+    const val WATERMARK_LOGO_SCALE = 1.7f
     private const val WATERMARK_ALPHA = 0.8f
 
     /** The credit line's font size and its distance from the corners, for an image [width] × [height]. */

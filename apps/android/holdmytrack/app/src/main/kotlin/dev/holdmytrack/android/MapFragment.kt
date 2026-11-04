@@ -294,6 +294,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             layers = layers,
             prepare = ::prepareExportStyle,
             photos = photos::markersSnapshot,
+            checked = { panelState.checked },
+            storyId = { storyId },
             chrome = listOf(topChrome, sheet),
             onShown = { shown ->
                 modes.renderChip()

@@ -201,6 +201,7 @@ The web's export (`docs/SPEC.md` FR-4.10) as a viewfinder over the map, not offe
 
 - A platform preset keeps its shape when cropped; Custom fixes the long side at 1,920, 2,560 or 3,840 px.
 - The image is exactly the window at the current zoom and rotation, with what `docs/SPEC.md` FR-4.10 draws, paths, Satellite and Roads included, and the map's credit and the HoldMyTrack mark.
+- Its stats card (`docs/SPEC.md` FR-4.10) can be added while activities are checked, and the choice is kept by the phone.
 - It's saved to Pictures/HoldMyTrack and offered to Android's share sheet. A failure keeps the viewfinder as it was.
 
 ### FR-2.12 Tour

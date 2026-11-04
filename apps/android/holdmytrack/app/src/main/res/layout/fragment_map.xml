@@ -430,6 +430,27 @@
             </LinearLayout>
         </LinearLayout>
 
+        <!-- The image export while rows are checked (map/SheetChrome), when the selection bar has
+             the top row and the rail is away: the rail's camera, on a row of its own under it. -->
+        <FrameLayout
+            android:id="@+id/checked_export_panel"
+            style="@style/Widget.HoldMyTrack.MapPanel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end"
+            android:layout_marginEnd="@dimen/hmt_space_12"
+            android:visibility="gone">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/checked_export_button"
+                style="@style/Widget.HoldMyTrack.Button.MapIcon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/export_open"
+                android:tooltipText="@string/export_open"
+                app:icon="@drawable/ic_camera" />
+        </FrameLayout>
+
         <!-- Fog and Heatmap still being updated (MapFragment.renderCoverageNotice), the web's
              .coverage-notice: the same pill as the level notice below, on a line of its own above
              it, for as long as the account's coverage is still being worked on. -->

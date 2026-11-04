@@ -654,6 +654,38 @@ object HoldMyTrackApi {
         call(request, { text -> decode<ActivityRowJson>(text).toActivity() }, onResult)
     }
 
+    /**
+     * `POST /v1/activities/stats-card` (`docs/IMPLEMENTATION.md` §4.3.3): the export's stats card
+     * for [activityIds] as a PNG drawn for an image [width] × [height], or null when every one of
+     * them is Pending (204). Decoded off the main thread.
+     */
+    fun statsCard(activityIds: List<String>, width: Int, height: Int, dark: Boolean, onResult: (Result<Bitmap?>) -> Unit) {
+        val request = Request.Builder()
+            .url(BuildConfig.API_BASE_URL + API_V1 + "/activities/stats-card")
+            .post(jsonBody(StatsCardRequestJson(activityIds, width, height, if (dark) "dark" else "light")))
+            .build()
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                main.post { onResult(Result.failure(e)) }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                if (refusedBuild(response)) return response.close()
+                val result = response.use {
+                    runCatching {
+                        when {
+                            it.code == 204 -> null
+                            !it.isSuccessful -> throw ApiException.from(it.code, it.body?.string().orEmpty())
+                            else -> it.body?.bytes()?.let { bytes -> BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }
+                                ?: throw IOException("not an image")
+                        }
+                    }
+                }
+                main.post { onResult(result) }
+            }
+        })
+    }
+
     /** `DELETE /v1/activities/{id}` (`docs/IMPLEMENTATION.md` §4.7.5) — the activity, its
      *  track and its share of fog and heatmap coverage, for good. */
     fun deleteActivity(id: String, onResult: (Result<Unit>) -> Unit) {

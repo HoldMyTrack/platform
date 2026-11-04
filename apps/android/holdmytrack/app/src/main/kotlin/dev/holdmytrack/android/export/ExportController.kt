@@ -25,6 +25,9 @@ class ExportController(
     prepare: (Style) -> Unit,
     /** The photo markers on screen, drawn into the image. */
     photos: () -> PhotoMarkers.Snapshot,
+    /** The Checked ids and the open Story, for the image's stats card. */
+    checked: () -> Set<String>,
+    storyId: () -> String?,
     /** The chrome that steps aside while the viewfinder shows. */
     private val chrome: List<View>,
     /** The viewfinder opened or closed: popups close, and the mode chip follows. */
@@ -38,6 +41,8 @@ class ExportController(
         darkBase = { style()?.let(layers::darkBase) ?: layers.isNight() },
         satelliteOn = { layers.satelliteOn },
         photos = photos,
+        checked = checked,
+        storyId = storyId,
         onShown = ::render,
     )
 
@@ -50,6 +55,7 @@ class ExportController(
 
     init {
         root.findViewById<View>(R.id.export_button).setOnClickListener { viewfinder.toggle() }
+        root.findViewById<View>(R.id.checked_export_button).setOnClickListener { viewfinder.toggle() }
     }
 
     val isOpen: Boolean get() = viewfinder.isOpen

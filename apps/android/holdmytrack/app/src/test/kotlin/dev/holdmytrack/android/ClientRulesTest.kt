@@ -1,5 +1,6 @@
 package dev.holdmytrack.android
 
+import dev.holdmytrack.android.export.ExportStatsRules
 import dev.holdmytrack.android.map.BasemapStatus
 import dev.holdmytrack.android.map.DateRange
 import dev.holdmytrack.android.map.DefaultRange
@@ -175,6 +176,12 @@ class ClientRulesTest {
             }
         },
         "toolbarTarget" to { input -> ids(PanelRules.targetIds(input.strings("checked").toSet(), input.string("focused"))) },
+        "statsOffered" to { input -> JsonPrimitive(ExportStatsRules.offered(input.strings("checked").toSet(), input.string("storyId"))) },
+        "statsCardPlacement" to { input ->
+            val card = input["card"]!!.jsonObject
+            val (x, y) = ExportStatsRules.placement(input.int("width"), input.int("height"), card.int("width"), card.int("height"))
+            buildJsonObject { put("x", x); put("y", y) }
+        },
         "targetVisibility" to { input -> ids(PanelRules.toggledVisibility(input.strings("hidden").toSet(), input.strings("target").toSet())) },
         "photoScope" to { input ->
             val edit = (input["editWindowIds"] as? JsonArray)?.map { it.jsonPrimitive.content }

@@ -126,6 +126,8 @@
     <string name="export_open">Экспорт карты в картинку</string>
     <string name="export_shape">Форма и размер снимка</string>
     <string name="export_close">Закрыть</string>
+    <string name="export_show_stats">Показать статистику</string>
+    <string name="export_show_stats_hint">Отметьте занятия, чтобы показать их статистику.</string>
     <string name="export_capture">Сохранить и поделиться</string>
     <string name="export_custom">Свой · %1$s</string>
     <string name="export_custom_full">Свой · %1$s (%2$d пикс. по длинной стороне)</string>

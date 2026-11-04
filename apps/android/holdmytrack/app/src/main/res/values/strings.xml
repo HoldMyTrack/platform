@@ -122,6 +122,8 @@
     <string name="export_open">Export map image</string>
     <string name="export_shape">Image shape and size</string>
     <string name="export_close">Close</string>
+    <string name="export_show_stats">Show stats</string>
+    <string name="export_show_stats_hint">Check activities to show their stats.</string>
     <string name="export_capture">Save and share</string>
     <string name="export_custom">Custom · %1$s</string>
     <string name="export_custom_full">Custom · %1$s (%2$d px long side)</string>
