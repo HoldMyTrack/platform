@@ -25,7 +25,7 @@ test('each mode shows only its own layers', () => {
       .filter(([, props]) => props.visibility === 'visible')
       .map(([id]) => id)
       .sort();
-  assert.deepEqual(visible('normal'), ['track-bands-arrows', 'track-bands-line', 'tracks-casing', 'tracks-focused', 'tracks-hover', 'tracks-line']);
+  assert.deepEqual(visible('normal'), ['track-bands-arrows', 'track-bands-line', 'tracks-arrows', 'tracks-casing', 'tracks-focused', 'tracks-hover', 'tracks-line']);
   assert.deepEqual(visible('fog'), ['country-fog-fill', 'fog-edge', 'fog-veil', 'region-fog-fill']);
   assert.deepEqual(visible('heatmap'), ['heat-points-circles', 'heatmap-dim']);
 });
@@ -145,7 +145,7 @@ test('the legend gives every path its color, and a dash where the map dashes it'
 
 test('the tracks draw the focused and hovered ids from vars the client binds, never a hidden one', () => {
   const tracks = groupOf(doc, 'tracks');
-  assert.deepEqual(tracks.layers.map((l) => l.id), ['tracks-casing', 'tracks-line', 'tracks-focused', 'tracks-hover']);
+  assert.deepEqual(tracks.layers.map((l) => l.id), ['tracks-casing', 'tracks-line', 'tracks-focused', 'tracks-hover', 'tracks-arrows']);
   assert.deepEqual([doc.vars.hidden, doc.vars.focused, doc.vars.hovered], [[], [], []]);
   const focused = tracks.layers.find((l) => l.id === 'tracks-focused');
   assert.deepEqual(focused.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden'] });
@@ -154,7 +154,7 @@ test('the tracks draw the focused and hovered ids from vars the client binds, ne
   assert.equal(tracks.layers.find((l) => l.id === 'tracks-line').metadata['holdmytrack:role'], 'track');
   assert.equal(tracks.sources.tracks.tiles, '/tiles/v1/tracks/{z}/{x}/{y}.mvt?cv=abcd1234.7');
   assert.ok(doc.groups.indexOf(tracks) < doc.groups.indexOf(groupOf(doc, 'track-bands')), 'under the bands');
-  for (const id of ['tracks-casing', 'tracks-line']) {
+  for (const id of ['tracks-casing', 'tracks-line', 'tracks-arrows']) {
     assert.equal(viewFor(doc, 'normal', false).layout[id].visibility, 'visible');
     assert.equal(viewFor(doc, 'heatmap', false).layout[id].visibility, 'none');
   }
@@ -193,4 +193,16 @@ test('the spots go on top, behind one switch, their badges named with the colors
   assert.equal(doc.vars.captureTarget, -1);
   // Fog mutes labels, never the badges.
   for (const base of ['plain', 'satellite']) for (const mode of MODES) assert.equal(doc.views[base][mode].paint['spots-icons'], undefined);
+});
+
+
+test('every bold track carries the pace bands\' arrows, pointing along it, and never a hidden one', () => {
+  const arrows = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-arrows');
+  const bandArrows = groupOf(doc, 'track-bands').layers.find((l) => l.id === 'track-bands-arrows');
+  assert.equal(arrows.layout['icon-image'], bandArrows.layout['icon-image']);
+  assert.equal(arrows.layout['symbol-placement'], 'line');
+  assert.equal(arrows.layout['icon-rotation-alignment'], 'map');
+  assert.deepEqual(arrows.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden'] });
+  const tracksFocused = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-focused');
+  assert.deepEqual(arrows.filter, tracksFocused.filter);
 });

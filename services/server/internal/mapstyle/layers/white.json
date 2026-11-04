@@ -1,5 +1,5 @@
 {
-  "styleBuild": "6ead97023bbe",
+  "styleBuild": "05253ae16722",
   "flavor": "white",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -55,6 +55,9 @@
             "visibility": "visible"
           },
           "tracks-hover": {
+            "visibility": "visible"
+          },
+          "tracks-arrows": {
             "visibility": "visible"
           },
           "track-bands-line": {
@@ -174,6 +177,9 @@
           "tracks-hover": {
             "visibility": "none"
           },
+          "tracks-arrows": {
+            "visibility": "none"
+          },
           "track-bands-line": {
             "visibility": "none"
           },
@@ -289,6 +295,9 @@
             "visibility": "none"
           },
           "tracks-hover": {
+            "visibility": "none"
+          },
+          "tracks-arrows": {
             "visibility": "none"
           },
           "track-bands-line": {
@@ -410,6 +419,9 @@
           "tracks-hover": {
             "visibility": "visible"
           },
+          "tracks-arrows": {
+            "visibility": "visible"
+          },
           "track-bands-line": {
             "visibility": "visible"
           },
@@ -527,6 +539,9 @@
           "tracks-hover": {
             "visibility": "none"
           },
+          "tracks-arrows": {
+            "visibility": "none"
+          },
           "track-bands-line": {
             "visibility": "none"
           },
@@ -642,6 +657,9 @@
             "visibility": "none"
           },
           "tracks-hover": {
+            "visibility": "none"
+          },
+          "tracks-arrows": {
             "visibility": "none"
           },
           "track-bands-line": {
@@ -1397,6 +1415,62 @@
             "holdmytrack:vars": {
               "filter": [
                 "hovered",
+                "hidden"
+              ]
+            }
+          }
+        },
+        {
+          "id": "tracks-arrows",
+          "type": "symbol",
+          "source": "tracks",
+          "source-layer": "tracks",
+          "minzoom": 4,
+          "filter": [
+            "all",
+            [
+              "in",
+              [
+                "get",
+                "id"
+              ],
+              [
+                "var",
+                "focused"
+              ]
+            ],
+            [
+              "!",
+              [
+                "in",
+                [
+                  "get",
+                  "id"
+                ],
+                [
+                  "var",
+                  "hidden"
+                ]
+              ]
+            ]
+          ],
+          "layout": {
+            "symbol-placement": "line",
+            "symbol-spacing": 50,
+            "icon-image": "track-arrow",
+            "icon-size": 1.4,
+            "icon-rotation-alignment": "map",
+            "icon-pitch-alignment": "map",
+            "icon-allow-overlap": true,
+            "icon-ignore-placement": true
+          },
+          "paint": {
+            "icon-color": "#ffffff"
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "focused",
                 "hidden"
               ]
             }

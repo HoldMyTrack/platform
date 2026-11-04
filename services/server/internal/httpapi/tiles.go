@@ -20,6 +20,8 @@ import (
 // wraps a longitude past 180 when projecting and would join the parts the long way round the
 // world again; only such a track pays for the wrap. It matches a tile on the far side of the
 // antimeridian through the tile moved a world's width, which keeps each test an index lookup.
+// Each line keeps the recording's point order, which the bold tracks' direction arrows read
+// (apps/web/src/map/tracksGroup.ts): nothing here may merge, union or reverse it.
 var tracksQuery = `
 SELECT ST_AsMVT(t, 'tracks', 4096, 'geom')
 FROM (

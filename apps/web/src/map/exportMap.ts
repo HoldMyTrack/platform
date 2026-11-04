@@ -15,7 +15,7 @@ import type { BikePathOverlays } from './bikePathsGroup';
 import { drawPhotoMarkers, type ExportPhotos } from './exportPhotos';
 import { photoMarkerLayout } from './photoClusters';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
-import { setTrackBands } from './trackBands';
+import { addArrowImage, setTrackBands } from './trackBands';
 import { trackQuery } from './tracks';
 
 /**
@@ -395,6 +395,7 @@ async function renderOffscreen(
       });
     });
 
+    addArrowImage(instance);
     applyLayers(instance, webLayers(state.flavor, getTileVersion()), {
       ...INITIAL_LAYER_STATE,
       mode: state.mode,
