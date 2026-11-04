@@ -89,6 +89,7 @@ type Server struct {
 	tileLimiter         *fixedWindowLimiter
 	syncLimiter         *fixedWindowLimiter
 	trackPointsLimiter  *fixedWindowLimiter
+	statsCardLimiter    *fixedWindowLimiter
 	syncActivityLimiter *fixedWindowLimiter
 	signupLimiter       *fixedWindowLimiter
 	budget              *budget.Gate
@@ -115,6 +116,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		tileLimiter:           newFixedWindowLimiter(defaultTilesPerMinute, time.Minute),
 		syncLimiter:           newFixedWindowLimiter(syncRequestsPerHour, time.Hour),
 		trackPointsLimiter:    newFixedWindowLimiter(trackPointsPerHour, time.Hour),
+		statsCardLimiter:      newFixedWindowLimiter(statsCardsPerHour, time.Hour),
 		syncActivityLimiter:   newFixedWindowLimiter(syncActivitiesPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
 	}
@@ -171,6 +173,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("PATCH", "/activities/{id}"), s.requireNotDemo(s.handleUpdateActivity))
 	s.mux.HandleFunc(route("DELETE", "/activities/{id}"), s.requireNotDemo(s.handleDeleteActivity))
 	s.mux.HandleFunc(route("POST", "/activities/overlaps"), s.requireVerified(s.handleActivityOverlaps))
+	s.mux.HandleFunc(route("POST", "/activities/stats-card"), s.requireVerified(s.handleStatsCard))
 	s.mux.HandleFunc(route("GET", "/activities/pending"), s.requireVerified(s.handleActivitiesPending))
 	s.mux.HandleFunc(route("GET", "/activities/summary"), s.requireVerified(s.handleActivitySummary))
 	s.mux.HandleFunc(route("GET", "/activities/histogram"), s.requireVerified(s.handleActivityHistogram))

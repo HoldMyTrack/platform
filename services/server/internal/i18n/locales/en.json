@@ -349,6 +349,7 @@
   "error.sync_rate_limit": "Too many syncs in the last hour (at most {max}). Try again later.",
   "error.sync_activity_rate_limit": "Too many activities synced in the last hour (at most {max}). Try the rest later.",
   "error.track_points_rate_limit": "Too many tracks opened for editing in the last hour (at most {max}). Try again later.",
+  "error.stats_card_rate_limit": "Too many stats cards drawn in the last hour (at most {max}). Try again later.",
   "error.export_too_soon": "A download can be requested once a week. You can request the next one from {time}.",
   "error.photo_limit": "This account already holds {max} photos, the most it can.",
   "error.activity_limit": "This account already holds {max} activities, the most it can. Delete some to make room.",

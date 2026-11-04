@@ -1466,6 +1466,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities/stats-card": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * The stats card a map image export carries, drawn for the image's size and theme
+         * @description One line per activity, newest first, at most five, then "+ N more" and, with more than one, a totals line, in the account's units and language. Pending activities are left out. The PNG is the card's panel alone, at the image's own pixel scale; the client places it.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        activity_ids: string[];
+                        /** @description The image's width in pixels. */
+                        width: number;
+                        /** @description The image's height in pixels. */
+                        height: number;
+                        /**
+                         * @description dark under a dark map flavor or Satellite.
+                         * @enum {string}
+                         */
+                        theme: "light" | "dark";
+                    };
+                };
+            };
+            responses: {
+                /** @description The card */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "image/png": string;
+                    };
+                };
+                /** @description Every activity asked for is Pending, so there is no card */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/activities/pending": {
         parameters: {
             query?: never;

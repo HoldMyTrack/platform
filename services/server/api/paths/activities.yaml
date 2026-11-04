@@ -158,6 +158,46 @@ activities_overlaps:
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
+activities_stats-card:
+  post:
+    summary: The stats card a map image export carries, drawn for the image's size and theme
+    description: >-
+      One line per activity, newest first, at most five, then "+ N more" and, with more than
+      one, a totals line, in the account's units and language. Pending activities are left out.
+      The PNG is the card's panel alone, at the image's own pixel scale; the client places it.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [activity_ids, width, height, theme]
+            properties:
+              activity_ids:
+                type: array
+                minItems: 1
+                maxItems: 10000
+                items: { type: string, format: uuid }
+              width: { type: integer, minimum: 1, maximum: 4096, description: The image's width in pixels. }
+              height: { type: integer, minimum: 1, maximum: 4096, description: The image's height in pixels. }
+              theme:
+                type: string
+                enum: [light, dark]
+                description: dark under a dark map flavor or Satellite.
+    responses:
+      "200":
+        description: The card
+        content:
+          image/png:
+            schema: { type: string, format: binary }
+      "204":
+        description: Every activity asked for is Pending, so there is no card
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
 activities_summary:
   get:
     summary: Totals over the activities the filter selects
