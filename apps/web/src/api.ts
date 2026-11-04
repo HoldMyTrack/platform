@@ -1,5 +1,5 @@
 import { t } from './i18n';
-import { rememberTypeLabels } from './ui/activityTypes';
+import { rememberTypeKinds, rememberTypeLabels } from './ui/activityTypes';
 import { deleteDone, parseErrorBody } from './apiError';
 import type { components, paths } from './apiSchema';
 import type { SpotCategory, SpotInArea } from './map/spots';
@@ -225,6 +225,7 @@ export async function listActivities(query: ActivityQuery = {}, signal?: AbortSi
   }
   const body = (await res.json()) as ResponseJson<'/activities', 'get'>;
   rememberTypeLabels(Object.entries(body.types).map(([type, info]) => [type, info.label]));
+  rememberTypeKinds(Object.entries(body.types).map(([type, info]) => [type, info.kind]));
   return body.activities.map(toActivity);
 }
 

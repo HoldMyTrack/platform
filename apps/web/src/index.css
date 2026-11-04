@@ -665,6 +665,19 @@ body {
 
 /* A button, because clicking it flies the map — but it has to keep looking like the row
    text it replaced, so every button default is reset here rather than styled around. */
+.activities-panel__type-icon {
+  flex: none;
+  color: rgb(var(--fm-ink-rgb) / 60%);
+}
+
+.activities-panel__row--hidden .activities-panel__type-icon {
+  opacity: 0.55;
+}
+
+.activities-panel__row--pending .activities-panel__type-icon {
+  opacity: 0.45;
+}
+
 .activities-panel__text {
   flex: 1;
   min-width: 0;
