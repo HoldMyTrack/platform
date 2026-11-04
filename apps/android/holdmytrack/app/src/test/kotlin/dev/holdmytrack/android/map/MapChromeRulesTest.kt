@@ -31,6 +31,14 @@ class MapChromeRulesTest {
     }
 
     @Test
+    fun `the bottom bar steps aside for the editors and the image export`() {
+        assertTrue(MapChromeRules.bottomBarShown(editOpen = false, privacyEditing = false, exportOpen = false))
+        assertFalse(MapChromeRules.bottomBarShown(editOpen = true, privacyEditing = false, exportOpen = false))
+        assertFalse(MapChromeRules.bottomBarShown(editOpen = false, privacyEditing = true, exportOpen = false))
+        assertFalse(MapChromeRules.bottomBarShown(editOpen = false, privacyEditing = false, exportOpen = true))
+    }
+
+    @Test
     fun `checking rows hides the mode toggle and the rail`() {
         assertTrue(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.ACTIVITIES, editOpen = false))
         assertFalse(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.STORIES, editOpen = false))
