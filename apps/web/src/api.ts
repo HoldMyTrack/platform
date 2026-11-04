@@ -383,6 +383,19 @@ export async function getStatsCard(
  * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
  * focus.
  */
+/** `GET /v1/map/imagery`: whether satellite imagery is offered now, which the server stops while
+ *  the imagery plan nears its monthly limit (docs/SPEC.md FR-4.14). */
+export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
+  const res = await fetch(`${API_BASE_URL}${API_V1}/map/imagery`, {
+    ...(signal ? { signal } : {}),
+    credentials: 'include',
+  });
+  if (!res.ok) {
+    throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
+  }
+  return ((await res.json()) as ResponseJson<'/map/imagery', 'get'>).available;
+}
+
 /** `GET /v1/activities/pending`: which of [ids] are still Pending (IMPLEMENTATION.md §4.2.5). */
 export async function pendingActivities(ids: readonly string[], signal?: AbortSignal): Promise<string[]> {
   const res = await fetch(`${API_BASE_URL}${API_V1}/activities/pending?ids=${ids.map(encodeURIComponent).join(',')}`, {
