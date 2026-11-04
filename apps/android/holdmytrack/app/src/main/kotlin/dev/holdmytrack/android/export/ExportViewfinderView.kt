@@ -2,10 +2,12 @@ package dev.holdmytrack.android.export
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.MotionEvent
 import android.view.View
@@ -39,6 +41,20 @@ class ExportViewfinderView @JvmOverloads constructor(context: Context, attrs: At
             invalidate()
         }
 
+    /** The stats card as the image will have it, previewed in the window; null for none. */
+    var statsCard: Bitmap? = null
+        set(value) {
+            field = value
+            invalidate()
+        }
+
+    /** The image's pixel size, which the card is laid out for and the window shows scaled. */
+    var imageSize: Pair<Int, Int> = 0 to 0
+        set(value) {
+            field = value
+            invalidate()
+        }
+
     /** Corners don't respond during a capture. */
     var locked = false
 
@@ -59,6 +75,8 @@ class ExportViewfinderView @JvmOverloads constructor(context: Context, attrs: At
         color = Color.WHITE
         setShadowLayer(1.5f * density, 0f, 0f, Color.argb(128, 0, 0, 0))
     }
+    private val cardPaint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val cardRect = RectF()
     private val cornerLength = 22 * density
     /** How near a corner a finger counts as on it: half a 48dp touch target. */
     private val cornerReach = 24 * density
@@ -77,6 +95,7 @@ class ExportViewfinderView @JvmOverloads constructor(context: Context, attrs: At
         canvas.drawRect(0f, b.y + b.h, w, h, shade)
         canvas.drawRect(0f, b.y, b.x, b.y + b.h, shade)
         canvas.drawRect(b.x + b.w, b.y, w, b.y + b.h, shade)
+        drawStatsCard(canvas, b)
         canvas.drawRect(b.x, b.y, b.x + b.w, b.y + b.h, border)
         path.reset()
         val l = cornerLength
@@ -85,6 +104,19 @@ class ExportViewfinderView @JvmOverloads constructor(context: Context, attrs: At
         path.moveTo(b.x, b.y + b.h - l); path.lineTo(b.x, b.y + b.h); path.lineTo(b.x + l, b.y + b.h)
         path.moveTo(b.x + b.w - l, b.y + b.h); path.lineTo(b.x + b.w, b.y + b.h); path.lineTo(b.x + b.w, b.y + b.h - l)
         canvas.drawPath(path, cornerPaint)
+    }
+
+    /** The card where [ExportStatsRules.placement] puts it on the image, at the window's scale. */
+    private fun drawStatsCard(canvas: Canvas, b: Box) {
+        val card = statsCard ?: return
+        val (imageW, imageH) = imageSize
+        if (imageW <= 0 || imageH <= 0 || b.w <= 0f) return
+        val scale = b.w / imageW
+        val (x, y) = ExportStatsRules.placement(imageW, imageH, card.width, card.height)
+        val left = b.x + Math.round(x) * scale
+        val top = b.y + Math.round(y) * scale
+        cardRect.set(left, top, left + card.width * scale, top + card.height * scale)
+        canvas.drawBitmap(card, null, cardRect, cardPaint)
     }
 
     @SuppressLint("ClickableViewAccessibility")

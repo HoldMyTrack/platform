@@ -6,6 +6,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
+import android.graphics.Canvas
 import android.graphics.PointF
 import android.net.Uri
 import android.os.Handler
@@ -21,12 +22,14 @@ import android.widget.PopupMenu
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.content.res.AppCompatResources
+import androidx.core.content.edit
 import androidx.core.graphics.scale
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.google.android.material.button.MaterialButton
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.PhotoMarkers
+import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.photos.PhotoClusters
 import dev.holdmytrack.android.photos.ScreenPoint
 import org.maplibre.android.camera.CameraPosition
@@ -44,7 +47,8 @@ import java.util.concurrent.Executors
  * viewfinder over the map, and what Capture does — draw the window on a hidden map
  * ([MapImageRenderer]), draw the photo markers on it ([ExportPhotos]), bake in the credit and the
  * logo ([ImageMarks]), save it to Pictures and
- * open the share sheet on it. The geometry is [Viewfinder]'s.
+ * open the share sheet on it. The geometry is [Viewfinder]'s. With Show stats ticked, the server's
+ * stats card ([ExportStatsCard]) is previewed in the window and drawn on the image as previewed.
  *
  * [host] is the map's own container, which the viewfinder covers whole; [prepare] puts the app's
  * layers on the hidden map's style the way the live map has them; [onShown] hides and brings back
@@ -59,6 +63,9 @@ class ExportViewfinder(
     private val satelliteOn: () -> Boolean,
     /** The photo markers on screen, drawn into the image as they're shown. */
     private val photos: () -> PhotoMarkers.Snapshot,
+    /** The Activities panel's Checked ids and the open Story, which the stats card is drawn from. */
+    private val checked: () -> Set<String>,
+    private val storyId: () -> String?,
     private val onShown: (Boolean) -> Unit,
 ) {
     private val context: Context = host.context
@@ -74,9 +81,17 @@ class ExportViewfinder(
     private lateinit var busyIndicator: View
     private lateinit var sizeLine: TextView
     private lateinit var errorLine: TextView
+    private lateinit var statsCheck: MaterialButton
+    private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+    private val stats = ExportStatsCard(
+        fetch = { r, done -> HoldMyTrackApi.statsCard(r.activityIds, r.width, r.height, r.dark, done) },
+        onChange = ::renderStats,
+    )
 
     private var choice: ExportChoice = lastChoice
     private var busy = false
+    /** The last capture failed, and the line under the window says so. */
+    private var failed = false
     private var settling: ValueAnimator? = null
     private var splitting = true
 
@@ -96,6 +111,17 @@ class ExportViewfinder(
         busyIndicator = view.findViewById(R.id.export_busy)
         sizeLine = view.findViewById(R.id.export_size)
         errorLine = view.findViewById(R.id.export_error)
+        statsCheck = view.findViewById(R.id.export_stats)
+        val offered = ExportStatsRules.offered(checked(), storyId())
+        statsCheck.isChecked = offered && prefs.getBoolean(KEY_SHOW_STATS, false)
+        setStatsEnabled(offered)
+        statsCheck.addOnCheckedChangeListener { _, on ->
+            prefs.edit { putBoolean(KEY_SHOW_STATS, on) }
+            askStats()
+        }
+        view.findViewById<View>(R.id.export_stats_box).setOnClickListener {
+            if (!statsCheck.isEnabled && !busy) Toast.makeText(context, R.string.export_show_stats_hint, Toast.LENGTH_SHORT).show()
+        }
         choiceButton.setOnClickListener { showChoices() }
         view.findViewById<View>(R.id.export_close).setOnClickListener { close() }
         captureButton.setOnClickListener { capture() }
@@ -119,6 +145,7 @@ class ExportViewfinder(
         val view = root ?: return
         settling?.cancel()
         renderer.cancel()
+        stats.clear()
         busy = false
         root = null
         host.removeView(view)
@@ -160,9 +187,44 @@ class ExportViewfinder(
         val box = frame.window
         val (w, h) = outputSize(choice, box.w, box.h)
         sizeLine.text = context.getString(R.string.export_size, w, h)
+        frame.imageSize = w to h
+        askStats()
         placeAround()
         // The toolbar and the lines change width with their text: again once measured.
         toolbar.post { if (isOpen) placeAround() }
+    }
+
+    /** A disabled view that is still clickable keeps its taps, so the toggle stops being clickable
+     *  too and a tap reaches its frame, which says why it's disabled. */
+    private fun setStatsEnabled(enabled: Boolean) {
+        statsCheck.isEnabled = enabled
+        statsCheck.isClickable = enabled
+        statsCheck.isLongClickable = enabled
+    }
+
+    /** The stats card for the image as it is now framed, or none (`ExportStatsRules.request`). */
+    private fun askStats() {
+        if (!isOpen) return
+        val (w, h) = frame.imageSize
+        if (w <= 0 || h <= 0) return
+        stats.want(ExportStatsRules.request(statsCheck.isChecked, checked(), storyId(), w, h, darkBase()))
+    }
+
+    /** The held card in the window; Capture waits for the one this frame asked for. */
+    private fun renderStats() {
+        if (!isOpen) return
+        frame.statsCard = stats.card
+        captureButton.isEnabled = !busy && stats.ready
+        val problem = stats.error
+        if (problem != null && !busy) {
+            errorLine.text = problem
+            sizeLine.visibility = View.INVISIBLE
+            errorLine.visibility = View.VISIBLE
+            errorLine.post { if (isOpen) placeAround() }
+        } else if (!failed) {
+            errorLine.visibility = View.GONE
+            sizeLine.visibility = View.VISIBLE
+        }
     }
 
     /** The toolbar centred over the window, the size line and the error centred under it. */
@@ -251,6 +313,7 @@ class ExportViewfinder(
 
     private fun renderChoice(keepWindow: Boolean = false) {
         choiceButton.text = label(choice, full = false)
+        failed = false
         errorLine.visibility = View.GONE
         sizeLine.visibility = View.VISIBLE
         if (keepWindow && frame.window.w > 0) {
@@ -263,7 +326,8 @@ class ExportViewfinder(
     private fun setBusy(on: Boolean) {
         busy = on
         frame.locked = on
-        captureButton.isEnabled = !on
+        captureButton.isEnabled = !on && stats.ready
+        setStatsEnabled(!on && ExportStatsRules.offered(checked(), storyId()))
         captureButton.icon = if (on) null else AppCompatResources.getDrawable(context, R.drawable.ic_camera)
         busyIndicator.visibility = if (on) View.VISIBLE else View.GONE
         choiceButton.isEnabled = !on
@@ -271,8 +335,10 @@ class ExportViewfinder(
 
     private fun capture() {
         val instance = map() ?: return
-        if (busy) return
+        if (busy || !stats.ready) return
+        val card = stats.card
         setBusy(true)
+        failed = false
         errorLine.visibility = View.GONE
         sizeLine.visibility = View.VISIBLE
         val box = frame.window
@@ -326,12 +392,23 @@ class ExportViewfinder(
                         sourceAttribution(json, BASEMAP_SOURCE_ID),
                         if (satellite) sourceAttribution(json, SATELLITE_SOURCE_ID) else null,
                     )
-                    picture = { finish(bitmap, widthPx, heightPx, credit, dark) { image -> ExportPhotos.draw(context, image, markers, thumbs.orEmpty(), unit) } }
+                    picture = {
+                        finish(bitmap, widthPx, heightPx, credit, dark) { image ->
+                            ExportPhotos.draw(context, image, markers, thumbs.orEmpty(), unit)
+                            card?.let { drawStatsCard(image, it) }
+                        }
+                    }
                     if (thumbs != null) picture?.invoke()
                 },
                 onFailure = { error -> fail(error) },
             )
         }
+    }
+
+    /** The card at its own pixel size, where the window previewed it. */
+    private fun drawStatsCard(image: Bitmap, card: Bitmap) {
+        val (x, y) = ExportStatsRules.placement(image.width, image.height, card.width, card.height)
+        Canvas(image).drawBitmap(card, Math.round(x).toFloat(), Math.round(y).toFloat(), null)
     }
 
     private fun sourceAttribution(styleJson: String?, sourceId: String): String? = runCatching {
@@ -369,6 +446,7 @@ class ExportViewfinder(
         Log.w(TAG, "map export failed", error)
         if (!isOpen) return
         setBusy(false)
+        failed = true
         errorLine.text = context.getString(R.string.export_failed)
         sizeLine.visibility = View.INVISIBLE
         errorLine.visibility = View.VISIBLE
@@ -418,6 +496,9 @@ class ExportViewfinder(
         /** The served style's basemap and imagery sources (`apps/web/src/map/style.ts`). */
         private const val BASEMAP_SOURCE_ID = "protomaps"
         private const val SATELLITE_SOURCE_ID = "satellite"
+        /** Show stats, kept on the phone; off until ticked. */
+        private const val PREFS = "export"
+        private const val KEY_SHOW_STATS = "show_stats"
         private val FILE_TIME = DateTimeFormatter.ofPattern("yyyy-MM-dd-HHmmss")
         private val io = Executors.newSingleThreadExecutor()
 

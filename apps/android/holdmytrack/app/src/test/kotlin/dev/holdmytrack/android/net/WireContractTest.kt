@@ -63,6 +63,7 @@ class WireContractTest {
         response(TrackPointsJson.serializer().descriptor, "/activities/{id}/track-points", "get")
         request(TrackEditRequestJson.serializer().descriptor, "/activities/{id}/track-edit", "post")
         request(OverlapsRequestJson.serializer().descriptor, "/activities/overlaps", "post")
+        request(StatsCardRequestJson.serializer().descriptor, "/activities/stats-card", "post")
         response(OverlapsJson.serializer().descriptor, "/activities/overlaps", "post")
         response(UploadResultJson.serializer().descriptor, "/activities/upload", "post", 202)
         response(UploadResultJson.serializer().descriptor, "/activities/upload", "post", 200)

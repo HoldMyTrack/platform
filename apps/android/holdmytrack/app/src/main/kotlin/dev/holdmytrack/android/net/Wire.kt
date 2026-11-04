@@ -214,6 +214,15 @@ internal data class OverlapSpanJson(val key: String, val start: String, val end:
 @Serializable
 internal data class OverlapsRequestJson(val spans: List<OverlapSpanJson>)
 
+/** `POST /v1/activities/stats-card`'s body: [theme] is `light` or `dark`. */
+@Serializable
+internal data class StatsCardRequestJson(
+    @SerialName("activity_ids") val activityIds: List<String>,
+    val width: Int,
+    val height: Int,
+    val theme: String,
+)
+
 @Serializable
 internal data class OverlapJson(
     val key: String,

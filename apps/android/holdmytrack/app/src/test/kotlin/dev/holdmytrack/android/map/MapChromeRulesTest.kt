@@ -40,6 +40,13 @@ class MapChromeRulesTest {
     }
 
     @Test
+    fun `checking rows keeps the image export at hand, without the rail`() {
+        assertTrue(MapChromeRules.checkedExportShown(editing = false, selectionShown = true))
+        assertFalse(MapChromeRules.checkedExportShown(editing = false, selectionShown = false))
+        assertFalse(MapChromeRules.checkedExportShown(editing = true, selectionShown = true))
+    }
+
+    @Test
     fun `the Sync tab keeps the sheet while recording, an editor hides it`() {
         assertTrue(MapChromeRules.sheetShown(normal = false, sessionReady = true, MapMode.NORMAL, PanelTab.SYNC, editing = false))
         assertFalse(MapChromeRules.sheetShown(normal = false, sessionReady = true, MapMode.NORMAL, PanelTab.ACTIVITIES, editing = false))

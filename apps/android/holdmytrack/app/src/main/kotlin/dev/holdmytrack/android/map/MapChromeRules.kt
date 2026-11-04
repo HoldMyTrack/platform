@@ -30,6 +30,10 @@ object MapChromeRules {
     /** The rail (Layers, Find my location), hidden while an editor is open or rows are checked. */
     fun railShown(editing: Boolean, selectionShown: Boolean): Boolean = !editing && !selectionShown
 
+    /** The image export's own button under the selection bar, while rows are checked and the rail
+     *  is away, so an image can show the Checked activities' stats (`docs/SPEC.md` FR-4.10). */
+    fun checkedExportShown(editing: Boolean, selectionShown: Boolean): Boolean = !editing && selectionShown
+
     /** Whether rows are being checked where the selection bar can show: the sheet up on the
      *  Activities tab, no Edit window. */
     fun selectionShown(sheetVisible: Boolean, selecting: Boolean, tab: PanelTab, editOpen: Boolean): Boolean =

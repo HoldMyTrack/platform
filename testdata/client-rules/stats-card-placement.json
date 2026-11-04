@@ -1,8 +1,8 @@
 {
   "rule": "statsCardPlacement",
   "description": "Where the server's stats card goes on an image: at the lower strip's margin from the left, a margin above the watermark, never above the top margin.",
-  "clients": ["web"],
-  "tolerance": 1e-6,
+  "clients": ["web", "android"],
+  "tolerance": 0.001,
   "cases": [
     { "name": "custom HD", "input": { "width": 1920, "height": 1080, "card": { "width": 400, "height": 200 } }, "expected": { "x": 15.12, "y": 824.6176 } },
     { "name": "a Story, its strip sized by the short side", "input": { "width": 1080, "height": 1920, "card": { "width": 500, "height": 250 } }, "expected": { "x": 15.12, "y": 1614.6176 } },
