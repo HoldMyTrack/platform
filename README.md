@@ -15,7 +15,7 @@ Each feature links to the part of [`docs/SPEC.md`](docs/SPEC.md) that defines it
 - **Somewhere new, close to home.** The fog shows which streets, parks and trails nearby you haven't been to.
 - **Points of interest.** Playgrounds, dog parks, monuments, viewpoints, waterfalls and historic sites from OpenStreetMap, with what OSM knows about each; the Android app captures one when you stand in it for 30 seconds ([FR-15](docs/SPEC.md#17-fr-15--spots)).
 - **Stories.** Hand-picked sets of activities, such as a multi-day hike, a holiday or a race weekend, each with its own name, map and totals ([FR-14](docs/SPEC.md#16-fr-14--stories)).
-- **Photos.** Your photos on an activity, placed on the route by capture time and adjustable in the Edit window, shown on the selected route and across a Story; kept as a resized copy, never the original ([FR-16](docs/SPEC.md#21-fr-16--activity-photos)).
+- **Photos.** Your photos on an activity, placed on the route by capture time and adjustable in the Edit window, shown on the focused route and across a Story; kept as a resized copy, never the original ([FR-16](docs/SPEC.md#21-fr-16--activity-photos)).
 - **Activity graph and trends.** A private, GitHub-style daily grid of your activity, and weekly or monthly totals of the ground you covered ([FR-7](docs/SPEC.md#9-fr-7--activity-graph-profile), [FR-9](docs/SPEC.md#11-fr-9--trends)).
 - **Private by default.** Nobody else sees your map. Private locations hide where tracks start and end near home or work, and no heart rate or other health data is read or stored ([FR-8](docs/SPEC.md#10-fr-8--privacy-controls), [ADR-0017](docs/adr/0017-no-health-data.md)).
 - **Share an image, not your map.** Frame any view and export it as a high-resolution image, sized for social media if you like ([FR-4.10](docs/SPEC.md#fr-410-map-image-export)).
@@ -44,7 +44,9 @@ holdmytrack/
 │   ├── boundaries-extract.sh    # cuts the country and region outlines file from Overture with DuckDB, off the server (docs/DEPLOY.md §6)
 │   ├── boundaries-extract.sql   # the query boundaries-extract.sh runs
 │   ├── lib/osm-download.sh      # the OSM download and checksum both OSM extract scripts share
+│   ├── check-doc-growth.sh      # reports each changed document's word change
 │   ├── check-doc-refs.sh        # fails on a citation whose heading no longer exists (AGENTS.md)
+│   ├── check-doc-style.sh       # fails on the writing rules a pattern can catch (AGENTS.md)
 │   ├── check-file-size.sh       # warns when a change grows a file past the soft size limit
 │   ├── check-contract-break.sh  # the breaking-change check against the base branch contract.yml runs (docs/DEVELOPMENT.md, "CI")
 │   ├── check-contract-release.sh # the same against each release production still lets in (docs/DEPLOY.md §10)
