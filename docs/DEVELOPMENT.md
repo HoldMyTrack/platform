@@ -111,7 +111,7 @@ The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` 
 
 ### CI
 
-`.github/workflows/ci.yml` runs on every push to `main` and every pull request: `scripts/check-doc-refs.sh`, `scripts/check-doc-style.sh`, `scripts/check-file-size.sh` and, on a pull request, `scripts/check-doc-growth.sh` (both reports only), the Go tests with a PostGIS service, the web `typecheck`, `test:coverage`, `verify:style`, `verify:api-types` and `npm audit --omit=dev`, `govulncheck` on the server, `gitleaks` over the whole history, the Android JUnit tests, shellcheck on `scripts/` and the iOS scripts with the Caddyfile, production compose file and web image checked, and `make verify verify-build`. Its token is read-only, and a superseded pull request run is cancelled, never one on `main`. That last job caches the basemap extract keyed on `apps/web/scripts/build-basemap.sh` and cuts it on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script.
+`.github/workflows/ci.yml` runs on every push to `main` and every pull request: `scripts/check-doc-refs.sh`, `scripts/check-doc-style.sh`, `scripts/check-file-size.sh` (a warning only), the Go tests with a PostGIS service, the web `typecheck`, `test:coverage`, `verify:style`, `verify:api-types` and `npm audit --omit=dev`, `govulncheck` on the server, `gitleaks` over the whole history, the Android JUnit tests, shellcheck on `scripts/` and the iOS scripts with the Caddyfile, production compose file and web image checked, and `make verify verify-build`. Its token is read-only, and a superseded pull request run is cancelled, never one on `main`. That last job caches the basemap extract keyed on `apps/web/scripts/build-basemap.sh` and cuts it on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script.
 
 `.github/dependabot.yml` opens one grouped pull request a week per ecosystem (Go, npm, Gradle, Swift, Docker, Actions), one per image in the compose files, each major version and Android Kotlin compiler change on its own (never a Postgres major), and a security update as soon as its advisory is published. A `govulncheck` failure on a pull request that changes no dependency means a new advisory: bump the module or Go itself.
 
@@ -151,7 +151,6 @@ Removing or renaming takes two releases: stop using it, then drop it. A migratio
 ```bash
 scripts/check-doc-refs.sh                                         # citation check
 scripts/check-doc-style.sh                                        # writing rules a pattern can catch
-scripts/check-doc-growth.sh                                       # each changed document's word change
 scripts/check-file-size.sh                                        # soft size warnings
 cd apps/web && npm run gen:api-types                              # after a contract change
 cd apps/web && npm run build:style                                # after a change under src/map that a served document carries
