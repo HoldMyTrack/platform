@@ -40,7 +40,7 @@ const EXPORT_IDLE_TIMEOUT_MS = 20_000;
 
 /** Drawn at partial opacity with no backing plate — a signature, not a banner competing with
  *  the map for attention. */
-const WATERMARK_ALPHA = 0.7;
+const WATERMARK_ALPHA = 0.8;
 
 export interface ExportViewState {
   flavor: Flavor;
