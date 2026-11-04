@@ -83,9 +83,26 @@ class MapImageRenderer(private val host: ViewGroup) {
                 // rendered" never counts as done — and nothing left to draw; then a short settle,
                 // as a source just added can report done a frame early (the web export's same
                 // `idle` and margin).
-                view.addOnDidBecomeIdleListener {
-                    main.postDelayed({ snapshot(view, finish) }, SETTLE_MS)
+                var taken = false
+                val take = {
+                    if (!taken) {
+                        taken = true
+                        main.postDelayed({ snapshot(view, finish) }, SETTLE_MS)
+                    }
                 }
+                view.addOnDidBecomeIdleListener { take() }
+                // Idle never comes when some tiles fail (seen with satellite imagery refused while
+                // tracks are bold), though the map stops drawing: a map that has drawn and then
+                // drawn nothing for QUIET_MS has drawn all it will, and a failed tile costs that
+                // tile only (`docs/SPEC.md` FR-4.14).
+                var lastFrame = 0L
+                view.addOnDidFinishRenderingFrameListener { _, _, _ -> lastFrame = SystemClock.uptimeMillis() }
+                lateinit var watch: Runnable
+                watch = Runnable {
+                    if (mapView !== view || taken) return@Runnable
+                    if (lastFrame > 0 && SystemClock.uptimeMillis() - lastFrame >= QUIET_MS) take() else main.postAtTime(watch, view, SystemClock.uptimeMillis() + QUIET_CHECK_MS)
+                }
+                main.postAtTime(watch, view, SystemClock.uptimeMillis() + QUIET_CHECK_MS)
                 map.triggerRepaint()
             }
         }
@@ -134,5 +151,8 @@ class MapImageRenderer(private val host: ViewGroup) {
         fun timeoutMs(request: Request): Long =
             TIMEOUT_BASE_MS + (request.widthPx.toLong() * request.heightPx * TIMEOUT_PER_MEGAPIXEL_MS / 1_000_000)
         const val SETTLE_MS = 150L
+        /** How long a map that has stopped drawing is given before it counts as done. */
+        const val QUIET_MS = 2_000L
+        const val QUIET_CHECK_MS = 250L
     }
 }
