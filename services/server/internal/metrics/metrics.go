@@ -68,6 +68,14 @@ var (
 		Help: "Object store requests by R2 billing class.",
 	}, []string{"class"})
 
+	// MailSent counts the emails the API tried to send through SMTP, by outcome ("sent" or
+	// "failed"): a failure is only logged where it happens, so this is what notices the provider
+	// refusing every message (internal/mail).
+	MailSent = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Name: "holdmytrack_mail_sent_total",
+		Help: "Emails the API tried to send through SMTP, by outcome.",
+	}, []string{"outcome"})
+
 	// JobDuration is how long a job ran, by kind.
 	JobDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "holdmytrack_job_duration_seconds",
@@ -80,7 +88,7 @@ func init() {
 	Registry.MustRegister(
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-		HTTPRequests, HTTPDuration, HTTPPanics, JobsFinished, JobDuration, R2Operations,
+		HTTPRequests, HTTPDuration, HTTPPanics, JobsFinished, JobDuration, R2Operations, MailSent,
 	)
 }
 

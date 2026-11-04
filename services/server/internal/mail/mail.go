@@ -15,6 +15,8 @@ import (
 	"net"
 	"net/smtp"
 	"net/textproto"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/metrics"
 )
 
 type Sender interface {
@@ -33,7 +35,21 @@ func New(host, port, username, password, from string, logBodies bool, log *slog.
 	if host == "" {
 		return &logSender{log: log, logBodies: logBodies}
 	}
-	return &smtpSender{host: host, port: port, username: username, password: password, from: from}
+	return countingSender{&smtpSender{host: host, port: port, username: username, password: password, from: from}}
+}
+
+// countingSender counts each send's outcome (metrics.MailSent): callers only log a failure, so a
+// provider refusing every message, its credits used up or expired, is noticed by the count.
+type countingSender struct{ next Sender }
+
+func (s countingSender) Send(ctx context.Context, to, subject, body string) error {
+	err := s.next.Send(ctx, to, subject, body)
+	outcome := "sent"
+	if err != nil {
+		outcome = "failed"
+	}
+	metrics.MailSent.WithLabelValues(outcome).Inc()
+	return err
 }
 
 type logSender struct {
