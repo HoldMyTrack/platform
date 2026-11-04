@@ -17,7 +17,7 @@ It targets people who already track workouts or travel and want a better way to 
 * **Not a fitness tracker.** The mobile app can record a plain GPS track as a convenience, for a road trip or a dog walk (§4.1). It captures GPS only: no heart rate, cadence, power or other sensor, no training metrics, and no attempt to match a watch's battery life or accuracy. A watch stays the better tool for workouts, and HoldMyTrack ingests its output.
 * **Not a location logger.** It doesn't log where someone is all day in the background the way Google Maps Timeline does, and doesn't import such a log: a Timeline export is mostly the daily routine, which can't be picked trip by trip (ADR-0039). A central store of round-the-clock location draws requests for everyone who was near a place at a given time, grows without bound (§4.3), and needs a background-location permission the Play Store reviews strictly. Continuous logging, if ever wanted, stays on the device.
 * **No social network.** No feed, follows, kudos, segments or leaderboards. A social graph is the third milestone, built only if the second milestone's numbers say it can be paid for, and not building it is an acceptable outcome (§5, §5.8). Stories are private like everything in an account: sharing one means an exported image, and a copy sent to someone who was on the trip (§4.2) becomes theirs and is shown to nobody.
-* **Not a health or fitness advisor, and no health data.** No training load, readiness scores or sleep tracking, and no heart rate: never read from a file or from Health Connect, never stored, never shown. An activity is where you went, when, and at what elevation; pace is derived from that and shown only as the color of a selected route (ADR-0017).
+* **Not a health or fitness advisor, and no health data.** No training load, readiness scores or sleep tracking, and no heart rate: never read from a file or from Health Connect, never stored, never shown. An activity is where you went, when, and at what elevation; pace is derived from that and shown only as the color of a focused route (ADR-0017).
 
 The small scope is what makes it defensible and affordable (§6.3).
 
@@ -107,7 +107,7 @@ The mobile app can also originate an activity, for someone with no watch running
 | :--- | :--- |
 | **Multi-source ingest** | Each source shows what it would bring in; only what the user ticks comes in |
 | **Map** | Fog of War, heatmap and track modes; curated themes; smooth fog edges |
-| **Per-activity detail** | The selected route colored by pace |
+| **Per-activity detail** | The focused route colored by pace |
 | **Stories** | Hand-picked activities kept as one trip, with joint stats and their own map |
 | **Photos** | The user's photos, each placed on its activity's route |
 | **Spots** | Outdoor places from OpenStreetMap, captured by staying in one with the Android app |
