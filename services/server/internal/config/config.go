@@ -52,11 +52,18 @@ type Config struct {
 	// key in it, the deepest zoom it serves, and the credit its terms require. Mirrors the web
 	// client's VITE_SATELLITE_* (apps/web/src/map/config.ts's satelliteSource), and compose.prod.yml
 	// passes the same values to both. An empty SatelliteTiles means no imagery: the style has no
-	// satellite source and clients show no switch. Only read by `serve`.
+	// satellite source and clients show no switch. The worker reads SatelliteTiles too, to probe
+	// the imagery (internal/imagery).
 	SatelliteTiles       string
 	SatelliteTileSize    int
 	SatelliteMaxZoom     int
 	SatelliteAttribution string
+	// MapTilerServiceToken reads the imagery's usage from MapTiler's Analytics API, and
+	// SatelliteMonthlyRequests is the plan's monthly allowance it's compared with (internal/imagery,
+	// docs/IMPLEMENTATION.md §4.26). The worker pauses imagery near the allowance; without both it
+	// decides on its tile probe alone.
+	MapTilerServiceToken     string
+	SatelliteMonthlyRequests int64
 	// SkipEmailVerification bypasses docs/ROADMAP.md's email-verification gate entirely —
 	// every new signup is created already verified, and no verification email is sent. Off
 	// by default; compose.yaml's `test` profile is the one place this is turned on, since
@@ -156,6 +163,14 @@ func Load() (Config, error) {
 	}
 	c.SatelliteTiles = env("SATELLITE_TILES", "")
 	c.SatelliteAttribution = env("SATELLITE_ATTRIBUTION", "")
+	c.MapTilerServiceToken = env("MAPTILER_SERVICE_TOKEN", "")
+	if v := env("SATELLITE_MONTHLY_REQUESTS", ""); v != "" {
+		n, err := strconv.ParseInt(v, 10, 64)
+		if err != nil || n <= 0 {
+			return c, fmt.Errorf("config: SATELLITE_MONTHLY_REQUESTS must be a positive integer, got %q", v)
+		}
+		c.SatelliteMonthlyRequests = n
+	}
 	// MapTiler Satellite's tile size and deepest level, the web client's defaults too.
 	var err error
 	if c.SatelliteTileSize, err = positiveInt("SATELLITE_TILE_SIZE", 512); err != nil {

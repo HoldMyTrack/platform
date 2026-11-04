@@ -107,7 +107,8 @@ Check from any machine: `curl -s -o /dev/null -w '%{http_code}\n' -H 'Range: byt
    VITE_SATELLITE_ATTRIBUTION=<a href="https://www.maptiler.com/copyright/">© MapTiler</a>
    ```
    Keep the tile size at 512: at 256 the map fetches four times as many tiles against the quota.
-4. Watch MapTiler's usage page during the first weeks. Another provider means changing these four values (Esri's tiles are 256).
+4. Under **Credentials**, create a service token for the worker's usage read, and set `MAPTILER_SERVICE_TOKEN` to it and `SATELLITE_MONTHLY_REQUESTS` to the plan's monthly requests (100000 on Free) in `.env.prod`, then `… up -d worker`. The worker pauses Satellite at 95% of them (`IMPLEMENTATION.md` §4.26). The token is a secret, unlike the key: `.env.prod` only.
+5. Another provider means changing these four `VITE_SATELLITE_*` values (Esri's tiles are 256), and leaving the token empty.
 
 ## 6. Bring it up
 

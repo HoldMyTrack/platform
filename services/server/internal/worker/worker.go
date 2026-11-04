@@ -16,6 +16,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/budget"
 	"github.com/HoldMyTrack/platform/services/server/internal/fog"
+	"github.com/HoldMyTrack/platform/services/server/internal/imagery"
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 	"github.com/HoldMyTrack/platform/services/server/internal/metrics"
 	"github.com/HoldMyTrack/platform/services/server/internal/stats"
@@ -85,7 +86,7 @@ const statsInterval = time.Hour
 //
 // The daily R2 budget (internal/budget) holds back lanes as the day's spend nears it
 // (lanePaused): their jobs stay pending and run once the day turns.
-func Run(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, n *Notifier, gate *budget.Gate, concurrency, renderConcurrency int) error {
+func Run(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, n *Notifier, gate *budget.Gate, watch *imagery.Watch, concurrency, renderConcurrency int) error {
 	notifier = n
 	var lanes sync.WaitGroup
 	defer lanes.Wait() // a long job cut off by shutdown is released before Run returns
@@ -112,7 +113,7 @@ func Run(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slo
 	lanes.Add(1)
 	go func() {
 		defer lanes.Done()
-		runSweeps(ctx, pool, store, log)
+		runSweeps(ctx, pool, store, watch, log)
 	}()
 
 	for range concurrency {
@@ -162,7 +163,7 @@ func runLane(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log 
 // rather than a case in Run's job loop: that loop drains the whole queue before it selects
 // again, so a queue that never empties (a big import) would hold back a deleted account's
 // purge and the daily sweeps for as long as it lasts.
-func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger) {
+func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, watch *imagery.Watch, log *slog.Logger) {
 	accountTicker := time.NewTicker(accountPurgeInterval)
 	defer accountTicker.Stop()
 	heatmapTicker := time.NewTicker(heatmapAgingInterval)
@@ -177,6 +178,8 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 	defer jobHistoryTicker.Stop()
 	authTicker := time.NewTicker(authSweepInterval)
 	defer authTicker.Stop()
+	imageryTicker := time.NewTicker(imagery.CheckInterval)
+	defer imageryTicker.Stop()
 
 	// A ticker's first tick is a whole interval away, so the daily sweeps also run once at
 	// start: a worker restarted more often than daily (every deploy) would otherwise never
@@ -197,6 +200,7 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 	if err := sweepExpiredAuth(ctx, pool, log); err != nil {
 		log.Error("auth sweep error", "err", err)
 	}
+	watch.Check(ctx, time.Now())
 
 	for {
 		select {
@@ -228,6 +232,8 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 			if err := sweepExpiredAuth(ctx, pool, log); err != nil {
 				log.Error("auth sweep error", "err", err)
 			}
+		case <-imageryTicker.C:
+			watch.Check(ctx, time.Now())
 		}
 	}
 }
