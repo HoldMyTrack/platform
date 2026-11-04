@@ -36,7 +36,7 @@ When `VISION.md` or an ADR changes a position, scan the other documents, the And
 
 **Write tight.** One statement per fact, and at most one cross-reference per paragraph unless more are load-bearing. Cut intensifiers ("deliberately", "genuinely", "actually", "simply", "just", "really"); "not X but Y" contrasts where nobody proposed X; meta-narration ("This section…", "As noted above…", "It is worth noting…"); history ("now", "no longer", "originally", "used to"); em-dash chains and stacked parentheticals; a reason restated beside the pointer to it; lists of three where one item carries the point; closing sentences that summarize the paragraph. The same applies to code comments, diagram labels, commit messages and pull request descriptions.
 
-**No word limits.** A sentence earns its place by its document's test above, never by fitting under a count, so adding something never means rephrasing unrelated text to make room. When a document feels long, prune it in a change of its own: a sentence that fails its document's test, restates another document or describes what no longer exists goes. `scripts/check-doc-style.sh` fails on the rules above a pattern can catch, and `scripts/check-doc-growth.sh` reports each document's word change on a pull request.
+**No word limits.** A sentence earns its place by its document's test above, never by fitting under a count, so adding something never means rephrasing unrelated text to make room. When a document feels long, prune it in a change of its own: a sentence that fails its document's test, restates another document or describes what no longer exists goes. `scripts/check-doc-style.sh` fails on the rules above a pattern can catch.
 
 ## Asking questions
 

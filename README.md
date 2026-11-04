@@ -44,7 +44,6 @@ holdmytrack/
 │   ├── boundaries-extract.sh    # cuts the country and region outlines file from Overture with DuckDB, off the server (docs/DEPLOY.md §6)
 │   ├── boundaries-extract.sql   # the query boundaries-extract.sh runs
 │   ├── lib/osm-download.sh      # the OSM download and checksum both OSM extract scripts share
-│   ├── check-doc-growth.sh      # reports each changed document's word change
 │   ├── check-doc-refs.sh        # fails on a citation whose heading no longer exists (AGENTS.md)
 │   ├── check-doc-style.sh       # fails on the writing rules a pattern can catch (AGENTS.md)
 │   ├── check-file-size.sh       # warns when a change grows a file past the soft size limit
