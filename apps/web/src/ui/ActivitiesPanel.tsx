@@ -52,7 +52,7 @@ import { lang, t, tn } from '../i18n';
  * track), Add to story (AddToStoryMenu.tsx), Delete, and, set off by a divider, Focus on map
  * (fly-to-fit). Each one's tooltip
  * names the target ("3 checked activities", or the selected row's own label), so which of the
- * two applies is never a guess. The footer keeps only the target's "N selected · X km" summary.
+ * two applies is never a guess. The footer keeps only the target's "N checked · X km" summary.
  *
  * Four interactions per row, all living in MapView (which holds the map instance they need;
  * this component owns only rendering and its own local UI state). Selection and the checkbox
@@ -322,7 +322,7 @@ export function ActivitiesPanel({
 
   const checkedCount = activities.filter((a) => checked.has(a.id)).length;
   // The toolbar's target (see the component doc comment) — the footer summary describes it
-  // too, so the "N selected · X km" line always matches what the toolbar would act on.
+  // too, so the "N checked · X km" line always matches what the toolbar would act on.
   const targetActivities = activities.filter((a) => targetIds.has(a.id));
   const targetMeters = targetActivities.reduce((sum, a) => sum + (a.distanceMeters ?? 0), 0);
   const system = useUnitSystem();

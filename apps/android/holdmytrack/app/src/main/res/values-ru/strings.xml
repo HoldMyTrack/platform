@@ -395,7 +395,7 @@
     <string name="panel_loading">Загрузка…</string>
     <string name="panel_expand">Развернуть панель</string>
     <string name="panel_collapse">Свернуть панель</string>
-    <string name="panel_select_menu">Выбрать</string>
+    <string name="panel_select_menu">Отметить</string>
     <string name="panel_select_all">Все</string>
     <string name="panel_select_none">Ничего</string>
     <string name="panel_select_invert">Обратить выбор</string>
@@ -412,12 +412,12 @@
     <string name="panel_hide_target">Скрыть с карты: %1$s</string>
     <string name="panel_show_target">Показать на карте: %1$s</string>
     <string name="panel_focus_target">Приблизить карту: %1$s</string>
-    <string name="panel_no_target">Сначала выберите занятие или отметьте несколько</string>
+    <string name="panel_no_target">Сначала нажмите на занятие или отметьте несколько</string>
     <string name="panel_target_one">«%1$s»</string>
-    <string name="panel_footer">Выбрано: %1$d · %2$s</string>
+    <string name="panel_footer">Отмечено: %1$d · %2$s</string>
     <string name="panel_reset">Сбросить</string>
-    <string name="selection_close">Закончить выбор</string>
-    <string name="card_close">Снять выбор</string>
+    <string name="selection_close">Снять все отметки</string>
+    <string name="card_close">Закрыть</string>
     <string name="card_distance">Расстояние</string>
     <string name="card_moving">В движении</string>
     <string name="card_pace">Темп</string>
@@ -621,7 +621,7 @@
          rows' Story badge), after the web's stories.* messages. -->
     <string name="panel_tab_stories">Истории</string>
     <string name="story_subtext">Подборки ваших занятий. Видны только вам.</string>
-    <string name="story_empty">Историй пока нет. На вкладке «Занятия» выберите или отметьте нужные занятия и нажмите «Добавить в историю».</string>
+    <string name="story_empty">Историй пока нет. На вкладке «Занятия» отметьте нужные занятия или нажмите на одно из них, затем — «Добавить в историю».</string>
     <string name="story_add_target">Добавить в историю: %1$s</string>
     <string name="story_demo_add">Недоступно в демо-аккаунте — создайте аккаунт, чтобы собирать истории</string>
     <string name="story_new">Новая история…</string>
