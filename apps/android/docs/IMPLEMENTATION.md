@@ -60,7 +60,7 @@ Settings, Activity graph & trends, Sync history and About are the server's pages
 
 - **Signed in by cookie.** WebView requests never pass through the app's `OkHttpClient`, so the session, the in-app marker and the language are written into the WebView's cookie store before every load. A header would reach only the first request; a cookie rides on every link, form POST and redirect.
 - **`route` acts on where a navigation goes**, decided by `web/WebRoute` from the link's parts (`testdata/client-rules/web-page-route.json`): the page's own path stays, `/` opens the native map, the sign-in pages finish and leave the map's session check to act, anything else opens in a Custom Tab. Trap: `shouldOverrideUrlLoading` is never offered a POST or reliably the redirect after one, so `route` runs again in `onPageStarted`. That is how first-run Settings' save, redirecting to `/`, reaches the map; `route` reads the session first, because the map gates on a Country only the server has heard of.
-- **View on map** is a link to `/` with the activity's id and local day, handed to `MainActivity` (`onNewIntent` when the map exists; ignored when replayed from recents). The map acts once the session is confirmed: inside the range it selects the activity, outside it applies that day as the range first. The fit is padded by the height the sheet is heading to, since fitting to the sheet mid-collapse put the activity at the top of the screen.
+- **View on map** is a link to `/` with the activity's id and local day, handed to `MainActivity` (`onNewIntent` when the map exists; ignored when replayed from recents). The map acts once the session is confirmed: inside the range it focuses the activity, outside it applies that day as the range first. The fit is padded by the height the sheet is heading to, since fitting to the sheet mid-collapse put the activity at the top of the screen.
 
 ## 2. Session and auth
 
@@ -104,7 +104,7 @@ The style is `GET /v1/map/style/{flavor}?lang=`, unmodified, fetched beside `GET
 
 - **`setMode` applies the document's view**, properties only, so a switch is instant and a reload re-applies it.
 - **Only the tracks URL carries a filter**: the date range or the open Story, appended to the document's path. `VectorSource` can't change its URL, so a range change replaces the source and its layers.
-- **The hidden, selected and checked ids are vars** the document's filters bind. The live recording and the Sync candidates draw like the layers whose role they share.
+- **The hidden, focused and checked ids are vars** the document's filters bind. The live recording and the Sync candidates draw like the layers whose role they share.
 - **An unreachable basemap is caught by the clock** (`BasemapWatch`, root `docs/IMPLEMENTATION.md` §5.4): a failed PMTiles header fails the source, not a tile, so no tile `Error` arrives.
 
 ### 3.2 Tile versions
@@ -117,9 +117,9 @@ Where the web has a rule, the app ports it as a pure Kotlin class running the sh
 
 ### 3.4 The panel, editors and touches
 
-The split follows the web's: `MapSession` holds the range or Story shown and the camera's next flight, `PanelState` the selection, and `ActivitiesPanel` binds views and redraws from it in one `render()`. `MapFragment` owns the map and composes one controller per feature; `RangeController` binds the session to the slider and the list. Trap: a controller that registers a permission request or the photo picker is created as a fragment field, since registering after the fragment starts throws; Back callbacks are asked last-added first, export's before the editors' before the sheet's.
+The split follows the web's: `MapSession` holds the range or Story shown and the camera's next flight, `PanelState` the focus, checked group, hidden set and filters, and `ActivitiesPanel` binds views and redraws from it in one `render()`. `MapFragment` owns the map and composes one controller per feature; `RangeController` binds the session to the slider and the list. Trap: a controller that registers a permission request or the photo picker is created as a fragment field, since registering after the fragment starts throws; Back callbacks are asked last-added first, export's before the editors' before the sheet's.
 
-- **Touch order**: a tap asks `MapSpots.spotAt` first unless an editor holds the map, so a spot's tap never selects a track under it. The track editor's point drags and the Private location handle are taken in a touch listener on the `MapView`, which runs before MapLibre's gestures (the web's `dragPan.disable()`). Photo markers are views, so their taps never reach the map.
+- **Touch order**: a tap asks `MapSpots.spotAt` first unless an editor holds the map, so a spot's tap never focuses a track under it. The track editor's point drags and the Private location handle are taken in a touch listener on the `MapView`, which runs before MapLibre's gestures (the web's `dragPan.disable()`). Photo markers are views, so their taps never reach the map.
 - **Edits run one request at a time**: parallel deletes raced each other's coverage re-render. A group edit resends each activity's own name and description, since the endpoint replaces them, and skips saves already sent on a retry.
 - **Pending**: a row entering or leaving Pending refetches the tracks and starts the coverage watch, and while one is, the Pending check is polled (root `docs/IMPLEMENTATION.md` §4.2.5).
 - **A Private location change reprocesses whole activities**, so the editor hands the coverage watch a callback that re-reads tracks, list, days and metrics once the server has drained.

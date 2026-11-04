@@ -141,7 +141,7 @@ The web's one-shot locate (`docs/SPEC.md` FR-4.7).
 The web's date slider (`docs/SPEC.md` FR-6) as the Activities tab's head, in Normal mode only, once the session is verified and the account has an activity day.
 
 - The default, the 5 most recent activity days, is worked out again on every return to the map until the user picks a range, so a sync or recording lands in view.
-- A range applies when a handle or held button is released. Only a range the user picked moves the camera and clears the selection, checked group, hidden tracks and filters (`docs/SPEC.md` FR-6.6). The camera never moves while recording.
+- A range applies when a handle or held button is released. Only a range the user picked moves the camera and clears the focus, checked group, hidden tracks and filters (`docs/SPEC.md` FR-6.6). The camera never moves while recording.
 - A picked range survives rotation and a return from another tab.
 
 ### FR-2.7 Activities panel
@@ -149,13 +149,13 @@ The web's date slider (`docs/SPEC.md` FR-6) as the Activities tab's head, in Nor
 The web's Activities panel (`docs/SPEC.md` FR-5) as a sheet over the map, with Activities and Stories tabs. Normal mode only, not while recording.
 
 - Rows, badges, the Type and Distance filters and Pending follow `docs/SPEC.md` FR-5.1–FR-5.3 and FR-5.15. The Distance filter is offered only with two or more distinct distances.
-- A tap on a row, or on a track within 14 dp, selects that activity and fits the camera to it; one at a time.
-- A tap on a row's tile or a long press checks it. Unlike the web, checking a row flies the camera to it; unchecking doesn't. All, None and Invert reach only the listed rows and never move the camera.
-- The toolbar acts on the checked group, else the selected row (`docs/SPEC.md` FR-5.1). Hide lasts for this app session. Delete is disabled while any target is Pending.
-- The list is read for each range and on every return to the map, keeping what of the selection, group and hidden set still exists; every 2 seconds while any row is Pending.
+- A tap on a row, or on a track within 14 dp, focuses that activity and fits the camera to it; one at a time.
+- A tap on a row's tile or a long press checks it. Unlike the web, focusing unchecks the rest, the first check takes the focused activity into the group, and checking a row flies the camera to it; unchecking doesn't. All, None and Invert reach only the listed rows and never move the camera.
+- The toolbar acts on the checked group, else the focused row (`docs/SPEC.md` FR-5.15). Hide lasts for this app session. Delete is disabled while any target is Pending.
+- The list is read for each range and on every return to the map, keeping what of the focus, checked group and hidden set still exists; every 2 seconds while any row is Pending.
 - Edit (`docs/SPEC.md` FR-5.10) writes only what changed, one activity at a time. A group of mixed types starts with Type empty, and leaving it empty keeps each its own.
 - Delete (`docs/SPEC.md` FR-5.11) asks first; on a failure, what was already deleted is reported as gone.
-- The selected activity is drawn in pace bands (`docs/SPEC.md` FR-4.8), unless hidden, filtered out or Pending.
+- The focused activity is drawn in pace bands (`docs/SPEC.md` FR-4.8), unless hidden, filtered out or Pending.
 - Track editing (`docs/SPEC.md` FR-5.14, FR-5.17), for one activity with a finished track, has Chop, Cut, Split, Move point, Delete point, Undo and Reset. A split leaving a part inside a Private location asks first.
 - The Private location editor (`docs/SPEC.md` FR-8.1) switches the map to Normal and draws every circle. A new one is 200 m at the map's centre; the radius moves in 10 m steps. Cancel, Back, a mode change or a recording starting drops the draft.
 - The Stories tab (`docs/SPEC.md` FR-14.6) opens the newest Story. Taking an activity out needs no confirmation; deleting a Story asks first. Leaving the tab restores the Activities range. Copies others sent wait at its top to be accepted or declined (`docs/SPEC.md` FR-14.7, FR-14.8).
@@ -178,7 +178,7 @@ The web's points of interest (`docs/SPEC.md` FR-15.2–FR-15.5) on the same tile
 
 Map, Stories, the record button (FR-5.1), Sync and You.
 
-- Each tab keeps its state: the map's camera, mode, range, selection and a recording are as they were on coming back. Back from another tab goes to Map, and from Map leaves the app.
+- Each tab keeps its state: the map's camera, mode, range, focus, checked group and a recording are as they were on coming back. Back from another tab goes to Map, and from Map leaves the app.
 - Stories counts copies waiting to be answered. Starting a recording from another tab moves to Map.
 - The You tab leads to Settings (FR-1.5), Activity graph & trends (FR-1.6), Settings › Sync (FR-3.1) and Privacy (FR-1.7), and shows the app's version and commit.
 - Theme belongs to the phone, not the account (`docs/SPEC.md` FR-4.12), so the demo account can change it. Language (FR-1.5) does nothing for the demo account.
@@ -189,7 +189,7 @@ Map, Stories, the record button (FR-5.1), Sync and You.
 
 The web's photos (`docs/SPEC.md` FR-16, ADR-0024) on the map and in the Edit window's Photos tab, against the same endpoints.
 
-- The map shows, in Normal mode, the photos of the activity being edited, else the selected one, else the open Story's. None in Fog or Heatmap, on a hidden route, on the Track tab or while recording. Smaller below zoom 10, none below 4 (`docs/SPEC.md` FR-4.15).
+- The map shows, in Normal mode, the photos of the activity being edited, else the focused one, else the open Story's. None in Fog or Heatmap, on a hidden route, on the Track tab or while recording. Smaller below zoom 10, none below 4 (`docs/SPEC.md` FR-4.15).
 - Photos that would overlap share a marker; a tap zooms in to separate them (up to zoom 19) when they lie more than 15 m apart, else steps through them.
 - The Photos tab is for one activity with a track. Added photos come from Android's photo picker, are redrawn upright at most 2,048 px with a 320 px thumbnail and placed by the server's placement check. One it can't place waits for the user to place it on the route, and Save is refused while any waits.
 - Nothing is written until Save, which writes the fields, then uploads, changes and deletes one at a time, then a track edit. A failure keeps the window open, and Save again carries on from the first unwritten change. Back asks before throwing photo changes away.
@@ -298,7 +298,7 @@ The web's upload (`docs/SPEC.md` FR-3.1, FR-3.4) as a screen, for a verified, no
 
 The web's `/sync` page (`docs/SPEC.md` FR-3.9) shown in the app (`docs/SPEC.md` FR-10.8), read again each time it comes to the front.
 
-- View on map opens the app's map in Normal mode with the activity selected. When its day is outside the range, the range becomes that day, as if picked.
+- View on map opens the app's map in Normal mode with the activity focused. When its day is outside the range, the range becomes that day, as if picked.
 
 ## 7. FR-5 — In-App GPS Recording
 

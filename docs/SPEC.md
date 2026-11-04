@@ -190,7 +190,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 
 ### FR-3.4 Import status
 
-- Files, Health Connect sessions and recordings are one history: the web's Upload menu shows what's in progress, the Sync page (FR-3.9) and the Android app's Sync history what finished, for 90 days.
+- Files, Health Connect sessions and recordings are one history, shown for 90 days (FR-3.9).
 - A phone sync of several activities is one import. The web can't start a phone sync.
 
 ### FR-3.5 Duplicate detection
@@ -245,7 +245,6 @@ An activity's times and dates are the wall clock where it was recorded, whatever
 
 - Normal mode draws every activity in the date range (FR-6) passing the Type and Distance filters that isn't Hidden or Pending (FR-5.15); with a Story open, its activities (FR-14.6).
 - Tracks are drawn from zoom 4 in.
-- The focused activity (FR-5.1) is emphasized, with its pace (FR-4.8).
 - A track across the 180° meridian is drawn the short way and counts in Fog and Heatmap on both sides.
 
 ### FR-4.2 Fog of War mode
@@ -355,7 +354,7 @@ The same paths for every account, behind the session and cached like every map t
 - A row's time is moving time, as Trends counts it (FR-9.1), so a Story's total is its rows' sum.
 - How a type shows is the server's to say, in the app's language, and never changes the activity: its name, from a catalog of common types, else the type spaced out and capitalized; and its kind (on foot, on wheels, motor, solowheel, e-scooter or other), from the words in it, which picks the row's icon and whether pace or speed shows.
 - Badges: Pending and Hidden (FR-5.15); Story, naming its Stories; Private, for an activity entirely inside Private locations (FR-8.1), which has no track, distance or duration.
-- One activity is focused at a time, by clicking its row or track; any number can be checked. The checked activities and the focused one are drawn bold, on the map and in its image (FR-4.10). The toolbar's actions act on the checked activities when any are, else on the focused one, never both. Checking never moves the camera, and camera fits skip Hidden activities.
+- Focusing, checking and what the toolbar acts on: FR-5.15.
 
 ### FR-5.2 TYPE filter
 
@@ -400,7 +399,9 @@ Chop (keep the part between two points), Cut (remove it and join the ends), Dele
 - An edit is stored by recording time, so it keeps meaning the same points when a Private location changes.
 - At most 120 editor openings an hour per account.
 
-### FR-5.15 Activity states
+### FR-5.15 Activity states and selection
+
+An activity's state has three independent parts: lifecycle, on the server; Hidden; and Focused or Checked, per tab or app session. "Selected" names none of them.
 
 ```mermaid
 stateDiagram-v2
@@ -420,7 +421,12 @@ stateDiagram-v2
 | Normal | Drawn | Counted | Plain | Yes |
 | Pending | Not drawn | Not counted, at any zoom | Badge, old numbers; can't be focused, checked, edited or deleted | Yes |
 | Hidden | Not drawn | Counted | Dimmed, badge | No |
+| Focused | Bold, in pace bands (FR-4.8) | Counted | Highlighted | No |
+| Checked | Bold | Counted | Ticked | No |
 
+- At most one activity is Focused, by clicking its row or track; any number are Checked. Bold is either, on the map and in its image (FR-4.10). The toolbar acts on the Checked ones when any are, else the Focused one.
+- On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/android/docs/SPEC.md` FR-2.7).
+- Hiding keeps Focused and Checked; camera fits skip Hidden. A new range (FR-6) or opening or closing a Story clears Hidden, Focused and Checked; Fog and Heatmap set the last two aside until Normal.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden activity stays hidden after Pending clears.
 - Leaving Pending brings the track back at once, and Fog and Heatmap once redrawn.
 - An activity entirely inside Private locations is Normal with no geometry.
@@ -503,7 +509,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 ### FR-10.2 Help page
 
 - `/help` explains every feature. Its facts are this document's: changing a limit, a mode's window or a zoom tier changes Help too.
-- Guides follow it too: `/gpx-viewer`, `/import/garmin`, `/import/strava`, `/fog-of-war`. `/guides` lists them and the Info menu links it.
+- Guides follow it too: `/gpx-viewer`, `/import/garmin`, `/import/strava`, `/fog-of-war`. `/guides` lists them.
 - It tells someone who can't sign in how to have their account deleted by email, and how to revoke Google's or Facebook's access. Its `#delete-account` anchor is the deployment's data-deletion instructions URL for Facebook (FR-1.10).
 
 ### FR-10.3 Contacts page
@@ -512,20 +518,19 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 
 ### FR-10.4 Page header and footer
 
-- One header on every page, one footer on every page but the map and Profile; menus work without JavaScript.
+- Menus work without JavaScript.
 - With a session pages are `Cache-Control: no-store`, since the header names the account; without, public pages are `public, max-age=300` with `Vary: Cookie`, so a copy cached signed out is never reused signed in.
 - An unknown address gets a "Page not found" page, or a JSON error under `/v1/` and `/tiles/` (§1.5).
-- Indexable pages carry Open Graph and Twitter card tags with a 1200×630 share image.
 
 ### FR-10.6 Privacy policy
 
-`/privacy`, in English and Russian, is the policy the Play Store listing and the Android app's Health Connect rationale point to. Its text (`templates/pages/privacy.html`, `privacy.ru.html`) must agree with `DPIA.md` and this document: a change to what is kept, who processes it or for how long changes all three.
+`/privacy`, in English and Russian, is the policy the Play Store listing and the Android app's Health Connect rationale point to. Its text must agree with `DPIA.md` and this document: a change to what is kept, who processes it or for how long changes all three.
 
 ### FR-10.8 Pages inside the Android app
 
 - The Android app shows Settings, Profile, the Sync page and About as web pages; the `hmt_app` cookie drops their header and footer.
-- For the app, Settings leaves out Theme, Download your data and Delete account, which the app has natively, and About has no demo link. Signed out, the app's About is cached apart from the browser's.
-- The cookie's value names the app, `android` or `ios`, and a page names that platform's app and health store; any value but `ios` counts as Android. An empty Sync page points to the app's Sync tab.
+- For the app, pages leave out what the app has natively. Signed out, the app's About is cached apart from the browser's.
+- The cookie's value names the app, `android` or `ios`, and a page names that platform's app and health store; any value but `ios` counts as Android.
 
 ## 13. FR-11 — Donations
 
@@ -699,7 +704,7 @@ A place is captured by staying inside it for 30 seconds with the Android app's c
 
 ## 19. Mobile Browser Support
 
-The web app works in a phone browser as on a desktop. Taps stand in for hover on Trends and the activity grid, a tap within about 14 px of a track focuses it, and hovering a track to underline its row stays mouse-only.
+The web app works in a phone browser as on a desktop. Taps stand in for hover.
 
 ## 20. Deliberate limits
 
