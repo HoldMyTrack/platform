@@ -65,7 +65,7 @@ data class RecordingStats(
  * ([onChange], [points]) to draw the live track.
  *
  * **Stop saves here, not in a screen**, for the same reason: Stop can come from the
- * notification. A recording shorter than [MIN_DURATION_MS] of moving time (pauses excluded),
+ * notification. A recording shorter than [RecordingRules.MIN_DURATION_MS] of moving time (pauses excluded),
  * or with fewer than two fixes, is dropped rather than saved. Otherwise it's inserted into
  * `recorded_activities` with no name or description and the
  * account's last-used type ([RecordingTypes.lastUsed]) — nothing is asked while recording —
@@ -122,7 +122,7 @@ class RecordingService : Service() {
 
     private val recorded = mutableListOf<RecordedPoint>()
     private var lastFix: Location? = null
-    private var distanceM = 0.0
+    private val tally = DistanceTally<Location> { a, b -> a.distanceTo(b).toDouble() }
 
     /** Elapsed time is measured off `elapsedRealtime()`, not wall-clock time — immune to the
      *  user's clock being adjusted (timezone travel, NTP correction) mid-recording. */
@@ -165,7 +165,7 @@ class RecordingService : Service() {
         account = Session.email
         recorded.clear()
         lastFix = null
-        distanceM = 0.0
+        tally.reset(0.0)
         accumulatedBeforePauseMs = 0L
         recordingStartedAtRealtime = SystemClock.elapsedRealtime()
         state = RecordingState.RECORDING
@@ -220,7 +220,7 @@ class RecordingService : Service() {
         recorded.clear()
         recorded += leftover.points
         lastFix = null
-        distanceM = leftover.distanceM
+        tally.reset(leftover.distanceM)
         accumulatedBeforePauseMs = leftover.movingMs
         state = RecordingState.PAUSED
         // Started, not just bound, so it outlives the map the way a fresh recording does;
@@ -249,16 +249,15 @@ class RecordingService : Service() {
                 accumulatedBeforePauseMs += SystemClock.elapsedRealtime() - recordingStartedAtRealtime
                 val id = recordingId
                 val movingMs = accumulatedBeforePauseMs
-                val distance = distanceM
+                val distance = tally.meters
                 journalWrite { it.updateTotals(id, movingMs, distance) }
             }
             RecordingState.PAUSED -> {
                 state = RecordingState.RECORDING
                 recordingStartedAtRealtime = SystemClock.elapsedRealtime()
-                // The next fix after a pause is a fresh baseline, not a jump from wherever the
-                // phone drifted to while stationary — counting that gap as distance would
-                // inflate the track.
+                // The next fix after a pause is a fresh baseline (DistanceTally).
                 lastFix = null
+                tally.breakStep()
             }
             RecordingState.IDLE -> return
         }
@@ -312,7 +311,7 @@ class RecordingService : Service() {
         val fix = lastFix
         return RecordingStats(
             elapsedMs = elapsed,
-            distanceM = distanceM,
+            distanceM = tally.meters,
             altitudeM = fix?.takeIf { it.hasAltitude() }?.altitude,
             speedMps = fix?.takeIf { it.hasSpeed() }?.speed?.toDouble() ?: 0.0,
         )
@@ -320,7 +319,7 @@ class RecordingService : Service() {
 
     private fun onLocation(location: Location) {
         if (state != RecordingState.RECORDING) return
-        lastFix?.let { distanceM += it.distanceTo(location) }
+        tally.add(location)
         lastFix = location
         val point = RecordedPoint(
             lat = location.latitude,
@@ -332,7 +331,7 @@ class RecordingService : Service() {
         val id = recordingId
         val seq = recorded.size - 1
         val movingMs = currentStats().elapsedMs
-        val distance = distanceM
+        val distance = tally.meters
         journalWrite { it.append(id, seq, point, movingMs, distance) }
         publish()
     }
@@ -442,10 +441,6 @@ class RecordingService : Service() {
         const val ACTION_TOGGLE = "dev.holdmytrack.android.recording.TOGGLE"
         const val ACTION_STOP = "dev.holdmytrack.android.recording.STOP"
 
-        /** A recording shorter than this — moving time, pauses excluded — is dropped on Stop
-         *  rather than saved: an accidental tap, not an activity anyone meant to keep. */
-        const val MIN_DURATION_MS = 60_000L
-
         fun intent(context: Context, action: String): Intent =
             Intent(context, RecordingService::class.java).setAction(action)
 
@@ -483,7 +478,7 @@ class RecordingService : Service() {
             distanceM: Double,
             points: List<RecordedPoint>,
         ): RecordedActivityRecord? {
-            if (movingMs < MIN_DURATION_MS || points.size < 2) return null
+            if (!RecordingRules.keeps(movingMs, points.size)) return null
             return RecordedActivityRecord(
                 id = id,
                 name = "",
