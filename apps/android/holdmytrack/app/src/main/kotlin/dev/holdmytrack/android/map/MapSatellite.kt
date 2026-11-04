@@ -42,15 +42,17 @@ object MapSatellite {
     /** Whether the deployment configures imagery: the server leaves the source out otherwise. */
     fun isAvailable(style: Style): Boolean = style.getSource(SOURCE_ID) != null
 
-    /** A no-op on a style without imagery. */
-    fun apply(style: Style, on: Boolean) {
+    /** The imagery layer for [on], and with [look] the fills hidden and the roads dimmed for it:
+     *  imagery that failed to load ([SatelliteStatus]) keeps its layer, to notice a tile, without
+     *  the look. A no-op on a style without imagery. */
+    fun apply(style: Style, on: Boolean, look: Boolean = on) {
         if (!isAvailable(style)) return
         style.getLayer(LAYER_ID)?.setProperties(PropertyFactory.visibility(if (on) Property.VISIBLE else Property.NONE))
         val metadata = StyleMetadata.of(style)
-        val fills = PropertyFactory.visibility(if (on) Property.NONE else Property.VISIBLE)
+        val fills = PropertyFactory.visibility(if (look) Property.NONE else Property.VISIBLE)
         ids(metadata, HIDES_METADATA).forEach { id -> style.getLayer(id)?.setProperties(fills) }
         // Off is the default opacity, 1: the dimmed roads are the ones that set none of their own.
-        val opacity = if (on) (metadata[ROAD_OPACITY_METADATA] as? JsonPrimitive)?.doubleOrNull?.toFloat() ?: 1f else 1f
+        val opacity = if (look) (metadata[ROAD_OPACITY_METADATA] as? JsonPrimitive)?.doubleOrNull?.toFloat() ?: 1f else 1f
         ids(metadata, DIMS_METADATA).forEach { id -> style.getLayer(id)?.setProperties(PropertyFactory.lineOpacity(opacity)) }
     }
 

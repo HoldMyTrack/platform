@@ -9,6 +9,7 @@ import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.MapSession
 import dev.holdmytrack.android.map.PendingDiff
 import dev.holdmytrack.android.map.RangeShift
+import dev.holdmytrack.android.map.SatelliteStatus
 import dev.holdmytrack.android.map.SliderRules
 import dev.holdmytrack.android.map.shiftRange
 import dev.holdmytrack.android.net.deleteDone
@@ -176,6 +177,10 @@ class ClientRulesTest {
             }
         },
         "toolbarTarget" to { input -> ids(PanelRules.targetIds(input.strings("checked").toSet(), input.string("focused"))) },
+        "satelliteStatus" to { input ->
+            val status = SatelliteStatus.of(input.bool("loaded"), input.bool("failed"), input.number("waitedMs").toLong())
+            buildJsonObject { put("status", status.name.lowercase()); put("look", SatelliteStatus.look(input.bool("on"), status)) }
+        },
         "statsOffered" to { input -> JsonPrimitive(ExportStatsRules.offered(input.strings("checked").toSet(), input.string("storyId"))) },
         "statsCardPlacement" to { input ->
             val card = input["card"]!!.jsonObject

@@ -33,6 +33,8 @@ import dev.holdmytrack.android.map.ModeBarState
 import dev.holdmytrack.android.map.NoticePanel
 import dev.holdmytrack.android.map.PaceBands
 import dev.holdmytrack.android.map.RangeController
+import dev.holdmytrack.android.map.SatelliteStatus
+import dev.holdmytrack.android.map.SatelliteWatch
 import dev.holdmytrack.android.map.SheetChrome
 import dev.holdmytrack.android.map.SpotsController
 import dev.holdmytrack.android.map.StyleMetadata
@@ -135,6 +137,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private lateinit var camera: CameraFramer
     private val selectedRange: DateRange? get() = session.range
     private lateinit var basemap: BasemapWatch
+    private lateinit var imagery: SatelliteWatch
+    private var imageryStatus = SatelliteStatus.LOADING
     private val storyId: String? get() = session.storyId
 
     /** Set on every resume, since Sync or a recording may have added days; `syncSession`
@@ -201,7 +205,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private val spots = SpotsController(this, map = { map }, style = { style?.takeIf { overlaysAttached } }, frame = { camera.flyTo(it) })
 
     /** The style's flavor and language, and the Layers menu's paths, places and satellite. */
-    private val layers = LayersController(this, spots, style = { style }, attached = { overlaysAttached }, mode = { mode })
+    private val layers = LayersController(this, spots, style = { style }, attached = { overlaysAttached }, mode = { mode }, onSatelliteSwitched = ::onSatelliteSwitched)
 
     /** The window this map is a tab of; null while the fragment is detached. */
     private val host get() = activity as? MainActivity
@@ -452,6 +456,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         // 404s leaves a plausible-looking blank map behind, with nothing on screen to say so.
         mapView.addOnDidFailLoadingMapListener { error -> reportFailure(error) }
         basemap = BasemapWatch(mapView, ::onBasemap)
+        imagery = SatelliteWatch(mapView, isOn = { layers.satelliteOn }, onChange = ::onImagery)
 
         mapView.getMapAsync { instance ->
             map = instance
@@ -767,6 +772,26 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         }
     }
 
+    /** Satellite's imagery loads or fails on this device: the map's look follows, and its notice. */
+    private fun onImagery(status: SatelliteStatus) {
+        imageryStatus = status
+        layers.onImagery(status)
+        renderImageryNotice()
+    }
+
+    private fun onSatelliteSwitched() {
+        if (::imagery.isInitialized) imagery.onSwitched()
+        renderImageryNotice()
+    }
+
+    private fun renderImageryNotice() {
+        if (layers.satelliteOn && imageryStatus == SatelliteStatus.FAILED) {
+            notices.show(MapNotice.SATELLITE_FAILED, getString(R.string.map_satellite_failed), failed = true)
+        } else {
+            notices.hide(MapNotice.SATELLITE_FAILED)
+        }
+    }
+
     private fun reportFailure(error: String) {
         Log.e(TAG, "map failed to load: $error")
         notices.show(
@@ -784,6 +809,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         super.onStart()
         mapView.onStart()
         basemap.start()
+        imagery.start()
         SyncProgress.addListener(syncProgressListener)
         SyncProgress.resume(requireContext())
         recording.start()
@@ -829,6 +855,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         SyncProgress.removeListener(syncProgressListener)
         recording.stop()
         basemap.stop()
+        imagery.stop()
         mapView.onStop()
         super.onStop()
     }

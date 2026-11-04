@@ -39,7 +39,7 @@ class ExportController(
         styleUrl = layers::styleUrl,
         prepare = prepare,
         darkBase = { style()?.let(layers::darkBase) ?: layers.isNight() },
-        satelliteOn = { layers.satelliteOn },
+        satelliteOn = { layers.satelliteShown },
         photos = photos,
         checked = checked,
         storyId = storyId,
