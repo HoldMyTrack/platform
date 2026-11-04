@@ -120,6 +120,7 @@ object MapOverlays {
     ) {
         trackStory = story
         MapLayers.update(null) { it.copy(mode = mode, satellite = satellite, queries = it.queries + (TRACKS_SOURCE_ID to trackQuery(range))) }
+        addArrowImage(style)
         MapLayers.attach(style, doc, excluded)
         setMode(style, mode)
         // The live line in the tracks' own color.
@@ -135,10 +136,16 @@ object MapOverlays {
      * [routeFeature] for the group's direction arrows. The web's `setTrackBands`.
      */
     fun setTrackBands(style: Style, metrics: TrackMetrics) {
-        // A style reload drops the image with the layers, and every reload draws the bands again.
-        if (style.getImage(ARROW_IMAGE) == null) style.addImage(ARROW_IMAGE, arrowBitmap(), true)
+        addArrowImage(style)
         val features = bandFeatures(metrics.points, metrics.bands) + listOfNotNull(routeFeature(metrics.points))
         style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(features))
+    }
+
+    /** Registers the chevron the bands' and the bold tracks' arrows draw (`track-bands-arrows`,
+     *  `tracks-arrows`). A style reload drops it with the layers, so each [attach] adds it again;
+     *  until it's there the bold tracks draw no arrows. The web's `addArrowImage`. */
+    fun addArrowImage(style: Style) {
+        if (style.getImage(ARROW_IMAGE) == null) style.addImage(ARROW_IMAGE, arrowBitmap(), true)
     }
 
     /** [points] as one line in recording order, marked `route`, or null with too few to have a
@@ -154,7 +161,8 @@ object MapOverlays {
         Feature.fromGeometry(line).apply { addNumberProperty("band", run.band) }
     }
 
-    /** The chevron the document's `track-bands-arrows` layer names (the web's bandsGroup.ts). */
+    /** The chevron the document's `track-bands-arrows` and `tracks-arrows` layers name (the web's
+     *  bandsGroup.ts). */
     private const val ARROW_IMAGE = "track-arrow"
 
     /** The chevron's box in dp. The chevron itself stays inside the 6 dp band it rides. */
