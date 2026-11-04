@@ -72,3 +72,23 @@ coverage_status:
                   description: What every tile request sends as `cv` to have the tile cached; it changes with version.
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
+map_imagery:
+  get:
+    summary: Whether satellite imagery is offered now
+    description: >-
+      False when the deployment configures none, or while the worker has paused it near the
+      imagery plan's monthly limit (docs/SPEC.md FR-4.14). Native clients read the same answer
+      from the style, which leaves imagery out; the web, whose imagery is built in, reads this.
+      Public, like the style.
+    security: []
+    responses:
+      "200":
+        description: The status
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [available]
+              additionalProperties: false
+              properties:
+                available: { type: boolean }

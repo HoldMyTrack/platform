@@ -77,6 +77,7 @@ type Server struct {
 	appBaseURL            string
 	basemapOrigin         string
 	satellite             mapstyle.Satellite
+	imagery               imageryCache
 	version               string
 	skipEmailVerification bool
 	google                googleOAuth
@@ -234,6 +235,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	// a session would also couple basemap rendering to session state on mobile, where the
 	// app can usefully draw a map before the user has signed in.
 	s.mux.HandleFunc(route("GET", "/map/style/{flavor}"), s.handleMapStyle)
+	s.mux.HandleFunc(route("GET", "/map/imagery"), s.handleMapImagery)
 	s.mux.HandleFunc("GET /healthz", s.handleHealthz)
 	return s
 }
