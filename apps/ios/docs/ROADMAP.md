@@ -172,7 +172,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [ ] **7b.2 Track editor and Private location editor**. Done when: each operation matches the `edit-track-*` cases on a real track, and a Private location saves and clips.
 - [ ] **7b.3 Spots and capture**: layers per category, the popup, capture by 30 seconds within 25 m in the foreground with precise location, the screen kept awake. Done when: a capture at a real place is accepted by the server.
 - [ ] **7b.4 Photos**: `PHPickerViewController`, redrawn upright at most 2,048 px with a 320 px thumbnail, placed by the server's check or by hand. iOS's picker may keep a photo's location, unlike Android's: measure it and say so in this app's `SPEC.md`. Done when: photos added, moved and deleted through Save survive a reload.
-- [ ] **7b.5 Map image export**: the viewfinder and presets, saved to Photos with add-only access and offered to the share sheet. Port Android's approach (`apps/android/docs/IMPLEMENTATION.md` §3.5). Done when: an exported image shows exactly the window, with the credit and the mark.
+- [ ] **7b.5 Map image export**: the viewfinder and presets, saved to Photos with add-only access and offered to the share sheet. Port Android's approach (`apps/android/docs/IMPLEMENTATION.md` §3.5), with the server's stats card (`docs/IMPLEMENTATION.md` §4.3.3). Done when: an exported image shows exactly the window, with the credit, the mark and, when asked for, the stats card.
 
 ## Phase 7c — HealthKit sync
 
