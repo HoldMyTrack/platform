@@ -182,6 +182,8 @@ export const en = {
   'spots.wikipedia': 'Wikipedia',
   'export.cancel': 'Cancel export',
   'export.capture': 'Capture export',
+  'export.show_stats': 'Show stats',
+  'export.show_stats_hint': 'Check activities to show their stats.',
   'export.custom': 'Custom',
   'export.custom_size': 'Custom · {name}',
   'export.custom_size_full': 'Custom · {name} ({px} px long side)',

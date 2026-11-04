@@ -213,7 +213,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite, roads, photos: photoLayer.exportPhotos }),
     [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, bands, paths, satellite, roads, photoLayer.exportPhotos],
   );
-  const exporter = useExportFlow(map, container, exportScene);
+  const exportStats = useMemo(() => ({ checked: checkedActivityIds, storyId }), [checkedActivityIds, storyId]);
+  const exporter = useExportFlow(map, container, exportScene, exportStats);
   const tapsAct = mapTapsAct(exporter.flow);
   useEffect(() => setMapTapsActive(tapsAct), [tapsAct]);
   useSelectionLayers(map, {

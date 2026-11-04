@@ -13,6 +13,7 @@ import { setRoadsVisible } from './mapRoads';
 import { setSatelliteVisible } from './satellite';
 import type { BikePathOverlays } from './bikePathsGroup';
 import { drawPhotoMarkers, type ExportPhotos } from './exportPhotos';
+import { statsCardPlacement, stripMetrics, WATERMARK_FONT_SCALE, WATERMARK_LOGO_SCALE } from './exportStats';
 import { photoMarkerLayout } from './photoClusters';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
 import { addArrowImage, setTrackBands } from './trackBands';
@@ -37,24 +38,6 @@ import { trackQuery } from './tracks';
  *  the live map which usually has most of them cached already. */
 const EXPORT_IDLE_TIMEOUT_MS = 20_000;
 
-/** Attribution font size, as a fraction of the *final* canvas's shorter side — scales with
- *  output resolution (a 566px-tall Instagram landscape and a 1920px Story shouldn't read
- *  the credit line at the same absolute size) rather than a fixed px value tuned for one
- *  preset and wrong for the rest. Clamped so it never disappears on a small custom export or
- *  overwhelms one on the largest preset. */
-const ATTRIBUTION_FONT_FRACTION = 0.016;
-const ATTRIBUTION_MIN_FONT_PX = 12;
-const ATTRIBUTION_MAX_FONT_PX = 28;
-/** Distance from the canvas's bottom-right corner to the credit line's own corner, same
- *  fraction-of-shorter-side scaling as the font size above. */
-const ATTRIBUTION_MARGIN_FRACTION = 0.014;
-
-/** The HoldMyTrack watermark's wordmark font size, relative to the attribution's own font
- *  size rather than its own fraction — the two share one lower strip, so they scale together
- *  and the mark stays the same modest step larger than the credit line at every output size. */
-const WATERMARK_FONT_SCALE = 1.15;
-/** The logo glyph's height, as a multiple of the wordmark's font size. */
-const WATERMARK_LOGO_SCALE = 1.7;
 /** Drawn at partial opacity with no backing plate — a signature, not a banner competing with
  *  the map for attention. */
 const WATERMARK_ALPHA = 0.7;
@@ -86,6 +69,8 @@ export interface ExportFrameCapture {
   heightPx: number;
   /** The image's exact pixel size: a platform preset's, or a Custom size in the window's shape. */
   target: { widthPx: number; heightPx: number };
+  /** The stats card the server drew for this size and theme (useStatsCard.ts), or null for none. */
+  statsCard: HTMLImageElement | null;
 }
 
 /**
@@ -117,7 +102,7 @@ export async function exportFramedImage(
   state: ExportViewState,
   capture: ExportFrameCapture,
 ): Promise<Blob> {
-  const { center, widthPx, heightPx, target } = capture;
+  const { center, widthPx, heightPx, target, statsCard } = capture;
   const { widthPx: outWidth, heightPx: outHeight } = target;
   const cssWidth = Math.max(1, Math.round(widthPx));
   const cssHeight = Math.max(1, Math.round(heightPx));
@@ -142,6 +127,7 @@ export async function exportFramedImage(
     });
     const markers = photoMarkerLayout(points, instance.getZoom(), activeId, loneId, { width: cssWidth, height: cssHeight }, scale);
     await drawPhotoMarkers(finalCanvas, markers, items, scale);
+    if (statsCard) drawStatsCard(finalCanvas, statsCard);
     const stripBottom = drawAttribution(finalCanvas, attributionText(state.satellite));
     await drawWatermark(finalCanvas, stripBottom, isDarkBase(state.flavor, state.satellite));
 
@@ -153,6 +139,14 @@ export async function exportFramedImage(
   } finally {
     cleanup();
   }
+}
+
+/** The stats card at its own pixel size, where the preview showed it (exportStats.ts). */
+function drawStatsCard(canvas: HTMLCanvasElement, card: HTMLImageElement): void {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) throw new Error('export: could not create stats card canvas context');
+  const { x, y } = statsCardPlacement(canvas.width, canvas.height, { width: card.naturalWidth, height: card.naturalHeight });
+  ctx.drawImage(card, Math.round(x), Math.round(y));
 }
 
 function scaleCanvas(source: HTMLCanvasElement, widthPx: number, heightPx: number): HTMLCanvasElement {
@@ -193,7 +187,7 @@ function drawAttribution(canvas: HTMLCanvasElement, text: string): number {
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('export: could not create attribution canvas context');
 
-  const { fontPx, margin } = stripMetrics(canvas);
+  const { fontPx, margin } = stripMetrics(canvas.width, canvas.height);
   const padX = fontPx * 0.5;
   const padY = fontPx * 0.3;
 
@@ -224,18 +218,6 @@ function drawAttribution(canvas: HTMLCanvasElement, text: string): number {
   return baselineY + descent + padY;
 }
 
-/** The lower strip's shared sizing: the attribution font size and the corner margin, both
- *  scaled off the canvas's shorter side. */
-function stripMetrics(canvas: HTMLCanvasElement): { fontPx: number; margin: number } {
-  const shortSide = Math.min(canvas.width, canvas.height);
-  const fontPx = Math.min(
-    ATTRIBUTION_MAX_FONT_PX,
-    Math.max(ATTRIBUTION_MIN_FONT_PX, shortSide * ATTRIBUTION_FONT_FRACTION),
-  );
-  const margin = Math.max(fontPx * 0.5, shortSide * ATTRIBUTION_MARGIN_FRACTION);
-  return { fontPx, margin };
-}
-
 /**
  * Bakes the HoldMyTrack logo and "HoldMyTrack" wordmark into the bottom-left corner of
  * `canvas` in place — the opposite end of the attribution's lower strip, with the same corner
@@ -259,7 +241,7 @@ async function drawWatermark(canvas: HTMLCanvasElement, bottomY: number, dark: b
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('export: could not create watermark canvas context');
 
-  const { fontPx: attributionFontPx, margin } = stripMetrics(canvas);
+  const { fontPx: attributionFontPx, margin } = stripMetrics(canvas.width, canvas.height);
   const fontPx = attributionFontPx * WATERMARK_FONT_SCALE;
   const logoH = fontPx * WATERMARK_LOGO_SCALE;
   const gap = fontPx * 0.35;

@@ -19,6 +19,8 @@ import {
   type ExportChoice,
   type Rect,
 } from '../map/exportViewfinder';
+import { statsCardPlacement } from '../map/exportStats';
+import type { StatsCardState } from '../map/useStatsCard';
 import { t } from '../i18n';
 
 /** EXPORT_PRESET_ROWS' names as the toolbar shows them — the ids stay English. */
@@ -50,6 +52,11 @@ export interface ExportViewfinderProps {
   onChoiceChange: (choice: ExportChoice) => void;
   onCapture: () => void;
   onCancel: () => void;
+  /** Show stats (FR-4.10): ticked, whether it can be, and the card it previews. */
+  showStats: boolean;
+  statsOffered: boolean;
+  onShowStatsChange: (show: boolean) => void;
+  stats: StatsCardState;
 }
 
 interface DragState {
@@ -87,6 +94,10 @@ export function ExportViewfinder({
   onChoiceChange,
   onCapture,
   onCancel,
+  showStats,
+  statsOffered,
+  onShowStatsChange,
+  stats,
 }: ExportViewfinderProps) {
   const dragRef = useRef<DragState | null>(null);
   const [settling, setSettling] = useState(false);
@@ -194,6 +205,7 @@ export function ExportViewfinder({
       <div className="export-viewfinder__shade export-viewfinder__shade--right" />
 
       <div className="export-viewfinder__window" data-testid="export-viewfinder-window">
+        {stats.card && <StatsCardPreview url={stats.card.url} card={stats.card.image} image={size} windowWidth={win.w} />}
         {CORNERS.map((corner) => (
           <div
             key={corner}
@@ -249,6 +261,16 @@ export function ExportViewfinder({
             ))}
           </select>
         </span>
+        <label className="export-viewfinder__stats" title={statsOffered ? undefined : t('export.show_stats_hint')}>
+          <input
+            type="checkbox"
+            data-testid="export-viewfinder-stats"
+            checked={showStats && statsOffered}
+            disabled={busy || !statsOffered}
+            onChange={(event) => onShowStatsChange(event.target.checked)}
+          />
+          {t('export.show_stats')}
+        </label>
         <button type="button" className="export-viewfinder__button" data-testid="export-viewfinder-close" aria-label={t('export.cancel')} onClick={onCancel}>
           <X size={16} />
         </button>
@@ -259,15 +281,15 @@ export function ExportViewfinder({
           aria-label={t('export.capture')}
           title={t('export.capture')}
           onClick={onCapture}
-          disabled={busy}
+          disabled={busy || !stats.ready}
         >
           {busy ? <span className="export-viewfinder__spinner" aria-hidden="true" /> : <Camera size={16} />}
         </button>
       </div>
 
-      {error ? (
+      {error || stats.error ? (
         <p className="export-viewfinder__note export-viewfinder__note--error" role="alert" data-testid="export-viewfinder-error">
-          {error}
+          {error ?? stats.error}
         </p>
       ) : (
         <p className="export-viewfinder__note" data-testid="export-viewfinder-dimensions">
@@ -276,4 +298,19 @@ export function ExportViewfinder({
       )}
     </div>
   );
+}
+
+
+/** The stats card where the image will have it (exportStats.ts), scaled from the image's pixels
+ *  to the window's. The window's 2px border sits over the image's edge, so its children start
+ *  2px in. */
+function StatsCardPreview({ url, card, image, windowWidth }: { url: string; card: HTMLImageElement; image: { widthPx: number; heightPx: number }; windowWidth: number }) {
+  const scale = windowWidth / image.widthPx;
+  const { x, y } = statsCardPlacement(image.widthPx, image.heightPx, { width: card.naturalWidth, height: card.naturalHeight });
+  const style: CSSProperties = {
+    left: `calc(${Math.round(x) * scale}px - 2px)`,
+    top: `calc(${Math.round(y) * scale}px - 2px)`,
+    width: `${card.naturalWidth * scale}px`,
+  };
+  return <img className="export-viewfinder__stats-card" src={url} alt="" style={style} data-testid="export-viewfinder-stats-card" />;
 }

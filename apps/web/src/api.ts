@@ -353,6 +353,30 @@ export interface ActivityTrackMetrics {
   bands: PaceBand[];
 }
 
+/** `POST /v1/activities/stats-card`'s body (IMPLEMENTATION.md §4.3.3). */
+type StatsCardBody = paths['/activities/stats-card']['post']['requestBody']['content']['application/json'];
+
+/** `POST /v1/activities/stats-card`: the export's stats card as a PNG, or null when every activity
+ *  asked for is Pending. */
+export async function getStatsCard(
+  request: { activityIds: string[]; width: number; height: number; theme: 'light' | 'dark' },
+  signal?: AbortSignal,
+): Promise<Blob | null> {
+  const body: StatsCardBody = { activity_ids: request.activityIds, width: request.width, height: request.height, theme: request.theme };
+  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/stats-card`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    ...(signal ? { signal } : {}),
+    body: JSON.stringify(body),
+  });
+  if (res.status === 204) return null;
+  if (!res.ok) {
+    throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
+  }
+  return res.blob();
+}
+
 /**
  * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one activity's own
  * track, matching the exact vertex sequence its display trajectory already renders. Backs
