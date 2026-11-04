@@ -20,11 +20,17 @@ class LayersController(
     /** Whether the user layers are on it. */
     private val attached: () -> Boolean,
     private val mode: () -> MapMode,
+    /** Satellite switched on or off, for the imagery's wait and its notice. */
+    private val onSatelliteSwitched: () -> Unit = {},
 ) {
     private lateinit var menu: LayersMenu
 
     /** Whether the served style has satellite imagery; the Layers menu offers it only then. */
     private var satelliteAvailable = false
+
+    /** Whether the imagery loads on this device ([SatelliteWatch]): failed, the map draws as
+     *  with Satellite off. */
+    private var imagery = SatelliteStatus.LOADING
 
     private val context get() = fragment.requireContext()
 
@@ -69,23 +75,36 @@ class LayersController(
     /** Whether the basemap reads dark (dark flavor or satellite), which picks the export frame's colors. */
     fun darkBase(style: Style): Boolean = isNight() || satelliteDrawn(style)
 
-    /** Satellite imagery is drawn on [style], which picks Fog's and Heatmap's view over it. */
-    fun satelliteDrawn(style: Style): Boolean = MapSatellite.isOn(context) && MapSatellite.isAvailable(style)
+    /** The map looks like Satellite on [style], which picks Fog's and Heatmap's view over it. */
+    fun satelliteDrawn(style: Style): Boolean =
+        SatelliteStatus.look(MapSatellite.isOn(context) && MapSatellite.isAvailable(style), imagery)
 
-    /** Satellite imagery is drawn: the deployment serves some and it's switched on. */
+    /** Satellite is switched on where the deployment serves imagery. */
     val satelliteOn: Boolean get() = satelliteAvailable && MapSatellite.isOn(context)
+
+    /** The map looks like Satellite: on, and its imagery not failed. */
+    val satelliteShown: Boolean get() = SatelliteStatus.look(satelliteOn, imagery)
+
+    /** The imagery's status changed: the look follows, the layer stays as switched. */
+    fun onImagery(status: SatelliteStatus) {
+        imagery = status
+        val loaded = style() ?: return
+        MapSatellite.apply(loaded, MapSatellite.isOn(context), SatelliteStatus.look(MapSatellite.isOn(context), imagery))
+        if (attached()) MapLayers.update(loaded) { it.copy(satellite = satelliteDrawn(loaded)) }
+    }
 
     /** A style just loaded: it ships the path layers hidden, and only a deployment with imagery serves it. */
     fun onStyleLoaded(loaded: Style) {
         applyPaths(loaded)
         satelliteAvailable = MapSatellite.isAvailable(loaded)
-        MapSatellite.apply(loaded, MapSatellite.isOn(context))
+        MapSatellite.apply(loaded, MapSatellite.isOn(context), SatelliteStatus.look(MapSatellite.isOn(context), imagery))
         applyRoads(loaded)
     }
 
-    /** Satellite and the roads onto the export's map. */
+    /** Satellite and the roads onto the export's map, as the screen shows them: failed imagery
+     *  leaves it out. */
     fun applyBasemap(loaded: Style) {
-        MapSatellite.apply(loaded, satelliteOn)
+        MapSatellite.apply(loaded, satelliteShown)
         applyRoads(loaded)
     }
 
@@ -118,8 +137,9 @@ class LayersController(
 
     private fun setSatellite(on: Boolean) {
         MapSatellite.set(context, on)
+        onSatelliteSwitched()
         val loaded = style() ?: return
-        MapSatellite.apply(loaded, on)
+        MapSatellite.apply(loaded, on, SatelliteStatus.look(on, imagery))
         if (attached()) MapLayers.update(loaded) { it.copy(satellite = satelliteDrawn(loaded)) }
     }
 
