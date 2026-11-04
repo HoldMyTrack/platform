@@ -1,7 +1,7 @@
 import type { LayerSpecification } from 'maplibre-gl';
 import { TRACKS_MIN_ZOOM } from './config.ts';
 import type { MapMode } from './mapMode';
-import { ARROW_IMAGE } from './bandsGroup.ts';
+import { arrowLayout, arrowPaint } from './bandsGroup.ts';
 import { ROLE_METADATA, tilePath, VARS_METADATA, type GroupPart } from './mapLayers.ts';
 
 /**
@@ -29,12 +29,8 @@ const HOVER_WIDTH = 5;
 // 1.5 px of halo showing on each side of the focused line.
 const CASING_WIDTH = FOCUSED_WIDTH + 3;
 
-// The pace bands' chevron (bandsGroup.ts) along every bold track: white, since ink on the line
-// merges with the halo around it, and larger than on the bands.
+// The pace bands' chevrons (bandsGroup.ts) along every bold track.
 const ARROWS_LAYER_ID = 'tracks-arrows';
-const ARROW_SPACING = 50;
-const ARROW_COLOR = '#ffffff';
-const ARROW_SCALE = 1.4;
 
 const LAYER_IDS = ['tracks-casing', TRACKS_LAYER_ID, 'tracks-focused', 'tracks-hover', ARROWS_LAYER_ID];
 
@@ -65,18 +61,8 @@ function arrows(): LayerSpecification {
     'source-layer': TRACKS_SOURCE_LAYER,
     minzoom: TRACKS_MIN_ZOOM,
     filter: among('focused') as never,
-    layout: {
-      'symbol-placement': 'line',
-      'symbol-spacing': ARROW_SPACING,
-      'icon-image': ARROW_IMAGE,
-      'icon-size': ARROW_SCALE,
-      'icon-rotation-alignment': 'map',
-      'icon-pitch-alignment': 'map',
-      // Neither hidden by the basemap's labels nor hiding them.
-      'icon-allow-overlap': true,
-      'icon-ignore-placement': true,
-    },
-    paint: { 'icon-color': ARROW_COLOR },
+    layout: arrowLayout(FOCUSED_WIDTH),
+    paint: arrowPaint,
     metadata: { [VARS_METADATA]: { filter: ['focused', 'hidden'] } },
   } as LayerSpecification;
 }

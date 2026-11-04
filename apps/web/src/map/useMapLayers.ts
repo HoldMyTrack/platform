@@ -10,7 +10,7 @@ import { setRoadsVisible } from './mapRoads';
 import { setSatelliteVisible } from './satellite';
 import { ensureSpotsLayer, type SpotCategory } from './spots';
 import { buildStyle, type Flavor } from './style';
-import { addArrowImage, setTrackBands } from './trackBands';
+import { setTrackBands } from './trackBands';
 import { attachTrackInteractivity, refreshTrackLayer, trackQuery } from './tracks';
 import type { ActivityQuery, ActivityTrackMetrics } from '../api';
 import { lang } from '../i18n';
@@ -56,7 +56,6 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       // last style had: a style load mid-mode would otherwise drop to Normal and un-hide every
       // hidden track.
       const state = currentLayerState(instance);
-      addArrowImage(instance);
       applyLayers(instance, webLayers(flavor, getTileVersion()), {
         ...state,
         mode,

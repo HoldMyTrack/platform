@@ -21,11 +21,34 @@ const BAND_COLORS = ['#2b6cb0', '#38a169', '#d69e2e', '#dd6b20', '#c53030'];
  *  filtering that track out of the shared tiles. */
 const BAND_WIDTH = 6;
 
-/** The chevron each client registers as an SDF image, drawn pointing along +x and inside the band,
- *  so the layer colors it and line placement turns it to point from the route's start to its end. */
-export const ARROW_IMAGE = 'track-arrow';
-const ARROW_SPACING = 50;
-const ARROW_COLOR = '#202b25'; // --fm-ink
+/** The three chevrons on the bands and the bold tracks, as text in their own font
+ *  (scripts/chevronFont.mjs): text placed along a line skips what bends past `text-max-angle`, so
+ *  they stay off a wiggle too tight to read, and keeps its size at any zoom. `text-size` is the
+ *  chevron's width. MapLibre has no blend modes: translucent white shows the color under it as a
+ *  lighter shade. */
+export const ARROW_FONT = 'HoldMyTrack Chevron';
+const ARROW_GROUP = '\uE000\uE000\uE000';
+const ARROW_SPACING = 150;
+const ARROW_MAX_ANGLE = 25;
+const ARROW_OPACITY = 0.7;
+
+export const arrowLayout = (lineWidth: number) => ({
+  'symbol-placement': 'line' as const,
+  'symbol-spacing': ARROW_SPACING,
+  'text-field': ARROW_GROUP,
+  // As an expression: Android's document reader takes any array for one.
+  'text-font': ['literal', [ARROW_FONT]] as never,
+  'text-size': lineWidth,
+  'text-max-angle': ARROW_MAX_ANGLE,
+  // Upright text would flip to read left to right, pointing some of them backwards.
+  'text-keep-upright': false,
+  'text-rotation-alignment': 'map' as const,
+  'text-pitch-alignment': 'map' as const,
+  // Neither hidden by the basemap's labels nor hiding them.
+  'text-allow-overlap': true,
+  'text-ignore-placement': true,
+});
+export const arrowPaint = { 'text-color': '#ffffff', 'text-opacity': ARROW_OPACITY };
 
 export function bandsGroup(): GroupPart {
   return {
@@ -54,18 +77,8 @@ export function bandsGroup(): GroupPart {
           type: 'symbol',
           source: 'track-bands',
           filter: ['has', 'route'],
-          layout: {
-            'symbol-placement': 'line',
-            'symbol-spacing': ARROW_SPACING,
-            'icon-image': ARROW_IMAGE,
-            'icon-rotation-alignment': 'map',
-            'icon-pitch-alignment': 'map',
-            // Neither hidden by the basemap's labels nor hiding them.
-            'icon-allow-overlap': true,
-            'icon-ignore-placement': true,
-          },
-          // Ink on every flavor: the chevron sits on the band's color, never on the map.
-          paint: { 'icon-color': ARROW_COLOR },
+          layout: arrowLayout(BAND_WIDTH),
+          paint: arrowPaint,
         },
       ],
       // The selected activity's card shows the five steps, slowest first.

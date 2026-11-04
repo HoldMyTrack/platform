@@ -1,5 +1,5 @@
 {
-  "styleBuild": "05253ae16722",
+  "styleBuild": "c459defaa66d",
   "flavor": "white",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -1456,16 +1456,25 @@
           ],
           "layout": {
             "symbol-placement": "line",
-            "symbol-spacing": 50,
-            "icon-image": "track-arrow",
-            "icon-size": 1.4,
-            "icon-rotation-alignment": "map",
-            "icon-pitch-alignment": "map",
-            "icon-allow-overlap": true,
-            "icon-ignore-placement": true
+            "symbol-spacing": 150,
+            "text-field": "",
+            "text-font": [
+              "literal",
+              [
+                "HoldMyTrack Chevron"
+              ]
+            ],
+            "text-size": 4.5,
+            "text-max-angle": 25,
+            "text-keep-upright": false,
+            "text-rotation-alignment": "map",
+            "text-pitch-alignment": "map",
+            "text-allow-overlap": true,
+            "text-ignore-placement": true
           },
           "paint": {
-            "icon-color": "#ffffff"
+            "text-color": "#ffffff",
+            "text-opacity": 0.7
           },
           "metadata": {
             "holdmytrack:vars": {
@@ -1535,15 +1544,25 @@
           ],
           "layout": {
             "symbol-placement": "line",
-            "symbol-spacing": 50,
-            "icon-image": "track-arrow",
-            "icon-rotation-alignment": "map",
-            "icon-pitch-alignment": "map",
-            "icon-allow-overlap": true,
-            "icon-ignore-placement": true
+            "symbol-spacing": 150,
+            "text-field": "",
+            "text-font": [
+              "literal",
+              [
+                "HoldMyTrack Chevron"
+              ]
+            ],
+            "text-size": 6,
+            "text-max-angle": 25,
+            "text-keep-upright": false,
+            "text-rotation-alignment": "map",
+            "text-pitch-alignment": "map",
+            "text-allow-overlap": true,
+            "text-ignore-placement": true
           },
           "paint": {
-            "icon-color": "#202b25"
+            "text-color": "#ffffff",
+            "text-opacity": 0.7
           }
         }
       ],

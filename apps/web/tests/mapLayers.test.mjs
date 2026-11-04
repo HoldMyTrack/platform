@@ -2,6 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs, like bbox.test.mjs: Node strips the types from the imported .ts module itself.
+import { CHEVRON_FONT } from '../scripts/chevronFont.mjs';
 import { heatPointsRadius } from '../src/map/coverageGroup.ts';
 import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor, zoomTier } from '../src/map/mapLayers.ts';
 
@@ -167,15 +168,18 @@ test('the focused halo is the opposite of the map under it', () => {
   assert.equal(groupOf(dark, 'tracks').layers.find((l) => l.id === 'tracks-casing').paint['line-color'], '#a39e93');
 });
 
-test('arrows ride the route line over the bands, never a band run, in ink on every flavor', () => {
+test('arrows ride the route line over the bands, never a band run, as translucent text skipping tight bends, pointing along the line', () => {
   const bands = groupOf(doc, 'track-bands');
   assert.deepEqual(bands.layers.map((l) => l.id), ['track-bands-line', 'track-bands-arrows']);
   const [line, arrows] = bands.layers;
   assert.deepEqual([line.filter, arrows.filter], [['has', 'band'], ['has', 'route']]);
   assert.equal(arrows.layout['symbol-placement'], 'line');
-  assert.equal(arrows.layout['icon-image'], 'track-arrow');
-  const dark = groupOf(buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' }), 'track-bands');
-  assert.deepEqual([arrows.paint['icon-color'], dark.layers[1].paint['icon-color']], ['#202b25', '#202b25']);
+  assert.equal(arrows.layout['text-field'], '\uE000\uE000\uE000');
+  assert.deepEqual(arrows.layout['text-font'], ['literal', [CHEVRON_FONT]]);
+  assert.equal(arrows.layout['text-size'], line.paint['line-width']);
+  assert.equal(arrows.layout['text-keep-upright'], false);
+  assert.ok(arrows.layout['text-max-angle'] < 45, 'tighter than the default');
+  assert.ok(arrows.paint['text-opacity'] > 0 && arrows.paint['text-opacity'] < 1);
   assert.equal(viewFor(doc, 'fog', false).layout['track-bands-arrows'].visibility, 'none');
 });
 
@@ -199,9 +203,9 @@ test('the spots go on top, behind one switch, their badges named with the colors
 test('every bold track carries the pace bands\' arrows, pointing along it, and never a hidden one', () => {
   const arrows = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-arrows');
   const bandArrows = groupOf(doc, 'track-bands').layers.find((l) => l.id === 'track-bands-arrows');
-  assert.equal(arrows.layout['icon-image'], bandArrows.layout['icon-image']);
-  assert.equal(arrows.layout['symbol-placement'], 'line');
-  assert.equal(arrows.layout['icon-rotation-alignment'], 'map');
+  assert.equal(arrows.layout['text-field'], bandArrows.layout['text-field']);
+  const focused = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-focused');
+  assert.equal(arrows.layout['text-size'], focused.paint['line-width']);
   assert.deepEqual(arrows.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden'] });
   const tracksFocused = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-focused');
   assert.deepEqual(arrows.filter, tracksFocused.filter);

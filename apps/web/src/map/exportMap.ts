@@ -16,7 +16,7 @@ import { drawPhotoMarkers, type ExportPhotos } from './exportPhotos';
 import { statsCardPlacement, stripMetrics, WATERMARK_FONT_SCALE, WATERMARK_LOGO_SCALE } from './exportStats';
 import { photoMarkerLayout } from './photoClusters';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
-import { addArrowImage, setTrackBands } from './trackBands';
+import { setTrackBands } from './trackBands';
 import { trackQuery } from './tracks';
 
 /**
@@ -377,7 +377,6 @@ async function renderOffscreen(
       });
     });
 
-    addArrowImage(instance);
     applyLayers(instance, webLayers(state.flavor, getTileVersion()), {
       ...INITIAL_LAYER_STATE,
       mode: state.mode,

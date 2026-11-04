@@ -282,7 +282,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 ### FR-4.8 Pace-colored segments
 
 - The focused activity's track is drawn in five bands, slowest blue to fastest red, scaled to its own speed range. No legend, no values, no heart-rate alternative (ADR-0017).
-- Chevrons along it point the way it was recorded.
+- Chevrons along its straighter stretches point the way it was recorded; a tight bend gets none.
 - Bands follow the simplified line, so a straight stretch can read coarser than its data (`IMPLEMENTATION.md` §4.3.1).
 - Not in Fog or Heatmap.
 
