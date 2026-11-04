@@ -648,7 +648,7 @@ body {
 }
 
 /* The selected (focused) row — reached by clicking the row's own text or its track on the map.
-   A checked row doesn't get this: its ticked checkbox is its only mark (docs/SPEC.md FR-5.1). */
+   A checked row doesn't get this: its ticked checkbox is its only mark (docs/SPEC.md FR-5.15). */
 .activities-panel__row--selected {
   background: rgb(var(--fm-accent-rgb) / 8%);
   box-shadow: inset 3px 0 0 var(--fm-accent-strong);
@@ -862,7 +862,7 @@ button.activities-panel__story-badge:hover {
   white-space: nowrap;
 }
 
-/* The toolbar icon buttons (docs/SPEC.md FR-5.1) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
+/* The toolbar icon buttons (docs/SPEC.md FR-5.15) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
    the checked group, else the selected row (there are no per-row action icons). One shared chip look, matching the
    mockup: a soft tinted square rather than a bare icon, so the group actions read as one
    family regardless of which one is destructive. */
