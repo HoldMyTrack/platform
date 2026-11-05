@@ -63,15 +63,8 @@ code {
 
 .page-lede {
   margin: 0;
-  max-width: 44rem;
   font-size: 18px;
   color: var(--fm-ink-secondary);
-}
-
-/* About's text spans the column, as wide as the screens in it; the other pages keep the
-   narrower measure for longer reading. */
-.page-main--wide :is(.page-lede, .page-section p, .page-features) {
-  max-width: none;
 }
 
 .page-actions {
@@ -214,12 +207,10 @@ code {
 
 .page-section p {
   margin: 0 0 12px;
-  max-width: 44rem;
 }
 
 /* About's feature list: one column, each item's name in bold ahead of its text. */
 .page-features {
-  max-width: 44rem;
   margin: 0;
   padding-left: 22px;
 }
@@ -341,7 +332,6 @@ code {
 .page-list {
   margin: 0;
   padding-left: 20px;
-  max-width: 44rem;
 }
 
 .page-list li + li {
