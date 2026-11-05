@@ -84,7 +84,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		if tiles, err = computeTouchedTiles(points, FogZoom); err != nil {
 			return Result{}, err
 		}
-		if pp, err = prepareTrack(ctx, pool, points); err != nil {
+		if pp, err = prepareTrack(ctx, pool, points, nil); err != nil {
 			return Result{}, err
 		}
 		startedAt = points[0].Time
@@ -312,8 +312,8 @@ type preparedTrack struct {
 	simpLons, simpLats, simpTs []float64
 }
 
-func prepareTrack(ctx context.Context, pool *pgxpool.Pool, points []parse.Point) (preparedTrack, error) {
-	pp := preparedTrack{m: computeMetrics(points)}
+func prepareTrack(ctx context.Context, pool *pgxpool.Pool, points []parse.Point, edit *TrackEdit) (preparedTrack, error) {
+	pp := preparedTrack{m: computeMetrics(points, edit)}
 
 	lons := make([]float64, len(points))
 	lats := make([]float64, len(points))
@@ -518,9 +518,13 @@ type metrics struct {
 // slow walking.
 const movingSpeedThresholdMps = 0.5
 
-func computeMetrics(points []parse.Point) metrics {
+// computeMetrics sums points after edit. Elapsed time alone spans a Cut's join (JoinsCut).
+func computeMetrics(points []parse.Point, edit *TrackEdit) metrics {
 	var m metrics
 	for i := 1; i < len(points); i++ {
+		if edit.JoinsCut(points[i-1].Time.UnixMilli(), points[i].Time.UnixMilli()) {
+			continue
+		}
 		segM := HaversineM(points[i-1].Lat, points[i-1].Lon, points[i].Lat, points[i].Lon)
 		m.distanceM += segM
 		if points[i-1].Elevation != nil && points[i].Elevation != nil {

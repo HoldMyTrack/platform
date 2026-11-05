@@ -63,6 +63,22 @@ func (e TrackEdit) Validate() error {
 	return nil
 }
 
+// JoinsCut reports whether a segment from one surviving point's time to the next's joins the
+// two ends of a Cut (unix milliseconds). The segment is a line across time spent elsewhere, so
+// it isn't movement: it has no pace of its own and counts in no total but elapsed time. A nil
+// edit has no Cuts.
+func (e *TrackEdit) JoinsCut(from, to int64) bool {
+	if e == nil {
+		return false
+	}
+	for _, r := range e.Remove {
+		if from <= r[0] && r[1] <= to {
+			return true
+		}
+	}
+	return false
+}
+
 // Apply returns the points that survive the edit, in their original order.
 func (e TrackEdit) Apply(points []parse.Point) []parse.Point {
 	if e.IsEmpty() {
@@ -344,7 +360,7 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	recStart, recEnd := recordedSpan(act.Points, rng)
 	var pp preparedTrack
 	if points != nil {
-		if pp, err = prepareTrack(ctx, pool, points); err != nil {
+		if pp, err = prepareTrack(ctx, pool, points, edit); err != nil {
 			return err
 		}
 		startedAt = points[0].Time

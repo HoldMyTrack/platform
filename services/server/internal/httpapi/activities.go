@@ -521,7 +521,8 @@ func (s *Server) handleDeleteActivity(w http.ResponseWriter, r *http.Request) {
 const trackMetricsQuery = `
 SELECT array_agg(ST_X(pt.geom) ORDER BY pt.path),
        array_agg(ST_Y(pt.geom) ORDER BY pt.path),
-       array_agg(ST_M(pt.geom) ORDER BY pt.path)
+       array_agg(ST_M(pt.geom) ORDER BY pt.path),
+       a.track_edit
 FROM activities a
 CROSS JOIN LATERAL ST_DumpPoints(a.trajectory) AS pt
 WHERE a.id = $1 AND a.user_id = $2
@@ -543,13 +544,30 @@ type trackMetricsResponse struct {
 }
 
 // pointSpeeds is each point's speed from the one before it, in m/s: 0 across no time, and the
-// first point takes the second's. ms is the M ordinate, epoch seconds, read in whole seconds.
-func pointSpeeds(lons, lats, ms []float64) []float64 {
+// first point takes the second's. ms is the M ordinate, epoch seconds, read in whole seconds. A
+// Cut's join has no pace of its own, so it keeps the speed before it, or after it at the start.
+func pointSpeeds(lons, lats, ms []float64, edit *ingest.TrackEdit) []float64 {
 	n := len(lons)
 	speed := make([]float64, n)
+	leadingJoins := 0
 	for i := 1; i < n; i++ {
-		if dt := float64(int64(ms[i]) - int64(ms[i-1])); dt > 0 {
+		// Whole seconds either way, so a range ending within the second still falls inside.
+		from, to := int64(ms[i-1]), int64(ms[i])
+		if edit.JoinsCut(from*1000, to*1000+999) {
+			if i-1 == leadingJoins {
+				leadingJoins = i
+			} else {
+				speed[i] = speed[i-1]
+			}
+			continue
+		}
+		if dt := float64(to - from); dt > 0 {
 			speed[i] = ingest.HaversineM(lats[i-1], lons[i-1], lats[i], lons[i]) / dt
+		}
+	}
+	if leadingJoins+1 < n {
+		for i := leadingJoins; i >= 1; i-- {
+			speed[i] = speed[leadingJoins+1]
 		}
 	}
 	if n > 1 {
@@ -571,8 +589,9 @@ func (s *Server) handleActivityTrackMetrics(w http.ResponseWriter, r *http.Reque
 	}
 
 	var lons, lats, ms []float64
+	var edit *ingest.TrackEdit
 	err := s.pool.QueryRow(r.Context(), trackMetricsQuery, activityID, userIDFromContext(r.Context())).
-		Scan(&lons, &lats, &ms)
+		Scan(&lons, &lats, &ms, &edit)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeAPIError(w, "activity not found", http.StatusNotFound)
@@ -586,7 +605,7 @@ func (s *Server) handleActivityTrackMetrics(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	speed := pointSpeeds(lons, lats, ms)
+	speed := pointSpeeds(lons, lats, ms, edit)
 	points := make([]trackMetricPoint, len(lons))
 	for i := range points {
 		points[i] = trackMetricPoint{Lon: lons[i], Lat: lats[i], SpeedMps: speed[i], TimeS: int64(ms[i])}
