@@ -39,6 +39,98 @@ body {
   width: 100%;
 }
 
+/* The demo session's strip under the header (DemoBar.tsx): what the demo is, and the way to an
+   account of one's own. In the flow, so it pushes the map down rather than covering it. */
+.demo-bar {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--fm-space-12);
+  padding: var(--fm-space-8) var(--fm-space-12) var(--fm-space-8) var(--fm-space-24);
+  background: rgb(var(--fm-accent-rgb) / 18%);
+  border-bottom: 1px solid rgb(var(--fm-accent-rgb) / 30%);
+}
+
+.demo-bar__icon {
+  flex-shrink: 0;
+  color: var(--fm-accent-strong);
+}
+
+.demo-bar__text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--fm-text-md);
+  line-height: 1.35;
+}
+
+.demo-bar__text strong {
+  font-weight: var(--fm-weight-semibold);
+}
+
+.demo-bar__start {
+  flex-shrink: 0;
+  padding: var(--fm-space-8) var(--fm-space-16);
+  border-radius: var(--fm-radius-md);
+  background: var(--fm-accent);
+  color: var(--fm-on-accent);
+  font-size: var(--fm-text-md);
+  font-weight: var(--fm-weight-semibold);
+  text-decoration: none;
+}
+
+.demo-bar__start:hover {
+  background: var(--fm-accent-hover);
+}
+
+.demo-bar__hide {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--fm-radius-sm);
+  background: none;
+  color: var(--fm-ink-secondary);
+  cursor: pointer;
+}
+
+.demo-bar__hide:hover {
+  background: rgb(var(--fm-ink-rgb) / 6%);
+}
+
+.demo-bar__short {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .demo-bar {
+    gap: var(--fm-space-8);
+    padding: var(--fm-space-6) var(--fm-space-4) var(--fm-space-6) var(--fm-space-12);
+  }
+
+  .demo-bar__icon,
+  .demo-bar__long {
+    display: none;
+  }
+
+  .demo-bar__short {
+    display: inline;
+  }
+
+  .demo-bar__start {
+    padding: var(--fm-space-8) var(--fm-space-12);
+  }
+
+  .demo-bar__hide {
+    width: 44px;
+    height: 44px;
+  }
+}
+
 /* A row (sidebar + map) under the page's own header. */
 .app-body {
   display: flex;

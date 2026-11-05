@@ -48,6 +48,8 @@ export interface TourStep {
 }
 
 const MODES = '[data-testid="map-mode-toggle"]';
+/** The demo's way to an account: the demo bar's button, or the account menu once the bar is hidden, never both. */
+const DEMO_SIGNUP = '[data-demo-bar-start], body:not(:has([data-demo-bar-start])) .page-header .user-menu__avatar';
 
 /**
  * The demo's views, over its fixed history (services/server/internal/httpapi/demo_data): Cleveland,
@@ -102,7 +104,7 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
     step('heatmap', MODES, { mode: 'heatmap', card: 'heatmap', view: isDemo ? DEMO_VIEWS.heatmapCity : null }),
     // The header's Upload menu, open; the demo's is a disabled button that says what an account adds.
     isDemo
-      ? step('add', '.page-header .upload-menu', { text: 'tour.add_demo' })
+      ? step('add', DEMO_SIGNUP, { text: 'tour.add_demo' })
       : step('add', '.page-header .upload-menu, .page-header .upload-menu__dropdown', { open: { upload: true } }),
     step('done', '[data-tour-start]'),
   ];
