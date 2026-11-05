@@ -451,6 +451,8 @@ sequenceDiagram
 
 **The React shell** (`templates/app/app.html`) is `/` for a signed-in account. The handler redirects first (no session, unverified, no Country), so the first-run gate is the server's. Every sign-in, demo start and sign-out redirects to a bare `/`, so no session inherits another's camera. The Go image never sees Vite's manifest, so `vite.config.ts` gives the entry and its stylesheet fixed names, which the shell links with the build version and Caddy serves `no-cache`. The header's Take a tour (FR-4.18) is a link to `/?tour` on every page; on the map, the app takes over a plain click on `[data-tour-start]` and starts the tour without a reload, so the header's own script holds nothing of the map's.
 
+**The Upload menu and the map talk through window events.** `static/upload.js` owns uploading on every page; the map hands it dropped or picked files as `hmt:upload-files`, and it fires `hmt:imports-changed` when an import finishes, which reloads the list and the slider's days. It keeps the number of imports in flight in the menu's `data-in-flight` attribute and announces changes as `hmt:imports-in-flight`, for the first-run panel (FR-5.18); the attribute covers a menu that rendered before React mounted.
+
 **For the apps** a page is the same page marked by the `hmt_app` cookie (FR-10.8, ADR-0042), set in the WebView's cookie store, because a header reaches only the first request and a query parameter wouldn't survive links and redirects. Its value, `android` or `ios`, is `PageData.App`, for wording that names a platform. Traps: the public cache key includes the value, and a WebView form POST carries the API's origin, so the app's `API_BASE_URL` must be `APP_BASE_URL`'s origin.
 
 **Keep in step:**

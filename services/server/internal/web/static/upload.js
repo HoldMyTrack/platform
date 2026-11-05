@@ -10,7 +10,9 @@
 // too — and the count of unseen failures, read every POLL_MS while anything is in flight and
 // every IDLE_MS otherwise. Whenever an import finishes, or a file's upload lands, the menu
 // fires `hmt:imports-changed` on window, which the map listens to (MapView.tsx) to redraw its
-// list and tracks.
+// list and tracks. How many are in flight, uploading or processing, it keeps in its
+// `data-in-flight` attribute and announces as `hmt:imports-in-flight`, for the map's first-run
+// panel (apps/web's ui/useImportsInFlight.ts).
 //
 // Both page shells load this one plain script (layout.html, app/app.html), so the menu works the
 // same on the map and on every server-rendered page.
@@ -42,6 +44,7 @@
   var transfers = []; // { id, name, progress, sending } — files still to send, or being sent
   var active = []; // GET /v1/uploads/active's imports
   var unseenFailures = 0;
+  var inFlight = -1; // the last count announced; -1 until the first render
   var noteList = []; // { id, text, error } — this page's own messages, dismissed one by one
   var uid = 0;
   var timer = null;
@@ -89,6 +92,11 @@
     idle.hidden = busy > 0;
     badge.hidden = busy === 0;
     badge.textContent = String(busy);
+    if (busy !== inFlight) {
+      inFlight = busy;
+      menu.setAttribute('data-in-flight', String(busy));
+      window.dispatchEvent(new CustomEvent('hmt:imports-in-flight', { detail: busy }));
+    }
 
     notes.replaceChildren();
     noteList.forEach(function (n) {
