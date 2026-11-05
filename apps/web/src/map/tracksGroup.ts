@@ -23,7 +23,17 @@ const HOVER_COLOR = '#93691f'; // --fm-accent-strong
 const LIGHT_CASING = '#202b25';
 const DARK_CASING = '#a39e93';
 const casingColor = (dark: boolean) => (dark ? DARK_CASING : LIGHT_CASING);
+// Imagery can be any color, and the accent nearly vanishes on sand: a bright core reads on dark
+// ground, and a dark outline around every track on pale ground.
+const SATELLITE_TRACK_COLOR = '#ffc533';
+const SATELLITE_HOVER_COLOR = '#ffe08a';
+const SATELLITE_EDGE_COLOR = '#14140e';
+const TRACK_OPACITY = 0.9;
+const OUTLINE_LAYER_ID = 'tracks-outline';
+const OUTLINE_OPACITY = 0.8;
 const NORMAL_WIDTH = 2.5;
+// 1 px of outline showing on each side of a track.
+const OUTLINE_WIDTH = NORMAL_WIDTH + 2;
 const FOCUSED_WIDTH = 4.5;
 const HOVER_WIDTH = 5;
 // 1.5 px of halo showing on each side of the focused line.
@@ -67,7 +77,13 @@ function arrows(): LayerSpecification {
   } as LayerSpecification;
 }
 
-/** Bottom to top: the focused track's halo, every track, the focused one, the hovered one, the
+/** Under every track, over imagery only. */
+function outline(): LayerSpecification {
+  const layer = line(OUTLINE_LAYER_ID, notHidden, ['hidden'], { 'line-color': SATELLITE_EDGE_COLOR, 'line-width': OUTLINE_WIDTH, 'line-opacity': OUTLINE_OPACITY });
+  return { ...layer, layout: { ...layer.layout, visibility: 'none' } } as LayerSpecification;
+}
+
+/** Bottom to top: every track's outline over imagery, the focused track's halo, every track, the focused one, the hovered one, the
  *  bold tracks' arrows. A focused track isn't raised above its neighbours; the halo is what
  *  separates it where tracks overlap. */
 export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
@@ -79,18 +95,30 @@ export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
       // zooms further.
       sources: { tracks: { type: 'vector', tiles: tilePath('tracks', tileVersion), minzoom: 0, maxzoom: 14 } },
       layers: [
+        outline(),
         line('tracks-casing', among('focused'), ['focused', 'hidden'], { 'line-color': casingColor(dark), 'line-width': CASING_WIDTH, 'line-opacity': 0.95 }, 'casing'),
-        line(TRACKS_LAYER_ID, notHidden, ['hidden'], { 'line-color': TRACK_COLOR, 'line-width': NORMAL_WIDTH, 'line-opacity': 0.9 }, 'track'),
+        line(TRACKS_LAYER_ID, notHidden, ['hidden'], { 'line-color': TRACK_COLOR, 'line-width': NORMAL_WIDTH, 'line-opacity': TRACK_OPACITY }, 'track'),
         line('tracks-focused', among('focused'), ['focused', 'hidden'], { 'line-color': TRACK_COLOR, 'line-width': FOCUSED_WIDTH, 'line-opacity': 1 }, 'focused'),
         line('tracks-hover', among('hovered'), ['hovered', 'hidden'], { 'line-color': HOVER_COLOR, 'line-width': HOVER_WIDTH }),
         arrows(),
       ],
     },
     // Fog and Heatmap already show where; lines over either read as noise.
-    view: (mode: MapMode, dark: boolean) => ({
-      layout: Object.fromEntries(LAYER_IDS.map((id) => [id, { visibility: mode === 'normal' ? 'visible' : 'none' }])),
-      paint: { 'tracks-casing': { 'line-color': casingColor(dark) } },
-    }),
+    view: (mode: MapMode, dark: boolean, satellite: boolean) => {
+      const track = satellite ? SATELLITE_TRACK_COLOR : TRACK_COLOR;
+      const shown = { visibility: mode === 'normal' ? 'visible' : 'none' };
+      return {
+        layout: { ...Object.fromEntries(LAYER_IDS.map((id) => [id, shown])), [OUTLINE_LAYER_ID]: satellite ? shown : { visibility: 'none' } },
+        paint: {
+          'tracks-casing': { 'line-color': satellite ? SATELLITE_EDGE_COLOR : casingColor(dark) },
+          [TRACKS_LAYER_ID]: { 'line-color': track, 'line-opacity': satellite ? 1 : TRACK_OPACITY },
+          'tracks-focused': { 'line-color': track },
+          'tracks-hover': { 'line-color': satellite ? SATELLITE_HOVER_COLOR : HOVER_COLOR },
+          // White on bright gold barely reads.
+          [ARROWS_LAYER_ID]: { 'text-color': satellite ? SATELLITE_EDGE_COLOR : arrowPaint['text-color'] },
+        },
+      };
+    },
     vars: { hidden: [], focused: [], hovered: [] },
   };
 }

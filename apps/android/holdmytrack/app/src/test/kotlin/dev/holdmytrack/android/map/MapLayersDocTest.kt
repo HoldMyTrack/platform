@@ -71,7 +71,7 @@ class MapLayersDocTest {
         fun casing(doc: MapLayersDoc.Doc, satellite: Boolean) = MapLayersDoc.view(doc, MapMode.NORMAL, satellite)!!.properties.getValue("tracks-casing").getValue("line-color")
         val black = MapLayersDoc.parse(served("layers/black.json"))!!
         assertEquals(JsonPrimitive("#202b25"), casing(light, false))
-        assertEquals(JsonPrimitive("#a39e93"), casing(light, true))
+        assertEquals(JsonPrimitive("#14140e"), casing(light, true))
         assertEquals(JsonPrimitive("#a39e93"), casing(black, false))
     }
 
@@ -118,8 +118,8 @@ class MapLayersDocTest {
     @Test
     fun theTracksFilterByTheIdSetsTheAppBinds() {
         val tracks = light.group("tracks")!!
-        assertEquals(listOf("tracks-casing", MapOverlays.TRACKS_LAYER_ID, "tracks-focused", "tracks-hover", "tracks-arrows"), tracks.layers.map { it.id })
-        assertEquals(listOf("casing", "track", "focused", null, null), tracks.layers.map { it.role })
+        assertEquals(listOf("tracks-outline", "tracks-casing", MapOverlays.TRACKS_LAYER_ID, "tracks-focused", "tracks-hover", "tracks-arrows"), tracks.layers.map { it.id })
+        assertEquals(listOf(null, "casing", "track", "focused", null, null), tracks.layers.map { it.role })
         assertEquals(listOf("focused", "hidden"), tracks.layers.first { it.id == "tracks-focused" }.vars.getValue("filter"))
         assertTrue(light.vars.keys.containsAll(setOf("hidden", "focused", "hovered")))
         assertEquals(MapOverlays.BAND_LAYER_ID, light.group("track-bands")!!.layers.first().id)
