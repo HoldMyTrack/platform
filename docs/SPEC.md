@@ -545,7 +545,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 
 ### FR-11.1 Donate
 
-Donate opens the configured Open Collective's donation page in a new tab (`VISION.md` §6.1). With none configured there is no Donate. HoldMyTrack takes no payment and stores nothing about a donation.
+Donate opens the configured Open Collective's donation page in a new tab. With none configured there is no Donate, and none is (ADR-0050). HoldMyTrack takes no payment and stores nothing about a donation.
 
 ## 14. FR-12 — Admin panel
 

@@ -2,7 +2,7 @@
 
 ## 1. Executive Summary
 
-HoldMyTrack is a **free, community-funded platform for tracking outdoor activities and seeing the accumulated shape of where you have been**: how much ground you've covered, how well you've explored the places you live and travel through, and where you go most. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats.
+HoldMyTrack is a **free, open-source platform for tracking outdoor activities and seeing the accumulated shape of where you have been**: how much ground you've covered, how well you've explored the places you live and travel through, and where you go most. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats.
 
 **What it is for.** A watch app shows one activity at a time, and years of history end up split across devices. HoldMyTrack puts the journeys the user picks from each source on one map (ADR-0039). "Where have I been?" is answered by a picture, which also shows the streets, parks and trails nearby that are still unexplored. Stories are the main feature: a trip spanning several activities, such as a multi-day hike or a holiday, is kept as one Story with its own map and totals (§4.2). HoldMyTrack shows what's left and leaves the choice of where to go to the user; Spots is the one place it suggests somewhere.
 
@@ -10,7 +10,7 @@ It targets people who already track workouts or travel and want a better way to 
 
 1. **Visual quality as the product.** Competitors are functional and largely ugly. HoldMyTrack treats the render, from smooth fog edges to print-grade output, as the thing worth building.
 2. **Source independence.** Three independent ingest paths (§4.1) mean the product survives any single provider revoking access, changing terms or pricing itself out of reach.
-3. **Free, and funded in the open.** No subscription, no paywalled features, and user data is never sold. Recurring community funding with public accounting covers running costs (§6); funding past the community milestone is decided from that milestone's numbers (§5, ADR-0031).
+3. **Free, with nothing to sell.** No subscription, no paywalled features, and user data is never sold. HoldMyTrack covers its own running costs; whether it ever asks for money is left open (§6, ADR-0050).
 
 ### 1.1 What HoldMyTrack is not
 
@@ -59,11 +59,11 @@ The major fitness platforms focus on real-time logging, social feeds and health 
 | **CityStrides** | Street completion | Free tier + sub | Running-only; sparse visuals |
 | **Fog of World** | The fog mechanic | One-time | Requires its own tracking |
 | **Polarsteps** | Trips on a map with photos | Free; printed books paid | Travel-only; no fog |
-| **Runalyze / Intervals.icu** | Free performance analysis | Free / donation | Analysis-first, plain; the closest funding model |
+| **Runalyze / Intervals.icu** | Free performance analysis | Free / donation | Analysis-first, plain |
 
 **Almost every product here ingests via the Strava API**, so they inherit Strava's terms and die if Strava changes them; the three independent paths (§4.1) are HoldMyTrack's answer. Strava itself is not a source, so the largest activity archive arrives only through manual export.
 
-**Intervals.icu and Runalyze prove the funding model**: free, donation-funded analysis with real users. They also show that it stays small; HoldMyTrack does not plan to be a venture-scale business.
+**Intervals.icu and Runalyze show that a free tool keeps real users.** They also show that it stays small; HoldMyTrack does not plan to be a venture-scale business.
 
 **HoldMyTrack does not copy the tile games.** Counting visited squares measures what the fog already shows, only coarser, and would be a second per-account coverage record that every deletion, track edit and Private location change has to un-visit. Fog of War is the exploration mechanic.
 
@@ -143,7 +143,7 @@ With no revenue, costs must be bounded by design.
 | Compliance | Fixed | DPA/DPIA work, EU-region hosting (§7) |
 | Egress | — | Cloudflare R2 charges none, which is why R2 over S3 |
 
-**At 10,000 active users** (300 activities of ~80 KB, ~3 MB of fog and 100 photos each; 20 map sessions a month of ~300 tile reads at a 90% CDN hit rate): about 900 GB of storage at ~$14/month, ~$2/month of tile reads and $100–300/month of compute, **roughly $150–350/month**. At $5/month per supporter, **break-even is 30–70 recurring donors, well under 1% of users**, a ratio Intervals.icu and Runalyze sustain.
+**At 10,000 active users** (300 activities of ~80 KB, ~3 MB of fog and 100 photos each; 20 map sessions a month of ~300 tile reads at a 90% CDN hit rate): about 900 GB of storage at ~$14/month, ~$2/month of tile reads and $100–300/month of compute, **roughly $150–350/month**.
 
 **Two things break this model**, likeliest first:
 
@@ -156,13 +156,13 @@ With no revenue, costs must be bounded by design.
 
 The product moves through three milestones (ADR-0031); `docs/ROADMAP.md` carries the work in each.
 
-1. **MVP**: activities, the map modes, Spots, Stories and photos, on the web and Android, free for everyone. It ends at the public launch, gated by compliance (§7) and a funding page already standing (§6.1).
-2. **Release and community**: open HoldMyTrack to the public and shape features and sources around what users ask for. Its other job is to find out what community funding can carry, which decides Milestone 3.
-3. **Social graph** (§5.7): public pages, followers and the rest, if at all. Whether to build it, and whether paid features, community funding or sponsors pay for it, is decided from Milestone 2's numbers. Staying single-player is one of the options.
+1. **MVP**: activities, the map modes, Spots, Stories and photos, on the web and Android, free for everyone. It ends at the public launch, gated by compliance (§7).
+2. **Release and community**: open HoldMyTrack to the public and shape features and sources around what users ask for. It has no exit gate (ADR-0050).
+3. **Social graph** (§5.7): public pages, followers and the rest, if at all. Whether to build it, and how to pay for it, is decided from what Milestone 2 shows. Staying single-player is one of the options.
 
 ### 5.7 Social graph (Milestone 3, not committed)
 
-Milestone 3 is unscheduled. It waits for Milestone 2 to show what community funding can carry, because social features bring moderation, abuse handling and safety obligations: **staff costs, not server costs**, the category donations scale to worst. The decision then is how to pay for them, or not to build them (§5.8).
+Milestone 3 is unscheduled. Social features bring moderation, abuse handling and safety obligations: **staff costs, not server costs**. Before building them, the decision is how to pay for them, or not to build them (§5.8).
 
 ### 5.8 Why social is last, not just later
 
@@ -176,20 +176,17 @@ A product with no headcount should not ship a location-sharing social network: e
 
 ### 6.1 The model
 
-**HoldMyTrack is free: all features, sources and exports, for everyone, and user data is never sold.** Nothing is promised past Milestone 2 (§5), neither "free forever" nor "no ads"; the one standing commitment is that data is never sold (ADR-0031).
-
-Recurring monthly community funding covers running costs. The funding page stands before launch, because the ask is weaker retrofitted. Open Collective fits best because spending is public by default: for a project pitched as "free and not extracting from you", verifiable accounting is part of the product, so the page shows the monthly bill against monthly income.
+**HoldMyTrack is free: all features, sources and exports, for everyone, and user data is never sold.** It covers its own running costs. Whether it ever asks for money, and how, is left open and decided when there is a reason to; until then nothing public speaks of money (ADR-0050). The one standing commitment is that data is never sold (ADR-0031).
 
 ### 6.2 What supporters get
 
-**Nothing that non-supporters do not get.** A supporter-only feature would be a paid tier, and whether HoldMyTrack ever has one is the Milestone 3 decision (§5). Supporters get recognition: a badge, a credits page, a say in roadmap priorities.
+**Nothing that others do not get.** If HoldMyTrack ever takes money, a supporter-only feature would be a paid tier, and whether it ever has one is a decision of its own (§5).
 
 ### 6.3 Risks of this model
 
-* **Donations do not track cost.** A growth spike is a cost spike with no matching income.
-* **It depends on one person's continued interest.** Donation-funded projects are typically one maintainer, and the failure mode is burnout. The mitigation is small scope, which is why §1.1 rules out fitness tracking and social waits for Milestone 3.
-* **It caps ambition.** It funds a good product, not a team; going further is the Milestone 3 decision (§5).
-* **Break-even is low** (§4.3), under 1% of users. That is the strongest argument for the model, and the number to measure through Milestone 2.
+* **Growth is cost with no income.** A spike in users is a spike in the bill; the per-user limits and the daily budget (§4.3) bound it.
+* **It depends on one person's continued interest.** The mitigation is small scope, which is why §1.1 rules out fitness tracking and social waits for Milestone 3.
+* **It caps ambition.** It runs a good product, not a team; going further is the Milestone 3 decision (§5).
 
 ---
 
@@ -214,9 +211,8 @@ A Fog of War map is a precise map of where a person lives; the 2018 Strava heatm
 
 ### 8.1 Launch
 
-* **Community-first**: r/running, r/cycling, r/Garmin, r/Strava, r/FogOfWorld respond to a working demo, and "Free, funded by its users" is a strong post title in each.
+* **Community-first**: r/running, r/cycling, r/Garmin, r/Strava, r/FogOfWorld respond to a working demo.
 * **Creators**: endurance creators and bikepackers, offered a good free tool and a credit.
-* **Funding stated from day one**, with a public ledger, before users ask what is monetised instead.
 
 ### 8.2 The demo is the ad
 
@@ -224,4 +220,4 @@ One click opens a populated, read-only example account with months of real walks
 
 ### 8.3 The key validation question
 
-**Will people fund a free tool they like?** (§6.) Under 1% of users at $5/month covers the bill. Measure it through Milestone 2; its answer decides Milestone 3 (§5).
+**Do people come back to the map they built?** Measure returning users and what they ask for through Milestone 2; that shapes what comes next (§5).
