@@ -349,7 +349,7 @@ export const en = {
   'tour.finish': 'Done',
   'tour.progress': '{n} of {total}',
   'tour.welcome.title': 'Welcome to HoldMyTrack',
-  'tour.welcome.body': 'It keeps the journeys you choose and turns them into maps. This tour shows where everything is, in about a minute.',
+  'tour.welcome.body': "See everywhere you've been, find somewhere new nearby, and keep each trip as a Story with its photos. This tour shows where everything is, in about a minute.",
   'tour.activities.title': 'Your activities',
   'tour.activities.body': 'Everything in the date range, newest first. Click one to fly to it; tick several to edit, hide or export them together.',
   'tour.range.title': 'Date range',
