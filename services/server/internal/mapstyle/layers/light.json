@@ -1,5 +1,5 @@
 {
-  "styleBuild": "47dd62f66cf7",
+  "styleBuild": "ee6f5b8e9cb0",
   "flavor": "light",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -68,6 +68,9 @@
           },
           "track-bands-arrows": {
             "visibility": "visible"
+          },
+          "track-bands-outline": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -161,6 +164,30 @@
             "line-color": "#93691f"
           },
           "tracks-arrows": {
+            "text-color": "#ffffff"
+          },
+          "track-bands-line": {
+            "line-color": [
+              "match",
+              [
+                "get",
+                "band"
+              ],
+              0,
+              "#2b6cb0",
+              1,
+              "#38a169",
+              2,
+              "#d69e2e",
+              3,
+              "#dd6b20",
+              4,
+              "#c53030",
+              "#2b6cb0"
+            ],
+            "line-opacity": 0.95
+          },
+          "track-bands-arrows": {
             "text-color": "#ffffff"
           }
         }
@@ -208,6 +235,9 @@
           },
           "track-bands-arrows": {
             "visibility": "none"
+          },
+          "track-bands-outline": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -302,6 +332,30 @@
           },
           "tracks-arrows": {
             "text-color": "#ffffff"
+          },
+          "track-bands-line": {
+            "line-color": [
+              "match",
+              [
+                "get",
+                "band"
+              ],
+              0,
+              "#2b6cb0",
+              1,
+              "#38a169",
+              2,
+              "#d69e2e",
+              3,
+              "#dd6b20",
+              4,
+              "#c53030",
+              "#2b6cb0"
+            ],
+            "line-opacity": 0.95
+          },
+          "track-bands-arrows": {
+            "text-color": "#ffffff"
           }
         }
       },
@@ -347,6 +401,9 @@
             "visibility": "none"
           },
           "track-bands-arrows": {
+            "visibility": "none"
+          },
+          "track-bands-outline": {
             "visibility": "none"
           }
         },
@@ -441,6 +498,30 @@
             "line-color": "#93691f"
           },
           "tracks-arrows": {
+            "text-color": "#ffffff"
+          },
+          "track-bands-line": {
+            "line-color": [
+              "match",
+              [
+                "get",
+                "band"
+              ],
+              0,
+              "#2b6cb0",
+              1,
+              "#38a169",
+              2,
+              "#d69e2e",
+              3,
+              "#dd6b20",
+              4,
+              "#c53030",
+              "#2b6cb0"
+            ],
+            "line-opacity": 0.95
+          },
+          "track-bands-arrows": {
             "text-color": "#ffffff"
           }
         }
@@ -490,6 +571,9 @@
           },
           "track-bands-arrows": {
             "visibility": "visible"
+          },
+          "track-bands-outline": {
+            "visibility": "visible"
           }
         },
         "paint": {
@@ -583,6 +667,30 @@
             "line-color": "#ffe08a"
           },
           "tracks-arrows": {
+            "text-color": "#14140e"
+          },
+          "track-bands-line": {
+            "line-color": [
+              "match",
+              [
+                "get",
+                "band"
+              ],
+              0,
+              "#4da6ff",
+              1,
+              "#3df08a",
+              2,
+              "#ffd23f",
+              3,
+              "#ff8c2e",
+              4,
+              "#ff4d4d",
+              "#4da6ff"
+            ],
+            "line-opacity": 1
+          },
+          "track-bands-arrows": {
             "text-color": "#14140e"
           }
         }
@@ -630,6 +738,9 @@
           },
           "track-bands-arrows": {
             "visibility": "none"
+          },
+          "track-bands-outline": {
+            "visibility": "none"
           }
         },
         "paint": {
@@ -724,6 +835,30 @@
           },
           "tracks-arrows": {
             "text-color": "#14140e"
+          },
+          "track-bands-line": {
+            "line-color": [
+              "match",
+              [
+                "get",
+                "band"
+              ],
+              0,
+              "#4da6ff",
+              1,
+              "#3df08a",
+              2,
+              "#ffd23f",
+              3,
+              "#ff8c2e",
+              4,
+              "#ff4d4d",
+              "#4da6ff"
+            ],
+            "line-opacity": 1
+          },
+          "track-bands-arrows": {
+            "text-color": "#14140e"
           }
         }
       },
@@ -769,6 +904,9 @@
             "visibility": "none"
           },
           "track-bands-arrows": {
+            "visibility": "none"
+          },
+          "track-bands-outline": {
             "visibility": "none"
           }
         },
@@ -863,6 +1001,30 @@
             "line-color": "#ffe08a"
           },
           "tracks-arrows": {
+            "text-color": "#14140e"
+          },
+          "track-bands-line": {
+            "line-color": [
+              "match",
+              [
+                "get",
+                "band"
+              ],
+              0,
+              "#4da6ff",
+              1,
+              "#3df08a",
+              2,
+              "#ffd23f",
+              3,
+              "#ff8c2e",
+              4,
+              "#ff4d4d",
+              "#4da6ff"
+            ],
+            "line-opacity": 1
+          },
+          "track-bands-arrows": {
             "text-color": "#14140e"
           }
         }
@@ -1632,6 +1794,24 @@
         }
       },
       "layers": [
+        {
+          "id": "track-bands-outline",
+          "type": "line",
+          "source": "track-bands",
+          "filter": [
+            "has",
+            "route"
+          ],
+          "layout": {
+            "line-cap": "round",
+            "line-join": "round",
+            "visibility": "none"
+          },
+          "paint": {
+            "line-color": "#14140e",
+            "line-width": 9
+          }
+        },
         {
           "id": "track-bands-line",
           "type": "line",
