@@ -77,7 +77,7 @@ object SyncCandidatesOverlay {
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
         val bands = candidates.firstOrNull { it.key == highlight }
-            ?.let { MapOverlays.bandFeatures(it.metrics, TrackBands.runs(it.metrics.map { point -> point.speedMps })) }.orEmpty()
+            ?.let { MapOverlays.bandFeatures(it.metrics, TrackBands.runs(it.metrics)) }.orEmpty()
         style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(bands))
     }
 

@@ -26,12 +26,14 @@ class TrackBandsTest {
         val cases = Json.parseToJsonElement(file.readText()).jsonObject["cases"]!!.jsonArray.map { it.jsonObject }
         assertTrue(cases.isNotEmpty())
         for (case in cases) {
-            val speeds = case["input"]!!.jsonObject["speeds"]!!.jsonArray.map { it.jsonPrimitive.double }
+            val input = case["input"]!!.jsonObject
+            val speeds = input["speeds"]!!.jsonArray.map { it.jsonPrimitive.double }
+            val distances = input["distances"]!!.jsonArray.map { it.jsonPrimitive.double }
             val expected = case["expected"]!!.jsonArray.map {
                 val run = it.jsonObject
                 PaceBand(run["band"]!!.jsonPrimitive.int, run["start"]!!.jsonPrimitive.int, run["end"]!!.jsonPrimitive.int)
             }
-            assertEquals(case["name"]!!.jsonPrimitive.content, expected, TrackBands.runs(speeds))
+            assertEquals(case["name"]!!.jsonPrimitive.content, expected, TrackBands.runs(speeds, distances))
         }
     }
 }

@@ -576,6 +576,18 @@ func pointSpeeds(lons, lats, ms []float64, edit *ingest.TrackEdit) []float64 {
 	return speed
 }
 
+// pointDistances is each point's distance from the one before it, in meters, for what weighs in
+// on the pace bands: a Cut's join isn't movement, so it has none.
+func pointDistances(lons, lats, ms []float64, edit *ingest.TrackEdit) []float64 {
+	distance := make([]float64, len(lons))
+	for i := 1; i < len(lons); i++ {
+		if !edit.JoinsCut(int64(ms[i-1])*1000, int64(ms[i])*1000+999) {
+			distance[i] = ingest.HaversineM(lats[i-1], lons[i-1], lats[i], lons[i])
+		}
+	}
+	return distance
+}
+
 // handleActivityTrackMetrics serves `GET /v1/activities/{id}/track-metrics` — per-simplified-
 // vertex speed, and the pace bands (paceBands) the web and Android clients draw over whichever
 // single activity is selected. Pace only: HoldMyTrack keeps no heart rate (VISION.md §1.1).
@@ -612,7 +624,7 @@ func (s *Server) handleActivityTrackMetrics(w http.ResponseWriter, r *http.Reque
 	}
 
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, trackMetricsResponse{ActivityID: activityID, Points: points, Bands: paceBands(speed)})
+	writeJSON(w, http.StatusOK, trackMetricsResponse{ActivityID: activityID, Points: points, Bands: paceBands(speed, pointDistances(lons, lats, ms, edit))})
 }
 
 // removeUnreferencedRaw removes a deleted activity's original once nothing else names it. Run

@@ -1,12 +1,18 @@
 {
   "rule": "paceBands",
-  "description": "The pace bands of one track (docs/SPEC.md FR-4.8): five equal bins over the track's own range of speeds, slowest 0 to fastest 4, as runs of point indices; a run starts at the point before the one whose speed it takes, so neighbouring runs share their boundary point. Run by the server (internal/httpapi) and by Android for the Sync tab's candidates, which aren't on the server. Input: speeds, one per point. Expected: [{ band, start, end }], end inclusive.",
+  "description": "The pace bands of one track (docs/SPEC.md FR-4.8), slowest 0 to fastest 4, 2 being the track's typical pace, as runs of point indices; a run starts at the point before the one whose speed it takes, so neighbouring runs share their boundary point. m is the distance-weighted median speed, z = ln(speed / m), and one band is w = max(0.10, 2 * the distance-weighted median of |z|) wide: band = floor(z / w + 2.5), kept to 0..4, 0 for no speed. Only points with a speed and a distance weigh in; with none, every point is 2. Input: speeds and distances, one each per point, a point's being from the point before it. Run by the server (internal/httpapi) and by Android for the Sync tab's candidates, which aren't on the server.",
   "cases": [
-    { "name": "runs share their boundary point and cover the whole track", "input": { "speeds": [0, 0, 10, 10, 0] }, "expected": [{ "band": 0, "start": 0, "end": 1 }, { "band": 4, "start": 1, "end": 3 }, { "band": 0, "start": 3, "end": 4 }] },
-    { "name": "five equal bins, the top speed in the last", "input": { "speeds": [0, 2, 5, 10] }, "expected": [{ "band": 1, "start": 0, "end": 1 }, { "band": 2, "start": 1, "end": 2 }, { "band": 4, "start": 2, "end": 3 }] },
-    { "name": "a flat track is all one band", "input": { "speeds": [3, 3, 3] }, "expected": [{ "band": 0, "start": 0, "end": 2 }] },
-    { "name": "the first point's speed only sets the scale", "input": { "speeds": [100, 1, 1] }, "expected": [{ "band": 0, "start": 0, "end": 2 }] },
-    { "name": "fewer than two points have no runs", "input": { "speeds": [1] }, "expected": [] },
-    { "name": "no points have no runs", "input": { "speeds": [] }, "expected": [] }
+    { "name": "a steady track stays at its typical pace", "input": { "speeds": [1.3, 1.3, 1.33, 1.27, 1.3, 1.32], "distances": [10, 10, 10, 10, 10, 10] }, "expected": [{"band": 2, "start": 0, "end": 5}] },
+    { "name": "one glitch stands out without flattening the rest", "input": { "speeds": [1.3, 1.3, 1.3, 0.9, 1.3, 1.8, 1.3, 6, 1.3, 1.3], "distances": [13, 13, 13, 13, 13, 13, 13, 13, 13, 13] }, "expected": [{"band": 2, "start": 0, "end": 2}, {"band": 0, "start": 2, "end": 3}, {"band": 2, "start": 3, "end": 4}, {"band": 4, "start": 4, "end": 5}, {"band": 2, "start": 5, "end": 6}, {"band": 4, "start": 6, "end": 7}, {"band": 2, "start": 7, "end": 9}] },
+    { "name": "a step is at least 10%, so a small change is the next band", "input": { "speeds": [1, 1, 1, 1, 1.1, 1, 1, 1], "distances": [10, 10, 10, 10, 10, 10, 10, 10] }, "expected": [{"band": 2, "start": 0, "end": 3}, {"band": 3, "start": 3, "end": 4}, {"band": 2, "start": 4, "end": 7}] },
+    { "name": "a track that varies a lot gets wider steps", "input": { "speeds": [1, 0.4, 2.5, 0.6, 1.8, 1, 0.5, 2, 1.2, 0.8], "distances": [10, 10, 10, 10, 10, 10, 10, 10, 10, 10] }, "expected": [{"band": 1, "start": 0, "end": 1}, {"band": 3, "start": 1, "end": 2}, {"band": 2, "start": 2, "end": 3}, {"band": 3, "start": 3, "end": 4}, {"band": 2, "start": 4, "end": 5}, {"band": 1, "start": 5, "end": 6}, {"band": 3, "start": 6, "end": 7}, {"band": 2, "start": 7, "end": 9}] },
+    { "name": "the typical pace is by distance, not by point", "input": { "speeds": [1, 1, 1, 1, 5], "distances": [0, 1, 1, 1, 100] }, "expected": [{"band": 0, "start": 0, "end": 3}, {"band": 2, "start": 3, "end": 4}] },
+    { "name": "a stop is slowest and weighs nothing", "input": { "speeds": [1, 1, 0, 1, 1], "distances": [10, 10, 0, 10, 10] }, "expected": [{"band": 2, "start": 0, "end": 1}, {"band": 0, "start": 1, "end": 2}, {"band": 2, "start": 2, "end": 4}] },
+    { "name": "a stretch with no distance can't move the typical pace", "input": { "speeds": [1, 1, 9, 1, 1], "distances": [0, 10, 0, 10, 10] }, "expected": [{"band": 2, "start": 0, "end": 1}, {"band": 4, "start": 1, "end": 2}, {"band": 2, "start": 2, "end": 4}] },
+    { "name": "the first point's speed sets nothing", "input": { "speeds": [100, 1, 1], "distances": [0, 10, 10] }, "expected": [{"band": 2, "start": 0, "end": 2}] },
+    { "name": "a flat track is all the middle band", "input": { "speeds": [3, 3, 3], "distances": [0, 10, 10] }, "expected": [{"band": 2, "start": 0, "end": 2}] },
+    { "name": "a track with no distance is all the middle band", "input": { "speeds": [0, 0, 0], "distances": [0, 0, 0] }, "expected": [{"band": 2, "start": 0, "end": 2}] },
+    { "name": "fewer than two points have no runs", "input": { "speeds": [1], "distances": [0] }, "expected": [] },
+    { "name": "no points have no runs", "input": { "speeds": [], "distances": [] }, "expected": [] }
   ]
 }

@@ -18,7 +18,8 @@ func TestPaceBands(t *testing.T) {
 		Cases []struct {
 			Name  string `json:"name"`
 			Input struct {
-				Speeds []float64 `json:"speeds"`
+				Speeds    []float64 `json:"speeds"`
+				Distances []float64 `json:"distances"`
 			} `json:"input"`
 			Expected []paceBand `json:"expected"`
 		} `json:"cases"`
@@ -30,7 +31,7 @@ func TestPaceBands(t *testing.T) {
 		t.Fatal("no cases")
 	}
 	for _, c := range file.Cases {
-		if got := paceBands(c.Input.Speeds); !reflect.DeepEqual(got, c.Expected) {
+		if got := paceBands(c.Input.Speeds, c.Input.Distances); !reflect.DeepEqual(got, c.Expected) {
 			t.Errorf("%s: %v, want %v", c.Name, got, c.Expected)
 		}
 	}

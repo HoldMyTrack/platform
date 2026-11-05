@@ -133,3 +133,13 @@ func TestPointSpeedsAcrossACut(t *testing.T) {
 		t.Errorf("leading join: speeds = %v, want all the walking pace", got)
 	}
 }
+
+func TestPointDistancesLeaveOutACut(t *testing.T) {
+	lats := []float64{0, 0.001, 0.1, 0.101}
+	lons := make([]float64, len(lats))
+	ms := []float64{100, 110, 500, 510}
+	got := pointDistances(lons, lats, ms, &ingest.TrackEdit{Remove: [][2]int64{{110001, 499000}}})
+	if got[0] != 0 || got[2] != 0 || math.Abs(got[1]-111) > 1 || math.Abs(got[3]-111) > 1 {
+		t.Fatalf("got %v, want ~111 m a step and none across the join", got)
+	}
+}
