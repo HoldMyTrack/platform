@@ -8,7 +8,7 @@
       "@type": "WebApplication",
       "name": "HoldMyTrack",
       "url": "{{.SiteURL}}/",
-      "description": "A free, community-funded place to keep GPX, FIT and TCX tracks from any watch or app and see every outdoor activity on one map, with Fog of War and heatmaps.",
+      "description": "A free, open-source place to keep GPX, FIT and TCX tracks from any watch or app and see every outdoor activity on one map, with Fog of War and heatmaps.",
       "applicationCategory": "SportsApplication",
       "operatingSystem": "Web, Android",
       "image": "{{.ShareImage}}",
@@ -18,10 +18,10 @@
     </script>
 {{end}}
 {{define "content"}}
-<main class="page-main">
+<main class="page-main page-main--wide">
   <section class="page-hero">
     <h1>Every place you have ever run, ridden or walked — on one map.</h1>
-    <p class="page-lede">Your watch or fitness app shows you one workout at a time, and the old ones get lost whenever you switch apps or devices. HoldMyTrack keeps the ones that matter to you, the hikes, trips and races worth remembering, from your GPX, FIT and TCX files on a single map, so you can see the places you know by heart and, just as clearly, the streets, parks and trails you have never set foot on. It is free for everyone, and it is funded by the people who use it.</p>
+    <p class="page-lede">Your watch or fitness app shows one workout at a time, and the old ones get lost when you switch apps or devices. HoldMyTrack keeps the trips worth remembering on one map, so you can see the places you know by heart and the streets, parks and trails you've never set foot on. It's free for everyone, with no paid tiers, and your data is never sold.</p>
     <div class="page-actions">
       {{/* To /signin, never straight into a demo: crawlers that run script would follow such a
            link and spend the demo's per-address budget. */}}
@@ -33,14 +33,68 @@
     </div>
   </section>
 
+  {{/* Screens from the demo account, one at a time: a scroll-snap strip that swipes without
+       script; static/carousel.js adds the buttons and dots. */}}
+  <figure class="page-carousel" data-carousel aria-roledescription="carousel" aria-label="Screens from the demo account">
+    <div class="page-carousel__track" tabindex="0">
+      <div class="page-carousel__slide" role="group" aria-roledescription="slide" aria-label="1 of 8">
+        <img src="{{asset "landing/fog-city.webp"}}" alt="Fog of War over Cleveland, cleared along every track" width="1760" height="992" loading="eager" />
+        <p class="page-carousel__caption">Fog of War clears wherever you have been. What is still fogged is left to explore.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="slide" aria-label="2 of 8">
+        <img src="{{asset "landing/fog-states.webp"}}" alt="Fog of War over the United States, with the visited states cleared" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">Zoomed out, a whole state clears once you have been in it.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="slide" aria-label="3 of 8">
+        <img src="{{asset "landing/fog-countries.webp"}}" alt="Fog of War over Europe, with Italy and Estonia cleared" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">Further out, whole countries.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="slide" aria-label="4 of 8">
+        <img src="{{asset "landing/map.webp"}}" alt="Every track around Cleveland on one map, with nearby places marked" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">Every track on one map, with places worth a visit around them.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="slide" aria-label="5 of 8">
+        <img src="{{asset "landing/story.webp"}}" alt="A Story of bike trails with its photos on the map" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">A Story keeps a trip together, with its photos where you took them.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="slide" aria-label="6 of 8">
+        <img src="{{asset "landing/satellite.webp"}}" alt="A trail over satellite imagery, colored by pace, with a photo open" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">Pick a route and it is colored by pace, here over satellite imagery.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="slide" aria-label="7 of 8">
+        <img src="{{asset "landing/heatmap.webp"}}" alt="The heatmap around Cleveland" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">The heatmap glows where you went most over the last year.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="slide" aria-label="8 of 8">
+        <img src="{{asset "landing/profile.webp"}}" alt="The profile page with its activity grid and weekly distances" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">Your profile: every day you got out, and how far you went week by week.</p>
+      </div>
+    </div>
+    <div class="page-carousel__controls" hidden>
+      <button type="button" class="page-carousel__step" data-carousel-step="-1" aria-label="Previous screen">‹</button>
+      <span class="page-carousel__dots">
+        <button type="button" class="page-carousel__dot" data-carousel-dot="0" aria-label="Screen 1"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="1" aria-label="Screen 2"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="2" aria-label="Screen 3"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="3" aria-label="Screen 4"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="4" aria-label="Screen 5"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="5" aria-label="Screen 6"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="6" aria-label="Screen 7"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="7" aria-label="Screen 8"></button>
+      </span>
+      <button type="button" class="page-carousel__step" data-carousel-step="1" aria-label="Next screen">›</button>
+    </div>
+    <figcaption class="page-carousel__note">This is the demo account.{{if not .InApp}} <a href="/signin">Open it and look around</a>.{{end}}</figcaption>
+  </figure>
+  <script src="{{asset "carousel.js"}}" defer></script>
+
   <section class="page-section">
     <h2>How it works</h2>
     <ol class="page-steps">
       <li>
         <h3>Bring what you already recorded</h3>
-        <p>From Strava, Garmin, any watch or bike computer, or {{if eq .App "ios"}}your iPhone{{else}}your Android phone{{end}}: pick the trips worth keeping. Nothing new to record, and nothing to change about how you record.</p>
-        <p class="page-step-links"><a href="/import/strava">From Strava</a><a href="/import/garmin">From Garmin</a>{{if not .InApp}}<a href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android">Android app</a>{{end}}</p>
-        <p class="page-step-note">Any watch's GPX, FIT or TCX files work too.</p>
+        <p>From Strava, Garmin, any watch or bike computer, or {{if eq .App "ios"}}your iPhone{{else}}your Android phone{{end}}: pick the trips worth keeping. Nothing new to record.</p>
+        <p class="page-step-links">Guides: <a href="/import/strava">Strava</a> · <a href="/import/garmin">Garmin</a>{{if not .InApp}} · <a href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android">Android app</a>{{end}}</p>
       </li>
       <li>
         <h3>See it all on one map</h3>
@@ -54,54 +108,24 @@
   </section>
 
   <section class="page-section">
-    <h2>Why you might want it</h2>
-    <ul class="page-cards">
-      <li>
-        <h3>The journeys worth keeping, in one place</h3>
-        <p>Years of activities end up spread across old watches, apps and export files. Bring in the ones worth keeping: <a href="/gpx-viewer">upload GPX, FIT and TCX files</a>, or pick what to sync from the {{if eq .App "ios"}}iPhone app through the Health app{{else}}Android app through Health Connect{{end}}. The app can also record a walk or a drive by itself, when all you want is the route.</p>
-      </li>
-      <li>
-        <h3>Somewhere new, close to home</h3>
-        <p>New places are always fun! Want to explore a new block while walking the dog? Find a playground your kids haven't tried yet, take the family to a park you've never visited, or discover a new trail to hike with friends? Open HoldMyTrack and see all your options in one place — the fog shows exactly where you haven't been yet.</p>
-      </li>
-      <li>
-        <h3>Places worth the trip</h3>
-        <p>Switch on points of interest and the map fills with playgrounds, dog parks, monuments, viewpoints, waterfalls and historic sites from OpenStreetMap. Click one to read what it is, with its address and Wikipedia article when it has them. Then go: with the Android app, stand in a place for half a minute to capture it, and it stays marked on your map from then on.</p>
-      </li>
-      <li>
-        <h3>See how much ground you have covered</h3>
-        <p><a href="/fog-of-war">Fog of War</a> clears the map wherever you have been, and the heatmap shows where you go most. Filter by year, activity type or distance, and watch the explored area grow.</p>
-      </li>
-      <li>
-        <h3>Watch your years take shape</h3>
-        <p>Your profile shows every day you got out as a square in a grid, year by year, with your totals and your longest streak, and how far you went week by week or month by month.</p>
-      </li>
-      <li>
-        <h3>Keep every trip as a story</h3>
-        <p>A week-long hike, a holiday, a race weekend: several activities over several days that would otherwise disappear into the rest of your history. Gather them into a Story with its own name, description, map and totals, and come back to the whole trip any time. You pick what belongs, so the drive to the trailhead can be in and the commute that week can stay out.</p>
-      </li>
-      <li>
-        <h3>Your photos, where you took them</h3>
-        <p>Add the pictures from a walk or a trip, and each one lands on the route at the spot where you took it, worked out from when it was taken. Look back at a Story and see the whole journey: the route, and what you saw along it.</p>
-      </li>
-      <li>
-        <h3>All the details you need</h3>
-        <p>Every route drawn cleanly. Pick one and it is colored by pace, so you can see where you sped up and where you slowed down.</p>
-      </li>
-      <li>
-        <h3>Your data stays yours</h3>
-        <p>Mark places like home or work as private, and wherever a track starts or ends inside one, that part is hidden, so your front door never appears on the map. You can edit tracks, delete activities, and nobody else can see any of it. And we don't keep your health profile: no heart rate, nothing about your body — only the geographical data you trust us with, and the photos you choose to add to it.</p>
-      </li>
-      <li>
-        <h3>Share your adventures</h3>
-        <p>Frame any view of your map — one trip, your neighborhood, a whole year of Fog of War — and save it as a high-resolution image, sized for Instagram, Facebook or X if you like. You choose exactly what to share; your map itself stays private.</p>
-      </li>
+    <h2>What it does</h2>
+    <ul class="page-features">
+      <li><strong>One map, three views:</strong> Every track at once; <a href="/fog-of-war">Fog of War</a>, which clears wherever you've ever been; and a heatmap of the last year.</li>
+      <li><strong>Somewhere new, close to home:</strong> The fog shows the nearby streets, parks and trails you haven't been to yet.</li>
+      <li><strong>Trails and bike paths:</strong> Trails and dirt tracks are always on the map, and bike paths, shared paths and mountain-bike trails from OpenStreetMap can be turned on in Layers. They draw over the fog, so you can see which unexplored one to try next.</li>
+      <li><strong>Stories:</strong> Group the activities of a multi-day hike or a holiday into one trip, with its own map, totals and photos.</li>
+      <li><strong>Photos on the route:</strong> Add your pictures to an activity and each one sits on the route where it was taken.</li>
+      <li><strong>Spots:</strong> Playgrounds, viewpoints, waterfalls and historic sites from OpenStreetMap. Spend 30 seconds in one with capture mode on in the Android app, and it stays marked on your map.</li>
+      <li><strong>Image export:</strong> Share a high-resolution picture of any view; your map itself is never public.</li>
+      <li><strong>Fix a track without losing it:</strong> Chop a recording down to the stretch you want, cut out a detour, move or delete stray GPS points, or split one recording into two activities. The original is never changed, so Reset brings the track back as recorded.</li>
+      <li><strong>Private by default:</strong> Nobody else sees your map, and Private locations hide where tracks start and end near home or work.</li>
+      <li><strong>Your years at a glance:</strong> A square for every day you got out, with weekly or monthly distances.</li>
     </ul>
   </section>
 
   <section class="page-section">
     <h2>What it isn't</h2>
-    <ul class="page-list">
+    <ul class="page-features">
       <li><strong>Not a replacement for your watch or tracking app.</strong> Keep recording the way you already do; HoldMyTrack starts where the recording ends.</li>
       <li><strong>Not a coach or a health app.</strong> There are no training plans, readiness scores or HR zones, and no heart rate at all. It is about where you went, not how your body did.</li>
       <li><strong>Not just for athletes.</strong> Anyone can use it in their own way, from kids to retirees: a daily dog walk counts as much as a marathon.</li>
@@ -110,9 +134,15 @@
   </section>
 
   <section class="page-section" id="funding">
-    <h2>Free, and funded in the open</h2>
-    <p>HoldMyTrack is free for everyone and will be paid for by recurring community donations, with the running costs and the money that comes in published openly. Every feature is available to everyone, and your data is never sold. The site uses cookies only to keep you signed in and to remember the language you picked, plus a short-lived one while you sign in with Google, Facebook or Apple, and it runs no analytics services or trackers; it only counts visitors per day without following anyone (<a href="/privacy">how</a>).</p>
-    <p>It is early days: the project is in active development, and donations are not open yet.</p>
+    <h2>Free and open</h2>
+    <ul class="page-features">
+      <li><strong>100% free:</strong> No subscriptions and no paid features.</li>
+      <li><strong>Your data isn't locked in:</strong> Download all of it, your original files included and every track as GPX. It is never sold.</li>
+      <li><strong>No tracking:</strong> No analytics services or trackers. The site only counts visitors per day, without following anyone (<a href="/privacy">how</a>).</li>
+      <li><strong>Yours to host:</strong> Run it on your own server with the <a href="https://github.com/HoldMyTrack/platform/blob/main/docs/DEPLOY.md">deployment guide</a>.</li>
+      <li><strong>Open source:</strong> MIT-licensed, so you can <a href="https://github.com/HoldMyTrack/platform">look under the hood</a>.</li>
+    </ul>
+    <p>The site uses cookies only to keep you signed in and to remember the language you picked, plus a short-lived one while you sign in with Google, Facebook or Apple.</p>
   </section>
 
   <section class="page-section">

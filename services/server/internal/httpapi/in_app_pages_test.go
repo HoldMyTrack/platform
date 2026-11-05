@@ -56,7 +56,7 @@ func TestInAppPublicPageIsCachedApart(t *testing.T) {
 		}
 		// The iOS app's copy names its own platform, and the others Android's.
 		ios := app == "ios"
-		if strings.Contains(body, "or your iPhone:") != ios || strings.Contains(body, "through Health Connect") == ios {
+		if strings.Contains(body, "or your iPhone:") != ios || strings.Contains(body, "or your Android phone:") == ios {
 			t.Errorf("request %d (app %q): names the wrong platform", i, app)
 		}
 	}
