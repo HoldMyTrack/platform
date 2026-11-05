@@ -35,3 +35,27 @@ func TestTemplatesHaveNoInlineScript(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// Every {{asset "…"}} a template names is a file in static/, or the page links a 404 that only
+// shows up in a browser.
+func TestTemplateAssetsExist(t *testing.T) {
+	ref := regexp.MustCompile(`\{\{asset "([^"]+)"\}\}`)
+	err := fs.WalkDir(Embedded(), "templates", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".html") {
+			return err
+		}
+		b, err := fs.ReadFile(Embedded(), path)
+		if err != nil {
+			return err
+		}
+		for _, m := range ref.FindAllStringSubmatch(string(b), -1) {
+			if _, err := fs.Stat(Embedded(), "static/"+m[1]); err != nil {
+				t.Errorf("%s: asset %q is not in static/", path, m[1])
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
