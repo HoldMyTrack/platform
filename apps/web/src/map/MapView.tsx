@@ -42,6 +42,7 @@ import { todayIn, type DateRange } from '../ui/dateMath';
 import { useUnitSystem } from '../ui/units';
 import { INITIAL_WINDOW_DAYS, useActivityDays } from '../ui/useActivityDays';
 import { showsFirstRun } from '../ui/firstRun';
+import { DemoBar } from '../ui/DemoBar';
 import { useActivityList } from '../ui/useActivityList';
 import { useStories } from '../ui/useStories';
 import { useStory } from '../ui/useStory';
@@ -350,6 +351,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
 
   return (
     <div className="app-shell">
+      <DemoBar isDemo={isDemo} />
       <div className="app-body">
         {mapMode === 'normal' && (
           // Inert while the Edit window is open: changing the range, selection or filters would pull
