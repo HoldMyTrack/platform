@@ -24,7 +24,7 @@ For the run, the same kind of override raises three limits, which go back to the
 - `TILES_PER_MINUTE`: `browse` runs several visitors per account, past one account's 1,200 tiles a minute (`SPEC.md` FR-4.15).
 - `R2_DAILY_BUDGET_USD`, on `api` and `worker`, which both apply it: the run's R2 requests count toward the daily budget (`DEPLOY.md` §4), whose stages would pause renders and refuse uploads mid-test. Restore it once the current UTC day's spend (`r2_ops`) is under 70% of the default, usually after midnight UTC: the run's requests stay in that day's spend, and a lower budget the same day puts every account under the stages it crosses (`SPEC.md` FR-17.1).
 
-Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATION.md` §4.28) removes their rows and objects. Check that no test row or pending job is left.
+Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATION.md` §4.28) removes their rows and objects. Check that no test row or pending job is left. Finish both before 00:00 UTC on the day of `signup`: the next daily snapshot (`IMPLEMENTATION.md` §4.32) counts a deleted account's signup until its row is purged, and its email is already rewritten, so no filter can recognize it.
 
 ### Scenarios
 
