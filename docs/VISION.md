@@ -10,7 +10,7 @@ It targets people who already track workouts or travel and want a better way to 
 
 1. **Visual quality as the product.** Competitors are functional and largely ugly. HoldMyTrack treats the render, from smooth fog edges to print-grade output, as the thing worth building.
 2. **Source independence.** Three independent ingest paths (§4.1) mean the product survives any single provider revoking access, changing terms or pricing itself out of reach.
-3. **Free, with nothing to sell.** No subscription, no paywalled features, and user data is never sold. HoldMyTrack covers its own running costs; whether it ever asks for money is left open (§6, ADR-0050).
+3. **Free, with nothing to sell.** No subscription, no paywalled features, and user data is never sold. HoldMyTrack covers its own running costs; whether it ever asks for money is left open (§6).
 
 ### 1.1 What HoldMyTrack is not
 
@@ -157,7 +157,7 @@ With no revenue, costs must be bounded by design.
 The product moves through three milestones (ADR-0031); `docs/ROADMAP.md` carries the work in each.
 
 1. **MVP**: activities, the map modes, Spots, Stories and photos, on the web and Android, free for everyone. It ends at the public launch, gated by compliance (§7).
-2. **Release and community**: open HoldMyTrack to the public and shape features and sources around what users ask for. It has no exit gate (ADR-0050).
+2. **Release and community**: open HoldMyTrack to the public and shape features and sources around what users ask for. It has no exit gate.
 3. **Social graph** (§5.7): public pages, followers and the rest, if at all. Whether to build it, and how to pay for it, is decided from what Milestone 2 shows. Staying single-player is one of the options.
 
 ### 5.7 Social graph (Milestone 3, not committed)
@@ -176,7 +176,7 @@ A product with no headcount should not ship a location-sharing social network: e
 
 ### 6.1 The model
 
-**HoldMyTrack is free: all features, sources and exports, for everyone, and user data is never sold.** It covers its own running costs. Whether it ever asks for money, and how, is left open and decided when there is a reason to; until then nothing public speaks of money (ADR-0050). The one standing commitment is that data is never sold (ADR-0031).
+**HoldMyTrack is free: all features, sources and exports, for everyone, and user data is never sold.** It covers its own running costs. Whether it ever asks for money, and how, is left open and decided when there is a reason to; until then nothing public speaks of money. The one standing commitment is that data is never sold (ADR-0031).
 
 ### 6.2 What supporters get
 

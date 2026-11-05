@@ -23,7 +23,7 @@ Gates the public launch (`VISION.md` §7, §8.3).
 
 ## Milestone 2 — Release and community
 
-Starts at the public launch, and has no exit gate (ADR-0050).
+Starts at the public launch, and has no exit gate (`VISION.md` §5).
 
 ### Cost control
 

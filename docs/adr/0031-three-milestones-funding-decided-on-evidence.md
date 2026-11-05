@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Applied to `VISION.md` §1, §5, §6, §8, `ROADMAP.md`, `AGENTS.md`, and the About page and home-page description. Its funding model (community donations, a funding page before launch, and Milestone 2's exit gate measured against donations) is superseded by [ADR-0050](0050-funding-left-open.md); the three milestones and the promise that data is never sold stand.
+Accepted. Applied to `VISION.md` §1, §5, §6, §8, `ROADMAP.md`, `AGENTS.md`, and the About page and home-page description. Its funding model (community donations, a funding page before launch, and Milestone 2's exit gate measured against donations) no longer applies: `VISION.md` §6 holds the current position. The three milestones and the promise that data is never sold stand.
 
 ## Context
 
