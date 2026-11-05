@@ -627,7 +627,7 @@ The basemap is an ODbL Produced Work, so the OSM credit shows on the map and in 
 
 ### 5.7 Cost control
 
-Costs scale with users and donations with goodwill (`VISION.md` §4.3), so the system bounds itself.
+Costs scale with users while the service stays free (`VISION.md` §4.3), so the system bounds itself.
 - **Per-point streams aren't stored**; ingest can derive them from the raw payload when a feature needs them. The photo cap bounds the line that grows with use.
 - **Raw payloads are kept as long as their activity**, since `reprivacy` and track edits re-parse them. A failed ingest has none, so the worker removes its original as it fails (`ingest.DiscardRaw`), unless an activity names the same key.
 - **Rate limits** (`httpapi/rate_limits.go`) are per account, except on the shared demo account, which counts per address. Tiles count per minute with a high ceiling, since pans and exports burst and one refused tile fails an export. Phone sync counts activities as well as requests, which bounds a sync-delete-sync loop that renders each time. The counts are in memory, per `api` process.

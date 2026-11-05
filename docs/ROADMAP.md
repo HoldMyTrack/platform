@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-10-31.
+Last updated: 2026-11-05.
 
 ## How to read this document
 
@@ -14,7 +14,6 @@ The current milestone (`VISION.md` §5, ADR-0031). The product is shipped and de
 
 Gates the public launch (`VISION.md` §7, §8.3).
 
-- [ ] Stand up the funding page (Open Collective, public ledger, `VISION.md` §6.1) before launch. The app side is built (`SPEC.md` FR-11.1), and the `holdmytrack` collective applied to Open Source Collective as fiscal host on 2026-09-24. Once approved, set `OpenCollectiveSlug` in `services/server/internal/web/web.go`, which brings back the header's Donate, and replace the About page's "donations are not open yet" line with a link.
 - [ ] Post concept renders to r/running, r/cycling, r/Garmin, r/Strava, r/FogOfWorld (`VISION.md` §8.1, §8.3).
 - [x] A privacy policy page, `/privacy` (`SPEC.md` FR-10.6).
 - [x] Account deletion and data export, on the web and Android (`SPEC.md` FR-1.11, FR-1.12).
@@ -24,7 +23,7 @@ Gates the public launch (`VISION.md` §7, §8.3).
 
 ## Milestone 2 — Release and community
 
-Starts at the public launch. Its exit gate is cost per active user (`IMPLEMENTATION.md` §4.32 keeps the active counts) set against monthly donations and the share of active users who give, over several months.
+Starts at the public launch, and has no exit gate (`VISION.md` §5).
 
 ### Cost control
 

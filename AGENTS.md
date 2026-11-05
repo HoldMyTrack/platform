@@ -4,7 +4,7 @@ Orientation for coding agents working in this repository. Read this first, then 
 
 ## What HoldMyTrack is
 
-HoldMyTrack is a free, community-funded platform that keeps the outdoor journeys people choose, from watches, the phone, cloud services and files, and turns them into maps and exploration stats: Stories, one map of everywhere those journeys went, Fog of War and Spots. `docs/VISION.md` §1 says what it is and §1.1 what it is not. Four boundaries apply to every change:
+HoldMyTrack is a free, open-source platform that keeps the outdoor journeys people choose, from watches, the phone, cloud services and files, and turns them into maps and exploration stats: Stories, one map of everywhere those journeys went, Fog of War and Spots. `docs/VISION.md` §1 says what it is and §1.1 what it is not. Four boundaries apply to every change:
 - No health data: no heart rate or other body signal is read, stored or shown (ADR-0017).
 - Every source is a gate: only what the user ticks comes in, nothing starts ticked, and no heuristic changes or hides an activity on their behalf (ADR-0039).
 - No social graph: no feed, follows or public pages (`VISION.md` §5, Milestone 3).

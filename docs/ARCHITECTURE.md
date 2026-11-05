@@ -10,7 +10,7 @@ How the system is put together: the top-level shape, the key decisions behind it
 
 HoldMyTrack is a **modular monolith** on PostgreSQL/PostGIS, fed by three independent ingest paths. Coverage is precomputed on ingest instead of assembled per request.
 
-**The service is free and community-funded** (`VISION.md` §6), so per-user cost is bounded by design in the schema, the retention policy and the tile strategy (`IMPLEMENTATION.md` §5.7).
+**The service is free** (`VISION.md` §6), so per-user cost is bounded by design in the schema, the retention policy and the tile strategy (`IMPLEMENTATION.md` §5.7).
 
 ### 1.1 Key decisions and their reasons
 

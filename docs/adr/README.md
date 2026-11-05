@@ -21,7 +21,7 @@ Numbered in rough order of how foundational the decision is, not strictly chrono
 | [0017](0017-no-health-data.md) | No health data: heart rate is never read or stored, and the pace/heart-rate profile card is removed |
 | [0021](0021-spots-from-osm-visits-from-tracks.md) | Spots are bulk-imported from OpenStreetMap, and a visit is five minutes inside one, worked out from tracks |
 | [0024](0024-activity-photos-resized-and-route-bound.md) | An activity can carry the user's photos, kept as resized copies on our own storage, each placed on the route by the time it was taken |
-| [0031](0031-three-milestones-funding-decided-on-evidence.md) | Three milestones (MVP, community, social graph); the funding model is decided on Milestone 2's evidence, and data is never sold |
+| [0031](0031-three-milestones-funding-decided-on-evidence.md) | Three milestones (MVP, community, social graph); the funding model is decided on Milestone 2's evidence, and data is never sold (its funding model no longer applies) |
 | [0032](0032-accept-and-enqueue.md) | A request that brings activities only accepts them; the worker does the storage work, and unpacks archives |
 | [0034](0034-country-region-outlines-from-overture.md) | Country and region outlines come from Overture Maps' divisions, land-clipped, loaded from our own copy at deploy time |
 | [0035](0035-activity-local-timezone.md) | An activity's times show, and its days group, in the timezone it was recorded in |
