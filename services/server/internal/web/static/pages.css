@@ -173,6 +173,35 @@ code {
   color: var(--fm-ink-secondary);
 }
 
+/* How it works' first step: a link per source under its text, then the file formats. */
+.page-steps .page-step-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.page-step-links a {
+  padding: 6px 12px;
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius-pill);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fm-accent-strong);
+  text-decoration: none;
+}
+
+.page-step-links a:hover {
+  border-color: var(--fm-border-strong);
+  background: var(--fm-surface-tint);
+}
+
+.page-steps .page-step-note {
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--fm-ink-secondary);
+}
+
 .page-list {
   margin: 0;
   padding-left: 20px;

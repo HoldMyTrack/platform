@@ -329,6 +329,78 @@
   display: none;
 }
 
+/* Where the files come from (FR-3.4's Upload menu): a guide per service, below what is importing. */
+.upload-menu__guides {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--fm-divider-tint);
+}
+
+.upload-menu__guides-title {
+  margin: 0 2px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fm-ink-secondary);
+}
+
+.upload-guide {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 4px;
+  border-radius: 6px;
+  color: var(--fm-ink);
+  text-decoration: none;
+}
+
+.upload-guide:hover {
+  background: rgb(var(--fm-ink-rgb) / 4%);
+}
+
+.upload-guide__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--fm-surface-tint);
+  color: var(--fm-accent-strong);
+}
+
+.upload-guide__text {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.upload-guide__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.upload-guide__detail {
+  font-size: 12px;
+  color: var(--fm-ink-secondary);
+}
+
+.upload-guide__chevron {
+  flex-shrink: 0;
+  color: var(--fm-ink-muted);
+}
+
+.upload-menu__guides-all {
+  display: inline-block;
+  margin: 4px 4px 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--fm-accent-strong);
+}
+
 .upload-menu__row {
   display: flex;
   align-items: baseline;

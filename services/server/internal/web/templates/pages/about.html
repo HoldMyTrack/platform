@@ -38,7 +38,9 @@
     <ol class="page-steps">
       <li>
         <h3>Bring what you already recorded</h3>
-        <p>Upload the GPX, FIT or TCX files your watch, bike computer or app saved, from <a href="/import/garmin">Garmin</a>, <a href="/import/strava">Strava</a> or anywhere else, for the trips you want to keep, or pick them in the {{if eq .App "ios"}}iPhone{{else}}Android{{end}} app. Nothing new to record, and nothing to change about how you record.</p>
+        <p>From Strava, Garmin, any watch or bike computer, or {{if eq .App "ios"}}your iPhone{{else}}your Android phone{{end}}: pick the trips worth keeping. Nothing new to record, and nothing to change about how you record.</p>
+        <p class="page-step-links"><a href="/import/strava">From Strava</a><a href="/import/garmin">From Garmin</a>{{if not .InApp}}<a href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android">Android app</a>{{end}}</p>
+        <p class="page-step-note">Any watch's GPX, FIT or TCX files work too.</p>
       </li>
       <li>
         <h3>See it all on one map</h3>
