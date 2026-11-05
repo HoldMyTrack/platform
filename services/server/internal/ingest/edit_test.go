@@ -208,25 +208,61 @@ func TestEditableTimestamps(t *testing.T) {
 	}
 }
 
-// A Cut's joining segment is walked distance like any other segment, but the time gap it
-// spans is a stop, not movement.
+// A Cut's join is a line across time spent elsewhere: only elapsed time spans it, however fast
+// it would read, so the pace stays the walking's.
 func TestMetricsAfterCut(t *testing.T) {
 	t0 := time.Date(2026, 9, 1, 8, 0, 0, 0, time.UTC)
+	elevation := func(m float32) *float32 { return &m }
+	before := pt(52.0001, 13.0, t0.Add(5*time.Second))
+	before.Elevation = elevation(100)
+	// 20 minutes later and ~1.1 km on, which reads as moving: what's left of a detour cut out.
+	after := pt(52.0101, 13.0, t0.Add(20*time.Minute))
+	after.Elevation = elevation(150)
 	points := []parse.Point{
 		pt(52.0, 13.0, t0),
-		pt(52.0001, 13.0, t0.Add(5*time.Second)),
-		// 20 minutes later and ~11 m on: what's left once a mall wander is cut out.
-		pt(52.0002, 13.0, t0.Add(20*time.Minute)),
-		pt(52.0003, 13.0, t0.Add(20*time.Minute+5*time.Second)),
+		before,
+		after,
+		pt(52.0102, 13.0, t0.Add(20*time.Minute+5*time.Second)),
 	}
-	m := computeMetrics(points)
+	edit := &TrackEdit{Remove: [][2]int64{{t0.Add(6 * time.Second).UnixMilli(), t0.Add(19 * time.Minute).UnixMilli()}}}
+
+	m := computeMetrics(points, edit)
 	if m.durationS != 1205 {
 		t.Errorf("duration = %d, want the full elapsed 1205 s", m.durationS)
 	}
 	if m.movingS != 10 {
 		t.Errorf("moving = %d, want only the two 5 s walking segments", m.movingS)
 	}
-	if m.distanceM < 33 || m.distanceM > 34 {
-		t.Errorf("distance = %.1f m, want the joining segment included (~33.4 m)", m.distanceM)
+	if m.distanceM < 22 || m.distanceM > 23 {
+		t.Errorf("distance = %.1f m, want the two walking segments alone (~22.2 m)", m.distanceM)
+	}
+	if m.elevationGainM != 0 {
+		t.Errorf("elevation gain = %.1f m, want none across the join", m.elevationGainM)
+	}
+	// Without the edit the same points are one ride, join and all.
+	if plain := computeMetrics(points, nil); plain.distanceM < 1000 || plain.movingS != 1205 {
+		t.Errorf("no edit: distance %.0f m, moving %d s", plain.distanceM, plain.movingS)
+	}
+}
+
+func TestJoinsCut(t *testing.T) {
+	edit := &TrackEdit{Remove: [][2]int64{{100, 200}, {200, 300}}, Drop: []int64{500}, Keep: &[2]int64{0, 1000}}
+	for _, c := range []struct {
+		from, to int64
+		want     bool
+	}{
+		{99, 301, true},   // around both ranges of one join
+		{99, 200, true},   // around the first
+		{301, 400, false}, // walking after it
+		{50, 99, false},   // walking before it
+		{250, 400, false}, // starts inside the last range: never a surviving pair
+		{450, 550, false}, // a deleted point leaves an ordinary segment
+	} {
+		if got := edit.JoinsCut(c.from, c.to); got != c.want {
+			t.Errorf("JoinsCut(%d, %d) = %v, want %v", c.from, c.to, got, c.want)
+		}
+	}
+	if (*TrackEdit)(nil).JoinsCut(0, 1000) {
+		t.Error("no edit has no Cuts")
 	}
 }

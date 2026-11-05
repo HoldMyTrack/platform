@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"testing"
 	"time"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
 func query(t *testing.T, raw string) url.Values {
@@ -97,11 +99,37 @@ func TestPointSpeeds(t *testing.T) {
 	lons := []float64{0, 0, 0, 0}
 	lats := []float64{0, 0.001, 0.002, 0.003}
 	ms := []float64{100, 110, 120, 120.9}
-	got := pointSpeeds(lons, lats, ms)
+	got := pointSpeeds(lons, lats, ms, nil)
 	if math.Abs(got[1]-11.1) > 0.1 || got[0] != got[1] || got[3] != 0 {
 		t.Fatalf("got %v, want ~11.1 m/s, the first copying the second, 0 across no time", got)
 	}
-	if got := pointSpeeds([]float64{1}, []float64{1}, []float64{1}); len(got) != 1 || got[0] != 0 {
+	if got := pointSpeeds([]float64{1}, []float64{1}, []float64{1}, nil); len(got) != 1 || got[0] != 0 {
 		t.Fatalf("one point: %v", got)
+	}
+}
+
+// A Cut's join keeps the pace before it, or after it at the track's start, so its made-up speed
+// never reaches the bands' range. Times are whole seconds while a range's ends are milliseconds.
+func TestPointSpeedsAcrossACut(t *testing.T) {
+	lats := []float64{0, 0.0001, 0.0002, 0.1, 0.1001, 0.1002}
+	lons := make([]float64, len(lats))
+	ms := []float64{100, 110, 120, 500, 510, 520}
+	edit := &ingest.TrackEdit{Remove: [][2]int64{{120001, 499500}}}
+	got := pointSpeeds(lons, lats, ms, edit)
+	walking := got[1]
+	for i, v := range got {
+		if math.Abs(v-walking) > 0.01 {
+			t.Errorf("speed[%d] = %.2f, want the walking pace %.2f", i, v, walking)
+		}
+	}
+	if plain := pointSpeeds(lons, lats, ms, nil); plain[3] < 10*walking {
+		t.Errorf("without the edit the join reads %.2f m/s, want its own speed", plain[3])
+	}
+
+	// Nothing before the first join: it takes the pace after it.
+	lats, lons, ms = []float64{0, 0.1, 0.1001}, make([]float64, 3), []float64{100, 500, 510}
+	got = pointSpeeds(lons, lats, ms, &ingest.TrackEdit{Remove: [][2]int64{{100001, 499000}}})
+	if got[1] != got[2] || got[0] != got[2] || got[2] == 0 {
+		t.Errorf("leading join: speeds = %v, want all the walking pace", got)
 	}
 }
