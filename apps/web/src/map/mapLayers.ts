@@ -94,10 +94,10 @@ export interface MapLayers {
 }
 
 /** One family's part of the document: its group and its share of a mode's view over a base
- *  that reads `dark`. */
+ *  that reads `dark`, which `satellite` imagery always does. */
 export interface GroupPart {
   group: LayerGroup;
-  view: (mode: MapMode, dark: boolean) => LayerView;
+  view: (mode: MapMode, dark: boolean, satellite: boolean) => LayerView;
   vars?: Record<string, unknown>;
   tiers?: LayerTier[];
 }
@@ -119,10 +119,10 @@ export function withView(spec: LayerSpecification, view: LayerView): LayerSpecif
 
 const MODES: readonly MapMode[] = ['normal', 'fog', 'heatmap'];
 
-function mergeViews(parts: readonly GroupPart[], mode: MapMode, dark: boolean): LayerView {
+function mergeViews(parts: readonly GroupPart[], mode: MapMode, dark: boolean, satellite: boolean): LayerView {
   const view: LayerView = { layout: {}, paint: {} };
   for (const part of parts) {
-    const own = part.view(mode, dark);
+    const own = part.view(mode, dark, satellite);
     Object.assign(view.layout, own.layout);
     Object.assign(view.paint, own.paint);
   }
@@ -143,14 +143,14 @@ export interface BuildLayersOptions {
  *  flavor, so its views take the dark ones. */
 export function buildLayers({ flavor, dark, labelIds, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
   const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(), spotsGroup(tileVersion)];
-  const views = (base: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base)])) as Record<MapMode, LayerView>;
+  const views = (base: boolean, satellite: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base, satellite)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,
     flavor,
     tileVersion,
     tiers: parts.flatMap((part) => part.tiers ?? []),
     vars: Object.assign({}, ...parts.map((part) => part.vars ?? {})),
-    views: { plain: views(dark), satellite: views(true) },
+    views: { plain: views(dark, false), satellite: views(true, true) },
     groups: parts.map((part) => part.group),
   };
 }

@@ -71,16 +71,16 @@ class MapLayersDocTest {
         fun casing(doc: MapLayersDoc.Doc, satellite: Boolean) = MapLayersDoc.view(doc, MapMode.NORMAL, satellite)!!.properties.getValue("tracks-casing").getValue("line-color")
         val black = MapLayersDoc.parse(served("layers/black.json"))!!
         assertEquals(JsonPrimitive("#202b25"), casing(light, false))
-        assertEquals(JsonPrimitive("#a39e93"), casing(light, true))
+        assertEquals(JsonPrimitive("#14140e"), casing(light, true))
         assertEquals(JsonPrimitive("#a39e93"), casing(black, false))
     }
 
     @Test
     fun theArrowsRideTheRouteOverTheBands() {
         val bands = light.group("track-bands")!!
-        assertEquals(listOf("track-bands-line", "track-bands-arrows"), bands.layers.map { it.id })
-        assertEquals("""["has","route"]""", bands.layers[1].filter.toString())
-        assertEquals("symbol", bands.layers[1].type)
+        assertEquals(listOf("track-bands-outline", "track-bands-line", "track-bands-arrows"), bands.layers.map { it.id })
+        assertEquals("""["has","route"]""", bands.layers[2].filter.toString())
+        assertEquals("symbol", bands.layers[2].type)
     }
 
     @Test
@@ -118,11 +118,11 @@ class MapLayersDocTest {
     @Test
     fun theTracksFilterByTheIdSetsTheAppBinds() {
         val tracks = light.group("tracks")!!
-        assertEquals(listOf("tracks-casing", MapOverlays.TRACKS_LAYER_ID, "tracks-focused", "tracks-hover", "tracks-arrows"), tracks.layers.map { it.id })
-        assertEquals(listOf("casing", "track", "focused", null, null), tracks.layers.map { it.role })
+        assertEquals(listOf("tracks-outline", "tracks-casing", MapOverlays.TRACKS_LAYER_ID, "tracks-focused", "tracks-hover", "tracks-arrows"), tracks.layers.map { it.id })
+        assertEquals(listOf(null, "casing", "track", "focused", null, null), tracks.layers.map { it.role })
         assertEquals(listOf("focused", "hidden"), tracks.layers.first { it.id == "tracks-focused" }.vars.getValue("filter"))
         assertTrue(light.vars.keys.containsAll(setOf("hidden", "focused", "hovered")))
-        assertEquals(MapOverlays.BAND_LAYER_ID, light.group("track-bands")!!.layers.first().id)
+        assertEquals(MapOverlays.BAND_LAYER_ID, light.group("track-bands")!!.layers[1].id)
         assertEquals(MapOverlays.TRACKS_MIN_ZOOM, tracks.layers.first().minZoom)
         val beneath = MapLayersDoc.order(light.groups, MapLayersDoc.Placement.BENEATH_LABELS)
         assertTrue(beneath.indexOf(MapOverlays.TRACKS_LAYER_ID) < beneath.indexOf(MapOverlays.BAND_LAYER_ID))

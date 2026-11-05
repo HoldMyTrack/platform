@@ -16,10 +16,18 @@ const ARROWS_LAYER_ID = 'track-bands-arrows';
 
 /** Blue (slowest) to red (fastest), one per band of internal/httpapi's paceBandCount. */
 const BAND_COLORS = ['#2b6cb0', '#38a169', '#d69e2e', '#dd6b20', '#c53030'];
+// The same steps over imagery, where the green above is lost among trees.
+const SATELLITE_BAND_COLORS = ['#4da6ff', '#3df08a', '#ffd23f', '#ff8c2e', '#ff4d4d'];
+const SATELLITE_EDGE_COLOR = '#14140e';
+const OUTLINE_LAYER_ID = 'track-bands-outline';
+const BAND_OPACITY = 0.95;
+const bandColor = (colors: readonly string[]) => ['match', ['get', 'band'], ...colors.flatMap((color, band) => [band, color]), colors[0]];
 
 /** Wider than the selected track (tracksGroup.ts) so it covers the line under it instead of
  *  filtering that track out of the shared tiles. */
 const BAND_WIDTH = 6;
+// 1.5 px of outline showing on each side, as on a bold track's halo.
+const OUTLINE_WIDTH = BAND_WIDTH + 3;
 
 /** The three chevrons on the bands and the bold tracks, as text in their own font
  *  (scripts/chevronFont.mjs): text placed along a line skips what bends past `text-max-angle`, so
@@ -57,6 +65,15 @@ export function bandsGroup(): GroupPart {
       placement: 'beneath-labels',
       sources: { 'track-bands': { type: 'geojson' } },
       layers: [
+        // Over imagery only. The whole route, so the runs' ends don't cut into it.
+        {
+          id: OUTLINE_LAYER_ID,
+          type: 'line',
+          source: 'track-bands',
+          filter: ['has', 'route'],
+          layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' },
+          paint: { 'line-color': SATELLITE_EDGE_COLOR, 'line-width': OUTLINE_WIDTH },
+        },
         {
           id: BANDS_LAYER_ID,
           type: 'line',
@@ -67,9 +84,9 @@ export function bandsGroup(): GroupPart {
           paint: {
             // A match, not ["at", …, ["literal", colors]]: a literal array of strings is typed
             // array<string>, which a color property refuses.
-            'line-color': ['match', ['get', 'band'], ...BAND_COLORS.flatMap((color, band) => [band, color]), BAND_COLORS[0]] as never,
+            'line-color': bandColor(BAND_COLORS) as never,
             'line-width': BAND_WIDTH,
-            'line-opacity': 0.95,
+            'line-opacity': BAND_OPACITY,
           },
         },
         {
@@ -85,9 +102,16 @@ export function bandsGroup(): GroupPart {
       legend: Object.fromEntries(BAND_COLORS.map((color, band) => [`band-${band}`, { color }])),
     },
     // Fog and Heatmap already show where; lines over either read as noise.
-    view: (mode: MapMode) => {
+    view: (mode: MapMode, _dark: boolean, satellite: boolean) => {
       const shown = { visibility: mode === 'normal' ? 'visible' : 'none' };
-      return { layout: { [BANDS_LAYER_ID]: shown, [ARROWS_LAYER_ID]: shown }, paint: {} };
+      return {
+        layout: { [BANDS_LAYER_ID]: shown, [ARROWS_LAYER_ID]: shown, [OUTLINE_LAYER_ID]: satellite ? shown : { visibility: 'none' } },
+        paint: {
+          [BANDS_LAYER_ID]: { 'line-color': bandColor(satellite ? SATELLITE_BAND_COLORS : BAND_COLORS), 'line-opacity': satellite ? 1 : BAND_OPACITY },
+          // White barely reads on the brighter bands.
+          [ARROWS_LAYER_ID]: { 'text-color': satellite ? SATELLITE_EDGE_COLOR : arrowPaint['text-color'] },
+        },
+      };
     },
   };
 }

@@ -110,7 +110,7 @@ test('the heat radius doubles across each zoom and drops back at the next', () =
 test('the pace bands color each run by its band, shown in Normal only', () => {
   const bands = groupOf(doc, 'track-bands');
   assert.deepEqual(bands.sources, { 'track-bands': { type: 'geojson' } });
-  const [line] = bands.layers;
+  const line = bands.layers.find((l) => l.id === 'track-bands-line');
   assert.deepEqual(line.paint['line-color'].slice(0, 4), ['match', ['get', 'band'], 0, '#2b6cb0']);
   assert.deepEqual(Object.keys(bands.legend), ['band-0', 'band-1', 'band-2', 'band-3', 'band-4']);
   assert.equal(viewFor(doc, 'normal', false).layout['track-bands-line'].visibility, 'visible');
@@ -146,7 +146,7 @@ test('the legend gives every path its color, and a dash where the map dashes it'
 
 test('the tracks draw the focused and hovered ids from vars the client binds, never a hidden one', () => {
   const tracks = groupOf(doc, 'tracks');
-  assert.deepEqual(tracks.layers.map((l) => l.id), ['tracks-casing', 'tracks-line', 'tracks-focused', 'tracks-hover', 'tracks-arrows']);
+  assert.deepEqual(tracks.layers.map((l) => l.id), ['tracks-outline', 'tracks-casing', 'tracks-line', 'tracks-focused', 'tracks-hover', 'tracks-arrows']);
   assert.deepEqual([doc.vars.hidden, doc.vars.focused, doc.vars.hovered], [[], [], []]);
   const focused = tracks.layers.find((l) => l.id === 'tracks-focused');
   assert.deepEqual(focused.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden'] });
@@ -164,14 +164,51 @@ test('the tracks draw the focused and hovered ids from vars the client binds, ne
 test('the focused halo is the opposite of the map under it', () => {
   const casing = (d, satellite) => viewFor(d, 'normal', satellite).paint['tracks-casing']['line-color'];
   const dark = buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' });
-  assert.deepEqual([casing(doc, false), casing(doc, true), casing(dark, false)], ['#202b25', '#a39e93', '#a39e93']);
+  assert.deepEqual([casing(doc, false), casing(doc, true), casing(dark, false)], ['#202b25', '#14140e', '#a39e93']);
   assert.equal(groupOf(dark, 'tracks').layers.find((l) => l.id === 'tracks-casing').paint['line-color'], '#a39e93');
+});
+
+test('over imagery, every track is bright with a dark outline, and off it nothing changes', () => {
+  const dark = buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' });
+  const tracks = groupOf(doc, 'tracks');
+  assert.equal(tracks.layers[0].id, 'tracks-outline');
+  assert.equal(tracks.layers[0].layout.visibility, 'none', 'off until a view says otherwise');
+  assert.deepEqual(tracks.layers[0].filter, tracks.layers.find((l) => l.id === 'tracks-line').filter);
+  for (const d of [doc, dark]) {
+    const over = viewFor(d, 'normal', true);
+    const plain = viewFor(d, 'normal', false);
+    assert.equal(over.layout['tracks-outline'].visibility, 'visible');
+    assert.equal(plain.layout['tracks-outline'].visibility, 'none');
+    assert.equal(viewFor(d, 'fog', true).layout['tracks-outline'].visibility, 'none');
+    for (const id of ['tracks-line', 'tracks-focused']) {
+      assert.equal(over.paint[id]['line-color'], '#ffc533');
+      assert.equal(plain.paint[id]['line-color'], '#b07e2e');
+    }
+    assert.deepEqual([over.paint['tracks-hover']['line-color'], plain.paint['tracks-hover']['line-color']], ['#ffe08a', '#93691f']);
+    assert.deepEqual([over.paint['tracks-line']['line-opacity'], plain.paint['tracks-line']['line-opacity']], [1, 0.9]);
+    assert.deepEqual([over.paint['tracks-arrows']['text-color'], plain.paint['tracks-arrows']['text-color']], ['#14140e', '#ffffff']);
+  }
+});
+
+test('over imagery, the pace bands are brighter on a dark outline, and off it nothing changes', () => {
+  const dark = buildLayers({ flavor: 'black', dark: true, labelIds: [], tileVersion: '' });
+  const green = (view) => view.paint['track-bands-line']['line-color'].at(5);
+  assert.equal(groupOf(doc, 'track-bands').layers[0].layout.visibility, 'none', 'off until a view says otherwise');
+  assert.deepEqual(groupOf(doc, 'track-bands').layers[0].filter, ['has', 'route']);
+  for (const d of [doc, dark]) {
+    const over = viewFor(d, 'normal', true);
+    const plain = viewFor(d, 'normal', false);
+    assert.deepEqual([green(over), green(plain)], ['#3df08a', '#38a169']);
+    assert.deepEqual([over.layout['track-bands-outline'].visibility, plain.layout['track-bands-outline'].visibility], ['visible', 'none']);
+    assert.equal(viewFor(d, 'fog', true).layout['track-bands-outline'].visibility, 'none');
+    assert.deepEqual([over.paint['track-bands-arrows']['text-color'], plain.paint['track-bands-arrows']['text-color']], ['#14140e', '#ffffff']);
+  }
 });
 
 test('arrows ride the route line over the bands, never a band run, as translucent text skipping tight bends, pointing along the line', () => {
   const bands = groupOf(doc, 'track-bands');
-  assert.deepEqual(bands.layers.map((l) => l.id), ['track-bands-line', 'track-bands-arrows']);
-  const [line, arrows] = bands.layers;
+  assert.deepEqual(bands.layers.map((l) => l.id), ['track-bands-outline', 'track-bands-line', 'track-bands-arrows']);
+  const [, line, arrows] = bands.layers;
   assert.deepEqual([line.filter, arrows.filter], [['has', 'band'], ['has', 'route']]);
   assert.equal(arrows.layout['symbol-placement'], 'line');
   assert.equal(arrows.layout['text-field'], '\uE000\uE000\uE000');
