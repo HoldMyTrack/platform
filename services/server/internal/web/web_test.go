@@ -65,6 +65,29 @@ func TestHeaderDemoMenu(t *testing.T) {
 	}
 }
 
+// The Upload menu says where files come from, a guide per service, each in a new tab so what is
+// uploading stays put.
+func TestHeaderUploadGuides(t *testing.T) {
+	r, err := New(Embedded(), false, "v", "https://app.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec := httptest.NewRecorder()
+	r.RenderApp(rec, AppPage{PageData: PageData{Title: "Map", Path: "/", User: &User{Email: "a@example.com"}}})
+	body := rec.Body.String()
+	for _, want := range []string{
+		`href="/import/strava" target="_blank"`,
+		`href="/import/garmin" target="_blank"`,
+		`href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android" target="_blank"`,
+		`href="/guides" target="_blank"`,
+		"Where are my files?",
+	} {
+		if !strings.Contains(body, want) {
+			t.Errorf("upload menu missing %s", want)
+		}
+	}
+}
+
 func TestDonateURL(t *testing.T) {
 	if got := donateURL(""); got != "" {
 		t.Errorf("no collective: %q, want no button", got)

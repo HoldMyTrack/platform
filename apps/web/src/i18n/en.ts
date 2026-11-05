@@ -371,7 +371,7 @@ export const en = {
   'tour.heatmap.title': 'Heatmap',
   'tour.heatmap.body': 'Where you go most, over the last 365 days. A route you take every week glows; one you stopped taking cools off.',
   'tour.add.title': 'Add your activities',
-  'tour.add.body': 'Upload GPX, FIT or TCX files here, or open Sync to bring them in from your phone, watch or another service. Only what you tick comes in.',
+  'tour.add.body': 'Bring in what you recorded on Strava, Garmin or any watch from this menu, which has a short guide for each. From an Android phone, use the app. Only what you pick comes in.',
   'tour.add_demo.title': 'Add your activities',
   'tour.add_demo.body': 'In your own account, files and synced activities come in here. The demo is read-only: create an account from the profile menu to start yours.',
   'tour.done.title': "That's the tour",

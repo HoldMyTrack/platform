@@ -37,7 +37,9 @@
     <ol class="page-steps">
       <li>
         <h3>Принесите то, что уже записали</h3>
-        <p>Загрузите файлы GPX, FIT или TCX, которые сохранили ваши часы, велокомпьютер или приложение, из <a href="/import/garmin">Garmin</a>, <a href="/import/strava">Strava</a> или откуда угодно, для поездок, которые хотите сохранить, или выберите их в приложении для {{if eq .App "ios"}}iPhone{{else}}Android{{end}}. Ничего не нужно записывать заново или менять в том, как вы записываете.</p>
+        <p>Из Strava, Garmin, с любых часов или велокомпьютера, или {{if eq .App "ios"}}с iPhone{{else}}с телефона на Android{{end}}: выберите поездки, которые стоит сохранить. Ничего не нужно записывать заново или менять в том, как вы записываете.</p>
+        <p class="page-step-links"><a href="/import/strava">Из Strava</a><a href="/import/garmin">Из Garmin</a>{{if not .InApp}}<a href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android">Приложение для Android</a>{{end}}</p>
+        <p class="page-step-note">Подойдут и файлы GPX, FIT или TCX с любых часов.</p>
       </li>
       <li>
         <h3>Смотрите всё на одной карте</h3>
