@@ -7,6 +7,7 @@ import { AddToStoryMenu } from './AddToStoryMenu';
 import { ConfirmDialog } from './ConfirmDialog';
 import { DateRangeSlider, type DateRangeSliderProps } from './DateRangeSlider';
 import { DistanceFilter } from './DistanceFilter';
+import { FirstRunPanel } from './FirstRunPanel';
 import { PrivateLocationsPanel } from './PrivateLocationsPanel';
 import { StoriesTab } from './StoriesTab';
 import type { StoryInboxState } from './useStoryInbox';
@@ -153,6 +154,9 @@ export interface ActivitiesPanelProps {
   onPrivateLocationsChanged: () => void;
   /** The Activities tab's date slider — MapView's selected range and useActivityDays' window. */
   dateRange: DateRangeSliderProps;
+  /** The account has no activities: the Activities tab is FirstRunPanel.tsx instead of the list
+   *  (firstRun.ts's showsFirstRun). */
+  firstRun?: boolean;
 }
 
 export type PanelTab = 'activities' | 'stories' | 'private';
@@ -210,6 +214,7 @@ export function ActivitiesPanel({
   map,
   onPrivateLocationsChanged,
   dateRange,
+  firstRun = false,
 }: ActivitiesPanelProps) {
   const hasActiveFilters = excludedTypes.size > 0 || distanceFilter !== null;
 
@@ -285,6 +290,9 @@ export function ActivitiesPanel({
   // media-query check.
   const [sheetPicked, setSheetExpanded] = useState(false);
   const sheetExpanded = sheetPicked || sheetOpen;
+  // An empty account's sheet opens onto the first-run panel, which the peek strip would hide,
+  // and closes again when the first activity lands, so its track is in view.
+  useEffect(() => setSheetExpanded(firstRun), [firstRun]);
   // A tab tap on a phone opens the sheet onto the tab just chosen: collapsed, the tab row is
   // all there is of it.
   const selectTab = (next: PanelTab) => {
@@ -384,7 +392,7 @@ export function ActivitiesPanel({
 
   return (
     <div
-      className={`activities-panel${sheetExpanded ? ' activities-panel--sheet-expanded' : ''}${tab === 'activities' ? ' activities-panel--dated' : ''}`}
+      className={`activities-panel${sheetExpanded ? ' activities-panel--sheet-expanded' : ''}${tab === 'activities' && !firstRun ? ' activities-panel--dated' : ''}`}
       data-testid="activities-panel"
       // A CSS custom property, not a direct `width`, specifically so the mobile media query
       // can override it with a plain `width: 100%` rule — an inline style always beats an
@@ -509,6 +517,8 @@ export function ActivitiesPanel({
           onDeleted={stories.onDeleted}
           onActivityRemoved={stories.onActivityRemoved}
         />
+      ) : firstRun ? (
+        <FirstRunPanel inbox={stories.inbox} onPrivacy={() => selectTab('private')} />
       ) : (
         <>
           <div className="activities-panel__dates">

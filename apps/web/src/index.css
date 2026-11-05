@@ -933,6 +933,163 @@ button.activities-panel__story-badge:hover {
   color: var(--fm-danger);
 }
 
+/* The Activities tab of an account with no activities (FirstRunPanel.tsx, FR-5.18): where to
+   bring some in from, a waiting Story copy first, imports in flight above both. */
+.first-run {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.first-run__processing {
+  margin: 0;
+  padding: var(--fm-space-10) var(--fm-space-16);
+  font-size: var(--fm-text-md);
+  background: var(--fm-notice-bg);
+  border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
+}
+
+.first-run__title {
+  margin: 0;
+  padding: var(--fm-space-24) var(--fm-space-20) var(--fm-space-6);
+  font-family: var(--fm-font-serif);
+  font-size: var(--fm-text-2xl);
+  font-weight: var(--fm-weight-semibold);
+}
+
+.first-run__lead {
+  margin: 0;
+  padding: 0 var(--fm-space-20) var(--fm-space-16);
+  font-size: var(--fm-text-md);
+  line-height: 1.5;
+  color: var(--fm-ink-secondary);
+}
+
+.first-run__inbox,
+.first-run__sources {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.first-run__inbox {
+  margin-bottom: var(--fm-space-12);
+  border-top: 1px solid rgb(var(--fm-ink-rgb) / 8%);
+}
+
+.first-run__sources {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-8);
+  padding: 0 var(--fm-space-16);
+}
+
+.first-run__source {
+  display: flex;
+  align-items: center;
+  gap: var(--fm-space-12);
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: var(--fm-space-10) var(--fm-space-12);
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius-lg);
+  background: var(--fm-surface);
+  color: var(--fm-ink);
+  font: inherit;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.first-run__source:hover {
+  border-color: var(--fm-border-strong);
+  background: var(--fm-surface-tint);
+}
+
+.first-run__source-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--fm-radius-md);
+  background: var(--fm-surface-tint);
+  color: var(--fm-accent-strong);
+}
+
+.first-run__source-text {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-2);
+  flex: 1;
+  min-width: 0;
+}
+
+.first-run__source-title {
+  font-size: var(--fm-text-md);
+  font-weight: var(--fm-weight-semibold);
+}
+
+.first-run__source-detail {
+  font-size: var(--fm-text-sm);
+  color: var(--fm-ink-secondary);
+}
+
+.first-run__source-chevron {
+  flex-shrink: 0;
+  color: var(--fm-ink-muted);
+}
+
+.first-run__nothing {
+  margin: var(--fm-space-16) var(--fm-space-20) 0;
+  padding-top: var(--fm-space-16);
+  border-top: 1px solid var(--fm-divider-tint);
+  font-size: var(--fm-text-sm);
+  line-height: 1.5;
+  color: var(--fm-ink-secondary);
+}
+
+.first-run__nothing a {
+  color: var(--fm-accent-strong);
+}
+
+.first-run__nothing strong {
+  display: block;
+  color: var(--fm-ink);
+}
+
+.first-run__privacy {
+  display: flex;
+  gap: var(--fm-space-8);
+  align-items: flex-start;
+  margin: auto 0 0;
+  padding: var(--fm-space-16) var(--fm-space-20);
+  border-top: 1px solid var(--fm-divider-tint);
+  background: var(--fm-surface-tint);
+  font-size: var(--fm-text-sm);
+  line-height: 1.5;
+  color: var(--fm-ink-secondary);
+}
+
+.first-run__privacy svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.first-run__link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--fm-accent-strong);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 /* The header toolbar (docs/SPEC.md FR-5.1) — right above the row list. There are no more per-row action
    columns to stay aligned with (Visible/Edit/Delete moved here entirely), so this is now a
    plain compact strip rather than a column-aligned header: the select-all checkbox, the Type

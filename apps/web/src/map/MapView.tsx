@@ -41,6 +41,7 @@ import { SpotPopup } from '../ui/SpotPopup';
 import { todayIn, type DateRange } from '../ui/dateMath';
 import { useUnitSystem } from '../ui/units';
 import { INITIAL_WINDOW_DAYS, useActivityDays } from '../ui/useActivityDays';
+import { showsFirstRun } from '../ui/firstRun';
 import { useActivityList } from '../ui/useActivityList';
 import { useStories } from '../ui/useStories';
 import { useStory } from '../ui/useStory';
@@ -390,6 +391,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               sheetOpen={tour.open.sheet === true}
               map={map}
               onPrivateLocationsChanged={refresh.afterPrivateLocations}
+              firstRun={showsFirstRun(isDemo, daysReady ? earliest !== null : null)}
               dateRange={{
                 days: visibleDays,
                 onPan: panBy,

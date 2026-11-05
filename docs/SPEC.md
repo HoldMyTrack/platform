@@ -446,6 +446,11 @@ An activity is split in two at a point on its track. Each part is a full activit
 - A part is edited like any activity, split again included; Reset returns its own stretch.
 - The original is still recognized on re-import (FR-3.5) and counts once against the limits.
 
+### FR-5.18 An empty account
+
+- With no activities at all, the Activities tab shows, in place of the list and its filters, the ways to bring activities in, any Story copy waiting for the account (FR-14.7) and how many imports are still in progress. The first activity, Hidden or not, brings the list back.
+- A demo session never shows it.
+
 ## 8. FR-6 — Date Range Slider
 
 The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load.
