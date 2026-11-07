@@ -149,6 +149,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 
 - [x] Decide who the controller is: the operator personally, named in the privacy policy's "Who we are" (2026-10-25).
 - [ ] Appoint an EU representative (Art. 27) and give a postal address in "Who we are", before the app is listed or promoted in the EU.
+- [ ] Keep a record of processing activities (Art. 30), drawn from sections 2, 3, 6 and 8, and give the EU representative a copy whenever it changes.
 - [ ] Have DPAs on file with DigitalOcean, Cloudflare, Grafana Labs and Zoho (R8).
 - [x] Assess the transfers to the US (R7, section 8).
 - [x] R2 encrypts every object and its metadata at rest with AES-256, by default (Cloudflare's R2 data security docs, checked 2026-10-25).
