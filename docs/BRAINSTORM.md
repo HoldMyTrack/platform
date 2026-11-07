@@ -46,7 +46,7 @@ A layer showing terrain height under your tracks. Elevation stays in the data as
 
 ### Per-region stacks if a data-localization law applies
 
-Most privacy laws outside the EU (Brazil's LGPD, Australia's APP 8, India's DPDP) restrict transfers abroad, which contracts and disclosures satisfy. A few (China's PIPL, Russia's 152-FZ, parts of Vietnam's and Indonesia's rules) require in-country storage. If one applies with enough users to justify it, the shape is one independent copy of the stack per region (`compose.prod.yml` with its own Postgres, worker and object storage), each account in exactly one. `ROADMAP.md`'s EU-region hosting is the one-region case and doesn't need this.
+Most privacy laws outside the EU (Brazil's LGPD, Australia's APP 8, India's DPDP) restrict transfers abroad, which contracts and disclosures satisfy. A few (China's PIPL, Russia's 152-FZ, parts of Vietnam's and Indonesia's rules) require in-country storage. If one applies with enough users to justify it, the shape is one independent copy of the stack per region (`compose.prod.yml` with its own Postgres, worker and object storage), each account in exactly one.
 
 * No feature reads another account's data except the Story copy job (ADR-0036), which would have to work across regions or be refused across them, as would a Milestone 3 social graph (`VISION.md` §5.7). User IDs are UUIDs, and the public basemap stays global on one CDN.
 * To build: a global directory from sign-in identity to home region (or per-region subdomains), a home region chosen at signup and defaulted from Country, deploys to N stacks, and the Demo Customer and admin boundaries seeded in each. Download your data (`internal/export`) plus a matching import would move an account.

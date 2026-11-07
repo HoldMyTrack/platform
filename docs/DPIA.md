@@ -1,6 +1,6 @@
 # HoldMyTrack: Data Protection Impact Assessment
 
-Last updated: 2026-10-31.
+Last updated: 2026-11-07.
 
 ## Summary
 
@@ -8,7 +8,7 @@ HoldMyTrack launches outside the EU, first in the US, Canada, Australia, New Zea
 
 **Status:** draft for the controller's review, written from the product's documents and its published privacy policy (`/privacy`), without an audit of the running system.
 
-**Controller:** Nikolai Poriadin, the operator, personally, named in the privacy policy with hello@holdmytrack.com. HoldMyTrack runs at holdmytrack.com. The operator lives outside the EU; GDPR applies to a non-EU controller serving EU users (Art. 3(2)), who appoints an EU representative (Art. 27), which waits for funding (section 7).
+**Controller:** Nikolai Poriadin, the operator, personally, named in the privacy policy with hello@holdmytrack.com. HoldMyTrack runs at holdmytrack.com. The operator lives outside the EU; GDPR applies to a non-EU controller serving EU users (Art. 3(2)), who appoints an EU representative (Art. 27) (section 7).
 
 **What is assessed:** the web app, the server and its storage, and the Android app as they ship, with all the data in section 2. Planned cloud connectors and the iOS app are out of scope (section 7, review triggers).
 
@@ -148,7 +148,8 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 **Before promoting in the EU:**
 
 - [x] Decide who the controller is: the operator personally, named in the privacy policy's "Who we are" (2026-10-25).
-- [ ] Appoint an EU representative (Art. 27) and give a postal address in "Who we are", once the project has funding and before it is listed or promoted in the EU.
+- [ ] Appoint an EU representative (Art. 27) and give a postal address in "Who we are", before the app is listed or promoted in the EU.
+- [ ] Keep a record of processing activities (Art. 30), drawn from sections 2, 3, 6 and 8, and give the EU representative a copy whenever it changes.
 - [ ] Have DPAs on file with DigitalOcean, Cloudflare, Grafana Labs and Zoho (R8).
 - [x] Assess the transfers to the US (R7, section 8).
 - [x] R2 encrypts every object and its metadata at rest with AES-256, by default (Cloudflare's R2 data security docs, checked 2026-10-25).
