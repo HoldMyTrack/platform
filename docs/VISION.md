@@ -140,7 +140,7 @@ With no revenue, costs must be bounded by design.
 | Photos | **Users × photos** | About 0.5 MB each, capped per account |
 | Spots | Fixed | Several million OSM places, about 1 GB in Postgres |
 | Compute | Users | One server and Postgres/PostGIS to start |
-| Compliance | Fixed | DPA/DPIA work, EU-region hosting (§7) |
+| Compliance | Fixed | DPA/DPIA work (§7) |
 | Egress | — | Cloudflare R2 charges none, which is why R2 over S3 |
 
 **At 10,000 active users** (300 activities of ~80 KB, ~3 MB of fog and 100 photos each; 20 map sessions a month of ~300 tile reads at a 90% CDN hit rate): about 900 GB of storage at ~$14/month, ~$2/month of tile reads and $100–300/month of compute, **roughly $150–350/month**.
@@ -197,7 +197,7 @@ A Fog of War map is a precise map of where a person lives; the 2018 Strava heatm
 * **Private locations**: user-named circles (home, work). A track's start or end inside one is hidden from every render and export, which matters because an exported file cannot be recalled; a track only passing through is shown whole.
 * **No blanket endpoint trimming.** On a multi-day trail it would cut a gap at every campsite while protecting nothing, and hundreds of tracks cut 100 m from the same door leave a ring with the door at its center. The places worth hiding are the ones the user names.
 * **Applied at ingest, server-side**, before anything is stored (`IMPLEMENTATION.md` §4.1): privacy applied at render time leaks through any render bug.
-* **Legal basis.** No health data is processed (§1.1), but a precise location history is sensitive personal data: the lawful bases `docs/DPIA.md` section 3 sets, a retention policy, working export and deletion, and, before the app is promoted in the EU, a completed DPIA and EU-region hosting.
+* **Legal basis.** No health data is processed (§1.1), but a precise location history is sensitive personal data: the lawful bases `docs/DPIA.md` section 3 sets, a retention policy, working export and deletion, and a completed DPIA.
 * **Deauthorization deletion**: partner APIs such as Wahoo's and COROS's require deleting synced data on disconnect, so any connector does.
 * **Health Connect declarations**: requesting more data types than the product uses is a known Play Console rejection cause. HoldMyTrack requests exercise sessions, their routes and the history window, and no health measurement.
 * **Photos** reach the server with no EXIF and are placed on the clipped track on every read, so one taken inside a Private location shows at the track's visible end (ADR-0024).

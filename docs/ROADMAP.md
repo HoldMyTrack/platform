@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-05.
+Last updated: 2026-11-07.
 
 ## How to read this document
 
@@ -32,15 +32,9 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 - [ ] Serve the basemap as `/{z}/{x}/{y}` tiles Cloudflare can cache, with `pmtiles serve` on the droplet first: every range read reaches R2, since the free plan caches files only up to 512 MB (`IMPLEMENTATION.md` §5.4). Worth it once traffic grows: about 97,000 basemap requests in the 30 days to 2026-10-14 were under 1% of R2's free reads. The web style (`apps/web/src/map/style.ts`) and the server-built Android style (`mapstyle.go`) move from `pmtiles://` to the tile URL.
 - [ ] Re-measure the funding-model assumptions (`VISION.md` §4.3, §6.3) against real usage; they feed the exit gate.
 
-### Before promoting in the EU
-
-The app launches outside the EU; the website is open to EU users, but the app isn't promoted there until these are done.
-
-- [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 actions and the controller's sign-off.
-- [ ] EU-region hosting for EU users, with the privacy policy updated when it moves the data.
-
 ### After launch
 
+- [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 actions and the controller's sign-off.
 - [ ] Review how long original uploads are kept (today, until the activity is deleted) once real accounts show what they cost. They're the most sensitive thing held (`DPIA.md` R2) and likely the largest storage line; an expired one can't be re-clipped, rebuilt or exported (`IMPLEMENTATION.md` §5.7).
 - [ ] The iOS app (`VISION.md` §4.1 Path 2, `ARCHITECTURE.md` §2), no date set; its plan is `apps/ios/docs/ROADMAP.md`.
 
