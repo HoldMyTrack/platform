@@ -4,7 +4,7 @@ Last updated: 2026-11-07.
 
 ## Summary
 
-HoldMyTrack launches outside the EU, first in the US, Canada, Australia, New Zealand and Ukraine. Its website is open to EU users; the app is promoted in the EU only once the actions in section 7 are done and this DPIA is signed off. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Three stay medium (section 6).
+HoldMyTrack launches outside the EU. Its website is open to EU users; the app is promoted in the EU only once the actions in section 7 are done and this DPIA is signed off. No risk stays high after the measures in place, so prior consultation with a supervisory authority (GDPR Art. 36) is not needed. Three stay medium (section 6).
 
 **Status:** draft for the controller's review, written from the product's documents and its published privacy policy (`/privacy`), without an audit of the running system.
 
