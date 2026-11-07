@@ -139,7 +139,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 | R4 | bcrypt password hashes. HttpOnly, SameSite=Lax session cookie for up to 30 days. Sign-in rate limits. Email verification. | Optional second factor; not needed for launch | Low |
 | R5 | The admin panel never shows tracks (section 2). Admin rights can be set only from the server's own command line. The daily statistics hold only aggregates (section 2). | An audit log, needed once an admin can see or change a track | Low |
 | R6 | Exports leave out Private locations and draw only clipped tracks, whose ends stop a secret, random distance past each circle so many tracks together don't outline it. A Story copy needs the recipient to accept it and carries the sender's Private locations. The policy warns that a copy is the recipient's. | — | Low |
-| R7 | Transfers rely on the processors' Standard Contractual Clauses or EU–US Data Privacy Framework certification, stated in the privacy policy, and are assessed in section 8. | EU-region hosting, before the app is promoted in the EU (`docs/ROADMAP.md`, "Before promoting in the EU") | Low |
+| R7 | Transfers rely on the processors' Standard Contractual Clauses or EU–US Data Privacy Framework certification, stated in the privacy policy, and are assessed in section 8. | — | Low |
 | R8 | Processors are named in the privacy policy. Logs are scrubbed before they reach Grafana (section 3). | Accepted DPAs with DigitalOcean, Cloudflare, Grafana Labs and Zoho on file | Medium |
 | R9 | Deletion is complete within minutes and reaches backups within 8 weeks; the rest expires as section 2 lists. | — | Medium |
 
