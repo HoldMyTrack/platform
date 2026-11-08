@@ -3,32 +3,56 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The map (apps/android/docs/SPEC.md FR-2.1–FR-2.5): the basemap style and the account's layers
+/// The map (apps/android/docs/SPEC.md FR-2.1–FR-2.7): the basemap style and the account's layers
 /// document combined into one style (MapStyle), Normal, Fog of War and Heatmap, the Layers menu,
-/// the first framing, Find my location, and the notices for an unreachable basemap, coverage still
-/// updating and an empty account.
+/// the first framing, Find my location, the notices for an unreachable basemap, coverage still
+/// updating and an empty account, and the sheet with the Activities and Stories tabs, shared by
+/// the Map and Stories tabs of the tab bar (MapHostViewController). The date range is
+/// MapViewController+Range, the sheet's wiring MapViewController+Panel.
 final class MapViewController: UIViewController, @preconcurrency MLNMapViewDelegate, @preconcurrency CLLocationManagerDelegate {
-    private unowned let flow: AppFlow
-    private let account: Account
+    unowned let flow: AppFlow
+    let account: Account
     private let documents: MapDocuments
     /// Made in viewDidLoad at the view's size: started at a zero frame, MapLibre keeps drawing
     /// into a quarter of the screen after it grows.
-    private var mapView: MLNMapView!
+    var mapView: MLNMapView!
     private let modes = UISegmentedControl()
     private let layersButton = UIButton(type: .system)
     private let locateButton = UIButton(type: .system)
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
     private let location = CLLocationManager()
-    private let slider = DateRangeSlider()
-    private let sliderCard = UIView()
+    let slider = DateRangeSlider()
+    private let modesRow = UIStackView()
 
-    private var session = MapSession()
-    private var days = ActivityDays(windowDays: DateRangeSlider.initialWindowDays)
+    var session = MapSession()
+    var days = ActivityDays(windowDays: DateRangeSlider.initialWindowDays)
     /// One earlier page at a time: a second would prepend the same page twice.
-    private var loadingEarlier = false
+    var loadingEarlier = false
 
-    private var state = MapState()
-    private var pair: MapDocuments.Pair?
+    // The sheet (MapViewController+Panel).
+    let sheet = PanelSheetView()
+    var activitiesPanel: ActivitiesPanel!
+    var storiesPanel: StoriesPanel!
+    var panelTab = PanelTab.activities
+    /// The list for the range or the open Story, as the server last sent it.
+    var activities: [Activity] = []
+    var listLoading = false
+    var listError: String?
+    var listTask: Task<Void, Never>?
+    /// The ids Pending in the last list, and edits saved here not yet seen done (PendingDiff).
+    var pendingIDs: Set<String> = []
+    var awaiting: Set<String> = []
+    var pendingTask: Task<Void, Never>?
+    /// Bumped whenever tracks change under the same query, so their tiles are fetched again.
+    var tracksVersion = 0
+    var editOpen = false
+    /// The tab bar's Stories count: copies others sent, waiting.
+    var onWaiting: ((Int) -> Void)?
+    /// A row's Story badge on the Activities tab: the tab bar moves to Stories.
+    var onWantsStories: ((String) -> Void)?
+
+    var state = MapState()
+    var pair: MapDocuments.Pair?
     /// The style last handed to MapLibre, which the next one is compared with.
     private var loaded: JSONValue?
     private var styleLoaded = false
@@ -39,6 +63,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     /// The first framing happens once per app session, not on every return to the map.
     private static var framed: Set<String> = []
+
+    var format: PanelFormat { PanelFormat(account: account) }
 
     private var flavor: String { traitCollection.userInterfaceStyle == .dark ? "dark" : "light" }
     private var accountKey: String { AccountKey.of(email: account.email, isDemo: account.isDemo) }
@@ -68,6 +94,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         mapView.accessibilityIdentifier = "map"
         view.addSubview(mapView)
         layoutChrome()
+        buildPanel()
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.load() }
         location.delegate = self
         load()
@@ -78,6 +105,14 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         checkCoverage()
         frameOnce()
         reloadDays()
+        loadList()
+        if panelTab != .stories { storiesPanel.refreshCount() }
+    }
+
+    override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        let guide = view.safeAreaLayoutGuide.layoutFrame
+        sheet.setRoom(container: guide.height, topInset: modesRow.frame.maxY - guide.minY + DesignTokens.Space.s8)
     }
 
     override func viewDidDisappear(_ animated: Bool) {
@@ -109,7 +144,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     /// The style for the current state: patched in place when only properties changed, else
     /// reloaded, which keeps the camera.
-    private func render() {
+    func render() {
         guard let pair else { return }
         let next = MapStyle.compose(style: pair.style, document: pair.layers, state: state, apiBase: flow.api.app.apiBaseURL)
         if let loaded, styleLoaded, let style = mapView.style, let changes = MapStyle.changes(from: loaded, to: next),
@@ -128,6 +163,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         styleLoaded = true
     }
 
+    /// The tracks' lines a tap is asked about (TrackTap).
+    var trackLayers: Set<String> { pair.map { TrackTap.layerIDs($0.layers) } ?? [] }
+
     // MARK: Modes and the Layers menu
 
     private func setMode(_ mode: MapMode) {
@@ -135,86 +173,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         MapPreferences.save(state)
         render()
         checkCoverage()
-        updateSlider()
-    }
-
-    // MARK: The date range (root docs/SPEC.md FR-6, apps/android/docs/SPEC.md FR-2.6)
-
-    /// The activity days from the newest end, on every return to the map, since an upload may
-    /// have added some; the default range is offered again until the user picks one.
-    private func reloadDays() {
-        Task {
-            guard let page = try? await flow.api.activityDays(limit: ActivityDays.pageSize, before: nil) else { return }
-            days.reloaded(days: page.days, earliest: page.earliest)
-            daysChanged(reloaded: true)
-        }
-    }
-
-    private func loadEarlier(_ oldest: String?) {
-        guard let oldest, !loadingEarlier else { return }
-        loadingEarlier = true
-        Task {
-            defer { loadingEarlier = false }
-            guard let page = try? await flow.api.activityDays(limit: ActivityDays.pageSize, before: oldest) else { return }
-            days.prepended(days: page.days, before: oldest, earliest: page.earliest)
-            daysChanged(reloaded: false)
-        }
-    }
-
-    private func daysChanged(reloaded: Bool) {
-        slider.setDays(days.visibleDays, canPanEarlier: days.canPanEarlier, canPanLater: days.canPanLater)
-        if reloaded {
-            let range = DefaultRange.of(days.visibleDays, earliest: days.earliest, today: DefaultRange.today(in: account.timezone))
-            if session.offerDefault(range) { showRange() }
-        }
-        loadEarlier(days.wantsEarlier)
-        updateSlider()
-    }
-
-    /// The range's tracks; a range the user picked also flies the camera onto them.
-    private func showRange() {
-        guard let range = session.range else { return }
-        slider.value = range
-        state.queries["tracks"] = MapFraming.tracksQuery(range)
-        render()
-        guard session.consumeFly() else { return }
-        Task {
-            guard let rows = try? await flow.api.activities(from: range.from, to: range.to),
-                  let box = MapFraming.union(rows.filter { !$0.pending }.compactMap(\.bbox).filter { $0.count == 4 })
-            else { return }
-            fit(box, animated: true)
-        }
-    }
-
-    private func bindSlider() {
-        slider.onChange = { [weak self] range in
-            guard let self else { return }
-            self.session.pickRange(range)
-            self.showRange()
-        }
-        slider.onPan = { [weak self] delta in
-            guard let self else { return }
-            self.days.pan(by: delta)
-            self.daysChanged(reloaded: false)
-        }
-        slider.onShift = { [weak self] range, dir in
-            guard let self else { return nil }
-            let result = self.days.shift(range, dir: dir)
-            if result.wantsLoad { self.loadEarlier(self.days.days.first) }
-            self.daysChanged(reloaded: false)
-            return result.range
-        }
-        slider.canShift = { [weak self] range, dir in self?.days.canShift(range, dir: dir) ?? false }
-        slider.onWindowDays = { [weak self] size in
-            guard let self else { return }
-            self.days.resize(size, selection: self.session.range)
-            self.daysChanged(reloaded: false)
-        }
-    }
-
-    /// Normal mode only, once the account has an activity day.
-    private func updateSlider() {
-        sliderCard.isHidden = state.mode != .normal || !days.ready || days.days.isEmpty
+        renderPanel()
     }
 
     private func updateLayersMenu() {
@@ -266,10 +225,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     }
 
     /// The camera on box, clear of the controls over the map, at most zoom 15.
-    private func fit(_ box: [Double], animated: Bool) {
+    func fit(_ box: [Double], animated: Bool) {
         let bounds = MLNCoordinateBounds(sw: CLLocationCoordinate2D(latitude: box[1], longitude: box[0]),
                                          ne: CLLocationCoordinate2D(latitude: box[3], longitude: box[2]))
-        let bottom = sliderCard.isHidden ? 64 : view.safeAreaLayoutGuide.layoutFrame.maxY - sliderCard.frame.minY + 32
+        let bottom = (sheet.isHidden ? 0 : sheet.restingHeight) + 48
         let padding = UIEdgeInsets(top: 120, left: 48, bottom: bottom, right: 48)
         mapView.setVisibleCoordinateBounds(bounds, edgePadding: padding, animated: animated) { [weak self] in
             MainActor.assumeIsolated {
@@ -309,7 +268,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     /// Fog and Heatmap say when coverage is still being redrawn, checked on every opening of the
     /// map, and refresh when the server is done (root docs/SPEC.md FR-4.2).
-    private func checkCoverage() {
+    func checkCoverage() {
         coverageTask?.cancel()
         guard state.mode != .normal else {
             hideNotice(.coverage)
@@ -367,9 +326,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Notices
 
-    private enum Notice: Int { case mapFailed, basemap, coverage, empty, location }
+    enum Notice: Int { case mapFailed, basemap, coverage, empty, location, pending }
 
-    private func notice(_ kind: Notice, _ text: String) {
+    func notice(_ kind: Notice, _ text: String) {
         if let label = notices.arrangedSubviews.first(where: { $0.tag == kind.rawValue + 1 }) as? UILabel {
             label.text = text
             return
@@ -385,7 +344,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         UIAccessibility.post(notification: .announcement, argument: text)
     }
 
-    private func hideNotice(_ kind: Notice) {
+    func hideNotice(_ kind: Notice) {
         notices.arrangedSubviews.first { $0.tag == kind.rawValue + 1 }?.removeFromSuperview()
     }
 
@@ -423,24 +382,13 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         locateButton.addAction(UIAction { [weak self] _ in self?.locate() }, for: .primaryActionTriggered)
         updateLayersMenu()
 
-        let top = UIStackView(arrangedSubviews: [modes, layersButton])
-        top.spacing = DesignTokens.Space.s8
-        top.alignment = .center
-        let column = Controls.column([top, notices], spacing: DesignTokens.Space.s8)
-
-        sliderCard.backgroundColor = UIColor(resource: .surface)
-        sliderCard.layer.cornerRadius = DesignTokens.Radius.lg
-        sliderCard.layer.shadowColor = UIColor.black.cgColor
-        sliderCard.layer.shadowOpacity = 0.12
-        sliderCard.layer.shadowRadius = 6
-        sliderCard.layer.shadowOffset = CGSize(width: 0, height: 1)
-        sliderCard.isHidden = true
-        sliderCard.accessibilityIdentifier = "dateRange"
-        slider.translatesAutoresizingMaskIntoConstraints = false
-        sliderCard.addSubview(slider)
+        for v in [modes, layersButton] { modesRow.addArrangedSubview(v) }
+        modesRow.spacing = DesignTokens.Space.s8
+        modesRow.alignment = .center
+        let column = Controls.column([modesRow, notices], spacing: DesignTokens.Space.s8)
         bindSlider()
 
-        for v in [column, locateButton, sliderCard] {
+        for v in [column, locateButton, sheet] {
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
         }
@@ -449,20 +397,17 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             column.topAnchor.constraint(equalTo: guide.topAnchor, constant: DesignTokens.Space.s8),
             column.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: DesignTokens.Space.s12),
             column.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -DesignTokens.Space.s12),
-            sliderCard.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: DesignTokens.Space.s8),
-            sliderCard.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -DesignTokens.Space.s8),
-            sliderCard.bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: -DesignTokens.Space.s8),
-            slider.topAnchor.constraint(equalTo: sliderCard.topAnchor),
-            slider.bottomAnchor.constraint(equalTo: sliderCard.bottomAnchor),
-            slider.leadingAnchor.constraint(equalTo: sliderCard.leadingAnchor),
-            slider.trailingAnchor.constraint(equalTo: sliderCard.trailingAnchor),
+            sheet.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
+            sheet.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
+            sheet.bottomAnchor.constraint(equalTo: guide.bottomAnchor),
             locateButton.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -DesignTokens.Space.s12),
             locateButton.bottomAnchor.constraint(lessThanOrEqualTo: guide.bottomAnchor, constant: -DesignTokens.Space.s32),
+            locateButton.topAnchor.constraint(greaterThanOrEqualTo: column.bottomAnchor, constant: DesignTokens.Space.s8),
         ])
-        // Above the slider while it shows, else near the bottom.
-        let aboveSlider = locateButton.bottomAnchor.constraint(equalTo: sliderCard.topAnchor, constant: -DesignTokens.Space.s12)
-        aboveSlider.priority = .defaultHigh
-        aboveSlider.isActive = true
+        // Above the sheet while it shows, else near the bottom.
+        let aboveSheet = locateButton.bottomAnchor.constraint(equalTo: sheet.topAnchor, constant: -DesignTokens.Space.s12)
+        aboveSheet.priority = .defaultHigh
+        aboveSheet.isActive = true
     }
 
     /// What the map shows before the documents arrive: the background alone.

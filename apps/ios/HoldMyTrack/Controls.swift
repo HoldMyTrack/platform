@@ -119,6 +119,26 @@ enum Controls {
         ])
     }
 
+    /// icon redrawn size points square, still a template, for a place a full-size icon is too big.
+    static func icon(_ icon: UIImage, size: CGFloat) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
+            icon.draw(in: CGRect(x: 0, y: 0, width: size, height: size))
+        }.withRenderingMode(.alwaysTemplate)
+    }
+
+    /// An icon button of the panel's toolbars: 44 points square, its label for VoiceOver.
+    static func iconButton(_ icon: UIImage, label: String, id: String) -> UIButton {
+        var config = UIButton.Configuration.plain()
+        config.image = icon
+        config.baseForegroundColor = UIColor(resource: .ink)
+        let button = UIButton(configuration: config)
+        button.accessibilityLabel = label
+        button.accessibilityIdentifier = id
+        button.widthAnchor.constraint(equalToConstant: 44).isActive = true
+        button.heightAnchor.constraint(equalToConstant: 44).isActive = true
+        return button
+    }
+
     private static func font(_ font: UIFont) -> UIConfigurationTextAttributesTransformer {
         UIConfigurationTextAttributesTransformer { attributes in
             var attributes = attributes

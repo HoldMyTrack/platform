@@ -168,7 +168,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 `apps/android/docs/SPEC.md` FR-2.7, FR-2.8, FR-2.10 and FR-2.11.
 
-- [ ] **7b.1 Activities and Stories panel**: rows, filters, selection, checked group, toolbar, Edit, Delete, Add to story, Pending polling, the Stories tab with copies to accept or decline. Done when: the panel rules' cases drive it and it behaves as `apps/android/docs/SPEC.md` FR-2.7 describes.
+- [x] **7b.1 Activities and Stories panel**: rows, filters, selection, checked group, toolbar, Edit, Delete, Add to story, Pending polling, the Stories tab with copies to accept or decline. Done when: the panel rules' cases drive it and it behaves as `apps/android/docs/SPEC.md` FR-2.7 describes.
 - [ ] **7b.2 Track editor and Private location editor**. Done when: each operation matches the `edit-track-*` cases on a real track, and a Private location saves and clips.
 - [ ] **7b.3 Spots and capture**: layers per category, the popup, capture by 30 seconds within 25 m in the foreground with precise location, the screen kept awake. Done when: a capture at a real place is accepted by the server.
 - [ ] **7b.4 Photos**: `PHPickerViewController`, redrawn upright at most 2,048 px with a 320 px thumbnail, placed by the server's check or by hand. iOS's picker may keep a photo's location, unlike Android's: measure it and say so in this app's `SPEC.md`. Done when: photos added, moved and deleted through Save survive a reload.
