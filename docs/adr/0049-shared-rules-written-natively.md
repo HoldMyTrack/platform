@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. The web and Android implement every rule in `testdata/client-rules/`; the iOS app will join them when it starts.
+Accepted. Every client implements every rule in `testdata/client-rules/` that names it, or that names no client: the web, Android and iOS's `HoldMyTrackCore`.
 
 ## Context
 
