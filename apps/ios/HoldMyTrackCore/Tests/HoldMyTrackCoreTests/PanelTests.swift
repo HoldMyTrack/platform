@@ -154,3 +154,13 @@ struct AccountTests {
         #expect(text == "--B\r\nContent-Disposition: form-data; name=\"file\"; filename=\"My 'walk'.gpx\"\r\nContent-Type: application/octet-stream\r\n\r\n<gpx/>\r\n--B--\r\n")
     }
 }
+
+/// Stories is Normal mode's; the Map tab keeps its own pick.
+struct TabModeTests {
+    @Test func storiesShowNormalWithNoToggleAndTheMapTabGetsItsPickBack() {
+        #expect(TabMode.shown(picked: .heatmap, onMapTab: false) == .normal)
+        #expect(!TabMode.toggleShown(onMapTab: false))
+        #expect(TabMode.shown(picked: .heatmap, onMapTab: true) == .heatmap)
+        #expect(TabMode.toggleShown(onMapTab: true))
+    }
+}

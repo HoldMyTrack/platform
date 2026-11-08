@@ -76,6 +76,7 @@ extension MapViewController {
             }
             sheet.setDetent(.collapsed, animated: false)
         }
+        applyTabMode()
         panelChanged()
     }
 
@@ -92,6 +93,8 @@ extension MapViewController {
     /// the list is in; a day outside the range becomes the range, as if picked.
     func viewOnMap(activity: String, day: String) {
         loadViewIfNeeded()
+        // The activity's track is Normal mode's.
+        if pickedMode != .normal { pickMode(.normal) }
         focusWhenListed = activity
         if session.range?.contains(day) == true && session.storyID == nil {
             loadList()

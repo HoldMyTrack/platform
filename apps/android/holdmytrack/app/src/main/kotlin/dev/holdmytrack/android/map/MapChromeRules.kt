@@ -14,9 +14,13 @@ object MapChromeRules {
     fun normalMode(sessionReady: Boolean, mode: MapMode, recording: Boolean): Boolean =
         sessionReady && mode == MapMode.NORMAL && !recording
 
-    /** The mode toggle, hidden while recording, editing or checking rows. */
-    fun modeBarShown(recording: Boolean, editOpen: Boolean, selectionShown: Boolean): Boolean =
-        !recording && !editOpen && !selectionShown
+    /** The mode toggle: the Map tab's, hidden while recording, editing or checking rows. */
+    fun modeBarShown(recording: Boolean, editOpen: Boolean, selectionShown: Boolean, tab: PanelTab): Boolean =
+        tab == PanelTab.ACTIVITIES && !recording && !editOpen && !selectionShown
+
+    /** The mode the map shows: the one picked on the Map tab there, Normal on Stories and Sync,
+     *  whose sheet and tracks are Normal mode's; back on Map, the pick comes back. */
+    fun tabMode(picked: MapMode, tab: PanelTab): MapMode = if (tab == PanelTab.ACTIVITIES) picked else MapMode.NORMAL
 
     /** The chip naming what Fog or Heatmap shows, since neither takes the date range. */
     fun modeChipShown(mode: MapMode, sessionReady: Boolean, recording: Boolean, exportOpen: Boolean): Boolean =

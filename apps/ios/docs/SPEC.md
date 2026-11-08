@@ -51,6 +51,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.7, FR-2.9), exce
 
 ### FR-2.2 Three map modes: Normal, Fog of War, Heatmap
 
+- Stories is Normal mode's, as on Android; the Sync tab is a page with no map.
 - The Layers menu has no Spot categories yet (`ROADMAP.md`, 7b.3), and there is no recording to hide the modes.
 
 ### FR-2.3 Initial camera framing

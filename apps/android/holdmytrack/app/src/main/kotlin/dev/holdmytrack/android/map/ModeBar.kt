@@ -1,5 +1,6 @@
 package dev.holdmytrack.android.map
 
+import dev.holdmytrack.android.panel.PanelTab
 import android.view.View
 import android.widget.TextView
 import androidx.core.view.AccessibilityDelegateCompat
@@ -20,6 +21,8 @@ data class ModeBarState(
     val exportOpen: Boolean,
     /** Fog and Heatmap are still being re-rendered (`CoverageWatch`). */
     val coverageRendering: Boolean,
+    /** The panel's tab: the toggle is the Map tab's. */
+    val tab: PanelTab,
 )
 
 /**
@@ -66,12 +69,12 @@ class ModeBar(root: View, onPick: (MapMode) -> Unit, private val state: () -> Mo
         }
     }
 
-    /** The toggle shows once the session allows, hidden while recording, editing or checking rows.
+    /** The toggle shows once the session allows, on the Map tab, hidden while recording, editing or checking rows.
      *  Layers stays while recording: the base map and paths are about where the recording goes. */
     fun render() {
         val s = state()
         if (!s.sessionReady) return
-        bar.isVisible = MapChromeRules.modeBarShown(s.recording, s.editOpen, s.selectionShown)
+        bar.isVisible = MapChromeRules.modeBarShown(s.recording, s.editOpen, s.selectionShown, s.tab)
         layersPanel.visibility = View.VISIBLE
         renderNotices()
     }
