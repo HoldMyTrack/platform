@@ -445,8 +445,6 @@ sequenceDiagram
 
 ### 4.19 Server-rendered pages (ADR-0012)
 
-`internal/web` renders; `httpapi` decides the page, the user (`pageAccount`, an optional-auth lookup) and the language. Signed-out pages are cached per page, path, language and `hmt_app` cookie (`RenderPublic`) and sent with `Vary: Cookie, Accept-Language`; the rest are `no-store`.
-
 **Security.** No page may be framed (`frame-ancestors 'none'`), since a framed signed-in page's clicks are same-origin. Scripts run only from this origin's files (`script-src 'self'`), so a template keeps its script in `static/`, never inline; `internal/web`'s tests refuse an inline one. Page forms require `Origin`, or `Referer` when the browser omits it, to match `APP_BASE_URL`; `/v1` writes refuse a foreign `Origin` and accept none, as the native apps send none. This stops an auto-submitted `text/plain` form from signing a victim's browser into an attacker's account through `/v1/auth/login`, which `SameSite=Lax` doesn't. Auth pages and JSON endpoints call the same cores, which return an `accountError` (a status and a catalog key) for what a person should see.
 
 **The React shell** (`templates/app/app.html`) is `/` for a signed-in account. The handler redirects first (no session, unverified, no Country), so the first-run gate is the server's. Every sign-in, demo start and sign-out redirects to a bare `/`, so no session inherits another's camera. The Go image never sees Vite's manifest, so `vite.config.ts` gives the entry and its stylesheet fixed names, which the shell links with the build version and Caddy serves `no-cache`. The header's Take a tour (FR-4.18) is a link to `/?tour` on every page; on the map, the app takes over a plain click on `[data-tour-start]` and starts the tour without a reload, so the header's own script holds nothing of the map's.
@@ -456,9 +454,7 @@ sequenceDiagram
 **For the apps** a page is the same page marked by the `hmt_app` cookie (FR-10.8, ADR-0042), set in the WebView's cookie store, because a header reaches only the first request and a query parameter wouldn't survive links and redirects. Its value, `android` or `ios`, is `PageData.App`, for wording that names a platform. Traps: the public cache key includes the value, and a WebView form POST carries the API's origin, so the app's `API_BASE_URL` must be `APP_BASE_URL`'s origin.
 
 **Keep in step:**
-- A new page path goes in `registerPages` and `vite.config.ts`'s `pageRoutes`, whose patterns end `(\?|$)` because Vite matches them with the query string.
-- Pages that quote the system change with it: Help's numbers; the privacy policy's processors, cookies, session lifetimes and backup window, in both language files with their date. `cmd/make-testing-files` generates the end-to-end suites' sample files from `demo_data/`, and its test fails on any byte of drift.
-- Screenshots committed to the public repository have the account photo, name, email and file lists painted over.
+- Pages that quote the system change with it: Help's numbers; the privacy policy's processors, cookies, session lifetimes and backup window, in both language files with their date.
 - `tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded first by the page layout and the map shell alike; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there. The iOS app's are written from these files and Android's by `apps/ios/scripts/make-design.py`, which CI runs with `--check`.
 
 ### 4.20 Admin panel (FR-12)

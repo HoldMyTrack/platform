@@ -1,5 +1,5 @@
 // cmd/make-testing-files writes the sample files the web and Android end-to-end suites upload
-// (IMPLEMENTATION.md §4.19) into internal/web/static/testing/, from the Demo Customer's own tracks and photos
+// (docs/DEVELOPMENT.md) into internal/web/static/testing/, from the Demo Customer's own tracks and photos
 // (internal/httpapi/demo_data). Run it from services/server after changing them, or this file:
 //
 //	go run ./cmd/make-testing-files
