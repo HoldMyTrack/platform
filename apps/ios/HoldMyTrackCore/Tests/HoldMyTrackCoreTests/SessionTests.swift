@@ -135,3 +135,17 @@ struct OAuthFailureTests {
         #expect(OAuthFailure.of("state_mismatch", provider: .google) == .failed(.google))
     }
 }
+
+struct AppleSignInTests {
+    @Test func aFirstAuthorizationsNameIsSentWhole() {
+        var name = PersonNameComponents()
+        name.givenName = "Ann"
+        name.familyName = "Lee"
+        #expect(AppleSignIn.name(name, locale: Locale(identifier: "en_US")) == "Ann Lee")
+    }
+
+    @Test func noNameOrAnEmptyOneSendsNone() {
+        #expect(AppleSignIn.name(nil) == nil)
+        #expect(AppleSignIn.name(PersonNameComponents()) == nil)
+    }
+}

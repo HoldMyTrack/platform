@@ -78,6 +78,13 @@ public final class APIClient: Sendable {
         try await grant(send("POST", "v1/auth/demo"))
     }
 
+    /// Signs in with the authorization code Sign in with Apple gave the app, exchanged by the
+    /// server under the app's bundle ID (root docs/IMPLEMENTATION.md §4.9). name is Apple's, sent
+    /// on the first authorization only; with timezone, it's for an account the sign-in creates.
+    public func apple(code: String, name: String?, timezone: String) async throws -> SessionGrant {
+        try await grant(send("POST", "v1/auth/apple/token", body: AppleTokenJSON(authorizationCode: code, name: name, tz: timezone)))
+    }
+
     /// Redeems a browser sign-in's one-time code with the verifier its challenge was made from.
     public func handoff(code: String, verifier: String) async throws -> SessionGrant {
         try await grant(send("POST", "v1/auth/handoff", body: HandoffJSON(code: code, verifier: verifier)))

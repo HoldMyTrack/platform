@@ -6,9 +6,12 @@ import UIKit
 /// Sign in, sign up, the demo, and Google and Facebook, against the web's endpoints
 /// (apps/android/docs/SPEC.md FR-1.1). Sign in and sign up are two modes of one screen. The app
 /// checks only that both fields are filled; every other rule is the server's, and its message is
-/// shown as sent. Google and Facebook show only when the server reports them configured, and run
-/// the server's own flow in ASWebAuthenticationSession (apps/ios/docs/ARCHITECTURE.md §1, D7).
-final class SignInViewController: UIViewController, ASWebAuthenticationPresentationContextProviding {
+/// shown as sent. Apple, Google and Facebook show only when the server reports them configured.
+/// Apple is the platform's own sheet, its authorization code exchanged by the server; Google and
+/// Facebook run the server's own flow in ASWebAuthenticationSession (decision D7 in
+/// apps/ios/docs/ARCHITECTURE.md §1).
+final class SignInViewController: UIViewController, ASWebAuthenticationPresentationContextProviding,
+    ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     private unowned let flow: AppFlow
     private var signingUp = false
     private var busy = false { didSet { updateEnabled() } }
@@ -24,6 +27,8 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
     private let forgot = Controls.textButton(String(localized: "Forgot password?"), id: "forgot")
     private let switchMode = Controls.textButton("", id: "switchMode")
     private let or = Controls.body(String(localized: "or"))
+    /// Holds Apple's button, which is remade when the theme changes: its style is fixed when made.
+    private let apple = UIView()
     private let google = Controls.secondaryButton(String(localized: "Continue with Google"), id: "google")
     private let facebook = Controls.secondaryButton(String(localized: "Continue with Facebook"), id: "facebook")
     private let demo = Controls.secondaryButton(String(localized: "Try the demo"), id: "demo")
@@ -58,11 +63,13 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         google.addAction(UIAction { [weak self] _ in self?.browserSignIn(.google) }, for: .primaryActionTriggered)
         facebook.addAction(UIAction { [weak self] _ in self?.browserSignIn(.facebook) }, for: .primaryActionTriggered)
         or.textAlignment = .center
-        for provider in [or, google, facebook] { provider.isHidden = true }
+        for provider in [or, apple, google, facebook] { provider.isHidden = true }
+        makeAppleButton()
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.makeAppleButton() }
 
         let links = UIStackView(arrangedSubviews: [forgot, UIView(), switchMode])
         links.alignment = .center
-        let column = Controls.column([titleLabel, intro, email, password, errorLabel, primary, links, or, google, facebook, demo])
+        let column = Controls.column([titleLabel, intro, email, password, errorLabel, primary, links, or, apple, google, facebook, demo])
         column.setCustomSpacing(DesignTokens.Space.s24, after: intro)
         column.setCustomSpacing(DesignTokens.Space.s24, after: links)
         Controls.host(column, in: self)
@@ -71,6 +78,10 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
     }
 
     func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
+        view.window ?? ASPresentationAnchor()
+    }
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
         view.window ?? ASPresentationAnchor()
     }
 
@@ -95,6 +106,8 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         let filled = !(email.text ?? "").trimmingCharacters(in: .whitespaces).isEmpty && !(password.text ?? "").isEmpty
         primary.isEnabled = filled && !busy
         for button in [demo, google, facebook, switchMode] { button.isEnabled = !busy }
+        apple.isUserInteractionEnabled = !busy
+        apple.alpha = busy ? 0.5 : 1
     }
 
     private func showError(_ message: String?) {
@@ -109,9 +122,10 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         Task {
             // A failed request shows neither provider (apps/android/docs/SPEC.md FR-1.1).
             let providers = (try? await flow.api.providers()) ?? .none
+            apple.isHidden = !providers.apple
             google.isHidden = !providers.google
             facebook.isHidden = !providers.facebook
-            or.isHidden = !(providers.google || providers.facebook)
+            or.isHidden = !(providers.apple || providers.google || providers.facebook)
         }
     }
 
@@ -202,6 +216,58 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         case .failed(.facebook):
             String(localized: "Couldn't sign in with Facebook. Please try again.")
         }
+    }
+
+    // MARK: Sign in with Apple
+
+    /// Apple's own button, black on a light screen and white on a dark one, as Apple asks.
+    private func makeAppleButton() {
+        apple.subviews.forEach { $0.removeFromSuperview() }
+        let style: ASAuthorizationAppleIDButton.Style = traitCollection.userInterfaceStyle == .dark ? .white : .black
+        let button = ASAuthorizationAppleIDButton(authorizationButtonType: .continue, authorizationButtonStyle: style)
+        button.cornerRadius = DesignTokens.Radius.md
+        button.accessibilityIdentifier = "apple"
+        button.addAction(UIAction { [weak self] _ in self?.appleSignIn() }, for: .primaryActionTriggered)
+        button.translatesAutoresizingMaskIntoConstraints = false
+        apple.addSubview(button)
+        NSLayoutConstraint.activate([
+            button.topAnchor.constraint(equalTo: apple.topAnchor),
+            button.bottomAnchor.constraint(equalTo: apple.bottomAnchor),
+            button.leadingAnchor.constraint(equalTo: apple.leadingAnchor),
+            button.trailingAnchor.constraint(equalTo: apple.trailingAnchor),
+            button.heightAnchor.constraint(equalToConstant: 48),
+        ])
+    }
+
+    private func appleSignIn() {
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        request.requestedScopes = [.fullName, .email]
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        busy = true
+        showError(nil)
+        controller.performRequests()
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        guard let credential = authorization.credential as? ASAuthorizationAppleIDCredential,
+              let codeData = credential.authorizationCode, let code = String(data: codeData, encoding: .utf8)
+        else {
+            busy = false
+            showError(String(localized: "Couldn't sign in with Apple. Please try again."))
+            return
+        }
+        let name = AppleSignIn.name(credential.fullName)
+        busy = false
+        run { try await $0.apple(code: code, name: name, timezone: TimeZone.current.identifier) }
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        busy = false
+        // Closing Apple's sheet is no failure.
+        if (error as? ASAuthorizationError)?.code == .canceled { return }
+        showError(String(localized: "Couldn't sign in with Apple. Please try again."))
     }
 
     private func openForgot() {

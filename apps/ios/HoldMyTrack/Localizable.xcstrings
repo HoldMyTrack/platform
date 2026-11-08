@@ -89,6 +89,17 @@
         }
       }
     },
+    "Couldn't sign in with Apple. Please try again." : {
+      "comment" : "Sign-in screen: Sign in with Apple failed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось войти через Apple. Попробуйте ещё раз."
+          }
+        }
+      }
+    },
     "Couldn't sign in with Facebook. Please try again." : {
       "comment" : "Sign-in screen: the Facebook round trip failed.",
       "localizations" : {

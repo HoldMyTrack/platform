@@ -23,7 +23,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.8), exce
 ### FR-1.1 Sign in, sign up, start a demo
 
 - Google and Facebook both run the server's own flow in the system's browser sheet, started with the S256 hash of a verifier the app keeps; the code returned to `holdmytrack://oauth` is redeemed with it at `POST /v1/auth/handoff`. No Google or Meta SDK is in the app.
-- Sign in with Apple isn't offered yet (`ROADMAP.md`, 5.2).
+- Sign in with Apple shows when the server reports it, in Apple's own sheet (`docs/SPEC.md` FR-1.14). The name Apple shares on the first sign-in names a new account.
 
 ### FR-1.2 Session persistence and re-verification
 

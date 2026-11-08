@@ -149,6 +149,26 @@ struct APIClientTests {
         await #expect(throws: APIError.unreadable) { _ = try await client().me() }
     }
 
+    @Test func appleSendsTheCodeTheNameAndTheTimezone() async throws {
+        var body = accountBody
+        body["session_token"] = "t"
+        StubProtocol.answer = { _ in .init(body: self.json(body)) }
+        _ = try await client(token: nil).apple(code: "c", name: "Ann Lee", timezone: "Europe/Tallinn")
+        let sent = try #require(StubProtocol.sent.first)
+        #expect(sent.url?.path == "/v1/auth/apple/token")
+        let fields = try JSONSerialization.jsonObject(with: try #require(sent.httpBody)) as? [String: String]
+        #expect(fields == ["authorization_code": "c", "name": "Ann Lee", "tz": "Europe/Tallinn"])
+    }
+
+    @Test func appleLeavesOutANameItWasntGiven() async throws {
+        var body = accountBody
+        body["session_token"] = "t"
+        StubProtocol.answer = { _ in .init(body: self.json(body)) }
+        _ = try await client(token: nil).apple(code: "c", name: nil, timezone: "UTC")
+        let fields = try JSONSerialization.jsonObject(with: try #require(StubProtocol.sent.first?.httpBody)) as? [String: String]
+        #expect(fields == ["authorization_code": "c", "tz": "UTC"])
+    }
+
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {
         var body = accountBody
         body["session_token"] = "t"
