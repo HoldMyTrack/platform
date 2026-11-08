@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"errors"
 	"image"
+	"math"
 	"math/rand/v2"
 	"testing"
+
+	"github.com/fogleman/gg"
 )
 
 // A stored PNG of another size than TileSize is refused, not handed to a raster that indexes a
@@ -121,5 +124,74 @@ func TestActivityMaskSurvivesJitter(t *testing.T) {
 	}
 	if lit < TileSize-10 {
 		t.Fatalf("a %d-point walk across the tile lit %d pixels, want a line of at least %d", len(line), lit, TileSize-10)
+	}
+}
+
+// A stroke just past a tile's edge paints nothing inside it, on every side alike. The drawing
+// library folds coverage from just left of and above its canvas into the first column and row,
+// which put a strip of false coverage along a tile's left and top edges, a seam in Fog where a
+// corridor ran along one (renderActivityMask's margin).
+func TestAStrokeOutsideTheTilePaintsNothingInIt(t *testing.T) {
+	for _, centre := range []float64{-3, -2.6, -4} {
+		far := TileSize - centre
+		sides := map[string]struct {
+			mask *image.Gray
+			x, y int
+		}{
+			"left":   {renderActivityMask([]pixelPoint{{centre, 20}, {centre, 100}}), 0, 60},
+			"right":  {renderActivityMask([]pixelPoint{{far, 20}, {far, 100}}), TileSize - 1, 60},
+			"top":    {renderActivityMask([]pixelPoint{{20, centre}, {100, centre}}), 60, 0},
+			"bottom": {renderActivityMask([]pixelPoint{{20, far}, {100, far}}), 60, TileSize - 1},
+		}
+		for side, s := range sides {
+			if v := s.mask.GrayAt(s.x, s.y).Y; v != 0 {
+				t.Errorf("a stroke %v px past the %s edge painted %d inside the tile", -centre, side, v)
+			}
+		}
+	}
+}
+
+// Two neighbouring tiles drawn from the same track meet as one drawing two tiles wide does.
+func TestNeighbouringTilesMeetAtTheirEdge(t *testing.T) {
+	// A wiggle along the shared edge, as a walk beside a tile boundary draws it.
+	var left []pixelPoint
+	for i := 0; i <= 40; i++ {
+		y := 10 + float64(i)*2.7
+		left = append(left, pixelPoint{x: TileSize - 1.5 + 2.2*math.Sin(float64(i)/2.3), y: y})
+	}
+	right := make([]pixelPoint, len(left))
+	for i, p := range left {
+		right[i] = pixelPoint{x: p.x - TileSize, y: p.y}
+	}
+	a, b := renderActivityMask(left), renderActivityMask(right)
+
+	dc := gg.NewContext(2*TileSize, TileSize)
+	dc.SetRGBA(0, 0, 0, 1)
+	dc.Clear()
+	dc.SetLineCapRound()
+	dc.SetLineJoinRound()
+	dc.SetLineWidth(strokeRadiusPx * 2)
+	dc.SetRGBA(1, 1, 1, 1)
+	pts := thinPoints(left)
+	dc.MoveTo(pts[0].x, pts[0].y)
+	for _, p := range pts[1:] {
+		dc.LineTo(p.x, p.y)
+	}
+	dc.Stroke()
+	whole := dc.Image()
+	at := func(x, y int) int { v, _, _, _ := whole.At(x, y).RGBA(); return int(v >> 8) }
+
+	for y := range TileSize {
+		for _, c := range []struct {
+			got, want int
+			col       string
+		}{
+			{int(a.GrayAt(TileSize-1, y).Y), at(TileSize-1, y), "left tile's last"},
+			{int(b.GrayAt(0, y).Y), at(TileSize, y), "right tile's first"},
+		} {
+			if d := c.got - c.want; d > 2 || d < -2 {
+				t.Fatalf("row %d: the %s column is %d where the whole drawing has %d", y, c.col, c.got, c.want)
+			}
+		}
 	}
 }
