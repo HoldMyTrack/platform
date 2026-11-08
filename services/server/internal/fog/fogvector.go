@@ -36,14 +36,22 @@ type pt struct{ x, y float64 }
 // line they step along; a z14 tile, its strokes anti-aliased, already traces smooth.
 const fogPooledSmooth = 1.0
 
+// Sides are the coverage tiles beside one, at the same zoom: nil where it isn't known, a blank
+// tile where nothing is on file.
+type Sides struct {
+	Left, Right, Top, Bottom *image.Gray
+}
+
 // EncodeFogTile traces a coverage tile and encodes it as a vector tile: one layer, "fog", with a
 // polygon feature for the veil (kind "veil": everywhere not cleared) and a line feature along
 // every edge between cleared and veiled ground (kind "edge"), for the clients to draw blurred.
-// pooled says the tile is a pyramid level above z14 (fogPooledSmooth).
-func EncodeFogTile(cov *image.Gray, pooled bool) []byte {
+// sides are its neighbours, whose pixels along the shared edge make an outline crossing it meet
+// theirs exactly (coverageField). pooled says the tile is a pyramid level above z14
+// (fogPooledSmooth).
+func EncodeFogTile(cov *image.Gray, sides Sides, pooled bool) []byte {
 	sc := fogScratchPool.Get().(*fogScratch)
 	defer fogScratchPool.Put(sc)
-	coverageField(sc.field, cov)
+	coverageField(sc.field, cov, sides)
 	smooth := 0.0
 	if pooled {
 		smooth = fogPooledSmooth
@@ -77,11 +85,13 @@ var fogScratchPool = sync.Pool{New: func() any {
 }}
 
 // coverageField fills f with the coverage as a fogN² grid of samples at pixel centres: the
-// tile's own pixels, a ring past its edge carrying each row and column on in a straight line —
-// so an outline crossing the edge carries on as it was going, and meets the next tile's own
-// close to where it reaches the edge — and an outer ring of nothing, so every traced outline
-// closes. Sample (i, j) sits at pixel (j-1.5, i-1.5).
-func coverageField(f []float32, cov *image.Gray) {
+// tile's own pixels, a ring past its edge, and an outer ring of nothing, so every traced outline
+// closes. Sample (i, j) sits at pixel (j-1.5, i-1.5). The ring past a side is the neighbour's
+// pixels along it, where sides has the neighbour: both tiles then trace the outline between the
+// same two samples, so it crosses the edge at the same point in each. Where it doesn't, the ring
+// carries each row and column on in a straight line, which meets the neighbour's outline only
+// within a fraction of a pixel, a kink at street zoom. The corners are always carried on.
+func coverageField(f []float32, cov *image.Gray, sides Sides) {
 	const n = fogN
 	clear(f)
 	for y := range TileSize {
@@ -94,9 +104,25 @@ func coverageField(f []float32, cov *image.Gray) {
 		f[i*n+1] = clamp(2*f[i*n+2] - f[i*n+3])
 		f[i*n+n-2] = clamp(2*f[i*n+n-3] - f[i*n+n-4])
 	}
+	for k := range TileSize {
+		if sides.Left != nil {
+			f[(k+2)*n+1] = float32(sides.Left.Pix[k*sides.Left.Stride+TileSize-1])
+		}
+		if sides.Right != nil {
+			f[(k+2)*n+n-2] = float32(sides.Right.Pix[k*sides.Right.Stride])
+		}
+	}
 	for j := 1; j < n-1; j++ {
 		f[n+j] = clamp(2*f[2*n+j] - f[3*n+j])
 		f[(n-2)*n+j] = clamp(2*f[(n-3)*n+j] - f[(n-4)*n+j])
+	}
+	for k := range TileSize {
+		if sides.Top != nil {
+			f[n+k+2] = float32(sides.Top.Pix[(TileSize-1)*sides.Top.Stride+k])
+		}
+		if sides.Bottom != nil {
+			f[(n-2)*n+k+2] = float32(sides.Bottom.Pix[k])
+		}
 	}
 }
 

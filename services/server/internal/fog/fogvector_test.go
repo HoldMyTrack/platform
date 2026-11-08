@@ -99,7 +99,7 @@ func decodeFogTile(t *testing.T, b []byte) decodedFog {
 
 // A tile with nothing cleared is all veil: one ring, the frame around the tile, and no edges.
 func TestFogTileAllVeiled(t *testing.T) {
-	got := decodeFogTile(t, EncodeFogTile(blankTile(), false))
+	got := decodeFogTile(t, EncodeFogTile(blankTile(), Sides{}, false))
 	if len(got.veil) != 1 || len(got.edges) != 0 {
 		t.Fatalf("%d veil rings, %d edges; want the frame alone", len(got.veil), len(got.edges))
 	}
@@ -112,7 +112,7 @@ func TestFogTileAllVeiled(t *testing.T) {
 // road as the stroke reaches, carried just past the tile's sides.
 func TestFogTileRoadAcross(t *testing.T) {
 	const mid = TileSize / 2
-	got := decodeFogTile(t, EncodeFogTile(lineMask(mid), false))
+	got := decodeFogTile(t, EncodeFogTile(lineMask(mid), Sides{}, false))
 	if len(got.veil) != 2 {
 		t.Fatalf("%d veil rings, want the frame and the road's hole", len(got.veil))
 	}
@@ -149,7 +149,7 @@ func TestFogTileIsland(t *testing.T) {
 		a := 2 * math.Pi * float64(k) / 64
 		loop = append(loop, pixelPoint{c + r*math.Cos(a), c + r*math.Sin(a)})
 	}
-	got := decodeFogTile(t, EncodeFogTile(renderActivityMask(loop), false))
+	got := decodeFogTile(t, EncodeFogTile(renderActivityMask(loop), Sides{}, false))
 	var outer, holes int
 	for _, ring := range got.veil {
 		if signedArea(ring) > 0 {
@@ -170,7 +170,8 @@ func TestFogTileIsland(t *testing.T) {
 }
 
 // A road crossing from one tile into the next meets itself at the shared edge: each tile traces
-// its own pixels, carried on past its side, and the two edges reach it at the same place.
+// its own pixels, carried on past its side, and the two edges reach it within a fraction of a
+// pixel; given each other as sides, at the same place.
 func TestFogTileEdgesMeetAcrossTiles(t *testing.T) {
 	// A diagonal through the shared edge x = 128 of a left and a right tile.
 	left := renderActivityMask([]pixelPoint{{40, 20}, {TileSize + 40, 100}})
@@ -187,8 +188,8 @@ func TestFogTileEdgesMeetAcrossTiles(t *testing.T) {
 		}
 		return ys
 	}
-	l := crossing(decodeFogTile(t, EncodeFogTile(left, false)).edges, TileSize)
-	r := crossing(decodeFogTile(t, EncodeFogTile(right, false)).edges, 0)
+	l := crossing(decodeFogTile(t, EncodeFogTile(left, Sides{}, false)).edges, TileSize)
+	r := crossing(decodeFogTile(t, EncodeFogTile(right, Sides{}, false)).edges, 0)
 	if len(l) != 2 || len(r) != 2 {
 		t.Fatalf("crossings %v and %v, want both edges of the road on each side", l, r)
 	}
@@ -201,6 +202,76 @@ func TestFogTileEdgesMeetAcrossTiles(t *testing.T) {
 	for i := range 2 {
 		if d := math.Abs(l[i] - r[i]); d > 0.35 {
 			t.Errorf("edge %d meets the shared side at y %.2f on the left, %.2f on the right: %.2f px apart", i, l[i], r[i], d)
+		}
+	}
+}
+
+// Given each other as sides, two tiles trace a road crossing their shared edge, left and right or
+// top and bottom, to the same point on it, as one drawing two tiles wide would.
+func TestFogTileEdgesMeetExactlyWithTheirSides(t *testing.T) {
+	crossingX := func(edges [][]pt, x float64) []float64 {
+		var ys []float64
+		for _, e := range edges {
+			for i := 0; i+1 < len(e); i++ {
+				a, b := e[i], e[i+1]
+				if (a.x-x)*(b.x-x) <= 0 && a.x != b.x {
+					ys = append(ys, a.y+(x-a.x)/(b.x-a.x)*(b.y-a.y))
+				}
+			}
+		}
+		sort.Float64s(ys)
+		return ys
+	}
+	swap := func(edges [][]pt) [][]pt {
+		out := make([][]pt, len(edges))
+		for i, e := range edges {
+			for _, p := range e {
+				out[i] = append(out[i], pt{p.y, p.x})
+			}
+		}
+		return out
+	}
+	// A wiggling road along and across the shared edge, as a walk beside a tile boundary.
+	var road []pixelPoint
+	for i := 0; i <= 40; i++ {
+		road = append(road, pixelPoint{x: TileSize - 1 + 3*math.Sin(float64(i)/2.3), y: 10 + float64(i)*2.7})
+	}
+	shifted := func(dx, dy float64) []pixelPoint {
+		out := make([]pixelPoint, len(road))
+		for i, p := range road {
+			out[i] = pixelPoint{p.x + dx, p.y + dy}
+		}
+		return out
+	}
+	// Left and right.
+	a, b := renderActivityMask(road), renderActivityMask(shifted(-TileSize, 0))
+	l := crossingX(decodeFogTile(t, EncodeFogTile(a, Sides{Right: b}, false)).edges, TileSize)
+	r := crossingX(decodeFogTile(t, EncodeFogTile(b, Sides{Left: a}, false)).edges, 0)
+	// Top and bottom: the same road turned on its side.
+	turned := func(m *image.Gray) *image.Gray {
+		out := image.NewGray(m.Rect)
+		for y := range TileSize {
+			for x := range TileSize {
+				out.Pix[x*out.Stride+y] = m.Pix[y*m.Stride+x]
+			}
+		}
+		return out
+	}
+	ta, tb := turned(a), turned(b)
+	top := crossingX(swap(decodeFogTile(t, EncodeFogTile(ta, Sides{Bottom: tb}, false)).edges), TileSize)
+	bottom := crossingX(swap(decodeFogTile(t, EncodeFogTile(tb, Sides{Top: ta}, false)).edges), 0)
+	for _, c := range []struct {
+		name   string
+		before []float64
+		after  []float64
+	}{{"left and right", l, r}, {"top and bottom", top, bottom}} {
+		if len(c.before) == 0 || len(c.before) != len(c.after) {
+			t.Fatalf("%s: crossings %v and %v, want the same edges on each side", c.name, c.before, c.after)
+		}
+		for i := range c.before {
+			if d := math.Abs(c.before[i] - c.after[i]); d > 0.02 {
+				t.Errorf("%s: edge %d meets the shared side at %.3f and %.3f: %.3f px apart", c.name, i, c.before[i], c.after[i], d)
+			}
 		}
 	}
 }
@@ -238,7 +309,7 @@ func TestFogTilePooledDiagonal(t *testing.T) {
 		// side's ends over the same stretch.
 		a, b := pt{30.0 / 8, 100.0 / 8}, pt{1000.0 / 8, 400.0 / 8} // the road, in z11 pixels
 		sides := map[bool][]pt{}
-		for _, e := range decodeFogTile(t, EncodeFogTile(cov, c.pooled)).edges {
+		for _, e := range decodeFogTile(t, EncodeFogTile(cov, Sides{}, c.pooled)).edges {
 			for _, p := range e {
 				if p.x > 20 && p.x < 110 {
 					above := (b.x-a.x)*(p.y-a.y)-(b.y-a.y)*(p.x-a.x) < 0
@@ -313,6 +384,6 @@ func BenchmarkEncodeFogTile(b *testing.B) {
 		}
 	}
 	for b.Loop() {
-		EncodeFogTile(m, false)
+		EncodeFogTile(m, Sides{}, false)
 	}
 }
