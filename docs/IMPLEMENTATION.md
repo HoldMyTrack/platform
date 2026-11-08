@@ -132,7 +132,7 @@ No state column: until `ready_at` is set, a request's state is its job's. Parts 
 
 ### 3.24 `tz_parts`
 
-timezone-boundary-builder's polygons in ≤256-vertex pieces (ADR-0035, §4.30); `tz_boundaries_source` skips reloading the same file.
+timezone-boundary-builder's polygons in ≤256-vertex pieces (§4.30); `tz_boundaries_source` skips reloading the same file.
 
 ### 3.25 `story_sends` / `story_copies` / `received_origins`
 
@@ -576,7 +576,9 @@ The routes are under `/v1/photos` because the mux rejects `/v1/activities/{id}/p
 
 A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each track is written from `DisplayedPoints` and each raw payload once. The archive is never reachable by a link alone: the email links to Settings, and a part is served only to its account, through `http.ServeContent` so a Range request resumes it. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
 
-### 4.30 Each activity's own timezone (ADR-0035)
+### 4.30 Each activity's own timezone (FR-3.11)
+
+**The activity's zone, for labels and grouping alike.** The account's zone would show a 07:00 run in Tokyo at 18:00 the day before, and the viewing device's would group the same history differently on a laptop and a phone. Labels in one zone and grouping in another would put a row near midnight in a different day from its slider slot. A source's own offset is no substitute: GPX and TCX carry none, and an offset has no history. The polygons sit in PostGIS like the country outlines (§4.2.4), not in a Go library such as `tzf`, whose simplified copy would be a second geography. An activity entirely inside a Private location still carries its zone, far coarser than the location it hides.
 
 `activities.timezone` is an IANA name, never an offset, so `AT TIME ZONE` gives the offset in force on the activity's date. It is looked up at ingest from the first recorded point, before clipping, with the account's zone where no polygon contains it; a reprocess looks again, which changes only split pieces. The `timezones-with-oceans` set gives a point at sea a zone, where the `-now` variant would merge zones whose clocks agree only today. `seed-timezones` re-matches every activity in its transaction; a zone the database's tzdata doesn't know is skipped and logged, since converting to it would fail. Grouping reads `localStartedAt` per row, and no local-time column is stored, since one would freeze each offset. `ORDER BY started_at` stays: across zones, local times can disagree with the order things happened.
 
