@@ -324,6 +324,24 @@ struct UploadResultJSON: Codable, Sendable, Equatable {
     let status: String
 }
 
+/// One batch of imports still running, `GET /v1/uploads/active`.
+struct ActiveImportJSON: Codable, Sendable, Equatable {
+    let title: String
+    let source: String
+    let done: Int
+    let total: Int
+}
+
+struct UploadsActiveJSON: Codable, Sendable, Equatable {
+    let imports: [ActiveImportJSON]
+    let unseenFailures: Int
+
+    enum CodingKeys: String, CodingKey {
+        case imports
+        case unseenFailures = "unseen_failures"
+    }
+}
+
 // Sync
 
 /// One point of a synced activity. elevationM is left out when unknown: no altitude is not sea

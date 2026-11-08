@@ -159,6 +159,13 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         mapView.styleJSON = json
     }
 
+    /// Where the map last looked, where a new Private location starts (PrivacyViewController).
+    static var lastCenter: CLLocationCoordinate2D?
+
+    func mapView(_ mapView: MLNMapView, regionDidChangeAnimated animated: Bool) {
+        Self.lastCenter = mapView.centerCoordinate
+    }
+
     func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
         styleLoaded = true
     }
@@ -215,7 +222,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             Self.framed.insert(accountKey)
             guard let box = MapFraming.latest(rows) else {
                 if !account.isDemo {
-                    notice(.empty, String(localized: "Nothing on your map yet. Upload a GPX, FIT or TCX file from the web to see it here."))
+                    notice(.empty, String(localized: "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here."))
                 }
                 return
             }

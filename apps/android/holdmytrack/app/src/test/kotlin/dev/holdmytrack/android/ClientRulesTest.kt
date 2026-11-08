@@ -1,6 +1,7 @@
 package dev.holdmytrack.android
 
 import dev.holdmytrack.android.export.ExportStatsRules
+import dev.holdmytrack.android.imports.UploadPlan
 import dev.holdmytrack.android.map.BasemapStatus
 import dev.holdmytrack.android.map.DateRange
 import dev.holdmytrack.android.map.DefaultRange
@@ -166,6 +167,21 @@ class ClientRulesTest {
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
+        "uploadPlan" to { input ->
+            val files = input["files"]!!.jsonArray.map { it.jsonObject }.map { UploadPlan.Picked(it.string("name")!!, it.int("size").toLong()) }
+            val plan = UploadPlan.of(files)
+            buildJsonObject {
+                put("send", JsonArray(plan.send.map { JsonPrimitive(it) }))
+                put("refusals", JsonArray(plan.refusals.map { refusal ->
+                    when (refusal) {
+                        is UploadPlan.Refusal.Zip -> buildJsonObject { put("kind", "zip"); put("name", refusal.name) }
+                        is UploadPlan.Refusal.WrongType -> buildJsonObject { put("kind", "wrongType"); put("name", refusal.name) }
+                        is UploadPlan.Refusal.TooMany -> buildJsonObject { put("kind", "tooMany"); put("count", refusal.count) }
+                        is UploadPlan.Refusal.TooLarge -> buildJsonObject { put("kind", "tooLarge"); put("name", refusal.name) }
+                    }
+                }))
+            }
+        },
         "pendingBatches" to { input ->
             JsonArray(PendingDiff.batches(input.strings("ids"), input.int("size")).map { ids(it, sort = false) })
         },

@@ -91,6 +91,19 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting)]
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
+    "uploadPlan": { input in
+        let files = input["files"].list!.map { UploadPlan.Picked(name: $0["name"].string!, size: $0.int("size")) }
+        let plan = UploadPlan.of(files)
+        let refusals: [RuleJSON] = plan.refusals.map { refusal in
+            switch refusal {
+            case .zip(let name): ["kind": "zip", "name": .string(name)]
+            case .wrongType(let name): ["kind": "wrongType", "name": .string(name)]
+            case .tooMany(let count): ["kind": "tooMany", "count": .number(Double(count))]
+            case .tooLarge(let name): ["kind": "tooLarge", "name": .string(name)]
+            }
+        }
+        return ["send": .array(plan.send.map { .number(Double($0)) }), "refusals": .array(refusals)]
+    },
     "basemapStatus": { input in
         .string(BasemapStatus.of(loaded: input["loaded"].bool!, failed: input["failed"].bool!, waitedMs: input.int("waitedMs")).rawValue)
     },

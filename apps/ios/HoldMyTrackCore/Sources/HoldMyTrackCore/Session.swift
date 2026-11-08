@@ -12,8 +12,10 @@ public struct Account: Equatable, Sendable {
     public let locale: String
     /// "imperial" or "metric", decided by the server from country (ADR-0048).
     public let unitSystem: String
+    /// The avatar's path on the API, empty when there is none.
+    public let avatarURL: String
 
-    public init(email: String, isDemo: Bool, emailVerified: Bool, displayName: String = "", country: String = "", timezone: String = "UTC", locale: String = "", unitSystem: String = "metric") {
+    public init(email: String, isDemo: Bool, emailVerified: Bool, displayName: String = "", country: String = "", timezone: String = "UTC", locale: String = "", unitSystem: String = "metric", avatarURL: String = "") {
         self.email = email
         self.isDemo = isDemo
         self.emailVerified = emailVerified
@@ -22,12 +24,13 @@ public struct Account: Equatable, Sendable {
         self.timezone = timezone
         self.locale = locale
         self.unitSystem = unitSystem
+        self.avatarURL = avatarURL
     }
 
     init(_ json: AccountJSON) {
         self.init(
             email: json.email, isDemo: json.isDemo, emailVerified: json.emailVerified, displayName: json.displayName,
-            country: json.country, timezone: json.timezone, locale: json.locale, unitSystem: json.unitSystem
+            country: json.country, timezone: json.timezone, locale: json.locale, unitSystem: json.unitSystem, avatarURL: json.avatarURL
         )
     }
 }
@@ -87,5 +90,12 @@ public enum AccountKey {
 
     public static func of(email: String, isDemo: Bool) -> String {
         isDemo ? demo : email.trimmingCharacters(in: .whitespaces).lowercased()
+    }
+
+    /// Whether the email typed to confirm Delete account is the account's, whatever its case or
+    /// surrounding spaces (root docs/SPEC.md FR-1.11).
+    public static func confirms(typed: String, email: String) -> Bool {
+        !typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && of(email: typed.trimmingCharacters(in: .whitespacesAndNewlines), isDemo: false) == of(email: email, isDemo: false)
     }
 }
