@@ -402,8 +402,8 @@ Email and password with server-side sessions, owned end to end, so no vendor can
 
 ```mermaid
 sequenceDiagram
-    participant App as Android app
-    participant Tab as Custom Tab
+    participant App as App
+    participant Tab as Custom Tab or browser sheet
     participant S as api
     participant F as Facebook
     App->>Tab: open /v1/auth/facebook/start?app_challenge=S256(v)
@@ -423,9 +423,9 @@ sequenceDiagram
 
 **The web flow** (`oauth.go`, shared by `google_auth.go` and `facebook_auth.go`) is the authorization-code flow run server-side with no provider script or library (ADR-0009); in a browser the callback sets the session cookie instead of the handoff. Round-trip state is one `SameSite=Lax` cookie. Every failure shows one generic message, the cause only in the log.
 
-**Google** adds PKCE, and is linked by verified email: `resolveVerifiedUser`, shared with Apple, says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`).
+**Google** adds PKCE, and is linked by verified email: `resolveVerifiedUser`, shared with Apple, says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v1/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`); iOS runs the browser flow with the handoff, as for Facebook, so it needs no Google SDK.
 
-**Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook account made under a victim's address first is cleaned up by Google's unverified branch. On Android the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser` has no automated test.
+**Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook account made under a victim's address first is cleaned up by Google's unverified branch. In an app the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser` has no automated test.
 
 **Apple** is linked by verified email like Google. Three traps: the client secret is an ES256 JWT this server signs per request with the Sign in with Apple key (`appleClientSecret`); asking for the name and email makes Apple answer with a cross-site `form_post`, so its round-trip cookie is `SameSite=None` and `crossSiteAPIWrite` lets Apple's origin post the callback, which only the state check then trusts; and Apple accepts only an `https://` return URL on a registered domain, so the flow can't complete against a local stack. The name arrives only in the first authorization's `user` field. The iOS app is to post its authorization code to `POST /v1/auth/apple/token`, exchanged under the bundle ID, so no token a client sent needs its signature checked. The refresh token is kept with the client id it was issued to (§3.17), and `closeAccount` revokes it once the deletion commits, logging a failure. Apple's notifications are JWTs checked against its published keys (`jwks.go`, shared with Google's Android tokens).
 

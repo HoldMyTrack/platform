@@ -1,16 +1,18 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The project's first screen until the app has its own (apps/ios/docs/ROADMAP.md, phase 5): the
-/// build and whether the API answers, which is how a Debug build shows it reached a dev stack.
-/// Drawn with the palette, the typefaces and an icon, it is also the sample the visual language
-/// is checked on in both themes.
-final class BuildInfoViewController: UIViewController {
-    private let app: AppInfo
+/// The signed-in screen until the map takes its place (apps/ios/docs/ROADMAP.md, phase 7a): who
+/// is signed in, Sign out, the build and whether the API answers, which is how a Debug build shows
+/// it reached a dev stack.
+final class HomeViewController: UIViewController {
+    private unowned let flow: AppFlow
+    private let account: Account
+    private var app: AppInfo { flow.api.app }
     private let server = UILabel()
 
-    init(app: AppInfo) {
-        self.app = app
+    init(flow: AppFlow, account: Account) {
+        self.flow = flow
+        self.account = account
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -47,7 +49,18 @@ final class BuildInfoViewController: UIViewController {
         serverRow.spacing = DesignTokens.Space.s8
         serverRow.alignment = .center
 
-        let card = UIStackView(arrangedSubviews: [title, build, serverRow])
+        let who = UILabel()
+        who.text = account.isDemo ? String(localized: "The demo account") : account.email
+        who.font = Typeface.sans(DesignTokens.Text.lg, weight: DesignTokens.Weight.semibold)
+        who.textColor = UIColor(resource: .ink)
+        who.numberOfLines = 0
+        who.adjustsFontForContentSizeCategory = true
+        who.accessibilityIdentifier = "account"
+
+        let signOut = Controls.secondaryButton(String(localized: "Sign out"), id: "signOut")
+        signOut.addAction(UIAction { [weak self] _ in self?.flow.signOut() }, for: .primaryActionTriggered)
+
+        let card = UIStackView(arrangedSubviews: [title, who, build, serverRow, signOut])
         card.axis = .vertical
         card.spacing = DesignTokens.Space.s12
         card.isLayoutMarginsRelativeArrangement = true

@@ -1,6 +1,347 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Already have an account? Sign in" : {
+      "comment" : "Sign-in screen: switches from signing up to signing in.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уже есть аккаунт? Войдите"
+          }
+        }
+      }
+    },
+    "An account with this email already exists. Sign in the way you usually do, or use “Forgot password?” to set a password." : {
+      "comment" : "Sign-in screen: Facebook's email belongs to an existing account, which Facebook is never linked to.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Аккаунт с этой почтой уже существует. Войдите так, как обычно, или задайте пароль через «Забыли пароль?»."
+          }
+        }
+      }
+    },
+    "Checking your session…" : {
+      "comment" : "Shown while the server confirms a session kept from an earlier launch.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Проверяем вход…"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "comment" : "Verify email screen: asks the server again whether the address is confirmed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продолжить"
+          }
+        }
+      }
+    },
+    "Continue with Facebook" : {
+      "comment" : "Sign-in screen: Facebook sign-in.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Войти через Facebook"
+          }
+        }
+      }
+    },
+    "Continue with Google" : {
+      "comment" : "Sign-in screen: Google sign-in.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Войти через Google"
+          }
+        }
+      }
+    },
+    "Could not sign in." : {
+      "comment" : "Sign-in screen: a sign-in failed and the server sent no message.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось войти."
+          }
+        }
+      }
+    },
+    "Couldn't reach HoldMyTrack. Check your connection and try again." : {
+      "comment" : "The server didn't answer a session check.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось связаться с HoldMyTrack. Проверьте подключение и попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "Couldn't sign in with Facebook. Please try again." : {
+      "comment" : "Sign-in screen: the Facebook round trip failed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось войти через Facebook. Попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "Couldn't sign in with Google. Please try again." : {
+      "comment" : "Sign-in screen: the Google round trip failed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось войти через Google. Попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "Create account" : {
+      "comment" : "Sign-in screen: the sign-up button.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Создать аккаунт"
+          }
+        }
+      }
+    },
+    "Create your account" : {
+      "comment" : "Sign-in screen: title in sign-up mode.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Создание аккаунта"
+          }
+        }
+      }
+    },
+    "Don't have an account? Create one" : {
+      "comment" : "Sign-in screen: switches from signing in to signing up.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет аккаунта? Создайте его"
+          }
+        }
+      }
+    },
+    "Email" : {
+      "comment" : "Sign-in screen: the email field.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эл. почта"
+          }
+        }
+      }
+    },
+    "Forgot password?" : {
+      "comment" : "Sign-in screen: opens the web's password reset page.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Забыли пароль?"
+          }
+        }
+      }
+    },
+    "Password" : {
+      "comment" : "Sign-in screen: the password field.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пароль"
+          }
+        }
+      }
+    },
+    "Resend verification email" : {
+      "comment" : "Verify email screen: sends the confirmation link again.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить письмо ещё раз"
+          }
+        }
+      }
+    },
+    "Sign in" : {
+      "comment" : "Sign-in screen: the sign-in button.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Войти"
+          }
+        }
+      }
+    },
+    "Sign in to HoldMyTrack" : {
+      "comment" : "Sign-in screen: title in sign-in mode.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вход в HoldMyTrack"
+          }
+        }
+      }
+    },
+    "Sign in to see your tracks, fog of war and heatmap on the map. The demo needs no signup: a shared, ready-made account you can look around but not change." : {
+      "comment" : "Sign-in screen: what signing in and the demo give.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Войдите, чтобы увидеть свои треки, «туман войны» и тепловую карту. Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять."
+          }
+        }
+      }
+    },
+    "Sign out" : {
+      "comment" : "Ends the session on the server and on the phone.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выйти"
+          }
+        }
+      }
+    },
+    "The demo account" : {
+      "comment" : "Home screen: who is signed in, for the shared demo account.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Демо-аккаунт"
+          }
+        }
+      }
+    },
+    "This version of the app is too old to use. Update it to keep using HoldMyTrack." : {
+      "comment" : "Update screen: the server turns this build away.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Эта версия приложения слишком старая. Обновите её, чтобы и дальше пользоваться HoldMyTrack."
+          }
+        }
+      }
+    },
+    "Try again" : {
+      "comment" : "Repeats a session check that couldn't reach the server.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Повторить"
+          }
+        }
+      }
+    },
+    "Try the demo" : {
+      "comment" : "Sign-in screen: starts a session on the shared demo account.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Попробовать демо"
+          }
+        }
+      }
+    },
+    "Update" : {
+      "comment" : "Update screen: opens the App Store listing.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обновить"
+          }
+        }
+      }
+    },
+    "Update HoldMyTrack" : {
+      "comment" : "Update screen: title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обновите HoldMyTrack"
+          }
+        }
+      }
+    },
+    "Verify your email" : {
+      "comment" : "Verify email screen: title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подтвердите почту"
+          }
+        }
+      }
+    },
+    "We sent a confirmation link to %@. Open it to unlock your account — your map starts working as soon as you do." : {
+      "comment" : "Verify email screen: the placeholder is the account's email address.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мы отправили ссылку для подтверждения на %@. Перейдите по ней, чтобы открыть доступ к аккаунту, — карта заработает сразу после этого."
+          }
+        }
+      }
+    },
+    "Your Facebook account didn't share an email address, and HoldMyTrack needs one. Try again and allow access to your email, or sign up with email and password." : {
+      "comment" : "Sign-in screen: Facebook shared no email.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваш аккаунт Facebook не передал адрес электронной почты, а он нужен HoldMyTrack. Попробуйте ещё раз и разрешите доступ к почте или зарегистрируйтесь по почте и паролю."
+          }
+        }
+      }
+    },
+    "Your email isn't confirmed yet. Open the link in the email we sent, then tap Continue." : {
+      "comment" : "Verify email screen: Continue found the address still unconfirmed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Почта ещё не подтверждена. Перейдите по ссылке из письма и нажмите «Продолжить»."
+          }
+        }
+      }
+    },
     "answered %lld" : {
       "comment" : "The first screen: the API answered /healthz with this HTTP status.",
       "localizations" : {
@@ -19,6 +360,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ответил не так, как /healthz"
+          }
+        }
+      }
+    },
+    "or" : {
+      "comment" : "Sign-in screen: between email sign-in and the providers.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "или"
           }
         }
       }

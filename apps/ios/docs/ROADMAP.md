@@ -49,7 +49,7 @@ Phase 0 has lead times outside anyone's control, so it starts first and runs bes
   - Register `holdmytrack.com` and the address verification mail is sent from, and publish SPF for it, under Sign in with Apple's email communication settings. Without it, mail to a hidden `@privaterelay.appleid.com` address bounces, and such an account can never verify (`docs/SPEC.md` FR-1.8).
   - Done when: a test message from production's sender reaches a relay address.
 - [ ] **0.4 App Store Connect record**
-  - Create the app with the name HoldMyTrack, the bundle ID and an SKU. Accept the Free Apps agreement; no banking or tax forms are needed for a free app. File the Digital Services Act trader-status declaration, which the EU storefronts need.
+  - Create the app with the name HoldMyTrack, the bundle ID and an SKU. Accept the Free Apps agreement; no banking or tax forms are needed for a free app. File the Digital Services Act trader-status declaration, which the EU storefronts need. Set `UpdateViewController.listing` to the listing, which gives the Update screen its button.
   - Done when: the record exists and no agreement is pending.
 
 ## Phase 1 — Device probes
@@ -121,18 +121,18 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 `apps/android/docs/SPEC.md` FR-1.1–FR-1.4 and FR-1.8.
 
-- [ ] **5.1 API client and session**
+- [x] **5.1 API client and session**
   - `URLSession` with the bearer token sent to the API's own origin only, never to the basemap or imagery origins (`apps/android/docs/SPEC.md` §8). The token in the Keychain, device-only; the Keychain outlives an uninstall, so a first launch with no `UserDefaults` marker deletes what it holds.
   - Cold start: no signed-in layer until `GET /v1/auth/me` answers; only `401` signs out (`apps/android/docs/SPEC.md` FR-1.2).
   - Done when: the session rules are pure functions with tests, and a restart with the server down keeps the session.
 - [ ] **5.2 Sign-in screen**
-  - Email and password, sign up and demo against the web's endpoints, with the server's messages shown as sent. Providers shown only when `GET /v1/auth/providers` reports them. Sign in with Apple through `ASAuthorizationAppleIDButton` and phase 2.2's endpoint; Google and Facebook through `ASWebAuthenticationSession` and the handoff (D7). Forgot password in `SFSafariViewController`.
+  - Built: email and password, sign up, the demo, Google and Facebook through `ASWebAuthenticationSession` and the handoff (D7), and Forgot password in `SFSafariViewController`. Left: Sign in with Apple through `ASAuthorizationAppleIDButton` and phase 2.2's endpoint, which needs 0.1.
   - Done when: each way in reaches the map on a real device against production.
-- [ ] **5.3 Verification, sign-out and Update**
+- [x] **5.3 Verification, sign-out and Update**
   - The "check your email" screen (`apps/android/docs/SPEC.md` FR-1.4), sign-out (`apps/android/docs/SPEC.md` FR-1.3), and the Update screen on any `426` (`apps/android/docs/SPEC.md` FR-1.8), which opens the App Store listing.
   - Done when: a dev stack with `MIN_IOS_BUILD` above the build shows the Update screen once, over any screen.
 - [ ] **5.4 Per-account local state**
-  - Everything kept on the phone is keyed by the account's email, the demo account with a key of its own (`apps/android/docs/SPEC.md` FR-5.3).
+  - Everything kept on the phone is keyed by the account's email, the demo account with a key of its own (`apps/android/docs/SPEC.md` FR-5.3). `AccountKey` makes the key; nothing is kept per account until recordings or HealthKit (7c, 7d), so this step is done with the first of them.
   - Done when: two accounts on one phone never see each other's recordings, hidden rows or HealthKit switch, under test.
 
 ## Phase 6 — The site's pages
