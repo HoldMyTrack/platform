@@ -82,16 +82,8 @@ Re-run this after any change to `compose.yaml`, a Dockerfile or the Vite config:
 3. `curl -H "Range: bytes=0-1023" http://localhost:5173/basemap/basemap.pmtiles` → `206`, never `200`.
 4. `make verify` → all 7 checks pass.
 5. `make verify-build` → all 4 checks pass.
-6. `docker compose run --rm web pmtiles show public/basemap/basemap.pmtiles` → z0–14, 63,948 addressed tiles.
+6. `docker compose run --rm web pmtiles show public/basemap/basemap.pmtiles` → z0–14.
 7. `npm run dev` in `apps/web` still works and binds loopback-only, since `VITE_DEV_HOST` is unset outside the container.
-
-### Backend verification
-
-After a change to ingest, the queue or tiles, check against a live stack:
-
-- `curl -F file=@sample.gpx http://localhost:8080/v1/activities/upload` lands in `activities` with a `LINESTRING M` trajectory (`docker compose logs worker -f` shows the job); a `.tcx` likewise, heart rate ignored (ADR-0017). An unsupported extension gets 415 and an empty file 400.
-- The same file twice returns `already_processed`; five concurrent uploads of new identical content leave one row (`IMPLEMENTATION.md` §4.0).
-- `GET /tiles/v1/tracks/{z}/{x}/{y}.mvt` returns a `tracks` layer over an upload and an empty `200` elsewhere; a file uploaded through the Upload menu appears on the map without a refresh.
 
 ### Go database tests
 
@@ -111,15 +103,11 @@ The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` 
 
 ### CI
 
-`.github/workflows/ci.yml` runs on every push to `main` and every pull request: `scripts/check-doc-refs.sh`, `scripts/check-doc-style.sh`, `scripts/check-file-size.sh` (a warning only), the Go tests with a PostGIS service, the web `typecheck`, `test:coverage`, `verify:style`, `verify:api-types` and `npm audit --omit=dev`, `govulncheck` on the server, `gitleaks` over the whole history, the Android JUnit tests, shellcheck on `scripts/` and the iOS scripts with the Caddyfile, production compose file and web image checked, and `make verify verify-build`. Its token is read-only, and a superseded pull request run is cancelled, never one on `main`. That last job caches the basemap extract keyed on `apps/web/scripts/build-basemap.sh` and cuts it on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script.
-
-`.github/dependabot.yml` opens one grouped pull request a week per ecosystem (Go, npm, Gradle, Swift, Docker, Actions), one per image in the compose files, each major version and Android Kotlin compiler change on its own (never a Postgres major), and a security update as soon as its advisory is published. A `govulncheck` failure on a pull request that changes no dependency means a new advisory: bump the module or Go itself.
+`.github/workflows/ci.yml` runs every check on each push to `main` and each pull request. Its basemap extract is cached on `apps/web/scripts/build-basemap.sh` and cut on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script. A `govulncheck` failure on a pull request that changes no dependency means a new advisory: bump the module or Go itself.
 
 `.github/workflows/contract.yml` fails a pull request touching `services/server/api/` on a change an installed client can't follow, such as a response field removed: against the base branch (`scripts/check-contract-break.sh`), and against each release tag `android/<versionCode>` or `ios/<build>` from the minimum production's `/healthz` reports for that app, counting only breaks the pull request adds (`scripts/check-contract-release.sh`). An intended break carries the `contract-break` label and ships with a raised `MIN_ANDROID_BUILD` (`DEPLOY.md` §10). A change oasdiff calls breaking that no client can feel, such as declaring a limit the server already enforced, goes in `services/server/api/breaking-ignore.txt` with why.
 
-`.github/workflows/ios.yml` runs the `HoldMyTrackCore` package's tests with `swift test`, then builds the iOS app and runs its unit tests on a macOS runner, for a push or pull request touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`. It is its own workflow so that path filter keeps the macOS runner off every other pull request; the runner's Xcode can trail the newest one by a release.
-
-The Go, web, Android and iOS package jobs upload unit-test coverage to Codecov, informational only (`codecov.yml`) and low by design: c8's `all` counts untested files. CI never deploys (`docs/DEPLOY.md` §6).
+`.github/workflows/ios.yml` runs the iOS tests on a macOS runner only for a push or pull request touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`; it is its own workflow so that path filter keeps the macOS runner off every other pull request.
 
 ## Writing a migration
 
@@ -158,11 +146,3 @@ cd apps/android/holdmytrack && ./gradlew :app:testDebugUnitTest   # Android JUni
 ```
 
 On the host, `npm run build` must precede `verify:build`, and `npm run basemap` needs `pmtiles` on `PATH`.
-
-## Known costs
-
-- **The IDE needs a host `node_modules`**, about 300 MB, refreshed by hand when the lockfile changes.
-- **Adding a dependency takes three steps**: install in the container, rebuild the image, install on the host.
-- **`vite build` copies the 326 MB archive through VirtioFS**, taking seconds.
-- **Playwright renders on SwiftShader**, which no user has.
-- **HMR can go deaf over VirtioFS.**
