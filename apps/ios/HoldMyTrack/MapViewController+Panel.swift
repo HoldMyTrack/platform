@@ -5,9 +5,10 @@ import UIKit
 /// The sheet's tabs: the tab bar's Map shows Activities, its Stories the Stories tab.
 enum PanelTab { case activities, stories }
 
-/// The sheet over the map (apps/android/docs/SPEC.md FR-2.7, apps/ios/docs/IMPLEMENTATION.md
-/// §3.4): the list for the range or the open Story, the selection bound into the map's `focused`
-/// and `hidden` vars, Pending watched, and the toolbar's Edit, Delete and Add to story.
+/// The sheet over the map (apps/android/docs/SPEC.md FR-2.7): the list for the range or the open
+/// Story, the selection bound into the map's `focused` and `hidden` vars, Pending watched, and the
+/// toolbar's Edit, Delete and Add to story. How it fits together is
+/// apps/ios/docs/IMPLEMENTATION.md §3.4.
 extension MapViewController {
     func buildPanel() {
         activitiesPanel = ActivitiesPanel(format: format, demo: account.isDemo)
