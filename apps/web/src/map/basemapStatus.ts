@@ -1,7 +1,8 @@
 /**
  * Whether the map says its basemap can't be reached (docs/SPEC.md FR-4.5): a network that blocks
  * the tile host leaves the globe empty with no error of its own, since a stalled request never
- * fails. Android's `BasemapStatus.kt` runs the same cases, `testdata/client-rules/basemap-status.json`.
+ * fails. Android's `BasemapStatus.kt` and iOS's `BasemapStatus.swift` run the same cases,
+ * `testdata/client-rules/basemap-status.json`.
  */
 
 export type BasemapStatus = 'loading' | 'loaded' | 'unreachable';

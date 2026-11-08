@@ -1,7 +1,7 @@
 import Foundation
 
-/// The map's three looks; photos and Stories belong to the first.
-public enum MapMode: String, Sendable { case normal, fog, heatmap }
+/// The map's three modes (root docs/SPEC.md FR-4.4); photos and Stories belong to the first.
+public enum MapMode: String, CaseIterable, Sendable { case normal, fog, heatmap }
 
 /// A photo marker's place on screen, in points from the map's top-left.
 public struct ScreenPoint: Equatable, Sendable {

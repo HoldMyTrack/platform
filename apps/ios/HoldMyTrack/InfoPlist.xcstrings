@@ -1,0 +1,24 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSLocationWhenInUseUsageDescription" : {
+      "comment" : "The location permission prompt, shown on the first Find my location.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack shows where you are on the map when you tap Find my location."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack показывает на карте, где вы находитесь, когда вы нажимаете «Моё местоположение»."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -19,6 +19,34 @@ public enum APIError: Error, Equatable, Sendable {
     }
 }
 
+/// A document fetched with its ETag, or the word that the one kept is still current.
+public enum Fetched: Equatable, Sendable {
+    case notModified
+    case document(Data, etag: String?)
+}
+
+/// An activity as the map frames it.
+public struct ActivityRow: Equatable, Sendable {
+    public let id: String
+    public let startedAt: Date?
+    /// `[west, south, east, north]`, or nil for an activity with no track.
+    public let bbox: [Double]?
+    public let pending: Bool
+
+    public init(id: String, startedAt: Date?, bbox: [Double]?, pending: Bool) {
+        self.id = id
+        self.startedAt = startedAt
+        self.bbox = bbox
+        self.pending = pending
+    }
+}
+
+/// Whether the account's coverage is being redrawn, and the tile version it's at.
+public struct CoverageStatus: Equatable, Sendable {
+    public let rendering: Bool
+    public let tileVersion: String
+}
+
 /// A new session: its token and the account it signs in to.
 public struct SessionGrant: Equatable, Sendable {
     public let token: String
@@ -112,6 +140,76 @@ public final class APIClient: Sendable {
         return json.message
     }
 
+    // MARK: The map
+
+    /// The basemap style, `GET /v1/map/style/{flavor}?lang=`: unauthenticated and the same for
+    /// every account, revalidated with the ETag kept from the last fetch.
+    public func mapStyle(flavor: String, language: String, etag: String?) async throws -> Fetched {
+        try await fetch("v1/map/style/\(flavor)", query: [URLQueryItem(name: "lang", value: language)], etag: etag)
+    }
+
+    /// The account's layers document, `GET /v1/map/layers?flavor=` (ADR-0048).
+    public func mapLayers(flavor: String, etag: String?) async throws -> Fetched {
+        try await fetch("v1/map/layers", query: [URLQueryItem(name: "flavor", value: flavor)], etag: etag)
+    }
+
+    /// A page of activity days for the date slider, newest first, before a day if given, with the
+    /// account's first activity day.
+    public func activityDays(limit: Int, before: String?) async throws -> (days: [String], earliest: String?) {
+        var items = [URLQueryItem(name: "days", value: String(limit))]
+        if let before { items.append(URLQueryItem(name: "before", value: before)) }
+        let json: HistogramJSON = try await decode(send("GET", "v1/activities/histogram", query: items))
+        return (json.buckets.map(\.date), json.earliest)
+    }
+
+    /// The account's activities, unfiltered or from from to to (YYYY-MM-DD, the account's days).
+    public func activities(from: String? = nil, to: String? = nil) async throws -> [ActivityRow] {
+        var items: [URLQueryItem] = []
+        if let from, let to { items = [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)] }
+        let json: ActivitiesJSON = try await decode(send("GET", "v1/activities", query: items))
+        let iso = ISO8601DateFormatter()
+        return json.activities.map { row in
+            ActivityRow(id: row.id, startedAt: iso.date(from: row.startedAt), bbox: row.bbox, pending: row.pending)
+        }
+    }
+
+    public func coverageStatus() async throws -> CoverageStatus {
+        let json: CoverageStatusJSON = try await decode(send("GET", "v1/coverage/status"))
+        return CoverageStatus(rendering: json.rendering, tileVersion: json.tileVersion)
+    }
+
+    /// Prepares a request MapLibre is about to send: the API's own get the session and the app's
+    /// headers (authorize); every other, the basemap's and the imagery's, gets the API's Origin,
+    /// which the basemap's edge rule and the imagery key check (root docs/IMPLEMENTATION.md §5.4).
+    public func prepareMapRequest(_ request: inout URLRequest) {
+        guard let url = request.url else { return }
+        if ApiOrigin.isAPI(url, base: app.apiBaseURL) {
+            authorize(&request)
+        } else if let origin = Self.origin(of: app.apiBaseURL) {
+            request.setValue(origin, forHTTPHeaderField: "Origin")
+        }
+    }
+
+    static func origin(of url: URL) -> String? {
+        guard let scheme = url.scheme, let host = url.host else { return nil }
+        let port = url.port.map { ":\($0)" } ?? ""
+        return "\(scheme)://\(host)\(port)"
+    }
+
+    private func fetch(_ path: String, query: [URLQueryItem], etag: String?) async throws -> Fetched {
+        var request = request("GET", path)
+        var components = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)!
+        components.queryItems = query
+        request.url = components.url
+        if let etag { request.setValue(etag, forHTTPHeaderField: "If-None-Match") }
+        // The kept copy is the cache; URLSession's own would answer a revalidation itself.
+        request.cachePolicy = .reloadIgnoringLocalCacheData
+        let (data, http) = try await exchange(request)
+        if http.statusCode == 304 { return .notModified }
+        try check(http, data)
+        return .document(data, etag: http.value(forHTTPHeaderField: "ETag"))
+    }
+
     // MARK: Requests
 
     /// The request for path on the API, with the app's headers and, since it's the API's own
@@ -139,8 +237,13 @@ public final class APIClient: Sendable {
         }
     }
 
-    private func send(_ method: String, _ path: String) async throws -> Data {
-        try await perform(request(method, path))
+    private func send(_ method: String, _ path: String, query: [URLQueryItem] = []) async throws -> Data {
+        var request = request(method, path)
+        if !query.isEmpty, let url = request.url, var c = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+            c.queryItems = query
+            request.url = c.url
+        }
+        return try await perform(request)
     }
 
     private func send<Body: Encodable>(_ method: String, _ path: String, body: Body) async throws -> Data {
@@ -149,6 +252,12 @@ public final class APIClient: Sendable {
     }
 
     private func perform(_ request: URLRequest) async throws -> Data {
+        let (data, http) = try await exchange(request)
+        try check(http, data)
+        return data
+    }
+
+    private func exchange(_ request: URLRequest) async throws -> (Data, HTTPURLResponse) {
         let data: Data
         let response: URLResponse
         do {
@@ -159,7 +268,11 @@ public final class APIClient: Sendable {
             throw APIError.unreachable
         }
         guard let http = response as? HTTPURLResponse else { throw APIError.unreadable }
-        if (200..<300).contains(http.statusCode) { return data }
+        return (data, http)
+    }
+
+    private func check(_ http: HTTPURLResponse, _ data: Data) throws {
+        if (200..<300).contains(http.statusCode) { return }
         let failure = try? JSONDecoder().decode(ErrorJSON.self, from: data)
         if http.statusCode == 426 {
             onOutdated()

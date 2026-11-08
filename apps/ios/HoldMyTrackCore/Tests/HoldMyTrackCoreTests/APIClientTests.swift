@@ -169,6 +169,38 @@ struct APIClientTests {
         #expect(fields == ["authorization_code": "c", "tz": "UTC"])
     }
 
+    @Test func aMapDocumentIsRevalidatedWithItsETag() async throws {
+        StubProtocol.answer = { request in
+            request.value(forHTTPHeaderField: "If-None-Match") == "\"e1\"" ? .init(status: 304) : .init(body: Data("{}".utf8))
+        }
+        let api = client()
+        #expect(try await api.mapStyle(flavor: "dark", language: "ru", etag: "\"e1\"") == .notModified)
+        let sent = try #require(StubProtocol.sent.first)
+        #expect(sent.url?.absoluteString == "http://localhost:8081/v1/map/style/dark?lang=ru")
+        guard case .document = try await api.mapLayers(flavor: "dark", etag: nil) else { Issue.record("expected a document"); return }
+        #expect(StubProtocol.sent.last?.url?.absoluteString == "http://localhost:8081/v1/map/layers?flavor=dark")
+    }
+
+    @Test func mapRequestsCarryTheSessionToTheAPIAndTheOriginElsewhere() {
+        let api = client()
+        var tile = URLRequest(url: URL(string: "http://localhost:8081/tiles/v1/tracks/4/4/6.mvt")!)
+        api.prepareMapRequest(&tile)
+        #expect(tile.value(forHTTPHeaderField: "Authorization") == "Bearer tok")
+        #expect(tile.value(forHTTPHeaderField: "Origin") == nil)
+        var basemap = URLRequest(url: URL(string: "https://tiles.holdmytrack.com/20261001/basemap.pmtiles")!)
+        api.prepareMapRequest(&basemap)
+        #expect(basemap.value(forHTTPHeaderField: "Authorization") == nil)
+        #expect(basemap.value(forHTTPHeaderField: "Origin") == "http://localhost:8081")
+    }
+
+    @Test func activitiesAreReadForFraming() async throws {
+        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "activity_type": "walking",
+                                  "bbox": [-81.5, 41.2, -81.4, 41.3], "pending": false, "edited": false, "private": false, "stories": []]
+        StubProtocol.answer = { _ in .init(body: self.json(["activities": [row]])) }
+        let rows = try await client().activities()
+        #expect(rows == [ActivityRow(id: "a1", startedAt: Date(timeIntervalSince1970: 1_793_730_993), bbox: [-81.5, 41.2, -81.4, 41.3], pending: false)])
+    }
+
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {
         var body = accountBody
         body["session_token"] = "t"

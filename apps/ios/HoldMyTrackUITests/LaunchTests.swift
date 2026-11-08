@@ -20,20 +20,21 @@ final class LaunchTests: XCTestCase {
 
     @MainActor
     func testTheDemoSignsInAndSignOutReturnsToSignIn() throws {
-        try requireDevStack()
+        try Self.requireDevStack(self)
         let app = launchSignedOut()
         let demo = app.buttons["demo"]
         XCTAssertTrue(demo.waitForExistence(timeout: 10))
         demo.tap()
-        let account = app.staticTexts["account"]
-        XCTAssertTrue(account.waitForExistence(timeout: 15))
-        XCTAssertTrue(app.staticTexts["build"].label.hasPrefix("HoldMyTrack-iOS/"))
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
 
         // A relaunch keeps the session and confirms it before showing the account.
         app.terminate()
         app.launchArguments = []
         app.launch()
-        XCTAssertTrue(app.staticTexts["account"].waitForExistence(timeout: 15))
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        app.tabBars.buttons.element(boundBy: 3).tap()
+        XCTAssertTrue(app.staticTexts["account"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.staticTexts["build"].label.hasPrefix("HoldMyTrack-iOS/"))
 
         app.buttons["signOut"].tap()
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 10))
@@ -41,7 +42,7 @@ final class LaunchTests: XCTestCase {
 
     @MainActor
     func testTheServersMessageShowsAsSent() throws {
-        try requireDevStack()
+        try Self.requireDevStack(self)
         let app = launchSignedOut()
         let email = app.textFields["email"]
         XCTAssertTrue(email.waitForExistence(timeout: 10))
@@ -58,15 +59,16 @@ final class LaunchTests: XCTestCase {
 
     /// Skips unless a dev stack answers on one of the ports a Debug build talks to: compose's
     /// default, or the one Config/Local.xcconfig.example suggests.
-    private func requireDevStack() throws {
+    @MainActor
+    static func requireDevStack(_ test: XCTestCase) throws {
         let answered = ["http://localhost:8080", "http://localhost:8081"].contains { base in
-            let done = expectation(description: base)
+            let done = test.expectation(description: base)
             nonisolated(unsafe) var ok = false
             URLSession.shared.dataTask(with: URL(string: base + "/healthz")!) { _, response, _ in
                 ok = (response as? HTTPURLResponse)?.statusCode == 200
                 done.fulfill()
             }.resume()
-            wait(for: [done], timeout: 5)
+            test.wait(for: [done], timeout: 5)
             return ok
         }
         try XCTSkipUnless(answered, "no dev stack on localhost")

@@ -452,7 +452,7 @@ An activity is split in two at a point on its track. Each part is a full activit
 
 ## 8. FR-6 — Date Range Slider
 
-The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load. The web and Android draw and move it alike, as the `slider-*` cases in `testdata/client-rules/` define (ADR-0049).
+The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load. The web and both apps draw and move it alike, as the `slider-*` cases in `testdata/client-rules/` define (ADR-0049).
 
 ### FR-6.1 Default selection
 

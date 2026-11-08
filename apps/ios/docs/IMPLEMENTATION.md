@@ -39,6 +39,17 @@ stateDiagram-v2
 
 ## 3. Map overlays
 
+### 3.1 Layers and the style
+
+**The map loads one style that `MapStyle.compose` makes from the two documents** (root `docs/ARCHITECTURE.md` §2.1): the layers document's sources on the API's origin, its layers placed by the shared `layer-insertion` rule in the steps Android adds them in, the mode's view, the Layers menu's switches, Satellite and Roads from the style's metadata, and each `["var", …]` bound with `let`. MapLibre Native iOS can't add a layer from JSON, as Android can't, but it loads a whole style from it, so the combining is plain JSON in `HoldMyTrackCore` and tested there; Android instead builds each layer by type.
+
+**A state change is patched when it can be**: `MapStyle.changes` compares the new style with the loaded one, and `MapPatcher` sets each changed property, visibility and filter on its layer, by the style spec's name camelCased (with MapLibre iOS's renames). A changed source, such as a new tile version or the tracks' range, or a property it can't set, reloads the style, which keeps the camera.
+
+- **The documents are kept in Caches with their ETags** (`MapDocuments`): a later launch draws the kept pair at once and revalidates; the layers document per account, since it carries the account's tile version. Two documents from different builds fetch the style again.
+- **Spots are left out of the style** (`MapState.excludedGroups`) until the app draws their badge images (`ROADMAP.md`, 7b.3).
+- **The date slider's window is `ActivityDays`**, a value in `HoldMyTrackCore` that names the page it wants (`wantsEarlier`) for the map screen to fetch; the range only reaches the map as the tracks source's query, so a new range reloads the style.
+- **The first framing runs once per app session per account** (`MapFraming`), and Fog and Heatmap check `GET /v1/coverage/status` on every opening, polling while the server renders and reloading the layers document after it.
+
 ### 3.3 Logic ported from the web
 
 **Each rule in `testdata/client-rules/` is a pure function or value type in `HoldMyTrackCore`'s `Rules/`**, run against every case by `ClientRulesTests`, which fails on a rule file with no Swift implementation (ADR-0049). The numeric rules are ported from the web's TypeScript rather than Android's Kotlin, since the generated cases are the web's answers: Swift's `Double` matches JavaScript's numbers where Android uses `Float`, and a halfway value rounds up, as `Math.round` does, not away from zero, as Swift's `rounded()` does. The selection and the map session are structs whose `mutating` methods are the rules, where Android's are classes.
@@ -51,4 +62,6 @@ stateDiagram-v2
 - **The palette, scales, fonts, icons and licenses are written, not edited**: `scripts/make-design.py` makes them from the web's `tokens.css` and the Android app's resources, and CI runs it with `--check`. Colors and icons are used through the asset catalog's generated symbols, `UIColor(resource: .accent)`, so a missing one fails the build.
 - **A command-line build doesn't add a new string to the String Catalog**, as Xcode's editor does, and nothing fails on a missing translation. So `scripts/check-strings.py`, run after the sources compile, reads the strings the compiler found (`*.stringsdata`) and fails on one the catalog lacks, one without its Russian, or a Russian whose placeholders differ.
 - **What decides over plain values lives in `HoldMyTrackCore`**, a local Swift package the app links, and its tests run with `swift test` on the Mac: the app's own test target needs the simulator booted and the app built, minutes on CI where the package takes seconds. A type moves there once it needs no UIKit; what reads `Bundle.main` stays in the app as an extension, so the package's tests pass every value in.
+- **MapLibre 6.31.0 draws the map into part of the screen on the iOS 27.2 simulator**, on the right drawable size, and on the iOS 27.0 one fills it. Check the map on an iOS 27.0 or 27.1 simulator.
+- **The map view is made at the view's size in `viewDidLoad`**: one made at a zero frame and resized after keeps drawing into a corner.
 - **CI's Xcode can trail this Mac's by a release**, and its simulators' names change with each runner image, so CI picks the newest iPhone the runner has.

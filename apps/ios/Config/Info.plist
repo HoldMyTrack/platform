@@ -22,6 +22,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>HMTAPIBaseURL</key>
 	<string>$(HMT_API_BASE_URL)</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>HoldMyTrack shows where you are on the map when you tap Find my location.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>inter.ttf</string>
