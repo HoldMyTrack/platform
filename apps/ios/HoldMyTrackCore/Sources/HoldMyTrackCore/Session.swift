@@ -7,16 +7,19 @@ public struct Account: Equatable, Sendable {
     public let emailVerified: Bool
     public let displayName: String
     public let country: String
+    /// The account's IANA zone, which decides "today".
+    public let timezone: String
     public let locale: String
     /// "imperial" or "metric", decided by the server from country (ADR-0048).
     public let unitSystem: String
 
-    public init(email: String, isDemo: Bool, emailVerified: Bool, displayName: String = "", country: String = "", locale: String = "", unitSystem: String = "metric") {
+    public init(email: String, isDemo: Bool, emailVerified: Bool, displayName: String = "", country: String = "", timezone: String = "UTC", locale: String = "", unitSystem: String = "metric") {
         self.email = email
         self.isDemo = isDemo
         self.emailVerified = emailVerified
         self.displayName = displayName
         self.country = country
+        self.timezone = timezone
         self.locale = locale
         self.unitSystem = unitSystem
     }
@@ -24,7 +27,7 @@ public struct Account: Equatable, Sendable {
     init(_ json: AccountJSON) {
         self.init(
             email: json.email, isDemo: json.isDemo, emailVerified: json.emailVerified, displayName: json.displayName,
-            country: json.country, locale: json.locale, unitSystem: json.unitSystem
+            country: json.country, timezone: json.timezone, locale: json.locale, unitSystem: json.unitSystem
         )
     }
 }

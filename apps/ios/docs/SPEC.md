@@ -37,7 +37,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.8), exce
 
 ## 4. FR-2 — Map Visualization
 
-As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.5, FR-2.9), except as below.
+As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.6, FR-2.9), except as below.
 
 ### FR-2.2 Three map modes: Normal, Fog of War, Heatmap
 
@@ -46,6 +46,10 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.5, FR-2.9), exce
 ### FR-2.3 Initial camera framing
 
 - An account with nothing on the map is pointed to uploading a file on the web, until the app uploads (`ROADMAP.md`, 7e.4).
+
+### FR-2.6 Date range
+
+- The slider sits over the bottom of the map, in Normal mode, until the Activities panel gives it a head to sit in (`ROADMAP.md`, 7b.1).
 
 ### FR-2.9 The bottom bar
 

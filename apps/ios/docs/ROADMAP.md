@@ -157,7 +157,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [x] **7a.2 Modes, Layers and framing**
   - Normal, Fog of War and Heatmap; the Layers menu; first framing; the empty account's pointer to Sync; attribution kept visible; Find my location; theme and language reloading the style and keeping the camera; the basemap's loading and unreachable notice (root `docs/SPEC.md` FR-4.5).
   - Done when: `apps/android/docs/SPEC.md` FR-2.2–FR-2.5 hold on iOS, and `ios` is in `testdata/client-rules/basemap-status.json`'s `clients` with its cases passing.
-- [ ] **7a.3 Tab bar and date range**
+- [x] **7a.3 Tab bar and date range**
   - Map, Stories, the record button, Sync and You (`apps/android/docs/SPEC.md` FR-2.9), each keeping its state. The date slider (`apps/android/docs/SPEC.md` FR-2.6) from the slider rules.
   - Done when: a picked range survives a trip to every tab and a rotation.
 - [ ] **7a.4 Tour**

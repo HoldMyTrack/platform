@@ -166,6 +166,28 @@
         }
       }
     },
+    "Earlier days" : {
+      "comment" : "Date slider: moves the window of days into the past (VoiceOver).",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Более ранние дни"
+          }
+        }
+      }
+    },
+    "Earlier range" : {
+      "comment" : "Date slider: moves the selected range back by its length (VoiceOver).",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Предыдущий период"
+          }
+        }
+      }
+    },
     "Email" : {
       "comment" : "Sign-in screen: the email field.",
       "localizations" : {
@@ -228,6 +250,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "HoldMyTrack нужен доступ к местоположению, чтобы показать, где вы. Включите его в Настройках."
+          }
+        }
+      }
+    },
+    "Later days" : {
+      "comment" : "Date slider: moves the window of days toward today (VoiceOver).",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Более поздние дни"
+          }
+        }
+      }
+    },
+    "Later range" : {
+      "comment" : "Date slider: moves the selected range forward by its length (VoiceOver).",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Следующий период"
           }
         }
       }

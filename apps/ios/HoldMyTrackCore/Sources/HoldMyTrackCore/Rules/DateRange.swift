@@ -1,3 +1,5 @@
+import Foundation
+
 // The date slider's selection and the rules that move it. Each rule here is one the web and
 // Android implement too, held to the same cases in testdata/client-rules (ADR-0049).
 
@@ -17,6 +19,14 @@ public struct DateRange: Equatable, Hashable, Sendable {
 /// activity, else today.
 public enum DefaultRange {
     public static let days = 5
+
+    /// Today in the account's zone (root docs/SPEC.md FR-1.7), as YYYY-MM-DD.
+    public static func today(in zone: String, now: Date = Date()) -> String {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: zone) ?? TimeZone(identifier: "UTC")!
+        let c = calendar.dateComponents([.year, .month, .day], from: now)
+        return String(format: "%04d-%02d-%02d", c.year!, c.month!, c.day!)
+    }
 
     /// visibleDates ascending.
     /// An activity day is in its own zone, so one recorded east of the account's can be later

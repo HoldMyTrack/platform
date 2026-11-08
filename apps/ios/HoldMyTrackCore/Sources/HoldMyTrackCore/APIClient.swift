@@ -153,9 +153,20 @@ public final class APIClient: Sendable {
         try await fetch("v1/map/layers", query: [URLQueryItem(name: "flavor", value: flavor)], etag: etag)
     }
 
-    /// Every activity of the account, unfiltered, as the map frames them.
-    public func activities() async throws -> [ActivityRow] {
-        let json: ActivitiesJSON = try await decode(send("GET", "v1/activities"))
+    /// A page of activity days for the date slider, newest first, before a day if given, with the
+    /// account's first activity day.
+    public func activityDays(limit: Int, before: String?) async throws -> (days: [String], earliest: String?) {
+        var items = [URLQueryItem(name: "days", value: String(limit))]
+        if let before { items.append(URLQueryItem(name: "before", value: before)) }
+        let json: HistogramJSON = try await decode(send("GET", "v1/activities/histogram", query: items))
+        return (json.buckets.map(\.date), json.earliest)
+    }
+
+    /// The account's activities, unfiltered or from from to to (YYYY-MM-DD, the account's days).
+    public func activities(from: String? = nil, to: String? = nil) async throws -> [ActivityRow] {
+        var items: [URLQueryItem] = []
+        if let from, let to { items = [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)] }
+        let json: ActivitiesJSON = try await decode(send("GET", "v1/activities", query: items))
         let iso = ISO8601DateFormatter()
         return json.activities.map { row in
             ActivityRow(id: row.id, startedAt: iso.date(from: row.startedAt), bbox: row.bbox, pending: row.pending)
@@ -226,8 +237,13 @@ public final class APIClient: Sendable {
         }
     }
 
-    private func send(_ method: String, _ path: String) async throws -> Data {
-        try await perform(request(method, path))
+    private func send(_ method: String, _ path: String, query: [URLQueryItem] = []) async throws -> Data {
+        var request = request(method, path)
+        if !query.isEmpty, let url = request.url, var c = URLComponents(url: url, resolvingAgainstBaseURL: false) {
+            c.queryItems = query
+            request.url = c.url
+        }
+        return try await perform(request)
     }
 
     private func send<Body: Encodable>(_ method: String, _ path: String, body: Body) async throws -> Data {

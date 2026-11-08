@@ -47,6 +47,7 @@ stateDiagram-v2
 
 - **The documents are kept in Caches with their ETags** (`MapDocuments`): a later launch draws the kept pair at once and revalidates; the layers document per account, since it carries the account's tile version. Two documents from different builds fetch the style again.
 - **Spots are left out of the style** (`MapState.excludedGroups`) until the app draws their badge images (`ROADMAP.md`, 7b.3).
+- **The date slider's window is `ActivityDays`**, a value in `HoldMyTrackCore` that names the page it wants (`wantsEarlier`) for the map screen to fetch; the range only reaches the map as the tracks source's query, so a new range reloads the style.
 - **The first framing runs once per app session per account** (`MapFraming`), and Fog and Heatmap check `GET /v1/coverage/status` on every opening, polling while the server renders and reloading the layers document after it.
 
 ### 3.3 Logic ported from the web
