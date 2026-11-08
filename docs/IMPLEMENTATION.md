@@ -453,9 +453,7 @@ sequenceDiagram
 
 **For the apps** a page is the same page marked by the `hmt_app` cookie (FR-10.8, ADR-0042), set in the WebView's cookie store, because a header reaches only the first request and a query parameter wouldn't survive links and redirects. Its value, `android` or `ios`, is `PageData.App`, for wording that names a platform. Traps: the public cache key includes the value, and a WebView form POST carries the API's origin, so the app's `API_BASE_URL` must be `APP_BASE_URL`'s origin.
 
-**Keep in step:**
-- Pages that quote the system change with it: Help's numbers; the privacy policy's processors, cookies, session lifetimes and backup window, in both language files with their date.
-- `tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded first by the page layout and the map shell alike; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there. The iOS app's are written from these files and Android's by `apps/ios/scripts/make-design.py`, which CI runs with `--check`.
+**Pages that quote the system change with it**: Help's numbers; the privacy policy's processors, cookies, session lifetimes and backup window, in both language files with their date.
 
 ### 4.20 Admin panel (FR-12)
 
@@ -596,6 +594,10 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 ### 4.33 Turning away old app builds
 
 `MIN_ANDROID_BUILD` and `MIN_IOS_BUILD` let a route kept for old installs be retired: an app's builds below its minimum get `426 app_outdated` on every `/v1` request before any handler (`app_outdated.go`). The build is the commit count in the app's User-Agent (`HoldMyTrack-Android/` or `HoldMyTrack-iOS/`); one with no number counts as 0, which is exactly the Android builds from before the gate. Play's in-app updates would leave the decision on the phone. Tiles and pages keep answering, so an old build's map doesn't blank out. Nothing else is ever refused, since anyone could claim to be an old build.
+
+### 4.34 Design tokens
+
+`tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded first by the page layout and the map shell alike; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there. The iOS app's are written from these files and Android's by `apps/ios/scripts/make-design.py`, which CI runs with `--check`.
 
 ## 5. Engineering Risks & Mitigations
 

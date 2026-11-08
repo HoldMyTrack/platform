@@ -92,7 +92,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Done when: a Release archive validates in Xcode's Organizer, and a Debug build on the simulator reaches a dev stack's `/healthz`.
   - Built, with MapLibre 6.31.0; the simulator half is met. Left: the archive, once 0.1 gives a team.
 - [x] **3.2 Visual language**
-  - The web's `--fm-*` tokens as an asset catalog of named colors with light and dark values, Inter and Fraunces bundled with Source Serif 4 for Russian headings, and the Lucide icons as template images (`docs/ARCHITECTURE.md` §1.1). Root `docs/IMPLEMENTATION.md` §4.19's "Keep in step" adds iOS.
+  - The web's `--fm-*` tokens as an asset catalog of named colors with light and dark values, Inter and Fraunces bundled with Source Serif 4 for Russian headings, and the Lucide icons as template images (`docs/ARCHITECTURE.md` §1.1). Root `docs/IMPLEMENTATION.md` §4.34 covers iOS.
   - Done when: a sample screen matches Android's in both themes.
 - [x] **3.3 Languages**
   - One String Catalog with English and Russian. Russian counts written as "label: N", as Android's. Accept-Language sent from the app's resolved language.
