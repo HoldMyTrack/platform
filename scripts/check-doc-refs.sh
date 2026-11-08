@@ -18,7 +18,7 @@ python3 - "$@" <<'PY'
 import os, re, sys
 
 DOC_NAMES = ["VISION", "ARCHITECTURE", "IMPLEMENTATION", "SPEC", "DEPLOY", "DEVELOPMENT", "ROADMAP",
-             "DPIA", "PERFORMANCE", "BRAINSTORM", "KNOWN_ISSUES"]
+             "DPIA", "PERFORMANCE", "KNOWN_ISSUES"]
 heading_cache = {}
 
 def headings(path):
