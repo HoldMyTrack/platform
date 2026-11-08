@@ -11,8 +11,9 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/fog"
 )
 
-// A Fog vector tile is traced from the account's stored coverage tile: one with a road across
-// it comes back traced from it; one with nothing on file, as all veil.
+// A Fog vector tile is traced from the account's stored coverage tile, with its neighbours as
+// its sides: one with a road across it comes back traced from it; one with nothing on file, as
+// all veil, its side by the road read from the road's tile.
 func TestFogVectorTile(t *testing.T) {
 	mem := newMemS3()
 	d := newDBTestWithS3(t, mem)
@@ -37,15 +38,20 @@ func TestFogVectorTile(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	blank := image.NewGray(image.Rect(0, 0, 128, 128))
 	for _, c := range []struct {
-		x    int
-		want *image.Gray
-	}{{4471, cov}, {4472, image.NewGray(image.Rect(0, 0, 128, 128))}} {
+		x     int
+		want  *image.Gray
+		sides fog.Sides
+	}{
+		{4471, cov, fog.Sides{Left: blank, Right: blank, Top: blank, Bottom: blank}},
+		{4472, blank, fog.Sides{Left: cov, Right: blank, Top: blank, Bottom: blank}},
+	} {
 		rec := d.do(me, "GET", fmt.Sprintf("/tiles/v1/fog-vector/14/%d/6119.mvt", c.x), nil)
 		if rec.Code != 200 {
 			t.Fatalf("x %d: status %d", c.x, rec.Code)
 		}
-		if !bytes.Equal(rec.Body.Bytes(), fog.EncodeFogTile(c.want, false)) {
+		if !bytes.Equal(rec.Body.Bytes(), fog.EncodeFogTile(c.want, c.sides, false)) {
 			t.Errorf("x %d: not the tile traced from what's on file", c.x)
 		}
 	}
