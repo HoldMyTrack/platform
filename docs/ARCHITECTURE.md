@@ -69,7 +69,7 @@ flowchart LR
     edge --> pub
 ```
 
-Everything server-side runs as one binary in two modes (`serve` and `work`) against one database, deployed on a single VPS at `https://holdmytrack.com`, not yet publicly launched (`docs/ROADMAP.md`, "Before launch"; `IMPLEMENTATION.md` §5.8).
+Everything server-side runs as one binary in two modes (`serve` and `work`) against one database, deployed on a single VPS at `https://holdmytrack.com` (`IMPLEMENTATION.md` §5.8).
 
 The API, track and fog tiles and every page come from one origin through Caddy. That origin is not proxied through Cloudflare, whose proxy caps uploads at 100 MB, so each browser or phone caches the app's tiles itself under a per-account version that moves whenever any of them may have changed (`IMPLEMENTATION.md` §4.2.6). The CDN serves only the basemap, and its free plan edge-caches only fonts and sprites; range reads into the archive reach R2 (`IMPLEMENTATION.md` §5.4). Postgres stores keys for object-storage items, never their bytes. Local dev reads the same planet basemap, with RustFS standing in for the private bucket (`docs/DEVELOPMENT.md`).
 

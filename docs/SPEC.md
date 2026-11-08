@@ -2,7 +2,7 @@
 
 | | |
 | :-- | :-- |
-| **Status** | Current: Milestone 1 as built |
+| **Status** | Current: as built |
 | **Last updated** | 2026-10-16 |
 | **Related documents** | `VISION.md` (what ships and why), `IMPLEMENTATION.md` (how it's built), `services/server/api/` (the JSON contract), `apps/android/docs/SPEC.md` (the Android app) |
 

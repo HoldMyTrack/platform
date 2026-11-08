@@ -20,7 +20,7 @@ A DPIA is required: the processing meets two of the nine criteria in the EDPB's 
 | --- | --- | --- |
 | Systematic monitoring | Yes | A user's tracks, kept over years, form a record of their movements. |
 | Sensitive or highly personal data | Yes | Precise location reveals home, work and routines. Not an Article 9 special category; no health data is processed. |
-| Large scale | Not yet | Few accounts before launch; revisit as it grows. |
+| Large scale | Not yet | Few accounts so far; revisit as it grows. |
 | Matching or combining datasets | Partly | Tracks from several sources are combined, for the same purpose and controller. |
 | Vulnerable data subjects | No | Not for children under 16. |
 

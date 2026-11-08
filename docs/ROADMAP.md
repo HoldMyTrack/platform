@@ -6,24 +6,9 @@ Last updated: 2026-11-07.
 
 The remaining work toward the product `VISION.md` describes, by its §5 milestones; each step points at the §/FR holding its design. A subsection whose every box is checked is deleted.
 
-## Milestone 1 — MVP
-
-The current milestone (`VISION.md` §5). The product is shipped and deployable (`SPEC.md` FR-1 to FR-17); what's left is what the public launch needs.
-
-### Before launch
-
-Gates the public launch (`VISION.md` §7, §8.3).
-
-- [ ] Post concept renders to r/running, r/cycling, r/Garmin, r/Strava, r/FogOfWorld (`VISION.md` §8.1, §8.3).
-- [x] A privacy policy page, `/privacy` (`SPEC.md` FR-10.6).
-- [x] Account deletion and data export, on the web and Android (`SPEC.md` FR-1.11, FR-1.12).
-- [x] Health Connect data-type declarations in the Play Console, scoped to what's used; filed 2026-10-07.
-
----
-
 ## Milestone 2 — Release and community
 
-Starts at the public launch, and has no exit gate (`VISION.md` §5).
+The current milestone, from the public launch on, with no exit gate (`VISION.md` §5).
 
 ### Cost control
 
