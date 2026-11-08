@@ -213,10 +213,10 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 `apps/android/docs/SPEC.md` FR-1.7, FR-2.9 and FR-3.6.
 
-- [ ] **7e.1 You tab**: account card, theme (kept on the phone), Language (D11), About in the app, Help and Contacts in the browser, the version and commit. No Donate: App Review allows payment links only through Apple's purchase system, with exceptions to recheck before relying on one. Done when: it matches Android's tab apart from Language.
-- [ ] **7e.2 Privacy**: Private locations, Download your data saved through the share sheet or Files, the privacy policy. Done when: an archive downloads and opens in Files.
-- [ ] **7e.3 Delete account**: confirmed by typing the email; on success the phone deletes that account's recordings, hidden rows, HealthKit switch and last Load, then signs out. Done when: a deleted account leaves nothing on the phone, and an Apple-linked one is revoked (2.2).
-- [ ] **7e.4 Upload**: `.gpx`, `.fit` and `.tcx` declared as document types the app opens, picked in the document picker or shared from Files and other apps, sent one at a time on a background `URLSession` so they carry on when the screen is left. The web's limits apply (`apps/android/docs/SPEC.md` FR-3.6). Done when: a file opened from Files and one shared from another app both import.
+- [ ] **7e.1 You tab**: account card, theme (kept on the phone), Language (D11), About in the app, Help and Contacts in the browser, the version and commit. No Donate: App Review allows payment links only through Apple's purchase system, with exceptions to recheck before relying on one. Done when: it matches Android's tab apart from Language. Built; left: About, Settings and Activity graph & trends in phase 6's web view.
+- [ ] **7e.2 Privacy**: Private locations, Download your data saved through the share sheet or Files, the privacy policy. Done when: an archive downloads and opens in Files. Built; left: an archive saved to Files and opened.
+- [ ] **7e.3 Delete account**: confirmed by typing the email; on success the phone deletes that account's recordings, hidden rows, HealthKit switch and last Load, then signs out. Done when: a deleted account leaves nothing on the phone, and an Apple-linked one is revoked (2.2). Built, and a deleted account signs out against a dev stack; left: an Apple-linked account on production.
+- [ ] **7e.4 Upload**: `.gpx`, `.fit` and `.tcx` declared as document types the app opens, picked in the document picker or shared from Files and other apps, sent one at a time on a background `URLSession` so they carry on when the screen is left. The web's limits apply (`apps/android/docs/SPEC.md` FR-3.6). Done when: a file opened from Files and one shared from another app both import. Built, and an opened file imports against a dev stack; left: from Files and a share sheet on a device.
 
 ## Phase 8 — App Store preparation
 

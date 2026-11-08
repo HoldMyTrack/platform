@@ -105,7 +105,7 @@ enum StoryDialogs {
                 }
             }
         }
-        let stories = UIDeferredMenuElement.uncached { completion in
+        let stories = UIDeferredMenuElement.uncached { [weak view] completion in
             Task { @MainActor in
                 guard let read = try? await api.stories() else {
                     completion([UIAction(title: String(localized: "Stories couldn't load."), attributes: .disabled) { _ in }])

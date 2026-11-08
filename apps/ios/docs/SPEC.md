@@ -14,11 +14,11 @@ What the iOS app does, as a user can rely on it: where it differs from the Andro
 
 ### 1.2 Scope
 
-Every built feature of the app: so far signing in and out, email verification, the Update screen, the map, and its Activities and Stories panel. The You tab shows the account, the build and whether the API answers until it gets its own screen (`ROADMAP.md`, 7e.1).
+Every built feature of the app: so far signing in and out, email verification, the Update screen, the map and its Activities and Stories panel, the You tab, Privacy, deleting the account, and Upload.
 
 ## 3. FR-1 — Authentication & Session
 
-As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.8), except as below.
+As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.7, FR-1.8), except as below.
 
 ### FR-1.1 Sign in, sign up, start a demo
 
@@ -29,6 +29,11 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.8), exce
 
 - The token is kept in the Keychain, on this iPhone only. A reinstall starts signed out, though the Keychain outlives an uninstall.
 - A failed check shows why, with Try again and Sign out; returning to the app checks again.
+
+### FR-1.7 Privacy
+
+- A new Private location is centred where the map last looked, with its radius typed in, until the map has an editor (`ROADMAP.md`, 7b.2); a row renames it or changes its radius.
+- Download your data hands each ready part to the share sheet, whose Save to Files keeps it, in place of Android's Downloads.
 
 ### FR-1.8 Update screen
 
@@ -45,7 +50,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.7, FR-2.9), exce
 
 ### FR-2.3 Initial camera framing
 
-- An account with nothing on the map is pointed to uploading a file on the web, until the app uploads (`ROADMAP.md`, 7e.4).
+- An account with nothing on the map is pointed to Upload on the You tab.
 
 ### FR-2.7 Activities panel
 
@@ -55,7 +60,18 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.7, FR-2.9), exce
 
 ### FR-2.9 The bottom bar
 
-- Map, Stories, Sync and You, with no record button yet. Sync says what comes with it, and You shows the account and Sign out.
+- Map, Stories, Sync and You, with no record button yet. Sync says what comes with it.
+- You leads to Upload, Privacy, Theme, Language, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). About opens in an in-app browser until the site's pages come (`ROADMAP.md`, 6.2). Settings, Activity graph & trends and Settings › Sync aren't there yet.
+- Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
+
+## 5. FR-3 — Sync and Imports
+
+### FR-3.6 Upload
+
+As the Android app's (`apps/android/docs/SPEC.md` FR-3.6), except as below.
+
+- Files come from the document picker, or are opened in HoldMyTrack from Files or another app's share sheet.
+- Files go on even after the app is left, sent by iOS one at a time. Imports still running show on the Upload screen.
 
 ## 8. Non-Functional Requirements (summary)
 

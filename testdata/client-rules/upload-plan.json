@@ -1,0 +1,48 @@
+{
+  "rule": "uploadPlan",
+  "description": "Which of a set of picked files the app's Upload sends (docs/SPEC.md FR-3.1), with the web upload's checks against the server's limits: a .gpx, .fit or .tcx (any case) goes; a .zip is refused by name, as is any other kind; more than 20 activity files at once sends none of them; a file over 16 MiB (16777216 bytes) is refused by name. Expected: send, the indexes sent in their order, and refusals in the order shown: wrong kinds in their order, then too many, then each too large.",
+  "clients": ["android", "ios"],
+  "cases": [
+    {
+      "name": "activity files go, in order, whatever their extension's case",
+      "input": { "files": [{ "name": "a.gpx", "size": 1000 }, { "name": "b.FIT", "size": 1000 }, { "name": "c.Tcx", "size": 1000 }] },
+      "expected": { "send": [0, 1, 2], "refusals": [] }
+    },
+    {
+      "name": "an archive and any other kind are named, and the rest still go",
+      "input": { "files": [{ "name": "trip.zip", "size": 1000 }, { "name": "a.gpx", "size": 1000 }, { "name": "notes.txt", "size": 1000 }, { "name": "gpx", "size": 1000 }] },
+      "expected": { "send": [1], "refusals": [{ "kind": "zip", "name": "trip.zip" }, { "kind": "wrongType", "name": "notes.txt" }, { "kind": "wrongType", "name": "gpx" }] }
+    },
+    {
+      "name": "more activity files than the cap sends none of them",
+      "input": { "files": [
+        { "name": "1.gpx", "size": 1 }, { "name": "2.gpx", "size": 1 }, { "name": "3.gpx", "size": 1 }, { "name": "4.gpx", "size": 1 }, { "name": "5.gpx", "size": 1 },
+        { "name": "6.gpx", "size": 1 }, { "name": "7.gpx", "size": 1 }, { "name": "8.gpx", "size": 1 }, { "name": "9.gpx", "size": 1 }, { "name": "10.gpx", "size": 1 },
+        { "name": "11.gpx", "size": 1 }, { "name": "12.gpx", "size": 1 }, { "name": "13.gpx", "size": 1 }, { "name": "14.gpx", "size": 1 }, { "name": "15.gpx", "size": 1 },
+        { "name": "16.gpx", "size": 1 }, { "name": "17.gpx", "size": 1 }, { "name": "18.gpx", "size": 1 }, { "name": "19.gpx", "size": 1 }, { "name": "20.gpx", "size": 1 },
+        { "name": "21.gpx", "size": 1 }, { "name": "x.zip", "size": 1 }
+      ] },
+      "expected": { "send": [], "refusals": [{ "kind": "zip", "name": "x.zip" }, { "kind": "tooMany", "count": 21 }] }
+    },
+    {
+      "name": "exactly the cap goes",
+      "input": { "files": [
+        { "name": "1.fit", "size": 1 }, { "name": "2.fit", "size": 1 }, { "name": "3.fit", "size": 1 }, { "name": "4.fit", "size": 1 }, { "name": "5.fit", "size": 1 },
+        { "name": "6.fit", "size": 1 }, { "name": "7.fit", "size": 1 }, { "name": "8.fit", "size": 1 }, { "name": "9.fit", "size": 1 }, { "name": "10.fit", "size": 1 },
+        { "name": "11.fit", "size": 1 }, { "name": "12.fit", "size": 1 }, { "name": "13.fit", "size": 1 }, { "name": "14.fit", "size": 1 }, { "name": "15.fit", "size": 1 },
+        { "name": "16.fit", "size": 1 }, { "name": "17.fit", "size": 1 }, { "name": "18.fit", "size": 1 }, { "name": "19.fit", "size": 1 }, { "name": "20.fit", "size": 1 }
+      ] },
+      "expected": { "send": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19], "refusals": [] }
+    },
+    {
+      "name": "a file past the server's limit is named, the limit itself still goes",
+      "input": { "files": [{ "name": "big.fit", "size": 16777217 }, { "name": "edge.fit", "size": 16777216 }] },
+      "expected": { "send": [1], "refusals": [{ "kind": "tooLarge", "name": "big.fit" }] }
+    },
+    {
+      "name": "a size the provider doesn't give is sent and left to the server",
+      "input": { "files": [{ "name": "a.gpx", "size": -1 }] },
+      "expected": { "send": [0], "refusals": [] }
+    }
+  ]
+}

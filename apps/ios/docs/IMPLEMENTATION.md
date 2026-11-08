@@ -64,6 +64,12 @@ The split is Android's: `MapSession` holds the range or Story shown and the came
 - **The list drives the camera**: a picked range or an opened Story sets `flyRequest`, and the next list read flies onto its tracks; tracks changed under the same query (a finished reprocess, a delete, a Story copy arriving) bump a `v=` counter on the tiles' query so MapLibre fetches them again.
 - **Edits and deletes run one request at a time**, as on Android; `EditPlan` writes only the activities a change reaches.
 
+## 4. Sync engine
+
+### 4.4 File upload
+
+**`Uploads` sends on a background `URLSession` that allows one connection per host**, so every picked file is queued at once and iOS sends them one at a time while the app is suspended; the app needn't wake between files to start the next. A background session sends only from a file, so each file is first written as its multipart body (`UploadBody`) to a temporary file, deleted when its task ends. The session's events after a relaunch reach `Uploads` through `AppDelegate`'s `handleEventsForBackgroundURLSession`, and `AppFlow` makes the session at launch so its delegate exists. Files opened from another app wait in `AppFlow` until the signed-in tab bar shows. `UploadPlan` is the shared `uploadPlan` rule. A Debug build's `-hmtUpload <path>` launch argument opens a file as if from Files, for the UI tests.
+
 ## 6. Build traps
 
 - **The API origin is a build setting, `HMT_API_BASE_URL`**, read from Info.plist. An xcconfig file reads `//` as a comment, so the origins are written `http:$(SLASH)$(SLASH)…`. Release sets its origin after every include and never reads `Local.xcconfig`, so no developer's override reaches the App Store build.

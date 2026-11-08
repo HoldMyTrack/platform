@@ -12,12 +12,28 @@ final class TestAccount {
 
     static let samples = ["west-side.gpx", "evening-loop.tcx", "mill-creek-falls.fit"]
 
-    init(base: String) throws {
+    /// samples: which of the sample files to upload first.
+    init(base: String, samples: [String] = TestAccount.samples) throws {
         self.base = base
         try call("POST", "/v1/auth/signup", ["email": email, "password": password])
         try call("PATCH", "/v1/account/settings", ["display_name": "", "country": "US", "timezone": "America/New_York"])
-        for name in Self.samples { try upload(name, data: try get("/static/testing/\(name)")) }
-        try settle(count: Self.samples.count)
+        for name in samples { try upload(name, data: try sample(name)) }
+        try settle(count: samples.count)
+    }
+
+    /// A sample file's bytes, from the dev stack.
+    func sample(_ name: String) throws -> Data { try get("/static/testing/\(name)") }
+
+    /// Whether the account has count activities, none Pending, within timeout seconds.
+    func waitForActivities(_ count: Int, timeout: TimeInterval) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let json = try? call("GET", "/v1/activities", nil) as? [String: Any]
+            let rows = json?["activities"] as? [[String: Any]] ?? []
+            if rows.count == count && !rows.contains(where: { $0["pending"] as? Bool == true }) { return true }
+            Thread.sleep(forTimeInterval: 1)
+        }
+        return false
     }
 
     func delete() {

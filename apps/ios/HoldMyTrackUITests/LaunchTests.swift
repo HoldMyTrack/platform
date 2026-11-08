@@ -34,7 +34,7 @@ final class LaunchTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.tabBars.buttons.element(boundBy: 3).tap()
         XCTAssertTrue(app.staticTexts["account"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["build"].label.hasPrefix("HoldMyTrack-iOS/"))
+        XCTAssertTrue(app.staticTexts["build"].label.contains("commit"))
 
         app.buttons["signOut"].tap()
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 10))

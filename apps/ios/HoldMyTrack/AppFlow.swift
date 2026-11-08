@@ -21,6 +21,27 @@ final class AppFlow {
             onOutdated: { [weak self] in Task { @MainActor in self?.showUpdate() } }
         )
         MapNetwork.install(api: api)
+        Uploads.shared.api = api
+        Uploads.shared.reconnect()
+        NotificationCenter.default.addObserver(forName: Uploads.outdated, object: nil, queue: .main) { [weak self] _ in
+            MainActor.assumeIsolated { self?.showUpdate() }
+        }
+    }
+
+    /// Files opened or shared from another app wait here until the signed-in app shows.
+    private var openedFiles: [URL] = []
+
+    /// Upload, over the signed-in app, for files from Files or another app; kept until signed in.
+    func openFiles(_ urls: [URL]) {
+        openedFiles += urls
+        presentOpenedFiles()
+    }
+
+    private func presentOpenedFiles() {
+        guard !openedFiles.isEmpty, let tabs = window.rootViewController as? MainTabBarController else { return }
+        let files = openedFiles
+        openedFiles = []
+        tabs.upload(files)
     }
 
     /// Shows the screen the session's route calls for; a restored token is checked first.
@@ -122,6 +143,17 @@ final class AppFlow {
         window.endEditing(true)
         window.rootViewController = controller
         if updateShown { presentUpdate(animated: false) }
+        presentOpenedFiles()
+    }
+
+    /// The account was deleted: the phone forgets what it kept for it and signs out, with no
+    /// logout request, since the server ended every session.
+    func accountDeleted() {
+        if let stored = store.stored {
+            MapDocuments.forget(account: AccountKey.of(email: stored.email, isDemo: stored.isDemo))
+        }
+        store.clear()
+        show()
     }
 }
 

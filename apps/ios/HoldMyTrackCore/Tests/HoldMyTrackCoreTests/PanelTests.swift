@@ -129,3 +129,28 @@ struct PanelTests {
         #expect(TrackTap.layerIDs(document) == ["tracks-line"])
     }
 }
+/// The You tab's decisions over plain values.
+struct AccountTests {
+    @Test func deleteIsConfirmedByTheAccountsOwnEmail() {
+        #expect(AccountKey.confirms(typed: " Me@Example.com\n", email: "me@example.com"))
+        #expect(!AccountKey.confirms(typed: "me@example.co", email: "me@example.com"))
+        #expect(!AccountKey.confirms(typed: "", email: ""))
+    }
+
+    @Test func anUploadsAnswerSaysWhetherItWent() {
+        #expect(APIClient.uploadOutcome(status: 202, body: Data(#"{"status":"queued"}"#.utf8)) == .sent)
+        #expect(APIClient.uploadOutcome(status: 200, body: Data(#"{"status":"already_processed"}"#.utf8)) == .already)
+        #expect(APIClient.uploadOutcome(status: 413, body: Data(#"{"error":"too_large","message":"Too big."}"#.utf8)) == .refused("Too big."))
+        #expect(APIClient.uploadOutcome(status: 500, body: Data()) == .refused(""))
+    }
+
+    @Test func theMultipartBodyHoldsTheFileUnderItsName() throws {
+        let dir = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        let file = dir.appending(path: "in.gpx"), out = dir.appending(path: "body")
+        try Data("<gpx/>".utf8).write(to: file)
+        try UploadBody.write(file: file, name: "My \"walk\".gpx", boundary: "B", to: out)
+        let text = String(decoding: try Data(contentsOf: out), as: UTF8.self)
+        #expect(text == "--B\r\nContent-Disposition: form-data; name=\"file\"; filename=\"My 'walk'.gpx\"\r\nContent-Type: application/octet-stream\r\n\r\n<gpx/>\r\n--B--\r\n")
+    }
+}

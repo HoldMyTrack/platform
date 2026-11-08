@@ -19,10 +19,23 @@ struct MapDocuments {
         return dir
     }
 
+    /// Deletes what's kept for account: its layers documents, which name its tile version.
+    static func forget(account: String) {
+        let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0].appending(path: "map", directoryHint: .isDirectory)
+        let prefix = "layers-\(hash(account))-"
+        for name in (try? FileManager.default.contentsOfDirectory(atPath: dir.path)) ?? [] where name.hasPrefix(prefix) {
+            try? FileManager.default.removeItem(at: dir.appending(path: name))
+        }
+    }
+
+    private static func hash(_ account: String) -> UInt64 {
+        account.utf8.reduce(UInt64(14_695_981_039_346_656_037)) { ($0 ^ UInt64($1)) &* 1_099_511_628_211 }
+    }
+
     private func styleName(_ flavor: String, _ language: String) -> String { "style-\(flavor)-\(language)" }
     private func layersName(_ flavor: String) -> String {
         // The email can hold characters a file name can't; its hash can't clash in practice.
-        "layers-\(account.utf8.reduce(UInt64(14_695_981_039_346_656_037)) { ($0 ^ UInt64($1)) &* 1_099_511_628_211 })-\(flavor)"
+        "layers-\(Self.hash(account))-\(flavor)"
     }
 
     /// The pair kept from an earlier fetch, if both are there and from the same build.
