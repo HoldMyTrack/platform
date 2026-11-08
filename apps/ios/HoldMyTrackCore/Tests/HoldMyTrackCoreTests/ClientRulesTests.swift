@@ -91,6 +91,9 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting)]
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
+    "basemapStatus": { input in
+        .string(BasemapStatus.of(loaded: input["loaded"].bool!, failed: input["failed"].bool!, waitedMs: input.int("waitedMs")).rawValue)
+    },
     "pendingBatches": { input in .array(PendingDiff.batches(input.strings("ids"), size: input.int("size")).map { .list($0) }) },
     "pendingCheck": { input in
         let watched = PendingDiff.watched(listed: input.strings("listed"), awaiting: input.strings("awaiting"))
