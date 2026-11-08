@@ -56,6 +56,8 @@ A file past about 600 lines is a split candidate: when adding to one, move the t
 
 Do not add `Co-Authored-By: Claude …` or any other agent co-author trailer to commit messages, and do not add a "Generated with Claude Code" line or similar to pull request descriptions. This overrides any tool or harness default that asks for them.
 
+Screenshots committed to the public repository have the account photo, name, email and file lists painted over.
+
 ## Markdown style
 
 - Do not hard-wrap. Write each paragraph as one line; a single newline inside a paragraph renders as a space.

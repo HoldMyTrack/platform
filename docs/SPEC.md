@@ -3,7 +3,6 @@
 | | |
 | :-- | :-- |
 | **Status** | Current: as built |
-| **Last updated** | 2026-10-16 |
 | **Related documents** | `VISION.md` (what ships and why), `IMPLEMENTATION.md` (how it's built), `services/server/api/` (the JSON contract), `apps/android/docs/SPEC.md` (the Android app) |
 
 ## 1. Introduction
@@ -30,7 +29,7 @@ Every built feature of the server and the web app; the Android app's own behavio
 
 ### 1.5 API errors
 
-Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-13.1); `services/server/api/` lists the codes (ADR-0045). With `MIN_ANDROID_BUILD` or `MIN_IOS_BUILD` set, an older build of that app gets `426` `app_outdated` from every `/v1` request before anything else is checked (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
+Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-13.1); `services/server/api/` lists the codes (ADR-0045). An app build older than the deployment's minimum for that app is refused on every `/v1` request before anything else is checked, and asked to update (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
 
 ## 2. Actors
 
@@ -161,12 +160,12 @@ Every account can keep up to 50,000 activities and 5 GB of originals, the same f
 
 - At most 5 demo starts an hour from one address.
 - Every demo session is on the one persistent Demo Customer account, so every visitor sees the same data. A demo session lasts 24 hours.
-- Every write (upload, sync, edit, delete, settings, avatar, Private locations, Stories, photos, captures, data download, account deletion) is refused with `demo_read_only`, whatever the client sends. On Android a demo session can record on the phone but not sync.
+- Every write (upload, sync, edit, delete, settings, avatar, Private locations, Stories, photos, captures, data download, account deletion) is refused, whatever the client sends. On Android a demo session can record on the phone but not sync.
 - It holds a real history from a live deployment: 55 activities from 2026 around Cleveland, OH and on trips to Niagara Falls, Rome, Tallinn and Vietnam, with photos, Stories and captures; a preset profile (Demo User, United States, America/New_York); three 305 m Private locations where the history starts and ends.
 
 ### FR-2.2 Demo account seeding and lifetime
 
-- Seeded at deploy time by `seed-demo-customer`, never by a request. A re-run fills in what's missing and holds the Stories to the manifest; `--reset` deletes its activities (with tiles, photos and files), Stories and captures and seeds again to match the shipped history exactly.
+- Seeded by the operator, never by a request. Seeding again fills in what's missing and holds the Stories to the manifest; a reset deletes its activities (with tiles, photos and files), Stories and captures and seeds again to match the shipped history exactly.
 - The shipped history is GPX files and a manifest in the repository: each track as its owner sees it after Private locations and edits, never the original; photos as stored; names, types, descriptions, Stories, and captures between the first and last exported point except places reaching into a Private location.
 - The account is recognized by its fixed id, which keeps it read-only, and is never deleted.
 
@@ -214,7 +213,7 @@ The Android app sends the Health Connect sessions and recordings (FR-3.8) the us
 A candidate on the phone covering the same time as an account activity, or another candidate, is marked so the user can leave one unticked. A hint only: nothing is matched or hidden on ingest (ADR-0039).
 
 - Two overlap when their times overlap for at least 80% of the longer one. Type and distance aren't compared, since sources disagree. Touching, a small part of the other, and no duration don't overlap.
-- An activity is compared by the time it was recorded over, even where Private locations hide its ends or all of it. A split part covers only its own stretch.
+- An activity is compared by the time it was recorded over, even where Private locations hide its ends or all of it. A split part covers only its own stretch, so a whole copy of a split activity overlaps no part and isn't marked.
 - `POST /v1/activities/overlaps` takes up to 5,000 spans and answers each with the account's own activity it overlaps most.
 
 ### FR-3.8 In-app GPS recording (Android)
@@ -453,11 +452,7 @@ An activity is split in two at a point on its track. Each part is a full activit
 
 ## 8. FR-6 — Date Range Slider
 
-The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load.
-
-- The same slider on the web and Android: two knobs on a track, a tick between activity days, taller with the month's name where a month starts.
-- Dragging a knob, tapping the track to bring the nearer knob there, swiping it to scroll the window, and holding a knob past an edge to page that way work on both.
-- « » page the window 5 activity days, pulling a knob parked on that edge along, where the width leaves the track room for them, and always with a mouse. ‹ › move the selection its own length.
+The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load. The web and Android draw and move it alike, as the `slider-*` cases in `testdata/client-rules/` define (ADR-0049).
 
 ### FR-6.1 Default selection
 
@@ -528,7 +523,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-10.4).
 ### FR-10.4 Page header and footer
 
 - Menus work without JavaScript.
-- With a session pages are `Cache-Control: no-store`, since the header names the account; without, public pages are `public, max-age=300` with `Vary: Cookie`, so a copy cached signed out is never reused signed in.
+- With a session no page is cached anywhere, since the header names the account; without one, public pages may be cached for five minutes, and a copy cached signed out is never reused signed in.
 - An unknown address gets a "Page not found" page, or a JSON error under `/v1/` and `/tiles/` (§1.5).
 
 ### FR-10.6 Privacy policy
@@ -553,7 +548,7 @@ A read-only view of every account, its activities and the service's daily statis
 
 ### FR-12.1 Access
 
-- Admin is granted or revoked only from the command line: `holdmytrack set-admin <email> true|false`, which fails for an unknown email or the demo account.
+- Admin is granted or revoked only from the command line, never for an unknown email or the demo account.
 - To anyone else, signed out or in a demo session, every admin page answers the ordinary "Page not found".
 - An admin still goes through verification and first-run Settings. Revoking applies on the next page load without ending the session.
 
@@ -669,8 +664,8 @@ Outdoor places from OpenStreetMap in six categories, with what OSM says about ea
 
 - **History** (`historic=castle`, `ruins`, `fort`, `archaeological_site`), **Monument** (`historic=monument`, `memorial`), **Mesmerizing view** (`tourism=viewpoint`), **Waterfall** (`waterway=waterfall`, `natural=waterfall`) with no viewpoint within 120 m, **Dog park** (`leisure=dog_park`), **Playground** (`leisure=playground`); a feature tagged for two takes the first.
 - A place keeps what OSM has of its name, address, description, inscription, memorial type, start date and Wikipedia article (`language:Title` only). Its area is its outline, or a 30 m circle for a point; a waterfall's is always a 75 m circle.
-- The operator loads places with `holdmytrack import-spots [--planet] <file>` (`DEPLOY.md` §6); loading again updates.
-- A place is never deleted. A `--planet` load retires places missing from the file: only accounts that captured one still see it, and nobody can capture it. A later load that has it brings it back. A `--planet` load that would retire over 1% of live places retires none and stops with an error, after updating what it read.
+- The operator loads places from an OpenStreetMap extract (`DEPLOY.md` §6); loading again updates.
+- A place is never deleted. A load of the whole planet retires places missing from it: only accounts that captured one still see it, and nobody can capture it. A later load that has it brings it back. A planet load that would retire over 1% of live places retires none and stops with an error, after updating what it read.
 - A load moves every account's tile version only if a place changed.
 
 ### FR-15.2 Points of interest
@@ -734,7 +729,7 @@ The user's own photos on an activity, each at a moment on its route, so an activ
 - The client resizes first: the copy at most 2,560 px a side and 3 MiB, the thumbnail 640 px and 256 KiB, JPEG or WebP (the web sends 2,048 px and 320 px). Larger is refused; the type is read from the bytes.
 - EXIF capture time and position are sent for placement only. Captions are up to 500 characters.
 - At most 2,000 photos per account, on the account's own activities that have a track.
-- A photo that can't be placed is refused with `photo_needs_place`, nothing stored, for the client to ask the user. A placement check answers where a photo would go without storing anything.
+- A photo that can't be placed is refused, nothing stored, for the client to ask the user. A placement check answers where a photo would go without storing anything.
 - A demo session can't add photos.
 
 ### FR-16.2 Placement
