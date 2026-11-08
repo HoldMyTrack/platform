@@ -11,7 +11,7 @@ import { mapTapsActive } from './mapTaps';
 import { SPOT_CATEGORY_WIRE, SPOTS_IN_AREA_LAYER_ID, SPOTS_IN_AREA_SOURCE_ID, SPOTS_LAYER_ID } from './spotsGroup';
 
 /**
- * The Spots layers on the map (IMPLEMENTATION.md §4.25, ADR-0021): the layers document draws them
+ * The Spots layers on the map (IMPLEMENTATION.md §4.25): the layers document draws them
  * (spotsGroup.ts), and this keeps what the client decides — the categories the Layers menu has on,
  * the account's captures, "Show in this area"'s places — and draws the badge images the document
  * names, in its colors, with the app's own icons.

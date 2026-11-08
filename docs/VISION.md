@@ -125,7 +125,7 @@ The mobile app can also originate an activity, for someone with no watch running
 
 **Stories are hand-picked**, because only the person who went knows which drive was part of the trip and which was the commute. A family trip is usually recorded by one device, so a Story can be sent as a copy; once accepted, it is the recipient's, and nothing the sender does takes it away (ADR-0036). A link that opens a Story for others is a §5.7 decision. A Story view draws only its tracks; a fog pyramid per Story would be per-user storage growing with every Story (§4.3).
 
-**Spots are OpenStreetMap's cleanly tagged places, imported in bulk**: a curated or moderated list would cost staff time, the model's main risk (§6.3). They don't change the fog. A place is marked only by capturing it, never by tracks passing through, so nobody has to tell "passed by" from "went to find it" (ADR-0021).
+**Spots are OpenStreetMap's cleanly tagged places, imported in bulk**: a curated or moderated list would cost staff time, the model's main risk (§6.3). They don't change the fog. A place is marked only by capturing it, never by tracks passing through, so nobody has to tell "passed by" from "went to find it".
 
 ### 4.3 Cost Model — running a free service
 

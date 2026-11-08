@@ -2,7 +2,7 @@ import type { ExpressionSpecification, LayerSpecification } from 'maplibre-gl';
 import { IMAGES_METADATA, ROLE_METADATA, tilePath, TOGGLE_METADATA, VARS_METADATA, type GroupPart } from './mapLayers.ts';
 
 /**
- * The Spots layers (IMPLEMENTATION.md §4.25, ADR-0021) as the layers document's `spots` group:
+ * The Spots layers (IMPLEMENTATION.md §4.25) as the layers document's `spots` group:
  * outdoor places from OpenStreetMap, each a badge over its area, drawn in every map mode for the
  * categories the Layers menu has on. The tiles come from `/tiles/v1/spots`, from SPOTS_MIN_ZOOM;
  * below it, "Show in this area" fills a GeoJSON source of its own.

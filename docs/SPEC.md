@@ -663,7 +663,7 @@ Accepting puts a Story and activities in the recipient's account that are theirs
 
 ## 17. FR-15 — Spots
 
-Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2, ADR-0021), on the web and Android (`apps/android/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
+Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2), on the web and Android (`apps/android/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
 
 ### FR-15.1 Places
 

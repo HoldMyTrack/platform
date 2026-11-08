@@ -1,4 +1,4 @@
-// Package spots is Spots (IMPLEMENTATION.md §3.20, §4.25, ADR-0021): outdoor places imported
+// Package spots is Spots (IMPLEMENTATION.md §3.20, §4.25): outdoor places imported
 // from OpenStreetMap and refreshed from it, shown on the map behind the Show POI toggle.
 //
 // The import maps osmium's area ids back to OSM's, so the upsert key is OSM's own. Each run
@@ -277,7 +277,7 @@ func parseFeature(raw []byte) (place, bool, error) {
 	}, true, nil
 }
 
-// Category maps a place's OSM tags to its Spots category (ADR-0021), or "" for none of them.
+// Category maps a place's OSM tags to its Spots category (IMPLEMENTATION.md §4.25), or "" for none of them.
 // A place carrying two categories' tags (a castle ruin that's also a viewpoint) gets the first
 // in this order — the more specific, rarer kind of place.
 func Category(tags map[string]string) string {

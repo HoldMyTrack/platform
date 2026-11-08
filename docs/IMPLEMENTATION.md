@@ -524,7 +524,9 @@ flowchart LR
 
 **Every path paints over Fog and Heatmap**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and the export; under the veil, unridden paths showed at a fifth of their colour. Clients move only a layer still below; the web diffs every property first, since each change fires another `styledata` (`DEVELOPMENT.md`).
 
-### 4.25 Spots (FR-15, ADR-0021)
+### 4.25 Spots (FR-15)
+
+**A category is one clean OSM tag set** (`spots.Category`): all of `historic=*` would bring millions of boundary stones, wayside crosses and plaques, and OSM has no tag for architecture worth seeing.
 
 **The import** (`internal/spots`) retires the places a planet run didn't see, refusing to retire too many. Waterfalls are held until the file ends, since a viewpoint that leaves one out can come after it; one that gains a viewpoint is retired by the next planet run like a place gone from OSM. **No row is ever deleted, so captures' cascade never fires on a refresh.** The version is bumped only if the upsert changed something.
 
