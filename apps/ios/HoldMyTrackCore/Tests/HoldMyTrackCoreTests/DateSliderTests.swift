@@ -7,7 +7,13 @@ import Testing
 struct ActivityDaysTests {
     /// n activity days, one a day from 2026-10-01.
     private func dates(_ n: Int, from day: Int = 1) -> [String] {
-        (0..<n).map { String(format: "2026-%02d-%02d", 10 + (day + $0 - 1) / 31, (day + $0 - 1) % 31 + 1) }
+        // Typed one step at a time: CI's compiler gives up on the arithmetic as one expression.
+        (0..<n).map { (i: Int) -> String in
+            let offset: Int = day + i - 1
+            let month: Int = 10 + offset / 31
+            let dayOfMonth: Int = offset % 31 + 1
+            return String(format: "2026-%02d-%02d", month, dayOfMonth)
+        }
     }
 
     @Test func aFirstPageFillsTheWindowFromTheNewestEnd() {
