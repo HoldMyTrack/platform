@@ -237,7 +237,7 @@ public final class APIClient: Sendable {
         }
     }
 
-    private func send(_ method: String, _ path: String, query: [URLQueryItem] = []) async throws -> Data {
+    func send(_ method: String, _ path: String, query: [URLQueryItem] = []) async throws -> Data {
         var request = request(method, path)
         if !query.isEmpty, let url = request.url, var c = URLComponents(url: url, resolvingAgainstBaseURL: false) {
             c.queryItems = query
@@ -246,12 +246,12 @@ public final class APIClient: Sendable {
         return try await perform(request)
     }
 
-    private func send<Body: Encodable>(_ method: String, _ path: String, body: Body) async throws -> Data {
+    func send<Body: Encodable>(_ method: String, _ path: String, body: Body) async throws -> Data {
         guard let data = try? JSONEncoder().encode(body) else { throw APIError.unreadable }
         return try await perform(request(method, path, body: data))
     }
 
-    private func perform(_ request: URLRequest) async throws -> Data {
+    func perform(_ request: URLRequest) async throws -> Data {
         let (data, http) = try await exchange(request)
         try check(http, data)
         return data
@@ -281,7 +281,7 @@ public final class APIClient: Sendable {
         throw APIError.http(status: http.statusCode, code: failure?.error, message: failure?.message)
     }
 
-    private func decode<T: Decodable>(_ data: Data) throws -> T {
+    func decode<T: Decodable>(_ data: Data) throws -> T {
         do { return try JSONDecoder().decode(T.self, from: data) } catch { throw APIError.unreadable }
     }
 

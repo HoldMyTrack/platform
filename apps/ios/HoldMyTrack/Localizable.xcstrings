@@ -1,6 +1,204 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ km/h" : {
+      "comment" : "A speed in kilometres an hour; the placeholder is the number.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ км/ч"
+          }
+        }
+      }
+    },
+    "%@ moving" : {
+      "comment" : "Stories tab: a Story's moving time; the placeholder is the duration.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ в движении"
+          }
+        }
+      }
+    },
+    "%@ mph" : {
+      "comment" : "A speed in miles an hour; the placeholder is the number.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ миль/ч"
+          }
+        }
+      }
+    },
+    "%@ sent you a copy of “%@” (%@)." : {
+      "comment" : "Stories tab: a copy waiting: who sent it, the Story's name, and its activity count.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ отправляет вам копию «%@» (%@)."
+          }
+        }
+      }
+    },
+    "%@ will be deleted for good, with its track and its part of Fog of War and Heatmap." : {
+      "comment" : "Activities panel: Delete's confirmation; the placeholder names what is deleted and its distance.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ — будет удалено навсегда вместе с треком и его вкладом в «туман войны» и тепловую карту."
+          }
+        }
+      }
+    },
+    "%@–%@ %@" : {
+      "comment" : "Activities panel: the Distance filter's band: the shortest, the longest, and the unit.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@–%@ %@"
+          }
+        }
+      }
+    },
+    "%lldh %lldm" : {
+      "comment" : "A duration in hours and minutes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld ч %lld мин"
+          }
+        }
+      }
+    },
+    "%lldm" : {
+      "comment" : "A duration in minutes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld мин"
+          }
+        }
+      }
+    },
+    "%llds" : {
+      "comment" : "A duration in seconds.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld с"
+          }
+        }
+      }
+    },
+    "A Story shows its activities whatever the date range." : {
+      "comment" : "Stories tab: the line under the title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "История показывает свои занятия независимо от выбранных дат."
+          }
+        }
+      }
+    },
+    "Accept" : {
+      "comment" : "Stories tab: accepts a copy someone sent.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Принять"
+          }
+        }
+      }
+    },
+    "Activities couldn't load." : {
+      "comment" : "Activities panel: the list's read failed and the server gave no reason.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить занятия."
+          }
+        }
+      }
+    },
+    "Activities: %@" : {
+      "comment" : "A count of activities, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Занятия: %@"
+          }
+        }
+      }
+    },
+    "Add %@ to a Story" : {
+      "comment" : "Activities panel: Add to story's label; the placeholder names the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить в историю: %@"
+          }
+        }
+      }
+    },
+    "Add to story" : {
+      "comment" : "Activities panel: the toolbar's Add to story, and its menu's title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить в историю"
+          }
+        }
+      }
+    },
+    "Added to “%@”." : {
+      "comment" : "Activities panel: Add to story added the target to an existing Story.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавлено в «%@»."
+          }
+        }
+      }
+    },
+    "All" : {
+      "comment" : "Activities panel: the select menu: checks every listed row.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все"
+          }
+        }
+      }
+    },
+    "All types" : {
+      "comment" : "Activities panel: the Type filter: every type shown.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все типы"
+          }
+        }
+      }
+    },
     "Already have an account? Sign in" : {
       "comment" : "Sign-in screen: switches from signing up to signing in.",
       "localizations" : {
@@ -23,6 +221,17 @@
         }
       }
     },
+    "Any distance" : {
+      "comment" : "Activities panel: the Distance filter with no band set.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Любое расстояние"
+          }
+        }
+      }
+    },
     "Bike paths" : {
       "comment" : "Layers menu: the bike path layer.",
       "localizations" : {
@@ -34,6 +243,72 @@
         }
       }
     },
+    "Can't delete while it's being processed" : {
+      "comment" : "Activities panel: why Delete is off: a target is Pending.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нельзя удалить, пока занятие обрабатывается"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "comment" : "A dialog's Cancel.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отмена"
+          }
+        }
+      }
+    },
+    "Changing the type changes it for every one of them." : {
+      "comment" : "Edit window, for a group: what the Type field does.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новый тип будет задан всем выбранным занятиям."
+          }
+        }
+      }
+    },
+    "Check %@" : {
+      "comment" : "Activities panel: a row's tile; the placeholder is the row's title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отметить: %@"
+          }
+        }
+      }
+    },
+    "Check all" : {
+      "comment" : "Activities panel: the master checkbox.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отметить все"
+          }
+        }
+      }
+    },
+    "Checked: %lld" : {
+      "comment" : "Activities panel: names the checked group, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отмечено: %lld"
+          }
+        }
+      }
+    },
     "Checking your session…" : {
       "comment" : "Shown while the server confirms a session kept from an earlier launch.",
       "localizations" : {
@@ -41,6 +316,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Проверяем вход…"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "comment" : "Activities panel: closes the focused activity's card.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Закрыть"
+          }
+        }
+      }
+    },
+    "Close the panel" : {
+      "comment" : "The sheet's handle while it's open.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Свернуть панель"
           }
         }
       }
@@ -74,6 +371,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Войти через Google"
+          }
+        }
+      }
+    },
+    "Copying “%@” from %@…" : {
+      "comment" : "Stories tab: an accepted copy still arriving: the Story's name and who sent it.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Копируем «%@» от %@…"
           }
         }
       }
@@ -133,6 +441,17 @@
         }
       }
     },
+    "Create" : {
+      "comment" : "Stories tab: creates a new Story.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Создать"
+          }
+        }
+      }
+    },
     "Create account" : {
       "comment" : "Sign-in screen: the sign-up button.",
       "localizations" : {
@@ -151,6 +470,127 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Создание аккаунта"
+          }
+        }
+      }
+    },
+    "Decline" : {
+      "comment" : "Stories tab: declines a copy someone sent.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отклонить"
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "comment" : "Activities panel: the toolbar's Delete, and its confirmation's button.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить"
+          }
+        }
+      }
+    },
+    "Delete %@" : {
+      "comment" : "Activities panel: Delete's label; the placeholder names the target, or a Story's name.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить: %@"
+          }
+        }
+      }
+    },
+    "Delete story" : {
+      "comment" : "Stories tab: the confirmation's button.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить историю"
+          }
+        }
+      }
+    },
+    "Delete these activities?" : {
+      "comment" : "Activities panel: Delete's confirmation title for a group.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить эти занятия?"
+          }
+        }
+      }
+    },
+    "Delete this Story?" : {
+      "comment" : "Stories tab: the delete confirmation's title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить эту историю?"
+          }
+        }
+      }
+    },
+    "Delete this activity?" : {
+      "comment" : "Activities panel: Delete's confirmation title for one activity.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить это занятие?"
+          }
+        }
+      }
+    },
+    "Deleted: %lld. The rest couldn't be deleted: %@" : {
+      "comment" : "Activities panel: a group delete failed partway: how many went, and the server's reason.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалено: %lld. Остальные удалить не удалось: %@"
+          }
+        }
+      }
+    },
+    "Description" : {
+      "comment" : "Edit window: the description field.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Описание"
+          }
+        }
+      }
+    },
+    "Description (optional)" : {
+      "comment" : "Stories tab: the description field of a new or renamed Story.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Описание (необязательно)"
+          }
+        }
+      }
+    },
+    "Distance: %@" : {
+      "comment" : "Activities panel: the focused activity's distance.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Расстояние: %@"
           }
         }
       }
@@ -188,6 +628,50 @@
         }
       }
     },
+    "Edit" : {
+      "comment" : "Activities panel: the toolbar's Edit.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить"
+          }
+        }
+      }
+    },
+    "Edit %@" : {
+      "comment" : "Activities panel: Edit's label; the placeholder names the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить: %@"
+          }
+        }
+      }
+    },
+    "Edit activities: %lld" : {
+      "comment" : "Edit window's title for a group, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить занятия: %lld"
+          }
+        }
+      }
+    },
+    "Edit activity" : {
+      "comment" : "Edit window's title for one activity.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить занятие"
+          }
+        }
+      }
+    },
     "Email" : {
       "comment" : "Sign-in screen: the email field.",
       "localizations" : {
@@ -195,6 +679,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Эл. почта"
+          }
+        }
+      }
+    },
+    "Filtered" : {
+      "comment" : "Activities panel: the Type filter's state when some types are left out.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "С фильтром"
           }
         }
       }
@@ -210,6 +705,28 @@
         }
       }
     },
+    "Fly to" : {
+      "comment" : "Activities panel: the toolbar's action that moves the camera onto the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать на карте"
+          }
+        }
+      }
+    },
+    "Fly to %@" : {
+      "comment" : "Activities panel: the fly-to label; the placeholder names the target or a row.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать на карте: %@"
+          }
+        }
+      }
+    },
     "Fog" : {
       "comment" : "Map: the Fog of War mode.",
       "localizations" : {
@@ -217,6 +734,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Туман"
+          }
+        }
+      }
+    },
+    "Folded" : {
+      "comment" : "Stories tab: a Story folder's state.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Свёрнута"
           }
         }
       }
@@ -232,6 +760,17 @@
         }
       }
     },
+    "From %@" : {
+      "comment" : "Stories tab: who sent the open Story's copy.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "От %@"
+          }
+        }
+      }
+    },
     "Heatmap" : {
       "comment" : "Map: the Heatmap mode.",
       "localizations" : {
@@ -243,6 +782,39 @@
         }
       }
     },
+    "Hidden" : {
+      "comment" : "Activities panel: a row's badge: hidden from the map for this session.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыто"
+          }
+        }
+      }
+    },
+    "Hide" : {
+      "comment" : "Activities panel: the toolbar's Show/Hide.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыть"
+          }
+        }
+      }
+    },
+    "Hide %@" : {
+      "comment" : "Activities panel: Hide's label; the placeholder names the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скрыть: %@"
+          }
+        }
+      }
+    },
     "HoldMyTrack needs location access to show where you are. Turn it on in Settings." : {
       "comment" : "Map: Find my location with location access refused.",
       "localizations" : {
@@ -250,6 +822,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "HoldMyTrack нужен доступ к местоположению, чтобы показать, где вы. Включите его в Настройках."
+          }
+        }
+      }
+    },
+    "If the address has a HoldMyTrack account, it gets a copy of “%@” to accept." : {
+      "comment" : "Stories tab: Send a copy's explanation; the placeholder is the Story's name.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Если у адреса есть аккаунт HoldMyTrack, туда придёт копия «%@», которую можно будет принять."
+          }
+        }
+      }
+    },
+    "In Stories: %@" : {
+      "comment" : "Activities panel: a row's Story badge for several Stories; the placeholder lists their names.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В историях: %@"
+          }
+        }
+      }
+    },
+    "Invert" : {
+      "comment" : "Activities panel: the select menu: checks the unchecked rows and unchecks the checked.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обратить выбор"
           }
         }
       }
@@ -287,6 +892,28 @@
         }
       }
     },
+    "Loading…" : {
+      "comment" : "A list waiting for the server.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузка…"
+          }
+        }
+      }
+    },
+    "Longest" : {
+      "comment" : "Activities panel: the Distance filter's upper knob.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Самое длинное"
+          }
+        }
+      }
+    },
     "Map" : {
       "comment" : "Tab bar: the map.",
       "localizations" : {
@@ -298,6 +925,17 @@
         }
       }
     },
+    "Mixed types" : {
+      "comment" : "Edit window: the Type of a group of mixed types, until one is picked.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разные типы"
+          }
+        }
+      }
+    },
     "Mountain bike trails" : {
       "comment" : "Layers menu: the mountain bike trail layer.",
       "localizations" : {
@@ -305,6 +943,116 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Трассы для горных велосипедов"
+          }
+        }
+      }
+    },
+    "Moving: %@" : {
+      "comment" : "Activities panel: the focused activity's moving time.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В движении: %@"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "comment" : "A name field: an activity's or a Story's.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Название"
+          }
+        }
+      }
+    },
+    "Name and description stay each activity's own." : {
+      "comment" : "Edit window, for a group.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Название и описание у каждого занятия останутся своими."
+          }
+        }
+      }
+    },
+    "New story" : {
+      "comment" : "Stories tab: the button and the dialog that make a Story.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая история"
+          }
+        }
+      }
+    },
+    "New story…" : {
+      "comment" : "Activities panel: Add to story's menu: makes a Story of the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая история…"
+          }
+        }
+      }
+    },
+    "No Stories yet. Check activities on the Activities tab and use Add to story, or make one with +." : {
+      "comment" : "Stories tab: the account has no Story.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Историй пока нет. Отметьте занятия на вкладке «Карта» и нажмите «Добавить в историю» или создайте историю кнопкой +."
+          }
+        }
+      }
+    },
+    "No activities in this Story yet. Add some with Add to story." : {
+      "comment" : "Stories tab: the open Story is empty.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этой истории пока нет занятий. Добавьте их через «Добавить в историю»."
+          }
+        }
+      }
+    },
+    "No activities in this range." : {
+      "comment" : "Activities panel: the range has no activities.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этом диапазоне нет занятий."
+          }
+        }
+      }
+    },
+    "No activities match these filters." : {
+      "comment" : "Activities panel: the filters leave no row.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет занятий, подходящих под фильтры."
+          }
+        }
+      }
+    },
+    "None" : {
+      "comment" : "Activities panel: the select menu: unchecks every row.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ничего"
           }
         }
       }
@@ -331,6 +1079,72 @@
         }
       }
     },
+    "Nothing to act on: focus or check an activity" : {
+      "comment" : "Activities panel: why a toolbar action is off: no target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не с чем работать: выберите или отметьте занятие"
+          }
+        }
+      }
+    },
+    "OK" : {
+      "comment" : "A dialog's OK.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ОК"
+          }
+        }
+      }
+    },
+    "Open" : {
+      "comment" : "Stories tab: a Story folder's state.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыта"
+          }
+        }
+      }
+    },
+    "Open the Story %@" : {
+      "comment" : "Activities panel: a row's Story badge; the placeholder is the Story's name.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Открыть историю %@"
+          }
+        }
+      }
+    },
+    "Open the panel" : {
+      "comment" : "The sheet's handle while it's closed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Развернуть панель"
+          }
+        }
+      }
+    },
+    "Pace" : {
+      "comment" : "Activities panel: the focused activity's pace, on foot.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Темп"
+          }
+        }
+      }
+    },
     "Password" : {
       "comment" : "Sign-in screen: the password field.",
       "localizations" : {
@@ -353,6 +1167,72 @@
         }
       }
     },
+    "Pending" : {
+      "comment" : "Activities panel: a row's badge: its track is being processed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрабатывается"
+          }
+        }
+      }
+    },
+    "Pick a type." : {
+      "comment" : "Edit window: Save with no type.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выберите тип."
+          }
+        }
+      }
+    },
+    "Private" : {
+      "comment" : "Activities panel: a row's badge: inside a Private location.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приватное"
+          }
+        }
+      }
+    },
+    "Private: inside a Private location, so it has no track or numbers." : {
+      "comment" : "Activities panel: the focused activity's card for a private one.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приватное: оно внутри приватного места, поэтому у него нет трека и показателей."
+          }
+        }
+      }
+    },
+    "Rename %@" : {
+      "comment" : "Stories tab: a folder's pencil; the placeholder is the Story's name.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переименовать: %@"
+          }
+        }
+      }
+    },
+    "Rename story" : {
+      "comment" : "Stories tab: the rename dialog's title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переименовать историю"
+          }
+        }
+      }
+    },
     "Resend verification email" : {
       "comment" : "Verify email screen: sends the confirmation link again.",
       "localizations" : {
@@ -360,6 +1240,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить письмо ещё раз"
+          }
+        }
+      }
+    },
+    "Reset filters" : {
+      "comment" : "Activities panel: clears the Type and Distance filters.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сбросить фильтры"
           }
         }
       }
@@ -386,6 +1277,72 @@
         }
       }
     },
+    "Save" : {
+      "comment" : "A dialog's or window's Save.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранить"
+          }
+        }
+      }
+    },
+    "Select" : {
+      "comment" : "Activities panel: the select menu's button: All, None, Invert.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Выбор"
+          }
+        }
+      }
+    },
+    "Send" : {
+      "comment" : "Stories tab: sends a copy.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить"
+          }
+        }
+      }
+    },
+    "Send a copy" : {
+      "comment" : "Stories tab: the send dialog's title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить копию"
+          }
+        }
+      }
+    },
+    "Send a copy of %@" : {
+      "comment" : "Stories tab: a folder's send button; the placeholder is the Story's name.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправить копию: %@"
+          }
+        }
+      }
+    },
+    "Sent. If %@ has an account, the copy waits on their Stories tab." : {
+      "comment" : "Stories tab: a copy was sent; the placeholder is the email address.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отправлено. Если у %@ есть аккаунт, копия появится на вкладке «Истории»."
+          }
+        }
+      }
+    },
     "Shared paths" : {
       "comment" : "Layers menu: the shared path layer.",
       "localizations" : {
@@ -393,6 +1350,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Велопешеходные дорожки"
+          }
+        }
+      }
+    },
+    "Shortest" : {
+      "comment" : "Activities panel: the Distance filter's lower knob.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Самое короткое"
+          }
+        }
+      }
+    },
+    "Show %@" : {
+      "comment" : "Activities panel: Show's label; the placeholder names the target.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать: %@"
           }
         }
       }
@@ -452,6 +1431,50 @@
         }
       }
     },
+    "Some activities are being processed. They'll show on the map when they're done." : {
+      "comment" : "Map notice: rows are Pending.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Некоторые занятия обрабатываются. Они появятся на карте, когда обработка закончится."
+          }
+        }
+      }
+    },
+    "Some checked" : {
+      "comment" : "Activities panel: the master checkbox's state when only some rows are checked.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отмечены некоторые"
+          }
+        }
+      }
+    },
+    "Speed" : {
+      "comment" : "Activities panel: the focused activity's speed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скорость"
+          }
+        }
+      }
+    },
+    "Stop selecting" : {
+      "comment" : "Activities panel: the selection bar's ×: unchecks every row.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снять отметки"
+          }
+        }
+      }
+    },
     "Stories" : {
       "comment" : "Tab bar: Stories.",
       "localizations" : {
@@ -463,13 +1486,35 @@
         }
       }
     },
-    "Stories come with the Activities panel." : {
-      "comment" : "Stories tab: its screen is still to come.",
+    "Stories couldn't load." : {
+      "comment" : "Stories tab: the list's read failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Истории появятся вместе с панелью занятий."
+            "value" : "Не удалось загрузить истории."
+          }
+        }
+      }
+    },
+    "Stories: %lld" : {
+      "comment" : "Activities panel: a row's badge for several Stories, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Истории: %lld"
+          }
+        }
+      }
+    },
+    "Story" : {
+      "comment" : "Activities panel: a row's badge for one Story.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "История"
           }
         }
       }
@@ -496,6 +1541,61 @@
         }
       }
     },
+    "Take %@ out of this Story" : {
+      "comment" : "Stories tab: a row's ×; the placeholder is the row's title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Убрать из истории: %@"
+          }
+        }
+      }
+    },
+    "The Story couldn't be deleted." : {
+      "comment" : "Stories tab: delete failed and the server gave no reason.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось удалить историю."
+          }
+        }
+      }
+    },
+    "The Story couldn't be saved." : {
+      "comment" : "Stories tab: a change failed and the server gave no reason.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить историю."
+          }
+        }
+      }
+    },
+    "The changes couldn't be saved." : {
+      "comment" : "Edit window: Save failed and the server gave no reason.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить изменения."
+          }
+        }
+      }
+    },
+    "The copy couldn't be sent." : {
+      "comment" : "Stories tab: sending failed and the server gave no reason.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось отправить копию."
+          }
+        }
+      }
+    },
     "The demo account" : {
       "comment" : "Home screen: who is signed in, for the shared demo account.",
       "localizations" : {
@@ -503,6 +1603,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Демо-аккаунт"
+          }
+        }
+      }
+    },
+    "The demo account can't change a Story" : {
+      "comment" : "Why a Story action is off for the demo account.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В демо-аккаунте нельзя менять истории"
+          }
+        }
+      }
+    },
+    "The demo account can't delete activities" : {
+      "comment" : "Activities panel: why Delete is off for the demo account.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В демо-аккаунте нельзя удалять занятия"
+          }
+        }
+      }
+    },
+    "The demo account can't edit activities" : {
+      "comment" : "Activities panel: why Edit is off for the demo account.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В демо-аккаунте нельзя изменять занятия"
+          }
+        }
+      }
+    },
+    "The description can be at most %lld characters." : {
+      "comment" : "Edit window: the description is too long.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Описание может быть не длиннее %lld символов."
           }
         }
       }
@@ -525,6 +1669,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось загрузить карту."
+          }
+        }
+      }
+    },
+    "The name can be at most %lld characters." : {
+      "comment" : "Edit window: the name is too long.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Название может быть не длиннее %lld символов."
+          }
+        }
+      }
+    },
+    "The server couldn't be reached." : {
+      "comment" : "A request had no answer.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось связаться с сервером."
+          }
+        }
+      }
+    },
+    "The type can be at most %lld characters." : {
+      "comment" : "Edit window: the type is too long.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тип может быть не длиннее %lld символов."
+          }
+        }
+      }
+    },
+    "This Story no longer exists." : {
+      "comment" : "Stories tab: the open Story was deleted elsewhere.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этой истории больше нет."
           }
         }
       }
@@ -558,6 +1746,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Попробовать демо"
+          }
+        }
+      }
+    },
+    "Type" : {
+      "comment" : "The Type filter's button, and the Edit window's Type field.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тип"
+          }
+        }
+      }
+    },
+    "Type •" : {
+      "comment" : "Activities panel: the Type filter's button while some types are left out.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тип •"
+          }
+        }
+      }
+    },
+    "Uncheck %@" : {
+      "comment" : "Activities panel: a checked row's tile; the placeholder is the row's title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снять отметку: %@"
+          }
+        }
+      }
+    },
+    "Uncheck all" : {
+      "comment" : "Activities panel: the master checkbox when every row is checked.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снять все отметки"
           }
         }
       }
@@ -672,6 +1904,28 @@
         }
       }
     },
+    "km" : {
+      "comment" : "Distance unit: kilometres.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "км"
+          }
+        }
+      }
+    },
+    "mi" : {
+      "comment" : "Distance unit: miles.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ми"
+          }
+        }
+      }
+    },
     "or" : {
       "comment" : "Sign-in screen: between email sign-in and the providers.",
       "localizations" : {
@@ -701,6 +1955,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "недоступен"
+          }
+        }
+      }
+    },
+    "“%@” will be deleted. Its activities stay on your map." : {
+      "comment" : "Stories tab: Delete story's confirmation; the placeholder is the Story's name.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "«%@» будет удалена. Её занятия останутся на карте."
           }
         }
       }

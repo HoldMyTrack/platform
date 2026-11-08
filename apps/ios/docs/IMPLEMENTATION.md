@@ -54,6 +54,16 @@ stateDiagram-v2
 
 **Each rule in `testdata/client-rules/` is a pure function or value type in `HoldMyTrackCore`'s `Rules/`**, run against every case by `ClientRulesTests`, which fails on a rule file with no Swift implementation (ADR-0049). The numeric rules are ported from the web's TypeScript rather than Android's Kotlin, since the generated cases are the web's answers: Swift's `Double` matches JavaScript's numbers where Android uses `Float`, and a halfway value rounds up, as `Math.round` does, not away from zero, as Swift's `rounded()` does. The selection and the map session are structs whose `mutating` methods are the rules, where Android's are classes.
 
+### 3.4 The panel and touches
+
+The split is Android's: `MapSession` holds the range or Story shown and the camera's next flight, `PanelState` the focus, checked group, hidden set and filters, both in `HoldMyTrackCore`. `ActivitiesPanel` and `StoriesPanel` draw them and report taps as events, which `MapViewController+Panel` applies, then binds `highlighted` and `mapHidden` into the layers document's `focused` and `hidden` vars, which `MapPatcher` sets as filters without a reload.
+
+- **One map screen for two tabs**: the tab bar's Map and Stories are each a `MapHostViewController` that adopts the one `MapViewController` as its child when it appears, so the camera, range and selection carry across, and the sheet switches tab.
+- **The sheet is hand-made** (`PanelSheetView`): a presented `UISheetPresentationController` would cover the tab bar and leave with the tab. Collapsed, its content is held at zero height and the sheet takes its head's laid-out height; the content's bottom is pinned below required, so it is clipped, never squeezing the head.
+- **A tap on the map** asks MapLibre for features within `TrackTap.radius` on the tracks group's line layers; the map's own double-tap must fail first, or every zoom would also focus.
+- **The list drives the camera**: a picked range or an opened Story sets `flyRequest`, and the next list read flies onto its tracks; tracks changed under the same query (a finished reprocess, a delete, a Story copy arriving) bump a `v=` counter on the tiles' query so MapLibre fetches them again.
+- **Edits and deletes run one request at a time**, as on Android; `EditPlan` writes only the activities a change reaches.
+
 ## 6. Build traps
 
 - **The API origin is a build setting, `HMT_API_BASE_URL`**, read from Info.plist. An xcconfig file reads `//` as a comment, so the origins are written `http:$(SLASH)$(SLASH)…`. Release sets its origin after every include and never reads `Local.xcconfig`, so no developer's override reaches the App Store build.

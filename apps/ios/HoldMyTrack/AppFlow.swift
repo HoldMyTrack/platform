@@ -118,6 +118,8 @@ final class AppFlow {
     }
 
     private func setRoot(_ controller: UIViewController) {
+        // The sign-in keyboard would otherwise stay up over the next screen's bottom for a moment.
+        window.endEditing(true)
         window.rootViewController = controller
         if updateShown { presentUpdate(animated: false) }
     }
