@@ -15,7 +15,6 @@ The current milestone, from the public launch on, with no exit gate (`VISION.md`
 Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] Serve the basemap as `/{z}/{x}/{y}` tiles Cloudflare can cache, with `pmtiles serve` on the droplet first: every range read reaches R2, since the free plan caches files only up to 512 MB (`IMPLEMENTATION.md` §5.4). Worth it once traffic grows: about 97,000 basemap requests in the 30 days to 2026-10-14 were under 1% of R2's free reads. The web style (`apps/web/src/map/style.ts`) and the server-built Android style (`mapstyle.go`) move from `pmtiles://` to the tile URL.
-- [ ] Re-measure the funding-model assumptions (`VISION.md` §4.3, §6.3) against real usage; they feed the exit gate.
 
 ### After launch
 
