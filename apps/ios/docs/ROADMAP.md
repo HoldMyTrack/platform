@@ -8,7 +8,7 @@ The iOS app's plan, from the first commit to the App Store. The shared code is b
 - **Behavior is the Android app's** unless a step says otherwise: each step cites `apps/android/docs/SPEC.md` by FR, and lists only where iOS differs. A difference not listed is a bug, or a change to this plan made first.
 - **One branch per phase, one commit per step**, with its documents in the same commit (`AGENTS.md`). The app's own `SPEC.md` and `IMPLEMENTATION.md` in this folder grow step by step, the way Android's describe Android; they are not written at the end.
 - **Decisions in pure functions with unit tests** (`AGENTS.md`, "Code and tests"); rules shared across clients come from `testdata/client-rules/` (ADR-0049).
-- **The server decides, the app applies** (ADR-0047, ADR-0048). A step that seems to need a look, a limit or a data rule in Swift needs it from the server instead.
+- **The server decides, the app applies** (ADR-0048). A step that seems to need a look, a limit or a data rule in Swift needs it from the server instead.
 - **Native only where the platform is the point**; every other screen is the site's page in a `WKWebView` (ADR-0042).
 - A ticked step is deleted with its phase once every box in the phase is ticked.
 
@@ -192,7 +192,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 7d — Recording
 
-`apps/android/docs/SPEC.md` FR-5.1–FR-5.2 (ADR-0007).
+`apps/android/docs/SPEC.md` FR-5.1–FR-5.2 (root `docs/IMPLEMENTATION.md` §4.0.4).
 
 - [ ] **7d.1 Recording**
   - `CLLocationManager` with the `location` background mode, `allowsBackgroundLocationUpdates` and the background indicator, on When In Use access only; precise location required (ask for temporary full accuracy when reduced). Pause and resume by tap, stop by a 2-second hold, the map showing only the recording.

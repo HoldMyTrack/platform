@@ -69,7 +69,7 @@ export interface UserProfile {
    *  zone where that isn't known (IMPLEMENTATION.md §4.30); the client shows a time with no
    *  activity of its own in it (a Spot's capture). */
   timezone: string;
-  /** Miles or kilometers, as the server decides it from `country` (ADR-0047). */
+  /** Miles or kilometers, as the server decides it from `country` (ADR-0048). */
   unitSystem: 'metric' | 'imperial';
 }
 

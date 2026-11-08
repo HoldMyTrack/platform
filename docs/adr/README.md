@@ -11,29 +11,20 @@ Numbered in rough order of how foundational the decision is, not strictly chrono
 
 | ADR | Decision |
 | :-- | :-- |
-| [0001](0001-three-independent-ingest-paths.md) | Three independent ingest paths, none of them Strava |
 | [0002](0002-privacy-applied-at-ingest.md) | Privacy is applied at ingest, never at render |
 | [0003](0003-precomputed-raster-fog-pyramid.md) | Precomputed raster fog pyramid, not per-request geometry union or H3 |
-| [0007](0007-in-app-gps-recording-submits-directly.md) | In-app GPS recording submits directly to the sync endpoint, not via a Health Connect/HealthKit round-trip |
 | [0009](0009-google-sign-in-server-side-code-flow.md) | Sign in with Google is a server-side authorization-code flow with no OAuth library, auto-linking by verified email |
 | [0012](0012-server-rendered-pages-react-for-the-map.md) | Every page is server-rendered HTML sharing one header; React is kept for the map page |
 | [0015](0015-identities-table-and-facebook-sign-in.md) | Sign in with Facebook, never linked by email, with identities in their own table |
 | [0017](0017-no-health-data.md) | No health data: heart rate is never read or stored, and the pace/heart-rate profile card is removed |
-| [0021](0021-spots-from-osm-visits-from-tracks.md) | Spots are bulk-imported from OpenStreetMap, and a visit is five minutes inside one, worked out from tracks |
 | [0024](0024-activity-photos-resized-and-route-bound.md) | An activity can carry the user's photos, kept as resized copies on our own storage, each placed on the route by the time it was taken |
-| [0031](0031-three-milestones-funding-decided-on-evidence.md) | Three milestones (MVP, community, social graph); the funding model is decided on Milestone 2's evidence, and data is never sold (its funding model no longer applies) |
-| [0032](0032-accept-and-enqueue.md) | A request that brings activities only accepts them; the worker does the storage work, and unpacks archives |
-| [0034](0034-country-region-outlines-from-overture.md) | Country and region outlines come from Overture Maps' divisions, land-clipped, loaded from our own copy at deploy time |
-| [0035](0035-activity-local-timezone.md) | An activity's times show, and its days group, in the timezone it was recorded in |
 | [0036](0036-send-a-copy-of-a-story.md) | A Story can be sent as a copy to another account, which accepts it into a Story and activities of its own; nothing syncs afterwards |
 | [0039](0039-the-app-is-the-gate.md) | The app is the gate: every source brings in only what the user ticks, and nothing is guessed on their behalf |
 | [0042](0042-mobile-apps-show-the-sites-pages.md) | The mobile apps are native where the platform is the point, and show the site's own pages for the rest |
 | [0043](0043-per-account-limits.md) | Every account can keep up to 50,000 activities and 5 GB of original files, the same limits for all |
-| [0044](0044-daily-r2-budget.md) | A daily R2 budget the app enforces itself, giving up renders, then adding, then the map's reads |
 | [0045](0045-one-json-error-shape.md) | Every API error is JSON `{"error": code, "message": text}` |
 | [0046](0046-heatmap-drawn-by-the-clients.md) | The Heatmap is pass counts on the server, drawn by the clients as MapLibre heatmap circles |
-| [0047](0047-the-server-shapes-the-map.md) | The server decides what the map shows and how; the clients apply what it sends, starting with Fog and Heatmap |
-| [0048](0048-two-map-documents.md) | The map is two documents, a shared basemap style and the account's layers, applied by native maps |
+| [0048](0048-two-map-documents.md) | The server shapes the map as two documents, a shared basemap style and the account's layers, which native maps apply |
 | [0049](0049-shared-rules-written-natively.md) | Rules every client applies are written natively in each, and defined once by shared test cases |
 
 ## Writing a new one

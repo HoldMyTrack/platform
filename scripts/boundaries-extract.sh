@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Make the country and region outlines file (docs/DEPLOY.md §6, ADR-0034): cut the land-clipped
+# Make the country and region outlines file (docs/DEPLOY.md §6, docs/IMPLEMENTATION.md §4.2.4): cut the land-clipped
 # countries, dependencies and regions out of a pinned Overture Maps release with DuckDB, for
 # `seed-admin-boundaries`. Run OFF the server, on any machine with the duckdb CLI
 # (brew install duckdb) and a few GB free: it reads about 4.5 GB of GeoParquet from Overture's

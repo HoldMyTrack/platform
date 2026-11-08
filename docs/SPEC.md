@@ -219,7 +219,7 @@ A candidate on the phone covering the same time as an account activity, or anoth
 
 ### FR-3.8 In-app GPS recording (Android)
 
-The Android app records GPS-only activities on the phone; nothing reaches the server until the user ticks a recording and sends it (ADR-0007; app side `apps/android/docs/SPEC.md` FR-5).
+The Android app records GPS-only activities on the phone; nothing reaches the server until the user ticks a recording and sends it (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
 
 - Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. A type over 50 characters is refused with the reason.
 - It is the only path that sets a name and description at ingest.
@@ -252,7 +252,7 @@ Every map and export choice is kept by the browser or phone, never by the accoun
 ### FR-4.2 Fog of War mode
 
 - Fog is all-time: everywhere any activity went is clear, whatever the date range, filters, hidden set or Stories. Only Pending activities drop out.
-- Zoomed out it clears a whole country once any activity is inside it (zoom 0–2), then a whole state or region (3–6), then exact coverage; the levels never blend. Boundaries are OpenStreetMap's on land (ADR-0034): a track on the water counts in no country, so the water stays veiled until exact coverage, and a country without regions is one region.
+- Zoomed out it clears a whole country once any activity is inside it (zoom 0–2), then a whole state or region (3–6), then exact coverage; the levels never blend. Boundaries are OpenStreetMap's on land (`IMPLEMENTATION.md` §4.2.4): a track on the water counts in no country, so the water stays veiled until exact coverage, and a country without regions is one region.
 - The edge of cleared ground is a smooth outline, traced to about 19 m at zoom 14 and twice that per zoom out, with no seams between tiles.
 - While a coverage change is still being worked on, the map says Fog and Heatmap may be incomplete; the veil then updates without a reload.
 - Switching modes never moves the camera; returning to Normal restores the panel's state.
@@ -663,7 +663,7 @@ Accepting puts a Story and activities in the recipient's account that are theirs
 
 ## 17. FR-15 — Spots
 
-Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2, ADR-0021), on the web and Android (`apps/android/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
+Outdoor places from OpenStreetMap in six categories, with what OSM says about each (`VISION.md` §4.2), on the web and Android (`apps/android/docs/SPEC.md` FR-2.8). The operator loads them; a place's only mark is a capture.
 
 ### FR-15.1 Places
 
@@ -762,7 +762,7 @@ Deleting a photo deletes both images. Deleting an activity deletes its photos (F
 
 ### FR-17.1 What the day's spend stops
 
-The service spends up to `R2_DAILY_BUDGET_USD` a day ($2 by default) on object-store requests, across every account, reset at midnight UTC. Nearing it, the service gives things up in stages, keeping what everyone sees for last (ADR-0044).
+The service spends up to `R2_DAILY_BUDGET_USD` a day ($2 by default) on object-store requests, across every account, reset at midnight UTC. Nearing it, the service gives things up in stages, keeping what everyone sees for last.
 
 - **At 70%**, Fog and Heatmap stop being redrawn: new and edited activities reach the tracks, and their coverage follows after midnight UTC, the map saying it's updating.
 - **At 85%**, everything that adds to storage is refused: uploads, phone syncs, photos, avatars, accepting a Story copy and asking for a data download. A download already asked for is built after midnight. Refusals carry `Retry-After` until midnight UTC and say nothing stored is affected; the Android app keeps what it didn't send.

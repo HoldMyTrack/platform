@@ -54,7 +54,7 @@ func (s *Server) handleHeatPointsTile(w http.ResponseWriter, r *http.Request) {
 	if z <= fog.HeatActivityMaxZoom {
 		points, err = s.heatCellPoints(r.Context(), z, x, y)
 	} else {
-		// Only these read the store, so only these stop with the day's reads (ADR-0044); the
+		// Only these read the store, so only these stop with the day's reads (SPEC.md FR-17); the
 		// zoomed-out tiles are the database's alone and keep working.
 		if s.budget.Stage(r.Context()) >= budget.ReadsPaused {
 			w.Header().Del("Content-Type")

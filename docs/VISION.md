@@ -77,7 +77,7 @@ Feature parity takes weeks and is not defensible; render quality and breadth of 
 
 ### 4.1 Ingest — three independent paths
 
-Each path fails differently, so no single provider can take the product down (ADR-0001).
+Each path fails differently, so no single provider can take the product down.
 
 #### Path 1 — Cloud-to-cloud integration
 
@@ -99,7 +99,7 @@ Native apps reading the platform health store: **Apple Watch (HealthKit)** and *
 
 #### Casual in-app GPS recording — mobile-only, and not a fourth path
 
-The mobile app can also originate an activity, for someone with no watch running who doesn't want a separate tracker for a walk or drive: a GPS-only recording that, on stop, goes through the same ingest pipeline as every other source (ADR-0007). It depends on no provider, so it is a convenience, and it stays GPS only (§1.1).
+The mobile app can also originate an activity, for someone with no watch running who doesn't want a separate tracker for a walk or drive: a GPS-only recording that, on stop, goes through the same ingest pipeline as every other source (`IMPLEMENTATION.md` §4.0.4). It depends on no provider, so it is a convenience, and it stays GPS only (§1.1).
 
 ### 4.2 Core Features
 
@@ -125,7 +125,7 @@ The mobile app can also originate an activity, for someone with no watch running
 
 **Stories are hand-picked**, because only the person who went knows which drive was part of the trip and which was the commute. A family trip is usually recorded by one device, so a Story can be sent as a copy; once accepted, it is the recipient's, and nothing the sender does takes it away (ADR-0036). A link that opens a Story for others is a §5.7 decision. A Story view draws only its tracks; a fog pyramid per Story would be per-user storage growing with every Story (§4.3).
 
-**Spots are OpenStreetMap's cleanly tagged places, imported in bulk**: a curated or moderated list would cost staff time, the model's main risk (§6.3). They don't change the fog. A place is marked only by capturing it, never by tracks passing through, so nobody has to tell "passed by" from "went to find it" (ADR-0021).
+**Spots are OpenStreetMap's cleanly tagged places, imported in bulk**: a curated or moderated list would cost staff time, the model's main risk (§6.3). They don't change the fog. A place is marked only by capturing it, never by tracks passing through, so nobody has to tell "passed by" from "went to find it".
 
 ### 4.3 Cost Model — running a free service
 
@@ -154,7 +154,7 @@ With no revenue, costs must be bounded by design.
 
 ## 5. Milestones
 
-The product moves through three milestones (ADR-0031); `docs/ROADMAP.md` carries the work in each.
+The product moves through three milestones; `docs/ROADMAP.md` carries the work in each.
 
 1. **MVP**: activities, the map modes, Spots, Stories and photos, on the web and Android, free for everyone. It ends at the public launch, gated by compliance (§7).
 2. **Release and community**: open HoldMyTrack to the public and shape features and sources around what users ask for. It has no exit gate.
@@ -176,7 +176,7 @@ A product with no headcount should not ship a location-sharing social network: e
 
 ### 6.1 The model
 
-**HoldMyTrack is free: all features, sources and exports, for everyone, and user data is never sold.** It covers its own running costs. Whether it ever asks for money, and how, is left open and decided when there is a reason to; until then nothing public speaks of money. The one standing commitment is that data is never sold (ADR-0031).
+**HoldMyTrack is free: all features, sources and exports, for everyone, and user data is never sold.** It covers its own running costs. Whether it ever asks for money, and how, is left open and decided when there is a reason to; until then nothing public speaks of money. The one standing commitment is that data is never sold: a fog map is a precise record of where someone lives, so whether it is for sale is the first question a user asks, and silence reads as yes.
 
 ### 6.2 What supporters get
 
@@ -202,7 +202,7 @@ A Fog of War map is a precise map of where a person lives; the 2018 Strava heatm
 * **Health Connect declarations**: requesting more data types than the product uses is a known Play Console rejection cause. HoldMyTrack requests exercise sessions, their routes and the history window, and no health measurement.
 * **Photos** reach the server with no EXIF and are placed on the clipped track on every read, so one taken inside a Private location shows at the track's visible end (ADR-0024).
 * **Spot captures and Stories are private** to the account. A Story copy is made from the track as the sender sees it, with their Private locations applied and the recipient's on top (ADR-0036).
-* **OpenStreetMap's licence.** Spots is an unmodified OSM extract and the country and region outlines are OSM's by way of Overture Maps, both credited on the map; the outlines' derivation is a public script, which keeps them available under the ODbL (ADR-0034).
+* **OpenStreetMap's licence.** Spots is an unmodified OSM extract and the country and region outlines are OSM's by way of Overture Maps, both credited on the map; the outlines' derivation is a public script, which keeps them available under the ODbL (`IMPLEMENTATION.md` §4.2.4).
 * **No data sales, ever, written in the privacy policy**, because every user of a free product asks.
 
 ---

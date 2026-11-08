@@ -37,7 +37,7 @@ The tuning values have defaults to leave alone. A change to one needs `… up -d
 | `TILES_PER_MINUTE` | 1200 | a load test's `browse` runs (`SPEC.md` FR-4.15) | `api` |
 | `SIGNUPS_PER_HOUR` | 5 | a load test's `signup` runs (`SPEC.md` FR-1.1) | `api` |
 | `RATE_LIMITS` | on | never here: `off` lifts every request limit for local development, and `api` refuses it unless `APP_BASE_URL` is local | `api` |
-| `R2_DAILY_BUDGET_USD` | 2 | the R2 alerts (§13) show real use nearing it, or a load test runs (`SPEC.md` FR-17, ADR-0044); a raise lifts the stages at once if the day's spend is under it | `api`, `worker` |
+| `R2_DAILY_BUDGET_USD` | 2 | the R2 alerts (§13) show real use nearing it, or a load test runs (`SPEC.md` FR-17); a raise lifts the stages at once if the day's spend is under it | `api`, `worker` |
 | `MIN_ANDROID_BUILD` | empty | older Android builds must go (§10, `SPEC.md` §1.5) | `api` |
 | `MIN_IOS_BUILD` | empty | older iOS builds must go, as for Android (§10) | `api` |
 
@@ -124,14 +124,14 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
 
 **Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try it now" opens an empty account (`SPEC.md` FR-2.2), Fog's Country/Region tiers draw nothing, and every activity shows its account's timezone. All three are idempotent.
 
-1. Make the country and region outlines (ADR-0034) off the server, with the duckdb CLI, then copy the file into the app bucket under the key `geo.BoundariesKey` names:
+1. Make the country and region outlines (`IMPLEMENTATION.md` §4.2.4) off the server, with the duckdb CLI, then copy the file into the app bucket under the key `geo.BoundariesKey` names:
    ```
    scripts/boundaries-extract.sh ~/boundaries
    scp ~/boundaries/overture-2026-09-23.0-boundaries.csv.gz holdmytrack:/tmp/
    … run --rm -v /tmp:/in:ro rclone copyto /in/overture-2026-09-23.0-boundaries.csv.gz data:boundaries/overture-2026-09-23.0-boundaries.csv.gz
    ```
    Check the counts it prints (272 countries and 3,922 regions for 2026-09-23.0).
-2. Copy the timezone polygons (ADR-0035), timezone-boundary-builder's release asset renamed to carry its release, into the bucket under the key `geo.TimezonesKey` names:
+2. Copy the timezone polygons (`IMPLEMENTATION.md` §4.30), timezone-boundary-builder's release asset renamed to carry its release, into the bucket under the key `geo.TimezonesKey` names:
    ```
    ssh holdmytrack 'curl -sSfL -o /tmp/timezones-with-oceans-2026d.geojson.zip https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026d/timezones-with-oceans.geojson.zip'
    … run --rm -v /tmp:/in:ro rclone copyto /in/timezones-with-oceans-2026d.geojson.zip data:timezones/timezones-with-oceans-2026d.geojson.zip

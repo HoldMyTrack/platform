@@ -28,7 +28,7 @@ A softer raster was built first and measured: the stroke narrowed, blurred into 
 ## Consequences
 
 - **Looks change without a re-render**, and so does a new `heatmap_cap`: the clients' paint and the per-request weighting carry both. The cap sweep only bumps the tile version.
-- **Renders and uploads cost what they did** (`PERFORMANCE.md`, 2026-10-15); a tile served costs a row, an object read and a decode, the read counted against the R2 budget (ADR-0044), and is bigger on the wire than the raster's PNG, up to ~50 KB over a dense area.
+- **Renders and uploads cost what they did** (`PERFORMANCE.md`, 2026-10-15); a tile served costs a row, an object read and a decode, the read counted against the R2 budget (`SPEC.md` FR-17), and is bigger on the wire than the raster's PNG, up to ~50 KB over a dense area.
 - **MapLibre adds overlapping circles**, so the server has to know the clients' circle radius to weight points against it: the two must change together. A point's neighbours in the next tile aren't seen, so the edge of a tile can read a touch hot.
 - **Android builds from before this show no heat in Heatmap mode** until updated; their Country/Region tiers still draw.
 - **The stored Heatmap objects changed format**: deploying it takes one `rerender-coverage`, until which a tile still in the old raster serves as empty.

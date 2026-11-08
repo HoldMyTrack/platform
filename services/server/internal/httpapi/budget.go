@@ -9,7 +9,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/budget"
 )
 
-// The daily R2 budget (internal/budget, ADR-0044) as the API applies it: what adds objects is
+// The daily R2 budget (internal/budget, docs/SPEC.md FR-17) as the API applies it: what adds objects is
 // refused from budget.AddingPaused, what reads them for the map from budget.ReadsPaused, each
 // with a 503 and a Retry-After to the day's end. Everything that only reads the database, the
 // track and Spots tiles included, is untouched at every stage.

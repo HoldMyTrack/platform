@@ -56,7 +56,7 @@ erDiagram
 
 ### 3.1 `users`
 
-No `tier` column (ADR-0031). The demo account is a row recognized by its fixed id (§4.10). `password_hash` is NULL for an account that signs in only through `user_identities`. `map_version` only goes up (§4.2.6). `is_admin` is written only by `set-admin` (§4.20). `deleted_at` marks a closed account until the purge deletes the row (§4.28). A NULL `country` means Settings was never saved, which is the first-run gate (FR-1.7); a NULL `locale` means automatic.
+No `tier` column (`VISION.md` §6.1). The demo account is a row recognized by its fixed id (§4.10). `password_hash` is NULL for an account that signs in only through `user_identities`. `map_version` only goes up (§4.2.6). `is_admin` is written only by `set-admin` (§4.20). `deleted_at` marks a closed account until the purge deletes the row (§4.28). A NULL `country` means Settings was never saved, which is the first-run gate (FR-1.7); a NULL `locale` means automatic.
 
 ### 3.3 `activities`
 
@@ -88,7 +88,7 @@ One unblurred mask per activity per z14 tile it touches, drawn at ingest (§4.2.
 
 ### 3.12 `admin_countries`
 
-Overture's land-clipped countries (ADR-0034). `geom` is simplified for drawing; matching uses the full outline cut into ≤256-vertex pieces in `admin_country_parts`, so a coastline crossing is an index lookup (§4.2.4).
+Overture's land-clipped countries. `geom` is simplified for drawing; matching uses the full outline cut into ≤256-vertex pieces in `admin_country_parts`, so a coastline crossing is an index lookup (§4.2.4).
 
 ### 3.13 `admin_regions`
 
@@ -132,7 +132,7 @@ No state column: until `ready_at` is set, a request's state is its job's. Parts 
 
 ### 3.24 `tz_parts`
 
-timezone-boundary-builder's polygons in ≤256-vertex pieces (ADR-0035, §4.30); `tz_boundaries_source` skips reloading the same file.
+timezone-boundary-builder's polygons in ≤256-vertex pieces (§4.30); `tz_boundaries_source` skips reloading the same file.
 
 ### 3.25 `story_sends` / `story_copies` / `received_origins`
 
@@ -166,7 +166,7 @@ One row: whether Satellite's imagery is offered to everyone, why not, and the us
 
 ### 4.0 The three ingest paths
 
-They differ only in how bytes arrive; from §4.1 step 2 on the code is shared (ADR-0001).
+They differ only in how bytes arrive; from §4.1 step 2 on the code is shared (`VISION.md` §4.1).
 
 ```mermaid
 flowchart LR
@@ -196,7 +196,7 @@ Path 2's endpoint (`sync_activities.go`); each activity gets its own result. It 
 
 #### 4.0.4 In-app GPS recording (Android)
 
-A stopped recording posts to §4.0.3 with `source = "recorded"` and a UUID minted at recording start, so a retried submit is recognized (ADR-0007). It is the one path that sets `name` and `description` at ingest. Its `activity_type` is free text, which is why §4.0.3 bounds it. The app side is `apps/android/docs/IMPLEMENTATION.md` §5.
+A stopped recording posts to §4.0.3 with `source = "recorded"` and a UUID minted at recording start, so a retried submit is recognized. It goes there directly, not into Health Connect or HealthKit for Path 2 to read back: writing would need a route-write permission, and reading back would bring Health Connect's foreground-only route reads to points the app already holds. The cost is that other apps on the phone never see a recording. It is the one path that sets `name` and `description` at ingest. Its `activity_type` is free text, which is why §4.0.3 bounds it. The app side is `apps/android/docs/IMPLEMENTATION.md` §5.
 
 ### 4.1 Ingestion pipeline
 
@@ -222,7 +222,7 @@ sequenceDiagram
 ```
 
 The order matters:
-1. **Receive.** Validate, check `(user_id, source, external_id)`, and enqueue with the bytes in `jobs.raw`, a column of its own because the import history reads `payload` on every row. A request writes nothing to object storage, so a 100-activity sync answers as fast as one file. The worker stores the bytes before parsing (`ingest.PromoteRaw`); a retry after a failed write finds them still in the row.
+1. **Receive.** Validate, check `(user_id, source, external_id)`, and enqueue with the bytes in `jobs.raw`, a column of its own because the import history reads `payload` on every row. A request writes nothing to object storage, so a 100-activity sync answers as fast as one file; writing to R2 concurrently in the request would still grow with the batch. The worker stores the bytes before parsing (`ingest.PromoteRaw`); a retry after a failed write finds them still in the row.
 2. **Parse**, streamed: a 100-mile ride at 1 Hz is 36,000+ points. Parsers don't check ranges, so `keepValid` and `keepTimed` filter what they return, and `ParseGPX` reads only the recorded line in time order, since step 3 clips from whichever points come first and last.
 3. **Clip** against the account's Private locations, read when the job runs, before anything is stored (§7).
 4. **Coverage** from the raw points: the touched z14 tiles, by segment. A track past `maxActivityTiles` fails, since a zigzag between far points could reach millions; a 10,000 km trip is about 12,000.
@@ -290,7 +290,7 @@ Both rasters are composited from per-activity masks (§3.11), drawn at ingest fr
 
 Below exact coverage, Fog reveals whole countries, then regions (FR-4.2). The tiers switch only by layer `minzoom`/`maxzoom`, never blended. The layers document carries the bands, for the layers and the level notice alike.
 
-**Boundaries**: `scripts/boundaries-extract.sh` cuts countries, dependencies and regions from a pinned Overture release with DuckDB, off the server, dropping the code-less duplicate drawing of a disputed region. `seed-admin-boundaries` replaces them in one transaction, re-matches every activity and bumps every account's tile version. Matching runs once per activity at ingest (`geo.MatchActivity`) against the full-detail pieces, the trajectory wrapped into −180…180.
+**Boundaries**: `scripts/boundaries-extract.sh` cuts countries, dependencies and regions from a pinned Overture release with DuckDB, off the server, dropping the code-less duplicate drawing of a disputed region. Overture is OpenStreetMap's administrative borders assembled into polygons: Natural Earth, even unsimplified at 1:10m, put Niagara Falls in Canada and St Peter's Square in Italy; GADM's licence forbids redistribution; geoBoundaries mixes sources and licences country by country; and cutting the planet ourselves means redoing Overture's multipolygon assembly and coastline clipping. The land-clipped outlines follow the basemap's coast and match a shoreline walk; the territorial-sea ones would count a ferry as a visit. Overture deletes old releases, so the extract (about 500 MB gzipped) lives in our app bucket; it stays out of the image and the repository, where a committed copy would be a distribution of the database under its own ODbL notice, and the public script is the record of how it was derived. `seed-admin-boundaries` replaces them in one transaction, re-matches every activity and bumps every account's tile version. Matching runs once per activity at ingest (`geo.MatchActivity`) against the full-detail pieces, the trajectory wrapped into −180…180.
 
 **Served as live MVT, not a precomputed pyramid**: the cost scales with a fixed boundary set, not with history, so there's no dirty machinery to keep. Fog's query returns the locked set (no non-Pending membership row) and the tile's sea, its frame minus every outline, in the veil's colour so nothing shifts crossing a tier. A tile's clipped outlines and sea are stored on its first request (§3.26), the built mark inserted first with `ON CONFLICT DO NOTHING` so a concurrent build waits; only tiles up to each tier's maxzoom are kept, and the seed empties them last in its transaction. Cutting visited outlines out per request took 0.5 s at z0.
 
@@ -524,7 +524,9 @@ flowchart LR
 
 **Every path paints over Fog and Heatmap**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and the export; under the veil, unridden paths showed at a fifth of their colour. Clients move only a layer still below; the web diffs every property first, since each change fires another `styledata` (`DEVELOPMENT.md`).
 
-### 4.25 Spots (FR-15, ADR-0021)
+### 4.25 Spots (FR-15)
+
+**A category is one clean OSM tag set** (`spots.Category`): all of `historic=*` would bring millions of boundary stones, wayside crosses and plaques, and OSM has no tag for architecture worth seeing.
 
 **The import** (`internal/spots`) retires the places a planet run didn't see, refusing to retire too many. Waterfalls are held until the file ends, since a viewpoint that leaves one out can come after it; one that gains a viewpoint is retired by the next planet run like a place gone from OSM. **No row is ever deleted, so captures' cascade never fires on a refresh.** The version is bumped only if the upsert changed something.
 
@@ -574,7 +576,9 @@ The routes are under `/v1/photos` because the mux rejects `/v1/activities/{id}/p
 
 A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each track is written from `DisplayedPoints` and each raw payload once. The archive is never reachable by a link alone: the email links to Settings, and a part is served only to its account, through `http.ServeContent` so a Range request resumes it. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
 
-### 4.30 Each activity's own timezone (ADR-0035)
+### 4.30 Each activity's own timezone (FR-3.11)
+
+**The activity's zone, for labels and grouping alike.** The account's zone would show a 07:00 run in Tokyo at 18:00 the day before, and the viewing device's would group the same history differently on a laptop and a phone. Labels in one zone and grouping in another would put a row near midnight in a different day from its slider slot. A source's own offset is no substitute: GPX and TCX carry none, and an offset has no history. The polygons sit in PostGIS like the country outlines (§4.2.4), not in a Go library such as `tzf`, whose simplified copy would be a second geography. An activity entirely inside a Private location still carries its zone, far coarser than the location it hides.
 
 `activities.timezone` is an IANA name, never an offset, so `AT TIME ZONE` gives the offset in force on the activity's date. It is looked up at ingest from the first recorded point, before clipping, with the account's zone where no polygon contains it; a reprocess looks again, which changes only split pieces. The `timezones-with-oceans` set gives a point at sea a zone, where the `-now` variant would merge zones whose clocks agree only today. `seed-timezones` re-matches every activity in its transaction; a zone the database's tzdata doesn't know is skipped and logged, since converting to it would fail. Grouping reads `localStartedAt` per row, and no local-time column is stored, since one would freeze each offset. `ORDER BY started_at` stays: across zones, local times can disagree with the order things happened.
 
@@ -601,7 +605,7 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 ### 5.1 Ingest path risk, per path
 
-The paths' independence is the mitigation (ADR-0001). **Path 1** connectors: webhooks only, answering at once and enqueuing; a per-provider rate limiter shared across workers; deletion on deauthorization built with the connector (§7); and everything working with no connector. **Path 2**: degrade honestly, counting and explaining the routes Health Connect withholds. **Path 3** is fed arbitrary files: cap the size before reading the body, refuse archives (ADR-0039), and never let one bad file abort a batch.
+The paths' independence is the mitigation (`VISION.md` §4.1). **Path 1** connectors: webhooks only, answering at once and enqueuing; a per-provider rate limiter shared across workers; deletion on deauthorization built with the connector (§7); and everything working with no connector. **Path 2**: degrade honestly, counting and explaining the routes Health Connect withholds. **Path 3** is fed arbitrary files: cap the size before reading the body, refuse archives (ADR-0039), and never let one bad file abort a batch.
 
 ### 5.2 Parsing overhead
 
@@ -632,7 +636,7 @@ Costs scale with users while the service stays free (`VISION.md` §4.3), so the 
 - **Raw payloads are kept as long as their activity**, since `reprivacy` and track edits re-parse them. A failed ingest has none, so the worker removes its original as it fails (`ingest.DiscardRaw`), unless an activity names the same key.
 - **Rate limits** (`httpapi/rate_limits.go`) are per account, except on the shared demo account, which counts per address. Tiles count per minute with a high ceiling, since pans and exports burst and one refused tile fails an export. Phone sync counts activities as well as requests, which bounds a sync-delete-sync loop that renders each time. The counts are in memory, per `api` process.
 - **Per-account limits** (ADR-0043, `account_limits.go`) count waiting ingest jobs by their size, so a queued import can't slip under, and count an original shared by split pieces once. The check takes no lock: a slight overshoot is harmless, and a lock would serialize an import. A Story copy is checked when accepted. `fitWithinLimits` lets a sync batch take what fits.
-- **The daily R2 budget** (ADR-0044, `internal/budget`) counts requests in `internal/storage`'s HTTP transport, since the bill counts what the client library sends underneath (listing pages, multipart parts, range reads). The API wraps the routes that touch the bucket (`httpapi/budget.go`), shared account cores return the refusal as their error, and the worker stops claiming the render lane, then the long lane. The basemap is outside it.
+- **The daily R2 budget** (`SPEC.md` FR-17, `internal/budget`) exists because R2 has no spending cap, only billing notifications after the money is spent. It counts requests in `internal/storage`'s HTTP transport, since the bill counts what the client library sends underneath (listing pages, multipart parts, range reads). Each process adds its counts to the UTC day's row every 30 s and reads the total back, so the budget is the deployment's; they are priced at list prices without the free allowance, so the count never falls below the bill. A day, not a month, so a bad day can't stop the rest of the month; stages, not one switch, so Fog and Heatmap don't go blank to save renders that can wait. The API wraps the routes that touch the bucket (`httpapi/budget.go`), shared account cores return the refusal as their error, and the worker stops claiming the render lane, then the long lane. The basemap is outside it.
 - **Cost per active user** is measured from day one (`VISION.md` §5), from `last_seen_at` (§4.32).
 
 ### 5.8 Minimal deployment topology

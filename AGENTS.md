@@ -8,7 +8,7 @@ HoldMyTrack is a free, open-source platform that keeps the outdoor journeys peop
 - No health data: no heart rate or other body signal is read, stored or shown (ADR-0017).
 - Every source is a gate: only what the user ticks comes in, nothing starts ticked, and no heuristic changes or hides an activity on their behalf (ADR-0039).
 - No social graph: no feed, follows or public pages (`VISION.md` §5, Milestone 3).
-- Every account has every feature, with no tiers (ADR-0031).
+- Every account has every feature, with no tiers (`VISION.md` §6.1).
 
 ## Documentation rules
 
@@ -44,7 +44,7 @@ When a request is ambiguous, a detail is missing, or it can be read more than on
 
 ## Code and tests
 
-The server decides what the map shows, how it looks and every rule about the data, and sends it to the clients as data; a client decides only what needs the device (ADR-0047).
+The server decides what the map shows, how it looks and every rule about the data, and sends it to the clients as data; a client decides only what needs the device (ADR-0048).
 
 New code puts what it decides (which screen a session goes to, whether a day is in range, where a link leads) in functions that take values and return values, with no View, `Context`, map, network or timer in them, and unit-tests them in the same change. Code touched for another reason gets the same treatment. The wiring around them stays thin, covered by a few end-to-end flows instead of mocks.
 

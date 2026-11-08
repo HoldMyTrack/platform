@@ -35,7 +35,7 @@
     <uses-permission android:name="android.permission.health.READ_HEALTH_DATA_HISTORY" />
 
     <!--
-      In-app GPS recording (docs/adr/0007-in-app-gps-recording-submits-directly.md,
+      In-app GPS recording (docs/IMPLEMENTATION.md §4.0.4,
       apps/android/docs/IMPLEMENTATION.md §5): foreground-only. Not
       ACCESS_BACKGROUND_LOCATION: that's a separately-reviewed permission with its own Play
       Store "prominent disclosure" burden, needed only if recording had to survive the app

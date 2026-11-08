@@ -303,7 +303,7 @@ The web's `/sync` page (`docs/SPEC.md` FR-3.9) shown in the app (`docs/SPEC.md` 
 
 ## 7. FR-5 — In-App GPS Recording
 
-Recording is separate from Health Connect sync: a finished recording goes straight to `POST /v1/sync/activities` under `recorded` (ADR-0007, `docs/SPEC.md` FR-3.8), so Health Connect's foreground rule doesn't apply. Recording and sending are two explicit steps.
+Recording is separate from Health Connect sync: a finished recording goes straight to `POST /v1/sync/activities` under `recorded` (`docs/SPEC.md` FR-3.8), so Health Connect's foreground rule doesn't apply. Recording and sending are two explicit steps.
 
 ```mermaid
 stateDiagram-v2
