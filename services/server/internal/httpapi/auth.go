@@ -103,7 +103,7 @@ type authResponse struct {
 	// the web app then follows the browser's.
 	Locale string `json:"locale"`
 	// UnitSystem is "imperial" or "metric", from Country (web.Imperial): decided here, so every
-	// client shows the units the server's own pages do (ADR-0047).
+	// client shows the units the server's own pages do (ADR-0048).
 	UnitSystem string `json:"unit_system"`
 }
 

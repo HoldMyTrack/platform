@@ -6,7 +6,7 @@ Accepted. The web and Android implement every rule in `testdata/client-rules/`; 
 
 ## Context
 
-Some rules can't live on the server (ADR-0047) because they answer a tap or a drag before any round trip: the date slider's knobs, which activities the toolbar acts on, the track editor's operations, where photo markers sit. The web implements them in TypeScript and Android in Kotlin; iOS will need them in Swift. Each rule has a JSON file of cases in `testdata/client-rules/`, and the web and Android suites run every file, failing on one they don't implement.
+Some rules can't live on the server (ADR-0048) because they answer a tap or a drag before any round trip: the date slider's knobs, which activities the toolbar acts on, the track editor's operations, where photo markers sit. The web implements them in TypeScript and Android in Kotlin; iOS will need them in Swift. Each rule has a JSON file of cases in `testdata/client-rules/`, and the web and Android suites run every file, failing on one they don't implement.
 
 The code is written by agents. That changes the cost of writing a rule three times, which is small, but not the cost of three implementations disagreeing, which a user sees as the apps behaving differently.
 
@@ -20,7 +20,7 @@ The code is written by agents. That changes the cost of writing a rule three tim
 
 - **Kotlin Multiplatform**, one Kotlin module compiled for iOS. It adds a Gradle build to the iOS toolchain, an Objective-C-shaped bridge between Swift and the shared code, and a debugger that stops at that bridge. Agents writing the code remove none of that: the cost is in building, interop and debugging, not in typing.
 - **The TypeScript rules run in an embedded JavaScript engine** on both phones. Every call crosses a bridge with serialized arguments, on paths as hot as a knob drag, and a stack trace on the phone points into bundled JavaScript.
-- **Rules on the server.** Right for anything that can wait for a response, and ADR-0047 moves those there; a drag or a tap can't.
+- **Rules on the server.** Right for anything that can wait for a response, and ADR-0048 moves those there; a drag or a tap can't.
 
 ## Consequences
 

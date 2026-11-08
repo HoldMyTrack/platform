@@ -24,8 +24,7 @@ Numbered in rough order of how foundational the decision is, not strictly chrono
 | [0043](0043-per-account-limits.md) | Every account can keep up to 50,000 activities and 5 GB of original files, the same limits for all |
 | [0045](0045-one-json-error-shape.md) | Every API error is JSON `{"error": code, "message": text}` |
 | [0046](0046-heatmap-drawn-by-the-clients.md) | The Heatmap is pass counts on the server, drawn by the clients as MapLibre heatmap circles |
-| [0047](0047-the-server-shapes-the-map.md) | The server decides what the map shows and how; the clients apply what it sends, starting with Fog and Heatmap |
-| [0048](0048-two-map-documents.md) | The map is two documents, a shared basemap style and the account's layers, applied by native maps |
+| [0048](0048-two-map-documents.md) | The server shapes the map as two documents, a shared basemap style and the account's layers, which native maps apply |
 | [0049](0049-shared-rules-written-natively.md) | Rules every client applies are written natively in each, and defined once by shared test cases |
 
 ## Writing a new one

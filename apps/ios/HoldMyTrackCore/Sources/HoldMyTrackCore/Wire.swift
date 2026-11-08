@@ -33,7 +33,7 @@ struct AccountJSON: Codable, Sendable, Equatable {
     let timezone: String
     let locale: String
     let avatarURL: String
-    /// "imperial" or "metric", decided by the server from country (ADR-0047).
+    /// "imperial" or "metric", decided by the server from country (ADR-0048).
     let unitSystem: String
 
     enum CodingKeys: String, CodingKey {
