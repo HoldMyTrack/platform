@@ -13,10 +13,11 @@ final class TestAccount {
     static let samples = ["west-side.gpx", "evening-loop.tcx", "mill-creek-falls.fit"]
 
     /// samples: which of the sample files to upload first.
-    init(base: String, samples: [String] = TestAccount.samples) throws {
+    /// country false leaves it unset, for the first run.
+    init(base: String, samples: [String] = TestAccount.samples, country: Bool = true) throws {
         self.base = base
         try call("POST", "/v1/auth/signup", ["email": email, "password": password])
-        try call("PATCH", "/v1/account/settings", ["display_name": "", "country": "US", "timezone": "America/New_York"])
+        if country { try call("PATCH", "/v1/account/settings", ["display_name": "", "country": "US", "timezone": "America/New_York"]) }
         for name in samples { try upload(name, data: try sample(name)) }
         try settle(count: samples.count)
     }

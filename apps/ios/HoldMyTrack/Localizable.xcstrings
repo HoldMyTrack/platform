@@ -254,6 +254,17 @@
         }
       }
     },
+    "Activity graph & trends" : {
+      "comment" : "The Profile page's title, and its row on the You tab.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "График и тренды"
+          }
+        }
+      }
+    },
     "Add %@ to a Story" : {
       "comment" : "Activities panel: Add to story's label; the placeholder names the target.",
       "localizations" : {
@@ -1772,6 +1783,28 @@
         }
       }
     },
+    "Set up your account" : {
+      "comment" : "Site page: the first run's Settings title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Настройка аккаунта"
+          }
+        }
+      }
+    },
+    "Settings" : {
+      "comment" : "The Settings page's title, and its row on the You tab.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Настройки"
+          }
+        }
+      }
+    },
     "Shared paths" : {
       "comment" : "Layers menu: the shared path layer.",
       "localizations" : {
@@ -1955,6 +1988,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Синхр."
+          }
+        }
+      }
+    },
+    "Sync history" : {
+      "comment" : "Site page: the Sync tab's page title.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "История синхронизации"
           }
         }
       }
@@ -2241,6 +2285,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Этой истории больше нет."
+          }
+        }
+      }
+    },
+    "This page couldn't load. Check your connection and try again." : {
+      "comment" : "Site page: a page failed to load.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить страницу. Проверьте подключение и попробуйте ещё раз."
           }
         }
       }

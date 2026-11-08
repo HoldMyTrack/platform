@@ -54,9 +54,12 @@ final class AppFlow {
             check()
         case .verifyEmail:
             if let account = store.confirmed { setRoot(VerifyEmailViewController(flow: self, email: account.email)) }
-        case .onboarding, .home:
-            // The first run's Settings page comes with the site's pages (ROADMAP.md, phase 6);
-            // until then the first run goes to the map too.
+        case .onboarding:
+            // The first run: Settings, and only its save, which reaches the map, gets past it.
+            let settings = UINavigationController(rootViewController: WebPageViewController(flow: self, page: .settings, onboarding: true))
+            settings.isModalInPresentation = true
+            setRoot(settings)
+        case .home:
             if let account = store.confirmed { setRoot(MainTabBarController(flow: self, account: account)) }
         }
     }
@@ -97,6 +100,22 @@ final class AppFlow {
             return error
         } catch {
             return .unreachable
+        }
+    }
+
+    /// Posted with the account, read again after a site page closed, when it changed.
+    static let accountChanged = Notification.Name("AppFlow.accountChanged")
+
+    /// The account read again once a site page closes, since Settings can change the units, the
+    /// name, the Country or the language; the screens that show it hear accountChanged.
+    func refreshAccount() {
+        guard store.route == .home else { return }
+        let before = store.confirmed
+        Task {
+            guard let account = try? await api.me() else { return }
+            store.confirm(account)
+            if store.route != .home { return show() }
+            if account != before { NotificationCenter.default.post(name: Self.accountChanged, object: nil, userInfo: ["account": account]) }
         }
     }
 

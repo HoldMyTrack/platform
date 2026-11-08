@@ -1,6 +1,24 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "NSCameraUsageDescription" : {
+      "comment" : "The camera permission prompt, shown when Settings' avatar takes a photo.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack uses the camera only when you take a photo for your avatar in Settings."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack использует камеру, только когда вы снимаете фото для аватара в настройках."
+          }
+        }
+      }
+    },
     "NSLocationWhenInUseUsageDescription" : {
       "comment" : "The location permission prompt, shown on the first Find my location.",
       "extractionState" : "manual",

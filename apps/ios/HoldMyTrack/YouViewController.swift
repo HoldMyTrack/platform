@@ -40,14 +40,14 @@ enum Theme: String, CaseIterable {
 /// Review allows payment links only through Apple's purchase system.
 final class YouViewController: UITableViewController {
     private unowned let flow: AppFlow
-    private let account: Account
+    private var account: Account
     private var avatar: UIImage?
 
-    private enum Row { case upload, privacy, theme, language, about, help, contacts, delete, signOut }
+    private enum Row { case settings, profile, upload, privacy, theme, language, about, help, contacts, delete, signOut }
     private var sections: [[Row]] {
         let real = !account.isDemo
         return [
-            (real ? [.upload] : []) + [.privacy],
+            [.settings, .profile] + (real ? [.upload] : []) + [.privacy],
             [.theme, .language],
             [.about, .help, .contacts],
             (real ? [.delete] : []) + [.signOut],
@@ -71,6 +71,16 @@ final class YouViewController: UITableViewController {
         tableView.tableHeaderView = header()
         tableView.tableFooterView = footer()
         loadAvatar()
+        NotificationCenter.default.addObserver(forName: AppFlow.accountChanged, object: nil, queue: .main) { [weak self] note in
+            let changed = note.userInfo?["account"] as? Account
+            MainActor.assumeIsolated {
+                guard let self, let account = changed else { return }
+                self.account = account
+                self.tableView.tableHeaderView = self.header()
+                self.loadAvatar()
+                self.view.setNeedsLayout()
+            }
+        }
     }
 
     override func viewDidLayoutSubviews() {
@@ -182,6 +192,8 @@ final class YouViewController: UITableViewController {
         cell.backgroundColor = UIColor(resource: .surface)
         let row = sections[indexPath.section][indexPath.row]
         switch row {
+        case .settings: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Settings"), UIImage(resource: .user), "youSettings")
+        case .profile: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Activity graph & trends"), UIImage(resource: .chart), "youProfile")
         case .upload: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Upload"), UIImage(resource: .upload), "youUpload")
         case .privacy: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Privacy"), UIImage(resource: .shield), "youPrivacy")
         case .theme:
@@ -210,12 +222,14 @@ final class YouViewController: UITableViewController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         tableView.deselectRow(at: indexPath, animated: true)
         switch sections[indexPath.section][indexPath.row] {
+        case .settings: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .settings), animated: true)
+        case .profile: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .profile), animated: true)
         case .upload: navigationController?.pushViewController(UploadViewController(api: flow.api), animated: true)
         case .privacy: navigationController?.pushViewController(PrivacyViewController(flow: flow, account: account), animated: true)
         case .theme: pickTheme(at: indexPath)
         // D11: the app's language is iOS's per-app setting, in the system's Settings.
         case .language: UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
-        case .about: present(SFSafariViewController(url: page("/about")), animated: true)
+        case .about: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .about), animated: true)
         case .help: UIApplication.shared.open(page("/help"))
         case .contacts: UIApplication.shared.open(page("/contacts"))
         case .delete: confirmDelete()

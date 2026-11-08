@@ -11,7 +11,8 @@ import UIKit
 /// MapViewController+Range, the sheet's wiring MapViewController+Panel.
 final class MapViewController: UIViewController, @preconcurrency MLNMapViewDelegate, @preconcurrency CLLocationManagerDelegate {
     unowned let flow: AppFlow
-    let account: Account
+    /// Read again when a site page closes (AppFlow.accountChanged): Settings can change the units.
+    private(set) var account: Account
     private let documents: MapDocuments
     /// Made in viewDidLoad at the view's size: started at a zero frame, MapLibre keeps drawing
     /// into a quarter of the screen after it grows.
@@ -46,6 +47,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Bumped whenever tracks change under the same query, so their tiles are fetched again.
     var tracksVersion = 0
     var editOpen = false
+    /// View on map's activity, focused when the next list holds it.
+    var focusWhenListed: String?
     /// The tab bar's Stories count: copies others sent, waiting.
     var onWaiting: ((Int) -> Void)?
     /// A row's Story badge on the Activities tab: the tab bar moves to Stories.
@@ -95,6 +98,14 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         view.addSubview(mapView)
         layoutChrome()
         buildPanel()
+        NotificationCenter.default.addObserver(forName: AppFlow.accountChanged, object: nil, queue: .main) { [weak self] note in
+            let changed = note.userInfo?["account"] as? Account
+            MainActor.assumeIsolated {
+                guard let self, let account = changed else { return }
+                self.account = account
+                self.renderPanel()
+            }
+        }
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.load() }
         location.delegate = self
         load()

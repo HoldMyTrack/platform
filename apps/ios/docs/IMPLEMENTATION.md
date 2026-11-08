@@ -2,6 +2,17 @@
 
 > **Scope note.** How the iOS app is built where the code can't say it: flows across files, invariants, reasons for a design that isn't the obvious one, and traps. The app's shape and stack are `ARCHITECTURE.md`, its behavior `SPEC.md`, and the server side of every call root `docs/IMPLEMENTATION.md`. Its sections take the Android document's numbers; detail confined to one type is in that type's doc comment.
 
+## 1. App shell and navigation
+
+### 1.4 The web's pages in a web view
+
+Settings, Activity graph & trends, Sync history and About are the server's pages in `WebPageViewController` (ADR-0042); how the server renders a page for the app is root `docs/IMPLEMENTATION.md` §4.19.
+
+- **Signed in by cookie, in a store of its own.** A `WKWebView`'s requests never pass through `APIClient`, so the session, the `hmt_app` marker and the app's language (`WebPageSession.cookies`) go into the page's cookie store before its first load. Each page gets a non-persistent `WKWebsiteDataStore`, gone with the page, so sign-out has nothing to clear and no cookie reaches another account.
+- **`route` acts on where a navigation goes**, decided by the shared `webPageRoute` rule (`WebPageSession.route` reads a URL into its parts, the port in the authority). It runs in `decidePolicyFor` and again on a server redirect, which is how first-run Settings' save, redirecting to `/`, reaches `AppFlow.check` and so the map.
+- **Closing a page reads the account again** (`AppFlow.refreshAccount`), since Settings can change the units, name or Country; the map and the You tab hear `AppFlow.accountChanged`. The app's language is iOS's per-app setting (`ARCHITECTURE.md` §1, D11), which the page doesn't change.
+- **View on map** is a link to `/` with the activity's id and day: the tab bar moves to Map and `MapViewController.viewOnMap` focuses the activity once the next list holds it, applying its day as the range first when it's outside it.
+
 ## 2. Session and auth
 
 ### 2.1 One credential
@@ -29,7 +40,7 @@ stateDiagram-v2
     home --> signIn: Sign out
 ```
 
-`SessionRoute.of` is the diagram's rule, over the kept session and the account the server confirmed this run; `AppFlow` sets the window's screen from it. Onboarding goes to the signed-in screen until the site's pages exist (`ROADMAP.md`, 6.2).
+`SessionRoute.of` is the diagram's rule, over the kept session and the account the server confirmed this run; `AppFlow` sets the window's screen from it. Onboarding is Settings as the window's root, with no tab bar behind it.
 
 - **The Keychain outlives an uninstall**, so `SessionStore` deletes its item on the first launch of an install, which a UserDefaults marker tells apart; an uninstall removes the marker. The item is this device's only and readable after the first unlock, so a background upload still has the token.
 - **Sign-out sends the token it ends explicitly** (`APIClient.logout(token:)`): the phone forgets it at once, before the request is built.
