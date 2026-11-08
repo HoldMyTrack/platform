@@ -39,8 +39,9 @@ const (
 	// the callback stops accepting the round trip.
 	oauthCookieTTL = 10 * time.Minute
 
-	// appRedirectURI is where a native round trip ends: the Android app's intent filter
-	// (scheme holdmytrack, host oauth), with ?code= or ?error= appended.
+	// appRedirectURI is where a native round trip ends: the Android app's intent filter, or
+	// the iOS app's ASWebAuthenticationSession callback (scheme holdmytrack, host oauth), with
+	// ?code= or ?error= appended.
 	appRedirectURI = "holdmytrack://oauth"
 	// handoffTTL bounds the gap between the callback and the app redeeming its code — the tab
 	// closing and one request, so seconds in practice.

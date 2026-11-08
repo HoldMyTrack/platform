@@ -2,8 +2,8 @@
 
 | | |
 | :-- | :-- |
-| **Status** | Current: the app as built, a skeleton so far |
-| **Last updated** | 2026-10-24 |
+| **Status** | Current: the app as built |
+| **Last updated** | 2026-11-08 |
 | **Related documents** | `docs/SPEC.md` (the server and web behavior this app shares), `apps/ios/docs/ARCHITECTURE.md` (the app's shape and stack), `apps/ios/docs/IMPLEMENTATION.md` (how it's built), `apps/ios/docs/ROADMAP.md` (the plan) |
 
 ## 1. Introduction
@@ -14,7 +14,26 @@ What the iOS app does, as a user can rely on it: where it differs from the Andro
 
 ### 1.2 Scope
 
-Every built feature of the app. None a user relies on is built yet: the app opens on a screen showing its build and whether the API answers, which the sign-in screen replaces (`ROADMAP.md`, phase 5).
+Every built feature of the app: so far signing in and out, email verification and the Update screen. Signed in, it shows the account, the build and whether the API answers, which the map replaces (`ROADMAP.md`, phase 7a).
+
+## 3. FR-1 — Authentication & Session
+
+As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.8), except as below.
+
+### FR-1.1 Sign in, sign up, start a demo
+
+- Google and Facebook both run the server's own flow in the system's browser sheet, started with the S256 hash of a verifier the app keeps; the code returned to `holdmytrack://oauth` is redeemed with it at `POST /v1/auth/handoff`. No Google or Meta SDK is in the app.
+- Sign in with Apple shows when the server reports it, in Apple's own sheet (`docs/SPEC.md` FR-1.14). The name Apple shares on the first sign-in names a new account.
+
+### FR-1.2 Session persistence and re-verification
+
+- The token is kept in the Keychain, on this iPhone only. A reinstall starts signed out, though the Keychain outlives an uninstall.
+- A failed check shows why, with Try again and Sign out; returning to the app checks again.
+
+### FR-1.8 Update screen
+
+- It stays over every screen for the rest of the run; iOS has no Back to close the app.
+- Until the app has an App Store listing it has no Update button.
 
 ## 8. Non-Functional Requirements (summary)
 

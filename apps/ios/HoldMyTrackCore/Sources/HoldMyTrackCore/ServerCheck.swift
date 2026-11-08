@@ -1,7 +1,7 @@
 import Foundation
 
 /// What `GET /healthz` says about the server: reachable and on which build, or why not. The
-/// project's first screen shows it until the app has screens of its own.
+/// signed-in screen shows it until the map takes its place.
 public enum ServerStatus: Equatable, Sendable {
     case reachable(version: String)
     case refused(status: Int)
