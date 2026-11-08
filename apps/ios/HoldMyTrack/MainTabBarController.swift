@@ -15,7 +15,8 @@ final class MainTabBarController: UITabBarController {
         let stories = MapHostViewController(map: map, tab: .stories)
         stories.tabBarItem = UITabBarItem(title: String(localized: "Stories"), image: UIImage(resource: .bookOpen), tag: 1)
         stories.tabBarItem.accessibilityIdentifier = "tabStories"
-        let sync = PlaceholderViewController(text: String(localized: "Sync history comes with the site's pages."))
+        let history = WebPageViewController(flow: flow, page: .syncHistory)
+        let sync = UINavigationController(rootViewController: history)
         sync.tabBarItem = UITabBarItem(title: String(localized: "Sync"), image: UIImage(resource: .refreshCw), tag: 2)
         let you = UINavigationController(rootViewController: YouViewController(flow: flow, account: account))
         you.navigationBar.prefersLargeTitles = false
@@ -24,6 +25,12 @@ final class MainTabBarController: UITabBarController {
         viewControllers = [mapHost, stories, sync, you]
         tabBar.tintColor = UIColor(resource: .accent)
         tabBar.backgroundColor = UIColor(resource: .surface)
+        sync.tabBarItem.accessibilityIdentifier = "tabSync"
+        history.onViewOnMap = { [weak self, weak mapHost, weak map] activity, day in
+            guard let self, let mapHost, let map else { return }
+            self.selectedViewController = mapHost
+            map.viewOnMap(activity: activity, day: day)
+        }
         map.onWaiting = { [weak stories] count in stories?.tabBarItem.badgeValue = count > 0 ? "\(count)" : nil }
         map.onWantsStories = { [weak self, weak stories] id in
             guard let self, let stories else { return }
@@ -40,26 +47,5 @@ final class MainTabBarController: UITabBarController {
         guard let you = viewControllers?.last as? UINavigationController, let home = you.viewControllers.first as? YouViewController else { return }
         selectedViewController = you
         home.upload(files)
-    }
-}
-
-/// A tab whose screen is still to come, saying when.
-final class PlaceholderViewController: UIViewController {
-    private let text: String
-
-    init(text: String) {
-        self.text = text
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    @available(*, unavailable)
-    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
-
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        view.backgroundColor = UIColor(resource: .bg)
-        let label = Controls.body(text)
-        label.textAlignment = .center
-        Controls.host(Controls.column([label]), in: self)
     }
 }

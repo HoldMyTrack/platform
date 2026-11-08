@@ -14,11 +14,11 @@ What the iOS app does, as a user can rely on it: where it differs from the Andro
 
 ### 1.2 Scope
 
-Every built feature of the app: so far signing in and out, email verification, the Update screen, the map and its Activities and Stories panel, the You tab, Privacy, deleting the account, and Upload.
+Every built feature of the app: so far signing in and out, email verification, the first run, the Update screen, the map and its Activities and Stories panel, the site's pages, the You tab, Privacy, deleting the account, and Upload.
 
 ## 3. FR-1 — Authentication & Session
 
-As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.7, FR-1.8), except as below.
+As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as below.
 
 ### FR-1.1 Sign in, sign up, start a demo
 
@@ -29,6 +29,11 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.7, FR-1.
 
 - The token is kept in the Keychain, on this iPhone only. A reinstall starts signed out, though the Keychain outlives an uninstall.
 - A failed check shows why, with Try again and Sign out; returning to the app checks again.
+
+### FR-1.5 Settings
+
+- Avatar: the page's file input, which iOS answers with its own photo picker, camera or Files.
+- Language is the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11); the page's Language sets only the account's.
 
 ### FR-1.7 Privacy
 
@@ -60,8 +65,8 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.7, FR-2.9), exce
 
 ### FR-2.9 The bottom bar
 
-- Map, Stories, Sync and You, with no record button yet. Sync says what comes with it.
-- You leads to Upload, Privacy, Theme, Language, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). About opens in an in-app browser until the site's pages come (`ROADMAP.md`, 6.2). Settings, Activity graph & trends and Settings › Sync aren't there yet.
+- Map, Stories, Sync and You, with no record button yet. Sync is Sync history (FR-4.1).
+- You leads to Settings, Activity graph & trends, Upload, Privacy, Theme, Language, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
 
 ## 5. FR-3 — Sync and Imports

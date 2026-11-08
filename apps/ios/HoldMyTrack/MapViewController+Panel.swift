@@ -88,6 +88,20 @@ extension MapViewController {
         panelChanged()
     }
 
+    /// Sync history's View on map (apps/android/docs/SPEC.md FR-4.1): the activity focused once
+    /// the list is in; a day outside the range becomes the range, as if picked.
+    func viewOnMap(activity: String, day: String) {
+        loadViewIfNeeded()
+        focusWhenListed = activity
+        if session.range?.contains(day) == true && session.storyID == nil {
+            loadList()
+        } else {
+            session.viewDay(day)
+            panelChanged()
+            showRange()
+        }
+    }
+
     // MARK: The list
 
     /// The range's or the open Story's activities, read for each and on every return to the map.
@@ -137,6 +151,11 @@ extension MapViewController {
         }
         if session.consumeFly() {
             fly(next.map(\.id))
+        }
+        if let id = focusWhenListed, next.contains(where: { $0.id == id }) {
+            focusWhenListed = nil
+            session.panel.focus(id)
+            fly([id])
         }
         panelChanged()
         watchPending()

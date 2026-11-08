@@ -61,7 +61,7 @@ For the admin panel (`/admin`, `IMPLEMENTATION.md` §4.20), sign up locally and 
 
 `worker` takes the daily statistics (`IMPLEMENTATION.md` §4.32) within an hour of midnight UTC and at its start. `docker compose run --rm api stats` prints the newest day, `stats 2026-10-13` one day, `stats activities_by_source --days 90` a key's (or prefix's) series. `stats --take [day]` writes a snapshot now, yesterday by default, but with today's state values, so use it only locally. To retake a day, delete its `daily_stats` rows.
 
-The Android app shows Settings, Profile, Sync and About as these pages in a WebView. Against the stock dev stack their forms get `403`: a form must come from `APP_BASE_URL`'s origin (`localhost:5173`), while the emulator reaches `10.0.2.2:8080`. To try them, run `adb reverse tcp:8080 tcp:8080` and set `APP_BASE_URL=http://localhost:8080` for `api` and `holdmytrack.apiBaseUrl=http://localhost:8080` for the app.
+The Android and iOS apps show Settings, Profile, Sync and About as these pages in a web view. Against the stock dev stack their forms get `403`: a form must come from `APP_BASE_URL`'s origin (`localhost:5173`), while the emulator reaches `10.0.2.2:8080`. To try them, run `adb reverse tcp:8080 tcp:8080` and set `APP_BASE_URL=http://localhost:8080` for `api` and `holdmytrack.apiBaseUrl=http://localhost:8080` for the app. The iOS app's pages have the same limit: set `APP_BASE_URL` to the origin in `apps/ios/Config/Local.xcconfig`'s `HMT_API_BASE_URL` for `api`.
 
 ### Dev uses the planet basemap from `tiles.holdmytrack.com`
 
