@@ -6,31 +6,15 @@ Last updated: 2026-11-07.
 
 The remaining work toward the product `VISION.md` describes, by its §5 milestones; each step points at the §/FR holding its design. A subsection whose every box is checked is deleted.
 
-## Milestone 1 — MVP
-
-The current milestone (`VISION.md` §5). The product is shipped and deployable (`SPEC.md` FR-1 to FR-17); what's left is what the public launch needs.
-
-### Before launch
-
-Gates the public launch (`VISION.md` §7, §8.3).
-
-- [ ] Post concept renders to r/running, r/cycling, r/Garmin, r/Strava, r/FogOfWorld (`VISION.md` §8.1, §8.3).
-- [x] A privacy policy page, `/privacy` (`SPEC.md` FR-10.6).
-- [x] Account deletion and data export, on the web and Android (`SPEC.md` FR-1.11, FR-1.12).
-- [x] Health Connect data-type declarations in the Play Console, scoped to what's used; filed 2026-10-07.
-
----
-
 ## Milestone 2 — Release and community
 
-Starts at the public launch, and has no exit gate (`VISION.md` §5).
+The current milestone, from the public launch on, with no exit gate (`VISION.md` §5).
 
 ### Cost control
 
 Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] Serve the basemap as `/{z}/{x}/{y}` tiles Cloudflare can cache, with `pmtiles serve` on the droplet first: every range read reaches R2, since the free plan caches files only up to 512 MB (`IMPLEMENTATION.md` §5.4). Worth it once traffic grows: about 97,000 basemap requests in the 30 days to 2026-10-14 were under 1% of R2's free reads. The web style (`apps/web/src/map/style.ts`) and the server-built Android style (`mapstyle.go`) move from `pmtiles://` to the tile URL.
-- [ ] Re-measure the funding-model assumptions (`VISION.md` §4.3, §6.3) against real usage; they feed the exit gate.
 
 ### After launch
 
