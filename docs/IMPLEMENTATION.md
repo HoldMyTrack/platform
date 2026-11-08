@@ -222,7 +222,7 @@ sequenceDiagram
 ```
 
 The order matters:
-1. **Receive.** Validate, check `(user_id, source, external_id)`, and enqueue with the bytes in `jobs.raw`, a column of its own because the import history reads `payload` on every row. A request writes nothing to object storage, so a 100-activity sync answers as fast as one file. The worker stores the bytes before parsing (`ingest.PromoteRaw`); a retry after a failed write finds them still in the row.
+1. **Receive.** Validate, check `(user_id, source, external_id)`, and enqueue with the bytes in `jobs.raw`, a column of its own because the import history reads `payload` on every row. A request writes nothing to object storage, so a 100-activity sync answers as fast as one file; writing to R2 concurrently in the request would still grow with the batch. The worker stores the bytes before parsing (`ingest.PromoteRaw`); a retry after a failed write finds them still in the row.
 2. **Parse**, streamed: a 100-mile ride at 1 Hz is 36,000+ points. Parsers don't check ranges, so `keepValid` and `keepTimed` filter what they return, and `ParseGPX` reads only the recorded line in time order, since step 3 clips from whichever points come first and last.
 3. **Clip** against the account's Private locations, read when the job runs, before anything is stored (§7).
 4. **Coverage** from the raw points: the touched z14 tiles, by segment. A track past `maxActivityTiles` fails, since a zigzag between far points could reach millions; a 10,000 km trip is about 12,000.
