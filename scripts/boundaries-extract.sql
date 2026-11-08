@@ -1,5 +1,5 @@
--- The country and region outlines `seed-admin-boundaries` loads (docs/IMPLEMENTATION.md §4.2.4,
--- ADR-0034), cut from one pinned Overture Maps release's divisions theme. Run by
+-- The country and region outlines `seed-admin-boundaries` loads (docs/IMPLEMENTATION.md §4.2.4),
+-- cut from one pinned Overture Maps release's divisions theme. Run by
 -- scripts/boundaries-extract.sh, which sets getvariable('release') and getvariable('out').
 --
 -- Overture's divisions are OpenStreetMap's boundaries (plus a few CC BY 4.0 sources) under ODbL,

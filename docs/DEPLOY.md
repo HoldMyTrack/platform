@@ -124,7 +124,7 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
 
 **Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try it now" opens an empty account (`SPEC.md` FR-2.2), Fog's Country/Region tiers draw nothing, and every activity shows its account's timezone. All three are idempotent.
 
-1. Make the country and region outlines (ADR-0034) off the server, with the duckdb CLI, then copy the file into the app bucket under the key `geo.BoundariesKey` names:
+1. Make the country and region outlines (`IMPLEMENTATION.md` §4.2.4) off the server, with the duckdb CLI, then copy the file into the app bucket under the key `geo.BoundariesKey` names:
    ```
    scripts/boundaries-extract.sh ~/boundaries
    scp ~/boundaries/overture-2026-09-23.0-boundaries.csv.gz holdmytrack:/tmp/

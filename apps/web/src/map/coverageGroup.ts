@@ -75,7 +75,7 @@ const DARK_DIM = { color: '#000000', opacity: 0.35 };
  *  orient by. */
 const FOG_LABEL_OPACITY = 0.4;
 
-/** The Country/Region outlines are Overture Maps' divisions, built from OpenStreetMap (ADR-0034). */
+/** The Country/Region outlines are Overture Maps' divisions, built from OpenStreetMap (IMPLEMENTATION.md §4.2.4). */
 const BOUNDARIES_ATTRIBUTION = '<a href="https://overturemaps.org">Overture Maps</a>';
 
 const FOG_LAYERS = [FOG_LAYER, FOG_EDGE_LAYER, COUNTRY_FOG_LAYER, REGION_FOG_LAYER];

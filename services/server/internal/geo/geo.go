@@ -4,7 +4,7 @@
 // owns and which stays exactly as it is above that threshold.
 //
 // admin_countries/admin_regions hold Overture Maps' land-clipped country and region outlines
-// (OpenStreetMap's borders, ADR-0034), loaded by SeedAdminBoundaries from an extract made off
+// (OpenStreetMap's borders), loaded by SeedAdminBoundaries from an extract made off
 // the server by scripts/boundaries-extract.sh: simplified there for the tiles, and in full detail,
 // cut into pieces, in admin_country_parts/admin_region_parts for matching.
 // activity_country/activity_region record, once per activity, which of them its trajectory

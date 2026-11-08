@@ -202,7 +202,7 @@ A Fog of War map is a precise map of where a person lives; the 2018 Strava heatm
 * **Health Connect declarations**: requesting more data types than the product uses is a known Play Console rejection cause. HoldMyTrack requests exercise sessions, their routes and the history window, and no health measurement.
 * **Photos** reach the server with no EXIF and are placed on the clipped track on every read, so one taken inside a Private location shows at the track's visible end (ADR-0024).
 * **Spot captures and Stories are private** to the account. A Story copy is made from the track as the sender sees it, with their Private locations applied and the recipient's on top (ADR-0036).
-* **OpenStreetMap's licence.** Spots is an unmodified OSM extract and the country and region outlines are OSM's by way of Overture Maps, both credited on the map; the outlines' derivation is a public script, which keeps them available under the ODbL (ADR-0034).
+* **OpenStreetMap's licence.** Spots is an unmodified OSM extract and the country and region outlines are OSM's by way of Overture Maps, both credited on the map; the outlines' derivation is a public script, which keeps them available under the ODbL (`IMPLEMENTATION.md` §4.2.4).
 * **No data sales, ever, written in the privacy policy**, because every user of a free product asks.
 
 ---

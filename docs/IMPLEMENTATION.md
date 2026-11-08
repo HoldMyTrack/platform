@@ -88,7 +88,7 @@ One unblurred mask per activity per z14 tile it touches, drawn at ingest (§4.2.
 
 ### 3.12 `admin_countries`
 
-Overture's land-clipped countries (ADR-0034). `geom` is simplified for drawing; matching uses the full outline cut into ≤256-vertex pieces in `admin_country_parts`, so a coastline crossing is an index lookup (§4.2.4).
+Overture's land-clipped countries. `geom` is simplified for drawing; matching uses the full outline cut into ≤256-vertex pieces in `admin_country_parts`, so a coastline crossing is an index lookup (§4.2.4).
 
 ### 3.13 `admin_regions`
 
@@ -290,7 +290,7 @@ Both rasters are composited from per-activity masks (§3.11), drawn at ingest fr
 
 Below exact coverage, Fog reveals whole countries, then regions (FR-4.2). The tiers switch only by layer `minzoom`/`maxzoom`, never blended. The layers document carries the bands, for the layers and the level notice alike.
 
-**Boundaries**: `scripts/boundaries-extract.sh` cuts countries, dependencies and regions from a pinned Overture release with DuckDB, off the server, dropping the code-less duplicate drawing of a disputed region. `seed-admin-boundaries` replaces them in one transaction, re-matches every activity and bumps every account's tile version. Matching runs once per activity at ingest (`geo.MatchActivity`) against the full-detail pieces, the trajectory wrapped into −180…180.
+**Boundaries**: `scripts/boundaries-extract.sh` cuts countries, dependencies and regions from a pinned Overture release with DuckDB, off the server, dropping the code-less duplicate drawing of a disputed region. Overture is OpenStreetMap's administrative borders assembled into polygons: Natural Earth, even unsimplified at 1:10m, put Niagara Falls in Canada and St Peter's Square in Italy; GADM's licence forbids redistribution; geoBoundaries mixes sources and licences country by country; and cutting the planet ourselves means redoing Overture's multipolygon assembly and coastline clipping. The land-clipped outlines follow the basemap's coast and match a shoreline walk; the territorial-sea ones would count a ferry as a visit. Overture deletes old releases, so the extract (about 500 MB gzipped) lives in our app bucket; it stays out of the image and the repository, where a committed copy would be a distribution of the database under its own ODbL notice, and the public script is the record of how it was derived. `seed-admin-boundaries` replaces them in one transaction, re-matches every activity and bumps every account's tile version. Matching runs once per activity at ingest (`geo.MatchActivity`) against the full-detail pieces, the trajectory wrapped into −180…180.
 
 **Served as live MVT, not a precomputed pyramid**: the cost scales with a fixed boundary set, not with history, so there's no dirty machinery to keep. Fog's query returns the locked set (no non-Pending membership row) and the tile's sea, its frame minus every outline, in the veil's colour so nothing shifts crossing a tier. A tile's clipped outlines and sea are stored on its first request (§3.26), the built mark inserted first with `ON CONFLICT DO NOTHING` so a concurrent build waits; only tiles up to each tier's maxzoom are kept, and the seed empties them last in its transaction. Cutting visited outlines out per request took 0.5 s at z0.
 

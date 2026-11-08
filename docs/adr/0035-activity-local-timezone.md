@@ -15,7 +15,7 @@ The server grouped activities into days by the account's own timezone (`users.ti
 - **The zone's name, never an offset or a stored local time.** Offsets change: Moscow kept summer time until 2011, sat on UTC+4 until late 2014 and has been on UTC+3 since. The tz database keeps each zone's whole history, so `started_at AT TIME ZONE timezone` gives the offset in force on the activity's own date, and an updated tz database corrects every activity at once.
 - **Looked up from the first recorded point**, before Private locations clip it, in timezone-boundary-builder's polygons loaded into PostGIS (`tz_parts`). Where no polygon covers the point (before the polygons are seeded, or for a zone the database's tz data doesn't know yet), the activity takes the account's zone.
 - **The full release with ocean zones** (`timezones-with-oceans`): the ocean zones (`Etc/GMT±N`) give a point at sea a zone; the full set rather than the `-now` variant, which merges zones whose clocks agree only today and would give an older activity the wrong offset.
-- **Seeded like the country outlines** (ADR-0034): the release zip goes into the app bucket by hand, and `seed-timezones` loads it and re-matches every activity in one transaction.
+- **Seeded like the country outlines** (`IMPLEMENTATION.md` §4.2.4): the release zip goes into the app bucket by hand, and `seed-timezones` loads it and re-matches every activity in one transaction.
 - **The account's zone still decides "today"**: the date slider's and Trends' windows end on today's date in the account's zone.
 
 ## Alternatives considered
