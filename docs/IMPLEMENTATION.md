@@ -166,7 +166,7 @@ One row: whether Satellite's imagery is offered to everyone, why not, and the us
 
 ### 4.0 The three ingest paths
 
-They differ only in how bytes arrive; from §4.1 step 2 on the code is shared (ADR-0001).
+They differ only in how bytes arrive; from §4.1 step 2 on the code is shared (`VISION.md` §4.1).
 
 ```mermaid
 flowchart LR
@@ -601,7 +601,7 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 ### 5.1 Ingest path risk, per path
 
-The paths' independence is the mitigation (ADR-0001). **Path 1** connectors: webhooks only, answering at once and enqueuing; a per-provider rate limiter shared across workers; deletion on deauthorization built with the connector (§7); and everything working with no connector. **Path 2**: degrade honestly, counting and explaining the routes Health Connect withholds. **Path 3** is fed arbitrary files: cap the size before reading the body, refuse archives (ADR-0039), and never let one bad file abort a batch.
+The paths' independence is the mitigation (`VISION.md` §4.1). **Path 1** connectors: webhooks only, answering at once and enqueuing; a per-provider rate limiter shared across workers; deletion on deauthorization built with the connector (§7); and everything working with no connector. **Path 2**: degrade honestly, counting and explaining the routes Health Connect withholds. **Path 3** is fed arbitrary files: cap the size before reading the body, refuse archives (ADR-0039), and never let one bad file abort a batch.
 
 ### 5.2 Parsing overhead
 

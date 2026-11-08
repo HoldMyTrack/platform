@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built: the Android app's list of what's on the phone to tick and send (`SPEC.md` FR-3.6, FR-3.8), Google Maps Timeline import and `.zip` and Takeout import removed, the overlap hint in place of duplicate handling on ingest (FR-3.7), and `superseded_by` gone with the copies it hid. Removes Takeout import, and supersedes the archive part of ADR-0001.
+Accepted. Built: the Android app's list of what's on the phone to tick and send (`SPEC.md` FR-3.6, FR-3.8), Google Maps Timeline import and `.zip` and Takeout import removed, the overlap hint in place of duplicate handling on ingest (FR-3.7), and `superseded_by` gone with the copies it hid.
 
 ## Context
 
@@ -21,7 +21,7 @@ Both exist to clean up after an import the user didn't choose activity by activi
 - **Fog of War shows only what's kept.** It is drawn from the account's activities and nothing else: no "fog-only" contributions from history that wasn't imported. Deleting an activity takes its fog away, so the fog stays reversible.
 - **Stories are the main feature; the Activities list stays the everyday view.** The last few days are what people look at most, so navigation and the map's opening view don't change.
 - **No guessing.** Automatic duplicate handling goes, and so does `superseded_by`. In its place is a hint: a candidate whose time overlaps a live activity is marked "overlaps *Morning walk*" in the list it's picked from, and stays unticked like everything else. Ticking it anyway makes a second activity. The user fixes a track with the edit tools. Idempotency stays (the content hash and `external_id`), since that's what makes a re-sync or a re-import safe.
-- **`.zip` and Google Takeout import are removed.** They bring in thousands of activities at once, the opposite of a gate. Getting the export is hard for a regular user, and a large one fills the single worker queue for everyone. Bulk history comes later through cloud connectors, with a picker. Path 3 still needs no one's permission (ADR-0001), through uploading single files, up to 20 at once.
+- **`.zip` and Google Takeout import are removed.** They bring in thousands of activities at once, the opposite of a gate. Getting the export is hard for a regular user, and a large one fills the single worker queue for everyone. Bulk history comes later through cloud connectors, with a picker. Path 3 still needs no one's permission (`VISION.md` §4.1), through uploading single files, up to 20 at once.
 - **Google Maps Timeline import is removed.** Its window picked by date range and mode, never a single trip, so keeping one drive meant keeping every drive in the range: a bulk import with a filter. A Timeline is mostly the routine, its tracks are a point every few minutes with no elevation, and its reader (an undocumented format, twice: in the browser and on the phone) is where endpoint trimming lived. Its trimming goes with it. The server refuses the `timeline` sync source; activities already imported stay as they are.
 
 ## Alternatives considered

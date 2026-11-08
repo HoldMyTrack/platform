@@ -77,7 +77,7 @@ Feature parity takes weeks and is not defensible; render quality and breadth of 
 
 ### 4.1 Ingest — three independent paths
 
-Each path fails differently, so no single provider can take the product down (ADR-0001).
+Each path fails differently, so no single provider can take the product down.
 
 #### Path 1 — Cloud-to-cloud integration
 

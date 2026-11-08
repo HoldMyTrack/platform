@@ -23,7 +23,7 @@ HoldMyTrack is a **modular monolith** on PostgreSQL/PostGIS, fed by three indepe
 | **Segment-rasterized** coverage, not point-sampled | 1 Hz at 40 km/h is ~11 m between fixes, gappy at fine resolution |
 | Postgres job queue, no broker | Premature at this scale, and a broker is a recurring bill a free service should not carry |
 | Privacy applied **at ingest** | Fog maps point at people's homes; render-time filtering leaks through any downstream bug — [ADR-0002](adr/0002-privacy-applied-at-ingest.md); hidden areas are user-chosen Private locations — `VISION.md` §7, `SPEC.md` FR-8.1 |
-| **Three independent ingest paths** | No single provider can revoke the product (`VISION.md` §4.1) — [ADR-0001](adr/0001-three-independent-ingest-paths.md) |
+| **Three independent ingest paths** | No single provider can revoke the product (`VISION.md` §4.1) |
 | **Planet-wide basemap**, not a regional extract | Users are everywhere; a regional extract makes a blank map the default outside one metro |
 | **Country/Region zoom tiers are live vector tiles**, not a second raster pyramid | Their cost scales with a fixed ~250-country/~4,600-region boundary set, not with a user's history — `IMPLEMENTATION.md` §4.2.4 |
 | **Heatmap stored as pass counts, drawn by the clients** | A server raster needed every tile's neighbours, baked its look into storage and blurred past z14 — [ADR-0046](adr/0046-heatmap-drawn-by-the-clients.md) |
@@ -109,8 +109,8 @@ The API, track and fog tiles and every page come from one origin through Caddy. 
 
 ## 3. Android app
 
-Path 2 for Health Connect (ADR-0001), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (`IMPLEMENTATION.md` §4.0.4): one Gradle module on the platform SDK. Its shape, key decisions, stack and what is deferred are `apps/android/docs/ARCHITECTURE.md`.
+Path 2 for Health Connect (`VISION.md` §4.1), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (`IMPLEMENTATION.md` §4.0.4): one Gradle module on the platform SDK. Its shape, key decisions, stack and what is deferred are `apps/android/docs/ARCHITECTURE.md`.
 
 ## 4. iOS app
 
-Path 2 for HealthKit (ADR-0001), and the same map viewer and GPS recording as Android, in Swift. So far a skeleton: the project, the visual language, both languages and CI (`apps/ios/docs/ROADMAP.md`). Its shape, key decisions and stack are `apps/ios/docs/ARCHITECTURE.md`.
+Path 2 for HealthKit (`VISION.md` §4.1), and the same map viewer and GPS recording as Android, in Swift. So far a skeleton: the project, the visual language, both languages and CI (`apps/ios/docs/ROADMAP.md`). Its shape, key decisions and stack are `apps/ios/docs/ARCHITECTURE.md`.

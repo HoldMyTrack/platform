@@ -11,7 +11,6 @@ Numbered in rough order of how foundational the decision is, not strictly chrono
 
 | ADR | Decision |
 | :-- | :-- |
-| [0001](0001-three-independent-ingest-paths.md) | Three independent ingest paths, none of them Strava |
 | [0002](0002-privacy-applied-at-ingest.md) | Privacy is applied at ingest, never at render |
 | [0003](0003-precomputed-raster-fog-pyramid.md) | Precomputed raster fog pyramid, not per-request geometry union or H3 |
 | [0009](0009-google-sign-in-server-side-code-flow.md) | Sign in with Google is a server-side authorization-code flow with no OAuth library, auto-linking by verified email |
