@@ -14,7 +14,6 @@ Numbered in rough order of how foundational the decision is, not strictly chrono
 | [0001](0001-three-independent-ingest-paths.md) | Three independent ingest paths, none of them Strava |
 | [0002](0002-privacy-applied-at-ingest.md) | Privacy is applied at ingest, never at render |
 | [0003](0003-precomputed-raster-fog-pyramid.md) | Precomputed raster fog pyramid, not per-request geometry union or H3 |
-| [0007](0007-in-app-gps-recording-submits-directly.md) | In-app GPS recording submits directly to the sync endpoint, not via a Health Connect/HealthKit round-trip |
 | [0009](0009-google-sign-in-server-side-code-flow.md) | Sign in with Google is a server-side authorization-code flow with no OAuth library, auto-linking by verified email |
 | [0012](0012-server-rendered-pages-react-for-the-map.md) | Every page is server-rendered HTML sharing one header; React is kept for the map page |
 | [0015](0015-identities-table-and-facebook-sign-in.md) | Sign in with Facebook, never linked by email, with identities in their own table |

@@ -219,7 +219,7 @@ A candidate on the phone covering the same time as an account activity, or anoth
 
 ### FR-3.8 In-app GPS recording (Android)
 
-The Android app records GPS-only activities on the phone; nothing reaches the server until the user ticks a recording and sends it (ADR-0007; app side `apps/android/docs/SPEC.md` FR-5).
+The Android app records GPS-only activities on the phone; nothing reaches the server until the user ticks a recording and sends it (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
 
 - Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. A type over 50 characters is refused with the reason.
 - It is the only path that sets a name and description at ingest.

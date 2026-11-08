@@ -52,7 +52,7 @@ object HoldMyTrackApi {
 
     /** The `source` values this app posts to `POST /v1/sync/activities` — Health Connect
      *  sync (`sync/SyncRunner.kt`), in-app GPS recording (`recording/RecordingActivity.kt`,
-     *  `docs/adr/0007-in-app-gps-recording-submits-directly.md`). iOS's own is `"healthkit"`; an
+     *  `docs/IMPLEMENTATION.md` §4.0.4). iOS's own is `"healthkit"`; an
      *  uploaded file has its own endpoint ([uploadActivityFile]). */
     const val SOURCE_HEALTH_CONNECT = "healthconnect"
     const val SOURCE_RECORDED = "recorded"

@@ -192,7 +192,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 ## Phase 7d — Recording
 
-`apps/android/docs/SPEC.md` FR-5.1–FR-5.2 (ADR-0007).
+`apps/android/docs/SPEC.md` FR-5.1–FR-5.2 (root `docs/IMPLEMENTATION.md` §4.0.4).
 
 - [ ] **7d.1 Recording**
   - `CLLocationManager` with the `location` background mode, `allowsBackgroundLocationUpdates` and the background indicator, on When In Use access only; precise location required (ask for temporary full accuracy when reduced). Pause and resume by tap, stop by a 2-second hold, the map showing only the recording.

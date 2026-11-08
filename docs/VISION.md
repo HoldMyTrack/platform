@@ -99,7 +99,7 @@ Native apps reading the platform health store: **Apple Watch (HealthKit)** and *
 
 #### Casual in-app GPS recording — mobile-only, and not a fourth path
 
-The mobile app can also originate an activity, for someone with no watch running who doesn't want a separate tracker for a walk or drive: a GPS-only recording that, on stop, goes through the same ingest pipeline as every other source (ADR-0007). It depends on no provider, so it is a convenience, and it stays GPS only (§1.1).
+The mobile app can also originate an activity, for someone with no watch running who doesn't want a separate tracker for a walk or drive: a GPS-only recording that, on stop, goes through the same ingest pipeline as every other source (`IMPLEMENTATION.md` §4.0.4). It depends on no provider, so it is a convenience, and it stays GPS only (§1.1).
 
 ### 4.2 Core Features
 

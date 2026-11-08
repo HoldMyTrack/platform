@@ -109,7 +109,7 @@ The API, track and fog tiles and every page come from one origin through Caddy. 
 
 ## 3. Android app
 
-Path 2 for Health Connect (ADR-0001), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (ADR-0007): one Gradle module on the platform SDK. Its shape, key decisions, stack and what is deferred are `apps/android/docs/ARCHITECTURE.md`.
+Path 2 for Health Connect (ADR-0001), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (`IMPLEMENTATION.md` §4.0.4): one Gradle module on the platform SDK. Its shape, key decisions, stack and what is deferred are `apps/android/docs/ARCHITECTURE.md`.
 
 ## 4. iOS app
 
