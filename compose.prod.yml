@@ -33,7 +33,7 @@ services:
     # a query for an account storing one would fail. The server stores only current names
     # (IMPLEMENTATION.md §4.9). Pinned by digest, since the tag is rebuilt upstream: a new one
     # changes the OS or glibc under the data, so it moves only by docs/DEPLOY.md §9.
-    image: postgis/postgis:16-3.6@sha256:bdd9351e706076260ac21552cd9c1bed01582e69a902b1b5843f83fa0b4c5a9c
+    image: postgis/postgis:16-3.6@sha256:d07ce3f06f657b6516c7511412232e97174d7e9dcf4c9fe520109b682b44a201
     restart: unless-stopped
     # Postgres's parallel queries share memory through /dev/shm, which Docker caps at 64 MB: a
     # parallel hash join over the spots or boundary tables would fail past it.
