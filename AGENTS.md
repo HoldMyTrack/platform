@@ -8,7 +8,7 @@ HoldMyTrack is a free, open-source platform that keeps the outdoor journeys peop
 - No health data: no heart rate or other body signal is read, stored or shown (ADR-0017).
 - Every source is a gate: only what the user ticks comes in, nothing starts ticked, and no heuristic changes or hides an activity on their behalf (ADR-0039).
 - No social graph: no feed, follows or public pages (`VISION.md` §5, Milestone 3).
-- Every account has every feature, with no tiers (ADR-0031).
+- Every account has every feature, with no tiers (`VISION.md` §6.1).
 
 ## Documentation rules
 

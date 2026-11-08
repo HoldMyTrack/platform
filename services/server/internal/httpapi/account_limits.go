@@ -14,7 +14,7 @@ import (
 // The per-account limits (ADR-0043, IMPLEMENTATION.md §5.7): how much one account may keep,
 // beside the rate limits on how fast it may add (rate_limits.go). Both sit far above anything a
 // person records, so only a script or a runaway import ever meets them, and one limit holds for
-// every account: a raised one for some would be a tier (ADR-0031).
+// every account: a raised one for some would be a tier (VISION.md §6.1).
 const (
 	// maxActivitiesPerAccount is about nine activities a day for fifteen years.
 	maxActivitiesPerAccount = 50_000

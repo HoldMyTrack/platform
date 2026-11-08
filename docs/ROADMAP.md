@@ -8,7 +8,7 @@ The remaining work toward the product `VISION.md` describes, by its §5 mileston
 
 ## Milestone 1 — MVP
 
-The current milestone (`VISION.md` §5, ADR-0031). The product is shipped and deployable (`SPEC.md` FR-1 to FR-17); what's left is what the public launch needs.
+The current milestone (`VISION.md` §5). The product is shipped and deployable (`SPEC.md` FR-1 to FR-17); what's left is what the public launch needs.
 
 ### Before launch
 

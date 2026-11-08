@@ -56,7 +56,7 @@ erDiagram
 
 ### 3.1 `users`
 
-No `tier` column (ADR-0031). The demo account is a row recognized by its fixed id (§4.10). `password_hash` is NULL for an account that signs in only through `user_identities`. `map_version` only goes up (§4.2.6). `is_admin` is written only by `set-admin` (§4.20). `deleted_at` marks a closed account until the purge deletes the row (§4.28). A NULL `country` means Settings was never saved, which is the first-run gate (FR-1.7); a NULL `locale` means automatic.
+No `tier` column (`VISION.md` §6.1). The demo account is a row recognized by its fixed id (§4.10). `password_hash` is NULL for an account that signs in only through `user_identities`. `map_version` only goes up (§4.2.6). `is_admin` is written only by `set-admin` (§4.20). `deleted_at` marks a closed account until the purge deletes the row (§4.28). A NULL `country` means Settings was never saved, which is the first-run gate (FR-1.7); a NULL `locale` means automatic.
 
 ### 3.3 `activities`
 
