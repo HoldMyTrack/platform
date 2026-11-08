@@ -20,6 +20,7 @@ final class AppFlow {
             token: { token.get() },
             onOutdated: { [weak self] in Task { @MainActor in self?.showUpdate() } }
         )
+        MapNetwork.install(api: api)
     }
 
     /// Shows the screen the session's route calls for; a restored token is checked first.
@@ -33,9 +34,9 @@ final class AppFlow {
         case .verifyEmail:
             if let account = store.confirmed { setRoot(VerifyEmailViewController(flow: self, email: account.email)) }
         case .onboarding, .home:
-            // The first run's Settings page comes with the site's pages (ROADMAP.md, phase 6),
-            // the map with phase 7a; until then both are the account's placeholder.
-            if let account = store.confirmed { setRoot(HomeViewController(flow: self, account: account)) }
+            // The first run's Settings page comes with the site's pages (ROADMAP.md, phase 6);
+            // until then the first run goes to the map too.
+            if let account = store.confirmed { setRoot(MainTabBarController(flow: self, account: account)) }
         }
     }
 

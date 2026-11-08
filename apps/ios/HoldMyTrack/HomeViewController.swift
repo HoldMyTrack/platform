@@ -1,9 +1,9 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The signed-in screen until the map takes its place (apps/ios/docs/ROADMAP.md, phase 7a): who
-/// is signed in, Sign out, the build and whether the API answers, which is how a Debug build shows
-/// it reached a dev stack.
+/// The You tab until it gets its own screen (apps/ios/docs/ROADMAP.md, 7e.1): who is signed in,
+/// Sign out, the build and whether the API answers, which is how a Debug build shows it reached a
+/// dev stack.
 final class HomeViewController: UIViewController {
     private unowned let flow: AppFlow
     private let account: Account

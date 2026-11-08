@@ -23,6 +23,17 @@
         }
       }
     },
+    "Bike paths" : {
+      "comment" : "Layers menu: the bike path layer.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Велодорожки"
+          }
+        }
+      }
+    },
     "Checking your session…" : {
       "comment" : "Shown while the server confirms a session kept from an earlier launch.",
       "localizations" : {
@@ -166,6 +177,28 @@
         }
       }
     },
+    "Find my location" : {
+      "comment" : "Map: the button that flies to the phone's position.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Моё местоположение"
+          }
+        }
+      }
+    },
+    "Fog" : {
+      "comment" : "Map: the Fog of War mode.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Туман"
+          }
+        }
+      }
+    },
     "Forgot password?" : {
       "comment" : "Sign-in screen: opens the web's password reset page.",
       "localizations" : {
@@ -173,6 +206,83 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Забыли пароль?"
+          }
+        }
+      }
+    },
+    "Heatmap" : {
+      "comment" : "Map: the Heatmap mode.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тепловая"
+          }
+        }
+      }
+    },
+    "HoldMyTrack needs location access to show where you are. Turn it on in Settings." : {
+      "comment" : "Map: Find my location with location access refused.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack нужен доступ к местоположению, чтобы показать, где вы. Включите его в Настройках."
+          }
+        }
+      }
+    },
+    "Layers" : {
+      "comment" : "Map: the Layers menu.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Слои"
+          }
+        }
+      }
+    },
+    "Map" : {
+      "comment" : "Tab bar: the map.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Карта"
+          }
+        }
+      }
+    },
+    "Mountain bike trails" : {
+      "comment" : "Layers menu: the mountain bike trail layer.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Трассы для горных велосипедов"
+          }
+        }
+      }
+    },
+    "Normal" : {
+      "comment" : "Map: the Normal mode.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обычный"
+          }
+        }
+      }
+    },
+    "Nothing on your map yet. Upload a GPX, FIT or TCX file from the web to see it here." : {
+      "comment" : "Map: an account with no activity on the map.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "На карте пока ничего нет. Загрузите файл GPX, FIT или TCX на сайте, чтобы увидеть его здесь."
           }
         }
       }
@@ -188,6 +298,17 @@
         }
       }
     },
+    "Paths" : {
+      "comment" : "Layers menu: the heading over the path layers.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тропы и дорожки"
+          }
+        }
+      }
+    },
     "Resend verification email" : {
       "comment" : "Verify email screen: sends the confirmation link again.",
       "localizations" : {
@@ -195,6 +316,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить письмо ещё раз"
+          }
+        }
+      }
+    },
+    "Roads" : {
+      "comment" : "Layers menu: the basemap's roads.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Дороги"
+          }
+        }
+      }
+    },
+    "Satellite" : {
+      "comment" : "Layers menu: satellite imagery under the map.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Спутник"
+          }
+        }
+      }
+    },
+    "Shared paths" : {
+      "comment" : "Layers menu: the shared path layer.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Велопешеходные дорожки"
+          }
+        }
+      }
+    },
+    "Show layers" : {
+      "comment" : "Layers menu: the switch over every picked layer.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показывать слои"
           }
         }
       }
@@ -243,6 +408,50 @@
         }
       }
     },
+    "Stories" : {
+      "comment" : "Tab bar: Stories.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Истории"
+          }
+        }
+      }
+    },
+    "Stories come with the Activities panel." : {
+      "comment" : "Stories tab: its screen is still to come.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Истории появятся вместе с панелью занятий."
+          }
+        }
+      }
+    },
+    "Sync" : {
+      "comment" : "Tab bar: Sync.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Синхр."
+          }
+        }
+      }
+    },
+    "Sync history comes with the site's pages." : {
+      "comment" : "Sync tab: its screen is still to come.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "История синхронизации появится вместе со страницами сайта."
+          }
+        }
+      }
+    },
     "The demo account" : {
       "comment" : "Home screen: who is signed in, for the shared demo account.",
       "localizations" : {
@@ -250,6 +459,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Демо-аккаунт"
+          }
+        }
+      }
+    },
+    "The map can't reach its tile server. Your network may be blocking it." : {
+      "comment" : "Map: no basemap tile arrived.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Карта не может связаться со своим сервером. Возможно, его блокирует ваша сеть."
+          }
+        }
+      }
+    },
+    "The map couldn't load." : {
+      "comment" : "Map: the map's documents couldn't be fetched.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить карту."
           }
         }
       }
@@ -331,6 +562,17 @@
         }
       }
     },
+    "You" : {
+      "comment" : "Tab bar: You.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы"
+          }
+        }
+      }
+    },
     "Your Facebook account didn't share an email address, and HoldMyTrack needs one. Try again and allow access to your email, or sign up with email and password." : {
       "comment" : "Sign-in screen: Facebook shared no email.",
       "localizations" : {
@@ -349,6 +591,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Почта ещё не подтверждена. Перейдите по ссылке из письма и нажмите «Продолжить»."
+          }
+        }
+      }
+    },
+    "Your map is still being updated, so Fog and Heatmap may be incomplete for now. They'll refresh on their own." : {
+      "comment" : "Map: coverage is still being redrawn.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Карта ещё обновляется, поэтому Туман и Тепловая карта пока могут быть неполными. Они обновятся сами."
           }
         }
       }

@@ -14,7 +14,7 @@ What the iOS app does, as a user can rely on it: where it differs from the Andro
 
 ### 1.2 Scope
 
-Every built feature of the app: so far signing in and out, email verification and the Update screen. Signed in, it shows the account, the build and whether the API answers, which the map replaces (`ROADMAP.md`, phase 7a).
+Every built feature of the app: so far signing in and out, email verification, the Update screen and the map. The You tab shows the account, the build and whether the API answers until it gets its own screen (`ROADMAP.md`, 7e.1).
 
 ## 3. FR-1 — Authentication & Session
 
@@ -34,6 +34,22 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.4, FR-1.8), exce
 
 - It stays over every screen for the rest of the run; iOS has no Back to close the app.
 - Until the app has an App Store listing it has no Update button.
+
+## 4. FR-2 — Map Visualization
+
+As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.5, FR-2.9), except as below.
+
+### FR-2.2 Three map modes: Normal, Fog of War, Heatmap
+
+- The Layers menu has no Spot categories yet (`ROADMAP.md`, 7b.3), and there is no recording to hide the modes.
+
+### FR-2.3 Initial camera framing
+
+- An account with nothing on the map is pointed to uploading a file on the web, until the app uploads (`ROADMAP.md`, 7e.4).
+
+### FR-2.9 The bottom bar
+
+- Map, Stories, Sync and You, with no record button yet. Stories and Sync say what comes with them, and You shows the account and Sign out.
 
 ## 8. Non-Functional Requirements (summary)
 
