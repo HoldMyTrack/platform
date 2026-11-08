@@ -4,12 +4,6 @@ Open defects in shipped functionality. A fixed entry is deleted, with any lastin
 
 ---
 
-### The overlap hint misses a whole copy of a split activity
-
-The overlap hint (`SPEC.md` FR-3.7, `IMPLEMENTATION.md` §4.6) marks a candidate whose time range overlaps one of the account's activities by at least 80% of the longer one. After a split (`SPEC.md` FR-5.17, `IMPLEMENTATION.md` §4.7.8), a whole copy of the recording from a second source, such as a Health Connect session of a ride uploaded from the watch's file and then split, overlaps each part by far less, so its row in the Android app's Sync tab isn't marked. Ticked, it lands next to the parts: its time is counted twice in totals and its route drawn twice into the Heatmap. A copy of just one part is marked.
-
-- [ ] In `ingest.Overlaps`, compare a span against a split group as one span (the group's earliest start to its latest end) as well as against each part, and answer with the group's first part.
-
 ### Photo prep in Chromium decodes a large PNG at full size
 
 `preparePhoto` (`apps/web/src/ui/photoPrep.ts`, `IMPLEMENTATION.md` §4.27) avoids a full-size decode of a large photo in Chromium only for a JPEG, which Chromium decodes at a reduced scale when the `<img>` is drawn onto the 2048 px canvas. A PNG gets no scaled decode there: `ImageDecoder` hands back the whole frame, and the `<img>` is decoded whole too. A 192 MP PNG peaked at about 1 GB in desktop Chromium and 813 MB in Chrome on a Pixel 10a. Camera, panorama and drone images are JPEGs, so this needs a very large PNG, such as an exported or stitched picture. WebP and AVIF were not measured.

@@ -214,7 +214,7 @@ The Android app sends the Health Connect sessions and recordings (FR-3.8) the us
 A candidate on the phone covering the same time as an account activity, or another candidate, is marked so the user can leave one unticked. A hint only: nothing is matched or hidden on ingest (ADR-0039).
 
 - Two overlap when their times overlap for at least 80% of the longer one. Type and distance aren't compared, since sources disagree. Touching, a small part of the other, and no duration don't overlap.
-- An activity is compared by the time it was recorded over, even where Private locations hide its ends or all of it. A split part covers only its own stretch.
+- An activity is compared by the time it was recorded over, even where Private locations hide its ends or all of it. A split part covers only its own stretch, so a whole copy of a split activity overlaps no part and isn't marked.
 - `POST /v1/activities/overlaps` takes up to 5,000 spans and answers each with the account's own activity it overlaps most.
 
 ### FR-3.8 In-app GPS recording (Android)
