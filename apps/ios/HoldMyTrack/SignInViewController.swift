@@ -227,7 +227,8 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         let button = ASAuthorizationAppleIDButton(authorizationButtonType: .continue, authorizationButtonStyle: style)
         button.cornerRadius = DesignTokens.Radius.md
         button.accessibilityIdentifier = "apple"
-        button.addAction(UIAction { [weak self] _ in self?.appleSignIn() }, for: .primaryActionTriggered)
+        // A UIControl, not a UIButton: it sends touchUpInside, never primaryActionTriggered.
+        button.addAction(UIAction { [weak self] _ in self?.appleSignIn() }, for: .touchUpInside)
         button.translatesAutoresizingMaskIntoConstraints = false
         apple.addSubview(button)
         NSLayoutConstraint.activate([

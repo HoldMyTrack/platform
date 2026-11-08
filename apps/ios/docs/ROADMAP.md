@@ -126,7 +126,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Cold start: no signed-in layer until `GET /v1/auth/me` answers; only `401` signs out (`apps/android/docs/SPEC.md` FR-1.2).
   - Done when: the session rules are pure functions with tests, and a restart with the server down keeps the session.
 - [ ] **5.2 Sign-in screen**
-  - Built: email and password, sign up, the demo, Sign in with Apple through `ASAuthorizationAppleIDButton` and phase 2.2's endpoint, Google and Facebook through `ASWebAuthenticationSession` and the handoff (D7), and Forgot password in `SFSafariViewController`. Left: Sign in with Apple's first run, once 0.2 has registered the identifiers and key.
+  - Built: email and password, sign up, the demo, Sign in with Apple through `ASAuthorizationAppleIDButton` and phase 2.2's endpoint, Google and Facebook through `ASWebAuthenticationSession` and the handoff (D7), and Forgot password in `SFSafariViewController`. Apple and Google complete against a dev stack (2026-11-08); left: Facebook, and every way in on a real device against production.
   - Done when: each way in reaches the map on a real device against production.
 - [x] **5.3 Verification, sign-out and Update**
   - The "check your email" screen (`apps/android/docs/SPEC.md` FR-1.4), sign-out (`apps/android/docs/SPEC.md` FR-1.3), and the Update screen on any `426` (`apps/android/docs/SPEC.md` FR-1.8), which opens the App Store listing.
