@@ -2,9 +2,9 @@ import CryptoKit
 import Foundation
 
 /// Google's and Facebook's sign-in, run as the server's own browser flow in
-/// ASWebAuthenticationSession (apps/ios/docs/ARCHITECTURE.md §1, D7; root docs/IMPLEMENTATION.md
-/// §4.9): started with the S256 challenge of a verifier only the app holds, it ends at
-/// `holdmytrack://oauth?code=…`, and only that verifier redeems the code.
+/// ASWebAuthenticationSession (decision D7 in apps/ios/docs/ARCHITECTURE.md §1; the flow is
+/// root docs/IMPLEMENTATION.md §4.9): started with the S256 challenge of a verifier only the app
+/// holds, it ends at `holdmytrack://oauth?code=…`, and only that verifier redeems the code.
 public enum OAuth {
     public enum Provider: String, Sendable, CaseIterable {
         case google, facebook

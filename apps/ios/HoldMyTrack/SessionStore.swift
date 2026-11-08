@@ -2,8 +2,8 @@ import Foundation
 import HoldMyTrackCore
 import Security
 
-/// The session the phone keeps between launches, in the Keychain (apps/ios/docs/ARCHITECTURE.md
-/// §1, D8), and the account the server confirmed for it this run.
+/// The session the phone keeps between launches, in the Keychain (decision D8 in
+/// apps/ios/docs/ARCHITECTURE.md §1), and the account the server confirmed for it this run.
 ///
 /// The Keychain outlives an uninstall, so the first launch of an install, told apart by a
 /// UserDefaults marker that an uninstall does remove, deletes whatever an earlier install left.

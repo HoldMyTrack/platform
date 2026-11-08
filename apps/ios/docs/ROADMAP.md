@@ -80,7 +80,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Set `hmt_app` to `android` or `ios` and let a page say the platform's words: Health Connect or Health, Google Play or the App Store. Audit Help, About, Privacy and the in-app pages for Android-only wording.
   - Done when: each in-app page read with `hmt_app=ios` has no Android wording, and the public cache key still separates the values.
 - [ ] **2.4 The native OAuth round trip from iOS**
-  - Check that Google's and Facebook's flows complete in `ASWebAuthenticationSession` with `holdmytrack://oauth` as callback, against a dev stack and production. No server change is expected; a needed one is made here.
+  - Check that Google's and Facebook's flows complete in `ASWebAuthenticationSession` with `holdmytrack://oauth` as callback, against a dev stack and production. No server change was needed. Google completes against a dev stack (2026-11-08); left: Facebook, and both against production.
   - Done when: both providers return a code that `POST /v1/auth/handoff` redeems.
 
 ## Phase 3 — Project skeleton
