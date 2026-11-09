@@ -4,7 +4,7 @@ import { refreshTrackLayer } from './tracks';
 import type { ActivityQuery } from '../api';
 
 export interface DataRefreshInputs {
-  activityQuery: ActivityQuery;
+  tracksQuery: ActivityQuery;
   reloadActivities: () => void;
   reloadDays: () => void;
   reloadStory: () => void;
@@ -39,10 +39,10 @@ export interface DataRefresh {
 /** What the map reads again when activities change under it. The header's Upload menu
  *  (static/upload.js) says when an upload or import has landed (`hmt:imports-changed`). */
 export function useDataRefresh(map: MapLibreMap | null, inputs: DataRefreshInputs): DataRefresh {
-  const { activityQuery, reloadActivities, reloadDays, reloadStory, watchCoverage, bumpMetrics } = inputs;
+  const { tracksQuery, reloadActivities, reloadDays, reloadStory, watchCoverage, bumpMetrics } = inputs;
   const refreshTracks = useCallback(() => {
-    if (map) refreshTrackLayer(map, activityQuery);
-  }, [map, activityQuery]);
+    if (map) refreshTrackLayer(map, tracksQuery);
+  }, [map, tracksQuery]);
 
   const afterImport = useCallback(() => {
     refreshTracks();

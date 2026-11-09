@@ -1,12 +1,14 @@
 /**
  * The map's cross-feature state and the rules between its parts, as a reducer: which activities
- * the list and the tracks show (a date range or a Story), the selection over them, the mode, and
- * whether the next loaded list moves the camera. Features read it and change it only through
- * events; side effects (flights, the URL) stay with them. Android: `map/MapSession.kt`; both run
- * `testdata/client-rules`.
+ * the list and the tracks show (the area and the Dates filter, or a Story), the selection over
+ * them, the mode, and whether the camera moves onto what's shown next. Features read it and change
+ * it only through events; side effects (flights, the URL) stay with them. Android's
+ * `map/MapSession.kt` keeps the date range the web replaced (docs/SPEC.md FR-6); the cases both
+ * share are `testdata/client-rules`'s `panelState`, the web's own `webSession`.
  */
+import type { BBox } from '../api';
 import type { DistanceRange } from '../ui/activityFacets';
-import type { DateRange } from '../ui/dateMath';
+import { ALL_TIME, type DateFilter } from '../ui/dateFilter.ts';
 import type { MapMode } from './mapMode';
 import { toggled, toggledVisibility, toolbarTarget, withoutIds } from './selection.ts';
 
@@ -22,13 +24,13 @@ export interface Selection {
 }
 
 export interface MapSession {
-  /** The date range; null until its default is known. */
-  range: DateRange | null;
-  /** The user picked [range]; until then the default may replace it. */
-  userPicked: boolean;
-  /** The open Story: the list and tracks are its activities, [range] kept for when it closes. */
+  /** The Dates filter (FR-5.20); all time until set. */
+  dates: DateFilter;
+  /** The map view the list was last asked about (FR-5.19); null until the opening view settles. */
+  area: BBox | null;
+  /** The open Story: the list and tracks are its activities, [dates] and [area] kept for when it closes. */
   storyId: string | null;
-  /** The next list loaded for a new query moves the camera onto what it draws. */
+  /** The camera moves onto what's shown next: a Story's list, or what Dates matches. */
   flyRequest: boolean;
   selection: Selection;
   mode: MapMode;
@@ -37,13 +39,12 @@ export interface MapSession {
 }
 
 export type MapSessionEvent =
-  /** The slider picked a range: a new set of rows, so the selection resets (docs/SPEC.md FR-6.6). */
-  | { type: 'rangePicked'; range: DateRange }
-  /** The default range re-derived; ignored once the user has picked one, and held while the Edit
-   *  window is open, since sliding past the edited activity would close it. */
-  | { type: 'defaultRange'; range: DateRange; editOpen?: boolean }
-  /** "View on map" for an activity outside the range: its own day, picked, without the range's
-   *  flight, since the focus flies to the activity. */
+  /** Dates changed (dateFilter.ts's setDateFilter). The selection stays, as on any reload; the
+   *  list then drops what left it (`listLoaded`). [fly] moves the camera onto the matches once. */
+  | { type: 'datesSet'; dates: DateFilter; fly: boolean }
+  /** The list is asked about this view: a move from zoom 10, the button, or a flight's end. */
+  | { type: 'areaLoaded'; area: BBox }
+  /** "View on map" for an activity not listed: Dates on its own day, and the camera onto it. */
   | { type: 'dayViewed'; day: string }
   | { type: 'storyEntered'; id: string }
   | { type: 'storyExited' }
@@ -58,7 +59,7 @@ export type MapSessionEvent =
   | { type: 'typeToggled'; activityType: string }
   | { type: 'distanceSet'; filter: DistanceRange | null }
   | { type: 'filtersReset' }
-  /** A list was read for the range or Story shown: a row it no longer has leaves the selection. */
+  /** A list was read for the area or Story shown: a row it no longer has leaves the selection. */
   | { type: 'listLoaded'; ids: Iterable<string> }
   /** Activities left the account (deleted, or taken out of the open Story): their ids leave the selection. */
   | { type: 'activitiesRemoved'; ids: Iterable<string>; unfocusOnly?: boolean };
@@ -68,22 +69,27 @@ export function emptySelection(): Selection {
 }
 
 export function initialSession(storyId: string | null): MapSession {
-  return { range: null, userPicked: false, storyId, flyRequest: false, selection: emptySelection(), mode: 'normal', modeSnapshot: null };
+  return { dates: ALL_TIME, area: null, storyId, flyRequest: false, selection: emptySelection(), mode: 'normal', modeSnapshot: null };
+}
+
+/** Two boxes the same to about a metre: a view the list was already asked about. */
+function sameArea(a: BBox | null, b: BBox): boolean {
+  return a !== null && a.every((v, i) => Math.abs(v - (b[i] ?? NaN)) < 1e-5);
 }
 
 export function mapSessionReducer(state: MapSession, event: MapSessionEvent): MapSession {
   const select = (selection: Partial<Selection>): MapSession => ({ ...state, selection: { ...state.selection, ...selection } });
   switch (event.type) {
-    case 'rangePicked':
-      return { ...state, range: event.range, userPicked: true, flyRequest: true, selection: emptySelection() };
-    case 'defaultRange':
-      return state.userPicked || event.editOpen ? state : { ...state, range: event.range };
+    case 'datesSet':
+      return { ...state, dates: event.dates, flyRequest: event.fly && state.storyId === null };
+    case 'areaLoaded':
+      return sameArea(state.area, event.area) ? state : { ...state, area: event.area };
     case 'dayViewed':
-      return { ...mapSessionReducer(state, { type: 'rangePicked', range: { from: event.day, to: event.day } }), flyRequest: false };
+      return mapSessionReducer(state, { type: 'datesSet', dates: { after: event.day, before: event.day }, fly: true });
     case 'storyEntered':
       return { ...state, storyId: event.id, flyRequest: true, selection: emptySelection() };
     case 'storyExited':
-      // The list returns to the date range; the camera stays.
+      // The list returns to the area and Dates; the camera stays.
       return { ...state, storyId: null, flyRequest: false, selection: emptySelection() };
     case 'flyConsumed':
       return state.flyRequest ? { ...state, flyRequest: false } : state;

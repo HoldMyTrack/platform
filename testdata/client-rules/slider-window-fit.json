@@ -1,5 +1,6 @@
 {
   "rule": "sliderWindowFit",
+  "clients": ["android", "ios"],
   "description": "Where a window of windowDays over count loaded days, its left edge at left, moves to show the days first..last (indices): as little as it takes; for a run longer than the window, its start moving back (dir -1) or its end moving on (dir 1). Clamped to 0..count - windowDays.",
   "cases": [
     {"name": "already in view: the window stays", "input": {"count": 100, "windowDays": 15, "left": 50, "first": 55, "last": 60, "dir": 1}, "expected": 50},

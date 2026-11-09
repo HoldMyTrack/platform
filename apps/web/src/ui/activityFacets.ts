@@ -2,9 +2,9 @@ import type { Activity } from '../api';
 
 /**
  * The TYPE and DISTANCE filters are pure client-side facets
- * over the activities already fetched for the current date range — no backend involvement,
- * since §4.7's list endpoint doesn't paginate and the panel always holds the full range's
- * rows already. "Reset filters" is instant for the same reason: there is nothing to refetch.
+ * over the activities already fetched (the web's area, the apps' date range) — no backend
+ * involvement, since §4.7's list endpoint doesn't paginate and the panel always holds every
+ * row already. "Reset filters" is instant for the same reason: there is nothing to refetch.
  * Android's `ActivityFacets.kt` runs the same cases, `testdata/client-rules`' `distance-bounds`,
  * `distance-filter`, `type-facets` and `passes-filters`.
  */
@@ -19,7 +19,7 @@ export interface TypeFacet {
   count: number;
 }
 
-/** The real min/max distance across the range's rows, or null when none have a distance at
+/** The real min/max distance across the fetched rows, or null when none have a distance at
  *  all — the slider has nothing to bound itself by in that case. A private activity (FR-8.1)
  *  counts as having none: its stored 0 is no track, not a zero-length one. */
 export function distanceBounds(activities: Activity[]): DistanceRange | null {

@@ -3,7 +3,6 @@
 // the types from the imported .ts modules itself.
 import { basemapStatus } from '../src/map/basemapStatus.ts';
 import { satelliteLook, satelliteStatus } from '../src/map/satelliteStatus.ts';
-import { defaultRange } from '../src/map/defaultRange.ts';
 import { openingView } from '../src/map/openingView.ts';
 import { areaLoad } from '../src/map/areaLoad.ts';
 import { dateFilterBounds, dateFilterLabel, setDateFilter } from '../src/ui/dateFilter.ts';
@@ -17,8 +16,6 @@ import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts'
 import { distanceParts, durationParts, totalDistanceParts } from '../src/ui/formatParts.ts';
 import { fractionAt, photoTrack, pointAt, startFraction } from '../src/ui/photoTrack.ts';
 import { clampView, fitSize, panBy, zoomAt } from '../src/ui/photoZoom.ts';
-import { shiftRange } from '../src/ui/rangeShift.ts';
-import { sliderBoundaries, sliderLayout, sliderMoveKnob, sliderPanLand, sliderTicks, sliderWindowFit } from '../src/ui/sliderRules.ts';
 import { activityTimeZone } from '../src/ui/timeZone.ts';
 import { boldTracks, invertedChecks, toggledVisibility, toolbarTarget } from '../src/map/selection.ts';
 import { statsCardPlacement, statsOffered } from '../src/map/exportStats.ts';
@@ -53,7 +50,6 @@ export const rules = {
     const steps = shown.map(() => ({ anchor: 'shared' }));
     return nextStep(steps, from, dir, (step) => shown[steps.indexOf(step)]);
   },
-  defaultRange: ({ visibleDays, earliest, today }) => defaultRange(visibleDays.map((date) => ({ date })), earliest ?? null, today),
   pendingCheck: ({ listed, awaiting, stillPending }) => {
     const watched = pendingWatched(listed, new Set(awaiting));
     return { watched, moved: pendingMoved(watched, stillPending) };
@@ -71,7 +67,6 @@ export const rules = {
   targetVisibility: ({ hidden, target }) => sorted(toggledVisibility(new Set(hidden), new Set(target))),
   photoScope: ({ mode, editWindowIds, focused, storyId }) => photoScopeFor(mode, editWindowIds ?? null, focused ?? null, storyId ?? null),
   photoGroup: ({ photos }) => photoGroupAction(photos),
-  rangeShift: ({ days, hasEarlier, range, dir }) => shiftRange(days, hasEarlier, range, dir),
   distanceBounds: ({ activities }) => distanceBounds(activities),
   distanceFilter: ({ bounds, current, knob, value }) => nextDistanceFilter(bounds, current, knob, value),
   typeFacets: ({ activities, distanceFilter }) => typeFacets(activities, distanceFilter ?? null),
@@ -127,24 +122,17 @@ export const rules = {
       distanceFilter: next.distanceFilter,
     };
   },
-  sliderLayout: ({ width, finePointer }) => sliderLayout(width, finePointer),
-  sliderBoundaries: ({ days, canPanEarlier, canPanLater, range }) => sliderBoundaries({ days, canPanEarlier, canPanLater }, range),
-  sliderMoveKnob: ({ days, canPanEarlier, canPanLater, range, knob, boundary }) =>
-    sliderMoveKnob({ days, canPanEarlier, canPanLater }, range, knob, boundary),
-  sliderTicks: ({ days }) => sliderTicks(days),
-  sliderPanLand: ({ days, range, start, end }) => sliderPanLand(days, range, start, end),
-  sliderWindowFit: ({ count, windowDays, left, first, last, dir }) => sliderWindowFit(count, windowDays, left, first, last, dir),
-  session: ({ state, event }) => {
+  webSession: ({ state, event }) => {
     const start = {
       ...initialSession(state.storyId ?? null),
-      range: state.range ?? null,
-      userPicked: state.userPicked ?? false,
+      dates: { after: state.dates?.after ?? null, before: state.dates?.before ?? null },
+      area: state.area ?? null,
       selection: { ...emptySelection(), checked: new Set(state.checked ?? []), hidden: new Set(state.hidden ?? []), excludedTypes: new Set(state.excludedTypes ?? []) },
     };
     const next = mapSessionReducer(start, event);
     return {
-      range: next.range,
-      userPicked: next.userPicked,
+      dates: next.dates,
+      area: next.area,
       ...(next.storyId !== null && { storyId: next.storyId }),
       checked: sorted(next.selection.checked),
       hidden: sorted(next.selection.hidden),

@@ -29,7 +29,7 @@ export interface MapLayersInputs {
   editingTrack: boolean;
   paths: BikePathOverlays;
   spotsShown: readonly SpotCategory[];
-  activityQuery: ActivityQuery;
+  tracksQuery: ActivityQuery;
   mapHiddenIds: ReadonlySet<string>;
   /** The tracks drawn bold (selection.ts's boldTracks). */
   boldIds: readonly string[];
@@ -43,12 +43,12 @@ export interface MapLayersInputs {
  * tracks' query between loads. A theme change swaps the style in place.
  */
 export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): void {
-  const { initialFlavor, flavor, satellite, satelliteLook, roads, mode, editingTrack, paths, spotsShown, activityQuery, mapHiddenIds, boldIds, bands } = inputs;
+  const { initialFlavor, flavor, satellite, satelliteLook, roads, mode, editingTrack, paths, spotsShown, tracksQuery, mapHiddenIds, boldIds, bands } = inputs;
 
   // Points the tracks source at the new query, as a new URL.
   useEffect(() => {
-    if (map) refreshTrackLayer(map, activityQuery);
-  }, [map, activityQuery]);
+    if (map) refreshTrackLayer(map, tracksQuery);
+  }, [map, tracksQuery]);
 
   const reattach = useCallback(
     (instance: MapLibreMap) => {
@@ -62,7 +62,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
         satellite: satelliteLook,
         toggles: { ...state.toggles, ...paths },
         vars: { ...state.vars, hidden: [...mapHiddenIds], focused: [...boldIds] },
-        queries: { ...state.queries, tracks: trackQuery(activityQuery) },
+        queries: { ...state.queries, tracks: trackQuery(tracksQuery) },
       });
       attachTrackInteractivity(instance);
       // Spots last, above the basemap's labels too (spots.ts).
@@ -73,7 +73,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
       // The band source is recreated empty.
       if (bands) setTrackBands(instance, bands);
     },
-    [flavor, satellite, satelliteLook, roads, mode, editingTrack, paths, spotsShown, mapHiddenIds, activityQuery, bands, boldIds],
+    [flavor, satellite, satelliteLook, roads, mode, editingTrack, paths, spotsShown, mapHiddenIds, tracksQuery, bands, boldIds],
   );
 
   useEffect(() => {

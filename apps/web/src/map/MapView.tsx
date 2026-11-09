@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { activityQuery as queryFor } from './activityQuery';
+import { listQuery, tracksQuery as tracksQueryFor } from './activityQuery';
+import { areaLoad } from './areaLoad';
 import { flyToBBox, unionBBox } from './bbox';
-import { defaultRange } from './defaultRange';
 import { mapTapsAct } from './exportFlow';
 import type { MapMode } from './mapMode';
 import { setMapTapsActive } from './mapTaps';
@@ -10,7 +10,9 @@ import { initialSession, mapSessionReducer } from './session';
 import { boldTracks, toolbarTarget } from './selection';
 import { initialPanelTab, storyParam } from './storyUrl';
 import type { SpotCategory } from './spots';
+import { useAreaList } from './useAreaList';
 import { useCoverageRefresh } from './useCoverageRefresh';
+import { useDatesFlight } from './useDatesFlight';
 import { useDataRefresh } from './useDataRefresh';
 import { useEditWindow } from './useEditWindow';
 import { useExportFlow } from './useExportFlow';
@@ -21,6 +23,7 @@ import { useListView } from './useListView';
 import { useListFlight } from './useListFlight';
 import { useMapInstance } from './useMapInstance';
 import { useMapLayers } from './useMapLayers';
+import { useOpeningView } from './useOpeningView';
 import { useOverlays } from './useOverlays';
 import { usePendingPoll } from './usePendingPoll';
 import { usePhotoLayer } from './usePhotoLayer';
@@ -38,9 +41,10 @@ import { MapControls } from '../ui/MapControls';
 import { MapExport } from '../ui/MapExport';
 import { PhotoPopup } from '../ui/PhotoPopup';
 import { SpotPopup } from '../ui/SpotPopup';
-import { todayIn, type DateRange } from '../ui/dateMath';
+import { todayIn } from '../ui/dateMath';
+import { ALL_TIME, dateFilterBounds, setDateFilter } from '../ui/dateFilter';
 import { useUnitSystem } from '../ui/units';
-import { INITIAL_WINDOW_DAYS, useActivityDays } from '../ui/useActivityDays';
+import { useHistoryStart } from '../ui/useHistoryStart';
 import { showsFirstRun } from '../ui/firstRun';
 import { DemoBar } from '../ui/DemoBar';
 import { useActivityList } from '../ui/useActivityList';
@@ -72,11 +76,9 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const { initial, flavor, pinned } = useInitialView();
 
   const container = useRef<HTMLDivElement>(null);
-  // The range or Story shown, the selection over it and the mode (session.ts).
+  // The area and Dates or the Story shown, the selection over it and the mode (session.ts).
   const [session, dispatch] = useReducer(mapSessionReducer, null, () => initialSession(storyParam(window.location.search)));
-  const { range: selectedRange, storyId, mode: mapMode } = session;
-  // How many activity-days the slider has room for, as it measured its row.
-  const [windowDays, setWindowDays] = useState(INITIAL_WINDOW_DAYS);
+  const { dates, area, storyId, mode: mapMode } = session;
   const { checked: checkedActivityIds, focused: focusedActivityId, hidden: hiddenActivityIds, excludedTypes, distanceFilter } = session.selection;
   const { overlays, change: changeOverlays, paths, roads, satelliteAvailable, satellite } = useOverlays();
 
@@ -102,38 +104,36 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
 
   const boldIds = useMemo(() => boldTracks(checkedActivityIds, focusedActivityId), [checkedActivityIds, focusedActivityId]);
   const toolbarTargetIds = useMemo(() => toolbarTarget(checkedActivityIds, focusedActivityId), [checkedActivityIds, focusedActivityId]);
-  const changeSelectedRange = useCallback((range: DateRange) => dispatch({ type: 'rangePicked', range }), []);
 
-  // A Story or the date range, never both.
-  const activityQuery = useMemo(() => queryFor(storyId, selectedRange), [selectedRange, storyId]);
+  // A Story, or the area under Dates; the tracks take Dates alone (activityQuery.ts).
+  const activityQuery = useMemo(() => listQuery(storyId, dates, area), [storyId, dates, area]);
+  const tracksQuery = useMemo(() => tracksQueryFor(storyId, dates), [storyId, dates]);
 
   // Fetched once here so the panel and the drawn tracks agree on the same rows.
   const {
     activities,
+    total: areaTotal,
     loading: activitiesLoading,
     error: activitiesError,
     reload: reloadActivities,
     loadedKey: activitiesLoadedKey,
   } = useActivityList(activityQuery);
-  // A row a fresh list no longer has (deleted elsewhere, or left the Story) leaves the selection;
-  // only a list read for the query shown says so.
+  // A row a fresh list no longer has (deleted elsewhere, left the Story or the area) leaves the
+  // selection; only a list read for the query shown says so.
   useEffect(() => {
-    if (activitiesLoadedKey === JSON.stringify(activityQuery)) dispatch({ type: 'listLoaded', ids: activities.map((a) => a.id) });
+    if (activityQuery !== null && activitiesLoadedKey === JSON.stringify(activityQuery)) dispatch({ type: 'listLoaded', ids: activities.map((a) => a.id) });
   }, [activities, activitiesLoadedKey, activityQuery]);
-  // The slider's window of activity-days and its pan position, independent of the selection.
-  const {
-    visibleDays,
-    earliest,
-    ready: daysReady,
-    canPanEarlier,
-    canPanLater,
-    panBy,
-    reveal: revealDay,
-    shift: shiftDays,
-    canShift,
-    reload: reloadDays,
-    generation: historyGeneration,
-  } = useActivityDays(windowDays, selectedRange);
+  // The first activity's day: the Dates pickers' bound and the empty account's panel.
+  const { earliest, ready: daysReady, reload: reloadDays } = useHistoryStart();
+  const datesBounds = dateFilterBounds(earliest, today);
+  const changeDates = useCallback(
+    (end: 'after' | 'before', value: string | null) => {
+      const { filter, fly } = setDateFilter(dates, end, value, datesBounds);
+      dispatch({ type: 'datesSet', dates: filter, fly });
+    },
+    [dates, datesBounds.min, datesBounds.max],
+  );
+  const clearDates = useCallback(() => dispatch({ type: 'datesSet', dates: ALL_TIME, fly: false }), []);
 
   const edit = useEditWindow(activities, activitiesLoading);
   const editOpen = edit.open;
@@ -143,16 +143,6 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     [editingTrack, overlays.enabled, overlays.spots],
   );
 
-  // The default range (defaultRange.ts) is re-derived on every real refetch of days
-  // (`historyGeneration`) until the user picks a range (session.ts ignores it after). Trap: keying
-  // on `visibleDays` would also re-pick on Earlier/Later paging, and settling once would freeze a
-  // zero-history account (every demo) on `{today, today}` past its first upload.
-  // Held while the Edit window is open; it catches up when the window closes.
-  useEffect(() => {
-    if (session.userPicked || !daysReady) return;
-    dispatch({ type: 'defaultRange', range: defaultRange(visibleDays, earliest, todayIn(user.timezone)), editOpen });
-    // visibleDays and today aren't dependencies: today is read as the range is derived.
-  }, [session.userPicked, daysReady, earliest, historyGeneration, user.timezone, editOpen]);
 
   const { pendingIds, distanceBounds: activityDistanceBounds, facets, listed: filteredActivities, mapHiddenIds } = useListView(activities, session.selection, dispatch);
 
@@ -196,7 +186,12 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const select = useSelectionActions(dispatch, activities, filteredActivities, checkedActivityIds, toolbarTargetIds, mapHiddenIds, fitToSelection);
   const focusActivity = select.focus;
   const clearFocus = select.clearFocus;
-  useViewOnMap(map, initialActivity, { mode: mapMode, range: selectedRange, activities }, dispatch, focusActivity, revealDay);
+  useViewOnMap(map, initialActivity, { mode: mapMode, activities }, dispatch, focusActivity);
+  const urlView = initial.hash.view != null;
+  useOpeningView(map, dispatch, { keepCamera: urlView || storyId !== null || initialActivity !== null, country: user.country, earliest, historyReady: daysReady });
+  const areaList = useAreaList(map, dispatch, storyId);
+  useDatesFlight(map, dispatch, { flyRequest: session.flyRequest, storyId, dates });
+  const areaState = areaLoad(areaList.zoom, activities.length, storyId === null ? areaTotal : null);
 
   useListFlight(map, {
     activities,
@@ -205,19 +200,16 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     flyRequest: session.flyRequest,
     onFlown: () => dispatch({ type: 'flyConsumed' }),
     mapHiddenIds,
-    urlView: initial.hash.view != null,
+    urlView,
     arrivingOnActivity: initialActivity !== null,
-    daysReady,
-    earliest,
-    country: user.country,
     fitTo: fitToSelection,
   });
 
   const spots = useSpots(map, spotsShown);
   const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
   const exportScene = useMemo(
-    () => ({ flavor, mode: mapMode, activityQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite: satelliteShown, roads, photos: photoLayer.exportPhotos }),
-    [flavor, mapMode, activityQuery, mapHiddenIds, boldIds, bands, paths, satelliteShown, roads, photoLayer.exportPhotos],
+    () => ({ flavor, mode: mapMode, tracksQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite: satelliteShown, roads, photos: photoLayer.exportPhotos }),
+    [flavor, mapMode, tracksQuery, mapHiddenIds, boldIds, bands, paths, satelliteShown, roads, photoLayer.exportPhotos],
   );
   const exportStats = useMemo(() => ({ checked: checkedActivityIds, storyId }), [checkedActivityIds, storyId]);
   const exporter = useExportFlow(map, container, exportScene, exportStats);
@@ -239,7 +231,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   // drives the notice that they may be incomplete.
   const { watch: watchCoverage, rendering: coverageRendering } = useCoverageRefresh(map);
   const refresh = useDataRefresh(map, {
-    activityQuery,
+    tracksQuery,
     reloadActivities,
     reloadDays,
     reloadStory: storyState.reload,
@@ -249,7 +241,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
 
   const fileDrop = useFileDrop(!isDemo);
 
-  // Deleted activities: the upload refresh (the slider's days change too), once per batch, and
+  // Deleted activities: the upload refresh (the first activity's day can change too), once per batch, and
   // their ids dropped from the selection. The focus matters most: left on a deleted id, the bands
   // would keep fetching its metrics.
   const handleActivitiesDeleted = useCallback(
@@ -342,7 +334,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     editingTrack,
     paths,
     spotsShown,
-    activityQuery,
+    tracksQuery,
     mapHiddenIds,
     boldIds,
     bands,
@@ -354,7 +346,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
       <DemoBar isDemo={isDemo} />
       <div className="app-body">
         {mapMode === 'normal' && (
-          // Inert while the Edit window is open: changing the range, selection or filters would pull
+          // Inert while the Edit window is open: changing the area, selection or filters would pull
           // its activities out from under it. display: contents keeps the wrapper out of the layout.
           <div className="edit-track-lock" inert={editOpen}>
             <ActivitiesPanel
@@ -394,17 +386,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               map={map}
               onPrivateLocationsChanged={refresh.afterPrivateLocations}
               firstRun={showsFirstRun(isDemo, daysReady ? earliest !== null : null)}
-              dateRange={{
-                days: visibleDays,
-                onPan: panBy,
-                canPanEarlier,
-                canPanLater,
-                onShift: shiftDays,
-                canShift,
-                value: selectedRange ?? { from: today, to: today },
-                onChange: changeSelectedRange,
-                onWindowDays: setWindowDays,
-              }}
+              dates={{ value: dates, bounds: datesBounds, earliest, onChange: changeDates, onClear: clearDates }}
+              cappedTotal={areaState.capped ? areaTotal : null}
             />
           </div>
         )}
@@ -456,6 +439,11 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               satelliteFailed={satellite && imagery === 'failed'}
               spotsShown={spotsShown}
               layersOpen={tour.open.layers === true}
+              area={{
+                button: mapMode === 'normal' && storyId === null && areaState.load === 'button' && areaList.stale,
+                onLoad: areaList.loadHere,
+                capped: mapMode === 'normal' && storyId === null && areaState.capped && areaTotal !== null ? { shown: activities.length, total: areaTotal } : null,
+              }}
             />
           )}
           {map && spots.openSpot && <SpotPopup map={map} spot={spots.openSpot} capturedAt={spots.capturedAt(spots.openSpot.id)} onClose={spots.closeSpot} />}

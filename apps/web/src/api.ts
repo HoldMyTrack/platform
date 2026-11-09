@@ -174,6 +174,10 @@ export interface ActivityQuery {
   types?: string[];
   /** One Story's activities only (`SPEC.md` FR-14.4). */
   story?: string;
+  /** Only the tracks crossing this map view, the newest 1,000 at most (`SPEC.md` FR-5.19). */
+  bbox?: BBox;
+  /** The newest this many at most. */
+  limit?: number;
 }
 
 function activityQueryString(query: ActivityQuery): string {
@@ -182,6 +186,8 @@ function activityQueryString(query: ActivityQuery): string {
   if (query.to) params.set('to', query.to);
   if (query.types?.length) params.set('types', query.types.join(','));
   if (query.story) params.set('story', query.story);
+  if (query.bbox) params.set('bbox', query.bbox.join(','));
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }
@@ -208,12 +214,19 @@ function toActivity(a: Schema<'ActivityRow'>): Activity {
   };
 }
 
+/** A list response: the rows, and with `bbox` how many the area holds, more than the rows when
+ *  they were cut at the limit; null without one. */
+export interface ActivityPage {
+  activities: Activity[];
+  total: number | null;
+}
+
 /**
  * §4.7's `GET /v1/activities`. Unpaginated: every activity matching the filter comes back in
  * one response, since the Activities panel needs the full set at once to draw the map, total
  * the stats and compute its type/distance facets.
  */
-export async function listActivities(query: ActivityQuery = {}, signal?: AbortSignal): Promise<Activity[]> {
+export async function listActivities(query: ActivityQuery = {}, signal?: AbortSignal): Promise<ActivityPage> {
   // A conditional spread: exactOptionalPropertyTypes:true
   // rejects `{ signal: undefined }` against RequestInit's `signal?: AbortSignal | null`.
   const res = await fetch(`${API_BASE_URL}${API_V1}/activities${activityQueryString(query)}`, {
@@ -226,7 +239,7 @@ export async function listActivities(query: ActivityQuery = {}, signal?: AbortSi
   const body = (await res.json()) as ResponseJson<'/activities', 'get'>;
   rememberTypeLabels(Object.entries(body.types).map(([type, info]) => [type, info.label]));
   rememberTypeKinds(Object.entries(body.types).map(([type, info]) => [type, info.kind]));
-  return body.activities.map(toActivity);
+  return { activities: body.activities.map(toActivity), total: body.total ?? null };
 }
 
 /**
@@ -270,12 +283,7 @@ export async function deleteActivity(id: string): Promise<void> {
   }
 }
 
-/**
- * One day of §4.7's histogram — a day that actually has activities. Days with none are
- * simply absent, at every level: the endpoint never returns them, and the date slider never
- * gives one a slot (DateRangeSlider.tsx), so a day's neighbours are the adjacent days the user
- * *recorded*, however far apart their real dates are.
- */
+/** One day of §4.7's histogram — a day that actually has activities; days with none are absent. */
 export interface HistogramBucket {
   date: string;
   count: number;
@@ -290,8 +298,8 @@ export interface ActivityDayPage {
   to: string;
   /** Ascending by date, exactly `limit` entries unless the history ran out. */
   days: HistogramBucket[];
-  /** This user's first activity's UTC day, or null if they have none — how far back the
-   *  date slider can keep paging, independent of this page's own bounds. */
+  /** This user's first activity's day, or null if they have none, independent of this page's
+   *  own bounds — the Dates filter's earliest (useHistoryStart.ts). */
   earliest: string | null;
 }
 
@@ -303,14 +311,10 @@ export interface DayPageQuery {
 }
 
 /**
- * `GET /v1/activities/histogram?days=&before=` — §4.7's activity-day pagination mode.
- *
- * Never takes the type/distance filter: this is the whole history a range is picked from, not a
- * view of the current one. It pages by *days that have activity* rather than by calendar window because that
- * is what the slider's slots are — one per such day, packed — so a page is exactly `limit`
- * days however sparse the underlying history is.
- * The endpoint's other mode (`from`/`to`, a real calendar window) has no reader here; §4.8's
- * planned year grid is the thing that wants it.
+ * `GET /v1/activities/histogram?days=&before=` — §4.7's activity-day pagination mode, over the
+ * whole history, never filtered. The web reads one day of it for `earliest`; the apps' date
+ * sliders page through it. The endpoint's other mode (`from`/`to`, a calendar window) has no
+ * reader here.
  */
 export async function getActivityDayPage(query: DayPageQuery, signal?: AbortSignal): Promise<ActivityDayPage> {
   const params = new URLSearchParams({ days: String(query.limit) });

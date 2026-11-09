@@ -111,13 +111,11 @@ export function formatTotalDistance(meters: number, system: UnitSystem): string 
   return withUnit(totalDistanceParts(meters, system));
 }
 
-/** "9 MAR 2026" — the date slider's labels (DateRangeSlider.tsx), per main-screen-v6.png. Takes
+/** "Jun 3, 2026" in the page's language — the Dates filter's labels (ActivityFilters.tsx). Takes
  *  a YYYY-MM-DD day, read as UTC so the label is exactly that calendar day in every browser time
  *  zone. */
-export function formatDayLabel(date: string): string {
-  const d = new Date(`${date}T00:00:00Z`);
-  const month = d.toLocaleDateString(lang, { month: 'short', timeZone: 'UTC' }).toUpperCase();
-  return `${d.getUTCDate()} ${month} ${d.getUTCFullYear()}`;
+export function formatShortDate(date: string): string {
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
 /** An `activity_type`'s name, as the server gave it (activityTypes.ts). */

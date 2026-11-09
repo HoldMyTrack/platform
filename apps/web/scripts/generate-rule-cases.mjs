@@ -148,36 +148,12 @@ const inputs = {
     const anchor = ids.length && d.chance(0.6) ? { waiting: d.pick(ids) } : d.chance(0.5) ? t() : null;
     return { points, anchor, placed, anchors };
   },
-  sliderLayout: (d) => ({ width: d.int(120, 1400), finePointer: d.chance(0.5) }),
-  sliderBoundaries: (d) => window(d),
-  sliderMoveKnob: (d) => {
-    const input = window(d);
-    const lo = input.canPanEarlier ? -1 : 0;
-    const hi = input.days.length + (input.canPanLater ? 1 : 0);
-    return { ...input, knob: d.pick(['start', 'end']), boundary: d.int(lo, hi) };
-  },
-  sliderTicks: (d) => ({ days: d.days(0, 25) }),
-  sliderPanLand: (d) => {
-    const days = d.days(0, 12);
-    return { days, range: d.range(days), start: d.chance(0.5), end: d.chance(0.5) };
-  },
-  sliderWindowFit: (d) => {
-    const count = d.int(1, 120);
-    const windowDays = d.int(7, 31);
-    const first = d.int(0, count - 1);
-    return { count, windowDays, left: d.int(0, Math.max(0, count - windowDays)), first, last: d.int(first, count - 1), dir: d.pick([-1, 1]) };
-  },
 };
 
 function knobs(d) {
   const visible = d.track(1, 15);
   const lo = d.int(0, visible.length - 1);
   return { visible, lo, hi: d.int(lo, visible.length - 1) };
-}
-
-function window(d) {
-  const days = d.days(0, 15);
-  return { days, canPanEarlier: d.chance(0.5), canPanLater: d.chance(0.5), range: d.range(days) };
 }
 
 /** A stable seed per rule, so adding a rule leaves the others' cases as they were. */
