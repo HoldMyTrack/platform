@@ -47,7 +47,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 
 ## 4. FR-2 — Map Visualization
 
-As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.9), except as below.
+As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as below.
 
 ### FR-2.2 Three map modes: Normal, Fog of War, Heatmap
 
@@ -60,7 +60,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.9), except as be
 
 ### FR-2.7 Activities panel
 
-- No track editing, Private location editor or photos yet (`ROADMAP.md`, 7b.2, 7b.4).
+- No track editing or Private location editor yet (`ROADMAP.md`, 7b.2).
 - While any listed activity is Pending, a notice over the map says so.
 
 ### FR-2.8 Spots
@@ -73,6 +73,10 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.9), except as be
 - Map, Stories, Sync and You, with no record button yet. Sync is Sync history (FR-4.1).
 - You leads to Settings, Activity graph & trends, Upload, Privacy, Theme, Language, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
+
+### FR-2.10 Photos
+
+- The Edit window has no Photos tab yet, so photos are added and changed on the web (`ROADMAP.md`, 7b.4).
 
 ## 5. FR-3 — Sync and Imports
 

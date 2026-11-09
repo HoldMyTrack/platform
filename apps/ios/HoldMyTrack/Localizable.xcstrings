@@ -188,6 +188,17 @@
         }
       }
     },
+    "%lld of %lld" : {
+      "comment" : "Which photo of a group shows: 2 of 5.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld из %lld"
+          }
+        }
+      }
+    },
     "%lldh %lldm" : {
       "comment" : "A duration in hours and minutes.",
       "localizations" : {
@@ -694,6 +705,17 @@
         }
       }
     },
+    "Couldn't load this photo." : {
+      "comment" : "Photo viewer: the stored copy couldn't be fetched.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить фотографию."
+          }
+        }
+      }
+    },
     "Couldn't load this place — retrying…" : {
       "comment" : "Capture: the place's area didn't load.",
       "localizations" : {
@@ -1123,6 +1145,17 @@
         }
       }
     },
+    "Fit to screen" : {
+      "comment" : "Photo viewer: the whole photo on the screen again.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вписать в экран"
+          }
+        }
+      }
+    },
     "Fly to" : {
       "comment" : "Activities panel: the toolbar's action that moves the camera onto the target.",
       "localizations" : {
@@ -1185,6 +1218,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "От %@"
+          }
+        }
+      }
+    },
+    "Full size" : {
+      "comment" : "Photo popup: opens the photo over the whole screen.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Полный размер"
           }
         }
       }
@@ -1563,6 +1607,17 @@
         }
       }
     },
+    "Next photo" : {
+      "comment" : "Photo popup and viewer: steps on through a group.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Следующая фотография"
+          }
+        }
+      }
+    },
     "No Private locations yet. Where a track starts or ends inside one, that part is hidden everywhere, your own map included." : {
       "comment" : "Privacy: the account has none.",
       "localizations" : {
@@ -1794,6 +1849,28 @@
         }
       }
     },
+    "Photo" : {
+      "comment" : "A photo marker or picture with no caption, for VoiceOver.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фотография"
+          }
+        }
+      }
+    },
+    "Photos: %lld" : {
+      "comment" : "A photo marker standing for several photos, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фотографии: %lld"
+          }
+        }
+      }
+    },
     "Pick a type." : {
       "comment" : "Edit window: Save with no type.",
       "localizations" : {
@@ -1878,6 +1955,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Готовим архив… Это может занять несколько минут."
+          }
+        }
+      }
+    },
+    "Previous photo" : {
+      "comment" : "Photo popup and viewer: steps back through a group.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Предыдущая фотография"
           }
         }
       }
@@ -2509,6 +2597,17 @@
         }
       }
     },
+    "Taken %@" : {
+      "comment" : "Photo popup: when the photo was taken.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Снято %@"
+          }
+        }
+      }
+    },
     "The Private location couldn't be deleted." : {
       "comment" : "Privacy: delete failed and the server gave no reason.",
       "localizations" : {
@@ -3066,6 +3165,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Карта ещё обновляется, поэтому Туман и Тепловая карта пока могут быть неполными. Они обновятся сами."
+          }
+        }
+      }
+    },
+    "Zoom in" : {
+      "comment" : "Photo viewer: zooms into the photo.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Увеличить"
+          }
+        }
+      }
+    },
+    "Zoom out" : {
+      "comment" : "Photo viewer: zooms out of the photo.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Уменьшить"
           }
         }
       }

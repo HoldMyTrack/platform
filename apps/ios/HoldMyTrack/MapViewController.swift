@@ -54,6 +54,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Points of interest (MapViewController+Spots).
     var spots = SpotsState(categories: MapPreferences.spots())
     let spotViews = SpotViews()
+    /// Photos on the map (MapViewController+Photos).
+    var photos = PhotosState()
+    lazy var photoViews = PhotoViews(api: flow.api, format: { [unowned self] in self.format }, onOpen: { [weak self] in self?.openPhotos($0) })
     /// Capture of a place (CaptureController), which lives no longer than the map.
     lazy var capturing = CaptureController(api: flow.api, map: captureMap(), format: { [unowned self] in self.format })
     /// View on map's activity, focused when the next list holds it.
@@ -200,10 +203,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         spots.area.cameraMoved()
         renderInArea()
         placeSpotPopup()
+        regroupPhotos()
     }
 
     func mapViewRegionIsChanging(_ mapView: MLNMapView) {
         placeSpotPopup()
+        placePhotos()
         capturing.mapRotated()
     }
 
@@ -244,6 +249,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         render()
         checkCoverage()
         renderPanel()
+        refreshPhotos(force: false)
     }
 
     private func updateLayersMenu() {
@@ -297,16 +303,16 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         }
     }
 
-    /// The camera on box, clear of the controls over the map, at most zoom 15.
-    func fit(_ box: [Double], animated: Bool) {
+    /// The camera on box, clear of the controls over the map, at most maxZoom.
+    func fit(_ box: [Double], animated: Bool, maxZoom: Double = MapFraming.maxZoom) {
         let bounds = MLNCoordinateBounds(sw: CLLocationCoordinate2D(latitude: box[1], longitude: box[0]),
                                          ne: CLLocationCoordinate2D(latitude: box[3], longitude: box[2]))
         let bottom = (sheet.isHidden ? 0 : sheet.restingHeight) + 48
         let padding = UIEdgeInsets(top: 120, left: 48, bottom: bottom, right: 48)
         mapView.setVisibleCoordinateBounds(bounds, edgePadding: padding, animated: animated) { [weak self] in
             MainActor.assumeIsolated {
-                guard let self, self.mapView.zoomLevel > MapFraming.maxZoom else { return }
-                self.mapView.setZoomLevel(MapFraming.maxZoom, animated: animated)
+                guard let self, self.mapView.zoomLevel > maxZoom else { return }
+                self.mapView.setZoomLevel(maxZoom, animated: animated)
             }
         }
     }
@@ -516,11 +522,18 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         ])
         bindSlider()
 
-        view.insertSubview(spotViews.popup, aboveSubview: mapView)
+        // Over the map and under its controls: the photo markers, then the popups.
+        photoViews.markers.frame = view.bounds
+        photoViews.markers.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.insertSubview(photoViews.markers, aboveSubview: mapView)
+        view.insertSubview(spotViews.popup, aboveSubview: photoViews.markers)
+        bindPhotos()
         for v in [column, locateButton, chrome.chip, sheet] {
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
         }
+        // Over the sheet: opened low on the map, the photo popup runs past the sheet's edge.
+        view.addSubview(photoViews.popup)
         let guide = view.safeAreaLayoutGuide
         NSLayoutConstraint.activate([
             column.topAnchor.constraint(equalTo: guide.topAnchor, constant: DesignTokens.Space.s8),

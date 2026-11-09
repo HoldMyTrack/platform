@@ -76,12 +76,15 @@ struct PanelFormat {
     }
 
     /// "Oct 11, 2026, 9:39 AM", in the zone the activity was recorded in.
-    func startedAt(_ activity: Activity) -> String {
-        guard let date = Self.iso(activity.startedAt) else { return activity.startedAt }
+    func startedAt(_ activity: Activity) -> String { moment(activity.startedAt, zone: activity.timezone) }
+
+    /// An ISO 8601 moment as "Oct 11, 2026, 9:39 AM", in zone, else the account's (ActivityZone).
+    func moment(_ iso: String, zone: String) -> String {
+        guard let date = Self.iso(iso) else { return iso }
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        if let zone = ActivityZone.of(own: activity.timezone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
+        if let zone = ActivityZone.of(own: zone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
         return formatter.string(from: date)
     }
 

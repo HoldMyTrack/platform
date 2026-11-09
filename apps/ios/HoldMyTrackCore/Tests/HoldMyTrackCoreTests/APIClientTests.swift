@@ -258,6 +258,19 @@ struct APIClientTests {
         #expect(await client().captureSpot(7, at: GeoPoint(lat: 0, lon: 0)) == .outside)
     }
 
+    @Test func aStorysPhotosAreAskedForByStory() async throws {
+        StubProtocol.answer = { _ in .init(body: self.json(["photos": [[
+            "id": "p1", "activity_id": "a1", "taken_at": "2026-10-04T15:00:00Z", "route_at": "2026-10-04T15:00:00Z",
+            "timezone": "America/New_York", "lon": -81.7, "lat": 41.5, "caption": NSNull(), "width": 2048, "height": 1536,
+            "url": "/v1/photos/p1/image", "thumb_url": "/v1/photos/p1/thumb",
+        ]]])) }
+        let photos = try await client().photos(.story("s1"))
+        #expect(StubProtocol.sent.first?.url?.absoluteString == "http://localhost:8081/v1/photos?story=s1")
+        #expect(photos == [Photo(id: "p1", activityID: "a1", takenAt: "2026-10-04T15:00:00Z", routeAt: "2026-10-04T15:00:00Z",
+                                 timezone: "America/New_York", lon: -81.7, lat: 41.5, width: 2048, height: 1536,
+                                 url: "/v1/photos/p1/image", thumbURL: "/v1/photos/p1/thumb")])
+    }
+
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {
         var body = accountBody
         body["session_token"] = "t"
