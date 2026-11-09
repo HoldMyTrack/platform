@@ -107,6 +107,10 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "basemapStatus": { input in
         .string(BasemapStatus.of(loaded: input["loaded"].bool!, failed: input["failed"].bool!, waitedMs: input.int("waitedMs")).rawValue)
     },
+    "satelliteStatus": { input in
+        let status = SatelliteStatus.of(loaded: input["loaded"].bool!, failed: input["failed"].bool!, waitedMs: input.int("waitedMs"))
+        return ["status": .string(status.rawValue), "look": .bool(SatelliteStatus.look(on: input["on"].bool!, status: status))]
+    },
     "pendingBatches": { input in .array(PendingDiff.batches(input.strings("ids"), size: input.int("size")).map { .list($0) }) },
     "pendingCheck": { input in
         let watched = PendingDiff.watched(listed: input.strings("listed"), awaiting: input.strings("awaiting"))

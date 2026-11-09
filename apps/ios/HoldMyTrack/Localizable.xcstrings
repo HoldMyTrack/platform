@@ -474,6 +474,17 @@
         }
       }
     },
+    "City view — cleared exactly where you've been" : {
+      "comment" : "Map: Fog of War's level notice, zoomed in to exact coverage.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Город — открыто ровно там, где вы были"
+          }
+        }
+      }
+    },
     "Close" : {
       "comment" : "Activities panel: closes the focused activity's card.",
       "localizations" : {
@@ -602,6 +613,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось войти через Google. Попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "Country view — a whole country clears once you've been anywhere in it" : {
+      "comment" : "Map: Fog of War's level notice, zoomed out to countries.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Страны — страна открывается целиком, если вы были в ней хоть раз"
           }
         }
       }
@@ -888,6 +910,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Эл. почта"
+          }
+        }
+      }
+    },
+    "Every activity, any date" : {
+      "comment" : "Map: the chip under Fog of War, which shows every activity whatever the date range.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все занятия, за всё время"
           }
         }
       }
@@ -1640,6 +1673,17 @@
         }
       }
     },
+    "Region view — a whole state or province clears once you've been anywhere in it" : {
+      "comment" : "Map: Fog of War's level notice, zoomed to states and provinces.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Регионы — штат или область открывается целиком, если вы были в нём хоть раз"
+          }
+        }
+      }
+    },
     "Rename %@" : {
       "comment" : "Stories tab: a folder's pencil; the placeholder is the Story's name.",
       "localizations" : {
@@ -1702,6 +1746,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Спутник"
+          }
+        }
+      }
+    },
+    "Satellite imagery couldn't load." : {
+      "comment" : "Map: Satellite is on and no imagery tile arrived.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить спутниковые снимки."
           }
         }
       }
@@ -2190,6 +2245,17 @@
         }
       }
     },
+    "The last 365 days" : {
+      "comment" : "Map: the chip under Heatmap, which shows the last year whatever the date range.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Последние 365 дней"
+          }
+        }
+      }
+    },
     "The last download couldn't be prepared. Try again." : {
       "comment" : "Download your data: the last copy failed.",
       "localizations" : {
@@ -2219,6 +2285,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось загрузить карту."
+          }
+        }
+      }
+    },
+    "The more often you go somewhere, the hotter it glows" : {
+      "comment" : "Map: Heatmap's notice on entering it.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Чем чаще вы где-то бываете, тем ярче это место"
           }
         }
       }

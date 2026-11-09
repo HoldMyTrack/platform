@@ -16,8 +16,20 @@ public struct LayersDocument: Equatable, Sendable {
         public let layers: [JSONValue]
     }
 
+    /// A level of detail and the zoom it holds below; the last holds at every zoom past it.
+    public struct Tier: Equatable, Sendable {
+        public let tier: ZoomTier
+        public let below: Double?
+
+        public init(tier: ZoomTier, below: Double?) {
+            self.tier = tier
+            self.below = below
+        }
+    }
+
     public let styleBuild: String
     public let tileVersion: String
+    public let tiers: [Tier]
     /// By name, the default of each value a layer reads as `["var", name]`.
     public let vars: [String: JSONValue]
     /// `plain` and `satellite`, each by mode, then `layout` or `paint`, then layer id.
@@ -29,6 +41,9 @@ public struct LayersDocument: Equatable, Sendable {
         styleBuild = json["styleBuild"]?.string ?? ""
         tileVersion = json["tileVersion"]?.string ?? ""
         vars = json["vars"]?.object ?? [:]
+        tiers = json["tiers"]?.array?.compactMap { t in
+            t["tier"]?.string.flatMap(ZoomTier.init(rawValue:)).map { Tier(tier: $0, below: t["below"]?.number) }
+        } ?? []
         self.views = views
         var parsed: [Group] = []
         for g in groups {
@@ -65,6 +80,9 @@ public struct MapState: Equatable, Sendable {
     /// The Layers menu: Satellite, Roads, Show layers, and the switches layers name
     /// (`holdmytrack:toggle`: bikePaths, sharedPaths, mtbTrails, spots).
     public var satellite = false
+    /// The imagery didn't load on this device: the map draws as with Satellite off, its layer
+    /// left on to notice a tile (SatelliteStatus).
+    public var satelliteFailed = false
     public var roads = true
     public var showLayers = true
     public var toggles: [String: Bool] = [:]
@@ -92,7 +110,7 @@ public enum MapStyle {
     static let dimsKey = "holdmytrack:satellite-dims"
     static let roadOpacityKey = "holdmytrack:satellite-road-opacity"
     static let buildKey = "holdmytrack:style-build"
-    static let satelliteID = "satellite"
+    public static let satelliteID = "satellite"
 
     /// The style's own build, which the layers document's must match: two from different builds
     /// mean the style is fetched again (ADR-0048).
@@ -150,7 +168,8 @@ public enum MapStyle {
     // MARK: Applying the state
 
     private static func apply(_ state: MapState, document: LayersDocument, groups: [LayersDocument.Group], metadata: JSONValue?, hasSatellite: Bool, to layers: inout [String: JSONValue]) {
-        let view = document.views[state.satellite && hasSatellite ? "satellite" : "plain"]?[state.mode.rawValue]
+        let look = hasSatellite && SatelliteStatus.look(on: state.satellite, status: state.satelliteFailed ? .failed : .loading)
+        let view = document.views[look ? "satellite" : "plain"]?[state.mode.rawValue]
         let specs = Dictionary(groups.flatMap { g in g.layers.compactMap { l in l["id"]?.string.map { ($0, (l, g)) } } }, uniquingKeysWith: { a, _ in a })
 
         // The basemap's own layers a view sets: its labels, which Fog mutes.
@@ -190,8 +209,7 @@ public enum MapStyle {
         // Satellite (root docs/SPEC.md FR-4.14): the imagery, the basemap's fills hidden over it
         // and its roads see-through; all three lists come from the style's own metadata.
         if hasSatellite {
-            let look = state.satellite
-            set(&layers, satelliteID, "layout", "visibility", .string(look ? "visible" : "none"))
+            set(&layers, satelliteID, "layout", "visibility", .string(state.satellite ? "visible" : "none"))
             for id in metadata?[hidesKey]?.array?.compactMap(\.string) ?? [] {
                 set(&layers, id, "layout", "visibility", .string(look ? "none" : "visible"))
             }

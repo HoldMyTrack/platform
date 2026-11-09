@@ -1,6 +1,7 @@
 import Foundation
 import HoldMyTrackCore
 import MapLibre
+import UIKit
 
 /// Every request MapLibre sends passes APIClient.prepareMapRequest: the API's tiles get the
 /// session, the basemap and imagery only the API's Origin (apps/ios/docs/IMPLEMENTATION.md §2.1).
@@ -49,6 +50,14 @@ enum MapPatcher {
         return parts.enumerated().map { $0.offset == 0 ? String($0.element) : $0.element.capitalized }.joined()
     }
 
+    /// value as the setter for property name takes it: a color as a UIColor, since the setter
+    /// throws on a string. Nil for one it can't take, which a reload settles.
+    private static func expression(_ name: String, _ value: JSONValue) -> NSExpression? {
+        guard name.hasSuffix("-color"), let text = value.string else { return NSExpression(mglJSONObject: value.foundation) }
+        guard let c = CSSColor(text) else { return nil }
+        return NSExpression(forConstantValue: UIColor(red: c.red, green: c.green, blue: c.blue, alpha: c.alpha))
+    }
+
     /// Applies changes to style; false when one couldn't be, which only a reload settles.
     static func apply(_ changes: [MapStyle.Change], to style: MLNStyle) -> Bool {
         for change in changes {
@@ -62,7 +71,12 @@ enum MapPatcher {
             default:
                 let key = key(change.name)
                 guard layer.responds(to: NSSelectorFromString(key)) else { return false }
-                layer.setValue(change.value.map { NSExpression(mglJSONObject: $0.foundation) }, forKey: key)
+                var value: NSExpression?
+                if let given = change.value {
+                    guard let parsed = expression(change.name, given) else { return false }
+                    value = parsed
+                }
+                layer.setValue(value, forKey: key)
             }
         }
         return true
