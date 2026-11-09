@@ -161,6 +161,8 @@ extension MapViewController {
             fly([id])
         }
         panelChanged()
+        // The focused activity's reprocess may have landed: its bands follow the new points.
+        if change.finished { updateBands(refetch: true) }
         watchPending()
     }
 
@@ -193,6 +195,7 @@ extension MapViewController {
         let panel = session.panel
         state.vars["focused"] = .array(panel.highlighted.sorted().map { .string($0) })
         state.vars["hidden"] = .array(panel.mapHidden.sorted().map { .string($0) })
+        updateBands()
         render()
         renderPanel()
     }

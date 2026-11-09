@@ -22,6 +22,11 @@ extension APIClient {
         return json.pending
     }
 
+    /// `GET /v1/activities/{id}/track-metrics`: the activity's points and their pace bands.
+    public func trackMetrics(_ id: String) async throws -> TrackMetrics {
+        TrackMetrics(try decode(try await send("GET", "v1/activities/\(id)/track-metrics")) as TrackMetricsJSON)
+    }
+
     /// `GET /v1/activity-types`: the catalog, and types by name.
     public func activityTypes(_ types: [String]) async throws -> [String: ActivityTypeInfo] {
         let query = types.isEmpty ? [] : [URLQueryItem(name: "types", value: types.joined(separator: ","))]

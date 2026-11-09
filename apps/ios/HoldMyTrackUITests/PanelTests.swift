@@ -21,7 +21,16 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.otherElements["activityCard"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["cardEdit"].isEnabled, "the demo account can't edit")
         XCTAssertTrue(app.buttons["cardFocus"].isEnabled)
+        // The map draws its pace bands, and the card their legend.
+        XCTAssertTrue(app.otherElements["cardBands"].waitForExistence(timeout: 10))
+        app.buttons["cardFocus"].tap()
+        sleep(2)
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = "Pace bands"
+        shot.lifetime = .keepAlways
+        add(shot)
         app.buttons["cardClose"].tap()
+        XCTAssertTrue(app.otherElements["cardBands"].waitForNonExistence(timeout: 5))
 
         // The tile checks: the selection bar comes, with Delete off for the demo.
         app.buttons["panelHandle"].tap()

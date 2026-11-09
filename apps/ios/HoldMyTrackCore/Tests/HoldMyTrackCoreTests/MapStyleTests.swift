@@ -55,7 +55,8 @@ struct MapStyleTests {
                     "metadata": {"holdmytrack:vars": {"filter": ["hidden"]}, "holdmytrack:role": "track"}}]},
        {"id": "track-bands", "placement": "beneath-labels",
         "sources": {"track-bands": {"type": "geojson"}},
-        "layers": [{"id": "track-bands-line", "type": "line", "source": "track-bands"}]},
+        "layers": [{"id": "track-bands-line", "type": "line", "source": "track-bands"}],
+        "legend": {"band-10": {"color": "#c00"}, "band-0": {"color": "#00b"}, "band-2": {"color": "#0b0"}, "other": {"color": "#fff"}}},
        {"id": "spots", "placement": "top",
         "sources": {"spots": {"type": "vector", "tiles": "/tiles/v1/spots/{z}/{x}/{y}.mvt?cv=7.1"}},
         "layers": [{"id": "spots-icons", "type": "symbol", "source": "spots"}]}
@@ -264,6 +265,53 @@ struct MapStyleTests {
 
     @Test func noChangeIsAnEmptyList() {
         #expect(MapStyle.changes(from: compose(), to: compose()) == [])
+    }
+
+    @Test func newGeoJSONDataIsADataChangeNotAReload() throws {
+        var state = MapState()
+        let empty = compose(state)
+        let bands = PaceBands.features(metrics)
+        state.geojson[PaceBands.group] = bands
+        let drawn = compose(state)
+        #expect(drawn["sources"]?["track-bands"]?["data"] == bands)
+        #expect(try #require(MapStyle.changes(from: empty, to: drawn)) == [MapStyle.Change(layer: "track-bands", kind: "data", name: "data", value: bands)])
+    }
+
+    // MARK: Pace bands
+
+    private let metrics = TrackMetrics(
+        activityID: "a1",
+        points: [.init(lon: 0, lat: 0), .init(lon: 1, lat: 0), .init(lon: 2, lat: 0), .init(lon: 3, lat: 0)],
+        bands: [.init(band: 0, start: 0, end: 2), .init(band: 4, start: 2, end: 3)]
+    )
+
+    @Test func eachRunIsALineWithItsBandAndTheRouteIsOneMore() {
+        let features = PaceBands.features(metrics)["features"]?.array ?? []
+        #expect(features.count == 3)
+        #expect(features[0]["properties"]?["band"] == .number(0))
+        #expect(features[0]["geometry"]?["coordinates"]?.array?.count == 3)
+        #expect(features[1]["properties"]?["band"] == .number(4))
+        #expect(features[1]["geometry"]?["coordinates"]?.array?.first == .array([.number(2), .number(0)]), "runs share their boundary point")
+        #expect(features[2]["properties"]?["route"] == .bool(true))
+        #expect(features[2]["geometry"]?["coordinates"]?.array?.count == 4)
+        #expect(PaceBands.features(nil)["features"] == .array([]))
+    }
+
+    @Test func aRunPastThePointsIsSkipped() {
+        let broken = TrackMetrics(activityID: "a1", points: metrics.points, bands: [.init(band: 1, start: 2, end: 9)])
+        #expect(PaceBands.features(broken)["features"]?.array?.count == 1, "the route alone")
+    }
+
+    @Test func bandsAreDrawnOnlyForTheFocusedActivityWhileItsTrackIs() {
+        #expect(PaceBands.drawn(metrics, focused: "a1", mapHidden: []) == metrics)
+        #expect(PaceBands.drawn(metrics, focused: "a2", mapHidden: []) == nil, "a new focus's are still loading")
+        #expect(PaceBands.drawn(metrics, focused: nil, mapHidden: []) == nil)
+        #expect(PaceBands.drawn(metrics, focused: "a1", mapHidden: ["a1"]) == nil)
+        #expect(PaceBands.drawn(nil, focused: "a1", mapHidden: []) == nil)
+    }
+
+    @Test func theLegendIsTheGroupsBandsInOrder() {
+        #expect(PaceBands.colors(document) == ["#00b", "#0b0", "#c00"])
     }
 }
 

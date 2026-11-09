@@ -925,6 +925,17 @@
         }
       }
     },
+    "Faster" : {
+      "comment" : "Card: the fast end of the pace bands' legend.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Быстрее"
+          }
+        }
+      }
+    },
     "Filtered" : {
       "comment" : "Activities panel: the Type filter's state when some types are left out.",
       "localizations" : {
@@ -1944,6 +1955,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выйти"
+          }
+        }
+      }
+    },
+    "Slower" : {
+      "comment" : "Card: the slow end of the pace bands' legend.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Медленнее"
           }
         }
       }

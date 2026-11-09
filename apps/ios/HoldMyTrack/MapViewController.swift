@@ -49,6 +49,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Bumped whenever tracks change under the same query, so their tiles are fetched again.
     var tracksVersion = 0
     var editOpen = false
+    /// The focused activity's pace bands (MapViewController+Bands).
+    var bands = BandsState()
     /// View on map's activity, focused when the next list holds it.
     var focusWhenListed: String?
     /// The tab bar's Stories count: copies others sent, waiting.
