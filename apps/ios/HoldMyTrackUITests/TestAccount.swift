@@ -58,6 +58,12 @@ final class TestAccount {
         return (json?["captures"] as? [[String: Any]] ?? []).compactMap { $0["spot_id"] as? Int }
     }
 
+    /// The activity's photos' captions, in route order, an empty string for none.
+    func photoCaptions(_ activity: String) -> [String] {
+        let json = (try? call("GET", "/v1/photos?activity=\(activity)", nil)) as? [String: Any]
+        return (json?["photos"] as? [[String: Any]] ?? []).map { $0["caption"] as? String ?? "" }
+    }
+
     func delete() {
         _ = try? call("DELETE", "/v1/account", ["email": email])
     }

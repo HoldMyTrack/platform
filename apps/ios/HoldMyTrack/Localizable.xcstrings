@@ -133,6 +133,17 @@
         }
       }
     },
+    "%@: %@" : {
+      "comment" : "Photos tab: a picked file that couldn't be added, and why.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@: %@"
+          }
+        }
+      }
+    },
     "%@: archives aren't imported. Upload the GPX, FIT or TCX files inside it." : {
       "comment" : "Upload: a picked .zip; the placeholder is its name.",
       "localizations" : {
@@ -298,6 +309,17 @@
         }
       }
     },
+    "Activity" : {
+      "comment" : "Edit window's tab: the activity's type, name and description.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Занятие"
+          }
+        }
+      }
+    },
     "Activity graph & trends" : {
       "comment" : "The Profile page's title, and its row on the You tab.",
       "localizations" : {
@@ -327,6 +349,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Добавить приватное место"
+          }
+        }
+      }
+    },
+    "Add a caption" : {
+      "comment" : "Photos tab: the caption field's placeholder.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить подпись"
+          }
+        }
+      }
+    },
+    "Add photos" : {
+      "comment" : "Photos tab: opens the photo picker.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добавить фото"
           }
         }
       }
@@ -441,6 +485,17 @@
         }
       }
     },
+    "Caption must be %lld characters or fewer." : {
+      "comment" : "Edit window: Save with a caption past the limit.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подпись должна быть не длиннее %lld символов."
+          }
+        }
+      }
+    },
     "Capture" : {
       "comment" : "Spot popup: starts capturing the place by going there.",
       "localizations" : {
@@ -492,6 +547,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Центр — там, куда последний раз смотрела карта. Радиус от %lld до %lld м."
+          }
+        }
+      }
+    },
+    "Changed" : {
+      "comment" : "Photos tab: a photo moved or captioned, not yet saved.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменена"
           }
         }
       }
@@ -782,6 +848,17 @@
         }
       }
     },
+    "Couldn't tell where this was taken. Move the slider to its place on the route." : {
+      "comment" : "Photos tab: a photo nothing placed, waiting for the user.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось определить, где снята фотография. Передвиньте ползунок к её месту на маршруте."
+          }
+        }
+      }
+    },
     "Country view — a whole country clears once you've been anywhere in it" : {
       "comment" : "Map: Fog of War's level notice, zoomed out to countries.",
       "localizations" : {
@@ -969,6 +1046,28 @@
         }
       }
     },
+    "Discard" : {
+      "comment" : "Edit window: closes, throwing the photo changes away.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отменить изменения"
+          }
+        }
+      }
+    },
+    "Discard photo changes?" : {
+      "comment" : "Edit window: Cancel with unsaved photo changes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отменить изменения фотографий?"
+          }
+        }
+      }
+    },
     "Distance: %@" : {
       "comment" : "Activities panel: the focused activity's distance.",
       "localizations" : {
@@ -1009,6 +1108,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Нет аккаунта? Создайте его"
+          }
+        }
+      }
+    },
+    "Done" : {
+      "comment" : "Photos tab: closes a photo's caption and place.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готово"
           }
         }
       }
@@ -1376,6 +1486,28 @@
         }
       }
     },
+    "Keep editing" : {
+      "comment" : "Edit window: stays open with the photo changes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Продолжить"
+          }
+        }
+      }
+    },
+    "Keep this photo" : {
+      "comment" : "Photos tab: undoes a photo's Delete.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оставить фотографию"
+          }
+        }
+      }
+    },
     "Language" : {
       "comment" : "You tab: opens the app's language in the system's Settings.",
       "localizations" : {
@@ -1427,6 +1559,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Светлая"
+          }
+        }
+      }
+    },
+    "Loading photos…" : {
+      "comment" : "Photos tab: the activity's photos being read.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузка фотографий…"
           }
         }
       }
@@ -1530,6 +1673,17 @@
         }
       }
     },
+    "More waiting: %lld" : {
+      "comment" : "Photos tab: how many more photos wait for a place, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ещё ждут места: %lld"
+          }
+        }
+      }
+    },
     "Mountain bike trails" : {
       "comment" : "Layers menu: the mountain bike trail layer.",
       "localizations" : {
@@ -1570,6 +1724,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Название и описание у каждого занятия останутся своими."
+          }
+        }
+      }
+    },
+    "New" : {
+      "comment" : "Photos tab: a photo added, not yet saved.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Новая"
           }
         }
       }
@@ -1680,6 +1845,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Архив ещё не готовился."
+          }
+        }
+      }
+    },
+    "No photos yet. Add the ones you took on this activity — each goes on the route where it was taken." : {
+      "comment" : "Photos tab: an activity with no photos.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фотографий пока нет. Добавьте снимки с этого занятия — каждый встанет на маршрут там, где был сделан."
           }
         }
       }
@@ -1860,6 +2036,61 @@
         }
       }
     },
+    "Photo %lld" : {
+      "comment" : "Photos tab: a photo with no caption, by its place in the list.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фото %lld"
+          }
+        }
+      }
+    },
+    "Photos" : {
+      "comment" : "Edit window's tab: the activity's photos, before its count is known.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фото"
+          }
+        }
+      }
+    },
+    "Photos, with unsaved changes" : {
+      "comment" : "Edit window's Photos tab, for VoiceOver, while it has unsaved changes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фото, есть несохранённые изменения"
+          }
+        }
+      }
+    },
+    "Photos: %@" : {
+      "comment" : "Edit window's tab: the activity's photos, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фото: %@"
+          }
+        }
+      }
+    },
+    "Photos: %@ •" : {
+      "comment" : "Edit window's tab with unsaved photo changes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фото: %@ •"
+          }
+        }
+      }
+    },
     "Photos: %lld" : {
       "comment" : "A photo marker standing for several photos, written as label: N.",
       "localizations" : {
@@ -1878,6 +2109,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выберите тип."
+          }
+        }
+      }
+    },
+    "Place every new photo on the route before saving." : {
+      "comment" : "Edit window: Save with a photo still waiting for its place.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перед сохранением поставьте каждую новую фотографию на маршрут."
+          }
+        }
+      }
+    },
+    "Place here" : {
+      "comment" : "Photos tab: puts a waiting photo where its slider is.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Поставить сюда"
+          }
+        }
+      }
+    },
+    "Place on the route" : {
+      "comment" : "Photos tab: the slider that moves a photo along the route.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Место на маршруте"
           }
         }
       }
@@ -1944,6 +2208,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Подготовить новый архив"
+          }
+        }
+      }
+    },
+    "Preparing %lld of %lld…" : {
+      "comment" : "Photos tab: picked photos being prepared.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подготовка %lld из %lld…"
           }
         }
       }
@@ -2102,6 +2377,17 @@
         }
       }
     },
+    "Remove" : {
+      "comment" : "Photos tab: drops a new photo waiting for its place.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Убрать"
+          }
+        }
+      }
+    },
     "Rename %@" : {
       "comment" : "Stories tab: a folder's pencil; the placeholder is the Story's name.",
       "localizations" : {
@@ -2186,6 +2472,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранить"
+          }
+        }
+      }
+    },
+    "Saving photos %lld of %lld…" : {
+      "comment" : "Edit window: photo writes under way.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохранение фото %lld из %lld…"
           }
         }
       }
@@ -2839,6 +3136,17 @@
         }
       }
     },
+    "The photos you added, moved or deleted in this window haven't been saved yet." : {
+      "comment" : "Edit window: why Cancel asks.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фотографии, которые вы добавили, переместили или удалили в этом окне, ещё не сохранены."
+          }
+        }
+      }
+    },
     "The server couldn't be reached." : {
       "comment" : "A request had no answer.",
       "localizations" : {
@@ -2879,6 +3187,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Этой истории больше нет."
+          }
+        }
+      }
+    },
+    "This activity has no track to put photos on." : {
+      "comment" : "Photos tab: an activity with no track.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У этого занятия нет трека, на который можно поместить фотографии."
+          }
+        }
+      }
+    },
+    "This file can't be opened as a photo." : {
+      "comment" : "Photos tab: a picked file that isn't an image.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этот файл не открывается как фотография."
           }
         }
       }
@@ -3099,6 +3429,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Википедия"
+          }
+        }
+      }
+    },
+    "Will be deleted" : {
+      "comment" : "Photos tab: a photo Save will delete.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Будет удалена"
           }
         }
       }

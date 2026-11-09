@@ -1,18 +1,29 @@
 import HoldMyTrackCore
+import PhotosUI
 import UIKit
+import UniformTypeIdentifiers
 
 /// Edit (root docs/SPEC.md FR-5.10, apps/android/docs/SPEC.md FR-2.7) over the toolbar's target:
 /// one activity's type, name and description, or a group's type alone. Save writes only what
 /// changed, one activity at a time (EditPlan); a group of mixed types starts with Type empty, and
-/// leaving it empty keeps each its own.
-final class EditActivityViewController: UIViewController {
+/// leaving it empty keeps each its own. One activity also has a Photos tab (PhotosTabView), whose
+/// draft the same Save writes after the fields.
+///
+/// A sheet that stops at half height with the map live above it, so the Photos tab's slider
+/// moves a photo along the route in sight.
+final class EditActivityViewController: UIViewController, PHPickerViewControllerDelegate {
     private let api: APIClient
     private let group: [Activity]
     /// The range's types with their counts, listed first in the Type menu.
     private let facets: [TypeFacet]
     private let format: PanelFormat
-    /// The ids written, once Save is done or Cancel follows a partial save.
-    private let onDone: ([String]) -> Void
+    /// The ids written, and whether any photo was, once Save is done or Cancel follows a partial save.
+    private let onDone: ([String], Bool) -> Void
+    /// One activity's Photos tab, else nil.
+    private let photos: PhotosTabView?
+    private let tabs = UISegmentedControl()
+    private let fields = UIStackView()
+    private let status = Controls.body()
 
     private var type: String
     private var written: [String] = []
@@ -22,12 +33,15 @@ final class EditActivityViewController: UIViewController {
     private let about = UITextView()
     private let error = Controls.error(id: "editError")
 
-    init(api: APIClient, group: [Activity], facets: [TypeFacet], format: PanelFormat, onDone: @escaping ([String]) -> Void) {
+    init(api: APIClient, group: [Activity], facets: [TypeFacet], format: PanelFormat, images: PhotoImages,
+         onOverlay: @escaping (PhotoMarkerOverlay?) -> Void, onDone: @escaping ([String], Bool) -> Void) {
         self.api = api
         self.group = group
         self.facets = facets
         self.format = format
         self.onDone = onDone
+        photos = group.count == 1 ? PhotosTabView(api: api, images: images, format: format, activity: group[0]) : nil
+        photos?.onOverlay = onOverlay
         type = EditPlan.initialType(group)
         super.init(nibName: nil, bundle: nil)
     }
@@ -72,15 +86,90 @@ final class EditActivityViewController: UIViewController {
         about.accessibilityLabel = String(localized: "Description")
         about.heightAnchor.constraint(greaterThanOrEqualToConstant: 120).isActive = true
 
-        var views: [UIView] = [subtitle, Self.caption(String(localized: "Type")), typeButton]
+        var views: [UIView] = [Self.caption(String(localized: "Type")), typeButton]
         if single != nil {
             views += [Self.caption(String(localized: "Name")), name, Self.caption(String(localized: "Description")), about]
         } else {
             views.append(Controls.body(String(localized: "Name and description stay each activity's own.")))
         }
-        views.append(error)
-        Controls.host(Controls.column(views), in: self)
+        for v in views { fields.addArrangedSubview(v) }
+        fields.axis = .vertical
+        fields.spacing = DesignTokens.Space.s12
+        var column: [UIView] = [subtitle]
+        if let photos {
+            tabs.insertSegment(withTitle: String(localized: "Activity"), at: 0, animated: false)
+            tabs.insertSegment(withTitle: String(localized: "Photos"), at: 1, animated: false)
+            tabs.selectedSegmentIndex = 0
+            tabs.accessibilityIdentifier = "editTabs"
+            tabs.addAction(UIAction { [weak self] _ in self?.showTab() }, for: .valueChanged)
+            photos.onPick = { [weak self] in self?.pick() }
+            photos.onChange = { [weak self] in self?.renderTabs() }
+            photos.isHidden = true
+            column += [tabs, fields, photos]
+        } else {
+            column.append(fields)
+        }
+        status.isHidden = true
+        column += [status, error]
+        Controls.host(Controls.column(column), in: self)
         renderType()
+        renderTabs()
+    }
+
+    /// The tab picked: Photos draws its draft on the map while it shows.
+    private func showTab() {
+        let onPhotos = tabs.selectedSegmentIndex == 1
+        view.endEditing(true)
+        fields.isHidden = onPhotos
+        photos?.isHidden = !onPhotos
+        photos?.active = onPhotos
+    }
+
+    /// The Photos tab's label: the count Save would leave, marked while it has unsaved changes.
+    private func renderTabs() {
+        guard let photos else { return }
+        let count = format.count(photos.count)
+        let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the activity's photos, written as label: N.")
+            : String(localized: "Photos: \(count) •", comment: "Edit window's tab with unsaved photo changes.")
+        tabs.setTitle(title, forSegmentAt: 1)
+        tabs.accessibilityValue = photos.draft.isEmpty ? nil : String(localized: "Photos, with unsaved changes")
+    }
+
+    // MARK: Picking photos
+
+    /// iOS's own picker, which needs no Photos access: the current representation, so the file
+    /// keeps the EXIF the placement check reads.
+    private func pick() {
+        var config = PHPickerConfiguration()
+        config.filter = .images
+        config.selectionLimit = 0
+        config.preferredAssetRepresentationMode = .current
+        let picker = PHPickerViewController(configuration: config)
+        picker.delegate = self
+        present(picker, animated: true)
+    }
+
+    func picker(_ picker: PHPickerViewController, didFinishPicking results: [PHPickerResult]) {
+        picker.dismiss(animated: true)
+        guard !results.isEmpty else { return }
+        Task {
+            var files: [(url: URL?, name: String)] = []
+            for result in results {
+                files.append((await Self.copy(result.itemProvider), result.itemProvider.suggestedName ?? String(localized: "Photo")))
+            }
+            photos?.add(files)
+        }
+    }
+
+    /// The picked file copied somewhere it outlives the provider's callback, or nil.
+    private static func copy(_ provider: NSItemProvider) async -> URL? {
+        await withCheckedContinuation { continuation in
+            provider.loadFileRepresentation(forTypeIdentifier: UTType.image.identifier) { url, _ in
+                guard let url else { return continuation.resume(returning: nil) }
+                let copy = FileManager.default.temporaryDirectory.appending(path: "pick-\(UUID().uuidString)-\(url.lastPathComponent)")
+                continuation.resume(returning: (try? FileManager.default.copyItem(at: url, to: copy)) == nil ? nil : copy)
+            }
+        }
     }
 
     private static func caption(_ text: String) -> UILabel {
@@ -111,6 +200,10 @@ final class EditActivityViewController: UIViewController {
     private func save() {
         guard !saving else { return }
         let nameText = name.text ?? "", aboutText = about.text ?? ""
+        if let invalid = photos?.invalid {
+            show(invalid)
+            return
+        }
         if let invalid = EditPlan.invalid(group: group, type: type, name: nameText, description: aboutText) {
             let message = switch invalid {
             case .typeRequired: String(localized: "Pick a type.")
@@ -122,13 +215,17 @@ final class EditActivityViewController: UIViewController {
             return
         }
         let writes = EditPlan.writes(group: group, type: type, name: nameText, description: aboutText).filter { !written.contains($0.id) }
-        guard !writes.isEmpty else { return finish() }
+        guard !writes.isEmpty || photos?.draft.isEmpty == false else { return finish() }
         saving = true
+        photos?.busy = true
+        error.isHidden = true
         navigationItem.rightBarButtonItem?.isEnabled = false
         view.endEditing(true)
         Task {
             defer {
                 saving = false
+                photos?.busy = false
+                status.isHidden = true
                 navigationItem.rightBarButtonItem?.isEnabled = true
             }
             for write in writes {
@@ -140,18 +237,35 @@ final class EditActivityViewController: UIViewController {
                     return
                 }
             }
+            if let photos, !photos.draft.isEmpty {
+                let failure = await photos.save { [weak self] done, total in
+                    self?.status.text = String(localized: "Saving photos \(min(done + 1, total)) of \(total)…")
+                    self?.status.isHidden = false
+                }
+                if let failure {
+                    show((failure as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved."))
+                    return
+                }
+            }
             finish()
         }
     }
 
+    /// Cancel asks first when photo changes would be thrown away.
     private func cancel() {
         guard !saving else { return }
-        finish()
+        guard let photos, !photos.draft.isEmpty else { return finish() }
+        let alert = UIAlertController(title: String(localized: "Discard photo changes?"),
+                                      message: String(localized: "The photos you added, moved or deleted in this window haven't been saved yet."), preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String(localized: "Keep editing"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Discard"), style: .destructive) { [weak self] _ in self?.finish() })
+        present(alert, animated: true)
     }
 
     private func finish() {
-        let done = written
-        dismiss(animated: true) { self.onDone(done) }
+        let done = written, photosSaved = photos?.photosSaved ?? false
+        photos?.active = false
+        dismiss(animated: true) { self.onDone(done, photosSaved) }
     }
 
     private func show(_ message: String) {

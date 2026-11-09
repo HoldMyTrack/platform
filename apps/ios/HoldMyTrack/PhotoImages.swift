@@ -10,6 +10,8 @@ final class PhotoImages {
     private let api: APIClient
     private let thumbs = NSCache<NSString, UIImage>()
     private var waiting: [String: [(UIImage?) -> Void]] = [:]
+    /// New photos' thumbnails, held until the Edit window closes: nothing could fetch one again.
+    private var local: [String: UIImage] = [:]
 
     init(api: APIClient) {
         self.api = api
@@ -18,7 +20,13 @@ final class PhotoImages {
     }
 
     /// The thumbnail at path if it's here.
-    func cached(_ path: String) -> UIImage? { thumbs.object(forKey: path as NSString) }
+    func cached(_ path: String) -> UIImage? { local[path] ?? thumbs.object(forKey: path as NSString) }
+
+    /// A thumbnail made on the phone, a new photo's, kept under a path no fetch answers.
+    func store(_ image: UIImage, for path: String) { local[path] = image }
+
+    /// The Edit window closed: its new photos' thumbnails go.
+    func forgetLocal() { local = [:] }
 
     /// The thumbnail at path: at once when it's here, else once fetched; nil when it can't be.
     func thumb(_ path: String, _ done: @escaping (UIImage?) -> Void) {
@@ -26,6 +34,8 @@ final class PhotoImages {
             done(image)
             return
         }
+        // A new photo's thumbnail is only ever stored, never fetched.
+        guard path.hasPrefix("/") else { return done(nil) }
         if waiting[path] != nil {
             waiting[path]?.append(done)
             return

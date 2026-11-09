@@ -16,6 +16,8 @@ final class PhotoMarkersView: UIView {
     private let onOpen: ([String]) -> Void
     private var items: [PhotoMarkerItem] = []
     private var activeID: String?
+    /// The photo the Photos tab is moving, kept out of every group.
+    private var loneID: String?
     /// One view per group, keyed by its photos' ids.
     private var markers: [String: PhotoMarkerView] = [:]
 
@@ -34,10 +36,12 @@ final class PhotoMarkersView: UIView {
         return hit === self ? nil : hit
     }
 
-    /// What to show: items in route order, the one open (activeID) drawn larger.
-    func set(_ items: [PhotoMarkerItem], activeID: String?, on map: MLNMapView) {
+    /// What to show: items in route order, the one open or in hand (activeID) drawn larger, and
+    /// loneID, the one the Photos tab is moving, in no group.
+    func set(_ items: [PhotoMarkerItem], activeID: String?, loneID: String?, on map: MLNMapView) {
         self.items = items
         self.activeID = activeID
+        self.loneID = loneID
         regroup(on: map)
     }
 
@@ -53,7 +57,7 @@ final class PhotoMarkersView: UIView {
             let p = map.convert(CLLocationCoordinate2D(latitude: item.lat, longitude: item.lon), toPointTo: self)
             return ScreenPoint(id: item.id, x: p.x, y: p.y)
         }
-        let groups = PhotoMarkers.groups(points, size: size, loneID: nil).map(\.ids)
+        let groups = PhotoMarkers.groups(points, size: size, loneID: loneID).map(\.ids)
         let wanted = Dictionary(groups.map { ($0.joined(separator: "|"), $0) }, uniquingKeysWith: { a, _ in a })
         for key in markers.keys where wanted[key] == nil { markers.removeValue(forKey: key)?.removeFromSuperview() }
         for (key, ids) in wanted {

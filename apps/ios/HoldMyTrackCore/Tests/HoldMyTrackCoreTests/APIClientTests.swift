@@ -210,7 +210,7 @@ struct APIClientTests {
             return .init(body: self.json(body))
         }
         let metrics = try await client().trackMetrics("a1")
-        #expect(metrics == TrackMetrics(activityID: "a1", points: [.init(lon: 1.5, lat: 2.5), .init(lon: 1.6, lat: 2.6)], bands: [.init(band: 2, start: 0, end: 1)]))
+        #expect(metrics == TrackMetrics(activityID: "a1", points: [.init(lon: 1.5, lat: 2.5, time: 0), .init(lon: 1.6, lat: 2.6, time: 5)], bands: [.init(band: 2, start: 0, end: 1)]))
     }
 
     @Test func spotsInAreaSendTheBoxAndTheCategories() async throws {
@@ -269,6 +269,37 @@ struct APIClientTests {
         #expect(photos == [Photo(id: "p1", activityID: "a1", takenAt: "2026-10-04T15:00:00Z", routeAt: "2026-10-04T15:00:00Z",
                                  timezone: "America/New_York", lon: -81.7, lat: 41.5, width: 2048, height: 1536,
                                  url: "/v1/photos/p1/image", thumbURL: "/v1/photos/p1/thumb")])
+    }
+
+    @Test func thePlaceCheckSendsTheZonedTimeAloneAndReadsNeedsPlace() async throws {
+        StubProtocol.answer = { _ in .init(body: self.json(["route_at": "2026-10-04T15:00:00Z", "taken_at": NSNull()])) }
+        let exif = PhotoExif(takenAt: Date(timeIntervalSince1970: 1_791_126_000), takenLocal: "2026-10-04T11:00:00", lat: 41.5, lon: -81.7)
+        #expect(try await client().checkPhotoPlace(activityID: "a1", exif: exif) == .at(1_791_126_000))
+        let sent = try JSONSerialization.jsonObject(with: try #require(StubProtocol.sent.first?.httpBody)) as? [String: Any]
+        #expect(sent?["taken_at"] as? String == "2026-10-04T15:00:00Z")
+        #expect(sent?["taken_local"] == nil)
+        StubProtocol.answer = { _ in .init(status: 422, body: self.json(["error": "photo_needs_place", "message": "?"])) }
+        #expect(try await client().checkPhotoPlace(activityID: "a1", exif: PhotoExif()) == .needsPlace)
+    }
+
+    @Test func anUploadIsMultipartWithBothImagesAndThePlace() async throws {
+        StubProtocol.answer = { _ in .init(status: 201, body: self.json([
+            "id": "p1", "activity_id": "a1", "taken_at": NSNull(), "route_at": "2026-10-04T15:00:00Z", "timezone": "UTC",
+            "lon": 1, "lat": 2, "caption": "Lake", "width": 10, "height": 10, "url": "/u", "thumb_url": "/t",
+        ])) }
+        let prepared = PreparedPhoto(file: Data("FILE".utf8), thumb: Data("THUMB".utf8), exif: PhotoExif(takenLocal: "2026-10-04T11:00:00"))
+        let photo = try await client().uploadPhoto(activityID: "a1", photo: prepared, routeAt: 1_791_126_000, caption: "Lake")
+        #expect(photo.caption == "Lake")
+        let sent = try #require(StubProtocol.sent.first)
+        #expect(sent.value(forHTTPHeaderField: "Content-Type")?.hasPrefix("multipart/form-data; boundary=") == true)
+        let body = String(decoding: try #require(sent.httpBody), as: UTF8.self)
+        for part in ["name=\"activity_id\"\r\n\r\na1", "name=\"file\"; filename=\"photo.jpg\"\r\nContent-Type: image/jpeg\r\n\r\nFILE",
+                     "name=\"thumb\"; filename=\"thumb.jpg\"", "name=\"taken_local\"\r\n\r\n2026-10-04T11:00:00",
+                     "name=\"route_at\"\r\n\r\n2026-10-04T15:00:00Z", "name=\"caption\"\r\n\r\nLake"] {
+            #expect(body.contains(part), "\(part)")
+        }
+        #expect(!body.contains("name=\"lat\""))
+        #expect(body.hasSuffix("--\r\n"))
     }
 
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {

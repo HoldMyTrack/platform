@@ -76,7 +76,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 ### FR-2.10 Photos
 
-- The Edit window has no Photos tab yet, so photos are added and changed on the web (`ROADMAP.md`, 7b.4).
+- Added photos come from iOS's photo picker, which hands over a photo's location with its time, unlike Android's, so the placement check can place a photo by where it was taken (`docs/SPEC.md` FR-16.1).
 
 ## 5. FR-3 — Sync and Imports
 
