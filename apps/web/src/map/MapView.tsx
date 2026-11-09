@@ -108,7 +108,6 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
 
   // A Story, or the area under Dates; the tracks take Dates alone (activityQuery.ts).
   const activityQuery = useMemo(() => listQuery(storyId, dates, area), [storyId, dates, area]);
-  const tracksQuery = useMemo(() => tracksQueryFor(storyId, dates), [storyId, dates]);
 
   // Fetched once here so the panel and the drawn tracks agree on the same rows.
   const {
@@ -195,6 +194,10 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const areaState = areaLoad(zoom, activities.length, storyId === null ? areaTotal : null);
   // Past the cap the map draws only the listed tracks, so the map and the list stay one set.
   const listedIds = useMemo(() => (areaState.capped ? activities.map((a) => a.id) : null), [areaState.capped, activities]);
+  // Past the cap the tiles carry only what starts at or after the oldest listed activity: the
+  // listed tracks and newer ones beyond the view, instead of the whole history (IMPLEMENTATION.md §4.3).
+  const since = areaState.capped ? activities[activities.length - 1]?.startedAt : undefined;
+  const tracksQuery = useMemo(() => ({ ...tracksQueryFor(storyId, dates), ...(since !== undefined && { since }) }), [storyId, dates, since]);
   useEffect(() => {
     if (map) setListedTracks(map, listedIds);
   }, [map, listedIds]);

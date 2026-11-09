@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/geo"
 )
@@ -41,9 +42,27 @@ FROM (
       AND ` + inDateRange("$5", "$6") + `
       AND ($7::text[] IS NULL OR activity_type = ANY($7))
       AND ($8::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $8))
+      AND ($9::timestamptz IS NULL OR started_at >= $9)
 ) t;`
 
 const dateLayout = "2006-01-02"
+
+// parseSince reads the tracks tile's optional `since`, an RFC 3339 moment: only activities
+// starting at or after it. The web sends the start of the oldest activity its area list holds
+// while that list is cut at its cap (docs/SPEC.md FR-5.19), so a low-zoom tile over a long
+// history carries about the listed tracks rather than every one; the newest 1,000 in view are
+// exactly the tracks in view starting at or after it. Nil when absent; a 400 answered otherwise.
+func parseSince(w http.ResponseWriter, raw string) (*time.Time, bool) {
+	if raw == "" {
+		return nil, true
+	}
+	t, err := time.Parse(time.RFC3339Nano, raw)
+	if err != nil {
+		writeAPIError(w, `invalid "since", want an RFC 3339 time`, http.StatusBadRequest)
+		return nil, false
+	}
+	return &t, true
+}
 
 // maxTileZoom is past any zoom the clients ask for (the Fog and Heatmap rasters stop at z14
 // and are overzoomed above it).
@@ -87,8 +106,13 @@ func (s *Server) handleTracksTile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	since, ok := parseSince(w, r.URL.Query().Get("since"))
+	if !ok {
+		return
+	}
+
 	var tile []byte
-	err = s.pool.QueryRow(r.Context(), tracksQuery, z, x, y, userIDFromContext(r.Context()), filter.From, filter.To, filter.Types, filter.Story).Scan(&tile)
+	err = s.pool.QueryRow(r.Context(), tracksQuery, z, x, y, userIDFromContext(r.Context()), filter.From, filter.To, filter.Types, filter.Story, since).Scan(&tile)
 	if err != nil {
 		if clientGone(w, r) {
 			return

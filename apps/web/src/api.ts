@@ -178,6 +178,8 @@ export interface ActivityQuery {
   types?: string[];
   /** One Story's activities only (`SPEC.md` FR-14.4). */
   story?: string;
+  /** Tracks tiles only: activities starting at or after this moment (`SPEC.md` FR-5.19). */
+  since?: string;
 }
 
 /** The web's area list (`SPEC.md` FR-5.19): the newest tracks crossing `bbox`, 1,000 at most;

@@ -23,7 +23,7 @@ const TAP_TOLERANCE_PX = 14;
 /** `from`/`to` and a Story (FR-14.4) — `types` stays a client-side-only filter (activityFacets.ts,
  *  setHiddenTracks below), matching DISTANCE, which has no server-side equivalent at all;
  *  keeping both narrowed the same way is simpler than half server-side, half client-side. */
-type TrackDateRange = Pick<ActivityQuery, 'from' | 'to' | 'story'>;
+type TrackDateRange = Pick<ActivityQuery, 'from' | 'to' | 'story' | 'since'>;
 
 /**
  * Bumped by every refreshTrackLayer, and sent as `v` (the handler ignores it) so each refresh
@@ -49,6 +49,7 @@ export function trackQuery(range: TrackDateRange): string {
   if (range.from) params.set('from', range.from);
   if (range.to) params.set('to', range.to);
   if (range.story) params.set('story', range.story);
+  if (range.since) params.set('since', range.since);
   if (tracksVersion > 0) params.set('v', `${pageLoaded}.${tracksVersion}`);
   return params.toString();
 }

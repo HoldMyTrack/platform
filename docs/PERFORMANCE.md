@@ -49,6 +49,7 @@ Two accounts seeded straight into the database with 5,000 and 20,000 activities 
 
 - **Low-zoom tiles grow with the whole history** in their square, in time and in bytes: a tile below z10 reads and sends every stored point of every track in it, though at that zoom most fall on one pixel. Past the list's 1,000 the browser draws only the listed tracks (FR-5.19), so most of a heavy tile is sent to be hidden.
 - **The area list** (`GET /v1/activities/area`, a 1,000×750 px view, HTTP round trip, warm): z8 0.15 s and 0.33 s, z10 0.11 s and 0.22 s, z12 11 ms and 34 ms; 1,000 rows are 330 KB, 67 KB gzipped. The total behind a cut list was most of the time: testing every line against the view took 400 ms for 15,000 tracks, the tracks' boxes alone 72 ms, 2 apart, so the total counts boxes.
+- **Past the cap the tiles carry `since`** (`IMPLEMENTATION.md` §4.3), the start of the oldest listed activity, and stop growing with the history: z4 156 ms and 211 KB, z6 156 ms and 440 KB, z8 60 ms and 364 KB, z10 24 ms and 193 KB, the same for both accounts.
 - A 10-person `-mode normal` browse over these accounts (`browse 10 60s`, the demo tracks' centres): `activities-area` p95 147 ms, `tracks` p95 117 ms, no errors.
 
 ### Production load test — 2026-10-22, `9a298d5a`

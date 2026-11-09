@@ -3,10 +3,13 @@ package httpapi
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"slices"
 	"testing"
 	"time"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
 )
 
 // The area list (FR-5.19): the tracks crossing a view, newest first, capped with the area's
@@ -111,5 +114,32 @@ func TestGetActivity(t *testing.T) {
 	}
 	if rec := d.do(me, "GET", "/v1/activities/not-a-uuid", nil); rec.Code != http.StatusNotFound {
 		t.Errorf("malformed id: status %d, want 404", rec.Code)
+	}
+}
+
+// A tracks tile's `since` keeps only activities starting at or after it: the web's map past the
+// list's cap (FR-5.19).
+func TestTracksTileSince(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	at := [2]float64{-30.5, -30.5}
+	d.newActivity(me, testActivity{activityType: "hiking", startedAt: time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC), at: &at})
+	d.newActivity(me, testActivity{activityType: "hiking", startedAt: time.Date(2026, 5, 3, 10, 0, 0, 0, time.UTC), at: &at})
+	x, y := tilemath.LonLatToTile(at[0], at[1], 12)
+	tile := func(query string) int {
+		t.Helper()
+		rec := d.do(me, "GET", fmt.Sprintf("/tiles/v1/tracks/12/%d/%d.mvt?%s", x, y, query), nil)
+		d.decode(rec, http.StatusOK, nil)
+		return rec.Body.Len()
+	}
+	both, newer := tile(""), tile("since=2026-05-03T10:00:00Z")
+	if newer == 0 || newer >= both {
+		t.Errorf("since the newer one's start: %d bytes, want some and fewer than both's %d", newer, both)
+	}
+	if n := tile("since=2026-05-03T10:00:01Z"); n != 0 {
+		t.Errorf("since after both: %d bytes, want none", n)
+	}
+	if rec := d.do(me, "GET", fmt.Sprintf("/tiles/v1/tracks/12/%d/%d.mvt?since=yesterday", x, y), nil); rec.Code != http.StatusBadRequest {
+		t.Errorf("a bad since: status %d, want 400", rec.Code)
 	}
 }
