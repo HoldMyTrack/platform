@@ -461,7 +461,7 @@ On the web the list holds every activity whose track crosses the visible map, of
 
 ### FR-5.20 DATES filter (web)
 
-- After and Before, local dates (FR-3.11), both inclusive and either optional; none set is all time. Each is bounded by the first activity and today (the account's, FR-1.7), with a day past today for an activity recorded in a zone ahead.
+- From and To, local dates (FR-3.11), both inclusive and either optional; none set is all time. Each is bounded by the first activity and today (the account's, FR-1.7), with a day past today for an activity recorded in a zone ahead.
 - Setting it moves the camera once onto the activities it matches, wherever they are; clearing it leaves the camera.
 - It filters the Activities tab and Normal mode's tracks only, not Stories, the Privacy tab, Fog or Heatmap.
 

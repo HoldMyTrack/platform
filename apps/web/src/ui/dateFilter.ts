@@ -1,6 +1,6 @@
 /**
- * The web's Dates filter (docs/SPEC.md FR-5.20), as plain values: After and Before, local
- * YYYY-MM-DD dates, both inclusive and either empty; both empty is all time.
+ * The web's Dates filter (docs/SPEC.md FR-5.20), as plain values: From (`after`) and To
+ * (`before`), local YYYY-MM-DD dates, both inclusive and either empty; both empty is all time.
  */
 export interface DateFilter {
   after: string | null;

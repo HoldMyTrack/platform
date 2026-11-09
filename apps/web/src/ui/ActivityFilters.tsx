@@ -89,7 +89,7 @@ function FilterDropdown({ text, set, onClear, clearLabel, panelLabel, testId, ch
   );
 }
 
-/** The Dates filter (docs/SPEC.md FR-5.20): After and Before, empty for all time. */
+/** The Dates filter (docs/SPEC.md FR-5.20): From and To, empty for all time. */
 function DatesFilter({ value, bounds, earliest, today, onChange, onClear }: DatesProps) {
   const label = dateFilterLabel(value);
   const text =

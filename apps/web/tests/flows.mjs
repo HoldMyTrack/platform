@@ -225,7 +225,7 @@ describe('map flows', () => {
     await page.getByTestId('dates-before').fill('2026-10-01');
     await page.getByTestId('dates-before').press('Enter');
     await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 1, undefined, { timeout: 30_000 });
-    assert.match(await page.getByTestId('dates-filter').textContent(), /Before Oct 1/);
+    assert.match(await page.getByTestId('dates-filter').textContent(), /Until Oct 1/);
     await page.keyboard.press('Escape');
     // Setting Dates flew the camera onto the match; clearing them must leave it where it landed.
     await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
