@@ -19,6 +19,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var mapView: MLNMapView!
     let modes = UISegmentedControl()
     private let layersButton = UIButton(type: .system)
+    /// The chip, the level notice, the Layers badge and Satellite's watch (MapViewController+Chrome).
+    lazy var chrome = MapChromeViews { [weak self] in self?.onImagery($0) }
     private let locateButton = UIButton(type: .system)
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
     private let location = CLLocationManager()
@@ -115,6 +117,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         checkCoverage()
+        countSatelliteWait(onScreen: true)
         frameOnce()
         reloadDays()
         loadList()
@@ -130,6 +133,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     override func viewDidDisappear(_ animated: Bool) {
         super.viewDidDisappear(animated)
         coverageTask?.cancel()
+        countSatelliteWait(onScreen: false)
     }
 
     // MARK: The documents
@@ -152,6 +156,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         self.pair = pair
         render()
         updateLayersMenu()
+        countSatelliteWait(onScreen: viewIfLoaded?.window != nil)
+        renderLevel()
     }
 
     /// The style for the current state: patched in place when only properties changed, else
@@ -176,6 +182,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     func mapView(_ mapView: MLNMapView, regionDidChangeAnimated animated: Bool) {
         Self.lastCenter = mapView.centerCoordinate
+        renderLevel()
     }
 
     func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
@@ -206,6 +213,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: pickedMode) ?? 0
         guard shown != state.mode else { return }
         state.mode = shown
+        renderModeChrome()
         render()
         checkCoverage()
         renderPanel()
@@ -220,6 +228,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                 MapPreferences.save(self.state, mode: self.pickedMode)
                 self.render()
                 self.updateLayersMenu()
+                self.countSatelliteWait(onScreen: self.viewIfLoaded?.window != nil)
             }
         }
         var items: [UIMenuElement] = [toggle(String(localized: "Show layers"), "showLayers", state.showLayers) { $0.showLayers.toggle() }]
@@ -237,6 +246,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         }
         items.append(UIMenu(title: String(localized: "Paths"), options: .displayInline, children: pathItems))
         layersButton.menu = UIMenu(title: String(localized: "Layers"), children: items)
+        renderLayersButton(layersButton)
     }
 
     // MARK: Framing
@@ -347,10 +357,29 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         }
     }
 
-    func mapViewDidFinishRenderingMap(_ mapView: MLNMapView, fullyRendered: Bool) {
-        if fullyRendered && !basemapLoaded {
-            basemapLoaded = true
-            updateBasemapNotice()
+    /// The style's basemap source, whose tiles alone say whether the basemap is reachable: the
+    /// map as a whole never finishes rendering while another source's tiles fail.
+    private static let basemapSource = "protomaps"
+
+    /// Called off the main thread for every tile of every source: the basemap's and the
+    /// imagery's arrivals and failures.
+    nonisolated func mapView(_ mapView: MLNMapView, tileDidTriggerAction operation: MLNTileOperation, x: Int, y: Int, z: Int,
+                             wrap: Int, overscaledZ: Int, sourceID: String) {
+        guard sourceID == Self.basemapSource || sourceID == MapStyle.satelliteID else { return }
+        let loaded: Bool
+        switch operation {
+        case .loadFromNetwork, .loadFromCache: loaded = true
+        case .error: loaded = false
+        default: return
+        }
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+            if sourceID == MapStyle.satelliteID {
+                self.chrome.satellite.tile(loaded: loaded)
+            } else if loaded ? !self.basemapLoaded : !self.basemapFailed {
+                if loaded { self.basemapLoaded = true } else { self.basemapFailed = true }
+                self.updateBasemapNotice()
+            }
         }
     }
 
@@ -361,7 +390,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Notices
 
-    enum Notice: Int { case mapFailed, basemap, coverage, empty, location, pending }
+    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending }
 
     func notice(_ kind: Notice, _ text: String) {
         if let label = notices.arrangedSubviews.first(where: { $0.tag == kind.rawValue + 1 }) as? UILabel {
@@ -397,6 +426,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: state.mode) ?? 0
         modes.backgroundColor = UIColor(resource: .surface)
         modes.accessibilityIdentifier = "modes"
+        renderModeChrome()
 
         for (button, icon, label, id) in [
             (layersButton, UIImage(resource: .layers), String(localized: "Layers"), "layers"),
@@ -420,10 +450,21 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         for v in [modes, layersButton] { modesRow.addArrangedSubview(v) }
         modesRow.spacing = DesignTokens.Space.s8
         modesRow.alignment = .center
-        let column = Controls.column([modesRow, notices], spacing: DesignTokens.Space.s8)
+        let level = UIStackView(arrangedSubviews: [chrome.level])
+        level.axis = .vertical
+        level.alignment = .center
+        let column = Controls.column([modesRow, level, notices], spacing: DesignTokens.Space.s8)
+        chrome.badge.translatesAutoresizingMaskIntoConstraints = false
+        layersButton.addSubview(chrome.badge)
+        NSLayoutConstraint.activate([
+            chrome.badge.heightAnchor.constraint(equalToConstant: 16),
+            chrome.badge.widthAnchor.constraint(greaterThanOrEqualToConstant: 16),
+            chrome.badge.topAnchor.constraint(equalTo: layersButton.topAnchor, constant: -6),
+            chrome.badge.trailingAnchor.constraint(equalTo: layersButton.trailingAnchor, constant: 6),
+        ])
         bindSlider()
 
-        for v in [column, locateButton, sheet] {
+        for v in [column, locateButton, chrome.chip, sheet] {
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
         }
@@ -432,6 +473,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             column.topAnchor.constraint(equalTo: guide.topAnchor, constant: DesignTokens.Space.s8),
             column.leadingAnchor.constraint(equalTo: guide.leadingAnchor, constant: DesignTokens.Space.s12),
             column.trailingAnchor.constraint(equalTo: guide.trailingAnchor, constant: -DesignTokens.Space.s12),
+            chrome.chip.centerXAnchor.constraint(equalTo: guide.centerXAnchor),
+            chrome.chip.bottomAnchor.constraint(equalTo: guide.bottomAnchor, constant: -DesignTokens.Space.s32),
+            // Clear of Find my location on both sides, so it stays centred.
+            chrome.chip.widthAnchor.constraint(lessThanOrEqualTo: guide.widthAnchor, constant: -2 * (44 + DesignTokens.Space.s12 + DesignTokens.Space.s8)),
             sheet.leadingAnchor.constraint(equalTo: guide.leadingAnchor),
             sheet.trailingAnchor.constraint(equalTo: guide.trailingAnchor),
             sheet.bottomAnchor.constraint(equalTo: guide.bottomAnchor),

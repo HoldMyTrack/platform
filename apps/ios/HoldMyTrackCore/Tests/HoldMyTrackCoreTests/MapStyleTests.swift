@@ -28,6 +28,7 @@ struct MapStyleTests {
 
     private let document = LayersDocument(JSONValue.parse(Data("""
     {"styleBuild": "b1", "tileVersion": "7.1",
+     "tiers": [{"tier": "country", "below": 4}, {"tier": "region", "below": 8}, {"tier": "city"}],
      "vars": {"hidden": []},
      "views": {
        "plain": {
@@ -157,6 +158,47 @@ struct MapStyleTests {
         #expect(layer(imagery, "tracks-line")?["paint"]?["line-color"] == .string("#ffffff"), "the satellite view applies")
     }
 
+    @Test func failedImageryDrawsAsSatelliteOffWithItsLayerKept() {
+        var state = MapState()
+        state.satellite = true
+        state.satelliteFailed = true
+        let failed = compose(state)
+        #expect(layer(failed, "satellite")?["layout"]?["visibility"] == .string("visible"), "a tile arriving later is noticed")
+        #expect(layer(failed, "earth")?["layout"]?["visibility"] == .string("visible"))
+        #expect(layer(failed, "roads_major")?["paint"]?["line-opacity"] == .number(1))
+        #expect(layer(failed, "tracks-line")?["paint"]?["line-color"] == nil, "the plain view applies")
+    }
+
+    @Test func theTierInViewIsTheFirstWhoseBelowIsPastTheZoom() {
+        #expect(ZoomTier.at(0, tiers: document.tiers) == .country)
+        #expect(ZoomTier.at(3.99, tiers: document.tiers) == .country)
+        #expect(ZoomTier.at(4, tiers: document.tiers) == .region)
+        #expect(ZoomTier.at(8, tiers: document.tiers) == .city)
+        #expect(ZoomTier.at(3, tiers: []) == .city, "a document without tiers draws exact coverage")
+    }
+
+    @Test func fogAndHeatmapHaveAChipAndALevelNormalHasNeither() {
+        #expect(MapChrome.chip(.normal) == nil)
+        #expect(MapChrome.chip(.fog) == .everyActivity)
+        #expect(MapChrome.chip(.heatmap) == .lastYear)
+        #expect(MapChrome.level(.normal, tier: .city) == nil)
+        #expect(MapChrome.level(.fog, tier: .country) == .fogCountry)
+        #expect(MapChrome.level(.fog, tier: .region) == .fogRegion)
+        #expect(MapChrome.level(.fog, tier: .city) == .fogCity)
+        #expect(MapChrome.level(.heatmap, tier: .country) == MapChrome.level(.heatmap, tier: .city))
+    }
+
+    @Test func theLayersBadgeCountsRoadsAndPathsAndGreysWhileHidden() {
+        var state = MapState()
+        #expect(MapChrome.layersBadge(state) == .init(count: 1, filled: true, greyed: false), "Roads starts picked")
+        state.roads = false
+        #expect(MapChrome.layersBadge(state) == .init(count: 0, filled: false, greyed: false))
+        state.toggles = ["bikePaths": true, "sharedPaths": false, "mtbTrails": true]
+        #expect(MapChrome.layersBadge(state).count == 2)
+        state.showLayers = false
+        #expect(MapChrome.layersBadge(state) == .init(count: 2, filled: false, greyed: true))
+    }
+
     @Test func roadsShowWhilePickedAndShowLayersIsOn() {
         var state = MapState()
         #expect(layer(compose(state), "roads_major")?["layout"]?["visibility"] == .string("visible"))
@@ -207,6 +249,17 @@ struct MapStyleTests {
         state.mode = .normal
         let changes = try #require(MapStyle.changes(from: fog, to: compose(state)))
         #expect(changes.contains(MapStyle.Change(layer: "place_label", kind: "paint", name: "text-opacity", value: nil)))
+    }
+
+    @Test func cssColorsParseToComponents() {
+        #expect(CSSColor("#000000") == CSSColor(0, 0, 0, 1))
+        #expect(CSSColor("#fff") == CSSColor(1, 1, 1, 1))
+        #expect(CSSColor("#FF000080") == CSSColor(1, 0, 0, 128.0 / 255))
+        #expect(CSSColor("rgb(255, 0, 51)") == CSSColor(1, 0, 0.2, 1))
+        #expect(CSSColor("rgba(0,0,0,0.5)") == CSSColor(0, 0, 0, 0.5))
+        #expect(CSSColor("hsl(0, 0%, 0%)") == nil, "an unknown form reloads the style")
+        #expect(CSSColor("#12345") == nil)
+        #expect(CSSColor("rgb(1, 2)") == nil)
     }
 
     @Test func noChangeIsAnEmptyList() {

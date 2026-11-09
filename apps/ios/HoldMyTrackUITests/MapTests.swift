@@ -15,10 +15,19 @@ final class MapTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let modes = app.segmentedControls["modes"]
         XCTAssertTrue(modes.exists)
+        // Fog and Heatmap name what they cover, since neither takes the date range; Normal
+        // doesn't. The level notice fades within seconds, which the query can miss.
+        let chip = app.staticTexts["modeChip"]
         modes.buttons.element(boundBy: 1).tap()
         XCTAssertTrue(modes.buttons.element(boundBy: 1).isSelected)
+        XCTAssertTrue(chip.waitForExistence(timeout: 5))
+        attach("Fog")
+        let fogChip = chip.label
         modes.buttons.element(boundBy: 2).tap()
+        XCTAssertTrue(waitForChange(of: chip, from: fogChip))
+        attach("Heatmap")
         modes.buttons.element(boundBy: 0).tap()
+        XCTAssertTrue(chip.waitForNonExistence(timeout: 5))
         // The date range: ‹ moves it back its own length, and a tap on the track brings the
         // nearer knob there.
         let label = app.staticTexts["rangeLabel"]
@@ -35,6 +44,14 @@ final class MapTests: XCTestCase {
         app.tabBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.otherElements["map"].exists, "the map keeps its place across a tab switch")
         XCTAssertNotEqual(label.label, first, "the picked range survives a tab switch")
+    }
+
+    @MainActor
+    private func attach(_ name: String) {
+        let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
     }
 
     private func waitForChange(of element: XCUIElement, from old: String) -> Bool {
