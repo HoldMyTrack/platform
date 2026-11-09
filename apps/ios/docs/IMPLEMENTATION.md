@@ -77,6 +77,7 @@ The split is Android's: `MapSession` holds the range or Story shown and the came
 - **A tap on the map** asks MapLibre for features within `TrackTap.radius` on the tracks group's line layers; the map's own double-tap must fail first, or every zoom would also focus.
 - **The list drives the camera**: a picked range or an opened Story sets `flyRequest`, and the next list read flies onto its tracks; tracks changed under the same query (a finished reprocess, a delete, a Story copy arriving) bump a `v=` counter on the tiles' query so MapLibre fetches them again.
 - **Edits and deletes run one request at a time**, as on Android; `EditPlan` writes only the activities a change reaches.
+- **Photo markers are views over the map** (`PhotoMarkersView`), as on Android, so a marker's tap never reaches the map's own: regrouped when the camera rests, moved on every frame of a move. The photo popup sits over the sheet, since one opened low on the map runs past the sheet's edge.
 
 ## 4. Sync engine
 

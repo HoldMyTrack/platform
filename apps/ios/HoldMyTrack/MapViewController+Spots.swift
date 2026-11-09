@@ -85,6 +85,7 @@ extension MapViewController {
             spotViews.popup.close()
             return false
         }
+        photoViews.popup.close()
         showPopup(spot)
         return true
     }

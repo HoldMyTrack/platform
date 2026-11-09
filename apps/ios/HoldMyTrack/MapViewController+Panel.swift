@@ -161,8 +161,11 @@ extension MapViewController {
             fly([id])
         }
         panelChanged()
-        // The focused activity's reprocess may have landed: its bands follow the new points.
-        if change.finished { updateBands(refetch: true) }
+        // The focused activity's reprocess may have landed: its bands and photos follow the new points.
+        if change.finished {
+            updateBands(refetch: true)
+            refreshPhotos(force: true)
+        }
         watchPending()
     }
 
@@ -198,6 +201,7 @@ extension MapViewController {
         updateBands()
         render()
         renderPanel()
+        refreshPhotos(force: false)
     }
 
     func renderPanel() {
@@ -274,6 +278,8 @@ extension MapViewController {
             panelChanged()
         case .storiesChanged:
             loadList()
+            // A Story's photos change with its members.
+            refreshPhotos(force: true)
         case .removed:
             tracksVersion += 1
             updateTracksQuery()
@@ -351,10 +357,14 @@ extension MapViewController {
         let group = targets
         guard !group.isEmpty, !account.isDemo else { return }
         editOpen = true
+        photos.editIDs = group.map(\.id)
+        refreshPhotos(force: false)
         let facets = ActivityFacets.typeFacets(session.panel.activities, distanceFilter: nil)
         let editor = EditActivityViewController(api: flow.api, group: group, facets: facets, format: format) { [weak self] written in
             guard let self else { return }
             self.editOpen = false
+            self.photos.editIDs = nil
+            self.refreshPhotos(force: false)
             guard !written.isEmpty else { return }
             self.awaiting.formUnion(written)
             self.loadList()
