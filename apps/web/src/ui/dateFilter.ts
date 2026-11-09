@@ -23,17 +23,11 @@ export function dateFilterLabel({ after, before }: DateFilter): DateFilterLabel 
   return { kind: 'all' };
 }
 
-/** The day after a YYYY-MM-DD date. */
-function nextDay(date: string): string {
-  const d = new Date(`${date}T00:00:00Z`);
-  d.setUTCDate(d.getUTCDate() + 1);
-  return d.toISOString().slice(0, 10);
-}
-
-/** What the pickers allow: the first activity's day (today without one) to the day after today,
- *  the account's, for an activity recorded in a zone ahead of it. */
-export function dateFilterBounds(earliest: string | null, today: string): { min: string; max: string } {
-  return { min: earliest !== null && earliest < today ? earliest : today, max: nextDay(today) };
+/** What the pickers allow: the first activity's day (today without one) to today, the account's,
+ *  or the newest activity's day when that's later: one recorded in a zone ahead can be dated
+ *  tomorrow. */
+export function dateFilterBounds(earliest: string | null, latest: string | null, today: string): { min: string; max: string } {
+  return { min: earliest !== null && earliest < today ? earliest : today, max: latest !== null && latest > today ? latest : today };
 }
 
 /**

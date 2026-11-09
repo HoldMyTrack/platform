@@ -1,7 +1,7 @@
 {
   "rule": "dateFilterSet",
   "clients": ["web"],
-  "description": "The web's Dates filter once one end is set or cleared (docs/SPEC.md FR-5.20): a date clamped into the bounds (the first activity to the day after today), the other end moved to meet it when they cross; null or empty clears that end. fly is true only when a date was set and the filter changed.",
+  "description": "The web's Dates filter once one end is set or cleared (docs/SPEC.md FR-5.20): a date clamped into the bounds (dateFilterBounds), the other end moved to meet it when they cross; null or empty clears that end. fly is true only when a date was set and the filter changed.",
   "cases": [
     {
       "name": "setting After from all time flies",
@@ -29,7 +29,7 @@
       "expected": {"filter": {"after": "2019-03-14", "before": null}, "fly": true}
     },
     {
-      "name": "past the day after today clamps to it",
+      "name": "past the newest bound clamps to it",
       "input": {"current": {"after": null, "before": null}, "end": "before", "value": "2027-01-01", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
       "expected": {"filter": {"after": null, "before": "2026-11-10"}, "fly": true}
     },

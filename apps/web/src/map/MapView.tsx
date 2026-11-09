@@ -124,8 +124,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     if (activityQuery !== null && activitiesLoadedKey === JSON.stringify(activityQuery)) dispatch({ type: 'listLoaded', ids: activities.map((a) => a.id) });
   }, [activities, activitiesLoadedKey, activityQuery]);
   // The first activity's day: the Dates pickers' bound and the empty account's panel.
-  const { earliest, ready: daysReady, reload: reloadDays } = useHistoryStart();
-  const datesBounds = dateFilterBounds(earliest, today);
+  const { earliest, latest, ready: daysReady, reload: reloadDays } = useHistoryStart();
+  const datesBounds = dateFilterBounds(earliest, latest, today);
   const changeDates = useCallback(
     (end: 'after' | 'before', value: string | null) => {
       const { filter, fly } = setDateFilter(dates, end, value, datesBounds);

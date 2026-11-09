@@ -30,7 +30,7 @@ export const rules = {
   areaLoad: ({ zoom, listed, total }) => areaLoad(zoom, listed, total ?? null),
   dateFilterSet: ({ current, end, value, bounds }) => setDateFilter({ after: current.after ?? null, before: current.before ?? null }, end, value ?? null, bounds),
   dateFilterLabel: ({ after, before }) => dateFilterLabel({ after: after ?? null, before: before ?? null }),
-  dateFilterBounds: ({ earliest, today }) => dateFilterBounds(earliest ?? null, today),
+  dateFilterBounds: ({ earliest, latest, today }) => dateFilterBounds(earliest ?? null, latest ?? null, today),
   satelliteStatus: ({ on, loaded, failed, waitedMs }) => {
     const status = satelliteStatus(loaded, failed, waitedMs);
     return { status, look: satelliteLook(on, status) };
