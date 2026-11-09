@@ -95,3 +95,9 @@ function positiveOr(value: unknown, fallback: number): number {
 // such fallback, so tracks hidden there left an empty map — and a focused road trip too long
 // to fit at z7 flew to a view with nothing drawn on it.
 export const TRACKS_MIN_ZOOM = 4;
+
+// Past a source's last zoom, every source's last tiles are scaled up whole, over the map's whole
+// zoom range. MapLibre's default cuts them into smaller tiles itself from four levels below the
+// map's maxZoom (22), and its cut gives a hole the edges of its outer ring, which earcut sometimes
+// fills or drops: a square of Fog over cleared ground, or none over fog, at street zoom.
+export const ZOOM_LEVELS_TO_OVERSCALE = 22;
