@@ -360,7 +360,6 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               distanceBounds={activityDistanceBounds}
               distanceFilter={distanceFilter}
               onChangeDistance={select.setDistanceFilter}
-              onResetFilters={select.resetFilters}
               checked={checkedActivityIds}
               targetIds={toolbarTargetIds}
               focusedId={focusedActivityId}

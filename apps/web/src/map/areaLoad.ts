@@ -1,3 +1,4 @@
+import { TRACKS_MIN_ZOOM } from './config.ts';
 import { SPOTS_IN_AREA_MIN_ZOOM } from './spotsGroup.ts';
 
 /** The zoom from which the web's list follows the map as it moves (docs/SPEC.md FR-5.19); below
@@ -9,10 +10,12 @@ export const AREA_AUTO_MIN_ZOOM = SPOTS_IN_AREA_MIN_ZOOM;
 export const AREA_LIMIT = 1000;
 
 /**
- * How the list follows the map at `zoom`, and whether the last area's list was cut at the limit,
- * which the map then says (FR-5.19). `listed` and `total` are the last load's; `total` is null
- * before one.
+ * How the list follows the map at `zoom` (FR-5.19): on its own from zoom 10, on request below,
+ * and not at all where no track is drawn (TRACKS_MIN_ZOOM), since a list of what the map can't
+ * show would make no sense. And whether the last area's list was cut at the limit, which the map
+ * then says. `listed` and `total` are the last load's; `total` is null before one.
  */
-export function areaLoad(zoom: number, listed: number, total: number | null): { load: 'auto' | 'button'; capped: boolean } {
-  return { load: zoom >= AREA_AUTO_MIN_ZOOM ? 'auto' : 'button', capped: total !== null && total > listed };
+export function areaLoad(zoom: number, listed: number, total: number | null): { load: 'auto' | 'button' | 'none'; capped: boolean } {
+  const load = zoom >= AREA_AUTO_MIN_ZOOM ? 'auto' : zoom >= TRACKS_MIN_ZOOM ? 'button' : 'none';
+  return { load, capped: total !== null && total > listed };
 }

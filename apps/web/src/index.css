@@ -552,20 +552,20 @@ body {
   gap: var(--fm-space-12);
 }
 
-/* The filter row (ActivityFilters.tsx): Type's and Dates' dropdowns side by side, and the
-   Distance slider on a line of its own under them, full width, since beside two dropdowns a
-   380px panel left it too narrow for its labels. */
+/* The filter row (ActivityFilters.tsx): Type's, Dates' and Distance's dropdowns, wrapping onto a
+   second line when the panel is narrow. */
 .activities-panel__filters {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--fm-space-12) var(--fm-space-8);
+  gap: var(--fm-space-8);
   padding: var(--fm-space-4) var(--fm-space-16) var(--fm-space-16);
   border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
 }
 
-.activities-panel__filters > .activity-filters {
-  flex-basis: 100%;
+/* The Distance slider inside its dropdown's panel. */
+.activities-panel__filter-panel .activity-filters {
+  min-width: 240px;
 }
 
 .activity-filters__section {
@@ -713,18 +713,6 @@ body {
   justify-content: space-between;
   font-size: var(--fm-text-2xs);
   color: rgb(var(--fm-ink-rgb) / 40%);
-}
-
-.activity-filters__reset {
-  align-self: flex-start;
-  border: 0;
-  background: none;
-  padding: 0;
-  color: var(--fm-accent-strong);
-  font: inherit;
-  font-size: var(--fm-text-sm);
-  font-weight: var(--fm-weight-semibold);
-  cursor: pointer;
 }
 
 .activities-panel__list {
@@ -1431,19 +1419,19 @@ button.activities-panel__story-badge:hover {
   color: var(--fm-danger);
 }
 
-/* The Dates filter (ActivityFilters.tsx): the type dropdown's trigger and panel, with the value
-   in the trigger, a clear button beside it while set, and two date fields in the panel. */
-.activities-panel__dates-dropdown {
+/* Dates' and Distance's dropdowns (ActivityFilters.tsx): the type dropdown's trigger and panel,
+   with the value in the trigger and a clear button beside it while set. */
+.activities-panel__filter-dropdown {
   display: inline-flex;
   align-items: center;
 }
 
-.activities-panel__dates-value--set {
+.activities-panel__filter-value--set {
   color: var(--fm-accent-strong);
   font-weight: var(--fm-weight-semibold);
 }
 
-.activities-panel__dates-clear {
+.activities-panel__filter-clear {
   display: inline-flex;
   align-items: center;
   padding: var(--fm-space-4);
@@ -1453,11 +1441,11 @@ button.activities-panel__story-badge:hover {
   cursor: pointer;
 }
 
-.activities-panel__dates-clear:hover {
+.activities-panel__filter-clear:hover {
   color: var(--fm-ink);
 }
 
-.activities-panel__dates-panel {
+.activities-panel__filter-panel {
   display: flex;
   flex-direction: column;
   gap: var(--fm-space-10);
@@ -1487,17 +1475,6 @@ button.activities-panel__story-badge:hover {
   grid-column: 2;
   color: var(--fm-ink-muted);
   font-size: var(--fm-text-xs);
-}
-
-.activities-panel__dates-reset {
-  align-self: flex-start;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--fm-accent-strong);
-  font: inherit;
-  font-size: var(--fm-text-sm);
-  cursor: pointer;
 }
 
 /* The list was cut at the area's limit (FR-5.19): one muted line over the rows. */

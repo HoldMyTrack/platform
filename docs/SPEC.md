@@ -455,7 +455,7 @@ An activity is split in two at a point on its track. Each part is a full activit
 On the web the list holds every activity whose track crosses the visible map, of all time unless the Dates filter (FR-5.20) narrows it. The apps list the date range instead (FR-6).
 
 - An activity with no track (FR-8.1) is never in it.
-- From zoom 10 the list follows the map as it moves; below zoom 10 the area loads when asked. The camera moving onto an activity or a Story leaves the list as it is.
+- From zoom 10 the list follows the map as it moves; from zoom 4, where tracks are drawn (FR-4.1), to 10 the area loads when asked; further out it isn't offered. The camera moving onto an activity or a Story leaves the list as it is.
 - At most the newest 1,000. Past that, the map and the count say how many the area holds. Tracks are drawn past the limit, and the Type and Distance filters reach only listed tracks.
 - A reload keeps Focused, Checked and Hidden on activities still listed, and every filter as set.
 

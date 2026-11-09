@@ -70,7 +70,6 @@ export interface ActivitiesPanelProps {
   distanceBounds: DistanceRange | null;
   distanceFilter: DistanceRange | null;
   onChangeDistance: (next: DistanceRange | null) => void;
-  onResetFilters: () => void;
   /** The checkbox group — additive/subtractive, independent of `focusedId` below. */
   checked: Set<string>;
   /** What the header toolbar acts on — `checked` when it's non-empty, else `focusedId` alone,
@@ -171,7 +170,6 @@ export function ActivitiesPanel({
   distanceBounds,
   distanceFilter,
   onChangeDistance,
-  onResetFilters,
   checked,
   targetIds,
   focusedId,
@@ -407,7 +405,6 @@ export function ActivitiesPanel({
             distanceBounds={distanceBounds}
             distanceFilter={distanceFilter}
             onChangeDistance={onChangeDistance}
-            onResetFilters={onResetFilters}
             dates={dates}
           />
 

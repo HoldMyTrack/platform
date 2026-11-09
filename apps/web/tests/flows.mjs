@@ -1,7 +1,7 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, Dates
  * narrowing the list and keeping the selection, a Story opened and closed by Back, a track edit's
- * reprocess, a delete, the area's button below zoom 10, the Dates menu, the header's menus
+ * reprocess, a delete, the area's button from zoom 4 to 10, the Dates menu, the header's menus
  * closing, and the tour's offer and header link. Each run signs up a fresh account, uploads the
  * sample files, and deletes the account at the end.
  *
@@ -144,7 +144,7 @@ describe('map flows', () => {
     assert.equal(await checkedBoxes().count(), 2);
     assert.equal(await hiddenRows().count(), 2);
     await page.keyboard.press('Escape');
-    await page.getByTestId('dates-clear').click();
+    await page.getByTestId('dates-filter-clear').click();
     assert.match(await page.getByTestId('dates-filter').textContent(), /All time/);
   });
 
@@ -208,7 +208,7 @@ describe('map flows', () => {
     assert.equal(activities.some((a) => a.id === id), false);
   });
 
-  it('6. below zoom 10 a move waits for "Show activities in this area"', async () => {
+  it('6. from zoom 4 to 10 a move waits for "Show activities in this area", and further out none is offered', async () => {
     await viewAll();
     const listed = await rows().count();
     await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [0, 0], zoom: 6 }));
@@ -219,6 +219,10 @@ describe('map flows', () => {
     await button.click();
     await button.waitFor({ state: 'detached', timeout: 10_000 });
     await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 0, undefined, { timeout: 30_000 });
+    // No track is drawn below zoom 4, so there's nothing to list.
+    await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [-81.7, 41.45], zoom: 3 }));
+    await page.waitForTimeout(500);
+    assert.equal(await button.count(), 0);
   });
 
   it('7. the Dates menu offers the first activity as a hint, and ✕ clears it without moving the camera', async () => {
@@ -233,7 +237,7 @@ describe('map flows', () => {
     // Setting Dates flew the camera onto the match; clearing them must leave it where it landed.
     await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
     const center = await page.evaluate(() => window.__holdmytrack.getCenter().toArray());
-    await page.getByTestId('dates-clear').click();
+    await page.getByTestId('dates-filter-clear').click();
     assert.match(await page.getByTestId('dates-filter').textContent(), /All time/);
     assert.deepEqual(await page.evaluate(() => window.__holdmytrack.getCenter().toArray()), center);
   });

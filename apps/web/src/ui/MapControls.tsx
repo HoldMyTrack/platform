@@ -28,7 +28,7 @@ export interface MapControlsProps {
   spotsShown: readonly SpotCategory[];
   /** The tour holds the Layers menu open (docs/SPEC.md FR-4.18). */
   layersOpen?: boolean;
-  /** The activity list's area (docs/SPEC.md FR-5.19): its button below zoom 10 once the map
+  /** The activity list's area (docs/SPEC.md FR-5.19): its button from zoom 4 to 10 once the map
    *  moved, and how many the area holds when the list was cut at its limit. */
   area: { button: boolean; onLoad: () => void; capped: { shown: number; total: number } | null };
 }

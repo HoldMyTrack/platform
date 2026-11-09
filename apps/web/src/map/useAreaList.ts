@@ -18,7 +18,7 @@ export function viewArea(map: MapLibreMap): BBox {
 export interface AreaList {
   /** The map's zoom, as of its last move. */
   zoom: number;
-  /** The map moved below zoom 10 since the list last followed it: the button shows. */
+  /** The map moved below zoom 10 since the list last followed it: from zoom 4 the button shows. */
   stale: boolean;
   /** The button: the list follows the visible map now. */
   loadHere: () => void;
@@ -26,7 +26,7 @@ export interface AreaList {
 
 /**
  * The list follows the map (docs/SPEC.md FR-5.19): from zoom 10 every move reloads it once the
- * map settles; below, a move only offers the button. The app's own flights (APP_FLIGHT: focusing a
+ * map settles; below, a move only offers the button, from zoom 4 where tracks are drawn (areaLoad.ts). The app's own flights (APP_FLIGHT: focusing a
  * row, Focus on map, a Story) leave the list as it is, or clicking a row would shrink the list to
  * that row's track; the opening view and Dates' flight ask for their area themselves. Closing a
  * Story asks about wherever the map is then.

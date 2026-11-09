@@ -3,7 +3,8 @@ import { ChevronDown, X } from 'lucide-react';
 import { DistanceFilter } from './DistanceFilter';
 import type { DistanceRange, TypeFacet } from './activityFacets';
 import { dateFilterLabel, type DateFilter } from './dateFilter';
-import { formatActivityType, formatShortDate } from './format';
+import { distanceValue, formatActivityType, formatShortDate, unitLabel } from './format';
+import { useUnitSystem } from './units';
 import { t } from '../i18n';
 
 export interface DatesProps {
@@ -24,7 +25,6 @@ export interface ActivityFiltersProps {
   distanceBounds: DistanceRange | null;
   distanceFilter: DistanceRange | null;
   onChangeDistance: (next: DistanceRange | null) => void;
-  onResetFilters: () => void;
   dates: DatesProps;
 }
 
@@ -62,13 +62,33 @@ function Trigger({ open, onClick, children, testId }: { open: boolean; onClick: 
 }
 
 /**
- * The Dates filter (docs/SPEC.md FR-5.20): After and Before, empty for all time. A typed date is
- * applied when the field is left or Enter pressed, not on every keystroke: a year typed digit by
- * digit is a valid date at each step, which the bounds would clamp and the camera fly to.
+ * A filter's dropdown: its trigger says what's set, a ✕ beside it clears it, and the panel holds
+ * the control. Type's keeps its own trigger, a dot, since its value is a list.
  */
-function DatesFilter({ value, bounds, earliest, onChange, onClear }: DatesProps) {
+function FilterDropdown({ text, set, onClear, clearLabel, panelLabel, testId, children }: { text: string; set: boolean; onClear: () => void; clearLabel: string; panelLabel: string; testId: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
   const ref = useDismiss(open, useCallback(() => setOpen(false), []));
+  return (
+    <div className="activities-panel__type-dropdown activities-panel__filter-dropdown" ref={ref}>
+      <Trigger open={open} onClick={() => setOpen((o) => !o)} testId={testId}>
+        <span className={set ? 'activities-panel__filter-value activities-panel__filter-value--set' : 'activities-panel__filter-value'}>{text}</span>
+      </Trigger>
+      {set && (
+        <button type="button" className="activities-panel__filter-clear" aria-label={clearLabel} title={clearLabel} onClick={onClear} data-testid={`${testId}-clear`}>
+          <X size={14} />
+        </button>
+      )}
+      {open && (
+        <div className="activities-panel__type-panel activities-panel__filter-panel" role="dialog" aria-label={panelLabel}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** The Dates filter (docs/SPEC.md FR-5.20): After and Before, empty for all time. */
+function DatesFilter({ value, bounds, earliest, onChange, onClear }: DatesProps) {
   const label = dateFilterLabel(value);
   const text =
     label.kind === 'all'
@@ -78,51 +98,32 @@ function DatesFilter({ value, bounds, earliest, onChange, onClear }: DatesProps)
         : label.kind === 'after'
           ? t('dates.after_date', { date: formatShortDate(label.after) })
           : t('dates.before_date', { date: formatShortDate(label.before) });
-  const set = label.kind !== 'all';
   return (
-    <div className="activities-panel__type-dropdown activities-panel__dates-dropdown" ref={ref}>
-      <Trigger open={open} onClick={() => setOpen((o) => !o)} testId="dates-filter">
-        <span className={set ? 'activities-panel__dates-value activities-panel__dates-value--set' : 'activities-panel__dates-value'}>{text}</span>
-      </Trigger>
-      {set && (
-        <button type="button" className="activities-panel__dates-clear" aria-label={t('dates.clear')} title={t('dates.clear')} onClick={onClear} data-testid="dates-clear">
-          <X size={14} />
-        </button>
-      )}
-      {open && (
-        <div className="activities-panel__type-panel activities-panel__dates-panel" role="dialog" aria-label={t('dates.filter')}>
-          <DateField
-            label={t('dates.after')}
-            hint={earliest !== null ? t('dates.first_activity', { date: formatShortDate(earliest) }) : null}
-            value={value.after}
-            bounds={bounds}
-            onCommit={(v) => onChange('after', v)}
-            testId="dates-after"
-          />
-          <DateField label={t('dates.before')} hint={t('dates.today')} value={value.before} bounds={bounds} onCommit={(v) => onChange('before', v)} testId="dates-before" />
-          {set && (
-            <button
-              type="button"
-              className="activities-panel__dates-reset"
-              onClick={() => {
-                onClear();
-                setOpen(false);
-              }}
-            >
-              {t('dates.clear')}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    <FilterDropdown text={text} set={label.kind !== 'all'} onClear={onClear} clearLabel={t('dates.clear')} panelLabel={t('dates.filter')} testId="dates-filter">
+      <DateField
+        label={t('dates.after')}
+        hint={earliest !== null ? t('dates.first_activity', { date: formatShortDate(earliest) }) : null}
+        value={value.after}
+        bounds={bounds}
+        onCommit={(v) => onChange('after', v)}
+        testId="dates-after"
+      />
+      <DateField label={t('dates.before')} hint={t('dates.today')} value={value.before} bounds={bounds} onCommit={(v) => onChange('before', v)} testId="dates-before" />
+    </FilterDropdown>
   );
 }
 
+/**
+ * One end of Dates. A date picked from the calendar applies at once; a typed one once its year has
+ * four digits, since a year typed digit by digit is a valid date at each step (0002, 0020, …),
+ * which the bounds would clamp and the camera fly to. A field emptied, or left half typed, applies
+ * when it's left or Enter is pressed.
+ */
 function DateField({ label, hint, value, bounds, onCommit, testId }: { label: string; hint: string | null; value: string | null; bounds: { min: string; max: string }; onCommit: (value: string | null) => void; testId: string }) {
   const [draft, setDraft] = useState(value ?? '');
   useEffect(() => setDraft(value ?? ''), [value]);
-  const commit = () => {
-    if (draft !== (value ?? '')) onCommit(draft === '' ? null : draft);
+  const commit = (next: string) => {
+    if (next !== (value ?? '')) onCommit(next === '' ? null : next);
   };
   return (
     <label className="activities-panel__date-field">
@@ -132,10 +133,14 @@ function DateField({ label, hint, value, bounds, onCommit, testId }: { label: st
         value={draft}
         min={bounds.min}
         max={bounds.max}
-        onChange={(e) => setDraft(e.target.value)}
-        onBlur={commit}
+        onChange={(e) => {
+          const next = e.target.value;
+          setDraft(next);
+          if (/^[1-9]\d{3}-/.test(next)) commit(next);
+        }}
+        onBlur={() => commit(draft)}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') commit();
+          if (e.key === 'Enter') commit(draft);
         }}
         data-testid={testId}
       />
@@ -144,11 +149,16 @@ function DateField({ label, hint, value, bounds, onCommit, testId }: { label: st
   );
 }
 
-/** The Activities tab's filter row: Type's dropdown, Dates', then Distance's slider taking the rest. */
-export function ActivityFilters({ facets, excludedTypes, onToggleType, distanceBounds, distanceFilter, onChangeDistance, onResetFilters, dates }: ActivityFiltersProps) {
+/** The Activities tab's filter row: Type's, Dates' and Distance's dropdowns. Distance is offered
+ *  only while the listed activities span distances (FR-5.3). */
+export function ActivityFilters({ facets, excludedTypes, onToggleType, distanceBounds, distanceFilter, onChangeDistance, dates }: ActivityFiltersProps) {
   const [typeOpen, setTypeOpen] = useState(false);
   const typeRef = useDismiss(typeOpen, useCallback(() => setTypeOpen(false), []));
-  const hasActiveFilters = excludedTypes.size > 0 || distanceFilter !== null;
+  const system = useUnitSystem();
+  const distanceText =
+    distanceFilter === null
+      ? t('filters.distance_any')
+      : t('filters.distance_between', { min: distanceValue(distanceFilter.min, system), max: distanceValue(distanceFilter.max, system), unit: unitLabel(system) });
   return (
     <div className="activities-panel__filters">
       <div className="activities-panel__type-dropdown" ref={typeRef}>
@@ -193,7 +203,18 @@ export function ActivityFilters({ facets, excludedTypes, onToggleType, distanceB
         )}
       </div>
       <DatesFilter {...dates} />
-      <DistanceFilter bounds={distanceBounds} value={distanceFilter} onChangeDistance={onChangeDistance} onReset={onResetFilters} hasActiveFilters={hasActiveFilters} />
+      {distanceBounds !== null && distanceBounds.min < distanceBounds.max && (
+        <FilterDropdown
+          text={distanceText}
+          set={distanceFilter !== null}
+          onClear={() => onChangeDistance(null)}
+          clearLabel={t('filters.clear_distance')}
+          panelLabel={t('filters.distance')}
+          testId="distance-dropdown"
+        >
+          <DistanceFilter bounds={distanceBounds} value={distanceFilter} onChangeDistance={onChangeDistance} />
+        </FilterDropdown>
+      )}
     </div>
   );
 }

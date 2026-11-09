@@ -40,7 +40,7 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `typeFacets` | `activities`, `distanceFilter` | `[{ type, count }]` |
 | `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
 | `openingView` | `boxes` (`[west, south, east, north]`, newest first), `viewport` (`{ width, height }`) | `{ center: [lon, lat], zoom }` or `null` |
-| `areaLoad` | `zoom`, `listed`, `total` | `{ load, capped }`, `load` `auto` or `button` |
+| `areaLoad` | `zoom`, `listed`, `total` | `{ load, capped }`, `load` `auto`, `button` or `none` |
 | `dateFilterSet` | `current` (`{ after, before }`), `end` (`after`, `before`), `value`, `bounds` (`{ min, max }`) | `{ filter, fly }` |
 | `dateFilterLabel` | `after`, `before` | `{ kind }`: `all`, `between`, `after` or `before`, with the ends set |
 | `dateFilterBounds` | `earliest`, `today` | `{ min, max }` |

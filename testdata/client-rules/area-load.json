@@ -1,7 +1,7 @@
 {
   "rule": "areaLoad",
   "clients": ["web"],
-  "description": "How the web's list follows the map (docs/SPEC.md FR-5.19): from zoom 10 it reloads as the map moves (\"auto\"), below it on request (\"button\"); capped when the last load's total is more than it listed. total is null before any load.",
+  "description": "How the web's list follows the map (docs/SPEC.md FR-5.19): from zoom 10 it reloads as the map moves (\"auto\"), from zoom 4, where tracks are drawn, on request (\"button\"), and below that not at all (\"none\"); capped when the last load's total is more than it listed. total is null before any load.",
   "cases": [
     {
       "name": "zoom 10 follows the map",
@@ -24,9 +24,14 @@
       "expected": {"load": "auto", "capped": false}
     },
     {
-      "name": "before any load",
+      "name": "zoom 4 asks",
       "input": {"zoom": 4, "listed": 0, "total": null},
       "expected": {"load": "button", "capped": false}
+    },
+    {
+      "name": "below zoom 4 no track is drawn, so nothing is offered",
+      "input": {"zoom": 3.99, "listed": 2, "total": 2},
+      "expected": {"load": "none", "capped": false}
     }
   ]
 }
