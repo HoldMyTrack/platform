@@ -46,6 +46,31 @@ final class MapTests: XCTestCase {
         XCTAssertNotEqual(label.label, first, "the picked range survives a tab switch")
     }
 
+    /// Points of interest on the demo's own area: a picked category counts on the Layers badge,
+    /// and below the tiles' zoom "Show in this area" loads its places and says how many.
+    @MainActor
+    func testAPickedCategoryShowsItsPlacesInTheArea() throws {
+        try LaunchTests.requireDevStack(self)
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut"]
+        app.launch()
+        app.buttons["demo"].tap()
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        let layers = app.buttons["layers"]
+        let before = layers.label
+        layers.tap()
+        app.buttons["Playgrounds"].tap()
+        XCTAssertNotEqual(layers.label, before, "the badge counts the pick")
+        let area = app.buttons["showInArea"]
+        XCTAssertTrue(area.waitForExistence(timeout: 10))
+        area.tap()
+        XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier == 'showInArea' AND label CONTAINS ':'")).firstMatch.waitForExistence(timeout: 10))
+        layers.tap()
+        app.buttons["Playgrounds"].tap()
+        XCTAssertTrue(area.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(layers.label, before)
+    }
+
     @MainActor
     private func attach(_ name: String) {
         let shot = XCTAttachment(screenshot: XCUIScreen.main.screenshot())

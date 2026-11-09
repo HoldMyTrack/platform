@@ -213,6 +213,31 @@ struct APIClientTests {
         #expect(metrics == TrackMetrics(activityID: "a1", points: [.init(lon: 1.5, lat: 2.5), .init(lon: 1.6, lat: 2.6)], bands: [.init(band: 2, start: 0, end: 1)]))
     }
 
+    @Test func spotsInAreaSendTheBoxAndTheCategories() async throws {
+        let spot: [String: Any] = ["id": 7, "category": "monument", "name": "Soldiers", "lon": -81.5, "lat": 41.2]
+        StubProtocol.answer = { request in
+            let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            #expect(request.url?.path == "/v1/spots")
+            #expect(items.first { $0.name == "bbox" }?.value == "-81.60000,41.10000,-81.40000,41.30000")
+            #expect(items.first { $0.name == "categories" }?.value == "monument,dog_park")
+            return .init(body: self.json(["spots": [spot], "total": 12]))
+        }
+        let found = try await client().spotsInArea(west: -81.6, south: 41.1, east: -81.4, north: 41.3, categories: [.monument, .dogPark])
+        #expect(found.spots == [Spot(id: 7, category: "monument", name: "Soldiers", lon: -81.5, lat: 41.2)])
+        #expect(found.total == 12)
+    }
+
+    @Test func capturesAreReadSinceATimeWithOrWithoutFractions() async throws {
+        StubProtocol.answer = { request in
+            let since = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems?.first { $0.name == "since" }?.value
+            #expect(since == "1970-01-01T00:01:40.000Z")
+            return .init(body: self.json(["captures": [["spot_id": 7, "captured_at": "2026-11-03T18:36:33Z"],
+                                                       ["spot_id": 8, "captured_at": "2026-11-03T18:36:33.5Z"]]]))
+        }
+        let captures = try await client().spotCaptures(since: Date(timeIntervalSince1970: 100))
+        #expect(captures == [7: Date(timeIntervalSince1970: 1_793_730_993), 8: Date(timeIntervalSince1970: 1_793_730_993.5)])
+    }
+
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {
         var body = accountBody
         body["session_token"] = "t"

@@ -397,6 +397,17 @@
         }
       }
     },
+    "Captured %@" : {
+      "comment" : "Spot popup: the date the account captured this place.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Захвачено %@"
+          }
+        }
+      }
+    },
     "Centred where the map last looked. Radius from %lld to %lld m." : {
       "comment" : "Privacy: a new Private location: where it goes and the radius's bounds.",
       "localizations" : {
@@ -551,6 +562,39 @@
         }
       }
     },
+    "Copied" : {
+      "comment" : "Spot popup: the address was copied.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопировано"
+          }
+        }
+      }
+    },
+    "Copy address" : {
+      "comment" : "Spot popup: copies the place's address.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопировать адрес"
+          }
+        }
+      }
+    },
+    "Copy location" : {
+      "comment" : "Spot popup: copies the place's coordinates, which it has no address for.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Скопировать координаты"
+          }
+        }
+      }
+    },
     "Copying “%@” from %@…" : {
       "comment" : "Stories tab: an accepted copy still arriving: the Story's name and who sent it.",
       "localizations" : {
@@ -569,6 +613,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось войти."
+          }
+        }
+      }
+    },
+    "Couldn't load places — try again" : {
+      "comment" : "Map: Show in this area failed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить места — попробуйте ещё раз"
           }
         }
       }
@@ -811,6 +866,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Расстояние: %@"
+          }
+        }
+      }
+    },
+    "Dog park" : {
+      "comment" : "Spot popup: a place's category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Площадка для собак"
+          }
+        }
+      }
+    },
+    "Dog parks" : {
+      "comment" : "Layers menu: a place category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Площадки для собак"
           }
         }
       }
@@ -1090,6 +1167,28 @@
         }
       }
     },
+    "Historic sites" : {
+      "comment" : "Layers menu: a place category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Исторические места"
+          }
+        }
+      }
+    },
+    "History" : {
+      "comment" : "Spot popup: a place's category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "История"
+          }
+        }
+      }
+    },
     "HoldMyTrack needs location access to show where you are. Turn it on in Settings." : {
       "comment" : "Map: Find my location with location access refused.",
       "localizations" : {
@@ -1189,6 +1288,17 @@
         }
       }
     },
+    "Loading places…" : {
+      "comment" : "Map: Show in this area is loading.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загружаем места…"
+          }
+        }
+      }
+    },
     "Loading…" : {
       "comment" : "A list waiting for the server.",
       "localizations" : {
@@ -1222,6 +1332,28 @@
         }
       }
     },
+    "Mesmerizing view" : {
+      "comment" : "Spot popup: a place's category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завораживающий вид"
+          }
+        }
+      }
+    },
+    "Mesmerizing views" : {
+      "comment" : "Layers menu: a place category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Завораживающие виды"
+          }
+        }
+      }
+    },
     "Mixed types" : {
       "comment" : "Edit window: the Type of a group of mixed types, until one is picked.",
       "localizations" : {
@@ -1229,6 +1361,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Разные типы"
+          }
+        }
+      }
+    },
+    "Monument" : {
+      "comment" : "Spot popup: a place's category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Памятник"
+          }
+        }
+      }
+    },
+    "Monuments" : {
+      "comment" : "Layers menu: a place category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Памятники"
           }
         }
       }
@@ -1372,6 +1526,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Архив ещё не готовился."
+          }
+        }
+      }
+    },
+    "No places in this area" : {
+      "comment" : "Map: Show in this area found nothing.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этой области мест нет"
           }
         }
       }
@@ -1526,6 +1691,50 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выберите тип."
+          }
+        }
+      }
+    },
+    "Places in this area: %@" : {
+      "comment" : "Map: what Show in this area found; the placeholder is the count.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Мест в этой области: %@"
+          }
+        }
+      }
+    },
+    "Playground" : {
+      "comment" : "Spot popup: a place's category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Детская площадка"
+          }
+        }
+      }
+    },
+    "Playgrounds" : {
+      "comment" : "Layers menu: a place category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Детские площадки"
+          }
+        }
+      }
+    },
+    "Points of interest" : {
+      "comment" : "Layers menu: the heading over the place categories.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Интересные места"
           }
         }
       }
@@ -1904,6 +2113,17 @@
         }
       }
     },
+    "Show in this area" : {
+      "comment" : "Map: loads the picked places in the visible map.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показать в этой области"
+          }
+        }
+      }
+    },
     "Show layers" : {
       "comment" : "Layers menu: the switch over every picked layer.",
       "localizations" : {
@@ -1911,6 +2131,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Показывать слои"
+          }
+        }
+      }
+    },
+    "Showing %@ of %@ places — zoom in for the rest" : {
+      "comment" : "Map: Show in this area found more than the server sends; the placeholders are the counts.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показано %@ из %@ мест — приблизьте карту, чтобы увидеть остальные"
           }
         }
       }
@@ -1955,6 +2186,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выйти"
+          }
+        }
+      }
+    },
+    "Since %@" : {
+      "comment" : "Spot popup: when a place was built or founded.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "С %@"
           }
         }
       }
@@ -2542,6 +2784,28 @@
         }
       }
     },
+    "Waterfall" : {
+      "comment" : "Spot popup: a place's category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Водопад"
+          }
+        }
+      }
+    },
+    "Waterfalls" : {
+      "comment" : "Layers menu: a place category.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Водопады"
+          }
+        }
+      }
+    },
     "We sent a confirmation link to %@. Open it to unlock your account — your map starts working as soon as you do." : {
       "comment" : "Verify email screen: the placeholder is the account's email address.",
       "localizations" : {
@@ -2549,6 +2813,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Мы отправили ссылку для подтверждения на %@. Перейдите по ней, чтобы открыть доступ к аккаунту, — карта заработает сразу после этого."
+          }
+        }
+      }
+    },
+    "Wikipedia" : {
+      "comment" : "Spot popup: opens the place's Wikipedia article.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Википедия"
           }
         }
       }

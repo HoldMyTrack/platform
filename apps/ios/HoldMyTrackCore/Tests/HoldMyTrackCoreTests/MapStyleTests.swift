@@ -83,14 +83,6 @@ struct MapStyleTests {
         ])
     }
 
-    @Test func anExcludedGroupIsLeftOutWithItsSources() {
-        var state = MapState()
-        state.excludedGroups = ["spots"]
-        let composed = compose(state)
-        #expect(!ids(composed).contains("spots-icons"))
-        #expect(composed["sources"]?["spots"] == nil)
-    }
-
     @Test func vectorTilesAreOnTheAPIWithTheirQueryAndGeoJSONStartsEmpty() {
         var state = MapState()
         state.queries = ["tracks": "from=2026-10-01&to=2026-10-16"]
@@ -191,13 +183,16 @@ struct MapStyleTests {
 
     @Test func theLayersBadgeCountsRoadsAndPathsAndGreysWhileHidden() {
         var state = MapState()
-        #expect(MapChrome.layersBadge(state) == .init(count: 1, filled: true, greyed: false), "Roads starts picked")
+        #expect(MapChrome.layersBadge(state, places: 0) == .init(count: 1, filled: true, greyed: false), "Roads starts picked")
         state.roads = false
-        #expect(MapChrome.layersBadge(state) == .init(count: 0, filled: false, greyed: false))
+        #expect(MapChrome.layersBadge(state, places: 0) == .init(count: 0, filled: false, greyed: false))
         state.toggles = ["bikePaths": true, "sharedPaths": false, "mtbTrails": true]
-        #expect(MapChrome.layersBadge(state).count == 2)
+        #expect(MapChrome.layersBadge(state, places: 0).count == 2)
         state.showLayers = false
-        #expect(MapChrome.layersBadge(state) == .init(count: 2, filled: false, greyed: true))
+        #expect(MapChrome.layersBadge(state, places: 0) == .init(count: 2, filled: false, greyed: true))
+        state.showLayers = true
+        state.toggles[Spots.group] = true
+        #expect(MapChrome.layersBadge(state, places: 3).count == 5, "each place category counts, not the group's switch")
     }
 
     @Test func roadsShowWhilePickedAndShowLayersIsOn() {
