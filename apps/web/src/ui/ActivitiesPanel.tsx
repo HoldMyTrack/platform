@@ -143,6 +143,9 @@ export interface ActivitiesPanelProps {
 
 export type PanelTab = 'activities' | 'stories' | 'private';
 
+/** How long a list load runs before the progress bar shows. */
+const PROGRESS_DELAY_MS = 300;
+
 /** What the Stories tab needs from MapView beyond the activity list the other tabs share —
  *  see StoriesTab.tsx's props of the same names. */
 export interface StoriesPanel {
@@ -216,6 +219,17 @@ export function ActivitiesPanel({
     const row = listRef.current?.querySelector<HTMLElement>('li[data-activity-id]');
     if (row && row.offsetHeight !== rowHeight) setRowHeight(row.offsetHeight);
   });
+  // A reload of the area keeps the old rows until the new ones land; the bar over the list says
+  // one is under way, only once it has taken long enough to notice, so a quick pan doesn't flicker.
+  const [slowLoad, setSlowLoad] = useState(false);
+  useEffect(() => {
+    if (!loading) {
+      setSlowLoad(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlowLoad(true), PROGRESS_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [loading]);
   const { start, end } = listWindow(outOfReach ? 0 : activities.length, rowHeight, scroll.top, scroll.height);
   // A newly focused row scrolls into view, by its place in the list: it may not be drawn yet.
   useEffect(() => {
@@ -454,6 +468,7 @@ export function ActivitiesPanel({
               clears the selection, the panel's counterpart to clicking away from every track
               on the map. Rows are <li>s filling the list's width, so a click on one never
               reaches here as the target. */}
+          <div className={slowLoad && !outOfReach ? 'activities-panel__progress activities-panel__progress--on' : 'activities-panel__progress'} role="progressbar" aria-label={t('common.loading')} aria-hidden={!slowLoad || outOfReach} data-testid="activities-progress" />
           <ul
             className="activities-panel__list"
             data-testid="activities-list"
@@ -486,7 +501,7 @@ export function ActivitiesPanel({
             {!outOfReach && end < activities.length && (
               <li className="activities-panel__spacer" style={{ height: (activities.length - end) * rowHeight }} aria-hidden="true" />
             )}
-            {loading && !outOfReach && <li className="activities-panel__note">{t('common.loading')}</li>}
+            {loading && !outOfReach && activities.length === 0 && <li className="activities-panel__note">{t('common.loading')}</li>}
             {error && !loading && (
               <li className="activities-panel__note activities-panel__note--error">{error}</li>
             )}
