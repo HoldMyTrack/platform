@@ -83,6 +83,7 @@ struct TrackEditSessionTests {
         let split = TrackEditDrawing.shape(points, lo: 2, hi: 4, preview: .chop, split: 2)
         #expect(split.lines.map(\.role) == ["kept", "second"])
         #expect(split.knobs.map(\.t) == [3000])
+        #expect(split.points.map(\.second) == [false, false, false, true, true])
     }
 
     @Test func availabilityIsTheServersAnswerForOneActivity() {

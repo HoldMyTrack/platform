@@ -60,7 +60,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 ### FR-2.7 Activities panel
 
-- No track editing or Private location editor yet (`ROADMAP.md`, 7b.2).
+- No Private location editor yet (`ROADMAP.md`, 7b.2).
 - While any listed activity is Pending, a notice over the map says so.
 
 ### FR-2.8 Spots

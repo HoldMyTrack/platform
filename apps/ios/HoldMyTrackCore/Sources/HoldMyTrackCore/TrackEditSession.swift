@@ -157,6 +157,8 @@ public enum TrackEditDrawing {
     public struct Point: Equatable, Sendable {
         public let point: TrackPoint
         public let removed: Bool
+        /// In a split's second part.
+        public var second = false
     }
 
     public struct Shape: Equatable, Sendable {
@@ -182,7 +184,7 @@ public enum TrackEditDrawing {
         if let split {
             line("kept", visible[0...split])
             line("second", visible[split...last])
-            shape.points = visible.map { Point(point: $0, removed: false) }
+            shape.points = visible.enumerated().map { i, p in Point(point: p, removed: false, second: i > split) }
             shape.knobs = [visible[split]]
             return shape
         }

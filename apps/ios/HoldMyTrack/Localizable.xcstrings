@@ -133,6 +133,17 @@
         }
       }
     },
+    "%@ – %@ %@ · %@–%@" : {
+      "comment" : "Track editor: the range's distances along the track, its unit, and the times at its ends.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ – %@ %@ · %@–%@"
+          }
+        }
+      }
+    },
     "%@: %@" : {
       "comment" : "Photos tab: a picked file that couldn't be added, and why.",
       "localizations" : {
@@ -595,6 +606,17 @@
         }
       }
     },
+    "Check exactly one activity to edit its track" : {
+      "comment" : "Edit window: why the Track tab can't be used for a group.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отметьте ровно одно занятие, чтобы редактировать его трек"
+          }
+        }
+      }
+    },
     "Checked: %lld" : {
       "comment" : "Activities panel: names the checked group, written as label: N.",
       "localizations" : {
@@ -624,6 +646,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Выбрать файлы"
+          }
+        }
+      }
+    },
+    "Chop" : {
+      "comment" : "Track editor: keeps the part between the knobs.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Обрезать"
           }
         }
       }
@@ -903,6 +936,17 @@
         }
       }
     },
+    "Cut" : {
+      "comment" : "Track editor: removes the part between the knobs.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вырезать"
+          }
+        }
+      }
+    },
     "Dark" : {
       "comment" : "You tab: the dark theme.",
       "localizations" : {
@@ -954,6 +998,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Удалить аккаунт"
+          }
+        }
+      }
+    },
+    "Delete point" : {
+      "comment" : "Track editor: a toggle; a tap on a point deletes it.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить точку"
           }
         }
       }
@@ -1057,13 +1112,13 @@
         }
       }
     },
-    "Discard photo changes?" : {
-      "comment" : "Edit window: Cancel with unsaved photo changes.",
+    "Discard changes?" : {
+      "comment" : "Edit window: Cancel with unsaved photo or track changes.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отменить изменения фотографий?"
+            "value" : "Отменить изменения?"
           }
         }
       }
@@ -1130,6 +1185,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скачать свои данные"
+          }
+        }
+      }
+    },
+    "Drag points on the map to move them" : {
+      "comment" : "Track editor: Move point's hint.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетаскивайте точки на карте, чтобы перемещать их"
           }
         }
       }
@@ -1207,6 +1273,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Эл. почта"
+          }
+        }
+      }
+    },
+    "End of the range" : {
+      "comment" : "Track editor: the range slider's second knob, for VoiceOver.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Конец диапазона"
+          }
+        }
+      }
+    },
+    "Entirely inside one of your private locations, so it isn't on the map and has no distance. Moving or removing that location brings it back." : {
+      "comment" : "Edit window: an activity hidden by a Private location.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Целиком внутри одного из ваших приватных мест, поэтому его нет на карте и у него нет расстояния. Если сдвинуть или удалить это место, оно вернётся."
           }
         }
       }
@@ -1365,6 +1453,17 @@
         }
       }
     },
+    "Go back to the track as it was recorded (Undo brings the edits back)" : {
+      "comment" : "Track editor: Reset's hint.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вернуть трек к записанному виду («Отменить» вернёт изменения)"
+          }
+        }
+      }
+    },
     "Heatmap" : {
       "comment" : "Map: the Heatmap mode.",
       "localizations" : {
@@ -1497,6 +1596,17 @@
         }
       }
     },
+    "Keep only the part between the knobs" : {
+      "comment" : "Track editor: Chop's hint.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оставить только часть между ручками"
+          }
+        }
+      }
+    },
     "Keep this photo" : {
       "comment" : "Photos tab: undoes a photo's Delete.",
       "localizations" : {
@@ -1581,6 +1691,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Загружаем места…"
+          }
+        }
+      }
+    },
+    "Loading points…" : {
+      "comment" : "Track editor: the track's points being read.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Загрузка точек…"
           }
         }
       }
@@ -1691,6 +1812,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Трассы для горных велосипедов"
+          }
+        }
+      }
+    },
+    "Move point" : {
+      "comment" : "Track editor: a toggle; a point dragged moves.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Переместить точку"
           }
         }
       }
@@ -2190,6 +2322,17 @@
         }
       }
     },
+    "Points: %@" : {
+      "comment" : "Track editor: how many points the track has, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Точки: %@"
+          }
+        }
+      }
+    },
     "Prepare a download" : {
       "comment" : "Download your data: asks for a copy.",
       "localizations" : {
@@ -2230,6 +2373,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Готовим архив… Это может занять несколько минут."
+          }
+        }
+      }
+    },
+    "Press a point on the map and drag it to move it." : {
+      "comment" : "Track editor: Move point is on.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите на точку на карте и перетащите её, чтобы переместить."
           }
         }
       }
@@ -2388,6 +2542,17 @@
         }
       }
     },
+    "Remove the part between the knobs and join its two ends. Hold to preview." : {
+      "comment" : "Track editor: Cut's hint.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Убрать часть между ручками и соединить концы. Удерживайте для предпросмотра."
+          }
+        }
+      }
+    },
     "Rename %@" : {
       "comment" : "Stories tab: a folder's pencil; the placeholder is the Story's name.",
       "localizations" : {
@@ -2417,6 +2582,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отправить письмо ещё раз"
+          }
+        }
+      }
+    },
+    "Reset" : {
+      "comment" : "Track editor: back to the track as recorded.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сбросить"
           }
         }
       }
@@ -2483,6 +2659,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Сохранение фото %lld из %lld…"
+          }
+        }
+      }
+    },
+    "Saving splits this activity in two at %@. The new part gets the same type, name and description." : {
+      "comment" : "Track editor: a split made, saved on Save.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "При сохранении занятие разделится на два в %@. Новая часть получит тот же тип, название и описание."
           }
         }
       }
@@ -2762,6 +2949,61 @@
         }
       }
     },
+    "Split" : {
+      "comment" : "Track editor: splits the activity in two.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разделить"
+          }
+        }
+      }
+    },
+    "Split anyway" : {
+      "comment" : "Edit window: goes ahead with that split.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Всё равно разделить"
+          }
+        }
+      }
+    },
+    "Split into a private location?" : {
+      "comment" : "Edit window: a split leaving a part inside a Private location.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разделить внутри приватного места?"
+          }
+        }
+      }
+    },
+    "Split the activity in two at the knob you moved" : {
+      "comment" : "Track editor: Split's hint.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Разделить занятие на два у сдвинутой ручки"
+          }
+        }
+      }
+    },
+    "Start of the range" : {
+      "comment" : "Track editor: the range slider's first knob, for VoiceOver.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Начало диапазона"
+          }
+        }
+      }
+    },
     "Stay here" : {
       "comment" : "Capture: the user is inside; the count runs.",
       "localizations" : {
@@ -2901,6 +3143,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Снято %@"
+          }
+        }
+      }
+    },
+    "Tap a point on the map to delete it." : {
+      "comment" : "Track editor: Delete point is on.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажмите на точку на карте, чтобы удалить её."
+          }
+        }
+      }
+    },
+    "Tap points on the map to delete them" : {
+      "comment" : "Track editor: Delete point's hint.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нажимайте на точки на карте, чтобы удалять их"
           }
         }
       }
@@ -3136,13 +3400,13 @@
         }
       }
     },
-    "The photos you added, moved or deleted in this window haven't been saved yet." : {
+    "The photos and track changes in this window haven't been saved yet." : {
       "comment" : "Edit window: why Cancel asks.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Фотографии, которые вы добавили, переместили или удалили в этом окне, ещё не сохранены."
+            "value" : "Изменения фотографий и трека в этом окне ещё не сохранены."
           }
         }
       }
@@ -3202,6 +3466,17 @@
         }
       }
     },
+    "This activity's original recording isn't stored, so its track can't be edited" : {
+      "comment" : "Edit window: why the Track tab can't be used.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Исходная запись этого занятия не сохранена, поэтому трек нельзя редактировать"
+          }
+        }
+      }
+    },
     "This file can't be opened as a photo." : {
       "comment" : "Photos tab: a picked file that isn't an image.",
       "localizations" : {
@@ -3235,6 +3510,28 @@
         }
       }
     },
+    "This track is still being processed" : {
+      "comment" : "Edit window: why the Track or Photos tab can't be used yet.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этот трек ещё обрабатывается"
+          }
+        }
+      }
+    },
+    "This track's points have no usable times, so it can't be edited" : {
+      "comment" : "Edit window: why the Track tab can't be used.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У точек этого трека нет пригодного времени, поэтому его нельзя редактировать"
+          }
+        }
+      }
+    },
     "This version of the app is too old to use. Update it to keep using HoldMyTrack." : {
       "comment" : "Update screen: the server turns this build away.",
       "localizations" : {
@@ -3242,6 +3539,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Эта версия приложения слишком старая. Обновите её, чтобы и дальше пользоваться HoldMyTrack."
+          }
+        }
+      }
+    },
+    "Track" : {
+      "comment" : "Edit window's tab: the track editor.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Трек"
+          }
+        }
+      }
+    },
+    "Track •" : {
+      "comment" : "Edit window's tab with unsaved track changes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Трек •"
+          }
+        }
+      }
+    },
+    "Track, with unsaved changes" : {
+      "comment" : "Edit window's Track tab, for VoiceOver, while it has unsaved changes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Трек, есть несохранённые изменения"
           }
         }
       }
@@ -3308,6 +3638,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Снять все отметки"
+          }
+        }
+      }
+    },
+    "Undo" : {
+      "comment" : "Track editor: takes back the last change.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отменить"
+          }
+        }
+      }
+    },
+    "Undo the last change" : {
+      "comment" : "Track editor: Undo's hint.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отменить последнее изменение"
           }
         }
       }

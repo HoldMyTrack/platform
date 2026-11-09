@@ -64,6 +64,12 @@ final class TestAccount {
         return (json?["photos"] as? [[String: Any]] ?? []).map { $0["caption"] as? String ?? "" }
     }
 
+    /// The edit saved on the activity's track, as the server sends it, or nil for none.
+    func trackEdit(_ activity: String) -> [String: Any]? {
+        let json = (try? call("GET", "/v1/activities/\(activity)/track-points", nil)) as? [String: Any]
+        return json?["edit"] as? [String: Any]
+    }
+
     func delete() {
         _ = try? call("DELETE", "/v1/account", ["email": email])
     }

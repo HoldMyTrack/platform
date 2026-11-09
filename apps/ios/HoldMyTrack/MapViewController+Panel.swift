@@ -46,6 +46,7 @@ extension MapViewController {
             tap.require(toFail: other)
         }
         mapView.addGestureRecognizer(tap)
+        bindTrackEditDrag()
         NotificationCenter.default.addObserver(forName: ActivityTypes.changed, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.renderPanel() }
         }
@@ -197,7 +198,7 @@ extension MapViewController {
     func panelChanged() {
         let panel = session.panel
         state.vars["focused"] = .array(panel.highlighted.sorted().map { .string($0) })
-        state.vars["hidden"] = .array(panel.mapHidden.sorted().map { .string($0) })
+        state.vars["hidden"] = .array(hiddenTracks.map { .string($0) })
         updateBands()
         render()
         renderPanel()
@@ -320,8 +321,8 @@ extension MapViewController {
     /// A track within TrackTap.radius of the finger: checked while selecting, else focused,
     /// without opening the sheet. Empty map clears the focus.
     @objc private func tappedMap(_ tap: UITapGestureRecognizer) {
-        // The Edit window's group mustn't change under it.
-        guard !editOpen else { return }
+        // The Edit window's group mustn't change under it; a tap serves only Delete point.
+        guard !editOpen else { return trackEditTapped(at: tap.location(in: mapView)) }
         // A place's badge first, in every mode; a tap elsewhere closes its popup.
         if tapSpot(at: tap.location(in: mapView)) { return }
         guard state.mode == .normal, !sheet.isHidden || panelTab == .stories else { return }
@@ -364,15 +365,19 @@ extension MapViewController {
         let facets = ActivityFacets.typeFacets(session.panel.activities, distanceFilter: nil)
         let editor = EditActivityViewController(
             api: flow.api, group: group, facets: facets, format: format, images: photoViews.images,
-            onOverlay: { [weak self] in self?.setPhotoOverlay($0) }
+            onOverlay: { [weak self] in self?.setPhotoOverlay($0) },
+            onTrackDraw: { [weak self] in self?.setTrackEdit($0) },
+            onTrackOpened: { [weak self] in self?.frameEditedTrack(group[0]) }
         ) { [weak self] written, photosSaved in
             guard let self else { return }
             self.editOpen = false
+            self.setTrackEdit(nil)
             self.photosEditClosed(saved: photosSaved)
             guard !written.isEmpty else { return }
             self.awaiting.formUnion(written)
             self.loadList()
         }
+        editWindow = editor
         let nav = UINavigationController(rootViewController: editor)
         // Half height with the map live above, so the Photos tab's slider moves a photo in sight.
         nav.modalPresentationStyle = .pageSheet

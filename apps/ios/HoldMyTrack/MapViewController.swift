@@ -56,6 +56,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let spotViews = SpotViews()
     /// Photos on the map (MapViewController+Photos).
     var photos = PhotosState()
+    /// The Edit window while it's open, and the track it edits (MapViewController+TrackEdit).
+    weak var editWindow: EditActivityViewController?
+    var trackEdit = TrackEditState()
     lazy var photoViews = PhotoViews(api: flow.api, format: { [unowned self] in self.format }, onOpen: { [weak self] in self?.openPhotos($0) })
     /// Capture of a place (CaptureController), which lives no longer than the map.
     lazy var capturing = CaptureController(api: flow.api, map: captureMap(), format: { [unowned self] in self.format })
@@ -216,6 +219,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         styleLoaded = true
         addBadgeImages(to: style)
         addGuide(to: style)
+        addTrackEdit(to: style)
     }
 
     /// How far down the controls over the map reach: a popup goes under its place above it.
