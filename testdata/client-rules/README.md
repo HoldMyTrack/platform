@@ -38,6 +38,11 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `distanceFilter` | `bounds`, `current` (`{ min, max }`), `knob` (`min`, `max`), `value` | `{ min, max }` or `null` |
 | `typeFacets` | `activities`, `distanceFilter` | `[{ type, count }]` |
 | `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
+| `openingView` | `boxes` (`[west, south, east, north]`, newest first), `viewport` (`{ width, height }`) | `{ center: [lon, lat], zoom }` or `null` |
+| `areaLoad` | `zoom`, `listed`, `total` | `{ load, capped }`, `load` `auto` or `button` |
+| `dateFilterSet` | `current` (`{ after, before }`), `end` (`after`, `before`), `value`, `bounds` (`{ min, max }`) | `{ filter, fly }` |
+| `dateFilterLabel` | `after`, `before` | `{ kind }`: `all`, `between`, `after` or `before`, with the ends set |
+| `dateFilterBounds` | `earliest`, `today` | `{ min, max }` |
 | `activityZone` | `own`, `account` (zone ids) | a zone id, or `null` for the device's |
 | `photoClusters` | `points` (`{ id, x, y }`), `radius` | `[{ ids, x, y }]` |
 | `sliderLayout` | `width`, `finePointer` | `{ buttons, days }` |

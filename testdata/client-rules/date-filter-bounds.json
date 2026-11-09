@@ -1,0 +1,27 @@
+{
+  "rule": "dateFilterBounds",
+  "clients": ["web"],
+  "description": "What the web's Dates pickers allow (docs/SPEC.md FR-5.20): the first activity's day, or today without one, to the day after today, the account's.",
+  "cases": [
+    {
+      "name": "history to the day after today",
+      "input": {"earliest": "2019-03-14", "today": "2026-11-09"},
+      "expected": {"min": "2019-03-14", "max": "2026-11-10"}
+    },
+    {
+      "name": "no activity yet",
+      "input": {"earliest": null, "today": "2026-11-09"},
+      "expected": {"min": "2026-11-09", "max": "2026-11-10"}
+    },
+    {
+      "name": "across a month and a year",
+      "input": {"earliest": "2026-01-01", "today": "2026-12-31"},
+      "expected": {"min": "2026-01-01", "max": "2027-01-01"}
+    },
+    {
+      "name": "a first activity dated tomorrow, in a zone ahead",
+      "input": {"earliest": "2026-11-10", "today": "2026-11-09"},
+      "expected": {"min": "2026-11-09", "max": "2026-11-10"}
+    }
+  ]
+}

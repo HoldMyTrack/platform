@@ -1,0 +1,32 @@
+{
+  "rule": "areaLoad",
+  "clients": ["web"],
+  "description": "How the web's list follows the map (docs/SPEC.md FR-5.19): from zoom 10 it reloads as the map moves (\"auto\"), below it on request (\"button\"); capped when the last load's total is more than it listed. total is null before any load.",
+  "cases": [
+    {
+      "name": "zoom 10 follows the map",
+      "input": {"zoom": 10, "listed": 3, "total": 3},
+      "expected": {"load": "auto", "capped": false}
+    },
+    {
+      "name": "just below 10 asks",
+      "input": {"zoom": 9.99, "listed": 3, "total": 3},
+      "expected": {"load": "button", "capped": false}
+    },
+    {
+      "name": "cut at the limit",
+      "input": {"zoom": 12, "listed": 1000, "total": 2340},
+      "expected": {"load": "auto", "capped": true}
+    },
+    {
+      "name": "exactly the limit is not cut",
+      "input": {"zoom": 12, "listed": 1000, "total": 1000},
+      "expected": {"load": "auto", "capped": false}
+    },
+    {
+      "name": "before any load",
+      "input": {"zoom": 4, "listed": 0, "total": null},
+      "expected": {"load": "button", "capped": false}
+    }
+  ]
+}

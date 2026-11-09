@@ -1,0 +1,52 @@
+{
+  "rule": "dateFilterSet",
+  "clients": ["web"],
+  "description": "The web's Dates filter once one end is set or cleared (docs/SPEC.md FR-5.20): a date clamped into the bounds (the first activity to the day after today), the other end moved to meet it when they cross; null or empty clears that end. fly is true only when a date was set and the filter changed.",
+  "cases": [
+    {
+      "name": "setting After from all time flies",
+      "input": {"current": {"after": null, "before": null}, "end": "after", "value": "2026-06-03", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": "2026-06-03", "before": null}, "fly": true}
+    },
+    {
+      "name": "setting Before keeps After",
+      "input": {"current": {"after": "2026-06-03", "before": null}, "end": "before", "value": "2026-06-10", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": "2026-06-03", "before": "2026-06-10"}, "fly": true}
+    },
+    {
+      "name": "clearing never flies",
+      "input": {"current": {"after": "2026-06-03", "before": "2026-06-10"}, "end": "after", "value": null, "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": null, "before": "2026-06-10"}, "fly": false}
+    },
+    {
+      "name": "an empty value clears",
+      "input": {"current": {"after": "2026-06-03", "before": null}, "end": "after", "value": "", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": null, "before": null}, "fly": false}
+    },
+    {
+      "name": "before the first activity clamps to it",
+      "input": {"current": {"after": null, "before": null}, "end": "after", "value": "2001-01-01", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": "2019-03-14", "before": null}, "fly": true}
+    },
+    {
+      "name": "past the day after today clamps to it",
+      "input": {"current": {"after": null, "before": null}, "end": "before", "value": "2027-01-01", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": null, "before": "2026-11-10"}, "fly": true}
+    },
+    {
+      "name": "After past Before moves Before",
+      "input": {"current": {"after": "2026-06-03", "before": "2026-06-10"}, "end": "after", "value": "2026-06-20", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": "2026-06-20", "before": "2026-06-20"}, "fly": true}
+    },
+    {
+      "name": "Before ahead of After moves After",
+      "input": {"current": {"after": "2026-06-03", "before": "2026-06-10"}, "end": "before", "value": "2026-05-01", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": "2026-05-01", "before": "2026-05-01"}, "fly": true}
+    },
+    {
+      "name": "the same date changes nothing",
+      "input": {"current": {"after": "2026-06-03", "before": null}, "end": "after", "value": "2026-06-03", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
+      "expected": {"filter": {"after": "2026-06-03", "before": null}, "fly": false}
+    }
+  ]
+}

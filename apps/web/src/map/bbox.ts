@@ -23,7 +23,7 @@ const MAX_FLY_ZOOM = 18;
  * rest is split evenly as padding on each side, which also keeps the track clear of the
  * docked header and the map's own controls.
  */
-const FLY_FILL = 0.75;
+export const FLY_FILL = 0.75;
 
 /** Long enough to read as a flight rather than a cut, short enough not to feel slow. */
 const FLY_DURATION_MS = 900;

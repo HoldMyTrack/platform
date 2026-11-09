@@ -4,6 +4,9 @@
 import { basemapStatus } from '../src/map/basemapStatus.ts';
 import { satelliteLook, satelliteStatus } from '../src/map/satelliteStatus.ts';
 import { defaultRange } from '../src/map/defaultRange.ts';
+import { openingView } from '../src/map/openingView.ts';
+import { areaLoad } from '../src/map/areaLoad.ts';
+import { dateFilterBounds, dateFilterLabel, setDateFilter } from '../src/ui/dateFilter.ts';
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
 import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
@@ -26,6 +29,11 @@ import { cameraEnd, cameraStep, cardFor, nextStep, stepChanges, tourStart } from
 const sorted = (set) => [...set].sort();
 
 export const rules = {
+  openingView: ({ boxes, viewport }) => openingView(boxes, viewport),
+  areaLoad: ({ zoom, listed, total }) => areaLoad(zoom, listed, total ?? null),
+  dateFilterSet: ({ current, end, value, bounds }) => setDateFilter({ after: current.after ?? null, before: current.before ?? null }, end, value ?? null, bounds),
+  dateFilterLabel: ({ after, before }) => dateFilterLabel({ after: after ?? null, before: before ?? null }),
+  dateFilterBounds: ({ earliest, today }) => dateFilterBounds(earliest ?? null, today),
   satelliteStatus: ({ on, loaded, failed, waitedMs }) => {
     const status = satelliteStatus(loaded, failed, waitedMs);
     return { status, look: satelliteLook(on, status) };
