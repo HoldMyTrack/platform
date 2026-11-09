@@ -63,7 +63,7 @@ final class PhotoTests: XCTestCase {
 
         let tabs = app.segmentedControls["editTabs"]
         XCTAssertTrue(tabs.waitForExistence(timeout: 5))
-        tabs.buttons.element(boundBy: 1).tap()
+        tabs.buttons.element(boundBy: 2).tap()
         let addPhotos = app.buttons["photosAdd"]
         XCTAssertTrue(addPhotos.waitForExistence(timeout: 5))
         XCTAssertTrue(waitForEnabled(addPhotos), "Add photos waits for the track")
@@ -100,7 +100,7 @@ final class PhotoTests: XCTestCase {
         // Open again: the saved photo is listed.
         app.buttons["cardEdit"].tap()
         XCTAssertTrue(tabs.waitForExistence(timeout: 5))
-        tabs.buttons.element(boundBy: 1).tap()
+        tabs.buttons.element(boundBy: 2).tap()
         XCTAssertTrue(app.staticTexts["From iOS"].waitForExistence(timeout: 10))
         attach("Reopened")
 

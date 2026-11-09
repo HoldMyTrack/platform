@@ -6,11 +6,12 @@ import UniformTypeIdentifiers
 /// Edit (root docs/SPEC.md FR-5.10, apps/android/docs/SPEC.md FR-2.7) over the toolbar's target:
 /// one activity's type, name and description, or a group's type alone. Save writes only what
 /// changed, one activity at a time (EditPlan); a group of mixed types starts with Type empty, and
-/// leaving it empty keeps each its own. One activity also has a Photos tab (PhotosTabView), whose
-/// draft the same Save writes after the fields.
+/// leaving it empty keeps each its own. One activity also has a Track tab (TrackEditorView) and a
+/// Photos tab (PhotosTabView), each open only when the server allows it (EditAvailability); the
+/// same Save writes the fields, then the photos, then the track edit.
 ///
-/// A sheet that stops at half height with the map live above it, so the Photos tab's slider
-/// moves a photo along the route in sight.
+/// A sheet that stops at half height with the map live above it, so the track's edits and the
+/// Photos tab's slider show on the route in sight.
 final class EditActivityViewController: UIViewController, PHPickerViewControllerDelegate {
     private let api: APIClient
     private let group: [Activity]
@@ -21,6 +22,13 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     private let onDone: ([String], Bool) -> Void
     /// One activity's Photos tab, else nil.
     private let photos: PhotosTabView?
+    /// One activity's Track tab, else nil; the map hands it Delete point's and Move point's touches.
+    let trackEditor: TrackEditorView?
+    /// Why the Track or Photos tab can't be used, shown in its place.
+    private let trackBlock: String?
+    private let photosBlock: String?
+    private let blocked = Controls.body()
+    private let onTrackOpened: () -> Void
     private let tabs = UISegmentedControl()
     private let fields = UIStackView()
     private let status = Controls.body()
@@ -34,13 +42,22 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     private let error = Controls.error(id: "editError")
 
     init(api: APIClient, group: [Activity], facets: [TypeFacet], format: PanelFormat, images: PhotoImages,
-         onOverlay: @escaping (PhotoMarkerOverlay?) -> Void, onDone: @escaping ([String], Bool) -> Void) {
+         onOverlay: @escaping (PhotoMarkerOverlay?) -> Void, onTrackDraw: @escaping (TrackEditDrawing.Shape?) -> Void,
+         onTrackOpened: @escaping () -> Void, onDone: @escaping ([String], Bool) -> Void) {
         self.api = api
         self.group = group
         self.facets = facets
         self.format = format
         self.onDone = onDone
-        photos = group.count == 1 ? PhotosTabView(api: api, images: images, format: format, activity: group[0]) : nil
+        self.onTrackOpened = onTrackOpened
+        let single = group.count == 1 ? group[0] : nil
+        let trackBlock = EditAvailability.track(group).map(EditActivityViewController.message)
+        let photosBlock = EditAvailability.photos(group).map(EditActivityViewController.message)
+        self.trackBlock = trackBlock
+        self.photosBlock = photosBlock
+        trackEditor = single.flatMap { trackBlock == nil ? TrackEditorView(api: api, format: format, activity: $0) : nil }
+        trackEditor?.onDraw = onTrackDraw
+        photos = single.flatMap { photosBlock == nil ? PhotosTabView(api: api, images: images, format: format, activity: $0) : nil }
         photos?.onOverlay = onOverlay
         type = EditPlan.initialType(group)
         super.init(nibName: nil, bundle: nil)
@@ -96,16 +113,19 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
         fields.axis = .vertical
         fields.spacing = DesignTokens.Space.s12
         var column: [UIView] = [subtitle]
-        if let photos {
+        if single != nil {
             tabs.insertSegment(withTitle: String(localized: "Activity"), at: 0, animated: false)
-            tabs.insertSegment(withTitle: String(localized: "Photos"), at: 1, animated: false)
+            tabs.insertSegment(withTitle: String(localized: "Track"), at: 1, animated: false)
+            tabs.insertSegment(withTitle: String(localized: "Photos"), at: 2, animated: false)
             tabs.selectedSegmentIndex = 0
             tabs.accessibilityIdentifier = "editTabs"
             tabs.addAction(UIAction { [weak self] _ in self?.showTab() }, for: .valueChanged)
-            photos.onPick = { [weak self] in self?.pick() }
-            photos.onChange = { [weak self] in self?.renderTabs() }
-            photos.isHidden = true
-            column += [tabs, fields, photos]
+            photos?.onPick = { [weak self] in self?.pick() }
+            photos?.onChange = { [weak self] in self?.renderTabs() }
+            trackEditor?.onChange = { [weak self] in self?.renderTabs() }
+            blocked.accessibilityIdentifier = "editTabBlocked"
+            column += [tabs, fields, trackEditor, photos, blocked].compactMap { $0 }
+            showTab()
         } else {
             column.append(fields)
         }
@@ -116,23 +136,51 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
         renderTabs()
     }
 
-    /// The tab picked: Photos draws its draft on the map while it shows.
+    /// The tab picked: the Track tab draws its edit on the map and the Photos tab its draft while
+    /// each shows; one the server doesn't allow says why in its place.
     private func showTab() {
-        let onPhotos = tabs.selectedSegmentIndex == 1
+        let tab = tabs.selectedSegmentIndex
         view.endEditing(true)
-        fields.isHidden = onPhotos
-        photos?.isHidden = !onPhotos
-        photos?.active = onPhotos
+        fields.isHidden = tab != 0
+        trackEditor?.isHidden = tab != 1
+        photos?.isHidden = tab != 2
+        photos?.active = tab == 2
+        if tab == 1, let trackEditor {
+            trackEditor.open()
+            onTrackOpened()
+        } else {
+            trackEditor?.hide()
+        }
+        let reason = tab == 1 ? trackBlock : tab == 2 ? photosBlock : nil
+        blocked.text = reason
+        blocked.isHidden = reason == nil
     }
 
-    /// The Photos tab's label: the count Save would leave, marked while it has unsaved changes.
+    /// The tabs' labels: Track and Photos marked while they have unsaved changes, Photos with
+    /// the count Save would leave.
     private func renderTabs() {
-        guard let photos else { return }
-        let count = format.count(photos.count)
-        let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the activity's photos, written as label: N.")
-            : String(localized: "Photos: \(count) •", comment: "Edit window's tab with unsaved photo changes.")
-        tabs.setTitle(title, forSegmentAt: 1)
-        tabs.accessibilityValue = photos.draft.isEmpty ? nil : String(localized: "Photos, with unsaved changes")
+        let trackChanged = trackEditor?.session?.changed == true
+        tabs.setTitle(trackChanged ? String(localized: "Track •", comment: "Edit window's tab with unsaved track changes.") : String(localized: "Track"), forSegmentAt: 1)
+        if let photos {
+            let count = format.count(photos.count)
+            let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the activity's photos, written as label: N.")
+                : String(localized: "Photos: \(count) •", comment: "Edit window's tab with unsaved photo changes.")
+            tabs.setTitle(title, forSegmentAt: 2)
+        }
+        let unsaved = [trackChanged ? String(localized: "Track, with unsaved changes") : nil,
+                       photos?.draft.isEmpty == false ? String(localized: "Photos, with unsaved changes") : nil].compactMap { $0 }
+        tabs.accessibilityValue = unsaved.isEmpty ? nil : unsaved.joined(separator: ", ")
+    }
+
+    /// Why a tab can't be used, in the server's terms (EditAvailability).
+    private static func message(_ block: EditBlock) -> String {
+        switch block {
+        case .checkOne: String(localized: "Check exactly one activity to edit its track")
+        case .pending: String(localized: "This track is still being processed")
+        case .isPrivate: String(localized: "Entirely inside one of your private locations, so it isn't on the map and has no distance. Moving or removing that location brings it back.")
+        case .noOriginal: String(localized: "This activity's original recording isn't stored, so its track can't be edited")
+        case .badTimes: String(localized: "This track's points have no usable times, so it can't be edited")
+        }
     }
 
     // MARK: Picking photos
@@ -215,9 +263,11 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
             return
         }
         let writes = EditPlan.writes(group: group, type: type, name: nameText, description: aboutText).filter { !written.contains($0.id) }
-        guard !writes.isEmpty || photos?.draft.isEmpty == false else { return finish() }
+        let trackChanged = trackEditor?.session?.changed == true
+        guard !writes.isEmpty || photos?.draft.isEmpty == false || trackChanged else { return finish() }
         saving = true
         photos?.busy = true
+        trackEditor?.busy = true
         error.isHidden = true
         navigationItem.rightBarButtonItem?.isEnabled = false
         view.endEditing(true)
@@ -225,6 +275,7 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
             defer {
                 saving = false
                 photos?.busy = false
+                trackEditor?.busy = false
                 status.isHidden = true
                 navigationItem.rightBarButtonItem?.isEnabled = true
             }
@@ -247,16 +298,53 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
                     return
                 }
             }
+            if trackChanged, !(await saveTrack(allowHidden: false)) { return }
             finish()
         }
+    }
+
+    /// The track edit, once the fields and photos are in; false when it isn't written. A split
+    /// leaving a part inside a Private location asks first (root docs/SPEC.md FR-5.17).
+    private func saveTrack(allowHidden: Bool) async -> Bool {
+        guard let id = group.first?.id, let session = trackEditor?.session else { return true }
+        do {
+            switch try await api.saveTrackEdit(id, edit: session.pending, splitAt: session.splitAt, allowHidden: allowHidden) {
+            case .queued:
+                written.append(id)
+                return true
+            case .splitHidesPart(let message):
+                confirmHiddenSplit(message)
+                return false
+            }
+        } catch {
+            show((error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved."))
+            return false
+        }
+    }
+
+    private func confirmHiddenSplit(_ message: String) {
+        let alert = UIAlertController(title: String(localized: "Split into a private location?"), message: message, preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
+        alert.addAction(UIAlertAction(title: String(localized: "Split anyway"), style: .destructive) { [weak self] _ in
+            guard let self else { return }
+            self.saving = true
+            self.trackEditor?.busy = true
+            Task {
+                let done = await self.saveTrack(allowHidden: true)
+                self.saving = false
+                self.trackEditor?.busy = false
+                if done { self.finish() }
+            }
+        })
+        present(alert, animated: true)
     }
 
     /// Cancel asks first when photo changes would be thrown away.
     private func cancel() {
         guard !saving else { return }
-        guard let photos, !photos.draft.isEmpty else { return finish() }
-        let alert = UIAlertController(title: String(localized: "Discard photo changes?"),
-                                      message: String(localized: "The photos you added, moved or deleted in this window haven't been saved yet."), preferredStyle: .alert)
+        guard photos?.draft.isEmpty == false || trackEditor?.session?.changed == true else { return finish() }
+        let alert = UIAlertController(title: String(localized: "Discard changes?"),
+                                      message: String(localized: "The photos and track changes in this window haven't been saved yet."), preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: String(localized: "Keep editing"), style: .cancel))
         alert.addAction(UIAlertAction(title: String(localized: "Discard"), style: .destructive) { [weak self] _ in self?.finish() })
         present(alert, animated: true)
@@ -265,6 +353,7 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     private func finish() {
         let done = written, photosSaved = photos?.photosSaved ?? false
         photos?.active = false
+        trackEditor?.hide()
         dismiss(animated: true) { self.onDone(done, photosSaved) }
     }
 

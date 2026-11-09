@@ -43,7 +43,8 @@ extension MapViewController {
     /// The markers: the scope's photos on their tracks, with the Photos tab's unsaved changes
     /// merged in, unless its route is hidden.
     func renderPhotos() {
-        let shown = PhotoMarkers.shown(photos.scope, mapHidden: session.panel.mapHidden)
+        // The Track tab has the map to itself.
+        let shown = trackEdit.shape == nil && PhotoMarkers.shown(photos.scope, mapHidden: session.panel.mapHidden)
         if !shown { photoViews.popup.close() }
         let overlay = photos.overlay
         let items = shown ? PhotoMarkers.items(photos.items, mapHidden: session.panel.mapHidden, overlay: overlay) : []
