@@ -6,7 +6,7 @@ import { countryView } from './countryView';
 import { OPENING_ACTIVITIES, openingView } from './openingView';
 import type { MapSessionEvent } from './session';
 import { viewArea } from './useAreaList';
-import { listActivities, type BBox } from '../api';
+import { listArea, type BBox } from '../api';
 
 export interface OpeningViewInputs {
   /** The URL's camera, a Story or an arriving activity decides the camera instead. */
@@ -30,7 +30,7 @@ export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSe
   const emptyRef = useRef<boolean | null>(null);
 
   const open = (m: MapLibreMap, signal: AbortSignal) =>
-    listActivities({ limit: OPENING_ACTIVITIES }, signal)
+    listArea({ limit: OPENING_ACTIVITIES }, signal)
       .then(({ activities }) => {
         const boxes = activities.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : []));
         const container = m.getContainer();

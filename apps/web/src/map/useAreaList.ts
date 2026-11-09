@@ -15,31 +15,19 @@ export function viewArea(map: MapLibreMap): BBox {
   return [round(b.getWest()), round(b.getSouth()), round(b.getEast()), round(b.getNorth())];
 }
 
-export interface AreaList {
-  /** The map's zoom, as of its last move. */
-  zoom: number;
-  /** The map moved below zoom 10 since the list last followed it: from zoom 4 the button shows. */
-  stale: boolean;
-  /** The button: the list follows the visible map now. */
-  loadHere: () => void;
-}
-
 /**
- * The list follows the map (docs/SPEC.md FR-5.19): from zoom 10 every move reloads it once the
- * map settles; below, a move only offers the button, from zoom 4 where tracks are drawn (areaLoad.ts). The app's own flights (APP_FLIGHT: focusing a
- * row, Focus on map, a Story) leave the list as it is, or clicking a row would shrink the list to
- * that row's track; the opening view and Dates' flight ask for their area themselves. Closing a
- * Story asks about wherever the map is then.
+ * The list follows the map (docs/SPEC.md FR-5.19): from zoom 4 every move reloads it once the map
+ * settles. The app's own flights (APP_FLIGHT: focusing a row, Focus on map, a Story) leave the list
+ * as it is, or clicking a row would shrink the list to that row's track; the opening view and
+ * Dates' flight ask for their area themselves. Closing a Story asks about wherever the map is then.
+ * Returns the map's zoom as of its last move.
  */
-export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, storyId: string | null): AreaList {
+export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, storyId: string | null): number {
   const [zoom, setZoom] = useState(() => map?.getZoom() ?? 0);
-  const [stale, setStale] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const loadHere = useCallback(() => {
-    if (!map) return;
-    setStale(false);
-    dispatch({ type: 'areaLoaded', area: viewArea(map) });
+    if (map) dispatch({ type: 'areaLoaded', area: viewArea(map) });
   }, [map, dispatch]);
 
   useEffect(() => {
@@ -49,11 +37,7 @@ export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessi
       setZoom(map.getZoom());
       if ((event as Record<string, unknown>)[APP_FLIGHT] === true) return;
       if (timer.current !== null) clearTimeout(timer.current);
-      if (areaLoad(map.getZoom(), 0, null).load === 'auto') {
-        timer.current = setTimeout(loadHere, SETTLE_MS);
-      } else {
-        setStale(true);
-      }
+      if (areaLoad(map.getZoom(), 0, null).load === 'auto') timer.current = setTimeout(loadHere, SETTLE_MS);
     };
     map.on('moveend', onMoveEnd);
     return () => {
@@ -68,5 +52,5 @@ export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessi
     storyRef.current = storyId;
   }, [storyId, loadHere]);
 
-  return { zoom, stale, loadHere };
+  return zoom;
 }

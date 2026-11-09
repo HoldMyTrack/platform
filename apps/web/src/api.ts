@@ -128,11 +128,9 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
  * are nullable because the schema is — a file that carried no distance is not a
  * zero-distance activity, and the UI says "—" rather than "0.0 km".
  *
- * `name` (§4.7: a user-entered title only, never
- * parsed from a source file) is what a row leads with when set; `startedAt` is the fallback
- * for a row that has none. `description` (`docs/SPEC.md` FR-5.10) stays a separate, later addition — longer
- * free text, shown only as a hover tooltip, not the row's visible title. Both are edited via
- * `updateActivity` below, and `null` means never set for either, not "set to empty."
+ * `name` (§4.7: a user-entered title only, never parsed from a source file) is what a row leads
+ * with when set; `startedAt` is the fallback for a row that has none. `null` means never set, not
+ * "set to empty." What only the Edit window needs is ActivityDetail's, read per activity.
  */
 export interface Activity {
   id: string;
@@ -145,23 +143,29 @@ export interface Activity {
   distanceMeters: number | null;
   /** The time a row shows: moving time, the same Stories and Trends sum, else elapsed. */
   movingSeconds: number | null;
-  description: string | null;
   /** [minLon, minLat, maxLon, maxLat], or null for a row with no trajectory. */
   bbox: BBox | null;
   /** An Edit track reprocess (§4.7.7) is queued or running — the row's numbers and geometry
    *  are still the pre-edit ones until it finishes. */
   pending: boolean;
-  /** The track carries a user edit, so "Reset to original track" has something to undo. */
-  edited: boolean;
   /** Entirely inside the account's Private locations (FR-8.1): kept with no track, so its
    *  distance and duration mean nothing — the row shows a Private badge instead. */
   private: boolean;
+  /** The Stories it's in, newest first — the Activities panel's Story badge. */
+  stories: { id: string; name: string }[];
+}
+
+/** An activity as the Edit window needs it: the row, and what the area list leaves out
+ *  (`GET /v1/activities/{id}`). */
+export interface ActivityDetail extends Activity {
+  /** Free text (`docs/SPEC.md` FR-5.10); `null` means never set. */
+  description: string | null;
+  /** The track carries a user edit, so "Reset to original track" has something to undo. */
+  edited: boolean;
   /** Why Edit track can't open for it (`docs/SPEC.md` FR-5.14), or null when it can. */
   trackEdit: Schema<'ActivityRow'>['track_edit'] | null;
   /** Why photos can't be added to it (FR-16.1), or null when they can. */
   photos: Schema<'ActivityRow'>['photos'] | null;
-  /** The Stories it's in, newest first — the Activities panel's Story badge. */
-  stories: { id: string; name: string }[];
 }
 
 /** GeoJSON bbox ordering, which is also what MapLibre's fitBounds takes as a flat array. */
@@ -174,9 +178,14 @@ export interface ActivityQuery {
   types?: string[];
   /** One Story's activities only (`SPEC.md` FR-14.4). */
   story?: string;
-  /** Only the tracks crossing this map view, the newest 1,000 at most (`SPEC.md` FR-5.19). */
+}
+
+/** The web's area list (`SPEC.md` FR-5.19): the newest tracks crossing `bbox`, 1,000 at most;
+ *  without one, the newest `limit` of the whole history. */
+export interface AreaQuery {
   bbox?: BBox;
-  /** The newest this many at most. */
+  from?: string;
+  to?: string;
   limit?: number;
 }
 
@@ -186,15 +195,13 @@ function activityQueryString(query: ActivityQuery): string {
   if (query.to) params.set('to', query.to);
   if (query.types?.length) params.set('types', query.types.join(','));
   if (query.story) params.set('story', query.story);
-  if (query.bbox) params.set('bbox', query.bbox.join(','));
-  if (query.limit !== undefined) params.set('limit', String(query.limit));
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }
 
-/** Shared by listActivities and updateActivity below — both endpoints return the same row
- *  shape (activityByIDQuery/listActivitiesQuery share one Scan in the backend too). */
-function toActivity(a: Schema<'ActivityRow'>): Activity {
+/** A row of either list as the panel shows it; the area list's rows are slim, so this reads only
+ *  what both have. */
+function toActivity(a: Schema<'ActivityRow'> | Schema<'AreaActivityRow'>): Activity {
   return {
     id: a.id,
     startedAt: a.started_at,
@@ -203,22 +210,56 @@ function toActivity(a: Schema<'ActivityRow'>): Activity {
     name: a.name,
     distanceMeters: a.distance_meters,
     movingSeconds: a.moving_seconds,
-    description: a.description,
     bbox: a.bbox ? [...a.bbox] : null,
     pending: a.pending,
-    edited: a.edited,
     private: a.private,
-    trackEdit: a.track_edit ?? null,
-    photos: a.photos ?? null,
     stories: a.stories,
   };
 }
 
-/** A list response: the rows, and with `bbox` how many the area holds, more than the rows when
- *  they were cut at the limit; null without one. */
+function toActivityDetail(a: Schema<'ActivityRow'>): ActivityDetail {
+  return { ...toActivity(a), description: a.description, edited: a.edited, trackEdit: a.track_edit ?? null, photos: a.photos ?? null };
+}
+
+/** A list response: the rows, and for an area how many it holds, more than the rows when they
+ *  were cut at the limit; null otherwise. */
 export interface ActivityPage {
   activities: Activity[];
   total: number | null;
+}
+
+function rememberTypes(types: Schema<'ActivityTypes'>): void {
+  rememberTypeLabels(Object.entries(types).map(([type, info]) => [type, info.label]));
+  rememberTypeKinds(Object.entries(types).map(([type, info]) => [type, info.kind]));
+}
+
+async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+  // A conditional spread: exactOptionalPropertyTypes:true rejects `{ signal: undefined }`.
+  const res = await fetch(`${API_BASE_URL}${API_V1}${path}`, { ...(signal ? { signal } : {}), credentials: 'include' });
+  if (!res.ok) {
+    throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
+  }
+  return (await res.json()) as T;
+}
+
+/** `GET /v1/activities/area` (`SPEC.md` FR-5.19): the web's list, and the set its map draws. */
+export async function listArea(query: AreaQuery, signal?: AbortSignal): Promise<ActivityPage> {
+  const params = new URLSearchParams();
+  if (query.bbox) params.set('bbox', query.bbox.join(','));
+  if (query.from) params.set('from', query.from);
+  if (query.to) params.set('to', query.to);
+  if (query.limit !== undefined) params.set('limit', String(query.limit));
+  const qs = params.toString();
+  const body = await getJson<ResponseJson<'/activities/area', 'get'>>(`/activities/area${qs ? `?${qs}` : ''}`, signal);
+  rememberTypes(body.types);
+  return { activities: body.activities.map(toActivity), total: body.total ?? null };
+}
+
+/** `GET /v1/activities/{id}`: one activity in full, for the Edit window. */
+export async function getActivity(id: string, signal?: AbortSignal): Promise<ActivityDetail> {
+  const body = await getJson<ResponseJson<'/activities/{id}', 'get'>>(`/activities/${encodeURIComponent(id)}`, signal);
+  rememberTypes(body.types);
+  return toActivityDetail(body.activities[0]!);
 }
 
 /**
@@ -227,19 +268,9 @@ export interface ActivityPage {
  * the stats and compute its type/distance facets.
  */
 export async function listActivities(query: ActivityQuery = {}, signal?: AbortSignal): Promise<ActivityPage> {
-  // A conditional spread: exactOptionalPropertyTypes:true
-  // rejects `{ signal: undefined }` against RequestInit's `signal?: AbortSignal | null`.
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities${activityQueryString(query)}`, {
-    ...(signal ? { signal } : {}),
-    credentials: 'include',
-  });
-  if (!res.ok) {
-    throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
-  }
-  const body = (await res.json()) as ResponseJson<'/activities', 'get'>;
-  rememberTypeLabels(Object.entries(body.types).map(([type, info]) => [type, info.label]));
-  rememberTypeKinds(Object.entries(body.types).map(([type, info]) => [type, info.kind]));
-  return { activities: body.activities.map(toActivity), total: body.total ?? null };
+  const body = await getJson<ResponseJson<'/activities', 'get'>>(`/activities${activityQueryString(query)}`, signal);
+  rememberTypes(body.types);
+  return { activities: body.activities.map(toActivity), total: null };
 }
 
 /**
@@ -253,7 +284,7 @@ export async function listActivities(query: ActivityQuery = {}, signal?: AbortSi
 export async function updateActivity(
   id: string,
   patch: { activityType: string; name: string; description: string },
-): Promise<Activity> {
+): Promise<ActivityDetail> {
   const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -264,7 +295,7 @@ export async function updateActivity(
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
   const body = (await res.json()) as ResponseJson<'/activities/{id}', 'patch'>;
-  return toActivity(body);
+  return toActivityDetail(body);
 }
 
 /**

@@ -7,6 +7,7 @@ import { mapTapsAct } from './exportFlow';
 import type { MapMode } from './mapMode';
 import { setMapTapsActive } from './mapTaps';
 import { initialSession, mapSessionReducer } from './session';
+import { setListedTracks } from './tracks';
 import { boldTracks, toolbarTarget } from './selection';
 import { initialPanelTab, storyParam } from './storyUrl';
 import type { SpotCategory } from './spots';
@@ -189,9 +190,14 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   useViewOnMap(map, initialActivity, { mode: mapMode, activities }, dispatch, focusActivity);
   const urlView = initial.hash.view != null;
   useOpeningView(map, dispatch, { keepCamera: urlView || storyId !== null || initialActivity !== null, country: user.country, earliest, historyReady: daysReady });
-  const areaList = useAreaList(map, dispatch, storyId);
+  const zoom = useAreaList(map, dispatch, storyId);
   useDatesFlight(map, dispatch, { flyRequest: session.flyRequest, storyId, dates });
-  const areaState = areaLoad(areaList.zoom, activities.length, storyId === null ? areaTotal : null);
+  const areaState = areaLoad(zoom, activities.length, storyId === null ? areaTotal : null);
+  // Past the cap the map draws only the listed tracks, so the map and the list stay one set.
+  const listedIds = useMemo(() => (areaState.capped ? activities.map((a) => a.id) : null), [areaState.capped, activities]);
+  useEffect(() => {
+    if (map) setListedTracks(map, listedIds);
+  }, [map, listedIds]);
 
   useListFlight(map, {
     activities,
@@ -208,8 +214,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const spots = useSpots(map, spotsShown);
   const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
   const exportScene = useMemo(
-    () => ({ flavor, mode: mapMode, tracksQuery, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite: satelliteShown, roads, photos: photoLayer.exportPhotos }),
-    [flavor, mapMode, tracksQuery, mapHiddenIds, boldIds, bands, paths, satelliteShown, roads, photoLayer.exportPhotos],
+    () => ({ flavor, mode: mapMode, tracksQuery, listedIds, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite: satelliteShown, roads, photos: photoLayer.exportPhotos }),
+    [flavor, mapMode, tracksQuery, listedIds, mapHiddenIds, boldIds, bands, paths, satelliteShown, roads, photoLayer.exportPhotos],
   );
   const exportStats = useMemo(() => ({ checked: checkedActivityIds, storyId }), [checkedActivityIds, storyId]);
   const exporter = useExportFlow(map, container, exportScene, exportStats);
@@ -386,7 +392,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               onPrivateLocationsChanged={refresh.afterPrivateLocations}
               firstRun={showsFirstRun(isDemo, daysReady ? earliest !== null : null)}
               dates={{ value: dates, bounds: datesBounds, earliest, onChange: changeDates, onClear: clearDates }}
-              cappedTotal={areaState.capped ? areaTotal : null}
+              outOfReach={storyId === null && areaState.load === 'none'}
             />
           </div>
         )}
@@ -438,11 +444,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               satelliteFailed={satellite && imagery === 'failed'}
               spotsShown={spotsShown}
               layersOpen={tour.open.layers === true}
-              area={{
-                button: mapMode === 'normal' && storyId === null && areaState.load === 'button' && areaList.stale,
-                onLoad: areaList.loadHere,
-                capped: mapMode === 'normal' && storyId === null && areaState.capped && areaTotal !== null ? { shown: activities.length, total: areaTotal } : null,
-              }}
+              capped={mapMode === 'normal' && storyId === null && areaState.capped && areaTotal !== null ? { shown: activities.length, total: areaTotal } : null}
             />
           )}
           {map && spots.openSpot && <SpotPopup map={map} spot={spots.openSpot} capturedAt={spots.capturedAt(spots.openSpot.id)} onClose={spots.closeSpot} />}

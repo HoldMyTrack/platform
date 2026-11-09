@@ -3,7 +3,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { datesQuery } from './activityQuery';
 import { flyToBBox, unionBBox } from './bbox';
 import { viewArea } from './useAreaList';
-import { listActivities, type BBox } from '../api';
+import { listArea, type BBox } from '../api';
 import type { MapSessionEvent } from './session';
 import type { DateFilter } from '../ui/dateFilter';
 
@@ -17,7 +17,7 @@ export function useDatesFlight(map: MapLibreMap | null, dispatch: Dispatch<MapSe
   useEffect(() => {
     if (!map || !flyRequest || storyId !== null) return;
     const controller = new AbortController();
-    listActivities(datesQuery(dates), controller.signal)
+    listArea(datesQuery(dates), controller.signal)
       .then(({ activities }) => {
         const bounds = unionBBox(activities.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : [])));
         if (!bounds) return;

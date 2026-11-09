@@ -244,7 +244,7 @@ Every map and export choice is kept by the browser or phone, never by the accoun
 
 ### FR-4.1 Track rendering (Normal mode)
 
-- Normal mode draws every activity passing the filters that isn't Hidden or Pending (FR-5.15): on the web Dates (FR-5.20), Type and Distance, in the apps the date range (FR-6), Type and Distance. With a Story open, its activities (FR-14.6).
+- Normal mode draws every activity passing the filters that isn't Hidden or Pending (FR-5.15): on the web Dates (FR-5.20), Type and Distance, and past the list's cap only the listed ones (FR-5.19); in the apps the date range (FR-6), Type and Distance. With a Story open, its activities (FR-14.6).
 - Tracks are drawn from zoom 4 in.
 - A track across the 180° meridian is drawn the short way and counts in Fog and Heatmap on both sides.
 
@@ -452,11 +452,11 @@ An activity is split in two at a point on its track. Each part is a full activit
 
 ### FR-5.19 The visible area (web)
 
-On the web the list holds every activity whose track crosses the visible map, of all time unless the Dates filter (FR-5.20) narrows it. The apps list the date range instead (FR-6).
+On the web the list holds every activity whose track crosses the visible map, of all time unless the Dates filter (FR-5.20) narrows it, and the map draws the same set. The apps list the date range instead (FR-6).
 
 - An activity with no track (FR-8.1) is never in it.
-- From zoom 10 the list follows the map as it moves; from zoom 4, where tracks are drawn (FR-4.1), to 10 the area loads when asked; further out it isn't offered. The camera moving onto an activity or a Story leaves the list as it is.
-- At most the newest 1,000. Past that, the map and the count say how many the area holds. Tracks are drawn past the limit, and the Type and Distance filters reach only listed tracks.
+- From zoom 4, where tracks are drawn (FR-4.1), the list follows the map each time it settles after a move; further out it lists nothing. The camera moving onto an activity or a Story leaves the list as it is.
+- At most the newest 1,000. Past that the map draws only the listed tracks and says how many the area holds, and only zooming in or Dates bring the rest in.
 - A reload keeps Focused, Checked and Hidden on activities still listed, and every filter as set.
 
 ### FR-5.20 DATES filter (web)

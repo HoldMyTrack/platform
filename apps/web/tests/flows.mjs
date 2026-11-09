@@ -1,7 +1,7 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, Dates
  * narrowing the list and keeping the selection, a Story opened and closed by Back, a track edit's
- * reprocess, a delete, the area's button from zoom 4 to 10, the Dates menu, the header's menus
+ * reprocess, a delete, the list following the map from zoom 4, the Dates menu, the header's menus
  * closing, and the tour's offer and header link. Each run signs up a fresh account, uploads the
  * sample files, and deletes the account at the end.
  *
@@ -62,18 +62,13 @@ async function settledActivities(expected, timeoutMs = 90_000) {
   }
 }
 
-/** The map framed on every activity, and the list following it: on its own from zoom 10, through
- *  the area's button below (docs/SPEC.md FR-5.19). A camera move from here counts as the user's. */
+/** The map framed on every activity, and the list following it (docs/SPEC.md FR-5.19). A camera
+ *  move from here counts as the user's. */
 async function viewAll() {
   const { activities } = await call('GET', '/activities');
   const boxes = activities.map((a) => a.bbox).filter(Boolean);
   const box = [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
-  const zoom = await page.evaluate((b) => {
-    const map = window.__holdmytrack;
-    map.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 80, animate: false });
-    return map.getZoom();
-  }, box);
-  if (zoom < 10) await page.getByTestId('activities-in-area').click();
+  await page.evaluate((b) => window.__holdmytrack.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 80, animate: false }), box);
   await page.waitForFunction((n) => document.querySelectorAll('li[data-activity-id]').length === n, activities.length, { timeout: 30_000 });
 }
 
@@ -89,7 +84,8 @@ before(async () => {
   // A fresh account opens on the first-run setup until it has a Country (FR-1.7).
   await call('PATCH', '/account/settings', { display_name: '', country: 'US', timezone: 'America/New_York' });
   page = await context.newPage();
-  await page.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
+  // Zoom 6 over the samples' region: from zoom 4 the list follows the map (docs/SPEC.md FR-5.19).
+  await page.goto(`${BASE}/#map=6.00/41.45/-81.70&theme=light`);
   await page.waitForFunction(() => Boolean(window.__holdmytrack), undefined, { timeout: 60_000 }).catch(async (err) => {
     await page.screenshot({ path: new URL('./screenshots/flows-before.png', import.meta.url).pathname });
     console.error('URL', page.url());
@@ -208,21 +204,15 @@ describe('map flows', () => {
     assert.equal(activities.some((a) => a.id === id), false);
   });
 
-  it('6. from zoom 4 to 10 a move waits for "Show activities in this area", and further out none is offered', async () => {
+  it('6. the list follows the map from zoom 4, and further out asks to zoom in', async () => {
     await viewAll();
-    const listed = await rows().count();
+    // Zoom 6 over open ocean: the list follows on its own.
     await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [0, 0], zoom: 6 }));
-    const button = page.getByTestId('activities-in-area');
-    await button.waitFor({ timeout: 10_000 });
-    // The list stays as it was until asked.
-    assert.equal(await rows().count(), listed);
-    await button.click();
-    await button.waitFor({ state: 'detached', timeout: 10_000 });
     await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 0, undefined, { timeout: 30_000 });
     // No track is drawn below zoom 4, so there's nothing to list.
     await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [-81.7, 41.45], zoom: 3 }));
-    await page.waitForTimeout(500);
-    assert.equal(await button.count(), 0);
+    await page.getByText('Zoom in to see your activities.').waitFor({ timeout: 10_000 });
+    assert.equal(await rows().count(), 0);
   });
 
   it('7. the Dates menu offers the first activity as a hint, and ✕ clears it without moving the camera', async () => {

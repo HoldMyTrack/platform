@@ -71,7 +71,6 @@ export function ActivityRow({
       // undefined (not an empty string) when there is none, so a row with nothing written there
       // gets no title attribute at all rather than an empty one a browser might still render as
       // an inert tooltip.
-      title={activity.description ?? undefined}
       onMouseEnter={() => onHover(activity.id)}
       onMouseLeave={() => onHover(null)}
     >

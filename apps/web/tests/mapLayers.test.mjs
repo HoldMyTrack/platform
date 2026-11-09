@@ -148,8 +148,10 @@ test('the tracks draw the focused and hovered ids from vars the client binds, ne
   const tracks = groupOf(doc, 'tracks');
   assert.deepEqual(tracks.layers.map((l) => l.id), ['tracks-outline', 'tracks-casing', 'tracks-line', 'tracks-focused', 'tracks-hover', 'tracks-arrows']);
   assert.deepEqual([doc.vars.hidden, doc.vars.focused, doc.vars.hovered], [[], [], []]);
+  // Past the web list's cap only listed tracks draw (docs/SPEC.md FR-5.19); unbound, every track does.
+  assert.deepEqual([doc.vars.capped, doc.vars.listed], [false, []]);
   const focused = tracks.layers.find((l) => l.id === 'tracks-focused');
-  assert.deepEqual(focused.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden'] });
+  assert.deepEqual(focused.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden', 'capped', 'listed'] });
   const bound = boundLayer(focused, { focused: ['a'], hidden: ['a'] }, doc.vars).filter;
   assert.deepEqual(bound.slice(0, 5), ['let', 'focused', ['literal', ['a']], 'hidden', ['literal', ['a']]]);
   assert.equal(tracks.layers.find((l) => l.id === 'tracks-line').metadata['holdmytrack:role'], 'track');
@@ -243,7 +245,7 @@ test('every bold track carries the pace bands\' arrows, pointing along it, and n
   assert.equal(arrows.layout['text-field'], bandArrows.layout['text-field']);
   const focused = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-focused');
   assert.equal(arrows.layout['text-size'], focused.paint['line-width']);
-  assert.deepEqual(arrows.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden'] });
+  assert.deepEqual(arrows.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden', 'capped', 'listed'] });
   const tracksFocused = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-focused');
   assert.deepEqual(arrows.filter, tracksFocused.filter);
 });

@@ -2,20 +2,16 @@ package httpapi
 
 import (
 	"context"
-	"fmt"
 	"net/http"
-	"strconv"
-	"strings"
 	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/activitytype"
 )
 
 // listActivitiesQuery is §4.7's list, with §4.3's "$n IS NULL OR ..." optional-filter
-// treatment, and $6 a LIMIT, NULL for none. No pagination: the client renders every matching
-// row on the map and computes stats and type/distance facets across all of them at once, so a
-// partial page was never usable. An account's activity count is in the hundreds to low
-// thousands; the web's area list (listActivitiesInAreaQuery) caps its own.
+// treatment. No pagination: the client renders every matching row on the map and computes stats
+// and type/distance facets across all of them at once, so a partial page was never usable. The
+// apps' date range and a Story read it; the web's area list is activity_area.go's.
 //
 // The four ST_*Min/Max calls are the row's bounding box, so a client can fly the map to an
 // activity without a follow-up request per row. They are cheaper than they look: PostGIS
@@ -23,28 +19,8 @@ import (
 // the vertices. §3.3 has no bbox column and doesn't need one back.
 //
 // Column order here has to match scanActivityRow's Scan call exactly — activityByIDQuery
-// below shares that same order for the same reason.
-var listActivitiesQuery = listActivitiesSelect + `
-ORDER BY started_at DESC, id DESC
-LIMIT $6::int`
-
-// listActivitiesInAreaQuery is the list narrowed to the tracks crossing a map view (FR-5.19),
-// $7–$12 as trajectoryInAreaSQL takes them; countActivitiesInAreaQuery is its total, past the
-// limit.
-var listActivitiesInAreaQuery = listActivitiesSelect + `
-  AND ` + trajectoryInAreaSQL(7) + `
-ORDER BY started_at DESC, id DESC
-LIMIT $6::int`
-
-var countActivitiesInAreaQuery = `
-SELECT count(*) FROM activities
-WHERE user_id = $1
-  AND ` + inDateRange("$2", "$3") + `
-  AND ($4::text[] IS NULL OR activity_type = ANY($4))
-  AND ($5::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $5))
-  AND ` + trajectoryInAreaSQL(6)
-
-var listActivitiesSelect = `
+// shares that same order for the same reason.
+var listActivitiesQuery = `
 SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds,
        COALESCE(moving_seconds, duration_seconds), description,
        ` + activityBBoxColumns + `,
@@ -55,28 +31,8 @@ FROM activities
 WHERE user_id = $1
   AND ` + inDateRange("$2", "$3") + `
   AND ($4::text[] IS NULL OR activity_type = ANY($4))
-  AND ($5::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $5))`
-
-// areaActivitiesLimit caps the area list (FR-5.19): a heavy user's home area holds thousands,
-// and the response says how many, so the client can ask for a smaller area.
-const areaActivitiesLimit = 1000
-
-// trajectoryInAreaSQL is "the track crosses one of the area's two boxes" (mapArea.boxes), with
-// the parameters from $first: south, north, then each box's west and east. A track stored past
-// ±180 (§4.1) is matched by the boxes moved a world's width, as the tracks tile matches it. Each
-// test is its own && against constant parameters, so idx_activities_spatial answers the OR, and
-// ST_Intersects then drops a track whose box reaches the view while the line doesn't.
-func trajectoryInAreaSQL(first int) string {
-	p := func(i int) string { return fmt.Sprintf("$%d::float8", first+i) }
-	var tests []string
-	for _, box := range [][2]string{{p(2), p(3)}, {p(4), p(5)}} {
-		for _, shift := range []string{"", " + 360", " - 360"} {
-			env := "ST_MakeEnvelope(" + box[0] + shift + ", " + p(0) + ", " + box[1] + shift + ", " + p(1) + ", 4326)"
-			tests = append(tests, "(trajectory && "+env+" AND ST_Intersects(trajectory, "+env+"))")
-		}
-	}
-	return "(" + strings.Join(tests, "\n    OR ") + ")"
-}
+  AND ($5::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $5))
+ORDER BY started_at DESC, id DESC`
 
 // activityRow is one row of the list. The field set is exactly what the Activities panel
 // renders, no more. MovingSeconds is the time a row shows, the same time Stories and Trends
@@ -179,53 +135,19 @@ type activitiesResponse struct {
 	Activities []activityRow `json:"activities"`
 	// Types is what a client shows for each type the rows use, once per type rather than per row.
 	Types map[string]activitytype.Info `json:"types"`
-	// Total is how many activities the area holds, sent with `bbox` alone; more than
-	// len(Activities) when the list was cut at the limit.
-	Total *int `json:"total,omitempty"`
 }
 
-// handleListActivities serves IMPLEMENTATION.md §4.7's
-// `GET /v1/activities?from=&to=&types=&story=&bbox=&limit=`: the user's own history as rows,
-// newest first, unpaginated — see listActivitiesQuery's doc comment for why. With `bbox`, only
-// the tracks crossing that view, at most areaActivitiesLimit of them, and the area's total.
+// handleListActivities serves IMPLEMENTATION.md §4.7's `GET /v1/activities?from=&to=&types=&story=`:
+// the user's own history as rows, newest first, unpaginated — see listActivitiesQuery's doc
+// comment for why.
 func (s *Server) handleListActivities(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	filter, err := parseActivityFilter(q)
+	filter, err := parseActivityFilter(r.URL.Query())
 	if err != nil {
 		writeAPIError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	limit, err := parseListLimit(q.Get("limit"))
-	if err != nil {
-		writeAPIError(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	var area *mapArea
-	if raw := q.Get("bbox"); raw != "" {
-		a, ok := parseBBox(raw)
-		if !ok {
-			writeAPIError(w, "bbox must be west,south,east,north in degrees, south < north", http.StatusBadRequest)
-			return
-		}
-		area = &a
-		if limit == nil {
-			l := areaActivitiesLimit
-			limit = &l
-		}
-	}
-
-	ctx := r.Context()
-	userID := userIDFromContext(ctx)
-	args := []any{userID, filter.From, filter.To, filter.Types, filter.Story, limit}
-	query := listActivitiesQuery
-	var areaArgs []any
-	if area != nil {
-		w1, e1, w2, e2 := area.boxes()
-		areaArgs = []any{area.south, area.north, w1, e1, w2, e2}
-		args = append(args, areaArgs...)
-		query = listActivitiesInAreaQuery
-	}
-	list, err := s.readActivityRows(ctx, query, args...)
+	list, err := readRows(r.Context(), s, listActivitiesQuery, scanActivityRow,
+		userIDFromContext(r.Context()), filter.From, filter.To, filter.Types, filter.Story)
 	if err != nil {
 		if clientGone(w, r) {
 			return
@@ -234,61 +156,28 @@ func (s *Server) handleListActivities(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-
-	resp := activitiesResponse{Activities: list}
-	if area != nil {
-		total := len(list)
-		// Only a full page can have more behind it.
-		if total == *limit {
-			countArgs := append([]any{userID, filter.From, filter.To, filter.Types, filter.Story}, areaArgs...)
-			if err := s.pool.QueryRow(ctx, countActivitiesInAreaQuery, countArgs...).Scan(&total); err != nil {
-				if clientGone(w, r) {
-					return
-				}
-				s.log.Error("activity area count failed", "err", err)
-				writeAPIError(w, "internal error", http.StatusInternalServerError)
-				return
-			}
-		}
-		resp.Total = &total
-	}
-
 	types := make([]string, 0, len(list))
 	for _, a := range list {
 		types = append(types, a.ActivityType)
 	}
-	resp.Types = activitytype.Describe(types, requestLang(r))
 	w.Header().Set("Cache-Control", "no-store")
-	writeJSON(w, http.StatusOK, resp)
+	writeJSON(w, http.StatusOK, activitiesResponse{Activities: list, Types: activitytype.Describe(types, requestLang(r))})
 }
 
-// readActivityRows runs a list query and scans its rows, an empty history as [] rather than null.
-func (s *Server) readActivityRows(ctx context.Context, query string, args ...any) ([]activityRow, error) {
+// readRows runs a list query and scans each row with scan, an empty result as [] rather than null.
+func readRows[T any](ctx context.Context, s *Server, query string, scan func(rowScanner) (T, error), args ...any) ([]T, error) {
 	rows, err := s.pool.Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	list := make([]activityRow, 0)
+	list := make([]T, 0)
 	for rows.Next() {
-		a, err := scanActivityRow(rows)
+		v, err := scan(rows)
 		if err != nil {
 			return nil, err
 		}
-		list = append(list, a)
+		list = append(list, v)
 	}
 	return list, rows.Err()
-}
-
-// parseListLimit reads the list's optional `limit`, nil when absent: 1 to areaActivitiesLimit,
-// the newest that many, for the web's opening view.
-func parseListLimit(raw string) (*int, error) {
-	if raw == "" {
-		return nil, nil
-	}
-	n, err := strconv.Atoi(raw)
-	if err != nil || n < 1 || n > areaActivitiesLimit {
-		return nil, fmt.Errorf("limit must be 1 to %d", areaActivitiesLimit)
-	}
-	return &n, nil
 }

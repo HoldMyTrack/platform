@@ -44,7 +44,10 @@ const ARROWS_LAYER_ID = 'tracks-arrows';
 
 const LAYER_IDS = ['tracks-casing', TRACKS_LAYER_ID, 'tracks-focused', 'tracks-hover', ARROWS_LAYER_ID];
 
-const notHidden = ['!', ['in', ['get', 'id'], ['var', 'hidden']]];
+// Drawn: not hidden, and while the web's list was cut at its cap, listed (docs/SPEC.md FR-5.19).
+// `capped` defaults to false, so a client that never binds it draws every track.
+const notHidden = ['all', ['!', ['in', ['get', 'id'], ['var', 'hidden']]], ['any', ['!', ['var', 'capped']], ['in', ['get', 'id'], ['var', 'listed']]]];
+const DRAWN_VARS = ['hidden', 'capped', 'listed'];
 const among = (set: string) => ['all', ['in', ['get', 'id'], ['var', set]], notHidden];
 
 function line(id: string, filter: unknown[], vars: string[], paint: Record<string, unknown>, role?: string): LayerSpecification {
@@ -73,13 +76,13 @@ function arrows(): LayerSpecification {
     filter: among('focused') as never,
     layout: arrowLayout(FOCUSED_WIDTH),
     paint: arrowPaint,
-    metadata: { [VARS_METADATA]: { filter: ['focused', 'hidden'] } },
+    metadata: { [VARS_METADATA]: { filter: ['focused', ...DRAWN_VARS] } },
   } as LayerSpecification;
 }
 
 /** Under every track, over imagery only. */
 function outline(): LayerSpecification {
-  const layer = line(OUTLINE_LAYER_ID, notHidden, ['hidden'], { 'line-color': SATELLITE_EDGE_COLOR, 'line-width': OUTLINE_WIDTH, 'line-opacity': OUTLINE_OPACITY });
+  const layer = line(OUTLINE_LAYER_ID, notHidden, DRAWN_VARS, { 'line-color': SATELLITE_EDGE_COLOR, 'line-width': OUTLINE_WIDTH, 'line-opacity': OUTLINE_OPACITY });
   return { ...layer, layout: { ...layer.layout, visibility: 'none' } } as LayerSpecification;
 }
 
@@ -96,10 +99,10 @@ export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
       sources: { tracks: { type: 'vector', tiles: tilePath('tracks', tileVersion), minzoom: 0, maxzoom: 14 } },
       layers: [
         outline(),
-        line('tracks-casing', among('focused'), ['focused', 'hidden'], { 'line-color': casingColor(dark), 'line-width': CASING_WIDTH, 'line-opacity': 0.95 }, 'casing'),
-        line(TRACKS_LAYER_ID, notHidden, ['hidden'], { 'line-color': TRACK_COLOR, 'line-width': NORMAL_WIDTH, 'line-opacity': TRACK_OPACITY }, 'track'),
-        line('tracks-focused', among('focused'), ['focused', 'hidden'], { 'line-color': TRACK_COLOR, 'line-width': FOCUSED_WIDTH, 'line-opacity': 1 }, 'focused'),
-        line('tracks-hover', among('hovered'), ['hovered', 'hidden'], { 'line-color': HOVER_COLOR, 'line-width': HOVER_WIDTH }),
+        line('tracks-casing', among('focused'), ['focused', ...DRAWN_VARS], { 'line-color': casingColor(dark), 'line-width': CASING_WIDTH, 'line-opacity': 0.95 }, 'casing'),
+        line(TRACKS_LAYER_ID, notHidden, DRAWN_VARS, { 'line-color': TRACK_COLOR, 'line-width': NORMAL_WIDTH, 'line-opacity': TRACK_OPACITY }, 'track'),
+        line('tracks-focused', among('focused'), ['focused', ...DRAWN_VARS], { 'line-color': TRACK_COLOR, 'line-width': FOCUSED_WIDTH, 'line-opacity': 1 }, 'focused'),
+        line('tracks-hover', among('hovered'), ['hovered', ...DRAWN_VARS], { 'line-color': HOVER_COLOR, 'line-width': HOVER_WIDTH }),
         arrows(),
       ],
     },
@@ -119,6 +122,6 @@ export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
         },
       };
     },
-    vars: { hidden: [], focused: [], hovered: [] },
+    vars: { hidden: [], focused: [], hovered: [], capped: false, listed: [] },
   };
 }

@@ -195,3 +195,9 @@ export function refreshTrackLayer(map: MapLibreMap, range: TrackDateRange): void
 export function setHiddenTracks(map: MapLibreMap, hiddenIds: string[]): void {
   setLayerVars(map, { hidden: hiddenIds });
 }
+
+/** While the web's list was cut at its cap, the map draws only the listed tracks, so the two stay
+ *  one set (docs/SPEC.md FR-5.19); null draws every track. */
+export function setListedTracks(map: MapLibreMap, listedIds: readonly string[] | null): void {
+  setLayerVars(map, { capped: listedIds !== null, listed: listedIds ?? [] });
+}

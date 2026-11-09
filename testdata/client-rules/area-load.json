@@ -1,17 +1,22 @@
 {
   "rule": "areaLoad",
   "clients": ["web"],
-  "description": "How the web's list follows the map (docs/SPEC.md FR-5.19): from zoom 10 it reloads as the map moves (\"auto\"), from zoom 4, where tracks are drawn, on request (\"button\"), and below that not at all (\"none\"); capped when the last load's total is more than it listed. total is null before any load.",
+  "description": "Whether the web's list follows the map (docs/SPEC.md FR-5.19): from zoom 4, where tracks are drawn, on every settled move (\"auto\"); further out there is nothing to list (\"none\"). capped when the last load's total is more than it listed, which makes the map draw only the listed tracks. total is null before any load.",
   "cases": [
     {
-      "name": "zoom 10 follows the map",
-      "input": {"zoom": 10, "listed": 3, "total": 3},
+      "name": "zoom 4 follows the map",
+      "input": {"zoom": 4, "listed": 3, "total": 3},
       "expected": {"load": "auto", "capped": false}
     },
     {
-      "name": "just below 10 asks",
-      "input": {"zoom": 9.99, "listed": 3, "total": 3},
-      "expected": {"load": "button", "capped": false}
+      "name": "zoom 12 follows the map",
+      "input": {"zoom": 12, "listed": 3, "total": 3},
+      "expected": {"load": "auto", "capped": false}
+    },
+    {
+      "name": "below zoom 4 no track is drawn, so nothing is listed",
+      "input": {"zoom": 3.99, "listed": 2, "total": 2},
+      "expected": {"load": "none", "capped": false}
     },
     {
       "name": "cut at the limit",
@@ -24,14 +29,9 @@
       "expected": {"load": "auto", "capped": false}
     },
     {
-      "name": "zoom 4 asks",
-      "input": {"zoom": 4, "listed": 0, "total": null},
-      "expected": {"load": "button", "capped": false}
-    },
-    {
-      "name": "below zoom 4 no track is drawn, so nothing is offered",
-      "input": {"zoom": 3.99, "listed": 2, "total": 2},
-      "expected": {"load": "none", "capped": false}
+      "name": "before any load",
+      "input": {"zoom": 8, "listed": 0, "total": null},
+      "expected": {"load": "auto", "capped": false}
     }
   ]
 }

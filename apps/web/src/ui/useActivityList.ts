@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { listActivities, type Activity, type ActivityQuery } from '../api';
+import { listActivities, listArea, type Activity } from '../api';
+import type { ListRequest } from '../map/activityQuery';
 
 export interface ActivityList {
   activities: Activity[];
@@ -15,14 +16,15 @@ export interface ActivityList {
 }
 
 /**
- * Reader for §4.7's `GET /v1/activities`. One request, the whole filtered set — the panel
- * renders every row, the map draws every track, and the type/distance facets are computed
- * over the same full list. A null query (no area yet) asks for nothing and stays loading.
+ * Reader for the list: a Story's `GET /v1/activities?story=`, else the area's
+ * `GET /v1/activities/area` (§4.7). One request, the whole set — the panel renders every row, the
+ * map draws the same set, and the type/distance facets are computed over it. A null request (no
+ * area yet) asks for nothing and stays loading.
  *
  * The filter is compared by its serialised form, not by identity, so a caller passing a
  * fresh object literal every render doesn't restart the fetch on every render.
  */
-export function useActivityList(query: ActivityQuery | null): ActivityList {
+export function useActivityList(query: ListRequest | null): ActivityList {
   const queryKey = query === null ? null : JSON.stringify(query);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [total, setTotal] = useState<number | null>(null);
@@ -35,7 +37,8 @@ export function useActivityList(query: ActivityQuery | null): ActivityList {
     if (queryKey === null) return;
     setLoading(true);
     const controller = new AbortController();
-    listActivities(JSON.parse(queryKey) as ActivityQuery, controller.signal)
+    const request = JSON.parse(queryKey) as ListRequest;
+    ('story' in request ? listActivities(request.story, controller.signal) : listArea(request.area, controller.signal))
       .then((page) => {
         setActivities(page.activities);
         setTotal(page.total);

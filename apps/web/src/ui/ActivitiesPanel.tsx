@@ -6,7 +6,6 @@ import { ActivitiesToolbar } from './ActivitiesToolbar';
 import { ActivityFilters, type DatesProps } from './ActivityFilters';
 import { ActivityRow, useScrollFocusedRow } from './ActivityRow';
 import { FirstRunPanel } from './FirstRunPanel';
-import { AREA_LIMIT } from '../map/areaLoad';
 import { PrivateLocationsPanel } from './PrivateLocationsPanel';
 import { StoriesTab } from './StoriesTab';
 import type { StoryInboxState } from './useStoryInbox';
@@ -134,8 +133,8 @@ export interface ActivitiesPanelProps {
   onPrivateLocationsChanged: () => void;
   /** The Dates filter (FR-5.20): MapView's, with its bounds. */
   dates: DatesProps;
-  /** How many the area holds when the list was cut at its limit (FR-5.19), else null. */
-  cappedTotal: number | null;
+  /** The map is zoomed out past where tracks are drawn, so there's nothing to list (FR-5.19). */
+  outOfReach: boolean;
   /** The account has no activities: the Activities tab is FirstRunPanel.tsx instead of the list
    *  (firstRun.ts's showsFirstRun). */
   firstRun?: boolean;
@@ -195,7 +194,7 @@ export function ActivitiesPanel({
   map,
   onPrivateLocationsChanged,
   dates,
-  cappedTotal,
+  outOfReach,
   firstRun = false,
 }: ActivitiesPanelProps) {
   // The row list, for useScrollFocusedRow (ActivityRow.tsx): a newly focused row scrolls into view.
@@ -424,11 +423,6 @@ export function ActivitiesPanel({
             onActivitiesDeleted={onActivitiesDeleted}
             onShowSelected={onShowSelected}
           />
-          {cappedTotal !== null && (
-            <p className="activities-panel__capped" data-testid="activities-capped">
-              {t('activities.newest_of', { shown: AREA_LIMIT.toLocaleString(lang), total: cappedTotal.toLocaleString(lang) })}
-            </p>
-          )}
 
           {/* A click on the list's own empty space (or one of its notes) — not on a row —
               clears the selection, the panel's counterpart to clicking away from every track
@@ -443,7 +437,7 @@ export function ActivitiesPanel({
               if (target === e.currentTarget || target.classList.contains('activities-panel__note')) onClearFocus();
             }}
           >
-            {activities.map((activity) => (
+            {!outOfReach && activities.map((activity) => (
               <ActivityRow
                 key={activity.id}
                 activity={activity}
@@ -461,12 +455,14 @@ export function ActivitiesPanel({
                 onHover={onHoverActivity}
               />
             ))}
-            {loading && <li className="activities-panel__note">{t('common.loading')}</li>}
+            {loading && !outOfReach && <li className="activities-panel__note">{t('common.loading')}</li>}
             {error && !loading && (
               <li className="activities-panel__note activities-panel__note--error">{error}</li>
             )}
-            {!loading && !error && activities.length === 0 && (
-              <li className="activities-panel__note">{t('activities.none_match')}</li>
+            {outOfReach ? (
+              <li className="activities-panel__note">{t('area.zoom_in')}</li>
+            ) : (
+              !loading && !error && activities.length === 0 && <li className="activities-panel__note">{t('activities.none_match')}</li>
             )}
           </ul>
 

@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"slices"
 	"testing"
@@ -9,8 +10,8 @@ import (
 )
 
 // The area list (FR-5.19): the tracks crossing a view, newest first, capped with the area's
-// total, across the antimeridian either way round.
-func TestListActivitiesInArea(t *testing.T) {
+// total, across the antimeridian either way round, in slim rows.
+func TestListArea(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	ctx := context.Background()
@@ -37,8 +38,8 @@ func TestListActivitiesInArea(t *testing.T) {
 	}
 	get := func(query string) listed {
 		t.Helper()
-		var resp activitiesResponse
-		d.decode(d.do(me, "GET", "/v1/activities?"+query, nil), http.StatusOK, &resp)
+		var resp areaResponse
+		d.decode(d.do(me, "GET", "/v1/activities/area?"+query, nil), http.StatusOK, &resp)
 		var ids []string
 		for _, a := range resp.Activities {
 			ids = append(ids, a.ID)
@@ -64,7 +65,7 @@ func TestListActivitiesInArea(t *testing.T) {
 	}
 	expect("bbox=170,-41,171,-40", nil, 0)
 
-	// Without an area: the whole history, no total; limit keeps the newest.
+	// Without an area: the newest of the whole history, no total, the opening view's read.
 	if got := get(""); len(got.ids) != 6 || got.total != nil {
 		t.Errorf("no area: %d rows, total %v, want 6 and none", len(got.ids), got.total)
 	}
@@ -73,8 +74,41 @@ func TestListActivitiesInArea(t *testing.T) {
 	}
 
 	for _, bad := range []string{"bbox=a,b,c,d", "bbox=-30,-31,-30,-30", "limit=0", "limit=1001", "limit=x"} {
-		if rec := d.do(me, "GET", "/v1/activities?"+bad, nil); rec.Code != http.StatusBadRequest {
+		if rec := d.do(me, "GET", "/v1/activities/area?"+bad, nil); rec.Code != http.StatusBadRequest {
 			t.Errorf("?%s: status %d, want 400", bad, rec.Code)
 		}
+	}
+
+	// A slim row: the Edit window's fields are GET /v1/activities/{id}'s alone.
+	rec := d.do(me, "GET", "/v1/activities/area?"+box, nil)
+	var raw struct {
+		Activities []map[string]json.RawMessage `json:"activities"`
+	}
+	d.decode(rec, http.StatusOK, &raw)
+	for _, field := range []string{"description", "edited", "track_edit", "photos", "split", "duration_seconds"} {
+		if _, ok := raw.Activities[0][field]; ok {
+			t.Errorf("area row carries %q", field)
+		}
+	}
+}
+
+// One activity in full, for the Edit window; another account's is a 404, like a missing one.
+func TestGetActivity(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	other := d.newAccount(false)
+	id := d.newActivity(me, testActivity{activityType: "hiking", at: &[2]float64{-30.5, -30.5}})
+	var resp activitiesResponse
+	d.decode(d.do(me, "GET", "/v1/activities/"+id, nil), http.StatusOK, &resp)
+	if len(resp.Activities) != 1 || resp.Activities[0].ID != id || resp.Types["hiking"].Label == "" {
+		t.Fatalf("got %+v", resp)
+	}
+	for _, as := range []account{other} {
+		if rec := d.do(as, "GET", "/v1/activities/"+id, nil); rec.Code != http.StatusNotFound {
+			t.Errorf("another account: status %d, want 404", rec.Code)
+		}
+	}
+	if rec := d.do(me, "GET", "/v1/activities/not-a-uuid", nil); rec.Code != http.StatusNotFound {
+		t.Errorf("malformed id: status %d, want 404", rec.Code)
 	}
 }

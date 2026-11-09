@@ -24,8 +24,8 @@ test('without a Story, or with a view in the URL, the list moves no camera', () 
 test('the list is the open Story, else the area under Dates; the tracks never take the area', () => {
   const dates = { after: '2026-09-01', before: null };
   const area = [8, 47, 9, 48];
-  assert.deepEqual(listQuery('s', dates, area), { story: 's' });
-  assert.deepEqual(listQuery(null, dates, area), { from: '2026-09-01', bbox: area });
+  assert.deepEqual(listQuery('s', dates, area), { story: { story: 's' } });
+  assert.deepEqual(listQuery(null, dates, area), { area: { from: '2026-09-01', bbox: area } });
   assert.equal(listQuery(null, dates, null), null);
   assert.deepEqual(tracksQuery(null, { after: null, before: '2026-09-02' }), { to: '2026-09-02' });
   assert.deepEqual(tracksQuery(null, { after: null, before: null }), {});
