@@ -12,6 +12,7 @@ struct SpotsTests {
          {"id": "spots-in-area-icons", "type": "symbol", "source": "spots-in-area", "minzoom": 10, "maxzoom": 13,
           "metadata": {"holdmytrack:images": {"spot-dog_park": {"category": "dog_park", "fill": "#fff", "ring": "#0a0", "ink": "#000"},
                                               "spot-ufo": {"category": "ufo", "fill": "#fff", "ring": "#fff", "ink": "#fff"}}}},
+         {"id": "spots-area-line", "type": "line", "source": "spots", "paint": {"line-color": "#8a6d1f"}, "metadata": {"holdmytrack:role": "spot-area"}},
          {"id": "spots-icons", "type": "symbol", "source": "spots",
           "metadata": {"holdmytrack:images": {"spot-dog_park-captured": {"category": "dog_park", "fill": "#0a0", "ring": "#fff", "ink": "#fff"}}}}
        ]}
@@ -34,6 +35,10 @@ struct SpotsTests {
         let badges = Spots.badges(document)
         #expect(Set(badges.keys) == ["spot-dog_park", "spot-dog_park-captured"])
         #expect(badges["spot-dog_park-captured"] == SpotBadge(category: .dogPark, fill: "#0a0", ring: "#fff", ink: "#fff"))
+    }
+
+    @Test func theGuideLineTakesThePlacesOutlineColor() {
+        #expect(Spots.areaColor(document) == "#8a6d1f")
     }
 
     @Test func showInThisAreaWorksBetweenItsLayersZooms() {

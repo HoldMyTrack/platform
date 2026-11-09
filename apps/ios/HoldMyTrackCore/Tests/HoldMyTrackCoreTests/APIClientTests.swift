@@ -238,6 +238,26 @@ struct APIClientTests {
         #expect(captures == [7: Date(timeIntervalSince1970: 1_793_730_993), 8: Date(timeIntervalSince1970: 1_793_730_993.5)])
     }
 
+    @Test func aPlacesAreaIsReadAsLatLonRings() async throws {
+        StubProtocol.answer = { _ in .init(body: self.json([
+            "id": 7, "category": "monument", "lon": 1.5, "lat": 2.5,
+            "area": ["type": "MultiPolygon", "coordinates": [[[[1, 2], [1, 3], [2, 3], [1, 2]]]]],
+        ])) }
+        let area = try await client().spotArea(7)
+        #expect(area == [[[GeoPoint(lat: 2, lon: 1), GeoPoint(lat: 3, lon: 1), GeoPoint(lat: 3, lon: 2), GeoPoint(lat: 2, lon: 1)]]])
+    }
+
+    @Test func aCaptureSendsThePositionAndReadsTheAnswer() async throws {
+        StubProtocol.answer = { request in
+            #expect(request.httpMethod == "POST")
+            #expect(request.url?.path == "/v1/spots/7/captures")
+            return .init(status: 201, body: self.json(["spot_id": 7, "captured_at": "2026-11-03T18:36:33Z"]))
+        }
+        #expect(await client().captureSpot(7, at: GeoPoint(lat: 2.5, lon: 1.5)) == .saved(spotID: 7, at: Date(timeIntervalSince1970: 1_793_730_993)))
+        StubProtocol.answer = { _ in .init(status: 422, body: self.json(["error": "outside"])) }
+        #expect(await client().captureSpot(7, at: GeoPoint(lat: 0, lon: 0)) == .outside)
+    }
+
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {
         var body = accountBody
         body["session_token"] = "t"

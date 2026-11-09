@@ -85,6 +85,12 @@ public enum Spots {
         return out
     }
 
+    /// The places' outline color, which capture's guide line is drawn in: the line layer the
+    /// document marks `spot-area`.
+    public static func areaColor(_ document: LayersDocument) -> String? {
+        document.groups.lazy.flatMap(\.layers).first { $0["metadata"]?["holdmytrack:role"]?.string == "spot-area" }?["paint"]?["line-color"]?.string
+    }
+
     /// The zooms "Show in this area" offers places between, its layer's: from a metro area in view
     /// to where the tiles start.
     public static func inAreaZooms(_ document: LayersDocument) -> Range<Double>? {

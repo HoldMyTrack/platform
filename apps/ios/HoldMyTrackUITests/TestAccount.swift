@@ -37,6 +37,27 @@ final class TestAccount {
         return false
     }
 
+    /// A place of category in box (west, south, east, north), with a point inside its area, the
+    /// mean of its outer ring, and one about 120 m north of it.
+    func place(_ category: String, in box: [Double]) throws -> (id: Int, inside: (lat: Double, lon: Double), outside: (lat: Double, lon: Double))? {
+        let bbox = box.map { String($0) }.joined(separator: ",")
+        let found = try call("GET", "/v1/spots?bbox=\(bbox)&categories=\(category)", nil) as? [String: Any]
+        guard let id = (found?["spots"] as? [[String: Any]])?.first?["id"] as? Int,
+              let detail = try call("GET", "/v1/spots/\(id)", nil) as? [String: Any],
+              let rings = ((detail["area"] as? [String: Any])?["coordinates"] as? [[[[Double]]]])?.first?.first,
+              rings.count > 1 else { return nil }
+        let ring = rings.dropLast()
+        let lat = ring.map { $0[1] }.reduce(0, +) / Double(ring.count)
+        let lon = ring.map { $0[0] }.reduce(0, +) / Double(ring.count)
+        return (id, (lat, lon), (lat + 0.0011, lon))
+    }
+
+    /// The places the account has captured.
+    func captures() -> [Int] {
+        let json = (try? call("GET", "/v1/spots/captures", nil)) as? [String: Any]
+        return (json?["captures"] as? [[String: Any]] ?? []).compactMap { $0["spot_id"] as? Int }
+    }
+
     func delete() {
         _ = try? call("DELETE", "/v1/account", ["email": email])
     }

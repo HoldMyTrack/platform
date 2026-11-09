@@ -54,6 +54,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Points of interest (MapViewController+Spots).
     var spots = SpotsState(categories: MapPreferences.spots())
     let spotViews = SpotViews()
+    /// Capture of a place (CaptureController), which lives no longer than the map.
+    lazy var capturing = CaptureController(api: flow.api, map: captureMap(), format: { [unowned self] in self.format })
     /// View on map's activity, focused when the next list holds it.
     var focusWhenListed: String?
     /// The tab bar's Stories count: copies others sent, waiting.
@@ -70,6 +72,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     private var basemapFailed = false
     private var basemapClock: Date?
     private var coverageTask: Task<Void, Never>?
+    /// Find my location was tapped and waits on the prompt or the first position.
+    private var locating = false
 
     /// The first framing happens once per app session, not on every return to the map.
     private static var framed: Set<String> = []
@@ -140,6 +144,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         super.viewDidDisappear(animated)
         coverageTask?.cancel()
         countSatelliteWait(onScreen: false)
+        // Leaving the map ends a capture: iOS has no Back, and the Map tab is where it shows.
+        capturing.stop()
     }
 
     // MARK: The documents
@@ -198,11 +204,13 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     func mapViewRegionIsChanging(_ mapView: MLNMapView) {
         placeSpotPopup()
+        capturing.mapRotated()
     }
 
     func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
         styleLoaded = true
         addBadgeImages(to: style)
+        addGuide(to: style)
     }
 
     /// How far down the controls over the map reach: a popup goes under its place above it.
@@ -307,26 +315,45 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     private func locate() {
         switch location.authorizationStatus {
-        case .notDetermined: location.requestWhenInUseAuthorization()
+        case .notDetermined:
+            locating = true
+            location.requestWhenInUseAuthorization()
         case .denied, .restricted: notice(.location, String(localized: "HoldMyTrack needs location access to show where you are. Turn it on in Settings."))
         default: followUser()
         }
     }
 
+    /// iOS also calls this when the delegate is set, at every launch: only a tap's prompt follows.
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
         switch manager.authorizationStatus {
         case .authorizedWhenInUse, .authorizedAlways:
             hideNotice(.location)
-            followUser()
+            if locating { followUser() }
+        case .denied, .restricted: locating = false
         default: break
         }
     }
 
-    /// Flies to at least zoom 14 and follows the position until the map is panned.
+    /// Flies to at least zoom 14 and follows the position until the map is panned. Before the
+    /// first position the camera waits for it (didUpdate): following with none loses the zoom.
     private func followUser() {
         mapView.showsUserLocation = true
-        if mapView.zoomLevel < 14 { mapView.setZoomLevel(14, animated: false) }
-        mapView.setUserTrackingMode(.follow, animated: true, completionHandler: nil)
+        guard mapView.userLocation?.location != nil else {
+            locating = true
+            return
+        }
+        locating = false
+        // Following sets its own zoom as it starts; zooming after keeps following.
+        mapView.setUserTrackingMode(.follow, animated: true) { [weak self] in
+            MainActor.assumeIsolated {
+                guard let self, self.mapView.zoomLevel < 14 else { return }
+                self.mapView.setZoomLevel(14, animated: true)
+            }
+        }
+    }
+
+    func mapView(_ mapView: MLNMapView, didUpdate userLocation: MLNUserLocation?) {
+        if locating, location.authorizationStatus != .notDetermined, userLocation?.location != nil { followUser() }
     }
 
     // MARK: Coverage still updating
@@ -477,7 +504,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         inArea.axis = .vertical
         inArea.alignment = .center
         spotViews.inArea.addAction(UIAction { [weak self] _ in self?.loadInArea() }, for: .primaryActionTriggered)
-        let column = Controls.column([modesRow, inArea, level, notices], spacing: DesignTokens.Space.s8)
+        spotViews.popup.onCapture = { [weak self] spot in self?.capturing.start(spot) }
+        let column = Controls.column([modesRow, capturing.banner, inArea, level, notices], spacing: DesignTokens.Space.s8)
         chrome.badge.translatesAutoresizingMaskIntoConstraints = false
         layersButton.addSubview(chrome.badge)
         NSLayoutConstraint.activate([
