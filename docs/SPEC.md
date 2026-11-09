@@ -244,7 +244,7 @@ Every map and export choice is kept by the browser or phone, never by the accoun
 
 ### FR-4.1 Track rendering (Normal mode)
 
-- Normal mode draws every activity in the date range (FR-6) passing the Type and Distance filters that isn't Hidden or Pending (FR-5.15); with a Story open, its activities (FR-14.6).
+- Normal mode draws every activity passing the filters that isn't Hidden or Pending (FR-5.15): on the web Dates (FR-5.20), Type and Distance, in the apps the date range (FR-6), Type and Distance. With a Story open, its activities (FR-14.6).
 - Tracks are drawn from zoom 4 in.
 - A track across the 180° meridian is drawn the short way and counts in Fog and Heatmap on both sides.
 
@@ -270,7 +270,7 @@ Exactly one of Normal, Fog of War and Heatmap shows at a time.
 
 - A self-hosted vector base map covering the whole planet at every zoom, light or dark with the theme (FR-4.12). A URL can pin `white`, `black` or `grayscale` until the theme changes.
 - The camera is kept in the URL (`#map=<zoom>/<lat>/<lon>`); an incomplete or out-of-range one is ignored.
-- The opening view: the URL's camera; else the most recent activity; else the account's Country; else a world view. It never asks for the browser's location, and a new session doesn't inherit an earlier one's camera.
+- The opening view: the URL's camera; else, on the web, zoom 12 centred on the newest five activities with a track, or fewer when five don't fit the screen there, down to the newest alone; in the apps, the most recent activity; else the account's Country; else a world view. It never asks for the browser's location, and a new session doesn't inherit an earlier one's camera.
 - The web map is a globe out to zoom 3 and flat from 4; Android's is flat. Zoomed all the way out, the globe fills 80% of the map's shorter side.
 - If no base map tile arrives within 15 seconds on screen, or one fails first, the map says its tile server is unreachable until one arrives.
 
@@ -352,7 +352,7 @@ The same paths for every account, behind the session and cached like every map t
 
 ### FR-5.1 Activity list
 
-- Lists every activity in the date range (FR-6) passing the Type and Distance filters, newest first by start time, not paginated. Count and total distance cover the whole range.
+- Lists the activities in the visible area on the web (FR-5.19), in the date range in the apps (FR-6), that pass the Type and Distance filters, newest first by start time, not paginated. Count and total distance cover every listed activity.
 - A row shows the activity's name, which exists only once a person types one (FR-5.10), else its local start time.
 - A row's time is moving time, as Trends counts it (FR-9.1), so a Story's total is its rows' sum.
 - How a type shows is the server's to say, in the app's language, and never changes the activity: its name, from a catalog of common types, else the type spaced out and capitalized; and its kind (on foot, on wheels, motor, solowheel, e-scooter or other), from the words in it, which picks the row's icon and whether pace or speed shows.
@@ -361,19 +361,19 @@ The same paths for every account, behind the session and cached like every map t
 
 ### FR-5.2 TYPE filter
 
-Lists the types present in the date range; types are free text, not a fixed vocabulary. It filters in the client and narrows the list, the tracks and the count.
+Lists the types present among the activities FR-5.1 starts from; types are free text, not a fixed vocabulary. It filters in the client and narrows the list, the tracks and the count.
 
 ### FR-5.3 DISTANCE filter
 
-- Bounded by the range's shortest and longest activity; both knobs at the ends means no filter.
-- Not offered while the range's activities don't span distances, and a filter set before is cleared.
+- Bounded by the shortest and longest of the activities FR-5.1 starts from; both knobs at the ends means no filter.
+- Not offered while they don't span distances, and a filter set before is cleared.
 - A Private activity sets no bound and is left out once a filter is on.
 
 ### FR-5.8 Hide/show a track
 
 - Hiding is per browser tab, never stored, and only affects Normal mode's tracks.
 - Over several activities, show/hide shows them all if any is hidden, else hides them all.
-- A new date range clears it (FR-6.6).
+- In the apps a new date range clears it (FR-6.6); on the web it stays on activities still listed (FR-5.19).
 
 ### FR-5.10 Edit activity type, name, and description
 
@@ -415,7 +415,7 @@ stateDiagram-v2
     Deleted --> [*]
     state "Visibility, this tab only" as Visibility {
         Shown --> Hidden: hide
-        Hidden --> Shown: show, or new range
+        Hidden --> Shown: show, new range, or no longer listed
     }
 ```
 
@@ -429,7 +429,7 @@ stateDiagram-v2
 
 - At most one activity is Focused, by clicking its row or track; any number are Checked. Bold is either, on the map and in its image (FR-4.10). The toolbar acts on the Checked ones when any are, else the Focused one.
 - On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/android/docs/SPEC.md` FR-2.7).
-- Hiding keeps Focused and Checked; camera fits skip Hidden. A new range (FR-6) or opening or closing a Story clears Hidden, Focused and Checked; Fog and Heatmap set the last two aside until Normal.
+- Hiding keeps Focused and Checked; camera fits skip Hidden. Opening or closing a Story, and in the apps a new range (FR-6), clears Hidden, Focused and Checked; on the web a list reloaded for a new area or Dates keeps them on activities still listed (FR-5.19). Fog and Heatmap set Focused and Checked aside until Normal.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden activity stays hidden after Pending clears.
 - Leaving Pending brings the track back at once, and Fog and Heatmap once redrawn.
 - An activity entirely inside Private locations is Normal with no geometry.
@@ -450,9 +450,24 @@ An activity is split in two at a point on its track. Each part is a full activit
 - With no activities at all, the Activities tab shows, in place of the list and its filters, the ways to bring activities in, any Story copy waiting for the account (FR-14.7) and how many imports are still in progress. The first activity, Hidden or not, brings the list back.
 - A demo session never shows it.
 
+### FR-5.19 The visible area (web)
+
+On the web the list holds every activity whose track crosses the visible map, of all time unless the Dates filter (FR-5.20) narrows it. The apps list the date range instead (FR-6).
+
+- An activity with no track (FR-8.1) is never in it.
+- From zoom 10 the list follows the map as it moves; below zoom 10 the area loads when asked.
+- At most the newest 1,000. Past that, the map and the count say how many the area holds. Tracks are drawn past the limit, and the Type and Distance filters reach only listed tracks.
+- A reload keeps Focused, Checked and Hidden on activities still listed, and every filter as set.
+
+### FR-5.20 DATES filter (web)
+
+- After and Before, local dates (FR-3.11), both inclusive and either optional; none set is all time. Each is bounded by the first activity and today (the account's, FR-1.7), with a day past today for an activity recorded in a zone ahead.
+- Setting it moves the camera once onto the activities it matches, wherever they are; clearing it leaves the camera.
+- It filters the Activities tab and Normal mode's tracks only, not Stories, the Privacy tab, Fog or Heatmap.
+
 ## 8. FR-6 — Date Range Slider
 
-The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load. The web and both apps draw and move it alike, as the `slider-*` cases in `testdata/client-rules/` define (ADR-0049).
+The Android and iOS apps' date control; the web filters by the visible area and Dates instead (FR-5.19, FR-5.20). The date range filters the Activities tab only, not Stories, the Privacy tab, Fog or Heatmap. The slider counts only days with an activity, by local date (FR-3.11), in a window of as many such days as the slider's width fits, 7 to 31, the most recent on load. Both apps draw and move it alike, as the `slider-*` cases in `testdata/client-rules/` define (ADR-0049).
 
 ### FR-6.1 Default selection
 

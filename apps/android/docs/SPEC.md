@@ -139,7 +139,7 @@ The web's one-shot locate (`docs/SPEC.md` FR-4.7).
 
 ### FR-2.6 Date range
 
-The web's date slider (`docs/SPEC.md` FR-6) as the Activities tab's head, in Normal mode only, once the session is verified and the account has an activity day.
+The date slider (`docs/SPEC.md` FR-6) as the Activities tab's head, in Normal mode only, once the session is verified and the account has an activity day.
 
 - The default, the 5 most recent activity days, is worked out again on every return to the map until the user picks a range, so a sync or recording lands in view.
 - A range applies when a handle or held button is released. Only a range the user picked moves the camera and clears the focus, checked group, hidden tracks and filters (`docs/SPEC.md` FR-6.6). The camera never moves while recording.
