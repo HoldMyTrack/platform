@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import type { Activity } from '../api';
+import { getActivity, type Activity, type ActivityDetail } from '../api';
 import { editPhotosBlocker, editTrackBlocker } from '../ui/editAvailability';
 import type { EditTab } from '../ui/EditActivityWindow';
 import type { MessageKey } from '../i18n/en';
@@ -12,8 +12,9 @@ export interface EditWindowState {
   editingId: string | null;
   tab: EditTab;
   setTab: (tab: EditTab) => void;
-  /** The window's activities as listed; null while closed or once one has left the list. */
-  activities: Activity[] | null;
+  /** The window's activities in full (`GET /v1/activities/{id}`), with the list's newer row over
+   *  each; null while closed, while they load, or once one has left the list. */
+  activities: ActivityDetail[] | null;
   trackBlocker: MessageKey | null;
   photosBlocker: MessageKey | null;
   openFor: (group: Activity[]) => void;
@@ -24,8 +25,10 @@ export interface EditWindowState {
 
 /**
  * The Edit window over the toolbar's target. While it's open the panel is inert and the map's own
- * controls step aside. It closes when its activities leave the list (deleted elsewhere, say), or
- * the map would stay locked with no editor to close it, and it opens on its Activity tab.
+ * controls step aside. It reads its activities in full on opening, since the list's rows are slim
+ * (a group's type change still writes each one's own description), and shows once they land. It
+ * closes when its activities leave the list (deleted elsewhere, say) or can't be read, or the map
+ * would stay locked with no editor to close it, and it opens on its Activity tab.
  */
 export function useEditWindow(listed: readonly Activity[], loading: boolean): EditWindowState {
   const [ids, setIds] = useState<string[] | null>(null);
@@ -33,18 +36,36 @@ export function useEditWindow(listed: readonly Activity[], loading: boolean): Ed
   const [tab, setTab] = useState<EditTab>('activity');
   const open = ids !== null;
 
-  const activities = useMemo(() => {
+  const group = useMemo(() => {
     if (ids === null) return null;
-    const group = listed.filter((a) => ids.includes(a.id));
-    return group.length === ids.length ? group : null;
+    const rows = listed.filter((a) => ids.includes(a.id));
+    return rows.length === ids.length ? rows : null;
   }, [listed, ids]);
 
+  const [details, setDetails] = useState<ActivityDetail[] | null>(null);
   useEffect(() => {
-    if (open && activities === null && !loading) {
+    setDetails(null);
+    if (ids === null) return;
+    const controller = new AbortController();
+    Promise.all(ids.map((id) => getActivity(id, controller.signal)))
+      .then(setDetails)
+      .catch(() => {
+        if (!controller.signal.aborted) setIds(null);
+      });
+    return () => controller.abort();
+  }, [ids]);
+
+  const activities = useMemo(
+    () => (group === null || details === null ? null : details.map((d) => ({ ...d, ...(group.find((a) => a.id === d.id) ?? {}) }))),
+    [group, details],
+  );
+
+  useEffect(() => {
+    if (open && group === null && !loading) {
       setIds(null);
       setEditingId(null);
     }
-  }, [open, activities, loading]);
+  }, [open, group, loading]);
 
   useEffect(() => {
     setTab('activity');

@@ -1,18 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { ChevronDown, ChevronUp, Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
-import { deleteActivity, type Activity, type Story } from '../api';
-import { ActivityRow, rowLabel, useScrollFocusedRow } from './ActivityRow';
-import { AddToStoryMenu } from './AddToStoryMenu';
-import { ConfirmDialog } from './ConfirmDialog';
-import { DateRangeSlider, type DateRangeSliderProps } from './DateRangeSlider';
-import { DistanceFilter } from './DistanceFilter';
+import { ChevronDown, ChevronUp } from 'lucide-react';
+import type { Activity, Story } from '../api';
+import { ActivitiesToolbar } from './ActivitiesToolbar';
+import { ActivityFilters, type DatesProps } from './ActivityFilters';
+import { ActivityRow } from './ActivityRow';
+import { listWindow, scrollTopFor } from './listWindow';
 import { FirstRunPanel } from './FirstRunPanel';
 import { PrivateLocationsPanel } from './PrivateLocationsPanel';
 import { StoriesTab } from './StoriesTab';
 import type { StoryInboxState } from './useStoryInbox';
 import type { DistanceRange, TypeFacet } from './activityFacets';
-import { formatActivityType, formatTotalDistance } from './format';
+import { formatTotalDistance } from './format';
 import { useUnitSystem } from './units';
 import { lang, t, tn } from '../i18n';
 
@@ -25,35 +24,17 @@ import { lang, t, tn } from '../i18n';
  * onto Privacy, `/?story=` onto Stories, and the tab survives this panel unmounting for
  * Fog/Heatmap.
  *
- * The activity list — a permanent left sidebar (not a collapsible
- * dropdown, nor a paginated one: §4.7's list
- * endpoint no longer pages, so this renders every row the current date range matched, filtered
- * further by TYPE/DISTANCE). MapView owns the fetch, the range, and both filters' state; this
- * component is purely presentational plus its own dropdown-open/panel-resize local UI state.
+ * The activity list — a permanent left sidebar, not paginated: every activity crossing the visible
+ * map (FR-5.19), narrowed by the filter row (ActivityFilters.tsx: Type, Dates, Distance). MapView
+ * owns the fetch, the area and the filters' state; this component is presentational plus its own
+ * sheet and panel-resize state.
  *
- * The date range is the list's first filter: DateRangeSlider.tsx, under the subtext line, on
- * this tab alone — the other tabs aren't about a stretch of time, so nothing there is filtered
- * by one. On a phone index.css pins it to the bottom of the screen under the sheet instead, so
- * the range can still be changed with the sheet collapsed and the map in view.
- *
- * The other filters share one row between the slider and the toolbar below: the Type dropdown
- * (TYPE checkboxes plus an "All types" convenience row that clears every exclusion), then
- * DistanceFilter.tsx, always visible — no longer hidden behind the old "Filter" toggle button,
- * which is gone.
- *
- * A header toolbar sits directly above the row list. Every single-item action (edit, delete,
- * hide) lives here, not on the row — a row has only its checkbox and its text; there are no
- * per-row icon buttons at all. The toolbar acts on its *target* (MapView's toolbarTargetIds):
- * the checked group whenever anything is checked, else the selected row alone, never the two
- * together: a group is built one tick at a time while a row is focused just by looking at it,
- * so a union would sweep the last-clicked row into a Delete. A master
- * checkbox mirrors the checked group's state, then icon actions over the target — Show/hide,
- * Edit (the Edit window, EditActivityWindow.tsx: its Activity tab edits Type/Name/Description
- * for exactly one activity and Type only for more than one, its Track tab one activity's
- * track), Add to story (AddToStoryMenu.tsx), Delete, and, set off by a divider, Focus on map
- * (fly-to-fit). Each one's tooltip
- * names the target ("3 checked activities", or the selected row's own label), so which of the
- * two applies is never a guess. The footer keeps only the target's "N checked · X km" summary.
+ * The header toolbar (ActivitiesToolbar.tsx) sits directly above the row list. Every single-item
+ * action lives there, not on the row — a row has only its checkbox and its text. The toolbar acts
+ * on its *target* (MapView's toolbarTargetIds): the checked group whenever anything is checked,
+ * else the selected row alone, never the two together: a group is built one tick at a time while
+ * a row is focused just by looking at it, so a union would sweep the last-clicked row into a
+ * Delete. The footer keeps only the target's "N checked · X km" summary.
  *
  * Four interactions per row, all living in MapView (which holds the map instance they need;
  * this component owns only rendering and its own local UI state). Selection and the checkbox
@@ -89,7 +70,6 @@ export interface ActivitiesPanelProps {
   distanceBounds: DistanceRange | null;
   distanceFilter: DistanceRange | null;
   onChangeDistance: (next: DistanceRange | null) => void;
-  onResetFilters: () => void;
   /** The checkbox group — additive/subtractive, independent of `focusedId` below. */
   checked: Set<string>;
   /** What the header toolbar acts on — `checked` when it's non-empty, else `focusedId` alone,
@@ -129,7 +109,7 @@ export interface ActivitiesPanelProps {
   onToggleGroupVisibility: () => void;
   /** §4.7.5's toolbar Delete — the only delete entry point (over the toolbar's target: the
    *  checked group, or the selected row alone), so always an array even for one id. Unlike onActivityUpdated, this also has to drop every deleted id from
-   *  `checked`/`hiddenIds`/`focusedId` and refresh the map's track layer and the slider's days
+   *  `checked`/`hiddenIds`/`focusedId` and refresh the map's track layer and the first activity's day
    *  (deleting changes distance/duration, editing never does) — MapView's own
    *  handleActivitiesDeleted does more than a plain reload. */
   onActivitiesDeleted: (ids: string[]) => void;
@@ -152,14 +132,19 @@ export interface ActivitiesPanelProps {
   map: MapLibreMap | null;
   /** A saved or deleted Private location — MapView's handlePrivateLocationsChanged. */
   onPrivateLocationsChanged: () => void;
-  /** The Activities tab's date slider — MapView's selected range and useActivityDays' window. */
-  dateRange: DateRangeSliderProps;
+  /** The Dates filter (FR-5.20): MapView's, with its bounds. */
+  dates: DatesProps;
+  /** The map is zoomed out past where tracks are drawn, so there's nothing to list (FR-5.19). */
+  outOfReach: boolean;
   /** The account has no activities: the Activities tab is FirstRunPanel.tsx instead of the list
    *  (firstRun.ts's showsFirstRun). */
   firstRun?: boolean;
 }
 
 export type PanelTab = 'activities' | 'stories' | 'private';
+
+/** How long a list load runs before the progress bar shows. */
+const PROGRESS_DELAY_MS = 300;
 
 /** What the Stories tab needs from MapView beyond the activity list the other tabs share —
  *  see StoriesTab.tsx's props of the same names. */
@@ -188,7 +173,6 @@ export function ActivitiesPanel({
   distanceBounds,
   distanceFilter,
   onChangeDistance,
-  onResetFilters,
   checked,
   targetIds,
   focusedId,
@@ -213,42 +197,52 @@ export function ActivitiesPanel({
   sheetOpen = false,
   map,
   onPrivateLocationsChanged,
-  dateRange,
+  dates,
+  outOfReach,
   firstRun = false,
 }: ActivitiesPanelProps) {
-  const hasActiveFilters = excludedTypes.size > 0 || distanceFilter !== null;
-
-  // The Type dropdown, in the filter row beside Distance — closed by
-  // default, same "most sessions don't start by narrowing filters" reasoning the old "Filter"
-  // toggle button had. Dismiss on outside click or Escape.
-  const [typeFilterOpen, setTypeFilterOpen] = useState(false);
-  const typeFilterRef = useRef<HTMLDivElement>(null);
-
-  // The header checkbox's ▾ menu — All, None, Invert, as in a mail app. Same dismissal.
-  const [selectMenuOpen, setSelectMenuOpen] = useState(false);
-  const selectMenuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!selectMenuOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!selectMenuRef.current?.contains(event.target as Node)) setSelectMenuOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSelectMenuOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [selectMenuOpen]);
-
-  // The row list, for useScrollFocusedRow (ActivityRow.tsx): a newly focused row scrolls into view.
+  // The row list renders only the rows in view (listWindow.ts): up to 1,000 again on every reload
+  // of the area stalled the page. All rows are one line high, measured from the first drawn.
   const listRef = useRef<HTMLUListElement>(null);
-  useScrollFocusedRow(listRef, focusedId);
+  const [scroll, setScroll] = useState({ top: 0, height: 600 });
+  const [rowHeight, setRowHeight] = useState(0);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const read = () => setScroll({ top: list.scrollTop, height: list.clientHeight });
+    read();
+    const observer = new ResizeObserver(read);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [tab, firstRun]);
+  useEffect(() => {
+    const row = listRef.current?.querySelector<HTMLElement>('li[data-activity-id]');
+    if (row && row.offsetHeight !== rowHeight) setRowHeight(row.offsetHeight);
+  });
+  // A reload of the area keeps the old rows until the new ones land; the bar over the list says
+  // one is under way, only once it has taken long enough to notice, so a quick pan doesn't flicker.
+  const [slowLoad, setSlowLoad] = useState(false);
+  useEffect(() => {
+    if (!loading) {
+      setSlowLoad(false);
+      return;
+    }
+    const timer = setTimeout(() => setSlowLoad(true), PROGRESS_DELAY_MS);
+    return () => clearTimeout(timer);
+  }, [loading]);
+  const { start, end } = listWindow(outOfReach ? 0 : activities.length, rowHeight, scroll.top, scroll.height);
+  // A newly focused row scrolls into view, by its place in the list: it may not be drawn yet.
+  useEffect(() => {
+    const list = listRef.current;
+    if (focusedId === null || !list || rowHeight === 0) return;
+    const index = activities.findIndex((a) => a.id === focusedId);
+    if (index >= 0) list.scrollTo({ top: scrollTopFor(index, activities.length, rowHeight, list.clientHeight), behavior: 'smooth' });
+    // Only a new focus scrolls; the list reloading under a focus leaves the scroll where it is.
+  }, [focusedId]);
 
   // The tab strip scrolls sideways when the tabs don't fit (index.css); the selected tab is
-  // brought into view, scrolling the strip alone, for the reason useScrollFocusedRow gives.
+  // brought into view, scrolling the strip alone, for the reason ActivityRow.tsx's
+  // useScrollFocusedRow gives.
   const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const strip = tabsRef.current;
@@ -260,28 +254,7 @@ export function ActivitiesPanel({
     }
   }, [tab]);
 
-  useEffect(() => {
-    if (!typeFilterOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!typeFilterRef.current?.contains(event.target as Node)) setTypeFilterOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setTypeFilterOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [typeFilterOpen]);
 
-
-
-  // §4.7.5's delete confirm dialog — the toolbar's Delete is the only delete entry point
-  // (there's no per-row delete button), so this covers both the one-activity and many-activity
-  // case uniformly. The confirm title and message below branch on targetActivities.length.
-  const [deletingGroup, setDeletingGroup] = useState(false);
 
   // Mobile-only bottom sheet (index.css's `@media (max-width: 768px)` layer) — collapsed by
   // default, same reasoning as typeFilterOpen above. Desktop CSS never reacts to the
@@ -328,71 +301,14 @@ export function ActivitiesPanel({
     if (resizeRef.current?.pointerId === event.pointerId) resizeRef.current = null;
   }, []);
 
-  const checkedCount = activities.filter((a) => checked.has(a.id)).length;
-  // The toolbar's target (see the component doc comment) — the footer summary describes it
-  // too, so the "N checked · X km" line always matches what the toolbar would act on.
+  const system = useUnitSystem();
+  // The footer describes the toolbar's target, so it always matches what the toolbar would act on.
   const targetActivities = activities.filter((a) => targetIds.has(a.id));
   const targetMeters = targetActivities.reduce((sum, a) => sum + (a.distanceMeters ?? 0), 0);
-  const system = useUnitSystem();
-  // The toolbar tooltips' name for the target. Keyed on `checked`, not on the count alone: one
-  // checked activity is still "1 checked activity", so it's clear the group wins over a
-  // selected row, rather than reading like the selection itself.
-  // Null when none of the target is listed (e.g. every checked row filtered out by TYPE), which
-  // disables the toolbar the same as having no target at all.
-  const firstTarget = targetActivities[0];
-  const targetName =
-    firstTarget === undefined
-      ? null
-      : checked.size > 0
-        ? tn('activities.checked_count', targetActivities.length)
-        : t('activities.target_one', { label: rowLabel(firstTarget) });
-  const hasTarget = targetName !== null;
-
-  // The header toolbar's master checkbox — checked once every currently-listed row is in
-  // `checked`, indeterminate for a partial selection, unchecked for none. `indeterminate`
-  // has no JSX prop (it's a DOM property, not an HTML attribute), hence the ref + effect.
-  const selectAllRef = useRef<HTMLInputElement>(null);
-  const allChecked = activities.length > 0 && checkedCount === activities.length;
-  const someChecked = checkedCount > 0 && !allChecked;
-  useEffect(() => {
-    if (selectAllRef.current) selectAllRef.current.indeterminate = someChecked;
-  }, [someChecked]);
-
-  // §4.7.5's ConfirmDialog message needs the target's own summary: the count and total
-  // distance for a group, the same two numbers the footer summary already shows, or the
-  // activity's own label for a single selected row.
-  const groupSummary = t('activities.group_summary', {
-    activities: targetName ?? '',
-    distance: formatTotalDistance(targetMeters, system),
-  });
-
-  // Group visible's own icon mirrors the row-level eye icon's open/closed convention: closed
-  // (about to reveal) once any of the target is currently hidden, open otherwise — matching
-  // MapView's toggleGroupVisibility rule (show all of it the moment any of it is hidden).
-  const groupHasHidden = targetActivities.some((a) => hiddenIds.has(a.id));
-
-  // Pending rows can't be edited or deleted until their reprocess lands — the job would
-  // otherwise race the edit or delete for the same row.
-  const groupHasPending = targetActivities.some((a) => a.pending);
-
-  // Each toolbar action's tooltip (and accessible name) says what it would act on; with no
-  // target at all, the disabled buttons say how to get one instead.
-  const noTarget = t('activities.no_target');
-  const visibilityTitle =
-    targetName === null
-      ? noTarget
-      : t(groupHasHidden ? 'activities.show_target' : 'activities.hide_target', { target: targetName });
-  const editTitle =
-    targetName === null
-      ? noTarget
-      : t(targetActivities.length === 1 ? 'activities.edit_one' : 'activities.edit_many', { target: targetName });
-  const deleteTitle = targetName === null ? noTarget : t('activities.delete_target', { target: targetName });
-
-  const focusTitle = targetName === null ? noTarget : t('activities.focus_target', { target: targetName });
 
   return (
     <div
-      className={`activities-panel${sheetExpanded ? ' activities-panel--sheet-expanded' : ''}${tab === 'activities' && !firstRun ? ' activities-panel--dated' : ''}`}
+      className={`activities-panel${sheetExpanded ? ' activities-panel--sheet-expanded' : ''}`}
       data-testid="activities-panel"
       // A CSS custom property, not a direct `width`, specifically so the mobile media query
       // can override it with a plain `width: 100%` rule — an inline style always beats an
@@ -426,7 +342,7 @@ export function ActivitiesPanel({
             onClick={() => selectTab('activities')}
           >
             <span className="activities-panel__heading-text">{t('activities.tab')}</span>
-            {/* On the Stories tab the list is the open Story's, not the date range's. */}
+            {/* On the Stories tab the list is the open Story's, not the area's. */}
             {tab !== 'stories' && <span className="activities-panel__badge">{activities.length.toLocaleString(lang)}</span>}
           </button>
           <button
@@ -472,7 +388,7 @@ export function ActivitiesPanel({
           {sheetExpanded ? <ChevronDown size={20} /> : <ChevronUp size={20} />}
         </button>
       </div>
-      {/* The Activities tab has no subtext: its slider and filters say what's listed. */}
+      {/* The Activities tab has no subtext: its filters say what's listed. */}
       {tab !== 'activities' && (
         <p className="activities-panel__subtext">{tab === 'private' ? t('private.subtitle') : t('stories.subtext')}</p>
       )}
@@ -521,201 +437,50 @@ export function ActivitiesPanel({
         <FirstRunPanel inbox={stories.inbox} onPrivacy={() => selectTab('private')} />
       ) : (
         <>
-          <div className="activities-panel__dates">
-            <DateRangeSlider {...dateRange} />
-          </div>
-          {/* The two filters side by side: Type's dropdown, then Distance's slider taking the
-              rest of the row. */}
-          <div className="activities-panel__filters">
-            <div className="activities-panel__type-dropdown" ref={typeFilterRef}>
-              <button
-                type="button"
-                className="activities-panel__type-trigger"
-                aria-haspopup="true"
-                aria-expanded={typeFilterOpen}
-                onClick={() => setTypeFilterOpen((open) => !open)}
-              >
-                {t('activities.type')}
-                {excludedTypes.size > 0 && <span className="activities-panel__type-trigger-dot" aria-hidden="true" />}
-                <span className="activities-panel__type-trigger-caret" aria-hidden="true">
-                  <ChevronDown size={14} />
-                </span>
-              </button>
-              {typeFilterOpen && (
-                <div className="activities-panel__type-panel" role="dialog" aria-label={t('activities.filter_by_type')}>
-                  {facets.length === 0 ? (
-                    <p className="activities-panel__type-panel-empty">{t('activities.type_empty')}</p>
-                  ) : (
-                    <>
-                      {/* A select-all convenience, not a real toggle — it only ever clears every
-                          exclusion (looping onToggleType over the current excluded set re-includes
-                          each one; there's no separate prop for "clear all"), matching how "Reset
-                          filters" elsewhere in this panel also only ever clears forward. Clicking
-                          it while every type is already shown is a no-op. */}
-                      <label htmlFor="activities-toolbar-type-all" className="activity-filters__type-item activity-filters__type-item--all">
-                        <input
-                          id="activities-toolbar-type-all"
-                          type="checkbox"
-                          checked={excludedTypes.size === 0}
-                          onChange={() => {
-                            for (const type of excludedTypes) onToggleType(type);
-                          }}
-                        />
-                        <span className="activity-filters__type-label">{t('activities.all_types')}</span>
-                      </label>
-                      <div className="activities-panel__type-panel-divider" aria-hidden="true" />
-                      <div className="activity-filters__type-list">
-                        {facets.map((facet) => {
-                          const included = !excludedTypes.has(facet.type);
-                          const inputId = `activities-toolbar-type-${facet.type}`;
-                          return (
-                            <label key={facet.type} htmlFor={inputId} className="activity-filters__type-item">
-                              <input id={inputId} type="checkbox" checked={included} onChange={() => onToggleType(facet.type)} />
-                              <span className="activity-filters__type-label">{formatActivityType(facet.type)}</span>
-                              <span className="activity-filters__type-count">{facet.count}</span>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-            <DistanceFilter
-              bounds={distanceBounds}
-              value={distanceFilter}
-              onChangeDistance={onChangeDistance}
-              onReset={onResetFilters}
-              hasActiveFilters={hasActiveFilters}
-            />
-          </div>
+          <ActivityFilters
+            facets={facets}
+            excludedTypes={excludedTypes}
+            onToggleType={onToggleType}
+            distanceBounds={distanceBounds}
+            distanceFilter={distanceFilter}
+            onChangeDistance={onChangeDistance}
+            dates={dates}
+          />
 
-          {/* The header toolbar — right above the row list. There are no per-row action icons
-              to stay column-aligned with (Visible/Edit/Delete all live here, operating on the
-              toolbar's target), so this is a plain compact strip: select-all checkbox and its
-              ▾ menu (All, None, Invert), a spacer, the action chips, a divider, then the one
-              accent-tinted "focus the map on the target" action. */}
-          <div className="activities-panel__toolbar">
-            <input
-              ref={selectAllRef}
-              type="checkbox"
-              className="activities-panel__checkbox"
-              checked={allChecked}
-              disabled={activities.length === 0}
-              aria-label={allChecked ? t('activities.uncheck_all_label') : t('activities.check_all_label')}
-              title={allChecked ? t('activities.uncheck_all') : t('activities.check_all')}
-              onChange={() => (allChecked || someChecked ? onClear() : onSelectAll())}
-            />
-            <div className="select-menu" ref={selectMenuRef}>
-              <button
-                type="button"
-                className="select-menu__trigger"
-                data-testid="select-menu"
-                disabled={activities.length === 0}
-                aria-haspopup="menu"
-                aria-expanded={selectMenuOpen}
-                aria-label={t('activities.select_menu')}
-                title={t('activities.select_menu')}
-                onClick={() => setSelectMenuOpen((open) => !open)}
-              >
-                <ChevronDown size={12} />
-              </button>
-              {selectMenuOpen && (
-                <div className="story-menu__panel select-menu__panel" role="menu" aria-label={t('activities.select_menu')}>
-                  {(
-                    [
-                      ['all', t('activities.select_all'), allChecked, onSelectAll],
-                      ['none', t('activities.select_none'), checkedCount === 0, onClear],
-                      ['invert', t('activities.select_invert'), false, onInvertSelection],
-                    ] as const
-                  ).map(([key, label, disabled, run]) => (
-                    <button
-                      key={key}
-                      type="button"
-                      role="menuitem"
-                      className="story-menu__item"
-                      data-testid={`select-${key}`}
-                      disabled={disabled}
-                      onClick={() => {
-                        setSelectMenuOpen(false);
-                        run();
-                      }}
-                    >
-                      <span className="story-menu__name">{label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <span className="activities-panel__toolbar-spacer" aria-hidden="true" />
-
-            <button
-              type="button"
-              className="activities-panel__visibility"
-              disabled={!hasTarget}
-              onClick={onToggleGroupVisibility}
-              aria-label={visibilityTitle}
-              title={visibilityTitle}
-            >
-              {groupHasHidden ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-            <button
-              type="button"
-              className="activities-panel__edit"
-              disabled={readOnly || !hasTarget}
-              onClick={() => onEdit(targetActivities)}
-              aria-label={editTitle}
-              title={readOnly ? t('activities.demo_edit_activities') : editTitle}
-            >
-              <Pencil size={16} />
-            </button>
-            <AddToStoryMenu
-              readOnly={readOnly}
-              target={targetActivities}
-              targetName={targetName}
-              summary={groupSummary}
-              onCreated={onStoryCreated}
-              onAdded={onStoryAdded}
-            />
-            <button
-              type="button"
-              className="activities-panel__delete"
-              disabled={readOnly || !hasTarget || groupHasPending}
-              onClick={() => setDeletingGroup(true)}
-              aria-label={deleteTitle}
-              title={readOnly ? t('activities.demo_delete') : deleteTitle}
-            >
-              <Trash2 size={16} />
-            </button>
-            <span className="activities-panel__toolbar-divider" aria-hidden="true" />
-            <button
-              type="button"
-              className="activities-panel__focus"
-              disabled={!hasTarget}
-              onClick={onShowSelected}
-              aria-label={focusTitle}
-              title={focusTitle}
-            >
-              <Focus size={16} />
-            </button>
-          </div>
+          <ActivitiesToolbar
+            readOnly={readOnly}
+            activities={activities}
+            checked={checked}
+            targetIds={targetIds}
+            hiddenIds={hiddenIds}
+            onClear={onClear}
+            onSelectAll={onSelectAll}
+            onInvertSelection={onInvertSelection}
+            onToggleGroupVisibility={onToggleGroupVisibility}
+            onEdit={onEdit}
+            onStoryCreated={onStoryCreated}
+            onStoryAdded={onStoryAdded}
+            onActivitiesDeleted={onActivitiesDeleted}
+            onShowSelected={onShowSelected}
+          />
 
           {/* A click on the list's own empty space (or one of its notes) — not on a row —
               clears the selection, the panel's counterpart to clicking away from every track
               on the map. Rows are <li>s filling the list's width, so a click on one never
               reaches here as the target. */}
+          <div className={slowLoad && !outOfReach ? 'activities-panel__progress activities-panel__progress--on' : 'activities-panel__progress'} role="progressbar" aria-label={t('common.loading')} aria-hidden={!slowLoad || outOfReach} data-testid="activities-progress" />
           <ul
             className="activities-panel__list"
             data-testid="activities-list"
             ref={listRef}
+            onScroll={(e) => setScroll({ top: e.currentTarget.scrollTop, height: e.currentTarget.clientHeight })}
             onClick={(e) => {
               const target = e.target as HTMLElement;
-              if (target === e.currentTarget || target.classList.contains('activities-panel__note')) onClearFocus();
+              if (target === e.currentTarget || target.classList.contains('activities-panel__note') || target.classList.contains('activities-panel__spacer')) onClearFocus();
             }}
           >
-            {activities.map((activity) => (
+            {start > 0 && <li className="activities-panel__spacer" style={{ height: start * rowHeight }} aria-hidden="true" />}
+            {!outOfReach && activities.slice(start, end).map((activity) => (
               <ActivityRow
                 key={activity.id}
                 activity={activity}
@@ -733,12 +498,17 @@ export function ActivitiesPanel({
                 onHover={onHoverActivity}
               />
             ))}
-            {loading && <li className="activities-panel__note">{t('common.loading')}</li>}
+            {!outOfReach && end < activities.length && (
+              <li className="activities-panel__spacer" style={{ height: (activities.length - end) * rowHeight }} aria-hidden="true" />
+            )}
+            {loading && !outOfReach && activities.length === 0 && <li className="activities-panel__note">{t('common.loading')}</li>}
             {error && !loading && (
               <li className="activities-panel__note activities-panel__note--error">{error}</li>
             )}
-            {!loading && !error && activities.length === 0 && (
-              <li className="activities-panel__note">{t('activities.none_match')}</li>
+            {outOfReach ? (
+              <li className="activities-panel__note">{t('area.zoom_in')}</li>
+            ) : (
+              !loading && !error && activities.length === 0 && <li className="activities-panel__note">{t('activities.none_match')}</li>
             )}
           </ul>
 
@@ -755,36 +525,6 @@ export function ActivitiesPanel({
 
 
 
-      {deletingGroup && (
-        <ConfirmDialog
-          title={targetActivities.length === 1 ? t('activities.delete_one_title') : t('activities.delete_title')}
-          message={
-            targetActivities.length === 1
-              ? t('activities.delete_one_body', { group: groupSummary })
-              : t('activities.delete_many_body', { group: groupSummary })
-          }
-          confirmLabel={t('activities.delete_confirm')}
-          busyLabel={t('common.deleting')}
-          onConfirm={async () => {
-            // Sequential, not Promise.all: N concurrent DELETEs against the same account's
-            // fog_tiles rows would race each other's dirty-mark-and-render trigger for no
-            // benefit — a checked group is a handful of rows a user selected by hand, not a
-            // bulk-import scale operation, so there's no latency reason to parallelize this.
-            const deleted: string[] = [];
-            try {
-              for (const activity of targetActivities) {
-                await deleteActivity(activity.id);
-                deleted.push(activity.id);
-              }
-            } finally {
-              // The ones already gone leave the list and the group even when a later one fails,
-              // so the dialog's retry deletes only the rest.
-              if (deleted.length > 0) onActivitiesDeleted(deleted);
-            }
-          }}
-          onClose={() => setDeletingGroup(false)}
-        />
-      )}
     </div>
   );
 }

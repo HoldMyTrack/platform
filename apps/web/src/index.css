@@ -552,14 +552,28 @@ body {
   gap: var(--fm-space-12);
 }
 
-/* Type's dropdown and the Distance slider share one row (ActivitiesPanel.tsx), the dropdown
-   centered against the slider's label/track/bounds stack. */
+/* The filter row (ActivityFilters.tsx): Type's, Dates' and Distance's dropdowns on one line, a
+   long value cut short rather than wrapping. */
 .activities-panel__filters {
   display: flex;
   align-items: center;
-  gap: var(--fm-space-16);
+  gap: var(--fm-space-8);
   padding: var(--fm-space-4) var(--fm-space-16) var(--fm-space-16);
   border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
+}
+
+/* Dates' and Distance's panels fit what they hold (the date fields, the slider and its bounds)
+   instead of Type's fixed width. The last dropdown's panel opens leftward from its right edge, or
+   it would run past the sidebar, which clips it. */
+.activities-panel__filters .activities-panel__filter-panel {
+  width: max-content;
+  min-width: 15rem;
+  box-sizing: border-box;
+}
+
+.activities-panel__filters > .activities-panel__type-dropdown:last-child .activities-panel__type-panel {
+  left: auto;
+  right: 0;
 }
 
 .activity-filters__section {
@@ -709,16 +723,39 @@ body {
   color: rgb(var(--fm-ink-rgb) / 40%);
 }
 
-.activity-filters__reset {
-  align-self: flex-start;
-  border: 0;
-  background: none;
-  padding: 0;
-  color: var(--fm-accent-strong);
-  font: inherit;
-  font-size: var(--fm-text-sm);
-  font-weight: var(--fm-weight-semibold);
-  cursor: pointer;
+/* The list's progress bar (ActivitiesPanel.tsx): a line over the rows while a slow reload is under
+   way. Always 2px tall, so showing it never moves the list. */
+.activities-panel__progress {
+  position: relative;
+  flex: none;
+  height: 2px;
+  overflow: hidden;
+}
+
+.activities-panel__progress--on::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: var(--fm-accent);
+  animation: activities-progress 1.1s ease-in-out infinite;
+}
+
+@keyframes activities-progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .activities-panel__progress--on::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.6;
+  }
 }
 
 .activities-panel__list {
@@ -1425,6 +1462,89 @@ button.activities-panel__story-badge:hover {
   color: var(--fm-danger);
 }
 
+/* Dates' and Distance's dropdowns (ActivityFilters.tsx): the type dropdown's trigger and panel,
+   with the value in the trigger and a clear button beside it while set. */
+.activities-panel__filter-dropdown {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+}
+
+/* Only a button showing a value gives way; a bare name always fits. */
+.activities-panel__filter-dropdown--set {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.activities-panel__filter-dropdown > .activities-panel__type-trigger {
+  min-width: 0;
+}
+
+.activities-panel__filter-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.activities-panel__filter-value--set {
+  color: var(--fm-accent-strong);
+  font-weight: var(--fm-weight-semibold);
+}
+
+.activities-panel__filter-clear {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--fm-space-4);
+  border: 0;
+  background: none;
+  color: var(--fm-ink-muted);
+  cursor: pointer;
+}
+
+.activities-panel__filter-clear:hover {
+  color: var(--fm-ink);
+}
+
+.activities-panel__filter-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--fm-space-10);
+  min-width: 220px;
+  padding: var(--fm-space-12);
+}
+
+.activities-panel__date-field {
+  display: grid;
+  grid-template-columns: 4.5em 1fr;
+  align-items: center;
+  column-gap: var(--fm-space-8);
+  row-gap: var(--fm-space-2);
+  font-size: var(--fm-text-sm);
+}
+
+.activities-panel__date-field input {
+  font: inherit;
+  color: var(--fm-ink);
+  background: var(--fm-surface);
+  border: 1px solid var(--fm-border);
+  border-radius: var(--fm-radius-sm);
+  padding: var(--fm-space-4) var(--fm-space-6);
+}
+
+.activities-panel__date-hint {
+  grid-column: 2;
+  color: var(--fm-ink-muted);
+  font-size: var(--fm-text-xs);
+}
+
+/* The list was cut at the area's limit (FR-5.19): one muted line over the rows. */
+.activities-panel__capped {
+  margin: 0;
+  padding: var(--fm-space-4) var(--fm-space-16);
+  color: var(--fm-ink-muted);
+  font-size: var(--fm-text-xs);
+}
+
 .activities-panel__type-panel-divider {
   height: 1px;
   background: var(--fm-divider-tint);
@@ -1971,14 +2091,23 @@ button.activities-panel__story-badge:hover {
   gap: var(--fm-space-4);
 }
 
-/* "Show in this area" (ShowInArea.tsx): a pill centered over the map, under the toggles. */
-.show-in-area {
+/* The area's pills centered over the map, under the toggles (MapControls.tsx): "Show activities
+   in this area", places' "Show in this area" (ShowInArea.tsx) and the list's cap notice. */
+.map-area {
   position: absolute;
   top: 60px;
   left: 50%;
   z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--fm-space-6);
   transform: translateX(-50%);
   max-width: calc(100% - 32px);
+}
+
+.map-area:empty {
+  display: none;
 }
 
 .show-in-area__btn,
@@ -2012,6 +2141,11 @@ button.activities-panel__story-badge:hover {
 
 .show-in-area__status {
   color: var(--fm-ink-secondary);
+}
+
+.show-in-area__status--capped {
+  max-width: 420px;
+  text-align: center;
 }
 
 /* A photo's marker on the map (map/photos.ts): its thumbnail in a round white frame. The one
@@ -3070,26 +3204,16 @@ button.activities-panel__story-badge:hover {
     font-size: 16px;
   }
 
-  /* On the Activities tab the date slider (DateRangeSlider.tsx) sits at the very bottom of the
-     screen and the collapsed Activities sheet's peek strip stacks directly on top of it — both
-     fixed heights, so the sheet can be anchored to the slider's top edge with no measuring. On
-     the other tabs there is no slider and the sheet sits on the bottom edge itself
-     (`--sheet-bottom`, set per tab below). */
   :root {
-    --phone-footer-height: 94px;
     --phone-sheet-peek: 49px;
   }
 
-  /* Reserves the peek strip (and on the Activities tab the slider under it) under the map, so
+  /* Reserves the peek strip under the map, so
      the map's own bottom-anchored controls (the scale control and attribution) end above the
      sheet rather than under it. Only while the sheet exists — it renders in Normal map mode
      alone. */
   .app-body:has(.activities-panel) {
     padding-bottom: var(--phone-sheet-peek);
-  }
-
-  .app-body:has(.activities-panel--dated) {
-    padding-bottom: calc(var(--phone-sheet-peek) + var(--phone-footer-height));
   }
 
   /* The Activities panel becomes a bottom sheet: `position: fixed` removes it from
@@ -3099,8 +3223,7 @@ button.activities-panel__story-badge:hover {
      initially) to a peek strip that is its tab row — the map stays fully interactive around and
      under it; expanding it (the row's chevron, or any tab) grows it upward to cover most of the
      screen.
-     On the Activities tab anchored to the date slider's top edge, not the viewport's bottom,
-     so the slider stays visible under the sheet in either state. No `map.resize()` call is needed either
+     No `map.resize()` call is needed either
      way, since the map's own container dimensions never change with the sheet's state —
      only what's drawn on top of it does. */
   .activities-panel {
@@ -3118,10 +3241,6 @@ button.activities-panel__story-badge:hover {
        and MapLibre's own controls, below the app header (z-index: 5). */
     z-index: 4;
     transition: height 0.15s ease;
-  }
-
-  .activities-panel--dated {
-    --sheet-bottom: var(--phone-footer-height);
   }
 
   /* Its top edge stays where it was when the sheet sat on the viewport's bottom. */
@@ -3199,200 +3318,7 @@ button.activities-panel__story-badge:hover {
     padding: var(--fm-space-8) var(--fm-space-6);
   }
 
-  /* The date slider leaves the sheet for the bottom of the screen, so the range can be changed
-     with the sheet collapsed and the map in view. Still rendered by the panel (fixed
-     positioning escapes its `overflow: hidden`, but only while the sheet has no `transform`,
-     which would make the sheet its containing block), so it comes and goes with the Activities
-     tab.
-     A fixed height, since the sheet is anchored to its top edge by that same number: the
-     slider's 40px band, the 18px of month names under it, a 6px gap and an 18px line of dates,
-     82px, with 6px above and below. A change to the slider's height changes this. */
-  .activities-panel__dates {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    box-sizing: border-box;
-    height: var(--phone-footer-height);
-    display: flex;
-    align-items: center;
-    padding: 0 var(--fm-space-12);
-    background: var(--fm-surface);
-    border-top: 1px solid var(--fm-border);
-  }
-}
 
-/* On the Activities tab, the list's first filter: between the subtext line and the Type/Distance
-   row. */
-.activities-panel__dates {
-  padding: var(--fm-space-4) var(--fm-space-16) var(--fm-space-10);
-}
-
-/* DateRangeSlider.tsx — the track line and accent fill are DistanceFilter's own
-   .activity-filters__track/__fill rules; the knobs are its own, and the whole 28px row is the
-   pointer target (a press goes to the nearer knob), so a knob can be narrow without being
-   hard to grab. The track sits inset by half a knob so a knob at either end stays on screen. */
-.date-range-slider {
-  display: flex;
-  flex-direction: column;
-  gap: var(--fm-space-6);
-  width: 100%;
-}
-
-/* « ‹ track › » — Earlier/Later outside, the range shift inside. Active/inactive is a real visual distinction, not just :disabled's
-   default dimming: enabled reads as a tinted, clickable chip; disabled drops back to a plain,
-   faint outline so "nothing further that way" is obvious before a press fails. */
-.date-range-slider__row {
-  display: flex;
-  align-items: center;
-  gap: var(--fm-space-6);
-  /* The month names under the track. */
-  padding-bottom: 18px;
-}
-
-.date-range-slider__page {
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--fm-border-panel);
-  border-radius: var(--fm-radius-md);
-  padding: 0;
-  background: var(--fm-surface-tint);
-  color: var(--fm-ink);
-  cursor: pointer;
-  touch-action: none;
-}
-
-.date-range-slider__page:hover:not(:disabled) {
-  background: var(--fm-surface-tint-strong);
-}
-
-.date-range-slider__page:disabled {
-  background: var(--fm-surface);
-  border-color: var(--fm-divider-tint);
-  color: var(--fm-ink-faint);
-  cursor: not-allowed;
-}
-
-/* The same track as Android's (DayScrubberView): a 40px band with the line and the knobs centred
-   in it, and the month names under it, which the row's bottom padding makes room for. */
-.date-range-slider__track {
-  position: relative;
-  flex: 1;
-  align-self: flex-start;
-  height: 40px;
-  margin: 0 var(--fm-space-8);
-  touch-action: none;
-  cursor: pointer;
-}
-
-.date-range-slider__track .activity-filters__track,
-.date-range-slider__track .activity-filters__fill {
-  top: 18px;
-  height: 4px;
-  border-radius: 2px;
-}
-
-.date-range-slider__track .activity-filters__track {
-  background: var(--fm-border-strong);
-}
-
-/* Day marks: one per slot boundary, taller where a month starts (sliderTicks). */
-.date-range-slider__tick {
-  position: absolute;
-  top: 16px;
-  width: 1px;
-  height: 8px;
-  transform: translateX(-50%);
-  background: rgb(var(--fm-ink-rgb) / 28%);
-  pointer-events: none;
-}
-
-.date-range-slider__tick--month {
-  top: 12px;
-  height: 16px;
-  background: rgb(var(--fm-ink-rgb) / 50%);
-}
-
-.date-range-slider__tick--selected {
-  background: var(--fm-accent);
-}
-
-/* A month's name, 3px right of its tall tick; the first month in view at the track's left edge. */
-.date-range-slider__month {
-  position: absolute;
-  top: 42px;
-  margin-left: 3px;
-  font-size: 11px;
-  font-weight: var(--fm-weight-bold);
-  line-height: 14px;
-  color: var(--fm-ink-muted);
-  white-space: nowrap;
-  pointer-events: none;
-}
-
-.date-range-slider__month--first {
-  margin-left: 0;
-}
-
-/* A tall pill, 12px wide where slots are under 18px so neighbouring knobs stay apart. */
-.date-range-slider__knob {
-  position: absolute;
-  top: 6px;
-  width: 16px;
-  height: 28px;
-  box-sizing: border-box;
-  transform: translateX(-50%);
-  border-radius: 6px;
-  border: 2px solid var(--fm-accent);
-  background: var(--fm-surface);
-  box-shadow: var(--fm-shadow-sm);
-}
-
-.date-range-slider__track--narrow .date-range-slider__knob {
-  width: 12px;
-}
-
-.date-range-slider__knob:focus-visible {
-  outline: 2px solid var(--fm-accent);
-  outline-offset: 2px;
-}
-
-.date-range-slider__labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: var(--fm-text-sm);
-  font-weight: var(--fm-weight-semibold);
-  letter-spacing: 0.02em;
-  color: rgb(var(--fm-ink-rgb) / 65%);
-}
-
-/* The inner pair, ‹ ›, that move the range: a little narrower, so the track keeps as much width
-   as it can. */
-.date-range-slider__page--shift {
-  width: 28px;
-}
-
-/* The outer pair, « », beside the track and as tall as its band, shown only where sliderLayout
-   leaves the track room (always with a mouse); tinted while the window can move that way. */
-.date-range-slider__page--window {
-  align-self: flex-start;
-  width: 22px;
-  height: 40px;
-  border-color: var(--fm-border);
-  border-radius: 6px;
-  background: rgb(var(--fm-accent-rgb) / 14%);
-}
-
-.date-range-slider__page--window:hover:not(:disabled) {
-  background: rgb(var(--fm-accent-rgb) / 22%);
-}
-
-.date-range-slider__page--window:disabled {
-  border-color: var(--fm-border);
 }
 
 /* MapLibre's own controls (zoom, locate, the scale bar, attribution) on the palette, so they

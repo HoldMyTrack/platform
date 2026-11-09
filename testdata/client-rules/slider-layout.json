@@ -1,5 +1,6 @@
 {
   "rule": "sliderLayout",
+  "clients": ["android", "ios"],
   "description": "How many activity-days the slider's window holds at width (CSS px or dp left for \u00ab track \u00bb), and whether \u00ab \u00bb show: always with a fine pointer (finePointer, a mouse or trackpad), otherwise only when the track still holds 12 days beside them. 18 a day, 7 to 31 days.",
   "cases": [
     {"name": "web desktop panel, with a mouse", "input": {"width": 280, "finePointer": true}, "expected": {"buttons": true, "days": 11}},

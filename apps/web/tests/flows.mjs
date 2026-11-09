@@ -1,8 +1,9 @@
 /**
- * End-to-end flows over the map's state rules: an upload reaching an empty account, a new date
- * range clearing the selection, a Story opened and closed by Back, a track edit's reprocess, a
- * delete, the date slider fitting a phone and its footer, the header's menus closing, and the tour's offer and header link. Each run signs up a fresh account, uploads the sample files, and
- * deletes the account at the end.
+ * End-to-end flows over the map's state rules: an upload reaching an empty account, Dates
+ * narrowing the list and keeping the selection, a Story opened and closed by Back, a track edit's
+ * reprocess, a delete, the list following the map from zoom 4, the Dates menu, the header's menus
+ * closing, and the tour's offer and header link. Each run signs up a fresh account, uploads the
+ * sample files, and deletes the account at the end.
  *
  *   npm run verify:map
  *
@@ -61,6 +62,16 @@ async function settledActivities(expected, timeoutMs = 90_000) {
   }
 }
 
+/** The map framed on every activity, and the list following it (docs/SPEC.md FR-5.19). A camera
+ *  move from here counts as the user's. */
+async function viewAll() {
+  const { activities } = await call('GET', '/activities');
+  const boxes = activities.map((a) => a.bbox).filter(Boolean);
+  const box = [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
+  await page.evaluate((b) => window.__holdmytrack.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 80, animate: false }), box);
+  await page.waitForFunction((n) => document.querySelectorAll('li[data-activity-id]').length === n, activities.length, { timeout: 30_000 });
+}
+
 before(async () => {
   server = spawn('npx', ['vite', '--port', String(PORT), '--strictPort'], {
     cwd: new URL('..', import.meta.url).pathname,
@@ -73,7 +84,8 @@ before(async () => {
   // A fresh account opens on the first-run setup until it has a Country (FR-1.7).
   await call('PATCH', '/account/settings', { display_name: '', country: 'US', timezone: 'America/New_York' });
   page = await context.newPage();
-  await page.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
+  // Zoom 6 over the samples' region: from zoom 4 the list follows the map (docs/SPEC.md FR-5.19).
+  await page.goto(`${BASE}/#map=6.00/41.45/-81.70&theme=light`);
   await page.waitForFunction(() => Boolean(window.__holdmytrack), undefined, { timeout: 60_000 }).catch(async (err) => {
     await page.screenshot({ path: new URL('./screenshots/flows-before.png', import.meta.url).pathname });
     console.error('URL', page.url());
@@ -94,7 +106,7 @@ after(async () => {
 describe('map flows', () => {
   let ids;
 
-  it('1. an empty account picks up its first upload, the default range moving onto it', async () => {
+  it('1. an empty account picks up its first upload in the area in view', async () => {
     assert.equal(await rows().count(), 0);
     for (const name of SAMPLES) {
       const sample = await context.request.get(`${API_BASE}/static/testing/${name}`);
@@ -112,41 +124,48 @@ describe('map flows', () => {
     assert.equal(await rows().count(), SAMPLES.length);
   });
 
-  it('2. a new date range clears the checked group and the hidden tracks', async () => {
+  it('2. Dates narrow the list, keeping the checked group and the hidden tracks on what stays', async () => {
     const boxes = page.locator('li[data-activity-id] input.activities-panel__checkbox');
+    // Newest first: 6 and 5 Oct.
     await boxes.nth(0).check();
     await boxes.nth(1).check();
     await page.locator('.activities-panel__visibility').click();
     assert.equal(await checkedBoxes().count(), 2);
     assert.equal(await hiddenRows().count(), 2);
-    // The start knob one activity-day later: 1 Oct drops out.
-    const start = page.getByTestId('date-range-slider-start');
-    await start.focus();
-    await start.press('ArrowRight');
-    await page.getByTestId('date-range-slider-end').focus();
+    await page.getByTestId('dates-filter').click();
+    await page.getByTestId('dates-after').fill('2026-10-05');
+    await page.getByTestId('dates-after').press('Enter');
     await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 2, undefined, { timeout: 30_000 });
-    assert.equal(await checkedBoxes().count(), 0);
-    assert.equal(await hiddenRows().count(), 0);
     assert.equal(await row(ids['2026-10-01']).count(), 0);
+    assert.equal(await checkedBoxes().count(), 2);
+    assert.equal(await hiddenRows().count(), 2);
+    await page.keyboard.press('Escape');
+    await page.getByTestId('dates-filter-clear').click();
+    assert.equal((await page.getByTestId('dates-filter').textContent()).trim(), 'Dates');
   });
 
-  it('3. the Stories tab opens the newest Story in the URL, and Back returns to the range', async () => {
+  it('3. the Stories tab opens the newest Story in the URL, and Back returns to the area', async () => {
     await call('POST', '/stories', { name: 'Flows trip', activity_ids: [ids['2026-10-01'], ids['2026-10-06']] });
     await page.getByRole('tab', { name: 'Stories' }).click();
     await page.waitForURL(/[?&]story=/, { timeout: 30_000 });
+    // The area's list shows until the Story's replaces it.
+    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 2, undefined, { timeout: 30_000 });
     await row(ids['2026-10-01']).waitFor({ timeout: 30_000 });
-    assert.equal(await rows().count(), 2);
     assert.equal(await row(ids['2026-10-05']).count(), 0);
     await page.goBack();
     await page.waitForURL((url) => !url.searchParams.has('story'), { timeout: 30_000 });
-    await row(ids['2026-10-05']).waitFor({ timeout: 30_000 });
     assert.equal(await page.getByRole('tab', { name: 'Activities' }).getAttribute('aria-selected'), 'true');
-    assert.equal(await rows().count(), 2);
-    assert.equal(await row(ids['2026-10-01']).count(), 0);
+    // The area is wherever the Story left the camera, which frames both of its tracks.
+    await row(ids['2026-10-01']).waitFor({ timeout: 30_000 });
+    await row(ids['2026-10-06']).waitFor({ timeout: 30_000 });
+    // The Stories tab's first-time card floats over the list's top rows until put away.
+    const card = page.getByTestId('tour-card');
+    if (await card.count()) await card.locator('.tour-card__close').click();
   });
 
   it('4. an applied track edit goes Pending, and the poll picks up the shorter track', async () => {
     const id = ids['2026-10-05'];
+    await viewAll();
     const before = (await call('GET', '/activities')).activities.find((a) => a.id === id).distance_meters;
     const metaBefore = await row(id).locator('.activities-panel__meta').textContent();
     await row(id).locator('.activities-panel__text').click();
@@ -188,57 +207,34 @@ describe('map flows', () => {
     assert.equal(activities.some((a) => a.id === id), false);
   });
 
-  it("6. the date slider's « » show with a mouse and stay hidden on a narrow touch screen", async () => {
-    assert.equal(await page.getByTestId('date-range-slider-earlier').count(), 1);
-    // The same session on a phone: a coarse pointer and no room for « » beside the track.
-    const phone = await browser.newContext({
-      storageState: await context.storageState(),
-      viewport: { width: 360, height: 780 },
-      isMobile: true,
-      hasTouch: true,
-    });
-    try {
-      const narrow = await phone.newPage();
-      await narrow.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
-      await narrow.getByTestId('date-range-slider-track').waitFor({ timeout: 60_000 });
-      assert.equal(await narrow.getByTestId('date-range-slider-earlier').count(), 0);
-      assert.equal(await narrow.getByTestId('date-range-slider-shift-earlier').count(), 1);
-    } finally {
-      await phone.close();
-    }
+  it('6. the list follows the map from zoom 4, and further out asks to zoom in', async () => {
+    await viewAll();
+    // Zoom 6 over open ocean: the list follows on its own.
+    await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [0, 0], zoom: 6 }));
+    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 0, undefined, { timeout: 30_000 });
+    // No track is drawn below zoom 4, so there's nothing to list.
+    await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [-81.7, 41.45], zoom: 3 }));
+    await page.getByText('Zoom in to see your activities.').waitFor({ timeout: 10_000 });
+    assert.equal(await rows().count(), 0);
   });
 
-  it('7. on a phone wide enough for « », the whole slider fits inside its footer', async () => {
-    const phone = await browser.newContext({
-      storageState: await context.storageState(),
-      viewport: { width: 412, height: 915 },
-      isMobile: true,
-      hasTouch: true,
-    });
-    try {
-      const wide = await phone.newPage();
-      await wide.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
-      await wide.getByTestId('date-range-slider-track').waitFor({ timeout: 60_000 });
-      assert.equal(await wide.getByTestId('date-range-slider-earlier').count(), 1);
-      // The footer's height is a fixed number the sheet is anchored by, so a taller slider
-      // spills over the tab row above it instead of growing the footer.
-      const { footer, content } = await wide.evaluate(() => {
-        const box = (el) => el.getBoundingClientRect();
-        const dates = document.querySelector('.activities-panel__dates');
-        const parts = [...dates.querySelectorAll('.date-range-slider, .date-range-slider *')].map(box);
-        const style = getComputedStyle(dates);
-        const outer = box(dates);
-        return {
-          footer: { top: outer.top + parseFloat(style.borderTopWidth), bottom: outer.bottom },
-          content: { top: Math.min(...parts.map((r) => r.top)), bottom: Math.max(...parts.map((r) => r.bottom)) },
-        };
-      });
-      assert.ok(content.top >= footer.top, `slider top ${content.top} above its footer's ${footer.top}`);
-      assert.ok(content.bottom <= footer.bottom, `slider bottom ${content.bottom} below its footer's ${footer.bottom}`);
-    } finally {
-      await phone.close();
-    }
+  it('7. the Dates menu offers the first activity as a hint, and ✕ clears it without moving the camera', async () => {
+    await viewAll();
+    await page.getByTestId('dates-filter').click();
+    assert.match(await page.locator('.activities-panel__date-hint').first().textContent(), /Oct 1, 2026/);
+    await page.getByTestId('dates-before').fill('2026-10-01');
+    await page.getByTestId('dates-before').press('Enter');
+    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 1, undefined, { timeout: 30_000 });
+    assert.match(await page.getByTestId('dates-filter').textContent(), /Until Oct 1/);
+    await page.keyboard.press('Escape');
+    // Setting Dates flew the camera onto the match; clearing them must leave it where it landed.
+    await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
+    const center = await page.evaluate(() => window.__holdmytrack.getCenter().toArray());
+    await page.getByTestId('dates-filter-clear').click();
+    assert.equal((await page.getByTestId('dates-filter').textContent()).trim(), 'Dates');
+    assert.deepEqual(await page.evaluate(() => window.__holdmytrack.getCenter().toArray()), center);
   });
+
   it("8. the header's menus close on another menu, a click on the map and Escape", async () => {
     await page.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
     await page.waitForFunction(() => Boolean(window.__holdmytrack));

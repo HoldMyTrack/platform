@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { deletePhoto, saveActivityTrackEdit, SplitHidesPartError, updateActivity, updatePhoto, uploadPhoto, type Activity, type Photo, type TrackEdit } from '../api';
+import { deletePhoto, saveActivityTrackEdit, SplitHidesPartError, updateActivity, updatePhoto, uploadPhoto, type Activity, type ActivityDetail, type Photo, type TrackEdit } from '../api';
 import type { PhotoMarkerOverlay } from '../map/photos';
 import { draftIsEmpty, draftSize, EMPTY_DRAFT, isoSeconds, type PhotoDraft } from './photoDraft';
 import { fieldWrites, saveProblem, type ActivityFields } from './editSave';
@@ -61,7 +61,7 @@ type TrackPending = { edit: TrackEdit | null; splitAt: number | null };
 export interface EditActivityWindowProps {
   map: MapLibreMap;
   /** At least one — the checked group, whatever its size. */
-  activities: Activity[];
+  activities: ActivityDetail[];
   /** Every distinct activity_type already in this account's loaded activities, with counts —
    *  the same facets the Type filter is built from (activityFacets.ts), reused as the Type
    *  picker's list rather than recomputed. */

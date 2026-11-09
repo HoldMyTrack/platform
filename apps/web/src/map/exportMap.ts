@@ -45,7 +45,9 @@ const WATERMARK_ALPHA = 0.8;
 export interface ExportViewState {
   flavor: Flavor;
   mode: MapMode;
-  activityQuery: ActivityQuery;
+  tracksQuery: ActivityQuery;
+  /** Past the list's cap, the only tracks drawn (tracks.ts's setListedTracks); null for all. */
+  listedIds: readonly string[] | null;
   hiddenIds: string[];
   /** The tracks drawn bold (selection.ts's boldTracks). */
   boldIds: readonly string[];
@@ -382,8 +384,8 @@ async function renderOffscreen(
       mode: state.mode,
       satellite: state.satellite,
       toggles: { ...state.paths },
-      vars: { hidden: state.hiddenIds, focused: [...state.boldIds] },
-      queries: { tracks: trackQuery(state.activityQuery) },
+      vars: { hidden: state.hiddenIds, focused: [...state.boldIds], capped: state.listedIds !== null, listed: [...(state.listedIds ?? [])] },
+      queries: { tracks: trackQuery(state.tracksQuery) },
       // No Spots, as on Android.
       excludedGroups: new Set(['spots']),
     });

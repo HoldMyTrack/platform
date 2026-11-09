@@ -14,7 +14,7 @@ A rule only some clients have names them in `"clients"` (`web`, `android`, `ios`
 
 The format is platform-neutral: dates are ISO strings, sets are arrays (compared sorted), ids are strings, field names are camelCase, and a missing field means the same as `null`. Timestamps are epoch milliseconds where the rule works in them, ISO strings otherwise. A union is plain JSON: `null`, a string tag such as `"load"`, or an object. A file or a case may set `"tolerance": 1e-6`, and numbers anywhere in the expected value then match within it. `"expected": { "throws": true }` means the rule rejects its input.
 
-The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayout`, `photoTrack*`, `slider*`) also have a `generated` list, run like `cases`: seeded random inputs with the web implementation's answers, written by `npm run gen:rule-cases` in `apps/web`. They catch rounding and boundary differences no hand-written case reaches. `cases` stay the reviewed spec; regenerate only after a deliberate rule change, and review the diff, since the script writes whatever the web code answers. CI never runs it.
+The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayout`, `photoTrack*`, `slider*`) also have a `generated` list, run like `cases`: seeded random inputs with the web implementation's answers, written by `npm run gen:rule-cases` in `apps/web`. The `slider*` lists were written before the web dropped its slider, so regenerating them needs an app's implementation. They catch rounding and boundary differences no hand-written case reaches. `cases` stay the reviewed spec; regenerate only after a deliberate rule change, and review the diff, since the script writes whatever the web code answers. CI never runs it.
 
 | Rule | Input | Expected |
 | :-- | :-- | :-- |
@@ -32,12 +32,18 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |
 | `photoScope` | `mode` (`normal`, `fog`, `heatmap`), `editWindowIds`, `focused`, `storyId` | `{ activity }`, `{ story }` or `null` |
 | `photoGroup` | `photos` (`{ lat, lon }`) | `"open"` or `{ fit: [west, south, east, north] }` |
-| `session` | `state` (`range`, `userPicked`, `storyId`, `checked`, `hidden`, `excludedTypes`), `event` | the state after it, with `flyRequest` |
+| `session` | `state` (`range`, `userPicked`, `storyId`, `checked`, `hidden`, `excludedTypes`), `event` | the state after it, with `flyRequest`; Android and iOS, whose date range the web replaced |
+| `webSession` | `state` (`dates`, `area`, `storyId`, `checked`, `hidden`, `excludedTypes`), `event` | the state after it, with `flyRequest` |
 | `rangeShift` | `days` (ascending dates), `hasEarlier`, `range`, `dir` (`-1`, `1`) | `{ from, to }`, `null` or `"load"` |
 | `distanceBounds` | `activities` (`{ activityType, distanceMeters, private }`) | `{ min, max }` or `null` |
 | `distanceFilter` | `bounds`, `current` (`{ min, max }`), `knob` (`min`, `max`), `value` | `{ min, max }` or `null` |
 | `typeFacets` | `activities`, `distanceFilter` | `[{ type, count }]` |
 | `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
+| `openingView` | `boxes` (`[west, south, east, north]`, newest first), `viewport` (`{ width, height }`) | `{ center: [lon, lat], zoom }` or `null` |
+| `areaLoad` | `zoom`, `listed`, `total` | `{ load, capped }`, `load` `auto` or `none` |
+| `dateFilterSet` | `current` (`{ after, before }`), `end` (`after`, `before`), `value`, `bounds` (`{ min, max }`) | `{ filter, fly }` |
+| `dateFilterLabel` | `after`, `before` | `{ kind }`: `all`, `between`, `after` or `before`, with the ends set |
+| `dateFilterBounds` | `earliest`, `latest`, `today` | `{ min, max }` |
 | `activityZone` | `own`, `account` (zone ids) | a zone id, or `null` for the device's |
 | `photoClusters` | `points` (`{ id, x, y }`), `radius` | `[{ ids, x, y }]` |
 | `sliderLayout` | `width`, `finePointer` | `{ buttons, days }` |

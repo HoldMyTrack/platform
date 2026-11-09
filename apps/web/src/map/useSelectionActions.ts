@@ -10,7 +10,6 @@ export interface SelectionActions {
   toggleGroupVisibility: () => void;
   /** A toggle: the type stays in the dropdown either way, so it can be turned back on without Reset filters. */
   toggleType: (activityType: string) => void;
-  resetFilters: () => void;
   setDistanceFilter: (filter: DistanceRange | null) => void;
   /** Focuses one activity and flies to it, unless it's hidden (an empty fit is a no-op). With
    *  Focus on map, the only fly to an activity. */
@@ -46,7 +45,6 @@ export function useSelectionActions(
   const toggleChecked = useCallback((id: string) => dispatch({ type: 'checkToggled', id }), [dispatch]);
   const toggleGroupVisibility = useCallback(() => dispatch({ type: 'visibilityToggled' }), [dispatch]);
   const toggleType = useCallback((activityType: string) => dispatch({ type: 'typeToggled', activityType }), [dispatch]);
-  const resetFilters = useCallback(() => dispatch({ type: 'filtersReset' }), [dispatch]);
   const setDistanceFilter = useCallback((filter: DistanceRange | null) => dispatch({ type: 'distanceSet', filter }), [dispatch]);
   const clearFocus = useCallback(() => dispatch({ type: 'focused', id: null }), [dispatch]);
   const clearChecked = useCallback(() => dispatch({ type: 'checkedSet', ids: [] }), [dispatch]);
@@ -56,5 +54,5 @@ export function useSelectionActions(
     () => fitTo(activities.filter((a) => target.has(a.id) && !mapHiddenIds.has(a.id))),
     [activities, target, mapHiddenIds, fitTo],
   );
-  return { toggleChecked, toggleGroupVisibility, toggleType, resetFilters, setDistanceFilter, focus, clearFocus, clearChecked, checkAll, invertChecked, showTarget };
+  return { toggleChecked, toggleGroupVisibility, toggleType, setDistanceFilter, focus, clearFocus, clearChecked, checkAll, invertChecked, showTarget };
 }

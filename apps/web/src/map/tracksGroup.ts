@@ -13,8 +13,11 @@ import { ROLE_METADATA, tilePath, VARS_METADATA, type GroupPart } from './mapLay
 
 export const TRACKS_LAYER_ID = 'tracks-line';
 
+/** The hovered track's lines, copied out of the loaded tiles on hover (tracks.ts's setHoveredTrack). */
+export const TRACK_HOVER_SOURCE = 'track-hover';
+
 /** Must match ST_AsMVT(t, 'tracks', ...) in internal/httpapi's tracks query. */
-const TRACKS_SOURCE_LAYER = 'tracks';
+export const TRACKS_SOURCE_LAYER = 'tracks';
 
 const TRACK_COLOR = '#b07e2e'; // --fm-accent
 const HOVER_COLOR = '#93691f'; // --fm-accent-strong
@@ -44,7 +47,10 @@ const ARROWS_LAYER_ID = 'tracks-arrows';
 
 const LAYER_IDS = ['tracks-casing', TRACKS_LAYER_ID, 'tracks-focused', 'tracks-hover', ARROWS_LAYER_ID];
 
-const notHidden = ['!', ['in', ['get', 'id'], ['var', 'hidden']]];
+// Drawn: not hidden, and while the web's list was cut at its cap, listed (docs/SPEC.md FR-5.19).
+// `capped` defaults to false, so a client that never binds it draws every track.
+const notHidden = ['all', ['!', ['in', ['get', 'id'], ['var', 'hidden']]], ['any', ['!', ['var', 'capped']], ['in', ['get', 'id'], ['var', 'listed']]]];
+const DRAWN_VARS = ['hidden', 'capped', 'listed'];
 const among = (set: string) => ['all', ['in', ['get', 'id'], ['var', set]], notHidden];
 
 function line(id: string, filter: unknown[], vars: string[], paint: Record<string, unknown>, role?: string): LayerSpecification {
@@ -73,14 +79,31 @@ function arrows(): LayerSpecification {
     filter: among('focused') as never,
     layout: arrowLayout(FOCUSED_WIDTH),
     paint: arrowPaint,
-    metadata: { [VARS_METADATA]: { filter: ['focused', 'hidden'] } },
+    metadata: { [VARS_METADATA]: { filter: ['focused', ...DRAWN_VARS] } },
   } as LayerSpecification;
 }
 
 /** Under every track, over imagery only. */
 function outline(): LayerSpecification {
-  const layer = line(OUTLINE_LAYER_ID, notHidden, ['hidden'], { 'line-color': SATELLITE_EDGE_COLOR, 'line-width': OUTLINE_WIDTH, 'line-opacity': OUTLINE_OPACITY });
+  const layer = line(OUTLINE_LAYER_ID, notHidden, DRAWN_VARS, { 'line-color': SATELLITE_EDGE_COLOR, 'line-width': OUTLINE_WIDTH, 'line-opacity': OUTLINE_OPACITY });
   return { ...layer, layout: { ...layer.layout, visibility: 'none' } } as LayerSpecification;
+}
+
+/**
+ * The hovered track, drawn widest from its own GeoJSON source. A filter by id would be shorter, but
+ * MapLibre re-parses a vector source's tiles whenever one of its layers' filters changes, and a
+ * pointer moving down the list changed it per row: over 1,000 tracks the highlight trailed the
+ * pointer by seconds. A client without hover (Android) leaves the source empty.
+ */
+function hoverLine(): LayerSpecification {
+  return {
+    id: 'tracks-hover',
+    type: 'line',
+    source: TRACK_HOVER_SOURCE,
+    minzoom: TRACKS_MIN_ZOOM,
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': HOVER_COLOR, 'line-width': HOVER_WIDTH },
+  } as LayerSpecification;
 }
 
 /** Bottom to top: every track's outline over imagery, the focused track's halo, every track, the focused one, the hovered one, the
@@ -93,13 +116,13 @@ export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
       placement: 'beneath-labels',
       // MapLibre overzooms a vector source past its maxzoom, so tiles stop at 14 while the map
       // zooms further.
-      sources: { tracks: { type: 'vector', tiles: tilePath('tracks', tileVersion), minzoom: 0, maxzoom: 14 } },
+      sources: { tracks: { type: 'vector', tiles: tilePath('tracks', tileVersion), minzoom: 0, maxzoom: 14 }, [TRACK_HOVER_SOURCE]: { type: 'geojson' } },
       layers: [
         outline(),
-        line('tracks-casing', among('focused'), ['focused', 'hidden'], { 'line-color': casingColor(dark), 'line-width': CASING_WIDTH, 'line-opacity': 0.95 }, 'casing'),
-        line(TRACKS_LAYER_ID, notHidden, ['hidden'], { 'line-color': TRACK_COLOR, 'line-width': NORMAL_WIDTH, 'line-opacity': TRACK_OPACITY }, 'track'),
-        line('tracks-focused', among('focused'), ['focused', 'hidden'], { 'line-color': TRACK_COLOR, 'line-width': FOCUSED_WIDTH, 'line-opacity': 1 }, 'focused'),
-        line('tracks-hover', among('hovered'), ['hovered', 'hidden'], { 'line-color': HOVER_COLOR, 'line-width': HOVER_WIDTH }),
+        line('tracks-casing', among('focused'), ['focused', ...DRAWN_VARS], { 'line-color': casingColor(dark), 'line-width': CASING_WIDTH, 'line-opacity': 0.95 }, 'casing'),
+        line(TRACKS_LAYER_ID, notHidden, DRAWN_VARS, { 'line-color': TRACK_COLOR, 'line-width': NORMAL_WIDTH, 'line-opacity': TRACK_OPACITY }, 'track'),
+        line('tracks-focused', among('focused'), ['focused', ...DRAWN_VARS], { 'line-color': TRACK_COLOR, 'line-width': FOCUSED_WIDTH, 'line-opacity': 1 }, 'focused'),
+        hoverLine(),
         arrows(),
       ],
     },
@@ -119,6 +142,6 @@ export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
         },
       };
     },
-    vars: { hidden: [], focused: [], hovered: [] },
+    vars: { hidden: [], focused: [], capped: false, listed: [] },
   };
 }

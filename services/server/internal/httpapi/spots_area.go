@@ -1,10 +1,8 @@
 package httpapi
 
 import (
-	"math"
 	"net/http"
 	"slices"
-	"strconv"
 	"strings"
 )
 
@@ -36,7 +34,7 @@ WHERE ` + spotsInAreaSQL + ` AND s.category = ANY($7)
   AND (s.retired_at IS NULL OR EXISTS (SELECT 1 FROM spot_captures c WHERE c.spot_id = s.id AND c.user_id = $8))`
 
 // spotsInAreaSQL is "s's point p.pt lies in one of the area's two boxes": $1 south, $2 north,
-// the first box from $3 west to $4 east, the second from $5 to $6 (spotArea.boxes). Each box is
+// the first box from $3 west to $4 east, the second from $5 to $6 (mapArea.boxes). Each box is
 // its own && against constant parameters, so the planner answers the OR with two index scans on
 // idx_spots_geom; an envelope built from rows (unnest) or one around both boxes scans the table.
 const spotsInAreaSQL = `(
@@ -131,58 +129,4 @@ func (s *Server) handleSpotsInArea(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, resp)
-}
-
-// spotArea is a view as boxes within −180…180: one, or two when the view crosses the
-// antimeridian, west[i] to east[i] each, all between south and north.
-type spotArea struct {
-	south, north float64
-	west, east   []float64
-}
-
-// boxes is the area as spotsInAreaSQL's two boxes, west and east edges each: a single box is
-// sent twice.
-func (a spotArea) boxes() (w1, e1, w2, e2 float64) {
-	last := len(a.west) - 1
-	return a.west[0], a.east[0], a.west[last], a.east[last]
-}
-
-// parseBBox reads "west,south,east,north" into the boxes it covers. A view across the
-// antimeridian comes either way: unwrapped, east past 180 (170,…,190,…, as MapLibre's web
-// bounds give it), or wrapped, west > east (170,…,−170,…); both are 170…180 and −180…−170. A
-// view 360° wide or more is the whole world.
-func parseBBox(raw string) (spotArea, bool) {
-	var box [4]float64
-	parts := strings.Split(raw, ",")
-	if len(parts) != 4 {
-		return spotArea{}, false
-	}
-	for i, p := range parts {
-		v, err := strconv.ParseFloat(strings.TrimSpace(p), 64)
-		if err != nil || math.IsNaN(v) || math.IsInf(v, 0) {
-			return spotArea{}, false
-		}
-		box[i] = v
-	}
-	west, east := box[0], box[2]
-	area := spotArea{south: math.Max(box[1], -90), north: math.Min(box[3], 90)}
-	if area.south >= area.north || west == east {
-		return spotArea{}, false
-	}
-	if west > east {
-		east += 360
-	}
-	if east-west >= 360 {
-		area.west, area.east = []float64{-180}, []float64{180}
-		return area, true
-	}
-	// Bring west into −180…180; east then lies within 360° of it.
-	shift := 360 * math.Floor((west+180)/360)
-	west, east = west-shift, east-shift
-	if east <= 180 {
-		area.west, area.east = []float64{west}, []float64{east}
-	} else {
-		area.west, area.east = []float64{west, -180}, []float64{180, east - 360}
-	}
-	return area, true
 }

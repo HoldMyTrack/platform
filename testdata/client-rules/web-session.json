@@ -1,0 +1,47 @@
+{
+  "rule": "webSession",
+  "clients": ["web"],
+  "description": "What the web map's scope events do (docs/SPEC.md FR-5.19, FR-5.20): Dates and the area keep the selection, which the next list then prunes (panelState's listLoaded); setting Dates flies once, never with a Story open; an area within about a metre of the last is the same one. State and expected: dates, area ([west, south, east, north]), storyId, checked, hidden, excludedTypes, flyRequest.",
+  "cases": [
+    {
+      "name": "setting Dates keeps the selection and flies",
+      "input": {"state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"]}, "event": {"type": "datesSet", "dates": {"after": "2026-06-03", "before": null}, "fly": true}},
+      "expected": {"dates": {"after": "2026-06-03", "before": null}, "area": null, "checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "flyRequest": true}
+    },
+    {
+      "name": "clearing Dates doesn't fly",
+      "input": {"state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "dates": {"after": "2026-06-03", "before": "2026-06-10"}}, "event": {"type": "datesSet", "dates": {"after": null, "before": null}, "fly": false}},
+      "expected": {"dates": {"after": null, "before": null}, "area": null, "checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "flyRequest": false}
+    },
+    {
+      "name": "with a Story open Dates never fly",
+      "input": {"state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "storyId": "s"}, "event": {"type": "datesSet", "dates": {"after": "2026-06-03", "before": null}, "fly": true}},
+      "expected": {"dates": {"after": "2026-06-03", "before": null}, "area": null, "checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "flyRequest": false, "storyId": "s"}
+    },
+    {
+      "name": "a new area keeps the selection",
+      "input": {"state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"]}, "event": {"type": "areaLoaded", "area": [8, 47, 9, 48]}},
+      "expected": {"dates": {"after": null, "before": null}, "area": [8, 47, 9, 48], "checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "flyRequest": false}
+    },
+    {
+      "name": "the same area to a metre changes nothing",
+      "input": {"state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "area": [8, 47, 9, 48]}, "event": {"type": "areaLoaded", "area": [8.000001, 47, 9, 48.000001]}},
+      "expected": {"dates": {"after": null, "before": null}, "area": [8, 47, 9, 48], "checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "flyRequest": false}
+    },
+    {
+      "name": "viewing a day sets Dates to it and flies",
+      "input": {"state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "area": [8, 47, 9, 48]}, "event": {"type": "dayViewed", "day": "2026-10-05"}},
+      "expected": {"dates": {"after": "2026-10-05", "before": "2026-10-05"}, "area": [8, 47, 9, 48], "checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "flyRequest": true}
+    },
+    {
+      "name": "opening a Story starts the selection and filters over and flies, keeping Dates and the area",
+      "input": {"state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "area": [8, 47, 9, 48], "dates": {"after": "2026-06-03", "before": null}}, "event": {"type": "storyEntered", "id": "s"}},
+      "expected": {"dates": {"after": "2026-06-03", "before": null}, "area": [8, 47, 9, 48], "checked": [], "hidden": [], "excludedTypes": [], "flyRequest": true, "storyId": "s"}
+    },
+    {
+      "name": "closing a Story starts the selection and filters over without a flight",
+      "input": {"state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["running"], "area": [8, 47, 9, 48], "storyId": "s"}, "event": {"type": "storyExited"}},
+      "expected": {"dates": {"after": null, "before": null}, "area": [8, 47, 9, 48], "checked": [], "hidden": [], "excludedTypes": [], "flyRequest": false}
+    }
+  ]
+}

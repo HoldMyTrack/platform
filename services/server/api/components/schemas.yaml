@@ -68,6 +68,36 @@ ActivityRow:
         properties:
           id: { type: string, format: uuid }
           name: { type: string }
+AreaActivityRow:
+  type: object
+  description: An activity as a list row shows it; GET /activities/{id} has the rest.
+  required: [id, started_at, timezone, activity_type, name, distance_meters, moving_seconds, bbox, pending, private, stories]
+  additionalProperties: false
+  properties:
+    id: { type: string, format: uuid }
+    started_at: { type: string, format: date-time }
+    timezone: { type: string }
+    activity_type: { type: string }
+    name: { type: string, nullable: true }
+    distance_meters: { type: number, nullable: true }
+    moving_seconds: { type: integer, nullable: true }
+    bbox:
+      type: array
+      nullable: true
+      minItems: 4
+      maxItems: 4
+      items: { type: number }
+    pending: { type: boolean }
+    private: { type: boolean }
+    stories:
+      type: array
+      items:
+        type: object
+        required: [id, name]
+        additionalProperties: false
+        properties:
+          id: { type: string, format: uuid }
+          name: { type: string }
 ActivityTypes:
   type: object
   description: What a client shows for each activity type, keyed by the type as stored (docs/SPEC.md FR-5.1).

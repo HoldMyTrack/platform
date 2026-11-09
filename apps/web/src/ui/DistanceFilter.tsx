@@ -4,10 +4,8 @@ import { nextDistanceFilter, type DistanceRange } from './activityFacets';
 import { t } from '../i18n';
 
 /**
- * The Activities panel's DISTANCE dual slider — standalone and always visible (docs/SPEC.md FR-5.3),
- * not folded into the Type dropdown or hidden behind the old "Filter" toggle button. TYPE
- * moved into its own dropdown (checkboxes inline in ActivitiesPanel.tsx's toolbar); this
- * component now does one job, distance only, and no longer takes any TYPE-related props.
+ * The Activities panel's DISTANCE dual slider (docs/SPEC.md FR-5.3), inside the filter row's
+ * Distance dropdown (ActivityFilters.tsx).
  *
  * `step="any"`: the bounds are real distances in meters with centimeters (a 16093.44 m ride),
  * and the default step of 1, counted from the minimum, can't land on the maximum — a knob
@@ -17,11 +15,9 @@ export interface DistanceFilterProps {
   bounds: DistanceRange | null;
   value: DistanceRange | null;
   onChangeDistance: (next: DistanceRange | null) => void;
-  onReset: () => void;
-  hasActiveFilters: boolean;
 }
 
-export function DistanceFilter({ bounds, value, onChangeDistance, onReset, hasActiveFilters }: DistanceFilterProps) {
+export function DistanceFilter({ bounds, value, onChangeDistance }: DistanceFilterProps) {
   const system = useUnitSystem();
   const current = value ?? bounds;
 
@@ -77,12 +73,6 @@ export function DistanceFilter({ bounds, value, onChangeDistance, onReset, hasAc
           </span>
         </div>
       </div>
-
-      {hasActiveFilters && (
-        <button type="button" className="activity-filters__reset" onClick={onReset}>
-          {t('filters.reset')}
-        </button>
-      )}
     </div>
   );
 }

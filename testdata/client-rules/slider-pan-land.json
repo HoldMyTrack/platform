@@ -1,5 +1,6 @@
 {
   "rule": "sliderPanLand",
+  "clients": ["android", "ios"],
   "description": "A pan has landed on the window days: each knob it was carrying (start, end) moves onto that edge, pushing the other if they'd cross.",
   "cases": [
     {"name": "the start knob pulled onto the new left edge", "input": {"days": ["2026-09-28", "2026-09-30", "2026-10-01", "2026-10-02", "2026-10-05", "2026-10-07"], "range": {"from": "2026-10-07", "to": "2026-10-20"}, "start": true, "end": false}, "expected": {"from": "2026-09-28", "to": "2026-10-20"}},

@@ -8,7 +8,7 @@ import { MapModeToggle } from './MapModeToggle';
 import { OverlaysMenu } from './OverlaysMenu';
 import { ShowInArea } from './ShowInArea';
 import { ZoomLevelNotice } from './ZoomLevelNotice';
-import { t } from '../i18n';
+import { lang, t } from '../i18n';
 
 export interface MapControlsProps {
   map: MapLibreMap | null;
@@ -27,10 +27,13 @@ export interface MapControlsProps {
   spotsShown: readonly SpotCategory[];
   /** The tour holds the Layers menu open (docs/SPEC.md FR-4.18). */
   layersOpen?: boolean;
+  /** How many the area holds when the list, and so the map, was cut at its limit (docs/SPEC.md FR-5.19). */
+  capped: { shown: number; total: number } | null;
 }
 
-/** The controls over the map's top edge: the mode toggle, Layers, Satellite, their notices, and Show in this area. */
-export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false }: MapControlsProps) {
+/** The controls over the map's top edge: the mode toggle, Layers, Satellite, their notices, and
+ *  the pills under them: places' Show in this area, and the area's cap. */
+export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, capped }: MapControlsProps) {
   return (
     <>
       <div className="map-toggles">
@@ -56,7 +59,14 @@ export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChang
         )}
         {map && <ZoomLevelNotice map={map} mode={mode} />}
       </div>
-      {map && <ShowInArea map={map} categories={spotsShown} />}
+      <div className="map-area">
+        {map && <ShowInArea map={map} categories={spotsShown} />}
+        {capped && (
+          <span className="show-in-area__status show-in-area__status--capped" role="status" data-testid="area-capped">
+            {t('area.capped', { shown: capped.shown.toLocaleString(lang), total: capped.total.toLocaleString(lang) })}
+          </span>
+        )}
+      </div>
     </>
   );
 }

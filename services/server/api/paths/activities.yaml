@@ -60,9 +60,67 @@ activities_upload:
       "415": { $ref: "../components/responses.yaml#/Error" }
       "429": { $ref: "../components/responses.yaml#/Error" }
       "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
+activities_area:
+  get:
+    summary: The newest activities whose track crosses a map view, the web's list and the set its map draws
+    parameters:
+      - $ref: "../components/parameters.yaml#/FilterFrom"
+      - $ref: "../components/parameters.yaml#/FilterTo"
+      - name: bbox
+        in: query
+        description: The view, west,south,east,north in degrees; west may be greater than east across the antimeridian. Absent, the newest of the whole history.
+        schema: { type: string }
+      - name: limit
+        in: query
+        description: The newest this many at most; 1,000 when absent.
+        schema: { type: integer, minimum: 1, maximum: 1000 }
+    responses:
+      "200":
+        description: The activities, slim
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [activities, types]
+              additionalProperties: false
+              properties:
+                activities:
+                  type: array
+                  items: { $ref: "../components/schemas.yaml#/AreaActivityRow" }
+                types:
+                  description: Every type the rows use, once each.
+                  allOf: [{ $ref: "../components/schemas.yaml#/ActivityTypes" }]
+                total:
+                  type: integer
+                  description: With `bbox`, how many activities the area holds; more than the rows when they were cut at the limit.
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
 activities_id:
   parameters:
     - $ref: "../components/parameters.yaml#/ActivityID"
+  get:
+    summary: One activity in full, as a one-row list
+    responses:
+      "200":
+        description: The activity
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [activities, types]
+              additionalProperties: false
+              properties:
+                activities:
+                  type: array
+                  minItems: 1
+                  maxItems: 1
+                  items: { $ref: "../components/schemas.yaml#/ActivityRow" }
+                types:
+                  allOf: [{ $ref: "../components/schemas.yaml#/ActivityTypes" }]
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
   patch:
     summary: Change an activity's type, name and description (a full replace)
     requestBody:

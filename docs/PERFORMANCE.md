@@ -29,11 +29,29 @@ Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATIO
 ### Scenarios
 
 - **Seed**: `seed` uploads the 53 demo tracks (`internal/httpapi/demo_data`) to every account, 1,113 jobs, and the queue is timed to empty. Three tracks cross 200+ z14 tiles each (the "2026-01-22 Vietnam" drive 756).
-- **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal, Fog and Heatmap and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A Spots visitor at z10–12 asks "Show in this area" on one view in three (`SPEC.md` FR-15.5), reported as `spots-area`. A view costs 2.3–4 requests with the cache, about 7.5 cold.
+- **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal, Fog and Heatmap and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A Normal visitor from z4 asks for the area's activity list on every view (`SPEC.md` FR-5.19), reported as `activities-area`; a Spots visitor at z10–12 asks "Show in this area" on one view in three (`SPEC.md` FR-15.5), reported as `spots-area`. A view costs 2.3–4 requests with the cache, about 7.5 cold.
 - **Import**: `gen 5 1000` then `import 5`: five accounts each upload a 1,000-track set at once, one file at a time as the web's Upload menu does. Two minutes in, and again deep into the backlog, `probe` uploads one track from another account and times it to processed, the fairness check. A 12-person `browse` runs meanwhile.
 - **Stop** a step on more than 2% errors, a p95 over 5 s on two consecutive steps, under 10% memory available, or an out-of-memory kill.
 
 ## Results
+
+### Heavy accounts — 2026-11-09, dev stack
+
+Two accounts seeded straight into the database with 5,000 and 20,000 activities of 245 points each, random walks in one region of about 65 × 55 km: what a long history around home looks like. Times are the query alone, run twice; the region fits one tile up to z8, so those tiles carry every track.
+
+| Tracks tile, centre of the region | 5,000: warm | tile | 20,000: warm | tile |
+| :-- | --: | --: | --: | --: |
+| z4 | 220 ms | 1.0 MB | 739 ms | 4.1 MB |
+| z6 | 223 ms | 2.2 MB | 813 ms | 8.6 MB |
+| z8 | 207 ms | 1.8 MB | 785 ms | 7.1 MB |
+| z10 | 79 ms | 0.7 MB | 315 ms | 2.7 MB |
+| z12 | 8 ms | 53 KB | 30 ms | 214 KB |
+
+- **Low-zoom tiles grow with the whole history** in their square, in time and in bytes: a tile below z10 reads and sends every stored point of every track in it, though at that zoom most fall on one pixel. Past the list's 1,000 the browser draws only the listed tracks (FR-5.19), so most of a heavy tile is sent to be hidden.
+- **The area list** (`GET /v1/activities/area`, a 1,000×750 px view, HTTP round trip, warm): z8 0.15 s and 0.33 s, z10 0.11 s and 0.22 s, z12 11 ms and 34 ms; 1,000 rows are 330 KB, 67 KB gzipped. The total behind a cut list was most of the time: testing every line against the view took 400 ms for 15,000 tracks, the tracks' boxes alone 72 ms, 2 apart, so the total counts boxes.
+- **Past the cap the tiles carry `since`** (`IMPLEMENTATION.md` §4.3), the start of the oldest listed activity, and stop growing with the history: z4 156 ms and 211 KB, z6 156 ms and 440 KB, z8 60 ms and 364 KB, z10 24 ms and 193 KB, the same for both accounts.
+- **In the browser** (Chrome with the GPU, the dev build, 6 pans at z10 over 1,000 listed): the map was never the cost, hiding every track changed nothing. Rendering 1,000 list rows on each reload was, 5.3 s of long tasks, the longest 254 ms: a new `Intl` formatter per date and number (1.8 s), then React. With formatters kept and only the rows in view rendered (`listWindow.ts`), no long task at all.
+- A 10-person `-mode normal` browse over these accounts (`browse 10 60s`, the demo tracks' centres): `activities-area` p95 147 ms, `tracks` p95 117 ms, no errors.
 
 ### Production load test — 2026-10-22, `9a298d5a`
 

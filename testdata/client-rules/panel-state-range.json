@@ -1,0 +1,8 @@
+{
+  "rule": "panelState",
+  "clients": ["android", "ios"],
+  "description": "panelState's case for the apps' date range (docs/SPEC.md FR-6.6): a new range starts the selection and the filters over. The web has no range (FR-5.19), so its cases are panel-state.json's alone.",
+  "cases": [
+    {"name": "a new range starts over, filters included", "input": {"activities": [{"id": "a", "activityType": "walking", "distanceMeters": 1200}, {"id": "b", "activityType": "running", "distanceMeters": 10400}, {"id": "c", "activityType": "cycling", "distanceMeters": 21000}], "state": {"checked": ["a"], "hidden": ["b"], "excludedTypes": ["cycling"], "distanceFilter": {"min": 1000, "max": 11000}}, "event": {"type": "rangePicked", "range": {"from": "2026-10-01", "to": "2026-10-07"}}}, "expected": {"checked": [], "focused": null, "hidden": [], "excludedTypes": [], "distanceFilter": null}}
+  ]
+}

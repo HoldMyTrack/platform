@@ -1,15 +1,15 @@
-import type { Map as MapLibreMap } from 'maplibre-gl';
+import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
 import type { ActivityQuery } from '../api';
-import { setLayerVars, updateLayers } from './applyLayers';
+import { currentLayerState, setLayerVars, updateLayers } from './applyLayers';
 import { mapTapsActive } from './mapTaps';
 import { PHOTO_MARKER_CLASS } from './photos';
 import { spotAt } from './spots';
-import { TRACKS_LAYER_ID } from './tracksGroup';
+import { TRACK_HOVER_SOURCE, TRACKS_LAYER_ID, TRACKS_SOURCE_LAYER } from './tracksGroup';
 
 /**
  * The live tracks MVT layer on the map (IMPLEMENTATION.md §4.3): the layers document draws it
  * (tracksGroup.ts), and this keeps what the client decides — the tiles' query, which ids are
- * hidden, focused and hovered, and the clicks and hovers on it. Unlike the basemap the tiles are
+ * hidden and focused, the hovered one's lines, and the clicks and hovers on it. Unlike the basemap the tiles are
  * never precomputed: the backend runs a live PostGIS query per tile.
  */
 
@@ -23,7 +23,7 @@ const TAP_TOLERANCE_PX = 14;
 /** `from`/`to` and a Story (FR-14.4) — `types` stays a client-side-only filter (activityFacets.ts,
  *  setHiddenTracks below), matching DISTANCE, which has no server-side equivalent at all;
  *  keeping both narrowed the same way is simpler than half server-side, half client-side. */
-type TrackDateRange = Pick<ActivityQuery, 'from' | 'to' | 'story'>;
+type TrackDateRange = Pick<ActivityQuery, 'from' | 'to' | 'story' | 'since'>;
 
 /**
  * Bumped by every refreshTrackLayer, and sent as `v` (the handler ignores it) so each refresh
@@ -49,6 +49,7 @@ export function trackQuery(range: TrackDateRange): string {
   if (range.from) params.set('from', range.from);
   if (range.to) params.set('to', range.to);
   if (range.story) params.set('story', range.story);
+  if (range.since) params.set('since', range.since);
   if (tracksVersion > 0) params.set('v', `${pageLoaded}.${tracksVersion}`);
   return params.toString();
 }
@@ -165,7 +166,15 @@ function isTouch(event: MouseEvent): boolean {
  * so a row hover and a map hover share one piece of state.
  */
 export function setHoveredTrack(map: MapLibreMap, activityId: string | null): void {
-  setLayerVars(map, { hovered: activityId !== null ? [activityId] : [] });
+  const source = map.getSource(TRACK_HOVER_SOURCE) as GeoJSONSource | undefined;
+  if (!source) return;
+  // A hidden track stays hidden under the pointer; the rest are drawn, or past the cap listed.
+  const hidden = currentLayerState(map).vars.hidden as readonly string[] | undefined;
+  const pieces =
+    activityId === null || hidden?.includes(activityId)
+      ? []
+      : map.querySourceFeatures('tracks', { sourceLayer: TRACKS_SOURCE_LAYER, filter: ['==', ['get', 'id'], activityId] });
+  source.setData({ type: 'FeatureCollection', features: pieces.map((f) => ({ type: 'Feature', geometry: f.geometry, properties: {} })) });
 }
 
 /** The tracks drawn bold over their halo (selection.ts's boldTracks). */
@@ -194,4 +203,10 @@ export function refreshTrackLayer(map: MapLibreMap, range: TrackDateRange): void
  */
 export function setHiddenTracks(map: MapLibreMap, hiddenIds: string[]): void {
   setLayerVars(map, { hidden: hiddenIds });
+}
+
+/** While the web's list was cut at its cap, the map draws only the listed tracks, so the two stay
+ *  one set (docs/SPEC.md FR-5.19); null draws every track. */
+export function setListedTracks(map: MapLibreMap, listedIds: readonly string[] | null): void {
+  setLayerVars(map, { capped: listedIds !== null, listed: listedIds ?? [] });
 }

@@ -1,5 +1,5 @@
 {
-  "styleBuild": "ee6f5b8e9cb0",
+  "styleBuild": "52b8fb1a595b",
   "flavor": "white",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -18,7 +18,8 @@
   "vars": {
     "hidden": [],
     "focused": [],
-    "hovered": [],
+    "capped": false,
+    "listed": [],
     "spotCategories": [],
     "captured": [],
     "captureTarget": -1
@@ -1480,6 +1481,9 @@
           "tiles": "/tiles/v1/tracks/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
           "minzoom": 0,
           "maxzoom": 14
+        },
+        "track-hover": {
+          "type": "geojson"
         }
       },
       "layers": [
@@ -1490,16 +1494,40 @@
           "source-layer": "tracks",
           "minzoom": 4,
           "filter": [
-            "!",
+            "all",
             [
-              "in",
+              "!",
               [
-                "get",
-                "id"
+                "in",
+                [
+                  "get",
+                  "id"
+                ],
+                [
+                  "var",
+                  "hidden"
+                ]
+              ]
+            ],
+            [
+              "any",
+              [
+                "!",
+                [
+                  "var",
+                  "capped"
+                ]
               ],
               [
-                "var",
-                "hidden"
+                "in",
+                [
+                  "get",
+                  "id"
+                ],
+                [
+                  "var",
+                  "listed"
+                ]
               ]
             ]
           ],
@@ -1516,7 +1544,9 @@
           "metadata": {
             "holdmytrack:vars": {
               "filter": [
-                "hidden"
+                "hidden",
+                "capped",
+                "listed"
               ]
             }
           }
@@ -1541,16 +1571,40 @@
               ]
             ],
             [
-              "!",
+              "all",
               [
-                "in",
+                "!",
                 [
-                  "get",
-                  "id"
+                  "in",
+                  [
+                    "get",
+                    "id"
+                  ],
+                  [
+                    "var",
+                    "hidden"
+                  ]
+                ]
+              ],
+              [
+                "any",
+                [
+                  "!",
+                  [
+                    "var",
+                    "capped"
+                  ]
                 ],
                 [
-                  "var",
-                  "hidden"
+                  "in",
+                  [
+                    "get",
+                    "id"
+                  ],
+                  [
+                    "var",
+                    "listed"
+                  ]
                 ]
               ]
             ]
@@ -1568,7 +1622,9 @@
             "holdmytrack:vars": {
               "filter": [
                 "focused",
-                "hidden"
+                "hidden",
+                "capped",
+                "listed"
               ]
             },
             "holdmytrack:role": "casing"
@@ -1581,16 +1637,40 @@
           "source-layer": "tracks",
           "minzoom": 4,
           "filter": [
-            "!",
+            "all",
             [
-              "in",
+              "!",
               [
-                "get",
-                "id"
+                "in",
+                [
+                  "get",
+                  "id"
+                ],
+                [
+                  "var",
+                  "hidden"
+                ]
+              ]
+            ],
+            [
+              "any",
+              [
+                "!",
+                [
+                  "var",
+                  "capped"
+                ]
               ],
               [
-                "var",
-                "hidden"
+                "in",
+                [
+                  "get",
+                  "id"
+                ],
+                [
+                  "var",
+                  "listed"
+                ]
               ]
             ]
           ],
@@ -1606,7 +1686,9 @@
           "metadata": {
             "holdmytrack:vars": {
               "filter": [
-                "hidden"
+                "hidden",
+                "capped",
+                "listed"
               ]
             },
             "holdmytrack:role": "track"
@@ -1632,16 +1714,40 @@
               ]
             ],
             [
-              "!",
+              "all",
               [
-                "in",
+                "!",
                 [
-                  "get",
-                  "id"
+                  "in",
+                  [
+                    "get",
+                    "id"
+                  ],
+                  [
+                    "var",
+                    "hidden"
+                  ]
+                ]
+              ],
+              [
+                "any",
+                [
+                  "!",
+                  [
+                    "var",
+                    "capped"
+                  ]
                 ],
                 [
-                  "var",
-                  "hidden"
+                  "in",
+                  [
+                    "get",
+                    "id"
+                  ],
+                  [
+                    "var",
+                    "listed"
+                  ]
                 ]
               ]
             ]
@@ -1659,7 +1765,9 @@
             "holdmytrack:vars": {
               "filter": [
                 "focused",
-                "hidden"
+                "hidden",
+                "capped",
+                "listed"
               ]
             },
             "holdmytrack:role": "focused"
@@ -1668,37 +1776,8 @@
         {
           "id": "tracks-hover",
           "type": "line",
-          "source": "tracks",
-          "source-layer": "tracks",
+          "source": "track-hover",
           "minzoom": 4,
-          "filter": [
-            "all",
-            [
-              "in",
-              [
-                "get",
-                "id"
-              ],
-              [
-                "var",
-                "hovered"
-              ]
-            ],
-            [
-              "!",
-              [
-                "in",
-                [
-                  "get",
-                  "id"
-                ],
-                [
-                  "var",
-                  "hidden"
-                ]
-              ]
-            ]
-          ],
           "layout": {
             "line-cap": "round",
             "line-join": "round"
@@ -1706,14 +1785,6 @@
           "paint": {
             "line-color": "#93691f",
             "line-width": 5
-          },
-          "metadata": {
-            "holdmytrack:vars": {
-              "filter": [
-                "hovered",
-                "hidden"
-              ]
-            }
           }
         },
         {
@@ -1736,16 +1807,40 @@
               ]
             ],
             [
-              "!",
+              "all",
               [
-                "in",
+                "!",
                 [
-                  "get",
-                  "id"
+                  "in",
+                  [
+                    "get",
+                    "id"
+                  ],
+                  [
+                    "var",
+                    "hidden"
+                  ]
+                ]
+              ],
+              [
+                "any",
+                [
+                  "!",
+                  [
+                    "var",
+                    "capped"
+                  ]
                 ],
                 [
-                  "var",
-                  "hidden"
+                  "in",
+                  [
+                    "get",
+                    "id"
+                  ],
+                  [
+                    "var",
+                    "listed"
+                  ]
                 ]
               ]
             ]
@@ -1776,7 +1871,9 @@
             "holdmytrack:vars": {
               "filter": [
                 "focused",
-                "hidden"
+                "hidden",
+                "capped",
+                "listed"
               ]
             }
           }

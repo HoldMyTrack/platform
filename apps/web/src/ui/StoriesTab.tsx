@@ -60,7 +60,7 @@ export interface StoriesTabProps {
  * The Activities panel's Stories tab (`SPEC.md` FR-14.6): the copies others sent, to accept or
  * decline (FR-14.7), then every Story as a folder, newest first,
  * exactly one of them open. Opening one is viewing it — MapView narrows the drawn tracks and the
- * list to it, whatever date range the Activities tab has, and this tab shows that list inside the folder and the whole
+ * list to it, whatever area and Dates the Activities tab has, and this tab shows that list inside the folder and the whole
  * Story's statistics in the footer. A row previews on hover and focuses on click, like the
  * Activities tab's, and its × takes the activity out of the Story (`DELETE
  * /v1/stories/{id}/activities`) — here, where the Story is open, rather than where activities are

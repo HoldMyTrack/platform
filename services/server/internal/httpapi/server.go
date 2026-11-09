@@ -170,6 +170,8 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/account/exports/{id}/parts/{n}"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleDownloadExportPart)))
 	s.mux.HandleFunc(route("POST", "/activities/upload"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUpload)))
 	s.mux.HandleFunc(route("GET", "/activities"), s.requireVerified(s.handleListActivities))
+	s.mux.HandleFunc(route("GET", "/activities/area"), s.requireVerified(s.handleListArea))
+	s.mux.HandleFunc(route("GET", "/activities/{id}"), s.requireVerified(s.handleGetActivity))
 	s.mux.HandleFunc(route("GET", "/activity-types"), s.requireVerified(s.handleActivityTypes))
 	s.mux.HandleFunc(route("PATCH", "/activities/{id}"), s.requireNotDemo(s.handleUpdateActivity))
 	s.mux.HandleFunc(route("DELETE", "/activities/{id}"), s.requireNotDemo(s.handleDeleteActivity))

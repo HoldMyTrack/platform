@@ -15,7 +15,7 @@ export interface StoryState {
 }
 
 /** Reader for `GET /v1/stories/{id}` — the open Story on the Stories tab: its whole-Story
- *  statistics (FR-14.1) for the footer, whatever the date range. */
+ *  statistics (FR-14.1) for the footer, whatever the area and Dates. */
 export function useStory(id: string | null): StoryState {
   const [story, setStory] = useState<Story | null>(null);
   const [error, setError] = useState<string | null>(null);

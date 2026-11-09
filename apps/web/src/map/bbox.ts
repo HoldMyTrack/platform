@@ -23,7 +23,7 @@ const MAX_FLY_ZOOM = 18;
  * rest is split evenly as padding on each side, which also keeps the track clear of the
  * docked header and the map's own controls.
  */
-const FLY_FILL = 0.75;
+export const FLY_FILL = 0.75;
 
 /** Long enough to read as a flight rather than a cut, short enough not to feel slow. */
 const FLY_DURATION_MS = 900;
@@ -54,6 +54,9 @@ export function unionBBox(boxes: readonly BBox[]): BBox | null {
   return [best[0], south, best[1], north];
 }
 
+/** Marks a camera move the app made, not the user: the list doesn't follow it (useAreaList.ts). */
+export const APP_FLIGHT = 'appFlight';
+
 export function flyToBBox(map: MapLibreMap, bbox: BBox): void {
   const bounds: LngLatBoundsLike = [
     [bbox[0], bbox[1]],
@@ -63,11 +66,11 @@ export function flyToBBox(map: MapLibreMap, bbox: BBox): void {
   const x = (clientWidth * (1 - FLY_FILL)) / 2;
   const y = (clientHeight * (1 - FLY_FILL)) / 2;
   const padding = { top: y, bottom: y, left: x, right: x };
-  map.fitBounds(bounds, { padding, maxZoom: MAX_FLY_ZOOM, duration: FLY_DURATION_MS });
+  map.fitBounds(bounds, { padding, maxZoom: MAX_FLY_ZOOM, duration: FLY_DURATION_MS }, { [APP_FLIGHT]: true });
 }
 
 /** For a bare point+zoom target (a country or world view) rather than an activity's bbox —
  *  MapView's zero-history fallback, docs/SPEC.md FR-4.5. */
 export function flyToView(map: MapLibreMap, view: ViewState): void {
-  map.flyTo({ center: [view.longitude, view.latitude], zoom: view.zoom, duration: FLY_DURATION_MS });
+  map.flyTo({ center: [view.longitude, view.latitude], zoom: view.zoom, duration: FLY_DURATION_MS }, { [APP_FLIGHT]: true });
 }

@@ -23,12 +23,11 @@ test('the same mode changes nothing', () => {
   assert.equal(reduce(start, { type: 'modeChanged', mode: 'normal' }), start);
 });
 
-test("viewing a day picks it as the range, without the range's own flight", () => {
+test('viewing a day sets Dates to it and flies there, keeping the selection', () => {
   const next = reduce(withSelection({ checked: new Set(['a']) }), { type: 'dayViewed', day: '2026-10-05' });
-  assert.deepEqual(next.range, { from: '2026-10-05', to: '2026-10-05' });
-  assert.equal(next.userPicked, true);
-  assert.equal(next.flyRequest, false);
-  assert.equal(next.selection.checked.size, 0);
+  assert.deepEqual(next.dates, { after: '2026-10-05', before: '2026-10-05' });
+  assert.equal(next.flyRequest, true);
+  assert.deepEqual([...next.selection.checked], ['a']);
 });
 
 test('removed activities leave the selection; an unrelated removal keeps the state', () => {

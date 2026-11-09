@@ -1,5 +1,6 @@
 {
   "rule": "rangeShift",
+  "clients": ["android", "ios"],
   "description": "Where the date slider's range-shift buttons move a selection, counted in activity-days. Input: days (the loaded activity-days, ascending), hasEarlier, range, dir (-1 or 1). Expected: the shifted range, null when there is nothing further that way, or \"load\" when the days it needs are older than what is loaded.",
   "cases": [
     { "name": "left moves the same number of activity-days, ending just before the old start", "input": { "days": ["2026-09-01", "2026-09-03", "2026-09-06", "2026-09-07", "2026-09-08", "2026-09-09"], "hasEarlier": false, "range": { "from": "2026-09-08", "to": "2026-09-09" }, "dir": -1 }, "expected": { "from": "2026-09-06", "to": "2026-09-07" } },

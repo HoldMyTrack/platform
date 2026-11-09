@@ -1,0 +1,43 @@
+{
+  "rule": "openingView",
+  "clients": ["web"],
+  "description": "The web's opening camera (docs/SPEC.md FR-4.5): zoom 12, centred on the newest five tracks' bounds if they fit the viewport there with flyToBBox's 75% fill, else the newest four, down to the newest alone, which is centred on even when it doesn't fit; null with no tracks. Boxes are [west, south, east, north], newest first; the centre is [lon, lat], longitude within -180..180, latitude at the Web Mercator middle.",
+  "tolerance": 1e-06,
+  "cases": [
+    {
+      "name": "five that fit",
+      "input": {"boxes": [[8.3, 47.04, 8.32, 47.05], [8.31, 47.03, 8.33, 47.05], [8.29, 47.05, 8.31, 47.06], [8.32, 47.04, 8.34, 47.06], [8.3, 47.02, 8.31, 47.03]], "viewport": {"width": 1200, "height": 800}},
+      "expected": {"center": [8.315, 47.0400037485], "zoom": 12}
+    },
+    {
+      "name": "the fifth too far leaves four",
+      "input": {"boxes": [[8.3, 47.04, 8.32, 47.05], [8.31, 47.03, 8.33, 47.05], [8.29, 47.05, 8.31, 47.06], [8.32, 47.04, 8.34, 47.06], [9.0, 47.0, 9.02, 47.02]], "viewport": {"width": 1200, "height": 800}},
+      "expected": {"center": [8.315, 47.0450021089], "zoom": 12}
+    },
+    {
+      "name": "a narrow screen fits fewer",
+      "input": {"boxes": [[8.3, 47.04, 8.32, 47.05], [8.31, 47.03, 8.33, 47.05], [8.29, 47.05, 8.31, 47.06], [8.32, 47.04, 8.34, 47.06]], "viewport": {"width": 360, "height": 640}},
+      "expected": {"center": [8.31, 47.0450021089], "zoom": 12}
+    },
+    {
+      "name": "the newest alone when the second is far",
+      "input": {"boxes": [[8.3, 47.04, 8.31, 47.05], [10, 47, 10.01, 47.01]], "viewport": {"width": 1200, "height": 800}},
+      "expected": {"center": [8.305, 47.0450002343], "zoom": 12}
+    },
+    {
+      "name": "the newest too big alone is still the centre",
+      "input": {"boxes": [[8.0, 47.0, 8.5, 47.3], [8.3, 47.04, 8.32, 47.05], [8.31, 47.03, 8.33, 47.05], [8.29, 47.05, 8.31, 47.06], [8.32, 47.04, 8.34, 47.06]], "viewport": {"width": 1200, "height": 800}},
+      "expected": {"center": [8.25, 47.1502116684], "zoom": 12}
+    },
+    {
+      "name": "across the antimeridian",
+      "input": {"boxes": [[179.98, -17.01, 179.99, -17.0], [-179.99, -17.01, -179.98, -17.0]], "viewport": {"width": 1200, "height": 800}},
+      "expected": {"center": [-180, -17.0050000667], "zoom": 12}
+    },
+    {
+      "name": "no tracks",
+      "input": {"boxes": [], "viewport": {"width": 1200, "height": 800}},
+      "expected": null
+    }
+  ]
+}

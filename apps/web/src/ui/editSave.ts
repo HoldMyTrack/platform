@@ -1,4 +1,4 @@
-import type { Activity } from '../api';
+import type { ActivityDetail } from '../api';
 import type { MessageKey } from '../i18n/en';
 import { MAX_ACTIVITY_DESCRIPTION_LEN, MAX_ACTIVITY_NAME_LEN, MAX_ACTIVITY_TYPE_LEN, MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
 import { waitingPhotos, type PhotoDraft } from './photoDraft.ts';
@@ -19,7 +19,7 @@ export interface ActivityFields {
  * ("Mixed types") keeps each activity's own type too.
  */
 export function fieldWrites(
-  activities: readonly Pick<Activity, 'id' | 'activityType' | 'name' | 'description'>[],
+  activities: readonly Pick<ActivityDetail, 'id' | 'activityType' | 'name' | 'description'>[],
   single: boolean,
   type: string,
   name: string,

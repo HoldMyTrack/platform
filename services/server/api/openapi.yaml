@@ -75,6 +75,8 @@ paths:
     $ref: "paths/activities.yaml#/activity_types"
   /activities/upload:
     $ref: "paths/activities.yaml#/activities_upload"
+  /activities/area:
+    $ref: "paths/activities.yaml#/activities_area"
   /activities/{id}:
     $ref: "paths/activities.yaml#/activities_id"
   /activities/overlaps:

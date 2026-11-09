@@ -1322,6 +1322,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/activities/area": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** The newest activities whose track crosses a map view, the web's list and the set its map draws */
+        get: {
+            parameters: {
+                query?: {
+                    /** @description Local start date, inclusive. */
+                    from?: components["parameters"]["FilterFrom"];
+                    /** @description Local start date, inclusive. */
+                    to?: components["parameters"]["FilterTo"];
+                    /** @description The view, west,south,east,north in degrees; west may be greater than east across the antimeridian. Absent, the newest of the whole history. */
+                    bbox?: string;
+                    /** @description The newest this many at most; 1,000 when absent. */
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The activities, slim */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            activities: components["schemas"]["AreaActivityRow"][];
+                            /** @description Every type the rows use, once each. */
+                            types: components["schemas"]["ActivityTypes"];
+                            /** @description With `bbox`, how many activities the area holds; more than the rows when they were cut at the limit. */
+                            total?: number;
+                        };
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/activities/{id}": {
         parameters: {
             query?: never;
@@ -1331,7 +1385,37 @@ export interface paths {
             };
             cookie?: never;
         };
-        get?: never;
+        /** One activity in full, as a one-row list */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: components["parameters"]["ActivityID"];
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The activity */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            activities: [
+                                components["schemas"]["ActivityRow"]
+                            ];
+                            types: components["schemas"]["ActivityTypes"];
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+                404: components["responses"]["Error"];
+            };
+        };
         put?: never;
         post?: never;
         /** Delete an activity, its photos and its stored file */
@@ -3808,6 +3892,31 @@ export interface components {
             /** @description The file's SHA-256, what GET /uploads/{external_id} takes. */
             external_id: string;
             filename: string;
+        };
+        /** @description An activity as a list row shows it; GET /activities/{id} has the rest. */
+        AreaActivityRow: {
+            /** Format: uuid */
+            id: string;
+            /** Format: date-time */
+            started_at: string;
+            timezone: string;
+            activity_type: string;
+            name: string | null;
+            distance_meters: number | null;
+            moving_seconds: number | null;
+            bbox: [
+                number,
+                number,
+                number,
+                number
+            ] | null;
+            pending: boolean;
+            private: boolean;
+            stories: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            }[];
         };
         ActivityStatsBlock: {
             count: number;

@@ -1,0 +1,27 @@
+{
+  "rule": "dateFilterLabel",
+  "clients": ["web"],
+  "description": "What the web's Dates button says, before wording (docs/SPEC.md FR-5.20): all time with no end set, else both ends or the one set.",
+  "cases": [
+    {
+      "name": "nothing set",
+      "input": {"after": null, "before": null},
+      "expected": {"kind": "all"}
+    },
+    {
+      "name": "both",
+      "input": {"after": "2026-06-03", "before": "2026-06-10"},
+      "expected": {"kind": "between", "after": "2026-06-03", "before": "2026-06-10"}
+    },
+    {
+      "name": "after only",
+      "input": {"after": "2026-06-03", "before": null},
+      "expected": {"kind": "after", "after": "2026-06-03"}
+    },
+    {
+      "name": "before only",
+      "input": {"after": null, "before": "2026-06-10"},
+      "expected": {"kind": "before", "before": "2026-06-10"}
+    }
+  ]
+}

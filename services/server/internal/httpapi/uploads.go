@@ -64,7 +64,7 @@ type uploadsResponse struct {
 // not the keyset pagination §4.7's histogram uses: unlike the activity list, an upload log
 // only grows, and a caller wants "page 3", not "everything since some cursor."
 // The `$2::text[] IS NULL OR ...` treatment is §4.3's own optional-filter pattern
-// (activities.go's listActivitiesQuery) — an absent/nil sources filter means "every source",
+// (activity_list.go's listActivitiesQuery) — an absent/nil sources filter means "every source",
 // not "no rows". `source` is what ROADMAP.md's Files/Sync tab split filters this by client-side.
 const uploadsCountQuery = `
 SELECT COUNT(*) FROM jobs
