@@ -14,6 +14,8 @@ public struct LayersDocument: Equatable, Sendable {
         /// By id, as the document gives them; a vector source's `tiles` is a path on the API.
         public let sources: [String: JSONValue]
         public let layers: [JSONValue]
+        /// By entry, the color the Layers menu or a card shows for it.
+        public let legend: [String: String]
     }
 
     /// A level of detail and the zoom it holds below; the last holds at every zoom past it.
@@ -53,7 +55,8 @@ public struct LayersDocument: Equatable, Sendable {
                 placement: g["placement"]?.string == "top" ? .top : .beneathLabels,
                 lifts: g["lifts"]?.array?.compactMap(\.string) ?? [],
                 sources: g["sources"]?.object ?? [:],
-                layers: layers
+                layers: layers,
+                legend: (g["legend"]?.object ?? [:]).compactMapValues { $0["color"]?.string }
             ))
         }
         self.groups = parsed
@@ -94,6 +97,8 @@ public struct MapState: Equatable, Sendable {
     public var excludedGroups: Set<String> = []
     /// By source id, a query appended to its tiles: the tracks' date range.
     public var queries: [String: String] = [:]
+    /// By GeoJSON source id, its data: the pace bands. A source without starts empty.
+    public var geojson: [String: JSONValue] = [:]
 
     public init() {}
 }
@@ -247,7 +252,7 @@ public enum MapStyle {
             if let query = state.queries[id], !query.isEmpty { url += (url.contains("?") ? "&" : "?") + query }
             s["tiles"] = .array([.string(url)])
         } else if s["type"]?.string == "geojson", s["data"] == nil {
-            s["data"] = .object(["type": .string("FeatureCollection"), "features": .array([])])
+            s["data"] = state.geojson[id] ?? .object(["type": .string("FeatureCollection"), "features": .array([])])
         }
         return .object(s)
     }
@@ -279,7 +284,8 @@ public enum MapStyle {
 
     // MARK: Changes
 
-    /// One property of one layer to set on the loaded map; kind is `layout`, `paint` or `filter`.
+    /// One property of one layer to set on the loaded map; kind is `layout`, `paint` or `filter`,
+    /// or `data` for a GeoJSON source's data, layer then naming the source.
     public struct Change: Equatable, Sendable {
         public let layer: String
         public let kind: String
@@ -287,14 +293,23 @@ public enum MapStyle {
         public let value: JSONValue?
     }
 
-    /// What turns the loaded style old into new: nil when only a reload does (a source, or the
-    /// layers or their order, changed), else every property and filter to set, in layer order.
+    /// What turns the loaded style old into new: nil when only a reload does (a source other than
+    /// a GeoJSON source's data, or the layers or their order, changed), else each GeoJSON source's
+    /// new data, then every property and filter to set, in layer order.
     public static func changes(from old: JSONValue, to new: JSONValue) -> [Change]? {
-        guard old["sources"] == new["sources"],
+        guard let p = old["sources"]?.object, let q = new["sources"]?.object, Set(p.keys) == Set(q.keys),
               let a = old["layers"]?.array, let b = new["layers"]?.array,
               a.map({ $0["id"] }) == b.map({ $0["id"] })
         else { return nil }
         var out: [Change] = []
+        for id in p.keys.sorted() where p[id] != q[id] {
+            guard var before = p[id]?.object, var after = q[id]?.object, after["type"]?.string == "geojson" else { return nil }
+            let data = after["data"]
+            before["data"] = nil
+            after["data"] = nil
+            guard before == after else { return nil }
+            out.append(Change(layer: id, kind: "data", name: "data", value: data))
+        }
         for (before, after) in zip(a, b) where before != after {
             guard let id = after["id"]?.string else { continue }
             var keys = Set((before.object ?? [:]).keys).union((after.object ?? [:]).keys)

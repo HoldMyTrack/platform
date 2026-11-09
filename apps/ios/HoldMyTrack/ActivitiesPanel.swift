@@ -44,6 +44,10 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
     private let cardTitle = Controls.label("", font: Typeface.sans(DesignTokens.Text.xl, weight: DesignTokens.Weight.semibold), color: UIColor(resource: .ink))
     private let cardMeta = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     private let cardStats = Controls.label("", font: Typeface.sans(DesignTokens.Text.md), color: UIColor(resource: .ink))
+    /// The pace bands' legend, slowest first, while the map draws them.
+    private let cardBands = UIStackView()
+    private let bandSteps = UIStackView()
+    private var bandColors: [String]?
 
     private var rows: [ActivityRowCell.Row] = []
     private var format: PanelFormat
@@ -173,7 +177,19 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         top.alignment = .center
         let actions = UIStackView(arrangedSubviews: cardActions.all)
         actions.distribution = .equalSpacing
-        let column = Controls.column([top, cardStats, actions], spacing: DesignTokens.Space.s4)
+        let legend = Typeface.sans(DesignTokens.Text.xs, relativeTo: .caption2)
+        bandSteps.spacing = DesignTokens.Space.s2
+        bandSteps.distribution = .fillEqually
+        bandSteps.heightAnchor.constraint(equalToConstant: 6).isActive = true
+        let slower = Controls.label(String(localized: "Slower"), font: legend, color: UIColor(resource: .inkSecondary))
+        let faster = Controls.label(String(localized: "Faster"), font: legend, color: UIColor(resource: .inkSecondary))
+        for label in [slower, faster] { label.setContentHuggingPriority(.required, for: .horizontal) }
+        for v in [slower, bandSteps, faster] { cardBands.addArrangedSubview(v) }
+        cardBands.spacing = DesignTokens.Space.s8
+        cardBands.alignment = .center
+        cardBands.isHidden = true
+        cardBands.accessibilityIdentifier = "cardBands"
+        let column = Controls.column([top, cardStats, cardBands, actions], spacing: DesignTokens.Space.s4)
         column.translatesAutoresizingMaskIntoConstraints = false
         card.addSubview(column)
         NSLayoutConstraint.activate([
@@ -300,6 +316,21 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         case .pending: String(localized: "Can't delete while it's being processed")
         case .ready: ready
         }
+    }
+
+    /// The map draws the focused activity's pace bands in colors, slowest first, or none (nil).
+    func setBands(_ colors: [String]?) {
+        if let colors, colors != bandColors {
+            bandColors = colors
+            bandSteps.arrangedSubviews.forEach { $0.removeFromSuperview() }
+            for color in colors {
+                let step = UIView()
+                step.backgroundColor = CSSColor(color).map { UIColor(red: $0.red, green: $0.green, blue: $0.blue, alpha: $0.alpha) }
+                step.layer.cornerRadius = 3
+                bandSteps.addArrangedSubview(step)
+            }
+        }
+        cardBands.isHidden = colors?.isEmpty ?? true
     }
 
     private func renderCard() {

@@ -61,6 +61,14 @@ enum MapPatcher {
     /// Applies changes to style; false when one couldn't be, which only a reload settles.
     static func apply(_ changes: [MapStyle.Change], to style: MLNStyle) -> Bool {
         for change in changes {
+            if change.kind == "data" {
+                guard let source = style.source(withIdentifier: change.layer) as? MLNShapeSource,
+                      let data = change.value?.data,
+                      let shape = try? MLNShape(data: data, encoding: String.Encoding.utf8.rawValue)
+                else { return false }
+                source.shape = shape
+                continue
+            }
             guard let layer = style.layer(withIdentifier: change.layer) else { return false }
             switch (change.kind, change.name) {
             case ("filter", _):

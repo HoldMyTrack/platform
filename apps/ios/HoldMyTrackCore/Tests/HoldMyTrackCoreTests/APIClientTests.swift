@@ -201,6 +201,18 @@ struct APIClientTests {
         #expect(rows == [ActivityRow(id: "a1", startedAt: Date(timeIntervalSince1970: 1_793_730_993), bbox: [-81.5, 41.2, -81.4, 41.3], pending: false)])
     }
 
+    @Test func trackMetricsAreReadWithTheirBands() async throws {
+        let body: [String: Any] = ["activity_id": "a1",
+                                   "points": [["lon": 1.5, "lat": 2.5, "speed_mps": 3, "time_s": 0], ["lon": 1.6, "lat": 2.6, "speed_mps": 4, "time_s": 5]],
+                                   "bands": [["band": 2, "start": 0, "end": 1]]]
+        StubProtocol.answer = { request in
+            #expect(request.url?.path == "/v1/activities/a1/track-metrics")
+            return .init(body: self.json(body))
+        }
+        let metrics = try await client().trackMetrics("a1")
+        #expect(metrics == TrackMetrics(activityID: "a1", points: [.init(lon: 1.5, lat: 2.5), .init(lon: 1.6, lat: 2.6)], bands: [.init(band: 2, start: 0, end: 1)]))
+    }
+
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {
         var body = accountBody
         body["session_token"] = "t"

@@ -60,7 +60,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.7, FR-2.9), exce
 
 ### FR-2.7 Activities panel
 
-- The focused activity is drawn bold, not in pace bands.
 - No track editing, Private location editor, Spots or photos yet (`ROADMAP.md`, 7b.2–7b.4).
 - While any listed activity is Pending, a notice over the map says so.
 
