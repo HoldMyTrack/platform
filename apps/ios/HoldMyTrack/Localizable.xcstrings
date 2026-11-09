@@ -1,6 +1,17 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "%@ away" : {
+      "comment" : "Capture: the distance to the place.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Осталось %@"
+          }
+        }
+      }
+    },
     "%@ couldn't be read." : {
       "comment" : "Upload: a picked file couldn't be read; the placeholder is its name.",
       "localizations" : {
@@ -151,6 +162,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "%@–%@ %@"
+          }
+        }
+      }
+    },
+    "%lld ft" : {
+      "comment" : "Capture: a short distance in feet.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld фт"
+          }
+        }
+      }
+    },
+    "%lld m" : {
+      "comment" : "Capture: a short distance in metres.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld м"
           }
         }
       }
@@ -397,6 +430,28 @@
         }
       }
     },
+    "Capture" : {
+      "comment" : "Spot popup: starts capturing the place by going there.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Захватить"
+          }
+        }
+      }
+    },
+    "Capture needs precise location access. Turn on Precise Location for HoldMyTrack in Settings." : {
+      "comment" : "Capture: precise location was refused.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Для захвата нужен доступ к точному местоположению. Включите «Точная геопозиция» для HoldMyTrack в Настройках."
+          }
+        }
+      }
+    },
     "Captured %@" : {
       "comment" : "Spot popup: the date the account captured this place.",
       "localizations" : {
@@ -404,6 +459,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Захвачено %@"
+          }
+        }
+      }
+    },
+    "Captured!" : {
+      "comment" : "Capture: the place was captured.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Захвачено!"
           }
         }
       }
@@ -628,6 +694,17 @@
         }
       }
     },
+    "Couldn't load this place — retrying…" : {
+      "comment" : "Capture: the place's area didn't load.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить место — пробуем ещё раз…"
+          }
+        }
+      }
+    },
     "Couldn't reach HoldMyTrack. Check your connection and try again." : {
       "comment" : "The server didn't answer a session check.",
       "localizations" : {
@@ -635,6 +712,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось связаться с HoldMyTrack. Проверьте подключение и попробуйте ещё раз."
+          }
+        }
+      }
+    },
+    "Couldn't save — retrying…" : {
+      "comment" : "Capture: sending failed and is retried.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось сохранить — пробуем ещё раз…"
           }
         }
       }
@@ -1112,6 +1200,17 @@
         }
       }
     },
+    "Get into %@" : {
+      "comment" : "Capture: the place to walk into.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Доберитесь до: %@"
+          }
+        }
+      }
+    },
     "Heatmap" : {
       "comment" : "Map: the Heatmap mode.",
       "localizations" : {
@@ -1563,6 +1662,17 @@
         }
       }
     },
+    "Not quite inside yet — keep going" : {
+      "comment" : "Capture: the server saw the position outside the place.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вы ещё не совсем внутри — продолжайте"
+          }
+        }
+      }
+    },
     "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here." : {
       "comment" : "Map notice: the account has no activity with a track.",
       "localizations" : {
@@ -1992,6 +2102,28 @@
         }
       }
     },
+    "Saving…" : {
+      "comment" : "Capture: the capture is being sent.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сохраняем…"
+          }
+        }
+      }
+    },
+    "Seconds left: %lld" : {
+      "comment" : "Capture: how long is left to stay inside.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Осталось секунд: %lld"
+          }
+        }
+      }
+    },
     "Select" : {
       "comment" : "Activities panel: the select menu's button: All, None, Invert.",
       "localizations" : {
@@ -2241,6 +2373,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Скорость"
+          }
+        }
+      }
+    },
+    "Stay here" : {
+      "comment" : "Capture: the user is inside; the count runs.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Оставайтесь здесь"
+          }
+        }
+      }
+    },
+    "Stop" : {
+      "comment" : "Capture: ends capture.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Стоп"
           }
         }
       }
@@ -2641,6 +2795,17 @@
         }
       }
     },
+    "This place is no longer on the map" : {
+      "comment" : "Capture: the place was retired.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этого места больше нет на карте"
+          }
+        }
+      }
+    },
     "This version of the app is too old to use. Update it to keep using HoldMyTrack." : {
       "comment" : "Update screen: the server turns this build away.",
       "localizations" : {
@@ -2780,6 +2945,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Версия %@ (%lld), коммит %@"
+          }
+        }
+      }
+    },
+    "Waiting for an accurate GPS fix…" : {
+      "comment" : "Capture: no position accurate enough yet.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ждём точного сигнала GPS…"
           }
         }
       }

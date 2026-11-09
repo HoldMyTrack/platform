@@ -12,7 +12,7 @@ extension MapViewController {
 
     /// The picks, the captures and the switch into the style, and everything that follows them.
     func applySpots() {
-        Spots.apply(categories: spots.categories, captured: spots.captured, target: nil, to: &state)
+        Spots.apply(categories: spots.categories, captured: spots.captured, target: spots.target, to: &state)
         if let open = spotViews.popup.spot, !shownSpotCategories.contains(where: { $0.rawValue == open.category }) {
             spotViews.popup.close()
         }
@@ -27,6 +27,8 @@ extension MapViewController {
                 guard let self else { return }
                 if let at = self.spots.categories.firstIndex(of: category) {
                     self.spots.categories.remove(at: at)
+                    // Unticking the place's category ends its capture.
+                    if self.capturing.spot?.category == category.rawValue { self.capturing.stop() }
                 } else {
                     self.spots.categories = SpotCategory.allCases.filter { self.spots.categories.contains($0) || $0 == category }
                     self.state.showLayers = true
@@ -94,7 +96,7 @@ extension MapViewController {
             formatter.timeZone = TimeZone(identifier: account.timezone) ?? .current
             return formatter.string(from: date)
         }
-        spotViews.popup.show(spot, capturedOn: on)
+        spotViews.popup.show(spot, capturedOn: on, canCapture: !account.isDemo)
         placeSpotPopup()
     }
 
@@ -104,6 +106,66 @@ extension MapViewController {
         let point = mapView.convert(CLLocationCoordinate2D(latitude: spot.lat, longitude: spot.lon), toPointTo: view)
         spotViews.popup.place(at: point, top: chromeBottom)
     }
+
+    // MARK: Capture
+
+    /// What capture asks of the map.
+    func captureMap() -> CaptureController.Map {
+        CaptureController.Map(
+            target: { [weak self] id in self?.setCaptureTarget(id) },
+            guide: { [weak self] from, to in self?.setGuide(from, to) },
+            frame: { [weak self] box in self?.fit(box, animated: true) },
+            bearing: { [weak self] in self?.mapView.direction ?? 0 },
+            captured: { [weak self] id, date in
+                guard let self else { return }
+                self.spots.captured[id] = date
+                self.applySpots()
+            },
+            notice: { [weak self] text in self?.notice(.location, text) }
+        )
+    }
+
+    /// Capture aims at a place, or stops: the areas shade darker, and the position dot shows
+    /// with the phone's heading, as it was before once capture ends.
+    private func setCaptureTarget(_ id: Int?) {
+        spots.target = id
+        if id != nil {
+            spots.dotWasOn = mapView.showsUserLocation
+            mapView.showsUserLocation = true
+            mapView.showsUserHeadingIndicator = true
+        } else {
+            mapView.showsUserHeadingIndicator = false
+            if !spots.dotWasOn { mapView.showsUserLocation = false }
+        }
+        applySpots()
+    }
+
+    /// Capture's dashed line, from the user to the area's nearest point, the app's own layer under
+    /// the badges in the areas' color; a style load drops it with the rest (addGuide).
+    private func setGuide(_ from: GeoPoint?, _ to: GeoPoint?) {
+        if let from, let to {
+            spots.guide = MLNPolylineFeature(coordinates: [CLLocationCoordinate2D(latitude: from.lat, longitude: from.lon),
+                                                           CLLocationCoordinate2D(latitude: to.lat, longitude: to.lon)], count: 2)
+        } else {
+            spots.guide = nil
+        }
+        (mapView.style?.source(withIdentifier: Self.guideSource) as? MLNShapeSource)?.shape = spots.guide ?? MLNShapeCollectionFeature(shapes: [])
+    }
+
+    /// The guide's source and layer onto a style just loaded.
+    func addGuide(to style: MLNStyle) {
+        guard style.source(withIdentifier: Self.guideSource) == nil else { return }
+        let source = MLNShapeSource(identifier: Self.guideSource, shape: spots.guide ?? MLNShapeCollectionFeature(shapes: []))
+        style.addSource(source)
+        let line = MLNLineStyleLayer(identifier: Self.guideSource, source: source)
+        line.lineWidth = NSExpression(forConstantValue: 2.5)
+        line.lineDashPattern = NSExpression(forConstantValue: [1.5, 1.5])
+        line.lineCap = NSExpression(forConstantValue: "round")
+        line.lineColor = NSExpression(forConstantValue: Self.color(pair.flatMap { Spots.areaColor($0.layers) } ?? "#8a6d1f"))
+        if let below = style.layer(withIdentifier: Spots.inAreaLayer) { style.insertLayer(line, below: below) } else { style.addLayer(line) }
+    }
+
+    private static let guideSource = "spots-capture-guide"
 
     // MARK: Show in this area
 
@@ -190,6 +252,11 @@ struct SpotsState {
     var area = ShowInArea()
     /// Bumped per "Show in this area" request, so only the latest one's answer lands.
     var areaRequest = 0
+    /// The place capture aims at, and its guide line.
+    var target: Int?
+    var guide: MLNPolylineFeature?
+    /// Whether Find my location had the dot on before capture.
+    var dotWasOn = false
 }
 
 /// The popup and the "Show in this area" pill.

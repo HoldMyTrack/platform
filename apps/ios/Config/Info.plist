@@ -100,7 +100,12 @@
 	<key>NSCameraUsageDescription</key>
 	<string>HoldMyTrack uses the camera only when you take a photo for your avatar in Settings.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>HoldMyTrack shows where you are on the map when you tap Find my location.</string>
+	<string>HoldMyTrack shows where you are on the map when you tap Find my location, and checks you're inside a place you capture.</string>
+	<key>NSLocationTemporaryUsageDescriptionDictionary</key>
+	<dict>
+		<key>SpotCapture</key>
+		<string>Capturing a place counts only a precise position, so a place you walk past isn't captured.</string>
+	</dict>
 	<key>UIAppFonts</key>
 	<array>
 		<string>inter.ttf</string>

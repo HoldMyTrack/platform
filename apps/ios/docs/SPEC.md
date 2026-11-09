@@ -65,7 +65,8 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.9), except as be
 
 ### FR-2.8 Spots
 
-- No capture yet: a place's popup has no Capture (`ROADMAP.md`, 7b.3).
+- With only approximate location allowed, Capture asks through iOS's one-time prompt for precise location; refused, nothing starts.
+- Leaving the Map tab ends a capture: iOS has no Back.
 
 ### FR-2.9 The bottom bar
 

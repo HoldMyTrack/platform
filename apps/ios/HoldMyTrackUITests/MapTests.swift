@@ -57,16 +57,15 @@ final class MapTests: XCTestCase {
         app.buttons["demo"].tap()
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let layers = app.buttons["layers"]
+        app.setPlaygrounds(false)
         let before = layers.label
-        layers.tap()
-        app.buttons["Playgrounds"].tap()
+        app.setPlaygrounds(true)
         XCTAssertNotEqual(layers.label, before, "the badge counts the pick")
         let area = app.buttons["showInArea"]
         XCTAssertTrue(area.waitForExistence(timeout: 10))
         area.tap()
         XCTAssertTrue(app.buttons.matching(NSPredicate(format: "identifier == 'showInArea' AND label CONTAINS ':'")).firstMatch.waitForExistence(timeout: 10))
-        layers.tap()
-        app.buttons["Playgrounds"].tap()
+        app.setPlaygrounds(false)
         XCTAssertTrue(area.waitForNonExistence(timeout: 5))
         XCTAssertEqual(layers.label, before)
     }
@@ -82,5 +81,23 @@ final class MapTests: XCTestCase {
     private func waitForChange(of element: XCUIElement, from old: String) -> Bool {
         let changed = NSPredicate(format: "label != %@", old)
         return XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: changed, object: element)], timeout: 5) == .completed
+    }
+}
+
+
+extension XCUIApplication {
+    /// Ticks or unticks Playgrounds in the Layers menu, whatever an earlier test left: the pick is
+    /// kept on the phone.
+    @MainActor
+    func setPlaygrounds(_ on: Bool) {
+        buttons["layers"].tap()
+        let item = buttons["Playgrounds"]
+        XCTAssertTrue(item.waitForExistence(timeout: 5))
+        if item.isSelected == on {
+            // The menu closes on a tap outside it.
+            otherElements["map"].coordinate(withNormalizedOffset: CGVector(dx: 0.1, dy: 0.6)).tap()
+        } else {
+            item.tap()
+        }
     }
 }

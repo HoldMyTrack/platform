@@ -15,6 +15,9 @@ final class SpotPopupView: UIView {
     private let captured = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .ink))
     private let copy = UIButton(type: .system)
     private let wikipedia = UIButton(type: .system)
+    /// Starts capture on the place: offered on one not yet captured, and never to the demo.
+    let capture = Controls.primaryButton(String(localized: "Capture"), id: "spotCapture")
+    var onCapture: ((Spot) -> Void)?
     private var copied: Task<Void, Never>?
     /// The description and inscription, scrolling past six lines; hidden with neither.
     private let texts = UIScrollView()
@@ -84,16 +87,21 @@ final class SpotPopupView: UIView {
             UIApplication.shared.open(url)
         }, for: .primaryActionTriggered)
         let actions = UIStackView(arrangedSubviews: [copy, wikipedia, UIView()])
+        capture.addAction(UIAction { [weak self] _ in
+            guard let self, let spot = self.spot else { return }
+            self.close()
+            self.onCapture?(spot)
+        }, for: .primaryActionTriggered)
 
-        let content = Controls.column([top, texts, address, captured, actions], spacing: DesignTokens.Space.s6)
+        let content = Controls.column([top, texts, address, captured, actions, capture], spacing: DesignTokens.Space.s6)
         content.translatesAutoresizingMaskIntoConstraints = false
         addSubview(content)
         let m = DesignTokens.Space.s12
         NSLayoutConstraint.activate([
             content.topAnchor.constraint(equalTo: topAnchor, constant: m),
-            content.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -DesignTokens.Space.s4),
+            content.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -DesignTokens.Space.s12),
             content.leadingAnchor.constraint(equalTo: leadingAnchor, constant: m),
-            content.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -DesignTokens.Space.s4),
+            content.trailingAnchor.constraint(equalTo: trailingAnchor, constant: -DesignTokens.Space.s12),
             widthAnchor.constraint(equalToConstant: Self.width),
         ])
     }
@@ -102,7 +110,7 @@ final class SpotPopupView: UIView {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     /// capturedOn: the account's capture of it, already formatted, or nil.
-    func show(_ next: Spot, capturedOn: String?) {
+    func show(_ next: Spot, capturedOn: String?, canCapture: Bool) {
         spot = next
         let category = SpotCategory(rawValue: next.category).map(Self.label) ?? next.category
         title.text = next.name ?? category
@@ -119,6 +127,7 @@ final class SpotPopupView: UIView {
         set(captured, capturedOn.map { String(localized: "Captured \($0)", comment: "Spot popup: the date the account captured this place.") })
         wikipedia.isHidden = next.wikipedia.flatMap(Spots.wikipediaURL) == nil
         wikipedia.updateConfiguration()
+        capture.isHidden = capturedOn != nil || !canCapture
         copied?.cancel()
         renderCopy(copied: false)
         isHidden = false
