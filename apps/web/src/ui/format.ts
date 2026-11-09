@@ -56,20 +56,32 @@ export function metersToFeet(meters: number): number {
 export function formatStartedAt(iso: string, timeZone: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString(lang, {
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: activityTimeZone(timeZone),
-  });
+  const zone = activityTimeZone(timeZone);
+  return cached(`started|${zone ?? ''}`, () =>
+    new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', ...(zone !== undefined && { timeZone: zone }) }),
+  ).format(d);
+}
+
+/**
+ * Formatters by what they format: setting one up is slow (`toLocaleString` with options builds a
+ * new one on every call), and a list of 1,000 rows formats a date and two numbers in each, again
+ * on every reload of the area.
+ */
+const formatters = new Map<string, Intl.DateTimeFormat | Intl.NumberFormat>();
+function cached<F extends Intl.DateTimeFormat | Intl.NumberFormat>(key: string, make: () => F): F {
+  let f = formatters.get(key) as F | undefined;
+  if (f === undefined) {
+    f = make();
+    formatters.set(key, f);
+  }
+  return f;
 }
 
 /** The time of day of `ms` (epoch milliseconds) in `timeZone`, an activity's own: the times of
  *  its points and photos in the Edit window. */
 export function formatClockTime(ms: number, timeZone: string): string {
-  return new Date(ms).toLocaleTimeString(lang, { hour: '2-digit', minute: '2-digit', timeZone: activityTimeZone(timeZone) });
+  const zone = activityTimeZone(timeZone);
+  return cached(`clock|${zone ?? ''}`, () => new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit', ...(zone !== undefined && { timeZone: zone }) })).format(ms);
 }
 
 /** `distanceValue` returns just the number (no unit suffix) — for the one place
@@ -81,7 +93,10 @@ export function distanceValue(meters: number, system: UnitSystem): string {
 }
 
 function written(parts: DistanceParts): string {
-  return parts.value.toLocaleString(lang, { minimumFractionDigits: parts.minDecimals, maximumFractionDigits: parts.maxDecimals, useGrouping: parts.grouping });
+  const { minDecimals, maxDecimals, grouping } = parts;
+  return cached(`number|${minDecimals}|${maxDecimals}|${grouping}`, () =>
+    new Intl.NumberFormat(lang, { minimumFractionDigits: minDecimals, maximumFractionDigits: maxDecimals, useGrouping: grouping }),
+  ).format(parts.value);
 }
 
 function withUnit(parts: DistanceParts): string {

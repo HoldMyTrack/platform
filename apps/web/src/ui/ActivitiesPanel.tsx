@@ -4,7 +4,8 @@ import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { Activity, Story } from '../api';
 import { ActivitiesToolbar } from './ActivitiesToolbar';
 import { ActivityFilters, type DatesProps } from './ActivityFilters';
-import { ActivityRow, useScrollFocusedRow } from './ActivityRow';
+import { ActivityRow } from './ActivityRow';
+import { listWindow, scrollTopFor } from './listWindow';
 import { FirstRunPanel } from './FirstRunPanel';
 import { PrivateLocationsPanel } from './PrivateLocationsPanel';
 import { StoriesTab } from './StoriesTab';
@@ -197,12 +198,37 @@ export function ActivitiesPanel({
   outOfReach,
   firstRun = false,
 }: ActivitiesPanelProps) {
-  // The row list, for useScrollFocusedRow (ActivityRow.tsx): a newly focused row scrolls into view.
+  // The row list renders only the rows in view (listWindow.ts): up to 1,000 again on every reload
+  // of the area stalled the page. All rows are one line high, measured from the first drawn.
   const listRef = useRef<HTMLUListElement>(null);
-  useScrollFocusedRow(listRef, focusedId);
+  const [scroll, setScroll] = useState({ top: 0, height: 600 });
+  const [rowHeight, setRowHeight] = useState(0);
+  useEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const read = () => setScroll({ top: list.scrollTop, height: list.clientHeight });
+    read();
+    const observer = new ResizeObserver(read);
+    observer.observe(list);
+    return () => observer.disconnect();
+  }, [tab, firstRun]);
+  useEffect(() => {
+    const row = listRef.current?.querySelector<HTMLElement>('li[data-activity-id]');
+    if (row && row.offsetHeight !== rowHeight) setRowHeight(row.offsetHeight);
+  });
+  const { start, end } = listWindow(outOfReach ? 0 : activities.length, rowHeight, scroll.top, scroll.height);
+  // A newly focused row scrolls into view, by its place in the list: it may not be drawn yet.
+  useEffect(() => {
+    const list = listRef.current;
+    if (focusedId === null || !list || rowHeight === 0) return;
+    const index = activities.findIndex((a) => a.id === focusedId);
+    if (index >= 0) list.scrollTo({ top: scrollTopFor(index, activities.length, rowHeight, list.clientHeight), behavior: 'smooth' });
+    // Only a new focus scrolls; the list reloading under a focus leaves the scroll where it is.
+  }, [focusedId]);
 
   // The tab strip scrolls sideways when the tabs don't fit (index.css); the selected tab is
-  // brought into view, scrolling the strip alone, for the reason useScrollFocusedRow gives.
+  // brought into view, scrolling the strip alone, for the reason ActivityRow.tsx's
+  // useScrollFocusedRow gives.
   const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const strip = tabsRef.current;
@@ -432,12 +458,14 @@ export function ActivitiesPanel({
             className="activities-panel__list"
             data-testid="activities-list"
             ref={listRef}
+            onScroll={(e) => setScroll({ top: e.currentTarget.scrollTop, height: e.currentTarget.clientHeight })}
             onClick={(e) => {
               const target = e.target as HTMLElement;
-              if (target === e.currentTarget || target.classList.contains('activities-panel__note')) onClearFocus();
+              if (target === e.currentTarget || target.classList.contains('activities-panel__note') || target.classList.contains('activities-panel__spacer')) onClearFocus();
             }}
           >
-            {!outOfReach && activities.map((activity) => (
+            {start > 0 && <li className="activities-panel__spacer" style={{ height: start * rowHeight }} aria-hidden="true" />}
+            {!outOfReach && activities.slice(start, end).map((activity) => (
               <ActivityRow
                 key={activity.id}
                 activity={activity}
@@ -455,6 +483,9 @@ export function ActivitiesPanel({
                 onHover={onHoverActivity}
               />
             ))}
+            {!outOfReach && end < activities.length && (
+              <li className="activities-panel__spacer" style={{ height: (activities.length - end) * rowHeight }} aria-hidden="true" />
+            )}
             {loading && !outOfReach && <li className="activities-panel__note">{t('common.loading')}</li>}
             {error && !loading && (
               <li className="activities-panel__note activities-panel__note--error">{error}</li>
