@@ -314,6 +314,8 @@ extension MapViewController {
     /// A track within TrackTap.radius of the finger: checked while selecting, else focused,
     /// without opening the sheet. Empty map clears the focus.
     @objc private func tappedMap(_ tap: UITapGestureRecognizer) {
+        // A place's badge first, in every mode; a tap elsewhere closes its popup.
+        if tapSpot(at: tap.location(in: mapView)) { return }
         guard state.mode == .normal, !sheet.isHidden || panelTab == .stories else { return }
         let point = tap.location(in: mapView)
         let r = TrackTap.radius

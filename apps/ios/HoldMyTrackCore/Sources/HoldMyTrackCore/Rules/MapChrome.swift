@@ -36,16 +36,16 @@ public enum MapChrome {
         }
     }
 
-    /// The Layers button: filled while picks show, with a badge counting Roads and the paths
-    /// picked, greyed while Show layers hides them.
+    /// The Layers button: filled while picks show, with a badge counting Roads, the paths and the
+    /// places picked, greyed while Show layers hides them.
     public struct LayersBadge: Equatable, Sendable {
         public let count: Int
         public let filled: Bool
         public let greyed: Bool
     }
 
-    public static func layersBadge(_ state: MapState) -> LayersBadge {
-        let count = (state.roads ? 1 : 0) + state.toggles.filter { $0.key != "spots" && $0.value }.count
+    public static func layersBadge(_ state: MapState, places: Int) -> LayersBadge {
+        let count = (state.roads ? 1 : 0) + state.toggles.filter { $0.key != Spots.group && $0.value }.count + places
         return LayersBadge(count: count, filled: state.showLayers && count > 0, greyed: !state.showLayers)
     }
 }

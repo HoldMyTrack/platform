@@ -51,6 +51,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var editOpen = false
     /// The focused activity's pace bands (MapViewController+Bands).
     var bands = BandsState()
+    /// Points of interest (MapViewController+Spots).
+    var spots = SpotsState(categories: MapPreferences.spots())
+    let spotViews = SpotViews()
     /// View on map's activity, focused when the next list holds it.
     var focusWhenListed: String?
     /// The tab bar's Stories count: copies others sent, waiting.
@@ -81,8 +84,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         self.account = account
         self.documents = MapDocuments(api: flow.api, account: AccountKey.of(email: account.email, isDemo: account.isDemo))
         super.init(nibName: nil, bundle: nil)
-        state.excludedGroups = ["spots"] // drawn with the panel's work (ROADMAP.md, 7b.3)
         MapPreferences.restore(into: &state)
+        Spots.apply(categories: spots.categories, captured: [:], target: nil, to: &state)
         pickedMode = state.mode
     }
 
@@ -120,6 +123,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         super.viewDidAppear(animated)
         checkCoverage()
         countSatelliteWait(onScreen: true)
+        loadCaptures()
         frameOnce()
         reloadDays()
         loadList()
@@ -157,7 +161,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     private func show(_ pair: MapDocuments.Pair) {
         self.pair = pair
         render()
+        if styleLoaded, let style = mapView.style { addBadgeImages(to: style) }
         updateLayersMenu()
+        renderInArea()
         countSatelliteWait(onScreen: viewIfLoaded?.window != nil)
         renderLevel()
     }
@@ -185,11 +191,22 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     func mapView(_ mapView: MLNMapView, regionDidChangeAnimated animated: Bool) {
         Self.lastCenter = mapView.centerCoordinate
         renderLevel()
+        spots.area.cameraMoved()
+        renderInArea()
+        placeSpotPopup()
+    }
+
+    func mapViewRegionIsChanging(_ mapView: MLNMapView) {
+        placeSpotPopup()
     }
 
     func mapView(_ mapView: MLNMapView, didFinishLoading style: MLNStyle) {
         styleLoaded = true
+        addBadgeImages(to: style)
     }
+
+    /// How far down the controls over the map reach: a popup goes under its place above it.
+    var chromeBottom: CGFloat { modesRow.convert(modesRow.bounds, to: view).maxY + DesignTokens.Space.s8 }
 
     /// The tracks' lines a tap is asked about (TrackTap).
     var trackLayers: Set<String> { pair.map { TrackTap.layerIDs($0.layers) } ?? [] }
@@ -228,7 +245,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                 guard let self else { return }
                 change(&self.state)
                 MapPreferences.save(self.state, mode: self.pickedMode)
-                self.render()
+                self.applySpots()
                 self.updateLayersMenu()
                 self.countSatelliteWait(onScreen: self.viewIfLoaded?.window != nil)
             }
@@ -247,6 +264,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             toggle(title, id, state.toggles[id] == true) { $0.toggles[id] = !($0.toggles[id] ?? false) }
         }
         items.append(UIMenu(title: String(localized: "Paths"), options: .displayInline, children: pathItems))
+        items.append(spotsMenu { [weak self] in self?.updateLayersMenu() })
         layersButton.menu = UIMenu(title: String(localized: "Layers"), children: items)
         renderLayersButton(layersButton)
     }
@@ -455,7 +473,11 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         let level = UIStackView(arrangedSubviews: [chrome.level])
         level.axis = .vertical
         level.alignment = .center
-        let column = Controls.column([modesRow, level, notices], spacing: DesignTokens.Space.s8)
+        let inArea = UIStackView(arrangedSubviews: [spotViews.inArea])
+        inArea.axis = .vertical
+        inArea.alignment = .center
+        spotViews.inArea.addAction(UIAction { [weak self] _ in self?.loadInArea() }, for: .primaryActionTriggered)
+        let column = Controls.column([modesRow, inArea, level, notices], spacing: DesignTokens.Space.s8)
         chrome.badge.translatesAutoresizingMaskIntoConstraints = false
         layersButton.addSubview(chrome.badge)
         NSLayoutConstraint.activate([
@@ -466,6 +488,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         ])
         bindSlider()
 
+        view.insertSubview(spotViews.popup, aboveSubview: mapView)
         for v in [column, locateButton, chrome.chip, sheet] {
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
@@ -518,6 +541,16 @@ enum MapPreferences {
         defaults.set(state.satellite, forKey: "map.satellite")
         defaults.set(state.roads, forKey: "map.roads")
         defaults.set(state.showLayers, forKey: "map.showLayers")
-        defaults.set(state.toggles, forKey: "map.toggles")
+        defaults.set(state.toggles.filter { $0.key != Spots.group }, forKey: "map.toggles")
+    }
+
+    /// The Points of interest picked, every one off until ticked.
+    static func spots() -> [SpotCategory] {
+        let saved = Set(defaults.stringArray(forKey: "map.spots") ?? [])
+        return SpotCategory.allCases.filter { saved.contains($0.rawValue) }
+    }
+
+    static func saveSpots(_ categories: [SpotCategory]) {
+        defaults.set(categories.map(\.rawValue), forKey: "map.spots")
     }
 }

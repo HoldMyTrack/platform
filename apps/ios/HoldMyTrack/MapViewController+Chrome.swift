@@ -29,7 +29,7 @@ extension MapViewController {
     /// The Layers button filled while picks show, with their count on its corner, greyed while
     /// Show layers hides them.
     func renderLayersButton(_ button: UIButton) {
-        let badge = MapChrome.layersBadge(state)
+        let badge = MapChrome.layersBadge(state, places: spots.categories.count)
         button.configuration?.baseBackgroundColor = UIColor(resource: badge.filled ? .ink : .surface)
         button.configuration?.baseForegroundColor = UIColor(resource: badge.filled ? .surface : .ink)
         chrome.badge.text = " \(badge.count) "

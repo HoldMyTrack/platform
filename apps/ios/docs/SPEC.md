@@ -47,12 +47,12 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 
 ## 4. FR-2 — Map Visualization
 
-As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.7, FR-2.9), except as below.
+As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.9), except as below.
 
 ### FR-2.2 Three map modes: Normal, Fog of War, Heatmap
 
 - Stories is Normal mode's, as on Android; the Sync tab is a page with no map.
-- The Layers menu has no Spot categories yet (`ROADMAP.md`, 7b.3), and there is no recording to hide the modes.
+- There is no recording to hide the modes.
 
 ### FR-2.3 Initial camera framing
 
@@ -60,8 +60,12 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.7, FR-2.9), exce
 
 ### FR-2.7 Activities panel
 
-- No track editing, Private location editor, Spots or photos yet (`ROADMAP.md`, 7b.2–7b.4).
+- No track editing, Private location editor or photos yet (`ROADMAP.md`, 7b.2, 7b.4).
 - While any listed activity is Pending, a notice over the map says so.
+
+### FR-2.8 Spots
+
+- No capture yet: a place's popup has no Capture (`ROADMAP.md`, 7b.3).
 
 ### FR-2.9 The bottom bar
 

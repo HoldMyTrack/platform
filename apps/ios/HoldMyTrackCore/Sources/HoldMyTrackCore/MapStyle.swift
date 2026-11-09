@@ -93,8 +93,6 @@ public struct MapState: Equatable, Sendable {
     public var vars: [String: JSONValue] = [:]
     /// Groups drawn hidden: the track editor hides the tracks.
     public var hiddenGroups: Set<String> = []
-    /// Groups left out of the style altogether, which the app doesn't draw yet.
-    public var excludedGroups: Set<String> = []
     /// By source id, a query appended to its tiles: the tracks' date range.
     public var queries: [String: String] = [:]
     /// By GeoJSON source id, its data: the pace bands. A source without starts empty.
@@ -132,7 +130,7 @@ public enum MapStyle {
     /// tiles on apiBase, and state applied.
     public static func compose(style: JSONValue, document: LayersDocument, state: MapState, apiBase: URL) -> JSONValue {
         guard var root = style.object, var sources = root["sources"]?.object, let base = root["layers"]?.array else { return style }
-        let groups = document.groups.filter { !state.excludedGroups.contains($0.id) }
+        let groups = document.groups
 
         var layers: [String: JSONValue] = [:]
         var ids: [String] = []
