@@ -17,7 +17,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Made in viewDidLoad at the view's size: started at a zero frame, MapLibre keeps drawing
     /// into a quarter of the screen after it grows.
     var mapView: MLNMapView!
-    private let modes = UISegmentedControl()
+    let modes = UISegmentedControl()
     private let layersButton = UIButton(type: .system)
     private let locateButton = UIButton(type: .system)
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
@@ -79,6 +79,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         super.init(nibName: nil, bundle: nil)
         state.excludedGroups = ["spots"] // drawn with the panel's work (ROADMAP.md, 7b.3)
         MapPreferences.restore(into: &state)
+        pickedMode = state.mode
     }
 
     @available(*, unavailable)
@@ -186,9 +187,25 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Modes and the Layers menu
 
-    private func setMode(_ mode: MapMode) {
-        state.mode = mode
-        MapPreferences.save(state)
+    /// The mode picked on the Map tab, which state.mode shows there and comes back to after
+    /// Stories (TabMode).
+    var pickedMode = MapMode.normal
+
+    /// The user's pick, shown at once on the Map tab.
+    func pickMode(_ mode: MapMode) {
+        pickedMode = mode
+        MapPreferences.save(state, mode: pickedMode)
+        applyTabMode()
+    }
+
+    /// The mode for the tab showing, and the toggle, which is only the Map tab's.
+    func applyTabMode() {
+        let onMap = panelTab == .activities
+        modes.isHidden = !TabMode.toggleShown(onMapTab: onMap)
+        let shown = TabMode.shown(picked: pickedMode, onMapTab: onMap)
+        modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: pickedMode) ?? 0
+        guard shown != state.mode else { return }
+        state.mode = shown
         render()
         checkCoverage()
         renderPanel()
@@ -200,7 +217,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             UIAction(title: title, state: on ? .on : .off) { [weak self] _ in
                 guard let self else { return }
                 change(&self.state)
-                MapPreferences.save(self.state)
+                MapPreferences.save(self.state, mode: self.pickedMode)
                 self.render()
                 self.updateLayersMenu()
             }
@@ -375,7 +392,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             case .fog: String(localized: "Fog")
             case .heatmap: String(localized: "Heatmap")
             }
-            modes.insertSegment(action: UIAction(title: title) { [weak self] _ in self?.setMode(mode) }, at: index, animated: false)
+            modes.insertSegment(action: UIAction(title: title) { [weak self] _ in self?.pickMode(mode) }, at: index, animated: false)
         }
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: state.mode) ?? 0
         modes.backgroundColor = UIColor(resource: .surface)
@@ -448,8 +465,9 @@ enum MapPreferences {
         state.toggles = defaults.dictionary(forKey: "map.toggles") as? [String: Bool] ?? [:]
     }
 
-    static func save(_ state: MapState) {
-        mode = state.mode
+    /// mode is the Map tab's pick, which the map may not be showing on another tab.
+    static func save(_ state: MapState, mode picked: MapMode) {
+        mode = picked
         defaults.set(state.satellite, forKey: "map.satellite")
         defaults.set(state.roads, forKey: "map.roads")
         defaults.set(state.showLayers, forKey: "map.showLayers")

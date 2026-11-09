@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.map
 
 import dev.holdmytrack.android.panel.PanelTab
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -39,10 +40,20 @@ class MapChromeRulesTest {
     }
 
     @Test
+    fun `Stories and Sync show Normal with no toggle, and the Map tab gets its pick back`() {
+        for (tab in listOf(PanelTab.STORIES, PanelTab.SYNC)) {
+            assertEquals(MapMode.NORMAL, MapChromeRules.tabMode(MapMode.HEATMAP, tab))
+            assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, tab))
+        }
+        assertEquals(MapMode.HEATMAP, MapChromeRules.tabMode(MapMode.HEATMAP, PanelTab.ACTIVITIES))
+        assertTrue(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, PanelTab.ACTIVITIES))
+    }
+
+    @Test
     fun `checking rows hides the mode toggle and the rail`() {
         assertTrue(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.ACTIVITIES, editOpen = false))
         assertFalse(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.STORIES, editOpen = false))
-        assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = true))
+        assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = true, PanelTab.ACTIVITIES))
         assertFalse(MapChromeRules.railShown(editing = false, selectionShown = true))
         assertTrue(MapChromeRules.railShown(editing = false, selectionShown = false))
     }

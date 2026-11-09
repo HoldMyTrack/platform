@@ -147,7 +147,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     private var map: MapLibreMap? = null
     private var style: Style? = null
+    /** The mode the map shows ([MapChromeRules.tabMode]): [pickedMode] on the Map tab, else Normal. */
     private var mode = MapMode.NORMAL
+
+    /** The mode picked on the Map tab, which comes back there after Stories or Sync. */
+    private var pickedMode = MapMode.NORMAL
 
     /** The chrome's and MapLibre's controls' margins against the system bars and the panels. */
     private lateinit var chrome: ChromeInsets
@@ -221,7 +225,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             pendingSync = true
             return
         }
-        if (modeBarReady && mode != MapMode.NORMAL) setMode(MapMode.NORMAL)
         panel.showSync()
     }
 
@@ -231,7 +234,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
      */
     fun editPrivateLocation(id: String) {
         if (!::edit.isInitialized || isRecording()) return
-        if (mode != MapMode.NORMAL) setMode(MapMode.NORMAL)
+        if (pickedMode != MapMode.NORMAL) pickMode(MapMode.NORMAL)
         edit.privacy.start(id)
         edit.privacy.onStyleReady()
     }
@@ -245,8 +248,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     val panelTab: PanelTab? get() = if (::panel.isInitialized) panel.tab else null
 
     // What the tour (tour/TourController, through MainActivity) reads and holds on the map.
-    val tourMode: MapMode? get() = if (modeBarReady) mode else null
-    fun setTourMode(next: MapMode) = setMode(next)
+    val tourMode: MapMode? get() = if (modeBarReady) pickedMode else null
+    fun setTourMode(next: MapMode) = pickMode(next)
     val sheetOpen: Boolean get() = ::panel.isInitialized && panel.expanded
     fun setSheetOpen(open: Boolean) {
         if (::panel.isInitialized) panel.setExpanded(open)
@@ -270,7 +273,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         )
         gate = SessionGate(this, notices, onChecked = ::syncSession)
         modes = ModeBar(view, onPick = { picked ->
-            setMode(picked)
+            pickMode(picked)
             host?.tour?.notice(TourEvent.Mode(picked))
         }) {
             ModeBarState(
@@ -281,6 +284,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 selectionShown = ::sheetChrome.isInitialized && sheetChrome.selectionShown(),
                 exportOpen = ::export.isInitialized && export.isOpen,
                 coverageRendering = coverage.rendering,
+                tab = if (::panel.isInitialized) panel.tab else PanelTab.ACTIVITIES,
             )
         }
         layers.bind(view)
@@ -335,6 +339,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onTabChanged = { tab ->
                 // Leaving the Stories tab closes its Story.
                 if (tab != PanelTab.STORIES && storyId != null) range.exitStory()
+                // Stories and Sync are Normal mode's; the Map tab gets its pick back.
+                applyTabMode()
                 // The footer is the Activities tab's; renderDateFooter renders Privacy too.
                 renderDateFooter()
                 // The empty map's notice points to Sync, so it steps aside there.
@@ -435,9 +441,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         // Carried through a recreation (a theme or language change), since the mode buttons
         // restore their own checked state and would otherwise show a mode the map isn't in.
         savedInstanceState?.getString(STATE_MODE)?.let { saved ->
-            MapMode.entries.firstOrNull { it.name == saved }?.let { mode = it }
+            MapMode.entries.firstOrNull { it.name == saved }?.let { pickedMode = it }
         }
-        setMode(mode)
+        setMode(MapChromeRules.tabMode(pickedMode, if (::panel.isInitialized) panel.tab else PanelTab.ACTIVITIES))
 
         chrome.install()
         if (savedInstanceState == null) {
@@ -599,7 +605,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** A Sync history row's View on map: Normal mode, the collapsed Activities tab, and the
      *  activity selected and flown to ([RangeController.viewActivity]). */
     private fun viewActivityOnMap(activityId: String, day: String) {
-        setMode(MapMode.NORMAL)
+        pickMode(MapMode.NORMAL)
         // The expanded sheet would stay drawn over the very map the link is meant to show.
         panel.showActivities()
         range.viewActivity(activityId, day)
@@ -723,6 +729,19 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val loaded = style ?: return
         if (overlaysAttached) MapOverlays.setRecording(loaded, active, mode)
         MapOverlays.updateLiveTrack(loaded, points)
+    }
+
+    /** The user's, or the tour's, pick for the Map tab, shown there at once. */
+    private fun pickMode(next: MapMode) {
+        pickedMode = next
+        applyTabMode()
+    }
+
+    /** The mode for the tab showing, and the toggle that's only the Map tab's. */
+    private fun applyTabMode() {
+        val shown = MapChromeRules.tabMode(pickedMode, if (::panel.isInitialized) panel.tab else PanelTab.ACTIVITIES)
+        if (shown != mode) setMode(shown)
+        renderModeBar()
     }
 
     private fun setMode(next: MapMode) {
@@ -867,7 +886,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             // The camera MapLibre just saved is where the user left it, once it's been framed.
             outState.putBoolean(STATE_FRAMED, camera.framed)
         }
-        outState.putString(STATE_MODE, mode.name)
+        outState.putString(STATE_MODE, pickedMode.name)
         if (::range.isInitialized) range.save(outState)
         if (::chrome.isInitialized) chrome.save(outState)
     }

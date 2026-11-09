@@ -72,4 +72,26 @@ final class PanelTests: XCTestCase {
         let fewer = NSPredicate(format: "count == %d", TestAccount.samples.count - 1)
         XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: fewer, object: rows)], timeout: 15), .completed)
     }
+
+    /// Stories shows its Story in Normal, with no mode toggle, and the Map tab gets its mode back.
+    @MainActor
+    func testStoriesShowNormalAndTheMapTabKeepsItsMode() throws {
+        try LaunchTests.requireDevStack(self)
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut"]
+        app.launch()
+        app.buttons["demo"].tap()
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        let modes = app.segmentedControls["modes"]
+        modes.buttons.element(boundBy: 2).tap()
+        XCTAssertFalse(app.buttons["panelHandle"].isHittable, "the sheet is Normal mode's")
+
+        app.tabBars.buttons["tabStories"].tap()
+        XCTAssertTrue(app.cells["storyFolder"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(modes.exists, "no mode toggle on Stories")
+
+        app.tabBars.buttons["tabMap"].tap()
+        XCTAssertTrue(modes.waitForExistence(timeout: 5))
+        XCTAssertTrue(modes.buttons.element(boundBy: 2).isSelected, "Heatmap again")
+    }
 }

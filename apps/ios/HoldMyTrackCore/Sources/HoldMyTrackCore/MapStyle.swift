@@ -50,6 +50,15 @@ public struct LayersDocument: Equatable, Sendable {
     }
 }
 
+/// The mode the map shows for the tab bar's tab (apps/android/docs/SPEC.md FR-2.2): the one picked
+/// on the Map tab there, Normal on Stories, whose sheet and tracks are Normal mode's. The toggle is
+/// the Map tab's, so back there the pick comes back.
+public enum TabMode {
+    public static func shown(picked: MapMode, onMapTab: Bool) -> MapMode { onMapTab ? picked : .normal }
+
+    public static func toggleShown(onMapTab: Bool) -> Bool { onMapTab }
+}
+
 /// What the app decides about the map; the rest is the documents'.
 public struct MapState: Equatable, Sendable {
     public var mode: MapMode = .normal
