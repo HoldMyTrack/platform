@@ -5,10 +5,13 @@ public struct TrackMetrics: Equatable, Sendable {
     public struct Point: Equatable, Sendable {
         public let lon: Double
         public let lat: Double
+        /// Its moment, in epoch seconds.
+        public let time: Double
 
-        public init(lon: Double, lat: Double) {
+        public init(lon: Double, lat: Double, time: Double = 0) {
             self.lon = lon
             self.lat = lat
+            self.time = time
         }
     }
 
@@ -34,7 +37,7 @@ public struct TrackMetrics: Equatable, Sendable {
 
     init(_ json: TrackMetricsJSON) {
         activityID = json.activityID
-        points = json.points.map { Point(lon: $0.lon, lat: $0.lat) }
+        points = json.points.map { Point(lon: $0.lon, lat: $0.lat, time: Double($0.timeS)) }
         bands = json.bands.map { Band(band: $0.band, start: $0.start, end: $0.end) }
     }
 }
