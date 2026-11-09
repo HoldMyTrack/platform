@@ -3,7 +3,7 @@ import { API_BASE_URL, type ActivityQuery, type ActivityTrackMetrics } from '../
 import { lang } from '../i18n';
 import logoOnDarkUrl from '../assets/logo-on-dark.png';
 import logoOnLightUrl from '../assets/logo-on-light.png';
-import { basemapOrigin, satelliteSource } from './config';
+import { basemapOrigin, satelliteSource, ZOOM_LEVELS_TO_OVERSCALE } from './config';
 import { withApiCredentials } from './requestCredentials';
 import { applyLayers, INITIAL_LAYER_STATE } from './applyLayers';
 import { getTileVersion } from './coverageVersion';
@@ -337,6 +337,7 @@ async function renderOffscreen(
     bearing: liveMap.getBearing(),
     pitch: liveMap.getPitch(),
     attributionControl: false,
+    zoomLevelsToOverscale: ZOOM_LEVELS_TO_OVERSCALE,
     maxPitch: 0,
     // Same credentialed-tile wiring useMapInstance.ts's live map already has — tracks/fog/
     // heatmap tiles need the session cookie, which MapLibre's own fetches don't carry by

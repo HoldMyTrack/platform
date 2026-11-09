@@ -12,7 +12,7 @@ import { BASEMAP_SOURCE, buildStyle, SATELLITE_SOURCE, type Flavor } from './sty
 import { basemapStatus, type BasemapStatus } from './basemapStatus';
 import { satelliteStatus, type SatelliteStatus } from './satelliteStatus';
 import { globeMinZoom } from './globe';
-import { basemapOrigin, satelliteSource } from './config';
+import { basemapOrigin, satelliteSource, ZOOM_LEVELS_TO_OVERSCALE } from './config';
 import { withApiCredentials } from './requestCredentials';
 import type { ViewState } from './viewState';
 import { API_BASE_URL } from '../api';
@@ -97,6 +97,7 @@ export function useMapInstance({
       zoom: initial.current.view.zoom,
       // We render our own, positioned with the rest of the UI.
       attributionControl: false,
+      zoomLevelsToOverscale: ZOOM_LEVELS_TO_OVERSCALE,
       // Zoomed out it's a globe (style.ts's GLOBE_MAX_ZOOM), never tilted.
       maxPitch: 0,
       // The session cookie for the API's own tiles, and nothing else (requestCredentials.ts).
