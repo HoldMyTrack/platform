@@ -6,6 +6,14 @@ activities:
       - $ref: "../components/parameters.yaml#/FilterTo"
       - $ref: "../components/parameters.yaml#/FilterTypes"
       - $ref: "../components/parameters.yaml#/FilterStory"
+      - name: bbox
+        in: query
+        description: Only the tracks crossing this view (west,south,east,north in degrees; west may be greater than east across the antimeridian), the newest 1,000 at most, with `total`.
+        schema: { type: string }
+      - name: limit
+        in: query
+        description: The newest this many at most.
+        schema: { type: integer, minimum: 1, maximum: 1000 }
     responses:
       "200":
         description: The activities
@@ -22,6 +30,9 @@ activities:
                 types:
                   description: Every type the rows use, once each.
                   allOf: [{ $ref: "../components/schemas.yaml#/ActivityTypes" }]
+                total:
+                  type: integer
+                  description: With `bbox`, how many activities the area holds; more than the rows when they were cut at the limit.
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }

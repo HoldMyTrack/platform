@@ -1179,6 +1179,10 @@ export interface paths {
                     types?: components["parameters"]["FilterTypes"];
                     /** @description One Story's activities only. */
                     story?: components["parameters"]["FilterStory"];
+                    /** @description Only the tracks crossing this view (west,south,east,north in degrees; west may be greater than east across the antimeridian), the newest 1,000 at most, with `total`. */
+                    bbox?: string;
+                    /** @description The newest this many at most. */
+                    limit?: number;
                 };
                 header?: never;
                 path?: never;
@@ -1196,6 +1200,8 @@ export interface paths {
                             activities: components["schemas"]["ActivityRow"][];
                             /** @description Every type the rows use, once each. */
                             types: components["schemas"]["ActivityTypes"];
+                            /** @description With `bbox`, how many activities the area holds; more than the rows when they were cut at the limit. */
+                            total?: number;
                         };
                     };
                 };
