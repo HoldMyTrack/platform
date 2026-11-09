@@ -141,7 +141,7 @@ describe('map flows', () => {
     assert.equal(await hiddenRows().count(), 2);
     await page.keyboard.press('Escape');
     await page.getByTestId('dates-filter-clear').click();
-    assert.match(await page.getByTestId('dates-filter').textContent(), /All time/);
+    assert.equal((await page.getByTestId('dates-filter').textContent()).trim(), 'Dates');
   });
 
   it('3. the Stories tab opens the newest Story in the URL, and Back returns to the area', async () => {
@@ -158,6 +158,9 @@ describe('map flows', () => {
     // The area is wherever the Story left the camera, which frames both of its tracks.
     await row(ids['2026-10-01']).waitFor({ timeout: 30_000 });
     await row(ids['2026-10-06']).waitFor({ timeout: 30_000 });
+    // The Stories tab's first-time card floats over the list's top rows until put away.
+    const card = page.getByTestId('tour-card');
+    if (await card.count()) await card.locator('.tour-card__close').click();
   });
 
   it('4. an applied track edit goes Pending, and the poll picks up the shorter track', async () => {
@@ -222,13 +225,13 @@ describe('map flows', () => {
     await page.getByTestId('dates-before').fill('2026-10-01');
     await page.getByTestId('dates-before').press('Enter');
     await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 1, undefined, { timeout: 30_000 });
-    assert.match(await page.getByTestId('dates-filter').textContent(), /before Oct 1, 2026/);
+    assert.match(await page.getByTestId('dates-filter').textContent(), /Before Oct 1/);
     await page.keyboard.press('Escape');
     // Setting Dates flew the camera onto the match; clearing them must leave it where it landed.
     await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
     const center = await page.evaluate(() => window.__holdmytrack.getCenter().toArray());
     await page.getByTestId('dates-filter-clear').click();
-    assert.match(await page.getByTestId('dates-filter').textContent(), /All time/);
+    assert.equal((await page.getByTestId('dates-filter').textContent()).trim(), 'Dates');
     assert.deepEqual(await page.evaluate(() => window.__holdmytrack.getCenter().toArray()), center);
   });
 

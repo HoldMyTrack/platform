@@ -3,7 +3,7 @@ import { ChevronDown, X } from 'lucide-react';
 import { DistanceFilter } from './DistanceFilter';
 import type { DistanceRange, TypeFacet } from './activityFacets';
 import { dateFilterLabel, type DateFilter } from './dateFilter';
-import { distanceValue, formatActivityType, formatShortDate, unitLabel } from './format';
+import { distanceValue, formatActivityType, formatFilterDate, formatShortDate, unitLabel } from './format';
 import { useUnitSystem } from './units';
 import { t } from '../i18n';
 
@@ -13,6 +13,8 @@ export interface DatesProps {
   bounds: { min: string; max: string };
   /** The first activity's day, for the empty After field's hint; null without one. */
   earliest: string | null;
+  /** The account's today: the button leaves this year out of its dates. */
+  today: string;
   /** One end set to a date, or cleared with null. */
   onChange: (end: 'after' | 'before', value: string | null) => void;
   onClear: () => void;
@@ -69,7 +71,7 @@ function FilterDropdown({ text, set, onClear, clearLabel, panelLabel, testId, ch
   const [open, setOpen] = useState(false);
   const ref = useDismiss(open, useCallback(() => setOpen(false), []));
   return (
-    <div className="activities-panel__type-dropdown activities-panel__filter-dropdown" ref={ref}>
+    <div className={`activities-panel__type-dropdown activities-panel__filter-dropdown${set ? ' activities-panel__filter-dropdown--set' : ''}`} ref={ref}>
       <Trigger open={open} onClick={() => setOpen((o) => !o)} testId={testId}>
         <span className={set ? 'activities-panel__filter-value activities-panel__filter-value--set' : 'activities-panel__filter-value'}>{text}</span>
       </Trigger>
@@ -88,16 +90,16 @@ function FilterDropdown({ text, set, onClear, clearLabel, panelLabel, testId, ch
 }
 
 /** The Dates filter (docs/SPEC.md FR-5.20): After and Before, empty for all time. */
-function DatesFilter({ value, bounds, earliest, onChange, onClear }: DatesProps) {
+function DatesFilter({ value, bounds, earliest, today, onChange, onClear }: DatesProps) {
   const label = dateFilterLabel(value);
   const text =
     label.kind === 'all'
-      ? t('dates.all_time')
+      ? t('dates.name')
       : label.kind === 'between'
-        ? t('dates.between', { after: formatShortDate(label.after), before: formatShortDate(label.before) })
+        ? t('dates.between', { after: formatFilterDate(label.after, today), before: formatFilterDate(label.before, today) })
         : label.kind === 'after'
-          ? t('dates.after_date', { date: formatShortDate(label.after) })
-          : t('dates.before_date', { date: formatShortDate(label.before) });
+          ? t('dates.after_date', { date: formatFilterDate(label.after, today) })
+          : t('dates.before_date', { date: formatFilterDate(label.before, today) });
   return (
     <FilterDropdown text={text} set={label.kind !== 'all'} onClear={onClear} clearLabel={t('dates.clear')} panelLabel={t('dates.filter')} testId="dates-filter">
       <DateField
@@ -157,7 +159,7 @@ export function ActivityFilters({ facets, excludedTypes, onToggleType, distanceB
   const system = useUnitSystem();
   const distanceText =
     distanceFilter === null
-      ? t('filters.distance_any')
+      ? t('filters.distance')
       : t('filters.distance_between', { min: distanceValue(distanceFilter.min, system), max: distanceValue(distanceFilter.max, system), unit: unitLabel(system) });
   return (
     <div className="activities-panel__filters">

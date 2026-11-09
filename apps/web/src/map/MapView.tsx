@@ -391,7 +391,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               map={map}
               onPrivateLocationsChanged={refresh.afterPrivateLocations}
               firstRun={showsFirstRun(isDemo, daysReady ? earliest !== null : null)}
-              dates={{ value: dates, bounds: datesBounds, earliest, onChange: changeDates, onClear: clearDates }}
+              dates={{ value: dates, bounds: datesBounds, earliest, today, onChange: changeDates, onClear: clearDates }}
               outOfReach={storyId === null && areaState.load === 'none'}
             />
           </div>

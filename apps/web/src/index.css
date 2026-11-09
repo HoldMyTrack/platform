@@ -552,20 +552,28 @@ body {
   gap: var(--fm-space-12);
 }
 
-/* The filter row (ActivityFilters.tsx): Type's, Dates' and Distance's dropdowns, wrapping onto a
-   second line when the panel is narrow. */
+/* The filter row (ActivityFilters.tsx): Type's, Dates' and Distance's dropdowns on one line, a
+   long value cut short rather than wrapping. */
 .activities-panel__filters {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
   gap: var(--fm-space-8);
   padding: var(--fm-space-4) var(--fm-space-16) var(--fm-space-16);
   border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
 }
 
-/* The Distance slider inside its dropdown's panel. */
-.activities-panel__filter-panel .activity-filters {
-  min-width: 240px;
+/* Dates' and Distance's panels fit what they hold (the date fields, the slider and its bounds)
+   instead of Type's fixed width. The last dropdown's panel opens leftward from its right edge, or
+   it would run past the sidebar, which clips it. */
+.activities-panel__filters .activities-panel__filter-panel {
+  width: max-content;
+  min-width: 15rem;
+  box-sizing: border-box;
+}
+
+.activities-panel__filters > .activities-panel__type-dropdown:last-child .activities-panel__type-panel {
+  left: auto;
+  right: 0;
 }
 
 .activity-filters__section {
@@ -1423,7 +1431,24 @@ button.activities-panel__story-badge:hover {
    with the value in the trigger and a clear button beside it while set. */
 .activities-panel__filter-dropdown {
   display: inline-flex;
+  flex: none;
   align-items: center;
+}
+
+/* Only a button showing a value gives way; a bare name always fits. */
+.activities-panel__filter-dropdown--set {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.activities-panel__filter-dropdown > .activities-panel__type-trigger {
+  min-width: 0;
+}
+
+.activities-panel__filter-value {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .activities-panel__filter-value--set {

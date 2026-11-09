@@ -118,6 +118,13 @@ export function formatShortDate(date: string): string {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString(lang, { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 }
 
+/** "Jun 3", or "Jun 3, 2025" outside `today`'s year: a filter button's value, kept short so the
+ *  filter row fits one line. */
+export function formatFilterDate(date: string, today: string): string {
+  const sameYear = date.slice(0, 4) === today.slice(0, 4);
+  return new Date(`${date}T00:00:00Z`).toLocaleDateString(lang, { day: 'numeric', month: 'short', ...(!sameYear && { year: 'numeric' }), timeZone: 'UTC' });
+}
+
 /** An `activity_type`'s name, as the server gave it (activityTypes.ts). */
 export function formatActivityType(activityType: string): string {
   return typeLabel(activityType);
