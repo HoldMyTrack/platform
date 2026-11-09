@@ -57,8 +57,9 @@ func TestListArea(t *testing.T) {
 	const box = "bbox=-31,-31,-30,-30"
 	expect(box, []string{newer, older}, 2)
 	expect(box+"&from=2026-05-01&to=2026-05-01", []string{older}, 1)
-	// Cut at the limit, the total still counts the whole area.
-	expect(box+"&limit=1", []string{newer}, 2)
+	// Cut at the limit, the total still counts the whole area, by the tracks' boxes: the line that
+	// goes round the view counts there, though it isn't listed.
+	expect(box+"&limit=1", []string{newer}, 3)
 
 	for _, bbox := range []string{"179,-41,181,-40", "179,-41,-179,-40", "-181,-41,-179,-40", "-180,-41,-179,-40"} {
 		expect("bbox="+bbox, []string{dateline}, 1)

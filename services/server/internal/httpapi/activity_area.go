@@ -31,27 +31,33 @@ var areaFilterSQL = `user_id = $1 AND ` + inDateRange("$2", "$3")
 
 // listAreaQuery is the newest $4 activities, at every zoom, for the opening view; with an area,
 // listInAreaQuery is those crossing it ($5–$10), and countInAreaQuery their total past the limit.
+// The total counts tracks whose box reaches the view, which the index answers alone: testing every
+// line took 400 ms for an area of 15,000 tracks against 70 ms, and miscounted 2 of them.
 var listAreaQuery = `SELECT ` + areaRowColumns + ` FROM activities WHERE ` + areaFilterSQL + `
 ORDER BY started_at DESC, id DESC LIMIT $4`
 
 var listInAreaQuery = `SELECT ` + areaRowColumns + ` FROM activities WHERE ` + areaFilterSQL + `
-  AND ` + trajectoryInAreaSQL(5) + `
+  AND ` + trajectoryInAreaSQL(5, true) + `
 ORDER BY started_at DESC, id DESC LIMIT $4`
 
-var countInAreaQuery = `SELECT count(*) FROM activities WHERE ` + areaFilterSQL + ` AND ` + trajectoryInAreaSQL(4)
+var countInAreaQuery = `SELECT count(*) FROM activities WHERE ` + areaFilterSQL + ` AND ` + trajectoryInAreaSQL(4, false)
 
 // trajectoryInAreaSQL is "the track crosses one of the area's two boxes" (mapArea.boxes), with
 // the parameters from $first: south, north, then each box's west and east. A track stored past
 // ±180 (§4.1) is matched by the boxes moved a world's width, as the tracks tile matches it. Each
-// test is its own && against constant parameters, so idx_activities_spatial answers the OR, and
-// ST_Intersects then drops a track whose box reaches the view while the line doesn't.
-func trajectoryInAreaSQL(first int) string {
+// test is its own && against constant parameters, so idx_activities_spatial answers the OR; exact
+// then drops, with ST_Intersects, a track whose box reaches the view while the line doesn't.
+func trajectoryInAreaSQL(first int, exact bool) string {
 	p := func(i int) string { return fmt.Sprintf("$%d::float8", first+i) }
 	var tests []string
 	for _, box := range [][2]string{{p(2), p(3)}, {p(4), p(5)}} {
 		for _, shift := range []string{"", " + 360", " - 360"} {
 			env := "ST_MakeEnvelope(" + box[0] + shift + ", " + p(0) + ", " + box[1] + shift + ", " + p(1) + ", 4326)"
-			tests = append(tests, "(trajectory && "+env+" AND ST_Intersects(trajectory, "+env+"))")
+			test := "trajectory && " + env
+			if exact {
+				test += " AND ST_Intersects(trajectory, " + env + ")"
+			}
+			tests = append(tests, "("+test+")")
 		}
 	}
 	return "(" + strings.Join(tests, "\n    OR ") + ")"

@@ -23,8 +23,10 @@
 //	                at a time as the web's Upload menu sends them
 //	browse VUS DUR  VUS people at the map for DUR, each in Normal, Fog or Heatmap mode (or all in
 //	                -mode), panning and zooming and requesting the tiles the web client would;
-//	                each keeps a browser-like tile cache unless -cold; Spots visitors at z10-12
-//	                also ask "Show in this area". Latency per tile layer and spots-area every 30 s
+//	                each keeps a browser-like tile cache unless -cold; Normal visitors from z4 ask
+//	                for the area's activity list on every view, as the web does after each settled
+//	                move, and Spots visitors at z10-12 also ask "Show in this area". Latency per
+//	                tile layer, activities-area and spots-area every 30 s
 //	probe           upload one new track from the last account and time it until it's processed
 //	cleanup         delete every account in tokens.json
 //
@@ -614,24 +616,31 @@ func view(ctx context.Context, st *stats, v *visitor) int {
 		}
 	}
 	wg.Wait()
+	b := windowBBox(v.c, v.z)
+	if v.mode == "normal" && v.z >= tracksMinZoom {
+		get(ctx, st, v, "activities-area", fmt.Sprintf("%s/v1/activities/area?bbox=%.5f,%.5f,%.5f,%.5f", *base, b[0], b[1], b[2], b[3]))
+	}
 	if asksArea(v.spots, v.z, v.r.Intn(areaShare)) {
-		b := windowBBox(v.c, v.z)
-		url := fmt.Sprintf("%s/v1/spots?bbox=%.5f,%.5f,%.5f,%.5f&categories=%s", *base, b[0], b[1], b[2], b[3], areaCategories)
-		req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
-		req.Header.Set("Authorization", "Bearer "+v.tok)
-		t := time.Now()
-		resp, err := client.Do(req)
-		code := 0
-		if err == nil {
-			io.Copy(io.Discard, resp.Body)
-			resp.Body.Close()
-			code = resp.StatusCode
-		}
-		if ctx.Err() == nil {
-			st.add("spots-area", code, time.Since(t), err)
-		}
+		get(ctx, st, v, "spots-area", fmt.Sprintf("%s/v1/spots?bbox=%.5f,%.5f,%.5f,%.5f&categories=%s", *base, b[0], b[1], b[2], b[3], areaCategories))
 	}
 	return skipped
+}
+
+// get asks for url as v and records its latency under name.
+func get(ctx context.Context, st *stats, v *visitor, name, url string) {
+	req, _ := http.NewRequestWithContext(ctx, "GET", url, nil)
+	req.Header.Set("Authorization", "Bearer "+v.tok)
+	t := time.Now()
+	resp, err := client.Do(req)
+	code := 0
+	if err == nil {
+		io.Copy(io.Discard, resp.Body)
+		resp.Body.Close()
+		code = resp.StatusCode
+	}
+	if ctx.Err() == nil {
+		st.add(name, code, time.Since(t), err)
+	}
 }
 
 // ---- stats
