@@ -320,6 +320,8 @@ extension MapViewController {
     /// A track within TrackTap.radius of the finger: checked while selecting, else focused,
     /// without opening the sheet. Empty map clears the focus.
     @objc private func tappedMap(_ tap: UITapGestureRecognizer) {
+        // The Edit window's group mustn't change under it.
+        guard !editOpen else { return }
         // A place's badge first, in every mode; a tap elsewhere closes its popup.
         if tapSpot(at: tap.location(in: mapView)) { return }
         guard state.mode == .normal, !sheet.isHidden || panelTab == .stories else { return }
@@ -360,17 +362,26 @@ extension MapViewController {
         photos.editIDs = group.map(\.id)
         refreshPhotos(force: false)
         let facets = ActivityFacets.typeFacets(session.panel.activities, distanceFilter: nil)
-        let editor = EditActivityViewController(api: flow.api, group: group, facets: facets, format: format) { [weak self] written in
+        let editor = EditActivityViewController(
+            api: flow.api, group: group, facets: facets, format: format, images: photoViews.images,
+            onOverlay: { [weak self] in self?.setPhotoOverlay($0) }
+        ) { [weak self] written, photosSaved in
             guard let self else { return }
             self.editOpen = false
-            self.photos.editIDs = nil
-            self.refreshPhotos(force: false)
+            self.photosEditClosed(saved: photosSaved)
             guard !written.isEmpty else { return }
             self.awaiting.formUnion(written)
             self.loadList()
         }
         let nav = UINavigationController(rootViewController: editor)
-        nav.modalPresentationStyle = .formSheet
+        // Half height with the map live above, so the Photos tab's slider moves a photo in sight.
+        nav.modalPresentationStyle = .pageSheet
+        if let sheet = nav.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.largestUndimmedDetentIdentifier = .medium
+            sheet.prefersGrabberVisible = true
+            sheet.prefersScrollingExpandsWhenScrolledToEdge = false
+        }
         present(nav, animated: true)
     }
 

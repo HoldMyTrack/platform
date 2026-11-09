@@ -88,6 +88,15 @@ struct PanelFormat {
         return formatter.string(from: date)
     }
 
+    /// A moment, in epoch seconds, as a time of day ("9:39 AM") in zone, else the account's.
+    func clock(_ seconds: Double, zone: String) -> String {
+        let formatter = DateFormatter()
+        formatter.dateStyle = .none
+        formatter.timeStyle = .short
+        if let zone = ActivityZone.of(own: zone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
+        return formatter.string(from: Date(timeIntervalSince1970: seconds))
+    }
+
     /// A row's first line: its name, else its start.
     func label(_ activity: Activity) -> String { activity.title ?? startedAt(activity) }
 

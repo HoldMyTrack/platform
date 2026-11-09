@@ -78,6 +78,8 @@ The split is Android's: `MapSession` holds the range or Story shown and the came
 - **The list drives the camera**: a picked range or an opened Story sets `flyRequest`, and the next list read flies onto its tracks; tracks changed under the same query (a finished reprocess, a delete, a Story copy arriving) bump a `v=` counter on the tiles' query so MapLibre fetches them again.
 - **Edits and deletes run one request at a time**, as on Android; `EditPlan` writes only the activities a change reaches.
 - **Photo markers are views over the map** (`PhotoMarkersView`), as on Android, so a marker's tap never reaches the map's own: regrouped when the camera rests, moved on every frame of a move. The photo popup sits over the sheet, since one opened low on the map runs past the sheet's edge.
+- **The Edit window is a sheet that stops at half height with the map undimmed above it**, so the Photos tab's slider moves a photo along the route in sight; a tap on the map does nothing while it's open, as on Android, so its group can't change under it. The tab's draft reaches the markers as a `PhotoMarkerOverlay`.
+- **Photos go up as JPEG** (`PhotoPrep`), where Android sends WebP: ImageIO decodes WebP but can't write it, and the server takes either.
 
 ## 4. Sync engine
 

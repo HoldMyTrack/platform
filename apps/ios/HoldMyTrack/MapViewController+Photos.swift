@@ -40,12 +40,30 @@ extension MapViewController {
         }
     }
 
-    /// The markers: the scope's photos on their tracks, unless its route is hidden.
+    /// The markers: the scope's photos on their tracks, with the Photos tab's unsaved changes
+    /// merged in, unless its route is hidden.
     func renderPhotos() {
         let shown = PhotoMarkers.shown(photos.scope, mapHidden: session.panel.mapHidden)
         if !shown { photoViews.popup.close() }
-        let items = shown ? PhotoMarkers.items(photos.items, mapHidden: session.panel.mapHidden) : []
-        photoViews.markers.set(items, activeID: photoViews.popup.showingID, on: mapView)
+        let overlay = photos.overlay
+        let items = shown ? PhotoMarkers.items(photos.items, mapHidden: session.panel.mapHidden, overlay: overlay) : []
+        photoViews.markers.set(items, activeID: overlay?.activeID ?? photoViews.popup.showingID, loneID: overlay?.activeID, on: mapView)
+    }
+
+    /// The Photos tab's draft moved: the markers follow it.
+    func setPhotoOverlay(_ overlay: PhotoMarkerOverlay?) {
+        guard overlay != photos.overlay else { return }
+        photos.overlay = overlay
+        if overlay != nil { photoViews.popup.close() }
+        renderPhotos()
+    }
+
+    /// The Edit window closed: back to the saved photos, read again when any was written.
+    func photosEditClosed(saved: Bool) {
+        photos.editIDs = nil
+        photos.overlay = nil
+        photoViews.images.forgetLocal()
+        refreshPhotos(force: saved)
     }
 
     /// The camera came to rest: what overlaps depends on the zoom.
@@ -108,6 +126,8 @@ struct PhotosState {
     var task: Task<Void, Never>?
     /// The Edit window's activities while it's open.
     var editIDs: [String]?
+    /// The Photos tab's unsaved changes, while it shows.
+    var overlay: PhotoMarkerOverlay?
 }
 
 /// The marker layer, the popup and the viewer, sharing one image cache.
