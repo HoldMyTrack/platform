@@ -302,6 +302,28 @@ struct APIClientTests {
         #expect(body.hasSuffix("--\r\n"))
     }
 
+    @Test func trackPointsAreReadWithTheSavedEdit() async throws {
+        StubProtocol.answer = { _ in .init(body: self.json([
+            "points": [[10, 50, 1000], [10.1, 50.1, 2000]],
+            "edit": ["keep": [1000, 2000], "move": ["2000": [10.2, 50.2]]],
+        ])) }
+        let read = try await client().trackPoints("a1")
+        #expect(StubProtocol.sent.first?.url?.path == "/v1/activities/a1/track-points")
+        #expect(read.points == [TrackPoint(lon: 10, lat: 50, t: 1000), TrackPoint(lon: 10.1, lat: 50.1, t: 2000)])
+        #expect(read.edit == TrackEdit(keep: TimeSpan(1000, 2000), move: [2000: [10.2, 50.2]]))
+    }
+
+    @Test func aTrackEditSendsTheWholeEditAndReadsASplitIntoAPrivateLocation() async throws {
+        StubProtocol.answer = { _ in .init(status: 202) }
+        #expect(try await client().saveTrackEdit("a1", edit: TrackEdit(drop: [5]), splitAt: 7, allowHidden: false) == .queued)
+        let sent = try JSONSerialization.jsonObject(with: try #require(StubProtocol.sent.first?.httpBody)) as? [String: Any]
+        #expect(sent?["split_at"] as? Int == 7)
+        #expect((sent?["edit"] as? [String: Any])?["drop"] as? [Int] == [5])
+        #expect(sent?["allow_hidden"] == nil)
+        StubProtocol.answer = { _ in .init(status: 422, body: self.json(["error": "split_hides_part", "message": "The second part is private."])) }
+        #expect(try await client().saveTrackEdit("a1", edit: nil, splitAt: 7, allowHidden: false) == .splitHidesPart("The second part is private."))
+    }
+
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {
         var body = accountBody
         body["session_token"] = "t"

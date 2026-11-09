@@ -16,11 +16,15 @@ public struct Activity: Equatable, Sendable {
     public let pending: Bool
     public let isPrivate: Bool
     public let stories: [StoryRef]
+    /// Why its track can't be edited, or nil when it can: the server's code (EditAvailability).
+    public let trackEdit: String?
+    /// Why photos can't be added to it, or nil when they can.
+    public let photosBlock: String?
 
     public init(
         id: String, startedAt: String, timezone: String = "", activityType: String, name: String? = nil,
         distanceMeters: Double? = nil, movingSeconds: Int? = nil, description: String? = nil, bbox: [Double]? = nil,
-        pending: Bool = false, isPrivate: Bool = false, stories: [StoryRef] = []
+        pending: Bool = false, isPrivate: Bool = false, stories: [StoryRef] = [], trackEdit: String? = nil, photosBlock: String? = nil
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -34,6 +38,8 @@ public struct Activity: Equatable, Sendable {
         self.pending = pending
         self.isPrivate = isPrivate
         self.stories = stories
+        self.trackEdit = trackEdit
+        self.photosBlock = photosBlock
     }
 
     init(_ json: ActivityRowJSON) {
@@ -41,7 +47,7 @@ public struct Activity: Equatable, Sendable {
             id: json.id, startedAt: json.startedAt, timezone: json.timezone, activityType: json.activityType, name: json.name,
             distanceMeters: json.distanceMeters, movingSeconds: json.movingSeconds, description: json.description,
             bbox: json.bbox?.count == 4 ? json.bbox : nil, pending: json.pending, isPrivate: json.private,
-            stories: json.stories.map { StoryRef(id: $0.id, name: $0.name) }
+            stories: json.stories.map { StoryRef(id: $0.id, name: $0.name) }, trackEdit: json.trackEdit, photosBlock: json.photos
         )
     }
 
