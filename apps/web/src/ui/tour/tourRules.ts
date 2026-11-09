@@ -96,7 +96,7 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
   return [
     step('welcome', null),
     step('activities', '[data-testid="activities-panel"]', { open: { sheet: true } }),
-    step('range', '[data-testid="date-range-slider"]'),
+    step('range', '[data-testid="dates-filter"]'),
     step('stories', '[data-testid="activities-panel"]', { card: 'stories', tab: 'stories', open: { sheet: true } }),
     step('layers', '[data-testid="map-overlays"], .overlays-menu__panel', { open: { layers: true } }),
     step('export', '[data-testid="export-button"]'),

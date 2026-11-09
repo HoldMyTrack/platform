@@ -21,14 +21,14 @@
     <h2>The map</h2>
 
     <h3>What you see when you open it</h3>
-    <p>The map flies to your most recent activity (the <a href="#dates">date slider</a> on the Activities tab selects the days around it). The address bar keeps your current position, so a reload brings you back to the same view and a copied link opens it for someone else.</p>
+    <p>The map opens close in on your newest activities, as many of the last five as fit on the screen. The address bar keeps your current position, so a reload brings you back to the same view and a copied link opens it for someone else.</p>
     <p>Until you have brought in your first activity, the Activities tab shows where to bring them in from instead: Strava, Garmin, the Android app or files from any watch or app, with a copy of a Story someone sent you, if one is waiting, at the top.</p>
 
     <h3>Three ways to look at your history</h3>
     <p>The switch in the top-left corner of the map changes what it shows.</p>
     <ul class="page-list">
-      <li><strong>Normal</strong> draws each activity from the <a href="#dates">dates you picked</a> as a line. Filter the list by type or distance, hide the ones you don't want to see, and click a track (or its row in the list) to focus it: it is colored by pace, blue where you were slowest and red where you were fastest.</li>
-      <li><strong><a href="/fog-of-war">Fog of War</a></strong> covers the world in fog and clears it wherever you have ever been. It is your whole history, all the time: the date range and the filters don't apply here, and a place you once cleared stays clear.</li>
+      <li><strong>Normal</strong> draws each of your activities on the map as a line, from all time or from the <a href="#dates">dates you picked</a>. Filter the list by type or distance, hide the ones you don't want to see, and click a track (or its row in the list) to focus it: it is colored by pace, blue where you were slowest and red where you were fastest.</li>
+      <li><strong><a href="/fog-of-war">Fog of War</a></strong> covers the world in fog and clears it wherever you have ever been. It is your whole history, all the time: Dates and the filters don't apply here, and a place you once cleared stays clear.</li>
       <li><strong>Heatmap</strong> glows brighter wherever you go more often, over the last 365 days only. Places you haven't visited for a year fade out, so it shows the shape of your life now rather than all time. How bright "a lot" is adapts to your own history, so your busiest route is always the hottest.</li>
     </ul>
 
@@ -53,14 +53,14 @@
   </section>
 
   <section class="page-section" id="dates">
-    <h2>Choosing dates</h2>
-    <p>The slider at the top of the Activities tab chooses which dates you're looking at: the activities between its two knobs are the ones listed and drawn on the map in Normal mode. When you open the map, it selects your five most recent days that have an activity.</p>
+    <h2>What the list shows</h2>
+    <p>The Activities tab lists the activities whose tracks cross the part of the map you're looking at, newest first, and the map draws the same ones. Pan or zoom, and the list follows once the map stops moving. Zoomed out too far to draw tracks, it asks you to zoom in.</p>
     <ul class="page-list">
-      <li><strong>Each step on the slider is one day</strong> with at least one activity. Days with nothing recorded are left out, so a quiet month takes no room. It shows fifteen of those days at a time, and the dates you picked are written under it.</li>
-      <li><strong>Drag a knob</strong>, or press the slider near one, to move that end of your selection. Bring the knobs one step apart to pick a single day.</li>
-      <li><strong>Go back through your history</strong> with the Earlier and Later buttons, five days per press, or hold one down. A knob parked on that edge comes along, which is how a selection grows beyond fifteen days; otherwise your selection stays as it was.</li>
+      <li><strong>Dates</strong> narrows them to a stretch of time: set From, To or both, each including its own day. Picking a date moves the map onto the activities it matches, wherever they are; ✕ clears it and leaves the map where it is.</li>
+      <li><strong>Type and Distance</strong> narrow the list further.</li>
+      <li><strong>Up to 1,000 at a time.</strong> Where more cross the map, it shows the newest 1,000 and says how many there are; zoom in or set Dates to see the rest. <a href="/fog-of-war">Fog of War</a> shows everywhere you've been at once.</li>
     </ul>
-    <p>Choosing new dates clears your filters, hidden tracks and selected activities, since they described the old ones. The Stories and Privacy tabs don't use dates, and neither do Fog of War and Heatmap, so the slider is only on the Activities tab. On a phone it sits at the bottom of the screen, under the panel.</p>
+    <p>Moving the map keeps your selected activities and hidden tracks for as long as they're listed. The Stories and Privacy tabs, Fog of War and Heatmap don't use Dates. The Android app picks dates with a slider instead, and opens on your five most recent days with an activity.</p>
   </section>
 
   <section class="page-section" id="edit">
@@ -155,7 +155,7 @@
     <p>Open <a href="/settings">Settings</a> from the menu under your avatar.</p>
     <ul class="page-list">
       <li><strong>Country</strong> sets your units: miles and feet in the United States, Liberia and Myanmar, kilometers and meters everywhere else.</li>
-      <li><strong>Timezone</strong> decides which day is today. Each activity keeps the date and time where it was recorded: a morning run in Tokyo is on its Tokyo date wherever you look at it from, and counts on that day on the date slider, the activity grid on your Profile and in trends. Timezone stands in for an activity whose place isn't known. It is set from your browser when you sign up; change it if you have moved.</li>
+      <li><strong>Timezone</strong> decides which day is today. Each activity keeps the date and time where it was recorded: a morning run in Tokyo is on its Tokyo date wherever you look at it from, and counts on that day in Dates, the activity grid on your Profile and in trends. Timezone stands in for an activity whose place isn't known. It is set from your browser when you sign up; change it if you have moved.</li>
       <li><strong>Language</strong> is the language of the pages, the map and our emails. It starts on automatic: whatever your browser is set to.</li>
       <li><strong>Theme</strong> is light or dark, or follows your device. It is kept by this browser only, so each device can have its own.</li>
     </ul>
