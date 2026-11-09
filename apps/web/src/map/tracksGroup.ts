@@ -13,8 +13,11 @@ import { ROLE_METADATA, tilePath, VARS_METADATA, type GroupPart } from './mapLay
 
 export const TRACKS_LAYER_ID = 'tracks-line';
 
+/** The hovered track's lines, copied out of the loaded tiles on hover (tracks.ts's setHoveredTrack). */
+export const TRACK_HOVER_SOURCE = 'track-hover';
+
 /** Must match ST_AsMVT(t, 'tracks', ...) in internal/httpapi's tracks query. */
-const TRACKS_SOURCE_LAYER = 'tracks';
+export const TRACKS_SOURCE_LAYER = 'tracks';
 
 const TRACK_COLOR = '#b07e2e'; // --fm-accent
 const HOVER_COLOR = '#93691f'; // --fm-accent-strong
@@ -86,6 +89,23 @@ function outline(): LayerSpecification {
   return { ...layer, layout: { ...layer.layout, visibility: 'none' } } as LayerSpecification;
 }
 
+/**
+ * The hovered track, drawn widest from its own GeoJSON source. A filter by id would be shorter, but
+ * MapLibre re-parses a vector source's tiles whenever one of its layers' filters changes, and a
+ * pointer moving down the list changed it per row: over 1,000 tracks the highlight trailed the
+ * pointer by seconds. A client without hover (Android) leaves the source empty.
+ */
+function hoverLine(): LayerSpecification {
+  return {
+    id: 'tracks-hover',
+    type: 'line',
+    source: TRACK_HOVER_SOURCE,
+    minzoom: TRACKS_MIN_ZOOM,
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': HOVER_COLOR, 'line-width': HOVER_WIDTH },
+  } as LayerSpecification;
+}
+
 /** Bottom to top: every track's outline over imagery, the focused track's halo, every track, the focused one, the hovered one, the
  *  bold tracks' arrows. A focused track isn't raised above its neighbours; the halo is what
  *  separates it where tracks overlap. */
@@ -96,13 +116,13 @@ export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
       placement: 'beneath-labels',
       // MapLibre overzooms a vector source past its maxzoom, so tiles stop at 14 while the map
       // zooms further.
-      sources: { tracks: { type: 'vector', tiles: tilePath('tracks', tileVersion), minzoom: 0, maxzoom: 14 } },
+      sources: { tracks: { type: 'vector', tiles: tilePath('tracks', tileVersion), minzoom: 0, maxzoom: 14 }, [TRACK_HOVER_SOURCE]: { type: 'geojson' } },
       layers: [
         outline(),
         line('tracks-casing', among('focused'), ['focused', ...DRAWN_VARS], { 'line-color': casingColor(dark), 'line-width': CASING_WIDTH, 'line-opacity': 0.95 }, 'casing'),
         line(TRACKS_LAYER_ID, notHidden, DRAWN_VARS, { 'line-color': TRACK_COLOR, 'line-width': NORMAL_WIDTH, 'line-opacity': TRACK_OPACITY }, 'track'),
         line('tracks-focused', among('focused'), ['focused', ...DRAWN_VARS], { 'line-color': TRACK_COLOR, 'line-width': FOCUSED_WIDTH, 'line-opacity': 1 }, 'focused'),
-        line('tracks-hover', among('hovered'), ['hovered', ...DRAWN_VARS], { 'line-color': HOVER_COLOR, 'line-width': HOVER_WIDTH }),
+        hoverLine(),
         arrows(),
       ],
     },
@@ -122,6 +142,6 @@ export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
         },
       };
     },
-    vars: { hidden: [], focused: [], hovered: [], capped: false, listed: [] },
+    vars: { hidden: [], focused: [], capped: false, listed: [] },
   };
 }

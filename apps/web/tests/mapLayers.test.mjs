@@ -144,10 +144,15 @@ test('the legend gives every path its color, and a dash where the map dashes it'
   assert.deepEqual(white.layers.find((l) => l.id === 'bike-paths-shared').paint['line-dasharray'], ['literal', [2, 1]]);
 });
 
-test('the tracks draw the focused and hovered ids from vars the client binds, never a hidden one', () => {
+test('the tracks draw the focused ids from vars the client binds, never a hidden one, and the hovered one from a source of its own', () => {
   const tracks = groupOf(doc, 'tracks');
   assert.deepEqual(tracks.layers.map((l) => l.id), ['tracks-outline', 'tracks-casing', 'tracks-line', 'tracks-focused', 'tracks-hover', 'tracks-arrows']);
-  assert.deepEqual([doc.vars.hidden, doc.vars.focused, doc.vars.hovered], [[], [], []]);
+  assert.deepEqual([doc.vars.hidden, doc.vars.focused], [[], []]);
+  // A filter change re-parses every tile of its source, so the hover, which changes per row, isn't one.
+  const hover = tracks.layers.find((l) => l.id === 'tracks-hover');
+  assert.equal(hover.source, 'track-hover');
+  assert.equal(hover.filter, undefined);
+  assert.deepEqual(tracks.sources['track-hover'], { type: 'geojson' });
   // Past the web list's cap only listed tracks draw (docs/SPEC.md FR-5.19); unbound, every track does.
   assert.deepEqual([doc.vars.capped, doc.vars.listed], [false, []]);
   const focused = tracks.layers.find((l) => l.id === 'tracks-focused');

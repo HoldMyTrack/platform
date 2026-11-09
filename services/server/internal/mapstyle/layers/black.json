@@ -1,5 +1,5 @@
 {
-  "styleBuild": "f2397bd9ea95",
+  "styleBuild": "52b8fb1a595b",
   "flavor": "black",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -18,7 +18,6 @@
   "vars": {
     "hidden": [],
     "focused": [],
-    "hovered": [],
     "capped": false,
     "listed": [],
     "spotCategories": [],
@@ -1482,6 +1481,9 @@
           "tiles": "/tiles/v1/tracks/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
           "minzoom": 0,
           "maxzoom": 14
+        },
+        "track-hover": {
+          "type": "geojson"
         }
       },
       "layers": [
@@ -1774,61 +1776,8 @@
         {
           "id": "tracks-hover",
           "type": "line",
-          "source": "tracks",
-          "source-layer": "tracks",
+          "source": "track-hover",
           "minzoom": 4,
-          "filter": [
-            "all",
-            [
-              "in",
-              [
-                "get",
-                "id"
-              ],
-              [
-                "var",
-                "hovered"
-              ]
-            ],
-            [
-              "all",
-              [
-                "!",
-                [
-                  "in",
-                  [
-                    "get",
-                    "id"
-                  ],
-                  [
-                    "var",
-                    "hidden"
-                  ]
-                ]
-              ],
-              [
-                "any",
-                [
-                  "!",
-                  [
-                    "var",
-                    "capped"
-                  ]
-                ],
-                [
-                  "in",
-                  [
-                    "get",
-                    "id"
-                  ],
-                  [
-                    "var",
-                    "listed"
-                  ]
-                ]
-              ]
-            ]
-          ],
           "layout": {
             "line-cap": "round",
             "line-join": "round"
@@ -1836,16 +1785,6 @@
           "paint": {
             "line-color": "#93691f",
             "line-width": 5
-          },
-          "metadata": {
-            "holdmytrack:vars": {
-              "filter": [
-                "hovered",
-                "hidden",
-                "capped",
-                "listed"
-              ]
-            }
           }
         },
         {
