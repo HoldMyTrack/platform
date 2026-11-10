@@ -1,5 +1,5 @@
 {
-  "styleBuild": "db8f1001fb7d",
+  "styleBuild": "732bf1ec1cc5",
   "flavor": "dark",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -709,14 +709,14 @@
         },
         "country-fog": {
           "type": "vector",
-          "tiles": "/tiles/v1/country-veil/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
+          "tiles": "/tiles/v1/countries/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
           "minzoom": 0,
           "maxzoom": 3,
           "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>"
         },
         "region-fog": {
           "type": "vector",
-          "tiles": "/tiles/v1/region-veil/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
+          "tiles": "/tiles/v1/regions/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
           "minzoom": 3,
           "maxzoom": 7,
           "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>"

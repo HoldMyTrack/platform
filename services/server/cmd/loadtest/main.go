@@ -404,9 +404,9 @@ func layers(mode string, spots bool, z int) ([]string, int) {
 	default: // fog
 		switch {
 		case z < countryMaxZoom:
-			out = append(out, "country-veil:mvt")
+			out = append(out, "countries:mvt")
 		case z < regionMaxZoom:
-			out = append(out, "region-veil:mvt")
+			out = append(out, "regions:mvt")
 		default:
 			out = append(out, "fog-vector:mvt")
 		}

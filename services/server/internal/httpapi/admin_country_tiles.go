@@ -24,8 +24,8 @@ type adminLayer struct {
 }
 
 var (
-	countryLayer = adminLayer{name: "countries", cache: "country-veil", outlines: "admin_countries", matches: "activity_country", matchID: "country_id", cacheMaxZoom: 3}
-	regionLayer  = adminLayer{name: "regions", cache: "region-veil", outlines: "admin_regions", matches: "activity_region", matchID: "region_id", cacheMaxZoom: 7}
+	countryLayer = adminLayer{name: "countries", cache: "countries", outlines: "admin_countries", matches: "activity_country", matchID: "country_id", cacheMaxZoom: 3}
+	regionLayer  = adminLayer{name: "regions", cache: "regions", outlines: "admin_regions", matches: "activity_region", matchID: "region_id", cacheMaxZoom: 7}
 )
 
 // seaID is the admin_id of a tile's sea: the tile's frame with every outline in it cut out.
@@ -42,6 +42,9 @@ const seaID = 0
 // border, where antialiasing drew a seam. At the world's top and bottom it stops at the edge: the
 // globe draws what lies past it over the pole, once per tile in the row. GEOS winds a
 // difference's outer ring the other way from ST_AsMVTGeom, and a vector tile reads that as a hole.
+// The difference adds vertices between the tile's integer grid points, and ST_AsMVT rounds them,
+// which can cross a ring over itself; MapLibre then leaves the polygon unfilled, so the sea is
+// snapped to the grid here, staying valid.
 func (l adminLayer) liveGeoms() string {
 	return fmt.Sprintf(`
 		WITH outlines AS (
@@ -54,7 +57,8 @@ func (l adminLayer) liveGeoms() string {
 				-2, CASE WHEN $3 = 0 THEN 0 ELSE -2 END,
 				4098, CASE WHEN $3 = power(2, $1)::int - 1 THEN 4096 ELSE 4098 END, 3857) AS geom
 		), sea AS (
-			SELECT ST_ForcePolygonCCW(COALESCE(ST_Difference(f.geom, ST_Union(o.geom)), f.geom)) AS geom
+			SELECT ST_ForcePolygonCCW(ST_CollectionExtract(ST_ReducePrecision(
+			           COALESCE(ST_Difference(f.geom, ST_Union(o.geom)), f.geom), 1), 3)) AS geom
 			FROM frame f LEFT JOIN outlines o ON true
 			GROUP BY f.geom
 		)

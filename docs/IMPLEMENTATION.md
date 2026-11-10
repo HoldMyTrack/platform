@@ -309,7 +309,7 @@ Every per-user tile is cacheable for good under the account's **tile version** (
 - changes with no render behind them: enqueueing a reprocess, deleting or editing an activity, a timezone change, a Story membership change, the demo reset;
 - the Spots and bike-path imports and `seed-admin-boundaries`, for every account.
 
-A release that changes what a tile kind draws gives it a new path (`country-veil`): a migration's bump runs while the previous release still serves.
+A release that changes what a tile kind draws gives it a new path (`countries`): a migration's bump runs while the previous release still serves.
 
 On the wire the version is prefixed with the start of the account id, so two accounts on one device never share a key. The tracks layer adds a per-page `v` (load time, then a counter), so a change the page made before a new version arrives isn't served from cache, not even another tab's. One upload invalidates every tile of the account; a per-tile key is the next step if measurements call for it.
 
