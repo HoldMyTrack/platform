@@ -717,7 +717,6 @@ The web app works in a phone browser as on a desktop. Taps stand in for hover.
 Not built by design, and not planned:
 
 - Performance analysis (best-effort curves, personal bests, power curves, training load) and recovery data (sleep, HRV, readiness): `VISION.md` §1.1. Pace stays per-activity route context (FR-4.8), and health measurements are never read, stored or shown (ADR-0017).
-- Explorer-tile scoring: Fog of War is the exploration mechanic (`VISION.md` §3.3).
 - Splitting a track that passes through a Private location mid-way: FR-8.1 hides only the ends.
 
 What is planned is in `docs/ROADMAP.md`.
