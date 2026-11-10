@@ -65,8 +65,6 @@ The major fitness platforms focus on real-time logging, social feeds and health 
 
 **Intervals.icu and Runalyze show that a free tool keeps real users.** They also show that it stays small; HoldMyTrack does not plan to be a venture-scale business.
 
-**HoldMyTrack does not copy the tile games.** Counting visited squares measures what the fog already shows, only coarser, and would be a second per-account coverage record that every deletion, track edit and Private location change has to un-visit. Fog of War is the exploration mechanic.
-
 Feature parity takes weeks and is not defensible; render quality and breadth of ingest are.
 
 **The default map is vector.** Fog of World's reveal shows satellite imagery. Imagery is billed per request on traffic that earns nothing, so HoldMyTrack renders over a self-hosted vector basemap, with Satellite an optional base map whose quota pauses it instead of billing past it (`IMPLEMENTATION.md` §4.26). Render quality has to carry the difference.
