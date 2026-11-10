@@ -155,4 +155,4 @@ for lang, serif in [('en', 'fraunces.ttf'), ('ru', 'source_serif_4.ttf')]:
     d.text((tx, base), 'HoldMy', font=light, fill='#C7C3B7', anchor='ls')  # header's ink at 82% on GREEN
     d.text((tx + w1, base), 'Track', font=bold, fill=GOLD, anchor='ls')
     d.text((tx + 4, base + 52), tagline, font=small, fill='#A8B2A9', anchor='ls')  # --fm-ink-secondary, dark
-    img.save(os.path.join(BRAND, 'play-feature-graphic.png' if lang == 'en' else f'play-feature-graphic-{lang}.png'))
+    img.save(os.path.join(BRAND, f'play/{lang}/feature-graphic.png'))
