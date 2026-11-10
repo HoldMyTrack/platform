@@ -67,7 +67,7 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         row.alignment = .center
         head.axis = .vertical
         head.addArrangedSubview(row)
-        head.addArrangedSubview(Controls.label(String(localized: "A Story shows its activities whatever the date range."), font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary)))
+        head.addArrangedSubview(Controls.label(String(localized: "A Story shows its own activities instead of what's on the map."), font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary)))
 
         table.dataSource = self
         table.delegate = self

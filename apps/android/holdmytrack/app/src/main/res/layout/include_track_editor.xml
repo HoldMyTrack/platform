@@ -114,6 +114,17 @@
                 tools:text="8.4 km" />
         </LinearLayout>
 
+        <!-- What Split, Move point or Delete point does next, above the tools: below them, the
+             phone's capped window scrolled it out of sight. -->
+        <TextView
+            android:id="@+id/edit_track_mode_note"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/hmt_space_8"
+            android:textColor="@color/hmt_ink_meta"
+            android:textSize="@dimen/hmt_text_sm"
+            android:visibility="gone" />
+
         <!-- The tools, in two rows — five across broke Russian labels mid-word. Chop and Cut over
              the stretch between the knobs and Split at the one knob moved; then Move point and
              Delete point, toggles each turning the other off, over the map's points. Not
@@ -168,6 +179,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
+                android:checkable="true"
                 android:text="@string/edit_track_move_point"
                 app:icon="@drawable/ic_move" />
 
@@ -178,17 +190,10 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/hmt_space_6"
                 android:layout_weight="1"
+                android:checkable="true"
                 android:text="@string/edit_track_delete_point"
                 app:icon="@drawable/ic_circle_x" />
         </LinearLayout>
 
-        <TextView
-            android:id="@+id/edit_track_mode_note"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="@dimen/hmt_space_4"
-            android:textColor="@color/hmt_ink_meta"
-            android:textSize="@dimen/hmt_text_sm"
-            android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>

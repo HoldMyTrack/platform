@@ -60,6 +60,7 @@
             android:orientation="horizontal">
 
             <LinearLayout
+                android:id="@+id/top_start"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/hmt_space_8"

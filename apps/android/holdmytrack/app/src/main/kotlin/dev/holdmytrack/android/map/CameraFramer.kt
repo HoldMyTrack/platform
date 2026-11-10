@@ -26,6 +26,7 @@ class CameraFramer(
 ) {
     private val root: View = view.findViewById(R.id.map_root)
     private val topBar: View = view.findViewById(R.id.top_bar)
+    private val topStart: View = view.findViewById(R.id.top_start)
     private val topChrome: View = view.findViewById(R.id.top_chrome)
     private val banner: View = view.findViewById(R.id.capture_banner)
     private val sheet: View = view.findViewById(R.id.activities_sheet)
@@ -94,7 +95,9 @@ class CameraFramer(
         }
         val padding = FrameRules.padding(
             rootHeight = root.height,
-            chromeBottom = topBar.bottom,
+            // The mode toggle's column, not the whole row: the rail of buttons at the end is
+            // taller, and fitting below it squeezed every fit into a strip above the sheet.
+            chromeBottom = topChrome.top + topBar.top + topStart.bottom,
             bannerBottom = if (banner.isVisible) topChrome.top + banner.bottom else null,
             coveredBelow = covered,
             minSpanPx = (MIN_SPAN_DP * density).toInt(),

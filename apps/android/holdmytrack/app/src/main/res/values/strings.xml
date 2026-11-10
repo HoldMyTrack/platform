@@ -691,14 +691,14 @@
     <string name="tour_range_title">Dates</string>
     <string name="tour_range_body">All time, unless you set From or To. Picking a date moves the map onto the activities it matches.</string>
     <string name="tour_stories_title">Stories</string>
-    <string name="tour_stories_body">Group activities into a trip or a season. A Story shows its own activities instead of the date range, and you can send someone a copy.</string>
+    <string name="tour_stories_body">Group activities into a trip or a season. A Story shows its own activities instead of what\'s on the map, and you can send someone a copy.</string>
     <string name="tour_layers_title">Layers</string>
     <string name="tour_layers_body">Roads, bike paths, trails and places such as waterfalls, viewpoints and historic sites, over any mode.</string>
     <string name="tour_export_title">Export</string>
     <string name="tour_export_body">Save the map as an image with your tracks on it, framed the way you choose.</string>
     <string name="tour_fog_title">Fog of War</string>
-    <string name="tour_fog_body">Everywhere you\'ve ever been, for all time: the date range and filters don\'t apply here. Zoomed out, a whole country clears once you\'ve been in it, then each region. The fog that\'s left is what you haven\'t explored yet.</string>
-    <string name="tour_fog_city_body">Everywhere you\'ve ever been, for all time: the date range and filters don\'t apply here. Zoomed in to a city, the fog lifts exactly along your tracks. The rest is still to explore.</string>
+    <string name="tour_fog_body">Everywhere you\'ve ever been, for all time: Dates and the filters don\'t apply here. Zoomed out, a whole country clears once you\'ve been in it, then each region. The fog that\'s left is what you haven\'t explored yet.</string>
+    <string name="tour_fog_city_body">Everywhere you\'ve ever been, for all time: Dates and the filters don\'t apply here. Zoomed in to a city, the fog lifts exactly along your tracks. The rest is still to explore.</string>
     <string name="tour_fog_regions_title">Fog of War: states and regions</string>
     <string name="tour_fog_regions_body">Zoomed out, a whole state or region clears once any activity is in it. Every fogged one is a place you haven\'t been yet.</string>
     <string name="tour_fog_countries_title">Fog of War: countries</string>
