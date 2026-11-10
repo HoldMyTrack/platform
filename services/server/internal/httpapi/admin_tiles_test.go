@@ -53,8 +53,8 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 		queries adminTileQueries
 	}
 	cases := []tileCase{
-		{"country-veil", countryLayer, countryFogQueries},
-		{"region-veil", regionLayer, regionFogQueries},
+		{"countries", countryLayer, countryFogQueries},
+		{"regions", regionLayer, regionFogQueries},
 	}
 	coords := func(l adminLayer) (int, int, int) {
 		x, y := tilemath.LonLatToTile(at[0], at[1], l.cacheMaxZoom)
@@ -140,7 +140,7 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 	// rather than drawn again.
 	z, x, y := coords(countryLayer)
 	if _, err := d.pool.Exec(ctx,
-		`DELETE FROM admin_tile_geoms WHERE layer = 'country-veil' AND zoom = $1 AND tile_x = $2 AND tile_y = $3`, z, x, y); err != nil {
+		`DELETE FROM admin_tile_geoms WHERE layer = 'countries' AND zoom = $1 AND tile_x = $2 AND tile_y = $3`, z, x, y); err != nil {
 		t.Fatal(err)
 	}
 	if n := len(get(cases[0])); n != 0 {
@@ -170,5 +170,35 @@ func TestAdminTileSeaStopsAtTheWorldsEdge(t *testing.T) {
 		if top != c.top || bottom != c.bottom {
 			t.Errorf("tile %d/%d/%d: the sea spans y %v to %v, want %v to %v", c.z, c.x, c.y, top, bottom, c.top, c.bottom)
 		}
+	}
+}
+
+// The sea is cut out of outlines already on the tile's grid, but where an outline's edge crosses
+// the frame the cut adds a vertex between grid points. Encoding rounds it, which can cross a ring
+// over itself, and MapLibre leaves such a polygon unfilled, so the sea comes out on the grid.
+func TestAdminTileSeaIsOnTheTileGrid(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	// A country whose long edge crosses tile 3/3/5's frame on the slant, in the South Atlantic.
+	var id int
+	if err := d.pool.QueryRow(ctx, `
+		INSERT INTO admin_countries (code, name, geom)
+		VALUES ($1, 'Slant', ST_Multi(ST_GeomFromText('POLYGON((-60 -60, 10 -60, -60 -20, -60 -60))', 4326))) RETURNING id`,
+		fmt.Sprintf("TS%d", time.Now().UnixNano())).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { d.pool.Exec(context.Background(), `DELETE FROM admin_countries WHERE id = $1`, id) })
+
+	var offGrid int
+	var valid bool
+	if err := d.pool.QueryRow(ctx, `
+		SELECT (SELECT count(*) FROM ST_DumpPoints(g.geom) p
+		        WHERE ST_X(p.geom) <> round(ST_X(p.geom)) OR ST_Y(p.geom) <> round(ST_Y(p.geom))),
+		       ST_IsValid(g.geom)
+		FROM (`+countryLayer.liveGeoms()+`) g WHERE g.admin_id = $4`, 3, 3, 5, seaID).Scan(&offGrid, &valid); err != nil {
+		t.Fatal(err)
+	}
+	if offGrid != 0 || !valid {
+		t.Errorf("the sea has %d vertices off the tile grid, valid %v; want none, valid", offGrid, valid)
 	}
 }
