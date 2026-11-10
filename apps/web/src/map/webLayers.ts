@@ -1,5 +1,5 @@
 import { buildLayers, type MapLayers } from './mapLayers';
-import { basemapLabelIds, isDarkFlavor, type Flavor } from './style';
+import { isDarkFlavor, type Flavor } from './style';
 
 const built = new Map<Flavor, MapLayers>();
 
@@ -11,7 +11,7 @@ const built = new Map<Flavor, MapLayers>();
 export function webLayers(flavor: Flavor, tileVersion: string): MapLayers {
   const cached = built.get(flavor);
   if (cached?.tileVersion === tileVersion) return cached;
-  const doc = buildLayers({ flavor, dark: isDarkFlavor(flavor), labelIds: basemapLabelIds(flavor), tileVersion });
+  const doc = buildLayers({ flavor, dark: isDarkFlavor(flavor), tileVersion });
   built.set(flavor, doc);
   return doc;
 }

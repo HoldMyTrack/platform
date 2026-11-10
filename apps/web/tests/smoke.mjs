@@ -444,7 +444,6 @@ describe('basemap foundation', () => {
           edge: shown('fog-edge'),
           heat: shown('heat-points-circles'),
           dim: shown('heatmap-dim'),
-          label: m.getPaintProperty('places_locality', 'text-opacity'),
           veilColor: m.getPaintProperty('fog-veil', 'fill-color'),
           imagery: Boolean(m.getLayer('satellite')) && m.getLayoutProperty('satellite', 'visibility') === 'visible',
           fogTiles: m.getStyle().sources['fog-vector'].tiles[0],
@@ -454,17 +453,17 @@ describe('basemap foundation', () => {
 
     await mode('Fog');
     const fog = await state();
-    assert.deepEqual([fog.veil, fog.edge, fog.heat, fog.dim, fog.label], ['visible', 'visible', 'none', 'none', 0.4], 'Fog: veil shown, labels muted');
+    assert.deepEqual([fog.veil, fog.edge, fog.heat, fog.dim], ['visible', 'visible', 'none', 'none'], 'Fog: veil shown');
     // Imagery reads dark, so it takes the cream veil the dark flavors have.
     assert.equal(fog.veilColor, fog.imagery ? '#f7f4ec' : '#202b25', `the veil for the light flavor, imagery ${fog.imagery}`);
     assert.match(fog.fogTiles, /\/tiles\/v1\/fog-vector\/\{z\}\/\{x\}\/\{y\}\.mvt/, 'the source on the API, from the style');
 
     await mode('Heatmap');
     const heat = await state();
-    assert.deepEqual([heat.veil, heat.heat, heat.dim, heat.label], ['none', 'visible', 'visible', 1], 'Heatmap: heat shown over its wash');
+    assert.deepEqual([heat.veil, heat.heat, heat.dim], ['none', 'visible', 'visible'], 'Heatmap: heat shown over its wash');
 
     await mode('Normal');
     const normal = await state();
-    assert.deepEqual([normal.veil, normal.heat, normal.dim, normal.label], ['none', 'none', 'none', 1], 'Normal: neither');
+    assert.deepEqual([normal.veil, normal.heat, normal.dim], ['none', 'none', 'none'], 'Normal: neither');
   });
 });

@@ -175,7 +175,7 @@ function applyState(map: MapLibreMap, doc: MapLayers, state: LayerState, groups:
   const own = new Map<string, { layer: LayerSpecification; group: LayerGroup }>();
   for (const group of groups) for (const layer of group.layers) own.set(layer.id, { layer, group });
 
-  // The basemap's own layers a view sets: its labels, which Fog mutes.
+  // The basemap's own layers a view sets.
   for (const [id, props] of Object.entries(view.layout)) {
     if (own.has(id) || !map.getLayer(id)) continue;
     for (const [property, value] of Object.entries(props)) setLayout(map, id, property, value);

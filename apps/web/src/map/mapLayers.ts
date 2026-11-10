@@ -133,16 +133,14 @@ export interface BuildLayersOptions {
   flavor: Flavor;
   /** Whether the flavor draws light on dark (style.ts's isDarkFlavor). */
   dark: boolean;
-  /** The basemap's label layers (style.ts's basemapLabelIds). */
-  labelIds: readonly string[];
   tileVersion: string;
   styleBuild?: string;
 }
 
 /** The layers document for `flavor` at `tileVersion`. Satellite imagery reads dark under any
  *  flavor, so its views take the dark ones. */
-export function buildLayers({ flavor, dark, labelIds, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
-  const parts = [coverageGroup(dark, tileVersion, labelIds), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(), spotsGroup(tileVersion)];
+export function buildLayers({ flavor, dark, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
+  const parts = [coverageGroup(dark, tileVersion), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(), spotsGroup(tileVersion)];
   const views = (base: boolean, satellite: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base, satellite)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,

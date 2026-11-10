@@ -71,10 +71,6 @@ const DARK_VEIL = { color: '#f7f4ec', opacity: 0.82 };
 const LIGHT_DIM = { color: '#f7f4ec', opacity: 0.45 };
 const DARK_DIM = { color: '#000000', opacity: 0.35 };
 
-/** How far Fog mutes the basemap's labels: enough to recede behind the veil, still enough to
- *  orient by. */
-const FOG_LABEL_OPACITY = 0.4;
-
 /** The Country/Region outlines are Overture Maps' divisions, built from OpenStreetMap (IMPLEMENTATION.md §4.2.4). */
 const BOUNDARIES_ATTRIBUTION = '<a href="https://overturemaps.org">Overture Maps</a>';
 
@@ -93,13 +89,12 @@ export function heatPointsRadius(): unknown[] {
   return ['interpolate', ['exponential', 2], ['zoom'], ...stops];
 }
 
-/** One mode's view over a base that reads `dark`; `labelIds` are the basemap's label layers. */
-export function coverageView(mode: MapMode, dark: boolean, labelIds: readonly string[]): LayerView {
+/** One mode's view over a base that reads `dark`. */
+export function coverageView(mode: MapMode, dark: boolean): LayerView {
   const veil = dark ? DARK_VEIL : LIGHT_VEIL;
   const dim = dark ? DARK_DIM : LIGHT_DIM;
   const shown = (on: boolean) => ({ visibility: on ? 'visible' : 'none' });
   const fill = { 'fill-color': veil.color, 'fill-opacity': veil.opacity };
-  const labels = mode === 'fog' ? FOG_LABEL_OPACITY : 1;
   return {
     layout: {
       [HEATMAP_DIM_LAYER]: shown(mode === 'heatmap'),
@@ -112,14 +107,13 @@ export function coverageView(mode: MapMode, dark: boolean, labelIds: readonly st
       [FOG_EDGE_LAYER]: { 'line-color': veil.color, 'line-opacity': veil.opacity },
       [COUNTRY_FOG_LAYER]: fill,
       [REGION_FOG_LAYER]: fill,
-      ...Object.fromEntries(labelIds.map((id) => [id, { 'text-opacity': labels, 'icon-opacity': labels }])),
     },
   };
 }
 
-/** The `coverage` group over a basemap drawn `dark`, whose label layers are `labelIds`. */
-export function coverageGroup(dark: boolean, tileVersion: string, labelIds: readonly string[]): GroupPart {
-  const base = coverageView('normal', dark, labelIds);
+/** The `coverage` group over a basemap drawn `dark`. */
+export function coverageGroup(dark: boolean, tileVersion: string): GroupPart {
+  const base = coverageView('normal', dark);
   const layer = (spec: LayerSpecification) => withView(spec, base);
   return {
     group: {
@@ -183,7 +177,7 @@ export function coverageGroup(dark: boolean, tileVersion: string, labelIds: read
         }),
       ],
     },
-    view: (mode, onDark) => coverageView(mode, onDark, labelIds),
+    view: (mode, onDark) => coverageView(mode, onDark),
     tiers: [{ tier: 'country', below: COUNTRY_MAX_ZOOM }, { tier: 'region', below: REGION_MAX_ZOOM }, { tier: 'city' }],
   };
 }

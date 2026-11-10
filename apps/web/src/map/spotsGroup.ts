@@ -9,7 +9,7 @@ import { IMAGES_METADATA, ROLE_METADATA, tilePath, TOGGLE_METADATA, VARS_METADAT
  *
  * On top of the whole stack rather than beneath the basemap's labels: a spot is something to find
  * on the map, so the fog veil mustn't bury it, and a label crossing it is less of a loss than the
- * icon. Fog's label dimming leaves the badges alone, since the views don't list them.
+ * icon.
  *
  * The client binds the categories shown, the ids the account captured (FR-15.6) and capture
  * mode's target (`apps/android/docs/SPEC.md` FR-2.8) as vars, and draws each badge image the
