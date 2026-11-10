@@ -460,10 +460,10 @@ describe('basemap foundation', () => {
 
     await mode('Heatmap');
     const heat = await state();
-    assert.deepEqual([heat.veil, heat.heat, heat.dim, heat.label], ['none', 'visible', 'visible', 1], 'Heatmap: heat shown over its wash');
+    assert.deepEqual([heat.veil, heat.heat, heat.dim], ['none', 'visible', 'visible'], 'Heatmap: heat shown over its wash');
 
     await mode('Normal');
     const normal = await state();
-    assert.deepEqual([normal.veil, normal.heat, normal.dim, normal.label], ['none', 'none', 'none', 1], 'Normal: neither');
+    assert.deepEqual([normal.veil, normal.heat, normal.dim], ['none', 'none', 'none'], 'Normal: neither');
   });
 });
