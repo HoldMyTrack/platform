@@ -170,6 +170,8 @@ class YouFragment : Fragment(R.layout.fragment_you) {
                 if (view == null) return@onSuccess
                 avatar.setImageBitmap(bitmap)
                 avatar.visibility = View.VISIBLE
+                // An avatar with transparent corners would show the letters through it.
+                initials.text = ""
             }
         }
     }
