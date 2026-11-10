@@ -230,6 +230,7 @@ extension MapViewController {
         let note: (text: String, failed: Bool)? = zoomNote.map { ($0, false) }
             ?? (listLoading && activities.isEmpty ? (String(localized: "Loading…"), false) : listError.map { ($0, true) })
         activitiesPanel.render(session.panel, activities: activities, format: format, note: note)
+        activitiesPanel.setLoading(listLoading && !(zoomedOut && session.storyID == nil))
         if panelTab == .stories {
             let panel = session.panel
             let byID = Dictionary(activities.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })

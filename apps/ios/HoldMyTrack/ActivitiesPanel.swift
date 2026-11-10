@@ -25,6 +25,8 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
 
     private let table = UITableView(frame: .zero, style: .plain)
     private let note = Controls.body()
+    private let progress = ListProgressView()
+    private var progressTask: Task<Void, Never>?
     private let footer = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     private let typeButton = UIButton(type: .system)
     private let distanceButton = UIButton(type: .system)
@@ -146,7 +148,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         note.accessibilityIdentifier = "panelNote"
 
         let top = Controls.column([filters, selectionBar], spacing: DesignTokens.Space.s4)
-        for v in [top, table, footer, note] as [UIView] {
+        for v in [top, progress, table, footer, note] as [UIView] {
             v.translatesAutoresizingMaskIntoConstraints = false
             content.addSubview(v)
         }
@@ -155,7 +157,10 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
             top.topAnchor.constraint(equalTo: content.topAnchor),
             top.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: m),
             top.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -m),
-            table.topAnchor.constraint(equalTo: top.bottomAnchor, constant: DesignTokens.Space.s4),
+            progress.topAnchor.constraint(equalTo: top.bottomAnchor, constant: DesignTokens.Space.s2),
+            progress.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+            progress.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            table.topAnchor.constraint(equalTo: progress.bottomAnchor),
             table.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             table.trailingAnchor.constraint(equalTo: content.trailingAnchor),
             footer.topAnchor.constraint(equalTo: table.bottomAnchor, constant: DesignTokens.Space.s4),
@@ -236,6 +241,23 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
 
     /// Whether the card shows at the head: something focused and nothing checked.
     var showsCard: Bool { state.focused != nil && !state.selecting && state.focused.flatMap { byID[$0] } != nil }
+
+    /// A list load is under way, or over: the bar over the rows shows once one has run
+    /// progressDelay, so a quick pan doesn't flicker. The list keeps its rows meanwhile, and a
+    /// "Loading…" line below them would go unseen.
+    func setLoading(_ loading: Bool) {
+        progressTask?.cancel()
+        guard loading else { return progress.stop() }
+        guard !progress.running else { return }
+        progressTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.progressDelay)
+            guard !Task.isCancelled else { return }
+            self?.progress.start()
+        }
+    }
+
+    /// How long a list load runs before the progress bar shows.
+    private static let progressDelay = Duration.milliseconds(300)
 
     /// The Dates button's words: "Dates", or the days set, marked while set.
     func setDates(_ text: String, set: Bool) {
