@@ -64,6 +64,7 @@ holdmytrack/
 │   └── DPIA.md                  # the data protection impact assessment
 ├── AGENTS.md                    # orientation for coding agents
 ├── brand/                       # logo.svg, the mark's master; make_icons.py renders every logo and icon from it, the README's included
+│   └── play/                    # the Play store listing per language: feature-graphic.png and the screenshots uploaded, phone-NN-<what>.png and tablet-NN-<what>.png
 ├── apps/
 │   ├── android/                 # Kotlin. Health Connect sync + in-app GPS recording; own docs/
 │   ├── ios/                     # Swift, HealthKit ingest. A skeleton; own docs/, whose ROADMAP.md is its plan
