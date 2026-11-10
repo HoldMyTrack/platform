@@ -1,5 +1,5 @@
 {
-  "styleBuild": "52b8fb1a595b",
+  "styleBuild": "3039f8a9b472",
   "flavor": "grayscale",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -259,56 +259,56 @@
             "fill-opacity": 0.82
           },
           "address_label": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "water_waterway_label": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "roads_oneway": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "roads_labels_minor": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "water_label_ocean": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "earth_label_islands": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "water_label_lakes": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "roads_shields": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "roads_labels_major": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "places_subplace": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "places_region": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "places_locality": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "places_country": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "tracks-casing": {
             "line-color": "#202b25"
@@ -750,56 +750,56 @@
             "fill-opacity": 0.82
           },
           "address_label": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "water_waterway_label": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "roads_oneway": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "roads_labels_minor": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "water_label_ocean": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "earth_label_islands": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "water_label_lakes": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "roads_shields": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "roads_labels_major": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "places_subplace": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "places_region": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "places_locality": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "places_country": {
-            "text-opacity": 0.4,
-            "icon-opacity": 0.4
+            "text-opacity": 1,
+            "icon-opacity": 1
           },
           "tracks-casing": {
             "line-color": "#14140e"

@@ -73,7 +73,7 @@ const DARK_DIM = { color: '#000000', opacity: 0.35 };
 
 /** How far Fog mutes the basemap's labels: enough to recede behind the veil, still enough to
  *  orient by. */
-const FOG_LABEL_OPACITY = 0.4;
+const FOG_LABEL_OPACITY = 1;
 
 /** The Country/Region outlines are Overture Maps' divisions, built from OpenStreetMap (IMPLEMENTATION.md §4.2.4). */
 const BOUNDARIES_ATTRIBUTION = '<a href="https://overturemaps.org">Overture Maps</a>';

@@ -33,7 +33,7 @@ test('each mode shows only its own layers', () => {
 
 test('Fog mutes the basemap labels and every other mode restores them', () => {
   for (const mode of MODES) {
-    const opacity = mode === 'fog' ? 0.4 : 1;
+    const opacity = 1;
     for (const id of labels) assert.deepEqual(viewFor(doc, mode, false).paint[id], { 'text-opacity': opacity, 'icon-opacity': opacity });
   }
 });
