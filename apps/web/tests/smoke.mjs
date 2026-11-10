@@ -454,7 +454,7 @@ describe('basemap foundation', () => {
 
     await mode('Fog');
     const fog = await state();
-    assert.deepEqual([fog.veil, fog.edge, fog.heat, fog.dim, fog.label], ['visible', 'visible', 'none', 'none', 0.4], 'Fog: veil shown, labels muted');
+    assert.deepEqual([fog.veil, fog.edge, fog.heat, fog.dim, fog.label], ['visible', 'visible', 'none', 'none', 1], 'Fog: veil shown, labels opaque');
     // Imagery reads dark, so it takes the cream veil the dark flavors have.
     assert.equal(fog.veilColor, fog.imagery ? '#f7f4ec' : '#202b25', `the veil for the light flavor, imagery ${fog.imagery}`);
     assert.match(fog.fogTiles, /\/tiles\/v1\/fog-vector\/\{z\}\/\{x\}\/\{y\}\.mvt/, 'the source on the API, from the style');
