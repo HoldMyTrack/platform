@@ -48,7 +48,7 @@ registerHooks({
   },
 });
 
-const { basemapLabelIds, buildStyle, FLAVORS, isDarkFlavor, STYLE_BUILD_METADATA } = await import('../src/map/style.ts');
+const { buildStyle, FLAVORS, isDarkFlavor, STYLE_BUILD_METADATA } = await import('../src/map/style.ts');
 const { buildLayers } = await import('../src/map/mapLayers.ts');
 const { LANGS } = await import('../src/i18n/index.ts');
 
@@ -79,13 +79,7 @@ for (const lang of LANGS) {
   }
 }
 for (const flavor of FLAVORS) {
-  // Fog mutes the labels by id, so every language has to give them the same ones.
-  const labelIds = basemapLabelIds(flavor);
-  for (const lang of LANGS) {
-    const ids = docs.get(`styles/${lang}/${flavor}.json`).layers.filter((layer) => layer.type === 'symbol').map((layer) => layer.id);
-    if (JSON.stringify(ids) !== JSON.stringify(labelIds)) throw new Error(`${lang}/${flavor}: label layer ids differ from English`);
-  }
-  docs.set(`layers/${flavor}.json`, buildLayers({ flavor, dark: isDarkFlavor(flavor), labelIds, tileVersion: TILE_VERSION_PLACEHOLDER }));
+  docs.set(`layers/${flavor}.json`, buildLayers({ flavor, dark: isDarkFlavor(flavor), tileVersion: TILE_VERSION_PLACEHOLDER }));
 }
 
 const hash = createHash('sha256');

@@ -674,7 +674,7 @@ Outdoor places from OpenStreetMap in six categories, with what OSM says about ea
 
 - One Layers toggle per category, off by default.
 - From zoom 13 ticked places show as badges with their areas; from 10 to 13 only on request (FR-15.5); below 10 none. A captured place's badge is filled.
-- Drawn over Fog and labels, undimmed; hidden during Edit track. A retired place shows only to an account that captured it.
+- Drawn over Fog and labels; hidden during Edit track. A retired place shows only to an account that captured it.
 
 ### FR-15.3 The popup
 

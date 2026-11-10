@@ -214,13 +214,6 @@ function basemapLayers(flavor: Flavor, lang: string): LayerSpecification[] {
   return withPathLayers(layers(BASEMAP_SOURCE, namedFlavor(flavor), { lang }), flavor);
 }
 
-/** The basemap's label layers, the same ids in every language: what Fog mutes (mapLayers.ts). */
-export function basemapLabelIds(flavor: Flavor): string[] {
-  return basemapLayers(flavor, 'en')
-    .filter((layer) => layer.type === 'symbol')
-    .map((layer) => layer.id);
-}
-
 export function buildStyle(options: BuildStyleOptions): StyleSpecification {
   const {
     flavor,

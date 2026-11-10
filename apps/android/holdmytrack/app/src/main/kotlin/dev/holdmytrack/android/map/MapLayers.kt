@@ -173,7 +173,7 @@ object MapLayers {
         val view = MapLayersDoc.view(doc, state.mode, state.satellite)?.properties.orEmpty()
         val own = entry.groups.flatMap { group -> group.layers.map { it to group } }.associateBy { it.first.id }
         val hidden = state.hiddenGroups.values.flatten().toSet()
-        // The basemap's own layers a view sets: its labels, which Fog mutes.
+        // The basemap's own layers a view sets.
         view.forEach { (id, props) ->
             if (id in own) return@forEach
             style.getLayer(id)?.setProperties(*props.mapNotNull { (k, v) -> property(k, v) }.toTypedArray())

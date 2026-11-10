@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { buildLayers, zoomTier } from '../src/map/mapLayers.ts';
 import { levelNoticeKey } from '../src/map/zoomTiers.ts';
 
-const { tiers } = buildLayers({ flavor: 'light', dark: false, labelIds: [], tileVersion: '' });
+const { tiers } = buildLayers({ flavor: 'light', dark: false, tileVersion: '' });
 
 test('Fog names the tier in view', () => {
   assert.equal(levelNoticeKey('fog', zoomTier(tiers, 1)), 'map.level.fog.country');

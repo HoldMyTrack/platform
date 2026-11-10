@@ -49,14 +49,11 @@ class MapLayersDocTest {
     }
 
     @Test
-    fun fogShowsTheVeilAndKeepsLabelsOpaque() {
+    fun fogShowsTheVeil() {
         val fog = MapLayersDoc.view(light, MapMode.FOG, false)!!.properties
         val normal = MapLayersDoc.view(light, MapMode.NORMAL, false)!!.properties
         assertEquals(JsonPrimitive("visible"), fog.getValue("fog-veil").getValue("visibility"))
         assertEquals(JsonPrimitive("none"), normal.getValue("fog-veil").getValue("visibility"))
-        val label = fog.keys.first { it.startsWith("places_") }
-        assertEquals(1.0, (fog.getValue(label).getValue("text-opacity") as JsonPrimitive).content.toDouble(), 1e-9)
-        assertEquals(1.0, (normal.getValue(label).getValue("text-opacity") as JsonPrimitive).content.toDouble(), 1e-9)
     }
 
     @Test

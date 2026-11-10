@@ -175,7 +175,7 @@ public enum MapStyle {
         let view = document.views[look ? "satellite" : "plain"]?[state.mode.rawValue]
         let specs = Dictionary(groups.flatMap { g in g.layers.compactMap { l in l["id"]?.string.map { ($0, (l, g)) } } }, uniquingKeysWith: { a, _ in a })
 
-        // The basemap's own layers a view sets: its labels, which Fog mutes.
+        // The basemap's own layers a view sets.
         for kind in ["layout", "paint"] {
             for (id, props) in view?[kind]?.object ?? [:] where specs[id] == nil {
                 for (name, value) in props.object ?? [:] { set(&layers, id, kind, name, value) }
