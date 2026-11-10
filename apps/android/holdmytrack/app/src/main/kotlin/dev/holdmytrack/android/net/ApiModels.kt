@@ -116,6 +116,10 @@ data class Activity(
     val stories: List<StoryRef> = emptyList(),
 )
 
+/** `GET /v1/activities/area`: the area's newest [activities], and with an area how many it holds,
+ *  more than listed when they were cut at the limit (`docs/SPEC.md` FR-5.19). */
+data class AreaPage(val activities: List<Activity>, val total: Int?)
+
 /** One of an activity's Stories, as a row of `GET /v1/activities` names it (`docs/SPEC.md`
  *  FR-5.1). */
 data class StoryRef(val id: String, val name: String)

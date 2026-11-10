@@ -7,11 +7,11 @@ import org.maplibre.android.maps.Style
 
 /**
  * What the map reads again when activities change under it, as the web's `useDataRefresh.ts`: the
- * track tiles, the list and its days ([RangeController]), the open Story, the bands, the photos,
+ * track tiles, the list and Dates' bounds ([AreaController]), the open Story, the bands, the photos,
  * and Fog and Heatmap once re-rendered ([CoverageController]).
  */
 class DataRefresh(
-    private val range: RangeController,
+    private val area: AreaController,
     private val session: MapSession,
     private val panel: ActivitiesPanel,
     private val panelState: PanelState,
@@ -22,7 +22,7 @@ class DataRefresh(
     private val photos: PhotosController,
 ) {
     private fun refreshTracks() {
-        style()?.let { MapOverlays.refreshTracks(it, session.range) }
+        style()?.let { MapOverlays.refreshTracks(it, session.dates) }
     }
 
     /** An activity taken out of the open Story: its track and row go, and its selection. The
@@ -32,7 +32,7 @@ class DataRefresh(
         photos.refresh(force = true)
         coverage.checkTileVersion()
         refreshTracks()
-        range.reloadList()
+        area.reloadList()
     }
 
     /**
@@ -41,11 +41,11 @@ class DataRefresh(
      * before the first read never shows a row Pending.
      */
     fun afterPrivateLocations() {
-        range.reloadList()
+        area.reloadList()
         coverage.watch {
             refreshTracks()
-            range.reloadList()
-            range.days.reload()
+            area.reloadList()
+            area.reloadHistory()
             bands.update(refetch = true)
             photos.refresh(force = true)
             panel.storiesTab.reloadOpen()
@@ -55,27 +55,27 @@ class DataRefresh(
     /** A Story copy arrived (`docs/SPEC.md` FR-14.8): new activities, refreshed as after an upload. */
     fun afterStoryCopy() {
         refreshTracks()
-        range.reloadList()
-        range.days.reload()
+        area.reloadList()
+        area.reloadHistory()
         coverage.watch()
     }
 
-    /** The Sync tab sent activities: the list, its days and the tiles catch up. */
+    /** The Sync tab sent activities: the list, Dates' bounds and the tiles catch up. */
     fun afterSync() {
-        range.days.reload()
-        range.reloadList()
+        area.reloadHistory()
+        area.reloadList()
         // Tracks refetch at once; the tile version moves only after the coverage render.
         refreshTracks()
         coverage.checkTileVersion()
     }
 
-    /** The toolbar's Delete finished: tracks, list and days read again, and Fog and Heatmap
+    /** The toolbar's Delete finished: tracks, list and Dates' bounds read again, and Fog and Heatmap
      *  watched until re-rendered. Deleted ids leave the selection with the reload. */
     fun afterDelete(ids: List<String>) {
         if (ids.isEmpty()) return
         refreshTracks()
-        range.reloadList()
-        range.days.reload()
+        area.reloadList()
+        area.reloadHistory()
         coverage.watch()
         panel.storiesTab.reloadOpen()
         photos.refresh(force = true)

@@ -12,7 +12,7 @@ import org.maplibre.android.maps.Style
 class CoverageController(
     /** The style once the user layers are on it. */
     private val style: () -> Style?,
-    private val range: () -> DateRange?,
+    private val dates: () -> DateFilter,
     /** Asks for the layers document again, which carries the new tile version ([MapLayersSource]). */
     private val refetchLayers: () -> Unit,
     /** [rendering] changed: the notice that Fog and Heatmap are still being updated follows. */
@@ -49,7 +49,7 @@ class CoverageController(
             Session.tileVersion = status.tileVersion
             style()?.let {
                 refetchLayers()
-                MapOverlays.refreshTracks(it, range())
+                MapOverlays.refreshTracks(it, dates())
             }
         }
     }

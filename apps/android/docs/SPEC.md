@@ -112,7 +112,7 @@ When any `/v1` request answers `426` `app_outdated` (`docs/SPEC.md` §1.5), sign
 
 The web's three exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.4), from the same tiles, with Fog's and Heatmap's coverage drawn under the tracks and both under the labels.
 
-- Normal's tracks follow the date range (FR-2.6) through the tile request. The panel's filters, hidden tracks and Pending rows are applied on the phone. Fog and Heatmap are never filtered.
+- Normal's tracks follow Dates (FR-2.6) through the tile request, and past the list's cap only the listed ones are drawn (`docs/SPEC.md` FR-5.19). The panel's filters, hidden tracks and Pending rows are applied on the phone. Fog and Heatmap are never filtered.
 - The map reads only the server. It never reads Health Connect, and an activity appears only once synced and ingested.
 - The mode survives a theme or language change.
 - The mode toggle is the Map tab's. Stories and Sync show the map in Normal, since their sheets and tracks are Normal mode's, and back on Map the mode picked there returns. Unlike the web, whose panel stays beside Fog and Heatmap (`docs/SPEC.md` FR-14.6).
@@ -122,7 +122,7 @@ The web's three exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.4), from the same 
 
 ### FR-2.3 Initial camera framing
 
-- Once per app session the camera fits the most recent activity with a track, skipping Pending ones (`docs/SPEC.md` FR-4.5), at most zoom 15. A rotation, theme or language change keeps the camera.
+- Once per app session the camera opens as the web's does (`docs/SPEC.md` FR-4.5): zoom 12 on the newest five activities with a track, skipping Pending ones, or fewer when five don't fit the screen. A rotation, theme or language change keeps the camera.
 - An account with nothing on the map stays on the world view with a pointer to Sync, asked again on every return to the map; the demo account never gets it.
 
 ### FR-2.4 Attribution
@@ -137,13 +137,13 @@ The web's one-shot locate (`docs/SPEC.md` FR-4.7).
 - It flies to at least zoom 14 and follows the position until the map is panned.
 - Hidden while recording, which follows its own fixes.
 
-### FR-2.6 Date range
+### FR-2.6 Dates
 
-The date slider (`docs/SPEC.md` FR-6) as the Activities tab's head, in Normal mode only, once the session is verified and the account has an activity day.
+The Activities tab lists the visible area under Dates, as the web's does (`docs/SPEC.md` FR-5.19, FR-5.20), in Normal mode only.
 
-- The default, the 5 most recent activity days, is worked out again on every return to the map until the user picks a range, so a sync or recording lands in view.
-- A range applies when a handle or held button is released. Only a range the user picked moves the camera and clears the focus, checked group, hidden tracks and filters (`docs/SPEC.md` FR-6.6). The camera never moves while recording.
-- A picked range survives rotation and a return from another tab.
+- Dates is a chip in the filter row. Each end is picked in a calendar and applies at once; Clear dates clears both.
+- The list doesn't follow the camera while recording, and asks about the view once it stops.
+- Dates survive rotation and a return from another tab.
 
 ### FR-2.7 Activities panel
 
@@ -209,7 +209,7 @@ The web's export (`docs/SPEC.md` FR-4.10) as a viewfinder over the map, not offe
 
 The web's tour (`docs/SPEC.md` FR-4.18) over the app's own screens, with its start, offer and card rules (`testdata/client-rules/tour-*.json`).
 
-- Its steps: the Activities sheet, the date range, Stories, Layers, export, Fog of War, Heatmap, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
+- Its steps: the Activities sheet, Dates, Stories, Layers, export, Fog of War, Heatmap, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
 - In a demo session Fog takes three steps, at city, state and country level, with the camera over the demo's history, and the camera comes back when the tour ends.
 - What has been shown is kept by the phone, not the account.
 

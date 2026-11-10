@@ -17,7 +17,6 @@ import dev.holdmytrack.android.map.CameraFramer
 import dev.holdmytrack.android.map.ChromeInsets
 import dev.holdmytrack.android.map.CoverageController
 import dev.holdmytrack.android.map.DataRefresh
-import dev.holdmytrack.android.map.DateRange
 import dev.holdmytrack.android.map.LayersController
 import dev.holdmytrack.android.map.LocateController
 import dev.holdmytrack.android.map.MapChromeRules
@@ -32,7 +31,7 @@ import dev.holdmytrack.android.map.ModeBar
 import dev.holdmytrack.android.map.ModeBarState
 import dev.holdmytrack.android.map.NoticePanel
 import dev.holdmytrack.android.map.PaceBands
-import dev.holdmytrack.android.map.RangeController
+import dev.holdmytrack.android.map.AreaController
 import dev.holdmytrack.android.map.SatelliteStatus
 import dev.holdmytrack.android.map.SatelliteWatch
 import dev.holdmytrack.android.map.SheetChrome
@@ -67,10 +66,10 @@ import org.maplibre.android.maps.Style
  * The map: the served basemap, the session the user layers need, and the Normal / Fog of War /
  * Heatmap toggle floating top-start, as on the web (`apps/web/src/map/MapView.tsx`).
  *
- * In Normal mode the Activities sheet (`panel/ActivitiesPanel`) lists the date range's
- * activities, the range defaulting to the five most recent activity days (`docs/SPEC.md`
- * FR-6.1). Tapping a track selects it; tapping empty map clears the selection. On the Stories
- * tab one Story is open, and the tracks and the list are its activities only ([RangeController.enterStory]).
+ * In Normal mode the Activities sheet (`panel/ActivitiesPanel`) lists the visible area's
+ * activities under Dates (`docs/SPEC.md` FR-5.19, FR-5.20, [AreaController]). Tapping a track
+ * selects it; tapping empty map clears the selection. On the Stories tab one Story is open, and
+ * the tracks and the list are its activities only ([AreaController.enterStory]).
  *
  * GPS recording is controlled from here: the record button in `MainActivity`'s bottom bar taps
  * to start, pause and resume, and a two-second hold stops (`RecordingService` does the rest; its
@@ -92,7 +91,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The Normal / Fog / Heatmap toggle and what it says about the mode. */
     private lateinit var modes: ModeBar
 
-    /** The Activities sheet, the date range at its head. */
+    /** The Activities sheet, the list's summary at its head. */
     private lateinit var sheet: View
     private lateinit var sheetChrome: SheetChrome
     private lateinit var panel: ActivitiesPanel
@@ -107,7 +106,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** Fog, Heatmap and every tile kept current with the account's renders and tile version. */
     private val coverage = CoverageController(
         style = { style?.takeIf { overlaysAttached } },
-        range = { selectedRange },
+        dates = { session.dates },
         refetchLayers = ::fetchLayers,
         onRenderingChanged = { if (::modes.isInitialized) modes.renderCoverage() },
     )
@@ -129,13 +128,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** Something the Sync tab sent has landed, whichever tab shows: the list, its days and the
      *  tiles catch up. Until then its job is only queued, with no row to show Pending. */
     private val syncProgressListener = SyncProgress.Listener(onChange = {}, onLanded = { onSyncedFromPhone() })
-    /** The range or Story the list and tracks show, and whether the next list moves the camera. */
+    /** The area and Dates or the Story the list and tracks show, and whether the camera moves next. */
     private val session = MapSession(panelState)
-    /** The slider, the default range and the list for the session's range or Story. */
-    private lateinit var range: RangeController
+    /** The list for the session's area under Dates or its Story, Dates' dialog and the cap. */
+    private lateinit var area: AreaController
     private lateinit var refresh: DataRefresh
     private lateinit var camera: CameraFramer
-    private val selectedRange: DateRange? get() = session.range
     private lateinit var basemap: BasemapWatch
     private lateinit var imagery: SatelliteWatch
     private var imageryStatus = SatelliteStatus.LOADING
@@ -316,7 +314,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                     layers.dismiss()
                 } else {
                     // The sheet comes back only where it belongs: not in Fog or Heatmap.
-                    renderDateFooter()
+                    renderSheet()
                 }
             },
         )
@@ -338,11 +336,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onDeleted = { refresh.afterDelete(it) },
             onTabChanged = { tab ->
                 // Leaving the Stories tab closes its Story.
-                if (tab != PanelTab.STORIES && storyId != null) range.exitStory()
+                if (tab != PanelTab.STORIES && storyId != null) area.exitStory()
                 // Stories and Sync are Normal mode's; the Map tab gets its pick back.
                 applyTabMode()
-                // The footer is the Activities tab's; renderDateFooter renders Privacy too.
-                renderDateFooter()
+                // The summary is the Activities tab's; renderSheet renders Privacy too.
+                renderSheet()
                 // The empty map's notice points to Sync, so it steps aside there.
                 notices.render()
                 // What's already synced steps aside for what's on offer.
@@ -350,12 +348,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 // The bottom bar's Stories is this tab, so the bar follows it.
                 host?.onPanelTabChanged(tab)
             },
-            onOpenStory = { range.enterStory(it) },
-            onCloseStory = { range.exitStory() },
+            onOpenStory = { area.enterStory(it) },
+            onCloseStory = { area.exitStory() },
             // A Story just made opens straight away, on the Stories tab.
-            onStoryCreated = { story -> range.enterStory(story.id) },
+            onStoryCreated = { story -> area.enterStory(story.id) },
             onStoriesChanged = {
-                range.reloadList()
+                area.reloadList()
                 // A Story's photos change with its members.
                 photos.refresh(force = true)
             },
@@ -370,25 +368,25 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             syncTab = syncTab,
         )
         camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, onEmpty = ::onEmptyChecked)
-        range = RangeController(
-            findViewById(R.id.date_footer),
+        area = AreaController(
+            this,
+            findViewById(R.id.activities_sheet),
             session,
             panelState,
             panel,
+            map = { map },
             style = { style?.takeIf { overlaysAttached } },
+            framer = { camera },
             bands = bands,
             coverage = coverage,
-            editOpen = { ::edit.isInitialized && editWindow.isOpen },
             recording = ::isRecording,
             onSelectionReset = ::applyTrackFilter,
-            onDaysChanged = ::renderDateFooter,
-            fly = { camera.flyTo(it) },
+            onCapped = { text -> if (text == null) notices.hide(MapNotice.CAPPED) else notices.show(MapNotice.CAPPED, text) },
         )
-        refresh = DataRefresh(range, session, panel, panelState, style = { style?.takeIf { overlaysAttached } }, coverage, bands, photos)
+        refresh = DataRefresh(area, session, panel, panelState, style = { style?.takeIf { overlaysAttached } }, coverage, bands, photos)
         sheetChrome = SheetChrome(
             view,
             panel,
-            range.days,
             normalMode = ::normalMode,
             sessionReady = { modeBarReady },
             mode = { mode },
@@ -437,7 +435,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, edit.closePrivacyOnBack)
         // Last, so it's asked first.
         requireActivity().onBackPressedDispatcher.addCallback(viewLifecycleOwner, export.backCallback)
-        range.restore(savedInstanceState)
+        area.restore(savedInstanceState)
         // Carried through a recreation (a theme or language change), since the mode buttons
         // restore their own checked state and would otherwise show a mode the map isn't in.
         savedInstanceState?.getString(STATE_MODE)?.let { saved ->
@@ -467,7 +465,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         mapView.getMapAsync { instance ->
             map = instance
             // A whole-world view is the honest starting camera until the session is verified
-            // and the activity extent is known; `CameraFramer.frameLatest` replaces it with the user's
+            // and the activity extent is known; `CameraFramer.open` replaces it with the user's
             // own, and leaves it for an account with no geometry yet. Not over a camera a
             // recreation brought back.
             if (!restoringCamera) {
@@ -487,6 +485,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             instance.addOnCameraIdleListener { photos.onCameraIdle() }
             spots.onMapReady(view, instance, layers.shownSpots())
             instance.addOnCameraIdleListener { spots.onCameraIdle() }
+            // The list follows the map (AreaController).
+            instance.addOnCameraIdleListener { if (::area.isInitialized) area.onCameraIdle() }
             instance.addOnCameraIdleListener {
                 style?.let { modes.onCameraIdle(MapLayers.tier(it, instance.cameraPosition.zoom)) }
             }
@@ -569,12 +569,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         renderModeBar()
         if (daysStale) {
             daysStale = false
-            range.days.reload()
-            // Sync or a recording may have changed the range's activities and an open Story too.
-            range.reloadList()
+            area.reloadHistory()
+            // Sync or a recording may have changed the area's activities and an open Story too.
+            area.reloadList()
             panel.storiesTab.reloadOpen()
         }
-        renderDateFooter()
+        renderSheet()
         viewOnMapRequest?.let { (id, day) ->
             viewOnMapRequest = null
             viewActivityOnMap(id, day)
@@ -583,7 +583,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val loaded = style ?: return
         val doc = layersDoc?.takeIf { it.styleBuild == StyleMetadata.build(loaded) } ?: return
         if (!overlaysAttached) {
-            MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), storyId)
+            MapOverlays.attach(loaded, doc, mode, session.dates, layers.satelliteDrawn(loaded), storyId)
             // The bike-path layers attach just added start hidden.
             layers.applyPaths(loaded)
             MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
@@ -597,18 +597,18 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             syncCandidates.draw()
             MapOverlays.setSyncing(loaded, ::panel.isInitialized && panel.tab == PanelTab.SYNC, mode)
             if (isRecording()) MapOverlays.setRecording(loaded, true, mode)
-            camera.frameLatest()
+            camera.open { area.followArea() }
             coverage.checkTileVersion()
         }
     }
 
     /** A Sync history row's View on map: Normal mode, the collapsed Activities tab, and the
-     *  activity selected and flown to ([RangeController.viewActivity]). */
+     *  activity selected and flown to ([AreaController.viewActivity]). */
     private fun viewActivityOnMap(activityId: String, day: String) {
         pickMode(MapMode.NORMAL)
         // The expanded sheet would stay drawn over the very map the link is meant to show.
         panel.showActivities()
-        range.viewActivity(activityId, day)
+        area.viewActivity(activityId, day)
     }
 
     /** The toolbar's Edit ([EditController.open]). */
@@ -616,8 +616,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /** The Edit window opened or closed: the chrome steps aside for it or comes back. */
     private fun onEditWindowChanged(open: Boolean) {
-        if (open) chrome.placeEditors() else range.offerDefault()
-        renderDateFooter()
+        if (open) chrome.placeEditors()
+        renderSheet()
         renderBottomBar()
         sheetChrome.renderSelectionBar()
         renderModeBar()
@@ -629,7 +629,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun onPrivacyEditorChanged(open: Boolean) {
         if (open) chrome.placeEditors()
         sheetChrome.renderRail()
-        renderDateFooter()
+        renderSheet()
         renderBottomBar()
     }
 
@@ -639,8 +639,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     private fun onEditClosed(saved: Boolean, editedTrack: String?) {
-        editedTrack?.let(range.pending::awaitEdit)
-        if (saved) range.reloadList()
+        editedTrack?.let(area.pending::awaitEdit)
+        if (saved) area.reloadList()
     }
 
     /** Whether the Private location editor is open over the map. */
@@ -656,7 +656,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The Sync tab sent activities; an empty map frames them once they're in. */
     private fun onSyncedFromPhone() {
         refresh.afterSync()
-        if (notices.shown == MapNotice.EMPTY) camera.frameLatestAgain()
+        if (notices.shown == MapNotice.EMPTY) camera.openAgain { area.followArea() }
     }
 
     private fun renderModeBar() = modes.render()
@@ -667,7 +667,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         style?.takeIf { overlaysAttached }?.let { MapOverlays.setTrackFilter(it, panelState.mapHidden, panelState.highlighted) }
         bands.update(refetch = false)
         photos.refresh(force = false)
-        if (::sheetChrome.isInitialized) renderDateFooter()
+        if (::sheetChrome.isInitialized) renderSheet()
     }
 
     /**
@@ -707,7 +707,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         return true
     }
 
-    private fun renderDateFooter() = sheetChrome.render()
+    private fun renderSheet() = sheetChrome.render()
 
     private fun isRecording() = recording.isRecording
 
@@ -721,8 +721,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         locate.setShown(!active)
         export.setAvailable(!active)
         modes.renderChip()
-        renderDateFooter()
+        renderSheet()
         notices.render()
+        // The live line had the camera: the list asks about wherever it's left.
+        if (!active && ::area.isInitialized) area.followArea(always = true)
         // Like every history layer, the photos give the map to the live track.
         photos.render()
 
@@ -749,7 +751,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         modes.check(next)
         style?.takeIf { overlaysAttached }?.let { MapOverlays.setMode(it, next) }
         modes.renderNotices()
-        renderDateFooter()
+        renderSheet()
         photos.refresh(force = false)
     }
 
@@ -761,13 +763,13 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         layers.applyPaths(loaded)
         layers.applyBasemap(loaded)
         val doc = layersDoc ?: return
-        MapOverlays.attach(loaded, doc, mode, selectedRange, layers.satelliteDrawn(loaded), storyId, EXPORT_EXCLUDED)
+        MapOverlays.attach(loaded, doc, mode, session.dates, layers.satelliteDrawn(loaded), storyId, EXPORT_EXCLUDED)
         layers.applyPaths(loaded)
         MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
         bands.drawn?.let { MapOverlays.setTrackBands(loaded, it) }
     }
 
-    /** What [CameraFramer.frameLatest] found. An account with no geometry stays at the world view,
+    /** What [CameraFramer.open] found. An account with no geometry stays at the world view,
      *  with a notice pointing at Sync, re-checked on every resume. Not for a demo, which has history
      *  and can't sync. */
     private fun onEmptyChecked(empty: Boolean) {
@@ -848,7 +850,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         spots.resume()
         // An empty map is checked again on every return, so the notice goes and the camera frames
         // the history once something arrives.
-        if (notices.shown == MapNotice.EMPTY) camera.frameLatestAgain()
+        if (notices.shown == MapNotice.EMPTY) camera.openAgain { area.followArea() }
         // Back from Health Connect's settings or a recording's Edit: the Sync tab reads again.
         if (::panel.isInitialized && !isHidden) panel.syncTab.resume()
     }
@@ -870,7 +872,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     override fun onStop() {
         // Health Connect's routes can't be read in the background (`docs/IMPLEMENTATION.md` §4.0).
         if (::panel.isInitialized) panel.syncTab.pause()
-        range.pending.stop()
+        area.pending.stop()
         SyncProgress.removeListener(syncProgressListener)
         recording.stop()
         basemap.stop()
@@ -887,7 +889,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             outState.putBoolean(STATE_FRAMED, camera.framed)
         }
         outState.putString(STATE_MODE, pickedMode.name)
-        if (::range.isInitialized) range.save(outState)
+        if (::area.isInitialized) area.save(outState)
         if (::chrome.isInitialized) chrome.save(outState)
     }
 
@@ -906,7 +908,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         map = null
         style = null
         overlaysAttached = false
-        range.release()
+        area.release()
         coverage.stop()
         super.onDestroyView()
     }

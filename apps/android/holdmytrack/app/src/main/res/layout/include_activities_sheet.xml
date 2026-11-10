@@ -53,108 +53,27 @@
                 android:background="@drawable/bg_sheet_handle" />
         </FrameLayout>
 
-        <!-- The Activities tab's head: the date range and the scrubber (map/DateRangeSlider),
-             shown once there are activity days to pick from (MapFragment.renderDateFooter). -->
+        <!-- The Activities tab's head: what the list holds, "6 activities · 74.8 km · 9h 6m"
+             (map/SheetChrome). -->
         <LinearLayout
-            android:id="@+id/date_footer"
+            android:id="@+id/panel_summary_head"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:paddingStart="@dimen/hmt_space_16"
+            android:paddingEnd="@dimen/hmt_space_12"
             android:visibility="gone">
 
-            <LinearLayout
-                android:layout_width="match_parent"
+            <TextView
+                android:id="@+id/panel_summary"
+                android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:paddingStart="@dimen/hmt_space_16"
-                android:paddingEnd="@dimen/hmt_space_12">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/date_range_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:accessibilityLiveRegion="polite"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleLarge"
-                        tools:text="24 Sep – 3 Oct 2026" />
-
-                    <TextView
-                        android:id="@+id/panel_summary"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:ellipsize="end"
-                        android:maxLines="1"
-                        android:textColor="@color/hmt_ink_meta"
-                        android:textSize="@dimen/hmt_text_sm"
-                        tools:text="6 activities · 74.8 km · 9h 6m" />
-                </LinearLayout>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/date_range_shift_earlier"
-                    style="@style/Widget.HoldMyTrack.Button.SheetShift"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:contentDescription="@string/date_range_shift_earlier"
-                    app:icon="@drawable/ic_chevron_left" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/date_range_shift_later"
-                    style="@style/Widget.HoldMyTrack.Button.SheetShift"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/hmt_space_4"
-                    android:contentDescription="@string/date_range_shift_later"
-                    app:icon="@drawable/ic_chevron_right" />
-            </LinearLayout>
-
-            <!-- « track »: the « » show only where the width leaves the track room for them
-                 (SliderRules.layout). -->
-            <LinearLayout
-                android:id="@+id/date_range_row"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="@dimen/hmt_space_16"
-                android:layout_marginTop="@dimen/hmt_space_10"
-                android:layout_marginEnd="@dimen/hmt_space_16"
-                android:gravity="top"
-                android:orientation="horizontal">
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/date_range_page_earlier"
-                    style="@style/Widget.HoldMyTrack.Button.SheetPage"
-                    android:layout_width="22dp"
-                    android:layout_height="48dp"
-                    android:layout_marginEnd="6dp"
-                    android:contentDescription="@string/date_range_page_earlier"
-                    android:visibility="gone"
-                    app:icon="@drawable/ic_chevrons_left" />
-
-                <dev.holdmytrack.android.map.DayScrubberView
-                    android:id="@+id/date_range_track"
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:paddingStart="8dp"
-                    android:paddingEnd="8dp" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/date_range_page_later"
-                    style="@style/Widget.HoldMyTrack.Button.SheetPage"
-                    android:layout_width="22dp"
-                    android:layout_height="48dp"
-                    android:layout_marginStart="6dp"
-                    android:contentDescription="@string/date_range_page_later"
-                    android:visibility="gone"
-                    app:icon="@drawable/ic_chevrons_right" />
-            </LinearLayout>
+                android:accessibilityLiveRegion="polite"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/hmt_ink_meta"
+                android:textSize="@dimen/hmt_text_sm"
+                tools:text="6 activities · 74.8 km · 9h 6m" />
         </LinearLayout>
 
         <!-- The selected activity, in the range's place while one is selected. -->
@@ -259,6 +178,41 @@
                         app:tint="@color/panel_ink_40" />
                 </LinearLayout>
 
+                <!-- Dates (docs/SPEC.md FR-5.20): the chip reads what's set, "Dates" for all
+                     time, and opens From and To (map/DatesDialog). -->
+                <LinearLayout
+                    android:id="@+id/panel_dates"
+                    style="@style/Widget.HoldMyTrack.FilterChip"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/hmt_space_8"
+                    android:contentDescription="@string/dates_filter">
+
+                    <TextView
+                        android:id="@+id/panel_dates_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:importantForAccessibility="no"
+                        android:text="@string/dates_name"
+                        android:textAppearance="@style/TextAppearance.HoldMyTrack.FilterChip" />
+
+                    <View
+                        android:id="@+id/panel_dates_dot"
+                        android:layout_width="6dp"
+                        android:layout_height="6dp"
+                        android:layout_marginStart="@dimen/hmt_space_6"
+                        android:background="@drawable/bg_panel_dot"
+                        android:visibility="gone" />
+
+                    <ImageView
+                        android:layout_width="14dp"
+                        android:layout_height="14dp"
+                        android:layout_marginStart="@dimen/hmt_space_6"
+                        android:importantForAccessibility="no"
+                        android:src="@drawable/ic_chevron_down"
+                        app:tint="@color/panel_ink_40" />
+                </LinearLayout>
+
                 <!-- DISTANCE (apps/web/src/ui/DistanceFilter.tsx): the chip reads the band, "any
                      distance" until a knob moves; gone when no two activities differ in distance,
                      as on the web. -->
@@ -302,7 +256,20 @@
                     android:visibility="gone" />
             </LinearLayout>
 
-            <!-- The rows, then a note while loading, when nothing matches, or when the read failed
+            <!-- The list's progress bar (.activities-panel__progress): over the rows while a slow
+                 reload is under way. Always 2dp tall, so showing it never moves the list. -->
+            <com.google.android.material.progressindicator.LinearProgressIndicator
+                android:id="@+id/panel_progress"
+                android:layout_width="match_parent"
+                android:layout_height="2dp"
+                android:contentDescription="@string/panel_loading"
+                android:indeterminate="true"
+                android:visibility="invisible"
+                app:indicatorColor="@color/hmt_accent"
+                app:trackColor="@android:color/transparent"
+                app:trackThickness="2dp" />
+
+            <!-- The rows, then a note while empty and loading, when nothing matches, or when the read failed
                  (.activities-panel__note, item_panel_note). A tap on the list's own empty space, or on
                  the note, clears the selection (ActivitiesPanel.kt). -->
             <androidx.recyclerview.widget.RecyclerView

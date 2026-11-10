@@ -60,7 +60,7 @@ object TourSteps {
         return listOf(
             TourStep("welcome", null),
             TourStep("activities", TourTarget.SHEET, sheet = true),
-            TourStep("range", TourTarget.RANGE),
+            TourStep("range", TourTarget.RANGE, sheet = true),
             TourStep("stories", TourTarget.SHEET, tab = MainActivity.Tab.STORIES, sheet = true, card = TourCard.STORIES),
             TourStep("layers", TourTarget.LAYERS, layers = true),
             TourStep("export", TourTarget.EXPORT),

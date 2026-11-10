@@ -107,13 +107,13 @@ object MapOverlays {
         style: Style,
         doc: MapLayersDoc.Doc,
         mode: MapMode,
-        range: DateRange?,
+        dates: DateFilter,
         satellite: Boolean,
         story: String?,
         excluded: Set<String> = emptySet(),
     ) {
         trackStory = story
-        MapLayers.update(null) { it.copy(mode = mode, satellite = satellite, queries = it.queries + (TRACKS_SOURCE_ID to trackQuery(range))) }
+        MapLayers.update(null) { it.copy(mode = mode, satellite = satellite, queries = it.queries + (TRACKS_SOURCE_ID to trackQuery(dates))) }
         MapLayers.attach(style, doc, excluded)
         setMode(style, mode)
         // The live line in the tracks' own color.
@@ -150,23 +150,32 @@ object MapOverlays {
         style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
     }
 
-    /** The tracks tiles fetched again for [range] — after a delete, or a reprocess landing. */
-    fun refreshTracks(style: Style, range: DateRange?) {
+    /** The tracks tiles fetched again under [dates]: after a delete, or a reprocess landing. */
+    fun refreshTracks(style: Style, dates: DateFilter) {
         tracksVersion += 1
-        setTrackRange(style, range)
+        setTrackDates(style, dates)
     }
 
-    /** Narrows the tracks to [range]: a new query, which [MapLayers] takes by replacing the
-     *  tracks source, since MapLibre Native can't change a vector source's URL in place. */
-    fun setTrackRange(style: Style, range: DateRange?) {
-        MapLayers.update(style) { it.copy(queries = it.queries + (TRACKS_SOURCE_ID to trackQuery(range))) }
+    /** Narrows the tracks to what [dates] pass: a new query, which [MapLayers] takes by replacing
+     *  the tracks source, since MapLibre Native can't change a vector source's URL in place. The
+     *  area is the list's alone: past its cap [setTrackCap] draws only the listed tracks. */
+    fun setTrackDates(style: Style, dates: DateFilter) {
+        MapLayers.update(style) { it.copy(queries = it.queries + (TRACKS_SOURCE_ID to trackQuery(dates))) }
     }
 
-    /** Narrows the tracks to [story]'s activities, all of them — the tile's `story` filter
-     *  (`docs/SPEC.md` FR-14.4), with no range — or, with null, back to [range]'s. */
-    fun setTrackStory(style: Style, story: String?, range: DateRange?) {
+    /** Narrows the tracks to [story]'s activities, all of them, the tile's `story` filter
+     *  (`docs/SPEC.md` FR-14.4) with no Dates; or, with null, back to [dates]. */
+    fun setTrackStory(style: Style, story: String?, dates: DateFilter) {
         trackStory = story
-        setTrackRange(style, range)
+        setTrackDates(style, dates)
+    }
+
+    /** Past the area list's cap the map draws only the [listed] tracks (`docs/SPEC.md` FR-5.19),
+     *  the document's `capped` and `listed` vars. */
+    fun setTrackCap(style: Style?, capped: Boolean, listed: List<String>) {
+        MapLayers.update(style) {
+            it.copy(vars = it.vars + mapOf("capped" to JsonPrimitive(capped), "listed" to JsonArray(listed.map(::JsonPrimitive))))
+        }
     }
 
     /**
@@ -254,15 +263,15 @@ object MapOverlays {
         }
     }
 
-    /** The query the app appends to the tracks tiles: an open Story whole, whatever the range
-     *  (`docs/SPEC.md` FR-14.6), else the range, and the refresh counter. */
-    private fun trackQuery(range: DateRange?): String = buildList {
+    /** The query the app appends to the tracks tiles: an open Story whole, whatever Dates
+     *  (`docs/SPEC.md` FR-14.6), else Dates' ends, and the refresh counter. */
+    private fun trackQuery(dates: DateFilter): String = buildList {
         val story = trackStory
         if (story != null) {
             add("story=${Uri.encode(story)}")
-        } else if (range != null) {
-            add("from=${range.from}")
-            add("to=${range.to}")
+        } else {
+            dates.after?.let { add("from=$it") }
+            dates.before?.let { add("to=$it") }
         }
         if (tracksVersion > 0) add("v=$tracksVersion")
     }.joinToString("&")

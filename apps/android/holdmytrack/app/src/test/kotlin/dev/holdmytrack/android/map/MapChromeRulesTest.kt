@@ -73,10 +73,18 @@ class MapChromeRulesTest {
     }
 
     @Test
-    fun `the date range needs the Activities tab, the days and some history`() {
-        assertTrue(MapChromeRules.dateFooterShown(normal = true, PanelTab.ACTIVITIES, showsCard = false, daysReady = true, hasHistory = true))
-        assertFalse(MapChromeRules.dateFooterShown(normal = true, PanelTab.ACTIVITIES, showsCard = true, daysReady = true, hasHistory = true))
-        assertFalse(MapChromeRules.dateFooterShown(normal = true, PanelTab.ACTIVITIES, showsCard = false, daysReady = true, hasHistory = false))
+    fun `the summary is the Activities tab's head unless the card has it`() {
+        assertTrue(MapChromeRules.summaryShown(normal = true, PanelTab.ACTIVITIES, showsCard = false))
+        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.ACTIVITIES, showsCard = true))
+        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.STORIES, showsCard = false))
+        assertFalse(MapChromeRules.summaryShown(normal = false, PanelTab.ACTIVITIES, showsCard = false))
+    }
+
+    @Test
+    fun `the capped notice steps aside where the list isn't the area's`() {
+        assertTrue(MapChromeRules.noticeShown(MapNotice.CAPPED, recording = false, onSync = false))
+        assertFalse(MapChromeRules.noticeShown(MapNotice.CAPPED, recording = true, onSync = false))
+        assertFalse(MapChromeRules.noticeShown(MapNotice.CAPPED, recording = false, onSync = true))
     }
 
     @Test

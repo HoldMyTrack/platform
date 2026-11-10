@@ -3,16 +3,14 @@ package dev.holdmytrack.android
 import dev.holdmytrack.android.export.ExportStatsRules
 import dev.holdmytrack.android.imports.UploadPlan
 import dev.holdmytrack.android.map.BasemapStatus
-import dev.holdmytrack.android.map.DateRange
-import dev.holdmytrack.android.map.DefaultRange
 import dev.holdmytrack.android.map.MapLayersDoc
 import dev.holdmytrack.android.map.MapMode
+import dev.holdmytrack.android.map.AreaLoad
+import dev.holdmytrack.android.map.DateFilter
 import dev.holdmytrack.android.map.MapSession
+import dev.holdmytrack.android.map.OpeningView
 import dev.holdmytrack.android.map.PendingDiff
-import dev.holdmytrack.android.map.RangeShift
 import dev.holdmytrack.android.map.SatelliteStatus
-import dev.holdmytrack.android.map.SliderRules
-import dev.holdmytrack.android.map.shiftRange
 import dev.holdmytrack.android.net.deleteDone
 import dev.holdmytrack.android.net.Activity
 import dev.holdmytrack.android.net.TrackEdit
@@ -148,13 +146,6 @@ class ClientRulesTest {
         "tourNextStep" to { input ->
             JsonPrimitive(TourRules.nextStep(input["shown"]!!.jsonArray.map { it.jsonPrimitive.boolean }, input.number("from").toInt(), input.number("dir").toInt()))
         },
-        "defaultRange" to { input ->
-            val range = DefaultRange.of(input.strings("visibleDays"), input.string("earliest"), input.string("today")!!)
-            buildJsonObject {
-                put("from", range.from)
-                put("to", range.to)
-            }
-        },
         "pendingChange" to { input ->
             val change = PendingDiff.of(input.strings("previous").toSet(), input.strings("now").toSet(), input.strings("awaiting").toSet())
             buildJsonObject {
@@ -220,13 +211,6 @@ class ClientRulesTest {
             PhotoMarkerScope.groupFit(points)?.let { box ->
                 buildJsonObject { put("fit", buildJsonArray { box.forEach { add(JsonPrimitive(it)) } }) }
             } ?: JsonPrimitive("open")
-        },
-        "rangeShift" to { input ->
-            when (val shift = shiftRange(input.strings("days"), input["hasEarlier"]!!.jsonPrimitive.booleanOrNull!!, range(input["range"]!!.jsonObject), input["dir"]!!.jsonPrimitive.int)) {
-                is RangeShift.Shifted -> rangeJson(shift.range)
-                RangeShift.None -> JsonNull
-                RangeShift.Load -> JsonPrimitive("load")
-            }
         },
         "distanceBounds" to { input -> distanceJson(ActivityFacets.distanceBounds(activities(input["activities"]))) },
         "distanceFilter" to { input ->
@@ -358,7 +342,6 @@ class ClientRulesTest {
                 "distanceSet" -> panel.setDistanceFilter(distance(event["filter"]))
                 "filtersReset" -> panel.resetFilters()
                 "listLoaded" -> event.strings("ids").toSet().let { ids -> panel.setActivities(all.filter { it.id in ids }) }
-                "rangePicked" -> panel.resetForNewRange()
                 else -> error("no Android event $type")
             }
             buildJsonObject {
@@ -369,43 +352,66 @@ class ClientRulesTest {
                 put("distanceFilter", distanceJson(panel.distanceFilter))
             }
         },
-        "sliderLayout" to { input ->
-            val layout = SliderRules.layout(input.int("width"), input["finePointer"]!!.jsonPrimitive.boolean)
-            buildJsonObject { put("buttons", layout.buttons); put("days", layout.days) }
+        "areaLoad" to { input ->
+            val total = (input["total"] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.int
+            val result = AreaLoad.of(input.number("zoom"), input.int("listed"), total)
+            buildJsonObject {
+                put("load", result.load.name.lowercase())
+                put("capped", result.capped)
+            }
         },
-        "sliderBoundaries" to { input ->
-            val (start, end) = SliderRules.boundaries(sliderWindow(input), range(input["range"]!!.jsonObject))
-            buildJsonObject { put("start", start); put("end", end) }
+        "openingView" to { input ->
+            val boxes = input["boxes"]!!.jsonArray.map { box -> box.jsonArray.map { it.jsonPrimitive.double } }
+            val viewport = input["viewport"]!!.jsonObject
+            OpeningView.of(boxes, viewport.number("width"), viewport.number("height"))?.let { view ->
+                buildJsonObject {
+                    put("center", buildJsonArray { add(JsonPrimitive(view.lon)); add(JsonPrimitive(view.lat)) })
+                    put("zoom", view.zoom)
+                }
+            } ?: JsonNull
         },
-        "sliderMoveKnob" to { input ->
-            val knob = if (input.string("knob") == "start") SliderRules.Knob.START else SliderRules.Knob.END
-            rangeJson(SliderRules.moveKnob(sliderWindow(input), range(input["range"]!!.jsonObject), knob, input.int("boundary")))
+        "dateFilterBounds" to { input ->
+            val bounds = DateFilter.bounds(input.string("earliest"), input.string("latest"), input.string("today")!!)
+            buildJsonObject {
+                put("min", bounds.min)
+                put("max", bounds.max)
+            }
         },
-        "sliderTicks" to { input ->
-            buildJsonArray {
-                SliderRules.ticks(input.strings("days")).forEach { tick ->
-                    add(buildJsonObject {
-                        put("boundary", tick.boundary)
-                        put("kind", if (tick.monthStart) "month" else "day")
-                        put("month", tick.month?.let(::JsonPrimitive) ?: JsonNull)
-                    })
+        "dateFilterLabel" to { input ->
+            when (val label = DateFilter(input.string("after"), input.string("before")).label) {
+                DateFilter.Label.All -> buildJsonObject { put("kind", "all") }
+                is DateFilter.Label.Between -> buildJsonObject {
+                    put("kind", "between")
+                    put("after", label.after)
+                    put("before", label.before)
+                }
+                is DateFilter.Label.After -> buildJsonObject {
+                    put("kind", "after")
+                    put("after", label.after)
+                }
+                is DateFilter.Label.Before -> buildJsonObject {
+                    put("kind", "before")
+                    put("before", label.before)
                 }
             }
         },
-        "sliderPanLand" to { input ->
-            val pulled = { key: String -> input[key]!!.jsonPrimitive.boolean }
-            rangeJson(SliderRules.panLand(input.strings("days"), range(input["range"]!!.jsonObject), pulled("start"), pulled("end")))
+        "dateFilterSet" to { input ->
+            val bounds = input["bounds"]!!.jsonObject
+            val end = if (input.string("end") == "after") DateFilter.End.AFTER else DateFilter.End.BEFORE
+            val change = dates(input["current"]!!.jsonObject).setting(end, input.string("value"), DateFilter.Bounds(bounds.string("min")!!, bounds.string("max")!!))
+            buildJsonObject {
+                put("filter", datesJson(change.filter))
+                put("fly", change.fly)
+            }
         },
-        "sliderWindowFit" to { input ->
-            JsonPrimitive(SliderRules.windowFit(input.int("count"), input.int("windowDays"), input.int("left"), input.int("first"), input.int("last"), input.int("dir")))
-        },
-        "session" to { input ->
+        "webSession" to { input ->
             val state = input["state"]!!.jsonObject
             val panel = PanelState()
             val session = MapSession(panel)
-            (state["range"] as? JsonObject)?.let { session.restore(range(it), state["userPicked"]?.jsonPrimitive?.booleanOrNull ?: false) }
-            // The Story first: opening one resets the selection set up below.
+            // The Story first: opening one starts the selection set up below over.
             state.string("storyId")?.let { session.enterStory(it); session.consumeFly() }
+            (state["dates"] as? JsonObject)?.let { session.setDates(dates(it), fly = false) }
+            (state["area"] as? JsonArray)?.let { area -> session.areaLoaded(area.map { it.jsonPrimitive.double }) }
             val ids = (state.strings("checked") + state.strings("hidden")).distinct()
             panel.setActivities(ids.map(::activity))
             // Hidden first: hiding goes through the toolbar's target, the checked group.
@@ -416,15 +422,16 @@ class ClientRulesTest {
             state.strings("excludedTypes").forEach(panel::toggleType)
             val event = input["event"]!!.jsonObject
             when (val type = event.string("type")) {
-                "rangePicked" -> session.pickRange(range(event["range"]!!.jsonObject))
-                "defaultRange" -> session.offerDefault(range(event["range"]!!.jsonObject), event["editOpen"]?.jsonPrimitive?.booleanOrNull ?: false)
+                "datesSet" -> session.setDates(dates(event["dates"]!!.jsonObject), event.bool("fly"))
+                "areaLoaded" -> session.areaLoaded(event["area"]!!.jsonArray.map { it.jsonPrimitive.double })
+                "dayViewed" -> session.viewDay(event.string("day")!!)
                 "storyEntered" -> session.enterStory(event.string("id")!!)
                 "storyExited" -> session.exitStory()
                 else -> error("no Android event $type")
             }
             buildJsonObject {
-                session.range?.let { put("range", rangeJson(it)) }
-                put("userPicked", session.userPicked)
+                put("dates", datesJson(session.dates))
+                put("area", session.area?.let { area -> buildJsonArray { area.forEach { add(JsonPrimitive(it)) } } } ?: JsonNull)
                 session.storyId?.let { put("storyId", it) }
                 put("checked", ids(panel.checked))
                 put("hidden", ids(panel.hidden))
@@ -434,17 +441,11 @@ class ClientRulesTest {
         },
     )
 
-    private fun range(json: JsonObject) = DateRange(json.string("from")!!, json.string("to")!!)
+    private fun dates(json: JsonObject) = DateFilter(json.string("after"), json.string("before"))
 
-    private fun sliderWindow(input: JsonObject) = SliderRules.Window(
-        input.strings("days"),
-        input["canPanEarlier"]!!.jsonPrimitive.boolean,
-        input["canPanLater"]!!.jsonPrimitive.boolean,
-    )
-
-    private fun rangeJson(range: DateRange) = buildJsonObject {
-        put("from", range.from)
-        put("to", range.to)
+    private fun datesJson(filter: DateFilter) = buildJsonObject {
+        put("after", filter.after?.let(::JsonPrimitive) ?: JsonNull)
+        put("before", filter.before?.let(::JsonPrimitive) ?: JsonNull)
     }
 
     private fun JsonObject.int(key: String): Int = this[key]!!.jsonPrimitive.int

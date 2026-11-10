@@ -4,9 +4,6 @@ The Android app's open work: testing and releasing it on Google Play. The produc
 
 ## Ongoing
 
-- [ ] **The area list, as on the web**
-  - Replace the date slider and its 5-day default with the web's list of the visible area under a Dates filter (root `docs/SPEC.md` FR-5.19, FR-5.20, FR-4.5): `GET /v1/activities/area`, the opening view, the list following the map from zoom 4, the 1,000 cap drawn through the tracks layer's `capped` and `listed` vars, and the Edit window reading `GET /v1/activities/{id}`.
-  - Done when: `android` is in the `clients` of `opening-view`, `area-load`, `date-filter-*` and `web-session.json` with their cases passing, and the `slider-*`, `range-shift`, `default-range`, `session` and `panel-state-range` files go, with Android's slider: iOS lists the area too.
 - [ ] **Testing tracks, then production**
   - 0.18 is in production outside the EU, linked from About and Help. The closed test stays open for testers in other countries.
   - Recheck the release requirements against Play Console Help before each submission.

@@ -8,13 +8,12 @@ import dev.holdmytrack.android.panel.ActivitiesPanel
 
 /**
  * The Activities sheet and the chrome that follows it ([MapChromeRules]): the sheet itself, the
- * date range at its head, the selection bar in the top row's place while rows are checked, and the
+ * list's summary at its head, the selection bar in the top row's place while rows are checked, and the
  * rail. Back ends selecting, then collapses an open sheet.
  */
 class SheetChrome(
     view: View,
     private val panel: ActivitiesPanel,
-    private val days: ActivityDays,
     /** Normal mode, session ready, not recording ([MapChromeRules.normalMode]). */
     private val normalMode: () -> Boolean,
     private val sessionReady: () -> Boolean,
@@ -30,7 +29,7 @@ class SheetChrome(
     private val dismissLayers: () -> Unit,
 ) {
     private val sheet: View = view.findViewById(R.id.activities_sheet)
-    private val dateFooter: View = view.findViewById(R.id.date_footer)
+    private val summaryHead: View = view.findViewById(R.id.panel_summary_head)
     private val selectionBar: View = view.findViewById(R.id.selection_bar)
     private val rail: View = view.findViewById(R.id.map_rail)
     private val checkedExport: View = view.findViewById(R.id.checked_export_panel)
@@ -46,12 +45,11 @@ class SheetChrome(
     }
 
     /** The sheet is Normal mode's only (`docs/SPEC.md` FR-4.2), hidden while recording, and waits
-     *  for the session. The range at its head is the Activities tab's, waits for the first page of
-     *  days, and is absent for an account with no activity, where the empty notice speaks. */
+     *  for the session. The summary at its head is the Activities tab's. */
     fun render() {
         val normal = normalMode()
-        // The selected activity's card takes the range's place at the head.
-        dateFooter.isVisible = MapChromeRules.dateFooterShown(normal, panel.tab, panel.showsCard, days.ready, days.earliest != null)
+        // The selected activity's card takes the summary's place at the head.
+        summaryHead.isVisible = MapChromeRules.summaryShown(normal, panel.tab, panel.showsCard)
         // An editor over the map hides the sheet. The Sync tab stays while recording: what's on
         // the phone can be sent mid-walk.
         sheet.isVisible = MapChromeRules.sheetShown(normal, sessionReady(), mode(), panel.tab, editOpen() || privacyEditing())

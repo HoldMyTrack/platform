@@ -56,12 +56,11 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 ### FR-2.3 Initial camera framing
 
-- Once per app session the camera opens as the web's does (`docs/SPEC.md` FR-4.5): zoom 12 on the newest five activities with a track, or fewer when five don't fit the screen.
 - An account with nothing on the map stays on the world view, never its Country's, and is pointed to Upload on the You tab.
 
-### FR-2.6 Date range
+### FR-2.6 Dates
 
-No date slider: the Activities tab lists the visible area under Dates, as the web's does (`docs/SPEC.md` FR-5.19, FR-5.20). Each end of Dates is picked in a calendar and applies at once.
+- Each end of Dates is picked in a calendar in a sheet, and applies at once.
 
 ### FR-2.7 Activities panel
 
