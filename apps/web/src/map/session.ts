@@ -2,9 +2,8 @@
  * The map's cross-feature state and the rules between its parts, as a reducer: which activities
  * the list and the tracks show (the area and the Dates filter, or a Story), the selection over
  * them, the mode, and whether the camera moves onto what's shown next. Features read it and change
- * it only through events; side effects (flights, the URL) stay with them. Android's
- * `map/MapSession.kt` keeps the date range the web replaced (docs/SPEC.md FR-6); the cases both
- * share are `testdata/client-rules`'s `panelState`, the web's own `webSession`.
+ * it only through events; side effects (flights, the URL) stay with them. The apps' `MapSession`s
+ * run the same cases, `testdata/client-rules`'s `webSession` and `panelState`.
  */
 import type { BBox } from '../api';
 import type { DistanceRange } from '../ui/activityFacets';

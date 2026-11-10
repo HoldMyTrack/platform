@@ -4,9 +4,6 @@ The Android app's open work: testing and releasing it on Google Play. The produc
 
 ## Ongoing
 
-- [ ] **The area list, as on the web**
-  - Replace the date slider and its 5-day default with the web's list of the visible area under a Dates filter (root `docs/SPEC.md` FR-5.19, FR-5.20, FR-4.5): `GET /v1/activities/area`, the opening view, the list following the map from zoom 4, the 1,000 cap drawn through the tracks layer's `capped` and `listed` vars, and the Edit window reading `GET /v1/activities/{id}`.
-  - Done when: `android` is in the `clients` of `opening-view`, `area-load`, `date-filter-*` and `web-session.json` with their cases passing, and the `slider-*`, `range-shift`, `default-range`, `session` and `panel-state-range` files name only `ios` or go.
 - [ ] **Sign in with Apple, for accounts made on an iPhone**
   - An account made with Sign in with Apple has no password, often a Hide My Email address, and no way into the Android app. Run the server's Apple flow in a Custom Tab with the app's challenge and redeem the handoff code, as Facebook does (root `docs/IMPLEMENTATION.md` §4.9); no Apple SDK. Declare `app_challenge` on `/v1/auth/apple/start` in `services/server/api/`, which the server already accepts.
   - Apple accepts only an `https://` return URL on the registered domain, so it is tested against production.

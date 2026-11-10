@@ -10,7 +10,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         case tapRow(String), toggleChecked(String), clearFocus, endSelecting
         case checkAll, checkNone, invert
         case toggleVisibility, fly, edit, delete
-        case toggleType(String), allTypes, distance(DistanceRange?), resetFilters
+        case toggleType(String), allTypes, distance(DistanceRange?), resetFilters, dates
         case openStory(String)
     }
 
@@ -25,9 +25,13 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
 
     private let table = UITableView(frame: .zero, style: .plain)
     private let note = Controls.body()
+    private let progress = ListProgressView()
+    private var progressTask: Task<Void, Never>?
     private let footer = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     private let typeButton = UIButton(type: .system)
     private let distanceButton = UIButton(type: .system)
+    /// The Dates filter (root docs/SPEC.md FR-5.20), its sheet the map's (DatesViewController).
+    private let datesButton = UIButton(type: .system)
     private let resetButton = Controls.textButton(String(localized: "Reset filters"), id: "resetFilters")
     private let selectionBar = UIStackView()
     private let checkAllButton = UIButton(type: .system)
@@ -87,7 +91,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
     }
 
     private func buildContent() {
-        for (button, id) in [(typeButton, "typeFilter"), (distanceButton, "distanceFilter")] {
+        for (button, id) in [(typeButton, "typeFilter"), (datesButton, "datesFilter"), (distanceButton, "distanceFilter")] {
             var config = UIButton.Configuration.bordered()
             config.cornerStyle = .capsule
             config.baseForegroundColor = UIColor(resource: .ink)
@@ -106,8 +110,10 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         }
         typeButton.showsMenuAsPrimaryAction = true
         distanceButton.addAction(UIAction { [weak self] _ in self?.showDistance() }, for: .primaryActionTriggered)
+        datesButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.dates) }, for: .primaryActionTriggered)
+        setDates(String(localized: "Dates"), set: false)
         resetButton.addAction(UIAction { [weak self] _ in self?.onEvent?(.resetFilters) }, for: .primaryActionTriggered)
-        let filters = UIStackView(arrangedSubviews: [typeButton, distanceButton, resetButton, UIView()])
+        let filters = UIStackView(arrangedSubviews: [typeButton, datesButton, distanceButton, resetButton, UIView()])
         filters.spacing = DesignTokens.Space.s8
         filters.alignment = .center
 
@@ -142,7 +148,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         note.accessibilityIdentifier = "panelNote"
 
         let top = Controls.column([filters, selectionBar], spacing: DesignTokens.Space.s4)
-        for v in [top, table, footer, note] as [UIView] {
+        for v in [top, progress, table, footer, note] as [UIView] {
             v.translatesAutoresizingMaskIntoConstraints = false
             content.addSubview(v)
         }
@@ -151,7 +157,10 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
             top.topAnchor.constraint(equalTo: content.topAnchor),
             top.leadingAnchor.constraint(equalTo: content.leadingAnchor, constant: m),
             top.trailingAnchor.constraint(equalTo: content.trailingAnchor, constant: -m),
-            table.topAnchor.constraint(equalTo: top.bottomAnchor, constant: DesignTokens.Space.s4),
+            progress.topAnchor.constraint(equalTo: top.bottomAnchor, constant: DesignTokens.Space.s2),
+            progress.leadingAnchor.constraint(equalTo: content.leadingAnchor),
+            progress.trailingAnchor.constraint(equalTo: content.trailingAnchor),
+            table.topAnchor.constraint(equalTo: progress.bottomAnchor),
             table.leadingAnchor.constraint(equalTo: content.leadingAnchor),
             table.trailingAnchor.constraint(equalTo: content.trailingAnchor),
             footer.topAnchor.constraint(equalTo: table.bottomAnchor, constant: DesignTokens.Space.s4),
@@ -232,6 +241,30 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
 
     /// Whether the card shows at the head: something focused and nothing checked.
     var showsCard: Bool { state.focused != nil && !state.selecting && state.focused.flatMap { byID[$0] } != nil }
+
+    /// A list load is under way, or over: the bar over the rows shows once one has run
+    /// progressDelay, so a quick pan doesn't flicker. The list keeps its rows meanwhile, and a
+    /// "Loading…" line below them would go unseen.
+    func setLoading(_ loading: Bool) {
+        progressTask?.cancel()
+        guard loading else { return progress.stop() }
+        guard !progress.running else { return }
+        progressTask = Task { [weak self] in
+            try? await Task.sleep(for: Self.progressDelay)
+            guard !Task.isCancelled else { return }
+            self?.progress.start()
+        }
+    }
+
+    /// How long a list load runs before the progress bar shows.
+    private static let progressDelay = Duration.milliseconds(300)
+
+    /// The Dates button's words: "Dates", or the days set, marked while set.
+    func setDates(_ text: String, set: Bool) {
+        datesButton.configuration?.title = set ? "\(text) •" : text
+        datesButton.accessibilityLabel = String(localized: "Filter by dates")
+        datesButton.accessibilityValue = text
+    }
 
     /// Centers id's row in the list, never moving the sheet.
     func scrollTo(_ id: String) {

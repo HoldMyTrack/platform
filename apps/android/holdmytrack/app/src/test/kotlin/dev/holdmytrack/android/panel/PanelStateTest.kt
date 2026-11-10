@@ -94,7 +94,7 @@ class PanelStateTest {
         s.toggleTargetVisibility()
         s.toggleType("running")
         s.setDistanceFilter(DistanceRange(0.0, 2000.0))
-        s.resetForNewRange()
+        s.startOver()
         assertTrue(s.checked.isEmpty() && s.hidden.isEmpty() && s.excludedTypes.isEmpty())
         assertNull(s.focused)
         assertNull(s.distanceFilter)
@@ -146,7 +146,7 @@ class PanelStateTest {
     fun `a new range ends selecting`() {
         val s = state(walk)
         s.toggleChecked("a")
-        s.resetForNewRange()
+        s.startOver()
         assertFalse(s.selecting)
     }
 }

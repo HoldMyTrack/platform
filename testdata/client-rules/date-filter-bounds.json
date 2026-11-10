@@ -1,6 +1,6 @@
 {
   "rule": "dateFilterBounds",
-  "clients": ["web"],
+  "clients": ["web", "android", "ios"],
   "description": "What the web's Dates pickers allow (docs/SPEC.md FR-5.20): the first activity's day, or today without one, to today, the account's, or the newest activity's day when that's later, one recorded in a zone ahead.",
   "cases": [
     {

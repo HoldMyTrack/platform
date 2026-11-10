@@ -55,9 +55,9 @@ class PanelState {
         if (focused !in ids) focused = null
     }
 
-    /** A new date range changes which rows exist, so everything built against the old one goes
-     *  (`docs/SPEC.md` FR-6.6) — a stale DISTANCE band in particular could exclude everything. */
-    fun resetForNewRange() {
+    /** A Story opened or closed changes which rows exist, so everything built against the old ones
+     *  goes; a stale Distance band in particular could exclude everything. */
+    fun startOver() {
         checked = emptySet()
         focused = null
         hidden = emptySet()

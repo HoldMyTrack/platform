@@ -2,6 +2,7 @@ package dev.holdmytrack.android.panel
 
 import android.annotation.SuppressLint
 import android.view.View
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.EditPreview
@@ -10,6 +11,8 @@ import dev.holdmytrack.android.map.MapOverlays
 import dev.holdmytrack.android.map.SpotsController
 import dev.holdmytrack.android.map.TrackEditOverlay
 import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.ApiException
+import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.TrackPoint
 import dev.holdmytrack.android.photos.PhotosController
 import org.maplibre.android.maps.MapLibreMap
@@ -23,7 +26,7 @@ import org.maplibre.android.maps.Style
  * the touch before the map pans.
  */
 class EditController(
-    root: View,
+    private val root: View,
     private val panelState: PanelState,
     private val panel: () -> ActivitiesPanel,
     private val photos: PhotosController,
@@ -97,8 +100,39 @@ class EditController(
     /** Whether the Private location editor is open over the map. */
     val privacyEditing: Boolean get() = privacy.isEditing
 
-    /** The toolbar's Edit: the window over its target, the panel held and inert under it. */
+    /** An Edit is reading its activities, so a second tap opens nothing. */
+    private var opening = false
+
+    /**
+     * The toolbar's Edit: the window over its target, each activity read in full first, since the
+     * area list's rows leave out the description, the track's edit and the photos (`docs/SPEC.md`
+     * FR-5.19). A read that fails says so, and nothing opens.
+     */
     fun open(group: List<Activity>) {
+        if (opening || window.isOpen) return
+        opening = true
+        val full = mutableListOf<Activity>()
+        fun next() {
+            if (full.size == group.size) {
+                opening = false
+                openWindow(full)
+                return
+            }
+            HoldMyTrackApi.activity(group[full.size].id) { result ->
+                result.onSuccess {
+                    full += it
+                    next()
+                }.onFailure { failure ->
+                    opening = false
+                    val reason = (failure as? ApiException)?.message ?: root.resources.getString(R.string.map_unreachable)
+                    Toast.makeText(root.context, root.resources.getString(R.string.edit_open_failed, reason), Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+        next()
+    }
+
+    private fun openWindow(group: List<Activity>) {
         panel().dismissPopups()
         panel().hold(true)
         window.open(group, ActivityFacets.typeFacets(panelState.activities, null))

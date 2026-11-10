@@ -133,6 +133,17 @@
         }
       }
     },
+    "%@ – %@" : {
+      "comment" : "Dates: both ends set.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ – %@"
+          }
+        }
+      }
+    },
     "%@ – %@ %@ · %@–%@" : {
       "comment" : "Track editor: the range's distances along the track, its unit, and the times at its ends.",
       "localizations" : {
@@ -672,6 +683,28 @@
         }
       }
     },
+    "Clear %@" : {
+      "comment" : "Dates: clears one end; the placeholder is From or To.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сбросить: %@"
+          }
+        }
+      }
+    },
+    "Clear dates" : {
+      "comment" : "Dates: clears both ends.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сбросить даты"
+          }
+        }
+      }
+    },
     "Close" : {
       "comment" : "Activities panel: closes the focused activity's card.",
       "localizations" : {
@@ -958,6 +991,17 @@
         }
       }
     },
+    "Dates" : {
+      "comment" : "Activities tab: the Dates filter's button, nothing set.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Даты"
+          }
+        }
+      }
+    },
     "Decline" : {
       "comment" : "Stories tab: declines a copy someone sent.",
       "localizations" : {
@@ -1200,28 +1244,6 @@
         }
       }
     },
-    "Earlier days" : {
-      "comment" : "Date slider: moves the window of days into the past (VoiceOver).",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Более ранние дни"
-          }
-        }
-      }
-    },
-    "Earlier range" : {
-      "comment" : "Date slider: moves the selected range back by its length (VoiceOver).",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Предыдущий период"
-          }
-        }
-      }
-    },
     "Edit" : {
       "comment" : "Activities panel: the toolbar's Edit.",
       "localizations" : {
@@ -1321,6 +1343,17 @@
         }
       }
     },
+    "Filter by dates" : {
+      "comment" : "Activities tab: the Dates filter's sheet and its button's VoiceOver label.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Фильтр по датам"
+          }
+        }
+      }
+    },
     "Filtered" : {
       "comment" : "Activities panel: the Type filter's state when some types are left out.",
       "localizations" : {
@@ -1339,6 +1372,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Моё местоположение"
+          }
+        }
+      }
+    },
+    "First activity: %@" : {
+      "comment" : "Dates: From's hint while unset.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Первая активность: %@"
           }
         }
       }
@@ -1405,6 +1449,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Забыли пароль?"
+          }
+        }
+      }
+    },
+    "From" : {
+      "comment" : "Dates: the filter's first day.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "С"
           }
         }
       }
@@ -1625,28 +1680,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Язык"
-          }
-        }
-      }
-    },
-    "Later days" : {
-      "comment" : "Date slider: moves the window of days toward today (VoiceOver).",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Более поздние дни"
-          }
-        }
-      }
-    },
-    "Later range" : {
-      "comment" : "Date slider: moves the selected range forward by its length (VoiceOver).",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Следующий период"
           }
         }
       }
@@ -2850,6 +2883,17 @@
         }
       }
     },
+    "Showing the newest %@ of %@ activities here. Zoom in or set Dates to see the rest." : {
+      "comment" : "Map: the area holds more activities than the list's cap; the placeholders are the counts.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Показаны последние %@ из %@ активностей здесь. Приблизьте карту или задайте даты, чтобы увидеть остальные."
+          }
+        }
+      }
+    },
     "Sign in" : {
       "comment" : "Sign-in screen: the sign-in button.",
       "localizations" : {
@@ -3224,6 +3268,17 @@
         }
       }
     },
+    "The activity couldn't be opened: %@" : {
+      "comment" : "Edit: reading the activity in full failed; the placeholder is why.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось открыть активность: %@"
+          }
+        }
+      }
+    },
     "The changes couldn't be saved." : {
       "comment" : "Edit window: Save failed and the server gave no reason.",
       "localizations" : {
@@ -3543,6 +3598,28 @@
         }
       }
     },
+    "To" : {
+      "comment" : "Dates: the filter's last day.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По"
+          }
+        }
+      }
+    },
+    "Today" : {
+      "comment" : "Dates: To's hint while unset.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Сегодня"
+          }
+        }
+      }
+    },
     "Track" : {
       "comment" : "Edit window's tab: the track editor.",
       "localizations" : {
@@ -3671,6 +3748,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Без названия"
+          }
+        }
+      }
+    },
+    "Until %@" : {
+      "comment" : "Dates: only the last day set.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "По %@"
           }
         }
       }
@@ -3873,6 +3961,17 @@
         }
       }
     },
+    "Zoom in to see your activities." : {
+      "comment" : "Activities tab: the map is too far out to list anything.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Приблизьте карту, чтобы увидеть свои активности."
+          }
+        }
+      }
+    },
     "Zoom out" : {
       "comment" : "Photo viewer: zooms out of the photo.",
       "localizations" : {
@@ -3880,6 +3979,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Уменьшить"
+          }
+        }
+      }
+    },
+    "dates.from" : {
+      "comment" : "Dates: only the first day set.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From %@"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "С %@"
           }
         }
       }

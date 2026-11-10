@@ -28,22 +28,27 @@ final class MapTests: XCTestCase {
         attach("Heatmap")
         modes.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(chip.waitForNonExistence(timeout: 5))
-        // The date range: ‹ moves it back its own length, and a tap on the track brings the
-        // nearer knob there.
-        let label = app.staticTexts["rangeLabel"]
-        XCTAssertTrue(label.waitForExistence(timeout: 10))
-        let first = label.label
-        app.buttons["shiftEarlier"].tap()
-        XCTAssertTrue(waitForChange(of: label, from: first))
-        let shifted = label.label
-        app.otherElements["scrubber"].coordinate(withNormalizedOffset: CGVector(dx: 0.08, dy: 0.35)).tap()
-        XCTAssertTrue(waitForChange(of: label, from: shifted))
+        // Dates: picking a day in To's calendar sets the button, and Clear dates puts it back.
+        app.buttons["panelHandle"].tap()
+        let dates = app.buttons["datesFilter"]
+        XCTAssertTrue(dates.waitForExistence(timeout: 10))
+        let unset = dates.value as? String
+        dates.tap()
+        app.buttons["datesBefore"].tap()
+        let calendar = app.datePickers["datesCalendar"]
+        XCTAssertTrue(calendar.waitForExistence(timeout: 5))
+        // A day other than the one the calendar opens on, which a tap wouldn't change.
+        calendar.buttons.matching(NSPredicate(format: "label MATCHES '.*day, [A-Za-z]+ [0-9]+' AND isEnabled == true AND isSelected == false")).firstMatch.tap()
+        XCTAssertTrue(app.buttons["datesBeforeClear"].waitForExistence(timeout: 5), "To is set")
+        app.buttons["datesClear"].tap()
+        XCTAssertTrue(app.buttons["datesBeforeClear"].waitForNonExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        XCTAssertEqual(dates.value as? String, unset)
 
         app.tabBars.buttons.element(boundBy: 3).tap()
         XCTAssertTrue(app.staticTexts["account"].waitForExistence(timeout: 5))
         app.tabBars.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(app.otherElements["map"].exists, "the map keeps its place across a tab switch")
-        XCTAssertNotEqual(label.label, first, "the picked range survives a tab switch")
     }
 
     /// Points of interest on the demo's own area: a picked category counts on the Layers badge,

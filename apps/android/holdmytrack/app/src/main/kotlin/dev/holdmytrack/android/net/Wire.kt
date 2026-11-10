@@ -134,6 +134,30 @@ internal data class ActivitiesJson(
     val types: Map<String, ActivityTypeJson> = emptyMap(),
 )
 
+/** An activity as the area list's row shows it; `GET /v1/activities/{id}` has the rest. */
+@Serializable
+internal data class AreaActivityRowJson(
+    val id: String,
+    @SerialName("started_at") val startedAt: String,
+    val timezone: String,
+    @SerialName("activity_type") val activityType: String,
+    val name: String?,
+    @SerialName("distance_meters") val distanceMeters: Double?,
+    @SerialName("moving_seconds") val movingSeconds: Long?,
+    val bbox: List<Double>?,
+    val pending: Boolean,
+    val private: Boolean,
+    val stories: List<StoryRefJson>,
+)
+
+/** `GET /v1/activities/area`. */
+@Serializable
+internal data class AreaActivitiesJson(
+    val activities: List<AreaActivityRowJson>,
+    val types: Map<String, ActivityTypeJson>,
+    val total: Int? = null,
+)
+
 /** `GET /v1/activities/pending`. */
 @Serializable
 internal data class PendingJson(val pending: List<String>)

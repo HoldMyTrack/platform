@@ -76,16 +76,6 @@ struct ClientRulesTests {
 
 /// Each rule, from a case's input to the JSON its expected value is written in.
 let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
-    "defaultRange": { input in
-        rangeJSON(DefaultRange.of(input.strings("visibleDays"), earliest: input["earliest"].string, today: input["today"].string!))
-    },
-    "rangeShift": { input in
-        switch RangeShift.of(days: input.strings("days"), hasEarlier: input["hasEarlier"].bool!, range: range(input["range"]), dir: input.int("dir")) {
-        case .shifted(let range): rangeJSON(range)
-        case .none: nil
-        case .load: "load"
-        }
-    },
     "pendingChange": { input in
         let change = PendingDiff.of(previous: Set(input.strings("previous")), now: Set(input.strings("now")), awaiting: Set(input.strings("awaiting")))
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting)]
@@ -130,29 +120,6 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "passesFilters": { input in
         .bool(ActivityFacets.passesFilters(activity(input["activity"]), excludedTypes: Set(input.strings("excludedTypes")), distanceFilter: distance(input["distanceFilter"])))
     },
-    "sliderLayout": { input in
-        let layout = SliderRules.layout(width: input.int("width"), finePointer: input["finePointer"].bool!)
-        return ["buttons": .bool(layout.buttons), "days": .num(layout.days)]
-    },
-    "sliderBoundaries": { input in
-        let (start, end) = SliderRules.boundaries(sliderWindow(input), range(input["range"]))
-        return ["start": .num(start), "end": .num(end)]
-    },
-    "sliderMoveKnob": { input in
-        let knob: SliderRules.Knob = input["knob"].string == "start" ? .start : .end
-        return rangeJSON(SliderRules.moveKnob(sliderWindow(input), range(input["range"]), knob: knob, to: input.int("boundary")))
-    },
-    "sliderTicks": { input in
-        .array(SliderRules.ticks(input.strings("days")).map { tick in
-            ["boundary": .num(tick.boundary), "kind": tick.monthStart ? "month" : "day", "month": tick.month.map { .num($0) } ?? nil]
-        })
-    },
-    "sliderPanLand": { input in
-        rangeJSON(SliderRules.panLand(days: input.strings("days"), range: range(input["range"]), start: input["start"].bool!, end: input["end"].bool!))
-    },
-    "sliderWindowFit": { input in
-        .num(SliderRules.windowFit(count: input.int("count"), windowDays: input.int("windowDays"), left: input.int("left"), first: input.int("first"), last: input.int("last"), dir: input.int("dir")))
-    },
     "panelState": { input in
         let all = (input["activities"].list ?? []).map { activity($0) }
         let state = input["state"]
@@ -179,7 +146,6 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         case "listLoaded":
             let ids = Set(event.strings("ids"))
             panel.setActivities(all.filter { ids.contains($0.id) })
-        case "rangePicked": panel.resetForNewRange()
         case let type: throw RuleError("no iOS event \(type ?? "?")")
         }
         return [
@@ -187,15 +153,43 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
             "excludedTypes": .ids(panel.excludedTypes), "distanceFilter": distanceJSON(panel.distanceFilter),
         ]
     },
-    "session": { input in
+    "areaLoad": { input in
+        let result = AreaLoad.of(zoom: input["zoom"].double!, listed: input.int("listed"), total: input["total"].double.map { Int($0) })
+        return ["load": .string(result.load.rawValue), "capped": .bool(result.capped)]
+    },
+    "openingView": { input in
+        let boxes = (input["boxes"].list ?? []).map { $0.list!.map { $0.double! } }
+        guard let view = OpeningView.of(boxes, width: input["viewport"]["width"].double!, height: input["viewport"]["height"].double!) else { return nil }
+        return ["center": .array([.number(view.lon), .number(view.lat)]), "zoom": .number(view.zoom)]
+    },
+    "dateFilterBounds": { input in
+        let b = DateFilter.bounds(earliest: input["earliest"].string, latest: input["latest"].string, today: input["today"].string!)
+        return ["min": .string(b.min), "max": .string(b.max)]
+    },
+    "dateFilterLabel": { input in
+        switch DateFilter(after: input["after"].string, before: input["before"].string).label {
+        case .all: ["kind": "all"]
+        case let .between(a, b): ["kind": "between", "after": .string(a), "before": .string(b)]
+        case let .after(a): ["kind": "after", "after": .string(a)]
+        case let .before(b): ["kind": "before", "before": .string(b)]
+        }
+    },
+    "dateFilterSet": { input in
+        let current = dates(input["current"])
+        let bounds = (min: input["bounds"]["min"].string!, max: input["bounds"]["max"].string!)
+        let result = current.setting(input["end"].string == "after" ? .after : .before, to: input["value"].string, bounds: bounds)
+        return ["filter": datesJSON(result.filter), "fly": .bool(result.fly)]
+    },
+    "webSession": { input in
         let state = input["state"]
         var session = MapSession()
-        if state["range"].object != nil { session.restore(range(state["range"]), picked: state["userPicked"].bool ?? false) }
-        // The Story first: opening one resets the selection set up below.
+        // The Story first: opening one starts the selection set up below over.
         if let story = state["storyId"].string {
             session.enterStory(story)
             _ = session.consumeFly()
         }
+        if state["dates"].object != nil { session.setDates(dates(state["dates"]), fly: false) }
+        if let area = state["area"].list { session.areaLoaded(area.map { $0.double! }) }
         var seen = Set<String>()
         let ids = (state.strings("checked") + state.strings("hidden")).filter { seen.insert($0).inserted }
         session.panel.setActivities(ids.map { ActivitySummary(id: $0, activityType: "walking", distanceMeters: 1000, isPrivate: false) })
@@ -207,17 +201,20 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         for type in state.strings("excludedTypes") { session.panel.toggleType(type) }
         let event = input["event"]
         switch event["type"].string {
-        case "rangePicked": session.pickRange(range(event["range"]))
-        case "defaultRange": session.offerDefault(range(event["range"]), editOpen: event["editOpen"].bool ?? false)
+        case "datesSet": session.setDates(dates(event["dates"]), fly: event["fly"].bool!)
+        case "areaLoaded": session.areaLoaded(event["area"].list!.map { $0.double! })
+        case "dayViewed": session.viewDay(event["day"].string!)
         case "storyEntered": session.enterStory(event["id"].string!)
         case "storyExited": session.exitStory()
         case let type: throw RuleError("no iOS event \(type ?? "?")")
         }
-        return [
-            "range": session.range.map(rangeJSON) ?? nil, "userPicked": .bool(session.userPicked), "storyId": .opt(session.storyID),
+        var out: [String: RuleJSON] = [
+            "dates": datesJSON(session.dates), "area": session.area.map { .array($0.map { .number($0) }) } ?? nil,
             "checked": .ids(session.panel.checked), "hidden": .ids(session.panel.hidden), "excludedTypes": .ids(session.panel.excludedTypes),
             "flyRequest": .bool(session.flyRequest),
         ]
+        if let story = session.storyID { out["storyId"] = .string(story) }
+        return .object(out)
     },
     "layerInsertion": { input in
         .opt(MapLayers.insertionPoint(current: input.strings("current"), order: input.strings("order"), id: input["id"].string!, own: Set(input.strings("own")), fallback: input["fallback"].string))
@@ -386,13 +383,6 @@ struct RuleError: Error, CustomStringConvertible {
     init(_ description: String) { self.description = description }
 }
 
-func sliderWindow(_ input: RuleJSON) -> SliderRules.Window {
-    SliderRules.Window(days: input.strings("days"), canPanEarlier: input["canPanEarlier"].bool!, canPanLater: input["canPanLater"].bool!)
-}
-
-func range(_ json: RuleJSON) -> DateRange { DateRange(from: json["from"].string!, to: json["to"].string!) }
-func rangeJSON(_ range: DateRange) -> RuleJSON { ["from": .string(range.from), "to": .string(range.to)] }
-
 func distance(_ json: RuleJSON) -> DistanceRange? {
     json.object == nil ? nil : DistanceRange(min: json.number("min"), max: json.number("max"))
 }
@@ -410,3 +400,7 @@ func activities(_ json: RuleJSON) -> [ActivitySummary] { (json.list ?? []).map {
 func partsJSON(_ parts: DistanceParts) -> RuleJSON {
     ["value": .num(parts.value), "minDecimals": .num(parts.minDecimals), "maxDecimals": .num(parts.maxDecimals), "grouping": .bool(parts.grouping), "unit": .string(parts.unit.rawValue)]
 }
+
+private func dates(_ json: RuleJSON) -> DateFilter { DateFilter(after: json["after"].string, before: json["before"].string) }
+
+private func datesJSON(_ filter: DateFilter) -> RuleJSON { ["after": .opt(filter.after), "before": .opt(filter.before)] }

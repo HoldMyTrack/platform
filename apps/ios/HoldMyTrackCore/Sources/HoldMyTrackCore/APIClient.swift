@@ -25,21 +25,6 @@ public enum Fetched: Equatable, Sendable {
     case document(Data, etag: String?)
 }
 
-/// An activity as the map frames it.
-public struct ActivityRow: Equatable, Sendable {
-    public let id: String
-    public let startedAt: Date?
-    /// `[west, south, east, north]`, or nil for an activity with no track.
-    public let bbox: [Double]?
-    public let pending: Bool
-
-    public init(id: String, startedAt: Date?, bbox: [Double]?, pending: Bool) {
-        self.id = id
-        self.startedAt = startedAt
-        self.bbox = bbox
-        self.pending = pending
-    }
-}
 
 /// Whether the account's coverage is being redrawn, and the tile version it's at.
 public struct CoverageStatus: Equatable, Sendable {
@@ -162,16 +147,6 @@ public final class APIClient: Sendable {
         return (json.buckets.map(\.date), json.earliest)
     }
 
-    /// The account's activities, unfiltered or from from to to (YYYY-MM-DD, the account's days).
-    public func activities(from: String? = nil, to: String? = nil) async throws -> [ActivityRow] {
-        var items: [URLQueryItem] = []
-        if let from, let to { items = [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)] }
-        let json: ActivitiesJSON = try await decode(send("GET", "v1/activities", query: items))
-        let iso = ISO8601DateFormatter()
-        return json.activities.map { row in
-            ActivityRow(id: row.id, startedAt: iso.date(from: row.startedAt), bbox: row.bbox, pending: row.pending)
-        }
-    }
 
     public func coverageStatus() async throws -> CoverageStatus {
         let json: CoverageStatusJSON = try await decode(send("GET", "v1/coverage/status"))

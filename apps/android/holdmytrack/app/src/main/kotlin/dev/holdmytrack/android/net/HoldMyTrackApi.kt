@@ -8,6 +8,7 @@ import android.os.Handler
 import android.os.LocaleList
 import android.os.Looper
 import dev.holdmytrack.android.BuildConfig
+import dev.holdmytrack.android.map.DateFilter
 import dev.holdmytrack.android.map.GeoPoint
 import dev.holdmytrack.android.panel.ActivityKind
 import dev.holdmytrack.android.panel.ActivityTypes
@@ -573,52 +574,43 @@ object HoldMyTrackApi {
         call(request, { body -> decode<MessageJson>(body).message }, onResult)
     }
 
-    /**
-     * The bounding box of the account's most recent drawn activity, or null when it has none
-     * with geometry yet — what the map opens on, as the web's does (`docs/SPEC.md` FR-4.5): an
-     * account with scattered recent history would otherwise open on a near-world view.
-     *
-     * From `GET /v1/activities`'s per-row `bbox` rather than from anything the map itself
-     * knows: a track outside the current viewport is in no loaded tile, so asking the renderer
-     * where the user's history is would only ever answer for history already on screen. Rows
-     * with a null bbox — an activity whose trajectory never made it in — are skipped rather
-     * than treated as a point at (0, 0), and so are Pending ones, which the tracks tile doesn't
-     * draw.
-     */
-    fun latestActivityBounds(onResult: (Result<DoubleArray?>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities").build()
-        call(request, { body ->
-            var latest: Instant? = null
-            var box: DoubleArray? = null
-            forEachDrawn(body) { row, bbox ->
-                val startedAt = runCatching { OffsetDateTime.parse(row.startedAt).toInstant() }.getOrNull()
-                if (startedAt != null && (latest == null || startedAt > latest)) {
-                    latest = startedAt
-                    box = bbox
-                }
-            }
-            box
-        }, onResult)
-    }
 
-    /**
-     * `GET /v1/activities?from=&to=` — every activity from [from] to [to] (`YYYY-MM-DD`,
-     * inclusive, read by the server as days in the account's timezone), newest first, in one
-     * response: the list isn't paged (`docs/IMPLEMENTATION.md` §4.7). What the map's
-     * Activities panel lists. With [story] instead, that whole Story's (`docs/SPEC.md`
-     * FR-14.4, FR-14.6: an open Story ignores the date range).
-     */
-    fun activities(from: String?, to: String?, story: String?, onResult: (Result<List<Activity>>) -> Unit) {
+    /** `GET /v1/activities?story=`: that whole Story's activities (`docs/SPEC.md` FR-14.6), newest
+     *  first, in one response. */
+    fun storyActivities(story: String, onResult: (Result<List<Activity>>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities").toHttpUrl().newBuilder()
-            .apply { if (from != null) addQueryParameter("from", from) }
-            .apply { if (to != null) addQueryParameter("to", to) }
-            .apply { if (story != null) addQueryParameter("story", story) }
+            .addQueryParameter("story", story)
             .build()
         call(Request.Builder().url(url).build(), { body ->
             val decoded = decode<ActivitiesJson>(body)
             ActivityTypes.merge(decoded.types.described())
             decoded.activities.map { it.toActivity() }
         }, onResult)
+    }
+
+    /**
+     * `GET /v1/activities/area`: the newest activities, at most [limit], whose track crosses [box]
+     * (`[west, south, east, north]`), all of them without one, under [dates] (`docs/SPEC.md`
+     * FR-5.19). Its rows are slim: the Edit window reads [activity] for the rest.
+     */
+    fun areaActivities(box: List<Double>?, dates: DateFilter, limit: Int? = null, onResult: (Result<AreaPage>) -> Unit) {
+        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities/area").toHttpUrl().newBuilder()
+            .apply { if (box != null) addQueryParameter("bbox", box.joinToString(",")) }
+            .apply { dates.after?.let { addQueryParameter("from", it) } }
+            .apply { dates.before?.let { addQueryParameter("to", it) } }
+            .apply { if (limit != null) addQueryParameter("limit", limit.toString()) }
+            .build()
+        call(Request.Builder().url(url).build(), { body ->
+            val decoded = decode<AreaActivitiesJson>(body)
+            ActivityTypes.merge(decoded.types.described())
+            AreaPage(decoded.activities.map { it.toActivity() }, decoded.total)
+        }, onResult)
+    }
+
+    /** `GET /v1/activities/{id}`: one activity in full, for the Edit window. */
+    fun activity(id: String, onResult: (Result<Activity>) -> Unit) {
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + Uri.encode(id)).build()
+        call(request, { body -> decode<ActivitiesJson>(body).activities.first().toActivity() }, onResult)
     }
 
     /** `GET /v1/activities/pending`: which of [ids] are still Pending (`map/PendingTracker`). */
@@ -1092,6 +1084,22 @@ object HoldMyTrackApi {
         byType = stats.byType.map { StoryTotals(it.activityType, it.count, it.distanceMeters, it.movingSeconds) },
     )
 
+    private fun AreaActivityRowJson.toActivity() = Activity(
+        id = id,
+        startedAt = startedAt,
+        activityType = activityType,
+        timezone = timezone,
+        name = name,
+        distanceMeters = distanceMeters,
+        movingSeconds = movingSeconds,
+        description = null,
+        bbox = bbox?.takeIf { it.size == 4 },
+        pending = pending,
+        edited = false,
+        isPrivate = private,
+        stories = stories.map { StoryRef(it.id, it.name) },
+    )
+
     private fun ActivityRowJson.toActivity() = Activity(
         id = id,
         startedAt = startedAt,
@@ -1123,8 +1131,8 @@ object HoldMyTrackApi {
     /**
      * `GET /v1/activities/histogram?days=&before=` — one page of the days that have activity
      * (`docs/IMPLEMENTATION.md` §4.7's activity-day pagination mode): the [limit] most recent,
-     * or the [limit] most recent strictly before [before]. What the map's date-range slider
-     * (`map/ActivityDays.kt`) pages through, as the web's does.
+     * or the [limit] most recent strictly before [before]. The newest day and the account's first
+     * are the Dates filter's bounds (`map/AreaController`).
      */
     fun activityDayPage(limit: Int, before: String?, onResult: (Result<ActivityDayPage>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities/histogram").toHttpUrl().newBuilder()
@@ -1173,14 +1181,6 @@ object HoldMyTrackApi {
 
     /** Each row of a `GET /v1/activities` body the tracks tile draws — one with a bbox and
      *  not Pending — with that bbox as `[minLon, minLat, maxLon, maxLat]`. */
-    private fun forEachDrawn(body: String, action: (ActivityRowJson, DoubleArray) -> Unit) {
-        for (row in decode<ActivitiesJson>(body).activities) {
-            if (row.pending) continue
-            val box = row.bbox ?: continue
-            if (box.size != 4) continue
-            action(row, box.toDoubleArray())
-        }
-    }
 
     /** A response body as its wire class (Wire.kt). */
     private inline fun <reified T> decode(text: String): T = apiJson.decodeFromString(text)

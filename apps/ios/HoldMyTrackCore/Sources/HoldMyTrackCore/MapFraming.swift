@@ -1,8 +1,8 @@
 import Foundation
 
-/// Where the map first frames an account (apps/android/docs/SPEC.md FR-2.3).
+/// How the camera frames activities it flies to.
 public enum MapFraming {
-    /// The furthest the first framing zooms in.
+    /// The furthest a flight zooms in.
     public static let maxZoom = 15.0
 
     /// The smallest box `[west, south, east, north]` holding every box, the short way round:
@@ -20,18 +20,5 @@ public enum MapFraming {
             if end - start < best.1 - best.0 { best = (start, end) }
         }
         return [best.0, boxes.map { $0[1] }.min()!, best.1, boxes.map { $0[3] }.max()!]
-    }
-
-    /// The tiles' query for the tracks of range (root docs/SPEC.md FR-14.4's filter, by date).
-    public static func tracksQuery(_ range: DateRange?) -> String {
-        guard let range else { return "" }
-        return "from=\(range.from)&to=\(range.to)"
-    }
-
-    /// The bounds `[west, south, east, north]` of the most recent activity with a track, skipping
-    /// Pending ones, or nil when the account has nothing on the map.
-    public static func latest(_ rows: [ActivityRow]) -> [Double]? {
-        rows.filter { !$0.pending && ($0.bbox?.count ?? 0) == 4 && $0.startedAt != nil }
-            .max { $0.startedAt! < $1.startedAt! }?.bbox
     }
 }

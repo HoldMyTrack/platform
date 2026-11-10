@@ -52,8 +52,3 @@ public enum WebPageSession {
         return url.port.map { "\(host):\($0)" } ?? host
     }
 }
-
-extension DateRange {
-    /// Whether day (YYYY-MM-DD) is in the range, both ends included.
-    public func contains(_ day: String) -> Bool { day >= from && day <= to }
-}

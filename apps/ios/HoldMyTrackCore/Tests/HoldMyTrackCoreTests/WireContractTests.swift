@@ -40,6 +40,8 @@ struct WireContractTests {
         try request(EmailJSON.self, "/stories/{id}/send", "post")
 
         try response(ActivitiesJSON.self, "/activities", "get")
+        try response(AreaActivitiesJSON.self, "/activities/area", "get")
+        try response(ActivitiesJSON.self, "/activities/{id}", "get")
         try response(ActivityTypesJSON.self, "/activity-types", "get")
         try response(PendingJSON.self, "/activities/pending", "get")
         try response(ActivityRowJSON.self, "/activities/{id}", "patch")

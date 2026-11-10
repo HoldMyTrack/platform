@@ -36,8 +36,4 @@ struct WebPageTests {
         #expect(SitePage.allCases.filter(\.refreshOnReturn) == [.profile, .syncHistory])
     }
 
-    @Test func aRangeHoldsBothItsEnds() {
-        let range = DateRange(from: "2026-10-01", to: "2026-10-05")
-        #expect(range.contains("2026-10-01") && range.contains("2026-10-05") && !range.contains("2026-10-06"))
-    }
 }

@@ -255,7 +255,7 @@ class MainActivity : AppCompatActivity() {
             fun mapView(id: Int) = listOfNotNull(map()?.view?.findViewById<View>(id))
             return when (target) {
                 TourTarget.SHEET -> mapView(R.id.activities_sheet)
-                TourTarget.RANGE -> mapView(R.id.date_range_row)
+                TourTarget.RANGE -> mapView(R.id.panel_dates)
                 TourTarget.LAYERS -> mapView(R.id.layers_panel) + listOfNotNull(map()?.layersMenu)
                 TourTarget.EXPORT -> mapView(R.id.export_panel)
                 TourTarget.MODES -> mapView(R.id.mode_bar)

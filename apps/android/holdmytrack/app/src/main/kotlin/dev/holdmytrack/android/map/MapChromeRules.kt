@@ -3,7 +3,7 @@ package dev.holdmytrack.android.map
 import dev.holdmytrack.android.panel.PanelTab
 
 /** The map's notices, most important first: when two apply, the earlier stays up. */
-enum class MapNotice { MAP_FAILED, UNREACHABLE, BASEMAP_UNREACHABLE, SATELLITE_FAILED, CHECKING, EMPTY }
+enum class MapNotice { MAP_FAILED, UNREACHABLE, BASEMAP_UNREACHABLE, SATELLITE_FAILED, CHECKING, EMPTY, CAPPED }
 
 /**
  * Which of the map's controls and notices show, as plain values `MapFragment` renders.
@@ -49,10 +49,10 @@ object MapChromeRules {
     fun selectionShown(sheetVisible: Boolean, selecting: Boolean, tab: PanelTab, editOpen: Boolean): Boolean =
         sheetVisible && selecting && tab == PanelTab.ACTIVITIES && !editOpen
 
-    /** The date range at the sheet's head: the Activities tab's, in Normal mode, unless the
-     *  selected activity's card has the head, once the days are in, and only with history. */
-    fun dateFooterShown(normal: Boolean, tab: PanelTab, showsCard: Boolean, daysReady: Boolean, hasHistory: Boolean): Boolean =
-        normal && tab == PanelTab.ACTIVITIES && !showsCard && daysReady && hasHistory
+    /** The list's summary at the sheet's head: the Activities tab's, in Normal mode, unless the
+     *  selected activity's card has the head. */
+    fun summaryShown(normal: Boolean, tab: PanelTab, showsCard: Boolean): Boolean =
+        normal && tab == PanelTab.ACTIVITIES && !showsCard
 
     /** The sheet: Normal mode's, and the Sync tab's even while recording, so what's on the phone
      *  can be sent mid-walk; hidden while an editor has the screen. */
@@ -64,7 +64,8 @@ object MapChromeRules {
     /** Whether [next] may replace the notice up: a less important one never replaces a more important one. */
     fun noticeReplaces(current: MapNotice?, next: MapNotice): Boolean = current == null || current.ordinal >= next.ordinal
 
-    /** The empty notice steps aside while recording and on the Sync tab it points to; failures stay up. */
+    /** The empty and capped notices step aside while recording and on the Sync tab, whose lists
+     *  aren't the area's; failures stay up. */
     fun noticeShown(kind: MapNotice?, recording: Boolean, onSync: Boolean): Boolean =
-        kind != null && !(kind == MapNotice.EMPTY && (recording || onSync))
+        kind != null && !((kind == MapNotice.EMPTY || kind == MapNotice.CAPPED) && (recording || onSync))
 }

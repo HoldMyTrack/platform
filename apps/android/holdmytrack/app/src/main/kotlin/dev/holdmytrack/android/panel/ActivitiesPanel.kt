@@ -43,11 +43,11 @@ enum class PanelTab { ACTIVITIES, STORIES, SYNC }
  * The map's Activities sheet (`apps/web/src/ui/ActivitiesPanel.tsx`, redrawn for a phone): a
  * bottom sheet dragged between collapsed — its head alone — half the map and nearly all of it
  * (`BottomSheetBehavior`), a tap on its handle opening it halfway or closing it. On the
- * Activities tab its head is the date range (`map/DateRangeSlider`, `MapFragment`'s) with the
- * listed activities' totals ([render]), and under it the Type dropdown and the DISTANCE slider,
+ * Activities tab its head is the listed activities' totals ([render]), the visible area's under
+ * Dates (`map/AreaController`), and under it the Type, Dates and DISTANCE filters,
  * a toolbar over the toolbar's target, the rows and the target's summary. The Stories tab — the
  * bottom bar's Stories — has the account's Stories with one open on the map ([StoriesTab]),
- * headed by its title instead of the range; the Sync tab — the bottom bar's Sync — what's on
+ * headed by its title instead of the totals; the Sync tab — the bottom bar's Sync — what's on
  * this phone waiting to be added ([SyncTab]), headed the same way.
  *
  * The rules live in [PanelState]; this draws it and turns taps into state changes.
@@ -103,6 +103,15 @@ class ActivitiesPanel(
     private val head: View = sheet.findViewById(R.id.panel_head)
     private val subtext: TextView = sheet.findViewById(R.id.panel_subtext)
     private val typeTrigger: View = sheet.findViewById(R.id.panel_type_trigger)
+    private val datesChip: View = sheet.findViewById(R.id.panel_dates)
+    private val datesLabel: TextView = sheet.findViewById(R.id.panel_dates_label)
+    private val datesDot: View = sheet.findViewById(R.id.panel_dates_dot)
+
+    /** Dates' chip was tapped: its dialog is the map's (`map/DatesDialog`). */
+    var onDatesTap: () -> Unit = {}
+
+    /** The map is too far out to list anything (`docs/SPEC.md` FR-5.19). */
+    private var zoomedOut = false
     private val typeDot: View = sheet.findViewById(R.id.panel_type_dot)
     private val distance: View = sheet.findViewById(R.id.panel_distance)
     private val distanceReadout: TextView = sheet.findViewById(R.id.panel_distance_readout)
@@ -141,6 +150,11 @@ class ActivitiesPanel(
     private val delete: ImageButton = selectionBar.findViewById(R.id.panel_delete)
     private val focus: ImageButton = selectionBar.findViewById(R.id.panel_focus)
     private val list: RecyclerView = sheet.findViewById(R.id.panel_list)
+
+    /** Over the rows while a reload runs past [PROGRESS_DELAY_MS]: the list keeps its rows until
+     *  the new ones land, and a "Loading…" line below them goes unseen. */
+    private val progress: View = sheet.findViewById(R.id.panel_progress)
+    private val showProgress = Runnable { if (loading && !zoomedOut) progress.visibility = View.VISIBLE }
     private val footer: TextView = sheet.findViewById(R.id.panel_footer)
 
     private val toolbarActions = Actions(visibility, edit, addToStory, delete, focus)
@@ -211,7 +225,7 @@ class ActivitiesPanel(
 
         handle.setOnClickListener { setExpanded(!expanded) }
         LargeText.stack(sheet.findViewById(R.id.card_stats))
-        // The collapsed height is the head's bottom edge, whatever the font scale and the range
+        // The collapsed height is the head's bottom edge, whatever the font scale and the totals
         // or title in it make of it — set after the layout pass rather than inside it.
         head.addOnLayoutChangeListener { _, _, _, _, bottom, _, _, _, oldBottom ->
             if (bottom != oldBottom) head.post {
@@ -239,6 +253,7 @@ class ActivitiesPanel(
         })
 
         typeTrigger.setOnClickListener { showTypeFilter() }
+        datesChip.setOnClickListener { onDatesTap() }
         distanceSlider.addOnChangeListener { slider, _, fromUser ->
             if (!fromUser) return@addOnChangeListener
             val bounds = ActivityFacets.distanceBounds(state.activities) ?: return@addOnChangeListener
@@ -317,18 +332,37 @@ class ActivitiesPanel(
         setExpanded(false)
     }
 
-    /** A new list is on its way — for a new range, or the same one again. */
+    /** A new list is on its way: for a new area, Dates or Story, or the same one again. */
     fun setLoading() {
         loading = true
         error = null
+        zoomedOut = false
+        // Only once it has taken long enough to notice, so a quick pan doesn't flicker.
+        progress.removeCallbacks(showProgress)
+        progress.postDelayed(showProgress, PROGRESS_DELAY_MS)
         render()
     }
 
     fun setActivities(activities: List<Activity>) {
         loading = false
         error = null
+        zoomedOut = false
         state.setActivities(activities)
         changed()
+    }
+
+    /** Too far out to list anything: the list empties and says to zoom in. */
+    fun setZoomedOut() {
+        setActivities(emptyList())
+        zoomedOut = true
+        render()
+    }
+
+    /** Dates' chip: [text] what's set, marked while anything is. */
+    fun setDates(text: String, set: Boolean) {
+        datesLabel.text = text
+        datesDot.visibility = if (set) View.VISIBLE else View.GONE
+        datesChip.contentDescription = "${res.getString(R.string.dates_filter)}, $text"
     }
 
     fun setError(message: String) {
@@ -436,7 +470,7 @@ class ActivitiesPanel(
     /** Whether the rows are being checked — the selection bar over the map then. */
     val selecting: Boolean get() = state.selecting
 
-    /** Whether the selected activity's card is at the sheet's head, in the range's place. */
+    /** Whether the selected activity's card is at the sheet's head, in the totals' place. */
     val showsCard: Boolean get() = tab == PanelTab.ACTIVITIES && state.focused != null && !state.selecting
 
     /** The map draws the selected activity's pace bands in [colors], slowest first, or stopped
@@ -479,9 +513,13 @@ class ActivitiesPanel(
     }
 
     private fun render() {
+        if (!loading || zoomedOut) {
+            progress.removeCallbacks(showProgress)
+            progress.visibility = View.INVISIBLE
+        }
         val listed = state.listed
         // The Activities tab's own totals: an open Story's rows are the list meanwhile, and
-        // aren't what the range's heading counts, as on the web.
+        // aren't what the area's heading counts, as on the web.
         if (tab == PanelTab.ACTIVITIES) summary.text = summaryOf(listed)
         renderTabs()
         subtext.visibility = if (tab == PanelTab.ACTIVITIES) View.GONE else View.VISIBLE
@@ -500,7 +538,9 @@ class ActivitiesPanel(
         adapter.submitList(rows)
         if (tab == PanelTab.STORIES) storiesTab.setRows(rows, loading, error)
         noteAdapter.note = when {
-            loading -> Note(res.getString(R.string.panel_loading), failed = false)
+            zoomedOut && tab == PanelTab.ACTIVITIES -> Note(res.getString(R.string.area_zoom_in), failed = false)
+            loading && listed.isEmpty() -> Note(res.getString(R.string.panel_loading), failed = false)
+            loading -> null
             error != null -> Note(error!!, failed = true)
             listed.isEmpty() -> Note(res.getString(R.string.panel_none_match), failed = false)
             else -> null
@@ -516,15 +556,15 @@ class ActivitiesPanel(
         if (storyMenu.target.let { it != null && it != targets.map { t -> t.id } }) storyMenu.dismiss()
     }
 
-    /** "6 activities · 74.8 km · 9h 6m", what's listed under the range. */
+    /** "6 activities · 74.8 km · 9h 6m", what's listed in the area. */
     private fun summaryOf(listed: List<Activity>): String = listOf(
         res.getQuantityString(R.plurals.story_activity_count, listed.size, listed.size),
         PanelFormat.totalDistance(res, listed.sumOf { it.distanceMeters ?: 0.0 }),
         PanelFormat.duration(res, listed.sumOf { it.movingSeconds ?: 0L }),
     ).joinToString(" · ")
 
-    /** The tab's head — the range is `MapFragment`'s to show; Stories and Sync have their
-     *  titles — and its content in the sheet. */
+    /** The tab's head, the Activities tab's totals or Stories' and Sync's titles, and its content
+     *  in the sheet. */
     private fun renderTabs() {
         titleHead.visibility = if (tab == PanelTab.ACTIVITIES) View.GONE else View.VISIBLE
         title.setText(if (tab == PanelTab.SYNC) R.string.sync_title else R.string.panel_tab_stories)
@@ -911,6 +951,9 @@ class ActivitiesPanel(
     }
 
     internal companion object {
+        /** How long a list load runs before the progress bar shows. */
+        const val PROGRESS_DELAY_MS = 300L
+
         /** About twelve rows, then a dropdown's list scrolls. */
         const val TYPE_LIST_MAX_DP = 192
         const val DISTANCE_POPUP_DP = 288
