@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import * as limits from '../src/limits.ts';
 
 const api = fileURLToPath(new URL('../../../services/server/api/', import.meta.url));
