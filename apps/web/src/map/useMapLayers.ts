@@ -11,6 +11,7 @@ import { setSatelliteVisible } from './satellite';
 import { ensureSpotsLayer, type SpotCategory } from './spots';
 import { buildStyle, type Flavor } from './style';
 import { setTrackBands } from './trackBands';
+import { attachFogPlaces } from './fogPlaces';
 import { attachTrackInteractivity, refreshTrackLayer, trackQuery } from './tracks';
 import type { ActivityQuery, ActivityTrackMetrics } from '../api';
 import { lang } from '../i18n';
@@ -65,6 +66,7 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
         queries: { ...state.queries, tracks: trackQuery(tracksQuery) },
       });
       attachTrackInteractivity(instance);
+      attachFogPlaces(instance);
       // Spots last, above the basemap's labels too (spots.ts).
       ensureSpotsLayer(instance, spotsShown);
       setMapMode(instance, mode, satelliteLook, editingTrack);

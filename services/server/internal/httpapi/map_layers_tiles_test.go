@@ -15,7 +15,7 @@ func TestLayersMatchTheTileHandlers(t *testing.T) {
 	minZooms := map[string]int{"bike-paths": bikePathsMinZoom, "spots": spotsMinZoom}
 	queries := map[string]string{"bike-paths": bikePathsQuery, "spots": spotsQuery, "tracks": tracksQuery}
 	for _, flavor := range mapstyle.Flavors() {
-		doc, err := mapstyle.Layers(flavor, "abcd1234.1")
+		doc, err := mapstyle.Layers(flavor, "abcd1234.1", "en")
 		if err != nil {
 			t.Fatal(err)
 		}

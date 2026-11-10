@@ -263,7 +263,7 @@ func TestETagVariesWithSatellite(t *testing.T) {
 
 func TestLayersFillTheTileVersion(t *testing.T) {
 	for _, flavor := range Flavors() {
-		doc, err := Layers(flavor, "abcd1234.9")
+		doc, err := Layers(flavor, "abcd1234.9", "en")
 		if err != nil {
 			t.Fatalf("Layers(%q): %v", flavor, err)
 		}
@@ -282,10 +282,10 @@ func TestLayersFillTheTileVersion(t *testing.T) {
 			t.Errorf("%s: head = %+v", flavor, head)
 		}
 	}
-	if _, err := Layers("neon", "x"); !errors.Is(err, ErrUnknownFlavor) {
+	if _, err := Layers("neon", "x", "en"); !errors.Is(err, ErrUnknownFlavor) {
 		t.Errorf("err = %v, want ErrUnknownFlavor", err)
 	}
-	if LayersETag("light", "a.1") == LayersETag("light", "a.2") || LayersETag("light", "a.1") == LayersETag("dark", "a.1") {
+	if LayersETag("light", "a.1", "en") == LayersETag("light", "a.2", "en") || LayersETag("light", "a.1", "en") == LayersETag("dark", "a.1", "en") || LayersETag("light", "a.1", "en") == LayersETag("light", "a.1", "ru") {
 		t.Error("the layers ETag doesn't vary with the tile version and flavor")
 	}
 }

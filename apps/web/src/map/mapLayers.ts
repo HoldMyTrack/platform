@@ -49,7 +49,7 @@ export const IMAGES_METADATA = 'holdmytrack:images';
 export type Placement = 'beneath-labels' | 'top';
 
 export type GroupSource =
-  | { type: 'vector'; tiles: string; minzoom: number; maxzoom: number; attribution?: string }
+  | { type: 'vector'; tiles: string; minzoom: number; maxzoom: number; attribution?: string; promoteId?: string }
   | { type: 'geojson' };
 
 /** A Layers menu legend line: the color, and the dash in line widths, or none for solid. */
@@ -134,13 +134,15 @@ export interface BuildLayersOptions {
   /** Whether the flavor draws light on dark (style.ts's isDarkFlavor). */
   dark: boolean;
   tileVersion: string;
+  /** The language the outline tiles name places in (coverageGroup). */
+  lang: string;
   styleBuild?: string;
 }
 
 /** The layers document for `flavor` at `tileVersion`. Satellite imagery reads dark under any
  *  flavor, so its views take the dark ones. */
-export function buildLayers({ flavor, dark, tileVersion, styleBuild = '' }: BuildLayersOptions): MapLayers {
-  const parts = [coverageGroup(dark, tileVersion), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(), spotsGroup(tileVersion)];
+export function buildLayers({ flavor, dark, tileVersion, lang, styleBuild = '' }: BuildLayersOptions): MapLayers {
+  const parts = [coverageGroup(dark, tileVersion, lang), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(), spotsGroup(tileVersion)];
   const views = (base: boolean, satellite: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base, satellite)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,

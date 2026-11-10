@@ -410,6 +410,9 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	if _, err := tx.Exec(ctx, `DELETE FROM activity_region WHERE activity_id = $1`, activityID); err != nil {
 		return err
 	}
+	if _, err := tx.Exec(ctx, `DELETE FROM activity_place WHERE activity_id = $1`, activityID); err != nil {
+		return err
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return err
 	}

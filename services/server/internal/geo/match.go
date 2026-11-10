@@ -38,6 +38,16 @@ func MatchActivity(ctx context.Context, pool *pgxpool.Pool, activityID string) e
 	if err != nil {
 		return fmt.Errorf("geo: match regions: %w", err)
 	}
+	// PROTOTYPE (FOG_REWORK.md): the city tier's places.
+	_, err = pool.Exec(ctx, `
+		INSERT INTO activity_place (activity_id, place_id)
+		SELECT DISTINCT $1::uuid, p.place_id FROM admin_place_parts p
+		WHERE ST_Intersects(p.geom, (SELECT `+WrappedSQL("trajectory")+` FROM activities WHERE id = $1))
+		ON CONFLICT DO NOTHING
+	`, activityID)
+	if err != nil {
+		return fmt.Errorf("geo: match places: %w", err)
+	}
 	return nil
 }
 

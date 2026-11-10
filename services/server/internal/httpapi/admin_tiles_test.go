@@ -107,7 +107,7 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 		z, x, y := coords(c.layer)
 		var built bool
 		var live []byte
-		if err := d.pool.QueryRow(ctx, c.queries.live, z, x, y, me.id).Scan(&built, &live); err != nil {
+		if err := d.pool.QueryRow(ctx, c.queries.live, z, x, y, me.id, "en").Scan(&built, &live); err != nil {
 			t.Fatalf("%s live: %v", c.path, err)
 		}
 		if len(served) == 0 || !bytes.Equal(served, live) {

@@ -314,6 +314,26 @@ func main() {
 			"skipped_regions", stats.SkippedRegions, "whole_country_regions", stats.WholeCountryRegions,
 			"activity_countries", stats.ActivityCountries, "activity_regions", stats.ActivityRegions)
 
+	case "seed-admin-places":
+		// PROTOTYPE (FOG_REWORK.md): the city tier's places from scripts/places-extract.sh's file.
+		if len(os.Args) != 4 || os.Args[2] != "--file" {
+			fmt.Fprintln(os.Stderr, "usage: holdmytrack seed-admin-places --file <places.csv.gz>")
+			os.Exit(2)
+		}
+		src, err := os.Open(os.Args[3])
+		if err != nil {
+			log.Error("seed-admin-places", "err", err)
+			os.Exit(1)
+		}
+		start := time.Now()
+		stats, err := geo.SeedAdminPlaces(ctx, pool, log, src)
+		src.Close()
+		if err != nil {
+			log.Error("seed-admin-places", "err", err)
+			os.Exit(1)
+		}
+		log.Info("seed-admin-places: done", "places", stats.Places, "parts", stats.Parts, "matches", stats.Matches, "took", time.Since(start))
+
 	case "seed-timezones":
 		// The timezone polygons each activity's own zone is looked up in (IMPLEMENTATION.md
 		// §4.30), from timezone-boundary-builder's release zip (docs/DEPLOY.md §6), and a

@@ -15,3 +15,9 @@ Open defects in shipped functionality. A fixed entry is deleted, with any lastin
 Account deletion clears what the device keeps for the account (`AccountDeletion.forget`): unsynced recordings, hidden Sync rows, the Health Connect switch and what Load last read. It does not clear the last-used recording type (`RecordingTypes`) or an unfinished recording's journal (`LiveRecordingJournal`), so a new account signing in with the same email inherits them.
 
 - [ ] Clear both in `AccountDeletion.forget`.
+
+### The Great Lakes states clear their lake water in the Region tier
+
+Overture's land-clipped outlines of the US states on the Great Lakes run through the water to the Canadian border, and so does the United States' own outline (`IMPLEMENTATION.md` §4.2.4). Michigan's is 250,436 km² against about 147,000 km² of land and covers the middle of Lake Huron and Lake Superior; Ohio's covers Lake Erie off Cleveland, New York's Lake Erie and Lake Ontario, and Wisconsin's its half of Lake Michigan. One activity in Ohio clears the US half of Lake Erie at zoom 3–6, while the Canadian half stays veiled, since Ontario's outline stops at its shore. A boat trip on the US side of a lake counts as a visit to the state.
+
+- [ ] Clip the Great Lakes out of these outlines in `scripts/boundaries-extract.sql`, against a lakes outline with a licence the extract can use.

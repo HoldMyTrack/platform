@@ -87,7 +87,8 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 	}
 	tileVersion := fog.TileVersion(userID, mapVersion)
 
-	doc, err := mapstyle.Layers(flavor, tileVersion)
+	lang := requestLang(r)
+	doc, err := mapstyle.Layers(flavor, tileVersion, lang)
 	if errors.Is(err, mapstyle.ErrUnknownFlavor) {
 		writeAPIError(w, "unknown flavor; expected one of "+strings.Join(mapstyle.Flavors(), ", "), http.StatusNotFound)
 		return
@@ -98,7 +99,7 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	etag := mapstyle.LayersETag(flavor, tileVersion)
+	etag := mapstyle.LayersETag(flavor, tileVersion, lang)
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "private, no-cache")
 	if match := r.Header.Get("If-None-Match"); match != "" && strings.Contains(match, etag) {

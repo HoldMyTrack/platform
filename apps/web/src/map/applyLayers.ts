@@ -94,6 +94,7 @@ function addSources(map: MapLibreMap, group: LayerGroup, state: LayerState): voi
       minzoom: source.minzoom,
       maxzoom: source.maxzoom,
       ...(source.attribution && { attribution: source.attribution }),
+      ...(source.promoteId && { promoteId: source.promoteId }),
     });
   }
 }

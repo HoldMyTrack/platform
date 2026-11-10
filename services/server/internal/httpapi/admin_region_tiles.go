@@ -8,3 +8,7 @@ import "net/http"
 func (s *Server) handleRegionFogTile(w http.ResponseWriter, r *http.Request) {
 	s.serveAdminTile(w, r, regionLayer, regionFogQueries)
 }
+
+func (s *Server) handlePlaceFogTile(w http.ResponseWriter, r *http.Request) {
+	s.serveAdminTile(w, r, placeLayer, placeFogQueries)
+}

@@ -2500,6 +2500,35 @@ button.activities-panel__story-badge:hover {
   color: var(--fm-danger);
 }
 
+/* PROTOTYPE (FOG_REWORK.md): the name of the outline under the pointer in Fog (fogPlaces.ts). It
+   follows the pointer, so it takes no pointer events of its own and has no tip. */
+.fog-place-tip {
+  pointer-events: none;
+}
+
+.fog-place-tip .maplibregl-popup-content {
+  padding: var(--fm-space-6) var(--fm-space-8);
+  border-radius: var(--fm-radius-sm);
+  background: var(--fm-surface);
+  color: var(--fm-ink);
+  box-shadow: var(--fm-shadow-sm);
+  font-family: var(--fm-font-sans);
+}
+
+.fog-place-tip .maplibregl-popup-tip {
+  display: none;
+}
+
+.fog-place-tip__name {
+  font-size: var(--fm-text-sm);
+  font-weight: var(--fm-weight-semibold);
+}
+
+.fog-place-tip__detail {
+  font-size: var(--fm-text-xs);
+  color: var(--fm-ink-muted);
+}
+
 /* A spot's popup (SpotPopup.tsx, FR-15.3) — MapLibre's own popup, restyled as the app's cards. */
 .spot-popup .maplibregl-popup-content {
   padding: var(--fm-space-12) var(--fm-space-16);

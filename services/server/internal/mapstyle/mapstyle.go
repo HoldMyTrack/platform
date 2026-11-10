@@ -41,6 +41,11 @@ var layerTemplates embed.FS
 // apps/web/scripts/build-style.mjs.
 const tileVersionPlaceholder = "__HOLDMYTRACK_TILE_VERSION__"
 
+// langPlaceholder stands in the layers templates for the language a tile names its outlines in
+// (PROTOTYPE, FOG_REWORK.md "Borders and names"). Must match LANG_PLACEHOLDER in
+// apps/web/scripts/build-style.mjs.
+const langPlaceholder = "__HOLDMYTRACK_LANG__"
+
 // originPlaceholder is baked into the generated JSON in place of a real host, because one
 // built artifact has to serve every deployment — dev resolves basemap assets against the
 // app's own origin, a production deployment may resolve them against a CDN. Must match
@@ -149,19 +154,20 @@ func StyleBuild() string {
 
 // Layers returns the layers document for one flavor at an account's tileVersion
 // (fog.TileVersion), which contains nothing that needs escaping in a URL or in JSON.
-func Layers(flavor, tileVersion string) ([]byte, error) {
+func Layers(flavor, tileVersion, lang string) ([]byte, error) {
 	load()
 	b, ok := layers[flavor]
 	if !ok {
 		return nil, fmt.Errorf("%w: %q", ErrUnknownFlavor, flavor)
 	}
-	return bytes.ReplaceAll(b, []byte(tileVersionPlaceholder), []byte(tileVersion)), nil
+	b = bytes.ReplaceAll(b, []byte(tileVersionPlaceholder), []byte(tileVersion))
+	return bytes.ReplaceAll(b, []byte(langPlaceholder), []byte(lang)), nil
 }
 
 // LayersETag is the layers document's validator, from what it varies by, so a 304 needs no
 // document built.
-func LayersETag(flavor, tileVersion string) string {
-	sum := sha256.Sum256([]byte(StyleBuild() + "\x00" + flavor + "\x00" + tileVersion))
+func LayersETag(flavor, tileVersion, lang string) string {
+	sum := sha256.Sum256([]byte(StyleBuild() + "\x00" + flavor + "\x00" + tileVersion + "\x00" + lang))
 	return `"` + hex.EncodeToString(sum[:16]) + `"`
 }
 

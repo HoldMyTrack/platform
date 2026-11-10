@@ -4046,6 +4046,8 @@ export interface components {
                     minzoom: number;
                     maxzoom: number;
                     attribution?: string;
+                    /** @description The feature property a client takes as each feature's id, for state it keeps per feature such as a hover. */
+                    promoteId?: string;
                 } | {
                     /**
                      * @description Filled by the client.

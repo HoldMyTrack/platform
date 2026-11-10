@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
 // adminLayer is one of the two outline sets the Country and Region tiers draw
@@ -16,6 +18,9 @@ type adminLayer struct {
 	outlines string
 	matches  string
 	matchID  string
+	// kind is the SQL for an outline's kind as the tile names it, over the outlines table as o:
+	// what the hover tooltip calls it (PROTOTYPE, FOG_REWORK.md "Borders and names").
+	kind string
 	// cacheMaxZoom is the highest zoom whose tiles are kept in admin_tile_geoms: the source's
 	// maxzoom in the served layers document (apps/web/src/map/coverageGroup.ts). A tile past it, which no client
 	// asks for, is drawn live rather than letting anyone fill the table with tiles nothing
@@ -24,8 +29,10 @@ type adminLayer struct {
 }
 
 var (
-	countryLayer = adminLayer{name: "countries", cache: "countries", outlines: "admin_countries", matches: "activity_country", matchID: "country_id", cacheMaxZoom: 3}
-	regionLayer  = adminLayer{name: "regions", cache: "regions", outlines: "admin_regions", matches: "activity_region", matchID: "region_id", cacheMaxZoom: 7}
+	countryLayer = adminLayer{name: "countries", cache: "countries", outlines: "admin_countries", matches: "activity_country", matchID: "country_id", kind: "'country'", cacheMaxZoom: 3}
+	regionLayer  = adminLayer{name: "regions", cache: "regions", outlines: "admin_regions", matches: "activity_region", matchID: "region_id", kind: "'region'", cacheMaxZoom: 7}
+	// PROTOTYPE (FOG_REWORK.md): the city tier, cities and the county land outside them.
+	placeLayer = adminLayer{name: "places", cache: "places", outlines: "admin_places", matches: "activity_place", matchID: "place_id", kind: "o.kind", cacheMaxZoom: 10}
 )
 
 // seaID is the admin_id of a tile's sea: the tile's frame with every outline in it cut out.
@@ -67,8 +74,10 @@ func (l adminLayer) liveGeoms() string {
 		SELECT %d, geom FROM sea WHERE NOT ST_IsEmpty(geom)`, l.outlines, seaID)
 }
 
-// tileQuery is one account's tile ($1, $2, $3) of this layer, for account $4: the sea and the
-// outlines the account has no activity in (the locked side), which Fog veils.
+// tileQuery is one account's tile ($1, $2, $3) of this layer, for account $4, with names in
+// language $5: every outline, whether the account has been in it (`visited`), its kind and name,
+// and the sea. Fog veils the sea and the unvisited, and draws every outline's border
+// (PROTOTYPE, FOG_REWORK.md "Borders and names").
 //
 // visited starts from the account's own activities, so its cost is the account's history,
 // not every account's matches in the outlines the tile covers. It answers two columns: whether
@@ -93,11 +102,16 @@ func (l adminLayer) tileQuery(cached bool) string {
 		SELECT %[3]s,
 		       (SELECT ST_AsMVT(t, '%[4]s', 4096, 'geom')
 		        FROM (
-		            SELECT g.admin_id AS id, g.geom
+		            SELECT g.admin_id AS id,
+		                   v.id IS NOT NULL AS visited,
+		                   CASE WHEN g.admin_id = %[7]d THEN 'sea' ELSE %[6]s END AS kind,
+		                   COALESCE(o.names ->> $5::text, o.name) AS name,
+		                   g.geom
 		            FROM (%[5]s) g
-		            WHERE NOT EXISTS (SELECT 1 FROM visited v WHERE v.id = g.admin_id)
+		            LEFT JOIN visited v ON v.id = g.admin_id
+		            LEFT JOIN %[8]s o ON o.id = g.admin_id
 		            ORDER BY g.admin_id
-		        ) t)`, l.matchID, l.matches, built, l.name, geoms)
+		        ) t)`, l.matchID, l.matches, built, l.name, geoms, l.kind, seaID, l.outlines)
 }
 
 // adminTileQueries are the two handlers' queries, cached and live, built once.
@@ -106,6 +120,7 @@ type adminTileQueries struct{ cached, live string }
 var (
 	countryFogQueries = adminTileQueries{countryLayer.tileQuery(true), countryLayer.tileQuery(false)}
 	regionFogQueries  = adminTileQueries{regionLayer.tileQuery(true), regionLayer.tileQuery(false)}
+	placeFogQueries   = adminTileQueries{placeLayer.tileQuery(true), placeLayer.tileQuery(false)}
 )
 
 func (s *Server) handleCountryFogTile(w http.ResponseWriter, r *http.Request) {
@@ -133,10 +148,16 @@ func (s *Server) serveAdminTile(w http.ResponseWriter, r *http.Request, l adminL
 
 	var built bool
 	var tile []byte
-	err := s.pool.QueryRow(ctx, query, z, x, y, userIDFromContext(ctx)).Scan(&built, &tile)
+	// The names' language comes in the path (the layers document's `lang`), so a tile cached under
+	// the tile version changes with it; a path without one gets the request's.
+	lang := r.URL.Query().Get("lang")
+	if !i18n.IsSupported(lang) {
+		lang = requestLang(r)
+	}
+	err := s.pool.QueryRow(ctx, query, z, x, y, userIDFromContext(ctx), lang).Scan(&built, &tile)
 	if err == nil && !built {
 		if err = s.buildAdminTile(ctx, l, z, x, y); err == nil {
-			err = s.pool.QueryRow(ctx, query, z, x, y, userIDFromContext(ctx)).Scan(&built, &tile)
+			err = s.pool.QueryRow(ctx, query, z, x, y, userIDFromContext(ctx), lang).Scan(&built, &tile)
 		}
 	}
 	if err != nil {

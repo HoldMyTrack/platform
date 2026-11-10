@@ -539,6 +539,7 @@ LayerGroup:
               minzoom: { type: integer }
               maxzoom: { type: integer }
               attribution: { type: string }
+              promoteId: { type: string, description: "The feature property a client takes as each feature's id, for state it keeps per feature such as a hover." }
           - type: object
             required: [type]
             additionalProperties: false
