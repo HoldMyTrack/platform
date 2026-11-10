@@ -265,13 +265,13 @@
         }
       }
     },
-    "A Story shows its activities whatever the date range." : {
+    "A Story shows its own activities instead of what's on the map." : {
       "comment" : "Stories tab: the line under the title.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "История показывает свои занятия независимо от выбранных дат."
+            "value" : "История показывает свои занятия вместо тех, что на карте."
           }
         }
       }
