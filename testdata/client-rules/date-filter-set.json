@@ -1,6 +1,6 @@
 {
   "rule": "dateFilterSet",
-  "clients": ["web"],
+  "clients": ["web", "ios"],
   "description": "The web's Dates filter once one end is set or cleared (docs/SPEC.md FR-5.20): a date clamped into the bounds (dateFilterBounds), the other end moved to meet it when they cross; null or empty clears that end. fly is true only when a date was set and the filter changed.",
   "cases": [
     {

@@ -24,13 +24,21 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     private let locateButton = UIButton(type: .system)
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
     private let location = CLLocationManager()
-    let slider = DateRangeSlider()
     private let modesRow = UIStackView()
 
     var session = MapSession()
-    var days = ActivityDays(windowDays: DateRangeSlider.initialWindowDays)
-    /// One earlier page at a time: a second would prepend the same page twice.
-    var loadingEarlier = false
+
+    // The area list and Dates (MapViewController+Area).
+    /// The first and newest activities' days, Dates' bounds.
+    var history: (earliest: String?, latest: String?) = (nil, nil)
+    /// How many activities the last area held, more than listed past the cap; nil for a Story.
+    var areaTotal: Int?
+    /// Whether the map was too far out to list anything at the last load.
+    var zoomedOut = false
+    /// The app is moving the camera itself, which the list doesn't follow.
+    var appFlying = false
+    var settleTask: Task<Void, Never>?
+    weak var datesSheet: DatesViewController?
 
     // The sheet (MapViewController+Panel).
     let sheet = PanelSheetView()
@@ -82,12 +90,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     private var locating = false
 
     /// The first framing happens once per app session, not on every return to the map.
-    private static var framed: Set<String> = []
+    static var framed: Set<String> = []
 
     var format: PanelFormat { PanelFormat(account: account) }
 
     private var flavor: String { traitCollection.userInterfaceStyle == .dark ? "dark" : "light" }
-    private var accountKey: String { AccountKey.of(email: account.email, isDemo: account.isDemo) }
+    var accountKey: String { AccountKey.of(email: account.email, isDemo: account.isDemo) }
 
     init(flow: AppFlow, account: Account) {
         self.flow = flow
@@ -134,8 +142,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         checkCoverage()
         countSatelliteWait(onScreen: true)
         loadCaptures()
-        frameOnce()
-        reloadDays()
+        openOnce()
+        loadHistory()
         loadList()
         if panelTab != .stories { storiesPanel.refreshCount() }
     }
@@ -207,6 +215,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         renderInArea()
         placeSpotPopup()
         regroupPhotos()
+        cameraSettled()
     }
 
     func mapViewRegionIsChanging(_ mapView: MLNMapView) {
@@ -289,34 +298,30 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Framing
 
-    /// Once per app session, the camera fits the most recent activity with a track
-    /// (apps/android/docs/SPEC.md FR-2.3); an account with nothing on the map gets a pointer.
-    private func frameOnce() {
-        guard !Self.framed.contains(accountKey) else { return }
-        Task {
-            guard let rows = try? await flow.api.activities() else { return }
-            Self.framed.insert(accountKey)
-            guard let box = MapFraming.latest(rows) else {
-                if !account.isDemo {
-                    notice(.empty, String(localized: "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here."))
-                }
-                return
-            }
-            hideNotice(.empty)
-            fit(box, animated: false)
-        }
-    }
 
     /// The camera on box, clear of the controls over the map, at most maxZoom.
-    func fit(_ box: [Double], animated: Bool, maxZoom: Double = MapFraming.maxZoom) {
+    func fit(_ box: [Double], animated: Bool, maxZoom: Double = MapFraming.maxZoom, completion: (() -> Void)? = nil) {
         let bounds = MLNCoordinateBounds(sw: CLLocationCoordinate2D(latitude: box[1], longitude: box[0]),
                                          ne: CLLocationCoordinate2D(latitude: box[3], longitude: box[2]))
         let bottom = (sheet.isHidden ? 0 : sheet.restingHeight) + 48
         let padding = UIEdgeInsets(top: 120, left: 48, bottom: bottom, right: 48)
-        mapView.setVisibleCoordinateBounds(bounds, edgePadding: padding, animated: animated) { [weak self] in
-            MainActor.assumeIsolated {
-                guard let self, self.mapView.zoomLevel > maxZoom else { return }
-                self.mapView.setZoomLevel(maxZoom, animated: animated)
+        // One move, so the list knows when the app's flight is over (cameraSettled): a box that
+        // would zoom in past maxZoom is widened about its centre to what maxZoom shows instead.
+        let camera = mapView.cameraThatFitsCoordinateBounds(bounds, edgePadding: padding)
+        let zoom = MLNZoomLevelForAltitude(camera.altitude, camera.pitch, camera.centerCoordinate.latitude, mapView.bounds.size)
+        var target = bounds
+        if zoom > maxZoom {
+            let grow = pow(2, zoom - maxZoom)
+            let lat = (box[1] + box[3]) / 2, lon = (box[0] + box[2]) / 2
+            let halfLat = (box[3] - box[1]) / 2 * grow, halfLon = (box[2] - box[0]) / 2 * grow
+            target = MLNCoordinateBounds(sw: CLLocationCoordinate2D(latitude: lat - halfLat, longitude: lon - halfLon),
+                                         ne: CLLocationCoordinate2D(latitude: lat + halfLat, longitude: lon + halfLon))
+        }
+        appFlying = true
+        mapView.setVisibleCoordinateBounds(target, edgePadding: padding, animated: animated) { [weak self] in
+            DispatchQueue.main.async {
+                self?.appFlying = false
+                completion?()
             }
         }
     }
@@ -447,7 +452,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Notices
 
-    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending }
+    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped }
 
     func notice(_ kind: Notice, _ text: String) {
         if let label = notices.arrangedSubviews.first(where: { $0.tag == kind.rawValue + 1 }) as? UILabel {
@@ -524,7 +529,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             chrome.badge.topAnchor.constraint(equalTo: layersButton.topAnchor, constant: -6),
             chrome.badge.trailingAnchor.constraint(equalTo: layersButton.trailingAnchor, constant: 6),
         ])
-        bindSlider()
 
         // Over the map and under its controls: the photo markers, then the popups.
         photoViews.markers.frame = view.bounds

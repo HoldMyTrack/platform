@@ -2,18 +2,29 @@ import Foundation
 
 /// The Activities panel's calls: the list, its types, Pending, Edit, Delete, and Stories.
 extension APIClient {
-    /// `GET /v1/activities`: the range's activities (from and to, the account's days), or with
-    /// story that whole Story's whatever the range (root docs/SPEC.md FR-14.6), newest first, with
-    /// what the server says about their types.
-    public func activityList(from: String?, to: String?, story: String?) async throws -> (activities: [Activity], types: [String: ActivityTypeInfo]) {
-        var items: [URLQueryItem] = []
-        if let story {
-            items.append(URLQueryItem(name: "story", value: story))
-        } else if let from, let to {
-            items += [URLQueryItem(name: "from", value: from), URLQueryItem(name: "to", value: to)]
-        }
-        let json: ActivitiesJSON = try decode(try await send("GET", "v1/activities", query: items))
+    /// `GET /v1/activities?story=`: that whole Story's activities (root docs/SPEC.md FR-14.6),
+    /// newest first, with what the server says about their types.
+    public func storyActivities(_ story: String) async throws -> (activities: [Activity], types: [String: ActivityTypeInfo]) {
+        let json: ActivitiesJSON = try decode(try await send("GET", "v1/activities", query: [URLQueryItem(name: "story", value: story)]))
         return (json.activities.map(Activity.init), (json.types ?? [:]).mapValues(ActivityTypeInfo.init))
+    }
+
+    /// `GET /v1/activities/area`: the newest activities, at most limit, whose track crosses box
+    /// (`[west, south, east, north]`), all of them without one, under dates; total is how many the
+    /// box holds, more than listed when they were cut at the limit (root docs/SPEC.md FR-5.19).
+    public func areaList(box: [Double]?, dates: DateFilter, limit: Int? = nil) async throws -> (activities: [Activity], total: Int?, types: [String: ActivityTypeInfo]) {
+        var items = dates.query
+        if let box { items.append(URLQueryItem(name: "bbox", value: box.map { String($0) }.joined(separator: ","))) }
+        if let limit { items.append(URLQueryItem(name: "limit", value: String(limit))) }
+        let json: AreaActivitiesJSON = try decode(try await send("GET", "v1/activities/area", query: items))
+        return (json.activities.map(Activity.init), json.total, json.types.mapValues(ActivityTypeInfo.init))
+    }
+
+    /// `GET /v1/activities/{id}`: one activity in full, for the Edit window.
+    public func activity(_ id: String) async throws -> Activity {
+        let json: ActivitiesJSON = try decode(try await send("GET", "v1/activities/\(id)"))
+        guard let row = json.activities.first else { throw APIError.unreadable }
+        return Activity(row)
     }
 
     /// `GET /v1/activities/pending`: which of ids are still Pending, at most PendingDiff.batch.

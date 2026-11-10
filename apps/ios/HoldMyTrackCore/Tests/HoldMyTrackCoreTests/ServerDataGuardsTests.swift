@@ -1,13 +1,12 @@
+import Foundation
 import Testing
 
 @testable import HoldMyTrackCore
 
 /// Malformed data from the server is shown without its broken part, never a crash.
 struct ServerDataGuardsTests {
-    @Test func aMalformedDayGetsNoMonthLabel() {
-        let ticks = SliderRules.ticks(["2026-09-01", "not-a-date", "2026-10-01"])
-        #expect(ticks.count == 4)
-        #expect(ticks[0].month == 9)
+    @Test func aMalformedDayIsShownAsSent() {
+        #expect(DateFilter.short("not-a-date", today: "2026-11-09", locale: Locale(identifier: "en_US")) == "not-a-date")
     }
 
     @Test func aMoveThatIsntAPairLeavesThePoint() {

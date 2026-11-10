@@ -51,6 +51,16 @@ public struct Activity: Equatable, Sendable {
         )
     }
 
+    /// An area list's row: what the Edit window needs besides, it reads in full (APIClient.activity).
+    init(_ json: AreaActivityRowJSON) {
+        self.init(
+            id: json.id, startedAt: json.startedAt, timezone: json.timezone, activityType: json.activityType, name: json.name,
+            distanceMeters: json.distanceMeters, movingSeconds: json.movingSeconds,
+            bbox: json.bbox?.count == 4 ? json.bbox : nil, pending: json.pending, isPrivate: json.private,
+            stories: json.stories.map { StoryRef(id: $0.id, name: $0.name) }
+        )
+    }
+
     /// What the panel's rules read of it.
     public var summary: ActivitySummary {
         ActivitySummary(id: id, activityType: activityType, distanceMeters: distanceMeters, isPrivate: isPrivate, isPending: pending)

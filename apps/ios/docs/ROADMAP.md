@@ -163,7 +163,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 - [ ] **7a.4 Tour**
   - The first-run tour and its three cards (`apps/android/docs/SPEC.md` FR-2.12), from the `tour-*` rules: which steps show, the camera each one moves to, and what restores after.
   - Done when: it runs as Android's on a new account and the demo, and `ios` is in every `testdata/client-rules/tour-*.json`'s `clients` with its cases passing.
-- [ ] **7a.5 The area list, as on the web**
+- [x] **7a.5 The area list, as on the web**
   - The web's list of the visible area under a Dates filter in place of the date slider (root `docs/SPEC.md` FR-5.19, FR-5.20, FR-4.5), on the same endpoints and rules as Android's item of the same name (`apps/android/docs/ROADMAP.md`).
   - Done when: `ios` is in the `clients` of `opening-view`, `area-load`, `date-filter-*` and `web-session.json` with their cases passing.
 

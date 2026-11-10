@@ -193,13 +193,6 @@ struct APIClientTests {
         #expect(basemap.value(forHTTPHeaderField: "Origin") == "http://localhost:8081")
     }
 
-    @Test func activitiesAreReadForFraming() async throws {
-        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "activity_type": "walking",
-                                  "bbox": [-81.5, 41.2, -81.4, 41.3], "pending": false, "edited": false, "private": false, "stories": []]
-        StubProtocol.answer = { _ in .init(body: self.json(["activities": [row]])) }
-        let rows = try await client().activities()
-        #expect(rows == [ActivityRow(id: "a1", startedAt: Date(timeIntervalSince1970: 1_793_730_993), bbox: [-81.5, 41.2, -81.4, 41.3], pending: false)])
-    }
 
     @Test func trackMetricsAreReadWithTheirBands() async throws {
         let body: [String: Any] = ["activity_id": "a1",
@@ -322,6 +315,35 @@ struct APIClientTests {
         #expect(sent?["allow_hidden"] == nil)
         StubProtocol.answer = { _ in .init(status: 422, body: self.json(["error": "split_hides_part", "message": "The second part is private."])) }
         #expect(try await client().saveTrackEdit("a1", edit: nil, splitAt: 7, allowHidden: false) == .splitHidesPart("The second part is private."))
+    }
+
+    @Test func theAreaListSendsTheViewAndDatesAndReadsTheTotal() async throws {
+        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "activity_type": "walking", "name": NSNull(),
+                                  "distance_meters": 1200.5, "moving_seconds": 600, "bbox": [-81.5, 41.2, -81.4, 41.3], "pending": false, "private": false, "stories": []]
+        StubProtocol.answer = { request in
+            let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            #expect(request.url?.path == "/v1/activities/area")
+            #expect(items.first { $0.name == "bbox" }?.value == "-81.6,41.1,-81.4,41.3")
+            #expect(items.first { $0.name == "from" }?.value == "2026-06-03")
+            #expect(items.first { $0.name == "to" } == nil)
+            return .init(body: self.json(["activities": [row], "types": [:], "total": 1500]))
+        }
+        let read = try await client().areaList(box: [-81.6, 41.1, -81.4, 41.3], dates: DateFilter(after: "2026-06-03"))
+        #expect(read.activities.map(\.id) == ["a1"])
+        #expect(read.activities.first?.description == nil)
+        #expect(read.total == 1500)
+    }
+
+    @Test func oneActivityIsReadInFull() async throws {
+        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "activity_type": "walking", "name": "Walk",
+                                  "distance_meters": 1200.5, "moving_seconds": 600, "duration_seconds": 700, "description": "Along the river",
+                                  "bbox": [-81.5, 41.2, -81.4, 41.3], "pending": false, "edited": false, "private": false, "split": NSNull(),
+                                  "track_edit": NSNull(), "photos": NSNull(), "stories": []]
+        StubProtocol.answer = { request in
+            #expect(request.url?.path == "/v1/activities/a1")
+            return .init(body: self.json(["activities": [row], "types": [:]]))
+        }
+        #expect(try await client().activity("a1").description == "Along the river")
     }
 
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {

@@ -1,6 +1,6 @@
 {
   "rule": "defaultRange",
-  "clients": ["android", "ios"],
+  "clients": ["android"],
   "description": "The default date range: the five most recent activity-days in the slider's window, through today (the account's, FR-1.7), or through the latest of them when it is later, an activity recorded in a zone ahead; with none, from the earliest activity, else today (docs/SPEC.md FR-6.1).",
   "cases": [
     {

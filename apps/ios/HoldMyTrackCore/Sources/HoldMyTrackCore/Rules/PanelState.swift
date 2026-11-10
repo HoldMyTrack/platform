@@ -63,9 +63,9 @@ public struct PanelState: Equatable, Sendable {
         if let focused, !ids.contains(focused) { self.focused = nil }
     }
 
-    /// A new date range changes which rows exist, so everything built against the old one goes
-    /// (docs/SPEC.md FR-6.6); a stale DISTANCE band in particular could exclude everything.
-    public mutating func resetForNewRange() {
+    /// A Story opened or closed changes which rows exist, so everything built against the old
+    /// ones goes; a stale Distance band in particular could exclude everything.
+    public mutating func startOver() {
         checked = []
         focused = nil
         hidden = []
@@ -124,70 +124,60 @@ public struct PanelState: Equatable, Sendable {
     }
 }
 
-/// Which activities the map's list and tracks show, a date range or a Story, and the rules
-/// between that scope, the panel's selection and the camera: a picked range or a Story resets
-/// the selection, the default never replaces a picked range, and only a picked range or an
-/// opened Story moves the camera onto the next list (consumeFly).
+/// Which activities the map's list and tracks show, the visible area under Dates or a Story, and
+/// the rules between that scope, the panel's selection and the camera (root docs/SPEC.md FR-5.19,
+/// FR-5.20, FR-14.6): Dates and the area keep the selection, which the next list prunes
+/// (PanelState.setActivities); setting Dates or opening a Story moves the camera once (consumeFly).
 public struct MapSession: Equatable, Sendable {
     public var panel = PanelState()
-    /// The date range; nil until its default is known.
-    public private(set) var range: DateRange?
-    /// Whether the user picked range; until then the default may replace it.
-    public private(set) var userPicked = false
-    /// The open Story (docs/SPEC.md FR-14.6): the list and tracks are its activities, range kept
-    /// for when it closes.
+    /// The Dates filter; all time until set.
+    public private(set) var dates = DateFilter.allTime
+    /// The map view the list was last asked about, `[west, south, east, north]`; nil until the
+    /// opening view settles.
+    public private(set) var area: [Double]?
+    /// The open Story: the list and tracks are its activities, dates and area kept for when it closes.
     public private(set) var storyID: String?
-    /// The next list loaded moves the camera onto what it draws.
+    /// The camera moves onto what's shown next: a Story's list, or what Dates match.
     public private(set) var flyRequest = false
 
     public init() {}
 
-    /// The slider picked next: a new set of rows, so the selection resets (docs/SPEC.md FR-6.6).
-    public mutating func pickRange(_ next: DateRange) {
-        range = next
-        userPicked = true
-        flyRequest = true
-        panel.resetForNewRange()
+    /// Dates changed (DateFilter.setting); fly moves the camera onto the matches once, never with
+    /// a Story open.
+    public mutating func setDates(_ next: DateFilter, fly: Bool) {
+        dates = next
+        flyRequest = fly && storyID == nil
     }
 
-    /// The default range re-derived: taken, and true, unless the user picked one, it's the same,
-    /// or the Edit window is open, since sliding past the edited activity would empty its row.
+    /// The list is asked about this view; false for one it was already asked about.
     @discardableResult
-    public mutating func offerDefault(_ next: DateRange, editOpen: Bool = false) -> Bool {
-        if userPicked || editOpen || next == range { return false }
-        range = next
+    public mutating func areaLoaded(_ box: [Double]) -> Bool {
+        guard !AreaLoad.same(area, box) else { return false }
+        area = box
         return true
     }
 
-    /// View on map for an activity outside the range: its own day, picked, without the range's
-    /// flight, since the selection flies to the activity.
+    /// View on map for an activity not listed: Dates on its own day, and the camera onto it.
     public mutating func viewDay(_ day: String) {
-        pickRange(DateRange(from: day, to: day))
-        flyRequest = false
+        setDates(DateFilter(after: day, before: day), fly: true)
     }
 
     public mutating func enterStory(_ id: String) {
         storyID = id
         flyRequest = true
-        panel.resetForNewRange()
+        panel.startOver()
     }
 
-    /// Back to the range; the camera stays.
+    /// Back to the area and Dates; the camera stays.
     public mutating func exitStory() {
         storyID = nil
         flyRequest = false
-        panel.resetForNewRange()
+        panel.startOver()
     }
 
     /// Whether a flight was requested, which this answer uses up.
     public mutating func consumeFly() -> Bool {
         defer { flyRequest = false }
         return flyRequest
-    }
-
-    /// A range carried through a relaunch.
-    public mutating func restore(_ saved: DateRange, picked: Bool) {
-        range = saved
-        userPicked = picked
     }
 }

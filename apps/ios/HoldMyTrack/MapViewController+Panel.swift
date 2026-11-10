@@ -22,8 +22,7 @@ extension MapViewController {
             }, added: { [weak self] story, created in self?.addedToStory(story, created: created) })
         }
 
-        slider.accessibilityIdentifier = "dateRange"
-        for v in [slider, activitiesPanel.card, activitiesPanel.summary, storiesPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
+        for v in [activitiesPanel.card, activitiesPanel.summary, storiesPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
         for v in [activitiesPanel.content, storiesPanel.content] {
             v.translatesAutoresizingMaskIntoConstraints = false
             sheet.content.addSubview(v)
@@ -73,7 +72,7 @@ extension MapViewController {
                 session.exitStory()
                 storiesPanel.setOpen(nil)
                 updateTracksQuery()
-                loadList()
+                followArea(always: true)
             }
             sheet.setDetent(.collapsed, animated: false)
         }
@@ -91,37 +90,55 @@ extension MapViewController {
     }
 
     /// Sync history's View on map (apps/android/docs/SPEC.md FR-4.1): the activity focused once
-    /// the list is in; a day outside the range becomes the range, as if picked.
+    /// the list has it; one not listed sets Dates to its day, which flies the camera there.
     func viewOnMap(activity: String, day: String) {
         loadViewIfNeeded()
         // The activity's track is Normal mode's.
         if pickedMode != .normal { pickMode(.normal) }
         focusWhenListed = activity
-        if session.range?.contains(day) == true && session.storyID == nil {
+        if session.storyID == nil && activities.contains(where: { $0.id == activity }) {
             loadList()
         } else {
+            if session.storyID != nil { show(.activities) }
             session.viewDay(day)
-            panelChanged()
-            showRange()
+            datesChanged()
         }
     }
 
     // MARK: The list
 
-    /// The range's or the open Story's activities, read for each and on every return to the map.
+    /// The open Story's activities, else the area's under Dates, read for each and on every
+    /// return to the map. Too far out the list is empty, asking nothing.
     func loadList() {
-        guard isViewLoaded, session.storyID != nil || session.range != nil else { return }
+        guard isViewLoaded else { return }
         listTask?.cancel()
-        let story = session.storyID, range = session.range
+        let story = session.storyID, dates = session.dates, area = session.area
+        if story == nil {
+            // Not until the opening view has asked about an area.
+            guard area != nil else { return }
+            zoomedOut = listZoomedOut
+            if zoomedOut {
+                areaTotal = nil
+                listed([])
+                return
+            }
+        }
         listLoading = true
         listError = nil
         renderPanel()
         listTask = Task {
             do {
-                let read = try await flow.api.activityList(from: range?.from, to: range?.to, story: story)
+                let read: (activities: [Activity], total: Int?, types: [String: ActivityTypeInfo])
+                if let story {
+                    let r = try await flow.api.storyActivities(story)
+                    read = (r.activities, nil, r.types)
+                } else {
+                    read = try await flow.api.areaList(box: area, dates: dates)
+                }
                 guard !Task.isCancelled else { return }
                 ActivityTypes.shared.merge(read.types)
                 ActivityTypes.shared.refresh(read.activities.map(\.activityType), api: flow.api)
+                areaTotal = read.total
                 listed(read.activities)
             } catch is CancellationError {
             } catch {
@@ -143,10 +160,11 @@ extension MapViewController {
         listLoading = false
         listError = nil
         session.panel.setActivities(next.map(\.summary))
+        renderCap()
         if change.finished {
             tracksVersion += 1
             updateTracksQuery()
-            reloadDays()
+            loadHistory()
         }
         if change.started || !change.now.isEmpty {
             notice(.pending, String(localized: "Some activities are being processed. They'll show on the map when they're done."))
@@ -208,7 +226,9 @@ extension MapViewController {
     func renderPanel() {
         guard activitiesPanel != nil else { return }
         let format = format
-        let note: (text: String, failed: Bool)? = listLoading && activities.isEmpty ? (String(localized: "Loading…"), false) : listError.map { ($0, true) }
+        let zoomNote = zoomedOut && session.storyID == nil ? String(localized: "Zoom in to see your activities.") : nil
+        let note: (text: String, failed: Bool)? = zoomNote.map { ($0, false) }
+            ?? (listLoading && activities.isEmpty ? (String(localized: "Loading…"), false) : listError.map { ($0, true) })
         activitiesPanel.render(session.panel, activities: activities, format: format, note: note)
         if panelTab == .stories {
             let panel = session.panel
@@ -220,7 +240,6 @@ extension MapViewController {
         }
         let activitiesTab = panelTab == .activities
         let card = activitiesTab && activitiesPanel.showsCard
-        slider.isHidden = !activitiesTab || card || !days.ready || days.days.isEmpty
         activitiesPanel.summary.isHidden = !activitiesTab || card
         activitiesPanel.card.isHidden = !card
         storiesPanel.head.isHidden = activitiesTab
@@ -253,6 +272,7 @@ extension MapViewController {
         case .allTypes: session.panel.includeAllTypes()
         case .distance(let band): session.panel.distanceFilter = band
         case .resetFilters: session.panel.resetFilters()
+        case .dates: showDates()
         case .openStory(let id):
             onWantsStories?(id)
             return
@@ -269,7 +289,7 @@ extension MapViewController {
             session.exitStory()
             storiesPanel.setOpen(nil)
             updateTracksQuery()
-            loadList()
+            followArea(always: true)
         case .select(let id):
             session.panel.focus(id)
             fly([id])
@@ -288,7 +308,7 @@ extension MapViewController {
         case .copyArrived:
             tracksVersion += 1
             updateTracksQuery()
-            reloadDays()
+            loadHistory()
             loadList()
         case .waiting(let count):
             onWaiting?(count)
@@ -356,10 +376,29 @@ extension MapViewController {
         return activities.filter { ids.contains($0.id) }
     }
 
+    /// The Edit window over the toolbar's target, each activity read in full first: the area's
+    /// rows leave out the description, the track's edit and the photos (root docs/SPEC.md FR-5.19).
     private func edit() {
-        let group = targets
-        guard !group.isEmpty, !account.isDemo else { return }
+        let ids = targets.map(\.id)
+        guard !ids.isEmpty, !account.isDemo, !editOpen else { return }
         editOpen = true
+        Task {
+            var group: [Activity] = []
+            for id in ids {
+                do {
+                    group.append(try await flow.api.activity(id))
+                } catch {
+                    editOpen = false
+                    let reason = (error as? APIError)?.serverMessage ?? String(localized: "The server couldn't be reached.")
+                    StoryDialogs.inform(over: view, String(localized: "The activity couldn't be opened: \(reason)"))
+                    return
+                }
+            }
+            openEditor(group)
+        }
+    }
+
+    private func openEditor(_ group: [Activity]) {
         photos.editIDs = group.map(\.id)
         refreshPhotos(force: false)
         let facets = ActivityFacets.typeFacets(session.panel.activities, distanceFilter: nil)
@@ -420,7 +459,7 @@ extension MapViewController {
     private func deleted(_ ids: [String]) {
         tracksVersion += 1
         updateTracksQuery()
-        reloadDays()
+        loadHistory()
         loadList()
         if panelTab == .stories { storiesPanel.reloadOpen() }
     }

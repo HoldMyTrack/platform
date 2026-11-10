@@ -312,22 +312,7 @@ struct MapStyleTests {
 
 /// Where the map first frames an account (apps/android/docs/SPEC.md FR-2.3).
 struct MapFramingTests {
-    private func row(_ id: String, _ t: TimeInterval?, bbox: [Double]? = [0, 0, 1, 1], pending: Bool = false) -> ActivityRow {
-        ActivityRow(id: id, startedAt: t.map { Date(timeIntervalSince1970: $0) }, bbox: bbox.map { $0.map { $0 + Double(id.count) } }, pending: pending)
-    }
 
-    @Test func theMostRecentActivityWithATrackIsFramed() {
-        let rows = [row("a", 100), row("bb", 300), row("ccc", 200)]
-        #expect(MapFraming.latest(rows) == [2, 2, 3, 3])
-    }
 
-    @Test func pendingAndTracklessActivitiesAreSkipped() {
-        let rows = [row("a", 100), row("bb", 300, pending: true), row("ccc", 400, bbox: nil)]
-        #expect(MapFraming.latest(rows) == [1, 1, 2, 2])
-    }
 
-    @Test func anAccountWithNothingOnTheMapHasNoFrame() {
-        #expect(MapFraming.latest([]) == nil)
-        #expect(MapFraming.latest([row("a", 100, bbox: nil)]) == nil)
-    }
 }

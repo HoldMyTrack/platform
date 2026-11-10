@@ -1,6 +1,6 @@
 {
   "rule": "session",
-  "clients": ["android", "ios"],
+  "clients": ["android"],
   "description": "What the map's scope events do to the range, the open Story, the selection and the camera's next flight. State and expected: range, userPicked, storyId, checked, hidden, excludedTypes, flyRequest.",
   "cases": [
     {

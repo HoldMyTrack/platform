@@ -1,6 +1,6 @@
 {
   "rule": "dateFilterLabel",
-  "clients": ["web"],
+  "clients": ["web", "ios"],
   "description": "What the web's Dates button says, before wording (docs/SPEC.md FR-5.20): all time with no end set, else both ends or the one set.",
   "cases": [
     {

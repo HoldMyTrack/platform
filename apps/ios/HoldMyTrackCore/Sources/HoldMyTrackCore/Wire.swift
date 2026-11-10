@@ -180,6 +180,36 @@ struct ActivitiesJSON: Codable, Sendable, Equatable {
     let types: [String: ActivityTypeJSON]?
 }
 
+/// An activity as the area list's row shows it; `GET /v1/activities/{id}` has the rest.
+struct AreaActivityRowJSON: Codable, Sendable, Equatable {
+    let id: String
+    let startedAt: String
+    let timezone: String
+    let activityType: String
+    let name: String?
+    let distanceMeters: Double?
+    let movingSeconds: Int?
+    let bbox: [Double]?
+    let pending: Bool
+    let `private`: Bool
+    let stories: [StoryRefJSON]
+
+    enum CodingKeys: String, CodingKey {
+        case id, timezone, name, bbox, pending, `private`, stories
+        case startedAt = "started_at"
+        case activityType = "activity_type"
+        case distanceMeters = "distance_meters"
+        case movingSeconds = "moving_seconds"
+    }
+}
+
+/// `GET /v1/activities/area`.
+struct AreaActivitiesJSON: Codable, Sendable, Equatable {
+    let activities: [AreaActivityRowJSON]
+    let types: [String: ActivityTypeJSON]
+    let total: Int?
+}
+
 /// `GET /v1/activities/pending`.
 struct PendingJSON: Codable, Sendable, Equatable {
     let pending: [String]
