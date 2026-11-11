@@ -1,7 +1,8 @@
 -- The outlines of every Fog level `seed-admin-boundaries` loads (docs/IMPLEMENTATION.md §4.2.4):
 -- countries, regions, counties and cities, cut from one pinned Overture Maps release's divisions
 -- theme. Run by scripts/boundaries-extract.sh, which sets getvariable('divisions') (the theme, on
--- S3 or a local copy), getvariable('lakes') (scripts/boundaries-lakes.sql's file),
+-- S3 or a local copy), getvariable('lakes') and getvariable('water') (scripts/boundaries-lakes.sql's
+-- and scripts/boundaries-water.sql's files),
 -- getvariable('places') (the countries whose counties and cities to take, comma-separated, or
 -- empty for all) and getvariable('out').
 --
@@ -122,10 +123,35 @@ WITH inside AS (
 )
 SELECT 'rest:' || r.key AS key, r.country, r.key AS region_key,
        CASE WHEN r.key LIKE 'country:%' THEN 'country' ELSE 'region' END AS kind,
-       r.local_type, r.name, r.names, rest(r.geometry, i.geometry) AS geometry
+       r.local_type, r.name, r.names, rest(r.geometry, i.geometry) AS geometry,
+       EXISTS (SELECT 1 FROM county k WHERE k.region_key = r.key) AS partial
 FROM region r LEFT JOIN inside i USING (key)
 WHERE r.country IN (SELECT DISTINCT country FROM county)
    OR getvariable('places') = '';
+
+-- Where a region has counties, water outside all of them is the region's only as its outline
+-- runs to the border in it, as Michigan's runs through the St Marys River where Chippewa County
+-- stops at the shore: it is water, so it goes, and a track on it counts on neither level below.
+-- A region without counties stands in whole, its rivers its own, as a county's are. Each piece
+-- loses its water only where water is a tenth of it or more: GEOS cut Nevada's 76 m-wide,
+-- 170 km-long strip, which a river only touches, to a tenth of its area.
+CREATE TABLE county_rest_piece AS
+SELECT key, UNNEST(ST_Dump(ST_CollectionExtract(ST_MakeValid(geometry), 3)), recursive := true)
+FROM county_rest WHERE partial;
+
+CREATE TABLE county_rest_dry AS
+WITH wet AS (
+    SELECT p.key, p.path, any_value(p.geom) AS geom, ST_Union_Agg(w.geometry) AS water
+    FROM county_rest_piece p JOIN read_parquet(getvariable('water')) w ON ST_Intersects(p.geom, w.geometry)
+    GROUP BY p.key, p.path
+)
+SELECT p.key, ST_Union_Agg(
+           CASE WHEN w.water IS NOT NULL AND ST_Area(ST_Intersection(p.geom, w.water)) >= 0.1 * ST_Area(p.geom)
+                THEN ST_Difference(p.geom, w.water) ELSE p.geom END) AS geometry
+FROM county_rest_piece p LEFT JOIN wet w USING (key, path)
+GROUP BY p.key;
+
+UPDATE county_rest SET geometry = d.geometry FROM county_rest_dry d WHERE county_rest.key = d.key;
 
 -- The City level's stand-ins: each County-level place's land outside its cities.
 CREATE TABLE city_rest AS
