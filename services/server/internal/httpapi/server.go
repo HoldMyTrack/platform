@@ -228,7 +228,8 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	// §4.2.4's Country/Region zoom tiers: live MVT, not precomputed (admin_country_tiles.go).
 	s.tile("/countries/{z}/{x}/{y}", s.handleCountryFogTile)
 	s.tile("/regions/{z}/{x}/{y}", s.handleRegionFogTile)
-	s.tile("/places/{z}/{x}/{y}", s.handlePlaceFogTile)
+	s.tile("/counties/{z}/{x}/{y}", s.handleCountyFogTile)
+	s.tile("/cities/{z}/{x}/{y}", s.handleCityFogTile)
 	// The paths before the sea was snapped to the tile grid, for a page loaded before this
 	// release. A browser keeps their tiles under its old tile version; the new paths start a
 	// cache of their own.

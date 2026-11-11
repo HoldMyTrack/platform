@@ -42,10 +42,10 @@ func testTx(t *testing.T) pgx.Tx {
 	return tx
 }
 
-// A load replaces the outlines, gives a country with no regions one region that is all of it,
-// leaves out a region whose country isn't there, re-matches activities against the full-detail
-// pieces and moves the tile version; loading the same extract again does nothing, and one with
-// too few outlines is refused.
+// A load replaces the outlines of every level, gives a country with no regions one region that is
+// all of it, leaves out a region whose country isn't there, links each county and city to the
+// places above, re-matches activities against the full-detail pieces and moves the tile version;
+// loading the same extract again does nothing, and one with too few outlines is refused.
 func TestLoadBoundaries(t *testing.T) {
 	tx := testTx(t)
 	ctx := context.Background()
@@ -61,7 +61,9 @@ func TestLoadBoundaries(t *testing.T) {
 	}
 	// Two countries side by side in the South Atlantic, where no real outline is; AA has a
 	// region over its west half, BB none, and ZZ-1's country isn't in the file. CC is smaller
-	// than the tiles' simplifying can keep, so it keeps its full outline.
+	// than the tiles' simplifying can keep, so it keeps its full outline. West Aland is one
+	// county, Westshire, with one town; on the City level the rest of Westshire stands in, and
+	// on the County level Bland stands in for itself.
 	file := func(rows ...string) *bytes.Buffer {
 		var buf bytes.Buffer
 		gz := gzip.NewWriter(&buf)
@@ -71,11 +73,15 @@ func TestLoadBoundaries(t *testing.T) {
 	}
 	extract := func() *bytes.Buffer {
 		return file(
-			"country,AA,AA,,Aland,"+box(-41, -61, -40, -60),
-			"country,BB,BB,,\"Bland, the\","+box(-40, -61, -39, -60),
-			"country,CC,CC,,Cland,"+box(-38, -61, -37.999, -60.999),
-			"region,div-aa-1,AA,AA-1,West Aland,"+box(-41, -61, -40.5, -60),
-			"region,div-zz-1,ZZ,ZZ-1,Nowhere,"+box(-30, -61, -29, -60),
+			"country,country,AA,AA,,,,,Aland,{},"+box(-41, -61, -40, -60),
+			"country,country,BB,BB,,,,,\"Bland, the\",{},"+box(-40, -61, -39, -60),
+			"country,country,CC,CC,,,,,Cland,{},"+box(-38, -61, -37.999, -60.999),
+			"region,region,div-aa-1,AA,,,AA-1,state,West Aland,\"{\"\"ru\"\": \"\"Западный Аланд\"\"}\","+box(-41, -61, -40.5, -60),
+			"region,region,div-zz-1,ZZ,,,ZZ-1,,Nowhere,{},"+box(-30, -61, -29, -60),
+			"county,county,div-aa-c1,AA,div-aa-1,,,county,Westshire,{},"+box(-41, -61, -40.5, -60),
+			"county,country,rest:country:BB,BB,country:BB,,,,\"Bland, the\",{},"+box(-40, -61, -39, -60),
+			"city,city,div-aa-t1,AA,div-aa-1,div-aa-c1,,town,Westtown,{},"+box(-40.9, -60.6, -40.7, -60.4),
+			"city,county,rest:div-aa-c1,AA,div-aa-1,div-aa-c1,,county,Westshire,{},"+box(-41, -61, -40.5, -60),
 		)
 	}
 
@@ -114,11 +120,12 @@ func TestLoadBoundaries(t *testing.T) {
 	}
 
 	before := version()
-	stats, err := loadBoundaries(ctx, tx, log, extract(), "test-1.csv.gz", false, 3, 1)
+	stats, err := loadBoundaries(ctx, tx, log, extract(), "test-1.csv.gz", false, minimums{3, 1, 1, 1})
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
-	if stats.Countries != 3 || stats.Regions != 1 || stats.SkippedRegions != 1 || stats.WholeCountryRegions != 2 {
+	if stats.Countries != 3 || stats.Regions != 1 || stats.SkippedRegions != 1 || stats.WholeCountryRegions != 2 ||
+		stats.Counties != 2 || stats.Cities != 2 {
 		t.Errorf("stats %+v", stats)
 	}
 	if got := matched(`SELECT string_agg(c.code || ' ' || c.name, ', ' ORDER BY c.code)
@@ -128,6 +135,19 @@ func TestLoadBoundaries(t *testing.T) {
 	if got := matched(`SELECT string_agg(r.overture_id || ' ' || COALESCE(r.code, '-'), ', ' ORDER BY r.overture_id)
 		FROM activity_region ar JOIN admin_regions r ON r.id = ar.region_id WHERE ar.activity_id = $1`); got != "country:BB -, div-aa-1 AA-1" {
 		t.Errorf("regions %q", got)
+	}
+	if got := matched(`SELECT string_agg(k.overture_id || ' ' || k.kind || ' ' || COALESCE(r.overture_id, '-'), ', ' ORDER BY k.overture_id)
+		FROM activity_county ak JOIN admin_counties k ON k.id = ak.county_id
+		LEFT JOIN admin_regions r ON r.id = k.region_id WHERE ak.activity_id = $1`); got != "div-aa-c1 county div-aa-1, rest:country:BB country country:BB" {
+		t.Errorf("counties %q", got)
+	}
+	if got := matched(`SELECT string_agg(c.overture_id || ' ' || c.kind || ' ' || k.overture_id || ' ' || c.local_type, ', ' ORDER BY c.overture_id)
+		FROM activity_city ac JOIN admin_cities c ON c.id = ac.city_id
+		JOIN admin_counties k ON k.id = c.county_id WHERE ac.activity_id = $1`); got != "div-aa-t1 city div-aa-c1 town, rest:div-aa-c1 county div-aa-c1 county" {
+		t.Errorf("cities %q", got)
+	}
+	if got := matched(`SELECT names ->> 'ru' || ' ' || local_type FROM admin_regions WHERE overture_id = 'div-aa-1' AND $1::uuid IS NOT NULL`); got != "Западный Аланд state" {
+		t.Errorf("West Aland's Russian name and type %q", got)
 	}
 	var tiny int
 	if err := tx.QueryRow(ctx, `SELECT ST_NPoints(c.geom) + ST_NPoints(r.geom) FROM admin_countries c
@@ -142,13 +162,16 @@ func TestLoadBoundaries(t *testing.T) {
 		t.Errorf("tiles drawn from the old outlines: %d rows kept, %v", kept, err)
 	}
 
-	stats, err = loadBoundaries(ctx, tx, log, extract(), "test-1.csv.gz", false, 3, 1)
+	stats, err = loadBoundaries(ctx, tx, log, extract(), "test-1.csv.gz", false, minimums{3, 1, 1, 1})
 	if err != nil || !stats.Unchanged || version() != before+1 {
 		t.Errorf("the same extract again: %+v, %v, version %d", stats, err, version())
 	}
 
-	if _, err := loadBoundaries(ctx, tx, log, extract(), "test-2.csv.gz", false, 4, 1); err == nil || !strings.Contains(err.Error(), "cut short") {
+	if _, err := loadBoundaries(ctx, tx, log, extract(), "test-2.csv.gz", false, minimums{4, 1, 1, 1}); err == nil || !strings.Contains(err.Error(), "cut short") {
 		t.Errorf("too few countries: %v", err)
+	}
+	if _, err := loadBoundaries(ctx, tx, log, extract(), "test-2.csv.gz", false, minimums{3, 1, 1, 2}); err == nil || !strings.Contains(err.Error(), "cut short") {
+		t.Errorf("too few cities: %v", err)
 	}
 }
 
@@ -170,9 +193,9 @@ func TestMatchAcrossTheAntimeridian(t *testing.T) {
 	var buf bytes.Buffer
 	gz := gzip.NewWriter(&buf)
 	gz.Write([]byte(strings.Join([]string{
-		"country,EE,EE,,East of it," + box(179, -61, 180, -60),
-		"country,WW,WW,,West of it," + box(-180, -61, -179, -60),
-		"country,FF,FF,,Far away," + box(0, -61, 1, -60),
+		"country,country,EE,EE,,,,,East of it,{}," + box(179, -61, 180, -60),
+		"country,country,WW,WW,,,,,West of it,{}," + box(-180, -61, -179, -60),
+		"country,country,FF,FF,,,,,Far away,{}," + box(0, -61, 1, -60),
 	}, "\n") + "\n"))
 	gz.Close()
 
@@ -187,7 +210,7 @@ func TestMatchAcrossTheAntimeridian(t *testing.T) {
 		RETURNING id`, userID).Scan(&activityID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := loadBoundaries(ctx, tx, log, &buf, "am.csv.gz", true, 3, 0); err != nil {
+	if _, err := loadBoundaries(ctx, tx, log, &buf, "am.csv.gz", true, minimums{3, 0, 0, 0}); err != nil {
 		t.Fatalf("load: %v", err)
 	}
 	var got string

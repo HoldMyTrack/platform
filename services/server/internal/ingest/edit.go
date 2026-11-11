@@ -402,15 +402,18 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	); err != nil {
 		return fmt.Errorf("update activity: %w", err)
 	}
-	// Country/Region matches are insert-only (geo.MatchActivity), so a reprocess that removed
-	// the only part of a track inside some region has to clear the old matches first.
+	// The places' matches are insert-only (geo.MatchActivity), so a reprocess that removed the
+	// only part of a track inside some place has to clear the old matches first.
 	if _, err := tx.Exec(ctx, `DELETE FROM activity_country WHERE activity_id = $1`, activityID); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(ctx, `DELETE FROM activity_region WHERE activity_id = $1`, activityID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_place WHERE activity_id = $1`, activityID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM activity_county WHERE activity_id = $1`, activityID); err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `DELETE FROM activity_city WHERE activity_id = $1`, activityID); err != nil {
 		return err
 	}
 	if err := tx.Commit(ctx); err != nil {

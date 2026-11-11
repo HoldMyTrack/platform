@@ -26,7 +26,10 @@ test('each mode shows only its own layers', () => {
       .map(([id]) => id)
       .sort();
   assert.deepEqual(visible('normal'), ['track-bands-arrows', 'track-bands-line', 'tracks-arrows', 'tracks-casing', 'tracks-focused', 'tracks-hover', 'tracks-line']);
-  assert.deepEqual(visible('fog'), ['country-fog-fill', 'fog-edge', 'fog-veil', 'region-fog-fill']);
+  assert.deepEqual(visible('fog'), [
+    'city-fog-border', 'city-fog-fill', 'country-fog-border', 'country-fog-fill', 'county-fog-border', 'county-fog-fill',
+    'fog-edge', 'fog-veil', 'region-fog-border', 'region-fog-fill',
+  ]);
   assert.deepEqual(visible('heatmap'), ['heat-points-circles', 'heatmap-dim']);
 });
 
@@ -56,14 +59,12 @@ test('groups go beneath the labels or on top', () => {
   for (const group of doc.groups) assert.ok(['beneath-labels', 'top'].includes(group.placement), group.id);
 });
 
-test('the tiers switch where the Country and Region fills hand over', () => {
+test('each level hands over to the next, and the last to exact coverage', () => {
+  const fills = ['country-fog-fill', 'region-fog-fill', 'county-fog-fill', 'city-fog-fill', 'fog-veil'].map((id) => coverage.layers.find((l) => l.id === id));
+  assert.equal(fills[0].minzoom, 0);
+  for (let i = 1; i < fills.length; i++) assert.equal(fills[i - 1].maxzoom, fills[i].minzoom, fills[i].id);
   assert.equal(zoomTier(doc.tiers, 2.99), 'country');
   assert.equal(zoomTier(doc.tiers, 3), 'region');
-  assert.equal(zoomTier(doc.tiers, 6.99), 'region');
-  assert.equal(zoomTier(doc.tiers, 7), 'city');
-  const region = coverage.layers.find((l) => l.id === 'region-fog-fill');
-  const veil = coverage.layers.find((l) => l.id === 'fog-veil');
-  assert.equal(region.maxzoom, veil.minzoom);
   assert.equal(zoomTier([], 3), 'city');
 });
 

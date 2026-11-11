@@ -10,7 +10,8 @@ import { tilePath, withView, type GroupPart, type LayerView } from './mapLayers.
 const FOG_SOURCE = 'fog-vector';
 const COUNTRY_FOG_SOURCE = 'country-fog';
 const REGION_FOG_SOURCE = 'region-fog';
-const PLACE_FOG_SOURCE = 'place-fog';
+const COUNTY_FOG_SOURCE = 'county-fog';
+const CITY_FOG_SOURCE = 'city-fog';
 const HEAT_POINTS_SOURCE = 'heat-points';
 
 const HEATMAP_DIM_LAYER = 'heatmap-dim';
@@ -18,22 +19,28 @@ const FOG_LAYER = 'fog-veil';
 const FOG_EDGE_LAYER = 'fog-edge';
 const COUNTRY_FOG_LAYER = 'country-fog-fill';
 const REGION_FOG_LAYER = 'region-fog-fill';
-const PLACE_FOG_LAYER = 'place-fog-fill';
+const COUNTY_FOG_LAYER = 'county-fog-fill';
+const CITY_FOG_LAYER = 'city-fog-fill';
 const COUNTRY_BORDER_LAYER = 'country-fog-border';
 const REGION_BORDER_LAYER = 'region-fog-border';
-const PLACE_BORDER_LAYER = 'place-fog-border';
+const COUNTY_BORDER_LAYER = 'county-fog-border';
+const CITY_BORDER_LAYER = 'city-fog-border';
 
-/** PROTOTYPE (FOG_REWORK.md "Borders and names"): the outline fills a pointer is over, which
- *  fogPlaces.ts hit-tests, and their sources, whose `id` it sets the hover state on. */
-export const PLACE_FILL_LAYERS = [COUNTRY_FOG_LAYER, REGION_FOG_LAYER, PLACE_FOG_LAYER];
+/** The outline fills a pointer is over, which fogPlaces.ts hit-tests, and their sources, whose
+ *  `id` it sets the hover state on. */
+export const PLACE_FILL_LAYERS = [COUNTRY_FOG_LAYER, REGION_FOG_LAYER, COUNTY_FOG_LAYER, CITY_FOG_LAYER];
 const HEAT_POINTS_LAYER = 'heat-points-circles';
 
-/** Adopted, tunable bands (IMPLEMENTATION.md §4.2.4): whole countries, then regions, then exact
- *  coverage. A layer shows at minzoom <= zoom < maxzoom, so the tiers never overlap. */
+/** Adopted, tunable bands (IMPLEMENTATION.md §4.2.4): whole countries, then regions, counties and
+ *  cities, then exact coverage. A layer shows at minzoom <= zoom < maxzoom, so the levels never
+ *  overlap. */
 const COUNTRY_MAX_ZOOM = 3;
-const REGION_MAX_ZOOM = 7;
-/** PROTOTYPE (FOG_REWORK.md): cities, and the county land outside them, below exact coverage. */
-const PLACE_MAX_ZOOM = 11;
+const REGION_MAX_ZOOM = 6;
+const COUNTY_MAX_ZOOM = 8;
+const CITY_MAX_ZOOM = 11;
+/** The last zoom the outline tiles are made for (internal/httpapi's cacheMaxZoom): about 10 m a
+ *  tile unit; MapLibre enlarges them past it. */
+const OUTLINE_TILE_MAX_ZOOM = 10;
 
 /** The zoom Fog's finest tiles are stored at (internal/fog's Zoom); MapLibre enlarges them past it. */
 const FOG_MAX_ZOOM = 14;
@@ -96,7 +103,7 @@ const HOVERED = ['boolean', ['feature-state', 'hover'], false];
 /** The Country/Region outlines are Overture Maps' divisions, built from OpenStreetMap (IMPLEMENTATION.md §4.2.4). */
 const BOUNDARIES_ATTRIBUTION = '<a href="https://overturemaps.org">Overture Maps</a>';
 
-const BORDER_LAYERS = [COUNTRY_BORDER_LAYER, REGION_BORDER_LAYER, PLACE_BORDER_LAYER];
+const BORDER_LAYERS = [COUNTRY_BORDER_LAYER, REGION_BORDER_LAYER, COUNTY_BORDER_LAYER, CITY_BORDER_LAYER];
 const FOG_LAYERS = [FOG_LAYER, FOG_EDGE_LAYER, ...PLACE_FILL_LAYERS, ...BORDER_LAYERS];
 
 /**
@@ -160,7 +167,8 @@ export function coverageGroup(dark: boolean, tileVersion: string, lang: string):
         [FOG_SOURCE]: { type: 'vector', tiles: tilePath('fog-vector', tileVersion), minzoom: 0, maxzoom: FOG_MAX_ZOOM },
         [COUNTRY_FOG_SOURCE]: { type: 'vector', tiles: outlines('countries'), minzoom: 0, maxzoom: COUNTRY_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
         [REGION_FOG_SOURCE]: { type: 'vector', tiles: outlines('regions'), minzoom: COUNTRY_MAX_ZOOM, maxzoom: REGION_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
-        [PLACE_FOG_SOURCE]: { type: 'vector', tiles: outlines('places'), minzoom: REGION_MAX_ZOOM, maxzoom: PLACE_MAX_ZOOM - 1, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
+        [COUNTY_FOG_SOURCE]: { type: 'vector', tiles: outlines('counties'), minzoom: REGION_MAX_ZOOM, maxzoom: COUNTY_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
+        [CITY_FOG_SOURCE]: { type: 'vector', tiles: outlines('cities'), minzoom: COUNTY_MAX_ZOOM, maxzoom: OUTLINE_TILE_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
         [HEAT_POINTS_SOURCE]: { type: 'vector', tiles: tilePath('heat-points', tileVersion), minzoom: 0, maxzoom: HEAT_POINTS_MAX_ZOOM },
       },
       layers: [
@@ -170,7 +178,7 @@ export function coverageGroup(dark: boolean, tileVersion: string, lang: string):
           type: 'fill',
           source: FOG_SOURCE,
           'source-layer': 'fog',
-          minzoom: PLACE_MAX_ZOOM,
+          minzoom: CITY_MAX_ZOOM,
           filter: ['==', ['get', 'kind'], 'veil'],
         }),
         layer({
@@ -178,7 +186,7 @@ export function coverageGroup(dark: boolean, tileVersion: string, lang: string):
           type: 'line',
           source: FOG_SOURCE,
           'source-layer': 'fog',
-          minzoom: PLACE_MAX_ZOOM,
+          minzoom: CITY_MAX_ZOOM,
           filter: ['==', ['get', 'kind'], 'edge'],
           // Butt ends: the server carries each edge just past the tile, where the next tile's own
           // takes over, so a cap would double up at the join.
@@ -203,21 +211,19 @@ export function coverageGroup(dark: boolean, tileVersion: string, lang: string):
           maxzoom: REGION_MAX_ZOOM,
           paint: { 'fill-antialias': false },
         }),
-        layer({
-          id: PLACE_FOG_LAYER,
-          type: 'fill',
-          source: PLACE_FOG_SOURCE,
-          'source-layer': 'places',
-          minzoom: REGION_MAX_ZOOM,
-          maxzoom: PLACE_MAX_ZOOM,
-          // Antialiasing drew a hairline where two locked places meet; the borders below draw
-          // them on purpose.
-          paint: { 'fill-antialias': false },
-        }),
+        // Antialiasing drew a hairline where two locked places meet; the borders below draw them
+        // on purpose.
+        ...([
+          [COUNTY_FOG_LAYER, COUNTY_FOG_SOURCE, 'counties', REGION_MAX_ZOOM, COUNTY_MAX_ZOOM],
+          [CITY_FOG_LAYER, CITY_FOG_SOURCE, 'cities', COUNTY_MAX_ZOOM, CITY_MAX_ZOOM],
+        ] as const).map(([id, source, sourceLayer, minzoom, maxzoom]) =>
+          layer({ id, type: 'fill', source, 'source-layer': sourceLayer, minzoom, maxzoom, paint: { 'fill-antialias': false } }),
+        ),
         ...([
           [COUNTRY_BORDER_LAYER, COUNTRY_FOG_SOURCE, 'countries', 0, COUNTRY_MAX_ZOOM],
           [REGION_BORDER_LAYER, REGION_FOG_SOURCE, 'regions', COUNTRY_MAX_ZOOM, REGION_MAX_ZOOM],
-          [PLACE_BORDER_LAYER, PLACE_FOG_SOURCE, 'places', REGION_MAX_ZOOM, PLACE_MAX_ZOOM],
+          [COUNTY_BORDER_LAYER, COUNTY_FOG_SOURCE, 'counties', REGION_MAX_ZOOM, COUNTY_MAX_ZOOM],
+          [CITY_BORDER_LAYER, CITY_FOG_SOURCE, 'cities', COUNTY_MAX_ZOOM, CITY_MAX_ZOOM],
         ] as const).map(([id, source, sourceLayer, minzoom, maxzoom]) =>
           layer({
             id,

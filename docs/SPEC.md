@@ -251,7 +251,7 @@ Every map and export choice is kept by the browser or phone, never by the accoun
 ### FR-4.2 Fog of War mode
 
 - Fog is all-time: everywhere any activity went is clear, whatever Dates, the filters, the hidden set or Stories. Only Pending activities drop out.
-- Zoomed out it clears a whole country once any activity is inside it (zoom 0–2), then a whole state or region (3–6), then exact coverage; the levels never blend. Boundaries are OpenStreetMap's on land, without lakes of 1,000 km² or more (`IMPLEMENTATION.md` §4.2.4): a track on the sea or such a lake counts in no country, so the water stays veiled until exact coverage, and a country without regions is one region.
+- Zoomed out it clears whole places once any activity is inside one: countries (zoom 0–2), states or regions (3–5), counties (6–7) and cities (8–10), then exact coverage; the levels never blend. A place clears with every place it lies in. Where a level has no place, the one above stands in: a country without regions is one region, a region without counties one county, and land outside every city shows its county. Boundaries are OpenStreetMap's on land, without lakes of 1,000 km² or more (`IMPLEMENTATION.md` §4.2.4): a track on the sea or such a lake counts in no place, so the water stays veiled until exact coverage.
 - The edge of cleared ground is a smooth outline, traced to about 19 m at zoom 14 and twice that per zoom out, with no seams between tiles.
 - While a coverage change is still being worked on, the map says Fog and Heatmap may be incomplete; the veil then updates without a reload.
 - Switching modes never moves the camera; returning to Normal restores the panel's state.
@@ -396,7 +396,7 @@ Chop (keep the part between two points), Cut (remove it and join the ends), Dele
 - Needs a real account and one non-Pending activity with a stored original and a track whose timestamps exist and run forward. The activity list says which of these an activity lacks, and whether photos can be added (FR-16.1).
 - The editor gets the points already clipped against Private locations, so hidden ends never reach the client.
 - A moved point keeps its time and elevation. No edit can leave fewer than two points.
-- Saving reprocesses the activity from its original: distance, duration, moving time, elevation gain, start time, track, coverage, country and region matches. A Cut's join counts only toward elapsed time: not distance, moving time or elevation gain. Its pace bands (FR-4.8) carry the pace before it.
+- Saving reprocesses the activity from its original: distance, duration, moving time, elevation gain, start time, track, coverage, the places it clears (FR-4.2). A Cut's join counts only toward elapsed time: not distance, moving time or elevation gain. Its pace bands (FR-4.8) carry the pace before it.
 - The result is clipped against Private locations again, so an edit can't uncover an end inside one; the editor's preview doesn't show that clip.
 - Pending until reprocessed; on failure it keeps its previous track and numbers.
 - An edit is stored by recording time, so it keeps meaning the same points when a Private location changes.
@@ -485,7 +485,7 @@ Circles a user marks so tracks don't reveal where they start and end. The part o
 - Applied at ingest, before anything is stored: the leading points inside any Private location are dropped, and so is a further stretch past the edge, between 0 and the radius long along the track. The track starts at the first point that stretch reaches, or the one before when that lies more than a radius past the edge; only a recording with no point in that first radius is cut at the stretch's end itself. The trailing points likewise.
 - Each end's stretch is random but fixed per activity, so the ends of many tracks scatter over a band outside the circle instead of outlining it, and reprocessing doesn't move them.
 - An end the stretch carries back inside a Private location is cut again where the track next leaves it. The same clip runs on an edited track (FR-5.14).
-- Distance, duration, elevation gain, pace, coverage and country and region matches come from the visible part.
+- Distance, duration, elevation gain, pace, coverage and the places it clears come from the visible part.
 - An activity left with fewer than two points is kept with no geometry and a Private badge (FR-5.1), and the Privacy tab counts them; moving or deleting the location brings it back.
 - Every change is retroactive: activities whose track comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure.
 - Circles are drawn only on the Privacy tab, from zoom 4, never in an export.

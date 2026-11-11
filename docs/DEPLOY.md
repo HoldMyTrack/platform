@@ -127,8 +127,8 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
 1. Make the country and region outlines (`IMPLEMENTATION.md` §4.2.4) off the server, with the duckdb CLI, then copy the file into the app bucket under the key `geo.BoundariesKey` names:
    ```
    scripts/boundaries-extract.sh ~/boundaries
-   scp ~/boundaries/overture-2026-09-23.0-lakes-boundaries.csv.gz holdmytrack:/tmp/
-   … run --rm -v /tmp:/in:ro rclone copyto /in/overture-2026-09-23.0-lakes-boundaries.csv.gz data:boundaries/overture-2026-09-23.0-lakes-boundaries.csv.gz
+   scp ~/boundaries/overture-2026-09-23.0-levels-boundaries.csv.gz holdmytrack:/tmp/
+   … run --rm -v /tmp:/in:ro rclone copyto /in/overture-2026-09-23.0-levels-boundaries.csv.gz data:boundaries/overture-2026-09-23.0-levels-boundaries.csv.gz
    ```
    Check the counts it prints (272 countries and 3,922 regions for 2026-09-23.0).
 2. Copy the timezone polygons (`IMPLEMENTATION.md` §4.30), timezone-boundary-builder's release asset renamed to carry its release, into the bucket under the key `geo.TimezonesKey` names:

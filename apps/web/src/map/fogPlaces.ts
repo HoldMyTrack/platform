@@ -1,14 +1,13 @@
 import { Popup, type Map as MapLibreMap, type MapGeoJSONFeature } from 'maplibre-gl';
-import { t } from '../i18n';
+import { hasKey, t } from '../i18n';
 import { PLACE_FILL_LAYERS } from './coverageGroup';
 import { placeLabel } from './fogPlaceLabel';
 import { mapTapsActive } from './mapTaps';
 
 /**
- * PROTOTYPE (FOG_REWORK.md "Borders and names"): in Fog, the outline under the pointer at the
- * Country, Region and Places levels is highlighted (its `hover` state, which the layers
- * document's border and fill read) and named in a tooltip. Web only: the apps would open the
- * same on a tap.
+ * In Fog, the outline under the pointer on every level but Exact is highlighted (its `hover`
+ * state, which the layers document's border and fill read) and named in a tooltip: what it is,
+ * where, and whether it is explored. Web only: the apps will open the same on a tap.
  */
 
 type Hovered = { source: string; sourceLayer: string; id: string | number };
@@ -27,8 +26,10 @@ export function attachFogPlaces(map: MapLibreMap): void {
   name.className = 'fog-place-tip__name';
   const detail = document.createElement('div');
   detail.className = 'fog-place-tip__detail';
+  const state = document.createElement('div');
+  state.className = 'fog-place-tip__detail';
   const content = document.createElement('div');
-  content.append(name, detail);
+  content.append(name, detail, state);
   popup.setDOMContent(content);
 
   const setHover = (next: Hovered | null) => {
@@ -45,14 +46,15 @@ export function attachFogPlaces(map: MapLibreMap): void {
   map.on('mousemove', (e) => {
     const layers = PLACE_FILL_LAYERS.filter((id) => map.getLayer(id));
     const feature: MapGeoJSONFeature | undefined = mapTapsActive() && layers.length ? map.queryRenderedFeatures(e.point, { layers })[0] : undefined;
-    const label = feature ? placeLabel(feature.properties ?? {}) : null;
+    const label = feature ? placeLabel(feature.properties ?? {}, hasKey) : null;
     if (!feature || !label || feature.id === undefined || !feature.sourceLayer) {
       clear();
       return;
     }
     setHover({ source: feature.source, sourceLayer: feature.sourceLayer, id: feature.id });
     name.textContent = label.name;
-    detail.textContent = `${t(label.kindKey)} · ${t(label.visitedKey)}`;
+    detail.textContent = [t(label.kindKey), label.within].filter(Boolean).join(' · ');
+    state.textContent = t(label.visitedKey);
     popup.setLngLat(e.lngLat);
     if (!popup.isOpen()) popup.addTo(map);
   });

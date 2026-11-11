@@ -8,19 +8,23 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
-// adminLayer is one of the two outline sets the Country and Region tiers draw
-// (docs/IMPLEMENTATION.md §4.2.4): which table holds the outlines, which holds each
-// activity's matches to them (populated once at ingest by internal/geo.MatchActivity, never at
-// request time), the tile's MVT layer name, and the key of its rows in admin_tile_geoms.
+// adminLayer is one of the outline sets Fog's levels draw (docs/IMPLEMENTATION.md §4.2.4):
+// which table holds the outlines, the tile's MVT layer name and the key of its rows in
+// admin_tile_geoms, and the SQL for what each outline's feature says.
 type adminLayer struct {
 	name     string
 	cache    string
 	outlines string
-	matches  string
-	matchID  string
-	// kind is the SQL for an outline's kind as the tile names it, over the outlines table as o:
-	// what the hover tooltip calls it (PROTOTYPE, FOG_REWORK.md "Borders and names").
-	kind string
+	// visited is the SQL for the ids of this level's places the account has been in, over its
+	// activities as `mine`: its own matches (internal/geo.MatchActivity, at ingest, never at
+	// request time), and the places above those matched on a level below, so a cleared city
+	// never sits in a fogged county.
+	visited string
+	// kind, localType and within are the SQL for what the tooltip says over the outlines table
+	// as o, with names in language $5: what the place is (on the County and City levels a stand-in
+	// is the region or county it comes from), its kind in its own country's words, and the
+	// places it lies in.
+	kind, localType, within string
 	// cacheMaxZoom is the highest zoom whose tiles are kept in admin_tile_geoms: the source's
 	// maxzoom in the served layers document (apps/web/src/map/coverageGroup.ts). A tile past it, which no client
 	// asks for, is drawn live rather than letting anyone fill the table with tiles nothing
@@ -28,11 +32,59 @@ type adminLayer struct {
 	cacheMaxZoom int
 }
 
+// matchedAbove is the SQL for the column `above` of the outlines of every place matched on the
+// level whose matches are `matches` (by `id`) and outlines `outlines`.
+func matchedAbove(above, matches, id, outlines string) string {
+	return fmt.Sprintf(`SELECT o.%s FROM mine a JOIN %s m ON m.activity_id = a.id JOIN %s o ON o.id = m.%s`,
+		above, matches, outlines, id)
+}
+
+// nameIn is the SQL for the name of the row of table whose id is idCol, in language $5, or NULL.
+func nameIn(table, idCol, cond string) string {
+	return fmt.Sprintf(`(SELECT COALESCE(x.names ->> $5::text, x.name) FROM %s x WHERE x.id = %s%s)`, table, idCol, cond)
+}
+
 var (
-	countryLayer = adminLayer{name: "countries", cache: "countries", outlines: "admin_countries", matches: "activity_country", matchID: "country_id", kind: "'country'", cacheMaxZoom: 3}
-	regionLayer  = adminLayer{name: "regions", cache: "regions", outlines: "admin_regions", matches: "activity_region", matchID: "region_id", kind: "'region'", cacheMaxZoom: 7}
-	// PROTOTYPE (FOG_REWORK.md): the city tier, cities and the county land outside them.
-	placeLayer = adminLayer{name: "places", cache: "places", outlines: "admin_places", matches: "activity_place", matchID: "place_id", kind: "o.kind", cacheMaxZoom: 10}
+	// A region standing in for a country without regions is named for the country; the chain
+	// skips it.
+	realRegion = ` AND x.overture_id NOT LIKE 'country:%'`
+
+	countryLayer = adminLayer{
+		name: "countries", cache: "countries", outlines: "admin_countries", cacheMaxZoom: 3,
+		visited: `SELECT m.country_id FROM mine a JOIN activity_country m ON m.activity_id = a.id
+			UNION ` + matchedAbove("country_id", "activity_region", "region_id", "admin_regions") + `
+			UNION ` + matchedAbove("country_id", "activity_county", "county_id", "admin_counties") + `
+			UNION ` + matchedAbove("country_id", "activity_city", "city_id", "admin_cities"),
+		kind: `'country'`, localType: `NULL`, within: `NULL`,
+	}
+	regionLayer = adminLayer{
+		name: "regions", cache: "regions", outlines: "admin_regions", cacheMaxZoom: 6,
+		visited: `SELECT m.region_id FROM mine a JOIN activity_region m ON m.activity_id = a.id
+			UNION ` + matchedAbove("region_id", "activity_county", "county_id", "admin_counties") + `
+			UNION ` + matchedAbove("region_id", "activity_city", "city_id", "admin_cities"),
+		kind:      `CASE WHEN o.overture_id LIKE 'country:%' THEN 'country' ELSE 'region' END`,
+		localType: `o.local_type`,
+		within:    `CASE WHEN o.overture_id NOT LIKE 'country:%' THEN ` + nameIn("admin_countries", "o.country_id", "") + ` END`,
+	}
+	countyLayer = adminLayer{
+		name: "counties", cache: "counties", outlines: "admin_counties", cacheMaxZoom: 8,
+		visited: `SELECT m.county_id FROM mine a JOIN activity_county m ON m.activity_id = a.id
+			UNION ` + matchedAbove("county_id", "activity_city", "city_id", "admin_cities"),
+		kind: `o.kind`, localType: `o.local_type`,
+		within: `CASE o.kind
+			WHEN 'county' THEN COALESCE(` + nameIn("admin_regions", "o.region_id", realRegion) + `, ` + nameIn("admin_countries", "o.country_id", "") + `)
+			WHEN 'region' THEN ` + nameIn("admin_countries", "o.country_id", "") + ` END`,
+	}
+	cityLayer = adminLayer{
+		name: "cities", cache: "cities", outlines: "admin_cities", cacheMaxZoom: 10,
+		visited: `SELECT m.city_id FROM mine a JOIN activity_city m ON m.activity_id = a.id`,
+		kind:    `o.kind`, localType: `o.local_type`,
+		within: `CASE o.kind
+			WHEN 'city' THEN NULLIF(concat_ws(', ', ` + nameIn("admin_counties", "o.county_id", ` AND x.kind = 'county'`) + `,
+				COALESCE(` + nameIn("admin_regions", "o.region_id", realRegion) + `, ` + nameIn("admin_countries", "o.country_id", "") + `)), '')
+			WHEN 'county' THEN COALESCE(` + nameIn("admin_regions", "o.region_id", realRegion) + `, ` + nameIn("admin_countries", "o.country_id", "") + `)
+			WHEN 'region' THEN ` + nameIn("admin_countries", "o.country_id", "") + ` END`,
+	}
 )
 
 // seaID is the admin_id of a tile's sea: the tile's frame with every outline in it cut out.
@@ -75,9 +127,9 @@ func (l adminLayer) liveGeoms() string {
 }
 
 // tileQuery is one account's tile ($1, $2, $3) of this layer, for account $4, with names in
-// language $5: every outline, whether the account has been in it (`visited`), its kind and name,
-// and the sea. Fog veils the sea and the unvisited, and draws every outline's border
-// (PROTOTYPE, FOG_REWORK.md "Borders and names").
+// language $5: every outline, whether the account has been in it (`visited`), its kind, type,
+// name and the places it lies in (`within`), and the sea. Fog veils the sea and the unvisited,
+// draws every outline's border, and names the one under the pointer from the rest.
 //
 // visited starts from the account's own activities, so its cost is the account's history,
 // not every account's matches in the outlines the tile covers. It answers two columns: whether
@@ -94,24 +146,26 @@ func (l adminLayer) tileQuery(cached bool) string {
 			WHERE layer = '%s' AND zoom = $1 AND tile_x = $2 AND tile_y = $3`, l.cache)
 	}
 	return fmt.Sprintf(`
-		WITH visited AS MATERIALIZED (
-			SELECT DISTINCT m.%[1]s AS id
-			FROM activities a JOIN %[2]s m ON m.activity_id = a.id
-			WHERE a.user_id = $4 AND NOT a.edit_pending
+		WITH mine AS MATERIALIZED (
+			SELECT id FROM activities WHERE user_id = $4 AND NOT edit_pending
+		), visited AS MATERIALIZED (
+			%[1]s
 		)
-		SELECT %[3]s,
-		       (SELECT ST_AsMVT(t, '%[4]s', 4096, 'geom')
+		SELECT %[2]s,
+		       (SELECT ST_AsMVT(t, '%[3]s', 4096, 'geom')
 		        FROM (
 		            SELECT g.admin_id AS id,
 		                   v.id IS NOT NULL AS visited,
-		                   CASE WHEN g.admin_id = %[7]d THEN 'sea' ELSE %[6]s END AS kind,
+		                   CASE WHEN g.admin_id = %[6]d THEN 'sea' ELSE %[5]s END AS kind,
+		                   %[8]s AS type,
 		                   COALESCE(o.names ->> $5::text, o.name) AS name,
+		                   %[9]s AS within,
 		                   g.geom
-		            FROM (%[5]s) g
-		            LEFT JOIN visited v ON v.id = g.admin_id
-		            LEFT JOIN %[8]s o ON o.id = g.admin_id
+		            FROM (%[4]s) g
+		            LEFT JOIN (SELECT DISTINCT * FROM visited) v(id) ON v.id = g.admin_id
+		            LEFT JOIN %[7]s o ON o.id = g.admin_id
 		            ORDER BY g.admin_id
-		        ) t)`, l.matchID, l.matches, built, l.name, geoms, l.kind, seaID, l.outlines)
+		        ) t)`, l.visited, built, l.name, geoms, l.kind, seaID, l.outlines, l.localType, l.within)
 }
 
 // adminTileQueries are the two handlers' queries, cached and live, built once.
@@ -120,7 +174,8 @@ type adminTileQueries struct{ cached, live string }
 var (
 	countryFogQueries = adminTileQueries{countryLayer.tileQuery(true), countryLayer.tileQuery(false)}
 	regionFogQueries  = adminTileQueries{regionLayer.tileQuery(true), regionLayer.tileQuery(false)}
-	placeFogQueries   = adminTileQueries{placeLayer.tileQuery(true), placeLayer.tileQuery(false)}
+	countyFogQueries  = adminTileQueries{countyLayer.tileQuery(true), countyLayer.tileQuery(false)}
+	cityFogQueries    = adminTileQueries{cityLayer.tileQuery(true), cityLayer.tileQuery(false)}
 )
 
 func (s *Server) handleCountryFogTile(w http.ResponseWriter, r *http.Request) {

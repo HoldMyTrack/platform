@@ -52,6 +52,11 @@ function lookup(key: string): string {
   return messages[key] ?? fallback[key] ?? key;
 }
 
+/** Whether key is a catalog message: for a key built from data, such as a place's kind. */
+export function hasKey(key: string): key is MessageKey {
+  return key in fallback;
+}
+
 /** A catalog message, `{name}`s filled from `vars` (numbers get this language's separators). */
 export function t(key: MessageKey, vars?: Vars): string {
   return fill(lookup(key), vars);
