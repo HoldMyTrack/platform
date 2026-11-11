@@ -315,7 +315,7 @@ Credentials:
       description: The browser's IANA zone, for a new account; anything invalid falls back to UTC.
 Account:
   type: object
-  required: [email, isDemo, email_verified, display_name, country, avatar_url, timezone, locale, unit_system]
+  required: [email, isDemo, email_verified, display_name, country, avatar_url, timezone, locale, unit_system, fog_words]
   additionalProperties: false
   properties:
     email:
@@ -338,9 +338,18 @@ Account:
       type: string
       enum: [metric, imperial]
       description: The units distances and elevations show in, from country.
+    fog_words: { $ref: "#/FogWords" }
+FogWords:
+  type: object
+  description: "What country calls its regions and counties, as Overture's local_type (state, department), which Fog's level control is worded with; empty for the generic name (IMPLEMENTATION.md §4.2.4)."
+  required: [region, county]
+  additionalProperties: false
+  properties:
+    region: { type: string }
+    county: { type: string }
 AccountWithSession:
   type: object
-  required: [session_token, email, isDemo, email_verified, display_name, country, avatar_url, timezone, locale, unit_system]
+  required: [session_token, email, isDemo, email_verified, display_name, country, avatar_url, timezone, locale, unit_system, fog_words]
   additionalProperties: false
   description: The Account, and the session's token.
   properties:
@@ -367,6 +376,7 @@ AccountWithSession:
       type: string
       enum: [metric, imperial]
       description: The units distances and elevations show in, from country.
+    fog_words: { $ref: "#/FogWords" }
 SettingsOption:
   type: object
   required: [value, label]

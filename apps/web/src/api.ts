@@ -71,6 +71,8 @@ export interface UserProfile {
   timezone: string;
   /** Miles or kilometers, as the server decides it from `country` (ADR-0048). */
   unitSystem: 'metric' | 'imperial';
+  /** What `country` calls its regions and counties, for Fog's level control (webLayers.ts). */
+  fogWords: { region: string; county: string };
 }
 
 export interface AuthUser extends UserProfile {
@@ -99,6 +101,7 @@ function toProfile(body: Schema<'Account'>): UserProfile {
     avatarUrl: body.avatar_url,
     timezone: body.timezone,
     unitSystem: body.unit_system,
+    fogWords: body.fog_words,
   };
 }
 

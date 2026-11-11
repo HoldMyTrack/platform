@@ -23,7 +23,8 @@ export function fogLevelInView(levels: readonly FogLevelBand[], zoom: number, lo
 }
 
 /** Picking `picked` while `locked` is locked at `zoom`: the lock after it, and the zoom to move
- *  the camera to, keeping its centre, or null to stay. */
+ *  the camera out to, keeping its centre, or null to stay. Picking never zooms in: a level
+ *  further in draws where the camera is. */
 export function fogLevelPick(
   levels: readonly FogLevelBand[],
   zoom: number,
@@ -33,8 +34,6 @@ export function fogLevelPick(
   const band = levels.find((l) => l.level === picked);
   if (!band) return { locked, zoom: null };
   if (picked === locked) return { locked: null, zoom: null };
-  const from = band.from ?? 0;
-  if (zoom < from) return { locked: picked, zoom: from };
   if (band.below !== undefined && zoom >= band.below) return { locked: picked, zoom: band.below };
   return { locked: picked, zoom: null };
 }

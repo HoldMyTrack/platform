@@ -81,16 +81,8 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())
 	var mapVersion int64
 	var words mapstyle.Words
-	// The level control's words: what most of the account's country's regions and counties are
-	// (docs/IMPLEMENTATION.md §4.2.4).
 	if err := s.pool.QueryRow(r.Context(), `
-		SELECT u.map_version,
-		       COALESCE((SELECT mode() WITHIN GROUP (ORDER BY o.local_type)
-		                 FROM admin_regions o JOIN admin_countries c ON c.id = o.country_id
-		                 WHERE c.code = u.country AND o.local_type IS NOT NULL), ''),
-		       COALESCE((SELECT mode() WITHIN GROUP (ORDER BY o.local_type)
-		                 FROM admin_counties o JOIN admin_countries c ON c.id = o.country_id
-		                 WHERE c.code = u.country AND o.kind = 'county' AND o.local_type IS NOT NULL), '')
+		SELECT u.map_version, `+fogWordsSQL("u.country")+`
 		FROM users u WHERE u.id = $1`, userID).Scan(&mapVersion, &words.Region, &words.County); err != nil {
 		s.log.Error("map layers: map version", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
@@ -121,4 +113,16 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 	if _, err := w.Write(doc); err != nil {
 		s.log.Warn("map layers write", "err", err)
 	}
+}
+
+// fogWordsSQL is the SQL for the two columns of mapstyle.Words for the country whose code is
+// country: what most of its regions and counties are, as Overture's local_type, or empty
+// (docs/IMPLEMENTATION.md §4.2.4).
+func fogWordsSQL(country string) string {
+	mode := func(table, cond string) string {
+		return `COALESCE((SELECT mode() WITHIN GROUP (ORDER BY o.local_type)
+			FROM ` + table + ` o JOIN admin_countries c ON c.id = o.country_id
+			WHERE c.code = ` + country + ` AND o.local_type IS NOT NULL` + cond + `), '')`
+	}
+	return mode("admin_regions", "") + ", " + mode("admin_counties", " AND o.kind = 'county'")
 }

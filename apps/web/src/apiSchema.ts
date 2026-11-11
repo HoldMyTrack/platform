@@ -3752,6 +3752,11 @@ export interface components {
             /** @description The browser's IANA zone, for a new account; anything invalid falls back to UTC. */
             timezone?: string;
         };
+        /** @description What country calls its regions and counties, as Overture's local_type (state, department), which Fog's level control is worded with; empty for the generic name (IMPLEMENTATION.md §4.2.4). */
+        FogWords: {
+            region: string;
+            county: string;
+        };
         /** @description The Account, and the session's token. */
         AccountWithSession: {
             /** @description The session cookie's value, for a client with no cookie jar to send as a bearer token. */
@@ -3773,6 +3778,7 @@ export interface components {
              * @enum {string}
              */
             unit_system: "metric" | "imperial";
+            fog_words: components["schemas"]["FogWords"];
         };
         /** @description Every error the API sends (ADR-0045). A client branches on error, never on message. */
         Error: {
@@ -3799,6 +3805,7 @@ export interface components {
              * @enum {string}
              */
             unit_system: "metric" | "imperial";
+            fog_words: components["schemas"]["FogWords"];
         };
         SettingsOption: {
             value: string;

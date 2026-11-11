@@ -7,8 +7,8 @@ import { hasKey, t } from '../i18n';
 /**
  * Fog's level control (docs/SPEC.md FR-4.2): "Country | State | County | City | Exact", one per
  * level of the layers document. The level in view follows the zoom and is marked as it changes;
- * picking one locks it at every zoom, moving the camera into its band when the zoom is outside
- * it, until it is picked again (fogLevels.ts). The lock lives in the map's layer state, so it
+ * picking one locks it at every zoom, zooming out to its band when zoomed in past it, until it
+ * is picked again (fogLevels.ts). The lock lives in the map's layer state, so it
  * outlasts a style swap and a trip out of Fog, and a reload releases it.
  */
 export function FogLevelControl({ map }: { map: MapLibreMap }) {
