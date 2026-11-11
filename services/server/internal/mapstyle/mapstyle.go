@@ -41,10 +41,31 @@ var layerTemplates embed.FS
 // apps/web/scripts/build-style.mjs.
 const tileVersionPlaceholder = "__HOLDMYTRACK_TILE_VERSION__"
 
-// langPlaceholder stands in the layers templates for the language a tile names its outlines in
-// (PROTOTYPE, FOG_REWORK.md "Borders and names"). Must match LANG_PLACEHOLDER in
-// apps/web/scripts/build-style.mjs.
+// langPlaceholder stands in the layers templates for the language a tile names its outlines in.
+// Must match LANG_PLACEHOLDER in apps/web/scripts/build-style.mjs.
 const langPlaceholder = "__HOLDMYTRACK_LANG__"
+
+// The placeholders for what the account's country calls its regions and counties (Words). Must
+// match WORD_PLACEHOLDERS in apps/web/scripts/build-style.mjs.
+const (
+	regionWordPlaceholder = "__HOLDMYTRACK_REGION_WORD__"
+	countyWordPlaceholder = "__HOLDMYTRACK_COUNTY_WORD__"
+)
+
+// Words are what an account's country calls the places of Fog's Region and County levels:
+// Overture's local_type for most of them (state, department), or empty for the generic name. The
+// client words its level control with them.
+type Words struct{ Region, County string }
+
+// word is w if it's a plain local_type, which needs no escaping in JSON, else empty.
+func word(w string) string {
+	for _, r := range w {
+		if (r < 'a' || r > 'z') && r != ' ' && r != '_' {
+			return ""
+		}
+	}
+	return w
+}
 
 // originPlaceholder is baked into the generated JSON in place of a real host, because one
 // built artifact has to serve every deployment — dev resolves basemap assets against the
@@ -154,20 +175,23 @@ func StyleBuild() string {
 
 // Layers returns the layers document for one flavor at an account's tileVersion
 // (fog.TileVersion), which contains nothing that needs escaping in a URL or in JSON.
-func Layers(flavor, tileVersion, lang string) ([]byte, error) {
+func Layers(flavor, tileVersion, lang string, words Words) ([]byte, error) {
 	load()
 	b, ok := layers[flavor]
 	if !ok {
 		return nil, fmt.Errorf("%w: %q", ErrUnknownFlavor, flavor)
 	}
 	b = bytes.ReplaceAll(b, []byte(tileVersionPlaceholder), []byte(tileVersion))
+	b = bytes.ReplaceAll(b, []byte(regionWordPlaceholder), []byte(word(words.Region)))
+	b = bytes.ReplaceAll(b, []byte(countyWordPlaceholder), []byte(word(words.County)))
 	return bytes.ReplaceAll(b, []byte(langPlaceholder), []byte(lang)), nil
 }
 
 // LayersETag is the layers document's validator, from what it varies by, so a 304 needs no
 // document built.
-func LayersETag(flavor, tileVersion, lang string) string {
-	sum := sha256.Sum256([]byte(StyleBuild() + "\x00" + flavor + "\x00" + tileVersion + "\x00" + lang))
+func LayersETag(flavor, tileVersion, lang string, words Words) string {
+	sum := sha256.Sum256([]byte(StyleBuild() + "\x00" + flavor + "\x00" + tileVersion + "\x00" + lang +
+		"\x00" + words.Region + "\x00" + words.County))
 	return `"` + hex.EncodeToString(sum[:16]) + `"`
 }
 

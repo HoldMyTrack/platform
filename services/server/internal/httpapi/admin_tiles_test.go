@@ -56,9 +56,11 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 		{"countries", countryLayer, countryFogQueries},
 		{"regions", regionLayer, regionFogQueries},
 	}
+	// A cached zoom whose tile holds both countries and the ocean round them.
 	coords := func(l adminLayer) (int, int, int) {
-		x, y := tilemath.LonLatToTile(at[0], at[1], l.cacheMaxZoom)
-		return l.cacheMaxZoom, x, y
+		const z = 5
+		x, y := tilemath.LonLatToTile(at[0], at[1], z)
+		return z, x, y
 	}
 	forget := func() {
 		for _, l := range []adminLayer{countryLayer, regionLayer} {

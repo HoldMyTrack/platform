@@ -1,6 +1,7 @@
 import type { LayerSpecification } from 'maplibre-gl';
 import type { MapMode } from './mapMode';
 import { tilePath, withView, type GroupPart, type LayerView } from './mapLayers.ts';
+import { EXACT } from './fogLevels.ts';
 
 /**
  * Fog of War and Heatmap (IMPLEMENTATION.md §4.2): their sources, layers, what each mode shows
@@ -154,7 +155,7 @@ export function coverageView(mode: MapMode, dark: boolean): LayerView {
 }
 
 /** The `coverage` group over a basemap drawn `dark`. */
-export function coverageGroup(dark: boolean, tileVersion: string, lang: string): GroupPart {
+export function coverageGroup(dark: boolean, tileVersion: string, lang: string, words: { region: string; county: string }): GroupPart {
   // The outlines' names come in `lang`, part of the path so a cached tile changes with it.
   const outlines = (kind: string) => `${tilePath(kind, tileVersion)}${tileVersion ? '&' : '?'}lang=${encodeURIComponent(lang)}`;
   const base = coverageView('normal', dark);
@@ -165,10 +166,13 @@ export function coverageGroup(dark: boolean, tileVersion: string, lang: string):
       placement: 'beneath-labels',
       sources: {
         [FOG_SOURCE]: { type: 'vector', tiles: tilePath('fog-vector', tileVersion), minzoom: 0, maxzoom: FOG_MAX_ZOOM },
-        [COUNTRY_FOG_SOURCE]: { type: 'vector', tiles: outlines('countries'), minzoom: 0, maxzoom: COUNTRY_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
-        [REGION_FOG_SOURCE]: { type: 'vector', tiles: outlines('regions'), minzoom: COUNTRY_MAX_ZOOM, maxzoom: REGION_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
-        [COUNTY_FOG_SOURCE]: { type: 'vector', tiles: outlines('counties'), minzoom: REGION_MAX_ZOOM, maxzoom: COUNTY_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
-        [CITY_FOG_SOURCE]: { type: 'vector', tiles: outlines('cities'), minzoom: COUNTY_MAX_ZOOM, maxzoom: OUTLINE_TILE_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
+        // Every level has tiles at every zoom, since a locked one draws at any.
+        ...Object.fromEntries(
+          ([[COUNTRY_FOG_SOURCE, 'countries'], [REGION_FOG_SOURCE, 'regions'], [COUNTY_FOG_SOURCE, 'counties'], [CITY_FOG_SOURCE, 'cities']] as const).map(([id, kind]) => [
+            id,
+            { type: 'vector', tiles: outlines(kind), minzoom: 0, maxzoom: OUTLINE_TILE_MAX_ZOOM, attribution: BOUNDARIES_ATTRIBUTION, promoteId: 'id' },
+          ]),
+        ),
         [HEAT_POINTS_SOURCE]: { type: 'vector', tiles: tilePath('heat-points', tileVersion), minzoom: 0, maxzoom: HEAT_POINTS_MAX_ZOOM },
       },
       layers: [
@@ -251,6 +255,15 @@ export function coverageGroup(dark: boolean, tileVersion: string, lang: string):
       ],
     },
     view: (mode, onDark) => coverageView(mode, onDark),
-    tiers: [{ tier: 'country', below: COUNTRY_MAX_ZOOM }, { tier: 'region', below: REGION_MAX_ZOOM }, { tier: 'city' }],
+    // The apps' level notice names three: whole countries, then whole places, then exact
+    // coverage. An installed app refuses a tier it doesn't know.
+    tiers: [{ tier: 'country', below: COUNTRY_MAX_ZOOM }, { tier: 'region', below: CITY_MAX_ZOOM }, { tier: 'city' }],
+    levels: [
+      { level: 'country', below: COUNTRY_MAX_ZOOM, layers: [COUNTRY_FOG_LAYER, COUNTRY_BORDER_LAYER] },
+      { level: 'region', from: COUNTRY_MAX_ZOOM, below: REGION_MAX_ZOOM, layers: [REGION_FOG_LAYER, REGION_BORDER_LAYER], word: words.region },
+      { level: 'county', from: REGION_MAX_ZOOM, below: COUNTY_MAX_ZOOM, layers: [COUNTY_FOG_LAYER, COUNTY_BORDER_LAYER], word: words.county },
+      { level: 'city', from: COUNTY_MAX_ZOOM, below: CITY_MAX_ZOOM, layers: [CITY_FOG_LAYER, CITY_BORDER_LAYER] },
+      { level: EXACT, from: CITY_MAX_ZOOM, layers: [FOG_LAYER, FOG_EDGE_LAYER] },
+    ],
   };
 }

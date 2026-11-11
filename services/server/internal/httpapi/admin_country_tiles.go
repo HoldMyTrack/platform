@@ -50,7 +50,7 @@ var (
 	realRegion = ` AND x.overture_id NOT LIKE 'country:%'`
 
 	countryLayer = adminLayer{
-		name: "countries", cache: "countries", outlines: "admin_countries", cacheMaxZoom: 3,
+		name: "countries", cache: "countries", outlines: "admin_countries", cacheMaxZoom: outlineMaxZoom,
 		visited: `SELECT m.country_id FROM mine a JOIN activity_country m ON m.activity_id = a.id
 			UNION ` + matchedAbove("country_id", "activity_region", "region_id", "admin_regions") + `
 			UNION ` + matchedAbove("country_id", "activity_county", "county_id", "admin_counties") + `
@@ -58,7 +58,7 @@ var (
 		kind: `'country'`, localType: `NULL`, within: `NULL`,
 	}
 	regionLayer = adminLayer{
-		name: "regions", cache: "regions", outlines: "admin_regions", cacheMaxZoom: 6,
+		name: "regions", cache: "regions", outlines: "admin_regions", cacheMaxZoom: outlineMaxZoom,
 		visited: `SELECT m.region_id FROM mine a JOIN activity_region m ON m.activity_id = a.id
 			UNION ` + matchedAbove("region_id", "activity_county", "county_id", "admin_counties") + `
 			UNION ` + matchedAbove("region_id", "activity_city", "city_id", "admin_cities"),
@@ -67,7 +67,7 @@ var (
 		within:    `CASE WHEN o.overture_id NOT LIKE 'country:%' THEN ` + nameIn("admin_countries", "o.country_id", "") + ` END`,
 	}
 	countyLayer = adminLayer{
-		name: "counties", cache: "counties", outlines: "admin_counties", cacheMaxZoom: 8,
+		name: "counties", cache: "counties", outlines: "admin_counties", cacheMaxZoom: outlineMaxZoom,
 		visited: `SELECT m.county_id FROM mine a JOIN activity_county m ON m.activity_id = a.id
 			UNION ` + matchedAbove("county_id", "activity_city", "city_id", "admin_cities"),
 		kind: `o.kind`, localType: `o.local_type`,
@@ -76,7 +76,7 @@ var (
 			WHEN 'region' THEN ` + nameIn("admin_countries", "o.country_id", "") + ` END`,
 	}
 	cityLayer = adminLayer{
-		name: "cities", cache: "cities", outlines: "admin_cities", cacheMaxZoom: 10,
+		name: "cities", cache: "cities", outlines: "admin_cities", cacheMaxZoom: outlineMaxZoom,
 		visited: `SELECT m.city_id FROM mine a JOIN activity_city m ON m.activity_id = a.id`,
 		kind:    `o.kind`, localType: `o.local_type`,
 		within: `CASE o.kind
@@ -87,12 +87,25 @@ var (
 	}
 )
 
+// minOutlineAtZ0 is the narrowest outline a tile keeps at zoom 0, in Web Mercator metres: 4
+// screen pixels, a 512-pixel tile spanning the world, halving at every zoom in. A narrower one
+// drops out of the tile and its land joins the sea, so a place too small to tell apart is veiled
+// until zoomed in, as a lone track is: with every outline the world's z0 City tile carried
+// 983 KB for the US's towns alone, and at one pixel z4 still took 3 s to build.
+const minOutlineAtZ0 = 4 * 40075016.68557849 / 512
+
+// outlineMaxZoom is the last zoom every level's tiles are made for and kept to: a locked level
+// draws at any zoom, MapLibre enlarging z10's past it, where a tile unit is about 10 m (the
+// layers document's OUTLINE_TILE_MAX_ZOOM).
+const outlineMaxZoom = 10
+
 // seaID is the admin_id of a tile's sea: the tile's frame with every outline in it cut out.
 // Outline ids start at 1.
 const seaID = 0
 
-// liveGeoms draws every outline in tile ($1, $2, $3), transformed and clipped to it, and the
-// tile's sea, so the veil covers the water too. The same for every account, so serveAdminTile
+// liveGeoms draws every outline in tile ($1, $2, $3) at least minOutlineAtZ0 across,
+// simplified to half a pixel, transformed and clipped to it, and the tile's sea, so the veil covers the water and
+// what drops out too. The same for every account, so serveAdminTile
 // keeps it in admin_tile_geoms rather than drawing it on every request: transforming and
 // clipping is most of a tile's cost (docs/PERFORMANCE.md, 2026-10-09 dev, over 80 ms for the
 // world's z0 Country tile), and the sea's union over a second for it.
@@ -108,9 +121,11 @@ func (l adminLayer) liveGeoms() string {
 	return fmt.Sprintf(`
 		WITH outlines AS (
 			SELECT o.id AS admin_id,
-			       ST_AsMVTGeom(ST_Transform(o.geom, 3857), ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS geom
-			FROM %s o
+			       ST_AsMVTGeom(ST_Simplify(ST_Transform(o.geom, 3857), %[2]f / power(2, $1::int) / 8, true),
+			                    ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS geom
+			FROM %[1]s o, ST_Transform(ST_Envelope(o.geom), 3857) e
 			WHERE o.geom && ST_Transform(ST_TileEnvelope($1, $2, $3), 4326)
+			  AND greatest(ST_XMax(e) - ST_XMin(e), ST_YMax(e) - ST_YMin(e)) >= %[2]f / power(2, $1::int)
 		), frame AS (
 			SELECT ST_MakeEnvelope(
 				-2, CASE WHEN $3 = 0 THEN 0 ELSE -2 END,
@@ -123,7 +138,7 @@ func (l adminLayer) liveGeoms() string {
 		)
 		SELECT admin_id, geom FROM outlines
 		UNION ALL
-		SELECT %d, geom FROM sea WHERE NOT ST_IsEmpty(geom)`, l.outlines, seaID)
+		SELECT %[3]d, geom FROM sea WHERE NOT ST_IsEmpty(geom)`, l.outlines, minOutlineAtZ0, seaID)
 }
 
 // tileQuery is one account's tile ($1, $2, $3) of this layer, for account $4, with names in

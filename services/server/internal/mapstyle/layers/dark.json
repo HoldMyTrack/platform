@@ -1,5 +1,5 @@
 {
-  "styleBuild": "e08882b30b69",
+  "styleBuild": "7c9be2f36355",
   "flavor": "dark",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -9,10 +9,57 @@
     },
     {
       "tier": "region",
-      "below": 6
+      "below": 11
     },
     {
       "tier": "city"
+    }
+  ],
+  "levels": [
+    {
+      "level": "country",
+      "below": 3,
+      "layers": [
+        "country-fog-fill",
+        "country-fog-border"
+      ]
+    },
+    {
+      "level": "region",
+      "from": 3,
+      "below": 6,
+      "layers": [
+        "region-fog-fill",
+        "region-fog-border"
+      ],
+      "word": "__HOLDMYTRACK_REGION_WORD__"
+    },
+    {
+      "level": "county",
+      "from": 6,
+      "below": 8,
+      "layers": [
+        "county-fog-fill",
+        "county-fog-border"
+      ],
+      "word": "__HOLDMYTRACK_COUNTY_WORD__"
+    },
+    {
+      "level": "city",
+      "from": 8,
+      "below": 11,
+      "layers": [
+        "city-fog-fill",
+        "city-fog-border"
+      ]
+    },
+    {
+      "level": "exact",
+      "from": 11,
+      "layers": [
+        "fog-veil",
+        "fog-edge"
+      ]
     }
   ],
   "vars": {
@@ -2523,30 +2570,30 @@
           "type": "vector",
           "tiles": "/tiles/v1/countries/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__&lang=__HOLDMYTRACK_LANG__",
           "minzoom": 0,
-          "maxzoom": 3,
+          "maxzoom": 10,
           "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>",
           "promoteId": "id"
         },
         "region-fog": {
           "type": "vector",
           "tiles": "/tiles/v1/regions/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__&lang=__HOLDMYTRACK_LANG__",
-          "minzoom": 3,
-          "maxzoom": 6,
+          "minzoom": 0,
+          "maxzoom": 10,
           "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>",
           "promoteId": "id"
         },
         "county-fog": {
           "type": "vector",
           "tiles": "/tiles/v1/counties/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__&lang=__HOLDMYTRACK_LANG__",
-          "minzoom": 6,
-          "maxzoom": 8,
+          "minzoom": 0,
+          "maxzoom": 10,
           "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>",
           "promoteId": "id"
         },
         "city-fog": {
           "type": "vector",
           "tiles": "/tiles/v1/cities/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__&lang=__HOLDMYTRACK_LANG__",
-          "minzoom": 8,
+          "minzoom": 0,
           "maxzoom": 10,
           "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>",
           "promoteId": "id"

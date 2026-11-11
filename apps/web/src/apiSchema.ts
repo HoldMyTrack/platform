@@ -4082,6 +4082,17 @@ export interface components {
                 tier: "country" | "region" | "city";
                 below?: number;
             }[];
+            /** @description Fog's levels, coarsest first (IMPLEMENTATION.md §4.2.4). Each draws by default where its band holds the zoom, from `from` up to but not including `below`; a client that locks one draws its layers at every zoom instead. */
+            levels: {
+                /** @enum {string} */
+                level: "country" | "region" | "county" | "city" | "exact";
+                from?: number;
+                below?: number;
+                /** @description The layers that draw the level. */
+                layers: string[];
+                /** @description What the account's country calls the level's places, as Overture's local_type (state, department); empty for the generic name. */
+                word?: string;
+            }[];
             /** @description By name, the default of each value a layer reads as ["var", name]; the client binds its own with let. */
             vars: Record<string, never>;
             /** @description The layout and paint the document's layers and the basemap's label layers take in each mode, over satellite imagery or not. */

@@ -67,6 +67,9 @@ const SATELLITE_PLACEHOLDER = {
 const TILE_VERSION_PLACEHOLDER = '__HOLDMYTRACK_TILE_VERSION__';
 /** Must match langPlaceholder in mapstyle.go. */
 const LANG_PLACEHOLDER = '__HOLDMYTRACK_LANG__';
+/** What the account's country calls its regions and counties: filled per account by the server
+ *  (internal/mapstyle's Layers), like the tile version. */
+const WORD_PLACEHOLDERS = { region: '__HOLDMYTRACK_REGION_WORD__', county: '__HOLDMYTRACK_COUNTY_WORD__' };
 
 const here = dirname(fileURLToPath(import.meta.url));
 const outDir = resolvePath(here, '../../../services/server/internal/mapstyle');
@@ -81,7 +84,7 @@ for (const lang of LANGS) {
   }
 }
 for (const flavor of FLAVORS) {
-  docs.set(`layers/${flavor}.json`, buildLayers({ flavor, dark: isDarkFlavor(flavor), tileVersion: TILE_VERSION_PLACEHOLDER, lang: LANG_PLACEHOLDER }));
+  docs.set(`layers/${flavor}.json`, buildLayers({ flavor, dark: isDarkFlavor(flavor), tileVersion: TILE_VERSION_PLACEHOLDER, lang: LANG_PLACEHOLDER, words: WORD_PLACEHOLDERS }));
 }
 
 const hash = createHash('sha256');

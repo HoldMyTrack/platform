@@ -6,6 +6,7 @@ import { spotsGroup } from './spotsGroup.ts';
 import { tracksGroup } from './tracksGroup.ts';
 import type { MapMode } from './mapMode';
 import type { Flavor } from './style';
+import type { FogLevelBand } from './fogLevels';
 
 /**
  * Every layer HoldMyTrack draws over the basemap, as one document per flavor and account
@@ -80,12 +81,21 @@ export interface LayerTier {
   below?: number;
 }
 
+/** A Fog level (fogLevels.ts): its band, the layers that draw it, and what the account's country
+ *  calls its places (a local_type, as the tooltip's kinds: `state`), empty for the generic name. */
+export interface FogLevel extends FogLevelBand {
+  layers: string[];
+  word?: string;
+}
+
 export interface MapLayers {
   /** The build both documents came from (build-style.mjs); empty when built in-process. */
   styleBuild: string;
   flavor: Flavor;
   tileVersion: string;
+  /** The level notice's tiers, which the apps read; the web reads `levels`. */
   tiers: LayerTier[];
+  levels: FogLevel[];
   /** Each run-time value a layer can read, at what it is until the client binds its own. */
   vars: Record<string, unknown>;
   /** `satellite` while satellite imagery is drawn, `plain` otherwise. */
@@ -100,6 +110,7 @@ export interface GroupPart {
   view: (mode: MapMode, dark: boolean, satellite: boolean) => LayerView;
   vars?: Record<string, unknown>;
   tiers?: LayerTier[];
+  levels?: FogLevel[];
 }
 
 /** A source's tile path for `kind` at `tileVersion`. */
@@ -136,19 +147,22 @@ export interface BuildLayersOptions {
   tileVersion: string;
   /** The language the outline tiles name places in (coverageGroup). */
   lang: string;
+  /** What the account's country calls its regions and counties (FogLevel's `word`). */
+  words?: { region: string; county: string };
   styleBuild?: string;
 }
 
 /** The layers document for `flavor` at `tileVersion`. Satellite imagery reads dark under any
  *  flavor, so its views take the dark ones. */
-export function buildLayers({ flavor, dark, tileVersion, lang, styleBuild = '' }: BuildLayersOptions): MapLayers {
-  const parts = [coverageGroup(dark, tileVersion, lang), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(), spotsGroup(tileVersion)];
+export function buildLayers({ flavor, dark, tileVersion, lang, words = { region: '', county: '' }, styleBuild = '' }: BuildLayersOptions): MapLayers {
+  const parts = [coverageGroup(dark, tileVersion, lang, words), bikePathsGroup(flavor, tileVersion), tracksGroup(dark, tileVersion), bandsGroup(), spotsGroup(tileVersion)];
   const views = (base: boolean, satellite: boolean) => Object.fromEntries(MODES.map((mode) => [mode, mergeViews(parts, mode, base, satellite)])) as Record<MapMode, LayerView>;
   return {
     styleBuild,
     flavor,
     tileVersion,
     tiers: parts.flatMap((part) => part.tiers ?? []),
+    levels: parts.flatMap((part) => part.levels ?? []),
     vars: Object.assign({}, ...parts.map((part) => part.vars ?? {})),
     views: { plain: views(dark, false), satellite: views(true, true) },
     groups: parts.map((part) => part.group),
@@ -158,11 +172,6 @@ export function buildLayers({ flavor, dark, tileVersion, lang, styleBuild = '' }
 /** The view to apply for `mode`, over imagery or not. */
 export function viewFor(doc: MapLayers, mode: MapMode, satellite: boolean): LayerView {
   return doc.views[satellite ? 'satellite' : 'plain'][mode];
-}
-
-/** The tier in view at `zoom`: the first whose `below` is past it. */
-export function zoomTier(tiers: readonly LayerTier[], zoom: number): ZoomTier {
-  return tiers.find((t) => t.below === undefined || zoom < t.below)?.tier ?? 'city';
 }
 
 /** Every layer id of `placement`, the basemap layers groups lift included, in paint order. */

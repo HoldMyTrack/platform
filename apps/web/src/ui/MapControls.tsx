@@ -7,6 +7,7 @@ import { BasemapToggle } from './BasemapToggle';
 import { MapModeToggle } from './MapModeToggle';
 import { OverlaysMenu } from './OverlaysMenu';
 import { ShowInArea } from './ShowInArea';
+import { FogLevelControl } from './FogLevelControl';
 import { ZoomLevelNotice } from './ZoomLevelNotice';
 import { lang, t } from '../i18n';
 
@@ -31,8 +32,8 @@ export interface MapControlsProps {
   capped: { shown: number; total: number } | null;
 }
 
-/** The controls over the map's top edge: the mode toggle, Layers, Satellite, their notices, and
- *  the pills under them: places' Show in this area, and the area's cap. */
+/** The controls over the map's top edge: the mode toggle, Layers, Satellite, Fog's level control,
+ *  their notices, and the pills under them: places' Show in this area, and the area's cap. */
 export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, capped }: MapControlsProps) {
   return (
     <>
@@ -57,7 +58,8 @@ export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChang
             <span className="coverage-notice__pill">{t('map.coverage_updating')}</span>
           </div>
         )}
-        {map && <ZoomLevelNotice map={map} mode={mode} />}
+        {map && mode === 'fog' && <FogLevelControl map={map} />}
+        <ZoomLevelNotice mode={mode} />
       </div>
       <div className="map-area">
         {map && <ShowInArea map={map} categories={spotsShown} />}

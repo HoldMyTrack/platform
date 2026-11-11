@@ -80,7 +80,18 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 	flavor := r.URL.Query().Get("flavor")
 	userID := userIDFromContext(r.Context())
 	var mapVersion int64
-	if err := s.pool.QueryRow(r.Context(), `SELECT map_version FROM users WHERE id = $1`, userID).Scan(&mapVersion); err != nil {
+	var words mapstyle.Words
+	// The level control's words: what most of the account's country's regions and counties are
+	// (docs/IMPLEMENTATION.md §4.2.4).
+	if err := s.pool.QueryRow(r.Context(), `
+		SELECT u.map_version,
+		       COALESCE((SELECT mode() WITHIN GROUP (ORDER BY o.local_type)
+		                 FROM admin_regions o JOIN admin_countries c ON c.id = o.country_id
+		                 WHERE c.code = u.country AND o.local_type IS NOT NULL), ''),
+		       COALESCE((SELECT mode() WITHIN GROUP (ORDER BY o.local_type)
+		                 FROM admin_counties o JOIN admin_countries c ON c.id = o.country_id
+		                 WHERE c.code = u.country AND o.kind = 'county' AND o.local_type IS NOT NULL), '')
+		FROM users u WHERE u.id = $1`, userID).Scan(&mapVersion, &words.Region, &words.County); err != nil {
 		s.log.Error("map layers: map version", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -88,7 +99,7 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 	tileVersion := fog.TileVersion(userID, mapVersion)
 
 	lang := requestLang(r)
-	doc, err := mapstyle.Layers(flavor, tileVersion, lang)
+	doc, err := mapstyle.Layers(flavor, tileVersion, lang, words)
 	if errors.Is(err, mapstyle.ErrUnknownFlavor) {
 		writeAPIError(w, "unknown flavor; expected one of "+strings.Join(mapstyle.Flavors(), ", "), http.StatusNotFound)
 		return
@@ -99,7 +110,7 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	etag := mapstyle.LayersETag(flavor, tileVersion, lang)
+	etag := mapstyle.LayersETag(flavor, tileVersion, lang, words)
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "private, no-cache")
 	if match := r.Header.Get("If-None-Match"); match != "" && strings.Contains(match, etag) {

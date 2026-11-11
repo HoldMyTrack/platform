@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 // Plain .mjs, like bbox.test.mjs: Node strips the types from the imported .ts module itself.
 import { CHEVRON_FONT } from '../scripts/chevronFont.mjs';
 import { heatPointsRadius } from '../src/map/coverageGroup.ts';
-import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor, zoomTier } from '../src/map/mapLayers.ts';
+import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor } from '../src/map/mapLayers.ts';
 
 const doc = buildLayers({ flavor: 'light', dark: false, tileVersion: 'abcd1234.7', lang: 'en' });
 const MODES = ['normal', 'fog', 'heatmap'];
@@ -63,9 +63,14 @@ test('each level hands over to the next, and the last to exact coverage', () => 
   const fills = ['country-fog-fill', 'region-fog-fill', 'county-fog-fill', 'city-fog-fill', 'fog-veil'].map((id) => coverage.layers.find((l) => l.id === id));
   assert.equal(fills[0].minzoom, 0);
   for (let i = 1; i < fills.length; i++) assert.equal(fills[i - 1].maxzoom, fills[i].minzoom, fills[i].id);
-  assert.equal(zoomTier(doc.tiers, 2.99), 'country');
-  assert.equal(zoomTier(doc.tiers, 3), 'region');
-  assert.equal(zoomTier([], 3), 'city');
+  assert.deepEqual(doc.levels.map((l) => l.level), ['country', 'region', 'county', 'city', 'exact']);
+  for (const level of doc.levels) {
+    for (const id of level.layers) {
+      const layer = coverage.layers.find((l) => l.id === id);
+      assert.equal(layer.minzoom ?? 0, level.from ?? 0, id);
+      assert.equal(layer.maxzoom, level.below, id);
+    }
+  }
 });
 
 test('vars bind with let, the client value over the default, arrays as literals', () => {

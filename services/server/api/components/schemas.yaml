@@ -483,7 +483,7 @@ MapStylePlain:
 MapLayers:
   type: object
   description: Every layer drawn over the basemap (IMPLEMENTATION.md §4.2, ADR-0048), for the client to apply as it comes. Every view sets the same properties, so switching views never undoes one.
-  required: [styleBuild, flavor, tileVersion, tiers, vars, views, groups]
+  required: [styleBuild, flavor, tileVersion, tiers, levels, vars, views, groups]
   additionalProperties: false
   properties:
     styleBuild: { type: string, description: "The build it came from; a style naming another is fetched again." }
@@ -499,6 +499,19 @@ MapLayers:
         properties:
           tier: { type: string, enum: [country, region, city] }
           below: { type: number }
+    levels:
+      type: array
+      description: Fog's levels, coarsest first (IMPLEMENTATION.md §4.2.4). Each draws by default where its band holds the zoom, from `from` up to but not including `below`; a client that locks one draws its layers at every zoom instead.
+      items:
+        type: object
+        required: [level, layers]
+        additionalProperties: false
+        properties:
+          level: { type: string, enum: [country, region, county, city, exact] }
+          from: { type: number }
+          below: { type: number }
+          layers: { type: array, items: { type: string }, description: The layers that draw the level. }
+          word: { type: string, description: "What the account's country calls the level's places, as Overture's local_type (state, department); empty for the generic name." }
     vars:
       type: object
       description: "By name, the default of each value a layer reads as [\"var\", name]; the client binds its own with let."
