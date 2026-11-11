@@ -9,6 +9,7 @@ LOAD spatial;
 INSTALL httpfs;
 LOAD httpfs;
 SET s3_region = 'us-west-2';
+SET geometry_always_xy = true;
 
 CREATE TABLE area AS
 SELECT division_id,
@@ -21,6 +22,31 @@ FROM read_parquet('s3://overturemaps-us-west-2/release/' || getvariable('release
                   '/theme=divisions/type=division_area/*', hive_partitioning = 1)
 -- The land-clipped outline: a coastal country's other outline runs 12 nautical miles out to sea.
 WHERE subtype IN ('country', 'dependency', 'region') AND is_land;
+
+-- The largest lakes, which the land-clipped outlines run across to the border in the water, as
+-- they run to the coast: Michigan's reached the Canadian border in Lake Huron and Lake Superior,
+-- Ontario's the US one in Lake Erie. Taken out like the sea, so a track on the water counts in no
+-- place. 1,000 km² keeps Lake Geneva and Lake Tahoe part of the land around them; a smaller lake
+-- cut out would be a veiled hole in cleared ground. Intermittent ones are salt pans people cross on
+-- foot (Lake Eyre, Etosha Pan). Simplified to about 20 m first: their shorelines at full detail
+-- would add 14.5 M points to the outlines.
+CREATE TABLE lake AS
+SELECT ST_SimplifyPreserveTopology(ST_MakeValid(geometry), 0.0002) AS geometry
+FROM read_parquet('s3://overturemaps-us-west-2/release/' || getvariable('release') ||
+                  '/theme=base/type=water/*', hive_partitioning = 1)
+-- 1,000 km² is at least 0.08 square degrees of bounding box, which skips most rows unread.
+WHERE (bbox.xmax - bbox.xmin) * (bbox.ymax - bbox.ymin) > 0.08
+  AND subtype IN ('lake', 'reservoir', 'water') AND class NOT IN ('fairway', 'oxbow')
+  AND is_intermittent IS NOT TRUE
+  AND ST_Area_Spheroid(geometry) >= 1e9;
+
+UPDATE area SET geometry = ST_Difference(area.geometry, cut.geometry)
+FROM (
+    SELECT a.division_id, ST_Union_Agg(l.geometry) AS geometry
+    FROM area a JOIN lake l ON ST_Intersects(a.geometry, l.geometry)
+    GROUP BY a.division_id
+) cut
+WHERE area.division_id = cut.division_id;
 
 -- A region with no ISO 3166-2 code that lies mostly inside one that has one is the other side of
 -- a dispute drawn twice (Aksai Chin, Western Sahara, South Tibet), not a region of its own.
