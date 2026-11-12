@@ -66,3 +66,10 @@ export function levelLabelKey(level: string, word: string | undefined, has: (key
   if ((level === 'region' || level === 'county') && has(own)) return own;
   return `map.fog.level.${level}`;
 }
+
+/** How many places of `level` the account has explored (the coverage status's `explored`), or
+ *  null for a level that counts none: exact coverage. */
+export function exploredCount(explored: { countries: number; regions: number; counties: number; cities: number }, level: string): number | null {
+  const by: Record<string, number> = { country: explored.countries, region: explored.regions, county: explored.counties, city: explored.cities };
+  return by[level] ?? null;
+}

@@ -252,3 +252,10 @@ test('every bold track carries the pace bands\' arrows, pointing along it, and n
   const tracksFocused = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-focused');
   assert.deepEqual(arrows.filter, tracksFocused.filter);
 });
+test("over satellite imagery the places' borders are drawn stronger, still under the hovered one", () => {
+  const border = (satellite) => viewFor(doc, 'fog', satellite).paint['county-fog-border'];
+  const resting = (expr) => expr[3];
+  assert.ok(resting(border(true)['line-opacity']) > resting(border(false)['line-opacity']));
+  assert.ok(resting(border(true)['line-width']) > resting(border(false)['line-width']));
+  assert.ok(border(true)['line-opacity'][2] > resting(border(true)['line-opacity']));
+});

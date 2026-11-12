@@ -95,6 +95,9 @@ const LIGHT_BORDER = '#f7f4ec';
 const DARK_BORDER = '#202b25';
 const BORDER_OPACITY = 0.22;
 const BORDER_WIDTH = 0.7;
+/** Over satellite imagery, whose colours vary under every border, a faint border vanishes. */
+const SATELLITE_BORDER_OPACITY = 0.5;
+const SATELLITE_BORDER_WIDTH = 1;
 const HOVER_BORDER_OPACITY = 0.95;
 const HOVER_BORDER_WIDTH = 2.5;
 
@@ -121,7 +124,7 @@ export function heatPointsRadius(): unknown[] {
 }
 
 /** One mode's view over a base that reads `dark`. */
-export function coverageView(mode: MapMode, dark: boolean): LayerView {
+export function coverageView(mode: MapMode, dark: boolean, satellite = false): LayerView {
   const veil = dark ? DARK_VEIL : LIGHT_VEIL;
   const dim = dark ? DARK_DIM : LIGHT_DIM;
   const shown = (on: boolean) => ({ visibility: on ? 'visible' : 'none' });
@@ -135,8 +138,8 @@ export function coverageView(mode: MapMode, dark: boolean): LayerView {
   const border = {
     // On cleared ground the basemap shows, so a visited outline takes the veil's own ink.
     'line-color': ['case', ['get', 'visited'], veil.color, dark ? DARK_BORDER : LIGHT_BORDER],
-    'line-opacity': ['case', HOVERED, HOVER_BORDER_OPACITY, BORDER_OPACITY],
-    'line-width': ['case', HOVERED, HOVER_BORDER_WIDTH, BORDER_WIDTH],
+    'line-opacity': ['case', HOVERED, HOVER_BORDER_OPACITY, satellite ? SATELLITE_BORDER_OPACITY : BORDER_OPACITY],
+    'line-width': ['case', HOVERED, HOVER_BORDER_WIDTH, satellite ? SATELLITE_BORDER_WIDTH : BORDER_WIDTH],
   };
   return {
     layout: {
@@ -254,7 +257,7 @@ export function coverageGroup(dark: boolean, tileVersion: string, lang: string, 
         }),
       ],
     },
-    view: (mode, onDark) => coverageView(mode, onDark),
+    view: (mode, onDark, satellite) => coverageView(mode, onDark, satellite),
     // The apps' level notice names three: whole countries, then whole places, then exact
     // coverage. An installed app refuses a tier it doesn't know.
     tiers: [{ tier: 'country', below: COUNTRY_MAX_ZOOM }, { tier: 'region', below: CITY_MAX_ZOOM }, { tier: 'city' }],

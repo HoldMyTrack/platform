@@ -2460,7 +2460,6 @@ button.activities-panel__story-badge:hover {
 .fog-level-control {
   flex-basis: 100%;
   display: flex;
-  flex-wrap: wrap;
 }
 
 .fog-level-control__group {
@@ -2473,15 +2472,9 @@ button.activities-panel__story-badge:hover {
   pointer-events: auto;
 }
 
-.fog-level-control__explored {
-  flex-basis: 100%;
-  margin: var(--fm-space-4) 0 0;
-  padding: var(--fm-space-4) var(--fm-space-8);
-  max-width: max-content;
-  border-radius: var(--fm-radius-sm);
-  background: rgb(var(--fm-surface-rgb) / 92%);
-  font-size: var(--fm-text-xs);
-  color: var(--fm-ink-muted);
+.fog-level-control__count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
 }
 
 .fog-level-control__btn {

@@ -1,7 +1,7 @@
 // Fog's level control: each level's layers' zoom range, and what the control calls each level.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { levelLabelKey, levelZoomRanges } from '../src/map/fogLevels.ts';
+import { exploredCount, levelLabelKey, levelZoomRanges } from '../src/map/fogLevels.ts';
 
 const levels = [
   { level: 'country', below: 3, layers: ['country-fill', 'country-border'] },
@@ -40,4 +40,9 @@ test("a level is named in its country's words where the catalog has them", () =>
   // Only regions and counties take a country's word: a city is called a city.
   assert.equal(levelLabelKey('city', 'state', has), 'map.fog.level.city');
   assert.equal(levelLabelKey('exact', undefined, has), 'map.fog.level.exact');
+});
+
+test('each level but Exact counts the places explored on it', () => {
+  const explored = { countries: 5, regions: 22, counties: 31, cities: 128 };
+  assert.deepEqual(['country', 'region', 'county', 'city', 'exact'].map((l) => exploredCount(explored, l)), [5, 22, 31, 128, null]);
 });

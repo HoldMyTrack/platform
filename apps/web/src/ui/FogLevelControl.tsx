@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { currentLayerState, currentLayers, updateLayers } from '../map/applyLayers';
-import { fogLevelInView, fogLevelPick, levelLabelKey } from '../map/fogLevels';
-import { hasKey, t, tn } from '../i18n';
+import { exploredCount, fogLevelInView, fogLevelPick, levelLabelKey } from '../map/fogLevels';
+import { hasKey, lang, t } from '../i18n';
 import type { Explored } from '../map/useCoverageRefresh';
 
 /**
@@ -10,8 +10,8 @@ import type { Explored } from '../map/useCoverageRefresh';
  * level of the layers document. The level in view follows the zoom and is marked as it changes;
  * picking one locks it at every zoom, zooming out to its band when zoomed in past it, until it
  * is picked again (fogLevels.ts). The lock lives in the map's layer state, so it
- * outlasts a style swap and a trip out of Fog, and a reload releases it. Under it, how many
- * places of each level the account has explored.
+ * outlasts a style swap and a trip out of Fog, and a reload releases it. Each level but Exact
+ * says how many of its places the account has explored: State (22).
  */
 export function FogLevelControl({ map, explored }: { map: MapLibreMap; explored: Explored | null }) {
   const [zoom, setZoom] = useState(() => map.getZoom());
@@ -50,18 +50,15 @@ export function FogLevelControl({ map, explored }: { map: MapLibreMap; explored:
         {levels.map(({ level, word }) => {
           const key = levelLabelKey(level, word, hasKey);
           const state = level === locked ? ' fog-level-control__btn--locked' : level === inView ? ' fog-level-control__btn--current' : '';
+          const count = explored ? exploredCount(explored, level) : null;
           return (
             <button key={level} type="button" className={`fog-level-control__btn${state}`} aria-pressed={level === locked} onClick={() => pick(level)}>
               {hasKey(key) ? t(key) : level}
+              {count !== null && <span className="fog-level-control__count"> ({count.toLocaleString(lang)})</span>}
             </button>
           );
         })}
       </div>
-      {explored && (
-        <p className="fog-level-control__explored" data-testid="fog-explored">
-          {(['countries', 'regions', 'counties', 'cities'] as const).map((level) => tn(`map.fog.explored.${level}`, explored[level])).join(' · ')}
-        </p>
-      )}
     </div>
   );
 }
