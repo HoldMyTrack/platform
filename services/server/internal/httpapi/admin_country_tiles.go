@@ -26,6 +26,9 @@ type adminLayer struct {
 	// places in it the account has been in and how many there are, and the words its country
 	// calls them by. A stand-in counts nothing, nor does a city, with nothing below it.
 	counts string
+	// mergeBelow is the zoom below which a tile keeps only the places the account has been in,
+	// the rest joining the sea as one veil (mergedGeoms); 0 for a level that never merges.
+	mergeBelow int
 	// cacheMaxZoom is the highest zoom whose tiles are kept in admin_tile_geoms: the source's
 	// maxzoom in the served layers document (apps/web/src/map/coverageGroup.ts). A tile past it, which no client
 	// asks for, is drawn live rather than letting anyone fill the table with tiles nothing
@@ -102,7 +105,7 @@ var (
 			` + countryWord("county_word") + ` AS county_word`,
 	}
 	countyLayer = adminLayer{
-		name: "counties", cache: "counties", outlines: "admin_counties", cacheMaxZoom: outlineMaxZoom,
+		name: "counties", cache: "counties", outlines: "admin_counties", cacheMaxZoom: outlineMaxZoom, mergeBelow: countyMergeBelow,
 		visited: "v_county", kind: `o.kind`, localType: `o.local_type`,
 		within: `CASE o.kind
 			WHEN 'county' THEN COALESCE(` + nameIn("admin_regions", "o.region_id", realRegion) + `, ` + nameIn("admin_countries", "o.country_id", "") + `)
@@ -110,7 +113,7 @@ var (
 		counts: count("cities", "o.kind = 'county'", "v_city", "admin_cities", "x.kind = 'city'", "county_id", "o.cities_total"),
 	}
 	cityLayer = adminLayer{
-		name: "cities", cache: "cities", outlines: "admin_cities", cacheMaxZoom: outlineMaxZoom,
+		name: "cities", cache: "cities", outlines: "admin_cities", cacheMaxZoom: outlineMaxZoom, mergeBelow: cityMergeBelow,
 		visited: "v_city", kind: `o.kind`, localType: `o.local_type`,
 		within: `CASE o.kind
 			WHEN 'city' THEN NULLIF(concat_ws(', ', ` + nameIn("admin_counties", "o.county_id", ` AND x.kind = 'county'`) + `,
@@ -140,6 +143,16 @@ const minOutlineAtZ0 = 4 * 40075016.68557849 / 512
 // layers document's OUTLINE_TILE_MAX_ZOOM).
 const outlineMaxZoom = 10
 
+// countyMergeBelow and cityMergeBelow are the zooms below which a locked County or City level
+// sends one veil for the places the account hasn't been in, a zoom below the level's band
+// (apps/web/src/map/coverageGroup.ts): further out a county or town is a few pixels, and every one
+// of them as its own outline made a z6 tile of central France's towns 673 KB, about 100,000
+// vertices. One zoom out of the band, France's towns are still 265 KB.
+const (
+	countyMergeBelow = 5
+	cityMergeBelow   = 7
+)
+
 // seaID is the admin_id of a tile's sea: the tile's frame with every outline in it cut out.
 // Outline ids start at 1.
 const seaID = 0
@@ -156,13 +169,7 @@ const seaID = 0
 // (an island, a whole place) narrower than minOutlineAtZ0 drops out first: it shares no border it
 // could open, and Canada's islets kept every ring through the coverage.
 //
-// The frame reaches just past the tile, as fog.veilPolygons' does, so no edge falls on the tile's
-// border, where antialiasing drew a seam. At the world's top and bottom it stops at the edge: the
-// globe draws what lies past it over the pole, once per tile in the row. GEOS winds a
-// difference's outer ring the other way from ST_AsMVTGeom, and a vector tile reads that as a hole.
-// The difference adds vertices between the tile's integer grid points, and ST_AsMVT rounds them,
-// which can cross a ring over itself; MapLibre then leaves the polygon unfilled, so the sea is
-// snapped to the grid here, staying valid.
+// The sea is veilOutside the outlines.
 func (l adminLayer) liveGeoms() string {
 	return fmt.Sprintf(`
 		WITH piece AS (
@@ -177,19 +184,26 @@ func (l adminLayer) liveGeoms() string {
 		), outlines AS (
 			SELECT id AS admin_id, ST_SetSRID(ST_CoverageSimplify(geom, %[4]d) OVER (), 3857) AS geom
 			FROM kept WHERE geom IS NOT NULL
-		), frame AS (
-			SELECT ST_MakeEnvelope(
-				-2, CASE WHEN $3 = 0 THEN 0 ELSE -2 END,
-				4098, CASE WHEN $3 = power(2, $1)::int - 1 THEN 4096 ELSE 4098 END, 3857) AS geom
-		), sea AS (
-			SELECT ST_ForcePolygonCCW(ST_CollectionExtract(ST_ReducePrecision(
-			           COALESCE(ST_Difference(f.geom, ST_Union(o.geom)), f.geom), 1), 3)) AS geom
-			FROM frame f LEFT JOIN outlines o ON true
-			GROUP BY f.geom
 		)
 		SELECT admin_id, geom FROM outlines WHERE NOT ST_IsEmpty(geom)
 		UNION ALL
-		SELECT %[3]d, geom FROM sea WHERE NOT ST_IsEmpty(geom)`, l.outlines, minOutlineAtZ0, seaID, pixel, farMaxZoom)
+		SELECT %[3]d, geom FROM (SELECT %[6]s AS geom FROM outlines) sea WHERE NOT ST_IsEmpty(geom)`, l.outlines, minOutlineAtZ0, seaID, pixel, farMaxZoom, veilOutside("outlines"))
+}
+
+// veilOutside is the SQL for an aggregate over `rows`, outlines on tile ($1, $2, $3)'s grid: the
+// tile's frame with them cut out, empty where nothing is left. The frame reaches just past the
+// tile, as fog.veilPolygons' does, so no edge falls on the tile's border, where antialiasing drew
+// a seam; at the world's top and bottom it stops at the edge, as the globe draws what lies past it
+// over the pole, once per tile in the row. GEOS winds a difference's outer ring the other way
+// from ST_AsMVTGeom, and a vector tile reads that as a hole. The difference adds vertices between
+// the grid's points, and ST_AsMVT rounds them, which can cross a ring over itself; MapLibre then
+// leaves the polygon unfilled, so the veil is snapped to the grid here, staying valid.
+func veilOutside(rows string) string {
+	frame := `ST_MakeEnvelope(
+			-2, CASE WHEN $3 = 0 THEN 0 ELSE -2 END,
+			4098, CASE WHEN $3 = power(2, $1)::int - 1 THEN 4096 ELSE 4098 END, 3857)`
+	return fmt.Sprintf(`ST_ForcePolygonCCW(ST_CollectionExtract(ST_ReducePrecision(
+			COALESCE(ST_Difference(%[1]s, ST_Union(%[2]s.geom)), %[1]s), 1), 3))`, frame, rows)
 }
 
 // tileQuery is one account's tile ($1, $2, $3) of this layer, for account $4, with names in
@@ -215,6 +229,9 @@ func (l adminLayer) tileQuery(cached bool) string {
 			SELECT admin_id, geom FROM admin_tile_geoms
 			WHERE layer = '%s' AND zoom = $1 AND tile_x = $2 AND tile_y = $3`, l.cache)
 	}
+	if l.mergeBelow > 0 {
+		geoms = l.mergedGeoms(geoms)
+	}
 	return fmt.Sprintf(`
 		WITH %[1]s
 		SELECT %[2]s,
@@ -232,6 +249,25 @@ func (l adminLayer) tileQuery(cached bool) string {
 		            LEFT JOIN %[7]s o ON o.id = g.admin_id
 		            ORDER BY g.admin_id
 		        ) t)`, visitedCTEs("$4"), built, l.name, geoms, l.kind, seaID, l.outlines, l.localType, l.within, l.visited, counts)
+}
+
+// mergedGeoms is a tile's outlines `geoms` as a level that merges draws them: from mergeBelow up,
+// all of them; below it, only the places the account has been in, and one veil for the rest and
+// the sea, cut from the same outlines, so the cleared places' borders stay where they were. The
+// veil is the sea's feature, which no client names or outlines.
+func (l adminLayer) mergedGeoms(geoms string) string {
+	return fmt.Sprintf(`
+		SELECT admin_id, geom FROM (%[1]s) a WHERE $1 >= %[2]d
+		UNION ALL (
+			WITH mine_here AS (
+				SELECT a.admin_id, a.geom FROM (%[1]s) a
+				WHERE $1 < %[2]d AND a.admin_id IN (SELECT id FROM %[3]s)
+			)
+			SELECT admin_id, geom FROM mine_here
+			UNION ALL
+			SELECT %[4]d, geom FROM (SELECT %[5]s AS geom FROM mine_here HAVING $1 < %[2]d) veil
+			WHERE NOT ST_IsEmpty(geom)
+		)`, geoms, l.mergeBelow, l.visited, seaID, veilOutside("mine_here"))
 }
 
 // adminTileQueries are the two handlers' queries, cached and live, built once.

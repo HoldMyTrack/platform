@@ -204,3 +204,68 @@ func TestAdminTileSeaIsOnTheTileGrid(t *testing.T) {
 		t.Errorf("the sea has %d vertices off the tile grid, valid %v; want none, valid", offGrid, valid)
 	}
 }
+
+// Below a level's merge zoom a tile keeps only the places the account has been in, and one veil
+// for the rest cut from the same outlines: with the cleared places it covers the tile, it overlaps
+// none of them, and from the merge zoom up every place is its own outline again.
+func TestCityTileMergesThePlacesNotBeenInBelowItsBand(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	at := [2]float64{-24.75, -44.5} // lon, lat: open ocean in the South Atlantic
+	stamp := time.Now().UnixNano()
+
+	var country, west, east int
+	if err := d.pool.QueryRow(ctx, `
+		INSERT INTO admin_countries (code, name, geom)
+		VALUES ($1, 'Isle', ST_Multi(ST_MakeEnvelope(-25, -44.6, -24.5, -44.4, 4326))) RETURNING id`,
+		fmt.Sprintf("TM%d", stamp)).Scan(&country); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		name   string
+		x0, x1 float64
+		id     *int
+	}{{"West", -25, -24.75, &west}, {"East", -24.75, -24.5, &east}} {
+		if err := d.pool.QueryRow(ctx, `
+			INSERT INTO admin_cities (overture_id, kind, country_id, name, geom)
+			VALUES ($1, 'city', $2, $3, ST_Multi(ST_MakeEnvelope($4, -44.6, $5, -44.4, 4326))) RETURNING id`,
+			fmt.Sprintf("test-city-%s-%d", c.name, stamp), country, c.name, c.x0, c.x1).Scan(c.id); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Cleanup(func() {
+		ctx := context.Background()
+		d.pool.Exec(ctx, `DELETE FROM admin_cities WHERE id = ANY($1)`, []int{west, east})
+		d.pool.Exec(ctx, `DELETE FROM admin_countries WHERE id = $1`, country)
+	})
+
+	me := d.newAccount(false) // deleted, with its matches, before the outlines above
+	activity := d.newActivity(me, testActivity{activityType: "walking", at: &at})
+	if _, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2)`, activity, west); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, c := range []struct {
+		z    int
+		want []int
+	}{
+		{cityMergeBelow - 1, []int{seaID, west}},
+		{cityMergeBelow, []int{seaID, west, east}},
+	} {
+		x, y := tilemath.LonLatToTile(at[0], at[1], c.z)
+		var ids []int
+		var gap, overlap float64
+		if err := d.pool.QueryRow(ctx, `
+			WITH `+visitedCTEs("$4")+`, g AS (`+cityLayer.mergedGeoms(cityLayer.liveGeoms())+`)
+			SELECT array_agg(admin_id ORDER BY admin_id),
+			       ST_Area(ST_Difference(ST_MakeEnvelope(0, 0, 4096, 4096, 3857), ST_Union(geom))),
+			       COALESCE((SELECT ST_Area(ST_Intersection(s.geom, ST_Union(o.geom)))
+			                 FROM g s JOIN g o ON o.admin_id <> s.admin_id WHERE s.admin_id = $5 GROUP BY s.geom), 0)
+			FROM g`, c.z, x, y, me.id, seaID).Scan(&ids, &gap, &overlap); err != nil {
+			t.Fatalf("z%d: %v", c.z, err)
+		}
+		if fmt.Sprint(ids) != fmt.Sprint(c.want) || gap > 1 || overlap > 1 {
+			t.Errorf("z%d: features %v, want %v; %.0f units of the tile bare, the veil over %.0f of the places", c.z, ids, c.want, gap, overlap)
+		}
+	}
+}
