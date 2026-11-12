@@ -101,6 +101,24 @@ LEFT JOIN region r ON r.key = COALESCE(a.region_key, 'country:' || a.country)
 LEFT JOIN county k ON k.key = a.county_key
 WHERE a.subtype = 'locality';
 
+-- Overture clips coastal regions and counties to the land but no locality, so a town whose
+-- boundary runs out to its islands keeps the sea between: Ust-Luga covered 6,844 km² of the Gulf
+-- of Finland. A town is cut to its region's land, which takes the lakes out too, and only where
+-- it reaches its region's border, found through that border in short pieces so the spatial join
+-- can skip the rest.
+CREATE TABLE region_edge AS
+SELECT key, UNNEST(ST_Dump(ST_Subdivide(ST_Boundary(geometry), 256)), recursive := true) FROM region;
+
+CREATE TABLE city_edge AS
+SELECT DISTINCT c.key, c.region_key, e.key AS edge_key
+FROM city_area c JOIN region_edge e ON ST_Intersects(c.geometry, e.geom);
+
+UPDATE city_area SET geometry = simple(ST_Intersection(city_area.geometry, r.geometry))
+FROM city_edge e, region r
+WHERE e.key = city_area.key AND e.edge_key = city_area.region_key AND r.key = city_area.region_key;
+
+DELETE FROM city_area WHERE geometry IS NULL OR ST_IsEmpty(geometry);
+
 -- The join takes ST_Intersects alone: with the size test beside it DuckDB plans a nested loop
 -- over every pair of cities instead of its spatial join (France's 35,000 cities took 14 minutes
 -- instead of 3 seconds).
