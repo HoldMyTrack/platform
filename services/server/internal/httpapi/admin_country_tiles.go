@@ -161,6 +161,10 @@ const visibleOutline = 2 * pixel
 // Outline ids start at 1.
 const seaID = 0
 
+// exploredID is the admin_id of a merged tile's one feature for every place the account has been
+// in (mergedGeoms), of kind 'explored': a client names no kind it doesn't know, and outlines it.
+const exploredID = -1
+
 // liveGeoms draws every outline in tile ($1, $2, $3), transformed and clipped to it, and the
 // tile's sea, so the veil covers the water and what drops out too. The same for every account, so
 // serveAdminTile keeps it in admin_tile_geoms rather than drawing it on every request:
@@ -242,8 +246,8 @@ func (l adminLayer) tileQuery(cached bool) string {
 		       (SELECT ST_AsMVT(t, '%[3]s', 4096, 'geom')
 		        FROM (
 		            SELECT g.admin_id AS id,
-		                   v.id IS NOT NULL AS visited,
-		                   CASE WHEN g.admin_id = %[6]d THEN 'sea' ELSE %[5]s END AS kind,
+		                   v.id IS NOT NULL OR g.admin_id = %[12]d AS visited,
+		                   CASE g.admin_id WHEN %[6]d THEN 'sea' WHEN %[12]d THEN 'explored' ELSE %[5]s END AS kind,
 		                   %[8]s AS type,
 		                   COALESCE(o.names ->> $5::text, o.name) AS name,
 		                   %[9]s AS within,
@@ -252,18 +256,21 @@ func (l adminLayer) tileQuery(cached bool) string {
 		            LEFT JOIN (SELECT DISTINCT id FROM %[10]s) v ON v.id = g.admin_id
 		            LEFT JOIN %[7]s o ON o.id = g.admin_id
 		            ORDER BY g.admin_id
-		        ) t)`, visitedCTEs("$4"), built, l.name, geoms, l.kind, seaID, l.outlines, l.localType, l.within, l.visited, counts)
+		        ) t)`, visitedCTEs("$4"), built, l.name, geoms, l.kind, seaID, l.outlines, l.localType, l.within, l.visited, counts, exploredID)
 }
 
 // mergedGeoms is a tile's outlines `geoms` as a level that merges draws them: from mergeBelow up,
-// all of them; below it, only the places the account has been in, and one veil for the rest and
-// the sea, cut from the same shapes, so the cleared places' borders meet it exactly. The veil is
-// the sea's feature, which no client names or outlines.
+// all of them; below it, two features, the places the account has been in as one (exploredID)
+// and the rest and the sea as the veil, cut from it, so the two meet exactly. Merging the explored
+// places too keeps a tile's size and cost to the outline of where the account has been, not the
+// count of places in it: one account with three coast-to-coast routes, 4,687 towns, made the
+// world's City tile 303 KB and its County tile 4.4 s, counting each county's towns.
 //
 // Below mergeBelow the places come from their outlines rather than the tile's cache, which drops a
 // piece narrower than minOutlineAtZ0: there that is most towns, and a merged tile exists to show
-// which of them the account has been in. One narrower than visibleOutline is drawn as a dot that
-// wide, round a point inside it.
+// where the account has been. One narrower than visibleOutline is drawn as a dot that wide, round
+// a point inside it. Simplifying the union can cross a hole with its ring, so it is made valid
+// before it is snapped to the grid.
 func (l adminLayer) mergedGeoms(geoms string) string {
 	return fmt.Sprintf(`
 		SELECT admin_id, geom FROM (%[1]s) a WHERE $1 >= %[2]d
@@ -280,21 +287,19 @@ func (l adminLayer) mergedGeoms(geoms string) string {
 				) o
 				WHERE $1 < %[2]d
 			), mine_clip AS MATERIALIZED (
-				SELECT id, m, ST_AsMVTGeom(m, ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS g FROM mine_shape
-			), mine_here AS MATERIALIZED (
-				SELECT admin_id, geom FROM (
-					SELECT id AS admin_id, ST_ReducePrecision(
-					       CASE WHEN g IS NULL OR greatest(ST_XMax(g) - ST_XMin(g), ST_YMax(g) - ST_YMin(g)) < %[6]d
-					            THEN ST_Buffer(ST_AsMVTGeom(ST_PointOnSurface(m), ST_TileEnvelope($1, $2, $3), 4096, 64, true), %[6]d / 2.0, 2)
-					            ELSE g END, 1) AS geom
-					FROM mine_clip
-				) d WHERE geom IS NOT NULL AND NOT ST_IsEmpty(geom)
+				SELECT m, ST_AsMVTGeom(m, ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS g FROM mine_shape
+			), explored AS MATERIALIZED (
+				SELECT ST_ForcePolygonCCW(ST_CollectionExtract(ST_ReducePrecision(ST_MakeValid(ST_SimplifyPreserveTopology(ST_Union(
+				       CASE WHEN g IS NULL OR greatest(ST_XMax(g) - ST_XMin(g), ST_YMax(g) - ST_YMin(g)) < %[6]d
+				            THEN ST_Buffer(ST_AsMVTGeom(ST_PointOnSurface(m), ST_TileEnvelope($1, $2, $3), 4096, 64, true), %[6]d / 2.0, 2)
+				            ELSE g END), %[9]d / 2.0)), 1), 3)) AS geom
+				FROM mine_clip HAVING $1 < %[2]d
 			)
-			SELECT admin_id, geom FROM mine_here
+			SELECT %[8]d, geom FROM explored WHERE geom IS NOT NULL AND NOT ST_IsEmpty(geom)
 			UNION ALL
-			SELECT %[4]d, geom FROM (SELECT %[5]s AS geom FROM mine_here HAVING $1 < %[2]d) veil
+			SELECT %[4]d, geom FROM (SELECT %[5]s AS geom FROM explored HAVING $1 < %[2]d) veil
 			WHERE NOT ST_IsEmpty(geom)
-		)`, geoms, l.mergeBelow, l.visited, seaID, veilOutside("mine_here"), visibleOutline, l.outlines)
+		)`, geoms, l.mergeBelow, l.visited, seaID, veilOutside("explored"), visibleOutline, l.outlines, exploredID, pixel)
 }
 
 // adminTileQueries are the two handlers' queries, cached and live, built once.

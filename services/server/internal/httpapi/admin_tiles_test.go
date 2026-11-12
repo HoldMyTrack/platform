@@ -205,10 +205,10 @@ func TestAdminTileSeaIsOnTheTileGrid(t *testing.T) {
 	}
 }
 
-// Below a level's merge zoom a tile keeps only the places the account has been in, and one veil
-// for the rest cut from the same shapes: with the cleared places it covers the tile, it overlaps
-// none of them, and from the merge zoom up every place is its own outline again. A cleared place
-// too narrow for the tile's cache, as most towns are there, still shows, two pixels wide.
+// Below a level's merge zoom a tile holds two features: where the account has been, as one, and
+// the veil for the rest cut from it, which together cover the tile without overlapping. From the
+// merge zoom up every place is its own outline again. A place the account has been in that is too
+// narrow for the tile's cache, as most towns are there, still clears, two pixels wide.
 func TestCityTileMergesThePlacesNotBeenInBelowItsBand(t *testing.T) {
 	d := newDBTest(t)
 	ctx := context.Background()
@@ -254,27 +254,32 @@ func TestCityTileMergesThePlacesNotBeenInBelowItsBand(t *testing.T) {
 		z    int
 		want []int
 	}{
-		{cityMergeBelow - 1, []int{seaID, west, speck}},
+		{cityMergeBelow - 1, []int{exploredID, seaID}},
 		{cityMergeBelow, []int{seaID, west, east}}, // the speck drops out of the cached outlines
 	} {
 		x, y := tilemath.LonLatToTile(at[0], at[1], c.z)
 		var ids []int
-		var gap, overlap, speckWidth float64
+		var gap, overlap float64
+		var cleared []bool
 		if err := d.pool.QueryRow(ctx, `
-			WITH `+visitedCTEs("$4")+`, g AS (`+cityLayer.mergedGeoms(cityLayer.liveGeoms())+`)
+			WITH `+visitedCTEs("$4")+`, g AS (`+cityLayer.mergedGeoms(cityLayer.liveGeoms())+`),
+			pt AS (
+				SELECT ST_AsMVTGeom(ST_Transform(ST_SetSRID(ST_MakePoint(lon, -44.5), 4326), 3857), ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS p, n
+				FROM (VALUES (-24.875, 1), (-24.625, 2), (-24.4, 3)) AS v(lon, n)
+			)
 			SELECT array_agg(admin_id ORDER BY admin_id),
 			       ST_Area(ST_Difference(ST_MakeEnvelope(0, 0, 4096, 4096, 3857), ST_Union(geom))),
 			       COALESCE((SELECT ST_Area(ST_Intersection(s.geom, ST_Union(o.geom)))
 			                 FROM g s JOIN g o ON o.admin_id <> s.admin_id WHERE s.admin_id = $5 GROUP BY s.geom), 0),
-			       COALESCE(max(ST_XMax(geom) - ST_XMin(geom)) FILTER (WHERE admin_id = $6), 0)
-			FROM g`, c.z, x, y, me.id, seaID, speck).Scan(&ids, &gap, &overlap, &speckWidth); err != nil {
+			       (SELECT array_agg(EXISTS (SELECT 1 FROM g WHERE admin_id = $6 AND ST_Intersects(g.geom, pt.p)) ORDER BY n) FROM pt)
+			FROM g`, c.z, x, y, me.id, seaID, exploredID).Scan(&ids, &gap, &overlap, &cleared); err != nil {
 			t.Fatalf("z%d: %v", c.z, err)
 		}
 		if fmt.Sprint(ids) != fmt.Sprint(c.want) || gap > 1 || overlap > 1 {
 			t.Errorf("z%d: features %v, want %v; %.0f units of the tile bare, the veil over %.0f of the places", c.z, ids, c.want, gap, overlap)
 		}
-		if c.z < cityMergeBelow && speckWidth < visibleOutline {
-			t.Errorf("z%d: the speck is %.0f units wide, want at least %d", c.z, speckWidth, visibleOutline)
+		if c.z < cityMergeBelow && fmt.Sprint(cleared) != "[true false true]" {
+			t.Errorf("z%d: West, East and the speck cleared %v, want [true false true]", c.z, cleared)
 		}
 	}
 }
