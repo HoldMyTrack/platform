@@ -147,8 +147,8 @@ class MapLayersDocTest {
     fun tiersSwitchWhereTheFillsHandOver() {
         assertEquals(ZoomTier.COUNTRY, MapLayersDoc.tier(light.tiers, 2.99))
         assertEquals(ZoomTier.REGION, MapLayersDoc.tier(light.tiers, 3.0))
-        assertEquals(ZoomTier.REGION, MapLayersDoc.tier(light.tiers, 6.99))
-        assertEquals(ZoomTier.CITY, MapLayersDoc.tier(light.tiers, 7.0))
+        assertEquals(ZoomTier.REGION, MapLayersDoc.tier(light.tiers, 10.99))
+        assertEquals(ZoomTier.CITY, MapLayersDoc.tier(light.tiers, 11.0))
         assertEquals(ZoomTier.CITY, MapLayersDoc.tier(emptyList(), 1.0))
     }
 
