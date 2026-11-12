@@ -140,7 +140,7 @@ timezone-boundary-builder's polygons in ≤256-vertex pieces (§4.30); `tz_bound
 
 ### 3.26 `admin_tile_geoms` / `admin_tiles_built`
 
-Country and Region outlines already clipped to each tile, shared by every account and emptied by a reseed. `admin_tiles_built` marks a built tile, an empty one included, so an empty tile isn't rebuilt on every request (§4.2.4).
+Every level's outlines already clipped to each tile, shared by every account and emptied by a reseed; `build-admin-tiles` fills zooms 0–6 again, where a tile spans a country or more and its first request waited seconds. `admin_tiles_built` marks a built tile, an empty one included, so an empty tile isn't rebuilt on every request (§4.2.4). Below a level's merge zoom a tile reads none of it, so none is built.
 
 ### 3.27 `bike_paths`
 

@@ -55,7 +55,7 @@ func main() {
 	slog.SetDefault(log)
 
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-activities|seed-admin-boundaries|seed-timezones|rerender-coverage|import-spots|import-bike-paths|set-admin|stats>")
+		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-activities|seed-admin-boundaries|build-admin-tiles|seed-timezones|rerender-coverage|import-spots|import-bike-paths|set-admin|stats>")
 		os.Exit(2)
 	}
 
@@ -317,6 +317,21 @@ func main() {
 			"skipped_regions", stats.SkippedRegions, "whole_country_regions", stats.WholeCountryRegions,
 			"activity_countries", stats.ActivityCountries, "activity_regions", stats.ActivityRegions,
 			"activity_counties", stats.ActivityCounties, "activity_cities", stats.ActivityCities)
+
+	case "build-admin-tiles":
+		// Fog's outline tiles from zoom 0 to httpapi.PrebuildMaxZoom, which seed-admin-boundaries
+		// leaves empty: run it after a seed, with the site up (docs/DEPLOY.md §6), so no visitor
+		// waits on a tile spanning a continent being built. Safe to re-run: a built tile is skipped.
+		if len(os.Args) > 2 {
+			fmt.Fprintln(os.Stderr, "usage: holdmytrack build-admin-tiles")
+			os.Exit(2)
+		}
+		start := time.Now()
+		if err := httpapi.BuildAdminTiles(ctx, pool, log, httpapi.PrebuildMaxZoom, 4); err != nil {
+			log.Error("build-admin-tiles", "err", err)
+			os.Exit(1)
+		}
+		log.Info("build-admin-tiles: done", "took", time.Since(start).Round(time.Second))
 
 	case "seed-timezones":
 		// The timezone polygons each activity's own zone is looked up in (IMPLEMENTATION.md

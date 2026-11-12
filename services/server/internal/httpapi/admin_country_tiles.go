@@ -3,7 +3,13 @@ package httpapi
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
@@ -234,9 +240,11 @@ func (l adminLayer) tileQuery(cached bool) string {
 	}
 	built, geoms := "true", l.liveGeoms()
 	if cached {
-		built = fmt.Sprintf(`EXISTS (
+		// Below mergeBelow the tile reads no cached outlines, so it never builds them: the world's
+		// z2 City tile took 7 s to build for nothing.
+		built = fmt.Sprintf(`($1 < %d OR EXISTS (
 			SELECT 1 FROM admin_tiles_built
-			WHERE layer = '%s' AND zoom = $1 AND tile_x = $2 AND tile_y = $3)`, l.cache)
+			WHERE layer = '%s' AND zoom = $1 AND tile_x = $2 AND tile_y = $3))`, l.mergeBelow, l.cache)
 		geoms = fmt.Sprintf(`
 			SELECT admin_id, geom FROM admin_tile_geoms
 			WHERE layer = '%s' AND zoom = $1 AND tile_x = $2 AND tile_y = $3`, l.cache)
@@ -349,7 +357,7 @@ func (s *Server) serveAdminTile(w http.ResponseWriter, r *http.Request, l adminL
 	}
 	err := s.pool.QueryRow(ctx, query, z, x, y, userIDFromContext(ctx), lang).Scan(&built, &tile)
 	if err == nil && !built {
-		if err = s.buildAdminTile(ctx, l, z, x, y); err == nil {
+		if err = buildAdminTile(ctx, s.pool, l, z, x, y); err == nil {
 			err = s.pool.QueryRow(ctx, query, z, x, y, userIDFromContext(ctx), lang).Scan(&built, &tile)
 		}
 	}
@@ -372,8 +380,8 @@ func (s *Server) serveAdminTile(w http.ResponseWriter, r *http.Request, l adminL
 // it, then finds it taken and leaves the tile to the first. The outlines are read by a
 // statement after the mark, so a build that waited on seed-admin-boundaries' TRUNCATE draws
 // the new outlines, not the ones it replaced.
-func (s *Server) buildAdminTile(ctx context.Context, l adminLayer, z, x, y int) error {
-	tx, err := s.pool.Begin(ctx)
+func buildAdminTile(ctx context.Context, pool *pgxpool.Pool, l adminLayer, z, x, y int) error {
+	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
@@ -395,4 +403,65 @@ func (s *Server) buildAdminTile(ctx context.Context, l adminLayer, z, x, y int) 
 		return fmt.Errorf("build admin tile: %w", err)
 	}
 	return tx.Commit(ctx)
+}
+
+// PrebuildMaxZoom is the last zoom BuildAdminTiles builds: the zooms where an outline tile spans
+// a country or more and took seconds to build on its first request (the world's z0 Country tile
+// 3.6 s), 5,461 tiles a level.
+const PrebuildMaxZoom = 6
+
+// BuildAdminTiles builds every tile of every level from zoom 0 to maxZoom that a request would
+// build (buildAdminTile), so the first person to look after seed-admin-boundaries emptied the
+// cache waits on none. A tile already built is skipped, and a request building one at the same
+// time waits on the other's mark, so it runs with the site up. Below a level's mergeBelow
+// nothing is built, as a request builds nothing there.
+func BuildAdminTiles(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger, maxZoom, workers int) error {
+	type tile struct {
+		l       adminLayer
+		z, x, y int
+	}
+	for _, l := range []adminLayer{countryLayer, regionLayer, countyLayer, cityLayer} {
+		for z := max(0, l.mergeBelow); z <= min(maxZoom, l.cacheMaxZoom); z++ {
+			start := time.Now()
+			tiles := make(chan tile)
+			var built atomic.Int64
+			var first error
+			var once sync.Once
+			var wg sync.WaitGroup
+			for range workers {
+				wg.Add(1)
+				go func() {
+					defer wg.Done()
+					for t := range tiles {
+						if err := buildAdminTile(ctx, pool, t.l, t.z, t.x, t.y); err != nil {
+							once.Do(func() { first = fmt.Errorf("build %s tile %d/%d/%d: %w", t.l.name, t.z, t.x, t.y, err) })
+							continue
+						}
+						built.Add(1)
+					}
+				}()
+			}
+			n := 1 << z
+		feed:
+			for x := range n {
+				for y := range n {
+					select {
+					case tiles <- tile{l, z, x, y}:
+					case <-ctx.Done():
+						break feed
+					}
+				}
+			}
+			close(tiles)
+			wg.Wait()
+			if first != nil {
+				return first
+			}
+			if err := ctx.Err(); err != nil {
+				return err
+			}
+			log.Info("build-admin-tiles", "layer", l.name, "zoom", z, "tiles", built.Load(), "took", time.Since(start).Round(time.Millisecond))
+		}
+	}
+	return nil
 }

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"testing"
 	"time"
@@ -327,5 +328,56 @@ func TestAdminTileOutlinesAreWoundAsTheSea(t *testing.T) {
 	}
 	if seen < len(ids)+1 {
 		t.Errorf("%d features in the tile, want the %d countries and the sea", seen, len(ids))
+	}
+}
+
+// BuildAdminTiles builds every tile a request would, to its zoom, and none below a level's merge
+// zoom, where a request reads no cached outlines and builds none either.
+func TestBuildAdminTilesBuildsWhatRequestsWould(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	const maxZoom = 1
+	forget := func() {
+		for _, table := range []string{"admin_tiles_built", "admin_tile_geoms"} {
+			if _, err := d.pool.Exec(ctx, `DELETE FROM `+table+` WHERE zoom <= $1`, cityMergeBelow-1); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	forget()
+	t.Cleanup(forget)
+
+	if err := BuildAdminTiles(ctx, d.pool, slog.New(slog.DiscardHandler), maxZoom, 2); err != nil {
+		t.Fatal(err)
+	}
+	built := map[string]int{}
+	rows, err := d.pool.Query(ctx, `SELECT layer, count(*) FROM admin_tiles_built WHERE zoom <= $1 GROUP BY layer`, maxZoom)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for rows.Next() {
+		var layer string
+		var n int
+		if err := rows.Scan(&layer, &n); err != nil {
+			t.Fatal(err)
+		}
+		built[layer] = n
+	}
+	rows.Close()
+	if want := map[string]int{"countries": 5, "regions": 5}; fmt.Sprint(built) != fmt.Sprint(want) {
+		t.Errorf("built %v, want %v: every tile of z0 and z1, none below a merge zoom", built, want)
+	}
+
+	// A County tile far out is served without building one.
+	me := d.newAccount(false)
+	if rec := d.do(me, "GET", "/tiles/v1/counties/0/0/0.mvt", nil); rec.Code != http.StatusOK {
+		t.Fatalf("status %d", rec.Code)
+	}
+	var n int
+	if err := d.pool.QueryRow(ctx, `SELECT count(*) FROM admin_tiles_built WHERE layer = 'counties' AND zoom = 0`).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 0 {
+		t.Errorf("a County tile below its merge zoom was built")
 	}
 }
