@@ -2455,52 +2455,28 @@ button.activities-panel__story-badge:hover {
 /* ZoomLevelNotice.tsx — which level Fog/Heatmap is drawing at, fading out after a few seconds.
    A line of its own in .map-toggles (flex-basis 100%), so it sits under the toggles however many
    rows they wrap to on a narrow screen. Takes no pointer events, like .map-toggles itself. */
-/* FogLevelControl.tsx: Fog's levels, on a line of its own under the toggles. The level in view
-   is tinted as the zoom moves; a locked one takes the mode toggle's active look. */
-.fog-level-control {
-  flex-basis: 100%;
+/* FogLevelMenu.tsx: Fog's button while Fog is on, naming the level in view, and its menu,
+   laid out as the Layers one. */
+.fog-level-menu {
+  position: relative;
   display: flex;
 }
 
-.fog-level-control__group {
-  display: flex;
-  gap: var(--fm-space-2);
-  padding: var(--fm-space-4);
-  border-radius: var(--fm-radius-md);
-  background: rgb(var(--fm-surface-rgb) / 92%);
-  box-shadow: var(--fm-shadow-sm);
-  pointer-events: auto;
+.fog-level-menu__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fm-space-4);
 }
 
-.fog-level-control__count {
-  font-variant-numeric: tabular-nums;
-  opacity: 0.7;
-}
-
-.fog-level-control__btn {
-  border: 0;
-  border-radius: var(--fm-radius-sm);
-  padding: var(--fm-space-6) var(--fm-space-10);
-  font: inherit;
+.fog-level-menu__hint {
+  color: var(--fm-ink-muted);
   font-size: var(--fm-text-sm);
-  color: var(--fm-ink);
-  background: transparent;
-  cursor: pointer;
 }
 
-.fog-level-control__btn:hover {
-  background: rgb(var(--fm-ink-rgb) / 7%);
-}
-
-.fog-level-control__btn--current,
-.fog-level-control__btn--current:hover {
-  background: rgb(var(--fm-ink-rgb) / 14%);
-}
-
-.fog-level-control__btn--locked,
-.fog-level-control__btn--locked:hover {
-  background: var(--fm-ink);
-  color: var(--fm-on-accent);
+.fog-level-menu__count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--fm-ink-muted);
 }
 
 .zoom-level-notice {
