@@ -263,7 +263,8 @@ describe('map flows', () => {
     await page.getByTestId('tour').waitFor();
     assert.equal(await page.evaluate(() => window.__tourMarker), true);
     while ((await page.getByTestId('tour').getAttribute('data-step')) !== 'fog') await page.getByTestId('tour-next').click();
-    assert.equal(await activeMode(), 'Fog');
+    // Fog's button names the level in view too: Fog · State.
+    assert.match(await activeMode(), /^Fog\b/);
     await page.keyboard.press('Escape');
     await page.getByTestId('tour').waitFor({ state: 'detached' });
     assert.equal(await activeMode(), 'Normal');
