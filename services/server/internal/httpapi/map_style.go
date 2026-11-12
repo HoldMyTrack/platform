@@ -116,13 +116,10 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 }
 
 // fogWordsSQL is the SQL for the two columns of mapstyle.Words for the country whose code is
-// country: what most of its regions and counties are, as Overture's local_type, or empty
-// (docs/IMPLEMENTATION.md §4.2.4).
+// country: what most of its regions and counties are, as the seed keeps them (internal/geo).
 func fogWordsSQL(country string) string {
-	mode := func(table, cond string) string {
-		return `COALESCE((SELECT mode() WITHIN GROUP (ORDER BY o.local_type)
-			FROM ` + table + ` o JOIN admin_countries c ON c.id = o.country_id
-			WHERE c.code = ` + country + ` AND o.local_type IS NOT NULL` + cond + `), '')`
+	word := func(col string) string {
+		return `COALESCE((SELECT c.` + col + ` FROM admin_countries c WHERE c.code = ` + country + `), '')`
 	}
-	return mode("admin_regions", "") + ", " + mode("admin_counties", " AND o.kind = 'county'")
+	return word("region_word") + ", " + word("county_word")
 }

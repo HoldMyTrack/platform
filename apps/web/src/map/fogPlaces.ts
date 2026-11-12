@@ -1,5 +1,5 @@
 import { Popup, type Map as MapLibreMap, type MapGeoJSONFeature } from 'maplibre-gl';
-import { hasKey, t } from '../i18n';
+import { hasKey, t, tn } from '../i18n';
 import { PLACE_FILL_LAYERS } from './coverageGroup';
 import { placeLabel } from './fogPlaceLabel';
 import { mapTapsActive } from './mapTaps';
@@ -54,7 +54,9 @@ export function attachFogPlaces(map: MapLibreMap): void {
     setHover({ source: feature.source, sourceLayer: feature.sourceLayer, id: feature.id });
     name.textContent = label.name;
     detail.textContent = [t(label.kindKey), label.within].filter(Boolean).join(' · ');
-    state.textContent = t(label.visitedKey);
+    // Explored, and of each level below, how many of its places in it are: 34 of 88 counties.
+    const counts = label.counts.map((c) => tn(c.key as Parameters<typeof tn>[0], c.total, { explored: c.explored }));
+    state.textContent = label.visitedKey === 'map.fog.place.visited' ? [t(label.visitedKey), ...counts].join(' · ') : t(label.visitedKey);
     popup.setLngLat(e.lngLat);
     if (!popup.isOpen()) popup.addTo(map);
   });

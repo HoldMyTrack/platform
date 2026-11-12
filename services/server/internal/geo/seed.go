@@ -198,6 +198,27 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			INSERT INTO admin_city_parts (city_id, geom)
 			SELECT k.id, (ST_Dump(ST_Subdivide(b.geom, 256))).geom
 			FROM boundary b JOIN admin_cities k ON k.overture_id = b.key WHERE b.level = 'city'`, nil},
+		// The places each place above holds, its stand-ins aside, and what most of a country's
+		// regions and counties are: Fog's tooltip and level control read them.
+		{"totals", `
+			UPDATE admin_counties k SET cities_total = n
+			FROM (SELECT county_id, count(*) AS n FROM admin_cities WHERE kind = 'city' GROUP BY county_id) c
+			WHERE c.county_id = k.id`, nil},
+		{"", `
+			UPDATE admin_regions r SET counties_total = COALESCE(k.n, 0), cities_total = COALESCE(c.n, 0)
+			FROM admin_regions r2
+			LEFT JOIN (SELECT region_id, count(*) AS n FROM admin_counties WHERE kind = 'county' GROUP BY region_id) k ON k.region_id = r2.id
+			LEFT JOIN (SELECT region_id, count(*) AS n FROM admin_cities WHERE kind = 'city' GROUP BY region_id) c ON c.region_id = r2.id
+			WHERE r2.id = r.id`, nil},
+		{"", `
+			UPDATE admin_countries o SET
+				regions_total = (SELECT count(*) FROM admin_regions r WHERE r.country_id = o.id AND r.overture_id NOT LIKE 'country:%'),
+				counties_total = (SELECT count(*) FROM admin_counties k WHERE k.country_id = o.id AND k.kind = 'county'),
+				cities_total = (SELECT count(*) FROM admin_cities c WHERE c.country_id = o.id AND c.kind = 'city'),
+				region_word = COALESCE((SELECT mode() WITHIN GROUP (ORDER BY r.local_type) FROM admin_regions r
+					WHERE r.country_id = o.id AND r.local_type IS NOT NULL), ''),
+				county_word = COALESCE((SELECT mode() WITHIN GROUP (ORDER BY k.local_type) FROM admin_counties k
+					WHERE k.country_id = o.id AND k.kind = 'county' AND k.local_type IS NOT NULL), '')`, nil},
 		{"", `ANALYZE admin_country_parts, admin_region_parts, admin_county_parts, admin_city_parts`, nil},
 		{"activity countries", `
 			INSERT INTO activity_country (activity_id, country_id)

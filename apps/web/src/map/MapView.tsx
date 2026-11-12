@@ -238,7 +238,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   // Fog and Heatmap are re-rendered by queued jobs, so after an upload or delete this waits for the
   // account's jobs to drain and then refetches both (useCoverageRefresh.ts). `coverageRendering`
   // drives the notice that they may be incomplete.
-  const { watch: watchCoverage, rendering: coverageRendering } = useCoverageRefresh(map);
+  const { watch: watchCoverage, rendering: coverageRendering, explored } = useCoverageRefresh(map);
   const refresh = useDataRefresh(map, {
     tracksQuery,
     reloadActivities,
@@ -443,6 +443,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               flavor={flavor}
               satelliteAvailable={satelliteAvailable}
               coverageRendering={coverageRendering}
+              explored={explored}
               basemapUnreachable={basemap === 'unreachable'}
               satelliteFailed={satellite && imagery === 'failed'}
               spotsShown={spotsShown}

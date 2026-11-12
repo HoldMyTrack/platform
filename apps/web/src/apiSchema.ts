@@ -3365,6 +3365,13 @@ export interface paths {
                             version: number;
                             /** @description What every tile request sends as `cv` to have the tile cached; it changes with version. */
                             tile_version: string;
+                            /** @description How many places of each Fog level the account has been in, as the map clears them (docs/SPEC.md FR-4.2); changes with version. */
+                            explored: {
+                                countries: number;
+                                regions: number;
+                                counties: number;
+                                cities: number;
+                            };
                         };
                     };
                 };

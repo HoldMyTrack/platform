@@ -15,16 +15,17 @@ type adminLayer struct {
 	name     string
 	cache    string
 	outlines string
-	// visited is the SQL for the ids of this level's places the account has been in, over its
-	// activities as `mine`: its own matches (internal/geo.MatchActivity, at ingest, never at
-	// request time), and the places above those matched on a level below, so a cleared city
-	// never sits in a fogged county.
+	// visited names the visitedCTEs set of this level's places the account has been in.
 	visited string
 	// kind, localType and within are the SQL for what the tooltip says over the outlines table
 	// as o, with names in language $5: what the place is (on the County and City levels a stand-in
 	// is the region or county it comes from), its kind in its own country's words, and the
 	// places it lies in.
 	kind, localType, within string
+	// counts is the SQL for the columns the tooltip counts with, over o: of each level below, the
+	// places in it the account has been in and how many there are, and the words its country
+	// calls them by. A stand-in counts nothing, nor does a city, with nothing below it.
+	counts string
 	// cacheMaxZoom is the highest zoom whose tiles are kept in admin_tile_geoms: the source's
 	// maxzoom in the served layers document (apps/web/src/map/coverageGroup.ts). A tile past it, which no client
 	// asks for, is drawn live rather than letting anyone fill the table with tiles nothing
@@ -32,11 +33,29 @@ type adminLayer struct {
 	cacheMaxZoom int
 }
 
-// matchedAbove is the SQL for the column `above` of the outlines of every place matched on the
-// level whose matches are `matches` (by `id`) and outlines `outlines`.
-func matchedAbove(above, matches, id, outlines string) string {
-	return fmt.Sprintf(`SELECT o.%s FROM mine a JOIN %s m ON m.activity_id = a.id JOIN %s o ON o.id = m.%s`,
-		above, matches, outlines, id)
+// visitedCTEs are the places of every level the account `user` (a parameter, $4 in a tile) has
+// been in, from its activities that aren't Pending: each level's own matches (internal/geo.MatchActivity, at ingest, never at
+// request time), and the places above those visited on a level below, through the parent ids,
+// so a cleared city never sits in a fogged county and the counts agree with the map.
+func visitedCTEs(user string) string {
+	return `
+	mine AS MATERIALIZED (
+		SELECT id FROM activities WHERE user_id = ` + user + ` AND NOT edit_pending
+	), v_city AS MATERIALIZED (
+		SELECT DISTINCT m.city_id AS id FROM mine a JOIN activity_city m ON m.activity_id = a.id
+	), v_county AS MATERIALIZED (
+		SELECT m.county_id AS id FROM mine a JOIN activity_county m ON m.activity_id = a.id
+		UNION SELECT c.county_id FROM v_city v JOIN admin_cities c ON c.id = v.id WHERE c.county_id IS NOT NULL
+	), v_region AS MATERIALIZED (
+		SELECT m.region_id AS id FROM mine a JOIN activity_region m ON m.activity_id = a.id
+		UNION SELECT k.region_id FROM v_county v JOIN admin_counties k ON k.id = v.id WHERE k.region_id IS NOT NULL
+		UNION SELECT c.region_id FROM v_city v JOIN admin_cities c ON c.id = v.id WHERE c.region_id IS NOT NULL
+	), v_country AS MATERIALIZED (
+		SELECT m.country_id AS id FROM mine a JOIN activity_country m ON m.activity_id = a.id
+		UNION SELECT r.country_id FROM v_region v JOIN admin_regions r ON r.id = v.id
+		UNION SELECT k.country_id FROM v_county v JOIN admin_counties k ON k.id = v.id
+		UNION SELECT c.country_id FROM v_city v JOIN admin_cities c ON c.id = v.id
+	)`
 }
 
 // nameIn is the SQL for the name of the row of table whose id is idCol, in language $5, or NULL.
@@ -44,41 +63,55 @@ func nameIn(table, idCol, cond string) string {
 	return fmt.Sprintf(`(SELECT COALESCE(x.names ->> $5::text, x.name) FROM %s x WHERE x.id = %s%s)`, table, idCol, cond)
 }
 
+// count is the SQL for the columns `name` and `name_total`: how many of the places in o of a level
+// below (`table`, its own places by `own`, under o by `parent`) are in `visited`, and how many
+// there are (`total`), when o is its level's own place (`when`) with any.
+func count(name, when, visited, table, own, parent, total string) string {
+	return fmt.Sprintf(`CASE WHEN %[2]s AND %[7]s > 0 THEN (SELECT count(*) FROM %[3]s v JOIN %[4]s x ON x.id = v.id
+			WHERE x.%[6]s = o.id AND %[5]s) END AS %[1]s,
+		CASE WHEN %[2]s AND %[7]s > 0 THEN %[7]s END AS %[1]s_total`, name, when, visited, table, own, parent, total)
+}
+
+// countryWord is the SQL for what o's country calls its places of a level, from its `col`.
+func countryWord(col string) string {
+	return `(SELECT NULLIF(x.` + col + `, '') FROM admin_countries x WHERE x.id = o.country_id)`
+}
+
 var (
 	// A region standing in for a country without regions is named for the country; the chain
 	// skips it.
 	realRegion = ` AND x.overture_id NOT LIKE 'country:%'`
+	ownRegion  = `x.overture_id NOT LIKE 'country:%'`
 
 	countryLayer = adminLayer{
 		name: "countries", cache: "countries", outlines: "admin_countries", cacheMaxZoom: outlineMaxZoom,
-		visited: `SELECT m.country_id FROM mine a JOIN activity_country m ON m.activity_id = a.id
-			UNION ` + matchedAbove("country_id", "activity_region", "region_id", "admin_regions") + `
-			UNION ` + matchedAbove("country_id", "activity_county", "county_id", "admin_counties") + `
-			UNION ` + matchedAbove("country_id", "activity_city", "city_id", "admin_cities"),
-		kind: `'country'`, localType: `NULL`, within: `NULL`,
+		visited: "v_country", kind: `'country'`, localType: `NULL`, within: `NULL`,
+		counts: count("regions", "true", "v_region", "admin_regions", ownRegion, "country_id", "o.regions_total") + `,
+			` + count("counties", "true", "v_county", "admin_counties", "x.kind = 'county'", "country_id", "o.counties_total") + `,
+			` + count("cities", "true", "v_city", "admin_cities", "x.kind = 'city'", "country_id", "o.cities_total") + `,
+			NULLIF(o.region_word, '') AS region_word, NULLIF(o.county_word, '') AS county_word`,
 	}
 	regionLayer = adminLayer{
 		name: "regions", cache: "regions", outlines: "admin_regions", cacheMaxZoom: outlineMaxZoom,
-		visited: `SELECT m.region_id FROM mine a JOIN activity_region m ON m.activity_id = a.id
-			UNION ` + matchedAbove("region_id", "activity_county", "county_id", "admin_counties") + `
-			UNION ` + matchedAbove("region_id", "activity_city", "city_id", "admin_cities"),
+		visited:   "v_region",
 		kind:      `CASE WHEN o.overture_id LIKE 'country:%' THEN 'country' ELSE 'region' END`,
 		localType: `o.local_type`,
 		within:    `CASE WHEN o.overture_id NOT LIKE 'country:%' THEN ` + nameIn("admin_countries", "o.country_id", "") + ` END`,
+		counts: count("counties", "true", "v_county", "admin_counties", "x.kind = 'county'", "region_id", "o.counties_total") + `,
+			` + count("cities", "true", "v_city", "admin_cities", "x.kind = 'city'", "region_id", "o.cities_total") + `,
+			` + countryWord("county_word") + ` AS county_word`,
 	}
 	countyLayer = adminLayer{
 		name: "counties", cache: "counties", outlines: "admin_counties", cacheMaxZoom: outlineMaxZoom,
-		visited: `SELECT m.county_id FROM mine a JOIN activity_county m ON m.activity_id = a.id
-			UNION ` + matchedAbove("county_id", "activity_city", "city_id", "admin_cities"),
-		kind: `o.kind`, localType: `o.local_type`,
+		visited: "v_county", kind: `o.kind`, localType: `o.local_type`,
 		within: `CASE o.kind
 			WHEN 'county' THEN COALESCE(` + nameIn("admin_regions", "o.region_id", realRegion) + `, ` + nameIn("admin_countries", "o.country_id", "") + `)
 			WHEN 'region' THEN ` + nameIn("admin_countries", "o.country_id", "") + ` END`,
+		counts: count("cities", "o.kind = 'county'", "v_city", "admin_cities", "x.kind = 'city'", "county_id", "o.cities_total"),
 	}
 	cityLayer = adminLayer{
 		name: "cities", cache: "cities", outlines: "admin_cities", cacheMaxZoom: outlineMaxZoom,
-		visited: `SELECT m.city_id FROM mine a JOIN activity_city m ON m.activity_id = a.id`,
-		kind:    `o.kind`, localType: `o.local_type`,
+		visited: "v_city", kind: `o.kind`, localType: `o.local_type`,
 		within: `CASE o.kind
 			WHEN 'city' THEN NULLIF(concat_ws(', ', ` + nameIn("admin_counties", "o.county_id", ` AND x.kind = 'county'`) + `,
 				COALESCE(` + nameIn("admin_regions", "o.region_id", realRegion) + `, ` + nameIn("admin_countries", "o.country_id", "") + `)), '')
@@ -143,7 +176,7 @@ func (l adminLayer) liveGeoms() string {
 
 // tileQuery is one account's tile ($1, $2, $3) of this layer, for account $4, with names in
 // language $5: every outline, whether the account has been in it (`visited`), its kind, type,
-// name and the places it lies in (`within`), and the sea. Fog veils the sea and the unvisited,
+// name, the places it lies in (`within`) and its counts, and the sea. Fog veils the sea and the unvisited,
 // draws every outline's border, and names the one under the pointer from the rest.
 //
 // visited starts from the account's own activities, so its cost is the account's history,
@@ -151,6 +184,10 @@ func (l adminLayer) liveGeoms() string {
 // the tile is in admin_tile_geoms yet (always true for a live one) and the tile itself, its
 // features in outline order whichever way it was drawn.
 func (l adminLayer) tileQuery(cached bool) string {
+	counts := ""
+	if l.counts != "" {
+		counts = l.counts + ",\n\t\t                   "
+	}
 	built, geoms := "true", l.liveGeoms()
 	if cached {
 		built = fmt.Sprintf(`EXISTS (
@@ -161,11 +198,7 @@ func (l adminLayer) tileQuery(cached bool) string {
 			WHERE layer = '%s' AND zoom = $1 AND tile_x = $2 AND tile_y = $3`, l.cache)
 	}
 	return fmt.Sprintf(`
-		WITH mine AS MATERIALIZED (
-			SELECT id FROM activities WHERE user_id = $4 AND NOT edit_pending
-		), visited AS MATERIALIZED (
-			%[1]s
-		)
+		WITH %[1]s
 		SELECT %[2]s,
 		       (SELECT ST_AsMVT(t, '%[3]s', 4096, 'geom')
 		        FROM (
@@ -175,12 +208,12 @@ func (l adminLayer) tileQuery(cached bool) string {
 		                   %[8]s AS type,
 		                   COALESCE(o.names ->> $5::text, o.name) AS name,
 		                   %[9]s AS within,
-		                   g.geom
+		                   %[11]sg.geom
 		            FROM (%[4]s) g
-		            LEFT JOIN (SELECT DISTINCT * FROM visited) v(id) ON v.id = g.admin_id
+		            LEFT JOIN (SELECT DISTINCT id FROM %[10]s) v ON v.id = g.admin_id
 		            LEFT JOIN %[7]s o ON o.id = g.admin_id
 		            ORDER BY g.admin_id
-		        ) t)`, l.visited, built, l.name, geoms, l.kind, seaID, l.outlines, l.localType, l.within)
+		        ) t)`, visitedCTEs("$4"), built, l.name, geoms, l.kind, seaID, l.outlines, l.localType, l.within, l.visited, counts)
 }
 
 // adminTileQueries are the two handlers' queries, cached and live, built once.

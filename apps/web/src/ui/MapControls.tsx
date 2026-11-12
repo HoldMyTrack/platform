@@ -3,6 +3,7 @@ import type { MapMode } from '../map/mapMode';
 import type { Overlays } from '../map/overlays';
 import type { SpotCategory } from '../map/spots';
 import type { Flavor } from '../map/style';
+import type { Explored } from '../map/useCoverageRefresh';
 import { BasemapToggle } from './BasemapToggle';
 import { MapModeToggle } from './MapModeToggle';
 import { OverlaysMenu } from './OverlaysMenu';
@@ -21,6 +22,8 @@ export interface MapControlsProps {
   satelliteAvailable: boolean;
   /** Fog and Heatmap are being re-rendered: their notice shows under the toggles. */
   coverageRendering: boolean;
+  /** The places of each Fog level explored, which Fog's level control counts. */
+  explored: Explored | null;
   /** The basemap can't be reached (basemapStatus.ts): its notice shows under the toggles. */
   basemapUnreachable: boolean;
   /** Satellite is on and its imagery failed to load (satelliteStatus.ts): its notice shows under the toggles. */
@@ -34,7 +37,7 @@ export interface MapControlsProps {
 
 /** The controls over the map's top edge: the mode toggle, Layers, Satellite, Fog's level control,
  *  their notices, and the pills under them: places' Show in this area, and the area's cap. */
-export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, capped }: MapControlsProps) {
+export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, explored, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, capped }: MapControlsProps) {
   return (
     <>
       <div className="map-toggles">
@@ -58,7 +61,7 @@ export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChang
             <span className="coverage-notice__pill">{t('map.coverage_updating')}</span>
           </div>
         )}
-        {map && mode === 'fog' && <FogLevelControl map={map} />}
+        {map && mode === 'fog' && <FogLevelControl map={map} explored={explored} />}
         <ZoomLevelNotice mode={mode} />
       </div>
       <div className="map-area">

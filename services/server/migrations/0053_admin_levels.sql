@@ -3,8 +3,16 @@
 -- its level, or a place above standing in for that level's land it leaves uncovered (kind). Every
 -- outline gets its names in the app's languages other than English, and the kind of place it is
 -- in its own country's words (Overture's local_type).
-ALTER TABLE admin_countries ADD COLUMN names jsonb NOT NULL DEFAULT '{}';
-ALTER TABLE admin_regions ADD COLUMN names jsonb NOT NULL DEFAULT '{}', ADD COLUMN local_type text;
+--
+-- A place above counts the places of each level below that lie in it, stand-ins aside, and a
+-- country keeps what most of its regions and counties are (its words), for Fog's tooltip and
+-- level control.
+ALTER TABLE admin_countries ADD COLUMN names jsonb NOT NULL DEFAULT '{}',
+    ADD COLUMN region_word text NOT NULL DEFAULT '', ADD COLUMN county_word text NOT NULL DEFAULT '',
+    ADD COLUMN regions_total integer NOT NULL DEFAULT 0, ADD COLUMN counties_total integer NOT NULL DEFAULT 0,
+    ADD COLUMN cities_total integer NOT NULL DEFAULT 0;
+ALTER TABLE admin_regions ADD COLUMN names jsonb NOT NULL DEFAULT '{}', ADD COLUMN local_type text,
+    ADD COLUMN counties_total integer NOT NULL DEFAULT 0, ADD COLUMN cities_total integer NOT NULL DEFAULT 0;
 
 CREATE TABLE admin_counties (
     id serial PRIMARY KEY,
@@ -15,6 +23,7 @@ CREATE TABLE admin_counties (
     local_type text,
     name text NOT NULL,
     names jsonb NOT NULL DEFAULT '{}',
+    cities_total integer NOT NULL DEFAULT 0,
     geom geometry(MultiPolygon, 4326) NOT NULL
 );
 CREATE INDEX idx_admin_counties_geom ON admin_counties USING gist (geom);

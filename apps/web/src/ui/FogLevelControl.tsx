@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { currentLayerState, currentLayers, updateLayers } from '../map/applyLayers';
 import { fogLevelInView, fogLevelPick, levelLabelKey } from '../map/fogLevels';
-import { hasKey, t } from '../i18n';
+import { hasKey, t, tn } from '../i18n';
+import type { Explored } from '../map/useCoverageRefresh';
 
 /**
  * Fog's level control (docs/SPEC.md FR-4.2): "Country | State | County | City | Exact", one per
  * level of the layers document. The level in view follows the zoom and is marked as it changes;
  * picking one locks it at every zoom, zooming out to its band when zoomed in past it, until it
  * is picked again (fogLevels.ts). The lock lives in the map's layer state, so it
- * outlasts a style swap and a trip out of Fog, and a reload releases it.
+ * outlasts a style swap and a trip out of Fog, and a reload releases it. Under it, how many
+ * places of each level the account has explored.
  */
-export function FogLevelControl({ map }: { map: MapLibreMap }) {
+export function FogLevelControl({ map, explored }: { map: MapLibreMap; explored: Explored | null }) {
   const [zoom, setZoom] = useState(() => map.getZoom());
   const [locked, setLocked] = useState<string | null>(() => currentLayerState(map).fogLevel ?? null);
   // The document arrives after the map: redraw once it's applied.
@@ -55,6 +57,11 @@ export function FogLevelControl({ map }: { map: MapLibreMap }) {
           );
         })}
       </div>
+      {explored && (
+        <p className="fog-level-control__explored" data-testid="fog-explored">
+          {(['countries', 'regions', 'counties', 'cities'] as const).map((level) => tn(`map.fog.explored.${level}`, explored[level])).join(' · ')}
+        </p>
+      )}
     </div>
   );
 }

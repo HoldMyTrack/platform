@@ -60,7 +60,7 @@ coverage_status:
           application/json:
             schema:
               type: object
-              required: [rendering, version, tile_version]
+              required: [rendering, version, tile_version, explored]
               additionalProperties: false
               properties:
                 rendering: { type: boolean }
@@ -70,6 +70,16 @@ coverage_status:
                 tile_version:
                   type: string
                   description: What every tile request sends as `cv` to have the tile cached; it changes with version.
+                explored:
+                  type: object
+                  description: How many places of each Fog level the account has been in, as the map clears them (docs/SPEC.md FR-4.2); changes with version.
+                  required: [countries, regions, counties, cities]
+                  additionalProperties: false
+                  properties:
+                    countries: { type: integer }
+                    regions: { type: integer }
+                    counties: { type: integer }
+                    cities: { type: integer }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
 map_imagery:

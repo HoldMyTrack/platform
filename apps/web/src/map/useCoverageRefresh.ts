@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { getCoverageStatus } from '../api';
+import { getCoverageStatus, type CoverageStatus } from '../api';
 import { coveragePollDelay } from './coveragePoll';
 import { getTileVersion, setTileVersion } from './coverageVersion';
 import { applyLayers, currentLayerState, currentLayers } from './applyLayers';
@@ -37,11 +37,17 @@ export interface CoverageRefresh {
   watch: (onDone?: () => void) => void;
   /** Whether the latest status read found coverage still being worked on. */
   rendering: boolean;
+  /** The places of each Fog level the account has been in, as of the latest read; null before
+   *  the first. */
+  explored: Explored | null;
 }
+
+export type Explored = CoverageStatus['explored'];
 
 export function useCoverageRefresh(map: MapLibreMap | null): CoverageRefresh {
   const [generation, setGeneration] = useState(0);
   const [rendering, setRendering] = useState(false);
+  const [explored, setExplored] = useState<Explored | null>(null);
   const onDoneRef = useRef<(() => void) | undefined>(undefined);
   // The status version the layers were last refetched at (or first seen at) — shared across
   // watches, since a restarted watch is still showing the same tiles.
@@ -62,9 +68,10 @@ export function useCoverageRefresh(map: MapLibreMap | null): CoverageRefresh {
     };
     const check = () => {
       getCoverageStatus(controller.signal)
-        .then(({ rendering: busy, version, tile_version: tileVersion }) => {
+        .then(({ rendering: busy, version, tile_version: tileVersion, explored: places }) => {
           polls += 1;
           setRendering(busy);
+          setExplored(places);
           if (busy) {
             if (shownVersionRef.current === null) shownVersionRef.current = version;
             else if (version !== shownVersionRef.current) refetch(version, tileVersion);
@@ -100,5 +107,5 @@ export function useCoverageRefresh(map: MapLibreMap | null): CoverageRefresh {
     if (onDone) onDoneRef.current = onDone;
     setGeneration((g) => g + 1);
   }, []);
-  return { watch, rendering };
+  return { watch, rendering, explored };
 }
