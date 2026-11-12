@@ -57,7 +57,18 @@
 		reverse_proxy api:8080
 	}
 
-	encode gzip
+	# Caddy's default list of types to compress leaves out vector tiles, the largest responses the
+	# app sends (a Fog tile is up to 670 KB, gzip takes 40–45% off), so the list is spelled out.
+	encode gzip {
+		match {
+			header Content-Type text/*
+			header Content-Type application/json*
+			header Content-Type application/javascript*
+			header Content-Type image/svg+xml*
+			header Content-Type application/wasm*
+			header Content-Type application/vnd.mapbox-vector-tile
+		}
+	}
 }
 
 # Every other name that should land on the app — www, plus any retired domains listed in
