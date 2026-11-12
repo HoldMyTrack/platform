@@ -141,19 +141,19 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			       COALESCE(NULLIF(names, ''), '{}')::jsonb AS names,
 			       ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(geom::geometry, 4326)), 3)) AS geom
 			FROM boundary_csv`, nil},
-		{"", `CREATE INDEX ON boundary (level, key)`, nil},
-		{"old matches", `DELETE FROM activity_city`, nil},
-		{"", `DELETE FROM activity_county`, nil},
-		{"", `DELETE FROM activity_region`, nil},
-		{"", `DELETE FROM activity_country`, nil},
-		{"old outlines", `DELETE FROM admin_cities`, nil},
-		{"", `DELETE FROM admin_counties`, nil},
-		{"", `DELETE FROM admin_regions`, nil},
-		{"", `DELETE FROM admin_countries`, nil},
+		{"outline index", `CREATE INDEX ON boundary (level, key)`, nil},
+		{"old city matches", `DELETE FROM activity_city`, nil},
+		{"old county matches", `DELETE FROM activity_county`, nil},
+		{"old region matches", `DELETE FROM activity_region`, nil},
+		{"old country matches", `DELETE FROM activity_country`, nil},
+		{"old cities", `DELETE FROM admin_cities`, nil},
+		{"old counties", `DELETE FROM admin_counties`, nil},
+		{"old regions", `DELETE FROM admin_regions`, nil},
+		{"old countries", `DELETE FROM admin_countries`, nil},
 		{"countries", `
 			INSERT INTO admin_countries (code, name, names, geom)
 			SELECT key, name, names, geom FROM boundary WHERE level = 'country'`, &stats.Countries},
-		{"", `
+		{"country parts", `
 			INSERT INTO admin_country_parts (country_id, geom)
 			SELECT c.id, (ST_Dump(ST_Subdivide(b.geom, 256))).geom
 			FROM boundary b JOIN admin_countries c ON c.code = b.key WHERE b.level = 'country'`, nil},
@@ -161,7 +161,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			INSERT INTO admin_regions (country_id, overture_id, code, local_type, name, names, geom)
 			SELECT c.id, b.key, b.code, b.local_type, b.name, b.names, b.geom
 			FROM boundary b JOIN admin_countries c ON c.code = b.country WHERE b.level = 'region'`, &stats.Regions},
-		{"", `
+		{"region parts", `
 			INSERT INTO admin_region_parts (region_id, geom)
 			SELECT r.id, (ST_Dump(ST_Subdivide(b.geom, 256))).geom
 			FROM boundary b JOIN admin_regions r ON r.overture_id = b.key WHERE b.level = 'region'`, nil},
@@ -170,7 +170,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			SELECT c.id, 'country:' || c.code, NULL, c.name, c.names, b.geom
 			FROM admin_countries c JOIN boundary b ON b.level = 'country' AND b.key = c.code
 			WHERE NOT EXISTS (SELECT 1 FROM admin_regions r WHERE r.country_id = c.id)`, &stats.WholeCountryRegions},
-		{"", `
+		{"whole-country region parts", `
 			INSERT INTO admin_region_parts (region_id, geom)
 			SELECT r.id, p.geom
 			FROM admin_regions r JOIN admin_countries c ON 'country:' || c.code = r.overture_id
@@ -181,7 +181,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			FROM boundary b JOIN admin_countries c ON c.code = b.country
 			LEFT JOIN admin_regions r ON r.overture_id = b.region_key
 			WHERE b.level = 'county'`, &stats.Counties},
-		{"", `
+		{"county parts", `
 			INSERT INTO admin_county_parts (county_id, geom)
 			SELECT k.id, (ST_Dump(ST_Subdivide(b.geom, 256))).geom
 			FROM boundary b JOIN admin_counties k ON k.overture_id = b.key WHERE b.level = 'county'`, nil},
@@ -192,7 +192,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			LEFT JOIN admin_regions r ON r.overture_id = b.region_key
 			LEFT JOIN admin_counties k ON k.overture_id = b.county_key
 			WHERE b.level = 'city'`, &stats.Cities},
-		{"", `
+		{"city parts", `
 			INSERT INTO admin_city_parts (city_id, geom)
 			SELECT k.id, (ST_Dump(ST_Subdivide(b.geom, 256))).geom
 			FROM boundary b JOIN admin_cities k ON k.overture_id = b.key WHERE b.level = 'city'`, nil},
@@ -200,23 +200,23 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 		// border, where simplifying each outline alone left a sliver of veil between them. The
 		// world at once for countries and regions; counties and cities country by country, which
 		// lets their international borders drift apart by up to the tolerance, under a pixel.
-		{"drawing", drawingSQL("admin_countries", ""), nil},
-		{"", drawingSQL("admin_regions", ""), nil},
-		{"", drawingSQL("admin_counties", "PARTITION BY country_id"), nil},
-		{"", drawingSQL("admin_cities", "PARTITION BY country_id"), nil},
+		{"country drawing", drawingSQL("admin_countries", ""), nil},
+		{"region drawing", drawingSQL("admin_regions", ""), nil},
+		{"county drawing", drawingSQL("admin_counties", "PARTITION BY country_id"), nil},
+		{"city drawing", drawingSQL("admin_cities", "PARTITION BY country_id"), nil},
 		// The places each place above holds, its stand-ins aside, and what most of a country's
 		// regions and counties are: Fog's tooltip and level control read them.
-		{"totals", `
+		{"county totals", `
 			UPDATE admin_counties k SET cities_total = n
 			FROM (SELECT county_id, count(*) AS n FROM admin_cities WHERE kind = 'city' GROUP BY county_id) c
 			WHERE c.county_id = k.id`, nil},
-		{"", `
+		{"region totals", `
 			UPDATE admin_regions r SET counties_total = COALESCE(k.n, 0), cities_total = COALESCE(c.n, 0)
 			FROM admin_regions r2
 			LEFT JOIN (SELECT region_id, count(*) AS n FROM admin_counties WHERE kind = 'county' GROUP BY region_id) k ON k.region_id = r2.id
 			LEFT JOIN (SELECT region_id, count(*) AS n FROM admin_cities WHERE kind = 'city' GROUP BY region_id) c ON c.region_id = r2.id
 			WHERE r2.id = r.id`, nil},
-		{"", `
+		{"country totals", `
 			UPDATE admin_countries o SET
 				regions_total = (SELECT count(*) FROM admin_regions r WHERE r.country_id = o.id AND r.overture_id NOT LIKE 'country:%'),
 				counties_total = (SELECT count(*) FROM admin_counties k WHERE k.country_id = o.id AND k.kind = 'county'),
@@ -225,7 +225,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 					WHERE r.country_id = o.id AND r.local_type IS NOT NULL), ''),
 				county_word = COALESCE((SELECT mode() WITHIN GROUP (ORDER BY k.local_type) FROM admin_counties k
 					WHERE k.country_id = o.id AND k.kind = 'county' AND k.local_type IS NOT NULL), '')`, nil},
-		{"", `ANALYZE admin_country_parts, admin_region_parts, admin_county_parts, admin_city_parts`, nil},
+		{"analyze", `ANALYZE admin_country_parts, admin_region_parts, admin_county_parts, admin_city_parts`, nil},
 		{"activity countries", `
 			INSERT INTO activity_country (activity_id, country_id)
 			SELECT DISTINCT a.id, p.country_id FROM activities a JOIN admin_country_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.ActivityCountries},
@@ -248,9 +248,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 		if s.into != nil {
 			*s.into = tag.RowsAffected()
 		}
-		if s.what != "" {
-			log.Info("seed-admin-boundaries: "+s.what, "rows", tag.RowsAffected(), "took", time.Since(start).Round(time.Millisecond))
-		}
+		log.Info("seed-admin-boundaries: "+s.what, "rows", tag.RowsAffected(), "took", time.Since(start).Round(time.Millisecond))
 	}
 	stats.SkippedRegions = have.regions - stats.Regions
 
