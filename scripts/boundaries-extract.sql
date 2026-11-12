@@ -220,6 +220,62 @@ WITH l AS (
 )
 SELECT level, keys[path[1]] AS key, ST_Union_Agg(geom) AS g FROM d GROUP BY level, keys[path[1]];
 
+-- A crumb is a stand-in under 1 km²: a sliver where a town's outline stops short of its county's,
+-- or a county's of its region's (Walworth County's 0.023 km² beside its towns), 1,014 on the City
+-- level and 174 on the County level in 2026-09. As its own place it named a hairline on hover and
+-- cleared as a speck beside the town walked in. Each piece joins the place of its level it shares
+-- the longest border with, one under the same parent first, so a walk through it clears the place
+-- it was in and nothing across a border. A piece touching none stays.
+CREATE TABLE crumb_piece AS
+SELECT level, key, parent, UNNEST(ST_Dump(g), recursive := true)
+FROM (
+    SELECT c.level, c.key, CASE c.level WHEN 'city' THEN p.county_key ELSE p.region_key END AS parent, c.g
+    FROM place_clean c JOIN place p USING (level, key)
+    WHERE starts_with(c.key, 'rest:') AND ST_Area_Spheroid(c.g) < 1e6
+);
+
+-- ST_Intersects alone in the join, so DuckDB plans its spatial join (city_touch says why).
+CREATE TABLE crumb_touch AS
+SELECT k.level, k.key, k.path, k.geom, k.parent, n.level AS to_level, n.key AS to_key, n.g AS to_g
+FROM crumb_piece k JOIN place_clean n ON ST_Intersects(k.geom, n.g);
+
+CREATE TABLE crumb_move AS
+SELECT level, key, path, geom, to_key FROM (
+    SELECT t.level, t.key, t.path, t.geom, t.to_key,
+           row_number() OVER (PARTITION BY t.level, t.key, t.path
+                              ORDER BY (t.parent IS NOT NULL AND p.parent IS NOT DISTINCT FROM t.parent) DESC, t.shared DESC) AS n
+    FROM (
+        SELECT *, ST_Length(ST_Intersection(ST_Boundary(geom), ST_Boundary(to_g))) AS shared FROM crumb_touch
+        WHERE to_level = level AND to_key <> key AND NOT EXISTS (SELECT 1 FROM crumb_piece k WHERE k.level = crumb_touch.level AND k.key = crumb_touch.to_key)
+    ) t JOIN (
+        SELECT level, key, CASE level WHEN 'city' THEN county_key ELSE region_key END AS parent FROM place
+    ) p ON p.level = t.level AND p.key = t.to_key
+    WHERE t.shared > 0
+) WHERE n = 1;
+
+-- Every outline after the crumbs moved: the untouched as they were, and each crumb and place that
+-- took one as the union of what it kept and what joined it. A crumb that kept nothing drops out.
+CREATE TABLE place_final AS
+WITH changed AS (
+    SELECT DISTINCT level, key, true AS crumb FROM crumb_piece
+    UNION
+    SELECT DISTINCT m.level, m.to_key, false FROM crumb_move m
+), part AS (
+    -- A place that took a crumb, whole.
+    SELECT c.level, c.key, c.g AS geom FROM place_clean c JOIN changed x ON x.level = c.level AND x.key = c.key AND NOT x.crumb
+    UNION ALL
+    -- A crumb's pieces that stayed.
+    SELECT k.level, k.key, k.geom FROM crumb_piece k
+    WHERE NOT EXISTS (SELECT 1 FROM crumb_move m WHERE m.level = k.level AND m.key = k.key AND m.path = k.path)
+    UNION ALL
+    -- And the pieces that joined one.
+    SELECT level, to_key, geom FROM crumb_move
+)
+SELECT c.level, c.key, c.g FROM place_clean c
+WHERE NOT EXISTS (SELECT 1 FROM changed x WHERE x.level = c.level AND x.key = c.key)
+UNION ALL
+SELECT level, key, ST_Union_Agg(geom) FROM part GROUP BY level, key;
+
 -- One row per outline, in the column order seed-admin-boundaries COPYs into its staging table:
 -- level, kind (what the place is: on the County and City levels a stand-in is the region or
 -- county it comes from), key (a country's code, else an Overture division id, 'rest:' and the key
@@ -234,6 +290,6 @@ COPY (
     FROM region WHERE key NOT LIKE 'country:%'
     UNION ALL
     SELECT p.level, p.kind, p.key, p.country, p.region_key, p.county_key, NULL, p.local_type, p.name, p.names, ST_AsHEXWKB(c.g)
-    FROM place p JOIN place_clean c USING (level, key)
+    FROM place p JOIN place_final c USING (level, key)
     ORDER BY 1, 3
 ) TO (getvariable('out')) (FORMAT csv, HEADER false, COMPRESSION gzip);
