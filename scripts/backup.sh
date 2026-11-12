@@ -21,8 +21,8 @@
 # since the last such dump (reference_fingerprint). A restore loads the newest reference dump
 # no newer than the run's dump with it (DEPLOY.md §11): user tables point into them
 # (spot_captures at spots, activity_country at admin_countries), so ids must stay as they were,
-# and re-importing instead would renumber them. The country and region tile cache
-# (admin_tile_geoms, admin_tiles_built) is in neither: tiles rebuild it on request.
+# and re-importing instead would renumber them. Fog's outline tile cache (admin_tile_geoms,
+# admin_tiles_built) is in neither: tiles rebuild it on request.
 #
 # The backup bucket's layout:
 #   postgres/daily/holdmytrack-<UTC stamp>.dump    every nightly run, kept KEEP_DAILY_DAYS
@@ -74,7 +74,8 @@ MIN_SHRINK_OBJECTS=500
 # Written only by `import-spots`, `import-bike-paths`, `seed-admin-boundaries` and
 # `seed-timezones`.
 REFERENCE_TABLES=(spots bike_paths admin_countries admin_country_parts admin_regions admin_region_parts
-  admin_boundaries_source tz_parts tz_boundaries_source)
+  admin_counties admin_county_parts admin_cities admin_city_parts admin_boundaries_source tz_parts
+  tz_boundaries_source)
 # Left out of every dump: rebuilt on demand (the tile cache) or by `rerender-coverage --masks`.
 REBUILT_TABLES=(admin_tile_geoms admin_tiles_built activity_tile_mask_data)
 # Left out of every dump: the visitor salts and hashes, deleted within 2 days (docs/DPIA.md), which
