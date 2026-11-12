@@ -3365,6 +3365,13 @@ export interface paths {
                             version: number;
                             /** @description What every tile request sends as `cv` to have the tile cached; it changes with version. */
                             tile_version: string;
+                            /** @description How many places of each Fog level the account has been in, as the map clears them (docs/SPEC.md FR-4.2); changes with version. */
+                            explored: {
+                                countries: number;
+                                regions: number;
+                                counties: number;
+                                cities: number;
+                            };
                         };
                     };
                 };
@@ -3752,6 +3759,11 @@ export interface components {
             /** @description The browser's IANA zone, for a new account; anything invalid falls back to UTC. */
             timezone?: string;
         };
+        /** @description What country calls its regions and counties, as Overture's local_type (state, department), which Fog's level control is worded with; empty for the generic name (IMPLEMENTATION.md §4.2.4). */
+        FogWords: {
+            region: string;
+            county: string;
+        };
         /** @description The Account, and the session's token. */
         AccountWithSession: {
             /** @description The session cookie's value, for a client with no cookie jar to send as a bearer token. */
@@ -3773,6 +3785,7 @@ export interface components {
              * @enum {string}
              */
             unit_system: "metric" | "imperial";
+            fog_words: components["schemas"]["FogWords"];
         };
         /** @description Every error the API sends (ADR-0045). A client branches on error, never on message. */
         Error: {
@@ -3799,6 +3812,7 @@ export interface components {
              * @enum {string}
              */
             unit_system: "metric" | "imperial";
+            fog_words: components["schemas"]["FogWords"];
         };
         SettingsOption: {
             value: string;
@@ -4046,6 +4060,8 @@ export interface components {
                     minzoom: number;
                     maxzoom: number;
                     attribution?: string;
+                    /** @description The feature property a client takes as each feature's id, for state it keeps per feature such as a hover. */
+                    promoteId?: string;
                 } | {
                     /**
                      * @description Filled by the client.
@@ -4079,6 +4095,17 @@ export interface components {
                 /** @enum {string} */
                 tier: "country" | "region" | "city";
                 below?: number;
+            }[];
+            /** @description Fog's levels, coarsest first (IMPLEMENTATION.md §4.2.4). Each draws by default where its band holds the zoom, from `from` up to but not including `below`; a client that locks one draws its layers at every zoom instead. */
+            levels: {
+                /** @enum {string} */
+                level: "country" | "region" | "county" | "city" | "exact";
+                from?: number;
+                below?: number;
+                /** @description The layers that draw the level. */
+                layers: string[];
+                /** @description What the account's country calls the level's places, as Overture's local_type (state, department); empty for the generic name. */
+                word?: string;
             }[];
             /** @description By name, the default of each value a layer reads as ["var", name]; the client binds its own with let. */
             vars: Record<string, never>;

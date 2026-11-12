@@ -105,6 +105,15 @@ type authResponse struct {
 	// UnitSystem is "imperial" or "metric", from Country (web.Imperial): decided here, so every
 	// client shows the units the server's own pages do (ADR-0048).
 	UnitSystem string `json:"unit_system"`
+	// FogWords are what Country calls its regions and counties, which Fog's level control is
+	// worded with: the layers document carries them too, but the web builds its own.
+	FogWords fogWords `json:"fog_words"`
+}
+
+// fogWords is the Account's fog_words.
+type fogWords struct {
+	Region string `json:"region"`
+	County string `json:"county"`
 }
 
 // authResponseWithSession wraps authResponse with the freshly minted session id, for the
@@ -131,11 +140,13 @@ func (s *Server) loadAuthResponse(ctx context.Context, userID string) (authRespo
 	var email, displayName, country, avatarKey, timezone, locale string
 	var avatarUpdatedAt *time.Time
 	var emailVerified bool
+	var words fogWords
 	err := s.pool.QueryRow(ctx, `
 		SELECT email, COALESCE(display_name, ''), COALESCE(country, ''),
-		       COALESCE(avatar_key, ''), avatar_updated_at, email_verified, timezone, COALESCE(locale, '')
+		       COALESCE(avatar_key, ''), avatar_updated_at, email_verified, timezone, COALESCE(locale, ''),
+		       `+fogWordsSQL("users.country")+`
 		FROM users WHERE id = $1
-	`, userID).Scan(&email, &displayName, &country, &avatarKey, &avatarUpdatedAt, &emailVerified, &timezone, &locale)
+	`, userID).Scan(&email, &displayName, &country, &avatarKey, &avatarUpdatedAt, &emailVerified, &timezone, &locale, &words.Region, &words.County)
 	if err != nil {
 		return authResponse{}, err
 	}
@@ -161,6 +172,7 @@ func (s *Server) loadAuthResponse(ctx context.Context, userID string) (authRespo
 		Timezone:      timezone,
 		Locale:        locale,
 		UnitSystem:    unitSystem(country),
+		FogWords:      words,
 	}, nil
 }
 

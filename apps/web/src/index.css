@@ -2455,6 +2455,30 @@ button.activities-panel__story-badge:hover {
 /* ZoomLevelNotice.tsx — which level Fog/Heatmap is drawing at, fading out after a few seconds.
    A line of its own in .map-toggles (flex-basis 100%), so it sits under the toggles however many
    rows they wrap to on a narrow screen. Takes no pointer events, like .map-toggles itself. */
+/* FogLevelMenu.tsx: Fog's button while Fog is on, naming the level in view, and its menu,
+   laid out as the Layers one. */
+.fog-level-menu {
+  position: relative;
+  display: flex;
+}
+
+.fog-level-menu__btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--fm-space-4);
+}
+
+.fog-level-menu__hint {
+  color: var(--fm-ink-muted);
+  font-size: var(--fm-text-sm);
+}
+
+.fog-level-menu__count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--fm-ink-muted);
+}
+
 .zoom-level-notice {
   flex-basis: 100%;
   display: flex;
@@ -2498,6 +2522,35 @@ button.activities-panel__story-badge:hover {
 
 .coverage-notice__pill--failed {
   color: var(--fm-danger);
+}
+
+/* PROTOTYPE (FOG_REWORK.md): the name of the outline under the pointer in Fog (fogPlaces.ts). It
+   follows the pointer, so it takes no pointer events of its own and has no tip. */
+.fog-place-tip {
+  pointer-events: none;
+}
+
+.fog-place-tip .maplibregl-popup-content {
+  padding: var(--fm-space-6) var(--fm-space-8);
+  border-radius: var(--fm-radius-sm);
+  background: var(--fm-surface);
+  color: var(--fm-ink);
+  box-shadow: var(--fm-shadow-sm);
+  font-family: var(--fm-font-sans);
+}
+
+.fog-place-tip .maplibregl-popup-tip {
+  display: none;
+}
+
+.fog-place-tip__name {
+  font-size: var(--fm-text-sm);
+  font-weight: var(--fm-weight-semibold);
+}
+
+.fog-place-tip__detail {
+  font-size: var(--fm-text-xs);
+  color: var(--fm-ink-muted);
 }
 
 /* A spot's popup (SpotPopup.tsx, FR-15.3) — MapLibre's own popup, restyled as the app's cards. */

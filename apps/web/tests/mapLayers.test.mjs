@@ -4,9 +4,9 @@ import assert from 'node:assert/strict';
 // Plain .mjs, like bbox.test.mjs: Node strips the types from the imported .ts module itself.
 import { CHEVRON_FONT } from '../scripts/chevronFont.mjs';
 import { heatPointsRadius } from '../src/map/coverageGroup.ts';
-import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor, zoomTier } from '../src/map/mapLayers.ts';
+import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor } from '../src/map/mapLayers.ts';
 
-const doc = buildLayers({ flavor: 'light', dark: false, tileVersion: 'abcd1234.7' });
+const doc = buildLayers({ flavor: 'light', dark: false, tileVersion: 'abcd1234.7', lang: 'en' });
 const MODES = ['normal', 'fog', 'heatmap'];
 const coverage = groupOf(doc, 'coverage');
 
@@ -26,14 +26,17 @@ test('each mode shows only its own layers', () => {
       .map(([id]) => id)
       .sort();
   assert.deepEqual(visible('normal'), ['track-bands-arrows', 'track-bands-line', 'tracks-arrows', 'tracks-casing', 'tracks-focused', 'tracks-hover', 'tracks-line']);
-  assert.deepEqual(visible('fog'), ['country-fog-fill', 'fog-edge', 'fog-veil', 'region-fog-fill']);
+  assert.deepEqual(visible('fog'), [
+    'city-fog-border', 'city-fog-fill', 'country-fog-border', 'country-fog-fill', 'county-fog-border', 'county-fog-fill',
+    'fog-edge', 'fog-veil', 'region-fog-border', 'region-fog-fill',
+  ]);
   assert.deepEqual(visible('heatmap'), ['heat-points-circles', 'heatmap-dim']);
 });
 
 test('imagery takes the dark veil over a light flavor', () => {
   assert.equal(viewFor(doc, 'fog', false).paint['fog-veil']['fill-color'], '#202b25');
   assert.equal(viewFor(doc, 'fog', true).paint['fog-veil']['fill-color'], '#f7f4ec');
-  const dark = buildLayers({ flavor: 'dark', dark: true, tileVersion: '' });
+  const dark = buildLayers({ flavor: 'dark', dark: true, tileVersion: '', lang: 'en' });
   assert.equal(viewFor(dark, 'fog', false).paint['fog-veil']['fill-color'], '#f7f4ec');
 });
 
@@ -56,15 +59,18 @@ test('groups go beneath the labels or on top', () => {
   for (const group of doc.groups) assert.ok(['beneath-labels', 'top'].includes(group.placement), group.id);
 });
 
-test('the tiers switch where the Country and Region fills hand over', () => {
-  assert.equal(zoomTier(doc.tiers, 2.99), 'country');
-  assert.equal(zoomTier(doc.tiers, 3), 'region');
-  assert.equal(zoomTier(doc.tiers, 6.99), 'region');
-  assert.equal(zoomTier(doc.tiers, 7), 'city');
-  const region = coverage.layers.find((l) => l.id === 'region-fog-fill');
-  const veil = coverage.layers.find((l) => l.id === 'fog-veil');
-  assert.equal(region.maxzoom, veil.minzoom);
-  assert.equal(zoomTier([], 3), 'city');
+test('each level hands over to the next, and the last to exact coverage', () => {
+  const fills = ['country-fog-fill', 'region-fog-fill', 'county-fog-fill', 'city-fog-fill', 'fog-veil'].map((id) => coverage.layers.find((l) => l.id === id));
+  assert.equal(fills[0].minzoom, 0);
+  for (let i = 1; i < fills.length; i++) assert.equal(fills[i - 1].maxzoom, fills[i].minzoom, fills[i].id);
+  assert.deepEqual(doc.levels.map((l) => l.level), ['country', 'region', 'county', 'city', 'exact']);
+  for (const level of doc.levels) {
+    for (const id of level.layers) {
+      const layer = coverage.layers.find((l) => l.id === id);
+      assert.equal(layer.minzoom ?? 0, level.from ?? 0, id);
+      assert.equal(layer.maxzoom, level.below, id);
+    }
+  }
 });
 
 test('vars bind with let, the client value over the default, arrays as literals', () => {
@@ -131,7 +137,7 @@ test('the legend gives every path its color, and a dash where the map dashes it'
   assert.deepEqual(Object.keys(legend).sort(), ['bikePaths', 'mtbTrails', 'sharedPaths', 'tracks', 'trails']);
   assert.deepEqual(legend.bikePaths, { color: '#0b5a85' });
   assert.deepEqual(legend.trails.dash, [2, 1]);
-  const white = groupOf(buildLayers({ flavor: 'white', dark: false, tileVersion: '' }), 'bike-paths');
+  const white = groupOf(buildLayers({ flavor: 'white', dark: false, tileVersion: '', lang: 'en' }), 'bike-paths');
   assert.deepEqual(white.legend.sharedPaths.dash, [2, 1]);
   assert.deepEqual(white.layers.find((l) => l.id === 'bike-paths-shared').paint['line-dasharray'], ['literal', [2, 1]]);
 });
@@ -162,13 +168,13 @@ test('the tracks draw the focused ids from vars the client binds, never a hidden
 
 test('the focused halo is the opposite of the map under it', () => {
   const casing = (d, satellite) => viewFor(d, 'normal', satellite).paint['tracks-casing']['line-color'];
-  const dark = buildLayers({ flavor: 'black', dark: true, tileVersion: '' });
+  const dark = buildLayers({ flavor: 'black', dark: true, tileVersion: '', lang: 'en' });
   assert.deepEqual([casing(doc, false), casing(doc, true), casing(dark, false)], ['#202b25', '#14140e', '#a39e93']);
   assert.equal(groupOf(dark, 'tracks').layers.find((l) => l.id === 'tracks-casing').paint['line-color'], '#a39e93');
 });
 
 test('over imagery, every track is bright with a dark outline, and off it nothing changes', () => {
-  const dark = buildLayers({ flavor: 'black', dark: true, tileVersion: '' });
+  const dark = buildLayers({ flavor: 'black', dark: true, tileVersion: '', lang: 'en' });
   const tracks = groupOf(doc, 'tracks');
   assert.equal(tracks.layers[0].id, 'tracks-outline');
   assert.equal(tracks.layers[0].layout.visibility, 'none', 'off until a view says otherwise');
@@ -190,7 +196,7 @@ test('over imagery, every track is bright with a dark outline, and off it nothin
 });
 
 test('over imagery, the pace bands are brighter on a dark outline, and off it nothing changes', () => {
-  const dark = buildLayers({ flavor: 'black', dark: true, tileVersion: '' });
+  const dark = buildLayers({ flavor: 'black', dark: true, tileVersion: '', lang: 'en' });
   const green = (view) => view.paint['track-bands-line']['line-color'].at(5);
   assert.equal(groupOf(doc, 'track-bands').layers[0].layout.visibility, 'none', 'off until a view says otherwise');
   assert.deepEqual(groupOf(doc, 'track-bands').layers[0].filter, ['has', 'route']);
@@ -245,4 +251,11 @@ test('every bold track carries the pace bands\' arrows, pointing along it, and n
   assert.deepEqual(arrows.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden', 'capped', 'listed'] });
   const tracksFocused = groupOf(doc, 'tracks').layers.find((l) => l.id === 'tracks-focused');
   assert.deepEqual(arrows.filter, tracksFocused.filter);
+});
+test("over satellite imagery the places' borders are drawn stronger, still under the hovered one", () => {
+  const border = (satellite) => viewFor(doc, 'fog', satellite).paint['county-fog-border'];
+  const resting = (expr) => expr[3];
+  assert.ok(resting(border(true)['line-opacity']) > resting(border(false)['line-opacity']));
+  assert.ok(resting(border(true)['line-width']) > resting(border(false)['line-width']));
+  assert.ok(border(true)['line-opacity'][2] > resting(border(true)['line-opacity']));
 });

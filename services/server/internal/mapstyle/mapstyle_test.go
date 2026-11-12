@@ -262,8 +262,9 @@ func TestETagVariesWithSatellite(t *testing.T) {
 }
 
 func TestLayersFillTheTileVersion(t *testing.T) {
+	us := Words{Region: "state", County: "county"}
 	for _, flavor := range Flavors() {
-		doc, err := Layers(flavor, "abcd1234.9")
+		doc, err := Layers(flavor, "abcd1234.9", "en", us)
 		if err != nil {
 			t.Fatalf("Layers(%q): %v", flavor, err)
 		}
@@ -274,6 +275,10 @@ func TestLayersFillTheTileVersion(t *testing.T) {
 			StyleBuild  string `json:"styleBuild"`
 			Flavor      string `json:"flavor"`
 			TileVersion string `json:"tileVersion"`
+			Levels      []struct {
+				Level string `json:"level"`
+				Word  string `json:"word"`
+			} `json:"levels"`
 		}
 		if err := json.Unmarshal(doc, &head); err != nil {
 			t.Fatalf("%s: not valid JSON: %v", flavor, err)
@@ -281,11 +286,25 @@ func TestLayersFillTheTileVersion(t *testing.T) {
 		if head.StyleBuild != StyleBuild() || head.Flavor != flavor || head.TileVersion != "abcd1234.9" {
 			t.Errorf("%s: head = %+v", flavor, head)
 		}
+		words := map[string]string{}
+		for _, l := range head.Levels {
+			words[l.Level] = l.Word
+		}
+		if words["region"] != "state" || words["county"] != "county" || words["city"] != "" {
+			t.Errorf("%s: level words %v", flavor, words)
+		}
 	}
-	if _, err := Layers("neon", "x"); !errors.Is(err, ErrUnknownFlavor) {
+	// A word that isn't a plain local_type would need escaping in JSON: it's left out.
+	doc, _ := Layers("light", "x", "en", Words{Region: `st"ate`})
+	if !json.Valid(doc) || strings.Contains(string(doc), `st\"ate`) || strings.Contains(string(doc), "__HOLDMYTRACK_REGION_WORD__") {
+		t.Error("an odd word reached the document")
+	}
+	if _, err := Layers("neon", "x", "en", us); !errors.Is(err, ErrUnknownFlavor) {
 		t.Errorf("err = %v, want ErrUnknownFlavor", err)
 	}
-	if LayersETag("light", "a.1") == LayersETag("light", "a.2") || LayersETag("light", "a.1") == LayersETag("dark", "a.1") {
-		t.Error("the layers ETag doesn't vary with the tile version and flavor")
+	etag := func(flavor, version, lang string, w Words) string { return LayersETag(flavor, version, lang, w) }
+	base := etag("light", "a.1", "en", us)
+	if base == etag("light", "a.2", "en", us) || base == etag("dark", "a.1", "en", us) || base == etag("light", "a.1", "ru", us) || base == etag("light", "a.1", "en", Words{}) {
+		t.Error("the layers ETag doesn't vary with the tile version, flavor, language and words")
 	}
 }

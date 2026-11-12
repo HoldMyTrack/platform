@@ -5,6 +5,7 @@ import { basemapStatus } from '../src/map/basemapStatus.ts';
 import { satelliteLook, satelliteStatus } from '../src/map/satelliteStatus.ts';
 import { openingView } from '../src/map/openingView.ts';
 import { areaLoad } from '../src/map/areaLoad.ts';
+import { fogLevelInView, fogLevelPick } from '../src/map/fogLevels.ts';
 import { dateFilterBounds, dateFilterLabel, setDateFilter } from '../src/ui/dateFilter.ts';
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
@@ -28,6 +29,8 @@ const sorted = (set) => [...set].sort();
 export const rules = {
   openingView: ({ boxes, viewport }) => openingView(boxes, viewport),
   areaLoad: ({ zoom, listed, total }) => areaLoad(zoom, listed, total ?? null),
+  fogLevelInView: ({ levels, zoom, locked }) => fogLevelInView(levels, zoom, locked ?? null),
+  fogLevelPick: ({ levels, zoom, locked, picked }) => fogLevelPick(levels, zoom, locked ?? null, picked),
   dateFilterSet: ({ current, end, value, bounds }) => setDateFilter({ after: current.after ?? null, before: current.before ?? null }, end, value ?? null, bounds),
   dateFilterLabel: ({ after, before }) => dateFilterLabel({ after: after ?? null, before: before ?? null }),
   dateFilterBounds: ({ earliest, latest, today }) => dateFilterBounds(earliest ?? null, latest ?? null, today),

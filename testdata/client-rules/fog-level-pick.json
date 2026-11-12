@@ -1,0 +1,14 @@
+{
+  "rule": "fogLevelPick",
+  "clients": ["web"],
+  "description": "Picking a Fog level in the control: the locked level is released; any other is locked, and if the zoom is past its band the camera zooms out to the band's top, keeping the centre. A level whose band is further in locks where the camera is: picking never zooms in. `zoom` in the result is where to move, or null to stay.",
+  "cases": [
+    { "name": "a level in its band locks it where it is", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "county", "from": 6, "below": 8 }, { "level": "exact", "from": 11 }], "zoom": 7, "picked": "county" }, "expected": { "locked": "county", "zoom": null } },
+    { "name": "a level below the zoom zooms out to its band's top", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "county", "from": 6, "below": 8 }, { "level": "exact", "from": 11 }], "zoom": 12, "picked": "county" }, "expected": { "locked": "county", "zoom": 8 } },
+    { "name": "Country from city zoom zooms out to 3", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "county", "from": 6, "below": 8 }, { "level": "exact", "from": 11 }], "zoom": 9, "picked": "country" }, "expected": { "locked": "country", "zoom": 3 } },
+    { "name": "a level further in locks without zooming in", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "county", "from": 6, "below": 8 }, { "level": "exact", "from": 11 }], "zoom": 2, "picked": "exact" }, "expected": { "locked": "exact", "zoom": null } },
+    { "name": "the locked level again releases it", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "exact", "from": 3 }], "zoom": 9, "locked": "country", "picked": "country" }, "expected": { "locked": null, "zoom": null } },
+    { "name": "another level moves the lock", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "county", "from": 6, "below": 8 }, { "level": "exact", "from": 11 }], "zoom": 2, "locked": "country", "picked": "county" }, "expected": { "locked": "county", "zoom": null } },
+    { "name": "a level the document doesn't have changes nothing", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "exact", "from": 3 }], "zoom": 5, "locked": "country", "picked": "county" }, "expected": { "locked": "country", "zoom": null } }
+  ]
+}

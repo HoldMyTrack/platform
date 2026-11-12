@@ -3,6 +3,7 @@ import { API_BASE_URL } from '../api';
 import type { MapMode } from './mapMode';
 import { boundLayer, bindVars, insertionPoint, layerToggle, layerVars, needsLift, placementOrder, viewFor, type GroupSource, type LayerGroup, type MapLayers } from './mapLayers';
 import { SATELLITE_LAYER_ID } from './style';
+import { levelZoomRanges } from './fogLevels';
 
 /**
  * The layers document (mapLayers.ts) on a live map: this adds what the document describes,
@@ -29,6 +30,8 @@ export interface LayerState {
   queries: Readonly<Record<string, string>>;
   /** Groups never added to this map (the export's has no Spots). */
   excludedGroups?: ReadonlySet<string>;
+  /** The Fog level the control locked (fogLevels.ts), drawn at every zoom; null follows the zoom. */
+  fogLevel?: string | null;
 }
 
 export const INITIAL_LAYER_STATE: LayerState = {
@@ -94,6 +97,7 @@ function addSources(map: MapLibreMap, group: LayerGroup, state: LayerState): voi
       minzoom: source.minzoom,
       maxzoom: source.maxzoom,
       ...(source.attribution && { attribution: source.attribution }),
+      ...(source.promoteId && { promoteId: source.promoteId }),
     });
   }
 }
@@ -172,6 +176,7 @@ function setPaint(map: MapLibreMap, id: string, property: string, value: unknown
 function applyState(map: MapLibreMap, doc: MapLayers, state: LayerState, groups: readonly LayerGroup[]): void {
   const view = viewFor(doc, state.mode, state.satellite && map.getLayer(SATELLITE_LAYER_ID) !== undefined);
   const hidden = new Set(Object.values(state.hiddenGroups).flat());
+  const ranges = levelZoomRanges(doc.levels ?? [], state.fogLevel ?? null);
   const own = new Map<string, { layer: LayerSpecification; group: LayerGroup }>();
   for (const group of groups) for (const layer of group.layers) own.set(layer.id, { layer, group });
 
@@ -197,6 +202,12 @@ function applyState(map: MapLibreMap, doc: MapLayers, state: LayerState, groups:
     const toggle = layerToggle(layer);
     const shown = base && (toggle === undefined || state.toggles[toggle] === true) && !hidden.has(group.id);
     setLayout(map, id, 'visibility', shown ? 'visible' : 'none');
+
+    const range = ranges[id];
+    if (range) {
+      const live = map.getLayer(id);
+      if (live && (live.minzoom !== range[0] || live.maxzoom !== range[1])) map.setLayerZoomRange(id, range[0], range[1]);
+    }
 
     for (const [property, names] of Object.entries(layerVars(layer))) {
       if (property === 'filter') {

@@ -3,10 +3,12 @@ import type { MapMode } from '../map/mapMode';
 import type { Overlays } from '../map/overlays';
 import type { SpotCategory } from '../map/spots';
 import type { Flavor } from '../map/style';
+import type { Explored } from '../map/useCoverageRefresh';
 import { BasemapToggle } from './BasemapToggle';
 import { MapModeToggle } from './MapModeToggle';
 import { OverlaysMenu } from './OverlaysMenu';
 import { ShowInArea } from './ShowInArea';
+import { FogLevelMenu } from './FogLevelMenu';
 import { ZoomLevelNotice } from './ZoomLevelNotice';
 import { lang, t } from '../i18n';
 
@@ -20,6 +22,8 @@ export interface MapControlsProps {
   satelliteAvailable: boolean;
   /** Fog and Heatmap are being re-rendered: their notice shows under the toggles. */
   coverageRendering: boolean;
+  /** The places of each Fog level explored, which Fog's level control counts. */
+  explored: Explored | null;
   /** The basemap can't be reached (basemapStatus.ts): its notice shows under the toggles. */
   basemapUnreachable: boolean;
   /** Satellite is on and its imagery failed to load (satelliteStatus.ts): its notice shows under the toggles. */
@@ -31,13 +35,13 @@ export interface MapControlsProps {
   capped: { shown: number; total: number } | null;
 }
 
-/** The controls over the map's top edge: the mode toggle, Layers, Satellite, their notices, and
- *  the pills under them: places' Show in this area, and the area's cap. */
-export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, capped }: MapControlsProps) {
+/** The controls over the map's top edge: the mode toggle with Fog's level menu, Layers,
+ *  Satellite, their notices, and the pills under them: places' Show in this area, and the area's cap. */
+export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, explored, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, capped }: MapControlsProps) {
   return (
     <>
       <div className="map-toggles">
-        <MapModeToggle mode={mode} onChange={onModeChange} />
+        <MapModeToggle mode={mode} onChange={onModeChange} fogMenu={map && <FogLevelMenu map={map} explored={explored} />} />
         {/* Layers switch on and off over any mode; they're not a fourth mode. */}
         <OverlaysMenu overlays={overlays} onChange={onOverlaysChange} flavor={flavor} forceOpen={layersOpen} />
         {satelliteAvailable && <BasemapToggle satellite={overlays.satellite} onChange={(on) => onOverlaysChange({ ...overlays, satellite: on })} />}
@@ -57,7 +61,7 @@ export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChang
             <span className="coverage-notice__pill">{t('map.coverage_updating')}</span>
           </div>
         )}
-        {map && <ZoomLevelNotice map={map} mode={mode} />}
+        <ZoomLevelNotice mode={mode} />
       </div>
       <div className="map-area">
         {map && <ShowInArea map={map} categories={spotsShown} />}

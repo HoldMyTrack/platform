@@ -122,15 +122,15 @@ Check from any machine: `curl -s -o /dev/null -w '%{http_code}\n' -H 'Range: byt
 
 Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… logs` reaches back only that far. Postgres's memory is set for a 4 GB droplet in `compose.prod.yml`'s `db` command: scale both values on another size, as a `db` change (§7).
 
-**Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try it now" opens an empty account (`SPEC.md` FR-2.2), Fog's Country/Region tiers draw nothing, and every activity shows its account's timezone. All three are idempotent.
+**Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try it now" opens an empty account (`SPEC.md` FR-2.2), Fog's levels draw nothing, and every activity shows its account's timezone. All three are idempotent.
 
-1. Make the country and region outlines (`IMPLEMENTATION.md` §4.2.4) off the server, with the duckdb CLI, then copy the file into the app bucket under the key `geo.BoundariesKey` names:
+1. Make every Fog level's outlines (`IMPLEMENTATION.md` §4.2.4) off the server, with the duckdb CLI and about 30 GB of disk free (20 minutes on 10 cores), then copy the file into the app bucket under the key `geo.BoundariesKey` names:
    ```
    scripts/boundaries-extract.sh ~/boundaries
-   scp ~/boundaries/overture-2026-09-23.0-lakes-boundaries.csv.gz holdmytrack:/tmp/
-   … run --rm -v /tmp:/in:ro rclone copyto /in/overture-2026-09-23.0-lakes-boundaries.csv.gz data:boundaries/overture-2026-09-23.0-lakes-boundaries.csv.gz
+   scp ~/boundaries/overture-2026-09-23.0-levels-coast-boundaries.csv.gz holdmytrack:/tmp/
+   … run --rm -v /tmp:/in:ro rclone copyto /in/overture-2026-09-23.0-levels-coast-boundaries.csv.gz data:boundaries/overture-2026-09-23.0-levels-coast-boundaries.csv.gz
    ```
-   Check the counts it prints (272 countries and 3,922 regions for 2026-09-23.0).
+   Check the counts it prints: for 2026-09-23.0, 272 countries, 3,922 regions, 41,090 County-level and 382,828 City-level places.
 2. Copy the timezone polygons (`IMPLEMENTATION.md` §4.30), timezone-boundary-builder's release asset renamed to carry its release, into the bucket under the key `geo.TimezonesKey` names:
    ```
    ssh holdmytrack 'curl -sSfL -o /tmp/timezones-with-oceans-2026d.geojson.zip https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026d/timezones-with-oceans.geojson.zip'
@@ -142,11 +142,12 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
    … run --rm api seed-timezones
    … run --rm api seed-demo-customer
    ```
+   Then, with the site up, `… run --rm api build-admin-tiles` builds Fog's outline tiles from zoom 0 to 6 (2½ minutes on 10 cores), so no one's first look waits on a tile spanning a continent.
 4. Delete the copies in `/tmp`.
 
 **One-time steps a deploy can bring.** The deploy skill's plan finds these:
 
-- A new `geo.BoundariesKey`: steps 1, 3's `seed-admin-boundaries` and 4. On a database with users, take a backup and turn maintenance mode on first (§7, §11): it re-matches every activity in one transaction for several minutes, and ingest waits on it. It also empties the Country/Region tile cache (`IMPLEMENTATION.md` §4.2.4), which refills on request.
+- A new `geo.BoundariesKey`: steps 1, 3's `seed-admin-boundaries` and 4. On a database with users, take a backup and turn maintenance mode on first (§7, §11): it re-matches every activity in one transaction, and ingest waits on it; the world's outlines took 30 minutes on 10 cores, the Country and Region levels alone 12½ on the 4 GB droplet. It also empties Fog's tile cache (`IMPLEMENTATION.md` §3.26): once maintenance is off, run step 3's `build-admin-tiles`.
 - A new `geo.TimezonesKey`: steps 2, 3's `seed-timezones` and 4; a couple of minutes. It logs and skips any zone the database's tz data doesn't know yet: after a newer `postgis/postgis` image, `seed-timezones --force` brings those in. Check: `select count(*) from tz_parts` is non-zero.
 - A change to `services/server/internal/httpapi/demo_data/`: `… run --rm api seed-demo-customer --reset`. A plain re-run leaves seeded activities as they were.
 - A change to how Fog/Heatmap tiles are drawn (`internal/fog`, `IMPLEMENTATION.md` §4.2): `… run --rm api rerender-coverage`. Add `--masks` when the stroke width, `fog.TileSize`, how a mask is drawn (`fog.renderActivityMask`) or which tiles a track reaches (`internal/tilemath`) changed; that redraws every stored mask first and takes a while. It only queues renders, so the worker must be up.

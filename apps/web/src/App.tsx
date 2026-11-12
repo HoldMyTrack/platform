@@ -5,6 +5,7 @@ import { AuthProvider } from './auth/AuthContext';
 import { MapView } from './map/MapView';
 import { setAccountTimeZone } from './ui/timeZone';
 import { VersionBanner } from './ui/VersionBanner';
+import { setFogWords } from './map/webLayers';
 
 /**
  * The map — the one page this app is (ADR-0012): the Go server renders `/` as a shell around
@@ -76,6 +77,7 @@ export function App() {
         else if ('email' in user && !user.emailVerified) window.location.replace('/verify-pending');
         else {
           setAccountTimeZone(user.timezone);
+          setFogWords(user.fogWords);
           setAuth(user);
         }
       })

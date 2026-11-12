@@ -38,6 +38,8 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `passesFilters` | `activity`, `excludedTypes`, `distanceFilter` | boolean |
 | `openingView` | `boxes` (`[west, south, east, north]`, newest first), `viewport` (`{ width, height }`) | `{ center: [lon, lat], zoom }` or `null` |
 | `areaLoad` | `zoom`, `listed`, `total` | `{ load, capped }`, `load` `auto` or `none` |
+| `fogLevelInView` | `levels` (`{ level, from, below }`), `zoom`, `locked` | a level |
+| `fogLevelPick` | `levels`, `zoom`, `locked`, `picked` | `{ locked, zoom }`, `zoom` null to stay |
 | `dateFilterSet` | `current` (`{ after, before }`), `end` (`after`, `before`), `value`, `bounds` (`{ min, max }`) | `{ filter, fly }` |
 | `dateFilterLabel` | `after`, `before` | `{ kind }`: `all`, `between`, `after` or `before`, with the ends set |
 | `dateFilterBounds` | `earliest`, `latest`, `today` | `{ min, max }` |

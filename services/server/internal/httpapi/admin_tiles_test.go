@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"testing"
 	"time"
@@ -56,9 +57,11 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 		{"countries", countryLayer, countryFogQueries},
 		{"regions", regionLayer, regionFogQueries},
 	}
+	// A cached zoom whose tile holds both countries and the ocean round them.
 	coords := func(l adminLayer) (int, int, int) {
-		x, y := tilemath.LonLatToTile(at[0], at[1], l.cacheMaxZoom)
-		return l.cacheMaxZoom, x, y
+		const z = 5
+		x, y := tilemath.LonLatToTile(at[0], at[1], z)
+		return z, x, y
 	}
 	forget := func() {
 		for _, l := range []adminLayer{countryLayer, regionLayer} {
@@ -107,7 +110,7 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 		z, x, y := coords(c.layer)
 		var built bool
 		var live []byte
-		if err := d.pool.QueryRow(ctx, c.queries.live, z, x, y, me.id).Scan(&built, &live); err != nil {
+		if err := d.pool.QueryRow(ctx, c.queries.live, z, x, y, me.id, "en").Scan(&built, &live); err != nil {
 			t.Fatalf("%s live: %v", c.path, err)
 		}
 		if len(served) == 0 || !bytes.Equal(served, live) {
@@ -200,5 +203,181 @@ func TestAdminTileSeaIsOnTheTileGrid(t *testing.T) {
 	}
 	if offGrid != 0 || !valid {
 		t.Errorf("the sea has %d vertices off the tile grid, valid %v; want none, valid", offGrid, valid)
+	}
+}
+
+// Below a level's merge zoom a tile holds two features: where the account has been, as one, and
+// the veil for the rest cut from it, which together cover the tile without overlapping. From the
+// merge zoom up every place is its own outline again. A place the account has been in that is too
+// narrow for the tile's cache, as most towns are there, still clears, two pixels wide.
+func TestCityTileMergesThePlacesNotBeenInBelowItsBand(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	at := [2]float64{-24.75, -44.5} // lon, lat: open ocean in the South Atlantic
+	stamp := time.Now().UnixNano()
+
+	var country, west, east, speck int
+	if err := d.pool.QueryRow(ctx, `
+		INSERT INTO admin_countries (code, name, geom)
+		VALUES ($1, 'Isle', ST_Multi(ST_MakeEnvelope(-25, -44.6, -24.5, -44.4, 4326))) RETURNING id`,
+		fmt.Sprintf("TM%d", stamp)).Scan(&country); err != nil {
+		t.Fatal(err)
+	}
+	for _, c := range []struct {
+		name           string
+		x0, y0, x1, y1 float64
+		id             *int
+	}{
+		{"West", -25, -44.6, -24.75, -44.4, &west},
+		{"East", -24.75, -44.6, -24.5, -44.4, &east},
+		{"Speck", -24.405, -44.505, -24.395, -44.495, &speck}, // about 1 km: under a pixel at z6
+	} {
+		if err := d.pool.QueryRow(ctx, `
+			INSERT INTO admin_cities (overture_id, kind, country_id, name, geom)
+			VALUES ($1, 'city', $2, $3, ST_Multi(ST_MakeEnvelope($4, $5, $6, $7, 4326))) RETURNING id`,
+			fmt.Sprintf("test-city-%s-%d", c.name, stamp), country, c.name, c.x0, c.y0, c.x1, c.y1).Scan(c.id); err != nil {
+			t.Fatal(err)
+		}
+	}
+	t.Cleanup(func() {
+		ctx := context.Background()
+		d.pool.Exec(ctx, `DELETE FROM admin_cities WHERE id = ANY($1)`, []int{west, east, speck})
+		d.pool.Exec(ctx, `DELETE FROM admin_countries WHERE id = $1`, country)
+	})
+
+	me := d.newAccount(false) // deleted, with its matches, before the outlines above
+	activity := d.newActivity(me, testActivity{activityType: "walking", at: &at})
+	if _, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2), ($1, $3)`, activity, west, speck); err != nil {
+		t.Fatal(err)
+	}
+
+	for _, c := range []struct {
+		z    int
+		want []int
+	}{
+		{cityMergeBelow - 1, []int{exploredID, seaID}},
+		{cityMergeBelow, []int{seaID, west, east}}, // the speck drops out of the cached outlines
+	} {
+		x, y := tilemath.LonLatToTile(at[0], at[1], c.z)
+		var ids []int
+		var gap, overlap float64
+		var cleared []bool
+		if err := d.pool.QueryRow(ctx, `
+			WITH `+visitedCTEs("$4")+`, g AS (`+cityLayer.mergedGeoms(cityLayer.liveGeoms())+`),
+			pt AS (
+				SELECT ST_AsMVTGeom(ST_Transform(ST_SetSRID(ST_MakePoint(lon, -44.5), 4326), 3857), ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS p, n
+				FROM (VALUES (-24.875, 1), (-24.625, 2), (-24.4, 3)) AS v(lon, n)
+			)
+			SELECT array_agg(admin_id ORDER BY admin_id),
+			       ST_Area(ST_Difference(ST_MakeEnvelope(0, 0, 4096, 4096, 3857), ST_Union(geom))),
+			       COALESCE((SELECT ST_Area(ST_Intersection(s.geom, ST_Union(o.geom)))
+			                 FROM g s JOIN g o ON o.admin_id <> s.admin_id WHERE s.admin_id = $5 GROUP BY s.geom), 0),
+			       (SELECT array_agg(EXISTS (SELECT 1 FROM g WHERE admin_id = $6 AND ST_Intersects(g.geom, pt.p)) ORDER BY n) FROM pt)
+			FROM g`, c.z, x, y, me.id, seaID, exploredID).Scan(&ids, &gap, &overlap, &cleared); err != nil {
+			t.Fatalf("z%d: %v", c.z, err)
+		}
+		if fmt.Sprint(ids) != fmt.Sprint(c.want) || gap > 1 || overlap > 1 {
+			t.Errorf("z%d: features %v, want %v; %.0f units of the tile bare, the veil over %.0f of the places", c.z, ids, c.want, gap, overlap)
+		}
+		if c.z < cityMergeBelow && fmt.Sprint(cleared) != "[true false true]" {
+			t.Errorf("z%d: West, East and the speck cleared %v, want [true false true]", c.z, cleared)
+		}
+	}
+}
+
+// A vector tile reads a ring wound against its polygon's as a hole, and MapLibre left that part
+// of the place unfilled, so it looked cleared: every outline in a tile is wound as the sea is,
+// whichever way its source's rings ran.
+func TestAdminTileOutlinesAreWoundAsTheSea(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	stamp := time.Now().UnixNano()
+	var ids []int
+	for i, wkt := range []string{
+		"MULTIPOLYGON(((-25 -45, -24.5 -45, -24.5 -44, -25 -44, -25 -45)))",                                                               // counter-clockwise
+		"MULTIPOLYGON(((-24.5 -45, -24.5 -44, -24 -44, -24 -45, -24.5 -45)))",                                                             // clockwise
+		"MULTIPOLYGON(((-25 -46, -24.5 -46, -24.5 -45.5, -25 -45.5, -25 -46)),((-24.4 -46, -24.4 -45.5, -24 -45.5, -24 -46, -24.4 -46)))", // one of each
+	} {
+		var id int
+		if err := d.pool.QueryRow(ctx, `
+			INSERT INTO admin_countries (code, name, geom) VALUES ($1, 'Wound', ST_GeomFromText($2, 4326)) RETURNING id`,
+			fmt.Sprintf("W%d%d", i, stamp), wkt).Scan(&id); err != nil {
+			t.Fatal(err)
+		}
+		ids = append(ids, id)
+	}
+	t.Cleanup(func() { d.pool.Exec(context.Background(), `DELETE FROM admin_countries WHERE id = ANY($1)`, ids) })
+
+	x, y := tilemath.LonLatToTile(-24.5, -45, 5)
+	rows, err := d.pool.Query(ctx, `SELECT g.admin_id, ST_IsPolygonCCW(g.geom) FROM (`+countryLayer.liveGeoms()+`) g`, 5, x, y)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	seen := 0
+	for rows.Next() {
+		var id int
+		var ccw bool
+		if err := rows.Scan(&id, &ccw); err != nil {
+			t.Fatal(err)
+		}
+		if !ccw {
+			t.Errorf("outline %d is not wound as the sea", id)
+		}
+		seen++
+	}
+	if seen < len(ids)+1 {
+		t.Errorf("%d features in the tile, want the %d countries and the sea", seen, len(ids))
+	}
+}
+
+// BuildAdminTiles builds every tile a request would, to its zoom, and none below a level's merge
+// zoom, where a request reads no cached outlines and builds none either.
+func TestBuildAdminTilesBuildsWhatRequestsWould(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	const maxZoom = 1
+	forget := func() {
+		for _, table := range []string{"admin_tiles_built", "admin_tile_geoms"} {
+			if _, err := d.pool.Exec(ctx, `DELETE FROM `+table+` WHERE zoom <= $1`, cityMergeBelow-1); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+	forget()
+	t.Cleanup(forget)
+
+	if err := BuildAdminTiles(ctx, d.pool, slog.New(slog.DiscardHandler), maxZoom, 2); err != nil {
+		t.Fatal(err)
+	}
+	built := map[string]int{}
+	rows, err := d.pool.Query(ctx, `SELECT layer, count(*) FROM admin_tiles_built WHERE zoom <= $1 GROUP BY layer`, maxZoom)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for rows.Next() {
+		var layer string
+		var n int
+		if err := rows.Scan(&layer, &n); err != nil {
+			t.Fatal(err)
+		}
+		built[layer] = n
+	}
+	rows.Close()
+	if want := map[string]int{"countries": 5, "regions": 5}; fmt.Sprint(built) != fmt.Sprint(want) {
+		t.Errorf("built %v, want %v: every tile of z0 and z1, none below a merge zoom", built, want)
+	}
+
+	// A County tile far out is served without building one.
+	me := d.newAccount(false)
+	if rec := d.do(me, "GET", "/tiles/v1/counties/0/0/0.mvt", nil); rec.Code != http.StatusOK {
+		t.Fatalf("status %d", rec.Code)
+	}
+	var n int
+	if err := d.pool.QueryRow(ctx, `SELECT count(*) FROM admin_tiles_built WHERE layer = 'counties' AND zoom = 0`).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+	if n != 0 {
+		t.Errorf("a County tile below its merge zoom was built")
 	}
 }

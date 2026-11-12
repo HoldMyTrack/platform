@@ -1,0 +1,13 @@
+{
+  "rule": "fogLevelInView",
+  "clients": ["web"],
+  "description": "The Fog level in view: the locked one, else the one whose band holds the zoom (a band runs from `from` up to but not including `below`; the last has no `below`).",
+  "cases": [
+    { "name": "the band holding the zoom", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "region", "from": 3, "below": 6 }, { "level": "exact", "from": 6 }], "zoom": 4.5 }, "expected": "region" },
+    { "name": "a band's upper edge is the next one's", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "region", "from": 3, "below": 6 }, { "level": "exact", "from": 6 }], "zoom": 3 }, "expected": "region" },
+    { "name": "past every band, the last", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "exact", "from": 3 }], "zoom": 18 }, "expected": "exact" },
+    { "name": "a locked level at any zoom", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "region", "from": 3, "below": 6 }, { "level": "exact", "from": 6 }], "zoom": 12, "locked": "country" }, "expected": "country" },
+    { "name": "a lock on a level the document no longer has follows the zoom", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "exact", "from": 3 }], "zoom": 1, "locked": "county" }, "expected": "country" },
+    { "name": "no levels: exact coverage", "input": { "levels": [], "zoom": 2 }, "expected": "exact" }
+  ]
+}

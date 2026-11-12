@@ -55,7 +55,7 @@ func main() {
 	slog.SetDefault(log)
 
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-activities|seed-admin-boundaries|seed-timezones|rerender-coverage|import-spots|import-bike-paths|set-admin|stats>")
+		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-activities|seed-admin-boundaries|build-admin-tiles|seed-timezones|rerender-coverage|import-spots|import-bike-paths|set-admin|stats>")
 		os.Exit(2)
 	}
 
@@ -265,22 +265,24 @@ func main() {
 		}
 
 	case "seed-admin-boundaries":
-		// The country/region outlines behind Fog/Heatmap's Country/Region zoom tiers, from the
-		// extract scripts/boundaries-extract.sh makes (docs/DEPLOY.md §6), and a re-match of every
-		// activity against them. Safe to re-run: the extract already loaded is skipped unless
-		// --force. Reads geo.BoundariesKey from the app bucket, or --file's local copy. See
-		// internal/geo.SeedAdminBoundaries's own doc comment.
+		// The outlines of Fog's levels, from the extract scripts/boundaries-extract.sh makes
+		// (docs/DEPLOY.md §6), and a re-match of every activity against them. Safe to re-run: the
+		// extract already loaded is skipped unless --force. Reads geo.BoundariesKey from the app
+		// bucket, or --file's local copy; --partial takes one with some countries' counties and
+		// cities only. See internal/geo.SeedAdminBoundaries's own doc comment.
 		var file string
-		force := false
+		force, partial := false, false
 		for i := 2; i < len(os.Args); i++ {
 			switch {
 			case os.Args[i] == "--force":
 				force = true
+			case os.Args[i] == "--partial":
+				partial = true
 			case os.Args[i] == "--file" && i+1 < len(os.Args):
 				file = os.Args[i+1]
 				i++
 			default:
-				fmt.Fprintln(os.Stderr, "usage: holdmytrack seed-admin-boundaries [--force] [--file <boundaries.csv.gz>]")
+				fmt.Fprintln(os.Stderr, "usage: holdmytrack seed-admin-boundaries [--force] [--partial] [--file <boundaries.csv.gz>]")
 				os.Exit(2)
 			}
 		}
@@ -299,8 +301,8 @@ func main() {
 			log.Error("seed-admin-boundaries", "err", err)
 			os.Exit(1)
 		}
-		log.Info("seed-admin-boundaries: starting", "file", name, "force", force)
-		stats, err := geo.SeedAdminBoundaries(ctx, pool, log, src, name, force)
+		log.Info("seed-admin-boundaries: starting", "file", name, "force", force, "partial", partial)
+		stats, err := geo.SeedAdminBoundaries(ctx, pool, log, src, name, force, partial)
 		src.Close()
 		if err != nil {
 			log.Error("seed-admin-boundaries", "err", err)
@@ -311,8 +313,25 @@ func main() {
 			break
 		}
 		log.Info("seed-admin-boundaries: done", "countries", stats.Countries, "regions", stats.Regions,
+			"counties", stats.Counties, "cities", stats.Cities,
 			"skipped_regions", stats.SkippedRegions, "whole_country_regions", stats.WholeCountryRegions,
-			"activity_countries", stats.ActivityCountries, "activity_regions", stats.ActivityRegions)
+			"activity_countries", stats.ActivityCountries, "activity_regions", stats.ActivityRegions,
+			"activity_counties", stats.ActivityCounties, "activity_cities", stats.ActivityCities)
+
+	case "build-admin-tiles":
+		// Fog's outline tiles from zoom 0 to httpapi.PrebuildMaxZoom, which seed-admin-boundaries
+		// leaves empty: run it after a seed, with the site up (docs/DEPLOY.md §6), so no visitor
+		// waits on a tile spanning a continent being built. Safe to re-run: a built tile is skipped.
+		if len(os.Args) > 2 {
+			fmt.Fprintln(os.Stderr, "usage: holdmytrack build-admin-tiles")
+			os.Exit(2)
+		}
+		start := time.Now()
+		if err := httpapi.BuildAdminTiles(ctx, pool, log, httpapi.PrebuildMaxZoom, 4); err != nil {
+			log.Error("build-admin-tiles", "err", err)
+			os.Exit(1)
+		}
+		log.Info("build-admin-tiles: done", "took", time.Since(start).Round(time.Second))
 
 	case "seed-timezones":
 		// The timezone polygons each activity's own zone is looked up in (IMPLEMENTATION.md

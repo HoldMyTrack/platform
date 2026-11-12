@@ -47,7 +47,7 @@ func TestMapLayers(t *testing.T) {
 	}
 	for _, g := range doc.Groups {
 		for id, s := range g.Sources {
-			if s.Tiles != "" && !strings.HasSuffix(s.Tiles, "?cv="+want) {
+			if s.Tiles != "" && !strings.HasSuffix(s.Tiles, "?cv="+want) && !strings.Contains(s.Tiles, "?cv="+want+"&") {
 				t.Errorf("%s/%s: tiles %q don't carry the tile version", g.ID, id, s.Tiles)
 			}
 		}

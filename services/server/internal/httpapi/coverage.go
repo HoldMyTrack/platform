@@ -30,12 +30,31 @@ SELECT EXISTS (
 ),
 (SELECT map_version FROM users WHERE id = $1)`
 
+// exploredQuery counts the places of each level the account has been in, as the map clears them
+// (visitedCTEs): derived from the matches on every request, so a deletion, a track edit or a
+// Private location can't leave a stored count behind. Stand-ins aside.
+var exploredQuery = `
+WITH ` + visitedCTEs("$1") + `
+SELECT (SELECT count(*) FROM v_country),
+       (SELECT count(*) FROM v_region v JOIN admin_regions x ON x.id = v.id WHERE x.overture_id NOT LIKE 'country:%'),
+       (SELECT count(*) FROM v_county v JOIN admin_counties x ON x.id = v.id WHERE x.kind = 'county'),
+       (SELECT count(*) FROM v_city v JOIN admin_cities x ON x.id = v.id WHERE x.kind = 'city')`
+
 type coverageStatusResponse struct {
 	Rendering bool  `json:"rendering"`
 	Version   int64 `json:"version"`
 	// TileVersion is what a client sends as every tile request's `cv` to have the tile cached
 	// (setTileCacheControl) — Version plus the account it belongs to (fog.TileVersion).
 	TileVersion string `json:"tile_version"`
+	// Explored counts the places of each level Fog clears for the account (SPEC.md FR-4.2).
+	Explored explored `json:"explored"`
+}
+
+type explored struct {
+	Countries int `json:"countries"`
+	Regions   int `json:"regions"`
+	Counties  int `json:"counties"`
+	Cities    int `json:"cities"`
 }
 
 // handleCoverageStatus serves `GET /v1/coverage/status` (IMPLEMENTATION.md §4.2.3): the
@@ -54,6 +73,15 @@ func (s *Server) handleCoverageStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	resp.TileVersion = fog.TileVersion(userID, resp.Version)
+	e := &resp.Explored
+	if err := s.pool.QueryRow(r.Context(), exploredQuery, userID).Scan(&e.Countries, &e.Regions, &e.Counties, &e.Cities); err != nil {
+		if clientGone(w, r) {
+			return
+		}
+		s.log.Error("coverage status: explored", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
 	w.Header().Set("Cache-Control", "no-store")
 	writeJSON(w, http.StatusOK, resp)
 }

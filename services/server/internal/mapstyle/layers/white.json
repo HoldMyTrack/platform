@@ -1,5 +1,5 @@
 {
-  "styleBuild": "732bf1ec1cc5",
+  "styleBuild": "96fe5a23fe01",
   "flavor": "white",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -9,10 +9,57 @@
     },
     {
       "tier": "region",
-      "below": 7
+      "below": 11
     },
     {
       "tier": "city"
+    }
+  ],
+  "levels": [
+    {
+      "level": "country",
+      "below": 3,
+      "layers": [
+        "country-fog-fill",
+        "country-fog-border"
+      ]
+    },
+    {
+      "level": "region",
+      "from": 3,
+      "below": 6,
+      "layers": [
+        "region-fog-fill",
+        "region-fog-border"
+      ],
+      "word": "__HOLDMYTRACK_REGION_WORD__"
+    },
+    {
+      "level": "county",
+      "from": 6,
+      "below": 8,
+      "layers": [
+        "county-fog-fill",
+        "county-fog-border"
+      ],
+      "word": "__HOLDMYTRACK_COUNTY_WORD__"
+    },
+    {
+      "level": "city",
+      "from": 8,
+      "below": 11,
+      "layers": [
+        "city-fog-fill",
+        "city-fog-border"
+      ]
+    },
+    {
+      "level": "exact",
+      "from": 11,
+      "layers": [
+        "fog-veil",
+        "fog-edge"
+      ]
     }
   ],
   "vars": {
@@ -41,6 +88,24 @@
             "visibility": "none"
           },
           "region-fog-fill": {
+            "visibility": "none"
+          },
+          "county-fog-fill": {
+            "visibility": "none"
+          },
+          "city-fog-fill": {
+            "visibility": "none"
+          },
+          "country-fog-border": {
+            "visibility": "none"
+          },
+          "region-fog-border": {
+            "visibility": "none"
+          },
+          "county-fog-border": {
+            "visibility": "none"
+          },
+          "city-fog-border": {
             "visibility": "none"
           },
           "heat-points-circles": {
@@ -89,11 +154,295 @@
           },
           "country-fog-fill": {
             "fill-color": "#202b25",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
           },
           "region-fog-fill": {
             "fill-color": "#202b25",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "county-fog-fill": {
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "city-fog-fill": {
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "country-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "region-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "county-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "city-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
           },
           "tracks-casing": {
             "line-color": "#202b25"
@@ -154,6 +503,24 @@
           "region-fog-fill": {
             "visibility": "visible"
           },
+          "county-fog-fill": {
+            "visibility": "visible"
+          },
+          "city-fog-fill": {
+            "visibility": "visible"
+          },
+          "country-fog-border": {
+            "visibility": "visible"
+          },
+          "region-fog-border": {
+            "visibility": "visible"
+          },
+          "county-fog-border": {
+            "visibility": "visible"
+          },
+          "city-fog-border": {
+            "visibility": "visible"
+          },
           "heat-points-circles": {
             "visibility": "none"
           },
@@ -200,11 +567,295 @@
           },
           "country-fog-fill": {
             "fill-color": "#202b25",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
           },
           "region-fog-fill": {
             "fill-color": "#202b25",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "county-fog-fill": {
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "city-fog-fill": {
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "country-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "region-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "county-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "city-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
           },
           "tracks-casing": {
             "line-color": "#202b25"
@@ -265,6 +916,24 @@
           "region-fog-fill": {
             "visibility": "none"
           },
+          "county-fog-fill": {
+            "visibility": "none"
+          },
+          "city-fog-fill": {
+            "visibility": "none"
+          },
+          "country-fog-border": {
+            "visibility": "none"
+          },
+          "region-fog-border": {
+            "visibility": "none"
+          },
+          "county-fog-border": {
+            "visibility": "none"
+          },
+          "city-fog-border": {
+            "visibility": "none"
+          },
           "heat-points-circles": {
             "visibility": "visible"
           },
@@ -311,11 +980,295 @@
           },
           "country-fog-fill": {
             "fill-color": "#202b25",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
           },
           "region-fog-fill": {
             "fill-color": "#202b25",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "county-fog-fill": {
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "city-fog-fill": {
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "country-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "region-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "county-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          },
+          "city-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
           },
           "tracks-casing": {
             "line-color": "#202b25"
@@ -378,6 +1331,24 @@
           "region-fog-fill": {
             "visibility": "none"
           },
+          "county-fog-fill": {
+            "visibility": "none"
+          },
+          "city-fog-fill": {
+            "visibility": "none"
+          },
+          "country-fog-border": {
+            "visibility": "none"
+          },
+          "region-fog-border": {
+            "visibility": "none"
+          },
+          "county-fog-border": {
+            "visibility": "none"
+          },
+          "city-fog-border": {
+            "visibility": "none"
+          },
           "heat-points-circles": {
             "visibility": "none"
           },
@@ -424,11 +1395,295 @@
           },
           "country-fog-fill": {
             "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
           },
           "region-fog-fill": {
             "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "county-fog-fill": {
+            "fill-color": "#f7f4ec",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "city-fog-fill": {
+            "fill-color": "#f7f4ec",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "country-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "region-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "county-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "city-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
           },
           "tracks-casing": {
             "line-color": "#14140e"
@@ -489,6 +1744,24 @@
           "region-fog-fill": {
             "visibility": "visible"
           },
+          "county-fog-fill": {
+            "visibility": "visible"
+          },
+          "city-fog-fill": {
+            "visibility": "visible"
+          },
+          "country-fog-border": {
+            "visibility": "visible"
+          },
+          "region-fog-border": {
+            "visibility": "visible"
+          },
+          "county-fog-border": {
+            "visibility": "visible"
+          },
+          "city-fog-border": {
+            "visibility": "visible"
+          },
           "heat-points-circles": {
             "visibility": "none"
           },
@@ -535,11 +1808,295 @@
           },
           "country-fog-fill": {
             "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
           },
           "region-fog-fill": {
             "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "county-fog-fill": {
+            "fill-color": "#f7f4ec",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "city-fog-fill": {
+            "fill-color": "#f7f4ec",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "country-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "region-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "county-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "city-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
           },
           "tracks-casing": {
             "line-color": "#14140e"
@@ -600,6 +2157,24 @@
           "region-fog-fill": {
             "visibility": "none"
           },
+          "county-fog-fill": {
+            "visibility": "none"
+          },
+          "city-fog-fill": {
+            "visibility": "none"
+          },
+          "country-fog-border": {
+            "visibility": "none"
+          },
+          "region-fog-border": {
+            "visibility": "none"
+          },
+          "county-fog-border": {
+            "visibility": "none"
+          },
+          "city-fog-border": {
+            "visibility": "none"
+          },
           "heat-points-circles": {
             "visibility": "visible"
           },
@@ -646,11 +2221,295 @@
           },
           "country-fog-fill": {
             "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
           },
           "region-fog-fill": {
             "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "county-fog-fill": {
+            "fill-color": "#f7f4ec",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "city-fog-fill": {
+            "fill-color": "#f7f4ec",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "country-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "region-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "county-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
+          },
+          "city-fog-border": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.5
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              1
+            ]
           },
           "tracks-casing": {
             "line-color": "#14140e"
@@ -709,17 +2568,35 @@
         },
         "country-fog": {
           "type": "vector",
-          "tiles": "/tiles/v1/countries/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
+          "tiles": "/tiles/v1/countries/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__&lang=__HOLDMYTRACK_LANG__",
           "minzoom": 0,
-          "maxzoom": 3,
-          "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>"
+          "maxzoom": 10,
+          "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>",
+          "promoteId": "id"
         },
         "region-fog": {
           "type": "vector",
-          "tiles": "/tiles/v1/regions/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__",
-          "minzoom": 3,
-          "maxzoom": 7,
-          "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>"
+          "tiles": "/tiles/v1/regions/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__&lang=__HOLDMYTRACK_LANG__",
+          "minzoom": 0,
+          "maxzoom": 10,
+          "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>",
+          "promoteId": "id"
+        },
+        "county-fog": {
+          "type": "vector",
+          "tiles": "/tiles/v1/counties/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__&lang=__HOLDMYTRACK_LANG__",
+          "minzoom": 0,
+          "maxzoom": 10,
+          "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>",
+          "promoteId": "id"
+        },
+        "city-fog": {
+          "type": "vector",
+          "tiles": "/tiles/v1/cities/{z}/{x}/{y}.mvt?cv=__HOLDMYTRACK_TILE_VERSION__&lang=__HOLDMYTRACK_LANG__",
+          "minzoom": 0,
+          "maxzoom": 10,
+          "attribution": "<a href=\"https://overturemaps.org\">Overture Maps</a>",
+          "promoteId": "id"
         },
         "heat-points": {
           "type": "vector",
@@ -745,7 +2622,7 @@
           "type": "fill",
           "source": "fog-vector",
           "source-layer": "fog",
-          "minzoom": 7,
+          "minzoom": 11,
           "filter": [
             "==",
             [
@@ -767,7 +2644,7 @@
           "type": "line",
           "source": "fog-vector",
           "source-layer": "fog",
-          "minzoom": 7,
+          "minzoom": 11,
           "filter": [
             "==",
             [
@@ -829,12 +2706,45 @@
           "source-layer": "countries",
           "minzoom": 0,
           "maxzoom": 3,
+          "paint": {
+            "fill-antialias": false,
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
           "layout": {
             "visibility": "none"
-          },
-          "paint": {
-            "fill-color": "#202b25",
-            "fill-opacity": 0.82
           }
         },
         {
@@ -843,13 +2753,370 @@
           "source": "region-fog",
           "source-layer": "regions",
           "minzoom": 3,
-          "maxzoom": 7,
+          "maxzoom": 6,
+          "paint": {
+            "fill-antialias": false,
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
           "layout": {
+            "visibility": "none"
+          }
+        },
+        {
+          "id": "county-fog-fill",
+          "type": "fill",
+          "source": "county-fog",
+          "source-layer": "counties",
+          "minzoom": 6,
+          "maxzoom": 8,
+          "paint": {
+            "fill-antialias": false,
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "layout": {
+            "visibility": "none"
+          }
+        },
+        {
+          "id": "city-fog-fill",
+          "type": "fill",
+          "source": "city-fog",
+          "source-layer": "cities",
+          "minzoom": 8,
+          "maxzoom": 11,
+          "paint": {
+            "fill-antialias": false,
+            "fill-color": "#202b25",
+            "fill-opacity": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.12,
+                0
+              ],
+              [
+                "case",
+                [
+                  "boolean",
+                  [
+                    "feature-state",
+                    "hover"
+                  ],
+                  false
+                ],
+                0.6799999999999999,
+                0.82
+              ]
+            ]
+          },
+          "layout": {
+            "visibility": "none"
+          }
+        },
+        {
+          "id": "country-fog-border",
+          "type": "line",
+          "source": "country-fog",
+          "source-layer": "countries",
+          "minzoom": 0,
+          "maxzoom": 3,
+          "filter": [
+            "!=",
+            [
+              "get",
+              "kind"
+            ],
+            "sea"
+          ],
+          "layout": {
+            "line-join": "round",
             "visibility": "none"
           },
           "paint": {
-            "fill-color": "#202b25",
-            "fill-opacity": 0.82
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          }
+        },
+        {
+          "id": "region-fog-border",
+          "type": "line",
+          "source": "region-fog",
+          "source-layer": "regions",
+          "minzoom": 3,
+          "maxzoom": 6,
+          "filter": [
+            "!=",
+            [
+              "get",
+              "kind"
+            ],
+            "sea"
+          ],
+          "layout": {
+            "line-join": "round",
+            "visibility": "none"
+          },
+          "paint": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          }
+        },
+        {
+          "id": "county-fog-border",
+          "type": "line",
+          "source": "county-fog",
+          "source-layer": "counties",
+          "minzoom": 6,
+          "maxzoom": 8,
+          "filter": [
+            "!=",
+            [
+              "get",
+              "kind"
+            ],
+            "sea"
+          ],
+          "layout": {
+            "line-join": "round",
+            "visibility": "none"
+          },
+          "paint": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
+          }
+        },
+        {
+          "id": "city-fog-border",
+          "type": "line",
+          "source": "city-fog",
+          "source-layer": "cities",
+          "minzoom": 8,
+          "maxzoom": 11,
+          "filter": [
+            "!=",
+            [
+              "get",
+              "kind"
+            ],
+            "sea"
+          ],
+          "layout": {
+            "line-join": "round",
+            "visibility": "none"
+          },
+          "paint": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#202b25",
+              "#f7f4ec"
+            ],
+            "line-opacity": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              0.95,
+              0.22
+            ],
+            "line-width": [
+              "case",
+              [
+                "boolean",
+                [
+                  "feature-state",
+                  "hover"
+                ],
+                false
+              ],
+              2.5,
+              0.7
+            ]
           }
         },
         {

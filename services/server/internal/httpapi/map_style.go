@@ -80,14 +80,18 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 	flavor := r.URL.Query().Get("flavor")
 	userID := userIDFromContext(r.Context())
 	var mapVersion int64
-	if err := s.pool.QueryRow(r.Context(), `SELECT map_version FROM users WHERE id = $1`, userID).Scan(&mapVersion); err != nil {
+	var words mapstyle.Words
+	if err := s.pool.QueryRow(r.Context(), `
+		SELECT u.map_version, `+fogWordsSQL("u.country")+`
+		FROM users u WHERE u.id = $1`, userID).Scan(&mapVersion, &words.Region, &words.County); err != nil {
 		s.log.Error("map layers: map version", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 	tileVersion := fog.TileVersion(userID, mapVersion)
 
-	doc, err := mapstyle.Layers(flavor, tileVersion)
+	lang := requestLang(r)
+	doc, err := mapstyle.Layers(flavor, tileVersion, lang, words)
 	if errors.Is(err, mapstyle.ErrUnknownFlavor) {
 		writeAPIError(w, "unknown flavor; expected one of "+strings.Join(mapstyle.Flavors(), ", "), http.StatusNotFound)
 		return
@@ -98,7 +102,7 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	etag := mapstyle.LayersETag(flavor, tileVersion)
+	etag := mapstyle.LayersETag(flavor, tileVersion, lang, words)
 	w.Header().Set("ETag", etag)
 	w.Header().Set("Cache-Control", "private, no-cache")
 	if match := r.Header.Get("If-None-Match"); match != "" && strings.Contains(match, etag) {
@@ -109,4 +113,13 @@ func (s *Server) handleMapLayers(w http.ResponseWriter, r *http.Request) {
 	if _, err := w.Write(doc); err != nil {
 		s.log.Warn("map layers write", "err", err)
 	}
+}
+
+// fogWordsSQL is the SQL for the two columns of mapstyle.Words for the country whose code is
+// country: what most of its regions and counties are, as the seed keeps them (internal/geo).
+func fogWordsSQL(country string) string {
+	word := func(col string) string {
+		return `COALESCE((SELECT c.` + col + ` FROM admin_countries c WHERE c.code = ` + country + `), '')`
+	}
+	return word("region_word") + ", " + word("county_word")
 }

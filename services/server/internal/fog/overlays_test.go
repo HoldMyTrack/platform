@@ -28,7 +28,7 @@ type servedLayers struct {
 // tile kind.
 func TestServedLayersMatchTheTiles(t *testing.T) {
 	for _, flavor := range mapstyle.Flavors() {
-		doc, err := mapstyle.Layers(flavor, "abcd1234.1")
+		doc, err := mapstyle.Layers(flavor, "abcd1234.1", "en", mapstyle.Words{})
 		if err != nil {
 			t.Fatal(err)
 		}

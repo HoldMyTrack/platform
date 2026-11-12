@@ -40,14 +40,16 @@ Adding a language takes a catalog on each surface, `about`/`help` translations, 
 
 ### Seeding a fresh database
 
-`migrate` creates the schema and the Demo Customer's `users` row but no data, and `docker compose up` runs no seeds. Without them "Try it now" opens an empty account, Fog's Country/Region tiers have no boundaries, and activities show their account's timezone. Make the boundaries file with `scripts/boundaries-extract.sh ~/boundaries` (`docs/DEPLOY.md` §6; needs the [duckdb](https://duckdb.org/docs/installation) CLI), then:
+`migrate` creates the schema and the Demo Customer's `users` row but no data, and `docker compose up` runs no seeds. Without them "Try it now" opens an empty account, Fog's levels have no boundaries, and activities show their account's timezone. Make the boundaries file with `scripts/boundaries-extract.sh ~/boundaries` (`docs/DEPLOY.md` §6; needs the [duckdb](https://duckdb.org/docs/installation) CLI), then:
 
 ```bash
 curl -sSfL -o ~/boundaries/timezones-with-oceans-2026d.geojson.zip https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026d/timezones-with-oceans.geojson.zip
-docker compose run --rm -v ~/boundaries:/data:ro api seed-admin-boundaries --file /data/overture-2026-09-23.0-lakes-boundaries.csv.gz   # IMPLEMENTATION.md §4.2.4
+docker compose run --rm -v ~/boundaries:/data:ro api seed-admin-boundaries --file /data/overture-2026-09-23.0-levels-coast-boundaries.csv.gz   # IMPLEMENTATION.md §4.2.4
 docker compose run --rm -v ~/boundaries:/data:ro api seed-timezones --file /data/timezones-with-oceans-2026d.geojson.zip       # IMPLEMENTATION.md §4.30
 docker compose run --rm api seed-demo-customer   # IMPLEMENTATION.md §4.10, SPEC.md FR-2.2
 ```
+
+The world's counties and cities take a long extract. `PLACES=US scripts/boundaries-extract.sh ~/boundaries` takes them for the listed countries only, into a file named for them, which the seed loads with `--partial`.
 
 Each takes a few minutes. Seeding boundaries and timezones first matches the demo at ingest; either order works. All three skip what is already loaded (`--force` makes either seed reload). `seed-demo-customer` never changes an activity already seeded, so after `demo_data/` changes run it once with `--reset`, which deletes the demo's activities first.
 
