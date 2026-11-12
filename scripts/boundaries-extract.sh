@@ -3,7 +3,7 @@
 # Make the country and region outlines file (docs/DEPLOY.md §6, docs/IMPLEMENTATION.md §4.2.4): cut the land-clipped
 # countries, dependencies and regions out of a pinned Overture Maps release with DuckDB, for
 # `seed-admin-boundaries`. Run OFF the server, on any machine with the duckdb CLI
-# (brew install duckdb) and a few GB free: it reads about 4.5 GB of GeoParquet from Overture's
+# (brew install duckdb) and a few GB free: it reads several GB of GeoParquet from Overture's
 # public S3 bucket, no account needed. Nothing here touches a deployment.
 #
 # Usage:
@@ -16,17 +16,20 @@
 set -euo pipefail
 
 RELEASE=2026-09-23.0
+# Changed with anything that changes the extract's content, since the seed skips a file name it
+# has already loaded.
+CUT=lakes
 
 [[ $# -eq 1 ]] || { echo "Usage: $0 <work-dir>" >&2; exit 2; }
 command -v duckdb > /dev/null || { echo "duckdb not found: install it (brew install duckdb, or https://duckdb.org/docs/installation)." >&2; exit 1; }
 
 work=$1
 mkdir -p "$work"
-out="$work/overture-$RELEASE-boundaries.csv.gz"
+out="$work/overture-$RELEASE-$CUT-boundaries.csv.gz"
 
 log() { echo "$(date -u +%FT%TZ) $*"; }
 
-log "extracting Overture $RELEASE divisions into $out (a few minutes)"
+log "extracting Overture $RELEASE divisions into $out (about 20 minutes, most of it reading the lakes)"
 sql=$(cd "$(dirname "$0")" && pwd)/boundaries-extract.sql
 printf "SET VARIABLE release = '%s';\nSET VARIABLE out = '%s';\n.read %s\n" "$RELEASE" "$out" "$sql" | duckdb
 
