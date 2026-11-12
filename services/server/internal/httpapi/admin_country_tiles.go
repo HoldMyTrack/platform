@@ -153,6 +153,10 @@ const (
 	cityMergeBelow   = 7
 )
 
+// visibleOutline is the narrowest a merged tile draws a place the account has been in, in tile
+// units: two screen pixels.
+const visibleOutline = 2 * pixel
+
 // seaID is the admin_id of a tile's sea: the tile's frame with every outline in it cut out.
 // Outline ids start at 1.
 const seaID = 0
@@ -253,21 +257,44 @@ func (l adminLayer) tileQuery(cached bool) string {
 
 // mergedGeoms is a tile's outlines `geoms` as a level that merges draws them: from mergeBelow up,
 // all of them; below it, only the places the account has been in, and one veil for the rest and
-// the sea, cut from the same outlines, so the cleared places' borders stay where they were. The
-// veil is the sea's feature, which no client names or outlines.
+// the sea, cut from the same shapes, so the cleared places' borders meet it exactly. The veil is
+// the sea's feature, which no client names or outlines.
+//
+// Below mergeBelow the places come from their outlines rather than the tile's cache, which drops a
+// piece narrower than minOutlineAtZ0: there that is most towns, and a merged tile exists to show
+// which of them the account has been in. One narrower than visibleOutline is drawn as a dot that
+// wide, round a point inside it.
 func (l adminLayer) mergedGeoms(geoms string) string {
 	return fmt.Sprintf(`
 		SELECT admin_id, geom FROM (%[1]s) a WHERE $1 >= %[2]d
 		UNION ALL (
-			WITH mine_here AS (
-				SELECT a.admin_id, a.geom FROM (%[1]s) a
-				WHERE $1 < %[2]d AND a.admin_id IN (SELECT id FROM %[3]s)
+			-- Materialized one step at a time and led by the account's places, each looked up by
+			-- its id and boxed by its far drawing, so a prepared statement's generic plan neither
+			-- scans every place for them, nor reads their full outlines, nor draws each shape again
+			-- for every use of it: together they made a z0 tile take over a minute.
+			WITH mine_shape AS MATERIALIZED (
+				SELECT o.id, ST_Transform(COALESCE(o.geom_far, o.geom), 3857) AS m
+				FROM (SELECT DISTINCT id FROM %[3]s) v, LATERAL (
+					SELECT o.id, o.geom_far, o.geom FROM %[7]s o
+					WHERE o.id = v.id AND COALESCE(o.geom_far, o.geom) && ST_Transform(ST_TileEnvelope($1, $2, $3), 4326)
+				) o
+				WHERE $1 < %[2]d
+			), mine_clip AS MATERIALIZED (
+				SELECT id, m, ST_AsMVTGeom(m, ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS g FROM mine_shape
+			), mine_here AS MATERIALIZED (
+				SELECT admin_id, geom FROM (
+					SELECT id AS admin_id, ST_ReducePrecision(
+					       CASE WHEN g IS NULL OR greatest(ST_XMax(g) - ST_XMin(g), ST_YMax(g) - ST_YMin(g)) < %[6]d
+					            THEN ST_Buffer(ST_AsMVTGeom(ST_PointOnSurface(m), ST_TileEnvelope($1, $2, $3), 4096, 64, true), %[6]d / 2.0, 2)
+					            ELSE g END, 1) AS geom
+					FROM mine_clip
+				) d WHERE geom IS NOT NULL AND NOT ST_IsEmpty(geom)
 			)
 			SELECT admin_id, geom FROM mine_here
 			UNION ALL
 			SELECT %[4]d, geom FROM (SELECT %[5]s AS geom FROM mine_here HAVING $1 < %[2]d) veil
 			WHERE NOT ST_IsEmpty(geom)
-		)`, geoms, l.mergeBelow, l.visited, seaID, veilOutside("mine_here"))
+		)`, geoms, l.mergeBelow, l.visited, seaID, veilOutside("mine_here"), visibleOutline, l.outlines)
 }
 
 // adminTileQueries are the two handlers' queries, cached and live, built once.
