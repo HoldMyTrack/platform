@@ -98,12 +98,19 @@ LEFT JOIN region r ON r.key = COALESCE(a.region_key, 'country:' || a.country)
 LEFT JOIN county k ON k.key = a.county_key
 WHERE a.subtype = 'locality';
 
+-- The join takes ST_Intersects alone: with the size test beside it DuckDB plans a nested loop
+-- over every pair of cities instead of its spatial join (France's 35,000 cities took 14 minutes
+-- instead of 3 seconds).
+CREATE TABLE city_touch AS
+SELECT c.key, c.m2, s.key AS smaller_key, s.m2 AS smaller_m2
+FROM city_area c JOIN city_area s ON ST_Intersects(c.geometry, s.geometry);
+
 CREATE TABLE city AS
 WITH smaller AS (
-    SELECT c.key, ST_Union_Agg(s.geometry) AS geometry
-    FROM city_area c JOIN city_area s ON ST_Intersects(c.geometry, s.geometry)
-    WHERE c.key <> s.key AND (s.m2 < c.m2 OR (s.m2 = c.m2 AND s.key < c.key))
-    GROUP BY c.key
+    SELECT t.key, ST_Union_Agg(s.geometry) AS geometry
+    FROM city_touch t JOIN city_area s ON s.key = t.smaller_key
+    WHERE t.key <> t.smaller_key AND (t.smaller_m2 < t.m2 OR (t.smaller_m2 = t.m2 AND t.smaller_key < t.key))
+    GROUP BY t.key
 )
 SELECT c.key, c.country, c.region_key, c.county_key, c.local_type, c.name, c.names,
        CASE WHEN s.geometry IS NULL THEN c.geometry ELSE ST_Difference(c.geometry, s.geometry) END AS geometry
