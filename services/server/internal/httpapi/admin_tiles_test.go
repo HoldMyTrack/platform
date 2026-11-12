@@ -283,3 +283,49 @@ func TestCityTileMergesThePlacesNotBeenInBelowItsBand(t *testing.T) {
 		}
 	}
 }
+
+// A vector tile reads a ring wound against its polygon's as a hole, and MapLibre left that part
+// of the place unfilled, so it looked cleared: every outline in a tile is wound as the sea is,
+// whichever way its source's rings ran.
+func TestAdminTileOutlinesAreWoundAsTheSea(t *testing.T) {
+	d := newDBTest(t)
+	ctx := context.Background()
+	stamp := time.Now().UnixNano()
+	var ids []int
+	for i, wkt := range []string{
+		"MULTIPOLYGON(((-25 -45, -24.5 -45, -24.5 -44, -25 -44, -25 -45)))",                                                               // counter-clockwise
+		"MULTIPOLYGON(((-24.5 -45, -24.5 -44, -24 -44, -24 -45, -24.5 -45)))",                                                             // clockwise
+		"MULTIPOLYGON(((-25 -46, -24.5 -46, -24.5 -45.5, -25 -45.5, -25 -46)),((-24.4 -46, -24.4 -45.5, -24 -45.5, -24 -46, -24.4 -46)))", // one of each
+	} {
+		var id int
+		if err := d.pool.QueryRow(ctx, `
+			INSERT INTO admin_countries (code, name, geom) VALUES ($1, 'Wound', ST_GeomFromText($2, 4326)) RETURNING id`,
+			fmt.Sprintf("W%d%d", i, stamp), wkt).Scan(&id); err != nil {
+			t.Fatal(err)
+		}
+		ids = append(ids, id)
+	}
+	t.Cleanup(func() { d.pool.Exec(context.Background(), `DELETE FROM admin_countries WHERE id = ANY($1)`, ids) })
+
+	x, y := tilemath.LonLatToTile(-24.5, -45, 5)
+	rows, err := d.pool.Query(ctx, `SELECT g.admin_id, ST_IsPolygonCCW(g.geom) FROM (`+countryLayer.liveGeoms()+`) g`, 5, x, y)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rows.Close()
+	seen := 0
+	for rows.Next() {
+		var id int
+		var ccw bool
+		if err := rows.Scan(&id, &ccw); err != nil {
+			t.Fatal(err)
+		}
+		if !ccw {
+			t.Errorf("outline %d is not wound as the sea", id)
+		}
+		seen++
+	}
+	if seen < len(ids)+1 {
+		t.Errorf("%d features in the tile, want the %d countries and the sea", seen, len(ids))
+	}
+}

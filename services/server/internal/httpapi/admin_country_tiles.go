@@ -177,6 +177,10 @@ const exploredID = -1
 // (an island, a whole place) narrower than minOutlineAtZ0 drops out first: it shares no border it
 // could open, and Canada's islets kept every ring through the coverage.
 //
+// Every ring is wound as the sea's: the coverage keeps no ring's winding, and a vector tile reads a
+// ring wound the other way as a hole, which MapLibre left unfilled, a patch of Ontario's
+// Six Nations stand-in cleared without a visit.
+//
 // The sea is veilOutside the outlines.
 func (l adminLayer) liveGeoms() string {
 	return fmt.Sprintf(`
@@ -190,7 +194,7 @@ func (l adminLayer) liveGeoms() string {
 			WHERE greatest(ST_XMax(geom) - ST_XMin(geom), ST_YMax(geom) - ST_YMin(geom)) >= %[2]f / power(2, $1::int)
 			GROUP BY id
 		), outlines AS (
-			SELECT id AS admin_id, ST_SetSRID(ST_CoverageSimplify(geom, %[4]d) OVER (), 3857) AS geom
+			SELECT id AS admin_id, ST_ForcePolygonCCW(ST_SetSRID(ST_CoverageSimplify(geom, %[4]d) OVER (), 3857)) AS geom
 			FROM kept WHERE geom IS NOT NULL
 		)
 		SELECT admin_id, geom FROM outlines WHERE NOT ST_IsEmpty(geom)
