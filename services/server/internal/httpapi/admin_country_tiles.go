@@ -120,6 +120,14 @@ var (
 	}
 )
 
+// farMaxZoom is the last zoom a tile draws the outlines' far form (internal/geo's farTolerance,
+// 1 km, under a pixel to here) rather than their near one.
+const farMaxZoom = 6
+
+// pixel is a screen pixel in tile units, a 4096-unit tile drawn 512 pixels wide: what a tile's
+// outlines are simplified to, as one coverage, so no seam opens at any tolerance.
+const pixel = 4096 / 512
+
 // minOutlineAtZ0 is the narrowest outline a tile keeps at zoom 0, in Web Mercator metres: 4
 // screen pixels, a 512-pixel tile spanning the world, halving at every zoom in. A narrower one
 // drops out of the tile and its land joins the sea, so a place too small to tell apart is veiled
@@ -136,12 +144,17 @@ const outlineMaxZoom = 10
 // Outline ids start at 1.
 const seaID = 0
 
-// liveGeoms draws every outline in tile ($1, $2, $3) at least minOutlineAtZ0 across,
-// simplified to half a pixel, transformed and clipped to it, and the tile's sea, so the veil covers the water and
-// what drops out too. The same for every account, so serveAdminTile
-// keeps it in admin_tile_geoms rather than drawing it on every request: transforming and
-// clipping is most of a tile's cost (docs/PERFORMANCE.md, 2026-10-09 dev, over 80 ms for the
-// world's z0 Country tile), and the sea's union over a second for it.
+// liveGeoms draws every outline in tile ($1, $2, $3), transformed and clipped to it, and the
+// tile's sea, so the veil covers the water and what drops out too. The same for every account, so
+// serveAdminTile keeps it in admin_tile_geoms rather than drawing it on every request:
+// transforming and clipping is most of a tile's cost (docs/PERFORMANCE.md, 2026-10-09 dev, over
+// 80 ms for the world's z0 Country tile), and the sea's union over a second for it.
+//
+// The outlines are simplified to a pixel together, as a coverage, so neighbours keep their
+// shared border and no sliver of veil opens between them; one by one, each moved its side
+// separately. Clipping and the tile grid treat a shared border the same on both sides. A piece
+// (an island, a whole place) narrower than minOutlineAtZ0 drops out first: it shares no border it
+// could open, and Canada's islets kept every ring through the coverage.
 //
 // The frame reaches just past the tile, as fog.veilPolygons' does, so no edge falls on the tile's
 // border, where antialiasing drew a seam. At the world's top and bottom it stops at the edge: the
@@ -152,13 +165,18 @@ const seaID = 0
 // snapped to the grid here, staying valid.
 func (l adminLayer) liveGeoms() string {
 	return fmt.Sprintf(`
-		WITH outlines AS (
-			SELECT o.id AS admin_id,
-			       ST_AsMVTGeom(ST_Simplify(ST_Transform(o.geom, 3857), %[2]f / power(2, $1::int) / 8, true),
-			                    ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS geom
-			FROM %[1]s o, ST_Transform(ST_Envelope(o.geom), 3857) e
+		WITH piece AS (
+			SELECT o.id, p.geom
+			FROM %[1]s o, ST_Dump(ST_Transform(CASE WHEN $1 <= %[5]d THEN COALESCE(o.geom_far, o.geom) ELSE o.geom END, 3857)) p
 			WHERE o.geom && ST_Transform(ST_TileEnvelope($1, $2, $3), 4326)
-			  AND greatest(ST_XMax(e) - ST_XMin(e), ST_YMax(e) - ST_YMin(e)) >= %[2]f / power(2, $1::int)
+		), kept AS (
+			SELECT id, ST_AsMVTGeom(ST_Collect(geom), ST_TileEnvelope($1, $2, $3), 4096, 64, true) AS geom
+			FROM piece
+			WHERE greatest(ST_XMax(geom) - ST_XMin(geom), ST_YMax(geom) - ST_YMin(geom)) >= %[2]f / power(2, $1::int)
+			GROUP BY id
+		), outlines AS (
+			SELECT id AS admin_id, ST_SetSRID(ST_CoverageSimplify(geom, %[4]d) OVER (), 3857) AS geom
+			FROM kept WHERE geom IS NOT NULL
 		), frame AS (
 			SELECT ST_MakeEnvelope(
 				-2, CASE WHEN $3 = 0 THEN 0 ELSE -2 END,
@@ -169,9 +187,9 @@ func (l adminLayer) liveGeoms() string {
 			FROM frame f LEFT JOIN outlines o ON true
 			GROUP BY f.geom
 		)
-		SELECT admin_id, geom FROM outlines
+		SELECT admin_id, geom FROM outlines WHERE NOT ST_IsEmpty(geom)
 		UNION ALL
-		SELECT %[3]d, geom FROM sea WHERE NOT ST_IsEmpty(geom)`, l.outlines, minOutlineAtZ0, seaID)
+		SELECT %[3]d, geom FROM sea WHERE NOT ST_IsEmpty(geom)`, l.outlines, minOutlineAtZ0, seaID, pixel, farMaxZoom)
 }
 
 // tileQuery is one account's tile ($1, $2, $3) of this layer, for account $4, with names in

@@ -177,6 +177,34 @@ CREATE MACRO kept(g) AS (
     ) WHERE 2 * ST_Area_Spheroid(geom) / NULLIF(ST_Perimeter_Spheroid(geom), 0) >= 30
 );
 
+-- The County and City levels' rows, each level to be cleaned as one coverage.
+CREATE TABLE place AS
+SELECT 'county' AS level, 'county' AS kind, key, country, region_key, NULL AS county_key, local_type, name, names, geometry AS g
+FROM county
+UNION ALL
+SELECT 'county', kind, key, country, region_key, NULL, local_type, name, names, g
+FROM (SELECT *, kept(geometry) AS g FROM county_rest) WHERE g IS NOT NULL
+UNION ALL
+SELECT 'city', 'city', key, country, region_key, county_key, local_type, name, names, g
+FROM (SELECT *, ST_CollectionExtract(ST_MakeValid(geometry), 3) AS g FROM city) WHERE NOT ST_IsEmpty(g)
+UNION ALL
+SELECT 'city', kind, key, country, region_key, county_key, local_type, name, names, g
+FROM (SELECT *, kept(geometry) AS g FROM city_rest) WHERE g IS NOT NULL;
+
+-- Each county and city simplified to 10 m on its own moves its side of a shared border apart
+-- from its neighbour's (1,780 km of Ohio's county borders no longer met), which leaves slivers
+-- between them however the seed draws them. Snapping each level's edges within 15 m back
+-- together, country by country, makes it a coverage again, so the seed can simplify it as one
+-- (internal/geo's drawingSQL). A place it collapses drops out.
+CREATE TABLE place_clean AS
+WITH l AS (
+    SELECT level, country, ST_CoverageClean(list(g ORDER BY key), 0.00015) AS c, list(key ORDER BY key) AS keys
+    FROM place GROUP BY level, country
+), d AS (
+    SELECT level, keys, UNNEST(ST_Dump(c), recursive := true) FROM l
+)
+SELECT level, keys[path[1]] AS key, ST_Union_Agg(geom) AS g FROM d GROUP BY level, keys[path[1]];
+
 -- One row per outline, in the column order seed-admin-boundaries COPYs into its staging table:
 -- level, kind (what the place is: on the County and City levels a stand-in is the region or
 -- county it comes from), key (a country's code, else an Overture division id, 'rest:' and the key
@@ -190,16 +218,7 @@ COPY (
     SELECT 'region', 'region', key, country, NULL, NULL, code, local_type, name, names, ST_AsHEXWKB(geometry)
     FROM region WHERE key NOT LIKE 'country:%'
     UNION ALL
-    SELECT 'county', 'county', key, country, region_key, NULL, NULL, local_type, name, names, ST_AsHEXWKB(geometry)
-    FROM county
-    UNION ALL
-    SELECT 'county', kind, key, country, region_key, NULL, NULL, local_type, name, names, ST_AsHEXWKB(g)
-    FROM (SELECT *, kept(geometry) AS g FROM county_rest) WHERE g IS NOT NULL
-    UNION ALL
-    SELECT 'city', 'city', key, country, region_key, county_key, NULL, local_type, name, names, ST_AsHEXWKB(g)
-    FROM (SELECT *, ST_CollectionExtract(ST_MakeValid(geometry), 3) AS g FROM city) WHERE NOT ST_IsEmpty(g)
-    UNION ALL
-    SELECT 'city', kind, key, country, region_key, county_key, NULL, local_type, name, names, ST_AsHEXWKB(g)
-    FROM (SELECT *, kept(geometry) AS g FROM city_rest) WHERE g IS NOT NULL
+    SELECT p.level, p.kind, p.key, p.country, p.region_key, p.county_key, NULL, p.local_type, p.name, p.names, ST_AsHEXWKB(c.g)
+    FROM place p JOIN place_clean c USING (level, key)
     ORDER BY 1, 3
 ) TO (getvariable('out')) (FORMAT csv, HEADER false, COMPRESSION gzip);

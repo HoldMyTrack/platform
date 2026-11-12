@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"math"
 	"os"
 	"strings"
 	"testing"
@@ -221,4 +222,55 @@ func TestMatchAcrossTheAntimeridian(t *testing.T) {
 	if got != "EE,WW" {
 		t.Errorf("matched %q, want EE,WW", got)
 	}
+}
+
+// The outlines the tiles draw, near and far, keep a shared border shared: two countries whose
+// border wiggles at every scale neither pull apart nor overlap once simplified, as each simplified
+// alone did at both tolerances.
+func TestDrawingKeepsSharedBorders(t *testing.T) {
+	tx := testTx(t)
+	ctx := context.Background()
+	log := slog.New(slog.DiscardHandler)
+	// A border near -40 from -61 to -60: a sine 0.05° wide, steps of 0.003° and a jitter of 0.0004°.
+	var zig []string
+	for i := 0; i <= 1000; i++ {
+		x := -40 + 0.05*math.Sin(float64(i)*0.02) + 0.003*float64((i/10)%3) + 0.0004*float64(i%2)
+		zig = append(zig, fmt.Sprintf("%v %v", x, -61+float64(i)*0.001))
+	}
+	border := strings.Join(zig, ", ")
+	var west, east string
+	if err := tx.QueryRow(ctx, `
+		SELECT encode(ST_AsBinary(ST_GeomFromText('POLYGON((-41 -61, '||$1||', -41 -60, -41 -61))')), 'hex'),
+		       encode(ST_AsBinary(ST_GeomFromText('POLYGON((-39 -61, -39 -60, '||$2||', -39 -61))')), 'hex')`,
+		border, reverse(zig)).Scan(&west, &east); err != nil {
+		t.Fatal(err)
+	}
+	var buf bytes.Buffer
+	gz := gzip.NewWriter(&buf)
+	gz.Write([]byte("country,country,WZ,WZ,,,,,West,{}," + west + "\ncountry,country,EZ,EZ,,,,,East,{}," + east + "\n"))
+	gz.Close()
+	if _, err := loadBoundaries(ctx, tx, log, &buf, "zigzag.csv.gz", true, minimums{2, 0, 0, 0}); err != nil {
+		t.Fatalf("load: %v", err)
+	}
+	for _, col := range []string{"geom", "geom_far"} {
+		var gap, overlap float64
+		if err := tx.QueryRow(ctx, `
+			SELECT ST_Area(ST_Difference(ST_MakeEnvelope(-41, -61, -39, -60, 4326), ST_Union(`+col+`))),
+			       ST_Area(ST_Intersection(min(`+col+`), max(`+col+`)))
+			FROM admin_countries WHERE code IN ('WZ', 'EZ')`).Scan(&gap, &overlap); err != nil {
+			t.Fatal(err)
+		}
+		if gap > 1e-9 || overlap > 1e-9 {
+			t.Errorf("%s: %.2g square degrees between the two, %.2g over each other", col, gap, overlap)
+		}
+	}
+}
+
+// reverse is the points of a border in the other direction, joined as WKT.
+func reverse(points []string) string {
+	out := make([]string, len(points))
+	for i, p := range points {
+		out[len(points)-1-i] = p
+	}
+	return strings.Join(out, ", ")
 }

@@ -43,15 +43,13 @@ const (
 	minCities    = 300000
 )
 
-// How far, in degrees, the outlines the tiles draw may stray from the matched ones: about 5 km
-// for countries, drawn below z3 (some 10 km a pixel at the equator), 1 km for regions, drawn to
-// z6 (1.2 km a pixel), and 50 m for counties and cities, under a pixel at z10 (FOG_REWORK.md
-// Findings 5). Finer outlines made the world's z0 tile take over a second to draw on every
-// request (IMPLEMENTATION.md §4.2.4).
+// How far, in degrees, the outlines the tiles draw may stray from the matched ones: 50 m near,
+// under a pixel at z10 (FOG_REWORK.md Findings 5), and 1 km far, for z6 and out (1.2 km a
+// pixel). Every level draws at every zoom once locked: drawn only at its own zooms, a country
+// was 5 km off at z10.
 const (
-	countryTolerance = 0.05
-	regionTolerance  = 0.01
-	placeTolerance   = 0.0005
+	nearTolerance = 0.0005
+	farTolerance  = 0.01
 )
 
 // SeedAdminBoundaries replaces every outline of every level with the extract's and re-matches
@@ -154,14 +152,14 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 		{"", `DELETE FROM admin_countries`, nil},
 		{"countries", `
 			INSERT INTO admin_countries (code, name, names, geom)
-			SELECT key, name, names, ` + displayGeom("geom", countryTolerance) + ` FROM boundary WHERE level = 'country'`, &stats.Countries},
+			SELECT key, name, names, geom FROM boundary WHERE level = 'country'`, &stats.Countries},
 		{"", `
 			INSERT INTO admin_country_parts (country_id, geom)
 			SELECT c.id, (ST_Dump(ST_Subdivide(b.geom, 256))).geom
 			FROM boundary b JOIN admin_countries c ON c.code = b.key WHERE b.level = 'country'`, nil},
 		{"regions", `
 			INSERT INTO admin_regions (country_id, overture_id, code, local_type, name, names, geom)
-			SELECT c.id, b.key, b.code, b.local_type, b.name, b.names, ` + displayGeom("b.geom", regionTolerance) + `
+			SELECT c.id, b.key, b.code, b.local_type, b.name, b.names, b.geom
 			FROM boundary b JOIN admin_countries c ON c.code = b.country WHERE b.level = 'region'`, &stats.Regions},
 		{"", `
 			INSERT INTO admin_region_parts (region_id, geom)
@@ -169,7 +167,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			FROM boundary b JOIN admin_regions r ON r.overture_id = b.key WHERE b.level = 'region'`, nil},
 		{"whole-country regions", `
 			INSERT INTO admin_regions (country_id, overture_id, code, name, names, geom)
-			SELECT c.id, 'country:' || c.code, NULL, c.name, c.names, ` + displayGeom("b.geom", regionTolerance) + `
+			SELECT c.id, 'country:' || c.code, NULL, c.name, c.names, b.geom
 			FROM admin_countries c JOIN boundary b ON b.level = 'country' AND b.key = c.code
 			WHERE NOT EXISTS (SELECT 1 FROM admin_regions r WHERE r.country_id = c.id)`, &stats.WholeCountryRegions},
 		{"", `
@@ -179,7 +177,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			JOIN admin_country_parts p ON p.country_id = c.id`, nil},
 		{"counties", `
 			INSERT INTO admin_counties (overture_id, kind, country_id, region_id, local_type, name, names, geom)
-			SELECT b.key, b.kind, c.id, r.id, b.local_type, b.name, b.names, ` + displayGeom("b.geom", placeTolerance) + `
+			SELECT b.key, b.kind, c.id, r.id, b.local_type, b.name, b.names, b.geom
 			FROM boundary b JOIN admin_countries c ON c.code = b.country
 			LEFT JOIN admin_regions r ON r.overture_id = b.region_key
 			WHERE b.level = 'county'`, &stats.Counties},
@@ -189,7 +187,7 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			FROM boundary b JOIN admin_counties k ON k.overture_id = b.key WHERE b.level = 'county'`, nil},
 		{"cities", `
 			INSERT INTO admin_cities (overture_id, kind, country_id, region_id, county_id, local_type, name, names, geom)
-			SELECT b.key, b.kind, c.id, r.id, k.id, b.local_type, b.name, b.names, ` + displayGeom("b.geom", placeTolerance) + `
+			SELECT b.key, b.kind, c.id, r.id, k.id, b.local_type, b.name, b.names, b.geom
 			FROM boundary b JOIN admin_countries c ON c.code = b.country
 			LEFT JOIN admin_regions r ON r.overture_id = b.region_key
 			LEFT JOIN admin_counties k ON k.overture_id = b.county_key
@@ -198,6 +196,14 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			INSERT INTO admin_city_parts (city_id, geom)
 			SELECT k.id, (ST_Dump(ST_Subdivide(b.geom, 256))).geom
 			FROM boundary b JOIN admin_cities k ON k.overture_id = b.key WHERE b.level = 'city'`, nil},
+		// What the tiles draw: each level simplified as a coverage, so neighbours keep their shared
+		// border, where simplifying each outline alone left a sliver of veil between them. The
+		// world at once for countries and regions; counties and cities country by country, which
+		// lets their international borders drift apart by up to the tolerance, under a pixel.
+		{"drawing", drawingSQL("admin_countries", ""), nil},
+		{"", drawingSQL("admin_regions", ""), nil},
+		{"", drawingSQL("admin_counties", "PARTITION BY country_id"), nil},
+		{"", drawingSQL("admin_cities", "PARTITION BY country_id"), nil},
 		// The places each place above holds, its stand-ins aside, and what most of a country's
 		// regions and counties are: Fog's tooltip and level control read them.
 		{"totals", `
@@ -267,11 +273,14 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 	return stats, nil
 }
 
-// displayGeom is the SQL for an outline the tiles draw: col simplified to tolerance, dropping
-// the islets and rings that collapse, which at these zooms are under a pixel, and made valid
-// again, since plain simplifying can cross a ring over itself. Where nothing is left (Vatican
-// City, Monaco: ST_Simplify gives NULL), the full outline, which is tiny anyway.
-func displayGeom(col string, tolerance float64) string {
-	s := fmt.Sprintf("ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_Simplify(%s, %v)), 3))", col, tolerance)
-	return fmt.Sprintf("CASE WHEN ST_IsEmpty(%[1]s) IS NOT FALSE THEN %[2]s ELSE %[1]s END", s, col)
+// drawingSQL replaces the outlines of table, each inserted in full, with the ones the tiles draw,
+// near and far: simplified to each tolerance as one coverage per window. An empty outline, which
+// the coverage gives back as NULL, stays as it is.
+func drawingSQL(table, window string) string {
+	return fmt.Sprintf(`
+		UPDATE %[1]s o SET geom = ST_Multi(ST_CollectionExtract(ST_SetSRID(COALESCE(s.near, o.geom), 4326), 3)),
+		                   geom_far = ST_Multi(ST_CollectionExtract(ST_SetSRID(COALESCE(s.far, o.geom), 4326), 3))
+		FROM (SELECT id, ST_CoverageSimplify(geom, %[2]v) OVER (%[4]s) AS near,
+		             ST_CoverageSimplify(geom, %[3]v) OVER (%[4]s) AS far FROM %[1]s) s
+		WHERE s.id = o.id`, table, nearTolerance, farTolerance, window)
 }

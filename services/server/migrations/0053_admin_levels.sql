@@ -4,9 +4,14 @@
 -- outline gets its names in the app's languages other than English, and the kind of place it is
 -- in its own country's words (Overture's local_type).
 --
+-- Every level is drawn at every zoom, so each outline is kept twice for the tiles: `geom` near,
+-- under a pixel at zoom 10, and `geom_far` for zoom 6 and out.
+--
 -- A place above counts the places of each level below that lie in it, stand-ins aside, and a
 -- country keeps what most of its regions and counties are (its words), for Fog's tooltip and
 -- level control.
+ALTER TABLE admin_countries ADD COLUMN geom_far geometry(MultiPolygon, 4326);
+ALTER TABLE admin_regions ADD COLUMN geom_far geometry(MultiPolygon, 4326);
 ALTER TABLE admin_countries ADD COLUMN names jsonb NOT NULL DEFAULT '{}',
     ADD COLUMN region_word text NOT NULL DEFAULT '', ADD COLUMN county_word text NOT NULL DEFAULT '',
     ADD COLUMN regions_total integer NOT NULL DEFAULT 0, ADD COLUMN counties_total integer NOT NULL DEFAULT 0,
@@ -24,7 +29,8 @@ CREATE TABLE admin_counties (
     name text NOT NULL,
     names jsonb NOT NULL DEFAULT '{}',
     cities_total integer NOT NULL DEFAULT 0,
-    geom geometry(MultiPolygon, 4326) NOT NULL
+    geom geometry(MultiPolygon, 4326) NOT NULL,
+    geom_far geometry(MultiPolygon, 4326)
 );
 CREATE INDEX idx_admin_counties_geom ON admin_counties USING gist (geom);
 
@@ -52,7 +58,8 @@ CREATE TABLE admin_cities (
     local_type text,
     name text NOT NULL,
     names jsonb NOT NULL DEFAULT '{}',
-    geom geometry(MultiPolygon, 4326) NOT NULL
+    geom geometry(MultiPolygon, 4326) NOT NULL,
+    geom_far geometry(MultiPolygon, 4326)
 );
 CREATE INDEX idx_admin_cities_geom ON admin_cities USING gist (geom);
 
