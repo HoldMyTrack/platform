@@ -33,6 +33,10 @@ CREATE TABLE admin_counties (
     geom_far geometry(MultiPolygon, 4326)
 );
 CREATE INDEX idx_admin_counties_geom ON admin_counties USING gist (geom);
+-- The parent ids, for the foreign keys that point at the levels above: without them deleting the
+-- old outlines in seed-admin-boundaries checked each region and country against every row.
+CREATE INDEX idx_admin_counties_region ON admin_counties (region_id);
+CREATE INDEX idx_admin_counties_country ON admin_counties (country_id);
 
 CREATE TABLE admin_county_parts (
     county_id integer NOT NULL REFERENCES admin_counties (id) ON DELETE CASCADE,
@@ -62,6 +66,10 @@ CREATE TABLE admin_cities (
     geom_far geometry(MultiPolygon, 4326)
 );
 CREATE INDEX idx_admin_cities_geom ON admin_cities USING gist (geom);
+-- The parent ids, as admin_counties': deleting the world's counties scanned 383,000 cities once each.
+CREATE INDEX idx_admin_cities_county ON admin_cities (county_id);
+CREATE INDEX idx_admin_cities_region ON admin_cities (region_id);
+CREATE INDEX idx_admin_cities_country ON admin_cities (country_id);
 
 CREATE TABLE admin_city_parts (
     city_id integer NOT NULL REFERENCES admin_cities (id) ON DELETE CASCADE,
