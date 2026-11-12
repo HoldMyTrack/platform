@@ -78,10 +78,13 @@ FROM country c
 WHERE NOT EXISTS (SELECT 1 FROM area r WHERE r.subtype = 'region' AND r.country = c.country);
 
 -- Counties and cities are simplified to about 10 m: at full detail they would be 3.7 GB
--- (FOG_REWORK.md Findings 5).
+-- (FOG_REWORK.md Findings 5). Simplifying can cross a hole with its outer ring (Newtown, Hampshire),
+-- and one invalid outline fails every GEOS call on it, so each is made valid again.
+CREATE MACRO simple(g) AS ST_CollectionExtract(ST_MakeValid(ST_SimplifyPreserveTopology(g, 0.0001)), 3);
+
 CREATE TABLE county AS
 SELECT a.division_id AS key, a.country, r.key AS region_key, a.local_type, a.name, a.names,
-       ST_SimplifyPreserveTopology(a.geometry, 0.0001) AS geometry
+       simple(a.geometry) AS geometry
 FROM area a LEFT JOIN region r ON r.key = COALESCE(a.region_key, 'country:' || a.country)
 WHERE a.subtype = 'county';
 
@@ -92,7 +95,7 @@ CREATE TABLE city_area AS
 -- A city's county is the County-level place it lies in: its county, else its region's stand-in.
 SELECT a.division_id AS key, a.country, r.key AS region_key, COALESCE(k.key, 'rest:' || r.key) AS county_key,
        a.local_type, a.name, a.names,
-       ST_Area_Spheroid(a.geometry) AS m2, ST_SimplifyPreserveTopology(a.geometry, 0.0001) AS geometry
+       ST_Area_Spheroid(a.geometry) AS m2, simple(a.geometry) AS geometry
 FROM area a
 LEFT JOIN region r ON r.key = COALESCE(a.region_key, 'country:' || a.country)
 LEFT JOIN county k ON k.key = a.county_key
@@ -142,9 +145,17 @@ WHERE r.country IN (SELECT DISTINCT country FROM county)
 -- A region without counties stands in whole, its rivers its own, as a county's are. Each piece
 -- loses its water only where water is a tenth of it or more: GEOS cut Nevada's 76 m-wide,
 -- 170 km-long strip, which a river only touches, to a tenth of its area.
+-- Cutting leaves slivers where two outlines' shared border doesn't quite match. A stand-in's piece
+-- whose mean width (2 × area / perimeter) is under 30 m is one: no track could be said to be in
+-- it. They go before the water cut, which would otherwise union water for each of the world's
+-- 1.3 million slivers and run out of memory.
+CREATE MACRO wide(g) AS 2 * ST_Area_Spheroid(g) / NULLIF(ST_Perimeter_Spheroid(g), 0) >= 30;
+
 CREATE TABLE county_rest_piece AS
-SELECT key, UNNEST(ST_Dump(ST_CollectionExtract(ST_MakeValid(geometry), 3)), recursive := true)
-FROM county_rest WHERE partial;
+SELECT * FROM (
+    SELECT key, UNNEST(ST_Dump(ST_CollectionExtract(ST_MakeValid(geometry), 3)), recursive := true)
+    FROM county_rest WHERE partial
+) WHERE wide(geom);
 
 CREATE TABLE county_rest_dry AS
 WITH wet AS (
@@ -175,13 +186,10 @@ SELECT 'rest:' || p.key AS key, p.country, p.region_key, p.county_key, p.kind,
        p.local_type, p.name, p.names, rest(p.geometry, i.geometry) AS geometry
 FROM above p LEFT JOIN inside i USING (key);
 
--- Cutting leaves slivers where two outlines' shared border doesn't quite match. A stand-in's piece
--- whose mean width (2 × area / perimeter) is under 30 m is one: no track could be said to be in
--- it.
 CREATE MACRO kept(g) AS (
     SELECT ST_Union_Agg(geom) FROM (
         SELECT UNNEST(ST_Dump(ST_CollectionExtract(ST_MakeValid(g), 3)), recursive := true)
-    ) WHERE 2 * ST_Area_Spheroid(geom) / NULLIF(ST_Perimeter_Spheroid(geom), 0) >= 30
+    ) WHERE wide(geom)
 );
 
 -- The County and City levels' rows, each level to be cleaned as one coverage.

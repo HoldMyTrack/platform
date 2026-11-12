@@ -2,9 +2,10 @@
 #
 # Make the outlines file of every Fog level (docs/DEPLOY.md §6, docs/IMPLEMENTATION.md §4.2.4): cut
 # the land-clipped countries, regions, counties and cities out of a pinned Overture Maps release
-# with DuckDB, for `seed-admin-boundaries`. Run OFF the server, on any machine with the duckdb CLI
-# (brew install duckdb) and a few GB free: it reads several GB of GeoParquet from Overture's
-# public S3 bucket, no account needed. Nothing here touches a deployment.
+# with DuckDB, for `seed-admin-boundaries`. Run OFF the server, on a machine with the duckdb CLI
+# (brew install duckdb) and 64 GB of memory, which the world's extract peaks at (about 15 minutes
+# on 10 cores); it reads several GB of GeoParquet from Overture's public S3 bucket, no account
+# needed. Nothing here touches a deployment.
 #
 # Usage:
 #   scripts/boundaries-extract.sh <work-dir>
@@ -59,7 +60,7 @@ log "extracting Overture $RELEASE divisions into $out"
 printf "SET VARIABLE divisions = '%s';\nSET VARIABLE lakes = '%s';\nSET VARIABLE water = '%s';\nSET VARIABLE places = '%s';\nSET VARIABLE out = '%s';\n.read %s\n" \
     "$divisions" "$lakes" "$water" "$places" "$out" "$here/boundaries-extract.sql" | duckdb
 
-# What to compare against the last extract before uploading: about 270 countries and dependencies
-# and 3,900 regions in 2026-09.
+# What to compare against the last extract before uploading: in 2026-09, 272 countries and
+# dependencies, 3,922 regions, 41,179 County-level and 382,538 City-level places.
 log "done: $out, $(du -h "$out" | cut -f 1)"
 gzip -dc "$out" | cut -d , -f 1,2 | sort | uniq -c
