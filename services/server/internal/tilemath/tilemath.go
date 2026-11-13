@@ -69,7 +69,7 @@ func SegmentTiles(lon1, lat1, lon2, lat2 float64, zoom int) [][2]int {
 
 // SegmentTilesBuffered is SegmentTiles plus every tile the segment comes within marginPx of
 // (tile-local pixels, at tileSize) — the tile a bare coordinate floors into isn't the only
-// tile the *rendered* stroke can touch, since fog/heatmap draws a track as a
+// tile the *rendered* stroke can touch, since Fog draws a track as a
 // strokeRadiusPx-wide, then featherPx-blurred line, not an infinitesimal one. A segment that
 // runs within marginPx of a tile edge has part of that drawn line geometrically inside the
 // neighboring tile even though the segment itself never crosses over — without this, that

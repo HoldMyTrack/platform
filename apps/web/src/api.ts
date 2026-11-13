@@ -304,7 +304,7 @@ export async function updateActivity(
 }
 
 /**
- * §4.7.5's `DELETE /v1/activities/{id}` — a full purge (track, fog/heatmap coverage,
+ * §4.7.5's `DELETE /v1/activities/{id}` — a full purge (track, Fog coverage,
  * the raw upload), not a soft delete. `204 No Content` on success, same
  * convention `logout` already uses for "succeeded, nothing to say back" — nothing to parse or
  * return here either.
@@ -805,9 +805,8 @@ export async function createStory(input: { name: string; description: string; ac
 
 /**
  * `GET /v1/coverage/status` — whether the account still has an unfinished job that changes its
- * Fog/Heatmap rasters (an upload not yet parsed, a track edit, a re-render). Polled after an
- * upload or delete by `useCoverageRefresh.ts`, which refetches both layers once this reports
- * nothing left.
+ * Fog (an upload not yet parsed, a track edit, a re-render). Polled after an upload or delete by
+ * `useCoverageRefresh.ts`, which refetches Fog once this reports nothing left.
  */
 export type CoverageStatus = ResponseJson<'/coverage/status', 'get'>;
 

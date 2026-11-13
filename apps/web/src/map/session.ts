@@ -94,8 +94,8 @@ export function mapSessionReducer(state: MapSession, event: MapSessionEvent): Ma
       return state.flyRequest ? { ...state, flyRequest: false } : state;
     case 'modeChanged': {
       if (event.mode === state.mode) return state;
-      // Fog and Heatmap can't select or focus: leaving Normal keeps the group and focus aside,
-      // and returning restores them. Fog to Heatmap touches neither.
+      // Fog can't select or focus: leaving Normal keeps the group and focus aside, and returning
+      // restores them.
       if (state.mode === 'normal') {
         const { checked, focused } = state.selection;
         return { ...state, mode: event.mode, modeSnapshot: { checked, focused }, selection: { ...state.selection, checked: new Set(), focused: null } };

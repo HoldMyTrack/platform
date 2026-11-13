@@ -4,7 +4,7 @@ import MapLibre
 import UIKit
 
 /// The map (apps/android/docs/SPEC.md FR-2.1–FR-2.7): the basemap style and the account's layers
-/// document combined into one style (MapStyle), Normal, Fog of War and Heatmap, the Layers menu,
+/// document combined into one style (MapStyle), Normal and Fog of War, the Layers menu,
 /// the first framing, Find my location, the notices for an unreachable basemap, coverage still
 /// updating and an empty account, and the sheet with the Activities and Stories tabs, shared by
 /// the Map and Stories tabs of the tab bar (MapHostViewController). The date range is
@@ -373,8 +373,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Coverage still updating
 
-    /// Fog and Heatmap say when coverage is still being redrawn, checked on every opening of the
-    /// map, and refresh when the server is done (root docs/SPEC.md FR-4.2).
+    /// Fog says when coverage is still being redrawn, checked on every opening of the map, and
+    /// refreshes when the server is done (root docs/SPEC.md FR-4.2).
     func checkCoverage() {
         coverageTask?.cancel()
         guard state.mode != .normal else {
@@ -387,7 +387,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                 guard let status = try? await flow.api.coverageStatus() else { return }
                 if status.rendering {
                     wasRendering = true
-                    notice(.coverage, String(localized: "Your map is still being updated, so Fog and Heatmap may be incomplete for now. They'll refresh on their own."))
+                    notice(.coverage, String(localized: "Your map is still being updated, so Fog may be incomplete for now. It'll refresh on its own."))
                     try? await Task.sleep(for: .seconds(5))
                     continue
                 }
@@ -481,7 +481,6 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             let title = switch mode {
             case .normal: String(localized: "Normal")
             case .fog: String(localized: "Fog")
-            case .heatmap: String(localized: "Heatmap")
             }
             modes.insertSegment(action: UIAction(title: title) { [weak self] _ in self?.pickMode(mode) }, at: index, animated: false)
         }

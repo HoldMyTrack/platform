@@ -53,7 +53,7 @@ The world's counties and cities take a long extract. `PLACES=US scripts/boundari
 
 Each takes a few minutes. Seeding boundaries and timezones first matches the demo at ingest; either order works. All three skip what is already loaded (`--force` makes either seed reload). `seed-demo-customer` never changes an activity already seeded, so after `demo_data/` changes run it once with `--reset`, which deletes the demo's activities first.
 
-After a change to how Fog/Heatmap tiles are drawn (`internal/fog`), `docker compose run --rm api rerender-coverage` queues a re-render of every account's tiles (`--user <id>` for one; `--masks` to redraw masks first, after a stroke change).
+After a change to how Fog tiles are drawn (`internal/fog`), `docker compose run --rm api rerender-coverage` queues a re-render of every account's tiles (`--user <id>` for one; `--masks` to redraw masks first, after a stroke change).
 
 Spots (`SPEC.md` FR-15) needs an import: cut a small extract with `scripts/spots-extract.sh <work-dir> <geofabrik-pbf-url>` from a [Geofabrik](https://download.geofabrik.de/) region (`docs/DEPLOY.md` §6), put `spots.geojsonseq` in `/tmp/spots`, and run `docker compose run --rm -v /tmp/spots:/data:ro api import-spots /data/spots.geojsonseq`. Bike paths (`SPEC.md` FR-4.13) likewise: `scripts/bike-paths-extract.sh <work-dir> <geofabrik-url>` (the Spots work-dir reuses its download), then `docker compose run --rm -v /tmp/bike-paths:/data:ro api import-bike-paths /data/bike-paths.geojsonseq`.
 

@@ -22,12 +22,15 @@ object MapChromeRules {
      *  whose sheet and tracks are Normal mode's; back on Map, the pick comes back. */
     fun tabMode(picked: MapMode, tab: PanelTab): MapMode = if (tab == PanelTab.ACTIVITIES) picked else MapMode.NORMAL
 
-    /** The chip naming what Fog or Heatmap shows, since neither takes the date range. */
+    /** The mode carried through a recreation, by name; Normal for none or one this build lacks. */
+    fun restoredMode(saved: String?): MapMode = MapMode.entries.firstOrNull { it.name == saved } ?: MapMode.NORMAL
+
+    /** The chip naming what Fog shows, since it doesn't take the date range. */
     fun modeChipShown(mode: MapMode, sessionReady: Boolean, recording: Boolean, exportOpen: Boolean): Boolean =
         mode != MapMode.NORMAL && sessionReady && !recording && !exportOpen
 
-    /** "Your map is still being updated…" (`docs/SPEC.md` FR-4.2), in Fog and Heatmap while
-     *  coverage is rendering. */
+    /** "Your map is still being updated…" (`docs/SPEC.md` FR-4.2), in Fog while coverage
+     *  is rendering. */
     fun coverageNoticeShown(rendering: Boolean, mode: MapMode, sessionReady: Boolean, recording: Boolean): Boolean =
         rendering && mode != MapMode.NORMAL && sessionReady && !recording
 

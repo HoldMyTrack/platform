@@ -6,9 +6,9 @@ import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 
 /**
- * Keeps Fog and Heatmap current after a delete or a reprocess — the web's
- * `apps/web/src/map/useCoverageRefresh.ts`. Both are re-rendered server-side by a queued job,
- * and their tile URLs never change by themselves, so the map would otherwise go on showing
+ * Keeps Fog current after a delete or a reprocess — the web's
+ * `apps/web/src/map/useCoverageRefresh.ts`. It is re-rendered server-side by a queued job,
+ * and its tile URLs never change by themselves, so the map would otherwise go on showing
  * coverage from before the change.
  *
  * [watch] polls `GET /v1/coverage/status` and calls [onRefetch] once the account has no

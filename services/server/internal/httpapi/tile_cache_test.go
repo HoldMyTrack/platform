@@ -33,7 +33,7 @@ func TestSetTileCacheControl(t *testing.T) {
 }
 
 func TestClientGone(t *testing.T) {
-	r := httptest.NewRequest("GET", "/tiles/v1/heat-points/12/1114/1529.mvt", nil)
+	r := httptest.NewRequest("GET", "/tiles/v1/fog-vector/12/1114/1529.mvt", nil)
 	w := httptest.NewRecorder()
 	if clientGone(w, r) {
 		t.Fatal("clientGone = true for a live request")

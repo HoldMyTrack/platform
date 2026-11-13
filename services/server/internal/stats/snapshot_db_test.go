@@ -134,12 +134,12 @@ func TestTake(t *testing.T) {
 	photo(qq[0], a1, "stats-test/b", 500)
 
 	// Stored objects: two activities over one original (a split) count it once; one more
-	// original isn't measured yet. A Fog/Heatmap tile with both sizes, one rendered before they
-	// were recorded, and a mask.
+	// original isn't measured yet. A Fog tile with its size, one rendered before it was
+	// recorded, and a mask.
 	exec(`UPDATE activities SET raw_payload_key = 'stats-test/raw-a', raw_bytes = 2000 WHERE user_id = $1 AND source = 'upload'`, qq[0])
 	exec(`UPDATE activities SET raw_payload_key = 'stats-test/raw-b' WHERE user_id = $1`, qq[1])
-	exec(`INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, heatmap_object_key, bytes, heatmap_bytes, dirty)
-		VALUES ($1, 14, 1, 1, 'f', 'h', 300, 400, false), ($1, 14, 1, 2, 'f', 'h', NULL, NULL, false)`, qq[0])
+	exec(`INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, bytes, dirty)
+		VALUES ($1, 14, 1, 1, 'f', 300, false), ($1, 14, 1, 2, 'f', NULL, false)`, qq[0])
 	exec(`INSERT INTO activity_tile_masks (activity_id, zoom, tile_x, tile_y) VALUES ($1, 14, 1, 1)`, a1)
 	exec(`INSERT INTO activity_tile_mask_data (activity_id, zoom, tile_x, tile_y, png) VALUES ($1, 14, 1, 1, $2)`, a1, make([]byte, 50))
 
@@ -185,8 +185,7 @@ func TestTake(t *testing.T) {
 		"r2_ops.class_a":                     70,
 		"r2_ops.class_b":                     900,
 		"storage_bytes.fog":                  300,
-		"storage_bytes.heatmap":              400,
-		"storage_bytes_unmeasured_rows":      3, // raw-b, and the second tile's two objects
+		"storage_bytes_unmeasured_rows":      2, // raw-b, and the second tile
 		"clients_30d.both":                   1,
 		"clients_30d.web_only":               1,
 		"clients_30d.android_only":           1,

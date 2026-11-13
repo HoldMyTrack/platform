@@ -7,13 +7,13 @@ import { applyLayers, currentLayerState, currentLayers } from './applyLayers';
 import { webLayers } from './webLayers';
 
 /**
- * Keeps the Fog/Heatmap layers current after an upload or delete (IMPLEMENTATION.md §4.2.3).
- * Both rasters are re-rendered by a queued `render_fog` job, and their tile URLs never change
- * on their own, so an open page would otherwise show pre-change coverage until a reload.
+ * Keeps the Fog layers current after an upload or delete (IMPLEMENTATION.md §4.2.3). Fog is
+ * re-rendered by a queued `render_fog` job, and its tile URLs never change on their own, so an
+ * open page would otherwise show pre-change coverage until a reload.
  *
  * The returned `watch()` starts polling `GET /v1/coverage/status` and, once the account has
  * no coverage-changing job left, takes its tile version (coverageVersion.ts) and refetches
- * every Fog/Heatmap source. Each call restarts the watch rather than joining one already running: a second
+ * every Fog source. Each call restarts the watch rather than joining one already running: a second
  * upload or delete can enqueue its jobs just after an in-flight read already came back
  * "done", and restarting is what guarantees that read isn't the last word.
  *

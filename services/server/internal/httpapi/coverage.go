@@ -6,7 +6,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/fog"
 )
 
-// coverageRenderingQuery reports whether any job that changes this account's Fog/Heatmap
+// coverageRenderingQuery reports whether any job that changes this account's Fog
 // rasters is still unfinished. A claimed job keeps state = 'pending' until the worker marks it
 // done or failed (internal/worker's claimAndRunOne only sets locked_at), so this covers
 // running jobs too. `ingest`, `edit_track`, `reprivacy` and `story_copy` are included, not just
@@ -58,7 +58,7 @@ type explored struct {
 }
 
 // handleCoverageStatus serves `GET /v1/coverage/status` (IMPLEMENTATION.md §4.2.3): the
-// signal a client polls after an upload or delete to know when refetching Fog/Heatmap tiles
+// signal a client polls after an upload or delete to know when refetching Fog tiles
 // will return the new coverage rather than the old. The tile URLs themselves are fixed and
 // the rasters are rendered asynchronously, so without this the client has no way to tell.
 func (s *Server) handleCoverageStatus(w http.ResponseWriter, r *http.Request) {

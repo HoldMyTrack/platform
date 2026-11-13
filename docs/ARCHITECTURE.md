@@ -26,7 +26,6 @@ HoldMyTrack is a **modular monolith** on PostgreSQL/PostGIS, fed by three indepe
 | **Three independent ingest paths** | No single provider can revoke the product (`VISION.md` §4.1) |
 | **Planet-wide basemap**, not a regional extract | Users are everywhere; a regional extract makes a blank map the default outside one metro |
 | **Country/Region zoom tiers are live vector tiles**, not a second raster pyramid | Their cost scales with a fixed ~250-country/~4,600-region boundary set, not with a user's history — `IMPLEMENTATION.md` §4.2.4 |
-| **Heatmap stored as pass counts, drawn by the clients** | A server raster needed every tile's neighbours, baked its look into storage and blurred past z14 — [ADR-0046](adr/0046-heatmap-drawn-by-the-clients.md) |
 | **Web pages are server-rendered HTML**; React only for the map page | Each page is a layout with a few per-user values; every page gets a real URL, one shared header and no map bundle to load — [ADR-0012](adr/0012-server-rendered-pages-react-for-the-map.md) |
 | **The mobile apps show the site's own pages** where nothing native is needed | A native copy of a server-rendered page is a second implementation kept in step by hand — [ADR-0042](adr/0042-mobile-apps-show-the-sites-pages.md) |
 | **One OpenAPI file is the JSON API's contract**, held to by the server's tests | The server, the web and Android each wrote the same shapes by hand with nothing checking them; tests check the JSON sent, which generated server types can't — `IMPLEMENTATION.md` §4.31 |
@@ -47,7 +46,7 @@ flowchart LR
     subgraph VPS["One VPS — compose.prod.yml"]
         caddy["Caddy<br/>TLS (Let's Encrypt) · serves /assets/* ·<br/>reverse-proxies everything else"]
         api["api<br/>Go binary, serve mode<br/>/v1/* API · track + fog tiles · pages"]
-        worker["worker<br/>same binary, work mode<br/>ingest · fog/heatmap rendering"]
+        worker["worker<br/>same binary, work mode<br/>ingest · fog rendering"]
         pg[("PostgreSQL 16 + PostGIS<br/>all tables + job queue ·<br/>users.map_version")]
     end
     subgraph CF["Cloudflare"]

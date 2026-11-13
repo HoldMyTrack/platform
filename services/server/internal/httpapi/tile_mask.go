@@ -11,8 +11,7 @@ import (
 // loadMaskPNG fetches a stored fog_tiles tile's PNG as it is, or nil when there is nothing
 // stored yet — "no coverage rendered here" is a normal state (a tile the user's history has
 // never touched, or one still waiting on render_fog), not an error condition: fog.DecodeCoverage
-// and fog.DecodeCounts take nil as a blank tile. Shared by handleFogVectorTile (object_key) and
-// handleHeatPointsTile (heatmap_object_key).
+// takes nil as a blank tile.
 func loadMaskPNG(ctx context.Context, store *storage.Store, objectKey *string) ([]byte, error) {
 	if objectKey == nil {
 		return nil, nil

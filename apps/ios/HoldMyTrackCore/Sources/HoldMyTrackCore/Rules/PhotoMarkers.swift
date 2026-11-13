@@ -1,7 +1,7 @@
 import Foundation
 
-/// The map's three modes (root docs/SPEC.md FR-4.4); photos and Stories belong to the first.
-public enum MapMode: String, CaseIterable, Sendable { case normal, fog, heatmap }
+/// The map's two modes (root docs/SPEC.md FR-4.4); photos and Stories belong to the first.
+public enum MapMode: String, CaseIterable, Sendable { case normal, fog }
 
 /// A photo marker's place on screen, in points from the map's top-left.
 public struct ScreenPoint: Equatable, Sendable {
@@ -117,8 +117,8 @@ public enum PhotoMarkers {
     }
 
     /// Whose photos the map shows: in Normal mode, the Edit window's activity when it edits one,
-    /// else the selected activity, else the open Story; none in Fog or Heatmap, or while the Edit
-    /// window holds several.
+    /// else the selected activity, else the open Story; none in Fog, or while the Edit window
+    /// holds several.
     public static func scope(mode: MapMode, editWindowIDs: [String]?, focused: String?, storyID: String?) -> PhotoScope? {
         if mode != .normal { return nil }
         if let editWindowIDs { return editWindowIDs.count == 1 ? .activity(editWindowIDs[0]) : nil }

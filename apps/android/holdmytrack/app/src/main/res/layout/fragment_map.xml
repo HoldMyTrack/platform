@@ -67,14 +67,14 @@
                 android:layout_weight="1"
                 android:orientation="vertical">
 
-                <!-- Only shown to a signed-in account: all three layers the toggle switches between
+                <!-- Only shown to a signed-in account: both layers the toggle switches between
                      are behind requireAuth, so there is nothing for it to do without a session.
                      Plain checkable buttons, each an icon and its label — MapFragment.setMode
-                     checks exactly one of the three.
+                     checks exactly one of the two.
 
                      It sits in a weighted scroll container rather than taking its own width first:
                      LinearLayout sizes weighted children last, so the rail always gets its own,
-                     and at a large font size, where the three labels outgrow the row, the toggle
+                     and at a large font size, where the labels outgrow the row, the toggle
                      scrolls sideways instead of pushing the rail off the screen. -->
                 <HorizontalScrollView
                     android:layout_width="wrap_content"
@@ -108,15 +108,6 @@
                             android:layout_marginStart="@dimen/hmt_space_2"
                             android:text="@string/mode_fog"
                             app:icon="@drawable/ic_cloud_fog" />
-
-                        <dev.holdmytrack.android.map.MapModeButton
-                            android:id="@+id/mode_heatmap"
-                            style="@style/Widget.HoldMyTrack.Button.MapMode"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:layout_marginStart="@dimen/hmt_space_2"
-                            android:text="@string/mode_heatmap"
-                            app:icon="@drawable/ic_flame" />
                     </LinearLayout>
                 </HorizontalScrollView>
 
@@ -453,7 +444,7 @@
                 app:icon="@drawable/ic_camera" />
         </FrameLayout>
 
-        <!-- Fog and Heatmap still being updated (MapFragment.renderCoverageNotice), the web's
+        <!-- Fog still being updated (map/ModeBar.renderCoverage), the web's
              .coverage-notice: the same pill as the level notice below, on a line of its own above
              it, for as long as the account's coverage is still being worked on. -->
         <TextView
@@ -468,7 +459,7 @@
             android:text="@string/coverage_updating"
             android:visibility="gone" />
 
-        <!-- Which level Fog and Heatmap draw at (map/ZoomLevelNotice), the web's
+        <!-- Which level Fog draws at (map/ZoomLevelNotice), the web's
              .zoom-level-notice: a line of its own under the top row, faded out a few seconds
              after it shows. Not clickable, so the map still takes touches through it. -->
         <TextView
@@ -543,8 +534,8 @@
          Edit window would be. -->
     <include layout="@layout/include_private_location_editor" />
 
-    <!-- Fog and Heatmap ignore the date range, so with the panel gone a chip at the bottom says
-         what they show instead: every activity, or the last 365 days (MapFragment.renderModeChip).
+    <!-- Fog ignores the date range, so with the panel gone a chip at the bottom says what it
+         shows instead: every activity (map/ModeBar.renderChip).
          Centred, clear of MapLibre's logo and attribution at the start, and of the record button
          raised out of the bottom bar below it. -->
     <TextView

@@ -82,14 +82,17 @@ class MapLayersDocTest {
 
     @Test
     fun layersCarryExpressionsAsJson() {
-        val heat = coverage.layers.first { it.id == "heat-points-circles" }
-        assertEquals("heatmap", heat.type)
-        assertEquals("heat", heat.sourceLayer)
-        assertTrue(MapLayersDoc.value(heat.properties.getValue("heatmap-radius")) is MapLayersDoc.Value.Expression)
-        assertEquals(MapLayersDoc.Value.Literal(2.5f), MapLayersDoc.value(heat.properties.getValue("heatmap-intensity")))
         val veil = coverage.layers.first { it.id == "fog-veil" }
         assertEquals("""["==",["get","kind"],"veil"]""", veil.filter.toString())
         assertTrue(veil.hidden)
+    }
+
+    @Test
+    fun aLayerOfATypeThisBuildDoesNotDrawIsLeftOut() {
+        fun layers(doc: MapLayersDoc.Doc) = doc.groups.flatMap { it.layers }
+        val renamed = MapLayersDoc.parse(served("layers/light.json").replaceFirst("\"type\": \"fill\"", "\"type\": \"heatmap\""))!!
+        assertEquals(layers(light).size - 1, layers(renamed).size)
+        assertTrue(layers(renamed).all { it.type in MapLayersDoc.TYPES })
     }
 
     @Test
@@ -109,7 +112,7 @@ class MapLayersDocTest {
         assertTrue(floatArrayOf(2f, 1f).contentEquals(bike.legend.getValue("trails").dash))
         assertNull(bike.legend.getValue("bikePaths").dash)
         val beneath = MapLayersDoc.order(light.groups, MapLayersDoc.Placement.BENEATH_LABELS)
-        assertTrue(beneath.indexOf("paths_trail") > beneath.indexOf("heat-points-circles"))
+        assertTrue(beneath.indexOf("paths_trail") > beneath.indexOf(coverage.layers.last().id))
     }
 
     @Test

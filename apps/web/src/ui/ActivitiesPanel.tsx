@@ -21,8 +21,7 @@ import { lang, t, tn } from '../i18n';
  * activities inside it, FR-14.6) and **Privacy** (PrivateLocationsPanel.tsx — FR-8.1's list,
  * whose editor floats over the map like Edit track's). Importing is the header's Upload menu and
  * the /sync page, not a tab here. The tab is MapView's state, so `/?private-locations` can open
- * onto Privacy, `/?story=` onto Stories, and the tab survives this panel unmounting for
- * Fog/Heatmap.
+ * onto Privacy, `/?story=` onto Stories, and the tab survives this panel unmounting for Fog.
  *
  * The activity list — a permanent left sidebar, not paginated: every activity crossing the visible
  * map (FR-5.19), narrowed by the filter row (ActivityFilters.tsx: Type, Dates, Distance). MapView

@@ -7,9 +7,9 @@ import type { MapMode } from '../../map/mapMode';
 import type { PanelTab } from '../ActivitiesPanel';
 
 /** A first-time card: the feature's own explanation, shown once per browser. */
-export type CardId = 'fog' | 'heatmap' | 'stories';
+export type CardId = 'fog' | 'stories';
 
-export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'export' | 'fog' | 'fog_regions' | 'fog_countries' | 'heatmap' | 'add' | 'done';
+export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'export' | 'fog' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
 
 /**
  * Where a step puts the camera: `center` and `zoom`, then a slow turn of the globe through each
@@ -65,14 +65,13 @@ export const DEMO_VIEWS = {
   regions: { center: [-82, 36], zoom: 3.6 },
   countries: { center: [-5, 30], zoom: 1.3, flat: true },
   countriesNarrow: { center: [-80, 38], zoom: 1.5, turn: [[15, 45], [106, 25]] },
-  heatmapCity: { center: [-81.72, 41.42], zoom: 10 },
 } as const satisfies Record<string, TourView>;
 
 /**
  * The tour's steps in order. The Normal-mode steps come first, so the panel is never torn down and
- * rebuilt in the middle. A demo's Fog is three steps, city, states and countries, and its Fog and
- * Heatmap fly to the demo's history; a real account's map stays where it is. `narrow` is a phone's
- * width (NARROW_WIDTH).
+ * rebuilt in the middle. A demo's Fog is three steps, city, states and countries, flown to the
+ * demo's history; a real account's map stays where it is. `narrow` is a phone's width
+ * (NARROW_WIDTH).
  */
 export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?: boolean }): TourStep[] {
   const step = (id: StepId, anchor: string | null, more: Partial<Omit<TourStep, 'id' | 'anchor'>> = {}): TourStep => ({
@@ -101,7 +100,6 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
     step('layers', '[data-testid="map-overlays"], .overlays-menu__panel', { open: { layers: true } }),
     step('export', '[data-testid="export-button"]'),
     ...fog,
-    step('heatmap', MODES, { mode: 'heatmap', card: 'heatmap', view: isDemo ? DEMO_VIEWS.heatmapCity : null }),
     // The header's Upload menu, open; the demo's is a disabled button that says what an account adds.
     isDemo
       ? step('add', DEMO_SIGNUP, { text: 'tour.add_demo' })
@@ -160,6 +158,20 @@ export interface TourSeen {
 }
 
 export const NOTHING_SEEN: TourSeen = { tour: false, cards: [] };
+
+const CARDS: readonly CardId[] = ['fog', 'stories'];
+
+/** What `raw`, the browser's stored record (tourStore.ts), says was seen: a card this build doesn't show, or a record that doesn't parse, counts as unseen. */
+export function readTourSeen(raw: string | null): TourSeen {
+  if (!raw) return NOTHING_SEEN;
+  try {
+    const saved = JSON.parse(raw) as Partial<TourSeen> | null;
+    const cards: unknown[] = Array.isArray(saved?.cards) ? saved.cards : [];
+    return { tour: saved?.tour === true, cards: CARDS.filter((c) => cards.includes(c)) };
+  } catch {
+    return NOTHING_SEEN;
+  }
+}
 
 export type TourStart = 'start' | 'offer' | 'none' | 'wait';
 

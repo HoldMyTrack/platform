@@ -679,15 +679,15 @@ object HoldMyTrackApi {
     }
 
     /** `DELETE /v1/activities/{id}` (`docs/IMPLEMENTATION.md` §4.7.5) — the activity, its
-     *  track and its share of fog and heatmap coverage, for good. */
+     *  track and its share of Fog coverage, for good. */
     fun deleteActivity(id: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
     /**
-     * `GET /v1/coverage/status` — whether the account still has a job that changes its Fog and
-     * Heatmap tiles, and its map version. What the map polls after a delete or a reprocess, to
+     * `GET /v1/coverage/status` — whether the account still has a job that changes its Fog
+     * tiles, and its map version. What the map polls after a delete or a reprocess, to
      * know when to fetch those tiles again (`map/CoverageWatch`).
      */
     fun coverageStatus(onResult: (Result<CoverageStatus>) -> Unit) {

@@ -8,10 +8,10 @@ import com.google.android.material.R as MaterialR
 import com.google.android.material.button.MaterialButton
 
 /**
- * One of the map's Normal, Fog and Heatmap buttons: a checkable [MaterialButton] that TalkBack
- * reads as a radio button, since exactly one of the three is on. `MaterialButton` names itself a
+ * One of the map's Normal and Fog buttons: a checkable [MaterialButton] that TalkBack
+ * reads as a radio button, since exactly one of the two is on. `MaterialButton` names itself a
  * toggle outside a `MaterialButtonToggleGroup`, and sets that last, so the name is set here after
- * it. [position] is its place in the row, read out as "1 of 3".
+ * it. [position] is its place in the row, read out as "1 of 2".
  */
 class MapModeButton @JvmOverloads constructor(
     context: Context,

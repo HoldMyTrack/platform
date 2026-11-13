@@ -128,7 +128,7 @@ export function withView(spec: LayerSpecification, view: LayerView): LayerSpecif
   } as LayerSpecification;
 }
 
-const MODES: readonly MapMode[] = ['normal', 'fog', 'heatmap'];
+const MODES: readonly MapMode[] = ['normal', 'fog'];
 
 function mergeViews(parts: readonly GroupPart[], mode: MapMode, dark: boolean, satellite: boolean): LayerView {
   const view: LayerView = { layout: {}, paint: {} };
@@ -167,6 +167,16 @@ export function buildLayers({ flavor, dark, tileVersion, lang, words = { region:
     views: { plain: views(dark, false), satellite: views(true, true) },
     groups: parts.map((part) => part.group),
   };
+}
+
+/**
+ * `doc` as the server serves it (build-style.mjs): each set of views also carries `heatmap`,
+ * Normal's, which Android builds below `MIN_ANDROID_BUILD` still switch to (services/server/api
+ * `LayerViews`).
+ */
+export function withInstalledAndroidViews(doc: MapLayers): MapLayers {
+  const legacy = (views: Record<MapMode, LayerView>) => ({ ...views, heatmap: views.normal });
+  return { ...doc, views: { plain: legacy(doc.views.plain), satellite: legacy(doc.views.satellite) } };
 }
 
 /** The view to apply for `mode`, over imagery or not. */

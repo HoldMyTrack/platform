@@ -29,7 +29,7 @@ Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATIO
 ### Scenarios
 
 - **Seed**: `seed` uploads the 53 demo tracks (`internal/httpapi/demo_data`) to every account, 1,113 jobs, and the queue is timed to empty. Three tracks cross 200+ z14 tiles each (the "2026-01-22 Vietnam" drive 756).
-- **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal, Fog and Heatmap and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A Normal visitor from z4 asks for the area's activity list on every view (`SPEC.md` FR-5.19), reported as `activities-area`; a Spots visitor at z10–12 asks "Show in this area" on one view in three (`SPEC.md` FR-15.5), reported as `spots-area`. A view costs 2.3–4 requests with the cache, about 7.5 cold.
+- **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal and Fog and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A Normal visitor from z4 asks for the area's activity list on every view (`SPEC.md` FR-5.19), reported as `activities-area`; a Spots visitor at z10–12 asks "Show in this area" on one view in three (`SPEC.md` FR-15.5), reported as `spots-area`. A view costs 2.3–4 requests with the cache, about 7.5 cold.
 - **Import**: `gen 5 1000` then `import 5`: five accounts each upload a 1,000-track set at once, one file at a time as the web's Upload menu does. Two minutes in, and again deep into the backlog, `probe` uploads one track from another account and times it to processed, the fairness check. A 12-person `browse` runs meanwhile.
 - **Stop** a step on more than 2% errors, a p95 over 5 s on two consecutive steps, under 10% memory available, or an out-of-memory kill.
 
@@ -55,7 +55,7 @@ Two accounts seeded straight into the database with 5,000 and 20,000 activities 
 
 ### Production load test — 2026-10-22, `9a298d5a`
 
-The production VPS (2 vCPU, 4 GB), two render loops beside four main ones (`IMPLEMENTATION.md` §4.1), Fog traced into vector tiles per request (`IMPLEMENTATION.md` §4.2), Heatmap as pass counts (`IMPLEMENTATION.md` §4.2.2), and 2.4 million Spots places. All three scenarios, 21 accounts, driven from a laptop about 45 ms from the server, which every p50 below includes.
+The production VPS (2 vCPU, 4 GB), two render loops beside four main ones (`IMPLEMENTATION.md` §4.1), Fog traced into vector tiles per request (`IMPLEMENTATION.md` §4.2), Heatmap as pass counts, and 2.4 million Spots places. All three scenarios, 21 accounts, driven from a laptop about 45 ms from the server, which every p50 below includes.
 
 | People | Views/s | Fog p95 | Heatmap p95 | Tracks p95 | Region p95 | Country p95 | Show in this area p95 | Errors |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
@@ -120,7 +120,7 @@ What keeping clipped outlines per tile (`admin_tile_geoms`, `IMPLEMENTATION.md` 
 
 ### Heatmap as pass counts — 2026-10-15, dev stack
 
-Storing the Heatmap as pass counts drawn as MapLibre heatmap circles (`IMPLEMENTATION.md` §4.2.2, ADR-0046) against the rendered raster, on three accounts, with object-store requests read off `r2_ops`; panning on a Pixel 10a held 60 fps with either.
+Storing the Heatmap as pass counts drawn as MapLibre heatmap circles against the rendered raster, on three accounts, with object-store requests read off `r2_ops`; panning on a Pixel 10a held 60 fps with either.
 
 | Measure | Raster | Counts |
 | :-- | :-- | :-- |
@@ -133,7 +133,7 @@ Storing the Heatmap as pass counts drawn as MapLibre heatmap circles (`IMPLEMENT
 
 ### Heat-points tiles encoded in Go — 2026-10-15, dev stack
 
-Encoding heat-points tiles in Go in place of `ST_AsMVT` (`IMPLEMENTATION.md` §4.2.2), `browse -mode heatmap` over 8 seeded accounts, before and after. At 100 and 200 people a tile's database transactions fell from about 2.8 to 2.1, with p50 / p95 unchanged at 3 / 6–9 ms and database CPU within 3 points: the round trip removed was cheap. One of the two left is the session lookup.
+Encoding heat-points tiles in Go in place of `ST_AsMVT`, `browse -mode heatmap` over 8 seeded accounts, before and after. At 100 and 200 people a tile's database transactions fell from about 2.8 to 2.1, with p50 / p95 unchanged at 3 / 6–9 ms and database CPU within 3 points: the round trip removed was cheap. One of the two left is the session lookup.
 
 ### Fog as vector tiles — 2026-10-15, dev stack
 

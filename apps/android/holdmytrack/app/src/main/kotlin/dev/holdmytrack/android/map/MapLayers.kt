@@ -1,6 +1,5 @@
 package dev.holdmytrack.android.map
 
-import android.util.Log
 import dev.holdmytrack.android.BuildConfig
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
@@ -9,7 +8,6 @@ import org.maplibre.android.style.expressions.Expression
 import org.maplibre.android.style.layers.BackgroundLayer
 import org.maplibre.android.style.layers.CircleLayer
 import org.maplibre.android.style.layers.FillLayer
-import org.maplibre.android.style.layers.HeatmapLayer
 import org.maplibre.android.style.layers.Layer
 import org.maplibre.android.style.layers.LineLayer
 import org.maplibre.android.style.layers.Property
@@ -222,13 +220,10 @@ object MapLayers {
             "background" -> BackgroundLayer(spec.id)
             "fill" -> FillLayer(spec.id, spec.source).apply { spec.sourceLayer?.let(::setSourceLayer) }
             "line" -> LineLayer(spec.id, spec.source).apply { spec.sourceLayer?.let(::setSourceLayer) }
-            "heatmap" -> HeatmapLayer(spec.id, spec.source).apply { spec.sourceLayer?.let(::setSourceLayer) }
             "circle" -> CircleLayer(spec.id, spec.source).apply { spec.sourceLayer?.let(::setSourceLayer) }
             "symbol" -> SymbolLayer(spec.id, spec.source).apply { spec.sourceLayer?.let(::setSourceLayer) }
-            else -> {
-                Log.w(TAG, "layer ${spec.id}: unsupported type ${spec.type}")
-                return null
-            }
+            // [MapLayersDoc.TYPES] leaves out every other type.
+            else -> return null
         }
         spec.filter?.let { filter ->
             setFilter(layer, Expression.raw(MapLayersDoc.bind(filter, spec.vars["filter"].orEmpty(), state.vars, doc.vars).toString()))
@@ -246,7 +241,6 @@ object MapLayers {
         when (layer) {
             is FillLayer -> layer.setFilter(filter)
             is LineLayer -> layer.setFilter(filter)
-            is HeatmapLayer -> layer.setFilter(filter)
             is CircleLayer -> layer.setFilter(filter)
             is SymbolLayer -> layer.setFilter(filter)
         }
@@ -257,6 +251,4 @@ object MapLayers {
         is MapLayersDoc.Value.Literal -> PropertyValue(name, value.value)
         null -> null
     }
-
-    private const val TAG = "MapLayers"
 }

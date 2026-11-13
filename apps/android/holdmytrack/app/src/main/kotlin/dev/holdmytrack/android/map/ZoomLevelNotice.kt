@@ -8,10 +8,9 @@ import dev.holdmytrack.android.R
  * Names the level Fog draws at (`docs/SPEC.md` FR-4.2), the web's `ui/ZoomLevelNotice.tsx`: whole
  * countries, then whole states or provinces, then exactly where you've been
  * (the served style's tiers, [MapLayers.tier]). Nothing else on the map says which is in view, and a veil lifted from
- * a whole country reads as a bug when you don't know that's the level you're at. Heatmap reads the
- * same way at every zoom, so it gets one message ([levelNoticeText]).
+ * a whole country reads as a bug when you don't know that's the level you're at.
  *
- * Shown on entering either mode and whenever a zoom lands where the message changes, faded out after
+ * Shown on entering Fog and whenever a zoom lands where the message changes, faded out after
  * [SHOW_MS]. MapFragment passes the tier when the camera comes to rest ([onCameraIdle]), not
  * mid-gesture, so a pinch through two levels names only where it lands. Never in Normal, which
  * draws tracks at every zoom, nor while the modes are away ([render]'s `active`).
@@ -46,7 +45,7 @@ class ZoomLevelNotice(private val view: TextView) {
             hide()
             return
         }
-        val next = levelNoticeText(mode, tier)
+        val next = levelNoticeText(tier)
         if (next == shown) return
         shown = next
         view.text = view.context.getString(next)
@@ -74,13 +73,9 @@ class ZoomLevelNotice(private val view: TextView) {
     }
 }
 
-/** The level notice's message for [mode] at [tier], the web's `levelNoticeKey`: Fog's names the
- *  tier; Heatmap's is one message at every zoom, so a zoom across a tier doesn't bring it back. */
-fun levelNoticeText(mode: MapMode, tier: ZoomTier): Int = when (mode) {
-    MapMode.FOG -> when (tier) {
-        ZoomTier.COUNTRY -> R.string.map_level_fog_country
-        ZoomTier.REGION -> R.string.map_level_fog_region
-        ZoomTier.CITY -> R.string.map_level_fog_city
-    }
-    else -> R.string.map_level_heatmap
+/** The level notice's message for Fog at [tier], the web's `levelNoticeKey`. */
+fun levelNoticeText(tier: ZoomTier): Int = when (tier) {
+    ZoomTier.COUNTRY -> R.string.map_level_fog_country
+    ZoomTier.REGION -> R.string.map_level_fog_region
+    ZoomTier.CITY -> R.string.map_level_fog_city
 }

@@ -104,7 +104,7 @@ The mobile app can also originate an activity, for someone with no watch running
 | Feature | What it gives |
 | :--- | :--- |
 | **Multi-source ingest** | Each source shows what it would bring in; only what the user ticks comes in |
-| **Map** | Fog of War, heatmap and track modes; curated themes; smooth fog edges |
+| **Map** | Fog of War and track modes; curated themes; smooth fog edges |
 | **Per-activity detail** | The focused route colored by pace |
 | **Stories** | Hand-picked activities kept as one trip, with joint stats and their own map |
 | **Photos** | The user's photos, each placed on its activity's route |

@@ -51,8 +51,8 @@ src/map/
   layers.ts                # layer-ordering helpers (fog/track insertion points)
   useMapInstance.ts        # map lifecycle, StrictMode-safe
   viewState.ts             # <-> URL hash
-  coverageStyle.ts         # Fog and Heatmap, served in the style's metadata
-  coverageLayers.ts tracks.ts mapMode.ts  # the overlays on the map and the mode switch
+  mapLayers.ts coverageGroup.ts  # the layers document the server serves, Fog included
+  tracks.ts mapMode.ts     # the tracks overlay and the Normal/Fog switch
   exportMap.ts             # high-resolution export, rendered client-side
   MapView.tsx
 src/ui/                    # ImportPanel, ActivitiesPanel and the rest of the UI

@@ -1,11 +1,60 @@
 package fog
 
 import (
+	"encoding/binary"
 	"image"
 	"math"
 	"sort"
 	"testing"
 )
+
+// field is one decoded protobuf field: its number, and its varint or its bytes.
+type field struct {
+	num   int
+	v     uint64
+	bytes []byte
+}
+
+// fields reads a protobuf message's fields, the wire types a vector tile uses.
+func fields(t *testing.T, b []byte) []field {
+	t.Helper()
+	var out []field
+	for len(b) > 0 {
+		key, n := binary.Uvarint(b)
+		b = b[n:]
+		f := field{num: int(key >> 3)}
+		switch key & 7 {
+		case 0:
+			f.v, n = binary.Uvarint(b)
+			b = b[n:]
+		case 2:
+			l, n := binary.Uvarint(b)
+			f.bytes, b = b[n:n+int(l)], b[n+int(l):]
+		case 5:
+			f.v, b = uint64(binary.LittleEndian.Uint32(b)), b[4:]
+		default:
+			t.Fatalf("unexpected wire type %d", key&7)
+		}
+		out = append(out, f)
+	}
+	return out
+}
+
+func varints(b []byte) []uint64 {
+	var out []uint64
+	for len(b) > 0 {
+		v, n := binary.Uvarint(b)
+		out, b = append(out, v), b[n:]
+	}
+	return out
+}
+
+func unzigzag(v uint64) int { return int(v>>1) ^ -int(v&1) }
+
+// lineMask is one activity's mask with a horizontal stroke at tile-local y, edge to edge.
+func lineMask(y float64) *image.Gray {
+	return renderActivityMask([]pixelPoint{{-10, y}, {TileSize + 10, y}})
+}
 
 // decodedFog is a fog tile read back: its veil rings and edge lines, in coverage pixels.
 type decodedFog struct {

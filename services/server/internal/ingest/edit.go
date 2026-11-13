@@ -166,7 +166,7 @@ func (j EditJob) activityIDs() []string {
 // ProcessTrackEdit reprocesses one activity with a new edit spec: the same parse → clip →
 // metrics → simplify → masks pipeline as Process, ending in an UPDATE of the existing row
 // instead of an INSERT. On any failure the activity's edit_pending flag is cleared again and
-// its tiles re-rendered, so a failed edit leaves the activity as it was — back in Fog/Heatmap
+// its tiles re-rendered, so a failed edit leaves the activity as it was — back in Fog
 // with its old masks — rather than stuck showing Pending.
 func ProcessTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job EditJob) error {
 	err := processTrackEdit(ctx, pool, store, job)
@@ -178,7 +178,7 @@ func ProcessTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 			return fmt.Errorf("%w (and clearing edit_pending failed: %v)", err, uerr)
 		}
 		if rerr := fog.RenderUser(ctx, pool, store, job.UserID); rerr != nil {
-			return fmt.Errorf("%w (and re-rendering fog/heatmap failed: %v)", err, rerr)
+			return fmt.Errorf("%w (and re-rendering fog failed: %v)", err, rerr)
 		}
 	}
 	return err
@@ -193,9 +193,9 @@ func processTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	// it, so each pass is done before the step after it. A `render_fog` job an earlier upload
 	// left can still run in its own lane beside this one; RenderUser runs one account's passes
 	// one at a time, so the two never race over the same dirty flags. First, with the activity Pending (EnqueueTrackEdit dirtied its tiles), so it drops out
-	// of Fog/Heatmap while it's reprocessed.
+	// of Fog while it's reprocessed.
 	if err := fog.RenderUser(ctx, pool, store, job.UserID); err != nil {
-		return fmt.Errorf("edit: render fog/heatmap: %w", err)
+		return fmt.Errorf("edit: render fog: %w", err)
 	}
 	for _, id := range job.activityIDs() {
 		if err := reprocessActivity(ctx, pool, store, job.UserID, id, edit); err != nil {
@@ -216,11 +216,11 @@ func processTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		return fmt.Errorf("edit: clear edit_pending: %w", err)
 	}
 	// Then again once Pending is cleared, which brings it back with its new masks. The badge
-	// clears a moment before these tiles land, so the client refreshes Fog/Heatmap off the
+	// clears a moment before these tiles land, so the client refreshes Fog off the
 	// coverage status — this job counts as rendering until it returns — not off the badge.
 	// RenderUser only renders dirty tiles, so each pass costs what one `render_fog` would.
 	if err := fog.RenderUser(ctx, pool, store, job.UserID); err != nil {
-		return fmt.Errorf("edit: render fog/heatmap: %w", err)
+		return fmt.Errorf("edit: render fog: %w", err)
 	}
 	return nil
 }
@@ -379,23 +379,21 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 
 	// started_at moves with a Chop — the activity now starts where its first kept point does.
-	// in_heatmap_window follows it, against the same fog.HeatmapWindowDays heatmap_aging.go sweeps with.
 	// track_edit is only rewritten by a user's edit; a reprivacy pass leaves it as stored.
 	if _, err := tx.Exec(ctx, `
 		UPDATE activities SET
 			distance_meters = $3, duration_seconds = $4, moving_seconds = $5,
 			elevation_gain_m = $6, avg_speed_mps = $7, started_at = $8,
 			trajectory = `+trajectorySQL("$9", "$10", "$11")+`,
-			track_edit = CASE WHEN $14 THEN $12::jsonb ELSE track_edit END,
-			in_heatmap_window = ($8 >= NOW() - make_interval(days => $13)),
-			timezone = `+geo.TimezoneAtSQL("$15::float8", "$16::float8", "$2")+`,
-			recorded_started_at = $17, recorded_ended_at = $18,
-			editable_times = $19
+			track_edit = CASE WHEN $13 THEN $12::jsonb ELSE track_edit END,
+			timezone = `+geo.TimezoneAtSQL("$14::float8", "$15::float8", "$2")+`,
+			recorded_started_at = $16, recorded_ended_at = $17,
+			editable_times = $18
 		WHERE id = $1 AND user_id = $2
 	`, activityID, userID,
 		m.distanceM, m.durationS, m.movingS, m.elevationGainM, m.avgSpeedMps, startedAt,
 		pp.simpLons, pp.simpLats, pp.simpTs,
-		editJSON, fog.HeatmapWindowDays, userEdit,
+		editJSON, userEdit,
 		zonePoint.Lon, zonePoint.Lat,
 		recStart, recEnd,
 		editable,

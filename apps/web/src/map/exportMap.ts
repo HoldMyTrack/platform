@@ -177,7 +177,7 @@ function attributionText(satellite: boolean): string {
  * what stands in for that control on the one output path that bypasses the DOM entirely.
  *
  * A translucent plate behind the text, not text alone, since the basemap flavor and whatever
- * fog/heatmap/track content sits beneath this corner varies per export — plain white or black
+ * fog/track content sits beneath this corner varies per export — plain white or black
  * text can disappear against a same-toned background, the same "needs to read regardless of
  * what's underneath" reasoning `IMPLEMENTATION.md` §4.2 already used for fog's own veil.
  *
@@ -339,8 +339,8 @@ async function renderOffscreen(
     attributionControl: false,
     zoomLevelsToOverscale: ZOOM_LEVELS_TO_OVERSCALE,
     maxPitch: 0,
-    // Same credentialed-tile wiring useMapInstance.ts's live map already has — tracks/fog/
-    // heatmap tiles need the session cookie, which MapLibre's own fetches don't carry by
+    // Same credentialed-tile wiring useMapInstance.ts's live map already has — tracks/fog
+    // tiles need the session cookie, which MapLibre's own fetches don't carry by
     // default (they bypass api.ts entirely).
     transformRequest: withApiCredentials(API_BASE_URL, window.location.href),
     // The one thing the live map deliberately doesn't set — see this module's own doc

@@ -191,27 +191,6 @@ func TestActivityStatusIsPerAccount(t *testing.T) {
 	}
 }
 
-// An activity older than Heatmap's window is out of it from the moment it's ingested, not
-// only after the next daily sweep.
-func TestOldActivityIngestsOutsideTheHeatmapWindow(t *testing.T) {
-	d := newDBTestWithS3(t, newMemS3())
-	me := d.newAccount(false)
-	old := strings.ReplaceAll(resumeGPX, "2026-05-01", "2019-05-01")
-	d.uploadFile(me, "old.gpx", []byte(old))
-	res, err := ingest.Process(context.Background(), d.pool, d.srv.store, d.latestIngestJob(me))
-	if err != nil {
-		t.Fatal(err)
-	}
-	var inWindow bool
-	if err := d.pool.QueryRow(context.Background(),
-		`SELECT in_heatmap_window FROM activities WHERE id = $1`, res.ActivityID).Scan(&inWindow); err != nil {
-		t.Fatal(err)
-	}
-	if inWindow {
-		t.Fatal("a 2019 activity was ingested inside the heatmap window")
-	}
-}
-
 // A synced activity's external_id becomes part of an object key and of two VARCHAR(255)
 // columns, so one that could nest the key or overflow them is rejected up front.
 func TestSyncRejectsAnUnsafeExternalID(t *testing.T) {

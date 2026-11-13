@@ -231,7 +231,7 @@
         <item name="android:textColor">@color/hmt_accent_strong</item>
     </style>
 
-    <!-- The map's Normal / Fog / Heatmap toggle, after the web's .map-mode-toggle__btn: ink
+    <!-- The map's Normal / Fog toggle, after the web's .map-mode-toggle__btn: ink
          text on nothing, and ink fill with white text when active; the web's 12px regular
          label, its 10px side padding, and its small radius nested inside the panel's medium
          one. Height stays at Material's 48dp minimum, a full touch target. -->
@@ -309,7 +309,7 @@
         <item name="android:textColor">@color/hmt_ink</item>
     </style>
 
-    <!-- The chip saying what Fog or Heatmap shows (fragment_map.xml): the map chrome's panel,
+    <!-- The chip saying what Fog shows (fragment_map.xml): the map chrome's panel,
          its text in the body size, a 40dp line. -->
     <style name="Widget.HoldMyTrack.ModeChip" parent="">
         <item name="android:background">@drawable/bg_map_chrome</item>

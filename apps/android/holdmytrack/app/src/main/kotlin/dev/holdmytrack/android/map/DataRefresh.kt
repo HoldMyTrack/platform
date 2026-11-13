@@ -8,7 +8,7 @@ import org.maplibre.android.maps.Style
 /**
  * What the map reads again when activities change under it, as the web's `useDataRefresh.ts`: the
  * track tiles, the list and Dates' bounds ([AreaController]), the open Story, the bands, the photos,
- * and Fog and Heatmap once re-rendered ([CoverageController]).
+ * and Fog once re-rendered ([CoverageController]).
  */
 class DataRefresh(
     private val area: AreaController,
@@ -69,8 +69,8 @@ class DataRefresh(
         coverage.checkTileVersion()
     }
 
-    /** The toolbar's Delete finished: tracks, list and Dates' bounds read again, and Fog and Heatmap
-     *  watched until re-rendered. Deleted ids leave the selection with the reload. */
+    /** The toolbar's Delete finished: tracks, list and Dates' bounds read again, and Fog watched
+     *  until re-rendered. Deleted ids leave the selection with the reload. */
     fun afterDelete(ids: List<String>) {
         if (ids.isEmpty()) return
         refreshTracks()

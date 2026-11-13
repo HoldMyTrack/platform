@@ -5,8 +5,8 @@ import dev.holdmytrack.android.net.Session
 import org.maplibre.android.maps.Style
 
 /**
- * Keeps the tiles current with the account: Fog and Heatmap fetched again once the server has
- * re-rendered them after a delete or a reprocess ([CoverageWatch]), and every tile again when the
+ * Keeps the tiles current with the account: Fog fetched again once the server has
+ * re-rendered it after a delete or a reprocess ([CoverageWatch]), and every tile again when the
  * account's tile version moved while the app was away.
  */
 class CoverageController(
@@ -15,10 +15,10 @@ class CoverageController(
     private val dates: () -> DateFilter,
     /** Asks for the layers document again, which carries the new tile version ([MapLayersSource]). */
     private val refetchLayers: () -> Unit,
-    /** [rendering] changed: the notice that Fog and Heatmap are still being updated follows. */
+    /** [rendering] changed: the notice that Fog is still being updated follows. */
     private val onRenderingChanged: () -> Unit,
 ) {
-    /** What the watch last read: the account's Fog and Heatmap are still being worked on. */
+    /** What the watch last read: the account's Fog is still being worked on. */
     var rendering = false
         private set
 
@@ -30,7 +30,7 @@ class CoverageController(
         onRefetch = { if (style() != null) refetchLayers() },
     )
 
-    /** Watches the account's re-render until it's done, then refetches Fog and Heatmap and runs [onDone]. */
+    /** Watches the account's re-render until it's done, then refetches Fog and runs [onDone]. */
     fun watch(onDone: (() -> Unit)? = null) = coverage.watch(onDone)
 
     fun stop() = coverage.stop()

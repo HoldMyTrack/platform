@@ -1,6 +1,6 @@
 # holdmytrack-android
 
-The HoldMyTrack Android app (`apps/android/docs/ROADMAP.md`). It renders the map, holds a session, and syncs exercise sessions in from Health Connect: a full-screen MapLibre Native map drawing the style document the API serves at `GET /v1/map/style/{flavor}`, sign-in against the same accounts the web client uses, the Normal / Fog of War / Heatmap toggle over the user's own layers, and Path 2 on-device ingest into `POST /v1/sync/activities`.
+The HoldMyTrack Android app (`apps/android/docs/ROADMAP.md`). It renders the map, holds a session, and syncs exercise sessions in from Health Connect: a full-screen MapLibre Native map drawing the style document the API serves at `GET /v1/map/style/{flavor}`, sign-in against the same accounts the web client uses, the Normal / Fog of War toggle over the user's own layers, and Path 2 on-device ingest into `POST /v1/sync/activities`.
 
 The basemap draws whether or not anyone is signed in — the style endpoint is unauthenticated and the archive it points at is a plain `pmtiles://` URL that MapLibre Native reads natively — so a signed-out HoldMyTrack is a working map rather than a login wall. Signing in is what adds the three user layers, every one of which is behind `requireAuth` server-side.
 
@@ -78,9 +78,9 @@ Everything is under `app/src/main/kotlin/dev/holdmytrack/android/`:
 - `SignInActivity.kt` — sign in, create an account, or start a demo account.
 - `net/Session.kt` — the session token, held process-wide and mirrored to private `SharedPreferences`.
 - `net/HoldMyTrackApi.kt` — the whole HTTP surface: the shared `OkHttpClient`, the interceptor that attaches the token to HoldMyTrack's own origin and nowhere else, and the five calls the app makes.
-- `map/MapOverlays.kt` — the tracks layers, their ordering beneath the basemap's labels, and the three-way mode toggle.
-- `map/CoverageStyle.kt`, `map/CoverageLayers.kt` — Fog and Heatmap as the served style describes them, read and put on the map.
-- `map/MapModeButton.kt` — a Normal, Fog or Heatmap button, read by TalkBack as one choice of three.
+- `map/MapOverlays.kt` — the tracks layers, their ordering beneath the basemap's labels, and the two-way mode toggle.
+- `map/MapLayersDoc.kt`, `map/MapLayers.kt` — the layers document the API serves, Fog included, read and put on the map.
+- `map/MapModeButton.kt` — a Normal or Fog button, read by TalkBack as one choice of two.
 - `map/SyncCandidatesOverlay.kt` — the Sync tab's candidates on the map, dashed, the picked one solid.
 - `SyncActivity.kt` — Health Connect's setup on its own, registered for `ACTION_SHOW_PERMISSIONS_RATIONALE`, so Health Connect opens it as the app's own explanation of what it reads.
 - `health/HealthConnect.kt` — availability, the three permissions, and the readiness states the onboarding walks through.

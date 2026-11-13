@@ -158,9 +158,9 @@ struct AccountTests {
 /// Stories is Normal mode's; the Map tab keeps its own pick.
 struct TabModeTests {
     @Test func storiesShowNormalWithNoToggleAndTheMapTabGetsItsPickBack() {
-        #expect(TabMode.shown(picked: .heatmap, onMapTab: false) == .normal)
+        #expect(TabMode.shown(picked: .fog, onMapTab: false) == .normal)
         #expect(!TabMode.toggleShown(onMapTab: false))
-        #expect(TabMode.shown(picked: .heatmap, onMapTab: true) == .heatmap)
+        #expect(TabMode.shown(picked: .fog, onMapTab: true) == .fog)
         #expect(TabMode.toggleShown(onMapTab: true))
     }
 }

@@ -17,15 +17,15 @@ class MapChromeRulesTest {
     }
 
     @Test
-    fun `the mode chip names Fog and Heatmap only, and steps aside for recording and export`() {
+    fun `the mode chip names Fog only, and steps aside for recording and export`() {
         assertFalse(MapChromeRules.modeChipShown(MapMode.NORMAL, sessionReady = true, recording = false, exportOpen = false))
-        assertTrue(MapChromeRules.modeChipShown(MapMode.HEATMAP, sessionReady = true, recording = false, exportOpen = false))
+        assertTrue(MapChromeRules.modeChipShown(MapMode.FOG, sessionReady = true, recording = false, exportOpen = false))
         assertFalse(MapChromeRules.modeChipShown(MapMode.FOG, sessionReady = true, recording = true, exportOpen = false))
         assertFalse(MapChromeRules.modeChipShown(MapMode.FOG, sessionReady = true, recording = false, exportOpen = true))
     }
 
     @Test
-    fun `the coverage notice shows in Fog and Heatmap while rendering`() {
+    fun `the coverage notice shows in Fog while rendering`() {
         assertTrue(MapChromeRules.coverageNoticeShown(rendering = true, MapMode.FOG, sessionReady = true, recording = false))
         assertFalse(MapChromeRules.coverageNoticeShown(rendering = true, MapMode.NORMAL, sessionReady = true, recording = false))
         assertFalse(MapChromeRules.coverageNoticeShown(rendering = false, MapMode.FOG, sessionReady = true, recording = false))
@@ -42,11 +42,19 @@ class MapChromeRulesTest {
     @Test
     fun `Stories and Sync show Normal with no toggle, and the Map tab gets its pick back`() {
         for (tab in listOf(PanelTab.STORIES, PanelTab.SYNC)) {
-            assertEquals(MapMode.NORMAL, MapChromeRules.tabMode(MapMode.HEATMAP, tab))
+            assertEquals(MapMode.NORMAL, MapChromeRules.tabMode(MapMode.FOG, tab))
             assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, tab))
         }
-        assertEquals(MapMode.HEATMAP, MapChromeRules.tabMode(MapMode.HEATMAP, PanelTab.ACTIVITIES))
+        assertEquals(MapMode.FOG, MapChromeRules.tabMode(MapMode.FOG, PanelTab.ACTIVITIES))
         assertTrue(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, PanelTab.ACTIVITIES))
+    }
+
+    @Test
+    fun `a mode carried through a recreation comes back, and one this build lacks opens Normal`() {
+        assertEquals(MapMode.FOG, MapChromeRules.restoredMode("FOG"))
+        assertEquals(MapMode.NORMAL, MapChromeRules.restoredMode("NORMAL"))
+        assertEquals(MapMode.NORMAL, MapChromeRules.restoredMode("HEATMAP"))
+        assertEquals(MapMode.NORMAL, MapChromeRules.restoredMode(null))
     }
 
     @Test

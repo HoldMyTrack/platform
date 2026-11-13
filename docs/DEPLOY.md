@@ -150,7 +150,7 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
 - A new `geo.BoundariesKey`: steps 1, 3's `seed-admin-boundaries` and 4. On a database with users, take a backup and turn maintenance mode on first (§7, §11): it re-matches every activity in one transaction, and ingest waits on it; the world's outlines took 30 minutes on 10 cores, the Country and Region levels alone 12½ on the 4 GB droplet. It also empties Fog's tile cache (`IMPLEMENTATION.md` §3.26): once maintenance is off, run step 3's `build-admin-tiles`.
 - A new `geo.TimezonesKey`: steps 2, 3's `seed-timezones` and 4; a couple of minutes. It logs and skips any zone the database's tz data doesn't know yet: after a newer `postgis/postgis` image, `seed-timezones --force` brings those in. Check: `select count(*) from tz_parts` is non-zero.
 - A change to `services/server/internal/httpapi/demo_data/`: `… run --rm api seed-demo-customer --reset`. A plain re-run leaves seeded activities as they were.
-- A change to how Fog/Heatmap tiles are drawn (`internal/fog`, `IMPLEMENTATION.md` §4.2): `… run --rm api rerender-coverage`. Add `--masks` when the stroke width, `fog.TileSize`, how a mask is drawn (`fog.renderActivityMask`) or which tiles a track reaches (`internal/tilemath`) changed; that redraws every stored mask first and takes a while. It only queues renders, so the worker must be up.
+- A change to how Fog tiles are drawn (`internal/fog`, `IMPLEMENTATION.md` §4.2): `… run --rm api rerender-coverage`. Add `--masks` when the stroke width, `fog.TileSize`, how a mask is drawn (`fog.renderActivityMask`) or which tiles a track reaches (`internal/tilemath`) changed; that redraws every stored mask first and takes a while. It only queues renders, so the worker must be up.
 
 **Copy demo activities out of a deployment.** With activity ids from the admin panel:
 
@@ -391,7 +391,7 @@ After changing a reference table by hand (one `backup.sh` lists), run `./scripts
    On a new server, run `… up -d db` alone first. The reference dump must be the one paired with the dump: re-running the imports would renumber ids user tables point at.
 3. If objects were lost, `… run --rm rclone copy backup:objects data:`. Use `copy`, never `sync`, which would delete from the app bucket. An object removed by mistake in the last 30 days is in `objects-deleted/`, under the stamp of the first backup after its removal.
 4. `GIT_SHA=$(git rev-parse --short HEAD) docker compose -f compose.prod.yml --env-file .env.prod up -d`, which runs any newer migrations.
-5. `… run --rm api rerender-coverage --masks` (§6): the dump has no activity masks, so Fog and Heatmap show none of the restored activities until it has run.
+5. `… run --rm api rerender-coverage --masks` (§6): the dump has no activity masks, so Fog shows none of the restored activities until it has run.
 6. Check `/healthz` and the map, then `./scripts/maintenance.sh off`.
 
 ## 12. Host hardening

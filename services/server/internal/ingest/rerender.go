@@ -12,7 +12,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 )
 
-// RerenderCoverage rebuilds every Fog and Heatmap tile of one account, or of every account with
+// RerenderCoverage rebuilds every Fog tile of one account, or of every account with
 // any (userID ""), for when how tiles are drawn has changed rather than what's in them — the
 // `rerender-coverage` subcommand, run once on deploying such a change (docs/DEPLOY.md). It marks
 // each account's z14 tiles dirty and queues one render_fog job per account: the worker then

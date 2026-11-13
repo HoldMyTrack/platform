@@ -12,7 +12,7 @@ test('leaving Normal sets the checked group and focus aside, and Normal brings t
   assert.equal(fog.selection.focused, null);
   // Hidden tracks and filters aren't set aside.
   assert.deepEqual([...fog.selection.hidden], ['c']);
-  const back = reduce(fog, { type: 'modeChanged', mode: 'heatmap' }, { type: 'modeChanged', mode: 'normal' });
+  const back = reduce(fog, { type: 'modeChanged', mode: 'normal' });
   assert.deepEqual([...back.selection.checked], ['a']);
   assert.equal(back.selection.focused, 'b');
   assert.equal(back.modeSnapshot, null);

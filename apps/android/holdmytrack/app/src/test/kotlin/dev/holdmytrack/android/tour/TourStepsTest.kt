@@ -23,7 +23,7 @@ class TourStepsTest {
     @Test
     fun `only the demo moves the camera on its own views`() {
         assertTrue(TourSteps.of(isDemo = false).all { it.view == null })
-        assertEquals(TourSteps.HEATMAP_CITY, TourSteps.of(isDemo = true).single { it.id == "heatmap" }.view)
+        assertTrue(TourSteps.of(isDemo = true).any { it.view != null })
     }
 
     @Test
@@ -33,7 +33,7 @@ class TourStepsTest {
     }
 
     @Test
-    fun `the Normal steps come before Fog and Heatmap, which come together`() {
+    fun `the Fog steps come together`() {
         val modes = TourSteps.of(isDemo = true).map { it.mode }
         val first = modes.indexOfFirst { it != MapMode.NORMAL }
         val last = modes.indexOfLast { it != MapMode.NORMAL }

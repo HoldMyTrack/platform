@@ -263,7 +263,7 @@ data class PrivateLocation(val id: String, val name: String, val lon: Double, va
     }
 }
 
-/** `GET /v1/coverage/status`: a Fog/Heatmap re-render still to come, the account's map version
+/** `GET /v1/coverage/status`: a Fog re-render still to come, the account's map version
  *  (it moves whenever any of its tiles may have), and that version as the `cv` tile URLs carry
  *  ([Session.tileVersion]). */
 data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVersion: String)

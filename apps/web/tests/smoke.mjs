@@ -432,9 +432,9 @@ describe('basemap foundation', () => {
     await page.locator('#overlay-spots-playground').uncheck();
   });
 
-  // Fog and Heatmap come from the layers document (mapLayers.ts, FR-4.2 to FR-4.4): each
-  // mode applies its view as the document describes it, here on a live map.
-  it('11. Fog and Heatmap apply the views the layers document carries', async () => {
+  // Fog comes from the layers document (mapLayers.ts, FR-4.2 and FR-4.4): each mode applies its
+  // view as the document describes it, here on a live map, and the toggle offers no other mode.
+  it('11. Normal and Fog apply the views the layers document carries', async () => {
     const state = () =>
       page.evaluate(() => {
         const m = window.__holdmytrack;
@@ -442,8 +442,6 @@ describe('basemap foundation', () => {
         return {
           veil: shown('fog-veil'),
           edge: shown('fog-edge'),
-          heat: shown('heat-points-circles'),
-          dim: shown('heatmap-dim'),
           veilColor: m.getPaintProperty('fog-veil', 'fill-color'),
           imagery: Boolean(m.getLayer('satellite')) && m.getLayoutProperty('satellite', 'visibility') === 'visible',
           fogTiles: m.getStyle().sources['fog-vector'].tiles[0],
@@ -453,17 +451,14 @@ describe('basemap foundation', () => {
 
     await mode('Fog');
     const fog = await state();
-    assert.deepEqual([fog.veil, fog.edge, fog.heat, fog.dim], ['visible', 'visible', 'none', 'none'], 'Fog: veil shown');
+    assert.deepEqual([fog.veil, fog.edge], ['visible', 'visible'], 'Fog: veil shown');
     // Imagery reads dark, so it takes the cream veil the dark flavors have.
     assert.equal(fog.veilColor, fog.imagery ? '#f7f4ec' : '#202b25', `the veil for the light flavor, imagery ${fog.imagery}`);
     assert.match(fog.fogTiles, /\/tiles\/v1\/fog-vector\/\{z\}\/\{x\}\/\{y\}\.mvt/, 'the source on the API, from the style');
 
-    await mode('Heatmap');
-    const heat = await state();
-    assert.deepEqual([heat.veil, heat.heat, heat.dim], ['none', 'visible', 'visible'], 'Heatmap: heat shown over its wash');
-
     await mode('Normal');
     const normal = await state();
-    assert.deepEqual([normal.veil, normal.heat, normal.dim], ['none', 'none', 'none'], 'Normal: neither');
+    assert.deepEqual([normal.veil, normal.edge], ['none', 'none'], 'Normal: no veil');
+    assert.equal(await page.getByTestId('map-mode-toggle').getByRole('button').count(), 2, 'Normal and Fog');
   });
 });

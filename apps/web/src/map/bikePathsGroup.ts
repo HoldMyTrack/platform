@@ -9,9 +9,9 @@ import type { Flavor } from './style';
  * cycleways, bike-designated paths and singletrack from `/tiles/v1/bike-paths`, not the basemap,
  * which has none below zoom 13. Drawn from zoom 9, so a whole region's bike network shows at once.
  *
- * The group lifts the basemap's trail and track layers to its place, over Fog's veil and
- * Heatmap's heat, and draws the bike kinds over them and under the rider's own tracks: under the
- * veil, unridden paths showed at a fifth of their colour.
+ * The group lifts the basemap's trail and track layers to its place, over Fog's veil, and draws
+ * the bike kinds over them and under the rider's own tracks: under the veil, unridden paths showed
+ * at a fifth of their colour.
  */
 
 /** Where the tiles start (internal/httpapi's bikePathsMinZoom): a region on the screen. */

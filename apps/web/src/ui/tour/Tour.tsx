@@ -13,7 +13,6 @@ const RADIUS = 12;
 
 const CARD_ANCHORS: Record<CardId, string> = {
   fog: '[data-testid="map-mode-toggle"]',
-  heatmap: '[data-testid="map-mode-toggle"]',
   stories: '[data-testid="activities-panel-tab-stories"]',
 };
 
