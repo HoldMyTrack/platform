@@ -87,6 +87,6 @@ printf "SET memory_limit = '%s';\nSET VARIABLE divisions = '%s';\nSET VARIABLE l
 rm -f "$db" "$db.wal"
 
 # What to compare against the last extract before uploading: in 2026-09, 272 countries and
-# dependencies, 3,922 regions, 41,049 County-level and 382,573 City-level places.
+# dependencies, 3,922 regions, 41,016 County-level and 381,808 City-level places.
 log "done: $out, $(du -h "$out" | cut -f 1)"
 gzip -dc "$out" | cut -d , -f 1,2 | sort | uniq -c
