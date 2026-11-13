@@ -53,17 +53,16 @@ QUALIFY row_number() OVER (PARTITION BY a.division_id ORDER BY a.is_territorial 
 
 -- The sea is OpenStreetMap's coastline, the one the basemap draws (scripts/boundaries-ocean.sql),
 -- cut from each outline in pieces of at most 256 points, so only those on the shore are touched
--- and none is measured against a whole country. The sea is simplified to 50 m first, the
--- tolerance the seed draws at, and the islets under a hectare it leaves are dropped: at 10 m the
--- countries' outlines were 31 million points in 952,000 pieces, 718,000 of them such islets, and
--- the seed's drawing of them ran Postgres out of memory. Simplifying the sea, not the outlines,
--- leaves the land borders as they are, so neighbours still meet; simplifying a country afterwards
--- checked each of Canada's islands against every other for over an hour.
+-- and none is measured against a whole country. The sea is simplified to 50 m, and the islets
+-- under a hectare it leaves are dropped: 718,000 of the countries' 952,000 pieces were such
+-- islets. Simplifying the sea, not the outlines, leaves the land borders as they are, so
+-- neighbours still meet; simplifying a country afterwards checked each of Canada's islands
+-- against every other for over an hour.
 CREATE TABLE area_part AS
 SELECT division_id, UNNEST(ST_Dump(ST_Subdivide(geometry, 256)), recursive := true) FROM area;
 
 CREATE TABLE area_part_sea AS
-SELECT p.division_id, p.path, ST_MakeValid(ST_SimplifyPreserveTopology(o.geom, 0.0005)) AS sea
+SELECT p.division_id, p.path, o.geom AS sea
 FROM area_part p JOIN read_parquet(getvariable('ocean')) o ON ST_Intersects(p.geom, o.geom);
 
 CREATE TABLE area_dry AS
