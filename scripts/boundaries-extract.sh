@@ -26,7 +26,8 @@
 # the next one, which is why the deployment reads its own copy from the app bucket. The lakes cut
 # out of every outline, the inland water cut from the land between a region's counties, and the
 # sea, are kept in <work-dir> and reused. osmdata.openstreetmap.de keeps only its latest sea, so
-# osm-ocean-50m.date records which day's this is.
+# the sea's file and the result are named after the day of its data: a later download is another
+# extract, which a deployment that loaded this one doesn't skip.
 #
 set -euo pipefail
 
@@ -41,11 +42,9 @@ command -v duckdb > /dev/null || { echo "duckdb not found: install it (brew inst
 work=$1
 mkdir -p "$work"
 places=${PLACES:-}
-out="$work/overture-$RELEASE-$CUT${places:+-${places//,/-}}-boundaries.csv.gz"
 lakes="$work/overture-$RELEASE-lakes.parquet"
 db="$work/extract.duckdb"
 water="$work/overture-$RELEASE-water.parquet"
-ocean="$work/osm-ocean-50m.parquet"
 divisions=${OVERTURE_DIVISIONS:-s3://overturemaps-us-west-2/release/$RELEASE/theme=divisions}
 here=$(cd "$(dirname "$0")" && pwd)
 
@@ -69,16 +68,21 @@ if [[ ! -s $water ]]; then
         "$RELEASE" "$water" "$here/boundaries-water.sql" | duckdb
 fi
 
-if [[ ! -s $ocean ]]; then
-    log "reading OpenStreetMap's coastline water polygons into $ocean (about 15 minutes)"
+ocean=$(find "$work" -maxdepth 1 -name 'osm-sea-*.parquet' -size +0 | sort | tail -n 1)
+if [[ -z $ocean ]]; then
+    log "reading OpenStreetMap's coastline water polygons (about 5 minutes)"
     rm -rf "$work/water-polygons-split-4326" "$work/water-polygons-split-4326.zip"
     curl -fsS -o "$work/water-polygons-split-4326.zip" https://osmdata.openstreetmap.de/download/water-polygons-split-4326.zip
     unzip -q -d "$work" "$work/water-polygons-split-4326.zip"
-    grep "^Date of the data" "$work/water-polygons-split-4326/README.txt" > "$work/osm-ocean-50m.date"
+    day=$(sed -n 's/^Date of the data used is \([0-9]*\)-\([0-9]*\)-\([0-9]*\)T.*/\1\2\3/p' "$work/water-polygons-split-4326/README.txt")
+    [[ -n $day ]] || { echo "No data date in osmdata's README." >&2; exit 1; }
+    ocean="$work/osm-sea-$day.parquet"
     printf "SET VARIABLE shapefile = '%s';\nSET VARIABLE out = '%s';\n.read %s\n" \
         "$work/water-polygons-split-4326/water_polygons.shp" "$ocean" "$here/boundaries-ocean.sql" | duckdb
     rm -rf "$work/water-polygons-split-4326" "$work/water-polygons-split-4326.zip"
 fi
+sea_day=$(basename "$ocean" .parquet)
+out="$work/overture-$RELEASE-$CUT-osm${sea_day#osm-sea-}${places:+-${places//,/-}}-boundaries.csv.gz"
 
 log "extracting Overture $RELEASE divisions into $out, DuckDB's memory limited to $MEMORY_LIMIT"
 rm -f "$db" "$db.wal"
@@ -87,6 +91,6 @@ printf "SET memory_limit = '%s';\nSET VARIABLE divisions = '%s';\nSET VARIABLE l
 rm -f "$db" "$db.wal"
 
 # What to compare against the last extract before uploading: in 2026-09, 272 countries and
-# dependencies, 3,922 regions, 40,991 County-level and 381,772 City-level places.
+# dependencies, 3,922 regions, 40,958 County-level and 381,727 City-level places.
 log "done: $out, $(du -h "$out" | cut -f 1)"
 gzip -dc "$out" | cut -d , -f 1,2 | sort | uniq -c

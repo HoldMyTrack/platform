@@ -72,12 +72,36 @@ FROM area_part p JOIN (SELECT DISTINCT division_id FROM area_part_sea) w USING (
 LEFT JOIN sea s USING (division_id, path)
 GROUP BY p.division_id;
 
-UPDATE area SET geometry = (
-    SELECT ST_Collect(list(geom)) FROM (
-        SELECT UNNEST(ST_Dump(ST_CollectionExtract(ST_MakeValid(d.geometry), 3)), recursive := true)
-    ) WHERE ST_Area_Spheroid(geom) >= 1e4
-)
-FROM area_dry d WHERE area.division_id = d.division_id;
+-- An islet is a piece under a hectare the sea touches; a small piece inland, such as one of
+-- Baarle-Hertog's enclaves, stays. The area is stored as a column and filtered on: DuckDB 2.0.0
+-- prunes a stored table's scan by a condition on a geometry wrongly, and ST_Area_Spheroid(geom)
+-- < 1e4 there kept 223 of the world's 210,989 such pieces.
+CREATE TABLE area_dry_piece AS
+SELECT division_id, path, geom, ST_Area_Spheroid(geom) AS m2 FROM (
+    SELECT division_id, UNNEST(ST_Dump(ST_CollectionExtract(ST_MakeValid(geometry), 3)), recursive := true)
+    FROM area_dry
+);
+
+CREATE TABLE area_islet_sea AS
+SELECT p.division_id, p.path
+FROM (SELECT * FROM area_dry_piece WHERE m2 < 1e4) p
+JOIN read_parquet(getvariable('ocean')) o ON ST_Intersects(p.geom, o.geom);
+
+UPDATE area SET geometry = d.geometry
+FROM (
+    SELECT p.division_id, ST_Collect(list(p.geom)) AS geometry
+    FROM area_dry_piece p
+    WHERE NOT EXISTS (SELECT 1 FROM area_islet_sea i WHERE i.division_id = p.division_id AND i.path = p.path)
+    GROUP BY p.division_id
+) d
+WHERE area.division_id = d.division_id;
+
+UPDATE area SET geometry = NULL
+WHERE division_id IN (SELECT division_id FROM area_dry)
+  AND division_id NOT IN (
+      SELECT p.division_id FROM area_dry_piece p
+      WHERE NOT EXISTS (SELECT 1 FROM area_islet_sea i WHERE i.division_id = p.division_id AND i.path = p.path)
+  );
 
 DELETE FROM area WHERE geometry IS NULL OR ST_IsEmpty(geometry);
 
@@ -263,7 +287,7 @@ SELECT level, keys[path[1]] AS key, ST_Union_Agg(geom) AS g FROM d GROUP BY leve
 -- on hover and cleared as a speck beside the town walked in. One along the coast or a cut lake
 -- joins the water; one enclosed by places joins the one it shares the longest border with, under
 -- the same parent first, so a walk through it clears the place it was in and nothing across a
--- border; one that is nearly all coast, an islet, stays.
+-- border; one that is nearly all coast and touches no other place, an islet, stays.
 --
 -- Every spatial join here is stored bare and filtered after: with a filter beside it, or on a
 -- subquery around it, DuckDB plans a nested loop (city_touch), which took over an hour here.
@@ -278,7 +302,9 @@ SELECT level, key, parent, path, geom FROM (
 ) WHERE ST_Area_Spheroid(geom) < 1e6;
 
 -- The coast: each country's outline in short pieces, less those on another country, buffered by
--- 30 m, as the places' edges are simplified to 10 m and snapped within 15 m off the outline.
+-- 33 m, as the places' edges are simplified to 10 m and snapped within 15 m off the outline. A
+-- degree of longitude shrinks away from the equator, so each piece is stretched east-west to
+-- square degrees for the buffer and back after: 0.0003° unstretched was 15 m wide at 60°N.
 CREATE TABLE country_seg AS
 SELECT key, UNNEST(ST_Dump(ST_Subdivide(ST_Boundary(geometry), 64)), recursive := true) FROM country;
 
@@ -289,34 +315,57 @@ CREATE TABLE country_seg_touch AS
 SELECT s.key, s.path, p.key AS other FROM country_seg s JOIN country_part p ON ST_Intersects(s.geom, p.geom);
 
 CREATE TABLE coast AS
-SELECT ST_Buffer(s.geom, 0.0003) AS geom FROM country_seg s
+SELECT ST_Scale(ST_Buffer(ST_Scale(s.geom, cos(radians(ST_Y(ST_Centroid(s.geom)))), 1), 0.0003),
+                1 / cos(radians(ST_Y(ST_Centroid(s.geom)))), 1) AS geom
+FROM country_seg s
 WHERE NOT EXISTS (SELECT 1 FROM country_seg_touch t WHERE t.key = s.key AND t.path = s.path AND t.other <> t.key);
 
 CREATE TABLE crumb_coast_touch AS
 SELECT k.level, k.key, k.path, c.geom FROM crumb_piece k JOIN coast c ON ST_Intersects(k.geom, c.geom);
 
 -- How much of each crumb's edge runs along the coast.
-CREATE TABLE crumb_fate AS
-WITH near AS (SELECT level, key, path, ST_Union_Agg(geom) AS coast FROM crumb_coast_touch GROUP BY ALL)
-SELECT k.level, k.key, k.path, k.parent, k.geom,
-       CASE WHEN COALESCE(ST_Length(ST_Intersection(ST_Boundary(k.geom), n.coast)), 0) >= 0.95 * ST_Length(ST_Boundary(k.geom)) THEN 'stays'
-            WHEN COALESCE(ST_Length(ST_Intersection(ST_Boundary(k.geom), n.coast)), 0) > 0.05 * ST_Length(ST_Boundary(k.geom)) THEN 'water'
-            ELSE 'enclosed' END AS fate
-FROM crumb_piece k LEFT JOIN near n USING (level, key, path);
+CREATE TABLE crumb_coast AS
+WITH near AS (SELECT level, key, path, ST_Union_Agg(geom) AS coast FROM crumb_coast_touch GROUP BY ALL),
+edge AS (
+    SELECT k.level, k.key, k.path, k.parent, k.geom, ST_Length(ST_Boundary(k.geom)) AS edge,
+           COALESCE(ST_Length(ST_Intersection(ST_Boundary(k.geom), n.coast)), 0) AS coast
+    FROM crumb_piece k LEFT JOIN near n USING (level, key, path)
+)
+SELECT *, coast / NULLIF(edge, 0) AS share FROM edge;
 
--- An enclosed crumb's neighbours, in pieces of at most 256 points, so no shared border is
--- measured against a place of hundreds of thousands.
+-- The neighbours a crumb can join, in pieces of at most 256 points, so no shared border is
+-- measured against a place of hundreds of thousands. Crumbs are left out: one joining another
+-- that leaves too, or two swapping, kept a stand-in meant to drop out as a lone speck.
 CREATE TABLE place_part AS
-SELECT level, key, UNNEST(ST_Dump(ST_Subdivide(ST_CollectionExtract(g, 3), 256)), recursive := true)
-FROM place_clean WHERE NOT ST_IsEmpty(ST_CollectionExtract(g, 3));
+SELECT level, key, UNNEST(ST_Dump(ST_Subdivide(geom, 256)), recursive := true)
+FROM (
+    SELECT c.level, c.key, d.path, d.geom
+    FROM place_clean c, LATERAL (SELECT UNNEST(ST_Dump(c.g), recursive := true)) d
+) p
+WHERE NOT EXISTS (SELECT 1 FROM crumb_piece k WHERE k.level = p.level AND k.key = p.key AND k.path = p.path);
 
+-- Every crumb along the coast, or nearly all coast, and the places it touches: one nearly all
+-- coast that touches none is an islet and stays, else a strip between a place and the shore, which
+-- lies inside the coast's buffer whole.
 CREATE TABLE crumb_part_touch AS
-SELECT k.level, k.key, k.path, k.parent, k.geom AS piece, n.level AS to_level, n.key AS to_key, n.geom AS part
-FROM (SELECT * FROM crumb_fate WHERE fate = 'enclosed') k JOIN place_part n ON ST_Intersects(k.geom, n.geom);
+SELECT k.level, k.key, k.path, k.parent, k.geom AS piece, k.share, n.level AS to_level, n.key AS to_key, n.geom AS part
+FROM crumb_coast k JOIN place_part n ON ST_Intersects(k.geom, n.geom);
+
+CREATE TABLE crumb_fate AS
+SELECT k.level, k.key, k.path, k.parent, k.geom,
+       CASE WHEN k.share >= 0.95 AND NOT EXISTS (
+                SELECT 1 FROM crumb_part_touch t
+                WHERE t.level = k.level AND t.key = k.key AND t.path = k.path AND t.to_level = k.level AND t.to_key <> k.key
+            ) THEN 'stays'
+            WHEN k.share > 0.05 THEN 'water'
+            ELSE 'enclosed' END AS fate
+FROM crumb_coast k;
 
 CREATE TABLE crumb_share AS
-SELECT level, key, path, parent, to_key, sum(ST_Length(ST_Intersection(ST_Boundary(piece), part))) AS shared
-FROM crumb_part_touch WHERE to_level = level AND to_key <> key GROUP BY level, key, path, parent, to_key;
+SELECT t.level, t.key, t.path, t.parent, t.to_key, sum(ST_Length(ST_Intersection(ST_Boundary(t.piece), t.part))) AS shared
+FROM crumb_part_touch t JOIN crumb_fate f USING (level, key, path)
+WHERE f.fate = 'enclosed' AND t.to_level = t.level AND t.to_key <> t.key
+GROUP BY t.level, t.key, t.path, t.parent, t.to_key;
 
 CREATE TABLE crumb_move AS
 SELECT level, key, path, to_key FROM (

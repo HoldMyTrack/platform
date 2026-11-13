@@ -9,11 +9,19 @@
 -- one by one, the gaps between them were straight lines of land across the Finnish archipelago.
 -- Douglas-Peucker can cross a ring over itself, so each is made valid again; keeping topology
 -- instead checked each island against every other, and simplifying the pieces as one coverage
--- crashed DuckDB.
+-- crashed DuckDB. osmdata splits its sea on a grid itself, and two neighbours simplified apart
+-- could each drop the corner where the coast crosses their shared line, leaving a wedge of land
+-- up to 50 m wide: within about 200 m of its frame a polygon keeps its full detail, so
+-- neighbours meet as osmdata drew them.
 INSTALL spatial;
 LOAD spatial;
 
 COPY (
-    SELECT UNNEST(ST_Dump(ST_Subdivide(ST_CollectionExtract(ST_MakeValid(ST_Simplify(geom, 0.0005)), 3), 256)), recursive := true)
-    FROM ST_Read(getvariable('shapefile'))
+    SELECT UNNEST(ST_Dump(ST_Subdivide(sea, 256)), recursive := true)
+    FROM (
+        SELECT ST_CollectionExtract(ST_MakeValid(ST_Union(
+                   ST_CollectionExtract(ST_MakeValid(ST_Simplify(geom, 0.0005)), 3),
+                   ST_Intersection(geom, ST_Difference(ST_Envelope(geom), ST_Buffer(ST_Envelope(geom), -0.002))))), 3) AS sea
+        FROM ST_Read(getvariable('shapefile'))
+    )
 ) TO (getvariable('out')) (FORMAT parquet);
