@@ -130,7 +130,7 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
    scp ~/boundaries/overture-2026-09-23.0-levels-sea-boundaries.csv.gz holdmytrack:/tmp/
    … run --rm -v /tmp:/in:ro rclone copyto /in/overture-2026-09-23.0-levels-sea-boundaries.csv.gz data:boundaries/overture-2026-09-23.0-levels-sea-boundaries.csv.gz
    ```
-   Check the counts it prints: for 2026-09-23.0, 272 countries, 3,922 regions, 41,016 County-level and 381,808 City-level places.
+   Check the counts it prints: for 2026-09-23.0, 272 countries, 3,922 regions, 40,991 County-level and 381,772 City-level places.
 2. Copy the timezone polygons (`IMPLEMENTATION.md` §4.30), timezone-boundary-builder's release asset renamed to carry its release, into the bucket under the key `geo.TimezonesKey` names:
    ```
    ssh holdmytrack 'curl -sSfL -o /tmp/timezones-with-oceans-2026d.geojson.zip https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026d/timezones-with-oceans.geojson.zip'
