@@ -44,7 +44,7 @@ Adding a language takes a catalog on each surface, `about`/`help` translations, 
 
 ```bash
 curl -sSfL -o ~/boundaries/timezones-with-oceans-2026d.geojson.zip https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026d/timezones-with-oceans.geojson.zip
-docker compose run --rm -v ~/boundaries:/data:ro api seed-admin-boundaries --file /data/overture-2026-09-23.0-levels-shore-boundaries.csv.gz   # IMPLEMENTATION.md §4.2.4
+docker compose run --rm -v ~/boundaries:/data:ro api seed-admin-boundaries --file /data/overture-2026-09-23.0-levels-sea-boundaries.csv.gz   # IMPLEMENTATION.md §4.2.4
 docker compose run --rm -v ~/boundaries:/data:ro api seed-timezones --file /data/timezones-with-oceans-2026d.geojson.zip       # IMPLEMENTATION.md §4.30
 docker compose run --rm api seed-demo-customer   # IMPLEMENTATION.md §4.10, SPEC.md FR-2.2
 ```

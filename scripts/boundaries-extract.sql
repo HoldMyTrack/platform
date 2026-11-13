@@ -1,13 +1,14 @@
 -- The outlines of every Fog level `seed-admin-boundaries` loads (docs/IMPLEMENTATION.md §4.2.4):
 -- countries, regions, counties and cities, cut from one pinned Overture Maps release's divisions
 -- theme. Run by scripts/boundaries-extract.sh, which sets getvariable('divisions') (the theme, on
--- S3 or a local copy), getvariable('lakes') and getvariable('water') (scripts/boundaries-lakes.sql's
--- and scripts/boundaries-water.sql's files),
+-- S3 or a local copy), getvariable('lakes'), getvariable('water') and getvariable('ocean')
+-- (scripts/boundaries-lakes.sql's, scripts/boundaries-water.sql's and scripts/boundaries-ocean.sql's
+-- files),
 -- getvariable('places') (the countries whose counties and cities to take, comma-separated, or
 -- empty for all) and getvariable('out').
 --
--- Overture's divisions are OpenStreetMap's boundaries (plus a few CC BY 4.0 sources) under ODbL,
--- so this file is also the public record of how the derived outlines were made.
+-- Overture's divisions are OpenStreetMap's boundaries (plus a few CC BY 4.0 sources) and the
+-- coastline is OpenStreetMap's, under ODbL, so this file is also the public record of how the derived outlines were made.
 --
 -- Each level tiles the land, so a track anywhere clears one place on it: where a level's own
 -- places leave land uncovered, the deepest place above with an outline there stands in for them,
@@ -32,8 +33,12 @@ WHERE d.subtype IN ('country', 'dependency', 'region')
    OR (d.subtype IN ('county', 'locality')
        AND (getvariable('places') = '' OR list_contains(string_split(getvariable('places'), ','), d.country)));
 
--- The land-clipped outline: a coastal country's other outline runs 12 nautical miles out to sea.
--- A city is an outlined locality whose parent is not a locality: below one are its districts.
+-- Overture clips countries and regions to a generalized coast (Kräsuli, a 0.3 km² Estonian islet,
+-- a 4-point triangle; a straight line across Tallinn Bay) and no county or locality at all
+-- (Ust-Luga covered 6,844 km² of the Gulf of Finland). So every outline is taken as drawn, the
+-- sea included where a country's or region's runs 12 nautical miles out, and the sea is cut out
+-- of it below. A city is an outlined locality whose parent is not a locality: below one are its
+-- districts.
 CREATE TABLE area AS
 SELECT a.division_id, a.subtype, a.country, a.region,
        COALESCE(a.names.common['en'], a.names."primary") AS name,
@@ -43,8 +48,39 @@ SELECT a.division_id, a.subtype, a.country, a.region,
        a.geometry
 FROM read_parquet(getvariable('divisions') || '/type=division_area/*', hive_partitioning = 1) a
 JOIN division d ON d.id = a.division_id
-WHERE a.is_land
-  AND (a.subtype <> 'locality' OR d.parent_subtype IS DISTINCT FROM 'locality');
+WHERE a.subtype <> 'locality' OR d.parent_subtype IS DISTINCT FROM 'locality'
+QUALIFY row_number() OVER (PARTITION BY a.division_id ORDER BY a.is_territorial DESC) = 1;
+
+-- The sea is OpenStreetMap's coastline, the one the basemap draws (scripts/boundaries-ocean.sql),
+-- cut from each outline in pieces of at most 256 points, so only those on the shore are touched
+-- and none is measured against a whole country. The sea is simplified to 50 m first, the
+-- tolerance the seed draws at, and the islets under a hectare it leaves are dropped: at 10 m the
+-- countries' outlines were 31 million points in 952,000 pieces, 718,000 of them such islets, and
+-- the seed's drawing of them ran Postgres out of memory. Simplifying the sea, not the outlines,
+-- leaves the land borders as they are, so neighbours still meet; simplifying a country afterwards
+-- checked each of Canada's islands against every other for over an hour.
+CREATE TABLE area_part AS
+SELECT division_id, UNNEST(ST_Dump(ST_Subdivide(geometry, 256)), recursive := true) FROM area;
+
+CREATE TABLE area_part_sea AS
+SELECT p.division_id, p.path, ST_MakeValid(ST_SimplifyPreserveTopology(o.geom, 0.0005)) AS sea
+FROM area_part p JOIN read_parquet(getvariable('ocean')) o ON ST_Intersects(p.geom, o.geom);
+
+CREATE TABLE area_dry AS
+WITH sea AS (SELECT division_id, path, ST_Union_Agg(sea) AS sea FROM area_part_sea GROUP BY ALL)
+SELECT p.division_id, ST_Union_Agg(CASE WHEN s.sea IS NULL THEN p.geom ELSE ST_Difference(p.geom, s.sea) END) AS geometry
+FROM area_part p JOIN (SELECT DISTINCT division_id FROM area_part_sea) w USING (division_id)
+LEFT JOIN sea s USING (division_id, path)
+GROUP BY p.division_id;
+
+UPDATE area SET geometry = (
+    SELECT ST_Collect(list(geom)) FROM (
+        SELECT UNNEST(ST_Dump(ST_CollectionExtract(ST_MakeValid(d.geometry), 3)), recursive := true)
+    ) WHERE ST_Area_Spheroid(geom) >= 1e4
+)
+FROM area_dry d WHERE area.division_id = d.division_id;
+
+DELETE FROM area WHERE geometry IS NULL OR ST_IsEmpty(geometry);
 
 UPDATE area SET geometry = ST_Difference(area.geometry, cut.geometry)
 FROM (
@@ -100,24 +136,6 @@ FROM area a
 LEFT JOIN region r ON r.key = COALESCE(a.region_key, 'country:' || a.country)
 LEFT JOIN county k ON k.key = a.county_key
 WHERE a.subtype = 'locality';
-
--- Overture clips coastal regions and counties to the land but no locality, so a town whose
--- boundary runs out to its islands keeps the sea between: Ust-Luga covered 6,844 km² of the Gulf
--- of Finland. A town is cut to its region's land, which takes the lakes out too, and only where
--- it reaches its region's border, found through that border in short pieces so the spatial join
--- can skip the rest.
-CREATE TABLE region_edge AS
-SELECT key, UNNEST(ST_Dump(ST_Subdivide(ST_Boundary(geometry), 256)), recursive := true) FROM region;
-
-CREATE TABLE city_edge AS
-SELECT DISTINCT c.key, c.region_key, e.key AS edge_key
-FROM city_area c JOIN region_edge e ON ST_Intersects(c.geometry, e.geom);
-
-UPDATE city_area SET geometry = simple(ST_Intersection(city_area.geometry, r.geometry))
-FROM city_edge e, region r
-WHERE e.key = city_area.key AND e.edge_key = city_area.region_key AND r.key = city_area.region_key;
-
-DELETE FROM city_area WHERE geometry IS NULL OR ST_IsEmpty(geometry);
 
 -- The join takes ST_Intersects alone: with the size test beside it DuckDB plans a nested loop
 -- over every pair of cities instead of its spatial join (France's 35,000 cities took 14 minutes
@@ -228,10 +246,12 @@ FROM (SELECT *, kept(geometry) AS g FROM city_rest) WHERE g IS NOT NULL;
 -- from its neighbour's (1,780 km of Ohio's county borders no longer met), which leaves slivers
 -- between them however the seed draws them. Snapping each level's edges within 15 m back
 -- together, country by country, makes it a coverage again, so the seed can simplify it as one
--- (internal/geo's drawingSQL). A place it collapses drops out.
+-- (internal/geo's drawingSQL). A place it collapses drops out. Each outline is snapped to a 10 cm
+-- grid first: GEOS failed to node Toms River, New Jersey, cut by the simplified sea, and stopped
+-- the extract ("CoverageUnion cannot process incorrectly noded inputs").
 CREATE TABLE place_clean AS
 WITH l AS (
-    SELECT level, country, ST_CoverageClean(list(g ORDER BY key), 0.00015) AS c, list(key ORDER BY key) AS keys
+    SELECT level, country, ST_CoverageClean(list(ST_ReducePrecision(g, 0.000001) ORDER BY key), 0.00015) AS c, list(key ORDER BY key) AS keys
     FROM place GROUP BY level, country
 ), d AS (
     SELECT level, keys, UNNEST(ST_Dump(c), recursive := true) FROM l

@@ -17,4 +17,4 @@ package geo
 // BoundariesKey is the extract seed-admin-boundaries reads from the app bucket by default:
 // scripts/boundaries-extract.sh's output for the release it pins, uploaded by hand
 // (docs/DEPLOY.md §6). A newer release, or a change to what the extract cuts, changes both.
-const BoundariesKey = "boundaries/overture-2026-09-23.0-levels-shore-boundaries.csv.gz"
+const BoundariesKey = "boundaries/overture-2026-09-23.0-levels-sea-boundaries.csv.gz"
