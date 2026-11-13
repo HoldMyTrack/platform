@@ -32,7 +32,7 @@ set -euo pipefail
 RELEASE=2026-09-23.0
 # Changed with anything that changes the extract's content, since the seed skips a file name it
 # has already loaded.
-CUT=levels-coast
+CUT=levels-shore
 
 [[ $# -eq 1 ]] || { echo "Usage: $0 <work-dir>" >&2; exit 2; }
 command -v duckdb > /dev/null || { echo "duckdb not found: install it (brew install duckdb, or https://duckdb.org/docs/installation)." >&2; exit 1; }
@@ -74,6 +74,6 @@ printf "SET memory_limit = '%s';\nSET VARIABLE divisions = '%s';\nSET VARIABLE l
 rm -f "$db" "$db.wal"
 
 # What to compare against the last extract before uploading: in 2026-09, 272 countries and
-# dependencies, 3,922 regions, 41,090 County-level and 382,828 City-level places.
+# dependencies, 3,922 regions, 41,049 County-level and 382,573 City-level places.
 log "done: $out, $(du -h "$out" | cut -f 1)"
 gzip -dc "$out" | cut -d , -f 1,2 | sort | uniq -c

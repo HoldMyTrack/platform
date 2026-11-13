@@ -238,56 +238,94 @@ WITH l AS (
 )
 SELECT level, keys[path[1]] AS key, ST_Union_Agg(geom) AS g FROM d GROUP BY level, keys[path[1]];
 
--- A crumb is a stand-in under 1 km²: a sliver where a town's outline stops short of its county's,
--- or a county's of its region's (Walworth County's 0.023 km² beside its towns), 1,014 on the City
--- level and 174 on the County level in 2026-09. As its own place it named a hairline on hover and
--- cleared as a speck beside the town walked in. Each piece joins the place of its level it shares
--- the longest border with, one under the same parent first, so a walk through it clears the place
--- it was in and nothing across a border. A piece touching none stays.
+-- A crumb is a piece of a stand-in under 1 km²: a sliver where a town's outline stops short of
+-- its county's, or of the coast its county's follows (Tallinn's piers and beaches, 232 of Harju
+-- County's 234 pieces), 440,535 on the two levels in 2026-09. As its own place it named a hairline
+-- on hover and cleared as a speck beside the town walked in. One along the coast or a cut lake
+-- joins the water; one enclosed by places joins the one it shares the longest border with, under
+-- the same parent first, so a walk through it clears the place it was in and nothing across a
+-- border; one that is nearly all coast, an islet, stays.
+--
+-- Every spatial join here is stored bare and filtered after: with a filter beside it, or on a
+-- subquery around it, DuckDB plans a nested loop (city_touch), which took over an hour here.
 CREATE TABLE crumb_piece AS
-SELECT level, key, parent, UNNEST(ST_Dump(g), recursive := true)
-FROM (
-    SELECT c.level, c.key, CASE c.level WHEN 'city' THEN p.county_key ELSE p.region_key END AS parent, c.g
-    FROM place_clean c JOIN place p USING (level, key)
-    WHERE starts_with(c.key, 'rest:') AND ST_Area_Spheroid(c.g) < 1e6
-);
+SELECT level, key, parent, path, geom FROM (
+    SELECT level, key, parent, UNNEST(ST_Dump(g), recursive := true)
+    FROM (
+        SELECT c.level, c.key, CASE c.level WHEN 'city' THEN p.county_key ELSE p.region_key END AS parent, c.g
+        FROM place_clean c JOIN place p USING (level, key)
+        WHERE starts_with(c.key, 'rest:')
+    )
+) WHERE ST_Area_Spheroid(geom) < 1e6;
 
--- ST_Intersects alone in the join, so DuckDB plans its spatial join (city_touch says why).
-CREATE TABLE crumb_touch AS
-SELECT k.level, k.key, k.path, k.geom, k.parent, n.level AS to_level, n.key AS to_key, n.g AS to_g
-FROM crumb_piece k JOIN place_clean n ON ST_Intersects(k.geom, n.g);
+-- The coast: each country's outline in short pieces, less those on another country, buffered by
+-- 30 m, as the places' edges are simplified to 10 m and snapped within 15 m off the outline.
+CREATE TABLE country_seg AS
+SELECT key, UNNEST(ST_Dump(ST_Subdivide(ST_Boundary(geometry), 64)), recursive := true) FROM country;
+
+CREATE TABLE country_part AS
+SELECT key, UNNEST(ST_Dump(ST_Subdivide(geometry, 256)), recursive := true) FROM country;
+
+CREATE TABLE country_seg_touch AS
+SELECT s.key, s.path, p.key AS other FROM country_seg s JOIN country_part p ON ST_Intersects(s.geom, p.geom);
+
+CREATE TABLE coast AS
+SELECT ST_Buffer(s.geom, 0.0003) AS geom FROM country_seg s
+WHERE NOT EXISTS (SELECT 1 FROM country_seg_touch t WHERE t.key = s.key AND t.path = s.path AND t.other <> t.key);
+
+CREATE TABLE crumb_coast_touch AS
+SELECT k.level, k.key, k.path, c.geom FROM crumb_piece k JOIN coast c ON ST_Intersects(k.geom, c.geom);
+
+-- How much of each crumb's edge runs along the coast.
+CREATE TABLE crumb_fate AS
+WITH near AS (SELECT level, key, path, ST_Union_Agg(geom) AS coast FROM crumb_coast_touch GROUP BY ALL)
+SELECT k.level, k.key, k.path, k.parent, k.geom,
+       CASE WHEN COALESCE(ST_Length(ST_Intersection(ST_Boundary(k.geom), n.coast)), 0) >= 0.95 * ST_Length(ST_Boundary(k.geom)) THEN 'stays'
+            WHEN COALESCE(ST_Length(ST_Intersection(ST_Boundary(k.geom), n.coast)), 0) > 0.05 * ST_Length(ST_Boundary(k.geom)) THEN 'water'
+            ELSE 'enclosed' END AS fate
+FROM crumb_piece k LEFT JOIN near n USING (level, key, path);
+
+-- An enclosed crumb's neighbours, in pieces of at most 256 points, so no shared border is
+-- measured against a place of hundreds of thousands.
+CREATE TABLE place_part AS
+SELECT level, key, UNNEST(ST_Dump(ST_Subdivide(ST_CollectionExtract(g, 3), 256)), recursive := true)
+FROM place_clean WHERE NOT ST_IsEmpty(ST_CollectionExtract(g, 3));
+
+CREATE TABLE crumb_part_touch AS
+SELECT k.level, k.key, k.path, k.parent, k.geom AS piece, n.level AS to_level, n.key AS to_key, n.geom AS part
+FROM (SELECT * FROM crumb_fate WHERE fate = 'enclosed') k JOIN place_part n ON ST_Intersects(k.geom, n.geom);
+
+CREATE TABLE crumb_share AS
+SELECT level, key, path, parent, to_key, sum(ST_Length(ST_Intersection(ST_Boundary(piece), part))) AS shared
+FROM crumb_part_touch WHERE to_level = level AND to_key <> key GROUP BY level, key, path, parent, to_key;
 
 CREATE TABLE crumb_move AS
-SELECT level, key, path, geom, to_key FROM (
-    SELECT t.level, t.key, t.path, t.geom, t.to_key,
-           row_number() OVER (PARTITION BY t.level, t.key, t.path
-                              ORDER BY (t.parent IS NOT NULL AND p.parent IS NOT DISTINCT FROM t.parent) DESC, t.shared DESC) AS n
-    FROM (
-        SELECT *, ST_Length(ST_Intersection(ST_Boundary(geom), ST_Boundary(to_g))) AS shared FROM crumb_touch
-        WHERE to_level = level AND to_key <> key AND NOT EXISTS (SELECT 1 FROM crumb_piece k WHERE k.level = crumb_touch.level AND k.key = crumb_touch.to_key)
-    ) t JOIN (
+SELECT level, key, path, to_key FROM (
+    SELECT s.*, row_number() OVER (PARTITION BY s.level, s.key, s.path
+                                   ORDER BY (s.parent IS NOT NULL AND p.parent IS NOT DISTINCT FROM s.parent) DESC, s.shared DESC) AS n
+    FROM crumb_share s JOIN (
         SELECT level, key, CASE level WHEN 'city' THEN county_key ELSE region_key END AS parent FROM place
-    ) p ON p.level = t.level AND p.key = t.to_key
-    WHERE t.shared > 0
+    ) p ON p.level = s.level AND p.key = s.to_key
+    WHERE s.shared > 0
 ) WHERE n = 1;
 
--- Every outline after the crumbs moved: the untouched as they were, and each crumb and place that
--- took one as the union of what it kept and what joined it. A crumb that kept nothing drops out.
+-- Every outline after the crumbs moved: the untouched as they were, and each that lost or took a
+-- piece rebuilt from its pieces. A stand-in left with none drops out.
 CREATE TABLE place_final AS
-WITH changed AS (
-    SELECT DISTINCT level, key, true AS crumb FROM crumb_piece
-    UNION
-    SELECT DISTINCT m.level, m.to_key, false FROM crumb_move m
+WITH gone AS (
+    SELECT level, key, path FROM crumb_fate WHERE fate = 'water'
+    UNION ALL SELECT level, key, path FROM crumb_move
+), moved AS (
+    SELECT m.level, m.to_key, k.geom FROM crumb_move m JOIN crumb_piece k USING (level, key, path)
+), changed AS (
+    SELECT DISTINCT level, key FROM gone UNION SELECT DISTINCT level, to_key FROM moved
+), own AS (
+    SELECT level, key, UNNEST(ST_Dump(g), recursive := true)
+    FROM (SELECT c.level, c.key, c.g FROM place_clean c JOIN changed x ON x.level = c.level AND x.key = c.key)
 ), part AS (
-    -- A place that took a crumb, whole.
-    SELECT c.level, c.key, c.g AS geom FROM place_clean c JOIN changed x ON x.level = c.level AND x.key = c.key AND NOT x.crumb
-    UNION ALL
-    -- A crumb's pieces that stayed.
-    SELECT k.level, k.key, k.geom FROM crumb_piece k
-    WHERE NOT EXISTS (SELECT 1 FROM crumb_move m WHERE m.level = k.level AND m.key = k.key AND m.path = k.path)
-    UNION ALL
-    -- And the pieces that joined one.
-    SELECT level, to_key, geom FROM crumb_move
+    SELECT o.level, o.key, o.geom FROM own o
+    WHERE NOT EXISTS (SELECT 1 FROM gone x WHERE x.level = o.level AND x.key = o.key AND x.path = o.path)
+    UNION ALL SELECT level, to_key, geom FROM moved
 )
 SELECT c.level, c.key, c.g FROM place_clean c
 WHERE NOT EXISTS (SELECT 1 FROM changed x WHERE x.level = c.level AND x.key = c.key)
