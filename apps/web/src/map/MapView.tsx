@@ -95,7 +95,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const bumpMetrics = useCallback(() => setTrackMetricsVersion((v) => v + 1), []);
 
   // The panel's tab lives here so `/?private-locations` (FR-8.1) and `/?story=` (FR-14.6) can open
-  // on it, and so it survives the panel unmounting in Fog and Heatmap.
+  // on it, and so it survives the panel unmounting in Fog.
   const [panelTab, setPanelTab] = useState<PanelTab>(() =>
     initialPanelTab(window.location.search, initialActivity !== null, initialPrivateLocationsOpen),
   );
@@ -235,8 +235,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     onClickAway: clearFocus,
   });
 
-  // Fog and Heatmap are re-rendered by queued jobs, so after an upload or delete this waits for the
-  // account's jobs to drain and then refetches both (useCoverageRefresh.ts). `coverageRendering`
+  // Fog is re-rendered by queued jobs, so after an upload or delete this waits for the account's
+  // jobs to drain and then refetches it (useCoverageRefresh.ts). `coverageRendering`
   // drives the notice that they may be incomplete.
   const { watch: watchCoverage, rendering: coverageRendering, explored } = useCoverageRefresh(map);
   const refresh = useDataRefresh(map, {

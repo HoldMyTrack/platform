@@ -101,7 +101,7 @@ export function bandsGroup(): GroupPart {
       // The selected activity's card shows the five steps, slowest first.
       legend: Object.fromEntries(BAND_COLORS.map((color, band) => [`band-${band}`, { color }])),
     },
-    // Fog and Heatmap already show where; lines over either read as noise.
+    // Fog already shows where; lines over it read as noise.
     view: (mode: MapMode, _dark: boolean, satellite: boolean) => {
       const shown = { visibility: mode === 'normal' ? 'visible' : 'none' };
       return {

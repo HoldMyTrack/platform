@@ -49,7 +49,7 @@ registerHooks({
 });
 
 const { buildStyle, FLAVORS, isDarkFlavor, STYLE_BUILD_METADATA } = await import('../src/map/style.ts');
-const { buildLayers } = await import('../src/map/mapLayers.ts');
+const { buildLayers, withInstalledAndroidViews } = await import('../src/map/mapLayers.ts');
 const { LANGS } = await import('../src/i18n/index.ts');
 
 /** Must match originPlaceholder in services/server/internal/mapstyle/mapstyle.go. */
@@ -84,7 +84,7 @@ for (const lang of LANGS) {
   }
 }
 for (const flavor of FLAVORS) {
-  docs.set(`layers/${flavor}.json`, buildLayers({ flavor, dark: isDarkFlavor(flavor), tileVersion: TILE_VERSION_PLACEHOLDER, lang: LANG_PLACEHOLDER, words: WORD_PLACEHOLDERS }));
+  docs.set(`layers/${flavor}.json`, withInstalledAndroidViews(buildLayers({ flavor, dark: isDarkFlavor(flavor), tileVersion: TILE_VERSION_PLACEHOLDER, lang: LANG_PLACEHOLDER, words: WORD_PLACEHOLDERS })));
 }
 
 const hash = createHash('sha256');

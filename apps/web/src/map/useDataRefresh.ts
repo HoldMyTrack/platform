@@ -8,7 +8,7 @@ export interface DataRefreshInputs {
   reloadActivities: () => void;
   reloadDays: () => void;
   reloadStory: () => void;
-  /** Waits for the account's coverage jobs to drain, then refetches Fog and Heatmap (useCoverageRefresh.ts). */
+  /** Waits for the account's coverage jobs to drain, then refetches Fog (useCoverageRefresh.ts). */
   watchCoverage: (then?: () => void) => void;
   /** The bands refetch against new points. */
   bumpMetrics: () => void;

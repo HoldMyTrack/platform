@@ -1,13 +1,12 @@
-// Covers docs/SPEC.md FR-4.2, FR-4.3 and FR-4.4: the layers document every client applies.
+// Covers docs/SPEC.md FR-4.2 and FR-4.4: the layers document every client applies.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs, like bbox.test.mjs: Node strips the types from the imported .ts module itself.
 import { CHEVRON_FONT } from '../scripts/chevronFont.mjs';
-import { heatPointsRadius } from '../src/map/coverageGroup.ts';
-import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor } from '../src/map/mapLayers.ts';
+import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor, withInstalledAndroidViews } from '../src/map/mapLayers.ts';
 
 const doc = buildLayers({ flavor: 'light', dark: false, tileVersion: 'abcd1234.7', lang: 'en' });
-const MODES = ['normal', 'fog', 'heatmap'];
+const MODES = ['normal', 'fog'];
 const coverage = groupOf(doc, 'coverage');
 
 // Every (layer, property) a view sets, as `kind:layer:property`.
@@ -30,7 +29,18 @@ test('each mode shows only its own layers', () => {
     'city-fog-border', 'city-fog-fill', 'country-fog-border', 'country-fog-fill', 'county-fog-border', 'county-fog-fill',
     'fog-edge', 'fog-veil', 'region-fog-border', 'region-fog-fill',
   ]);
-  assert.deepEqual(visible('heatmap'), ['heat-points-circles', 'heatmap-dim']);
+});
+
+test('the served document gives Android builds that still offer Heatmap the Normal view, and nothing to draw it with', () => {
+  const served = withInstalledAndroidViews(doc);
+  for (const base of ['plain', 'satellite']) {
+    assert.deepEqual(Object.keys(served.views[base]).sort(), ['fog', 'heatmap', 'normal']);
+    assert.equal(served.views[base].heatmap, doc.views[base].normal);
+  }
+  assert.deepEqual(Object.keys(doc.views.plain).sort(), ['fog', 'normal']);
+  assert.deepEqual(served.groups, doc.groups);
+  const ids = doc.groups.flatMap((g) => [...Object.keys(g.sources), ...g.layers.map((l) => l.id)]);
+  assert.deepEqual(ids.filter((id) => id.startsWith('heat')), []);
 });
 
 test('imagery takes the dark veil over a light flavor', () => {
@@ -44,7 +54,7 @@ test('a layer is added looking as the plain Normal view leaves it', () => {
   const veil = coverage.layers.find((l) => l.id === 'fog-veil');
   assert.equal(veil.layout.visibility, 'none');
   assert.equal(veil.paint['fill-color'], '#202b25');
-  assert.equal(coverage.layers[0].id, 'heatmap-dim');
+  assert.equal(coverage.layers[0].id, 'fog-veil');
 });
 
 test('every layer draws from a source its group carries, at the tile version', () => {
@@ -83,28 +93,6 @@ test('vars bind with let, the client value over the default, arrays as literals'
   assert.deepEqual(boundLayer(layer, { hidden: ['b'] }, {}).filter, ['let', 'hidden', ['literal', ['b']], filter]);
 });
 
-// The expression's stops as [zoom, radius] pairs.
-const stops = () => {
-  const e = heatPointsRadius();
-  const out = [];
-  for (let i = 3; i < e.length; i += 2) out.push([e[i], e[i + 1]]);
-  return out;
-};
-
-test('the heat radius doubles across each zoom and drops back at the next', () => {
-  const all = stops();
-  const max = coverage.sources['heat-points'].maxzoom;
-  for (let i = 1; i < all.length; i++) assert.ok(all[i][0] > all[i - 1][0], 'zooms ascend');
-  const r = all[0][1];
-  for (let z = 0; z < max; z++) {
-    assert.equal(all.find(([zoom]) => zoom === z)[1], r);
-    assert.equal(all.find(([zoom]) => zoom === z + 0.999)[1], 2 * r);
-  }
-  const [prev, last] = all.slice(-2);
-  assert.equal(prev[0], max);
-  assert.equal(last[1] / prev[1], 2 ** (last[0] - prev[0]));
-});
-
 test('the pace bands color each run by its band, shown in Normal only', () => {
   const bands = groupOf(doc, 'track-bands');
   assert.deepEqual(bands.sources, { 'track-bands': { type: 'geojson' } });
@@ -129,7 +117,7 @@ test('the bike paths lift the basemap trails, each kind behind its Layers menu s
   );
   for (const layer of bike.layers) assert.equal(layer.layout.visibility, 'none');
   assert.equal(bike.sources['bike-paths'].minzoom, 9);
-  assert.ok(doc.groups.indexOf(bike) > doc.groups.indexOf(coverage), 'over Fog and Heatmap');
+  assert.ok(doc.groups.indexOf(bike) > doc.groups.indexOf(coverage), 'over Fog');
 });
 
 test('the legend gives every path its color, and a dash where the map dashes it', () => {
@@ -162,7 +150,7 @@ test('the tracks draw the focused ids from vars the client binds, never a hidden
   assert.ok(doc.groups.indexOf(tracks) < doc.groups.indexOf(groupOf(doc, 'track-bands')), 'under the bands');
   for (const id of ['tracks-casing', 'tracks-line', 'tracks-arrows']) {
     assert.equal(viewFor(doc, 'normal', false).layout[id].visibility, 'visible');
-    assert.equal(viewFor(doc, 'heatmap', false).layout[id].visibility, 'none');
+    assert.equal(viewFor(doc, 'fog', false).layout[id].visibility, 'none');
   }
 });
 

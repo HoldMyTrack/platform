@@ -126,7 +126,7 @@ export function tracksGroup(dark: boolean, tileVersion: string): GroupPart {
         arrows(),
       ],
     },
-    // Fog and Heatmap already show where; lines over either read as noise.
+    // Fog already shows where; lines over it read as noise.
     view: (mode: MapMode, dark: boolean, satellite: boolean) => {
       const track = satellite ? SATELLITE_TRACK_COLOR : TRACK_COLOR;
       const shown = { visibility: mode === 'normal' ? 'visible' : 'none' };

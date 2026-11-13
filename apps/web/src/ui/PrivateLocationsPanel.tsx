@@ -31,7 +31,7 @@ import { lang, t, tn } from '../i18n';
  * the Edit window's (portaled into the map's container, since this tab lives in the side
  * panel), where its center drags, a slider sets its radius, and Save or Cancel closes it. The
  * circles are drawn, and clickable, for exactly as long as this is mounted: switching tabs, or
- * to Fog/Heatmap (which unmounts the whole panel), clears them and drops an unsaved edit. Save
+ * to Fog (which unmounts the whole panel), clears them and drops an unsaved edit. Save
  * and Delete go straight to the server, which reprocesses every activity the change could clip
  * — `onChanged` has MapView reload the list so those rows show Pending straight away. The footer
  * counts the activities they hide entirely, the list's Private rows; it's read when the tab opens,

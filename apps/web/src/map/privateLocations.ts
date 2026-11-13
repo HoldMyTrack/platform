@@ -59,7 +59,7 @@ function circlePolygon(c: Circle): number[][] {
   return ring;
 }
 
-/** From the zoom tracks start at, like everything else on the map but Fog and Heatmap (FR-4.15).
+/** From the zoom tracks start at, like everything else on the map but Fog (FR-4.15).
  *  Adds the source and layers if missing — idempotent for the same styledata reason every
  *  other overlay here is (a theme swap's setStyle discards custom layers). */
 export function ensurePrivateLocationsLayer(map: MapLibreMap, beforeId: string | undefined): void {

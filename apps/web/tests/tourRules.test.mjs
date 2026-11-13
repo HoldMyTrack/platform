@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { CAMERA_UNMOVED, DEMO_VIEWS, NOTHING_SEEN, cameraStep, cardFor, unionOf, isPlainClick, nextStep, onScreen, placePopover, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
+import { CAMERA_UNMOVED, DEMO_VIEWS, NOTHING_SEEN, cameraStep, cardFor, unionOf, isPlainClick, nextStep, onScreen, placePopover, readTourSeen, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
 
 const start = (over) => tourStart({ requested: false, isDemo: false, hasActivities: true, seen: NOTHING_SEEN, ...over });
 
@@ -21,14 +21,22 @@ test('once seen it never comes back by itself, but a request always starts it', 
   assert.equal(start({ requested: true, hasActivities: false }), 'start');
 });
 
-test('a card shows once, for Fog, Heatmap or the Stories tab, and never during the tour', () => {
+test('a card shows once, for Fog or the Stories tab, and never during the tour', () => {
   assert.equal(cardFor({ kind: 'mode', mode: 'fog' }, NOTHING_SEEN, false), 'fog');
-  assert.equal(cardFor({ kind: 'mode', mode: 'heatmap' }, NOTHING_SEEN, false), 'heatmap');
   assert.equal(cardFor({ kind: 'mode', mode: 'normal' }, NOTHING_SEEN, false), null);
   assert.equal(cardFor({ kind: 'tab', tab: 'stories' }, NOTHING_SEEN, false), 'stories');
   assert.equal(cardFor({ kind: 'tab', tab: 'activities' }, NOTHING_SEEN, false), null);
   assert.equal(cardFor({ kind: 'mode', mode: 'fog' }, withCard(NOTHING_SEEN, 'fog'), false), null);
   assert.equal(cardFor({ kind: 'mode', mode: 'fog' }, NOTHING_SEEN, true), null);
+});
+
+test('a stored record keeps only the cards this build shows, and a broken one counts as nothing seen', () => {
+  assert.deepEqual(readTourSeen(JSON.stringify({ tour: true, cards: ['fog', 'heatmap', 'stories'] })), { tour: true, cards: ['fog', 'stories'] });
+  assert.deepEqual(readTourSeen(JSON.stringify({ cards: ['heatmap'] })), NOTHING_SEEN);
+  assert.equal(readTourSeen(null), NOTHING_SEEN);
+  assert.equal(readTourSeen('{'), NOTHING_SEEN);
+  assert.deepEqual(readTourSeen('null'), NOTHING_SEEN);
+  assert.deepEqual(readTourSeen(JSON.stringify({ tour: 'yes', cards: 'fog' })), NOTHING_SEEN);
 });
 
 test('withCard adds a card once', () => {
@@ -37,7 +45,7 @@ test('withCard adds a card once', () => {
   assert.equal(withCard(once, 'fog'), once);
 });
 
-test('the steps keep Normal together before Fog and Heatmap, and the demo gets its own Add text', () => {
+test('the steps keep Normal together before Fog, and the demo gets its own Add text', () => {
   const steps = stepsFor({ isDemo: false });
   const firstOther = steps.findIndex((s) => s.mode !== 'normal');
   const lastOther = steps.findLastIndex((s) => s.mode !== 'normal');
@@ -55,7 +63,6 @@ test("a demo's Fog is city, states and countries at Fog's own zoom tiers, and on
   assert.ok(fog[0].view.zoom >= 7);
   assert.ok(fog[1].view.zoom >= 3 && fog[1].view.zoom < 7);
   assert.ok(fog[2].view.zoom < 3);
-  assert.equal(demo.find((s) => s.id === 'heatmap').view, DEMO_VIEWS.heatmapCity);
   // The fog card goes with the first Fog step only.
   assert.deepEqual(demo.filter((s) => s.card === 'fog').map((s) => s.id), ['fog']);
   assert.ok(stepsFor({ isDemo: false }).every((s) => s.view === null));
@@ -76,8 +83,8 @@ test("the demo's steps fly through its views and back; a real account's never mo
   const at = (id) => moves[demo.findIndex((s) => s.id === id)];
   assert.equal(at('welcome'), null);
   assert.equal(at('fog'), DEMO_VIEWS.city);
-  assert.equal(at('heatmap'), DEMO_VIEWS.heatmapCity);
-  // The step after Heatmap goes back to the view before the tour's first move, the Stories tab's.
+  assert.equal(at('fog_countries'), DEMO_VIEWS.countries);
+  // The step after Fog goes back to the view before the tour's first move, the Stories tab's.
   assert.deepEqual(at('add'), current);
   // A real account's Stories step lets the map frame its Story, and the next step brings it back.
   const real = stepsFor({ isDemo: false });

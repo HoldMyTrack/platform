@@ -1,7 +1,7 @@
 /**
  * MapLibre's `transformRequest` for this app's maps (useMapInstance.ts, exportMap.ts): the
  * session cookie goes with requests to the app's own API origin and with nothing else.
- * Tracks/fog/heatmap tiles need it (requireAuth, server.go), and MapLibre's own fetches
+ * Tracks and Fog tiles need it (requireAuth, server.go), and MapLibre's own fetches
  * otherwise carry no cookie, since they don't go through api.ts's fetch wrapper.
  *
  * Compared by origin, not by URL prefix: a production build's API base is "" (same origin,

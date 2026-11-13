@@ -2,11 +2,10 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { setHiddenGroups, updateLayers } from './applyLayers';
 
 /**
- * The three mutually exclusive views (docs/SPEC.md FR-4.4) — not independent checkboxes, a single
- * toggle. What each shows, and how Fog and Heatmap quiet the basemap and hide the tracks, is the
- * layers document's views (mapLayers.ts).
+ * The two mutually exclusive views (docs/SPEC.md FR-4.4), a single toggle. What each shows, and
+ * how Fog veils the basemap and hides the tracks, is the layers document's views (mapLayers.ts).
  */
-export type MapMode = 'normal' | 'fog' | 'heatmap';
+export type MapMode = 'normal' | 'fog';
 
 /**
  * Applies `mode`'s view. A no-op before the layers document is on the map. `satellite` picks the

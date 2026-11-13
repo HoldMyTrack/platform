@@ -9,7 +9,6 @@ import { MapModeToggle } from './MapModeToggle';
 import { OverlaysMenu } from './OverlaysMenu';
 import { ShowInArea } from './ShowInArea';
 import { FogLevelMenu } from './FogLevelMenu';
-import { ZoomLevelNotice } from './ZoomLevelNotice';
 import { lang, t } from '../i18n';
 
 export interface MapControlsProps {
@@ -20,7 +19,7 @@ export interface MapControlsProps {
   onOverlaysChange: (next: Overlays) => void;
   flavor: Flavor;
   satelliteAvailable: boolean;
-  /** Fog and Heatmap are being re-rendered: their notice shows under the toggles. */
+  /** Fog is being re-rendered: its notice shows under the toggles. */
   coverageRendering: boolean;
   /** The places of each Fog level explored, which Fog's level control counts. */
   explored: Explored | null;
@@ -42,7 +41,7 @@ export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChang
     <>
       <div className="map-toggles">
         <MapModeToggle mode={mode} onChange={onModeChange} fogMenu={map && <FogLevelMenu map={map} explored={explored} />} />
-        {/* Layers switch on and off over any mode; they're not a fourth mode. */}
+        {/* Layers switch on and off over either mode. */}
         <OverlaysMenu overlays={overlays} onChange={onOverlaysChange} flavor={flavor} forceOpen={layersOpen} />
         {satelliteAvailable && <BasemapToggle satellite={overlays.satellite} onChange={(on) => onOverlaysChange({ ...overlays, satellite: on })} />}
         {/* On lines of their own under the toggles, however many rows they wrap to. */}
@@ -56,12 +55,11 @@ export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChang
             <span className="coverage-notice__pill coverage-notice__pill--failed">{t('map.satellite_failed')}</span>
           </div>
         )}
-        {mode !== 'normal' && coverageRendering && (
+        {mode === 'fog' && coverageRendering && (
           <div className="coverage-notice" role="status" data-testid="coverage-notice">
             <span className="coverage-notice__pill">{t('map.coverage_updating')}</span>
           </div>
         )}
-        <ZoomLevelNotice mode={mode} />
       </div>
       <div className="map-area">
         {map && <ShowInArea map={map} categories={spotsShown} />}

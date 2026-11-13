@@ -1,7 +1,7 @@
 import type { ProjectionSpecification } from 'maplibre-gl';
 
 /** The last zoom drawn as a globe; one zoom further in the map is flat. Out there a flat map
- *  on a wide screen repeats the world, two of every country and of every heat, and a globe
+ *  on a wide screen repeats the world, two of every country, and a globe
  *  shows each once; from here in, the map is as it always was. */
 export const GLOBE_MAX_ZOOM = 3;
 
