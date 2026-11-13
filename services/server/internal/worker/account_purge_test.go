@@ -30,7 +30,7 @@ func TestPurgeDeletedAccountRemovesItsObjectsAndRows(t *testing.T) {
 		t.Fatalf("create activity: %v", err)
 	}
 	mine := []string{
-		"raw/" + userID + "/a.gpx", "fog/" + userID + "/14/1/2.png", "heatmap/" + userID + "/14/1/2.png",
+		"raw/" + userID + "/a.gpx", "fog/" + userID + "/14/1/2.png",
 		"photos/" + userID + "/p1", "photos/" + userID + "/p1-thumb", "avatars/" + userID,
 		"exports/" + userID + "/e1/1.zip",
 	}

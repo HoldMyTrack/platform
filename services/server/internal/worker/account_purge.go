@@ -82,10 +82,10 @@ func purgeAccount(ctx context.Context, pool *pgxpool.Pool, store *storage.Store,
 	}
 
 	prefixes := []string{
-		"raw/" + userID + "/", "fog/" + userID + "/", "heatmap/" + userID + "/", "exports/" + userID + "/",
+		"raw/" + userID + "/", "fog/" + userID + "/", "exports/" + userID + "/",
 	}
 	// Side by side: each prefix is a listing and a bulk delete, round trips to object storage,
-	// and a big account's fog/ and heatmap/ hold thousands of tiles.
+	// and a big account's fog/ holds thousands of tiles.
 	// A failed prefix is logged and the rest go on; ForEach itself fails only when the worker
 	// is shutting down, and then the account is left for the next sweep rather than its row
 	// deleted with objects still listed.

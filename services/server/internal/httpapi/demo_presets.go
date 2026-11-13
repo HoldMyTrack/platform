@@ -501,7 +501,7 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 		return fmt.Errorf("reset: rows: %w", err)
 	}
 
-	prefixes := []string{"raw/" + DemoCustomerUserID + "/", "fog/" + DemoCustomerUserID + "/", "heatmap/" + DemoCustomerUserID + "/", "photos/" + DemoCustomerUserID + "/"}
+	prefixes := []string{"raw/" + DemoCustomerUserID + "/", "fog/" + DemoCustomerUserID + "/", "photos/" + DemoCustomerUserID + "/"}
 	for _, prefix := range prefixes {
 		if err := store.RemoveByPrefix(ctx, prefix); err != nil {
 			log.Error("demo customer reset: storage cleanup failed, deleting rows anyway", "prefix", prefix, "err", err)
