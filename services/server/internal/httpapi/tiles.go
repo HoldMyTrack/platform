@@ -64,8 +64,8 @@ func parseSince(w http.ResponseWriter, raw string) (*time.Time, bool) {
 	return &t, true
 }
 
-// maxTileZoom is past any zoom the clients ask for (the Fog and Heatmap rasters stop at z14
-// and are overzoomed above it).
+// maxTileZoom is past any zoom the clients ask for (the Fog raster stops at z14 and is
+// overzoomed above it).
 const maxTileZoom = 24
 
 // tileCoords reads a tile route's {z}/{x}/{y}, with ext trimmed off {y}, or answers 400 for

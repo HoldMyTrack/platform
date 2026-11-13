@@ -1,6 +1,6 @@
 // Package ingest implements IMPLEMENTATION.md §4.1 steps 2, 3, 5, 6 — the
 // work-mode half of the ingestion pipeline — plus step 4's dirty-marking and, since the
-// per-activity fog/heatmap mask redesign, the actual per-activity rendering too (internal/
+// per-activity mask redesign, the actual per-activity rendering too (internal/
 // fog.RenderActivityMasks): raw points are already in memory here, pre-simplification,
 // exactly why ARCHITECTURE.md §1.1 says coverage can't be derived from the simplified display trajectory,
 // and exactly why rendering one activity's own masks belongs here rather than in a
@@ -93,8 +93,6 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 
 	// ingest_complete stays false until every step after this insert has run (the end of
 	// this function): a hidden track has none, so it is complete as inserted.
-	// in_heatmap_window is decided from started_at here, against the same window
-	// heatmap_aging.go sweeps with: an import of years-old history isn't current heat.
 	// timezone is the zone of the first recorded point, before Private locations clip it, so
 	// a track hidden by them still shows its times where it was recorded (§4.30).
 	var activityID string
@@ -106,7 +104,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 				activity_type, distance_meters, duration_seconds, moving_seconds,
 				elevation_gain_m, avg_speed_mps, started_at,
 				trajectory, raw_payload_key, name, description, ingest_complete,
-				in_heatmap_window, timezone, recorded_started_at, recorded_ended_at, raw_bytes,
+				timezone, recorded_started_at, recorded_ended_at, raw_bytes,
 				editable_times
 			) VALUES (
 				$1, $2, $3, $4,
@@ -114,10 +112,9 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 				$9, $10, $11,
 				`+trajectorySQL("$12", "$13", "$14")+`,
 				$15, NULLIF($16, ''), NULLIF($17, ''), $18,
-				$11 >= NOW() - make_interval(days => $19),
-				`+geo.TimezoneAtSQL("$20::float8", "$21::float8", "$1")+`,
-				$22, $23, NULLIF($24::bigint, 0),
-				$25
+				`+geo.TimezoneAtSQL("$19::float8", "$20::float8", "$1")+`,
+				$21, $22, NULLIF($23::bigint, 0),
+				$24
 			)
 			ON CONFLICT (user_id, source, external_id) WHERE external_id IS NOT NULL DO NOTHING -- $15 = raw_payload_key
 			RETURNING id
@@ -134,7 +131,6 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		m.elevationGainM, m.avgSpeedMps, startedAt,
 		pp.simpLons, pp.simpLats, pp.simpTs,
 		job.RawPayloadKey, act.Name, act.Description, hidden,
-		fog.HeatmapWindowDays,
 		act.Points[0].Lon, act.Points[0].Lat,
 		recStart, recEnd, job.RawBytes,
 		EditableTimestamps(points) == nil,
@@ -156,7 +152,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		return Result{ActivityID: activityID, Persisted: true}, nil
 	}
 
-	// §4.1 step 4: render this activity's own fog/heatmap masks and mark every z14 tile it
+	// §4.1 step 4: render this activity's own Fog masks and mark every z14 tile it
 	// touches dirty, both from `points` (pre-simplification), not the simplified trajectory
 	// just persisted — a straight line between two of Douglas-Peucker's surviving vertices
 	// can cut across tiles the real GPS path never entered, which would render/reveal tiles
@@ -171,7 +167,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		return Result{}, fmt.Errorf("ingest: mark fog tiles dirty: %w", err)
 	}
 
-	// Country/Region-tier unlocking (§4.2.4) — independent of the fog/heatmap raster pyramid
+	// Country/Region-tier unlocking (§4.2.4) — independent of the Fog raster pyramid
 	// above, so it runs alongside it rather than inside fog's own dirty/render pipeline: there
 	// is nothing here to mark dirty or recomposite, matching against activity_id is enough.
 	if err := geo.MatchActivity(ctx, pool, activityID); err != nil {
@@ -414,8 +410,7 @@ var errTooManyTiles = fmt.Errorf("the track touches more than %d map tiles", max
 // computeTouchedTiles' result for a fresh ingest, a deleted activity's own already-rendered
 // tiles (`internal/httpapi`'s handleDeleteActivity, which has no raw points to recompute
 // touched tiles from — it reads them back out of activity_tile_masks before the cascade
-// removes that row), or an activity that just aged out of Heatmap's rolling window
-// (`internal/worker`'s heatmap_aging.go, via ActivityTiles below). Exported for those callers;
+// removes that row, via ActivityTiles below). Exported for those callers;
 // the upsert itself doesn't care which triggered it.
 func MarkFogTilesDirty(ctx context.Context, pool *pgxpool.Pool, userID string, tiles [][2]int) error {
 	if len(tiles) == 0 {
@@ -441,9 +436,6 @@ func MarkFogTilesDirty(ctx context.Context, pool *pgxpool.Pool, userID string, t
 
 // ActivityTiles reads back the z14 tiles one activity's own crisp masks cover —
 // activity_tile_masks' primary key leads with activity_id, so this is an index-only lookup.
-// Shared by handleDeleteActivity's own tile lookup and heatmap_aging.go's daily sweep: an
-// activity aging out of the window is still live, just no longer eligible, so only its own
-// tiles need re-rendering.
 func ActivityTiles(ctx context.Context, pool *pgxpool.Pool, activityID string) ([][2]int, error) {
 	rows, err := pool.Query(ctx,
 		`SELECT DISTINCT tile_x, tile_y FROM activity_tile_masks WHERE activity_id = $1 AND zoom = $2`,

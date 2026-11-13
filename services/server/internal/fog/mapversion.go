@@ -16,7 +16,7 @@ type execer interface {
 
 // BumpMapVersion advances users.map_version, the key every per-user map tile is cached under
 // (TileVersion, IMPLEMENTATION.md §4.2's "Caching"). Call it after any change that alters
-// what a Fog, Heatmap, Country/Region or tracks tile would return. A change the worker makes
+// what a Fog, Country/Region or tracks tile would return. A change the worker makes
 // is covered by the bump at the end of RenderUser; one made at request time, which the next
 // render may be seconds away from (or never follow, like a type edit), bumps here.
 func BumpMapVersion(ctx context.Context, db execer, userID string) error {

@@ -120,7 +120,7 @@ const maxTrackEditEntries = 10000
 
 // handleActivityTrackEdit serves `POST /v1/activities/{id}/track-edit`: validate the spec,
 // mark the activity pending, and enqueue an `edit_track` job to reprocess it (§4.7.7). The
-// reprocessing itself — reparse, metrics, masks, fog/heatmap invalidation — is the same heavy
+// reprocessing itself — reparse, metrics, masks, Fog invalidation — is the same heavy
 // work ingest does, so it goes through the job queue, never inline. Responds 202; the
 // activity list reports `pending` until the job finishes.
 func (s *Server) handleActivityTrackEdit(w http.ResponseWriter, r *http.Request) {

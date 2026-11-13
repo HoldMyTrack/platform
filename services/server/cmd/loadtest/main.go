@@ -21,7 +21,7 @@
 //	                tiles
 //	import K        upload set-1..K, one per account, all accounts at once, each set's files one
 //	                at a time as the web's Upload menu sends them
-//	browse VUS DUR  VUS people at the map for DUR, each in Normal, Fog or Heatmap mode (or all in
+//	browse VUS DUR  VUS people at the map for DUR, each in Normal or Fog mode (or all in
 //	                -mode), panning and zooming and requesting the tiles the web client would;
 //	                each keeps a browser-like tile cache unless -cold; Normal visitors from z4 ask
 //	                for the area's activity list on every view, as the web does after each settled
@@ -375,17 +375,15 @@ func tileXY(lat, lon float64, z int) (int, int) {
 }
 
 // The served style's tiers (apps/web/src/map/coverageStyle.ts and the layers' own zoom ranges): Fog
-// draws whole countries below z3 and whole regions below z7, its veil from z7; Heatmap draws
-// heat points at every zoom; Normal draws tracks from z4. Every tile source stops at z14 and is
-// stretched past it, except heat points, at z15.
+// draws whole countries below z3 and whole regions below z7, its veil from z7; Normal draws
+// tracks from z4. Every tile source stops at z14 and is stretched past it.
 const (
-	countryMaxZoom    = 3
-	regionMaxZoom     = 7
-	tracksMinZoom     = 4
-	spotsMinZoom      = 13
-	heatPointsMaxZoom = 15
-	sourceMaxZoom     = 14
-	viewW, viewH      = 1280, 800 // a laptop browser window, CSS pixels; the clients draw tiles 512 px
+	countryMaxZoom = 3
+	regionMaxZoom  = 7
+	tracksMinZoom  = 4
+	spotsMinZoom   = 13
+	sourceMaxZoom  = 14
+	viewW, viewH   = 1280, 800 // a laptop browser window, CSS pixels; the clients draw tiles 512 px
 )
 
 // layers returns the tile layers the web client requests at whole zoom z in mode, each as
@@ -398,9 +396,6 @@ func layers(mode string, spots bool, z int) ([]string, int) {
 		if z >= tracksMinZoom {
 			out = append(out, "tracks:mvt")
 		}
-	case "heatmap":
-		out = append(out, "heat-points:mvt")
-		tz = min(z, heatPointsMaxZoom)
 	default: // fog
 		switch {
 		case z < countryMaxZoom:
@@ -460,20 +455,16 @@ type visitor struct {
 }
 
 // onlyMode pins every visitor to one mode for the whole run, for a session measuring one.
-var onlyMode = flag.String("mode", "", "browse: keep every visitor in this mode (normal, fog or heatmap) instead of the usual mix")
+var onlyMode = flag.String("mode", "", "browse: keep every visitor in this mode (normal or fog) instead of the usual mix")
 
 func pickMode(r *mrand.Rand) string {
 	if *onlyMode != "" {
 		return *onlyMode
 	}
-	switch n := r.Intn(100); {
-	case n < 50:
+	if r.Intn(100) < 50 {
 		return "normal"
-	case n < 85:
-		return "fog"
-	default:
-		return "heatmap"
 	}
+	return "fog"
 }
 
 // step moves the visitor the way people use the map: mostly panning about half a screen,

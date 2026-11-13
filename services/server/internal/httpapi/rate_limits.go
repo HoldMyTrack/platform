@@ -21,7 +21,7 @@ func SetRateLimitsOff(off bool) { rateLimitsOff.Store(off) }
 // every /tiles/v1 layer. A pan fetches dozens at once and a high-resolution map export
 // (apps/web/src/map/exportMap.ts) many more in one burst, failing outright on a single refused
 // tile, so this sits far above any person's use: it stops a script that ignores the clients'
-// per-version tile cache (§4.2.6), each Fog or Heatmap tile of which is an R2 read.
+// per-version tile cache (§4.2.6), each Fog tile of which is an R2 read.
 // TILES_PER_MINUTE overrides it, for a load test's target.
 const defaultTilesPerMinute = 1200
 

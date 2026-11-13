@@ -224,7 +224,7 @@ func demoFiles(fsys fs.FS) ([]string, error) {
 
 // SeedDemoCustomer ingests every embedded activity file in demo_data/ into
 // DemoCustomerUserID, through the same real pipeline (internal/ingest.Process — parse,
-// persist, fog/heatmap mask render) a real upload uses. Meant to run once, out of band (the
+// persist, Fog mask render) a real upload uses. Meant to run once, out of band (the
 // `seed-demo-customer` CLI subcommand), not per visitor — see docs/ROADMAP.md's "Email
 // verification + demo without real ingest" for why re-running this per "Try Demo" click would
 // be far too slow. ingest.go's `ON CONFLICT (user_id, source, external_id) DO NOTHING` makes
@@ -473,8 +473,6 @@ func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, sto
 // it's deleted explicitly — ingest recreates each row a new activity touches, and a row left
 // behind would keep a tile only the old history reached. Object storage has no foreign keys,
 // so its prefixes are swept first, logging a failure and carrying on.
-// heatmap_cap goes back to its column default: the old history's value would scale the new
-// one's heatmap until the worker's daily cap sweep caught up.
 //
 // The worker is quiesced for this account first: a previous seed can leave a render_fog job
 // queued behind its ingests, and one already running would rewrite fog_tiles rows (and their
@@ -524,7 +522,7 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 		`DELETE FROM spot_captures WHERE user_id = $1`,
 		`DELETE FROM fog_tiles WHERE user_id = $1`,
 		// Its tiles are about to be rendered from scratch; nothing cached before this is its.
-		`UPDATE users SET heatmap_cap = DEFAULT, map_version = map_version + 1 WHERE id = $1`,
+		`UPDATE users SET map_version = map_version + 1 WHERE id = $1`,
 	} {
 		if _, err := tx.Exec(ctx, q, DemoCustomerUserID); err != nil {
 			return fmt.Errorf("reset: %w", err)

@@ -1,4 +1,4 @@
-// Package geo backs the Country/Region zoom tiers Fog and Heatmap fall back to below city
+// Package geo backs the Country/Region zoom tiers Fog falls back to below city
 // zoom (docs/IMPLEMENTATION.md §4.2.4): "have you been anywhere in this country/region at
 // all," as a whole-polygon reveal, distinct from the per-pixel raster pyramid internal/fog
 // owns and which stays exactly as it is above that threshold.

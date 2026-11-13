@@ -235,8 +235,8 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	// cache of their own.
 	s.tile("/country-veil/{z}/{x}/{y}", s.handleCountryFogTile)
 	s.tile("/region-veil/{z}/{x}/{y}", s.handleRegionFogTile)
-	// §4.2.2's Heatmap: weighted points made from the stored count tiles.
-	s.tile("/heat-points/{z}/{x}/{y}", s.handleHeatPointsTile) // budgeted inside: only close in reads the store
+	// An empty tile for installed Android builds, until MIN_ANDROID_BUILD next goes up.
+	s.tile("/heat-points/{z}/{x}/{y}", s.handleHeatPointsTile)
 	// Deliberately not behind requireAuth, unlike every /v1 route above it. The style
 	// document is derived entirely from the public Protomaps basemap and contains no
 	// per-user data — only layer definitions and the asset URLs a client would need

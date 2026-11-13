@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"image"
-	"image/color"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -84,7 +83,7 @@ func TestUpsertTileRenderedKeepsAMidRenderMark(t *testing.T) {
 		userID, z, x, y); err != nil {
 		t.Fatal(err)
 	}
-	if err := upsertTileRendered(ctx, pool, userID, z, x, y, gen, "fog", ptr("heat"), [2]int{120, 340}); err != nil {
+	if err := upsertTileRendered(ctx, pool, userID, z, x, y, gen, "fog", 120); err != nil {
 		t.Fatal(err)
 	}
 	if !tileDirty(t, pool, userID, z, x, y) {
@@ -98,20 +97,20 @@ func TestUpsertTileRenderedKeepsAMidRenderMark(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := upsertTileRendered(ctx, pool, userID, z, x, y, gen, "fog", ptr("heat"), [2]int{120, 340}); err != nil {
+	if err := upsertTileRendered(ctx, pool, userID, z, x, y, gen, "fog", 120); err != nil {
 		t.Fatal(err)
 	}
 	if tileDirty(t, pool, userID, z, x, y) {
 		t.Error("tile rendered with nothing marking it since stayed dirty")
 	}
-	var fogBytes, heatmapBytes int
+	var fogBytes int
 	if err := pool.QueryRow(ctx,
-		`SELECT bytes, heatmap_bytes FROM fog_tiles WHERE user_id = $1 AND zoom = $2 AND tile_x = $3 AND tile_y = $4`,
-		userID, z, x, y).Scan(&fogBytes, &heatmapBytes); err != nil {
+		`SELECT bytes FROM fog_tiles WHERE user_id = $1 AND zoom = $2 AND tile_x = $3 AND tile_y = $4`,
+		userID, z, x, y).Scan(&fogBytes); err != nil {
 		t.Fatal(err)
 	}
-	if fogBytes != 120 || heatmapBytes != 340 {
-		t.Errorf("sizes stored %d, %d; want 120, 340", fogBytes, heatmapBytes)
+	if fogBytes != 120 {
+		t.Errorf("size stored %d, want 120", fogBytes)
 	}
 }
 
@@ -163,8 +162,8 @@ func TestRenderUserFinishesAnInterruptedPyramid(t *testing.T) {
 	pool, userID := testAccount(t)
 	const x, y = 8800, 5400
 	if _, err := pool.Exec(context.Background(), `
-		INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, heatmap_object_key, dirty, rendered_at)
-		VALUES ($1, $2, $3, $4, NULL, NULL, false, NOW()), ($1, $2 - 1, $3 / 2, $4 / 2, NULL, NULL, true, NULL)
+		INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, dirty, rendered_at)
+		VALUES ($1, $2, $3, $4, NULL, false, NOW()), ($1, $2 - 1, $3 / 2, $4 / 2, NULL, true, NULL)
 	`, userID, Zoom, x, y); err != nil {
 		t.Fatal(err)
 	}
@@ -212,8 +211,7 @@ func TestRenderUserWaitsForTheAccountsRunningPass(t *testing.T) {
 }
 
 // A pyramid tile is the downsample of its four children as stored, read in the right
-// quadrants: one child with both rasters, one with both again, one with only Fog, one never
-// rendered.
+// quadrants: three children stored, one never rendered.
 func TestRenderPyramidLevelReadsEachChild(t *testing.T) {
 	pool, userID := testAccount(t)
 	ctx := context.Background()
@@ -234,17 +232,9 @@ func TestRenderPyramidLevelReadsEachChild(t *testing.T) {
 		}
 		return m
 	}
-	counts := func(col int, v uint16) *image.Gray16 {
-		m := blankCounts()
-		for y := range TileSize {
-			m.SetGray16(col, y, color.Gray16{Y: v})
-		}
-		return m
-	}
 	var fog [4]*image.Gray
-	var heat [4]*image.Gray16
 	for q := range 4 {
-		fog[q], heat[q] = blankTile(), blankCounts()
+		fog[q] = blankTile()
 	}
 	put := func(key string, m image.Image) {
 		b, err := encodeTilePNG(m)
@@ -257,16 +247,9 @@ func TestRenderPyramidLevelReadsEachChild(t *testing.T) {
 		fog[q] = child(10+q*20, 255)
 		fogKey := fogObjectKey(userID, z+1, c[0], c[1])
 		put(fogKey, fog[q])
-		var heatKey *string
-		if q < 2 {
-			heat[q] = counts(15+q*20, uint16(300+q))
-			k := heatmapObjectKey(userID, z+1, c[0], c[1])
-			put(k, heat[q])
-			heatKey = &k
-		}
 		if _, err := pool.Exec(ctx, `
-			INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, heatmap_object_key, dirty, rendered_at)
-			VALUES ($1, $2, $3, $4, $5, $6, false, NOW())`, userID, z+1, c[0], c[1], fogKey, heatKey); err != nil {
+			INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, dirty, rendered_at)
+			VALUES ($1, $2, $3, $4, $5, false, NOW())`, userID, z+1, c[0], c[1], fogKey); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -284,17 +267,6 @@ func TestRenderPyramidLevelReadsEachChild(t *testing.T) {
 	}
 	if !bytes.Equal(gotFog.Pix, downsampleQuadrants(fog).Pix) {
 		t.Error("parent Fog tile isn't the downsample of its children as stored")
-	}
-	b, ok = mem.Object(heatmapObjectKey(userID, z, px, py))
-	if !ok {
-		t.Fatal("parent Heatmap tile not stored")
-	}
-	gotHeat, err := decodeCounts(b)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !bytes.Equal(gotHeat.Pix, downsampleCounts(heat).Pix) {
-		t.Error("parent Heatmap tile isn't the downsample of its children's counts as stored")
 	}
 }
 
@@ -334,5 +306,3 @@ func TestRenderPyramidLevelRefusesAChildOfAnotherSize(t *testing.T) {
 		t.Error("the parent was stored from a child it couldn't read")
 	}
 }
-
-func ptr(s string) *string { return &s }

@@ -73,7 +73,7 @@ func AffectedHiddenActivities(ctx context.Context, tx pgx.Tx, userID string) ([]
 // inside the caller's transaction so a location is never saved without its reprocessing on
 // the way. Unlike EnqueueTrackEdit it doesn't skip an activity already pending: an edit in
 // flight was clipped with the old locations, and this job, queued behind it, fixes that.
-// Their tiles are marked dirty too, so the job's first render drops them from Fog/Heatmap
+// Their tiles are marked dirty too, so the job's first render drops them from Fog
 // (markPendingTilesDirty).
 func EnqueueReprivacy(ctx context.Context, tx pgx.Tx, job ReprivacyJob) error {
 	if len(job.ActivityIDs) == 0 {
@@ -103,8 +103,8 @@ func EnqueueReprivacy(ctx context.Context, tx pgx.Tx, job ReprivacyJob) error {
 // locations. It renders twice, each time every dirty tile once — not one composite per
 // activity, which for a location at home would redo the same busy tiles hundreds of times:
 // first before reprocessing, which drops the batch (Pending, and so left out of the render)
-// from Fog/Heatmap; then after clearing Pending, which brings it back with its new masks.
-// Pending therefore clears just before the second render; the client refreshes Fog/Heatmap
+// from Fog; then after clearing Pending, which brings it back with its new masks.
+// Pending therefore clears just before the second render; the client refreshes Fog
 // off the coverage status (this job counts as rendering until it returns), not off the badge.
 //
 // An activity that fails stays Pending: clearing the flag would put its old geometry, clipped
@@ -112,7 +112,7 @@ func EnqueueReprivacy(ctx context.Context, tx pgx.Tx, job ReprivacyJob) error {
 // queued in the transaction that clears the rest, and this job still fails, naming them.
 func ProcessReprivacy(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, jobID int64, job ReprivacyJob) error {
 	if err := fog.RenderUser(ctx, pool, store, job.UserID); err != nil {
-		return retryReprivacy(ctx, pool, job, job.ActivityIDs, fmt.Errorf("reprivacy: render fog/heatmap: %w", err))
+		return retryReprivacy(ctx, pool, job, job.ActivityIDs, fmt.Errorf("reprivacy: render fog: %w", err))
 	}
 
 	var done, failedIDs, failed []string
@@ -152,7 +152,7 @@ func ProcessReprivacy(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		return fmt.Errorf("reprivacy: commit: %w", err)
 	}
 	if err := fog.RenderUser(ctx, pool, store, job.UserID); err != nil {
-		return fmt.Errorf("reprivacy: render fog/heatmap: %w", err)
+		return fmt.Errorf("reprivacy: render fog: %w", err)
 	}
 
 	if len(failed) > 0 {
@@ -207,7 +207,7 @@ func reprivacyRetryDelay(retry int) (time.Duration, bool) {
 
 // markPendingTilesDirty flags every z14 tile the given activities' current masks cover, inside
 // the transaction that marks them Pending — so the reprocess job's first render leaves them out
-// of Fog/Heatmap, and the tiles are already dirty however soon that job runs. The same upsert
+// of Fog, and the tiles are already dirty however soon that job runs. The same upsert
 // as MarkFogTilesDirty, fed straight from activity_tile_masks rather than a tile list.
 func markPendingTilesDirty(ctx context.Context, tx pgx.Tx, userID string, activityIDs []string) error {
 	_, err := tx.Exec(ctx, `

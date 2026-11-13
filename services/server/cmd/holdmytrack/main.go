@@ -237,7 +237,7 @@ func main() {
 		log.Info("export-demo-activities: done", "files", len(files))
 
 	case "rerender-coverage":
-		// One-off, on deploying a change to how Fog/Heatmap tiles are drawn (docs/DEPLOY.md):
+		// One-off, on deploying a change to how Fog tiles are drawn (docs/DEPLOY.md):
 		// queues a full re-render of every account's tiles, or of one account's with --user;
 		// --masks redraws every activity's stored masks first, for a change to the stroke.
 		// Idempotent. See internal/ingest.RerenderCoverage's doc comment.

@@ -9,7 +9,7 @@
       "@type": "WebApplication",
       "name": "HoldMyTrack",
       "url": "{{.SiteURL}}/",
-      "description": "Бесплатный сервис с открытым кодом, где можно хранить треки GPX, FIT и TCX с любых часов и приложений и видеть все свои прогулки, пробежки и поездки на одной карте с «туманом войны» и тепловыми картами.",
+      "description": "Бесплатный сервис с открытым кодом, где можно хранить треки GPX, FIT и TCX с любых часов и приложений и видеть все свои прогулки, пробежки и поездки на одной карте с «туманом войны».",
       "applicationCategory": "SportsApplication",
       "operatingSystem": "Web, Android",
       "image": "{{.ShareImage}}",
@@ -36,35 +36,31 @@
        script; static/carousel.js adds the buttons and dots. */}}
   <figure class="page-carousel" data-carousel aria-roledescription="карусель" aria-label="Экраны демо-аккаунта">
     <div class="page-carousel__track" tabindex="0">
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="1 из 8">
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="1 из 7">
         <img src="{{asset "landing/map.webp"}}" alt="Все треки вокруг Кливленда на одной карте, с отмеченными местами рядом" width="1760" height="992" loading="eager" />
         <p class="page-carousel__caption">Все треки на одной карте, а вокруг — места, куда стоит сходить.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="2 из 8">
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="2 из 7">
         <img src="{{asset "landing/story.webp"}}" alt="История о велотропах с фотографиями на карте" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">История собирает поездку целиком, а фотографии стоят там, где вы их сняли.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="3 из 8">
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="3 из 7">
         <img src="{{asset "landing/satellite.webp"}}" alt="Тропа на спутниковом снимке, раскрашенная по темпу, с открытой фотографией" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Выберите маршрут, и он раскрасится по темпу, здесь — поверх спутникового снимка.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="4 из 8">
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="4 из 7">
         <img src="{{asset "landing/fog-city.webp"}}" alt="Туман войны над Кливлендом, расчищенный вдоль каждого трека" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Туман войны рассеивается везде, где вы побывали. Всё, что ещё в тумане, осталось открыть.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="5 из 8">
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="5 из 7">
         <img src="{{asset "landing/fog-states.webp"}}" alt="Туман войны над США, посещённые штаты расчищены" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Если отдалить карту, штат расчищается целиком, как только вы в нём побывали.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="6 из 8">
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="6 из 7">
         <img src="{{asset "landing/fog-countries.webp"}}" alt="Туман войны над Европой, Италия и Эстония расчищены" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Ещё дальше — целые страны.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="7 из 8">
-        <img src="{{asset "landing/heatmap.webp"}}" alt="Тепловая карта вокруг Кливленда" width="1760" height="992" loading="lazy" />
-        <p class="page-carousel__caption">Тепловая карта светится там, где вы бывали чаще всего за последний год.</p>
-      </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="8 из 8">
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="7 из 7">
         <img src="{{asset "landing/profile.webp"}}" alt="Страница профиля с сеткой активности и расстоянием по неделям" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Ваш профиль: каждый день, когда вы выходили, и сколько прошли за неделю.</p>
       </div>
@@ -79,7 +75,6 @@
         <button type="button" class="page-carousel__dot" data-carousel-dot="4" aria-label="Экран 5"></button>
         <button type="button" class="page-carousel__dot" data-carousel-dot="5" aria-label="Экран 6"></button>
         <button type="button" class="page-carousel__dot" data-carousel-dot="6" aria-label="Экран 7"></button>
-        <button type="button" class="page-carousel__dot" data-carousel-dot="7" aria-label="Экран 8"></button>
       </span>
       <button type="button" class="page-carousel__step" data-carousel-step="1" aria-label="Следующий экран">›</button>
     </div>
@@ -97,7 +92,7 @@
       </li>
       <li>
         <h3>Смотрите всё на одной карте</h3>
-        <p>Все треки рисуются вместе. Включите «туман войны» — он закрывает карту и рассеивается везде, где вы побывали, — или тепловую карту, которая светится там, где вы бываете чаще всего.</p>
+        <p>Все треки рисуются вместе. Включите «туман войны»: он закрывает карту и рассеивается везде, где вы побывали.</p>
       </li>
       <li>
         <h3>Идите туда, где ещё не были</h3>
@@ -109,7 +104,7 @@
   <section class="page-section">
     <h2>Что он умеет</h2>
     <ul class="page-features">
-      <li><strong>Одна карта, три вида:</strong> Все треки сразу; <a href="/fog-of-war">«Туман войны»</a>, который рассеивается везде, где вы побывали; и тепловая карта за последний год.</li>
+      <li><strong>Одна карта, два вида:</strong> Все треки сразу или <a href="/fog-of-war">«Туман войны»</a>, который рассеивается везде, где вы побывали.</li>
       <li><strong>Новое — совсем рядом:</strong> Туман показывает ближайшие улицы, парки и тропы, где вы ещё не бывали.</li>
       <li><strong>Тропы и велодорожки:</strong> Тропы и грунтовки всегда на карте, а велодорожки, общие дорожки для пешеходов и велосипедистов и трассы для горного велосипеда из OpenStreetMap включаются в «Слоях». Они рисуются поверх тумана, так что видно, какую из неизведанных выбрать следующей.</li>
       <li><strong>Истории:</strong> Соберите занятия многодневного похода или отпуска в одну поездку с собственной картой, итогами и фотографиями.</li>

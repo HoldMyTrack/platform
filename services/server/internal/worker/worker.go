@@ -44,18 +44,6 @@ var maxAttempts = len(retryDelays) + 1
 // deleted it (account_purge.go), plus however long a job of its takes to finish.
 const accountPurgeInterval = time.Minute
 
-// heatmapAgingInterval is daily, not weekly — heatmap_aging.go's sweep is cheap (one indexed
-// query plus whatever small number of activities actually crossed the window boundary since
-// the last run), so there's no reason to let staleness accumulate to a week when a day is just
-// as easy to check.
-const heatmapAgingInterval = 24 * time.Hour
-
-// heatmapCapInterval matches heatmapAgingInterval's own reasoning — recomputeHeatmapCaps
-// (heatmap_cap.go) is one cheap indexed query per user with any in-window activity, so daily
-// is easy to afford and keeps users.heatmap_cap from drifting far from an account's actual
-// coverage between sweeps.
-const heatmapCapInterval = 24 * time.Hour
-
 type job struct {
 	id      int64
 	kind    string
@@ -166,10 +154,6 @@ func runLane(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log 
 func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, watch *imagery.Watch, log *slog.Logger) {
 	accountTicker := time.NewTicker(accountPurgeInterval)
 	defer accountTicker.Stop()
-	heatmapTicker := time.NewTicker(heatmapAgingInterval)
-	defer heatmapTicker.Stop()
-	heatmapCapTicker := time.NewTicker(heatmapCapInterval)
-	defer heatmapCapTicker.Stop()
 	exportSweepTicker := time.NewTicker(exportSweepInterval)
 	defer exportSweepTicker.Stop()
 	statsTicker := time.NewTicker(statsInterval)
@@ -184,12 +168,6 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, wa
 	// A ticker's first tick is a whole interval away, so the daily sweeps also run once at
 	// start: a worker restarted more often than daily (every deploy) would otherwise never
 	// reach them.
-	if err := ageOutHeatmapWindow(ctx, pool, log); err != nil {
-		log.Error("heatmap aging error", "err", err)
-	}
-	if err := recomputeHeatmapCaps(ctx, pool, log); err != nil {
-		log.Error("heatmap cap error", "err", err)
-	}
 	if err := sweepExports(ctx, pool, store, log); err != nil {
 		log.Error("export sweep error", "err", err)
 	}
@@ -210,17 +188,9 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, wa
 			if err := purgeDeletedAccounts(ctx, pool, store, log); err != nil {
 				log.Error("account purge error", "err", err)
 			}
-		case <-heatmapTicker.C:
-			if err := ageOutHeatmapWindow(ctx, pool, log); err != nil {
-				log.Error("heatmap aging error", "err", err)
-			}
 		case <-exportSweepTicker.C:
 			if err := sweepExports(ctx, pool, store, log); err != nil {
 				log.Error("export sweep error", "err", err)
-			}
-		case <-heatmapCapTicker.C:
-			if err := recomputeHeatmapCaps(ctx, pool, log); err != nil {
-				log.Error("heatmap cap error", "err", err)
 			}
 		case <-statsTicker.C:
 			takeStats(ctx, pool, log)
@@ -251,7 +221,7 @@ func takeStats(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger) {
 }
 
 // lanePaused reports whether the budget's stage holds l's jobs back: renders at the first stage,
-// since a Fog or Heatmap render can wait a day and is the most requests a job makes; exports
+// since a Fog render can wait a day and is the most requests a job makes; exports
 // with everything else that adds, since building one reads every original and writes the
 // archive. The main lane runs on: an ingest or an edit already accepted is finished.
 func lanePaused(l lane, s budget.Stage) bool {

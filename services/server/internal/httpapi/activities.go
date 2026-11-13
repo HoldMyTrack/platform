@@ -242,7 +242,7 @@ func (s *Server) handleUpdateActivity(w http.ResponseWriter, r *http.Request) {
 //
 //   - Object storage has no foreign keys, so the raw upload has to be removed explicitly,
 //     unless another activity (a split piece, a re-import) still names it.
-//   - Fog and Heatmap both read a precomputed per-user, per-tile cache that ingest builds by
+//   - Fog reads a precomputed per-user, per-tile cache that ingest builds by
 //     compositing activity_tile_masks rows together, but only ingest ever marks a tile dirty
 //     or enqueues its re-render — deleting an activity would otherwise cascade its masks away
 //     while leaving that cache's already-rendered PNGs stale indefinitely, still showing

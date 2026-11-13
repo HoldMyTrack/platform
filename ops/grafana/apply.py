@@ -117,7 +117,7 @@ RULES = [
     dict(uid="hmt-r2-budget-renders", title="Renders paused by the daily R2 budget",
          expr=f'max(holdmytrack_r2_budget_used_ratio{{{D}}})',
          op=">", threshold=0.7, for_="0m", nodata="OK",
-         summary="Today's object store requests have cost {{ humanizePercentage $values.A.Value }} of the daily R2 budget: Fog and Heatmap wait for midnight UTC, and uploads stop at 85%."),
+         summary="Today's object store requests have cost {{ humanizePercentage $values.A.Value }} of the daily R2 budget: Fog waits for midnight UTC, and uploads stop at 85%."),
     dict(uid="hmt-drill-stale", title="Restore drill overdue",
          expr=f'(time() - max(holdmytrack_restore_drill_last_success_timestamp_seconds{{{D}}})) or vector({NEVER})',
          op=">", threshold=33 * 86400, for_="1h", nodata="Alerting",

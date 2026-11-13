@@ -510,6 +510,22 @@ func fogFeature(value, geomType uint64, cmds []uint64) []byte {
 	return appendBytesField(f, 4, packed)
 }
 
+func zigzag(v int) uint64 { return uint64((v << 1) ^ (v >> 63)) }
+
+// protowireKey appends a field's key: its number and wire type.
+func protowireKey(b []byte, field, wireType int) []byte {
+	return binary.AppendUvarint(b, uint64(field<<3|wireType))
+}
+
+func appendVarintField(b []byte, field int, v uint64) []byte {
+	return binary.AppendUvarint(protowireKey(b, field, 0), v)
+}
+
+func appendBytesField(b []byte, field int, v []byte) []byte {
+	b = binary.AppendUvarint(protowireKey(b, field, 2), uint64(len(v)))
+	return append(b, v...)
+}
+
 // geomWriter builds a feature's geometry commands, its cursor carried from one part to the next
 // as the format has it.
 type geomWriter struct {
