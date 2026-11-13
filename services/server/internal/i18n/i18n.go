@@ -121,6 +121,12 @@ func (l *Localizer) T(key string, args ...any) string {
 	return l.format(l.lookup(key), args)
 }
 
+// Has reports whether key, or a plural key's "other" form, has a message in this language or its
+// fallback: for a word the catalog may lack, such as a country's own word for its regions.
+func (l *Localizer) Has(key string) bool {
+	return l.lookup(key) != key || l.lookup(key+".other") != key+".other"
+}
+
 // N is the plural form of key that fits n — key.one, key.few, … — with {n} set to n, formatted,
 // alongside any other name/value pairs in args.
 func (l *Localizer) N(key string, n int64, args ...any) string {

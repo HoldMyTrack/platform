@@ -82,5 +82,34 @@
     <p class="profile__subtext">{{t "profile.trends_empty"}}</p>
     {{end}}
   </section>
+
+  {{/* Explored places, opened a level at a time by link (profile_exploration.go): only the
+       open chain is on the page. */}}
+  <section class="exploration" id="exploration" aria-label="{{t "profile.exploration"}}">
+    <div class="profile__head">
+      <div>
+        <h2 class="profile__title">{{t "profile.exploration"}}</h2>
+        <p class="profile__subtext">{{t "profile.exploration_subtext"}}</p>
+      </div>
+    </div>
+    {{if .Exploration.Rows}}{{template "exploration-rows" .Exploration.Rows}}{{else}}
+    <p class="profile__subtext">{{t "profile.exploration_empty"}}</p>
+    {{end}}
+  </section>
 </main>
 {{end}}{{end}}
+
+{{define "exploration-rows"}}
+<ul class="exploration__list">
+  {{range .}}
+  <li class="exploration__item">
+    <a class="exploration__row" href="{{.Href}}" {{if .Open}}aria-expanded="true"{{else}}aria-expanded="false"{{end}}>
+      <span class="exploration__name">{{.Name}}</span>
+      <span class="exploration__counts">{{.Counts}}</span>
+    </a>
+    {{if .Children}}{{template "exploration-rows" .Children}}{{end}}
+    {{if .Cities}}<p class="exploration__cities">{{range $i, $c := .Cities}}{{if $i}}, {{end}}{{$c}}{{end}}</p>{{end}}
+  </li>
+  {{end}}
+</ul>
+{{end}}

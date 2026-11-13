@@ -40,6 +40,8 @@ type profileView struct {
 	TrendTo   string
 	// Legend is the grid legend's own words: "Shaded by activity count: less".
 	Legend string
+	// Exploration is the explored places, opened down to `?place=` (profile_exploration.go).
+	Exploration explorationView
 }
 
 type statCard struct{ Label, Value string }
@@ -93,9 +95,16 @@ func (s *Server) handleProfilePage(w http.ResponseWriter, r *http.Request) {
 		bucket = "month"
 	}
 
+	place, opened := parseExplorationPlace(q.Get("place"))
+
 	lang := pageLang(acct, r)
 	l := i18n.Get(lang)
-	view, err := s.buildProfile(r.Context(), l, acct, shade, bucket, time.Now())
+	exploration, err := s.buildExploration(r.Context(), l, acct.info.userID, lang, place, opened, shade, bucket)
+	var view profileView
+	if err == nil {
+		view, err = s.buildProfile(r.Context(), l, acct, shade, bucket, exploration.Open, time.Now())
+		view.Exploration = exploration
+	}
 	if err != nil {
 		s.log.Error("profile page failed", "err", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
@@ -104,7 +113,7 @@ func (s *Server) handleProfilePage(w http.ResponseWriter, r *http.Request) {
 	s.pages.Render(w, http.StatusOK, "profile", web.PageData{Title: l.T("meta.profile_title"), Path: "/profile", NoIndex: true, User: acct.user, Page: view, Lang: lang, App: appPlatform(r)})
 }
 
-func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *pageAccount, shade, bucket string, now time.Time) (profileView, error) {
+func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *pageAccount, shade, bucket, open string, now time.Time) (profileView, error) {
 	userID, tz := acct.info.userID, acct.info.timezone
 	loc, err := time.LoadLocation(tz)
 	if err != nil {
@@ -145,8 +154,8 @@ func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *page
 		},
 		ShadeBy:   shade,
 		Bucket:    bucket,
-		ShadeHref: map[string]string{"count": profileHref("count", bucket), "distance": profileHref("distance", bucket)},
-		BucketURL: map[string]string{"week": profileHref(shade, "week"), "month": profileHref(shade, "month")},
+		ShadeHref: map[string]string{"count": profileHref("count", bucket, open), "distance": profileHref("distance", bucket, open)},
+		BucketURL: map[string]string{"week": profileHref(shade, "week", open), "month": profileHref(shade, "month", open)},
 		Legend:    l.T("profile.legend_" + shade),
 	}
 	for year := currentYear; year >= firstYear; year-- {
@@ -166,9 +175,9 @@ func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *page
 	return view, nil
 }
 
-// profileHref keeps the other toggle's state when one changes. The defaults are left out, so
-// the plain /profile is the default view.
-func profileHref(shade, bucket string) string {
+// profileHref keeps the other toggles' state when one changes, and the place the explored places
+// have open. The defaults are left out, so the plain /profile is the default view.
+func profileHref(shade, bucket, place string) string {
 	href, sep := "/profile", "?"
 	if shade != "count" {
 		href += sep + "shade=" + shade
@@ -176,6 +185,10 @@ func profileHref(shade, bucket string) string {
 	}
 	if bucket != "week" {
 		href += sep + "bucket=" + bucket
+		sep = "&"
+	}
+	if q := explorationQuery(place); q != "" {
+		href += sep + q
 	}
 	return href
 }
