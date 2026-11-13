@@ -64,7 +64,7 @@ Idempotency is `idx_activities_dedupe` on `(user_id, source, external_id)` plus 
 
 ### 3.6 `fog_tiles`
 
-One row per account and tile, z0–z14, naming Fog's coverage PNG. `heatmap_object_key` and `heatmap_bytes` are never read or written, and storing a tile deletes its `heatmap/` object (`ROADMAP.md` drops both). Every dirty mark increments `dirty_gen`; a render clears `dirty` only if `dirty_gen` is unchanged since it read the tile (`fog.upsertTileRendered`), so a change landing mid-render leaves the tile dirty.
+One row per account and tile, z0–z14, naming Fog's coverage PNG. Every dirty mark increments `dirty_gen`; a render clears `dirty` only if `dirty_gen` is unchanged since it read the tile (`fog.upsertTileRendered`), so a change landing mid-render leaves the tile dirty.
 
 ### 3.7 `privacy_zones`
 
