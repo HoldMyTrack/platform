@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Russian. Every translatable string in values/strings.xml, in the same order; Android lint's
      MissingTranslation keeps the two in step. The web app's own Russian (apps/web/src/i18n/ru.ts)
-     names the same things the same way — Обычный/Туман, «Синхронизировать» — except the Heatmap mode:
-     «Тепловая» here, since «Тепловая карта» doesn't fit the map's toolbar beside the locate button. -->
+     names the same things the same way: Обычный/Туман, «Синхронизировать». -->
 <resources>
     <string name="map_load_failed">Не удалось загрузить карту.</string>
     <string name="map_unreachable">Не удалось связаться с HoldMyTrack, поэтому ваших треков пока нет на карте.</string>
@@ -17,7 +16,7 @@
     <string name="create_account">Создать аккаунт</string>
     <string name="try_demo">Попробовать демо</string>
     <string name="sign_in_title">Вход в HoldMyTrack</string>
-    <string name="sign_in_intro">Войдите, чтобы увидеть свои треки, «туман войны» и тепловую карту. Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять.</string>
+    <string name="sign_in_intro">Войдите, чтобы увидеть свои треки и «туман войны». Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять.</string>
     <string name="sign_up_title">Создание аккаунта</string>
     <string name="forgot_password">Забыли пароль?</string>
     <string name="to_sign_up">Нет аккаунта? Создайте его</string>
@@ -53,14 +52,11 @@
 
     <string name="mode_normal">Обычный</string>
     <string name="mode_fog">Туман</string>
-    <string name="mode_heatmap">Тепловая</string>
     <string name="mode_chip_fog">Все занятия, за всё время</string>
-    <string name="mode_chip_heatmap">Последние 365 дней</string>
-    <string name="coverage_updating">Карта ещё обновляется, поэтому Туман и Тепловая карта пока могут быть неполными. Они обновятся сами.</string>
+    <string name="coverage_updating">Карта ещё обновляется, поэтому Туман пока может быть неполным. Он обновится сам.</string>
     <string name="map_level_fog_city">Город — открыто ровно там, где вы были</string>
     <string name="map_level_fog_country">Страны — страна открывается целиком, если вы были в ней хоть раз</string>
     <string name="map_level_fog_region">Регионы — штат или область открывается целиком, если вы были в нём хоть раз</string>
-    <string name="map_level_heatmap">Чем чаще вы где-то бываете, тем ярче это место</string>
     <string name="layers_button">Слои</string>
     <string name="layers_master">Показывать слои</string>
     <string name="layers_master_empty">Сначала выберите дороги, тропы или места</string>
@@ -471,8 +467,8 @@
     <string name="panel_delete_target">Удалить: %1$s</string>
     <string name="panel_delete_one_title">Удалить это занятие?</string>
     <string name="panel_delete_title">Удалить эту группу?</string>
-    <string name="panel_delete_one_body">%1$s будет удалено навсегда — вместе с треком, покрытием «тумана войны» и тепловой карты и всеми рекордами, в которые оно входило. Это нельзя отменить.</string>
-    <string name="panel_delete_many_body">%1$s будут удалены навсегда — вместе с треками, покрытием «тумана войны» и тепловой карты и всеми рекордами, в которые они входили. Это нельзя отменить.</string>
+    <string name="panel_delete_one_body">%1$s будет удалено навсегда — вместе с треком, покрытием «тумана войны» и всеми рекордами, в которые оно входило. Это нельзя отменить.</string>
+    <string name="panel_delete_many_body">%1$s будут удалены навсегда — вместе с треками, покрытием «тумана войны» и всеми рекордами, в которые они входили. Это нельзя отменить.</string>
     <string name="panel_delete_confirm">Удалить</string>
     <string name="panel_deleting">Удаление…</string>
     <string name="panel_delete_failed">Не удалось удалить занятие: %1$s</string>
@@ -736,8 +732,6 @@
     <string name="tour_fog_regions_body">При отдалении целый штат или регион открывается, как только в нём есть хоть одно занятие. Каждый затуманенный — место, где вы ещё не были.</string>
     <string name="tour_fog_countries_title">Туман: страны</string>
     <string name="tour_fog_countries_body">Ещё дальше открывается целая страна. То, что осталось в тумане, — мир, который ещё впереди.</string>
-    <string name="tour_heatmap_title">Тепловая карта</string>
-    <string name="tour_heatmap_body">Где вы бываете чаще всего за последние 365 дней. Маршрут, по которому вы ходите каждую неделю, светится; заброшенный остывает.</string>
     <string name="tour_record_title">Запись</string>
     <string name="tour_record_body">Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. Записи ждут на телефоне, пока вы не отправите их из Синхронизации.</string>
     <string name="tour_sync_title">Синхронизация</string>

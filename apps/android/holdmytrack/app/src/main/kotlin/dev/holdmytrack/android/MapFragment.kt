@@ -63,8 +63,8 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.maps.Style
 
 /**
- * The map: the served basemap, the session the user layers need, and the Normal / Fog of War /
- * Heatmap toggle floating top-start, as on the web (`apps/web/src/map/MapView.tsx`).
+ * The map: the served basemap, the session the user layers need, and the Normal / Fog of War
+ * toggle floating top-start, as on the web (`apps/web/src/map/MapView.tsx`).
  *
  * In Normal mode the Activities sheet (`panel/ActivitiesPanel`) lists the visible area's
  * activities under Dates (`docs/SPEC.md` FR-5.19, FR-5.20, [AreaController]). Tapping a track
@@ -88,7 +88,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /** Whether the session lets the map show the user's layers. */
     private lateinit var gate: SessionGate
-    /** The Normal / Fog / Heatmap toggle and what it says about the mode. */
+    /** The Normal / Fog toggle and what it says about the mode. */
     private lateinit var modes: ModeBar
 
     /** The Activities sheet, the list's summary at its head. */
@@ -103,7 +103,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The map image export's viewfinder, from the rail's camera. */
     private lateinit var export: ExportController
 
-    /** Fog, Heatmap and every tile kept current with the account's renders and tile version. */
+    /** Fog and every tile kept current with the account's renders and tile version. */
     private val coverage = CoverageController(
         style = { style?.takeIf { overlaysAttached } },
         dates = { session.dates },
@@ -313,7 +313,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                     photos.closePopup()
                     layers.dismiss()
                 } else {
-                    // The sheet comes back only where it belongs: not in Fog or Heatmap.
+                    // The sheet comes back only where it belongs: not in Fog.
                     renderSheet()
                 }
             },
@@ -438,9 +438,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         area.restore(savedInstanceState)
         // Carried through a recreation (a theme or language change), since the mode buttons
         // restore their own checked state and would otherwise show a mode the map isn't in.
-        savedInstanceState?.getString(STATE_MODE)?.let { saved ->
-            MapMode.entries.firstOrNull { it.name == saved }?.let { pickedMode = it }
-        }
+        savedInstanceState?.let { pickedMode = MapChromeRules.restoredMode(it.getString(STATE_MODE)) }
         setMode(MapChromeRules.tabMode(pickedMode, if (::panel.isInitialized) panel.tab else PanelTab.ACTIVITIES))
 
         chrome.install()

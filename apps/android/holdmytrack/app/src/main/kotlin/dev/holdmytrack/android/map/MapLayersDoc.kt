@@ -28,6 +28,10 @@ object MapLayersDoc {
 
     enum class Placement { BENEATH_LABELS, TOP }
 
+    /** The MapLibre layer types [MapLayers] draws. A layer of any other type is left out of the
+     *  document as read: the server keeps one for builds that draw it. */
+    val TYPES = setOf("background", "fill", "line", "circle", "symbol")
+
     /** A `vector` source of the account's tiles, or a `geojson` one the app fills ([tiles] null). */
     data class Source(val tiles: String?, val minZoom: Float, val maxZoom: Float, val attribution: String?)
 
@@ -178,7 +182,7 @@ object MapLayersDoc {
                 attribution = source.string("attribution"),
             )
         },
-        layers = (g["layers"] as JsonArray).map { layer(it.jsonObject) },
+        layers = (g["layers"] as JsonArray).map { layer(it.jsonObject) }.filter { it.type in TYPES },
         legend = (g["legend"] as? JsonObject)?.mapValues { (_, l) ->
             val entry = l.jsonObject
             Legend(entry.string("color")!!, (entry["dash"] as? JsonArray)?.map { it.jsonPrimitive.doubleOrNull!!.toFloat() }?.toFloatArray())

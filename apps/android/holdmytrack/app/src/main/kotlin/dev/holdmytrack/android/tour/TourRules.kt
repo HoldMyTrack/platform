@@ -5,7 +5,7 @@ import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.panel.PanelTab
 
 /** A first-time card: a feature's own explanation, shown once per phone. */
-enum class TourCard { FOG, HEATMAP, STORIES }
+enum class TourCard { FOG, STORIES }
 
 /** What the tour has shown on this phone: [tour] once it was started or its offer answered. */
 data class TourSeen(val tour: Boolean = false, val cards: Set<TourCard> = emptySet())
@@ -40,15 +40,14 @@ object TourRules {
         else -> TourStart.NONE
     }
 
+    /** The cards kept as seen, by name; a name this build has no card for is dropped. */
+    fun seenCards(names: Set<String>): Set<TourCard> = names.mapNotNull { name -> TourCard.entries.firstOrNull { it.name == name } }.toSet()
+
     /** The card [event] earns, once, and never while the tour runs, whose steps say the same. */
     fun card(event: TourEvent, seen: TourSeen, touring: Boolean): TourCard? {
         if (touring) return null
         val card = when (event) {
-            is TourEvent.Mode -> when (event.mode) {
-                MapMode.FOG -> TourCard.FOG
-                MapMode.HEATMAP -> TourCard.HEATMAP
-                MapMode.NORMAL -> null
-            }
+            is TourEvent.Mode -> TourCard.FOG.takeIf { event.mode == MapMode.FOG }
             is TourEvent.Tab -> TourCard.STORIES.takeIf { event.tab == PanelTab.STORIES }
         }
         return card?.takeUnless { it in seen.cards }

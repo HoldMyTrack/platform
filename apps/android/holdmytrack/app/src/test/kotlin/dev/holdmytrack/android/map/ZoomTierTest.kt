@@ -7,11 +7,9 @@ import org.junit.Test
 class ZoomTierTest {
 
     @Test
-    fun fogNamesTheTierHeatmapHasOneMessage() {
-        assertEquals(R.string.map_level_fog_country, levelNoticeText(MapMode.FOG, ZoomTier.COUNTRY))
-        assertEquals(R.string.map_level_fog_city, levelNoticeText(MapMode.FOG, ZoomTier.CITY))
-        for (tier in ZoomTier.values()) {
-            assertEquals(R.string.map_level_heatmap, levelNoticeText(MapMode.HEATMAP, tier))
-        }
+    fun fogNamesTheTier() {
+        assertEquals(R.string.map_level_fog_country, levelNoticeText(ZoomTier.COUNTRY))
+        assertEquals(R.string.map_level_fog_region, levelNoticeText(ZoomTier.REGION))
+        assertEquals(R.string.map_level_fog_city, levelNoticeText(ZoomTier.CITY))
     }
 }

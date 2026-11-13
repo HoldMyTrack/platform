@@ -12,7 +12,7 @@ class TourStore(context: Context) {
 
     fun load(): TourSeen = TourSeen(
         tour = prefs.getBoolean(KEY_TOUR, false),
-        cards = prefs.getStringSet(KEY_CARDS, emptySet()).orEmpty().mapNotNull { name -> TourCard.entries.firstOrNull { it.name == name } }.toSet(),
+        cards = TourRules.seenCards(prefs.getStringSet(KEY_CARDS, emptySet()).orEmpty()),
     )
 
     fun save(seen: TourSeen) = prefs.edit {

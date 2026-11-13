@@ -108,17 +108,17 @@ When any `/v1` request answers `426` `app_outdated` (`docs/SPEC.md` §1.5), sign
 - The camera starts on a world view until FR-2.3 frames the account.
 - The map is flat at every zoom: MapLibre Native has no globe (`docs/SPEC.md` FR-4.5).
 
-### FR-2.2 Three map modes: Normal, Fog of War, Heatmap
+### FR-2.2 Two map modes: Normal and Fog of War
 
-The web's three exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.4), from the same tiles, with Fog's and Heatmap's coverage drawn under the tracks and both under the labels.
+The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.4), from the same tiles, with Fog's coverage drawn under the tracks and the labels.
 
-- Normal's tracks follow Dates (FR-2.6) through the tile request, and past the list's cap only the listed ones are drawn (`docs/SPEC.md` FR-5.19). The panel's filters, hidden tracks and Pending rows are applied on the phone. Fog and Heatmap are never filtered.
+- Normal's tracks follow Dates (FR-2.6) through the tile request, and past the list's cap only the listed ones are drawn (`docs/SPEC.md` FR-5.19). The panel's filters, hidden tracks and Pending rows are applied on the phone. Fog is never filtered.
 - The map reads only the server. It never reads Health Connect, and an activity appears only once synced and ingested.
 - The mode survives a theme or language change.
-- The mode toggle is the Map tab's. Stories and Sync show the map in Normal, since their sheets and tracks are Normal mode's, and back on Map the mode picked there returns. Unlike the web, whose panel stays beside Fog and Heatmap (`docs/SPEC.md` FR-14.6).
+- The mode toggle is the Map tab's. Stories and Sync show the map in Normal, since their sheets and tracks are Normal mode's, and back on Map the mode picked there returns. Unlike the web, whose panel stays beside Fog (`docs/SPEC.md` FR-14.6).
 - While recording (FR-5.1) the mode toggle goes and no mode's layers are drawn, only the recording; the mode comes back when it stops.
 - The Layers menu (`docs/SPEC.md` FR-4.13) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.14), Roads (`docs/SPEC.md` FR-4.17), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8). Each is kept on the phone, not the account, and all but Roads start off. Layers stays while recording.
-- Fog and Heatmap say when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
+- Fog says when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
 
 ### FR-2.3 Initial camera framing
 
@@ -190,7 +190,7 @@ Map, Stories, the record button (FR-5.1), Sync and You.
 
 The web's photos (`docs/SPEC.md` FR-16, ADR-0024) on the map and in the Edit window's Photos tab, against the same endpoints.
 
-- The map shows, in Normal mode, the photos of the activity being edited, else the focused one, else the open Story's. None in Fog or Heatmap, on a hidden route, on the Track tab or while recording. Smaller below zoom 10, none below 4 (`docs/SPEC.md` FR-4.15).
+- The map shows, in Normal mode, the photos of the activity being edited, else the focused one, else the open Story's. None in Fog, on a hidden route, on the Track tab or while recording. Smaller below zoom 10, none below 4 (`docs/SPEC.md` FR-4.15).
 - Photos that would overlap share a marker; a tap zooms in to separate them (up to zoom 19) when they lie more than 15 m apart, else steps through them.
 - The Photos tab is for one activity with a track. Added photos come from Android's photo picker, are redrawn upright at most 2,048 px with a 320 px thumbnail and placed by the server's placement check. One it can't place waits for the user to place it on the route, and Save is refused while any waits.
 - Nothing is written until Save, which writes the fields, then uploads, changes and deletes one at a time, then a track edit. A failure keeps the window open, and Save again carries on from the first unwritten change. Back asks before throwing photo changes away.
@@ -209,7 +209,7 @@ The web's export (`docs/SPEC.md` FR-4.10) as a viewfinder over the map, not offe
 
 The web's tour (`docs/SPEC.md` FR-4.18) over the app's own screens, with its start, offer and card rules (`testdata/client-rules/tour-*.json`).
 
-- Its steps: the Activities sheet, Dates, Stories, Layers, export, Fog of War, Heatmap, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
+- Its steps: the Activities sheet, Dates, Stories, Layers, export, Fog of War, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
 - In a demo session Fog takes three steps, at city, state and country level, with the camera over the demo's history, and the camera comes back when the tour ends.
 - What has been shown is kept by the phone, not the account.
 

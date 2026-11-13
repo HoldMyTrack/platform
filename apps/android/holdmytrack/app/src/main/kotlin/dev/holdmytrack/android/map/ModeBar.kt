@@ -19,15 +19,15 @@ data class ModeBarState(
     val editOpen: Boolean,
     val selectionShown: Boolean,
     val exportOpen: Boolean,
-    /** Fog and Heatmap are still being re-rendered (`CoverageWatch`). */
+    /** Fog is still being re-rendered (`CoverageWatch`). */
     val coverageRendering: Boolean,
     /** The panel's tab: the toggle is the Map tab's. */
     val tab: PanelTab,
 )
 
 /**
- * The Normal / Fog of War / Heatmap toggle floating top-start, and what it says about the mode:
- * the chip naming what Fog or Heatmap shows, the level in view, and that coverage is still being
+ * The Normal / Fog of War toggle floating top-start, and what it says about the mode:
+ * the chip naming what Fog shows, the level in view, and that coverage is still being
  * updated (`docs/SPEC.md` FR-4.2).
  */
 class ModeBar(root: View, onPick: (MapMode) -> Unit, private val state: () -> ModeBarState) {
@@ -39,11 +39,10 @@ class ModeBar(root: View, onPick: (MapMode) -> Unit, private val state: () -> Mo
     private val buttons: Map<MapMode, MaterialButton> = mapOf(
         MapMode.NORMAL to root.findViewById(R.id.mode_normal),
         MapMode.FOG to root.findViewById(R.id.mode_fog),
-        MapMode.HEATMAP to root.findViewById(R.id.mode_heatmap),
     )
 
     init {
-        // One choice of three: each reads as a radio button, "1 of 3" (map/MapModeButton).
+        // One choice of two: each reads as a radio button, "1 of 2" (map/MapModeButton).
         buttons.values.forEachIndexed { index, button -> (button as? MapModeButton)?.position = index }
         ViewCompat.setAccessibilityDelegate(bar, object : AccessibilityDelegateCompat() {
             override fun onInitializeAccessibilityNodeInfo(host: View, info: AccessibilityNodeInfoCompat) {
@@ -87,22 +86,17 @@ class ModeBar(root: View, onPick: (MapMode) -> Unit, private val state: () -> Mo
         renderChip()
     }
 
-    /** "Your map is still being updated…" (`docs/SPEC.md` FR-4.2), in Fog and Heatmap while coverage renders. */
+    /** "Your map is still being updated…" (`docs/SPEC.md` FR-4.2), in Fog while coverage renders. */
     fun renderCoverage() {
         val s = state()
         coverageNotice.isVisible = MapChromeRules.coverageNoticeShown(s.coverageRendering, s.mode, s.sessionReady, s.recording)
     }
 
-    /** Names what Fog or Heatmap shows, since neither takes the date range. */
+    /** Names what Fog shows, since it doesn't take the date range. */
     fun renderChip() {
         val s = state()
-        val text = when (s.mode) {
-            MapMode.NORMAL -> null
-            MapMode.FOG -> R.string.mode_chip_fog
-            MapMode.HEATMAP -> R.string.mode_chip_heatmap
-        }
         chip.isVisible = MapChromeRules.modeChipShown(s.mode, s.sessionReady, s.recording, s.exportOpen)
-        if (text != null) chip.setText(text)
+        if (s.mode == MapMode.FOG) chip.setText(R.string.mode_chip_fog)
     }
 
     fun onCameraIdle(tier: ZoomTier) = zoomLevelNotice.onCameraIdle(tier)

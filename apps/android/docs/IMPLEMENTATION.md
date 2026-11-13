@@ -50,7 +50,7 @@ stateDiagram-v2
 
 Map, Stories and Sync are one `MapFragment` whose panel switches tabs; You is `YouFragment`. `MainActivity` shows and hides them, never replaces them, so the `MapView`, its camera, its layers and a recording survive a trip to You.
 
-What survives a recreation is chosen item by item, and each was a bug: the fragment is added only on a first create; the once-per-process camera fit, the map mode and the logo's and attribution's base margins go into the saved state. Without the mode, the buttons restored their own checked state and showed Heatmap over a map in Normal; without the margins, MapLibre's restored values were lifted a second time.
+What survives a recreation is chosen item by item, and each was a bug: the fragment is added only on a first create; the once-per-process camera fit, the map mode and the logo's and attribution's base margins go into the saved state. Without the mode, the buttons restored their own checked state and showed Fog over a map in Normal; without the margins, MapLibre's restored values were lifted a second time.
 
 Every screen draws edge-to-edge: Android 15+ does at `targetSdk` 35+, and `HoldMyTrackApplication` calls `enableEdgeToEdge()` before each activity's `onCreate` so Android 14 matches. The map's chrome adds the bottom inset to each view's padding (`insetSystemBars`) and passes the insets on unconsumed; the side insets are applied once, on the tabs' container.
 
@@ -100,7 +100,7 @@ The style is `GET /v1/map/style/{flavor}?lang=`, unmodified, fetched beside `GET
 
 **A style reload discards every custom layer and image**, so everything that adds to the style is idempotent and re-adds on each load: `MapLayers`, `MapOverlays`, `MapSatellite`, `MapRoads`, `MapSpots` with its badge bitmaps, the Sync candidates and the Private location circles. `syncSession()` attaches them once the session is verified.
 
-**Order, bottom to top, matches the web's layer by layer**: Fog or Heatmap coverage, the trails and tracks lifted out of the basemap's roads, the bike paths, the account's tracks, all under the basemap's first symbol layer; Spots over everything. MapLibre Native has no `moveLayer`, so lifting a layer is remove and re-add, as is a coverage refresh.
+**Order, bottom to top, matches the web's layer by layer**: Fog's coverage, the trails and tracks lifted out of the basemap's roads, the bike paths, the account's tracks, all under the basemap's first symbol layer; Spots over everything. MapLibre Native has no `moveLayer`, so lifting a layer is remove and re-add, as is a coverage refresh.
 
 - **`setMode` applies the document's view**, properties only, so a switch is instant and a reload re-applies it.
 - **Only the tracks URL carries a filter**: Dates or the open Story, appended to the document's path. `VectorSource` can't change its URL, so a Dates change replaces the source and its layers. The area is the list's alone: past its cap the tracks layer's `capped` and `listed` vars draw only the listed tracks (`MapOverlays.setTrackCap`).

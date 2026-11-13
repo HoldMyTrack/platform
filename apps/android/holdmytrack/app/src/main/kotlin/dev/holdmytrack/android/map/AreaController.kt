@@ -156,7 +156,7 @@ class AreaController(
 
     /**
      * Pending rows ([PendingTracker]): a row starting or stopping Pending refetches the track tiles
-     * and watches Fog and Heatmap until re-rendered; a finished one also reloads Dates' bounds.
+     * and watches Fog until re-rendered; a finished one also reloads Dates' bounds.
      */
     private fun trackPending(activities: List<Activity>) {
         val change = pending.track(activities)

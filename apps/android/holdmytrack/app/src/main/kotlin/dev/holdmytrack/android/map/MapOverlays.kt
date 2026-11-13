@@ -19,14 +19,12 @@ import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
 
 /**
- * The three mutually exclusive views `docs/SPEC.md` FR-4.4 names — one toggle, not
- * three checkboxes. Both Fog and Heatmap hide the track lines: the veil or the heat already
- * shows where the user has been, and lines drawn on top of it read as noise rather than as extra
- * information.
+ * The two mutually exclusive views `docs/SPEC.md` FR-4.4 names, one toggle. Fog hides the track
+ * lines: the veil already shows where the user has been, and lines drawn on top of it read as noise.
  */
-enum class MapMode { NORMAL, FOG, HEATMAP }
+enum class MapMode { NORMAL, FOG }
 
-/** The three levels Fog and Heatmap draw at by zoom (`docs/IMPLEMENTATION.md` §4.2.4): whole
+/** The three levels Fog draws at by zoom (`docs/IMPLEMENTATION.md` §4.2.4): whole
  *  countries, then whole states or provinces, then exactly where you've been. */
 enum class ZoomTier { COUNTRY, REGION, CITY }
 
@@ -97,8 +95,8 @@ object MapOverlays {
      *
      * Only the tracks tile carries a filter: `from`/`to`, or an open Story's `story` in their
      * place ([setTrackStory]) — the same as the web, whose date range and Story narrow the
-     * tracks alone: Fog and Heatmap show coverage no filter narrows
-     * (`docs/SPEC.md` FR-4.2, FR-4.3). The Activities panel's TYPE/DISTANCE filters, hidden
+     * tracks alone: Fog shows coverage no filter narrows
+     * (`docs/SPEC.md` FR-4.2). The Activities panel's TYPE/DISTANCE filters, hidden
      * set and selection are vars the layers bind ([setTrackFilter]).
      *
      * [satellite] says imagery is drawn, which picks the views over it.
@@ -209,7 +207,7 @@ object MapOverlays {
 
     /**
      * While a recording is in progress the map shows that recording and nothing else — no
-     * history tracks, no fog, no heatmap, whichever [mode] was selected. Ending it restores
+     * history tracks, no fog, whichever [mode] was selected. Ending it restores
      * [mode]. The live track ([attachLiveTrack]) is always on and simply empty when nothing is
      * recording.
      */

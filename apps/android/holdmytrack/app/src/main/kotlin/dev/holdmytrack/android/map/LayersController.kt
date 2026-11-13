@@ -75,7 +75,7 @@ class LayersController(
     /** Whether the basemap reads dark (dark flavor or satellite), which picks the export frame's colors. */
     fun darkBase(style: Style): Boolean = isNight() || satelliteDrawn(style)
 
-    /** The map looks like Satellite on [style], which picks Fog's and Heatmap's view over it. */
+    /** The map looks like Satellite on [style], which picks Fog's view over it. */
     fun satelliteDrawn(style: Style): Boolean =
         SatelliteStatus.look(MapSatellite.isOn(context) && MapSatellite.isAvailable(style), imagery)
 

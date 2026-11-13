@@ -60,7 +60,7 @@ class StoriesTab(
     private val onBadgesChanged: () -> Unit,
     /** [activityId] was taken out of the open Story: the list and the tracks are out of date. */
     private val onActivityRemoved: (activityId: String) -> Unit,
-    /** A copy of a Story someone sent has arrived: new activities, and Fog and Heatmap coming. */
+    /** A copy of a Story someone sent has arrived: new activities, and Fog coming. */
     private val onCopyArrived: () -> Unit,
     /** The inbox read: [waiting] copies others sent wait to be answered — the bar's badge. */
     private val onInboxRead: (waiting: Int) -> Unit,

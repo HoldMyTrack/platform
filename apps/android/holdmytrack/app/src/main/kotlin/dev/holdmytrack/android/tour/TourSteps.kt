@@ -45,7 +45,6 @@ object TourSteps {
     val CITY = TourView(-81.72, 41.42, 9.0)
     val REGIONS = TourView(-82.0, 36.0, 3.6)
     val COUNTRIES = TourView(-80.0, 38.0, 1.5, pan = listOf(15.0 to 45.0, 106.0 to 25.0))
-    val HEATMAP_CITY = TourView(-81.72, 41.42, 10.0)
 
     fun of(isDemo: Boolean): List<TourStep> {
         val fog = if (isDemo) {
@@ -65,7 +64,6 @@ object TourSteps {
             TourStep("layers", TourTarget.LAYERS, layers = true),
             TourStep("export", TourTarget.EXPORT),
         ) + fog + listOf(
-            TourStep("heatmap", TourTarget.MODES, mode = MapMode.HEATMAP, view = HEATMAP_CITY.takeIf { isDemo }, card = TourCard.HEATMAP),
             TourStep("record", TourTarget.RECORD),
             TourStep("sync", TourTarget.SHEET, tab = MainActivity.Tab.SYNC, sheet = true, text = if (isDemo) "tour_sync_demo" else "tour_sync"),
             TourStep("done", TourTarget.YOU_TOUR, tab = MainActivity.Tab.YOU),
@@ -78,7 +76,6 @@ object TourSteps {
     /** A first-time card's text and what it points at. */
     fun card(card: TourCard): Pair<String, TourTarget> = when (card) {
         TourCard.FOG -> "tour_fog" to TourTarget.MODES
-        TourCard.HEATMAP -> "tour_heatmap" to TourTarget.MODES
         TourCard.STORIES -> "tour_stories" to TourTarget.SHEET
     }
 

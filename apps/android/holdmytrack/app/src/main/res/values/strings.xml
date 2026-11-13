@@ -14,7 +14,7 @@
     <string name="create_account">Create account</string>
     <string name="try_demo">Try the demo</string>
     <string name="sign_in_title">Sign in to HoldMyTrack</string>
-    <string name="sign_in_intro">Sign in to see your tracks, fog of war and heatmap on the map. The demo needs no signup: a shared, ready-made account you can look around but not change.</string>
+    <string name="sign_in_intro">Sign in to see your tracks and fog of war on the map. The demo needs no signup: a shared, ready-made account you can look around but not change.</string>
     <string name="sign_up_title">Create your account</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="to_sign_up">Don\'t have an account? Create one</string>
@@ -51,14 +51,11 @@
 
     <string name="mode_normal">Normal</string>
     <string name="mode_fog">Fog</string>
-    <string name="mode_heatmap">Heatmap</string>
     <string name="mode_chip_fog">Every activity, any date</string>
-    <string name="mode_chip_heatmap">The last 365 days</string>
-    <string name="coverage_updating">Your map is still being updated, so Fog and Heatmap may be incomplete for now. They\'ll refresh on their own.</string>
+    <string name="coverage_updating">Your map is still being updated, so Fog may be incomplete for now. It\'ll refresh on its own.</string>
     <string name="map_level_fog_city">City view — cleared exactly where you\'ve been</string>
     <string name="map_level_fog_country">Country view — a whole country clears once you\'ve been anywhere in it</string>
     <string name="map_level_fog_region">Region view — a whole state or province clears once you\'ve been anywhere in it</string>
-    <string name="map_level_heatmap">The more often you go somewhere, the hotter it glows</string>
     <string name="layers_button">Layers</string>
     <string name="layers_master">Show layers</string>
     <string name="layers_master_empty">Pick roads, paths or places first</string>
@@ -456,8 +453,8 @@
     <string name="panel_delete_target">Delete %1$s</string>
     <string name="panel_delete_one_title">Delete this activity?</string>
     <string name="panel_delete_title">Delete this group?</string>
-    <string name="panel_delete_one_body">%1$s will be permanently deleted — its track, fog/heatmap coverage, and any performance records it contributed to. This can\'t be undone.</string>
-    <string name="panel_delete_many_body">%1$s will be permanently deleted — their tracks, fog/heatmap coverage, and any performance records they contributed to. This can\'t be undone.</string>
+    <string name="panel_delete_one_body">%1$s will be permanently deleted — its track, fog coverage, and any performance records it contributed to. This can\'t be undone.</string>
+    <string name="panel_delete_many_body">%1$s will be permanently deleted — their tracks, fog coverage, and any performance records they contributed to. This can\'t be undone.</string>
     <string name="panel_delete_confirm">Delete</string>
     <string name="panel_deleting">Deleting…</string>
     <string name="panel_delete_failed">Could not delete the activity: %1$s</string>
@@ -703,8 +700,6 @@
     <string name="tour_fog_regions_body">Zoomed out, a whole state or region clears once any activity is in it. Every fogged one is a place you haven\'t been yet.</string>
     <string name="tour_fog_countries_title">Fog of War: countries</string>
     <string name="tour_fog_countries_body">Further out, a whole country clears. What stays fogged is the world still ahead of you.</string>
-    <string name="tour_heatmap_title">Heatmap</string>
-    <string name="tour_heatmap_body">Where you go most, over the last 365 days. A route you take every week glows; one you stopped taking cools off.</string>
     <string name="tour_record_title">Record</string>
     <string name="tour_record_body">Tap to record a walk or a ride with the phone\'s GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync.</string>
     <string name="tour_sync_title">Sync</string>

@@ -15,7 +15,6 @@ object TourText {
         "tour_fog_city" to (R.string.tour_fog_title to R.string.tour_fog_city_body),
         "tour_fog_regions" to (R.string.tour_fog_regions_title to R.string.tour_fog_regions_body),
         "tour_fog_countries" to (R.string.tour_fog_countries_title to R.string.tour_fog_countries_body),
-        "tour_heatmap" to (R.string.tour_heatmap_title to R.string.tour_heatmap_body),
         "tour_record" to (R.string.tour_record_title to R.string.tour_record_body),
         "tour_sync" to (R.string.tour_sync_title to R.string.tour_sync_body),
         "tour_sync_demo" to (R.string.tour_sync_title to R.string.tour_sync_demo_body),
