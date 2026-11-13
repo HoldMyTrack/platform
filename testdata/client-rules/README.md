@@ -29,7 +29,7 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `panelState` | `activities` (`{ id, activityType, distanceMeters }`), `state` (`checked`, `focused`, `hidden`, `excludedTypes`, `distanceFilter`), `event` | the state after it |
 | `boldTracks` | `checked` (ids), `focused` | ids |
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |
-| `photoScope` | `mode` (`normal`, `fog`, `heatmap`), `editWindowIds`, `focused`, `storyId` | `{ activity }`, `{ story }` or `null` |
+| `photoScope` | `mode` (`normal`, `fog`), `editWindowIds`, `focused`, `storyId` | `{ activity }`, `{ story }` or `null` |
 | `photoGroup` | `photos` (`{ lat, lon }`) | `"open"` or `{ fit: [west, south, east, north] }` |
 | `webSession` | `state` (`dates`, `area`, `storyId`, `checked`, `hidden`, `excludedTypes`), `event` | the state after it, with `flyRequest` |
 | `distanceBounds` | `activities` (`{ activityType, distanceMeters, private }`) | `{ min, max }` or `null` |
@@ -68,7 +68,7 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `basemapStatus` (web and Android) | `loaded`, `failed`, `waitedMs` (on screen) | `"loading"`, `"loaded"` or `"unreachable"` |
 | `satelliteStatus` (web and Android) | `on`, `loaded`, `failed`, `waitedMs` (Satellite on screen) | `{ status: "loading", "loaded" or "failed", look }` |
 | `tourStart` (web and Android) | `requested`, `isDemo`, `hasActivities` (or `null`), `seen` (`tour`, `cards`) | `"start"`, `"offer"`, `"none"` or `"wait"` |
-| `tourCard` (web and Android) | `event` (`{ kind: "mode", mode }` or `{ kind: "tab", tab }`), `seen`, `touring` | `"fog"`, `"heatmap"`, `"stories"` or `null` |
+| `tourCard` (web and Android) | `event` (`{ kind: "mode", mode }` or `{ kind: "tab", tab }`), `seen`, `touring` | `"fog"`, `"stories"` or `null` |
 | `tourNextStep` (web and Android) | `shown` (a flag per step), `from`, `dir` (`-1`, `1`) | an index or `null` |
 | `tourCamera` (web and Android) | `start`, `shown` (views `{ lon, lat, zoom }` or `null`), `current`, `step` (`{ view, tab }` or `null` for the end) | `{ start, shown, move }` |
 | `tourStep` (web and Android) | `now` (`mode`, `tab`), `step` (`mode`, `tab`, `card`, or `null` for the end), `restore` (`mode`, `tab`) | `{ mode, tab, card }` |
