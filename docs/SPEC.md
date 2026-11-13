@@ -476,6 +476,10 @@ A private page, `/profile`: one cell per calendar day by local date, one block p
 
 Activities, Distance, Active Days and Longest Streak (consecutive days with an activity), all-time and per year.
 
+### FR-7.3 Explored places
+
+The places the account has explored, on the same page and as private: every country it has been in, opening one place at a time to its regions, counties and the cities' names. Each place says, of each level below it, how many of its places the account has explored out of how many it holds, in its country's own word for them where there is one. A place counts as explored exactly when Fog clears it (FR-4.2), so the two always agree; land outside every county or city is no place of its own and isn't listed.
+
 ## 10. FR-8 — Privacy Controls
 
 ### FR-8.1 Private locations

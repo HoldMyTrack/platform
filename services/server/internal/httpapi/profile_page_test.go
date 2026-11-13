@@ -85,14 +85,16 @@ func TestShading(t *testing.T) {
 }
 
 func TestProfileHref(t *testing.T) {
-	for _, tc := range [][3]string{
-		{"count", "week", "/profile"},
-		{"distance", "week", "/profile?shade=distance"},
-		{"count", "month", "/profile?bucket=month"},
-		{"distance", "month", "/profile?shade=distance&bucket=month"},
+	for _, tc := range [][4]string{
+		{"count", "week", "", "/profile"},
+		{"distance", "week", "", "/profile?shade=distance"},
+		{"count", "month", "", "/profile?bucket=month"},
+		{"distance", "month", "", "/profile?shade=distance&bucket=month"},
+		{"count", "week", "region:12", "/profile?place=region%3A12"},
+		{"distance", "month", "country:US", "/profile?shade=distance&bucket=month&place=country%3AUS"},
 	} {
-		if got := profileHref(tc[0], tc[1]); got != tc[2] {
-			t.Errorf("profileHref(%s, %s) = %q, want %q", tc[0], tc[1], got, tc[2])
+		if got := profileHref(tc[0], tc[1], tc[2]); got != tc[3] {
+			t.Errorf("profileHref(%s, %s, %s) = %q, want %q", tc[0], tc[1], tc[2], got, tc[3])
 		}
 	}
 }

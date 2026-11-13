@@ -396,6 +396,8 @@ flowchart TD
 
 `/profile` (FR-7) is server-rendered from three queries however many years it shows (`profile_page.go`): the day histogram over the whole history, the earliest activity and Trends. Every year's cards are derived in Go from local-day buckets (§4.30), so they match the SQL stats. `internal/web/format.go` ports the web's `format.ts` and changes with it; its `Imperial` decides every client's units, sent as the Account's `unit_system`. Shading is a count or distance quantiles of that year's active days, never a composite effort score, which would need a training-load formula. `GET /v1/activities/graph-stats` remains for API clients; its streak is a gaps-and-islands query.
 
+The explored places (FR-7.3, `profile_exploration.go`) open a level at a time by link, as the page's toggles do, so a request queries only the countries and the opened chain, never an account's thousands of cities at once. Explored comes from `visitedCTEs`, the sets Fog's tiles and tooltip count from, and the totals from the seed's `*_total` columns. The count words are the web's Fog catalog entries, copied into the server's as `fog.count.*`: the profile is server-rendered and can't read the web's.
+
 ### 4.9 Accounts and sign-in
 
 Email and password with server-side sessions, owned end to end, so no vendor can revoke sign-in (§4.0). Google, Facebook and Apple are optional extra ways into the same accounts, and every sign-in ends in one `startSession`, so nothing downstream knows how an account signed in. What each flow does is FR-1.
