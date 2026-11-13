@@ -15,17 +15,13 @@ final class MapTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let modes = app.segmentedControls["modes"]
         XCTAssertTrue(modes.exists)
-        // Fog and Heatmap name what they cover, since neither takes the date range; Normal
-        // doesn't. The level notice fades within seconds, which the query can miss.
+        // Fog names what it covers, since it doesn't take the date range; Normal doesn't. The
+        // level notice fades within seconds, which the query can miss.
         let chip = app.staticTexts["modeChip"]
         modes.buttons.element(boundBy: 1).tap()
         XCTAssertTrue(modes.buttons.element(boundBy: 1).isSelected)
         XCTAssertTrue(chip.waitForExistence(timeout: 5))
         attach("Fog")
-        let fogChip = chip.label
-        modes.buttons.element(boundBy: 2).tap()
-        XCTAssertTrue(waitForChange(of: chip, from: fogChip))
-        attach("Heatmap")
         modes.buttons.element(boundBy: 0).tap()
         XCTAssertTrue(chip.waitForNonExistence(timeout: 5))
         // Dates: picking a day in To's calendar sets the button, and Clear dates puts it back.
@@ -81,11 +77,6 @@ final class MapTests: XCTestCase {
         shot.name = name
         shot.lifetime = .keepAlways
         add(shot)
-    }
-
-    private func waitForChange(of element: XCUIElement, from old: String) -> Bool {
-        let changed = NSPredicate(format: "label != %@", old)
-        return XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: changed, object: element)], timeout: 5) == .completed
     }
 }
 

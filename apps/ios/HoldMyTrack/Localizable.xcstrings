@@ -122,13 +122,13 @@
         }
       }
     },
-    "%@ will be deleted for good, with its track and its part of Fog of War and Heatmap." : {
+    "%@ will be deleted for good, with its track and its part of Fog of War." : {
       "comment" : "Activities panel: Delete's confirmation; the placeholder names what is deleted and its distance.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ — будет удалено навсегда вместе с треком и его вкладом в «туман войны» и тепловую карту."
+            "value" : "%@ — будет удалено навсегда вместе с треком и его вкладом в «туман войны»."
           }
         }
       }
@@ -1519,17 +1519,6 @@
         }
       }
     },
-    "Heatmap" : {
-      "comment" : "Map: the Heatmap mode.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Тепловая"
-          }
-        }
-      }
-    },
     "Help" : {
       "comment" : "You tab: opens the Help page.",
       "localizations" : {
@@ -2916,13 +2905,13 @@
         }
       }
     },
-    "Sign in to see your tracks, fog of war and heatmap on the map. The demo needs no signup: a shared, ready-made account you can look around but not change." : {
+    "Sign in to see your tracks and fog of war on the map. The demo needs no signup: a shared, ready-made account you can look around but not change." : {
       "comment" : "Sign-in screen: what signing in and the demo give.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Войдите, чтобы увидеть свои треки, «туман войны» и тепловую карту. Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять."
+            "value" : "Войдите, чтобы увидеть свои треки и «туман войны». Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять."
           }
         }
       }
@@ -3378,17 +3367,6 @@
         }
       }
     },
-    "The last 365 days" : {
-      "comment" : "Map: the chip under Heatmap, which shows the last year whatever the date range.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Последние 365 дней"
-          }
-        }
-      }
-    },
     "The last download couldn't be prepared. Try again." : {
       "comment" : "Download your data: the last copy failed.",
       "localizations" : {
@@ -3418,17 +3396,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось загрузить карту."
-          }
-        }
-      }
-    },
-    "The more often you go somewhere, the hotter it glows" : {
-      "comment" : "Map: Heatmap's notice on entering it.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Чем чаще вы где-то бываете, тем ярче это место"
           }
         }
       }
@@ -3939,13 +3906,13 @@
         }
       }
     },
-    "Your map is still being updated, so Fog and Heatmap may be incomplete for now. They'll refresh on their own." : {
+    "Your map is still being updated, so Fog may be incomplete for now. It'll refresh on its own." : {
       "comment" : "Map: coverage is still being redrawn.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Карта ещё обновляется, поэтому Туман и Тепловая карта пока могут быть неполными. Они обновятся сами."
+            "value" : "Карта ещё обновляется, поэтому Туман пока может быть неполным. Он обновится сам."
           }
         }
       }

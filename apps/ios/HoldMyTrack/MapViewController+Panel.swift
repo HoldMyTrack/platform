@@ -439,7 +439,7 @@ extension MapViewController {
         let name = group.count == 1 ? format.label(group[0]) : String(localized: "Checked: \(group.count)")
         let summary = "\(name) (\(format.totalDistance(group.compactMap(\.distanceMeters).reduce(0, +))))"
         let title = group.count == 1 ? String(localized: "Delete this activity?") : String(localized: "Delete these activities?")
-        let message = String(localized: "\(summary) will be deleted for good, with its track and its part of Fog of War and Heatmap.")
+        let message = String(localized: "\(summary) will be deleted for good, with its track and its part of Fog of War.")
         var done: [String] = []
         StoryDialogs.confirm(over: view, title: title, message: message, action: String(localized: "Delete")) { [weak self] in
             guard let self else { return nil }

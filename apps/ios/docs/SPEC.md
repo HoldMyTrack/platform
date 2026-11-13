@@ -49,7 +49,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 
 As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as below.
 
-### FR-2.2 Three map modes: Normal, Fog of War, Heatmap
+### FR-2.2 Two map modes: Normal and Fog of War
 
 - Stories is Normal mode's, as on Android; the Sync tab is a page with no map.
 - There is no recording to hide the modes.

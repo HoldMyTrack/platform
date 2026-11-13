@@ -3,7 +3,7 @@ import MapLibre
 import UIKit
 
 /// What the map shows beside the modes (apps/android/docs/SPEC.md FR-2.2): the chip naming what
-/// Fog or Heatmap covers, the notice naming the level in view, the Layers button's badge, and
+/// Fog covers, the notice naming the level in view, the Layers button's badge, and
 /// whether Satellite imagery loads on this device (root docs/SPEC.md FR-4.14). The decisions are
 /// HoldMyTrackCore's MapChrome and SatelliteStatus.
 extension MapViewController {
@@ -12,7 +12,6 @@ extension MapViewController {
         let chip = MapChrome.chip(state.mode)
         chrome.chip.text = switch chip {
         case .everyActivity: String(localized: "Every activity, any date")
-        case .lastYear: String(localized: "The last 365 days")
         case nil: nil
         }
         chrome.chip.isHidden = chip == nil
@@ -118,7 +117,6 @@ final class MapChromeViews {
         case .fogCountry: String(localized: "Country view — a whole country clears once you've been anywhere in it")
         case .fogRegion: String(localized: "Region view — a whole state or province clears once you've been anywhere in it")
         case .fogCity: String(localized: "City view — cleared exactly where you've been")
-        case .heatmap: String(localized: "The more often you go somewhere, the hotter it glows")
         }
         UIAccessibility.post(notification: .announcement, argument: level.text)
         fade?.cancel()

@@ -6,7 +6,7 @@ import UIKit
 /// as markers on their routes, the popup a marker's tap opens, and the viewer it leads to.
 extension MapViewController {
     /// Whose photos show now: the Edit window's activity while it edits one, else the focus,
-    /// else the open Story; none in Fog or Heatmap.
+    /// else the open Story; none in Fog.
     private var photoScope: PhotoScope? {
         PhotoMarkers.scope(mode: state.mode, editWindowIDs: photos.editIDs, focused: session.panel.focused, storyID: session.storyID)
     }

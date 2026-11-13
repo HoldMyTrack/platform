@@ -63,7 +63,7 @@ stateDiagram-v2
 - **The basemap's and the imagery's reachability are timed from their own sources' tiles** (`tileDidTriggerAction`, `protomaps` and `satellite`), as on Android: failing imagery keeps the map from ever finishing rendering, so `fullyRendered` would call the basemap unreachable.
 - **Capture's guide line is the app's own layer** (`addGuide`), added on every style load outside `MapStyle`'s JSON, so neither a patch nor `MapStyle.changes` sees it; the darker areas are the spots group's `captureTarget` var. `CaptureController` reads its own `CLLocationManager`, stopped while the app is in the background, and counts by each fix's own timestamp (`SpotCapture`).
 - **Find my location follows only once a position has arrived**: MapLibre sets its own zoom when following starts, so the zoom to 14 comes after it, and following before the first position lost the zoom altogether. iOS calls the authorization callback at every launch, so only a tap's prompt follows.
-- **The opening view runs once per app session per account** (`OpeningView`), and Fog and Heatmap check `GET /v1/coverage/status` on every opening, polling while the server renders and reloading the layers document after it.
+- **The opening view runs once per app session per account** (`OpeningView`), and Fog checks `GET /v1/coverage/status` on every opening, polling while the server renders and reloading the layers document after it.
 
 ### 3.3 Logic ported from the web
 

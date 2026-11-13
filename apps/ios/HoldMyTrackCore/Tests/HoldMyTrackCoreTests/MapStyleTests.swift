@@ -103,6 +103,24 @@ struct MapStyleTests {
         #expect(layer(fog, "place_label")?["paint"]?["text-opacity"] == .number(0.5))
     }
 
+    @Test func aViewNamedForNoModeIsNeverApplied() {
+        // The server keeps a `heatmap` view and layer for old Android builds.
+        let stub = LayersDocument(JSONValue.parse(Data("""
+        {"views": {"plain": {
+           "normal": {"layout": {"heat": {"visibility": "none"}}},
+           "fog": {"layout": {"heat": {"visibility": "none"}}},
+           "heatmap": {"layout": {"heat": {"visibility": "visible"}}, "paint": {"earth": {"fill-opacity": 0.3}}}}},
+         "groups": [{"id": "coverage", "sources": {}, "layers": [{"id": "heat", "type": "heatmap"}]}]}
+        """.utf8))!)!
+        for mode in MapMode.allCases {
+            var state = MapState()
+            state.mode = mode
+            let composed = MapStyle.compose(style: style, document: stub, state: state, apiBase: api)
+            #expect(layer(composed, "heat")?["layout"]?["visibility"] == .string("none"), "\(mode)")
+            #expect(layer(composed, "earth")?["paint"] == nil, "\(mode)")
+        }
+    }
+
     @Test func aLayerTheViewDoesntNameIsShownOnceAViewApplies() {
         // As on Android: what a layer is added with holds only until a view applies.
         #expect(layer(compose(), "track-bands-line")?["layout"]?["visibility"] == .string("visible"))
@@ -170,15 +188,13 @@ struct MapStyleTests {
         #expect(ZoomTier.at(3, tiers: []) == .city, "a document without tiers draws exact coverage")
     }
 
-    @Test func fogAndHeatmapHaveAChipAndALevelNormalHasNeither() {
+    @Test func fogHasAChipAndALevelNormalHasNeither() {
         #expect(MapChrome.chip(.normal) == nil)
         #expect(MapChrome.chip(.fog) == .everyActivity)
-        #expect(MapChrome.chip(.heatmap) == .lastYear)
         #expect(MapChrome.level(.normal, tier: .city) == nil)
         #expect(MapChrome.level(.fog, tier: .country) == .fogCountry)
         #expect(MapChrome.level(.fog, tier: .region) == .fogRegion)
         #expect(MapChrome.level(.fog, tier: .city) == .fogCity)
-        #expect(MapChrome.level(.heatmap, tier: .country) == MapChrome.level(.heatmap, tier: .city))
     }
 
     @Test func theLayersBadgeCountsRoadsAndPathsAndGreysWhileHidden() {

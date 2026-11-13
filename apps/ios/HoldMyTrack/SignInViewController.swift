@@ -19,7 +19,7 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
     private var browserSession: ASWebAuthenticationSession?
 
     private let titleLabel = Controls.title("")
-    private let intro = Controls.body(String(localized: "Sign in to see your tracks, fog of war and heatmap on the map. The demo needs no signup: a shared, ready-made account you can look around but not change."))
+    private let intro = Controls.body(String(localized: "Sign in to see your tracks and fog of war on the map. The demo needs no signup: a shared, ready-made account you can look around but not change."))
     private let email = Controls.field(String(localized: "Email"), id: "email")
     private let password = Controls.field(String(localized: "Password"), id: "password")
     private let errorLabel = Controls.error(id: "signInError")
