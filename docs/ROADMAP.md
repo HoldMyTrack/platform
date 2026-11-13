@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-07.
+Last updated: 2026-11-13.
 
 ## How to read this document
 
@@ -15,6 +15,11 @@ The current milestone, from the public launch on, with no exit gate (`VISION.md`
 Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] Serve the basemap as `/{z}/{x}/{y}` tiles Cloudflare can cache, with `pmtiles serve` on the droplet first: every range read reaches R2, since the free plan caches files only up to 512 MB (`IMPLEMENTATION.md` §5.4). Worth it once traffic grows: about 97,000 basemap requests in the 30 days to 2026-10-14 were under 1% of R2's free reads. The web style (`apps/web/src/map/style.ts`) and the server-built Android style (`mapstyle.go`) move from `pmtiles://` to the tile URL.
+
+### Heatmap's leftovers
+
+- [ ] Once the build without Heatmap is live: migration `0054` drops `activities.in_heatmap_window` and its index, `users.heatmap_cap`, `users.heat_point_caps`, `fog_tiles.heatmap_object_key` and `fog_tiles.heatmap_bytes`; the private bucket's `heatmap/` objects are deleted, then the prefix leaves `worker/account_purge.go` and `scripts/backup.sh` (`IMPLEMENTATION.md` §3.6).
+- [ ] When `MIN_ANDROID_BUILD` next rises, drop the Heatmap stubs kept for older builds (`IMPLEMENTATION.md` §4.33).
 
 ### After launch
 

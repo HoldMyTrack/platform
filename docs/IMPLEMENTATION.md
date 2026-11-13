@@ -64,7 +64,7 @@ Idempotency is `idx_activities_dedupe` on `(user_id, source, external_id)` plus 
 
 ### 3.6 `fog_tiles`
 
-One row per account and tile, z0–z14, naming Fog's coverage PNG and Heatmap's count PNG (`heatmap_object_key`), which share the row because the same events dirty both. Every dirty mark increments `dirty_gen`; a render clears `dirty` only if `dirty_gen` is unchanged since it read the tile (`fog.upsertTileRendered`), so a change landing mid-render leaves the tile dirty.
+One row per account and tile, z0–z14, naming Fog's coverage PNG. `heatmap_object_key` and `heatmap_bytes` are never read or written, and storing a tile deletes its `heatmap/` object (`ROADMAP.md` drops both). Every dirty mark increments `dirty_gen`; a render clears `dirty` only if `dirty_gen` is unchanged since it read the tile (`fog.upsertTileRendered`), so a change landing mid-render leaves the tile dirty.
 
 ### 3.7 `privacy_zones`
 
@@ -249,7 +249,7 @@ The order matters:
 flowchart LR
     T["clipped raw points"] --> S["segments, buffered<br/>by stroke width"]
     S --> M["per-activity mask<br/>z14, 128 px"]
-    M --> U["per-tile composite<br/>Fog: max, Heatmap: count"]
+    M --> U["per-tile composite<br/>max"]
     U --> P["pyramid z13 to z0<br/>2x2 brightest"]
     P --> V["served: traced vector<br/>or tinted PNG"]
 ```
@@ -266,27 +266,11 @@ flowchart LR
 
 The inversion is the server's because MapLibre can't invert a raster (no `raster-color`), and a shader would otherwise be written twice.
 
-**Veils** (`coverageGroup.ts`) are each opposite in lightness to their basemap, at 0.82 opacity: at 0.6 the cream veil left satellite imagery too clear to tell fogged ground from revealed. The fog is designed over the vector basemap, with imagery optional (§4.26). The veil, the Country/Region fills and Heatmap are the layers document's `coverage` group (`ARCHITECTURE.md` §2.1), beneath the first symbol layer, so labels stay on top.
-
-#### 4.2.2 Heatmap mode
-
-Heatmap shares Fog's masks, `fog_tiles` row, dirty flag and render; the server stores pass counts and the clients draw them (ADR-0046).
-
-**Stored**: per z14 tile, a 16-bit PNG counting the in-window, non-Pending activities whose stroke covers each pixel (`fog.heatCounts`), so a loop or an idle stop counts once.
-
-**Served** as MapLibre heatmap circles from `/tiles/v1/heat-points/`: a point per non-empty cell, 64 to a tile side, weighted `log1p(count) / log1p(scale)`, log because most ground is crossed once or twice and a few places a hundred times. Up to z8 (`fog.HeatActivityMaxZoom`) a cell is a z14 tile or larger and counts distinct activities, read live from the mask rows; from z9 it counts the busiest pixel of the count tile one zoom up, since per-pixel counts can't be added up into a larger area's activities. Zooms up to z8 scale against their own busiest cell (`users.heat_point_caps`, stored by every render), never below `heatmap_cap`; finer zooms against `heatmap_cap`.
-
-**Each point is weighted for its neighbours** (`weighNeighbours`), so that MapLibre's overlapping circles each peak at their own weight. **The radius and intensity are the layers document's, and a test in `internal/fog` holds the radius to `heatRadiusCells`.**
-
-**One query a tile**: up to z8 a grouped read of the account's own mask rows; from z9 the row and one object read, counted against the R2 budget. The MVT is encoded in Go, saving a round trip on the database the load tests found to be the bottleneck.
-
-**`heatmap_cap`** is the account's most-touched z14 tile in distinct in-window activities (`fog.RecomputeHeatmapCap`). A changed cap re-renders nothing, it only bumps the tile version. The cap sweep and the window aging run daily and at worker start, independently; each corrects from the state it finds.
+**Veils** (`coverageGroup.ts`) are each opposite in lightness to their basemap, at 0.82 opacity: at 0.6 the cream veil left satellite imagery too clear to tell fogged ground from revealed. The fog is designed over the vector basemap, with imagery optional (§4.26). The veil and the Country/Region fills are the layers document's `coverage` group (`ARCHITECTURE.md` §2.1), beneath the first symbol layer, so labels stay on top.
 
 #### 4.2.3 Per-activity masks
 
-Both rasters are composited from per-activity masks (§3.11), drawn at ingest from points already in memory, so ingest costs the activity's own tiles. **A dirty tile is always recomposited whole from the masks of non-Pending activities, never decremented**, so a delete is one fewer row feeding it, with no re-parse of the activities sharing the tile. An unreadable mask is skipped and counted. Tile routes are a plain lookup, and a request whose client has gone answers `499` without logging (`clientGone`).
-
-**Window membership is stored** (`activities.in_heatmap_window`, set from `started_at` at ingest), because compositing a window ending now took ~12.6 s on the demo account's home tile and is a new cache key on every request. Leaving the window is passage of time, so `ageOutHeatmapWindow` runs daily and at worker start (a worker restarted on every deploy might never reach a ticker's first tick), re-rendering only the tiles of activities that crossed.
+Fog is composited from per-activity masks (§3.11), drawn at ingest from points already in memory, so ingest costs the activity's own tiles. **A dirty tile is always recomposited whole from the masks of non-Pending activities, never decremented**, so a delete is one fewer row feeding it, with no re-parse of the activities sharing the tile. An unreadable mask is skipped and counted. Tile routes are a plain lookup, and a request whose client has gone answers `499` without logging (`clientGone`).
 
 **Refreshing an open page.** Coverage URLs change only with the tile version (§4.2.6). `GET /v1/coverage/status` reports `rendering` while any coverage-changing job is still `pending` (a claimed job stays `pending`), `ingest` included, since the watch starts before the render exists; one waiting out a retry's delay doesn't count. The client's watch (`useCoverageRefresh.ts`) refetches whenever `version` moves, not only when done, since a reprocess renders twice (§4.2.5).
 
@@ -302,9 +286,9 @@ Below exact coverage, Fog reveals whole countries, then regions, counties and ci
 
 #### 4.2.5 Pending activities drop out of every map read (FR-5.15)
 
-An activity is Pending (`edit_pending`) while an Edit track or Private location reprocess is queued or running, its geometry and masks stale or half-rewritten. **Every map read filters `AND NOT edit_pending`**: tracks tiles, Fog and Heatmap composites at every level, the heatmap cap and Country/Region. A new map read needs it too.
+An activity is Pending (`edit_pending`) while an Edit track or Private location reprocess is queued or running, its geometry and masks stale or half-rewritten. **Every map read filters `AND NOT edit_pending`**: tracks tiles, Fog composites at every level and Country/Region. A new map read needs it too.
 
-**Two renders per reprocess, inside the job**: enqueueing sets the flag and dirties the activities' current tiles in one transaction; the job renders (dropping them), reprocesses, clears the flag (unless a later `reprivacy` still covers the activity) and renders again. A failed edit clears the flag and renders, restoring the old masks. A failed `reprivacy` activity keeps the flag, since its old masks ignore the new location, and is rerun after a growing delay. Pending clears before the rasters are current, so clients refetch on `/v1/coverage/status`, not on the badge (§4.2.3). The web hides a Pending track itself as soon as the list shows it, apart from the user's hidden set. Clients then poll `GET /v1/activities/pending` for their ids, at most 200 a request (`pendingBatches`), rereading the list once one finishes (`pendingCheck`).
+**Two renders per reprocess, inside the job**: enqueueing sets the flag and dirties the activities' current tiles in one transaction; the job renders (dropping them), reprocesses, clears the flag (unless a later `reprivacy` still covers the activity) and renders again. A failed edit clears the flag and renders, restoring the old masks. A failed `reprivacy` activity keeps the flag, since its old masks ignore the new location, and is rerun after a growing delay. Pending clears before Fog is current, so clients refetch on `/v1/coverage/status`, not on the badge (§4.2.3). The web hides a Pending track itself as soon as the list shows it, apart from the user's hidden set. Clients then poll `GET /v1/activities/pending` for their ids, at most 200 a request (`pendingBatches`), rereading the list once one finishes (`pendingCheck`).
 
 #### 4.2.6 Caching: one tile version per account
 
@@ -537,7 +521,7 @@ flowchart LR
 
 **The bike kinds come from their own import** because the basemap has no paths below z13. **The extract keeps every way with one of the tags and `Kind` narrows it, so a new kind changes both.** Below z13 a way shorter than a pixel is dropped. A Go test holds the document's z9 minimum and source layer to the tile handler's.
 
-**Every path paints over Fog and Heatmap**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and the export; under the veil, unridden paths showed at a fifth of their colour. Clients move only a layer still below; the web diffs every property first, since each change fires another `styledata` (`DEVELOPMENT.md`).
+**Every path paints over Fog**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and the export; under the veil, unridden paths showed at a fifth of their colour. Clients move only a layer still below; the web diffs every property first, since each change fires another `styledata` (`DEVELOPMENT.md`).
 
 ### 4.25 Spots (FR-15)
 
@@ -616,6 +600,8 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 `MIN_ANDROID_BUILD` and `MIN_IOS_BUILD` let a route kept for old installs be retired: an app's builds below its minimum get `426 app_outdated` on every `/v1` request before any handler (`app_outdated.go`). The build is the commit count in the app's User-Agent (`HoldMyTrack-Android/` or `HoldMyTrack-iOS/`); one with no number counts as 0, which is exactly the Android builds from before the gate. Play's in-app updates would leave the decision on the phone. Tiles and pages keep answering, so an old build's map doesn't blank out. Nothing else is ever refused, since anyone could claim to be an old build.
 
+Android builds that still offer a Heatmap mode get `/tiles/v1/heat-points/` as an empty tile with no read, and the layers documents carry a `heatmap` view that copies Normal's (`withInstalledAndroidViews`), so that mode shows the basemap and tracks. Both go when `MIN_ANDROID_BUILD` next rises (`ROADMAP.md`).
+
 ### 4.34 Design tokens
 
 `tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded first by the page layout and the map shell alike; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there. The iOS app's are written from these files and Android's by `apps/ios/scripts/make-design.py`, which CI runs with `--check`.
@@ -655,7 +641,7 @@ Costs scale with users while the service stays free (`VISION.md` §4.3), so the 
 - **Raw payloads are kept as long as their activity**, since `reprivacy` and track edits re-parse them. A failed ingest has none, so the worker removes its original as it fails (`ingest.DiscardRaw`), unless an activity names the same key.
 - **Rate limits** (`httpapi/rate_limits.go`) are per account, except on the shared demo account, which counts per address. Tiles count per minute with a high ceiling, since pans and exports burst and one refused tile fails an export. Phone sync counts activities as well as requests, which bounds a sync-delete-sync loop that renders each time. The counts are in memory, per `api` process.
 - **Per-account limits** (ADR-0043, `account_limits.go`) count waiting ingest jobs by their size, so a queued import can't slip under, and count an original shared by split pieces once. The check takes no lock: a slight overshoot is harmless, and a lock would serialize an import. A Story copy is checked when accepted. `fitWithinLimits` lets a sync batch take what fits.
-- **The daily R2 budget** (`SPEC.md` FR-17, `internal/budget`) exists because R2 has no spending cap, only billing notifications after the money is spent. It counts requests in `internal/storage`'s HTTP transport, since the bill counts what the client library sends underneath (listing pages, multipart parts, range reads). Each process adds its counts to the UTC day's row every 30 s and reads the total back, so the budget is the deployment's; they are priced at list prices without the free allowance, so the count never falls below the bill. A day, not a month, so a bad day can't stop the rest of the month; stages, not one switch, so Fog and Heatmap don't go blank to save renders that can wait. The API wraps the routes that touch the bucket (`httpapi/budget.go`), shared account cores return the refusal as their error, and the worker stops claiming the render lane, then the long lane. The basemap is outside it.
+- **The daily R2 budget** (`SPEC.md` FR-17, `internal/budget`) exists because R2 has no spending cap, only billing notifications after the money is spent. It counts requests in `internal/storage`'s HTTP transport, since the bill counts what the client library sends underneath (listing pages, multipart parts, range reads). Each process adds its counts to the UTC day's row every 30 s and reads the total back, so the budget is the deployment's; they are priced at list prices without the free allowance, so the count never falls below the bill. A day, not a month, so a bad day can't stop the rest of the month; stages, not one switch, so Fog doesn't go blank to save renders that can wait. The API wraps the routes that touch the bucket (`httpapi/budget.go`), shared account cores return the refusal as their error, and the worker stops claiming the render lane, then the long lane. The basemap is outside it.
 - **Cost per active user** is measured from day one (`VISION.md` §5), from `last_seen_at` (§4.32).
 
 ### 5.8 Minimal deployment topology

@@ -24,7 +24,6 @@ Every built feature of the server and the web app; the Android app's own behavio
 | **Registered user** | An account with an email and password, a linked Google or Facebook identity, or both. |
 | **Demo user** | A visitor in a session on the shared, read-only Demo Customer account (FR-2). |
 | **Fog of War** | A map mode that veils everywhere the account has never recorded an activity. |
-| **Heatmap** | A map mode that shades each place by how often the account crossed it in the last 365 days. |
 | **Ingest** | Turning an original into a stored activity: parsing, clipping against Private locations (FR-8.1), simplifying, storing. |
 
 ### 1.5 API errors
@@ -185,7 +184,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 - At most 100 files an hour per account, refused and duplicate ones included, checked before the file is read.
 - An empty file, another type, a file too large or one past the account's limits (FR-1.13) is refused at once.
 - A file that can't be read, has no timestamps (a planned route), has no positioned point or has fewer than 2 points fails in processing, with the reason on the Sync page. Untimed points inside a timed track are dropped.
-- The activity reaches the list, map and totals without a reload; Fog and Heatmap follow once redrawn (FR-4.2).
+- The activity reaches the list, map and totals without a reload; Fog follows once redrawn (FR-4.2).
 
 ### FR-3.4 Import status
 
@@ -246,7 +245,7 @@ Every map and export choice is kept by the browser or phone, never by the accoun
 
 - Normal mode draws every activity passing the filters that isn't Hidden or Pending (FR-5.15): Dates (FR-5.20), Type and Distance, and past the list's cap only the listed ones (FR-5.19). With a Story open, its activities (FR-14.6).
 - Tracks are drawn from zoom 4 in.
-- A track across the 180° meridian is drawn the short way and counts in Fog and Heatmap on both sides.
+- A track across the 180° meridian is drawn the short way and counts in Fog on both sides.
 
 ### FR-4.2 Fog of War mode
 
@@ -254,18 +253,12 @@ Every map and export choice is kept by the browser or phone, never by the accoun
 - Zoomed out it clears whole places once any activity is inside one: countries (zoom 0–2), states or regions (3–5), counties (6–7) and cities (8–10), then exact coverage; the levels never blend. A place clears with every place it lies in. Where a level has no place, the one above stands in: a country without regions is one region, a region without counties one county, and land outside every city shows its county. Water no county covers in a region that has counties is veiled on the County and City levels, as the sea is. Boundaries are OpenStreetMap's on land, without lakes of 1,000 km² or more (`IMPLEMENTATION.md` §4.2.4): a track on the sea or such a lake counts in no place, so the water stays veiled until exact coverage.
 - On the web the level in view is named as the zoom changes it, in the account's country's words where it has its own (State, Department). Its menu offers Auto, which follows the zoom, and each level, all but Exact with how many of its places the account has explored; a place's tooltip counts, of each level below it, how many of its places the account has explored out of how many it holds. Picking a level draws it at every zoom until Auto is picked or the page reloads; picked while zoomed in past it, the map zooms out to it, keeping its centre, and it never zooms in. A place under about 4 pixels across shows veiled until zoomed in, visited or not.
 - The edge of cleared ground is a smooth outline, traced to about 19 m at zoom 14 and twice that per zoom out, with no seams between tiles.
-- While a coverage change is still being worked on, the map says Fog and Heatmap may be incomplete; the veil then updates without a reload.
+- While a coverage change is still being worked on, the map says Fog may be incomplete; the veil then updates without a reload.
 - Switching modes never moves the camera; returning to Normal restores the panel's state.
-
-### FR-4.3 Heatmap mode
-
-- Heatmap counts the last 365 days, a fixed rolling window, so a route not taken any more cools off. It ignores the filters, hidden set and Stories, like Fog.
-- Out to a region, a place is as hot as the activities through it; closer in, as the times it was crossed. A route passed once is green at every zoom.
-- What reads hottest adapts to the account's own history, recomputed daily. No country or region levels.
 
 ### FR-4.4 Mode is mutually exclusive
 
-Exactly one of Normal, Fog of War and Heatmap shows at a time.
+Exactly one of Normal and Fog of War shows at a time.
 
 ### FR-4.5 Base map, theming, and the opening view
 
@@ -284,13 +277,13 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - The focused activity's track is drawn in five bands, slowest blue to fastest red, scaled to its own speed range. No legend, no values, no heart-rate alternative (ADR-0017).
 - Chevrons along its straighter stretches point the way it was recorded; a tight bend gets none.
 - Bands follow the simplified line, so a straight stretch can read coarser than its data (`IMPLEMENTATION.md` §4.3.1).
-- Not in Fog or Heatmap.
+- Not in Fog.
 
 ### FR-4.10 Map image export
 
 - Any framed view as a PNG, on the web and Android: Custom with a long side of 1920, 2560 or 3840 px, or an Instagram, Facebook or X preset. A size the browser can't draw isn't offered.
 - While the frame is open the map only pans and zooms: a tap selects, opens and clears nothing.
-- The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story with its bold tracks, pace bands and photo markers as on screen, Fog's all-time coverage, Heatmap's window. Spots and Private location circles are never drawn.
+- The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story with its bold tracks, pace bands and photo markers as on screen, Fog's all-time coverage. Spots and Private location circles are never drawn.
 - OpenStreetMap's attribution, the imagery credit with Satellite on, and a HoldMyTrack watermark are drawn in and can't be removed: the basemap is an ODbL Produced Work (`IMPLEMENTATION.md` §5.6).
 - On the web and Android, a stats card of the Checked activities (FR-5.15), none with a Story open: newest first, five at most and a count of the rest, each with type, distance, moving time (FR-5.1) and elevation gain, or type alone inside Private locations; with more than one, their totals.
 
@@ -305,7 +298,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - Bike paths, shared paths and mountain-bike trails come from an OSM import of their own (FR-4.16), are off until ticked in Layers, drawn from zoom 9.
 - From OSM tags, the first that fits: **mountain-bike trail**, a cycleway, path, footway or bridleway with `mtb:scale`, or a cycleway or shared path with an unpaved `surface`; **bike path**, `highway=cycleway`; **shared path**, `highway=path`, `footway` or `bridleway` with `bicycle=designated`. Separately, **trail**: `highway=path`, `footway` or `bridleway`; **dirt track**: `highway=track`.
 - A street's painted bike lane and untagged singletrack are none of these. Sidewalks, crossings, steps and named route networks aren't drawn.
-- Paths draw over Fog and Heatmap at full strength, under the tracks, in every mode and export. One switch hides every ticked road (FR-4.17), path and place (FR-15.2) and keeps the picks.
+- Paths draw over Fog at full strength, under the tracks, in every mode and export. One switch hides every ticked road (FR-4.17), path and place (FR-15.2) and keeps the picks.
 
 ### FR-4.14 Satellite mode
 
@@ -317,20 +310,20 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 
 ### FR-4.15 What the map draws
 
-| Zoom | Tracks | Fog | Heatmap | Bike kinds | Trails, dirt tracks | Spots | Photos |
-| :-- | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
-| 0–2 | — | Countries | Circles | — | — | — | — |
-| 3 | — | Regions | Circles | — | — | — | — |
-| 4–6 | Drawn | Regions | Circles | — | — | — | Small |
-| 7–8 | Drawn | Exact | Lines | — | — | — | Small |
-| 9 | Drawn | Exact | Lines | Drawn | — | — | Small |
-| 10–11 | Drawn | Exact | Lines | Drawn | — | On request | Drawn |
-| 12 | Drawn | Exact | Lines | Drawn | Dirt tracks | On request | Drawn |
-| 13+ | Drawn | Exact | Lines | Drawn | Drawn | Drawn | Drawn |
+| Zoom | Tracks | Fog | Bike kinds | Trails, dirt tracks | Spots | Photos |
+| :-- | :-- | :-- | :-- | :-- | :-- | :-- |
+| 0–2 | — | Countries | — | — | — | — |
+| 3 | — | Regions | — | — | — | — |
+| 4–6 | Drawn | Regions | — | — | — | Small |
+| 7–8 | Drawn | Exact | — | — | — | Small |
+| 9 | Drawn | Exact | Drawn | — | — | Small |
+| 10–11 | Drawn | Exact | Drawn | — | On request | Drawn |
+| 12 | Drawn | Exact | Drawn | Dirt tracks | On request | Drawn |
+| 13+ | Drawn | Exact | Drawn | Drawn | Drawn | Drawn |
 
 - Each band runs up to the next band's first zoom. The Android app follows the same bands.
-- Bottom to top: base map or imagery, Fog or Heatmap, paths, tracks and pace bands, labels, Spots, photos.
-- Past the deepest stored level the map enlarges it: tracks, Fog, bike kinds and Spots past zoom 14, Heatmap and the base map past 15, imagery past the deployment's deepest level (18 on holdmytrack.com).
+- Bottom to top: base map or imagery, Fog, paths, tracks and pace bands, labels, Spots, photos.
+- Past the deepest stored level the map enlarges it: tracks, Fog, bike kinds and Spots past zoom 14, the base map past 15, imagery past the deployment's deepest level (18 on holdmytrack.com).
 - At most 1,200 tile requests a minute per account across every layer (per address for the demo account); past that a tile is refused for the minute and an export that meets one fails. Caching is `IMPLEMENTATION.md` §4.2.6.
 
 ### FR-4.16 Bike-path tiles
@@ -346,7 +339,7 @@ The same paths for every account, behind the session and cached like every map t
 
 - A tour points at the web map's features in turn, putting the map in each step's mode; in a demo session it also flies over the demo's history to show Fog at city, state and country level. It can be left at any step and restores the mode and camera.
 - A demo session gets it unasked on its first map in a browser. A real account is offered it once, after it has an activity. Anyone signed in can start it from the header.
-- The first time a user opens Fog of War, Heatmap or the Stories tab outside the tour, a card says what it is for. A tour step on the same feature counts as its card.
+- The first time a user opens Fog of War or the Stories tab outside the tour, a card says what it is for. A tour step on the same feature counts as its card.
 - What has been shown is kept by the browser, not the account.
 
 ## 7. FR-5 — Activities Panel
@@ -387,7 +380,7 @@ Lists the types present among the activities FR-5.1 starts from; types are free 
 ### FR-5.11 Delete an activity
 
 - A full purge with no undo: the activity, track, coverage, photos (FR-16.5), and its original once no other activity (a split part, a Story copy) shares it. It leaves every Story; copies others accepted stay theirs (FR-14.8).
-- Fog and Heatmap revert where it was the only source, without a reload once redrawn.
+- Fog reverts where it was the only source, without a reload once redrawn.
 - When one of several deletes fails, the others stay deleted.
 
 ### FR-5.14 Edit track
@@ -420,7 +413,7 @@ stateDiagram-v2
     }
 ```
 
-| State | Track | Fog and Heatmap | Row | Survives reload |
+| State | Track | Fog | Row | Survives reload |
 | :-- | :-- | :-- | :-- | :-- |
 | Normal | Drawn | Counted | Plain | Yes |
 | Pending | Not drawn | Not counted, at any zoom | Badge, old numbers; can't be focused, checked, edited or deleted | Yes |
@@ -430,9 +423,9 @@ stateDiagram-v2
 
 - At most one activity is Focused, by clicking its row or track; any number are Checked. Bold is either, on the map and in its image (FR-4.10). The toolbar acts on the Checked ones when any are, else the Focused one.
 - On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/android/docs/SPEC.md` FR-2.7).
-- Hiding keeps Focused and Checked; camera fits skip Hidden. Opening or closing a Story clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on activities still listed (FR-5.19). Fog and Heatmap set Focused and Checked aside until Normal.
+- Hiding keeps Focused and Checked; camera fits skip Hidden. Opening or closing a Story clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on activities still listed (FR-5.19). Fog sets Focused and Checked aside until Normal.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden activity stays hidden after Pending clears.
-- Leaving Pending brings the track back at once, and Fog and Heatmap once redrawn.
+- Leaving Pending brings the track back at once, and Fog once redrawn.
 - An activity entirely inside Private locations is Normal with no geometry.
 
 ### FR-5.17 Split an activity
@@ -464,7 +457,7 @@ The list holds every activity whose track crosses the visible map, of all time u
 
 - From and To, local dates (FR-3.11), both inclusive and either optional; none set is all time. Each is bounded by the first activity and today (the account's, FR-1.7), or the newest activity when it's later, recorded in a zone ahead.
 - Setting it moves the camera once onto the activities it matches, wherever they are; clearing it leaves the camera.
-- It filters the Activities tab and Normal mode's tracks only, not Stories, the Privacy tab, Fog or Heatmap.
+- It filters the Activities tab and Normal mode's tracks only, not Stories, the Privacy tab or Fog.
 
 ## 9. FR-7 — Activity Graph (Profile)
 
@@ -637,7 +630,7 @@ A Story is a hand-picked, private set of the account's activities with a name, a
 
 ### FR-14.6 The Stories tab
 
-- One Story is open at a time. While open, the tracks, rows, photos and exports are its activities, whatever Dates. Normal mode only: Fog and Heatmap stay all-time.
+- One Story is open at a time. While open, the tracks, rows, photos and exports are its activities, whatever Dates. Normal mode only: Fog stays all-time.
 - The URL carries it (`/?story=<id>`); `/?tab=stories` opens the tab. Leaving the tab restores the Activities tab's range.
 
 ### FR-14.7 Send a copy
@@ -657,7 +650,7 @@ Accepting puts a Story and activities in the recipient's account that are theirs
 
 - The Story is copied as it is when the copy is made, not when sent.
 - The first accepted copy makes a new Story with its name and description; a later one adds to it, or, if the recipient deleted it, makes a new one with only what they haven't received.
-- Each activity is made from its track as the sender sees it, with the sender's Private locations and edits applied, then treated as the recipient's upload: their Private locations apply too, and it counts in their Fog, Heatmap, totals, regions and Trends. Type, name, description and photos come with it.
+- Each activity is made from its track as the sender sees it, with the sender's Private locations and edits applied, then treated as the recipient's upload: their Private locations apply too, and it counts in their Fog, totals, regions and Trends. Type, name, description and photos come with it.
 - An account receives each original activity once, ever: one it already received, recorded or holds is left out, so a deleted copy doesn't return and a copy sent back to its recorder adds nothing. With nothing to add, no Story is made unless the Story is empty.
 - An activity with no track, or hidden entirely by the sender's Private locations, isn't copied; one being reprocessed is copied once that finishes.
 - Neither side's later changes, deletions or account deletion reach the other.
@@ -765,7 +758,7 @@ Deleting a photo deletes both images. Deleting an activity deletes its photos (F
 
 The service spends up to `R2_DAILY_BUDGET_USD` a day ($2 by default) on object-store requests, across every account, reset at midnight UTC. Nearing it, the service gives things up in stages, keeping what everyone sees for last.
 
-- **At 70%**, Fog and Heatmap stop being redrawn: new and edited activities reach the tracks, and their coverage follows after midnight UTC, the map saying it's updating.
+- **At 70%**, Fog stops being redrawn: new and edited activities reach the tracks, and their coverage follows after midnight UTC, the map saying it's updating.
 - **At 85%**, everything that adds to storage is refused: uploads, phone syncs, photos, avatars, accepting a Story copy and asking for a data download. A download already asked for is built after midnight. Refusals carry `Retry-After` until midnight UTC and say nothing stored is affected; the Android app keeps what it didn't send.
-- **At 100%**, reads of stored files are refused the same way: Fog and Heatmap tiles, photos, avatars, download archives and the track editor's points. Tracks, lists, Stories, totals, Spots and pages keep working.
+- **At 100%**, reads of stored files are refused the same way: Fog tiles, photos, avatars, download archives and the track editor's points. Tracks, lists, Stories, totals, Spots and pages keep working.
 - The stages lift at midnight UTC, or when the budget is raised past the day's spend. A stage can start up to a minute after the spend that crosses it.
