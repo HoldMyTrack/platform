@@ -59,4 +59,6 @@
     <color name="hmt_photo_viewer_bar">#B30F1311</color>
     <color name="hmt_photo_viewer_ink">#ECE6D8</color>
     <color name="hmt_photo_viewer_ink_secondary">#A8B2A9</color>
+    <!-- The outline of a popup over the map (bg_map_popup): the panel border on a light map. -->
+    <color name="hmt_map_popup_border">@color/hmt_border_panel</color>
 </resources>
