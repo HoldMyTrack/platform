@@ -10,13 +10,12 @@ import org.junit.Test
 class TourStepsTest {
 
     @Test
-    fun `a demo's Fog is city, states and countries at Fog's zoom tiers`() {
+    fun `a demo's Fog is a step per level, each in its level's band`() {
         val fog = TourSteps.of(isDemo = true).filter { it.mode == MapMode.FOG }
-        assertEquals(listOf("fog", "fog_regions", "fog_countries"), fog.map { it.id })
-        // Exact coverage from zoom 7, regions 3–6, countries 0–2 (docs/SPEC.md FR-4.2).
-        assertTrue(fog[0].view!!.zoom >= 7)
-        assertTrue(fog[1].view!!.zoom >= 3 && fog[1].view!!.zoom < 7)
-        assertTrue(fog[2].view!!.zoom < 3)
+        assertEquals(listOf("fog", "fog_cities", "fog_counties", "fog_regions", "fog_countries"), fog.map { it.id })
+        // Exact from zoom 11, cities 8–11, counties 6–8, regions 3–6, countries 0–3 (docs/SPEC.md FR-4.2).
+        val bands = listOf(11.0 to 24.0, 8.0 to 11.0, 6.0 to 8.0, 3.0 to 6.0, 0.0 to 3.0)
+        fog.zip(bands).forEach { (step, band) -> assertTrue(step.id, step.view!!.zoom >= band.first && step.view!!.zoom < band.second) }
         assertEquals(listOf("fog"), TourSteps.of(isDemo = true).filter { it.card == TourCard.FOG }.map { it.id })
     }
 

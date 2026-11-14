@@ -55,14 +55,13 @@ test('the steps keep Normal together before Fog, and the demo gets its own Add t
   assert.equal(stepsFor({ isDemo: true }).find((s) => s.id === 'add').text, 'tour.add_demo');
 });
 
-test("a demo's Fog is city, states and countries at Fog's own zoom tiers, and only the demo moves the camera", () => {
+test("a demo's Fog is a step per level, each in its level's band, and only the demo moves the camera", () => {
   const demo = stepsFor({ isDemo: true });
   const fog = demo.filter((s) => s.mode === 'fog');
-  assert.deepEqual(fog.map((s) => s.id), ['fog', 'fog_regions', 'fog_countries']);
-  // Exact coverage from zoom 7, regions 3–6, countries 0–2 (SPEC.md FR-4.2).
-  assert.ok(fog[0].view.zoom >= 7);
-  assert.ok(fog[1].view.zoom >= 3 && fog[1].view.zoom < 7);
-  assert.ok(fog[2].view.zoom < 3);
+  assert.deepEqual(fog.map((s) => s.id), ['fog', 'fog_cities', 'fog_counties', 'fog_regions', 'fog_countries']);
+  // Exact from zoom 11, cities 8–11, counties 6–8, regions 3–6, countries 0–3 (SPEC.md FR-4.2).
+  const bands = [[11, 24], [8, 11], [6, 8], [3, 6], [0, 3]];
+  fog.forEach((step, i) => assert.ok(step.view.zoom >= bands[i][0] && step.view.zoom < bands[i][1], step.id));
   // The fog card goes with the first Fog step only.
   assert.deepEqual(demo.filter((s) => s.card === 'fog').map((s) => s.id), ['fog']);
   assert.ok(stepsFor({ isDemo: false }).every((s) => s.view === null));
@@ -82,7 +81,8 @@ test("the demo's steps fly through its views and back; a real account's never mo
   const moves = walk(demo);
   const at = (id) => moves[demo.findIndex((s) => s.id === id)];
   assert.equal(at('welcome'), null);
-  assert.equal(at('fog'), DEMO_VIEWS.city);
+  assert.equal(at('fog'), DEMO_VIEWS.exact);
+  assert.equal(at('fog_counties'), DEMO_VIEWS.counties);
   assert.equal(at('fog_countries'), DEMO_VIEWS.countries);
   // The step after Fog goes back to the view before the tour's first move, the Stories tab's.
   assert.deepEqual(at('add'), current);

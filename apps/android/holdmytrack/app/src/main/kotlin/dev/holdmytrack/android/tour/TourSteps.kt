@@ -37,19 +37,23 @@ data class TourStep(
 object TourSteps {
     /**
      * The demo's views over its fixed history (`services/server/internal/httpapi/demo_data`), the
-     * web's `DEMO_VIEWS`: Cleveland, where Fog clears along the tracks (zoom 7 up); the eastern US,
-     * where it clears states (3–6); and the world, where it clears countries (0–2). A phone shows
-     * one country at a time there, so the camera pans from the US over Europe to Vietnam, each leg
-     * east and under 180°.
+     * web's `DEMO_VIEWS`, one per Fog level: Brecksville Reservation's tracks, exact coverage (zoom
+     * 11 up); Cleveland's towns (8 to 11); northern Ohio's counties (6 to 8); the eastern US's
+     * states (3 to 6); and the world's countries (0 to 3). A phone shows one country at a time
+     * there, so the camera pans from the US over Europe to Vietnam, each leg east and under 180°.
      */
+    val EXACT = TourView(-81.609, 41.315, 12.0)
     val CITY = TourView(-81.72, 41.42, 9.0)
+    val COUNTIES = TourView(-81.6, 41.2, 7.0)
     val REGIONS = TourView(-82.0, 36.0, 3.6)
     val COUNTRIES = TourView(-80.0, 38.0, 1.5, pan = listOf(15.0 to 45.0, 106.0 to 25.0))
 
     fun of(isDemo: Boolean): List<TourStep> {
         val fog = if (isDemo) {
             listOf(
-                TourStep("fog", TourTarget.MODES, mode = MapMode.FOG, view = CITY, card = TourCard.FOG, text = "tour_fog_city"),
+                TourStep("fog", TourTarget.MODES, mode = MapMode.FOG, view = EXACT, card = TourCard.FOG, text = "tour_fog_exact"),
+                TourStep("fog_cities", TourTarget.MODES, mode = MapMode.FOG, view = CITY),
+                TourStep("fog_counties", TourTarget.MODES, mode = MapMode.FOG, view = COUNTIES),
                 TourStep("fog_regions", TourTarget.MODES, mode = MapMode.FOG, view = REGIONS),
                 TourStep("fog_countries", TourTarget.MODES, mode = MapMode.FOG, view = COUNTRIES),
             )
