@@ -26,12 +26,12 @@ import (
 // archive re-exposed as `{z}/{x}/{y}`, confirmed on a physical Android device reading this
 // endpoint's own output (docs/ARCHITECTURE.md §3).
 //
-// The satellite imagery source (docs/SPEC.md FR-4.14) is filled from SATELLITE_* the same way,
+// The satellite imagery source (docs/SPEC.md FR-4.10) is filled from SATELLITE_* the same way,
 // or left out when the deployment configures none or the worker has paused it (imagery.go) —
 // which is how a client knows to show no Satellite switch. Paused, the document and its ETag
 // change, so a client revalidating it learns.
 //
-// `?lang=` picks the labels' language (docs/SPEC.md FR-13.1), matched on its primary subtag
+// `?lang=` picks the labels' language (docs/SPEC.md FR-12.1), matched on its primary subtag
 // so `ru-RU` is Russian; anything unsupported, or none, is English. A query parameter rather
 // than Accept-Language: MapLibre's offline cache keys the document by URL alone, so one URL per
 // language keeps a cached copy from ever answering for another.

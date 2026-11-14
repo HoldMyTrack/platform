@@ -1,7 +1,7 @@
 {
   "rule": "areaLoad",
   "clients": ["web", "android", "ios"],
-  "description": "Whether the web's list follows the map (docs/SPEC.md FR-5.19): from zoom 4, where tracks are drawn, on every settled move (\"auto\"); further out there is nothing to list (\"none\"). capped when the last load's total is more than it listed, which makes the map draw only the listed tracks. total is null before any load.",
+  "description": "Whether the web's list follows the map (docs/SPEC.md FR-5.11): from zoom 4, where tracks are drawn, on every settled move (\"auto\"); further out there is nothing to list (\"none\"). capped when the last load's total is more than it listed, which makes the map draw only the listed tracks. total is null before any load.",
   "cases": [
     {
       "name": "zoom 4 follows the map",

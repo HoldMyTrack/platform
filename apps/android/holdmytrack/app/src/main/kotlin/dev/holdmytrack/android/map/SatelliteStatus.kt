@@ -5,7 +5,7 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.tile.TileOperation
 
 /**
- * Whether satellite imagery is loading on this device (`docs/SPEC.md` FR-4.14): a network that
+ * Whether satellite imagery is loading on this device (`docs/SPEC.md` FR-4.10): a network that
  * refuses or blocks the imagery host leaves Satellite with its fills hidden over nothing. The web's
  * `satelliteStatus.ts` runs the same cases, `testdata/client-rules/satellite-status.json`.
  */

@@ -11,7 +11,7 @@ import org.maplibre.android.maps.MapLibreMap
 import java.text.NumberFormat
 
 /**
- * "Show in this area" (`docs/SPEC.md` FR-15.5), the web's `ui/ShowInArea.tsx`: the Spots tiles
+ * "Show in this area" (`docs/SPEC.md` FR-14.4), the web's `ui/ShowInArea.tsx`: the Spots tiles
  * start where [MapSpots.inAreaZooms] ends, and between there and a metro area in view a view holds too many places to load on every pan. So there they load on request,
  * for the visible map and the ticked categories, and stay drawn until the next request
  * ([MapSpots.setInArea]).

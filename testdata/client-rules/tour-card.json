@@ -1,7 +1,7 @@
 {
   "rule": "tourCard",
   "clients": ["web", "android"],
-  "description": "The first-time card a user's own pick earns (docs/SPEC.md FR-4.18): \"fog\" for Fog, \"stories\" for the Stories tab; null for Normal, any other tab, a card already seen (seen.cards), or while the tour runs (touring), whose steps say the same.",
+  "description": "The first-time card a user's own pick earns (docs/SPEC.md FR-4.14): \"fog\" for Fog, \"stories\" for the Stories tab; null for Normal, any other tab, a card already seen (seen.cards), or while the tour runs (touring), whose steps say the same.",
   "cases": [
     { "name": "Fog", "input": { "event": { "kind": "mode", "mode": "fog" }, "seen": { "tour": false, "cards": [] }, "touring": false }, "expected": "fog" },
     { "name": "Normal earns nothing", "input": { "event": { "kind": "mode", "mode": "normal" }, "seen": { "tour": false, "cards": [] }, "touring": false }, "expected": null },

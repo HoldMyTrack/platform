@@ -47,7 +47,7 @@ type Config struct {
 	// serves it from there. Set it only for a deployment reading the archive from object
 	// storage or a CDN. Only read by `serve`.
 	BasemapOrigin string
-	// Satellite* are the deployment's satellite imagery (docs/SPEC.md FR-4.14, docs/IMPLEMENTATION.md §4.26), which
+	// Satellite* are the deployment's satellite imagery (docs/SPEC.md FR-4.10, docs/IMPLEMENTATION.md §4.26), which
 	// the served style document hands native clients: an XYZ tile template with the provider's
 	// key in it, the deepest zoom it serves, and the credit its terms require. Mirrors the web
 	// client's VITE_SATELLITE_* (apps/web/src/map/config.ts's satelliteSource), and compose.prod.yml
@@ -91,7 +91,7 @@ type Config struct {
 	// empty TurnstileSiteKey turns it off. Only read by `serve`.
 	TurnstileSiteKey   string
 	TurnstileSecretKey string
-	// Apple* configure "Sign in with Apple" (docs/SPEC.md FR-1.14). An empty AppleServicesID,
+	// Apple* configure "Sign in with Apple" (docs/SPEC.md FR-1.11). An empty AppleServicesID,
 	// the web's client id, turns it off; AppleBundleID, the iOS app's, adds the native
 	// endpoint. Either needs the team, and the Sign in with Apple key's id and private key
 	// (the .p8 file), which sign each request's client secret. AppleRedirectURL defaults to

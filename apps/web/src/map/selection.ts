@@ -56,7 +56,7 @@ export function invertedChecks(listed: readonly Pick<Activity, 'id'>[], checked:
   return new Set(listed.filter((a) => !checked.has(a.id)).map((a) => a.id));
 }
 
-/** Tracks the map doesn't draw or fly to: filtered out, hidden, or Pending (FR-5.15). Pending
+/** Tracks the map doesn't draw or fly to: filtered out, hidden, or Pending (FR-5.8). Pending
  *  stays out of `hidden` so the user's own choice survives the reprocess. */
 export function mapHiddenIds(
   activities: readonly Activity[],

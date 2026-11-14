@@ -63,7 +63,7 @@ function shownNow(step: TourStep, mode: MapMode): boolean {
   return el !== null && onScreen(el.getBoundingClientRect(), viewport());
 }
 
-/** The tour, its offer and the first-time cards (docs/SPEC.md FR-4.18): the state around tourRules.ts. */
+/** The tour, its offer and the first-time cards (docs/SPEC.md FR-4.14): the state around tourRules.ts. */
 export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, tab, setTab, blocked }: TourOptions): Tour {
   const [seen, setSeen] = useState<TourSeen>(loadTourSeen);
   const [running, setRunning] = useState<Running | null>(null);

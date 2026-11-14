@@ -29,7 +29,7 @@ import (
 // isn't dominated by round trips, small enough that one batch's geometries stay a few MB.
 const importBatch = 1000
 
-// maxRetiredShare is the most of the live places one planet import may retire (docs/SPEC.md FR-15.1). A
+// maxRetiredShare is the most of the live places one planet import may retire (docs/SPEC.md FR-14.1). A
 // quarter's real churn in OSM is well under it; more is far likelier a planet file cut short or a
 // filter gone wrong, so the import stops rather than take most of the map with it.
 const maxRetiredShare = 0.01
@@ -45,7 +45,7 @@ type ImportStats struct {
 	Imported int // upserted into spots
 	Skipped  int // features with no category, no usable id or no geometry
 	Changed  int // of Imported, places new, different from what was stored, or back from retired
-	Retired  int // places a planet import no longer saw (docs/SPEC.md FR-15.1)
+	Retired  int // places a planet import no longer saw (docs/SPEC.md FR-14.1)
 	// NearViewpoint counts the waterfalls left out for a viewpoint within viewpointNearM.
 	NearViewpoint int
 }
@@ -54,7 +54,7 @@ type ImportStats struct {
 var ErrTooManyRetired = errors.New("spots: the file is missing too many places to be the whole planet")
 
 // Import upserts every place in r into spots and, when planet says r is the whole planet,
-// retires the places it didn't have (docs/SPEC.md FR-15.1). Then, if any place was added, changed, brought
+// retires the places it didn't have (docs/SPEC.md FR-14.1). Then, if any place was added, changed, brought
 // back or retired, it bumps every account's tile version, since every account's spots tiles just
 // changed; a refresh that changed nothing leaves the clients' cached tiles alone.
 //

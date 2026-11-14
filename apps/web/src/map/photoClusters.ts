@@ -84,7 +84,7 @@ export interface PhotoMarkerPlacement {
 }
 
 /**
- * The markers an exported image draws (FR-4.10): grouped and sized as the screen does at [zoom],
+ * The markers an exported image draws (FR-4.7): grouped and sized as the screen does at [zoom],
  * from [points] in CSS pixels from the frame's top-left, then scaled to the image by [scale]. A
  * marker wholly outside the frame is left out; the active one comes last, to be drawn on top.
  */

@@ -13,7 +13,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// The Profile page's explored places (docs/SPEC.md FR-7.3): every country the account has been in,
+// The Profile page's explored places (docs/SPEC.md FR-6.3): every country the account has been in,
 // and down the one place `?place=` opens, its regions, counties and the cities' names, each with
 // how many of the places below it the account has explored out of how many it holds. A link
 // opens a level, as the page's other toggles are links (ADR-0012): only the opened chain is

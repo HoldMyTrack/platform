@@ -6,7 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 import org.maplibre.geojson.LineString
 
-/** The selected activity's route, which the layers document's direction arrows ride (`docs/SPEC.md` FR-4.8). */
+/** The selected activity's route, which the layers document's direction arrows ride (`docs/SPEC.md` FR-4.6). */
 class RouteFeatureTest {
 
     private fun point(lon: Double) = TrackMetricPoint(lon, 0.0, 1.0)

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A spot's popup (map/SpotPopup, docs/SPEC.md FR-15.3), the web's .spot-popup: the name (or
+<!-- A spot's popup (map/SpotPopup, docs/SPEC.md FR-14.3), the web's .spot-popup: the name (or
      the category), a line of category, memorial type and date, the description and the
      inscription — each scrolling past six lines — the address, when the account captured it,
      then Copy address (Copy location without one) and Wikipedia, and Capture for a place not yet

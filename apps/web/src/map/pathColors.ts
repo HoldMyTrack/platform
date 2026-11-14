@@ -1,7 +1,7 @@
 import type { Flavor } from './style';
 
 /**
- * The trail and track layers (docs/SPEC.md FR-4.13), part of the map itself rather than the
+ * The trail and track layers (docs/SPEC.md FR-4.9), part of the map itself rather than the
  * Layers menu. Protomaps already carries every OSM path in the `roads` layer (`kind=path`,
  * sorted by `kind_detail`), but the stock style draws them all through `roads_other` as one
  * hairline grey from z14, which reads as no paths at all. These draw trails and tracks over that

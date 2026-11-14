@@ -4,7 +4,7 @@ import type { ExportControls } from '../map/useExportFlow';
 import { ExportControl } from './ExportControl';
 import { ExportViewfinder } from './ExportViewfinder';
 
-/** The map image export (FR-4.10): its map control, and the viewfinder while it's open (useExportFlow.ts). */
+/** The map image export (FR-4.7): its map control, and the viewfinder while it's open (useExportFlow.ts). */
 export function MapExport({ map, container, exporter }: { map: MapLibreMap; container: RefObject<HTMLDivElement | null>; exporter: ExportControls }) {
   const { flow } = exporter;
   return (

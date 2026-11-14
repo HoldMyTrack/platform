@@ -85,7 +85,7 @@ func generate() {
 	write("evening-loop.tcx", tcx(load(eveningLoop), "Biking", true))
 	write("mill-creek-falls.fit", fit(load(millCreek)))
 	// The same outing as the zip's Clague Park walk, without elevation: uploaded, it's a second
-	// activity beside the GPX copy, since nothing is merged on ingest (SPEC.md FR-3.7).
+	// activity beside the GPX copy, since nothing is merged on ingest (SPEC.md FR-3.5).
 	write("duplicate.tcx", tcx(load(clague), "Other", false))
 
 	broken := demoFile(playArea)

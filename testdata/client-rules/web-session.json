@@ -1,7 +1,7 @@
 {
   "rule": "webSession",
   "clients": ["web", "android", "ios"],
-  "description": "What the web map's scope events do (docs/SPEC.md FR-5.19, FR-5.20): Dates and the area keep the selection, which the next list then prunes (panelState's listLoaded); setting Dates flies once, never with a Story open; an area within about a metre of the last is the same one. State and expected: dates, area ([west, south, east, north]), storyId, checked, hidden, excludedTypes, flyRequest.",
+  "description": "What the web map's scope events do (docs/SPEC.md FR-5.11, FR-5.12): Dates and the area keep the selection, which the next list then prunes (panelState's listLoaded); setting Dates flies once, never with a Story open; an area within about a metre of the last is the same one. State and expected: dates, area ([west, south, east, north]), storyId, checked, hidden, excludedTypes, flyRequest.",
   "cases": [
     {
       "name": "setting Dates keeps the selection and flies",

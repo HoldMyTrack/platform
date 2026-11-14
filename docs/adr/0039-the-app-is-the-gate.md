@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built: the Android app's list of what's on the phone to tick and send (`SPEC.md` FR-3.6, FR-3.8), Google Maps Timeline import and `.zip` and Takeout import removed, the overlap hint in place of duplicate handling on ingest (FR-3.7), and `superseded_by` gone with the copies it hid.
+Accepted. Built: the Android app's list of what's on the phone to tick and send (`SPEC.md` FR-3.4, FR-3.6), Google Maps Timeline import and `.zip` and Takeout import removed, the overlap hint in place of duplicate handling on ingest (FR-3.5), and `superseded_by` gone with the copies it hid.
 
 ## Context
 
@@ -40,4 +40,4 @@ Both exist to clean up after an import the user didn't choose activity by activi
 - Someone with a large archive (a Strava export, a Takeout) can't bring it in at once. They upload up to 20 files at a time or wait for a connector. Path 3 is weaker for them than it was.
 - The same walk from two sources can now be kept twice, if the user ticks both despite the hint. Both count in totals and Fog of War until one is deleted.
 - Removing `superseded_by` takes a migration that deletes the superseded copies already stored, and a change to every read that filters them out.
-- Accounts that already hold routine activities clean them up with the existing Delete group (FR-5.13) over a type and date filter.
+- Accounts that already hold routine activities clean them up by deleting what a type and date filter lists (FR-5.6).

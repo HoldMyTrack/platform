@@ -5,7 +5,7 @@ import type { Activity } from '../api';
 import { distanceBounds, passesFilters, typeFacets, type DistanceRange, type TypeFacet } from '../ui/activityFacets';
 
 export interface ListView {
-  /** Rows with a reprocess pending (a track edit or a Private location change). A Pending track isn't drawn (FR-5.15). */
+  /** Rows with a reprocess pending (a track edit or a Private location change). A Pending track isn't drawn (FR-5.8). */
   pendingIds: string[];
   distanceBounds: DistanceRange | null;
   facets: TypeFacet[];

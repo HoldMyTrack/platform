@@ -1,6 +1,6 @@
 import Foundation
 
-/// A circle where the account's tracks are clipped (root docs/SPEC.md FR-8.1).
+/// A circle where the account's tracks are clipped (root docs/SPEC.md FR-7.1).
 public struct PrivateLocation: Equatable, Sendable {
     public let id: String
     public let name: String
@@ -12,7 +12,7 @@ public struct PrivateLocation: Equatable, Sendable {
     public static let radiusRange = 50...2000
 }
 
-/// Where the account's latest copy of its data stands (root docs/SPEC.md FR-1.12).
+/// Where the account's latest copy of its data stands (root docs/SPEC.md FR-1.13).
 public struct ExportStatus: Equatable, Sendable {
     public enum State: String, Sendable { case none, preparing, ready, failed }
 

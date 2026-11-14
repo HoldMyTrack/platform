@@ -1,5 +1,5 @@
 /**
- * Which photos the map shows and what a marker's click does (FR-16), as plain values.
+ * Which photos the map shows and what a marker's click does (FR-15), as plain values.
  * Android: `photos/PhotoMarkerScope.kt`.
  */
 import type { Photo } from '../api';

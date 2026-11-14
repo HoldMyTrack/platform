@@ -1,4 +1,4 @@
-// Package budget is the daily R2 budget (IMPLEMENTATION.md §5.7, docs/SPEC.md FR-17):
+// Package budget is the daily R2 budget (IMPLEMENTATION.md §5.7, docs/SPEC.md FR-16):
 // a ceiling on what every account together may cost in object store requests in a UTC day.
 // Each process counts its own requests (internal/storage's countingTransport) and adds them to
 // the day's total in r2_ops; every process reads that total back to decide what to give up as

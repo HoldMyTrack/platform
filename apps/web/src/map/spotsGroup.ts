@@ -11,7 +11,7 @@ import { IMAGES_METADATA, ROLE_METADATA, tilePath, TOGGLE_METADATA, VARS_METADAT
  * on the map, so the fog veil mustn't bury it, and a label crossing it is less of a loss than the
  * icon.
  *
- * The client binds the categories shown, the ids the account captured (FR-15.6) and capture
+ * The client binds the categories shown, the ids the account captured (FR-14.6) and capture
  * mode's target (`apps/android/docs/SPEC.md` FR-2.8) as vars, and draws each badge image the
  * layers name in the colors given: the icon shapes are the client's.
  */
@@ -48,7 +48,7 @@ const TARGET_AREA_OPACITY = 0.55;
 const byCategory: ExpressionSpecification = ['in', ['get', 'category'], ['var', 'spotCategories']];
 const isCaptured: ExpressionSpecification = ['in', ['to-number', ['get', 'id']], ['var', 'captured']];
 const isTarget: ExpressionSpecification = ['==', ['to-number', ['get', 'id']], ['var', 'captureTarget']];
-// The tiles' layers leave out a retired place (docs/SPEC.md FR-15.1) unless the account captured
+// The tiles' layers leave out a retired place (docs/SPEC.md FR-14.1) unless the account captured
 // it; "Show in this area" gets only those from the server already.
 const shown: ExpressionSpecification = ['all', byCategory, ['any', ['!', ['to-boolean', ['get', 'retired']]], isCaptured]];
 

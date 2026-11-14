@@ -5,7 +5,7 @@ import dev.holdmytrack.android.panel.PanelState
 /**
  * Which activities the map's list and tracks show, the visible area under Dates or a Story, and
  * the rules between that scope, the panel's selection ([panel]) and the camera (`docs/SPEC.md`
- * FR-5.19, FR-5.20, FR-14.6): Dates and the area keep the selection, which the next list prunes
+ * FR-5.11, FR-5.12, FR-13.6): Dates and the area keep the selection, which the next list prunes
  * ([PanelState.setActivities]); setting Dates or opening a Story moves the camera once
  * ([consumeFly]). The web's `session.ts`; both run `testdata/client-rules/web-session.json`.
  */
@@ -20,7 +20,7 @@ class MapSession(private val panel: PanelState) {
     var area: List<Double>? = null
         private set
 
-    /** The open Story (`docs/SPEC.md` FR-14.6): the list and tracks are its activities, [dates]
+    /** The open Story (`docs/SPEC.md` FR-13.6): the list and tracks are its activities, [dates]
      *  and [area] kept for when it closes. */
     var storyId: String? = null
         private set

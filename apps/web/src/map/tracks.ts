@@ -20,7 +20,7 @@ const CLICK_TOLERANCE_PX = 4;
 // box above missed a track under the finger most of the time — and a miss clears the focus.
 const TAP_TOLERANCE_PX = 14;
 
-/** `from`/`to` and a Story (FR-14.4) — `types` stays a client-side-only filter (activityFacets.ts,
+/** `from`/`to` and a Story (FR-13.4) — `types` stays a client-side-only filter (activityFacets.ts,
  *  setHiddenTracks below), matching DISTANCE, which has no server-side equivalent at all;
  *  keeping both narrowed the same way is simpler than half server-side, half client-side. */
 type TrackDateRange = Pick<ActivityQuery, 'from' | 'to' | 'story' | 'since'>;
@@ -206,7 +206,7 @@ export function setHiddenTracks(map: MapLibreMap, hiddenIds: string[]): void {
 }
 
 /** While the web's list was cut at its cap, the map draws only the listed tracks, so the two stay
- *  one set (docs/SPEC.md FR-5.19); null draws every track. */
+ *  one set (docs/SPEC.md FR-5.11); null draws every track. */
 export function setListedTracks(map: MapLibreMap, listedIds: readonly string[] | null): void {
   setLayerVars(map, { capped: listedIds !== null, listed: listedIds ?? [] });
 }

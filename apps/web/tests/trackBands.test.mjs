@@ -1,4 +1,4 @@
-// Covers docs/SPEC.md FR-4.8: the focused activity's bands and its direction arrows' route.
+// Covers docs/SPEC.md FR-4.6: the focused activity's bands and its direction arrows' route.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { bandsData } from '../src/map/trackBands.ts';

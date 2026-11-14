@@ -9,7 +9,7 @@ import dev.holdmytrack.android.photos.PhotoImages
 import dev.holdmytrack.android.photos.PhotoMarkerPlacement
 
 /**
- * The photo markers on screen, drawn into an exported image (root `docs/SPEC.md` FR-4.10) after
+ * The photo markers on screen, drawn into an exported image (root `docs/SPEC.md` FR-4.7) after
  * the map and before [ImageMarks], as the web's `exportPhotos.ts`. Where they go and how big is
  * [dev.holdmytrack.android.photos.PhotoClusters.layout]; how they look is [PhotoMarkerPainter],
  * the live markers' own.

@@ -1,6 +1,6 @@
 {
   "rule": "satelliteStatus",
-  "description": "Whether Satellite imagery is loading on this device (docs/SPEC.md FR-4.14), from whether an imagery tile has arrived, whether an imagery request failed before that, and how long Satellite has been on screen; and whether the map looks like Satellite, which failed imagery doesn't.",
+  "description": "Whether Satellite imagery is loading on this device (docs/SPEC.md FR-4.10), from whether an imagery tile has arrived, whether an imagery request failed before that, and how long Satellite has been on screen; and whether the map looks like Satellite, which failed imagery doesn't.",
   "clients": ["web", "android", "ios"],
   "cases": [
     { "name": "loading at first", "input": { "on": true, "loaded": false, "failed": false, "waitedMs": 0 }, "expected": { "status": "loading", "look": true } },

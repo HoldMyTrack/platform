@@ -1,4 +1,4 @@
-// Covers docs/SPEC.md FR-4.8: the font the direction chevrons are drawn in.
+// Covers docs/SPEC.md FR-4.6: the font the direction chevrons are drawn in.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';

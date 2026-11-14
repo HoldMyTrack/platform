@@ -6,7 +6,7 @@ import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
-/** How a sync batch is sorted by the server's answer (`docs/SPEC.md` FR-3.6). */
+/** How a sync batch is sorted by the server's answer (`docs/SPEC.md` FR-3.4). */
 class SyncVerdictsTest {
 
     private val t0 = Instant.parse("2026-05-01T10:00:00Z")

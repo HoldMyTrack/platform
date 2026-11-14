@@ -5,7 +5,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Test
 
-/** The Edit window's Track and Photos tabs (root `docs/SPEC.md` FR-5.14, FR-16.1). */
+/** The Edit window's Track and Photos tabs (root `docs/SPEC.md` FR-5.7, FR-15.1). */
 class EditAvailabilityTest {
 
     private fun activity(id: String = "a", trackEdit: String? = null, photos: String? = null) = Activity(

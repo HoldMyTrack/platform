@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-12.4 (the admin statistics page).
+// Covers docs/SPEC.md FR-11.4 (the admin statistics page).
 
 import (
 	"net/http"

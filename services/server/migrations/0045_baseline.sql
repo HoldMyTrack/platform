@@ -719,7 +719,7 @@ ALTER TABLE ONLY public.user_identities
 INSERT INTO public.users (id, email, display_name, country, timezone)
 VALUES ('22222222-2222-2222-2222-222222222222', 'demo-customer@holdmytrack.invalid', 'Demo User', 'US', 'America/New_York');
 
--- Where its history starts and ends, so ingest clips them as it would for any account (FR-8.1).
+-- Where its history starts and ends, so ingest clips them as it would for any account (FR-7.1).
 -- radius_m = 305 is the closest whole-meters value to 1000 ft (304.8 m).
 INSERT INTO public.privacy_zones (user_id, name, center, radius_m)
 SELECT '22222222-2222-2222-2222-222222222222', z.name, public.ST_SetSRID(public.ST_MakePoint(z.lon, z.lat), 4326)::public.geography, 305

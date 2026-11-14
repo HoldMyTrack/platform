@@ -41,7 +41,7 @@ class CameraFramer(
     private var appFlight = false
 
     /**
-     * The opening view (`docs/SPEC.md` FR-4.5), once per session: the newest five tracks framed at
+     * The opening view (`docs/SPEC.md` FR-4.4), once per session: the newest five tracks framed at
      * zoom 12, or fewer when five don't fit ([OpeningView]), the list then asked about wherever
      * the camera is ([onOpened]). The newest few are asked for alone, since no area is known yet.
      */

@@ -1,6 +1,6 @@
 package bikepaths
 
-// Covers docs/SPEC.md FR-4.13 (which ways are bike paths).
+// Covers docs/SPEC.md FR-4.9 (which ways are bike paths).
 
 import "testing"
 

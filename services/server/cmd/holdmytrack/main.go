@@ -385,7 +385,7 @@ func main() {
 	case "import-spots":
 		// The load, and each quarterly refresh, of the Spots places from an OpenStreetMap extract
 		// made off-box (docs/DEPLOY.md §6) — upserted, so safe to re-run. --planet says the file
-		// is the whole planet, so the places it doesn't have are retired (docs/SPEC.md FR-15.1). See
+		// is the whole planet, so the places it doesn't have are retired (docs/SPEC.md FR-14.1). See
 		// internal/spots.Import's doc comment.
 		args := os.Args[2:]
 		planet := len(args) > 0 && args[0] == "--planet"
@@ -441,7 +441,7 @@ func main() {
 			"deleted", stats.Deleted, "skipped", stats.Skipped)
 
 	case "set-admin":
-		// Grants or revokes the admin panel (/admin, FR-12) — deliberately a shell-only
+		// Grants or revokes the admin panel (/admin, FR-11) — deliberately a shell-only
 		// operation: nothing on the web can make an account an admin.
 		if len(os.Args) != 4 || (os.Args[3] != "true" && os.Args[3] != "false") {
 			fmt.Fprintln(os.Stderr, "usage: holdmytrack set-admin <email> true|false")

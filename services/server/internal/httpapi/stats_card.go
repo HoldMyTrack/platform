@@ -32,7 +32,7 @@ SELECT activity_type, distance_meters, COALESCE(moving_seconds, duration_seconds
  WHERE user_id = $1 AND id = ANY($2::uuid[])
  ORDER BY started_at DESC, id DESC`
 
-// handleStatsCard draws the stats card for a map image export (SPEC FR-4.10): the checked
+// handleStatsCard draws the stats card for a map image export (SPEC FR-4.7): the checked
 // activities' numbers as a PNG the client lays over its image. Every id must be the account's;
 // Pending ones are left out, and with none left there is no card (204).
 func (s *Server) handleStatsCard(w http.ResponseWriter, r *http.Request) {

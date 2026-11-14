@@ -4,7 +4,7 @@ import { t } from '../i18n';
 import { useBackdropClose } from './ConfirmDialog';
 
 /**
- * Send a copy (`SPEC.md` FR-14.7): a Stories tab folder's send button, asking for the email
+ * Send a copy (`SPEC.md` FR-13.7): a Stories tab folder's send button, asking for the email
  * address to send a copy of the Story to. A modal `<dialog>` like StoryDialog.tsx, owning its busy
  * and error state. Once sent it says so and stays open on that, with the same words whether or
  * not the address has an account — the server answers the same either way, so the person

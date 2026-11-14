@@ -37,7 +37,7 @@ type overlapsResponse struct {
 }
 
 // handleActivityOverlaps answers, for each time span a client is about to offer for import,
-// the live activity it overlaps (§4.6, SPEC FR-3.7): the hint that ticking it would make a
+// the live activity it overlaps (§4.6, SPEC FR-3.5): the hint that ticking it would make a
 // second copy of something the account already has. It decides nothing; the spans not listed
 // overlap nothing.
 func (s *Server) handleActivityOverlaps(w http.ResponseWriter, r *http.Request) {

@@ -16,7 +16,7 @@ const CARD_ANCHORS: Record<CardId, string> = {
   stories: '[data-testid="activities-panel-tab-stories"]',
 };
 
-/** The tour, its offer, the tip after the offer is declined, and the first-time cards (docs/SPEC.md FR-4.18). A card closes on the next press outside it. */
+/** The tour, its offer, the tip after the offer is declined, and the first-time cards (docs/SPEC.md FR-4.14). A card closes on the next press outside it. */
 export function TourLayer({ tour }: { tour: Tour }) {
   return (
     <>

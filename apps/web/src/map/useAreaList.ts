@@ -16,7 +16,7 @@ export function viewArea(map: MapLibreMap): BBox {
 }
 
 /**
- * The list follows the map (docs/SPEC.md FR-5.19): from zoom 4 every move reloads it once the map
+ * The list follows the map (docs/SPEC.md FR-5.11): from zoom 4 every move reloads it once the map
  * settles. The app's own flights (APP_FLIGHT: focusing a row, Focus on map, a Story) leave the list
  * as it is, or clicking a row would shrink the list to that row's track; the opening view and
  * Dates' flight ask for their area themselves. Closing a Story asks about wherever the map is then.

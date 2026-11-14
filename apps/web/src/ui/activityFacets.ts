@@ -20,7 +20,7 @@ export interface TypeFacet {
 }
 
 /** The real min/max distance across the fetched rows, or null when none have a distance at
- *  all — the slider has nothing to bound itself by in that case. A private activity (FR-8.1)
+ *  all — the slider has nothing to bound itself by in that case. A private activity (FR-7.1)
  *  counts as having none: its stored 0 is no track, not a zero-length one. */
 export function distanceBounds(activities: Activity[]): DistanceRange | null {
   let min = Infinity;

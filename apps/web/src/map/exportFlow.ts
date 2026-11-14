@@ -1,5 +1,5 @@
 /**
- * The export viewfinder's stages (FR-4.10) as a reducer. The state lives in `MapView` because it
+ * The export viewfinder's stages (FR-4.7) as a reducer. The state lives in `MapView` because it
  * spans `ExportViewfinder`, `ExportControl` and the map instance capture needs. Windows are in the
  * map container's CSS pixels.
  */

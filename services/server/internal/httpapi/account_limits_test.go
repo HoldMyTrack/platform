@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-1.13 (account limits).
+// Covers docs/SPEC.md FR-1.14 (account limits).
 
 import (
 	"context"

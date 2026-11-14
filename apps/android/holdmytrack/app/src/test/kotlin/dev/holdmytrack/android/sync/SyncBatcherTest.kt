@@ -6,7 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** How a sync's sessions are grouped into requests (`docs/SPEC.md` FR-3.6). */
+/** How a sync's sessions are grouped into requests (`docs/SPEC.md` FR-3.4). */
 class SyncBatcherTest {
 
     /** Adds each (name, points) and returns the requests sent, the leftover last. */

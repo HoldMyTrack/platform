@@ -26,11 +26,11 @@ function AuthenticatedApp() {
 const openPrivateLocations = takeFlagParam('private-locations');
 
 /** `?activity=<id>&day=<YYYY-MM-DD>` is the map arriving on one activity — the /sync page's
- *  "View on map" (`SPEC.md` FR-3.9), which works out the activity's day on the server. Taken
+ *  "View on map" (`SPEC.md` FR-3.7), which works out the activity's day on the server. Taken
  *  once and stripped, like `?private-locations`, so a refresh doesn't set Dates to its day again. */
 const openActivity = takeActivityParam();
 
-/** `?tour` is the map arriving to start the tour: the header's Take a tour from any other page (`SPEC.md` FR-4.18). Taken once and stripped, so a refresh doesn't start it again. */
+/** `?tour` is the map arriving to start the tour: the header's Take a tour from any other page (`SPEC.md` FR-4.14). Taken once and stripped, so a refresh doesn't start it again. */
 const openTour = takeFlagParam('tour');
 
 function takeActivityParam(): { id: string; day: string } | null {

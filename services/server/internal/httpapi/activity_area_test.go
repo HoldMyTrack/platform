@@ -12,7 +12,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
 )
 
-// The area list (FR-5.19): the tracks crossing a view, newest first, capped with the area's
+// The area list (FR-5.11): the tracks crossing a view, newest first, capped with the area's
 // total, across the antimeridian either way round, in slim rows.
 func TestListArea(t *testing.T) {
 	d := newDBTest(t)
@@ -29,7 +29,7 @@ func TestListArea(t *testing.T) {
 	older := d.newActivity(me, testActivity{activityType: "hiking", startedAt: day(1), at: &[2]float64{-30.6, -30.6}})
 	newer := d.newActivity(me, testActivity{activityType: "running", startedAt: day(2), at: &[2]float64{-30.4, -30.4}})
 	d.newActivity(me, testActivity{activityType: "hiking", startedAt: day(3), at: &[2]float64{-20.5, -30.5}}) // outside
-	d.newActivity(me, testActivity{activityType: "hiking", startedAt: day(4)})                                // no track (FR-8.1)
+	d.newActivity(me, testActivity{activityType: "hiking", startedAt: day(4)})                                // no track (FR-7.1)
 	// Its box covers the view, but the line goes round it.
 	track(day(5), "LINESTRING M(-32 -29.5 0, -29.5 -29.5 60, -29.5 -32 120)")
 	// Stored continuing past 180 (§4.1), as ingest keeps a track across the antimeridian.
@@ -118,7 +118,7 @@ func TestGetActivity(t *testing.T) {
 }
 
 // A tracks tile's `since` keeps only activities starting at or after it: the web's map past the
-// list's cap (FR-5.19).
+// list's cap (FR-5.11).
 func TestTracksTileSince(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)

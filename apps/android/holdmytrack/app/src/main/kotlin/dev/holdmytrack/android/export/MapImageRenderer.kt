@@ -94,7 +94,7 @@ class MapImageRenderer(private val host: ViewGroup) {
                 // Idle never comes when some tiles fail (seen with satellite imagery refused while
                 // tracks are bold), though the map stops drawing: a map that has drawn and then
                 // drawn nothing for QUIET_MS has drawn all it will, and a failed tile costs that
-                // tile only (`docs/SPEC.md` FR-4.14).
+                // tile only (`docs/SPEC.md` FR-4.10).
                 var lastFrame = 0L
                 view.addOnDidFinishRenderingFrameListener { _, _, _ -> lastFrame = SystemClock.uptimeMillis() }
                 lateinit var watch: Runnable

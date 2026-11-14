@@ -87,7 +87,7 @@ class SpotsController(
     }
 
     /**
-     * The account's captured spots (`docs/SPEC.md` FR-15.6), for the badges and the popup: all of
+     * The account's captured spots (`docs/SPEC.md` FR-14.6), for the badges and the popup: all of
      * them when the overlays attach, then on every return only what's newer ([capturesSince]).
      * Kept as they were on a failure.
      */

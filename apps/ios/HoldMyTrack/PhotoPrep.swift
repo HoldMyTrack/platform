@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import ImageIO
 import UniformTypeIdentifiers
 
-/// Getting a picked photo ready for upload (root docs/SPEC.md FR-16.1, ADR-0024), Android's
+/// Getting a picked photo ready for upload (root docs/SPEC.md FR-15.1, ADR-0024), Android's
 /// PhotoPrep: read what its EXIF says about when and where it was taken (PhotoExifFields), then
 /// redraw it upright at most maxSide pixels on its long side, plus a thumbSide thumbnail. Redrawing
 /// keeps the pixels alone, so no EXIF field, the position included, reaches the server inside the

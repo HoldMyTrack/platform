@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The Private location editor's card along the bottom of the map (root docs/SPEC.md FR-8.1),
+/// The Private location editor's card along the bottom of the map (root docs/SPEC.md FR-7.1),
 /// Android's PrivateLocationEditor card: Name, the radius in 10 m steps, Delete for a saved one,
 /// Cancel and Save. It draws the draft MapViewController+PrivateLocations hands it and reports
 /// each change; the map moves the circle.

@@ -62,7 +62,7 @@ async function settledActivities(expected, timeoutMs = 90_000) {
   }
 }
 
-/** The map framed on every activity, and the list following it (docs/SPEC.md FR-5.19). A camera
+/** The map framed on every activity, and the list following it (docs/SPEC.md FR-5.11). A camera
  *  move from here counts as the user's. */
 async function viewAll() {
   const { activities } = await call('GET', '/activities');
@@ -84,7 +84,7 @@ before(async () => {
   // A fresh account opens on the first-run setup until it has a Country (FR-1.7).
   await call('PATCH', '/account/settings', { display_name: '', country: 'US', timezone: 'America/New_York' });
   page = await context.newPage();
-  // Zoom 6 over the samples' region: from zoom 4 the list follows the map (docs/SPEC.md FR-5.19).
+  // Zoom 6 over the samples' region: from zoom 4 the list follows the map (docs/SPEC.md FR-5.11).
   await page.goto(`${BASE}/#map=6.00/41.45/-81.70&theme=light`);
   await page.waitForFunction(() => Boolean(window.__holdmytrack), undefined, { timeout: 60_000 }).catch(async (err) => {
     await page.screenshot({ path: new URL('./screenshots/flows-before.png', import.meta.url).pathname });

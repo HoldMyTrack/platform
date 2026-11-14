@@ -34,11 +34,11 @@ The tuning values have defaults to leave alone. A change to one needs `… up -d
 | `WORKER_CONCURRENCY` | 4 | jobs queue up and memory allows; each unit adds 4 database connections (`IMPLEMENTATION.md` §4.1) | `worker` |
 | `WORKER_RENDER_CONCURRENCY` | 2 | renders queue up; each unit adds 4 database connections | `worker` |
 | `UPLOADS_PER_HOUR` | 100 | a load test's `seed` or `import` runs (`docs/PERFORMANCE.md`, `SPEC.md` FR-3.1); recreating also resets every count | `api` |
-| `TILES_PER_MINUTE` | 1200 | a load test's `browse` runs (`SPEC.md` FR-4.15) | `api` |
+| `TILES_PER_MINUTE` | 1200 | a load test's `browse` runs (`SPEC.md` FR-4.11) | `api` |
 | `SIGNUPS_PER_HOUR` | 5 | a load test's `signup` runs (`SPEC.md` FR-1.1) | `api` |
 | `RATE_LIMITS` | on | never here: `off` lifts every request limit for local development, and `api` refuses it unless `APP_BASE_URL` is local | `api` |
-| `R2_DAILY_BUDGET_USD` | 2 | the R2 alerts (§13) show real use nearing it, or a load test runs (`SPEC.md` FR-17); a raise lifts the stages at once if the day's spend is under it | `api`, `worker` |
-| `MIN_ANDROID_BUILD` | empty | older Android builds must go (§10, `SPEC.md` §1.5) | `api` |
+| `R2_DAILY_BUDGET_USD` | 2 | the R2 alerts (§13) show real use nearing it, or a load test runs (`SPEC.md` FR-16); a raise lifts the stages at once if the day's spend is under it | `api`, `worker` |
+| `MIN_ANDROID_BUILD` | empty | older Android builds must go (§10, `SPEC.md` §1.4) | `api` |
 | `MIN_IOS_BUILD` | empty | older iOS builds must go, as for Android (§10) | `api` |
 
 Put a load test's raised values back afterwards.
@@ -50,7 +50,7 @@ Put a load test's raised values back afterwards.
 3. Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` in `.env.prod`, leave `GOOGLE_REDIRECT_URL` empty, and run `… up -d api`. No rebuild: the web client asks the API whether to show the button.
 4. For the Android app (`IMPLEMENTATION.md` §4.9), create a second OAuth client ID in the same project, type **Android**, package `dev.holdmytrack.android`, with the SHA-1 of the signing key. Create one per key: the release key and each developer's debug key (`apps/android/holdmytrack/README.md` shows how to get the SHA-1). Nothing goes into `.env.prod`: the app requests tokens for the web client ID it reads from `GET /v1/auth/providers`. Without it, the app's account picker fails with a generic error.
 
-**Sign in with Facebook (optional).** Leave `FACEBOOK_APP_ID` empty to run without it. SMTP must work first: a new Facebook account verifies its email by mail (`SPEC.md` FR-1.10, ADR-0015). Taking the app Live needs a Meta-verified business portfolio (step 6), so without one leave it off; holdmytrack.com does (`ROADMAP.md`). Meta renames dashboard labels; search the dashboard when one below doesn't match.
+**Sign in with Facebook (optional).** Leave `FACEBOOK_APP_ID` empty to run without it. SMTP must work first: a new Facebook account verifies its email by mail (`SPEC.md` FR-1.10, ADR-0009). Taking the app Live needs a Meta-verified business portfolio (step 6), so without one leave it off; holdmytrack.com does (`ROADMAP.md`). Meta renames dashboard labels; search the dashboard when one below doesn't match.
 
 1. At developers.facebook.com, register as a developer, then **My Apps → Create App**: name HoldMyTrack, a contact email, use case "Authenticate and request data from users with Facebook Login".
 2. Under the use case's **Customize**, make sure `email` is added beside `public_profile`. Neither needs App Review.
@@ -97,7 +97,7 @@ A newer build repeats steps 4–6 under a new prefix; keep the old prefix until 
 
 Check from any machine: `curl -s -o /dev/null -w '%{http_code}\n' -H 'Range: bytes=0-126' https://tiles.<your-domain>/<YYYYMMDD>/basemap/basemap.pmtiles` prints `403`, and with `-H 'Origin: https://<your-domain>'` added, `206`.
 
-**Satellite imagery (optional).** Leave `VITE_SATELLITE_TILES` empty to run without it (`SPEC.md` FR-4.14). holdmytrack.com uses MapTiler Satellite on the Free plan, which pauses the imagery past 100k tiles a month instead of billing (`IMPLEMENTATION.md` §4.26):
+**Satellite imagery (optional).** Leave `VITE_SATELLITE_TILES` empty to run without it (`SPEC.md` FR-4.10). holdmytrack.com uses MapTiler Satellite on the Free plan, which pauses the imagery past 100k tiles a month instead of billing (`IMPLEMENTATION.md` §4.26):
 
 1. Create a MapTiler Cloud account on the Free plan, with no payment method.
 2. Under **API keys**, create a key and add `https://<your-domain>` to **Allowed HTTP origins** (plus `http://localhost:5173` for local dev). The key is public in the bundle; the origin list is what protects the quota. The Android app sends the deployment's origin, so the same key serves it.
@@ -120,7 +120,7 @@ Check from any machine: `curl -s -o /dev/null -w '%{http_code}\n' -H 'Range: byt
    ```
    `GIT_SHA` is per invocation, never in `.env.prod`; without it the stale-tab banner can't work. This builds the images, runs `migrate` once, and starts `db`, `api`, `worker` and `web`.
 2. If the site isn't up within a couple of minutes, read `… logs web` for Caddy's certificate request.
-3. Make your own account an admin, to open `/admin` (`SPEC.md` FR-12): sign up on the site, then `… run --rm api set-admin you@example.com true` (`false` revokes). Nothing on the web can grant it.
+3. Make your own account an admin, to open `/admin` (`SPEC.md` FR-11): sign up on the site, then `… run --rm api set-admin you@example.com true` (`false` revokes). Nothing on the web can grant it.
 
 Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… logs` reaches back only that far. Postgres's memory is set for a 4 GB droplet in `compose.prod.yml`'s `db` command: scale both values on another size, as a `db` change (§7).
 
@@ -163,7 +163,7 @@ mkdir -p /tmp/demo-export && chmod 777 /tmp/demo-export
 
 Copy the GPX files into `demo_data/`, `photos/` into `demo_data/photos/`, and merge `manifest.json`'s `activities` into the one there (`httpapi.ExportDemoActivities` says what it writes). Review every track and photo before committing: the repository is public.
 
-**Load or refresh Spots** (`SPEC.md` FR-15), about once a quarter; until the first load the Layers menu shows no points of interest.
+**Load or refresh Spots** (`SPEC.md` FR-14), about once a quarter; until the first load the Layers menu shows no points of interest.
 
 1. Off the server, with osmium-tool and ~100 GB free (the planet download is ~95 GB, about 1.5 hours; a re-run resumes it):
    ```
@@ -179,7 +179,7 @@ Copy the GPX files into `demo_data/`, `photos/` into `demo_data/photos/`, and me
    Never pass `--planet` with a regional file: it retires every place the file lacks (`IMPLEMENTATION.md` §4.25). If it stops with `the file is missing too many places to be the whole planet`, it retired nothing; check the file's line count against the last run's. The last log line counts `imported`, `changed`, `retired` and `skipped`.
 4. Delete `/tmp/spots`.
 
-**Load or refresh bike paths** (`SPEC.md` FR-4.13), right after Spots; until the first load Bike paths, Shared paths and Mountain bike trails draw nothing.
+**Load or refresh bike paths** (`SPEC.md` FR-4.9), right after Spots; until the first load Bike paths, Shared paths and Mountain bike trails draw nothing.
 
 1. Off the server, with the same work directory so it reuses the planet download:
    ```

@@ -14,7 +14,7 @@ import kotlinx.coroutines.launch
 
 /**
  * The files the Upload screen sends to `POST /v1/activities/upload` — the web's Upload menu
- * (`services/server/internal/web/static/upload.js`, root `docs/SPEC.md` FR-3.1–FR-3.4) on the
+ * (`services/server/internal/web/static/upload.js`, root `docs/SPEC.md` FR-3.1–FR-3.2) on the
  * phone: `.gpx`, `.fit` and `.tcx`, up to 20 at a time. A `.zip` is refused with a note:
  * archives aren't imported (ADR-0039). One file at a time, in the order picked, each with its
  * progress.

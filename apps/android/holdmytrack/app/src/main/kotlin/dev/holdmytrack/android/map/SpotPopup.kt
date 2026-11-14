@@ -21,7 +21,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 /**
- * A spot's popup (`docs/SPEC.md` FR-15.3), the web's `SpotPopup.tsx`: [view] (`view_spot_popup`)
+ * A spot's popup (`docs/SPEC.md` FR-14.3), the web's `SpotPopup.tsx`: [view] (`view_spot_popup`)
  * over the map, above the spot's badge — or under it when there's no room above, below [top] —
  * and following it as the camera moves ([place]). One at a time; [show] replaces it.
  *

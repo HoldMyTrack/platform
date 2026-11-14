@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The focused activity's pace bands (root docs/SPEC.md FR-4.8): its metrics fetched when the
+/// The focused activity's pace bands (root docs/SPEC.md FR-4.6): its metrics fetched when the
 /// focus moves, again after its reprocess lands, and dropped when it clears; drawn by the layers
 /// document's `track-bands` group while its track is drawn (PaceBands.drawn), with the legend on
 /// its card.

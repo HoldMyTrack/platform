@@ -3,7 +3,7 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// One Edit track session (root docs/SPEC.md FR-5.14, FR-5.17), as Android's TrackEditor runs it.
+/// One Edit track session (root docs/SPEC.md FR-5.7, FR-5.9), as Android's TrackEditor runs it.
 struct TrackEditSessionTests {
     /// Five points a second apart along a meridian.
     private let points = (0..<5).map { TrackPoint(lon: 10, lat: 50 + Double($0) * 0.001, t: 1000 * ($0 + 1)) }

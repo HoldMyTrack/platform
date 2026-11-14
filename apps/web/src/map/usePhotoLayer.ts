@@ -33,7 +33,7 @@ export interface PhotoLayer {
   exportPhotos: ExportPhotos;
 }
 
-/** Photos on the map (FR-16): the scope's photos as markers on their routes, and the popup a
+/** Photos on the map (FR-15): the scope's photos as markers on their routes, and the popup a
  *  marker's click opens. The popup closes when the scope changes. */
 export function usePhotoLayer(map: MapLibreMap | null, inputs: PhotoLayerInputs): PhotoLayer {
   const { mode, editWindowIds, focusedId, storyId, version, editOpen, trackTabShown, mapHiddenIds } = inputs;

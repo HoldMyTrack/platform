@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-16 (activity photos).
+// Covers docs/SPEC.md FR-15 (activity photos).
 
 import (
 	"bytes"

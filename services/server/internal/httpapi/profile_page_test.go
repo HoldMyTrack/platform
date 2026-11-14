@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-7 (the activity graph).
+// Covers docs/SPEC.md FR-6 (the activity graph).
 
 import (
 	"strings"

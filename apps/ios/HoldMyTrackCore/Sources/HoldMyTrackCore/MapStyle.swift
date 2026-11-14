@@ -205,7 +205,7 @@ public enum MapStyle {
             }
         }
 
-        // Satellite (root docs/SPEC.md FR-4.14): the imagery, the basemap's fills hidden over it
+        // Satellite (root docs/SPEC.md FR-4.10): the imagery, the basemap's fills hidden over it
         // and its roads see-through; all three lists come from the style's own metadata.
         if hasSatellite {
             set(&layers, satelliteID, "layout", "visibility", .string(state.satellite ? "visible" : "none"))
@@ -218,7 +218,7 @@ public enum MapStyle {
             }
         }
 
-        // Roads (root docs/SPEC.md FR-4.17), drawn while picked and Show layers is on.
+        // Roads (root docs/SPEC.md FR-4.13), drawn while picked and Show layers is on.
         let roads = state.roads && state.showLayers
         for id in metadata?[roadsKey]?.array?.compactMap(\.string) ?? [] {
             set(&layers, id, "layout", "visibility", .string(roads ? "visible" : "none"))

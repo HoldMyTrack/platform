@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built for the server and the web (`SPEC.md` FR-16, `IMPLEMENTATION.md` §4.27) and for Android (`apps/android/docs/SPEC.md` FR-2.10). Amends the "only the geographical data you trust us with" line of ADR-0017, which it otherwise leaves as it is.
+Accepted. Built for the server and the web (`SPEC.md` FR-15, `IMPLEMENTATION.md` §4.27) and for Android (`apps/android/docs/SPEC.md` FR-2.10). Amends the "only the geographical data you trust us with" line of ADR-0017, which it otherwise leaves as it is.
 
 ## Context
 
@@ -14,7 +14,7 @@ A Story keeps a trip as one thing — its tracks, its name, its totals (`VISION.
 
 **Every photo has a place on its route, and that place is a moment, not a position.** The browser reads the file's EXIF capture time and GPS position before resizing and sends them as fields. The server places the photo at the capture time if it falls within the activity's track (five minutes either side are clamped to its ends); without a usable time, at the point of the track nearest the EXIF position, if that's within 500 m. If neither places it, the upload is refused with a code saying so, and the client asks the user where on the track it goes and sends it again with that choice; an activity with no track can't hold photos at all. What is stored is a time on the track's own time axis (`route_at`, never null); the position is worked out from the track on every read. Photos are managed in the activity's Edit window, on a Photos tab: a list with Add, Edit and Delete, where Edit moves the photo along the track with a slider.
 
-**A photo is always on the track as it's drawn.** Its moment is clamped to the track's current first and last moment on every read, so a stretch Edit track or a Private location has since cut away leaves the photo at the visible track's nearest end — and back at its own moment if the track returns. This is also all the Private location handling it needs: a Private location only ever cuts a track's ends, which are then gone from the track the photo is read against, and a track that passes through one is drawn whole (`VISION.md` §7), so a photo on that stretch shows nothing the track itself doesn't. Whenever its track is shown selected, its photos are on it.
+**A photo is always on the track as it's drawn.** Its moment is clamped to the track's current first and last moment on every read, so a stretch Edit track or a Private location has since cut away leaves the photo at the visible track's nearest end — and back at its own moment if the track returns. This is also all the Private location handling it needs: a Private location only ever cuts a track's ends, which are then gone from the track the photo is read against, and a track that passes through one is drawn whole (`VISION.md` §7), so a photo on that stretch shows nothing the track itself doesn't. Whenever its track is Focused, its photos are on it.
 
 **Photos are private,** like everything else in an account: served only to their owner, never by a public link.
 
@@ -35,8 +35,8 @@ A Story keeps a trip as one thing — its tracks, its name, its totals (`VISION.
 ## Consequences
 
 - The data promise changes for the first time since ADR-0017: HoldMyTrack now keeps something that isn't geography. The About and Help pages say so.
-- Photos are a new storage line that grows with users, about 0.5 MB a photo, bounded by the per-account limit (`VISION.md` §4.3). Dormancy and retention (`IMPLEMENTATION.md` §5.7) will have to cover them.
-- A shared Story link (`VISION.md` §5.7), if it is ever built, would make these images visible to others, and with that come moderation and takedown duties that private photos don't have. That decision gets harder once photos exist.
+- Photos are a new storage line that grows with users, about 0.5 MB a photo, bounded by the per-account limit (`VISION.md` §4.3).
+- A shared Story link (`VISION.md` §5.1), if it is ever built, would make these images visible to others, and with that come moderation and takedown duties that private photos don't have. That decision gets harder once photos exist.
 - A file with no usable EXIF needs the user to place it before it is stored, so adding a batch of such photos is a slider per photo. A HEIC file outside Safari can't be decoded at all and isn't added.
 - An EXIF capture time with no time zone is read in the account's time zone first, then in whichever other zone puts it on the track; a trip across a zone change can still misplace one, which the user can move along the track.
-- Deleting an activity deletes its photos; when deduplication hides an activity behind a richer copy, its photos move to that copy.
+- Deleting an activity deletes its photos.

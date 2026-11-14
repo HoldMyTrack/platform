@@ -5,7 +5,7 @@ import androidx.core.content.edit
 import org.maplibre.android.maps.Style
 
 /**
- * The Layers menu's Bike paths, Shared paths and Mountain bike trails (`docs/SPEC.md` FR-4.13,
+ * The Layers menu's Bike paths, Shared paths and Mountain bike trails (`docs/SPEC.md` FR-4.9,
  * [LayersMenu]), the layers document's `bike-paths` group: a per-device choice, each off until
  * turned on, kept in SharedPreferences like the theme (`settings/AppTheme.kt`), and applied as
  * the group's switches ([MapLayers]).

@@ -8,7 +8,7 @@ enum class EditBlock { CHECK_ONE, PENDING, PRIVATE, NO_ORIGINAL, BAD_TIMES }
 /**
  * Whether the Edit window's Track and Photos tabs can be used for its activities. Whether one
  * activity allows it is the server's answer (the list's `track_edit` and `photos`, root
- * `docs/SPEC.md` FR-5.14 and FR-16.1); the app adds only the rule that depends on the selection.
+ * `docs/SPEC.md` FR-5.7 and FR-15.1); the app adds only the rule that depends on the selection.
  * The web's `ui/editAvailability.ts`.
  */
 object EditAvailability {

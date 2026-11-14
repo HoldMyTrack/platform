@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// The pages a native app shows in its WebView (SPEC.md FR-10.8) carry appCookieName on every
+// The pages a native app shows in its WebView (SPEC.md FR-9.6) carry appCookieName on every
 // request, and render without the site's header, footer and Back to map.
 
 // getPage asks for path as session (signed out when empty), from app's WebView ("android" or

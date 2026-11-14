@@ -15,7 +15,7 @@ import org.maplibre.android.maps.Style
 import java.text.NumberFormat
 
 /**
- * What the list and the tracks show, bound to the views (`docs/SPEC.md` FR-5.19, FR-5.20): the
+ * What the list and the tracks show, bound to the views (`docs/SPEC.md` FR-5.11, FR-5.12): the
  * visible area's activities under Dates, followed each time the camera settles from zoom 4 but
  * not after the app's own flights, the 1,000 cap drawn through the tracks' `capped` and `listed`
  * vars, Dates' dialog and its one flight, or a Story through [MapSession]; the list's Pending rows

@@ -38,7 +38,7 @@ export function isDarkFlavor(flavor: Flavor): boolean {
 
 /** The flavors drawn light-on-dark, or satellite imagery under any flavor: it reads dark, so it
  *  gets the same watermark colors a dark flavor does, as the layers' satellite views take the
- *  dark veil (mapLayers.ts, docs/SPEC.md FR-4.14). */
+ *  dark veil (mapLayers.ts, docs/SPEC.md FR-4.10). */
 export function isDarkBase(flavor: Flavor, satellite: boolean): boolean {
   return satellite || isDarkFlavor(flavor);
 }
@@ -51,7 +51,7 @@ export const BASEMAP_SOURCE = 'protomaps';
 export const STYLE_BUILD_METADATA = 'holdmytrack:style-build';
 
 /**
- * Satellite mode (docs/SPEC.md FR-4.14): a raster imagery source under the vector basemap's
+ * Satellite mode (docs/SPEC.md FR-4.10): a raster imagery source under the vector basemap's
  * roads, boundaries and labels. The imagery is a deployment's choice, not the style's — a tile
  * URL template carrying its own key, and the credit its terms require — so it is an option here
  * and absent from the style entirely when a deployment configures none.

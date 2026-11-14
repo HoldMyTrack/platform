@@ -11,7 +11,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/mapstyle"
 )
 
-// The worker's decision reaches both clients (docs/SPEC.md FR-4.14): paused, the style leaves the
+// The worker's decision reaches both clients (docs/SPEC.md FR-4.10): paused, the style leaves the
 // imagery out and GET /v1/map/imagery says so; offered again, both bring it back.
 func TestImageryStatusPublished(t *testing.T) {
 	d := newDBTest(t)

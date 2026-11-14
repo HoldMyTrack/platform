@@ -30,7 +30,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
     private let footer = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
     private let typeButton = UIButton(type: .system)
     private let distanceButton = UIButton(type: .system)
-    /// The Dates filter (root docs/SPEC.md FR-5.20), its sheet the map's (DatesViewController).
+    /// The Dates filter (root docs/SPEC.md FR-5.12), its sheet the map's (DatesViewController).
     private let datesButton = UIButton(type: .system)
     private let resetButton = Controls.textButton(String(localized: "Reset filters"), id: "resetFilters")
     private let selectionBar = UIStackView()

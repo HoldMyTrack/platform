@@ -6,7 +6,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.time.Instant
 
-/** The area list and Dates (`docs/SPEC.md` FR-5.19, FR-5.20) beyond their shared rules. */
+/** The area list and Dates (`docs/SPEC.md` FR-5.11, FR-5.12) beyond their shared rules. */
 class AreaListTest {
 
     private val lateEvening = Instant.parse("2026-09-12T23:30:00Z")

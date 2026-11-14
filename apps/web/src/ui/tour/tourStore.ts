@@ -1,6 +1,6 @@
 import { NOTHING_SEEN, readTourSeen, type TourSeen } from './tourRules.ts';
 
-/** What the tour has shown in this browser (docs/SPEC.md FR-4.18). A per-browser record like the Layers picks (map/overlays.ts): the demo is one account shared by every visitor. */
+/** What the tour has shown in this browser (docs/SPEC.md FR-4.14). A per-browser record like the Layers picks (map/overlays.ts): the demo is one account shared by every visitor. */
 const STORAGE_KEY = 'hmt.tour';
 
 export function loadTourSeen(): TourSeen {

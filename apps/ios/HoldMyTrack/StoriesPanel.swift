@@ -1,12 +1,12 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The sheet's Stories tab (root docs/SPEC.md FR-14.6, apps/android/docs/SPEC.md FR-2.7): every
+/// The sheet's Stories tab (root docs/SPEC.md FR-13.6, apps/android/docs/SPEC.md FR-2.7): every
 /// Story as a folder, newest first, one of them open while the tab shows, the newest until another
 /// is tapped. The map screen lists and draws the open Story's activities and hands its rows back
 /// (setRows); this tab draws them inside the folder, with × to take one out and the whole Story's
 /// numbers under them. Above the folders, copies others sent wait to be accepted or declined
-/// (FR-14.7), read with the list and every 3 seconds while an accepted one is arriving.
+/// (FR-13.7), read with the list and every 3 seconds while an accepted one is arriving.
 final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
         /// Open the Story; collapse brings the sheet down so its tracks show.

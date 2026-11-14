@@ -21,7 +21,7 @@ export const SPRITE_BASE_PATH = '/basemap/sprites/v4';
 /**
  * The fallback camera target once there is no saved URL position, no activity history to fly
  * to, and no Country setting to fall back to first (MapView.tsx's zero-history fallback,
- * docs/SPEC.md FR-4.5) — deliberately zoomed out far enough to keep every continent in frame,
+ * docs/SPEC.md FR-4.4) — deliberately zoomed out far enough to keep every continent in frame,
  * not a regional point like the old Columbus, OH default this replaced.
  */
 export const WORLD_VIEW = {
@@ -65,7 +65,7 @@ const DEFAULT_SATELLITE_TILE_SIZE = 512;
 const DEFAULT_SATELLITE_MAXZOOM = 18;
 
 /**
- * The deployment's satellite imagery (docs/SPEC.md FR-4.14), from build-time
+ * The deployment's satellite imagery (docs/SPEC.md FR-4.10), from build-time
  * `VITE_SATELLITE_TILES` (an XYZ template, key included) and `VITE_SATELLITE_ATTRIBUTION`. Null
  * when no template is set, and then the style has no satellite source and the Layers menu no
  * Satellite switch: imagery is metered per tile, so a deployment opts in rather than out

@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted. Built for every layer HoldMyTrack draws: Fog and Heatmap, the bike paths, the track lines, the pace bands and Spots (`ARCHITECTURE.md` §2.1). Closes ADR-0042's open question of a WebView map.
+Accepted. Built for every layer HoldMyTrack draws: Fog, the bike paths, the track lines, the pace bands and Spots (`ARCHITECTURE.md` §2.1). Closes ADR-0042's open question of a WebView map.
 
 ## Context
 
-The web, Android and soon iOS draw the same map. The basemap style had one definition, served as a document (`ARCHITECTURE.md` §2.1), but each client built every layer HoldMyTrack draws over it by hand: the veil colours and edge widths, the heat ramp and circle radius, the zoom tiers, which layers each mode shows, the track lines, the pace bands, the bike paths and Spots. The web and Android held about 65 such values each, kept equal by comments, with the pace-band binning rule implemented twice, and the server's neighbour weighting assumed one of them, the circle radius, with nothing checking it. An iOS app would have made a third copy, and every change to the look shipped as an app release. Those layers' sources carry the account's tile version, which a style shared by every account can't hold, and MapLibre Native can't change a source's URL, so a native client already replaced sources from their specifications whenever the version moved.
+The web, Android and soon iOS draw the same map. The basemap style had one definition, served as a document (`ARCHITECTURE.md` §2.1), but each client built every layer HoldMyTrack draws over it by hand: the veil colours and edge widths, the zoom tiers, which layers each mode shows, the track lines, the pace bands, the bike paths and Spots. The web and Android held about 65 such values each, kept equal by comments, with the pace-band binning rule implemented twice. An iOS app would have made a third copy, and every change to the look shipped as an app release. Those layers' sources carry the account's tile version, which a style shared by every account can't hold, and MapLibre Native can't change a source's URL, so a native client already replaced sources from their specifications whenever the version moved.
 
 ## Decision
 
@@ -22,7 +22,7 @@ The web, Android and soon iOS draw the same map. The basemap style had one defin
 
 - **Each client keeps its copy, checked by a script** comparing the values across files. Built first and dropped: it catches a drifted value, but the copies remain, and so does the layer construction around them in each language.
 - **An endpoint of values only.** Each client would still turn the numbers into expressions and layers, the part where the clients differed.
-- **Everything in the style's metadata**, which carried Fog and Heatmap first. The tile version would make the style per account: no shared cache, and a 100 KB re-fetch per upload.
+- **Everything in the style's metadata**, which carried Fog first. The tile version would make the style per account: no shared cache, and a 100 KB re-fetch per upload.
 - **The layers in the style, with the tile version as a query the client appends.** Every native client still needs the builder that replaces sources, and the style still couldn't be shared.
 - **Selection by feature-state**, as the web drew it. MapLibre Native Android has no feature-state API; filters on id sets work on every renderer.
 - **Keeping old builds working.** Two contract shapes in the server and the app for one release cycle, for a build the Update screen already replaces.

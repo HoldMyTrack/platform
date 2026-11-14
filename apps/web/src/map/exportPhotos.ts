@@ -3,7 +3,7 @@ import { PHOTO_MARKER_LOOK, type PhotoMarkerLookSize } from './photoMarkerLook';
 import type { PhotoMarkerItem } from './photos';
 
 /**
- * The photo markers on screen, drawn into an exported image (FR-4.10) after the map, under the
+ * The photo markers on screen, drawn into an exported image (FR-4.7) after the map, under the
  * attribution and watermark. Where they go and how big is photoClusters.ts's photoMarkerLayout;
  * how they look is photoMarkerLook.ts and the theme's tokens, as index.css draws them live.
  */

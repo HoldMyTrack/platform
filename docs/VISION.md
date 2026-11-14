@@ -4,7 +4,7 @@
 
 HoldMyTrack is a **free, open-source platform for tracking outdoor activities and seeing the accumulated shape of where you have been**: how much ground you've covered, how well you've explored the places you live and travel through, and where you go most. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats.
 
-**What it is for.** A watch app shows one activity at a time, and years of history end up split across devices. HoldMyTrack puts the journeys the user picks from each source on one map (ADR-0039). "Where have I been?" is answered by a picture, which also shows the streets, parks and trails nearby that are still unexplored. Stories are the main feature: a trip spanning several activities, such as a multi-day hike or a holiday, is kept as one Story with its own map and totals (§4.2). HoldMyTrack shows what's left and leaves the choice of where to go to the user; Spots is the one place it suggests somewhere.
+**What it is for.** A watch app shows one activity at a time, and years of history end up split across devices. HoldMyTrack puts the journeys the user picks from each source on one map (ADR-0039). "Where have I been?" is answered by a picture, which also shows the streets, parks and trails nearby that are still unexplored. Stories are the main feature: a trip spanning several activities, such as a multi-day hike or a holiday, is kept as one Story with its own map and totals (§4.2). HoldMyTrack shows what's left and leaves the choice of where to go to the user, Spots aside (§4.2).
 
 It targets people who already track workouts or travel and want a better way to *see* the result, without adopting another real-time GPS tracker. Its wedge is:
 
@@ -15,13 +15,11 @@ It targets people who already track workouts or travel and want a better way to 
 ### 1.1 What HoldMyTrack is not
 
 * **Not a fitness tracker.** The mobile app can record a plain GPS track as a convenience, for a road trip or a dog walk (§4.1). It captures GPS only: no heart rate, cadence, power or other sensor, no training metrics, and no attempt to match a watch's battery life or accuracy. A watch stays the better tool for workouts, and HoldMyTrack ingests its output.
-* **Not a location logger.** It doesn't log where someone is all day in the background the way Google Maps Timeline does, and doesn't import such a log: a Timeline export is mostly the daily routine, which can't be picked trip by trip (ADR-0039). A central store of round-the-clock location draws requests for everyone who was near a place at a given time, grows without bound (§4.3), and needs a background-location permission the Play Store reviews strictly. Continuous logging, if ever wanted, stays on the device.
-* **No social network.** No feed, follows, kudos, segments or leaderboards. A social graph is the third milestone, built only if the second milestone's numbers say it can be paid for, and not building it is an acceptable outcome (§5, §5.8). Stories are private like everything in an account: sharing one means an exported image, and a copy sent to someone who was on the trip (§4.2) becomes theirs and is shown to nobody.
+* **Not a location logger.** It doesn't log where someone is all day in the background the way Google Maps Timeline does, and doesn't import such a log: a Timeline export is mostly the daily routine, which can't be picked trip by trip (ADR-0039). A central store of round-the-clock location draws requests for everyone who was near a place at a given time and grows without bound (§4.3). Continuous logging, if ever wanted, stays on the device.
+* **No social network.** No feed, follows, kudos, segments or leaderboards. A social graph is the third milestone, built only if the second milestone's numbers say it can be paid for, and not building it is an acceptable outcome (§5, §5.2). Stories are private like everything in an account.
 * **Not a health or fitness advisor, and no health data.** No training load, readiness scores or sleep tracking, and no heart rate: never read from a file or from Health Connect, never stored, never shown. An activity is where you went, when, and at what elevation; pace is derived from that and shown only as the color of a focused route (ADR-0017).
 
 The small scope is what makes it defensible and affordable (§6.3).
-
-**Spots is the one place it suggests where to go.** It names outdoor places from OpenStreetMap, such as a playground, a dog park or a viewpoint, with no venues, reviews or ratings (§4.2). Standing in one for half a minute with the Android app open captures it: a private mark nobody else sees, and the only mark a place carries.
 
 ---
 
@@ -47,7 +45,7 @@ The major fitness platforms focus on real-time logging, social feeds and health 
 * **Multi-device athletes** with a bike computer for rides and a watch for runs, served by the three ingest paths (§4.1) and by no single-source competitor.
 * **Travellers** who want a trip kept as one journey with its photos (§4.2). Their trace usually sits in Google Maps Timeline, which isn't imported (§1.1), so a trip comes in only if recorded in the app or on a watch.
 
-### 3.3 Competitive Landscape
+### 3.2 Competitive Landscape
 
 | Product | Overlap | Pricing | Gap HoldMyTrack exploits |
 | :--- | :--- | :--- | :--- |
@@ -67,7 +65,7 @@ The major fitness platforms focus on real-time logging, social feeds and health 
 
 Feature parity takes weeks and is not defensible; render quality and breadth of ingest are.
 
-**The default map is vector.** Fog of World's reveal shows satellite imagery. Imagery is billed per request on traffic that earns nothing, so HoldMyTrack renders over a self-hosted vector basemap, with Satellite an optional base map whose quota pauses it instead of billing past it (`IMPLEMENTATION.md` §4.26). Render quality has to carry the difference.
+**The default map is vector.** Fog of World's reveal shows satellite imagery. Imagery is billed per request on traffic that earns nothing, so HoldMyTrack renders over a self-hosted vector basemap, with satellite an optional base map held under a fixed quota. Render quality has to carry the difference.
 
 ---
 
@@ -85,9 +83,8 @@ Server-side OAuth connections to services holding the user's history. None is pl
 
 Native apps reading the platform health store: **Apple Watch (HealthKit)** and **Samsung Galaxy Watch (Health Connect)**.
 
-* **HealthKit** exposes `HKWorkoutRoute`, so full GPS geometry is available to a native iOS app.
-* **Health Connect** does not expose Samsung Health's routes: Samsung's developer documentation states that `EXERCISE_ROUTE` data cannot be accessed from Samsung Health via Health Connect. HoldMyTrack ingests only activities with a route, so every Samsung session is rejected at sync time, never dropped silently or shown without a route. Samsung Galaxy Watch is unsupported, and product copy must not promise otherwise.
-* On Android, `READ_EXERCISE_ROUTES` cannot be requested programmatically; the user grants it in Health Connect settings or the route request activity. Routes written by other apps can't be read in the background, so sync is foreground-only (`IMPLEMENTATION.md` §4.1).
+* **HealthKit** gives a native iOS app an Apple Watch workout's full route.
+* **Health Connect** gives no Samsung Health routes, and only activities with a route come in, so Samsung Galaxy Watch is unsupported and product copy must not promise otherwise. Routes from other apps are read only while HoldMyTrack is open.
 
 #### Path 3 — Direct manual file upload
 
@@ -97,7 +94,7 @@ Native apps reading the platform health store: **Apple Watch (HealthKit)** and *
 
 #### Casual in-app GPS recording — mobile-only, and not a fourth path
 
-The mobile app can also originate an activity, for someone with no watch running who doesn't want a separate tracker for a walk or drive: a GPS-only recording that, on stop, goes through the same ingest pipeline as every other source (`IMPLEMENTATION.md` §4.0.4). It depends on no provider, so it is a convenience, and it stays GPS only (§1.1).
+The mobile app can also originate an activity, for someone with no watch running who doesn't want a separate tracker for a walk or drive: a GPS-only recording, ingested like any other source. It depends on no provider, so it is a convenience, and it stays GPS only (§1.1).
 
 ### 4.2 Core Features
 
@@ -119,11 +116,11 @@ The mobile app can also originate an activity, for someone with no watch running
 
 **Only what the user keeps comes in, and nothing is guessed for them.** Every source is a gate with nothing ticked to start. Fog of War clears only where kept journeys went. An overlapping candidate is marked, never merged or hidden, and tracks are fixed with the edit tools rather than rules on import (ADR-0039).
 
-**The activity graph is private**: motivation from your own history, visible to nobody else. A shareable version would be a §5.7 decision.
+**The activity graph is private**: motivation from your own history, visible to nobody else. A shareable version would be a §5.1 decision.
 
-**Stories are hand-picked**, because only the person who went knows which drive was part of the trip and which was the commute. A family trip is usually recorded by one device, so a Story can be sent as a copy; once accepted, it is the recipient's, and nothing the sender does takes it away (ADR-0036). A link that opens a Story for others is a §5.7 decision. A Story view draws only its tracks; a fog pyramid per Story would be per-user storage growing with every Story (§4.3).
+**Stories are hand-picked**, because only the person who went knows which drive was part of the trip and which was the commute. A family trip is usually recorded by one device, so a Story can be sent as a copy that becomes the recipient's once accepted (ADR-0036). A link that opens a Story for others is a §5.1 decision. A Story view draws only its tracks, with no fog of its own.
 
-**Spots are OpenStreetMap's cleanly tagged places, imported in bulk**: a curated or moderated list would cost staff time, the model's main risk (§6.3). They don't change the fog. A place is marked only by capturing it, never by tracks passing through, so nobody has to tell "passed by" from "went to find it".
+**Spots are OpenStreetMap's cleanly tagged outdoor places, imported in bulk**, such as a playground, a dog park or a viewpoint, with no venues, reviews or ratings: a curated or moderated list would cost staff time, the model's main risk (§6.3). A place is marked only by capturing it with the Android app, never by tracks passing through, and the mark is private. Spots don't change the fog.
 
 ### 4.3 Cost Model — running a free service
 
@@ -139,7 +136,7 @@ With no revenue, costs must be bounded by design.
 | Spots | Fixed | Several million OSM places, about 1 GB in Postgres |
 | Compute | Users | One server and Postgres/PostGIS to start |
 | Compliance | Fixed | DPA/DPIA work (§7) |
-| Egress | — | Cloudflare R2 charges none, which is why R2 over S3 |
+| Egress | — | None on Cloudflare R2 |
 
 **At 10,000 active users** (300 activities of ~80 KB, ~3 MB of fog and 100 photos each; 20 map sessions a month of ~300 tile reads at a 90% CDN hit rate): about 900 GB of storage at ~$14/month, ~$2/month of tile reads and $100–300/month of compute, **roughly $150–350/month**.
 
@@ -156,13 +153,13 @@ The product moves through three milestones; `docs/ROADMAP.md` carries the work i
 
 1. **MVP**: activities, the map modes, Spots, Stories and photos, on the web and Android, free for everyone. It ends at the public launch, gated by compliance (§7).
 2. **Release and community**: open HoldMyTrack to the public and shape features and sources around what users ask for. It has no exit gate.
-3. **Social graph** (§5.7): public pages, followers and the rest, if at all. Whether to build it, and how to pay for it, is decided from what Milestone 2 shows. Staying single-player is one of the options.
+3. **Social graph** (§5.1): public pages, followers and the rest, if at all. Whether to build it, and how to pay for it, is decided from what Milestone 2 shows. Staying single-player is one of the options.
 
-### 5.7 Social graph (Milestone 3, not committed)
+### 5.1 Social graph (Milestone 3, not committed)
 
-Milestone 3 is unscheduled. Social features bring moderation, abuse handling and safety obligations: **staff costs, not server costs**. Before building them, the decision is how to pay for them, or not to build them (§5.8).
+Milestone 3 is unscheduled. Social features bring moderation, abuse handling and safety obligations: **staff costs, not server costs**. Before building them, the decision is how to pay for them, or not to build them (§5.2).
 
-### 5.8 Why social is last, not just later
+### 5.2 Why social is last, not just later
 
 A fog map is a precise record of where someone lives and when they are away. Adding a social graph to it changes the threat model. Strava's 2018 heatmap incident is the reference case, and Strava had a large trust-and-safety team at the time.
 
@@ -194,13 +191,12 @@ A Fog of War map is a precise map of where a person lives; the 2018 Strava heatm
 
 * **Private locations**: user-named circles (home, work). A track's start or end inside one is hidden from every render and export, which matters because an exported file cannot be recalled; a track only passing through is shown whole.
 * **No blanket endpoint trimming.** On a multi-day trail it would cut a gap at every campsite while protecting nothing, and hundreds of tracks cut 100 m from the same door leave a ring with the door at its center. The places worth hiding are the ones the user names.
-* **Applied at ingest, server-side**, before anything is stored (`IMPLEMENTATION.md` §4.1): privacy applied at render time leaks through any render bug.
+* **Applied at ingest, server-side**, before anything is stored (ADR-0002): privacy applied at render time leaks through any render bug.
 * **Legal basis.** No health data is processed (§1.1), but a precise location history is sensitive personal data: the lawful bases `docs/DPIA.md` section 3 sets, a retention policy, working export and deletion, and a completed DPIA.
 * **Deauthorization deletion**: partner APIs such as Wahoo's and COROS's require deleting synced data on disconnect, so any connector does.
-* **Health Connect declarations**: requesting more data types than the product uses is a known Play Console rejection cause. HoldMyTrack requests exercise sessions, their routes and the history window, and no health measurement.
 * **Photos** reach the server with no EXIF and are placed on the clipped track on every read, so one taken inside a Private location shows at the track's visible end (ADR-0024).
 * **Spot captures and Stories are private** to the account. A Story copy is made from the track as the sender sees it, with their Private locations applied and the recipient's on top (ADR-0036).
-* **OpenStreetMap's licence.** Spots is an unmodified OSM extract and the country and region outlines are OSM's by way of Overture Maps, both credited on the map; the outlines' derivation is a public script, which keeps them available under the ODbL (`IMPLEMENTATION.md` §4.2.4).
+* **OpenStreetMap's licence.** Spots and the country and region outlines come from OpenStreetMap, the outlines by way of Overture Maps; both are credited on the map and stay available under the ODbL.
 * **No data sales, ever, written in the privacy policy**, because every user of a free product asks.
 
 ---

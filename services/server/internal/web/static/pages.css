@@ -815,7 +815,7 @@ code {
   cursor: not-allowed;
 }
 
-/* Download your data (FR-1.12), above Delete account. */
+/* Download your data (FR-1.13), above Delete account. */
 .settings__export,
 .settings__usage {
   margin-top: 16px;
@@ -841,7 +841,7 @@ code {
   margin-top: 4px;
 }
 
-/* Delete account (FR-1.11), last on the page. */
+/* Delete account (FR-1.12), last on the page. */
 .settings__delete {
   margin-top: 16px;
   padding-top: 24px;

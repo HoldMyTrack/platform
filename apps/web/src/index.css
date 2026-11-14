@@ -288,7 +288,7 @@ body {
   display: none;
 }
 
-/* The Stories tab (StoriesTab.tsx, FR-14.6): one scrolling list of folders, one of them open
+/* The Stories tab (StoriesTab.tsx, FR-13.6): one scrolling list of folders, one of them open
    with its activities inside, and the open Story's numbers pinned below in the footer. */
 .stories-tab {
   flex: 1;
@@ -364,7 +364,7 @@ body {
   opacity: 1;
 }
 
-/* A copy someone sent, waiting at the top of the tab to be accepted or declined (FR-14.7), and
+/* A copy someone sent, waiting at the top of the tab to be accepted or declined (FR-13.7), and
    one accepted and still arriving. */
 .stories-tab__inbox {
   display: flex;
@@ -401,7 +401,7 @@ body {
   color: var(--fm-ink-secondary);
 }
 
-/* Who sent the copy a Story came from (FR-14.8). */
+/* Who sent the copy a Story came from (FR-13.8). */
 .stories-tab__from {
   margin: 0;
   padding: 0 var(--fm-space-16) var(--fm-space-4) 36px;
@@ -526,7 +526,7 @@ body {
   font-weight: var(--fm-weight-bold);
 }
 
-/* Copies of Stories waiting to be answered (FR-14.7): filled, and never dimmed with its tab. */
+/* Copies of Stories waiting to be answered (FR-13.7): filled, and never dimmed with its tab. */
 .activities-panel__tab > .activities-panel__badge--waiting {
   opacity: 1;
   background: var(--fm-accent);
@@ -777,7 +777,7 @@ body {
 }
 
 /* The selected (focused) row — reached by clicking the row's own text or its track on the map.
-   A checked row doesn't get this: its ticked checkbox is its only mark (docs/SPEC.md FR-5.15). */
+   A checked row doesn't get this: its ticked checkbox is its only mark (docs/SPEC.md FR-5.8). */
 .activities-panel__row--selected {
   background: rgb(var(--fm-accent-rgb) / 8%);
   box-shadow: inset 3px 0 0 var(--fm-accent-strong);
@@ -917,7 +917,7 @@ body {
   white-space: nowrap;
 }
 
-/* Private (FR-8.1): an activity entirely inside a Private location, kept with no track. A lock
+/* Private (FR-7.1): an activity entirely inside a Private location, kept with no track. A lock
    before the word, in the same neutral chip as Pending and Hidden — it's a state, not an error. */
 .activities-panel__private-badge {
   display: inline-flex;
@@ -991,7 +991,7 @@ button.activities-panel__story-badge:hover {
   white-space: nowrap;
 }
 
-/* The toolbar icon buttons (docs/SPEC.md FR-5.15) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
+/* The toolbar icon buttons (docs/SPEC.md FR-5.8) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
    the checked group, else the selected row (there are no per-row action icons). One shared chip look, matching the
    mockup: a soft tinted square rather than a bare icon, so the group actions read as one
    family regardless of which one is destructive. */
@@ -1062,7 +1062,7 @@ button.activities-panel__story-badge:hover {
   color: var(--fm-danger);
 }
 
-/* The Activities tab of an account with no activities (FirstRunPanel.tsx, FR-5.18): where to
+/* The Activities tab of an account with no activities (FirstRunPanel.tsx, FR-5.10): where to
    bring some in from, a waiting Story copy first, imports in flight above both. */
 .first-run {
   display: flex;
@@ -1537,7 +1537,7 @@ button.activities-panel__story-badge:hover {
   font-size: var(--fm-text-xs);
 }
 
-/* The list was cut at the area's limit (FR-5.19): one muted line over the rows. */
+/* The list was cut at the area's limit (FR-5.11): one muted line over the rows. */
 .activities-panel__capped {
   margin: 0;
   padding: var(--fm-space-4) var(--fm-space-16);
@@ -2471,7 +2471,7 @@ button.activities-panel__story-badge:hover {
 /* MapView.tsx's "still being updated" notice (FR-4.2): a pill on a line of its own under the
    toggles (flex-basis 100%), however many rows they wrap to, shown in Fog for as long as the
    account's coverage is still being worked on.
-   The basemap-unreachable notice (FR-4.5) takes the same pill in the failure color. */
+   The basemap-unreachable notice (FR-4.4) takes the same pill in the failure color. */
 .coverage-notice {
   flex-basis: 100%;
   display: flex;
@@ -2522,7 +2522,7 @@ button.activities-panel__story-badge:hover {
   color: var(--fm-ink-muted);
 }
 
-/* A spot's popup (SpotPopup.tsx, FR-15.3) — MapLibre's own popup, restyled as the app's cards. */
+/* A spot's popup (SpotPopup.tsx, FR-14.3) — MapLibre's own popup, restyled as the app's cards. */
 .spot-popup .maplibregl-popup-content {
   padding: var(--fm-space-12) var(--fm-space-16);
   border-radius: var(--fm-radius-md);
@@ -2809,7 +2809,7 @@ button.activities-panel__story-badge:hover {
   color: var(--fm-ink-secondary);
 }
 
-/* PhotosTab.tsx (FR-16): Add photos, then the photos as rows — a thumbnail, a name, Edit and
+/* PhotosTab.tsx (FR-15): Add photos, then the photos as rows — a thumbnail, a name, Edit and
    Delete — one of which may be open with its slider and caption. The list scrolls inside the
    window rather than growing it past the map. */
 .photos-tab {
@@ -3194,7 +3194,7 @@ button.activities-panel__story-badge:hover {
    query. Scope is "core flows fully touch-usable," a direct decision, not full parity with
    every desktop interaction: the map-track-hover ↔ Activities-row-underline two-way
    highlight stays mouse-only — a continuous-position hover read with no discrete point to
-   tap (docs/SPEC.md §19). Desktop phone emulation has a fixed viewport, no browser toolbar,
+   tap (docs/SPEC.md §20). Desktop phone emulation has a fixed viewport, no browser toolbar,
    no iOS focus-zoom and a pointer-precise "tap", so it passes layouts that fail on a phone:
    the traps below were each found on a real one. */
 @media (max-width: 768px) {

@@ -93,7 +93,7 @@ public enum AccountKey {
     }
 
     /// Whether the email typed to confirm Delete account is the account's, whatever its case or
-    /// surrounding spaces (root docs/SPEC.md FR-1.11).
+    /// surrounding spaces (root docs/SPEC.md FR-1.12).
     public static func confirms(typed: String, email: String) -> Bool {
         !typed.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
             && of(email: typed.trimmingCharacters(in: .whitespacesAndNewlines), isDemo: false) == of(email: email, isDemo: false)

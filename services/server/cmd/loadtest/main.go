@@ -413,7 +413,7 @@ func layers(mode string, spots bool, z int) ([]string, int) {
 }
 
 // Below spotsMinZoom the web draws places only when asked, "Show in this area" (SPEC.md
-// FR-15.5): a live query over the window's box rather than a tile. A Spots visitor at those
+// FR-14.4): a live query over the window's box rather than a tile. A Spots visitor at those
 // zooms asks on one view in areaShare.
 const (
 	spotsInAreaMinZoom = 10
@@ -516,7 +516,7 @@ func browse(vus int, dur time.Duration) {
 		go func(i int) {
 			defer wg.Done()
 			r := mrand.New(mrand.NewSource(int64(i) + time.Now().UnixNano()))
-			// Opening the map frames the account's latest activity, at city zoom (SPEC.md FR-4.5).
+			// Opening the map frames the account's latest activity, at city zoom (SPEC.md FR-4.4).
 			v := &visitor{r: r, tok: accts[i%len(accts)].Token, mode: pickMode(r), spots: r.Intn(5) == 0,
 				c: cs[r.Intn(len(cs))], z: 12 + r.Intn(3), cache: map[string]bool{}}
 			time.Sleep(time.Duration(r.Intn(3000)) * time.Millisecond)

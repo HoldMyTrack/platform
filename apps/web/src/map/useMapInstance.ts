@@ -34,7 +34,7 @@ export interface UseMapInstanceOptions {
   container: React.RefObject<HTMLDivElement | null>;
   initialView: ViewState;
   initialFlavor: Flavor;
-  /** Whether satellite imagery (FR-4.14) is on at first paint, read once like initialFlavor,
+  /** Whether satellite imagery (FR-4.10) is on at first paint, read once like initialFlavor,
    *  so a saved choice doesn't flash the vector map first. */
   initialSatellite: boolean;
   /** Whether Satellite is on now: its imagery's wait (satelliteStatus.ts) counts only then. */

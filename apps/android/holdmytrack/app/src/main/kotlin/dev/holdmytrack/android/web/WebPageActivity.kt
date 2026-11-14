@@ -30,7 +30,7 @@ import java.io.File
 import java.util.concurrent.Executors
 
 /**
- * One of the web's own pages, shown in the app (root `docs/SPEC.md` FR-10.8): Activity graph &
+ * One of the web's own pages, shown in the app (root `docs/SPEC.md` FR-9.6): Activity graph &
  * trends, Sync history, Settings (a new account's first run included) and About. The server
  * renders a page for the app when the request carries the `hmt_app` cookie — no site header,
  * footer or Back to map, and none of what the app keeps as screens of its own — and this screen

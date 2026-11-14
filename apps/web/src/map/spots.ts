@@ -184,7 +184,7 @@ export function setSpotsVisible(map: MapLibreMap, categories: readonly SpotCateg
   setLayerToggles(map, { spots: categories.length > 0 });
 }
 
-/** Draws the account's captured places (FR-15.6) with the captured badge, the rest plain, and
+/** Draws the account's captured places (FR-14.6) with the captured badge, the rest plain, and
  *  shows the retired ones among them. */
 export function setSpotsCaptured(map: MapLibreMap, captured: readonly number[]): void {
   setLayerVars(map, { captured: [...captured] });

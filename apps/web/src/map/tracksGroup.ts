@@ -47,7 +47,7 @@ const ARROWS_LAYER_ID = 'tracks-arrows';
 
 const LAYER_IDS = ['tracks-casing', TRACKS_LAYER_ID, 'tracks-focused', 'tracks-hover', ARROWS_LAYER_ID];
 
-// Drawn: not hidden, and while the web's list was cut at its cap, listed (docs/SPEC.md FR-5.19).
+// Drawn: not hidden, and while the web's list was cut at its cap, listed (docs/SPEC.md FR-5.11).
 // `capped` defaults to false, so a client that never binds it draws every track.
 const notHidden = ['all', ['!', ['in', ['get', 'id'], ['var', 'hidden']]], ['any', ['!', ['var', 'capped']], ['in', ['get', 'id'], ['var', 'listed']]]];
 const DRAWN_VARS = ['hidden', 'capped', 'listed'];

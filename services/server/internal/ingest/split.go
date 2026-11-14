@@ -64,7 +64,7 @@ func LoadPiecePoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 var ErrSplitTooClose = errors.New("a split needs at least two points on each side")
 
 // ErrSplitHidden is a split leaving one side entirely inside Private locations — a part saved
-// with no track, as any activity entirely inside them is (FR-8.1), which comes back when the
+// with no track, as any activity entirely inside them is (FR-7.1), which comes back when the
 // location moves. Allowed once the user has been told. Reachable from the editor, whose preview shows the points
 // a track edit's second clip (TrackEdit.ApplyClipped) hides: a walk home ending in a stray fix
 // outside the circle, that fix deleted, keeps every point inside the circle on show there.

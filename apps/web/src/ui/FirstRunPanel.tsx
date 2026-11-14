@@ -8,7 +8,7 @@ import { t, tn } from '../i18n';
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=dev.holdmytrack.android';
 
 /**
- * The Activities tab of an account with no activities (docs/SPEC.md FR-5.18; firstRun.ts says
+ * The Activities tab of an account with no activities (docs/SPEC.md FR-5.10; firstRun.ts says
  * when): the ways to bring some in, named by where people record rather than by file format,
  * with any Story copy waiting for the account first, since accepting one brings activities too.
  * The Strava and Garmin rows open their export guides; Files hands its pick to the header's

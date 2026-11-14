@@ -18,7 +18,7 @@ Every built feature of the app; what it won't do is in §9.
 
 ### 1.4 Definitions
 
-`docs/SPEC.md` §1.4's terms apply.
+`docs/SPEC.md` §1.3's terms apply.
 
 | Term | Meaning |
 | :-- | :-- |
@@ -71,7 +71,7 @@ An unverified account (`docs/SPEC.md` FR-1.8) sees a "check your email" screen i
 
 ### FR-1.5 Settings
 
-The web's Settings page (`docs/SPEC.md` FR-1.7) shown in the app (`docs/SPEC.md` FR-10.8), in the app's theme and language.
+The web's Settings page (`docs/SPEC.md` FR-1.7) shown in the app (`docs/SPEC.md` FR-9.6), in the app's theme and language.
 
 - Theme, Download your data and Delete account are native instead (FR-2.9, FR-1.7).
 - Avatar: Android's photo picker (no storage permission), shrunk to at most 512 px on the long side, uploaded as JPEG at once. An image the phone can't read leaves the avatar as it was.
@@ -82,18 +82,18 @@ The web's Settings page (`docs/SPEC.md` FR-1.7) shown in the app (`docs/SPEC.md`
 
 ### FR-1.6 Activity graph & trends
 
-The web's `/profile` page, the activity graph and Trends (`docs/SPEC.md` FR-7, FR-9), shown in the app (`docs/SPEC.md` FR-10.8) and read again each time the screen comes back to the front.
+The web's `/profile` page, the activity graph and Trends (`docs/SPEC.md` FR-6, FR-8), shown in the app (`docs/SPEC.md` FR-9.6) and read again each time the screen comes back to the front.
 
 ### FR-1.7 Privacy
 
-- Private locations (`docs/SPEC.md` FR-8.1) are read again each time the screen shows; a row or Add opens FR-2.7's editor on the map.
-- Download your data (`docs/SPEC.md` FR-1.12), for a real account only: a native screen that checks the request every 10 seconds while it shows and saves each archive to the phone's Downloads through Android's download manager.
+- Private locations (`docs/SPEC.md` FR-7.1) are read again each time the screen shows; a row or Add opens FR-2.7's editor on the map.
+- Download your data (`docs/SPEC.md` FR-1.13), for a real account only: a native screen that checks the request every 10 seconds while it shows and saves each archive to the phone's Downloads through Android's download manager.
 - Privacy policy opens `/privacy` in a browser tab.
 - The demo account sees its Private locations read-only and no download.
 
 ### FR-1.8 Update screen
 
-When any `/v1` request answers `426` `app_outdated` (`docs/SPEC.md` §1.5), signed in or not, the Update screen opens over whatever showed.
+When any `/v1` request answers `426` `app_outdated` (`docs/SPEC.md` §1.4), signed in or not, the Update screen opens over whatever showed.
 
 - Several refusals at once open it once; a refused request's own screen says nothing.
 - Update opens the app's Play listing.
@@ -104,26 +104,26 @@ When any `/v1` request answers `426` `app_outdated` (`docs/SPEC.md` §1.5), sign
 
 ### FR-2.1 Base map
 
-- The style comes unauthenticated from `GET /v1/map/style/{flavor}?lang=`: `light` or `dark` by the app's theme (the other flavors aren't offered), labels in the app's language (`docs/SPEC.md` FR-13.1).
+- The style comes unauthenticated from `GET /v1/map/style/{flavor}?lang=`: `light` or `dark` by the app's theme (the other flavors aren't offered), labels in the app's language (`docs/SPEC.md` FR-12.1).
 - The camera starts on a world view until FR-2.3 frames the account.
-- The map is flat at every zoom: MapLibre Native has no globe (`docs/SPEC.md` FR-4.5).
+- The map is flat at every zoom: MapLibre Native has no globe (`docs/SPEC.md` FR-4.4).
 
 ### FR-2.2 Two map modes: Normal and Fog of War
 
-The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.4), from the same tiles, with Fog's coverage drawn under the tracks and the labels.
+The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.3), from the same tiles, with Fog's coverage drawn under the tracks and the labels.
 
-- Normal's tracks follow Dates (FR-2.6) through the tile request, and past the list's cap only the listed ones are drawn (`docs/SPEC.md` FR-5.19). The panel's filters, hidden tracks and Pending rows are applied on the phone. Fog is never filtered.
+- Normal's tracks follow Dates (FR-2.6) through the tile request, and past the list's cap only the listed ones are drawn (`docs/SPEC.md` FR-5.11). The panel's filters, hidden tracks and Pending rows are applied on the phone. Fog is never filtered.
 - The map reads only the server. It never reads Health Connect, and an activity appears only once synced and ingested.
 - The mode survives a theme or language change.
-- The mode toggle is the Map tab's. Stories and Sync show the map in Normal, since their sheets and tracks are Normal mode's, and back on Map the mode picked there returns. Unlike the web, whose panel stays beside Fog (`docs/SPEC.md` FR-14.6).
+- The mode toggle is the Map tab's. Stories and Sync show the map in Normal, since their sheets and tracks are Normal mode's, and back on Map the mode picked there returns. Unlike the web, whose panel stays beside Fog (`docs/SPEC.md` FR-13.6).
 - While recording (FR-5.1) the mode toggle goes and no mode's layers are drawn, only the recording; the mode comes back when it stops.
-- The Layers menu (`docs/SPEC.md` FR-4.13) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.14), Roads (`docs/SPEC.md` FR-4.17), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8). Each is kept on the phone, not the account, and all but Roads start off. Layers stays while recording.
+- The Layers menu (`docs/SPEC.md` FR-4.9) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.10), Roads (`docs/SPEC.md` FR-4.13), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8). Each is kept on the phone, not the account, and all but Roads start off. Layers stays while recording.
 - Fog says when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
 - Fog's button names the level in view, and a tap on it while Fog is on opens the level menu (`docs/SPEC.md` FR-4.2), its counts read on each opening. A picked level holds through a trip out of Fog and until the app restarts. A tap on a place outlines it and names it, as the web's tooltip does, until it's closed or a tap lands off every place.
 
 ### FR-2.3 Initial camera framing
 
-- Once per app session the camera opens as the web's does (`docs/SPEC.md` FR-4.5): zoom 12 on the newest five activities with a track, skipping Pending ones, or fewer when five don't fit the screen. A rotation, theme or language change keeps the camera.
+- Once per app session the camera opens as the web's does (`docs/SPEC.md` FR-4.4): zoom 12 on the newest five activities with a track, skipping Pending ones, or fewer when five don't fit the screen. A rotation, theme or language change keeps the camera.
 - An account with nothing on the map stays on the world view with a pointer to Sync, asked again on every return to the map; the demo account never gets it.
 
 ### FR-2.4 Attribution
@@ -132,7 +132,7 @@ MapLibre's attribution control stays on and visible above the collapsed sheet: t
 
 ### FR-2.5 Find my location
 
-The web's one-shot locate (`docs/SPEC.md` FR-4.7).
+The web's one-shot locate (`docs/SPEC.md` FR-4.5).
 
 - Nothing is located before the first tap, which asks for location, Precise or Approximate.
 - It flies to at least zoom 14 and follows the position until the map is panned.
@@ -140,7 +140,7 @@ The web's one-shot locate (`docs/SPEC.md` FR-4.7).
 
 ### FR-2.6 Dates
 
-The Activities tab lists the visible area under Dates, as the web's does (`docs/SPEC.md` FR-5.19, FR-5.20), in Normal mode only.
+The Activities tab lists the visible area under Dates, as the web's does (`docs/SPEC.md` FR-5.11, FR-5.12), in Normal mode only.
 
 - Dates is a chip in the filter row. Each end is picked in a calendar and applies at once; Clear dates clears both.
 - The list doesn't follow the camera while recording, and asks about the view once it stops.
@@ -150,30 +150,30 @@ The Activities tab lists the visible area under Dates, as the web's does (`docs/
 
 The web's Activities panel (`docs/SPEC.md` FR-5) as a sheet over the map, with Activities and Stories tabs. Normal mode only, not while recording.
 
-- Rows, badges, the Type and Distance filters and Pending follow `docs/SPEC.md` FR-5.1–FR-5.3 and FR-5.15. The Distance filter is offered only with two or more distinct distances.
+- Rows, badges, the Type and Distance filters and Pending follow `docs/SPEC.md` FR-5.1–FR-5.3 and FR-5.8. The Distance filter is offered only with two or more distinct distances.
 - A tap on a row, or on a track within 14 dp, focuses that activity and fits the camera to it; one at a time.
 - A tap on a row's tile or a long press checks it. Unlike the web, focusing unchecks the rest, the first check takes the focused activity into the group, and checking a row flies the camera to it; unchecking doesn't. All, None and Invert reach only the listed rows and never move the camera.
-- The toolbar acts on the checked group, else the focused row (`docs/SPEC.md` FR-5.15). Hide lasts for this app session. Delete is disabled while any target is Pending.
+- The toolbar acts on the checked group, else the focused row (`docs/SPEC.md` FR-5.8). Hide lasts for this app session. Delete is disabled while any target is Pending.
 - The list is read for each range and on every return to the map, keeping what of the focus, checked group and hidden set still exists; every 2 seconds while any row is Pending.
-- Edit (`docs/SPEC.md` FR-5.10) writes only what changed, one activity at a time. A group of mixed types starts with Type empty, and leaving it empty keeps each its own.
-- Delete (`docs/SPEC.md` FR-5.11) asks first; on a failure, what was already deleted is reported as gone.
-- The focused activity is drawn in pace bands (`docs/SPEC.md` FR-4.8), unless hidden, filtered out or Pending.
-- Track editing (`docs/SPEC.md` FR-5.14, FR-5.17), for one activity with a finished track, has Chop, Cut, Split, Move point, Delete point, Undo and Reset. A split leaving a part inside a Private location asks first.
-- The Private location editor (`docs/SPEC.md` FR-8.1) switches the map to Normal and draws every circle. A new one is 200 m at the map's centre; the radius moves in 10 m steps. Cancel, Back, a mode change or a recording starting drops the draft.
-- The Stories tab (`docs/SPEC.md` FR-14.6) opens the newest Story. Taking an activity out needs no confirmation; deleting a Story asks first. Leaving the tab restores the Activities range. Copies others sent wait at its top to be accepted or declined (`docs/SPEC.md` FR-14.7, FR-14.8).
-- Add to story (`docs/SPEC.md` FR-14.2, FR-14.3) adds the toolbar's target to a Story, or a new one, in one request.
+- Edit (`docs/SPEC.md` FR-5.5) writes only what changed, one activity at a time. A group of mixed types starts with Type empty, and leaving it empty keeps each its own.
+- Delete (`docs/SPEC.md` FR-5.6) asks first; on a failure, what was already deleted is reported as gone.
+- The focused activity is drawn in pace bands (`docs/SPEC.md` FR-4.6), unless hidden, filtered out or Pending.
+- Track editing (`docs/SPEC.md` FR-5.7, FR-5.9), for one activity with a finished track, has Chop, Cut, Split, Move point, Delete point, Undo and Reset. A split leaving a part inside a Private location asks first.
+- The Private location editor (`docs/SPEC.md` FR-7.1) switches the map to Normal and draws every circle. A new one is 200 m at the map's centre; the radius moves in 10 m steps. Cancel, Back, a mode change or a recording starting drops the draft.
+- The Stories tab (`docs/SPEC.md` FR-13.6) opens the newest Story. Taking an activity out needs no confirmation; deleting a Story asks first. Leaving the tab restores the Activities range. Copies others sent wait at its top to be accepted or declined (`docs/SPEC.md` FR-13.7, FR-13.8).
+- Add to story (`docs/SPEC.md` FR-13.2, FR-13.3) adds the toolbar's target to a Story, or a new one, in one request.
 - The demo account can't edit, delete or change a Story.
 
 ### FR-2.8 Spots
 
-The web's points of interest (`docs/SPEC.md` FR-15.2–FR-15.5) on the same tiles, and, in the app only, capturing a place by going there (`docs/SPEC.md` FR-15.6).
+The web's points of interest (`docs/SPEC.md` FR-14.2–FR-14.4) on the same tiles, and, in the app only, capturing a place by going there (`docs/SPEC.md` FR-14.6).
 
 - One Layers entry per category, off until ticked, kept on the phone; drawn in every mode and while recording, hidden while a track is edited.
 - From zoom 13 ticked places show with their areas; from 10 to 13 on request. A captured place's badge is filled, and a retired place shows only to an account that captured it.
 - A place's popup offers Capture, except on a captured place or to the demo account.
 - **Capture rule**: 30 seconds inside the place, counting only fixes accurate to 25 m. A fix outside starts the count again. In the background nothing is read and the count waits.
 - Capture asks for precise location first; without it nothing starts. Location is read only while capture runs and only in the foreground, and the screen stays on meanwhile.
-- The server checks the position (`docs/SPEC.md` FR-15.6): refused, the count starts again; unsent, it's retried every 5 seconds. A place retired since the map loaded it ends capture.
+- The server checks the position (`docs/SPEC.md` FR-14.6): refused, the count starts again; unsent, it's retried every 5 seconds. A place retired since the map loaded it ends capture.
 - Capture ends on success, Stop, Back, a track edit starting, unticking the category or leaving the account.
 
 ### FR-2.9 The bottom bar
@@ -183,15 +183,15 @@ Map, Stories, the record button (FR-5.1), Sync and You.
 - Each tab keeps its state: the map's camera, mode, range, focus, checked group and a recording are as they were on coming back. Back from another tab goes to Map, and from Map leaves the app.
 - Stories counts copies waiting to be answered. Starting a recording from another tab moves to Map.
 - The You tab leads to Settings (FR-1.5), Activity graph & trends (FR-1.6), Settings › Sync (FR-3.1) and Privacy (FR-1.7), and shows the app's version and commit.
-- Theme belongs to the phone, not the account (`docs/SPEC.md` FR-4.12), so the demo account can change it. Language (FR-1.5) does nothing for the demo account.
-- About opens in the app (`docs/SPEC.md` FR-10.8); Help and Contacts in a browser tab, in the browser's language. The app has no Donate: Play doesn't allow pointing to payment outside its billing.
-- Delete account (`docs/SPEC.md` FR-1.11), for a real account, is confirmed by typing the email. On success the app also deletes that account's unsynced recordings, hidden Sync rows, Health Connect switch and last Load, since a new account could take the same email, then signs out.
+- Theme belongs to the phone, not the account (`docs/SPEC.md` FR-4.8), so the demo account can change it. Language (FR-1.5) does nothing for the demo account.
+- About opens in the app (`docs/SPEC.md` FR-9.6); Help and Contacts in a browser tab, in the browser's language. The app has no Donate: Play doesn't allow pointing to payment outside its billing.
+- Delete account (`docs/SPEC.md` FR-1.12), for a real account, is confirmed by typing the email. On success the app also deletes that account's unsynced recordings, hidden Sync rows, Health Connect switch and last Load, since a new account could take the same email, then signs out.
 
 ### FR-2.10 Photos
 
-The web's photos (`docs/SPEC.md` FR-16, ADR-0024) on the map and in the Edit window's Photos tab, against the same endpoints.
+The web's photos (`docs/SPEC.md` FR-15, ADR-0024) on the map and in the Edit window's Photos tab, against the same endpoints.
 
-- The map shows, in Normal mode, the photos of the activity being edited, else the focused one, else the open Story's. None in Fog, on a hidden route, on the Track tab or while recording. Smaller below zoom 10, none below 4 (`docs/SPEC.md` FR-4.15).
+- The map shows, in Normal mode, the photos of the activity being edited, else the focused one, else the open Story's. None in Fog, on a hidden route, on the Track tab or while recording. Smaller below zoom 10, none below 4 (`docs/SPEC.md` FR-4.11).
 - Photos that would overlap share a marker; a tap zooms in to separate them (up to zoom 19) when they lie more than 15 m apart, else steps through them.
 - The Photos tab is for one activity with a track. Added photos come from Android's photo picker, are redrawn upright at most 2,048 px with a 320 px thumbnail and placed by the server's placement check. One it can't place waits for the user to place it on the route, and Save is refused while any waits.
 - Nothing is written until Save, which writes the fields, then uploads, changes and deletes one at a time, then a track edit. A failure keeps the window open, and Save again carries on from the first unwritten change. Back asks before throwing photo changes away.
@@ -199,16 +199,16 @@ The web's photos (`docs/SPEC.md` FR-16, ADR-0024) on the map and in the Edit win
 
 ### FR-2.11 Map image export
 
-The web's export (`docs/SPEC.md` FR-4.10) as a viewfinder over the map, not offered while recording.
+The web's export (`docs/SPEC.md` FR-4.7) as a viewfinder over the map, not offered while recording.
 
 - A platform preset keeps its shape when cropped; Custom fixes the long side at 1,920, 2,560 or 3,840 px.
-- The image is exactly the window at the current zoom and rotation, with what `docs/SPEC.md` FR-4.10 draws, paths, Satellite and Roads included, and the map's credit and the HoldMyTrack mark.
-- Its stats card (`docs/SPEC.md` FR-4.10) can be added while activities are checked, and the choice is kept by the phone.
+- The image is exactly the window at the current zoom and rotation, with what `docs/SPEC.md` FR-4.7 draws, paths, Satellite and Roads included, and the map's credit and the HoldMyTrack mark.
+- Its stats card (`docs/SPEC.md` FR-4.7) can be added while activities are checked, and the choice is kept by the phone.
 - It's saved to Pictures/HoldMyTrack and offered to Android's share sheet. A failure keeps the viewfinder as it was.
 
 ### FR-2.12 Tour
 
-The web's tour (`docs/SPEC.md` FR-4.18) over the app's own screens, with its start, offer and card rules (`testdata/client-rules/tour-*.json`).
+The web's tour (`docs/SPEC.md` FR-4.14) over the app's own screens, with its start, offer and card rules (`testdata/client-rules/tour-*.json`).
 
 - Its steps: the Activities sheet, Dates, Stories, Layers, export, Fog of War, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
 - In a demo session Fog takes a step per level, from exact coverage out to countries, with the camera over the demo's history, and the camera comes back when the tour ends.
@@ -216,7 +216,7 @@ The web's tour (`docs/SPEC.md` FR-4.18) over the app's own screens, with its sta
 
 ## 5. FR-3 — Sync and Imports
 
-Sync needs a verified session; the demo account can't send. **The gate rule** (ADR-0039, `docs/SPEC.md` FR-3.6): nothing is ticked when the list shows, only ticked candidates are sent, and nothing is hidden, merged or changed on the user's behalf.
+Sync needs a verified session; the demo account can't send. **The gate rule** (ADR-0039, `docs/SPEC.md` FR-3.4): nothing is ticked when the list shows, only ticked candidates are sent, and nothing is hidden, merged or changed on the user's behalf.
 
 ```mermaid
 sequenceDiagram
@@ -252,7 +252,7 @@ sequenceDiagram
   5. **Needs history permission**: not blocking; the list reaches back 30 days instead of 90.
   6. **Ready**.
 - Recorded on this phone is always on. Location and notifications are asked on the first recording (FR-5.1).
-- Health Connect's rationale request opens the app's own rationale, with the privacy policy (`docs/SPEC.md` FR-10.6).
+- Health Connect's rationale request opens the app's own rationale, with the privacy policy (`docs/SPEC.md` FR-9.5).
 - Signed out, unverified or demo, the screen only says why nothing can sync.
 
 ### FR-3.2 What's waiting — the list
@@ -264,7 +264,7 @@ The Sync sheet lists every candidate and draws it on the map.
 - The record ids go to `POST /v1/sync/known`; what the account has, in any state, is left out, so a reinstall or second phone agrees and a deleted activity is offered again. One still processing shows as on its way.
 - Every recording on the phone is listed, whatever its age.
 - A row's distance is worked out from its route; no distance is read from Health Connect.
-- A row overlapping another candidate or an account activity (`docs/SPEC.md` FR-3.7) is marked, as a hint only. Hidden and on-their-way rows aren't compared.
+- A row overlapping another candidate or an account activity (`docs/SPEC.md` FR-3.5) is marked, as a hint only. Hidden and on-their-way rows aren't compared.
 - **Foreground only**: a read runs only while its screen shows. Leaving the tab, the app going to the background or the You tab covering the map cancels it, since Health Connect withholds routes from a background read whatever was granted. Nothing schedules a read or a send.
 - The map draws the candidates from the phone's data, and none of the account's tracks.
 - Load sends the server only the record ids; showing the list sends only the spans for the overlap check.
@@ -276,7 +276,7 @@ The Sync sheet lists every candidate and draws it on the map.
 - The route sent is the one Health Connect holds, read again by id, never the line drawn. A session gone from Health Connect, or whose route it withholds, is refused with the reason. Elevation goes only where a point has it. A route over 50,000 points is refused by the app.
 - What the server took or already had is unticked (a recording leaves the phone) and stays listed as being added, not tickable, until its ingest ends; the app asks every 2 seconds on any tab. Landed, it leaves the list and the map refreshes; failed, it's back on the list, a recording back on the phone, pointing to Sync history.
 - Each refused row is listed with its reason and stays ticked. A run cut short leaves what wasn't confirmed ticked. Ticked rows that overlap don't stop a send.
-- Leaving the tab or the app cancels a run safely: the server is idempotent on each activity's id (`docs/SPEC.md` FR-3.6), and the next Load knows what it took.
+- Leaving the tab or the app cancels a run safely: the server is idempotent on each activity's id (`docs/SPEC.md` FR-3.4), and the next Load knows what it took.
 
 ### FR-3.5 The Sync sheet — sending what's on the phone
 
@@ -289,7 +289,7 @@ The bottom bar's Sync is the map in Normal mode with the sheet on its Sync tab, 
 
 ### FR-3.6 Upload
 
-The web's upload (`docs/SPEC.md` FR-3.1, FR-3.4) as a screen, for a verified, non-demo account.
+The web's upload (`docs/SPEC.md` FR-3.1, FR-3.2) as a screen, for a verified, non-demo account.
 
 - Files come from Android's picker, or are opened or shared from another app (§9).
 - The web's limits apply: `.gpx`, `.fit` or `.tcx`, up to 16 MiB each, 20 at a time (more are refused whole) and 100 an hour; a `.zip` is refused by name.
@@ -299,13 +299,13 @@ The web's upload (`docs/SPEC.md` FR-3.1, FR-3.4) as a screen, for a verified, no
 
 ### FR-4.1 Sync history
 
-The web's `/sync` page (`docs/SPEC.md` FR-3.9) shown in the app (`docs/SPEC.md` FR-10.8), read again each time it comes to the front.
+The web's `/sync` page (`docs/SPEC.md` FR-3.7) shown in the app (`docs/SPEC.md` FR-9.6), read again each time it comes to the front.
 
 - View on map opens the app's map in Normal mode with the activity focused. When its day is outside the range, the range becomes that day, as if picked.
 
 ## 7. FR-5 — In-App GPS Recording
 
-Recording is separate from Health Connect sync: a finished recording goes straight to `POST /v1/sync/activities` under `recorded` (`docs/SPEC.md` FR-3.8), so Health Connect's foreground rule doesn't apply. Recording and sending are two explicit steps.
+Recording is separate from Health Connect sync: a finished recording goes straight to `POST /v1/sync/activities` under `recorded` (`docs/SPEC.md` FR-3.6), so Health Connect's foreground rule doesn't apply. Recording and sending are two explicit steps.
 
 ```mermaid
 stateDiagram-v2
@@ -367,8 +367,8 @@ Recordings belong to the account signed in when they began (the demo account has
 | **Foreground-only Health Connect** | No background service or scheduled job reads Health Connect (FR-3.2). |
 | **Safe interruption** | A cancelled read leaves what was kept; a cancelled run is known to the server at the next Load (FR-3.2, FR-3.4). |
 | **Nothing sent unasked** | Only ticked candidates reach the server; none is ticked when the list shows (FR-3.4). |
-| **Idempotency** | Syncing a Health Connect record or a recording twice makes one activity, keyed on its own id (`docs/SPEC.md` FR-3.6). |
-| **Language** | English or Russian by the per-app language, else the phone's, else English; sent as `Accept-Language` (`docs/SPEC.md` FR-13.1). |
+| **Idempotency** | Syncing a Health Connect record or a recording twice makes one activity, keyed on its own id (`docs/SPEC.md` FR-3.4). |
+| **Language** | English or Russian by the per-app language, else the phone's, else English; sent as `Accept-Language` (`docs/SPEC.md` FR-12.1). |
 | **Accessibility** | Every control is labelled for TalkBack and at least 48 dp; at 1.3× font size and up, rows that no longer fit stack. |
 | **Orientation** | Works in landscape with no control under the navigation bar or a cutout; the camera survives rotation (FR-2.3). |
 

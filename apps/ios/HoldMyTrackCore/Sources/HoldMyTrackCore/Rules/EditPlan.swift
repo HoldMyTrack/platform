@@ -1,4 +1,4 @@
-/// The Edit window's decisions (root docs/SPEC.md FR-5.10, apps/android/docs/SPEC.md FR-2.7):
+/// The Edit window's decisions (root docs/SPEC.md FR-5.5, apps/android/docs/SPEC.md FR-2.7):
 /// what it opens with, what it refuses, and which `PATCH /v1/activities/{id}` it sends.
 public enum EditPlan {
     /// The server's bounds on each field.

@@ -13,7 +13,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// Private locations (FR-8.1, IMPLEMENTATION.md §7) — circles on the map whose contents never
+// Private locations (FR-7.1, IMPLEMENTATION.md §7) — circles on the map whose contents never
 // leave ingest. Stored in privacy_zones (§3.7). Every change enqueues a `reprivacy` job over
 // the activities the old and new circle could clip, marking them Pending in the same
 // transaction, so the Activity List shows which rows are being reprocessed.

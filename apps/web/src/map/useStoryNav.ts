@@ -22,7 +22,7 @@ export interface StoryNavInputs {
   reloadActivities: () => void;
   watchCoverage: (then?: () => void) => void;
   refreshTracks: () => void;
-  /** A Story copy arrived (FR-14.7): new activities, refreshed as an import is. */
+  /** A Story copy arrived (FR-13.7): new activities, refreshed as an import is. */
   afterImport: () => void;
   /** An activity left the open Story: its hover preview goes too. */
   onActivityRemoved: (id: string) => void;
@@ -40,7 +40,7 @@ export interface StoryNavigation {
 }
 
 /**
- * The open Story (FR-14.6) and the Stories tab: one Story is always open there, the newest until
+ * The open Story (FR-13.6) and the Stories tab: one Story is always open there, the newest until
  * another is picked, and it's kept in the URL so Back and Forward move between Stories and to and
  * from the tab. Opening or closing one resets the list state as a new range does (session.ts).
  */

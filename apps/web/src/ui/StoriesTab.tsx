@@ -57,8 +57,8 @@ export interface StoriesTabProps {
 }
 
 /**
- * The Activities panel's Stories tab (`SPEC.md` FR-14.6): the copies others sent, to accept or
- * decline (FR-14.7), then every Story as a folder, newest first,
+ * The Activities panel's Stories tab (`SPEC.md` FR-13.6): the copies others sent, to accept or
+ * decline (FR-13.7), then every Story as a folder, newest first,
  * exactly one of them open. Opening one is viewing it — MapView narrows the drawn tracks and the
  * list to it, whatever area and Dates the Activities tab has, and this tab shows that list inside the folder and the whole
  * Story's statistics in the footer. A row previews on hover and focuses on click, like the
@@ -230,7 +230,7 @@ export function StoriesTab({
         {storiesReady && stories.length === 0 && <li className="activities-panel__note">{t('stories.empty')}</li>}
       </ul>
 
-      {/* The whole Story's statistics (FR-14.1). */}
+      {/* The whole Story's statistics (FR-13.1). */}
       {openStory && openStory.id === openId && (
         <div className="activities-panel__footer stories-tab__stats" data-testid="stories-tab-stats">
           {openStory.stats.count > 0 ? (

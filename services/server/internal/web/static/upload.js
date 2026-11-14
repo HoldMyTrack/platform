@@ -1,4 +1,4 @@
-// The header's Upload menu (templates/header.html, docs/SPEC.md FR-3.4), on every page: files
+// The header's Upload menu (templates/header.html, docs/SPEC.md FR-3.2), on every page: files
 // chosen here — or dropped on the map, which sends them here as an `hmt:upload-files` event —
 // upload one at a time with their progress, then show as "Processing…" until the server has
 // finished them. A .zip is refused here, with a note: archives aren't imported (ADR-0039). A

@@ -5,7 +5,7 @@ public enum EditBlock: Equatable, Sendable { case checkOne, pending, isPrivate, 
 
 /// Whether the Track and Photos tabs can be used for the Edit window's activities, Android's and
 /// the web's EditAvailability. One activity's answer is the server's (the list's `track_edit` and
-/// `photos`, root docs/SPEC.md FR-5.14 and FR-16.1); the app adds only the rule that depends on
+/// `photos`, root docs/SPEC.md FR-5.7 and FR-15.1); the app adds only the rule that depends on
 /// the selection: one activity.
 public enum EditAvailability {
     public static func track(_ group: [Activity]) -> EditBlock? {
@@ -34,7 +34,7 @@ public enum EditAvailability {
 /// between them (Cut, while its button is held), or the track in two at a knob (Split, held).
 public enum EditPreview: Equatable, Sendable { case chop, cut, split }
 
-/// One Edit track session (root docs/SPEC.md FR-5.14, FR-5.17), Android's TrackEditor less its
+/// One Edit track session (root docs/SPEC.md FR-5.7, FR-5.9), Android's TrackEditor less its
 /// views: the recorded points, the edit saved on them, the steps taken since, and the two knobs.
 /// The knobs are held as the times of the points they sit on, not as indices, so a deleted point
 /// elsewhere never moves them; nil is "at that end". Split is a step, so Undo takes it back, but

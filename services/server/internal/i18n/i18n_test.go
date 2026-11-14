@@ -1,6 +1,6 @@
 package i18n
 
-// Covers docs/SPEC.md FR-13.1 (which language a request gets).
+// Covers docs/SPEC.md FR-12.1 (which language a request gets).
 
 import (
 	"net/http"

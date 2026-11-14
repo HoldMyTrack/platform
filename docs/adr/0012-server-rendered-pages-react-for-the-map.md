@@ -16,8 +16,6 @@ The pages coming next make the pattern worse, not better: Contacts, a Cloud-inte
 
 **React is kept for the map page only**, where it earns its place: the map, the Activities panel, filters, the date-range picker and export are one tightly interactive WebGL surface. Import moved out of the header into the Activities panel (its Sync tab) as part of this, because the header becomes shared page chrome, not a toolbar for the map.
 
-It lands in phases, each shippable on its own: the rendering foundation plus About, Help and Contacts first; then sign-in and the other auth screens; then the map page itself, served by Go with the shared header around the React mount point; then Settings and Profile. Until the map page moves, Caddy and Vite's dev proxy send only the listed page paths to the Go server, and the React header stays a hand-kept copy of the template's.
-
 ## Alternatives considered
 
 - **Keep one React app and give it a client-side router.** Fixes refresh and Back for Profile and Settings, but not the rest: every page still downloads the map bundle, renders blank until its API calls land, and needs a second static copy for anything a crawler or a signed-out visitor should read. The header stays split between React and whatever the static pages use.
@@ -27,8 +25,8 @@ It lands in phases, each shippable on its own: the rendering foundation plus Abo
 ## Consequences
 
 - Every page has a URL, and refresh and Back behave like any other website. A signed-out visitor, a crawler and a signed-in user get the same page with a different header, with no bundle to download first.
-- The header exists once (the template) as soon as the map page moves to it; until then, its React copy is kept in step by hand, with comments on both sides.
+- The header exists once, as the template; the map page is served by Go with the header around the React mount point.
 - Pages are rendered per request with the session looked up, so they are sent `Cache-Control: no-store`. They cost one session query each, the same as any API call.
 - Plain form POSTs remove the barrier the JSON API relied on against cross-site request forgery (a cross-site form can't send a JSON body or a PATCH/DELETE). Every page form is behind an Origin/Referer check against `APP_BASE_URL`, on top of the session cookie's `SameSite=Lax`.
 - The Go server now serves HTML, so page changes are server changes: templates and their stylesheet live in `services/server/internal/web`, not `apps/web`. Dev reads them from disk (`WEB_DEV_DIR`) so editing one needs no image rebuild, and Vite's dev server proxies the page paths to Go so dev keeps one origin like production.
-- Interactivity on the rendered pages is deliberately plainer than React's: a native `<select>` rather than a typeahead picker, an SVG `<title>` rather than a hover tooltip. Where a page genuinely needs more, a small script (or a React island) can be added to that page alone; the default is none.
+- Interactivity on the rendered pages is plainer than React's: a native `<select>` rather than a typeahead picker, an SVG `<title>` rather than a hover tooltip. Where a page needs more, a small script (or a React island) can be added to that page alone; the default is none.

@@ -3,7 +3,7 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// The area list and Dates (root docs/SPEC.md FR-5.19, FR-5.20) beyond their shared rules.
+/// The area list and Dates (root docs/SPEC.md FR-5.11, FR-5.12) beyond their shared rules.
 struct AreaListTests {
     @Test func theViewIsAskedAboutToAMetre() {
         #expect(AreaLoad.box(west: -81.123456, south: 41.000004, east: -81.0, north: 41.5) == [-81.12346, 41.0, -81.0, 41.5])

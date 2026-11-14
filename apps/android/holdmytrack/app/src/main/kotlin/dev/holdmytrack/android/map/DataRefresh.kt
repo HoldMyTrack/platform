@@ -52,7 +52,7 @@ class DataRefresh(
         }
     }
 
-    /** A Story copy arrived (`docs/SPEC.md` FR-14.8): new activities, refreshed as after an upload. */
+    /** A Story copy arrived (`docs/SPEC.md` FR-13.8): new activities, refreshed as after an upload. */
     fun afterStoryCopy() {
         refreshTracks()
         area.reloadList()

@@ -177,7 +177,7 @@ class CaptureMode(
         HoldMyTrackApi.spotDetail(target.id) { result ->
             if (spot?.id != target.id) return@spotDetail
             val detail = result.getOrElse { error ->
-                // A place retired since the map loaded it (`docs/SPEC.md` FR-15.1) is a 404
+                // A place retired since the map loaded it (`docs/SPEC.md` FR-14.1) is a 404
                 // to anyone who hasn't captured it — the only accounts capture mode starts for.
                 if (error is ApiException && error.code == 404) return@spotDetail gone()
                 this.detail.setText(R.string.spots_capture_load_failed)
@@ -286,7 +286,7 @@ class CaptureMode(
         }
     }
 
-    /** The place is gone from OpenStreetMap and retired (`docs/SPEC.md` FR-15.1): there's
+    /** The place is gone from OpenStreetMap and retired (`docs/SPEC.md` FR-14.1): there's
      *  nothing to capture. Says so, and ends capture mode a moment later. */
     private fun gone() {
         capture = null // so resume() doesn't start listening again

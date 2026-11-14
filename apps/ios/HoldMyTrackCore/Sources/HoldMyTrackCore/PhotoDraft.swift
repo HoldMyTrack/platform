@@ -1,6 +1,6 @@
 import Foundation
 
-/// What a picked photo's EXIF says about when and where it was taken (root docs/SPEC.md FR-16.1),
+/// What a picked photo's EXIF says about when and where it was taken (root docs/SPEC.md FR-15.1),
 /// sent as plain upload fields since the redrawn file carries no EXIF.
 public struct PhotoExif: Equatable, Sendable {
     /// A moment, when the camera wrote a zone or a GPS clock gives one.

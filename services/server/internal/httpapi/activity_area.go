@@ -13,7 +13,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/activitytype"
 )
 
-// areaActivitiesLimit caps the web's area list, and so its map (docs/SPEC.md FR-5.19): a heavy
+// areaActivitiesLimit caps the web's area list, and so its map (docs/SPEC.md FR-5.11): a heavy
 // user's home area holds thousands, and the response says how many, so the client can say the
 // rest is out of view.
 const areaActivitiesLimit = 1000
@@ -100,9 +100,9 @@ type areaResponse struct {
 }
 
 // handleListArea serves `GET /v1/activities/area?bbox=&from=&to=&limit=`, the web's list and the
-// set its map draws (docs/SPEC.md FR-5.19): the newest activities whose track crosses the view,
+// set its map draws (docs/SPEC.md FR-5.11): the newest activities whose track crosses the view,
 // areaActivitiesLimit at most, with the area's total. Without `bbox`, the newest `limit` of the
-// whole history, for the opening view (FR-4.5).
+// whole history, for the opening view (FR-4.4).
 func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	filter, err := parseActivityFilter(q)

@@ -329,7 +329,7 @@
   display: none;
 }
 
-/* Where the files come from (FR-3.4's Upload menu): a guide per service, below what is importing. */
+/* Where the files come from (FR-3.2's Upload menu): a guide per service, below what is importing. */
 .upload-menu__guides {
   margin-top: 6px;
   padding-top: 8px;

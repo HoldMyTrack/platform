@@ -1,6 +1,6 @@
 import Foundation
 
-/// The map's two modes (root docs/SPEC.md FR-4.4); photos and Stories belong to the first.
+/// The map's two modes (root docs/SPEC.md FR-4.3); photos and Stories belong to the first.
 public enum MapMode: String, CaseIterable, Sendable { case normal, fog }
 
 /// A photo marker's place on screen, in points from the map's top-left.
@@ -93,7 +93,7 @@ public enum PhotoMarkers {
         return groups
     }
 
-    /// The markers an exported image draws (docs/SPEC.md FR-4.10): grouped and sized as the
+    /// The markers an exported image draws (docs/SPEC.md FR-4.7): grouped and sized as the
     /// screen does at zoom, from points in points from the frame's top-left, then scaled to the
     /// image by scale. A marker wholly outside the frame is left out; the active one comes last,
     /// to be drawn on top.

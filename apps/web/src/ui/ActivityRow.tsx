@@ -67,7 +67,7 @@ export function ActivityRow({
     <li
       data-activity-id={activity.id}
       className={classes.join(' ')}
-      // The description (docs/SPEC.md FR-5.10) shows as a hover tooltip only — no second visible line, and
+      // The description (docs/SPEC.md FR-5.5) shows as a hover tooltip only — no second visible line, and
       // undefined (not an empty string) when there is none, so a row with nothing written there
       // gets no title attribute at all rather than an empty one a browser might still render as
       // an inert tooltip.

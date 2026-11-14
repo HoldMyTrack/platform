@@ -13,7 +13,7 @@ import kotlin.math.sin
 import kotlin.math.sinh
 
 /**
- * Whether the list follows the map (`docs/SPEC.md` FR-5.19): from zoom 4, where tracks are drawn,
+ * Whether the list follows the map (`docs/SPEC.md` FR-5.11): from zoom 4, where tracks are drawn,
  * on every settled move; further out there's nothing on the map to list. And whether the last
  * area's list was cut at the limit, so the map draws only the listed tracks and says so. The web's
  * `areaLoad.ts`; both run `testdata/client-rules/area-load.json`.
@@ -43,7 +43,7 @@ object AreaLoad {
 }
 
 /**
- * The opening camera (`docs/SPEC.md` FR-4.5): zoom 12, centred on the newest five tracks if they
+ * The opening camera (`docs/SPEC.md` FR-4.4): zoom 12, centred on the newest five tracks if they
  * fit the screen there with three quarters of it filled, else the newest four, and so on; when even
  * the newest alone doesn't fit, still centred on it. The web's `openingView.ts`; both run
  * `testdata/client-rules/opening-view.json`.
@@ -97,7 +97,7 @@ object OpeningView {
 }
 
 /**
- * The Dates filter (`docs/SPEC.md` FR-5.20): From ([after]) and To ([before]), local YYYY-MM-DD
+ * The Dates filter (`docs/SPEC.md` FR-5.12): From ([after]) and To ([before]), local YYYY-MM-DD
  * dates, both inclusive and either null; both null is all time. The web's `dateFilter.ts`; both
  * run the `date-filter-*` files in `testdata/client-rules`.
  */

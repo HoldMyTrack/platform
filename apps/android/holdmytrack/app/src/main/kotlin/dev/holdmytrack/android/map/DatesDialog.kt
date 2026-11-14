@@ -21,7 +21,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 /**
- * The Dates filter's From and To (`docs/SPEC.md` FR-5.20): each its day or the web's hint, a tap
+ * The Dates filter's From and To (`docs/SPEC.md` FR-5.12): each its day or the web's hint, a tap
  * that picks it in a calendar bounded by the first activity and today, which applies at once, as
  * the web's does, and ✕ while it's set; Clear dates clears both ([onClear]). What a change does
  * is [DateFilter.setting]'s, reported through [onChange].

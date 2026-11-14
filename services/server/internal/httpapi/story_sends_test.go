@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-14.7 (sending a copy).
+// Covers docs/SPEC.md FR-13.7 (sending a copy).
 
 import (
 	"context"

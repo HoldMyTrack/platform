@@ -151,7 +151,7 @@ export interface Activity {
   /** An Edit track reprocess (§4.7.7) is queued or running — the row's numbers and geometry
    *  are still the pre-edit ones until it finishes. */
   pending: boolean;
-  /** Entirely inside the account's Private locations (FR-8.1): kept with no track, so its
+  /** Entirely inside the account's Private locations (FR-7.1): kept with no track, so its
    *  distance and duration mean nothing — the row shows a Private badge instead. */
   private: boolean;
   /** The Stories it's in, newest first — the Activities panel's Story badge. */
@@ -161,13 +161,13 @@ export interface Activity {
 /** An activity as the Edit window needs it: the row, and what the area list leaves out
  *  (`GET /v1/activities/{id}`). */
 export interface ActivityDetail extends Activity {
-  /** Free text (`docs/SPEC.md` FR-5.10); `null` means never set. */
+  /** Free text (`docs/SPEC.md` FR-5.5); `null` means never set. */
   description: string | null;
   /** The track carries a user edit, so "Reset to original track" has something to undo. */
   edited: boolean;
-  /** Why Edit track can't open for it (`docs/SPEC.md` FR-5.14), or null when it can. */
+  /** Why Edit track can't open for it (`docs/SPEC.md` FR-5.7), or null when it can. */
   trackEdit: Schema<'ActivityRow'>['track_edit'] | null;
-  /** Why photos can't be added to it (FR-16.1), or null when they can. */
+  /** Why photos can't be added to it (FR-15.1), or null when they can. */
   photos: Schema<'ActivityRow'>['photos'] | null;
 }
 
@@ -179,13 +179,13 @@ export interface ActivityQuery {
   from?: string;
   to?: string;
   types?: string[];
-  /** One Story's activities only (`SPEC.md` FR-14.4). */
+  /** One Story's activities only (`SPEC.md` FR-13.4). */
   story?: string;
-  /** Tracks tiles only: activities starting at or after this moment (`SPEC.md` FR-5.19). */
+  /** Tracks tiles only: activities starting at or after this moment (`SPEC.md` FR-5.11). */
   since?: string;
 }
 
-/** The web's area list (`SPEC.md` FR-5.19): the newest tracks crossing `bbox`, 1,000 at most;
+/** The web's area list (`SPEC.md` FR-5.11): the newest tracks crossing `bbox`, 1,000 at most;
  *  without one, the newest `limit` of the whole history. */
 export interface AreaQuery {
   bbox?: BBox;
@@ -247,7 +247,7 @@ async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
   return (await res.json()) as T;
 }
 
-/** `GET /v1/activities/area` (`SPEC.md` FR-5.19): the web's list, and the set its map draws. */
+/** `GET /v1/activities/area` (`SPEC.md` FR-5.11): the web's list, and the set its map draws. */
 export async function listArea(query: AreaQuery, signal?: AbortSignal): Promise<ActivityPage> {
   const params = new URLSearchParams();
   if (query.bbox) params.set('bbox', query.bbox.join(','));
@@ -279,7 +279,7 @@ export async function listActivities(query: ActivityQuery = {}, signal?: AbortSi
 }
 
 /**
- * `PATCH /v1/activities/{id}` (`docs/SPEC.md` FR-5.10) — the Edit window's Save, for its Activity tab's
+ * `PATCH /v1/activities/{id}` (`docs/SPEC.md` FR-5.5) — the Edit window's Save, for its Activity tab's
  * fields. Full-replace-on-save, not per-field: all three fields commit together.
  * Returns the updated row so the caller can `reload()` the list (EditActivityWindow.tsx's caller does,
  * matching the "just refetch" convention an upload completion already uses) rather than
@@ -424,7 +424,7 @@ export async function getStatsCard(
  * focus.
  */
 /** `GET /v1/map/imagery`: whether satellite imagery is offered now, which the server stops while
- *  the imagery plan nears its monthly limit (docs/SPEC.md FR-4.14). */
+ *  the imagery plan nears its monthly limit (docs/SPEC.md FR-4.10). */
 export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
   const res = await fetch(`${API_BASE_URL}${API_V1}/map/imagery`, {
     ...(signal ? { signal } : {}),
@@ -498,7 +498,7 @@ export async function getActivityTrackPoints(activityId: string, signal?: AbortS
 }
 
 /** A split would leave one part entirely inside a Private location (`split_hides_part`,
- *  FR-5.17): nothing was saved, and saving again with `allowHidden` goes ahead. The message
+ *  FR-5.9): nothing was saved, and saving again with `allowHidden` goes ahead. The message
  *  says what the part will be. */
 export class SplitHidesPartError extends Error {}
 
@@ -529,7 +529,7 @@ export async function saveActivityTrackEdit(
   }
 }
 
-/** One of the account's Private locations (FR-8.1): a circle whose contents are clipped off
+/** One of the account's Private locations (FR-7.1): a circle whose contents are clipped off
  *  the ends of every track at ingest. `name` is `''` when unset. */
 export interface PrivateLocation {
   id: string;
@@ -596,7 +596,7 @@ export async function deletePrivateLocation(id: string): Promise<void> {
   }
 }
 
-/** A Story's joint statistics, or one activity type's share of them (`SPEC.md` FR-14.1). */
+/** A Story's joint statistics, or one activity type's share of them (`SPEC.md` FR-13.1). */
 export interface StoryTotals {
   count: number;
   distanceMeters: number;
@@ -604,13 +604,13 @@ export interface StoryTotals {
   elapsedSeconds: number;
 }
 
-/** A hand-picked, private set of the account's activities (`SPEC.md` FR-14). `description` is
+/** A hand-picked, private set of the account's activities (`SPEC.md` FR-13). `description` is
  *  `''` when unset. */
 export interface Story {
   id: string;
   name: string;
   description: string;
-  /** Who sent the copy this Story came from (FR-14.8) — their name or email address — while the
+  /** Who sent the copy this Story came from (FR-13.8) — their name or email address — while the
    *  Story it was copied from still exists; null for the account's own. */
   from: string | null;
   /** Every member, earliest activity first. */
@@ -646,7 +646,7 @@ function toStory(body: Schema<'Story'>): Story {
 
 
 /** Thrown by `getStory` for a Story that doesn't exist or isn't this account's — the two are
- *  one `404` on purpose (`SPEC.md` FR-14.5). */
+ *  one `404` on purpose (`SPEC.md` FR-13.5). */
 export class StoryNotFoundError extends Error {}
 
 /** `GET /v1/stories/{id}`. */
@@ -727,7 +727,7 @@ export async function removeStoryActivities(id: string, activityIds: string[]): 
   return toStory((await res.json()) as Schema<'Story'>);
 }
 
-/** `POST /v1/stories/{id}/send` — a copy of the Story to `email` (FR-14.7). Succeeds whether or
+/** `POST /v1/stories/{id}/send` — a copy of the Story to `email` (FR-13.7). Succeeds whether or
  *  not the address has an account: the server never says. */
 export async function sendStory(id: string, email: string): Promise<void> {
   const res = await fetch(`${API_BASE_URL}${API_V1}/stories/${encodeURIComponent(id)}/send`, {
@@ -741,7 +741,7 @@ export async function sendStory(id: string, email: string): Promise<void> {
   }
 }
 
-/** A copy of a Story someone sent the account, waiting to be accepted or declined (FR-14.7). */
+/** A copy of a Story someone sent the account, waiting to be accepted or declined (FR-13.7). */
 export interface StorySend {
   id: string;
   storyName: string;
@@ -821,7 +821,7 @@ export async function getCoverageStatus(signal?: AbortSignal): Promise<CoverageS
   return (await res.json()) as ResponseJson<'/coverage/status', 'get'>;
 }
 
-/** `GET /v1/spots` — "Show in this area" (FR-15.5): the places in a box, in the chosen
+/** `GET /v1/spots` — "Show in this area" (FR-14.4): the places in a box, in the chosen
  *  categories. `total` is how many the box holds; more than `spots.length` when the server cut
  *  the answer at its limit. */
 export interface SpotsInArea {
@@ -845,7 +845,7 @@ export async function getSpotsInArea(
   return (await res.json()) as ResponseJson<'/spots', 'get'>;
 }
 
-/** One place the account has captured with the Android app (FR-15.6). */
+/** One place the account has captured with the Android app (FR-14.6). */
 export type SpotCapture = Schema<'SpotCapture'>;
 
 /** `GET /v1/spots/captures` — the account's captured places, newest first; with [since] (a
@@ -862,7 +862,7 @@ export async function getSpotCaptures(signal?: AbortSignal, since?: string): Pro
   return ((await res.json()) as ResponseJson<'/spots/captures', 'get'>).captures;
 }
 
-/** One photo on an activity (FR-16), always with a place on its track (`routeAt`, a moment on
+/** One photo on an activity (FR-15), always with a place on its track (`routeAt`, a moment on
  *  it). `lon`/`lat` are null only for an activity with no track left at all. `url` and
  *  `thumbUrl` are API paths (`/v1/photos/…`) — callers prefix `API_BASE_URL`. */
 export interface Photo {
@@ -912,7 +912,7 @@ export async function listPhotos(of: { activity: string } | { story: string }, s
   return ((await res.json()) as ResponseJson<'/photos', 'get'>).photos.map(toPhoto);
 }
 
-/** The server couldn't tell where on the track a photo was taken (`photo_needs_place`, FR-16.1):
+/** The server couldn't tell where on the track a photo was taken (`photo_needs_place`, FR-15.1):
  *  nothing was stored, and it goes again with the user's `routeAt`. */
 export class PhotoNeedsPlaceError extends Error {}
 

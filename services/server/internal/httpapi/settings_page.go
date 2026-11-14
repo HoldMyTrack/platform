@@ -37,13 +37,13 @@ type settingsForm struct {
 	AvatarError string
 	Notice      string
 	NoticeKey   string
-	// Email is the address to type to delete the account (FR-1.11); DeleteError is that
+	// Email is the address to type to delete the account (FR-1.12); DeleteError is that
 	// form's, and keeps its section open.
 	Email       string
 	DeleteError string
-	// Export is Download your data's state (FR-1.12), with its sizes and date already worded.
+	// Export is Download your data's state (FR-1.13), with its sizes and date already worded.
 	Export settingsExport
-	// Usage is what the account holds against its limits (FR-1.13), already worded; "" when it
+	// Usage is what the account holds against its limits (FR-1.14), already worded; "" when it
 	// couldn't be read.
 	Usage string
 }
@@ -207,7 +207,7 @@ func (s *Server) avatarForm(w http.ResponseWriter, r *http.Request, notice strin
 	http.Redirect(w, r, "/settings"+notice, http.StatusSeeOther)
 }
 
-// POST /settings/export — Download your data's request (FR-1.12); back to the section, now
+// POST /settings/export — Download your data's request (FR-1.13); back to the section, now
 // preparing.
 func (s *Server) handleSettingsExportForm(w http.ResponseWriter, r *http.Request) {
 	acct := s.settingsAccount(w, r)
@@ -224,7 +224,7 @@ func (s *Server) handleSettingsExportForm(w http.ResponseWriter, r *http.Request
 	http.Redirect(w, r, "/settings#download-data", http.StatusSeeOther)
 }
 
-// POST /settings/delete — the account's email in field "email" as confirmation (FR-1.11). On
+// POST /settings/delete — the account's email in field "email" as confirmation (FR-1.12). On
 // success the session is gone with the account, so it lands on the sign-in page, which says so.
 func (s *Server) handleSettingsDeleteForm(w http.ResponseWriter, r *http.Request) {
 	acct := s.settingsAccount(w, r)

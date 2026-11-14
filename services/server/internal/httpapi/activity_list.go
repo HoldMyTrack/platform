@@ -42,7 +42,7 @@ ORDER BY started_at DESC, id DESC`
 // Name (migrations/0002_activities.sql) is a user-entered title, nullable — a row with
 // none has never had one set, and the client falls back to started_at for its primary line
 // (§4.7 revised its earlier "no name column" decision to add exactly this, and nothing
-// more: still no parser reads a name out of a source file). Description (docs/SPEC.md FR-5.10,
+// more: still no parser reads a name out of a source file). Description (docs/SPEC.md FR-5.5,
 // migrations/0002_activities.sql's activities.description) stays separate free-text, shown only
 // as a hover tooltip — a row with nothing written there has never been edited, not "an
 // empty description."
@@ -69,7 +69,7 @@ type activityRow struct {
 	// a user edit, which is what makes "Reset to original track" meaningful.
 	Pending bool `json:"pending"`
 	Edited  bool `json:"edited"`
-	// Private is an activity entirely inside the account's Private locations (FR-8.1): kept,
+	// Private is an activity entirely inside the account's Private locations (FR-7.1): kept,
 	// with no track, so no distance or duration worth showing — the panel badges it instead.
 	// A NULL trajectory has no other cause (§3.3).
 	Private bool `json:"private"`

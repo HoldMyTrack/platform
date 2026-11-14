@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-1.1, FR-1.12, FR-3.6 and FR-4.15 (rate limits).
+// Covers docs/SPEC.md FR-1.1, FR-1.13, FR-3.4 and FR-4.11 (rate limits).
 
 import (
 	"context"

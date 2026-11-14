@@ -175,7 +175,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     /** The Stories tab's badge: the copies of Stories others sent, waiting to be accepted or
-     *  declined (`docs/SPEC.md` FR-14.7) — in the accent, an invitation rather than a chore. */
+     *  declined (`docs/SPEC.md` FR-13.7) — in the accent, an invitation rather than a chore. */
     fun setStoriesWaiting(count: Int) {
         if (count <= 0 || Session.isDemo) {
             nav.removeBadge(R.id.nav_stories)

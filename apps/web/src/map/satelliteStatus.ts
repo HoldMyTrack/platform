@@ -1,5 +1,5 @@
 /**
- * Whether satellite imagery is loading on this device (docs/SPEC.md FR-4.14): an ad blocker, a
+ * Whether satellite imagery is loading on this device (docs/SPEC.md FR-4.10): an ad blocker, a
  * firewall or a network that refuses the imagery host leaves Satellite mode with its fills hidden
  * and nothing under them. "failed" when an imagery request failed before any tile arrived, or 15
  * seconds of Satellite on screen passed without one; "loaded" once one has, which a later tile

@@ -231,7 +231,7 @@ describe('basemap foundation', () => {
     const SHARED = ['bike-paths-shared'];
     const MTB = ['bike-paths-mtb'];
     const PICKS = [...BIKES, ...SHARED, ...MTB];
-    // A sample of the basemap's road layers (FR-4.17): a line, rail and the street names.
+    // A sample of the basemap's road layers (FR-4.13): a line, rail and the street names.
     const ROADS = ['roads_major', 'roads_rail', 'roads_labels_minor'];
     const visibility = (ids) =>
       page.evaluate((ids) => ids.map((id) => window.__holdmytrack.getLayoutProperty(id, 'visibility')), ids);
@@ -266,7 +266,7 @@ describe('basemap foundation', () => {
     await page.waitForFunction(() => window.__holdmytrack.areTilesLoaded(), undefined, { timeout: 30_000 });
     const rendered = await page.evaluate(() => window.__holdmytrack.queryRenderedFeatures({ layers: ['paths_trail'] }).length);
     assert.ok(rendered > 0, `trails drawn (${rendered})`);
-    // Bike and shared paths come from their own tiles (FR-4.16). This database may have none
+    // Bike and shared paths come from their own tiles (FR-4.12). This database may have none
     // imported, so the check is that the tiles answer, not what they hold.
     const tileStatus = await page.evaluate(async () => {
       const url = window.__holdmytrack.getStyle().sources['bike-paths'].tiles[0];
@@ -279,7 +279,7 @@ describe('basemap foundation', () => {
     await styleLoaded();
     assert.deepEqual(await visibility(PICKS), PICKS.map(() => 'visible'), 'remembered across reload');
 
-    // Every path paints over Fog's veil and under the activity tracks (FR-4.13).
+    // Every path paints over Fog's veil and under the activity tracks (FR-4.9).
     const order = await page.evaluate(() => window.__holdmytrack.getStyle().layers.map((layer) => layer.id));
     const fogAt = order.indexOf('fog-veil');
     const tracksAt = order.indexOf('tracks-casing');
@@ -351,7 +351,7 @@ describe('basemap foundation', () => {
     await page.screenshot({ path: new URL('layers-menu.png', SHOTS).pathname });
   });
 
-  // Satellite mode (docs/SPEC.md FR-4.14) exists only when the dev server was started with
+  // Satellite mode (docs/SPEC.md FR-4.10) exists only when the dev server was started with
   // VITE_SATELLITE_TILES: without it the style has no imagery and the map no Satellite button,
   // which is what CI checks; with it, the button itself.
   it('9. Satellite button: shows imagery under roads and labels, remembered across reload, or is absent unconfigured', async () => {
@@ -410,7 +410,7 @@ describe('basemap foundation', () => {
     await page.unroute(isImagery, stubImagery);
   });
 
-  // Points of interest (docs/SPEC.md FR-15.2, FR-15.5): nothing below zoom 10, "Show in this area"
+  // Points of interest (docs/SPEC.md FR-14.2, FR-14.4): nothing below zoom 10, "Show in this area"
   // from 10 until the tiles take over at 13.
   it('10. Show in this area offered only between zoom 10 and 13', async () => {
     const menu = page.getByTestId('map-overlays');
@@ -432,7 +432,7 @@ describe('basemap foundation', () => {
     await page.locator('#overlay-spots-playground').uncheck();
   });
 
-  // Fog comes from the layers document (mapLayers.ts, FR-4.2 and FR-4.4): each mode applies its
+  // Fog comes from the layers document (mapLayers.ts, FR-4.2 and FR-4.3): each mode applies its
   // view as the document describes it, here on a live map, and the toggle offers no other mode.
   it('11. Normal and Fog apply the views the layers document carries', async () => {
     const state = () =>

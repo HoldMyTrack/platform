@@ -7,7 +7,7 @@ export interface BasemapToggleProps {
 }
 
 /**
- * The Satellite button beside the Layers menu (FR-4.14, IMPLEMENTATION.md §4.26): one press
+ * The Satellite button beside the Layers menu (FR-4.10, IMPLEMENTATION.md §4.26): one press
  * switches the base map between the vector map and satellite imagery. A choice between two, so a
  * pressed button rather than a menu. MapView shows it only when the deployment has imagery.
  */

@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-14.4 (the story filter).
+// Covers docs/SPEC.md FR-13.4 (the story filter).
 
 import (
 	"context"

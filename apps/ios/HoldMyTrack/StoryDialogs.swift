@@ -42,7 +42,7 @@ enum StoryDialogs {
         top(view)?.present(alert, animated: true)
     }
 
-    /// FR-14.7: a copy to an email address; the server never says whether it has an account.
+    /// FR-13.7: a copy to an email address; the server never says whether it has an account.
     static func sendCopy(over view: UIView, story: Story, email: String = "", error: String? = nil, run: @escaping (String) async -> Outcome) {
         let message = error ?? String(localized: "If the address has a HoldMyTrack account, it gets a copy of “\(story.name)” to accept.")
         let alert = UIAlertController(title: String(localized: "Send a copy"), message: message, preferredStyle: .alert)
@@ -89,7 +89,7 @@ enum StoryDialogs {
         top(view)?.present(alert, animated: true)
     }
 
-    /// Add to story (FR-14.2, FR-14.3): the account's Stories, read as the menu opens, and New
+    /// Add to story (FR-13.2, FR-13.3): the account's Stories, read as the menu opens, and New
     /// story…; either takes targets() in one request. added reports the Story, and whether it's new.
     static func addToStoryMenu(api: APIClient, over view: UIView, targets: @escaping () -> [String],
                                added: @escaping (Story, _ created: Bool) -> Void) -> UIMenu {

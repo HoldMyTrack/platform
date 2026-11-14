@@ -7,7 +7,7 @@ import dev.holdmytrack.android.net.HoldMyTrackApi
 /**
  * Photo thumbnails, fetched once and kept: the map's markers and the Photos tab's rows show the
  * same ones, and a marker is rebuilt on every regrouping. A photo's images never change under
- * its URL (`docs/SPEC.md` FR-16.3), so nothing here ever goes stale. Main thread only.
+ * its URL (`docs/SPEC.md` FR-15.3), so nothing here ever goes stale. Main thread only.
  */
 object PhotoImages {
 

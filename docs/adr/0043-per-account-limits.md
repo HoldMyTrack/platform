@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted. Built: the server checks them on upload, phone sync and accepting a Story copy (`SPEC.md` FR-1.13), and Settings shows what an account holds against them.
+Accepted. Built: the server checks them on upload, phone sync and accepting a Story copy (`SPEC.md` FR-1.14), and Settings shows what an account holds against them.
 
 ## Context
 
-Storage growing without bound is the first thing `VISION.md` §4.3 names as breaking a free service, and the rate limits (`IMPLEMENTATION.md` §5.7) only bound how fast an account adds: 100 uploads an hour, 60 sync requests an hour, 16 MiB a file. A script staying under them adds thousands of activities a day, every day, and each one keeps costing: its original upload in R2, its masks in Postgres on the droplet's disk, its share of the Fog and Heatmap tiles, and the renders behind them. Photos were the one stored line with a ceiling (2,000 per account, ADR-0024).
+Storage growing without bound is the first thing `VISION.md` §4.3 names as breaking a free service, and the rate limits (`IMPLEMENTATION.md` §5.7) only bound how fast an account adds: 100 uploads an hour, 60 sync requests an hour, 16 MiB a file. A script staying under them adds thousands of activities a day, every day, and each one keeps costing: its original upload in R2, its masks in Postgres on the droplet's disk, its share of the Fog tiles, and the renders behind them. Photos were the one stored line with a ceiling (2,000 per account, ADR-0024).
 
 Against that, `VISION.md` §1 promises to keep the journeys people choose, and `VISION.md` §6.1 rules out tiers: every account has every feature.
 

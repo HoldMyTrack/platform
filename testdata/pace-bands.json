@@ -1,6 +1,6 @@
 {
   "rule": "paceBands",
-  "description": "The pace bands of one track (docs/SPEC.md FR-4.8): five equal bins over the track's own range of speeds, slowest 0 to fastest 4, as runs of point indices; a run starts at the point before the one whose speed it takes, so neighbouring runs share their boundary point. Run by the server (internal/httpapi) and by Android for the Sync tab's candidates, which aren't on the server. Input: speeds, one per point. Expected: [{ band, start, end }], end inclusive.",
+  "description": "The pace bands of one track (docs/SPEC.md FR-4.6): five equal bins over the track's own range of speeds, slowest 0 to fastest 4, as runs of point indices; a run starts at the point before the one whose speed it takes, so neighbouring runs share their boundary point. Run by the server (internal/httpapi) and by Android for the Sync tab's candidates, which aren't on the server. Input: speeds, one per point. Expected: [{ band, start, end }], end inclusive.",
   "cases": [
     { "name": "runs share their boundary point and cover the whole track", "input": { "speeds": [0, 0, 10, 10, 0] }, "expected": [{ "band": 0, "start": 0, "end": 1 }, { "band": 4, "start": 1, "end": 3 }, { "band": 0, "start": 3, "end": 4 }] },
     { "name": "five equal bins, the top speed in the last", "input": { "speeds": [0, 2, 5, 10] }, "expected": [{ "band": 1, "start": 0, "end": 1 }, { "band": 2, "start": 1, "end": 2 }, { "band": 4, "start": 2, "end": 3 }] },

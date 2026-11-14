@@ -57,7 +57,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * The Activities sheet's Sync tab — the bottom bar's Sync (`docs/SPEC.md` FR-3.6, FR-3.8): every
+ * The Activities sheet's Sync tab — the bottom bar's Sync (`docs/SPEC.md` FR-3.4, FR-3.6): every
  * activity on this phone that isn't on the map yet, the user's to choose. Health Connect's
  * sessions with a route from the last three months, and every recording waiting on the phone,
  * newest first ([SyncCandidates]), each drawn dashed on the map while the tab shows
@@ -670,7 +670,7 @@ class SyncTab(
         val note: String?,
         /** Sent, and not on the map yet ([SyncProgress]): nothing to tick, hide or edit. */
         val processing: Boolean,
-        /** How many tracks cover the same time (`docs/SPEC.md` FR-3.7): other rows, and the
+        /** How many tracks cover the same time (`docs/SPEC.md` FR-3.5): other rows, and the
          *  account's activity it overlaps the most. Its ⓘ shows while there are any. */
         val similar: Int,
         val type: String,

@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 /**
- * Similar tracks (`docs/SPEC.md` FR-3.7; `apps/android/docs/SPEC.md` FR-3.2), over
+ * Similar tracks (`docs/SPEC.md` FR-3.5; `apps/android/docs/SPEC.md` FR-3.2), over
  * `dialog_similar_tracks`: a Sync row's ⓘ. What else covers the same time as [of] — rows
  * waiting on this phone ([Similar.waiting]), each picked out on the map when tapped ([onPick]),
  * and the account's activity it overlaps the most (`HoldMyTrackApi.activityOverlaps`), opened on

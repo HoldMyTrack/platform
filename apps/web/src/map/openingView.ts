@@ -1,7 +1,7 @@
 import type { BBox } from '../api';
 import { FLY_FILL, unionBBox } from './bbox.ts';
 
-/** The zoom the web's map opens at (docs/SPEC.md FR-4.5): a town or a few valleys. */
+/** The zoom the web's map opens at (docs/SPEC.md FR-4.4): a town or a few valleys. */
 export const OPENING_ZOOM = 12;
 
 /** How many of the newest activities the opening view tries to show. */
@@ -26,7 +26,7 @@ function wrapped(lon: number): number {
 }
 
 /**
- * The web's opening camera (docs/SPEC.md FR-4.5): zoom 12, centred on the newest five tracks if
+ * The web's opening camera (docs/SPEC.md FR-4.4): zoom 12, centred on the newest five tracks if
  * they fit the screen there, as `flyToBBox` would frame them, else the newest four, and so on;
  * when even the newest alone doesn't fit, still centred on it. `boxes` are the tracks' bounds,
  * newest first; null when there are none.

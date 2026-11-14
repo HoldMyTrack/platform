@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// An activity's name, type and description are limited in characters, not bytes (SPEC FR-5.10):
+// An activity's name, type and description are limited in characters, not bytes (SPEC FR-5.5):
 // a Cyrillic name of the full length, two bytes a letter, is accepted, and one letter more isn't.
 func TestActivityEditLimitsCountCharacters(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())

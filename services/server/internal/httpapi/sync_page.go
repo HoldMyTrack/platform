@@ -11,7 +11,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
 )
 
-// The Sync page (IMPLEMENTATION.md §4.0, docs/SPEC.md FR-3.4): every finished import, newest
+// The Sync page (IMPLEMENTATION.md §4.0, docs/SPEC.md FR-3.2): every finished import, newest
 // first — uploaded files and phone syncs alike, each Ready with its date and
 // distance and a link to it on the map, or Failed with why. What's still being processed is the header's Upload
 // menu's, not this page's, so the page never changes while it's open and needs no script.

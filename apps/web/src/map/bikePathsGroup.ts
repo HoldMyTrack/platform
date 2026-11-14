@@ -4,7 +4,7 @@ import { PATH_COLORS, PATH_LAYER_IDS, pathDash } from './pathColors.ts';
 import type { Flavor } from './style';
 
 /**
- * The Layers menu's Bike paths, Shared paths and Mountain bike trails (docs/SPEC.md FR-4.13,
+ * The Layers menu's Bike paths, Shared paths and Mountain bike trails (docs/SPEC.md FR-4.9,
  * IMPLEMENTATION.md §4.24) as the layers document's `bike-paths` group: OpenStreetMap's
  * cycleways, bike-designated paths and singletrack from `/tiles/v1/bike-paths`, not the basemap,
  * which has none below zoom 13. Drawn from zoom 9, so a whole region's bike network shows at once.

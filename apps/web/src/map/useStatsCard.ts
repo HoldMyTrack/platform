@@ -23,7 +23,7 @@ export interface StatsCardState {
 }
 
 /**
- * The stats card the server draws for [request] (FR-4.10): asked for again after a pause in
+ * The stats card the server draws for [request] (FR-4.7): asked for again after a pause in
  * changing it, and held until the next one arrives, so Export never makes a second request.
  */
 export function useStatsCard(request: StatsCardRequest | null): StatsCardState {

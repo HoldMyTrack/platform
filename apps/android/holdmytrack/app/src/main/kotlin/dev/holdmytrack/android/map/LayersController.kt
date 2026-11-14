@@ -63,7 +63,7 @@ class LayersController(
      *  the layers document's. */
     fun flavor(): String = if (isNight()) "dark" else "light"
 
-    /** The style URL: [flavor], labels in the app's language (`?lang=`, root `docs/SPEC.md` FR-13.1). */
+    /** The style URL: [flavor], labels in the app's language (`?lang=`, root `docs/SPEC.md` FR-12.1). */
     fun styleUrl(): String {
         val lang = fragment.resources.configuration.locales[0].language
         return "${BuildConfig.API_BASE_URL}/v1/map/style/${flavor()}?lang=$lang"

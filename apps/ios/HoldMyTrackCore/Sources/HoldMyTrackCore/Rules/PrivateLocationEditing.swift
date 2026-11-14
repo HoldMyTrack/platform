@@ -1,6 +1,6 @@
 import Foundation
 
-/// The Private location editor's decisions (root docs/SPEC.md FR-8.1,
+/// The Private location editor's decisions (root docs/SPEC.md FR-7.1,
 /// apps/android/docs/SPEC.md FR-2.7), the web's PrivateLocationsPanel and privateLocations.ts: a new circle's size and
 /// where the camera goes, the radius's steps, whether a draft differs from what's saved, what a
 /// tap on the circles hit, and each circle's outline on the map.
@@ -38,7 +38,7 @@ public enum PrivateLocationEditing {
     public static let minPlaceZoom = 12.0
     /// Where a saved one opens at least, and a new one lands from too far out.
     public static let openZoom = 14.0
-    /// From the zoom tracks start at, like everything but Fog (root docs/SPEC.md FR-4.15).
+    /// From the zoom tracks start at, like everything but Fog (root docs/SPEC.md FR-4.11).
     public static let minZoom = PhotoMarkers.tracksMinZoom
 
     /// A radius from the control, on its step and within the server's bounds.

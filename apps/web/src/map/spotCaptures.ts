@@ -2,7 +2,7 @@ import type { SpotCapture } from '../api';
 
 /**
  * What the map asks `GET /v1/spots/captures` for on a return to its tab: `since` the newest
- * capture it already has, so the answer is usually empty (FR-15.2). Undefined, for the whole
+ * capture it already has, so the answer is usually empty (FR-14.2). Undefined, for the whole
  * list, when it has none. The newest is chosen by time but sent back as the server wrote it,
  * so no precision is lost to `Date`'s milliseconds.
  */

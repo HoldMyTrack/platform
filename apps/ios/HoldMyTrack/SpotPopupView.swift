@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// A place's popup (root docs/SPEC.md FR-15.3), the web's SpotPopup.tsx: over the map above the
+/// A place's popup (root docs/SPEC.md FR-14.3), the web's SpotPopup.tsx: over the map above the
 /// place's badge, or under it when there's no room above, following it as the camera moves
 /// (place). One at a time; show replaces it. Past six lines a long description or inscription
 /// scrolls within it instead of stretching it over the map.

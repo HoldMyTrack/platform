@@ -74,7 +74,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Docs: root `docs/IMPLEMENTATION.md` §4.33 covers both platforms; `docs/DEPLOY.md` §10 gets the iOS procedure.
   - Done when: a request with an iOS agent below the minimum gets `426`, and the server tests cover it.
 - [ ] **2.2 Sign in with Apple**
-  - Built (root `docs/SPEC.md` FR-1.14): the web flow, `POST /v1/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
+  - Built (root `docs/SPEC.md` FR-1.11): the web flow, `POST /v1/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
   - Done when: a new account, an existing verified email and a relay email each sign in on the web, and deleting the account revokes the token.
 - [x] **2.3 Pages tell the platforms apart**
   - Set `hmt_app` to `android` or `ios` and let a page say the platform's words: Health Connect or Health, Google Play or the App Store. Audit Help, About, Privacy and the in-app pages for Android-only wording.
@@ -155,7 +155,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - The bearer token on tile requests to the API's origin only, through MapLibre's network configuration.
   - Done when: a server deploy that changes a layer's color changes it on the phone without an app release.
 - [x] **7a.2 Modes, Layers and framing**
-  - Normal and Fog of War; the Layers menu; first framing; the empty account's pointer to Sync; attribution kept visible; Find my location; theme and language reloading the style and keeping the camera; the basemap's loading and unreachable notice (root `docs/SPEC.md` FR-4.5).
+  - Normal and Fog of War; the Layers menu; first framing; the empty account's pointer to Sync; attribution kept visible; Find my location; theme and language reloading the style and keeping the camera; the basemap's loading and unreachable notice (root `docs/SPEC.md` FR-4.4).
   - Done when: `apps/android/docs/SPEC.md` FR-2.2–FR-2.5 hold on iOS, and `ios` is in `testdata/client-rules/basemap-status.json`'s `clients` with its cases passing.
 - [x] **7a.3 Tab bar and date range**
   - Map, Stories, the record button, Sync and You (`apps/android/docs/SPEC.md` FR-2.9), each keeping its state. The date slider (`apps/android/docs/SPEC.md` FR-2.6) from the slider rules.
@@ -164,7 +164,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - The first-run tour and its three cards (`apps/android/docs/SPEC.md` FR-2.12), from the `tour-*` rules: which steps show, the camera each one moves to, and what restores after.
   - Done when: it runs as Android's on a new account and the demo, and `ios` is in every `testdata/client-rules/tour-*.json`'s `clients` with its cases passing.
 - [x] **7a.5 The area list, as on the web**
-  - The web's list of the visible area under a Dates filter in place of the date slider (root `docs/SPEC.md` FR-5.19, FR-5.20, FR-4.5), on the same endpoints and rules as the web's and Android's.
+  - The web's list of the visible area under a Dates filter in place of the date slider (root `docs/SPEC.md` FR-5.11, FR-5.12, FR-4.4), on the same endpoints and rules as the web's and Android's.
   - Done when: `ios` is in the `clients` of `opening-view`, `area-load`, `date-filter-*` and `web-session.json` with their cases passing.
 
 ## Phase 7b — Panel, editors, Spots, photos, export

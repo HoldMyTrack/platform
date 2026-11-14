@@ -54,7 +54,7 @@ export interface ExportControls {
   stats: StatsCardState;
 }
 
-/** The map image export (FR-4.10): the viewfinder's stages (exportFlow.ts) and the capture of
+/** The map image export (FR-4.7): the viewfinder's stages (exportFlow.ts) and the capture of
  *  what [scene] draws into a downloaded PNG. */
 export function useExportFlow(
   map: MapLibreMap | null,

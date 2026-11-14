@@ -14,7 +14,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
 )
 
-// The Profile page (ADR-0012, IMPLEMENTATION.md §4.8, docs/SPEC.md FR-7 and FR-9): the
+// The Profile page (ADR-0012, IMPLEMENTATION.md §4.8, docs/SPEC.md FR-6 and FR-8): the
 // all-time stat cards, one activity grid per year back to the account's first activity, and
 // the Trends chart — rendered on the server, no script. The shading toggle and the Trends
 // week/month switch are links (`?shade=`, `?bucket=`), and a cell's or a bar's detail is its

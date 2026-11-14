@@ -1,6 +1,6 @@
 import Foundation
 
-/// A place on the Spots layers (root docs/SPEC.md FR-15), from the tiles, "Show in this area" or
+/// A place on the Spots layers (root docs/SPEC.md FR-14), from the tiles, "Show in this area" or
 /// `GET /v1/spots`.
 public struct Spot: Equatable, Sendable {
     public let id: Int
@@ -163,7 +163,7 @@ public enum Spots {
     }
 }
 
-/// "Show in this area" (root docs/SPEC.md FR-15.5): between a metro area in view and where the
+/// "Show in this area" (root docs/SPEC.md FR-14.4): between a metro area in view and where the
 /// tiles start, places load on request for the visible map and the picked categories, and stay
 /// drawn until the next request. Once a load is current, the map not moved and no category
 /// picked since, the pill says what it found instead of offering another.

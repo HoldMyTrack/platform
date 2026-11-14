@@ -5,7 +5,7 @@ import org.maplibre.android.maps.MapView
 import org.maplibre.android.tile.TileOperation
 
 /**
- * Whether the map says its basemap can't be reached (`docs/SPEC.md` FR-4.5): a network that blocks
+ * Whether the map says its basemap can't be reached (`docs/SPEC.md` FR-4.4): a network that blocks
  * the tile host stalls its requests, so the map stays blank with no error of its own. The web's
  * `basemapStatus.ts` runs the same cases, `testdata/client-rules/basemap-status.json`.
  */

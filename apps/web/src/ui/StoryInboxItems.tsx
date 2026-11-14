@@ -4,7 +4,7 @@ import type { StoryInboxState } from './useStoryInbox';
 
 /**
  * The Story copies others sent, each waiting to be accepted or declined, then the accepted ones
- * still arriving (docs/SPEC.md FR-14.7), as list items for the caller's `<ul>`: the Stories tab
+ * still arriving (docs/SPEC.md FR-13.7), as list items for the caller's `<ul>`: the Stories tab
  * and the first-run panel, where a copy can be an account's first activities.
  */
 export function StoryInboxItems({ inbox }: { inbox: StoryInboxState }) {

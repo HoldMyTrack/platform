@@ -1,4 +1,4 @@
-/// The focused activity's pace bands (root docs/SPEC.md FR-4.8), as
+/// The focused activity's pace bands (root docs/SPEC.md FR-4.6), as
 /// `GET /v1/activities/{id}/track-metrics` gives them: the server bands every synced activity, so
 /// the app only draws the runs.
 public struct TrackMetrics: Equatable, Sendable {

@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-15.1 (retired places).
+// Covers docs/SPEC.md FR-14.1 (retired places).
 
 import (
 	"bytes"

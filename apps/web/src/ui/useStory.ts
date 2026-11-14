@@ -5,7 +5,7 @@ export interface StoryState {
   /** null outside a Story, until it has loaded, and after an error. */
   story: Story | null;
   error: string | null;
-  /** The Story doesn't exist, or isn't this account's (FR-14.5). */
+  /** The Story doesn't exist, or isn't this account's (FR-13.5). */
   notFound: boolean;
   /** Re-reads it — after anything that changes its activities or their numbers. */
   reload: () => void;
@@ -15,7 +15,7 @@ export interface StoryState {
 }
 
 /** Reader for `GET /v1/stories/{id}` — the open Story on the Stories tab: its whole-Story
- *  statistics (FR-14.1) for the footer, whatever the area and Dates. */
+ *  statistics (FR-13.1) for the footer, whatever the area and Dates. */
 export function useStory(id: string | null): StoryState {
   const [story, setStory] = useState<Story | null>(null);
   const [error, setError] = useState<string | null>(null);

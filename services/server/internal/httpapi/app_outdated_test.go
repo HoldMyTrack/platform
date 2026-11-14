@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md §1.5 (old Android builds refused).
+// Covers docs/SPEC.md §1.4 (old Android builds refused).
 
 import (
 	"encoding/json"
