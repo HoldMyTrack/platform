@@ -62,12 +62,12 @@ class ModeBar(
         })
         buttons.forEach { (value, button) ->
             button.setOnClickListener {
-                if (value == MapMode.FOG && state().mode == MapMode.FOG) {
-                    // Checkable, so the tap just unchecked it: Fog stays on, and the tap is the menu's.
+                val menu = value == MapMode.FOG && state().mode == MapMode.FOG
+                onPick(value)
+                if (menu) {
+                    // Checkable, so the tap just unchecked it: Fog stays on, and the tap opens its menu.
                     button.isChecked = true
                     fogMenu.toggle()
-                } else {
-                    onPick(value)
                 }
             }
             button.minWidth = ChromeInsets.minTouchTargetPx(button)
@@ -120,11 +120,12 @@ class ModeBar(
         val fog = buttons.getValue(MapMode.FOG)
         val on = state().mode == MapMode.FOG
         if (!on) fogMenu.dismiss()
-        val label = if (on) fogMenu.label() else fog.resources.getString(R.string.mode_fog)
-        if (fog.tag?.toString() == label.toString()) return
-        fog.tag = label
-        fog.text = label
+        val label = if (on) fogMenu.label() else fog.resources.getString(R.string.mode_fog).let { FogLevelMenu.Label(it, it) }
+        if (fog.tag === label.text) return
+        fog.tag = label.text
+        fog.text = label.text
         renderLabel(fog, fog.isChecked)
+        fog.contentDescription = label.description
     }
 
     /**

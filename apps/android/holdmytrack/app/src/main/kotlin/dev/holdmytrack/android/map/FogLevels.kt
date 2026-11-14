@@ -24,8 +24,9 @@ object FogLevels {
     /** What a level is when nothing else is: the finest, drawing every track. */
     const val EXACT = "exact"
 
-    /** The highest zoom a layer can have: a range starting there never draws. */
-    private const val MAX_ZOOM = 24f
+    /** Past MapLibre Native's deepest camera zoom (25.5): a range ending here has no end, and one
+     *  starting here never draws. The web's 24 is MapLibre GL JS's. */
+    private const val MAX_ZOOM = 30f
 
     /** The level in view: the [locked] one, else the one whose band holds [zoom]. */
     fun inView(levels: List<Level>, zoom: Double, locked: String? = null): String {

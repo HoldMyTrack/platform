@@ -20,15 +20,15 @@ class FogLevelsTest {
         assertEquals(0f..3f, ranges["countries-fill"])
         assertEquals(0f..3f, ranges["countries-line"])
         assertEquals(6f..8f, ranges["counties-fill"])
-        assertEquals(11f..24f, ranges["fog"])
+        assertEquals(11f..30f, ranges["fog"])
     }
 
     @Test
     fun `a locked level draws at every zoom and the others at none`() {
         val ranges = FogLevels.zoomRanges(levels, "county")
-        assertEquals(0f..24f, ranges["counties-fill"])
-        assertEquals(24f..24f, ranges["countries-fill"])
-        assertEquals(24f..24f, ranges["fog"])
+        assertEquals(0f..30f, ranges["counties-fill"])
+        assertEquals(30f..30f, ranges["countries-fill"])
+        assertEquals(30f..30f, ranges["fog"])
     }
 
     @Test
@@ -52,5 +52,6 @@ class FogLevelsTest {
         assertEquals(R.string.fog_level_region, FogLevelMenu.levelLabel("region", null))
         assertEquals(R.string.fog_level_city, FogLevelMenu.levelLabel("city", "town"))
         assertEquals(R.string.fog_level_exact, FogLevelMenu.levelLabel("exact", null))
+        assertNull(FogLevelMenu.levelLabel("district", null))
     }
 }

@@ -41,19 +41,32 @@ class FogLevelMenu(
     private var popup: PopupWindow? = null
     private var closedAt = 0L
 
-    private val locked: String? get() = MapLayers.state.fogLevel
+    /** The lock, when the document applied has its level: a lock on one it lacks follows the
+     *  zoom, as [FogLevels.inView] and [FogLevels.zoomRanges] treat it. */
+    private fun locked(all: List<FogLevels.Level>): String? = MapLayers.state.fogLevel?.takeIf { l -> all.any { it.level == l } }
 
-    /** The button's text while Fog is on: "Fog · City", a lock when one is locked, and the chevron
-     *  saying it opens a menu; just "Fog" before the document has levels. */
-    fun label(): CharSequence {
+    /** The button's text and what TalkBack reads for it. */
+    data class Label(val text: CharSequence, val description: String)
+
+    private var last: Pair<String, Label>? = null
+
+    /** The button's label while Fog is on: "Fog · City", a lock when one holds, and the chevron
+     *  saying it opens a menu; just "Fog" before the document has levels. Built again only when the
+     *  level or the lock changes: it's asked on every frame of a pinch. */
+    fun label(): Label {
         val all = levels()
         val fog = res.getString(R.string.mode_fog)
-        val z = zoom() ?: return fog
-        if (all.isEmpty()) return fog
-        val text = SpannableStringBuilder(fog).append(" · ").append(levelName(all, FogLevels.inView(all, z, locked)))
-        if (locked != null) icon(text, R.drawable.ic_lock)
+        val z = zoom()
+        if (z == null || all.isEmpty()) return Label(fog, fog)
+        val lock = locked(all)
+        val name = levelName(all, FogLevels.inView(all, z, lock))
+        val key = "$name|${lock != null}|${ink()}"
+        last?.takeIf { it.first == key }?.let { return it.second }
+        val text = SpannableStringBuilder(fog).append(" · ").append(name)
+        if (lock != null) icon(text, R.drawable.ic_lock)
         icon(text, R.drawable.ic_chevron_down)
-        return text
+        val description = "$fog · $name" + if (lock != null) ", " + res.getString(R.string.fog_level_locked) else ""
+        return Label(text, description).also { last = key to it }
     }
 
     /** Opens the menu, or does nothing when a tap just closed it (the tap outside landed on the button). */
@@ -67,24 +80,30 @@ class FogLevelMenu(
         popup?.dismiss()
     }
 
+    /** The checked button's text color: the label shows only while Fog is on, and is built before
+     *  the button's state may have caught up. */
+    private fun ink(): Int = button.textColors.getColorForState(intArrayOf(android.R.attr.state_checked, android.R.attr.state_enabled), button.currentTextColor)
+
     private fun icon(text: SpannableStringBuilder, id: Int) {
         val drawable = ContextCompat.getDrawable(button.context, id)?.mutate() ?: return
         val size = (button.textSize * ICON_SCALE).toInt()
         drawable.setBounds(0, 0, size, size)
-        drawable.setTint(button.currentTextColor)
+        drawable.setTint(ink())
         val start = text.length
         text.append("  ")
         text.setSpan(ImageSpan(drawable, ImageSpan.ALIGN_CENTER), start + 1, start + 2, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
     }
 
+    /** A level this build has no name for, one the server added since, shows as its id. */
     private fun levelName(all: List<FogLevels.Level>, level: String): String =
-        res.getString(levelLabel(level, all.firstOrNull { it.level == level }?.word))
+        levelLabel(level, all.firstOrNull { it.level == level }?.word)?.let(res::getString) ?: level
 
     private fun show() {
         val inflater = LayoutInflater.from(button.context)
         val content = inflater.inflate(R.layout.popup_fog_level, null as ViewGroup?)
         val rows = content.findViewById<LinearLayout>(R.id.fog_level_rows)
         val all = levels()
+        val locked = locked(all)
         val counts = mutableMapOf<String, TextView>()
 
         fun row(name: CharSequence, checked: Boolean, onPick: () -> Unit): View {
@@ -136,8 +155,10 @@ class FogLevelMenu(
     private fun pick(level: String?) {
         dismiss()
         if (level == null) return onLock(null, null)
+        val all = levels()
+        val locked = locked(all)
         if (level == locked) return
-        val next = FogLevels.pick(levels(), zoom() ?: return, locked, level)
+        val next = FogLevels.pick(all, zoom() ?: return, locked, level)
         onLock(next.locked, next.zoom)
     }
 
@@ -151,16 +172,17 @@ class FogLevelMenu(
         /**
          * The string naming [level] in the control: what the account's country calls its places
          * ([word], Overture's local_type) where there's a word for it, for regions and counties,
-         * else the generic name — the web's `levelLabelKey`.
+         * else the generic name — the web's `levelLabelKey`; null for a level this build doesn't know.
          */
-        fun levelLabel(level: String, word: String?): Int {
+        fun levelLabel(level: String, word: String?): Int? {
             if ((level == "region" || level == "county") && word != null) WORDS[word]?.let { return it }
             return when (level) {
                 "country" -> R.string.fog_level_country
                 "region" -> R.string.fog_level_region
                 "county" -> R.string.fog_level_county
                 "city" -> R.string.fog_level_city
-                else -> R.string.fog_level_exact
+                FogLevels.EXACT -> R.string.fog_level_exact
+                else -> null
             }
         }
 
