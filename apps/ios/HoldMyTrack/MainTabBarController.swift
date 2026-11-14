@@ -6,9 +6,12 @@ import UIKit
 /// or the Stories tab (MapHostViewController); Stories counts copies waiting to be answered. The
 /// record button comes with recording (ROADMAP.md, 7d).
 final class MainTabBarController: UITabBarController {
+    private let map: MapViewController
+
     init(flow: AppFlow, account: Account) {
-        super.init(nibName: nil, bundle: nil)
         let map = MapViewController(flow: flow, account: account)
+        self.map = map
+        super.init(nibName: nil, bundle: nil)
         let mapHost = MapHostViewController(map: map, tab: .activities)
         mapHost.tabBarItem = UITabBarItem(title: String(localized: "Map"), image: UIImage(resource: .map), tag: 0)
         mapHost.tabBarItem.accessibilityIdentifier = "tabMap"
@@ -41,6 +44,14 @@ final class MainTabBarController: UITabBarController {
 
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    /// Privacy's row or Add: the map, with the editor on a saved location's id or a new one.
+    func editPrivateLocation(_ id: String?) {
+        guard let mapHost = viewControllers?.first, let you = viewControllers?.last as? UINavigationController else { return }
+        selectedViewController = mapHost
+        you.popToRootViewController(animated: false)
+        map.editPrivateLocation(id)
+    }
 
     /// Files opened or shared from another app: Upload on the You tab, for an account that can.
     func upload(_ files: [URL]) {

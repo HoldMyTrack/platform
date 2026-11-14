@@ -1,12 +1,11 @@
-import CoreLocation
 import HoldMyTrackCore
 import SafariServices
 import UIKit
 
 /// Privacy (apps/android/docs/SPEC.md FR-1.7): Private locations, read again each time the screen
-/// shows, added, renamed and deleted; Download your data; the privacy policy. Until the map has
-/// its editor (ROADMAP.md, 7b.2), a new Private location is centred where the map last looked.
-/// The demo account sees its Private locations read-only and no download.
+/// shows, a row or Add opening the editor on the map (MapViewController+PrivateLocations);
+/// Download your data; the privacy policy. The demo account sees its Private locations read-only
+/// and no download.
 final class PrivacyViewController: UITableViewController {
     private unowned let flow: AppFlow
     private let account: Account
@@ -123,66 +122,9 @@ final class PrivacyViewController: UITableViewController {
         }
     }
 
-    override func tableView(_ tableView: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
-        guard Section(rawValue: indexPath.section) == .locations, indexPath.row < locations.count, !account.isDemo else { return nil }
-        let location = locations[indexPath.row]
-        let delete = UIContextualAction(style: .destructive, title: String(localized: "Delete")) { [weak self] _, _, done in
-            guard let self else { return done(false) }
-            Task {
-                do {
-                    try await self.flow.api.deletePrivateLocation(location.id)
-                    done(true)
-                } catch {
-                    StoryDialogs.inform(over: self.view, (error as? APIError)?.serverMessage ?? String(localized: "The Private location couldn't be deleted."))
-                    done(false)
-                }
-                self.load()
-            }
-        }
-        return UISwipeActionsConfiguration(actions: [delete])
-    }
-
-    /// Add (location nil) at the map's last centre, or rename and resize one.
-    private func edit(_ location: PrivateLocation?, error: String? = nil, name: String? = nil, radius: String? = nil) {
-        let center = location.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) } ?? MapViewController.lastCenter
-        guard let center else {
-            StoryDialogs.inform(over: view, String(localized: "Open the map on the place first: a new Private location starts at the map's centre."))
-            return
-        }
-        let range = PrivateLocation.radiusRange
-        let alert = UIAlertController(
-            title: location == nil ? String(localized: "New Private location") : String(localized: "Private location"),
-            message: error ?? (location == nil ? String(localized: "Centred where the map last looked. Radius from \(range.lowerBound) to \(range.upperBound) m.") : String(localized: "Radius from \(range.lowerBound) to \(range.upperBound) m.")),
-            preferredStyle: .alert
-        )
-        alert.addTextField {
-            $0.placeholder = String(localized: "Name")
-            $0.text = name ?? location?.name
-            $0.autocapitalizationType = .sentences
-            $0.accessibilityIdentifier = "locationName"
-        }
-        alert.addTextField {
-            $0.placeholder = String(localized: "Radius in metres")
-            $0.text = radius ?? String(location?.radiusM ?? 200)
-            $0.keyboardType = .numberPad
-            $0.accessibilityIdentifier = "locationRadius"
-        }
-        alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
-        alert.addAction(UIAlertAction(title: String(localized: "Save"), style: .default) { [weak self] _ in
-            guard let self else { return }
-            let typedName = (alert.textFields?[0].text ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let typedRadius = alert.textFields?[1].text ?? ""
-            Task {
-                do {
-                    _ = try await self.flow.api.savePrivateLocation(id: location?.id, name: typedName, lon: center.longitude, lat: center.latitude, radiusM: Int(typedRadius) ?? 0)
-                    self.load()
-                } catch {
-                    let reason = (error as? APIError)?.serverMessage ?? String(localized: "The Private location couldn't be saved.")
-                    self.edit(location, error: reason, name: typedName, radius: typedRadius)
-                }
-            }
-        })
-        present(alert, animated: true)
+    /// The map, with the editor on location or a new one (nil): this screen gives way to it.
+    private func edit(_ location: PrivateLocation?) {
+        (tabBarController as? MainTabBarController)?.editPrivateLocation(location?.id)
     }
 }
 
