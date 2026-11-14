@@ -18,7 +18,6 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 ### Heatmap's leftovers
 
-- [ ] Once the build without Heatmap is live: migration `0054` drops `activities.in_heatmap_window` and its index, `users.heatmap_cap`, `users.heat_point_caps`, `fog_tiles.heatmap_object_key` and `fog_tiles.heatmap_bytes`; the private bucket's `heatmap/` objects are deleted, then the prefix leaves `worker/account_purge.go` and `scripts/backup.sh` (`IMPLEMENTATION.md` §3.6).
 - [ ] When `MIN_ANDROID_BUILD` next rises, drop the Heatmap stubs kept for older builds (`IMPLEMENTATION.md` §4.33).
 
 ### After launch

@@ -185,29 +185,3 @@ func TestMaskBytesGoWithTheirRow(t *testing.T) {
 		t.Errorf("deleted activity left %d mask PNGs", n)
 	}
 }
-
-// Rendering a tile removes the Heatmap counts left in the store for it, so no per-place counts
-// outlast the tile's next render.
-func TestRenderRemovesLeftoverHeatmap(t *testing.T) {
-	pool, userID := testAccount(t)
-	ctx := context.Background()
-	store, mem, _ := maskStore(t)
-	activityID := insertActivity(t, pool, userID)
-	pts, tile := walkInOneTile()
-	if err := RenderActivityMasks(ctx, pool, activityID, pts, [][2]int{tile}); err != nil {
-		t.Fatal(err)
-	}
-	markDirty(t, pool, userID, tile)
-	key := heatmapObjectKey(userID, Zoom, tile[0], tile[1])
-	mem.Put(key, []byte("counts"))
-	var skipped atomic.Int64
-	if err := renderAndStoreTile(ctx, pool, store, userID, Zoom, tile[0], tile[1], &skipped); err != nil {
-		t.Fatal(err)
-	}
-	if _, ok := mem.Object(key); ok {
-		t.Error("the tile's Heatmap counts are still in the store")
-	}
-	if !fogTileLit(t, mem, userID, tile) {
-		t.Error("Fog tile not drawn")
-	}
-}

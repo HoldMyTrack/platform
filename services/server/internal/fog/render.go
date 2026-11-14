@@ -447,21 +447,9 @@ func loadChildren(ctx context.Context, pool *pgxpool.Pool, store *storage.Store,
 }
 
 // storeFogTile stores one tile's Fog mask and returns its size, for fog_tiles' storage
-// statistics (IMPLEMENTATION.md §4.32). Beside it, it removes the tile's Heatmap counts if the
-// bucket still holds them, so a redrawn tile leaves no per-place counts behind. fog_tiles'
-// heatmap columns are left unwritten: nothing reads them, and a binary that never names them
-// keeps working while a migration drops them.
+// statistics (IMPLEMENTATION.md §4.32).
 func storeFogTile(ctx context.Context, store *storage.Store, userID string, zoom, x, y int, mask *image.Gray) (int, error) {
-	var size int
-	err := parallel.ForEach(ctx, 2, 2, func(ctx context.Context, i int) error {
-		if i == 0 {
-			var err error
-			size, err = storeTilePNG(ctx, store, fogObjectKey(userID, zoom, x, y), mask)
-			return err
-		}
-		return store.Remove(ctx, heatmapObjectKey(userID, zoom, x, y))
-	})
-	return size, err
+	return storeTilePNG(ctx, store, fogObjectKey(userID, zoom, x, y), mask)
 }
 
 // storeTilePNG stores mask as a PNG at key and returns its size.
@@ -483,11 +471,6 @@ func encodeTilePNG(mask image.Image) ([]byte, error) {
 
 func fogObjectKey(userID string, zoom, x, y int) string {
 	return fmt.Sprintf("fog/%s/%d/%d/%d.png", userID, zoom, x, y)
-}
-
-// heatmapObjectKey is where a tile's Heatmap counts were stored, for storeFogTile to remove.
-func heatmapObjectKey(userID string, zoom, x, y int) string {
-	return fmt.Sprintf("heatmap/%s/%d/%d/%d.png", userID, zoom, x, y)
 }
 
 // tileDirtyGen is a tile's dirty_gen as a render starts, read before anything it draws from:

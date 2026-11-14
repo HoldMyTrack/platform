@@ -35,7 +35,7 @@
 #   objects-deleted/<UTC stamp>/...                what a run's sync removed or overwrote in
 #                                                  objects/, kept KEEP_DELETED_DAYS
 #
-# fog/ and heatmap/ are left out, and so is the activity_tile_mask_data
+# fog/ is left out, and so is the activity_tile_mask_data
 # table's data (the masks' PNGs, docs/IMPLEMENTATION.md §3.11): `rerender-coverage --masks` rebuilds all of them
 # from the database and raw/ (DEPLOY.md §11's restore steps), so the dump doesn't grow with them.
 #

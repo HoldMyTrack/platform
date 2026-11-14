@@ -64,7 +64,7 @@ Idempotency is `idx_activities_dedupe` on `(user_id, source, external_id)` plus 
 
 ### 3.6 `fog_tiles`
 
-One row per account and tile, z0–z14, naming Fog's coverage PNG. `heatmap_object_key` and `heatmap_bytes` are never read or written, and storing a tile deletes its `heatmap/` object (`ROADMAP.md` drops both). Every dirty mark increments `dirty_gen`; a render clears `dirty` only if `dirty_gen` is unchanged since it read the tile (`fog.upsertTileRendered`), so a change landing mid-render leaves the tile dirty.
+One row per account and tile, z0–z14, naming Fog's coverage PNG. Every dirty mark increments `dirty_gen`; a render clears `dirty` only if `dirty_gen` is unchanged since it read the tile (`fog.upsertTileRendered`), so a change landing mid-render leaves the tile dirty.
 
 ### 3.7 `privacy_zones`
 
@@ -650,7 +650,7 @@ The topology is `ARCHITECTURE.md` §1.2's diagram and the steps are `DEPLOY.md`.
 - `compose.prod.yml` stands alone instead of overlaying `compose.yaml`, since the two topologies differ too much.
 - Caddy is the one origin, with automatic TLS; `www` and retired domains redirect to it, so one origin holds the session cookie. That is why the production API base is relative and `corsAllowedOrigins` has no production entry. The cookie's `Secure` flag derives from `APP_BASE_URL`.
 - No `*.pmtiles` enters a build context.
-- **Backups** (`scripts/backup.sh`, `restore-drill.sh`, `DEPLOY.md` §11): `rclone` is configured by environment, so the scripts never name a bucket; `pg_dump` runs in the `db` container to match its version; the object sync uses `--backup-dir`, pruned by folder stamps because a moved object keeps its old modification time; fog, heatmap and masks are skipped. **A new kind of stored object needs adding to the drill's expected keys and `backup.sh`'s filter.** Not covered: losing the Cloudflare account, and up to a day of writes.
+- **Backups** (`scripts/backup.sh`, `restore-drill.sh`, `DEPLOY.md` §11): `rclone` is configured by environment, so the scripts never name a bucket; `pg_dump` runs in the `db` container to match its version; the object sync uses `--backup-dir`, pruned by folder stamps because a moved object keeps its old modification time; fog and masks are skipped. **A new kind of stored object needs adding to the drill's expected keys and `backup.sh`'s filter.** Not covered: losing the Cloudflare account, and up to a day of writes.
 - **Metrics** (`internal/metrics`) listen on their own port, since Caddy forwards every path it doesn't serve to the API. **A label takes values only from a fixed set, never an id**, for the free tier's series limit. Queue gauges run in `serve`, so they report while the worker is down.
 - **Logs** ship to Grafana Cloud through Alloy (`ops/alloy/`), scrubbed by a list of known leaks, so **a new log line keeps to ids, job kinds and errors**. Every line carries `version`. Alert rules in `ops/grafana/` name their contact point directly, and the backup-age rules never go no-data, because Grafana mails a no-data summary's raw template.
 

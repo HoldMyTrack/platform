@@ -110,8 +110,8 @@ func (s *Store) Open(ctx context.Context, key string) (io.ReadSeekCloser, error)
 }
 
 // RemoveByPrefix deletes every object under prefix — internal/worker's demo-account purge
-// sweep is the only caller today, cleaning up a demo user's raw uploads and fog/heatmap tile
-// pyramids (all namespaced raw/{userID}/, fog/{userID}/, heatmap/{userID}/ — see server.go
+// sweep is the only caller today, cleaning up a demo user's raw uploads and fog tile
+// pyramids (all namespaced raw/{userID}/, fog/{userID}/ — see server.go
 // and internal/fog/render.go's object key builders) in one call rather than tracking every
 // individual key written for that user. Best-effort: logged and swallowed by the caller,
 // not surfaced as a reason to skip deleting the DB rows those objects belong to.
