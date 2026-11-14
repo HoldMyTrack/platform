@@ -2,8 +2,8 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The Private location editor on the map (root docs/SPEC.md FR-8.1, apps/android/docs/SPEC.md
-/// FR-2.7), opened from Privacy: the map switches to Normal, the sheet steps aside for the card,
+/// The Private location editor on the map (root docs/SPEC.md FR-8.1,
+/// apps/android/docs/SPEC.md FR-2.7), opened from Privacy: the map switches to Normal, the sheet steps aside for the card,
 /// and every Private location is drawn, the one being edited stronger with a handle at its centre
 /// to drag it by. A new one is 200 m at the middle of the map left showing, flying in first from
 /// too far out; a tap on another circle opens that one. Cancel, a mode change or leaving the Map

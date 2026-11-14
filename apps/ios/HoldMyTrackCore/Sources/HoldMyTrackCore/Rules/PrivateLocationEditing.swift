@@ -1,7 +1,7 @@
 import Foundation
 
-/// The Private location editor's decisions (root docs/SPEC.md FR-8.1, apps/android/docs/SPEC.md
-/// FR-2.7), the web's PrivateLocationsPanel and privateLocations.ts: a new circle's size and
+/// The Private location editor's decisions (root docs/SPEC.md FR-8.1,
+/// apps/android/docs/SPEC.md FR-2.7), the web's PrivateLocationsPanel and privateLocations.ts: a new circle's size and
 /// where the camera goes, the radius's steps, whether a draft differs from what's saved, what a
 /// tap on the circles hit, and each circle's outline on the map.
 public enum PrivateLocationEditing {
