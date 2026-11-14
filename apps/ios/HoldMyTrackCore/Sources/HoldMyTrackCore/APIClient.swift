@@ -26,10 +26,12 @@ public enum Fetched: Equatable, Sendable {
 }
 
 
-/// Whether the account's coverage is being redrawn, and the tile version it's at.
+/// Whether the account's coverage is being redrawn, the tile version it's at, and how many places
+/// of each Fog level it has explored, nil from a server before the counts.
 public struct CoverageStatus: Equatable, Sendable {
     public let rendering: Bool
     public let tileVersion: String
+    public let explored: FogLevels.Explored?
 }
 
 /// A new session: its token and the account it signs in to.
@@ -150,7 +152,9 @@ public final class APIClient: Sendable {
 
     public func coverageStatus() async throws -> CoverageStatus {
         let json: CoverageStatusJSON = try await decode(send("GET", "v1/coverage/status"))
-        return CoverageStatus(rendering: json.rendering, tileVersion: json.tileVersion)
+        return CoverageStatus(rendering: json.rendering, tileVersion: json.tileVersion, explored: json.explored.map {
+            FogLevels.Explored(countries: $0.countries, regions: $0.regions, counties: $0.counties, cities: $0.cities)
+        })
     }
 
     /// Prepares a request MapLibre is about to send: the API's own get the session and the app's

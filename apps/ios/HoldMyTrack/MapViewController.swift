@@ -19,7 +19,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var mapView: MLNMapView!
     let modes = UISegmentedControl()
     private let layersButton = UIButton(type: .system)
-    /// The chip, the level notice, the Layers badge and Satellite's watch (MapViewController+Chrome).
+    /// The chip, the Layers badge and Satellite's watch (MapViewController+Chrome).
     lazy var chrome = MapChromeViews { [weak self] in self?.onImagery($0) }
     private let locateButton = UIButton(type: .system)
     private let notices = Controls.column([], spacing: DesignTokens.Space.s8)
@@ -62,6 +62,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Points of interest (MapViewController+Spots).
     var spots = SpotsState(categories: MapPreferences.spots())
     let spotViews = SpotViews()
+    /// Fog's level menu and place popup (MapViewController+Fog).
+    let fogViews = FogViews()
     /// Photos on the map (MapViewController+Photos).
     var photos = PhotosState()
     /// The Edit window while it's open, and the track it edits (MapViewController+TrackEdit).
@@ -214,12 +216,15 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         spots.area.cameraMoved()
         renderInArea()
         placeSpotPopup()
+        placeFogPlace()
         regroupPhotos()
         cameraSettled()
     }
 
     func mapViewRegionIsChanging(_ mapView: MLNMapView) {
+        renderLevel()
         placeSpotPopup()
+        placeFogPlace()
         placePhotos()
         capturing.mapRotated()
     }
@@ -256,6 +261,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         modes.isHidden = !TabMode.toggleShown(onMapTab: onMap)
         let shown = TabMode.shown(picked: pickedMode, onMapTab: onMap)
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: pickedMode) ?? 0
+        renderLevel()
         guard shown != state.mode else { return }
         state.mode = shown
         renderModeChrome()
@@ -385,6 +391,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             var wasRendering = false
             while !Task.isCancelled {
                 guard let status = try? await flow.api.coverageStatus() else { return }
+                if let explored = status.explored { fogViews.explored = explored }
                 if status.rendering {
                     wasRendering = true
                     notice(.coverage, String(localized: "Your map is still being updated, so Fog may be incomplete for now. It'll refresh on its own."))
@@ -511,15 +518,15 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         for v in [modes, layersButton] { modesRow.addArrangedSubview(v) }
         modesRow.spacing = DesignTokens.Space.s8
         modesRow.alignment = .center
-        let level = UIStackView(arrangedSubviews: [chrome.level])
-        level.axis = .vertical
-        level.alignment = .center
         let inArea = UIStackView(arrangedSubviews: [spotViews.inArea])
         inArea.axis = .vertical
         inArea.alignment = .center
         spotViews.inArea.addAction(UIAction { [weak self] _ in self?.loadInArea() }, for: .primaryActionTriggered)
-        spotViews.popup.onCapture = { [weak self] spot in self?.capturing.start(spot) }
-        let column = Controls.column([modesRow, capturing.banner, inArea, level, notices], spacing: DesignTokens.Space.s8)
+        spotViews.popup.onCapture = { [weak self] spot in
+            self?.closeFogPlace()
+            self?.capturing.start(spot)
+        }
+        let column = Controls.column([modesRow, capturing.banner, inArea, notices], spacing: DesignTokens.Space.s8)
         chrome.badge.translatesAutoresizingMaskIntoConstraints = false
         layersButton.addSubview(chrome.badge)
         NSLayoutConstraint.activate([
@@ -539,6 +546,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             v.translatesAutoresizingMaskIntoConstraints = false
             view.addSubview(v)
         }
+        setUpFogControl()
         // Over the sheet: opened low on the map, the photo popup runs past the sheet's edge.
         view.addSubview(photoViews.popup)
         let guide = view.safeAreaLayoutGuide
@@ -574,9 +582,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 enum MapPreferences {
     private static let defaults = UserDefaults.standard
     private static var mode = MapMode.normal
+    /// The Fog level locked, for the app session.
+    private static var fogLevel: String?
 
     static func restore(into state: inout MapState) {
         state.mode = mode
+        state.fogLevel = fogLevel
         state.satellite = defaults.bool(forKey: "map.satellite")
         state.roads = defaults.object(forKey: "map.roads") as? Bool ?? true
         state.showLayers = defaults.object(forKey: "map.showLayers") as? Bool ?? true
@@ -586,6 +597,7 @@ enum MapPreferences {
     /// mode is the Map tab's pick, which the map may not be showing on another tab.
     static func save(_ state: MapState, mode picked: MapMode) {
         mode = picked
+        fogLevel = state.fogLevel
         defaults.set(state.satellite, forKey: "map.satellite")
         defaults.set(state.roads, forKey: "map.roads")
         defaults.set(state.showLayers, forKey: "map.showLayers")
