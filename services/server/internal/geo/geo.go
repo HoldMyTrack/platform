@@ -3,8 +3,8 @@
 // all," as a whole-polygon reveal, distinct from the per-pixel raster pyramid internal/fog
 // owns and which stays exactly as it is above that threshold.
 //
-// admin_countries/admin_regions hold Overture Maps' land-clipped country and region outlines
-// (OpenStreetMap's borders), loaded by SeedAdminBoundaries from an extract made off
+// admin_countries/admin_regions hold Overture Maps' country and region outlines
+// (OpenStreetMap's borders) less OpenStreetMap's sea, loaded by SeedAdminBoundaries from an extract made off
 // the server by scripts/boundaries-extract.sh: simplified there for the tiles, and in full detail,
 // cut into pieces, in admin_country_parts/admin_region_parts for matching.
 // activity_country/activity_region record, once per activity, which of them its trajectory
@@ -17,4 +17,4 @@ package geo
 // BoundariesKey is the extract seed-admin-boundaries reads from the app bucket by default:
 // scripts/boundaries-extract.sh's output for the release it pins, uploaded by hand
 // (docs/DEPLOY.md §6). A newer release, or a change to what the extract cuts, changes both.
-const BoundariesKey = "boundaries/overture-2026-09-23.0-levels-coast-boundaries.csv.gz"
+const BoundariesKey = "boundaries/overture-2026-09-23.0-levels-sea-osm20261111-boundaries.csv.gz"

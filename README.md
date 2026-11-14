@@ -43,6 +43,7 @@ holdmytrack/
 │   ├── bike-paths-extract.sh    # the same for the bike paths file (docs/DEPLOY.md §6)
 │   ├── boundaries-extract.sh    # cuts the country and region outlines file from Overture with DuckDB, off the server (docs/DEPLOY.md §6)
 │   ├── boundaries-extract.sql   # the query boundaries-extract.sh runs
+│   ├── boundaries-ocean.sql     # the sea it cuts, from OpenStreetMap's coastline
 │   ├── lib/osm-download.sh      # the OSM download and checksum both OSM extract scripts share
 │   ├── check-doc-refs.sh        # fails on a citation whose heading no longer exists (AGENTS.md)
 │   ├── check-doc-style.sh       # fails on the writing rules a pattern can catch (AGENTS.md)

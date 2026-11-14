@@ -2,8 +2,8 @@
 -- scripts/boundaries-extract.sh, which sets getvariable('release') and getvariable('out') and keeps
 -- the file between runs: reading the water from Overture is most of an extract's time.
 --
--- The largest lakes, which the land-clipped outlines run across to the border in the water, as
--- they run to the coast: Michigan's reached the Canadian border in Lake Huron and Lake Superior,
+-- The largest lakes, which the outlines run across to the border in the water, as they run
+-- out to sea: Michigan's reached the Canadian border in Lake Huron and Lake Superior,
 -- Ontario's the US one in Lake Erie. Taken out like the sea, so a track on the water counts in no
 -- place. 1,000 km² keeps Lake Geneva and Lake Tahoe part of the land around them; a smaller lake
 -- cut out would be a veiled hole in cleared ground. Intermittent ones are salt pans people cross on
