@@ -133,6 +133,7 @@ func main() {
 		srv.SetUploadsPerHour(cfg.UploadsPerHour)
 		srv.SetTilesPerMinute(cfg.TilesPerMinute)
 		srv.SetSignupsPerHour(cfg.SignupsPerHour)
+		srv.SetTurnstile(cfg.TurnstileSiteKey, cfg.TurnstileSecretKey)
 		httpapi.SetRateLimitsOff(cfg.RateLimitsOff)
 		if cfg.RateLimitsOff {
 			log.Warn("serve: RATE_LIMITS=off, no request limits apply")

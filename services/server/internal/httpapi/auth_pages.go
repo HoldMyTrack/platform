@@ -34,6 +34,8 @@ type authForm struct {
 	Upgrading bool
 	// Sent is /forgot's "check your email" state, after its form is submitted.
 	Sent bool
+	// TurnstileSiteKey shows /signup's Turnstile widget when set (turnstile.go).
+	TurnstileSiteKey string
 }
 
 // pageAccount is the optional-auth lookup every page does: who is signed in (the header's
@@ -146,6 +148,9 @@ func (s *Server) renderAuthFailure(w http.ResponseWriter, r *http.Request, statu
 	if page == "signin" {
 		data.Description = l.T("meta.site_description")
 	}
+	if form.TurnstileSiteKey != "" {
+		w.Header().Set("Content-Security-Policy", turnstileCSP())
+	}
 	s.pages.Render(w, status, page, data)
 }
 
@@ -226,17 +231,21 @@ func (s *Server) handleSignUpPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// noindex: /signin is the one sign-in-or-up page search results should show (it links here).
-	s.renderAuth(w, r, http.StatusOK, "signup", "signup.title", true, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil})
+	s.renderAuth(w, r, http.StatusOK, "signup", "signup.title", true, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil, TurnstileSiteKey: s.turnstile.siteKey})
 }
 
 // POST /signup. timezone comes from a hidden field the page's one-line script fills from the
 // browser; without it the account starts on UTC, as the JSON endpoint's would.
 func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
-	userID, err := s.createAccountLimited(r, email, r.PostFormValue("password"), r.PostFormValue("timezone"), pageLang(s.pageAccount(r), r))
+	err := s.checkTurnstile(r)
+	var userID string
+	if err == nil {
+		userID, err = s.createAccountLimited(r, email, r.PostFormValue("password"), r.PostFormValue("timezone"), pageLang(s.pageAccount(r), r))
+	}
 	if err != nil {
 		acct := s.pageAccount(r)
-		s.renderAuthError(w, r, "sign up", "signup", "signup.title", true, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil && acct.info.isDemo}, err)
+		s.renderAuthError(w, r, "sign up", "signup", "signup.title", true, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil && acct.info.isDemo, TurnstileSiteKey: s.turnstile.siteKey}, err)
 		return
 	}
 	s.signIn(w, r, userID)

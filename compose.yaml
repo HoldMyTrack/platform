@@ -185,6 +185,10 @@ services:
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       FACEBOOK_REDIRECT_URL: ${FACEBOOK_REDIRECT_URL:-}
+      # Cloudflare Turnstile on /signup (docs/SPEC.md FR-1.1) — empty turns it off. Cloudflare's
+      # test keys (docs/DEPLOY.md §4) always pass, for trying it here.
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       # Sign in with Apple (docs/SPEC.md FR-1.14) — keyed on APPLE_SERVICES_ID. Apple accepts
       # only an https:// return URL on a registered domain, so it can't complete against this
       # stack; set it here only to see the button.

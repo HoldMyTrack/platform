@@ -287,6 +287,7 @@
   "error.handoff_invalid": "This sign-in link has expired or was already used. Please try again.",
   "error.demo_rate_limited": "Too many demo sessions from this address; try again later.",
   "error.signup_rate_limited": "Too many accounts created from this address in the last hour; try again later.",
+  "error.turnstile_failed": "Couldn't confirm you're not a bot. Complete the check above the button and try again.",
   "error.rate_limited": "Too many requests; try again later.",
   "error.reset_link_invalid": "This reset link is invalid or has expired.",
   "error.verify_link_invalid": "This verification link is invalid or has expired.",
