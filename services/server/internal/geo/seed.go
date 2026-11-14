@@ -198,10 +198,12 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			FROM boundary b JOIN admin_cities k ON k.overture_id = b.key WHERE b.level = 'city'`, nil},
 		// What the tiles draw: each level simplified as a coverage, so neighbours keep their shared
 		// border, where simplifying each outline alone left a sliver of veil between them. The
-		// world at once for countries and regions; counties and cities country by country, which
+		// world at once for countries; regions, counties and cities country by country, which
 		// lets their international borders drift apart by up to the tolerance, under a pixel.
+		// The world's regions at once, 36 million points with OpenStreetMap's coastline, ran
+		// Postgres out of memory on a 4 GB droplet.
 		{"country drawing", drawingSQL("admin_countries", ""), nil},
-		{"region drawing", drawingSQL("admin_regions", ""), nil},
+		{"region drawing", drawingSQL("admin_regions", "PARTITION BY country_id"), nil},
 		{"county drawing", drawingSQL("admin_counties", "PARTITION BY country_id"), nil},
 		{"city drawing", drawingSQL("admin_cities", "PARTITION BY country_id"), nil},
 		// The places each place above holds, its stand-ins aside, and what most of a country's
