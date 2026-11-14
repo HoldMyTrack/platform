@@ -17,6 +17,7 @@ import android.widget.TableRow
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.TooltipCompat
+import androidx.recyclerview.widget.ConcatAdapter
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.ListAdapter
@@ -105,7 +106,14 @@ class StoriesTab(
 
     init {
         list.layoutManager = LinearLayoutManager(context)
-        list.adapter = adapter
+        // In landscape the statistics are the list's last item, scrolling with the rows: pinned
+        // under them, they left the rows a sliver of the sheet.
+        list.adapter = if (res.getBoolean(R.bool.stories_stats_scroll)) {
+            (stats.parent as ViewGroup).removeView(stats)
+            ConcatAdapter(adapter, FooterAdapter(stats))
+        } else {
+            adapter
+        }
         list.itemAnimator = null
         clearFocusOnEmptyTap()
     }
@@ -548,4 +556,16 @@ class StoriesTab(
         /** The web's 36px `.stories-tab__rows` indent. */
         const val ROW_INDENT_DP = 36
     }
+}
+
+/** One view, always the list's last item: the open Story's statistics in landscape ([StoriesTab]). */
+private class FooterAdapter(private val view: View) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
+    override fun getItemCount() = 1
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
+        view.layoutParams = RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
+        return object : RecyclerView.ViewHolder(view) {}
+    }
+
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) = Unit
 }

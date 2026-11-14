@@ -341,21 +341,23 @@
                  the counterpart of the web map's geolocate control, hidden while recording, when
                  the camera already follows the recording — then Export map image, also hidden while
                  recording. The rail steps aside while an editor opens over the top of the map
-                 (MapFragment.renderRail). -->
+                 (MapFragment.renderRail). A column, but a row in landscape, where stacked it took
+                 most of the height the Activities sheet needs (Widget.HoldMyTrack.MapRail). -->
             <LinearLayout
                 android:id="@+id/map_rail"
+                style="@style/Widget.HoldMyTrack.MapRail"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:clipChildren="false"
                 android:clipToPadding="false"
-                android:orientation="vertical">
+                android:divider="@drawable/gap_8_both"
+                android:showDividers="middle">
 
                 <FrameLayout
                     android:id="@+id/layers_panel"
                     style="@style/Widget.HoldMyTrack.MapPanel"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginBottom="@dimen/hmt_space_8"
                     android:clipChildren="false"
                     android:clipToPadding="false"
                     android:visibility="gone">
@@ -409,8 +411,7 @@
                     android:id="@+id/export_panel"
                     style="@style/Widget.HoldMyTrack.MapPanel"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="@dimen/hmt_space_8">
+                    android:layout_height="wrap_content">
 
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/export_button"
