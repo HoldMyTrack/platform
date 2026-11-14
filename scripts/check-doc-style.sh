@@ -6,7 +6,7 @@
 # pointer) stay with the reviewer.
 #
 # Checks the project's Markdown documents: docs/, the apps' docs/, README.md. AGENTS.md, which
-# quotes the words, and the frozen ADRs are left out.
+# quotes the words, and the ADRs are left out.
 # Usage: scripts/check-doc-style.sh [file...] (default: every such tracked document).
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"

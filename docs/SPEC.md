@@ -28,7 +28,7 @@ Every built feature of the server and the web app; the Android app's own behavio
 
 ### 1.5 API errors
 
-Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-13.1); `services/server/api/` lists the codes (ADR-0045). An app build older than the deployment's minimum for that app is refused on every `/v1` request before anything else is checked, and asked to update (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
+Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-13.1); `services/server/api/` lists the codes. An app build older than the deployment's minimum for that app is refused on every `/v1` request before anything else is checked, and asked to update (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
 
 ## 2. Actors
 

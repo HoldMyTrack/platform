@@ -6,7 +6,7 @@ Accepted. Built on the server, the web and in the Android app (`SPEC.md` FR-14.7
 
 ## Context
 
-A family trip is one trip for everyone who went, but usually only one device records it: two people in the same car, or a child walking beside a parent's watch. The others have nothing on their Fog of War, Heatmap, totals or countries for a trip they were on. Stories are private (`VISION.md` §4.2), and sharing one meant an exported image (`IMPLEMENTATION.md` §4.3.3), which shows the trip but doesn't put it in anyone's history.
+A family trip is one trip for everyone who went, but usually only one device records it: two people in the same car, or a child walking beside a parent's watch. The others have nothing on their Fog of War, totals or countries for a trip they were on. Stories are private (`VISION.md` §4.2), and sharing one meant an exported image (`IMPLEMENTATION.md` §4.3.3), which shows the trip but doesn't put it in anyone's history.
 
 The request was to give the trip to the people who were on it, as theirs, and to keep it theirs: nothing the sender does later — an edit, a deletion, a deleted account — should take it away from them. Several shapes were weighed against that, from one Story every member sees to Stories that stay linked and keep syncing; each kept the recipient's history dependent on someone else's account in some way. A copy that becomes the recipient's own data doesn't.
 
@@ -40,4 +40,4 @@ The request was to give the trip to the people who were on it, as theirs, and to
 - Photo deletion and the account and demo purges have to count references to an image file instead of removing a whole `photos/{id}/` prefix.
 - Account deletion stays total: everything an account owns goes, and a recipient's copies are theirs, not the sender's.
 - A copy reflects the sender's Private locations as they were when it was made. A Private location the sender adds later doesn't reach copies already made.
-- Nothing is shared live and no one can see another account: this is not the social graph of Milestone 3 (`VISION.md` §5.7, §5.8).
+- Nothing is shared live and no one can see another account: this is not the social graph of Milestone 3 (`VISION.md` §5.1, §5.2).

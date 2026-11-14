@@ -16,7 +16,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// Sign in with Facebook (docs/SPEC.md FR-1.10, docs/adr/0015-identities-table-and-facebook-sign-in.md)
+// Sign in with Facebook (docs/SPEC.md FR-1.10, docs/adr/0009-external-sign-in.md)
 // — Facebook Login's manual authorization-code flow, run server-side like Google's
 // (google_auth.go): handleFacebookStart redirects to Facebook's login dialog, Facebook redirects
 // back to handleFacebookCallback, which trades the code for an access token with the app secret,

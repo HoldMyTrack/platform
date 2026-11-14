@@ -30,14 +30,14 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 ## Milestone 3 — Social graph (not committed)
 
-Public pages, followers and the rest (`VISION.md` §5.7, §5.8). No steps: the first is the Milestone 3 decision, made from Milestone 2's numbers, and not building it is one outcome.
+Public pages, followers and the rest (`VISION.md` §5.1, §5.2). No steps: the first is the Milestone 3 decision, made from Milestone 2's numbers, and not building it is one outcome.
 
 ---
 
 ## Ongoing
 
 - [x] Describe every `/v1` endpoint in the API contract, `services/server/api/` (`IMPLEMENTATION.md` §4.31).
-- [x] One error shape for the JSON API (ADR-0045), described in the contract.
+- [x] One error shape for the JSON API (`SPEC.md` §1.5), described in the contract.
 - [x] Generate the web client's types from the contract (`apps/web/src/apiSchema.ts`).
 - [x] Typed Android wire classes (`net/Wire.kt`) checked against the contract (`WireContractTest`).
 - [x] Fail a pull request whose contract change breaks an installed client (`scripts/check-contract-break.sh`).

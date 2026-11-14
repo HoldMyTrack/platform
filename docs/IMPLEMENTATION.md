@@ -104,7 +104,7 @@ Same shape as `password_resets`. `email` is the address the link confirms; a cha
 
 ### 3.17 `user_identities`
 
-Google, Facebook and Apple links (ADR-0015), keyed by the provider's stable `subject`, never the email. `UNIQUE (user_id, provider)` allows one identity per provider. An Apple link also keeps its `refresh_token` and the `client_id` it was issued to, the only way to revoke it when the account is deleted (§4.9).
+Google, Facebook and Apple links (ADR-0009), keyed by the provider's stable `subject`, never the email. `UNIQUE (user_id, provider)` allows one identity per provider. An Apple link also keeps its `refresh_token` and the `client_id` it was issued to, the only way to revoke it when the account is deleted (§4.9).
 
 ### 3.18 `auth_handoffs`
 
@@ -587,7 +587,7 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 `openapi.yaml` indexes every path, each a `$ref` into its area's file in `paths/`, with shared shapes in `components/`. **The server's tests hold the handlers to it**: every exchange they make is validated (`contract_test.go`, kin-openapi). That checks the bytes sent (a nil slice as `null`, an `omitempty` dropping a required field), which generated types can't. `TestContractCoversEveryRoute` fails on a route the contract lacks or an operation no route registers. The web's `apiSchema.ts` is generated from it, Android's `WireContractTest` checks `net/Wire.kt` and iOS's `WireContractTests` `Wire.swift` (`DEVELOPMENT.md`). Traps:
 - The file describes what the handler accepts: a field it doesn't insist on is optional, an optional array also `nullable`, and an undeclared request field is refused (`decodeJSON`), so request objects are closed.
-- An error code is its message key (`api_errors.go`, ADR-0045), pinned by enums, so renaming a key a client branches on fails a test.
+- Every error is one JSON shape (`SPEC.md` §1.5), so an error that later needs a code keeps its shape under installed clients. A code is its message key (`api_errors.go`), pinned by enums, so renaming a key a client branches on fails a test; a code chosen at each of some 250 call sites was rejected, since few have a client branching on them. RFC 9457 Problem Details was rejected too: it wants a URI per error type and splits a translated message between `title` and `detail`, for third-party consumers HoldMyTrack doesn't have.
 - The cross-origin 403 and the 426 (§4.33) answer before any operation and aren't in the contract; paths outside `/v1` aren't checked.
 
 ### 4.32 Service statistics

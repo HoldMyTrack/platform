@@ -314,7 +314,7 @@ data class ActivityDayPage(val days: List<ActivityDay>, val earliest: String?)
 
 /**
  * A request the server answered with a non-2xx status. Every API error is
- * `{"error": code, "message": text}` (`docs/adr/0045-one-json-error-shape.md`): `message` is
+ * `{"error": code, "message": text}` (`docs/SPEC.md` §1.5): `message` is
  * the server's own wording, shown to the user as-is rather than replaced with something vaguer —
  * "invalid email or password" and "an account with this email already exists" are exactly what
  * someone needs to read — and [errorCode] is what a caller branches on, never the message.

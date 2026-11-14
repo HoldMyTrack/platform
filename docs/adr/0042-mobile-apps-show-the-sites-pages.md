@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built in the Android app: Settings, Activity graph & trends, Sync history and About are the site's pages in a WebView (`SPEC.md` FR-10.8, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6. ADR-0048 keeps the map native, closing the measurement below.
+Accepted. Built in the Android app: Settings, Activity graph & trends, Sync history and About are the site's pages in a WebView (`SPEC.md` FR-10.8, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6.
 
 ## Context
 
@@ -16,12 +16,12 @@ The parts that have to be native are few and known. Health Connect and HealthKit
 - **The site's own page for the rest.** A screen the server already renders as a page is that page in a WebView (`WKWebView` on iOS), not a native copy. A new feature of that kind is built once, as a page.
 - **The server renders a page for an app** when the request carries the `hmt_app` cookie: no site header, footer or Back to map, and none of what the app keeps as screens of its own (`IMPLEMENTATION.md` §4.19). The app signs the WebView in with the session as the site's own session cookie, in the WebView's own cookie store (`apps/android/docs/IMPLEMENTATION.md` §2.5).
 - **Links between the two halves**: a link to the map opens the native map; a link within the page stays in the WebView; anything else opens in the browser.
-- **The map stays native for now.** Whether the map page itself could be the WebView too is decided by measuring it on a mid-range phone, not assumed; it hasn't been measured.
+- **The map is native** (ADR-0048).
 
 ## Alternatives considered
 
 - **Keep building native copies.** What the app was doing. Each feature costs twice, and three times with iOS, with the copies kept in step by hand and comments.
-- **The whole app as one WebView, the map included.** Removes nearly all the copying at once. But the map is the screen that matters most, and in a WebView it runs on MapLibre GL JS over WebGL instead of MapLibre Native, which reads the basemap archive directly; on a mid-range phone that risks a slower, heavier map with worse gestures. Not ruled out — it is what the measurement above decides — but not taken blind.
+- **The whole app as one WebView, the map included.** Removes nearly all the copying at once. But the map is the screen that matters most, and in a WebView it runs on MapLibre GL JS over WebGL instead of MapLibre Native, which reads the basemap archive directly; on a mid-range phone that risks a slower, heavier map with worse gestures. ADR-0048 settled it: with the map's look served as documents, a native map keeps little code of its own.
 - **Native map with web panels over it.** The track editor drags points on the map, the Private location editor draws circles on it, and selecting a row flies the camera. Splitting those across a native map and a web panel needs a two-way bridge for every drag, selection and camera move: glue code in place of copied code, not less code.
 - **A cross-platform framework (React Native, Flutter, Kotlin Multiplatform).** It would share code between Android and iOS, but not with the web, and it needs native modules for exactly the native parts listed above. It means rewriting the Android app for a smaller saving than reusing pages that already exist.
 - **Hiding the site's header from the app instead of the server** (CSS the app injects into each page). Works against any server, but the header flashes before it's hidden, the rule for what an in-app page leaves out lives in two places, and a change to the page's markup breaks it silently.
@@ -29,7 +29,7 @@ The parts that have to be native are few and known. Health Connect and HealthKit
 ## Consequences
 
 - **One implementation of each page.** A change to Settings, Profile or the Sync page reaches the web and every installed app with a server deploy, with no app release and no copy to carry it to.
-- **Installed apps depend on the server.** They rely on the page paths, the `hmt_app` cookie and the session cookie's name staying as they are; changing any of them breaks apps already on phones. And a page change ships into the apps without an app review — so, for one, About's funding section is inside the app, which Play's payments policy makes worth rechecking once donations open (`apps/android/docs/ROADMAP.md`).
+- **Installed apps depend on the server.** They rely on the page paths, the `hmt_app` cookie and the session cookie's name staying as they are; changing any of them breaks apps already on phones. And a page change ships into the apps without an app review, which matters for what Play's payments policy allows (`apps/android/docs/ROADMAP.md`).
 - **These screens need the network**, where a native screen could show what it last loaded; without it they show an error with Try again. Nothing on them worked offline before either, since every one read the server.
 - **They look and feel like the web**: the browser's own file input and pickers, the page's own typography. Acceptable for secondary screens, not for the map.
 - **What a page saves reaches the native app only through the server** — units, the name, a first run's country — so the app reads the session again when it takes over, and forgetting that is a bug (`apps/android/docs/IMPLEMENTATION.md` §2.5).

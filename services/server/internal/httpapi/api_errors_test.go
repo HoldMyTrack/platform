@@ -10,7 +10,7 @@ import (
 )
 
 // A failure with its own message key gets the key's name as its code; anything else, its
-// status's generic code (ADR-0045).
+// status's generic code (docs/SPEC.md §1.5).
 func TestErrorCodes(t *testing.T) {
 	for _, tc := range []struct {
 		key    string

@@ -1,6 +1,6 @@
 Error:
   type: object
-  description: Every error the API sends (ADR-0045). A client branches on error, never on message.
+  description: Every error the API sends (docs/SPEC.md §1.5). A client branches on error, never on message.
   required: [error, message]
   additionalProperties: false
   properties:

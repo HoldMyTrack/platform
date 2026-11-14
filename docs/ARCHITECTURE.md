@@ -82,7 +82,7 @@ The API, track and fog tiles and every page come from one origin through Caddy. 
 | Dedicated queue (SQS/RabbitMQ) | Postgres `FOR UPDATE SKIP LOCKED` throughput becomes the bottleneck |
 | Separate render service | Export rendering starves the API of CPU |
 | Read replicas | Read load, not write load, saturates the primary |
-| Social graph (public pages, followers) | Milestone 3 decides to build it (`VISION.md` §5.7) |
+| Social graph (public pages, followers) | Milestone 3 decides to build it (`VISION.md` §5.1) |
 
 ---
 

@@ -1,5 +1,5 @@
 /**
- * What an API error response says (ADR-0045): every error the server sends is JSON
+ * What an API error response says (docs/SPEC.md §1.5): every error the server sends is JSON
  * `{"error": code, "message": text}` — `code` to branch on, `message` to show. A body that isn't
  * that shape (a proxy's error page in front of the server, an empty body) has no code; its text,
  * or the fallback when there's none, is the message.

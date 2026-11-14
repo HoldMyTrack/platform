@@ -7,7 +7,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
-// Every error the JSON API and the tiles send is one shape (ADR-0045): `error`, a stable code a
+// Every error the JSON API and the tiles send is one shape (docs/SPEC.md §1.5): `error`, a stable code a
 // client branches on, and `message`, text for a person. The HTML pages render their own.
 
 type apiErrorBody struct {

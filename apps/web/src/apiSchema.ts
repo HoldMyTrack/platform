@@ -3787,7 +3787,7 @@ export interface components {
             unit_system: "metric" | "imperial";
             fog_words: components["schemas"]["FogWords"];
         };
-        /** @description Every error the API sends (ADR-0045). A client branches on error, never on message. */
+        /** @description Every error the API sends (docs/SPEC.md §1.5). A client branches on error, never on message. */
         Error: {
             /** @description A stable code: a failure's own (photo_no_track), or its status's generic one (invalid_request, unauthenticated, forbidden, not_found, conflict, gone, payload_too_large, unsupported_type, unprocessable, rate_limited, unavailable, internal). */
             error: string;

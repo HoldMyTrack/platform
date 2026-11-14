@@ -16,7 +16,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
-// Sign in with Google (docs/SPEC.md FR-1.9, docs/adr/0009-google-sign-in-server-side-code-flow.md)
+// Sign in with Google (docs/SPEC.md FR-1.9, docs/adr/0009-external-sign-in.md)
 // — the OAuth 2.0 authorization-code flow with PKCE, run entirely server-side: the browser
 // navigates to handleGoogleStart, Google redirects back to handleGoogleCallback, and the
 // callback ends in the same startSession every other sign-in path uses. No Google JS SDK on the
