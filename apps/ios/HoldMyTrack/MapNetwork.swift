@@ -76,6 +76,10 @@ enum MapPatcher {
                 vector.predicate = change.value.map { NSPredicate(mglJSONObject: $0.foundation) }
             case ("layout", "visibility"):
                 layer.isVisible = change.value?.string != "none"
+            case ("zoom", "minzoom"):
+                layer.minimumZoomLevel = Float(change.value?.number ?? 0)
+            case ("zoom", "maxzoom"):
+                layer.maximumZoomLevel = Float(change.value?.number ?? FogLevels.maxZoom)
             default:
                 let key = key(change.name)
                 guard layer.responds(to: NSSelectorFromString(key)) else { return false }

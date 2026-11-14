@@ -3,11 +3,10 @@ import MapLibre
 import UIKit
 
 /// What the map shows beside the modes (apps/android/docs/SPEC.md FR-2.2): the chip naming what
-/// Fog covers, the notice naming the level in view, the Layers button's badge, and
-/// whether Satellite imagery loads on this device (root docs/SPEC.md FR-4.14). The decisions are
+/// Fog covers, the Layers button's badge, and whether Satellite imagery loads on this device (root docs/SPEC.md FR-4.14). The decisions are
 /// HoldMyTrackCore's MapChrome and SatelliteStatus.
 extension MapViewController {
-    /// The chip and the level notice for the mode shown.
+    /// The chip and Fog's level for the mode shown.
     func renderModeChrome() {
         let chip = MapChrome.chip(state.mode)
         chrome.chip.text = switch chip {
@@ -16,13 +15,6 @@ extension MapViewController {
         }
         chrome.chip.isHidden = chip == nil
         renderLevel()
-    }
-
-    /// The level in view, named when it changes; called once the camera comes to rest, so a pinch
-    /// through two levels names only where it lands.
-    func renderLevel() {
-        let tier = ZoomTier.at(mapView.zoomLevel, tiers: pair?.layers.tiers ?? [])
-        chrome.showLevel(MapChrome.level(state.mode, tier: tier))
     }
 
     /// The Layers button filled while picks show, with their count on its corner, greyed while
@@ -65,36 +57,22 @@ extension MapViewController {
 @MainActor
 final class MapChromeViews {
     let chip = InsetLabel(insets: UIEdgeInsets(top: 0, left: DesignTokens.Space.s16, bottom: 0, right: DesignTokens.Space.s16))
-    let level = InsetLabel(insets: UIEdgeInsets(top: DesignTokens.Space.s8, left: DesignTokens.Space.s12, bottom: DesignTokens.Space.s8, right: DesignTokens.Space.s12))
     let badge = UILabel()
     let satellite: SatelliteWatch
 
-    /// The level on screen, or last: shown again only once it changes.
-    private var shownLevel: MapChrome.Level?
-    private var fade: Task<Void, Never>?
-
-    /// The web's `SHOW_MS`, and its 0.4 s opacity transition.
-    private static let showFor = Duration.seconds(3)
-    private static let fadeFor = 0.4
-
     init(onImagery: @escaping (SatelliteStatus) -> Void) {
         satellite = SatelliteWatch(onChange: onImagery)
-        for label in [chip, level] {
-            label.font = Typeface.sans(label === chip ? DesignTokens.Text.lg : DesignTokens.Text.sm)
-            label.adjustsFontForContentSizeCategory = true
-            label.textColor = UIColor(resource: .ink)
-            label.numberOfLines = 0
-            label.textAlignment = .center
-            label.layer.masksToBounds = true
-            label.isHidden = true
-        }
+        chip.font = Typeface.sans(DesignTokens.Text.lg)
+        chip.adjustsFontForContentSizeCategory = true
+        chip.textColor = UIColor(resource: .ink)
+        chip.numberOfLines = 0
+        chip.textAlignment = .center
+        chip.layer.masksToBounds = true
+        chip.isHidden = true
         chip.backgroundColor = UIColor(resource: .surface)
         chip.layer.cornerRadius = 20
         chip.heightAnchor.constraint(greaterThanOrEqualToConstant: 40).isActive = true
         chip.accessibilityIdentifier = "modeChip"
-        level.backgroundColor = UIColor(resource: .noticeBg)
-        level.layer.cornerRadius = DesignTokens.Radius.md
-        level.accessibilityIdentifier = "levelNotice"
         badge.font = Typeface.sans(DesignTokens.Text.xxxs, weight: DesignTokens.Weight.bold)
         badge.textColor = UIColor(resource: .onAccent)
         badge.backgroundColor = UIColor(resource: .accent)
@@ -103,41 +81,6 @@ final class MapChromeViews {
         badge.layer.masksToBounds = true
         badge.isAccessibilityElement = false
         badge.isHidden = true
-    }
-
-    func showLevel(_ next: MapChrome.Level?) {
-        guard let next else {
-            shownLevel = nil
-            hideLevel()
-            return
-        }
-        guard next != shownLevel else { return }
-        shownLevel = next
-        level.text = switch next {
-        case .fogCountry: String(localized: "Country view — a whole country clears once you've been anywhere in it")
-        case .fogRegion: String(localized: "Region view — a whole state or province clears once you've been anywhere in it")
-        case .fogCity: String(localized: "City view — cleared exactly where you've been")
-        }
-        UIAccessibility.post(notification: .announcement, argument: level.text)
-        fade?.cancel()
-        if level.isHidden {
-            level.alpha = 0
-            level.isHidden = false
-        }
-        UIView.animate(withDuration: Self.fadeFor) { self.level.alpha = 1 }
-        fade = Task { [weak self] in
-            try? await Task.sleep(for: Self.showFor)
-            guard !Task.isCancelled else { return }
-            self?.hideLevel()
-        }
-    }
-
-    private func hideLevel() {
-        fade?.cancel()
-        guard !level.isHidden else { return }
-        UIView.animate(withDuration: Self.fadeFor, animations: { self.level.alpha = 0 }) { done in
-            if done { self.level.isHidden = true }
-        }
     }
 }
 
@@ -187,7 +130,7 @@ final class SatelliteWatch {
     }
 }
 
-/// A label with room around its text, for the chip and the level notice.
+/// A label with room around its text, for the chip.
 final class InsetLabel: UILabel {
     private let insets: UIEdgeInsets
 

@@ -252,13 +252,21 @@ struct HistogramJSON: Codable, Sendable, Equatable {
     let earliest: String?
 }
 
+struct ExploredJSON: Codable, Sendable, Equatable {
+    let countries: Int
+    let regions: Int
+    let counties: Int
+    let cities: Int
+}
+
 struct CoverageStatusJSON: Codable, Sendable, Equatable {
     let rendering: Bool
     let version: Int
     let tileVersion: String
+    let explored: ExploredJSON?
 
     enum CodingKeys: String, CodingKey {
-        case rendering, version
+        case rendering, version, explored
         case tileVersion = "tile_version"
     }
 }

@@ -93,7 +93,7 @@ export interface MapLayers {
   styleBuild: string;
   flavor: Flavor;
   tileVersion: string;
-  /** The level notice's tiers, which the apps read; the web reads `levels`. */
+  /** The level notice's tiers, which Android builds before the level control read; the web reads `levels`. */
   tiers: LayerTier[];
   levels: FogLevel[];
   /** Each run-time value a layer can read, at what it is until the client binds its own. */

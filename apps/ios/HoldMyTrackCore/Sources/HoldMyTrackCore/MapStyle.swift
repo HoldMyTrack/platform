@@ -18,20 +18,10 @@ public struct LayersDocument: Equatable, Sendable {
         public let legend: [String: String]
     }
 
-    /// A level of detail and the zoom it holds below; the last holds at every zoom past it.
-    public struct Tier: Equatable, Sendable {
-        public let tier: ZoomTier
-        public let below: Double?
-
-        public init(tier: ZoomTier, below: Double?) {
-            self.tier = tier
-            self.below = below
-        }
-    }
-
     public let styleBuild: String
     public let tileVersion: String
-    public let tiers: [Tier]
+    /// Fog's levels, coarsest first, each with its band and layers.
+    public let levels: [FogLevels.Level]
     /// By name, the default of each value a layer reads as `["var", name]`.
     public let vars: [String: JSONValue]
     /// `plain` and `satellite`, each by mode, then `layout` or `paint`, then layer id.
@@ -43,9 +33,7 @@ public struct LayersDocument: Equatable, Sendable {
         styleBuild = json["styleBuild"]?.string ?? ""
         tileVersion = json["tileVersion"]?.string ?? ""
         vars = json["vars"]?.object ?? [:]
-        tiers = json["tiers"]?.array?.compactMap { t in
-            t["tier"]?.string.flatMap(ZoomTier.init(rawValue:)).map { Tier(tier: $0, below: t["below"]?.number) }
-        } ?? []
+        levels = json["levels"]?.array?.compactMap(FogLevels.Level.init) ?? []
         self.views = views
         var parsed: [Group] = []
         for g in groups {
@@ -97,6 +85,8 @@ public struct MapState: Equatable, Sendable {
     public var queries: [String: String] = [:]
     /// By GeoJSON source id, its data: the pace bands. A source without starts empty.
     public var geojson: [String: JSONValue] = [:]
+    /// The Fog level the level control locked, drawn at every zoom; nil follows the zoom.
+    public var fogLevel: String?
 
     public init() {}
 }
@@ -163,6 +153,12 @@ public enum MapStyle {
         }
 
         apply(state, document: document, groups: groups, metadata: style["metadata"], hasSatellite: sources[satelliteID] != nil, to: &layers)
+        for (id, range) in FogLevels.zoomRanges(document.levels, locked: state.fogLevel) {
+            guard var layer = layers[id]?.object else { continue }
+            layer["minzoom"] = .number(range.lowerBound)
+            layer["maxzoom"] = .number(range.upperBound)
+            layers[id] = .object(layer)
+        }
         root["sources"] = .object(sources)
         root["layers"] = .array(ids.compactMap { layers[$0] })
         return .object(root)
@@ -282,8 +278,9 @@ public enum MapStyle {
 
     // MARK: Changes
 
-    /// One property of one layer to set on the loaded map; kind is `layout`, `paint` or `filter`,
-    /// or `data` for a GeoJSON source's data, layer then naming the source.
+    /// One property of one layer to set on the loaded map; kind is `layout`, `paint`, `filter` or
+    /// `zoom` (name `minzoom` or `maxzoom`, nil for none), or `data` for a GeoJSON source's data,
+    /// layer then naming the source.
     public struct Change: Equatable, Sendable {
         public let layer: String
         public let kind: String
@@ -311,9 +308,12 @@ public enum MapStyle {
         for (before, after) in zip(a, b) where before != after {
             guard let id = after["id"]?.string else { continue }
             var keys = Set((before.object ?? [:]).keys).union((after.object ?? [:]).keys)
-            keys.subtract(["layout", "paint", "filter"])
-            // Anything but properties and the filter (a source, a zoom range) needs the reload.
+            keys.subtract(["layout", "paint", "filter", "minzoom", "maxzoom"])
+            // Anything but properties, the filter and the zoom range (a source) needs the reload.
             for key in keys where before[key] != after[key] { return nil }
+            for name in ["minzoom", "maxzoom"] where before[name] != after[name] {
+                out.append(Change(layer: id, kind: "zoom", name: name, value: after[name]))
+            }
             for kind in ["layout", "paint"] {
                 let p = before[kind]?.object ?? [:], q = after[kind]?.object ?? [:]
                 for name in Set(p.keys).union(q.keys).sorted() where p[name] != q[name] {

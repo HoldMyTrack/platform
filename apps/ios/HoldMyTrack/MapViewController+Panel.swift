@@ -345,7 +345,14 @@ extension MapViewController {
         // The Edit window's group mustn't change under it; a tap serves only Delete point.
         guard !editOpen else { return trackEditTapped(at: tap.location(in: mapView)) }
         // A place's badge first, in every mode; a tap elsewhere closes its popup.
-        if tapSpot(at: tap.location(in: mapView)) { return }
+        if tapSpot(at: tap.location(in: mapView)) {
+            closeFogPlace()
+            return
+        }
+        if state.mode == .fog {
+            _ = tapFogPlace(at: tap.location(in: mapView))
+            return
+        }
         guard state.mode == .normal, !sheet.isHidden || panelTab == .stories else { return }
         let point = tap.location(in: mapView)
         let r = TrackTap.radius

@@ -96,6 +96,7 @@ extension MapViewController {
         }
         guard !located.isEmpty else { return }
         spotViews.popup.close()
+        closeFogPlace()
         photoViews.popup.show(located)
         placePhotoPopup()
     }

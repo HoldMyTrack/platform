@@ -28,7 +28,9 @@ struct MapStyleTests {
 
     private let document = LayersDocument(JSONValue.parse(Data("""
     {"styleBuild": "b1", "tileVersion": "7.1",
-     "tiers": [{"tier": "country", "below": 4}, {"tier": "region", "below": 8}, {"tier": "city"}],
+     "levels": [{"level": "country", "below": 4, "layers": ["country-fog-fill"]},
+                {"level": "region", "from": 4, "below": 8, "layers": ["region-fog-fill"], "word": "state"},
+                {"level": "exact", "from": 8, "layers": ["fog-veil"]}],
      "vars": {"hidden": []},
      "views": {
        "plain": {
@@ -43,7 +45,9 @@ struct MapStyleTests {
      "groups": [
        {"id": "coverage", "placement": "beneath-labels",
         "sources": {"fog-vector": {"type": "vector", "tiles": "/tiles/v1/fog-vector/{z}/{x}/{y}.mvt?cv=7.1", "maxzoom": 14}},
-        "layers": [{"id": "fog-veil", "type": "fill", "source": "fog-vector", "layout": {"visibility": "none"}}]},
+        "layers": [{"id": "fog-veil", "type": "fill", "source": "fog-vector", "minzoom": 8, "layout": {"visibility": "none"}},
+                   {"id": "country-fog-fill", "type": "fill", "source": "fog-vector", "maxzoom": 4},
+                   {"id": "region-fog-fill", "type": "fill", "source": "fog-vector", "minzoom": 4, "maxzoom": 8}]},
        {"id": "bike-paths", "placement": "beneath-labels", "lifts": ["paths_trail"],
         "sources": {"bike-paths": {"type": "vector", "tiles": "/tiles/v1/bike-paths/{z}/{x}/{y}.mvt?cv=7.1"}},
         "layers": [{"id": "bike-paths-cycleway", "type": "line", "source": "bike-paths",
@@ -78,7 +82,7 @@ struct MapStyleTests {
     @Test func ownLayersGoBeneathTheLabelsWithLiftedTrailsAboveCoverageAndTopGroupsLast() {
         #expect(ids(compose()) == [
             "background", "satellite", "earth", "roads_major",
-            "fog-veil", "paths_trail", "bike-paths-cycleway", "tracks-line", "track-bands-line",
+            "fog-veil", "country-fog-fill", "region-fog-fill", "paths_trail", "bike-paths-cycleway", "tracks-line", "track-bands-line",
             "place_label", "country_label", "spots-icons",
         ])
     }
@@ -180,21 +184,44 @@ struct MapStyleTests {
         #expect(layer(failed, "tracks-line")?["paint"]?["line-color"] == nil, "the plain view applies")
     }
 
-    @Test func theTierInViewIsTheFirstWhoseBelowIsPastTheZoom() {
-        #expect(ZoomTier.at(0, tiers: document.tiers) == .country)
-        #expect(ZoomTier.at(3.99, tiers: document.tiers) == .country)
-        #expect(ZoomTier.at(4, tiers: document.tiers) == .region)
-        #expect(ZoomTier.at(8, tiers: document.tiers) == .city)
-        #expect(ZoomTier.at(3, tiers: []) == .city, "a document without tiers draws exact coverage")
+    @Test func theDocumentsLevelsAreReadWithTheirBandsLayersAndWord() {
+        #expect(document.levels.map(\.level) == ["country", "region", "exact"])
+        #expect(document.levels[1] == FogLevels.Level(level: "region", from: 4, below: 8, layers: ["region-fog-fill"], word: "state"))
     }
 
-    @Test func fogHasAChipAndALevelNormalHasNeither() {
+    @Test func fogHasAChipNormalHasNone() {
         #expect(MapChrome.chip(.normal) == nil)
         #expect(MapChrome.chip(.fog) == .everyActivity)
-        #expect(MapChrome.level(.normal, tier: .city) == nil)
-        #expect(MapChrome.level(.fog, tier: .country) == .fogCountry)
-        #expect(MapChrome.level(.fog, tier: .region) == .fogRegion)
-        #expect(MapChrome.level(.fog, tier: .city) == .fogCity)
+    }
+
+    @Test func aLockedLevelDrawsAtEveryZoomAndTheOthersAtNone() throws {
+        #expect(layer(compose(), "region-fog-fill")?["minzoom"] == .number(4), "unlocked, each layer keeps its band")
+        var state = MapState()
+        state.fogLevel = "region"
+        let locked = compose(state)
+        #expect(layer(locked, "region-fog-fill")?["minzoom"] == .number(0))
+        #expect(layer(locked, "region-fog-fill")?["maxzoom"] == .number(FogLevels.maxZoom))
+        #expect(layer(locked, "fog-veil")?["minzoom"] == .number(FogLevels.maxZoom))
+        #expect(layer(locked, "country-fog-fill")?["minzoom"] == .number(FogLevels.maxZoom))
+        let changes = try #require(MapStyle.changes(from: compose(), to: locked), "a lock patches the zoom ranges in place")
+        #expect(changes.contains(MapStyle.Change(layer: "region-fog-fill", kind: "zoom", name: "minzoom", value: .number(0))))
+        #expect(changes.contains(MapStyle.Change(layer: "country-fog-fill", kind: "zoom", name: "maxzoom", value: .number(FogLevels.maxZoom))))
+        state.fogLevel = "county"
+        #expect(layer(compose(state), "region-fog-fill")?["minzoom"] == .number(4), "a lock on a level the document lacks follows the zoom")
+    }
+
+    @Test func aLevelIsNamedByItsCountrysWordWhereTheCatalogHasIt() {
+        let has: (String) -> Bool = { $0 == "map.fog.type.state" }
+        #expect(FogLevels.labelKey("region", word: "state", has: has) == "map.fog.type.state")
+        #expect(FogLevels.labelKey("county", word: "parish", has: has) == "map.fog.level.county")
+        #expect(FogLevels.labelKey("city", word: "state", has: has) == "map.fog.level.city", "only regions and counties take the word")
+        #expect(FogLevels.labelKey("exact", word: nil, has: has) == "map.fog.level.exact")
+        #expect(FogLevels.labelKey("township", word: nil, has: has) == nil)
+    }
+
+    @Test func eachLevelButExactCountsItsExploredPlaces() {
+        let explored = FogLevels.Explored(countries: 3, regions: 9, counties: 20, cities: 41)
+        #expect(["country", "region", "county", "city", "exact"].map { FogLevels.exploredCount(explored, level: $0) } == [3, 9, 20, 41, nil])
     }
 
     @Test func theLayersBadgeCountsRoadsAndPathsAndGreysWhileHidden() {

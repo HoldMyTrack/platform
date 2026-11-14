@@ -1,14 +1,3 @@
-/// The level of detail Fog draws at, from the layers document's tiers: whole countries, whole
-/// states or provinces, then exactly where you've been.
-public enum ZoomTier: String, Equatable, Sendable {
-    case country, region, city
-
-    /// The tier in view at zoom: the first whose `below` is past it.
-    public static func at(_ zoom: Double, tiers: [LayersDocument.Tier]) -> ZoomTier {
-        tiers.first { $0.below.map { zoom < $0 } ?? true }?.tier ?? .city
-    }
-}
-
 /// What the controls over the map show, beside the modes (apps/android/docs/SPEC.md FR-2.2).
 public enum MapChrome {
     /// The chip naming what Fog shows, since it doesn't take the date range.
@@ -18,18 +7,6 @@ public enum MapChrome {
         switch mode {
         case .normal: nil
         case .fog: .everyActivity
-        }
-    }
-
-    /// The notice naming the level in view (root docs/SPEC.md FR-4.2).
-    public enum Level: Equatable, Sendable { case fogCountry, fogRegion, fogCity }
-
-    public static func level(_ mode: MapMode, tier: ZoomTier) -> Level? {
-        switch (mode, tier) {
-        case (.normal, _): nil
-        case (.fog, .country): .fogCountry
-        case (.fog, .region): .fogRegion
-        case (.fog, .city): .fogCity
         }
     }
 

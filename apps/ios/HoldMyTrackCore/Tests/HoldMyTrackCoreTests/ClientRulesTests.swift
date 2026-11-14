@@ -296,7 +296,39 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         case .seconds(let s): ["key": "duration.s", "args": ["s": .num(s)]]
         }
     },
+    "fogLevelInView": { input in
+        .string(FogLevels.inView(fogLevels(input["levels"]), zoom: input.number("zoom"), locked: input["locked"].string))
+    },
+    "fogLevelPick": { input in
+        let pick = FogLevels.pick(fogLevels(input["levels"]), zoom: input.number("zoom"), locked: input["locked"].string, picked: input["picked"].string!)
+        return ["locked": pick.locked.map(RuleJSON.string) ?? nil, "zoom": pick.zoom.map(RuleJSON.number) ?? nil]
+    },
+    "fogPlaceLabel": { input in
+        let catalog = Set(input.strings("catalog"))
+        let props = (input["props"].object ?? [:]).mapValues(jsonValue)
+        guard let label = FogPlaceLabel.of(props, has: catalog.contains) else { return nil }
+        return [
+            "name": .string(label.name), "kindKey": .string(label.kindKey), "within": .string(label.within),
+            "visitedKey": .string(label.visitedKey),
+            "counts": .array(label.counts.map { ["key": .string($0.key), "explored": .num($0.explored), "total": .num($0.total)] }),
+        ]
+    },
 ]
+
+func jsonValue(_ json: RuleJSON) -> JSONValue {
+    switch json {
+    case .null: .null
+    case .bool(let b): .bool(b)
+    case .number(let n): .number(n)
+    case .string(let s): .string(s)
+    case .array(let a): .array(a.map(jsonValue))
+    case .object(let o): .object(o.mapValues(jsonValue))
+    }
+}
+
+func fogLevels(_ json: RuleJSON) -> [FogLevels.Level] {
+    (json.list ?? []).map { FogLevels.Level(level: $0["level"].string!, from: $0["from"].double, below: $0["below"].double) }
+}
 
 func screenPoints(_ json: RuleJSON) -> [ScreenPoint] {
     (json.list ?? []).map { ScreenPoint(id: $0["id"].string!, x: $0.number("x"), y: $0.number("y")) }

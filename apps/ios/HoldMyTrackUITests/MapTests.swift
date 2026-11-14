@@ -15,8 +15,7 @@ final class MapTests: XCTestCase {
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         let modes = app.segmentedControls["modes"]
         XCTAssertTrue(modes.exists)
-        // Fog names what it covers, since it doesn't take the date range; Normal doesn't. The
-        // level notice fades within seconds, which the query can miss.
+        // Fog names what it covers, since it doesn't take the date range; Normal doesn't.
         let chip = app.staticTexts["modeChip"]
         modes.buttons.element(boundBy: 1).tap()
         XCTAssertTrue(modes.buttons.element(boundBy: 1).isSelected)
@@ -69,6 +68,38 @@ final class MapTests: XCTestCase {
         app.setPlaygrounds(false)
         XCTAssertTrue(area.waitForNonExistence(timeout: 5))
         XCTAssertEqual(layers.label, before)
+    }
+
+    /// Fog's level control on the demo: its segment names the level, the menu offers Auto and
+    /// each level, a picked level holds, and a tap on a place names it in a popup.
+    @MainActor
+    func testFogsLevelMenuLocksALevelAndATapNamesAPlace() throws {
+        try LaunchTests.requireDevStack(self)
+        let app = XCUIApplication()
+        app.launchArguments = ["-hmtSignedOut"]
+        app.launch()
+        app.buttons["demo"].tap()
+        XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
+        app.segmentedControls["modes"].buttons.element(boundBy: 1).tap()
+        let level = app.buttons["fogLevel"]
+        XCTAssertTrue(level.waitForExistence(timeout: 10))
+        level.tap()
+        // A menu item reads its subtitle after its title.
+        func item(_ title: String) -> XCUIElement { app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", title)).firstMatch }
+        let auto = item("Auto")
+        XCTAssertTrue(auto.waitForExistence(timeout: 10))
+        attach("Fog level menu")
+        // The demo's country may have its own word for its regions.
+        let region = item("State").exists ? "State" : "Region"
+        item(region).tap()
+        XCTAssertTrue(level.label.contains(region), level.label)
+        app.otherElements["map"].tap()
+        XCTAssertTrue(app.otherElements["fogPlacePopup"].waitForExistence(timeout: 5))
+        attach("Fog place")
+        level.tap()
+        XCTAssertTrue(auto.waitForExistence(timeout: 10))
+        auto.tap()
+        XCTAssertFalse(level.label.contains("Locked"), level.label)
     }
 
     @MainActor
