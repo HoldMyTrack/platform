@@ -13,7 +13,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
 )
 
-// The admin panel's home, its statistics (docs/SPEC.md FR-12.4): a chart per daily_stats key
+// The admin panel's home, its statistics (docs/SPEC.md FR-11.4): a chart per daily_stats key
 // (IMPLEMENTATION.md §4.32), drawn on the server as inline SVG. Postgres is the record, so the
 // page reaches past the ~14 days Grafana keeps.
 

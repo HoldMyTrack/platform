@@ -2,7 +2,7 @@
 
 How the system is put together: the top-level shape, the key decisions behind it, the stack, and what is not built yet. `docs/IMPLEMENTATION.md` picks up from here with the schema and how each feature is built; the Android app's own implementation is `apps/android/docs/IMPLEMENTATION.md`.
 
-> **Scope note.** Besides ingesting activities it didn't record, HoldMyTrack records casual GPS-only tracks in the mobile app (`SPEC.md` FR-3.8); a stopped recording submits through the same ingest pipeline as every other source.
+> **Scope note.** Besides ingesting activities it didn't record, HoldMyTrack records casual GPS-only tracks in the mobile app (`SPEC.md` FR-3.6); a stopped recording submits through the same ingest pipeline as every other source.
 
 ---
 
@@ -22,7 +22,7 @@ HoldMyTrack is a **modular monolith** on PostgreSQL/PostGIS, fed by three indepe
 | **Index raw points; simplify only for display** | Douglas-Peucker deletes intermediate points, leaving gaps in the fog trail |
 | **Segment-rasterized** coverage, not point-sampled | 1 Hz at 40 km/h is ~11 m between fixes, gappy at fine resolution |
 | Postgres job queue, no broker | Premature at this scale, and a broker is a recurring bill a free service should not carry |
-| Privacy applied **at ingest** | Fog maps point at people's homes; render-time filtering leaks through any downstream bug — [ADR-0002](adr/0002-privacy-applied-at-ingest.md); hidden areas are user-chosen Private locations — `VISION.md` §7, `SPEC.md` FR-8.1 |
+| Privacy applied **at ingest** | Fog maps point at people's homes; render-time filtering leaks through any downstream bug — [ADR-0002](adr/0002-privacy-applied-at-ingest.md); hidden areas are user-chosen Private locations — `VISION.md` §7, `SPEC.md` FR-7.1 |
 | **Three independent ingest paths** | No single provider can revoke the product (`VISION.md` §4.1) |
 | **Planet-wide basemap**, not a regional extract | Users are everywhere; a regional extract makes a blank map the default outside one metro |
 | **Country/Region zoom tiers are live vector tiles**, not a second raster pyramid | Their cost scales with a fixed ~250-country/~4,600-region boundary set, not with a user's history — `IMPLEMENTATION.md` §4.2.4 |

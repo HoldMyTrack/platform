@@ -80,7 +80,7 @@ object PrivateLocationsOverlay {
         val beforeId = style.layers.firstOrNull { it is SymbolLayer }?.id
         fun add(layer: Layer) {
             if (style.getLayer(layer.id) != null) return
-            // From the zoom tracks start at, like everything else but Fog (`docs/SPEC.md` FR-4.15).
+            // From the zoom tracks start at, like everything else but Fog (`docs/SPEC.md` FR-4.11).
             layer.minZoom = MapOverlays.TRACKS_MIN_ZOOM
             if (beforeId != null) style.addLayerBelow(layer, beforeId) else style.addLayer(layer)
         }

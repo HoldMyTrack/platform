@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-12 (the admin panel).
+// Covers docs/SPEC.md FR-11 (the admin panel).
 
 import (
 	"net/http"

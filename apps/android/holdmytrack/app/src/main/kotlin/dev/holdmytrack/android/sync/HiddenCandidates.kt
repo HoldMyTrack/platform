@@ -4,7 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 
 /**
- * The Sync tab's hidden rows (`docs/SPEC.md` FR-3.6): candidates the user swiped aside, by
+ * The Sync tab's hidden rows (`docs/SPEC.md` FR-3.4): candidates the user swiped aside, by
  * [Candidate.key], kept on this phone only. Per account, as everything the phone keeps for an
  * account is — two people on one phone each set aside their own; the demo account has no email
  * and shares the empty key, which is harmless.

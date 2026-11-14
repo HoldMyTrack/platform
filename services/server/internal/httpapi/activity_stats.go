@@ -466,7 +466,7 @@ func (s *Server) handleActivityGraphStats(w http.ResponseWriter, r *http.Request
 	writeJSON(w, http.StatusOK, activityGraphStatsResponse{Year: year, YearStats: yearStats, AllTime: allTime})
 }
 
-// activityTrendsQuery is docs/SPEC.md FR-9's "trends": count/distance/moving-time/
+// activityTrendsQuery is docs/SPEC.md FR-8's "trends": count/distance/moving-time/
 // elevation-gain per calendar bucket (week or month), over the [from, to) window. Every bucket
 // the window touches comes back, an empty one as zeroes: generate_series lists them from the
 // bucket holding $3 to the one holding the day before $4, and the account's sums are left-joined

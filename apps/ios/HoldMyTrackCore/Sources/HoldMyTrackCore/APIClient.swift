@@ -4,7 +4,7 @@ import Foundation
 public enum APIError: Error, Equatable, Sendable {
     /// `426 app_outdated`: the server turns this build away (root docs/IMPLEMENTATION.md §4.33).
     case outdated
-    /// Any other answer outside 2xx, with the server's code and its message as sent (docs/SPEC.md §1.5),
+    /// Any other answer outside 2xx, with the server's code and its message as sent (docs/SPEC.md §1.4),
     /// which the screens show unreworded so the app and the server never disagree.
     case http(status: Int, code: String?, message: String?)
     /// No answer: offline, the server down, or a timeout.

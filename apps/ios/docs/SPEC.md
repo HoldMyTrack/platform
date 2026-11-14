@@ -23,7 +23,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 ### FR-1.1 Sign in, sign up, start a demo
 
 - Google and Facebook both run the server's own flow in the system's browser sheet, started with the S256 hash of a verifier the app keeps; the code returned to `holdmytrack://oauth` is redeemed with it at `POST /v1/auth/handoff`. No Google or Meta SDK is in the app.
-- Sign in with Apple shows when the server reports it, in Apple's own sheet (`docs/SPEC.md` FR-1.14). The name Apple shares on the first sign-in names a new account.
+- Sign in with Apple shows when the server reports it, in Apple's own sheet (`docs/SPEC.md` FR-1.11). The name Apple shares on the first sign-in names a new account.
 
 ### FR-1.2 Session persistence and re-verification
 
@@ -79,7 +79,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 ### FR-2.10 Photos
 
-- Added photos come from iOS's photo picker, which hands over a photo's location with its time, unlike Android's, so the placement check can place a photo by where it was taken (`docs/SPEC.md` FR-16.1).
+- Added photos come from iOS's photo picker, which hands over a photo's location with its time, unlike Android's, so the placement check can place a photo by where it was taken (`docs/SPEC.md` FR-15.1).
 
 ## 5. FR-3 — Sync and Imports
 
@@ -95,5 +95,5 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-3.6), except as below.
 | Concern | Behavior |
 | :-- | :-- |
 | **Devices** | iPhone, on iOS 17 and later; an iPad runs it in compatibility mode. |
-| **Language** | English or Russian, iOS's choice from the phone's languages and the app's own setting in Settings, else English; sent as `Accept-Language` (`docs/SPEC.md` FR-13.1). |
-| **Version gate** | Every request names the build in its User-Agent, so the server can turn away an old one (`docs/SPEC.md` §1.5). |
+| **Language** | English or Russian, iOS's choice from the phone's languages and the app's own setting in Settings, else English; sent as `Accept-Language` (`docs/SPEC.md` FR-12.1). |
+| **Version gate** | Every request names the build in its User-Agent, so the server can turn away an old one (`docs/SPEC.md` §1.4). |

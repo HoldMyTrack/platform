@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The track being edited, drawn over the map (root docs/SPEC.md FR-5.14), Android's
+/// The track being edited, drawn over the map (root docs/SPEC.md FR-5.7), Android's
 /// TrackEditOverlay: what the edit keeps in the accent, what it would take out dashed in red, a
 /// split's second part in blue, every point as a small ring, and the knobs. The app's own source
 /// and layers, added on every style load as capture's guide is, under the basemap's labels. While

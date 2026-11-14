@@ -70,11 +70,11 @@ class ActivitiesPanel(
     private val onDeleted: (List<String>) -> Unit,
     /** The tab changed — leaving the Stories tab closes its Story. */
     private val onTabChanged: (PanelTab) -> Unit,
-    /** The Stories tab opened a Story (`docs/SPEC.md` FR-14.6). */
+    /** The Stories tab opened a Story (`docs/SPEC.md` FR-13.6). */
     private val onOpenStory: (storyId: String) -> Unit,
     /** The Stories tab has no Story left to open. */
     private val onCloseStory: () -> Unit,
-    /** Add to story's New story… made one of the toolbar's target (`docs/SPEC.md` FR-14). */
+    /** Add to story's New story… made one of the toolbar's target (`docs/SPEC.md` FR-13). */
     private val onStoryCreated: (Story) -> Unit,
     /** A Story renamed, deleted or added to: the rows' Story badges are out of date. */
     private val onStoriesChanged: () -> Unit,
@@ -110,7 +110,7 @@ class ActivitiesPanel(
     /** Dates' chip was tapped: its dialog is the map's (`map/DatesDialog`). */
     var onDatesTap: () -> Unit = {}
 
-    /** The map is too far out to list anything (`docs/SPEC.md` FR-5.19). */
+    /** The map is too far out to list anything (`docs/SPEC.md` FR-5.11). */
     private var zoomedOut = false
     private val typeDot: View = sheet.findViewById(R.id.panel_type_dot)
     private val distance: View = sheet.findViewById(R.id.panel_distance)
@@ -372,7 +372,7 @@ class ActivitiesPanel(
     }
 
     /** Selects [id] and scrolls its row to the middle of the list — without expanding a
-     *  collapsed sheet (`docs/SPEC.md` §19). */
+     *  collapsed sheet (`docs/SPEC.md` §20). */
     fun focusFromMap(id: String) {
         select(id)
         if (tab == PanelTab.STORIES) storiesTab.scrollToRow(id) else scrollToRow(id)
@@ -697,7 +697,7 @@ class ActivitiesPanel(
 
     /**
      * Delete, over the toolbar's target, after a confirmation that says what goes with it
-     * (`docs/SPEC.md` FR-5.11). The dialog stays up while the deletes run — one at a time, as
+     * (`docs/SPEC.md` FR-5.6). The dialog stays up while the deletes run — one at a time, as
      * the web's are, rather than a burst racing each other's coverage re-render — and keeps a
      * failure on screen rather than closing over it.
      */

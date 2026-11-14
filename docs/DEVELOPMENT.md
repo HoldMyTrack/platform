@@ -55,7 +55,7 @@ Each takes a few minutes. Seeding boundaries and timezones first matches the dem
 
 After a change to how Fog tiles are drawn (`internal/fog`), `docker compose run --rm api rerender-coverage` queues a re-render of every account's tiles (`--user <id>` for one; `--masks` to redraw masks first, after a stroke change).
 
-Spots (`SPEC.md` FR-15) needs an import: cut a small extract with `scripts/spots-extract.sh <work-dir> <geofabrik-pbf-url>` from a [Geofabrik](https://download.geofabrik.de/) region (`docs/DEPLOY.md` §6), put `spots.geojsonseq` in `/tmp/spots`, and run `docker compose run --rm -v /tmp/spots:/data:ro api import-spots /data/spots.geojsonseq`. Bike paths (`SPEC.md` FR-4.13) likewise: `scripts/bike-paths-extract.sh <work-dir> <geofabrik-url>` (the Spots work-dir reuses its download), then `docker compose run --rm -v /tmp/bike-paths:/data:ro api import-bike-paths /data/bike-paths.geojsonseq`.
+Spots (`SPEC.md` FR-14) needs an import: cut a small extract with `scripts/spots-extract.sh <work-dir> <geofabrik-pbf-url>` from a [Geofabrik](https://download.geofabrik.de/) region (`docs/DEPLOY.md` §6), put `spots.geojsonseq` in `/tmp/spots`, and run `docker compose run --rm -v /tmp/spots:/data:ro api import-spots /data/spots.geojsonseq`. Bike paths (`SPEC.md` FR-4.9) likewise: `scripts/bike-paths-extract.sh <work-dir> <geofabrik-url>` (the Spots work-dir reuses its download), then `docker compose run --rm -v /tmp/bike-paths:/data:ro api import-bike-paths /data/bike-paths.geojsonseq`.
 
 ### Admin, stats and the Android WebView
 
@@ -73,7 +73,7 @@ The Playwright suites use a regional extract, `apps/web/public/basemap/basemap.p
 
 ### Satellite imagery in dev
 
-Off unless configured (`docs/SPEC.md` FR-4.14). Set `SATELLITE_*` in the root `.env` and recreate `web` and `api`; `compose.yaml` passes the web the same values as `VITE_SATELLITE_*`, which outrank `apps/web/.env.local`. A MapTiler key must allow `http://localhost:5173`. For a keyless local check (never a deployment), use Esri World Imagery: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`, tile size 256. `tests/smoke.mjs` step 9 tests the switch over stub tiles; CI sets a stand-in host.
+Off unless configured (`docs/SPEC.md` FR-4.10). Set `SATELLITE_*` in the root `.env` and recreate `web` and `api`; `compose.yaml` passes the web the same values as `VITE_SATELLITE_*`, which outrank `apps/web/.env.local`. A MapTiler key must allow `http://localhost:5173`. For a keyless local check (never a deployment), use Esri World Imagery: `https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}`, tile size 256. `tests/smoke.mjs` step 9 tests the switch over stub tiles; CI sets a stand-in host.
 
 ## Verification
 

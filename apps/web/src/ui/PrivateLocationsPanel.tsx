@@ -25,7 +25,7 @@ import { useUnitSystem } from './units';
 import { lang, t, tn } from '../i18n';
 
 /**
- * The Activities panel's Privacy tab (FR-8.1): the account's circles listed, each with its own
+ * The Activities panel's Privacy tab (FR-7.1): the account's circles listed, each with its own
  * Delete, and a Create that puts a new circle in the middle of the map. Picking one — its row,
  * or the circle itself on the map — opens its editor, a window floating over the map like
  * the Edit window's (portaled into the map's container, since this tab lives in the side

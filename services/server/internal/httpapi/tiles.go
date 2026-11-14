@@ -49,7 +49,7 @@ const dateLayout = "2006-01-02"
 
 // parseSince reads the tracks tile's optional `since`, an RFC 3339 moment: only activities
 // starting at or after it. The web sends the start of the oldest activity its area list holds
-// while that list is cut at its cap (docs/SPEC.md FR-5.19), so a low-zoom tile over a long
+// while that list is cut at its cap (docs/SPEC.md FR-5.11), so a low-zoom tile over a long
 // history carries about the listed tracks rather than every one; the newest 1,000 in view are
 // exactly the tracks in view starting at or after it. Nil when absent; a 400 answered otherwise.
 func parseSince(w http.ResponseWriter, raw string) (*time.Time, bool) {

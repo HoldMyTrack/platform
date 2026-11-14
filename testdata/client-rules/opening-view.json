@@ -1,7 +1,7 @@
 {
   "rule": "openingView",
   "clients": ["web", "android", "ios"],
-  "description": "The web's opening camera (docs/SPEC.md FR-4.5): zoom 12, centred on the newest five tracks' bounds if they fit the viewport there with flyToBBox's 75% fill, else the newest four, down to the newest alone, which is centred on even when it doesn't fit; null with no tracks. Boxes are [west, south, east, north], newest first; the centre is [lon, lat], longitude within -180..180, latitude at the Web Mercator middle.",
+  "description": "The web's opening camera (docs/SPEC.md FR-4.4): zoom 12, centred on the newest five tracks' bounds if they fit the viewport there with flyToBBox's 75% fill, else the newest four, down to the newest alone, which is centred on even when it doesn't fit; null with no tracks. Boxes are [west, south, east, north], newest first; the centre is [lon, lat], longitude within -180..180, latitude at the Web Mercator middle.",
   "tolerance": 1e-06,
   "cases": [
     {

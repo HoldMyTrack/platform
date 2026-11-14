@@ -25,7 +25,7 @@ sealed interface TourEvent {
 }
 
 /**
- * The tour's shared decisions (`docs/SPEC.md` FR-4.18): when it starts by itself or is offered,
+ * The tour's shared decisions (`docs/SPEC.md` FR-4.14): when it starts by itself or is offered,
  * which card a pick earns, which step comes next, what a step changes and where the camera goes.
  * The web's `tourRules.ts`; both run `testdata/client-rules/tour-*.json`.
  */

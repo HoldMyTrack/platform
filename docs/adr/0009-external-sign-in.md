@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built for Google, Facebook and Apple (`SPEC.md` FR-1.9, FR-1.10, FR-1.14; `IMPLEMENTATION.md` §4.9).
+Accepted. Built for Google, Facebook and Apple (`SPEC.md` FR-1.9, FR-1.10, FR-1.11; `IMPLEMENTATION.md` §4.9).
 
 ## Context
 

@@ -1,6 +1,6 @@
 package worker
 
-// Covers docs/SPEC.md FR-1.12 (download your data).
+// Covers docs/SPEC.md FR-1.13 (download your data).
 
 import (
 	"context"

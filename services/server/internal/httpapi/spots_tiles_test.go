@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-15.4 (Spots tiles).
+// Covers docs/SPEC.md FR-14.5 (Spots tiles).
 
 import (
 	"bytes"

@@ -93,12 +93,12 @@ public struct StoryTotals: Equatable, Sendable {
     public let movingSeconds: Int
 }
 
-/// A Story (root docs/SPEC.md FR-14): a named set of activities, whatever their dates.
+/// A Story (root docs/SPEC.md FR-13): a named set of activities, whatever their dates.
 public struct Story: Equatable, Sendable {
     public let id: String
     public let name: String
     public let description: String
-    /// Who sent it, for a copy accepted from someone else (FR-14.7).
+    /// Who sent it, for a copy accepted from someone else (FR-13.7).
     public let from: String?
     public let activityIDs: [String]
     public let stats: StoryTotals
@@ -123,7 +123,7 @@ public struct Story: Equatable, Sendable {
     }
 }
 
-/// A copy of a Story someone sent, waiting to be accepted or declined (FR-14.7).
+/// A copy of a Story someone sent, waiting to be accepted or declined (FR-13.7).
 public struct StorySend: Equatable, Sendable {
     public let id: String
     public let storyName: String

@@ -67,7 +67,7 @@ var InfoLinks = []Link{
 	{Href: "/privacy", LabelKey: "nav.privacy"},
 }
 
-// Guide is a how-to page written for one search (SPEC.md FR-10.2). httpapi serves it from
+// Guide is a how-to page written for one search (SPEC.md FR-9.2). httpapi serves it from
 // templates/pages/<Page>.html with the catalog's meta.<MetaKey>_title and _description. A test
 // checks that /guides links each one and apps/web/public/sitemap.xml lists it.
 type Guide struct {
@@ -88,7 +88,7 @@ type User struct {
 	DisplayName string
 	AvatarURL   string // "" when no avatar is set
 	IsDemo      bool
-	// IsAdmin shows the account menu's Admin item (the admin panel, FR-12).
+	// IsAdmin shows the account menu's Admin item (the admin panel, FR-11).
 	IsAdmin bool
 }
 

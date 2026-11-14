@@ -243,7 +243,7 @@ final class CaptureController: NSObject, @preconcurrency CLLocationManagerDelega
         }
     }
 
-    /// The place is gone from OpenStreetMap and retired (root docs/SPEC.md FR-15.1): says so,
+    /// The place is gone from OpenStreetMap and retired (root docs/SPEC.md FR-14.1): says so,
     /// and ends capture a moment later.
     private func gone() {
         capture = nil

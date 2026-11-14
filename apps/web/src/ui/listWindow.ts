@@ -1,6 +1,6 @@
 /**
  * The rows of a long list worth rendering: those in view and a few either side, for a list whose
- * rows share one height. The Activities tab renders up to 1,000 (docs/SPEC.md FR-5.19), every one
+ * rows share one height. The Activities tab renders up to 1,000 (docs/SPEC.md FR-5.11), every one
  * again on each reload of the area, which stalled the page for a quarter of a second at a time;
  * the rest are spacers the height of the rows they stand for.
  */

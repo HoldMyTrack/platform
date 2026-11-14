@@ -18,7 +18,7 @@ export interface OpeningViewInputs {
 }
 
 /**
- * The web's opening view (docs/SPEC.md FR-4.5) and the list's first area. The newest few tracks
+ * The web's opening view (docs/SPEC.md FR-4.4) and the list's first area. The newest few tracks
  * are asked for alone (`limit`), since no area is known yet; openingView.ts picks the camera. An
  * account with none gets its Country's view, else the world, never geolocation. An empty
  * account's first activity opens the same way once it lands, so its track is in view, unless the

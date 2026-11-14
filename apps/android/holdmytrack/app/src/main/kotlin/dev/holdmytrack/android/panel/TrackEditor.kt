@@ -24,10 +24,10 @@ import org.maplibre.android.maps.MapLibreMap
 
 /**
  * The Edit window's Track tab — the web's `apps/web/src/ui/TrackEditor.tsx` (`docs/SPEC.md`
- * FR-5.14): one activity's recorded points and the edit already saved on them, a two-knob range
+ * FR-5.7): one activity's recorded points and the edit already saved on them, a two-knob range
  * over the points as the edit leaves them, and **Chop** (keep the range), **Cut** (take out
  * what's between the knobs and join them), **Split** (split the activity in two at the one
- * knob moved, FR-5.17), **Delete point** (a toggle: a tap on the map takes
+ * knob moved, FR-5.9), **Delete point** (a toggle: a tap on the map takes
  * out the point under it), **Move point** (a toggle: a point pressed on the map follows the
  * finger and stays where it's let go), **Undo** and **Reset**. Nothing is sent from here: [pending] is the
  * whole edit for the window's Save to send, and every change is drawn over the map through

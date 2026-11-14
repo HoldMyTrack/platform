@@ -15,7 +15,7 @@ import Foundation
 // Unknown keys are skipped, so a field the server adds breaks no version of the app, and a nil
 // is left out of a request rather than sent: both are JSONDecoder's and JSONEncoder's defaults.
 
-// Errors (docs/SPEC.md §1.5)
+// Errors (docs/SPEC.md §1.4)
 
 struct ErrorJSON: Codable, Sendable, Equatable {
     let error: String?

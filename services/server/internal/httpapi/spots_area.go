@@ -14,7 +14,7 @@ const spotsAreaLimit = 2000
 var spotCategories = []string{"playground", "dog_park", "monument", "viewpoint", "waterfall", "history"}
 
 // spotsAreaQuery is the places in an area, in the chosen categories, at most $8 of them,
-// leaving out a retired place (docs/SPEC.md FR-15.1) unless the account $9 captured it. The area is two
+// leaving out a retired place (docs/SPEC.md FR-14.1) unless the account $9 captured it. The area is two
 // boxes (spotsInAreaSQL, $1–$6). Named places first — the ones worth a popup — then by a hash of the id: a stable order that's
 // spread evenly over the area, so a cut-off leaves a thinner map rather than an empty corner.
 var spotsAreaQuery = `
@@ -65,7 +65,7 @@ type spotsAreaResponse struct {
 }
 
 // handleSpotsInArea serves `GET /v1/spots?bbox=west,south,east,north&categories=a,b` — "Show in
-// this area" below the zoom the spots tiles start at (FR-15.5). The places are the same for
+// this area" below the zoom the spots tiles start at (FR-14.4). The places are the same for
 // everyone but the retired ones, which only an account that captured one gets back; it's behind
 // the session like the tiles.
 func (s *Server) handleSpotsInArea(w http.ResponseWriter, r *http.Request) {

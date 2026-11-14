@@ -1,5 +1,5 @@
 /**
- * The map image export's stats card (FR-4.10, `IMPLEMENTATION.md` §4.3.3): when it's offered, what
+ * The map image export's stats card (FR-4.7, `IMPLEMENTATION.md` §4.3.3): when it's offered, what
  * the server is asked to draw, and where the drawn card goes. The server renders the card; the
  * client only places it, in the bottom-left corner above the watermark, sharing the lower strip's
  * sizing with the credit and the watermark (`exportMap.ts`).

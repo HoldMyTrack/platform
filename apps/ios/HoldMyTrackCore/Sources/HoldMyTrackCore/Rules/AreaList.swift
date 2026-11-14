@@ -1,6 +1,6 @@
 import Foundation
 
-/// Whether the list follows the map (root docs/SPEC.md FR-5.19): from zoom 4, where tracks are
+/// Whether the list follows the map (root docs/SPEC.md FR-5.11): from zoom 4, where tracks are
 /// drawn, on every settled move; further out there's nothing on the map to list. And whether the
 /// last area's list was cut at the limit, so the map draws only the listed tracks and says so.
 public enum AreaLoad {
@@ -28,7 +28,7 @@ public enum AreaLoad {
     }
 }
 
-/// The opening camera (root docs/SPEC.md FR-4.5): zoom 12, centred on the newest five tracks if
+/// The opening camera (root docs/SPEC.md FR-4.4): zoom 12, centred on the newest five tracks if
 /// they fit the screen there with three quarters of it filled, else the newest four, and so on;
 /// when even the newest alone doesn't fit, still centred on it.
 public enum OpeningView {
@@ -74,7 +74,7 @@ public enum OpeningView {
     }
 }
 
-/// The Dates filter (root docs/SPEC.md FR-5.20): From (after) and To (before), local YYYY-MM-DD
+/// The Dates filter (root docs/SPEC.md FR-5.12): From (after) and To (before), local YYYY-MM-DD
 /// dates, both inclusive and either nil; both nil is all time.
 public struct DateFilter: Equatable, Sendable {
     public var after: String?

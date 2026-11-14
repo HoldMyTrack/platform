@@ -8,7 +8,7 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 
 /**
- * What a picked photo's EXIF says about when and where it was taken (`docs/SPEC.md` FR-16.1), from
+ * What a picked photo's EXIF says about when and where it was taken (`docs/SPEC.md` FR-15.1), from
  * the tag values as `android.media.ExifInterface` reads them — the web's `readExif`
  * (`apps/web/src/ui/photoPrep.ts`) less the byte parsing, which the platform does, for JPEG, HEIC
  * and WebP alike.

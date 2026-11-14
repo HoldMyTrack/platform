@@ -3,7 +3,7 @@ import PhotosUI
 import UIKit
 import UniformTypeIdentifiers
 
-/// Edit (root docs/SPEC.md FR-5.10, apps/android/docs/SPEC.md FR-2.7) over the toolbar's target:
+/// Edit (root docs/SPEC.md FR-5.5, apps/android/docs/SPEC.md FR-2.7) over the toolbar's target:
 /// one activity's type, name and description, or a group's type alone. Save writes only what
 /// changed, one activity at a time (EditPlan); a group of mixed types starts with Type empty, and
 /// leaving it empty keeps each its own. One activity also has a Track tab (TrackEditorView) and a
@@ -304,7 +304,7 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     }
 
     /// The track edit, once the fields and photos are in; false when it isn't written. A split
-    /// leaving a part inside a Private location asks first (root docs/SPEC.md FR-5.17).
+    /// leaving a part inside a Private location asks first (root docs/SPEC.md FR-5.9).
     private func saveTrack(allowHidden: Bool) async -> Bool {
         guard let id = group.first?.id, let session = trackEditor?.session else { return true }
         do {

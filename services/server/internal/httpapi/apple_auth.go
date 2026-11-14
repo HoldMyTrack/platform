@@ -18,7 +18,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
-// Sign in with Apple (docs/SPEC.md FR-1.14) — Apple's authorization-code flow, run server-side
+// Sign in with Apple (docs/SPEC.md FR-1.11) — Apple's authorization-code flow, run server-side
 // like Google's (google_auth.go): handleAppleStart redirects to Apple, Apple posts the browser
 // back to handleAppleCallback, which trades the code for tokens and ends in the same session
 // every other sign-in path starts. Apple vouches for the email it sends, so an account is

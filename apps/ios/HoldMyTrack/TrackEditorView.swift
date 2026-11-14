@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The Edit window's Track tab (root docs/SPEC.md FR-5.14, FR-5.17), Android's TrackEditor: the
+/// The Edit window's Track tab (root docs/SPEC.md FR-5.7, FR-5.9), Android's TrackEditor: the
 /// activity's recorded points and the edit saved on them (TrackEditSession), a two-knob range over
 /// the points as the edit leaves them, and Chop, Cut, Split, Delete point, Move point, Undo and
 /// Reset. Nothing is sent from here: the window's Save sends session.pending and session.splitAt.

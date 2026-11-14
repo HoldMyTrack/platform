@@ -1,4 +1,4 @@
-// The Edit window's Save (docs/SPEC.md FR-5.10): what it refuses before writing anything, and
+// The Edit window's Save (docs/SPEC.md FR-5.5): what it refuses before writing anything, and
 // which activities' fields it writes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

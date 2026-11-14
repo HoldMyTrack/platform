@@ -128,7 +128,7 @@ final class PrivacyViewController: UITableViewController {
     }
 }
 
-/// Download your data (root docs/SPEC.md FR-1.12): asks for a copy, checks it every 10 seconds
+/// Download your data (root docs/SPEC.md FR-1.13): asks for a copy, checks it every 10 seconds
 /// while it's being prepared and the screen shows, and hands each ready part to the share sheet,
 /// whose Save to Files keeps it.
 final class DataExportViewController: UIViewController {

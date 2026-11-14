@@ -12,8 +12,8 @@ export interface HistoryStart {
   reload: () => void;
 }
 
-/** The first and newest activities' days: the Dates pickers' bounds (FR-5.20), and the empty
- *  account's first-run panel (FR-5.18). One day of the histogram, the newest, carries both (§4.7). */
+/** The first and newest activities' days: the Dates pickers' bounds (FR-5.12), and the empty
+ *  account's first-run panel (FR-5.10). One day of the histogram, the newest, carries both (§4.7). */
 export function useHistoryStart(): HistoryStart {
   const [earliest, setEarliest] = useState<string | null>(null);
   const [latest, setLatest] = useState<string | null>(null);

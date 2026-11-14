@@ -71,7 +71,7 @@ func (s *Server) pageAccount(r *http.Request) *pageAccount {
 	return &pageAccount{info: info, profile: resp, user: &web.User{Email: resp.Email, DisplayName: resp.DisplayName, AvatarURL: resp.AvatarURL, IsDemo: resp.IsDemo, IsAdmin: info.isAdmin && !info.isDemo}}
 }
 
-// appCookieName marks a request from a native app's WebView (SPEC.md FR-10.8): the app puts it
+// appCookieName marks a request from a native app's WebView (SPEC.md FR-9.6): the app puts it
 // in the WebView's own cookie store, so every request the WebView makes carries it — a link, a
 // form POST, the redirect after one. A page asked for that way leaves out the site's header,
 // footer and Back to map, whose jobs the app's own screen does, and what the app keeps as
@@ -201,7 +201,7 @@ func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
 	case "apple":
 		form.ErrorKey = "signin.apple_failed"
 	}
-	// handleSettingsDeleteForm's landing, once the account is gone (FR-1.11).
+	// handleSettingsDeleteForm's landing, once the account is gone (FR-1.12).
 	if r.URL.Query().Has("deleted") {
 		form.NoticeKey = "signin.account_deleted"
 	}

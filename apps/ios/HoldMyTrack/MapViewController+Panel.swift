@@ -387,7 +387,7 @@ extension MapViewController {
     }
 
     /// The Edit window over the toolbar's target, each activity read in full first: the area's
-    /// rows leave out the description, the track's edit and the photos (root docs/SPEC.md FR-5.19).
+    /// rows leave out the description, the track's edit and the photos (root docs/SPEC.md FR-5.11).
     private func edit() {
         let ids = targets.map(\.id)
         guard !ids.isEmpty, !account.isDemo, !editOpen else { return }
@@ -439,7 +439,7 @@ extension MapViewController {
         present(nav, animated: true)
     }
 
-    /// Delete over the toolbar's target (root docs/SPEC.md FR-5.11), confirmed first, one at a
+    /// Delete over the toolbar's target (root docs/SPEC.md FR-5.6), confirmed first, one at a
     /// time; on a failure, what was already deleted is reported as gone.
     private func confirmDelete() {
         let group = targets

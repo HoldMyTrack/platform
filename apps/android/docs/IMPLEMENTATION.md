@@ -80,7 +80,7 @@ The shared client's interceptors apply to the map's requests too:
 
 **Every body is a class in `net/Wire.kt`, held to `services/server/api` by `WireContractTest`**, which walks each class's serial descriptor against the contract's schema: a field the server renames, drops, retypes or sends as null fails CI instead of a decode on a phone. Response classes list only what the app reads and unknown keys are skipped, so a field the server adds breaks no installed version. The test task declares the contract as an input, since it sits outside the Gradle project.
 
-**`ApiException` carries the server's `message` unreworded** (root `docs/SPEC.md` §1.5), with `error` as `errorCode` for callers to branch on.
+**`ApiException` carries the server's `message` unreworded** (root `docs/SPEC.md` §1.4), with `error` as `errorCode` for callers to branch on.
 
 ### 2.3 Sign-in and per-account state
 

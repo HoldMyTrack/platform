@@ -113,7 +113,7 @@ object TrackEditOverlay {
      * dashed; with [EditPreview.CUT] the stretch between them dashed and a straight kept line
      * joining the knobs, which is what Cut would do. With [split] — a split made, or the one
      * Split would make — the track is its two parts instead, the second in blue, with the one
-     * knob between them (`docs/SPEC.md` FR-5.17).
+     * knob between them (`docs/SPEC.md` FR-5.9).
      */
     fun set(style: Style, visible: List<TrackPoint>, lo: Int, hi: Int, preview: EditPreview, split: Int?) {
         ensure(style)

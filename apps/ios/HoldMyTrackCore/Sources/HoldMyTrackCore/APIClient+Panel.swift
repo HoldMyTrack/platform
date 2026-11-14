@@ -2,7 +2,7 @@ import Foundation
 
 /// The Activities panel's calls: the list, its types, Pending, Edit, Delete, and Stories.
 extension APIClient {
-    /// `GET /v1/activities?story=`: that whole Story's activities (root docs/SPEC.md FR-14.6),
+    /// `GET /v1/activities?story=`: that whole Story's activities (root docs/SPEC.md FR-13.6),
     /// newest first, with what the server says about their types.
     public func storyActivities(_ story: String) async throws -> (activities: [Activity], types: [String: ActivityTypeInfo]) {
         let json: ActivitiesJSON = try decode(try await send("GET", "v1/activities", query: [URLQueryItem(name: "story", value: story)]))
@@ -11,7 +11,7 @@ extension APIClient {
 
     /// `GET /v1/activities/area`: the newest activities, at most limit, whose track crosses box
     /// (`[west, south, east, north]`), all of them without one, under dates; total is how many the
-    /// box holds, more than listed when they were cut at the limit (root docs/SPEC.md FR-5.19).
+    /// box holds, more than listed when they were cut at the limit (root docs/SPEC.md FR-5.11).
     public func areaList(box: [Double]?, dates: DateFilter, limit: Int? = nil) async throws -> (activities: [Activity], total: Int?, types: [String: ActivityTypeInfo]) {
         var items = dates.query
         if let box { items.append(URLQueryItem(name: "bbox", value: box.map { String($0) }.joined(separator: ","))) }
@@ -58,7 +58,7 @@ extension APIClient {
         try await delete("v1/activities/\(id)")
     }
 
-    // MARK: Stories (root docs/SPEC.md FR-14)
+    // MARK: Stories (root docs/SPEC.md FR-13)
 
     /// The Story and the type labels its numbers carry.
     public typealias StoryRead = (story: Story, types: [String: ActivityTypeInfo])

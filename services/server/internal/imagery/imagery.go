@@ -1,5 +1,5 @@
 // Package imagery decides whether satellite imagery is offered to everyone (docs/SPEC.md
-// FR-4.14, docs/IMPLEMENTATION.md §4.26). The deployment's MapTiler plan pauses its tiles once a
+// FR-4.10, docs/IMPLEMENTATION.md §4.26). The deployment's MapTiler plan pauses its tiles once a
 // month's requests are used up, and a map in Satellite mode then hides its fills over nothing; so
 // the worker reads the month's usage from MapTiler, probes one tile, and pauses imagery before the
 // plan does. The decision is Decide's, a function of what was read; the worker job is Watch.

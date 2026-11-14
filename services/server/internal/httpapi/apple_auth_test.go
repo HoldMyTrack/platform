@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-1.14 (Sign in with Apple).
+// Covers docs/SPEC.md FR-1.11 (Sign in with Apple).
 
 import (
 	"context"

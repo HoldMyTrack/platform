@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built in the Android app: Settings, Activity graph & trends, Sync history and About are the site's pages in a WebView (`SPEC.md` FR-10.8, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6.
+Accepted. Built in the Android app: Settings, Activity graph & trends, Sync history and About are the site's pages in a WebView (`SPEC.md` FR-9.6, `apps/android/docs/SPEC.md` FR-1.5, FR-1.6, FR-4.1). The iOS app is a skeleton so far; its pages come in `apps/ios/docs/ROADMAP.md` phase 6.
 
 ## Context
 

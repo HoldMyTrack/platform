@@ -1,4 +1,4 @@
-// Covers docs/SPEC.md FR-4.2 and FR-4.4: the layers document every client applies.
+// Covers docs/SPEC.md FR-4.2 and FR-4.3: the layers document every client applies.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs, like bbox.test.mjs: Node strips the types from the imported .ts module itself.
@@ -151,7 +151,7 @@ test('the tracks draw the focused ids from vars the client binds, never a hidden
   assert.equal(hover.source, 'track-hover');
   assert.equal(hover.filter, undefined);
   assert.deepEqual(tracks.sources['track-hover'], { type: 'geojson' });
-  // Past the web list's cap only listed tracks draw (docs/SPEC.md FR-5.19); unbound, every track does.
+  // Past the web list's cap only listed tracks draw (docs/SPEC.md FR-5.11); unbound, every track does.
   assert.deepEqual([doc.vars.capped, doc.vars.listed], [false, []]);
   const focused = tracks.layers.find((l) => l.id === 'tracks-focused');
   assert.deepEqual(focused.metadata['holdmytrack:vars'], { filter: ['focused', 'hidden', 'capped', 'listed'] });

@@ -9,7 +9,7 @@ import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 
 /**
- * Roads, a pick in the Layers menu (`docs/SPEC.md` FR-4.17): shows or hides the layers the served
+ * Roads, a pick in the Layers menu (`docs/SPEC.md` FR-4.13): shows or hides the layers the served
  * style lists under `holdmytrack:roads` (apps/web/src/map/style.ts's `ROADS_METADATA`), drawn
  * while picked and Show layers ([MapLayersSwitch]) is on. A per-device choice, on until unpicked,
  * kept in SharedPreferences like [MapPaths].

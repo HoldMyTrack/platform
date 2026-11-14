@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-5.17 (splitting and merging).
+// Covers docs/SPEC.md FR-5.9 (splitting and merging).
 
 import (
 	"context"

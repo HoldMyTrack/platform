@@ -1,6 +1,6 @@
 Error:
   type: object
-  description: Every error the API sends (docs/SPEC.md §1.5). A client branches on error, never on message.
+  description: Every error the API sends (docs/SPEC.md §1.4). A client branches on error, never on message.
   required: [error, message]
   additionalProperties: false
   properties:
@@ -45,11 +45,11 @@ ActivityRow:
     track_edit:
       type: string
       enum: [pending, private, no_original, bad_times]
-      description: Why Edit track can't open for this activity (docs/SPEC.md FR-5.14); absent when it can.
+      description: Why Edit track can't open for this activity (docs/SPEC.md FR-5.7); absent when it can.
     photos:
       type: string
       enum: [private]
-      description: Why photos can't be added to it (docs/SPEC.md FR-16.1); absent when they can.
+      description: Why photos can't be added to it (docs/SPEC.md FR-15.1); absent when they can.
     split:
       type: object
       nullable: true

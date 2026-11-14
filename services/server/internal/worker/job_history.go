@@ -10,7 +10,7 @@ import (
 )
 
 // jobHistoryRetention is how long a finished job is kept: the import history the Upload menu,
-// /sync and the apps' Sync history show (docs/SPEC.md FR-3.4), and every other kind's record. A
+// /sync and the apps' Sync history show (docs/SPEC.md FR-3.2), and every other kind's record. A
 // pending job is never removed.
 const jobHistoryRetention = 90 * 24 * time.Hour
 

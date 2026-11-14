@@ -1,6 +1,6 @@
 package httpapi
 
-// Why an activity's Edit window tabs can't be used (docs/SPEC.md FR-5.14, FR-16.1), as the
+// Why an activity's Edit window tabs can't be used (docs/SPEC.md FR-5.7, FR-15.1), as the
 // activity list's track_edit and photos codes. Empty is allowed. The clients map a code to their
 // own message and add the one rule that depends on the selection: exactly one activity checked.
 const (

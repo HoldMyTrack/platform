@@ -1,5 +1,5 @@
 // Package export builds a copy of everything an account holds, for its owner to download
-// (SPEC FR-1.12, IMPLEMENTATION.md §4.29): zip parts in object storage that the worker's
+// (SPEC FR-1.13, IMPLEMENTATION.md §4.29): zip parts in object storage that the worker's
 // `export` job writes and httpapi serves.
 package export
 

@@ -15,7 +15,7 @@ import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Story
 
 /**
- * Add to story's menu under its button (`docs/SPEC.md` FR-14): New story…, then every Story,
+ * Add to story's menu under its button (`docs/SPEC.md` FR-13): New story…, then every Story,
  * newest first — read each time the menu opens — with how many activities it holds. One that
  * already holds all of the target is ticked and can't be picked. Picking a Story adds the target
  * to it in one request and closes the menu; a failure stays in the menu.

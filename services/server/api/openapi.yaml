@@ -6,7 +6,7 @@ info:
     The JSON contract between the Go server and its clients: this file indexes every path, each
     area's operations are in paths/, and the shapes they share in components/. The httpapi
     package's tests check every request and response they make against it, so a handler that
-    stops matching it fails CI. Every error is components/schemas.yaml's Error (docs/SPEC.md §1.5). A
+    stops matching it fails CI. Every error is components/schemas.yaml's Error (docs/SPEC.md §1.4). A
     browser's write from another site is refused with a 403 forbidden before any operation
     runs, and so is an Android build older than the deployment's minimum, with a 426
     app_outdated; the operations don't repeat either.

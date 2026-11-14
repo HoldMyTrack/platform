@@ -18,13 +18,13 @@ import { lang, t, tn } from '../i18n';
 /**
  * The left sidebar, with three tabs, each about what the map shows under it: **Activities** (the
  * list, below), **Stories** (StoriesTab.tsx — every Story as a folder, the open one's
- * activities inside it, FR-14.6) and **Privacy** (PrivateLocationsPanel.tsx — FR-8.1's list,
+ * activities inside it, FR-13.6) and **Privacy** (PrivateLocationsPanel.tsx — FR-7.1's list,
  * whose editor floats over the map like Edit track's). Importing is the header's Upload menu and
  * the /sync page, not a tab here. The tab is MapView's state, so `/?private-locations` can open
  * onto Privacy, `/?story=` onto Stories, and the tab survives this panel unmounting for Fog.
  *
  * The activity list — a permanent left sidebar, not paginated: every activity crossing the visible
- * map (FR-5.19), narrowed by the filter row (ActivityFilters.tsx: Type, Dates, Distance). MapView
+ * map (FR-5.11), narrowed by the filter row (ActivityFilters.tsx: Type, Dates, Distance). MapView
  * owns the fetch, the area and the filters' state; this component is presentational plus its own
  * sheet and panel-resize state.
  *
@@ -131,9 +131,9 @@ export interface ActivitiesPanelProps {
   map: MapLibreMap | null;
   /** A saved or deleted Private location — MapView's handlePrivateLocationsChanged. */
   onPrivateLocationsChanged: () => void;
-  /** The Dates filter (FR-5.20): MapView's, with its bounds. */
+  /** The Dates filter (FR-5.12): MapView's, with its bounds. */
   dates: DatesProps;
-  /** The map is zoomed out past where tracks are drawn, so there's nothing to list (FR-5.19). */
+  /** The map is zoomed out past where tracks are drawn, so there's nothing to list (FR-5.11). */
   outOfReach: boolean;
   /** The account has no activities: the Activities tab is FirstRunPanel.tsx instead of the list
    *  (firstRun.ts's showsFirstRun). */
@@ -353,7 +353,7 @@ export function ActivitiesPanel({
             onClick={() => selectTab('stories')}
           >
             <span className="activities-panel__heading-text">{t('stories.tab')}</span>
-            {/* Copies others sent, waiting to be accepted or declined (FR-14.7). */}
+            {/* Copies others sent, waiting to be accepted or declined (FR-13.7). */}
             {stories.inbox.sends.length > 0 && (
               <span
                 className="activities-panel__badge activities-panel__badge--waiting"

@@ -3,7 +3,7 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// The Private location editor's decisions (root docs/SPEC.md FR-8.1).
+/// The Private location editor's decisions (root docs/SPEC.md FR-7.1).
 struct PrivateLocationEditingTests {
     private typealias E = PrivateLocationEditing
     private let home = PrivateLocation(id: "a", name: "Home", lon: -81.5, lat: 41.2, radiusM: 300)

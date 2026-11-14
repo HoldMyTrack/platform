@@ -6,7 +6,7 @@ Accepted.
 
 ## Context
 
-A Fog of War map is, by construction, a precise record of where a person lives and when they're away from home — Strava's 2018 global heatmap incident is the canonical example of exactly this kind of data leaking in a way its own users never expected. Private locations (`SPEC.md` FR-8.1) exist to prevent that, by removing a track's start or end inside one before the route is ever a fog reveal, a track line, or an export.
+A Fog of War map is, by construction, a precise record of where a person lives and when they're away from home — Strava's 2018 global heatmap incident is the canonical example of exactly this kind of data leaking in a way its own users never expected. Private locations (`SPEC.md` FR-7.1) exist to prevent that, by removing a track's start or end inside one before the route is ever a fog reveal, a track line, or an export.
 
 The obvious place to apply that removal is wherever the map is drawn: filter the points at render time, right before they become pixels. That would also be the most flexible point, since a user could add a privacy zone and see it applied immediately everywhere, with no reprocessing.
 

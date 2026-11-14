@@ -8,7 +8,7 @@ const LABELS: Record<MapMode, 'map.mode_normal' | 'map.mode_fog'> = {
   fog: 'map.mode_fog',
 };
 
-/** Normal or Fog (docs/SPEC.md FR-4.4). While Fog is on, `fogMenu` stands in for its button: the
+/** Normal or Fog (docs/SPEC.md FR-4.3). While Fog is on, `fogMenu` stands in for its button: the
  *  level in view and the menu of levels (FogLevelMenu). */
 export function MapModeToggle({ mode, onChange, fogMenu }: { mode: MapMode; onChange: (mode: MapMode) => void; fogMenu?: ReactNode }) {
   return (

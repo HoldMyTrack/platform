@@ -19,7 +19,7 @@ const purgeParallelism = 16
 // accountPurgeBatchSize bounds one sweep, as demoPurgeBatchSize does; the next tick takes the rest.
 const accountPurgeBatchSize = 20
 
-// purgeDeletedAccounts finishes what httpapi's closeAccount started (SPEC FR-1.11): for every
+// purgeDeletedAccounts finishes what httpapi's closeAccount started (SPEC FR-1.12): for every
 // account with deleted_at set, it removes the account's stored objects, then its users row,
 // whose cascade takes every other row it owns — activities, photos, Stories, Private
 // locations, captures, imports, jobs.

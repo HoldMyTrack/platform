@@ -104,7 +104,7 @@ services:
       # resolves the basemap against — the same value the web bundle bakes in, so both
       # clients read one archive. Empty falls back to APP_BASE_URL (config.go).
       BASEMAP_ORIGIN: ${VITE_BASEMAP_ORIGIN:-}
-      # Satellite imagery (docs/SPEC.md FR-4.14, docs/DEPLOY.md) — optional; empty leaves the
+      # Satellite imagery (docs/SPEC.md FR-4.10, docs/DEPLOY.md) — optional; empty leaves the
       # satellite source out of the style document, and native clients show no switch. The
       # same values the web bundle bakes in, so both clients read one provider.
       SATELLITE_TILES: ${VITE_SATELLITE_TILES:-}
@@ -142,7 +142,7 @@ services:
       # an empty site key turns it off.
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
-      # Sign in with Apple (docs/SPEC.md FR-1.14, docs/DEPLOY.md) — keyed on APPLE_SERVICES_ID;
+      # Sign in with Apple (docs/SPEC.md FR-1.11, docs/DEPLOY.md) — keyed on APPLE_SERVICES_ID;
       # its redirect URL defaults to APP_BASE_URL + /v1/auth/apple/callback.
       APPLE_SERVICES_ID: ${APPLE_SERVICES_ID:-}
       APPLE_BUNDLE_ID: ${APPLE_BUNDLE_ID:-}

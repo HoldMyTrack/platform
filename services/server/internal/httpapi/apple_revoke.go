@@ -7,7 +7,7 @@ import (
 )
 
 // appleLink is an Apple identity's refresh token and the client it was issued to, which
-// revoking it needs (docs/SPEC.md FR-1.11, FR-1.14).
+// revoking it needs (docs/SPEC.md FR-1.12, FR-1.11).
 type appleLink struct {
 	refreshToken, clientID string
 }

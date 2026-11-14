@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-1.9 and FR-1.14: the account a provider that vouches for the email
+// Covers docs/SPEC.md FR-1.9 and FR-1.11: the account a provider that vouches for the email
 // signs in to (resolveVerifiedUser).
 
 import (

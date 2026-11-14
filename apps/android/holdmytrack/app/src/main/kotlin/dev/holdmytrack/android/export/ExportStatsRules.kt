@@ -1,7 +1,7 @@
 package dev.holdmytrack.android.export
 
 /**
- * The image's stats card (`docs/SPEC.md` FR-4.10, `docs/IMPLEMENTATION.md` §4.3.3) as values:
+ * The image's stats card (`docs/SPEC.md` FR-4.7, `docs/IMPLEMENTATION.md` §4.3.3) as values:
  * when Show stats can be ticked, what the server is asked to draw, and where the drawn card goes.
  * The web's `exportStats.ts`; the cases are `testdata/client-rules/stats-offered.json` and
  * `stats-card-placement.json`.

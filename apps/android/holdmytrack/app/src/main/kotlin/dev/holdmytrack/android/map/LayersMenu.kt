@@ -16,7 +16,7 @@ import dev.holdmytrack.android.R
 
 /**
  * The Layers button on the map's rail and the menu it opens — the web's `OverlaysMenu`
- * (`docs/SPEC.md` FR-4.13): Paths — Bike paths, Shared paths and Mountain bike trails — and
+ * (`docs/SPEC.md` FR-4.9): Paths — Bike paths, Shared paths and Mountain bike trails — and
  * Points of interest, one entry per [MapSpots.Category], each picked over any mode.
  *
  * The button is filled like the active map mode while picks show, with a badge on its corner

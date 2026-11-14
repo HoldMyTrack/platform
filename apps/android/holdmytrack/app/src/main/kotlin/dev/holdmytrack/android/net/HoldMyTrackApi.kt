@@ -46,7 +46,7 @@ import okio.source
 object HoldMyTrackApi {
 
     /** [ApiException.errorCode] of a split that would leave a part entirely inside a Private
-     *  location (`docs/SPEC.md` FR-5.17) — asked about, then sent with allowHidden. */
+     *  location (`docs/SPEC.md` FR-5.9) — asked about, then sent with allowHidden. */
     const val SPLIT_HIDES_PART = "split_hides_part"
 
     private const val API_V1 = "/v1"
@@ -259,7 +259,7 @@ object HoldMyTrackApi {
     /**
      * `POST /v1/activities/overlaps` (root `docs/IMPLEMENTATION.md` §4.6): for each of [spans],
      * keyed by the caller, the live activity it overlaps, if any — the Already on your map half
-     * of the Sync tab's similar tracks (`docs/SPEC.md` FR-3.7). Keys with no overlap aren't in
+     * of the Sync tab's similar tracks (`docs/SPEC.md` FR-3.5). Keys with no overlap aren't in
      * the map.
      */
     suspend fun activityOverlaps(spans: List<OverlapSpan>): Map<String, ActivityOverlap> =
@@ -480,7 +480,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `DELETE /v1/account` (root `docs/SPEC.md` FR-1.11) — [email] typed as confirmation. The
+     * `DELETE /v1/account` (root `docs/SPEC.md` FR-1.12) — [email] typed as confirmation. The
      * server closes the account and ends every session of it; a mismatch is its own wording.
      * The caller clears what this device holds for the account ([Session.clear] and the rest).
      */
@@ -575,7 +575,7 @@ object HoldMyTrackApi {
     }
 
 
-    /** `GET /v1/activities?story=`: that whole Story's activities (`docs/SPEC.md` FR-14.6), newest
+    /** `GET /v1/activities?story=`: that whole Story's activities (`docs/SPEC.md` FR-13.6), newest
      *  first, in one response. */
     fun storyActivities(story: String, onResult: (Result<List<Activity>>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities").toHttpUrl().newBuilder()
@@ -591,7 +591,7 @@ object HoldMyTrackApi {
     /**
      * `GET /v1/activities/area`: the newest activities, at most [limit], whose track crosses [box]
      * (`[west, south, east, north]`), all of them without one, under [dates] (`docs/SPEC.md`
-     * FR-5.19). Its rows are slim: the Edit window reads [activity] for the rest.
+     * FR-5.11). Its rows are slim: the Edit window reads [activity] for the rest.
      */
     fun areaActivities(box: List<Double>?, dates: DateFilter, limit: Int? = null, onResult: (Result<AreaPage>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities/area").toHttpUrl().newBuilder()
@@ -634,7 +634,7 @@ object HoldMyTrackApi {
 
     /**
      * `PATCH /v1/activities/{id}` — a full replace of the three fields a person can set
-     * (`docs/SPEC.md` FR-5.10): an empty [name] or [description] clears it. Answers
+     * (`docs/SPEC.md` FR-5.5): an empty [name] or [description] clears it. Answers
      * with the row as it now is. A refusal (too long, a demo account) is the server's own
      * wording, in the app's language.
      */
@@ -810,7 +810,7 @@ object HoldMyTrackApi {
     /**
      * `POST /v1/activities/{id}/track-edit` — the whole new edit, or null (or an empty one) to
      * go back to the track as recorded, and [splitAt], a point's time, to also split the activity
-     * there (`docs/SPEC.md` FR-5.17). The server answers `202` and reprocesses it in the
+     * there (`docs/SPEC.md` FR-5.9). The server answers `202` and reprocesses it in the
      * background, the activity Pending meanwhile; `409` when a reprocess is already running; a
      * `422` [SPLIT_HIDES_PART] for a split that would leave a part inside a Private location,
      * which goes ahead when sent again with [allowHidden].
@@ -840,7 +840,7 @@ object HoldMyTrackApi {
     )
 
     /**
-     * `GET /v1/photos?activity=` or `?story=` (`docs/SPEC.md` FR-16.3) — one activity's photos,
+     * `GET /v1/photos?activity=` or `?story=` (`docs/SPEC.md` FR-15.3) — one activity's photos,
      * or every photo of a Story's activities, in route order. Exactly one of the two is given.
      */
     fun photos(activity: String?, story: String?, onResult: (Result<List<Photo>>) -> Unit) {
@@ -852,7 +852,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `POST /v1/photos/place` (FR-16.1) — where an upload of a photo with this EXIF would be
+     * `POST /v1/photos/place` (FR-15.1) — where an upload of a photo with this EXIF would be
      * placed on [activityId]'s track, storing nothing: its `route_at`. A
      * [PhotoNeedsPlaceException] when the server can't tell, for the user to choose.
      */
@@ -875,7 +875,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `POST /v1/photos` (FR-16.1) — a photo already resized ([file] and its [thumb]), what its
+     * `POST /v1/photos` (FR-15.1) — a photo already resized ([file] and its [thumb]), what its
      * EXIF said, where on the track it goes ([routeAt]: the placement check's answer or the
      * user's, which wins at upload) and its [caption]. Answers with the photo as stored.
      */
@@ -910,7 +910,7 @@ object HoldMyTrackApi {
         }
     }
 
-    /** `PATCH /v1/photos/{id}` (FR-16.4) — a field given changes: [caption] (empty clears it),
+    /** `PATCH /v1/photos/{id}` (FR-15.4) — a field given changes: [caption] (empty clears it),
      *  [routeAt] the photo's new moment on its track, which the server clamps to the track. */
     fun updatePhoto(id: String, caption: String?, routeAt: Instant?, onResult: (Result<Photo>) -> Unit) {
         val request = Request.Builder()
@@ -920,7 +920,7 @@ object HoldMyTrackApi {
         call(request, { text -> decode<PhotoJson>(text).toPhoto() }, onResult)
     }
 
-    /** `DELETE /v1/photos/{id}` (FR-16.5) — the photo and both its images. */
+    /** `DELETE /v1/photos/{id}` (FR-15.5) — the photo and both its images. */
     fun deletePhoto(id: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/photos/" + id).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
@@ -989,20 +989,20 @@ object HoldMyTrackApi {
 
     private fun PrivateLocationJson.toPrivateLocation() = PrivateLocation(id, name, lon, lat, radiusM)
 
-    /** `GET /v1/stories` — every Story of the account, newest first (`docs/SPEC.md` FR-14). */
+    /** `GET /v1/stories` — every Story of the account, newest first (`docs/SPEC.md` FR-13). */
     fun stories(onResult: (Result<List<Story>>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/stories").build()
         call(request, { text -> decode<StoriesJson>(text).stories.map { it.toStory() } }, onResult)
     }
 
     /** `GET /v1/stories/{id}` — one Story. A `404` ([ApiException]) is one that doesn't exist
-     *  or isn't this account's, which the server doesn't tell apart (FR-14.5). */
+     *  or isn't this account's, which the server doesn't tell apart (FR-13.5). */
     fun story(id: String, onResult: (Result<Story>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/stories/" + id).build()
         call(request, { text -> decode<StoryJson>(text).toStory() }, onResult)
     }
 
-    /** `POST /v1/stories` — a new Story with [activityIds] in it, in one step (FR-14.2). A
+    /** `POST /v1/stories` — a new Story with [activityIds] in it, in one step (FR-13.2). A
      *  refusal (a blank or long name, a demo account) is the server's own wording. */
     fun createStory(name: String, description: String, activityIds: Collection<String>, onResult: (Result<Story>) -> Unit) {
         val request = Request.Builder()
@@ -1027,7 +1027,7 @@ object HoldMyTrackApi {
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
-    /** `POST` ([add]) or `DELETE /v1/stories/{id}/activities` with [activityIds] (FR-14.3): puts
+    /** `POST` ([add]) or `DELETE /v1/stories/{id}/activities` with [activityIds] (FR-13.3): puts
      *  them in the Story, or takes them out. Answers with the Story as it now is. */
     fun changeStoryActivities(id: String, activityIds: Collection<String>, add: Boolean, onResult: (Result<Story>) -> Unit) {
         val body = jsonBody(StoryActivitiesJson(activityIds.toList()))
@@ -1038,7 +1038,7 @@ object HoldMyTrackApi {
         call(request, { text -> decode<StoryJson>(text).toStory() }, onResult)
     }
 
-    /** `POST /v1/stories/{id}/send` — a copy of the Story to [email] (FR-14.7). Succeeds
+    /** `POST /v1/stories/{id}/send` — a copy of the Story to [email] (FR-13.7). Succeeds
      *  whether or not the address has an account: the server never says. */
     fun sendStory(id: String, email: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder()

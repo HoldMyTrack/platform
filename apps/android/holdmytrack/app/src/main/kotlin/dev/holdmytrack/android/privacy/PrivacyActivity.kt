@@ -16,7 +16,7 @@ import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.panel.PrivateLocationEditor
 
 /**
- * Privacy, from the You tab: the account's Private locations (`docs/SPEC.md` FR-8.1), each a
+ * Privacy, from the You tab: the account's Private locations (`docs/SPEC.md` FR-7.1), each a
  * row with its circle drawn small ([CirclePreviewView]) that opens the editor on the map
  * ([PrivateLocationEditor], through `MainActivity.editPrivateLocation`), and Add a location on
  * the map, and how many activities they hide entirely (the list's Private rows); then what

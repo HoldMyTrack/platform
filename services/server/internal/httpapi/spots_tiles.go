@@ -19,7 +19,7 @@ const spotsMinZoom = 13
 //     filters both layers by it) and `circle` for the circle a place mapped as a single node,
 //     or any waterfall, stands in with, rather than an outline OSM has.
 //
-// Both carry `retired` (docs/SPEC.md FR-15.1): a place gone from OSM is still in the tiles, which are the
+// Both carry `retired` (docs/SPEC.md FR-14.1): a place gone from OSM is still in the tiles, which are the
 // same for every account, and each map hides it unless the account captured it.
 //
 // The two layers are separate ST_AsMVT calls concatenated, which is a valid tile: a tile is a

@@ -45,7 +45,7 @@ CMD ["npm", "run", "verify:map"]
 # DEPLOY.md for both.
 FROM base AS build
 ARG VITE_BASEMAP_ORIGIN=""
-# Satellite imagery (docs/SPEC.md FR-4.14): an XYZ template with the provider's key, its tile
+# Satellite imagery (docs/SPEC.md FR-4.10): an XYZ template with the provider's key, its tile
 # size, deepest zoom and credit. An empty template hides the Satellite switch.
 ARG VITE_SATELLITE_TILES=""
 ARG VITE_SATELLITE_TILE_SIZE=""

@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-12.4 (unique web visitors).
+// Covers docs/SPEC.md FR-11.4 (unique web visitors).
 
 import (
 	"bytes"

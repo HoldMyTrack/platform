@@ -70,7 +70,7 @@ export function flyToBBox(map: MapLibreMap, bbox: BBox): void {
 }
 
 /** For a bare point+zoom target (a country or world view) rather than an activity's bbox —
- *  MapView's zero-history fallback, docs/SPEC.md FR-4.5. */
+ *  MapView's zero-history fallback, docs/SPEC.md FR-4.4. */
 export function flyToView(map: MapLibreMap, view: ViewState): void {
   map.flyTo({ center: [view.longitude, view.latitude], zoom: view.zoom, duration: FLY_DURATION_MS }, { [APP_FLIGHT]: true });
 }

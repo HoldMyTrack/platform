@@ -1,4 +1,4 @@
-// Covers docs/SPEC.md FR-3.11 (an activity's own timezone); the rule runs from
+// Covers docs/SPEC.md FR-3.8 (an activity's own timezone); the rule runs from
 // testdata/client-rules/activity-zone.json in clientRules.test.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';

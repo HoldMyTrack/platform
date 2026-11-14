@@ -1,5 +1,5 @@
 /**
- * The tour's decisions (docs/SPEC.md FR-4.18), as values in and values out: which steps run, when
+ * The tour's decisions (docs/SPEC.md FR-4.14), as values in and values out: which steps run, when
  * the tour starts by itself or is offered, which first-time card a user's own action earns, and
  * where the popover sits. useTour.ts holds the state around them, Tour.tsx draws it.
  */

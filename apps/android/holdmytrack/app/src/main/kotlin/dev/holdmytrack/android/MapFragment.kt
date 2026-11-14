@@ -69,7 +69,7 @@ import org.maplibre.android.maps.Style
  * toggle floating top-start, as on the web (`apps/web/src/map/MapView.tsx`).
  *
  * In Normal mode the Activities sheet (`panel/ActivitiesPanel`) lists the visible area's
- * activities under Dates (`docs/SPEC.md` FR-5.19, FR-5.20, [AreaController]). Tapping a track
+ * activities under Dates (`docs/SPEC.md` FR-5.11, FR-5.12, [AreaController]). Tapping a track
  * selects it; tapping empty map clears the selection. On the Stories tab one Story is open, and
  * the tracks and the list are its activities only ([AreaController.enterStory]).
  *
@@ -697,7 +697,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
      * to hit) is selected and flown to; empty map clears the selection. The sheet stays as it was.
      */
     private fun onMapTap(instance: MapLibreMap, point: LatLng): Boolean {
-        // Framing only pans and zooms (`docs/SPEC.md` FR-4.10).
+        // Framing only pans and zooms (`docs/SPEC.md` FR-4.7).
         if (export.isOpen) return true
         // A spot's badge first, in every mode, unless an editor has the map; a tap elsewhere
         // closes its popup.

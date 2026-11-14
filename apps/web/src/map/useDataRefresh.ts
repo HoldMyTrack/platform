@@ -32,7 +32,7 @@ export interface DataRefresh {
    */
   pendingStarted: () => void;
   /** A row left Pending with new points: tracks, days, the open Story, the bands and coverage
-   *  refresh; the camera stays (FR-5.15). */
+   *  refresh; the camera stays (FR-5.8). */
   pendingFinished: () => void;
 }
 

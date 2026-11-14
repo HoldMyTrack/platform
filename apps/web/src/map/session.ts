@@ -23,9 +23,9 @@ export interface Selection {
 }
 
 export interface MapSession {
-  /** The Dates filter (FR-5.20); all time until set. */
+  /** The Dates filter (FR-5.12); all time until set. */
   dates: DateFilter;
-  /** The map view the list was last asked about (FR-5.19); null until the opening view settles. */
+  /** The map view the list was last asked about (FR-5.11); null until the opening view settles. */
   area: BBox | null;
   /** The open Story: the list and tracks are its activities, [dates] and [area] kept for when it closes. */
   storyId: string | null;

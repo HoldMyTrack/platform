@@ -1,4 +1,4 @@
-// Package statscard draws the stats card a map image export carries (docs/SPEC.md FR-4.10,
+// Package statscard draws the stats card a map image export carries (docs/SPEC.md FR-4.7,
 // docs/IMPLEMENTATION.md §4.3.3): the checked activities' numbers, formatted here so every
 // client shows the same text, on a translucent panel the client lays over its own map image.
 //

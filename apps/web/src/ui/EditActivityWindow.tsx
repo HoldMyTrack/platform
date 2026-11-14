@@ -20,7 +20,7 @@ export type EditTab = 'activity' | 'track' | 'photos';
 type TrackPending = { edit: TrackEdit | null; splitAt: number | null };
 
 /**
- * The Edit window (docs/SPEC.md FR-5.10, IMPLEMENTATION.md §4.7.7) — reached from the header toolbar's Edit button
+ * The Edit window (docs/SPEC.md FR-5.5, IMPLEMENTATION.md §4.7.7) — reached from the header toolbar's Edit button
  * (ActivitiesPanel.tsx) over whatever's currently checked, floating over the map. Two tabs
  * behind one shared Save and Cancel:
  *
@@ -129,7 +129,7 @@ export function EditActivityWindow({
   const [description, setDescription] = useState(single?.description ?? '');
   const [trackPending, setTrackPending] = useState<TrackPending | null>(null);
   const [saving, setSaving] = useState(false);
-  // A split that would leave a part inside a Private location (FR-5.17): the server's
+  // A split that would leave a part inside a Private location (FR-5.9): the server's
   // explanation, asked about before saving again with allowHidden.
   const [hiddenSplitWarning, setHiddenSplitWarning] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);

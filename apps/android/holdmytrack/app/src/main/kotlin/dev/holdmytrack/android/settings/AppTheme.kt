@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
 
 /**
- * The app's light/dark theme (Settings' Theme toggle, `docs/SPEC.md` FR-4.12): the phone's own
+ * The app's light/dark theme (Settings' Theme toggle, `docs/SPEC.md` FR-4.8): the phone's own
  * setting by default, or always light or always dark. A per-device choice, like the web's
  * account-menu toggle — kept here in SharedPreferences, not on the account.
  *

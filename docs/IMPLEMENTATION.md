@@ -68,7 +68,7 @@ One row per account and tile, z0–z14, naming Fog's coverage PNG. Every dirty m
 
 ### 3.7 `privacy_zones`
 
-Private locations (FR-8.1). `salt` seeds each clipped end's stretch (§4.1); only ingest reads it, and no response or export carries it. The radius range is enforced by the API, not the schema.
+Private locations (FR-7.1). `salt` seeds each clipped end's stretch (§4.1); only ingest reads it, and no response or export carries it. The radius range is enforced by the API, not the schema.
 
 ### 3.8 `jobs`
 
@@ -284,7 +284,7 @@ Below exact coverage, Fog reveals whole countries, then regions, counties and ci
 
 **Served as live MVT, not a precomputed pyramid**: the cost scales with a fixed boundary set, not with history, so there's no dirty machinery to keep. Fog's query returns every outline with a piece at least 4 pixels across at the tile's zoom, its pieces under that dropped (an islet shares no border it could open), simplified to a pixel as one coverage, with whether the account cleared it, and the tile's sea, its frame minus those outlines, in the veil's colour so nothing shifts crossing a level; what drops out is sea. With every outline the world's z0 City tile carried 983 KB for the US's towns alone, and at one pixel z4 took 3 s to build. A tile's clipped outlines and sea are stored on its first request (§3.26), the built mark inserted first with `ON CONFLICT DO NOTHING` so a concurrent build waits; tiles to zoom 10 are kept, and the seed empties them last in its transaction. Cutting visited outlines out per request took 0.5 s at z0.
 
-#### 4.2.5 Pending activities drop out of every map read (FR-5.15)
+#### 4.2.5 Pending activities drop out of every map read (FR-5.8)
 
 An activity is Pending (`edit_pending`) while an Edit track or Private location reprocess is queued or running, its geometry and masks stale or half-rewritten. **Every map read filters `AND NOT edit_pending`**: tracks tiles, Fog composites at every level and Country/Region. A new map read needs it too.
 
@@ -307,7 +307,7 @@ On the wire the version is prefixed with the start of the account id, so two acc
 
 **Tracks are a live query** (`handleTracksTile`), `ST_AsMVT` over the account's non-Pending activities, because they follow filters that can't be precomputed. A track stored past ±180 is drawn through `geo.WrappedSQL`, a part each side, since PROJ would rejoin the parts round the world; a tile on the far side matches it through its envelope shifted 360°.
 
-**The filter is the list's** (`parseActivityFilter`, §4.7) without its area: the apps always append `from`/`to` to the document's tile path, the web only while Dates is set (FR-5.20), since an absent bound means unrestricted. Type, Distance, hidden and focused are id sets the `tracks` group's filters bind (ADR-0048): a change refetches no tile, but MapLibre re-parses the source's loaded tiles in its workers, about 180 ms over 1,000 heavy tracks in Chrome and longer in Firefox. **The hover, which changes per row as a pointer moves down the list, is not a filter**: the web copies the hovered track's lines out of the loaded tiles into the `track-hover` GeoJSON source (`setHoveredTrack`), which Android, without hover, leaves empty. **On the web the map and the list are one set** (FR-5.19): the id sets come from the list, and past its cap the `capped` and `listed` vars limit every track layer to the listed ids, and the tiles carry `since`, the start of the oldest listed activity: the newest 1,000 in view are exactly the tracks in view starting at or after it, so a low-zoom tile holds about the listed tracks rather than the whole history (`PERFORMANCE.md` "Heavy accounts": 8.6 MB to 440 KB for 20,000 activities). A pan that changes the oldest listed refetches the tiles. `capped` defaults to false in the document, so a client that never binds it draws every track. Under the cap the allow-list stays unbound, or every pan would blank the new edge until the list reloads. **Every refresh gets a new URL** (the per-page `v`): MapLibre caches overzoomed slices by URL, and an unchanged one kept a track's pre-edit shape past z14.
+**The filter is the list's** (`parseActivityFilter`, §4.7) without its area: the apps always append `from`/`to` to the document's tile path, the web only while Dates is set (FR-5.12), since an absent bound means unrestricted. Type, Distance, hidden and focused are id sets the `tracks` group's filters bind (ADR-0048): a change refetches no tile, but MapLibre re-parses the source's loaded tiles in its workers, about 180 ms over 1,000 heavy tracks in Chrome and longer in Firefox. **The hover, which changes per row as a pointer moves down the list, is not a filter**: the web copies the hovered track's lines out of the loaded tiles into the `track-hover` GeoJSON source (`setHoveredTrack`), which Android, without hover, leaves empty. **On the web the map and the list are one set** (FR-5.11): the id sets come from the list, and past its cap the `capped` and `listed` vars limit every track layer to the listed ids, and the tiles carry `since`, the start of the oldest listed activity: the newest 1,000 in view are exactly the tracks in view starting at or after it, so a low-zoom tile holds about the listed tracks rather than the whole history (`PERFORMANCE.md` "Heavy accounts": 8.6 MB to 440 KB for 20,000 activities). A pan that changes the oldest listed refetches the tiles. `capped` defaults to false in the document, so a client that never binds it draws every track. Under the cap the allow-list stays unbound, or every pan would blank the new edge until the list reloads. **Every refresh gets a new URL** (the per-page `v`): MapLibre caches overzoomed slices by URL, and an unchanged one kept a track's pre-edit shape past z14.
 
 A track has four looks (normal, Checked, Focused, hovered), each with and without imagery, so eight in all; a change to one is a decision about the other seven. The look is the layers document's, in both of its views, and a property one view sets the other sets too, or it stays on the map after a switch.
 
@@ -331,7 +331,7 @@ Pace is route context on one activity (§4.3.1) and trends a plain rollup per pe
 
 ### 4.6 Overlapping activities
 
-One ride synced from a watch and uploaded as its `.fit` has two `external_id`s, and nothing on ingest matches them (ADR-0039); the hint is FR-3.7 (`ingest/overlap.go`). Time is compared because it is what every copy agrees on, and measuring against the longer duration keeps a short walk inside a long hike apart. Each activity is compared by `recorded_started_at`/`recorded_ended_at`, its parsed first and last point narrowed to its split range but before clipping and edits, since Private locations shorten the shown span. The lookup stays a range scan on `idx_activities_user_recorded_start`: an 80% overlap bounds the start difference to a quarter of the span. **Android's Sync tab applies the same rule** (`sync/Similar.kt`, tested against the same cases); change both. Splits are unknown to it (`KNOWN_ISSUES.md`).
+One ride synced from a watch and uploaded as its `.fit` has two `external_id`s, and nothing on ingest matches them (ADR-0039); the hint is FR-3.5 (`ingest/overlap.go`). Time is compared because it is what every copy agrees on, and measuring against the longer duration keeps a short walk inside a long hike apart. Each activity is compared by `recorded_started_at`/`recorded_ended_at`, its parsed first and last point narrowed to its split range but before clipping and edits, since Private locations shorten the shown span. The lookup stays a range scan on `idx_activities_user_recorded_start`: an 80% overlap bounds the start difference to a quarter of the span. **Android's Sync tab applies the same rule** (`sync/Similar.kt`, tested against the same cases); change both. Splits are unknown to it (`KNOWN_ISSUES.md`).
 
 ### 4.7 Activity listing and filtering
 
@@ -339,7 +339,7 @@ One ride synced from a watch and uploaded as its `.fit` has two `external_id`s, 
 
 **Device rules are one set on every client**: the web, Android and iOS run the same cases for each rule `testdata/client-rules/README.md` lists, so a rule can't change on one platform alone.
 
-#### 4.7.5 Delete an activity — a full purge (FR-5.11)
+#### 4.7.5 Delete an activity — a full purge (FR-5.6)
 
 The cascade takes masks with their bytes, region rows, Story memberships and photo rows. Object storage has no foreign keys, so `handleDeleteActivity`:
 - removes the raw payload only when no other row (a split piece, a Story copy) names it;
@@ -370,7 +370,7 @@ flowchart TD
 
 **The editor's points** (`GET /v1/activities/{id}/track-points`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The web's editing session folds its ops with the server's predicate (`editTrackOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, not yet looked at, passes.
 
-#### 4.7.8 Split an activity (FR-5.17)
+#### 4.7.8 Split an activity (FR-5.9)
 
 **A piece is a row over the same raw payload, narrowed to a stretch** (`split_group`, `split_from`, `split_to`, inclusive, so pieces share the point they meet at). Everything that turns a raw payload into points narrows through `LoadPiecePoints`, after the Private location clip and before the edit (the reprocess, `DisplayedPoints`, the editor), and clips the narrowed ends again, since a split made at home leaves an end inside a zone. The range sits outside `track_edit`, so Reset returns a piece to its own stretch.
 
@@ -378,9 +378,9 @@ flowchart TD
 
 ### 4.8 Activity graph — a private, per-user contribution grid
 
-`/profile` (FR-7) is server-rendered from three queries however many years it shows (`profile_page.go`): the day histogram over the whole history, the earliest activity and Trends. Every year's cards are derived in Go from local-day buckets (§4.30), so they match the SQL stats. `internal/web/format.go` ports the web's `format.ts` and changes with it; its `Imperial` decides every client's units, sent as the Account's `unit_system`. Shading is a count or distance quantiles of that year's active days, never a composite effort score, which would need a training-load formula. `GET /v1/activities/graph-stats` remains for API clients; its streak is a gaps-and-islands query.
+`/profile` (FR-6) is server-rendered from three queries however many years it shows (`profile_page.go`): the day histogram over the whole history, the earliest activity and Trends. Every year's cards are derived in Go from local-day buckets (§4.30), so they match the SQL stats. `internal/web/format.go` ports the web's `format.ts` and changes with it; its `Imperial` decides every client's units, sent as the Account's `unit_system`. Shading is a count or distance quantiles of that year's active days, never a composite effort score, which would need a training-load formula. `GET /v1/activities/graph-stats` remains for API clients; its streak is a gaps-and-islands query.
 
-The explored places (FR-7.3, `profile_exploration.go`) open a level at a time by link, as the page's toggles do, so a request queries only the countries and the opened chain, never an account's thousands of cities at once. Explored comes from `visitedCTEs`, the sets Fog's tiles and tooltip count from, and the totals from the seed's `*_total` columns. The count words are the web's Fog catalog entries, copied into the server's as `fog.count.*`: the profile is server-rendered and can't read the web's.
+The explored places (FR-6.3, `profile_exploration.go`) open a level at a time by link, as the page's toggles do, so a request queries only the countries and the opened chain, never an account's thousands of cities at once. Explored comes from `visitedCTEs`, the sets Fog's tiles and tooltip count from, and the totals from the seed's `*_total` columns. The count words are the web's Fog catalog entries, copied into the server's as `fog.count.*`: the profile is server-rendered and can't read the web's.
 
 ### 4.9 Accounts and sign-in
 
@@ -441,7 +441,7 @@ sequenceDiagram
 
 **Turnstile** (`httpapi/turnstile.go`) guards `/signup` alone, so only that page's CSP adds `https://challenges.cloudflare.com` to `script-src`; the widget's iframe needs no `frame-src`, since the policy sets none. The form's token is checked with Cloudflare's siteverify before `createAccountLimited`, and an unreachable siteverify refuses the signup, so the check can't be skipped by making it fail. `POST /v1/auth/signup` has no check, because the native apps' sign-up forms have no widget (`KNOWN_ISSUES.md`).
 
-**The React shell** (`templates/app/app.html`) is `/` for a signed-in account. The handler redirects first (no session, unverified, no Country), so the first-run gate is the server's. Every sign-in, demo start and sign-out redirects to a bare `/`, so no session inherits another's camera. The Go image never sees Vite's manifest, so `vite.config.ts` gives the entry and its stylesheet fixed names, which the shell links with the build version and Caddy serves `no-cache`. The header's Take a tour (FR-4.18) is a link to `/?tour` on every page; on the map, the app takes over a plain click on `[data-tour-start]` and starts the tour without a reload, so the header's own script holds nothing of the map's.
+**The React shell** (`templates/app/app.html`) is `/` for a signed-in account. The handler redirects first (no session, unverified, no Country), so the first-run gate is the server's. Every sign-in, demo start and sign-out redirects to a bare `/`, so no session inherits another's camera. The Go image never sees Vite's manifest, so `vite.config.ts` gives the entry and its stylesheet fixed names, which the shell links with the build version and Caddy serves `no-cache`. The header's Take a tour (FR-4.14) is a link to `/?tour` on every page; on the map, the app takes over a plain click on `[data-tour-start]` and starts the tour without a reload, so the header's own script holds nothing of the map's.
 
 **The Upload menu and the map talk through window events.** `static/upload.js` owns uploading on every page, and the React app only sends and listens:
 
@@ -456,17 +456,17 @@ sequenceDiagram
     M->>M: reload the list and the days
 ```
 
-The first-run panel (FR-5.18) reads `data-in-flight` on mount before it listens, since the menu may have rendered before React mounted.
+The first-run panel (FR-5.10) reads `data-in-flight` on mount before it listens, since the menu may have rendered before React mounted.
 
-**For the apps** a page is the same page marked by the `hmt_app` cookie (FR-10.8, ADR-0042), set in the WebView's cookie store, because a header reaches only the first request and a query parameter wouldn't survive links and redirects. Its value, `android` or `ios`, is `PageData.App`, for wording that names a platform. Traps: the public cache key includes the value, and a WebView form POST carries the API's origin, so the app's `API_BASE_URL` must be `APP_BASE_URL`'s origin.
+**For the apps** a page is the same page marked by the `hmt_app` cookie (FR-9.6, ADR-0042), set in the WebView's cookie store, because a header reaches only the first request and a query parameter wouldn't survive links and redirects. Its value, `android` or `ios`, is `PageData.App`, for wording that names a platform. Traps: the public cache key includes the value, and a WebView form POST carries the API's origin, so the app's `API_BASE_URL` must be `APP_BASE_URL`'s origin.
 
 **Pages that quote the system change with it**: Help's numbers; the privacy policy's processors, cookies, session lifetimes and backup window, in both language files with their date.
 
-### 4.20 Admin panel (FR-12)
+### 4.20 Admin panel (FR-11)
 
 In the app, reusing sessions, renderer and formatting, and showing the product's view of an account instead of raw tables. `is_admin` is written only by `set-admin`, so the web is never an escalation path; an email allowlist (admin is whoever registers the address first) and a promotion page (a stolen admin session escalates) were rejected. Access is read per page and fails as a 404, so a revoke applies on the next load. `/admin` charts `daily_stats` (§4.32) as server-drawn SVG, since Grafana keeps about 14 days.
 
-### 4.21 Localization (FR-13)
+### 4.21 Localization (FR-12)
 
 No i18n library: each surface has flat `key → message` catalogs with `{name}` placeholders and plural forms as sibling keys, and a test per surface checks every catalog against English for keys, plural forms and placeholders. A language needing gender agreement or nested selects is when to adopt one. **The language is decided once, by the server** (`i18n.Resolve`); the map app reads `<html lang>`, and the style, emails and errors take the request's, so no two parts of a page disagree. The menu's choice is a cookie because the server needs it with the request (exempt from consent under ePrivacy Art. 5(3)), and signup doesn't copy it into the account. Automatic is never shown checked, since a cached signed-out page can't tell a choice from the browser's language. One URL serves every language, so crawlers index English.
 - About and Help have whole-page Russian files: **a change to an English section needs the same change in its `.ru.html`**.
@@ -475,7 +475,7 @@ No i18n library: each surface has flat `key → message` catalogs with `{name}` 
 - The served style is one document per language and flavor, picked by `?lang=` rather than `Accept-Language`, so MapLibre's URL-keyed cache never mixes languages; a test holds the two language lists together.
 - Android sends its locale as `Accept-Language`.
 
-### 4.23 Stories (FR-14)
+### 4.23 Stories (FR-13)
 
 ```mermaid
 sequenceDiagram
@@ -503,7 +503,7 @@ sequenceDiagram
 
 **The web** keeps the open Story in its map session and `?story=`; with one open, the activity query is the Story alone and the selected range is left as it was.
 
-### 4.24 Trails and bike paths (FR-4.13)
+### 4.24 Trails and bike paths (FR-4.9)
 
 ```mermaid
 flowchart LR
@@ -525,13 +525,13 @@ flowchart LR
 
 **Every path paints over Fog**: the group's `lifts` move the basemap path layers above the coverage group, and the bike layers and tracks go on top, in every mode and the export; under the veil, unridden paths showed at a fifth of their colour. Clients move only a layer still below; the web diffs every property first, since each change fires another `styledata` (`DEVELOPMENT.md`).
 
-### 4.25 Spots (FR-15)
+### 4.25 Spots (FR-14)
 
 **A category is one clean OSM tag set** (`spots.Category`): all of `historic=*` would bring millions of boundary stones, wayside crosses and plaques, and OSM has no tag for architecture worth seeing.
 
 **The import** (`internal/spots`) retires the places a planet run didn't see, refusing to retire too many. Waterfalls are held until the file ends, since a viewpoint that leaves one out can come after it; one that gains a viewpoint is retired by the next planet run like a place gone from OSM. **No row is ever deleted, so captures' cascade never fires on a refresh.** The version is bumped only if the upsert changed something.
 
-**The tiles are the same for every account.** A retired place is flagged and hidden unless captured, and the captured badge is styled from the account's capture list rather than baked in, which would need a bump per capture. **Show in this area** splits a view across the antimeridian into two boxes, whether its bounds come unwrapped (web) or wrapped (Android), and orders results named first, then by `md5(id)`, so the result limit thins the map evenly. On the web it is the map's only button; the activity list follows the map without one (FR-5.19).
+**The tiles are the same for every account.** A retired place is flagged and hidden unless captured, and the captured badge is styled from the account's capture list rather than baked in, which would need a bump per capture. **Show in this area** splits a view across the antimeridian into two boxes, whether its bounds come unwrapped (web) or wrapped (Android), and orders results named first, then by `md5(id)`, so the result limit thins the map evenly. On the web it is the map's only button; the activity list follows the map without one (FR-5.11).
 
 ```mermaid
 flowchart LR
@@ -544,17 +544,17 @@ flowchart LR
 
 **Captures** (`spot_captures.go`): only the phone captures, since a desktop browser's position is too coarse. The server checks the last fix against the whole outline with a few metres' slack, because a fix is a few metres off either way. **A capture is never changed or removed while its account exists**, so both clients keep their list and ask only `since` their newest (inclusive, merged by place) on every return to the app. A change that could remove or re-date a capture has to make the clients reload the whole list.
 
-### 4.26 Satellite mode (FR-4.14)
+### 4.26 Satellite mode (FR-4.10)
 
 **The imagery belongs to the deployment**: an XYZ template with its key, a tile size, a max zoom and a credit, read by the web at build time and by the API at run time from the same `.env.prod` lines. holdmytrack.com uses MapTiler on a free plan that pauses instead of billing (§5.4); Sentinel-2 cloudless is free, but at 10 m a pixel it blurs at street level.
 
-**Hybrid over our own style**, a raster layer right after `background`, switched as a layer since `setStyle` reloads every overlay; a second style on another schema would need a second planet archive and rewritten path layers. **What satellite hides and dims is derived at build time and published in the style's metadata**: hidden, `background` and every fill; dimmed, road lines with no opacity of their own; and for Roads (FR-4.17), every `roads_*` layer, published with or without imagery. **Clients read the lists from the metadata**: a derivation over a live style misses roads already dimmed. The server fills in the configured source, or deletes source, layer and satellite metadata, then computes the ETag. Android sends `Origin: <API origin>` on requests outside the API (`OriginInterceptor`), since the key is restricted by origin.
+**Hybrid over our own style**, a raster layer right after `background`, switched as a layer since `setStyle` reloads every overlay; a second style on another schema would need a second planet archive and rewritten path layers. **What satellite hides and dims is derived at build time and published in the style's metadata**: hidden, `background` and every fill; dimmed, road lines with no opacity of their own; and for Roads (FR-4.13), every `roads_*` layer, published with or without imagery. **Clients read the lists from the metadata**: a derivation over a live style misses roads already dimmed. The server fills in the configured source, or deletes source, layer and satellite metadata, then computes the ETag. Android sends `Origin: <API origin>` on requests outside the API (`OriginInterceptor`), since the key is restricted by origin.
 
 **The worker pauses imagery before MapTiler does** (`internal/imagery`): every 30 minutes it reads the billing period's requests from MapTiler's Analytics API with a service token, and hourly it probes the world tile; at 95% of `SATELLITE_MONTHLY_REQUESTS`, or after two failed probes in a row, it stores imagery as paused in `imagery_status` (§3.31). The probe sends the site as `Referer`, since the key only serves the site's origins and a bare request is refused whatever the plan's state. A usage read that fails keeps the stored decision. The API reads it at most once a minute: paused, the served style leaves the imagery out, so native clients show no switch, and `GET /v1/map/imagery` answers false for the web, which builds its imagery in and asks this at load and every 5 minutes.
 
 **Failed imagery keeps its layer** (the `satelliteStatus` rule): only the satellite look, its hidden fills and dimmed roads, goes, so a tile arriving later is noticed and brings the look back.
 
-### 4.27 Photos (FR-16, ADR-0024)
+### 4.27 Photos (FR-15, ADR-0024)
 
 The routes are under `/v1/photos` because the mux rejects `/v1/activities/{id}/photos` beside the fixed segments there.
 - **A row never points at a missing image**: inserted in a transaction, both images stored, then committed. Types are sniffed and dimensions checked.
@@ -564,7 +564,7 @@ The routes are under `/v1/photos` because the mux rejects `/v1/activities/{id}/p
 
 **Preparing a photo in the browser** (`photoPrep.ts`): the original never leaves it. A large photo must never be decoded at full size, since a 200 MP panorama takes about 800 MB and kills a phone's tab; the file's comments say which decode paths each engine honours. A large PNG still decodes whole in Chromium (`KNOWN_ISSUES.md`).
 
-### 4.28 Account deletion (FR-1.11)
+### 4.28 Account deletion (FR-1.12)
 
 **Close at once, purge in the worker.** `closeAccount` deletes, in one transaction, every way back in (sessions, identities, reset and verification rows, handoffs), clears the password, renames the email to a placeholder and stamps `deleted_at`, so no sign-in path needs a check of its own and the address is free at once. It is behind `requireAuth` alone, so an unverified account can delete itself. The purge (`worker/account_purge.go`) runs on its own ticker, so a busy queue can't delay it:
 - drop unclaimed jobs, and wait while one runs, since it could write after the listing;
@@ -573,11 +573,11 @@ The routes are under `/v1/photos` because the mux rejects `/v1/activities/{id}/p
 
 **A new per-account object prefix must be added to the purge.** Backups keep the data up to 8 weeks (`DEPLOY.md` §11).
 
-### 4.29 Downloading your data (FR-1.12)
+### 4.29 Downloading your data (FR-1.13)
 
 A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each track is written from `DisplayedPoints` and each raw payload once. The archive is never reachable by a link alone: the email links to Settings, and a part is served only to its account, through `http.ServeContent` so a Range request resumes it. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
 
-### 4.30 Each activity's own timezone (FR-3.11)
+### 4.30 Each activity's own timezone (FR-3.8)
 
 **The activity's zone, for labels and grouping alike.** The account's zone would show a 07:00 run in Tokyo at 18:00 the day before, and the viewing device's would group the same history differently on a laptop and a phone. Labels in one zone and grouping in another would put a row near midnight in a different day from its slider slot. A source's own offset is no substitute: GPX and TCX carry none, and an offset has no history. The polygons sit in PostGIS like the country outlines (§4.2.4), not in a Go library such as `tzf`, whose simplified copy would be a second geography. An activity entirely inside a Private location still carries its zone, far coarser than the location it hides.
 
@@ -587,7 +587,7 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 `openapi.yaml` indexes every path, each a `$ref` into its area's file in `paths/`, with shared shapes in `components/`. **The server's tests hold the handlers to it**: every exchange they make is validated (`contract_test.go`, kin-openapi). That checks the bytes sent (a nil slice as `null`, an `omitempty` dropping a required field), which generated types can't. `TestContractCoversEveryRoute` fails on a route the contract lacks or an operation no route registers. The web's `apiSchema.ts` is generated from it, Android's `WireContractTest` checks `net/Wire.kt` and iOS's `WireContractTests` `Wire.swift` (`DEVELOPMENT.md`). Traps:
 - The file describes what the handler accepts: a field it doesn't insist on is optional, an optional array also `nullable`, and an undeclared request field is refused (`decodeJSON`), so request objects are closed.
-- Every error is one JSON shape (`SPEC.md` §1.5), so an error that later needs a code keeps its shape under installed clients. A code is its message key (`api_errors.go`), pinned by enums, so renaming a key a client branches on fails a test; a code chosen at each of some 250 call sites was rejected, since few have a client branching on them. RFC 9457 Problem Details was rejected too: it wants a URI per error type and splits a translated message between `title` and `detail`, for third-party consumers HoldMyTrack doesn't have.
+- Every error is one JSON shape (`SPEC.md` §1.4), so an error that later needs a code keeps its shape under installed clients. A code is its message key (`api_errors.go`), pinned by enums, so renaming a key a client branches on fails a test; a code chosen at each of some 250 call sites was rejected, since few have a client branching on them. RFC 9457 Problem Details was rejected too: it wants a URI per error type and splits a translated message between `title` and `detail`, for third-party consumers HoldMyTrack doesn't have.
 - The cross-origin 403 and the 426 (§4.33) answer before any operation and aren't in the contract; paths outside `/v1` aren't checked.
 
 ### 4.32 Service statistics
@@ -626,7 +626,7 @@ Fog's pyramid makes a z3 tile the size of a z14 one, and `ST_AsMVTGeom`'s 4096-u
 
 Self-hosted Protomaps, the planet build unmodified (~138 GB, a couple of dollars a month on R2, no egress), because metered tiles charge per pan and a regional extract blanks the map everywhere else. Pin a dated build, since Protomaps keeps about a week of them; each has its own prefix with its fonts and sprites, so a client never sees a half-swap. Serving needs range requests and CORS; behind Cloudflare a response rule sets `Access-Control-Allow-Origin: *`, since one cached copy serves every origin. **Every range read is a billed R2 GET**, as the free plan doesn't edge-cache the archive, so Cloudflare refuses any `Origin` but the site's and local dev's and rate-limits per IP (`DEPLOY.md` §5). That stops other sites; a determined script is what the rate rule and a budget alert are for. The Playwright suites use a small Ohio extract under the same name.
 
-A network that throttles the tile host stalls range reads instead of failing them, so each client times its first basemap tile (`SPEC.md` FR-4.5, the `basemapStatus` rule). On the web a stalled basemap also holds back MapLibre's `load`, which every overlay waits on: `useMapInstance.ts` watches the raw instance, and no track draws until a tile arrives.
+A network that throttles the tile host stalls range reads instead of failing them, so each client times its first basemap tile (`SPEC.md` FR-4.4, the `basemapStatus` rule). On the web a stalled basemap also holds back MapLibre's `load`, which every overlay waits on: `useMapInstance.ts` watches the raw instance, and no track draws until a tile arrives.
 
 ### 5.5 Export rendering
 
@@ -643,7 +643,7 @@ Costs scale with users while the service stays free (`VISION.md` §4.3), so the 
 - **Raw payloads are kept as long as their activity**, since `reprivacy` and track edits re-parse them. A failed ingest has none, so the worker removes its original as it fails (`ingest.DiscardRaw`), unless an activity names the same key.
 - **Rate limits** (`httpapi/rate_limits.go`) are per account, except on the shared demo account, which counts per address. Tiles count per minute with a high ceiling, since pans and exports burst and one refused tile fails an export. Phone sync counts activities as well as requests, which bounds a sync-delete-sync loop that renders each time. The counts are in memory, per `api` process.
 - **Per-account limits** (ADR-0043, `account_limits.go`) count waiting ingest jobs by their size, so a queued import can't slip under, and count an original shared by split pieces once. The check takes no lock: a slight overshoot is harmless, and a lock would serialize an import. A Story copy is checked when accepted. `fitWithinLimits` lets a sync batch take what fits.
-- **The daily R2 budget** (`SPEC.md` FR-17, `internal/budget`) exists because R2 has no spending cap, only billing notifications after the money is spent. It counts requests in `internal/storage`'s HTTP transport, since the bill counts what the client library sends underneath (listing pages, multipart parts, range reads). Each process adds its counts to the UTC day's row every 30 s and reads the total back, so the budget is the deployment's; they are priced at list prices without the free allowance, so the count never falls below the bill. A day, not a month, so a bad day can't stop the rest of the month; stages, not one switch, so Fog doesn't go blank to save renders that can wait. The API wraps the routes that touch the bucket (`httpapi/budget.go`), shared account cores return the refusal as their error, and the worker stops claiming the render lane, then the long lane. The basemap is outside it.
+- **The daily R2 budget** (`SPEC.md` FR-16, `internal/budget`) exists because R2 has no spending cap, only billing notifications after the money is spent. It counts requests in `internal/storage`'s HTTP transport, since the bill counts what the client library sends underneath (listing pages, multipart parts, range reads). Each process adds its counts to the UTC day's row every 30 s and reads the total back, so the budget is the deployment's; they are priced at list prices without the free allowance, so the count never falls below the bill. A day, not a month, so a bad day can't stop the rest of the month; stages, not one switch, so Fog doesn't go blank to save renders that can wait. The API wraps the routes that touch the bucket (`httpapi/budget.go`), shared account cores return the refusal as their error, and the worker stops claiming the render lane, then the long lane. The basemap is outside it.
 - **Cost per active user** is measured from day one (`VISION.md` §5), from `last_seen_at` (§4.32).
 
 ### 5.8 Minimal deployment topology
@@ -661,7 +661,7 @@ The topology is `ARCHITECTURE.md` §1.2's diagram and the steps are `DEPLOY.md`.
 ## 7. Privacy & Security Implementation
 
 Privacy is applied at ingest (ADR-0002): once §4.1 step 3 drops a point, no render bug, cached raster or export can contain it.
-- **Private locations** (§3.7, FR-8.1): ends are clipped with a secret random stretch (§4.1). A pass-through stays whole: it reveals neither end, splitting would force a multi-part `trajectory` on every consumer, and a bridging line would still draw a chord through the circle.
+- **Private locations** (§3.7, FR-7.1): ends are clipped with a secret random stretch (§4.1). A pass-through stays whole: it reveals neither end, splitting would force a multi-part `trajectory` on every consumer, and a bridging line would still draw a chord through the circle.
 - **Retroactive application**: each change enqueues its reprocessing in the same transaction. The affected activities are those whose `trajectory` comes within twice the old or new radius plus a margin (an end lies up to a radius past the edge, and the trajectory is simplified), and every fully hidden one. One `reprivacy` job reprocesses the batch with each stored edit, rendering once before and once after for the whole batch (§4.2.5). **Re-clipping is why privacy is applied on the server, not before upload.**
 - **The web editor**'s circles exist only while the Privacy tab is mounted, so they never reach an export.
 - **Raw payloads** keep the unclipped points: private, encrypted server-side, never publicly addressable, and the most sensitive thing held (§5.7).

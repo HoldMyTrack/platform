@@ -1,4 +1,4 @@
-/** Where the camera goes when a Story's list lands (FR-14.6), as plain values. */
+/** Where the camera goes when a Story's list lands (FR-13.6), as plain values. */
 import type { Activity } from '../api';
 
 /**

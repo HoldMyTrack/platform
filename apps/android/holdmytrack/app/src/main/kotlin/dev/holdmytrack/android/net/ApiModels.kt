@@ -6,7 +6,7 @@ import java.time.Instant
 import okio.source
 
 /**
- * The account's latest copy of its data (root `docs/SPEC.md` FR-1.12), as
+ * The account's latest copy of its data (root `docs/SPEC.md` FR-1.13), as
  * `GET /v1/account/export` describes it: [state] is "none", "preparing", "ready" or "failed";
  * [expiresAt] and [parts] only when ready.
  */
@@ -91,7 +91,7 @@ data class UploadOutcome(val status: String)
  * [description], [distanceMeters] and [movingSeconds] are null when the source never set
  * them; [movingSeconds] is moving time, as Stories sum it, else elapsed; [bbox] (`[minLon, minLat, maxLon, maxLat]`) is null for an activity with no drawn
  * track. [pending] is a reprocess still running (a track edit, a Private location change):
- * the tracks tile leaves such a row out until it lands (`docs/SPEC.md` FR-5.15). [isPrivate] is an
+ * the tracks tile leaves such a row out until it lands (`docs/SPEC.md` FR-5.8). [isPrivate] is an
  * activity entirely inside the account's Private locations (FR-5.1): kept, with no track, so its
  * zero distance and duration mean nothing.
  */
@@ -117,7 +117,7 @@ data class Activity(
 )
 
 /** `GET /v1/activities/area`: the area's newest [activities], and with an area how many it holds,
- *  more than listed when they were cut at the limit (`docs/SPEC.md` FR-5.19). */
+ *  more than listed when they were cut at the limit (`docs/SPEC.md` FR-5.11). */
 data class AreaPage(val activities: List<Activity>, val total: Int?)
 
 /** One of an activity's Stories, as a row of `GET /v1/activities` names it (`docs/SPEC.md`
@@ -125,7 +125,7 @@ data class AreaPage(val activities: List<Activity>, val total: Int?)
 data class StoryRef(val id: String, val name: String)
 
 /** A copy of a Story someone sent the account, waiting to be accepted or declined
- *  (`docs/SPEC.md` FR-14.7). [from] is the sender's name, or their email address. */
+ *  (`docs/SPEC.md` FR-13.7). [from] is the sender's name, or their email address. */
 data class StorySend(val id: String, val storyName: String, val from: String, val activityCount: Int)
 
 /** A copy the account accepted that hasn't finished arriving. */
@@ -135,7 +135,7 @@ data class StoryCopying(val storyName: String, val from: String)
 data class StoryInbox(val sends: List<StorySend>, val copying: List<StoryCopying>)
 
 /**
- * A Story's numbers, or one activity type's share of them (`docs/SPEC.md` FR-14.1): [count]
+ * A Story's numbers, or one activity type's share of them (`docs/SPEC.md` FR-13.1): [count]
  * activities, their distance and moving time. [activityType] is empty for the whole Story.
  */
 data class StoryTotals(
@@ -146,9 +146,9 @@ data class StoryTotals(
 )
 
 /**
- * A Story — a hand-picked set of the account's activities (`docs/SPEC.md` FR-14.1), the web's
+ * A Story — a hand-picked set of the account's activities (`docs/SPEC.md` FR-13.1), the web's
  * `Story`. [description] is empty when none is set; [from] names who sent the copy it came from
- * (FR-14.8), null for the account's own; [activityIds] is every member, earliest activity
+ * (FR-13.8), null for the account's own; [activityIds] is every member, earliest activity
  * first; [stats] covers the whole Story, whatever the date range, and [byType] the same per
  * activity type, the most frequent first.
  */
@@ -165,7 +165,7 @@ data class Story(
 /**
  * One vertex of an activity's display track, as `GET /v1/activities/{id}/track-metrics`
  * measures it: its speed from the vertex before, and its moment ([timeS], epoch seconds) —
- * what the Photos tab's slider turns a place on the track into (`docs/SPEC.md` FR-16.4).
+ * what the Photos tab's slider turns a place on the track into (`docs/SPEC.md` FR-15.4).
  */
 data class TrackMetricPoint(
     val lon: Double,
@@ -210,7 +210,7 @@ data class TrackEdit(
 data class TrackPoints(val points: List<TrackPoint>, val edit: TrackEdit?)
 
 /**
- * One photo on an activity (`docs/SPEC.md` FR-16.3), always with a place on its track:
+ * One photo on an activity (`docs/SPEC.md` FR-15.3), always with a place on its track:
  * [routeAt], a moment on it. [lon]/[lat] are that moment's point on the track as drawn, null
  * only for an activity with no track left at all. [url] and [thumbUrl] are API paths
  * (`/v1/photos/…`); [width]/[height] are the stored copy's. [timezone] is its activity's, which
@@ -233,7 +233,7 @@ data class Photo(
 
 /**
  * What a photo's EXIF said about when and where it was taken, as `POST /v1/photos` and its
- * placement check take it (FR-16.1): [takenAt] an instant, or [takenLocal] a camera clock with
+ * placement check take it (FR-15.1): [takenAt] an instant, or [takenLocal] a camera clock with
  * no zone (`YYYY-MM-DDTHH:MM:SS`) — at most one is set — and a position.
  */
 data class PhotoExif(
@@ -247,11 +247,11 @@ data class PhotoExif(
 class PhotoImage(val bytes: ByteArray, val contentType: String)
 
 /** The server couldn't tell where on the track a photo was taken (`photo_needs_place`,
- *  FR-16.1): nothing was stored, and it goes again with the user's `route_at`. */
+ *  FR-15.1): nothing was stored, and it goes again with the user's `route_at`. */
 class PhotoNeedsPlaceException(message: String) : IOException(message)
 
 /**
- * One of the account's Private locations (`docs/SPEC.md` FR-8.1): a circle whose contents are
+ * One of the account's Private locations (`docs/SPEC.md` FR-7.1): a circle whose contents are
  * clipped off the ends of every track. [name] is empty when unset; [radiusM] is between
  * [PrivateLocation.MIN_RADIUS_M] and [PrivateLocation.MAX_RADIUS_M].
  */
@@ -273,7 +273,7 @@ data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVer
 data class Explored(val countries: Int, val regions: Int, val counties: Int, val cities: Int)
 
 /**
- * One Spots place (`docs/SPEC.md` FR-15), as a tile's `spots` feature or `GET /v1/spots` carries
+ * One Spots place (`docs/SPEC.md` FR-14), as a tile's `spots` feature or `GET /v1/spots` carries
  * it: [category] is the wire name (`playground`, `dog_park`, `monument`, `viewpoint`,
  * `waterfall`, `history`), [lon]/[lat] its anchor, and each text null when OSM has none. [wikipedia] is OSM's
  * tag in its "lang:Article title" form, the only one the server keeps.
@@ -295,7 +295,7 @@ data class Spot(
 /** `GET /v1/spots`: the places in a box, up to the server's cap, and how many there are in all. */
 data class SpotsInArea(val spots: List<Spot>, val total: Int)
 
-/** `GET /v1/spots/{id}` (`docs/SPEC.md` FR-15.6): the place, its whole [area] — what capture
+/** `GET /v1/spots/{id}` (`docs/SPEC.md` FR-14.6): the place, its whole [area] — what capture
  *  mode measures against — and when the account captured it, or null. */
 data class SpotDetail(val spot: Spot, val area: SpotArea, val capturedAt: Instant?)
 
@@ -314,7 +314,7 @@ data class ActivityDayPage(val days: List<ActivityDay>, val earliest: String?)
 
 /**
  * A request the server answered with a non-2xx status. Every API error is
- * `{"error": code, "message": text}` (`docs/SPEC.md` §1.5): `message` is
+ * `{"error": code, "message": text}` (`docs/SPEC.md` §1.4): `message` is
  * the server's own wording, shown to the user as-is rather than replaced with something vaguer —
  * "invalid email or password" and "an account with this email already exists" are exactly what
  * someone needs to read — and [errorCode] is what a caller branches on, never the message.

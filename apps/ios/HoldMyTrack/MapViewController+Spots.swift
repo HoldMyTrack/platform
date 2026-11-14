@@ -62,7 +62,7 @@ extension MapViewController {
         }
     }
 
-    /// The account's captures (root docs/SPEC.md FR-15.6), for the badges and the popup: all of
+    /// The account's captures (root docs/SPEC.md FR-14.6), for the badges and the popup: all of
     /// them the first time, then only what's newer. Kept as they were on a failure.
     func loadCaptures() {
         let since = spots.capturesLoaded ? Spots.capturesSince(spots.captured) : nil

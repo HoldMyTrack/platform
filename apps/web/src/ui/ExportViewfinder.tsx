@@ -52,7 +52,7 @@ export interface ExportViewfinderProps {
   onChoiceChange: (choice: ExportChoice) => void;
   onCapture: () => void;
   onCancel: () => void;
-  /** Show stats (FR-4.10): ticked, whether it can be, and the card it previews. */
+  /** Show stats (FR-4.7): ticked, whether it can be, and the card it previews. */
   showStats: boolean;
   statsOffered: boolean;
   onShowStatsChange: (show: boolean) => void;
@@ -68,7 +68,7 @@ interface DragState {
 }
 
 /**
- * The export viewfinder (FR-4.10, `IMPLEMENTATION.md` §4.3.3): the map dimmed around a window
+ * The export viewfinder (FR-4.7, `IMPLEMENTATION.md` §4.3.3): the map dimmed around a window
  * fixed in its middle, which is what the picture shows. The map moves under the window, and only
  * there: four dark panels cover the rest and take its pointer events, so the map's own controls
  * and the map outside the window don't respond. Its geometry is `map/exportViewfinder.ts`.

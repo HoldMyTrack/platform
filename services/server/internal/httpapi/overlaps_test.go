@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-3.7 (the overlap hint).
+// Covers docs/SPEC.md FR-3.5 (the overlap hint).
 
 import (
 	"context"

@@ -14,7 +14,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * What the Sync tab sent and the server hasn't finished yet (`docs/SPEC.md` FR-3.6): the server
+ * What the Sync tab sent and the server hasn't finished yet (`docs/SPEC.md` FR-3.4): the server
  * queues each activity and answers at once, and until the worker has done it the activity is
  * neither on the phone's list nor on the map. Each stays here, and on the Sync tab as "Adding to
  * your map…", until `POST /v1/sync/known` says its job has ended: known and not processing, it

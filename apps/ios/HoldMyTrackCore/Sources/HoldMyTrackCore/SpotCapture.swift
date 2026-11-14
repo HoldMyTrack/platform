@@ -159,7 +159,7 @@ public struct SpotCapture: Sendable {
     }
 }
 
-/// What a capture's answer means for capture (root docs/SPEC.md FR-15.6).
+/// What a capture's answer means for capture (root docs/SPEC.md FR-14.6).
 public enum CaptureOutcome: Equatable, Sendable {
     case saved(spotID: Int, at: Date)
     /// The server saw the position outside the area: the count starts again.

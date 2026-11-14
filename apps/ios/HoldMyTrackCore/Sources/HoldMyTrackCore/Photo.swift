@@ -1,6 +1,6 @@
 import Foundation
 
-/// A saved photo (root docs/SPEC.md FR-16), at its point on its activity's route.
+/// A saved photo (root docs/SPEC.md FR-15), at its point on its activity's route.
 public struct Photo: Equatable, Sendable {
     public let id: String
     public let activityID: String

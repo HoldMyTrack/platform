@@ -3,7 +3,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The list of the visible area under Dates (root docs/SPEC.md FR-4.5, FR-5.19, FR-5.20): the
+/// The list of the visible area under Dates (root docs/SPEC.md FR-4.4, FR-5.11, FR-5.12): the
 /// opening view, the list following the map once it settles from zoom 4, the 1,000 cap drawn
 /// through the tracks layer's `capped` and `listed` vars, and the Dates sheet with its one flight.
 extension MapViewController {
@@ -147,7 +147,7 @@ extension MapViewController {
         }
     }
 
-    /// The tiles' query: an open Story whole (root docs/SPEC.md FR-14.6), else every track Dates
+    /// The tiles' query: an open Story whole (root docs/SPEC.md FR-13.6), else every track Dates
     /// pass, and a counter bumped whenever tracks change under the same query. The area is the
     /// list's alone: past the cap the listed vars choose (renderCap).
     func updateTracksQuery() {

@@ -8,11 +8,11 @@ export interface SpotsState {
   /** The spot whose popup is open. */
   openSpot: Spot | null;
   closeSpot: () => void;
-  /** When this account captured [spotId] with the Android app (FR-15.6), or null. */
+  /** When this account captured [spotId] with the Android app (FR-14.6), or null. */
   capturedAt: (spotId: Spot['id']) => string | null;
 }
 
-/** Points of interest (FR-15) over the map: the shown categories, the captured badges, and the
+/** Points of interest (FR-14) over the map: the shown categories, the captured badges, and the
  *  popup a click on a spot opens. Hiding a spot's category closes its popup. */
 export function useSpots(map: MapLibreMap | null, shown: readonly SpotCategory[]): SpotsState {
   const [openSpot, setOpenSpot] = useState<Spot | null>(null);

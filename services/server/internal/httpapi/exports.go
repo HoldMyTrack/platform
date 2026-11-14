@@ -17,7 +17,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
 )
 
-// Downloading your data (SPEC FR-1.12, IMPLEMENTATION.md §4.29): a request makes an exports
+// Downloading your data (SPEC FR-1.13, IMPLEMENTATION.md §4.29): a request makes an exports
 // row and an `export` job (internal/worker/export_job.go), which builds the archive and emails
 // the owner; these endpoints say where it stands and serve its parts. The Settings page
 // (settings_page.go) shares requestExport and latestExport.

@@ -7,7 +7,7 @@ import {
 } from './style';
 
 /**
- * The Satellite button (BasemapToggle.tsx, docs/SPEC.md FR-4.14, overlays.ts): shows the satellite
+ * The Satellite button (BasemapToggle.tsx, docs/SPEC.md FR-4.10, overlays.ts): shows the satellite
  * imagery and, with [look], hides the basemap's background and area fills over it and draws the
  * roads at `SATELLITE_ROAD_OPACITY`, or the reverse. Imagery that failed to load
  * (satelliteStatus.ts) keeps its layer, to notice a tile arriving, without the look; boundaries and place labels stay as they are either

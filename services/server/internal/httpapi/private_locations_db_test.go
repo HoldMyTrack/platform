@@ -111,7 +111,7 @@ func (d *dbTest) nearestM(id string, lon, lat float64) float64 {
 
 // Adding, moving, resizing and deleting a Private location reprocesses the activities it
 // touches, from their original uploads, against the account's locations as they are now
-// (FR-8.1, IMPLEMENTATION.md §7): a track's hidden end follows the location and comes back
+// (FR-7.1, IMPLEMENTATION.md §7): a track's hidden end follows the location and comes back
 // once it leaves, and an activity it covers entirely is hidden and then restored.
 func TestPrivateLocationReprocessesActivities(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())

@@ -7,7 +7,7 @@ import (
 )
 
 // viewpointNearM is how close a viewpoint leaves a waterfall out of the import (docs/SPEC.md
-// FR-15.1): the viewpoint's badge already leads there.
+// FR-14.1): the viewpoint's badge already leads there.
 const viewpointNearM = 120
 
 // waterfallRadiusM is the radius of a waterfall's area, whatever its OSM geometry. OSM puts a

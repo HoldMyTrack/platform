@@ -30,7 +30,7 @@ import kotlin.math.roundToInt
 
 /**
  * The Private location editor on the map — the web's `apps/web/src/ui/PrivateLocationsPanel.tsx`
- * window (`docs/SPEC.md` FR-8.1), opened from the Privacy screen (`PrivacyActivity`): the
+ * window (`docs/SPEC.md` FR-7.1), opened from the Privacy screen (`PrivacyActivity`): the
  * account's Private locations, circles whose contents are clipped off the ends of every track,
  * drawn on the map (`map/PrivateLocationsOverlay`), and one of them — or a new one — in a card
  * along the bottom: Name, Radius, Delete for a saved one, Cancel and Save. A new one is a 200 m

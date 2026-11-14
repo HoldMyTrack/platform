@@ -106,7 +106,7 @@ class EditController(
     /**
      * The toolbar's Edit: the window over its target, each activity read in full first, since the
      * area list's rows leave out the description, the track's edit and the photos (`docs/SPEC.md`
-     * FR-5.19). A read that fails says so, and nothing opens.
+     * FR-5.11). A read that fails says so, and nothing opens.
      */
     fun open(group: List<Activity>) {
         if (opening || window.isOpen) return

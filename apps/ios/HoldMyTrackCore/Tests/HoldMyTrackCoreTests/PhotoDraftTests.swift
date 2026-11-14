@@ -105,7 +105,7 @@ struct PhotoDraftTests {
     }
 }
 
-/// What a picked photo's EXIF says (root docs/SPEC.md FR-16.1), Android's PhotoExifFieldsTest.
+/// What a picked photo's EXIF says (root docs/SPEC.md FR-15.1), Android's PhotoExifFieldsTest.
 struct PhotoExifFieldsTests {
     private func resolve(original: String? = nil, dateTime: String? = nil, offset: String? = nil, lat: Double? = nil, lon: Double? = nil,
                          gpsDate: String? = nil, gpsTime: String? = nil) -> PhotoExif {

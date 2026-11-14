@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import SafariServices
 import UIKit
 
-/// The theme, kept on the phone rather than the account (root docs/SPEC.md FR-4.12), so the
+/// The theme, kept on the phone rather than the account (root docs/SPEC.md FR-4.8), so the
 /// demo account can change it too.
 @MainActor
 enum Theme: String, CaseIterable {
@@ -254,7 +254,7 @@ final class YouViewController: UITableViewController {
         present(sheet, animated: true)
     }
 
-    // MARK: Delete account (root docs/SPEC.md FR-1.11)
+    // MARK: Delete account (root docs/SPEC.md FR-1.12)
 
     /// Confirmed by typing the account's email; on success the phone forgets the account and
     /// signs out. An Apple-linked account's authorization is revoked by the server.

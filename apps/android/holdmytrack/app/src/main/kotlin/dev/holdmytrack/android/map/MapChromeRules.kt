@@ -40,7 +40,7 @@ object MapChromeRules {
         !editOpen && !privacyEditing && !exportOpen
 
     /** The image export's own button under the selection bar, while rows are checked and the rail
-     *  is away, so an image can show the Checked activities' stats (`docs/SPEC.md` FR-4.10). */
+     *  is away, so an image can show the Checked activities' stats (`docs/SPEC.md` FR-4.7). */
     fun checkedExportShown(editing: Boolean, selectionShown: Boolean): Boolean = !editing && selectionShown
 
     /** Whether rows are being checked where the selection bar can show: the sheet up on the

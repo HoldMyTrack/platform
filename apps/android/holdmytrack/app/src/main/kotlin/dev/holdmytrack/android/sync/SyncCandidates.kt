@@ -28,7 +28,7 @@ class HealthConnectSession(val record: ExerciseSessionRecord, val route: List<Ex
 class Recording(val record: RecordedActivityRecord) : CandidateOrigin
 
 /**
- * One thing the Sync tab offers (`docs/SPEC.md` FR-3.6): an activity on this phone that isn't in
+ * One thing the Sync tab offers (`docs/SPEC.md` FR-3.4): an activity on this phone that isn't in
  * the account yet. [key] is unique across both origins and is what the hidden set stores;
  * [line] is the route simplified for drawing ([Simplify]), as `[lon, lat]` pairs, [metrics] the
  * same vertices with their speed — what its pace bands are drawn from when it's picked
@@ -39,7 +39,7 @@ data class Candidate(
     val source: String,
     val externalId: String,
     val startedAt: Instant,
-    /** When it ended: what the overlap hint (`docs/SPEC.md` FR-3.7) compares, with [startedAt]. */
+    /** When it ended: what the overlap hint (`docs/SPEC.md` FR-3.5) compares, with [startedAt]. */
     val endedAt: Instant,
     val activityType: String,
     val distanceM: Double,
@@ -59,7 +59,7 @@ data class Candidate(
 data class HealthConnectRead(val sessions: List<Candidate>, val refused: Int)
 
 /**
- * The Sync tab's list (`docs/SPEC.md` FR-3.6): Health Connect sessions with a route from the
+ * The Sync tab's list (`docs/SPEC.md` FR-3.4): Health Connect sessions with a route from the
  * last [WINDOW], minus what the account already has (`POST /v1/sync/known`), plus every recording
  * waiting on the phone, which never ages out — the phone holds its only copy. There is no
  * cursor: each Load works Health Connect's part out afresh from the phone and the server

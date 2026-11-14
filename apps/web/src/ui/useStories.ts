@@ -17,7 +17,7 @@ export interface StoriesState {
   reload: () => void;
 }
 
-/** Reader for `GET /v1/stories`, the Stories tab's list (`SPEC.md` FR-14.6). Fetched each time
+/** Reader for `GET /v1/stories`, the Stories tab's list (`SPEC.md` FR-13.6). Fetched each time
  *  the tab opens (`enabled`), so a Story made or changed elsewhere — Create story included — is
  *  there without a reload. */
 export function useStories(enabled: boolean): StoriesState {

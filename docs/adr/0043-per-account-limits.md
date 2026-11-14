@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built: the server checks them on upload, phone sync and accepting a Story copy (`SPEC.md` FR-1.13), and Settings shows what an account holds against them.
+Accepted. Built: the server checks them on upload, phone sync and accepting a Story copy (`SPEC.md` FR-1.14), and Settings shows what an account holds against them.
 
 ## Context
 

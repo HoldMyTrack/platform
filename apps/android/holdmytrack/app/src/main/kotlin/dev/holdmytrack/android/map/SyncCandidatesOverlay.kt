@@ -17,7 +17,7 @@ import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
 
 /**
- * The Sync tab's candidates on the map (`docs/SPEC.md` FR-3.6): every activity listed there,
+ * The Sync tab's candidates on the map (`docs/SPEC.md` FR-3.4): every activity listed there,
  * drawn dashed from the phone's own data — none of it is on the server yet — and the one picked
  * on the list or the map as the Map tab draws a selected activity: solid and wider over a dark
  * halo, coloured by pace ([Candidate.metrics], [TrackBands]). One GeoJSON source
@@ -42,7 +42,7 @@ object SyncCandidatesOverlay {
         val beforeId = style.layers.firstOrNull { it is SymbolLayer }?.id
         fun add(layer: LineLayer) {
             if (style.getLayer(layer.id) != null) return
-            // From the zoom tracks start at, like everything else but Fog (`docs/SPEC.md` FR-4.15).
+            // From the zoom tracks start at, like everything else but Fog (`docs/SPEC.md` FR-4.11).
             layer.minZoom = MapOverlays.TRACKS_MIN_ZOOM
             if (beforeId != null) style.addLayerBelow(layer, beforeId) else style.addLayer(layer)
         }

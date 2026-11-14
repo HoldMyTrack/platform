@@ -22,7 +22,7 @@ type imageryCache struct {
 }
 
 // imageryOffered is whether the deployment configures imagery and the worker hasn't paused it
-// (docs/SPEC.md FR-4.14, docs/IMPLEMENTATION.md §4.26).
+// (docs/SPEC.md FR-4.10, docs/IMPLEMENTATION.md §4.26).
 func imageryOffered(configured bool, stored imagery.Status, found bool) bool {
 	return configured && (!found || stored.Available)
 }

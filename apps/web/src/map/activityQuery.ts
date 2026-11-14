@@ -1,13 +1,13 @@
 import type { ActivityQuery, AreaQuery, BBox } from '../api';
 import type { DateFilter } from '../ui/dateFilter';
 
-/** The Dates filter (docs/SPEC.md FR-5.20) as the server's `from`/`to`, an empty end left out. */
+/** The Dates filter (docs/SPEC.md FR-5.12) as the server's `from`/`to`, an empty end left out. */
 export function datesQuery({ after, before }: DateFilter): ActivityQuery {
   return { ...(after !== null && { from: after }), ...(before !== null && { to: before }) };
 }
 
 /** What the list reads: the open Story's activities (`GET /v1/activities?story=`), else the area
- *  under Dates (`GET /v1/activities/area`, FR-5.19); null until the map has an area to ask about. */
+ *  under Dates (`GET /v1/activities/area`, FR-5.11); null until the map has an area to ask about. */
 export type ListRequest = { story: ActivityQuery } | { area: AreaQuery };
 
 export function listQuery(storyId: string | null, dates: DateFilter, area: BBox | null): ListRequest | null {

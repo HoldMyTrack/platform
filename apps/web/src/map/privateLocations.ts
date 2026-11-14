@@ -2,7 +2,7 @@ import { TRACKS_MIN_ZOOM } from './config';
 import type { ExpressionSpecification, GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent, MapLayerTouchEvent } from 'maplibre-gl';
 
 /**
- * The Private locations overlay (FR-8.1): every saved circle, the one being edited, and its
+ * The Private locations overlay (FR-7.1): every saved circle, the one being edited, and its
  * drag handle. Only drawn while PrivateLocationsPanel is open — the circles are the one thing
  * on the map that points straight at the places they hide, so they never appear in the normal
  * view or in an Export (which renders its own offscreen map from fog and tracks alone —
@@ -59,7 +59,7 @@ function circlePolygon(c: Circle): number[][] {
   return ring;
 }
 
-/** From the zoom tracks start at, like everything else on the map but Fog (FR-4.15).
+/** From the zoom tracks start at, like everything else on the map but Fog (FR-4.11).
  *  Adds the source and layers if missing — idempotent for the same styledata reason every
  *  other overlay here is (a theme swap's setStyle discards custom layers). */
 export function ensurePrivateLocationsLayer(map: MapLibreMap, beforeId: string | undefined): void {

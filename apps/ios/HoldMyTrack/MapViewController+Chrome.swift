@@ -3,7 +3,7 @@ import MapLibre
 import UIKit
 
 /// What the map shows beside the modes (apps/android/docs/SPEC.md FR-2.2): the chip naming what
-/// Fog covers, the Layers button's badge, and whether Satellite imagery loads on this device (root docs/SPEC.md FR-4.14). The decisions are
+/// Fog covers, the Layers button's badge, and whether Satellite imagery loads on this device (root docs/SPEC.md FR-4.10). The decisions are
 /// HoldMyTrackCore's MapChrome and SatelliteStatus.
 extension MapViewController {
     /// The chip and Fog's level for the mode shown.

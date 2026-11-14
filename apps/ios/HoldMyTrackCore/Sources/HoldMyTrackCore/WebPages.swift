@@ -1,6 +1,6 @@
 import Foundation
 
-/// A page of the site the app shows in a web view (root docs/SPEC.md FR-10.8, ADR-0042).
+/// A page of the site the app shows in a web view (root docs/SPEC.md FR-9.6, ADR-0042).
 public enum SitePage: String, CaseIterable, Sendable {
     case profile = "/profile"
     case syncHistory = "/sync"

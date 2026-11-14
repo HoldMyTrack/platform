@@ -3,7 +3,7 @@ import SafariServices
 import UIKit
 import WebKit
 
-/// One of the site's own pages in the app (root docs/SPEC.md FR-10.8, ADR-0042): Settings, a new
+/// One of the site's own pages in the app (root docs/SPEC.md FR-9.6, ADR-0042): Settings, a new
 /// account's first run included, Activity graph & trends, Sync history and About. The server
 /// renders a page for the app when it carries the `hmt_app` cookie; this screen hands the web view
 /// the session as the cookie a browser would hold (apps/ios/docs/IMPLEMENTATION.md §1.4).

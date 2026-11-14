@@ -11,7 +11,7 @@ import type { MessageKey } from '../i18n/en';
 export interface SpotPopupProps {
   map: MapLibreMap;
   spot: Spot;
-  /** When the account captured the place (FR-15.6), or null. */
+  /** When the account captured the place (FR-14.6), or null. */
   capturedAt: string | null;
   /** The popup's × button was clicked. */
   onClose: () => void;
@@ -51,7 +51,7 @@ export function memorialLabel(memorial: string): string {
 }
 
 /**
- * A spot's popup (IMPLEMENTATION.md §4.25, SPEC.md FR-15.3): its name and category, what OSM
+ * A spot's popup (IMPLEMENTATION.md §4.25, SPEC.md FR-14.3): its name and category, what OSM
  * says about it — memorial type, date, description, inscription, address — each only when OSM
  * has it, with Copy address and, when OSM names one, its Wikipedia article. A MapLibre popup anchored at the
  * spot, so it moves with the map; React renders into it through a portal, the way

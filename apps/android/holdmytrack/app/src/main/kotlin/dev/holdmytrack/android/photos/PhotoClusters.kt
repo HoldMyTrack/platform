@@ -73,7 +73,7 @@ object PhotoClusters {
     }
 
     /**
-     * The markers an exported image draws (root `docs/SPEC.md` FR-4.10): grouped and sized as the
+     * The markers an exported image draws (root `docs/SPEC.md` FR-4.7): grouped and sized as the
      * screen does at [zoom], from [points] in dp from the frame's top-left, then scaled to the image
      * by [scale] (pixels per dp). A marker wholly outside the [width] × [height] frame is left out;
      * the active one comes last, to be drawn on top. The web's `photoMarkerLayout`.

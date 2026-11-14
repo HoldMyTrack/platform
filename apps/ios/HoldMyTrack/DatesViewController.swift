@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The Dates filter (root docs/SPEC.md FR-5.20): From and To, each set from a calendar, which
+/// The Dates filter (root docs/SPEC.md FR-5.12): From and To, each set from a calendar, which
 /// applies as soon as a day is picked, as the web's does, or cleared; both clear is all time.
 /// What a change does is DateFilter.setting's; this only shows it and reports it.
 final class DatesViewController: UIViewController {

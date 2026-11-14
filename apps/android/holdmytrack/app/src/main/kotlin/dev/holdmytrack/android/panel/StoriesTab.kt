@@ -35,13 +35,13 @@ import dev.holdmytrack.android.recording.RecordingTypes
 
 /**
  * The Activities panel's Stories tab, the web's `apps/web/src/ui/StoriesTab.tsx` and the Story
- * half of `MapView.tsx` (`docs/SPEC.md` FR-14.6): every Story as a folder, newest first,
+ * half of `MapView.tsx` (`docs/SPEC.md` FR-13.6): every Story as a folder, newest first,
  * exactly one of them open while the tab shows — the newest, until another is tapped. Opening
  * one is viewing it: `MapFragment` shows the tracks and the list of all its activities,
  * whatever the date range ([onOpen]), and this tab lists those rows inside the folder — tap to
  * select, × to take one out of the Story — with the whole Story's statistics in the footer. A
  * folder's pencil and bin rename and delete it, and its send button sends someone a copy
- * ([SendCopyDialog], FR-14.7).
+ * ([SendCopyDialog], FR-13.7).
  *
  * The list is read each time the tab opens ([start]), so a Story made or changed since —
  * Add to story's included — is there; the open Story is read on its own ([setOpen]) for the
@@ -96,7 +96,7 @@ class StoriesTab(
      *  one, or another Story opening. */
     private var removeError: String? = null
 
-    /** The inbox (FR-14.7): copies waiting, and accepted ones arriving. */
+    /** The inbox (FR-13.7): copies waiting, and accepted ones arriving. */
     private var sends: List<StorySend> = emptyList()
     private var copying: List<StoryCopying> = emptyList()
     private var answering = false
@@ -276,7 +276,7 @@ class StoriesTab(
         renderStats()
     }
 
-    /** The whole Story, whatever the date range selects (FR-14.1). */
+    /** The whole Story, whatever the date range selects (FR-13.1). */
     private fun renderStats() {
         val story = openStory?.takeIf { it.id == openId }
         stats.visibility = if (story == null) View.GONE else View.VISIBLE
@@ -360,7 +360,7 @@ class StoriesTab(
     }
 
     /** The row's ×: out of the Story at once, with no confirmation — the activity itself stays,
-     *  and Add to story puts it back (`docs/SPEC.md` FR-14.6). */
+     *  and Add to story puts it back (`docs/SPEC.md` FR-13.6). */
     private fun remove(storyId: String, activityId: String) {
         HoldMyTrackApi.changeStoryActivities(storyId, listOf(activityId), add = false) { result ->
             result.onSuccess { story ->
@@ -522,7 +522,7 @@ class StoriesTab(
             // Tapping the open Story does nothing: there is no way to fold them all.
             toggle.setOnClickListener { if (!item.open) onOpen(story.id, true) }
 
-            // The demo account sees both, disabled, saying why (FR-14.6), as it does
+            // The demo account sees both, disabled, saying why (FR-13.6), as it does
             // the rows' ×.
             val demo = Session.isDemo
             val editLabel = res.getString(if (demo) R.string.story_demo_edit else R.string.story_edit)

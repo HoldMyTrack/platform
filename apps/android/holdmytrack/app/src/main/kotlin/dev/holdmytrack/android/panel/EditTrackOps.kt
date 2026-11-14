@@ -25,13 +25,13 @@ sealed interface EditOp {
     /** Back to the track as recorded — itself a step, so Undo brings the edits back. */
     data object Reset : EditOp
 
-    /** Split the activity in two at the point at [t] (`docs/SPEC.md` FR-5.17). Not part of the
+    /** Split the activity in two at the point at [t] (`docs/SPEC.md` FR-5.9). Not part of the
      *  edit: Save sends it beside the folded edit, which then applies to both parts. */
     data class Split(val t: Long) : EditOp
 }
 
 /**
- * The track editor's rules (`docs/SPEC.md` FR-5.14): the saved edit and the session's steps
+ * The track editor's rules (`docs/SPEC.md` FR-5.7): the saved edit and the session's steps
  * fold into one [TrackEdit], which is what's sent, and replaying it over the recorded points is
  * what's drawn. Points are named by their time rather than their index, so a deleted point never
  * shifts what an earlier step meant. The web's `editTrackOps.ts`; both run

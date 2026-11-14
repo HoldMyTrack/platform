@@ -51,7 +51,7 @@ func testTx(t *testing.T) pgx.Tx {
 	return tx
 }
 
-// A refresh (docs/SPEC.md FR-15.1): an unchanged re-run changes nothing and leaves the tile version alone; a
+// A refresh (docs/SPEC.md FR-14.1): an unchanged re-run changes nothing and leaves the tile version alone; a
 // planet run retires what it didn't see, keeping its captures, and brings it back when it
 // returns; a regional run retires nothing; and a run that would retire too much retires none.
 func TestImportRetires(t *testing.T) {
@@ -145,7 +145,7 @@ func TestImportRetires(t *testing.T) {
 	}
 }
 
-// Waterfalls (docs/SPEC.md FR-15.1): one with a viewpoint within 120 m stays out, even when the
+// Waterfalls (docs/SPEC.md FR-14.1): one with a viewpoint within 120 m stays out, even when the
 // viewpoint comes later in the file, and the rest get a 75 m circle.
 func TestImportWaterfalls(t *testing.T) {
 	tx := testTx(t)

@@ -3,8 +3,8 @@ import { SPOT_CATEGORIES } from './spots';
 
 /**
  * The map's view choices beside the mode toggle: satellite imagery (the Satellite button,
- * FR-4.14), and what the Layers menu (OverlaysMenu.tsx) has picked — the basemap's roads (FR-4.17), bike and shared paths and
- * mountain-bike trails (FR-4.13) and each Spots category (FR-15.2) — with the Layers button's checkbox, which shows or
+ * FR-4.10), and what the Layers menu (OverlaysMenu.tsx) has picked — the basemap's roads (FR-4.13), bike and shared paths and
+ * mountain-bike trails (FR-4.9) and each Spots category (FR-14.2) — with the Layers button's checkbox, which shows or
  * hides all of them at once. A per-browser view preference, kept in localStorage like the theme,
  * not on the account; roads on and every path and place off until picked.
  */

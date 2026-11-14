@@ -9,7 +9,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// The list says why Edit track or photos can't be used for a row (docs/SPEC.md FR-5.14), from
+// The list says why Edit track or photos can't be used for a row (docs/SPEC.md FR-5.7), from
 // what's stored, and stays silent when they can.
 func TestActivityListAvailability(t *testing.T) {
 	d := newDBTest(t)

@@ -178,7 +178,7 @@
                         app:tint="@color/panel_ink_40" />
                 </LinearLayout>
 
-                <!-- Dates (docs/SPEC.md FR-5.20): the chip reads what's set, "Dates" for all
+                <!-- Dates (docs/SPEC.md FR-5.12): the chip reads what's set, "Dates" for all
                      time, and opens From and To (map/DatesDialog). -->
                 <LinearLayout
                     android:id="@+id/panel_dates"

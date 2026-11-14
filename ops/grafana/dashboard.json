@@ -1130,7 +1130,7 @@
         },
         "overrides": []
       },
-      "description": "Today's (UTC) requests to the app's bucket at R2 list prices, as a share of R2_DAILY_BUDGET_USD. Renders stop at 70%, adding at 85%, the map's stored tiles at 100% (SPEC.md FR-17)."
+      "description": "Today's (UTC) requests to the app's bucket at R2 list prices, as a share of R2_DAILY_BUDGET_USD. Renders stop at 70%, adding at 85%, the map's stored tiles at 100% (SPEC.md FR-16)."
     },
     {
       "id": 23,

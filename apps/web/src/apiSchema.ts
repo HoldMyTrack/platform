@@ -2140,7 +2140,7 @@ export interface paths {
         };
         /**
          * Whether satellite imagery is offered now
-         * @description False when the deployment configures none, or while the worker has paused it near the imagery plan's monthly limit (docs/SPEC.md FR-4.14). Native clients read the same answer from the style, which leaves imagery out; the web, whose imagery is built in, reads this. Public, like the style.
+         * @description False when the deployment configures none, or while the worker has paused it near the imagery plan's monthly limit (docs/SPEC.md FR-4.10). Native clients read the same answer from the style, which leaves imagery out; the web, whose imagery is built in, reads this. Public, like the style.
          */
         get: {
             parameters: {
@@ -3787,7 +3787,7 @@ export interface components {
             unit_system: "metric" | "imperial";
             fog_words: components["schemas"]["FogWords"];
         };
-        /** @description Every error the API sends (docs/SPEC.md §1.5). A client branches on error, never on message. */
+        /** @description Every error the API sends (docs/SPEC.md §1.4). A client branches on error, never on message. */
         Error: {
             /** @description A stable code: a failure's own (photo_no_track), or its status's generic one (invalid_request, unauthenticated, forbidden, not_found, conflict, gone, payload_too_large, unsupported_type, unprocessable, rate_limited, unavailable, internal). */
             error: string;
@@ -3865,12 +3865,12 @@ export interface components {
             edited: boolean;
             private: boolean;
             /**
-             * @description Why Edit track can't open for this activity (docs/SPEC.md FR-5.14); absent when it can.
+             * @description Why Edit track can't open for this activity (docs/SPEC.md FR-5.7); absent when it can.
              * @enum {string}
              */
             track_edit?: "pending" | "private" | "no_original" | "bad_times";
             /**
-             * @description Why photos can't be added to it (docs/SPEC.md FR-16.1); absent when they can.
+             * @description Why photos can't be added to it (docs/SPEC.md FR-15.1); absent when they can.
              * @enum {string}
              */
             photos?: "private";

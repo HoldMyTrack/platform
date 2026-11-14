@@ -2,7 +2,7 @@ import type { MapMode } from './mapMode';
 import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
 
 /**
- * The focused activity's pace-colored segments (docs/SPEC.md FR-4.8) as the layers document's
+ * The focused activity's pace-colored segments (docs/SPEC.md FR-4.6) as the layers document's
  * `track-bands` group: a GeoJSON source the client fills with one line per run of
  * `GET /v1/activities/{id}/track-metrics`' `bands` (trackBands.ts), over the shared tracks layer,
  * since a vector tile can't carry per-vertex color. Each line carries its `band` index, and the

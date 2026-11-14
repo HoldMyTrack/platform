@@ -10,7 +10,7 @@ import org.maplibre.android.style.layers.Property
 import org.maplibre.android.style.layers.PropertyFactory
 
 /**
- * Satellite, a switch in the Layers menu (`docs/SPEC.md` FR-4.14):
+ * Satellite, a switch in the Layers menu (`docs/SPEC.md` FR-4.10):
  * Satellite shows the served style's imagery layer, hides the basemap's background and area fills
  * over it and draws the roads see-through, so roads, boundaries and labels stay on top; whether
  * the roads show at all is [MapRoads]'s. The served style has the imagery only when the

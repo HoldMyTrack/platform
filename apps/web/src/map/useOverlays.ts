@@ -13,7 +13,7 @@ export interface OverlayChoices {
   /** The basemap's roads are drawn: picked, while the Layers checkbox is on. */
   roads: boolean;
   /** Satellite is offered: the deployment configures imagery and the server hasn't paused it
-   *  (FR-4.14, imageryOffered.ts). */
+   *  (FR-4.10, imageryOffered.ts). */
   satelliteAvailable: boolean;
   /** Imagery is drawn: available and picked, whatever was saved; a choice saved while it's
    *  paused comes back with it. */

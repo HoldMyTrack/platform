@@ -28,7 +28,7 @@ import org.maplibre.geojson.Point
 import java.time.Instant
 
 /**
- * The Spots layers (`docs/SPEC.md` FR-15, root `docs/IMPLEMENTATION.md` §4.25) as the layers
+ * The Spots layers (`docs/SPEC.md` FR-14, root `docs/IMPLEMENTATION.md` §4.25) as the layers
  * document's `spots` group draws them ([MapLayers]), and what the app decides about them: the
  * categories the Layers menu has on ([LayersMenu]), the account's captures, capture mode's target
  * and guide, and "Show in this area"'s places ([ShowInArea]). The web's `map/spots.ts`.
@@ -79,7 +79,7 @@ object MapSpots {
     private var editing = false
     private var inArea: FeatureCollection = FeatureCollection.fromFeatures(emptyList())
 
-    /** The places the account has captured (`docs/SPEC.md` FR-15.6), by id: drawn with the
+    /** The places the account has captured (`docs/SPEC.md` FR-14.6), by id: drawn with the
      *  captured badge, and dated in their popup. */
     var captured: Map<Long, Instant> = emptyMap()
         private set
@@ -167,7 +167,7 @@ object MapSpots {
     }
 
     /** A track is being edited: the places step aside with every other track, as on the web
-     *  (`docs/SPEC.md` FR-15.2). */
+     *  (`docs/SPEC.md` FR-14.2). */
     fun setEditing(style: Style, next: Boolean) {
         editing = next
         apply(style)

@@ -37,7 +37,7 @@ Public pages, followers and the rest (`VISION.md` §5.1, §5.2). No steps: the f
 ## Ongoing
 
 - [x] Describe every `/v1` endpoint in the API contract, `services/server/api/` (`IMPLEMENTATION.md` §4.31).
-- [x] One error shape for the JSON API (`SPEC.md` §1.5), described in the contract.
+- [x] One error shape for the JSON API (`SPEC.md` §1.4), described in the contract.
 - [x] Generate the web client's types from the contract (`apps/web/src/apiSchema.ts`).
 - [x] Typed Android wire classes (`net/Wire.kt`) checked against the contract (`WireContractTest`).
 - [x] Fail a pull request whose contract change breaks an installed client (`scripts/check-contract-break.sh`).

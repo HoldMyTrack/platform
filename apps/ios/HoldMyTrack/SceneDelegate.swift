@@ -21,7 +21,7 @@ final class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         #endif
     }
 
-    /// A GPX, FIT or TCX file opened from Files or shared from another app (FR-3.6).
+    /// A GPX, FIT or TCX file opened from Files or shared from another app (FR-3.4).
     func scene(_ scene: UIScene, openURLContexts contexts: Set<UIOpenURLContext>) {
         open(contexts)
     }

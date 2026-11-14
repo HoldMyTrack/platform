@@ -117,7 +117,7 @@ const activityStoriesColumn = `COALESCE((
 
 // maxActivityTypeLen matches activities.activity_type's own VARCHAR(50) — rejecting an
 // over-length value here is a clearer 400 than letting Postgres reject the UPDATE. These limits
-// count characters (runes), as VARCHAR and SPEC FR-5.10 do, not bytes: a Cyrillic name takes
+// count characters (runes), as VARCHAR and SPEC FR-5.5 do, not bytes: a Cyrillic name takes
 // two bytes a letter.
 const maxActivityTypeLen = 50
 
@@ -163,7 +163,7 @@ func activityIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return strings.ToLower(id), true
 }
 
-// handleUpdateActivity serves `PATCH /v1/activities/{id}` (docs/SPEC.md FR-5.10) — the "rename a
+// handleUpdateActivity serves `PATCH /v1/activities/{id}` (docs/SPEC.md FR-5.5) — the "rename a
 // mis-tagged upload" / "describe a non-sport GPS trace" feature. activity_type is free-form
 // (IMPLEMENTATION.md §4.7), not a controlled vocabulary, so a manual rename here is
 // architecturally identical to what ingest itself already writes — nothing to validate

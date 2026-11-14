@@ -1,5 +1,5 @@
 /**
- * The export viewfinder's geometry and output sizes (FR-4.10), as plain values so they're
+ * The export viewfinder's geometry and output sizes (FR-4.7), as plain values so they're
  * unit-tested apart from the component that draws them (`ExportViewfinder.tsx`). Every rect is
  * in the map container's CSS pixels.
  *

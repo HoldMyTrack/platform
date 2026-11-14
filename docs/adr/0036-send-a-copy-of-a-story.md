@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted. Built on the server, the web and in the Android app (`SPEC.md` FR-14.7, FR-14.8; `IMPLEMENTATION.md` §3.25, §4.23). A Story stays private to its account (`VISION.md` §4.2), and what is sent is a copy, not a view of it.
+Accepted. Built on the server, the web and in the Android app (`SPEC.md` FR-13.7, FR-13.8; `IMPLEMENTATION.md` §3.25, §4.23). A Story stays private to its account (`VISION.md` §4.2), and what is sent is a copy, not a view of it.
 
 ## Context
 

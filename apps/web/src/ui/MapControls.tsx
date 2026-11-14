@@ -28,9 +28,9 @@ export interface MapControlsProps {
   /** Satellite is on and its imagery failed to load (satelliteStatus.ts): its notice shows under the toggles. */
   satelliteFailed: boolean;
   spotsShown: readonly SpotCategory[];
-  /** The tour holds the Layers menu open (docs/SPEC.md FR-4.18). */
+  /** The tour holds the Layers menu open (docs/SPEC.md FR-4.14). */
   layersOpen?: boolean;
-  /** How many the area holds when the list, and so the map, was cut at its limit (docs/SPEC.md FR-5.19). */
+  /** How many the area holds when the list, and so the map, was cut at its limit (docs/SPEC.md FR-5.11). */
   capped: { shown: number; total: number } | null;
 }
 

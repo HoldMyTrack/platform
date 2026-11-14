@@ -257,7 +257,7 @@ func oauthCookieSameSite(path string, secure bool) http.SameSite {
 }
 
 // resolveVerifiedUser maps the identity of a provider that vouches for the email (Google,
-// FR-1.9; Apple, FR-1.14) to a HoldMyTrack account, in one transaction:
+// FR-1.9; Apple, FR-1.11) to a HoldMyTrack account, in one transaction:
 //
 //  1. An account already linked to this provider's subject signs in — whatever its email is now.
 //  2. Otherwise a real (non-demo) account with the same email gets linked. The provider has just

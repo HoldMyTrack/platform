@@ -1,5 +1,5 @@
 /**
- * The web's Dates filter (docs/SPEC.md FR-5.20), as plain values: From (`after`) and To
+ * The web's Dates filter (docs/SPEC.md FR-5.12), as plain values: From (`after`) and To
  * (`before`), local YYYY-MM-DD dates, both inclusive and either empty; both empty is all time.
  */
 export interface DateFilter {
@@ -33,7 +33,7 @@ export function dateFilterBounds(earliest: string | null, latest: string | null,
 /**
  * The filter once one end is set to `value`, or cleared with null: clamped into `bounds`, and the
  * other end moved to meet it if they crossed. `fly` asks for the camera to move onto what it
- * matches once (FR-5.20): only setting a date does, never clearing one, nor a value that changed
+ * matches once (FR-5.12): only setting a date does, never clearing one, nor a value that changed
  * nothing.
  */
 export function setDateFilter(

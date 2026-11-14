@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-15.6 (captures).
+// Covers docs/SPEC.md FR-14.6 (captures).
 
 import (
 	"context"

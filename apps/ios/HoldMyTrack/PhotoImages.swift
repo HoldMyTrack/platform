@@ -4,7 +4,7 @@ import UIKit
 
 /// Photo images from the API, with the session: thumbnails fetched once and kept, since the
 /// markers are rebuilt on every regrouping, and a photo's images never change under their path
-/// (root docs/SPEC.md FR-16.3).
+/// (root docs/SPEC.md FR-15.3).
 @MainActor
 final class PhotoImages {
     private let api: APIClient

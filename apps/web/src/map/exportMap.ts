@@ -55,7 +55,7 @@ export interface ExportViewState {
   bands: ActivityTrackMetrics | null;
   /** The Layers menu's paths (overlays.ts), so the image shows what the screen does. */
   paths: BikePathOverlays;
-  /** The Satellite button (FR-4.14): satellite imagery, when the deployment has any. */
+  /** The Satellite button (FR-4.10): satellite imagery, when the deployment has any. */
   satellite: boolean;
   /** The Layers menu's roads (overlays.ts). */
   roads: boolean;
@@ -96,7 +96,7 @@ export function maxExportSide(liveMap: MapLibreMap): number {
  * extent, with labels and line widths at the same proportions as on screen — and rendered
  * at a `pixelRatio` that makes its backing canvas the output size. "What's in the window, only
  * sharper", with no crop step. `liveMap` is read from directly for the camera rather than requiring the caller
- * to track it — MapView.tsx doesn't keep camera position in React state at all (FR-4.5: the
+ * to track it — MapView.tsx doesn't keep camera position in React state at all (FR-4.4: the
  * URL hash is the only place it's persisted).
  */
 export async function exportFramedImage(
@@ -162,7 +162,7 @@ function scaleCanvas(source: HTMLCanvasElement, widthPx: number, heightPx: numbe
 }
 
 /** `ATTRIBUTION_TEXT`, plus the imagery provider's credit when the image shows its imagery —
- *  its terms require it on every image as much as ODbL requires OSM's (FR-4.14). */
+ *  its terms require it on every image as much as ODbL requires OSM's (FR-4.10). */
 function attributionText(satellite: boolean): string {
   const imagery = satellite ? satelliteSource()?.attribution.replace(/<[^>]+>/g, '').trim() : '';
   return imagery ? `${ATTRIBUTION_TEXT} · ${imagery}` : ATTRIBUTION_TEXT;

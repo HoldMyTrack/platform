@@ -17,7 +17,7 @@ import dev.holdmytrack.android.sync.WaitingStore
 import kotlinx.coroutines.launch
 
 /**
- * Delete account (root `docs/SPEC.md` FR-1.11), from the You tab, as on the web: a dialog asks
+ * Delete account (root `docs/SPEC.md` FR-1.12), from the You tab, as on the web: a dialog asks
  * for the account's email, the server closes the account, and this device forgets it.
  */
 object AccountDeletion {

@@ -24,7 +24,7 @@ internal val apiJson = Json {
     explicitNulls = false
 }
 
-// Errors (docs/SPEC.md §1.5)
+// Errors (docs/SPEC.md §1.4)
 
 @Serializable
 internal data class ErrorJson(val error: String? = null, val message: String = "")

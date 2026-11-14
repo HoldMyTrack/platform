@@ -2,7 +2,7 @@ package httpapi
 
 import "math"
 
-// paceBandCount is how many bands a track's speeds split into (docs/SPEC.md FR-4.8), slowest 0.
+// paceBandCount is how many bands a track's speeds split into (docs/SPEC.md FR-4.6), slowest 0.
 // The layers document's band colors have one each (apps/web/src/map/bandsGroup.ts).
 const paceBandCount = 5
 

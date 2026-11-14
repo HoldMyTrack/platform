@@ -11,7 +11,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/statscard"
 )
 
-// The stats card (SPEC FR-4.10) reads the asked activities newest first, leaves Pending ones out,
+// The stats card (SPEC FR-4.7) reads the asked activities newest first, leaves Pending ones out,
 // marks one with no track Private, and refuses an id that isn't the account's.
 func TestStatsCard(t *testing.T) {
 	d := newDBTest(t)

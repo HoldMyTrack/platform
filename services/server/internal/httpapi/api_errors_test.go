@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md §1.5 (the JSON error shape).
+// Covers docs/SPEC.md §1.4 (the JSON error shape).
 
 import (
 	"encoding/json"
@@ -10,7 +10,7 @@ import (
 )
 
 // A failure with its own message key gets the key's name as its code; anything else, its
-// status's generic code (docs/SPEC.md §1.5).
+// status's generic code (docs/SPEC.md §1.4).
 func TestErrorCodes(t *testing.T) {
 	for _, tc := range []struct {
 		key    string

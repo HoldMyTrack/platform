@@ -19,7 +19,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 /**
- * Download your data (root `docs/SPEC.md` FR-1.12), from the Privacy screen: what the copy
+ * Download your data (root `docs/SPEC.md` FR-1.13), from the Privacy screen: what the copy
  * holds, the request, where it stands, and each finished archive saved to Downloads by
  * Android's DownloadManager. The Privacy screen offers it to a real account only.
  */

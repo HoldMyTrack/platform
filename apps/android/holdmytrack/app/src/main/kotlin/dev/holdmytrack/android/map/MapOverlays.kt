@@ -19,7 +19,7 @@ import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
 
 /**
- * The two mutually exclusive views `docs/SPEC.md` FR-4.4 names, one toggle. Fog hides the track
+ * The two mutually exclusive views `docs/SPEC.md` FR-4.3 names, one toggle. Fog hides the track
  * lines: the veil already shows where the user has been, and lines drawn on top of it read as noise.
  */
 enum class MapMode { NORMAL, FOG }
@@ -158,13 +158,13 @@ object MapOverlays {
     }
 
     /** Narrows the tracks to [story]'s activities, all of them, the tile's `story` filter
-     *  (`docs/SPEC.md` FR-14.4) with no Dates; or, with null, back to [dates]. */
+     *  (`docs/SPEC.md` FR-13.4) with no Dates; or, with null, back to [dates]. */
     fun setTrackStory(style: Style, story: String?, dates: DateFilter) {
         trackStory = story
         setTrackDates(style, dates)
     }
 
-    /** Past the area list's cap the map draws only the [listed] tracks (`docs/SPEC.md` FR-5.19),
+    /** Past the area list's cap the map draws only the [listed] tracks (`docs/SPEC.md` FR-5.11),
      *  the document's `capped` and `listed` vars. */
     fun setTrackCap(style: Style?, capped: Boolean, listed: List<String>) {
         MapLayers.update(style) {
@@ -258,7 +258,7 @@ object MapOverlays {
     }
 
     /** The query the app appends to the tracks tiles: an open Story whole, whatever Dates
-     *  (`docs/SPEC.md` FR-14.6), else Dates' ends, and the refresh counter. */
+     *  (`docs/SPEC.md` FR-13.6), else Dates' ends, and the refresh counter. */
     private fun trackQuery(dates: DateFilter): String = buildList {
         val story = trackStory
         if (story != null) {

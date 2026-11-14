@@ -30,7 +30,7 @@ data class SyncReport(
 )
 
 /**
- * Sends what the user ticked on the Sync tab (`docs/SPEC.md` FR-3.6, FR-3.8) to
+ * Sends what the user ticked on the Sync tab (`docs/SPEC.md` FR-3.4, FR-3.6) to
  * `POST /v1/sync/activities`, and nothing else: an unticked candidate never reaches the server.
  * Health Connect sessions go in batches under `healthconnect`; each recording in a request of its
  * own under `recorded`, kept on the phone until its ingest lands ([SyncProgress]).

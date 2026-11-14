@@ -94,7 +94,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const [trackMetricsVersion, setTrackMetricsVersion] = useState(0);
   const bumpMetrics = useCallback(() => setTrackMetricsVersion((v) => v + 1), []);
 
-  // The panel's tab lives here so `/?private-locations` (FR-8.1) and `/?story=` (FR-14.6) can open
+  // The panel's tab lives here so `/?private-locations` (FR-7.1) and `/?story=` (FR-13.6) can open
   // on it, and so it survives the panel unmounting in Fog.
   const [panelTab, setPanelTab] = useState<PanelTab>(() =>
     initialPanelTab(window.location.search, initialActivity !== null, initialPrivateLocationsOpen),

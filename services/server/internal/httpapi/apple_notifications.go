@@ -9,7 +9,7 @@ import (
 )
 
 // handleAppleNotifications serves `POST /v1/auth/apple/notifications` `{payload}` — Apple's
-// server-to-server notifications about Sign in with Apple (docs/SPEC.md FR-1.14), at the URL
+// server-to-server notifications about Sign in with Apple (docs/SPEC.md FR-1.11), at the URL
 // registered on the App ID. The payload is a JWT Apple signs with the keys it publishes. When
 // someone stops using Sign in with Apple here, or deletes their Apple ID, the link is removed
 // and the account's sessions end; the account stays, reachable through its email. Other events

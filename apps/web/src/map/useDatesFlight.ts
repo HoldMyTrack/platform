@@ -9,7 +9,7 @@ import type { DateFilter } from '../ui/dateFilter';
 
 /**
  * Setting Dates moves the camera once onto what they match, wherever it is (docs/SPEC.md
- * FR-5.20): asked for without an area, since the area holds only what's in view. The list then
+ * FR-5.12): asked for without an area, since the area holds only what's in view. The list then
  * follows the camera's new view. Nothing matched leaves the camera.
  */
 export function useDatesFlight(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, state: { flyRequest: boolean; storyId: string | null; dates: DateFilter }): void {

@@ -26,7 +26,7 @@ RULES = [
     (lambda p: True, re.compile(r"(^|[.:]\s+|^[-*]\s+)(This section|As noted above|As mentioned|It is worth noting|Note that)\b"),
      "meta-narration (AGENTS.md, Write tight): state the fact"),
     (lambda p: True, re.compile(r"\bselected\s+(activit|routes?\b|tracks?\b|rows?\b|ones?\b)|\b(activit\w*|routes?|tracks?|rows?)\s+((is|are)\s+)?selected\b", re.I),
-     'an activity is Focused or Checked, never "selected" (SPEC.md FR-5.15)'),
+     'an activity is Focused or Checked, never "selected" (SPEC.md FR-5.8)'),
     (lambda p: os.path.basename(p) == "SPEC.md", re.compile(r"`[^`\s]+\.(go|ts|tsx|kt|swift|html|sql|mjs|sh|css)`"),
      "a source file in a SPEC (AGENTS.md, One fact, one home): name the behavior, not the file"),
 ]

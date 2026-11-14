@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-4.16 (bike-path tiles).
+// Covers docs/SPEC.md FR-4.12 (bike-path tiles).
 
 import (
 	"bytes"
