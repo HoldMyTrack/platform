@@ -9,7 +9,7 @@ import type { PanelTab } from '../ActivitiesPanel';
 /** A first-time card: the feature's own explanation, shown once per browser. */
 export type CardId = 'fog' | 'stories';
 
-export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'export' | 'fog' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
+export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'export' | 'fog' | 'fog_cities' | 'fog_counties' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
 
 /**
  * Where a step puts the camera: `center` and `zoom`, then a slow turn of the globe through each
@@ -60,7 +60,11 @@ const DEMO_SIGNUP = '[data-demo-bar-start], body:not(:has([data-demo-bar-start])
  * the turn is under 180°, so it goes east.
  */
 export const DEMO_VIEWS = {
+  // Brecksville Reservation, the demo's densest tracks: exact coverage (zoom 11 up).
+  exact: { center: [-81.609, 41.315], zoom: 12 },
+  // Cleveland's towns (8 to 11), then northern Ohio's counties (6 to 8).
   city: { center: [-81.72, 41.42], zoom: 9 },
+  counties: { center: [-81.6, 41.2], zoom: 7 },
   // East of the middle: a phone's narrow view still holds Ohio, New York and Florida, a desktop's Arizona too.
   regions: { center: [-82, 36], zoom: 3.6 },
   countries: { center: [-5, 30], zoom: 1.3, flat: true },
@@ -69,8 +73,8 @@ export const DEMO_VIEWS = {
 
 /**
  * The tour's steps in order. The Normal-mode steps come first, so the panel is never torn down and
- * rebuilt in the middle. A demo's Fog is three steps, city, states and countries, flown to the
- * demo's history; a real account's map stays where it is. `narrow` is a phone's width
+ * rebuilt in the middle. A demo's Fog is a step per level, from exact coverage out to countries,
+ * flown to the demo's history; a real account's map stays where it is. `narrow` is a phone's width
  * (NARROW_WIDTH).
  */
 export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?: boolean }): TourStep[] {
@@ -87,7 +91,9 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
   });
   const fog = isDemo
     ? [
-        step('fog', MODES, { mode: 'fog', card: 'fog', text: 'tour.fog_city', view: DEMO_VIEWS.city }),
+        step('fog', MODES, { mode: 'fog', card: 'fog', text: 'tour.fog_exact', view: DEMO_VIEWS.exact }),
+        step('fog_cities', MODES, { mode: 'fog', view: DEMO_VIEWS.city }),
+        step('fog_counties', MODES, { mode: 'fog', view: DEMO_VIEWS.counties }),
         step('fog_regions', MODES, { mode: 'fog', view: DEMO_VIEWS.regions }),
         step('fog_countries', MODES, { mode: 'fog', view: narrow ? DEMO_VIEWS.countriesNarrow : DEMO_VIEWS.countries }),
       ]

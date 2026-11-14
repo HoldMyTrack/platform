@@ -211,7 +211,7 @@ The web's export (`docs/SPEC.md` FR-4.10) as a viewfinder over the map, not offe
 The web's tour (`docs/SPEC.md` FR-4.18) over the app's own screens, with its start, offer and card rules (`testdata/client-rules/tour-*.json`).
 
 - Its steps: the Activities sheet, Dates, Stories, Layers, export, Fog of War, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
-- In a demo session Fog takes three steps, at city, state and country level, with the camera over the demo's history, and the camera comes back when the tour ends.
+- In a demo session Fog takes a step per level, from exact coverage out to countries, with the camera over the demo's history, and the camera comes back when the tour ends.
 - What has been shown is kept by the phone, not the account.
 
 ## 5. FR-3 — Sync and Imports
