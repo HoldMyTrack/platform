@@ -22,9 +22,11 @@
         android:layout_height="match_parent"
         android:clipChildren="false" />
 
-    <!-- A spot's popup (map/SpotPopup) and a photo's (map/PhotoPopup): over the map, under all
-         of its chrome. -->
+    <!-- A spot's popup (map/SpotPopup), a Fog place's (map/FogPlaces) and a photo's
+         (map/PhotoPopup): over the map, under all of its chrome. -->
     <include layout="@layout/view_spot_popup" />
+
+    <include layout="@layout/view_fog_place_popup" />
 
     <include layout="@layout/view_photo_popup" />
 

@@ -175,7 +175,7 @@ class FogLevelMenu(
          * else the generic name — the web's `levelLabelKey`; null for a level this build doesn't know.
          */
         fun levelLabel(level: String, word: String?): Int? {
-            if ((level == "region" || level == "county") && word != null) WORDS[word]?.let { return it }
+            if ((level == "region" || level == "county") && word != null) FogWords.type(word)?.let { return it }
             return when (level) {
                 "country" -> R.string.fog_level_country
                 "region" -> R.string.fog_level_region
@@ -185,55 +185,5 @@ class FogLevelMenu(
                 else -> null
             }
         }
-
-        /** The words a level can be named with, as the web's `map.fog.type.*`. */
-        private val WORDS: Map<String, Int> = mapOf(
-        "allotments" to R.string.fog_type_allotments,
-        "archipelago" to R.string.fog_type_archipelago,
-        "area" to R.string.fog_type_area,
-        "atoll" to R.string.fog_type_atoll,
-        "canton" to R.string.fog_type_canton,
-        "cercle" to R.string.fog_type_cercle,
-        "city" to R.string.fog_type_city,
-        "civil_parish" to R.string.fog_type_civil_parish,
-        "commune" to R.string.fog_type_commune,
-        "community" to R.string.fog_type_community,
-        "constituency" to R.string.fog_type_constituency,
-        "council" to R.string.fog_type_council,
-        "country" to R.string.fog_type_country,
-        "county" to R.string.fog_type_county,
-        "department" to R.string.fog_type_department,
-        "district" to R.string.fog_type_district,
-        "division" to R.string.fog_type_division,
-        "emirate" to R.string.fog_type_emirate,
-        "entity" to R.string.fog_type_entity,
-        "federal subject" to R.string.fog_type_federal_subject,
-        "governorate" to R.string.fog_type_governorate,
-        "hamlet" to R.string.fog_type_hamlet,
-        "industrial" to R.string.fog_type_industrial,
-        "island" to R.string.fog_type_island,
-        "islet" to R.string.fog_type_islet,
-        "isolated_dwelling" to R.string.fog_type_isolated_dwelling,
-        "locality" to R.string.fog_type_locality,
-        "municipal_federation" to R.string.fog_type_municipal_federation,
-        "municipality" to R.string.fog_type_municipality,
-        "parish" to R.string.fog_type_parish,
-        "prefecture" to R.string.fog_type_prefecture,
-        "province" to R.string.fog_type_province,
-        "regency" to R.string.fog_type_regency,
-        "region" to R.string.fog_type_region,
-        "sector" to R.string.fog_type_sector,
-        "state" to R.string.fog_type_state,
-        "subcounty" to R.string.fog_type_subcounty,
-        "subdistrict" to R.string.fog_type_subdistrict,
-        "subprefecture" to R.string.fog_type_subprefecture,
-        "subregion" to R.string.fog_type_subregion,
-        "suburb" to R.string.fog_type_suburb,
-        "territory" to R.string.fog_type_territory,
-        "town" to R.string.fog_type_town,
-        "township" to R.string.fog_type_township,
-        "village" to R.string.fog_type_village,
-        "zone" to R.string.fog_type_zone
-        )
     }
 }

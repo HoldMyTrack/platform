@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The outline a tap picked in Fog (map/FogPlaces, docs/SPEC.md FR-4.2), the web's
+     .fog-place-tip: its name, its kind and the places it lies in, and whether it's explored with
+     how many of each level below it are. Placed over the tap by FogPlaces. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/fog_place_popup"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="top|start"
+    android:background="@drawable/bg_spot_popup"
+    android:clickable="true"
+    android:elevation="6dp"
+    android:focusable="false"
+    android:maxWidth="272dp"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/hmt_space_12"
+    android:paddingTop="@dimen/hmt_space_8"
+    android:paddingEnd="@dimen/hmt_space_12"
+    android:paddingBottom="@dimen/hmt_space_8"
+    android:visibility="gone">
+
+    <TextView
+        android:id="@+id/fog_place_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="248dp"
+        android:textColor="@color/hmt_ink"
+        android:textSize="@dimen/hmt_text_md"
+        android:textStyle="bold"
+        tools:text="Parma" />
+
+    <TextView
+        android:id="@+id/fog_place_detail"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="248dp"
+        android:textColor="@color/hmt_ink_secondary"
+        android:textSize="@dimen/hmt_text_sm"
+        tools:text="City · Cuyahoga County, Ohio" />
+
+    <TextView
+        android:id="@+id/fog_place_state"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:maxWidth="248dp"
+        android:textColor="@color/hmt_ink_secondary"
+        android:textSize="@dimen/hmt_text_sm"
+        tools:text="Explored" />
+</LinearLayout>

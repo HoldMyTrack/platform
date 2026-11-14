@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import dev.holdmytrack.android.export.ExportController
+import dev.holdmytrack.android.map.FogPlaces
 import dev.holdmytrack.android.map.BasemapStatus
 import dev.holdmytrack.android.map.BasemapWatch
 import dev.holdmytrack.android.map.BoxUnion
@@ -84,6 +85,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     private lateinit var mapView: MapView
     private lateinit var topChrome: View
+    private lateinit var fogPlaces: FogPlaces
     /** The notice under the top row. */
     private lateinit var notices: NoticePanel
 
@@ -298,6 +300,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         }
         layers.bind(view)
         spots.bind(view) { topChrome.bottom }
+        fogPlaces = FogPlaces(view.findViewById(R.id.fog_place_popup)) { topChrome.bottom }
         photos.bind(view) { topChrome.bottom }
         recording.bind(view)
 
@@ -496,8 +499,11 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             instance.addOnCameraIdleListener { spots.onCameraIdle() }
             // The list follows the map (AreaController).
             instance.addOnCameraIdleListener { if (::area.isInitialized) area.onCameraIdle() }
-            // Fog's button names the level in view as the zoom changes.
-            instance.addOnCameraMoveListener { modes.renderFogLevel() }
+            // Fog's button names the level in view as the zoom changes; a picked place's popup follows.
+            instance.addOnCameraMoveListener {
+                modes.renderFogLevel()
+                fogPlaces.onCameraMove()
+            }
             loadStyle()
         }
     }
@@ -689,10 +695,18 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         if (export.isOpen) return true
         // A spot's badge first, in every mode, unless an editor has the map; a tap elsewhere
         // closes its popup.
-        if (!edit.privacy.isShowing && !editWindow.isOpen && spots.tap(instance, point)) return true
+        if (!edit.privacy.isShowing && !editWindow.isOpen && spots.tap(instance, point)) {
+            fogPlaces.close()
+            return true
+        }
         // The Sync tab's lines: one tapped is picked out on its list.
         if (::panel.isInitialized && panel.tab == PanelTab.SYNC && sheet.isVisible) {
             syncCandidates.keyAt(instance, point, resources.displayMetrics.density)?.let(panel.syncTab::focus)
+            return true
+        }
+        // In Fog, the outline tapped is named; a tap off every outline closes it.
+        if (mode == MapMode.FOG) {
+            style?.takeIf { overlaysAttached }?.let { fogPlaces.tap(instance, it, point) }
             return true
         }
         if (!normalMode()) return false
@@ -758,6 +772,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     private fun setMode(next: MapMode) {
         mode = next
+        if (next != MapMode.FOG) fogPlaces.close()
         modes.check(next)
         style?.takeIf { overlaysAttached }?.let { MapOverlays.setMode(it, next) }
         modes.renderNotices()

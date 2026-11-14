@@ -801,4 +801,287 @@
     <string name="fog_type_township">Тауншип</string>
     <string name="fog_type_village">Деревня</string>
     <string name="fog_type_zone">Зона</string>
+    <!-- Fog's place popup (map/FogPlaces), the web's map.fog.place.* and map.fog.count.* -->
+    <string name="fog_place_city">Город</string>
+    <string name="fog_place_country">Страна</string>
+    <string name="fog_place_county">Округ</string>
+    <string name="fog_place_region">Регион</string>
+    <string name="fog_place_unvisited">Ещё не исследовано</string>
+    <string name="fog_place_visited">Исследовано</string>
+    <plurals name="fog_count_allotments">
+        <item quantity="one">%1$s из %2$s садового участка</item>
+        <item quantity="few">%1$s из %2$s садовых участков</item>
+        <item quantity="many">%1$s из %2$s садовых участков</item>
+        <item quantity="other">%1$s из %2$s садового участка</item>
+    </plurals>
+    <plurals name="fog_count_archipelago">
+        <item quantity="one">%1$s из %2$s архипелага</item>
+        <item quantity="few">%1$s из %2$s архипелагов</item>
+        <item quantity="many">%1$s из %2$s архипелагов</item>
+        <item quantity="other">%1$s из %2$s архипелага</item>
+    </plurals>
+    <plurals name="fog_count_area">
+        <item quantity="one">%1$s из %2$s территории</item>
+        <item quantity="few">%1$s из %2$s территорий</item>
+        <item quantity="many">%1$s из %2$s территорий</item>
+        <item quantity="other">%1$s из %2$s территории</item>
+    </plurals>
+    <plurals name="fog_count_atoll">
+        <item quantity="one">%1$s из %2$s атолла</item>
+        <item quantity="few">%1$s из %2$s атоллов</item>
+        <item quantity="many">%1$s из %2$s атоллов</item>
+        <item quantity="other">%1$s из %2$s атолла</item>
+    </plurals>
+    <plurals name="fog_count_canton">
+        <item quantity="one">%1$s из %2$s кантона</item>
+        <item quantity="few">%1$s из %2$s кантонов</item>
+        <item quantity="many">%1$s из %2$s кантонов</item>
+        <item quantity="other">%1$s из %2$s кантона</item>
+    </plurals>
+    <plurals name="fog_count_cercle">
+        <item quantity="one">%1$s из %2$s округа</item>
+        <item quantity="few">%1$s из %2$s округов</item>
+        <item quantity="many">%1$s из %2$s округов</item>
+        <item quantity="other">%1$s из %2$s округа</item>
+    </plurals>
+    <plurals name="fog_count_city">
+        <item quantity="one">%1$s из %2$s города</item>
+        <item quantity="few">%1$s из %2$s городов</item>
+        <item quantity="many">%1$s из %2$s городов</item>
+        <item quantity="other">%1$s из %2$s города</item>
+    </plurals>
+    <plurals name="fog_count_civil_parish">
+        <item quantity="one">%1$s из %2$s гражданского прихода</item>
+        <item quantity="few">%1$s из %2$s гражданских приходов</item>
+        <item quantity="many">%1$s из %2$s гражданских приходов</item>
+        <item quantity="other">%1$s из %2$s гражданского прихода</item>
+    </plurals>
+    <plurals name="fog_count_commune">
+        <item quantity="one">%1$s из %2$s коммуны</item>
+        <item quantity="few">%1$s из %2$s коммун</item>
+        <item quantity="many">%1$s из %2$s коммун</item>
+        <item quantity="other">%1$s из %2$s коммуны</item>
+    </plurals>
+    <plurals name="fog_count_community">
+        <item quantity="one">%1$s из %2$s общины</item>
+        <item quantity="few">%1$s из %2$s общин</item>
+        <item quantity="many">%1$s из %2$s общин</item>
+        <item quantity="other">%1$s из %2$s общины</item>
+    </plurals>
+    <plurals name="fog_count_constituency">
+        <item quantity="one">%1$s из %2$s избирательного округа</item>
+        <item quantity="few">%1$s из %2$s избирательных округов</item>
+        <item quantity="many">%1$s из %2$s избирательных округов</item>
+        <item quantity="other">%1$s из %2$s избирательного округа</item>
+    </plurals>
+    <plurals name="fog_count_council">
+        <item quantity="one">%1$s из %2$s округа совета</item>
+        <item quantity="few">%1$s из %2$s округов совета</item>
+        <item quantity="many">%1$s из %2$s округов совета</item>
+        <item quantity="other">%1$s из %2$s округа совета</item>
+    </plurals>
+    <plurals name="fog_count_country">
+        <item quantity="one">%1$s из %2$s страны</item>
+        <item quantity="few">%1$s из %2$s стран</item>
+        <item quantity="many">%1$s из %2$s стран</item>
+        <item quantity="other">%1$s из %2$s страны</item>
+    </plurals>
+    <plurals name="fog_count_county">
+        <item quantity="one">%1$s из %2$s округа</item>
+        <item quantity="few">%1$s из %2$s округов</item>
+        <item quantity="many">%1$s из %2$s округов</item>
+        <item quantity="other">%1$s из %2$s округа</item>
+    </plurals>
+    <plurals name="fog_count_department">
+        <item quantity="one">%1$s из %2$s департамента</item>
+        <item quantity="few">%1$s из %2$s департаментов</item>
+        <item quantity="many">%1$s из %2$s департаментов</item>
+        <item quantity="other">%1$s из %2$s департамента</item>
+    </plurals>
+    <plurals name="fog_count_district">
+        <item quantity="one">%1$s из %2$s района</item>
+        <item quantity="few">%1$s из %2$s районов</item>
+        <item quantity="many">%1$s из %2$s районов</item>
+        <item quantity="other">%1$s из %2$s района</item>
+    </plurals>
+    <plurals name="fog_count_division">
+        <item quantity="one">%1$s из %2$s административного округа</item>
+        <item quantity="few">%1$s из %2$s административных округов</item>
+        <item quantity="many">%1$s из %2$s административных округов</item>
+        <item quantity="other">%1$s из %2$s административного округа</item>
+    </plurals>
+    <plurals name="fog_count_emirate">
+        <item quantity="one">%1$s из %2$s эмирата</item>
+        <item quantity="few">%1$s из %2$s эмиратов</item>
+        <item quantity="many">%1$s из %2$s эмиратов</item>
+        <item quantity="other">%1$s из %2$s эмирата</item>
+    </plurals>
+    <plurals name="fog_count_entity">
+        <item quantity="one">%1$s из %2$s энтитета</item>
+        <item quantity="few">%1$s из %2$s энтитетов</item>
+        <item quantity="many">%1$s из %2$s энтитетов</item>
+        <item quantity="other">%1$s из %2$s энтитета</item>
+    </plurals>
+    <plurals name="fog_count_federal_subject">
+        <item quantity="one">%1$s из %2$s субъекта федерации</item>
+        <item quantity="few">%1$s из %2$s субъектов федерации</item>
+        <item quantity="many">%1$s из %2$s субъектов федерации</item>
+        <item quantity="other">%1$s из %2$s субъекта федерации</item>
+    </plurals>
+    <plurals name="fog_count_governorate">
+        <item quantity="one">%1$s из %2$s мухафазы</item>
+        <item quantity="few">%1$s из %2$s мухафаз</item>
+        <item quantity="many">%1$s из %2$s мухафаз</item>
+        <item quantity="other">%1$s из %2$s мухафазы</item>
+    </plurals>
+    <plurals name="fog_count_hamlet">
+        <item quantity="one">%1$s из %2$s хутора</item>
+        <item quantity="few">%1$s из %2$s хуторов</item>
+        <item quantity="many">%1$s из %2$s хуторов</item>
+        <item quantity="other">%1$s из %2$s хутора</item>
+    </plurals>
+    <plurals name="fog_count_industrial">
+        <item quantity="one">%1$s из %2$s промышленной зоны</item>
+        <item quantity="few">%1$s из %2$s промышленных зон</item>
+        <item quantity="many">%1$s из %2$s промышленных зон</item>
+        <item quantity="other">%1$s из %2$s промышленной зоны</item>
+    </plurals>
+    <plurals name="fog_count_island">
+        <item quantity="one">%1$s из %2$s острова</item>
+        <item quantity="few">%1$s из %2$s островов</item>
+        <item quantity="many">%1$s из %2$s островов</item>
+        <item quantity="other">%1$s из %2$s острова</item>
+    </plurals>
+    <plurals name="fog_count_islet">
+        <item quantity="one">%1$s из %2$s островка</item>
+        <item quantity="few">%1$s из %2$s островков</item>
+        <item quantity="many">%1$s из %2$s островков</item>
+        <item quantity="other">%1$s из %2$s островка</item>
+    </plurals>
+    <plurals name="fog_count_isolated_dwelling">
+        <item quantity="one">%1$s из %2$s отдельного жилья</item>
+        <item quantity="few">%1$s из %2$s отдельных жилищ</item>
+        <item quantity="many">%1$s из %2$s отдельных жилищ</item>
+        <item quantity="other">%1$s из %2$s отдельного жилья</item>
+    </plurals>
+    <plurals name="fog_count_locality">
+        <item quantity="one">%1$s из %2$s населённого пункта</item>
+        <item quantity="few">%1$s из %2$s населённых пунктов</item>
+        <item quantity="many">%1$s из %2$s населённых пунктов</item>
+        <item quantity="other">%1$s из %2$s населённого пункта</item>
+    </plurals>
+    <plurals name="fog_count_municipal_federation">
+        <item quantity="one">%1$s из %2$s муниципальной федерации</item>
+        <item quantity="few">%1$s из %2$s муниципальных федераций</item>
+        <item quantity="many">%1$s из %2$s муниципальных федераций</item>
+        <item quantity="other">%1$s из %2$s муниципальной федерации</item>
+    </plurals>
+    <plurals name="fog_count_municipality">
+        <item quantity="one">%1$s из %2$s муниципалитета</item>
+        <item quantity="few">%1$s из %2$s муниципалитетов</item>
+        <item quantity="many">%1$s из %2$s муниципалитетов</item>
+        <item quantity="other">%1$s из %2$s муниципалитета</item>
+    </plurals>
+    <plurals name="fog_count_parish">
+        <item quantity="one">%1$s из %2$s прихода</item>
+        <item quantity="few">%1$s из %2$s приходов</item>
+        <item quantity="many">%1$s из %2$s приходов</item>
+        <item quantity="other">%1$s из %2$s прихода</item>
+    </plurals>
+    <plurals name="fog_count_prefecture">
+        <item quantity="one">%1$s из %2$s префектуры</item>
+        <item quantity="few">%1$s из %2$s префектур</item>
+        <item quantity="many">%1$s из %2$s префектур</item>
+        <item quantity="other">%1$s из %2$s префектуры</item>
+    </plurals>
+    <plurals name="fog_count_province">
+        <item quantity="one">%1$s из %2$s провинции</item>
+        <item quantity="few">%1$s из %2$s провинций</item>
+        <item quantity="many">%1$s из %2$s провинций</item>
+        <item quantity="other">%1$s из %2$s провинции</item>
+    </plurals>
+    <plurals name="fog_count_regency">
+        <item quantity="one">%1$s из %2$s округа</item>
+        <item quantity="few">%1$s из %2$s округов</item>
+        <item quantity="many">%1$s из %2$s округов</item>
+        <item quantity="other">%1$s из %2$s округа</item>
+    </plurals>
+    <plurals name="fog_count_region">
+        <item quantity="one">%1$s из %2$s региона</item>
+        <item quantity="few">%1$s из %2$s регионов</item>
+        <item quantity="many">%1$s из %2$s регионов</item>
+        <item quantity="other">%1$s из %2$s региона</item>
+    </plurals>
+    <plurals name="fog_count_sector">
+        <item quantity="one">%1$s из %2$s сектора</item>
+        <item quantity="few">%1$s из %2$s секторов</item>
+        <item quantity="many">%1$s из %2$s секторов</item>
+        <item quantity="other">%1$s из %2$s сектора</item>
+    </plurals>
+    <plurals name="fog_count_state">
+        <item quantity="one">%1$s из %2$s штата</item>
+        <item quantity="few">%1$s из %2$s штатов</item>
+        <item quantity="many">%1$s из %2$s штатов</item>
+        <item quantity="other">%1$s из %2$s штата</item>
+    </plurals>
+    <plurals name="fog_count_subcounty">
+        <item quantity="one">%1$s из %2$s подокруга</item>
+        <item quantity="few">%1$s из %2$s подокругов</item>
+        <item quantity="many">%1$s из %2$s подокругов</item>
+        <item quantity="other">%1$s из %2$s подокруга</item>
+    </plurals>
+    <plurals name="fog_count_subdistrict">
+        <item quantity="one">%1$s из %2$s подрайона</item>
+        <item quantity="few">%1$s из %2$s подрайонов</item>
+        <item quantity="many">%1$s из %2$s подрайонов</item>
+        <item quantity="other">%1$s из %2$s подрайона</item>
+    </plurals>
+    <plurals name="fog_count_subprefecture">
+        <item quantity="one">%1$s из %2$s субпрефектуры</item>
+        <item quantity="few">%1$s из %2$s субпрефектур</item>
+        <item quantity="many">%1$s из %2$s субпрефектур</item>
+        <item quantity="other">%1$s из %2$s субпрефектуры</item>
+    </plurals>
+    <plurals name="fog_count_subregion">
+        <item quantity="one">%1$s из %2$s субрегиона</item>
+        <item quantity="few">%1$s из %2$s субрегионов</item>
+        <item quantity="many">%1$s из %2$s субрегионов</item>
+        <item quantity="other">%1$s из %2$s субрегиона</item>
+    </plurals>
+    <plurals name="fog_count_suburb">
+        <item quantity="one">%1$s из %2$s пригорода</item>
+        <item quantity="few">%1$s из %2$s пригородов</item>
+        <item quantity="many">%1$s из %2$s пригородов</item>
+        <item quantity="other">%1$s из %2$s пригорода</item>
+    </plurals>
+    <plurals name="fog_count_territory">
+        <item quantity="one">%1$s из %2$s территории</item>
+        <item quantity="few">%1$s из %2$s территорий</item>
+        <item quantity="many">%1$s из %2$s территорий</item>
+        <item quantity="other">%1$s из %2$s территории</item>
+    </plurals>
+    <plurals name="fog_count_town">
+        <item quantity="one">%1$s из %2$s городка</item>
+        <item quantity="few">%1$s из %2$s городков</item>
+        <item quantity="many">%1$s из %2$s городков</item>
+        <item quantity="other">%1$s из %2$s городка</item>
+    </plurals>
+    <plurals name="fog_count_township">
+        <item quantity="one">%1$s из %2$s тауншипа</item>
+        <item quantity="few">%1$s из %2$s тауншипов</item>
+        <item quantity="many">%1$s из %2$s тауншипов</item>
+        <item quantity="other">%1$s из %2$s тауншипа</item>
+    </plurals>
+    <plurals name="fog_count_village">
+        <item quantity="one">%1$s из %2$s деревни</item>
+        <item quantity="few">%1$s из %2$s деревень</item>
+        <item quantity="many">%1$s из %2$s деревень</item>
+        <item quantity="other">%1$s из %2$s деревни</item>
+    </plurals>
+    <plurals name="fog_count_zone">
+        <item quantity="one">%1$s из %2$s зоны</item>
+        <item quantity="few">%1$s из %2$s зон</item>
+        <item quantity="many">%1$s из %2$s зон</item>
+        <item quantity="other">%1$s из %2$s зоны</item>
+    </plurals>
 </resources>
