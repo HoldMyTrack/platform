@@ -6,5 +6,5 @@
 {"name": "phone-05-spots", "raw": "raw/phone-05-spots.png", "callouts": [{"x": 40, "y": 1050, "w": 440, "title": "Places worth a visit", "body": "Playgrounds, viewpoints and monuments from OpenStreetMap.", "to": [226, 620]}, {"x": 560, "y": 1050, "w": 480, "title": "Capture them", "body": "Get there and the place is marked as yours.", "to": [622, 842]}]},
 {"name": "phone-06-edit", "raw": "raw/phone-06-edit.png", "callouts": [{"x": 580, "y": 600, "w": 460, "title": "Fix a track in seconds", "body": "Move or delete a stray GPS point, or chop off the drive home.", "to": [478, 705]}]},
 {"name": "phone-07-you", "raw": "raw/phone-07-you.png", "callouts": [{"x": 430, "y": 110, "w": 610, "title": "Your numbers at a glance", "body": "Activities, distance, active days, and every setting in one place.", "to": [850, 690]}]},
-{"name": "phone-08-profile", "raw": "raw/phone-08-profile.png", "callouts": [{"x": 400, "y": 1080, "w": 640, "title": "Watch your year take shape", "body": "Every active day on one graph, with distance and time trends.", "to": [713, 663]}]}
+{"name": "phone-08-profile", "raw": "raw/phone-08-profile.png", "callouts": [{"x": 440, "y": 716, "w": 600, "title": "Every place you've been", "body": "From countries down to towns.", "to": [240, 866]}]}
 ]
