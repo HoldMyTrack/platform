@@ -21,8 +21,9 @@
     android:paddingBottom="@dimen/hmt_space_8"
     android:visibility="gone">
 
+    <!-- As wide as the popup, the close button at its end. -->
     <LinearLayout
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
@@ -36,6 +37,11 @@
             android:textSize="@dimen/hmt_text_md"
             android:textStyle="bold"
             tools:text="Parma" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
 
         <Button
             android:id="@+id/fog_place_close"
