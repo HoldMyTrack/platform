@@ -52,7 +52,6 @@
 
     <string name="mode_normal">Обычный</string>
     <string name="mode_fog">Туман</string>
-    <string name="mode_chip_fog">Все занятия, за всё время</string>
     <string name="coverage_updating">Карта ещё обновляется, поэтому Туман пока может быть неполным. Он обновится сам.</string>
     <string name="layers_button">Слои</string>
     <string name="layers_master">Показывать слои</string>
@@ -802,6 +801,7 @@
     <string name="fog_type_village">Деревня</string>
     <string name="fog_type_zone">Зона</string>
     <!-- Fog's place popup (map/FogPlaces), the web's map.fog.place.* and map.fog.count.* -->
+    <string name="fog_place_close">Закрыть</string>
     <string name="fog_place_city">Город</string>
     <string name="fog_place_country">Страна</string>
     <string name="fog_place_county">Округ</string>

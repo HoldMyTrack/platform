@@ -522,19 +522,6 @@
          Edit window would be. -->
     <include layout="@layout/include_private_location_editor" />
 
-    <!-- Fog ignores the date range, so with the panel gone a chip at the bottom says what it
-         shows instead: every activity (map/ModeBar.renderChip).
-         Centred, clear of MapLibre's logo and attribution at the start, and of the record button
-         raised out of the bottom bar below it. -->
-    <TextView
-        android:id="@+id/mode_chip"
-        style="@style/Widget.HoldMyTrack.ModeChip"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|center_horizontal"
-        android:layout_marginBottom="@dimen/hmt_space_32"
-        android:visibility="gone" />
-
     <!-- The Activities sheet, Normal mode's alone, at the bottom of the map
          (include_activities_sheet, panel/ActivitiesPanel). -->
     <include layout="@layout/include_activities_sheet" />

@@ -19,8 +19,8 @@ import java.text.NumberFormat
  * draws a hovered one (the layers document's picked layers, through its [VAR] var, since MapLibre
  * Native has no feature-state to set), and a popup over the tap names it ([FogPlaceLabel]): what
  * it is, where, whether it's explored, and of each level below it how many of its places are
- * (`docs/SPEC.md` FR-4.2). A tap off every outline, a change of level or leaving Fog closes it;
- * it follows the map while open, as a spot's popup does.
+ * (`docs/SPEC.md` FR-4.2). Its close button, a tap off every outline, a change of level or
+ * leaving Fog closes it; it follows the map while open, as a spot's popup does.
  */
 class FogPlaces(
     private val view: View,
@@ -39,6 +39,7 @@ class FogPlaces(
     private var level: String? = null
 
     init {
+        view.findViewById<View>(R.id.fog_place_close).setOnClickListener { close() }
         view.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
             if (bottom - top != oldBottom - oldTop) place()
         }

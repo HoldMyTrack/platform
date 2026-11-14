@@ -293,7 +293,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 recording = isRecording(),
                 editOpen = ::edit.isInitialized && editWindow.isOpen,
                 selectionShown = ::sheetChrome.isInitialized && sheetChrome.selectionShown(),
-                exportOpen = ::export.isInitialized && export.isOpen,
                 coverageRendering = coverage.rendering,
                 tab = if (::panel.isInitialized) panel.tab else PanelTab.ACTIVITIES,
             )
@@ -318,7 +317,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             storyId = { storyId },
             chrome = listOf(topChrome, sheet),
             onShown = { shown ->
-                modes.renderChip()
                 renderBottomBar()
                 // In sight, as they're in the image, but a tap on one goes to the map.
                 photos.setMarkersInteractive(!shown)
@@ -744,7 +742,6 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         renderModeBar()
         locate.setShown(!active)
         export.setAvailable(!active)
-        modes.renderChip()
         renderSheet()
         notices.render()
         // The live line had the camera: the list asks about wherever it's left.

@@ -51,7 +51,6 @@
 
     <string name="mode_normal">Normal</string>
     <string name="mode_fog">Fog</string>
-    <string name="mode_chip_fog">Every activity, any date</string>
     <string name="coverage_updating">Your map is still being updated, so Fog may be incomplete for now. It\'ll refresh on its own.</string>
     <string name="layers_button">Layers</string>
     <string name="layers_master">Show layers</string>
@@ -770,6 +769,7 @@
     <string name="fog_type_village">Village</string>
     <string name="fog_type_zone">Zone</string>
     <!-- Fog's place popup (map/FogPlaces), the web's map.fog.place.* and map.fog.count.* -->
+    <string name="fog_place_close">Close</string>
     <string name="fog_place_city">City</string>
     <string name="fog_place_country">Country</string>
     <string name="fog_place_county">County</string>
