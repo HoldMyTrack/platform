@@ -120,35 +120,58 @@ func (s *Server) handleResetPassword(w http.ResponseWriter, r *http.Request) {
 }
 
 // resetPassword is the reset core (the JSON endpoint and the /reset page): sets the new
-// password and returns the account id, for the caller to start the fresh session.
+// password and returns the account id, for the caller to start the fresh session. One
+// transaction, so a reset that can't end the old ways in changes nothing.
 func (s *Server) resetPassword(ctx context.Context, token, password string) (string, error) {
 	if err := checkPasswordLength(password); err != nil {
 		return "", err
 	}
+	// The token is checked before the hash, so a guessed one costs no bcrypt, and again under
+	// the lock below.
+	var live bool
+	if err := s.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM password_resets WHERE token_hash = $1 AND expires_at > NOW())`, tokenHash(token)).Scan(&live); err != nil {
+		return "", err
+	}
+	if !live {
+		return "", accountFailure(http.StatusBadRequest, "error.reset_link_invalid")
+	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return "", err
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
+
 	var userID string
-	err := s.pool.QueryRow(ctx,
-		`SELECT user_id FROM password_resets WHERE token_hash = $1 AND expires_at > NOW()`, tokenHash(token),
-	).Scan(&userID)
+	var verified bool
+	err = tx.QueryRow(ctx, `
+		SELECT r.user_id, u.email_verified FROM password_resets r JOIN users u ON u.id = r.user_id
+		WHERE r.token_hash = $1 AND r.expires_at > NOW()
+		FOR UPDATE OF u
+	`, tokenHash(token)).Scan(&userID, &verified)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", accountFailure(http.StatusBadRequest, "error.reset_link_invalid")
 	}
 	if err != nil {
 		return "", err
 	}
-	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-	if err != nil {
+	// A reset proves who holds the mailbox. An unverified account's Facebook link proves
+	// nothing about the address, so whoever linked it loses it (ADR-0009).
+	if !verified {
+		if _, err := tx.Exec(ctx, `DELETE FROM user_identities WHERE user_id = $1 AND provider = 'facebook'`, userID); err != nil {
+			return "", err
+		}
+	}
+	if _, err := tx.Exec(ctx, `UPDATE users SET password_hash = $2 WHERE id = $1`, userID, hash); err != nil {
 		return "", err
 	}
-	if _, err := s.pool.Exec(ctx, `UPDATE users SET password_hash = $2 WHERE id = $1`, userID, hash); err != nil {
+	if err := endSignIns(ctx, tx, userID); err != nil {
 		return "", err
 	}
-	if _, err := s.pool.Exec(ctx, `DELETE FROM password_resets WHERE user_id = $1`, userID); err != nil {
-		s.log.Error("reset token cleanup failed", "err", err)
-	}
-	if _, err := s.pool.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1`, userID); err != nil {
-		s.log.Error("session cleanup failed", "err", err)
-	}
-	return userID, nil
+	return userID, tx.Commit(ctx)
 }
 
 // forgotPasswordLimiter mirrors demoLimiter — 5 requests per hour per address is generous for
@@ -188,6 +211,11 @@ func (s *Server) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	s.writeSession(w, r, userID, sessionTTL, http.StatusOK)
 }
 
+// errVerifyNeedsFacebook refuses a first verification of a Facebook-linked account from a
+// browser not signed in to it: the /verify page answers with a Continue with Facebook that
+// returns to the link.
+var errVerifyNeedsFacebook = accountFailure(http.StatusForbidden, "error.verify_needs_facebook")
+
 // verifyEmail is the verification core (the JSON endpoint and the /verify page): confirms the
 // address the token was sent to, makes it the account's own if it was a pending change, and
 // returns the account id and whether the caller may start a session for it.
@@ -199,8 +227,11 @@ func (s *Server) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 // An account's first verification proves who owns the address, not who chose the password:
 // anyone can sign up with someone else's email (SPEC FR-1.8). So it ends every session but the
 // one the request carries (sessionID, the browser's own), and signs in only a browser already
-// signed in to the account; anyone else signs in with the password, or resets it. Confirming a
-// changed address of a verified account signs in as before.
+// signed in to the account; anyone else signs in with the password, or resets it. A
+// Facebook-made account has no password, and its Facebook link was never vouched for by the
+// address, so only a browser signed in to it verifies it: anywhere else gets
+// errVerifyNeedsFacebook and the token stays usable (ADR-0009). Confirming a changed address of
+// a verified account signs in as before.
 func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (string, bool, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -222,6 +253,22 @@ func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (stri
 	if err != nil {
 		return "", false, err
 	}
+	signIn := wasVerified
+	mine := tokenHash(sessionID)
+	if !wasVerified {
+		var facebook bool
+		if err := tx.QueryRow(ctx, `
+			SELECT EXISTS (SELECT 1 FROM sessions WHERE user_id = $1 AND token_hash = $2 AND expires_at > NOW()),
+			       EXISTS (SELECT 1 FROM user_identities WHERE user_id = $1 AND provider = 'facebook')
+		`, userID, mine).Scan(&signIn, &facebook); err != nil {
+			return "", false, err
+		}
+		// The mailbox's owner may not be whoever linked Facebook, so a Facebook-linked account is
+		// verified only by a browser signed in to it. The link stays usable for that.
+		if facebook && !signIn {
+			return "", false, errVerifyNeedsFacebook
+		}
+	}
 	if _, err := tx.Exec(ctx, `UPDATE users SET email = $2, email_verified = true WHERE id = $1`, userID, email); err != nil {
 		if isUniqueViolation(err) {
 			// Another account took the address while this change was pending.
@@ -241,15 +288,11 @@ func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (stri
 			return "", false, err
 		}
 	}
-	signIn := wasVerified
 	if !wasVerified {
-		mine := tokenHash(sessionID)
-		if err := tx.QueryRow(ctx, `
-			SELECT EXISTS (SELECT 1 FROM sessions WHERE user_id = $1 AND token_hash = $2 AND expires_at > NOW())
-		`, userID, mine).Scan(&signIn); err != nil {
+		if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2`, userID, mine); err != nil {
 			return "", false, err
 		}
-		if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2`, userID, mine); err != nil {
+		if _, err := tx.Exec(ctx, `DELETE FROM auth_handoffs WHERE user_id = $1`, userID); err != nil {
 			return "", false, err
 		}
 	}

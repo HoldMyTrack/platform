@@ -85,7 +85,7 @@ func (s *Server) handleGoogleStart(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "not found", http.StatusNotFound)
 		return
 	}
-	state, verifier, ok := s.beginOAuth(w, r, googleCookiePath, true)
+	state, verifier, ok := s.beginOAuth(w, r, googleCookiePath, true, "")
 	if !ok {
 		return
 	}
