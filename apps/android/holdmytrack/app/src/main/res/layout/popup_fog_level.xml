@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fog's level menu (map/FogLevelMenu), the web's FogLevelMenu panel: Auto, then each level of
+     the layers document with how many of its places the account has explored, one picked. -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="224dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_panel_popup"
+    android:elevation="8dp">
+
+    <LinearLayout
+        android:id="@+id/fog_level_rows"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/hmt_space_8">
+
+        <TextView
+            style="@style/Widget.HoldMyTrack.LayersLegend"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/fog_level" />
+    </LinearLayout>
+</ScrollView>

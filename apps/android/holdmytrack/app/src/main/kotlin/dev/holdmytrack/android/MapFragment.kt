@@ -57,6 +57,7 @@ import dev.holdmytrack.android.sync.SyncCandidatesController
 import dev.holdmytrack.android.sync.SyncProgress
 import dev.holdmytrack.android.tour.TourEvent
 import org.maplibre.android.camera.CameraPosition
+import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
@@ -270,10 +271,20 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onSync = { ::panel.isInitialized && panel.tab == PanelTab.SYNC },
         )
         gate = SessionGate(this, notices, onChecked = ::syncSession)
-        modes = ModeBar(view, onPick = { picked ->
-            pickMode(picked)
-            host?.tour?.notice(TourEvent.Mode(picked))
-        }) {
+        modes = ModeBar(
+            view,
+            onPick = { picked ->
+                pickMode(picked)
+                host?.tour?.notice(TourEvent.Mode(picked))
+            },
+            levels = { style?.let(MapLayers::levels).orEmpty() },
+            zoom = { map?.cameraPosition?.zoom },
+            onLock = { locked, zoomTo ->
+                MapLayers.update(style) { it.copy(fogLevel = locked) }
+                zoomTo?.let { z -> map?.easeCamera(CameraUpdateFactory.zoomTo(z)) }
+                modes.renderFogLevel()
+            },
+        ) {
             ModeBarState(
                 mode = mode,
                 sessionReady = modeBarReady,
@@ -485,9 +496,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             instance.addOnCameraIdleListener { spots.onCameraIdle() }
             // The list follows the map (AreaController).
             instance.addOnCameraIdleListener { if (::area.isInitialized) area.onCameraIdle() }
-            instance.addOnCameraIdleListener {
-                style?.let { modes.onCameraIdle(MapLayers.tier(it, instance.cameraPosition.zoom)) }
-            }
+            // Fog's button names the level in view as the zoom changes.
+            instance.addOnCameraMoveListener { modes.renderFogLevel() }
             loadStyle()
         }
     }
@@ -587,6 +597,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
             spots.attach(loaded, layers.shownSpots())
             overlaysAttached = true
+            // The document's levels name Fog's button.
+            modes.renderFogLevel()
             spots.onStyleAttached()
             bands.render()
             // A new style has none of the circles; draw them again if the editor has the map.

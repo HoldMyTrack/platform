@@ -3,6 +3,7 @@ package dev.holdmytrack.android
 import dev.holdmytrack.android.export.ExportStatsRules
 import dev.holdmytrack.android.imports.UploadPlan
 import dev.holdmytrack.android.map.BasemapStatus
+import dev.holdmytrack.android.map.FogLevels
 import dev.holdmytrack.android.map.MapLayersDoc
 import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.AreaLoad
@@ -53,6 +54,7 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonArray
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.double
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
@@ -92,6 +94,12 @@ class ClientRulesTest {
     private fun JsonObject.strings(key: String): List<String> = (this[key] as? JsonArray)?.map { it.jsonPrimitive.content }.orEmpty()
 
     private fun JsonObject.bool(key: String): Boolean = (this[key] as? JsonPrimitive)?.booleanOrNull ?: false
+
+    /** A case's Fog levels, each a band without layers. */
+    private fun fogLevels(input: JsonObject): List<FogLevels.Level> = input["levels"]!!.jsonArray.map {
+        val l = it.jsonObject
+        FogLevels.Level(l.string("level")!!, (l["from"] as? JsonPrimitive)?.doubleOrNull, (l["below"] as? JsonPrimitive)?.doubleOrNull)
+    }
 
     /** A case's tab: the web's panel tabs, Android's bottom bar, whose Map shows the Activities tab. */
     private fun tourTab(name: String) = if (name == "activities") MainActivity.Tab.MAP else MainActivity.Tab.valueOf(name.uppercase())
@@ -238,6 +246,14 @@ class ClientRulesTest {
                 PhotoClusters.cluster(points, input.number("radius").toFloat()).forEach { group ->
                     add(buildJsonObject { put("ids", ids(group.ids, sort = false)); put("x", group.x); put("y", group.y) })
                 }
+            }
+        },
+        "fogLevelInView" to { input -> JsonPrimitive(FogLevels.inView(fogLevels(input), input.number("zoom"), input.string("locked"))) },
+        "fogLevelPick" to { input ->
+            val pick = FogLevels.pick(fogLevels(input), input.number("zoom"), input.string("locked"), input.string("picked")!!)
+            buildJsonObject {
+                put("locked", pick.locked?.let(::JsonPrimitive) ?: JsonNull)
+                put("zoom", pick.zoom?.let(::JsonPrimitive) ?: JsonNull)
             }
         },
         "basemapStatus" to { input -> JsonPrimitive(BasemapStatus.of(input.bool("loaded"), input.bool("failed"), input.number("waitedMs").toLong()).name.lowercase()) },

@@ -623,6 +623,12 @@
         <item name="android:textColor">@color/hmt_ink</item>
     </style>
 
+    <!-- One Fog level menu entry (map/FogLevelMenu): a radio button in the checkboxes' size. -->
+    <style name="Widget.HoldMyTrack.LayersOption.Radio" parent="Widget.Material3.CompoundButton.RadioButton">
+        <item name="android:textSize">@dimen/hmt_text_md</item>
+        <item name="android:textColor">@color/hmt_ink</item>
+    </style>
+
     <!-- The Layers menu's two switches, Show layers and Satellite: the checkboxes' row height and
          text, the label at the start and the switch at the end. -->
     <style name="Widget.HoldMyTrack.LayersOption.Switch" parent="Widget.Material3.CompoundButton.MaterialSwitch">

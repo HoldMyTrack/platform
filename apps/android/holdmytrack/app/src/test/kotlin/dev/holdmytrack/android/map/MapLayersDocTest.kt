@@ -147,12 +147,22 @@ class MapLayersDocTest {
     }
 
     @Test
-    fun tiersSwitchWhereTheFillsHandOver() {
-        assertEquals(ZoomTier.COUNTRY, MapLayersDoc.tier(light.tiers, 2.99))
-        assertEquals(ZoomTier.REGION, MapLayersDoc.tier(light.tiers, 3.0))
-        assertEquals(ZoomTier.REGION, MapLayersDoc.tier(light.tiers, 10.99))
-        assertEquals(ZoomTier.CITY, MapLayersDoc.tier(light.tiers, 11.0))
-        assertEquals(ZoomTier.CITY, MapLayersDoc.tier(emptyList(), 1.0))
+    fun levelsCarryTheirBandsAndLayers() {
+        assertEquals(listOf("country", "region", "county", "city", "exact"), light.levels.map { it.level })
+        val region = light.levels.first { it.level == "region" }
+        assertEquals(3.0, region.from)
+        assertEquals(6.0, region.below)
+        assertTrue(region.layers.isNotEmpty())
+        assertTrue(region.layers.all { id -> light.groups.any { g -> g.layers.any { it.id == id } } })
+        assertEquals(null, light.levels.first().from)
+        assertEquals(null, light.levels.last().below)
+        assertEquals("city", FogLevels.inView(light.levels, 9.0))
+    }
+
+    @Test
+    fun aKeptDocumentWithoutLevelsHasNone() {
+        val old = served("layers/light.json").replace(Regex(""""levels"\s*:"""), "\"levelsGone\":")
+        assertEquals(emptyList<FogLevels.Level>(), MapLayersDoc.parse(old)!!.levels)
     }
 
     @Test

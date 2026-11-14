@@ -694,7 +694,7 @@ object HoldMyTrackApi {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/coverage/status").build()
         call(request, { text ->
             val json = decode<CoverageStatusJson>(text)
-            CoverageStatus(json.rendering, json.version, json.tileVersion)
+            CoverageStatus(json.rendering, json.version, json.tileVersion, json.explored.let { Explored(it.countries, it.regions, it.counties, it.cities) })
         }, onResult)
     }
 
