@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- The open Story's statistics scroll with its rows (panel/StoriesTab) rather than sit
+         under them: true in landscape (values-land), where pinned they left the rows a sliver. -->
+    <bool name="stories_stats_scroll">false</bool>
+</resources>
