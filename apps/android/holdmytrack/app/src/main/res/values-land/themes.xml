@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- In landscape, each item's label beside its icon on one row, 56dp tall rather than 80:
+         stacked, the bar took a quarter of the height and left the map's sheet no room to open. -->
+    <style name="Widget.HoldMyTrack.BottomNav" parent="Widget.HoldMyTrack.BottomNav.Base">
+        <item name="itemIconGravity">start</item>
+        <item name="android:minHeight">56dp</item>
+    </style>
+
+    <!-- A row: stacked under the mode bar, the rail took most of the height the sheet needs. -->
+    <style name="Widget.HoldMyTrack.MapRail" parent="">
+        <item name="android:orientation">horizontal</item>
+    </style>
+</resources>

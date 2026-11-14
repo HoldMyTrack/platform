@@ -283,7 +283,17 @@
 
     <!-- The bottom bar (activity_main.xml): every label always shown, the selected tab on an
          accent-container pill, on the page background with a hairline above it. -->
-    <style name="Widget.HoldMyTrack.BottomNav" parent="Widget.Material3.BottomNavigationView">
+    <!-- The map's rail of Layers, Find my location and Export (fragment_map.xml): a column; a row
+         in landscape (values-land). -->
+    <style name="Widget.HoldMyTrack.MapRail" parent="">
+        <item name="android:orientation">vertical</item>
+    </style>
+
+    <!-- The bottom navigation (activity_main.xml): an icon over its label; in landscape, where
+         that stack took a quarter of the height, the label beside it (values-land). -->
+    <style name="Widget.HoldMyTrack.BottomNav" parent="Widget.HoldMyTrack.BottomNav.Base" />
+
+    <style name="Widget.HoldMyTrack.BottomNav.Base" parent="Widget.Material3.BottomNavigationView">
         <item name="android:background">@color/hmt_bg</item>
         <item name="itemIconTint">@color/nav_item_icon</item>
         <item name="itemTextColor">@color/nav_item_text</item>
