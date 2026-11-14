@@ -70,6 +70,11 @@ final class TestAccount {
         return json?["edit"] as? [String: Any]
     }
 
+    /// The account's Private locations, as the server sends them.
+    func privateLocations() -> [[String: Any]] {
+        (try? call("GET", "/v1/private-locations", nil)) as? [[String: Any]] ?? []
+    }
+
     func delete() {
         _ = try? call("DELETE", "/v1/account", ["email": email])
     }

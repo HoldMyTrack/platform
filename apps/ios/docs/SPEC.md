@@ -37,7 +37,6 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 
 ### FR-1.7 Privacy
 
-- A new Private location is centred where the map last looked, with its radius typed in, until the map has an editor (`ROADMAP.md`, 7b.2); a row renames it or changes its radius.
 - Download your data hands each ready part to the share sheet, whose Save to Files keeps it, in place of Android's Downloads.
 
 ### FR-1.8 Update screen
@@ -64,7 +63,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 ### FR-2.7 Activities panel
 
-- No Private location editor yet (`ROADMAP.md`, 7b.2).
+- Leaving the Map tab drops the Private location editor's draft: iOS has no Back.
 - While any listed activity is Pending, a notice over the map says so.
 
 ### FR-2.8 Spots

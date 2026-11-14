@@ -247,7 +247,7 @@ extension MapViewController {
         activitiesPanel.content.isHidden = !activitiesTab
         storiesPanel.content.isHidden = activitiesTab
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
-        sheet.isHidden = state.mode != .normal
+        sheet.isHidden = state.mode != .normal || privateLocations.open
         sheet.setNeedsLayout()
     }
 
@@ -344,6 +344,8 @@ extension MapViewController {
     @objc private func tappedMap(_ tap: UITapGestureRecognizer) {
         // The Edit window's group mustn't change under it; a tap serves only Delete point.
         guard !editOpen else { return trackEditTapped(at: tap.location(in: mapView)) }
+        // The Private location editor holds the map: a tap serves only its circles.
+        guard !privateLocations.open else { return privateLocationTapped(at: tap.location(in: mapView)) }
         // A place's badge first, in every mode; a tap elsewhere closes its popup.
         if tapSpot(at: tap.location(in: mapView)) {
             closeFogPlace()

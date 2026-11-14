@@ -331,6 +331,17 @@
         }
       }
     },
+    "Activities that start or end inside it will show those parts again once they're reprocessed." : {
+      "comment" : "Private location editor: what deleting a Private location brings back.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Занятия, которые начинаются или заканчиваются внутри него, снова покажут эти части после повторной обработки."
+          }
+        }
+      }
+    },
     "Activities: %@" : {
       "comment" : "A count of activities, written as label: N.",
       "localizations" : {
@@ -580,17 +591,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Захвачено!"
-          }
-        }
-      }
-    },
-    "Centred where the map last looked. Radius from %lld to %lld m." : {
-      "comment" : "Privacy: a new Private location: where it goes and the radius's bounds.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Центр — там, куда последний раз смотрела карта. Радиус от %lld до %lld м."
           }
         }
       }
@@ -1101,6 +1101,17 @@
         }
       }
     },
+    "Delete this Private location?" : {
+      "comment" : "Private location editor: confirming a delete.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить это приватное место?"
+          }
+        }
+      }
+    },
     "Delete this Story?" : {
       "comment" : "Stories tab: the delete confirmation's title.",
       "localizations" : {
@@ -1262,6 +1273,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Перетаскивайте точки на карте, чтобы перемещать их"
+          }
+        }
+      }
+    },
+    "Drag the centre to move it. Don't centre it exactly on your door: a circle's middle is the first place anyone looks." : {
+      "comment" : "Private location editor: how to move the circle, and why not onto the door.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Перетащите центр, чтобы сдвинуть круг. Не ставьте центр прямо на свою дверь: середину круга проверят в первую очередь."
           }
         }
       }
@@ -2157,17 +2179,6 @@
         }
       }
     },
-    "Open the map on the place first: a new Private location starts at the map's centre." : {
-      "comment" : "Privacy: the map hasn't been shown yet this run.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Сначала откройте карту на нужном месте: новое приватное место ставится в центр карты."
-          }
-        }
-      }
-    },
     "Open the panel" : {
       "comment" : "The sheet's handle while it's closed.",
       "localizations" : {
@@ -2542,24 +2553,13 @@
         }
       }
     },
-    "Radius from %lld to %lld m." : {
-      "comment" : "Privacy: the radius's bounds.",
+    "Radius" : {
+      "comment" : "Private location editor: VoiceOver's name for the radius slider.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Радиус от %lld до %lld м."
-          }
-        }
-      }
-    },
-    "Radius in metres" : {
-      "comment" : "Privacy: the radius field.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Радиус в метрах"
+            "value" : "Радиус"
           }
         }
       }

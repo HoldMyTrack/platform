@@ -64,6 +64,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let spotViews = SpotViews()
     /// Fog's level menu and place popup (MapViewController+Fog).
     let fogViews = FogViews()
+    /// The Private location editor (MapViewController+PrivateLocations).
+    let privateLocations = PrivateLocationsState()
     /// Photos on the map (MapViewController+Photos).
     var photos = PhotosState()
     /// The Edit window while it's open, and the track it edits (MapViewController+TrackEdit).
@@ -160,8 +162,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         super.viewDidDisappear(animated)
         coverageTask?.cancel()
         countSatelliteWait(onScreen: false)
-        // Leaving the map ends a capture: iOS has no Back, and the Map tab is where it shows.
+        // Leaving the map ends a capture and drops the Private location editor's draft: iOS has
+        // no Back, and the Map tab is where they show.
         capturing.stop()
+        closePrivateEditor()
     }
 
     // MARK: The documents
@@ -207,11 +211,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         mapView.styleJSON = json
     }
 
-    /// Where the map last looked, where a new Private location starts (PrivacyViewController).
-    static var lastCenter: CLLocationCoordinate2D?
-
     func mapView(_ mapView: MLNMapView, regionDidChangeAnimated animated: Bool) {
-        Self.lastCenter = mapView.centerCoordinate
         renderLevel()
         spots.area.cameraMoved()
         renderInArea()
@@ -234,6 +234,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         addBadgeImages(to: style)
         addGuide(to: style)
         addTrackEdit(to: style)
+        addPrivateLocations(to: style)
     }
 
     /// How far down the controls over the map reach: a popup goes under its place above it.
@@ -258,6 +259,8 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// The mode for the tab showing, and the toggle, which is only the Map tab's.
     func applyTabMode() {
         let onMap = panelTab == .activities
+        // The editor is the Map tab's, in Normal.
+        if !onMap || pickedMode != .normal { closePrivateEditor() }
         modes.isHidden = !TabMode.toggleShown(onMapTab: onMap)
         let shown = TabMode.shown(picked: pickedMode, onMapTab: onMap)
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: pickedMode) ?? 0
@@ -547,6 +550,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             view.addSubview(v)
         }
         setUpFogControl()
+        bindPrivateEditor()
         // Over the sheet: opened low on the map, the photo popup runs past the sheet's edge.
         view.addSubview(photoViews.popup)
         let guide = view.safeAreaLayoutGuide

@@ -117,9 +117,15 @@ extension MapViewController {
 
     /// Move point's drag: a press on a point takes the gesture from the map, which stays put.
     func bindTrackEditDrag() {
-        let drag = UIPanGestureRecognizer(target: trackEdit.gestures, action: #selector(TrackEditGestures.dragged(_:)))
-        drag.delegate = trackEdit.gestures
         trackEdit.gestures.map = self
+        addExclusiveDrag(trackEdit.gestures, action: #selector(TrackEditGestures.dragged(_:)))
+    }
+
+    /// A pan that, when its delegate lets it begin, takes the drag from the map, whose own pans
+    /// wait for it to fail: so every other drag still moves the map.
+    func addExclusiveDrag(_ target: NSObject & UIGestureRecognizerDelegate, action: Selector) {
+        let drag = UIPanGestureRecognizer(target: target, action: action)
+        drag.delegate = target
         for pan in mapView.gestureRecognizers ?? [] where pan is UIPanGestureRecognizer { pan.require(toFail: drag) }
         mapView.addGestureRecognizer(drag)
     }
