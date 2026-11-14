@@ -4,6 +4,7 @@ import dev.holdmytrack.android.export.ExportStatsRules
 import dev.holdmytrack.android.imports.UploadPlan
 import dev.holdmytrack.android.map.BasemapStatus
 import dev.holdmytrack.android.map.FogLevels
+import dev.holdmytrack.android.map.FogPlaceLabel
 import dev.holdmytrack.android.map.MapLayersDoc
 import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.AreaLoad
@@ -255,6 +256,24 @@ class ClientRulesTest {
                 put("locked", pick.locked?.let(::JsonPrimitive) ?: JsonNull)
                 put("zoom", pick.zoom?.let(::JsonPrimitive) ?: JsonNull)
             }
+        },
+        "fogPlaceLabel" to { input ->
+            val catalog = input.strings("catalog").toSet()
+            val props = input["props"]!!.jsonObject.mapValues { (_, v) ->
+                (v as? JsonPrimitive)?.let { p -> p.booleanOrNull ?: p.doubleOrNull ?: p.content }
+            }
+            val label = FogPlaceLabel.of(props) { it in catalog }
+            label?.let { l ->
+                buildJsonObject {
+                    put("name", l.name)
+                    put("kindKey", l.kindKey)
+                    put("within", l.within)
+                    put("visitedKey", l.visitedKey)
+                    put("counts", buildJsonArray {
+                        l.counts.forEach { c -> add(buildJsonObject { put("key", c.key); put("explored", c.explored); put("total", c.total) }) }
+                    })
+                }
+            } ?: JsonNull
         },
         "basemapStatus" to { input -> JsonPrimitive(BasemapStatus.of(input.bool("loaded"), input.bool("failed"), input.number("waitedMs").toLong()).name.lowercase()) },
         "photoMarkerSize" to { input -> JsonPrimitive(PhotoClusters.markerSize(input.number("zoom")).name.lowercase()) },

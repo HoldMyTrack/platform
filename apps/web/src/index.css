@@ -2502,6 +2502,7 @@ button.activities-panel__story-badge:hover {
   padding: var(--fm-space-6) var(--fm-space-8);
   border-radius: var(--fm-radius-sm);
   background: var(--fm-surface);
+  border: 1px solid var(--fm-map-popup-border);
   color: var(--fm-ink);
   box-shadow: var(--fm-shadow-sm);
   font-family: var(--fm-font-sans);
@@ -2526,6 +2527,7 @@ button.activities-panel__story-badge:hover {
   padding: var(--fm-space-12) var(--fm-space-16);
   border-radius: var(--fm-radius-md);
   background: var(--fm-surface);
+  border: 1px solid var(--fm-map-popup-border);
   color: var(--fm-ink);
   box-shadow: var(--fm-shadow-md);
   font-family: var(--fm-font-sans);

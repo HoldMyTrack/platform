@@ -11,7 +11,7 @@
     android:layout_width="272dp"
     android:layout_height="wrap_content"
     android:layout_gravity="top|start"
-    android:background="@drawable/bg_spot_popup"
+    android:background="@drawable/bg_map_popup"
     android:clickable="true"
     android:elevation="6dp"
     android:focusable="false"

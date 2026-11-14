@@ -1,6 +1,6 @@
 import type { LayerSpecification } from 'maplibre-gl';
 import type { MapMode } from './mapMode';
-import { tilePath, withView, type GroupPart, type LayerView } from './mapLayers.ts';
+import { tilePath, withView, VARS_METADATA, type GroupPart, type LayerView } from './mapLayers.ts';
 import { EXACT } from './fogLevels.ts';
 
 /**
@@ -24,6 +24,15 @@ const COUNTRY_BORDER_LAYER = 'country-fog-border';
 const REGION_BORDER_LAYER = 'region-fog-border';
 const COUNTY_BORDER_LAYER = 'county-fog-border';
 const CITY_BORDER_LAYER = 'city-fog-border';
+const COUNTRY_PICKED_LAYER = 'country-fog-picked';
+const REGION_PICKED_LAYER = 'region-fog-picked';
+const COUNTY_PICKED_LAYER = 'county-fog-picked';
+const CITY_PICKED_LAYER = 'city-fog-picked';
+
+/** The outline an app's tap picked, by its tile `id`, which the apps bind: MapLibre Native has no
+ *  feature-state to set, so where the web hovers an outline, they draw this layer over it. Null
+ *  matches no outline, the sea (0) and the merged explored places (-1) included. */
+const PICKED_VAR = 'fogPlace';
 
 /** The outline fills a pointer is over, which fogPlaces.ts hit-tests, and their sources, whose
  *  `id` it sets the hover state on. */
@@ -70,7 +79,8 @@ const HOVERED = ['boolean', ['feature-state', 'hover'], false];
 const BOUNDARIES_ATTRIBUTION = '<a href="https://overturemaps.org">Overture Maps</a>';
 
 const BORDER_LAYERS = [COUNTRY_BORDER_LAYER, REGION_BORDER_LAYER, COUNTY_BORDER_LAYER, CITY_BORDER_LAYER];
-const FOG_LAYERS = [FOG_LAYER, FOG_EDGE_LAYER, ...PLACE_FILL_LAYERS, ...BORDER_LAYERS];
+const PICKED_LAYERS = [COUNTRY_PICKED_LAYER, REGION_PICKED_LAYER, COUNTY_PICKED_LAYER, CITY_PICKED_LAYER];
+const FOG_LAYERS = [FOG_LAYER, FOG_EDGE_LAYER, ...PLACE_FILL_LAYERS, ...BORDER_LAYERS, ...PICKED_LAYERS];
 
 /** One mode's view over a base that reads `dark`. */
 export function coverageView(mode: MapMode, dark: boolean, satellite = false): LayerView {
@@ -98,6 +108,8 @@ export function coverageView(mode: MapMode, dark: boolean, satellite = false): L
       [FOG_EDGE_LAYER]: { 'line-color': veil.color, 'line-opacity': veil.opacity },
       ...Object.fromEntries(PLACE_FILL_LAYERS.map((id) => [id, outlineFill])),
       ...Object.fromEntries(BORDER_LAYERS.map((id) => [id, border])),
+      // As a hovered border.
+      ...Object.fromEntries(PICKED_LAYERS.map((id) => [id, { 'line-color': border['line-color'], 'line-opacity': HOVER_BORDER_OPACITY, 'line-width': HOVER_BORDER_WIDTH }])),
     },
   };
 }
@@ -186,17 +198,36 @@ export function coverageGroup(dark: boolean, tileVersion: string, lang: string, 
             layout: { 'line-join': 'round' },
           }),
         ),
+        ...([
+          [COUNTRY_PICKED_LAYER, COUNTRY_FOG_SOURCE, 'countries', 0, COUNTRY_MAX_ZOOM],
+          [REGION_PICKED_LAYER, REGION_FOG_SOURCE, 'regions', COUNTRY_MAX_ZOOM, REGION_MAX_ZOOM],
+          [COUNTY_PICKED_LAYER, COUNTY_FOG_SOURCE, 'counties', REGION_MAX_ZOOM, COUNTY_MAX_ZOOM],
+          [CITY_PICKED_LAYER, CITY_FOG_SOURCE, 'cities', COUNTY_MAX_ZOOM, CITY_MAX_ZOOM],
+        ] as const).map(([id, source, sourceLayer, minzoom, maxzoom]) =>
+          layer({
+            id,
+            type: 'line',
+            source,
+            'source-layer': sourceLayer,
+            minzoom,
+            maxzoom,
+            filter: ['==', ['get', 'id'], ['var', PICKED_VAR]],
+            layout: { 'line-join': 'round' },
+            metadata: { [VARS_METADATA]: { filter: [PICKED_VAR] } },
+          }),
+        ),
       ],
     },
+    vars: { [PICKED_VAR]: null },
     view: (mode, onDark, satellite) => coverageView(mode, onDark, satellite),
     // The apps' level notice names three: whole countries, then whole places, then exact
     // coverage. An installed app refuses a tier it doesn't know.
     tiers: [{ tier: 'country', below: COUNTRY_MAX_ZOOM }, { tier: 'region', below: CITY_MAX_ZOOM }, { tier: 'city' }],
     levels: [
-      { level: 'country', below: COUNTRY_MAX_ZOOM, layers: [COUNTRY_FOG_LAYER, COUNTRY_BORDER_LAYER] },
-      { level: 'region', from: COUNTRY_MAX_ZOOM, below: REGION_MAX_ZOOM, layers: [REGION_FOG_LAYER, REGION_BORDER_LAYER], word: words.region },
-      { level: 'county', from: REGION_MAX_ZOOM, below: COUNTY_MAX_ZOOM, layers: [COUNTY_FOG_LAYER, COUNTY_BORDER_LAYER], word: words.county },
-      { level: 'city', from: COUNTY_MAX_ZOOM, below: CITY_MAX_ZOOM, layers: [CITY_FOG_LAYER, CITY_BORDER_LAYER] },
+      { level: 'country', below: COUNTRY_MAX_ZOOM, layers: [COUNTRY_FOG_LAYER, COUNTRY_BORDER_LAYER, COUNTRY_PICKED_LAYER] },
+      { level: 'region', from: COUNTRY_MAX_ZOOM, below: REGION_MAX_ZOOM, layers: [REGION_FOG_LAYER, REGION_BORDER_LAYER, REGION_PICKED_LAYER], word: words.region },
+      { level: 'county', from: REGION_MAX_ZOOM, below: COUNTY_MAX_ZOOM, layers: [COUNTY_FOG_LAYER, COUNTY_BORDER_LAYER, COUNTY_PICKED_LAYER], word: words.county },
+      { level: 'city', from: COUNTY_MAX_ZOOM, below: CITY_MAX_ZOOM, layers: [CITY_FOG_LAYER, CITY_BORDER_LAYER, CITY_PICKED_LAYER] },
       { level: EXACT, from: CITY_MAX_ZOOM, layers: [FOG_LAYER, FOG_EDGE_LAYER] },
     ],
   };

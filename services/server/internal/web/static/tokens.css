@@ -50,6 +50,8 @@
   --fm-border: #e6e1d2;
   --fm-border-strong: #dcd6c4;
   --fm-border-panel: #e2dcc8;
+  /* The outline of a popup over the map: the panels' own border vanishes on a dark map. */
+  --fm-map-popup-border: var(--fm-border-panel);
 
   --fm-accent: #b07e2e;
   --fm-accent-rgb: 176 126 46;
@@ -141,6 +143,7 @@
   --fm-border: #2e3932;
   --fm-border-strong: #3a463e;
   --fm-border-panel: #34403a;
+  --fm-map-popup-border: var(--fm-ink-faint);
 
   --fm-accent: #d6a553;
   --fm-accent-rgb: 214 165 83;
@@ -189,6 +192,7 @@
     --fm-border: #2e3932;
     --fm-border-strong: #3a463e;
     --fm-border-panel: #34403a;
+    --fm-map-popup-border: var(--fm-ink-faint);
 
     --fm-accent: #d6a553;
     --fm-accent-rgb: 214 165 83;

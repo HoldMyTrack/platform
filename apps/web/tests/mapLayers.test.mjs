@@ -26,9 +26,21 @@ test('each mode shows only its own layers', () => {
       .sort();
   assert.deepEqual(visible('normal'), ['track-bands-arrows', 'track-bands-line', 'tracks-arrows', 'tracks-casing', 'tracks-focused', 'tracks-hover', 'tracks-line']);
   assert.deepEqual(visible('fog'), [
-    'city-fog-border', 'city-fog-fill', 'country-fog-border', 'country-fog-fill', 'county-fog-border', 'county-fog-fill',
-    'fog-edge', 'fog-veil', 'region-fog-border', 'region-fog-fill',
+    'city-fog-border', 'city-fog-fill', 'city-fog-picked', 'country-fog-border', 'country-fog-fill', 'country-fog-picked',
+    'county-fog-border', 'county-fog-fill', 'county-fog-picked', 'fog-edge', 'fog-veil', 'region-fog-border', 'region-fog-fill',
+    'region-fog-picked',
   ]);
+});
+
+test("a picked outline's border draws only for the outline the apps bind, none by default", () => {
+  const picked = doc.groups.flatMap((g) => g.layers).filter((l) => l.id.endsWith('-fog-picked'));
+  assert.equal(picked.length, 4);
+  for (const layer of picked) {
+    assert.deepEqual(layer.filter, ['==', ['get', 'id'], ['var', 'fogPlace']]);
+    assert.deepEqual(layer.metadata['holdmytrack:vars'], { filter: ['fogPlace'] });
+  }
+  assert.equal(doc.vars.fogPlace, null);
+  for (const level of doc.levels.filter((l) => l.level !== 'exact')) assert.ok(level.layers.some((id) => id.endsWith('-fog-picked')));
 });
 
 test('the served document gives Android builds that still offer Heatmap the Normal view, and nothing to draw it with', () => {

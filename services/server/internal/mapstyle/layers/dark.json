@@ -1,5 +1,5 @@
 {
-  "styleBuild": "26195dfc2885",
+  "styleBuild": "9e0917101842",
   "flavor": "dark",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -21,7 +21,8 @@
       "below": 3,
       "layers": [
         "country-fog-fill",
-        "country-fog-border"
+        "country-fog-border",
+        "country-fog-picked"
       ]
     },
     {
@@ -30,7 +31,8 @@
       "below": 6,
       "layers": [
         "region-fog-fill",
-        "region-fog-border"
+        "region-fog-border",
+        "region-fog-picked"
       ],
       "word": "__HOLDMYTRACK_REGION_WORD__"
     },
@@ -40,7 +42,8 @@
       "below": 8,
       "layers": [
         "county-fog-fill",
-        "county-fog-border"
+        "county-fog-border",
+        "county-fog-picked"
       ],
       "word": "__HOLDMYTRACK_COUNTY_WORD__"
     },
@@ -50,7 +53,8 @@
       "below": 11,
       "layers": [
         "city-fog-fill",
-        "city-fog-border"
+        "city-fog-border",
+        "city-fog-picked"
       ]
     },
     {
@@ -63,6 +67,7 @@
     }
   ],
   "vars": {
+    "fogPlace": null,
     "hidden": [],
     "focused": [],
     "capped": false,
@@ -103,6 +108,18 @@
             "visibility": "none"
           },
           "city-fog-border": {
+            "visibility": "none"
+          },
+          "country-fog-picked": {
+            "visibility": "none"
+          },
+          "region-fog-picked": {
+            "visibility": "none"
+          },
+          "county-fog-picked": {
+            "visibility": "none"
+          },
+          "city-fog-picked": {
             "visibility": "none"
           },
           "tracks-casing": {
@@ -433,6 +450,58 @@
               2.5,
               0.7
             ]
+          },
+          "country-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "region-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "county-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "city-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
           },
           "tracks-casing": {
             "line-color": "#a39e93"
@@ -508,6 +577,18 @@
           "city-fog-border": {
             "visibility": "visible"
           },
+          "country-fog-picked": {
+            "visibility": "visible"
+          },
+          "region-fog-picked": {
+            "visibility": "visible"
+          },
+          "county-fog-picked": {
+            "visibility": "visible"
+          },
+          "city-fog-picked": {
+            "visibility": "visible"
+          },
           "tracks-casing": {
             "visibility": "none"
           },
@@ -836,6 +917,58 @@
               2.5,
               0.7
             ]
+          },
+          "country-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "region-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "county-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "city-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
           },
           "tracks-casing": {
             "line-color": "#a39e93"
@@ -911,6 +1044,18 @@
           "city-fog-border": {
             "visibility": "none"
           },
+          "country-fog-picked": {
+            "visibility": "none"
+          },
+          "region-fog-picked": {
+            "visibility": "none"
+          },
+          "county-fog-picked": {
+            "visibility": "none"
+          },
+          "city-fog-picked": {
+            "visibility": "none"
+          },
           "tracks-casing": {
             "visibility": "visible"
           },
@@ -1239,6 +1384,58 @@
               2.5,
               0.7
             ]
+          },
+          "country-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "region-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "county-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "city-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
           },
           "tracks-casing": {
             "line-color": "#a39e93"
@@ -1316,6 +1513,18 @@
           "city-fog-border": {
             "visibility": "none"
           },
+          "country-fog-picked": {
+            "visibility": "none"
+          },
+          "region-fog-picked": {
+            "visibility": "none"
+          },
+          "county-fog-picked": {
+            "visibility": "none"
+          },
+          "city-fog-picked": {
+            "visibility": "none"
+          },
           "tracks-casing": {
             "visibility": "visible"
           },
@@ -1644,6 +1853,58 @@
               2.5,
               1
             ]
+          },
+          "country-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "region-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "county-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "city-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
           },
           "tracks-casing": {
             "line-color": "#14140e"
@@ -1719,6 +1980,18 @@
           "city-fog-border": {
             "visibility": "visible"
           },
+          "country-fog-picked": {
+            "visibility": "visible"
+          },
+          "region-fog-picked": {
+            "visibility": "visible"
+          },
+          "county-fog-picked": {
+            "visibility": "visible"
+          },
+          "city-fog-picked": {
+            "visibility": "visible"
+          },
           "tracks-casing": {
             "visibility": "none"
           },
@@ -2047,6 +2320,58 @@
               2.5,
               1
             ]
+          },
+          "country-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "region-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "county-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "city-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
           },
           "tracks-casing": {
             "line-color": "#14140e"
@@ -2122,6 +2447,18 @@
           "city-fog-border": {
             "visibility": "none"
           },
+          "country-fog-picked": {
+            "visibility": "none"
+          },
+          "region-fog-picked": {
+            "visibility": "none"
+          },
+          "county-fog-picked": {
+            "visibility": "none"
+          },
+          "city-fog-picked": {
+            "visibility": "none"
+          },
           "tracks-casing": {
             "visibility": "visible"
           },
@@ -2450,6 +2787,58 @@
               2.5,
               1
             ]
+          },
+          "country-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "region-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "county-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          },
+          "city-fog-picked": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
           },
           "tracks-casing": {
             "line-color": "#14140e"
@@ -3040,6 +3429,178 @@
               2.5,
               0.7
             ]
+          }
+        },
+        {
+          "id": "country-fog-picked",
+          "type": "line",
+          "source": "country-fog",
+          "source-layer": "countries",
+          "minzoom": 0,
+          "maxzoom": 3,
+          "filter": [
+            "==",
+            [
+              "get",
+              "id"
+            ],
+            [
+              "var",
+              "fogPlace"
+            ]
+          ],
+          "layout": {
+            "line-join": "round",
+            "visibility": "none"
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "fogPlace"
+              ]
+            }
+          },
+          "paint": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          }
+        },
+        {
+          "id": "region-fog-picked",
+          "type": "line",
+          "source": "region-fog",
+          "source-layer": "regions",
+          "minzoom": 3,
+          "maxzoom": 6,
+          "filter": [
+            "==",
+            [
+              "get",
+              "id"
+            ],
+            [
+              "var",
+              "fogPlace"
+            ]
+          ],
+          "layout": {
+            "line-join": "round",
+            "visibility": "none"
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "fogPlace"
+              ]
+            }
+          },
+          "paint": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          }
+        },
+        {
+          "id": "county-fog-picked",
+          "type": "line",
+          "source": "county-fog",
+          "source-layer": "counties",
+          "minzoom": 6,
+          "maxzoom": 8,
+          "filter": [
+            "==",
+            [
+              "get",
+              "id"
+            ],
+            [
+              "var",
+              "fogPlace"
+            ]
+          ],
+          "layout": {
+            "line-join": "round",
+            "visibility": "none"
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "fogPlace"
+              ]
+            }
+          },
+          "paint": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
+          }
+        },
+        {
+          "id": "city-fog-picked",
+          "type": "line",
+          "source": "city-fog",
+          "source-layer": "cities",
+          "minzoom": 8,
+          "maxzoom": 11,
+          "filter": [
+            "==",
+            [
+              "get",
+              "id"
+            ],
+            [
+              "var",
+              "fogPlace"
+            ]
+          ],
+          "layout": {
+            "line-join": "round",
+            "visibility": "none"
+          },
+          "metadata": {
+            "holdmytrack:vars": {
+              "filter": [
+                "fogPlace"
+              ]
+            }
+          },
+          "paint": {
+            "line-color": [
+              "case",
+              [
+                "get",
+                "visited"
+              ],
+              "#f7f4ec",
+              "#202b25"
+            ],
+            "line-opacity": 0.95,
+            "line-width": 2.5
           }
         }
       ]

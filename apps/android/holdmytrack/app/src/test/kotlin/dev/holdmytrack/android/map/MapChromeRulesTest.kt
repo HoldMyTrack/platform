@@ -17,14 +17,6 @@ class MapChromeRulesTest {
     }
 
     @Test
-    fun `the mode chip names Fog only, and steps aside for recording and export`() {
-        assertFalse(MapChromeRules.modeChipShown(MapMode.NORMAL, sessionReady = true, recording = false, exportOpen = false))
-        assertTrue(MapChromeRules.modeChipShown(MapMode.FOG, sessionReady = true, recording = false, exportOpen = false))
-        assertFalse(MapChromeRules.modeChipShown(MapMode.FOG, sessionReady = true, recording = true, exportOpen = false))
-        assertFalse(MapChromeRules.modeChipShown(MapMode.FOG, sessionReady = true, recording = false, exportOpen = true))
-    }
-
-    @Test
     fun `the coverage notice shows in Fog while rendering`() {
         assertTrue(MapChromeRules.coverageNoticeShown(rendering = true, MapMode.FOG, sessionReady = true, recording = false))
         assertFalse(MapChromeRules.coverageNoticeShown(rendering = true, MapMode.NORMAL, sessionReady = true, recording = false))

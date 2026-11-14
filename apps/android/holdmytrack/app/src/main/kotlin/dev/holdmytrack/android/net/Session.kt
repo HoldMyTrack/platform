@@ -3,6 +3,7 @@ package dev.holdmytrack.android.net
 import android.content.Context
 import android.content.SharedPreferences
 import android.webkit.CookieManager
+import dev.holdmytrack.android.map.FogPlaces
 import dev.holdmytrack.android.map.MapLayers
 
 /**
@@ -151,8 +152,8 @@ object Session {
         runCatching { CookieManager.getInstance().removeAllCookies(null) }
         cachedToken = null
         verified = false
-        // Fog's locked level is the account's choice: the next account starts following the zoom.
-        MapLayers.update(null) { it.copy(fogLevel = null) }
+        // Fog's locked level and picked place are the account's: the next account starts with neither.
+        MapLayers.update(null) { it.copy(fogLevel = null, vars = it.vars - FogPlaces.VAR) }
         prefs.edit()
             .remove(KEY_TOKEN)
             .remove(KEY_EMAIL)

@@ -30,7 +30,7 @@ class ExportController(
     storyId: () -> String?,
     /** The chrome that steps aside while the viewfinder shows. */
     private val chrome: List<View>,
-    /** The viewfinder opened or closed: popups close, and the mode chip follows. */
+    /** The viewfinder opened or closed: popups close. */
     private val onShown: (Boolean) -> Unit,
 ) {
     private val viewfinder = ExportViewfinder(

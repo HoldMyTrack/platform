@@ -309,19 +309,6 @@
         <item name="android:textColor">@color/hmt_ink</item>
     </style>
 
-    <!-- The chip saying what Fog shows (fragment_map.xml): the map chrome's panel,
-         its text in the body size, a 40dp line. -->
-    <style name="Widget.HoldMyTrack.ModeChip" parent="">
-        <item name="android:background">@drawable/bg_map_chrome</item>
-        <item name="android:elevation">2dp</item>
-        <item name="android:minHeight">40dp</item>
-        <item name="android:gravity">center</item>
-        <item name="android:paddingStart">@dimen/hmt_space_16</item>
-        <item name="android:paddingEnd">@dimen/hmt_space_16</item>
-        <item name="android:textAppearance">@style/TextAppearance.HoldMyTrack.BodyMedium</item>
-        <item name="android:textColor">@color/hmt_ink</item>
-    </style>
-
     <!-- ‹ › beside the date range in the Activities sheet (include_activities_sheet): a 44dp round
          icon button on the tinted surface, a faint outline when it can't move the range. The
          tints are state lists: a plain colour here would override Material's disabled look and

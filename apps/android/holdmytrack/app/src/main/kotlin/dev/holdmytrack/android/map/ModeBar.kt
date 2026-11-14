@@ -18,7 +18,6 @@ data class ModeBarState(
     val recording: Boolean,
     val editOpen: Boolean,
     val selectionShown: Boolean,
-    val exportOpen: Boolean,
     /** Fog is still being re-rendered (`CoverageWatch`). */
     val coverageRendering: Boolean,
     /** The panel's tab: the toggle is the Map tab's. */
@@ -26,9 +25,8 @@ data class ModeBarState(
 )
 
 /**
- * The Normal / Fog of War toggle floating top-start, and what it says about the mode:
- * the chip naming what Fog shows, Fog's level on its button ([FogLevelMenu]), and that coverage
- * is still being updated (`docs/SPEC.md` FR-4.2). A tap on Fog while it's on opens the level menu.
+ * The Normal / Fog of War toggle floating top-start, and what it says about the mode: Fog's
+ * level on its button ([FogLevelMenu]), and that coverage is still being updated (`docs/SPEC.md` FR-4.2). A tap on Fog while it's on opens the level menu.
  */
 class ModeBar(
     root: View,
@@ -41,7 +39,6 @@ class ModeBar(
 ) {
     private val bar: View = root.findViewById(R.id.mode_bar)
     private val layersPanel: View = root.findViewById(R.id.layers_panel)
-    private val chip: TextView = root.findViewById(R.id.mode_chip)
     private val coverageNotice: View = root.findViewById(R.id.coverage_notice)
     private val buttons: Map<MapMode, MaterialButton> = mapOf(
         MapMode.NORMAL to root.findViewById(R.id.mode_normal),
@@ -94,24 +91,16 @@ class ModeBar(
         renderNotices()
     }
 
-    /** Fog's level on its button, the coverage notice and the chip. */
+    /** Fog's level on its button and the coverage notice. */
     fun renderNotices() {
         renderFogLevel()
         renderCoverage()
-        renderChip()
     }
 
     /** "Your map is still being updated…" (`docs/SPEC.md` FR-4.2), in Fog while coverage renders. */
     fun renderCoverage() {
         val s = state()
         coverageNotice.isVisible = MapChromeRules.coverageNoticeShown(s.coverageRendering, s.mode, s.sessionReady, s.recording)
-    }
-
-    /** Names what Fog shows, since it doesn't take the date range. */
-    fun renderChip() {
-        val s = state()
-        chip.isVisible = MapChromeRules.modeChipShown(s.mode, s.sessionReady, s.recording, s.exportOpen)
-        if (s.mode == MapMode.FOG) chip.setText(R.string.mode_chip_fog)
     }
 
     /** Fog's button names the level in view while Fog is on: called as the zoom or the lock moves,

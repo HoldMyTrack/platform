@@ -51,7 +51,6 @@
 
     <string name="mode_normal">Normal</string>
     <string name="mode_fog">Fog</string>
-    <string name="mode_chip_fog">Every activity, any date</string>
     <string name="coverage_updating">Your map is still being updated, so Fog may be incomplete for now. It\'ll refresh on its own.</string>
     <string name="layers_button">Layers</string>
     <string name="layers_master">Show layers</string>
@@ -769,4 +768,196 @@
     <string name="fog_type_township">Township</string>
     <string name="fog_type_village">Village</string>
     <string name="fog_type_zone">Zone</string>
+    <!-- Fog's place popup (map/FogPlaces), the web's map.fog.place.* and map.fog.count.* -->
+    <string name="fog_place_close">Close</string>
+    <string name="fog_place_city">City</string>
+    <string name="fog_place_country">Country</string>
+    <string name="fog_place_county">County</string>
+    <string name="fog_place_region">Region</string>
+    <string name="fog_place_unvisited">Not explored yet</string>
+    <string name="fog_place_visited">Explored</string>
+    <plurals name="fog_count_allotments">
+        <item quantity="one">%1$s of %2$s allotment</item>
+        <item quantity="other">%1$s of %2$s allotments</item>
+    </plurals>
+    <plurals name="fog_count_archipelago">
+        <item quantity="one">%1$s of %2$s archipelago</item>
+        <item quantity="other">%1$s of %2$s archipelagos</item>
+    </plurals>
+    <plurals name="fog_count_area">
+        <item quantity="one">%1$s of %2$s area</item>
+        <item quantity="other">%1$s of %2$s areas</item>
+    </plurals>
+    <plurals name="fog_count_atoll">
+        <item quantity="one">%1$s of %2$s atoll</item>
+        <item quantity="other">%1$s of %2$s atolls</item>
+    </plurals>
+    <plurals name="fog_count_canton">
+        <item quantity="one">%1$s of %2$s canton</item>
+        <item quantity="other">%1$s of %2$s cantons</item>
+    </plurals>
+    <plurals name="fog_count_cercle">
+        <item quantity="one">%1$s of %2$s cercle</item>
+        <item quantity="other">%1$s of %2$s cercles</item>
+    </plurals>
+    <plurals name="fog_count_city">
+        <item quantity="one">%1$s of %2$s city</item>
+        <item quantity="other">%1$s of %2$s cities</item>
+    </plurals>
+    <plurals name="fog_count_civil_parish">
+        <item quantity="one">%1$s of %2$s civil parish</item>
+        <item quantity="other">%1$s of %2$s civil parishes</item>
+    </plurals>
+    <plurals name="fog_count_commune">
+        <item quantity="one">%1$s of %2$s commune</item>
+        <item quantity="other">%1$s of %2$s communes</item>
+    </plurals>
+    <plurals name="fog_count_community">
+        <item quantity="one">%1$s of %2$s community</item>
+        <item quantity="other">%1$s of %2$s communities</item>
+    </plurals>
+    <plurals name="fog_count_constituency">
+        <item quantity="one">%1$s of %2$s constituency</item>
+        <item quantity="other">%1$s of %2$s constituencies</item>
+    </plurals>
+    <plurals name="fog_count_council">
+        <item quantity="one">%1$s of %2$s council area</item>
+        <item quantity="other">%1$s of %2$s council areas</item>
+    </plurals>
+    <plurals name="fog_count_country">
+        <item quantity="one">%1$s of %2$s country</item>
+        <item quantity="other">%1$s of %2$s countries</item>
+    </plurals>
+    <plurals name="fog_count_county">
+        <item quantity="one">%1$s of %2$s county</item>
+        <item quantity="other">%1$s of %2$s counties</item>
+    </plurals>
+    <plurals name="fog_count_department">
+        <item quantity="one">%1$s of %2$s department</item>
+        <item quantity="other">%1$s of %2$s departments</item>
+    </plurals>
+    <plurals name="fog_count_district">
+        <item quantity="one">%1$s of %2$s district</item>
+        <item quantity="other">%1$s of %2$s districts</item>
+    </plurals>
+    <plurals name="fog_count_division">
+        <item quantity="one">%1$s of %2$s division</item>
+        <item quantity="other">%1$s of %2$s divisions</item>
+    </plurals>
+    <plurals name="fog_count_emirate">
+        <item quantity="one">%1$s of %2$s emirate</item>
+        <item quantity="other">%1$s of %2$s emirates</item>
+    </plurals>
+    <plurals name="fog_count_entity">
+        <item quantity="one">%1$s of %2$s entity</item>
+        <item quantity="other">%1$s of %2$s entities</item>
+    </plurals>
+    <plurals name="fog_count_federal_subject">
+        <item quantity="one">%1$s of %2$s federal subject</item>
+        <item quantity="other">%1$s of %2$s federal subjects</item>
+    </plurals>
+    <plurals name="fog_count_governorate">
+        <item quantity="one">%1$s of %2$s governorate</item>
+        <item quantity="other">%1$s of %2$s governorates</item>
+    </plurals>
+    <plurals name="fog_count_hamlet">
+        <item quantity="one">%1$s of %2$s hamlet</item>
+        <item quantity="other">%1$s of %2$s hamlets</item>
+    </plurals>
+    <plurals name="fog_count_industrial">
+        <item quantity="one">%1$s of %2$s industrial area</item>
+        <item quantity="other">%1$s of %2$s industrial areas</item>
+    </plurals>
+    <plurals name="fog_count_island">
+        <item quantity="one">%1$s of %2$s island</item>
+        <item quantity="other">%1$s of %2$s islands</item>
+    </plurals>
+    <plurals name="fog_count_islet">
+        <item quantity="one">%1$s of %2$s islet</item>
+        <item quantity="other">%1$s of %2$s islets</item>
+    </plurals>
+    <plurals name="fog_count_isolated_dwelling">
+        <item quantity="one">%1$s of %2$s isolated dwelling</item>
+        <item quantity="other">%1$s of %2$s isolated dwellings</item>
+    </plurals>
+    <plurals name="fog_count_locality">
+        <item quantity="one">%1$s of %2$s locality</item>
+        <item quantity="other">%1$s of %2$s localities</item>
+    </plurals>
+    <plurals name="fog_count_municipal_federation">
+        <item quantity="one">%1$s of %2$s municipal federation</item>
+        <item quantity="other">%1$s of %2$s municipal federations</item>
+    </plurals>
+    <plurals name="fog_count_municipality">
+        <item quantity="one">%1$s of %2$s municipality</item>
+        <item quantity="other">%1$s of %2$s municipalities</item>
+    </plurals>
+    <plurals name="fog_count_parish">
+        <item quantity="one">%1$s of %2$s parish</item>
+        <item quantity="other">%1$s of %2$s parishes</item>
+    </plurals>
+    <plurals name="fog_count_prefecture">
+        <item quantity="one">%1$s of %2$s prefecture</item>
+        <item quantity="other">%1$s of %2$s prefectures</item>
+    </plurals>
+    <plurals name="fog_count_province">
+        <item quantity="one">%1$s of %2$s province</item>
+        <item quantity="other">%1$s of %2$s provinces</item>
+    </plurals>
+    <plurals name="fog_count_regency">
+        <item quantity="one">%1$s of %2$s regency</item>
+        <item quantity="other">%1$s of %2$s regencies</item>
+    </plurals>
+    <plurals name="fog_count_region">
+        <item quantity="one">%1$s of %2$s region</item>
+        <item quantity="other">%1$s of %2$s regions</item>
+    </plurals>
+    <plurals name="fog_count_sector">
+        <item quantity="one">%1$s of %2$s sector</item>
+        <item quantity="other">%1$s of %2$s sectors</item>
+    </plurals>
+    <plurals name="fog_count_state">
+        <item quantity="one">%1$s of %2$s state</item>
+        <item quantity="other">%1$s of %2$s states</item>
+    </plurals>
+    <plurals name="fog_count_subcounty">
+        <item quantity="one">%1$s of %2$s subcounty</item>
+        <item quantity="other">%1$s of %2$s subcounties</item>
+    </plurals>
+    <plurals name="fog_count_subdistrict">
+        <item quantity="one">%1$s of %2$s subdistrict</item>
+        <item quantity="other">%1$s of %2$s subdistricts</item>
+    </plurals>
+    <plurals name="fog_count_subprefecture">
+        <item quantity="one">%1$s of %2$s subprefecture</item>
+        <item quantity="other">%1$s of %2$s subprefectures</item>
+    </plurals>
+    <plurals name="fog_count_subregion">
+        <item quantity="one">%1$s of %2$s subregion</item>
+        <item quantity="other">%1$s of %2$s subregions</item>
+    </plurals>
+    <plurals name="fog_count_suburb">
+        <item quantity="one">%1$s of %2$s suburb</item>
+        <item quantity="other">%1$s of %2$s suburbs</item>
+    </plurals>
+    <plurals name="fog_count_territory">
+        <item quantity="one">%1$s of %2$s territory</item>
+        <item quantity="other">%1$s of %2$s territories</item>
+    </plurals>
+    <plurals name="fog_count_town">
+        <item quantity="one">%1$s of %2$s town</item>
+        <item quantity="other">%1$s of %2$s towns</item>
+    </plurals>
+    <plurals name="fog_count_township">
+        <item quantity="one">%1$s of %2$s township</item>
+        <item quantity="other">%1$s of %2$s townships</item>
+    </plurals>
+    <plurals name="fog_count_village">
+        <item quantity="one">%1$s of %2$s village</item>
+        <item quantity="other">%1$s of %2$s villages</item>
+    </plurals>
+    <plurals name="fog_count_zone">
+        <item quantity="one">%1$s of %2$s zone</item>
+        <item quantity="other">%1$s of %2$s zones</item>
+    </plurals>
 </resources>
