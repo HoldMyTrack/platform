@@ -266,7 +266,11 @@ data class PrivateLocation(val id: String, val name: String, val lon: Double, va
 /** `GET /v1/coverage/status`: a Fog re-render still to come, the account's map version
  *  (it moves whenever any of its tiles may have), and that version as the `cv` tile URLs carry
  *  ([Session.tileVersion]). */
-data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVersion: String)
+data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVersion: String, val explored: Explored?)
+
+/** How many places of each Fog level the account has been in, as the map clears them
+ *  (`docs/SPEC.md` FR-4.2): the level control's counts ([dev.holdmytrack.android.map.FogLevels]). */
+data class Explored(val countries: Int, val regions: Int, val counties: Int, val cities: Int)
 
 /**
  * One Spots place (`docs/SPEC.md` FR-15), as a tile's `spots` feature or `GET /v1/spots` carries

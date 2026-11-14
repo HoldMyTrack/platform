@@ -24,10 +24,6 @@ import org.maplibre.geojson.Point
  */
 enum class MapMode { NORMAL, FOG }
 
-/** The three levels Fog draws at by zoom (`docs/IMPLEMENTATION.md` §4.2.4): whole
- *  countries, then whole states or provinces, then exactly where you've been. */
-enum class ZoomTier { COUNTRY, REGION, CITY }
-
 /**
  * The user layers on top of the served basemap, as the layers document draws them ([MapLayers]),
  * and what the app decides about them: the tracks' range or Story, which tracks are hidden and

@@ -576,8 +576,8 @@
          under the chrome, its map-pin before the label; semibold as a button, regular and
          secondary as the line saying what loaded. -->
     <!-- The web's .zoom-level-notice__pill. -->
-    <style name="Widget.HoldMyTrack.ZoomLevelNotice" parent="">
-        <item name="android:background">@drawable/bg_zoom_level_notice</item>
+    <style name="Widget.HoldMyTrack.MapPill" parent="">
+        <item name="android:background">@drawable/bg_map_pill</item>
         <item name="android:elevation">3dp</item>
         <item name="android:maxWidth">352dp</item>
         <item name="android:paddingStart">@dimen/hmt_space_12</item>
@@ -619,6 +619,12 @@
     <!-- One Layers menu entry (.overlays-menu__item): the whole row is the checkbox or radio
          button's own 48dp target, its label in the body size. -->
     <style name="Widget.HoldMyTrack.LayersOption.Check" parent="Widget.Material3.CompoundButton.CheckBox">
+        <item name="android:textSize">@dimen/hmt_text_md</item>
+        <item name="android:textColor">@color/hmt_ink</item>
+    </style>
+
+    <!-- One Fog level menu entry (map/FogLevelMenu): a radio button in the checkboxes' size. -->
+    <style name="Widget.HoldMyTrack.LayersOption.Radio" parent="Widget.Material3.CompoundButton.RadioButton">
         <item name="android:textSize">@dimen/hmt_text_md</item>
         <item name="android:textColor">@color/hmt_ink</item>
     </style>

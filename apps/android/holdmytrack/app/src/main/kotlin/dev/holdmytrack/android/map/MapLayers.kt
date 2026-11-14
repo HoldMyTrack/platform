@@ -46,6 +46,8 @@ object MapLayers {
         val hiddenGroups: Map<String, Set<String>> = emptyMap(),
         /** By source id, the app's own query appended to its tiles (the tracks' range). */
         val queries: Map<String, String> = emptyMap(),
+        /** The Fog level the control locked ([FogLevels]), drawn at every zoom; null follows the zoom. */
+        val fogLevel: String? = null,
     )
 
     var state = State()
@@ -61,8 +63,8 @@ object MapLayers {
     /** The document on [style], or null before [attach]. */
     fun doc(style: Style): MapLayersDoc.Doc? = applied[style]?.doc
 
-    /** The tier in view at [zoom], by [style]'s document. */
-    fun tier(style: Style, zoom: Double): ZoomTier = MapLayersDoc.tier(applied[style]?.doc?.tiers.orEmpty(), zoom)
+    /** Fog's levels in [style]'s document, empty before [attach]. */
+    fun levels(style: Style): List<FogLevels.Level> = applied[style]?.doc?.levels.orEmpty()
 
     /**
      * Adds [doc]'s sources and layers to [style], at their place in the stack, all but the groups
@@ -171,6 +173,7 @@ object MapLayers {
         val view = MapLayersDoc.view(doc, state.mode, state.satellite)?.properties.orEmpty()
         val own = entry.groups.flatMap { group -> group.layers.map { it to group } }.associateBy { it.first.id }
         val hidden = state.hiddenGroups.values.flatten().toSet()
+        val ranges = FogLevels.zoomRanges(doc.levels, state.fogLevel)
         // The basemap's own layers a view sets.
         view.forEach { (id, props) ->
             if (id in own) return@forEach
@@ -185,6 +188,10 @@ object MapLayers {
             val base = ((props["visibility"] as? JsonPrimitive)?.content ?: Property.VISIBLE) == Property.VISIBLE
             val shown = base && (spec.toggle == null || state.toggles[spec.toggle] == true) && group.id !in hidden
             layer.setProperties(PropertyFactory.visibility(if (shown) Property.VISIBLE else Property.NONE))
+            ranges[spec.id]?.let { range ->
+                if (layer.minZoom != range.start) layer.setMinZoom(range.start)
+                if (layer.maxZoom != range.endInclusive) layer.setMaxZoom(range.endInclusive)
+            }
             spec.vars.forEach { (name, names) ->
                 if (name == "filter") {
                     spec.filter?.let { setFilter(layer, Expression.raw(MapLayersDoc.bind(it, names, state.vars, doc.vars).toString())) }

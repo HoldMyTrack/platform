@@ -14,7 +14,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 /**
  * The layers document, `GET /v1/map/layers` (root `docs/ARCHITECTURE.md` §2.1, ADR-0048): every
- * layer HoldMyTrack draws over the basemap, what each mode shows and how, and the zoom tiers,
+ * layer HoldMyTrack draws over the basemap, what each mode shows and how, and Fog's levels,
  * defined once in the web's `apps/web/src/map/mapLayers.ts`. This reads it; [MapLayers] puts it
  * on a map. Pure, so nothing here needs MapLibre.
  */
@@ -75,13 +75,12 @@ object MapLayersDoc {
     /** A view: by layer id, the properties to set, layout and paint alike (their names don't overlap). */
     data class View(val properties: Map<String, Map<String, JsonElement>>)
 
-    data class Tier(val tier: ZoomTier, val below: Double?)
-
     data class Doc(
         val styleBuild: String,
         val flavor: String,
         val tileVersion: String,
-        val tiers: List<Tier>,
+        /** Fog's levels, coarsest first ([FogLevels]). */
+        val levels: List<FogLevels.Level>,
         /** By name, the default of each value a layer reads as `["var", name]`. */
         val vars: Map<String, JsonElement>,
         val plain: Map<MapMode, View>,
@@ -102,10 +101,6 @@ object MapLayersDoc {
 
     /** The view for [mode], over satellite imagery or not. */
     fun view(doc: Doc, mode: MapMode, satellite: Boolean): View? = (if (satellite) doc.satellite else doc.plain)[mode]
-
-    /** The tier in view at [zoom]: the first whose `below` is past it. */
-    fun tier(tiers: List<Tier>, zoom: Double): ZoomTier =
-        tiers.firstOrNull { it.below == null || zoom < it.below }?.tier ?: ZoomTier.CITY
 
     /** Every array is an expression (the document's contract); numbers are floats, which is what
      *  MapLibre Native's number properties take. */
@@ -158,10 +153,17 @@ object MapLayersDoc {
             styleBuild = o.string("styleBuild").orEmpty(),
             flavor = o.string("flavor").orEmpty(),
             tileVersion = o.string("tileVersion").orEmpty(),
-            tiers = (o["tiers"] as JsonArray).map { t ->
-                val tier = t.jsonObject
-                Tier(ZoomTier.valueOf(tier.string("tier")!!.uppercase()), tier["below"]?.jsonPrimitive?.doubleOrNull)
-            },
+            // A document kept on disk from before the levels has none: the layers keep their own zooms.
+            levels = (o["levels"] as? JsonArray)?.map { l ->
+                val level = l.jsonObject
+                FogLevels.Level(
+                    level = level.string("level")!!,
+                    from = level["from"]?.jsonPrimitive?.doubleOrNull,
+                    below = level["below"]?.jsonPrimitive?.doubleOrNull,
+                    layers = (level["layers"] as? JsonArray)?.map { it.jsonPrimitive.content }.orEmpty(),
+                    word = level.string("word")?.takeIf { it.isNotEmpty() },
+                )
+            }.orEmpty(),
             vars = o["vars"]?.jsonObject.orEmpty(),
             plain = views(views.obj("plain")),
             satellite = views(views.obj("satellite")),

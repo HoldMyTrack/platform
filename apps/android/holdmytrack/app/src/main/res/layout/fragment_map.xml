@@ -445,11 +445,11 @@
         </FrameLayout>
 
         <!-- Fog still being updated (map/ModeBar.renderCoverage), the web's
-             .coverage-notice: the same pill as the level notice below, on a line of its own above
-             it, for as long as the account's coverage is still being worked on. -->
+             .coverage-notice: a pill on a line of its own, for as long as the account's coverage
+             is still being worked on. -->
         <TextView
             android:id="@+id/coverage_notice"
-            style="@style/Widget.HoldMyTrack.ZoomLevelNotice"
+            style="@style/Widget.HoldMyTrack.MapPill"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="@dimen/hmt_space_12"
@@ -457,20 +457,6 @@
             android:layout_marginBottom="@dimen/hmt_space_8"
             android:accessibilityLiveRegion="polite"
             android:text="@string/coverage_updating"
-            android:visibility="gone" />
-
-        <!-- Which level Fog draws at (map/ZoomLevelNotice), the web's
-             .zoom-level-notice: a line of its own under the top row, faded out a few seconds
-             after it shows. Not clickable, so the map still takes touches through it. -->
-        <TextView
-            android:id="@+id/zoom_level_notice"
-            style="@style/Widget.HoldMyTrack.ZoomLevelNotice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/hmt_space_12"
-            android:layout_marginEnd="@dimen/hmt_space_12"
-            android:layout_marginBottom="@dimen/hmt_space_8"
-            android:accessibilityLiveRegion="polite"
             android:visibility="gone" />
 
         <!-- The map's notice: the map chrome's own panel, after the web's on-map banner

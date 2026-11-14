@@ -27,19 +27,27 @@ data class ModeBarState(
 
 /**
  * The Normal / Fog of War toggle floating top-start, and what it says about the mode:
- * the chip naming what Fog shows, the level in view, and that coverage is still being
- * updated (`docs/SPEC.md` FR-4.2).
+ * the chip naming what Fog shows, Fog's level on its button ([FogLevelMenu]), and that coverage
+ * is still being updated (`docs/SPEC.md` FR-4.2). A tap on Fog while it's on opens the level menu.
  */
-class ModeBar(root: View, onPick: (MapMode) -> Unit, private val state: () -> ModeBarState) {
+class ModeBar(
+    root: View,
+    onPick: (MapMode) -> Unit,
+    /** Fog's levels in the applied layers document, the camera's zoom, and a pick's lock and zoom. */
+    levels: () -> List<FogLevels.Level>,
+    zoom: () -> Double?,
+    onLock: (locked: String?, zoomTo: Double?) -> Unit,
+    private val state: () -> ModeBarState,
+) {
     private val bar: View = root.findViewById(R.id.mode_bar)
     private val layersPanel: View = root.findViewById(R.id.layers_panel)
     private val chip: TextView = root.findViewById(R.id.mode_chip)
     private val coverageNotice: View = root.findViewById(R.id.coverage_notice)
-    private val zoomLevelNotice = ZoomLevelNotice(root.findViewById(R.id.zoom_level_notice))
     private val buttons: Map<MapMode, MaterialButton> = mapOf(
         MapMode.NORMAL to root.findViewById(R.id.mode_normal),
         MapMode.FOG to root.findViewById(R.id.mode_fog),
     )
+    private val fogMenu = FogLevelMenu(buttons.getValue(MapMode.FOG), levels, zoom, onLock)
 
     init {
         // One choice of two: each reads as a radio button, "1 of 2" (map/MapModeButton).
@@ -53,7 +61,15 @@ class ModeBar(root: View, onPick: (MapMode) -> Unit, private val state: () -> Mo
             }
         })
         buttons.forEach { (value, button) ->
-            button.setOnClickListener { onPick(value) }
+            button.setOnClickListener {
+                val menu = value == MapMode.FOG && state().mode == MapMode.FOG
+                onPick(value)
+                if (menu) {
+                    // Checkable, so the tap just unchecked it: Fog stays on, and the tap opens its menu.
+                    button.isChecked = true
+                    fogMenu.toggle()
+                }
+            }
             button.minWidth = ChromeInsets.minTouchTargetPx(button)
             button.minimumWidth = ChromeInsets.minTouchTargetPx(button)
         }
@@ -78,10 +94,9 @@ class ModeBar(root: View, onPick: (MapMode) -> Unit, private val state: () -> Mo
         renderNotices()
     }
 
-    /** The level in view, the coverage notice and the chip. */
+    /** Fog's level on its button, the coverage notice and the chip. */
     fun renderNotices() {
-        val s = state()
-        zoomLevelNotice.render(s.mode, active = s.sessionReady && !s.recording)
+        renderFogLevel()
         renderCoverage()
         renderChip()
     }
@@ -99,7 +114,19 @@ class ModeBar(root: View, onPick: (MapMode) -> Unit, private val state: () -> Mo
         if (s.mode == MapMode.FOG) chip.setText(R.string.mode_chip_fog)
     }
 
-    fun onCameraIdle(tier: ZoomTier) = zoomLevelNotice.onCameraIdle(tier)
+    /** Fog's button names the level in view while Fog is on: called as the zoom or the lock moves,
+     *  and once the layers document is applied. Its menu closes when Fog does. */
+    fun renderFogLevel() {
+        val fog = buttons.getValue(MapMode.FOG)
+        val on = state().mode == MapMode.FOG
+        if (!on) fogMenu.dismiss()
+        val label = if (on) fogMenu.label() else fog.resources.getString(R.string.mode_fog).let { FogLevelMenu.Label(it, it) }
+        if (fog.tag === label.text) return
+        fog.tag = label.text
+        fog.text = label.text
+        renderLabel(fog, fog.isChecked)
+        fog.contentDescription = label.description
+    }
 
     /**
      * At a large font size only the active mode keeps its label; the others show icons

@@ -191,7 +191,12 @@ internal data class CoverageStatusJson(
     val rendering: Boolean,
     val version: Long,
     @SerialName("tile_version") val tileVersion: String,
+    /** Null from a server before the counts, which the level menu then leaves out. */
+    val explored: ExploredJson? = null,
 )
+
+@Serializable
+internal data class ExploredJson(val countries: Int, val regions: Int, val counties: Int, val cities: Int)
 
 @Serializable
 internal data class TrackMetricPointJson(

@@ -119,6 +119,7 @@ The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.4), from the same ti
 - While recording (FR-5.1) the mode toggle goes and no mode's layers are drawn, only the recording; the mode comes back when it stops.
 - The Layers menu (`docs/SPEC.md` FR-4.13) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.14), Roads (`docs/SPEC.md` FR-4.17), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8). Each is kept on the phone, not the account, and all but Roads start off. Layers stays while recording.
 - Fog says when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
+- Fog's button names the level in view, and a tap on it while Fog is on opens the level menu (`docs/SPEC.md` FR-4.2), its counts read on each opening. A picked level holds through a trip out of Fog and until the app restarts. A place has no tooltip yet.
 
 ### FR-2.3 Initial camera framing
 

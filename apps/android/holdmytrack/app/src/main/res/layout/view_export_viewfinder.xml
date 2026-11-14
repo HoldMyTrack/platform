@@ -104,7 +104,7 @@
 
     <TextView
         android:id="@+id/export_error"
-        style="@style/Widget.HoldMyTrack.ZoomLevelNotice"
+        style="@style/Widget.HoldMyTrack.MapPill"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:accessibilityLiveRegion="polite"

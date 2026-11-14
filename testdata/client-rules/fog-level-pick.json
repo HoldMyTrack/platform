@@ -1,6 +1,6 @@
 {
   "rule": "fogLevelPick",
-  "clients": ["web"],
+  "clients": ["web", "android"],
   "description": "Picking a Fog level in the control: the locked level is released; any other is locked, and if the zoom is past its band the camera zooms out to the band's top, keeping the centre. A level whose band is further in locks where the camera is: picking never zooms in. `zoom` in the result is where to move, or null to stay.",
   "cases": [
     { "name": "a level in its band locks it where it is", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "county", "from": 6, "below": 8 }, { "level": "exact", "from": 11 }], "zoom": 7, "picked": "county" }, "expected": { "locked": "county", "zoom": null } },

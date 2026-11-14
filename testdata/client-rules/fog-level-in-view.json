@@ -1,6 +1,6 @@
 {
   "rule": "fogLevelInView",
-  "clients": ["web"],
+  "clients": ["web", "android"],
   "description": "The Fog level in view: the locked one, else the one whose band holds the zoom (a band runs from `from` up to but not including `below`; the last has no `below`).",
   "cases": [
     { "name": "the band holding the zoom", "input": { "levels": [{ "level": "country", "below": 3 }, { "level": "region", "from": 3, "below": 6 }, { "level": "exact", "from": 6 }], "zoom": 4.5 }, "expected": "region" },
