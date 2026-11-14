@@ -9,6 +9,7 @@
       {{/* The account's starting timezone (FR-1.7) — the browser knows it, the server can't.
            Without static/auth-timezone.js the account starts on UTC and Settings asks anyway. */}}
       <input type="hidden" name="timezone" id="signup-timezone" />
+      {{with .TurnstileSiteKey}}<div class="cf-turnstile auth-card__turnstile" data-sitekey="{{.}}"></div>{{end}}
       {{with .Error}}<p class="auth-card__error" role="alert">{{.}}</p>{{end}}
       <button type="submit" class="auth-card__submit">{{t "signup.submit"}}</button>
     </form>
@@ -18,4 +19,5 @@
 </main>
 <script src="{{asset "password.js"}}" defer></script>
 <script src="{{asset "auth-timezone.js"}}" defer></script>
+{{if .TurnstileSiteKey}}<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>{{end}}
 {{end}}{{end}}

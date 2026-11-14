@@ -71,9 +71,9 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 - **The user:** all of their own data.
 - **A Story recipient:** the sender's display name, else email address, and the copy they accepted, with the sender's Private locations applied, theirs from then on.
 - **The operator:** in the admin panel, each account's email, name and activities (dates, names, types, distances, places), not their tracks.
-- **Processors:** DigitalOcean (servers), Cloudflare (R2 storage, the basemap's CDN), Grafana Labs (monitoring) and Zoho (email, US).
+- **Processors:** DigitalOcean (servers), Cloudflare (R2 storage, the basemap's CDN, the sign-up bot check), Grafana Labs (monitoring) and Zoho (email, US).
 
-Cloudflare's CDN (basemap tiles, so which areas are viewed), Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser or app directly.
+Cloudflare's CDN (basemap tiles, so which areas are viewed), Cloudflare Turnstile (the web sign-up page, which also reads browser signals; the server sends it the visitor's IP address with the check), Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser or app directly.
 
 ## 3. Legal basis, necessity and proportionality
 
@@ -81,7 +81,7 @@ Cloudflare's CDN (basemap tiles, so which areas are viewed), Google Fonts, MapTi
 | --- | --- |
 | Account, activities, Private locations, Stories, photos, captures | (1)(b) contract: the service the user signed up for |
 | Reading Health Connect and the phone's location | (1)(a) consent, withdrawable in Android settings or Health Connect |
-| Server logs, backups, sign-in rate limits, the visitor count | (1)(f) legitimate interest in a working, secure service |
+| Server logs, backups, sign-in rate limits, the sign-up bot check, the visitor count | (1)(f) legitimate interest in a working, secure service |
 | Account emails (confirm address, reset password, data download, Story copy) | (1)(b) contract |
 
 No Article 9 special-category data is processed. Heart rate and other body data inside an uploaded file is never read out of it (ADR-0017).

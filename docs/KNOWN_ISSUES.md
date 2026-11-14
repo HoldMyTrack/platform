@@ -10,6 +10,12 @@ Open defects in shipped functionality. A fixed entry is deleted, with any lastin
 
 - [ ] Find a decode path for a large PNG in Chromium that doesn't hold it at full size, or refuse one above a pixel count with a reason, and measure WebP and AVIF while at it.
 
+### Turnstile doesn't guard the JSON signup endpoint
+
+Turnstile checks only the web `/signup` page (`IMPLEMENTATION.md` §4.19). `POST /v1/auth/signup`, which the Android and iOS sign-up forms call, takes no token, so a script can make unconfirmed accounts there, up to the per-address limit (`SPEC.md` FR-1.1).
+
+- [ ] Give the native sign-up forms a Turnstile token, then require one on `POST /v1/auth/signup`.
+
 ### Deleting an account on Android leaves two pieces of its state on the phone
 
 Account deletion clears what the device keeps for the account (`AccountDeletion.forget`): unsynced recordings, hidden Sync rows, the Health Connect switch and what Load last read. It does not clear the last-used recording type (`RecordingTypes`) or an unfinished recording's journal (`LiveRecordingJournal`), so a new account signing in with the same email inherits them.

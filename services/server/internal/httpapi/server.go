@@ -85,6 +85,7 @@ type Server struct {
 	// visitors counts unique web visitors (visitors.go); nil without a database.
 	visitors            *visitorCounter
 	apple               appleOAuth
+	turnstile           turnstile
 	pages               *web.Renderer
 	uploadLimiter       *fixedWindowLimiter
 	tileLimiter         *fixedWindowLimiter

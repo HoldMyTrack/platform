@@ -411,6 +411,11 @@ code {
   margin: 0;
 }
 
+/* Turnstile's widget is 65px tall; reserving it keeps the button from jumping when it loads. */
+.auth-card__turnstile {
+  min-height: 65px;
+}
+
 .auth-card__field {
   display: flex;
   flex-direction: column;

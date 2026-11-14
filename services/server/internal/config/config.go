@@ -87,6 +87,10 @@ type Config struct {
 	FacebookAppID       string
 	FacebookAppSecret   string
 	FacebookRedirectURL string
+	// Turnstile* turn on Cloudflare Turnstile on the /signup page (docs/SPEC.md FR-1.1). An
+	// empty TurnstileSiteKey turns it off. Only read by `serve`.
+	TurnstileSiteKey   string
+	TurnstileSecretKey string
 	// Apple* configure "Sign in with Apple" (docs/SPEC.md FR-1.14). An empty AppleServicesID,
 	// the web's client id, turns it off; AppleBundleID, the iOS app's, adds the native
 	// endpoint. Either needs the team, and the Sign in with Apple key's id and private key
@@ -226,6 +230,11 @@ func Load() (Config, error) {
 	}
 	if c.FacebookAppID != "" && c.FacebookAppSecret == "" {
 		return c, fmt.Errorf("config: FACEBOOK_APP_SECRET is required when FACEBOOK_APP_ID is set")
+	}
+	c.TurnstileSiteKey = env("TURNSTILE_SITE_KEY", "")
+	c.TurnstileSecretKey = env("TURNSTILE_SECRET_KEY", "")
+	if c.TurnstileSiteKey != "" && c.TurnstileSecretKey == "" {
+		return c, fmt.Errorf("config: TURNSTILE_SECRET_KEY is required when TURNSTILE_SITE_KEY is set")
 	}
 	c.AppleServicesID = env("APPLE_SERVICES_ID", "")
 	c.AppleBundleID = env("APPLE_BUNDLE_ID", "")

@@ -51,6 +51,7 @@ On the web, sign-in, sign-up, password reset and verification are server-rendere
 - The password is 8 characters to 72 bytes (bcrypt's limit), stored as a bcrypt hash, never stored or logged in plain text.
 - The browser's IANA timezone comes with the form; a missing or invalid one starts the account on UTC and never refuses the signup.
 - At most 5 accounts from one address in an hour. Failed signups and Google or Facebook sign-ins don't count.
+- The web sign-up page asks Cloudflare Turnstile whether the visitor is a person, when the deployment turns it on, and refuses the signup without its pass.
 - Signing up always makes a new account, also from a demo session (FR-2.3), starts a 30-day session and sends a verification email (FR-1.8).
 
 ### FR-1.2 Sign in
