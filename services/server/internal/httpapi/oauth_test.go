@@ -35,7 +35,7 @@ func TestBeginOAuthAppChallenge(t *testing.T) {
 // The /verify page's round trip carries the link's token to the callback; only a token's shape is
 // accepted, and never beside an app's challenge, whose round trip ends in the app.
 func TestBeginOAuthVerifyToken(t *testing.T) {
-	token := "0b7e3c1a-5d2f-4e8b-9a6c-3f1d2e4b5a6c"
+	token, _ := newToken()
 	rec := serveChecked(t, testFacebookServer("").handleFacebookStart, httptest.NewRequest("GET", "/v1/auth/facebook/start?tz=UTC&verify="+token, nil))
 	cookies := rec.Result().Cookies()
 	if rec.Code != http.StatusFound || len(cookies) != 1 || !strings.HasSuffix(cookies[0].Value, "..UTC.."+token) {
