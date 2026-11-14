@@ -200,7 +200,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         storyId = { storyId },
         recording = ::isRecording,
         frame = { box, maxZoom -> camera.flyTo(box, maxZoom) },
-        onPopupOpening = { spots.closePopup() },
+        onPopupOpening = {
+            spots.closePopup()
+            if (::fogPlaces.isInitialized) fogPlaces.close()
+        },
     )
 
     /** Find my location's dot and tracking camera. */
@@ -285,6 +288,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 MapLayers.update(style) { it.copy(fogLevel = locked) }
                 zoomTo?.let { z -> map?.easeCamera(CameraUpdateFactory.zoomTo(z)) }
                 modes.renderFogLevel()
+                // A lock can change the level without moving the camera.
+                fogPlaces.onCameraMove()
             },
         ) {
             ModeBarState(
@@ -299,7 +304,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         }
         layers.bind(view)
         spots.bind(view) { topChrome.bottom }
-        fogPlaces = FogPlaces(view.findViewById(R.id.fog_place_popup)) { topChrome.bottom }
+        fogPlaces = FogPlaces(view.findViewById(R.id.fog_place_popup), style = { style?.takeIf { overlaysAttached } }) { topChrome.bottom }
         photos.bind(view) { topChrome.bottom }
         recording.bind(view)
 
@@ -323,6 +328,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 if (shown) {
                     spots.closePopup()
                     photos.closePopup()
+                    fogPlaces.close()
                     layers.dismiss()
                 } else {
                     // The sheet comes back only where it belongs: not in Fog.
@@ -515,6 +521,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val instance = map ?: return
         style = null
         overlaysAttached = false
+        // The picked outline was the old style's; the new one starts with none.
+        if (::fogPlaces.isInitialized) fogPlaces.close()
         // The layers document is fetched beside the style, so only the overlays wait for it.
         layersDoc = layersDoc?.takeIf { it.flavor == layers.flavor() } ?: MapLayersSource.last(requireContext(), layers.flavor())
         fetchLayers()
@@ -704,7 +712,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         }
         // In Fog, the outline tapped is named; a tap off every outline closes it.
         if (mode == MapMode.FOG) {
-            style?.takeIf { overlaysAttached }?.let { fogPlaces.tap(instance, it, point) }
+            if (fogPlaces.tap(instance, point)) photos.closePopup()
             return true
         }
         if (!normalMode()) return false
@@ -739,6 +747,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The map follows the recording: while one runs the live track has the map, and the mode
      *  toggle, Find my location, the export and every history layer step aside. */
     private fun onRecordingChanged(active: Boolean, points: List<RecordedPoint>) {
+        // The recording has the map: Fog's layers step aside, and its place popup with them.
+        if (active && ::fogPlaces.isInitialized) fogPlaces.close()
         renderModeBar()
         locate.setShown(!active)
         export.setAvailable(!active)

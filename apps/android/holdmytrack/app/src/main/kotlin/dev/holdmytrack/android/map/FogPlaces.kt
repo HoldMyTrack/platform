@@ -19,11 +19,19 @@ import java.text.NumberFormat
  * draws a hovered one (the layers document's picked layers, through its [VAR] var, since MapLibre
  * Native has no feature-state to set), and a popup over the tap names it ([FogPlaceLabel]): what
  * it is, where, whether it's explored, and of each level below it how many of its places are
- * (`docs/SPEC.md` FR-4.2). Its close button, a tap off every outline, a change of level or
- * leaving Fog closes it; it follows the map while open, as a spot's popup does.
+ * (`docs/SPEC.md` FR-4.2). Its close button, a tap off every outline, a change of level, leaving
+ * Fog, another popup, the export, a recording or a new style closes it; it follows the map while
+ * open, as a spot's popup does.
+ *
+ * The outline is the app's [MapLayers.State], which outlives this screen, while the popup is this
+ * screen's: so a new one starts by dropping any outline an earlier one left, and closing always
+ * drops it, popup open or not.
  */
 class FogPlaces(
     private val view: View,
+    /** The style with the user layers on it, or null while one loads: never one kept from a tap,
+     *  which a reload leaves dead. */
+    private val style: () -> Style?,
     /** The chrome's bottom: the popup goes under the tap rather than up into it. */
     private val top: () -> Int,
 ) {
@@ -33,21 +41,23 @@ class FogPlaces(
     private val state = view.findViewById<TextView>(R.id.fog_place_state)
 
     private var map: MapLibreMap? = null
-    private var style: Style? = null
     private var at: LatLng? = null
     /** The level the picked outline is on: one coming into view in its place closes the popup. */
     private var level: String? = null
 
     init {
+        MapLayers.update(null) { it.copy(vars = it.vars - VAR) }
         view.findViewById<View>(R.id.fog_place_close).setOnClickListener { close() }
-        view.addOnLayoutChangeListener { _, _, top, _, bottom, _, oldTop, _, oldBottom ->
-            if (bottom - top != oldBottom - oldTop) place()
+        // Placed again once the new text has its size: the first placing measures the old.
+        view.addOnLayoutChangeListener { _, left, top, right, bottom, oldLeft, oldTop, oldRight, oldBottom ->
+            if (right - left != oldRight - oldLeft || bottom - top != oldBottom - oldTop) place()
         }
     }
 
     /** Picks the outline under [point] on [style], or closes the popup when there's none to name.
      *  True when a place was picked. */
-    fun tap(instance: MapLibreMap, style: Style, point: LatLng): Boolean {
+    fun tap(instance: MapLibreMap, point: LatLng): Boolean {
+        val style = style() ?: return false
         val levels = MapLayers.levels(style)
         val zoom = instance.cameraPosition.zoom
         val inView = FogLevels.inView(levels, zoom, MapLayers.state.fogLevel)
@@ -64,7 +74,6 @@ class FogPlaces(
             return false
         }
         map = instance
-        this.style = style
         at = point
         level = inView
         MapLayers.update(style) { it.copy(vars = it.vars + (VAR to JsonPrimitive(id))) }
@@ -73,18 +82,18 @@ class FogPlaces(
     }
 
     fun close() {
-        if (at == null) return
         at = null
         level = null
         view.isVisible = false
-        MapLayers.update(style) { it.copy(vars = it.vars - VAR) }
+        if (VAR in MapLayers.state.vars) MapLayers.update(style()) { it.copy(vars = it.vars - VAR) }
     }
 
-    /** Over the tap again on every camera move while open, and closed once the level changes. */
+    /** Over the tap again on every camera move while open, and closed once the level in view
+     *  changes, by the zoom or by a lock. */
     fun onCameraMove() {
         val instance = map ?: return
         val picked = level ?: return
-        val levels = style?.let(MapLayers::levels).orEmpty()
+        val levels = style()?.let(MapLayers::levels).orEmpty()
         if (FogLevels.inView(levels, instance.cameraPosition.zoom, MapLayers.state.fogLevel) != picked) return close()
         place()
     }
@@ -128,12 +137,12 @@ class FogPlaces(
         }
     }
 
-    private companion object {
+    companion object {
         /** The layers document's var naming the picked outline by its tile `id`. */
         const val VAR = "fogPlace"
-        const val VISITED = "map.fog.place.visited"
-        const val GUTTER_DP = 8
+        private const val VISITED = "map.fog.place.visited"
+        private const val GUTTER_DP = 8
         /** The web popup's 14px offset from the pointer. */
-        const val OFFSET_DP = 14
+        private const val OFFSET_DP = 14
     }
 }
