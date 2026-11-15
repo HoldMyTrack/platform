@@ -148,14 +148,13 @@ func TestJWKSWaitersSurviveTheFetchersCancel(t *testing.T) {
 	}
 }
 
-// After a failed shared fetch, a caller that waited on it fetches again in turn.
-func TestJWKSWaiterRetriesAFailedFetch(t *testing.T) {
+// Callers that waited on a failed fetch share its failure; the next caller fetches again.
+func TestJWKSWaitersShareAFailedFetch(t *testing.T) {
 	key := &newRSAKey(t).PublicKey
 	var calls atomic.Int32
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		switch calls.Add(1) {
-		case 2:
-			time.Sleep(50 * time.Millisecond)
+		if calls.Add(1) == 2 {
+			time.Sleep(100 * time.Millisecond)
 			http.Error(w, "down", http.StatusBadGateway)
 			return
 		}
@@ -172,16 +171,27 @@ func TestJWKSWaiterRetriesAFailedFetch(t *testing.T) {
 		t.Fatal(err)
 	}
 	expired := now.Add(2 * jwksDefaultTTL)
-	first := make(chan error, 1)
-	go func() {
-		_, err := k.key(context.Background(), "k1", expired)
-		first <- err
-	}()
-	time.Sleep(10 * time.Millisecond) // the first caller's fetch is under way
-	if _, err := k.key(context.Background(), "k1", expired); err != nil {
-		t.Errorf("waiter after a failed fetch: %v, want its own fetch to succeed", err)
+	var wg sync.WaitGroup
+	errs := make(chan error, 4)
+	for range 4 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			_, err := k.key(context.Background(), "k1", expired)
+			errs <- err
+		}()
 	}
-	if err := <-first; err == nil {
-		t.Error("the failed fetch reported success")
+	wg.Wait()
+	close(errs)
+	for err := range errs {
+		if err == nil {
+			t.Error("a caller succeeded although the one fetch it could share failed")
+		}
+	}
+	if got := calls.Load(); got != 2 {
+		t.Errorf("%d fetches, want 2: the first, and one failed fetch for all four callers", got)
+	}
+	if _, err := k.key(context.Background(), "k1", expired); err != nil {
+		t.Errorf("next caller after the failure: %v, want its own fetch to succeed", err)
 	}
 }

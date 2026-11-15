@@ -44,7 +44,8 @@ type jwksKeySet struct {
 	keys      map[string]*rsa.PublicKey
 	expires   time.Time
 	lastFetch time.Time
-	fetches   int // fetches that succeeded, so a caller that waited on one doesn't repeat it
+	fetches   int   // fetches finished, so a caller that waited on one doesn't repeat it
+	fetchErr  error // the last fetch's failure, nil when it succeeded
 }
 
 func newJWKSKeySet(url string, client *http.Client) *jwksKeySet {
@@ -66,11 +67,16 @@ func (k *jwksKeySet) key(ctx context.Context, kid string, now time.Time) (*rsa.P
 	defer func() { <-k.fetching }()
 
 	k.mu.Lock()
-	done := k.fetches != seen
+	done, fetchErr := k.fetches != seen, k.fetchErr
 	key = k.keys[kid]
 	k.mu.Unlock()
 	if done {
-		// Another caller's fetch succeeded while this one waited: answer from what it got.
+		// Another caller's fetch finished while this one waited: answer as it did. A failure is
+		// the provider's own, since the fetch runs detached, and each caller retrying it in turn
+		// would wait out the client's timeout once for every caller ahead of it.
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
 		return key, unknownKey(key, kid)
 	}
 
@@ -79,9 +85,10 @@ func (k *jwksKeySet) key(ctx context.Context, kid string, now time.Time) (*rsa.P
 	keys, ttl, err := fetchJWKS(context.WithoutCancel(ctx), k.client, k.url)
 	k.mu.Lock()
 	k.lastFetch = now
+	k.fetches++
+	k.fetchErr = err
 	if err == nil {
 		k.keys, k.expires = keys, now.Add(ttl)
-		k.fetches++
 	}
 	k.mu.Unlock()
 	if err != nil {
@@ -92,8 +99,7 @@ func (k *jwksKeySet) key(ctx context.Context, kid string, now time.Time) (*rsa.P
 }
 
 // cached is kid's key from the cache, or whether the set has to be fetched for it; seen is the
-// fetch count it read, for key to tell whether one succeeded since. A failed one leaves the
-// count, so each caller that waited on it fetches in turn.
+// fetch count it read, for key to tell whether one finished since.
 func (k *jwksKeySet) cached(kid string, now time.Time) (key *rsa.PublicKey, fetch bool, seen int) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
