@@ -90,20 +90,34 @@ func sessionIDFromRequest(r *http.Request) (string, bool) {
 // err is a failed lookup, not a missing session: a caller answers it 503, never 401, since a
 // client takes a 401 for a dead session and signs out.
 func (s *Server) currentUserID(r *http.Request) (userID string, ok bool, err error) {
+	info, _, found, err := s.lookupSession(r)
+	return info.userID, found, err
+}
+
+// lookupSession is the one session lookup currentUserID, requireAuth and pageAccount share:
+// the account behind r's session and when each client last used it, found false for no live
+// session. err is a failed lookup, which every caller answers 503: a 401, or a page drawn
+// signed out, would tell a client its session is gone when it isn't.
+func (s *Server) lookupSession(r *http.Request) (info authInfo, was seen, found bool, err error) {
 	sessionID, ok := sessionIDFromRequest(r)
 	if !ok {
-		return "", false, nil
+		return authInfo{}, seen{}, false, nil
 	}
-	err = s.pool.QueryRow(r.Context(),
-		`SELECT user_id FROM sessions WHERE token_hash = $1 AND expires_at > NOW()`, tokenHash(sessionID),
-	).Scan(&userID)
+	err = s.pool.QueryRow(r.Context(), `
+		SELECT u.id, u.email_verified, u.timezone, COALESCE(u.locale, ''), u.is_admin, u.last_seen_at,
+		       u.web_seen_at, u.android_seen_at, u.android_build, u.ios_seen_at, u.ios_build
+		FROM sessions se JOIN users u ON u.id = se.user_id
+		WHERE se.token_hash = $1 AND se.expires_at > NOW()
+	`, tokenHash(sessionID)).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &info.isAdmin,
+		&was.last, &was.web, &was.android, &was.androidBuild, &was.ios, &was.iosBuild)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return "", false, nil
+		return authInfo{}, seen{}, false, nil
 	}
 	if err != nil {
-		return "", false, err
+		return authInfo{}, seen{}, false, err
 	}
-	return userID, true, nil
+	info.isDemo = info.userID == DemoCustomerUserID
+	return info, was, true, nil
 }
 
 type contextKey string
@@ -114,8 +128,8 @@ const authContextKey contextKey = "authInfo"
 // context: isDemo and emailVerified for the gates layered on top (requireVerified,
 // requireNotDemo), timezone for day-bucketing without a second query, and locale for the
 // language of a request's messages (requestLang), "" when the account follows its browser.
-// isAdmin is read only by pageAccount, for the admin pages (admin_pages.go); requireAuth leaves
-// it false, since no JSON endpoint is admin-only.
+// isAdmin is read only by pageAccount, for the admin pages (admin_pages.go): no JSON endpoint is
+// admin-only.
 type authInfo struct {
 	userID        string
 	isDemo        bool
@@ -156,21 +170,8 @@ func locationFromContext(ctx context.Context) *time.Location {
 // help an account that hasn't verified yet.
 func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		sessionID, ok := sessionIDFromRequest(r)
-		if !ok {
-			writeAPIError(w, "authentication required", http.StatusUnauthorized)
-			return
-		}
-		var info authInfo
-		var was seen
-		err := s.pool.QueryRow(r.Context(), `
-			SELECT u.id, u.email_verified, u.timezone, COALESCE(u.locale, ''), u.last_seen_at,
-			       u.web_seen_at, u.android_seen_at, u.android_build, u.ios_seen_at, u.ios_build
-			FROM sessions se JOIN users u ON u.id = se.user_id
-			WHERE se.token_hash = $1 AND se.expires_at > NOW()
-		`, tokenHash(sessionID)).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &was.last,
-			&was.web, &was.android, &was.androidBuild, &was.ios, &was.iosBuild)
-		if errors.Is(err, pgx.ErrNoRows) {
+		info, was, found, err := s.lookupSession(r)
+		if err == nil && !found {
 			writeAPIError(w, "authentication required", http.StatusUnauthorized)
 			return
 		}
@@ -183,7 +184,6 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 			writeAPIError(w, "session lookup failed", http.StatusServiceUnavailable)
 			return
 		}
-		info.isDemo = info.userID == DemoCustomerUserID
 		if !info.isDemo {
 			c, build := requestClient(r.UserAgent(), inApp(r))
 			if query, args := seenDue(was, c, build, time.Now()).update(); query != "" {

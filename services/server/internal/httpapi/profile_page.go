@@ -77,7 +77,10 @@ type trendBar struct {
 
 // GET /profile.
 func (s *Server) handleProfilePage(w http.ResponseWriter, r *http.Request) {
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
 	if acct == nil {
 		http.Redirect(w, r, "/signin", http.StatusSeeOther)
 		return

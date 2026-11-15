@@ -39,36 +39,40 @@ type authForm struct {
 }
 
 // pageAccount is the optional-auth lookup every page does: who is signed in (the header's
-// account), whether it's the demo, whether the email is verified, its language. nil for no
-// live session (or an expired one). Unlike requireAuth it never rejects, and an unverified
-// account still counts as signed in — the header only needs a name.
+// account), whether it's the demo, whether the email is verified, its language. Unlike
+// requireAuth it never rejects, and an unverified account still counts as signed in — the
+// header only needs a name.
 type pageAccount struct {
 	info    authInfo
 	profile authResponse
 	user    *web.User
 }
 
-func (s *Server) pageAccount(r *http.Request) *pageAccount {
-	sessionID, ok := sessionIDFromRequest(r)
-	if !ok {
-		return nil
-	}
-	var info authInfo
-	err := s.pool.QueryRow(r.Context(), `
-		SELECT u.id, u.email_verified, u.timezone, COALESCE(u.locale, ''), u.is_admin
-		FROM sessions se JOIN users u ON u.id = se.user_id
-		WHERE se.token_hash = $1 AND se.expires_at > NOW()
-	`, tokenHash(sessionID)).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &info.isAdmin)
+// pageAccount returns nil, true for no live session (or an expired one). A lookup that fails
+// returns false after answering the request with the unavailable page: drawn signed out, the
+// page would show a visitor whose session is fine the signed-out header, or send them to sign in.
+func (s *Server) pageAccount(w http.ResponseWriter, r *http.Request) (*pageAccount, bool) {
+	acct, err := s.lookupPageAccount(r)
 	if err != nil {
-		return nil
+		if !clientGone(w, r) {
+			s.log.Error("page session lookup failed", "err", err)
+			s.unavailable(w, r)
+		}
+		return nil, false
 	}
-	info.isDemo = info.userID == DemoCustomerUserID
+	return acct, true
+}
+
+func (s *Server) lookupPageAccount(r *http.Request) (*pageAccount, error) {
+	info, _, found, err := s.lookupSession(r)
+	if err != nil || !found {
+		return nil, err
+	}
 	resp, err := s.loadAuthResponse(r.Context(), info.userID)
 	if err != nil {
-		s.log.Error("page account lookup failed", "err", err)
-		return nil
+		return nil, err
 	}
-	return &pageAccount{info: info, profile: resp, user: &web.User{Email: resp.Email, DisplayName: resp.DisplayName, AvatarURL: resp.AvatarURL, IsDemo: resp.IsDemo, IsAdmin: info.isAdmin && !info.isDemo}}
+	return &pageAccount{info: info, profile: resp, user: &web.User{Email: resp.Email, DisplayName: resp.DisplayName, AvatarURL: resp.AvatarURL, IsDemo: resp.IsDemo, IsAdmin: info.isAdmin && !info.isDemo}}, nil
 }
 
 // appCookieName marks a request from a native app's WebView (SPEC.md FR-9.6): the app puts it
@@ -190,7 +194,10 @@ func (s *Server) signIn(w http.ResponseWriter, r *http.Request, userID string) {
 
 // GET /signin. Someone already signed in goes where their account belongs instead.
 func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
 	if acct != nil && !acct.info.isDemo {
 		http.Redirect(w, r, acct.home(), http.StatusSeeOther)
 		return
@@ -226,7 +233,11 @@ func (s *Server) handleSignInForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	userID, err := s.checkPassword(r.Context(), rateLimitAddress(r), email, r.PostFormValue("password"))
 	if err != nil {
-		s.renderAuthError(w, r, s.pageAccount(r), "sign in", "signin", "signin.title", false, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
+		acct, ok := s.pageAccount(w, r)
+		if !ok {
+			return
+		}
+		s.renderAuthError(w, r, acct, "sign in", "signin", "signin.title", false, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
 		return
 	}
 	s.signIn(w, r, userID)
@@ -234,7 +245,10 @@ func (s *Server) handleSignInForm(w http.ResponseWriter, r *http.Request) {
 
 // GET /signup. A demo session is allowed here — it's how a demo becomes a real account.
 func (s *Server) handleSignUpPage(w http.ResponseWriter, r *http.Request) {
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
 	if acct != nil && !acct.info.isDemo {
 		http.Redirect(w, r, acct.home(), http.StatusSeeOther)
 		return
@@ -247,7 +261,10 @@ func (s *Server) handleSignUpPage(w http.ResponseWriter, r *http.Request) {
 // browser; without it the account starts on UTC, as the JSON endpoint's would.
 func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
 	userID, err := s.createAccountLimited(r, email, r.PostFormValue("password"), r.PostFormValue("timezone"), pageLang(acct, r), s.checkTurnstile)
 	if err != nil {
 		s.renderAuthError(w, r, acct, "sign up", "signup", "signup.title", true, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil && acct.info.isDemo, TurnstileSiteKey: s.turnstile.siteKey}, err)
@@ -259,7 +276,11 @@ func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
 // POST /demo — the sign-in page's "Try it now — no signup".
 func (s *Server) handleDemoForm(w http.ResponseWriter, r *http.Request) {
 	if err := allowDemo(r); err != nil {
-		s.renderAuthError(w, r, s.pageAccount(r), "demo start", "signin", "signin.title", false, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
+		acct, ok := s.pageAccount(w, r)
+		if !ok {
+			return
+		}
+		s.renderAuthError(w, r, acct, "demo start", "signin", "signin.title", false, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
 		return
 	}
 	if _, err := s.startSession(w, r.Context(), DemoCustomerUserID, demoSessionTTL); err != nil {
@@ -272,7 +293,11 @@ func (s *Server) handleDemoForm(w http.ResponseWriter, r *http.Request) {
 
 // GET /forgot.
 func (s *Server) handleForgotPage(w http.ResponseWriter, r *http.Request) {
-	s.renderAuth(w, r, s.pageAccount(r), http.StatusOK, "forgot", "forgot.title", true, authForm{})
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
+	s.renderAuth(w, r, acct, http.StatusOK, "forgot", "forgot.title", true, authForm{})
 }
 
 // POST /forgot. Answers "check your email" whether or not the address has an account.
@@ -280,10 +305,18 @@ func (s *Server) handleForgotForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	send, err := s.requestPasswordReset(r, email)
 	if err != nil {
-		s.renderAuthError(w, r, s.pageAccount(r), "forgot password", "forgot", "forgot.title", true, authForm{Email: email}, err)
+		acct, ok := s.pageAccount(w, r)
+		if !ok {
+			return
+		}
+		s.renderAuthError(w, r, acct, "forgot password", "forgot", "forgot.title", true, authForm{Email: email}, err)
 		return
 	}
-	s.renderAuth(w, r, s.pageAccount(r), http.StatusOK, "forgot", "forgot.title", true, authForm{Sent: true})
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
+	s.renderAuth(w, r, acct, http.StatusOK, "forgot", "forgot.title", true, authForm{Sent: true})
 	s.afterResponse(send)
 }
 
@@ -294,7 +327,11 @@ func (s *Server) handleResetPage(w http.ResponseWriter, r *http.Request) {
 	if form.Token == "" {
 		form.ErrorKey = "error.reset_link_invalid"
 	}
-	s.renderAuth(w, r, s.pageAccount(r), http.StatusOK, "reset", "reset.title", true, form)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
+	s.renderAuth(w, r, acct, http.StatusOK, "reset", "reset.title", true, form)
 }
 
 // POST /reset.
@@ -302,7 +339,11 @@ func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
 	token := r.PostFormValue("token")
 	userID, err := s.resetPassword(r.Context(), token, r.PostFormValue("password"))
 	if err != nil {
-		s.renderAuthError(w, r, s.pageAccount(r), "reset password", "reset", "reset.title", true, authForm{Token: token}, err)
+		acct, ok := s.pageAccount(w, r)
+		if !ok {
+			return
+		}
+		s.renderAuthError(w, r, acct, "reset password", "reset", "reset.title", true, authForm{Token: token}, err)
 		return
 	}
 	s.signIn(w, r, userID)
@@ -330,14 +371,26 @@ func (s *Server) handleVerifyPage(w http.ResponseWriter, r *http.Request) {
 			form.ErrorKey = "signin.facebook_failed"
 		}
 		if form.ErrorKey != "" {
-			s.renderAuthFailure(w, r, s.pageAccount(r), http.StatusForbidden, "verify", "verify.title", true, form, nil)
+			acct, ok := s.pageAccount(w, r)
+			if !ok {
+				return
+			}
+			s.renderAuthFailure(w, r, acct, http.StatusForbidden, "verify", "verify.title", true, form, nil)
 			return
 		}
-		s.renderAuthError(w, r, s.pageAccount(r), "verify email", "verify", "verify.title", true, form, err)
+		acct, ok := s.pageAccount(w, r)
+		if !ok {
+			return
+		}
+		s.renderAuthError(w, r, acct, "verify email", "verify", "verify.title", true, form, err)
 		return
 	}
 	if err != nil {
-		s.renderAuthError(w, r, s.pageAccount(r), "verify email", "verify", "verify.title", true, authForm{}, err)
+		acct, ok := s.pageAccount(w, r)
+		if !ok {
+			return
+		}
+		s.renderAuthError(w, r, acct, "verify email", "verify", "verify.title", true, authForm{}, err)
 		return
 	}
 	if !signIn {
@@ -350,7 +403,10 @@ func (s *Server) handleVerifyPage(w http.ResponseWriter, r *http.Request) {
 // GET /verify-pending — a signed-in real account whose email isn't confirmed yet: resend the
 // link, or correct a mistyped address. ?sent / ?changed are the two forms' PRG notices.
 func (s *Server) handleVerifyPendingPage(w http.ResponseWriter, r *http.Request) {
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
 	if acct == nil {
 		http.Redirect(w, r, "/signin", http.StatusSeeOther)
 		return
@@ -376,7 +432,10 @@ func (s *Server) handleVerifyPendingPage(w http.ResponseWriter, r *http.Request)
 
 // POST /verify-pending/resend.
 func (s *Server) handleVerifyResendForm(w http.ResponseWriter, r *http.Request) {
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
 	if acct == nil {
 		http.Redirect(w, r, "/signin", http.StatusSeeOther)
 		return
@@ -390,7 +449,10 @@ func (s *Server) handleVerifyResendForm(w http.ResponseWriter, r *http.Request) 
 
 // POST /verify-pending/email.
 func (s *Server) handleVerifyChangeEmailForm(w http.ResponseWriter, r *http.Request) {
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
 	if acct == nil {
 		http.Redirect(w, r, "/signin", http.StatusSeeOther)
 		return
