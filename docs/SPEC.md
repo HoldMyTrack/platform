@@ -78,7 +78,8 @@ Signing out deletes the session on the server; its cookie or token stops working
 ### FR-1.6 Reset password
 
 - The password rules are FR-1.1's. A missing, used and expired token get the same error.
-- A reset ends every session and every outstanding reset link of the account, then signs in the browser that made it.
+- A reset ends every session, every app sign-in not yet completed and every outstanding reset link of the account, then signs in the browser that made it.
+- A reset of an account whose email isn't verified yet drops its Facebook link, which whoever owns the address may not have made.
 - A reset link opens the reset page whatever session the browser holds.
 
 ### FR-1.7 Account settings
@@ -97,7 +98,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 A real account must confirm its email before using anything else. Why: a mistyped email strands an account's imported data where nobody can get it back.
 
 - Until verified, every route except `GET /v1/auth/me`, sign-out, resend and change of address is refused with a distinguishable error. A demo account is never gated.
-- A link is valid for 24 hours, works once and confirms only the address it was sent to, from any device. A first verification ends the account's other sessions and signs in only a browser already signed in to it; a later one signs the browser in unless it's signed in to another account.
+- A link is valid for 24 hours, works once and confirms only the address it was sent to, from any device. A first verification ends the account's other sessions and app sign-ins not yet completed, and signs in only a browser already signed in to it; a later one signs the browser in unless it's signed in to another account. An account linked to Facebook is first verified only in a browser signed in to it: anywhere else the link verifies nothing and stays usable. A Facebook sign-in started from the link comes back to it, signed in only when it is the account's own Facebook; a password reset is the other way in (FR-1.6).
 - Verifying ends every other verification link, and, when the address changed, every reset link.
 - A change of address before verifying waits for the new address's link: until then the account keeps its address and state, the new address stays free for anyone else, and earlier links stop working. If another account takes the address meanwhile, verifying is refused.
 - A change to an address another account has is refused. A resend goes to the newest link's address. Resends and changes together: at most 5 an hour per account; a demo account can do neither.

@@ -91,7 +91,7 @@ auth_reset-password:
 auth_verify-email:
   post:
     summary: Verify an address with a verification link's token, and sign in
-    description: An account's first verification signs in only a caller already signed in to it, and ends the account's other sessions; any other caller gets 204 and signs in with the password (SPEC FR-1.8).
+    description: An account's first verification signs in only a caller already signed in to it, and ends the account's other sessions; any other caller gets 204 and signs in with the password, or 403 verify_needs_facebook for an account made through Facebook, whose token stays usable (SPEC FR-1.8).
     security: []
     requestBody:
       required: true
@@ -108,6 +108,7 @@ auth_verify-email:
       "204":
         description: Verified, not signed in
       "400": { $ref: "../components/responses.yaml#/Error" }
+      "403": { $ref: "../components/responses.yaml#/Error" }
       "409": { $ref: "../components/responses.yaml#/Error" }
 auth_providers:
   get:
@@ -159,6 +160,7 @@ auth_facebook_start:
     parameters:
       - $ref: "../components/parameters.yaml#/OAuthTZ"
       - $ref: "../components/parameters.yaml#/OAuthAppChallenge"
+      - $ref: "../components/parameters.yaml#/OAuthVerify"
     responses:
       "302": { $ref: "../components/responses.yaml#/Redirect" }
       "400": { $ref: "../components/responses.yaml#/Error" }

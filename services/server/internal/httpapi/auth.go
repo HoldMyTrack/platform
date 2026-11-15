@@ -384,7 +384,7 @@ func (s *Server) sendVerificationEmail(ctx context.Context, userID, email, lang 
 		return err
 	}
 
-	link := fmt.Sprintf("%s/verify?token=%s", s.appBaseURL, tokenID)
+	link := s.verifyLinkURL(tokenID, nil)
 	l := i18n.Get(lang)
 	return s.mailer.Send(ctx, email, l.T("email.verify.subject"), l.T("email.verify.body", "link", link))
 }

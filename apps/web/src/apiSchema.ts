@@ -260,7 +260,7 @@ export interface paths {
         put?: never;
         /**
          * Verify an address with a verification link's token, and sign in
-         * @description An account's first verification signs in only a caller already signed in to it, and ends the account's other sessions; any other caller gets 204 and signs in with the password (SPEC FR-1.8).
+         * @description An account's first verification signs in only a caller already signed in to it, and ends the account's other sessions; any other caller gets 204 and signs in with the password, or 403 verify_needs_facebook for an account made through Facebook, whose token stays usable (SPEC FR-1.8).
          */
         post: {
             parameters: {
@@ -286,6 +286,7 @@ export interface paths {
                     content?: never;
                 };
                 400: components["responses"]["Error"];
+                403: components["responses"]["Error"];
                 409: components["responses"]["Error"];
             };
         };
@@ -425,6 +426,8 @@ export interface paths {
                     tz?: components["parameters"]["OAuthTZ"];
                     /** @description A native app's S256 PKCE challenge; the round trip then ends in the app with a one-time code. */
                     app_challenge?: components["parameters"]["OAuthAppChallenge"];
+                    /** @description A verification link's token, from the /verify page; the browser round trip ends back at that link. Not with app_challenge. */
+                    verify?: components["parameters"]["OAuthVerify"];
                 };
                 header?: never;
                 path?: never;
@@ -4361,6 +4364,8 @@ export interface components {
         OAuthTZ: string;
         /** @description A native app's S256 PKCE challenge; the round trip then ends in the app with a one-time code. */
         OAuthAppChallenge: string;
+        /** @description A verification link's token, from the /verify page; the browser round trip ends back at that link. Not with app_challenge. */
+        OAuthVerify: string;
         /** @description Local start date, inclusive. */
         FilterFrom: string;
         /** @description Local start date, inclusive. */

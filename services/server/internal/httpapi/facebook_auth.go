@@ -84,7 +84,14 @@ func (s *Server) handleFacebookStart(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "not found", http.StatusNotFound)
 		return
 	}
-	state, _, ok := s.beginOAuth(w, r, facebookCookiePath, false)
+	// ?verify= is a verification link's token from the /verify page (errVerifyNeedsFacebook):
+	// the round trip goes back to it.
+	verifyToken := r.URL.Query().Get("verify")
+	if verifyToken != "" && !uuidPattern.MatchString(verifyToken) {
+		writeAPIError(w, "invalid verify", http.StatusBadRequest)
+		return
+	}
+	state, _, ok := s.beginOAuth(w, r, facebookCookiePath, false, verifyToken)
 	if !ok {
 		return
 	}
@@ -132,6 +139,10 @@ func (s *Server) handleFacebookCallback(w http.ResponseWriter, r *http.Request) 
 		fail("profile", err)
 		return
 	}
+	if rt.verifyToken != "" {
+		s.finishFacebookVerify(w, r, rt, profile.ID, fail)
+		return
+	}
 	userID, created, err := s.resolveFacebookUser(ctx, profile, rt.tz)
 	if err != nil {
 		fail("account resolution", err)
@@ -142,6 +153,31 @@ func (s *Server) handleFacebookCallback(w http.ResponseWriter, r *http.Request) 
 			// Not fatal, as in createAccount: the account can ask for a resend.
 			s.log.Error("verification email failed", "err", err)
 		}
+	}
+	if err := s.finishOAuth(w, r, rt, userID); err != nil {
+		fail("session start", err)
+	}
+}
+
+// finishFacebookVerify ends a round trip started from the /verify page: it signs in only the
+// unverified account the verification link belongs to, and only when this Facebook account is
+// the one linked to it, then goes back to the link. Any other Facebook account makes or signs
+// in to nothing and goes back with ?error=other_facebook, so no stray account is made.
+func (s *Server) finishFacebookVerify(w http.ResponseWriter, r *http.Request, rt oauthRoundTrip, subject string, fail func(string, error)) {
+	var userID string
+	err := s.pool.QueryRow(r.Context(), `
+		SELECT ev.user_id FROM email_verifications ev
+		JOIN users u ON u.id = ev.user_id AND NOT u.email_verified
+		JOIN user_identities i ON i.user_id = ev.user_id AND i.provider = 'facebook' AND i.subject = $2
+		WHERE ev.token_hash = $1 AND ev.expires_at > NOW()
+	`, tokenHash(rt.verifyToken), subject).Scan(&userID)
+	if errors.Is(err, pgx.ErrNoRows) {
+		http.Redirect(w, r, s.verifyLinkURL(rt.verifyToken, url.Values{"error": {"other_facebook"}}), http.StatusFound)
+		return
+	}
+	if err != nil {
+		fail("verification account", err)
+		return
 	}
 	if err := s.finishOAuth(w, r, rt, userID); err != nil {
 		fail("session start", err)

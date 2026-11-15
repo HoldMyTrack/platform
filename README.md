@@ -35,6 +35,7 @@ holdmytrack/
 ├── .env.example                 # Compose interpolation only — never VITE_*
 ├── .env.prod.example            # compose.prod.yml's own env template
 ├── .editorconfig
+├── .gitleaksignore             # findings CI's secrets scan reports that aren't secrets, each with why
 ├── scripts/
 │   ├── backup.sh                # nightly Postgres dump and object sync to the backup bucket (docs/DEPLOY.md §11)
 │   ├── restore-drill.sh         # restores the newest backup into a throwaway container and checks it (docs/DEPLOY.md §11)

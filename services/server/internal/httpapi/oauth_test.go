@@ -32,6 +32,23 @@ func TestBeginOAuthAppChallenge(t *testing.T) {
 	}
 }
 
+// The /verify page's round trip carries the link's token to the callback; only a token's shape is
+// accepted, and never beside an app's challenge, whose round trip ends in the app.
+func TestBeginOAuthVerifyToken(t *testing.T) {
+	token, _ := newToken()
+	rec := serveChecked(t, testFacebookServer("").handleFacebookStart, httptest.NewRequest("GET", "/v1/auth/facebook/start?tz=UTC&verify="+token, nil))
+	cookies := rec.Result().Cookies()
+	if rec.Code != http.StatusFound || len(cookies) != 1 || !strings.HasSuffix(cookies[0].Value, "..UTC.."+token) {
+		t.Fatalf("got %d, cookies %+v", rec.Code, cookies)
+	}
+	for _, bad := range []string{"verify=not-a-token", "verify=" + token + "&app_challenge=" + testChallenge("v"), "verify=" + token + ".x"} {
+		rec := serveChecked(t, testFacebookServer("").handleFacebookStart, httptest.NewRequest("GET", "/v1/auth/facebook/start?"+bad, nil))
+		if rec.Code != http.StatusBadRequest || len(rec.Result().Cookies()) != 0 {
+			t.Errorf("%q: got %d, want 400 and no cookie", bad, rec.Code)
+		}
+	}
+}
+
 // An app's round trip that fails goes back to the app, with the same error codes the sign-in
 // page gets, rather than leaving the browser tab on the web's sign-in page.
 func TestNativeCallbackFailuresReturnToApp(t *testing.T) {

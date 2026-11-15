@@ -311,7 +311,24 @@ func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
 // whatever they uploaded next would land.
 func (s *Server) handleVerifyPage(w http.ResponseWriter, r *http.Request) {
 	sessionID, _ := sessionIDFromRequest(r)
-	userID, signIn, err := s.verifyEmail(r.Context(), r.URL.Query().Get("token"), sessionID)
+	token := r.URL.Query().Get("token")
+	userID, signIn, err := s.verifyEmail(r.Context(), token, sessionID)
+	if errors.Is(err, errVerifyNeedsFacebook) {
+		form := authForm{Token: token, Facebook: s.facebook.enabled()}
+		// Back from a Facebook round trip this page started (finishFacebookVerify, failOAuth).
+		switch r.URL.Query().Get("error") {
+		case "other_facebook":
+			form.ErrorKey = "error.verify_other_facebook"
+		case "facebook":
+			form.ErrorKey = "signin.facebook_failed"
+		}
+		if form.ErrorKey != "" {
+			s.renderAuthFailure(w, r, http.StatusForbidden, "verify", "verify.title", true, form, nil)
+			return
+		}
+		s.renderAuthError(w, r, "verify email", "verify", "verify.title", true, form, err)
+		return
+	}
 	if err != nil {
 		s.renderAuthError(w, r, "verify email", "verify", "verify.title", true, authForm{}, err)
 		return
