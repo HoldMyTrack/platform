@@ -51,7 +51,7 @@ func BenchmarkParseFIT(b *testing.B) {
 	var calls int
 	for b.Loop() {
 		src := &countingReader{r: bytes.NewReader(data)}
-		if _, err := ParseFIT(src); err != nil {
+		if _, err := parseFIT(src, 0); err != nil {
 			b.Fatal(err)
 		}
 		calls = src.calls

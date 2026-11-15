@@ -439,3 +439,8 @@ func TestLanePaused(t *testing.T) {
 		}
 	}
 }
+
+// claimAndRunOne is claimAndRun on the main lane.
+func claimAndRunOne(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger) (bool, error) {
+	return claimAndRun(ctx, pool, store, log, laneMain)
+}

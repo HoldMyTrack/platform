@@ -195,15 +195,6 @@ func Flavors() []string {
 	return out
 }
 
-// Languages lists the embedded label languages, sorted — one per catalog in
-// apps/web/src/i18n, the same set as i18n.Supported.
-func Languages() []string {
-	load()
-	out := make([]string, len(languages))
-	copy(out, languages)
-	return out
-}
-
 // Document returns the style for one flavor, its labels in lang, with basemap asset URLs
 // resolved against origin and the satellite source filled from sat, or removed when sat
 // configures none. origin is an absolute origin with no trailing slash, e.g.

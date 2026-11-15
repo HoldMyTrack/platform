@@ -56,7 +56,7 @@ func TestFilesIngestAsNamed(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer f.Close()
-		return parse.ByExtension(name, f)
+		return parse.ByExtensionUpTo(name, f, 0)
 	}
 	timed := func(a parse.Activity) int {
 		n := 0
@@ -122,7 +122,7 @@ func TestFilesIngestAsNamed(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if _, err := parse.ByExtension(f.Name, r); err != nil {
+		if _, err := parse.ByExtensionUpTo(f.Name, r, 0); err != nil {
 			t.Errorf("holdmytrack-sample.zip: %s: %v", f.Name, err)
 		}
 		r.Close()

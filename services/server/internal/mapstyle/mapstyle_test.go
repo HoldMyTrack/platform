@@ -344,3 +344,12 @@ func TestStyleMatchesDocument(t *testing.T) {
 		t.Errorf("unknown flavor: %v, want ErrUnknownFlavor", err)
 	}
 }
+
+// Languages lists the embedded label languages, sorted — one per catalog in
+// apps/web/src/i18n, the same set as i18n.Supported.
+func Languages() []string {
+	load()
+	out := make([]string, len(languages))
+	copy(out, languages)
+	return out
+}

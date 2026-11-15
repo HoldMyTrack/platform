@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"regexp"
 	"slices"
+	"sort"
 	"strings"
 	"testing"
 )
@@ -169,4 +170,18 @@ func TestCatalogsAreClean(t *testing.T) {
 			}
 		}
 	}
+}
+
+// Keys are every key in lang's catalog, sorted, for the parity checks.
+func Keys(lang string) []string {
+	l, ok := catalogs[lang]
+	if !ok {
+		return nil
+	}
+	keys := make([]string, 0, len(l.msgs))
+	for k := range l.msgs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }

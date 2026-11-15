@@ -276,11 +276,6 @@ func keepClaimed(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger, jobI
 	return cancel
 }
 
-// claimAndRunOne is claimAndRun on the main lane.
-func claimAndRunOne(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger) (bool, error) {
-	return claimAndRun(ctx, pool, store, log, laneMain)
-}
-
 // claimQuery picks the lane's next job, fairly across accounts. $2 is the lane's kinds and $3
 // whether the lane takes those kinds ($3 false) or every other kind (the main lane, $3 true).
 //

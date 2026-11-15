@@ -56,3 +56,18 @@ func TestStartSlackCoversEveryMatch(t *testing.T) {
 		}
 	}
 }
+
+// overlapMatches is Overlaps' SQL rule in Go, for the cases below to pin.
+func overlapMatches(aStart time.Time, aDur time.Duration, bStart time.Time, bDur time.Duration) bool {
+	if aDur <= 0 || bDur <= 0 {
+		return false
+	}
+	lo, hi := aStart, aStart.Add(aDur)
+	if bStart.After(lo) {
+		lo = bStart
+	}
+	if bEnd := bStart.Add(bDur); bEnd.Before(hi) {
+		hi = bEnd
+	}
+	return hi.Sub(lo).Seconds() >= overlapMinShare*max(aDur, bDur).Seconds()
+}

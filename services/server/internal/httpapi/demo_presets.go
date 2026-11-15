@@ -29,7 +29,7 @@ import (
 const DemoCustomerUserID = "22222222-2222-2222-2222-222222222222"
 
 // demo_data/ holds the account's history as raw activity files in any format ingest parses
-// (parse.ByExtension: .gpx, .tcx, .fit, .json), plus manifest.json. They are real activities
+// (parse.ByExtensionUpTo: .gpx, .tcx, .fit, .json), plus manifest.json. They are real activities
 // on a live deployment, written out as GPX by `export-demo-activities` (demo_export.go)
 // exactly as their owner sees them, and reviewed by hand before being committed.
 //
@@ -525,7 +525,7 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 const demoJobLockStale = 10 * time.Minute
 
 // quiesceDemoJobs deletes the demo account's unclaimed pending jobs and waits until none is
-// running. A claim (internal/worker's claimAndRunOne) only sets locked_at — the job stays
+// running. A claim (internal/worker's claimAndRun) only sets locked_at — the job stays
 // 'pending' until it finishes — so a running job is a pending one with a recent locked_at.
 func quiesceDemoJobs(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger) error {
 	tag, err := pool.Exec(ctx,

@@ -8,7 +8,7 @@ import (
 
 // coverageRenderingQuery reports whether any job that changes this account's Fog
 // rasters is still unfinished. A claimed job keeps state = 'pending' until the worker marks it
-// done or failed (internal/worker's claimAndRunOne only sets locked_at), so this covers
+// done or failed (internal/worker's claimAndRun only sets locked_at), so this covers
 // running jobs too. `ingest`, `edit_track`, `reprivacy` and `story_copy` are included, not just
 // `render_fog`: an upload the client has already seen accepted may not have been parsed yet, and
 // until it has, the `render_fog` job it will enqueue doesn't exist to be waited on; an accepted

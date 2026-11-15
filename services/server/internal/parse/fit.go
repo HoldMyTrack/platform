@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-// ParseFIT is a minimal, honest subset of the FIT binary format: enough to read `record`
+// parseFIT is a minimal, honest subset of the FIT binary format: enough to read `record`
 // (global message 20) and `session` (global message 18, for activity_type — see
 // fit_sport.go) fields out of files produced by mainstream encoders (little-endian
 // architecture, no compressed-timestamp headers). It correctly walks every other message
@@ -17,10 +17,8 @@ import (
 // aligned) rather than only handling those two and desyncing on anything else. It does not
 // implement developer-field *values* (only skips their declared bytes) and does not verify
 // CRCs. This is the parser most likely to need the most depth of the three formats — it
-// covers the common case, not the full FIT SDK surface.
-func ParseFIT(r io.Reader) (Activity, error) { return parseFIT(r, 0) }
-
-// parseFIT is ParseFIT refusing a file past maxPoints positioned points, 0 for no cap.
+// covers the common case, not the full FIT SDK surface. It refuses a file past maxPoints
+// positioned points, 0 for no cap.
 func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 	br := bufio.NewReader(r)
 
