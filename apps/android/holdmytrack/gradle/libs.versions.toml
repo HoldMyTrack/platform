@@ -47,7 +47,7 @@ junit = "4.13.2"
 # The serialization runtime (net/Wire.kt's bodies) and googleId need a compiler at least as new
 # as the Kotlin they were built with.
 kotlin = "2.4.21"
-serialization = "1.12.0"
+serialization = "1.13.0"
 # The test that holds net/Wire.kt to the API contract reads services/server/api's YAML.
 snakeyaml = "2.7"
 # The end-to-end flows on an emulator (src/androidTest): AndroidX Test's runner and JUnit 4
