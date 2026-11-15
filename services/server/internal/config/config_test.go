@@ -95,3 +95,21 @@ func TestDatabaseURLEscapesItsParts(t *testing.T) {
 		t.Fatalf("parsed back as user %q, password %q, %s:%d/%s", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
 	}
 }
+
+// Skipping verification is warned about only where others can reach the deployment.
+func TestSkipsVerificationInPublic(t *testing.T) {
+	for _, tc := range []struct {
+		skip bool
+		base string
+		want bool
+	}{
+		{true, "https://holdmytrack.com", true},
+		{true, "http://localhost:5173", false},
+		{false, "https://holdmytrack.com", false},
+	} {
+		c := Config{SkipEmailVerification: tc.skip, AppBaseURL: tc.base}
+		if got := c.SkipsVerificationInPublic(); got != tc.want {
+			t.Errorf("skip %v at %s: %v, want %v", tc.skip, tc.base, got, tc.want)
+		}
+	}
+}
