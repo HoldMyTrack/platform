@@ -1,6 +1,7 @@
 package httpapi
 
 import (
+	"fmt"
 	"net/http"
 	"slices"
 	"strings"
@@ -57,6 +58,9 @@ type spotJSON struct {
 	Lat         float64 `json:"lat"`
 }
 
+// maxSpotsAreaDeg bounds a Show in this area request's box, twice what zoom 10 shows.
+const maxSpotsAreaDeg = 10
+
 type spotsAreaResponse struct {
 	Spots []spotJSON `json:"spots"`
 	// Total is how many places the area holds in those categories; more than len(Spots) when
@@ -73,6 +77,12 @@ func (s *Server) handleSpotsInArea(w http.ResponseWriter, r *http.Request) {
 	area, ok := parseBBox(q.Get("bbox"))
 	if !ok {
 		writeAPIError(w, "bbox must be west,south,east,north in degrees, south < north", http.StatusBadRequest)
+		return
+	}
+	// The count looks at every place in the area, millions in a continent's. Clients ask from
+	// zoom 10, about 5° across on a wide screen.
+	if lon, lat := area.span(); lon > maxSpotsAreaDeg || lat > maxSpotsAreaDeg {
+		writeAPIError(w, fmt.Sprintf("bbox spans at most %d degrees each way", maxSpotsAreaDeg), http.StatusBadRequest)
 		return
 	}
 	var categories []string

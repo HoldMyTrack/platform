@@ -98,6 +98,9 @@ func main() {
 		log.Info("migrate: up to date")
 
 	case "serve":
+		if cfg.SkipsVerificationInPublic() {
+			log.Warn("SKIP_EMAIL_VERIFICATION is on for a deployment others can reach: every signup is verified unchecked; turn it off once the load test is over", "app_base_url", cfg.AppBaseURL)
+		}
 		store, err := storage.New(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket)
 		if err != nil {
 			log.Error("storage", "err", err)

@@ -21,6 +21,14 @@ func (a mapArea) boxes() (w1, e1, w2, e2 float64) {
 	return a.west[0], a.east[0], a.west[last], a.east[last]
 }
 
+// span is how many degrees the area covers across and down, its boxes added up across.
+func (a mapArea) span() (lon, lat float64) {
+	for i := range a.west {
+		lon += a.east[i] - a.west[i]
+	}
+	return lon, a.north - a.south
+}
+
 // parseBBox reads "west,south,east,north" into the boxes it covers. A view across the
 // antimeridian comes either way: unwrapped, east past 180 (170,…,190,…, as MapLibre's web
 // bounds give it), or wrapped, west > east (170,…,−170,…); both are 170…180 and −180…−170. A

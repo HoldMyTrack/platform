@@ -23,7 +23,11 @@ import (
 //     timestamp: a file listing the return leg before the outbound one would otherwise have
 //     its start in the middle, where no clip reaches.
 //   - A point whose lat or lon is missing or unreadable is skipped, not read as 0.
-func ParseGPX(r io.Reader) (Activity, error) {
+func ParseGPX(r io.Reader) (Activity, error) { return parseGPX(r, 0) }
+
+// parseGPX is ParseGPX refusing a file past maxPoints positioned points, 0 for no cap.
+func parseGPX(r io.Reader, maxPoints int) (Activity, error) {
+	var total int // points of either kind kept so far, against maxPoints
 	dec := xml.NewDecoder(r)
 	act := Activity{ActivityType: "unknown"}
 
@@ -126,6 +130,9 @@ func ParseGPX(r io.Reader) (Activity, error) {
 					// starts a segment of its own.
 					if len(*segs) == 0 {
 						*segs = append(*segs, nil)
+					}
+					if total++; maxPoints > 0 && total > maxPoints {
+						return Activity{}, ErrTooManyPoints
 					}
 					last := len(*segs) - 1
 					(*segs)[last] = append((*segs)[last], *cur)

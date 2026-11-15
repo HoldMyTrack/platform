@@ -2082,6 +2082,8 @@ export interface paths {
                         };
                     };
                 };
+                429: components["responses"]["Error"];
+                503: components["responses"]["DailyCapacity"];
             };
         };
         delete?: never;

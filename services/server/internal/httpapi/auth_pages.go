@@ -273,11 +273,13 @@ func (s *Server) handleForgotPage(w http.ResponseWriter, r *http.Request) {
 // POST /forgot. Answers "check your email" whether or not the address has an account.
 func (s *Server) handleForgotForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
-	if err := s.requestPasswordReset(r, email); err != nil {
+	send, err := s.requestPasswordReset(r, email)
+	if err != nil {
 		s.renderAuthError(w, r, "forgot password", "forgot", "forgot.title", true, authForm{Email: email}, err)
 		return
 	}
 	s.renderAuth(w, r, http.StatusOK, "forgot", "forgot.title", true, authForm{Sent: true})
+	s.afterResponse(send)
 }
 
 // GET /reset?token= — the link in the password-reset email. The token is only checked on

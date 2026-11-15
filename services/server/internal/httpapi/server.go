@@ -69,11 +69,14 @@ func route(method, path string) string     { return method + " " + apiPrefix + p
 func tileRoute(method, path string) string { return method + " " + tilesPrefix + path }
 
 type Server struct {
-	pool                  *pgxpool.Pool
-	store                 *storage.Store
-	log                   *slog.Logger
-	mux                   *http.ServeMux
-	mailer                mail.Sender
+	pool   *pgxpool.Pool
+	store  *storage.Store
+	log    *slog.Logger
+	mux    *http.ServeMux
+	mailer mail.Sender
+	// afterResponse runs work whose length would tell a caller something, once
+	// the handler has returned: on its own goroutine, or inline in tests that read its mail.
+	afterResponse         func(func())
 	appBaseURL            string
 	basemapOrigin         string
 	satellite             mapstyle.Satellite
@@ -108,7 +111,8 @@ const defaultUploadsPerHour = 100
 func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail.Sender, appBaseURL, basemapOrigin string, satellite mapstyle.Satellite, version string, skipEmailVerification bool, google GoogleOAuthConfig, facebook FacebookOAuthConfig, apple AppleOAuthConfig, pages *web.Renderer) *Server {
 	s := &Server{
 		pool: pool, store: store, log: log, mux: http.NewServeMux(), mailer: mailer,
-		appBaseURL: appBaseURL, basemapOrigin: basemapOrigin, satellite: satellite, version: version,
+		afterResponse: func(f func()) { go f() },
+		appBaseURL:    appBaseURL, basemapOrigin: basemapOrigin, satellite: satellite, version: version,
 		skipEmailVerification: skipEmailVerification,
 		google:                newGoogleOAuth(google),
 		facebook:              newFacebookOAuth(facebook),
