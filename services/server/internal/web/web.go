@@ -14,6 +14,7 @@ import (
 	"fmt"
 	"html/template"
 	"io/fs"
+	"log/slog"
 	"net/http"
 	"net/url"
 	"path"
@@ -290,7 +291,14 @@ func (r *Renderer) Render(w http.ResponseWriter, status int, page string, data P
 		return
 	}
 	r.fill(&data)
-	r.execute(w, status, t, data)
+	buf, ok := renderPage(w, page, t, data)
+	if !ok {
+		return
+	}
+	// A page carries the signed-in account's name and avatar in its header, so no shared cache
+	// may keep one — and a browser shouldn't show a stale header after sign-out either.
+	// Signed-out pages that are the same for everyone go through RenderPublic instead.
+	writeHTML(w, status, "no-store", buf)
 }
 
 // RenderApp writes the React app's shell (the map page, and for now Profile and Settings).
@@ -300,7 +308,9 @@ func (r *Renderer) RenderApp(w http.ResponseWriter, data AppPage) {
 		return
 	}
 	r.fill(&data.PageData)
-	r.execute(w, http.StatusOK, set.app, data)
+	if buf, ok := renderPage(w, "app", set.app, data); ok {
+		writeHTML(w, http.StatusOK, "no-store", buf)
+	}
 }
 
 // current is lang's parsed templates (English's for an unknown lang) — every language
@@ -346,16 +356,16 @@ func (r *Renderer) fill(data *PageData) {
 	data.ShareImage = r.baseURL + "/static/og-image.jpg?v=" + url.QueryEscape(r.version)
 }
 
-func (r *Renderer) execute(w http.ResponseWriter, status int, t *template.Template, data any) {
+// renderPage runs page's template into a buffer, so a template error becomes a clean 500 rather
+// than half a page. The visitor gets a bare 500, so the log is the only place the cause shows.
+func renderPage(w http.ResponseWriter, page string, t *template.Template, data any) ([]byte, bool) {
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, data); err != nil {
+		slog.Error("page template failed", "page", page, "err", err)
 		http.Error(w, "template error", http.StatusInternalServerError)
-		return
+		return nil, false
 	}
-	// A page carries the signed-in account's name and avatar in its header, so no shared cache
-	// may keep one — and a browser shouldn't show a stale header after sign-out either.
-	// Signed-out pages that are the same for everyone go through RenderPublic instead.
-	writeHTML(w, status, "no-store", buf.Bytes())
+	return buf.Bytes(), true
 }
 
 // RenderPublic is Render for a page with no session behind it and nothing request-specific
@@ -382,15 +392,14 @@ func (r *Renderer) RenderPublic(w http.ResponseWriter, page string, data PageDat
 		http.Error(w, "unknown page "+page, http.StatusInternalServerError)
 		return
 	}
-	var buf bytes.Buffer
-	if err := t.Execute(&buf, data); err != nil {
-		http.Error(w, "template error", http.StatusInternalServerError)
+	buf, ok := renderPage(w, page, t, data)
+	if !ok {
 		return
 	}
 	if !r.reload {
-		r.public.Store(key, buf.Bytes())
+		r.public.Store(key, buf)
 	}
-	writePublic(w, buf.Bytes())
+	writePublic(w, buf)
 }
 
 func writePublic(w http.ResponseWriter, body []byte) {
