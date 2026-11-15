@@ -120,16 +120,15 @@ func (a *pageAccount) home() string {
 	return "/"
 }
 
-// renderAuth renders one of the auth pages; titleKey is its title's catalog key. The sign-in
-// page carries the site's description, for a search result or a shared link that lands on it.
-// (The site's own front page is `/`, About's content.)
-func (s *Server) renderAuth(w http.ResponseWriter, r *http.Request, status int, page, titleKey string, noIndex bool, form authForm) {
-	s.renderAuthFailure(w, r, status, page, titleKey, noIndex, form, nil)
+// renderAuth renders one of the auth pages for acct (s.pageAccount); titleKey is its title's
+// catalog key. The sign-in page carries the site's description, for a search result or a shared
+// link that lands on it. (The site's own front page is `/`, About's content.)
+func (s *Server) renderAuth(w http.ResponseWriter, r *http.Request, acct *pageAccount, status int, page, titleKey string, noIndex bool, form authForm) {
+	s.renderAuthFailure(w, r, acct, status, page, titleKey, noIndex, form, nil)
 }
 
-func (s *Server) renderAuthFailure(w http.ResponseWriter, r *http.Request, status int, page, titleKey string, noIndex bool, form authForm, ae *accountError) {
+func (s *Server) renderAuthFailure(w http.ResponseWriter, r *http.Request, acct *pageAccount, status int, page, titleKey string, noIndex bool, form authForm, ae *accountError) {
 	var user *web.User
-	acct := s.pageAccount(r)
 	if acct != nil {
 		user = acct.user
 	}
@@ -148,21 +147,29 @@ func (s *Server) renderAuthFailure(w http.ResponseWriter, r *http.Request, statu
 	if page == "signin" {
 		data.Description = l.T("meta.site_description")
 	}
-	if form.TurnstileSiteKey != "" {
-		w.Header().Set("Content-Security-Policy", turnstileCSP())
+	if origins := s.pageScriptOrigins(page); len(origins) > 0 {
+		w.Header().Set("Content-Security-Policy", cspWithScripts(origins...))
 	}
 	s.pages.Render(w, status, page, data)
 }
 
+// pageScriptOrigins is where an auth page loads scripts from besides this origin.
+func (s *Server) pageScriptOrigins(page string) []string {
+	if page == "signup" && s.turnstile.enabled() {
+		return []string{turnstileScriptOrigin}
+	}
+	return nil
+}
+
 // renderAuthError re-renders a form after one of the account cores failed: an accountError's
 // own status and message, or a logged 500 with a generic one.
-func (s *Server) renderAuthError(w http.ResponseWriter, r *http.Request, op, page, titleKey string, noIndex bool, form authForm, err error) {
+func (s *Server) renderAuthError(w http.ResponseWriter, r *http.Request, acct *pageAccount, op, page, titleKey string, noIndex bool, form authForm, err error) {
 	var ae *accountError
 	if !errors.As(err, &ae) {
 		s.log.Error(op+" failed", "err", err)
 		ae = &accountError{status: http.StatusInternalServerError, key: "error.internal"}
 	}
-	s.renderAuthFailure(w, r, ae.status, page, titleKey, noIndex, form, ae)
+	s.renderAuthFailure(w, r, acct, ae.status, page, titleKey, noIndex, form, ae)
 }
 
 // signIn starts a session for userID and sends the browser on to where the account belongs.
@@ -182,7 +189,8 @@ func (s *Server) signIn(w http.ResponseWriter, r *http.Request, userID string) {
 
 // GET /signin. Someone already signed in goes where their account belongs instead.
 func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
-	if acct := s.pageAccount(r); acct != nil && !acct.info.isDemo {
+	acct := s.pageAccount(r)
+	if acct != nil && !acct.info.isDemo {
 		http.Redirect(w, r, acct.home(), http.StatusSeeOther)
 		return
 	}
@@ -209,7 +217,7 @@ func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Has("verified") {
 		form.NoticeKey = "signin.email_verified"
 	}
-	s.renderAuth(w, r, http.StatusOK, "signin", "signin.title", false, form)
+	s.renderAuth(w, r, acct, http.StatusOK, "signin", "signin.title", false, form)
 }
 
 // POST /signin.
@@ -217,7 +225,7 @@ func (s *Server) handleSignInForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	userID, err := s.checkPassword(r.Context(), rateLimitAddress(r), email, r.PostFormValue("password"))
 	if err != nil {
-		s.renderAuthError(w, r, "sign in", "signin", "signin.title", false, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
+		s.renderAuthError(w, r, s.pageAccount(r), "sign in", "signin", "signin.title", false, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
 		return
 	}
 	s.signIn(w, r, userID)
@@ -231,21 +239,17 @@ func (s *Server) handleSignUpPage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// noindex: /signin is the one sign-in-or-up page search results should show (it links here).
-	s.renderAuth(w, r, http.StatusOK, "signup", "signup.title", true, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil, TurnstileSiteKey: s.turnstile.siteKey})
+	s.renderAuth(w, r, acct, http.StatusOK, "signup", "signup.title", true, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil, TurnstileSiteKey: s.turnstile.siteKey})
 }
 
 // POST /signup. timezone comes from a hidden field the page's one-line script fills from the
 // browser; without it the account starts on UTC, as the JSON endpoint's would.
 func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
-	err := s.checkTurnstile(r)
-	var userID string
-	if err == nil {
-		userID, err = s.createAccountLimited(r, email, r.PostFormValue("password"), r.PostFormValue("timezone"), pageLang(s.pageAccount(r), r))
-	}
+	acct := s.pageAccount(r)
+	userID, err := s.createAccountLimited(r, email, r.PostFormValue("password"), r.PostFormValue("timezone"), pageLang(acct, r), s.checkTurnstile)
 	if err != nil {
-		acct := s.pageAccount(r)
-		s.renderAuthError(w, r, "sign up", "signup", "signup.title", true, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil && acct.info.isDemo, TurnstileSiteKey: s.turnstile.siteKey}, err)
+		s.renderAuthError(w, r, acct, "sign up", "signup", "signup.title", true, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil && acct.info.isDemo, TurnstileSiteKey: s.turnstile.siteKey}, err)
 		return
 	}
 	s.signIn(w, r, userID)
@@ -254,7 +258,7 @@ func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
 // POST /demo — the sign-in page's "Try it now — no signup".
 func (s *Server) handleDemoForm(w http.ResponseWriter, r *http.Request) {
 	if err := allowDemo(r); err != nil {
-		s.renderAuthError(w, r, "demo start", "signin", "signin.title", false, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
+		s.renderAuthError(w, r, s.pageAccount(r), "demo start", "signin", "signin.title", false, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
 		return
 	}
 	if _, err := s.startSession(w, r.Context(), DemoCustomerUserID, demoSessionTTL); err != nil {
@@ -267,7 +271,7 @@ func (s *Server) handleDemoForm(w http.ResponseWriter, r *http.Request) {
 
 // GET /forgot.
 func (s *Server) handleForgotPage(w http.ResponseWriter, r *http.Request) {
-	s.renderAuth(w, r, http.StatusOK, "forgot", "forgot.title", true, authForm{})
+	s.renderAuth(w, r, s.pageAccount(r), http.StatusOK, "forgot", "forgot.title", true, authForm{})
 }
 
 // POST /forgot. Answers "check your email" whether or not the address has an account.
@@ -275,10 +279,10 @@ func (s *Server) handleForgotForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	send, err := s.requestPasswordReset(r, email)
 	if err != nil {
-		s.renderAuthError(w, r, "forgot password", "forgot", "forgot.title", true, authForm{Email: email}, err)
+		s.renderAuthError(w, r, s.pageAccount(r), "forgot password", "forgot", "forgot.title", true, authForm{Email: email}, err)
 		return
 	}
-	s.renderAuth(w, r, http.StatusOK, "forgot", "forgot.title", true, authForm{Sent: true})
+	s.renderAuth(w, r, s.pageAccount(r), http.StatusOK, "forgot", "forgot.title", true, authForm{Sent: true})
 	s.afterResponse(send)
 }
 
@@ -289,7 +293,7 @@ func (s *Server) handleResetPage(w http.ResponseWriter, r *http.Request) {
 	if form.Token == "" {
 		form.ErrorKey = "error.reset_link_invalid"
 	}
-	s.renderAuth(w, r, http.StatusOK, "reset", "reset.title", true, form)
+	s.renderAuth(w, r, s.pageAccount(r), http.StatusOK, "reset", "reset.title", true, form)
 }
 
 // POST /reset.
@@ -297,7 +301,7 @@ func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
 	token := r.PostFormValue("token")
 	userID, err := s.resetPassword(r.Context(), token, r.PostFormValue("password"))
 	if err != nil {
-		s.renderAuthError(w, r, "reset password", "reset", "reset.title", true, authForm{Token: token}, err)
+		s.renderAuthError(w, r, s.pageAccount(r), "reset password", "reset", "reset.title", true, authForm{Token: token}, err)
 		return
 	}
 	s.signIn(w, r, userID)
@@ -325,14 +329,14 @@ func (s *Server) handleVerifyPage(w http.ResponseWriter, r *http.Request) {
 			form.ErrorKey = "signin.facebook_failed"
 		}
 		if form.ErrorKey != "" {
-			s.renderAuthFailure(w, r, http.StatusForbidden, "verify", "verify.title", true, form, nil)
+			s.renderAuthFailure(w, r, s.pageAccount(r), http.StatusForbidden, "verify", "verify.title", true, form, nil)
 			return
 		}
-		s.renderAuthError(w, r, "verify email", "verify", "verify.title", true, form, err)
+		s.renderAuthError(w, r, s.pageAccount(r), "verify email", "verify", "verify.title", true, form, err)
 		return
 	}
 	if err != nil {
-		s.renderAuthError(w, r, "verify email", "verify", "verify.title", true, authForm{}, err)
+		s.renderAuthError(w, r, s.pageAccount(r), "verify email", "verify", "verify.title", true, authForm{}, err)
 		return
 	}
 	if !signIn {
@@ -366,7 +370,7 @@ func (s *Server) handleVerifyPendingPage(w http.ResponseWriter, r *http.Request)
 	case r.URL.Query().Has("changed"):
 		form.NoticeKey = "verify_pending.changed"
 	}
-	s.renderAuth(w, r, http.StatusOK, "verify-pending", "verify.title", true, form)
+	s.renderAuth(w, r, acct, http.StatusOK, "verify-pending", "verify.title", true, form)
 }
 
 // POST /verify-pending/resend.
@@ -377,7 +381,7 @@ func (s *Server) handleVerifyResendForm(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	if err := s.resendVerification(r.Context(), acct.info, pageLang(acct, r)); err != nil {
-		s.renderAuthError(w, r, "resend verification", "verify-pending", "verify.title", true, authForm{Email: acct.user.Email}, err)
+		s.renderAuthError(w, r, acct, "resend verification", "verify-pending", "verify.title", true, authForm{Email: acct.user.Email}, err)
 		return
 	}
 	http.Redirect(w, r, "/verify-pending?sent", http.StatusSeeOther)
@@ -391,7 +395,7 @@ func (s *Server) handleVerifyChangeEmailForm(w http.ResponseWriter, r *http.Requ
 		return
 	}
 	if err := s.changeEmail(r.Context(), acct.info, r.PostFormValue("email"), pageLang(acct, r)); err != nil {
-		s.renderAuthError(w, r, "change email", "verify-pending", "verify.title", true, authForm{Email: acct.user.Email}, err)
+		s.renderAuthError(w, r, acct, "change email", "verify-pending", "verify.title", true, authForm{Email: acct.user.Email}, err)
 		return
 	}
 	http.Redirect(w, r, "/verify-pending?changed", http.StatusSeeOther)

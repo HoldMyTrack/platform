@@ -468,8 +468,20 @@ func setsOwnBodyLimit(r *http.Request) bool {
 	return ownBodyLimitRoutes[r.Method+" "+r.URL.Path]
 }
 
-// contentSecurityPolicy is every response's CSP (setSecurityHeaders).
-const contentSecurityPolicy = "script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+// contentSecurityPolicy is every response's CSP (setSecurityHeaders), unless a page loads
+// scripts from elsewhere too (pageScriptOrigins).
+var contentSecurityPolicy = cspWithScripts()
+
+// cspWithScripts is the CSP allowing scripts from this origin and scriptOrigins.
+func cspWithScripts(scriptOrigins ...string) string {
+	scripts := append([]string{"'self'"}, scriptOrigins...)
+	return strings.Join([]string{
+		"script-src " + strings.Join(scripts, " "),
+		"object-src 'none'",
+		"base-uri 'self'",
+		"frame-ancestors 'none'",
+	}, "; ")
+}
 
 // setSecurityHeaders applies to every response. No page here is meant to be framed, so none
 // may be (frame-ancestors, and X-Frame-Options for browsers without CSP): framed invisibly by

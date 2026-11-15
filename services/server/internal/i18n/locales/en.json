@@ -288,6 +288,7 @@
   "error.demo_rate_limited": "Too many demo sessions from this address; try again later.",
   "error.signup_rate_limited": "Too many accounts created from this address in the last hour; try again later.",
   "error.turnstile_failed": "Couldn't confirm you're not a bot. Complete the check above the button and try again.",
+  "error.turnstile_unavailable": "The bot check is unavailable; try again later.",
   "error.rate_limited": "Too many requests; try again later.",
   "error.reset_link_invalid": "This reset link is invalid or has expired.",
   "error.verify_link_invalid": "This verification link is invalid, expired or already used. If your email is already confirmed, sign in.",
