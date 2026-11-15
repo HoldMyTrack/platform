@@ -173,9 +173,8 @@ func (s *Server) setAvatar(w http.ResponseWriter, r *http.Request, userID string
 }
 
 // handleDeleteAvatar serves `DELETE /v1/account/avatar`. Object removal is best-effort and
-// logged rather than surfaced as a failure — the same pattern storage.Store.RemoveByPrefix's
-// callers already use — since a stray orphaned blob is a cleanup nuisance, not a reason to
-// leave the DB still pointing at an avatar the user just asked to remove.
+// logged rather than surfaced as a failure, since a stray orphaned blob is a cleanup nuisance,
+// not a reason to leave the DB still pointing at an avatar the user just asked to remove.
 func (s *Server) handleDeleteAvatar(w http.ResponseWriter, r *http.Request) {
 	s.writeProfile(w, r, "avatar removal", s.removeAvatar(r.Context(), userIDFromContext(r.Context())))
 }
