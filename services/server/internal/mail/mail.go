@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/smtp"
 	"net/textproto"
+	"strings"
 	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/metrics"
@@ -106,6 +107,10 @@ func (s *smtpSender) Send(ctx context.Context, to, subject, body string) error {
 		if err := client.StartTLS(&tls.Config{ServerName: s.host}); err != nil {
 			return replyError("starttls", err)
 		}
+	} else if needsTLS(s.host) {
+		// Not sent in the clear: every message carries a sign-in, reset or verification link,
+		// and a server, or something in between, that drops STARTTLS would expose them.
+		return fmt.Errorf("mail: %s offers no STARTTLS", s.host)
 	}
 
 	if s.username != "" {
@@ -132,6 +137,16 @@ func (s *smtpSender) Send(ctx context.Context, to, subject, body string) error {
 		return replyError("close body", err)
 	}
 	return replyError("QUIT", client.Quit())
+}
+
+// needsTLS reports whether mail to host must be encrypted: everywhere it could cross a network
+// someone else runs. A relay on this machine, a private address or a one-label name (a compose
+// service such as "smtp") is the deployment's own.
+func needsTLS(host string) bool {
+	if ip := net.ParseIP(host); ip != nil {
+		return !ip.IsLoopback() && !ip.IsPrivate()
+	}
+	return strings.Contains(host, ".")
 }
 
 // replyError is err from step for the logs, nil for nil. An SMTP reply keeps only its code: a

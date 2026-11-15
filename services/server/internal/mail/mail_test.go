@@ -119,3 +119,15 @@ func TestSendGivesUpOnASilentServer(t *testing.T) {
 		t.Fatalf("gave up after %v, want about the timeout", took)
 	}
 }
+
+// Mail goes unencrypted only to a relay of the deployment's own.
+func TestNeedsTLS(t *testing.T) {
+	for host, want := range map[string]bool{
+		"smtp.gmail.com": true, "203.0.113.7": true, "mail.example.com": true,
+		"localhost": false, "127.0.0.1": false, "::1": false, "smtp": false, "10.0.0.5": false, "172.18.0.4": false,
+	} {
+		if got := needsTLS(host); got != want {
+			t.Errorf("needsTLS(%q) = %v, want %v", host, got, want)
+		}
+	}
+}
