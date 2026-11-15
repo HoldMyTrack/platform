@@ -19,6 +19,7 @@ const (
 	FailTooFewPoints      = "too_few_points"
 	FailNoTimestamps      = "no_timestamps"
 	FailTooLarge          = "too_large"
+	FailTooManyPoints     = "too_many_points"
 	FailInternal          = "internal"
 )
 
@@ -48,6 +49,8 @@ func FailureCode(err error) string {
 		return FailTooFewPoints
 	case errors.Is(err, errTooManyTiles):
 		return FailTooLarge
+	case errors.Is(err, parse.ErrTooManyPoints):
+		return FailTooManyPoints
 	case errors.As(err, &pe):
 		return FailUnreadableFile
 	default:

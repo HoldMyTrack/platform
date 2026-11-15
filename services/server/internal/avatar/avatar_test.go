@@ -2,12 +2,15 @@ package avatar
 
 import (
 	"bytes"
+	"context"
 	"encoding/binary"
+	"errors"
 	"image"
 	"image/color"
 	"image/jpeg"
 	"image/png"
 	"testing"
+	"time"
 )
 
 // halves is a w × h image, red on its left half and blue on its right.
@@ -59,7 +62,7 @@ func TestNormalizeTurnsUprightAndDropsMetadata(t *testing.T) {
 	if jpegOrientation(in) != 6 {
 		t.Fatalf("test image orientation %d, want 6", jpegOrientation(in))
 	}
-	out, contentType, err := Normalize(in)
+	out, contentType, err := Normalize(context.Background(), in)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -84,7 +87,7 @@ func TestNormalizeScalesDownAndKeepsPNG(t *testing.T) {
 	if err := png.Encode(&in, halves(1024, 300)); err != nil {
 		t.Fatal(err)
 	}
-	out, contentType, err := Normalize(in.Bytes())
+	out, contentType, err := Normalize(context.Background(), in.Bytes())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,7 +101,7 @@ func TestNormalizeScalesDownAndKeepsPNG(t *testing.T) {
 }
 
 func TestNormalizeRefusesWhatIsntAnImage(t *testing.T) {
-	if _, _, err := Normalize([]byte("GIF89a not really")); err != ErrNotImage {
+	if _, _, err := Normalize(context.Background(), []byte("GIF89a not really")); err != ErrNotImage {
 		t.Errorf("err %v, want ErrNotImage", err)
 	}
 }
@@ -113,5 +116,26 @@ func TestOrientMapsEachCorner(t *testing.T) {
 		if r, _, _, _ := dst.At(want.X, want.Y).RGBA(); r == 0 {
 			t.Errorf("orientation %d: marked corner not at %v", o, want)
 		}
+	}
+}
+
+// An upload waiting for a decode slot stops when its client has gone, instead of queueing on.
+func TestNormalizeStopsWaitingForAGoneClient(t *testing.T) {
+	for range cap(decodeSlots) {
+		decodeSlots <- struct{}{}
+	}
+	defer func() {
+		for range cap(decodeSlots) {
+			<-decodeSlots
+		}
+	}()
+	var in bytes.Buffer
+	if err := png.Encode(&in, image.NewRGBA(image.Rect(0, 0, 4, 4))); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 50*time.Millisecond)
+	defer cancel()
+	if _, _, err := Normalize(ctx, in.Bytes()); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatalf("waiting with every slot taken: %v, want the context's end", err)
 	}
 }

@@ -73,7 +73,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 ### FR-1.5 Forgot password
 
 - A reset link goes to a real, claimed account, including a Google- or Facebook-only one, which is how such an account gets its first password. It is valid for 1 hour and works once.
-- The answer is the same whether or not the email has an account.
+- The answer is the same, and as quick, whether or not the email has an account.
 - At most 5 requests an hour from one address.
 
 ### FR-1.6 Reset password
@@ -186,7 +186,7 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 - Each file is processed on its own; one failing doesn't affect the others.
 - At most 100 files an hour per account, refused and duplicate ones included, checked before the file is read.
 - An empty file, another type, a file too large or one past the account's limits (FR-1.14) is refused at once.
-- A file that can't be read, has no timestamps (a planned route), has no positioned point or has fewer than 2 points fails in processing, with the reason on the Sync page. Untimed points inside a timed track are dropped.
+- A file that can't be read, has no timestamps (a planned route), has no positioned point, has fewer than 2 points or more than 200,000 fails in processing, with the reason on the Sync page. Untimed points inside a timed track are dropped.
 - The activity reaches the list, map and totals without a reload; Fog follows once redrawn (FR-4.2).
 
 ### FR-3.2 Import status
@@ -683,7 +683,7 @@ Shows what OSM has about the place, a way to copy its address or coordinates, it
 
 ### FR-14.4 Show in this area
 
-From zoom 10 to 13, the ticked categories' places in the visible map load when asked: at most 2,000, named first, spread evenly, with the area's total. A view across the antimeridian works either way round.
+From zoom 10 to 13, the ticked categories' places in the visible map load when asked: at most 2,000, named first, spread evenly, with the area's total. A view across the antimeridian works either way round; one more than 10° across or down is refused.
 
 ### FR-14.5 The tiles
 
