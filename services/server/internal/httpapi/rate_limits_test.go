@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"net/url"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -208,21 +209,47 @@ func TestSignupsPastTheHourlyLimitAreRefused(t *testing.T) {
 	}
 }
 
-// With the limits off every limiter lets everything through, counted or not, and on again
-// they count as before.
-func TestRateLimitsOff(t *testing.T) {
-	l := newFixedWindowLimiter(1, time.Hour)
-	SetRateLimitsOff(true)
-	t.Cleanup(func() { SetRateLimitsOff(false) })
-	for range 3 {
-		if !l.allow("k") || !l.allowN("k", 5) || l.exceeded("k") {
-			t.Fatal("a limit applied while off")
-		}
-		l.hit("k")
+// Signups sent at once from one address make no more accounts than the limit: each takes its
+// slot before its account is made, not after.
+func TestParallelSignupsStayWithinTheLimit(t *testing.T) {
+	d := newDBTest(t)
+	d.srv.SetSignupsPerHour(2)
+	prefix := fmt.Sprintf("signup-burst-%d-", time.Now().UnixNano())
+	t.Cleanup(func() {
+		d.pool.Exec(context.Background(), `DELETE FROM users WHERE email LIKE $1`, prefix+"%")
+	})
+	var wg sync.WaitGroup
+	for i := range 10 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			body := strings.NewReader(fmt.Sprintf(`{"email": "%s%d@holdmytrack.invalid", "password": "a long enough password"}`, prefix, i))
+			req := httptest.NewRequest("POST", "/v1/auth/signup", body)
+			req.Header.Set("Content-Type", "application/json")
+			d.srv.ServeHTTP(httptest.NewRecorder(), req)
+		}()
 	}
-	SetRateLimitsOff(false)
-	l = newFixedWindowLimiter(1, time.Hour)
-	if !l.allow("k") || l.allow("k") {
-		t.Fatal("back on: want the first request through and the second refused")
+	wg.Wait()
+	var n int
+	if err := d.pool.QueryRow(context.Background(), `SELECT count(*) FROM users WHERE email LIKE $1`, prefix+"%").Scan(&n); err != nil || n != 2 {
+		t.Fatalf("accounts created by 10 signups at once: %d, %v; want 2", n, err)
+	}
+}
+
+// A per-address limit counts an IPv6 caller by its /64, so addresses stepped through inside it
+// share one count; an IPv4 address is its own, however it's written.
+func TestRateLimitKey(t *testing.T) {
+	for _, tc := range []struct{ ip, want string }{
+		{"2001:db8:1:2::1", "2001:db8:1:2::/64"},
+		{"2001:db8:1:2:ffff:ffff:ffff:ffff", "2001:db8:1:2::/64"},
+		{"2001:db8:1:3::1", "2001:db8:1:3::/64"},
+		{"fe80::1%eth0", "fe80::/64"},
+		{"203.0.113.7", "203.0.113.7"},
+		{"::ffff:203.0.113.7", "203.0.113.7"},
+		{"not-an-ip", "not-an-ip"},
+	} {
+		if got := rateLimitKey(tc.ip); got != tc.want {
+			t.Errorf("%s: %s, want %s", tc.ip, got, tc.want)
+		}
 	}
 }

@@ -119,7 +119,7 @@ func (s *Server) handleSyncActivities(w http.ResponseWriter, r *http.Request) {
 	}
 	// Every activity sent counts, taken or not; a batch that doesn't fit in what's left of
 	// the hour is refused whole and counts nothing.
-	if !s.syncActivityLimiter.allowN(rateKey(authInfoFromContext(r.Context()), clientIP(r)), len(req.Activities)) {
+	if !s.syncActivityLimiter.allowN(rateKey(authInfoFromContext(r.Context()), rateLimitAddress(r)), len(req.Activities)) {
 		httpErrorT(w, r, http.StatusTooManyRequests, "error.sync_activity_rate_limit", "max", s.syncActivityLimiter.limit)
 		return
 	}
