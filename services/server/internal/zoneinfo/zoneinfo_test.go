@@ -27,3 +27,20 @@ func TestLoad(t *testing.T) {
 		t.Errorf("LoadOr of an unknown zone = %v, want the fallback", got)
 	}
 }
+
+// Other spellings of a zone's path load, but aren't kept.
+func TestLoadKeepsOnlyCleanNames(t *testing.T) {
+	for _, name := range []string{"Europe/./Berlin", "Europe//Berlin", "Europe/Berlin/"} {
+		if loc, err := Load(name); err != nil {
+			t.Logf("%q doesn't load here: %v", name, err)
+		} else if loc == nil {
+			t.Errorf("Load(%q) = nil", name)
+		}
+		if _, ok := loaded.Load(name); ok {
+			t.Errorf("%q was kept", name)
+		}
+	}
+	if !cacheable("America/Argentina/Buenos_Aires") || !cacheable("UTC") || cacheable("/etc/localtime") || cacheable("Europe/../Berlin") {
+		t.Error("cacheable misjudges a name")
+	}
+}
