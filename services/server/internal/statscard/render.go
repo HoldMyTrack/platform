@@ -1,18 +1,18 @@
 package statscard
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
 	"image"
 	"image/color"
-	"image/png"
 	"sync"
 
 	"golang.org/x/image/font"
 	"golang.org/x/image/font/opentype"
 	"golang.org/x/image/math/fixed"
 	"golang.org/x/image/vector"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/pngenc"
 )
 
 // Inter, the apps' UI font, as static Regular and SemiBold instances of the variable font the
@@ -125,11 +125,11 @@ func Render(card Card, width, height int, theme Theme) ([]byte, error) {
 		d.DrawString(r.Text)
 	}
 
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, img); err != nil {
+	b, err := pngenc.Encode(img)
+	if err != nil {
 		return nil, fmt.Errorf("statscard: encode: %w", err)
 	}
-	return buf.Bytes(), nil
+	return b, nil
 }
 
 func withAlpha(c color.NRGBA, a float64) color.NRGBA {

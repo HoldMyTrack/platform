@@ -18,6 +18,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/parallel"
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
+	"github.com/HoldMyTrack/platform/services/server/internal/pngenc"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
 )
@@ -462,11 +463,11 @@ func storeTilePNG(ctx context.Context, store *storage.Store, key string, mask im
 }
 
 func encodeTilePNG(mask image.Image) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, mask); err != nil {
+	b, err := pngenc.Encode(mask)
+	if err != nil {
 		return nil, fmt.Errorf("encode png: %w", err)
 	}
-	return buf.Bytes(), nil
+	return b, nil
 }
 
 func fogObjectKey(userID string, zoom, x, y int) string {
