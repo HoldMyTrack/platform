@@ -49,11 +49,11 @@ func TestKeepValid(t *testing.T) {
 	ok.Elevation = &inf
 	in := []parse.Point{
 		pt(math.NaN(), -83, t0), pt(40, math.Inf(-1), t0), pt(90.5, 0, t0), pt(0, 180.5, t0),
-		ok, pt(-90, 180, t0),
+		ok, pt(-89.9, 180, t0), pt(-90, 0, t0), pt(90, 0, t0),
 	}
 	got := keepValid(in)
-	if len(got) != 2 || got[0].Lat != 40 || got[1].Lat != -90 {
-		t.Fatalf("got %+v, want the two points with a place on Earth", got)
+	if len(got) != 2 || got[0].Lat != 40 || got[1].Lat != -89.9 {
+		t.Fatalf("got %+v, want the two points a map can place, not the poles", got)
 	}
 	if got[0].Elevation != nil {
 		t.Errorf("infinite elevation kept: %v", *got[0].Elevation)

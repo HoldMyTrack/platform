@@ -99,4 +99,10 @@ func TestFlushAndGate(t *testing.T) {
 	if s := NewGate(pool, 2.0, log).Stage(ctx); s != Normal {
 		t.Errorf("$1.26 of $2: stage %d, want Normal", s)
 	}
+	// Refreshed by a request whose client has gone, the read still happens.
+	gone, cancel := context.WithCancel(ctx)
+	cancel()
+	if s := NewGate(pool, 1.0, log).Stage(gone); s != ReadsPaused {
+		t.Errorf("refreshed on a cancelled request: stage %d, want ReadsPaused", s)
+	}
 }

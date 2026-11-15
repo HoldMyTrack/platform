@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"slices"
 	"testing"
 	"time"
@@ -141,5 +142,27 @@ func TestTracksTileSince(t *testing.T) {
 	}
 	if rec := d.do(me, "GET", fmt.Sprintf("/tiles/v1/tracks/12/%d/%d.mvt?since=yesterday", x, y), nil); rec.Code != http.StatusBadRequest {
 		t.Errorf("a bad since: status %d, want 400", rec.Code)
+	}
+}
+
+// The list doesn't filter by type or Story, so asking it to is refused rather than answered
+// with the whole set.
+func TestListAreaRefusesFiltersItDoesNotApply(t *testing.T) {
+	s := &Server{}
+	for _, q := range []string{"types=walking", "story=any"} {
+		rec := httptest.NewRecorder()
+		s.handleListArea(rec, httptest.NewRequest(http.MethodGet, "/v1/activities/area?"+q, nil))
+		if rec.Code != http.StatusBadRequest {
+			t.Errorf("%s: %d, want 400", q, rec.Code)
+		}
+	}
+}
+
+// An empty types= or story= is no filter, as on the other lists, so it is answered.
+func TestListAreaTakesEmptyFilters(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	if rec := d.do(me, http.MethodGet, "/v1/activities/area?types=&story=", nil); rec.Code != http.StatusOK {
+		t.Fatalf("empty filters: %d, want 200", rec.Code)
 	}
 }

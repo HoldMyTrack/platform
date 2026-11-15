@@ -105,6 +105,12 @@ type areaResponse struct {
 // whole history, for the opening view (FR-4.4).
 func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
+	// The list filters by type and Story itself; taking these and answering the whole set
+	// would let a client think it had filtered.
+	if q.Get("types") != "" || q.Get("story") != "" {
+		writeAPIError(w, "types and story don't filter this list", http.StatusBadRequest)
+		return
+	}
 	filter, err := parseActivityFilter(q)
 	if err != nil {
 		writeAPIError(w, err.Error(), http.StatusBadRequest)

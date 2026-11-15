@@ -266,3 +266,31 @@ func TestJoinsCut(t *testing.T) {
 		t.Error("no edit has no Cuts")
 	}
 }
+
+// Moving time keeps the sub-second gaps of a millisecond-stamped recording: a 1 Hz walk whose
+// fixes come a few milliseconds early or late moves for the whole hour, not half of it.
+func TestMovingTimeKeepsSubSecondGaps(t *testing.T) {
+	start := time.Date(2026, 9, 1, 8, 0, 0, 0, time.UTC)
+	points := []parse.Point{pt(41.4, -81.7, start)}
+	at := start
+	for i := 1; i <= 3600; i++ {
+		jitter := 998 * time.Millisecond
+		if i%2 == 0 {
+			jitter = 1002 * time.Millisecond
+		}
+		at = at.Add(jitter)
+		points = append(points, pt(41.4+float64(i)*1.4/111195, -81.7, at)) // 1.4 m a fix
+	}
+	if m := computeMetrics(points, nil); m.movingS != 3600 {
+		t.Fatalf("moving %d s, want 3600", m.movingS)
+	}
+}
+
+// Moving time is rounded where elapsed time is cut, so it never comes out longer than elapsed.
+func TestMovingTimeNeverPastElapsed(t *testing.T) {
+	start := time.Date(2026, 9, 1, 8, 0, 0, 0, time.UTC)
+	points := []parse.Point{pt(41.4, -81.7, start), pt(41.4001, -81.7, start.Add(10600*time.Millisecond))}
+	if m := computeMetrics(points, nil); m.movingS > m.durationS {
+		t.Fatalf("moving %d s past elapsed %d s", m.movingS, m.durationS)
+	}
+}

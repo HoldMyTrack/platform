@@ -290,8 +290,9 @@ func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKe
 	return act, nil
 }
 
-// keepValid drops the points no place on Earth has — a NaN or infinite coordinate, a latitude
-// past a pole, a longitude past the antimeridian — and an elevation that isn't finite. No
+// keepValid drops the points no map can place — a NaN or infinite coordinate, a latitude at or
+// past a pole, which Web Mercator puts at infinity, a longitude past the antimeridian — and an
+// elevation that isn't finite. No
 // parser checks ranges (a GPX attribute reads "Inf" as readily as a number, and a phone sync
 // sends whatever it sends), and one such point anywhere breaks everything downstream: the
 // tracks tile query's ST_Transform fails for every tile its bounding box covers, mask
@@ -301,7 +302,7 @@ func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKe
 func keepValid(points []parse.Point) []parse.Point {
 	valid := points[:0:0]
 	for _, p := range points {
-		if !(p.Lat >= -90 && p.Lat <= 90 && p.Lon >= -180 && p.Lon <= 180) { // false for NaN too
+		if !(p.Lat > -90 && p.Lat < 90 && p.Lon >= -180 && p.Lon <= 180) { // false for NaN too
 			continue
 		}
 		if p.Elevation != nil && (math.IsNaN(float64(*p.Elevation)) || math.IsInf(float64(*p.Elevation), 0)) {
@@ -525,8 +526,10 @@ type RenderFogJob struct {
 // The coalescing is this INSERT's: it adds no job while the user already has a render_fog
 // waiting unclaimed, since that one reads the dirty flags only once claimed, after every
 // caller has committed its marks (they all mark before enqueueing). A claimed one may have
-// read them already, so it doesn't count. Without this, a 584-activity import queued 584
-// renders of ~40 s each, every one after the first redrawing nothing new.
+// read them already, so it doesn't count, and nor does one waiting out a retry delay
+// (run_after ahead), which would hold this change's render back until it ran. Without this, a
+// 584-activity import queued 584 renders of ~40 s each, every one after the first redrawing
+// nothing new.
 func EnqueueRenderFog(ctx context.Context, pool *pgxpool.Pool, userID string) error {
 	payload, err := json.Marshal(RenderFogJob{UserID: userID})
 	if err != nil {
@@ -538,6 +541,7 @@ func EnqueueRenderFog(ctx context.Context, pool *pgxpool.Pool, userID string) er
 		WHERE NOT EXISTS (
 			SELECT 1 FROM jobs
 			WHERE kind = 'render_fog' AND user_id = $1 AND state = 'pending' AND locked_at IS NULL
+			  AND run_after <= NOW()
 		)`,
 		userID, payload,
 	)
@@ -565,6 +569,9 @@ const movingSpeedThresholdMps = 0.5
 // computeMetrics sums points after edit. Elapsed time alone spans a Cut's join (JoinsCut).
 func computeMetrics(points []parse.Point, edit *TrackEdit) metrics {
 	var m metrics
+	// Summed in seconds as fractions and rounded once: rounding each segment down dropped
+	// every sub-second gap of a millisecond-stamped recording (the phone's) to nothing.
+	var movingS float64
 	for i := 1; i < len(points); i++ {
 		if edit.JoinsCut(points[i-1].Time.UnixMilli(), points[i].Time.UnixMilli()) {
 			continue
@@ -579,10 +586,12 @@ func computeMetrics(points []parse.Point, edit *TrackEdit) metrics {
 		}
 		dt := points[i].Time.Sub(points[i-1].Time).Seconds()
 		if dt > 0 && segM/dt >= movingSpeedThresholdMps {
-			m.movingS += int(dt)
+			movingS += dt
 		}
 	}
 	m.durationS = int(points[len(points)-1].Time.Sub(points[0].Time).Seconds())
+	// Rounded where elapsed time is cut, so never past it: 10.6 s of moving in 10.6 s is 10.
+	m.movingS = min(int(math.Round(movingS)), m.durationS)
 	if m.durationS > 0 {
 		m.avgSpeedMps = m.distanceM / float64(m.durationS)
 	}

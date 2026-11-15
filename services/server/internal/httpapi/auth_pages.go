@@ -302,8 +302,9 @@ func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /verify?token= — the link in the verification email. A GET with an effect, because
-// it's a link someone clicks in their inbox; the effect is idempotent (verifying twice
-// verifies once, and the token is single-use), which is what makes that acceptable.
+// it's a link someone clicks in their inbox. The token works once, so a second open, often a
+// mail scanner's prefetch then the person's click, finds it used: the message for that says
+// a confirmed email just signs in.
 //
 // The link verifies wherever it's opened. A browser already signed in to its account goes on
 // with the session it has; any other, signed out or signed in to another account, keeps what it

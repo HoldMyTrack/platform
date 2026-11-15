@@ -9,6 +9,8 @@ import (
 	"encoding/pem"
 	"strings"
 	"testing"
+
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func TestRateLimitsOff(t *testing.T) {
@@ -79,5 +81,17 @@ func TestAppleNeedsItsKey(t *testing.T) {
 	t.Setenv("APPLE_BUNDLE_ID", "dev.holdmytrack.ios")
 	if _, err := Load(); err == nil {
 		t.Fatal("loaded a bundle id without a services id")
+	}
+}
+
+// A password with the characters a URL gives meaning to still connects with that password.
+func TestDatabaseURLEscapesItsParts(t *testing.T) {
+	const pass = "p/a+s=s@w?o#r%d"
+	cfg, err := pgconn.ParseConfig(databaseURL("hold my", pass, "db", "5432", "holdmytrack"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.User != "hold my" || cfg.Password != pass || cfg.Host != "db" || cfg.Port != 5432 || cfg.Database != "holdmytrack" {
+		t.Fatalf("parsed back as user %q, password %q, %s:%d/%s", cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.Database)
 	}
 }

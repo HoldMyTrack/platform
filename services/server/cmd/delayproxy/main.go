@@ -11,6 +11,7 @@
 package main
 
 import (
+	"errors"
 	"log"
 	"net"
 	"os"
@@ -31,7 +32,13 @@ func main() {
 	}
 	for {
 		c, err := ln.Accept()
+		if errors.Is(err, net.ErrClosed) {
+			log.Fatal(err)
+		}
 		if err != nil {
+			// Out of file descriptors, most often: retrying at once would spin a core.
+			log.Print(err)
+			time.Sleep(100 * time.Millisecond)
 			continue
 		}
 		go func(c net.Conn) {

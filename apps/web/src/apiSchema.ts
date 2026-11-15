@@ -135,6 +135,15 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Unauthenticated"];
+                /** @description The session couldn't be checked, which is not a sign-out; try again. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
             };
         };
         put?: never;
@@ -1332,7 +1341,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The newest activities whose track crosses a map view, the web's list and the set its map draws */
+        /**
+         * The newest activities whose track crosses a map view, the web's list and the set its map draws
+         * @description Type and Story filters (types, story) are refused, since the list filters those itself.
+         */
         get: {
             parameters: {
                 query?: {
@@ -1701,6 +1713,7 @@ export interface paths {
                         "application/json": {
                             count: number;
                             distance_meters: number;
+                            /** @description Moving time, or elapsed where an activity has none, as every other total counts it. */
                             duration_seconds: number;
                             elevation_gain_m: number;
                         };

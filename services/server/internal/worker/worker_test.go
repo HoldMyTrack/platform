@@ -405,6 +405,20 @@ func TestRenderFogCoalescesWhileUnclaimed(t *testing.T) {
 	if n := count(); n != 2 {
 		t.Fatalf("an enqueue behind a claimed job left %d jobs, want 2", n)
 	}
+
+	// Released to wait out a retry delay, it would run only after the delay: the next change
+	// needs a job that runs now.
+	if _, err := pool.Exec(ctx, `
+		UPDATE jobs SET locked_at = NULL, run_after = NOW() + interval '2 hours'
+		WHERE kind = 'render_fog' AND user_id = $1`, userID); err != nil {
+		t.Fatalf("retry delay: %v", err)
+	}
+	if err := ingest.EnqueueRenderFog(ctx, pool, userID); err != nil {
+		t.Fatalf("enqueue: %v", err)
+	}
+	if n := count(); n != 3 {
+		t.Fatalf("an enqueue behind renders waiting to retry left %d jobs, want 3", n)
+	}
 }
 
 func TestLanePaused(t *testing.T) {

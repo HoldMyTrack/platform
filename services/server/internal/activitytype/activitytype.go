@@ -7,6 +7,7 @@
 package activitytype
 
 import (
+	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -29,8 +30,12 @@ const (
 	Other Kind = "other"
 )
 
-// kindWords is matched in order, case-insensitively, anywhere in the type: the first kind with
-// a word in it wins.
+// kindWords is matched in order, case-insensitively: the first kind with a word in the type
+// wins. A word matches anywhere in it ("bicycle", "longboard"), except the few in wholeWords,
+// which must be one of the type's words entire ("car_ride", never "cardio"), and startWords,
+// which must start one. Snow, ice and
+// water come before wheels and foot, since "snowboarding", "ice_skating" and
+// "stand_up_paddleboarding" carry their words.
 var kindWords = []struct {
 	kind  Kind
 	words []string
@@ -38,21 +43,44 @@ var kindWords = []struct {
 	{Solowheel, []string{"solowheel", "monowheel"}},
 	{EScooter, []string{"e_scooter", "escooter"}},
 	{Motor, []string{"driv", "motor", "car"}},
+	{Wheels, []string{"roller"}}, // roller skiing is on wheels, though it says "ski"
+	{Other, []string{"ski", "snow", "ice", "paddl", "wake", "surf", "kayak", "canoe", "rowing", "sail", "swim"}},
 	{Wheels, []string{"cycl", "bik", "skat", "wheel", "scoot", "board"}},
 	{Foot, []string{"walk", "hik", "run", "jog", "trek", "stroll", "march"}},
 }
 
+// wholeWords are the kindWords that match only a whole word of the type, and startWords the ones
+// that match only the start of one: a type is often run together ("IceSkate" arrives as
+// "iceskate"), while "ice" inside a word ("service") means nothing.
+var (
+	wholeWords = map[string]bool{"car": true}
+	startWords = map[string]bool{"ice": true}
+)
+
 // KindOf is the kind of activityType.
 func KindOf(activityType string) Kind {
 	t := strings.ToLower(activityType)
+	words := strings.FieldsFunc(t, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) })
 	for _, k := range kindWords {
 		for _, w := range k.words {
-			if strings.Contains(t, w) {
+			if matchesWord(t, words, w) {
 				return k.kind
 			}
 		}
 	}
 	return Other
+}
+
+// matchesWord reports whether w is in the type t, split into words, by w's rule.
+func matchesWord(t string, words []string, w string) bool {
+	switch {
+	case wholeWords[w]:
+		return slices.Contains(words, w)
+	case startWords[w]:
+		return slices.ContainsFunc(words, func(word string) bool { return strings.HasPrefix(word, w) })
+	default:
+		return strings.Contains(t, w)
+	}
 }
 
 // Catalog is the types the Type picker can suggest beyond an account's own: the ones the

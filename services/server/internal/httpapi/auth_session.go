@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -84,19 +85,24 @@ func sessionIDFromRequest(r *http.Request) (string, bool) {
 // ("", false) if there is none, or it doesn't match a live session. Expiry is checked in SQL
 // (expires_at > NOW()), not left to the browser dropping an expired cookie on its own — a
 // client could replay an old one past its stated expiry.
-func (s *Server) currentUserID(r *http.Request) (string, bool) {
+//
+// err is a failed lookup, not a missing session: a caller answers it 503, never 401, since a
+// client takes a 401 for a dead session and signs out.
+func (s *Server) currentUserID(r *http.Request) (userID string, ok bool, err error) {
 	sessionID, ok := sessionIDFromRequest(r)
 	if !ok {
-		return "", false
+		return "", false, nil
 	}
-	var userID string
-	err := s.pool.QueryRow(r.Context(),
+	err = s.pool.QueryRow(r.Context(),
 		`SELECT user_id FROM sessions WHERE token_hash = $1 AND expires_at > NOW()`, tokenHash(sessionID),
 	).Scan(&userID)
-	if err != nil {
-		return "", false
+	if errors.Is(err, pgx.ErrNoRows) {
+		return "", false, nil
 	}
-	return userID, true
+	if err != nil {
+		return "", false, err
+	}
+	return userID, true, nil
 }
 
 type contextKey string
@@ -167,8 +173,17 @@ func (s *Server) requireAuth(next http.HandlerFunc) http.HandlerFunc {
 			WHERE se.token_hash = $1 AND se.expires_at > NOW()
 		`, tokenHash(sessionID)).Scan(&info.userID, &info.emailVerified, &info.timezone, &info.locale, &was.last,
 			&was.web, &was.android, &was.androidBuild, &was.ios, &was.iosBuild)
-		if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
 			writeAPIError(w, "authentication required", http.StatusUnauthorized)
+			return
+		}
+		if err != nil {
+			if clientGone(w, r) {
+				return
+			}
+			// Not a 401: the Android app signs out on one, over what is only a failed lookup.
+			s.log.Error("session lookup failed", "err", err)
+			writeAPIError(w, "session lookup failed", http.StatusServiceUnavailable)
 			return
 		}
 		info.isDemo = info.userID == DemoCustomerUserID

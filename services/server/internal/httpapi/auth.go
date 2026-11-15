@@ -510,7 +510,15 @@ func (s *Server) endSession(w http.ResponseWriter, r *http.Request) {
 // handleMe serves `GET /v1/auth/me` — how the frontend learns whether a session cookie it's
 // already holding is still valid, and whose it is, on first load (App.tsx).
 func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
-	userID, ok := s.currentUserID(r)
+	userID, ok, err := s.currentUserID(r)
+	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
+		s.log.Error("session lookup failed", "err", err)
+		writeAPIError(w, "session lookup failed", http.StatusServiceUnavailable)
+		return
+	}
 	if !ok {
 		writeAPIError(w, "not signed in", http.StatusUnauthorized)
 		return
