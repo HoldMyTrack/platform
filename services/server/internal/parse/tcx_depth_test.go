@@ -21,9 +21,9 @@ func TestParseTCXDeepNestingIsLinear(t *testing.T) {
 	b.WriteString("</TrainingCenterDatabase>")
 
 	start := time.Now()
-	act, err := ParseTCX(strings.NewReader(b.String()))
+	act, err := parseTCX(strings.NewReader(b.String()), 0)
 	if err != nil {
-		t.Fatalf("ParseTCX: %v", err)
+		t.Fatalf("parseTCX: %v", err)
 	}
 	if len(act.Points) != 1 {
 		t.Fatalf("points = %d, want 1", len(act.Points))

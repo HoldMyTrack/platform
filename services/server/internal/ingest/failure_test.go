@@ -16,7 +16,7 @@ import (
 func TestFailureCode(t *testing.T) {
 	// parsed runs a real parser, wrapped the way loadClippedPoints wraps its error.
 	parsed := func(filename, body string) error {
-		_, err := parse.ByExtension(filename, strings.NewReader(body))
+		_, err := parse.ByExtensionUpTo(filename, strings.NewReader(body), 0)
 		if err == nil {
 			t.Fatalf("%s: parse succeeded, want an error", filename)
 		}
@@ -48,7 +48,7 @@ func TestFailureCode(t *testing.T) {
 func TestObjectReaderTellsAStorageFailureFromABadFile(t *testing.T) {
 	classify := func(r io.Reader) string {
 		src := &objectReader{r: r}
-		_, err := parse.ByExtension("ride.gpx", src)
+		_, err := parse.ByExtensionUpTo("ride.gpx", src, 0)
 		if err == nil {
 			t.Fatal("parse succeeded, want an error")
 		}

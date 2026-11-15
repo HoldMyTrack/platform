@@ -59,7 +59,7 @@ func TestFlushAndGate(t *testing.T) {
 		t.Skip("TEST_DATABASE_URL not set")
 	}
 	ctx := context.Background()
-	pool, err := db.Open(ctx, url)
+	pool, err := db.Open(ctx, url, 0)
 	if err != nil {
 		t.Fatal(err)
 	}

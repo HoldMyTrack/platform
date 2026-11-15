@@ -18,14 +18,10 @@ import (
 
 var migrationsFS = migrations.FS
 
-func Open(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
-	return OpenSized(ctx, databaseURL, 0)
-}
-
-// OpenSized is Open with the pool capped at maxConns connections; 0 keeps pgx's default
-// (the greater of 4 and the CPU count), which is too few for `work` running several jobs at
-// once, each rendering many tiles side by side.
-func OpenSized(ctx context.Context, databaseURL string, maxConns int32) (*pgxpool.Pool, error) {
+// Open connects to databaseURL with the pool capped at maxConns connections; 0 keeps pgx's
+// default (the greater of 4 and the CPU count), which is too few for `work` running several
+// jobs at once, each rendering many tiles side by side.
+func Open(ctx context.Context, databaseURL string, maxConns int32) (*pgxpool.Pool, error) {
 	cfg, err := pgxpool.ParseConfig(databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("db: parse url: %w", err)

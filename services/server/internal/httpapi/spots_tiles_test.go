@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // The spots tiles (§4.25) carry the places and their areas from zoom 13 up, with OSM's text.
@@ -34,7 +34,7 @@ func TestSpotsTile(t *testing.T) {
 
 	tile := func(z int) []byte {
 		t.Helper()
-		x, y := tilemath.LonLatToTile(at[0], at[1], z)
+		x, y := tilemathtest.LonLatToTile(at[0], at[1], z)
 		rec := d.do(me, "GET", fmt.Sprintf("/tiles/v1/spots/%d/%d/%d.mvt", z, x, y), nil)
 		d.decode(rec, http.StatusOK, nil)
 		return rec.Body.Bytes()

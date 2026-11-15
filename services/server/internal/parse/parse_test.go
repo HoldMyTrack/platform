@@ -97,9 +97,9 @@ const sampleTCX = `<?xml version="1.0"?>
 </Track></Lap></Activity></Activities></TrainingCenterDatabase>`
 
 func TestParseTCX(t *testing.T) {
-	act, err := ParseTCX(strings.NewReader(sampleTCX))
+	act, err := parseTCX(strings.NewReader(sampleTCX), 0)
 	if err != nil {
-		t.Fatalf("ParseTCX: %v", err)
+		t.Fatalf("parseTCX: %v", err)
 	}
 	if act.ActivityType != "running" {
 		t.Fatalf("want activity type running, got %q", act.ActivityType)
@@ -177,9 +177,9 @@ func TestParseJSONRefusesIncompleteOrUnknownPointFields(t *testing.T) {
 }
 
 func TestByExtensionJSON(t *testing.T) {
-	act, err := ByExtension("activity.json", strings.NewReader(sampleSyncJSON))
+	act, err := ByExtensionUpTo("activity.json", strings.NewReader(sampleSyncJSON), 0)
 	if err != nil {
-		t.Fatalf("ByExtension: %v", err)
+		t.Fatalf("ByExtensionUpTo: %v", err)
 	}
 	if len(act.Points) != 2 {
 		t.Fatalf("want 2 points, got %d", len(act.Points))
@@ -290,7 +290,7 @@ func TestParseTCXSkipsAPointMissingACoordinate(t *testing.T) {
 <Trackpoint><Time>2024-05-01T10:01:00Z</Time><Position><LatitudeDegrees>50.001</LatitudeDegrees></Position></Trackpoint>
 <Trackpoint><Time>2024-05-01T10:02:00Z</Time><Position><LatitudeDegrees>0</LatitudeDegrees><LongitudeDegrees>0</LongitudeDegrees></Position></Trackpoint>
 </Track></Lap></Activity></Activities></TrainingCenterDatabase>`
-	act, err := ParseTCX(strings.NewReader(tcx))
+	act, err := parseTCX(strings.NewReader(tcx), 0)
 	if err != nil {
 		t.Fatal(err)
 	}

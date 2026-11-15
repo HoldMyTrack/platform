@@ -297,8 +297,6 @@ func normalizeEmail(raw string) (string, error) {
 	return email, nil
 }
 
-var errEmailTaken = errors.New("email already registered")
-
 // handleSignup serves `POST /v1/auth/signup`. Always a plain new account, whether or not the
 // caller currently holds a demo session — docs/ROADMAP.md's "Email verification + demo
 // without real ingest" retired the old claim-the-demo-account-in-place path along with demo's

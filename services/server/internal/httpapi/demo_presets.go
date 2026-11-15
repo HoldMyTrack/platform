@@ -29,7 +29,7 @@ import (
 const DemoCustomerUserID = "22222222-2222-2222-2222-222222222222"
 
 // demo_data/ holds the account's history as raw activity files in any format ingest parses
-// (parse.ByExtension: .gpx, .tcx, .fit, .json), plus manifest.json. They are real activities
+// (parse.ByExtensionUpTo: .gpx, .tcx, .fit, .json), plus manifest.json. They are real activities
 // on a live deployment, written out as GPX by `export-demo-activities` (demo_export.go)
 // exactly as their owner sees them, and reviewed by hand before being committed.
 //
@@ -483,24 +483,6 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 		return fmt.Errorf("reset: %w", err)
 	}
 
-	rows, err := pool.Query(ctx, `SELECT id FROM activities WHERE user_id = $1`, DemoCustomerUserID)
-	if err != nil {
-		return fmt.Errorf("reset: list activities: %w", err)
-	}
-	var activityIDs []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			rows.Close()
-			return fmt.Errorf("reset: scan: %w", err)
-		}
-		activityIDs = append(activityIDs, id)
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
-		return fmt.Errorf("reset: rows: %w", err)
-	}
-
 	prefixes := []string{"raw/" + DemoCustomerUserID + "/", "fog/" + DemoCustomerUserID + "/", "photos/" + DemoCustomerUserID + "/"}
 	for _, prefix := range prefixes {
 		if err := store.RemoveByPrefix(ctx, prefix); err != nil {
@@ -513,9 +495,12 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 		return fmt.Errorf("reset: begin: %w", err)
 	}
 	defer tx.Rollback(ctx)
+	removed, err := tx.Exec(ctx, `DELETE FROM activities WHERE user_id = $1`, DemoCustomerUserID)
+	if err != nil {
+		return fmt.Errorf("reset: %w", err)
+	}
 	for _, q := range []string{
 		`DELETE FROM jobs WHERE user_id = $1 AND state = 'pending'`,
-		`DELETE FROM activities WHERE user_id = $1`,
 		// Its Stories too: the seed recreates the manifest's, and nothing else should survive.
 		`DELETE FROM stories WHERE user_id = $1`,
 		// And its captures, which belong to the account rather than to an activity.
@@ -531,7 +516,7 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("reset: commit: %w", err)
 	}
-	log.Info("demo customer reset: done", "activities_removed", len(activityIDs))
+	log.Info("demo customer reset: done", "activities_removed", removed.RowsAffected())
 	return nil
 }
 
@@ -540,7 +525,7 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 const demoJobLockStale = 10 * time.Minute
 
 // quiesceDemoJobs deletes the demo account's unclaimed pending jobs and waits until none is
-// running. A claim (internal/worker's claimAndRunOne) only sets locked_at — the job stays
+// running. A claim (internal/worker's claimAndRun) only sets locked_at — the job stays
 // 'pending' until it finishes — so a running job is a pending one with a recent locked_at.
 func quiesceDemoJobs(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger) error {
 	tag, err := pool.Exec(ctx,

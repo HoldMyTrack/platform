@@ -168,6 +168,14 @@ func decodeSatellite(t *testing.T, doc []byte) satelliteStyle {
 	return s
 }
 
+// The satellite imagery source is generated with placeholders in place of a real tile URL and
+// credit (docs/SPEC.md FR-4.10), which withSatellite replaces structurally. Must match
+// SATELLITE_PLACEHOLDER in apps/web/scripts/build-style.mjs.
+const (
+	satelliteTilesPlaceholder       = "__HOLDMYTRACK_SATELLITE_TILES__"
+	satelliteAttributionPlaceholder = "__HOLDMYTRACK_SATELLITE_ATTRIBUTION__"
+)
+
 func TestDocumentFillsSatellite(t *testing.T) {
 	sat := Satellite{
 		Tiles:       `https://tiles.example.com/sat/{z}/{x}/{y}.jpg?key=k&"quoted"`,
@@ -335,4 +343,13 @@ func TestStyleMatchesDocument(t *testing.T) {
 	if _, _, err := Style("neon", "en", "https://example.com", Satellite{}); !errors.Is(err, ErrUnknownFlavor) {
 		t.Errorf("unknown flavor: %v, want ErrUnknownFlavor", err)
 	}
+}
+
+// Languages lists the embedded label languages, sorted — one per catalog in
+// apps/web/src/i18n, the same set as i18n.Supported.
+func Languages() []string {
+	load()
+	out := make([]string, len(languages))
+	copy(out, languages)
+	return out
 }

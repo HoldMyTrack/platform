@@ -2,15 +2,6 @@ package stats
 
 import "fmt"
 
-// kind is whether a stat is read as it stands when the snapshot runs (state) or counted over
-// the day itself by a timestamp column (flow); IMPLEMENTATION.md §4.32.
-type kind int
-
-const (
-	state kind = iota
-	flow
-)
-
 // stat is one entry of the catalogue. A stat with key returns one value; one with prefix
 // returns (group, value) rows, each stored as keyFor(prefix, group), or, with fold, (group,
 // value, accounts, ids) rows folded by foldSmallGroups first, ids being the accounts' ids when
@@ -24,7 +15,6 @@ const (
 type stat struct {
 	key    string
 	prefix string
-	kind   kind
 	fold   bool
 	groups []string
 	query  string
@@ -59,48 +49,48 @@ var clients = []string{"web_only", "android_only", "ios_only", "both"}
 
 var catalogue = []stat{
 	// Accounts and activity.
-	{key: "accounts", kind: state, query: `SELECT count(*) FROM acct`},
-	{key: "accounts_verified", kind: state, query: `SELECT count(*) FROM acct WHERE email_verified`},
+	{key: "accounts", query: `SELECT count(*) FROM acct`},
+	{key: "accounts_verified", query: `SELECT count(*) FROM acct WHERE email_verified`},
 	// Deleted accounts count until their row is purged; deletions are derived when read.
-	{key: "signups", kind: flow, query: `SELECT count(*) FROM users u, p WHERE u.created_at >= p.d0 AND u.created_at < p.d1 AND u.id <> p.demo`},
-	{key: "active_1d", kind: state, query: `SELECT count(*) FROM acct WHERE ` + activeSince(1)},
-	{key: "active_7d", kind: state, query: `SELECT count(*) FROM acct WHERE ` + activeSince(7)},
-	{key: "active_30d", kind: state, query: `SELECT count(*) FROM acct WHERE ` + activeSince(30)},
+	{key: "signups", query: `SELECT count(*) FROM users u, p WHERE u.created_at >= p.d0 AND u.created_at < p.d1 AND u.id <> p.demo`},
+	{key: "active_1d", query: `SELECT count(*) FROM acct WHERE ` + activeSince(1)},
+	{key: "active_7d", query: `SELECT count(*) FROM acct WHERE ` + activeSince(7)},
+	{key: "active_30d", query: `SELECT count(*) FROM acct WHERE ` + activeSince(30)},
 	// Unique web visitors, signed in or not (internal/httpapi's visitors.go); Take deletes the
 	// day's hashes once this is stored.
-	{key: "visitors", kind: flow, query: `SELECT count(*) FROM visitor_days v, p WHERE v.day = (p.d0 AT TIME ZONE 'UTC')::date`},
+	{key: "visitors", query: `SELECT count(*) FROM visitor_days v, p WHERE v.day = (p.d0 AT TIME ZONE 'UTC')::date`},
 
 	// Clients: who used the website, an app or both in the last 30 days — someone on both apps
 	// counts as Android — and which builds of each app, so MIN_ANDROID_BUILD and MIN_IOS_BUILD
 	// can be raised once none below them is left.
-	{prefix: "clients_30d", kind: state, groups: clients, query: `
+	{prefix: "clients_30d", groups: clients, query: `
 		, c AS (SELECT ` + seenSince("web_seen_at", 30) + ` AS web, ` + seenSince("android_seen_at", 30) + ` AS android,
 		               ` + seenSince("ios_seen_at", 30) + ` AS ios FROM acct)
 		SELECT CASE WHEN web AND (android OR ios) THEN 'both' WHEN web THEN 'web_only' WHEN android THEN 'android_only' ELSE 'ios_only' END, count(*)
 		FROM c WHERE web OR android OR ios GROUP BY 1`},
-	{prefix: "android_builds_30d", kind: state, query: `
+	{prefix: "android_builds_30d", query: `
 		SELECT android_build::text, count(*) FROM acct WHERE ` + seenSince("android_seen_at", 30) + ` GROUP BY 1`},
-	{prefix: "ios_builds_30d", kind: state, query: `
+	{prefix: "ios_builds_30d", query: `
 		SELECT ios_build::text, count(*) FROM acct WHERE ` + seenSince("ios_seen_at", 30) + ` GROUP BY 1`},
-	{prefix: "signin_method", kind: state, groups: []string{"password", "google", "facebook", "apple"}, query: `
+	{prefix: "signin_method", groups: []string{"password", "google", "facebook", "apple"}, query: `
 		SELECT 'password', count(*) FROM acct WHERE has_password
 		UNION ALL
 		SELECT i.provider, count(*) FROM user_identities i JOIN acct a ON a.id = i.user_id GROUP BY i.provider`},
-	{prefix: "locale", kind: state, query: `SELECT coalesce(locale, ''), count(*) FROM acct GROUP BY 1`},
+	{prefix: "locale", query: `SELECT coalesce(locale, ''), count(*) FROM acct GROUP BY 1`},
 
 	// Countries: folded by the accounts behind each value.
-	{prefix: "accounts_by_country", kind: state, fold: true, query: `
+	{prefix: "accounts_by_country", fold: true, query: `
 		SELECT coalesce(country, ''), count(*), count(*), ` + smallGroupIDs("id") + ` FROM acct GROUP BY 1`},
-	{prefix: "active_30d_by_country", kind: state, fold: true, query: `
+	{prefix: "active_30d_by_country", fold: true, query: `
 		SELECT coalesce(country, ''), count(*), count(*), ` + smallGroupIDs("id") + ` FROM acct WHERE ` + activeSince(30) + ` GROUP BY 1`},
-	{prefix: "activity_accounts_by_country", kind: state, fold: true, query: `
+	{prefix: "activity_accounts_by_country", fold: true, query: `
 		SELECT c.code, count(DISTINCT a.user_id), count(DISTINCT a.user_id), ` + smallGroupIDs("a.user_id") + `
 		FROM activity_country ac
 		JOIN activities a ON a.id = ac.activity_id
 		JOIN acct u ON u.id = a.user_id
 		JOIN admin_countries c ON c.id = ac.country_id
 		GROUP BY c.code`},
-	{prefix: "activities_by_country", kind: state, fold: true, query: `
+	{prefix: "activities_by_country", fold: true, query: `
 		SELECT c.code, count(*), count(DISTINCT a.user_id), ` + smallGroupIDs("a.user_id") + `
 		FROM activity_country ac
 		JOIN activities a ON a.id = ac.activity_id
@@ -109,16 +99,16 @@ var catalogue = []stat{
 		GROUP BY c.code`},
 
 	// Activities.
-	{key: "activities", kind: state, query: `SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id`},
-	{key: "activities_added", kind: flow, query: `
+	{key: "activities", query: `SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id`},
+	{key: "activities_added", query: `
 		SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id, p
 		WHERE a.created_at >= p.d0 AND a.created_at < p.d1`},
-	{prefix: "activities_by_source", kind: state, groups: sources, query: `
+	{prefix: "activities_by_source", groups: sources, query: `
 		SELECT a.source, count(*) FROM activities a JOIN acct u ON u.id = a.user_id GROUP BY a.source`},
-	{prefix: "activities_added_by_source", kind: flow, groups: sources, query: `
+	{prefix: "activities_added_by_source", groups: sources, query: `
 		SELECT a.source, count(*) FROM activities a JOIN acct u ON u.id = a.user_id, p
 		WHERE a.created_at >= p.d0 AND a.created_at < p.d1 GROUP BY a.source`},
-	{prefix: "activities_per_account", kind: state, query: `
+	{prefix: "activities_per_account", query: `
 		, per AS (SELECT count(*)::float8 AS c FROM activities a JOIN acct u ON u.id = a.user_id GROUP BY a.user_id),
 		v AS (
 			SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY c) AS p50,
@@ -130,31 +120,31 @@ var catalogue = []stat{
 
 	// Storage the database measures. A photo's files are shared by the copies of a Story it was
 	// sent in (IMPLEMENTATION.md §4.23), so each image_key counts once.
-	{key: "photos", kind: state, query: `SELECT count(*) FROM activity_photos ph JOIN acct u ON u.id = ph.user_id`},
-	{key: "storage_bytes.photos", kind: state, query: `
+	{key: "photos", query: `SELECT count(*) FROM activity_photos ph JOIN acct u ON u.id = ph.user_id`},
+	{key: "storage_bytes.photos", query: `
 		SELECT coalesce(sum(b), 0) FROM (
 			SELECT DISTINCT ON (ph.image_key) ph.bytes AS b
 			FROM activity_photos ph JOIN acct u ON u.id = ph.user_id
 		) f`},
-	{key: "storage_bytes.exports", kind: state, query: `
+	{key: "storage_bytes.exports", query: `
 		SELECT coalesce(sum(s), 0)
 		FROM exports e JOIN acct u ON u.id = e.user_id, unnest(e.part_sizes) s
 		WHERE e.expires_at IS NULL OR e.expires_at > NOW()`},
 	// Originals, by the size recorded beside each key; split pieces share one, so each key
 	// counts once. Masks are in the database: pg_column_size reads each one's stored size.
-	{key: "storage_bytes.originals", kind: state, query: `
+	{key: "storage_bytes.originals", query: `
 		SELECT coalesce(sum(b), 0) FROM (
 			SELECT max(a.raw_bytes) AS b FROM activities a JOIN acct u ON u.id = a.user_id
 			WHERE a.raw_payload_key IS NOT NULL GROUP BY a.raw_payload_key
 		) f`},
-	{key: "storage_bytes.masks", kind: state, query: `
+	{key: "storage_bytes.masks", query: `
 		SELECT coalesce(sum(pg_column_size(d.png)), 0)
 		FROM activity_tile_mask_data d JOIN activities a ON a.id = d.activity_id JOIN acct u ON u.id = a.user_id`},
-	{key: "storage_bytes.fog", kind: state, query: `
+	{key: "storage_bytes.fog", query: `
 		SELECT coalesce(sum(f.bytes), 0) FROM fog_tiles f JOIN acct u ON u.id = f.user_id`},
 	// Everything an account stores, over accounts storing anything: what a quota would bound.
 	// A photo shared with a Story copy counts for each account holding it.
-	{prefix: "storage_bytes_per_account", kind: state, query: `
+	{prefix: "storage_bytes_per_account", query: `
 		, per AS (
 			SELECT user_id, sum(b)::float8 AS b FROM (
 				SELECT a.user_id, max(a.raw_bytes) AS b FROM activities a
@@ -179,7 +169,7 @@ var catalogue = []stat{
 		SELECT g, x FROM v, LATERAL (VALUES ('p50', v.p50), ('p90', v.p90), ('max', v.mx)) AS t(g, x)`},
 	// The most originals one account keeps, what its storage limit (ADR-0043) bounds, for the
 	// alert at half of it.
-	{key: "original_bytes_per_account.max", kind: state, query: `
+	{key: "original_bytes_per_account.max", query: `
 		SELECT coalesce(max(b), 0) FROM (
 			SELECT sum(o) AS b FROM (
 				SELECT a.user_id, max(a.raw_bytes) AS o FROM activities a JOIN acct u ON u.id = a.user_id
@@ -187,25 +177,25 @@ var catalogue = []stat{
 			) k GROUP BY user_id
 		) per`},
 	// Rows naming an object whose size isn't recorded: 0 unless a write failed to record one.
-	{key: "storage_bytes_unmeasured_rows", kind: state, query: `
+	{key: "storage_bytes_unmeasured_rows", query: `
 		SELECT (SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id
 		        WHERE a.raw_payload_key IS NOT NULL AND a.raw_bytes IS NULL)
 		     + (SELECT count(*) FROM fog_tiles f JOIN acct u ON u.id = f.user_id
 		        WHERE f.object_key IS NOT NULL AND f.bytes IS NULL)`},
 
 	// Features.
-	{key: "stories", kind: state, query: `SELECT count(*) FROM stories s JOIN acct u ON u.id = s.user_id`},
-	{key: "stories_added", kind: flow, query: `
+	{key: "stories", query: `SELECT count(*) FROM stories s JOIN acct u ON u.id = s.user_id`},
+	{key: "stories_added", query: `
 		SELECT count(*) FROM stories s JOIN acct u ON u.id = s.user_id, p
 		WHERE s.created_at >= p.d0 AND s.created_at < p.d1`},
-	{key: "story_sends", kind: flow, query: `
+	{key: "story_sends", query: `
 		SELECT count(*) FROM story_sends ss JOIN stories s ON s.id = ss.story_id JOIN acct u ON u.id = s.user_id, p
 		WHERE ss.sent_at >= p.d0 AND ss.sent_at < p.d1`},
-	{key: "spot_captures", kind: state, query: `SELECT count(*) FROM spot_captures c JOIN acct u ON u.id = c.user_id`},
-	{key: "spot_captures_added", kind: flow, query: `
+	{key: "spot_captures", query: `SELECT count(*) FROM spot_captures c JOIN acct u ON u.id = c.user_id`},
+	{key: "spot_captures_added", query: `
 		SELECT count(*) FROM spot_captures c JOIN acct u ON u.id = c.user_id, p
 		WHERE c.captured_at >= p.d0 AND c.captured_at < p.d1`},
-	{prefix: "accounts_with", kind: state, groups: []string{"stories", "spots", "photos", "privacy_zones"}, query: `
+	{prefix: "accounts_with", groups: []string{"stories", "spots", "photos", "privacy_zones"}, query: `
 		SELECT 'stories', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM stories x WHERE x.user_id = u.id)
 		UNION ALL
 		SELECT 'spots', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM spot_captures x WHERE x.user_id = u.id)
@@ -214,24 +204,24 @@ var catalogue = []stat{
 		UNION ALL
 		SELECT 'privacy_zones', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM privacy_zones x WHERE x.user_id = u.id)`},
 	// An export's row stays for its 7 days, so the next day's snapshot still sees it.
-	{key: "exports_requested", kind: flow, query: `
+	{key: "exports_requested", query: `
 		SELECT count(*) FROM exports e JOIN acct u ON u.id = e.user_id, p
 		WHERE e.requested_at >= p.d0 AND e.requested_at < p.d1`},
 
 	// Object store requests, by the class R2 bills them as, from the daily budget's own count
 	// (internal/budget): what the operations cost, kept past r2_ops' use for the day.
-	{prefix: "r2_ops", kind: flow, groups: []string{"class_a", "class_b"}, query: `
+	{prefix: "r2_ops", groups: []string{"class_a", "class_b"}, query: `
 		SELECT 'class_' || lower(o.class), o.count FROM r2_ops o, p WHERE o.day = (p.d0 AT TIME ZONE 'UTC')::date`},
 
 	// Jobs: finished ones by the day they finished, pending ones as they stand. Jobs without an
 	// account (none today) count; the demo's don't.
-	{prefix: "jobs", kind: flow, query: `
+	{prefix: "jobs", query: `
 		SELECT j.kind || '.' || j.state, count(*) FROM jobs j, p
 		WHERE j.user_id IS DISTINCT FROM p.demo
 		  AND (j.state = 'pending' OR (j.finished_at >= p.d0 AND j.finished_at < p.d1))
 		GROUP BY j.kind, j.state`},
 	// "internal" is ours; every other code is the user's file.
-	{prefix: "ingest_failed", kind: flow, query: `
+	{prefix: "ingest_failed", query: `
 		SELECT coalesce(j.error_code, 'internal'), count(*) FROM jobs j, p
 		WHERE j.kind = 'ingest' AND j.state = 'failed' AND j.user_id IS DISTINCT FROM p.demo
 		  AND j.finished_at >= p.d0 AND j.finished_at < p.d1

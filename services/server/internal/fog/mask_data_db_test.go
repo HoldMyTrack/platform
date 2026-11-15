@@ -14,7 +14,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage/storagetest"
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // maskStore is memStore that also counts the GETs it answers.
@@ -50,7 +50,7 @@ func insertActivity(t *testing.T, pool *pgxpool.Pool, userID string) string {
 // A short walk inside one z14 tile, and that tile.
 func walkInOneTile() ([]parse.Point, [2]int) {
 	const lon, lat = 13.40, 52.52
-	x, y := tilemath.LonLatToTile(lon, lat, Zoom)
+	x, y := tilemathtest.LonLatToTile(lon, lat, Zoom)
 	start := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
 	pts := []parse.Point{
 		{Lat: lat, Lon: lon, Time: start},

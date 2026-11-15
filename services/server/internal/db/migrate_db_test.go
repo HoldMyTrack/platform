@@ -23,7 +23,7 @@ func scratchDatabase(t *testing.T) *pgxpool.Config {
 		t.Skip("TEST_DATABASE_URL not set")
 	}
 	ctx := context.Background()
-	admin, err := Open(ctx, url)
+	admin, err := Open(ctx, url, 0)
 	if err != nil {
 		t.Fatalf("open test database: %v", err)
 	}

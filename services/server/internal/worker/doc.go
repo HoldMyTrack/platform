@@ -12,7 +12,7 @@
 //
 // Three lanes, so a minutes-long render or export never holds up an upload: render (render_fog,
 // WORKER_RENDER_CONCURRENCY loops), long (export, one loop) and main (every other kind,
-// WORKER_CONCURRENCY). The pool is sized to the loops (db.OpenSized).
+// WORKER_CONCURRENCY). The pool is sized to the loops (db.Open).
 //
 // Each lane is fair (claimQuery): one job per account is considered, none from an account that
 // has one of that lane claimed, and accounts go in order of when that lane last served them,

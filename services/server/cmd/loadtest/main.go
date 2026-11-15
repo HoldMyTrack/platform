@@ -366,14 +366,6 @@ func centres() []pt {
 	return out
 }
 
-func tileXY(lat, lon float64, z int) (int, int) {
-	n := math.Exp2(float64(z))
-	x := int((lon + 180) / 360 * n)
-	lr := lat * math.Pi / 180
-	y := int((1 - math.Log(math.Tan(lr)+1/math.Cos(lr))/math.Pi) / 2 * n)
-	return x, y
-}
-
 // The served style's tiers (apps/web/src/map/coverageStyle.ts and the layers' own zoom ranges): Fog
 // draws whole countries below z3 and whole regions below z7, its veil from z7; Normal draws
 // tracks from z4. Every tile source stops at z14 and is stretched past it.

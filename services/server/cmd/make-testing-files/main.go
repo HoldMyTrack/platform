@@ -328,20 +328,6 @@ func untimed(gpx []byte) []byte {
 	}
 }
 
-// length is a track's length in meters, as the crow flies between points.
-func length(points []parse.Point) float64 {
-	const earth = 6371008.8
-	rad := math.Pi / 180
-	var m float64
-	for i := 1; i < len(points); i++ {
-		a, b := points[i-1], points[i]
-		dLat, dLon := (b.Lat-a.Lat)*rad, (b.Lon-a.Lon)*rad
-		h := math.Sin(dLat/2)*math.Sin(dLat/2) + math.Cos(a.Lat*rad)*math.Cos(b.Lat*rad)*math.Sin(dLon/2)*math.Sin(dLon/2)
-		m += 2 * earth * math.Asin(math.Min(1, math.Sqrt(h)))
-	}
-	return m
-}
-
 func demoFile(name string) []byte { return read(filepath.Join(demoDir, name)) }
 
 func load(name string) parse.Activity {

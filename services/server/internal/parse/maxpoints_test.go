@@ -59,7 +59,7 @@ func TestParsersRefusePastMaxPoints(t *testing.T) {
 		if _, err := ByExtensionUpTo(name, bytes.NewReader(build(MaxPoints+1)), MaxPoints); !errors.Is(err, ErrTooManyPoints) {
 			t.Errorf("%s one past the cap: %v, want ErrTooManyPoints", name, err)
 		}
-		if act, err := ByExtension(name, bytes.NewReader(build(MaxPoints+1))); err != nil || len(act.Points) != MaxPoints+1 {
+		if act, err := ByExtensionUpTo(name, bytes.NewReader(build(MaxPoints+1)), 0); err != nil || len(act.Points) != MaxPoints+1 {
 			t.Errorf("%s past the cap, read with none: %d points, %v; want all", name, len(act.Points), err)
 		}
 	}

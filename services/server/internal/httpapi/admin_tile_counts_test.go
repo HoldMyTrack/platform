@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // A place's tile feature counts the places of each level below it the account has been in, out
@@ -64,7 +64,7 @@ func TestAdminTilesCountTheExploredPlacesBelow(t *testing.T) {
 	features := func(l adminLayer, q adminTileQueries) map[string]map[string]any {
 		t.Helper()
 		const z = 7
-		x, y := tilemath.LonLatToTile(at[0], at[1], z)
+		x, y := tilemathtest.LonLatToTile(at[0], at[1], z)
 		live := strings.Replace(q.live, fmt.Sprintf("ST_AsMVT(t, '%s', 4096, 'geom')", l.name), "json_agg(t)", 1)
 		var built bool
 		var raw []byte

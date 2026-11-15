@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // The bike-path tiles (§4.24) carry each way with its kind and name from zoom 9 up, and leave a
@@ -38,7 +38,7 @@ func TestBikePathsTile(t *testing.T) {
 
 	tile := func(z int) []byte {
 		t.Helper()
-		x, y := tilemath.LonLatToTile(at[0], at[1], z)
+		x, y := tilemathtest.LonLatToTile(at[0], at[1], z)
 		rec := d.do(me, "GET", fmt.Sprintf("/tiles/v1/bike-paths/%d/%d/%d.mvt", z, x, y), nil)
 		d.decode(rec, http.StatusOK, nil)
 		return rec.Body.Bytes()

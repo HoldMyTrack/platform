@@ -81,7 +81,7 @@ type syncActivitiesResponse struct {
 // enqueues an `ingest` job per activity with its raw payload inline (ingest.EnqueueRaw), two
 // queries however large the batch; no parsing or privacy clipping happens inline.
 // ingest.Process needs no Path-2-specific branch at all: each activity's raw payload is
-// stored as JSON and read back through parse.ByExtension's ".json" case
+// stored as JSON and read back through parse.ByExtensionUpTo's ".json" case
 // (parse.ParseJSON), the same "differ only in how bytes arrive, converge on §4.1 step 2"
 // contract §4.0 states for all three paths.
 //

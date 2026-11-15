@@ -99,11 +99,11 @@ func TestFacebookCallbackFailures(t *testing.T) {
 	for name, tc := range map[string]struct {
 		query, cookie, want string
 	}{
-		"cancelled":     {"?error=access_denied&state=s", "s..UTC", "facebook"},
+		"cancelled":     {"?error=access_denied&state=s", "s..UTC.", "facebook"},
 		"no cookie":     {"?state=s&code=x", "", "facebook"},
-		"state forged":  {"?state=forged&code=x", "s..UTC", "facebook"},
-		"no code":       {"?state=s", "s..UTC", "facebook"},
-		"email missing": {"?state=s&code=x", "s..UTC", "facebook_no_email"},
+		"state forged":  {"?state=forged&code=x", "s..UTC.", "facebook"},
+		"no code":       {"?state=s", "s..UTC.", "facebook"},
+		"email missing": {"?state=s&code=x", "s..UTC.", "facebook_no_email"},
 	} {
 		req := httptest.NewRequest("GET", "/v1/auth/facebook/callback"+tc.query, nil)
 		if tc.cookie != "" {

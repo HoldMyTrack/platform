@@ -83,17 +83,9 @@ func (s *Server) parseAppleNotification(r *http.Request, payload string) (appleE
 // unlinkApple removes the Apple link with subject and ends its account's sessions, in one
 // transaction. A subject linked to nothing here is no error.
 func (s *Server) unlinkApple(r *http.Request, subject string) error {
-	ctx := r.Context()
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-	if _, err := tx.Exec(ctx, `
+	_, err := s.pool.Exec(r.Context(), `
 		WITH gone AS (DELETE FROM user_identities WHERE provider = 'apple' AND subject = $1 RETURNING user_id)
 		DELETE FROM sessions WHERE user_id IN (SELECT user_id FROM gone)
-	`, subject); err != nil {
-		return err
-	}
-	return tx.Commit(ctx)
+	`, subject)
+	return err
 }

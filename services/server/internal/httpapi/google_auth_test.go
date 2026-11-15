@@ -125,7 +125,7 @@ func TestGoogleEndpointsDisabledWithoutClientID(t *testing.T) {
 func TestGoogleCallbackRejectsStateMismatch(t *testing.T) {
 	s := testGoogleServer("")
 	req := httptest.NewRequest("GET", "/v1/auth/google/callback?state=forged&code=x", nil)
-	req.AddCookie(&http.Cookie{Name: oauthCookieName, Value: "real.verifier.UTC"})
+	req.AddCookie(&http.Cookie{Name: oauthCookieName, Value: "real.verifier.UTC."})
 	rec := serveChecked(t, s.handleGoogleCallback, req)
 	if loc := rec.Header().Get("Location"); rec.Code != http.StatusFound || loc != "https://app.example/signin?error=google" {
 		t.Fatalf("got %d %q", rec.Code, loc)

@@ -29,7 +29,7 @@ func testPool(t *testing.T) (*pgxpool.Pool, string) {
 		t.Skip("TEST_DATABASE_URL not set")
 	}
 	ctx := context.Background()
-	pool, err := db.Open(ctx, url)
+	pool, err := db.Open(ctx, url, 0)
 	if err != nil {
 		t.Fatalf("open test database: %v", err)
 	}
@@ -438,4 +438,9 @@ func TestLanePaused(t *testing.T) {
 			t.Errorf("%s: got %v", tc.name, got)
 		}
 	}
+}
+
+// claimAndRunOne is claimAndRun on the main lane.
+func claimAndRunOne(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger) (bool, error) {
+	return claimAndRun(ctx, pool, store, log, laneMain)
 }

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // A retired place (§4.25): flagged in the tiles, returned by "Show in this area" and
@@ -39,7 +39,7 @@ func TestRetiredSpot(t *testing.T) {
 		t.Fatalf("retire: %v", err)
 	}
 
-	x, y := tilemath.LonLatToTile(at[0], at[1], 14)
+	x, y := tilemathtest.LonLatToTile(at[0], at[1], 14)
 	rec := d.do(other, "GET", fmt.Sprintf("/tiles/v1/spots/14/%d/%d.mvt", x, y), nil)
 	d.decode(rec, http.StatusOK, nil)
 	if body := rec.Body.Bytes(); !bytes.Contains(body, []byte("Test Gone")) || !bytes.Contains(body, []byte("retired")) {

@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"math"
 	"net/http"
-	"sort"
 	"strconv"
 	"strings"
 )
@@ -77,20 +76,6 @@ func Get(lang string) *Localizer {
 func IsSupported(lang string) bool {
 	_, ok := catalogs[lang]
 	return ok
-}
-
-// Keys are every key in lang's catalog, sorted — for the tests' parity checks.
-func Keys(lang string) []string {
-	l, ok := catalogs[lang]
-	if !ok {
-		return nil
-	}
-	keys := make([]string, 0, len(l.msgs))
-	for k := range l.msgs {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 // Raw is key's message in lang's own catalog, unformatted, and whether it has one.

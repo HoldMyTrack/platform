@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/mapstyle"
 )
 
@@ -43,7 +44,7 @@ func TestEveryMapStyleMatchesContract(t *testing.T) {
 		s := newPagesTestServer(t)
 		s.satellite = sat
 		for _, flavor := range mapstyle.Flavors() {
-			for _, lang := range mapstyle.Languages() {
+			for _, lang := range i18n.Supported {
 				rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodGet, "/v1/map/style/"+flavor+"?lang="+lang, nil))
 				if rec.Code != http.StatusOK {
 					t.Fatalf("%s/%s: status %d", flavor, lang, rec.Code)

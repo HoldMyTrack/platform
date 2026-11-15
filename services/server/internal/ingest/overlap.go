@@ -27,21 +27,6 @@ const overlapMinShare = 0.8
 // min ≥ f·max, max ≤ D/f. Together: |Δstart| ≤ (1−f)/f · D.
 const overlapStartSlack = (1 - overlapMinShare) / overlapMinShare
 
-// overlapMatches is the rule on its own, for tests; Overlaps' SQL mirrors it.
-func overlapMatches(aStart time.Time, aDur time.Duration, bStart time.Time, bDur time.Duration) bool {
-	if aDur <= 0 || bDur <= 0 {
-		return false
-	}
-	lo, hi := aStart, aStart.Add(aDur)
-	if bStart.After(lo) {
-		lo = bStart
-	}
-	if bEnd := bStart.Add(bDur); bEnd.Before(hi) {
-		hi = bEnd
-	}
-	return hi.Sub(lo).Seconds() >= overlapMinShare*max(aDur, bDur).Seconds()
-}
-
 // Span is one candidate's time range, named by the caller's own key.
 type Span struct {
 	Key   string
@@ -97,7 +82,7 @@ func Overlaps(ctx context.Context, pool *pgxpool.Pool, userID string, spans []Sp
 			SELECT extract(epoch FROM least(rec.e, span.e) - greatest(rec.s, span.s))::float8 AS secs,
 			       extract(epoch FROM rec.e - rec.s)::float8 AS dur
 		) shared
-		-- overlapMatches: the overlap covers overlapMinShare of the longer of the two.
+		-- The overlap covers overlapMinShare of the longer of the two (overlap_test.go's overlapMatches).
 		WHERE shared.dur > 0
 		  AND shared.secs >= $6::float8 * greatest(shared.dur, span.secs)
 		ORDER BY span.key, shared.secs DESC, a.started_at, a.id

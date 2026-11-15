@@ -55,7 +55,7 @@ const { LANGS } = await import('../src/i18n/index.ts');
 /** Must match originPlaceholder in services/server/internal/mapstyle/mapstyle.go. */
 const ORIGIN_PLACEHOLDER = '__HOLDMYTRACK_BASEMAP_ORIGIN__';
 
-/** Must match satelliteTilesPlaceholder and satelliteAttributionPlaceholder in mapstyle.go. */
+/** Must match satelliteTilesPlaceholder and satelliteAttributionPlaceholder in mapstyle_test.go, which checks none survives. */
 const SATELLITE_PLACEHOLDER = {
   tiles: '__HOLDMYTRACK_SATELLITE_TILES__',
   tileSize: 512,

@@ -80,7 +80,7 @@ func main() {
 	}
 	var pool *pgxpool.Pool
 	err = retry(ctx, log, "db connect", func() (err error) {
-		pool, err = db.OpenSized(ctx, cfg.DatabaseURL, maxConns)
+		pool, err = db.Open(ctx, cfg.DatabaseURL, maxConns)
 		return err
 	})
 	if err != nil {

@@ -52,14 +52,10 @@ var (
 // second, past any real activity. A 16 MiB FIT file of bare records holds about 1.9 million, half a gigabyte decoded.
 const MaxPoints = 200_000
 
-// ByExtension dispatches on the uploaded filename's extension and streams from r — callers
-// must not read r into memory first (IMPLEMENTATION.md §5.2; a 100-mile ride at 1 Hz is 36,000+ points).
-func ByExtension(filename string, r io.Reader) (Activity, error) {
-	return ByExtensionUpTo(filename, r, 0)
-}
-
-// ByExtensionUpTo is ByExtension refusing a file past maxPoints positioned points with
-// ErrTooManyPoints, as soon as the parser reaches it; 0 is no cap. A new upload is held to
+// ByExtensionUpTo dispatches on the uploaded filename's extension and streams from r — callers
+// must not read r into memory first (IMPLEMENTATION.md §5.2; a 100-mile ride at 1 Hz is
+// 36,000+ points). It refuses a file past maxPoints positioned points with ErrTooManyPoints,
+// as soon as the parser reaches it; 0 is no cap. A new upload is held to
 // MaxPoints; a stored original is read without one, so one kept before the cap still opens.
 func ByExtensionUpTo(filename string, r io.Reader, maxPoints int) (Activity, error) {
 	switch strings.ToLower(filepath.Ext(filename)) {

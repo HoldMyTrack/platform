@@ -38,9 +38,9 @@ import (
 // split or sent as FIT.
 const maxUploadBytes = 16 << 20 // 16 MiB
 
-// multipartMemoryBytes is how much of an upload's multipart body ParseMultipartForm keeps in
-// memory; a larger file part goes to a temp file.
-const multipartMemoryBytes = 32 << 20
+// maxUploadBodyBytes is an upload's whole multipart body: the file and 1 MiB of overhead.
+// ParseMultipartForm keeps all of it in memory, so no upload is written to a temp file.
+const maxUploadBodyBytes = maxUploadBytes + 1<<20
 
 // uploadExts is the activity file types an upload may be. A `.zip` is refused with a message
 // of its own: archives aren't imported (ADR-0039).
@@ -235,11 +235,6 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.tile("/regions/{z}/{x}/{y}", s.handleRegionFogTile)
 	s.tile("/counties/{z}/{x}/{y}", s.handleCountyFogTile)
 	s.tile("/cities/{z}/{x}/{y}", s.handleCityFogTile)
-	// The paths before the sea was snapped to the tile grid, for a page loaded before this
-	// release. A browser keeps their tiles under its old tile version; the new paths start a
-	// cache of their own.
-	s.tile("/country-veil/{z}/{x}/{y}", s.handleCountryFogTile)
-	s.tile("/region-veil/{z}/{x}/{y}", s.handleRegionFogTile)
 	// An empty tile for installed Android builds, until MIN_ANDROID_BUILD next goes up.
 	s.tile("/heat-points/{z}/{x}/{y}", s.handleHeatPointsTile)
 	// Deliberately not behind requireAuth, unlike every /v1 route above it. The style
@@ -555,8 +550,8 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		httpErrorT(w, r, http.StatusTooManyRequests, "error.upload_rate_limit", "max", s.uploadLimiter.limit)
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes+1<<20) // +1MiB of multipart overhead
-	if err := r.ParseMultipartForm(multipartMemoryBytes); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBodyBytes)
+	if err := r.ParseMultipartForm(maxUploadBodyBytes); err != nil {
 		httpErrorT(w, r, http.StatusRequestEntityTooLarge, "error.upload_too_large")
 		return
 	}

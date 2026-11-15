@@ -13,7 +13,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
@@ -115,27 +114,6 @@ func TestInterruptedIngestResumes(t *testing.T) {
 	}
 	if !complete || masks == 0 {
 		t.Fatalf("after resume: complete %v, masks %d", complete, masks)
-	}
-}
-
-// discardS3 accepts single and multipart PUTs, reading each body through without keeping it,
-// and counts the bytes it was sent.
-type discardS3 struct{ received atomic.Int64 }
-
-func (s *discardS3) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	q := r.URL.Query()
-	w.Header().Set("Content-Type", "application/xml")
-	switch _, starting := q["uploads"]; {
-	case q.Has("location"):
-		io.WriteString(w, `<LocationConstraint xmlns="http://s3.amazonaws.com/doc/2006-03-01/">us-east-1</LocationConstraint>`)
-	case r.Method == http.MethodPost && starting:
-		io.WriteString(w, `<InitiateMultipartUploadResult><UploadId>1</UploadId></InitiateMultipartUploadResult>`)
-	case r.Method == http.MethodPost:
-		io.WriteString(w, `<CompleteMultipartUploadResult><Bucket>test</Bucket><Key>k</Key><ETag>"0"</ETag></CompleteMultipartUploadResult>`)
-	case r.Method == http.MethodPut:
-		n, _ := io.Copy(io.Discard, r.Body)
-		s.received.Add(n)
-		w.Header().Set("ETag", `"`+q.Get("partNumber")+`"`)
 	}
 }
 
