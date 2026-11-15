@@ -565,6 +565,9 @@ const movingSpeedThresholdMps = 0.5
 // computeMetrics sums points after edit. Elapsed time alone spans a Cut's join (JoinsCut).
 func computeMetrics(points []parse.Point, edit *TrackEdit) metrics {
 	var m metrics
+	// Summed in seconds as fractions and rounded once: rounding each segment down dropped
+	// every sub-second gap of a millisecond-stamped recording (the phone's) to nothing.
+	var movingS float64
 	for i := 1; i < len(points); i++ {
 		if edit.JoinsCut(points[i-1].Time.UnixMilli(), points[i].Time.UnixMilli()) {
 			continue
@@ -579,10 +582,12 @@ func computeMetrics(points []parse.Point, edit *TrackEdit) metrics {
 		}
 		dt := points[i].Time.Sub(points[i-1].Time).Seconds()
 		if dt > 0 && segM/dt >= movingSpeedThresholdMps {
-			m.movingS += int(dt)
+			movingS += dt
 		}
 	}
 	m.durationS = int(points[len(points)-1].Time.Sub(points[0].Time).Seconds())
+	// Rounded where elapsed time is cut, so never past it: 10.6 s of moving in 10.6 s is 10.
+	m.movingS = min(int(math.Round(movingS)), m.durationS)
 	if m.durationS > 0 {
 		m.avgSpeedMps = m.distanceM / float64(m.durationS)
 	}
