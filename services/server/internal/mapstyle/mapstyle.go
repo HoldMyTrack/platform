@@ -230,6 +230,38 @@ func Document(flavor, lang, origin string, sat Satellite) ([]byte, error) {
 	return withSatellite(b, sat)
 }
 
+// styleKey is what a served style varies by. Each part has few values in one process: an
+// embedded flavor and language, the deployment's origin, and its imagery or none.
+type styleKey struct {
+	flavor, lang, origin string
+	sat                  Satellite
+}
+
+type builtStyle struct {
+	doc  []byte
+	etag string
+}
+
+// builtStyles memoises Style: a document is about 100 KB of JSON to rebuild, and every
+// revalidation needs one for its ETag.
+var builtStyles sync.Map // styleKey → builtStyle
+
+// Style is Document and its ETag, built once per set of arguments. The caller must not modify
+// doc, which every later call returns too.
+func Style(flavor, lang, origin string, sat Satellite) (doc []byte, etag string, err error) {
+	key := styleKey{flavor, lang, origin, sat}
+	if b, ok := builtStyles.Load(key); ok {
+		return b.(builtStyle).doc, b.(builtStyle).etag, nil
+	}
+	doc, err = Document(flavor, lang, origin, sat)
+	if err != nil {
+		return nil, "", err
+	}
+	b := builtStyle{doc: doc, etag: ETag(doc)}
+	builtStyles.Store(key, b)
+	return b.doc, b.etag, nil
+}
+
 // withSatellite replaces the generated placeholder source with sat, or drops the source, its
 // layer and the satellite metadata keys, keeping the rest (the style build). It edits the document structurally rather than
 // by string replacement: the tile URL and credit are arbitrary text that needs JSON escaping,

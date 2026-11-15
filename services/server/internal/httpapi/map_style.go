@@ -42,7 +42,7 @@ func (s *Server) handleMapStyle(w http.ResponseWriter, r *http.Request) {
 		lang = i18n.Default
 	}
 
-	doc, err := mapstyle.Document(flavor, lang, s.basemapOrigin, s.styleSatellite(r.Context()))
+	doc, etag, err := mapstyle.Style(flavor, lang, s.basemapOrigin, s.styleSatellite(r.Context()))
 	if errors.Is(err, mapstyle.ErrUnknownFlavor) {
 		// Name the valid set rather than a bare 404 — the caller is a client developer
 		// wiring this up, and the flavor list is not discoverable from anywhere else.
@@ -55,7 +55,6 @@ func (s *Server) handleMapStyle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	etag := mapstyle.ETag(doc)
 	w.Header().Set("ETag", etag)
 	// Revalidate rather than cache blind: the document changes when style.ts is regenerated
 	// or the origin is reconfigured, and a client holding a stale one points at asset URLs

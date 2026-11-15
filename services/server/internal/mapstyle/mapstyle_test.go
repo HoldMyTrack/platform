@@ -1,6 +1,7 @@
 package mapstyle
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"slices"
@@ -306,5 +307,32 @@ func TestLayersFillTheTileVersion(t *testing.T) {
 	base := etag("light", "a.1", "en", us)
 	if base == etag("light", "a.2", "en", us) || base == etag("dark", "a.1", "en", us) || base == etag("light", "a.1", "ru", us) || base == etag("light", "a.1", "en", Words{}) {
 		t.Error("the layers ETag doesn't vary with the tile version, flavor, language and words")
+	}
+}
+
+// Style answers as Document and ETag do, for each flavor, language and imagery, and builds each
+// once.
+func TestStyleMatchesDocument(t *testing.T) {
+	sats := []Satellite{{}, {Tiles: "https://t/{z}/{x}/{y}", TileSize: 512, MaxZoom: 18}}
+	for _, flavor := range Flavors() {
+		for _, lang := range Languages() {
+			for _, sat := range sats {
+				want, err := Document(flavor, lang, "https://cdn.example.com", sat)
+				if err != nil {
+					t.Fatal(err)
+				}
+				doc, etag, err := Style(flavor, lang, "https://cdn.example.com", sat)
+				if err != nil || !bytes.Equal(doc, want) || etag != ETag(want) {
+					t.Errorf("Style(%q, %q, %+v) differs from Document", flavor, lang, sat)
+				}
+				again, _, _ := Style(flavor, lang, "https://cdn.example.com", sat)
+				if &again[0] != &doc[0] {
+					t.Errorf("Style(%q, %q, %+v) built the document again", flavor, lang, sat)
+				}
+			}
+		}
+	}
+	if _, _, err := Style("neon", "en", "https://example.com", Satellite{}); !errors.Is(err, ErrUnknownFlavor) {
+		t.Errorf("unknown flavor: %v, want ErrUnknownFlavor", err)
 	}
 }
