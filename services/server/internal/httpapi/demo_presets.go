@@ -24,7 +24,7 @@ import (
 
 // DemoCustomerUserID is the one persistent, shared demo account every "Try Demo" visitor's
 // session is pointed at (handleDemoStart) — not a fresh row created and re-seeded per visitor.
-// Must match migrations/0006_demo_customer.sql's fixed id. This id is what makes an account
+// Must match the row migrations/0045_baseline.sql inserts. This id is what makes an account
 // the demo (authInfo.isDemo): read-only and exempt from email verification.
 const DemoCustomerUserID = "22222222-2222-2222-2222-222222222222"
 
@@ -222,13 +222,12 @@ func demoFiles(fsys fs.FS) ([]string, error) {
 	return names, nil
 }
 
-// SeedDemoCustomer ingests every embedded activity file in demo_data/ into
-// DemoCustomerUserID, through the same real pipeline (internal/ingest.Process — parse,
-// persist, Fog mask render) a real upload uses. Meant to run once, out of band (the
-// `seed-demo-customer` CLI subcommand), not per visitor — see docs/ROADMAP.md's "Email
-// verification + demo without real ingest" for why re-running this per "Try Demo" click would
-// be far too slow. ingest.go's `ON CONFLICT (user_id, source, external_id) DO NOTHING` makes
-// re-running this safe: already-ingested files are skipped, not duplicated.
+// SeedDemoCustomer ingests every embedded activity file in demo_data/ into DemoCustomerUserID,
+// through the same real pipeline (internal/ingest.Process — parse, persist, Fog mask render) a
+// real upload uses. Meant to run once, out of band (the `seed-demo-customer` CLI subcommand),
+// not per visitor: re-ingesting the whole history on every "Try Demo" click would be far too
+// slow. ingest.go's `ON CONFLICT (user_id, source, external_id) DO NOTHING` makes re-running
+// this safe: already-ingested files are skipped, not duplicated.
 //
 // That same skip means a plain re-run never picks up a changed or removed file — reset wipes
 // the account's activities first (resetDemoCustomer), so the seeded history ends up matching

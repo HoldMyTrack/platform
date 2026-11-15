@@ -60,11 +60,8 @@ func (s *Server) handleActivitySummary(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// histogramWindowMonths is the *default* window length for the calendar-window mode, used
-// when a caller sends no `days` and no `from`/`to`. Twelve months is what the original
-// fixed-window mockup's Jan–Nov axis implied, and is still a reasonable first paint for a
-// caller that has nothing else to go on — §4.8's year-grid activity graph is the one that
-// still wants whole calendar windows.
+// histogramWindowMonths is the calendar-window mode's window when a caller sends no `days`
+// and no `from`/`to`: a year, a first paint for a caller with nothing else to go on.
 const histogramWindowMonths = 12
 
 // maxHistogramDays bounds the activity-day mode's LIMIT. A page is meant to be one strip of
@@ -107,7 +104,7 @@ ORDER BY day`
 // here is exactly `days` days, every time.
 //
 // The anchor is a local date like the days themselves, so each activity is compared in its
-// own zone; the account's live activities are read through idx_activities_live either way.
+// own zone; the account's activities are read through idx_activities_user_time either way.
 const activityDayPageQuery = `
 SELECT ` + localStartedAt + `::date AS day,
        COUNT(*),
@@ -397,11 +394,8 @@ type activityStatsBlock struct {
 	LongestStreakDays int64   `json:"longest_streak_days"`
 }
 
-// activityStats runs both queries above for one optional [from, to) window. Two round trips
-// rather than one combined query: the aggregate is a plain GROUP-BY-free scan and the streak
-// needs its own CTE, and combining them into one query would mean computing the window twice
-// anyway (once per CTE) for no fewer round trips saved, since both still have to run to
-// completion before a single response can be built either way.
+// activityStats runs both queries above for one optional [from, to) window. Combined, they
+// would compute the window once per CTE anyway, so they stay two.
 func (s *Server) activityStats(ctx context.Context, userID string, from, to *string) (activityStatsBlock, error) {
 	var b activityStatsBlock
 	if err := s.pool.QueryRow(ctx, activityStatsAggregateQuery, userID, from, to).
@@ -485,10 +479,8 @@ func (s *Server) handleActivityGraphStats(w http.ResponseWriter, r *http.Request
 // still validates it against an allow-list first, so a bad value gets a clean 400 instead
 // of a Postgres error.
 //
-// moving_seconds falls back to duration_seconds per row: ingest.Process only started
-// populating moving_seconds once the movingS-from-stopped-time fix landed, so activities
-// ingested before that have NULL there — COALESCE keeps old and new activities rendering
-// consistently in the same trend line rather than silently undercounting older periods.
+// moving_seconds falls back to duration_seconds per row where it is NULL, so a period of
+// activities without a moving time isn't undercounted.
 const activityTrendsQuery = `
 WITH sums AS (
   SELECT date_trunc($1::text, ` + localStartedAt + `)::date AS period,

@@ -359,8 +359,8 @@ type changeEmailRequest struct {
 
 // handleChangeEmail serves `PATCH /v1/auth/email` — plain requireAuth like
 // handleResendVerification, reachable before verification specifically so a mistyped signup
-// email can be corrected (docs/ROADMAP.md: "resend alone doesn't help someone who typed the
-// address wrong in the first place"). The change is pending until the link sent to the new
+// email can be corrected: resending alone doesn't help someone who typed the address wrong.
+// The change is pending until the link sent to the new
 // address is clicked (changeEmail); the response is the account as it stands meanwhile.
 func (s *Server) handleChangeEmail(w http.ResponseWriter, r *http.Request) {
 	info := authInfoFromContext(r.Context())

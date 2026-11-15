@@ -16,10 +16,9 @@ import (
 )
 
 // startSession returns the new session id, alongside setting it as the holdmytrack_session
-// cookie — a browser client needs nothing more, but the four callers that mint a fresh
-// session (signup, login, demo-start, reset-password) also thread this value into
-// authResponseWithSession.SessionToken, apps/android/docs/ARCHITECTURE.md §1's
-// bearer-token path for a native client with no browser-style cookie handling.
+// cookie. A browser needs nothing more; writeSession also hands the id back as
+// authResponseWithSession.SessionToken, the bearer token of a native client with no
+// browser-style cookie handling (apps/android/docs/ARCHITECTURE.md §1).
 func (s *Server) startSession(w http.ResponseWriter, ctx context.Context, userID string, ttl time.Duration) (string, error) {
 	expiresAt := time.Now().Add(ttl)
 	sessionID, hash := newToken()
@@ -211,13 +210,12 @@ func lastSeenDue(lastSeen *time.Time, now time.Time) bool {
 	return y1 != y2 || m1 != m2 || d1 != d2
 }
 
-// requireVerified wraps requireAuth with docs/ROADMAP.md's email-verification gate: a real
+// requireVerified wraps requireAuth with the email-verification gate (docs/SPEC.md FR-1.8): a real
 // (non-demo) account whose email isn't yet confirmed gets a distinguishable 403 instead of
 // reaching the handler, so the frontend can render the "verify your email" screen rather than
-// a generic error. Demo accounts always pass — the gate never applied to them; see
-// handleDemoStart's own doc comment for why a demo account has no email worth verifying at
-// all. This is the middleware every previously-plain-requireAuth route below gets, except the
-// handful (resend-verification, change-email) that exist to help an unverified account.
+// a generic error. Demo accounts always pass: the shared demo has no email to verify
+// (handleDemoStart). Every signed-in route uses it, except the two that exist to help an
+// unverified account (resend-verification, change-email).
 func (s *Server) requireVerified(next http.HandlerFunc) http.HandlerFunc {
 	return s.requireAuth(func(w http.ResponseWriter, r *http.Request) {
 		info := authInfoFromContext(r.Context())
@@ -230,10 +228,9 @@ func (s *Server) requireVerified(next http.HandlerFunc) http.HandlerFunc {
 }
 
 // requireNotDemo layers on top of requireVerified for the write endpoints a demo account must
-// never reach — upload, sync, edit, delete, avatar, settings — docs/ROADMAP.md: "Demo Users
-// can only view preset activities and can't do any modifications." A real, verified account
-// passes through unchanged; a demo account gets a distinguishable 403 a frontend can turn into
-// "create an account to save your own data" rather than a generic error.
+// never reach (docs/SPEC.md FR-2.1). A real, verified account passes through unchanged; a demo
+// account gets a distinguishable 403 a frontend can turn into "create an account to save your
+// own data" rather than a generic error.
 func (s *Server) requireNotDemo(next http.HandlerFunc) http.HandlerFunc {
 	return s.requireVerified(func(w http.ResponseWriter, r *http.Request) {
 		if authInfoFromContext(r.Context()).isDemo {

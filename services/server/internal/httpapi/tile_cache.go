@@ -6,8 +6,8 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/fog"
 )
 
-// setTileCacheControl is every per-user tile route's caching (IMPLEMENTATION.md §4.2's
-// "Caching"): a request carrying the caller's own tile version as `cv` may be kept for good,
+// setTileCacheControl is every per-user tile route's caching (IMPLEMENTATION.md §4.2.6): a
+// request carrying the caller's own tile version as `cv` may be kept for good,
 // since any change to what it returns bumps map_version (fog.BumpMapVersion) and with it the
 // URL a client asks for next. `private` because the tile is the caller's own coverage, which
 // points at where they live — only their browser or app may keep it, never a shared cache.

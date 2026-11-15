@@ -126,9 +126,8 @@ const maxActivityTypeLen = 50
 // not opine on reasonable length" reasoning.
 const maxActivityDescriptionLen = 2000
 
-// maxActivityNameLen matches migrations/0002_activities.sql's VARCHAR(200) — a single-line
-// title bound, deliberately shorter than maxActivityDescriptionLen: anything longer belongs
-// in the description field, not the row's primary line.
+// maxActivityNameLen matches activities.name's varchar(200): a single-line title, shorter than
+// maxActivityDescriptionLen, since anything longer belongs in the description.
 const maxActivityNameLen = 200
 
 // activityByIDQuery is the single-row counterpart to listActivitiesQuery, same column order
@@ -309,12 +308,9 @@ func (s *Server) handleDeleteActivity(w http.ResponseWriter, r *http.Request) {
 		s.log.Error("activity delete: bump map version failed", "activity_id", activityID, "err", err)
 	}
 
-	// The fix for the stale-cache risk above: re-trigger the exact same dirty-mark-and-render
-	// machinery ingest uses, just from removal instead of addition. RenderUser's own render is
-	// "idempotent and complete per tile, not incremental" — it fully recomposites a tile from
-	// whatever activity_tile_masks rows currently exist, so simply re-triggering it against
-	// the now-smaller set (this activity's rows already gone via the cascade above) produces a
-	// correct result with no new compositing logic needed.
+	// The deleted activity's tiles are marked dirty and rendered again, as ingest does: a render
+	// recomposites each tile from the activity_tile_masks rows left, which no longer include
+	// this activity's.
 	if len(tiles) > 0 {
 		if err := ingest.MarkFogTilesDirty(ctx, s.pool, userID, tiles); err != nil {
 			s.log.Error("activity delete: mark fog tiles dirty failed", "activity_id", activityID, "err", err)

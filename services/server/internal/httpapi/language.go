@@ -65,9 +65,9 @@ func (s *Server) setLanguageCookie(w http.ResponseWriter, lang string) {
 }
 
 // languageReturnPath is where the language menu sends the browser back to: the page it was
-// on, query included (a reset link's token, say), from the Referer — which sameOrigin has
-// already checked is this app's own, when present. Only its path and query are kept, so the
-// redirect can't leave the site; anything unusable goes to `/`.
+// on, query included (a reset link's token, say), from the Referer. Only its path and query are
+// kept, so the redirect stays on this site whatever the Referer names; anything unusable goes
+// to `/`.
 func languageReturnPath(r *http.Request) string {
 	ref, err := url.Parse(r.Referer())
 	if err != nil || !strings.HasPrefix(ref.Path, "/") || strings.HasPrefix(ref.Path, "//") || strings.Contains(ref.Path, `\`) {

@@ -17,17 +17,15 @@ const defaultUploadsLimit = 5
 // comment on why LIMIT/OFFSET is fine here despite §4.7's list endpoint dropping pagination.
 const maxUploadsLimit = 50
 
-// uploadRow is one entry in the persistent upload history (IMPLEMENTATION.md §4.0),
-// distinct from live in-flight status
-// (handleUploadStatus): this answers "what happened to every upload ever, including ones
-// whose tab is long closed," which nothing before this endpoint could answer at all.
+// uploadRow is one entry in the persistent upload history (IMPLEMENTATION.md §4.0), distinct
+// from live in-flight status (handleUploadStatus): what happened to every upload, including
+// ones whose tab is long closed.
 type uploadRow struct {
 	Filename   string `json:"filename"`
 	ExternalID string `json:"external_id"`
 	// The `jobs.payload->>'source'` value — "upload", "healthconnect", "healthkit",
 	// "recorded", or "takeout" and "timeline" on jobs from before those imports were removed
-	// (§3.3). ROADMAP.md's Files/Sync split reads this to decide
-	// which tab a row belongs in; nothing server-side needed it as a response field until now.
+	// (§3.3). The clients' Files and Sync lists split rows by it.
 	Source      string    `json:"source"`
 	Status      string    `json:"status"` // "processing" | "done" | "failed"
 	Error       string    `json:"error,omitempty"`
@@ -40,18 +38,15 @@ type uploadRow struct {
 	StartedAt      *time.Time `json:"started_at,omitempty"`
 	Timezone       *string    `json:"timezone,omitempty"` // StartedAt's zone, where it was recorded (§4.30)
 	DistanceMeters *float64   `json:"distance_meters,omitempty"`
-	// The resulting activity's own id, once one exists — ROADMAP.md's "View on map" item:
-	// nothing before this could point a click handler at the activity a finished row became.
-	// Nullable for the same reason StartedAt/DistanceMeters are: a job with no matching
-	// activity yet (still processing, or failed) has nothing to link to.
+	// The resulting activity's own id, for a row's "View on map"; absent while the job has no
+	// activity (still processing, or failed).
 	ActivityID *string `json:"activity_id,omitempty"`
 }
 
 type uploadsResponse struct {
 	Total int64 `json:"total"`
-	// A global count (every pending ingest job for this user, not just this page) — the
-	// panel's "N in progress" badge needs the true number regardless of which page happens
-	// to be showing, not an approximation from whatever page a caller is currently viewing.
+	// Every pending ingest job of the account, not just this page's, for the panel's "N in
+	// progress" badge.
 	Processing int64       `json:"processing"`
 	Limit      int         `json:"limit"`
 	Offset     int         `json:"offset"`
@@ -65,7 +60,7 @@ type uploadsResponse struct {
 // only grows, and a caller wants "page 3", not "everything since some cursor."
 // The `$2::text[] IS NULL OR ...` treatment is §4.3's own optional-filter pattern
 // (activity_list.go's listActivitiesQuery) — an absent/nil sources filter means "every source",
-// not "no rows". `source` is what ROADMAP.md's Files/Sync tab split filters this by client-side.
+// not "no rows".
 const uploadsCountQuery = `
 SELECT COUNT(*) FROM jobs
 WHERE kind = 'ingest' AND user_id = $1
@@ -129,7 +124,7 @@ func (s *Server) handleListUploads(w http.ResponseWriter, r *http.Request) {
 		}
 		offset = n
 	}
-	// Comma-separated source values (e.g. "upload,takeout" for the Files tab,
+	// Comma-separated source values (e.g. "upload" for the Files tab,
 	// "healthconnect,healthkit,recorded" for Sync) — same convention as §4.3's own `types`
 	// filter. Absent means "every source", the unfiltered combined view.
 	var sources []string

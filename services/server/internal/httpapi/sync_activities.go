@@ -13,12 +13,10 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
 )
 
-// syncSources is the `source` allowlist this endpoint accepts — IMPLEMENTATION.md §4.0 names
-// the two on-device platforms for Path 2 (iOS/HealthKit, Android/Health Connect), and §4.0.4
-// adds "recorded" for in-app GPS recording — authored by HoldMyTrack itself rather than
-// read from a platform health store, but the same batched wire shape either way. Path 1
-// (webhooks) and Path 3's file upload have their own endpoints and their own `source` values,
-// so this list doesn't need to anticipate those.
+// syncSources is the `source` allowlist this endpoint accepts: Path 2's on-device health stores
+// (IMPLEMENTATION.md §4.0), Health Connect and HealthKit, and "recorded", the app's own GPS
+// recording (§4.0.4), all in one batched wire shape. A file upload has its own endpoint and
+// source.
 var syncSources = map[string]bool{"healthconnect": true, "healthkit": true, "recorded": true}
 
 // syncExternalIDPattern is what a synced activity's external_id may be: a Health Connect or
@@ -28,15 +26,12 @@ var syncSources = map[string]bool{"healthconnect": true, "healthkit": true, "rec
 // only for the worker's insert to fail on it.
 var syncExternalIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-][A-Za-z0-9._-]{0,199}$`)
 
-// maxSyncBatchActivities bounds one request to a reasonable page of a foreground sync run, not
-// a claim that a real sync history can't be larger — ROADMAP.md's own "resumable retry"
-// requirement (§4.0: "mobile uploads get interrupted... retries are normal") already assumes a
-// first backfill makes several requests rather than one unbounded one.
+// maxSyncBatchActivities bounds one request to a page of a sync run: a first backfill makes
+// several requests, each retried on its own when interrupted (IMPLEMENTATION.md §4.0).
 const maxSyncBatchActivities = 100
 
-// maxSyncPointsPerActivity matches parse.go's own "100-mile ride at 1 Hz is 36,000+ points"
-// ceiling for file formats — a synced activity carries the same real-world variance whether it
-// arrived as GPX or as batched JSON points.
+// maxSyncPointsPerActivity bounds one synced activity: nearly 14 hours at a point a second,
+// with room above a 100-mile ride's 36,000. A file upload's bound is parse.MaxPoints.
 const maxSyncPointsPerActivity = 50000
 
 // maxSyncBodyBytes bounds the whole batched request body: generously above
@@ -50,11 +45,10 @@ const maxSyncBodyBytes = 64 << 20 // 64 MiB
 // identical — there is exactly one place that defines what "activity_type" and "points" mean
 // on the wire.
 type syncActivityRequest struct {
-	// ExternalID is the platform health store's own stable id for this record (a Health
-	// Connect session UUID, eventually a HealthKit workout UUID) — the actual identity
-	// (user_id, source, external_id) idempotency keys off, not a hash of the bytes below,
-	// so a retried sync of the same record is recognized as the same activity even if its
-	// JSON re-serializes slightly differently byte-for-byte.
+	// ExternalID is the source's own stable id for this record (a Health Connect session UUID,
+	// say). (user_id, source, external_id) is what a retried sync is matched on, not a hash of
+	// the bytes below, so the same record is the same activity even if its JSON re-serializes
+	// differently.
 	ExternalID string `json:"external_id"`
 	parse.JSONActivity
 }
@@ -254,12 +248,9 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncActiv
 	if len(act.Points) > maxSyncPointsPerActivity {
 		return ingest.RawItem{}, l.T("error.sync_too_many_points", "n", len(act.Points), "max", maxSyncPointsPerActivity)
 	}
-	// Same bounds handleUpdateActivity enforces for an edit after the fact — these columns
-	// are VARCHAR(50)/VARCHAR(200)/TEXT-but-bounded regardless of which path sets them first.
-	// activity_type specifically matters now that a client can send an arbitrary custom value
-	// (GPS Logger's free-text type field) rather than one of a fixed vocabulary — unchecked,
-	// an over-length value would fail as a raw, unhandled column-width error at insert time
-	// deep in the worker instead of a clean rejection here.
+	// The bounds handleUpdateActivity enforces, checked here: a client can send any custom
+	// activity_type (GPS Logger's free-text field), and an over-long value would otherwise fail
+	// on the column's width in the worker instead of being refused here.
 	if utf8.RuneCountInString(act.ActivityType) > maxActivityTypeLen {
 		return ingest.RawItem{}, l.T("error.activity_type_too_long", "max", maxActivityTypeLen)
 	}

@@ -145,7 +145,7 @@ func (s *Server) loadPhoto(ctx context.Context, userID, photoID string) (photoJS
 }
 
 // handleListPhotos serves `GET /v1/photos?activity={id}` — one activity's photos — and
-// `?story={id}`, the photos of every live activity in a Story (§4.23), for its map.
+// `?story={id}`, the photos of every activity in a Story (§4.23), for its map.
 func (s *Server) handleListPhotos(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())
 	ctx := r.Context()

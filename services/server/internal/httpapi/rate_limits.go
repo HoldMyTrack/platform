@@ -41,8 +41,8 @@ const syncActivitiesPerHour = 1000
 // defaultSignupsPerHour bounds the accounts one address creates with an email and password in
 // an hour. Each sends a verification email to whatever address was typed, and every
 // per-account limit counts one account. Only an account created counts, so a mistyped
-// password or a taken address costs nothing; Google and Facebook sign-in, whose providers
-// gate account creation themselves, aren't counted. SIGNUPS_PER_HOUR overrides it, for a load
+// password or a taken address costs nothing; Google, Facebook and Apple sign-in, whose
+// providers gate account creation themselves, aren't counted. SIGNUPS_PER_HOUR overrides it, for a load
 // test creating its accounts.
 const defaultSignupsPerHour = 5
 
@@ -119,8 +119,7 @@ func newFixedWindowLimiter(limit int, window time.Duration) *fixedWindowLimiter 
 	return &fixedWindowLimiter{limit: limit, window: window, counts: make(map[string]*windowCount)}
 }
 
-// allow counts one request against key and reports whether it is within the limit — the
-// limit on every request, for the endpoints that mail or create something.
+// allow counts one request against key and reports whether it is within the limit.
 func (l *fixedWindowLimiter) allow(key string) bool {
 	if rateLimitsOff.Load() {
 		return true
