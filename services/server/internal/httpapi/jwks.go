@@ -44,7 +44,7 @@ type jwksKeySet struct {
 	keys      map[string]*rsa.PublicKey
 	expires   time.Time
 	lastFetch time.Time
-	fetches   int // fetches finished, so a caller that waited on one doesn't repeat it
+	fetches   int // fetches that succeeded, so a caller that waited on one doesn't repeat it
 }
 
 func newJWKSKeySet(url string, client *http.Client) *jwksKeySet {
@@ -67,23 +67,21 @@ func (k *jwksKeySet) key(ctx context.Context, kid string, now time.Time) (*rsa.P
 
 	k.mu.Lock()
 	done := k.fetches != seen
-	key = nil
-	if now.Before(k.expires) {
-		key = k.keys[kid]
-	}
+	key = k.keys[kid]
 	k.mu.Unlock()
 	if done {
-		// Another caller's fetch finished while this one waited: answer from what it got,
-		// which is nothing fresh when it failed.
+		// Another caller's fetch succeeded while this one waited: answer from what it got.
 		return key, unknownKey(key, kid)
 	}
 
-	keys, ttl, err := fetchJWKS(ctx, k.client, k.url)
+	// Not on ctx: the waiters share this fetch, so one caller giving up mustn't fail it for
+	// them. The client's timeout bounds it.
+	keys, ttl, err := fetchJWKS(context.WithoutCancel(ctx), k.client, k.url)
 	k.mu.Lock()
 	k.lastFetch = now
-	k.fetches++
 	if err == nil {
 		k.keys, k.expires = keys, now.Add(ttl)
+		k.fetches++
 	}
 	k.mu.Unlock()
 	if err != nil {
@@ -94,7 +92,8 @@ func (k *jwksKeySet) key(ctx context.Context, kid string, now time.Time) (*rsa.P
 }
 
 // cached is kid's key from the cache, or whether the set has to be fetched for it; seen is the
-// fetch count it read, for key to tell whether one ran since.
+// fetch count it read, for key to tell whether one succeeded since. A failed one leaves the
+// count, so each caller that waited on it fetches in turn.
 func (k *jwksKeySet) cached(kid string, now time.Time) (key *rsa.PublicKey, fetch bool, seen int) {
 	k.mu.Lock()
 	defer k.mu.Unlock()

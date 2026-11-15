@@ -114,10 +114,59 @@ func TestJWKSWaitStopsWithTheContext(t *testing.T) {
 	}
 }
 
-// A caller whose shared fetch failed doesn't fall back to the expired set.
-func TestJWKSWaiterAfterAFailedFetchRefusesTheExpiredKey(t *testing.T) {
-	url, started, release, _ := slowKeySet(t, &newRSAKey(t).PublicKey)
-	k := newJWKSKeySet(url, &http.Client{Timeout: 100 * time.Millisecond})
+// A caller whose shared fetch failed fetches again rather than being refused, and one caller
+// giving up doesn't fail the fetch it started for the others.
+func TestJWKSWaitersSurviveTheFetchersCancel(t *testing.T) {
+	url, started, release, fetches := slowKeySet(t, &newRSAKey(t).PublicKey)
+	k := newJWKSKeySet(url, http.DefaultClient)
+	now := time.Now()
+	if _, err := k.key(context.Background(), "k1", now); err != nil {
+		t.Fatal(err)
+	}
+	expired := now.Add(2 * jwksDefaultTTL)
+	ctx, cancel := context.WithCancel(context.Background())
+	first := make(chan error, 1)
+	go func() {
+		_, err := k.key(ctx, "k1", expired)
+		first <- err
+	}()
+	<-started
+	waiter := make(chan error, 1)
+	go func() {
+		_, err := k.key(context.Background(), "k1", expired)
+		waiter <- err
+	}()
+	time.Sleep(50 * time.Millisecond) // the waiter reaches the wait
+	cancel()
+	close(release)
+	if err := <-waiter; err != nil {
+		t.Errorf("waiter after the fetcher's caller gave up: %v", err)
+	}
+	<-first
+	if got := fetches.Load(); got != 2 {
+		t.Errorf("%d fetches, want 2: the waiter used the one it waited on", got)
+	}
+}
+
+// After a failed shared fetch, a caller that waited on it fetches again in turn.
+func TestJWKSWaiterRetriesAFailedFetch(t *testing.T) {
+	key := &newRSAKey(t).PublicKey
+	var calls atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch calls.Add(1) {
+		case 2:
+			time.Sleep(50 * time.Millisecond)
+			http.Error(w, "down", http.StatusBadGateway)
+			return
+		}
+		json.NewEncoder(w).Encode(map[string]any{"keys": []map[string]string{{
+			"kid": "k1", "kty": "RSA",
+			"n": base64.RawURLEncoding.EncodeToString(key.N.Bytes()),
+			"e": base64.RawURLEncoding.EncodeToString(big.NewInt(int64(key.E)).Bytes()),
+		}}})
+	}))
+	t.Cleanup(srv.Close)
+	k := newJWKSKeySet(srv.URL, http.DefaultClient)
 	now := time.Now()
 	if _, err := k.key(context.Background(), "k1", now); err != nil {
 		t.Fatal(err)
@@ -128,17 +177,11 @@ func TestJWKSWaiterAfterAFailedFetchRefusesTheExpiredKey(t *testing.T) {
 		_, err := k.key(context.Background(), "k1", expired)
 		first <- err
 	}()
-	<-started
-	waiter := make(chan error, 1)
-	go func() {
-		_, err := k.key(context.Background(), "k1", expired)
-		waiter <- err
-	}()
+	time.Sleep(10 * time.Millisecond) // the first caller's fetch is under way
+	if _, err := k.key(context.Background(), "k1", expired); err != nil {
+		t.Errorf("waiter after a failed fetch: %v, want its own fetch to succeed", err)
+	}
 	if err := <-first; err == nil {
-		t.Fatal("fetch past the client timeout succeeded")
+		t.Error("the failed fetch reported success")
 	}
-	if err := <-waiter; err == nil {
-		t.Error("waiter accepted a key from the expired set after the fetch failed")
-	}
-	close(release)
 }
