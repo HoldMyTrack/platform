@@ -61,7 +61,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 | Sessions and emailed links, with a pending address | System | Database | Until expiry: 30 days, links 1 day |
 | The day an account last used the service, the website and each app, and the app's version | System | Database | Until the account is deleted |
 | Server logs with account ids, no tracks or emails | System | Server, then Grafana Cloud (US) | Rotated on the server; 14 days at Grafana |
-| Daily service statistics: counts, sums and percentiles across all accounts, never one account's; country groups under 5 accounts folded into one | System | Database; the newest day also at Grafana Cloud (US) | Indefinitely; 14 days at Grafana |
+| Daily service statistics: counts, sums and percentiles across all accounts, never one account's; country groups under 5 accounts folded into one, itself of at least 5 or left out | System | Database; the newest day also at Grafana Cloud (US) | Indefinitely; 14 days at Grafana |
 | A web visitor's hash of address and browser under a random daily salt, for the unique-visitor count | System | Database | Deleted with the salt once that day's statistics are taken, within 2 days |
 | Nightly backups: database dump, originals, photos, avatars | System | Cloudflare R2 | Up to 8 weeks after deletion; newest 3 dumps also on the server |
 | Data download archive | User's request | Cloudflare R2 | 7 days |

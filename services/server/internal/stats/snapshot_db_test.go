@@ -87,8 +87,9 @@ func TestTake(t *testing.T) {
 		return id
 	}
 
-	// Five accounts in QQ, four in QZ: QQ keeps its key, QZ folds into other. Their last visits
-	// fall on the day, six days before it, seven days before it, and never.
+	// Five accounts in QQ, four in QZ and one in QY: QQ keeps its key, QZ and QY fold into an
+	// other of five. QQ's last visits fall on the day, six days before it, seven days before it,
+	// and never.
 	var qq []string
 	for i, seen := range []*time.Time{at(time.Hour), at(-6 * 24 * time.Hour), at(-7 * 24 * time.Hour), nil, nil} {
 		created := day.Add(-48 * time.Hour)
@@ -101,11 +102,12 @@ func TestTake(t *testing.T) {
 	for range 4 {
 		qz = append(qz, account("QZ", nil, day.Add(-48*time.Hour)))
 	}
+	account("QY", nil, day.Add(-48*time.Hour))
 	deleted := account("QQ", at(time.Hour), day.Add(-48*time.Hour))
 	exec(`UPDATE users SET deleted_at = NOW() WHERE id = $1`, deleted)
 
-	var qqCountry, qzCountry int
-	for code, id := range map[string]*int{"QQ": &qqCountry, "QZ": &qzCountry} {
+	var qqCountry, qzCountry, qyCountry int
+	for code, id := range map[string]*int{"QQ": &qqCountry, "QZ": &qzCountry, "QY": &qyCountry} {
 		if err := tx.QueryRow(ctx, `
 			INSERT INTO admin_countries (code, name, geom) VALUES ($1, $1, ST_Multi(ST_MakeEnvelope(0, 0, 1, 1, 4326)))
 			RETURNING id`, code).Scan(id); err != nil {
@@ -118,11 +120,20 @@ func TestTake(t *testing.T) {
 	a1 := activity(qq[0], "upload", day.Add(3*time.Hour))
 	activity(qq[0], "upload", day.Add(4*time.Hour))
 	activity(qq[0], "healthconnect", day.Add(5*time.Hour))
-	activity(qq[1], "recorded", day.Add(-time.Hour))
-	activity(qz[0], "upload", day.Add(-time.Hour))
+	a2 := activity(qq[1], "recorded", day.Add(-time.Hour))
+	a3 := activity(qz[0], "upload", day.Add(-time.Hour))
+	a4 := activity(qq[2], "recorded", day.Add(-time.Hour))
+	a5 := activity(qq[3], "recorded", day.Add(-time.Hour))
 	activity(demoUserID, "upload", day.Add(3*time.Hour))
 	activity(deleted, "upload", day.Add(3*time.Hour))
+	// By the countries their activities are in: QQ one account, QZ three, QY three. All three
+	// fold, into an other of the five distinct accounts behind them; an account counts under
+	// each country it was in.
 	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2), ($1, $3)`, a1, qqCountry, qzCountry)
+	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2), ($1, $3)`, a2, qzCountry, qyCountry)
+	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2)`, a3, qyCountry)
+	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2)`, a4, qyCountry)
+	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2)`, a5, qzCountry)
 
 	// Photos: two rows over the same files (a copy) count their bytes once.
 	photo := func(userID, activityID, key string, bytes int) {
@@ -160,27 +171,27 @@ func TestTake(t *testing.T) {
 		t.Fatal(err)
 	}
 	for key, want := range map[string]float64{
-		"accounts":                           9,
+		"accounts":                           10,
 		"signups":                            1,
 		"active_1d":                          1,
 		"active_7d":                          2,
 		"active_30d":                         3,
-		"activities":                         5,
+		"activities":                         7,
 		"activities_added":                   3,
 		"activities_by_source.upload":        3,
 		"activities_by_source.healthconnect": 1,
-		"activities_by_source.recorded":      1,
+		"activities_by_source.recorded":      3,
 		"activities_by_source.healthkit":     0,
 		"activities_added_by_source.upload":  2,
 		"photos":                             3,
 		"storage_bytes.photos":               1500,
 		"accounts_by_country.qq":             5,
 		"accounts_by_country.qz":             0,
-		"accounts_by_country.other":          4,
+		"accounts_by_country.other":          5,
 		"accounts_with.photos":               1,
 		"activity_accounts_by_country.qq":    0, // one account: folded
-		"activity_accounts_by_country.other": 2, // its one account, counted under each country
-		"activities_by_country.other":        2,
+		"activity_accounts_by_country.other": 7,
+		"activities_by_country.other":        7,
 		"storage_bytes.originals":            2000,
 		"r2_ops.class_a":                     70,
 		"r2_ops.class_b":                     900,
