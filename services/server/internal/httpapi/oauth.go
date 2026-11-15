@@ -17,7 +17,8 @@ import (
 )
 
 // The provider-independent half of the server-side sign-in flows — Google (google_auth.go,
-// docs/SPEC.md FR-1.9) and Facebook (facebook_auth.go, FR-1.10). Each provider's start handler
+// docs/SPEC.md FR-1.9), Facebook (facebook_auth.go, FR-1.10) and Apple (apple_auth.go,
+// FR-1.11). Each provider's start handler
 // calls beginOAuth, its callback calls readOAuthCallback, resolves the account its own way,
 // and ends in finishOAuth — or failOAuth.
 //

@@ -301,7 +301,7 @@ func (r *Renderer) Render(w http.ResponseWriter, status int, page string, data P
 	writeHTML(w, status, "no-store", buf)
 }
 
-// RenderApp writes the React app's shell (the map page, and for now Profile and Settings).
+// RenderApp writes the React app's shell: the map page, `/`.
 func (r *Renderer) RenderApp(w http.ResponseWriter, data AppPage) {
 	set, ok := r.current(w, data.Lang)
 	if !ok {

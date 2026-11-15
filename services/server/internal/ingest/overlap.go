@@ -34,7 +34,7 @@ type Span struct {
 	End   time.Time
 }
 
-// Overlap is the live activity a Span overlaps the most.
+// Overlap is the activity a Span overlaps the most.
 type Overlap struct {
 	Key          string
 	ActivityID   string
@@ -44,7 +44,7 @@ type Overlap struct {
 	Timezone     *string
 }
 
-// Overlaps answers, for each span, the account's live activity it overlaps the most, if any,
+// Overlaps answers, for each span, the account's activity it overlaps the most, if any,
 // each activity taken as recorded (recordedSpan). A span with no duration overlaps nothing.
 func Overlaps(ctx context.Context, pool *pgxpool.Pool, userID string, spans []Span) ([]Overlap, error) {
 	keys := make([]string, 0, len(spans))

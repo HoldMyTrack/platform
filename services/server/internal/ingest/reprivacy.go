@@ -78,8 +78,7 @@ func AffectedActivities(ctx context.Context, tx pgx.Tx, userID string, lat, lon 
 
 // AffectedHiddenActivities is AffectedActivities for the activities a location change can
 // bring back but that have no trajectory to search by — those entirely inside Private
-// locations. There are few, and reprocessing one that stays hidden changes nothing. Hidden
-// duplicates are included for the same reason as there.
+// locations. There are few, and reprocessing one that stays hidden changes nothing.
 func AffectedHiddenActivities(ctx context.Context, tx pgx.Tx, userID string) ([]string, error) {
 	rows, err := tx.Query(ctx, `
 		SELECT id FROM activities

@@ -164,12 +164,9 @@ func dirtyTiles(ctx context.Context, pool *pgxpool.Pool, userID string, zoom int
 	return out, rows.Err()
 }
 
-// renderAndStoreTile is one z14 tile, fully re-rendered from the per-activity masks already
-// on file for it — no raw-payload re-fetch/re-parse here any more (see RenderActivityMasks,
-// which is what actually does that, once per activity, at ingest time). This is also more
-// precise than the old bbox-intersection query it replaces: activity_tile_masks only ever
-// contains tiles the *raw* trajectory actually passed through, not an approximation from the
-// simplified trajectory's bounding box.
+// renderAndStoreTile is one z14 tile, re-rendered from the per-activity masks on file for it,
+// which RenderActivityMasks draws once per activity at ingest. activity_tile_masks holds only
+// the tiles the raw trajectory's stroke reaches.
 //
 // The masks' bytes come in the same query, from activity_tile_mask_data (IMPLEMENTATION.md §3.11), so a tile
 // costs one SQL read rather than a round trip to object storage per activity through it. A
@@ -262,12 +259,9 @@ func decodeGray(r io.Reader) (*image.Gray, error) {
 // in one transaction (IMPLEMENTATION.md §3.11). Idempotent: safe to re-run for the same activity (a
 // redelivered ingest job).
 //
-// Called from ingest.Process with the points already in memory (pre-simplification, already
-// privacy-clipped) — unlike the old per-tile re-render this replaces, this never reads raw
-// payloads back from object storage for the activity that triggered it. Ingest-time
-// rendering cost is now proportional to just this one activity's own tiles, independent of
-// how many *other* activities already touch them — the old design re-parsed every one of
-// them on every tile they shared.
+// Called from ingest.Process with the points in memory (before simplification, after Private
+// locations), so it never reads an original back from object storage, and costs this
+// activity's own tiles however many other activities share them.
 func RenderActivityMasks(ctx context.Context, pool *pgxpool.Pool, activityID string, points []parse.Point, tiles [][2]int) error {
 	if len(tiles) == 0 {
 		return nil

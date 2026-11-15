@@ -88,10 +88,8 @@ func tileCoords(w http.ResponseWriter, r *http.Request, ext string) (z, x, y int
 // they have to answer filters (date range, activity type) that can't be baked into a raster
 // ahead of time, so this runs the query per request rather than reading a stored tile.
 //
-// Registered as "GET /tiles/v1/tracks/{z}/{x}/{y}" (no ".mvt" in the pattern) rather than
-// "{y}.mvt" — verified against the installed Go toolchain that net/http's ServeMux wildcard
-// must occupy a whole path segment, so a literal suffix glued onto "{y}" is not a pattern
-// stdlib supports. The ".mvt" suffix is trimmed from the captured segment by hand instead.
+// Registered as "GET /tiles/v1/tracks/{z}/{x}/{y}", with ".mvt" trimmed from the last segment
+// by hand: a ServeMux wildcard must fill a whole path segment, so "{y}.mvt" isn't a pattern.
 func (s *Server) handleTracksTile(w http.ResponseWriter, r *http.Request) {
 	z, x, y, ok := tileCoords(w, r, ".mvt")
 	if !ok {

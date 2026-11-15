@@ -18,19 +18,15 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
-// Email+password auth, server-side sessions (migrations/0001_users_and_auth.sql) — resolved toward
-// the smallest thing that removes the old placeholder-user stand-in, with no vendor to depend
-// on, the same bias Path 3 uploads already made. Sign in with Google (google_auth.go) is an
-// optional second way into the same accounts and the same sessions, off unless configured —
-// email+password never depends on it. Password reset (IMPLEMENTATION.md §4.9) and email verification (docs/SPEC.md FR-1.8)
-// share the same token-table shape. Rate limiting is partially built: see demoLimiter/forgotPasswordLimiter
-// below, added specifically because their endpoints are reachable with no credentials at all,
-// and storySendLimiter and Server.uploadLimiter, per account.
+// Email+password auth with server-side sessions, and no vendor to depend on. Google, Facebook
+// and Apple sign-in (google_auth.go, facebook_auth.go, apple_auth.go) are optional ways into the
+// same accounts and sessions, each off unless configured; email+password never depends on them.
+// Password reset (IMPLEMENTATION.md §4.9) and email verification (docs/SPEC.md FR-1.8) share one
+// token-table shape. The per-address and per-account limits are in rate_limits.go.
 
 const sessionCookieName = "holdmytrack_session"
 
-// sessionTTL is deliberately long — a single-user personal app with no "remember me"
-// checkbox should just stay signed in, not force a re-login every few hours.
+// sessionTTL is long: with no "remember me" choice, a session stays signed in for a month.
 const sessionTTL = 30 * 24 * time.Hour
 
 // demoSessionTTL bounds how long a no-signup demo session (VISION.md §8.2) stays signed in
@@ -98,9 +94,9 @@ type authResponse struct {
 	Country     string `json:"country"`
 	AvatarURL   string `json:"avatar_url"`
 	// IANA name (e.g. "America/New_York"), never empty — unlike DisplayName/Country there is
-	// no "unset" state: the column is NOT NULL DEFAULT 'UTC' (migrations/0001_users_and_auth.sql).
+	// no "unset" state: users.timezone is NOT NULL DEFAULT 'UTC'.
 	Timezone string `json:"timezone"`
-	// Locale is the account's language (migrations/0001_users_and_auth.sql), "" for automatic —
+	// Locale is the account's language (users.locale), "" for automatic —
 	// the web app then follows the browser's.
 	Locale string `json:"locale"`
 	// UnitSystem is "imperial" or "metric", from Country (web.Imperial): decided here, so every
@@ -118,9 +114,8 @@ type fogWords struct {
 }
 
 // authResponseWithSession wraps authResponse with the freshly minted session id, for the
-// four endpoints that call startSession and therefore have a session to hand back — signup,
-// login, demo-start, reset-password. handleMe returns plain authResponse: it's "is my
-// existing credential still valid," not a place to reissue one.
+// endpoints that start a session (writeSession). handleMe returns plain authResponse: it's "is
+// my existing credential still valid," not a place to reissue one.
 type authResponseWithSession struct {
 	authResponse
 	// SessionToken is the same value already set as the holdmytrack_session cookie in this same
@@ -298,12 +293,9 @@ func normalizeEmail(raw string) (string, error) {
 }
 
 // handleSignup serves `POST /v1/auth/signup`. Always a plain new account, whether or not the
-// caller currently holds a demo session — docs/ROADMAP.md's "Email verification + demo
-// without real ingest" retired the old claim-the-demo-account-in-place path along with demo's
-// real upload/sync access: every demo session shares the one persistent DemoCustomerUserID
-// (demo_presets.go) rather than holding a row of its own, so there is nothing per-session to
-// preserve by reusing it. The new account starts unverified (email_verified defaults false) and
-// gets a verification email; requireVerified is what actually gates on that.
+// caller holds a demo session: every demo session shares the one DemoCustomerUserID
+// (demo_presets.go), so there is nothing per-session to keep (docs/SPEC.md FR-2.3). The new
+// account starts unverified and gets a verification email; requireVerified gates on that.
 func (s *Server) handleSignup(w http.ResponseWriter, r *http.Request) {
 	req, err := decodeAuthRequest(r)
 	if err != nil {
@@ -352,7 +344,7 @@ func (s *Server) createAccountLimited(r *http.Request, email, password, timezone
 // createAccount is signup's shared core — handleSignup (JSON) and the /signup page
 // (auth_pages.go) both call it. email and password are validated here, not by the caller.
 // timezone is the browser's own guess and falls back to "UTC" when absent or unknown, rather
-// than failing the signup over a convenience default (migrations/0001_users_and_auth.sql).
+// than failing the signup over a convenience default.
 func (s *Server) createAccount(ctx context.Context, rawEmail, password, timezone, lang string) (string, error) {
 	email, err := validateCredentials(rawEmail, password)
 	if err != nil {

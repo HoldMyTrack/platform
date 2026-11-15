@@ -72,7 +72,7 @@ func EnqueueRaw(ctx context.Context, db Querier, userID string, items []RawItem)
 			// Scoped by source, unlike the content-addressed key below: a caller-supplied id
 			// is only unique within its own source's namespace (a Health Connect UUID and a
 			// HealthKit UUID could coincide in theory), whereas a hash collision across
-			// sources is intentionally shared storage (see handleDeleteActivity's comment).
+			// sources is shared storage (RawNamed).
 			keys[i] = fmt.Sprintf("raw/%s/%s/%s%s", userID, it.Source, it.ExternalID, it.Ext)
 		} else {
 			sum := sha256.Sum256(it.Data)
@@ -207,9 +207,10 @@ func PromoteRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, j
 }
 
 // RawNamed reports whether userID's activities or pending ingests other than exceptJob (0 for
-// none) still name rawKey. raw_payload_key is content-addressed (raw/{userID}/{sha256}{ext}),
+// none) still name rawKey. An upload's key is content-addressed (raw/{userID}/{sha256}{ext}),
 // so the same file uploaded twice, a split's pieces, or a re-upload still waiting for ingest
-// can share one. Every key sits under its owner's prefix, so only the owner's rows are read,
+// can share one; a synced activity's is its source and external id. Every key sits under its
+// owner's prefix, so only the owner's rows are read,
 // through their user_id indexes; raw_payload_key has none.
 func RawNamed(ctx context.Context, pool *pgxpool.Pool, userID, rawKey string, exceptJob int64) (bool, error) {
 	var named bool

@@ -1,9 +1,6 @@
-// Package httpapi is cmd/holdmytrack serve — currently just the Path 3 upload endpoint
-// (IMPLEMENTATION.md §4.0/§4.1 step 1). Uses stdlib net/http's ServeMux
-// method+pattern routing (Go 1.22+) rather than a router dependency — the "HTTP router and
-// database access" open decision in services/server/README.md, resolved toward the smallest
-// dependency set that does the job, per PostGIS being the deciding constraint on the DB side
-// (pgx directly, no ORM) rather than the router choice mattering much either way.
+// Package httpapi is cmd/holdmytrack serve: the JSON API, the tile endpoints and the
+// server-rendered pages. Routing is stdlib net/http's ServeMux method+pattern matching, with
+// no router dependency; the database is pgx directly, with no ORM.
 package httpapi
 
 import (
@@ -29,13 +26,10 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
 )
 
-// maxUploadBytes bounds the single read into memory this handler does. The parse step
-// (worker, ingest.Process) streams the format from object storage without buffering — this
-// cap is specifically about not accepting an unbounded HTTP body here (§5.1: "cap file
-// size... before reading the body fully"), not a claim that the whole pipeline never
-// buffers. An activity of a few hours is a few MB of GPX or TCX and far less as FIT; only a
-// day or more recorded once a second as GPX or TCX comes near this, and such a file has to be
-// split or sent as FIT.
+// maxUploadBytes bounds an uploaded file, which handleUpload reads into memory before the
+// worker streams it from object storage (IMPLEMENTATION.md §5.1). An activity of a few hours is
+// a few MB of GPX or TCX and far less as FIT; only a day or more recorded once a second as GPX
+// or TCX comes near this, and such a file has to be split or sent as FIT.
 const maxUploadBytes = 16 << 20 // 16 MiB
 
 // maxUploadBodyBytes is an upload's whole multipart body: the file and 1 MiB of overhead.
@@ -158,9 +152,9 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	// account that hasn't verified yet (auth_email.go's own doc comments on each).
 	s.mux.HandleFunc(route("POST", "/auth/resend-verification"), s.requireAuth(s.handleResendVerification))
 	s.mux.HandleFunc(route("PATCH", "/auth/email"), s.requireAuth(s.handleChangeEmail))
-	// requireNotDemo below: account/activity mutations docs/ROADMAP.md's "Email verification
-	// + demo without real ingest" says a demo account must never reach. requireVerified alone
-	// covers everything else a signed-in-but-unverified real account must also not reach yet.
+	// requireNotDemo below: account and activity changes a demo account must never reach
+	// (docs/SPEC.md FR-2.1). requireVerified alone covers everything else a signed-in but
+	// unverified real account must not reach yet.
 	s.mux.HandleFunc(route("PATCH", "/account/settings"), s.requireNotDemo(s.handleUpdateSettings))
 	// Readable by a demo session, whose Settings screen shows the fields, disabled.
 	s.mux.HandleFunc(route("GET", "/account/settings/options"), s.requireVerified(s.handleSettingsOptions))
@@ -406,12 +400,10 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter 
 // itself that anything went wrong — the request can be seen succeeding in the Network tab
 // while the calling code sees only a rejected promise.
 //
-// Every request now carries (or is trying to establish) a session cookie, so "*" no longer
-// works: browsers refuse to honour Access-Control-Allow-Credentials alongside a wildcard
-// origin, and a credentialed request without it just has its cookie silently dropped. This
-// reflects the request's own Origin back when it's on the allowlist instead — the standard
-// pattern for "credentialed CORS from a known set of origins" — rather than accepting any
-// origin with credentials, which would let any site ride a visitor's session.
+// Requests carry a session cookie, so "*" can't be the allowed origin: browsers refuse
+// Access-Control-Allow-Credentials beside a wildcard. The request's own Origin is reflected
+// back when it's on the allowlist, never any origin, which would let any site ride a visitor's
+// session.
 func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	setSecurityHeaders(w.Header())
 	if origin := r.Header.Get("Origin"); corsAllowedOrigins[origin] {

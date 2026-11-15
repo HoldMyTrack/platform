@@ -39,13 +39,10 @@ ORDER BY started_at DESC, id DESC`
 // sum, so a Story's total is its rows added up. Like them, it falls back to the elapsed
 // DurationSeconds where moving time is unset.
 //
-// Name (migrations/0002_activities.sql) is a user-entered title, nullable — a row with
-// none has never had one set, and the client falls back to started_at for its primary line
-// (§4.7 revised its earlier "no name column" decision to add exactly this, and nothing
-// more: still no parser reads a name out of a source file). Description (docs/SPEC.md FR-5.5,
-// migrations/0002_activities.sql's activities.description) stays separate free-text, shown only
-// as a hover tooltip — a row with nothing written there has never been edited, not "an
-// empty description."
+// Name is a user-entered title, nullable: a row with none has never had one set, and the
+// client falls back to started_at for its primary line. No parser reads a name out of a
+// source file. Description (docs/SPEC.md FR-5.5) is separate free text, shown only as a hover
+// tooltip.
 //
 // The metric fields are nullable in §3.3 and stay nullable here rather than being
 // coerced to 0: a file that carried no distance is not a zero-distance activity.
@@ -98,10 +95,8 @@ type storyRef struct {
 	Name string `json:"name"`
 }
 
-// rowScanner is the common surface of pgx.Row (QueryRow) and pgx.Rows (Query's iteration) —
-// scanActivityRow works against either, so the single-row lookup in handleUpdateActivity and
-// the list loop in handleListActivities share one place that knows the column order and the
-// bbox-from-four-nullable-floats shape, rather than duplicating it.
+// rowScanner is the common surface of pgx.Row and pgx.Rows, so scanActivityRow serves the
+// single-row lookup and the list loop alike.
 type rowScanner interface {
 	Scan(dest ...any) error
 }

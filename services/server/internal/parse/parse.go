@@ -14,8 +14,8 @@ import (
 	"time"
 )
 
-// Point is one raw sample. Fields are pointers so "not present in this format/record" is
-// distinguishable from zero.
+// Point is one raw sample. Elevation is a pointer, so a sample without one is told apart from
+// one at sea level.
 type Point struct {
 	Lat       float64
 	Lon       float64
@@ -27,11 +27,9 @@ type Point struct {
 type Activity struct {
 	ActivityType string // 'run' | 'ride' | 'hike' | ... — best-effort from the source file
 	Points       []Point
-	// Name and Description are empty for every file-format parser (GPX/TCX/FIT never carry a
-	// title HoldMyTrack trusts here) and for Health Connect/HealthKit sync. Path 2's JSON wire
-	// format is the one source that can set them directly (`docs/IMPLEMENTATION.md` §4.0.4,
-	// in-app GPS recording) — ingest.Process persists them at creation when non-empty, the
-	// same NULLIF-on-empty convention `handleUpdateActivity` uses for an edit after the fact.
+	// Name and Description are empty from every file format and from Health Connect sync. Only
+	// the app's own recording sets them, through Path 2's JSON wire format (IMPLEMENTATION.md
+	// §4.0.4); ingest.Process stores them when non-empty.
 	Name        string
 	Description string
 }

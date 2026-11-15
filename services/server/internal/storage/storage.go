@@ -1,8 +1,7 @@
 // Package storage wraps the S3-compatible object store (RustFS locally, R2 in production —
-// docs/ARCHITECTURE.md §2). minio-go was chosen over the AWS SDK for the open
-// "HTTP router and database access" — well, storage-client — decision: it's purpose-built
-// for any S3-compatible endpoint, RustFS and R2 included, and pulls in far less than
-// aws-sdk-go-v2 for the two operations this needs (put, get).
+// docs/ARCHITECTURE.md §2). minio-go rather than the AWS SDK: it is built for any
+// S3-compatible endpoint and pulls in far less than aws-sdk-go-v2 for the few operations
+// here.
 package storage
 
 import (

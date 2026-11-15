@@ -328,8 +328,8 @@ func (s *Server) handleCountryFogTile(w http.ResponseWriter, r *http.Request) {
 	s.serveAdminTile(w, r, countryLayer, countryFogQueries)
 }
 
-// serveAdminTile is shared by the Country and Region tile handlers (this file's and
-// admin_region_tiles.go's) — they differ only in the layer and its queries, not in how tile
+// serveAdminTile is shared by the Country, Region, County and City tile handlers (this file's
+// and admin_region_tiles.go's) — they differ only in the layer and its queries, not in how tile
 // coordinates are parsed or the result written. A tile up to the layer's cacheMaxZoom is read
 // from admin_tile_geoms, built there by its first request (buildAdminTile).
 //

@@ -1,6 +1,5 @@
-// Package config reads the environment variables compose.yaml's backend services pass in.
-// See services/server/README.md's "Open decisions -> Config": env vars, not a config file,
-// matching the convention already settled for the web client (root .env.example).
+// Package config reads the environment variables compose.yaml's backend services pass in:
+// env vars, not a config file, as for the web client (root .env.example).
 package config
 
 import (
@@ -28,17 +27,15 @@ type Config struct {
 	// MetricsAddr is where `serve` and `work` answer GET /metrics (internal/metrics). Empty,
 	// the default, serves none; compose.prod.yml sets it for the Alloy service to scrape.
 	MetricsAddr string
-	// SMTP* are all optional — an empty SMTPHost is what selects internal/mail's log-only
-	// sender instead of a real one (see its own doc comment for why that's a valid default,
-	// not a placeholder). Only read by `serve`, same as ListenAddr.
+	// SMTP* are all optional: an empty SMTPHost selects internal/mail's log-only sender (mail.New).
+	// Read by `serve` and `work`, which mails a finished data export.
 	SMTPHost     string
 	SMTPPort     string
 	SMTPUsername string
 	SMTPPassword string
 	SMTPFrom     string
-	// AppBaseURL is the frontend origin a password-reset email's link points back into —
-	// the same address corsAllowedOrigins (httpapi/server.go) already has to know, just on
-	// the sending side instead of the receiving one. Only read by `serve`.
+	// AppBaseURL is the app's own origin: the links in its emails point there, and
+	// corsAllowedOrigins (httpapi/server.go) accepts it. Read by `serve` and `work`.
 	AppBaseURL string
 	// BasemapOrigin is where the basemap archive, fonts and sprites actually live — the
 	// origin the served style document (internal/mapstyle, ARCHITECTURE.md §2.1) resolves

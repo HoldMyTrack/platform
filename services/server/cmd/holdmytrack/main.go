@@ -110,9 +110,6 @@ func main() {
 			log.Error("storage bucket", "err", err)
 			os.Exit(1)
 		}
-		// SMTP_FROM falls back to SMTP_USERNAME (the common case: the account you're
-		// authenticating as is also the one you're sending as) rather than requiring both to
-		// be set for the same address.
 		mailer := newMailer(cfg, log, "serve")
 		webFS, webReload := web.Embedded(), false
 		if cfg.WebDevDir != "" {
@@ -471,7 +468,7 @@ func main() {
 		}
 
 	default:
-		fmt.Fprintf(os.Stderr, "unknown subcommand %q; want serve, work, migrate, seed-demo-customer, export-demo-activities, seed-admin-boundaries, import-spots, or set-admin\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "unknown subcommand %q; want serve, work, migrate, seed-demo-customer, export-demo-activities, rerender-coverage, seed-admin-boundaries, build-admin-tiles, seed-timezones, import-spots, import-bike-paths, set-admin, or stats\n", os.Args[1])
 		os.Exit(2)
 	}
 	// What a one-off subcommand asked of the object store counts toward the day's R2 budget
@@ -530,6 +527,8 @@ func serveUntilDone(ctx context.Context, srv *http.Server, ln net.Listener, drai
 // SMTP_HOST is a misconfiguration worth a warning at start, not a reason to log live account
 // links.
 func newMailer(cfg config.Config, log *slog.Logger, mode string) mail.Sender {
+	// SMTP_FROM falls back to SMTP_USERNAME: the account authenticating is usually the one
+	// sending.
 	smtpFrom := cfg.SMTPFrom
 	if smtpFrom == "" {
 		smtpFrom = cfg.SMTPUsername
