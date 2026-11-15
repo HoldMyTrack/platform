@@ -290,7 +290,7 @@
   "error.turnstile_failed": "Couldn't confirm you're not a bot. Complete the check above the button and try again.",
   "error.rate_limited": "Too many requests; try again later.",
   "error.reset_link_invalid": "This reset link is invalid or has expired.",
-  "error.verify_link_invalid": "This verification link is invalid or has expired.",
+  "error.verify_link_invalid": "This verification link is invalid, expired or already used. If your email is already confirmed, sign in.",
   "error.verify_needs_facebook": "This account is linked to Facebook. To confirm the address, open this link in a browser signed in to the account. Didn't make this account, or can't sign in to it? Reset its password instead.",
   "error.verify_other_facebook": "That Facebook account isn't the one linked to this account. Continue with the linked one, or reset the password if this account isn't yours.",
   "error.demo_no_email_verify": "Demo accounts have no email to verify.",
