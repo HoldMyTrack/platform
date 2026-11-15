@@ -13,7 +13,8 @@ const (
 
 // stat is one entry of the catalogue. A stat with key returns one value; one with prefix
 // returns (group, value) rows, each stored as keyFor(prefix, group), or, with fold, (group,
-// value, accounts) rows folded by foldSmallGroups first. groups are written as 0 when the
+// value, accounts, ids) rows folded by foldSmallGroups first, ids being the accounts' ids when
+// fewer than minGroupAccounts (smallGroupIDs) and NULL otherwise. groups are written as 0 when the
 // query has no row for them, so a series exists before its first non-zero day.
 //
 // query follows queryHead, which defines p (d0 and d1, the start of the day and of the next;
@@ -89,18 +90,18 @@ var catalogue = []stat{
 
 	// Countries: folded by the accounts behind each value.
 	{prefix: "accounts_by_country", kind: state, fold: true, query: `
-		SELECT coalesce(country, ''), count(*), count(*) FROM acct GROUP BY 1`},
+		SELECT coalesce(country, ''), count(*), count(*), ` + smallGroupIDs("id") + ` FROM acct GROUP BY 1`},
 	{prefix: "active_30d_by_country", kind: state, fold: true, query: `
-		SELECT coalesce(country, ''), count(*), count(*) FROM acct WHERE ` + activeSince(30) + ` GROUP BY 1`},
+		SELECT coalesce(country, ''), count(*), count(*), ` + smallGroupIDs("id") + ` FROM acct WHERE ` + activeSince(30) + ` GROUP BY 1`},
 	{prefix: "activity_accounts_by_country", kind: state, fold: true, query: `
-		SELECT c.code, count(DISTINCT a.user_id), count(DISTINCT a.user_id)
+		SELECT c.code, count(DISTINCT a.user_id), count(DISTINCT a.user_id), ` + smallGroupIDs("a.user_id") + `
 		FROM activity_country ac
 		JOIN activities a ON a.id = ac.activity_id
 		JOIN acct u ON u.id = a.user_id
 		JOIN admin_countries c ON c.id = ac.country_id
 		GROUP BY c.code`},
 	{prefix: "activities_by_country", kind: state, fold: true, query: `
-		SELECT c.code, count(*), count(DISTINCT a.user_id)
+		SELECT c.code, count(*), count(DISTINCT a.user_id), ` + smallGroupIDs("a.user_id") + `
 		FROM activity_country ac
 		JOIN activities a ON a.id = ac.activity_id
 		JOIN acct u ON u.id = a.user_id
@@ -235,4 +236,11 @@ var catalogue = []stat{
 		WHERE j.kind = 'ingest' AND j.state = 'failed' AND j.user_id IS DISTINCT FROM p.demo
 		  AND j.finished_at >= p.d0 AND j.finished_at < p.d1
 		GROUP BY 1`},
+}
+
+// smallGroupIDs is the ids of the accounts behind a group, by column, when there are fewer than
+// minGroupAccounts of them, and NULL otherwise: what foldSmallGroups needs to count the
+// distinct accounts behind "other" when one account can count in several groups.
+func smallGroupIDs(column string) string {
+	return fmt.Sprintf("CASE WHEN count(DISTINCT %[1]s) < %[2]d THEN array_agg(DISTINCT %[1]s::text) END", column, minGroupAccounts)
 }

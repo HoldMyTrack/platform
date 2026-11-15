@@ -129,6 +129,7 @@ func compute(ctx context.Context, tx pgx.Tx, day time.Time) (map[string]float64,
 		}
 		groups := map[string]float64{}
 		accounts := map[string]float64{}
+		members := map[string][]string{}
 		for rows.Next() {
 			vs, err := rows.Values()
 			if err != nil {
@@ -151,6 +152,7 @@ func compute(ctx context.Context, tx pgx.Tx, day time.Time) (map[string]float64,
 			if s.fold {
 				a, _ := toFloat(vs[2])
 				accounts[g] += a
+				members[g] = append(members[g], toStrings(vs[3])...)
 			}
 		}
 		rows.Close()
@@ -166,7 +168,7 @@ func compute(ctx context.Context, tx pgx.Tx, day time.Time) (map[string]float64,
 			}
 		}
 		if s.fold {
-			groups = foldSmallGroups(groups, accounts, minGroupAccounts)
+			groups = foldSmallGroups(groups, accounts, members, minGroupAccounts)
 		}
 		for g, v := range groups {
 			out[keyFor(s.prefix, g)] = v
@@ -200,4 +202,21 @@ func toFloat(v any) (float64, bool) {
 		return f.Float64, true
 	}
 	return 0, false
+}
+
+// toStrings is a text[] column's value as strings; NULL is none.
+func toStrings(v any) []string {
+	switch v := v.(type) {
+	case []string:
+		return v
+	case []any:
+		out := make([]string, 0, len(v))
+		for _, e := range v {
+			if s, ok := e.(string); ok {
+				out = append(out, s)
+			}
+		}
+		return out
+	}
+	return nil
 }

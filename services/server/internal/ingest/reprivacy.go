@@ -34,18 +34,42 @@ var reprivacyRetryDelays = []time.Duration{time.Minute, 5 * time.Minute, 30 * ti
 // trajectory is simplified (a few metres of tolerance).
 const zoneMarginM = 25
 
-// AffectedActivities returns the activities of userID whose display trajectory comes within
-// twice a circle's radius (plus zoneMarginM) of its center: every activity a location placed,
-// or previously placed, there could clip. Twice, because ClipEnds cuts an end up to a radius
-// further on past the edge (clipStart). Run inside the caller's transaction, alongside the
-// privacy_zones change itself.
+// AffectedActivities returns the activities of userID whose display trajectory comes near
+// enough a circle that a location placed, or previously placed, there could clip them. Run
+// inside the caller's transaction, after the privacy_zones change itself.
+//
+// An end lies up to a radius past the edge it left through (clipStart), and that radius is
+// the largest of the locations the last hidden point lay in. On its own, a circle's ends lie
+// within twice its radius. Overlapping locations clip as one shape: an end can leave through
+// another location's edge, a radius further on. So the search covers the cluster of the
+// account's locations that overlap the circle, directly or through each other: within each
+// one's radius plus the cluster's largest radius (plus zoneMarginM) of its center.
 func AffectedActivities(ctx context.Context, tx pgx.Tx, userID string, lat, lon float64, radiusM int) ([]string, error) {
 	rows, err := tx.Query(ctx, `
-		SELECT id FROM activities
-		WHERE user_id = $1 AND raw_payload_key IS NOT NULL
-		  AND trajectory IS NOT NULL
-		  AND ST_DWithin(trajectory::geography, ST_SetSRID(ST_MakePoint($3, $2), 4326)::geography, $4)
-	`, userID, lat, lon, 2*radiusM+zoneMarginM)
+		WITH RECURSIVE circle AS (
+			SELECT ST_SetSRID(ST_MakePoint($3, $2), 4326)::geography AS center
+		), cluster(id) AS (
+			SELECT z.id FROM privacy_zones z, circle c
+			WHERE z.user_id = $1 AND ST_DWithin(z.center, c.center, z.radius_m + $4)
+			UNION
+			SELECT z.id FROM cluster k
+			JOIN privacy_zones kz ON kz.id = k.id
+			JOIN privacy_zones z ON z.user_id = $1 AND ST_DWithin(z.center, kz.center, z.radius_m + kz.radius_m)
+		), zones AS (
+			SELECT z.center, z.radius_m FROM privacy_zones z JOIN cluster USING (id)
+			UNION ALL
+			SELECT center, $4 FROM circle
+		), reach AS (
+			SELECT max(radius_m) AS r FROM zones
+		)
+		SELECT a.id FROM activities a, reach
+		WHERE a.user_id = $1 AND a.raw_payload_key IS NOT NULL
+		  AND a.trajectory IS NOT NULL
+		  AND EXISTS (
+			SELECT 1 FROM zones z
+			WHERE ST_DWithin(a.trajectory::geography, z.center, z.radius_m + reach.r + $5)
+		  )
+	`, userID, lat, lon, radiusM, zoneMarginM)
 	if err != nil {
 		return nil, err
 	}

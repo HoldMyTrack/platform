@@ -1,6 +1,7 @@
 package stats
 
 import (
+	"fmt"
 	"maps"
 	"testing"
 	"time"
@@ -31,24 +32,47 @@ func TestDayDue(t *testing.T) {
 }
 
 func TestFoldSmallGroups(t *testing.T) {
+	ids := func(n int, prefix string) []string {
+		out := make([]string, n)
+		for i := range out {
+			out[i] = fmt.Sprintf("%s%d", prefix, i)
+		}
+		return out
+	}
 	for _, tc := range []struct {
 		name     string
 		groups   map[string]float64
 		accounts map[string]float64
+		members  map[string][]string
 		want     map[string]float64
 	}{
-		{"a group of 4 folds", map[string]float64{"de": 9}, map[string]float64{"de": 4}, map[string]float64{"other": 9}},
-		{"a group of 5 stays", map[string]float64{"de": 9}, map[string]float64{"de": 5}, map[string]float64{"de": 9}},
+		{"a group of 4 alone is left out", map[string]float64{"de": 9}, map[string]float64{"de": 4}, map[string][]string{"de": ids(4, "d")}, map[string]float64{}},
 		{
-			"small groups add up into one other",
+			"a group of 4 takes the smallest kept group with it",
+			map[string]float64{"de": 9, "fr": 70, "us": 40},
+			map[string]float64{"de": 4, "fr": 7, "us": 40},
+			map[string][]string{"de": ids(4, "d")},
+			map[string]float64{"other": 79, "us": 40},
+		},
+		{"a group of 5 stays", map[string]float64{"de": 9}, map[string]float64{"de": 5}, nil, map[string]float64{"de": 9}},
+		{
+			"small groups of different accounts add up into one other",
 			map[string]float64{"de": 3, "fr": 2, "us": 40},
 			map[string]float64{"de": 3, "fr": 2, "us": 40},
+			map[string][]string{"de": ids(3, "d"), "fr": ids(2, "f")},
 			map[string]float64{"other": 5, "us": 40},
 		},
-		{"nothing to fold, no other", map[string]float64{"us": 7}, map[string]float64{"us": 7}, map[string]float64{"us": 7}},
-		{"value folds by accounts, not by itself", map[string]float64{"de": 300}, map[string]float64{"de": 2}, map[string]float64{"other": 300}},
+		{
+			"one account in five small groups is one account",
+			map[string]float64{"de": 1, "fr": 1, "it": 1, "es": 1, "pt": 1, "us": 40},
+			map[string]float64{"de": 1, "fr": 1, "it": 1, "es": 1, "pt": 1, "us": 40},
+			map[string][]string{"de": {"x"}, "fr": {"x"}, "it": {"x"}, "es": {"x"}, "pt": {"x"}},
+			map[string]float64{"other": 45},
+		},
+		{"nothing to fold, no other", map[string]float64{"us": 7}, map[string]float64{"us": 7}, nil, map[string]float64{"us": 7}},
+		{"value folds by accounts, not by itself", map[string]float64{"de": 300, "us": 1}, map[string]float64{"de": 2, "us": 9}, map[string][]string{"de": ids(2, "d")}, map[string]float64{"other": 301}},
 	} {
-		if got := foldSmallGroups(tc.groups, tc.accounts, minGroupAccounts); !maps.Equal(got, tc.want) {
+		if got := foldSmallGroups(tc.groups, tc.accounts, tc.members, minGroupAccounts); !maps.Equal(got, tc.want) {
 			t.Errorf("%s: got %v, want %v", tc.name, got, tc.want)
 		}
 	}

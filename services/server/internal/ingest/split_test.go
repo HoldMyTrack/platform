@@ -74,8 +74,9 @@ func TestCheckSplitInsidePrivateLocation(t *testing.T) {
 	if err := CheckSplit(points, zones, dropStray, at[1]); err != nil {
 		t.Errorf("split before the location: %v", err)
 	}
-	// Without the edit the later part keeps the stray fix, and with it a track.
-	if err := CheckSplit(points, zones, nil, at[7]); err != nil {
-		t.Errorf("split inside the location, stray fix kept: %v", err)
+	// Keeping the stray fix doesn't give the later part a track: one recorded point outside
+	// is no line, and a line drawn to it from the circle would point at what the circle hides.
+	if err := CheckSplit(points, zones, nil, at[7]); err != ErrSplitHidden {
+		t.Errorf("split inside the location, stray fix kept: %v, want ErrSplitHidden", err)
 	}
 }

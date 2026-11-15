@@ -146,11 +146,8 @@ func (s *Server) handleCreatePrivateLocation(w http.ResponseWriter, r *http.Requ
 
 	var created privateLocation
 	err := s.changePrivateLocations(r.Context(), userID, func(tx pgx.Tx) ([]circle, error) {
-		// Two creates at once each counted the other's row as not there yet and both
-		// inserted; this lock makes one wait for the other's commit, so the count is exact.
-		if _, err := tx.Exec(r.Context(), `SELECT pg_advisory_xact_lock(hashtext('privacy_zones:' || $1))`, userID); err != nil {
-			return nil, err
-		}
+		// Exact under changePrivateLocations' lock: two creates at once would otherwise each
+		// count the other's row as not there yet and both insert.
 		var count int
 		if err := tx.QueryRow(r.Context(), `SELECT count(*) FROM privacy_zones WHERE user_id = $1`, userID).Scan(&count); err != nil {
 			return nil, err
@@ -252,6 +249,11 @@ func (s *Server) changePrivateLocations(ctx context.Context, userID string, chan
 		return err
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
+	// Shared with ingest's save (ingest.LockZones), so an activity saved meanwhile is either
+	// found below or clipped with this change.
+	if err := ingest.LockZones(ctx, tx, userID); err != nil {
+		return err
+	}
 
 	circles, err := change(tx)
 	if err != nil {

@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
 )
@@ -20,6 +20,15 @@ type Zone struct {
 	Lat, Lon float64
 	RadiusM  float64
 	Salt     string
+}
+
+// LockZones takes the per-account lock every Private location change holds for its
+// transaction. Ingest takes it to save an activity, so the two see each other: a change
+// committed first is in ingest's second read of the locations, and an activity saved first is
+// in the change's AffectedActivities.
+func LockZones(ctx context.Context, tx pgx.Tx, userID string) error {
+	_, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext('privacy_zones:' || $1))`, userID)
+	return err
 }
 
 func (z Zone) contains(p parse.Point) bool {
@@ -35,12 +44,14 @@ func insideAny(zones []Zone, p parse.Point) bool {
 	return false
 }
 
-// LoadZones reads an account's Private locations. Called when a job runs, never when it's
-// enqueued, so a location saved while an upload waits in the queue still applies to it.
-func LoadZones(ctx context.Context, pool *pgxpool.Pool, userID string) ([]Zone, error) {
-	rows, err := pool.Query(ctx, `
+// LoadZones reads an account's Private locations, in a fixed order so two reads compare.
+// Called when a job runs, never when it's enqueued, so a location saved while an upload waits
+// in the queue still applies to it.
+func LoadZones(ctx context.Context, q Querier, userID string) ([]Zone, error) {
+	rows, err := q.Query(ctx, `
 		SELECT ST_Y(center::geometry), ST_X(center::geometry), radius_m, salt::text
 		FROM privacy_zones WHERE user_id = $1
+		ORDER BY salt
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -91,12 +102,15 @@ func ClipEnds(points []parse.Point, zones []Zone) []parse.Point {
 //
 // The distance is random but fixed for the end (trimFraction), so reprocessing the activity
 // gives the same track: a new draw each time would let the ends seen over several reprocesses
-// average back to the edge. No end is cut more than a radius past the edge, which keeps every
-// end within twice the radius of the center, where AffectedActivities looks for it: when the
-// point reached lies further on, the recorded point before it is the end instead, and when
-// there is none — a sparse recording's first segment out — the track is cut at the distance
-// itself. An end that lands back inside
-// a zone, on a track curving back in, starts over from where the track leaves it again.
+// average back to the edge. When the point reached lies more than a radius past the edge, the
+// recorded point before it is the end instead, which keeps the end within twice the radius of
+// the center, where AffectedActivities looks for it. When there is none, a sparse recording's
+// first segment out, the end is that segment's far point: any point placed on the segment
+// would lie on the line to the hidden one, so two such tracks would cross at it. Such an end
+// can lie past where AffectedActivities looks, so removing the location may leave the
+// activity clipped further than it needs until it's next reprocessed, never less. An end that
+// lands back inside a zone, on a track curving back in, starts over from where the track
+// leaves it again.
 func clipStart(points []parse.Point, zones []Zone, end byte) []parse.Point {
 	first := 0
 	for first < len(points) && insideAny(zones, points[first]) {
@@ -130,13 +144,8 @@ func clipStart(points []parse.Point, zones []Zone, end byte) []parse.Point {
 		}
 
 		out := rest[i:]
-		if walked+seg > r {
-			if i > 0 {
-				out = rest[i-1:]
-			} else {
-				cut := interpolatePoint(prev, rest[i], (d-walked)/seg)
-				out = append([]parse.Point{cut}, rest[i:]...)
-			}
+		if walked+seg > r && i > 0 {
+			out = rest[i-1:]
 		}
 		if !insideAny(zones, out[0]) {
 			return out

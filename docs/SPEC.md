@@ -135,7 +135,7 @@ Every provider: a provider-only account has no password and can set one through 
 
 - A real account, verified or not, confirms by typing its email (case and surrounding spaces ignored). A demo session can't.
 - At once: every session ends, the provider links and every unused reset, verification or app sign-in link stop working, nothing can sign in, and the email is free for a new account. An Apple link's access is revoked at Apple too (FR-1.11).
-- Within minutes: activities and originals, tiles, photos, Stories, Private locations, captures, import history, data downloads, avatar and settings are deleted. A file being processed finishes first.
+- Within minutes: activities and originals, tiles, photos, Stories, Private locations, captures, import history, data downloads, avatar and settings are deleted. A file being processed finishes first, and an object-storage outage holds the deletion until storage is back, so nothing is left behind.
 - Backups keep the data for up to 8 weeks. Story copies others accepted stay theirs (FR-13.8).
 - The Android app also clears the account's unsynced recordings on that phone. An unverified account deletes on the web by verifying first, or by email (FR-9.2).
 
@@ -483,12 +483,12 @@ The places the account has explored, on the same page and as private: every coun
 Circles a user marks so tracks don't reveal where they start and end. The part of an activity that starts or ends inside one is hidden everywhere, the user's own map included. A track that only passes through one is shown whole.
 
 - A center, a radius of 50–2,000 m (200 by default) and an optional name up to 100 characters; at most 20 per account. The demo account's are read-only.
-- Applied at ingest, before anything is stored: the leading points inside any Private location are dropped, and so is a further stretch past the edge, between 0 and the radius long along the track. The track starts at the first point that stretch reaches, or the one before when that lies more than a radius past the edge; only a recording with no point in that first radius is cut at the stretch's end itself. The trailing points likewise.
+- Applied at ingest, before anything is stored: the leading points inside any Private location are dropped, and so is a further stretch past the edge, between 0 and the radius long along the track. The track starts at the first point that stretch reaches, or the one before when that lies more than a radius past the edge; a recording with no point in that first radius starts at its first point past it, never at one placed on the way, which would point back at what the circle hides. The trailing points likewise.
 - Each end's stretch is random but fixed per activity, so the ends of many tracks scatter over a band outside the circle instead of outlining it, and reprocessing doesn't move them.
 - An end the stretch carries back inside a Private location is cut again where the track next leaves it. The same clip runs on an edited track (FR-5.7).
 - Distance, duration, elevation gain, pace, coverage and the places it clears come from the visible part.
 - An activity left with fewer than two points is kept with no geometry and a Private badge (FR-5.1), and the Privacy tab counts them; moving or deleting the location brings it back.
-- Every change is retroactive: activities whose track comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure.
+- Every change is retroactive: activities whose track comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure. Locations that overlap clip as one shape, so for them the reach is each one's radius plus the largest among them. An upload being processed when a location is saved is clipped with it too. A track that started at its first recorded point past the edge (a recording with no point in the first radius) can end beyond that reach, and then stays clipped after its location is moved or deleted until something else reprocesses it.
 - Circles are drawn only on the Privacy tab, from zoom 4, never in an export.
 - Originals stay unclipped and are in the data download (FR-1.13). A Story copy carries the sender's clipped track (FR-13.8).
 - An activity ingested before Private locations existed keeps its fixed 100 m endpoint trim until reprocessed.

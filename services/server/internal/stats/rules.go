@@ -6,7 +6,7 @@ import (
 )
 
 // minGroupAccounts is the fewest accounts a grouped value may stand for before it's folded
-// into its stat's "other" group (foldSmallGroups), so no stored value describes one person.
+// into its stat's "other" group (foldSmallGroups).
 const minGroupAccounts = 5
 
 // dayDue reports which UTC day the snapshot is for at now (the day that just ended) and whether
@@ -18,18 +18,47 @@ func dayDue(lastDay *time.Time, now time.Time) (day time.Time, due bool) {
 	return day, lastDay == nil || lastDay.Before(day)
 }
 
-// foldSmallGroups merges every group with fewer than min accounts behind it into "other".
-// accounts holds, per group, how many accounts its value stands for; a group missing from it
-// counts as none. With nothing to fold there is no "other" key.
-func foldSmallGroups(groups map[string]float64, accounts map[string]float64, min int) map[string]float64 {
+// foldSmallGroups merges every group with fewer than min accounts behind it into "other", so no
+// stored value stands for fewer than min accounts. accounts holds, per group, how many accounts
+// its value stands for, and members the ids of those accounts for a group under min; a group
+// missing from accounts counts as none. "other" stands for the distinct accounts of the groups
+// it took, since one account can count in several groups (the countries an account's
+// activities are in). When those are fewer than min, "other" also takes the smallest group
+// kept, which has min on its own, and with none kept there is no "other" at all. With nothing
+// to fold there is no "other" key.
+func foldSmallGroups(groups map[string]float64, accounts map[string]float64, members map[string][]string, min int) map[string]float64 {
 	out := make(map[string]float64, len(groups))
+	var folded bool
+	distinct := map[string]bool{}
 	for g, v := range groups {
 		if accounts[g] < float64(min) {
 			out["other"] += v
+			for _, id := range members[g] {
+				distinct[id] = true
+			}
+			folded = true
 		} else {
 			out[g] += v
 		}
 	}
+	if !folded || len(distinct) >= min {
+		return out
+	}
+	smallest := ""
+	for g := range groups {
+		if g == "other" || accounts[g] < float64(min) {
+			continue
+		}
+		if smallest == "" || accounts[g] < accounts[smallest] || accounts[g] == accounts[smallest] && g < smallest {
+			smallest = g
+		}
+	}
+	if smallest == "" {
+		delete(out, "other")
+		return out
+	}
+	out["other"] += out[smallest]
+	delete(out, smallest)
 	return out
 }
 
