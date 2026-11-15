@@ -73,7 +73,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 ### FR-1.5 Forgot password
 
 - A reset link goes to a real, claimed account, including a Google- or Facebook-only one, which is how such an account gets its first password. It is valid for 1 hour and works once.
-- The answer is the same whether or not the email has an account.
+- The answer is the same, and as quick, whether or not the email has an account.
 - At most 5 requests an hour from one address.
 
 ### FR-1.6 Reset password
