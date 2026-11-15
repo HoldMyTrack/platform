@@ -1341,7 +1341,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The newest activities whose track crosses a map view, the web's list and the set its map draws */
+        /**
+         * The newest activities whose track crosses a map view, the web's list and the set its map draws
+         * @description Type and Story filters (types, story) are refused, since the list filters those itself.
+         */
         get: {
             parameters: {
                 query?: {

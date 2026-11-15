@@ -63,6 +63,7 @@ activities_upload:
 activities_area:
   get:
     summary: The newest activities whose track crosses a map view, the web's list and the set its map draws
+    description: Type and Story filters (types, story) are refused, since the list filters those itself.
     parameters:
       - $ref: "../components/parameters.yaml#/FilterFrom"
       - $ref: "../components/parameters.yaml#/FilterTo"
