@@ -511,6 +511,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'private.delete_body': 'Занятия, которые начинаются или заканчиваются внутри него, снова покажут эти части после повторной обработки.',
   'private.delete_label': 'Удалить «{label}»',
   'private.delete_title': 'Удалить это приватное место?',
+  'private.edit_label': 'Изменить «{label}»',
   'private.edit_title': 'Изменить приватное место',
   'private.editor_note': 'Перетащите центр, чтобы сдвинуть круг. Не ставьте центр прямо на свою дверь — середину круга проверят в первую очередь.',
   'private.name_placeholder': 'например, Дом',

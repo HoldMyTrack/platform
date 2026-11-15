@@ -399,6 +399,7 @@ export const en = {
   'private.delete_body': "Activities that start or end inside it will show those parts again once they're reprocessed.",
   'private.delete_label': 'Delete {label}',
   'private.delete_title': 'Delete this private location?',
+  'private.edit_label': 'Edit {label}',
   'private.edit_title': 'Edit private location',
   'private.editor_note': "Drag the center to move it. Don't center it exactly on your door — a circle's middle is the first place anyone looks.",
   'private.name_placeholder': 'e.g. Home',
