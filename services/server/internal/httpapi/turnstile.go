@@ -47,12 +47,16 @@ type turnstileVerdict struct {
 	ErrorCodes []string `json:"error-codes"`
 }
 
+// turnstileServerCodes are siteverify's error codes no visitor can fix: a refused secret, a
+// malformed request, or Cloudflare's own failure.
+var turnstileServerCodes = []string{"missing-input-secret", "invalid-input-secret", "bad-request", "internal-error"}
+
 // maxSiteverifyBytes bounds siteverify's answer, a few hundred bytes of JSON.
 const maxSiteverifyBytes = 64 << 10
 
 // verify asks Cloudflare whether token passed the challenge for this visitor. A missing token
-// fails without a request. An error means no visitor could pass: Cloudflare couldn't answer, or
-// refused the deployment's secret. The caller refuses the signup either way, so the check
+// fails without a request. An error means no visitor could pass: Cloudflare couldn't answer,
+// or answered with one of turnstileServerCodes. The caller refuses the signup either way, so the check
 // can't be skipped by making it fail.
 func (t turnstile) verify(ctx context.Context, token, remoteIP string) (turnstileVerdict, error) {
 	if token == "" {
@@ -79,8 +83,8 @@ func (t turnstile) verify(ctx context.Context, token, remoteIP string) (turnstil
 	if err := json.NewDecoder(io.LimitReader(resp.Body, maxSiteverifyBytes)).Decode(&v); err != nil {
 		return turnstileVerdict{}, fmt.Errorf("turnstile siteverify: %w", err)
 	}
-	if !v.Success && (slices.Contains(v.ErrorCodes, "missing-input-secret") || slices.Contains(v.ErrorCodes, "invalid-input-secret")) {
-		return turnstileVerdict{}, fmt.Errorf("turnstile siteverify: secret refused: %v", v.ErrorCodes)
+	if !v.Success && slices.ContainsFunc(v.ErrorCodes, func(c string) bool { return slices.Contains(turnstileServerCodes, c) }) {
+		return turnstileVerdict{}, fmt.Errorf("turnstile siteverify: %v", v.ErrorCodes)
 	}
 	return v, nil
 }
@@ -97,9 +101,7 @@ func (s *Server) checkTurnstile(r *http.Request) error {
 		return accountFailure(http.StatusServiceUnavailable, "error.turnstile_unavailable")
 	}
 	if !v.Success {
-		if len(v.ErrorCodes) > 0 {
-			s.log.Info("turnstile refused a signup", "codes", v.ErrorCodes)
-		}
+		s.log.Debug("turnstile refused a signup", "codes", v.ErrorCodes)
 		return accountFailure(http.StatusBadRequest, "error.turnstile_failed")
 	}
 	return nil

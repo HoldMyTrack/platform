@@ -135,6 +135,17 @@ func (l *fixedWindowLimiter) allow(key string) bool {
 	return true
 }
 
+// full reports whether key's window has no room left, counting nothing: a cheap refusal before
+// slow work whose own allow comes after it.
+func (l *fixedWindowLimiter) full(key string) bool {
+	if rateLimitsOff.Load() {
+		return false
+	}
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	return l.current(key).count >= l.limit
+}
+
 // allowN is allow for n at once: it counts all n and reports true when they fit in what's left
 // of key's window, and counts nothing and reports false when they don't.
 func (l *fixedWindowLimiter) allowN(key string, n int) bool {

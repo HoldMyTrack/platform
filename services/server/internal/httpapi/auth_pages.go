@@ -147,15 +147,16 @@ func (s *Server) renderAuthFailure(w http.ResponseWriter, r *http.Request, acct 
 	if page == "signin" {
 		data.Description = l.T("meta.site_description")
 	}
-	if origins := s.pageScriptOrigins(page); len(origins) > 0 {
+	if origins := pageScriptOrigins(form); len(origins) > 0 {
 		w.Header().Set("Content-Security-Policy", cspWithScripts(origins...))
 	}
 	s.pages.Render(w, status, page, data)
 }
 
-// pageScriptOrigins is where an auth page loads scripts from besides this origin.
-func (s *Server) pageScriptOrigins(page string) []string {
-	if page == "signup" && s.turnstile.enabled() {
+// pageScriptOrigins is where an auth page showing form loads scripts from besides this origin:
+// Turnstile's, wherever the form draws the widget.
+func pageScriptOrigins(form authForm) []string {
+	if form.TurnstileSiteKey != "" {
 		return []string{turnstileScriptOrigin}
 	}
 	return nil
