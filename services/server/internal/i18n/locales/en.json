@@ -220,6 +220,7 @@
   "admin.older": "Older →",
   "admin.range": "{from}–{to} of {total}",
   "admin.range_empty": "No activities on this page",
+  "admin.range_empty_accounts": "No accounts on this page",
   "admin.no_activities": "No activities.",
   "admin.stats_title": "Statistics",
   "admin.accounts_link": "All accounts →",

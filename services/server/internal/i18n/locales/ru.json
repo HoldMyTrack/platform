@@ -224,6 +224,7 @@
   "admin.older": "Старше →",
   "admin.range": "{from}–{to} из {total}",
   "admin.range_empty": "На этой странице нет занятий",
+  "admin.range_empty_accounts": "На этой странице нет аккаунтов",
   "admin.no_activities": "Занятий нет.",
   "admin.stats_title": "Статистика",
   "admin.accounts_link": "Все аккаунты →",
