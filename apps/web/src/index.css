@@ -353,14 +353,18 @@ body {
   font-weight: var(--fm-weight-semibold);
 }
 
-/* A folder's pencil, send and trash show on hover (and for keyboard focus) at desktop width; the
-   phone query below keeps them visible, since a finger has no hover. */
-.stories-tab__action {
+/* A row's own actions, on lists without checkboxes (a Story folder's pencil, send and trash; a
+   Private location's pencil and trash), show on hover and for keyboard focus; the `hover: none`
+   query at the end keeps them visible on a touch screen. A list with checkboxes
+   acts from its header toolbar instead (ActivitiesToolbar.tsx). */
+.activities-panel__row-action {
   opacity: 0;
 }
 
-.stories-tab__folder:hover .stories-tab__action,
-.stories-tab__folder:focus-within .stories-tab__action {
+.stories-tab__folder:hover .activities-panel__row-action,
+.stories-tab__folder:focus-within .activities-panel__row-action,
+.activities-panel__row:hover .activities-panel__row-action,
+.activities-panel__row:focus-within .activities-panel__row-action {
   opacity: 1;
 }
 
@@ -867,7 +871,7 @@ body {
 }
 
 /* An open Story's row's Remove from story (StoriesTab.tsx) — hidden until the row is hovered or
-   has focus, like a Story folder's pencil and bin; always shown on a phone. */
+   has focus, like a Story folder's pencil and bin; always shown on a touch screen. */
 .activities-panel__row-remove {
   flex: none;
   display: flex;
@@ -992,8 +996,8 @@ button.activities-panel__story-badge:hover {
 }
 
 /* The toolbar icon buttons (docs/SPEC.md FR-5.8) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
-   the checked group, else the selected row (there are no per-row action icons). One shared chip look, matching the
-   mockup: a soft tinted square rather than a bare icon, so the group actions read as one
+   the checked group, else the selected row. Row actions on lists without checkboxes (.activities-panel__row-action)
+   use the same chips. One shared chip look, matching the mockup: a soft tinted square rather than a bare icon, so the group actions read as one
    family regardless of which one is destructive. */
 .activities-panel__edit,
 .activities-panel__edit-track,
@@ -1219,9 +1223,7 @@ button.activities-panel__story-badge:hover {
   cursor: pointer;
 }
 
-/* The header toolbar (docs/SPEC.md FR-5.1) — right above the row list. There are no more per-row action
-   columns to stay aligned with (Visible/Edit/Delete moved here entirely), so this is now a
-   plain compact strip rather than a column-aligned header: the select-all checkbox, the Type
+/* The header toolbar (docs/SPEC.md FR-5.1) — right above the row list, a compact strip: the select-all checkbox, the Type
    dropdown, a flex spacer pushing the rest right, the group action chips, a divider, then the
    one accent-tinted "focus on map" action. */
 .activities-panel__toolbar {
@@ -3313,10 +3315,8 @@ button.activities-panel__story-badge:hover {
 
      Bigger touch targets for the row checkbox and the toolbar's four icon actions, which
      stay at their desktop size otherwise (15px/30px/30px/30px/30px — comfortably clickable
-     with a mouse, tight with a finger). There are no per-row action icons any more (see the
-     toolbar's own doc comment in ActivitiesPanel.tsx), so this only needs to widen the
-     toolbar's own Show/Edit/Delete/Focus chips plus the checkbox shared by rows and the
-     master checkbox alike. */
+     with a mouse, tight with a finger). The chips are shared by the toolbar and the row
+     actions of Stories and Privacy, so both widen here. */
   .activities-panel__checkbox {
     width: 20px;
     height: 20px;
@@ -3329,12 +3329,6 @@ button.activities-panel__story-badge:hover {
   .activities-panel__focus {
     width: 34px;
     height: 34px;
-  }
-
-  /* A finger has no hover, so a Story's pencil and bin, and its rows' ×, stay in view. */
-  .stories-tab__action,
-  .activities-panel__row-remove {
-    opacity: 1;
   }
 
   .activities-panel__type-trigger {
@@ -3390,4 +3384,13 @@ button.activities-panel__story-badge:hover {
 .maplibregl-ctrl-group .export-control[aria-pressed='true'] {
   background: rgb(var(--fm-accent-rgb) / 14%);
   color: var(--fm-accent-strong);
+}
+
+/* A screen that can't hover (a phone, a tablet, a touch laptop at any width) keeps row actions
+   and a Story's rows' × in view. */
+@media (hover: none) {
+  .activities-panel__row-action,
+  .activities-panel__row-remove {
+    opacity: 1;
+  }
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Trash2 } from 'lucide-react';
+import { Pencil, Trash2 } from 'lucide-react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import {
   deletePrivateLocation,
@@ -20,24 +20,27 @@ import {
   type PrivateLocationsClick,
 } from '../map/privateLocations';
 import { ConfirmDialog } from './ConfirmDialog';
+import { highlightedCircle, pickAction, type PickIntent } from './privateLocationPick';
 import { elevationUnitLabel, metersToFeet } from './format';
 import { useUnitSystem } from './units';
 import { lang, t, tn } from '../i18n';
 
 /**
  * The Activities panel's Privacy tab (FR-7.1): the account's circles listed, each with its own
- * Delete, and a Create that puts a new circle in the middle of the map. Picking one — its row,
- * or the circle itself on the map — opens its editor, a window floating over the map like
- * the Edit window's (portaled into the map's container, since this tab lives in the side
- * panel), where its center drags, a slider sets its radius, and Save or Cancel closes it. The
- * circles are drawn, and clickable, for exactly as long as this is mounted: switching tabs, or
- * to Fog (which unmounts the whole panel), clears them and drops an unsaved edit. Save
+ * Edit and Delete, and a Create that puts a new circle in the middle of the map. Clicking a row
+ * flies to its circle and highlights it, as clicking the circle on the map does; Edit opens the
+ * editor, a window floating over the map like the Edit window's (portaled into the map's
+ * container, since this tab lives in the side panel), where its center drags, a slider sets its
+ * radius, and Save or Cancel closes it. With the editor open, clicking another circle switches
+ * the editor to it. The circles are drawn, and clickable, for exactly as long as this is
+ * mounted: switching tabs, or to Fog (which unmounts the whole panel), clears them and drops an
+ * unsaved edit. Save
  * and Delete go straight to the server, which reprocesses every activity the change could clip
  * — `onChanged` has MapView reload the list so those rows show Pending straight away. The footer
  * counts the activities they hide entirely, the list's Private rows; it's read when the tab opens,
  * so a change shows there once reprocessing ends and the tab is opened again.
  *
- * Read-only for the demo account: its circle is listed and shown, nothing is editable.
+ * Read-only for the demo account: its circle is listed, shown and highlighted, nothing is editable.
  */
 export interface PrivateLocationsPanelProps {
   map: MapLibreMap;
@@ -81,8 +84,10 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState<PrivateLocation | null>(null);
+  // Highlighted on the map without an editor open.
+  const [focusedId, setFocusedId] = useState<string | null>(null);
   // A location picked while the open one has unsaved changes — waiting on "Discard changes?".
-  const [switchTo, setSwitchTo] = useState<PrivateLocation | null>(null);
+  const [switchTo, setSwitchTo] = useState<{ location: PrivateLocation; intent: PickIntent; fly: boolean } | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -101,39 +106,44 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
   useEffect(() => {
     const draw = () => {
       ensurePrivateLocationsLayer(map, labelInsertionPoint(map));
-      setPrivateLocationsData(map, locations ?? [], draft);
+      setPrivateLocationsData(map, locations ?? [], highlightedCircle(locations, draft, focusedId), draft !== null);
     };
     draw();
     map.on('styledata', draw);
     return () => {
       map.off('styledata', draw);
     };
-  }, [map, locations, draft]);
+  }, [map, locations, draft, focusedId]);
   useEffect(() => () => clearPrivateLocations(map), [map]);
 
-  // For the demo, "opening" one only highlights it — there's no editor to open.
-  const openNow = useCallback(
-    (location: PrivateLocation) => {
-      setDraft(toDraft(location));
+  const pickNow = useCallback(
+    (location: PrivateLocation, intent: PickIntent, fly: boolean) => {
+      if (fly) map.flyTo({ center: [location.lon, location.lat], zoom: Math.max(map.getZoom(), 14) });
+      setFocusedId(location.id);
       setError(null);
-      if (!readOnly) onEditorOpen();
+      if (intent === 'edit') {
+        setDraft(toDraft(location));
+        onEditorOpen();
+      } else setDraft(null);
     },
-    [readOnly, onEditorOpen],
+    [map, onEditorOpen],
   );
-  // Picking another location asks before it throws the open one's unsaved changes away, and
-  // waits out a Save in flight, whose success closes the editor. Picking the open one again
-  // keeps its changes.
+  // pickAction (privateLocationPick.ts) says when this asks first or leaves the editor as it is.
   const editorState = useRef({ draft, dirty: false, busy });
-  const open = useCallback(
-    (location: PrivateLocation) => {
+  const pick = useCallback(
+    (location: PrivateLocation, intent: PickIntent, fly: boolean) => {
       const { draft, dirty, busy } = editorState.current;
-      if (busy) return;
-      if (draft?.id === location.id) {
-        if (!readOnly) onEditorOpen();
-      } else if (dirty) setSwitchTo(location);
-      else openNow(location);
+      const action = pickAction({ open: draft !== null, id: draft?.id, dirty, busy }, location.id);
+      // The map moves only once the pick goes through: flying ahead of "Discard changes?" would
+      // leave the circle still being edited off screen on Keep editing.
+      if (action === 'apply') pickNow(location, intent, fly);
+      else if (action === 'confirm') setSwitchTo({ location, intent, fly });
+      else if (action === 'keep') {
+        if (fly) map.flyTo({ center: [location.lon, location.lat], zoom: Math.max(map.getZoom(), 14) });
+        if (intent === 'edit') onEditorOpen();
+      }
     },
-    [readOnly, onEditorOpen, openNow],
+    [map, onEditorOpen, pickNow],
   );
 
   function create() {
@@ -143,27 +153,29 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
       map.flyTo({ center, zoom: PRIVATE_LOCATIONS_MIN_PLACE_ZOOM + 2 });
     }
     setDraft({ name: '', lon: center.lng, lat: center.lat, radiusM: DEFAULT_RADIUS_M });
+    setFocusedId(null);
     setError(null);
     onEditorOpen();
   }
 
   // Attached once, reading everything else through this ref: re-attaching detaches first, and
   // detaching ends a drag in progress. A drag crossing a track re-renders this (the track's
-  // hover goes up to MapView), with a new `open` — found live, the circle stopped dead on the
+  // hover goes up to MapView), with a new `pick` — found live, the circle stopped dead on the
   // first track it was dragged over.
-  const clickInputs = useRef({ locations, open, readOnly });
-  clickInputs.current = { locations, open, readOnly };
+  const clickInputs = useRef({ locations, pick, readOnly, editing: draft !== null });
+  clickInputs.current = { locations, pick, readOnly, editing: draft !== null };
   const loaded = locations !== null;
   useEffect(() => {
     if (!loaded) return;
     return attachPrivateLocationsHandlers(map, {
       onClick: (target: PrivateLocationsClick) => {
-        const { locations, open, readOnly } = clickInputs.current;
+        const { locations, pick, editing } = clickInputs.current;
         if (target.kind === 'saved') {
           const location = locations?.find((l) => l.id === target.id);
-          if (location) open(location);
-        } else if (target.kind === 'empty' && readOnly) {
-          setDraft(null);
+          // With the editor open, a click on another circle edits that one instead.
+          if (location) pick(location, editing ? 'edit' : 'focus', false);
+        } else if (target.kind === 'empty' && !editing) {
+          setFocusedId(null);
         }
       },
       onDrag: (lngLat) => {
@@ -189,6 +201,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
         draft.id === undefined ? [...(prev ?? []), result] : (prev ?? []).map((l) => (l.id === result.id ? result : l)),
       );
       setDraft(null);
+      setFocusedId(result.id);
       onChanged();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -203,6 +216,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
     // Unmounting the dialog skips its own onClose, so close it here too.
     setDeleting(null);
     setDraft((d) => (d?.id === id ? null : d));
+    setFocusedId((f) => (f === id ? null : f));
     onChanged();
   }
 
@@ -237,19 +251,14 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
         {locations?.length === 0 && <li className="activities-panel__note">{t('private.none')}</li>}
         {locations?.map((l) => {
           const label = l.name || t('private.unnamed');
+          const highlighted = draft ? draft.id === l.id : focusedId === l.id;
           return (
-            <li
-              key={l.id}
-              className={`activities-panel__row${draft?.id === l.id ? ' activities-panel__row--selected' : ''}`}
-            >
+            <li key={l.id} className={`activities-panel__row${highlighted ? ' activities-panel__row--selected' : ''}`}>
               <button
                 type="button"
                 className="activities-panel__text"
-                aria-pressed={draft?.id === l.id}
-                onClick={() => {
-                  open(l);
-                  map.flyTo({ center: [l.lon, l.lat], zoom: Math.max(map.getZoom(), 14) });
-                }}
+                aria-pressed={highlighted}
+                onClick={() => pick(l, 'focus', true)}
               >
                 <span className="activities-panel__title">{label}</span>
                 <span className="activities-panel__meta">
@@ -257,15 +266,26 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
                 </span>
               </button>
               {!readOnly && (
-                <button
-                  type="button"
-                  className="activities-panel__delete"
-                  aria-label={t('private.delete_label', { label })}
-                  title={t('common.delete')}
-                  onClick={() => setDeleting(l)}
-                >
-                  <Trash2 size={16} />
-                </button>
+                <>
+                  <button
+                    type="button"
+                    className="activities-panel__edit activities-panel__row-action"
+                    aria-label={t('private.edit_label', { label })}
+                    title={t('private.edit_title')}
+                    onClick={() => pick(l, 'edit', true)}
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    className="activities-panel__delete activities-panel__row-action"
+                    aria-label={t('private.delete_label', { label })}
+                    title={t('common.delete')}
+                    onClick={() => setDeleting(l)}
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </>
               )}
             </li>
           );
@@ -351,7 +371,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
           message={t('edit.discard_message')}
           confirmLabel={t('edit.discard')}
           cancelLabel={t('edit.keep_editing')}
-          onConfirm={async () => openNow(switchTo)}
+          onConfirm={async () => pickNow(switchTo.location, switchTo.intent, switchTo.fly)}
           onClose={() => setSwitchTo(null)}
         />
       )}

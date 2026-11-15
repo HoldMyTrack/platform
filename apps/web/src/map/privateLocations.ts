@@ -93,7 +93,8 @@ export function ensurePrivateLocationsLayer(map: MapLibreMap, beforeId: string |
     type: 'circle',
     source: PRIVATE_LOCATIONS_SOURCE_ID,
     filter: ['==', ['get', 'role'], 'center'],
-    paint: { 'circle-radius': 5, 'circle-color': COLOR, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5 },
+    // A highlighted circle's center is larger: zoomed out, the dot is all there is to see.
+    paint: { 'circle-radius': ['case', SELECTED, 7, 5], 'circle-color': COLOR, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 1.5 },
   });
   add({
     id: HANDLE_LAYER_ID,
@@ -105,8 +106,8 @@ export function ensurePrivateLocationsLayer(map: MapLibreMap, beforeId: string |
   });
 }
 
-/** Redraws every circle; `selected` (saved or not) is highlighted and gets a drag handle. */
-export function setPrivateLocationsData(map: MapLibreMap, circles: readonly Circle[], selected: Circle | null): void {
+/** Redraws every circle; `selected` (saved or not) is highlighted, with a drag handle when `draggable`. */
+export function setPrivateLocationsData(map: MapLibreMap, circles: readonly Circle[], selected: Circle | null, draggable: boolean): void {
   const source = map.getSource(PRIVATE_LOCATIONS_SOURCE_ID) as GeoJSONSource | undefined;
   if (!source) return;
   const features: Feature[] = [];
@@ -121,7 +122,9 @@ export function setPrivateLocationsData(map: MapLibreMap, circles: readonly Circ
     const id = selected.id ?? '';
     features.push(
       { type: 'Feature', properties: { role: 'circle', id, selected: true }, geometry: { type: 'Polygon', coordinates: [circlePolygon(selected)] } },
-      { type: 'Feature', properties: { role: 'handle', id, selected: true }, geometry: { type: 'Point', coordinates: [selected.lon, selected.lat] } },
+      draggable
+        ? { type: 'Feature', properties: { role: 'handle', id, selected: true }, geometry: { type: 'Point', coordinates: [selected.lon, selected.lat] } }
+        : { type: 'Feature', properties: { role: 'center', id, selected: true }, geometry: { type: 'Point', coordinates: [selected.lon, selected.lat] } },
     );
   }
   source.setData({ type: 'FeatureCollection', features });
@@ -180,7 +183,7 @@ export function attachPrivateLocationsHandlers(map: MapLibreMap, handlers: Priva
     const hits = map.getLayer(FILL_LAYER_ID)
       ? map.queryRenderedFeatures([e.point.x, e.point.y], { layers: [HANDLE_LAYER_ID, CENTER_LAYER_ID, FILL_LAYER_ID] })
       : [];
-    // The circle being edited wins over a saved one overlapping it.
+    // The highlighted circle wins over a saved one overlapping it.
     if (hits.some((f) => f.properties?.['selected'])) {
       handlers.onClick({ kind: 'selected' });
       return;

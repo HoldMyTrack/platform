@@ -146,7 +146,7 @@ export function StoriesTab({
                 </button>
                 <button
                   type="button"
-                  className="activities-panel__edit stories-tab__action"
+                  className="activities-panel__edit activities-panel__row-action"
                   disabled={readOnly}
                   onClick={() => setEditing(story)}
                   aria-label={`${editTitle}: ${story.name}`}
@@ -156,7 +156,7 @@ export function StoriesTab({
                 </button>
                 <button
                   type="button"
-                  className="activities-panel__edit stories-tab__action"
+                  className="activities-panel__edit activities-panel__row-action"
                   disabled={readOnly}
                   onClick={() => setSending(story)}
                   aria-label={`${sendTitle}: ${story.name}`}
@@ -166,7 +166,7 @@ export function StoriesTab({
                 </button>
                 <button
                   type="button"
-                  className="activities-panel__delete stories-tab__action"
+                  className="activities-panel__delete activities-panel__row-action"
                   disabled={readOnly}
                   onClick={() => setDeleting(story)}
                   aria-label={`${deleteTitle}: ${story.name}`}
