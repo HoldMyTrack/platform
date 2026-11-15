@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"slices"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 
@@ -64,10 +65,41 @@ type Result struct {
 }
 
 func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job) (Result, error) {
-	act, points, _, err := loadClippedPoints(ctx, pool, store, job.UserID, job.SourceDetail, job.RawPayloadKey)
+	act, err := loadRecorded(ctx, store, job.SourceDetail, job.RawPayloadKey)
 	if err != nil {
 		return Result{}, err
 	}
+	// Continuous across the antimeridian, as loadClippedPoints leaves them.
+	act.Points = unwrapLons(act.Points)
+	zones, err := LoadZones(ctx, pool, job.UserID)
+	if err != nil {
+		return Result{}, fmt.Errorf("ingest: load private locations: %w", err)
+	}
+	for attempt := 1; ; attempt++ {
+		res, current, err := processClipped(ctx, pool, store, job, act, zones)
+		if errors.Is(err, errZonesChanged) && attempt < 3 {
+			zones = current // clipped again with the locations read under the lock
+			continue
+		}
+		return res, err
+	}
+}
+
+// errZonesChanged is the account's Private locations changing between the clip and the save:
+// the track is clipped again with the new ones.
+var errZonesChanged = errors.New("ingest: Private locations changed while the track was clipped")
+
+// processClipped clips the parsed recording with zones and saves it, unless the account's
+// locations changed since zones was read: then errZonesChanged, with the current ones.
+func processClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job, act parse.Activity, zones []Zone) (Result, []Zone, error) {
+	act.Points = slices.Clone(act.Points)
+	points := ClipEnds(act.Points, zones)
+	res, current, err := persistClipped(ctx, pool, store, job, act, points, zones)
+	return res, current, err
+}
+
+func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job, act parse.Activity, points []parse.Point, zones []Zone) (Result, []Zone, error) {
+	var err error
 	if job.ActivityType != "" {
 		act.ActivityType = job.ActivityType
 	}
@@ -82,22 +114,39 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 	if !hidden {
 		// Before anything is persisted, so a track too large to draw fails cleanly.
 		if tiles, err = computeTouchedTiles(points, FogZoom); err != nil {
-			return Result{}, err
+			return Result{}, nil, err
 		}
 		if pp, err = prepareTrack(ctx, pool, points, nil); err != nil {
-			return Result{}, err
+			return Result{}, nil, err
 		}
 		startedAt = points[0].Time
 	}
 	m := pp.m
 
+	// Saved under the Private locations' lock, after checking they are still the ones the track
+	// was clipped with: a change made since might not have found this activity (LockZones).
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return Result{}, nil, fmt.Errorf("ingest: persist activity: %w", err)
+	}
+	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
+	if err := LockZones(ctx, tx, job.UserID); err != nil {
+		return Result{}, nil, fmt.Errorf("ingest: lock Private locations: %w", err)
+	}
+	current, err := LoadZones(ctx, tx, job.UserID)
+	if err != nil {
+		return Result{}, nil, fmt.Errorf("ingest: reread Private locations: %w", err)
+	}
+	if !slices.Equal(current, zones) {
+		return Result{}, current, errZonesChanged
+	}
 	// ingest_complete stays false until every step after this insert has run (the end of
 	// this function): a hidden track has none, so it is complete as inserted.
 	// timezone is the zone of the first recorded point, before Private locations clip it, so
 	// a track hidden by them still shows its times where it was recorded (§4.30).
 	var activityID string
 	var inserted, complete bool
-	err = pool.QueryRow(ctx, `
+	err = tx.QueryRow(ctx, `
 		WITH ins AS (
 			INSERT INTO activities (
 				user_id, source, source_detail, external_id,
@@ -136,20 +185,23 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		EditableTimestamps(points) == nil,
 	).Scan(&activityID, &inserted, &complete)
 	if err != nil {
-		return Result{}, fmt.Errorf("ingest: persist activity: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: persist activity: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		return Result{}, nil, fmt.Errorf("ingest: persist activity: %w", err)
 	}
 
 	if !inserted && complete {
 		// Idempotency requirement: a duplicate that reached persist is a no-op, not an
 		// error. Fog is skipped too: nothing new happened, so no tile needs marking dirty
 		// again.
-		return Result{ActivityID: activityID, Persisted: false}, nil
+		return Result{ActivityID: activityID, Persisted: false}, nil, nil
 	}
 	// Otherwise this is a new row, or one an earlier run of this ingest inserted and then
 	// didn't finish (cut off, or failed partway): every step below is safe to run again.
 	if hidden {
 		// No masks, tiles or regions: there is nothing visible to derive them from.
-		return Result{ActivityID: activityID, Persisted: true}, nil
+		return Result{ActivityID: activityID, Persisted: true}, nil, nil
 	}
 
 	// §4.1 step 4: render this activity's own Fog masks and mark every z14 tile it
@@ -160,28 +212,28 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 	// tells `render_fog` this tile's aggregate needs recompositing, so the mask it would
 	// composite in should already exist by the time that runs.
 	if err := fog.RenderActivityMasks(ctx, pool, activityID, points, tiles); err != nil {
-		return Result{}, fmt.Errorf("ingest: render activity masks: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: render activity masks: %w", err)
 	}
 
 	if err := MarkFogTilesDirty(ctx, pool, job.UserID, tiles); err != nil {
-		return Result{}, fmt.Errorf("ingest: mark fog tiles dirty: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: mark fog tiles dirty: %w", err)
 	}
 
 	// Country/Region-tier unlocking (§4.2.4) — independent of the Fog raster pyramid
 	// above, so it runs alongside it rather than inside fog's own dirty/render pipeline: there
 	// is nothing here to mark dirty or recomposite, matching against activity_id is enough.
 	if err := geo.MatchActivity(ctx, pool, activityID); err != nil {
-		return Result{}, fmt.Errorf("ingest: match admin boundaries: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: match admin boundaries: %w", err)
 	}
 
 	if err := EnqueueRenderFog(ctx, pool, job.UserID); err != nil {
-		return Result{}, fmt.Errorf("ingest: enqueue render_fog: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: enqueue render_fog: %w", err)
 	}
 	if _, err := pool.Exec(ctx, `UPDATE activities SET ingest_complete = true WHERE id = $1`, activityID); err != nil {
-		return Result{}, fmt.Errorf("ingest: mark complete: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: mark complete: %w", err)
 	}
 
-	return Result{ActivityID: activityID, Persisted: true}, nil
+	return Result{ActivityID: activityID, Persisted: true}, nil, nil
 }
 
 // loadClippedPoints is §4.1 steps 2–3: fetch the raw payload, parse it, and clip it against

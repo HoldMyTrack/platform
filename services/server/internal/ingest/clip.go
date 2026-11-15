@@ -8,7 +8,7 @@ import (
 	"sort"
 	"time"
 
-	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/jackc/pgx/v5"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
 )
@@ -20,6 +20,15 @@ type Zone struct {
 	Lat, Lon float64
 	RadiusM  float64
 	Salt     string
+}
+
+// LockZones takes the per-account lock every Private location change holds for its
+// transaction. Ingest takes it to save an activity, so the two see each other: a change
+// committed first is in ingest's second read of the locations, and an activity saved first is
+// in the change's AffectedActivities.
+func LockZones(ctx context.Context, tx pgx.Tx, userID string) error {
+	_, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext('privacy_zones:' || $1))`, userID)
+	return err
 }
 
 func (z Zone) contains(p parse.Point) bool {
@@ -35,12 +44,14 @@ func insideAny(zones []Zone, p parse.Point) bool {
 	return false
 }
 
-// LoadZones reads an account's Private locations. Called when a job runs, never when it's
-// enqueued, so a location saved while an upload waits in the queue still applies to it.
-func LoadZones(ctx context.Context, pool *pgxpool.Pool, userID string) ([]Zone, error) {
-	rows, err := pool.Query(ctx, `
+// LoadZones reads an account's Private locations, in a fixed order so two reads compare.
+// Called when a job runs, never when it's enqueued, so a location saved while an upload waits
+// in the queue still applies to it.
+func LoadZones(ctx context.Context, q Querier, userID string) ([]Zone, error) {
+	rows, err := q.Query(ctx, `
 		SELECT ST_Y(center::geometry), ST_X(center::geometry), radius_m, salt::text
 		FROM privacy_zones WHERE user_id = $1
+		ORDER BY salt
 	`, userID)
 	if err != nil {
 		return nil, err

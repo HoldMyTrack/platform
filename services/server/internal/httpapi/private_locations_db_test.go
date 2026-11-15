@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
@@ -342,5 +343,64 @@ func TestDeletingAnOverlappingLocationFindsEndsPastItsOwnReach(t *testing.T) {
 	}
 	if jobs := d.reprivacyJobs(me); len(jobs) != 1 || !slices.Contains(jobs[0].ActivityIDs, walk) {
 		t.Fatalf("after deleting the small location, jobs %+v, want one reprocessing walk", jobs)
+	}
+}
+
+// A Private location saved while an upload is being ingested still clips it: the save waits
+// for the change's lock, sees the locations changed since the clip, and clips again.
+func TestLocationSavedDuringIngestStillClipsIt(t *testing.T) {
+	d := newDBTestWithS3(t, newMemS3())
+	ctx := context.Background()
+	me := d.newAccount(false)
+	if resp := d.uploadFile(me, "walk.gpx", northGPX(10.0)); resp.Status != "enqueued" {
+		t.Fatalf("upload: %q", resp.Status)
+	}
+	job := d.latestIngestJob(me)
+
+	// A location change in progress, holding the lock the save needs.
+	tx, err := d.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer tx.Rollback(ctx)
+	if err := ingest.LockZones(ctx, tx, me.id); err != nil {
+		t.Fatal(err)
+	}
+	type outcome struct {
+		res ingest.Result
+		err error
+	}
+	done := make(chan outcome, 1)
+	go func() {
+		res, err := ingest.Process(ctx, d.pool, d.srv.store, job)
+		done <- outcome{res, err}
+	}()
+	// Until the save waits on the lock: by then the track was clipped with no locations.
+	for deadline := time.Now().Add(10 * time.Second); time.Now().Before(deadline); time.Sleep(20 * time.Millisecond) {
+		var waiting bool
+		if err := d.pool.QueryRow(ctx, `
+			SELECT EXISTS (SELECT 1 FROM pg_stat_activity
+			WHERE wait_event_type = 'Lock' AND query LIKE '%pg_advisory_xact_lock%' AND pid <> pg_backend_pid())
+		`).Scan(&waiting); err != nil {
+			t.Fatal(err)
+		}
+		if waiting {
+			break
+		}
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO privacy_zones (user_id, center, radius_m)
+		VALUES ($1, ST_SetSRID(ST_MakePoint(10.0, 50.0), 4326)::geography, 250)`, me.id); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	got := <-done
+	if got.err != nil || !got.res.Persisted {
+		t.Fatalf("ingest: %+v, %v", got.res, got.err)
+	}
+	if near := d.nearestM(got.res.ActivityID, 10.0, 50.0); near < 249 {
+		t.Fatalf("the track comes within %.0f m of the location saved during its ingest, want at least 250", near)
 	}
 }
