@@ -9,6 +9,7 @@ import (
 	"encoding/base64"
 	"encoding/pem"
 	"fmt"
+	"net"
 	"net/url"
 	"os"
 	"strconv"
@@ -263,7 +264,7 @@ func Load() (Config, error) {
 		name := env("POSTGRES_DB", "holdmytrack")
 		host := env("POSTGRES_HOST", "db")
 		port := env("POSTGRES_PORT_INTERNAL", "5432") // container-internal, not the published host port
-		c.DatabaseURL = fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", user, pass, host, port, name)
+		c.DatabaseURL = databaseURL(user, pass, host, port, name)
 	}
 	if c.S3Endpoint == "" {
 		return c, fmt.Errorf("config: S3_ENDPOINT is required")
@@ -358,4 +359,18 @@ func applePrivateKey(v string) (*ecdsa.PrivateKey, error) {
 		return nil, fmt.Errorf("not an EC key")
 	}
 	return ec, nil
+}
+
+// databaseURL is the connection URL for these parts, each escaped: a generated password
+// (openssl rand -base64) can hold "/", "+" or "=", and one with "@", "?", "#" or "%" set by
+// hand would otherwise split the URL somewhere else.
+func databaseURL(user, pass, host, port, name string) string {
+	u := url.URL{
+		Scheme:   "postgres",
+		User:     url.UserPassword(user, pass),
+		Host:     net.JoinHostPort(host, port),
+		Path:     "/" + name,
+		RawQuery: "sslmode=disable",
+	}
+	return u.String()
 }
