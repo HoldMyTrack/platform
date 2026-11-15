@@ -38,9 +38,9 @@ import (
 // split or sent as FIT.
 const maxUploadBytes = 16 << 20 // 16 MiB
 
-// multipartMemoryBytes is how much of an upload's multipart body ParseMultipartForm keeps in
-// memory; a larger file part goes to a temp file.
-const multipartMemoryBytes = 32 << 20
+// maxUploadBodyBytes is an upload's whole multipart body: the file and 1 MiB of overhead.
+// ParseMultipartForm keeps all of it in memory, so no upload is written to a temp file.
+const maxUploadBodyBytes = maxUploadBytes + 1<<20
 
 // uploadExts is the activity file types an upload may be. A `.zip` is refused with a message
 // of its own: archives aren't imported (ADR-0039).
@@ -555,8 +555,8 @@ func (s *Server) handleUpload(w http.ResponseWriter, r *http.Request) {
 		httpErrorT(w, r, http.StatusTooManyRequests, "error.upload_rate_limit", "max", s.uploadLimiter.limit)
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBytes+1<<20) // +1MiB of multipart overhead
-	if err := r.ParseMultipartForm(multipartMemoryBytes); err != nil {
+	r.Body = http.MaxBytesReader(w, r.Body, maxUploadBodyBytes)
+	if err := r.ParseMultipartForm(maxUploadBodyBytes); err != nil {
 		httpErrorT(w, r, http.StatusRequestEntityTooLarge, "error.upload_too_large")
 		return
 	}
