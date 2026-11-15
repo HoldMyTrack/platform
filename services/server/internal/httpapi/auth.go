@@ -62,7 +62,7 @@ type authRequest struct {
 	Timezone string `json:"timezone"`
 }
 
-// normalizeTimezone validates raw against the IANA tz database via time.LoadLocation, and
+// normalizeTimezone validates raw against the IANA tz database via zoneinfo.Load, and
 // returns it under its current name (web.CurrentTimezoneName: a browser reports Asia/Calcutta,
 // the account stores Asia/Kolkata). Returns ok=false for empty or unloadable input; the caller
 // decides what that means for its own endpoint (createAccount falls back to "UTC",

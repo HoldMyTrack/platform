@@ -145,7 +145,7 @@ func timezoneFromContext(ctx context.Context) string {
 // locationFromContext resolves timezoneFromContext to a *time.Location, for the Go-side date
 // math (time.ParseInLocation, time.Now().In(loc)) day-bucketing queries need alongside their
 // own SQL-side AT TIME ZONE parameter. Falls back to UTC on a load failure — defensive only,
-// since every stored value was already validated with time.LoadLocation before being written
+// since every stored value was already validated with zoneinfo.Load before being written
 // (handleSignup, handleUpdateSettings), so this should never actually fail in practice.
 func locationFromContext(ctx context.Context) *time.Location {
 	return zoneinfo.LoadOr(timezoneFromContext(ctx), time.UTC)

@@ -20,6 +20,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // PartLimit is roughly how big one zip part gets: a part is closed once it passes this, so
@@ -86,21 +87,7 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 	}
 
 	// Each activity is named by its local start where it was recorded (IMPLEMENTATION.md §4.30).
-	accountLoc, err := time.LoadLocation(doc.Account.Timezone)
-	if err != nil {
-		accountLoc = time.UTC
-	}
-	locs := map[string]*time.Location{}
-	locationOf := func(tz string) *time.Location {
-		loc, ok := locs[tz]
-		if !ok {
-			if loc, err = time.LoadLocation(tz); err != nil {
-				loc = accountLoc
-			}
-			locs[tz] = loc
-		}
-		return loc
-	}
+	accountLoc := zoneinfo.LoadOr(doc.Account.Timezone, time.UTC)
 	names := map[string]bool{}
 	originals := map[string]string{} // raw key -> its file in the archive
 	for i := range doc.Activities {
@@ -109,7 +96,7 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 		if act.Name != "" {
 			label = act.Name
 		}
-		base := uniqueName(names, act.StartedAt.In(locationOf(act.Timezone)).Format("2006-01-02 1504")+" "+Slug(label))
+		base := uniqueName(names, act.StartedAt.In(zoneinfo.LoadOr(act.Timezone, accountLoc)).Format("2006-01-02 1504")+" "+Slug(label))
 
 		if act.rawKey != "" {
 			if file, ok := originals[act.rawKey]; ok {
