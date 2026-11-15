@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // `story` narrows the activity list, the summary, the histogram (both modes and `earliest`)
@@ -96,7 +96,7 @@ func TestStoryFilter(t *testing.T) {
 	const z = 12
 	tile := func(at [2]float64, query string) int {
 		t.Helper()
-		x, y := tilemath.LonLatToTile(at[0], at[1], z)
+		x, y := tilemathtest.LonLatToTile(at[0], at[1], z)
 		rec := d.do(me, "GET", fmt.Sprintf("/tiles/v1/tracks/%d/%d/%d.mvt?%s", z, x, y, query), nil)
 		d.decode(rec, http.StatusOK, nil)
 		return rec.Body.Len()

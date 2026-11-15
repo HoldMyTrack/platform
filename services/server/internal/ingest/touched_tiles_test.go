@@ -7,7 +7,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/fog"
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 func touchedTileSet(tiles [][2]int) map[[2]int]bool {
@@ -25,7 +25,7 @@ func touchedTileSet(tiles [][2]int) map[[2]int]bool {
 // renders a mask there and the overflow is silently clipped at the canvas edge instead.
 func TestComputeTouchedTilesBuffersStrokeWidth(t *testing.T) {
 	const zoom = FogZoom
-	minLon, minLat, maxLon, maxLat := tilemath.TileBounds(100, 100, zoom)
+	minLon, minLat, maxLon, maxLat := tilemathtest.TileBounds(100, 100, zoom)
 
 	// localX = 509 of 512, within fog.TileMarginPx (9px) of the tile's right edge — lon
 	// interpolates linearly within a tile, so this is exact regardless of latitude.
@@ -55,7 +55,7 @@ func TestComputeTouchedTilesBuffersStrokeWidth(t *testing.T) {
 // a trajectory comfortably inside a tile shouldn't pull in neighbors it never gets near.
 func TestComputeTouchedTilesFarFromEdgeStaysSingleTile(t *testing.T) {
 	const zoom = FogZoom
-	minLon, minLat, maxLon, maxLat := tilemath.TileBounds(100, 100, zoom)
+	minLon, minLat, maxLon, maxLat := tilemathtest.TileBounds(100, 100, zoom)
 
 	lon := minLon + 0.5*(maxLon-minLon)
 	lat1 := minLat + 0.1*(maxLat-minLat)

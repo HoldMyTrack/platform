@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // A track continuing past 180 (ingest's unwrapLons) draws into the tiles on both sides of the
@@ -15,7 +15,7 @@ func TestMaskAcrossTheAntimeridian(t *testing.T) {
 		{Lon: 179.999, Lat: -16.82, Time: time.Unix(0, 0)},
 		{Lon: 180.001, Lat: -16.82, Time: time.Unix(60, 0)},
 	}
-	east, y := tilemath.LonLatToTile(179.999, -16.82, Zoom)
+	east, y := tilemathtest.LonLatToTile(179.999, -16.82, Zoom)
 	for _, x := range []int{east, 0} {
 		mask := renderActivityMask(projectToTile(points, x, y, Zoom)...)
 		lit := 0

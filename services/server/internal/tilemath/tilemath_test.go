@@ -3,6 +3,8 @@ package tilemath
 import (
 	"math"
 	"testing"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // lonLatFromWorldPixel inverts WorldPixel — used only by this test to construct a point at an
@@ -11,7 +13,7 @@ import (
 func lonLatFromWorldPixel(wx, wy float64, zoom int, tileSize float64) (lon, lat float64) {
 	n := 1 << uint(zoom)
 	lon = wx/(tileSize*float64(n))*360 - 180
-	lat = tileYToLat(wy/tileSize, float64(n))
+	lat = tilemathtest.TileYToLat(wy/tileSize, float64(n))
 	return lon, lat
 }
 

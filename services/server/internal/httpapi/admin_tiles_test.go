@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
+	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
 // The Country and Region tiles are drawn from outlines kept per tile (admin_tile_geoms): the
@@ -60,7 +60,7 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 	// A cached zoom whose tile holds both countries and the ocean round them.
 	coords := func(l adminLayer) (int, int, int) {
 		const z = 5
-		x, y := tilemath.LonLatToTile(at[0], at[1], z)
+		x, y := tilemathtest.LonLatToTile(at[0], at[1], z)
 		return z, x, y
 	}
 	forget := func() {
@@ -258,7 +258,7 @@ func TestCityTileMergesThePlacesNotBeenInBelowItsBand(t *testing.T) {
 		{cityMergeBelow - 1, []int{exploredID, seaID}},
 		{cityMergeBelow, []int{seaID, west, east}}, // the speck drops out of the cached outlines
 	} {
-		x, y := tilemath.LonLatToTile(at[0], at[1], c.z)
+		x, y := tilemathtest.LonLatToTile(at[0], at[1], c.z)
 		var ids []int
 		var gap, overlap float64
 		var cleared []bool
@@ -308,7 +308,7 @@ func TestAdminTileOutlinesAreWoundAsTheSea(t *testing.T) {
 	}
 	t.Cleanup(func() { d.pool.Exec(context.Background(), `DELETE FROM admin_countries WHERE id = ANY($1)`, ids) })
 
-	x, y := tilemath.LonLatToTile(-24.5, -45, 5)
+	x, y := tilemathtest.LonLatToTile(-24.5, -45, 5)
 	rows, err := d.pool.Query(ctx, `SELECT g.admin_id, ST_IsPolygonCCW(g.geom) FROM (`+countryLayer.liveGeoms()+`) g`, 5, x, y)
 	if err != nil {
 		t.Fatal(err)
