@@ -469,8 +469,9 @@ func setsOwnBodyLimit(r *http.Request) bool {
 }
 
 // contentSecurityPolicy is every response's CSP (setSecurityHeaders), unless a page loads
-// scripts from elsewhere too (pageScriptOrigins).
-var contentSecurityPolicy = cspWithScripts()
+// scripts from elsewhere too (pageScriptOrigins). It is cspWithScripts() written out as a
+// constant; TestContentSecurityPolicyParts holds the two equal.
+const contentSecurityPolicy = "script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
 
 // cspWithScripts is the CSP allowing scripts from this origin and scriptOrigins.
 func cspWithScripts(scriptOrigins ...string) string {

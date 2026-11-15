@@ -9,8 +9,9 @@ import (
 	"testing"
 )
 
-// fakeSiteverify answers like Cloudflare's siteverify: success for the token "pass", a refused
-// secret for "secret-key" sent as anything but the secret, and records what it was sent.
+// fakeSiteverify answers like Cloudflare's siteverify: a refused secret for any secret but
+// "secret-key", success for the token "pass", Cloudflare's own failure for "cloudflare-fails",
+// and records what it was sent.
 func fakeSiteverify(t *testing.T, status int) (*httptest.Server, *[]string) {
 	t.Helper()
 	var calls []string
@@ -29,6 +30,8 @@ func fakeSiteverify(t *testing.T, status int) (*httptest.Server, *[]string) {
 			w.Write([]byte(`{"success":false,"error-codes":["invalid-input-secret"]}`))
 		case r.PostForm.Get("response") == "pass":
 			w.Write([]byte(`{"success":true}`))
+		case r.PostForm.Get("response") == "cloudflare-fails":
+			w.Write([]byte(`{"success":false,"error-codes":["internal-error"]}`))
 		default:
 			w.Write([]byte(`{"success":false,"error-codes":["invalid-input-response"]}`))
 		}
@@ -68,6 +71,10 @@ func TestTurnstileVerify(t *testing.T) {
 	wrong.verifyURL = srv.URL
 	if _, err := wrong.verify(ctx, "pass", ""); err == nil {
 		t.Error("refused secret: no error, want one, since no visitor could pass")
+	}
+
+	if _, err := ts.verify(ctx, "cloudflare-fails", ""); err == nil {
+		t.Error("internal-error: no error, want one, since no visitor could pass")
 	}
 
 	down, _ := fakeSiteverify(t, http.StatusInternalServerError)
@@ -173,5 +180,44 @@ func TestSignupPageWithoutTurnstile(t *testing.T) {
 	}
 	if csp := rec.Header().Get("Content-Security-Policy"); csp != contentSecurityPolicy {
 		t.Errorf("/signup CSP %q, want the default", csp)
+	}
+}
+
+// The check runs before the address's slot is taken, so a slow siteverify holds none.
+func TestSignupCheckHoldsNoSlot(t *testing.T) {
+	s := newPagesTestServer(t)
+	s.SetSignupsPerHour(1)
+	req := httptest.NewRequest(http.MethodPost, "/signup", nil)
+	addr := rateLimitAddress(req)
+	refused := accountFailure(http.StatusBadRequest, "error.turnstile_failed")
+	_, err := s.createAccountLimited(req, "someone@example.com", "long enough", "", "en", func(*http.Request) error {
+		if s.signupLimiter.full(addr) {
+			t.Error("the check ran holding the address's only slot")
+		}
+		return refused
+	})
+	if err != refused {
+		t.Errorf("createAccountLimited: %v, want the check's error", err)
+	}
+	if s.signupLimiter.full(addr) {
+		t.Error("a refused check left its slot taken")
+	}
+}
+
+func TestPageScriptOrigins(t *testing.T) {
+	if got := pageScriptOrigins(authForm{TurnstileSiteKey: "site-key"}); !slices.Equal(got, []string{turnstileScriptOrigin}) {
+		t.Errorf("form with the widget: %v, want Turnstile's origin", got)
+	}
+	if got := pageScriptOrigins(authForm{}); got != nil {
+		t.Errorf("form without the widget: %v, want none", got)
+	}
+}
+
+func TestContentSecurityPolicyParts(t *testing.T) {
+	if got := cspWithScripts(); got != contentSecurityPolicy {
+		t.Errorf("cspWithScripts() = %q, want contentSecurityPolicy %q", got, contentSecurityPolicy)
+	}
+	if got, want := cspWithScripts(turnstileScriptOrigin), "script-src 'self' "+turnstileScriptOrigin+"; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"; got != want {
+		t.Errorf("cspWithScripts(Turnstile) = %q, want %q", got, want)
 	}
 }
