@@ -134,3 +134,28 @@ func zeptoStatusError(status int, body io.Reader) error {
 	}
 	return fmt.Errorf("mail: zeptomail: HTTP %d %s", status, strings.Join(codes, " "))
 }
+
+// Check posts an empty message, which ZeptoMail refuses with a 400 once the token is accepted
+// and with a 401 when it isn't. Nothing is sent.
+func (s *zeptoSender) Check(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sendTimeout)
+	defer cancel()
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.url, strings.NewReader("{}"))
+	if err != nil {
+		return fmt.Errorf("mail: zeptomail: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Zoho-enczapikey "+s.token)
+	resp, err := s.client.Do(req)
+	if err != nil {
+		return fmt.Errorf("mail: zeptomail: %w", err)
+	}
+	defer resp.Body.Close()
+	respBody := io.LimitReader(resp.Body, zeptoResponseLimit)
+	if resp.StatusCode != http.StatusBadRequest {
+		return zeptoStatusError(resp.StatusCode, respBody)
+	}
+	_, _ = io.Copy(io.Discard, respBody)
+	return nil
+}
