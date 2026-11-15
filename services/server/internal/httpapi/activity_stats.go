@@ -12,7 +12,8 @@ import (
 // activitySummaryQuery is §4.7's range summary: one query, one row, the aggregate behind
 // the panel's own "1,284 km · 186 activities · 42 h · 9,120 m up" line. Same filter shape as
 // the list above, deliberately — the totals have to describe exactly the set of activities
-// the list is showing, which only holds if both read the same filter.
+// the list is showing, which only holds if both read the same filter, and the time is moving
+// time, as the list, Stories and Trends total it.
 //
 // COALESCE to 0 here, unlike the per-row nullability the list preserves: SUM already skips
 // NULL inputs, and a total over zero rows is legitimately zero rather than unknown. The
@@ -21,7 +22,7 @@ import (
 var activitySummaryQuery = `
 SELECT COUNT(*),
        COALESCE(SUM(distance_meters), 0),
-       COALESCE(SUM(duration_seconds), 0),
+       COALESCE(SUM(COALESCE(moving_seconds, duration_seconds)), 0),
        COALESCE(SUM(elevation_gain_m), 0)
 FROM activities
 WHERE user_id = $1

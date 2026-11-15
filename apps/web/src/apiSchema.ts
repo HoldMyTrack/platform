@@ -1713,6 +1713,7 @@ export interface paths {
                         "application/json": {
                             count: number;
                             distance_meters: number;
+                            /** @description Moving time, or elapsed where an activity has none, as every other total counts it. */
                             duration_seconds: number;
                             elevation_gain_m: number;
                         };

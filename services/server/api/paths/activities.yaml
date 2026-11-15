@@ -277,7 +277,7 @@ activities_summary:
               properties:
                 count: { type: integer }
                 distance_meters: { type: number }
-                duration_seconds: { type: integer }
+                duration_seconds: { type: integer, description: "Moving time, or elapsed where an activity has none, as every other total counts it." }
                 elevation_gain_m: { type: number }
       "400": { $ref: "../components/responses.yaml#/Error" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
