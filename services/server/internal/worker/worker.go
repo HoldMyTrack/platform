@@ -448,7 +448,7 @@ func discardFailedRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	if err := json.Unmarshal(j.payload, &ij); err != nil {
 		return
 	}
-	if err := ingest.DiscardRaw(ctx, pool, store, j.id, ij.RawPayloadKey); err != nil {
+	if err := ingest.DiscardRaw(ctx, pool, store, j.id, ij.UserID, ij.RawPayloadKey); err != nil {
 		log.Error("failed ingest's original not discarded", "job_id", j.id, "err", err)
 	}
 }

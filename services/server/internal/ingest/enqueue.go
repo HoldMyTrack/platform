@@ -206,25 +206,36 @@ func PromoteRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, j
 	return nil
 }
 
+// RawNamed reports whether userID's activities or pending ingests other than exceptJob (0 for
+// none) still name rawKey. raw_payload_key is content-addressed (raw/{userID}/{sha256}{ext}),
+// so the same file uploaded twice, a split's pieces, or a re-upload still waiting for ingest
+// can share one. Every key sits under its owner's prefix, so only the owner's rows are read,
+// through their user_id indexes; raw_payload_key has none.
+func RawNamed(ctx context.Context, pool *pgxpool.Pool, userID, rawKey string, exceptJob int64) (bool, error) {
+	var named bool
+	err := pool.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM activities WHERE user_id = $1 AND raw_payload_key = $2)
+		    OR EXISTS (SELECT 1 FROM jobs WHERE user_id = $1 AND kind = 'ingest' AND state = 'pending'
+		                 AND id <> $3 AND payload->>'raw_payload_key' = $2)
+	`, userID, rawKey, exceptJob).Scan(&named)
+	return named, err
+}
+
 // DiscardRaw drops the original of an ingest that failed: the job row's inline copy, and the
 // object at its raw key unless an activity or another pending ingest still names it. Nothing
 // else removes it before the account's purge, and with no activity the user can neither see
 // it, delete it nor find it in their data download (docs/DPIA.md keeps originals only as long
 // as their activity). The worker runs it inside the failed job, while the account's other
 // ingests wait their turn, so none can promote the same key in between.
-func DiscardRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, jobID int64, rawKey string) error {
+func DiscardRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, jobID int64, userID, rawKey string) error {
 	if _, err := pool.Exec(ctx, `UPDATE jobs SET raw = NULL WHERE id = $1`, jobID); err != nil {
 		return fmt.Errorf("ingest: clear failed job's inline raw payload: %w", err)
 	}
 	if rawKey == "" {
 		return nil
 	}
-	var named bool
-	if err := pool.QueryRow(ctx, `
-		SELECT EXISTS (SELECT 1 FROM activities WHERE raw_payload_key = $1)
-		    OR EXISTS (SELECT 1 FROM jobs WHERE kind = 'ingest' AND state = 'pending' AND id <> $2
-		                 AND payload->>'raw_payload_key' = $1)
-	`, rawKey, jobID).Scan(&named); err != nil {
+	named, err := RawNamed(ctx, pool, userID, rawKey, jobID)
+	if err != nil {
 		return fmt.Errorf("ingest: check failed job's raw payload: %w", err)
 	}
 	if named {
