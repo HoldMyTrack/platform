@@ -63,8 +63,10 @@ func TestNativeCallbackFailuresReturnToApp(t *testing.T) {
 		"email missing": {"?state=s&code=x", appCookie, "holdmytrack://oauth?error=facebook_no_email"},
 		// Without the cookie there's no telling an app started it; the web page is all that's left.
 		"no cookie": {"?state=s&code=x", "", "https://app.example/signin?error=facebook"},
-		// A cookie from before app handoffs existed still reads as a browser's round trip.
-		"three-part cookie": {"?state=s&code=x", "s..UTC", "https://app.example/signin?error=facebook_no_email"},
+		// A browser's round trip, with no challenge.
+		"browser cookie": {"?state=s&code=x", "s..UTC.", "https://app.example/signin?error=facebook_no_email"},
+		// beginOAuth always writes four parts, so a shorter cookie is no round trip of its.
+		"three-part cookie": {"?state=s&code=x", "s..UTC", "https://app.example/signin?error=facebook"},
 	} {
 		req := httptest.NewRequest("GET", "/v1/auth/facebook/callback"+tc.query, nil)
 		if tc.cookie != "" {

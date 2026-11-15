@@ -81,10 +81,6 @@ func (s *Server) isSameOrigin(r *http.Request) bool {
 // that ends while the page is open.
 func (s *Server) appShell(titleKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		if dest := legacyLanding(r); dest != "" {
-			http.Redirect(w, r, dest, http.StatusSeeOther)
-			return
-		}
 		acct := s.pageAccount(r)
 		lang := pageLang(acct, r)
 		l := i18n.Get(lang)
@@ -121,26 +117,6 @@ func (s *Server) appShell(titleKey string) http.HandlerFunc {
 // viteDevHeader is how Vite's dev proxy tells the app shell to load the bundle from Vite's
 // dev server rather than from /assets/ — the same name as apps/web/vite.config.ts's.
 const viteDevHeader = "X-HoldMyTrack-Vite"
-
-// legacyLanding forwards the links emails carried before the auth screens became pages
-// (`/?reset_token=`, `/?verify_token=`) and the old Google-failure redirect
-// (`/?auth_error=`) to the page that handles each now. Keep while such emails may still be
-// sitting in inboxes; a reset link lives an hour, a verification link a day.
-func legacyLanding(r *http.Request) string {
-	if r.URL.Path != "/" {
-		return ""
-	}
-	q := r.URL.Query()
-	switch {
-	case q.Get("reset_token") != "":
-		return "/reset?token=" + url.QueryEscape(q.Get("reset_token"))
-	case q.Get("verify_token") != "":
-		return "/verify?token=" + url.QueryEscape(q.Get("verify_token"))
-	case q.Get("auth_error") != "":
-		return "/signin?error=google"
-	}
-	return ""
-}
 
 // notFound answers every path nothing else claims: an HTML page for a browser, the API's error
 // shape under its own prefixes, where a client expects no page.

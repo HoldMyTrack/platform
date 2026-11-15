@@ -107,8 +107,8 @@ func (s *Server) readOAuthCallback(w http.ResponseWriter, r *http.Request, cooki
 	var parts []string
 	var rt oauthRoundTrip
 	if cookieErr == nil {
-		// State, verifier and timezone, then an app's challenge, then a verification link's
-		// token; a cookie may stop after any of the last two.
+		// State, verifier, timezone and an app's challenge (beginOAuth writes all four, empty
+		// or not), then a verification link's token when there is one.
 		parts = strings.SplitN(cookie.Value, ".", 5)
 		if len(parts) >= 4 {
 			rt.appChallenge = parts[3]
@@ -123,7 +123,7 @@ func (s *Server) readOAuthCallback(w http.ResponseWriter, r *http.Request, cooki
 	if cookieErr != nil {
 		return rt, errors.New("missing oauth cookie")
 	}
-	if len(parts) < 3 || subtle.ConstantTimeCompare([]byte(parts[0]), []byte(r.FormValue("state"))) != 1 {
+	if len(parts) < 4 || subtle.ConstantTimeCompare([]byte(parts[0]), []byte(r.FormValue("state"))) != 1 {
 		return rt, errors.New("state mismatch")
 	}
 	if r.FormValue("code") == "" {

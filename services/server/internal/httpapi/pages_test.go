@@ -462,11 +462,6 @@ func TestAppShellRoutes(t *testing.T) {
 		// TestSignedOutHome).
 		{"/profile", "/signin"},
 		{"/settings", "/signin"},
-		// Links from emails sent before the auth pages existed, forwarded before any session
-		// check — they work signed out.
-		{"/?reset_token=abc", "/reset?token=abc"},
-		{"/?verify_token=a%20b", "/verify?token=a+b"},
-		{"/?auth_error=google", "/signin?error=google"},
 	} {
 		rec := httptest.NewRecorder()
 		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, tc.path, nil))
