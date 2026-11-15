@@ -155,12 +155,15 @@ func (s *Server) setAvatar(w http.ResponseWriter, r *http.Request, userID string
 		return accountFailure(http.StatusUnsupportedMediaType, "error.avatar_type", "type", strconv.Quote(sniffed))
 	}
 	// Stored re-encoded, never as uploaded: a phone photo's EXIF holds where it was taken.
-	data, contentType, err := avatar.Normalize(data)
+	ctx := r.Context()
+	data, contentType, err := avatar.Normalize(ctx, data)
+	if ctx.Err() != nil {
+		return ctx.Err()
+	}
 	if err != nil {
 		return accountFailure(http.StatusUnsupportedMediaType, "error.avatar_read")
 	}
 
-	ctx := r.Context()
 	key := avatarKey(userID)
 	if err := s.store.Put(ctx, key, bytes.NewReader(data), int64(len(data))); err != nil {
 		return err
