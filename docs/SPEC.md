@@ -135,7 +135,7 @@ Every provider: a provider-only account has no password and can set one through 
 
 - A real account, verified or not, confirms by typing its email (case and surrounding spaces ignored). A demo session can't.
 - At once: every session ends, the provider links and every unused reset, verification or app sign-in link stop working, nothing can sign in, and the email is free for a new account. An Apple link's access is revoked at Apple too (FR-1.11).
-- Within minutes: activities and originals, tiles, photos, Stories, Private locations, captures, import history, data downloads, avatar and settings are deleted. A file being processed finishes first.
+- Within minutes: activities and originals, tiles, photos, Stories, Private locations, captures, import history, data downloads, avatar and settings are deleted. A file being processed finishes first, and an object-storage outage holds the deletion until storage is back, so nothing is left behind.
 - Backups keep the data for up to 8 weeks. Story copies others accepted stay theirs (FR-13.8).
 - The Android app also clears the account's unsynced recordings on that phone. An unverified account deletes on the web by verifying first, or by email (FR-9.2).
 

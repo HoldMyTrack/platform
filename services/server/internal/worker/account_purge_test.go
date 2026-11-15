@@ -4,8 +4,12 @@ package worker
 
 import (
 	"context"
+	"io"
 	"log/slog"
+	"net/http"
 	"net/http/httptest"
+	"slices"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -145,5 +149,74 @@ func TestPurgeKeepsPhotoFilesAnotherAccountUses(t *testing.T) {
 		if s3.Has(key) != want || s3.Has(key+"-thumb") != want {
 			t.Errorf("%s stored %v, want %v", key, s3.Has(key), want)
 		}
+	}
+}
+
+// A storage cleanup that fails leaves the account for the next sweep instead of deleting its
+// row over objects nothing would name any more; once storage works, the next sweep finishes it.
+func TestPurgeKeepsTheAccountWhenStorageCleanupFails(t *testing.T) {
+	pool, userID := testPool(t)
+	ctx := context.Background()
+	s3 := storagetest.New()
+	var failListing atomic.Bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if failListing.Load() && r.Method == http.MethodGet && r.URL.Path == "/test/" && !r.URL.Query().Has("location") {
+			w.Header().Set("Content-Type", "application/xml")
+			w.WriteHeader(http.StatusForbidden)
+			io.WriteString(w, `<Error><Code>AccessDenied</Code><Message>listing refused</Message></Error>`)
+			return
+		}
+		s3.ServeHTTP(w, r)
+	}))
+	t.Cleanup(srv.Close)
+	store, err := storage.New(srv.URL, "test", "test", "test")
+	if err != nil {
+		t.Fatalf("store: %v", err)
+	}
+	raw := "raw/" + userID + "/a.gpx"
+	s3.Put(raw, []byte("x"))
+	if _, err := pool.Exec(ctx, `UPDATE users SET deleted_at = NOW() WHERE id = $1`, userID); err != nil {
+		t.Fatalf("mark deleted: %v", err)
+	}
+	accountLeft := func() bool {
+		var n int
+		if err := pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE id = $1`, userID).Scan(&n); err != nil {
+			t.Fatal(err)
+		}
+		return n == 1
+	}
+	log := slog.New(slog.DiscardHandler)
+
+	failListing.Store(true)
+	if err := purgeAccount(ctx, pool, store, log, userID); err == nil {
+		t.Fatal("a purge whose storage cleanup failed reported success")
+	}
+	if !accountLeft() || !s3.Has(raw) {
+		t.Fatalf("after a failed cleanup: account kept %v, original kept %v; want both kept", accountLeft(), s3.Has(raw))
+	}
+
+	failListing.Store(false)
+	if err := purgeAccount(ctx, pool, store, log, userID); err != nil {
+		t.Fatalf("purge: %v", err)
+	}
+	if accountLeft() || s3.Has(raw) {
+		t.Fatalf("after the next sweep: account kept %v, original kept %v; want both gone", accountLeft(), s3.Has(raw))
+	}
+}
+
+// An account whose purge failed is left out of the batches until its wait is over, then comes
+// back; a purge that succeeds releases it at once.
+func TestHeldAccounts(t *testing.T) {
+	h := heldAccounts{until: map[string]time.Time{}}
+	now := time.Date(2026, 11, 14, 12, 0, 0, 0, time.UTC)
+	h.hold("a", now.Add(10*time.Minute))
+	h.hold("b", now.Add(-time.Second))
+	h.hold("c", now.Add(10*time.Minute))
+	h.release("c")
+	if got := h.ids(now); !slices.Equal(got, []string{"a"}) {
+		t.Fatalf("held at now: %v, want [a]", got)
+	}
+	if got := h.ids(now.Add(11 * time.Minute)); len(got) != 0 {
+		t.Fatalf("held once the wait is over: %v, want none", got)
 	}
 }
