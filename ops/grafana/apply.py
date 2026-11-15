@@ -51,12 +51,19 @@ RULES = [
          op=">", threshold=0, for_="0m", nodata="OK",
          summary="{{ $values.A.Value }} {{ $labels.kind }} jobs failed for a reason other than the user's file in the last 10 minutes. Logs: {service=\"worker\"} |= \"job failed\"."),
     # A failed send is only logged where it happens (internal/mail), and the person who signed up
-    # just never gets their link. One in an hour is worth a look; no data is fine, since the
-    # counter starts at the first send after a restart.
+    # just never gets their link. One in an hour is worth a look; both outcomes start at zero,
+    # so the first failure after a restart counts.
     dict(uid="hmt-mail-failed", title="Email failed to send",
          expr=f'sum(increase(holdmytrack_mail_sent_total{{{D}, outcome="failed"}}[1h]))',
          op=">", threshold=0, for_="0m", nodata="OK",
          summary="{{ $values.A.Value }} emails failed to send in the last hour: sign-up verifications, password resets or Story sends didn't arrive. Check ZeptoMail's credits and their expiry (Subscription page), then the logs: {service=\"api\"} |~ \"email failed|send failed|forgot-password failed\"."),
+    # The worker checks the provider every 5 minutes without sending (mail.RunCheck), so an
+    # outage shows with nobody signing up. Three failed checks in a row; no data is the worker
+    # being down, which "api or worker not answering" covers.
+    dict(uid="hmt-mail-down", title="Email can't be sent",
+         expr=f'min(holdmytrack_mail_up{{{D}}})',
+         op="<", threshold=1, for_="15m", nodata="OK",
+         summary="The worker's mail check has failed for 15 minutes: no email would get out. Logs: {service=\"worker\"} |= \"mail check failed\"."),
     dict(uid="hmt-queue-stuck", title="Job queue stuck",
          expr=f'max by (kind) (holdmytrack_jobs_oldest_runnable_age_seconds{{{D}}})',
          op=">", threshold=1800, for_="5m", nodata="OK",

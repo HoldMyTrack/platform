@@ -68,13 +68,22 @@ var (
 		Help: "Object store requests by R2 billing class.",
 	}, []string{"class"})
 
-	// MailSent counts the emails the API tried to send through SMTP, by outcome ("sent" or
-	// "failed"): a failure is only logged where it happens, so this is what notices the provider
-	// refusing every message (internal/mail).
+	// MailSent counts the emails this process tried to send, by outcome ("sent" or "failed"): a
+	// failure is only logged where it happens, so this is what notices the provider refusing
+	// every message (internal/mail). Both outcomes start at zero (init), since increase() can't
+	// see a series appear with its first failure already counted.
 	MailSent = prometheus.NewCounterVec(prometheus.CounterOpts{
 		Name: "holdmytrack_mail_sent_total",
-		Help: "Emails the API tried to send through SMTP, by outcome.",
+		Help: "Emails this process tried to send, by outcome.",
 	}, []string{"outcome"})
+
+	// MailUp is 1 while the worker's mail check passes and 0 while it fails, by transport
+	// ("zeptomail", "smtp", or "none" when mail isn't configured): mail.RunCheck. Only the
+	// worker sets it, so the api exports no series of its own to read as down.
+	MailUp = prometheus.NewGaugeVec(prometheus.GaugeOpts{
+		Name: "holdmytrack_mail_up",
+		Help: "1 while the mail provider is reachable and takes the credentials, by transport.",
+	}, []string{"transport"})
 
 	// JobDuration is how long a job ran, by kind.
 	JobDuration = prometheus.NewHistogramVec(prometheus.HistogramOpts{
@@ -88,8 +97,10 @@ func init() {
 	Registry.MustRegister(
 		collectors.NewGoCollector(),
 		collectors.NewProcessCollector(collectors.ProcessCollectorOpts{}),
-		HTTPRequests, HTTPDuration, HTTPPanics, JobsFinished, JobDuration, R2Operations, MailSent,
+		HTTPRequests, HTTPDuration, HTTPPanics, JobsFinished, JobDuration, R2Operations, MailSent, MailUp,
 	)
+	MailSent.WithLabelValues("sent")
+	MailSent.WithLabelValues("failed")
 }
 
 // StatusClass is "2xx" for 200–299 and so on.

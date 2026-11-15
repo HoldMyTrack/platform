@@ -183,6 +183,7 @@ func main() {
 			log.Error("mail", "err", err)
 			os.Exit(1)
 		}
+		go mail.RunCheck(ctx, mailer, 5*time.Minute, log)
 		notifier := &worker.Notifier{Mailer: mailer, BaseURL: cfg.AppBaseURL}
 		go budget.RunFlusher(ctx, pool, log)
 		gate := budget.NewGate(pool, cfg.R2DailyBudgetUSD, log)

@@ -111,40 +111,11 @@ var sendTimeout = 30 * time.Second
 // verification mail is owed once the account exists, whether or not the client that asked is
 // still there.
 func (s *smtpSender) Send(ctx context.Context, to, subject, body string) error {
-	ctx = context.WithoutCancel(ctx)
-	deadline := time.Now().Add(sendTimeout)
-	addr := net.JoinHostPort(s.host, s.port)
-	conn, err := (&net.Dialer{Deadline: deadline}).DialContext(ctx, "tcp", addr)
+	client, done, err := s.open(ctx)
 	if err != nil {
-		return fmt.Errorf("mail: dial %s: %w", addr, err)
+		return err
 	}
-	defer conn.Close()
-	if err := conn.SetDeadline(deadline); err != nil {
-		return fmt.Errorf("mail: deadline: %w", err)
-	}
-
-	client, err := smtp.NewClient(conn, s.host)
-	if err != nil {
-		return replyError("new client", err)
-	}
-	defer client.Close()
-
-	if ok, _ := client.Extension("STARTTLS"); ok {
-		if err := client.StartTLS(&tls.Config{ServerName: s.host}); err != nil {
-			return replyError("starttls", err)
-		}
-	} else if needsTLS(s.host) {
-		// Not sent in the clear: every message carries a sign-in, reset or verification link,
-		// and a server, or something in between, that drops STARTTLS would expose them.
-		return fmt.Errorf("mail: %s offers no STARTTLS", s.host)
-	}
-
-	if s.username != "" {
-		if err := client.Auth(smtp.PlainAuth("", s.username, s.password, s.host)); err != nil {
-			return replyError("auth", err)
-		}
-	}
-
+	defer done()
 	if err := client.Mail(s.from.Address); err != nil {
 		return replyError("MAIL FROM", err)
 	}
@@ -163,6 +134,57 @@ func (s *smtpSender) Send(ctx context.Context, to, subject, body string) error {
 		return replyError("close body", err)
 	}
 	return replyError("QUIT", client.Quit())
+}
+
+// Check connects, upgrades and authenticates as Send does, then quits without sending.
+func (s *smtpSender) Check(ctx context.Context) error {
+	client, done, err := s.open(ctx)
+	if err != nil {
+		return err
+	}
+	defer done()
+	return replyError("QUIT", client.Quit())
+}
+
+// open dials, upgrades to TLS and authenticates. done closes the client and its connection.
+func (s *smtpSender) open(ctx context.Context) (client *smtp.Client, done func(), err error) {
+	ctx = context.WithoutCancel(ctx)
+	deadline := time.Now().Add(sendTimeout)
+	addr := net.JoinHostPort(s.host, s.port)
+	conn, err := (&net.Dialer{Deadline: deadline}).DialContext(ctx, "tcp", addr)
+	if err != nil {
+		return nil, nil, fmt.Errorf("mail: dial %s: %w", addr, err)
+	}
+	if err := conn.SetDeadline(deadline); err != nil {
+		conn.Close()
+		return nil, nil, fmt.Errorf("mail: deadline: %w", err)
+	}
+	client, err = smtp.NewClient(conn, s.host)
+	if err != nil {
+		conn.Close()
+		return nil, nil, replyError("new client", err)
+	}
+	done = func() { client.Close(); conn.Close() }
+
+	if ok, _ := client.Extension("STARTTLS"); ok {
+		if err := client.StartTLS(&tls.Config{ServerName: s.host}); err != nil {
+			done()
+			return nil, nil, replyError("starttls", err)
+		}
+	} else if needsTLS(s.host) {
+		// Not sent in the clear: every message carries a sign-in, reset or verification link,
+		// and a server, or something in between, that drops STARTTLS would expose them.
+		done()
+		return nil, nil, fmt.Errorf("mail: %s offers no STARTTLS", s.host)
+	}
+
+	if s.username != "" {
+		if err := client.Auth(smtp.PlainAuth("", s.username, s.password, s.host)); err != nil {
+			done()
+			return nil, nil, replyError("auth", err)
+		}
+	}
+	return client, done, nil
 }
 
 // needsTLS reports whether mail to host must be encrypted: everywhere it could cross a network
