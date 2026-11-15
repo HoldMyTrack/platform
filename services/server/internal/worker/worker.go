@@ -47,6 +47,7 @@ const accountPurgeInterval = time.Minute
 type job struct {
 	id      int64
 	kind    string
+	userID  string // "" for a job no account owns
 	payload []byte
 }
 
@@ -322,7 +323,7 @@ const claimQuery = `
 			 WHERE s.user_id = h.user_id AND (s.kind = ANY($2)) = NOT $3) AS served
 		FROM heads h
 	)
-	SELECT j.id, j.kind, j.payload, j.attempts
+	SELECT j.id, j.kind, COALESCE(j.user_id::text, ''), j.payload, j.attempts
 	FROM jobs j JOIN ranked r ON r.id = j.id
 	WHERE j.state = 'pending'
 	  AND (j.locked_at IS NULL OR j.locked_at < NOW() - make_interval(secs => $1))
@@ -339,7 +340,7 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 
 	var j job
 	var attempts int
-	err = tx.QueryRow(ctx, claimQuery, claimLease.Seconds(), l.kinds, l.rest).Scan(&j.id, &j.kind, &j.payload, &attempts)
+	err = tx.QueryRow(ctx, claimQuery, claimLease.Seconds(), l.kinds, l.rest).Scan(&j.id, &j.kind, &j.userID, &j.payload, &attempts)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return false, nil
 	}
@@ -434,7 +435,7 @@ func claimAndRun(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, 
 // another kind has none. A job cut off by a shutdown never gets here: it is handed back with
 // its bytes.
 func discardFailedRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, j job) {
-	if j.kind != "ingest" {
+	if j.kind != "ingest" || j.userID == "" {
 		return
 	}
 	// Cleanup after a failure the job already reported: whatever goes wrong here is logged, and
@@ -448,7 +449,7 @@ func discardFailedRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	if err := json.Unmarshal(j.payload, &ij); err != nil {
 		return
 	}
-	if err := ingest.DiscardRaw(ctx, pool, store, j.id, ij.UserID, ij.RawPayloadKey); err != nil {
+	if err := ingest.DiscardRaw(ctx, pool, store, j.id, j.userID, ij.RawPayloadKey); err != nil {
 		log.Error("failed ingest's original not discarded", "job_id", j.id, "err", err)
 	}
 }
