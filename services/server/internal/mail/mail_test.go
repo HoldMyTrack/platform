@@ -36,7 +36,7 @@ func TestMessageEncodesSubject(t *testing.T) {
 func TestLogSenderKeepsBodiesOutOfARealDeploymentsLog(t *testing.T) {
 	for _, logBodies := range []bool{false, true} {
 		var buf bytes.Buffer
-		s := New("", "", "", "", "", logBodies, slog.New(slog.NewTextHandler(&buf, nil)))
+		s := New(Config{}, logBodies, slog.New(slog.NewTextHandler(&buf, nil)))
 		if err := s.Send(context.Background(), "a@x", "Reset", "https://app.example/reset?token=secret"); err != nil {
 			t.Fatal(err)
 		}
@@ -80,7 +80,7 @@ func TestSendErrorLeavesOutTheReplyText(t *testing.T) {
 	}()
 
 	host, port, _ := net.SplitHostPort(ln.Addr().String())
-	s := New(host, port, "", "", "from@holdmytrack.app", false, slog.New(slog.DiscardHandler))
+	s := New(Config{SMTPHost: host, SMTPPort: port, From: "from@holdmytrack.app"}, false, slog.New(slog.DiscardHandler))
 	err = s.Send(context.Background(), "user@example.com", "subject", "body")
 	if err == nil {
 		t.Fatal("rejected recipient: want an error")
@@ -110,7 +110,7 @@ func TestSendGivesUpOnASilentServer(t *testing.T) {
 	sendTimeout = 200 * time.Millisecond
 
 	host, port, _ := net.SplitHostPort(ln.Addr().String())
-	s := New(host, port, "", "", "from@holdmytrack.app", false, slog.New(slog.DiscardHandler))
+	s := New(Config{SMTPHost: host, SMTPPort: port, From: "from@holdmytrack.app"}, false, slog.New(slog.DiscardHandler))
 	start := time.Now()
 	if err := s.Send(context.Background(), "user@example.com", "subject", "body"); err == nil {
 		t.Fatal("a server that never greets: want an error")

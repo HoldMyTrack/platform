@@ -27,7 +27,7 @@ func TestSendsAreCountedByOutcome(t *testing.T) {
 	failed := testutil.ToFloat64(metrics.MailSent.WithLabelValues("failed"))
 	sent := testutil.ToFloat64(metrics.MailSent.WithLabelValues("sent"))
 
-	s := New("127.0.0.1", port, "u", "p", "noreply@example.test", false, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	s := New(Config{SMTPHost: "127.0.0.1", SMTPPort: port, SMTPUsername: "u", SMTPPassword: "p", From: "noreply@example.test"}, false, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err := s.Send(context.Background(), "a@example.test", "Hi", "Body"); err == nil {
 		t.Fatal("a send to a closed port succeeded")
 	}
@@ -35,7 +35,7 @@ func TestSendsAreCountedByOutcome(t *testing.T) {
 		t.Errorf("failed counted %v times, want 1", got)
 	}
 
-	dev := New("", "", "", "", "", false, slog.New(slog.NewTextHandler(io.Discard, nil)))
+	dev := New(Config{}, false, slog.New(slog.NewTextHandler(io.Discard, nil)))
 	if err := dev.Send(context.Background(), "a@example.test", "Hi", "Body"); err != nil {
 		t.Fatal(err)
 	}

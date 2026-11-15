@@ -390,7 +390,7 @@ Email and password with server-side sessions, owned end to end, so no vendor can
 
 **An email change waits for proof**: the verification row carries the new address, and verifying applies it with the account row locked. Applying it at once let anyone take an unproven address, blocking its owner's signup and, after a reset, handing them an account whose provider link belonged to someone else.
 
-**Mail** (`internal/mail`) is plain SMTP. With `SMTP_HOST` unset it logs messages in dev, but on an `https://` deployment only that a message wasn't sent, since a logged link opens the account.
+**Mail** (`internal/mail`) goes through ZeptoMail's HTTPS API when `ZEPTOMAIL_TOKEN` is set, since DigitalOcean blocks outgoing SMTP, and plain SMTP otherwise. With neither configured it logs messages in dev, but on an `https://` deployment only that a message wasn't sent, since a logged link opens the account.
 
 ```mermaid
 sequenceDiagram

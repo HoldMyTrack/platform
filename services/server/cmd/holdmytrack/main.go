@@ -523,8 +523,8 @@ func serveUntilDone(ctx context.Context, srv *http.Server, ln net.Listener, drai
 }
 
 // newMailer is the account emails' sender, for `serve` (verification, reset) and `work` (a
-// finished data export). Bodies go to the log only off a real deployment; on one, an unset
-// SMTP_HOST is a misconfiguration worth a warning at start, not a reason to log live account
+// finished data export). Bodies go to the log only off a real deployment; on one, mail left
+// unconfigured is a misconfiguration worth a warning at start, not a reason to log live account
 // links.
 func newMailer(cfg config.Config, log *slog.Logger, mode string) mail.Sender {
 	// SMTP_FROM falls back to SMTP_USERNAME: the account authenticating is usually the one
@@ -533,9 +533,14 @@ func newMailer(cfg config.Config, log *slog.Logger, mode string) mail.Sender {
 	if smtpFrom == "" {
 		smtpFrom = cfg.SMTPUsername
 	}
-	realDeployment := strings.HasPrefix(cfg.AppBaseURL, "https://")
-	if realDeployment && cfg.SMTPHost == "" {
-		log.Warn(mode + ": SMTP_HOST not set; account emails will not be sent")
+	mc := mail.Config{
+		ZeptoMailURL: cfg.ZeptoMailURL, ZeptoMailToken: cfg.ZeptoMailToken,
+		SMTPHost: cfg.SMTPHost, SMTPPort: cfg.SMTPPort, SMTPUsername: cfg.SMTPUsername, SMTPPassword: cfg.SMTPPassword,
+		From: smtpFrom,
 	}
-	return mail.New(cfg.SMTPHost, cfg.SMTPPort, cfg.SMTPUsername, cfg.SMTPPassword, smtpFrom, !realDeployment, log)
+	realDeployment := strings.HasPrefix(cfg.AppBaseURL, "https://")
+	if realDeployment && !mc.Configured() {
+		log.Warn(mode + ": neither ZEPTOMAIL_TOKEN nor SMTP_HOST set; account emails will not be sent")
+	}
+	return mail.New(mc, !realDeployment, log)
 }

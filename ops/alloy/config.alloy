@@ -46,7 +46,7 @@ loki.process "scrub" {
 		}
 
 		// internal/mail logs the recipient, and off a real deployment the message itself (a
-		// reset link), when SMTP_HOST is unset. Never meant to happen here; dropped if it does.
+		// reset link), when no mail is configured. Never meant to happen here; dropped if it does.
 		stage.drop {
 			source              = "msg"
 			expression          = "^mail: "
