@@ -1,6 +1,8 @@
-// Package pngenc encodes PNGs reusing the encoder's buffers between calls. png.Encode allocates
-// them afresh each time, about a megabyte for a 256 px tile, and a fog render encodes
-// one per changed tile.
+// Package pngenc encodes PNGs reusing the encoder's buffers between calls, for fog tiles.
+// png.Encode allocates them afresh each time, about a megabyte for a 256 px tile, and a fog
+// render encodes one per changed tile. A pooled buffer keeps the last image it encoded, and
+// that PNG's bytes, alive until the pool is collected, so a large image that is encoded rarely
+// (an avatar, a stats card) is better encoded with png.Encode.
 package pngenc
 
 import (
