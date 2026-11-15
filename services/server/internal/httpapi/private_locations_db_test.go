@@ -311,3 +311,36 @@ func TestHiddenActivitiesCount(t *testing.T) {
 		t.Errorf("count %d, want 2", resp.Count)
 	}
 }
+
+// Overlapping locations clip as one shape, so an end can lie past where a small location's own
+// radius reaches. Deleting it still reprocesses that activity, which would otherwise stay
+// clipped by a location that no longer exists.
+func TestDeletingAnOverlappingLocationFindsEndsPastItsOwnReach(t *testing.T) {
+	d := newDBTestWithS3(t, newMemS3())
+	ctx := context.Background()
+	me := d.newAccount(false)
+	walk := d.ingestNorth(me, "walk.gpx", 10.0)
+	north := func(m float64) float64 { return 50.0 + m/111195.0 }
+
+	var big, small privateLocation
+	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 300}), http.StatusCreated, &big)
+	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Yard", "lon": 10.0, "lat": north(290), "radius_m": 100}), http.StatusCreated, &small)
+	// The track as the two clipped it: starting 690 m north, 400 m from the small one's center,
+	// past the 225 m twice its own radius reaches.
+	if _, err := d.pool.Exec(ctx, `
+		UPDATE activities SET trajectory = ST_SetSRID(ST_MakeLine(ST_MakePointM(10.0, $2, 0), ST_MakePointM(10.0, $3, 1)), 4326)
+		WHERE id = $1
+	`, walk, north(690), north(2000)); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.pool.Exec(ctx, `DELETE FROM jobs WHERE user_id = $1 AND kind = 'reprivacy'`, me.id); err != nil {
+		t.Fatal(err)
+	}
+
+	if rec := d.do(me, "DELETE", "/v1/private-locations/"+small.ID, nil); rec.Code != http.StatusNoContent {
+		t.Fatalf("delete: %d %s", rec.Code, rec.Body)
+	}
+	if jobs := d.reprivacyJobs(me); len(jobs) != 1 || !slices.Contains(jobs[0].ActivityIDs, walk) {
+		t.Fatalf("after deleting the small location, jobs %+v, want one reprocessing walk", jobs)
+	}
+}
