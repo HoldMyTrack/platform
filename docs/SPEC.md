@@ -683,7 +683,7 @@ Shows what OSM has about the place, a way to copy its address or coordinates, it
 
 ### FR-14.4 Show in this area
 
-From zoom 10 to 13, the ticked categories' places in the visible map load when asked: at most 2,000, named first, spread evenly, with the area's total. A view across the antimeridian works either way round.
+From zoom 10 to 13, the ticked categories' places in the visible map load when asked: at most 2,000, named first, spread evenly, with the area's total. A view across the antimeridian works either way round; one more than 10° across or down is refused.
 
 ### FR-14.5 The tiles
 
