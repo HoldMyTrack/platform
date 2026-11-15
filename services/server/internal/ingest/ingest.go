@@ -290,8 +290,9 @@ func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKe
 	return act, nil
 }
 
-// keepValid drops the points no place on Earth has — a NaN or infinite coordinate, a latitude
-// past a pole, a longitude past the antimeridian — and an elevation that isn't finite. No
+// keepValid drops the points no map can place — a NaN or infinite coordinate, a latitude at or
+// past a pole, which Web Mercator puts at infinity, a longitude past the antimeridian — and an
+// elevation that isn't finite. No
 // parser checks ranges (a GPX attribute reads "Inf" as readily as a number, and a phone sync
 // sends whatever it sends), and one such point anywhere breaks everything downstream: the
 // tracks tile query's ST_Transform fails for every tile its bounding box covers, mask
@@ -301,7 +302,7 @@ func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKe
 func keepValid(points []parse.Point) []parse.Point {
 	valid := points[:0:0]
 	for _, p := range points {
-		if !(p.Lat >= -90 && p.Lat <= 90 && p.Lon >= -180 && p.Lon <= 180) { // false for NaN too
+		if !(p.Lat > -90 && p.Lat < 90 && p.Lon >= -180 && p.Lon <= 180) { // false for NaN too
 			continue
 		}
 		if p.Elevation != nil && (math.IsNaN(float64(*p.Elevation)) || math.IsInf(float64(*p.Elevation), 0)) {
