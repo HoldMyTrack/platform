@@ -11,6 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // startSession returns the new session id, alongside setting it as the holdmytrack_session
@@ -146,11 +148,7 @@ func timezoneFromContext(ctx context.Context) string {
 // since every stored value was already validated with time.LoadLocation before being written
 // (handleSignup, handleUpdateSettings), so this should never actually fail in practice.
 func locationFromContext(ctx context.Context) *time.Location {
-	loc, err := time.LoadLocation(timezoneFromContext(ctx))
-	if err != nil {
-		return time.UTC
-	}
-	return loc
+	return zoneinfo.LoadOr(timezoneFromContext(ctx), time.UTC)
 }
 
 // requireAuth wraps a handler that needs a signed-in account, passing the resolved authInfo in

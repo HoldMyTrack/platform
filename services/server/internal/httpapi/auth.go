@@ -15,6 +15,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // Email+password auth, server-side sessions (migrations/0001_users_and_auth.sql) — resolved toward
@@ -71,7 +72,7 @@ func normalizeTimezone(raw string) (tz string, ok bool) {
 	if raw == "" {
 		return "", false
 	}
-	if _, err := time.LoadLocation(raw); err != nil {
+	if _, err := zoneinfo.Load(raw); err != nil {
 		return "", false
 	}
 	return web.CurrentTimezoneName(raw), true

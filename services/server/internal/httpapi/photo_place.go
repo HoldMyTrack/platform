@@ -12,6 +12,8 @@ import (
 
 	"github.com/jackc/pgx/v5"
 	_ "golang.org/x/image/webp" // image.DecodeConfig for an uploaded WebP
+
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // placeFromFields places a photo from what the client read of its EXIF and where the user put
@@ -182,7 +184,7 @@ func (s *Server) placePhoto(ctx context.Context, activityID string, clock photoC
 		if err := s.pool.QueryRow(ctx, `SELECT timezone FROM activities WHERE id = $1`, activityID).Scan(&tz); err != nil {
 			return nil, nil, err
 		}
-		if loc, err := time.LoadLocation(tz); err == nil {
+		if loc, err := zoneinfo.Load(tz); err == nil {
 			home = loc
 		}
 		takenAt = resolveWallClock(*clock.local, home, onTrack)

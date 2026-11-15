@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // Units: the distance/elevation formatting the server-rendered pages need, ported from
@@ -83,7 +84,7 @@ func FormatHours(l *i18n.Localizer, seconds int64) string {
 // 14:05" — what Settings' Timezone field shows under itself, and the same shape the page's
 // script renders with Intl.DateTimeFormat. "" for a zone Go can't load.
 func LocalTime(l *i18n.Localizer, at time.Time, zone string) string {
-	loc, err := time.LoadLocation(zone)
+	loc, err := zoneinfo.Load(zone)
 	if err != nil || zone == "" {
 		return ""
 	}

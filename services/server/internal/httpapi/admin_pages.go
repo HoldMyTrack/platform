@@ -11,6 +11,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // The admin panel (IMPLEMENTATION.md §4.20, docs/SPEC.md FR-11): every account, and
@@ -275,11 +276,7 @@ func adminDuration(seconds int64) string {
 
 // adminLocation is the account's own timezone, so dates read as that account saw them.
 func adminLocation(tz string) *time.Location {
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		return time.UTC
-	}
-	return loc
+	return zoneinfo.LoadOr(tz, time.UTC)
 }
 
 // SetAdmin grants or revokes the admin panel for the account with this email — the

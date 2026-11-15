@@ -12,6 +12,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // The Profile page (ADR-0012, IMPLEMENTATION.md §4.8, docs/SPEC.md FR-6 and FR-8): the
@@ -115,10 +116,7 @@ func (s *Server) handleProfilePage(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *pageAccount, shade, bucket, open string, now time.Time) (profileView, error) {
 	userID, tz := acct.info.userID, acct.info.timezone
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		loc = time.UTC
-	}
+	loc := zoneinfo.LoadOr(tz, time.UTC)
 	imperial := web.Imperial(acct.profile.Country)
 	now = now.In(loc)
 	currentYear := now.Year()
