@@ -146,24 +146,24 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 			INSERT INTO activities (
 				user_id, source, source_detail, external_id,
 				activity_type, distance_meters, duration_seconds, moving_seconds,
-				elevation_gain_m, avg_speed_mps, started_at,
+				elevation_gain_m, started_at,
 				trajectory, raw_payload_key, name, description, ingest_complete,
 				timezone, recorded_started_at, recorded_ended_at, raw_bytes,
 				editable_times
 			) VALUES (
 				$1, $2, $3, $4,
 				$5, $6, $7, $8,
-				$9, $10, $11,
-				`+trajectorySQL("$12", "$13", "$14")+`,
-				$15, NULLIF($16, ''), NULLIF($17, ''), $18,
-				`+geo.TimezoneAtSQL("$19::float8", "$20::float8", "$1")+`,
-				$21, $22, NULLIF($23::bigint, 0),
-				$24
+				$9, $10,
+				`+trajectorySQL("$11", "$12", "$13")+`,
+				$14, NULLIF($15, ''), NULLIF($16, ''), $17,
+				`+geo.TimezoneAtSQL("$18::float8", "$19::float8", "$1")+`,
+				$20, $21, NULLIF($22::bigint, 0),
+				$23
 			)
 			ON CONFLICT (user_id, source, external_id) WHERE external_id IS NOT NULL DO NOTHING
 			RETURNING id
 		)
-		SELECT id, true, $18 FROM ins
+		SELECT id, true, $17 FROM ins
 		UNION ALL
 		SELECT id, false, ingest_complete FROM activities
 		WHERE user_id = $1 AND source = $2 AND external_id = $4
@@ -172,7 +172,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 	`,
 		job.UserID, job.Source, job.SourceDetail, job.ExternalID,
 		act.ActivityType, m.distanceM, m.durationS, m.movingS,
-		m.elevationGainM, m.avgSpeedMps, startedAt,
+		m.elevationGainM, startedAt,
 		pp.simpLons, pp.simpLats, pp.simpTs,
 		job.RawPayloadKey, act.Name, act.Description, hidden,
 		act.Points[0].Lon, act.Points[0].Lat,
@@ -541,7 +541,6 @@ type metrics struct {
 	durationS      int
 	movingS        int
 	elevationGainM float64
-	avgSpeedMps    float64
 }
 
 // movingSpeedThresholdMps is the speed below which a segment counts as stopped, not moving,
@@ -576,11 +575,5 @@ func computeMetrics(points []parse.Point, edit *TrackEdit) metrics {
 	m.durationS = int(points[len(points)-1].Time.Sub(points[0].Time).Seconds())
 	// Rounded where elapsed time is cut, so never past it: 10.6 s of moving in 10.6 s is 10.
 	m.movingS = min(int(math.Round(movingS)), m.durationS)
-	if m.durationS > 0 {
-		m.avgSpeedMps = m.distanceM / float64(m.durationS)
-	}
-	if math.IsNaN(m.avgSpeedMps) || math.IsInf(m.avgSpeedMps, 0) {
-		m.avgSpeedMps = 0
-	}
 	return m
 }

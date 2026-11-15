@@ -47,8 +47,7 @@ func TestTrackEditPastTheTileLimitChangesNothing(t *testing.T) {
 	before := read()
 
 	// The middle point dragged to near the far side of the Earth: its two segments cross far
-	// more map tiles than one activity may touch. The points are days apart, so the track's
-	// speed still fits its column and only the tile limit refuses it.
+	// more map tiles than one activity may touch.
 	middle := time.Date(2026, 5, 11, 10, 0, 0, 0, time.UTC).UnixMilli()
 	edit := map[string]any{"move": map[int64][2]float64{middle: {-170, -50}}}
 	d.decode(d.do(me, http.MethodPost, "/v1/activities/"+res.ActivityID+"/track-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)

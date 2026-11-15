@@ -16,7 +16,7 @@ The question came up while looking at whether to also read heart rate from Healt
 
 - Heart rate is never read — not from a file, not from Health Connect — never stored and never shown. The parsers skip it, `JSONPoint` has no field for it (an old client that still sends `heart_rate` is ignored, not rejected), and the database has no column for it.
 - The profile card goes on both clients, with its toggle and readout.
-- Pace stays, as route context: the focused activity's track is colored by pace (`SPEC.md` FR-4.6), and average speed and moving time are computed. `GET /v1/activities/{id}/track-metrics` returns position and speed per vertex and nothing else.
+- Pace stays, as route context: the focused activity's track is colored by pace (`SPEC.md` FR-4.6), and moving time is computed. `GET /v1/activities/{id}/track-metrics` returns position and speed per vertex and nothing else.
 - Elevation stays as route data: per-point `elevation_m`, elevation gain, the Trends totals and GPX export.
 - The original upload is kept as-is. It can contain heart rate, but it is only ever read for its route (to rebuild the activity after a track edit or a Private location change), and it is deleted with the activity. The About and Help pages say so.
 
