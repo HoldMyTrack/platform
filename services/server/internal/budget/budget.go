@@ -135,6 +135,9 @@ func Ratio(ctx context.Context, pool *pgxpool.Pool, daily float64, now time.Time
 	return spend(a, b) / daily, nil
 }
 
+// readTimeout bounds Gate's read of the day's total.
+const readTimeout = 2 * time.Second
+
 // Gate answers what the day's spend has stopped, reading the total at most every
 // refreshInterval. A nil Gate stops nothing, for a process or test without a budget. A failed
 // read keeps the last answer: a database too troubled to answer this is the database's problem,
@@ -144,9 +147,10 @@ type Gate struct {
 	daily float64
 	log   *slog.Logger
 
-	mu      sync.Mutex
-	stage   Stage
-	checked time.Time
+	mu         sync.Mutex
+	stage      Stage
+	checked    time.Time
+	refreshing bool
 }
 
 // NewGate is a Gate for a budget of daily US dollars a day.
@@ -160,13 +164,25 @@ func (g *Gate) Stage(ctx context.Context) Stage {
 		return Normal
 	}
 	g.mu.Lock()
-	defer g.mu.Unlock()
 	now := time.Now()
-	if now.Sub(g.checked) < refreshInterval && day(now).Equal(day(g.checked)) {
-		return g.stage
+	if g.refreshing || now.Sub(g.checked) < refreshInterval && day(now).Equal(day(g.checked)) {
+		s := g.stage
+		g.mu.Unlock()
+		return s
 	}
+	// One request reads, outside the lock; the rest get the last stage meanwhile rather than
+	// queue behind a slow database.
+	g.refreshing = true
 	g.checked = now
-	ratio, err := Ratio(ctx, g.pool, g.daily, now)
+	g.mu.Unlock()
+	// On a context of its own: the request that happens to refresh may be cancelled (its client
+	// gone), and that must not cost every request the next refreshInterval's answer.
+	rctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), readTimeout)
+	defer cancel()
+	ratio, err := Ratio(rctx, g.pool, g.daily, now)
+	g.mu.Lock()
+	defer g.mu.Unlock()
+	g.refreshing = false
 	if err != nil {
 		g.log.Error("budget: read failed, keeping the last stage", "err", err)
 		return g.stage
