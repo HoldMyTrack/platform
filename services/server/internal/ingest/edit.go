@@ -192,8 +192,9 @@ func processTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	// Rendered here, in the job, rather than enqueued as `render_fog` jobs the way ingest does
 	// it, so each pass is done before the step after it. A `render_fog` job an earlier upload
 	// left can still run in its own lane beside this one; RenderUser runs one account's passes
-	// one at a time, so the two never race over the same dirty flags. First, with the activity Pending (EnqueueTrackEdit dirtied its tiles), so it drops out
-	// of Fog while it's reprocessed.
+	// one at a time, so the two never race over the same dirty flags. First, with the activity
+	// Pending (EnqueueTrackEdit dirtied its tiles), so it drops out of Fog while it's
+	// reprocessed.
 	if err := fog.RenderUser(ctx, pool, store, job.UserID); err != nil {
 		return fmt.Errorf("edit: render fog: %w", err)
 	}
@@ -492,8 +493,7 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 
 	// Old ∪ new: a tile the reprocess cut the track out of needs recompositing just as much as
-	// one it still crosses. Deduplication is deliberately not re-run (§4.7.7) — this changes
-	// the copy's geometry, not which copy of the ride is the real one.
+	// one it still crosses.
 	if err := MarkFogTilesDirty(ctx, pool, userID, mergeTiles(oldTiles, newTiles)); err != nil {
 		return fmt.Errorf("mark fog tiles dirty: %w", err)
 	}
@@ -515,10 +515,10 @@ func tilesNotIn(a, b [][2]int) [][2]int {
 	return out
 }
 
-// EnqueueTrackEdit marks the activity pending (and its tiles dirty — markPendingTilesDirty)
-// and enqueues its `edit_track` job in one transaction, so an activity is never shown Pending without a job on its way, nor gets a job
-// while already pending. Returns false when the activity isn't this user's or already has an
-// edit pending.
+// EnqueueTrackEdit marks the activity pending (and its tiles dirty — markPendingTilesDirty) and
+// enqueues its `edit_track` job in one transaction, so an activity is never shown Pending
+// without a job on its way, nor gets a job while already pending. Returns false when the
+// activity isn't this user's or already has an edit pending.
 //
 // splitAt, when set, also splits the activity at that point timestamp (§4.7.8) in the same
 // transaction — insertSplitPiece — and the job reprocesses both pieces with job.Edit.

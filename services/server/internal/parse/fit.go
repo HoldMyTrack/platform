@@ -9,16 +9,12 @@ import (
 	"time"
 )
 
-// parseFIT is a minimal, honest subset of the FIT binary format: enough to read `record`
-// (global message 20) and `session` (global message 18, for activity_type — see
-// fit_sport.go) fields out of files produced by mainstream encoders (little-endian
-// architecture, no compressed-timestamp headers). It correctly walks every other message
-// type it doesn't understand (reading each field's declared byte width so the stream stays
-// aligned) rather than only handling those two and desyncing on anything else. It does not
-// implement developer-field *values* (only skips their declared bytes) and does not verify
-// CRCs. This is the parser most likely to need the most depth of the three formats — it
-// covers the common case, not the full FIT SDK surface. It refuses a file past maxPoints
-// positioned points, 0 for no cap.
+// parseFIT reads a subset of the FIT binary format: the `record` (global message 20) and
+// `session` (global message 18, for activity_type, fit_sport.go) fields of files from
+// mainstream encoders, with no compressed-timestamp headers. Every other message is walked by
+// its fields' declared widths, so the stream stays aligned. Developer fields' values are
+// skipped, and CRCs aren't checked. It refuses a file past maxPoints positioned points, 0 for
+// no cap.
 func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 	br := bufio.NewReader(r)
 
@@ -83,10 +79,8 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 
 		switch def.globalMesgNum {
 		case 18: // session — carries the activity's own sport/sub_sport (fields 5, 6).
-			// A multi-sport file can have more than one session message; last one read
-			// wins, a deliberate simplification rather than an oversight — there's no
-			// single obviously-correct "the whole file's type" when there's more than
-			// one, and this parser covers the common single-sport case (see doc comment).
+			// A multi-sport file has a session per sport; the last one read wins, since no one
+			// of them is the whole file's type.
 			var sport, subSport byte = 0xFF, 0xFF
 			if raw := def.value(5); len(raw) > 0 {
 				sport = raw[0]
@@ -152,8 +146,7 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 			}
 
 		default:
-			// Every other message type is just skipped — its bytes were already read
-			// above to keep the stream aligned, but nothing here needs its fields.
+			// Every other message's bytes were read above, keeping the stream aligned.
 		}
 	}
 
@@ -205,13 +198,11 @@ func (d *fitDef) value(num byte) []byte {
 
 // readDefinition reads a definition message: reserved, architecture, global_mesg_num,
 // num_fields, fields..., and — when the record header's bit 5 (devFields) said so — a
-// trailing developer-field count and that many (num, size, dev_data_index) triples. Those
-// bytes are read and skipped, not interpreted: values from developer fields on `record`
-// aren't extracted, but the byte stream stays correctly aligned for every message that
-// follows, which is the part that actually matters for not silently corrupting the rest of
-// the parse. Returns bytes consumed after the header byte.
+// trailing developer-field count and that many (num, size, dev_data_index) triples, recorded
+// only so their bytes are skipped in each data message. Returns bytes consumed after the
+// header byte.
 func readDefinition(br *bufio.Reader, devFields bool) (*fitDef, uint32, error) {
-	// reserved(1) + architecture(1) + global_mesg_num(2) = 4 bytes, not 5.
+	// reserved(1) + architecture(1) + global_mesg_num(2).
 	buf := make([]byte, 4)
 	if _, err := io.ReadFull(br, buf); err != nil {
 		return nil, 0, err

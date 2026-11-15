@@ -37,6 +37,12 @@ const (
 	// neighbor rendered too, not just the tile its coordinate floors into.
 	TileMarginPx = strokeRadiusPx
 
+	// drawMarginPx is how much larger than the tile renderActivityMask's canvas is on every
+	// side. gg's rasterizer folds coverage from just left of and above its canvas into the first
+	// column and row, so drawn on the tile alone, a corridor along a neighbour's edge painted a
+	// false strip along this tile's left or top edge, and Fog showed a seam there. On the larger
+	// canvas that fold lands in the margin, which is cropped. It need only clear the fold, a
+	// pixel; a stroke's width leaves room.
 	drawMarginPx = 4
 )
 
@@ -83,13 +89,6 @@ func renderActivityMask(lines ...[]pixelPoint) *image.Gray {
 	draw.Draw(gray, gray.Bounds(), dc.Image(), image.Point{X: drawMarginPx, Y: drawMarginPx}, draw.Src)
 	return gray
 }
-
-// drawMarginPx is how much larger than the tile renderActivityMask's canvas is on every side.
-// gg's rasterizer folds coverage from just left of and above its canvas into the first column
-// and row, so drawn on the tile alone, a corridor along a neighbour's edge painted a false strip
-// along this tile's left or top edge, and Fog showed a seam there. On the larger canvas that fold
-// lands in the margin, which is cropped. It need only clear the fold, a pixel; a stroke's width
-// leaves room.
 
 // minStepPx is the shortest move renderActivityMask draws: a point closer than this to the
 // last one drawn is skipped. gg's stroker breaks on segments a small fraction of a pixel long —

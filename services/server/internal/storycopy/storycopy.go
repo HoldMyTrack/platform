@@ -63,11 +63,11 @@ type source struct {
 //
 //   - into the Story an earlier copy of the same Story made for them (story_copies), or a new
 //     one with the Story's name and description when there's none, or it was deleted;
-//   - each live activity the recipient hasn't received before — an original is received once,
+//   - each activity the recipient hasn't received before — an original is received once,
 //     ever (received_origins), and one they recorded themselves, or hold a copy of, is skipped;
 //   - from the points the sender sees (ingest.DisplayedPoints: their Private locations and track
 //     edit applied), written as GPX and run through the ordinary ingest as the recipient's
-//     activity, so the recipient's own Private locations and duplicate check apply on top;
+//     activity, so the recipient's own Private locations apply on top;
 //   - with its name, type and description, and its photos as the recipient's rows over the same
 //     image files.
 //
@@ -142,7 +142,7 @@ func plan(sources []source) (ready int, retry bool) {
 	return ready, ready < len(sources)
 }
 
-// sourcesToCopy lists the Story's live activities with a track, and a raw payload to rebuild it
+// sourcesToCopy lists the Story's activities with a track, and a raw payload to rebuild it
 // from, that the recipient has neither received, recorded nor holds a copy of, oldest first.
 func sourcesToCopy(ctx context.Context, pool *pgxpool.Pool, job Job) ([]source, error) {
 	rows, err := pool.Query(ctx, `

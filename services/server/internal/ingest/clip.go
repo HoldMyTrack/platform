@@ -209,9 +209,10 @@ func reversed(points []parse.Point) []parse.Point {
 }
 
 // boundaryCrossing finds the point on the segment from outside to inside where it first enters
-// a zone: where clipStart starts measuring its extra stretch from. Bisection on the segment rather than a closed-form circle intersection: several
-// overlapping zones make the boundary a union of arcs, and "inside any" is all bisection
-// needs. 40 halvings takes even a 100 km segment below a millimetre.
+// a zone: where clipStart starts measuring its extra stretch from. Bisection on the segment
+// rather than a closed-form circle intersection: several overlapping zones make the boundary a
+// union of arcs, and "inside any" is all bisection needs. 40 halvings takes even a 100 km
+// segment below a millimetre.
 func boundaryCrossing(zones []Zone, outside, inside parse.Point) parse.Point {
 	lo, hi := 0.0, 1.0 // lo stays outside, hi stays inside
 	for i := 0; i < 40; i++ {

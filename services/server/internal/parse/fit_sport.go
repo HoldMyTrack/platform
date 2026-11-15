@@ -3,13 +3,10 @@ package parse
 import "fmt"
 
 // fitSportNames and fitSubSportNames are the FIT SDK's "sport" and "sub_sport" enum types
-// (global message 18 "session", fields 5 and 6) — transcribed programmatically, not by
-// hand, from python-fitparse's profile.py (github.com/dtcooper/python-fitparse), which is
-// itself auto-generated from Garmin's own FIT SDK Profile.xlsx. Hand-typing ~110 numeric
-// enum mappings that can't be verified against a live device is exactly the kind of thing
-// that goes silently wrong; generating them from a verified source instead removes that
-// risk. 254 ("all") is a real SDK value (a goals-only sentinel, per its own comment) kept
-// here for completeness even though it's very unlikely to appear in a recorded session.
+// (global message 18 "session", fields 5 and 6), transcribed programmatically from
+// python-fitparse's profile.py (github.com/dtcooper/python-fitparse), itself generated from
+// Garmin's FIT SDK Profile.xlsx. 254 ("all") is the SDK's goals-only value, kept for
+// completeness.
 var fitSportNames = map[byte]string{
 	0:   "generic",
 	1:   "running",
@@ -146,8 +143,6 @@ func sportName(sport, subSport byte) string {
 	if name, ok := fitSportNames[sport]; ok {
 		return name
 	}
-	// A real but unmapped value — this table is complete as of the fetched SDK profile,
-	// so reaching here means either a newer SDK revision or a nonconformant encoder, not a
-	// bug in the table. Honest fallback over silently discarding the value.
+	// A value the table lacks: a newer SDK revision, or a nonconformant encoder.
 	return fmt.Sprintf("sport_%d", sport)
 }

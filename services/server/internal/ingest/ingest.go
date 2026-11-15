@@ -1,12 +1,9 @@
-// Package ingest implements IMPLEMENTATION.md §4.1 steps 2, 3, 5, 6 — the
-// work-mode half of the ingestion pipeline — plus step 4's dirty-marking and, since the
-// per-activity mask redesign, the actual per-activity rendering too (internal/
-// fog.RenderActivityMasks): raw points are already in memory here, pre-simplification,
-// exactly why ARCHITECTURE.md §1.1 says coverage can't be derived from the simplified display trajectory,
-// and exactly why rendering one activity's own masks belongs here rather than in a
-// re-fetch-and-reparse step in internal/fog. The user-wide aggregate rebuild (compositing
-// every activity's masks touching a tile, and the z13..z0 pyramid above it) still lives in
-// internal/fog, run by a `render_fog` job this package enqueues but does not itself execute.
+// Package ingest is the worker's half of the ingestion pipeline (IMPLEMENTATION.md §4.1): it
+// parses an original, applies Private locations, stores the activity with its simplified
+// display track, and draws the activity's own Fog masks (fog.RenderActivityMasks) from the raw
+// points while they're in memory, since coverage can't come from the simplified track
+// (ARCHITECTURE.md §1.1). Compositing the tiles, and the z13..z0 pyramid above them, is
+// internal/fog's, run by a `render_fog` job this package enqueues.
 package ingest
 
 import (
@@ -29,8 +26,6 @@ import (
 // simplifyToleranceDeg is ST_SimplifyPreserveTopology's tolerance for the display trajectory
 // (§4.1 step 5), in degrees (the geometry's own units, WGS84). ~0.00003° is roughly 3 m at
 // the equator — small enough to preserve trail shape, large enough to matter on long tracks.
-// Not specified numerically in IMPLEMENTATION.md; chosen and documented here
-// as the value to revisit if display tracks look over- or under-simplified.
 const simplifyToleranceDeg = 0.00003
 
 // Job is what the `ingest` job's payload carries — everything the worker needs that isn't
@@ -165,7 +160,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 				$21, $22, NULLIF($23::bigint, 0),
 				$24
 			)
-			ON CONFLICT (user_id, source, external_id) WHERE external_id IS NOT NULL DO NOTHING -- $15 = raw_payload_key
+			ON CONFLICT (user_id, source, external_id) WHERE external_id IS NOT NULL DO NOTHING
 			RETURNING id
 		)
 		SELECT id, true, $18 FROM ins
