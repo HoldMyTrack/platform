@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 )
@@ -41,15 +43,20 @@ func (s *Server) SetTurnstile(siteKey, secret string) {
 
 // turnstileVerdict is the part of siteverify's answer the check reads.
 type turnstileVerdict struct {
-	Success bool `json:"success"`
+	Success    bool     `json:"success"`
+	ErrorCodes []string `json:"error-codes"`
 }
 
+// maxSiteverifyBytes bounds siteverify's answer, a few hundred bytes of JSON.
+const maxSiteverifyBytes = 64 << 10
+
 // verify asks Cloudflare whether token passed the challenge for this visitor. A missing token
-// fails without a request. An error means Cloudflare couldn't answer; the caller refuses the
-// signup either way, so the check can't be skipped by making it fail.
-func (t turnstile) verify(ctx context.Context, token, remoteIP string) (bool, error) {
+// fails without a request. An error means no visitor could pass: Cloudflare couldn't answer, or
+// refused the deployment's secret. The caller refuses the signup either way, so the check
+// can't be skipped by making it fail.
+func (t turnstile) verify(ctx context.Context, token, remoteIP string) (turnstileVerdict, error) {
 	if token == "" {
-		return false, nil
+		return turnstileVerdict{}, nil
 	}
 	form := url.Values{"secret": {t.secret}, "response": {token}}
 	if remoteIP != "" {
@@ -57,41 +64,43 @@ func (t turnstile) verify(ctx context.Context, token, remoteIP string) (bool, er
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, t.verifyURL, strings.NewReader(form.Encode()))
 	if err != nil {
-		return false, err
+		return turnstileVerdict{}, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	resp, err := t.client.Do(req)
 	if err != nil {
-		return false, err
+		return turnstileVerdict{}, err
 	}
 	defer resp.Body.Close()
 	if resp.StatusCode != http.StatusOK {
-		return false, fmt.Errorf("turnstile siteverify: status %d", resp.StatusCode)
+		return turnstileVerdict{}, fmt.Errorf("turnstile siteverify: status %d", resp.StatusCode)
 	}
 	var v turnstileVerdict
-	if err := json.NewDecoder(resp.Body).Decode(&v); err != nil {
-		return false, fmt.Errorf("turnstile siteverify: %w", err)
+	if err := json.NewDecoder(io.LimitReader(resp.Body, maxSiteverifyBytes)).Decode(&v); err != nil {
+		return turnstileVerdict{}, fmt.Errorf("turnstile siteverify: %w", err)
 	}
-	return v.Success, nil
+	if !v.Success && (slices.Contains(v.ErrorCodes, "missing-input-secret") || slices.Contains(v.ErrorCodes, "invalid-input-secret")) {
+		return turnstileVerdict{}, fmt.Errorf("turnstile siteverify: secret refused: %v", v.ErrorCodes)
+	}
+	return v, nil
 }
 
-// checkTurnstile refuses a /signup form whose token Cloudflare doesn't accept, when Turnstile is on.
+// checkTurnstile refuses a /signup form whose token Cloudflare doesn't accept, when Turnstile
+// is on: as the visitor's to fix, or, when no visitor could pass, as one to try later.
 func (s *Server) checkTurnstile(r *http.Request) error {
 	if !s.turnstile.enabled() {
 		return nil
 	}
-	ok, err := s.turnstile.verify(r.Context(), r.PostFormValue(turnstileTokenField), clientIP(r))
+	v, err := s.turnstile.verify(r.Context(), r.PostFormValue(turnstileTokenField), clientIP(r))
 	if err != nil {
 		s.log.Error("turnstile verify failed", "err", err)
+		return accountFailure(http.StatusServiceUnavailable, "error.turnstile_unavailable")
 	}
-	if !ok {
+	if !v.Success {
+		if len(v.ErrorCodes) > 0 {
+			s.log.Info("turnstile refused a signup", "codes", v.ErrorCodes)
+		}
 		return accountFailure(http.StatusBadRequest, "error.turnstile_failed")
 	}
 	return nil
-}
-
-// turnstileCSP is contentSecurityPolicy with the widget's script origin allowed, for the one
-// page that shows it.
-func turnstileCSP() string {
-	return strings.Replace(contentSecurityPolicy, "script-src 'self'", "script-src 'self' "+turnstileScriptOrigin, 1)
 }

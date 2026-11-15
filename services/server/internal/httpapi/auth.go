@@ -311,7 +311,7 @@ func (s *Server) handleSignup(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	userID, err := s.createAccountLimited(r, req.Email, req.Password, req.Timezone, requestLang(r))
+	userID, err := s.createAccountLimited(r, req.Email, req.Password, req.Timezone, requestLang(r), nil)
 	if err != nil {
 		s.writeAccountError(w, r, "signup", err)
 		return
@@ -322,8 +322,9 @@ func (s *Server) handleSignup(w http.ResponseWriter, r *http.Request) {
 // createAccountLimited is createAccount within the address's signup limit
 // (defaultSignupsPerHour), which only an account created counts. The slot is taken before the
 // account is made and given back if none is: counting afterwards let a burst of parallel
-// signups all pass the check before any was counted.
-func (s *Server) createAccountLimited(r *http.Request, email, password, timezone, lang string) (string, error) {
+// signups all pass the check before any was counted. check, when not nil, runs once the slot
+// is taken, so an address past its limit costs no call to Turnstile (checkTurnstile).
+func (s *Server) createAccountLimited(r *http.Request, email, password, timezone, lang string, check func(*http.Request) error) (string, error) {
 	// Input refused without a database round trip takes no slot from a real signup.
 	if _, err := validateCredentials(email, password); err != nil {
 		return "", err
@@ -332,7 +333,14 @@ func (s *Server) createAccountLimited(r *http.Request, email, password, timezone
 	if !s.signupLimiter.allow(addr) {
 		return "", accountFailure(http.StatusTooManyRequests, "error.signup_rate_limited")
 	}
-	userID, err := s.createAccount(r.Context(), email, password, timezone, lang)
+	var err error
+	if check != nil {
+		err = check(r)
+	}
+	var userID string
+	if err == nil {
+		userID, err = s.createAccount(r.Context(), email, password, timezone, lang)
+	}
 	if err != nil {
 		s.signupLimiter.refund(addr)
 	}
