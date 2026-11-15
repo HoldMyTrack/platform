@@ -439,15 +439,15 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 	if _, err := tx.Exec(ctx, `
 		UPDATE activities SET
 			distance_meters = $3, duration_seconds = $4, moving_seconds = $5,
-			elevation_gain_m = $6, avg_speed_mps = $7, started_at = $8,
-			trajectory = `+trajectorySQL("$9", "$10", "$11")+`,
-			track_edit = CASE WHEN $13 THEN $12::jsonb ELSE track_edit END,
-			timezone = `+geo.TimezoneAtSQL("$14::float8", "$15::float8", "$2")+`,
-			recorded_started_at = $16, recorded_ended_at = $17,
-			editable_times = $18
+			elevation_gain_m = $6, started_at = $7,
+			trajectory = `+trajectorySQL("$8", "$9", "$10")+`,
+			track_edit = CASE WHEN $12 THEN $11::jsonb ELSE track_edit END,
+			timezone = `+geo.TimezoneAtSQL("$13::float8", "$14::float8", "$2")+`,
+			recorded_started_at = $15, recorded_ended_at = $16,
+			editable_times = $17
 		WHERE id = $1 AND user_id = $2
 	`, activityID, userID,
-		m.distanceM, m.durationS, m.movingS, m.elevationGainM, m.avgSpeedMps, startedAt,
+		m.distanceM, m.durationS, m.movingS, m.elevationGainM, startedAt,
 		pp.simpLons, pp.simpLats, pp.simpTs,
 		editJSON, userEdit,
 		zonePoint.Lon, zonePoint.Lat,

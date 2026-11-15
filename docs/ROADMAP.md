@@ -20,6 +20,10 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] When `MIN_ANDROID_BUILD` next rises, drop the Heatmap stubs kept for older builds (`IMPLEMENTATION.md` §4.33).
 
+### Schema leftovers
+
+- [ ] Drop `activities.avg_speed_mps` in a release after the one that stopped writing it (`DEVELOPMENT.md` "Writing a migration"): nothing ever read it.
+
 ### After launch
 
 - [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 actions and the controller's sign-off.
