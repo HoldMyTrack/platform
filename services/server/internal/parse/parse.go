@@ -40,21 +40,35 @@ type Activity struct {
 // workout's FIT file, typically. ErrUnsupportedFormat is an extension no parser here reads.
 // Both are the person's file rather than a fault here, so ingest reports each as its own
 // failure code (ingest.FailureCode), which the apps show translated.
+// ErrTooManyPoints is a file past the cap ByExtensionUpTo was given, refused as the parser
+// reaches it rather than after holding them all.
 var (
 	ErrNoPoints          = errors.New("no track points with a position")
 	ErrUnsupportedFormat = errors.New("unrecognized extension")
+	ErrTooManyPoints     = fmt.Errorf("more than %d track points", MaxPoints)
 )
+
+// MaxPoints bounds a new upload's positioned points (ByExtensionUpTo): two days at one a
+// second, past any real activity. A 16 MiB FIT file of bare records holds about 1.9 million, half a gigabyte decoded.
+const MaxPoints = 200_000
 
 // ByExtension dispatches on the uploaded filename's extension and streams from r — callers
 // must not read r into memory first (IMPLEMENTATION.md §5.2; a 100-mile ride at 1 Hz is 36,000+ points).
 func ByExtension(filename string, r io.Reader) (Activity, error) {
+	return ByExtensionUpTo(filename, r, 0)
+}
+
+// ByExtensionUpTo is ByExtension refusing a file past maxPoints positioned points with
+// ErrTooManyPoints, as soon as the parser reaches it; 0 is no cap. A new upload is held to
+// MaxPoints; a stored original is read without one, so one kept before the cap still opens.
+func ByExtensionUpTo(filename string, r io.Reader, maxPoints int) (Activity, error) {
 	switch strings.ToLower(filepath.Ext(filename)) {
 	case ".gpx":
-		return ParseGPX(r)
+		return parseGPX(r, maxPoints)
 	case ".tcx":
-		return ParseTCX(r)
+		return parseTCX(r, maxPoints)
 	case ".fit":
-		return ParseFIT(r)
+		return parseFIT(r, maxPoints)
 	case ".json":
 		return ParseJSON(r)
 	default:
