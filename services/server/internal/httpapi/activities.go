@@ -301,7 +301,7 @@ func (s *Server) handleDeleteActivity(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if rawKey != nil {
-		s.removeUnreferencedRaw(ctx, activityID, *rawKey)
+		s.removeUnreferencedRaw(ctx, userID, activityID, *rawKey)
 	}
 	s.removeUnreferencedPhotoFiles(ctx, photoKeys)
 	// The track is gone from the tracks tiles now; the render below only bumps once it runs.
@@ -431,13 +431,15 @@ func (s *Server) handleActivityTrackMetrics(w http.ResponseWriter, r *http.Reque
 // after the row is gone, never before: a failed DELETE would otherwise leave an activity without
 // its original, and of two pieces deleted together each would see the other and both keep it.
 // raw_payload_key is content-addressed (raw/{userID}/{sha256(bytes)}{ext}), so the same file
-// uploaded twice, a split's pieces, or a re-upload still waiting for ingest can share it.
-func (s *Server) removeUnreferencedRaw(ctx context.Context, activityID, rawKey string) {
+// uploaded twice, a split's pieces, or a re-upload still waiting for ingest can share it. Every
+// key sits under its owner's prefix, so only the owner's activities can name it, and the check
+// reads them through the user_id index; raw_payload_key has none.
+func (s *Server) removeUnreferencedRaw(ctx context.Context, userID, activityID, rawKey string) {
 	var named bool
 	if err := s.pool.QueryRow(ctx, `
-		SELECT EXISTS (SELECT 1 FROM activities WHERE raw_payload_key = $1)
+		SELECT EXISTS (SELECT 1 FROM activities WHERE user_id = $2 AND raw_payload_key = $1)
 		    OR EXISTS (SELECT 1 FROM jobs WHERE kind = 'ingest' AND state = 'pending' AND payload->>'raw_payload_key' = $1)
-	`, rawKey).Scan(&named); err != nil {
+	`, rawKey, userID).Scan(&named); err != nil {
 		s.log.Error("activity delete: raw key reference check failed, keeping the original", "activity_id", activityID, "err", err)
 		return
 	}
