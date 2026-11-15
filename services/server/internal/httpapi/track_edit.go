@@ -8,6 +8,7 @@ import (
 
 	"github.com/jackc/pgx/v5"
 
+	"github.com/HoldMyTrack/platform/services/server/internal/budget"
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
@@ -150,6 +151,15 @@ func (s *Server) handleActivityTrackEdit(w http.ResponseWriter, r *http.Request)
 	}
 
 	if req.SplitAt != nil {
+		// Checking a split reads the original from object storage and parses it, as opening the
+		// editor does, so it counts against the same limit and stops with reads (budget).
+		if s.budget.Stage(r.Context()) >= budget.ReadsPaused {
+			writeBudgetPaused(w, r)
+			return
+		}
+		if limited(w, r, s.trackPointsLimiter, "error.track_points_rate_limit") {
+			return
+		}
 		status, key := s.checkSplit(r, userID, activityID, req.Edit, *req.SplitAt)
 		if key == "error.split_in_private" {
 			if !req.AllowHidden {

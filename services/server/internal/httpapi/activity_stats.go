@@ -301,6 +301,14 @@ func dateWindow(q url.Values, now time.Time, loc *time.Location) (first, last ti
 	if first.After(last) {
 		return first, last, badRequest{errors.New(`"from" must not be after "to"`)}
 	}
+	// Every bucket in the window is a row: 0001-01-01 to 9999-12-31 would be half a million
+	// weekly ones. 1970 is before any GPS track, and the Android profile asks from it.
+	if earliest := time.Date(1970, 1, 1, 0, 0, 0, 0, loc); first.Before(earliest) {
+		return first, last, badRequest{errors.New(`"from" must be 1970-01-01 or later`)}
+	}
+	if latest := now.AddDate(2, 0, 0); last.After(latest) {
+		return first, last, badRequest{errors.New(`"to" must be within two years from now`)}
+	}
 	return first, last, nil
 }
 
