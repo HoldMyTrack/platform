@@ -116,8 +116,8 @@ func TestPhotoPlacement(t *testing.T) {
 		if c.lon == 0 {
 			var refusal map[string]string
 			d.decode(rec, http.StatusUnprocessableEntity, &refusal)
-			if refusal["error"] != photoNeedsPlaceCode || refusal["message"] == "" {
-				t.Errorf("%s: refusal %v, want %s with a message", c.name, refusal, photoNeedsPlaceCode)
+			if refusal["error"] != "photo_needs_place" || refusal["message"] == "" {
+				t.Errorf("%s: refusal %v, want photo_needs_place with a message", c.name, refusal)
 			}
 			continue
 		}

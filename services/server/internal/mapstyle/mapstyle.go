@@ -73,14 +73,6 @@ func word(w string) string {
 // ORIGIN_PLACEHOLDER in apps/web/scripts/build-style.mjs.
 const originPlaceholder = "__HOLDMYTRACK_BASEMAP_ORIGIN__"
 
-// The satellite imagery source is generated with placeholders in place of a real tile URL and
-// credit (docs/SPEC.md FR-4.10): the URL carries a deployment's own key, and a deployment may
-// configure no imagery at all. Must match SATELLITE_PLACEHOLDER in build-style.mjs.
-const (
-	satelliteTilesPlaceholder       = "__HOLDMYTRACK_SATELLITE_TILES__"
-	satelliteAttributionPlaceholder = "__HOLDMYTRACK_SATELLITE_ATTRIBUTION__"
-)
-
 // The ids style.ts gives the imagery: SATELLITE_SOURCE and SATELLITE_LAYER_ID.
 const (
 	satelliteSource = "satellite"

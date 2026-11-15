@@ -62,10 +62,6 @@ var (
 	errPhotoInvalidJSON = errors.New("invalid request body")
 )
 
-// photoNeedsPlaceCode is the error code of an upload the server couldn't place (photoNeedsPlace):
-// the client asks the user where on the track it was taken and sends it again with route_at.
-const photoNeedsPlaceCode = "photo_needs_place"
-
 // photoKey is where a newly uploaded photo's image goes, and the image_key its row records. A
 // copy of the photo in a copied Story (§4.23) keeps the original's key, so the key, not the
 // row's owner and id, names the files from then on.

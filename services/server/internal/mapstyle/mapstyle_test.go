@@ -168,6 +168,14 @@ func decodeSatellite(t *testing.T, doc []byte) satelliteStyle {
 	return s
 }
 
+// The satellite imagery source is generated with placeholders in place of a real tile URL and
+// credit (docs/SPEC.md FR-4.10), which withSatellite replaces structurally. Must match
+// SATELLITE_PLACEHOLDER in apps/web/scripts/build-style.mjs.
+const (
+	satelliteTilesPlaceholder       = "__HOLDMYTRACK_SATELLITE_TILES__"
+	satelliteAttributionPlaceholder = "__HOLDMYTRACK_SATELLITE_ATTRIBUTION__"
+)
+
 func TestDocumentFillsSatellite(t *testing.T) {
 	sat := Satellite{
 		Tiles:       `https://tiles.example.com/sat/{z}/{x}/{y}.jpg?key=k&"quoted"`,
