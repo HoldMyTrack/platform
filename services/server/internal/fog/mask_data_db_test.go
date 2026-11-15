@@ -107,7 +107,7 @@ func TestRenderedMaskIsReadBackWithoutTheStore(t *testing.T) {
 
 	markDirty(t, pool, userID, tile)
 	var skipped atomic.Int64
-	if err := renderAndStoreTile(ctx, pool, store, userID, Zoom, tile[0], tile[1], &skipped); err != nil {
+	if err := renderAndStoreTile(ctx, pool, store, userID, Zoom, tile[0], tile[1], 0, &skipped); err != nil {
 		t.Fatal(err)
 	}
 	if n := gets.Load(); n != 0 {
@@ -138,7 +138,7 @@ func TestRenderCountsMasksWithoutPNG(t *testing.T) {
 	markDirty(t, pool, userID, tile)
 
 	var skipped atomic.Int64
-	if err := renderAndStoreTile(ctx, pool, store, userID, Zoom, tile[0], tile[1], &skipped); err != nil {
+	if err := renderAndStoreTile(ctx, pool, store, userID, Zoom, tile[0], tile[1], 0, &skipped); err != nil {
 		t.Fatal(err)
 	}
 	if n := skipped.Load(); n != 1 {

@@ -63,6 +63,22 @@ func tileDirty(t *testing.T, pool *pgxpool.Pool, userID string, zoom, x, y int) 
 // an activity deleted mid-render must not leave its old mask in the stored tile for good —
 // and always leaves its parent dirty, so the pyramid above survives an interrupted pass. It
 // stores both objects' sizes.
+// listedGen is the dirty_gen dirtyTiles lists for a dirty tile.
+func listedGen(t *testing.T, pool *pgxpool.Pool, userID string, z, x, y int) int64 {
+	t.Helper()
+	dirty, err := dirtyTiles(context.Background(), pool, userID, z)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, d := range dirty {
+		if d.x == x && d.y == y {
+			return d.gen
+		}
+	}
+	t.Fatalf("z%d/%d/%d not listed dirty", z, x, y)
+	return 0
+}
+
 func TestUpsertTileRenderedKeepsAMidRenderMark(t *testing.T) {
 	pool, userID := testAccount(t)
 	ctx := context.Background()
@@ -73,10 +89,7 @@ func TestUpsertTileRenderedKeepsAMidRenderMark(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	gen, err := tileDirtyGen(ctx, pool, userID, z, x, y)
-	if err != nil {
-		t.Fatal(err)
-	}
+	gen := listedGen(t, pool, userID, z, x, y)
 	// What MarkFogTilesDirty does when a delete lands while the render is compositing.
 	if _, err := pool.Exec(ctx,
 		`UPDATE fog_tiles SET dirty = true, dirty_gen = dirty_gen + 1 WHERE user_id = $1 AND zoom = $2 AND tile_x = $3 AND tile_y = $4`,
@@ -93,10 +106,7 @@ func TestUpsertTileRenderedKeepsAMidRenderMark(t *testing.T) {
 		t.Error("parent not marked dirty")
 	}
 
-	gen, err = tileDirtyGen(ctx, pool, userID, z, x, y)
-	if err != nil {
-		t.Fatal(err)
-	}
+	gen = listedGen(t, pool, userID, z, x, y)
 	if err := upsertTileRendered(ctx, pool, userID, z, x, y, gen, "fog", 120); err != nil {
 		t.Fatal(err)
 	}
@@ -254,7 +264,7 @@ func TestRenderPyramidLevelReadsEachChild(t *testing.T) {
 		}
 	}
 
-	if err := renderPyramidLevel(ctx, pool, store, userID, z, px, py); err != nil {
+	if err := renderPyramidLevel(ctx, pool, store, userID, z, px, py, 0); err != nil {
 		t.Fatal(err)
 	}
 	b, ok := mem.Object(fogObjectKey(userID, z, px, py))
@@ -299,7 +309,7 @@ func TestRenderPyramidLevelRefusesAChildOfAnotherSize(t *testing.T) {
 		}
 	}
 
-	if err := renderPyramidLevel(ctx, pool, store, userID, z, px, py); !errors.Is(err, errTileSize) {
+	if err := renderPyramidLevel(ctx, pool, store, userID, z, px, py, 0); !errors.Is(err, errTileSize) {
 		t.Fatalf("err = %v, want errTileSize", err)
 	}
 	if _, ok := mem.Object(fogObjectKey(userID, z, px, py)); ok {
