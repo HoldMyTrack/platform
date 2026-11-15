@@ -542,6 +542,6 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 	case "export":
 		return runExport(ctx, pool, store, log, j.id, j.payload)
 	default:
-		return fmt.Errorf("unhandled job kind %q (export / provider_sync / retention are out of scope for this task)", j.kind)
+		return fmt.Errorf("unhandled job kind %q", j.kind)
 	}
 }

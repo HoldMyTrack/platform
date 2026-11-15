@@ -58,7 +58,7 @@ func (h *heldAccounts) ids(now time.Time) []string {
 	return ids
 }
 
-// accountPurgeBatchSize bounds one sweep, as demoPurgeBatchSize does; the next tick takes the rest.
+// accountPurgeBatchSize bounds one sweep; the next tick takes the rest.
 const accountPurgeBatchSize = 20
 
 // purgeDeletedAccounts finishes what httpapi's closeAccount started (SPEC FR-1.12): for every

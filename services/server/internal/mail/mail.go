@@ -1,8 +1,6 @@
-// Package mail sends the one kind of email this app has ever needed to send — a password
-// reset link (IMPLEMENTATION.md §4.9). Stdlib net/smtp against whatever
-// SMTP_* config.Config was given, not a vendor SDK or HTTP API: any provider that speaks SMTP
-// works, including a personal Gmail account via an app password, which is what this app's own
-// single real user already has — no new account to provision just to send one kind of email.
+// Package mail sends the app's email: verification and password-reset links, export-ready
+// notices and Story copies (IMPLEMENTATION.md §4.9). Stdlib net/smtp against the SMTP_*
+// config, not a vendor SDK or HTTP API, so any provider that speaks SMTP works.
 package mail
 
 import (

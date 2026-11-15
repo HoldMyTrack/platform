@@ -1,5 +1,6 @@
 // Package worker is cmd/holdmytrack work: dequeues jobs with FOR UPDATE SKIP LOCKED
-// (IMPLEMENTATION.md §3.8, §4.1) and runs internal/ingest for `ingest` and `edit_track` jobs.
+// (IMPLEMENTATION.md §3.8, §4.1) and runs each kind runJob names: ingest, render_fog,
+// edit_track, reprivacy, story_copy and export.
 // No broker, per ARCHITECTURE.md §1.1: this poll loop against idx_jobs_runnable is the whole queue.
 //
 // # Claiming
