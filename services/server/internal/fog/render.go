@@ -13,6 +13,7 @@ import (
 	"math"
 	"sync/atomic"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/parallel"
@@ -89,12 +90,12 @@ func RenderUser(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, u
 			t := dirty[i]
 			var err error
 			if z == Zoom {
-				err = renderAndStoreTile(ctx, pool, store, userID, z, t.x, t.y, t.gen, &skipped)
+				err = renderAndStoreTile(ctx, pool, store, userID, z, t[0], t[1], &skipped)
 			} else {
-				err = renderPyramidLevel(ctx, pool, store, userID, z, t.x, t.y, t.gen)
+				err = renderPyramidLevel(ctx, pool, store, userID, z, t[0], t[1])
 			}
 			if err != nil {
-				return fmt.Errorf("fog: render z%d/%d/%d: %w", z, t.x, t.y, err)
+				return fmt.Errorf("fog: render z%d/%d/%d: %w", z, t[0], t[1], err)
 			}
 			return nil
 		})
@@ -142,16 +143,9 @@ func lockRenders(ctx context.Context, pool *pgxpool.Pool, userID string) (unlock
 // re-renders each affected activity's own masks from freshly clipped points (internal/ingest's
 // ProcessReprivacy) before this recomposites.
 
-// dirtyTile is a tile to render, with its dirty_gen as listed: read before anything its render
-// draws from, so upsertTileRendered clears dirty only if no one has marked the tile again since.
-type dirtyTile struct {
-	x, y int
-	gen  int64
-}
-
-func dirtyTiles(ctx context.Context, pool *pgxpool.Pool, userID string, zoom int) ([]dirtyTile, error) {
+func dirtyTiles(ctx context.Context, pool *pgxpool.Pool, userID string, zoom int) ([][2]int, error) {
 	rows, err := pool.Query(ctx,
-		`SELECT tile_x, tile_y, dirty_gen FROM fog_tiles WHERE user_id = $1 AND zoom = $2 AND dirty`,
+		`SELECT tile_x, tile_y FROM fog_tiles WHERE user_id = $1 AND zoom = $2 AND dirty`,
 		userID, zoom,
 	)
 	if err != nil {
@@ -159,13 +153,13 @@ func dirtyTiles(ctx context.Context, pool *pgxpool.Pool, userID string, zoom int
 	}
 	defer rows.Close()
 
-	var out []dirtyTile
+	var out [][2]int
 	for rows.Next() {
-		var t dirtyTile
-		if err := rows.Scan(&t.x, &t.y, &t.gen); err != nil {
+		var x, y int
+		if err := rows.Scan(&x, &y); err != nil {
 			return nil, err
 		}
-		out = append(out, t)
+		out = append(out, [2]int{x, y})
 	}
 	return out, rows.Err()
 }
@@ -188,7 +182,11 @@ func dirtyTiles(ctx context.Context, pool *pgxpool.Pool, userID string, zoom int
 // A Pending activity (edit_pending, §4.7.7) is left out: its masks are the pre-reprocess ones,
 // or mid-rewrite. The reprocess marks its tiles dirty when it goes Pending and renders them
 // again after clearing the flag, so it drops out of the tile for the duration.
-func renderAndStoreTile(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID string, zoom, x, y int, gen int64, skipped *atomic.Int64) error {
+func renderAndStoreTile(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID string, zoom, x, y int, skipped *atomic.Int64) error {
+	gen, err := tileDirtyGen(ctx, pool, userID, zoom, x, y)
+	if err != nil {
+		return err
+	}
 	rows, err := pool.Query(ctx, `
 		SELECT d.png
 		FROM activity_tile_masks m
@@ -382,7 +380,11 @@ func projectToTile(points []parse.Point, tileX, tileY, zoom int) [][]pixelPoint 
 //
 // The children's keys come in one query and their images are fetched side by side: one
 // after another, a pyramid tile was about ten round trips to object storage.
-func renderPyramidLevel(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID string, zoom, x, y int, gen int64) error {
+func renderPyramidLevel(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID string, zoom, x, y int) error {
+	gen, err := tileDirtyGen(ctx, pool, userID, zoom, x, y)
+	if err != nil {
+		return err
+	}
 	children, err := loadChildren(ctx, pool, store, userID, zoom+1, x, y)
 	if err != nil {
 		return err
@@ -472,12 +474,29 @@ func fogObjectKey(userID string, zoom, x, y int) string {
 	return fmt.Sprintf("fog/%s/%d/%d/%d.png", userID, zoom, x, y)
 }
 
+// tileDirtyGen is a tile's dirty_gen as its render starts, read before anything it draws from:
+// upsertTileRendered clears dirty only if no one has marked the tile again since. Read here
+// rather than with the level's list, since a tile can wait long in the level's queue, and a
+// mark landing in that wait would leave it dirty for a render it doesn't need. 0 for a tile
+// with no row yet.
+func tileDirtyGen(ctx context.Context, pool *pgxpool.Pool, userID string, zoom, x, y int) (int64, error) {
+	var gen int64
+	err := pool.QueryRow(ctx,
+		`SELECT dirty_gen FROM fog_tiles WHERE user_id = $1 AND zoom = $2 AND tile_x = $3 AND tile_y = $4`,
+		userID, zoom, x, y,
+	).Scan(&gen)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return 0, nil
+	}
+	return gen, err
+}
+
 // upsertTileRendered records a fresh render, and marks the tile's parent dirty in the same
 // statement (RenderUser walks the pyramid off that flag). INSERT ... ON CONFLICT, not a plain
 // UPDATE: a pyramid tile (z13..z0) may have no fog_tiles row yet the first time it's built.
 //
-// dirty clears only if dirty_gen is still gen, the value listed before the render gathered its
-// masks (dirtyTiles). A change that lands mid-render — an activity deleted while its old mask
+// dirty clears only if dirty_gen is still gen, the value read before the render gathered its
+// masks (tileDirtyGen). A change that lands mid-render — an activity deleted while its old mask
 // was being composited in — marks the tile again (bumping dirty_gen), and the tile stays dirty
 // for the render the change enqueued, instead of keeping the deleted track until something else
 // touches that tile.
