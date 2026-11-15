@@ -187,18 +187,15 @@ func TestClipEndsPassThroughUntouched(t *testing.T) {
 	}
 }
 
-// Sparse recording: the only segment leaving the zone is 600 m long. Its far end lies past a
-// radius beyond the edge, so the cut is placed on the segment rather than at that point, and
-// never more than a radius past the edge.
+// Sparse recording: the only segment leaving the zone is 600 m long. The track starts at its far
+// point, never at one placed on the segment: that would lie on the line to the hidden start,
+// and two tracks leaving in different directions would cross there.
 func TestClipEndsSparsePoints(t *testing.T) {
 	points := line(41.4, -81.7, 4, 600)
 	zone := Zone{Lat: 41.4, Lon: -81.7, RadiusM: 100, Salt: "a"}
 	got := ClipEnds(points, []Zone{zone})
-	if len(got) != 4 {
-		t.Fatalf("got %d points, want 4 (cut + 3 originals)", len(got))
-	}
-	if d := distToZone(zone, got[0]); d < 100 || d > 200 {
-		t.Errorf("first point %.1f m from center, want 100–200", d)
+	if len(got) != 3 || got[0] != points[1] {
+		t.Fatalf("got %d points starting at %+v, want the 3 recorded ones after the hidden start", len(got), got[0])
 	}
 }
 
