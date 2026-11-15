@@ -79,6 +79,11 @@ func TestBudgetStages(t *testing.T) {
 	if rec := d.do(me, "GET", "/tiles/v1/tracks/14/8800/5370", nil); rec.Code == http.StatusServiceUnavailable {
 		t.Error("track tile refused: it reads only the database")
 	}
+	// Checking a split reads the original, as opening the editor does.
+	walk := d.newActivity(me, testActivity{activityType: "walking"})
+	if rec := d.do(me, "POST", "/v1/activities/"+walk+"/track-edit", map[string]any{"split_at": time.Now().UnixMilli()}); rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("split check: %d, want 503", rec.Code)
+	}
 
 	d.srv.SetBudget(budget.NewGate(d.pool, 100, log)) // 4.5%: nothing stops
 	if rec := d.uploadRaw(me, "day.gpx", []byte(splitGPX)); rec.Code != http.StatusAccepted {
