@@ -316,3 +316,44 @@ func TestFirstVerificationSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 		t.Errorf("the verifying browser's own session: %d, want 200", rec.Code)
 	}
 }
+
+// blockingMail holds every message until release is closed, counting the ones begun.
+type blockingMail struct {
+	begun   chan struct{}
+	release chan struct{}
+}
+
+func (m *blockingMail) Send(context.Context, string, string, string) error {
+	m.begun <- struct{}{}
+	<-m.release
+	return nil
+}
+
+// Whether an address has an account changes only what happens after the response is complete:
+// the handler returns, and with it the whole answer, while the reset mail is still held.
+func TestForgotPasswordAnswersBeforeMailing(t *testing.T) {
+	d := newDBTest(t)
+	d.srv.afterResponse = func(f func()) { go f() } // as served, not the tests' inline
+	a := d.newAccount(false)
+	if _, err := d.pool.Exec(context.Background(), `UPDATE users SET password_hash = 'x' WHERE id = $1`, a.id); err != nil {
+		t.Fatal(err)
+	}
+	email, _ := d.email(a)
+	mail := &blockingMail{begun: make(chan struct{}, 1), release: make(chan struct{})}
+	d.srv.mailer = mail
+	defer close(mail.release)
+
+	req := httptest.NewRequest(http.MethodPost, "/v1/auth/forgot-password", strings.NewReader(`{"email":"`+email+`"}`))
+	req.Header.Set("Content-Type", "application/json")
+	req.RemoteAddr = "198.51.100.31:4321" // the forgot-password limit is per address, and shared by the package's tests
+	rec := httptest.NewRecorder()
+	d.srv.ServeHTTP(rec, req) // returns only once the answer is complete
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status %d", rec.Code)
+	}
+	select {
+	case <-mail.begun:
+	case <-time.After(5 * time.Second):
+		t.Fatal("no reset mail went out after the answer")
+	}
+}

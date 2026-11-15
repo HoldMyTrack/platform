@@ -32,30 +32,36 @@ func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
-	if err := s.requestPasswordReset(r, req.Email); err != nil {
+	send, err := s.requestPasswordReset(r, req.Email)
+	if err != nil {
 		s.writeAccountError(w, r, "forgot-password", err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]string{
 		"message": i18n.Get(requestLang(r)).T("message.reset_sent"),
 	})
+	s.afterResponse(send)
 }
 
 // requestPasswordReset is the forgot-password core (the JSON endpoint and the /forgot page).
-// It only ever fails on the rate limit or a malformed address: an unknown email, and a failure
-// actually sending the mail, both look like success to the caller.
-func (s *Server) requestPasswordReset(r *http.Request, rawEmail string) error {
+// It only ever fails on the rate limit or a malformed address. Everything that depends on
+// whether the address has an account, the lookup, the link and the mail, is in send, which the
+// caller hands to afterResponse: an unknown email, and a failure sending, both look like
+// success, in what is answered and in how long it takes. A flushed answer isn't enough: one
+// with no Content-Length goes chunked, and its end follows the handler's return.
+func (s *Server) requestPasswordReset(r *http.Request, rawEmail string) (send func(), err error) {
 	if !forgotPasswordLimiter.allow(rateLimitAddress(r)) {
-		return accountFailure(http.StatusTooManyRequests, "error.rate_limited")
+		return nil, accountFailure(http.StatusTooManyRequests, "error.rate_limited")
 	}
 	email, err := normalizeEmail(rawEmail)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	if err := s.sendPasswordReset(r, email); err != nil {
-		s.log.Error("forgot-password failed", "err", err)
-	}
-	return nil
+	return func() {
+		if err := s.sendPasswordReset(r.WithContext(context.WithoutCancel(r.Context())), email); err != nil {
+			s.log.Error("forgot-password failed", "err", err)
+		}
+	}, nil
 }
 
 // sendPasswordReset looks up a real, claimed account — one with a password or a linked external

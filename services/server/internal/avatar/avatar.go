@@ -6,6 +6,7 @@ package avatar
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"image"
@@ -24,17 +25,29 @@ const MaxSide = 512
 // few-KB PNG can claim 50,000 × 50,000 pixels.
 const maxPixels = 40_000_000
 
+// decodeSlots bounds how many avatars decode at once. One within maxPixels can still take a few
+// hundred MB decoded (a 16-bit PNG is 8 bytes a pixel), and an account could send many at once.
+var decodeSlots = make(chan struct{}, 2)
+
 // ErrNotImage is an upload no decoder here can read, or one too large to decode.
 var ErrNotImage = errors.New("avatar: not a readable image")
 
 // Normalize decodes data (PNG, JPEG or WebP) and returns the image to store and its content
 // type: a JPEG stays a JPEG, anything else becomes a PNG (Go has no WebP encoder, and PNG keeps
 // transparency).
-func Normalize(data []byte) ([]byte, string, error) {
+//
+// It waits for one of decodeSlots, or ctx: an upload whose client has gone stops waiting.
+func Normalize(ctx context.Context, data []byte) ([]byte, string, error) {
 	cfg, format, err := image.DecodeConfig(bytes.NewReader(data))
 	if err != nil || cfg.Width <= 0 || cfg.Height <= 0 || cfg.Width*cfg.Height > maxPixels {
 		return nil, "", ErrNotImage
 	}
+	select {
+	case decodeSlots <- struct{}{}:
+	case <-ctx.Done():
+		return nil, "", ctx.Err()
+	}
+	defer func() { <-decodeSlots }()
 	src, _, err := image.Decode(bytes.NewReader(data))
 	if err != nil {
 		return nil, "", ErrNotImage

@@ -17,7 +17,10 @@ import (
 // implement developer-field *values* (only skips their declared bytes) and does not verify
 // CRCs. This is the parser most likely to need the most depth of the three formats — it
 // covers the common case, not the full FIT SDK surface.
-func ParseFIT(r io.Reader) (Activity, error) {
+func ParseFIT(r io.Reader) (Activity, error) { return parseFIT(r, 0) }
+
+// parseFIT is ParseFIT refusing a file past maxPoints positioned points, 0 for no cap.
+func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 	br := &byteReader{r: r}
 
 	hdr := make([]byte, 12)
@@ -145,6 +148,9 @@ func ParseFIT(r io.Reader) (Activity, error) {
 				p.Elevation = enhanced
 			}
 			if haveLat && haveLon {
+				if maxPoints > 0 && len(act.Points) == maxPoints {
+					return Activity{}, ErrTooManyPoints
+				}
 				act.Points = append(act.Points, p)
 			}
 
