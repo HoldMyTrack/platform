@@ -4,6 +4,8 @@ package httpapi
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -80,7 +82,6 @@ func TestOverlappingSyncsStayLive(t *testing.T) {
 	}
 }
 
-
 // A walk from home is compared as recorded: the minutes its Private location clipped off the
 // start still count, so the other source's full copy of it is marked — also once an activity
 // stored before the recorded span existed has been backfilled.
@@ -127,5 +128,31 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 	}
 	if o := overlaps(); len(o) != 1 || o[0].ActivityID != res.ActivityID {
 		t.Fatalf("overlaps %+v, want the recorded walk", o)
+	}
+}
+
+// The most spans a phone may ask about, each with the longest key, run past the 1 MiB other
+// JSON routes take, and are answered.
+func TestOverlapsTakesItsLargestRequest(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	start := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
+	spans := make([]map[string]any, maxOverlapSpans)
+	for i := range spans {
+		spans[i] = map[string]any{
+			"key":   fmt.Sprintf("%0*d", maxOverlapKeyLen, i),
+			"start": start.Add(time.Duration(i) * time.Hour),
+			"end":   start.Add(time.Duration(i)*time.Hour + 30*time.Minute),
+		}
+	}
+	body, err := json.Marshal(map[string]any{"spans": spans})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(body) <= maxJSONBodyBytes {
+		t.Fatalf("request of %d bytes, want one past %d", len(body), maxJSONBodyBytes)
+	}
+	if rec := d.send(me, http.MethodPost, "/v1/activities/overlaps", "application/json", body); rec.Code != http.StatusOK {
+		t.Fatalf("the largest overlaps request: %d %s", rec.Code, rec.Body.String())
 	}
 }

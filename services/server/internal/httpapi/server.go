@@ -447,15 +447,16 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 const maxJSONBodyBytes = 1 << 20
 
 // ownBodyLimitRoutes are the routes whose handler bounds the body itself, at a size above
-// maxJSONBodyBytes: the multipart uploads (an activity file, a photo, an avatar) and a phone
-// sync's batch of activities. Matched by route, never by the client's Content-Type, which any
+// maxJSONBodyBytes: the multipart uploads (an activity file, a photo, an avatar), a phone
+// sync's batch of activities, and the overlap check over everything a phone could offer. Matched by route, never by the client's Content-Type, which any
 // caller can set to skip the cap on a JSON route.
 var ownBodyLimitRoutes = map[string]bool{
-	"POST " + apiPrefix + "/activities/upload": true,
-	"POST " + apiPrefix + "/photos":            true,
-	"POST " + apiPrefix + "/account/avatar":    true,
-	"POST " + apiPrefix + "/sync/activities":   true,
-	"POST /settings/avatar":                    true,
+	"POST " + apiPrefix + "/activities/upload":   true,
+	"POST " + apiPrefix + "/photos":              true,
+	"POST " + apiPrefix + "/account/avatar":      true,
+	"POST " + apiPrefix + "/sync/activities":     true,
+	"POST " + apiPrefix + "/activities/overlaps": true,
+	"POST /settings/avatar":                      true,
 }
 
 // setsOwnBodyLimit reports whether r's handler bounds the body itself (ownBodyLimitRoutes).
