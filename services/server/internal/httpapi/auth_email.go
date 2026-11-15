@@ -185,12 +185,10 @@ type verifyEmailRequest struct {
 }
 
 // handleVerifyEmail serves `POST /v1/auth/verify-email` — the link handleSignup/
-// handleChangeEmail/handleResendVerification email out. Token-based like
-// handleResetPassword, not session-based: the link has to work whether or not the browser
-// opening it already holds a session (a different device, a different browser profile), so it
-// mints a fresh session on success exactly as reset-password does, rather than requiring one
-// to already exist. A generic error for a missing or expired token, same "don't tell a caller
-// more than it needs to know" reasoning as reset-password.
+// handleChangeEmail/handleResendVerification email out. Token-based, so the link verifies from
+// any device; it answers with a session only to a caller already signed in to the account
+// (verifyEmail), and 204 to anyone else. A generic error for a missing or expired token, same
+// "don't tell a caller more than it needs to know" reasoning as reset-password.
 func (s *Server) handleVerifyEmail(w http.ResponseWriter, r *http.Request) {
 	var req verifyEmailRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
@@ -224,14 +222,14 @@ var errVerifyNeedsFacebook = accountFailure(http.StatusForbidden, "error.verify_
 // flag set: a token sent to the account's old address can't confirm a new one changed to
 // meanwhile, however the two requests interleave.
 //
-// An account's first verification proves who owns the address, not who chose the password:
-// anyone can sign up with someone else's email (SPEC FR-1.8). So it ends every session but the
-// one the request carries (sessionID, the browser's own), and signs in only a browser already
-// signed in to the account; anyone else signs in with the password, or resets it. A
-// Facebook-made account has no password, and its Facebook link was never vouched for by the
-// address, so only a browser signed in to it verifies it: anywhere else gets
-// errVerifyNeedsFacebook and the token stays usable (ADR-0009). Confirming a changed address of
-// a verified account signs in as before.
+// A link proves who holds the mailbox, not who holds the account, so it signs in only a browser
+// already signed in to the account (sessionID, the browser's own); anyone else signs in with
+// the password, or resets it (IMPLEMENTATION.md §4.9).
+//
+// An account's first verification also ends every session but the browser's own: anyone can
+// sign up with someone else's email. A Facebook-made account has no password, and its Facebook
+// link was never vouched for by the address, so only a browser signed in to it verifies it:
+// anywhere else gets errVerifyNeedsFacebook and the token stays usable (ADR-0009).
 func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (string, bool, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -253,21 +251,18 @@ func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (stri
 	if err != nil {
 		return "", false, err
 	}
-	signIn := wasVerified
+	var signIn, facebook bool
 	mine := tokenHash(sessionID)
-	if !wasVerified {
-		var facebook bool
-		if err := tx.QueryRow(ctx, `
-			SELECT EXISTS (SELECT 1 FROM sessions WHERE user_id = $1 AND token_hash = $2 AND expires_at > NOW()),
-			       EXISTS (SELECT 1 FROM user_identities WHERE user_id = $1 AND provider = 'facebook')
-		`, userID, mine).Scan(&signIn, &facebook); err != nil {
-			return "", false, err
-		}
-		// The mailbox's owner may not be whoever linked Facebook, so a Facebook-linked account is
-		// verified only by a browser signed in to it. The link stays usable for that.
-		if facebook && !signIn {
-			return "", false, errVerifyNeedsFacebook
-		}
+	if err := tx.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM sessions WHERE user_id = $1 AND token_hash = $2 AND expires_at > NOW()),
+		       NOT $3 AND EXISTS (SELECT 1 FROM user_identities WHERE user_id = $1 AND provider = 'facebook')
+	`, userID, mine, wasVerified).Scan(&signIn, &facebook); err != nil {
+		return "", false, err
+	}
+	// The mailbox's owner may not be whoever linked Facebook, so a Facebook-linked account is
+	// first verified only by a browser signed in to it. The link stays usable for that.
+	if facebook && !signIn {
+		return "", false, errVerifyNeedsFacebook
 	}
 	if _, err := tx.Exec(ctx, `UPDATE users SET email = $2, email_verified = true WHERE id = $1`, userID, email); err != nil {
 		if isUniqueViolation(err) {

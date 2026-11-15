@@ -88,9 +88,67 @@ func TestChangeEmailIsPendingUntilConfirmed(t *testing.T) {
 	}
 
 	token := d.verificationToken(a)
-	d.decode(d.do(account{}, http.MethodPost, "/v1/auth/verify-email", map[string]string{"token": token}), http.StatusOK, nil)
+	if rec := d.do(account{}, http.MethodPost, "/v1/auth/verify-email", map[string]string{"token": token}); rec.Code != http.StatusNoContent {
+		t.Fatalf("confirming from elsewhere: %d, want 204 and no session", rec.Code)
+	}
 	if email, verified := d.email(a); email != target || !verified {
 		t.Fatalf("after confirming: email %q verified %v, want %q verified", email, verified, target)
+	}
+}
+
+// A changed address's link signs in only the account's own browser, not a signed-out reader or
+// one signed in to another account (IMPLEMENTATION.md §4.9).
+func TestChangedAddressLinkSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
+	d := newDBTest(t)
+	d.srv.mailer = &sentMail{}
+	sender := d.newAccount(false)
+	before, _ := d.email(sender)
+	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "second-" + before}), http.StatusOK, nil)
+
+	rec := d.do(account{}, http.MethodGet, "/verify?token="+d.verificationToken(sender), nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/signin?verified" {
+		t.Fatalf("link opened signed out: %d to %q, want a redirect to /signin?verified", rec.Code, rec.Header().Get("Location"))
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == sessionCookieName && c.Value != "" {
+			t.Fatalf("signed the reader in to the sender's account: %v", c)
+		}
+	}
+	if email, _ := d.email(sender); email != "second-"+before {
+		t.Fatalf("address %q, want the confirmed one", email)
+	}
+
+	// Opened in a browser signed in to another account: verified, and that browser stays its own.
+	reader := d.newAccount(false)
+	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "third-" + before}), http.StatusOK, nil)
+	rec = d.do(reader, http.MethodGet, "/verify?token="+d.verificationToken(sender), nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/signin?verified" {
+		t.Fatalf("link opened in another account's browser: %d to %q, want a redirect to /signin?verified", rec.Code, rec.Header().Get("Location"))
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == sessionCookieName {
+			t.Fatalf("replaced the reader's session: %v", c)
+		}
+	}
+	var me struct{ Email string }
+	d.decode(d.do(reader, http.MethodGet, "/v1/auth/me", nil), http.StatusOK, &me)
+	if readerEmail, _ := d.email(reader); me.Email != readerEmail {
+		t.Fatalf("the reader's browser is signed in as %q, want its own account %q", me.Email, readerEmail)
+	}
+
+	// Opened in the account's own browser: it carries on with the session it has.
+	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "fourth-" + before}), http.StatusOK, nil)
+	rec = d.do(sender, http.MethodGet, "/verify?token="+d.verificationToken(sender), nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/" {
+		t.Fatalf("link opened in the account's own browser: %d to %q, want a redirect to /", rec.Code, rec.Header().Get("Location"))
+	}
+	for _, c := range rec.Result().Cookies() {
+		if c.Name == sessionCookieName {
+			t.Errorf("started a second session for a browser already signed in: %v", c)
+		}
+	}
+	if rec := d.do(sender, http.MethodGet, "/v1/auth/me", nil); rec.Code != http.StatusOK {
+		t.Errorf("the account's own browser after confirming: %d, want still signed in", rec.Code)
 	}
 }
 

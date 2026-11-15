@@ -205,7 +205,7 @@ func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Query().Has("deleted") {
 		form.NoticeKey = "signin.account_deleted"
 	}
-	// handleVerifyPage's landing after a first verification from a browser not signed in to it.
+	// handleVerifyPage's landing after a verification from a browser not signed in to the account.
 	if r.URL.Query().Has("verified") {
 		form.NoticeKey = "signin.email_verified"
 	}
@@ -305,14 +305,13 @@ func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
 // it's a link someone clicks in their inbox; the effect is idempotent (verifying twice
 // verifies once, and the token is single-use), which is what makes that acceptable.
 //
-// A browser already signed in to a different account stays signed in to it: the link still
-// verifies, but doesn't replace that session. Otherwise anyone could send their own account's
-// link to someone signed in here and switch them silently into the sender's account, where
-// whatever they uploaded next would land.
+// The link verifies wherever it's opened. A browser already signed in to its account goes on
+// with the session it has; any other, signed out or signed in to another account, keeps what it
+// has and is sent to sign in (verifyEmail).
 func (s *Server) handleVerifyPage(w http.ResponseWriter, r *http.Request) {
 	sessionID, _ := sessionIDFromRequest(r)
 	token := r.URL.Query().Get("token")
-	userID, signIn, err := s.verifyEmail(r.Context(), token, sessionID)
+	_, signIn, err := s.verifyEmail(r.Context(), token, sessionID)
 	if errors.Is(err, errVerifyNeedsFacebook) {
 		form := authForm{Token: token, Facebook: s.facebook.enabled()}
 		// Back from a Facebook round trip this page started (finishFacebookVerify, failOAuth).
@@ -337,11 +336,7 @@ func (s *Server) handleVerifyPage(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/signin?verified", http.StatusSeeOther)
 		return
 	}
-	if acct := s.pageAccount(r); acct != nil && acct.info.userID != userID {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
-	}
-	s.signIn(w, r, userID)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // GET /verify-pending — a signed-in real account whose email isn't confirmed yet: resend the

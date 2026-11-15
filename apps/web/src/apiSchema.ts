@@ -259,8 +259,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Verify an address with a verification link's token, and sign in
-         * @description An account's first verification signs in only a caller already signed in to it, and ends the account's other sessions; any other caller gets 204 and signs in with the password, or 403 verify_needs_facebook for an account made through Facebook, whose token stays usable (SPEC FR-1.8).
+         * Verify an address with a verification link's token
+         * @description Signs in only a caller already signed in to the account; any other caller gets 204 and signs in with the password, or, on a first verification of an account made through Facebook, 403 verify_needs_facebook, whose token stays usable. A first verification also ends the account's other sessions (SPEC FR-1.8).
          */
         post: {
             parameters: {
