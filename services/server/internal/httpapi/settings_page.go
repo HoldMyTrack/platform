@@ -7,6 +7,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // The Settings page (ADR-0012, IMPLEMENTATION.md §4.9, docs/SPEC.md FR-1.7): Avatar, Name,
@@ -104,10 +105,7 @@ func (s *Server) renderSettings(w http.ResponseWriter, r *http.Request, status i
 		} else {
 			form.Export.State = st.State
 			if st.ExpiresAt != nil {
-				loc, err := time.LoadLocation(acct.info.timezone)
-				if err != nil {
-					loc = time.UTC
-				}
+				loc := zoneinfo.LoadOr(acct.info.timezone, time.UTC)
 				form.Export.Expires = web.ShortDate(l, st.ExpiresAt.In(loc).Format("2006-01-02"))
 			}
 			form.Export.Total = web.FormatBytes(l, st.TotalSize)

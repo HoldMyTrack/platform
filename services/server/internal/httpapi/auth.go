@@ -15,6 +15,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // Email+password auth, server-side sessions (migrations/0001_users_and_auth.sql) — resolved toward
@@ -61,7 +62,7 @@ type authRequest struct {
 	Timezone string `json:"timezone"`
 }
 
-// normalizeTimezone validates raw against the IANA tz database via time.LoadLocation, and
+// normalizeTimezone validates raw against the IANA tz database via zoneinfo.Load, and
 // returns it under its current name (web.CurrentTimezoneName: a browser reports Asia/Calcutta,
 // the account stores Asia/Kolkata). Returns ok=false for empty or unloadable input; the caller
 // decides what that means for its own endpoint (createAccount falls back to "UTC",
@@ -71,7 +72,7 @@ func normalizeTimezone(raw string) (tz string, ok bool) {
 	if raw == "" {
 		return "", false
 	}
-	if _, err := time.LoadLocation(raw); err != nil {
+	if _, err := zoneinfo.Load(raw); err != nil {
 		return "", false
 	}
 	return web.CurrentTimezoneName(raw), true

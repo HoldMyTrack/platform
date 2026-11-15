@@ -11,6 +11,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // The admin panel (IMPLEMENTATION.md §4.20, docs/SPEC.md FR-11): every account, and
@@ -22,9 +23,16 @@ import (
 // adminActivitiesPerPage is how many activities one page of /admin/users/{id} lists.
 const adminActivitiesPerPage = 100
 
+// adminUsersPerPage is how many accounts one page of /admin/users lists.
+const adminUsersPerPage = 100
+
 // adminUsersView is what templates/pages/admin.html reads from PageData.Page.
 type adminUsersView struct {
 	Users []adminUserRow
+	// Range is "1–100 of 250"; "" when there are no accounts.
+	Range    string
+	PrevHref string
+	NextHref string
 }
 
 type adminUserRow struct {
@@ -93,13 +101,28 @@ func (s *Server) handleAdminPage(w http.ResponseWriter, r *http.Request) {
 	}
 	lang := pageLang(acct, r)
 	l := i18n.Get(lang)
-	users, err := s.adminUsers(r.Context(), l, "", web.Imperial(acct.profile.Country))
+	view, err := s.adminUsersPage(r.Context(), l, adminPageParam(r), web.Imperial(acct.profile.Country))
 	if err != nil {
 		s.log.Error("admin page failed", "err", err)
 		http.Error(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	s.pages.Render(w, http.StatusOK, "admin", web.PageData{Title: l.T("meta.admin_accounts_title"), Path: "/admin/users", NoIndex: true, User: acct.user, Page: adminUsersView{Users: users}, Lang: lang})
+	s.pages.Render(w, http.StatusOK, "admin", web.PageData{Title: l.T("meta.admin_accounts_title"), Path: "/admin/users", NoIndex: true, User: acct.user, Page: view, Lang: lang})
+}
+
+// adminPageParam is ?page=, 1 when absent or not a page number.
+func adminPageParam(r *http.Request) int {
+	if p, err := strconv.Atoi(r.URL.Query().Get("page")); err == nil && p > 1 {
+		return p
+	}
+	return 1
+}
+
+// adminPages places page among total rows listed perPage at a time: its first row's offset,
+// whether it lies past the last row, and whether pages come before and after it.
+func adminPages(page, total, perPage int) (offset int, past, prev, next bool) {
+	offset = (page - 1) * perPage
+	return offset, offset >= total, page > 1, offset+perPage < total
 }
 
 // GET /admin/users/{id}.
@@ -113,22 +136,18 @@ func (s *Server) handleAdminUserPage(w http.ResponseWriter, r *http.Request) {
 		s.notFound(w, r)
 		return
 	}
-	page := 1
-	if p, err := strconv.Atoi(r.URL.Query().Get("page")); err == nil && p > 1 {
-		page = p
-	}
 	imperial := web.Imperial(acct.profile.Country)
 	lang := pageLang(acct, r)
 	l := i18n.Get(lang)
 
-	users, err := s.adminUsers(r.Context(), l, userID, imperial)
-	if err == nil && len(users) == 0 {
+	user, found, err := s.adminUser(r.Context(), l, userID, imperial)
+	if err == nil && !found {
 		s.notFound(w, r)
 		return
 	}
 	var view adminUserView
 	if err == nil {
-		view, err = s.adminUserActivities(r.Context(), l, users[0], page, imperial)
+		view, err = s.adminUserActivities(r.Context(), l, user, adminPageParam(r), imperial)
 	}
 	if err != nil {
 		s.log.Error("admin user page failed", "err", err, "user_id", userID)
@@ -138,20 +157,69 @@ func (s *Server) handleAdminUserPage(w http.ResponseWriter, r *http.Request) {
 	s.pages.Render(w, http.StatusOK, "admin-user", web.PageData{Title: l.T("meta.admin_user_title", "name", adminUserLabel(view.User)), Path: r.URL.Path, NoIndex: true, User: acct.user, Page: view, Lang: lang})
 }
 
-// adminUsers lists every account, newest first, or just userID's when it's set. Counts and
-// distance are over every activity.
-func (s *Server) adminUsers(ctx context.Context, l *i18n.Localizer, userID string, imperial bool) ([]adminUserRow, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT u.id, u.email, COALESCE(u.display_name, ''), u.created_at, COALESCE(u.country, ''),
-		       u.timezone, u.is_admin, u.email_verified,
-		       u.last_seen_at, count(a.id),
-		       COALESCE(sum(a.distance_meters), 0)::float8
-		FROM users u
-		LEFT JOIN activities a ON a.user_id = u.id
-		WHERE u.deleted_at IS NULL AND ($1 = '' OR u.id::text = $1)
-		GROUP BY u.id
-		ORDER BY u.created_at DESC
-	`, userID)
+// adminUsersSQL selects adminUserRow's columns, newest first, for the open accounts whose ids
+// picked selects. Counts and distance are over every activity, totalled only for those: picked
+// is a subquery so a page's LIMIT applies before the totals, which a join in the same FROM
+// would compute for every account first.
+func adminUsersSQL(picked string) string {
+	return `
+	SELECT u.id, u.email, COALESCE(u.display_name, ''), u.created_at, COALESCE(u.country, ''),
+	       u.timezone, u.is_admin, u.email_verified, u.last_seen_at, a.n, a.meters
+	FROM (` + picked + `) p
+	JOIN users u ON u.id = p.id
+	CROSS JOIN LATERAL (
+		SELECT count(*), COALESCE(sum(distance_meters), 0)::float8
+		FROM activities WHERE user_id = u.id
+	) a (n, meters)
+	ORDER BY u.created_at DESC, u.id`
+}
+
+// adminUsersPage is one page of every account, newest first.
+func (s *Server) adminUsersPage(ctx context.Context, l *i18n.Localizer, page int, imperial bool) (adminUsersView, error) {
+	var view adminUsersView
+	var total int
+	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE deleted_at IS NULL`).Scan(&total); err != nil {
+		return view, fmt.Errorf("admin: count users: %w", err)
+	}
+	offset, past, prev, next := adminPages(page, total, adminUsersPerPage)
+	if total == 0 {
+		return view, nil
+	}
+	if past {
+		// A page past the end (a stale link after deletions): empty, with a way back.
+		view.Range = l.T("admin.range_empty_accounts")
+		view.PrevHref = adminUsersHref(1)
+		return view, nil
+	}
+	users, err := s.adminUserRows(ctx, l, imperial, adminUsersSQL(`
+		SELECT id FROM users WHERE deleted_at IS NULL
+		ORDER BY created_at DESC, id LIMIT $1 OFFSET $2`), adminUsersPerPage, offset)
+	if err != nil {
+		return view, err
+	}
+	view.Users = users
+	view.Range = adminRange(l, offset, len(users), total)
+	if prev {
+		view.PrevHref = adminUsersHref(page - 1)
+	}
+	if next {
+		view.NextHref = adminUsersHref(page + 1)
+	}
+	return view, nil
+}
+
+// adminUser is the account userID, a UUID, if it exists and isn't closed.
+func (s *Server) adminUser(ctx context.Context, l *i18n.Localizer, userID string, imperial bool) (adminUserRow, bool, error) {
+	users, err := s.adminUserRows(ctx, l, imperial, adminUsersSQL(`
+		SELECT id FROM users WHERE deleted_at IS NULL AND id = $1::uuid`), userID)
+	if err != nil || len(users) == 0 {
+		return adminUserRow{}, false, err
+	}
+	return users[0], true, nil
+}
+
+func (s *Server) adminUserRows(ctx context.Context, l *i18n.Localizer, imperial bool, sql string, args ...any) ([]adminUserRow, error) {
+	rows, err := s.pool.Query(ctx, sql, args...)
 	if err != nil {
 		return nil, fmt.Errorf("admin: list users: %w", err)
 	}
@@ -186,15 +254,12 @@ func (s *Server) adminUsers(ctx context.Context, l *i18n.Localizer, userID strin
 // marked as such, since the panel is for seeing what's actually stored.
 func (s *Server) adminUserActivities(ctx context.Context, l *i18n.Localizer, u adminUserRow, page int, imperial bool) (adminUserView, error) {
 	view := adminUserView{User: u}
-	var total int
-	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM activities WHERE user_id = $1`, u.ID).Scan(&total); err != nil {
-		return view, fmt.Errorf("admin: count activities: %w", err)
-	}
-	offset := (page - 1) * adminActivitiesPerPage
+	total := int(u.ActivityCount)
+	offset, past, prev, next := adminPages(page, total, adminActivitiesPerPage)
 	if total == 0 {
 		return view, nil
 	}
-	if offset >= total {
+	if past {
 		// A page past the end (a stale link after deletions): empty, with a way back.
 		view.Range = l.T("admin.range_empty")
 		view.PrevHref = adminUserHref(u.ID, 1)
@@ -238,10 +303,10 @@ func (s *Server) adminUserActivities(ctx context.Context, l *i18n.Localizer, u a
 	}
 
 	view.Range = adminRange(l, offset, len(view.Activities), total)
-	if page > 1 {
+	if prev {
 		view.PrevHref = adminUserHref(u.ID, page-1)
 	}
-	if offset+len(view.Activities) < total {
+	if next {
 		view.NextHref = adminUserHref(u.ID, page+1)
 	}
 	return view, nil
@@ -250,6 +315,13 @@ func (s *Server) adminUserActivities(ctx context.Context, l *i18n.Localizer, u a
 // adminRange is "1–100 of 250".
 func adminRange(l *i18n.Localizer, offset, n, total int) string {
 	return l.T("admin.range", "from", offset+1, "to", offset+n, "total", total)
+}
+
+func adminUsersHref(page int) string {
+	if page <= 1 {
+		return "/admin/users"
+	}
+	return fmt.Sprintf("/admin/users?page=%d", page)
 }
 
 func adminUserHref(userID string, page int) string {
@@ -275,11 +347,7 @@ func adminDuration(seconds int64) string {
 
 // adminLocation is the account's own timezone, so dates read as that account saw them.
 func adminLocation(tz string) *time.Location {
-	loc, err := time.LoadLocation(tz)
-	if err != nil {
-		return time.UTC
-	}
-	return loc
+	return zoneinfo.LoadOr(tz, time.UTC)
 }
 
 // SetAdmin grants or revokes the admin panel for the account with this email — the

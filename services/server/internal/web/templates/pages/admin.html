@@ -4,6 +4,14 @@
   <h1 class="settings__title">{{t "admin.accounts_title"}}</h1>
   <p class="profile__subtext">{{t "admin.intro"}}</p>
 
+  {{if .Range}}
+  <nav class="admin__pager" aria-label="{{t "admin.pages"}}">
+    <span>{{.Range}}</span>
+    {{with .PrevHref}}<a href="{{.}}">{{t "admin.newer"}}</a>{{end}}
+    {{with .NextHref}}<a href="{{.}}">{{t "admin.older"}}</a>{{end}}
+  </nav>
+  {{end}}
+
   <div class="admin__scroll">
     <table class="admin__table">
       <thead>

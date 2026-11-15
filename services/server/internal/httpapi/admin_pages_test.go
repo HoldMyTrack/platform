@@ -29,9 +29,9 @@ func TestAdminPagesRender(t *testing.T) {
 	user := adminUserRow{ID: "u-1", Email: "rider@example.com", DisplayName: "Rider", SignedUp: "2026-08-01", Timezone: "Europe/Rome", Verified: true, Activities: "2", Distance: "12 km", LastSeen: "2026-09-20"}
 
 	rec := httptest.NewRecorder()
-	s.pages.Render(rec, http.StatusOK, "admin", web.PageData{Title: "Accounts", Path: "/admin/users", NoIndex: true, User: admin, Page: adminUsersView{Users: []adminUserRow{user}}})
+	s.pages.Render(rec, http.StatusOK, "admin", web.PageData{Title: "Accounts", Path: "/admin/users", NoIndex: true, User: admin, Page: adminUsersView{Users: []adminUserRow{user}, Range: "101–101 of 101", PrevHref: "/admin/users"}})
 	body := rec.Body.String()
-	for _, want := range []string{`href="/admin/users/u-1"`, "rider@example.com", "Europe/Rome", "2026-09-20", `href="/admin">Admin</a>`, `href="/admin">← Statistics</a>`} {
+	for _, want := range []string{`href="/admin/users/u-1"`, "rider@example.com", "Europe/Rome", "2026-09-20", `href="/admin">Admin</a>`, `href="/admin">← Statistics</a>`, "101–101 of 101", `<a href="/admin/users">← Newer</a>`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("admin page: missing %q", want)
 		}
@@ -89,5 +89,25 @@ func TestAdminFormatting(t *testing.T) {
 	}
 	if got := adminUserHref("u", 3); got != "/admin/users/u?page=3" {
 		t.Errorf("page 3 href = %q", got)
+	}
+}
+
+func TestAdminPages(t *testing.T) {
+	for _, tc := range []struct {
+		page, total      int
+		offset           int
+		past, prev, next bool
+	}{
+		{1, 0, 0, true, false, false},
+		{1, 100, 0, false, false, false},
+		{1, 101, 0, false, false, true},
+		{2, 101, 100, false, true, false},
+		{3, 101, 200, true, true, false},
+	} {
+		offset, past, prev, next := adminPages(tc.page, tc.total, 100)
+		if offset != tc.offset || past != tc.past || prev != tc.prev || next != tc.next {
+			t.Errorf("adminPages(%d, %d) = %d, past %v, prev %v, next %v; want %d, %v, %v, %v",
+				tc.page, tc.total, offset, past, prev, next, tc.offset, tc.past, tc.prev, tc.next)
+		}
 	}
 }

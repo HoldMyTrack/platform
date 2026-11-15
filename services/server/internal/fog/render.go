@@ -18,6 +18,7 @@ import (
 
 	"github.com/HoldMyTrack/platform/services/server/internal/parallel"
 	"github.com/HoldMyTrack/platform/services/server/internal/parse"
+	"github.com/HoldMyTrack/platform/services/server/internal/pngenc"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 	"github.com/HoldMyTrack/platform/services/server/internal/tilemath"
 )
@@ -462,20 +463,22 @@ func storeTilePNG(ctx context.Context, store *storage.Store, key string, mask im
 }
 
 func encodeTilePNG(mask image.Image) ([]byte, error) {
-	var buf bytes.Buffer
-	if err := png.Encode(&buf, mask); err != nil {
+	b, err := pngenc.Encode(mask)
+	if err != nil {
 		return nil, fmt.Errorf("encode png: %w", err)
 	}
-	return buf.Bytes(), nil
+	return b, nil
 }
 
 func fogObjectKey(userID string, zoom, x, y int) string {
 	return fmt.Sprintf("fog/%s/%d/%d/%d.png", userID, zoom, x, y)
 }
 
-// tileDirtyGen is a tile's dirty_gen as a render starts, read before anything it draws from:
-// upsertTileRendered clears dirty only if no one has marked the tile again since. 0 for a
-// tile with no row yet.
+// tileDirtyGen is a tile's dirty_gen as its render starts, read before anything it draws from:
+// upsertTileRendered clears dirty only if no one has marked the tile again since. Read here
+// rather than with the level's list, since a tile can wait long in the level's queue, and a
+// mark landing in that wait would leave it dirty for a render it doesn't need. 0 for a tile
+// with no row yet.
 func tileDirtyGen(ctx context.Context, pool *pgxpool.Pool, userID string, zoom, x, y int) (int64, error) {
 	var gen int64
 	err := pool.QueryRow(ctx,
@@ -489,37 +492,27 @@ func tileDirtyGen(ctx context.Context, pool *pgxpool.Pool, userID string, zoom, 
 }
 
 // upsertTileRendered records a fresh render, and marks the tile's parent dirty in the same
-// transaction (RenderUser walks the pyramid off that flag). INSERT ... ON CONFLICT, not a plain
+// statement (RenderUser walks the pyramid off that flag). INSERT ... ON CONFLICT, not a plain
 // UPDATE: a pyramid tile (z13..z0) may have no fog_tiles row yet the first time it's built.
 //
 // dirty clears only if dirty_gen is still gen, the value read before the render gathered its
-// masks. A change that lands mid-render — an activity deleted while its old mask was being
-// composited in — marks the tile again (bumping dirty_gen), and the tile stays dirty for the
-// render the change enqueued, instead of keeping the deleted track until something else
+// masks (tileDirtyGen). A change that lands mid-render — an activity deleted while its old mask
+// was being composited in — marks the tile again (bumping dirty_gen), and the tile stays dirty
+// for the render the change enqueued, instead of keeping the deleted track until something else
 // touches that tile.
 func upsertTileRendered(ctx context.Context, pool *pgxpool.Pool, userID string, zoom, x, y int, gen int64, fogKey string, size int) error {
-	tx, err := pool.Begin(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
-	if _, err := tx.Exec(ctx, `
-		INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, bytes, dirty, rendered_at)
-		VALUES ($1, $2, $3, $4, $5, $7, false, NOW())
-		ON CONFLICT (user_id, zoom, tile_x, tile_y)
-		DO UPDATE SET object_key = EXCLUDED.object_key, bytes = EXCLUDED.bytes,
-			dirty = fog_tiles.dirty_gen <> $6, rendered_at = NOW()
-	`, userID, zoom, x, y, fogKey, gen, size); err != nil {
-		return err
-	}
-	if zoom > 0 {
-		if _, err := tx.Exec(ctx, `
-			INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, dirty)
-			VALUES ($1, $2, $3, $4, true)
-			ON CONFLICT (user_id, zoom, tile_x, tile_y) DO UPDATE SET dirty = true, dirty_gen = fog_tiles.dirty_gen + 1
-		`, userID, zoom-1, x/2, y/2); err != nil {
-			return err
-		}
-	}
-	return tx.Commit(ctx)
+	_, err := pool.Exec(ctx, `
+		WITH rendered AS (
+			INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, bytes, dirty, rendered_at)
+			VALUES ($1, $2, $3, $4, $5, $7, false, NOW())
+			ON CONFLICT (user_id, zoom, tile_x, tile_y)
+			DO UPDATE SET object_key = EXCLUDED.object_key, bytes = EXCLUDED.bytes,
+				dirty = fog_tiles.dirty_gen <> $6, rendered_at = NOW()
+			RETURNING zoom, tile_x, tile_y
+		)
+		INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, dirty)
+		SELECT $1, zoom - 1, tile_x / 2, tile_y / 2, true FROM rendered WHERE zoom > 0
+		ON CONFLICT (user_id, zoom, tile_x, tile_y) DO UPDATE SET dirty = true, dirty_gen = fog_tiles.dirty_gen + 1
+	`, userID, zoom, x, y, fogKey, gen, size)
+	return err
 }

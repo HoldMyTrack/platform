@@ -32,58 +32,112 @@ const (
 )
 
 // jwksKeySet caches a provider's RS256 signing keys by kid, for as long as its key set's
-// Cache-Control allows.
+// Cache-Control allows. mu guards the cache and is never held across a request to the
+// provider, so a token whose key is cached never waits on a fetch; fetching lets one fetch run
+// at a time.
 type jwksKeySet struct {
-	url    string
-	client *http.Client
+	url      string
+	client   *http.Client
+	fetching chan struct{}
 
 	mu        sync.Mutex
 	keys      map[string]*rsa.PublicKey
 	expires   time.Time
 	lastFetch time.Time
+	fetches   int   // fetches finished, so a caller that waited on one doesn't repeat it
+	fetchErr  error // the last fetch's failure, nil when it succeeded
 }
 
 func newJWKSKeySet(url string, client *http.Client) *jwksKeySet {
-	return &jwksKeySet{url: url, client: client}
+	return &jwksKeySet{url: url, client: client, fetching: make(chan struct{}, 1)}
 }
 
 // key returns the public key for kid, fetching the set when the cache has expired or doesn't
 // have kid (at most once per jwksRefetchGap for the latter).
 func (k *jwksKeySet) key(ctx context.Context, kid string, now time.Time) (*rsa.PublicKey, error) {
+	key, fetch, seen := k.cached(kid, now)
+	if !fetch {
+		return key, unknownKey(key, kid)
+	}
+	select {
+	case k.fetching <- struct{}{}:
+	case <-ctx.Done():
+		return nil, ctx.Err()
+	}
+	defer func() { <-k.fetching }()
+
 	k.mu.Lock()
-	defer k.mu.Unlock()
-	if key, ok := k.keys[kid]; ok && now.Before(k.expires) {
-		return key, nil
+	done, fetchErr := k.fetches != seen, k.fetchErr
+	key = k.keys[kid]
+	k.mu.Unlock()
+	if done {
+		// Another caller's fetch finished while this one waited: answer as it did. A failure is
+		// the provider's own, since the fetch runs detached, and each caller retrying it in turn
+		// would wait out the client's timeout once for every caller ahead of it.
+		if fetchErr != nil {
+			return nil, fetchErr
+		}
+		return key, unknownKey(key, kid)
 	}
-	if k.keys != nil && now.Before(k.expires) && now.Sub(k.lastFetch) < jwksRefetchGap {
-		return nil, fmt.Errorf("unknown signing key %q", kid)
+
+	// Not on ctx: the waiters share this fetch, so one caller giving up mustn't fail it for
+	// them. The client's timeout bounds it.
+	keys, ttl, err := fetchJWKS(context.WithoutCancel(ctx), k.client, k.url)
+	k.mu.Lock()
+	k.lastFetch = now
+	k.fetches++
+	k.fetchErr = err
+	if err == nil {
+		k.keys, k.expires = keys, now.Add(ttl)
 	}
-	if err := k.fetch(ctx, now); err != nil {
+	k.mu.Unlock()
+	if err != nil {
 		return nil, err
 	}
-	if key, ok := k.keys[kid]; ok {
-		return key, nil
-	}
-	return nil, fmt.Errorf("unknown signing key %q", kid)
+	key = keys[kid]
+	return key, unknownKey(key, kid)
 }
 
-func (k *jwksKeySet) fetch(ctx context.Context, now time.Time) error {
-	k.lastFetch = now
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, k.url, nil)
-	if err != nil {
-		return err
+// cached is kid's key from the cache, or whether the set has to be fetched for it; seen is the
+// fetch count it read, for key to tell whether one finished since.
+func (k *jwksKeySet) cached(kid string, now time.Time) (key *rsa.PublicKey, fetch bool, seen int) {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+	fresh := k.keys != nil && now.Before(k.expires)
+	if key, ok := k.keys[kid]; ok && fresh {
+		return key, false, k.fetches
 	}
-	resp, err := k.client.Do(req)
+	if fresh && now.Sub(k.lastFetch) < jwksRefetchGap {
+		return nil, false, k.fetches
+	}
+	return nil, true, k.fetches
+}
+
+func unknownKey(key *rsa.PublicKey, kid string) error {
+	if key == nil {
+		return fmt.Errorf("unknown signing key %q", kid)
+	}
+	return nil
+}
+
+// fetchJWKS reads the RS256 keys a key set publishes, and how long its Cache-Control lets them
+// be kept.
+func fetchJWKS(ctx context.Context, client *http.Client, url string) (map[string]*rsa.PublicKey, time.Duration, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return err
+		return nil, 0, err
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return err
+		return nil, 0, err
 	}
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("key set endpoint returned %d", resp.StatusCode)
+		return nil, 0, fmt.Errorf("key set endpoint returned %d", resp.StatusCode)
 	}
 	var set struct {
 		Keys []struct {
@@ -94,7 +148,7 @@ func (k *jwksKeySet) fetch(ctx context.Context, now time.Time) error {
 		} `json:"keys"`
 	}
 	if err := json.Unmarshal(body, &set); err != nil {
-		return fmt.Errorf("key set response: %w", err)
+		return nil, 0, fmt.Errorf("key set response: %w", err)
 	}
 	keys := make(map[string]*rsa.PublicKey, len(set.Keys))
 	for _, jwk := range set.Keys {
@@ -109,11 +163,9 @@ func (k *jwksKeySet) fetch(ctx context.Context, now time.Time) error {
 		keys[jwk.Kid] = &rsa.PublicKey{N: new(big.Int).SetBytes(n), E: int(new(big.Int).SetBytes(e).Int64())}
 	}
 	if len(keys) == 0 {
-		return errors.New("key set has no RSA keys")
+		return nil, 0, errors.New("key set has no RSA keys")
 	}
-	k.keys = keys
-	k.expires = now.Add(cacheMaxAge(resp.Header.Get("Cache-Control"), jwksDefaultTTL))
-	return nil
+	return keys, cacheMaxAge(resp.Header.Get("Cache-Control"), jwksDefaultTTL), nil
 }
 
 // cacheMaxAge reads max-age out of a Cache-Control header, or returns fallback.

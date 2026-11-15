@@ -17,6 +17,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/mail"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // Notifier is what the export job needs to tell the owner their archive is ready: a way to
@@ -87,10 +88,7 @@ func runExport(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, lo
 		total += s
 	}
 	l := i18n.Get(lang)
-	loc, err := time.LoadLocation(timezone)
-	if err != nil {
-		loc = time.UTC
-	}
+	loc := zoneinfo.LoadOr(timezone, time.UTC)
 	link := strings.TrimRight(notifier.BaseURL, "/") + "/settings#download-data"
 	body := l.T("email.export.body",
 		"parts", l.N("email.export.parts", int64(len(sizes))),

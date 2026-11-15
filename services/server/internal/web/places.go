@@ -6,6 +6,8 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // Country is one entry of the Settings page's Country list (places_data.go).
@@ -64,7 +66,7 @@ func TimezoneGroups(at time.Time, current string) []TimezoneGroup {
 	for _, id := range ids {
 		region, place := splitZone(id)
 		opt := TimezoneOption{ID: id, Label: place}
-		if loc, err := time.LoadLocation(id); err == nil {
+		if loc, err := zoneinfo.Load(id); err == nil {
 			_, opt.offset = at.In(loc).Zone()
 			opt.hasOffset = true
 			opt.Label = "(" + formatOffset(opt.offset) + ") - " + place

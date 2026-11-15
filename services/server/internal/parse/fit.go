@@ -1,6 +1,7 @@
 package parse
 
 import (
+	"bufio"
 	"encoding/binary"
 	"fmt"
 	"io"
@@ -21,7 +22,7 @@ func ParseFIT(r io.Reader) (Activity, error) { return parseFIT(r, 0) }
 
 // parseFIT is ParseFIT refusing a file past maxPoints positioned points, 0 for no cap.
 func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
-	br := &byteReader{r: r}
+	br := bufio.NewReader(r)
 
 	hdr := make([]byte, 12)
 	if _, err := io.ReadFull(br, hdr); err != nil {
@@ -74,15 +75,13 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 			return Activity{}, fmt.Errorf("parse fit: data message for undefined local type %d", localType)
 		}
 
-		fields := make(map[byte][]byte, len(def.fields))
-		for _, f := range def.fields {
-			buf := make([]byte, f.size)
-			if _, err := io.ReadFull(br, buf); err != nil {
-				return Activity{}, fmt.Errorf("parse fit: field data: %w", err)
-			}
-			read += uint32(f.size)
-			fields[f.num] = buf
+		if def.data == nil {
+			def.data = make([]byte, def.size)
 		}
+		if _, err := io.ReadFull(br, def.data); err != nil {
+			return Activity{}, fmt.Errorf("parse fit: field data: %w", err)
+		}
+		read += uint32(len(def.data))
 
 		switch def.globalMesgNum {
 		case 18: // session — carries the activity's own sport/sub_sport (fields 5, 6).
@@ -91,10 +90,10 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 			// single obviously-correct "the whole file's type" when there's more than
 			// one, and this parser covers the common single-sport case (see doc comment).
 			var sport, subSport byte = 0xFF, 0xFF
-			if raw := fields[5]; len(raw) > 0 {
+			if raw := def.value(5); len(raw) > 0 {
 				sport = raw[0]
 			}
-			if raw := fields[6]; len(raw) > 0 {
+			if raw := def.value(6); len(raw) > 0 {
 				subSport = raw[0]
 			}
 			act.ActivityType = sportName(sport, subSport)
@@ -109,7 +108,7 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 			haveLat, haveLon := false, false
 			var enhanced *float32
 			for _, f := range def.fields {
-				raw := fields[f.num]
+				raw := def.data[f.off : f.off+int(f.size)]
 				switch f.num {
 				case 0: // position_lat, sint32 semicircles
 					if v, ok := fitSint32(def.order, raw); ok {
@@ -179,12 +178,31 @@ func fitSint32(order binary.ByteOrder, raw []byte) (int32, bool) {
 type fitField struct {
 	num  byte
 	size byte
+	off  int // where the field starts in a data message's bytes
 }
 
+// fitDef is a definition message, and the buffer each data message of its local type is read
+// into, its fields at their offsets. A message's bytes are used before the next one is read.
+// The buffer is made for the first data message, so a file of definitions alone, each up to
+// about 130 KB of fields, allocates nothing for them.
 type fitDef struct {
 	globalMesgNum uint16
 	order         binary.ByteOrder
 	fields        []fitField
+	size          int // bytes in a data message
+	data          []byte
+}
+
+// value is field num's bytes in the data message last read, the last field of that number when
+// a definition repeats one; nil when the definition has none.
+func (d *fitDef) value(num byte) []byte {
+	var raw []byte
+	for _, f := range d.fields {
+		if f.num == num {
+			raw = d.data[f.off : f.off+int(f.size)]
+		}
+	}
+	return raw
 }
 
 // readDefinition reads a definition message: reserved, architecture, global_mesg_num,
@@ -194,7 +212,7 @@ type fitDef struct {
 // aren't extracted, but the byte stream stays correctly aligned for every message that
 // follows, which is the part that actually matters for not silently corrupting the rest of
 // the parse. Returns bytes consumed after the header byte.
-func readDefinition(br *byteReader, devFields bool) (*fitDef, uint32, error) {
+func readDefinition(br *bufio.Reader, devFields bool) (*fitDef, uint32, error) {
 	// reserved(1) + architecture(1) + global_mesg_num(2) = 4 bytes, not 5.
 	buf := make([]byte, 4)
 	if _, err := io.ReadFull(br, buf); err != nil {
@@ -214,13 +232,15 @@ func readDefinition(br *byteReader, devFields bool) (*fitDef, uint32, error) {
 	}
 	n++
 	def := &fitDef{globalMesgNum: globalMesgNum, order: order}
+	size := 0
+	var fb [3]byte
 	for i := byte(0); i < numFieldsB; i++ {
-		fb := make([]byte, 3)
-		if _, err := io.ReadFull(br, fb); err != nil {
+		if _, err := io.ReadFull(br, fb[:]); err != nil {
 			return nil, n, err
 		}
 		n += 3
-		def.fields = append(def.fields, fitField{num: fb[0], size: fb[1]})
+		def.fields = append(def.fields, fitField{num: fb[0], size: fb[1], off: size})
+		size += int(fb[1])
 	}
 
 	if devFields {
@@ -230,31 +250,18 @@ func readDefinition(br *byteReader, devFields bool) (*fitDef, uint32, error) {
 		}
 		n++
 		for i := byte(0); i < numDevB; i++ {
-			db := make([]byte, 3) // field_num, size, developer_data_index — skipped, not stored
-			if _, err := io.ReadFull(br, db); err != nil {
+			// field_num, size, developer_data_index — skipped, not stored
+			if _, err := io.ReadFull(br, fb[:]); err != nil {
 				return nil, n, err
 			}
 			n += 3
 			// The data-message bytes these fields occupy still need to be skipped when a
 			// matching data message arrives, so they're recorded like any other field —
-			// just never read out of `fields` by number in the `record` switch above.
-			def.fields = append(def.fields, fitField{num: 0xFF, size: db[1]})
+			// just never read by number in the `record` switch above.
+			def.fields = append(def.fields, fitField{num: 0xFF, size: fb[1], off: size})
+			size += int(fb[1])
 		}
 	}
+	def.size = size
 	return def, n, nil
-}
-
-// byteReader adapts an io.Reader to io.ByteReader without pulling in bufio's larger surface,
-// and without ever buffering more than one byte ahead — consistent with §5.2's "stream,
-// don't buffer the whole file" requirement.
-type byteReader struct {
-	r   io.Reader
-	one [1]byte
-}
-
-func (b *byteReader) Read(p []byte) (int, error) { return b.r.Read(p) }
-
-func (b *byteReader) ReadByte() (byte, error) {
-	_, err := io.ReadFull(b.r, b.one[:])
-	return b.one[0], err
 }

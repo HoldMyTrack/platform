@@ -20,6 +20,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
+	"github.com/HoldMyTrack/platform/services/server/internal/zoneinfo"
 )
 
 // PartLimit is roughly how big one zip part gets: a part is closed once it passes this, so
@@ -86,18 +87,18 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 	}
 
 	// Each activity is named by its local start where it was recorded (IMPLEMENTATION.md §4.30).
-	accountLoc, err := time.LoadLocation(doc.Account.Timezone)
-	if err != nil {
-		accountLoc = time.UTC
-	}
-	locs := map[string]*time.Location{}
+	accountLoc := zoneinfo.LoadOr(doc.Account.Timezone, time.UTC)
+	// zoneinfo keeps only zones that load, so one that doesn't is remembered here, not looked
+	// up again for each activity recorded in it.
+	unloadable := map[string]bool{}
 	locationOf := func(tz string) *time.Location {
-		loc, ok := locs[tz]
-		if !ok {
-			if loc, err = time.LoadLocation(tz); err != nil {
-				loc = accountLoc
-			}
-			locs[tz] = loc
+		if unloadable[tz] {
+			return accountLoc
+		}
+		loc, err := zoneinfo.Load(tz)
+		if err != nil {
+			unloadable[tz] = true
+			return accountLoc
 		}
 		return loc
 	}
