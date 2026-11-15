@@ -88,6 +88,20 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 
 	// Each activity is named by its local start where it was recorded (IMPLEMENTATION.md §4.30).
 	accountLoc := zoneinfo.LoadOr(doc.Account.Timezone, time.UTC)
+	// zoneinfo keeps only zones that load, so one that doesn't is remembered here, not looked
+	// up again for each activity recorded in it.
+	unloadable := map[string]bool{}
+	locationOf := func(tz string) *time.Location {
+		if unloadable[tz] {
+			return accountLoc
+		}
+		loc, err := zoneinfo.Load(tz)
+		if err != nil {
+			unloadable[tz] = true
+			return accountLoc
+		}
+		return loc
+	}
 	names := map[string]bool{}
 	originals := map[string]string{} // raw key -> its file in the archive
 	for i := range doc.Activities {
@@ -96,7 +110,7 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 		if act.Name != "" {
 			label = act.Name
 		}
-		base := uniqueName(names, act.StartedAt.In(zoneinfo.LoadOr(act.Timezone, accountLoc)).Format("2006-01-02 1504")+" "+Slug(label))
+		base := uniqueName(names, act.StartedAt.In(locationOf(act.Timezone)).Format("2006-01-02 1504")+" "+Slug(label))
 
 		if act.rawKey != "" {
 			if file, ok := originals[act.rawKey]; ok {
