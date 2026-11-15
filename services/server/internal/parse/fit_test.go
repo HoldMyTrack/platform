@@ -253,3 +253,31 @@ func TestParseFITEnhancedAltitude(t *testing.T) {
 		}
 	}
 }
+
+// A file of nothing but the largest definitions allocates no data buffer for them.
+func TestParseFITDefinitionsAllocateNoData(t *testing.T) {
+	var body bytes.Buffer
+	for range 50 {
+		body.WriteByte(0x40)
+		body.Write([]byte{0x00, 0x00})
+		binary.Write(&body, binary.LittleEndian, uint16(20))
+		body.WriteByte(255)
+		for f := range 255 {
+			body.Write([]byte{byte(f), 255, 0x0D})
+		}
+	}
+	hdr := make([]byte, 12)
+	hdr[0] = 12
+	binary.LittleEndian.PutUint32(hdr[4:8], uint32(body.Len()))
+	copy(hdr[8:], ".FIT")
+	data := append(hdr, body.Bytes()...)
+	allocs := testing.Benchmark(func(b *testing.B) {
+		b.ReportAllocs()
+		for b.Loop() {
+			ParseFIT(bytes.NewReader(data))
+		}
+	}).AllocedBytesPerOp()
+	if allocs > 1<<20 {
+		t.Errorf("50 definitions allocated %d bytes per parse, want well under the 3 MB their data buffers would take", allocs)
+	}
+}

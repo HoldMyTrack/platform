@@ -75,6 +75,9 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 			return Activity{}, fmt.Errorf("parse fit: data message for undefined local type %d", localType)
 		}
 
+		if def.data == nil {
+			def.data = make([]byte, def.size)
+		}
 		if _, err := io.ReadFull(br, def.data); err != nil {
 			return Activity{}, fmt.Errorf("parse fit: field data: %w", err)
 		}
@@ -180,10 +183,13 @@ type fitField struct {
 
 // fitDef is a definition message, and the buffer each data message of its local type is read
 // into, its fields at their offsets. A message's bytes are used before the next one is read.
+// The buffer is made for the first data message, so a file of definitions alone, each up to
+// about 130 KB of fields, allocates nothing for them.
 type fitDef struct {
 	globalMesgNum uint16
 	order         binary.ByteOrder
 	fields        []fitField
+	size          int // bytes in a data message
 	data          []byte
 }
 
@@ -256,6 +262,6 @@ func readDefinition(br *bufio.Reader, devFields bool) (*fitDef, uint32, error) {
 			size += int(fb[1])
 		}
 	}
-	def.data = make([]byte, size)
+	def.size = size
 	return def, n, nil
 }
