@@ -7,30 +7,47 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	netmail "net/mail"
 	"strings"
 	"testing"
 )
 
-func TestZeptoRequestBodySplitsTheSendersName(t *testing.T) {
-	b, err := zeptoRequestBody("HoldMyTrack <noreply@holdmytrack.com>", "a@example.test", "Сброс пароля", "Тело")
+func mustNew(t *testing.T, c Config, logBodies bool, log *slog.Logger) Sender {
+	t.Helper()
+	s, err := New(c, logBodies, log)
 	if err != nil {
 		t.Fatal(err)
 	}
-	var got zeptoRequest
-	if err := json.Unmarshal(b, &got); err != nil {
+	return s
+}
+
+// A configuration that would fail every send, or send in the clear, is refused at start.
+func TestNewRefusesABrokenConfig(t *testing.T) {
+	for name, c := range map[string]Config{
+		"no sender, API":           {ZeptoMailURL: "https://api.zeptomail.com/v1.1/email", ZeptoMailToken: "t"},
+		"username as sender, SMTP": {SMTPHost: "smtp.example.com", SMTPPort: "587", From: "emailapikey"},
+		"http API URL":             {ZeptoMailURL: "http://api.zeptomail.com/v1.1/email", ZeptoMailToken: "t", From: "a@example.test"},
+		"unparsable API URL":       {ZeptoMailURL: "https://%zz", ZeptoMailToken: "t", From: "a@example.test"},
+	} {
+		if _, err := New(c, false, slog.New(slog.DiscardHandler)); err == nil {
+			t.Errorf("%s: accepted", name)
+		}
+	}
+	if _, err := New(Config{}, false, slog.New(slog.DiscardHandler)); err != nil {
+		t.Errorf("the unconfigured dev default was refused: %v", err)
+	}
+}
+
+func TestZeptoRequestBodySplitsTheSendersName(t *testing.T) {
+	from, err := netmail.ParseAddress("HoldMyTrack <noreply@holdmytrack.com>")
+	if err != nil {
 		t.Fatal(err)
 	}
-	want := zeptoRequest{
-		From:     zeptoAddress{Address: "noreply@holdmytrack.com", Name: "HoldMyTrack"},
-		To:       []zeptoTo{{EmailAddress: zeptoAddress{Address: "a@example.test"}}},
-		Subject:  "Сброс пароля",
-		TextBody: "Тело",
-	}
-	if got.From != want.From || len(got.To) != 1 || got.To[0] != want.To[0] || got.Subject != want.Subject || got.TextBody != want.TextBody {
-		t.Errorf("got %+v, want %+v", got, want)
-	}
-	if _, err := zeptoRequestBody("not an address", "a@example.test", "s", "b"); err == nil {
-		t.Error("an unparsable sender was accepted")
+	got := zeptoRequestBody(from, "a@example.test", "Сброс пароля", "Тело")
+	if got.From != (zeptoAddress{Address: "noreply@holdmytrack.com", Name: "HoldMyTrack"}) ||
+		len(got.To) != 1 || got.To[0].EmailAddress != (zeptoAddress{Address: "a@example.test"}) ||
+		got.Subject != "Сброс пароля" || got.TextBody != "Тело" {
+		t.Errorf("got %+v", got)
 	}
 }
 
@@ -38,8 +55,7 @@ func TestZeptoRequestBodySplitsTheSendersName(t *testing.T) {
 // quote the recipient and would reach the logs.
 func TestZeptoStatusErrorLeavesOutTheMessages(t *testing.T) {
 	body := `{"error":{"code":"TM_3201","details":[{"code":"GE_102","message":"Invalid address a@example.test","target":"to"}],"message":"Mandatory Field 'to' was not set"}}`
-	err := zeptoStatusError(422, strings.NewReader(body))
-	if got, want := err.Error(), "mail: zeptomail: HTTP 422 TM_3201 GE_102"; got != want {
+	if got, want := zeptoStatusError(422, strings.NewReader(body)).Error(), "mail: zeptomail: HTTP 422 TM_3201 GE_102"; got != want {
 		t.Errorf("got %q, want %q", got, want)
 	}
 	if got, want := zeptoStatusError(502, strings.NewReader("<html>")).Error(), "mail: zeptomail: HTTP 502"; got != want {
@@ -58,17 +74,30 @@ func TestZeptoSenderPostsWithTheToken(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	// The token pasted with its scheme, as ZeptoMail's console shows it, is sent once-prefixed.
-	for _, token := range []string{"secret", "Zoho-enczapikey secret"} {
-		s := New(Config{ZeptoMailURL: srv.URL, ZeptoMailToken: token, SMTPHost: "unused.example", From: "noreply@holdmytrack.com"}, false, slog.New(slog.DiscardHandler))
+	// The token as the console shows it, with its scheme in any case or whitespace an .env edit
+	// left, is sent once-prefixed.
+	for _, token := range []string{"secret", "Zoho-enczapikey secret", "zoho-enczapikey secret", " secret\r\n"} {
+		s := mustNew(t, Config{ZeptoMailURL: srv.URL, ZeptoMailToken: token, SMTPHost: "unused.example", From: "HoldMyTrack <noreply@holdmytrack.com>"}, false, slog.New(slog.DiscardHandler))
 		if err := s.Send(context.Background(), "a@example.test", "Hi", "Body"); err != nil {
 			t.Fatal(err)
 		}
 		if auth != "Zoho-enczapikey secret" {
 			t.Errorf("token %q: Authorization %q", token, auth)
 		}
-		if req.To[0].EmailAddress.Address != "a@example.test" || req.TextBody != "Body" {
+		if req.From.Address != "noreply@holdmytrack.com" || req.To[0].EmailAddress.Address != "a@example.test" || req.TextBody != "Body" {
 			t.Errorf("request %+v", req)
 		}
+	}
+}
+
+// A redirect counts as a failed send: the 2xx at its end isn't ZeptoMail taking the message.
+func TestZeptoSenderDoesNotFollowRedirects(t *testing.T) {
+	landing := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {}))
+	defer landing.Close()
+	srv := httptest.NewServer(http.RedirectHandler(landing.URL, http.StatusTemporaryRedirect))
+	defer srv.Close()
+	s := mustNew(t, Config{ZeptoMailURL: srv.URL, ZeptoMailToken: "t", From: "noreply@holdmytrack.com"}, false, slog.New(slog.DiscardHandler))
+	if err := s.Send(context.Background(), "a@example.test", "Hi", "Body"); err == nil || !strings.Contains(err.Error(), "HTTP 307") {
+		t.Errorf("got %v, want an HTTP 307 failure", err)
 	}
 }

@@ -110,7 +110,11 @@ func main() {
 			log.Error("storage bucket", "err", err)
 			os.Exit(1)
 		}
-		mailer := newMailer(cfg, log, "serve")
+		mailer, err := newMailer(cfg, log, "serve")
+		if err != nil {
+			log.Error("mail", "err", err)
+			os.Exit(1)
+		}
 		webFS, webReload := web.Embedded(), false
 		if cfg.WebDevDir != "" {
 			webFS, webReload = os.DirFS(cfg.WebDevDir), true
@@ -174,7 +178,12 @@ func main() {
 		}
 		metrics.Serve(ctx, cfg.MetricsAddr, log)
 		log.Info("work: polling", "concurrency", cfg.WorkerConcurrency)
-		notifier := &worker.Notifier{Mailer: newMailer(cfg, log, "work"), BaseURL: cfg.AppBaseURL}
+		mailer, err := newMailer(cfg, log, "work")
+		if err != nil {
+			log.Error("mail", "err", err)
+			os.Exit(1)
+		}
+		notifier := &worker.Notifier{Mailer: mailer, BaseURL: cfg.AppBaseURL}
 		go budget.RunFlusher(ctx, pool, log)
 		gate := budget.NewGate(pool, cfg.R2DailyBudgetUSD, log)
 		watch := imagery.NewWatch(imagery.Config{
@@ -526,7 +535,7 @@ func serveUntilDone(ctx context.Context, srv *http.Server, ln net.Listener, drai
 // finished data export). Bodies go to the log only off a real deployment; on one, mail left
 // unconfigured is a misconfiguration worth a warning at start, not a reason to log live account
 // links.
-func newMailer(cfg config.Config, log *slog.Logger, mode string) mail.Sender {
+func newMailer(cfg config.Config, log *slog.Logger, mode string) (mail.Sender, error) {
 	// SMTP_FROM falls back to SMTP_USERNAME: the account authenticating is usually the one
 	// sending.
 	smtpFrom := cfg.SMTPFrom

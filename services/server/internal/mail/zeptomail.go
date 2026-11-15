@@ -8,14 +8,44 @@ import (
 	"io"
 	"net/http"
 	netmail "net/mail"
+	"net/url"
 	"strings"
 )
 
 // zeptoSender sends through ZeptoMail's HTTPS API: a host whose provider blocks outgoing SMTP
 // (DigitalOcean does, on 25, 465 and 587) still reaches port 443.
 type zeptoSender struct {
-	url, token, from string
-	client           *http.Client
+	url, token string
+	from       *netmail.Address
+	client     *http.Client
+}
+
+// zeptoResponseLimit caps how much of a response is read: an answer that isn't ZeptoMail's
+// small JSON is cut off rather than buffered whole.
+const zeptoResponseLimit = 64 << 10
+
+// newZeptoSender takes the token as ZeptoMail's console shows it, with or without its
+// "Zoho-enczapikey" scheme and with the surrounding whitespace an .env edit can leave.
+func newZeptoSender(rawURL, token string, from *netmail.Address) (*zeptoSender, error) {
+	u, err := url.Parse(rawURL)
+	if err != nil {
+		return nil, fmt.Errorf("mail: ZEPTOMAIL_API_URL: %w", err)
+	}
+	if u.Scheme != "https" && (u.Scheme != "http" || needsTLS(u.Hostname())) {
+		return nil, fmt.Errorf("mail: ZEPTOMAIL_API_URL must be https, got %q", rawURL)
+	}
+	token = strings.TrimSpace(token)
+	if scheme, rest, ok := strings.Cut(token, " "); ok && strings.EqualFold(scheme, "Zoho-enczapikey") {
+		token = strings.TrimSpace(rest)
+	}
+	return &zeptoSender{
+		url:   rawURL,
+		token: token,
+		from:  from,
+		// A redirect isn't followed: the API answers a send itself, and a 2xx from wherever a
+		// redirect led would count a message as sent that wasn't.
+		client: &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }},
+	}, nil
 }
 
 type zeptoAddress struct {
@@ -45,45 +75,43 @@ type zeptoError struct {
 	} `json:"error"`
 }
 
-// Send ignores ctx's cancellation for the reason smtpSender.Send gives; the client's timeout,
-// sendTimeout, bounds it.
+// Send ignores ctx's cancellation for the reason smtpSender.Send gives; sendTimeout bounds it.
 func (s *zeptoSender) Send(ctx context.Context, to, subject, body string) error {
-	req, err := zeptoRequestBody(s.from, to, subject, body)
-	if err != nil {
-		return err
-	}
-	httpReq, err := http.NewRequestWithContext(context.WithoutCancel(ctx), http.MethodPost, s.url, bytes.NewReader(req))
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), sendTimeout)
+	defer cancel()
+	payload, err := json.Marshal(zeptoRequestBody(s.from, to, subject, body))
 	if err != nil {
 		return fmt.Errorf("mail: zeptomail: %w", err)
 	}
-	httpReq.Header.Set("Content-Type", "application/json")
-	httpReq.Header.Set("Accept", "application/json")
-	httpReq.Header.Set("Authorization", "Zoho-enczapikey "+strings.TrimPrefix(s.token, "Zoho-enczapikey "))
-	resp, err := s.client.Do(httpReq)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.url, bytes.NewReader(payload))
+	if err != nil {
+		return fmt.Errorf("mail: zeptomail: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Authorization", "Zoho-enczapikey "+s.token)
+	resp, err := s.client.Do(req)
 	if err != nil {
 		return fmt.Errorf("mail: zeptomail: %w", err)
 	}
 	defer resp.Body.Close()
-	if resp.StatusCode/100 == 2 {
-		_, _ = io.Copy(io.Discard, io.LimitReader(resp.Body, 64<<10))
-		return nil
+	respBody := io.LimitReader(resp.Body, zeptoResponseLimit)
+	if resp.StatusCode/100 != 2 {
+		return zeptoStatusError(resp.StatusCode, respBody)
 	}
-	return zeptoStatusError(resp.StatusCode, io.LimitReader(resp.Body, 64<<10))
+	_, _ = io.Copy(io.Discard, respBody)
+	return nil
 }
 
-// zeptoRequestBody is the API's JSON for one plain-text message. from may carry a display
-// name ("HoldMyTrack <noreply@holdmytrack.com>"), which the API takes as a field of its own.
-func zeptoRequestBody(from, to, subject, body string) ([]byte, error) {
-	sender, err := netmail.ParseAddress(from)
-	if err != nil {
-		return nil, fmt.Errorf("mail: zeptomail: sender address: %w", err)
-	}
-	return json.Marshal(zeptoRequest{
-		From:     zeptoAddress{Address: sender.Address, Name: sender.Name},
+// zeptoRequestBody is the API's request for one plain-text message, the sender's display name
+// a field of its own.
+func zeptoRequestBody(from *netmail.Address, to, subject, body string) zeptoRequest {
+	return zeptoRequest{
+		From:     zeptoAddress{Address: from.Address, Name: from.Name},
 		To:       []zeptoTo{{EmailAddress: zeptoAddress{Address: to}}},
 		Subject:  subject,
 		TextBody: body,
-	})
+	}
 }
 
 // zeptoStatusError is a failed send's error for the logs: the HTTP status and ZeptoMail's

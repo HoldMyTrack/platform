@@ -12,7 +12,7 @@ import (
 	"log/slog"
 	"mime"
 	"net"
-	"net/http"
+	netmail "net/mail"
 	"net/smtp"
 	"net/textproto"
 	"strings"
@@ -43,14 +43,26 @@ func (c Config) Configured() bool { return c.ZeptoMailToken != "" || c.SMTPHost 
 // logBodies says whether that log line carries the body. The caller passes false for a real
 // deployment (an https APP_BASE_URL): a body holds a live reset or verification link, and
 // written to the logs it would open the account to anyone who can read them.
-func New(c Config, logBodies bool, log *slog.Logger) Sender {
-	switch {
-	case c.ZeptoMailToken != "":
-		return countingSender{&zeptoSender{url: c.ZeptoMailURL, token: c.ZeptoMailToken, from: c.From, client: &http.Client{Timeout: sendTimeout}}}
-	case c.SMTPHost != "":
-		return countingSender{&smtpSender{host: c.SMTPHost, port: c.SMTPPort, username: c.SMTPUsername, password: c.SMTPPassword, from: c.From}}
+//
+// A configured sender whose From doesn't parse, or an API URL that isn't https outside the
+// deployment's own network, is an error: every send would fail, or carry the token and the
+// account links in the clear.
+func New(c Config, logBodies bool, log *slog.Logger) (Sender, error) {
+	if !c.Configured() {
+		return &logSender{log: log, logBodies: logBodies}, nil
 	}
-	return &logSender{log: log, logBodies: logBodies}
+	from, err := netmail.ParseAddress(c.From)
+	if err != nil {
+		return nil, fmt.Errorf("mail: sender address %q: %w", c.From, err)
+	}
+	if c.ZeptoMailToken != "" {
+		s, err := newZeptoSender(c.ZeptoMailURL, c.ZeptoMailToken, from)
+		if err != nil {
+			return nil, err
+		}
+		return countingSender{s}, nil
+	}
+	return countingSender{&smtpSender{host: c.SMTPHost, port: c.SMTPPort, username: c.SMTPUsername, password: c.SMTPPassword, from: from}}, nil
 }
 
 // countingSender counts each send's outcome (metrics.MailSent): callers only log a failure, so a
@@ -82,10 +94,11 @@ func (s *logSender) Send(_ context.Context, to, subject, body string) error {
 }
 
 type smtpSender struct {
-	host, port, username, password, from string
+	host, port, username, password string
+	from                           *netmail.Address
 }
 
-// sendTimeout bounds one message, from the dial to QUIT. Signup, reset and resend send inside
+// sendTimeout bounds one message, from the dial to QUIT or the API's answer. Signup, reset and resend send inside
 // their request, and the HTTP server has no write timeout (uploads take minutes), so a server
 // that stops answering would otherwise hold those requests open for good: a port expecting TLS
 // from the first byte (465) never sends the plaintext greeting net/smtp waits for.
@@ -132,7 +145,7 @@ func (s *smtpSender) Send(ctx context.Context, to, subject, body string) error {
 		}
 	}
 
-	if err := client.Mail(s.from); err != nil {
+	if err := client.Mail(s.from.Address); err != nil {
 		return replyError("MAIL FROM", err)
 	}
 	if err := client.Rcpt(to); err != nil {
@@ -143,7 +156,7 @@ func (s *smtpSender) Send(ctx context.Context, to, subject, body string) error {
 	if err != nil {
 		return replyError("DATA", err)
 	}
-	if _, err := w.Write(message(s.from, to, subject, body)); err != nil {
+	if _, err := w.Write(message(s.from.String(), to, subject, body)); err != nil {
 		return replyError("write body", err)
 	}
 	if err := w.Close(); err != nil {
