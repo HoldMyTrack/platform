@@ -24,6 +24,7 @@ Every built feature of the server and the web app; the Android app's own behavio
 | **Registered user** | An account with an email and password, a linked Google or Facebook identity, or both. |
 | **Demo user** | A visitor in a session on the shared, read-only Demo Customer account (FR-2). |
 | **Fog of War** | A map mode that veils everywhere the account has never recorded an activity. |
+| **Per-address limit** | A limit counted per caller IP address ("from one address"), an IPv6 one together with the rest of its /64. |
 | **Ingest** | Turning an original into a stored activity: parsing, clipping against Private locations (FR-7.1), simplifying, storing. |
 
 ### 1.4 API errors

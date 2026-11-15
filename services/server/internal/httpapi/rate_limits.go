@@ -3,6 +3,7 @@ package httpapi
 import (
 	"net"
 	"net/http"
+	"net/netip"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -68,7 +69,7 @@ func rateKey(info authInfo, ip string) string {
 // limited reports whether l refuses r, answering the 429 itself when it does, with msgKey's
 // message naming the limit as {max}.
 func limited(w http.ResponseWriter, r *http.Request, l *fixedWindowLimiter, msgKey string) bool {
-	if l.allow(rateKey(authInfoFromContext(r.Context()), clientIP(r))) {
+	if l.allow(rateKey(authInfoFromContext(r.Context()), rateLimitAddress(r))) {
 		return false
 	}
 	httpErrorT(w, r, http.StatusTooManyRequests, msgKey, "max", l.limit)
@@ -80,7 +81,7 @@ func limited(w http.ResponseWriter, r *http.Request, l *fixedWindowLimiter, msgK
 // Retry-After rather than a message anyone sees.
 func (s *Server) tile(path string, h http.HandlerFunc) {
 	s.mux.HandleFunc(tileRoute("GET", path), s.requireVerified(func(w http.ResponseWriter, r *http.Request) {
-		if !s.tileLimiter.allow(rateKey(authInfoFromContext(r.Context()), clientIP(r))) {
+		if !s.tileLimiter.allow(rateKey(authInfoFromContext(r.Context()), rateLimitAddress(r))) {
 			w.Header().Set("Retry-After", "60")
 			httpErrorT(w, r, http.StatusTooManyRequests, "error.tile_rate_limit")
 			return
@@ -150,25 +151,8 @@ func (l *fixedWindowLimiter) allowN(key string, n int) bool {
 	return true
 }
 
-// exceeded and hit split allow for a limit on failures only (sign-in): exceeded checks
-// without counting, hit counts one.
-func (l *fixedWindowLimiter) exceeded(key string) bool {
-	if rateLimitsOff.Load() {
-		return false
-	}
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	return l.current(key).count >= l.limit
-}
-
-func (l *fixedWindowLimiter) hit(key string) {
-	l.mu.Lock()
-	defer l.mu.Unlock()
-	l.current(key).count++
-}
-
 // refund takes back one count allow made, for an attempt that turned out not to be what the
-// limit counts (a sign-in that succeeded).
+// limit counts (a sign-in that succeeded, a signup that made no account).
 func (l *fixedWindowLimiter) refund(key string) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -199,14 +183,40 @@ func (l *fixedWindowLimiter) current(key string) *windowCount {
 	return c
 }
 
-// clientIP is the address a per-caller limit keys on. In production every request arrives
-// through Caddy (apps/web/docker/Caddyfile; api publishes no port), so RemoteAddr is Caddy's
-// container address for every visitor, and a limit keyed on it was one limit shared by the
-// whole site. Caddy, trusting no proxy ahead of it, discards any X-Forwarded-For a client
-// sends and sets its own, the address it was connected from; the last entry is taken, so a
-// proxy that appends instead would still be read correctly. The header is believed only from
-// a private or loopback peer — the proxy on the container network; a caller reaching this
-// server directly gets its own RemoteAddr and can't claim a different one.
+// rateLimitAddress is the caller a per-address limit counts (rateLimitKey of clientIP).
+func rateLimitAddress(r *http.Request) string {
+	return rateLimitKey(clientIP(r))
+}
+
+// rateLimitKey is the key a per-address limit counts ip under: an IPv4 address as it is, an
+// IPv6 one as its /64, the block one connection is usually given, so stepping through
+// addresses inside it doesn't start a fresh count. An IPv4-mapped IPv6 address counts as its
+// IPv4 address; anything unparsable is its own key.
+func rateLimitKey(ip string) string {
+	addr, err := netip.ParseAddr(ip)
+	if err != nil {
+		return ip
+	}
+	addr = addr.Unmap().WithZone("")
+	if addr.Is4() {
+		return addr.String()
+	}
+	block, err := addr.Prefix(64)
+	if err != nil {
+		return ip
+	}
+	return block.String()
+}
+
+// clientIP is the caller's address, which rateLimitAddress turns into a limit's key. In
+// production every request arrives through Caddy (apps/web/docker/Caddyfile; api publishes no
+// port), so RemoteAddr is Caddy's container address for every visitor, and a limit keyed on it
+// would be one limit shared by the whole site. Caddy, trusting no proxy ahead of it, discards
+// any X-Forwarded-For a client sends and sets its own, the address it was connected from; the
+// last entry is taken, so a proxy that appends instead would still be read correctly. The
+// header is believed only from a private or loopback peer — the proxy on the container
+// network; a caller reaching this server directly gets its own RemoteAddr and can't claim a
+// different one.
 func clientIP(r *http.Request) string {
 	host, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {

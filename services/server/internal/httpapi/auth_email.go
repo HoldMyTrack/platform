@@ -45,7 +45,7 @@ func (s *Server) handleForgotPassword(w http.ResponseWriter, r *http.Request) {
 // It only ever fails on the rate limit or a malformed address: an unknown email, and a failure
 // actually sending the mail, both look like success to the caller.
 func (s *Server) requestPasswordReset(r *http.Request, rawEmail string) error {
-	if !forgotPasswordLimiter.allow(clientIP(r)) {
+	if !forgotPasswordLimiter.allow(rateLimitAddress(r)) {
 		return accountFailure(http.StatusTooManyRequests, "error.rate_limited")
 	}
 	email, err := normalizeEmail(rawEmail)

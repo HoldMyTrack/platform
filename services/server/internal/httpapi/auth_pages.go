@@ -215,7 +215,7 @@ func (s *Server) handleSignInPage(w http.ResponseWriter, r *http.Request) {
 // POST /signin.
 func (s *Server) handleSignInForm(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
-	userID, err := s.checkPassword(r.Context(), clientIP(r), email, r.PostFormValue("password"))
+	userID, err := s.checkPassword(r.Context(), rateLimitAddress(r), email, r.PostFormValue("password"))
 	if err != nil {
 		s.renderAuthError(w, r, "sign in", "signin", "signin.title", false, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
 		return

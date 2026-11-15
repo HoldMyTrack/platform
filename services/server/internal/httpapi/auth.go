@@ -320,15 +320,21 @@ func (s *Server) handleSignup(w http.ResponseWriter, r *http.Request) {
 }
 
 // createAccountLimited is createAccount within the address's signup limit
-// (defaultSignupsPerHour), which only an account created counts.
+// (defaultSignupsPerHour), which only an account created counts. The slot is taken before the
+// account is made and given back if none is: counting afterwards let a burst of parallel
+// signups all pass the check before any was counted.
 func (s *Server) createAccountLimited(r *http.Request, email, password, timezone, lang string) (string, error) {
-	ip := clientIP(r)
-	if s.signupLimiter.exceeded(ip) {
+	// Input refused without a database round trip takes no slot from a real signup.
+	if _, err := validateCredentials(email, password); err != nil {
+		return "", err
+	}
+	addr := rateLimitAddress(r)
+	if !s.signupLimiter.allow(addr) {
 		return "", accountFailure(http.StatusTooManyRequests, "error.signup_rate_limited")
 	}
 	userID, err := s.createAccount(r.Context(), email, password, timezone, lang)
-	if err == nil {
-		s.signupLimiter.hit(ip)
+	if err != nil {
+		s.signupLimiter.refund(addr)
 	}
 	return userID, err
 }
@@ -396,7 +402,7 @@ func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	userID, err := s.checkPassword(r.Context(), clientIP(r), req.Email, req.Password)
+	userID, err := s.checkPassword(r.Context(), rateLimitAddress(r), req.Email, req.Password)
 	if err != nil {
 		s.writeAccountError(w, r, "login", err)
 		return
@@ -533,7 +539,7 @@ func (s *Server) handleDemoStart(w http.ResponseWriter, r *http.Request) {
 
 // allowDemo is the demo start's one check, shared with the page's `POST /demo`.
 func allowDemo(r *http.Request) error {
-	if !demoLimiter.allow(clientIP(r)) {
+	if !demoLimiter.allow(rateLimitAddress(r)) {
 		return accountFailure(http.StatusTooManyRequests, "error.demo_rate_limited")
 	}
 	return nil
