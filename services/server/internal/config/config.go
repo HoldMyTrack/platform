@@ -65,12 +65,11 @@ type Config struct {
 	// decides on its tile probe alone.
 	MapTilerServiceToken     string
 	SatelliteMonthlyRequests int64
-	// SkipEmailVerification bypasses docs/ROADMAP.md's email-verification gate entirely —
-	// every new signup is created already verified, and no verification email is sent. Off
-	// by default; compose.yaml's `test` profile is the one place this is turned on, since
-	// apps/web/tests/smoke.mjs and build.mjs sign up a fixture account and expect the map to
-	// mount immediately with no token to fetch out of a mailbox that doesn't exist in CI.
-	// Never set this in a real deployment. Only read by `serve`.
+	// SkipEmailVerification bypasses the email-verification gate (docs/SPEC.md FR-1.8): every
+	// new signup is created already verified, and no verification email is sent. The dev stack
+	// turns it on, so its tests and a developer reach the map with no mailbox; on a real
+	// deployment only a load test's throwaway override does (docs/PERFORMANCE.md), and `serve`
+	// warns while it's on there (SkipsVerificationInPublic). Only read by `serve`.
 	SkipEmailVerification bool
 	// Google* configure "Sign in with Google" (docs/SPEC.md FR-1.9). An empty GoogleClientID
 	// turns the feature off entirely — GET /v1/auth/providers reports it unavailable and the
@@ -287,6 +286,12 @@ func rateLimitsOff(appBaseURL string) (bool, error) {
 	default:
 		return false, fmt.Errorf("config: RATE_LIMITS must be on or off, got %q", v)
 	}
+}
+
+// SkipsVerificationInPublic reports a deployment others can reach that skips email
+// verification: a load test's override left behind lets anyone claim any address.
+func (c Config) SkipsVerificationInPublic() bool {
+	return c.SkipEmailVerification && !isLocal(c.AppBaseURL)
 }
 
 // isLocal reports whether rawURL's host is this machine.

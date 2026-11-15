@@ -193,3 +193,25 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 		t.Errorf("earlier part %+v, want its track up to the location's edge", earlier)
 	}
 }
+
+// Checking a split reads the original, so splits count against the editor's hourly limit.
+func TestSplitCountsAgainstTheEditorsLimit(t *testing.T) {
+	d := newDBTestWithS3(t, newMemS3())
+	me := d.newAccount(false)
+	d.srv.trackPointsLimiter = newFixedWindowLimiter(1, time.Hour)
+	if resp := d.uploadFile(me, "day.gpx", []byte(splitGPX)); resp.Status != "enqueued" {
+		t.Fatalf("upload: %q", resp.Status)
+	}
+	res, err := ingest.Process(context.Background(), d.pool, d.srv.store, d.latestIngestJob(me))
+	if err != nil || !res.Persisted {
+		t.Fatalf("ingest: %+v, %v", res, err)
+	}
+	path := "/v1/activities/" + res.ActivityID + "/track-edit"
+	at := time.Date(2026, 5, 1, 10, 3, 0, 0, time.UTC).UnixMilli()
+	if rec := d.do(me, http.MethodPost, path, map[string]any{"split_at": at + 1}); rec.Code == http.StatusTooManyRequests {
+		t.Fatalf("first split: 429, want it checked")
+	}
+	if rec := d.do(me, http.MethodPost, path, map[string]any{"split_at": at + 2}); rec.Code != http.StatusTooManyRequests {
+		t.Fatalf("second split in the hour with a limit of one: %d, want 429", rec.Code)
+	}
+}

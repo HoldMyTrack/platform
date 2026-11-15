@@ -520,6 +520,8 @@ activities_id_track-edit:
                 - { $ref: "../components/schemas.yaml#/Error" }
                 - properties:
                     error: { enum: [split_hides_part] }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+      "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
 activity_types:
   get:
     summary: What a client shows for the catalog's activity types and any others it names

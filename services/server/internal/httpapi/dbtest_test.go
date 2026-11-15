@@ -67,6 +67,7 @@ func newDBTestWithS3(t *testing.T, s3Handler http.Handler) *dbTest {
 		t.Fatalf("templates: %v", err)
 	}
 	srv := New(pool, store, slog.New(slog.DiscardHandler), &sentMail{}, "https://app.example", "", mapstyle.Satellite{}, "test", false, GoogleOAuthConfig{}, FacebookOAuthConfig{}, AppleOAuthConfig{}, pages)
+	srv.afterResponse = func(f func()) { f() } // inline, so a test reads the mail as soon as it's answered
 	return &dbTest{t: t, pool: pool, srv: srv}
 }
 

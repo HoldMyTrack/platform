@@ -14,7 +14,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"slices"
 
@@ -65,7 +64,8 @@ type Result struct {
 }
 
 func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job) (Result, error) {
-	act, err := loadRecorded(ctx, store, job.SourceDetail, job.RawPayloadKey)
+	// A new file is held to parse.MaxPoints; one kept before the cap is read whole elsewhere.
+	act, err := loadRecorded(ctx, store, job.SourceDetail, job.RawPayloadKey, parse.MaxPoints)
 	if err != nil {
 		return Result{}, err
 	}
@@ -246,7 +246,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 // zones clipped with are returned too, for a caller that applies a track edit and has to clip
 // its result again (TrackEdit.ApplyClipped).
 func loadClippedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, sourceDetail, rawKey string) (parse.Activity, []parse.Point, []Zone, error) {
-	act, err := loadRecorded(ctx, store, sourceDetail, rawKey)
+	act, err := loadRecorded(ctx, store, sourceDetail, rawKey, 0)
 	if err != nil {
 		return parse.Activity{}, nil, nil, err
 	}
@@ -264,7 +264,7 @@ func loadClippedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 
 // loadRecorded fetches and parses the raw payload, keeping the points every reader can use:
 // the whole recording, before Private locations.
-func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKey string) (parse.Activity, error) {
+func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKey string, maxPoints int) (parse.Activity, error) {
 	obj, err := store.Get(ctx, rawKey)
 	if err != nil {
 		return parse.Activity{}, fmt.Errorf("ingest: fetch raw payload: %w", err)
@@ -274,7 +274,7 @@ func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKe
 	// The store fetches lazily, so its own failure surfaces inside the parser; that one isn't
 	// the file's fault, and the worker retries it.
 	src := &objectReader{r: obj}
-	act, err := parseByExtensionReader(sourceDetail, src)
+	act, err := parse.ByExtensionUpTo(sourceDetail, src, maxPoints)
 	if err != nil {
 		if src.err != nil {
 			return parse.Activity{}, fmt.Errorf("ingest: read raw payload: %w", src.err)
@@ -546,10 +546,6 @@ func EnqueueRenderFog(ctx context.Context, pool *pgxpool.Pool, userID string) er
 		userID, payload,
 	)
 	return err
-}
-
-func parseByExtensionReader(filename string, r io.Reader) (parse.Activity, error) {
-	return parse.ByExtension(filename, r)
 }
 
 type metrics struct {
