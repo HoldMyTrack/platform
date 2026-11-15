@@ -27,13 +27,16 @@ type Config struct {
 	// MetricsAddr is where `serve` and `work` answer GET /metrics (internal/metrics). Empty,
 	// the default, serves none; compose.prod.yml sets it for the Alloy service to scrape.
 	MetricsAddr string
-	// SMTP* are all optional: an empty SMTPHost selects internal/mail's log-only sender (mail.New).
-	// Read by `serve` and `work`, which mails a finished data export.
-	SMTPHost     string
-	SMTPPort     string
-	SMTPUsername string
-	SMTPPassword string
-	SMTPFrom     string
+	// ZeptoMail* and SMTP* are all optional: with neither ZeptoMailToken nor SMTPHost set,
+	// internal/mail logs instead of sending (mail.New). Read by `serve` and `work`, which mails a
+	// finished data export.
+	ZeptoMailURL   string
+	ZeptoMailToken string
+	SMTPHost       string
+	SMTPPort       string
+	SMTPUsername   string
+	SMTPPassword   string
+	SMTPFrom       string
 	// AppBaseURL is the app's own origin: the links in its emails point there, and
 	// corsAllowedOrigins (httpapi/server.go) accepts it. Read by `serve` and `work`.
 	AppBaseURL string
@@ -141,19 +144,21 @@ type Config struct {
 
 func Load() (Config, error) {
 	c := Config{
-		DatabaseURL:  env("DATABASE_URL", ""),
-		S3Endpoint:   env("S3_ENDPOINT", ""),
-		S3Bucket:     env("S3_BUCKET", "holdmytrack-dev"),
-		S3AccessKey:  env("S3_ACCESS_KEY", ""),
-		S3SecretKey:  env("S3_SECRET_KEY", ""),
-		ListenAddr:   env("LISTEN_ADDR", ":8080"),
-		MetricsAddr:  env("METRICS_ADDR", ""),
-		SMTPHost:     env("SMTP_HOST", ""),
-		SMTPPort:     env("SMTP_PORT", "587"),
-		SMTPUsername: env("SMTP_USERNAME", ""),
-		SMTPPassword: env("SMTP_PASSWORD", ""),
-		SMTPFrom:     env("SMTP_FROM", ""),
-		AppBaseURL:   env("APP_BASE_URL", "http://localhost:5173"),
+		DatabaseURL:    env("DATABASE_URL", ""),
+		S3Endpoint:     env("S3_ENDPOINT", ""),
+		S3Bucket:       env("S3_BUCKET", "holdmytrack-dev"),
+		S3AccessKey:    env("S3_ACCESS_KEY", ""),
+		S3SecretKey:    env("S3_SECRET_KEY", ""),
+		ListenAddr:     env("LISTEN_ADDR", ":8080"),
+		MetricsAddr:    env("METRICS_ADDR", ""),
+		ZeptoMailURL:   env("ZEPTOMAIL_API_URL", "https://api.zeptomail.com/v1.1/email"),
+		ZeptoMailToken: env("ZEPTOMAIL_TOKEN", ""),
+		SMTPHost:       env("SMTP_HOST", ""),
+		SMTPPort:       env("SMTP_PORT", "587"),
+		SMTPUsername:   env("SMTP_USERNAME", ""),
+		SMTPPassword:   env("SMTP_PASSWORD", ""),
+		SMTPFrom:       env("SMTP_FROM", ""),
+		AppBaseURL:     env("APP_BASE_URL", "http://localhost:5173"),
 	}
 	c.SkipEmailVerification = env("SKIP_EMAIL_VERIFICATION", "") == "true"
 	if c.BasemapOrigin = env("BASEMAP_ORIGIN", ""); c.BasemapOrigin == "" {

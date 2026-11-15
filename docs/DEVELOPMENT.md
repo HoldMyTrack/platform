@@ -16,7 +16,7 @@ Every page, the map's shell included, is rendered by Go (`IMPLEMENTATION.md` §4
 
 `compose.yaml` mounts `services/server/internal/web` into `api` with `WEB_DEV_DIR` set, so templates and stylesheets are re-read on every request; a Go handler change needs `docker compose up -d --build api`. A new page path goes in both `registerPages` (`server.go`) and `pageRoutes`, whose patterns must allow a query string; a path missing from either 404s in dev only, since production's Caddy sends every non-static path to Go.
 
-To try email verification, set `SKIP_EMAIL_VERIFICATION=false`: with no `SMTP_HOST`, the server logs each email, link included.
+To try email verification, set `SKIP_EMAIL_VERIFICATION=false`: with neither `ZEPTOMAIL_TOKEN` nor `SMTP_HOST` set, the server logs each email, link included.
 
 The end-to-end suites' sample files (`/static/testing/`) are generated. After changing `demo_data/` or `cmd/make-testing-files`, run this from `services/server` and commit what it writes to `internal/web/static/testing/`:
 
