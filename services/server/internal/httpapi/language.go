@@ -35,7 +35,11 @@ func (s *Server) handleLanguageForm(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "unsupported language", http.StatusBadRequest)
 		return
 	}
-	if acct := s.pageAccount(r); acct != nil && !acct.info.isDemo {
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
+	if acct != nil && !acct.info.isDemo {
 		if _, err := s.pool.Exec(r.Context(), `UPDATE users SET locale = NULLIF($2, '') WHERE id = $1`, acct.info.userID, lang); err != nil {
 			s.log.Error("language save failed", "err", err)
 			http.Error(w, "internal error", http.StatusInternalServerError)

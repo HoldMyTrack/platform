@@ -22,7 +22,10 @@ import (
 // titleKey and descriptionKey are catalog keys.
 func (s *Server) staticPage(page, titleKey, descriptionKey, canonicalPath string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		acct := s.pageAccount(r)
+		acct, ok := s.pageAccount(w, r)
+		if !ok {
+			return
+		}
 		lang := pageLang(acct, r)
 		l := i18n.Get(lang)
 		data := web.PageData{Title: l.T(titleKey), Description: l.T(descriptionKey), Path: r.URL.Path, CanonicalPath: canonicalPath, Lang: lang, App: appPlatform(r)}
@@ -81,7 +84,10 @@ func (s *Server) isSameOrigin(r *http.Request) bool {
 // that ends while the page is open.
 func (s *Server) appShell(titleKey string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		acct := s.pageAccount(r)
+		acct, ok := s.pageAccount(w, r)
+		if !ok {
+			return
+		}
 		lang := pageLang(acct, r)
 		l := i18n.Get(lang)
 		// Signed out, `/` is the site's front page — About's content, not a redirect to a
@@ -118,6 +124,14 @@ func (s *Server) appShell(titleKey string) http.HandlerFunc {
 // dev server rather than from /assets/ — the same name as apps/web/vite.config.ts's.
 const viteDevHeader = "X-HoldMyTrack-Vite"
 
+// unavailable answers a page request whose session couldn't be looked up, signed out and in the
+// browser's language: 503 with a Retry-After, as the lookup's failure is the server's and passing.
+func (s *Server) unavailable(w http.ResponseWriter, r *http.Request) {
+	lang := pageLang(nil, r)
+	w.Header().Set("Retry-After", "30")
+	s.pages.Render(w, http.StatusServiceUnavailable, "unavailable", web.PageData{Title: i18n.Get(lang).T("meta.unavailable_title"), Path: r.URL.Path, NoIndex: true, Lang: lang})
+}
+
 // notFound answers every path nothing else claims: an HTML page for a browser, the API's error
 // shape under its own prefixes, where a client expects no page.
 func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
@@ -125,7 +139,10 @@ func (s *Server) notFound(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "not found", http.StatusNotFound)
 		return
 	}
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return
+	}
 	lang := pageLang(acct, r)
 	data := web.PageData{Title: i18n.Get(lang).T("meta.notfound_title"), Path: r.URL.Path, NoIndex: true, Lang: lang}
 	if acct != nil {

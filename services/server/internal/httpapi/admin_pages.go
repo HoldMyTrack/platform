@@ -81,7 +81,10 @@ type adminActivityRow struct {
 // the request itself: the 404 page for anyone who isn't an admin, the account's own home
 // (/verify-pending, /settings) for an admin who isn't past those yet.
 func (s *Server) adminAccount(w http.ResponseWriter, r *http.Request) *pageAccount {
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return nil
+	}
 	if acct == nil || !acct.info.isAdmin || acct.info.isDemo {
 		s.notFound(w, r)
 		return nil

@@ -65,7 +65,10 @@ type settingsExportPart struct {
 // settingsAccount is the check every Settings request starts with: a live, verified (or demo)
 // session, or a redirect to where the visitor belongs instead.
 func (s *Server) settingsAccount(w http.ResponseWriter, r *http.Request) *pageAccount {
-	acct := s.pageAccount(r)
+	acct, ok := s.pageAccount(w, r)
+	if !ok {
+		return nil
+	}
 	if acct == nil {
 		http.Redirect(w, r, "/signin", http.StatusSeeOther)
 		return nil
