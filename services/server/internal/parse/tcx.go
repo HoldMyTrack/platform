@@ -10,7 +10,10 @@ import (
 
 // ParseTCX streams Trackpoint elements. Garmin Training Center XML nests position and
 // altitude under a Trackpoint — heart rate too, which is deliberately not read (VISION.md §1.1).
-func ParseTCX(r io.Reader) (Activity, error) {
+func ParseTCX(r io.Reader) (Activity, error) { return parseTCX(r, 0) }
+
+// parseTCX is ParseTCX refusing a file past maxPoints positioned points, 0 for no cap.
+func parseTCX(r io.Reader, maxPoints int) (Activity, error) {
 	dec := xml.NewDecoder(r)
 	act := Activity{ActivityType: "unknown"}
 
@@ -79,6 +82,9 @@ func ParseTCX(r io.Reader) (Activity, error) {
 				// Both or neither: one alone would put the point on the equator or the prime
 				// meridian, a line across the map.
 				if haveLat && haveLon {
+					if maxPoints > 0 && len(act.Points) == maxPoints {
+						return Activity{}, ErrTooManyPoints
+					}
 					act.Points = append(act.Points, *cur)
 				}
 				cur = nil

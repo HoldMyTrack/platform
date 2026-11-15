@@ -69,11 +69,14 @@ func route(method, path string) string     { return method + " " + apiPrefix + p
 func tileRoute(method, path string) string { return method + " " + tilesPrefix + path }
 
 type Server struct {
-	pool                  *pgxpool.Pool
-	store                 *storage.Store
-	log                   *slog.Logger
-	mux                   *http.ServeMux
-	mailer                mail.Sender
+	pool   *pgxpool.Pool
+	store  *storage.Store
+	log    *slog.Logger
+	mux    *http.ServeMux
+	mailer mail.Sender
+	// afterResponse runs work whose length would tell a caller something, once
+	// the handler has returned: on its own goroutine, or inline in tests that read its mail.
+	afterResponse         func(func())
 	appBaseURL            string
 	basemapOrigin         string
 	satellite             mapstyle.Satellite
@@ -108,7 +111,8 @@ const defaultUploadsPerHour = 100
 func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail.Sender, appBaseURL, basemapOrigin string, satellite mapstyle.Satellite, version string, skipEmailVerification bool, google GoogleOAuthConfig, facebook FacebookOAuthConfig, apple AppleOAuthConfig, pages *web.Renderer) *Server {
 	s := &Server{
 		pool: pool, store: store, log: log, mux: http.NewServeMux(), mailer: mailer,
-		appBaseURL: appBaseURL, basemapOrigin: basemapOrigin, satellite: satellite, version: version,
+		afterResponse: func(f func()) { go f() },
+		appBaseURL:    appBaseURL, basemapOrigin: basemapOrigin, satellite: satellite, version: version,
 		skipEmailVerification: skipEmailVerification,
 		google:                newGoogleOAuth(google),
 		facebook:              newFacebookOAuth(facebook),
@@ -464,8 +468,20 @@ func setsOwnBodyLimit(r *http.Request) bool {
 	return ownBodyLimitRoutes[r.Method+" "+r.URL.Path]
 }
 
-// contentSecurityPolicy is every response's CSP (setSecurityHeaders).
-const contentSecurityPolicy = "script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
+// contentSecurityPolicy is every response's CSP (setSecurityHeaders), unless a page loads
+// scripts from elsewhere too (pageScriptOrigins).
+var contentSecurityPolicy = cspWithScripts()
+
+// cspWithScripts is the CSP allowing scripts from this origin and scriptOrigins.
+func cspWithScripts(scriptOrigins ...string) string {
+	scripts := append([]string{"'self'"}, scriptOrigins...)
+	return strings.Join([]string{
+		"script-src " + strings.Join(scripts, " "),
+		"object-src 'none'",
+		"base-uri 'self'",
+		"frame-ancestors 'none'",
+	}, "; ")
+}
 
 // setSecurityHeaders applies to every response. No page here is meant to be framed, so none
 // may be (frame-ancestors, and X-Frame-Options for browsers without CSP): framed invisibly by
