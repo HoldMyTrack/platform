@@ -68,7 +68,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 
 - Every request checks the session in the database, so a session ended on the server (sign-out, password reset, account deletion) stops at once. A session lasts 30 days from creation, a demo session 24 hours.
 - `GET /v1/auth/me` returns the account and whether its email is verified (always true for a demo session).
-- When the check gets no answer (the server unreachable or failing), the map says it couldn't load the account and offers to retry; it doesn't treat the visitor as signed out.
+- When the check gets no answer (the server unreachable or failing), the map says it couldn't load the account and offers to retry; it doesn't treat the visitor as signed out. A check the database can't answer is a 503, never the 401 that means the session is gone.
 
 ### FR-1.5 Forgot password
 

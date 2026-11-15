@@ -44,6 +44,11 @@ auth_me:
           application/json:
             schema: { $ref: "../components/schemas.yaml#/Account" }
       "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "503":
+        description: The session couldn't be checked, which is not a sign-out; try again.
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/Error" }
 auth_demo:
   post:
     summary: Start a session on the shared, read-only demo account

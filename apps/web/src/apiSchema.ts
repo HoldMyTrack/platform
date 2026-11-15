@@ -135,6 +135,15 @@ export interface paths {
                     };
                 };
                 401: components["responses"]["Unauthenticated"];
+                /** @description The session couldn't be checked, which is not a sign-out; try again. */
+                503: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Error"];
+                    };
+                };
             };
         };
         put?: never;
