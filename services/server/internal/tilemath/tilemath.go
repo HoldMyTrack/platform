@@ -1,7 +1,7 @@
-// Package tilemath is the slippy-map tile arithmetic shared by ingest (marking z14 fog
-// tiles dirty from a raw trajectory) and fog (rendering a tile's bounds and its pyramid
-// parent/child relationships) — the same standard Web Mercator scheme the basemap, tracks,
-// and fog tiles all already share, kept in one place rather than duplicated per package.
+// Package tilemath is the slippy-map tile arithmetic shared by ingest (which z14 fog tiles a
+// trajectory's stroke reaches) and fog (projecting points into a tile): the Web Mercator
+// scheme of the basemap, tracks and fog tiles alike. LonLatToTile and TileBounds serve other
+// packages' tests.
 package tilemath
 
 import "math"
@@ -57,17 +57,11 @@ func tileYToLat(y, n float64) float64 {
 	return rad * 180 / math.Pi
 }
 
-// SegmentTiles returns every tile at the given zoom a straight segment between two points
-// passes through, walking tile space rather than just the two endpoints' tiles —
-// consecutive GPS fixes are usually within one tile at 1 Hz, but a fast segment (a car
-// commute logged by mistake, a GPS glitch) or a sparse track (a drive with a point every few
-// minutes) can span many, and a gap here would leave a strip of
-// genuinely-covered ground stuck fogged.
-func SegmentTiles(lon1, lat1, lon2, lat2 float64, zoom int) [][2]int {
-	return SegmentTilesBuffered(lon1, lat1, lon2, lat2, zoom, 0, 256)
-}
-
-// SegmentTilesBuffered is SegmentTiles plus every tile the segment comes within marginPx of
+// SegmentTilesBuffered returns every tile at the given zoom a straight segment between two
+// points passes through, walking tile space rather than just the two endpoints' tiles:
+// consecutive GPS fixes are usually within one tile at 1 Hz, but a fast segment or a sparse
+// track can span many, and a gap would leave covered ground fogged. It adds every tile the
+// segment comes within marginPx of
 // (tile-local pixels, at tileSize) — the tile a bare coordinate floors into isn't the only
 // tile the *rendered* stroke can touch, since Fog draws a track as a
 // strokeRadiusPx-wide, then featherPx-blurred line, not an infinitesimal one. A segment that

@@ -335,13 +335,6 @@ func keepTimed(points []parse.Point) ([]parse.Point, error) {
 	return timed, nil
 }
 
-// LoadClippedPoints is loadClippedPoints for the track editor's point endpoint
-// (httpapi's handleActivityTrackPoints), which needs the same post-clip points to show.
-func LoadClippedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, sourceDetail, rawKey string) ([]parse.Point, error) {
-	_, points, _, err := loadClippedPoints(ctx, pool, store, userID, sourceDetail, rawKey)
-	return points, err
-}
-
 // trajectorySQL builds the display LineStringM from three parallel lon/lat/epoch-seconds
 // array parameters, or NULL when they hold fewer than two points — an activity entirely
 // inside Private locations (§3.3 allows a null trajectory, and every reader already copes).

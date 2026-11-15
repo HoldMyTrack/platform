@@ -79,7 +79,7 @@ func TestSegmentTilesBufferedNearCornerAddsDiagonal(t *testing.T) {
 // TestSegmentTilesBufferedHuggingBoundary reproduces docs/KNOWN_ISSUES.md's reported defect:
 // a segment that runs the length of a tile boundary, both endpoints inside the same tile but
 // close enough to its edge that the drawn stroke spills into the neighbor — unbuffered
-// SegmentTiles (and the old computeTouchedTiles) never marks that neighbor touched at all.
+// an unbuffered walk never marks that neighbor touched at all.
 func TestSegmentTilesBufferedHuggingBoundary(t *testing.T) {
 	const zoom = 14
 	const tileSize = 512.0
@@ -88,7 +88,7 @@ func TestSegmentTilesBufferedHuggingBoundary(t *testing.T) {
 	lon1, lat1 := lonLatFromWorldPixel(100*tileSize+509, 100*tileSize+50, zoom, tileSize)
 	lon2, lat2 := lonLatFromWorldPixel(100*tileSize+509, 100*tileSize+450, zoom, tileSize)
 
-	unbuffered := tileSet(SegmentTiles(lon1, lat1, lon2, lat2, zoom))
+	unbuffered := tileSet(SegmentTilesBuffered(lon1, lat1, lon2, lat2, zoom, 0, 256))
 	if len(unbuffered) != 1 || !unbuffered[[2]int{100, 100}] {
 		t.Fatalf("expected unbuffered segment to stay within the one tile, got %v", unbuffered)
 	}
@@ -133,7 +133,7 @@ func TestSegmentTilesLongSlantedSegmentMissesNone(t *testing.T) {
 		{-81.95, 41.42, -81.60, 41.43},
 	}
 	for _, s := range segments {
-		got := tileSet(SegmentTiles(s[0], s[1], s[2], s[3], zoom))
+		got := tileSet(SegmentTilesBuffered(s[0], s[1], s[2], s[3], zoom, 0, 256))
 		x1, y1 := WorldPixel(s[0], s[1], zoom, tileSize)
 		x2, y2 := WorldPixel(s[2], s[3], zoom, tileSize)
 		steps := int(math.Hypot(x2-x1, y2-y1))
