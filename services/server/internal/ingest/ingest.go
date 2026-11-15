@@ -525,8 +525,10 @@ type RenderFogJob struct {
 // The coalescing is this INSERT's: it adds no job while the user already has a render_fog
 // waiting unclaimed, since that one reads the dirty flags only once claimed, after every
 // caller has committed its marks (they all mark before enqueueing). A claimed one may have
-// read them already, so it doesn't count. Without this, a 584-activity import queued 584
-// renders of ~40 s each, every one after the first redrawing nothing new.
+// read them already, so it doesn't count, and nor does one waiting out a retry delay
+// (run_after ahead), which would hold this change's render back until it ran. Without this, a
+// 584-activity import queued 584 renders of ~40 s each, every one after the first redrawing
+// nothing new.
 func EnqueueRenderFog(ctx context.Context, pool *pgxpool.Pool, userID string) error {
 	payload, err := json.Marshal(RenderFogJob{UserID: userID})
 	if err != nil {
@@ -538,6 +540,7 @@ func EnqueueRenderFog(ctx context.Context, pool *pgxpool.Pool, userID string) er
 		WHERE NOT EXISTS (
 			SELECT 1 FROM jobs
 			WHERE kind = 'render_fog' AND user_id = $1 AND state = 'pending' AND locked_at IS NULL
+			  AND run_after <= NOW()
 		)`,
 		userID, payload,
 	)
