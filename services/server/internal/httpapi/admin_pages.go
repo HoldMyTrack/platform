@@ -157,17 +157,22 @@ func (s *Server) handleAdminUserPage(w http.ResponseWriter, r *http.Request) {
 	s.pages.Render(w, http.StatusOK, "admin-user", web.PageData{Title: l.T("meta.admin_user_title", "name", adminUserLabel(view.User)), Path: r.URL.Path, NoIndex: true, User: acct.user, Page: view, Lang: lang})
 }
 
-// adminUsersSQL selects adminUserRow's columns for the accounts its WHERE clause, appended,
-// picks. Counts and distance are over every activity, totalled only for the accounts listed.
-const adminUsersSQL = `
+// adminUsersSQL selects adminUserRow's columns, newest first, for the open accounts whose ids
+// picked selects. Counts and distance are over every activity, totalled only for those: picked
+// is a subquery so a page's LIMIT applies before the totals, which a join in the same FROM
+// would compute for every account first.
+func adminUsersSQL(picked string) string {
+	return `
 	SELECT u.id, u.email, COALESCE(u.display_name, ''), u.created_at, COALESCE(u.country, ''),
 	       u.timezone, u.is_admin, u.email_verified, u.last_seen_at, a.n, a.meters
-	FROM users u
+	FROM (` + picked + `) p
+	JOIN users u ON u.id = p.id
 	CROSS JOIN LATERAL (
 		SELECT count(*), COALESCE(sum(distance_meters), 0)::float8
 		FROM activities WHERE user_id = u.id
 	) a (n, meters)
-	WHERE u.deleted_at IS NULL`
+	ORDER BY u.created_at DESC, u.id`
+}
 
 // adminUsersPage is one page of every account, newest first.
 func (s *Server) adminUsersPage(ctx context.Context, l *i18n.Localizer, page int, imperial bool) (adminUsersView, error) {
@@ -186,8 +191,9 @@ func (s *Server) adminUsersPage(ctx context.Context, l *i18n.Localizer, page int
 		view.PrevHref = adminUsersHref(1)
 		return view, nil
 	}
-	users, err := s.adminUserRows(ctx, l, imperial, adminUsersSQL+`
-		ORDER BY u.created_at DESC, u.id LIMIT $1 OFFSET $2`, adminUsersPerPage, offset)
+	users, err := s.adminUserRows(ctx, l, imperial, adminUsersSQL(`
+		SELECT id FROM users WHERE deleted_at IS NULL
+		ORDER BY created_at DESC, id LIMIT $1 OFFSET $2`), adminUsersPerPage, offset)
 	if err != nil {
 		return view, err
 	}
@@ -204,7 +210,8 @@ func (s *Server) adminUsersPage(ctx context.Context, l *i18n.Localizer, page int
 
 // adminUser is the account userID, a UUID, if it exists and isn't closed.
 func (s *Server) adminUser(ctx context.Context, l *i18n.Localizer, userID string, imperial bool) (adminUserRow, bool, error) {
-	users, err := s.adminUserRows(ctx, l, imperial, adminUsersSQL+` AND u.id = $1::uuid`, userID)
+	users, err := s.adminUserRows(ctx, l, imperial, adminUsersSQL(`
+		SELECT id FROM users WHERE deleted_at IS NULL AND id = $1::uuid`), userID)
 	if err != nil || len(users) == 0 {
 		return adminUserRow{}, false, err
 	}
@@ -247,10 +254,7 @@ func (s *Server) adminUserRows(ctx context.Context, l *i18n.Localizer, imperial 
 // marked as such, since the panel is for seeing what's actually stored.
 func (s *Server) adminUserActivities(ctx context.Context, l *i18n.Localizer, u adminUserRow, page int, imperial bool) (adminUserView, error) {
 	view := adminUserView{User: u}
-	var total int
-	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM activities WHERE user_id = $1`, u.ID).Scan(&total); err != nil {
-		return view, fmt.Errorf("admin: count activities: %w", err)
-	}
+	total := int(u.ActivityCount)
 	offset, past, prev, next := adminPages(page, total, adminActivitiesPerPage)
 	if total == 0 {
 		return view, nil
