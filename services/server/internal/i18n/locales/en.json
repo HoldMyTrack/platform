@@ -329,7 +329,6 @@
   "error.upload_read": "Failed reading the uploaded file.",
   "error.upload_zip": "A .zip archive can't be imported. Upload the GPX, FIT or TCX files inside it instead, up to 20 at a time.",
   "error.upload_type": "Unsupported file type {type} (want .gpx, .fit or .tcx).",
-  "error.takeout_unreadable": "Could not read this Takeout export.",
   "error.track_no_points": "This activity has no recorded points to edit.",
   "error.track_unreadable": "Couldn't read this activity's recorded points.",
   "error.track_all_private": "This activity is entirely inside your private locations.",
