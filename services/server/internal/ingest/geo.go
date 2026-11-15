@@ -11,8 +11,8 @@ func HaversineM(lat1, lon1, lat2, lon2 float64) float64 {
 	rad := math.Pi / 180
 	dLat := (lat2 - lat1) * rad
 	dLon := (lon2 - lon1) * rad
-	a := math.Sin(dLat/2)*math.Sin(dLat/2) +
+	h := math.Sin(dLat/2)*math.Sin(dLat/2) +
 		math.Cos(lat1*rad)*math.Cos(lat2*rad)*math.Sin(dLon/2)*math.Sin(dLon/2)
-	c := 2 * math.Atan2(math.Sqrt(a), math.Sqrt(1-a))
-	return earthRadiusM * c
+	// The clients' form (editTrackOps.ts): min keeps rounding past 1 at an antipode from a NaN.
+	return 2 * earthRadiusM * math.Asin(math.Min(1, math.Sqrt(h)))
 }

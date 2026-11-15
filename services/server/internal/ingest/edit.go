@@ -197,8 +197,18 @@ func processTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	if err := fog.RenderUser(ctx, pool, store, job.UserID); err != nil {
 		return fmt.Errorf("edit: render fog: %w", err)
 	}
+	var prepared []*reprocess
 	for _, id := range job.activityIDs() {
-		if err := reprocessActivity(ctx, pool, store, job.UserID, id, edit); err != nil {
+		r, err := prepareReprocess(ctx, pool, store, job.UserID, id, edit)
+		if err != nil {
+			return fmt.Errorf("edit: %w", err)
+		}
+		if r != nil {
+			prepared = append(prepared, r)
+		}
+	}
+	for _, r := range prepared {
+		if err := r.apply(ctx, pool); err != nil {
 			return fmt.Errorf("edit: %w", err)
 		}
 	}
@@ -286,6 +296,32 @@ var errFewPointsAfterEdit = errors.New("fewer than 2 points survive the edit")
 // edit == nil replays the activity's stored track_edit unchanged; otherwise edit replaces it
 // (empty meaning reset). An activity deleted meanwhile is skipped without error.
 func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, activityID string, edit *TrackEdit) error {
+	r, err := prepareReprocess(ctx, pool, store, userID, activityID, edit)
+	if err != nil || r == nil {
+		return err
+	}
+	return r.apply(ctx, pool)
+}
+
+// reprocess is one activity's reprocess worked out and checked, the tile limit included, with
+// nothing written yet (prepareReprocess). A job over several activities prepares them all
+// before applying any, so one refused piece of a split leaves the others as they were.
+type reprocess struct {
+	userID, activityID string
+	points             []parse.Point
+	pp                 preparedTrack
+	startedAt          time.Time
+	editJSON           []byte
+	userEdit           bool
+	zonePoint          parse.Point
+	recStart, recEnd   *time.Time
+	editable           bool
+	oldTiles, newTiles [][2]int
+}
+
+// prepareReprocess works out activityID's reprocess without writing anything; nil when the
+// activity was deleted meanwhile.
+func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, activityID string, edit *TrackEdit) (*reprocess, error) {
 	var sourceDetail string
 	var rawKey *string
 	var storedEdit []byte
@@ -295,20 +331,20 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 		FROM activities WHERE id = $1 AND user_id = $2
 	`, activityID, userID).Scan(&sourceDetail, &rawKey, &storedEdit, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return nil // deleted while the job was queued: nothing left to reprocess
+		return nil, nil // deleted while the job was queued: nothing left to reprocess
 	}
 	if err != nil {
-		return fmt.Errorf("load activity: %w", err)
+		return nil, fmt.Errorf("load activity: %w", err)
 	}
 	if rawKey == nil {
-		return errors.New("activity has no raw payload to reprocess")
+		return nil, errors.New("activity has no raw payload to reprocess")
 	}
 
 	userEdit := edit != nil
 	if !userEdit && storedEdit != nil {
 		edit = &TrackEdit{}
 		if err := json.Unmarshal(storedEdit, edit); err != nil {
-			return fmt.Errorf("stored track edit unreadable: %w", err)
+			return nil, fmt.Errorf("stored track edit unreadable: %w", err)
 		}
 	}
 
@@ -316,7 +352,7 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	// list was built from (handleActivityTrackPoints), so what the user saw is what's processed.
 	act, points, zones, err := loadClippedPoints(ctx, pool, store, userID, sourceDetail, *rawKey)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if points != nil {
 		// Counted on the piece's own points with no second Private location clip: an edit
@@ -324,7 +360,7 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 		// lie inside Private locations just hides the track, as those locations would on their
 		// own — including a split piece that starts inside one (§4.7.8).
 		if userEdit && edit != nil && !edit.IsEmpty() && len(edit.Apply(rng.Apply(points, nil))) < 2 {
-			return errFewPointsAfterEdit
+			return nil, errFewPointsAfterEdit
 		}
 		if points = rng.Apply(points, zones); len(points) < 2 {
 			points = nil // this piece lies entirely inside Private locations
@@ -338,7 +374,7 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 			points = edit.ApplyClipped(points, zones)
 		}
 		if editJSON, err = json.Marshal(edit); err != nil {
-			return err
+			return nil, err
 		}
 	}
 	if len(points) < 2 {
@@ -361,17 +397,36 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	var pp preparedTrack
 	if points != nil {
 		if pp, err = prepareTrack(ctx, pool, points, edit); err != nil {
-			return err
+			return nil, err
 		}
 		startedAt = points[0].Time
 	}
-	m := pp.m
-
 	oldTiles, err := ActivityTiles(ctx, pool, activityID)
 	if err != nil {
-		return fmt.Errorf("read old tiles: %w", err)
+		return nil, fmt.Errorf("read old tiles: %w", err)
+	}
+	// Before anything is written, as Process checks it: a track past the tile limit leaves the
+	// activity as it was.
+	var newTiles [][2]int
+	if points != nil {
+		if newTiles, err = computeTouchedTiles(points, FogZoom); err != nil {
+			return nil, err
+		}
 	}
 
+	return &reprocess{
+		userID: userID, activityID: activityID, points: points, pp: pp, startedAt: startedAt,
+		editJSON: editJSON, userEdit: userEdit, zonePoint: zonePoint, recStart: recStart,
+		recEnd: recEnd, editable: editable, oldTiles: oldTiles, newTiles: newTiles,
+	}, nil
+}
+
+// apply writes a prepared reprocess: the row and its place matches in one transaction, then
+// the masks, the matches and the dirty tiles.
+func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
+	activityID, userID, points, pp, m := r.activityID, r.userID, r.points, r.pp, r.pp.m
+	startedAt, editJSON, userEdit, zonePoint := r.startedAt, r.editJSON, r.userEdit, r.zonePoint
+	recStart, recEnd, editable, oldTiles, newTiles := r.recStart, r.recEnd, r.editable, r.oldTiles, r.newTiles
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return err
@@ -421,11 +476,7 @@ func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	// Masks: re-render every tile the new track touches (overwriting in place), then drop
 	// the ones it no longer touches. Overwriting rather than clearing first means a tile the
 	// track still crosses never goes through a moment with no mask for this activity.
-	var newTiles [][2]int
 	if points != nil {
-		if newTiles, err = computeTouchedTiles(points, FogZoom); err != nil {
-			return err
-		}
 		if err := fog.RenderActivityMasks(ctx, pool, activityID, points, newTiles); err != nil {
 			return fmt.Errorf("render activity masks: %w", err)
 		}

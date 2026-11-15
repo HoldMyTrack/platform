@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io"
 	"net/url"
+	"sync"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -109,12 +110,9 @@ func (s *Store) Open(ctx context.Context, key string) (io.ReadSeekCloser, error)
 	return obj, nil
 }
 
-// RemoveByPrefix deletes every object under prefix — internal/worker's demo-account purge
-// sweep is the only caller today, cleaning up a demo user's raw uploads and fog tile
-// pyramids (all namespaced raw/{userID}/, fog/{userID}/ — see server.go
-// and internal/fog/render.go's object key builders) in one call rather than tracking every
-// individual key written for that user. Best-effort: logged and swallowed by the caller,
-// not surfaced as a reason to skip deleting the DB rows those objects belong to.
+// RemoveByPrefix deletes every object under prefix — an account's raw/{userID}/, fog/{userID}/
+// or photos/{userID}/, or an export's parts — in one call rather than tracking every key
+// written under it.
 func (s *Store) RemoveByPrefix(ctx context.Context, prefix string) error {
 	return s.RemoveByPrefixExcept(ctx, prefix, nil)
 }
@@ -122,16 +120,39 @@ func (s *Store) RemoveByPrefix(ctx context.Context, prefix string) error {
 // RemoveByPrefixExcept is RemoveByPrefix sparing every object whose key keep reports true for —
 // the account purge's photos, whose files a copied Story's rows in another account still use.
 // A nil keep spares nothing.
+//
+// A listing that fails partway is an error too, so a caller never takes a prefix as emptied
+// while objects under it may remain.
 func (s *Store) RemoveByPrefixExcept(ctx context.Context, prefix string, keep func(key string) bool) error {
 	objectsCh := make(chan minio.ObjectInfo)
+	// The listing's first error, and whether it ran to its end. Locked, since a cancelled ctx
+	// can end RemoveObjects while the listing is still running.
+	var listMu sync.Mutex
+	var listErr error
+	var listed bool
 	go func() {
 		defer close(objectsCh)
 		for obj := range s.client.ListObjects(ctx, s.bucket, minio.ListObjectsOptions{Prefix: prefix, Recursive: true}) {
-			if obj.Err != nil || (keep != nil && keep(obj.Key)) {
+			if obj.Err != nil {
+				listMu.Lock()
+				if listErr == nil {
+					listErr = fmt.Errorf("storage: list %s: %w", prefix, obj.Err)
+				}
+				listMu.Unlock()
 				continue
 			}
-			objectsCh <- obj
+			if keep != nil && keep(obj.Key) {
+				continue
+			}
+			select {
+			case objectsCh <- obj:
+			case <-ctx.Done():
+				return
+			}
 		}
+		listMu.Lock()
+		listed = true
+		listMu.Unlock()
 	}()
 
 	var firstErr error
@@ -140,5 +161,16 @@ func (s *Store) RemoveByPrefixExcept(ctx context.Context, prefix string, keep fu
 			firstErr = fmt.Errorf("storage: remove %s: %w", result.ObjectName, result.Err)
 		}
 	}
-	return firstErr
+	listMu.Lock()
+	defer listMu.Unlock()
+	switch {
+	case listErr != nil:
+		return listErr
+	case firstErr != nil:
+		return firstErr
+	case !listed:
+		return fmt.Errorf("storage: list %s cut short: %w", prefix, context.Cause(ctx))
+	default:
+		return nil
+	}
 }
