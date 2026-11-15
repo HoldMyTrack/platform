@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/smtp"
 	"net/textproto"
+	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/metrics"
 )
@@ -70,18 +71,30 @@ type smtpSender struct {
 	host, port, username, password, from string
 }
 
+// sendTimeout bounds one message, from the dial to QUIT. Signup, reset and resend send inside
+// their request, and the HTTP server has no write timeout (uploads take minutes), so a server
+// that stops answering would otherwise hold those requests open for good: a port expecting TLS
+// from the first byte (465) never sends the plaintext greeting net/smtp waits for.
+var sendTimeout = 30 * time.Second
+
 // Send does the manual STARTTLS dance net/smtp has no convenience wrapper for — dial plain,
 // upgrade if the server offers STARTTLS (every real provider does), authenticate, then the
-// usual MAIL/RCPT/DATA sequence. ctx isn't threaded into net/smtp's own calls (the stdlib
-// package predates context and has no cancellable variant); kept on the interface anyway so
-// a future non-SMTP Sender (an HTTP API) can honor it without changing every call site.
+// usual MAIL/RCPT/DATA sequence. net/smtp takes no context, so the connection's deadline,
+// sendTimeout, is what bounds every step. ctx's cancellation is ignored: a sign-up's
+// verification mail is owed once the account exists, whether or not the client that asked is
+// still there.
 func (s *smtpSender) Send(ctx context.Context, to, subject, body string) error {
+	ctx = context.WithoutCancel(ctx)
+	deadline := time.Now().Add(sendTimeout)
 	addr := net.JoinHostPort(s.host, s.port)
-	conn, err := net.Dial("tcp", addr)
+	conn, err := (&net.Dialer{Deadline: deadline}).DialContext(ctx, "tcp", addr)
 	if err != nil {
 		return fmt.Errorf("mail: dial %s: %w", addr, err)
 	}
 	defer conn.Close()
+	if err := conn.SetDeadline(deadline); err != nil {
+		return fmt.Errorf("mail: deadline: %w", err)
+	}
 
 	client, err := smtp.NewClient(conn, s.host)
 	if err != nil {

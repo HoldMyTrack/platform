@@ -8,6 +8,7 @@ import (
 	"net"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestMessageEncodesSubject(t *testing.T) {
@@ -86,5 +87,35 @@ func TestSendErrorLeavesOutTheReplyText(t *testing.T) {
 	}
 	if msg := err.Error(); strings.Contains(msg, "@") || !strings.Contains(msg, "RCPT TO") || !strings.Contains(msg, "550") {
 		t.Errorf("error %q: want the step and code without the address", msg)
+	}
+}
+
+// A server that accepts the connection and never greets, as a port expecting TLS from the first
+// byte does, fails the send at the timeout instead of holding it open.
+func TestSendGivesUpOnASilentServer(t *testing.T) {
+	ln, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer ln.Close()
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		time.Sleep(5 * time.Second)
+	}()
+	defer func(was time.Duration) { sendTimeout = was }(sendTimeout)
+	sendTimeout = 200 * time.Millisecond
+
+	host, port, _ := net.SplitHostPort(ln.Addr().String())
+	s := New(host, port, "", "", "from@holdmytrack.app", false, slog.New(slog.DiscardHandler))
+	start := time.Now()
+	if err := s.Send(context.Background(), "user@example.com", "subject", "body"); err == nil {
+		t.Fatal("a server that never greets: want an error")
+	}
+	if took := time.Since(start); took > 2*time.Second {
+		t.Fatalf("gave up after %v, want about the timeout", took)
 	}
 }
