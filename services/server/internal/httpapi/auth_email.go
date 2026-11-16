@@ -236,6 +236,10 @@ var errVerifyNeedsFacebook = accountFailure(http.StatusForbidden, "error.verify_
 // sign up with someone else's email. A Facebook-made account has no password, and its Facebook
 // link was never vouched for by the address, so only a browser signed in to it verifies it:
 // anywhere else gets errVerifyNeedsFacebook and the token stays usable (ADR-0009).
+//
+// deleted_at is checked although closing deletes the token: the worker's unverified-account
+// sweep can close the account while this waits for the row lock, and the token row read
+// before it would otherwise verify the closed account.
 func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (string, bool, error) {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
@@ -248,7 +252,7 @@ func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (stri
 	err = tx.QueryRow(ctx, `
 		SELECT ev.user_id, ev.email, u.email, u.email_verified
 		FROM email_verifications ev JOIN users u ON u.id = ev.user_id
-		WHERE ev.token_hash = $1 AND ev.expires_at > NOW()
+		WHERE ev.token_hash = $1 AND ev.expires_at > NOW() AND u.deleted_at IS NULL
 		FOR UPDATE OF u
 	`, tokenHash(token)).Scan(&userID, &email, &current, &wasVerified)
 	if errors.Is(err, pgx.ErrNoRows) {

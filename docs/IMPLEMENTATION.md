@@ -566,10 +566,12 @@ The routes are under `/v1/photos` because the mux rejects `/v1/activities/{id}/p
 
 ### 4.28 Account deletion (FR-1.12)
 
-**Close at once, purge in the worker.** `closeAccount` deletes, in one transaction, every way back in (sessions, identities, reset and verification rows, handoffs), clears the password, renames the email to a placeholder and stamps `deleted_at`, so no sign-in path needs a check of its own and the address is free at once. It is behind `requireAuth` alone, so an unverified account can delete itself. The purge (`worker/account_purge.go`) runs on its own ticker, so a busy queue can't delay it:
+**Close at once, purge in the worker.** `closeAccount` deletes, in one transaction (`db.CloseAccounts`), every way back in (sessions, identities, reset and verification rows, handoffs), clears the password, renames the email to a placeholder and stamps `deleted_at`, so no sign-in path needs a check of its own and the address is free at once. It is behind `requireAuth` alone, so an unverified account can delete itself. The purge (`worker/account_purge.go`) runs on its own ticker, so a busy queue can't delay it:
 - drop unclaimed jobs, and wait while one runs, since it could write after the listing;
 - remove objects by prefix, except photo files another account's rows name, and the received copies' files no other account's rows name; any failure leaves the account for a later sweep, held back 10 minutes so accounts failing every time don't fill each batch, since nothing names what's left once the row is gone;
 - `DELETE FROM users`, whose cascade takes the rest.
+
+**An account never verified** is closed by the daily auth sweep 7 days after signup once it has no live link (`worker/unverified_accounts.go`), through the same `db.CloseAccounts`, leaving out the demo account, which is stored unverified. `verifyEmail` checks `deleted_at`, since the sweep can close the account while a verification waits for its row lock.
 
 **A new per-account object prefix must be added to the purge.** Backups keep the data up to 8 weeks (`DEPLOY.md` §11).
 

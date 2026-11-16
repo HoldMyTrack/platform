@@ -176,9 +176,7 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, wa
 	if err := sweepJobHistory(ctx, pool, log); err != nil {
 		log.Error("job history sweep error", "err", err)
 	}
-	if err := sweepExpiredAuth(ctx, pool, log); err != nil {
-		log.Error("auth sweep error", "err", err)
-	}
+	sweepAuth(ctx, pool, log)
 	watch.Check(ctx, time.Now())
 
 	for {
@@ -200,12 +198,20 @@ func runSweeps(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, wa
 				log.Error("job history sweep error", "err", err)
 			}
 		case <-authTicker.C:
-			if err := sweepExpiredAuth(ctx, pool, log); err != nil {
-				log.Error("auth sweep error", "err", err)
-			}
+			sweepAuth(ctx, pool, log)
 		case <-imageryTicker.C:
 			watch.Check(ctx, time.Now())
 		}
+	}
+}
+
+// sweepAuth runs the daily account sweeps: expired sign-in rows, and accounts never verified.
+func sweepAuth(ctx context.Context, pool *pgxpool.Pool, log *slog.Logger) {
+	if err := sweepExpiredAuth(ctx, pool, log); err != nil {
+		log.Error("auth sweep error", "err", err)
+	}
+	if err := closeUnverifiedAccounts(ctx, pool, log); err != nil {
+		log.Error("unverified account sweep error", "err", err)
 	}
 }
 

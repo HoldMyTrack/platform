@@ -103,6 +103,7 @@ A real account must confirm its email before using anything else. Why: a mistype
 - Verifying ends every other verification link, and, when the address changed, every reset link.
 - A change of address before verifying waits for the new address's link: until then the account keeps its address and state, the new address stays free for anyone else, and earlier links stop working. If another account takes the address meanwhile, verifying is refused.
 - A change to an address another account has is refused. A resend goes to the newest link's address. Resends and changes together: at most 5 an hour per account; a demo account can do neither.
+- An account not verified 7 days after signing up, and with no link still valid, is deleted with everything it holds, which frees its address.
 
 ### FR-1.9 Sign in with Google
 
