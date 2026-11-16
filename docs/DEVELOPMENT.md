@@ -40,7 +40,7 @@ Adding a language takes a catalog on each surface, `about`/`help` translations, 
 
 ### Seeding a fresh database
 
-`migrate` creates the schema and the Demo Customer's `users` row but no data, and `docker compose up` runs no seeds. Without them "Try it now" opens an empty account, Fog's levels have no boundaries, and activities show their account's timezone. Make the boundaries file with `scripts/boundaries-extract.sh ~/boundaries` (`docs/DEPLOY.md` §6; needs the [duckdb](https://duckdb.org/docs/installation) CLI), then:
+`migrate` creates the schema and the Demo Customer's `users` row but no data, and `docker compose up` runs no seeds. Without them "Try the demo" opens an empty account, Fog's levels have no boundaries, and activities show their account's timezone. Make the boundaries file with `scripts/boundaries-extract.sh ~/boundaries` (`docs/DEPLOY.md` §6; needs the [duckdb](https://duckdb.org/docs/installation) CLI), then:
 
 ```bash
 curl -sSfL -o ~/boundaries/timezones-with-oceans-2026d.geojson.zip https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026d/timezones-with-oceans.geojson.zip
