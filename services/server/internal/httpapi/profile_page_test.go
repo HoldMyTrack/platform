@@ -115,17 +115,17 @@ func TestTrendBars(t *testing.T) {
 func TestProfileInRussian(t *testing.T) {
 	ru := i18n.Get("ru")
 	g := buildYearGrid(ru, 2026, []histogramBucket{day("2026-01-01", 2, 5000), day("2026-01-02", 5, 1234567)}, "count", false, "")
-	if c := g.Cells[4]; c.Title != "2026-01-01: 2 занятия, 5,0 км" {
+	if c := g.Cells[4]; c.Title != "2026-01-01: 2 путешествия, 5,0 км" {
 		t.Errorf("Jan 1: %q", c.Title)
 	}
-	if c := g.Cells[5]; c.Title != "2026-01-02: 5 занятий, 1\u00a0234,6 км" {
+	if c := g.Cells[5]; c.Title != "2026-01-02: 5 путешествий, 1\u00a0234,6 км" {
 		t.Errorf("Jan 2: %q", c.Title)
 	}
 	if g.Months[0].Label != "ЯНВ." {
 		t.Errorf("month label %q", g.Months[0].Label)
 	}
 	bars := buildTrendBars(ru, []trendPeriod{{PeriodStart: "2026-09-07", Count: 1, DistanceMeters: 10000, MovingSeconds: 7200, ElevationGainM: 120}}, false)
-	if bars[0].Title != "7 сент.: 10 км · 1 занятие · 2 ч в движении · набор 120 м" {
+	if bars[0].Title != "7 сент.: 10 км · 1 путешествие · 2 ч в движении · набор 120 м" {
 		t.Errorf("title %q", bars[0].Title)
 	}
 }
