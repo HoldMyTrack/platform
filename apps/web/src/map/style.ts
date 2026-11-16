@@ -10,6 +10,7 @@ import { GLYPHS_PATH, PMTILES_PATH, SPRITE_BASE_PATH } from './config';
 import { globeProjection } from './globe';
 import { PATH_COLORS, pathDash, PATHS_MIN_ZOOM } from './pathColors.ts';
 import { roadLayerIds } from './roads';
+import { liftColor } from './liftColor.ts';
 
 /**
  * Style construction, kept pure and DOM-free on purpose.
@@ -210,8 +211,26 @@ function withPathLayers(base: LayerSpecification[], flavor: Flavor): LayerSpecif
   });
 }
 
+/** How far the dark flavor's colours are mixed toward white: Protomaps' dark land is near-black
+ *  (`#1f1f1f`), dark enough to hide its own roads, parks and labels. */
+export const DARK_LIFT = 0.08;
+
+/** The flavor's palette, the dark one lifted by DARK_LIFT; the point-of-interest colours stay as
+ *  bright as Protomaps made them. */
+function palette(flavor: Flavor): ReturnType<typeof namedFlavor> {
+  const base = namedFlavor(flavor);
+  if (flavor !== 'dark') return base;
+  const lift = (value: unknown): unknown => {
+    if (typeof value === 'string') return liftColor(value, DARK_LIFT);
+    if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, lift(v)]));
+    return value;
+  };
+  const lifted = lift(base) as ReturnType<typeof namedFlavor>;
+  return base.pois ? { ...lifted, pois: base.pois } : lifted;
+}
+
 function basemapLayers(flavor: Flavor, lang: string): LayerSpecification[] {
-  return withPathLayers(layers(BASEMAP_SOURCE, namedFlavor(flavor), { lang }), flavor);
+  return withPathLayers(layers(BASEMAP_SOURCE, palette(flavor), { lang }), flavor);
 }
 
 export function buildStyle(options: BuildStyleOptions): StyleSpecification {
