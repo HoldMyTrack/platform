@@ -1,5 +1,5 @@
 {
-  "styleBuild": "6d075bd488c7",
+  "styleBuild": "b4f74bc1cb9e",
   "flavor": "black",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -3903,7 +3903,7 @@
             "line-join": "round"
           },
           "paint": {
-            "line-color": "#b8b8b8",
+            "line-color": "#9c9c9c",
             "line-dasharray": [
               "literal",
               [
@@ -3950,7 +3950,7 @@
             "visibility": "none"
           },
           "paint": {
-            "line-color": "#a8a8a8",
+            "line-color": "#8f8f8f",
             "line-dasharray": [
               "literal",
               [
@@ -3999,7 +3999,7 @@
             "line-join": "round"
           },
           "paint": {
-            "line-color": "#c4c4c4",
+            "line-color": "#a7a7a7",
             "line-width": [
               "interpolate",
               [
@@ -4024,31 +4024,31 @@
       ],
       "legend": {
         "bikePaths": {
-          "color": "#c4c4c4"
+          "color": "#a7a7a7"
         },
         "sharedPaths": {
-          "color": "#a8a8a8",
+          "color": "#8f8f8f",
           "dash": [
             2,
             1
           ]
         },
         "mtbTrails": {
-          "color": "#b8b8b8",
+          "color": "#9c9c9c",
           "dash": [
             1,
             1
           ]
         },
         "trails": {
-          "color": "#9a9a9a",
+          "color": "#838383",
           "dash": [
             2,
             1
           ]
         },
         "tracks": {
-          "color": "#b0b0b0",
+          "color": "#969696",
           "dash": [
             3,
             1.5
