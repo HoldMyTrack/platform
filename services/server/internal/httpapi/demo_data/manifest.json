@@ -509,6 +509,7 @@
     },
     {
       "name": "Greater Cleveland trails",
+      "opens_first": true,
       "description": "I want to ride every bike trail in the Greater Cleveland area.",
       "activities": [
         "2026-07-01 Emerald Necklace Trail.gpx",

@@ -61,11 +61,13 @@ type demoManifestCapture struct {
 }
 
 // demoManifestStory is one Story the seed gives the account (§4.23): a name, a description,
-// and its activities by filename. Stories are matched by name on a re-run.
+// and its activities by filename. Stories are matched by name on a re-run. OpensFirst marks the
+// one Story dated newest, which the Stories tab and the tour open (seedDemoStories).
 type demoManifestStory struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
 	Activities  []string `json:"activities"`
+	OpensFirst  bool     `json:"opens_first,omitempty"`
 }
 
 // demoManifestEntry is one file's overrides. Name is the activity's display name — no file
@@ -164,8 +166,14 @@ func loadDemoManifest(fsys fs.FS, files []string) (demoManifest, error) {
 		}
 	}
 	names := map[string]bool{}
+	opensFirst := 0
 	for _, st := range manifest.Stories {
+		if st.OpensFirst {
+			opensFirst++
+		}
 		switch {
+		case opensFirst > 1:
+			return demoManifest{}, fmt.Errorf("%s: story %q: only one story opens first", demoManifestFile, st.Name)
 		case strings.TrimSpace(st.Name) == "" || len([]rune(st.Name)) > maxStoryNameLen:
 			return demoManifest{}, fmt.Errorf("%s: story name %q must be 1–%d characters", demoManifestFile, st.Name, maxStoryNameLen)
 		case len([]rune(st.Description)) > maxStoryDescriptionLen:
@@ -409,7 +417,9 @@ func seedDemoCaptures(ctx context.Context, pool *pgxpool.Pool, userID string, ca
 //
 // Each Story is dated the day after its last activity ended, as someone would make one after a
 // trip, rather than the moment of the seed: the Stories are listed newest first, so they then
-// read in the order they were visited, not the manifest's.
+// read in the order they were visited, not the manifest's. The one that opens first is dated
+// after its own activities and a day after every other Story, so the Stories tab, which opens
+// the newest, opens it.
 func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, stories []demoManifestStory, activityIDs map[string]string) error {
 	tx, err := pool.Begin(ctx)
 	if err != nil {
@@ -417,6 +427,7 @@ func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, sto
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 	changed := false
+	first := ""
 	for _, st := range stories {
 		ids := make([]string, 0, len(st.Activities))
 		for _, f := range st.Activities {
@@ -449,6 +460,9 @@ func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, sto
 		if removed.RowsAffected() > 0 || added.RowsAffected() > 0 {
 			changed = true
 		}
+		if st.OpensFirst {
+			first = storyID
+		}
 		if _, err := tx.Exec(ctx, `
 			UPDATE stories s SET created_at = d.at, updated_at = d.at
 			FROM (SELECT MAX(started_at + make_interval(secs => COALESCE(duration_seconds, 0))) + INTERVAL '1 day' AS at
@@ -456,6 +470,16 @@ func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, sto
 			WHERE s.id = $1 AND (s.created_at IS DISTINCT FROM d.at OR s.updated_at IS DISTINCT FROM d.at)`,
 			storyID, ids); err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
+		}
+	}
+	// Dated above, by its own activities, so a later date only ever moves it on.
+	if first != "" {
+		if _, err := tx.Exec(ctx, `
+			UPDATE stories s SET created_at = d.at, updated_at = d.at
+			FROM (SELECT MAX(created_at) + INTERVAL '1 day' AS at FROM stories WHERE user_id = $1 AND id <> $2) d
+			WHERE s.id = $2 AND d.at > s.created_at`,
+			userID, first); err != nil {
+			return fmt.Errorf("stories: %w", err)
 		}
 	}
 	if changed {

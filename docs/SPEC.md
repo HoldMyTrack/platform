@@ -302,7 +302,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - Bike paths, shared paths and mountain-bike trails come from an OSM import of their own (FR-4.12), are off until ticked in Layers, drawn from zoom 9.
 - From OSM tags, the first that fits: **mountain-bike trail**, a cycleway, path, footway or bridleway with `mtb:scale`, or a cycleway or shared path with an unpaved `surface`; **bike path**, `highway=cycleway`; **shared path**, `highway=path`, `footway` or `bridleway` with `bicycle=designated`. Separately, **trail**: `highway=path`, `footway` or `bridleway`; **dirt track**: `highway=track`.
 - A street's painted bike lane and untagged singletrack are none of these. Sidewalks, crossings, steps and named route networks aren't drawn.
-- Paths draw over Fog at full strength, under the tracks, in every mode and export. One switch hides every ticked road (FR-4.13), path and place (FR-14.2) and keeps the picks.
+- Paths draw over Fog at full strength, under the tracks, in every mode and export. Layers has a switch that hides every ticked road (FR-4.13) and path, and Places one that hides every ticked place (FR-14.2); each keeps its picks. The Android app keeps places in Layers, under its one switch (`apps/android/docs/SPEC.md` FR-2.2).
 
 ### FR-4.10 Satellite mode
 
@@ -336,7 +336,7 @@ The same paths for every account, behind the session and cached like every map t
 
 ### FR-4.13 Roads
 
-- Roads is a Layers pick, on until unticked, for every base map and mode. The switch that hides ticked paths and places (FR-4.9) hides roads too.
+- Roads is a Layers pick, on until unticked, for every base map and mode. The switch that hides ticked paths (FR-4.9) hides roads too.
 - It covers the base map's roads, rail, street names and shields. Trails, dirt tracks, bike kinds and place names stay. Exports draw what the screen does.
 
 ### FR-4.14 Tour
@@ -674,7 +674,7 @@ Outdoor places from OpenStreetMap in six categories, with what OSM says about ea
 
 ### FR-14.2 Points of interest
 
-- One Layers toggle per category, off by default.
+- One Places toggle per category, off by default.
 - From zoom 13 ticked places show as badges with their areas; from 10 to 13 only on request (FR-14.4); below 10 none. A captured place's badge is filled.
 - Drawn over Fog and labels; hidden during Edit track. A retired place shows only to an account that captured it.
 

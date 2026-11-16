@@ -20,7 +20,7 @@ export interface OverlayChoices {
   satellite: boolean;
 }
 
-/** The Satellite button and the Layers menu's roads, paths and Spots categories, remembered per browser (overlays.ts). */
+/** The Satellite button, the Layers menu's roads and paths and the Places menu's Spots categories, remembered per browser (overlays.ts). */
 export function useOverlays(): OverlayChoices {
   const [overlays, setOverlays] = useState<Overlays>(loadOverlays);
   const change = useCallback((next: Overlays) => {

@@ -10,6 +10,8 @@ export interface FogLevelMenuProps {
   map: MapLibreMap;
   /** The places of each level the account has explored, which the menu counts. */
   explored: Explored | null;
+  /** Held open from outside, whatever the button says: the tour's step on Fog's levels. */
+  forceOpen?: boolean;
 }
 
 /**
@@ -20,10 +22,11 @@ export interface FogLevelMenuProps {
  * (fogLevels.ts), until Auto is picked. The lock lives in the map's layer state, so it outlasts a
  * style swap and a trip out of Fog, and a reload releases it. Open and close as the Layers menu.
  */
-export function FogLevelMenu({ map, explored }: FogLevelMenuProps) {
+export function FogLevelMenu({ map, explored, forceOpen = false }: FogLevelMenuProps) {
   const [zoom, setZoom] = useState(() => map.getZoom());
   const [locked, setLocked] = useState<string | null>(() => currentLayerState(map).fogLevel ?? null);
-  const [open, setOpen] = useState(false);
+  const [picked, setOpen] = useState(false);
+  const open = picked || forceOpen;
   const ref = useRef<HTMLDivElement>(null);
   // The document arrives after the map: redraw once it's applied.
   const [, setApplied] = useState(0);
@@ -86,7 +89,7 @@ export function FogLevelMenu({ map, explored }: FogLevelMenuProps) {
         aria-pressed="true"
         aria-haspopup="true"
         aria-expanded={open}
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => !forceOpen && setOpen((o) => !o)}
         data-testid="fog-level-menu"
       >
         {t('map.mode_fog')}

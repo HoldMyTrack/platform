@@ -275,8 +275,14 @@ function useHeaderMenuOpen(selector: string, open: boolean) {
     if (!open) return;
     const menu = document.querySelector<HTMLDetailsElement>(selector);
     if (!menu) return;
+    // A click on the page closes a <details> menu; the step's highlight would frame nothing.
+    const keepOpen = () => {
+      if (!menu.open) menu.open = true;
+    };
     menu.open = true;
+    menu.addEventListener('toggle', keepOpen);
     return () => {
+      menu.removeEventListener('toggle', keepOpen);
       menu.open = false;
     };
   }, [selector, open]);

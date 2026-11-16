@@ -4,7 +4,7 @@ import { IMAGES_METADATA, ROLE_METADATA, tilePath, TOGGLE_METADATA, VARS_METADAT
 /**
  * The Spots layers (IMPLEMENTATION.md §4.25) as the layers document's `spots` group:
  * outdoor places from OpenStreetMap, each a badge over its area, drawn in every map mode for the
- * categories the Layers menu has on. The tiles come from `/tiles/v1/spots`, from SPOTS_MIN_ZOOM;
+ * categories the Places menu has on. The tiles come from `/tiles/v1/spots`, from SPOTS_MIN_ZOOM;
  * below it, "Show in this area" fills a GeoJSON source of its own.
  *
  * On top of the whole stack rather than beneath the basemap's labels: a spot is something to find
@@ -29,7 +29,7 @@ export const SPOTS_LAYER_ID = 'spots-icons';
 export const SPOTS_IN_AREA_LAYER_ID = 'spots-in-area-icons';
 export const SPOTS_IN_AREA_SOURCE_ID = 'spots-in-area';
 
-/** Every category, in the order the Layers menu lists them. */
+/** Every category, in the order the Places menu lists them. */
 export const SPOT_CATEGORY_WIRE = ['playground', 'dog_park', 'monument', 'viewpoint', 'waterfall', 'history'] as const;
 
 // The marker: a round badge, the category icon in ink on white, ringed in the accent — or, for a

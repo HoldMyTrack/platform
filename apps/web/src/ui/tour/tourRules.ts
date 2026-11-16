@@ -9,7 +9,7 @@ import type { PanelTab } from '../ActivitiesPanel';
 /** A first-time card: the feature's own explanation, shown once per browser. */
 export type CardId = 'fog' | 'stories';
 
-export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'export' | 'fog' | 'fog_cities' | 'fog_counties' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
+export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'places' | 'export' | 'fog' | 'fog_cities' | 'fog_counties' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
 
 /**
  * Where a step puts the camera: `center` and `zoom`, then a slow turn of the globe through each
@@ -23,10 +23,12 @@ export interface TourView {
   flat?: boolean;
 }
 
-/** What a step opens so the user sees the feature it explains: the panel's sheet on a phone, the Layers menu, the header's Upload menu. Each closes again after the step. */
+/** What a step opens so the user sees the feature it explains: the panel's sheet on a phone, the Layers, Places or Fog level menu, the header's Upload menu. Each closes again after the step. */
 export interface TourOpen {
   sheet?: boolean;
   layers?: boolean;
+  places?: boolean;
+  fogLevel?: boolean;
   upload?: boolean;
 }
 
@@ -48,6 +50,8 @@ export interface TourStep {
 }
 
 const MODES = '[data-testid="map-mode-toggle"]';
+/** A control and its open menu, which sits outside the control's box, lit together. */
+const withPanel = (control: string) => `${control}, ${control} .overlays-menu__panel`;
 /** The demo's way to an account: the demo bar's button, or the account menu once the bar is hidden, never both. */
 const DEMO_SIGNUP = '[data-demo-bar-start], body:not(:has([data-demo-bar-start])) .page-header .user-menu__avatar';
 
@@ -74,8 +78,8 @@ export const DEMO_VIEWS = {
 /**
  * The tour's steps in order. The Normal-mode steps come first, so the panel is never torn down and
  * rebuilt in the middle. A demo's Fog is a step per level, from exact coverage out to countries,
- * flown to the demo's history; a real account's map stays where it is. `narrow` is a phone's width
- * (NARROW_WIDTH).
+ * flown to the demo's history; a real account's map stays where it is. Fog's last step opens its
+ * level menu. `narrow` is a phone's width (NARROW_WIDTH).
  */
 export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?: boolean }): TourStep[] {
   const step = (id: StepId, anchor: string | null, more: Partial<Omit<TourStep, 'id' | 'anchor'>> = {}): TourStep => ({
@@ -95,15 +99,16 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
         step('fog_cities', MODES, { mode: 'fog', view: DEMO_VIEWS.city }),
         step('fog_counties', MODES, { mode: 'fog', view: DEMO_VIEWS.counties }),
         step('fog_regions', MODES, { mode: 'fog', view: DEMO_VIEWS.regions }),
-        step('fog_countries', MODES, { mode: 'fog', view: narrow ? DEMO_VIEWS.countriesNarrow : DEMO_VIEWS.countries }),
+        step('fog_countries', withPanel(MODES), { mode: 'fog', view: narrow ? DEMO_VIEWS.countriesNarrow : DEMO_VIEWS.countries, open: { fogLevel: true } }),
       ]
-    : [step('fog', MODES, { mode: 'fog', card: 'fog' })];
+    : [step('fog', withPanel(MODES), { mode: 'fog', card: 'fog', open: { fogLevel: true } })];
   return [
     step('welcome', null),
     step('activities', '[data-testid="activities-panel"]', { open: { sheet: true } }),
     step('range', '[data-testid="dates-filter"]'),
     step('stories', '[data-testid="activities-panel"]', { card: 'stories', tab: 'stories', open: { sheet: true } }),
-    step('layers', '[data-testid="map-overlays"], .overlays-menu__panel', { open: { layers: true } }),
+    step('layers', withPanel('[data-testid="map-overlays"]'), { open: { layers: true } }),
+    step('places', withPanel('[data-testid="map-places"]'), { open: { places: true } }),
     step('export', '[data-testid="export-button"]'),
     ...fog,
     // The header's Upload menu, open; the demo's is a disabled button that says what an account adds.
