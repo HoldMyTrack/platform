@@ -539,7 +539,7 @@ export const en = {
   'tour.add.title': 'Add your activities',
   'tour.add.body': "Bring in what you recorded on Strava, Garmin or any other watch. This menu has a short guide for each. Have an Android phone? The HoldMyTrack app brings in activities from Health Connect or records new ones. You don't need to bring everything, only the journeys you want to keep.",
   'tour.add_demo.title': 'Add your activities',
-  'tour.add_demo.body': "The demo is read-only. Start your own map makes your account, where you bring in what you recorded: from Strava, Garmin, the Android app or files. You don't need to bring everything, only the journeys you want to keep.",
+  'tour.add_demo.body': "The demo is read-only. Create your own account to bring in what you recorded: from Strava, Garmin, the Android app or files. You don't need to bring everything, only the journeys you want to keep.",
   'tour.done.title': "That's the tour",
   'tour.done.body': 'Take it again any time from Take a tour at the top.',
   'tour.card_got_it': 'Got it',
