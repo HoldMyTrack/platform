@@ -1,5 +1,5 @@
 {
-  "styleBuild": "9e0917101842",
+  "styleBuild": "e565266c595d",
   "flavor": "dark",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -152,15 +152,15 @@
         },
         "paint": {
           "fog-veil": {
-            "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-color": "#000000",
+            "fill-opacity": 0.6
           },
           "fog-edge": {
-            "line-color": "#f7f4ec",
-            "line-opacity": 0.82
+            "line-color": "#000000",
+            "line-opacity": 0.6
           },
           "country-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -190,13 +190,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "region-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -226,13 +226,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "county-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -262,13 +262,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "city-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -298,8 +298,8 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
@@ -310,8 +310,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -347,8 +347,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -384,8 +384,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -421,8 +421,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -458,8 +458,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -471,8 +471,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -484,8 +484,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -497,8 +497,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -619,15 +619,15 @@
         },
         "paint": {
           "fog-veil": {
-            "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-color": "#000000",
+            "fill-opacity": 0.6
           },
           "fog-edge": {
-            "line-color": "#f7f4ec",
-            "line-opacity": 0.82
+            "line-color": "#000000",
+            "line-opacity": 0.6
           },
           "country-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -657,13 +657,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "region-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -693,13 +693,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "county-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -729,13 +729,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "city-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -765,8 +765,8 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
@@ -777,8 +777,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -814,8 +814,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -851,8 +851,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -888,8 +888,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -925,8 +925,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -938,8 +938,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -951,8 +951,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -964,8 +964,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -1086,15 +1086,15 @@
         },
         "paint": {
           "fog-veil": {
-            "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-color": "#000000",
+            "fill-opacity": 0.6
           },
           "fog-edge": {
-            "line-color": "#f7f4ec",
-            "line-opacity": 0.82
+            "line-color": "#000000",
+            "line-opacity": 0.6
           },
           "country-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -1124,13 +1124,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "region-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -1160,13 +1160,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "county-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -1196,13 +1196,13 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
           "city-fog-fill": {
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -1232,8 +1232,8 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
@@ -1244,8 +1244,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -1281,8 +1281,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -1318,8 +1318,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -1355,8 +1355,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -1392,8 +1392,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -1405,8 +1405,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -1418,8 +1418,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -1431,8 +1431,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -2947,8 +2947,8 @@
             "visibility": "none"
           },
           "paint": {
-            "fill-color": "#f7f4ec",
-            "fill-opacity": 0.82
+            "fill-color": "#000000",
+            "fill-opacity": 0.6
           }
         },
         {
@@ -3007,8 +3007,8 @@
               18,
               20
             ],
-            "line-color": "#f7f4ec",
-            "line-opacity": 0.82
+            "line-color": "#000000",
+            "line-opacity": 0.6
           }
         },
         {
@@ -3020,7 +3020,7 @@
           "maxzoom": 3,
           "paint": {
             "fill-antialias": false,
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -3050,8 +3050,8 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
@@ -3068,7 +3068,7 @@
           "maxzoom": 6,
           "paint": {
             "fill-antialias": false,
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -3098,8 +3098,8 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
@@ -3116,7 +3116,7 @@
           "maxzoom": 8,
           "paint": {
             "fill-antialias": false,
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -3146,8 +3146,8 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
@@ -3164,7 +3164,7 @@
           "maxzoom": 11,
           "paint": {
             "fill-antialias": false,
-            "fill-color": "#f7f4ec",
+            "fill-color": "#000000",
             "fill-opacity": [
               "case",
               [
@@ -3194,8 +3194,8 @@
                   ],
                   false
                 ],
-                0.6799999999999999,
-                0.82
+                0.45999999999999996,
+                0.6
               ]
             ]
           },
@@ -3229,8 +3229,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -3286,8 +3286,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -3343,8 +3343,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -3400,8 +3400,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": [
               "case",
@@ -3467,8 +3467,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -3510,8 +3510,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -3553,8 +3553,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5
@@ -3596,8 +3596,8 @@
                 "get",
                 "visited"
               ],
-              "#f7f4ec",
-              "#202b25"
+              "#000000",
+              "#f7f4ec"
             ],
             "line-opacity": 0.95,
             "line-width": 2.5

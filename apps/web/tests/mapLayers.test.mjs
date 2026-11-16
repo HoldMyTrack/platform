@@ -55,11 +55,15 @@ test('the served document gives Android builds that still offer Heatmap the Norm
   assert.deepEqual(ids.filter((id) => id.startsWith('heat')), []);
 });
 
-test('imagery takes the dark veil over a light flavor', () => {
-  assert.equal(viewFor(doc, 'fog', false).paint['fog-veil']['fill-color'], '#202b25');
-  assert.equal(viewFor(doc, 'fog', true).paint['fog-veil']['fill-color'], '#f7f4ec');
+test('fog is darker than the map it covers, and a cream mist over imagery', () => {
+  const veil = (d, satellite) => viewFor(d, 'fog', satellite).paint['fog-veil'];
+  const border = (d, satellite) => viewFor(d, 'fog', satellite).paint['city-fog-border']['line-color'][3];
   const dark = buildLayers({ flavor: 'dark', dark: true, tileVersion: '', lang: 'en' });
-  assert.equal(viewFor(dark, 'fog', false).paint['fog-veil']['fill-color'], '#f7f4ec');
+  assert.deepEqual([veil(doc, false)['fill-color'], veil(doc, false)['fill-opacity']], ['#202b25', 0.82]);
+  assert.deepEqual([veil(dark, false)['fill-color'], veil(dark, false)['fill-opacity']], ['#000000', 0.6]);
+  for (const d of [doc, dark]) assert.deepEqual([veil(d, true)['fill-color'], veil(d, true)['fill-opacity']], ['#f7f4ec', 0.82]);
+  // Unvisited borders are drawn on the veil, so they take its opposite.
+  assert.deepEqual([border(doc, false), border(dark, false), border(dark, true)], ['#f7f4ec', '#f7f4ec', '#202b25']);
 });
 
 test('a layer is added looking as the plain Normal view leaves it', () => {

@@ -56,14 +56,16 @@ const FOG_MAX_ZOOM = 14;
  *  out, where a wider one would smudge it, to 14 px close in. */
 const FOG_EDGE_WIDTH = ['interpolate', ['exponential', 2], ['zoom'], 10, 1, 13, 5, 15, 14, 18, 20];
 
-/** Each veil is the opposite of the basemap under it: dark ink over a light map, a cream mist over
- *  a dark one or imagery. The Country/Region fills take the same, so nothing shifts at a tier. */
-const LIGHT_VEIL = { color: '#202b25', opacity: 0.82 };
-const DARK_VEIL = { color: '#f7f4ec', opacity: 0.82 };
-
-/** The borders: the veil's opposite, faint until hovered. */
-const LIGHT_BORDER = '#f7f4ec';
-const DARK_BORDER = '#202b25';
+/**
+ * The veil over each base, with the colour of the unvisited borders drawn on it, faint until
+ * hovered. Fog is always darker than what it reveals: dark ink over a light map, black over a dark
+ * one, so explored ground stays the lighter part of the map in either theme, and a cream mist over
+ * imagery, whose own darks would hide a dark veil. The Country/Region fills take the same, so
+ * nothing shifts at a tier.
+ */
+const LIGHT_VEIL = { color: '#202b25', opacity: 0.82, border: '#f7f4ec' };
+const DARK_VEIL = { color: '#000000', opacity: 0.6, border: '#f7f4ec' };
+const IMAGERY_VEIL = { color: '#f7f4ec', opacity: 0.82, border: '#202b25' };
 const BORDER_OPACITY = 0.22;
 const BORDER_WIDTH = 0.7;
 /** Over satellite imagery, whose colours vary under every border, a faint border vanishes. */
@@ -82,9 +84,9 @@ const BORDER_LAYERS = [COUNTRY_BORDER_LAYER, REGION_BORDER_LAYER, COUNTY_BORDER_
 const PICKED_LAYERS = [COUNTRY_PICKED_LAYER, REGION_PICKED_LAYER, COUNTY_PICKED_LAYER, CITY_PICKED_LAYER];
 const FOG_LAYERS = [FOG_LAYER, FOG_EDGE_LAYER, ...PLACE_FILL_LAYERS, ...BORDER_LAYERS, ...PICKED_LAYERS];
 
-/** One mode's view over a base that reads `dark`. */
+/** One mode's view over a base that reads `dark`, or over imagery. */
 export function coverageView(mode: MapMode, dark: boolean, satellite = false): LayerView {
-  const veil = dark ? DARK_VEIL : LIGHT_VEIL;
+  const veil = satellite ? IMAGERY_VEIL : dark ? DARK_VEIL : LIGHT_VEIL;
   const shown = (on: boolean) => ({ visibility: on ? 'visible' : 'none' });
   const fill = { 'fill-color': veil.color, 'fill-opacity': veil.opacity };
   // Every outline is in the tile; the veil covers the unvisited and the sea. A hovered outline
@@ -95,7 +97,7 @@ export function coverageView(mode: MapMode, dark: boolean, satellite = false): L
   };
   const border = {
     // On cleared ground the basemap shows, so a visited outline takes the veil's own ink.
-    'line-color': ['case', ['get', 'visited'], veil.color, dark ? DARK_BORDER : LIGHT_BORDER],
+    'line-color': ['case', ['get', 'visited'], veil.color, veil.border],
     'line-opacity': ['case', HOVERED, HOVER_BORDER_OPACITY, satellite ? SATELLITE_BORDER_OPACITY : BORDER_OPACITY],
     'line-width': ['case', HOVERED, HOVER_BORDER_WIDTH, satellite ? SATELLITE_BORDER_WIDTH : BORDER_WIDTH],
   };
