@@ -20,6 +20,7 @@ import dev.holdmytrack.android.recording.RecordingService
 import dev.holdmytrack.android.tour.TourController
 import dev.holdmytrack.android.tour.TourEvent
 import dev.holdmytrack.android.tour.TourHost
+import dev.holdmytrack.android.tour.TourMenu
 import dev.holdmytrack.android.tour.TourTarget
 
 /**
@@ -246,8 +247,8 @@ class MainActivity : AppCompatActivity() {
         override fun setSheetOpen(open: Boolean) {
             map()?.setSheetOpen(open)
         }
-        override fun setLayersOpen(open: Boolean) {
-            map()?.holdLayers(open)
+        override fun setMenuOpen(menu: TourMenu, open: Boolean) {
+            map()?.holdMenu(menu, open)
         }
         override val map get() = map()?.mapLibre
         override val blocked get() = map()?.tourBlocked ?: true
@@ -257,8 +258,9 @@ class MainActivity : AppCompatActivity() {
                 TourTarget.SHEET -> mapView(R.id.activities_sheet)
                 TourTarget.RANGE -> mapView(R.id.panel_dates)
                 TourTarget.LAYERS -> mapView(R.id.layers_panel) + listOfNotNull(map()?.layersMenu)
+                TourTarget.PLACES -> mapView(R.id.places_panel) + listOfNotNull(map()?.placesMenu)
                 TourTarget.EXPORT -> mapView(R.id.export_panel)
-                TourTarget.MODES -> mapView(R.id.mode_bar)
+                TourTarget.MODES -> mapView(R.id.mode_bar) + listOfNotNull(map()?.fogLevelMenu)
                 TourTarget.RECORD -> listOfNotNull(findViewById(R.id.record_button))
                 TourTarget.YOU_TOUR -> listOfNotNull(youTourRow())
             }

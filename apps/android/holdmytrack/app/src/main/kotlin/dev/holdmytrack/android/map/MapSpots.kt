@@ -30,7 +30,7 @@ import java.time.Instant
 /**
  * The Spots layers (`docs/SPEC.md` FR-14, root `docs/IMPLEMENTATION.md` §4.25) as the layers
  * document's `spots` group draws them ([MapLayers]), and what the app decides about them: the
- * categories the Layers menu has on ([LayersMenu]), the account's captures, capture mode's target
+ * categories the Places menu has on ([PlacesMenu]), the account's captures, capture mode's target
  * and guide, and "Show in this area"'s places ([ShowInArea]). The web's `map/spots.ts`.
  *
  * The choice is per device, every category off until ticked, kept in SharedPreferences like
@@ -38,19 +38,19 @@ import java.time.Instant
  */
 object MapSpots {
 
-    /** The categories, in the order the Layers menu lists them (the web's `SPOT_CATEGORIES`). */
+    /** The categories, in the order the Places menu lists them (the web's `SPOT_CATEGORIES`). */
     enum class Category(
         val wire: String,
         @param:DrawableRes val icon: Int,
         @param:StringRes val menuLabel: Int,
         @param:StringRes val label: Int,
     ) {
-        PLAYGROUND("playground", R.drawable.ic_seesaw, R.string.layers_playgrounds, R.string.spots_category_playground),
-        DOG_PARK("dog_park", R.drawable.ic_dog, R.string.layers_dog_parks, R.string.spots_category_dog_park),
-        MONUMENT("monument", R.drawable.ic_landmark, R.string.layers_monuments, R.string.spots_category_monument),
-        VIEWPOINT("viewpoint", R.drawable.ic_binoculars, R.string.layers_viewpoints, R.string.spots_category_viewpoint),
-        WATERFALL("waterfall", R.drawable.ic_waterfall, R.string.layers_waterfalls, R.string.spots_category_waterfall),
-        HISTORY("history", R.drawable.ic_castle, R.string.layers_history, R.string.spots_category_history),
+        PLAYGROUND("playground", R.drawable.ic_seesaw, R.string.places_playgrounds, R.string.spots_category_playground),
+        DOG_PARK("dog_park", R.drawable.ic_dog, R.string.places_dog_parks, R.string.spots_category_dog_park),
+        MONUMENT("monument", R.drawable.ic_landmark, R.string.places_monuments, R.string.spots_category_monument),
+        VIEWPOINT("viewpoint", R.drawable.ic_binoculars, R.string.places_viewpoints, R.string.spots_category_viewpoint),
+        WATERFALL("waterfall", R.drawable.ic_waterfall, R.string.places_waterfalls, R.string.spots_category_waterfall),
+        HISTORY("history", R.drawable.ic_castle, R.string.places_history, R.string.spots_category_history),
         ;
 
         companion object {

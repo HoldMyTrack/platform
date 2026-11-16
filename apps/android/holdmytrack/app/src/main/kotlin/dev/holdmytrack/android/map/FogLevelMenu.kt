@@ -1,6 +1,5 @@
 package dev.holdmytrack.android.map
 
-import android.os.SystemClock
 import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.style.ImageSpan
@@ -9,7 +8,6 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import android.widget.PopupWindow
 import android.widget.RadioButton
 import android.widget.TextView
 import androidx.core.content.ContextCompat
@@ -38,8 +36,9 @@ class FogLevelMenu(
     private val onLock: (locked: String?, zoomTo: Double?) -> Unit,
 ) {
     private val res = button.resources
-    private var popup: PopupWindow? = null
-    private var closedAt = 0L
+
+    /** Under the mode bar, lined up with its start edge. It opens only once the document has levels. */
+    private val popup = MenuPopup(button.parent as View, Gravity.START, capHeld = false, canOpen = { levels().isNotEmpty() }, build = ::build)
 
     /** The lock, when the document applied has its level: a lock on one it lacks follows the
      *  zoom, as [FogLevels.inView] and [FogLevels.zoomRanges] treat it. */
@@ -69,16 +68,20 @@ class FogLevelMenu(
         return Label(text, description).also { last = key to it }
     }
 
-    /** Opens the menu, or does nothing when a tap just closed it (the tap outside landed on the button). */
-    fun toggle() {
-        if (popup != null) return dismiss()
-        if (SystemClock.uptimeMillis() - closedAt < REOPEN_GUARD_MS) return
-        if (levels().isNotEmpty()) show()
-    }
+    /** Opens or closes the menu ([MenuPopup.toggle]). */
+    fun toggle() = popup.toggle()
 
-    fun dismiss() {
-        popup?.dismiss()
-    }
+    fun dismiss() = popup.dismiss()
+
+    /** The open menu's content, for the tour's spotlight. */
+    val content: View? get() = popup.content
+
+    /** Holds the menu open for the tour, or lets go of it ([MenuPopup.hold]). Asked before the
+     *  document has levels, it opens once [retry] finds them. */
+    fun hold(open: Boolean) = popup.hold(open)
+
+    /** The levels may have arrived: a hold waiting for them opens. */
+    fun retry() = popup.retry()
 
     /** The checked button's text color: the label shows only while Fog is on, and is built before
      *  the button's state may have caught up. */
@@ -98,7 +101,7 @@ class FogLevelMenu(
     private fun levelName(all: List<FogLevels.Level>, level: String): String =
         levelLabel(level, all.firstOrNull { it.level == level }?.word)?.let(res::getString) ?: level
 
-    private fun show() {
+    private fun build(): View {
         val inflater = LayoutInflater.from(button.context)
         val content = inflater.inflate(R.layout.popup_fog_level, null as ViewGroup?)
         val rows = content.findViewById<LinearLayout>(R.id.fog_level_rows)
@@ -140,16 +143,7 @@ class FogLevelMenu(
             }
         }
 
-        val width = (MENU_WIDTH_DP * res.displayMetrics.density).toInt()
-        val window = PopupWindow(content, width, ViewGroup.LayoutParams.WRAP_CONTENT, true)
-        window.elevation = res.getDimension(R.dimen.hmt_space_8)
-        window.setOnDismissListener {
-            popup = null
-            closedAt = SystemClock.uptimeMillis()
-        }
-        popup = window
-        // Under the mode bar, lined up with its start edge, 6dp below it.
-        window.showAsDropDown(button.parent as View, 0, res.getDimensionPixelSize(R.dimen.hmt_space_6), Gravity.START)
+        return content
     }
 
     private fun pick(level: String?) {
@@ -163,9 +157,6 @@ class FogLevelMenu(
     }
 
     companion object {
-        private const val REOPEN_GUARD_MS = 300L
-        /** The web's panel width, as the Layers menu's. */
-        private const val MENU_WIDTH_DP = 224
         /** The lock and chevron, a little under the label's text height. */
         private const val ICON_SCALE = 1.05f
 

@@ -5,7 +5,8 @@ import androidx.core.content.edit
 
 /**
  * Show layers, the Layers menu's first switch (`docs/SPEC.md` FR-4.9, [LayersMenu]): whether the picked
- * paths ([MapPaths]) and places ([MapSpots]) are drawn at all. Off hides them and keeps the picks.
+ * roads ([MapRoads]) and paths ([MapPaths]) are drawn at all. Off hides them and keeps the picks.
+ * Places have their own ([MapPlacesSwitch]).
  * A per-device choice, on until turned off, kept in SharedPreferences like the picks themselves.
  */
 object MapLayersSwitch {

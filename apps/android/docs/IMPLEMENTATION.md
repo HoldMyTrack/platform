@@ -137,9 +137,9 @@ The web's design (root `docs/IMPLEMENTATION.md` §4.3.3).
 
 ### 3.6 The tour
 
-`tour/TourController` runs the tour from `MainActivity`, which implements `TourHost` over its tabs and `MapFragment`'s mode, sheet, Layers menu and camera; `TourSteps` and the shared `TourRules` decide, and `TourOverlay` draws over the whole window and follows its target's views every frame.
+`tour/TourController` runs the tour from `MainActivity`, which implements `TourHost` over its tabs and `MapFragment`'s mode, sheet, Layers, Places and Fog level menus and camera; `TourSteps` and the shared `TourRules` decide, and `TourOverlay` draws over the whole window and follows its target's views every frame.
 
-- **The Layers menu is a `PopupWindow`, a window above the overlay**: held for the tour it's shown neither focusable nor touchable, or the tap on the tour's Next would only dismiss it, and capped at 40% of the screen so it can't cover the card.
+- **The Layers, Places and Fog level menus are `PopupWindow`s, windows above the overlay** (`map/MenuPopup`): held for the tour they're shown neither focusable nor touchable, and one the user had open is taken over as held, so it closes after the step, or the tap on the tour's Next would only dismiss them. Layers and Places are capped at 40% of the screen so they can't cover the card. Fog's level menu hangs from its mode button, so the tour holds it only once Fog is the mode (`TourSteps.menuMoves`), and only once the document has levels, retrying as they arrive. The menus are windows of their own, so `MapFragment` closes them with its view and when the export opens.
 - **A tab or a sheet still settling has no target yet**: a step whose views don't appear within 30 frames is skipped in the direction of travel.
 
 ## 4. Sync engine

@@ -44,7 +44,9 @@ class TourStepsTest {
         val steps = TourSteps.of(isDemo = false).associateBy { it.id }
         assertEquals(MainActivity.Tab.STORIES, steps.getValue("stories").tab)
         assertTrue(steps.getValue("stories").sheet && steps.getValue("activities").sheet)
-        assertTrue(steps.getValue("layers").layers)
+        assertTrue(steps.getValue("layers").layers && !steps.getValue("layers").places)
+        assertTrue(steps.getValue("places").places && !steps.getValue("places").layers)
+        assertEquals(TourTarget.PLACES, steps.getValue("places").target)
         assertEquals(MainActivity.Tab.SYNC, steps.getValue("sync").tab)
         assertEquals(MainActivity.Tab.YOU, TourSteps.of(isDemo = false).last().tab)
         assertEquals("tour_sync_demo", TourSteps.of(isDemo = true).single { it.id == "sync" }.text)
@@ -58,12 +60,30 @@ class TourStepsTest {
     }
 
     @Test
-    fun `a step holds the sheet and the Layers menu it says, and the end gives the sheet back`() {
+    fun `a step holds the sheet and the menus it says, and the end gives the sheet back`() {
         val steps = TourSteps.of(isDemo = false).associateBy { it.id }
-        assertEquals(true to false, TourSteps.held(steps.getValue("activities"), restoreSheet = false))
-        assertEquals(false to true, TourSteps.held(steps.getValue("layers"), restoreSheet = true))
-        assertEquals(true to false, TourSteps.held(null, restoreSheet = true))
-        assertEquals(false to false, TourSteps.held(null, restoreSheet = false))
+        assertEquals(TourSteps.Held(sheet = true), TourSteps.held(steps.getValue("activities"), restoreSheet = false))
+        assertEquals(TourSteps.Held(sheet = false, layers = true), TourSteps.held(steps.getValue("layers"), restoreSheet = true))
+        assertEquals(TourSteps.Held(sheet = false, places = true), TourSteps.held(steps.getValue("places"), restoreSheet = true))
+        assertEquals(TourSteps.Held(sheet = true), TourSteps.held(null, restoreSheet = true))
+        assertEquals(TourSteps.Held(sheet = false), TourSteps.held(null, restoreSheet = false))
+    }
+
+    @Test
+    fun `Fog's level menu opens after the mode change, every other menu before it`() {
+        val fog = TourSteps.menuMoves(TourSteps.Held(sheet = false, fogLevel = true))
+        assertEquals(listOf(TourMenu.FOG_LEVEL to true), fog.after)
+        assertEquals(listOf(TourMenu.LAYERS to false, TourMenu.PLACES to false), fog.before)
+        val places = TourSteps.menuMoves(TourSteps.Held(sheet = false, places = true))
+        assertEquals(listOf(TourMenu.LAYERS to false, TourMenu.PLACES to true, TourMenu.FOG_LEVEL to false), places.before)
+        assertEquals(emptyList<Pair<TourMenu, Boolean>>(), places.after)
+    }
+
+    @Test
+    fun `Fog's level menu opens on the last Fog step only`() {
+        assertEquals(listOf("fog"), TourSteps.of(isDemo = false).filter { it.fogLevel }.map { it.id })
+        assertEquals(listOf("fog_countries"), TourSteps.of(isDemo = true).filter { it.fogLevel }.map { it.id })
+        assertEquals(TourSteps.Held(sheet = false, fogLevel = true), TourSteps.held(TourSteps.of(isDemo = true).single { it.id == "fog_countries" }, restoreSheet = true))
     }
 
     @Test

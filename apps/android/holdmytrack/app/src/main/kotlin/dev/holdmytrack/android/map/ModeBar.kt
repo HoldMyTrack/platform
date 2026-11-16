@@ -39,12 +39,18 @@ class ModeBar(
 ) {
     private val bar: View = root.findViewById(R.id.mode_bar)
     private val layersPanel: View = root.findViewById(R.id.layers_panel)
+    private val placesPanel: View = root.findViewById(R.id.places_panel)
     private val coverageNotice: View = root.findViewById(R.id.coverage_notice)
     private val buttons: Map<MapMode, MaterialButton> = mapOf(
         MapMode.NORMAL to root.findViewById(R.id.mode_normal),
         MapMode.FOG to root.findViewById(R.id.mode_fog),
     )
     private val fogMenu = FogLevelMenu(buttons.getValue(MapMode.FOG), levels, zoom, onLock)
+
+    /** The tour holds Fog's level menu open, view-only ([FogLevelMenu.hold]). */
+    fun holdFogLevel(open: Boolean) = fogMenu.hold(open)
+    fun dismissFogLevel() = fogMenu.dismiss()
+    val fogLevelContent: View? get() = fogMenu.content
 
     init {
         // One choice of two: each reads as a radio button, "1 of 2" (map/MapModeButton).
@@ -82,12 +88,13 @@ class ModeBar(
     }
 
     /** The toggle shows once the session allows, on the Map tab, hidden while recording, editing or checking rows.
-     *  Layers stays while recording: the base map and paths are about where the recording goes. */
+     *  Layers and Places stay while recording: the base map, paths and places are about where the recording goes. */
     fun render() {
         val s = state()
         if (!s.sessionReady) return
         bar.isVisible = MapChromeRules.modeBarShown(s.recording, s.editOpen, s.selectionShown, s.tab)
         layersPanel.visibility = View.VISIBLE
+        placesPanel.visibility = View.VISIBLE
         renderNotices()
     }
 
@@ -108,7 +115,7 @@ class ModeBar(
     fun renderFogLevel() {
         val fog = buttons.getValue(MapMode.FOG)
         val on = state().mode == MapMode.FOG
-        if (!on) fogMenu.dismiss()
+        if (!on) fogMenu.dismiss() else fogMenu.retry()
         val label = if (on) fogMenu.label() else fog.resources.getString(R.string.mode_fog).let { FogLevelMenu.Label(it, it) }
         if (fog.tag === label.text) return
         fog.tag = label.text

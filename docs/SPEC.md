@@ -302,7 +302,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - Bike paths, shared paths and mountain-bike trails come from an OSM import of their own (FR-4.12), are off until ticked in Layers, drawn from zoom 9.
 - From OSM tags, the first that fits: **mountain-bike trail**, a cycleway, path, footway or bridleway with `mtb:scale`, or a cycleway or shared path with an unpaved `surface`; **bike path**, `highway=cycleway`; **shared path**, `highway=path`, `footway` or `bridleway` with `bicycle=designated`. Separately, **trail**: `highway=path`, `footway` or `bridleway`; **dirt track**: `highway=track`.
 - A street's painted bike lane and untagged singletrack are none of these. Sidewalks, crossings, steps and named route networks aren't drawn.
-- Paths draw over Fog at full strength, under the tracks, in every mode and export. Layers has a switch that hides every ticked road (FR-4.13) and path, and Places one that hides every ticked place (FR-14.2); each keeps its picks. The Android app keeps places in Layers, under its one switch (`apps/android/docs/SPEC.md` FR-2.2).
+- Paths draw over Fog at full strength, under the tracks, in every mode and export. Layers has a switch that hides every ticked road (FR-4.13) and path, and Places one that hides every ticked place (FR-14.2); each keeps its picks.
 
 ### FR-4.10 Satellite mode
 

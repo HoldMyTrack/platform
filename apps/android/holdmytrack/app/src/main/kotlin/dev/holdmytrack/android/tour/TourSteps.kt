@@ -4,7 +4,10 @@ import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.map.MapMode
 
 /** What a step points at, found by `TourHost`; null centers nothing and puts the card at the bottom. */
-enum class TourTarget { SHEET, RANGE, LAYERS, EXPORT, MODES, RECORD, YOU_TOUR }
+enum class TourTarget { SHEET, RANGE, LAYERS, PLACES, EXPORT, MODES, RECORD, YOU_TOUR }
+
+/** A map menu the tour can hold open. */
+enum class TourMenu { LAYERS, PLACES, FOG_LEVEL }
 
 /** A camera: [lon], [lat], [zoom], then a slow pan through each point of [pan], if any. */
 data class TourView(val lon: Double, val lat: Double, val zoom: Double, val pan: List<Pair<Double, Double>> = emptyList()) {
@@ -13,8 +16,8 @@ data class TourView(val lon: Double, val lat: Double, val zoom: Double, val pan:
 
 /**
  * One step of the tour. [tab] is the bottom bar's tab for the step, [mode] the map's, [sheet]
- * whether the panel's sheet is open and [layers] whether the Layers menu is; the user's own come
- * back when the tour ends. [view] is the camera, null for the one before the tour's first move.
+ * whether the panel's sheet is open, and [layers], [places] and [fogLevel] whether the Layers,
+ * Places or Fog level menu is; the user's own come back when the tour ends. [view] is the camera, null for the one before the tour's first move.
  * [card] is the first-time card the step stands in for, and [text] the string resources'
  * `<text>_title` and `<text>_body`.
  */
@@ -25,6 +28,8 @@ data class TourStep(
     val mode: MapMode = MapMode.NORMAL,
     val sheet: Boolean = false,
     val layers: Boolean = false,
+    val places: Boolean = false,
+    val fogLevel: Boolean = false,
     val view: TourView? = null,
     val card: TourCard? = null,
     val text: String = "tour_$id",
@@ -55,10 +60,10 @@ object TourSteps {
                 TourStep("fog_cities", TourTarget.MODES, mode = MapMode.FOG, view = CITY),
                 TourStep("fog_counties", TourTarget.MODES, mode = MapMode.FOG, view = COUNTIES),
                 TourStep("fog_regions", TourTarget.MODES, mode = MapMode.FOG, view = REGIONS),
-                TourStep("fog_countries", TourTarget.MODES, mode = MapMode.FOG, view = COUNTRIES),
+                TourStep("fog_countries", TourTarget.MODES, mode = MapMode.FOG, view = COUNTRIES, fogLevel = true),
             )
         } else {
-            listOf(TourStep("fog", TourTarget.MODES, mode = MapMode.FOG, card = TourCard.FOG))
+            listOf(TourStep("fog", TourTarget.MODES, mode = MapMode.FOG, card = TourCard.FOG, fogLevel = true))
         }
         return listOf(
             TourStep("welcome", null),
@@ -66,6 +71,7 @@ object TourSteps {
             TourStep("range", TourTarget.RANGE, sheet = true),
             TourStep("stories", TourTarget.SHEET, tab = MainActivity.Tab.STORIES, sheet = true, card = TourCard.STORIES),
             TourStep("layers", TourTarget.LAYERS, layers = true),
+            TourStep("places", TourTarget.PLACES, places = true),
             TourStep("export", TourTarget.EXPORT),
         ) + fog + listOf(
             TourStep("record", TourTarget.RECORD),
@@ -74,8 +80,25 @@ object TourSteps {
         )
     }
 
-    /** Whether the panel's sheet and the Layers menu are open for [step], or at the end (null), the sheet as the user had it ([restoreSheet]). */
-    fun held(step: TourStep?, restoreSheet: Boolean): Pair<Boolean, Boolean> = (step?.sheet ?: restoreSheet) to (step?.layers ?: false)
+    /**
+     * The menus to hold open or let go of, in order: those [before] the step's tab and mode change,
+     * and those [after]. Fog's level menu hangs from Fog's mode button, so it opens only once Fog is
+     * the mode; opened before, the mode change would close it again.
+     */
+    data class MenuMoves(val before: List<Pair<TourMenu, Boolean>>, val after: List<Pair<TourMenu, Boolean>>)
+
+    fun menuMoves(held: Held): MenuMoves = MenuMoves(
+        before = listOf(TourMenu.LAYERS to held.layers, TourMenu.PLACES to held.places) +
+            if (held.fogLevel) emptyList() else listOf(TourMenu.FOG_LEVEL to false),
+        after = if (held.fogLevel) listOf(TourMenu.FOG_LEVEL to true) else emptyList(),
+    )
+
+    /** What's held open for a step: the panel's sheet and the Layers, Places and Fog level menus. */
+    data class Held(val sheet: Boolean, val layers: Boolean = false, val places: Boolean = false, val fogLevel: Boolean = false)
+
+    /** What's open for [step], or at the end (null) only the sheet, as the user had it ([restoreSheet]). */
+    fun held(step: TourStep?, restoreSheet: Boolean): Held =
+        if (step == null) Held(restoreSheet) else Held(step.sheet, step.layers, step.places, step.fogLevel)
 
     /** A first-time card's text and what it points at. */
     fun card(card: TourCard): Pair<String, TourTarget> = when (card) {

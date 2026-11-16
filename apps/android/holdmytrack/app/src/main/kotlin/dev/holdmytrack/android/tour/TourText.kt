@@ -10,6 +10,7 @@ object TourText {
         "tour_range" to (R.string.tour_range_title to R.string.tour_range_body),
         "tour_stories" to (R.string.tour_stories_title to R.string.tour_stories_body),
         "tour_layers" to (R.string.tour_layers_title to R.string.tour_layers_body),
+        "tour_places" to (R.string.tour_places_title to R.string.tour_places_body),
         "tour_export" to (R.string.tour_export_title to R.string.tour_export_body),
         "tour_fog" to (R.string.tour_fog_title to R.string.tour_fog_body),
         "tour_fog_exact" to (R.string.tour_fog_title to R.string.tour_fog_exact_body),

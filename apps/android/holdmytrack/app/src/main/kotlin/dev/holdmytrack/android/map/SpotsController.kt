@@ -101,7 +101,7 @@ class SpotsController(
         }
     }
 
-    /** The Layers menu's Points of interest, [shown] being what's drawn of them. Unticking the
+    /** The Places menu's categories, [shown] being what's drawn of them. Unticking the
      *  category being captured stops the capture. */
     fun setPicked(categories: List<MapSpots.Category>, shown: List<MapSpots.Category>) {
         MapSpots.set(fragment.requireContext(), categories)

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The Places menu, opened by the Places button on the map's rail (map/PlacesMenu): a switch
+     that shows or hides every picked category at once, then one entry per category, each picked
+     over any mode. It scrolls when it outgrows the screen (landscape). -->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="224dp"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_panel_popup"
+    android:elevation="8dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/hmt_space_8">
+
+        <com.google.android.material.materialswitch.MaterialSwitch
+            android:id="@+id/places_master"
+            style="@style/Widget.HoldMyTrack.LayersOption.Switch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/places_master" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginTop="@dimen/hmt_space_4"
+            android:layout_marginBottom="@dimen/hmt_space_4"
+            android:background="@color/hmt_border" />
+
+        <!-- One per MapSpots.Category, in its order. -->
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/places_playground"
+            style="@style/Widget.HoldMyTrack.LayersOption.Check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/places_playgrounds" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/places_dog_park"
+            style="@style/Widget.HoldMyTrack.LayersOption.Check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/places_dog_parks" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/places_monument"
+            style="@style/Widget.HoldMyTrack.LayersOption.Check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/places_monuments" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/places_viewpoint"
+            style="@style/Widget.HoldMyTrack.LayersOption.Check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/places_viewpoints" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/places_waterfall"
+            style="@style/Widget.HoldMyTrack.LayersOption.Check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/places_waterfalls" />
+
+        <com.google.android.material.checkbox.MaterialCheckBox
+            android:id="@+id/places_history"
+            style="@style/Widget.HoldMyTrack.LayersOption.Check"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/places_history" />
+    </LinearLayout>
+</ScrollView>

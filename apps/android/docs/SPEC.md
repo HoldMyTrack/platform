@@ -117,7 +117,7 @@ The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.3), from the same ti
 - The mode survives a theme or language change.
 - The mode toggle is the Map tab's. Stories and Sync show the map in Normal, since their sheets and tracks are Normal mode's, and back on Map the mode picked there returns. Unlike the web, whose panel stays beside Fog (`docs/SPEC.md` FR-13.6).
 - While recording (FR-5.1) the mode toggle goes and no mode's layers are drawn, only the recording; the mode comes back when it stops.
-- The Layers menu (`docs/SPEC.md` FR-4.9) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.10), Roads (`docs/SPEC.md` FR-4.13), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8), which the web has in a Places menu of its own; Show layers hides places too. Each is kept on the phone, not the account, and all but Roads start off. Layers stays while recording.
+- The Layers menu (`docs/SPEC.md` FR-4.9) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.10), Roads (`docs/SPEC.md` FR-4.13) and the bike, shared and mountain-bike paths; the Places menu holds Show places and the Spot categories (FR-2.8). Each switch hides its own picks and keeps them. Every choice is kept on the phone, not the account, and all picks but Roads start off. Both menus stay while recording.
 - Fog says when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
 - Fog's button names the level in view, and a tap on it while Fog is on opens the level menu (`docs/SPEC.md` FR-4.2), its counts read on each opening. A picked level holds through a trip out of Fog and until the app restarts. A tap on a place outlines it and names it, as the web's tooltip does, until it's closed or a tap lands off every place.
 
@@ -168,7 +168,7 @@ The web's Activities panel (`docs/SPEC.md` FR-5) as a sheet over the map, with A
 
 The web's points of interest (`docs/SPEC.md` FR-14.2–FR-14.4) on the same tiles, and, in the app only, capturing a place by going there (`docs/SPEC.md` FR-14.6).
 
-- One Layers entry per category, off until ticked, kept on the phone; drawn in every mode and while recording, hidden while a track is edited.
+- One Places entry per category, off until ticked, kept on the phone; drawn in every mode and while recording, hidden while a track is edited.
 - From zoom 13 ticked places show with their areas; from 10 to 13 on request. A captured place's badge is filled, and a retired place shows only to an account that captured it.
 - A place's popup offers Capture, except on a captured place or to the demo account.
 - **Capture rule**: 30 seconds inside the place, counting only fixes accurate to 25 m. A fix outside starts the count again. In the background nothing is read and the count waits.
@@ -210,7 +210,7 @@ The web's export (`docs/SPEC.md` FR-4.7) as a viewfinder over the map, not offer
 
 The web's tour (`docs/SPEC.md` FR-4.14) over the app's own screens, with its start, offer and card rules (`testdata/client-rules/tour-*.json`).
 
-- Its steps: the Activities sheet, Dates, Stories, Layers, export, Fog of War, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
+- Its steps: the Activities sheet, Dates, Stories, Layers, Places, export, Fog of War, Record (FR-5.1), Sync (FR-3.5), and Take a tour on the You tab, which starts it again. Fog's last step opens its level menu. Each step opens the tab, sheet or menu it explains; the user's tab, mode and sheet come back when it ends.
 - In a demo session Fog takes a step per level, from exact coverage out to countries, with the camera over the demo's history, and the camera comes back when the tour ends.
 - What has been shown is kept by the phone, not the account.
 

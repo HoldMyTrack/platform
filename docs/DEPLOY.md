@@ -163,7 +163,7 @@ mkdir -p /tmp/demo-export && chmod 777 /tmp/demo-export
 
 Copy the GPX files into `demo_data/`, `photos/` into `demo_data/photos/`, and merge `manifest.json`'s `activities` into the one there (`httpapi.ExportDemoActivities` says what it writes). Review every track and photo before committing: the repository is public.
 
-**Load or refresh Spots** (`SPEC.md` FR-14), about once a quarter; until the first load the Layers menu shows no points of interest.
+**Load or refresh Spots** (`SPEC.md` FR-14), about once a quarter; until the first load no category in the Places menu shows anything.
 
 1. Off the server, with osmium-tool and ~100 GB free (the planet download is ~95 GB, about 1.5 hours; a re-run resumes it):
    ```

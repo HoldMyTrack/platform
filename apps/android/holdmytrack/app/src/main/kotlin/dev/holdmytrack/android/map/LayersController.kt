@@ -9,8 +9,9 @@ import org.maplibre.android.maps.Style
 
 /**
  * What the map draws under and beside the user's history: the served style's flavor and
- * language, and the Layers menu's roads, paths, places and satellite imagery, each remembered on the
- * device. Show layers hides every pick at once and keeps them.
+ * language, the Layers menu's roads, paths and satellite imagery and the Places menu's places,
+ * each remembered on the device. Show layers hides every road and path at once and Show places
+ * every place, each keeping its picks.
  */
 class LayersController(
     private val fragment: Fragment,
@@ -24,6 +25,7 @@ class LayersController(
     private val onSatelliteSwitched: () -> Unit = {},
 ) {
     private lateinit var menu: LayersMenu
+    private lateinit var places: PlacesMenu
 
     /** Whether the served style has satellite imagery; the Layers menu offers it only then. */
     private var satelliteAvailable = false
@@ -39,10 +41,8 @@ class LayersController(
             button = root.findViewById(R.id.layers_button),
             count = root.findViewById(R.id.layers_count),
             paths = { MapPaths.get(context) },
-            spots = { MapSpots.get(context) },
             shown = { MapLayersSwitch.isOn(context) },
             onPaths = ::setPaths,
-            onSpots = { categories -> spots.setPicked(categories, shownSpots(categories)) },
             onShown = ::setShown,
             satellite = { if (satelliteAvailable) MapSatellite.isOn(context) else null },
             onSatellite = ::setSatellite,
@@ -50,14 +50,27 @@ class LayersController(
             onRoads = ::setRoads,
             legend = { style()?.let(MapLayers::doc)?.group("bike-paths")?.legend.orEmpty() },
         )
+        places = PlacesMenu(
+            button = root.findViewById(R.id.places_button),
+            count = root.findViewById(R.id.places_count),
+            spots = { MapSpots.get(context) },
+            shown = { MapPlacesSwitch.isOn(context) },
+            onSpots = { categories -> spots.setPicked(categories, shownSpots(categories)) },
+            onShown = ::setPlacesShown,
+        )
     }
 
-    fun dismiss() = menu.dismiss()
+    fun dismiss() {
+        menu.dismiss()
+        places.dismiss()
+    }
 
-    /** The tour holds the menu open, view-only ([LayersMenu.hold]). */
+    /** The tour holds a menu open, view-only ([LayersMenu.hold]). */
     fun hold(open: Boolean) = menu.hold(open)
+    fun holdPlaces(open: Boolean) = places.hold(open)
 
     val menuContent: View? get() = menu.content
+    val placesContent: View? get() = places.content
 
     /** `light` or `dark`, following the app's night mode (`AppTheme`): the style's flavor, and
      *  the layers document's. */
@@ -114,9 +127,9 @@ class LayersController(
     /** The path picks onto [loaded], all hidden while Show layers is off. */
     fun applyPaths(loaded: Style) = MapPaths.apply(loaded, shownPaths(MapPaths.get(context)))
 
-    /** The place picks drawn: all while Show layers is on, none while off. */
+    /** The place picks drawn: all while Show places is on, none while off. */
     fun shownSpots(categories: List<MapSpots.Category> = MapSpots.get(context)): List<MapSpots.Category> =
-        if (MapLayersSwitch.isOn(context)) categories else emptyList()
+        if (MapPlacesSwitch.isOn(context)) categories else emptyList()
 
     private fun shownPaths(paths: MapPaths.Paths) = if (MapLayersSwitch.isOn(context)) paths else MapPaths.NONE
 
@@ -125,13 +138,18 @@ class LayersController(
         style()?.let { MapPaths.apply(it, shownPaths(paths)) }
     }
 
-    /** Show layers: shows or hides every pick, keeping them. A capture in progress carries on. */
+    /** Show layers: shows or hides every road and path, keeping them. */
     private fun setShown(on: Boolean) {
         MapLayersSwitch.set(context, on)
         style()?.let {
             applyPaths(it)
             applyRoads(it)
         }
+    }
+
+    /** Show places: shows or hides every place, keeping them. A capture in progress carries on. */
+    private fun setPlacesShown(on: Boolean) {
+        MapPlacesSwitch.set(context, on)
         spots.show(shownSpots())
     }
 

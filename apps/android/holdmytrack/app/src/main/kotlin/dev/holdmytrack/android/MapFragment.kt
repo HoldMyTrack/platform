@@ -57,6 +57,7 @@ import dev.holdmytrack.android.recording.RecordingService
 import dev.holdmytrack.android.sync.SyncCandidatesController
 import dev.holdmytrack.android.sync.SyncProgress
 import dev.holdmytrack.android.tour.TourEvent
+import dev.holdmytrack.android.tour.TourMenu
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -212,7 +213,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** Points of interest: the shown places, their badges and popup, and capture mode. */
     private val spots = SpotsController(this, map = { map }, style = { style?.takeIf { overlaysAttached } }, frame = { camera.flyTo(it) })
 
-    /** The style's flavor and language, and the Layers menu's paths, places and satellite. */
+    /** The style's flavor and language, the Layers menu's roads, paths and satellite, and the Places menu's places. */
     private val layers = LayersController(this, spots, style = { style }, attached = { overlaysAttached }, mode = { mode }, onSatelliteSwitched = ::onSatelliteSwitched)
 
     /** The window this map is a tab of; null while the fragment is detached. */
@@ -258,8 +259,21 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     fun setSheetOpen(open: Boolean) {
         if (::panel.isInitialized) panel.setExpanded(open)
     }
-    fun holdLayers(open: Boolean) = layers.hold(open)
+    /** The tour holds a map menu open, or lets go of it. */
+    fun holdMenu(menu: TourMenu, open: Boolean) = when (menu) {
+        TourMenu.LAYERS -> layers.hold(open)
+        TourMenu.PLACES -> layers.holdPlaces(open)
+        TourMenu.FOG_LEVEL -> if (::modes.isInitialized) modes.holdFogLevel(open) else Unit
+    }
     val layersMenu: View? get() = layers.menuContent
+    val placesMenu: View? get() = layers.placesContent
+    val fogLevelMenu: View? get() = if (::modes.isInitialized) modes.fogLevelContent else null
+
+    /** Every map menu closed: their popups are windows of their own, outliving the view and drawn over the export. */
+    private fun dismissMenus() {
+        layers.dismiss()
+        if (::modes.isInitialized) modes.dismissFogLevel()
+    }
     val mapLibre: MapLibreMap? get() = map
     val tourBlocked: Boolean get() = !modeBarReady || isRecording() || (::edit.isInitialized && (editWindow.isOpen || edit.privacyEditing))
 
@@ -329,7 +343,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                     spots.closePopup()
                     photos.closePopup()
                     fogPlaces.close()
-                    layers.dismiss()
+                    dismissMenus()
                 } else {
                     // The sheet comes back only where it belongs: not in Fog.
                     renderSheet()
@@ -933,7 +947,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     override fun onDestroyView() {
         export.close()
         recording.dismissDialogs()
-        layers.dismiss()
+        dismissMenus()
         spots.stopCapture()
         mapView.onDestroy()
         // A fetch that lands after this must find no map: the destroyed style throws on every call.
