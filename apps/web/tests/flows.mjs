@@ -280,6 +280,8 @@ describe('map flows', () => {
     await nextTo('add');
     // The click lands on the tour's blocker, as a user's does.
     await page.mouse.click(10, 400);
+    // The tour reopens it on the menu's `toggle` event, which fires after the click closes it.
+    await page.waitForFunction(() => document.querySelector('.page-header details.upload-menu')?.open === true, undefined, { timeout: 2000 }).catch(() => {});
     assert.equal(await page.locator('.page-header details.upload-menu').evaluate((menu) => menu.open), true, 'Upload stays open');
     await page.getByTestId('tour-back').click();
     await page.keyboard.press('Escape');
