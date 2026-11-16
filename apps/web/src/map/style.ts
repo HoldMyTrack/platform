@@ -215,8 +215,50 @@ function withPathLayers(base: LayerSpecification[], flavor: Flavor): LayerSpecif
  *  (`#1f1f1f`), dark enough to hide its own roads, parks and labels. */
 export const DARK_LIFT = 0.08;
 
-/** The flavor's palette, the dark one lifted by DARK_LIFT; the point-of-interest colours stay as
- *  bright as Protomaps made them. */
+/**
+ * The dark flavor's land use, water and roads. Protomaps' own sit within a few steps of its land,
+ * so parks, woods, lakes and rivers vanish into it; these keep the light flavor's hues, darkened,
+ * so the dark map carries what the light one does.
+ */
+const DARK_COLORS = {
+  earth: '#262626',
+  background: '#2e3136',
+  water: '#1e4258',
+  park_a: '#24382b',
+  park_b: '#2b4a35',
+  wood_a: '#253a2b',
+  wood_b: '#2a4731',
+  scrub_a: '#2c3a30',
+  scrub_b: '#2f4536',
+  zoo: '#2b3b3b',
+  hospital: '#3b2f2f',
+  school: '#3a332a',
+  industrial: '#2c3236',
+  military: '#343131',
+  aerodrome: '#2d2e33',
+  pedestrian: '#2c2c2c',
+  sand: '#36332b',
+  beach: '#3b372a',
+  glacier: '#3a3d40',
+  other: '#3a3a3a',
+  minor_a: '#444444',
+  minor_b: '#444444',
+  major: '#4f4f4f',
+  highway: '#5a5a5a',
+} as const;
+
+const DARK_LANDCOVER = {
+  grassland: 'rgba(37, 54, 39, 1)',
+  farmland: 'rgba(40, 50, 39, 1)',
+  forest: 'rgba(33, 56, 43, 1)',
+  scrub: 'rgba(45, 51, 38, 1)',
+  barren: 'rgba(50, 47, 40, 1)',
+  urban_area: 'rgba(41, 41, 41, 1)',
+  glacier: 'rgba(60, 63, 66, 1)',
+} as const;
+
+/** The flavor's palette: the dark one lifted by DARK_LIFT, with its land use, water and roads set
+ *  by DARK_COLORS; the point-of-interest colours stay as bright as Protomaps made them. */
 function palette(flavor: Flavor): ReturnType<typeof namedFlavor> {
   const base = namedFlavor(flavor);
   if (flavor !== 'dark') return base;
@@ -225,7 +267,7 @@ function palette(flavor: Flavor): ReturnType<typeof namedFlavor> {
     if (value && typeof value === 'object') return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, lift(v)]));
     return value;
   };
-  const lifted = lift(base) as ReturnType<typeof namedFlavor>;
+  const lifted = { ...(lift(base) as ReturnType<typeof namedFlavor>), ...DARK_COLORS, landcover: { ...base.landcover, ...DARK_LANDCOVER } };
   return base.pois ? { ...lifted, pois: base.pois } : lifted;
 }
 

@@ -69,7 +69,7 @@ const FOG_EDGE_WIDTH = ['interpolate', ['exponential', 2], ['zoom'], 10, 1, 13, 
  *   strength glares.
  */
 const LIGHT_VEIL = { color: '#202b25', opacity: 0.82, border: '#f7f4ec', visited: '#202b25', hover: 0.68, outline: 0.95 };
-const DARK_VEIL = { color: '#000000', opacity: 0.6, border: '#f7f4ec', visited: '#f7f4ec', hover: 0.3, outline: 0.7 };
+const DARK_VEIL = { color: '#000000', opacity: 0.7, border: '#f7f4ec', visited: '#f7f4ec', hover: 0.3, outline: 0.7 };
 const IMAGERY_VEIL = { color: '#f7f4ec', opacity: 0.82, border: '#202b25', visited: '#f7f4ec', hover: 0.68, outline: 0.95 };
 const BORDER_OPACITY = 0.22;
 const BORDER_WIDTH = 0.7;
