@@ -1,0 +1,9 @@
+{{/* Starts a demo from a page, given the page's data: a form to the sign-in page's own
+     `POST /demo`, never a link, which a crawler would follow and so spend its address's demo
+     starts. Nothing for someone with a session, which the form would swap for the demo's. */}}
+{{define "demo-button"}}{{if not .User}}<form method="post" action="/demo"><button type="submit" class="page-button">{{t "pages.demo"}}</button></form>{{end}}{{end}}
+
+{{define "demo-button-quiet"}}{{if not .User}}<form method="post" action="/demo"><button type="submit" class="page-button page-button--quiet">{{t "pages.demo"}}</button></form>{{end}}{{end}}
+
+{{/* The same inside a sentence, as a button that reads as a link. */}}
+{{define "demo-link"}}{{if not .User}}<form class="page-inline-form" method="post" action="/demo"><button type="submit" class="page-link-button">{{t "pages.demo_open"}}</button></form>{{end}}{{end}}

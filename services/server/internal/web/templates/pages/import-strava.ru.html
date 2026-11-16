@@ -43,7 +43,7 @@
     </ul>
     {{if not .User}}<div class="page-actions">
       <a class="page-button" href="/signup">Создать бесплатный аккаунт</a>
-      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Попробовать демо без регистрации</a>{{end}}
+      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
     </div>{{end}}
   </section>
 </main>

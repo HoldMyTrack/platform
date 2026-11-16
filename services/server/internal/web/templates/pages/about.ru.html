@@ -21,14 +21,14 @@
 {{define "content"}}
 <main class="page-main">
   <section class="page-hero">
-    <h1>Все места, где вы когда-либо бегали, катались или гуляли, — на одной карте.</h1>
-    <p class="page-lede">Часы или фитнес-приложение показывают тренировки по одной, а старые теряются при каждой смене приложения или устройства. HoldMyTrack хранит поездки, которые хочется помнить, на одной карте, чтобы было видно и места, которые вы знаете наизусть, и улицы, парки и тропы, где вы ещё ни разу не были. Это бесплатно для всех, без платных тарифов, и ваши данные никогда не продаются.</p>
+    <h1>Все записанные вами прогулки, пробежки и поездки хранятся в одном месте.</h1>
+    <p class="page-lede">Перенесите их из Strava, Garmin, с любых часов или из любого приложения и смотрите все вместе на одной карте.</p>
     <div class="page-actions">
-      {{if not .InApp}}<a class="page-button" href="/signin">Попробовать демо без регистрации</a>{{end}}
-      <a class="page-button page-button--quiet" href="https://github.com/HoldMyTrack/platform">Открыть на GitHub</a>
+      {{if not .InApp}}{{template "demo-button" .}}{{end}}
       {{/* Google's badge, unmodified but for its transparent margin, and self-hosted: the site
            loads nothing from third parties. Its trademark line is at the foot of the page. */}}
       {{if not .InApp}}<a class="page-store" href="https://play.google.com/store/apps/details?id=dev.holdmytrack.android"><img src="{{asset "google-play-badge.ru.png"}}" alt="Скачать из Google Play" width="134" height="40" /></a>{{end}}
+      {{if not .InApp}}<span class="page-actions__note">Приложение для iPhone в разработке</span>{{end}}
     </div>
   </section>
 
@@ -36,32 +36,49 @@
        script; static/carousel.js adds the buttons and dots. */}}
   <figure class="page-carousel" data-carousel aria-roledescription="карусель" aria-label="Экраны демо-аккаунта">
     <div class="page-carousel__track" tabindex="0">
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="1 из 7">
-        <img src="{{asset "landing/map.webp"}}" alt="Все треки вокруг Кливленда на одной карте, с отмеченными местами рядом" width="1760" height="992" loading="eager" />
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="1 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/map.webp"}}" alt="Все треки вокруг Кливленда на одной карте, с отмеченными местами рядом и открытой фотографией" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/map-dark.webp"}}" alt="Все треки вокруг Кливленда на одной карте, с отмеченными местами рядом и открытой фотографией" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Все треки на одной карте, а вокруг — места, куда стоит сходить.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="2 из 7">
-        <img src="{{asset "landing/story.webp"}}" alt="История о велотропах с фотографиями на карте" width="1760" height="992" loading="lazy" />
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="2 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/story.webp"}}" alt="История о велотропах с фотографиями на карте" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/story-dark.webp"}}" alt="История о велотропах с фотографиями на карте" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">История собирает поездку целиком, а фотографии стоят там, где вы их сняли.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="3 из 7">
-        <img src="{{asset "landing/satellite.webp"}}" alt="Тропа на спутниковом снимке, раскрашенная по темпу, с открытой фотографией" width="1760" height="992" loading="lazy" />
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="3 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/activity.webp"}}" alt="Тропа на спутниковом снимке, раскрашенная по темпу, с открытой фотографией" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/activity-dark.webp"}}" alt="Тропа на спутниковом снимке, раскрашенная по темпу, с открытой фотографией" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Выберите маршрут, и он раскрасится по темпу, здесь — поверх спутникового снимка.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="4 из 7">
-        <img src="{{asset "landing/fog-city.webp"}}" alt="Туман войны над Кливлендом, расчищенный вдоль каждого трека" width="1760" height="992" loading="lazy" />
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="4 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/fog-exact.webp"}}" alt="Туман войны над Кливлендом, расчищенный вдоль каждого трека" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/fog-exact-dark.webp"}}" alt="Туман войны над Кливлендом, расчищенный вдоль каждого трека" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Туман войны рассеивается везде, где вы побывали. Всё, что ещё в тумане, осталось открыть.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="5 из 7">
-        <img src="{{asset "landing/fog-states.webp"}}" alt="Туман войны над США, посещённые штаты расчищены" width="1760" height="992" loading="lazy" />
-        <p class="page-carousel__caption">Если отдалить карту, штат расчищается целиком, как только вы в нём побывали.</p>
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="5 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/fog-city.webp"}}" alt="Туман войны вокруг Кливленда, посещённые города расчищены" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/fog-city-dark.webp"}}" alt="Туман войны вокруг Кливленда, посещённые города расчищены" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">Если отдалить карту, город расчищается целиком, как только вы в нём побывали.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="6 из 7">
-        <img src="{{asset "landing/fog-countries.webp"}}" alt="Туман войны над Европой, Италия и Эстония расчищены" width="1760" height="992" loading="lazy" />
-        <p class="page-carousel__caption">Ещё дальше — целые страны.</p>
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="6 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/fog-county.webp"}}" alt="Туман войны вдоль озера Эри, посещённые округа расчищены" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/fog-county-dark.webp"}}" alt="Туман войны вдоль озера Эри, посещённые округа расчищены" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">Ещё дальше — целый округ.</p>
       </div>
-      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="7 из 7">
-        <img src="{{asset "landing/profile.webp"}}" alt="Страница профиля с сеткой активности и расстоянием по неделям" width="1760" height="992" loading="lazy" />
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="7 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/fog-state.webp"}}" alt="Туман войны над северо-востоком США: Огайо, Пенсильвания и Нью-Йорк расчищены" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/fog-state-dark.webp"}}" alt="Туман войны над северо-востоком США: Огайо, Пенсильвания и Нью-Йорк расчищены" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">Затем — целый штат.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="8 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/fog-country.webp"}}" alt="Туман войны над Европой, Италия и Эстония расчищены" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/fog-country-dark.webp"}}" alt="Туман войны над Европой, Италия и Эстония расчищены" width="1760" height="992" loading="lazy" />
+        <p class="page-carousel__caption">И целые страны.</p>
+      </div>
+      <div class="page-carousel__slide" role="group" aria-roledescription="слайд" aria-label="9 из 9">
+        <img class="page-carousel__light" src="{{asset "landing/profile.webp"}}" alt="Страница профиля с сеткой активности, расстоянием по неделям и исследованными местами" width="1760" height="992" loading="lazy" />
+        <img class="page-carousel__dark" src="{{asset "landing/profile-dark.webp"}}" alt="Страница профиля с сеткой активности, расстоянием по неделям и исследованными местами" width="1760" height="992" loading="lazy" />
         <p class="page-carousel__caption">Ваш профиль: каждый день, когда вы выходили, и сколько прошли за неделю.</p>
       </div>
     </div>
@@ -75,10 +92,12 @@
         <button type="button" class="page-carousel__dot" data-carousel-dot="4" aria-label="Экран 5"></button>
         <button type="button" class="page-carousel__dot" data-carousel-dot="5" aria-label="Экран 6"></button>
         <button type="button" class="page-carousel__dot" data-carousel-dot="6" aria-label="Экран 7"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="7" aria-label="Экран 8"></button>
+        <button type="button" class="page-carousel__dot" data-carousel-dot="8" aria-label="Экран 9"></button>
       </span>
       <button type="button" class="page-carousel__step" data-carousel-step="1" aria-label="Следующий экран">›</button>
     </div>
-    <figcaption class="page-carousel__note">Это демо-аккаунт.{{if not .InApp}} <a href="/signin">Откройте его и осмотритесь</a>.{{end}}</figcaption>
+    <figcaption class="page-carousel__note">Это демо-аккаунт.{{if not (or .InApp .User)}} {{template "demo-link" .}}.{{end}}</figcaption>
   </figure>
   <script src="{{asset "carousel.js"}}" defer></script>
 
@@ -134,9 +153,9 @@
       <li><strong>Ваши данные не заперты:</strong> Скачайте их целиком, вместе с исходными файлами и каждым треком в GPX. Они никогда не продаются.</li>
       <li><strong>Без слежки:</strong> Никаких сервисов аналитики или трекеров. Сайт только считает посетителей за день, ни за кем не следя (<a href="/privacy">как</a>).</li>
       <li><strong>Можно развернуть у себя:</strong> Запустите его на своём сервере по <a href="https://github.com/HoldMyTrack/platform/blob/main/docs/DEPLOY.md">руководству по развёртыванию</a>.</li>
-      <li><strong>Открытый код:</strong> Лицензия MIT, так что можно <a href="https://github.com/HoldMyTrack/platform">заглянуть под капот</a>.</li>
+      <li><strong>Открытый код:</strong> Лицензия MIT, так что можно заглянуть под капот.</li>
     </ul>
-    <p>Сайт использует cookie только для того, чтобы вы оставались в аккаунте и чтобы запомнить выбранный язык, плюс один кратковременный — пока вы входите через Google, Facebook или Apple.</p>
+    <p class="page-repo">{{template "github-button" "Открыть на GitHub"}}</p>
   </section>
 
   <section class="page-section">

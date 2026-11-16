@@ -52,6 +52,8 @@
   "nav.contacts": "Контакты",
   "nav.privacy": "Конфиденциальность",
   "footer.open_map": "Открыть карту",
+  "pages.demo": "Попробовать демо без регистрации",
+  "pages.demo_open": "Откройте его и осмотритесь",
   "common.back_to_map": "← Назад к карте",
   "auth.google": "Войти через Google",
   "auth.facebook": "Войти через Facebook",

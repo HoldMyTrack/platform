@@ -518,7 +518,8 @@ func TestSignedOutHome(t *testing.T) {
 	}
 	for _, want := range []string{
 		"<title>HoldMyTrack — Keep your GPX, FIT and TCX tracks on one map</title>",
-		"Every place you have ever run, ridden or walked", // About's own content
+		"Every walk, run and ride you", // About's own content
+		`<form method="post" action="/demo"><button type="submit" class="page-button">Try the demo`,
 		`<link rel="canonical" href="https://app.example/"`,
 		">Sign in</a>",
 	} {

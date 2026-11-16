@@ -31,7 +31,7 @@
     <p>Frame any view of your fog and <a href="/help#export">save it as an image</a> to share. Your map itself stays private.</p>
     {{if not .User}}<div class="page-actions">
       <a class="page-button" href="/signup">Create a free account</a>
-      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
+      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
     </div>{{end}}
   </section>
 </main>
