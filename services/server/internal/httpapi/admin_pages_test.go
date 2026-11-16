@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
@@ -26,12 +27,12 @@ func TestAdminPagesSignedOutAreNotFound(t *testing.T) {
 func TestAdminPagesRender(t *testing.T) {
 	s := newPagesTestServer(t)
 	admin := &web.User{Email: "admin@example.com", IsAdmin: true}
-	user := adminUserRow{ID: "u-1", Email: "rider@example.com", DisplayName: "Rider", SignedUp: "2026-08-01", Timezone: "Europe/Rome", Verified: true, Activities: "2", Distance: "12 km", LastSeen: "2026-09-20"}
+	user := adminUserRow{ID: "u-1", Email: "rider@example.com", DisplayName: "Rider", SignedUp: "2026-08-01", Timezone: "Europe/Rome", Verified: true, Activities: "2", Distance: "12 km", LastSeen: "2026-09-20", Clients: adminClients{Web: true, IOS: true}}
 
 	rec := httptest.NewRecorder()
 	s.pages.Render(rec, http.StatusOK, "admin", web.PageData{Title: "Accounts", Path: "/admin/users", NoIndex: true, User: admin, Page: adminUsersView{Users: []adminUserRow{user}, Range: "101–101 of 101", PrevHref: "/admin/users"}})
 	body := rec.Body.String()
-	for _, want := range []string{`href="/admin/users/u-1"`, "rider@example.com", "Europe/Rome", "2026-09-20", `href="/admin">Admin</a>`, `href="/admin">← Statistics</a>`, "101–101 of 101", `<a href="/admin/users">← Newer</a>`} {
+	for _, want := range []string{`href="/admin/users/u-1"`, "rider@example.com", "Europe/Rome", "2026-09-20", `<span class="admin__badge">web</span><span class="admin__badge">iOS</span>`, `href="/admin">Admin</a>`, `href="/admin">← Statistics</a>`, "101–101 of 101", `<a href="/admin/users">← Newer</a>`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("admin page: missing %q", want)
 		}
@@ -108,6 +109,29 @@ func TestAdminPages(t *testing.T) {
 		if offset != tc.offset || past != tc.past || prev != tc.prev || next != tc.next {
 			t.Errorf("adminPages(%d, %d) = %d, past %v, prev %v, next %v; want %d, %v, %v, %v",
 				tc.page, tc.total, offset, past, prev, next, tc.offset, tc.past, tc.prev, tc.next)
+		}
+	}
+}
+
+func TestClientsInUse(t *testing.T) {
+	day := func(month time.Month, d int) *time.Time {
+		t := time.Date(2026, month, d, 0, 0, 0, 0, time.UTC)
+		return &t
+	}
+	for _, tc := range []struct {
+		name              string
+		web, android, ios *time.Time
+		want              adminClients
+	}{
+		{"never seen", nil, nil, nil, adminClients{}},
+		{"web only, long ago", day(1, 5), nil, nil, adminClients{Web: true}},
+		{"all three within 30 days", day(11, 1), day(11, 20), day(11, 30), adminClients{Web: true, Android: true, IOS: true}},
+		{"moved from iOS to Android", nil, day(12, 15), day(11, 14), adminClients{Android: true}},
+		{"30 days apart still counts", nil, day(12, 1), day(11, 1), adminClients{Android: true, IOS: true}},
+		{"31 days apart doesn't", nil, day(12, 2), day(11, 1), adminClients{Android: true}},
+	} {
+		if got := clientsInUse(tc.web, tc.android, tc.ios); got != tc.want {
+			t.Errorf("%s: clientsInUse = %+v, want %+v", tc.name, got, tc.want)
 		}
 	}
 }

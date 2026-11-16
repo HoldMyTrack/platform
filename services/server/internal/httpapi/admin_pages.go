@@ -51,6 +51,30 @@ type adminUserRow struct {
 	// LastSeen is the last UTC day the account made a signed-in request; "" when never recorded.
 	LastSeen string
 	Distance string
+	Clients  adminClients
+}
+
+// adminClients is which clients an account uses (IMPLEMENTATION.md §4.32).
+type adminClients struct {
+	Web, Android, IOS bool
+}
+
+// adminClientWindow is how long before an account's latest visit a client still counts as
+// one it uses, so a client given up for another drops off instead of staying listed.
+const adminClientWindow = 30 * 24 * time.Hour
+
+// clientsInUse is each client seen within adminClientWindow of the latest of the days given,
+// nil for never. Measured from the account's own latest visit, not today, so an account that
+// stopped visiting still shows what it used.
+func clientsInUse(web, android, ios *time.Time) adminClients {
+	var latest time.Time
+	for _, t := range []*time.Time{web, android, ios} {
+		if t != nil && t.After(latest) {
+			latest = *t
+		}
+	}
+	recent := func(t *time.Time) bool { return t != nil && latest.Sub(*t) <= adminClientWindow }
+	return adminClients{Web: recent(web), Android: recent(android), IOS: recent(ios)}
 }
 
 // adminUserView is what templates/pages/admin-user.html reads from PageData.Page.
@@ -167,7 +191,8 @@ func (s *Server) handleAdminUserPage(w http.ResponseWriter, r *http.Request) {
 func adminUsersSQL(picked string) string {
 	return `
 	SELECT u.id, u.email, COALESCE(u.display_name, ''), u.created_at, COALESCE(u.country, ''),
-	       u.timezone, u.is_admin, u.email_verified, u.last_seen_at, a.n, a.meters
+	       u.timezone, u.is_admin, u.email_verified, u.last_seen_at,
+	       u.web_seen_at, u.android_seen_at, u.ios_seen_at, a.n, a.meters
 	FROM (` + picked + `) p
 	JOIN users u ON u.id = p.id
 	CROSS JOIN LATERAL (
@@ -231,15 +256,16 @@ func (s *Server) adminUserRows(ctx context.Context, l *i18n.Localizer, imperial 
 	for rows.Next() {
 		var u adminUserRow
 		var created time.Time
-		var lastSeen *time.Time
+		var lastSeen, webSeen, androidSeen, iosSeen *time.Time
 		var count int64
 		var meters float64
 		if err := rows.Scan(&u.ID, &u.Email, &u.DisplayName, &created, &u.Country,
 			&u.Timezone, &u.IsAdmin, &u.Verified,
-			&lastSeen, &count, &meters); err != nil {
+			&lastSeen, &webSeen, &androidSeen, &iosSeen, &count, &meters); err != nil {
 			return nil, fmt.Errorf("admin: scan user: %w", err)
 		}
 		u.IsDemo = u.ID == DemoCustomerUserID
+		u.Clients = clientsInUse(webSeen, androidSeen, iosSeen)
 		loc := adminLocation(u.Timezone)
 		u.SignedUp = created.In(loc).Format("2006-01-02")
 		u.ActivityCount = count
