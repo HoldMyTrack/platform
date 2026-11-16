@@ -87,6 +87,7 @@ func TestLoadDemoManifest(t *testing.T) {
 		"a story with no name":              `{"stories": [{"name": " ", "activities": ["a.gpx"]}]}`,
 		"a story with no activities":        `{"stories": [{"name": "S", "activities": []}]}`,
 		"two stories with one name":         `{"stories": [{"name": "S", "activities": ["a.gpx"]}, {"name": "S", "activities": ["b.fit"]}]}`,
+		"two stories opening first":         `{"stories": [{"name": "S", "activities": ["a.gpx"], "opens_first": true}, {"name": "T", "activities": ["b.fit"], "opens_first": true}]}`,
 		"a story name over the API's limit": `{"stories": [{"name": "` + strings.Repeat("x", maxStoryNameLen+1) + `", "activities": ["a.gpx"]}]}`,
 	} {
 		fsys["manifest.json"] = &fstest.MapFile{Data: []byte(manifest)}

@@ -139,8 +139,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const editOpen = edit.open;
   const editingTrack = edit.editingId !== null;
   const spotsShown = useMemo<readonly SpotCategory[]>(
-    () => (editingTrack || !overlays.enabled ? [] : overlays.spots),
-    [editingTrack, overlays.enabled, overlays.spots],
+    () => (editingTrack || !overlays.placesEnabled ? [] : overlays.spots),
+    [editingTrack, overlays.placesEnabled, overlays.spots],
   );
 
 
@@ -448,6 +448,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               satelliteFailed={satellite && imagery === 'failed'}
               spotsShown={spotsShown}
               layersOpen={tour.open.layers === true}
+              placesOpen={tour.open.places === true}
+              fogLevelOpen={tour.open.fogLevel === true}
               capped={mapMode === 'normal' && storyId === null && areaState.capped && areaTotal !== null ? { shown: activities.length, total: areaTotal } : null}
             />
           )}

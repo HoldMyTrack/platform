@@ -7,7 +7,7 @@ import { t, tn } from '../i18n';
 
 export interface ShowInAreaProps {
   map: MapLibreMap;
-  /** The Spots categories the Layers menu has on; none hides this control. */
+  /** The Spots categories the Places menu has on; none hides this control. */
   categories: readonly SpotCategory[];
 }
 

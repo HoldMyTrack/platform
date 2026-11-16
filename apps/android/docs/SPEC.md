@@ -117,7 +117,7 @@ The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.3), from the same ti
 - The mode survives a theme or language change.
 - The mode toggle is the Map tab's. Stories and Sync show the map in Normal, since their sheets and tracks are Normal mode's, and back on Map the mode picked there returns. Unlike the web, whose panel stays beside Fog (`docs/SPEC.md` FR-13.6).
 - While recording (FR-5.1) the mode toggle goes and no mode's layers are drawn, only the recording; the mode comes back when it stops.
-- The Layers menu (`docs/SPEC.md` FR-4.9) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.10), Roads (`docs/SPEC.md` FR-4.13), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8). Each is kept on the phone, not the account, and all but Roads start off. Layers stays while recording.
+- The Layers menu (`docs/SPEC.md` FR-4.9) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.10), Roads (`docs/SPEC.md` FR-4.13), the bike, shared and mountain-bike paths and the Spot categories (FR-2.8), which the web has in a Places menu of its own; Show layers hides places too. Each is kept on the phone, not the account, and all but Roads start off. Layers stays while recording.
 - Fog says when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
 - Fog's button names the level in view, and a tap on it while Fog is on opens the level menu (`docs/SPEC.md` FR-4.2), its counts read on each opening. A picked level holds through a trip out of Fog and until the app restarts. A tap on a place outlines it and names it, as the web's tooltip does, until it's closed or a tap lands off every place.
 

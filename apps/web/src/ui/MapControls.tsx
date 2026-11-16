@@ -7,6 +7,7 @@ import type { Explored } from '../map/useCoverageRefresh';
 import { BasemapToggle } from './BasemapToggle';
 import { MapModeToggle } from './MapModeToggle';
 import { OverlaysMenu } from './OverlaysMenu';
+import { PlacesMenu } from './PlacesMenu';
 import { ShowInArea } from './ShowInArea';
 import { FogLevelMenu } from './FogLevelMenu';
 import { lang, t } from '../i18n';
@@ -28,21 +29,24 @@ export interface MapControlsProps {
   /** Satellite is on and its imagery failed to load (satelliteStatus.ts): its notice shows under the toggles. */
   satelliteFailed: boolean;
   spotsShown: readonly SpotCategory[];
-  /** The tour holds the Layers menu open (docs/SPEC.md FR-4.14). */
+  /** The tour holds a menu open (docs/SPEC.md FR-4.14): Layers, Places or Fog's level. */
   layersOpen?: boolean;
+  placesOpen?: boolean;
+  fogLevelOpen?: boolean;
   /** How many the area holds when the list, and so the map, was cut at its limit (docs/SPEC.md FR-5.11). */
   capped: { shown: number; total: number } | null;
 }
 
-/** The controls over the map's top edge: the mode toggle with Fog's level menu, Layers,
+/** The controls over the map's top edge: the mode toggle with Fog's level menu, Layers, Places,
  *  Satellite, their notices, and the pills under them: places' Show in this area, and the area's cap. */
-export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, explored, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, capped }: MapControlsProps) {
+export function MapControls({ map, mode, onModeChange, overlays, onOverlaysChange, flavor, satelliteAvailable, coverageRendering, explored, basemapUnreachable, satelliteFailed, spotsShown, layersOpen = false, placesOpen = false, fogLevelOpen = false, capped }: MapControlsProps) {
   return (
     <>
       <div className="map-toggles">
-        <MapModeToggle mode={mode} onChange={onModeChange} fogMenu={map && <FogLevelMenu map={map} explored={explored} />} />
-        {/* Layers switch on and off over either mode. */}
+        <MapModeToggle mode={mode} onChange={onModeChange} fogMenu={map && <FogLevelMenu map={map} explored={explored} forceOpen={fogLevelOpen} />} />
+        {/* Layers and places switch on and off over either mode. */}
         <OverlaysMenu overlays={overlays} onChange={onOverlaysChange} flavor={flavor} forceOpen={layersOpen} />
+        <PlacesMenu overlays={overlays} onChange={onOverlaysChange} forceOpen={placesOpen} />
         {satelliteAvailable && <BasemapToggle satellite={overlays.satellite} onChange={(on) => onOverlaysChange({ ...overlays, satellite: on })} />}
         {/* On lines of their own under the toggles, however many rows they wrap to. */}
         {basemapUnreachable && (

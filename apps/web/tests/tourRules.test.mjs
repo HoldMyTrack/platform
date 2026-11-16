@@ -111,12 +111,17 @@ test("the globe's turn goes east in legs under 180°, from the US to Vietnam", (
   }
 });
 
-test('a step opens what it explains: the Stories tab, the sheet, Layers, and Upload for an account that can upload', () => {
+test("a step opens what it explains: the Stories tab, the sheet, Layers, Places, Fog's levels, and Upload for an account that can upload", () => {
   const steps = (isDemo) => Object.fromEntries(stepsFor({ isDemo }).map((s) => [s.id, s]));
   const real = steps(false);
+  const demo = steps(true);
   assert.equal(real.stories.tab, 'stories');
   assert.ok(real.stories.open.sheet && real.activities.open.sheet);
-  assert.ok(real.layers.open.layers);
+  assert.ok(real.layers.open.layers && !real.layers.open.places);
+  assert.ok(real.places.open.places && !real.places.open.layers);
+  // Fog's level menu opens on its last step: a real account's only one, the demo's countries.
+  assert.ok(real.fog.open.fogLevel);
+  assert.deepEqual(Object.values(demo).filter((s) => s.open.fogLevel).map((s) => s.id), ['fog_countries']);
   assert.ok(real.add.open.upload);
   assert.equal(steps(true).add.open.upload, undefined);
   // Every other step is on the Activities tab, which the tour leaves for the Stories step alone.

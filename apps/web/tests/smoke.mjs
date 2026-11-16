@@ -412,8 +412,8 @@ describe('basemap foundation', () => {
 
   // Points of interest (docs/SPEC.md FR-14.2, FR-14.4): nothing below zoom 10, "Show in this area"
   // from 10 until the tiles take over at 13.
-  it('10. Show in this area offered only between zoom 10 and 13', async () => {
-    const menu = page.getByTestId('map-overlays');
+  it('10. Show in this area offered only between zoom 10 and 13; the Places checkbox hides places and keeps them', async () => {
+    const menu = page.getByTestId('map-places');
     const trigger = menu.getByRole('button').first();
     if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
     await page.locator('#overlay-spots-playground').check();
@@ -427,6 +427,15 @@ describe('basemap foundation', () => {
     assert.equal(await offeredAt(10), true, 'offered at zoom 10');
     assert.equal(await offeredAt(12.5), true, 'offered at zoom 12.5');
     assert.equal(await offeredAt(13), false, 'the tiles take over at zoom 13');
+
+    // Places has its own checkbox: off, nothing to show in this area, and the Layers one untouched.
+    await offeredAt(11);
+    const master = page.locator('#places-master');
+    await master.uncheck();
+    assert.equal(await page.getByTestId('show-in-area').isVisible(), false, 'hidden by the Places checkbox');
+    assert.equal(await page.locator('#overlay-master').isChecked(), true, 'Layers checkbox untouched');
+    await master.check();
+    assert.equal(await page.getByTestId('show-in-area').isVisible(), true, 'back with the Places checkbox');
 
     if ((await trigger.getAttribute('aria-expanded')) !== 'true') await trigger.click();
     await page.locator('#overlay-spots-playground').uncheck();

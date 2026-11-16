@@ -262,9 +262,28 @@ describe('map flows', () => {
     await page.locator('[data-tour-start]').click();
     await page.getByTestId('tour').waitFor();
     assert.equal(await page.evaluate(() => window.__tourMarker), true);
-    while ((await page.getByTestId('tour').getAttribute('data-step')) !== 'fog') await page.getByTestId('tour-next').click();
-    // Fog's button names the level in view too: Fog · State.
+    const step = () => page.getByTestId('tour').getAttribute('data-step');
+    const nextTo = async (id) => {
+      while ((await step()) !== id) await page.getByTestId('tour-next').click();
+    };
+    // Layers and Places each open their own menu.
+    await nextTo('layers');
+    assert.ok(await page.getByTestId('map-overlays').locator('.overlays-menu__panel').isVisible(), 'Layers open');
+    await nextTo('places');
+    assert.ok(await page.getByTestId('map-places').locator('.overlays-menu__panel').isVisible(), 'Places open');
+    assert.equal(await page.getByTestId('map-overlays').locator('.overlays-menu__panel').count(), 0, 'Layers closed');
+    await nextTo('fog');
+    // Fog's button names the level in view too: Fog · State. Its level menu is open.
     assert.match(await activeMode(), /^Fog\b/);
+    assert.ok(await page.getByTestId('map-mode-toggle').locator('.overlays-menu__panel').isVisible(), 'Fog levels open');
+    // A click on the page doesn't close the Upload menu the step points at.
+    await nextTo('add');
+    // The click lands on the tour's blocker, as a user's does.
+    await page.mouse.click(10, 400);
+    // The tour reopens it on the menu's `toggle` event, which fires after the click closes it.
+    await page.waitForFunction(() => document.querySelector('.page-header details.upload-menu')?.open === true, undefined, { timeout: 2000 }).catch(() => {});
+    assert.equal(await page.locator('.page-header details.upload-menu').evaluate((menu) => menu.open), true, 'Upload stays open');
+    await page.getByTestId('tour-back').click();
     await page.keyboard.press('Escape');
     await page.getByTestId('tour').waitFor({ state: 'detached' });
     assert.equal(await activeMode(), 'Normal');

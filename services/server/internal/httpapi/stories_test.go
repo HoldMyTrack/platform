@@ -369,4 +369,27 @@ func TestSeedDemoStories(t *testing.T) {
 	if !slices.Equal(held, want) || *fixed.Description != "Weekend" {
 		t.Errorf("drift not fixed: %+v", fixed)
 	}
+
+	// The Story that opens first is dated a day after every other, so it lists first, on every run.
+	manifest[0].OpensFirst = true
+	for range 2 {
+		if err := seedDemoStories(ctx, d.pool, acct.id, manifest, ids); err != nil {
+			t.Fatal(err)
+		}
+		d.decode(d.do(acct, "GET", "/v1/stories", nil), http.StatusOK, &list)
+		if len(list.Stories) != 2 || list.Stories[0].Name != "Trip" ||
+			!list.Stories[0].CreatedAt.Equal(time.Date(2026, 5, 10, 10, 1, 0, 0, time.UTC)) {
+			t.Errorf("opening first: %+v", list.Stories)
+		}
+	}
+	// Already the newest by its own activities, it keeps that date: never before its own trip.
+	manifest[0].OpensFirst, manifest[1].OpensFirst = false, true
+	if err := seedDemoStories(ctx, d.pool, acct.id, manifest, ids); err != nil {
+		t.Fatal(err)
+	}
+	d.decode(d.do(acct, "GET", "/v1/stories", nil), http.StatusOK, &list)
+	if len(list.Stories) != 2 || list.Stories[0].Name != "Trail" ||
+		!list.Stories[0].CreatedAt.Equal(time.Date(2026, 5, 9, 10, 1, 0, 0, time.UTC)) {
+		t.Errorf("opening first, already newest: %+v", list.Stories)
+	}
 }
