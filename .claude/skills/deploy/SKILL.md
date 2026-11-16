@@ -35,7 +35,7 @@ Tell the user: what's deployed, the target `origin/main` short SHA, the commits 
 
 ### Android version bump (only if the app changed)
 
-`versionCode` is the commit count and takes care of itself; `versionName` is the release number, bumped by hand when a release means something (`apps/android/docs/IMPLEMENTATION.md` §6). Show the user where it stands:
+`versionCode` is the commit count and takes care of itself; `versionName` is the release number, `major.minor.patch`, raised by hand (`docs/DEPLOY.md` §10). Show the user where it stands:
 
 ```
 git show origin/main:apps/android/holdmytrack/app/build.gradle.kts | grep 'versionName ='
@@ -43,12 +43,12 @@ BUMPED=$(git log -1 --format=%h -G'versionName = ' origin/main -- apps/android/h
 git log --oneline --no-merges $BUMPED..origin/main -- apps/android ':!apps/android/docs'
 ```
 
-Give the current `versionName`, the commit that last set it, and the app's commits since — summarised as features, not a raw list — and ask whether this release deserves a bump, suggesting the next number (0.4 → 0.5) and a one-word theme when the features have one. Ask together with the deploy confirmation, so it's one question.
+Give the current `versionName`, the commit that last set it, and the app's commits since — summarised as features, not a raw list — and ask whether this release deserves a bump, suggesting the next number by `DEPLOY.md` §10's rule (a feature: 0.31.0 → 0.32.0, with a one-word theme; fixes alone: 0.31.0 → 0.31.1). Each step is 1, and major moves only when the user says so. Ask together with the deploy confirmation, so it's one question.
 
 The app goes out through Google Play, built separately from the deploy (`apps/android/holdmytrack/README.md`, Release build), but a build reads `versionName` from the commit it's built from, so a bump goes on `origin/main` with the deploy rather than after it. If the user wants one, before step 2:
 
-1. Branch off `origin/main` (`android-version-0.5`) and change the number everywhere it's written: `versionName` in `apps/android/holdmytrack/app/build.gradle.kts`, and the examples of it in the KDoc of `appVersion` and `UserAgentInterceptor` in `net/HoldMyTrackApi.kt` and of `userAgent` in `net/AppBuild.kt`. `git grep -n '0\.4' apps/android` finds them; leave the unrelated matches (distances like "10.4 km", opacities).
-2. One commit, `Android: version 0.5 — <theme>`, with a body naming what the release brings; push it and give the user the compare URL to open the PR (`gh` may not be installed).
+1. Branch off `origin/main` (`android-version-0.32.0`) and change the number everywhere it's written: `versionName` in `apps/android/holdmytrack/app/build.gradle.kts`, the examples of it in the KDoc of `appVersion` and `UserAgentInterceptor` in `net/HoldMyTrackApi.kt` and of `userAgent` in `net/AppBuild.kt`, and the case in `AppBuildTest`. `git grep -nF '0.31.0' apps/android` finds them.
+2. One commit, `Android: version 0.32.0 — <theme>` (for fixes alone, `Android: version 0.31.1`), with a body naming what the release brings; push it and give the user the compare URL to open the PR (`gh` may not be installed).
 3. Wait for the user to say it's merged, then re-run the plan above: the target SHA is now the merge commit.
 
 No bump: go on with the target as it is.

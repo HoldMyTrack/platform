@@ -55,7 +55,7 @@ final class Counter: @unchecked Sendable {
 
 @Suite(.serialized)
 struct APIClientTests {
-    private let app = AppInfo(version: "0.1", commit: "abc1234", build: 42, apiBaseURL: URL(string: "http://localhost:8081")!)
+    private let app = AppInfo(version: "0.1.0", commit: "abc1234", build: 42, apiBaseURL: URL(string: "http://localhost:8081")!)
     private let outdated = Counter()
 
     private func client(token: String? = "tok") -> APIClient {
@@ -80,7 +80,7 @@ struct APIClientTests {
         #expect(account.unitSystem == "imperial")
         let sent = try #require(StubProtocol.sent.first)
         #expect(sent.url?.absoluteString == "http://localhost:8081/v1/auth/me")
-        #expect(sent.value(forHTTPHeaderField: "User-Agent") == "HoldMyTrack-iOS/0.1 (abc1234; 42)")
+        #expect(sent.value(forHTTPHeaderField: "User-Agent") == "HoldMyTrack-iOS/0.1.0 (abc1234; 42)")
         #expect(sent.value(forHTTPHeaderField: "Accept-Language") == "ru")
         #expect(sent.value(forHTTPHeaderField: "Authorization") == "Bearer tok")
     }
