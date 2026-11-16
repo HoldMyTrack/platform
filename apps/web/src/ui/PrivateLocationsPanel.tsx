@@ -253,7 +253,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
           const label = l.name || t('private.unnamed');
           const highlighted = draft ? draft.id === l.id : focusedId === l.id;
           return (
-            <li key={l.id} className={`activities-panel__row${highlighted ? ' activities-panel__row--selected' : ''}`}>
+            <li key={l.id} className={`activities-panel__row${highlighted ? ' activities-panel__row--current' : ''}`}>
               <button
                 type="button"
                 className="activities-panel__text"

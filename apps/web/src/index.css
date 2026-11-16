@@ -326,11 +326,8 @@ body {
   cursor: pointer;
 }
 
-.stories-tab__story--open .stories-tab__toggle {
-  cursor: default;
-}
-
-/* The Play triangle points right while folded and turns to point down once open. */
+/* The Play triangle points right while the list is folded and down while it shows; the open
+   Story's is accent-coloured either way. */
 .stories-tab__chevron {
   flex: none;
   fill: currentColor;
@@ -339,8 +336,11 @@ body {
 }
 
 .stories-tab__story--open .stories-tab__chevron {
-  transform: rotate(90deg);
   color: var(--fm-accent-strong);
+}
+
+.stories-tab__story--expanded .stories-tab__chevron {
+  transform: rotate(90deg);
 }
 
 .stories-tab__name {
@@ -780,9 +780,10 @@ body {
   border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 6%);
 }
 
-/* The selected (focused) row — reached by clicking the row's own text or its track on the map.
+/* The one row being viewed, on every tab: a focused activity (ActivityRow.tsx, reached by clicking
+   its text or its track on the map), the highlighted Private location and the open Story's folder.
    A checked row doesn't get this: its ticked checkbox is its only mark (docs/SPEC.md FR-5.8). */
-.activities-panel__row--selected {
+.activities-panel__row--current {
   background: rgb(var(--fm-accent-rgb) / 8%);
   box-shadow: inset 3px 0 0 var(--fm-accent-strong);
 }
