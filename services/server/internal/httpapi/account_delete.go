@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+
+	"github.com/HoldMyTrack/platform/services/server/internal/db"
 )
 
 // deleteAccountRequest is DELETE /v1/account's body: the account's own email address, typed
@@ -34,10 +36,8 @@ func (s *Server) handleDeleteAccount(w http.ResponseWriter, r *http.Request) {
 
 // closeAccount is account deletion's shared core — the JSON endpoint above and the Settings
 // page's form (settings_page.go) both call it. confirm must be the account's email, in any
-// case and with surrounding spaces. In one transaction it takes away every way back in —
-// sessions, Google, Facebook and Apple identities, reset, verification and app sign-in tokens,
-// the password — renames the email to a placeholder so the address can sign up again at once,
-// and stamps deleted_at. The data stays until internal/worker/account_purge.go removes it,
+// case and with surrounding spaces. In one transaction it closes the account (db.CloseAccounts),
+// so the address can sign up again at once. The data stays until internal/worker/account_purge.go removes it,
 // within a minute or so: a job of the account's may be running, and its objects have to be
 // swept after the last one finishes, not before. An Apple link's token is revoked once the
 // transaction commits.
@@ -78,17 +78,8 @@ func (s *Server) closeAccount(ctx context.Context, userID string, isDemo bool, c
 	if err := rows.Err(); err != nil {
 		return fmt.Errorf("delete account: apple links: %w", err)
 	}
-	for _, q := range []string{
-		`DELETE FROM sessions WHERE user_id = $1`,
-		`DELETE FROM user_identities WHERE user_id = $1`,
-		`DELETE FROM password_resets WHERE user_id = $1`,
-		`DELETE FROM email_verifications WHERE user_id = $1`,
-		`DELETE FROM auth_handoffs WHERE user_id = $1`,
-		`UPDATE users SET email = 'deleted-' || id || '@holdmytrack.invalid', password_hash = NULL, deleted_at = NOW() WHERE id = $1`,
-	} {
-		if _, err := tx.Exec(ctx, q, userID); err != nil {
-			return fmt.Errorf("delete account: %w", err)
-		}
+	if err := db.CloseAccounts(ctx, tx, []string{userID}); err != nil {
+		return fmt.Errorf("delete account: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("delete account: commit: %w", err)
