@@ -19,15 +19,15 @@ export const PATHS_MIN_ZOOM = 12;
  *  green for trails, brown for tracks, all clear of the ochre activity tracks (tracks.ts). Teal sits between the cycleway blue and
  *  the trail green, so a shared path reads as a bike route people walk too, and the hue alone
  *  tells it from a cycleway when the map is zoomed out too far for a dash to show. On the light
- *  flavors the two bike colors are dark enough to hold up on Fog's grey veil; on the dark ones
- *  they are lighter than the map but kept short of full brightness, which glares on it. The monochrome flavors stay monochrome; there the
+ *  flavors the two bike colors are dark enough to hold up on Fog's grey veil; on the dark and
+ *  black ones they are lighter than the map but kept short of full brightness, which glares on it. The monochrome flavors stay monochrome; there the
  *  kinds differ by weight and dash. */
 export const PATH_COLORS: Record<Flavor, { cycleway: string; shared: string; mtb: string; trail: string; track: string }> = {
   light: { cycleway: '#0b5a85', shared: '#0b7f74', mtb: '#7d3a96', trail: '#4f7a3a', track: '#8a5a2b' },
   dark: { cycleway: '#4ea2be', shared: '#43b6a5', mtb: '#b384cb', trail: '#7aa25a', track: '#ab7f50' },
   white: { cycleway: '#262626', shared: '#404040', mtb: '#333333', trail: '#6e6e6e', track: '#5c5c5c' },
   grayscale: { cycleway: '#1f1f1f', shared: '#383838', mtb: '#2b2b2b', trail: '#666666', track: '#555555' },
-  black: { cycleway: '#c4c4c4', shared: '#a8a8a8', mtb: '#b8b8b8', trail: '#9a9a9a', track: '#b0b0b0' },
+  black: { cycleway: '#a7a7a7', shared: '#8f8f8f', mtb: '#9c9c9c', trail: '#838383', track: '#969696' },
 };
 
 /** Each kind's dash, in line widths as MapLibre's `line-dasharray` takes it, or none for a solid
