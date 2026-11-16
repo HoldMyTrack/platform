@@ -334,6 +334,8 @@ Something wrong before step 4's upgrade: put the old tag back and `… up -d db`
 
 The Android app ships only through Google Play, as the release-signed bundle built from a deployed commit (`apps/android/holdmytrack/README.md`, Release build).
 
+**Release number.** Each app has its own `major.minor.patch`, raised by hand: `versionName` in `apps/android/holdmytrack/app/build.gradle.kts` and `MARKETING_VERSION` in `apps/ios/Config/Base.xcconfig`. A release that brings a feature raises minor by 1 and sets patch to 0; a release of fixes alone raises patch by 1. Major stays 0 until the app is offered widely (North America, the EU, Asia) and enough people use it to have found the obvious bugs.
+
 **Tagging.** Tag every build that reaches Play, for the release contract check (`DEVELOPMENT.md`, "CI"): `git tag android/<versionCode> <sha>`, then `git push origin android/<versionCode>`.
 
 **Turning away older builds.** Needed when `scripts/check-contract-release.sh --needed-floor <deployed sha>` raises a minimum, and only once the release it names is live on Google Play:

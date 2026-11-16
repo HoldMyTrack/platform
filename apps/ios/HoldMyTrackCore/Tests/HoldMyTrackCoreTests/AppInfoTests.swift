@@ -5,7 +5,7 @@ import HoldMyTrackCore
 
 struct AppInfoTests {
     private let plist: [String: Any] = [
-        "CFBundleShortVersionString": "0.1",
+        "CFBundleShortVersionString": "0.1.0",
         "CFBundleVersion": "1400",
         "HMTCommit": "62da50b",
         "HMTAPIBaseURL": "https://holdmytrack.com",
@@ -13,7 +13,7 @@ struct AppInfoTests {
 
     @Test func userAgentNamesTheBuild() throws {
         let app = try #require(AppInfo.from(plist))
-        #expect(app.userAgent == "HoldMyTrack-iOS/0.1 (62da50b; 1400)")
+        #expect(app.userAgent == "HoldMyTrack-iOS/0.1.0 (62da50b; 1400)")
     }
 
     @Test func missingBuildReadsAsOne() throws {
@@ -64,10 +64,10 @@ struct ServerStatusTests {
 
 struct ServerCheckTests {
     @Test func requestNamesTheBuildAndLanguage() throws {
-        let app = try #require(AppInfo.from(["CFBundleShortVersionString": "0.1", "CFBundleVersion": "1400", "HMTCommit": "62da50b", "HMTAPIBaseURL": "http://localhost:8081/"]))
+        let app = try #require(AppInfo.from(["CFBundleShortVersionString": "0.1.0", "CFBundleVersion": "1400", "HMTCommit": "62da50b", "HMTAPIBaseURL": "http://localhost:8081/"]))
         let request = ServerCheck.request(app, language: "ru")
         #expect(request.url?.absoluteString == "http://localhost:8081/healthz")
-        #expect(request.value(forHTTPHeaderField: "User-Agent") == "HoldMyTrack-iOS/0.1 (62da50b; 1400)")
+        #expect(request.value(forHTTPHeaderField: "User-Agent") == "HoldMyTrack-iOS/0.1.0 (62da50b; 1400)")
         #expect(request.value(forHTTPHeaderField: "Accept-Language") == "ru")
     }
 }

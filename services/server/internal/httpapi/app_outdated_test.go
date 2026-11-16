@@ -35,6 +35,7 @@ func TestAndroidBuild(t *testing.T) {
 		android bool
 	}{
 		{"HoldMyTrack-Android/0.14 (62da50b; 812)", 812, true},
+		{"HoldMyTrack-Android/0.31.0 (62da50b; 2000)", 2000, true},
 		{"HoldMyTrack-Android/0.13 (62da50b)", 0, true},
 		{"HoldMyTrack-Android/0.13", 0, true},
 		{"HoldMyTrack-Android/0.14 (62da50b; x)", 0, true},

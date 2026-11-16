@@ -35,10 +35,10 @@ android {
         targetSdk = 37
         // versionCode is the commit count, so it rises with every commit to main and never
         // needs remembering — Play refuses an upload whose code isn't higher than the last.
-        // versionName is the release number, bumped by hand when a release means something;
+        // versionName is the release number, major.minor.patch, raised by hand (docs/DEPLOY.md §10);
         // GIT_SHA is the exact commit, the same short SHA the server's /healthz reports.
         versionCode = gitOutput("rev-list", "--count", "HEAD")?.toIntOrNull() ?: 1
-        versionName = "0.30"
+        versionName = "0.31.0"
         buildConfigField("String", "GIT_SHA", "\"${gitOutput("rev-parse", "--short", "HEAD") ?: "dev"}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
