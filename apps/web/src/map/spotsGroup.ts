@@ -39,6 +39,7 @@ const INK = '#202b25'; // --fm-ink
 const ACCENT = '#b07e2e'; // --fm-accent
 const ACCENT_DARK = '#7d5820';
 const WHITE = '#ffffff';
+const DARK_BADGE_OPACITY = 0.85;
 
 /** The areas' fill: faint normally, darker in capture mode, darkest for its target. */
 const AREA_OPACITY = 0.15;
@@ -131,7 +132,12 @@ export function spotsGroup(tileVersion: string): GroupPart {
         badges(SPOTS_LAYER_ID, 'spots', 'spots', SPOTS_MIN_ZOOM, 24, shown, ['spotCategories', 'captured']),
       ],
     },
-    view: () => ({ layout: {}, paint: {} }),
+    // On the dark map a white badge at full strength outshines everything around it; over
+    // imagery it needs that strength.
+    view: (_mode, dark, satellite) => {
+      const icons = { 'icon-opacity': dark && !satellite ? DARK_BADGE_OPACITY : 1 };
+      return { layout: {}, paint: { [SPOTS_IN_AREA_LAYER_ID]: icons, [SPOTS_LAYER_ID]: icons } };
+    },
     vars: { spotCategories: [], captured: [], captureTarget: -1 },
   };
 }
