@@ -335,8 +335,9 @@
             </LinearLayout>
 
             <!-- The rail: Layers (map/LayersMenu) — its icon filled like the active mode while picks
-                 show, with a badge on its corner counting them, opening the menu of paths, places,
-                 the show-or-hide switch and Satellite — then Find my location
+                 show, with a badge on its corner counting them, opening the menu of roads, paths,
+                 the show-or-hide switch and Satellite — then Places (map/PlacesMenu), the same for
+                 the place categories — then Find my location
                  (MapFragment.onLocateTap), which shows the position dot and flies the camera to it,
                  the counterpart of the web map's geolocate control, hidden while recording, when
                  the camera already follows the recording — then Export map image, also hidden while
@@ -372,6 +373,43 @@
 
                     <TextView
                         android:id="@+id/layers_count"
+                        android:layout_width="wrap_content"
+                        android:layout_height="16dp"
+                        android:layout_gravity="end|top"
+                        android:layout_marginTop="-6dp"
+                        android:layout_marginEnd="-6dp"
+                        android:background="@drawable/bg_layers_count"
+                        android:elevation="2dp"
+                        android:gravity="center"
+                        android:importantForAccessibility="no"
+                        android:minWidth="16dp"
+                        android:paddingStart="@dimen/hmt_space_4"
+                        android:paddingEnd="@dimen/hmt_space_4"
+                        android:textColor="@color/hmt_on_accent"
+                        android:textSize="@dimen/hmt_text_3xs"
+                        android:textStyle="bold"
+                        android:visibility="gone" />
+                </FrameLayout>
+
+                <FrameLayout
+                    android:id="@+id/places_panel"
+                    style="@style/Widget.HoldMyTrack.MapPanel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:clipChildren="false"
+                    android:clipToPadding="false"
+                    android:visibility="gone">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/places_button"
+                        style="@style/Widget.HoldMyTrack.Button.MapIcon.Toggle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:contentDescription="@string/places_button"
+                        app:icon="@drawable/ic_map_pin" />
+
+                    <TextView
+                        android:id="@+id/places_count"
                         android:layout_width="wrap_content"
                         android:layout_height="16dp"
                         android:layout_gravity="end|top"

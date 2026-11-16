@@ -16,8 +16,8 @@ import dev.holdmytrack.android.R
 
 /**
  * The Layers button on the map's rail and the menu it opens — the web's `OverlaysMenu`
- * (`docs/SPEC.md` FR-4.9): Paths — Bike paths, Shared paths and Mountain bike trails — and
- * Points of interest, one entry per [MapSpots.Category], each picked over any mode.
+ * (`docs/SPEC.md` FR-4.9): Paths — Bike paths, Shared paths and Mountain bike trails — each
+ * picked over any mode. Places have a menu of their own ([PlacesMenu]).
  *
  * The button is filled like the active map mode while picks show, with a badge on its corner
  * counting them, greyed while they're hidden. The menu opens with a switch that shows or hides
@@ -32,10 +32,8 @@ class LayersMenu(
     private val button: MaterialButton,
     private val count: TextView,
     private val paths: () -> MapPaths.Paths,
-    private val spots: () -> List<MapSpots.Category>,
     private val shown: () -> Boolean,
     private val onPaths: (MapPaths.Paths) -> Unit,
-    private val onSpots: (List<MapSpots.Category>) -> Unit,
     private val onShown: (Boolean) -> Unit,
     private val satellite: () -> Boolean?,
     private val onSatellite: (Boolean) -> Unit,
@@ -66,7 +64,7 @@ class LayersMenu(
 
     /** The filled look, the badge and the open menu's switch, from the saved choice. */
     fun render() {
-        val picked = (if (roads()) 1 else 0) + paths().count + spots().size
+        val picked = (if (roads()) 1 else 0) + paths().count
         val on = shown()
         master?.let {
             it.isChecked = on
@@ -166,18 +164,6 @@ class LayersMenu(
         content.findViewById<TextView>(R.id.layers_key_trails).swatch("trails", atEnd = false)
         content.findViewById<TextView>(R.id.layers_key_tracks).swatch("tracks", atEnd = false)
 
-        for ((category, id) in SPOT_BOXES) {
-            content.findViewById<CheckBox>(id).apply {
-                isChecked = category in spots()
-                setOnCheckedChangeListener { _, on ->
-                    picked(on)
-                    val before = spots()
-                    onSpots(MapSpots.Category.entries.filter { if (it == category) on else it in before })
-                    render()
-                }
-            }
-        }
-
         // A fixed width, the web panel's 14rem.
         val width = (MENU_WIDTH_DP * res.displayMetrics.density).toInt()
         // Held for the tour, it's capped so the tour's card below it stays in view; it scrolls.
@@ -199,15 +185,6 @@ class LayersMenu(
     }
 
     private companion object {
-        val SPOT_BOXES = listOf(
-            MapSpots.Category.PLAYGROUND to R.id.layers_spots_playground,
-            MapSpots.Category.DOG_PARK to R.id.layers_spots_dog_park,
-            MapSpots.Category.MONUMENT to R.id.layers_spots_monument,
-            MapSpots.Category.VIEWPOINT to R.id.layers_spots_viewpoint,
-            MapSpots.Category.WATERFALL to R.id.layers_spots_waterfall,
-            MapSpots.Category.HISTORY to R.id.layers_spots_history,
-        )
-
         const val REOPEN_GUARD_MS = 300L
         const val MENU_WIDTH_DP = 224
 

@@ -80,6 +80,22 @@ class FogLevelMenu(
         popup?.dismiss()
     }
 
+    /** The open menu's content, for the tour's spotlight. */
+    val content: View? get() = popup?.contentView
+
+    /** The open menu is the tour's, view-only ([hold]). */
+    private var held = false
+
+    /** Holds the menu open for the tour to point at, or closes it ([LayersMenu.hold]). Held, it
+     *  takes no touches, so the tour's own buttons under it keep working. */
+    fun hold(open: Boolean) {
+        if (!open) {
+            if (held) dismiss()
+            return
+        }
+        if (popup == null && levels().isNotEmpty()) show(interactive = false)
+    }
+
     /** The checked button's text color: the label shows only while Fog is on, and is built before
      *  the button's state may have caught up. */
     private fun ink(): Int = button.textColors.getColorForState(intArrayOf(android.R.attr.state_checked, android.R.attr.state_enabled), button.currentTextColor)
@@ -98,7 +114,7 @@ class FogLevelMenu(
     private fun levelName(all: List<FogLevels.Level>, level: String): String =
         levelLabel(level, all.firstOrNull { it.level == level }?.word)?.let(res::getString) ?: level
 
-    private fun show() {
+    private fun show(interactive: Boolean = true) {
         val inflater = LayoutInflater.from(button.context)
         val content = inflater.inflate(R.layout.popup_fog_level, null as ViewGroup?)
         val rows = content.findViewById<LinearLayout>(R.id.fog_level_rows)
@@ -141,10 +157,13 @@ class FogLevelMenu(
         }
 
         val width = (MENU_WIDTH_DP * res.displayMetrics.density).toInt()
-        val window = PopupWindow(content, width, ViewGroup.LayoutParams.WRAP_CONTENT, true)
+        val window = PopupWindow(content, width, ViewGroup.LayoutParams.WRAP_CONTENT, interactive)
+        window.isTouchable = interactive
         window.elevation = res.getDimension(R.dimen.hmt_space_8)
+        held = !interactive
         window.setOnDismissListener {
             popup = null
+            held = false
             closedAt = SystemClock.uptimeMillis()
         }
         popup = window

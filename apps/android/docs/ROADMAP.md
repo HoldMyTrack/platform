@@ -4,9 +4,6 @@ The Android app's open work: testing and releasing it on Google Play. The produc
 
 ## Ongoing
 
-- [ ] **Layers and Places as two menus, and the web's tour texts**
-  - The web splits the Spot categories out of Layers into a Places menu with its own switch (root `docs/SPEC.md` FR-4.9, FR-14.2), and its tour gives Places a step, opens Fog's level menu on its last Fog step and says what ticking activities does for an export. Follow both in the app's Layers menu and tour (FR-2.12), then drop the difference FR-2.2 states.
-  - Done when: the app's Layers and Places menus each hide their own picks, and its tour's texts match the web's.
 - [ ] **Sign in with Apple, for accounts made on an iPhone**
   - An account made with Sign in with Apple has no password, often a Hide My Email address, and no way into the Android app. Run the server's Apple flow in a Custom Tab with the app's challenge and redeem the handoff code, as Facebook does (root `docs/IMPLEMENTATION.md` §4.9); no Apple SDK. Declare `app_challenge` on `/v1/auth/apple/start` in `services/server/api/`, which the server already accepts.
   - Apple accepts only an `https://` return URL on the registered domain, so it is tested against production.

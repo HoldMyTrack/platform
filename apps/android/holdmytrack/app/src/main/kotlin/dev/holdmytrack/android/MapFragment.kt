@@ -260,6 +260,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
     fun holdLayers(open: Boolean) = layers.hold(open)
     val layersMenu: View? get() = layers.menuContent
+    fun holdPlaces(open: Boolean) = layers.holdPlaces(open)
+    val placesMenu: View? get() = layers.placesContent
+    fun holdFogLevel(open: Boolean) {
+        if (::modes.isInitialized) modes.holdFogLevel(open)
+    }
+    val fogLevelMenu: View? get() = if (::modes.isInitialized) modes.fogLevelContent else null
     val mapLibre: MapLibreMap? get() = map
     val tourBlocked: Boolean get() = !modeBarReady || isRecording() || (::edit.isInitialized && (editWindow.isOpen || edit.privacyEditing))
 

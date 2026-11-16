@@ -28,6 +28,8 @@ interface TourHost {
     fun setSheetOpen(open: Boolean)
     /** Holds the Layers menu open for looking at, or lets it go. */
     fun setLayersOpen(open: Boolean)
+    fun setPlacesOpen(open: Boolean)
+    fun setFogLevelOpen(open: Boolean)
     val map: MapLibreMap?
     /** The Edit window, the Private location editor or a recording has the map. */
     val blocked: Boolean
@@ -122,11 +124,15 @@ class TourController(private val activity: AppCompatActivity, private val host: 
     private fun go(run: Running, index: Int?) {
         val step = index?.let { run.steps[it] }
         val changes = TourRules.changes(host.mode ?: MapMode.NORMAL, host.tab, step, run.mode, run.tab)
-        val (sheet, layers) = TourSteps.held(step, run.sheet)
-        host.setLayersOpen(layers)
+        val held = TourSteps.held(step, run.sheet)
+        host.setLayersOpen(held.layers)
+        host.setPlacesOpen(held.places)
+        if (!held.fogLevel) host.setFogLevelOpen(false)
         changes.tab?.let(host::showTab)
         changes.mode?.let(host::setMode)
-        host.setSheetOpen(sheet)
+        host.setSheetOpen(held.sheet)
+        // Once Fog is the map's mode, which its level menu hangs from.
+        if (held.fogLevel) host.setFogLevelOpen(true)
         changes.card?.let { save(seen.copy(cards = seen.cards + it)) }
         if (step == null || index == null) {
             camera.end()
