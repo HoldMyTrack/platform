@@ -57,21 +57,25 @@ const FOG_MAX_ZOOM = 14;
 const FOG_EDGE_WIDTH = ['interpolate', ['exponential', 2], ['zoom'], 10, 1, 13, 5, 15, 14, 18, 20];
 
 /**
- * The veil over each base, with the colour of the unvisited borders drawn on it, faint until
- * hovered. Fog is always darker than what it reveals: dark ink over a light map, black over a dark
- * one, so explored ground stays the lighter part of the map in either theme, and a cream mist over
- * imagery, whose own darks would hide a dark veil. The Country/Region fills take the same, so
- * nothing shifts at a tier.
+ * The veil over each base. Fog is always darker than what it reveals: dark ink over a light map,
+ * black over a dark one, so explored ground stays the lighter part of the map in either theme, and
+ * a cream mist over imagery, whose own darks would hide a dark veil. The Country/Region fills take
+ * the same, so nothing shifts at a tier.
+ * - `border`: an unvisited outline, drawn on the veil, so its opposite.
+ * - `visited`: a visited outline and a hovered visited place's tint, drawn on the basemap, so the
+ *   basemap's opposite: the veil's own colour where that contrasts with the basemap, cream on dark.
+ * - `hover`: an unvisited place's veil under the pointer, thinned enough to read as opening up.
+ * - `outline`: a hovered or picked outline's opacity, lower in cream on the dark map, where full
+ *   strength glares.
  */
-const LIGHT_VEIL = { color: '#202b25', opacity: 0.82, border: '#f7f4ec' };
-const DARK_VEIL = { color: '#000000', opacity: 0.6, border: '#f7f4ec' };
-const IMAGERY_VEIL = { color: '#f7f4ec', opacity: 0.82, border: '#202b25' };
+const LIGHT_VEIL = { color: '#202b25', opacity: 0.82, border: '#f7f4ec', visited: '#202b25', hover: 0.68, outline: 0.95 };
+const DARK_VEIL = { color: '#000000', opacity: 0.6, border: '#f7f4ec', visited: '#f7f4ec', hover: 0.3, outline: 0.7 };
+const IMAGERY_VEIL = { color: '#f7f4ec', opacity: 0.82, border: '#202b25', visited: '#f7f4ec', hover: 0.68, outline: 0.95 };
 const BORDER_OPACITY = 0.22;
 const BORDER_WIDTH = 0.7;
 /** Over satellite imagery, whose colours vary under every border, a faint border vanishes. */
 const SATELLITE_BORDER_OPACITY = 0.5;
 const SATELLITE_BORDER_WIDTH = 1;
-const HOVER_BORDER_OPACITY = 0.95;
 const HOVER_BORDER_WIDTH = 2.5;
 
 /** An outline is hovered while fogPlaces.ts sets its `hover` state. */
@@ -92,13 +96,12 @@ export function coverageView(mode: MapMode, dark: boolean, satellite = false): L
   // Every outline is in the tile; the veil covers the unvisited and the sea. A hovered outline
   // thins its veil, or tints a visited one, so the place under the pointer stands out.
   const outlineFill = {
-    'fill-color': veil.color,
-    'fill-opacity': ['case', ['get', 'visited'], ['case', HOVERED, 0.12, 0], ['case', HOVERED, veil.opacity - 0.14, veil.opacity]],
+    'fill-color': ['case', ['get', 'visited'], veil.visited, veil.color],
+    'fill-opacity': ['case', ['get', 'visited'], ['case', HOVERED, 0.12, 0], ['case', HOVERED, veil.hover, veil.opacity]],
   };
   const border = {
-    // On cleared ground the basemap shows, so a visited outline takes the veil's own ink.
-    'line-color': ['case', ['get', 'visited'], veil.color, veil.border],
-    'line-opacity': ['case', HOVERED, HOVER_BORDER_OPACITY, satellite ? SATELLITE_BORDER_OPACITY : BORDER_OPACITY],
+    'line-color': ['case', ['get', 'visited'], veil.visited, veil.border],
+    'line-opacity': ['case', HOVERED, veil.outline, satellite ? SATELLITE_BORDER_OPACITY : BORDER_OPACITY],
     'line-width': ['case', HOVERED, HOVER_BORDER_WIDTH, satellite ? SATELLITE_BORDER_WIDTH : BORDER_WIDTH],
   };
   return {
@@ -111,7 +114,7 @@ export function coverageView(mode: MapMode, dark: boolean, satellite = false): L
       ...Object.fromEntries(PLACE_FILL_LAYERS.map((id) => [id, outlineFill])),
       ...Object.fromEntries(BORDER_LAYERS.map((id) => [id, border])),
       // As a hovered border.
-      ...Object.fromEntries(PICKED_LAYERS.map((id) => [id, { 'line-color': border['line-color'], 'line-opacity': HOVER_BORDER_OPACITY, 'line-width': HOVER_BORDER_WIDTH }])),
+      ...Object.fromEntries(PICKED_LAYERS.map((id) => [id, { 'line-color': border['line-color'], 'line-opacity': veil.outline, 'line-width': HOVER_BORDER_WIDTH }])),
     },
   };
 }

@@ -66,6 +66,29 @@ test('fog is darker than the map it covers, and a cream mist over imagery', () =
   assert.deepEqual([border(doc, false), border(dark, false), border(dark, true)], ['#f7f4ec', '#f7f4ec', '#202b25']);
 });
 
+test("a visited place's outline and hover tint stand out from the basemap, and a hovered unvisited one opens up", () => {
+  const paint = (d, satellite) => viewFor(d, 'fog', satellite).paint;
+  const dark = buildLayers({ flavor: 'dark', dark: true, tileVersion: '', lang: 'en' });
+  const black = buildLayers({ flavor: 'black', dark: true, tileVersion: '', lang: 'en' });
+  // A visited outline and tint are drawn on cleared ground: dark ink on the light map, cream on a dark one or imagery.
+  for (const [d, satellite, ink] of [[doc, false, '#202b25'], [dark, false, '#f7f4ec'], [black, false, '#f7f4ec'], [dark, true, '#f7f4ec']]) {
+    const p = paint(d, satellite);
+    assert.equal(p['city-fog-border']['line-color'][2], ink);
+    assert.equal(p['city-fog-picked']['line-color'][2], ink);
+    assert.equal(p['city-fog-fill']['fill-color'][2], ink);
+  }
+  // Under the pointer an unvisited place's veil thins by at least half of what it hides.
+  for (const d of [doc, dark]) {
+    const [, , , unvisited] = paint(d, false)['city-fog-fill']['fill-opacity'];
+    const [, , hovered, still] = unvisited;
+    assert.ok(still - hovered > 0.139 && hovered <= still * 0.85, `${hovered} of ${still}`);
+  }
+  assert.ok(paint(dark, false)['city-fog-fill']['fill-opacity'][3][2] <= 0.3, 'black thins to a third or less');
+  // A hovered or picked outline in cream on the dark map is held below full strength.
+  assert.deepEqual([paint(doc, false)['city-fog-picked']['line-opacity'], paint(dark, false)['city-fog-picked']['line-opacity']], [0.95, 0.7]);
+  assert.equal(paint(dark, false)['city-fog-border']['line-opacity'][2], 0.7);
+});
+
 test('a layer is added looking as the plain Normal view leaves it', () => {
   const veil = coverage.layers.find((l) => l.id === 'fog-veil');
   assert.equal(veil.layout.visibility, 'none');
@@ -241,8 +264,11 @@ test('the spots go on top, behind one switch, their badges named with the colors
   assert.equal(Object.keys(icons.metadata['holdmytrack:images']).length, 12);
   assert.deepEqual(icons.metadata['holdmytrack:vars']['icon-image'], ['captured']);
   assert.equal(doc.vars.captureTarget, -1);
-  // Fog mutes labels, never the badges.
-  for (const base of ['plain', 'satellite']) for (const mode of MODES) assert.equal(doc.views[base][mode].paint['spots-icons'], undefined);
+  // Fog mutes labels, never the badges: every mode draws them alike, softened only on the dark map.
+  const dark = buildLayers({ flavor: 'dark', dark: true, tileVersion: '', lang: 'en' });
+  for (const [d, base, opacity] of [[doc, 'plain', 1], [doc, 'satellite', 1], [dark, 'plain', 0.85], [dark, 'satellite', 1]]) {
+    for (const mode of MODES) for (const id of ['spots-icons', 'spots-in-area-icons']) assert.deepEqual(d.views[base][mode].paint[id], { 'icon-opacity': opacity }, `${base} ${mode} ${id}`);
+  }
 });
 
 
