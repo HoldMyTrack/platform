@@ -65,6 +65,38 @@ func TestHeaderDemoMenu(t *testing.T) {
 	}
 }
 
+// A page's demo button starts the demo for a visitor with no session. With a session it is left
+// out, since the form would swap that session for the demo's, and so it is in an app.
+func TestPageDemoButton(t *testing.T) {
+	r, err := New(Embedded(), false, "v", "https://app.example")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, page := range []string{"about", "fog-of-war", "gpx-viewer", "guides", "import-strava", "import-garmin"} {
+		for _, tc := range []struct {
+			name string
+			data PageData
+			want bool
+		}{
+			{"signed out", PageData{}, true},
+			{"signed in", PageData{User: &User{Email: "a@b.c"}}, false},
+			{"demo session", PageData{User: &User{DisplayName: "Demo User", IsDemo: true}}, false},
+			{"in an app", PageData{App: "android"}, false},
+		} {
+			tc.data.Title, tc.data.Path = "T", "/"+page
+			rec := httptest.NewRecorder()
+			r.Render(rec, 200, page, tc.data)
+			body := rec.Body.String()
+			if got := strings.Contains(body, `<form method="post" action="/demo"><button type="submit" class="page-button`); got != tc.want {
+				t.Errorf("%s, %s: demo button shown %v, want %v", page, tc.name, got, tc.want)
+			}
+			if strings.Contains(body, `href="/signin">Try the demo`) {
+				t.Errorf("%s, %s: the demo is a link to /signin", page, tc.name)
+			}
+		}
+	}
+}
+
 // The Upload menu says where files come from, a guide per service, each in a new tab so what is
 // uploading stays put.
 func TestHeaderUploadGuides(t *testing.T) {

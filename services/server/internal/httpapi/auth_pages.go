@@ -273,7 +273,7 @@ func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
 	s.signIn(w, r, userID)
 }
 
-// POST /demo — the sign-in page's "Try it now — no signup".
+// POST /demo — the pages' "Try the demo — no signup" (templates/demo.html, signin.html).
 func (s *Server) handleDemoForm(w http.ResponseWriter, r *http.Request) {
 	if err := allowDemo(r); err != nil {
 		acct, ok := s.pageAccount(w, r)

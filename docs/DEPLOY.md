@@ -124,7 +124,7 @@ Check from any machine: `curl -s -o /dev/null -w '%{http_code}\n' -H 'Range: byt
 
 Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… logs` reaches back only that far. Postgres's memory is set for a 4 GB droplet in `compose.prod.yml`'s `db` command: scale both values on another size, as a `db` change (§7).
 
-**Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try it now" opens an empty account (`SPEC.md` FR-2.2), Fog's levels draw nothing, and every activity shows its account's timezone. All three are idempotent.
+**Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try the demo" opens an empty account (`SPEC.md` FR-2.2), Fog's levels draw nothing, and every activity shows its account's timezone. All three are idempotent.
 
 1. Make every Fog level's outlines (`IMPLEMENTATION.md` §4.2.4) off the server, with the duckdb CLI and about 30 GB of disk free (20 minutes on 10 cores), then copy the file into the app bucket under the key `geo.BoundariesKey` names:
    ```

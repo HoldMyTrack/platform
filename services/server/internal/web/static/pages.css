@@ -22,6 +22,25 @@ a:hover {
   color: var(--fm-accent-hover);
 }
 
+/* A form's submit inside a sentence (templates/demo.html), reading as the links around it. */
+.page-inline-form {
+  display: inline;
+}
+
+.page-link-button {
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: var(--fm-accent-strong);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.page-link-button:hover {
+  color: var(--fm-accent-hover);
+}
+
 code {
   font-size: 0.9em;
   padding: 1px 5px;
@@ -112,6 +131,31 @@ code {
   height: auto;
 }
 
+/* Each screen has a light and a dark capture, picked the way tokens.css picks the palette. Every
+   capture is loading="lazy", the first screen's too, so a hidden one is never fetched. Keep the
+   two copies identical. */
+.page-carousel__slide .page-carousel__dark {
+  display: none;
+}
+
+:root[data-theme='dark'] .page-carousel__slide .page-carousel__light {
+  display: none;
+}
+
+:root[data-theme='dark'] .page-carousel__slide .page-carousel__dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .page-carousel__slide .page-carousel__light {
+    display: none;
+  }
+
+  :root:not([data-theme='light']) .page-carousel__slide .page-carousel__dark {
+    display: block;
+  }
+}
+
 .page-carousel__caption {
   margin: 0;
   padding: 12px 16px 14px;
@@ -186,6 +230,38 @@ code {
 
 .page-store img {
   display: block;
+}
+
+/* Beside the store badge: the app that has no badge yet. */
+.page-actions__note {
+  font-size: 14px;
+  color: var(--fm-ink-secondary);
+}
+
+/* The link to the source (templates/github.html). GitHub's logo guidelines allow its mark in
+   black or white only, so it doesn't take the label's ink. */
+.page-section .page-repo {
+  margin: 16px 0 20px;
+}
+
+.page-repo .page-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-repo__mark {
+  color: #000;
+}
+
+:root[data-theme='dark'] .page-repo__mark {
+  color: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) .page-repo__mark {
+    color: #fff;
+  }
 }
 
 .page-section .page-fineprint {

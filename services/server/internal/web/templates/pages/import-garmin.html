@@ -44,7 +44,7 @@
     <p>Any other app that exports GPX, FIT or TCX works the same way: see <a href="/gpx-viewer">opening a track file</a>.</p>
     {{if not .User}}<div class="page-actions">
       <a class="page-button" href="/signup">Create a free account</a>
-      {{if not .InApp}}<a class="page-button page-button--quiet" href="/signin">Try the demo — no signup</a>{{end}}
+      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
     </div>{{end}}
   </section>
 </main>

@@ -510,7 +510,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 
 ### FR-9.1 About page
 
-- `/about` says what HoldMyTrack is, isn't and how it's funded. Without a session `/` is the same page, with `/` as canonical; with one, `/` is the map. It never starts a demo itself.
+- `/about` says what HoldMyTrack is, isn't and how it's funded. Without a session `/` is the same page, with `/` as canonical; with one, `/` is the map. Opening it never starts a demo.
 - `/robots.txt` disallows `/v1/` and `/tiles/`; `/sitemap.xml` lists the indexable pages.
 
 ### FR-9.2 Help page

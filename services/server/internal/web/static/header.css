@@ -546,6 +546,12 @@
   border: 1px solid var(--fm-accent);
 }
 
+/* As a form's submit (templates/demo.html) it looks the same as the link. */
+button.page-button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
 .page-button:hover {
   color: var(--fm-on-accent);
   background: var(--fm-accent-hover);
