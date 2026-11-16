@@ -4,10 +4,10 @@
      names the same things the same way: Обычный/Туман, «Синхронизировать». -->
 <resources>
     <string name="map_load_failed">Не удалось загрузить карту.</string>
-    <string name="map_unreachable">Не удалось связаться с HoldMyTrack, поэтому ваших треков пока нет на карте.</string>
+    <string name="map_unreachable">Не удалось связаться с HoldMyTrack, поэтому ваших маршрутов пока нет на карте.</string>
     <string name="map_basemap_unreachable">Карта не может связаться со своим сервером. Возможно, его блокирует ваша сеть.</string>
     <string name="map_satellite_failed">Не удалось загрузить спутниковые снимки.</string>
-    <string name="map_empty">На карте пока ничего нет. Синхронизируйте занятия из Health Connect или запишите прогулку кнопкой внизу.</string>
+    <string name="map_empty">На карте пока ничего нет. Синхронизируйте путешествия из Health Connect или запишите прогулку кнопкой внизу.</string>
     <string name="retry">Повторить</string>
     <string name="web_page_failed">Не удалось загрузить страницу. Проверьте подключение и попробуйте снова.</string>
 
@@ -16,7 +16,7 @@
     <string name="create_account">Создать аккаунт</string>
     <string name="try_demo">Попробовать демо</string>
     <string name="sign_in_title">Вход в HoldMyTrack</string>
-    <string name="sign_in_intro">Войдите, чтобы увидеть свои треки и «туман войны». Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять.</string>
+    <string name="sign_in_intro">Войдите, чтобы увидеть свои маршруты и «туман войны». Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять.</string>
     <string name="sign_up_title">Создание аккаунта</string>
     <string name="forgot_password">Забыли пароль?</string>
     <string name="to_sign_up">Нет аккаунта? Создайте его</string>
@@ -35,7 +35,7 @@
 
     <string name="checking_session">Проверяем вход…</string>
 
-    <string name="profile_card_activities">Занятия</string>
+    <string name="profile_card_activities">Путешествия</string>
     <string name="profile_card_distance">Расстояние</string>
     <string name="profile_card_active_days">Активные дни</string>
     <string name="profile_card_longest_streak">Самая длинная серия</string>
@@ -120,7 +120,7 @@
     <string name="export_shape">Форма и размер снимка</string>
     <string name="export_close">Закрыть</string>
     <string name="export_show_stats">Показать статистику</string>
-    <string name="export_show_stats_hint">Отметьте занятия, чтобы показать их статистику.</string>
+    <string name="export_show_stats_hint">Отметьте путешествия, чтобы показать их статистику.</string>
     <string name="export_capture">Сохранить и поделиться</string>
     <string name="export_custom">Свой · %1$s</string>
     <string name="export_custom_full">Свой · %1$s (%2$d пикс. по длинной стороне)</string>
@@ -140,12 +140,12 @@
     <string name="dates_between">%1$s – %2$s</string>
     <string name="dates_clear">Сбросить даты</string>
     <string name="dates_clear_end">Сбросить: %1$s</string>
-    <string name="dates_first_activity">Первая активность: %1$s</string>
+    <string name="dates_first_activity">Первое путешествие: %1$s</string>
     <string name="dates_today">Сегодня</string>
     <string name="dates_done">Готово</string>
-    <string name="area_capped">Показаны последние %1$s из %2$s активностей здесь. Приблизьте карту или задайте даты, чтобы увидеть остальные.</string>
-    <string name="edit_open_failed">Не удалось открыть активность: %1$s</string>
-    <string name="area_zoom_in">Приблизьте карту, чтобы увидеть свои активности.</string>
+    <string name="area_capped">Показаны последние %1$s из %2$s путешествий здесь. Приблизьте карту или задайте даты, чтобы увидеть остальные.</string>
+    <string name="edit_open_failed">Не удалось открыть путешествие: %1$s</string>
+    <string name="area_zoom_in">Приблизьте карту, чтобы увидеть свои путешествия.</string>
     <string name="locate_needs_location">HoldMyTrack нужен доступ к местоположению, чтобы показать, где вы.</string>
     <string name="nav_map">Карта</string>
     <string name="nav_stories">Истории</string>
@@ -173,7 +173,7 @@
     <string name="settings_language_auto">Автоматически (как на телефоне)</string>
     <string name="settings_theme">Тема</string>
     <string name="settings_export_title">Скачать свои данные</string>
-    <string name="settings_export_hint">Копия всего, что есть в вашем аккаунте, в zip-архивах: загруженные и синхронизированные файлы, все занятия в виде GPX, фотографии, а также настройки, истории, приватные и отмеченные места.</string>
+    <string name="settings_export_hint">Копия всего, что есть в вашем аккаунте, в zip-архивах: загруженные и синхронизированные файлы, все путешествия в виде GPX, фотографии, а также настройки, истории, приватные и отмеченные места.</string>
     <string name="settings_export_request">Запросить архив</string>
     <string name="settings_export_again">Запросить новый</string>
     <string name="settings_export_preparing">Готовим архив. Обычно это занимает несколько минут; когда он будет готов, мы напишем на %1$s, и он появится здесь.</string>
@@ -182,7 +182,7 @@
     <string name="settings_export_failed">Не удалось подготовить архив. Попробуйте ещё раз, а если снова не получится — напишите нам.</string>
     <string name="settings_export_downloading">Скачивается в папку «Загрузки».</string>
     <string name="settings_delete_title">Удаление аккаунта</string>
-    <string name="settings_delete_hint">Удаляет аккаунт и всё, что в нём, насовсем: все занятия и загруженные файлы, фотографии, истории, приватные и отмеченные места, а также записи на этом телефоне, которые ещё не синхронизированы. Это нельзя отменить, а в резервных копиях данные хранятся ещё до 8 недель.</string>
+    <string name="settings_delete_hint">Удаляет аккаунт и всё, что в нём, насовсем: все путешествия и загруженные файлы, фотографии, истории, приватные и отмеченные места, а также записи на этом телефоне, которые ещё не синхронизированы. Это нельзя отменить, а в резервных копиях данные хранятся ещё до 8 недель.</string>
     <string name="settings_delete_open">Удалить аккаунт…</string>
     <string name="settings_delete_confirm">Вы выйдете из аккаунта на всех устройствах, а всё, что в нём, исчезнет в течение нескольких минут. Для подтверждения введите адрес своей почты — %1$s.</string>
     <string name="settings_delete_email">Адрес почты</string>
@@ -195,7 +195,7 @@
     <string name="settings_no_match">Ничего не найдено.</string>
 
     <string name="recording_name_hint">Название</string>
-    <string name="recording_type_hint">Тип занятия</string>
+    <string name="recording_type_hint">Тип путешествия</string>
     <string name="recording_description_hint">Описание (необязательно)</string>
     <string name="recording_pause">Пауза</string>
     <string name="recording_resume">Продолжить</string>
@@ -208,17 +208,17 @@
     <string name="recording_type_no_match">Нет типа, подходящего под «%1$s»</string>
     <string name="recording_download">Скачать GPX</string>
     <string name="recording_saved_until_sync">Запись сохранена. Она появится на карте после синхронизации.</string>
-    <string name="recording_downloaded">Трек сохранён.</string>
-    <string name="recording_download_failed">Не удалось сохранить трек.</string>
+    <string name="recording_downloaded">Маршрут сохранён.</string>
+    <string name="recording_download_failed">Не удалось сохранить маршрут.</string>
     <string name="recording_stat_time">Время</string>
     <string name="recording_stat_distance">Расстояние</string>
     <string name="recording_too_short">Слишком коротко — не сохранено.</string>
-    <string name="recording_needs_location">HoldMyTrack нужен доступ к местоположению, чтобы записать GPS-трек.</string>
+    <string name="recording_needs_location">HoldMyTrack нужен доступ к местоположению, чтобы записать GPS-маршрут.</string>
     <string name="recording_edit_title">Изменить запись</string>
     <string name="recording_save_title">Сохранить запись</string>
     <string name="recording_discard">Удалить</string>
     <string name="recording_discard_confirm_title">Удалить эту запись?</string>
-    <string name="recording_discard_confirm_message">Трек будет удалён с этого устройства. Это нельзя отменить.</string>
+    <string name="recording_discard_confirm_message">Маршрут будет удалён с этого устройства. Это нельзя отменить.</string>
     <string name="recording_leftover_title">Незавершённая запись</string>
     <string name="recording_leftover_message">HoldMyTrack закрылся во время записи. До остановки записано %1$s · %2$s.</string>
     <string name="recording_leftover_resume">Продолжить</string>
@@ -256,7 +256,7 @@
     <string name="privacy_policy">Политика конфиденциальности</string>
     <string name="sync_needs_account">Сначала войдите в HoldMyTrack — до этого синхронизировать некуда.</string>
     <string name="sync_needs_verified_email">Сначала подтвердите адрес почты — если нужна новая ссылка, откройте HoldMyTrack.</string>
-    <string name="sync_demo_read_only">Демо-аккаунт только для просмотра — в нём нельзя добавлять, изменять и удалять занятия. Создайте аккаунт, чтобы синхронизировать свои данные.</string>
+    <string name="sync_demo_read_only">Демо-аккаунт только для просмотра — в нём нельзя добавлять, изменять и удалять путешествия. Создайте аккаунт, чтобы синхронизировать свои данные.</string>
     <string name="sync_unavailable">На этом устройстве нет Health Connect, так что синхронизировать не из чего.</string>
     <string name="sync_update_required">Health Connect нужно обновить, прежде чем он сможет чем-то поделиться.</string>
     <string name="sync_needs_exercise_permission">HoldMyTrack пока не может читать ваши тренировки.</string>
@@ -270,7 +270,7 @@
     <string name="sync_stopped">Остановлено досрочно. %1$s</string>
     <string name="sync_refusal_too_many_points">в маршруте %1$d точек — больше, чем принимает один запрос синхронизации</string>
     <string name="sync_request_failed">запрос синхронизации не удался</string>
-    <string name="sync_no_report">сервер ничего не сообщил об этом занятии (статус %1$s)</string>
+    <string name="sync_no_report">сервер ничего не сообщил об этом путешествии (статус %1$s)</string>
     <string name="sync_subtext">То, что есть на этом телефоне, но ещё не на вашей карте. Отметьте, что добавить, — больше ничего не отправляется.</string>
     <string name="sync_window_note">Тренировки Health Connect за последние 3 месяца. Более старые остаются в Health Connect.</string>
     <plurals name="sync_routes_refused">
@@ -280,7 +280,7 @@
         <item quantity="other">Health Connect не отдал маршрутов: %1$d. Не уходите из HoldMyTrack и проверьте, что доступ к маршрутам тренировок всё ещё разрешён.</item>
     </plurals>
     <string name="sync_read_failed">Не удалось прочитать Health Connect: %1$s</string>
-    <string name="sync_types">Типы занятий</string>
+    <string name="sync_types">Типы путешествий</string>
     <string name="sync_select_all">Выбрать все</string>
     <string name="sync_select_none">Снять все</string>
     <string name="sync_list_loading">Читаем, что есть на этом телефоне…</string>
@@ -309,16 +309,16 @@
     <string name="sync_row_untick">Снять отметку: %1$s</string>
     <string name="sync_row_show">Показать на карте: %1$s</string>
     <plurals name="sync_row_similar">
-        <item quantity="one">%1$s: %2$d похожий трек</item>
-        <item quantity="few">%1$s: %2$d похожих трека</item>
-        <item quantity="many">%1$s: %2$d похожих треков</item>
-        <item quantity="other">%1$s: %2$d похожего трека</item>
+        <item quantity="one">%1$s: %2$d похожий маршрут</item>
+        <item quantity="few">%1$s: %2$d похожих маршрута</item>
+        <item quantity="many">%1$s: %2$d похожих маршрутов</item>
+        <item quantity="other">%1$s: %2$d похожего маршрута</item>
     </plurals>
-    <string name="similar_title">Есть похожие треки</string>
+    <string name="similar_title">Есть похожие маршруты</string>
     <string name="similar_lead">%1$s (%2$s) приходится на то же время, что и:</string>
     <string name="similar_waiting">Ждут здесь</string>
     <string name="similar_on_map">Уже на карте</string>
-    <string name="similar_note">Если отправить больше одного, у вас будут две активности одного и того же пути. Ничего не выбирается за вас — отметьте нужный.</string>
+    <string name="similar_note">Если отправить больше одного, у вас будут два путешествия по одному и тому же пути. Ничего не выбирается за вас — отметьте нужный.</string>
     <string name="similar_show">Показать</string>
     <string name="similar_show_named">Показать: %1$s, %2$s</string>
     <string name="similar_close">Закрыть</string>
@@ -375,7 +375,7 @@
     <string name="sync_history_title">История синхронизации</string>
     <string name="sync_history_sub">Все импорты и чем они закончились</string>
     <string name="upload_title">Загрузить</string>
-    <string name="upload_demo">Недоступно в демо-аккаунте — создайте аккаунт, чтобы загружать свои занятия.</string>
+    <string name="upload_demo">Недоступно в демо-аккаунте — создайте аккаунт, чтобы загружать свои путешествия.</string>
     <string name="upload_see_sync">Смотреть в истории синхронизации</string>
     <string name="upload_hint">Файлы .gpx, .fit или .tcx, до 20 за раз.</string>
     <string name="upload_choose">Выбрать файлы…</string>
@@ -391,8 +391,8 @@
     <string name="upload_network_error">Ошибка сети</string>
 
     <!-- The map's Activities panel (panel/ActivitiesPanel.kt), after the web's activities.* and filters.* messages. -->
-    <string name="panel_label">Панель занятий</string>
-    <string name="panel_tab_activities">Занятия</string>
+    <string name="panel_label">Панель путешествий</string>
+    <string name="panel_tab_activities">Путешествия</string>
     <string name="panel_unit_m">м</string>
     <string name="panel_unit_ft">фт</string>
     <string name="panel_loading">Загрузка…</string>
@@ -410,12 +410,12 @@
     <string name="panel_any_distance">любое расстояние</string>
     <string name="panel_any_distance_chip">Любое расстояние</string>
     <string name="panel_distance_range">%1$s – %2$s %3$s</string>
-    <string name="panel_check_all">Отметить все занятия</string>
-    <string name="panel_uncheck_all">Снять отметку со всех занятий</string>
+    <string name="panel_check_all">Отметить все путешествия</string>
+    <string name="panel_uncheck_all">Снять отметку со всех путешествий</string>
     <string name="panel_hide_target">Скрыть с карты: %1$s</string>
     <string name="panel_show_target">Показать на карте: %1$s</string>
     <string name="panel_focus_target">Приблизить карту: %1$s</string>
-    <string name="panel_no_target">Сначала нажмите на занятие или отметьте несколько</string>
+    <string name="panel_no_target">Сначала нажмите на путешествие или отметьте несколько</string>
     <string name="panel_target_one">«%1$s»</string>
     <string name="panel_footer">Отмечено: %1$d · %2$s</string>
     <string name="panel_reset">Сбросить</string>
@@ -437,7 +437,7 @@
     <string name="card_pace_mi">%1$s /миля</string>
     <string name="card_speed_km">%1$s км/ч</string>
     <string name="card_speed_mi">%1$s миль/ч</string>
-    <string name="panel_none_match">Нет занятий, подходящих под фильтры.</string>
+    <string name="panel_none_match">Нет путешествий, подходящих под фильтры.</string>
     <string name="panel_pending">Ожидает</string>
     <string name="panel_hidden">Скрыто</string>
     <string name="activity_private_badge">Приватное</string>
@@ -451,38 +451,38 @@
     <string name="panel_unit_km">км</string>
     <string name="panel_unit_mi">ми</string>
     <plurals name="panel_checked_count">
-        <item quantity="one">%1$d отмеченное занятие</item>
-        <item quantity="few">%1$d отмеченных занятия</item>
-        <item quantity="many">%1$d отмеченных занятий</item>
-        <item quantity="other">%1$d отмеченного занятия</item>
+        <item quantity="one">%1$d отмеченное путешествие</item>
+        <item quantity="few">%1$d отмеченных путешествия</item>
+        <item quantity="many">%1$d отмеченных путешествий</item>
+        <item quantity="other">%1$d отмеченного путешествия</item>
     </plurals>
 
     <!-- The panel's Edit and Delete (panel/EditActivityWindow.kt), after the web's edit.* and activities.delete_* messages. -->
-    <string name="panel_edit_one">Изменить тип, название, описание и трек: %1$s</string>
+    <string name="panel_edit_one">Изменить тип, название, описание и маршрут: %1$s</string>
     <string name="panel_edit_many">Изменить тип: %1$s</string>
     <string name="panel_delete_target">Удалить: %1$s</string>
-    <string name="panel_delete_one_title">Удалить это занятие?</string>
+    <string name="panel_delete_one_title">Удалить это путешествие?</string>
     <string name="panel_delete_title">Удалить эту группу?</string>
-    <string name="panel_delete_one_body">%1$s будет удалено навсегда — вместе с треком, покрытием «тумана войны» и всеми рекордами, в которые оно входило. Это нельзя отменить.</string>
-    <string name="panel_delete_many_body">%1$s будут удалены навсегда — вместе с треками, покрытием «тумана войны» и всеми рекордами, в которые они входили. Это нельзя отменить.</string>
+    <string name="panel_delete_one_body">%1$s будет удалено навсегда — вместе с маршрутом, покрытием «тумана войны» и всеми рекордами, в которые оно входило. Это нельзя отменить.</string>
+    <string name="panel_delete_many_body">%1$s будут удалены навсегда — вместе с маршрутами, покрытием «тумана войны» и всеми рекордами, в которые они входили. Это нельзя отменить.</string>
     <string name="panel_delete_confirm">Удалить</string>
     <string name="panel_deleting">Удаление…</string>
-    <string name="panel_delete_failed">Не удалось удалить занятие: %1$s</string>
+    <string name="panel_delete_failed">Не удалось удалить путешествие: %1$s</string>
     <string name="panel_group_summary">%1$s (%2$s)</string>
-    <string name="panel_demo_edit">Недоступно в демо-аккаунте — создайте аккаунт, чтобы редактировать занятия</string>
-    <string name="panel_demo_delete">Недоступно в демо-аккаунте — создайте аккаунт, чтобы удалять занятия</string>
-    <string name="edit_tab_activity">Занятие</string>
-    <string name="edit_tab_track">Трек</string>
-    <string name="edit_track_check_one">Отметьте ровно одно занятие, чтобы редактировать его трек</string>
-    <string name="edit_track_processing">Этот трек ещё обрабатывается</string>
-    <string name="edit_track_no_original">Исходная запись этого занятия не сохранена, поэтому трек нельзя редактировать</string>
-    <string name="edit_track_bad_times">У точек этого трека нет пригодного времени, поэтому его нельзя редактировать</string>
+    <string name="panel_demo_edit">Недоступно в демо-аккаунте — создайте аккаунт, чтобы редактировать путешествия</string>
+    <string name="panel_demo_delete">Недоступно в демо-аккаунте — создайте аккаунт, чтобы удалять путешествия</string>
+    <string name="edit_tab_activity">Путешествие</string>
+    <string name="edit_tab_track">Маршрут</string>
+    <string name="edit_track_check_one">Отметьте ровно одно путешествие, чтобы редактировать его маршрут</string>
+    <string name="edit_track_processing">Этот маршрут ещё обрабатывается</string>
+    <string name="edit_track_no_original">Исходная запись этого путешествия не сохранена, поэтому маршрут нельзя редактировать</string>
+    <string name="edit_track_bad_times">У точек этого маршрута нет пригодного времени, поэтому его нельзя редактировать</string>
     <string name="edit_track_chop">Обрезать</string>
     <string name="edit_track_chop_title">Оставить только часть между ручками</string>
     <string name="edit_track_cut">Вырезать</string>
     <string name="edit_track_split">Разделить</string>
-    <string name="edit_track_split_title">Разделить занятие на два у сдвинутой ручки</string>
-    <string name="edit_track_split_note">При сохранении занятие разделится на два в %1$s. Новая часть получит тот же тип, название и описание.</string>
+    <string name="edit_track_split_title">Разделить путешествие на два у сдвинутой ручки</string>
+    <string name="edit_track_split_note">При сохранении путешествие разделится на два в %1$s. Новая часть получит тот же тип, название и описание.</string>
     <string name="edit_track_split_hidden_title">Разделить внутри приватного места?</string>
     <string name="edit_track_split_hidden_confirm">Всё равно разделить</string>
     <string name="edit_track_cut_title">Убрать часть между ручками и соединить концы. Удерживайте для предпросмотра.</string>
@@ -495,23 +495,23 @@
     <string name="edit_track_undo">Отменить</string>
     <string name="edit_track_undo_title">Отменить последнее изменение</string>
     <string name="edit_track_reset">Сбросить</string>
-    <string name="edit_track_reset_title">Вернуть трек к записанному виду («Отменить» вернёт изменения)</string>
+    <string name="edit_track_reset_title">Вернуть маршрут к записанному виду («Отменить» вернёт изменения)</string>
     <string name="edit_track_range">Диапазон</string>
     <string name="edit_track_range_readout">%1$s – %2$s %3$s · %4$s–%5$s</string>
     <string name="edit_track_loading">Загрузка точек…</string>
-    <string name="edit_track_unsaved">Трек, есть несохранённые изменения</string>
+    <string name="edit_track_unsaved">Маршрут, есть несохранённые изменения</string>
     <plurals name="edit_track_points">
         <item quantity="one">%1$d точка</item>
         <item quantity="few">%1$d точки</item>
         <item quantity="many">%1$d точек</item>
         <item quantity="other">%1$d точки</item>
     </plurals>
-    <string name="edit_title_one">Редактировать занятие</string>
-    <string name="edit_multi_subtitle">Тип и истории применяются ко всем отмеченным занятиям; название и описание у каждого свои.</string>
-    <string name="edit_multi_reason">При редактировании нескольких занятий меняются тип и истории — название и описание у каждого занятия свои.</string>
+    <string name="edit_title_one">Редактировать путешествие</string>
+    <string name="edit_multi_subtitle">Тип и истории применяются ко всем отмеченным путешествиям; название и описание у каждого свои.</string>
+    <string name="edit_multi_reason">При редактировании нескольких путешествий меняются тип и истории — название и описание у каждого путешествия свои.</string>
     <string name="edit_type">Тип</string>
     <string name="edit_name">Название</string>
-    <string name="edit_name_placeholder">Необязательно — показывается вместо даты в списке занятий</string>
+    <string name="edit_name_placeholder">Необязательно — показывается вместо даты в списке путешествий</string>
     <string name="edit_description">Описание</string>
     <string name="edit_description_placeholder">Добавьте заметку — например, «Поездка к морю с детьми»</string>
     <string name="edit_type_mixed">Разные типы — выберите один, чтобы задать его всем</string>
@@ -519,27 +519,27 @@
     <string name="edit_type_too_long">Тип должен быть не длиннее %1$d символов.</string>
     <string name="edit_name_too_long">Название должно быть не длиннее %1$d символов.</string>
     <string name="edit_description_too_long">Описание должно быть не длиннее %1$d символов.</string>
-    <string name="edit_save_failed">Не удалось сохранить занятие</string>
+    <string name="edit_save_failed">Не удалось сохранить путешествие</string>
     <string name="edit_save">Сохранить</string>
     <string name="edit_saving">Сохранение…</string>
     <string name="edit_cancel">Отмена</string>
     <plurals name="edit_title_many">
-        <item quantity="one">Редактировать %1$d занятие</item>
-        <item quantity="few">Редактировать %1$d занятия</item>
-        <item quantity="many">Редактировать %1$d занятий</item>
-        <item quantity="other">Редактировать %1$d занятия</item>
+        <item quantity="one">Редактировать %1$d путешествие</item>
+        <item quantity="few">Редактировать %1$d путешествия</item>
+        <item quantity="many">Редактировать %1$d путешествий</item>
+        <item quantity="other">Редактировать %1$d путешествия</item>
     </plurals>
 
     <!-- Photos (photos/, panel/PhotosTab.kt, map/PhotoMarkers.kt, map/PhotoPopup.kt), after the
          web's photos.* messages. -->
     <string name="photos_tab">Фото</string>
     <string name="photos_unsaved">Фото, есть несохранённые изменения</string>
-    <string name="photos_check_one">Фотографии относятся к одному занятию — отметьте только одно, чтобы добавить или изменить их.</string>
-    <string name="photos_no_track">У этого занятия нет трека, на который можно поместить фотографии.</string>
+    <string name="photos_check_one">Фотографии относятся к одному путешествию — отметьте только одно, чтобы добавить или изменить их.</string>
+    <string name="photos_no_track">У этого путешествия нет маршрута, на который можно поместить фотографии.</string>
     <string name="photos_add">Добавить фото</string>
     <string name="photos_preparing">Подготовка %1$d из %2$d…</string>
     <string name="photos_loading">Загрузка фотографий…</string>
-    <string name="photos_empty">Фотографий пока нет. Добавьте снимки с этого занятия — каждый встанет на маршрут там, где был сделан.</string>
+    <string name="photos_empty">Фотографий пока нет. Добавьте снимки с этого путешествия — каждый встанет на маршрут там, где был сделан.</string>
     <string name="photos_upload_failed">%1$s: %2$s</string>
     <string name="photos_unreadable">Этот файл не открывается как фотография.</string>
     <string name="photos_needs_place">Не удалось определить, где снята фотография. Передвиньте ползунок к её месту на маршруте.</string>
@@ -589,7 +589,7 @@
     <string name="photos_unavailable">Не удалось загрузить фотографию.</string>
 
     <!-- Private locations: the Privacy screen and the editor on the map (privacy/PrivacyActivity.kt, panel/PrivateLocationEditor.kt), after the web's private.* messages. -->
-    <string name="private_subtitle">Треки никогда не начинаются и не заканчиваются внутри этих кругов — часть внутри отрезается от каждого занятия, так что никто не проследит трек до вашей двери.</string>
+    <string name="private_subtitle">Маршруты никогда не начинаются и не заканчиваются внутри этих кругов — часть внутри отрезается от каждого путешествия, так что никто не проследит маршрут до вашей двери.</string>
     <string name="panel_private_title">Приватные места</string>
     <string name="private_none">Пока нет.</string>
     <string name="private_unnamed">Без названия</string>
@@ -599,16 +599,16 @@
     <string name="private_new_title">Новое приватное место</string>
     <string name="private_edit_title">Изменить приватное место</string>
     <string name="private_editor_note">Перетащите центр, чтобы сдвинуть круг. Не ставьте центр прямо на свою дверь — середину круга проверят в первую очередь.</string>
-    <string name="private_hidden_none">Ни одно занятие не находится целиком внутри этих мест.</string>
+    <string name="private_hidden_none">Ни одно путешествие не находится целиком внутри этих мест.</string>
     <plurals name="private_hidden">
-        <item quantity="one">%1$d занятие целиком внутри этих мест и отмечено «Приватное».</item>
-        <item quantity="few">%1$d занятия целиком внутри этих мест и отмечены «Приватное».</item>
-        <item quantity="many">%1$d занятий целиком внутри этих мест и отмечены «Приватное».</item>
-        <item quantity="other">%1$d занятия целиком внутри этих мест и отмечены «Приватное».</item>
+        <item quantity="one">%1$d путешествие целиком внутри этих мест и отмечено «Приватное».</item>
+        <item quantity="few">%1$d путешествия целиком внутри этих мест и отмечены «Приватное».</item>
+        <item quantity="many">%1$d путешествий целиком внутри этих мест и отмечены «Приватное».</item>
+        <item quantity="other">%1$d путешествия целиком внутри этих мест и отмечены «Приватное».</item>
     </plurals>
-    <string name="private_reprocess_note">Сохранение изменения запускает повторную обработку затронутых занятий — до её окончания они помечены «Ожидает».</string>
+    <string name="private_reprocess_note">Сохранение изменения запускает повторную обработку затронутых путешествий — до её окончания они помечены «Ожидает».</string>
     <string name="private_delete_title">Удалить это приватное место?</string>
-    <string name="private_delete_body">Занятия, которые начинаются или заканчиваются внутри него, снова покажут эти части после повторной обработки.</string>
+    <string name="private_delete_body">Путешествия, которые начинаются или заканчиваются внутри него, снова покажут эти части после повторной обработки.</string>
     <string name="private_delete_failed">Не удалось удалить: %1$s</string>
     <string name="private_add_on_map">Добавить место на карте</string>
     <string name="private_delete">Удалить</string>
@@ -623,8 +623,8 @@
     <!-- Stories (panel/StoriesTab.kt, panel/StoryDialog.kt, Add to story (panel/ActivitiesPanel.kt) and the
          rows' Story badge), after the web's stories.* messages. -->
     <string name="panel_tab_stories">Истории</string>
-    <string name="story_subtext">Подборки ваших занятий. Видны только вам.</string>
-    <string name="story_empty">Историй пока нет. На вкладке «Занятия» отметьте нужные занятия или нажмите на одно из них, затем — «Добавить в историю».</string>
+    <string name="story_subtext">Подборки ваших путешествий. Видны только вам.</string>
+    <string name="story_empty">Историй пока нет. На вкладке «Путешествия» отметьте нужные путешествия или нажмите на одно из них, затем — «Добавить в историю».</string>
     <string name="story_add_target">Добавить в историю: %1$s</string>
     <string name="story_demo_add">Недоступно в демо-аккаунте — создайте аккаунт, чтобы собирать истории</string>
     <string name="story_new">Новая история…</string>
@@ -633,7 +633,7 @@
     <string name="story_remove">Убрать из истории</string>
     <string name="story_demo_remove">Недоступно в демо-аккаунте — создайте аккаунт, чтобы изменять истории</string>
     <string name="panel_open_story">Открыть «%1$s»</string>
-    <string name="story_no_activities">В этой истории нет занятий.</string>
+    <string name="story_no_activities">В этой истории нет путешествий.</string>
     <string name="story_not_found">Такой истории нет, или она не ваша.</string>
     <string name="story_load_failed">Не удалось загрузить истории</string>
     <string name="story_open">Открыта</string>
@@ -643,13 +643,13 @@
     <string name="story_delete">Удалить историю</string>
     <string name="story_demo_delete">Недоступно в демо-аккаунте — создайте аккаунт, чтобы удалять истории</string>
     <string name="story_delete_title">Удалить историю</string>
-    <string name="story_delete_confirm">Удалить «%1$s»? Занятия останутся.</string>
+    <string name="story_delete_confirm">Удалить «%1$s»? Путешествия останутся.</string>
     <string name="story_delete_button">Удалить историю</string>
     <string name="story_delete_failed">Не удалось удалить историю: %1$s</string>
     <string name="story_send">Отправить копию</string>
     <string name="story_demo_send">Недоступно в демо-аккаунте — создайте аккаунт, чтобы отправлять копии историй</string>
     <string name="story_send_title">Отправить копию «%1$s»</string>
-    <string name="story_send_body">Когда человек примет копию, в его аккаунте HoldMyTrack появится собственная копия этой истории и её занятий. С этого момента она его: ваши дальнейшие изменения до неё не дойдут. Если отправить ещё раз позже, добавятся только занятия, которых у него ещё нет.</string>
+    <string name="story_send_body">Когда человек примет копию, в его аккаунте HoldMyTrack появится собственная копия этой истории и её путешествий. С этого момента она его: ваши дальнейшие изменения до неё не дойдут. Если отправить ещё раз позже, добавятся только путешествия, которых у него ещё нет.</string>
     <string name="story_send_email">Адрес электронной почты</string>
     <string name="story_send_confirm">Отправить</string>
     <string name="story_sending">Отправляем…</string>
@@ -671,12 +671,12 @@
     <string name="story_edit_title">Изменить историю</string>
     <string name="story_save_failed">Не удалось сохранить историю</string>
     <string name="story_stats">%1$s · %2$s · %3$s в движении</string>
-    <string name="story_by_type">По типам занятий</string>
+    <string name="story_by_type">По типам путешествий</string>
     <plurals name="story_activity_count">
-        <item quantity="one">%1$d занятие</item>
-        <item quantity="few">%1$d занятия</item>
-        <item quantity="many">%1$d занятий</item>
-        <item quantity="other">%1$d занятия</item>
+        <item quantity="one">%1$d путешествие</item>
+        <item quantity="few">%1$d путешествия</item>
+        <item quantity="many">%1$d путешествий</item>
+        <item quantity="other">%1$d путешествия</item>
     </plurals>
     <string name="panel_story_badge_one">История</string>
     <plurals name="panel_story_badge">
@@ -711,12 +711,12 @@
     <string name="tour_progress">%1$d из %2$d</string>
     <string name="tour_welcome_title">Добро пожаловать в HoldMyTrack</string>
     <string name="tour_welcome_body">Здесь хранятся маршруты, которые вы выбрали, и из них получаются карты. Тур покажет, что где находится, примерно за минуту.</string>
-    <string name="tour_activities_title">Ваши занятия</string>
-    <string name="tour_activities_body">Все занятия на карте, сначала новые: список следует за картой, когда вы её двигаете. Нажмите на занятие, чтобы перейти к нему на карте; отметьте несколько, чтобы изменить, скрыть или экспортировать их вместе.</string>
+    <string name="tour_activities_title">Ваши путешествия</string>
+    <string name="tour_activities_body">Все путешествия на карте, сначала новые: список следует за картой, когда вы её двигаете. Нажмите на путешествие, чтобы перейти к нему на карте; отметьте несколько, чтобы изменить, скрыть или экспортировать их вместе.</string>
     <string name="tour_range_title">Даты</string>
-    <string name="tour_range_body">За всё время, пока не заданы «С» или «По». Выбранная дата переносит карту к подходящим занятиям.</string>
+    <string name="tour_range_body">За всё время, пока не заданы «С» или «По». Выбранная дата переносит карту к подходящим путешествиям.</string>
     <string name="tour_stories_title">Истории</string>
-    <string name="tour_stories_body">Соберите занятия в поездку или сезон. История показывает свои занятия вместо тех, что на карте, а её копию можно отправить другому человеку.</string>
+    <string name="tour_stories_body">Соберите путешествия в поездку или сезон. История показывает свои путешествия вместо тех, что на карте, а её копию можно отправить другому человеку.</string>
     <string name="tour_layers_title">Слои</string>
     <string name="tour_layers_body">Дороги, велодорожки, тропы и интересные места — водопады, смотровые площадки, исторические места — поверх любого режима.</string>
     <string name="tour_export_title">Экспорт</string>
@@ -725,7 +725,7 @@
     <string name="tour_fog_body">Все места, где вы когда-либо были, за всё время: даты и фильтры здесь не действуют. Туман открывает места целиком, от стран и штатов до округов и городов, а вблизи — точно вдоль ваших маршрутов. Нажмите «Туман», чтобы выбрать уровень и оставить его на любом масштабе.</string>
     <string name="tour_fog_exact_body">Все места, где вы когда-либо были, за всё время: даты и фильтры здесь не действуют. Вблизи туман рассеивается точно вдоль ваших маршрутов.</string>
     <string name="tour_fog_cities_title">Туман: города</string>
-    <string name="tour_fog_cities_body">При отдалении целый город открывается, как только в нём есть хоть одно занятие. Коснитесь места, чтобы увидеть его название и сколько в нём исследовано.</string>
+    <string name="tour_fog_cities_body">При отдалении целый город открывается, как только в нём есть хоть одно путешествие. Коснитесь места, чтобы увидеть его название и сколько в нём исследовано.</string>
     <string name="tour_fog_counties_title">Туман: округа</string>
     <string name="tour_fog_counties_body">Ещё дальше открывается целый округ.</string>
     <string name="tour_fog_regions_title">Туман: штаты и регионы</string>
@@ -735,8 +735,8 @@
     <string name="tour_record_title">Запись</string>
     <string name="tour_record_body">Нажмите, чтобы записать прогулку или поездку по GPS телефона, нажмите ещё раз для паузы, удерживайте, чтобы остановить. Записи ждут на телефоне, пока вы не отправите их из Синхронизации.</string>
     <string name="tour_sync_title">Синхронизация</string>
-    <string name="tour_sync_body">Занятия из Health Connect и записи с этого телефона. Сначала ничего не отмечено: отправляется только то, что вы отметите.</string>
-    <string name="tour_sync_demo_body">В своём аккаунте сюда приходят занятия из Health Connect и ваши записи. Демо не может отправлять: создайте аккаунт на вкладке «Вы», чтобы начать свой.</string>
+    <string name="tour_sync_body">Путешествия из Health Connect и записи с этого телефона. Сначала ничего не отмечено: отправляется только то, что вы отметите.</string>
+    <string name="tour_sync_demo_body">В своём аккаунте сюда приходят путешествия из Health Connect и ваши записи. Демо не может отправлять: создайте аккаунт на вкладке «Вы», чтобы начать свой.</string>
     <string name="tour_done_title">Вот и весь тур</string>
     <string name="tour_done_body">Пройти его снова можно в любой момент — «Пройти тур» здесь, на вкладке «Вы».</string>
     <string name="tour_card_got_it">Понятно</string>

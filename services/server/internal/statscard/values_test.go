@@ -49,7 +49,7 @@ func TestValues(t *testing.T) {
 		}},
 		{"russian", []Activity{hike(), flat}, ru, false, Card{
 			Lines:  []string{"Поход · 13,2 км · 3 ч 41 мин · 591 м", "Ходьба · 1,8 км · 27 мин"},
-			Totals: "2 занятия · 15 км · 4 ч 8 мин · 591 м",
+			Totals: "2 путешествия · 15 км · 4 ч 8 мин · 591 м",
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
