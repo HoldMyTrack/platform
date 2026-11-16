@@ -60,7 +60,7 @@ export function ActivityRow({
   const classes = ['activities-panel__row'];
   // Only the selected row is bold on the map, so only it gets the row highlight — a checked
   // row's ticked box is its only mark.
-  if (focused) classes.push('activities-panel__row--selected');
+  if (focused) classes.push('activities-panel__row--current');
   if (hidden) classes.push('activities-panel__row--hidden');
   if (isPending) classes.push('activities-panel__row--pending');
   return (

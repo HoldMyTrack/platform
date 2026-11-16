@@ -6,6 +6,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { SendCopyDialog } from './SendCopyDialog';
 import { StoryDialog } from './StoryDialog';
 import { StoryInboxItems } from './StoryInboxItems';
+import { folderClick, isFolded } from './storyFold';
 import type { StoryInboxState } from './useStoryInbox';
 import { formatActivityType, formatDuration, formatTotalDistance } from './format';
 import { useUnitSystem, type UnitSystem } from './units';
@@ -65,7 +66,8 @@ export interface StoriesTabProps {
  * Activities tab's, and its × takes the activity out of the Story (`DELETE
  * /v1/stories/{id}/activities`) — here, where the Story is open, rather than where activities are
  * picked, which is where they go in (AddToStoryMenu.tsx). A folder's pencil and trash rename and
- * delete that Story.
+ * delete that Story. A click on the open Story's folder folds its list away or back
+ * (storyFold.ts); the Story stays open.
  */
 export function StoriesTab({
   readOnly,
@@ -96,6 +98,7 @@ export function StoriesTab({
   // The row being taken out of the open Story, and why the last one couldn't be.
   const [removing, setRemoving] = useState<string | null>(null);
   const [removeError, setRemoveError] = useState<string | null>(null);
+  const [foldedId, setFoldedId] = useState<string | null>(null);
 
   async function remove(storyId: string, activityId: string) {
     if (removing !== null) return;
@@ -125,18 +128,24 @@ export function StoriesTab({
         {openError && !openListed && <li className="activities-panel__note activities-panel__note--error">{openError}</li>}
         {stories.map((listed) => {
           const open = listed.id === openId;
+          const expanded = open && !isFolded(foldedId, openId);
           // The open Story's own copy is the fresher one — its numbers follow edits made since.
           const story = open && openStory?.id === listed.id ? openStory : listed;
           return (
-            <li key={story.id} className={`stories-tab__story${open ? ' stories-tab__story--open' : ''}`}>
-              <div className="stories-tab__folder">
+            <li
+              key={story.id}
+              className={`stories-tab__story${open ? ' stories-tab__story--open' : ''}${expanded ? ' stories-tab__story--expanded' : ''}`}
+            >
+              <div className={`stories-tab__folder${open ? ' activities-panel__row--current' : ''}`}>
                 <button
                   type="button"
                   className="stories-tab__toggle"
-                  aria-expanded={open}
+                  aria-expanded={expanded}
                   data-testid="stories-tab-toggle"
                   onClick={() => {
-                    if (open) return;
+                    const click = folderClick(foldedId, openId, story.id);
+                    setFoldedId(click.foldedId);
+                    if (!click.open) return;
                     setRemoveError(null);
                     onOpen(story.id);
                   }}
@@ -175,7 +184,7 @@ export function StoriesTab({
                   <Trash2 size={14} />
                 </button>
               </div>
-              {open && (
+              {expanded && (
                 // A click on the body's own empty space clears the selection, as on the
                 // Activities tab's list.
                 <div
@@ -203,6 +212,7 @@ export function StoriesTab({
                           onRemove: () => void remove(story.id, activity.id),
                         }}
                         onOpenStory={(id) => {
+                          setFoldedId(null);
                           setRemoveError(null);
                           onOpen(id);
                         }}
