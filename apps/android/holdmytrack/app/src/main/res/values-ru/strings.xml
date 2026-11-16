@@ -69,12 +69,12 @@
     <string name="layers_always_shown">Всегда видны при приближении:</string>
     <string name="layers_trails">Тропы</string>
     <string name="layers_dirt_tracks">Грунтовки</string>
-    <string name="layers_playgrounds">Детские площадки</string>
-    <string name="layers_dog_parks">Площадки для собак</string>
-    <string name="layers_monuments">Памятники</string>
-    <string name="layers_viewpoints">Завораживающие виды</string>
-    <string name="layers_waterfalls">Водопады</string>
-    <string name="layers_history">Исторические места</string>
+    <string name="places_playgrounds">Детские площадки</string>
+    <string name="places_dog_parks">Площадки для собак</string>
+    <string name="places_monuments">Памятники</string>
+    <string name="places_viewpoints">Завораживающие виды</string>
+    <string name="places_waterfalls">Водопады</string>
+    <string name="places_history">Исторические места</string>
 
     <string name="spots_category_playground">Детская площадка</string>
     <string name="spots_category_dog_park">Площадка для собак</string>

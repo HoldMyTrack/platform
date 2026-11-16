@@ -13,9 +13,14 @@ object MapPlacesSwitch {
     private const val PREFS = "map_layers"
     private const val KEY = "places_shown"
 
+    /** Read before it was ever set, the value [initial] gives is saved at once, so from then on it
+     *  no longer follows Show layers. */
     fun isOn(context: Context): Boolean {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-        return initial(if (prefs.contains(KEY)) prefs.getBoolean(KEY, true) else null, MapLayersSwitch.isOn(context))
+        val stored = if (prefs.contains(KEY)) prefs.getBoolean(KEY, true) else null
+        val on = initial(stored, MapLayersSwitch.isOn(context))
+        if (stored == null) set(context, on)
+        return on
     }
 
     fun set(context: Context, on: Boolean) {

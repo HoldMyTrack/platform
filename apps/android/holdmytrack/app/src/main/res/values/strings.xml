@@ -68,12 +68,12 @@
     <string name="layers_always_shown">Always shown when zoomed in:</string>
     <string name="layers_trails">Trails</string>
     <string name="layers_dirt_tracks">Dirt tracks</string>
-    <string name="layers_playgrounds">Playgrounds</string>
-    <string name="layers_dog_parks">Dog parks</string>
-    <string name="layers_monuments">Monuments</string>
-    <string name="layers_viewpoints">Mesmerizing views</string>
-    <string name="layers_waterfalls">Waterfalls</string>
-    <string name="layers_history">Historic sites</string>
+    <string name="places_playgrounds">Playgrounds</string>
+    <string name="places_dog_parks">Dog parks</string>
+    <string name="places_monuments">Monuments</string>
+    <string name="places_viewpoints">Mesmerizing views</string>
+    <string name="places_waterfalls">Waterfalls</string>
+    <string name="places_history">Historic sites</string>
 
     <string name="spots_category_playground">Playground</string>
     <string name="spots_category_dog_park">Dog park</string>

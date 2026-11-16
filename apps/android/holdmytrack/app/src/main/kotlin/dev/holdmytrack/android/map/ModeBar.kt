@@ -49,6 +49,7 @@ class ModeBar(
 
     /** The tour holds Fog's level menu open, view-only ([FogLevelMenu.hold]). */
     fun holdFogLevel(open: Boolean) = fogMenu.hold(open)
+    fun dismissFogLevel() = fogMenu.dismiss()
     val fogLevelContent: View? get() = fogMenu.content
 
     init {
@@ -114,7 +115,7 @@ class ModeBar(
     fun renderFogLevel() {
         val fog = buttons.getValue(MapMode.FOG)
         val on = state().mode == MapMode.FOG
-        if (!on) fogMenu.dismiss()
+        if (!on) fogMenu.dismiss() else fogMenu.retry()
         val label = if (on) fogMenu.label() else fog.resources.getString(R.string.mode_fog).let { FogLevelMenu.Label(it, it) }
         if (fog.tag === label.text) return
         fog.tag = label.text

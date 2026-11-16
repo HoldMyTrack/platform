@@ -70,6 +70,16 @@ class TourStepsTest {
     }
 
     @Test
+    fun `Fog's level menu opens after the mode change, every other menu before it`() {
+        val fog = TourSteps.menuMoves(TourSteps.Held(sheet = false, fogLevel = true))
+        assertEquals(listOf(TourMenu.FOG_LEVEL to true), fog.after)
+        assertEquals(listOf(TourMenu.LAYERS to false, TourMenu.PLACES to false), fog.before)
+        val places = TourSteps.menuMoves(TourSteps.Held(sheet = false, places = true))
+        assertEquals(listOf(TourMenu.LAYERS to false, TourMenu.PLACES to true, TourMenu.FOG_LEVEL to false), places.before)
+        assertEquals(emptyList<Pair<TourMenu, Boolean>>(), places.after)
+    }
+
+    @Test
     fun `Fog's level menu opens on the last Fog step only`() {
         assertEquals(listOf("fog"), TourSteps.of(isDemo = false).filter { it.fogLevel }.map { it.id })
         assertEquals(listOf("fog_countries"), TourSteps.of(isDemo = true).filter { it.fogLevel }.map { it.id })

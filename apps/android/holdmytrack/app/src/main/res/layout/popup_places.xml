@@ -31,45 +31,45 @@
 
         <!-- One per MapSpots.Category, in its order. -->
         <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/layers_spots_playground"
+            android:id="@+id/places_playground"
             style="@style/Widget.HoldMyTrack.LayersOption.Check"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/layers_playgrounds" />
+            android:text="@string/places_playgrounds" />
 
         <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/layers_spots_dog_park"
+            android:id="@+id/places_dog_park"
             style="@style/Widget.HoldMyTrack.LayersOption.Check"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/layers_dog_parks" />
+            android:text="@string/places_dog_parks" />
 
         <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/layers_spots_monument"
+            android:id="@+id/places_monument"
             style="@style/Widget.HoldMyTrack.LayersOption.Check"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/layers_monuments" />
+            android:text="@string/places_monuments" />
 
         <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/layers_spots_viewpoint"
+            android:id="@+id/places_viewpoint"
             style="@style/Widget.HoldMyTrack.LayersOption.Check"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/layers_viewpoints" />
+            android:text="@string/places_viewpoints" />
 
         <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/layers_spots_waterfall"
+            android:id="@+id/places_waterfall"
             style="@style/Widget.HoldMyTrack.LayersOption.Check"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/layers_waterfalls" />
+            android:text="@string/places_waterfalls" />
 
         <com.google.android.material.checkbox.MaterialCheckBox
-            android:id="@+id/layers_spots_history"
+            android:id="@+id/places_history"
             style="@style/Widget.HoldMyTrack.LayersOption.Check"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/layers_history" />
+            android:text="@string/places_history" />
     </LinearLayout>
 </ScrollView>

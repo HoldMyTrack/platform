@@ -16,7 +16,7 @@ import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
 
-/** What the tour drives in the app: the tabs, the map's mode, sheet, Layers menu and camera, and the views it points at. */
+/** What the tour drives in the app: the tabs, the map's mode, sheet, menus and camera, and the views it points at. */
 interface TourHost {
     val isDemo: Boolean
     val tab: MainActivity.Tab
@@ -26,10 +26,8 @@ interface TourHost {
     fun setMode(mode: MapMode)
     val sheetOpen: Boolean
     fun setSheetOpen(open: Boolean)
-    /** Holds the Layers menu open for looking at, or lets it go. */
-    fun setLayersOpen(open: Boolean)
-    fun setPlacesOpen(open: Boolean)
-    fun setFogLevelOpen(open: Boolean)
+    /** Holds a map menu open for looking at, or lets it go. */
+    fun setMenuOpen(menu: TourMenu, open: Boolean)
     val map: MapLibreMap?
     /** The Edit window, the Private location editor or a recording has the map. */
     val blocked: Boolean
@@ -41,7 +39,7 @@ interface TourHost {
 /**
  * The tour, its offer and the first-time cards (`apps/android/docs/SPEC.md` FR-2.12), the state around
  * [TourRules] and [TourSteps]: the web's `useTour.ts`. Each step puts its tab, mode, sheet and
- * Layers menu as it says, and the user's come back when the tour ends. The map's camera follows
+ * menus as it says, and the user's come back when the tour ends. The map's camera follows
  * [TourSteps]' views, and goes back to where it was before the first move.
  */
 class TourController(private val activity: AppCompatActivity, private val host: TourHost) {
@@ -125,14 +123,12 @@ class TourController(private val activity: AppCompatActivity, private val host: 
         val step = index?.let { run.steps[it] }
         val changes = TourRules.changes(host.mode ?: MapMode.NORMAL, host.tab, step, run.mode, run.tab)
         val held = TourSteps.held(step, run.sheet)
-        host.setLayersOpen(held.layers)
-        host.setPlacesOpen(held.places)
-        if (!held.fogLevel) host.setFogLevelOpen(false)
+        val menus = TourSteps.menuMoves(held)
+        menus.before.forEach { (menu, open) -> host.setMenuOpen(menu, open) }
         changes.tab?.let(host::showTab)
         changes.mode?.let(host::setMode)
         host.setSheetOpen(held.sheet)
-        // Once Fog is the map's mode, which its level menu hangs from.
-        if (held.fogLevel) host.setFogLevelOpen(true)
+        menus.after.forEach { (menu, open) -> host.setMenuOpen(menu, open) }
         changes.card?.let { save(seen.copy(cards = seen.cards + it)) }
         if (step == null || index == null) {
             camera.end()

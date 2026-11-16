@@ -6,6 +6,9 @@ import dev.holdmytrack.android.map.MapMode
 /** What a step points at, found by `TourHost`; null centers nothing and puts the card at the bottom. */
 enum class TourTarget { SHEET, RANGE, LAYERS, PLACES, EXPORT, MODES, RECORD, YOU_TOUR }
 
+/** A map menu the tour can hold open. */
+enum class TourMenu { LAYERS, PLACES, FOG_LEVEL }
+
 /** A camera: [lon], [lat], [zoom], then a slow pan through each point of [pan], if any. */
 data class TourView(val lon: Double, val lat: Double, val zoom: Double, val pan: List<Pair<Double, Double>> = emptyList()) {
     fun sameSpot(other: TourView) = lon == other.lon && lat == other.lat && zoom == other.zoom
@@ -76,6 +79,19 @@ object TourSteps {
             TourStep("done", TourTarget.YOU_TOUR, tab = MainActivity.Tab.YOU),
         )
     }
+
+    /**
+     * The menus to hold open or let go of, in order: those [before] the step's tab and mode change,
+     * and those [after]. Fog's level menu hangs from Fog's mode button, so it opens only once Fog is
+     * the mode; opened before, the mode change would close it again.
+     */
+    data class MenuMoves(val before: List<Pair<TourMenu, Boolean>>, val after: List<Pair<TourMenu, Boolean>>)
+
+    fun menuMoves(held: Held): MenuMoves = MenuMoves(
+        before = listOf(TourMenu.LAYERS to held.layers, TourMenu.PLACES to held.places) +
+            if (held.fogLevel) emptyList() else listOf(TourMenu.FOG_LEVEL to false),
+        after = if (held.fogLevel) listOf(TourMenu.FOG_LEVEL to true) else emptyList(),
+    )
 
     /** What's held open for a step: the panel's sheet and the Layers, Places and Fog level menus. */
     data class Held(val sheet: Boolean, val layers: Boolean = false, val places: Boolean = false, val fogLevel: Boolean = false)

@@ -20,6 +20,7 @@ import dev.holdmytrack.android.recording.RecordingService
 import dev.holdmytrack.android.tour.TourController
 import dev.holdmytrack.android.tour.TourEvent
 import dev.holdmytrack.android.tour.TourHost
+import dev.holdmytrack.android.tour.TourMenu
 import dev.holdmytrack.android.tour.TourTarget
 
 /**
@@ -246,14 +247,8 @@ class MainActivity : AppCompatActivity() {
         override fun setSheetOpen(open: Boolean) {
             map()?.setSheetOpen(open)
         }
-        override fun setLayersOpen(open: Boolean) {
-            map()?.holdLayers(open)
-        }
-        override fun setPlacesOpen(open: Boolean) {
-            map()?.holdPlaces(open)
-        }
-        override fun setFogLevelOpen(open: Boolean) {
-            map()?.holdFogLevel(open)
+        override fun setMenuOpen(menu: TourMenu, open: Boolean) {
+            map()?.holdMenu(menu, open)
         }
         override val map get() = map()?.mapLibre
         override val blocked get() = map()?.tourBlocked ?: true
