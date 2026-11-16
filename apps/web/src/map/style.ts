@@ -31,7 +31,7 @@ export function isFlavor(value: string): value is Flavor {
   return (FLAVORS as readonly string[]).includes(value);
 }
 
-/** The flavors drawn light-on-dark — the ones the cream fog veil and the export watermark's
+/** The flavors drawn light-on-dark — the ones the black fog veil and the export watermark's
  *  light colors are for. */
 export function isDarkFlavor(flavor: Flavor): boolean {
   return flavor === 'dark' || flavor === 'black';
