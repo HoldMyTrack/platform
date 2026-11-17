@@ -1,9 +1,9 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, Dates
  * narrowing the list and keeping the selection, a Story opened and closed by Back, a track edit's
- * reprocess, a delete, the list following the map from zoom 4, the Dates menu, the header's menus
- * closing, and the tour's offer and header link. Each run signs up a fresh account, uploads the
- * sample files, and deletes the account at the end.
+ * reprocess, a delete, the list following the map from zoom 4, the Dates menu, the Edit window
+ * outliving its activity's row, the header's menus closing, and the tour's offer and header link.
+ * Each run signs up a fresh account, uploads the sample files, and deletes the account at the end.
  *
  *   npm run verify:map
  *
@@ -235,7 +235,55 @@ describe('map flows', () => {
     assert.deepEqual(await page.evaluate(() => window.__holdmytrack.getCenter().toArray()), center);
   });
 
-  it("8. the header's menus close on another menu, a click on the map and Escape", async () => {
+  it('8. the Edit window outlives its row in the list, and its track edit is still followed until it lands', async () => {
+    const id = ids['2026-10-01'];
+    await viewAll();
+    const before = (await call('GET', '/activities')).activities.find((a) => a.id === id).distance_meters;
+    await row(id).locator('.activities-panel__text').click();
+    await page.locator('.activities-panel__edit').click();
+    const name = page.getByTestId('edit-activity-window').getByLabel('Name');
+    await name.fill('Kept through a move');
+    await page.getByTestId('edit-tab-track').click();
+    const startKnob = page.getByLabel('Start of range');
+    await startKnob.waitFor({ timeout: 30_000 });
+    await startKnob.fill(String(Math.round(Number(await startKnob.getAttribute('max')) / 2)));
+    await page.getByRole('button', { name: 'Chop', exact: true }).click();
+    // Open ocean: the list follows the map there and holds no activity.
+    await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
+    await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [0, 0], zoom: 6 }));
+    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 0, undefined, { timeout: 30_000 });
+    await page.getByTestId('edit-tab-activity').click();
+    assert.equal(await name.inputValue(), 'Kept through a move');
+    // The Pending checks, and the days read again once an edit counts as landed.
+    const requests = [];
+    const record = (request) => {
+      const kind = ['/v1/activities/pending', '/v1/activities/histogram'].find((path) => request.url().includes(path));
+      if (kind) requests.push(kind);
+    };
+    page.on('request', record);
+    await page.getByTestId('edit-save').click();
+    await page.getByTestId('edit-activity-window').waitFor({ state: 'detached', timeout: 30_000 });
+    const [after] = (await settledActivities(SAMPLES.length - 1)).filter((a) => a.id === id);
+    assert.equal(after.name, 'Kept through a move');
+    assert.ok(after.distance_meters < before, `distance ${after.distance_meters} not below ${before}`);
+    // The check stops by itself: two of its 2-second intervals pass with no request.
+    const deadline = Date.now() + 30_000;
+    for (let seen = -1; seen !== requests.length; ) {
+      assert.ok(Date.now() < deadline, 'the Pending check never stopped');
+      seen = requests.length;
+      await page.waitForTimeout(4500);
+    }
+    page.off('request', record);
+    // No list shows the row, so the check alone says the edit has landed: the map reads its data
+    // again after the last one, not when the first list came back without the row.
+    const lastCheck = requests.lastIndexOf('/v1/activities/pending');
+    assert.ok(lastCheck >= 0, 'the Pending check never ran');
+    assert.ok(requests.lastIndexOf('/v1/activities/histogram') > lastCheck, `nothing was read again after the edit landed: ${requests.join(' ')}`);
+    await viewAll();
+    assert.equal(await row(id).evaluate((el) => el.classList.contains('activities-panel__row--pending')), false);
+  });
+
+  it("9. the header's menus close on another menu, a click on the map and Escape", async () => {
     await page.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
     await page.waitForFunction(() => Boolean(window.__holdmytrack));
     const open = () => page.evaluate(() => [...document.querySelectorAll('.page-header details[open]')].map((d) => d.className));
@@ -250,7 +298,7 @@ describe('map flows', () => {
     assert.deepEqual(await open(), []);
   });
 
-  it("9. an account with activities is offered the tour once; the header's link starts it in place, and it puts the mode back", async () => {
+  it("10. an account with activities is offered the tour once; the header's link starts it in place, and it puts the mode back", async () => {
     // Loaded with activities from the start, the map offers the tour.
     await page.reload();
     await page.getByTestId('tour-offer').waitFor({ timeout: 60_000 });

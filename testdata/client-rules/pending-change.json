@@ -1,31 +1,46 @@
 {
   "rule": "pendingChange",
-  "description": "What a newly fetched list says about reprocesses. An edit applied here (awaiting) counts as finished once a list shows it not pending, even if no list ever showed it pending.",
+  "description": "What a newly fetched list says about reprocesses. The list is an area's, so it speaks only for the rows it holds (listed): a row held Pending that it doesn't show stays Pending, and an awaited edit it doesn't show keeps waiting; the Pending check answers for both (pendingCheck). An edit applied here (awaiting) counts as finished once a list shows it not pending, even if no list ever showed it pending. Expected pending: the ids held Pending afterwards.",
   "cases": [
     {
       "name": "a row entering Pending starts",
-      "input": { "previous": [], "now": ["a"], "awaiting": [] },
-      "expected": { "started": true, "finished": false, "left": [], "landed": [], "awaiting": [] }
+      "input": { "previous": [], "now": ["a"], "awaiting": [], "listed": ["a"] },
+      "expected": { "started": true, "finished": false, "left": [], "landed": [], "awaiting": [], "pending": ["a"] }
     },
     {
       "name": "a row leaving Pending finishes",
-      "input": { "previous": ["a", "b"], "now": ["b"], "awaiting": [] },
-      "expected": { "started": false, "finished": true, "left": ["a"], "landed": [], "awaiting": [] }
+      "input": { "previous": ["a", "b"], "now": ["b"], "awaiting": [], "listed": ["a", "b"] },
+      "expected": { "started": false, "finished": true, "left": ["a"], "landed": [], "awaiting": [], "pending": ["b"] }
     },
     {
       "name": "an awaited edit never seen Pending still finishes",
-      "input": { "previous": [], "now": [], "awaiting": ["a"] },
-      "expected": { "started": false, "finished": true, "left": [], "landed": ["a"], "awaiting": [] }
+      "input": { "previous": [], "now": [], "awaiting": ["a"], "listed": ["a"] },
+      "expected": { "started": false, "finished": true, "left": [], "landed": ["a"], "awaiting": [], "pending": [] }
     },
     {
       "name": "an awaited edit still pending keeps waiting",
-      "input": { "previous": [], "now": ["a"], "awaiting": ["a"] },
-      "expected": { "started": true, "finished": false, "left": [], "landed": [], "awaiting": ["a"] }
+      "input": { "previous": [], "now": ["a"], "awaiting": ["a"], "listed": ["a"] },
+      "expected": { "started": true, "finished": false, "left": [], "landed": [], "awaiting": ["a"], "pending": ["a"] }
     },
     {
       "name": "the same pending set changes nothing",
-      "input": { "previous": ["a"], "now": ["a"], "awaiting": [] },
-      "expected": { "started": false, "finished": false, "left": [], "landed": [], "awaiting": [] }
+      "input": { "previous": ["a"], "now": ["a"], "awaiting": [], "listed": ["a"] },
+      "expected": { "started": false, "finished": false, "left": [], "landed": [], "awaiting": [], "pending": ["a"] }
+    },
+    {
+      "name": "a Pending row the list no longer shows stays Pending",
+      "input": { "previous": ["a"], "now": [], "awaiting": [], "listed": ["b"] },
+      "expected": { "started": false, "finished": false, "left": [], "landed": [], "awaiting": [], "pending": ["a"] }
+    },
+    {
+      "name": "an awaited edit the list doesn't show keeps waiting",
+      "input": { "previous": [], "now": [], "awaiting": ["a"], "listed": ["b"] },
+      "expected": { "started": false, "finished": false, "left": [], "landed": [], "awaiting": ["a"], "pending": [] }
+    },
+    {
+      "name": "a Pending row back in the list and done finishes",
+      "input": { "previous": ["a", "c"], "now": [], "awaiting": [], "listed": ["a"] },
+      "expected": { "started": false, "finished": true, "left": ["a"], "landed": [], "awaiting": [], "pending": ["c"] }
     }
   ]
 }

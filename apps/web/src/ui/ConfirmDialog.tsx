@@ -20,7 +20,8 @@ export interface ConfirmDialogProps {
   /** Defaults to "Confirm"/"Cancel" — callers name the action explicitly ("Delete") when a
    *  generic label would read oddly for what's being confirmed. */
   confirmLabel?: string;
-  cancelLabel?: string;
+  /** null leaves only the confirm button, for a dialog that only informs. */
+  cancelLabel?: string | null;
   busyLabel?: string;
   onConfirm: () => Promise<void>;
   onClose: () => void;
@@ -102,9 +103,11 @@ export function ConfirmDialog({
         <button type="button" className="confirm-dialog__confirm" disabled={busy} onClick={() => void handleConfirm()}>
           {busy ? busyLabel : confirmLabel}
         </button>
-        <button type="button" className="settings-page__button" disabled={busy} onClick={() => ref.current?.close()}>
-          {cancelLabel}
-        </button>
+        {cancelLabel !== null && (
+          <button type="button" className="settings-page__button" disabled={busy} onClick={() => ref.current?.close()}>
+            {cancelLabel}
+          </button>
+        )}
       </div>
     </dialog>
   );

@@ -64,7 +64,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 ### FR-2.7 Activities panel
 
 - Leaving the Map tab drops the Private location editor's draft: iOS has no Back.
-- While any listed activity is Pending, a notice over the map says so.
+- While any activity is Pending, a notice over the map says so, including one the list no longer shows.
 
 ### FR-2.8 Spots
 

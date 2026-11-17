@@ -16,6 +16,8 @@ import { useCoverageRefresh } from './useCoverageRefresh';
 import { useDatesFlight } from './useDatesFlight';
 import { useDataRefresh } from './useDataRefresh';
 import { useEditWindow } from './useEditWindow';
+import { ConfirmDialog } from '../ui/ConfirmDialog';
+import { selectionKept } from './editWindowRows';
 import { useExportFlow } from './useExportFlow';
 import { satelliteLook } from './satelliteStatus';
 import { useFileDrop } from './useFileDrop';
@@ -118,11 +120,6 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     reload: reloadActivities,
     loadedKey: activitiesLoadedKey,
   } = useActivityList(activityQuery);
-  // A row a fresh list no longer has (deleted elsewhere, left the Story or the area) leaves the
-  // selection; only a list read for the query shown says so.
-  useEffect(() => {
-    if (activityQuery !== null && activitiesLoadedKey === JSON.stringify(activityQuery)) dispatch({ type: 'listLoaded', ids: activities.map((a) => a.id) });
-  }, [activities, activitiesLoadedKey, activityQuery]);
   // The first activity's day: the Dates pickers' bound and the empty account's panel.
   const { earliest, latest, ready: daysReady, reload: reloadDays } = useHistoryStart();
   const datesBounds = dateFilterBounds(earliest, latest, today);
@@ -135,8 +132,19 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   );
   const clearDates = useCallback(() => dispatch({ type: 'datesSet', dates: ALL_TIME, fly: false }), []);
 
-  const edit = useEditWindow(activities, activitiesLoading);
+  const listedActivityIds = useMemo(() => activities.map((a) => a.id), [activities]);
+  const edit = useEditWindow(activities);
   const editOpen = edit.open;
+  // A row a fresh list no longer has (deleted elsewhere, left the Story or the area) leaves the
+  // selection, except the Edit window's while it's open; only a list read for the query shown says
+  // so. Read through a ref: closing the window is not a new list.
+  const editIdsRef = useRef(edit.ids);
+  editIdsRef.current = edit.ids;
+  useEffect(() => {
+    if (activityQuery !== null && activitiesLoadedKey === JSON.stringify(activityQuery)) {
+      dispatch({ type: 'listLoaded', ids: selectionKept(listedActivityIds, editIdsRef.current) });
+    }
+  }, [listedActivityIds, activitiesLoadedKey, activityQuery]);
   const editingTrack = edit.editingId !== null;
   const spotsShown = useMemo<readonly SpotCategory[]>(
     () => (editingTrack || !overlays.placesEnabled ? [] : overlays.spots),
@@ -275,7 +283,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     onActivityRemoved: (id) => setHoveredActivityId((hovered) => (hovered === id ? null : hovered)),
   });
 
-  const awaitEdit = usePendingPoll(pendingIds, { reload: reloadActivities, onStarted: refresh.pendingStarted, onFinished: refresh.pendingFinished });
+  const awaitEdit = usePendingPoll(listedActivityIds, pendingIds, activitiesLoading, { reload: reloadActivities, onStarted: refresh.pendingStarted, onFinished: refresh.pendingFinished });
 
   const openEditWindow = useCallback(
     (group: Activity[]) => {
@@ -355,8 +363,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
       <DemoBar isDemo={isDemo} />
       <div className="app-body">
         {mapMode === 'normal' && (
-          // Inert while the Edit window is open: changing the area, selection or filters would pull
-          // its activities out from under it. display: contents keeps the wrapper out of the layout.
+          // Inert while the Edit window is open: it is over the toolbar's target, which the panel
+          // would change or delete under it. display: contents keeps the wrapper out of the layout.
           <div className="edit-track-lock" inert={editOpen}>
             <ActivitiesPanel
               readOnly={isDemo}
@@ -422,6 +430,16 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               photos={{ photos: photoLayer.photos.photos, error: photoLayer.photos.error, onOverlay: photoLayer.setOverlay }}
               onTabChange={edit.setTab}
               onClose={closeEditWindow}
+            />
+          )}
+          {edit.closedDeleted && (
+            <ConfirmDialog
+              title={t('edit.deleted_title')}
+              message={t('edit.deleted_message')}
+              confirmLabel={t('common.close')}
+              cancelLabel={null}
+              onConfirm={async () => {}}
+              onClose={edit.dismissClosedDeleted}
             />
           )}
           {map && photoLayer.popup && (

@@ -77,8 +77,8 @@ struct ClientRulesTests {
 /// Each rule, from a case's input to the JSON its expected value is written in.
 let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "pendingChange": { input in
-        let change = PendingDiff.of(previous: Set(input.strings("previous")), now: Set(input.strings("now")), awaiting: Set(input.strings("awaiting")))
-        return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting)]
+        let change = PendingDiff.of(previous: Set(input.strings("previous")), now: Set(input.strings("now")), awaiting: Set(input.strings("awaiting")), listed: Set(input.strings("listed")))
+        return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting), "pending": .ids(change.pending)]
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
     "uploadPlan": { input in
@@ -103,8 +103,9 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     },
     "pendingBatches": { input in .array(PendingDiff.batches(input.strings("ids"), size: input.int("size")).map { .list($0) }) },
     "pendingCheck": { input in
-        let watched = PendingDiff.watched(listed: input.strings("listed"), awaiting: input.strings("awaiting"))
-        return ["watched": .list(watched), "moved": .bool(PendingDiff.moved(watched: watched, stillPending: input.strings("stillPending")))]
+        let watched = PendingDiff.watched(pending: input.strings("pending"), awaiting: input.strings("awaiting"))
+        let answer = PendingDiff.answer(watched: watched, stillPending: input.strings("stillPending"), listed: Set(input.strings("listed")))
+        return ["watched": .list(watched), "moved": .bool(answer.moved), "finished": .ids(answer.finished)]
     },
     "boldTracks": { input in .ids(PanelRules.boldIDs(checked: Set(input.strings("checked")), focused: input["focused"].string)) },
     "toolbarTarget": { input in .ids(PanelRules.targetIDs(checked: Set(input.strings("checked")), focused: input["focused"].string)) },
