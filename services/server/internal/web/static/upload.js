@@ -173,15 +173,16 @@
 
   // ---- Uploading --------------------------------------------------------------------------
 
+  // The API's error body (docs/SPEC.md §1.4) carries the text for a person in `message`. Anything
+  // else, such as Caddy's maintenance page, is not shown as it is: the status stands in for it.
   function errorMessage(xhr) {
-    var text = (xhr.responseText || '').trim();
     try {
-      var body = JSON.parse(text);
-      if (body && body.error && body.error.message) return body.error.message;
+      var body = JSON.parse(xhr.responseText || '');
+      if (body && typeof body.message === 'string' && body.message) return body.message;
     } catch (e) {
-      // Plain text.
+      // Not the API's JSON.
     }
-    return text || fill(strings.request_failed, { status: xhr.status });
+    return fill(strings.request_failed, { status: xhr.status });
   }
 
   // One XMLHttpRequest per file, for the upload-progress event fetch doesn't reliably have.
