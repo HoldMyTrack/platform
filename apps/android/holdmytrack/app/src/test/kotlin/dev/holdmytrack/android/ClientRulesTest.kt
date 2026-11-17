@@ -168,6 +168,12 @@ class ClientRulesTest {
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
+        "verifyAction" to { input ->
+            when (val action = VerifyAction.of(input.string("typed")!!)) {
+                VerifyAction.Check -> JsonPrimitive("check")
+                is VerifyAction.Submit -> buildJsonObject { put("submit", action.code) }
+            }
+        },
         "uploadPlan" to { input ->
             val files = input["files"]!!.jsonArray.map { it.jsonObject }.map { UploadPlan.Picked(it.string("name")!!, it.int("size").toLong()) }
             val plan = UploadPlan.of(files)

@@ -44,10 +44,11 @@
     <string name="update_app_title">Обновите HoldMyTrack</string>
     <string name="update_app_body">Эта версия приложения слишком старая. Обновите её, чтобы и дальше пользоваться HoldMyTrack. Всё, что ждёт синхронизации, останется на телефоне до тех пор.</string>
     <string name="update_app_open">Обновить</string>
-    <string name="verify_email_hint">Мы отправили ссылку для подтверждения на %1$s. Перейдите по ней, чтобы открыть доступ к аккаунту, — карта и синхронизация заработают сразу после этого.</string>
-    <string name="verify_email_continue">Продолжить</string>
+    <string name="verify_email_hint">Мы отправили 6-значный код на %1$s. Введите его ниже, чтобы открыть доступ к аккаунту, — карта и синхронизация заработают сразу после этого.</string>
+    <string name="verify_email_continue">Подтвердить</string>
+    <string name="verify_email_code_hint">Код из письма</string>
     <string name="verify_email_resend">Отправить письмо ещё раз</string>
-    <string name="verify_email_not_yet">Почта ещё не подтверждена. Перейдите по ссылке из письма и нажмите «Продолжить».</string>
+    <string name="verify_email_not_yet">Введите 6-значный код из письма.</string>
     <string name="verify_email_check_failed">Не удалось связаться с HoldMyTrack: %1$s</string>
 
     <string name="mode_normal">Обычный</string>
