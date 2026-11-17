@@ -18,6 +18,12 @@ public enum MapChrome {
         public let greyed: Bool
     }
 
+    /// The empty notice tells a real account with nothing on the map how to add something, until
+    /// this phone closes it for the account. The demo account has history and adds nothing.
+    public static func emptyNoticeShown(empty: Bool, demo: Bool, closed: Bool) -> Bool {
+        empty && !demo && !closed
+    }
+
     public static func layersBadge(_ state: MapState, places: Int) -> LayersBadge {
         let count = (state.roads ? 1 : 0) + state.toggles.filter { $0.key != Spots.group && $0.value }.count + places
         return LayersBadge(count: count, filled: state.showLayers && count > 0, greyed: !state.showLayers)

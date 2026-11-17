@@ -28,8 +28,11 @@ extension MapViewController {
                     mapView.setCenter(CLLocationCoordinate2D(latitude: view.lat, longitude: view.lon), zoomLevel: view.zoom, animated: false)
                     DispatchQueue.main.async { [weak self] in self?.appFlying = false }
                 }
-            } else if !account.isDemo {
-                notice(.empty, String(localized: "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here."))
+            } else if MapChrome.emptyNoticeShown(empty: true, demo: account.isDemo, closed: EmptyNoticeDismissal.closed(account: accountKey)) {
+                let account = accountKey
+                notice(.empty, String(localized: "Nothing on your map yet. Upload a GPX, FIT or TCX file from the You tab to see it here.")) {
+                    EmptyNoticeDismissal.close(account: account)
+                }
             }
             followArea()
         }
