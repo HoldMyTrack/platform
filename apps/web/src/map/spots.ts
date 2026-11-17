@@ -137,10 +137,19 @@ function loadImages(badges: Record<string, Badge>): Promise<void> {
       const Icon = CATEGORY_ICONS[badge.category];
       if (!Icon) continue;
       if (!markup.has(badge.category)) markup.set(badge.category, iconMarkup(Icon));
-      drawn.set(name, await rasterize(badgeSVG(markup.get(badge.category)!, badge)));
+      // One badge that won't draw costs that badge only.
+      try {
+        drawn.set(name, await rasterize(badgeSVG(markup.get(badge.category)!, badge)));
+      } catch (err) {
+        console.error(`spots: badge ${name} not drawn`, err);
+      }
     }
     images = drawn;
-  })();
+  })().catch((err: unknown) => {
+    // Asked again by the next styledata.
+    imagesLoading = null;
+    throw err;
+  });
   return imagesLoading;
 }
 
@@ -163,10 +172,13 @@ export function ensureSpotsLayer(map: MapLibreMap, categories: readonly SpotCate
   if (!images) {
     const badges = documentBadges(map);
     if (Object.keys(badges).length === 0) return;
-    void loadImages(badges).then(() => {
-      // The map may have been removed (the page moved on) while the images were drawn.
-      if (map.getStyle()) ensureSpotsLayer(map, categories);
-    });
+    loadImages(badges).then(
+      () => {
+        // The map may have been removed (the page moved on) while the images were drawn.
+        if (map.getStyle()) ensureSpotsLayer(map, categories);
+      },
+      (err: unknown) => console.error('spots: badges not drawn', err),
+    );
     return;
   }
   for (const [name, image] of images) {
