@@ -34,6 +34,13 @@ type authForm struct {
 	Upgrading bool
 	// Sent is /forgot's "check your email" state, after its form is submitted.
 	Sent bool
+	// AppChallenge is /signup opened by a native app (signup_page.go).
+	AppChallenge string
+	// InApp leaves out the site's header and footer (web.PageData.InApp).
+	InApp bool
+	// Created is /signup's page after an app's account was made but couldn't be handed to the
+	// app: it says to sign in there, and shows no form.
+	Created bool
 	// Confirm is /verify's button that confirms the link's address.
 	Confirm bool
 	// TurnstileSiteKey shows /signup's Turnstile widget when set (turnstile.go).
@@ -149,7 +156,7 @@ func (s *Server) renderAuthFailure(w http.ResponseWriter, r *http.Request, acct 
 	if form.NoticeKey != "" {
 		form.Notice = l.T(form.NoticeKey)
 	}
-	data := web.PageData{Title: l.T("meta.title", "page", l.T(titleKey)), Path: r.URL.Path, NoIndex: noIndex, User: user, Page: form, Lang: lang}
+	data := web.PageData{Title: l.T("meta.title", "page", l.T(titleKey)), Path: r.URL.Path, NoIndex: noIndex, User: user, Page: form, Lang: lang, InApp: form.InApp}
 	if page == "signin" {
 		data.Description = l.T("meta.site_description")
 	}
@@ -240,36 +247,6 @@ func (s *Server) handleSignInForm(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.renderAuthError(w, r, acct, "sign in", "signin", "signin.title", false, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled()}, err)
-		return
-	}
-	s.signIn(w, r, userID)
-}
-
-// GET /signup. A demo session is allowed here — it's how a demo becomes a real account.
-func (s *Server) handleSignUpPage(w http.ResponseWriter, r *http.Request) {
-	acct, ok := s.pageAccount(w, r)
-	if !ok {
-		return
-	}
-	if acct != nil && !acct.info.isDemo {
-		http.Redirect(w, r, acct.home(), http.StatusSeeOther)
-		return
-	}
-	// noindex: /signin is the one sign-in-or-up page search results should show (it links here).
-	s.renderAuth(w, r, acct, http.StatusOK, "signup", "signup.title", true, authForm{Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil, TurnstileSiteKey: s.turnstile.siteKey})
-}
-
-// POST /signup. timezone comes from a hidden field the page's one-line script fills from the
-// browser; without it the account starts on UTC, as the JSON endpoint's would.
-func (s *Server) handleSignUpForm(w http.ResponseWriter, r *http.Request) {
-	email := r.PostFormValue("email")
-	acct, ok := s.pageAccount(w, r)
-	if !ok {
-		return
-	}
-	userID, err := s.createAccountLimited(r, email, r.PostFormValue("password"), r.PostFormValue("timezone"), pageLang(acct, r), s.checkTurnstile)
-	if err != nil {
-		s.renderAuthError(w, r, acct, "sign up", "signup", "signup.title", true, authForm{Email: email, Google: s.google.enabled(), Facebook: s.facebook.enabled(), Apple: s.apple.enabled(), Upgrading: acct != nil && acct.info.isDemo, TurnstileSiteKey: s.turnstile.siteKey}, err)
 		return
 	}
 	s.signIn(w, r, userID)

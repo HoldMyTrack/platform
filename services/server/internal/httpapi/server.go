@@ -343,7 +343,7 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		}
 		metrics.HTTPRequests.WithLabelValues(route, metrics.StatusClass(status)).Inc()
 		metrics.HTTPDuration.WithLabelValues(route).Observe(time.Since(start).Seconds())
-		if s.visitors != nil && countsAsVisitor(route, status, r.UserAgent(), appPlatform(r) != "") {
+		if s.visitors != nil && countsAsVisitor(route, status, r.UserAgent(), fromApp(r)) {
 			ip, ua := clientIP(r), r.UserAgent()
 			go func() {
 				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

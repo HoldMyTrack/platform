@@ -342,7 +342,7 @@ func (s *Server) createAccountLimited(r *http.Request, email, password, timezone
 }
 
 // createAccount is signup's shared core — handleSignup (JSON) and the /signup page
-// (auth_pages.go) both call it. email and password are validated here, not by the caller.
+// (signup_page.go) both call it. email and password are validated here, not by the caller.
 // timezone is the browser's own guess and falls back to "UTC" when absent or unknown, rather
 // than failing the signup over a convenience default.
 func (s *Server) createAccount(ctx context.Context, rawEmail, password, timezone, lang string) (string, error) {
