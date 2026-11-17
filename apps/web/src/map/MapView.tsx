@@ -427,7 +427,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               trackUnavailable={edit.trackBlocker === null ? null : t(edit.trackBlocker)}
               onStartTrack={startEditTrack}
               photosUnavailable={edit.photosBlocker === null ? null : t(edit.photosBlocker)}
-              photos={{ photos: photoLayer.photos.photos, error: photoLayer.photos.error, onOverlay: photoLayer.setOverlay }}
+              photos={{ photos: photoLayer.photos.photos, error: photoLayer.photos.error, reload: photoLayer.photos.reload, onOverlay: photoLayer.setOverlay }}
               onTabChange={edit.setTab}
               onClose={closeEditWindow}
             />
