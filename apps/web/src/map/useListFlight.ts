@@ -40,14 +40,17 @@ export function useListFlight(map: MapLibreMap | null, inputs: ListFlightInputs)
   useEffect(() => {
     if (!map || loadedKey === null) return;
     if (loadedKey === flownKeyRef.current) return;
-    flownKeyRef.current = loadedKey;
     if (!hasFlownRef.current) {
       const fit = firstListFit(activities, storyId, urlView);
+      // Waiting for a later list, which may be a reload of this same query (a Story opened by URL
+      // while its activities are all Pending), so the key isn't taken yet.
       if (fit === null) return;
+      flownKeyRef.current = loadedKey;
       hasFlownRef.current = true;
       if (fit.length > 0) fitTo(fit);
       return;
     }
+    flownKeyRef.current = loadedKey;
     if (!flyRequest || storyId === null) return;
     onFlown();
     const visible = activities.filter((a) => !mapHiddenIdsRef.current.has(a.id));
