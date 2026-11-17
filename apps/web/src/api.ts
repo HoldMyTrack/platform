@@ -270,7 +270,9 @@ export async function getActivity(id: string, signal?: AbortSignal): Promise<Act
   const path = `/activities/${encodeURIComponent(id)}`;
   const body = await getJson<ResponseJson<'/activities/{id}', 'get'>>(path, signal, () => new ActivityNotFoundError(t('common.request_failed', { status: 404 })));
   rememberTypes(body.types);
-  return toActivityDetail(body.activities[0]!);
+  const row = body.activities[0];
+  if (row === undefined) throw new Error(t('common.bad_response'));
+  return toActivityDetail(row);
 }
 
 /**
