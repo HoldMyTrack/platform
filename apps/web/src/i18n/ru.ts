@@ -585,6 +585,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'stories.inbox_sent': '{from} отправляет вам копию «{name}»',
   'stories.inbox_accept': 'Принять',
   'stories.inbox_decline': 'Отклонить',
+  'stories.inbox_withdrawn': 'Отправитель отозвал эту копию, принимать нечего.',
   'stories.inbox_copying': 'Копируем «{name}» от {from}…',
   'stories.from': 'От {from}',
   'photos.add': 'Добавить фото',

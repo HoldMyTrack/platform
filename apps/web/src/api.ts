@@ -696,7 +696,7 @@ export async function deleteStory(id: string): Promise<void> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
-  if (!res.ok && res.status !== 404) {
+  if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
 }
@@ -781,7 +781,9 @@ export async function answerStorySend(id: string, accept: boolean): Promise<void
   const res = await apiFetch(`/story-sends/${encodeURIComponent(id)}${accept ? '/accept' : ''}`, {
     method: accept ? 'POST' : 'DELETE',
   });
-  if (!res.ok && res.status !== 404) {
+  // A copy its sender withdrew is gone: declining it is done, accepting it brings nothing.
+  if (accept && res.status === 404) throw new Error(t('stories.inbox_withdrawn'));
+  if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
 }
