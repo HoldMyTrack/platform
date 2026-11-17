@@ -4,6 +4,7 @@ import type { MapMode } from './mapMode';
 import { boundLayer, bindVars, insertionPoint, layerToggle, layerVars, needsLift, placementOrder, viewFor, type GroupSource, type LayerGroup, type MapLayers } from './mapLayers';
 import { SATELLITE_LAYER_ID } from './style';
 import { levelZoomRanges } from './fogLevels';
+import { styleReady } from './styleReady';
 
 /**
  * The layers document (mapLayers.ts) on a live map: this adds what the document describes,
@@ -109,6 +110,8 @@ function addSources(map: MapLibreMap, group: LayerGroup, state: LayerState): voi
  */
 export function applyLayers(map: MapLibreMap, doc: MapLayers, state: LayerState): void {
   applied.set(map, { doc, state });
+  // Mid style swap: the state is kept, and the swap's own `styledata` applies it.
+  if (!styleReady(map)) return;
   const groups = groupsOf(doc, state);
   const ownIds = new Set(groups.flatMap((group) => group.layers.map((layer) => layer.id)));
   const beneath = placementOrder(groups, 'beneath-labels');
