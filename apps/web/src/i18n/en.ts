@@ -6,6 +6,7 @@
 export const en = {
   'app.load_failed': "Couldn't load your account: {message}",
   'app.try_again': 'Try again',
+  'app.crashed': 'Something went wrong and the map stopped.',
   'common.bad_response': "The server's reply couldn't be read.",
   'common.cancel': 'Cancel',
   'common.confirm': 'Confirm',
