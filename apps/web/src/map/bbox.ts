@@ -57,7 +57,8 @@ export function unionBBox(boxes: readonly BBox[]): BBox | null {
 /** Marks a camera move the app made, not the user: the list doesn't follow it (useAreaList.ts). */
 export const APP_FLIGHT = 'appFlight';
 
-export function flyToBBox(map: MapLibreMap, bbox: BBox): void {
+/** `tag` rides on the flight's events, so a listener can tell its own `moveend` from another's. */
+export function flyToBBox(map: MapLibreMap, bbox: BBox, tag: Record<string, unknown> = {}): void {
   const bounds: LngLatBoundsLike = [
     [bbox[0], bbox[1]],
     [bbox[2], bbox[3]],
@@ -66,7 +67,7 @@ export function flyToBBox(map: MapLibreMap, bbox: BBox): void {
   const x = (clientWidth * (1 - FLY_FILL)) / 2;
   const y = (clientHeight * (1 - FLY_FILL)) / 2;
   const padding = { top: y, bottom: y, left: x, right: x };
-  map.fitBounds(bounds, { padding, maxZoom: MAX_FLY_ZOOM, duration: FLY_DURATION_MS }, { [APP_FLIGHT]: true });
+  map.fitBounds(bounds, { padding, maxZoom: MAX_FLY_ZOOM, duration: FLY_DURATION_MS }, { ...tag, [APP_FLIGHT]: true });
 }
 
 /** For a bare point+zoom target (a country or world view) rather than an activity's bbox —
