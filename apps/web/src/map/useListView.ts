@@ -25,8 +25,8 @@ export function useListView(activities: Activity[], selection: Selection, dispat
   // would keep filtering with nothing on screen to clear it.
   const sliderShown = bounds !== null && bounds.min < bounds.max;
   useEffect(() => {
-    if (!sliderShown) dispatch({ type: 'distanceSet', filter: null });
-  }, [sliderShown, dispatch]);
+    if (!sliderShown) dispatch({ type: 'distanceSet', filter: null, activities });
+  }, [sliderShown, dispatch, activities]);
   const facets = useMemo(() => typeFacets(activities, distanceFilter), [activities, distanceFilter]);
   const listed = useMemo(() => activities.filter((a) => passesFilters(a, excludedTypes, distanceFilter)), [activities, excludedTypes, distanceFilter]);
   const mapHiddenIds = useMemo(

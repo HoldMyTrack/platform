@@ -136,10 +136,11 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         for id in state.strings("hidden") { panel.toggleChecked(id) }
         panel.toggleTargetVisibility()
         panel.clearChecked()
-        for id in state.strings("checked") { panel.toggleChecked(id) }
-        if let focused = state["focused"].string { panel.focus(focused) }
+        // Filters before checks: setting a filter unchecks what it hides.
         for type in state.strings("excludedTypes") { panel.toggleType(type) }
         panel.distanceFilter = distance(state["distanceFilter"])
+        for id in state.strings("checked") { panel.toggleChecked(id) }
+        if let focused = state["focused"].string { panel.focus(focused) }
         let event = input["event"]
         switch event["type"].string {
         case "checkToggled": panel.toggleChecked(event["id"].string!)
