@@ -148,10 +148,11 @@ describe('map flows', () => {
     await call('POST', '/stories', { name: 'Flows trip', activity_ids: [ids['2026-10-01'], ids['2026-10-06']] });
     await page.getByRole('tab', { name: 'Stories' }).click();
     await page.waitForURL(/[?&]story=/, { timeout: 30_000 });
-    // The area's list shows until the Story's replaces it.
     await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 2, undefined, { timeout: 30_000 });
     await row(ids['2026-10-01']).waitFor({ timeout: 30_000 });
     assert.equal(await row(ids['2026-10-05']).count(), 0);
+    // Back reads the area under the camera, so the camera has to finish framing the Story first.
+    await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
     await page.goBack();
     await page.waitForURL((url) => !url.searchParams.has('story'), { timeout: 30_000 });
     assert.equal(await page.getByRole('tab', { name: 'Activities' }).getAttribute('aria-selected'), 'true');

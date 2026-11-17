@@ -6,6 +6,7 @@
 export const en = {
   'app.load_failed': "Couldn't load your account: {message}",
   'app.try_again': 'Try again',
+  'app.crashed': 'Something went wrong and the map stopped.',
   'common.bad_response': "The server's reply couldn't be read.",
   'common.cancel': 'Cancel',
   'common.confirm': 'Confirm',
@@ -135,6 +136,7 @@ export const en = {
   'edit.discard_title': 'Discard changes?',
   'edit.discard_message': 'The changes you made in this window haven\'t been saved yet.',
   'edit.deleted_title': 'Activity deleted',
+  'edit.unreadable_title': "Couldn't open Edit",
   'edit.deleted_message': 'An activity in the Edit window was deleted elsewhere, so the window closed. Changes you hadn\'t saved were lost.',
   'edit.discard': 'Discard',
   'edit.keep_editing': 'Keep editing',
@@ -469,6 +471,7 @@ export const en = {
   'stories.inbox_sent': '{from} sent you a copy of “{name}”',
   'stories.inbox_accept': 'Accept',
   'stories.inbox_decline': 'Decline',
+  'stories.inbox_withdrawn': 'Its sender withdrew this copy, so there is nothing to accept.',
   'stories.inbox_copying': 'Copying “{name}” from {from}…',
   'stories.from': 'From {from}',
   'photos.add': 'Add photos',

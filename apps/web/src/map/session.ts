@@ -5,8 +5,8 @@
  * it only through events; side effects (flights, the URL) stay with them. The apps' `MapSession`s
  * run the same cases, `testdata/client-rules`'s `webSession` and `panelState`.
  */
-import type { BBox } from '../api';
-import type { DistanceRange } from '../ui/activityFacets';
+import type { Activity, BBox } from '../api';
+import { passesFilters, type DistanceRange } from '../ui/activityFacets.ts';
 import { ALL_TIME, type DateFilter } from '../ui/dateFilter.ts';
 import type { MapMode } from './mapMode';
 import { toggled, toggledVisibility, toolbarTarget, withoutIds } from './selection.ts';
@@ -55,8 +55,9 @@ export type MapSessionEvent =
   | { type: 'focused'; id: string | null }
   /** The toolbar's Show/Hide over its target. */
   | { type: 'visibilityToggled' }
-  | { type: 'typeToggled'; activityType: string }
-  | { type: 'distanceSet'; filter: DistanceRange | null }
+  /** A filter changed; a checked row among [activities] (the range's) that it now hides is unchecked. */
+  | { type: 'typeToggled'; activityType: string; activities: readonly Activity[] }
+  | { type: 'distanceSet'; filter: DistanceRange | null; activities: readonly Activity[] }
   | { type: 'filtersReset' }
   /** A list was read for the area or Story shown: a row it no longer has leaves the selection. */
   | { type: 'listLoaded'; ids: Iterable<string> }
@@ -71,9 +72,20 @@ export function initialSession(storyId: string | null): MapSession {
   return { dates: ALL_TIME, area: null, storyId, flyRequest: false, selection: emptySelection(), mode: 'normal', modeSnapshot: null };
 }
 
+/** The snapshot Fog holds, emptied: a Story opened or closed there clears what Normal set aside. */
+function emptySnapshot(snapshot: MapSession['modeSnapshot']): MapSession['modeSnapshot'] {
+  return snapshot && { checked: new Set(), focused: null };
+}
+
 /** Two boxes the same to about a metre: a view the list was already asked about. */
 function sameArea(a: BBox | null, b: BBox): boolean {
   return a !== null && a.every((v, i) => Math.abs(v - (b[i] ?? NaN)) < 1e-5);
+}
+
+/** `checked` without the rows the filters hide; the same set when they hide none of it. */
+function checksPassing(checked: Set<string>, activities: readonly Activity[], excludedTypes: ReadonlySet<string>, distanceFilter: DistanceRange | null): Set<string> {
+  const filtered = new Set(activities.filter((a) => checked.has(a.id) && !passesFilters(a, excludedTypes, distanceFilter)).map((a) => a.id));
+  return withoutIds(checked, filtered) as Set<string>;
 }
 
 export function mapSessionReducer(state: MapSession, event: MapSessionEvent): MapSession {
@@ -86,10 +98,10 @@ export function mapSessionReducer(state: MapSession, event: MapSessionEvent): Ma
     case 'dayViewed':
       return mapSessionReducer(state, { type: 'datesSet', dates: { after: event.day, before: event.day }, fly: true });
     case 'storyEntered':
-      return { ...state, storyId: event.id, flyRequest: true, selection: emptySelection() };
+      return { ...state, storyId: event.id, flyRequest: true, selection: emptySelection(), modeSnapshot: emptySnapshot(state.modeSnapshot) };
     case 'storyExited':
       // The list returns to the area and Dates; the camera stays.
-      return { ...state, storyId: null, flyRequest: false, selection: emptySelection() };
+      return { ...state, storyId: null, flyRequest: false, selection: emptySelection(), modeSnapshot: emptySnapshot(state.modeSnapshot) };
     case 'flyConsumed':
       return state.flyRequest ? { ...state, flyRequest: false } : state;
     case 'modeChanged': {
@@ -114,16 +126,21 @@ export function mapSessionReducer(state: MapSession, event: MapSessionEvent): Ma
       return state.selection.focused === event.id ? state : select({ focused: event.id });
     case 'visibilityToggled':
       return select({ hidden: toggledVisibility(state.selection.hidden, toolbarTarget(state.selection.checked, state.selection.focused)) });
-    case 'typeToggled':
-      return select({ excludedTypes: toggled(state.selection.excludedTypes, event.activityType) });
+    case 'typeToggled': {
+      const excludedTypes = toggled(state.selection.excludedTypes, event.activityType);
+      return select({ excludedTypes, checked: checksPassing(state.selection.checked, event.activities, excludedTypes, state.selection.distanceFilter) });
+    }
     case 'distanceSet':
-      return state.selection.distanceFilter === event.filter ? state : select({ distanceFilter: event.filter });
+      if (state.selection.distanceFilter === event.filter) return state;
+      return select({ distanceFilter: event.filter, checked: checksPassing(state.selection.checked, event.activities, state.selection.excludedTypes, event.filter) });
     case 'filtersReset':
       return select({ excludedTypes: new Set(), distanceFilter: null });
     case 'listLoaded': {
       const kept = new Set(event.ids);
       const { checked, focused, hidden } = state.selection;
-      const gone = new Set([...checked, ...hidden, ...(focused !== null ? [focused] : [])].filter((id) => !kept.has(id)));
+      const set = state.modeSnapshot;
+      const held = [...checked, ...hidden, ...(focused !== null ? [focused] : []), ...(set?.checked ?? []), ...(set?.focused != null ? [set.focused] : [])];
+      const gone = new Set(held.filter((id) => !kept.has(id)));
       return gone.size === 0 ? state : mapSessionReducer(state, { type: 'activitiesRemoved', ids: gone });
     }
     case 'activitiesRemoved': {
@@ -133,8 +150,15 @@ export function mapSessionReducer(state: MapSession, event: MapSessionEvent): Ma
       if (event.unfocusOnly) return nextFocused === focused ? state : select({ focused: nextFocused });
       const nextChecked = withoutIds(checked, ids);
       const nextHidden = withoutIds(hidden, ids);
-      if (nextFocused === focused && nextChecked === checked && nextHidden === hidden) return state;
-      return select({ focused: nextFocused, checked: nextChecked as Set<string>, hidden: nextHidden as Set<string> });
+      const set = state.modeSnapshot;
+      const nextSet = set && { checked: withoutIds(set.checked, ids) as Set<string>, focused: set.focused !== null && ids.has(set.focused) ? null : set.focused };
+      const setChanged = set !== null && (nextSet!.checked !== set.checked || nextSet!.focused !== set.focused);
+      if (nextFocused === focused && nextChecked === checked && nextHidden === hidden && !setChanged) return state;
+      return {
+        ...state,
+        modeSnapshot: setChanged ? nextSet : set,
+        selection: { ...state.selection, focused: nextFocused, checked: nextChecked as Set<string>, hidden: nextHidden as Set<string> },
+      };
     }
   }
 }

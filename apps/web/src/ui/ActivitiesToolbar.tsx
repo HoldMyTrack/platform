@@ -131,7 +131,7 @@ export function ActivitiesToolbar({
         disabled={activities.length === 0}
         aria-label={allChecked ? t('activities.uncheck_all_label') : t('activities.check_all_label')}
         title={allChecked ? t('activities.uncheck_all') : t('activities.check_all')}
-        onChange={() => (allChecked || someChecked ? onClear() : onSelectAll())}
+        onChange={() => (allChecked ? onClear() : onSelectAll())}
       />
       <div className="select-menu" ref={selectMenuRef}>
         <button

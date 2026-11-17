@@ -53,9 +53,13 @@ export function currentLayers(map: MapLibreMap): MapLayers | null {
   return applied.get(map)?.doc ?? null;
 }
 
-/** The state last applied to `map`. */
+/** Patches that arrived before the first applyLayers: state that first apply must carry, since a
+ *  setter's effect can run before the one that applies the document (the Spots captures do). */
+const early = new WeakMap<MapLibreMap, LayerState>();
+
+/** The state last applied to `map`, or before the first apply, the initial one with any early patch. */
 export function currentLayerState(map: MapLibreMap): LayerState {
-  return applied.get(map)?.state ?? INITIAL_LAYER_STATE;
+  return applied.get(map)?.state ?? early.get(map) ?? INITIAL_LAYER_STATE;
 }
 
 function groupsOf(doc: MapLayers, state: LayerState): LayerGroup[] {
@@ -132,11 +136,14 @@ export function applyLayers(map: MapLibreMap, doc: MapLayers, state: LayerState)
   applyState(map, doc, state, groups);
 }
 
-/** `patch` merged into the state last applied to `map`, and applied; a no-op before the first
- *  applyLayers. */
+/** `patch` merged into the state last applied to `map`, and applied; before the first
+ *  applyLayers, kept for it. */
 export function updateLayers(map: MapLibreMap, patch: Partial<LayerState>): void {
   const current = applied.get(map);
-  if (!current) return;
+  if (!current) {
+    early.set(map, { ...currentLayerState(map), ...patch });
+    return;
+  }
   applyLayers(map, current.doc, { ...current.state, ...patch });
 }
 
