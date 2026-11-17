@@ -8,6 +8,7 @@ import type { MessageKey } from './en';
 export const ru: Record<MessageKey, string> & Record<string, string> = {
   'app.load_failed': 'Не удалось загрузить аккаунт: {message}',
   'app.try_again': 'Попробовать снова',
+  'app.crashed': 'Что-то пошло не так, и карта остановилась.',
   'common.bad_response': 'Не удалось прочитать ответ сервера.',
   'common.cancel': 'Отмена',
   'common.confirm': 'Подтвердить',
