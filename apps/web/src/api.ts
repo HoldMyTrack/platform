@@ -239,9 +239,21 @@ function rememberTypes(types: Schema<'ActivityTypes'>): void {
 }
 
 /** [notFound] is what a `404` throws, for a caller that tells it from other failures. */
+/**
+ * `fetch` for one of the API's paths under /v1, with the session cookie. A 401 means the session
+ * ended under the open tab: the page goes to sign-in, and the promise never settles, so no caller
+ * shows the error or asks again on its way out.
+ */
+async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+  const res = await fetch(`${API_BASE_URL}${API_V1}${path}`, { ...init, credentials: 'include' });
+  if (res.status !== 401) return res;
+  window.location.replace('/signin');
+  return new Promise<Response>(() => {});
+}
+
 async function getJson<T>(path: string, signal?: AbortSignal, notFound?: () => Error): Promise<T> {
   // A conditional spread: exactOptionalPropertyTypes:true rejects `{ signal: undefined }`.
-  const res = await fetch(`${API_BASE_URL}${API_V1}${path}`, { ...(signal ? { signal } : {}), credentials: 'include' });
+  const res = await apiFetch(path, signal ? { signal } : {});
   if (res.status === 404 && notFound) throw notFound();
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -270,7 +282,9 @@ export async function getActivity(id: string, signal?: AbortSignal): Promise<Act
   const path = `/activities/${encodeURIComponent(id)}`;
   const body = await getJson<ResponseJson<'/activities/{id}', 'get'>>(path, signal, () => new ActivityNotFoundError(t('common.request_failed', { status: 404 })));
   rememberTypes(body.types);
-  return toActivityDetail(body.activities[0]!);
+  const row = body.activities[0];
+  if (row === undefined) throw new Error(t('common.bad_response'));
+  return toActivityDetail(row);
 }
 
 /**
@@ -296,10 +310,9 @@ export async function updateActivity(
   id: string,
   patch: { activityType: string; name: string; description: string },
 ): Promise<ActivityDetail> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ activity_type: patch.activityType, name: patch.name, description: patch.description }),
   });
   if (!res.ok) {
@@ -316,9 +329,8 @@ export async function updateActivity(
  * return here either.
  */
 export async function deleteActivity(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
   if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -361,9 +373,8 @@ export interface DayPageQuery {
 export async function getActivityDayPage(query: DayPageQuery, signal?: AbortSignal): Promise<ActivityDayPage> {
   const params = new URLSearchParams({ days: String(query.limit) });
   if (query.before) params.set('before', query.before);
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/histogram?${params.toString()}`, {
+  const res = await apiFetch(`/activities/histogram?${params.toString()}`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -409,10 +420,9 @@ export async function getStatsCard(
   signal?: AbortSignal,
 ): Promise<Blob | null> {
   const body: StatsCardBody = { activity_ids: request.activityIds, width: request.width, height: request.height, theme: request.theme };
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/stats-card`, {
+  const res = await apiFetch(`/activities/stats-card`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     ...(signal ? { signal } : {}),
     body: JSON.stringify(body),
   });
@@ -432,9 +442,8 @@ export async function getStatsCard(
 /** `GET /v1/map/imagery`: whether satellite imagery is offered now, which the server stops while
  *  the imagery plan nears its monthly limit (docs/SPEC.md FR-4.10). */
 export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/map/imagery`, {
+  const res = await apiFetch(`/map/imagery`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -444,9 +453,8 @@ export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
 
 /** `GET /v1/activities/pending`: which of [ids] are still Pending (IMPLEMENTATION.md §4.2.5). */
 export async function pendingActivities(ids: readonly string[], signal?: AbortSignal): Promise<string[]> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/pending?ids=${ids.map(encodeURIComponent).join(',')}`, {
+  const res = await apiFetch(`/activities/pending?ids=${ids.map(encodeURIComponent).join(',')}`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -458,9 +466,8 @@ export async function getActivityTrackMetrics(
   activityId: string,
   signal?: AbortSignal,
 ): Promise<ActivityTrackMetrics> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(activityId)}/track-metrics`, {
+  const res = await apiFetch(`/activities/${encodeURIComponent(activityId)}/track-metrics`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -493,9 +500,8 @@ export interface ActivityTrackPoints {
 
 /** `GET /v1/activities/{id}/track-points` — what the track editor opens with. */
 export async function getActivityTrackPoints(activityId: string, signal?: AbortSignal): Promise<ActivityTrackPoints> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(activityId)}/track-points`, {
+  const res = await apiFetch(`/activities/${encodeURIComponent(activityId)}/track-points`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -521,10 +527,9 @@ export async function saveActivityTrackEdit(
   splitAt: number | null = null,
   allowHidden = false,
 ): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/activities/${encodeURIComponent(activityId)}/track-edit`, {
+  const res = await apiFetch(`/activities/${encodeURIComponent(activityId)}/track-edit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify(splitAt === null ? { edit } : { edit, split_at: splitAt, ...(allowHidden ? { allow_hidden: true } : {}) }),
   });
   if (!res.ok) {
@@ -554,9 +559,8 @@ function toPrivateLocation(body: Schema<'PrivateLocation'>): PrivateLocation {
 
 
 export async function listPrivateLocations(signal?: AbortSignal): Promise<PrivateLocation[]> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations`, {
+  const res = await apiFetch(`/private-locations`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -567,9 +571,8 @@ export async function listPrivateLocations(signal?: AbortSignal): Promise<Privat
 /** How many of the account's activities its Private locations hide entirely: the rows the list
  *  marks private, counted across the whole account. */
 export async function hiddenActivityCount(signal?: AbortSignal): Promise<number> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations/hidden`, {
+  const res = await apiFetch(`/private-locations/hidden`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -583,10 +586,9 @@ export async function hiddenActivityCount(signal?: AbortSignal): Promise<number>
  * soon as that's queued — the Activity List's Pending badges show the rest.
  */
 export async function savePrivateLocation(input: PrivateLocationInput, id?: string): Promise<PrivateLocation> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations${id ? `/${encodeURIComponent(id)}` : ''}`, {
+  const res = await apiFetch(`/private-locations${id ? `/${encodeURIComponent(id)}` : ''}`, {
     method: id ? 'PATCH' : 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM }),
   });
   if (!res.ok) {
@@ -596,7 +598,7 @@ export async function savePrivateLocation(input: PrivateLocationInput, id?: stri
 }
 
 export async function deletePrivateLocation(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/private-locations/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+  const res = await apiFetch(`/private-locations/${encodeURIComponent(id)}`, { method: 'DELETE' });
   if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
@@ -657,9 +659,8 @@ export class StoryNotFoundError extends Error {}
 
 /** `GET /v1/stories/{id}`. */
 export async function getStory(id: string, signal?: AbortSignal): Promise<Story> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/stories/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (res.status === 404) throw new StoryNotFoundError(t('stories.not_found'));
   if (!res.ok) {
@@ -670,10 +671,9 @@ export async function getStory(id: string, signal?: AbortSignal): Promise<Story>
 
 /** `PATCH /v1/stories/{id}` — name and description, both every time. */
 export async function updateStory(id: string, input: { name: string; description: string }): Promise<Story> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/stories/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ name: input.name, description: input.description }),
   });
   if (!res.ok) {
@@ -684,9 +684,8 @@ export async function updateStory(id: string, input: { name: string; description
 
 /** `GET /v1/stories` — every Story of the account, newest first. */
 export async function listStories(signal?: AbortSignal): Promise<Story[]> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/stories`, {
+  const res = await apiFetch(`/stories`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -696,21 +695,19 @@ export async function listStories(signal?: AbortSignal): Promise<Story[]> {
 
 /** `DELETE /v1/stories/{id}` — the Story only; its activities stay. */
 export async function deleteStory(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/stories/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     method: 'DELETE',
-    credentials: 'include',
   });
-  if (!res.ok && res.status !== 404) {
+  if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
 }
 
 /** `POST /v1/stories/{id}/activities` — puts them in the Story; any already there stay as they are. */
 export async function addStoryActivities(id: string, activityIds: string[]): Promise<Story> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/stories/${encodeURIComponent(id)}/activities`, {
+  const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ activity_ids: activityIds }),
   });
   if (!res.ok) {
@@ -721,10 +718,9 @@ export async function addStoryActivities(id: string, activityIds: string[]): Pro
 
 /** `DELETE /v1/stories/{id}/activities` — takes them out of the Story; the activities stay. */
 export async function removeStoryActivities(id: string, activityIds: string[]): Promise<Story> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/stories/${encodeURIComponent(id)}/activities`, {
+  const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ activity_ids: activityIds }),
   });
   if (!res.ok) {
@@ -736,10 +732,9 @@ export async function removeStoryActivities(id: string, activityIds: string[]): 
 /** `POST /v1/stories/{id}/send` — a copy of the Story to `email` (FR-13.7). Succeeds whether or
  *  not the address has an account: the server never says. */
 export async function sendStory(id: string, email: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/stories/${encodeURIComponent(id)}/send`, {
+  const res = await apiFetch(`/stories/${encodeURIComponent(id)}/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ email }),
   });
   if (!res.ok) {
@@ -770,9 +765,8 @@ export interface StoryInbox {
 /** `GET /v1/story-sends` — the copies waiting for the account, newest first, and the accepted
  *  ones still being copied. */
 export async function listStorySends(signal?: AbortSignal): Promise<StoryInbox> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/story-sends`, {
+  const res = await apiFetch(`/story-sends`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -786,21 +780,21 @@ export async function listStorySends(signal?: AbortSignal): Promise<StoryInbox> 
 
 /** `POST /v1/story-sends/{id}/accept` (accept) or `DELETE /v1/story-sends/{id}` (decline). */
 export async function answerStorySend(id: string, accept: boolean): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/story-sends/${encodeURIComponent(id)}${accept ? '/accept' : ''}`, {
+  const res = await apiFetch(`/story-sends/${encodeURIComponent(id)}${accept ? '/accept' : ''}`, {
     method: accept ? 'POST' : 'DELETE',
-    credentials: 'include',
   });
-  if (!res.ok && res.status !== 404) {
+  // A copy its sender withdrew is gone: declining it is done, accepting it brings nothing.
+  if (accept && res.status === 404) throw new Error(t('stories.inbox_withdrawn'));
+  if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
 }
 
 /** `POST /v1/stories` — a new Story holding `activityIds` from the start, in one request. */
 export async function createStory(input: { name: string; description: string; activityIds: string[] }): Promise<Story> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/stories`, {
+  const res = await apiFetch(`/stories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ name: input.name, description: input.description, activity_ids: input.activityIds }),
   });
   if (!res.ok) {
@@ -817,9 +811,8 @@ export async function createStory(input: { name: string; description: string; ac
 export type CoverageStatus = ResponseJson<'/coverage/status', 'get'>;
 
 export async function getCoverageStatus(signal?: AbortSignal): Promise<CoverageStatus> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/coverage/status`, {
+  const res = await apiFetch(`/coverage/status`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -841,9 +834,8 @@ export async function getSpotsInArea(
   signal?: AbortSignal,
 ): Promise<SpotsInArea> {
   const params = new URLSearchParams({ bbox: bbox.map((v) => v.toFixed(5)).join(','), categories: categories.join(',') });
-  const res = await fetch(`${API_BASE_URL}${API_V1}/spots?${params}`, {
+  const res = await apiFetch(`/spots?${params}`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -858,9 +850,8 @@ export type SpotCapture = Schema<'SpotCapture'>;
  *  `captured_at` as the server wrote it), only those captured at or after it. */
 export async function getSpotCaptures(signal?: AbortSignal, since?: string): Promise<SpotCapture[]> {
   const query = since ? `?since=${encodeURIComponent(since)}` : '';
-  const res = await fetch(`${API_BASE_URL}${API_V1}/spots/captures${query}`, {
+  const res = await apiFetch(`/spots/captures${query}`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -908,9 +899,8 @@ function toPhoto(b: Schema<'Photo'>): Photo {
  *  order, then unplaced ones. */
 export async function listPhotos(of: { activity: string } | { story: string }, signal?: AbortSignal): Promise<Photo[]> {
   const params = new URLSearchParams(of);
-  const res = await fetch(`${API_BASE_URL}${API_V1}/photos?${params}`, {
+  const res = await apiFetch(`/photos?${params}`, {
     ...(signal ? { signal } : {}),
-    credentials: 'include',
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -933,10 +923,9 @@ export interface PhotoExifFields {
 /** `POST /v1/photos/place` — where an upload of a photo with this EXIF would be placed (`routeAt`,
  *  RFC 3339), storing nothing; `PhotoNeedsPlaceError` when the server can't tell. */
 export async function checkPhotoPlace(activityId: string, exif: PhotoExifFields): Promise<{ routeAt: string }> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/photos/place`, {
+  const res = await apiFetch(`/photos/place`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ activity_id: activityId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
   });
   if (!res.ok) {
@@ -970,7 +959,7 @@ export async function uploadPhoto(
   }
   if (routeAt) form.set('route_at', routeAt);
   if (caption) form.set('caption', caption);
-  const res = await fetch(`${API_BASE_URL}${API_V1}/photos`, { method: 'POST', credentials: 'include', body: form });
+  const res = await apiFetch('/photos', { method: 'POST', body: form });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
     const { code, message } = parseErrorBody(text, t('common.request_failed', { status: res.status }));
@@ -983,10 +972,9 @@ export async function uploadPhoto(
 /** `PATCH /v1/photos/{id}` — a field present changes. `routeAt` (RFC 3339) is the photo's new
  *  moment on its track; the server clamps it to the track. */
 export async function updatePhoto(id: string, change: { caption?: string | undefined; routeAt?: string | undefined }): Promise<Photo> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/photos/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/photos/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    credentials: 'include',
     body: JSON.stringify({ caption: change.caption, route_at: change.routeAt }),
   });
   if (!res.ok) {
@@ -997,7 +985,7 @@ export async function updatePhoto(id: string, change: { caption?: string | undef
 
 /** `DELETE /v1/photos/{id}`. */
 export async function deletePhoto(id: string): Promise<void> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/photos/${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' });
+  const res = await apiFetch(`/photos/${encodeURIComponent(id)}`, { method: 'DELETE' });
   if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }

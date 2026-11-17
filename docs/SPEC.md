@@ -427,7 +427,7 @@ stateDiagram-v2
 | Focused | Bold, in pace bands (FR-4.6) | Counted | Highlighted | No |
 | Checked | Bold | Counted | Ticked | No |
 
-- At most one activity is Focused, by clicking its row or track; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one.
+- At most one activity is Focused, by clicking its row or track; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one. A Type or Distance filter that hides a Checked activity unchecks it.
 - On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/android/docs/SPEC.md` FR-2.7).
 - Hiding keeps Focused and Checked; camera fits skip Hidden. Opening or closing a Story clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on activities still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
 - Pending wins over Hidden, and reprocessing never changes visibility: a hidden activity stays hidden after Pending clears.
