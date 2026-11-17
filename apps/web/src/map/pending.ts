@@ -30,6 +30,25 @@ export function pendingChange(previous: ReadonlySet<string>, pendingIds: Iterabl
   return { now, started, finished: left.size > 0 || landed.size > 0, left, landed, awaiting: stillAwaiting };
 }
 
+/**
+ * The edits applied here that `listed` can speak for (`shown`), and the rest (`unseen`). The web's
+ * list is an area's (FR-5.11), and the Edit window can save with its track outside it
+ * (useEditWindow.ts): that list says nothing about the edit, and pendingChange would read the
+ * missing row as landed while the reprocess still runs. The Pending check answers for those
+ * (`unseenLanded`).
+ */
+export function awaitedByList(awaiting: ReadonlySet<string>, listed: Iterable<string>): { shown: Set<string>; unseen: Set<string> } {
+  const rows = new Set(listed);
+  return { shown: new Set([...awaiting].filter((id) => rows.has(id))), unseen: new Set([...awaiting].filter((id) => !rows.has(id))) };
+}
+
+/** The `unseen` edits that have landed: the Pending check was asked about them (`watched`) and no
+ *  longer finds them pending. */
+export function unseenLanded(unseen: ReadonlySet<string>, watched: readonly string[], stillPending: readonly string[]): Set<string> {
+  const still = new Set(stillPending);
+  return new Set(watched.filter((id) => unseen.has(id) && !still.has(id)));
+}
+
 /** The ids to ask the Pending check about: the rows the list shows Pending and the edits applied
  *  here, once each. None means there's nothing to watch. */
 export function pendingWatched(listed: readonly string[], awaiting: ReadonlySet<string>): string[] {

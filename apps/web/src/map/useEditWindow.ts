@@ -13,7 +13,7 @@ export interface EditWindowState {
   tab: EditTab;
   setTab: (tab: EditTab) => void;
   /** The window's activities in full (`GET /v1/activities/{id}`), with the list's newer row over
-   *  each; null while closed, while they load, or once one has left the list. */
+   *  each one it shows; null while closed or while they load. */
   activities: ActivityDetail[] | null;
   trackBlocker: MessageKey | null;
   photosBlocker: MessageKey | null;
@@ -27,21 +27,18 @@ export interface EditWindowState {
  * The Edit window over the toolbar's target. While it's open the panel is inert and the map's own
  * controls step aside. It reads its activities in full on opening, since the list's rows are slim
  * (a group's type change still writes each one's own description), and shows once they land. It
- * closes when its activities leave the list (deleted elsewhere, say) or can't be read, or the map
- * would stay locked with no editor to close it, and it opens on its Activity tab. A move of the
- * map doesn't take them out of the list: the list waits for the window to close (useAreaList.ts).
+ * closes when they can't be read, or the map would stay locked with no editor to close it, and it
+ * opens on its Activity tab.
+ *
+ * Trap: the activities are the window's own once read. The list follows the map and Back
+ * (FR-5.11), so a row leaving it says nothing about the activity, and closing on that would drop
+ * what is unsaved. One deleted elsewhere shows when Save is refused.
  */
-export function useEditWindow(listed: readonly Activity[], loading: boolean): EditWindowState {
+export function useEditWindow(listed: readonly Activity[]): EditWindowState {
   const [ids, setIds] = useState<string[] | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tab, setTab] = useState<EditTab>('activity');
   const open = ids !== null;
-
-  const group = useMemo(() => {
-    if (ids === null) return null;
-    const rows = listed.filter((a) => ids.includes(a.id));
-    return rows.length === ids.length ? rows : null;
-  }, [listed, ids]);
 
   const [details, setDetails] = useState<ActivityDetail[] | null>(null);
   useEffect(() => {
@@ -51,22 +48,17 @@ export function useEditWindow(listed: readonly Activity[], loading: boolean): Ed
     Promise.all(ids.map((id) => getActivity(id, controller.signal)))
       .then(setDetails)
       .catch(() => {
-        if (!controller.signal.aborted) setIds(null);
+        if (controller.signal.aborted) return;
+        setIds(null);
+        setEditingId(null);
       });
     return () => controller.abort();
   }, [ids]);
 
   const activities = useMemo(
-    () => (group === null || details === null ? null : details.map((d) => ({ ...d, ...(group.find((a) => a.id === d.id) ?? {}) }))),
-    [group, details],
+    () => (ids === null || details === null ? null : details.map((d) => ({ ...d, ...(listed.find((a) => a.id === d.id) ?? {}) }))),
+    [ids, listed, details],
   );
-
-  useEffect(() => {
-    if (open && group === null && !loading) {
-      setIds(null);
-      setEditingId(null);
-    }
-  }, [open, group, loading]);
 
   useEffect(() => {
     setTab('activity');

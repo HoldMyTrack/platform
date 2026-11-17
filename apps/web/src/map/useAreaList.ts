@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { APP_FLIGHT } from './bbox';
-import { settledMove } from './areaLoad';
+import { areaLoad } from './areaLoad';
 import type { MapSessionEvent } from './session';
 import type { BBox } from '../api';
 
@@ -19,16 +19,12 @@ export function viewArea(map: MapLibreMap): BBox {
  * The list follows the map (docs/SPEC.md FR-5.11): from zoom 4 every move reloads it once the map
  * settles. The app's own flights (APP_FLIGHT: focusing a row, Focus on map, a Story) leave the list
  * as it is, or clicking a row would shrink the list to that row's track; the opening view and
- * Dates' flight ask for their area themselves. Closing a Story asks about wherever the map is then,
- * and so does closing the Edit window after a move made while it was open (areaLoad.ts's
- * settledMove). Returns the map's zoom as of its last move.
+ * Dates' flight ask for their area themselves. Closing a Story asks about wherever the map is then.
+ * Returns the map's zoom as of its last move.
  */
-export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, storyId: string | null, editOpen: boolean): number {
+export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, storyId: string | null): number {
   const [zoom, setZoom] = useState(() => map?.getZoom() ?? 0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // The Edit window as the settle timer finds it, and whether a move is waiting for it to close.
-  const editOpenRef = useRef(editOpen);
-  const moveWaiting = useRef(false);
 
   const loadHere = useCallback(() => {
     if (map) dispatch({ type: 'areaLoaded', area: viewArea(map) });
@@ -37,16 +33,11 @@ export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessi
   useEffect(() => {
     if (!map) return;
     setZoom(map.getZoom());
-    const onSettled = () => {
-      const move = settledMove(map.getZoom(), editOpenRef.current);
-      if (move === 'load') loadHere();
-      else if (move === 'later') moveWaiting.current = true;
-    };
     const onMoveEnd = (event: object) => {
       setZoom(map.getZoom());
       if ((event as Record<string, unknown>)[APP_FLIGHT] === true) return;
       if (timer.current !== null) clearTimeout(timer.current);
-      timer.current = setTimeout(onSettled, SETTLE_MS);
+      if (areaLoad(map.getZoom(), 0, null).load === 'auto') timer.current = setTimeout(loadHere, SETTLE_MS);
     };
     map.on('moveend', onMoveEnd);
     return () => {
@@ -54,13 +45,6 @@ export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessi
       if (timer.current !== null) clearTimeout(timer.current);
     };
   }, [map, loadHere]);
-
-  useEffect(() => {
-    editOpenRef.current = editOpen;
-    if (editOpen || !moveWaiting.current || !map) return;
-    moveWaiting.current = false;
-    if (settledMove(map.getZoom(), false) === 'load') loadHere();
-  }, [editOpen, map, loadHere]);
 
   const storyRef = useRef(storyId);
   useEffect(() => {

@@ -135,7 +135,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   );
   const clearDates = useCallback(() => dispatch({ type: 'datesSet', dates: ALL_TIME, fly: false }), []);
 
-  const edit = useEditWindow(activities, activitiesLoading);
+  const edit = useEditWindow(activities);
   const editOpen = edit.open;
   const editingTrack = edit.editingId !== null;
   const spotsShown = useMemo<readonly SpotCategory[]>(
@@ -145,6 +145,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
 
 
   const { pendingIds, distanceBounds: activityDistanceBounds, facets, listed: filteredActivities, mapHiddenIds } = useListView(activities, session.selection, dispatch);
+  const listedActivityIds = useMemo(() => activities.map((a) => a.id), [activities]);
 
   const unitSystem = useUnitSystem();
   const { map, basemap, imagery } = useMapInstance({
@@ -189,7 +190,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   useViewOnMap(map, initialActivity, { mode: mapMode, activities }, dispatch, focusActivity);
   const urlView = initial.hash.view != null;
   useOpeningView(map, dispatch, { keepCamera: urlView || storyId !== null || initialActivity !== null, country: user.country, earliest, historyReady: daysReady });
-  const zoom = useAreaList(map, dispatch, storyId, editOpen);
+  const zoom = useAreaList(map, dispatch, storyId);
   useDatesFlight(map, dispatch, { flyRequest: session.flyRequest, storyId, dates });
   const areaState = areaLoad(zoom, activities.length, storyId === null ? areaTotal : null);
   // Past the cap the map draws only the listed tracks, so the map and the list stay one set.
@@ -275,7 +276,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     onActivityRemoved: (id) => setHoveredActivityId((hovered) => (hovered === id ? null : hovered)),
   });
 
-  const awaitEdit = usePendingPoll(pendingIds, { reload: reloadActivities, onStarted: refresh.pendingStarted, onFinished: refresh.pendingFinished });
+  const awaitEdit = usePendingPoll(listedActivityIds, pendingIds, { reload: reloadActivities, onStarted: refresh.pendingStarted, onFinished: refresh.pendingFinished });
 
   const openEditWindow = useCallback(
     (group: Activity[]) => {
@@ -355,9 +356,8 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
       <DemoBar isDemo={isDemo} />
       <div className="app-body">
         {mapMode === 'normal' && (
-          // Inert while the Edit window is open: changing the selection or filters would pull its
-          // activities out from under it, as a new area would (useAreaList.ts holds the list for
-          // that). display: contents keeps the wrapper out of the layout.
+          // Inert while the Edit window is open: it is over the toolbar's target, which the panel
+          // would change or delete under it. display: contents keeps the wrapper out of the layout.
           <div className="edit-track-lock" inert={editOpen}>
             <ActivitiesPanel
               readOnly={isDemo}

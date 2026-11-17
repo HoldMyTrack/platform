@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { pendingActivities } from '../api';
-import { pendingBatches, pendingChange, pendingMoved, pendingWatched } from './pending';
+import { awaitedByList, pendingBatches, pendingChange, pendingMoved, pendingWatched, unseenLanded } from './pending';
 
 /** How often the Pending check runs while a reprocess is pending: one activity's ingest takes seconds. */
 const POLL_MS = 2000;
@@ -19,10 +19,11 @@ export interface PendingPollHandlers {
  * on each fetched list, so polling stops by itself. A failed check is tried again. The ids go in
  * batches the endpoint accepts (`pendingBatches`). An edit
  * applied here ([awaitEdit]) counts as finished once a later list shows it not pending
- * (pending.ts). Each fetched list is a new `pendingIds` array, and Apply's fetch aborts earlier
- * ones, so every list seen after Apply was fetched after it.
+ * (pending.ts), or, when no list shows its row (`listedIds` lacks it), once the Pending check no
+ * longer finds it pending. Each fetched list is a new `pendingIds` array, and Apply's fetch aborts
+ * earlier ones, so every list seen after Apply was fetched after it.
  */
-export function usePendingPoll(pendingIds: string[], handlers: PendingPollHandlers): (id: string) => void {
+export function usePendingPoll(listedIds: readonly string[], pendingIds: string[], handlers: PendingPollHandlers): (id: string) => void {
   const handlersRef = useRef(handlers);
   handlersRef.current = handlers;
 
@@ -34,12 +35,16 @@ export function usePendingPoll(pendingIds: string[], handlers: PendingPollHandle
     let timer = 0;
     const check = () => {
       timer = window.setTimeout(() => {
-        const answers = pendingBatches(watched).map((ids) => pendingActivities(ids, controller.signal));
-        Promise.all(answers).then(
-          (still) => {
+        const checks = pendingBatches(watched).map((ids) => pendingActivities(ids, controller.signal));
+        Promise.all(checks).then(
+          (answers) => {
+            const still = answers.flat();
+            const landed = unseenLanded(awaitedByList(awaitingRef.current, listedIds).unseen, watched, still);
+            for (const id of landed) awaitingRef.current.delete(id);
+            if (landed.size > 0) handlersRef.current.onFinished();
             // Polling goes on after asking for a reload: a successful one brings a new list and
             // restarts this, a failed one leaves the same list, and the next check asks again.
-            if (pendingMoved(watched, still.flat())) handlersRef.current.reload();
+            if (pendingMoved(watched, still)) handlersRef.current.reload();
             check();
           },
           () => {
@@ -61,9 +66,10 @@ export function usePendingPoll(pendingIds: string[], handlers: PendingPollHandle
     // Only a newly fetched list says anything new.
     if (pendingIds === lastRef.current) return;
     lastRef.current = pendingIds;
-    const change = pendingChange(previousRef.current, pendingIds, awaitingRef.current);
+    const { shown, unseen } = awaitedByList(awaitingRef.current, listedIds);
+    const change = pendingChange(previousRef.current, pendingIds, shown);
     previousRef.current = change.now;
-    awaitingRef.current = change.awaiting;
+    awaitingRef.current = new Set([...change.awaiting, ...unseen]);
     if (change.started) handlersRef.current.onStarted();
     if (change.finished) handlersRef.current.onFinished();
   }, [pendingIds]);

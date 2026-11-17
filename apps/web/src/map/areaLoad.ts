@@ -12,15 +12,3 @@ export const AREA_LIMIT = 1000;
 export function areaLoad(zoom: number, listed: number, total: number | null): { load: 'auto' | 'none'; capped: boolean } {
   return { load: zoom >= TRACKS_MIN_ZOOM ? 'auto' : 'none', capped: total !== null && total > listed };
 }
-
-/**
- * What a move of the user's does to the list once the map settles at `zoom`: 'load' reads it for
- * the new view, and 'none' leaves it, with no track drawn to list. With the Edit window open it is
- * 'later': the window closes when its activities leave the list (useEditWindow.ts), taking what is
- * unsaved in it, so the list keeps its rows until the window closes and then reads the view the
- * map has.
- */
-export function settledMove(zoom: number, editOpen: boolean): 'load' | 'later' | 'none' {
-  if (areaLoad(zoom, 0, null).load === 'none') return 'none';
-  return editOpen ? 'later' : 'load';
-}

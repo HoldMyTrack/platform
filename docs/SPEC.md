@@ -453,7 +453,7 @@ An activity is split in two at a point on its track. Each part is a full activit
 The list holds every activity whose track crosses the visible map, of all time unless the Dates filter (FR-5.12) narrows it, and the map draws the same set.
 
 - An activity with no track (FR-7.1) is never in it.
-- From zoom 4, where tracks are drawn (FR-4.1), the list follows the map each time it settles after a move; further out it lists nothing. The camera moving onto an activity or a Story leaves the list as it is, and so does any move while the Edit window is open: the list follows the map again when it closes.
+- From zoom 4, where tracks are drawn (FR-4.1), the list follows the map each time it settles after a move; further out it lists nothing. The camera moving onto an activity or a Story leaves the list as it is.
 - At most the newest 1,000. Past that the map draws only the listed tracks and says how many the area holds, and only zooming in or Dates bring the rest in.
 - A reload keeps Focused, Checked and Hidden on activities still listed, and every filter as set.
 
