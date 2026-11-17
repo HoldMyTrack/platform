@@ -136,6 +136,7 @@ class PanelState {
     /** A toggle, so a type is always one tap from coming back without "Reset filters". */
     fun toggleType(type: String) {
         excludedTypes = if (type in excludedTypes) excludedTypes - type else excludedTypes + type
+        dropFilteredChecks()
     }
 
     /** The TYPE dropdown's "All types": only ever re-includes everything. */
@@ -147,6 +148,14 @@ class PanelState {
      *  doesn't count as an active filter. */
     fun setDistanceFilter(next: DistanceRange?) {
         distanceFilter = next
+        dropFilteredChecks()
+    }
+
+    /** A checked row the filters now hide is unchecked, as Invert drops one: the toolbar acts
+     *  only on rows the list shows. */
+    private fun dropFilteredChecks() {
+        val ids = listed.mapTo(HashSet()) { it.id }
+        checked = checked intersect ids
     }
 
     fun resetFilters() {
