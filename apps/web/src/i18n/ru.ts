@@ -8,6 +8,7 @@ import type { MessageKey } from './en';
 export const ru: Record<MessageKey, string> & Record<string, string> = {
   'app.load_failed': 'Не удалось загрузить аккаунт: {message}',
   'app.try_again': 'Попробовать снова',
+  'app.crashed': 'Что-то пошло не так, и карта остановилась.',
   'common.bad_response': 'Не удалось прочитать ответ сервера.',
   'common.cancel': 'Отмена',
   'common.confirm': 'Подтвердить',
@@ -149,6 +150,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'edit.discard_title': 'Отменить изменения?',
   'edit.discard_message': 'Изменения, сделанные в этом окне, ещё не сохранены.',
   'edit.deleted_title': 'Маршрут удалён',
+  'edit.unreadable_title': 'Не удалось открыть редактирование',
   'edit.deleted_message': 'Маршрут из окна редактирования был удалён, поэтому окно закрылось. Несохранённые изменения потеряны.',
   'edit.discard': 'Отменить изменения',
   'edit.keep_editing': 'Продолжить',
@@ -585,6 +587,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'stories.inbox_sent': '{from} отправляет вам копию «{name}»',
   'stories.inbox_accept': 'Принять',
   'stories.inbox_decline': 'Отклонить',
+  'stories.inbox_withdrawn': 'Отправитель отозвал эту копию, принимать нечего.',
   'stories.inbox_copying': 'Копируем «{name}» от {from}…',
   'stories.from': 'От {from}',
   'photos.add': 'Добавить фото',
