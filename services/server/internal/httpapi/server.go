@@ -152,6 +152,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	// account that hasn't verified yet (auth_email.go's own doc comments on each).
 	s.mux.HandleFunc(route("POST", "/auth/resend-verification"), s.requireAuth(s.handleResendVerification))
 	s.mux.HandleFunc(route("PATCH", "/auth/email"), s.requireAuth(s.handleChangeEmail))
+	s.mux.HandleFunc(route("POST", "/auth/verify-code"), s.requireAuth(s.handleVerifyCode))
 	// requireNotDemo below: account and activity changes a demo account must never reach
 	// (docs/SPEC.md FR-2.1). requireVerified alone covers everything else a signed-in but
 	// unverified real account must not reach yet.
@@ -275,6 +276,7 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("GET /verify-pending", s.handleVerifyPendingPage)
 	s.mux.HandleFunc("POST /verify-pending/resend", s.sameOrigin(s.handleVerifyResendForm))
 	s.mux.HandleFunc("POST /verify-pending/email", s.sameOrigin(s.handleVerifyChangeEmailForm))
+	s.mux.HandleFunc("POST /verify-pending/code", s.sameOrigin(s.handleVerifyCodeForm))
 	// settings_page.go.
 	s.mux.HandleFunc("GET /settings", s.handleSettingsPage)
 	s.mux.HandleFunc("POST /settings", s.sameOrigin(s.handleSettingsForm))

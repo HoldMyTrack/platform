@@ -383,18 +383,22 @@ func (s *Server) createAccount(ctx context.Context, rawEmail, password, timezone
 // handleSignup, handleChangeEmail, and handleResendVerification, the three places a real
 // account needs one (re)sent. lang is the language the email is written in.
 func (s *Server) sendVerificationEmail(ctx context.Context, userID, email, lang string) error {
-	expiresAt := time.Now().Add(emailVerificationTTL)
+	now := time.Now()
 	tokenID, hash := newToken()
+	code, err := newVerificationCode()
+	if err != nil {
+		return err
+	}
 	if _, err := s.pool.Exec(ctx,
-		`INSERT INTO email_verifications (token_hash, user_id, email, expires_at) VALUES ($1, $2, $3, $4)`,
-		hash, userID, email, expiresAt,
+		`INSERT INTO email_verifications (token_hash, user_id, email, expires_at, code_hash, code_expires_at) VALUES ($1, $2, $3, $4, $5, $6)`,
+		hash, userID, email, now.Add(emailVerificationTTL), verificationCodeHash(hash, code), now.Add(verificationCodeTTL),
 	); err != nil {
 		return err
 	}
 
 	link := s.verifyLinkURL(tokenID, nil)
 	l := i18n.Get(lang)
-	return s.mailer.Send(ctx, email, l.T("email.verify.subject"), l.T("email.verify.body", "link", link))
+	return s.mailer.Send(ctx, email, l.T("email.verify.subject"), l.T("email.verify.body", "code", code, "link", link))
 }
 
 // handleLogin serves `POST /v1/auth/login`.

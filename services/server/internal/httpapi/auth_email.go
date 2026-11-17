@@ -274,34 +274,44 @@ func (s *Server) verifyEmail(ctx context.Context, token, sessionID string) (stri
 	if facebook && !signIn {
 		return "", false, errVerifyNeedsFacebook
 	}
+	if err := applyVerification(ctx, tx, userID, email, current, wasVerified, mine); err != nil {
+		return "", false, err
+	}
+	return userID, signIn, tx.Commit(ctx)
+}
+
+// applyVerification makes email the verified address of userID, whose row the caller holds
+// locked in tx, the way a link or a code does it: current is the address before, wasVerified
+// whether it was verified, and keep the hash of the one session a first verification leaves.
+func applyVerification(ctx context.Context, tx pgx.Tx, userID, email, current string, wasVerified bool, keep []byte) error {
 	if _, err := tx.Exec(ctx, `UPDATE users SET email = $2, email_verified = true WHERE id = $1`, userID, email); err != nil {
 		if isUniqueViolation(err) {
 			// Another account took the address while this change was pending.
-			return "", false, accountFailure(http.StatusConflict, "error.email_taken")
+			return accountFailure(http.StatusConflict, "error.email_taken")
 		}
-		return "", false, err
+		return err
 	}
 	// Every outstanding token for this account, not just the one used — mirrors
 	// resetPassword's own "close every other still-live link too" reasoning, applied to a
 	// resend that arrived after this one was already clicked.
 	if _, err := tx.Exec(ctx, `DELETE FROM email_verifications WHERE user_id = $1`, userID); err != nil {
-		return "", false, err
+		return err
 	}
 	// A reset link mailed to the address the account just left must stop working with it.
 	if email != current {
 		if _, err := tx.Exec(ctx, `DELETE FROM password_resets WHERE user_id = $1`, userID); err != nil {
-			return "", false, err
+			return err
 		}
 	}
 	if !wasVerified {
-		if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2`, userID, mine); err != nil {
-			return "", false, err
+		if _, err := tx.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2`, userID, keep); err != nil {
+			return err
 		}
 		if _, err := tx.Exec(ctx, `DELETE FROM auth_handoffs WHERE user_id = $1`, userID); err != nil {
-			return "", false, err
+			return err
 		}
 	}
-	return userID, signIn, tx.Commit(ctx)
+	return nil
 }
 
 // pendingEmail is the address the account's newest live verification link went to — a
@@ -403,14 +413,20 @@ func (s *Server) changeEmail(ctx context.Context, info authInfo, rawEmail, lang 
 	if err != nil {
 		return err
 	}
-	var taken bool
-	if err := s.pool.QueryRow(ctx,
-		`SELECT EXISTS (SELECT 1 FROM users WHERE email = $1 AND id <> $2)`, email, info.userID,
-	).Scan(&taken); err != nil {
+	var taken, pending bool
+	if err := s.pool.QueryRow(ctx, `
+		SELECT EXISTS (SELECT 1 FROM users WHERE email = $1 AND id <> $2),
+		       EXISTS (SELECT 1 FROM email_verifications WHERE email = $1 AND user_id <> $2 AND expires_at > NOW())
+	`, email, info.userID).Scan(&taken, &pending); err != nil {
 		return err
 	}
 	if taken {
 		return accountFailure(http.StatusConflict, "error.email_taken")
+	}
+	// One account at a time confirms an address: each would have a code of its own to guess at,
+	// and another account's change waits until that one's link expires.
+	if pending {
+		return accountFailure(http.StatusConflict, "error.email_pending")
 	}
 	if !resendVerificationLimiter.allow(info.userID) {
 		return accountFailure(http.StatusTooManyRequests, "error.rate_limited")
