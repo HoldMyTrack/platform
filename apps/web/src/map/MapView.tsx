@@ -439,14 +439,19 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               onClose={closeEditWindow}
             />
           )}
-          {edit.closedDeleted && (
+          {edit.open && !edit.activities && (
+            <section className="edit-track edit-window" aria-busy="true" data-testid="edit-window-loading">
+              <p className="activities-panel__note" role="status">{t('common.loading')}</p>
+            </section>
+          )}
+          {edit.closedNotice && (
             <ConfirmDialog
-              title={t('edit.deleted_title')}
-              message={t('edit.deleted_message')}
+              title={t('deleted' in edit.closedNotice ? 'edit.deleted_title' : 'edit.unreadable_title')}
+              message={'deleted' in edit.closedNotice ? t('edit.deleted_message') : edit.closedNotice.failed}
               confirmLabel={t('common.close')}
               cancelLabel={null}
               onConfirm={async () => {}}
-              onClose={edit.dismissClosedDeleted}
+              onClose={edit.dismissClosedNotice}
             />
           )}
           {map && photoLayer.popup && (
