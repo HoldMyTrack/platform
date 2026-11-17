@@ -463,17 +463,6 @@
         }
       }
     },
-    "Already have an account? Sign in" : {
-      "comment" : "Sign-in screen: switches from signing up to signing in.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Уже есть аккаунт? Войдите"
-          }
-        }
-      }
-    },
     "An account with this email already exists. Sign in the way you usually do, or use “Forgot password?” to set a password." : {
       "comment" : "Sign-in screen: Facebook's email belongs to an existing account, which Facebook is never linked to.",
       "localizations" : {
@@ -859,6 +848,17 @@
         }
       }
     },
+    "Couldn't create your account. Please try again." : {
+      "comment" : "Sign-in screen: the sign-up sheet failed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось создать аккаунт. Попробуйте ещё раз."
+          }
+        }
+      }
+    },
     "Couldn't load places — try again" : {
       "comment" : "Map: Show in this area failed.",
       "localizations" : {
@@ -976,28 +976,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Создать"
-          }
-        }
-      }
-    },
-    "Create account" : {
-      "comment" : "Sign-in screen: the sign-up button.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Создать аккаунт"
-          }
-        }
-      }
-    },
-    "Create your account" : {
-      "comment" : "Sign-in screen: title in sign-up mode.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Создание аккаунта"
           }
         }
       }

@@ -2,13 +2,13 @@ package dev.holdmytrack.android
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
-import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.credentials.CredentialManager
@@ -32,17 +32,14 @@ import java.util.Base64
 import kotlinx.coroutines.launch
 
 /**
- * Sign in, create an account, or start a demo account — the three ways
- * `services/server/internal/httpapi/auth.go` mints a session — or continue with Google or
- * Facebook, when the server has them configured (`docs/IMPLEMENTATION.md` §4.9).
+ * Sign in, start a demo account, or continue with Google or Facebook, when the server has them
+ * configured (`docs/IMPLEMENTATION.md` §4.9). Creating an account opens the web's `/signup` in a
+ * browser tab, so it passes that page's Turnstile check, and comes back here as Facebook does
+ * ([OAuthRedirectActivity]), with the verifier this screen keeps.
  *
- * Designed as the web's sign-in and sign-up pages (`templates/pages/signin.html`,
- * `signup.html`): one card, the serif title inside it, the providers, then the email form, then
- * (sign-in only) the demo — the layout carries all of that, and this class only shows, hides
- * and wires it. The two pages are two modes of this one screen, switched by the link under the
- * button, rather than two activities: the Facebook round trip comes back here
- * ([OAuthRedirectActivity]) with the verifier this screen keeps, whichever page started it.
- * Back from sign-up returns to sign-in, as Back from `/signup` does on the web.
+ * Designed as the web's sign-in page (`templates/pages/signin.html`): one card, the serif title
+ * inside it, the providers, then the email form, then the demo — the layout carries all of
+ * that, and this class only shows, hides and wires it.
  *
  * The app's first screen whenever no session is held, mirroring web's `AuthGate`: a bare
  * basemap with no tracks or fog is a weak demonstration of what HoldMyTrack does, and the
@@ -56,31 +53,19 @@ class SignInActivity : AppCompatActivity() {
     private lateinit var email: EditText
     private lateinit var password: EditText
     private lateinit var error: TextView
-    private lateinit var title: TextView
-    private lateinit var intro: TextView
     private lateinit var submit: Button
-    private lateinit var switchMode: Button
+    private lateinit var signUp: Button
     private lateinit var forgot: Button
     private lateinit var demo: Button
-    private lateinit var demoDivider: View
     private lateinit var buttons: List<Button>
     private lateinit var google: Button
     private lateinit var facebook: Button
     private lateinit var providersDivider: View
     private var providers: Providers? = null
 
-    /** A Facebook browser tab is open and hasn't come back — so the buttons, disabled when it
-     *  opened, come back on in [onResume] if it was simply closed. */
+    /** A sign-up or Facebook browser tab is open and hasn't come back — so the buttons,
+     *  disabled when it opened, come back on in [onResume] if it was simply closed. */
     private var awaitingBrowser = false
-
-    /** The web's `/signup` rather than `/signin` — kept across a recreation, including one
-     *  after the process died behind a Facebook browser tab. */
-    private var signingUp = false
-
-    /** Back from sign-up is back to sign-in; from sign-in it leaves the app, as ever. */
-    private val backToSignIn = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() = setSigningUp(false)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -95,25 +80,17 @@ class SignInActivity : AppCompatActivity() {
                 visibility = View.VISIBLE
             }
         }
-        title = findViewById(R.id.title)
-        intro = findViewById(R.id.intro)
         submit = findViewById(R.id.submit)
-        switchMode = findViewById(R.id.switch_mode)
+        signUp = findViewById(R.id.sign_up)
         forgot = findViewById(R.id.forgot)
         demo = findViewById(R.id.demo)
-        demoDivider = findViewById(R.id.demo_divider)
         google = findViewById(R.id.google)
         facebook = findViewById(R.id.facebook)
         providersDivider = findViewById(R.id.providers_divider)
-        buttons = listOf(submit, switchMode, forgot, demo, google, facebook)
+        buttons = listOf(submit, signUp, forgot, demo, google, facebook)
 
-        onBackPressedDispatcher.addCallback(this, backToSignIn)
-        setSigningUp(savedInstanceState?.getBoolean(STATE_SIGNING_UP) ?: false)
-
-        submit.setOnClickListener {
-            withCredentials(if (signingUp) HoldMyTrackApi::signUp else HoldMyTrackApi::signIn)
-        }
-        switchMode.setOnClickListener { setSigningUp(!signingUp) }
+        submit.setOnClickListener { withCredentials(HoldMyTrackApi::signIn) }
+        signUp.setOnClickListener { openBrowserRoundTrip(BrowserFlow.SIGN_UP, HoldMyTrackApi::signUpPageUri) }
         // The web's own /forgot, not a native form: the emailed reset link opens the web's
         // /reset page anyway, so the flow ends in the browser whichever way it starts.
         forgot.setOnClickListener {
@@ -124,7 +101,9 @@ class SignInActivity : AppCompatActivity() {
             HoldMyTrackApi.startDemo(::onResult)
         }
         google.setOnClickListener { signInWithGoogle() }
-        facebook.setOnClickListener { signInWithFacebook() }
+        facebook.setOnClickListener {
+            openBrowserRoundTrip(BrowserFlow.FACEBOOK) { challenge -> HoldMyTrackApi.facebookStartUri(timezone(), challenge) }
+        }
 
         // Shown only once the server says it has them configured — the web's same rule. A
         // failure leaves them hidden: email and password still work, and a button that can
@@ -141,29 +120,6 @@ class SignInActivity : AppCompatActivity() {
 
         // Not on a recreation: the intent is the same one already handled before it.
         if (savedInstanceState == null) handleRedirect(intent)
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        outState.putBoolean(STATE_SIGNING_UP, signingUp)
-    }
-
-    /**
-     * Switches between the web's two pages. The typed email carries over; an error from the
-     * other page doesn't. The password's autofill hint follows, so a password manager offers a
-     * saved password on sign-in and suggests a new one on sign-up.
-     */
-    private fun setSigningUp(value: Boolean) {
-        signingUp = value
-        backToSignIn.isEnabled = value
-        title.setText(if (value) R.string.sign_up_title else R.string.sign_in_title)
-        submit.setText(if (value) R.string.create_account else R.string.sign_in)
-        switchMode.setText(if (value) R.string.to_sign_in else R.string.to_sign_up)
-        listOf(intro, forgot, demoDivider, demo).forEach { it.visibility = if (value) View.GONE else View.VISIBLE }
-        // "newPassword" is androidx.autofill's HintConstants.AUTOFILL_HINT_NEW_PASSWORD, spelled
-        // out rather than pulling in that library for one constant.
-        password.setAutofillHints(if (value) "newPassword" else View.AUTOFILL_HINT_PASSWORD)
-        error.visibility = View.GONE
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -221,19 +177,20 @@ class SignInActivity : AppCompatActivity() {
     }
 
     /**
-     * The server's own Facebook web flow in a browser tab, started with the S256 challenge of a
-     * fresh verifier. The verifier is kept on disk rather than in a field, since the process can
-     * be killed while the tab is in front; [handleRedirect] reads it back when the tab returns.
+     * One of the server's own pages that end in a handoff — the web's sign-up, or its Facebook
+     * flow — in a browser tab, started with the S256 challenge of a fresh verifier. The verifier
+     * and [flow] are kept on disk rather than in fields, since the process can be killed while
+     * the tab is in front; [handleRedirect] reads them back when the tab returns.
      */
-    private fun signInWithFacebook() {
+    private fun openBrowserRoundTrip(flow: BrowserFlow, start: (challenge: String) -> Uri) {
         val verifier = Base64.getUrlEncoder().withoutPadding()
             .encodeToString(ByteArray(32).also { SecureRandom().nextBytes(it) })
         val challenge = Base64.getUrlEncoder().withoutPadding()
             .encodeToString(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
-        handoffPrefs().edit().putString(KEY_VERIFIER, verifier).apply()
+        handoffPrefs().edit().putString(KEY_VERIFIER, verifier).putString(KEY_FLOW, flow.name).apply()
         setBusy(true)
         awaitingBrowser = true
-        CustomTabsIntent.Builder().build().launchUrl(this, HoldMyTrackApi.facebookStartUri(timezone(), challenge))
+        CustomTabsIntent.Builder().build().launchUrl(this, start(challenge))
     }
 
     /**
@@ -252,11 +209,12 @@ class SignInActivity : AppCompatActivity() {
             is OAuthRedirectRule.ShowError -> {
                 awaitingBrowser = false
                 setBusy(false)
-                showError(getString(browserErrorMessage(rule.error)))
+                val flow = prefs.getString(KEY_FLOW, null)?.let { name -> BrowserFlow.entries.firstOrNull { it.name == name } }
+                showError(getString(browserErrorMessage(BrowserFailure.of(flow, rule.error))))
             }
             is OAuthRedirectRule.Exchange -> {
                 awaitingBrowser = false
-                prefs.edit().remove(KEY_VERIFIER).apply()
+                prefs.edit().remove(KEY_VERIFIER).remove(KEY_FLOW).apply()
                 setBusy(true)
                 HoldMyTrackApi.exchangeHandoff(rule.code, verifier!!, ::onResult)
             }
@@ -266,11 +224,12 @@ class SignInActivity : AppCompatActivity() {
     private fun handoffPrefs() = getSharedPreferences(HANDOFF_PREFS, Context.MODE_PRIVATE)
 
     /** The web's own wording for the same codes (`/signin?error=…`). */
-    private fun browserErrorMessage(code: String?): Int = when (code) {
-        "facebook_no_email" -> R.string.facebook_no_email
-        "facebook_email_in_use" -> R.string.facebook_email_in_use
-        "google" -> R.string.google_failed
-        else -> R.string.facebook_failed
+    private fun browserErrorMessage(failure: BrowserFailure): Int = when (failure) {
+        BrowserFailure.FACEBOOK_NO_EMAIL -> R.string.facebook_no_email
+        BrowserFailure.FACEBOOK_EMAIL_IN_USE -> R.string.facebook_email_in_use
+        BrowserFailure.GOOGLE -> R.string.google_failed
+        BrowserFailure.FACEBOOK -> R.string.facebook_failed
+        BrowserFailure.SIGN_UP -> R.string.sign_up_failed
     }
 
     /** The device's IANA zone — what the web sends as `tz` — so a new account starts on it. */
@@ -327,7 +286,7 @@ class SignInActivity : AppCompatActivity() {
         private const val TAG = "SignInActivity"
         private const val HANDOFF_PREFS = "sign_in_handoff"
         private const val KEY_VERIFIER = "verifier"
-        private const val STATE_SIGNING_UP = "signing_up"
+        private const val KEY_FLOW = "flow"
 
         /** Replaces the whole back stack with this screen — used on a cold start with no
          *  session, when a stored token turns out to be revoked, and on sign-out (from Profile

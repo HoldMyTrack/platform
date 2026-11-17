@@ -39,12 +39,13 @@ Every built feature of the app; what it won't do is in §9.
 
 ### FR-1.1 Sign in, sign up, start a demo
 
-One screen signs in, signs up, starts a demo or continues with Google or Facebook, against the web's endpoints (`docs/SPEC.md` FR-1.1, FR-1.2, FR-2.1, FR-1.9, FR-1.10).
+One screen signs in, starts a demo or continues with Google or Facebook, against the web's endpoints (`docs/SPEC.md` FR-1.1, FR-1.2, FR-2.1, FR-1.9, FR-1.10), and opens sign-up.
 
 - The app checks only that email and password aren't empty. Every other rule is the server's, and its message is shown as sent, so the two never disagree.
 - The response's session token is kept with the email (empty for the demo account) and whether it's verified.
 - Google and Facebook show only when `GET /v1/auth/providers` reports them configured; when that request fails, neither shows.
 - Google sends the system account picker's ID token with the phone's timezone. Facebook runs the server's own flow in a browser tab, not Meta's SDK, started with the S256 hash of a random verifier the app keeps; the code returned to `holdmytrack://oauth` is redeemed with that verifier at `POST /v1/auth/handoff`.
+- Creating an account opens the web's sign-up page in a browser tab, which passes the new account to the app as Facebook does and leaves the tab's browser signed out (`docs/SPEC.md` FR-1.1).
 - Forgot password opens the web's page (`docs/SPEC.md` FR-1.5) in a browser tab.
 - Without a session this is the first screen. The map is never shown signed out: a base map without the account's layers demonstrates less than the demo does.
 

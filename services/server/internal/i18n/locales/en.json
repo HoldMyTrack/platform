@@ -307,6 +307,7 @@
   "error.code_expired": "This code has expired. Send a new one.",
   "error.code_rate_limited": "Too many wrong codes for this address. Try again in an hour.",
   "error.email_pending": "Another account is confirming this address. Try again later.",
+  "error.signup_created_sign_in": "Your account was created. Go back to the app and sign in with this email and password.",
   "error.verify_link_invalid": "This verification link is invalid, expired or already used. If your email is already confirmed, sign in.",
   "error.verify_needs_facebook": "This account is linked to Facebook. To confirm the address, open this link in a browser signed in to the account. Didn't make this account, or can't sign in to it? Reset its password instead.",
   "error.verify_other_facebook": "That Facebook account isn't the one linked to this account. Continue with the linked one, or reset the password if this account isn't yours.",

@@ -73,7 +73,7 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 - **The operator:** in the admin panel, each account's email, name, which clients it uses (web, Android, iOS) and activities (dates, names, types, distances, places), not their tracks.
 - **Processors:** DigitalOcean (servers), Cloudflare (R2 storage, the basemap's CDN, the sign-up bot check), Grafana Labs (monitoring) and Zoho (email, US).
 
-Cloudflare's CDN (basemap tiles, so which areas are viewed), Cloudflare Turnstile (the web sign-up page, which also reads browser signals; the server sends it the visitor's IP address with the check), Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser or app directly.
+Cloudflare's CDN (basemap tiles, so which areas are viewed), Cloudflare Turnstile (the sign-up page, where the apps sign up too, which also reads browser signals; the server sends it the visitor's IP address with the check), Google Fonts, MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser or app directly.
 
 ## 3. Legal basis, necessity and proportionality
 

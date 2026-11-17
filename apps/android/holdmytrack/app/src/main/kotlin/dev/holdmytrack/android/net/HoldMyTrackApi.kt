@@ -14,7 +14,6 @@ import dev.holdmytrack.android.panel.ActivityKind
 import dev.holdmytrack.android.panel.ActivityTypes
 import java.io.IOException
 import java.time.Duration
-import java.time.ZoneId
 import java.time.Instant
 import java.time.OffsetDateTime
 import okhttp3.Call
@@ -380,6 +379,17 @@ object HoldMyTrackApi {
             .appendQueryParameter("app_challenge", challenge)
             .build()
 
+    /**
+     * The web's sign-up page for this app, opened in a browser tab so the sign-up passes its
+     * Turnstile check, with the S256 [challenge] of a verifier only this app holds. A new account
+     * comes back at `holdmytrack://oauth?code=…`, redeemed with [exchangeHandoff]; the page's own
+     * script gives it the browser's timezone.
+     */
+    fun signUpPageUri(challenge: String): Uri =
+        Uri.parse(BuildConfig.API_BASE_URL + "/signup").buildUpon()
+            .appendQueryParameter("app_challenge", challenge)
+            .build()
+
     /** One of the web's own pages — "Forgot password?", About, Help — served by the API's own
      *  origin, outside `/v1`. */
     fun webPageUri(path: String): Uri = Uri.parse(BuildConfig.API_BASE_URL + path)
@@ -391,12 +401,6 @@ object HoldMyTrackApi {
 
     fun signIn(email: String, password: String, onResult: (Result<Account>) -> Unit) {
         authenticate("/auth/login", jsonBody(CredentialsJson(email, password)), onResult)
-    }
-
-    /** Sends the phone's IANA zone as `timezone`, as the web's sign-up sends the browser's, so
-     *  a new account starts on it rather than on UTC (Google and Facebook already send it). */
-    fun signUp(email: String, password: String, onResult: (Result<Account>) -> Unit) {
-        authenticate("/auth/signup", jsonBody(CredentialsJson(email, password, ZoneId.systemDefault().id)), onResult)
     }
 
     /**

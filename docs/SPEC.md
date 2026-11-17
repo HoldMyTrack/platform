@@ -53,6 +53,7 @@ On the web, sign-in, sign-up, password reset and verification are server-rendere
 - The browser's IANA timezone comes with the form; a missing or invalid one starts the account on UTC and never refuses the signup.
 - At most 5 accounts from one address in an hour. Failed signups and Google or Facebook sign-ins don't count.
 - The web sign-up page asks Cloudflare Turnstile whether the visitor is a person, when the deployment turns it on, and refuses the signup without its pass.
+- The apps sign up on that page, opened in a browser tab. The account it makes is signed in only in the app, never in the tab's browser.
 - Signing up always makes a new account, also from a demo session (FR-2.3), starts a 30-day session and sends a verification email (FR-1.8).
 
 ### FR-1.2 Sign in

@@ -107,6 +107,11 @@ struct OAuthTests {
         #expect(url.absoluteString == "http://localhost:8081/v1/auth/facebook/start?tz=America/New_York&app_challenge=abc")
     }
 
+    @Test func theSignupURLCarriesTheChallenge() {
+        let url = OAuth.signupURL(base: URL(string: "http://localhost:8081")!, challenge: "abc")
+        #expect(url.absoluteString == "http://localhost:8081/signup?app_challenge=abc")
+    }
+
     @Test func aCodeWithASignInInFlightIsRedeemed() {
         #expect(OAuthRedirect.of(URL(string: "holdmytrack://oauth?code=abc")!, hasVerifier: true) == .exchange(code: "abc"))
     }
@@ -124,6 +129,12 @@ struct OAuthTests {
 }
 
 struct OAuthFailureTests {
+    @Test func aSignupSheetsFailureIsASignupFailureWhateverItsCode() {
+        #expect(OAuthFailure.of(nil, flow: .signup) == .signupFailed)
+        #expect(OAuthFailure.of("facebook_no_email", flow: .signup) == .signupFailed)
+        #expect(OAuthFailure.of("facebook_no_email", flow: .provider(.facebook)) == .noEmail)
+    }
+
     @Test func facebooksTwoRefusalsSayWhatToDo() {
         #expect(OAuthFailure.of("facebook_no_email", provider: .facebook) == .noEmail)
         #expect(OAuthFailure.of("facebook_email_in_use", provider: .facebook) == .emailInUse)

@@ -82,11 +82,7 @@ public final class APIClient: Sendable {
     }
 
     public func login(email: String, password: String) async throws -> SessionGrant {
-        try await grant(send("POST", "v1/auth/login", body: CredentialsJSON(email: email, password: password, timezone: nil)))
-    }
-
-    public func signup(email: String, password: String, timezone: String) async throws -> SessionGrant {
-        try await grant(send("POST", "v1/auth/signup", body: CredentialsJSON(email: email, password: password, timezone: timezone)))
+        try await grant(send("POST", "v1/auth/login", body: CredentialsJSON(email: email, password: password)))
     }
 
     public func demo() async throws -> SessionGrant {

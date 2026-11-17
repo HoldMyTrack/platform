@@ -105,7 +105,6 @@ struct ExportStatusJSON: Codable, Sendable, Equatable {
 struct CredentialsJSON: Codable, Sendable, Equatable {
     let email: String
     let password: String
-    let timezone: String?
 }
 
 /// Sign in with Apple's authorization code; name is only on the first authorization.

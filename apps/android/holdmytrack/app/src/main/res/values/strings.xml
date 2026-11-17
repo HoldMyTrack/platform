@@ -11,14 +11,11 @@
 
     <string name="sign_in">Sign in</string>
     <string name="sign_out">Sign out</string>
-    <string name="create_account">Create account</string>
     <string name="try_demo">Try the demo</string>
     <string name="sign_in_title">Sign in to HoldMyTrack</string>
     <string name="sign_in_intro">Sign in to see your tracks and fog of war on the map. The demo needs no signup: a shared, ready-made account you can look around but not change.</string>
-    <string name="sign_up_title">Create your account</string>
     <string name="forgot_password">Forgot password?</string>
     <string name="to_sign_up">Don\'t have an account? Create one</string>
-    <string name="to_sign_in">Already have an account? Sign in</string>
     <string name="email_hint">Email</string>
     <string name="password_hint">Password</string>
     <string name="credentials_required">Enter an email and a password.</string>
@@ -28,6 +25,7 @@
     <string name="sign_in_or">or</string>
     <string name="google_failed">Couldn\'t sign in with Google. Please try again.</string>
     <string name="facebook_failed">Couldn\'t sign in with Facebook. Please try again.</string>
+    <string name="sign_up_failed">Couldn\'t create your account. Please try again.</string>
     <string name="facebook_no_email">Your Facebook account didn\'t share an email address, and HoldMyTrack needs one. Try again and allow access to your email, or sign up with email and password.</string>
     <string name="facebook_email_in_use">An account with this email already exists. Sign in the way you usually do, or use “Forgot password?” to set a password.</string>
 

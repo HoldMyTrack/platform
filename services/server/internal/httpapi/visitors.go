@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"log/slog"
+	"net/http"
 	"regexp"
 	"sync"
 	"time"
@@ -34,6 +35,12 @@ var notAPerson = regexp.MustCompile(`(?i)bot|crawl|spider|slurp|preview|monitor|
 // own requests count.
 func countsAsVisitor(route string, status int, userAgent string, inApp bool) bool {
 	return visitorPages[route] && status == 200 && !inApp && userAgent != "" && !notAPerson.MatchString(userAgent)
+}
+
+// fromApp is whether r comes from an app: its WebView, or the browser tab it opened for
+// sign-up (signup_page.go), which carries no app cookie.
+func fromApp(r *http.Request) bool {
+	return appPlatform(r) != "" || r.URL.Query().Get("app_challenge") != ""
 }
 
 // visitorHash is the visitor behind ip and userAgent under salt.
