@@ -398,7 +398,7 @@ func (s *Server) sendVerificationEmail(ctx context.Context, userID, email, lang 
 
 	link := s.verifyLinkURL(tokenID, nil)
 	l := i18n.Get(lang)
-	return s.mailer.Send(ctx, email, l.T("email.verify.subject"), l.T("email.verify.body", "code", code, "link", link))
+	return s.mailer.Send(ctx, email, l.T("email.verify.subject", "code", code), l.T("email.verify.body", "code", code, "link", link))
 }
 
 // handleLogin serves `POST /v1/auth/login`.

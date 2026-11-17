@@ -65,7 +65,7 @@ func (d *dbTest) mailedCode(to string) string {
 	m := d.srv.mailer.(*sentMail)
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	code := regexp.MustCompile(`\n\n(\d{6})\n\n`)
+	code := regexp.MustCompile(`(?m)^(\d{6})$`)
 	for i := len(m.bodies) - 1; i >= 0; i-- {
 		if found := code.FindStringSubmatch(m.bodies[i]); found != nil && m.to[i] == to {
 			return found[1]
@@ -272,5 +272,20 @@ func TestAddressChangeToAnAddressPendingElsewhere(t *testing.T) {
 	d.decode(d.do(b, http.MethodPatch, "/v1/auth/email", map[string]string{"email": target}), http.StatusConflict, &body)
 	if body.Error != "email_pending" {
 		t.Errorf("error %q, want email_pending", body.Error)
+	}
+}
+
+// The code leads the subject and the body, so a notification or the inbox list shows it, and
+// a phone's keyboard can offer it.
+func TestVerificationEmailLeadsWithTheCode(t *testing.T) {
+	d := newDBTest(t)
+	_, email := d.unverifiedWithCode()
+	code := d.mailedCode(email)
+	m := d.srv.mailer.(*sentMail)
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	last := len(m.bodies) - 1
+	if !strings.HasPrefix(m.subjects[last], code+" ") || !strings.HasPrefix(m.bodies[last], code+"\n") {
+		t.Errorf("subject %q, body %q: want both to start with the code %s", m.subjects[last], m.bodies[last], code)
 	}
 }
