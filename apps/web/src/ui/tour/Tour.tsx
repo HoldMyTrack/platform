@@ -5,8 +5,9 @@ import { onScreen, placePopover, unionOf, type CardId, type Placement, type Rect
 import type { Tour } from './useTour';
 import './tour.css';
 
-/** The frames a step's anchor gets to appear after a mode change before the step is skipped. */
-const MISSING_FRAMES = 20;
+/** How long a step's anchor gets to appear after a mode change before the step is skipped: in
+ *  time, not frames, which a 120 Hz display runs through twice as fast. */
+const MISSING_MS = 330;
 /** Room around the anchor inside the spotlight's ring, and the ring's corners (tour.css's --fm-radius-lg). */
 const PAD = 6;
 const RADIUS = 12;
@@ -40,7 +41,7 @@ function anchorRects(selector: string): Rect[] {
 /**
  * What `selector` matches, each rect lit on its own and their union for placing beside, followed
  * every frame (the panel resizes, the map's controls wrap, a menu opens, a mode change mounts and
- * unmounts the panel). `onMissing` is called once if nothing has appeared within MISSING_FRAMES.
+ * unmounts the panel). `onMissing` is called once if nothing has appeared within MISSING_MS.
  */
 function useAnchor(selector: string | null, onMissing?: () => void): { rects: Rect[]; rect: Rect | null } {
   const [rects, setRects] = useState<Rect[]>([]);
@@ -50,15 +51,18 @@ function useAnchor(selector: string | null, onMissing?: () => void): { rects: Re
     setRects([]);
     if (selector === null) return;
     let frame = 0;
-    let absent = 0;
+    let absentSince: number | null = null;
     let last = '[]';
     const tick = () => {
       const next = anchorRects(selector);
-      if (next.length === 0 && ++absent === MISSING_FRAMES) {
-        missing.current?.();
-        return;
+      if (next.length > 0) absentSince = null;
+      else {
+        absentSince ??= performance.now();
+        if (performance.now() - absentSince >= MISSING_MS) {
+          missing.current?.();
+          return;
+        }
       }
-      if (next.length > 0) absent = 0;
       const key = JSON.stringify(next);
       if (key !== last) {
         last = key;
