@@ -253,6 +253,11 @@
     }, Promise.resolve()).then(schedule);
   }
 
+  // A button, not a label around the hidden input, so the keyboard reaches it.
+  menu.querySelector('.upload-menu__choose').addEventListener('click', function () {
+    input.click();
+  });
+
   input.addEventListener('change', function () {
     enqueue(input.files);
     input.value = '';
