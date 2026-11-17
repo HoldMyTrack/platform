@@ -232,6 +232,11 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const exporter = useExportFlow(map, container, exportScene, exportStats);
   const tapsAct = mapTapsAct(exporter.flow);
   useEffect(() => setMapTapsActive(tapsAct), [tapsAct]);
+  // An export being framed closes when Edit opens over it.
+  const cancelExport = exporter.cancel;
+  useEffect(() => {
+    if (editOpen) cancelExport();
+  }, [editOpen, cancelExport]);
   useSelectionLayers(map, {
     boldIds,
     // Hover isn't exported, and framing doesn't preview.
@@ -418,7 +423,9 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
             </div>
           )}
           <div ref={container} className="map-canvas" data-testid="map-canvas" />
-          {map && <MapExport map={map} container={container} exporter={exporter} />}
+          {/* Edit owns the map while it's open, as the other controls step aside: an export would
+              draw the tracks without the edit, and Escape would reach both. */}
+          {map && !editOpen && <MapExport map={map} container={container} exporter={exporter} />}
           {map && edit.activities && (
             <EditActivityWindow
               map={map}
