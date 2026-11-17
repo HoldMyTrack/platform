@@ -135,6 +135,7 @@ export const en = {
   'edit.discard_title': 'Discard changes?',
   'edit.discard_message': 'The changes you made in this window haven\'t been saved yet.',
   'edit.deleted_title': 'Activity deleted',
+  'edit.unreadable_title': "Couldn't open Edit",
   'edit.deleted_message': 'An activity in the Edit window was deleted elsewhere, so the window closed. Changes you hadn\'t saved were lost.',
   'edit.discard': 'Discard',
   'edit.keep_editing': 'Keep editing',
