@@ -44,8 +44,8 @@ export function useSelectionActions(
   );
   const toggleChecked = useCallback((id: string) => dispatch({ type: 'checkToggled', id }), [dispatch]);
   const toggleGroupVisibility = useCallback(() => dispatch({ type: 'visibilityToggled' }), [dispatch]);
-  const toggleType = useCallback((activityType: string) => dispatch({ type: 'typeToggled', activityType }), [dispatch]);
-  const setDistanceFilter = useCallback((filter: DistanceRange | null) => dispatch({ type: 'distanceSet', filter }), [dispatch]);
+  const toggleType = useCallback((activityType: string) => dispatch({ type: 'typeToggled', activityType, activities }), [dispatch, activities]);
+  const setDistanceFilter = useCallback((filter: DistanceRange | null) => dispatch({ type: 'distanceSet', filter, activities }), [dispatch, activities]);
   const clearFocus = useCallback(() => dispatch({ type: 'focused', id: null }), [dispatch]);
   const clearChecked = useCallback(() => dispatch({ type: 'checkedSet', ids: [] }), [dispatch]);
   const checkAll = useCallback(() => dispatch({ type: 'checkedSet', ids: listed.map((a) => a.id) }), [dispatch, listed]);
