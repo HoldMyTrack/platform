@@ -126,7 +126,8 @@ export function useExportFlow(
       document.body.appendChild(a);
       a.click();
       a.remove();
-      URL.revokeObjectURL(url);
+      // Later, not now: Safari has dropped a download whose URL was revoked in the same task.
+      window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       dispatch({ type: 'close' });
     } catch (err) {
       // The cause (a canvas or render timeout) is for developers; the user gets a generic message.
