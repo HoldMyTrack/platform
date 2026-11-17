@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The web's sign-in and sign-up pages (templates/pages/signin.html, signup.html) as two modes
-     of one card, which SignInActivity switches between: the serif title inside it, and the same
-     order — providers, "or", the email form, then (sign-in only) the demo. The screen has no
-     action bar (Theme.HoldMyTrack.NoActionBar); the card carries the title. -->
+<!-- The web's sign-in page (templates/pages/signin.html) as one card: the serif title inside it,
+     and the same order — providers, "or", the email form, then the demo. Creating an account
+     opens the web's sign-up page instead (SignInActivity). The screen has no action bar
+     (Theme.HoldMyTrack.NoActionBar); the card carries the title. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
@@ -32,7 +32,6 @@
                 android:showDividers="middle">
 
                 <TextView
-                    android:id="@+id/title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:accessibilityHeading="true"
@@ -48,7 +47,6 @@
                     android:visibility="gone" />
 
                 <TextView
-                    android:id="@+id/intro"
                     style="@style/Widget.HoldMyTrack.Hint"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -134,7 +132,7 @@
                     android:accessibilityLiveRegion="polite"
                     android:visibility="gone" />
 
-                <!-- Sign in or Create account, by mode, then the web's link to the other page. -->
+                <!-- Sign in, then the web's link to its sign-up page, which opens in a browser tab. -->
                 <Button
                     android:id="@+id/submit"
                     android:layout_width="match_parent"
@@ -142,7 +140,7 @@
                     android:text="@string/sign_in" />
 
                 <Button
-                    android:id="@+id/switch_mode"
+                    android:id="@+id/sign_up"
                     style="@style/Widget.HoldMyTrack.Button.Link"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
@@ -150,7 +148,6 @@
                     android:text="@string/to_sign_up" />
 
                 <include
-                    android:id="@+id/demo_divider"
                     layout="@layout/include_or_divider"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />

@@ -85,7 +85,7 @@ internal data class ExportStatusJson(
 )
 
 @Serializable
-internal data class CredentialsJson(val email: String, val password: String, val timezone: String? = null)
+internal data class CredentialsJson(val email: String, val password: String)
 
 @Serializable
 internal data class GoogleTokenJson(@SerialName("id_token") val idToken: String, val tz: String)

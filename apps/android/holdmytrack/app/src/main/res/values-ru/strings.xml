@@ -13,14 +13,11 @@
 
     <string name="sign_in">Войти</string>
     <string name="sign_out">Выйти</string>
-    <string name="create_account">Создать аккаунт</string>
     <string name="try_demo">Попробовать демо</string>
     <string name="sign_in_title">Вход в HoldMyTrack</string>
     <string name="sign_in_intro">Войдите, чтобы увидеть свои маршруты и «туман войны». Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять.</string>
-    <string name="sign_up_title">Создание аккаунта</string>
     <string name="forgot_password">Забыли пароль?</string>
     <string name="to_sign_up">Нет аккаунта? Создайте его</string>
-    <string name="to_sign_in">Уже есть аккаунт? Войдите</string>
     <string name="email_hint">Эл. почта</string>
     <string name="password_hint">Пароль</string>
     <string name="credentials_required">Введите адрес почты и пароль.</string>
@@ -30,6 +27,7 @@
     <string name="sign_in_or">или</string>
     <string name="google_failed">Не удалось войти через Google. Попробуйте ещё раз.</string>
     <string name="facebook_failed">Не удалось войти через Facebook. Попробуйте ещё раз.</string>
+    <string name="sign_up_failed">Не удалось создать аккаунт. Попробуйте ещё раз.</string>
     <string name="facebook_no_email">Ваш аккаунт Facebook не передал адрес электронной почты, а он нужен HoldMyTrack. Попробуйте ещё раз и разрешите доступ к почте или зарегистрируйтесь по почте и паролю.</string>
     <string name="facebook_email_in_use">Аккаунт с этой почтой уже существует. Войдите так, как обычно, или задайте пароль через «Забыли пароль?».</string>
 

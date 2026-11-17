@@ -36,7 +36,6 @@ class WireContractTest {
             response(AccountJson.serializer().descriptor, path, "post")
             response(SessionTokenJson.serializer().descriptor, path, "post")
         }
-        response(SessionTokenJson.serializer().descriptor, "/auth/signup", "post", 201)
         response(SessionTokenJson.serializer().descriptor, "/auth/demo", "post", 201)
         response(AccountJson.serializer().descriptor, "/account/settings", "patch")
         response(MessageJson.serializer().descriptor, "/auth/resend-verification", "post")
@@ -46,7 +45,6 @@ class WireContractTest {
         response(ExportStatusJson.serializer().descriptor, "/account/export", "get")
         response(ExportStatusJson.serializer().descriptor, "/account/export", "post", 202)
         request(CredentialsJson.serializer().descriptor, "/auth/login", "post")
-        request(CredentialsJson.serializer().descriptor, "/auth/signup", "post")
         request(GoogleTokenJson.serializer().descriptor, "/auth/google/token", "post")
         request(HandoffJson.serializer().descriptor, "/auth/handoff", "post")
         request(CodeJson.serializer().descriptor, "/auth/verify-code", "post")
