@@ -81,6 +81,12 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting), "pending": .ids(change.pending)]
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
+    "verifyAction": { input in
+        switch VerifyAction.of(input["typed"].string!) {
+        case .check: .string("check")
+        case .submit(let code): .object(["submit": .string(code)])
+        }
+    },
     "uploadPlan": { input in
         let files = input["files"].list!.map { UploadPlan.Picked(name: $0["name"].string!, size: $0.int("size")) }
         let plan = UploadPlan.of(files)

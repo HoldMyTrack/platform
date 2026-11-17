@@ -749,6 +749,28 @@
         }
       }
     },
+    "Code from the email" : {
+      "comment" : "Verify email screen: the field for the 6-digit code.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Код из письма"
+          }
+        }
+      }
+    },
+    "Confirm" : {
+      "comment" : "Verify email screen: sends the typed code, or with the field empty asks the server again whether the address is confirmed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Подтвердить"
+          }
+        }
+      }
+    },
     "Contacts" : {
       "comment" : "You tab: opens the Contacts page.",
       "localizations" : {
@@ -756,17 +778,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Контакты"
-          }
-        }
-      }
-    },
-    "Continue" : {
-      "comment" : "Verify email screen: asks the server again whether the address is confirmed.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Продолжить"
           }
         }
       }
@@ -1350,6 +1361,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Конец диапазона"
+          }
+        }
+      }
+    },
+    "Enter the 6-digit code from the email." : {
+      "comment" : "Verify email screen: Confirm with the field empty found the address still unconfirmed.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Введите 6-значный код из письма."
           }
         }
       }
@@ -3862,13 +3884,13 @@
         }
       }
     },
-    "We sent a confirmation link to %@. Open it to unlock your account — your map starts working as soon as you do." : {
+    "We sent a 6-digit code to %@. Enter it below to unlock your account — your map starts working as soon as you do." : {
       "comment" : "Verify email screen: the placeholder is the account's email address.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Мы отправили ссылку для подтверждения на %@. Перейдите по ней, чтобы открыть доступ к аккаунту, — карта заработает сразу после этого."
+            "value" : "Мы отправили 6-значный код на %@. Введите его ниже, чтобы открыть доступ к аккаунту, — карта заработает сразу после этого."
           }
         }
       }
@@ -3935,17 +3957,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Ваши путешествия, истории, фото и настройки будут удалены навсегда. Чтобы подтвердить, введите %@."
-          }
-        }
-      }
-    },
-    "Your email isn't confirmed yet. Open the link in the email we sent, then tap Continue." : {
-      "comment" : "Verify email screen: Continue found the address still unconfirmed.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Почта ещё не подтверждена. Перейдите по ссылке из письма и нажмите «Продолжить»."
           }
         }
       }

@@ -103,6 +103,19 @@ final class AppFlow {
         }
     }
 
+    /// The account the server answered a verification code with: confirmed, the flow moves on
+    /// without asking again, which a check already running would skip.
+    func verified(_ account: Account) {
+        store.confirm(account)
+        show()
+    }
+
+    /// A request refused for the session itself: the phone forgets it, as the check does.
+    func sessionEnded() {
+        store.clear()
+        show()
+    }
+
     /// Posted with the account, read again after a site page closed, when it changed.
     static let accountChanged = Notification.Name("AppFlow.accountChanged")
 
