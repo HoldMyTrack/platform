@@ -51,7 +51,12 @@ export function useStatsCard(request: StatsCardRequest | null): StatsCardState {
           const url = URL.createObjectURL(blob);
           const image = new Image();
           image.src = url;
-          await image.decode();
+          try {
+            await image.decode();
+          } catch (err) {
+            URL.revokeObjectURL(url);
+            throw err;
+          }
           return { key, url, image };
         })
         .then((next) => {
