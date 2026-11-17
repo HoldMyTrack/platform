@@ -87,6 +87,7 @@
   "reset.submit": "Set new password",
   "reset.new_link": "Request a new link",
   "verify.title": "Verify your email",
+  "verify.confirm": "Confirm my email",
   "verify.hint": "Sign in to have a new link sent to you.",
   "verify_pending.hint": "We sent a confirmation link to <strong>{email}</strong>. Click it to unlock your account.",
   "verify_pending.resend": "Resend verification email",

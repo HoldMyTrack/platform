@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"regexp"
 	"strings"
 	"sync"
@@ -49,6 +50,70 @@ func (d *dbTest) verificationToken(a account) string {
 		d.t.Fatalf("read verification address: %v", err)
 	}
 	return d.mailedToken(to, "/verify")
+}
+
+// confirmLink presses the Confirm button the verification link's page shows, as as (the zero
+// account is signed out).
+func (d *dbTest) confirmLink(as account, token string) *httptest.ResponseRecorder {
+	d.t.Helper()
+	req := httptest.NewRequest(http.MethodPost, "/verify", strings.NewReader(url.Values{"token": {token}}.Encode()))
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("Origin", "https://app.example")
+	if as.session != "" {
+		req.Header.Set("Authorization", bearerPrefix+as.session)
+	}
+	rec := httptest.NewRecorder()
+	d.srv.ServeHTTP(rec, req)
+	return rec
+}
+
+// Opening the link, as a mail scanner does, confirms nothing: the page only offers the button,
+// and the link still works when it's pressed. A dead link says so at once, and the browser
+// signed in to the link's account confirms on opening.
+func TestOpeningTheVerificationLinkConfirmsOnlyInItsOwnBrowser(t *testing.T) {
+	d := newDBTest(t)
+	d.srv.mailer = &sentMail{}
+	unverified := func() account {
+		a := d.newAccount(false)
+		if _, err := d.pool.Exec(context.Background(), `UPDATE users SET email_verified = false WHERE id = $1`, a.id); err != nil {
+			t.Fatal(err)
+		}
+		email, _ := d.email(a)
+		if err := d.srv.sendVerificationEmail(context.Background(), a.id, email, "en"); err != nil {
+			t.Fatal(err)
+		}
+		return a
+	}
+
+	a := unverified()
+	token := d.verificationToken(a)
+	rec := d.do(account{}, http.MethodGet, "/verify?token="+token, nil)
+	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), `action="/verify"`) || !strings.Contains(rec.Body.String(), `name="token" value="`+token+`"`) {
+		t.Fatalf("opening the link signed out: %d, want the page with its Confirm button:\n%s", rec.Code, rec.Body)
+	}
+	if _, verified := d.email(a); verified {
+		t.Fatal("opening the link signed out verified the address")
+	}
+	if rec := d.confirmLink(account{}, token); rec.Code != http.StatusSeeOther {
+		t.Fatalf("pressing Confirm after the link was opened: %d, want a redirect", rec.Code)
+	}
+	if _, verified := d.email(a); !verified {
+		t.Fatal("pressing Confirm didn't verify the address")
+	}
+
+	rec = d.do(account{}, http.MethodGet, "/verify?token="+token, nil)
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), `role="alert"`) || strings.Contains(rec.Body.String(), `action="/verify"`) {
+		t.Fatalf("opening a used link: %d, want the invalid-link message without a button:\n%s", rec.Code, rec.Body)
+	}
+
+	own := unverified()
+	rec = d.do(own, http.MethodGet, "/verify?token="+d.verificationToken(own), nil)
+	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/" {
+		t.Fatalf("opening the link in the account's own browser: %d to %q, want a redirect to /", rec.Code, rec.Header().Get("Location"))
+	}
+	if _, verified := d.email(own); !verified {
+		t.Fatal("opening the link in the account's own browser didn't verify the address")
+	}
 }
 
 // mailedToken is the token in the newest link to path mailed to an address: the database keeps
@@ -105,7 +170,7 @@ func TestChangedAddressLinkSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 	before, _ := d.email(sender)
 	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "second-" + before}), http.StatusOK, nil)
 
-	rec := d.do(account{}, http.MethodGet, "/verify?token="+d.verificationToken(sender), nil)
+	rec := d.confirmLink(account{}, d.verificationToken(sender))
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/signin?verified" {
 		t.Fatalf("link opened signed out: %d to %q, want a redirect to /signin?verified", rec.Code, rec.Header().Get("Location"))
 	}
@@ -121,7 +186,7 @@ func TestChangedAddressLinkSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 	// Opened in a browser signed in to another account: verified, and that browser stays its own.
 	reader := d.newAccount(false)
 	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "third-" + before}), http.StatusOK, nil)
-	rec = d.do(reader, http.MethodGet, "/verify?token="+d.verificationToken(sender), nil)
+	rec = d.confirmLink(reader, d.verificationToken(sender))
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/signin?verified" {
 		t.Fatalf("link opened in another account's browser: %d to %q, want a redirect to /signin?verified", rec.Code, rec.Header().Get("Location"))
 	}
@@ -138,7 +203,7 @@ func TestChangedAddressLinkSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 
 	// Opened in the account's own browser: it carries on with the session it has.
 	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "fourth-" + before}), http.StatusOK, nil)
-	rec = d.do(sender, http.MethodGet, "/verify?token="+d.verificationToken(sender), nil)
+	rec = d.confirmLink(sender, d.verificationToken(sender))
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/" {
 		t.Fatalf("link opened in the account's own browser: %d to %q, want a redirect to /", rec.Code, rec.Header().Get("Location"))
 	}
@@ -232,7 +297,7 @@ func TestVerifyLinkKeepsAnotherAccountsSession(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	rec := d.do(reader, http.MethodGet, "/verify?token="+d.verificationToken(sender), nil)
+	rec := d.confirmLink(reader, d.verificationToken(sender))
 	if rec.Code != http.StatusSeeOther {
 		t.Fatalf("status %d, want a redirect", rec.Code)
 	}
@@ -287,7 +352,7 @@ func TestFirstVerificationSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 
 	// Someone signed up with another person's address; its owner opens the link.
 	squatter := unverified()
-	rec := d.do(account{}, http.MethodGet, "/verify?token="+d.verificationToken(squatter), nil)
+	rec := d.confirmLink(account{}, d.verificationToken(squatter))
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/signin?verified" {
 		t.Fatalf("link opened elsewhere: %d to %q, want a redirect to /signin?verified", rec.Code, rec.Header().Get("Location"))
 	}
