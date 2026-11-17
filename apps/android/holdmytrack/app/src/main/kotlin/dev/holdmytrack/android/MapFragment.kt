@@ -18,6 +18,7 @@ import dev.holdmytrack.android.map.CameraFramer
 import dev.holdmytrack.android.map.ChromeInsets
 import dev.holdmytrack.android.map.CoverageController
 import dev.holdmytrack.android.map.DataRefresh
+import dev.holdmytrack.android.map.EmptyNoticeDismissal
 import dev.holdmytrack.android.map.LayersController
 import dev.holdmytrack.android.map.LocateController
 import dev.holdmytrack.android.map.MapChromeRules
@@ -816,17 +817,22 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     /** What [CameraFramer.open] found. An account with no geometry stays at the world view,
-     *  with a notice pointing at Sync, re-checked on every resume. Not for a demo, which has history
-     *  and can't sync. */
+     *  with a notice pointing at Sync, re-checked on every resume until closed
+     *  ([MapChromeRules.emptyNoticeShown]). */
     private fun onEmptyChecked(empty: Boolean) {
         host?.tour?.historyKnown(!empty)
-        if (!empty) {
+        val dismissal = EmptyNoticeDismissal(requireContext(), Session.email)
+        if (!MapChromeRules.emptyNoticeShown(empty, Session.isDemo, dismissal.closed())) {
             notices.hide(MapNotice.EMPTY)
-        } else if (!Session.isDemo) {
-            notices.show(MapNotice.EMPTY, getString(R.string.map_empty), action = R.string.nav_sync) {
-                host?.showTab(MainActivity.Tab.SYNC)
-            }
+            return
         }
+        notices.show(
+            MapNotice.EMPTY,
+            getString(R.string.map_empty),
+            action = R.string.nav_sync,
+            onAction = { host?.showTab(MainActivity.Tab.SYNC) },
+            onClose = dismissal::close,
+        )
     }
 
     /** The style or its sources failed: a plain sentence, the origin and MapLibre's error in

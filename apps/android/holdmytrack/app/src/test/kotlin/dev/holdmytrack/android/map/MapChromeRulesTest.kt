@@ -104,4 +104,12 @@ class MapChromeRulesTest {
         assertTrue(MapChromeRules.noticeShown(MapNotice.MAP_FAILED, recording = true, onSync = true))
         assertFalse(MapChromeRules.noticeShown(null, recording = false, onSync = false))
     }
+
+    @Test
+    fun `the empty notice shows for a real account with nothing on the map until closed`() {
+        assertTrue(MapChromeRules.emptyNoticeShown(empty = true, demo = false, closed = false))
+        assertFalse(MapChromeRules.emptyNoticeShown(empty = true, demo = false, closed = true))
+        assertFalse(MapChromeRules.emptyNoticeShown(empty = true, demo = true, closed = false))
+        assertFalse(MapChromeRules.emptyNoticeShown(empty = false, demo = false, closed = false))
+    }
 }

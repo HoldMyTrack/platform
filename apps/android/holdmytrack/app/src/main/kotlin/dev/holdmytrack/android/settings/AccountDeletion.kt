@@ -8,6 +8,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.SignInActivity
+import dev.holdmytrack.android.map.EmptyNoticeDismissal
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.db.RecordedActivityStore
@@ -66,6 +67,7 @@ object AccountDeletion {
             RecordedActivityStore(context).deleteAll()
             HiddenCandidates(context, email).clear()
             SyncSources(context, email).clear()
+            EmptyNoticeDismissal(context, email).clear()
             WaitingStore(context).clear()
             Session.clear()
             SignInActivity.open(activity, R.string.account_deleted)
