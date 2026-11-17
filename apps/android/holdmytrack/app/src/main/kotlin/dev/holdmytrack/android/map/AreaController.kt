@@ -40,7 +40,7 @@ class AreaController(
     private val onCapped: (String?) -> Unit,
 ) {
     /** Reprocesses running, and the list read again while any is. */
-    val pending = PendingTracker(host = { host }, reload = ::reloadList)
+    val pending = PendingTracker(host = { host }, reload = ::reloadList, finished = ::pendingFinished)
 
     /** The first and newest activities' days: Dates' bounds. */
     private var earliest: String? = null
@@ -106,6 +106,8 @@ class AreaController(
                 total = null
                 panel.setZoomedOut()
                 renderCap()
+                // An empty list: held Pending rows are the Pending check's to finish.
+                trackPending(emptyList())
                 return
             }
         }
@@ -160,16 +162,22 @@ class AreaController(
      */
     private fun trackPending(activities: List<Activity>) {
         val change = pending.track(activities)
+        if (change.finished) pendingFinished(change.landed + change.left)
+        else if (change.started) refreshPending()
+    }
+
+    /** Reprocesses finished, seen by a list or by the Pending check for rows it doesn't show. */
+    private fun pendingFinished(ids: Set<String>) {
         // The selected activity's reprocess landed: its metrics describe the old points.
-        if (panelState.focused in change.landed || panelState.focused in change.left) bands.update(refetch = true)
-        if (change.started || change.finished) {
-            style()?.let { MapOverlays.refreshTracks(it, session.dates) }
-            coverage.watch()
-        }
-        if (change.finished) {
-            reloadHistory()
-            panel.storiesTab.reloadOpen()
-        }
+        if (panelState.focused in ids) bands.update(refetch = true)
+        refreshPending()
+        reloadHistory()
+        panel.storiesTab.reloadOpen()
+    }
+
+    private fun refreshPending() {
+        style()?.let { MapOverlays.refreshTracks(it, session.dates) }
+        coverage.watch()
     }
 
     // Dates.

@@ -2,8 +2,8 @@
  * End-to-end flows over the map's state rules: an upload reaching an empty account, Dates
  * narrowing the list and keeping the selection, a Story opened and closed by Back, a track edit's
  * reprocess, a delete, the list following the map from zoom 4, the Dates menu, the Edit window
- * outliving its activity's row, the header's menus closing, and the tour's offer and header link. Each run signs up a fresh account, uploads the
- * sample files, and deletes the account at the end.
+ * outliving its activity's row, the header's menus closing, and the tour's offer and header link.
+ * Each run signs up a fresh account, uploads the sample files, and deletes the account at the end.
  *
  *   npm run verify:map
  *

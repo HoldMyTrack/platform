@@ -146,6 +146,8 @@ extension MapViewController {
                 listLoading = false
                 listError = (error as? APIError)?.serverMessage ?? String(localized: "Activities couldn't load.")
                 renderPanel()
+                // A failed read doesn't end the polling: a Pending row still has to be seen finishing.
+                watchPending()
             }
         }
     }
@@ -153,24 +155,15 @@ extension MapViewController {
     /// A fresh list: what of the selection still exists stays, a finished reprocess fetches the
     /// tracks again, and a picked range or an opened Story flies onto it.
     private func listed(_ next: [Activity]) {
-        let change = PendingDiff.of(previous: pendingIDs, now: Set(next.filter(\.pending).map(\.id)), awaiting: awaiting)
-        pendingIDs = change.now
+        let change = PendingDiff.of(previous: pendingIDs, now: Set(next.filter(\.pending).map(\.id)), awaiting: awaiting, listed: Set(next.map(\.id)))
+        pendingIDs = change.pending
         awaiting = change.awaiting
         activities = next
         listLoading = false
         listError = nil
         session.panel.setActivities(next.map(\.summary))
         renderCap()
-        if change.finished {
-            tracksVersion += 1
-            updateTracksQuery()
-            loadHistory()
-        }
-        if change.started || !change.now.isEmpty {
-            notice(.pending, String(localized: "Some activities are being processed. They'll show on the map when they're done."))
-        } else {
-            hideNotice(.pending)
-        }
+        renderPendingNotice()
         if session.consumeFly() {
             fly(next.map(\.id))
         }
@@ -180,19 +173,36 @@ extension MapViewController {
             fly([id])
         }
         panelChanged()
-        // The focused activity's reprocess may have landed: its bands and photos follow the new points.
-        if change.finished {
-            updateBands(refetch: true)
-            refreshPhotos(force: true)
-        }
+        if change.finished { reprocessFinished(change.landed.union(change.left)) }
         watchPending()
     }
 
-    /// Every 2 seconds while a row is Pending or an edit saved here hasn't landed: the list is
-    /// read again once one of them moves.
-    private func watchPending() {
+    /// Reprocesses of ids finished, seen by a list or by the Pending check: the tracks' tiles,
+    /// Dates' bounds and the photos follow the new points, and the focused activity's bands if it
+    /// is among them.
+    private func reprocessFinished(_ ids: Set<String>) {
+        tracksVersion += 1
+        updateTracksQuery()
+        loadHistory()
+        if let focused = session.panel.focused, ids.contains(focused) { updateBands(refetch: true) }
+        refreshPhotos(force: true)
+    }
+
+    private func renderPendingNotice() {
+        if !pendingIDs.isEmpty {
+            notice(.pending, String(localized: "Some activities are being processed. They'll show on the map when they're done."))
+        } else {
+            hideNotice(.pending)
+        }
+    }
+
+    /// Every 2 seconds while a row is held Pending or an edit saved here hasn't landed: the list is
+    /// read again once a listed one moves, and one it doesn't show finishes by the check alone.
+    /// Called again after a save, which cancels the check in flight: its answer was asked before
+    /// the save and would count the new edit as landed.
+    func watchPending() {
         pendingTask?.cancel()
-        let watched = PendingDiff.watched(listed: activities.filter(\.pending).map(\.id), awaiting: Array(awaiting))
+        let watched = PendingDiff.watched(pending: Array(pendingIDs), awaiting: Array(awaiting))
         guard !watched.isEmpty else { return }
         pendingTask = Task {
             try? await Task.sleep(for: .seconds(2))
@@ -206,7 +216,14 @@ extension MapViewController {
                 still += answer
             }
             guard !Task.isCancelled else { return }
-            if PendingDiff.moved(watched: watched, stillPending: still) { loadList() } else { watchPending() }
+            let answer = PendingDiff.answer(watched: watched, stillPending: still, listed: Set(activities.map(\.id)))
+            if !answer.finished.isEmpty {
+                pendingIDs.subtract(answer.finished)
+                awaiting.subtract(answer.finished)
+                renderPendingNotice()
+                reprocessFinished(answer.finished)
+            }
+            if answer.moved { loadList() } else { watchPending() }
         }
     }
 
@@ -424,6 +441,7 @@ extension MapViewController {
             self.photosEditClosed(saved: photosSaved)
             guard !written.isEmpty else { return }
             self.awaiting.formUnion(written)
+            self.watchPending()
             self.loadList()
         }
         editWindow = editor

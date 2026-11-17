@@ -1,11 +1,15 @@
 {
   "rule": "pendingCheck",
-  "description": "While a reprocess runs, the client asks the Pending check (GET /v1/activities/pending) about the rows its list shows Pending and the edits it saved, and reads the list again once one of them is no longer Pending. Expected: watched (the ids asked about, once each, listed first) and moved (whether the list is read again), given the check's answer stillPending.",
+  "description": "While a reprocess runs, the client asks the Pending check (GET /v1/activities/pending) about the rows it holds Pending (pending) and the edits it saved (awaiting). One the list shows (listed) that is no longer Pending means reading the list again (moved); one the list doesn't show has finished by the check alone (finished), since no list will say so. Expected: watched (the ids asked about, once each, pending first), moved, and finished, given the check's answer stillPending.",
   "cases": [
-    { "name": "nothing to watch", "input": { "listed": [], "awaiting": [], "stillPending": [] }, "expected": { "watched": [], "moved": false } },
-    { "name": "every watched row still Pending", "input": { "listed": ["a", "b"], "awaiting": [], "stillPending": ["a", "b"] }, "expected": { "watched": ["a", "b"], "moved": false } },
-    { "name": "a row finished", "input": { "listed": ["a", "b"], "awaiting": [], "stillPending": ["b"] }, "expected": { "watched": ["a", "b"], "moved": true } },
-    { "name": "an edit saved here is watched too, once", "input": { "listed": ["a"], "awaiting": ["a", "c"], "stillPending": ["a", "c"] }, "expected": { "watched": ["a", "c"], "moved": false } },
-    { "name": "an edit that landed before the list saw it Pending", "input": { "listed": [], "awaiting": ["c"], "stillPending": [] }, "expected": { "watched": ["c"], "moved": true } }
+    { "name": "nothing to watch", "input": { "pending": [], "awaiting": [], "listed": [], "stillPending": [] }, "expected": { "watched": [], "moved": false, "finished": [] } },
+    { "name": "every watched row still Pending", "input": { "pending": ["a", "b"], "awaiting": [], "listed": ["a", "b"], "stillPending": ["a", "b"] }, "expected": { "watched": ["a", "b"], "moved": false, "finished": [] } },
+    { "name": "a row finished", "input": { "pending": ["a", "b"], "awaiting": [], "listed": ["a", "b"], "stillPending": ["b"] }, "expected": { "watched": ["a", "b"], "moved": true, "finished": [] } },
+    { "name": "an edit saved here is watched too, once", "input": { "pending": ["a"], "awaiting": ["a", "c"], "listed": ["a", "c"], "stillPending": ["a", "c"] }, "expected": { "watched": ["a", "c"], "moved": false, "finished": [] } },
+    { "name": "an edit that landed before the list saw it Pending", "input": { "pending": [], "awaiting": ["c"], "listed": ["c"], "stillPending": [] }, "expected": { "watched": ["c"], "moved": true, "finished": [] } },
+    { "name": "a Pending row the list doesn't show finishes by the check alone", "input": { "pending": ["a"], "awaiting": [], "listed": ["b"], "stillPending": [] }, "expected": { "watched": ["a"], "moved": false, "finished": ["a"] } },
+    { "name": "an edit saved with its track out of view lands by the check", "input": { "pending": [], "awaiting": ["c"], "listed": [], "stillPending": [] }, "expected": { "watched": ["c"], "moved": false, "finished": ["c"] } },
+    { "name": "an edit out of view still Pending keeps waiting", "input": { "pending": [], "awaiting": ["c"], "listed": [], "stillPending": ["c"] }, "expected": { "watched": ["c"], "moved": false, "finished": [] } },
+    { "name": "a shown row and an unseen edit finish together", "input": { "pending": ["a"], "awaiting": ["c"], "listed": ["a"], "stillPending": [] }, "expected": { "watched": ["a", "c"], "moved": true, "finished": ["c"] } }
   ]
 }

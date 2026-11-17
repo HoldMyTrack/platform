@@ -11,7 +11,7 @@ import { dateFilterBounds, dateFilterLabel, setDateFilter } from '../src/ui/date
 import { distanceBounds, nextDistanceFilter, passesFilters, typeFacets } from '../src/ui/activityFacets.ts';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitIndex, splitPoint } from '../src/ui/editTrackOps.ts';
 import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
-import { pendingBatches, pendingChange, pendingMoved, pendingWatched } from '../src/map/pending.ts';
+import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from '../src/map/pending.ts';
 import { deleteDone } from '../src/apiError.ts';
 import { clusterPoints, photoMarkerLayout, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
@@ -55,15 +55,16 @@ export const rules = {
     const steps = shown.map(() => ({ anchor: 'shared' }));
     return nextStep(steps, from, dir, (step) => shown[steps.indexOf(step)]);
   },
-  pendingCheck: ({ listed, awaiting, stillPending }) => {
-    const watched = pendingWatched(listed, new Set(awaiting));
-    return { watched, moved: pendingMoved(watched, stillPending) };
+  pendingCheck: ({ pending, awaiting, listed, stillPending }) => {
+    const watched = pendingWatched(pending, awaiting);
+    const { moved, finished } = pendingAnswer(watched, stillPending, new Set(listed));
+    return { watched, moved, finished: sorted(finished) };
   },
   pendingBatches: ({ ids, size }) => pendingBatches(ids, size),
   deleteDone: ({ status }) => deleteDone(status),
-  pendingChange: ({ previous, now, awaiting }) => {
-    const change = pendingChange(new Set(previous), now, new Set(awaiting));
-    return { started: change.started, finished: change.finished, left: sorted(change.left), landed: sorted(change.landed), awaiting: sorted(change.awaiting) };
+  pendingChange: ({ previous, now, awaiting, listed }) => {
+    const change = pendingChange(new Set(previous), now, new Set(awaiting), new Set(listed));
+    return { started: change.started, finished: change.finished, left: sorted(change.left), landed: sorted(change.landed), awaiting: sorted(change.awaiting), pending: sorted(change.pending) };
   },
   boldTracks: ({ checked, focused }) => boldTracks(new Set(checked), focused ?? null),
   toolbarTarget: ({ checked, focused }) => sorted(toolbarTarget(new Set(checked), focused ?? null)),

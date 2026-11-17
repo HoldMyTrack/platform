@@ -50,7 +50,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var listLoading = false
     var listError: String?
     var listTask: Task<Void, Never>?
-    /// The ids Pending in the last list, and edits saved here not yet seen done (PendingDiff).
+    /// The ids held Pending, and edits saved here not yet seen done (PendingDiff).
     var pendingIDs: Set<String> = []
     var awaiting: Set<String> = []
     var pendingTask: Task<Void, Never>?

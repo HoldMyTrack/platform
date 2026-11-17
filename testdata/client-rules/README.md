@@ -18,8 +18,8 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 
 | Rule | Input | Expected |
 | :-- | :-- | :-- |
-| `pendingChange` | `previous`, `now`, `awaiting` (id sets) | `{ started, finished, left, landed, awaiting }` |
-| `pendingCheck` | `listed`, `awaiting`, `stillPending` (ids) | `{ watched, moved }` |
+| `pendingChange` | `previous`, `now`, `awaiting`, `listed` (id sets) | `{ started, finished, left, landed, awaiting, pending }` |
+| `pendingCheck` | `pending`, `awaiting`, `listed`, `stillPending` (ids) | `{ watched, moved, finished }` |
 | `pendingBatches` | `ids`, `size` | the ids in consecutive batches of at most `size` |
 | `deleteDone` | `status` (a DELETE's HTTP status) | boolean |
 | `uploadPlan` | `files` (`{ name, size }`, size -1 when unknown) | `{ send, refusals }`, each refusal `{ kind, name }` or `{ kind: "tooMany", count }` |

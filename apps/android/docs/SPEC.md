@@ -154,7 +154,7 @@ The web's Activities panel (`docs/SPEC.md` FR-5) as a sheet over the map, with A
 - A tap on a row, or on a track within 14 dp, focuses that activity and fits the camera to it; one at a time.
 - A tap on a row's tile or a long press checks it. Unlike the web, focusing unchecks the rest, the first check takes the focused activity into the group, and checking a row flies the camera to it; unchecking doesn't. All, None and Invert reach only the listed rows and never move the camera.
 - The toolbar acts on the checked group, else the focused row (`docs/SPEC.md` FR-5.8). Hide lasts for this app session. Delete is disabled while any target is Pending.
-- The list is read for each range and on every return to the map, keeping what of the focus, checked group and hidden set still exists; every 2 seconds while any row is Pending.
+- The list is read for each range and on every return to the map, keeping what of the focus, checked group and hidden set still exists; every 2 seconds while any row is Pending, including one the list no longer shows.
 - Edit (`docs/SPEC.md` FR-5.5) writes only what changed, one activity at a time. A group of mixed types starts with Type empty, and leaving it empty keeps each its own.
 - Delete (`docs/SPEC.md` FR-5.6) asks first; on a failure, what was already deleted is reported as gone.
 - The focused activity is drawn in pace bands (`docs/SPEC.md` FR-4.6), unless hidden, filtered out or Pending.

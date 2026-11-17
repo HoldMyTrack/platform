@@ -238,9 +238,11 @@ function rememberTypes(types: Schema<'ActivityTypes'>): void {
   rememberTypeKinds(Object.entries(types).map(([type, info]) => [type, info.kind]));
 }
 
-async function getJson<T>(path: string, signal?: AbortSignal): Promise<T> {
+/** [notFound] is what a `404` throws, for a caller that tells it from other failures. */
+async function getJson<T>(path: string, signal?: AbortSignal, notFound?: () => Error): Promise<T> {
   // A conditional spread: exactOptionalPropertyTypes:true rejects `{ signal: undefined }`.
   const res = await fetch(`${API_BASE_URL}${API_V1}${path}`, { ...(signal ? { signal } : {}), credentials: 'include' });
+  if (res.status === 404 && notFound) throw notFound();
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
@@ -260,9 +262,13 @@ export async function listArea(query: AreaQuery, signal?: AbortSignal): Promise<
   return { activities: body.activities.map(toActivity), total: body.total ?? null };
 }
 
+/** Thrown by `getActivity` for an activity that was deleted. */
+export class ActivityNotFoundError extends Error {}
+
 /** `GET /v1/activities/{id}`: one activity in full, for the Edit window. */
 export async function getActivity(id: string, signal?: AbortSignal): Promise<ActivityDetail> {
-  const body = await getJson<ResponseJson<'/activities/{id}', 'get'>>(`/activities/${encodeURIComponent(id)}`, signal);
+  const path = `/activities/${encodeURIComponent(id)}`;
+  const body = await getJson<ResponseJson<'/activities/{id}', 'get'>>(path, signal, () => new ActivityNotFoundError(t('common.request_failed', { status: 404 })));
   rememberTypes(body.types);
   return toActivityDetail(body.activities[0]!);
 }

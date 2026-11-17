@@ -156,13 +156,14 @@ class ClientRulesTest {
             JsonPrimitive(TourRules.nextStep(input["shown"]!!.jsonArray.map { it.jsonPrimitive.boolean }, input.number("from").toInt(), input.number("dir").toInt()))
         },
         "pendingChange" to { input ->
-            val change = PendingDiff.of(input.strings("previous").toSet(), input.strings("now").toSet(), input.strings("awaiting").toSet())
+            val change = PendingDiff.of(input.strings("previous").toSet(), input.strings("now").toSet(), input.strings("awaiting").toSet(), input.strings("listed").toSet())
             buildJsonObject {
                 put("started", change.started)
                 put("finished", change.finished)
                 put("left", ids(change.left))
                 put("landed", ids(change.landed))
                 put("awaiting", ids(change.awaiting))
+                put("pending", ids(change.pending))
             }
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
@@ -186,10 +187,12 @@ class ClientRulesTest {
             JsonArray(PendingDiff.batches(input.strings("ids"), input.int("size")).map { ids(it, sort = false) })
         },
         "pendingCheck" to { input ->
-            val watched = PendingDiff.watched(input.strings("listed"), input.strings("awaiting"))
+            val watched = PendingDiff.watched(input.strings("pending"), input.strings("awaiting"))
+            val answer = PendingDiff.answer(watched, input.strings("stillPending"), input.strings("listed").toSet())
             buildJsonObject {
                 put("watched", ids(watched, sort = false))
-                put("moved", PendingDiff.moved(watched, input.strings("stillPending")))
+                put("moved", answer.moved)
+                put("finished", ids(answer.finished))
             }
         },
         "toolbarTarget" to { input -> ids(PanelRules.targetIds(input.strings("checked").toSet(), input.string("focused"))) },

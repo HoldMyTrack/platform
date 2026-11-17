@@ -134,6 +134,8 @@ export const en = {
   'edit.description_too_long': 'Description must be {max} characters or fewer.',
   'edit.discard_title': 'Discard changes?',
   'edit.discard_message': 'The changes you made in this window haven\'t been saved yet.',
+  'edit.deleted_title': 'Activity deleted',
+  'edit.deleted_message': 'An activity in the Edit window was deleted elsewhere, so the window closed. Changes you hadn\'t saved were lost.',
   'edit.discard': 'Discard',
   'edit.keep_editing': 'Keep editing',
   'edit.multi_reason': 'Editing multiple activities changes their type and Stories — name and description are per-activity.',

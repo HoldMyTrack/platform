@@ -148,6 +148,8 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'edit.description_too_long': 'Описание должно быть не длиннее {max} символов.',
   'edit.discard_title': 'Отменить изменения?',
   'edit.discard_message': 'Изменения, сделанные в этом окне, ещё не сохранены.',
+  'edit.deleted_title': 'Маршрут удалён',
+  'edit.deleted_message': 'Маршрут из окна редактирования был удалён, поэтому окно закрылось. Несохранённые изменения потеряны.',
   'edit.discard': 'Отменить изменения',
   'edit.keep_editing': 'Продолжить',
   'edit.multi_reason': 'При редактировании нескольких путешествий меняются тип и истории — название и описание у каждого путешествия свои.',
