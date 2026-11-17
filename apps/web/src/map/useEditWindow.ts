@@ -28,7 +28,8 @@ export interface EditWindowState {
  * controls step aside. It reads its activities in full on opening, since the list's rows are slim
  * (a group's type change still writes each one's own description), and shows once they land. It
  * closes when its activities leave the list (deleted elsewhere, say) or can't be read, or the map
- * would stay locked with no editor to close it, and it opens on its Activity tab.
+ * would stay locked with no editor to close it, and it opens on its Activity tab. A move of the
+ * map doesn't take them out of the list: the list waits for the window to close (useAreaList.ts).
  */
 export function useEditWindow(listed: readonly Activity[], loading: boolean): EditWindowState {
   const [ids, setIds] = useState<string[] | null>(null);

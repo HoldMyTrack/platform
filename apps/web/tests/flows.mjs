@@ -1,8 +1,9 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, Dates
  * narrowing the list and keeping the selection, a Story opened and closed by Back, a track edit's
- * reprocess, a delete, the list following the map from zoom 4, the Dates menu, the header's menus
- * closing, and the tour's offer and header link. Each run signs up a fresh account, uploads the
+ * reprocess, a delete, the list following the map from zoom 4, the Dates menu, the Edit window
+ * holding the list through a map move, the header's menus closing, and the tour's offer and header
+ * link. Each run signs up a fresh account, uploads the
  * sample files, and deletes the account at the end.
  *
  *   npm run verify:map
@@ -235,7 +236,28 @@ describe('map flows', () => {
     assert.deepEqual(await page.evaluate(() => window.__holdmytrack.getCenter().toArray()), center);
   });
 
-  it("8. the header's menus close on another menu, a click on the map and Escape", async () => {
+  it('8. the Edit window stays open while the map moves off its activity, and the list follows once it closes', async () => {
+    const id = ids['2026-10-01'];
+    await viewAll();
+    const listed = await rows().count();
+    await row(id).locator('.activities-panel__text').click();
+    await page.locator('.activities-panel__edit').click();
+    const name = page.getByTestId('edit-activity-window').getByLabel('Name');
+    await name.fill('Kept through a move');
+    // Open ocean: a list read for this view wouldn't hold the activity.
+    await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [0, 0], zoom: 6 }));
+    // Past the settle delay and a list request.
+    await page.waitForTimeout(1500);
+    assert.equal(await name.inputValue(), 'Kept through a move');
+    assert.equal(await rows().count(), listed);
+    await page.getByTestId('edit-save').click();
+    await page.getByTestId('edit-activity-window').waitFor({ state: 'detached', timeout: 30_000 });
+    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 0, undefined, { timeout: 30_000 });
+    const { activities } = await call('GET', '/activities');
+    assert.equal(activities.find((a) => a.id === id).name, 'Kept through a move');
+  });
+
+  it("9. the header's menus close on another menu, a click on the map and Escape", async () => {
     await page.goto(`${BASE}/#map=3.00/40.00/-82.00&theme=light`);
     await page.waitForFunction(() => Boolean(window.__holdmytrack));
     const open = () => page.evaluate(() => [...document.querySelectorAll('.page-header details[open]')].map((d) => d.className));
@@ -250,7 +272,7 @@ describe('map flows', () => {
     assert.deepEqual(await open(), []);
   });
 
-  it("9. an account with activities is offered the tour once; the header's link starts it in place, and it puts the mode back", async () => {
+  it("10. an account with activities is offered the tour once; the header's link starts it in place, and it puts the mode back", async () => {
     // Loaded with activities from the start, the map offers the tour.
     await page.reload();
     await page.getByTestId('tour-offer').waitFor({ timeout: 60_000 });

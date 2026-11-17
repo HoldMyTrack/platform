@@ -189,7 +189,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   useViewOnMap(map, initialActivity, { mode: mapMode, activities }, dispatch, focusActivity);
   const urlView = initial.hash.view != null;
   useOpeningView(map, dispatch, { keepCamera: urlView || storyId !== null || initialActivity !== null, country: user.country, earliest, historyReady: daysReady });
-  const zoom = useAreaList(map, dispatch, storyId);
+  const zoom = useAreaList(map, dispatch, storyId, editOpen);
   useDatesFlight(map, dispatch, { flyRequest: session.flyRequest, storyId, dates });
   const areaState = areaLoad(zoom, activities.length, storyId === null ? areaTotal : null);
   // Past the cap the map draws only the listed tracks, so the map and the list stay one set.
@@ -355,8 +355,9 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
       <DemoBar isDemo={isDemo} />
       <div className="app-body">
         {mapMode === 'normal' && (
-          // Inert while the Edit window is open: changing the area, selection or filters would pull
-          // its activities out from under it. display: contents keeps the wrapper out of the layout.
+          // Inert while the Edit window is open: changing the selection or filters would pull its
+          // activities out from under it, as a new area would (useAreaList.ts holds the list for
+          // that). display: contents keeps the wrapper out of the layout.
           <div className="edit-track-lock" inert={editOpen}>
             <ActivitiesPanel
               readOnly={isDemo}
