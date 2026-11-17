@@ -7,6 +7,12 @@ import { listArea, type BBox } from '../api';
 import type { MapSessionEvent } from './session';
 import type { DateFilter } from '../ui/dateFilter';
 
+/** Tags each Dates flight, so its own `moveend` is told from another's. A newer flight's `stop()`
+ *  ends the older one early, mid-way: that one's `moveend` is dropped, and only the newest loads
+ *  the area. The listener outlives the effect, which re-runs as soon as the flight is consumed. */
+const DATES_FLIGHT = 'datesFlight';
+let flights = 0;
+
 /**
  * Setting Dates moves the camera once onto what they match, wherever it is (docs/SPEC.md
  * FR-5.12): asked for without an area, since the area holds only what's in view. The list then
@@ -17,12 +23,19 @@ export function useDatesFlight(map: MapLibreMap | null, dispatch: Dispatch<MapSe
   useEffect(() => {
     if (!map || !flyRequest || storyId !== null) return;
     const controller = new AbortController();
+    let flight = 0;
+    const onMoveEnd = (event: object) => {
+      if ((event as Record<string, unknown>)[DATES_FLIGHT] !== flight) return;
+      map.off('moveend', onMoveEnd);
+      if (flight === flights) dispatch({ type: 'areaLoaded', area: viewArea(map) });
+    };
     listArea(datesQuery(dates), controller.signal)
       .then(({ activities }) => {
         const bounds = unionBBox(activities.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : [])));
         if (!bounds) return;
-        map.once('moveend', () => dispatch({ type: 'areaLoaded', area: viewArea(map) }));
-        flyToBBox(map, bounds);
+        flight = ++flights;
+        map.on('moveend', onMoveEnd);
+        flyToBBox(map, bounds, { [DATES_FLIGHT]: flight });
       })
       .catch(() => {
         // The camera stays; the list still shows Dates over the area in view.
