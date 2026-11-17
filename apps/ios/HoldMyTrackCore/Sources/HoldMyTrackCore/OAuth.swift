@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-/// Google's and Facebook's sign-in, run as the server's own browser flow in
+/// Google's and Facebook's sign-in, and sign-up, run as the server's own browser flow in
 /// ASWebAuthenticationSession (decision D7 in apps/ios/docs/ARCHITECTURE.md §1; the flow is
 /// root docs/IMPLEMENTATION.md §4.9): started with the S256 challenge of a verifier only the app
 /// holds, it ends at `holdmytrack://oauth?code=…`, and only that verifier redeems the code.
@@ -30,6 +30,14 @@ public enum OAuth {
     public static func startURL(_ provider: Provider, base: URL, timezone: String, challenge: String) -> URL {
         var c = URLComponents(url: base.appending(path: "v1/auth/\(provider.rawValue)/start"), resolvingAgainstBaseURL: false)!
         c.queryItems = [URLQueryItem(name: "tz", value: timezone), URLQueryItem(name: "app_challenge", value: challenge)]
+        return c.url!
+    }
+
+    /// The web's sign-up page for the app, whose Turnstile check a native form can't show. The
+    /// page's own script gives a new account the browser's timezone.
+    public static func signupURL(base: URL, challenge: String) -> URL {
+        var c = URLComponents(url: base.appending(path: "signup"), resolvingAgainstBaseURL: false)!
+        c.queryItems = [URLQueryItem(name: "app_challenge", value: challenge)]
         return c.url!
     }
 
@@ -63,8 +71,16 @@ public enum OAuthRedirect: Equatable, Sendable {
     }
 }
 
-/// What a browser sign-in's `?error=` code tells the user (root docs/SPEC.md FR-1.9, FR-1.10):
-/// the two Facebook refusals a person can act on, else that the provider's sign-in failed.
+/// A browser round trip: a provider's sign-in, or the web's sign-up page.
+public enum BrowserFlow: Equatable, Sendable {
+    case provider(OAuth.Provider)
+    case signup
+}
+
+/// What a browser round trip's `?error=` code tells the user (root docs/SPEC.md FR-1.9, FR-1.10):
+/// the two Facebook refusals a person can act on, else that the flow that opened the sheet
+/// failed. The sign-up page shows its own refusals, so a failure reaching the app from it is a
+/// generic one.
 public enum OAuthFailure: Equatable, Sendable {
     /// Facebook shared no email, and every account needs one.
     case noEmail
@@ -72,6 +88,15 @@ public enum OAuthFailure: Equatable, Sendable {
     case emailInUse
     /// Anything else, cancelled included: try again.
     case failed(OAuth.Provider)
+    /// Sign-up failed: try again.
+    case signupFailed
+
+    public static func of(_ code: String?, flow: BrowserFlow) -> OAuthFailure {
+        switch flow {
+        case .provider(let provider): of(code, provider: provider)
+        case .signup: .signupFailed
+        }
+    }
 
     public static func of(_ code: String?, provider: OAuth.Provider) -> OAuthFailure {
         switch code {

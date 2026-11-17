@@ -3,29 +3,28 @@ import HoldMyTrackCore
 import SafariServices
 import UIKit
 
-/// Sign in, sign up, the demo, and Google and Facebook, against the web's endpoints
-/// (apps/android/docs/SPEC.md FR-1.1). Sign in and sign up are two modes of one screen. The app
-/// checks only that both fields are filled; every other rule is the server's, and its message is
-/// shown as sent. Apple, Google and Facebook show only when the server reports them configured.
-/// Apple is the platform's own sheet, its authorization code exchanged by the server; Google and
-/// Facebook run the server's own flow in ASWebAuthenticationSession (decision D7 in
-/// apps/ios/docs/ARCHITECTURE.md §1).
+/// Sign in, the demo, and Google and Facebook, against the web's endpoints
+/// (apps/android/docs/SPEC.md FR-1.1). The app checks only that both fields are filled; every
+/// other rule is the server's, and its message is shown as sent. Apple, Google and Facebook show
+/// only when the server reports them configured. Apple is the platform's own sheet, its
+/// authorization code exchanged by the server; Google and Facebook run the server's own flow in
+/// ASWebAuthenticationSession (decision D7 in apps/ios/docs/ARCHITECTURE.md §1), and so does
+/// sign-up, the web's page, whose Turnstile check a native form can't show.
 final class SignInViewController: UIViewController, ASWebAuthenticationPresentationContextProviding,
     ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     private unowned let flow: AppFlow
-    private var signingUp = false
     private var busy = false { didSet { updateEnabled() } }
     /// The browser sign-in in flight, kept so it isn't released while its sheet shows.
     private var browserSession: ASWebAuthenticationSession?
 
-    private let titleLabel = Controls.title("")
+    private let titleLabel = Controls.title(String(localized: "Sign in to HoldMyTrack"))
     private let intro = Controls.body(String(localized: "Sign in to see your tracks and fog of war on the map. The demo needs no signup: a shared, ready-made account you can look around but not change."))
     private let email = Controls.field(String(localized: "Email"), id: "email")
     private let password = Controls.field(String(localized: "Password"), id: "password")
     private let errorLabel = Controls.error(id: "signInError")
-    private let primary = Controls.primaryButton("", id: "primary")
+    private let primary = Controls.primaryButton(String(localized: "Sign in"), id: "primary")
     private let forgot = Controls.textButton(String(localized: "Forgot password?"), id: "forgot")
-    private let switchMode = Controls.textButton("", id: "switchMode")
+    private let signUp = Controls.textButton(String(localized: "Don't have an account? Create one"), id: "signUp")
     private let or = Controls.body(String(localized: "or"))
     /// Holds Apple's button, which is remade when the theme changes: its style is fixed when made.
     private let apple = UIView()
@@ -49,6 +48,7 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         email.textContentType = .username
         email.returnKeyType = .next
         password.isSecureTextEntry = true
+        password.textContentType = .password
         password.returnKeyType = .go
         email.addAction(UIAction { [weak self] _ in self?.password.becomeFirstResponder() }, for: .editingDidEndOnExit)
         password.addAction(UIAction { [weak self] _ in self?.submit() }, for: .editingDidEndOnExit)
@@ -57,23 +57,23 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         }
 
         primary.addAction(UIAction { [weak self] _ in self?.submit() }, for: .primaryActionTriggered)
-        switchMode.addAction(UIAction { [weak self] _ in self?.toggleMode() }, for: .primaryActionTriggered)
+        signUp.addAction(UIAction { [weak self] _ in self?.browserRoundTrip(.signup) }, for: .primaryActionTriggered)
         forgot.addAction(UIAction { [weak self] _ in self?.openForgot() }, for: .primaryActionTriggered)
         demo.addAction(UIAction { [weak self] _ in self?.startDemo() }, for: .primaryActionTriggered)
-        google.addAction(UIAction { [weak self] _ in self?.browserSignIn(.google) }, for: .primaryActionTriggered)
-        facebook.addAction(UIAction { [weak self] _ in self?.browserSignIn(.facebook) }, for: .primaryActionTriggered)
+        google.addAction(UIAction { [weak self] _ in self?.browserRoundTrip(.provider(.google)) }, for: .primaryActionTriggered)
+        facebook.addAction(UIAction { [weak self] _ in self?.browserRoundTrip(.provider(.facebook)) }, for: .primaryActionTriggered)
         or.textAlignment = .center
         for provider in [or, apple, google, facebook] { provider.isHidden = true }
         makeAppleButton()
         registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.makeAppleButton() }
 
-        let links = UIStackView(arrangedSubviews: [forgot, UIView(), switchMode])
+        let links = UIStackView(arrangedSubviews: [forgot, UIView(), signUp])
         links.alignment = .center
         let column = Controls.column([titleLabel, intro, email, password, errorLabel, primary, links, or, apple, google, facebook, demo])
         column.setCustomSpacing(DesignTokens.Space.s24, after: intro)
         column.setCustomSpacing(DesignTokens.Space.s24, after: links)
         Controls.host(column, in: self)
-        applyMode()
+        updateEnabled()
         loadProviders()
     }
 
@@ -85,27 +85,12 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         view.window ?? ASPresentationAnchor()
     }
 
-    // MARK: Modes
-
-    private func toggleMode() {
-        signingUp.toggle()
-        applyMode()
-    }
-
-    private func applyMode() {
-        titleLabel.text = signingUp ? String(localized: "Create your account") : String(localized: "Sign in to HoldMyTrack")
-        primary.configuration?.title = signingUp ? String(localized: "Create account") : String(localized: "Sign in")
-        switchMode.configuration?.title = signingUp ? String(localized: "Already have an account? Sign in") : String(localized: "Don't have an account? Create one")
-        password.textContentType = signingUp ? .newPassword : .password
-        forgot.isHidden = signingUp
-        showError(nil)
-        updateEnabled()
-    }
+    // MARK: State
 
     private func updateEnabled() {
         let filled = !(email.text ?? "").trimmingCharacters(in: .whitespaces).isEmpty && !(password.text ?? "").isEmpty
         primary.isEnabled = filled && !busy
-        for button in [demo, google, facebook, switchMode] { button.isEnabled = !busy }
+        for button in [demo, google, facebook, signUp] { button.isEnabled = !busy }
         apple.isUserInteractionEnabled = !busy
         apple.alpha = busy ? 0.5 : 1
     }
@@ -133,12 +118,7 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         guard primary.isEnabled else { return }
         let address = (email.text ?? "").trimmingCharacters(in: .whitespaces)
         let secret = password.text ?? ""
-        let signingUp = signingUp
-        run {
-            signingUp
-                ? try await $0.signup(email: address, password: secret, timezone: TimeZone.current.identifier)
-                : try await $0.login(email: address, password: secret)
-        }
+        run { try await $0.login(email: address, password: secret) }
     }
 
     private func startDemo() {
@@ -163,14 +143,19 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         }
     }
 
-    /// The server's own Google or Facebook flow in the system's browser sheet, started with the
-    /// challenge of a verifier only this screen holds; the code it ends with is redeemed with
-    /// that verifier (root docs/IMPLEMENTATION.md §4.9).
-    private func browserSignIn(_ provider: OAuth.Provider) {
+    /// The server's own Google or Facebook flow, or its sign-up page, in the system's browser
+    /// sheet, started with the challenge of a verifier only this screen holds; the code it ends
+    /// with is redeemed with that verifier (root docs/IMPLEMENTATION.md §4.9).
+    private func browserRoundTrip(_ browserFlow: BrowserFlow) {
         let verifier = OAuth.newVerifier()
-        let start = OAuth.startURL(provider, base: flow.api.app.apiBaseURL, timezone: TimeZone.current.identifier, challenge: OAuth.challenge(for: verifier))
+        let challenge = OAuth.challenge(for: verifier)
+        let base = flow.api.app.apiBaseURL
+        let start = switch browserFlow {
+        case .provider(let provider): OAuth.startURL(provider, base: base, timezone: TimeZone.current.identifier, challenge: challenge)
+        case .signup: OAuth.signupURL(base: base, challenge: challenge)
+        }
         let done: ASWebAuthenticationSession.CompletionHandler = { [weak self] url, error in
-            Task { @MainActor in self?.finishBrowserSignIn(provider, verifier: verifier, url: url, error: error) }
+            Task { @MainActor in self?.finishBrowserRoundTrip(browserFlow, verifier: verifier, url: url, error: error) }
         }
         let session = if #available(iOS 17.4, *) {
             ASWebAuthenticationSession(url: start, callback: .customScheme(OAuth.callbackScheme), completionHandler: done)
@@ -183,11 +168,11 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
         showError(nil)
         if !session.start() {
             busy = false
-            showError(Self.message(.failed(provider)))
+            showError(Self.message(OAuthFailure.of(nil, flow: browserFlow)))
         }
     }
 
-    private func finishBrowserSignIn(_ provider: OAuth.Provider, verifier: String, url: URL?, error: Error?) {
+    private func finishBrowserRoundTrip(_ browserFlow: BrowserFlow, verifier: String, url: URL?, error: Error?) {
         browserSession = nil
         if let error = error as? ASWebAuthenticationSessionError, error.code == .canceledLogin {
             busy = false
@@ -199,7 +184,7 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
             run { try await $0.handoff(code: code, verifier: verifier) }
         case .showError(let code):
             busy = false
-            showError(Self.message(OAuthFailure.of(code, provider: provider)))
+            showError(Self.message(OAuthFailure.of(code, flow: browserFlow)))
         case .ignore:
             busy = false
         }
@@ -215,6 +200,8 @@ final class SignInViewController: UIViewController, ASWebAuthenticationPresentat
             String(localized: "Couldn't sign in with Google. Please try again.")
         case .failed(.facebook):
             String(localized: "Couldn't sign in with Facebook. Please try again.")
+        case .signupFailed:
+            String(localized: "Couldn't create your account. Please try again.")
         }
     }
 

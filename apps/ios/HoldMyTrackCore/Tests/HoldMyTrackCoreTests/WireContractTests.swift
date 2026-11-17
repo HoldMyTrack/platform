@@ -23,7 +23,6 @@ struct WireContractTests {
             try response(AccountJSON.self, path, "post")
             try response(SessionTokenJSON.self, path, "post")
         }
-        try response(SessionTokenJSON.self, "/auth/signup", "post", 201)
         try response(SessionTokenJSON.self, "/auth/demo", "post", 201)
         try response(AccountJSON.self, "/account/settings", "patch")
         try response(MessageJSON.self, "/auth/resend-verification", "post")
@@ -33,7 +32,6 @@ struct WireContractTests {
         try response(ExportStatusJSON.self, "/account/export", "get")
         try response(ExportStatusJSON.self, "/account/export", "post", 202)
         try request(CredentialsJSON.self, "/auth/login", "post")
-        try request(CredentialsJSON.self, "/auth/signup", "post")
         try request(AppleTokenJSON.self, "/auth/apple/token", "post")
         try request(HandoffJSON.self, "/auth/handoff", "post")
         try request(CodeJSON.self, "/auth/verify-code", "post")

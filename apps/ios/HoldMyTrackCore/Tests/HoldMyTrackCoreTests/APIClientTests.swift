@@ -107,23 +107,14 @@ struct APIClientTests {
         var body = accountBody
         body["session_token"] = "new-token"
         StubProtocol.answer = { _ in .init(body: self.json(body)) }
-        let grant = try await client(token: nil).signup(email: "ann@example.com", password: "hunter22", timezone: "Europe/Tallinn")
+        let grant = try await client(token: nil).login(email: "ann@example.com", password: "hunter22")
         #expect(grant.token == "new-token")
         #expect(grant.account.displayName == "Ann")
         let sent = try #require(StubProtocol.sent.first)
         #expect(sent.httpMethod == "POST")
-        #expect(sent.url?.path == "/v1/auth/signup")
+        #expect(sent.url?.path == "/v1/auth/login")
         let credentials = try JSONSerialization.jsonObject(with: try #require(sent.httpBody)) as? [String: String]
-        #expect(credentials == ["email": "ann@example.com", "password": "hunter22", "timezone": "Europe/Tallinn"])
-    }
-
-    @Test func aLoginLeavesTheTimezoneOut() async throws {
-        var body = accountBody
-        body["session_token"] = "t"
-        StubProtocol.answer = { _ in .init(body: self.json(body)) }
-        _ = try await client(token: nil).login(email: "a@b.c", password: "p")
-        let credentials = try JSONSerialization.jsonObject(with: try #require(StubProtocol.sent.first?.httpBody)) as? [String: String]
-        #expect(credentials == ["email": "a@b.c", "password": "p"])
+        #expect(credentials == ["email": "ann@example.com", "password": "hunter22"])
     }
 
     @Test func theServersMessageComesBackAsSent() async {
