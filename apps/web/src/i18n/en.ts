@@ -6,6 +6,7 @@
 export const en = {
   'app.load_failed': "Couldn't load your account: {message}",
   'app.try_again': 'Try again',
+  'app.crashed': 'Something went wrong and the map stopped.',
   'common.bad_response': "The server's reply couldn't be read.",
   'common.cancel': 'Cancel',
   'common.confirm': 'Confirm',
@@ -469,6 +470,7 @@ export const en = {
   'stories.inbox_sent': '{from} sent you a copy of “{name}”',
   'stories.inbox_accept': 'Accept',
   'stories.inbox_decline': 'Decline',
+  'stories.inbox_withdrawn': 'Its sender withdrew this copy, so there is nothing to accept.',
   'stories.inbox_copying': 'Copying “{name}” from {from}…',
   'stories.from': 'From {from}',
   'photos.add': 'Add photos',
