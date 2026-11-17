@@ -182,7 +182,9 @@ final class AppFlow {
     /// logout request, since the server ended every session.
     func accountDeleted() {
         if let stored = store.stored {
-            MapDocuments.forget(account: AccountKey.of(email: stored.email, isDemo: stored.isDemo))
+            let account = AccountKey.of(email: stored.email, isDemo: stored.isDemo)
+            MapDocuments.forget(account: account)
+            EmptyNoticeDismissal.forget(account: account)
         }
         store.clear()
         show()

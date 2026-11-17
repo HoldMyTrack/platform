@@ -8,6 +8,7 @@
     <string name="map_basemap_unreachable">Карта не может связаться со своим сервером. Возможно, его блокирует ваша сеть.</string>
     <string name="map_satellite_failed">Не удалось загрузить спутниковые снимки.</string>
     <string name="map_empty">На карте пока ничего нет. Синхронизируйте путешествия из Health Connect или запишите прогулку кнопкой внизу.</string>
+    <string name="map_notice_close">Закрыть</string>
     <string name="retry">Повторить</string>
     <string name="web_page_failed">Не удалось загрузить страницу. Проверьте подключение и попробуйте снова.</string>
 

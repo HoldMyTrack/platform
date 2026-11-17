@@ -464,19 +464,37 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped }
 
-    func notice(_ kind: Notice, _ text: String) {
-        if let label = notices.arrangedSubviews.first(where: { $0.tag == kind.rawValue + 1 }) as? UILabel {
-            label.text = text
+    /// Shows kind's notice, or changes its text. onClose gives it a close button, which takes it
+    /// down and then calls onClose.
+    func notice(_ kind: Notice, _ text: String, onClose: (() -> Void)? = nil) {
+        if let shown = notices.arrangedSubviews.first(where: { $0.tag == kind.rawValue + 1 }) {
+            (shown as? UILabel ?? shown.subviews.compactMap { $0 as? UILabel }.first)?.text = text
             return
         }
         let label = Controls.body(text, color: UIColor(resource: .ink))
-        label.tag = kind.rawValue + 1
-        label.backgroundColor = UIColor(resource: .noticeBg)
-        label.layer.cornerRadius = DesignTokens.Radius.md
-        label.layer.masksToBounds = true
         label.textAlignment = .center
         label.accessibilityIdentifier = "notice"
-        notices.addArrangedSubview(label)
+        let box: UIView
+        if let onClose {
+            let close = Controls.iconButton(Controls.icon(UIImage(resource: .x), size: 18), label: String(localized: "Close"), id: "noticeClose")
+            close.addAction(UIAction { [weak self] _ in
+                self?.hideNotice(kind)
+                onClose()
+            }, for: .primaryActionTriggered)
+            let row = UIStackView(arrangedSubviews: [label, close])
+            row.alignment = .center
+            row.spacing = DesignTokens.Space.s8
+            row.isLayoutMarginsRelativeArrangement = true
+            row.directionalLayoutMargins = NSDirectionalEdgeInsets(top: 0, leading: DesignTokens.Space.s12, bottom: 0, trailing: DesignTokens.Space.s4)
+            box = row
+        } else {
+            box = label
+        }
+        box.tag = kind.rawValue + 1
+        box.backgroundColor = UIColor(resource: .noticeBg)
+        box.layer.cornerRadius = DesignTokens.Radius.md
+        box.layer.masksToBounds = true
+        notices.addArrangedSubview(box)
         UIAccessibility.post(notification: .announcement, argument: text)
     }
 
@@ -577,6 +595,21 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     /// What the map shows before the documents arrive: the background alone.
     private static let emptyStyle = ##"{"version":8,"sources":{},"layers":[{"id":"background","type":"background","paint":{"background-color":"#e8e4da"}}]}"##
+}
+
+/// Whether this phone closed the empty map notice for an account (AccountKey), which then stays
+/// down for it.
+@MainActor
+enum EmptyNoticeDismissal {
+    private static let defaults = UserDefaults.standard
+
+    private static func key(_ account: String) -> String { "map.emptyNoticeClosed.\(account)" }
+
+    static func closed(account: String) -> Bool { defaults.bool(forKey: key(account)) }
+
+    static func close(account: String) { defaults.set(true, forKey: key(account)) }
+
+    static func forget(account: String) { defaults.removeObject(forKey: key(account)) }
 }
 
 /// The Layers menu, kept on the phone rather than the account (apps/android/docs/SPEC.md FR-2.2):

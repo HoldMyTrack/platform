@@ -126,7 +126,7 @@ The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.3), from the same ti
 ### FR-2.3 Initial camera framing
 
 - Once per app session the camera opens as the web's does (`docs/SPEC.md` FR-4.4): zoom 12 on the newest five activities with a track, skipping Pending ones, or fewer when five don't fit the screen. A rotation, theme or language change keeps the camera.
-- An account with nothing on the map stays on the world view with a pointer to Sync, asked again on every return to the map; the demo account never gets it.
+- An account with nothing on the map stays on the world view with a pointer to Sync, asked again on every return to the map until it is closed, which this phone remembers for the account; the demo account never gets it.
 
 ### FR-2.4 Attribution
 

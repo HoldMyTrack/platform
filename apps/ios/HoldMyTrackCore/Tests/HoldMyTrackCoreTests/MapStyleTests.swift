@@ -194,6 +194,13 @@ struct MapStyleTests {
         #expect(MapChrome.chip(.fog) == .everyActivity)
     }
 
+    @Test func theEmptyNoticeShowsForARealAccountWithNothingOnTheMapUntilClosed() {
+        #expect(MapChrome.emptyNoticeShown(empty: true, demo: false, closed: false))
+        #expect(!MapChrome.emptyNoticeShown(empty: true, demo: false, closed: true))
+        #expect(!MapChrome.emptyNoticeShown(empty: true, demo: true, closed: false))
+        #expect(!MapChrome.emptyNoticeShown(empty: false, demo: false, closed: false))
+    }
+
     @Test func aLockedLevelDrawsAtEveryZoomAndTheOthersAtNone() throws {
         #expect(layer(compose(), "region-fog-fill")?["minzoom"] == .number(4), "unlocked, each layer keeps its band")
         var state = MapState()

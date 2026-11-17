@@ -63,6 +63,10 @@ object MapChromeRules {
     /** Whether [next] may replace the notice up: a less important one never replaces a more important one. */
     fun noticeReplaces(current: MapNotice?, next: MapNotice): Boolean = current == null || current.ordinal >= next.ordinal
 
+    /** The empty notice points a real account with nothing on the map at Sync, until this phone
+     *  closes it for the account. The demo account has history and can't sync. */
+    fun emptyNoticeShown(empty: Boolean, demo: Boolean, closed: Boolean): Boolean = empty && !demo && !closed
+
     /** The empty and capped notices step aside while recording and on the Sync tab, whose lists
      *  aren't the area's; failures stay up. */
     fun noticeShown(kind: MapNotice?, recording: Boolean, onSync: Boolean): Boolean =

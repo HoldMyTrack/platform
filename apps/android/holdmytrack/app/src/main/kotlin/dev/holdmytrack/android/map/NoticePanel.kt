@@ -7,8 +7,9 @@ import androidx.core.view.isVisible
 import dev.holdmytrack.android.R
 
 /**
- * The map's one notice, under the top row: a sentence, an optional smaller detail and at most one
- * action. When two apply the more important stays up ([MapNotice], [MapChromeRules.noticeReplaces]).
+ * The map's one notice, under the top row: a sentence, an optional smaller detail, at most one
+ * action, and a close button for a notice that can be closed. When two apply the more important
+ * stays up ([MapNotice], [MapChromeRules.noticeReplaces]).
  */
 class NoticePanel(
     /** The panel itself, which the compass also clears. */
@@ -20,6 +21,7 @@ class NoticePanel(
     private val text: TextView = view.findViewById(R.id.map_notice_text)
     private val detail: TextView = view.findViewById(R.id.map_notice_detail)
     private val action: Button = view.findViewById(R.id.map_notice_action)
+    private val close: Button = view.findViewById(R.id.map_notice_close)
 
     /** Which notice is up, if any. */
     var shown: MapNotice? = null
@@ -32,6 +34,7 @@ class NoticePanel(
         failed: Boolean = false,
         action: Int? = null,
         onAction: (() -> Unit)? = null,
+        onClose: (() -> Unit)? = null,
     ) {
         if (!MapChromeRules.noticeReplaces(shown, kind)) return
         shown = kind
@@ -42,6 +45,11 @@ class NoticePanel(
         this.action.visibility = if (action == null) View.GONE else View.VISIBLE
         if (action != null) this.action.setText(action)
         this.action.setOnClickListener { onAction?.invoke() }
+        close.visibility = if (onClose == null) View.GONE else View.VISIBLE
+        close.setOnClickListener {
+            hide(kind)
+            onClose?.invoke()
+        }
         render()
     }
 
