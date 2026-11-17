@@ -3,7 +3,12 @@
   <div class="auth-card">
     <h1 class="auth-card__title">{{t "verify.title"}}</h1>
     {{with .Error}}<p class="auth-card__error" role="alert">{{.}}</p>{{end}}
-    {{if .Token}}
+    {{if .Confirm}}
+    <form class="auth-card__form" method="post" action="/verify">
+      <input type="hidden" name="token" value="{{.Token}}" />
+      <button type="submit" class="auth-card__submit">{{t "verify.confirm"}}</button>
+    </form>
+    {{else if .Token}}
     {{/* A Facebook-linked account is first verified only in a browser signed in to it (FR-1.8):
          sign in and come back to this link, or reset the password if the account isn't yours. */}}
     {{if .Facebook}}{{template "facebook-button" (printf "/v1/auth/facebook/start?verify=%s" .Token)}}{{end}}

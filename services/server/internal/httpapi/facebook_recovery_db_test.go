@@ -98,7 +98,7 @@ func TestFacebookMadeAccountVerifiesOnlyWhenSignedIn(t *testing.T) {
 	a, email, subject := f.facebookAccount(false)
 	token := f.verificationToken(a)
 
-	rec := f.do(account{}, http.MethodGet, "/verify?token="+token, nil)
+	rec := f.confirmLink(account{}, token)
 	if rec.Code != http.StatusForbidden {
 		t.Fatalf("link opened signed out: %d, want 403", rec.Code)
 	}
@@ -202,6 +202,9 @@ func TestFacebookVerifyRoundTripWithAnotherAccount(t *testing.T) {
 	rec := f.do(account{}, http.MethodGet, link+"&error=other_facebook", nil)
 	if rec.Code != http.StatusForbidden || !strings.Contains(rec.Body.String(), "isn&#39;t the one linked") {
 		t.Errorf("the link back from another Facebook account: %d without saying why", rec.Code)
+	}
+	if body := rec.Body.String(); !strings.Contains(body, `href="/v1/auth/facebook/start?verify=`+token+`"`) || strings.Contains(body, `action="/verify"`) {
+		t.Errorf("the link back from another Facebook account offers no Facebook sign-in, or a Confirm button that can't verify it:\n%s", body)
 	}
 
 	location, _ = f.facebookCallback("error=access_denied&state=s", "", "", token)

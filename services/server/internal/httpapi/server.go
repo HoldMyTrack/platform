@@ -271,6 +271,7 @@ func (s *Server) registerPages() {
 	s.mux.HandleFunc("GET /reset", s.handleResetPage)
 	s.mux.HandleFunc("POST /reset", s.sameOrigin(s.handleResetForm))
 	s.mux.HandleFunc("GET /verify", s.handleVerifyPage)
+	s.mux.HandleFunc("POST /verify", s.sameOrigin(s.handleVerifyForm))
 	s.mux.HandleFunc("GET /verify-pending", s.handleVerifyPendingPage)
 	s.mux.HandleFunc("POST /verify-pending/resend", s.sameOrigin(s.handleVerifyResendForm))
 	s.mux.HandleFunc("POST /verify-pending/email", s.sameOrigin(s.handleVerifyChangeEmailForm))

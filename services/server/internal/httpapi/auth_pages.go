@@ -34,6 +34,8 @@ type authForm struct {
 	Upgrading bool
 	// Sent is /forgot's "check your email" state, after its form is submitted.
 	Sent bool
+	// Confirm is /verify's button that confirms the link's address.
+	Confirm bool
 	// TurnstileSiteKey shows /signup's Turnstile widget when set (turnstile.go).
 	TurnstileSiteKey string
 }
@@ -347,57 +349,6 @@ func (s *Server) handleResetForm(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.signIn(w, r, userID)
-}
-
-// GET /verify?token= — the link in the verification email. A GET with an effect, because
-// it's a link someone clicks in their inbox. The token works once, so a second open, often a
-// mail scanner's prefetch then the person's click, finds it used: the message for that says
-// a confirmed email just signs in.
-//
-// The link verifies wherever it's opened. A browser already signed in to its account goes on
-// with the session it has; any other, signed out or signed in to another account, keeps what it
-// has and is sent to sign in (verifyEmail).
-func (s *Server) handleVerifyPage(w http.ResponseWriter, r *http.Request) {
-	sessionID, _ := sessionIDFromRequest(r)
-	token := r.URL.Query().Get("token")
-	_, signIn, err := s.verifyEmail(r.Context(), token, sessionID)
-	if errors.Is(err, errVerifyNeedsFacebook) {
-		form := authForm{Token: token, Facebook: s.facebook.enabled()}
-		// Back from a Facebook round trip this page started (finishFacebookVerify, failOAuth).
-		switch r.URL.Query().Get("error") {
-		case "other_facebook":
-			form.ErrorKey = "error.verify_other_facebook"
-		case "facebook":
-			form.ErrorKey = "signin.facebook_failed"
-		}
-		if form.ErrorKey != "" {
-			acct, ok := s.pageAccount(w, r)
-			if !ok {
-				return
-			}
-			s.renderAuthFailure(w, r, acct, http.StatusForbidden, "verify", "verify.title", true, form, nil)
-			return
-		}
-		acct, ok := s.pageAccount(w, r)
-		if !ok {
-			return
-		}
-		s.renderAuthError(w, r, acct, "verify email", "verify", "verify.title", true, form, err)
-		return
-	}
-	if err != nil {
-		acct, ok := s.pageAccount(w, r)
-		if !ok {
-			return
-		}
-		s.renderAuthError(w, r, acct, "verify email", "verify", "verify.title", true, authForm{}, err)
-		return
-	}
-	if !signIn {
-		http.Redirect(w, r, "/signin?verified", http.StatusSeeOther)
-		return
-	}
-	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // GET /verify-pending — a signed-in real account whose email isn't confirmed yet: resend the
