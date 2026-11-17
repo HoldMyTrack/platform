@@ -57,8 +57,12 @@ export function useStoryInbox(enabled: boolean, onArrived: () => void): StoryInb
   }, [inbox, failures]);
 
   const answer = useCallback(async (id: string, accept: boolean) => {
-    await answerStorySend(id, accept);
-    setNonce((n) => n + 1);
+    // Read again either way: a copy withdrawn meanwhile leaves the inbox.
+    try {
+      await answerStorySend(id, accept);
+    } finally {
+      setNonce((n) => n + 1);
+    }
   }, []);
   return useMemo(() => ({ ...inbox, answer }), [inbox, answer]);
 }

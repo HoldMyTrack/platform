@@ -130,6 +130,8 @@ jobs:
           cache-dependency-path: apps/web/package-lock.json
       - run: npm ci
       - run: npm run typecheck
+      # Warnings are the hits the code had when the linter came in (eslint.config.js); errors fail.
+      - run: npm run lint
       # test:unit under c8, which counts every file in src, not only the ones a test imports.
       - run: npm run test:coverage
       - run: npm run verify:style

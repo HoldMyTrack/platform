@@ -76,6 +76,8 @@ export interface EditActivityWindowProps {
   photos: {
     photos: readonly Photo[];
     error: string | null;
+    /** Reads the saved photos again: a Save that stops partway has taken what landed out of the draft. */
+    reload: () => void;
     onOverlay: (overlay: PhotoMarkerOverlay | null) => void;
   };
   /** The tab showing changed — MapView hides the photo markers on the Track tab. */
@@ -228,6 +230,7 @@ export function EditActivityWindow({
       }
       onClose({ saved: written.current.size > 0, trackApplied: false, photosSaved: photosSaved.current });
     } catch (err) {
+      if (photosSaved.current) photos.reload();
       if (err instanceof SplitHidesPartError) {
         // Everything before the track is written; the question is about the split alone.
         setHiddenSplitWarning(err.message);

@@ -320,35 +320,42 @@ async function renderOffscreen(
   container.style.height = `${height}px`;
   document.body.appendChild(container);
 
-  const instance = new MapLibreMap({
-    container,
-    style: buildStyle({
-      flavor: state.flavor,
-      origin: basemapOrigin(),
-      satellite: satelliteSource(),
-      satelliteOn: state.satellite,
-      lang,
-      // The live map's projection, so a frame drawn on the globe exports as drawn.
-      globe: true,
-    }),
-    center: [view.center.lng, view.center.lat],
-    zoom: liveMap.getZoom(),
-    pixelRatio: view.pixelRatio,
-    bearing: liveMap.getBearing(),
-    pitch: liveMap.getPitch(),
-    attributionControl: false,
-    zoomLevelsToOverscale: ZOOM_LEVELS_TO_OVERSCALE,
-    maxPitch: 0,
-    // Same credentialed-tile wiring useMapInstance.ts's live map already has — tracks/fog
-    // tiles need the session cookie, which MapLibre's own fetches don't carry by
-    // default (they bypass api.ts entirely).
-    transformRequest: withApiCredentials(API_BASE_URL, window.location.href),
-    // The one thing the live map deliberately doesn't set — see this module's own doc
-    // comment for why it's confined to this temporary instance instead. Nested under
-    // canvasContextAttributes, not a top-level MapOptions field, in this maplibre-gl version
-    // (confirmed against the installed 6.9.0 type declarations, not assumed).
-    canvasContextAttributes: { preserveDrawingBuffer: true },
-  });
+  // The constructor throws without WebGL, or out of contexts; the container mustn't stay behind.
+  let instance: MapLibreMap;
+  try {
+    instance = new MapLibreMap({
+      container,
+      style: buildStyle({
+        flavor: state.flavor,
+        origin: basemapOrigin(),
+        satellite: satelliteSource(),
+        satelliteOn: state.satellite,
+        lang,
+        // The live map's projection, so a frame drawn on the globe exports as drawn.
+        globe: true,
+      }),
+      center: [view.center.lng, view.center.lat],
+      zoom: liveMap.getZoom(),
+      pixelRatio: view.pixelRatio,
+      bearing: liveMap.getBearing(),
+      pitch: liveMap.getPitch(),
+      attributionControl: false,
+      zoomLevelsToOverscale: ZOOM_LEVELS_TO_OVERSCALE,
+      maxPitch: 0,
+      // Same credentialed-tile wiring useMapInstance.ts's live map already has — tracks/fog
+      // tiles need the session cookie, which MapLibre's own fetches don't carry by
+      // default (they bypass api.ts entirely).
+      transformRequest: withApiCredentials(API_BASE_URL, window.location.href),
+      // The one thing the live map deliberately doesn't set — see this module's own doc
+      // comment for why it's confined to this temporary instance instead. Nested under
+      // canvasContextAttributes, not a top-level MapOptions field, in this maplibre-gl version
+      // (confirmed against the installed 6.9.0 type declarations, not assumed).
+      canvasContextAttributes: { preserveDrawingBuffer: true },
+    });
+  } catch (err) {
+    container.remove();
+    throw err;
+  }
 
   const cleanup = () => {
     instance.remove();

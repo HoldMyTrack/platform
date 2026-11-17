@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type MouseEvent, type RefObject } from 'react';
+import { useEffect, useId, useRef, useState, type MouseEvent, type RefObject } from 'react';
 import { t } from '../i18n';
 
 /**
@@ -12,7 +12,8 @@ import { t } from '../i18n';
  * `EditActivityWindow.tsx`'s own Save button uses, rather than pushing busy/error
  * state onto whichever caller happens to render this — the dialog closes itself once
  * `onConfirm` actually resolves, not before. While it runs, nothing closes it — not Escape, not
- * the backdrop — so a failure always has somewhere to show.
+ * the backdrop — so a failure always has somewhere to show. It opens on Cancel, so a held or
+ * repeated Enter from the button that opened it can't confirm what may not be undone.
  */
 export interface ConfirmDialogProps {
   title: string;
@@ -61,6 +62,8 @@ export function ConfirmDialog({
   onClose,
 }: ConfirmDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
+  const cancelRef = useRef<HTMLButtonElement>(null);
+  const titleId = useId();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const backdrop = useBackdropClose(ref, () => {
@@ -70,6 +73,7 @@ export function ConfirmDialog({
   useEffect(() => {
     const el = ref.current;
     if (el && !el.open) el.showModal();
+    cancelRef.current?.focus();
   }, []);
 
   async function handleConfirm() {
@@ -90,13 +94,14 @@ export function ConfirmDialog({
       ref={ref}
       className="confirm-dialog"
       data-testid="confirm-dialog"
+      aria-labelledby={titleId}
       onClose={onClose}
       onCancel={(event) => {
         if (busy) event.preventDefault();
       }}
       {...backdrop}
     >
-      <h2 className="confirm-dialog__title">{title}</h2>
+      <h2 id={titleId} className="confirm-dialog__title">{title}</h2>
       <p className="confirm-dialog__message">{message}</p>
       {error && <p className="settings-page__error">{error}</p>}
       <div className="settings-page__save-row">
@@ -104,7 +109,7 @@ export function ConfirmDialog({
           {busy ? busyLabel : confirmLabel}
         </button>
         {cancelLabel !== null && (
-          <button type="button" className="settings-page__button" disabled={busy} onClick={() => ref.current?.close()}>
+          <button ref={cancelRef} type="button" className="settings-page__button" disabled={busy} onClick={() => ref.current?.close()}>
             {cancelLabel}
           </button>
         )}
