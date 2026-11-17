@@ -103,10 +103,15 @@ export function useExportFlow(
 
   const moveWindow = useCallback((window: Rect) => dispatch({ type: 'window', window }), [dispatch]);
 
+  // Bumped by each capture and by Cancel: a capture whose number has moved on was cancelled or
+  // superseded, so its image is dropped and its failure is not reported.
+  const captureSeq = useRef(0);
+
   const capture = useCallback(async () => {
     // Until the card for this frame arrives, Export would draw another than the one previewed.
     if (flow.stage !== 'framing' || !map || !stats.ready) return;
     const { preset, customSize, window: win } = flow;
+    const seq = ++captureSeq.current;
     dispatch({ type: 'capture' });
     setError(null);
     try {
@@ -118,6 +123,7 @@ export function useExportFlow(
         target: outputSize(preset, customSize, win),
         statsCard: stats.card?.image ?? null,
       });
+      if (seq !== captureSeq.current) return;
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
@@ -130,6 +136,7 @@ export function useExportFlow(
       window.setTimeout(() => URL.revokeObjectURL(url), 60_000);
       dispatch({ type: 'close' });
     } catch (err) {
+      if (seq !== captureSeq.current) return;
       // The cause (a canvas or render timeout) is for developers; the user gets a generic message.
       console.error('export failed', err);
       setError(t('export.failed'));
@@ -138,6 +145,7 @@ export function useExportFlow(
   }, [flow, map, scene, dispatch, stats]);
 
   const cancel = useCallback(() => {
+    captureSeq.current++;
     dispatch({ type: 'close' });
     setError(null);
   }, [dispatch]);

@@ -31,6 +31,7 @@ npm run dev
 | `npm run verify:build` | The same checks against the production bundle |
 | `npm run basemap` | Re-cut the `.pmtiles` extract |
 | `npm run typecheck` | `tsc --noEmit` |
+| `npm run lint` | ESLint over `src/`: hook rules and JSX accessibility; a rule `eslint.config.js` lists as a warning has hits left to fix |
 | `npm run test:unit` | Plain `node --test` unit tests |
 | `npm run test:coverage` | `test:unit` under c8, counting every file in `src/`; the report lands in `coverage/` |
 | `npm run build:style` | Regenerate the style documents the API serves (`services/server/internal/mapstyle/styles`) from `src/map/style.ts` |
