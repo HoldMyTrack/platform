@@ -100,7 +100,7 @@ Which countries and regions each trajectory touches, matched once at ingest and 
 
 ### 3.16 `email_verifications`
 
-Same shape as `password_resets`. `email` is the address the link confirms; a change of address waits on this row until verified (§4.9).
+Same shape as `password_resets`. `email` is the address the link confirms; a change of address waits on this row until verified (§4.9). `code_hash` is the SHA-256 of the row's token hash and its 6-digit code, with the code's own expiry and wrong tries.
 
 ### 3.17 `user_identities`
 
@@ -389,6 +389,8 @@ Email and password with server-side sessions, owned end to end, so no vendor can
 **Sessions** are an opaque cookie (§3.9) checked in SQL on every request; sign-out deletes the row. `requireAuth` puts the user and its timezone in the request context, `requireVerified` wraps every route that needs a confirmed email, and resend and change-email are only `requireAuth`. Sign-in counts failures only, per email and per address, before the password is compared. A reset ends every session and reset row, then starts one session. A verification link works from any browser but signs in only one already signed in to its account, since it proves the mailbox, not the account: signing in whoever opens it would let someone send the link for a second address of their own account to a signed-out person. Opening the link (`verify_page.go`) confirms only in that browser and elsewhere shows a button that posts the token, because mail security scanners open every link in a message and would otherwise confirm addresses a script signed up with.
 
 **An email change waits for proof**: the verification row carries the new address, and verifying applies it with the account row locked. Applying it at once let anyone take an unproven address, blocking its owner's signup and, after a reset, handing them an account whose provider link belonged to someone else.
+
+**A verification code** (`verify_code.go`) proves the mailbox to the session that types it, so a first verification keeps that session and ends the rest, where a link opened in a signed-out browser ends them all. Only the account's newest row is checked, so a resend or address change retires the older code. Each account confirming an address has a code of its own, so the per-code and per-account limits alone would let many accounts guess at one address together: wrong codes are also counted per address across accounts (`codeTriesPerAddress`), and a change to an address another account is confirming is refused. The hash binds each code to its row, so equal codes in two rows differ.
 
 **Mail** (`internal/mail`) goes through ZeptoMail's HTTPS API when `ZEPTOMAIL_TOKEN` is set, since DigitalOcean blocks outgoing SMTP, and plain SMTP otherwise. With neither configured it logs messages in dev, but on an `https://` deployment only that a message wasn't sent, since a logged link opens the account. A failed send surfaces only when someone asks for mail, so the `worker` checks the provider every 5 minutes without sending (`mail.RunCheck`) and an alert watches the result.
 

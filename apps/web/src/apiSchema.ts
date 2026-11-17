@@ -305,6 +305,55 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/verify-code": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify the caller's address with the 6-digit code from its newest verification email
+         * @description Works before the account is verified. The caller's session stays signed in; a first verification ends the account's other sessions (SPEC FR-1.8). A wrong code answers code_wrong, the fifth answers code_used_up, and a code past 30 minutes or its tries answers code_expired; a resend sends a new one. Ten wrong codes in an hour for one address, across accounts, answer 429 code_rate_limited.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": {
+                        code: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description The account, verified */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Account"];
+                    };
+                };
+                400: components["responses"]["Error"];
+                401: components["responses"]["Unauthenticated"];
+                409: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/providers": {
         parameters: {
             query?: never;
@@ -737,7 +786,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Email the verification link again; works before the account is verified */
+        /** Email a new verification code and link; works before the account is verified */
         post: {
             parameters: {
                 query?: never;

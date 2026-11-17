@@ -120,6 +120,12 @@ public final class APIClient: Sendable {
         _ = try await perform(request)
     }
 
+    /// The 6-digit code from the verification email, typed in this session, which stays signed in.
+    public func verifyCode(_ code: String) async throws -> Account {
+        let json: AccountJSON = try await decode(send("POST", "v1/auth/verify-code", body: CodeJSON(code: code)))
+        return Account(json)
+    }
+
     /// Mails a fresh verification link; the server's answer, its hourly limit included, is the
     /// message to show.
     public func resendVerification() async throws -> String {

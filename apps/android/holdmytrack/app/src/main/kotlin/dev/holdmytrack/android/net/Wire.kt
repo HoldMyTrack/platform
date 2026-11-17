@@ -104,6 +104,9 @@ internal data class SettingsJson(
 @Serializable
 internal data class EmailJson(val email: String)
 
+@Serializable
+internal data class CodeJson(val code: String)
+
 // Activities
 
 @Serializable

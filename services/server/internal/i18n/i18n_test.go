@@ -102,7 +102,7 @@ func TestFormatting(t *testing.T) {
 		en.T("no.such.key"):                           "no.such.key",
 		Get("xx").T("header.profile"):                 "Profile",
 		ru.T("meta.title", "page", "Вход"):            "Вход — HoldMyTrack",
-		en.T("verify_pending.hint", "email", "a@b.c"): "We sent a confirmation link to <strong>a@b.c</strong>. Click it to unlock your account.",
+		en.T("verify_pending.hint", "email", "a@b.c"): "We sent a 6-digit code to <strong>a@b.c</strong>. Enter it below to unlock your account.",
 	} {
 		if got != want {
 			t.Errorf("got %q, want %q", got, want)

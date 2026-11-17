@@ -141,6 +141,10 @@ struct EmailJSON: Codable, Sendable, Equatable {
     let email: String
 }
 
+struct CodeJSON: Codable, Sendable, Equatable {
+    let code: String
+}
+
 // Activities
 
 struct StoryRefJSON: Codable, Sendable, Equatable {

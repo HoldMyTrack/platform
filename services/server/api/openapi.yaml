@@ -31,6 +31,8 @@ paths:
     $ref: "paths/auth.yaml#/auth_reset-password"
   /auth/verify-email:
     $ref: "paths/auth.yaml#/auth_verify-email"
+  /auth/verify-code:
+    $ref: "paths/auth.yaml#/auth_verify-code"
   /auth/providers:
     $ref: "paths/auth.yaml#/auth_providers"
   /auth/google/start:

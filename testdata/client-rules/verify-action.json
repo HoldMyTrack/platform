@@ -1,0 +1,12 @@
+{
+  "rule": "verifyAction",
+  "description": "What the apps' check-your-email screen does on Confirm with what's in its code field (apps/android/docs/SPEC.md FR-1.4): nothing but whitespace asks the server whether the email's link confirmed the address (\"check\"); anything else is sent trimmed for the server to judge ({ submit }).",
+  "clients": ["android", "ios"],
+  "cases": [
+    { "name": "a code is sent", "input": { "typed": "123456" }, "expected": { "submit": "123456" } },
+    { "name": "surrounding whitespace is trimmed, inner spaces kept", "input": { "typed": " 123 456\n" }, "expected": { "submit": "123 456" } },
+    { "name": "a short or odd code is still the server's to refuse", "input": { "typed": "12a" }, "expected": { "submit": "12a" } },
+    { "name": "an empty field checks", "input": { "typed": "" }, "expected": "check" },
+    { "name": "spaces, a tab and a no-break space check", "input": { "typed": " \t " }, "expected": "check" }
+  ]
+}

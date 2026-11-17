@@ -43,10 +43,11 @@
     <string name="update_app_title">Update HoldMyTrack</string>
     <string name="update_app_body">This version of the app is too old to use. Update it to keep using HoldMyTrack. Anything waiting to sync stays on your phone until then.</string>
     <string name="update_app_open">Update</string>
-    <string name="verify_email_hint">We sent a confirmation link to %1$s. Open it to unlock your account — your map and sync start working as soon as you do.</string>
-    <string name="verify_email_continue">Continue</string>
+    <string name="verify_email_hint">We sent a 6-digit code to %1$s. Enter it below to unlock your account — your map and sync start working as soon as you do.</string>
+    <string name="verify_email_continue">Confirm</string>
+    <string name="verify_email_code_hint">Code from the email</string>
     <string name="verify_email_resend">Resend verification email</string>
-    <string name="verify_email_not_yet">Your email isn\'t confirmed yet. Open the link in the email we sent, then tap Continue.</string>
+    <string name="verify_email_not_yet">Enter the 6-digit code from the email.</string>
     <string name="verify_email_check_failed">Couldn\'t reach HoldMyTrack: %1$s</string>
 
     <string name="mode_normal">Normal</string>

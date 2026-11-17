@@ -5,8 +5,12 @@
     <p class="auth-card__hint">{{th "verify_pending.hint" "email" .Email}}</p>
     {{with .Notice}}<p class="auth-card__notice" role="status">{{.}}</p>{{end}}
     {{with .Error}}<p class="auth-card__error" role="alert">{{.}}</p>{{end}}
+    <form class="auth-card__form" method="post" action="/verify-pending/code">
+      <label class="auth-card__field"><span>{{t "verify_pending.code_label"}}</span><input type="text" name="code" required inputmode="numeric" autocomplete="one-time-code" pattern="[-0-9 ]*" maxlength="9" /></label>
+      <button type="submit" class="auth-card__submit">{{t "verify_pending.code_submit"}}</button>
+    </form>
     <form method="post" action="/verify-pending/resend">
-      <button type="submit" class="auth-card__submit">{{t "verify_pending.resend"}}</button>
+      <button type="submit" class="auth-card__secondary">{{t "verify_pending.resend"}}</button>
     </form>
     <form class="auth-card__form" method="post" action="/verify-pending/email">
       <label class="auth-card__field"><span>{{t "verify_pending.change_label"}}</span><input type="email" name="email" value="{{.Email}}" required autocomplete="email" /></label>

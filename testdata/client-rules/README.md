@@ -22,6 +22,7 @@ The geometric and numeric rules (`editTrack*`, `photoClusters`, `photoMarkerLayo
 | `pendingCheck` | `pending`, `awaiting`, `listed`, `stillPending` (ids) | `{ watched, moved, finished }` |
 | `pendingBatches` | `ids`, `size` | the ids in consecutive batches of at most `size` |
 | `deleteDone` | `status` (a DELETE's HTTP status) | boolean |
+| `verifyAction` | `typed` (the code field's text) | `"check"` or `{ submit }` |
 | `uploadPlan` | `files` (`{ name, size }`, size -1 when unknown) | `{ send, refusals }`, each refusal `{ kind, name }` or `{ kind: "tooMany", count }` |
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
 | `statsOffered` | `checked` (ids), `storyId` | boolean |

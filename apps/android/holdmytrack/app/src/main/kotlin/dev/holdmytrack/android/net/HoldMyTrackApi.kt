@@ -562,6 +562,16 @@ object HoldMyTrackApi {
             ?: Result.failure(IOException("not an image"))
     }
 
+    /** `POST /v1/auth/verify-code` — the 6-digit code from the verification email, typed in this
+     *  session, which stays signed in. The account as verified, or the server's refusal. */
+    fun verifyCode(code: String, onResult: (Result<Profile>) -> Unit) {
+        val request = Request.Builder()
+            .url(BuildConfig.API_BASE_URL + API_V1 + "/auth/verify-code")
+            .post(jsonBody(CodeJson(code)))
+            .build()
+        call(request, { body -> decode<AccountJson>(body).toProfile() }, onResult)
+    }
+
     /**
      * `POST /v1/auth/resend-verification` — mails a fresh confirmation link. Answers with the
      * server's own confirmation text ("Verification email sent."), in the app's language.
