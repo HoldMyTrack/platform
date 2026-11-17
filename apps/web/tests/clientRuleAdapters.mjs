@@ -118,6 +118,8 @@ export const rules = {
       checkAll: () => ({ type: 'checkedSet', ids: listed.map((a) => a.id) }),
       checksCleared: () => ({ type: 'checkedSet', ids: [] }),
       checksInverted: () => ({ type: 'checkedSet', ids: invertedChecks(listed, selection.checked) }),
+      typeToggled: () => ({ ...event, activities }),
+      distanceSet: () => ({ ...event, activities }),
     }[event.type]?.() ?? event;
     const next = mapSessionReducer({ ...initialSession(null), selection }, sent).selection;
     return {
