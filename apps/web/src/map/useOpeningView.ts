@@ -29,9 +29,17 @@ export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSe
   const openedRef = useRef(false);
   const emptyRef = useRef<boolean | null>(null);
 
-  const open = (m: MapLibreMap, signal: AbortSignal) =>
-    listArea({ limit: OPENING_ACTIVITIES }, signal)
+  // The user moving the map first wins: the view is dropped, and their own move loads the list.
+  const open = (m: MapLibreMap) => {
+    const controller = new AbortController();
+    const { signal } = controller;
+    const onMoveStart = (event: { originalEvent?: unknown }) => {
+      if (event.originalEvent) controller.abort();
+    };
+    m.on('movestart', onMoveStart);
+    return listArea({ limit: OPENING_ACTIVITIES }, signal)
       .then(({ activities }) => {
+        if (signal.aborted) return;
         const boxes = activities.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : []));
         const container = m.getContainer();
         const view = openingView(boxes, { width: container.clientWidth, height: container.clientHeight });
@@ -43,8 +51,10 @@ export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSe
         // The camera stays where the map started; the list still follows it.
       })
       .finally(() => {
+        m.off('movestart', onMoveStart);
         if (!signal.aborted) dispatch({ type: 'areaLoaded', area: viewArea(m) });
       });
+  };
 
   useEffect(() => {
     if (!map || openedRef.current) return;
@@ -53,8 +63,7 @@ export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSe
       dispatch({ type: 'areaLoaded', area: viewArea(map) });
       return;
     }
-    const controller = new AbortController();
-    void open(map, controller.signal);
+    void open(map);
     // Once only: a later map instance (a theme swap keeps it) must not move the camera again.
   }, [map]);
 
@@ -66,8 +75,7 @@ export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSe
     }
     if (emptyRef.current && earliest !== null) {
       emptyRef.current = false;
-      const controller = new AbortController();
-      void open(map, controller.signal);
+      void open(map);
     }
   }, [map, historyReady, earliest, keepCamera]);
 }
