@@ -1,6 +1,6 @@
 import UIKit
 
-/// A slider with two knobs over whole steps 0...maximum, the track editor's range: UIKit has no
+/// A slider with two knobs over whole steps 0...maximum, the route editor's range: UIKit has no
 /// two-knob slider. A drag moves the knob nearer the finger, never past the other; valueChanged
 /// fires on every step. VoiceOver reads each knob as its own adjustable element.
 final class RangeSlider: UIControl {

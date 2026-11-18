@@ -1,7 +1,7 @@
 import XCTest
 
 /// A fresh account on the dev stack, as Android's flows use: signed up with a password, given a
-/// Country so it skips the first run, and the three sample activities under `/static/testing/`
+/// Country so it skips the first run, and the three sample tracks under `/static/testing/`
 /// uploaded and processed. Deleted at the end of the test.
 final class TestAccount {
     let email = "ios-flows-\(Int(Date().timeIntervalSince1970 * 1000))@holdmytrack.local"
@@ -25,8 +25,8 @@ final class TestAccount {
     /// A sample file's bytes, from the dev stack.
     func sample(_ name: String) throws -> Data { try get("/static/testing/\(name)") }
 
-    /// Whether the account has count activities, none Pending, within timeout seconds.
-    func waitForActivities(_ count: Int, timeout: TimeInterval) -> Bool {
+    /// Whether the account has count tracks, none Pending, within timeout seconds.
+    func waitForTracks(_ count: Int, timeout: TimeInterval) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
             let json = try? call("GET", "/v1/activities", nil) as? [String: Any]
@@ -58,15 +58,15 @@ final class TestAccount {
         return (json?["captures"] as? [[String: Any]] ?? []).compactMap { $0["spot_id"] as? Int }
     }
 
-    /// The activity's photos' captions, in route order, an empty string for none.
-    func photoCaptions(_ activity: String) -> [String] {
-        let json = (try? call("GET", "/v1/photos?activity=\(activity)", nil)) as? [String: Any]
+    /// The track's photos' captions, in route order, an empty string for none.
+    func photoCaptions(_ track: String) -> [String] {
+        let json = (try? call("GET", "/v1/photos?activity=\(track)", nil)) as? [String: Any]
         return (json?["photos"] as? [[String: Any]] ?? []).map { $0["caption"] as? String ?? "" }
     }
 
-    /// The edit saved on the activity's track, as the server sends it, or nil for none.
-    func trackEdit(_ activity: String) -> [String: Any]? {
-        let json = (try? call("GET", "/v1/activities/\(activity)/track-points", nil)) as? [String: Any]
+    /// The edit saved on the track's track, as the server sends it, or nil for none.
+    func routeEdit(_ track: String) -> [String: Any]? {
+        let json = (try? call("GET", "/v1/activities/\(track)/track-points", nil)) as? [String: Any]
         return json?["edit"] as? [String: Any]
     }
 

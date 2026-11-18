@@ -10,7 +10,7 @@ final class CaptureTests: XCTestCase {
         try LaunchTests.requireDevStack(self)
         let account = try TestAccount(base: TestAccount.base()!, samples: [])
         defer { account.delete() }
-        // Around the sample activities, Northfield, Ohio.
+        // Around the sample tracks, Northfield, Ohio.
         guard let place = try account.place("playground", in: [-81.56, 41.28, -81.48, 41.33]) else {
             throw XCTSkip("no playground in the dev stack's places")
         }

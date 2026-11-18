@@ -3,17 +3,17 @@ import Foundation
 /// Why the Edit window's Track or Photos tab can't be used.
 public enum EditBlock: Equatable, Sendable { case checkOne, pending, isPrivate, noOriginal, badTimes }
 
-/// Whether the Track and Photos tabs can be used for the Edit window's activities, Android's and
-/// the web's EditAvailability. One activity's answer is the server's (the list's `track_edit` and
+/// Whether the Track and Photos tabs can be used for the Edit window's tracks, Android's and
+/// the web's EditAvailability. One track's answer is the server's (the list's `track_edit` and
 /// `photos`, root docs/SPEC.md FR-5.7 and FR-15.1); the app adds only the rule that depends on
-/// the selection: one activity.
+/// the selection: one track.
 public enum EditAvailability {
-    public static func track(_ group: [Activity]) -> EditBlock? {
+    public static func track(_ group: [Track]) -> EditBlock? {
         guard group.count == 1 else { return .checkOne }
-        return block(group[0].trackEdit)
+        return block(group[0].routeEdit)
     }
 
-    public static func photos(_ group: [Activity]) -> EditBlock? {
+    public static func photos(_ group: [Track]) -> EditBlock? {
         guard group.count == 1 else { return .checkOne }
         return block(group[0].photosBlock)
     }
@@ -34,45 +34,45 @@ public enum EditAvailability {
 /// between them (Cut, while its button is held), or the track in two at a knob (Split, held).
 public enum EditPreview: Equatable, Sendable { case chop, cut, split }
 
-/// One Edit track session (root docs/SPEC.md FR-5.7, FR-5.9), Android's TrackEditor less its
+/// One Edit route session (root docs/SPEC.md FR-5.7, FR-5.9), Android's TrackEditor less its
 /// views: the recorded points, the edit saved on them, the steps taken since, and the two knobs.
 /// The knobs are held as the times of the points they sit on, not as indices, so a deleted point
 /// elsewhere never moves them; nil is "at that end". Split is a step, so Undo takes it back, but
 /// it isn't part of the edit: Save sends splitAt beside it. One split a session; once it's made
 /// the other tools wait for Undo, since the edit applies to both parts.
-public struct TrackEditSession: Equatable, Sendable {
-    public let points: [TrackPoint]
-    public let base: TrackEdit?
+public struct RouteEditSession: Equatable, Sendable {
+    public let points: [RoutePoint]
+    public let base: RouteEdit?
     public private(set) var ops: [EditOp] = []
     public private(set) var knobLo: Int?
     public private(set) var knobHi: Int?
 
-    public init(points: [TrackPoint], base: TrackEdit?) {
+    public init(points: [RoutePoint], base: RouteEdit?) {
         self.points = points
         self.base = base
     }
 
     /// The points as the session's edit leaves them.
-    public var visible: [TrackPoint] { EditTrackOps.apply(points, EditTrackOps.fold(base, ops)) }
+    public var visible: [RoutePoint] { EditRouteOps.apply(points, EditRouteOps.fold(base, ops)) }
 
     /// Whether the session changed anything: what Save sends, and the tab's dot.
     public var changed: Bool { !ops.isEmpty }
 
     /// The whole edit to send, nil to go back to the track as recorded.
-    public var pending: TrackEdit? {
-        let edit = EditTrackOps.fold(base, ops)
+    public var pending: RouteEdit? {
+        let edit = EditRouteOps.fold(base, ops)
         return edit.isEmpty ? nil : edit
     }
 
-    /// The time to split the activity at, sent beside pending.
-    public var splitAt: Int? { EditTrackOps.splitPoint(ops) }
+    /// The time to split the track at, sent beside pending.
+    public var splitAt: Int? { EditRouteOps.splitPoint(ops) }
 
     /// Whether Reset has anything to take back.
-    public var canReset: Bool { !EditTrackOps.fold(base, ops).isEmpty && splitAt == nil }
+    public var canReset: Bool { !EditRouteOps.fold(base, ops).isEmpty && splitAt == nil }
 
     /// The knobs' indices in visible: the first point at or after the low knob's time, the last
     /// at or before the high one's.
-    public func knobs(in visible: [TrackPoint]) -> (lo: Int, hi: Int) {
+    public func knobs(in visible: [RoutePoint]) -> (lo: Int, hi: Int) {
         let last = visible.count - 1
         let lo = knobLo.map { t in visible.firstIndex { $0.t >= t } ?? 0 } ?? 0
         let found = knobHi.map { t in visible.lastIndex { $0.t <= t } ?? last } ?? last
@@ -89,21 +89,21 @@ public struct TrackEditSession: Equatable, Sendable {
         knobHi = h == visible.count - 1 ? nil : visible[h].t
     }
 
-    public var chopOp: EditOp? { tool { EditTrackOps.chop($0, lo: $1, hi: $2) } }
-    public var cutOp: EditOp? { tool { EditTrackOps.cut($0, lo: $1, hi: $2) } }
+    public var chopOp: EditOp? { tool { EditRouteOps.chop($0, lo: $1, hi: $2) } }
+    public var cutOp: EditOp? { tool { EditRouteOps.cut($0, lo: $1, hi: $2) } }
 
     /// The index Split would split visible at, or nil.
     public var splitIndex: Int? {
         guard splitAt == nil else { return nil }
         let visible = visible
         let (lo, hi) = knobs(in: visible)
-        return EditTrackOps.splitIndex(visible, lo: lo, hi: hi)
+        return EditRouteOps.splitIndex(visible, lo: lo, hi: hi)
     }
 
     /// Delete point and Move point wait while a split is made.
     public var pointToolsOn: Bool { splitAt == nil }
 
-    private func tool(_ make: ([TrackPoint], Int, Int) -> EditOp?) -> EditOp? {
+    private func tool(_ make: ([RoutePoint], Int, Int) -> EditOp?) -> EditOp? {
         guard splitAt == nil else { return nil }
         let visible = visible
         let (lo, hi) = knobs(in: visible)
@@ -127,7 +127,7 @@ public struct TrackEditSession: Equatable, Sendable {
     /// Move point let go: the point at t at lon and lat.
     public mutating func move(_ t: Int, lon: Double, lat: Double) {
         guard pointToolsOn else { return }
-        push(EditTrackOps.move(t: t, lon: lon, lat: lat))
+        push(EditRouteOps.move(t: t, lon: lon, lat: lat))
     }
 
     public mutating func reset() { push(.reset) }
@@ -153,18 +153,18 @@ public struct TrackEditSession: Equatable, Sendable {
 
 /// What the editor's overlay draws: lines by role (kept, preview, second), every point with
 /// whether it would go, and the knobs, the web's trackEdit.ts and Android's TrackEditOverlay.
-public enum TrackEditDrawing {
+public enum RouteEditDrawing {
     public struct Point: Equatable, Sendable {
-        public let point: TrackPoint
+        public let point: RoutePoint
         public let removed: Bool
         /// In a split's second part.
         public var second = false
     }
 
     public struct Shape: Equatable, Sendable {
-        public var lines: [(role: String, points: [TrackPoint])] = []
+        public var lines: [(role: String, points: [RoutePoint])] = []
         public var points: [Point] = []
-        public var knobs: [TrackPoint] = []
+        public var knobs: [RoutePoint] = []
 
         public static func == (a: Shape, b: Shape) -> Bool {
             a.lines.map(\.role) == b.lines.map(\.role) && a.lines.map(\.points) == b.lines.map(\.points) && a.points == b.points && a.knobs == b.knobs
@@ -174,11 +174,11 @@ public enum TrackEditDrawing {
     /// visible with the knobs at lo and hi: the stretch between them kept and both sides dashed;
     /// with cut, that stretch dashed and a straight kept line joining the knobs; with split, the
     /// track in its two parts, the second its own color, and the one knob between them.
-    public static func shape(_ visible: [TrackPoint], lo: Int, hi: Int, preview: EditPreview, split: Int?) -> Shape {
+    public static func shape(_ visible: [RoutePoint], lo: Int, hi: Int, preview: EditPreview, split: Int?) -> Shape {
         var shape = Shape()
         let last = visible.count - 1
         guard last >= 1 else { return shape }
-        func line(_ role: String, _ part: ArraySlice<TrackPoint>) {
+        func line(_ role: String, _ part: ArraySlice<RoutePoint>) {
             if part.count >= 2 { shape.lines.append((role, Array(part))) }
         }
         if let split {
@@ -208,14 +208,14 @@ public enum TrackEditDrawing {
 }
 
 /// What Save's track write came to.
-public enum TrackEditOutcome: Equatable, Sendable {
+public enum RouteEditOutcome: Equatable, Sendable {
     case queued
     /// The split would leave a part entirely inside Private locations: the server's explanation,
     /// for the user to confirm with allowHidden.
     case splitHidesPart(String)
 }
 
-extension TrackEdit {
+extension RouteEdit {
     init(_ json: TrackEditJSON) {
         self.init(
             keep: json.keep.flatMap { $0.count == 2 ? TimeSpan($0[0], $0[1]) : nil },
@@ -236,17 +236,17 @@ extension TrackEdit {
 }
 
 extension APIClient {
-    /// `GET /v1/activities/{id}/track-points`: every point the activity was processed from,
+    /// `GET /v1/activities/{id}/track-points`: every point the track was processed from,
     /// clipped by Private locations, and the edit saved on them.
-    public func trackPoints(_ id: String) async throws -> (points: [TrackPoint], edit: TrackEdit?) {
+    public func trackPoints(_ id: String) async throws -> (points: [RoutePoint], edit: RouteEdit?) {
         let json: TrackPointsJSON = try decode(try await send("GET", "v1/activities/\(id)/track-points"))
-        let points = json.points.compactMap { p in p.count >= 3 ? TrackPoint(lon: p[0], lat: p[1], t: Int(p[2])) : nil }
-        return (points, json.edit.map(TrackEdit.init))
+        let points = json.points.compactMap { p in p.count >= 3 ? RoutePoint(lon: p[0], lat: p[1], t: Int(p[2])) : nil }
+        return (points, json.edit.map(RouteEdit.init))
     }
 
     /// `POST /v1/activities/{id}/track-edit`: the whole new edit (nil resets the track), and the
-    /// split beside it; the activity reads Pending until reprocessed.
-    public func saveTrackEdit(_ id: String, edit: TrackEdit?, splitAt: Int?, allowHidden: Bool) async throws -> TrackEditOutcome {
+    /// split beside it; the track reads Pending until reprocessed.
+    public func saveRouteEdit(_ id: String, edit: RouteEdit?, splitAt: Int?, allowHidden: Bool) async throws -> RouteEditOutcome {
         let body = TrackEditRequestJSON(edit: edit?.json, splitAt: splitAt, allowHidden: allowHidden ? true : nil)
         do {
             _ = try await send("POST", "v1/activities/\(id)/track-edit", body: body)

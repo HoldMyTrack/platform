@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import UIKit
 
 /// The Edit window's Photos tab (apps/android/docs/SPEC.md FR-2.10), Android's PhotosTab: the
-/// activity's photos as a list, each with Edit and Delete, and Add photos. Nothing is written
+/// track's photos as a list, each with Edit and Delete, and Add photos. Nothing is written
 /// until the window's Save (save); Cancel throws the draft away. The list and the map (onOverlay)
 /// show the photos as Save would leave them.
 ///
@@ -15,7 +15,7 @@ final class PhotosTabView: UIView {
     private let api: APIClient
     private let images: PhotoImages
     private let format: PanelFormat
-    private let activity: Activity
+    private let track: Track
     /// Add photos: the window opens the system photo picker and hands what's picked to add.
     var onPick: (() -> Void)?
     /// How the map should show the draft, or nil for the saved photos as they are.
@@ -34,7 +34,7 @@ final class PhotosTabView: UIView {
     private var photos: [Photo] = []
     private var photosLoaded = false
     private var photosError: String?
-    private var track: PhotoTrack?
+    private var route: PhotoRoute?
     private var trackError: String?
     private var progress: (done: Int, total: Int)?
     private var failures: [String] = []
@@ -62,11 +62,11 @@ final class PhotosTabView: UIView {
     private let waitingRemove = Controls.textButton(String(localized: "Remove"), id: "photoWaitingRemove")
     private let waitingPlace = Controls.primaryButton(String(localized: "Place here"), id: "photoWaitingPlace")
 
-    init(api: APIClient, images: PhotoImages, format: PanelFormat, activity: Activity) {
+    init(api: APIClient, images: PhotoImages, format: PanelFormat, track: Track) {
         self.api = api
         self.images = images
         self.format = format
-        self.activity = activity
+        self.track = track
         super.init(frame: .zero)
         accessibilityIdentifier = "photosTab"
         add.addAction(UIAction { [weak self] _ in
@@ -127,12 +127,12 @@ final class PhotosTabView: UIView {
         ])
     }
 
-    /// The activity's saved photos and its track, for the list and the slider.
+    /// The track's saved photos and its track, for the list and the slider.
     private func load() {
         Task { [weak self] in
             guard let self else { return }
             do {
-                self.photos = try await self.api.photos(.activity(self.activity.id))
+                self.photos = try await self.api.photos(.track(self.track.id))
                 self.photosLoaded = true
             } catch {
                 self.photosError = (error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved.")
@@ -143,11 +143,11 @@ final class PhotosTabView: UIView {
         Task { [weak self] in
             guard let self else { return }
             do {
-                let metrics = try await self.api.trackMetrics(self.activity.id)
+                let metrics = try await self.api.trackMetrics(self.track.id)
                 if metrics.points.isEmpty {
                     self.trackError = String(localized: "This track has no route to put photos on.")
                 } else {
-                    self.track = PhotoTrack(metrics.points.map { TimedPoint(lon: $0.lon, lat: $0.lat, t: $0.time) })
+                    self.route = PhotoRoute(metrics.points.map { TimedPoint(lon: $0.lon, lat: $0.lat, t: $0.time) })
                 }
             } catch {
                 self.trackError = (error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved.")
@@ -190,7 +190,7 @@ final class PhotosTabView: UIView {
                 self.nextKey += 1
                 let key = "new-\(self.nextKey)"
                 do {
-                    switch try await self.api.checkPhotoPlace(activityID: self.activity.id, exif: prepared.exif) {
+                    switch try await self.api.checkPhotoPlace(activityID: self.track.id, exif: prepared.exif) {
                     case .at(let t):
                         self.addNew(key, file.name, prepared, routeAt: t)
                         previous = .at(t: t)
@@ -223,7 +223,7 @@ final class PhotosTabView: UIView {
     static func localPath(_ key: String) -> String { "local:\(key)" }
 
     private func placeWaiting() {
-        guard let photo = draft.waiting.first, let at = waitingAt, at.key == photo.key, let point = try? track?.point(at: at.fraction) else { return }
+        guard let photo = draft.waiting.first, let at = waitingAt, at.key == photo.key, let point = try? route?.point(at: at.fraction) else { return }
         draft.changeNew(photo.key) { $0.routeAt = point.t }
         changed()
     }
@@ -242,7 +242,7 @@ final class PhotosTabView: UIView {
 
     // MARK: Saving
 
-    /// Writes the draft to the activity, one request at a time: uploads, then moves and captions,
+    /// Writes the draft to the track, one request at a time: uploads, then moves and captions,
     /// then deletes. Each write that lands leaves the draft, so Save again carries on from where
     /// this stopped. progress counts the writes; the answer is the failure, or nil once all is written.
     func save(progress: @escaping (Int, Int) -> Void) async -> Error? {
@@ -253,7 +253,7 @@ final class PhotosTabView: UIView {
         defer { changed() }
         do {
             for photo in snapshot.added {
-                _ = try await api.uploadPhoto(activityID: activity.id, photo: photo.prepared, routeAt: photo.routeAt ?? 0,
+                _ = try await api.uploadPhoto(activityID: track.id, photo: photo.prepared, routeAt: photo.routeAt ?? 0,
                                               caption: photo.caption.trimmingCharacters(in: .whitespacesAndNewlines))
                 photosSaved = true
                 draft.removeNew(photo.key)
@@ -287,15 +287,15 @@ final class PhotosTabView: UIView {
         let waiting = waitingList.first
         // A waiting photo's slider starts just after the photo picked before it, worked out when
         // its turn comes, since the one before may only just have been placed.
-        if let waiting, let track, waitingAt?.key != waiting.key {
+        if let waiting, let route, waitingAt?.key != waiting.key {
             var placed: [String: Double?] = [:]
-            for p in draft.added { if let t = p.routeAt { placed[p.key] = track.fraction(at: t) } }
+            for p in draft.added { if let t = p.routeAt { placed[p.key] = route.fraction(at: t) } }
             for key in removed { placed[key] = .some(nil) }
-            waitingAt = (waiting.key, track.startFraction(anchor: anchors[waiting.key] ?? nil, placed: placed, anchors: anchors))
+            waitingAt = (waiting.key, route.startFraction(anchor: anchors[waiting.key] ?? nil, placed: placed, anchors: anchors))
         }
         if waiting == nil { waitingAt = nil }
 
-        add.isEnabled = !busy && progress == nil && track != nil
+        add.isEnabled = !busy && progress == nil && route != nil
         status.text = progress.map { String(localized: "Preparing \($0.done + 1) of \($0.total)…") }
         status.isHidden = progress == nil
         let shownError = photosError ?? trackError
@@ -313,7 +313,7 @@ final class PhotosTabView: UIView {
             let at = waitingAt?.key == waiting.key ? waitingAt?.fraction : nil
             waitingSlider.bind(fraction: at, time: at.flatMap(clock(at:)), enabled: !busy)
             waitingRemove.isEnabled = !busy
-            waitingPlace.isEnabled = !busy && track != nil && at != nil
+            waitingPlace.isEnabled = !busy && route != nil && at != nil
         }
 
         let sorted = draft.rows(photos)
@@ -348,10 +348,10 @@ final class PhotosTabView: UIView {
         for (index, row) in rows.enumerated() {
             let view = rowViews[row.id] ?? makeRow(row.id)
             let label = row.caption.isEmpty ? String(localized: "Photo \(index + 1)") : row.caption
-            let open = editingID == row.id && track != nil
-            let place = open ? track.map { t in (t.fraction(at: row.routeAt), clock(at: t.fraction(at: row.routeAt)) ?? "") } : nil
-            view.bind(row, look: PhotoRowView.Look(label: label, time: format.clock(row.routeAt, zone: activity.timezone), place: place,
-                                                  open: open, canEdit: track != nil, busy: busy))
+            let open = editingID == row.id && route != nil
+            let place = open ? route.map { t in (t.fraction(at: row.routeAt), clock(at: t.fraction(at: row.routeAt)) ?? "") } : nil
+            view.bind(row, look: PhotoRowView.Look(label: label, time: format.clock(row.routeAt, zone: track.timezone), place: place,
+                                                  open: open, canEdit: route != nil, busy: busy))
             let path: String
             switch row {
             case .saved(let photo, _, _, _, _): path = photo.thumbURL
@@ -398,7 +398,7 @@ final class PhotosTabView: UIView {
             self?.changed()
         }
         view.onMove = { [weak self] fraction in
-            guard let self, let t = try? self.track?.point(at: fraction).t else { return }
+            guard let self, let t = try? self.route?.point(at: fraction).t else { return }
             self.edit(id, routeAt: t, caption: nil)
         }
         view.onCaption = { [weak self] text in self?.edit(id, routeAt: nil, caption: text) }
@@ -420,21 +420,21 @@ final class PhotosTabView: UIView {
 
     /// The map shows the photos as Save would leave them, while this tab shows.
     private func renderOverlay(_ rows: [DraftRow], waiting: NewPhoto?) {
-        guard active, let track else {
+        guard active, let route else {
             onOverlay?(nil)
             return
         }
         var upserts: [PhotoMarkerItem] = []
         for row in rows {
             if case .saved(_, _, _, let deleted, let changed) = row, deleted || !changed { continue }
-            guard let p = try? track.point(at: track.fraction(at: row.routeAt)) else { continue }
+            guard let p = try? route.point(at: route.fraction(at: row.routeAt)) else { continue }
             let path = switch row {
             case .saved(let photo, _, _, _, _): photo.thumbURL
             case .new(let photo, _): Self.localPath(photo.key)
             }
             upserts.append(PhotoMarkerItem(id: row.id, lon: p.lon, lat: p.lat, caption: row.caption.isEmpty ? nil : row.caption, thumbPath: path))
         }
-        if let waiting, let at = waitingAt, at.key == waiting.key, let p = try? track.point(at: at.fraction) {
+        if let waiting, let at = waitingAt, at.key == waiting.key, let p = try? route.point(at: at.fraction) {
             upserts.append(PhotoMarkerItem(id: waiting.key, lon: p.lon, lat: p.lat, caption: nil, thumbPath: Self.localPath(waiting.key)))
         }
         onOverlay?(PhotoMarkerOverlay(upserts: upserts, hidden: Set(draft.deleted), activeID: waiting?.key ?? editingID))
@@ -442,7 +442,7 @@ final class PhotosTabView: UIView {
 
     /// The time of day fraction of the way along the track.
     private func clock(at fraction: Double) -> String? {
-        guard let point = try? track?.point(at: fraction) else { return nil }
-        return format.clock(point.t, zone: activity.timezone)
+        guard let point = try? route?.point(at: fraction) else { return nil }
+        return format.clock(point.t, zone: track.timezone)
     }
 }

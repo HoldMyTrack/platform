@@ -227,7 +227,7 @@ final class DataExportViewController: UIViewController {
                 share.completionWithItemsHandler = { _, _, _, _ in try? FileManager.default.removeItem(at: file.deletingLastPathComponent()) }
                 present(share, animated: true)
             } catch {
-                StoryDialogs.inform(over: view, (error as? APIError)?.serverMessage ?? String(localized: "The part couldn't be downloaded."))
+                TripDialogs.inform(over: view, (error as? APIError)?.serverMessage ?? String(localized: "The part couldn't be downloaded."))
             }
         }
     }

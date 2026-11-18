@@ -1,26 +1,26 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The Activities tab's views (apps/android/docs/SPEC.md FR-2.7): the Type and Distance filters,
+/// The Tracks tab's views (apps/android/docs/SPEC.md FR-2.7): the Type and Distance filters,
 /// the selection bar while rows are checked, the rows and the target's footer, and the focused
-/// activity's card for the sheet's head. It draws PanelState and reports each tap as an Event;
+/// track's card for the sheet's head. It draws PanelState and reports each tap as an Event;
 /// the map screen owns the state and applies them, since most touch the map too.
-final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
+final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     enum Event {
         case tapRow(String), toggleChecked(String), clearFocus, endSelecting
         case checkAll, checkNone, invert
         case toggleVisibility, fly, edit, delete
         case toggleType(String), allTypes, distance(DistanceRange?), resetFilters, dates
-        case openStory(String)
+        case openTrip(String)
     }
 
     var onEvent: ((Event) -> Void)?
 
     /// The tab's content, under the sheet's head.
     let content = UIView()
-    /// The focused activity, at the head in the range's place while nothing is checked.
+    /// The focused track, at the head in the range's place while nothing is checked.
     let card = UIView()
-    /// "Activities: 6 · 74.8 km · 9h 6m", under the range.
+    /// "Tracks: 6 · 74.8 km · 9h 6m", under the range.
     let summary = Controls.label("", font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary))
 
     private let table = UITableView(frame: .zero, style: .plain)
@@ -38,8 +38,8 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
     private let selectMenuButton = Controls.iconButton(UIImage(resource: .chevronDown), label: String(localized: "Select"), id: "selectMenu")
 
     private struct ActionButtons {
-        let visibility: UIButton, edit: UIButton, addToStory: UIButton, delete: UIButton, focus: UIButton
-        var all: [UIButton] { [visibility, edit, addToStory, delete, focus] }
+        let visibility: UIButton, edit: UIButton, addToTrip: UIButton, delete: UIButton, focus: UIButton
+        var all: [UIButton] { [visibility, edit, addToTrip, delete, focus] }
     }
     private var barActions: ActionButtons!
     private var cardActions: ActionButtons!
@@ -53,14 +53,14 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
     private let bandSteps = UIStackView()
     private var bandColors: [String]?
 
-    private var rows: [ActivityRowCell.Row] = []
+    private var rows: [TrackRowCell.Row] = []
     private var format: PanelFormat
     private var state = PanelState()
-    private var byID: [String: Activity] = [:]
+    private var byID: [String: Track] = [:]
     private let demo: Bool
 
-    /// The Add to story buttons, whose menu the map screen builds from the account's Stories.
-    var addToStoryButtons: [UIButton] { [barActions.addToStory, cardActions.addToStory] }
+    /// The Add to trip buttons, whose menu the map screen builds from the account's Trips.
+    var addToTripButtons: [UIButton] { [barActions.addToTrip, cardActions.addToTrip] }
 
     init(format: PanelFormat, demo: Bool) {
         self.format = format
@@ -78,7 +78,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         let a = ActionButtons(
             visibility: Controls.iconButton(UIImage(resource: .eye), label: String(localized: "Hide"), id: "\(prefix)Visibility"),
             edit: Controls.iconButton(UIImage(resource: .pencil), label: String(localized: "Edit"), id: "\(prefix)Edit"),
-            addToStory: Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to trip"), id: "\(prefix)AddToStory"),
+            addToTrip: Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to trip"), id: "\(prefix)AddToStory"),
             delete: Controls.iconButton(UIImage(resource: .trash2), label: String(localized: "Delete"), id: "\(prefix)Delete"),
             focus: Controls.iconButton(UIImage(resource: .focus), label: String(localized: "Fly to"), id: "\(prefix)Focus")
         )
@@ -86,7 +86,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         a.edit.addAction(UIAction { [weak self] _ in self?.onEvent?(.edit) }, for: .primaryActionTriggered)
         a.delete.addAction(UIAction { [weak self] _ in self?.onEvent?(.delete) }, for: .primaryActionTriggered)
         a.focus.addAction(UIAction { [weak self] _ in self?.onEvent?(.fly) }, for: .primaryActionTriggered)
-        a.addToStory.showsMenuAsPrimaryAction = true
+        a.addToTrip.showsMenuAsPrimaryAction = true
         return a
     }
 
@@ -136,10 +136,10 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
 
         table.dataSource = self
         table.delegate = self
-        table.register(ActivityRowCell.self, forCellReuseIdentifier: ActivityRowCell.reuse)
+        table.register(TrackRowCell.self, forCellReuseIdentifier: TrackRowCell.reuse)
         table.backgroundColor = .clear
         table.separatorInset = .init(top: 0, left: 64, bottom: 0, right: 0)
-        table.accessibilityIdentifier = "activityList"
+        table.accessibilityIdentifier = "trackList"
         table.estimatedRowHeight = 64
         let tapEmpty = UITapGestureRecognizer(target: self, action: #selector(tappedList(_:)))
         tapEmpty.cancelsTouchesInView = false
@@ -207,26 +207,26 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
             column.leadingAnchor.constraint(equalTo: card.leadingAnchor),
             column.trailingAnchor.constraint(equalTo: card.trailingAnchor),
         ])
-        card.accessibilityIdentifier = "activityCard"
+        card.accessibilityIdentifier = "trackCard"
     }
 
     // MARK: Rendering
 
-    /// Draws state over the range's activities; note says the list is loading or why it failed.
-    func render(_ state: PanelState, activities: [Activity], format: PanelFormat, note loadNote: (text: String, failed: Bool)?) {
+    /// Draws state over the range's tracks; note says the list is loading or why it failed.
+    func render(_ state: PanelState, tracks: [Track], format: PanelFormat, note loadNote: (text: String, failed: Bool)?) {
         self.state = state
         self.format = format
-        byID = Dictionary(activities.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        byID = Dictionary(tracks.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
         let listed = state.listed.compactMap { byID[$0.id] }
         summary.text = format.summary(count: listed.count, meters: listed.compactMap(\.distanceMeters).reduce(0, +), seconds: listed.compactMap(\.movingSeconds).reduce(0, +))
 
-        rows = listed.map { ActivityRowCell.Row(activity: $0, checked: state.checked.contains($0.id), focused: state.focused == $0.id, hidden: state.hidden.contains($0.id), selecting: state.selecting) }
+        rows = listed.map { TrackRowCell.Row(track: $0, checked: state.checked.contains($0.id), focused: state.focused == $0.id, hidden: state.hidden.contains($0.id), selecting: state.selecting) }
         table.reloadData()
         if let loadNote {
             note.text = loadNote.text
             note.textColor = UIColor(resource: loadNote.failed ? .danger : .inkSecondary)
         } else {
-            note.text = listed.isEmpty && !activities.isEmpty ? String(localized: "No tracks match these filters.") : listed.isEmpty ? String(localized: "No tracks in this range.") : nil
+            note.text = listed.isEmpty && !tracks.isEmpty ? String(localized: "No tracks match these filters.") : listed.isEmpty ? String(localized: "No tracks in this range.") : nil
             note.textColor = UIColor(resource: .inkSecondary)
         }
         note.isHidden = note.text == nil
@@ -268,27 +268,27 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
 
     /// Centers id's row in the list, never moving the sheet.
     func scrollTo(_ id: String) {
-        guard let index = rows.firstIndex(where: { $0.activity.id == id }) else { return }
+        guard let index = rows.firstIndex(where: { $0.track.id == id }) else { return }
         table.scrollToRow(at: IndexPath(row: index, section: 0), at: .middle, animated: true)
     }
 
     private func renderFilters() {
-        let facets = ActivityFacets.typeFacets(state.activities, distanceFilter: state.distanceFilter)
+        let facets = TrackFacets.typeFacets(state.tracks, distanceFilter: state.distanceFilter)
         var config = typeButton.configuration
         config?.title = state.excludedTypes.isEmpty ? String(localized: "Type") : String(localized: "Type •")
         typeButton.configuration = config
         typeButton.accessibilityValue = state.excludedTypes.isEmpty ? String(localized: "All types") : String(localized: "Filtered")
         let all = UIAction(title: String(localized: "All types"), state: state.excludedTypes.isEmpty ? .on : .off) { [weak self] _ in self?.onEvent?(.allTypes) }
         let types = facets.map { facet in
-            UIAction(title: ActivityTypes.shared.label(facet.type), subtitle: format.count(facet.count),
-                     image: ActivityTypes.icon(ActivityTypes.shared.kind(facet.type)),
+            UIAction(title: TrackTypes.shared.label(facet.type), subtitle: format.count(facet.count),
+                     image: TrackTypes.icon(TrackTypes.shared.kind(facet.type)),
                      state: state.excludedTypes.contains(facet.type) ? .off : .on) { [weak self] _ in self?.onEvent?(.toggleType(facet.type)) }
         }
         typeButton.menu = UIMenu(children: [all, UIMenu(options: .displayInline, children: types)])
         typeButton.isEnabled = !facets.isEmpty
 
         // Offered only with two or more distinct distances.
-        let bounds = ActivityFacets.distanceBounds(state.activities)
+        let bounds = TrackFacets.distanceBounds(state.tracks)
         distanceButton.isHidden = bounds.map { $0.min >= $0.max } ?? true
         var d = distanceButton.configuration
         if let band = state.distanceFilter {
@@ -300,7 +300,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         resetButton.isHidden = !state.hasActiveFilters
     }
 
-    private func targetName(_ targets: [Activity]) -> String {
+    private func targetName(_ targets: [Track]) -> String {
         state.checked.isEmpty ? format.label(targets[0]) : String(localized: "Checked: \(targets.count)")
     }
 
@@ -329,7 +329,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
             describe(actions.visibility, use.visibility, image: UIImage(resource: anyHidden ? .eyeOff : .eye),
                      anyHidden ? String(localized: "Show \(name ?? "")") : String(localized: "Hide \(name ?? "")"))
             describe(actions.edit, use.edit, demo: String(localized: "The demo account can't edit tracks"), String(localized: "Edit \(name ?? "")"))
-            describe(actions.addToStory, use.addToStory, demo: String(localized: "The demo account can't change a Trip"), String(localized: "Add \(name ?? "") to a Trip"))
+            describe(actions.addToTrip, use.addToTrip, demo: String(localized: "The demo account can't change a Trip"), String(localized: "Add \(name ?? "") to a Trip"))
             describe(actions.delete, use.delete, demo: String(localized: "The demo account can't delete tracks"), String(localized: "Delete \(name ?? "")"))
             describe(actions.focus, use.focus, String(localized: "Fly to \(name ?? "")"))
         }
@@ -351,7 +351,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         }
     }
 
-    /// The map draws the focused activity's pace bands in colors, slowest first, or none (nil).
+    /// The map draws the focused track's pace bands in colors, slowest first, or none (nil).
     func setBands(_ colors: [String]?) {
         if let colors, colors != bandColors {
             bandColors = colors
@@ -367,20 +367,20 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
     }
 
     private func renderCard() {
-        guard showsCard, let id = state.focused, let activity = byID[id] else { return }
-        let kind = ActivityTypes.shared.kind(activity.activityType)
-        cardIcon.image = ActivityTypes.icon(kind)
-        cardTitle.text = format.label(activity)
-        cardMeta.text = ([activity.title != nil ? format.startedAt(activity) : nil, ActivityTypes.shared.label(activity.activityType)] as [String?])
+        guard showsCard, let id = state.focused, let track = byID[id] else { return }
+        let kind = TrackTypes.shared.kind(track.activityType)
+        cardIcon.image = TrackTypes.icon(kind)
+        cardTitle.text = format.label(track)
+        cardMeta.text = ([track.title != nil ? format.startedAt(track) : nil, TrackTypes.shared.label(track.activityType)] as [String?])
             .compactMap { $0 }.joined(separator: " · ")
-        if activity.isPrivate {
+        if track.isPrivate {
             cardStats.text = String(localized: "Private: inside a Private location, so it has no route or numbers.")
         } else {
             let speed = kind.showsPace ? String(localized: "Pace") : String(localized: "Speed")
             cardStats.text = [
-                String(localized: "Distance: \(format.distance(activity.distanceMeters))"),
-                String(localized: "Moving: \(format.duration(activity.movingSeconds))"),
-                "\(speed): \(format.paceOrSpeed(kind, meters: activity.distanceMeters, seconds: activity.movingSeconds))",
+                String(localized: "Distance: \(format.distance(track.distanceMeters))"),
+                String(localized: "Moving: \(format.duration(track.movingSeconds))"),
+                "\(speed): \(format.paceOrSpeed(kind, meters: track.distanceMeters, seconds: track.movingSeconds))",
             ].joined(separator: "  ·  ")
         }
     }
@@ -388,7 +388,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
     // MARK: Distance
 
     private func showDistance() {
-        guard let bounds = ActivityFacets.distanceBounds(state.activities), let anchor = distanceButton.window?.rootViewController else { return }
+        guard let bounds = TrackFacets.distanceBounds(state.tracks), let anchor = distanceButton.window?.rootViewController else { return }
         var top = anchor
         while let presented = top.presentedViewController { top = presented }
         let picker = DistanceFilterViewController(bounds: bounds, current: state.distanceFilter, format: format) { [weak self] next in
@@ -405,20 +405,20 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
     func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int { rows.count }
 
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: ActivityRowCell.reuse, for: indexPath) as! ActivityRowCell
+        let cell = tableView.dequeueReusableCell(withIdentifier: TrackRowCell.reuse, for: indexPath) as! TrackRowCell
         let row = rows[indexPath.row]
-        let id = row.activity.id
-        cell.bind(row, format: format, openStoryID: nil, demo: demo,
+        let id = row.track.id
+        cell.bind(row, format: format, openTripID: nil, demo: demo,
                   onCheck: { [weak self] in self?.onEvent?(.toggleChecked(id)) },
-                  onOpenStory: { [weak self] in self?.onEvent?(.openStory($0)) },
+                  onOpenTrip: { [weak self] in self?.onEvent?(.openTrip($0)) },
                   onRemove: nil)
         return cell
     }
 
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         let row = rows[indexPath.row]
-        guard !row.activity.pending || row.checked else { return }
-        onEvent?(row.selecting ? .toggleChecked(row.activity.id) : .tapRow(row.activity.id))
+        guard !row.track.pending || row.checked else { return }
+        onEvent?(row.selecting ? .toggleChecked(row.track.id) : .tapRow(row.track.id))
     }
 
     @objc private func tappedList(_ tap: UITapGestureRecognizer) {
@@ -485,7 +485,7 @@ final class DistanceFilterViewController: UIViewController, UIPopoverPresentatio
             return v
         }
         let knob: DistanceKnob = slider === low ? .min : .max
-        current = ActivityFacets.nextDistanceFilter(bounds: bounds, current: current ?? bounds, knob: knob, value: snap(slider.value))
+        current = TrackFacets.nextDistanceFilter(bounds: bounds, current: current ?? bounds, knob: knob, value: snap(slider.value))
         let band = current ?? bounds
         low.value = Float(band.min)
         high.value = Float(band.max)

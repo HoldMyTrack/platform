@@ -8,13 +8,13 @@ struct PhotoTests {
         #expect(!PhotoMarkers.shown(nil, mapHidden: []))
     }
 
-    @Test func anActivitysMarkersHideWithItsRoute() {
-        #expect(PhotoMarkers.shown(.activity("a"), mapHidden: ["b"]))
-        #expect(!PhotoMarkers.shown(.activity("a"), mapHidden: ["a"]))
+    @Test func aTracksMarkersHideWithItsRoute() {
+        #expect(PhotoMarkers.shown(.track("a"), mapHidden: ["b"]))
+        #expect(!PhotoMarkers.shown(.track("a"), mapHidden: ["a"]))
     }
 
-    @Test func aStorysMarkersShowWhateverIsHidden() {
-        #expect(PhotoMarkers.shown(.story("s"), mapHidden: ["a"]))
+    @Test func aTripsMarkersShowWhateverIsHidden() {
+        #expect(PhotoMarkers.shown(.trip("s"), mapHidden: ["a"]))
     }
 
     @Test func markersLeaveOutUnplacedPhotosAndHiddenRoutes() {

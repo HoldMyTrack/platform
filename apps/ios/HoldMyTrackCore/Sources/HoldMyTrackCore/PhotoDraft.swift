@@ -168,7 +168,7 @@ public enum DraftRow: Equatable, Sendable {
 }
 
 /// The Photos tab's unsaved changes (apps/android/docs/SPEC.md FR-2.10), Android's PhotoDraft and
-/// the web's photoDraft.ts: what the Edit window's Save writes after the activity's fields, and
+/// the web's photoDraft.ts: what the Edit window's Save writes after the track's fields, and
 /// what its Cancel throws away. A new photo is prepared on the phone and placed by the placement
 /// check or by the user, and goes up only on Save.
 public struct PhotoDraft: Equatable, Sendable {
@@ -300,7 +300,7 @@ public enum PhotoPlace: Equatable, Sendable {
 }
 
 extension APIClient {
-    /// `POST /v1/photos/place`: where an upload with this EXIF would go on the activity's track,
+    /// `POST /v1/photos/place`: where an upload with this EXIF would go on the track's track,
     /// storing nothing, or needsPlace for the user to choose.
     public func checkPhotoPlace(activityID: String, exif: PhotoExif) async throws -> PhotoPlace {
         let placed = exif.lat != nil && exif.lon != nil

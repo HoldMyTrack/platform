@@ -9,7 +9,7 @@ public struct UploadPlan: Equatable, Sendable {
         case zip(String)
         /// Not a `.gpx`, `.fit` or `.tcx`.
         case wrongType(String)
-        /// More than maxFiles activity files at once: none of them is sent.
+        /// More than maxFiles track files at once: none of them is sent.
         case tooMany(Int)
         /// Past the server's size limit.
         case tooLarge(String)
@@ -44,13 +44,13 @@ public struct UploadPlan: Equatable, Sendable {
         for file in picked where !extensions.contains(ext(file.name)) {
             refusals.append(ext(file.name) == "zip" ? .zip(file.name) : .wrongType(file.name))
         }
-        var activityFiles = picked.indices.filter { extensions.contains(ext(picked[$0].name)) }
-        if activityFiles.count > maxFiles {
-            refusals.append(.tooMany(activityFiles.count))
-            activityFiles = []
+        var trackFiles = picked.indices.filter { extensions.contains(ext(picked[$0].name)) }
+        if trackFiles.count > maxFiles {
+            refusals.append(.tooMany(trackFiles.count))
+            trackFiles = []
         }
         var send: [Int] = []
-        for i in activityFiles {
+        for i in trackFiles {
             if picked[i].size > maxFileBytes { refusals.append(.tooLarge(picked[i].name)) } else { send.append(i) }
         }
         return UploadPlan(send: send, refusals: refusals)

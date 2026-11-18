@@ -1,6 +1,6 @@
 import Foundation
 
-/// The map's two modes (root docs/SPEC.md FR-4.3); photos and Stories belong to the first.
+/// The map's two modes (root docs/SPEC.md FR-4.3); photos and Trips belong to the first.
 public enum MapMode: String, CaseIterable, Sendable { case normal, fog }
 
 /// A photo marker's place on screen, in points from the map's top-left.
@@ -35,10 +35,10 @@ public struct PhotoMarkerPlacement: Equatable, Sendable {
     public let small: Bool
 }
 
-/// Which photos the map shows: one activity's, a Story's, or none.
+/// Which photos the map shows: one track's, a Trip's, or none.
 public enum PhotoScope: Equatable, Sendable {
-    case activity(String)
-    case story(String)
+    case track(String)
+    case trip(String)
 }
 
 public enum PhotoMarkers {
@@ -116,14 +116,14 @@ public enum PhotoMarkers {
         return m.x + r >= 0 && m.x - r <= width && m.y + r >= 0 && m.y - r <= height
     }
 
-    /// Whose photos the map shows: in Normal mode, the Edit window's activity when it edits one,
-    /// else the selected activity, else the open Story; none in Fog, or while the Edit window
+    /// Whose photos the map shows: in Normal mode, the Edit window's track when it edits one,
+    /// else the selected track, else the open Trip; none in Fog, or while the Edit window
     /// holds several.
-    public static func scope(mode: MapMode, editWindowIDs: [String]?, focused: String?, storyID: String?) -> PhotoScope? {
+    public static func scope(mode: MapMode, editWindowIDs: [String]?, focused: String?, tripID: String?) -> PhotoScope? {
         if mode != .normal { return nil }
-        if let editWindowIDs { return editWindowIDs.count == 1 ? .activity(editWindowIDs[0]) : nil }
-        if let focused { return .activity(focused) }
-        if let storyID { return .story(storyID) }
+        if let editWindowIDs { return editWindowIDs.count == 1 ? .track(editWindowIDs[0]) : nil }
+        if let focused { return .track(focused) }
+        if let tripID { return .trip(tripID) }
         return nil
     }
 

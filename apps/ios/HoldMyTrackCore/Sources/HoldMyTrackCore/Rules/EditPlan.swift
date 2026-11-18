@@ -23,12 +23,12 @@ public enum EditPlan {
 
     /// The Type the window opens with: the group's one type, or empty for a group of mixed
     /// types, which keeps each its own unless one is picked.
-    public static func initialType(_ group: [Activity]) -> String {
+    public static func initialType(_ group: [Track]) -> String {
         guard let first = group.first?.activityType, group.allSatisfy({ $0.activityType == first }) else { return "" }
         return first
     }
 
-    public static func invalid(group: [Activity], type: String, name: String, description: String) -> Invalid? {
+    public static func invalid(group: [Track], type: String, name: String, description: String) -> Invalid? {
         let type = type.trimmingCharacters(in: .whitespacesAndNewlines)
         if type.isEmpty && !initialType(group).isEmpty { return .typeRequired }
         if type.count > maxType { return .typeTooLong }
@@ -37,10 +37,10 @@ public enum EditPlan {
         return nil
     }
 
-    /// The writes Save sends, one activity at a time, for only what changed. One activity takes
+    /// The writes Save sends, one track at a time, for only what changed. One track takes
     /// all three fields; a group only a picked type, each keeping its own name and description,
     /// and only the ones not of that type already.
-    public static func writes(group: [Activity], type: String, name: String, description: String) -> [Write] {
+    public static func writes(group: [Track], type: String, name: String, description: String) -> [Write] {
         let type = type.trimmingCharacters(in: .whitespacesAndNewlines)
         if group.count == 1, let one = group.first {
             let name = name.trimmingCharacters(in: .whitespacesAndNewlines)

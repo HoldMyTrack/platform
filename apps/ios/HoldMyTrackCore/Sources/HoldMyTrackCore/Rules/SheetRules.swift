@@ -1,4 +1,4 @@
-/// Where the map's Activities sheet rests (apps/android/docs/SPEC.md FR-2.7): its head alone,
+/// Where the map's Tracks sheet rests (apps/android/docs/SPEC.md FR-2.7): its head alone,
 /// half the map, or nearly all of it.
 public enum SheetDetent: Int, Equatable, Sendable, CaseIterable {
     case collapsed, half, expanded
@@ -30,7 +30,7 @@ public enum SheetRules {
     }
 }
 
-/// Which activity a tap on the map picks (apps/android/docs/SPEC.md FR-2.7: a track within 14
+/// Which track a tap on the map picks (apps/android/docs/SPEC.md FR-2.7: a track within 14
 /// points of the finger).
 public enum TrackTap {
     /// How far from the finger a track still counts as tapped.
@@ -44,9 +44,9 @@ public enum TrackTap {
             .compactMap { $0["id"]?.string })
     }
 
-    /// The tapped activity from the features under the finger, topmost first, each its `id`
-    /// attribute: the first that is an activity the panel lists, so a stale tile's track of a
-    /// deleted activity is passed over.
+    /// The tapped track from the features under the finger, topmost first, each its `id`
+    /// attribute: the first that is a track the panel lists, so a stale tile's track of a
+    /// deleted track is passed over.
     public static func pick(_ ids: [String?], listed: Set<String>) -> String? {
         ids.lazy.compactMap { $0 }.first { listed.contains($0) }
     }

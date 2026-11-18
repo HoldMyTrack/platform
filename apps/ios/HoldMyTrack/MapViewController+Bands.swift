@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The focused activity's pace bands (root docs/SPEC.md FR-4.6): its metrics fetched when the
+/// The focused track's pace bands (root docs/SPEC.md FR-4.6): its metrics fetched when the
 /// focus moves, again after its reprocess lands, and dropped when it clears; drawn by the layers
 /// document's `track-bands` group while its track is drawn (PaceBands.drawn), with the legend on
 /// its card.
@@ -27,15 +27,15 @@ extension MapViewController {
     }
 
     private func drawBands() {
-        // The Track tab's overlay stands in for the track and its bands while it shows.
-        let drawn = trackEdit.shape == nil ? PaceBands.drawn(bands.metrics, focused: session.panel.focused, mapHidden: session.panel.mapHidden) : nil
+        // The Route tab's overlay stands in for the track and its bands while it shows.
+        let drawn = routeEdit.shape == nil ? PaceBands.drawn(bands.metrics, focused: session.panel.focused, mapHidden: session.panel.mapHidden) : nil
         state.geojson[PaceBands.group] = PaceBands.features(drawn)
-        activitiesPanel.setBands(drawn == nil ? nil : pair.map { PaceBands.colors($0.layers) })
+        tracksPanel.setBands(drawn == nil ? nil : pair.map { PaceBands.colors($0.layers) })
     }
 }
 
-/// The metrics last fetched for the focused activity, and the fetch under way.
+/// The metrics last fetched for the focused track, and the fetch under way.
 struct BandsState {
-    var metrics: TrackMetrics?
+    var metrics: RouteMetrics?
     var task: Task<Void, Never>?
 }

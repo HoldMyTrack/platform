@@ -17,7 +17,7 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
     let page: SitePage
     private let onboarding: Bool
     /// Sync history's View on map; the map takes it from there.
-    var onViewOnMap: ((_ activity: String, _ day: String) -> Void)?
+    var onViewOnMap: ((_ track: String, _ day: String) -> Void)?
 
     private var web: WKWebView!
     private let spinner = UIActivityIndicatorView(style: .medium)
@@ -139,9 +139,9 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
         case .close:
             leaving = true
             close()
-        case .viewOnMap(let activity, let day):
+        case .viewOnMap(let track, let day):
             leaving = true
-            onViewOnMap?(activity, day)
+            onViewOnMap?(track, day)
             if navigationController?.viewControllers.first !== self { close() }
             leaving = false
         // The map gates on a Country only the server has heard of: the session is read first.

@@ -6,37 +6,37 @@ import UIKit
 /// TrackEditOverlay: what the edit keeps in the accent, what it would take out dashed in red, a
 /// split's second part in blue, every point as a small ring, and the knobs. The app's own source
 /// and layers, added on every style load as capture's guide is, under the basemap's labels. While
-/// the Track tab shows, every other track, the pace bands and the photos step aside.
+/// the Route tab shows, every other track, the pace bands and the photos step aside.
 extension MapViewController {
-    static let trackEditSource = "track-edit"
-    static let trackEditPoints = "track-edit-points"
+    static let routeEditSource = "track-edit"
+    static let routeEditPoints = "track-edit-points"
 
     /// The editor's drawing, or nil once its tab closes.
-    func setTrackEdit(_ shape: TrackEditDrawing.Shape?) {
-        let was = trackEdit.shape != nil
-        trackEdit.shape = shape
-        (mapView.style?.source(withIdentifier: Self.trackEditSource) as? MLNShapeSource)?.shape = Self.features(shape)
+    func setRouteEdit(_ shape: RouteEditDrawing.Shape?) {
+        let was = routeEdit.shape != nil
+        routeEdit.shape = shape
+        (mapView.style?.source(withIdentifier: Self.routeEditSource) as? MLNShapeSource)?.shape = Self.features(shape)
         if was != (shape != nil) { panelChanged() }
     }
 
-    /// The Track tab opened: the camera onto the activity, clear of the half-height sheet.
-    func frameEditedTrack(_ activity: Activity) {
-        guard let box = activity.bbox else { return }
+    /// The Route tab opened: the camera onto the track, clear of the half-height sheet.
+    func frameEditedTrack(_ track: Track) {
+        guard let box = track.bbox else { return }
         let bounds = MLNCoordinateBounds(sw: CLLocationCoordinate2D(latitude: box[1], longitude: box[0]),
                                          ne: CLLocationCoordinate2D(latitude: box[3], longitude: box[2]))
         let padding = UIEdgeInsets(top: chromeBottom + 16, left: 32, bottom: view.bounds.height / 2 + 24, right: 32)
         mapView.setVisibleCoordinateBounds(bounds, edgePadding: padding, animated: true, completionHandler: nil)
     }
 
-    /// The tracks the map hides: the panel's, and while the Track tab shows, every one.
+    /// The tracks the map hides: the panel's, and while the Route tab shows, every one.
     var hiddenTracks: [String] {
-        trackEdit.shape == nil ? session.panel.mapHidden.sorted() : activities.map(\.id)
+        routeEdit.shape == nil ? session.panel.mapHidden.sorted() : tracks.map(\.id)
     }
 
     /// The overlay's source and layers onto a style just loaded.
-    func addTrackEdit(to style: MLNStyle) {
-        guard style.source(withIdentifier: Self.trackEditSource) == nil else { return }
-        let source = MLNShapeSource(identifier: Self.trackEditSource, shape: Self.features(trackEdit.shape))
+    func addRouteEdit(to style: MLNStyle) {
+        guard style.source(withIdentifier: Self.routeEditSource) == nil else { return }
+        let source = MLNShapeSource(identifier: Self.routeEditSource, shape: Self.features(routeEdit.shape))
         style.addSource(source)
         let accent = UIColor(red: 0xb0 / 255, green: 0x7e / 255, blue: 0x2e / 255, alpha: 1)
         let removed = UIColor(red: 0xc5 / 255, green: 0x30 / 255, blue: 0x30 / 255, alpha: 1)
@@ -52,7 +52,7 @@ extension MapViewController {
             if dashed { layer.lineDashPattern = NSExpression(forConstantValue: [1.5, 1.5]) }
             return layer
         }
-        let points = MLNCircleStyleLayer(identifier: Self.trackEditPoints, source: source)
+        let points = MLNCircleStyleLayer(identifier: Self.routeEditPoints, source: source)
         points.predicate = NSPredicate(format: "role == 'point'")
         points.circleRadius = NSExpression(mglJSONObject: ["interpolate", ["linear"], ["zoom"], 12, 1.5, 16, 3, 19, 5])
         points.circleColor = NSExpression(forConstantValue: UIColor.white)
@@ -75,9 +75,9 @@ extension MapViewController {
         }
     }
 
-    private static func features(_ shape: TrackEditDrawing.Shape?) -> MLNShape {
+    private static func features(_ shape: RouteEditDrawing.Shape?) -> MLNShape {
         guard let shape else { return MLNShapeCollectionFeature(shapes: []) }
-        func coordinate(_ p: TrackPoint) -> CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: p.lat, longitude: p.lon) }
+        func coordinate(_ p: RoutePoint) -> CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: p.lat, longitude: p.lon) }
         var features: [MLNShape & MLNFeature] = shape.lines.map { role, points in
             let line = MLNPolylineFeature(coordinates: points.map(coordinate), count: UInt(points.count))
             line.attributes = ["role": role]
@@ -99,10 +99,10 @@ extension MapViewController {
     }
 
     /// The time of the drawn point nearest point on the map view, within a fingertip, or nil.
-    func trackEditPoint(at point: CGPoint) -> Int? {
+    func routeEditPoint(at point: CGPoint) -> Int? {
         let r: CGFloat = 16
         let rect = CGRect(x: point.x - r, y: point.y - r, width: 2 * r, height: 2 * r)
-        return mapView.visibleFeatures(in: rect, styleLayerIdentifiers: [Self.trackEditPoints]).compactMap { feature -> (Int, CGFloat)? in
+        return mapView.visibleFeatures(in: rect, styleLayerIdentifiers: [Self.routeEditPoints]).compactMap { feature -> (Int, CGFloat)? in
             guard let t = (feature.attribute(forKey: "t") as? NSNumber)?.intValue else { return nil }
             let at = mapView.convert(feature.coordinate, toPointTo: mapView)
             return (t, hypot(at.x - point.x, at.y - point.y))
@@ -110,15 +110,15 @@ extension MapViewController {
     }
 
     /// A tap while the Edit window is open: Delete point's, on the point under it.
-    func trackEditTapped(at point: CGPoint) {
-        guard let editor = editWindow?.trackEditor, editor.deleteMode, let t = trackEditPoint(at: point) else { return }
+    func routeEditTapped(at point: CGPoint) {
+        guard let editor = editWindow?.routeEditor, editor.deleteMode, let t = routeEditPoint(at: point) else { return }
         editor.dropPoint(t)
     }
 
     /// Move point's drag: a press on a point takes the gesture from the map, which stays put.
-    func bindTrackEditDrag() {
-        trackEdit.gestures.map = self
-        addExclusiveDrag(trackEdit.gestures, action: #selector(TrackEditGestures.dragged(_:)))
+    func bindRouteEditDrag() {
+        routeEdit.gestures.map = self
+        addExclusiveDrag(routeEdit.gestures, action: #selector(RouteEditGestures.dragged(_:)))
     }
 
     /// A pan that, when its delegate lets it begin, takes the drag from the map, whose own pans
@@ -133,25 +133,25 @@ extension MapViewController {
 
 /// The overlay's drawing and the drag that moves its points.
 @MainActor
-struct TrackEditState {
-    var shape: TrackEditDrawing.Shape?
-    let gestures = TrackEditGestures()
+struct RouteEditState {
+    var shape: RouteEditDrawing.Shape?
+    let gestures = RouteEditGestures()
 }
 
 /// Move point's gesture: it begins only on a point while Move point is on, so every other pan
 /// still moves the map.
 @MainActor
-final class TrackEditGestures: NSObject, UIGestureRecognizerDelegate {
+final class RouteEditGestures: NSObject, UIGestureRecognizerDelegate {
     weak var map: MapViewController?
 
     func gestureRecognizerShouldBegin(_ gesture: UIGestureRecognizer) -> Bool {
-        guard let map, let editor = map.editWindow?.trackEditor, editor.moveMode,
-              let t = map.trackEditPoint(at: gesture.location(in: map.mapView)) else { return false }
+        guard let map, let editor = map.editWindow?.routeEditor, editor.moveMode,
+              let t = map.routeEditPoint(at: gesture.location(in: map.mapView)) else { return false }
         return editor.beginMove(t)
     }
 
     @objc func dragged(_ gesture: UIPanGestureRecognizer) {
-        guard let map, let editor = map.editWindow?.trackEditor else { return }
+        guard let map, let editor = map.editWindow?.routeEditor else { return }
         switch gesture.state {
         case .changed:
             let at = map.mapView.convert(gesture.location(in: map.mapView), toCoordinateFrom: map.mapView)

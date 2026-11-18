@@ -194,7 +194,7 @@ struct APIClientTests {
             return .init(body: self.json(body))
         }
         let metrics = try await client().trackMetrics("a1")
-        #expect(metrics == TrackMetrics(activityID: "a1", points: [.init(lon: 1.5, lat: 2.5, time: 0), .init(lon: 1.6, lat: 2.6, time: 5)], bands: [.init(band: 2, start: 0, end: 1)]))
+        #expect(metrics == RouteMetrics(activityID: "a1", points: [.init(lon: 1.5, lat: 2.5, time: 0), .init(lon: 1.6, lat: 2.6, time: 5)], bands: [.init(band: 2, start: 0, end: 1)]))
     }
 
     @Test func spotsInAreaSendTheBoxAndTheCategories() async throws {
@@ -242,13 +242,13 @@ struct APIClientTests {
         #expect(await client().captureSpot(7, at: GeoPoint(lat: 0, lon: 0)) == .outside)
     }
 
-    @Test func aStorysPhotosAreAskedForByStory() async throws {
+    @Test func aTripsPhotosAreAskedForByTrip() async throws {
         StubProtocol.answer = { _ in .init(body: self.json(["photos": [[
             "id": "p1", "activity_id": "a1", "taken_at": "2026-10-04T15:00:00Z", "route_at": "2026-10-04T15:00:00Z",
             "timezone": "America/New_York", "lon": -81.7, "lat": 41.5, "caption": NSNull(), "width": 2048, "height": 1536,
             "url": "/v1/photos/p1/image", "thumb_url": "/v1/photos/p1/thumb",
         ]]])) }
-        let photos = try await client().photos(.story("s1"))
+        let photos = try await client().photos(.trip("s1"))
         #expect(StubProtocol.sent.first?.url?.absoluteString == "http://localhost:8081/v1/photos?story=s1")
         #expect(photos == [Photo(id: "p1", activityID: "a1", takenAt: "2026-10-04T15:00:00Z", routeAt: "2026-10-04T15:00:00Z",
                                  timezone: "America/New_York", lon: -81.7, lat: 41.5, width: 2048, height: 1536,
@@ -293,19 +293,19 @@ struct APIClientTests {
         ])) }
         let read = try await client().trackPoints("a1")
         #expect(StubProtocol.sent.first?.url?.path == "/v1/activities/a1/track-points")
-        #expect(read.points == [TrackPoint(lon: 10, lat: 50, t: 1000), TrackPoint(lon: 10.1, lat: 50.1, t: 2000)])
-        #expect(read.edit == TrackEdit(keep: TimeSpan(1000, 2000), move: [2000: [10.2, 50.2]]))
+        #expect(read.points == [RoutePoint(lon: 10, lat: 50, t: 1000), RoutePoint(lon: 10.1, lat: 50.1, t: 2000)])
+        #expect(read.edit == RouteEdit(keep: TimeSpan(1000, 2000), move: [2000: [10.2, 50.2]]))
     }
 
-    @Test func aTrackEditSendsTheWholeEditAndReadsASplitIntoAPrivateLocation() async throws {
+    @Test func aRouteEditSendsTheWholeEditAndReadsASplitIntoAPrivateLocation() async throws {
         StubProtocol.answer = { _ in .init(status: 202) }
-        #expect(try await client().saveTrackEdit("a1", edit: TrackEdit(drop: [5]), splitAt: 7, allowHidden: false) == .queued)
+        #expect(try await client().saveRouteEdit("a1", edit: RouteEdit(drop: [5]), splitAt: 7, allowHidden: false) == .queued)
         let sent = try JSONSerialization.jsonObject(with: try #require(StubProtocol.sent.first?.httpBody)) as? [String: Any]
         #expect(sent?["split_at"] as? Int == 7)
         #expect((sent?["edit"] as? [String: Any])?["drop"] as? [Int] == [5])
         #expect(sent?["allow_hidden"] == nil)
         StubProtocol.answer = { _ in .init(status: 422, body: self.json(["error": "split_hides_part", "message": "The second part is private."])) }
-        #expect(try await client().saveTrackEdit("a1", edit: nil, splitAt: 7, allowHidden: false) == .splitHidesPart("The second part is private."))
+        #expect(try await client().saveRouteEdit("a1", edit: nil, splitAt: 7, allowHidden: false) == .splitHidesPart("The second part is private."))
     }
 
     @Test func theAreaListSendsTheViewAndDatesAndReadsTheTotal() async throws {
@@ -320,12 +320,12 @@ struct APIClientTests {
             return .init(body: self.json(["activities": [row], "types": [:], "total": 1500]))
         }
         let read = try await client().areaList(box: [-81.6, 41.1, -81.4, 41.3], dates: DateFilter(after: "2026-06-03"))
-        #expect(read.activities.map(\.id) == ["a1"])
-        #expect(read.activities.first?.description == nil)
+        #expect(read.tracks.map(\.id) == ["a1"])
+        #expect(read.tracks.first?.description == nil)
         #expect(read.total == 1500)
     }
 
-    @Test func oneActivityIsReadInFull() async throws {
+    @Test func oneTrackIsReadInFull() async throws {
         let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "activity_type": "walking", "name": "Walk",
                                   "distance_meters": 1200.5, "moving_seconds": 600, "duration_seconds": 700, "description": "Along the river",
                                   "bbox": [-81.5, 41.2, -81.4, 41.3], "pending": false, "edited": false, "private": false, "split": NSNull(),
@@ -334,7 +334,7 @@ struct APIClientTests {
             #expect(request.url?.path == "/v1/activities/a1")
             return .init(body: self.json(["activities": [row], "types": [:]]))
         }
-        #expect(try await client().activity("a1").description == "Along the river")
+        #expect(try await client().track("a1").description == "Along the river")
     }
 
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {

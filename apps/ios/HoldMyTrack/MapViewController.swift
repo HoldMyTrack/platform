@@ -6,8 +6,8 @@ import UIKit
 /// The map (apps/android/docs/SPEC.md FR-2.1–FR-2.7): the basemap style and the account's layers
 /// document combined into one style (MapStyle), Normal and Fog of War, the Layers menu,
 /// the first framing, Find my location, the notices for an unreachable basemap, coverage still
-/// updating and an empty account, and the sheet with the Activities and Stories tabs, shared by
-/// the Map and Stories tabs of the tab bar (MapHostViewController). The date range is
+/// updating and an empty account, and the sheet with the Tracks and Trips tabs, shared by
+/// the Map and Trips tabs of the tab bar (MapHostViewController). The date range is
 /// MapViewController+Range, the sheet's wiring MapViewController+Panel.
 final class MapViewController: UIViewController, @preconcurrency MLNMapViewDelegate, @preconcurrency CLLocationManagerDelegate {
     unowned let flow: AppFlow
@@ -29,9 +29,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var session = MapSession()
 
     // The area list and Dates (MapViewController+Area).
-    /// The first and newest activities' days, Dates' bounds.
+    /// The first and newest tracks' days, Dates' bounds.
     var history: (earliest: String?, latest: String?) = (nil, nil)
-    /// How many activities the last area held, more than listed past the cap; nil for a Story.
+    /// How many tracks the last area held, more than listed past the cap; nil for a Trip.
     var areaTotal: Int?
     /// Whether the map was too far out to list anything at the last load.
     var zoomedOut = false
@@ -42,11 +42,11 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // The sheet (MapViewController+Panel).
     let sheet = PanelSheetView()
-    var activitiesPanel: ActivitiesPanel!
-    var storiesPanel: StoriesPanel!
-    var panelTab = PanelTab.activities
-    /// The list for the range or the open Story, as the server last sent it.
-    var activities: [Activity] = []
+    var tracksPanel: TracksPanel!
+    var tripsPanel: TripsPanel!
+    var panelTab = PanelTab.tracks
+    /// The list for the range or the open Trip, as the server last sent it.
+    var tracks: [Track] = []
     var listLoading = false
     var listError: String?
     var listTask: Task<Void, Never>?
@@ -57,7 +57,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Bumped whenever tracks change under the same query, so their tiles are fetched again.
     var tracksVersion = 0
     var editOpen = false
-    /// The focused activity's pace bands (MapViewController+Bands).
+    /// The focused track's pace bands (MapViewController+Bands).
     var bands = BandsState()
     /// Points of interest (MapViewController+Spots).
     var spots = SpotsState(categories: MapPreferences.spots())
@@ -69,17 +69,17 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// Photos on the map (MapViewController+Photos).
     var photos = PhotosState()
     /// The Edit window while it's open, and the track it edits (MapViewController+TrackEdit).
-    weak var editWindow: EditActivityViewController?
-    var trackEdit = TrackEditState()
+    weak var editWindow: EditTrackViewController?
+    var routeEdit = RouteEditState()
     lazy var photoViews = PhotoViews(api: flow.api, format: { [unowned self] in self.format }, onOpen: { [weak self] in self?.openPhotos($0) })
     /// Capture of a place (CaptureController), which lives no longer than the map.
     lazy var capturing = CaptureController(api: flow.api, map: captureMap(), format: { [unowned self] in self.format })
-    /// View on map's activity, focused when the next list holds it.
+    /// View on map's track, focused when the next list holds it.
     var focusWhenListed: String?
-    /// The tab bar's Stories count: copies others sent, waiting.
+    /// The tab bar's Trips count: copies others sent, waiting.
     var onWaiting: ((Int) -> Void)?
-    /// A row's Story badge on the Activities tab: the tab bar moves to Stories.
-    var onWantsStories: ((String) -> Void)?
+    /// A row's Trip badge on the Tracks tab: the tab bar moves to Trips.
+    var onWantsTrips: ((String) -> Void)?
 
     var state = MapState()
     var pair: MapDocuments.Pair?
@@ -149,7 +149,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         openOnce()
         loadHistory()
         loadList()
-        if panelTab != .stories { storiesPanel.refreshCount() }
+        if panelTab != .trips { tripsPanel.refreshCount() }
     }
 
     override func viewDidLayoutSubviews() {
@@ -233,7 +233,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         styleLoaded = true
         addBadgeImages(to: style)
         addGuide(to: style)
-        addTrackEdit(to: style)
+        addRouteEdit(to: style)
         addPrivateLocations(to: style)
     }
 
@@ -246,7 +246,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     // MARK: Modes and the Layers menu
 
     /// The mode picked on the Map tab, which state.mode shows there and comes back to after
-    /// Stories (TabMode).
+    /// Trips (TabMode).
     var pickedMode = MapMode.normal
 
     /// The user's pick, shown at once on the Map tab.
@@ -258,7 +258,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     /// The mode for the tab showing, and the toggle, which is only the Map tab's.
     func applyTabMode() {
-        let onMap = panelTab == .activities
+        let onMap = panelTab == .tracks
         // The editor is the Map tab's, in Normal.
         if !onMap || pickedMode != .normal { closePrivateEditor() }
         modes.isHidden = !TabMode.toggleShown(onMapTab: onMap)

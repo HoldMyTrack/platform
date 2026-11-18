@@ -1,6 +1,6 @@
 import Foundation
 
-/// How the camera frames activities it flies to.
+/// How the camera frames tracks it flies to.
 public enum MapFraming {
     /// The furthest a flight zooms in.
     public static let maxZoom = 15.0

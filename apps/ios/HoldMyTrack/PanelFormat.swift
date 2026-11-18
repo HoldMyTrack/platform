@@ -2,13 +2,13 @@ import Foundation
 import HoldMyTrackCore
 import UIKit
 
-/// The Activities panel's numbers and dates in the app's language: FormatParts' decisions
-/// written out, a start time as a medium date with a short time in the zone the activity was
+/// The Tracks panel's numbers and dates in the app's language: FormatParts' decisions
+/// written out, a start time as a medium date with a short time in the zone the track was
 /// recorded in (ActivityZone), units by the account's Country.
 @MainActor
 struct PanelFormat {
     let imperial: Bool
-    /// The account's zone, for an activity with none of its own.
+    /// The account's zone, for a track with none of its own.
     let accountZone: String
 
     init(account: Account) {
@@ -60,7 +60,7 @@ struct PanelFormat {
     func count(_ n: Int) -> String { NumberFormatter.localizedString(from: NSNumber(value: n), number: .decimal) }
 
     /// Pace on foot ("8:47 /mi"), speed otherwise ("17.1 km/h"); a dash with no distance or time.
-    func paceOrSpeed(_ kind: ActivityKind, meters: Double?, seconds: Int?) -> String {
+    func paceOrSpeed(_ kind: TrackKind, meters: Double?, seconds: Int?) -> String {
         let unitMeters = imperial ? Pace.metersPerMile : 1000
         if kind.showsPace {
             guard let perUnit = Pace.secondsPerUnit(meters: meters, seconds: seconds, unitMeters: unitMeters) else { return Self.dash }
@@ -75,8 +75,8 @@ struct PanelFormat {
         return imperial ? String(localized: "\(number) mph", comment: "A speed in miles an hour.") : String(localized: "\(number) km/h", comment: "A speed in kilometres an hour.")
     }
 
-    /// "Oct 11, 2026, 9:39 AM", in the zone the activity was recorded in.
-    func startedAt(_ activity: Activity) -> String { moment(activity.startedAt, zone: activity.timezone) }
+    /// "Oct 11, 2026, 9:39 AM", in the zone the track was recorded in.
+    func startedAt(_ track: Track) -> String { moment(track.startedAt, zone: track.timezone) }
 
     /// An ISO 8601 moment as "Oct 11, 2026, 9:39 AM", in zone, else the account's (ActivityZone).
     func moment(_ iso: String, zone: String) -> String {
@@ -84,7 +84,7 @@ struct PanelFormat {
         let formatter = DateFormatter()
         formatter.dateStyle = .medium
         formatter.timeStyle = .short
-        if let zone = ActivityZone.of(own: zone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
+        if let zone = TrackZone.of(own: zone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
         return formatter.string(from: date)
     }
 
@@ -93,19 +93,19 @@ struct PanelFormat {
         let formatter = DateFormatter()
         formatter.dateStyle = .none
         formatter.timeStyle = .short
-        if let zone = ActivityZone.of(own: zone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
+        if let zone = TrackZone.of(own: zone, account: accountZone) { formatter.timeZone = TimeZone(identifier: zone) }
         return formatter.string(from: Date(timeIntervalSince1970: seconds))
     }
 
     /// A row's first line: its name, else its start.
-    func label(_ activity: Activity) -> String { activity.title ?? startedAt(activity) }
+    func label(_ track: Track) -> String { track.title ?? startedAt(track) }
 
-    /// "Activities: 6 · 74.8 km · 9h 6m".
+    /// "Tracks: 6 · 74.8 km · 9h 6m".
     func summary(count: Int, meters: Double, seconds: Int) -> String {
-        [activityCount(count), totalDistance(meters), duration(seconds)].joined(separator: " · ")
+        [trackCount(count), totalDistance(meters), duration(seconds)].joined(separator: " · ")
     }
 
-    func activityCount(_ n: Int) -> String { String(localized: "Tracks: \(count(n))", comment: "A count of tracks, written as label: N.") }
+    func trackCount(_ n: Int) -> String { String(localized: "Tracks: \(count(n))", comment: "A count of tracks, written as label: N.") }
 
     private static func iso(_ text: String) -> Date? {
         let plain = ISO8601DateFormatter()
@@ -116,20 +116,20 @@ struct PanelFormat {
     }
 }
 
-/// The account's activity types, as the server describes them (ActivityTypeCatalog), for every
+/// The account's track types, as the server describes them (ActivityTypeCatalog), for every
 /// screen at once; a change is announced so rows drawn with a fallback label redraw.
 @MainActor
-final class ActivityTypes {
-    static let shared = ActivityTypes()
+final class TrackTypes {
+    static let shared = TrackTypes()
     static let changed = Notification.Name("ActivityTypes.changed")
 
-    private(set) var catalog = ActivityTypeCatalog()
+    private(set) var catalog = TrackTypeCatalog()
     private var catalogRead = false
 
-    func kind(_ type: String) -> ActivityKind { catalog.kind(type) }
+    func kind(_ type: String) -> TrackKind { catalog.kind(type) }
     func label(_ type: String) -> String { catalog.label(type) }
 
-    func merge(_ described: [String: ActivityTypeInfo]) {
+    func merge(_ described: [String: TrackTypeInfo]) {
         if catalog.merge(described) { NotificationCenter.default.post(name: Self.changed, object: nil) }
     }
 
@@ -148,7 +148,7 @@ final class ActivityTypes {
     /// Every type the catalog knows, by label.
     var known: [String] { catalog.labels.keys.sorted { label($0) < label($1) } }
 
-    static func icon(_ kind: ActivityKind) -> UIImage {
+    static func icon(_ kind: TrackKind) -> UIImage {
         switch kind {
         case .foot: UIImage(resource: .footprints)
         case .wheels: UIImage(resource: .bike)

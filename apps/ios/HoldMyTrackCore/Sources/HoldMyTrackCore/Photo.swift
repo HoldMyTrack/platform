@@ -1,6 +1,6 @@
 import Foundation
 
-/// A saved photo (root docs/SPEC.md FR-15), at its point on its activity's route.
+/// A saved photo (root docs/SPEC.md FR-15), at its point on its track's route.
 public struct Photo: Equatable, Sendable {
     public let id: String
     public let activityID: String
@@ -70,12 +70,12 @@ extension PhotoMarkers {
     /// How far a spread group's tap zooms in: where groupSpread is wider than a marker.
     public static let groupMaxZoom = 19.0
 
-    /// Whether markers show for scope: one, and for an activity, its route not hidden.
+    /// Whether markers show for scope: one, and for a track, its route not hidden.
     public static func shown(_ scope: PhotoScope?, mapHidden: Set<String>) -> Bool {
         switch scope {
         case nil: false
-        case .activity(let id): !mapHidden.contains(id)
-        case .story: true
+        case .track(let id): !mapHidden.contains(id)
+        case .trip: true
         }
     }
 
@@ -89,11 +89,11 @@ extension PhotoMarkers {
 }
 
 extension APIClient {
-    /// `GET /v1/photos?activity=` or `?story=`: the scope's photos, in route order.
+    /// `GET /v1/photos?activity=` or `?trip=`: the scope's photos, in route order.
     public func photos(_ scope: PhotoScope) async throws -> [Photo] {
         let item = switch scope {
-        case .activity(let id): URLQueryItem(name: "activity", value: id)
-        case .story(let id): URLQueryItem(name: "story", value: id)
+        case .track(let id): URLQueryItem(name: "activity", value: id)
+        case .trip(let id): URLQueryItem(name: "story", value: id)
         }
         let json: PhotosJSON = try decode(try await send("GET", "v1/photos", query: [item]))
         return json.photos.map(Photo.init)
