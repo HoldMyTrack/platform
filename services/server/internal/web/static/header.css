@@ -199,7 +199,7 @@
   min-width: 12rem;
 }
 
-.header-menu__item[aria-checked='true'] {
+.header-menu__item[aria-current='true'] {
   font-weight: 600;
 }
 

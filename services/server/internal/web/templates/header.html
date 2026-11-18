@@ -56,15 +56,15 @@
     {{end}}
     <details class="header-menu language-menu">
       <summary class="language-menu__trigger" aria-label="{{t "header.language"}}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M2 12h20" /><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" /></svg><span class="language-menu__code">{{lang}}</span></summary>
-      <form class="header-menu__dropdown language-menu__dropdown" method="post" action="/language" role="menu">
-        {{range .Languages}}<button type="submit" role="menuitemradio" class="header-menu__item" name="lang" value="{{.Code}}" lang="{{.Code}}" aria-checked="{{if eq .Code lang}}true{{else}}false{{end}}">{{.Name}}</button>{{end}}
-        <button type="submit" role="menuitem" class="header-menu__item language-menu__auto" name="lang" value="">{{t "header.language_auto"}}</button>
+      <form class="header-menu__dropdown language-menu__dropdown" method="post" action="/language">
+        {{range .Languages}}<button type="submit" class="header-menu__item" name="lang" value="{{.Code}}" lang="{{.Code}}"{{if eq .Code lang}} aria-current="true"{{end}}>{{.Name}}</button>{{end}}
+        <button type="submit" class="header-menu__item language-menu__auto" name="lang" value="">{{t "header.language_auto"}}</button>
       </form>
     </details>
     <details class="header-menu info-menu">
       <summary class="info-menu__trigger" aria-label="{{t "header.info"}}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg><span class="info-menu__label">{{t "header.info"}}</span></summary>
-      <div class="header-menu__dropdown" role="menu">
-        {{range .InfoLinks}}<a role="menuitem" class="header-menu__item" href="{{.Href}}"{{if eq .Href $.Path}} aria-current="page"{{end}}>{{t .LabelKey}}</a>{{end}}
+      <div class="header-menu__dropdown">
+        {{range .InfoLinks}}<a class="header-menu__item" href="{{.Href}}"{{if eq .Href $.Path}} aria-current="page"{{end}}>{{t .LabelKey}}</a>{{end}}
       </div>
     </details>
     {{with .User}}
@@ -72,14 +72,14 @@
       <summary class="user-menu__avatar" aria-label="{{t "header.account_menu"}}">
         {{if .AvatarURL}}<img src="{{.AvatarURL}}" alt="" />{{else}}<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></svg>{{end}}
       </summary>
-      <div class="header-menu__dropdown" role="menu">
+      <div class="header-menu__dropdown">
         <div class="header-menu__label">{{with .Label}}{{.}}{{else}}{{t "header.demo_account"}}{{end}}</div>
-        {{if .IsDemo}}<a role="menuitem" class="header-menu__item header-menu__item--accent" href="/signup">{{t "header.create_account"}}</a>{{end}}
-        <a role="menuitem" class="header-menu__item" href="/profile">{{t "header.profile"}}</a>
-        <a role="menuitem" class="header-menu__item" href="/settings">{{t "header.settings"}}</a>
-        {{if .IsAdmin}}<a role="menuitem" class="header-menu__item" href="/admin">{{t "header.admin"}}</a>{{end}}
+        {{if .IsDemo}}<a class="header-menu__item header-menu__item--accent" href="/signup">{{t "header.create_account"}}</a>{{end}}
+        <a class="header-menu__item" href="/profile">{{t "header.profile"}}</a>
+        <a class="header-menu__item" href="/settings">{{t "header.settings"}}</a>
+        {{if .IsAdmin}}<a class="header-menu__item" href="/admin">{{t "header.admin"}}</a>{{end}}
         <form method="post" action="/logout">
-          <button type="submit" role="menuitem" class="header-menu__item">{{t "header.sign_out"}}</button>
+          <button type="submit" class="header-menu__item">{{t "header.sign_out"}}</button>
         </form>
       </div>
     </details>

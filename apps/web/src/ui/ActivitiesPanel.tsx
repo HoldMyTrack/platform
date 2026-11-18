@@ -15,6 +15,7 @@ import { emptyListReason, type DistanceRange, type TypeFacet } from './activityF
 import { formatTotalDistance } from './format.ts';
 import { useUnitSystem } from './units.ts';
 import { lang, t, tn } from '../i18n/index.ts';
+import { onTabListKeyDown } from './tabKeys.ts';
 
 /**
  * The left sidebar, with three tabs, each about what the map shows under it: **Activities** (the
@@ -317,9 +318,8 @@ export function ActivitiesPanel({
       <div
         className="activities-panel__resize-handle"
         data-testid="activities-panel-resize"
-        role="separator"
-        aria-orientation="vertical"
-        aria-label={t('activities.resize')}
+        // A pointer's affordance only: no keyboard can drag it, so it isn't announced as a control.
+        aria-hidden="true"
         onPointerDown={onResizePointerDown}
         onPointerMove={onResizePointerMove}
         onPointerUp={onResizePointerUp}
@@ -332,7 +332,9 @@ export function ActivitiesPanel({
           <button
             type="button"
             role="tab"
+            onKeyDown={onTabListKeyDown}
             aria-selected={tab === 'activities'}
+            tabIndex={tab === 'activities' ? 0 : -1}
             className="activities-panel__tab"
             data-testid="activities-panel-tab-activities"
             onClick={() => selectTab('activities')}
@@ -344,7 +346,9 @@ export function ActivitiesPanel({
           <button
             type="button"
             role="tab"
+            onKeyDown={onTabListKeyDown}
             aria-selected={tab === 'stories'}
+            tabIndex={tab === 'stories' ? 0 : -1}
             className="activities-panel__tab"
             data-testid="activities-panel-tab-stories"
             onClick={() => selectTab('stories')}
@@ -365,7 +369,9 @@ export function ActivitiesPanel({
           <button
             type="button"
             role="tab"
+            onKeyDown={onTabListKeyDown}
             aria-selected={tab === 'private'}
+            tabIndex={tab === 'private' ? 0 : -1}
             className="activities-panel__tab"
             data-testid="activities-panel-tab-private"
             onClick={() => selectTab('private')}
