@@ -623,9 +623,9 @@ A Trip is a hand-picked, private set of the account's tracks with a name, an opt
 - Removing a track from a Trip keeps the track. Deleting a track removes it from every Trip; an emptied Trip stays.
 - A track is in a Trip only once added, never by its dates.
 
-### FR-13.4 The `story` filter
+### FR-13.4 The `trip` filter
 
-- The track list, its totals, the day histogram and the tracks tiles take `story`, narrowing them to its tracks; inside a Trip the histogram counts only its days.
+- The track list, its totals, the day histogram and the tracks tiles take `trip`, narrowing them to its tracks; inside a Trip the histogram counts only its days.
 - Another account's Trip, or an empty one, matches nothing.
 - A change to a Trip's tracks moves the tile version; renaming doesn't.
 

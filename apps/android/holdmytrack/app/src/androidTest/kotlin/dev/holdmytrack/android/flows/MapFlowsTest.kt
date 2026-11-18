@@ -43,17 +43,17 @@ class MapFlowsTest {
     fun a_newRangeClearsTheCheckedGroupAndHiddenTracks() {
         signIn()
         expandSheet()
-        atLeast(id("activity_tile_target"), 2)
+        atLeast(id("track_tile_target"), 2)
         for (row in 0..1) {
-            tapUntil({ device.findObjects(id("activity_tile_target"))[row] }) { checkedRows() > row }
+            tapUntil({ device.findObjects(id("track_tile_target"))[row] }) { checkedRows() > row }
         }
         need(id("selection_bar"))
         need(id("panel_visibility")).click()
-        assertTrue("two rows hidden", device.wait(Until.findObjects(id("activity_hidden")), TIMEOUT_MS).orEmpty().size == 2)
+        assertTrue("two rows hidden", device.wait(Until.findObjects(id("track_hidden")), TIMEOUT_MS).orEmpty().size == 2)
 
         need(id("date_range_shift_earlier")).click()
         assertTrue("selection bar gone", device.wait(Until.gone(id("selection_bar")), TIMEOUT_MS))
-        assertFalse("no row hidden", device.hasObject(id("activity_hidden")))
+        assertFalse("no row hidden", device.hasObject(id("track_hidden")))
         assertFalse("no row checked", checkedRows() > 0)
     }
 
@@ -61,19 +61,19 @@ class MapFlowsTest {
     fun b_theTripsTabOpensTheNewestTripAndBackReturnsToTheRange() {
         signIn()
         val members = listOf(account.idsByDay.getValue("2026-10-01"), account.idsByDay.getValue("2026-10-06"))
-        account.createTrip(STORY, members)
-        need(id("nav_stories")).click()
+        account.createTrip(TRIP, members)
+        need(id("nav_trips")).click()
         expandSheet()
-        need(By.text(STORY))
-        assertTrue("the Story's two rows", device.wait(Until.findObjects(id("activity_text")), TIMEOUT_MS).orEmpty().size == 2)
+        need(By.text(TRIP))
+        assertTrue("the Trip's two rows", device.wait(Until.findObjects(id("track_text")), TIMEOUT_MS).orEmpty().size == 2)
 
         device.pressBack()
-        assertTrue("Story closed", device.wait(Until.gone(By.text(STORY)), TIMEOUT_MS))
+        assertTrue("Trip closed", device.wait(Until.gone(By.text(TRIP)), TIMEOUT_MS))
         need(id("date_range_label"))
         // Back to the map collapses the sheet; until it has, the handle still offers Collapse.
         need(id("panel_handle").descStartsWith("Expand"))
         expandSheet()
-        assertTrue("the range's rows", device.wait(Until.hasObject(id("activity_text")), TIMEOUT_MS))
+        assertTrue("the range's rows", device.wait(Until.hasObject(id("track_text")), TIMEOUT_MS))
     }
 
     @Test
@@ -220,7 +220,7 @@ class MapFlowsTest {
         const val SWIPE_STEPS = 200
         const val SIGN_IN_MS = 15_000L
         const val RECORDING_MS = 70_000L
-        const val STORY = "Flows trip"
+        const val TRIP = "Flows trip"
         const val WALK = "Flows walk"
 
         val instrumentation get() = InstrumentationRegistry.getInstrumentation()

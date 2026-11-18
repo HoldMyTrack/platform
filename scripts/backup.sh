@@ -20,7 +20,7 @@
 # dump leaves their data out, and they're dumped on their own, data only, when they changed
 # since the last such dump (reference_fingerprint). A restore loads the newest reference dump
 # no newer than the run's dump with it (DEPLOY.md §11): user tables point into them
-# (spot_captures at spots, activity_country at admin_countries), so ids must stay as they were,
+# (spot_captures at spots, track_country at admin_countries), so ids must stay as they were,
 # and re-importing instead would renumber them. Fog's outline tile cache (admin_tile_geoms,
 # admin_tiles_built) is in neither: tiles rebuild it on request.
 #
@@ -35,7 +35,7 @@
 #   objects-deleted/<UTC stamp>/...                what a run's sync removed or overwrote in
 #                                                  objects/, kept KEEP_DELETED_DAYS
 #
-# fog/ is left out, and so is the activity_tile_mask_data
+# fog/ is left out, and so is the track_tile_mask_data
 # table's data (the masks' PNGs, docs/IMPLEMENTATION.md §3.11): `rerender-coverage --masks` rebuilds all of them
 # from the database and raw/ (DEPLOY.md §11's restore steps), so the dump doesn't grow with them.
 #
@@ -77,7 +77,7 @@ REFERENCE_TABLES=(spots bike_paths admin_countries admin_country_parts admin_reg
   admin_counties admin_county_parts admin_cities admin_city_parts admin_boundaries_source tz_parts
   tz_boundaries_source)
 # Left out of every dump: rebuilt on demand (the tile cache) or by `rerender-coverage --masks`.
-REBUILT_TABLES=(admin_tile_geoms admin_tiles_built activity_tile_mask_data)
+REBUILT_TABLES=(admin_tile_geoms admin_tiles_built track_tile_mask_data)
 # Left out of every dump: the visitor salts and hashes, deleted within 2 days (docs/DPIA.md), which
 # a dump kept for weeks would otherwise outlive.
 SHORT_LIVED_TABLES=(visitor_salts visitor_days)
