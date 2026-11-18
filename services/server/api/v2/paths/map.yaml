@@ -1,0 +1,104 @@
+map_style_flavor:
+  parameters:
+    - name: flavor
+      in: path
+      required: true
+      description: One of the styles embedded in internal/mapstyle (light, dark, …); a trailing .json is ignored.
+      schema: { type: string }
+  get:
+    summary: A MapLibre style document for the basemap
+    description: Public, so a client can draw a map before anyone signs in; it holds no account's data.
+    security: []
+    parameters:
+      - name: lang
+        in: query
+        description: The labels' language, by its primary subtag; an unsupported one, or none, is English.
+        schema: { type: string }
+    responses:
+      "200":
+        description: The style; revalidate with its ETag
+        headers:
+          ETag:
+            schema: { type: string }
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/MapStyle" }
+      "304":
+        description: Unchanged since the If-None-Match ETag
+      "404": { $ref: "../components/responses.yaml#/Error" }
+map_layers:
+  get:
+    summary: Every layer drawn over the basemap, at the account's tile version
+    description: Fetched beside the style and applied over it (ADR-0048). Changes with a deploy or the account's tile version.
+    parameters:
+      - name: flavor
+        in: query
+        required: true
+        description: The style's flavor, whose colors the layers take.
+        schema: { type: string }
+    responses:
+      "200":
+        description: The layers; revalidate with its ETag
+        headers:
+          ETag:
+            schema: { type: string }
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/MapLayers" }
+      "304":
+        description: Unchanged since the If-None-Match ETag
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+coverage_status:
+  get:
+    summary: Whether the account's map is being rendered, and its tile version
+    responses:
+      "200":
+        description: The status
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rendering, version, tile_version, explored]
+              additionalProperties: false
+              properties:
+                rendering: { type: boolean }
+                version:
+                  type: integer
+                  description: Changes whenever what the account's tiles return does; a client refetches tiles when it does.
+                tile_version:
+                  type: string
+                  description: What every tile request sends as `cv` to have the tile cached; it changes with version.
+                explored:
+                  type: object
+                  description: How many places of each Fog level the account has been in, as the map clears them (docs/SPEC.md FR-4.2); changes with version.
+                  required: [countries, regions, counties, cities]
+                  additionalProperties: false
+                  properties:
+                    countries: { type: integer }
+                    regions: { type: integer }
+                    counties: { type: integer }
+                    cities: { type: integer }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+map_imagery:
+  get:
+    summary: Whether satellite imagery is offered now
+    description: >-
+      False when the deployment configures none, or while the worker has paused it near the
+      imagery plan's monthly limit (docs/SPEC.md FR-4.10). Native clients read the same answer
+      from the style, which leaves imagery out; the web, whose imagery is built in, reads this.
+      Public, like the style.
+    security: []
+    responses:
+      "200":
+        description: The status
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [available]
+              additionalProperties: false
+              properties:
+                available: { type: boolean }

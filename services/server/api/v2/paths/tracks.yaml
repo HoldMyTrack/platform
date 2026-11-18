@@ -1,0 +1,577 @@
+tracks:
+  get:
+    summary: The signed-in account's tracks, newest first, unpaginated
+    parameters:
+      - $ref: "../components/parameters.yaml#/FilterFrom"
+      - $ref: "../components/parameters.yaml#/FilterTo"
+      - $ref: "../components/parameters.yaml#/FilterTypes"
+      - $ref: "../components/parameters.yaml#/FilterTrip"
+    responses:
+      "200":
+        description: The tracks
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tracks, types]
+              additionalProperties: false
+              properties:
+                tracks:
+                  type: array
+                  items: { $ref: "../components/schemas.yaml#/TrackRow" }
+                types:
+                  description: Every type the rows use, once each.
+                  allOf: [{ $ref: "../components/schemas.yaml#/TrackTypes" }]
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_upload:
+  post:
+    summary: Upload one track file; parsing happens in a job
+    requestBody:
+      required: true
+      content:
+        multipart/form-data:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [file]
+            properties:
+              file:
+                type: string
+                format: binary
+                description: A .gpx, .tcx or .fit file; the extension decides.
+    responses:
+      "200":
+        description: This exact file was imported already
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/UploadResult" }
+      "202":
+        description: Queued for import; GET /uploads/{external_id} says how it went
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/UploadResult" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/Forbidden" }
+      "409": { $ref: "../components/responses.yaml#/OverLimit" }
+      "413": { $ref: "../components/responses.yaml#/Error" }
+      "415": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+      "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
+tracks_area:
+  get:
+    summary: The newest tracks whose route crosses a map view, the web's list and the set its map draws
+    description: Type and Trip filters (types, trip) are refused, since the list filters those itself.
+    parameters:
+      - $ref: "../components/parameters.yaml#/FilterFrom"
+      - $ref: "../components/parameters.yaml#/FilterTo"
+      - name: bbox
+        in: query
+        description: The view, west,south,east,north in degrees; west may be greater than east across the antimeridian. Absent, the newest of the whole history.
+        schema: { type: string }
+      - name: limit
+        in: query
+        description: The newest this many at most; 1,000 when absent.
+        schema: { type: integer, minimum: 1, maximum: 1000 }
+    responses:
+      "200":
+        description: The tracks, slim
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tracks, types]
+              additionalProperties: false
+              properties:
+                tracks:
+                  type: array
+                  items: { $ref: "../components/schemas.yaml#/AreaTrackRow" }
+                types:
+                  description: Every type the rows use, once each.
+                  allOf: [{ $ref: "../components/schemas.yaml#/TrackTypes" }]
+                total:
+                  type: integer
+                  description: With `bbox`, how many tracks the area holds; more than the rows when they were cut at the limit.
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_id:
+  parameters:
+    - $ref: "../components/parameters.yaml#/TrackID"
+  get:
+    summary: One track in full, as a one-row list
+    responses:
+      "200":
+        description: The track
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [tracks, types]
+              additionalProperties: false
+              properties:
+                tracks:
+                  type: array
+                  minItems: 1
+                  maxItems: 1
+                  items: { $ref: "../components/schemas.yaml#/TrackRow" }
+                types:
+                  allOf: [{ $ref: "../components/schemas.yaml#/TrackTypes" }]
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+  patch:
+    summary: Change a track's type, name and description (a full replace)
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [track_type]
+            properties:
+              track_type:
+                type: string
+                maxLength: 50
+                description: Trimmed; blank is a 400.
+              name:
+                type: string
+                maxLength: 200
+                description: Trimmed; missing or empty clears it.
+              description:
+                type: string
+                maxLength: 2000
+                description: Trimmed; missing or empty clears it.
+    responses:
+      "200":
+        description: The track as saved
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/TrackRow" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/Forbidden" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+  delete:
+    summary: Delete a track, its photos and its stored file
+    responses:
+      "204":
+        description: Deleted
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/Forbidden" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+tracks_overlaps:
+  post:
+    summary: Which of these time spans the account already has a track overlapping
+    description: Lets a client leave out what it would import twice before sending it.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              spans:
+                type: array
+                nullable: true
+                maxItems: 5000
+                items:
+                  type: object
+                  additionalProperties: false
+                  required: [key, start, end]
+                  properties:
+                    key:
+                      type: string
+                      minLength: 1
+                      maxLength: 256
+                      description: The client's own name for the span, echoed back on an overlap.
+                    start: { type: string, format: date-time }
+                    end: { type: string, format: date-time }
+    responses:
+      "200":
+        description: The overlaps
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [overlaps]
+              additionalProperties: false
+              properties:
+                overlaps:
+                  type: array
+                  items:
+                    type: object
+                    required: [key, track_id, name, track_type, started_at, timezone]
+                    additionalProperties: false
+                    properties:
+                      key: { type: string }
+                      track_id: { type: string, format: uuid }
+                      name: { type: string }
+                      track_type: { type: string }
+                      started_at: { type: string, format: date-time }
+                      timezone: { type: string, nullable: true }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_stats-card:
+  post:
+    summary: The stats card a map image export carries, drawn for the image's size and theme
+    description: >-
+      One line per track, newest first, at most five, then "+ N more" and, with more than
+      one, a totals line, in the account's units and language. Pending tracks are left out.
+      The PNG is the card's panel alone, at the image's own pixel scale; the client places it.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [track_ids, width, height, theme]
+            properties:
+              track_ids:
+                type: array
+                minItems: 1
+                maxItems: 10000
+                items: { type: string, format: uuid }
+              width: { type: integer, minimum: 1, maximum: 4096, description: The image's width in pixels. }
+              height: { type: integer, minimum: 1, maximum: 4096, description: The image's height in pixels. }
+              theme:
+                type: string
+                enum: [light, dark]
+                description: dark under a dark map flavor or Satellite.
+    responses:
+      "200":
+        description: The card
+        content:
+          image/png:
+            schema: { type: string, format: binary }
+      "204":
+        description: Every track asked for is Pending, so there is no card
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+tracks_summary:
+  get:
+    summary: Totals over the tracks the filter selects
+    parameters:
+      - $ref: "../components/parameters.yaml#/FilterFrom"
+      - $ref: "../components/parameters.yaml#/FilterTo"
+      - $ref: "../components/parameters.yaml#/FilterTypes"
+      - $ref: "../components/parameters.yaml#/FilterTrip"
+    responses:
+      "200":
+        description: The totals
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [count, distance_meters, duration_seconds, elevation_gain_m]
+              additionalProperties: false
+              properties:
+                count: { type: integer }
+                distance_meters: { type: number }
+                duration_seconds: { type: integer, description: "Moving time, or elapsed where a track has none, as every other total counts it." }
+                elevation_gain_m: { type: number }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_histogram:
+  get:
+    summary: Per-day totals, by a page of track days or by a calendar window
+    description: >-
+      With days, the most recent days that have a track (before `before`, when given);
+      otherwise every day with one in from–to, which default to the 12 months up to today.
+      Buckets are in ascending date order either way. No type filter; trip narrows it to one Trip.
+    parameters:
+      - name: days
+        in: query
+        description: Track-day mode, at most this many days (capped by the server).
+        schema: { type: integer, minimum: 1 }
+      - name: before
+        in: query
+        description: Track-day mode, only days strictly before this local date.
+        schema: { type: string, format: date }
+      - $ref: "../components/parameters.yaml#/FilterFrom"
+      - $ref: "../components/parameters.yaml#/FilterTo"
+      - $ref: "../components/parameters.yaml#/FilterTrip"
+    responses:
+      "200":
+        description: The buckets
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bucket, from, to, buckets]
+              additionalProperties: false
+              properties:
+                bucket: { type: string, enum: [day] }
+                from:
+                  type: string
+                  description: The window, inclusive; in track-day mode the first returned day, empty when none was.
+                to:
+                  type: string
+                  description: The window, inclusive; in track-day mode the last returned day, empty when none was.
+                buckets:
+                  type: array
+                  items:
+                    type: object
+                    required: [date, count, distance_meters]
+                    additionalProperties: false
+                    properties:
+                      date: { type: string, format: date }
+                      count: { type: integer }
+                      distance_meters: { type: number }
+                earliest:
+                  type: string
+                  format: date
+                  description: The local day of the first track at all (in the Trip, with trip); missing when there is none.
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_graph-stats:
+  get:
+    summary: The track graph's cards, for one year and for all time
+    parameters:
+      - name: year
+        in: query
+        description: Defaults to the current year in the account's zone.
+        schema: { type: integer, minimum: 1 }
+    responses:
+      "200":
+        description: The statistics
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [year, year_stats, all_time]
+              additionalProperties: false
+              properties:
+                year: { type: integer }
+                year_stats: { $ref: "../components/schemas.yaml#/TrackStatsBlock" }
+                all_time: { $ref: "../components/schemas.yaml#/TrackStatsBlock" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_trends:
+  get:
+    summary: Totals per week or month, every period in the window included
+    parameters:
+      - name: bucket
+        in: query
+        schema: { type: string, enum: [week, month], default: week }
+      - name: from
+        in: query
+        description: Local date, inclusive; defaults to 12 months before to.
+        schema: { type: string, format: date }
+      - name: to
+        in: query
+        description: Local date, inclusive; defaults to today.
+        schema: { type: string, format: date }
+    responses:
+      "200":
+        description: The periods, oldest first
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [bucket, from, to, periods]
+              additionalProperties: false
+              properties:
+                bucket: { type: string, enum: [week, month] }
+                from: { type: string, format: date }
+                to: { type: string, format: date }
+                periods:
+                  type: array
+                  items:
+                    type: object
+                    required: [period_start, count, distance_meters, moving_seconds, elevation_gain_m]
+                    additionalProperties: false
+                    properties:
+                      period_start: { type: string, format: date }
+                      count: { type: integer }
+                      distance_meters: { type: number }
+                      moving_seconds: { type: integer }
+                      elevation_gain_m: { type: number }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_id_route-metrics:
+  parameters:
+    - $ref: "../components/parameters.yaml#/TrackID"
+  get:
+    summary: The stored route's points with their speed, and its pace bands
+    responses:
+      "200":
+        description: The points, in order
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [track_id, points, bands]
+              additionalProperties: false
+              properties:
+                track_id: { type: string, format: uuid }
+                points:
+                  type: array
+                  items:
+                    type: object
+                    required: [lon, lat, speed_mps, time_s]
+                    additionalProperties: false
+                    properties:
+                      lon: { type: number }
+                      lat: { type: number }
+                      speed_mps: { type: number }
+                      time_s:
+                        type: integer
+                        description: Unix seconds.
+                bands:
+                  type: array
+                  description: Runs of points by pace band, slowest 0 to fastest 4, over the route's own speeds; neighbouring runs share their boundary point.
+                  items:
+                    type: object
+                    required: [band, start, end]
+                    additionalProperties: false
+                    properties:
+                      band: { type: integer, minimum: 0, maximum: 4 }
+                      start: { type: integer, description: "The run's first point's index." }
+                      end: { type: integer, description: "Its last point's index, inclusive." }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+tracks_id_route-points:
+  parameters:
+    - $ref: "../components/parameters.yaml#/TrackID"
+  get:
+    summary: Every point the track was processed from, clipped by Private locations, and the user's edit of them
+    responses:
+      "200":
+        description: The points and the edit
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [points, edit]
+              additionalProperties: false
+              properties:
+                points:
+                  type: array
+                  description: "[lon, lat, t], t in unix milliseconds."
+                  items:
+                    type: array
+                    minItems: 3
+                    maxItems: 3
+                    items: { type: number }
+                edit:
+                  allOf:
+                    - { $ref: "../components/schemas.yaml#/RouteEdit" }
+                  nullable: true
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+      "409": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+      "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
+tracks_id_route-edit:
+  parameters:
+    - $ref: "../components/parameters.yaml#/TrackID"
+  post:
+    summary: Replace the track's route edit, optionally splitting it; reprocessed in a job
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            properties:
+              edit:
+                description: The complete new edit, not a delta; null or empty resets to the original route.
+                allOf:
+                  - { $ref: "../components/schemas.yaml#/RouteEdit" }
+                nullable: true
+              split_at:
+                type: integer
+                nullable: true
+                description: Also split the track at this point (unix milliseconds).
+              allow_hidden:
+                type: boolean
+                description: Go ahead with a split that leaves a piece entirely inside Private locations.
+    responses:
+      "202":
+        description: Queued; the track reads pending until it's done
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/Forbidden" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+      "409": { $ref: "../components/responses.yaml#/Error" }
+      "422":
+        description: The split would leave a piece with no route; resend with allow_hidden once the user agrees
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: "../components/schemas.yaml#/Error" }
+                - properties:
+                    error: { enum: [split_hides_part] }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+      "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
+track_types:
+  get:
+    summary: What a client shows for the catalog's track types and any others it names
+    description: >-
+      For the Type picker's suggestions and for types not in a list response, such as a phone's
+      unsent recordings.
+    parameters:
+      - name: types
+        in: query
+        description: Comma-separated types to describe besides the catalog's; at most 100, each at most 50 characters.
+        schema: { type: string }
+    responses:
+      "200":
+        description: The types
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [types]
+              additionalProperties: false
+              properties:
+                types: { $ref: "../components/schemas.yaml#/TrackTypes" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+tracks_pending:
+  get:
+    summary: Which of the given tracks are still Pending
+    description: >-
+      What a client polls while it watches a reprocess, reading the whole list again only once
+      the answer changes. An id that isn't the account's, or no longer exists, isn't Pending.
+    parameters:
+      - name: ids
+        in: query
+        required: true
+        description: Comma-separated track ids, at most 200.
+        schema: { type: string }
+    responses:
+      "200":
+        description: The ids still Pending
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pending]
+              additionalProperties: false
+              properties:
+                pending:
+                  type: array
+                  items: { type: string, format: uuid }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
