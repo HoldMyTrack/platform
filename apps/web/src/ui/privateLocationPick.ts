@@ -30,3 +30,9 @@ export function highlightedCircle<T extends { id?: string }>(locations: readonly
   if (focusedId === null) return null;
   return locations?.find((l) => l.id === focusedId) ?? null;
 }
+/** The location the Privacy tab opens on: the one added last, as the Stories tab opens on the
+ *  newest Story, so the map shows a circle rather than whatever was in view. `locations` come
+ *  oldest first, as the API lists them. */
+export function openingLocation<T>(locations: readonly T[]): T | null {
+  return locations[locations.length - 1] ?? null;
+}
