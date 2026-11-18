@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Marker, type Map as MapLibreMap } from 'maplibre-gl';
 import { photoMarkerGroups, photoMarkerSize } from './photoClusters';
 import { photoMarkerCssVars } from './photoMarkerLook';
+import { t, tn } from '../i18n';
 
 /**
  * Photo markers (FR-15, IMPLEMENTATION.md §4.27): each photo of the selected activity or the
@@ -57,15 +58,18 @@ function markerElement(item: PhotoMarkerItem, ids: string[], onOpen: (ids: strin
   el.className = ids.length > 1 ? `${PHOTO_MARKER_CLASS} ${PHOTO_MARKER_CLASS}--group` : PHOTO_MARKER_CLASS;
   el.dataset.photoId = item.id;
   if (ids.length === 1 && item.caption) el.title = item.caption;
+  // Named here, its picture decoration: an uncaptioned photo was a bare "button", a group its count.
+  el.setAttribute('aria-label', ids.length > 1 ? tn('photos.marker_group', ids.length) : item.caption ? t('photos.marker_captioned', { caption: item.caption }) : t('photos.marker'));
   const img = document.createElement('img');
   img.src = item.thumbSrc;
-  img.alt = item.caption ?? '';
+  img.alt = '';
   img.decoding = 'async';
   img.draggable = false;
   el.append(img);
   if (ids.length > 1) {
     const count = document.createElement('span');
     count.className = `${PHOTO_MARKER_CLASS}__count`;
+    count.setAttribute('aria-hidden', 'true');
     count.textContent = String(ids.length);
     el.append(count);
   }
