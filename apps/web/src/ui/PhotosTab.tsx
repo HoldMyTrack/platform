@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { ImagePlus, Pencil, Trash2, Undo2 } from 'lucide-react';
-import { API_BASE_URL, checkPhotoPlace, getActivityTrackMetrics, PhotoNeedsPlaceError, type Activity, type Photo } from '../api';
-import { t } from '../i18n';
-import type { PhotoMarkerItem, PhotoMarkerOverlay } from '../map/photos';
-import { formatClockTime } from './format';
-import { draftRows, waitingPhotos, type NewPhoto, type PhotoDraft } from './photoDraft';
-import { fractionAt, photoTrack, pointAt, startFraction, type PhotoTrack, type PlaceAnchor } from './photoTrack';
-import { OversizedPhotoError, preparePhoto, UnreadablePhotoError } from './photoPrep';
-import { MAX_PHOTO_CAPTION_LEN } from '../limits';
+import { API_BASE_URL, checkPhotoPlace, getActivityTrackMetrics, PhotoNeedsPlaceError, type Activity, type Photo } from '../api.ts';
+import { t } from '../i18n/index.ts';
+import type { PhotoMarkerItem, PhotoMarkerOverlay } from '../map/photos.ts';
+import { formatClockTime } from './format.ts';
+import { draftRows, waitingPhotos, type NewPhoto, type PhotoDraft } from './photoDraft.ts';
+import { fractionAt, photoTrack, pointAt, startFraction, type PhotoTrack, type PlaceAnchor } from './photoTrack.ts';
+import { OversizedPhotoError, preparePhoto, UnreadablePhotoError } from './photoPrep.ts';
+import { MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
 
 /** The slider's steps — fine enough that a step on a long route is a few metres. */
 const SLIDER_STEPS = 1000;

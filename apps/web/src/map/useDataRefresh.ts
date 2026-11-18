@@ -1,7 +1,7 @@
 import { useCallback, useEffect } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { refreshTrackLayer } from './tracks';
-import type { ActivityQuery } from '../api';
+import { refreshTrackLayer } from './tracks.ts';
+import type { ActivityQuery } from '../api.ts';
 
 export interface DataRefreshInputs {
   tracksQuery: ActivityQuery;

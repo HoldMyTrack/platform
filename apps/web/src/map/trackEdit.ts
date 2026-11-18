@@ -1,5 +1,5 @@
 import type { GeoJSONSource, Map as MapLibreMap, MapMouseEvent, MapTouchEvent } from 'maplibre-gl';
-import type { TrackPoint } from '../api';
+import type { TrackPoint } from '../api.ts';
 
 /**
  * The Edit track overlay (IMPLEMENTATION.md §4.7.7): one GeoJSON source drawing the track

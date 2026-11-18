@@ -10,7 +10,7 @@
  * apart from it, so a phone's small screen makes as big an image as a desktop's.
  */
 
-import type { ExportPreset } from './exportPresets';
+import type { ExportPreset } from './exportPresets.ts';
 
 export interface Rect {
   x: number;

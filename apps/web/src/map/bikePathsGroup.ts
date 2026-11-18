@@ -1,7 +1,7 @@
 import type { LayerSpecification } from 'maplibre-gl';
 import { tilePath, TOGGLE_METADATA, type GroupPart, type LegendEntry } from './mapLayers.ts';
 import { PATH_COLORS, PATH_LAYER_IDS, pathDash } from './pathColors.ts';
-import type { Flavor } from './style';
+import type { Flavor } from './style.ts';
 
 /**
  * The Layers menu's Bike paths, Shared paths and Mountain bike trails (docs/SPEC.md FR-4.9,

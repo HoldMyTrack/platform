@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { getStatsCard } from '../api';
-import { statsCardKey, type StatsCardRequest } from './exportStats';
+import { getStatsCard } from '../api.ts';
+import { statsCardKey, type StatsCardRequest } from './exportStats.ts';
 
 /** How long the request waits after the size, theme or checked set last changed. */
 const STATS_CARD_DELAY_MS = 400;

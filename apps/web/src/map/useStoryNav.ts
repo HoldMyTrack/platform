@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useMemo, useRef, type Dispatch } from 'react';
-import type { MapSessionEvent } from './session';
-import { storyParam, urlWithStory, type StoryNav } from './storyUrl';
-import type { Story } from '../api';
-import type { PanelTab, StoriesPanel } from '../ui/ActivitiesPanel';
-import type { StoriesState } from '../ui/useStories';
-import type { StoryState } from '../ui/useStory';
-import { useStoryInbox } from '../ui/useStoryInbox';
+import type { MapSessionEvent } from './session.ts';
+import { storyParam, urlWithStory, type StoryNav } from './storyUrl.ts';
+import type { Story } from '../api.ts';
+import type { PanelTab, StoriesPanel } from '../ui/ActivitiesPanel.tsx';
+import type { StoriesState } from '../ui/useStories.ts';
+import type { StoryState } from '../ui/useStory.ts';
+import { useStoryInbox } from '../ui/useStoryInbox.ts';
 
 function moveStoryUrl(id: string | null, nav: StoryNav) {
   if (nav === 'push') window.history.pushState(null, '', urlWithStory(window.location, id));

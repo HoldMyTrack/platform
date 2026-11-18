@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Lock, X } from 'lucide-react';
-import type { Activity } from '../api';
-import { formatActivityType, formatDistance, formatDuration, formatStartedAt } from './format';
-import type { UnitSystem } from './units';
-import { typeIcon } from './activityKindIcon';
-import { t, tn } from '../i18n';
-import { useDismiss } from './useDismiss';
+import type { Activity } from '../api.ts';
+import { formatActivityType, formatDistance, formatDuration, formatStartedAt } from './format.ts';
+import type { UnitSystem } from './units.ts';
+import { typeIcon } from './activityKindIcon.ts';
+import { t, tn } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
 /** A row's primary line: its user-entered name (§4.7) when it has one, else
  *  its start date/time — also how the toolbar names a single selected activity. */

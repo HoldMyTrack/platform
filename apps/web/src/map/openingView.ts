@@ -1,4 +1,4 @@
-import type { BBox } from '../api';
+import type { BBox } from '../api.ts';
 import { FLY_FILL, unionBBox } from './bbox.ts';
 
 /** The zoom the web's map opens at (docs/SPEC.md FR-4.4): a town or a few valleys. */

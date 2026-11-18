@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import type { MapMode } from '../../map/mapMode';
-import type { PanelTab } from '../ActivitiesPanel';
+import type { MapMode } from '../../map/mapMode.ts';
+import type { PanelTab } from '../ActivitiesPanel.tsx';
 import { CAMERA_UNMOVED, NARROW_WIDTH, cameraEnd, cameraStep, cardFor, isPlainClick, nextStep, onScreen, stepChanges, stepsFor, tourStart, withCard, type TourCamera, type CardId, type TourSeen, type TourOpen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
 import { loadTourSeen, saveTourSeen } from './tourStore.ts';
 

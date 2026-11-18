@@ -1,7 +1,7 @@
-import { distanceValue, unitLabel } from './format';
-import { useUnitSystem } from './units';
-import { bandWithin, nextDistanceFilter, type DistanceRange } from './activityFacets';
-import { t } from '../i18n';
+import { distanceValue, unitLabel } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { bandWithin, nextDistanceFilter, type DistanceRange } from './activityFacets.ts';
+import { t } from '../i18n/index.ts';
 
 /**
  * The Activities panel's DISTANCE dual slider (docs/SPEC.md FR-5.3), inside the filter row's

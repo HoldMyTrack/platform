@@ -1,11 +1,11 @@
 import { useEffect, type Dispatch } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { datesQuery } from './activityQuery';
-import { flyToBBox, unionBBox } from './bbox';
-import { viewArea } from './useAreaList';
-import { listArea, type BBox } from '../api';
-import type { MapSessionEvent } from './session';
-import type { DateFilter } from '../ui/dateFilter';
+import { datesQuery } from './activityQuery.ts';
+import { flyToBBox, unionBBox } from './bbox.ts';
+import { viewArea } from './useAreaList.ts';
+import { listArea, type BBox } from '../api.ts';
+import type { MapSessionEvent } from './session.ts';
+import type { DateFilter } from '../ui/dateFilter.ts';
 
 /** Tags each Dates flight, so its own `moveend` is told from another's. A newer flight's `stop()`
  *  ends the older one early, mid-way: that one's `moveend` is dropped, and only the newest loads

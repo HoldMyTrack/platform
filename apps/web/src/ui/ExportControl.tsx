@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { IControl, Map as MapLibreMap } from 'maplibre-gl';
 import { Camera } from 'lucide-react';
-import { t } from '../i18n';
+import { t } from '../i18n/index.ts';
 
 export interface ExportControlProps {
   map: MapLibreMap;

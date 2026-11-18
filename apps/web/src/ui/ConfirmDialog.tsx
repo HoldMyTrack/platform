@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type RefObject } from 'react';
-import { t } from '../i18n';
+import { t } from '../i18n/index.ts';
 
 /**
  * A generic "are you sure" confirm/cancel dialog — first used by the Activities panel's

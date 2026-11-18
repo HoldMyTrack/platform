@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Marker, type Map as MapLibreMap } from 'maplibre-gl';
-import { photoMarkerGroups, photoMarkerSize } from './photoClusters';
-import { photoMarkerCssVars } from './photoMarkerLook';
-import { t, tn } from '../i18n';
+import { photoMarkerGroups, photoMarkerSize } from './photoClusters.ts';
+import { photoMarkerCssVars } from './photoMarkerLook.ts';
+import { t, tn } from '../i18n/index.ts';
 
 /**
  * Photo markers (FR-15, IMPLEMENTATION.md §4.27): each photo of the selected activity or the

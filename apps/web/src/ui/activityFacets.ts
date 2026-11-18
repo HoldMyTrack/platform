@@ -1,4 +1,4 @@
-import type { Activity } from '../api';
+import type { Activity } from '../api.ts';
 import type { DateFilter } from './dateFilter.ts';
 
 /**

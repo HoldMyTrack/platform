@@ -1,6 +1,6 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { ROADS_METADATA } from './style';
-import { styleReady } from './styleReady';
+import { ROADS_METADATA } from './style.ts';
+import { styleReady } from './styleReady.ts';
 
 /** Shows or hides the layers the style's ROADS_METADATA lists (roads.ts's roadLayerIds). Diffs
  *  before setting, like satellite.ts, since useMapLayers' reattach calls it on every 'styledata'. */

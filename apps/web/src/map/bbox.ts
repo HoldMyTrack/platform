@@ -1,5 +1,5 @@
 import type { LngLatBoundsLike, Map as MapLibreMap } from 'maplibre-gl';
-import type { BBox } from '../api';
+import type { BBox } from '../api.ts';
 
 /**
  * Flying the map to an activity's bounds.

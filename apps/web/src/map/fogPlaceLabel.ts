@@ -1,4 +1,4 @@
-import type { MessageKey } from '../i18n/en';
+import type { MessageKey } from '../i18n/en.ts';
 
 /** What the Fog tooltip says about an outline (fogPlaces.ts). */
 

@@ -1,5 +1,5 @@
-import { en, type MessageKey } from './en';
-import { ru } from './ru';
+import { en, type MessageKey } from './en.ts';
+import { ru } from './ru.ts';
 
 /**
  * The map app's localization (IMPLEMENTATION.md §4.21) — the client-side twin of

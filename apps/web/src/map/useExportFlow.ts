@@ -1,15 +1,15 @@
 import { useCallback, useMemo, useRef, useState, type RefObject } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { exportFlowReducer, type ExportEvent, type ExportFlow } from './exportFlow';
-import { exportFramedImage, maxExportSide, type ExportViewState } from './exportMap';
-import { DEFAULT_CUSTOM_SIZE, outputSize, usableCustomSize, type CustomSizeId, type ExportChoice } from './exportViewfinder';
-import type { Rect } from './exportViewfinder';
-import { t } from '../i18n';
-import { todayIn } from '../ui/dateMath';
-import { activityTimeZone } from '../ui/timeZone';
-import { statsCardRequest, statsOffered } from './exportStats';
-import { isDarkBase } from './style';
-import { useStatsCard, type StatsCardState } from './useStatsCard';
+import { exportFlowReducer, type ExportEvent, type ExportFlow } from './exportFlow.ts';
+import { exportFramedImage, maxExportSide, type ExportViewState } from './exportMap.ts';
+import { DEFAULT_CUSTOM_SIZE, outputSize, usableCustomSize, type CustomSizeId, type ExportChoice } from './exportViewfinder.ts';
+import type { Rect } from './exportViewfinder.ts';
+import { t } from '../i18n/index.ts';
+import { todayIn } from '../ui/dateMath.ts';
+import { activityTimeZone } from '../ui/timeZone.ts';
+import { statsCardRequest, statsOffered } from './exportStats.ts';
+import { isDarkBase } from './style.ts';
+import { useStatsCard, type StatsCardState } from './useStatsCard.ts';
 
 const SHOW_STATS_KEY = 'hmt.exportShowStats';
 

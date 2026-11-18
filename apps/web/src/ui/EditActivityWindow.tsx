@@ -1,17 +1,17 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { deletePhoto, saveActivityTrackEdit, SplitHidesPartError, updateActivity, updatePhoto, uploadPhoto, type Activity, type ActivityDetail, type Photo, type TrackEdit } from '../api';
-import type { PhotoMarkerOverlay } from '../map/photos';
-import { draftIsEmpty, draftSize, EMPTY_DRAFT, isoSeconds, type PhotoDraft } from './photoDraft';
-import { fieldWrites, saveProblem, type ActivityFields } from './editSave';
-import { MAX_ACTIVITY_DESCRIPTION_LEN, MAX_ACTIVITY_NAME_LEN, MAX_ACTIVITY_TYPE_LEN } from '../limits';
-import type { TypeFacet } from './activityFacets';
-import { ActivityTypePicker } from './ActivityTypePicker';
-import { ConfirmDialog } from './ConfirmDialog';
-import { formatStartedAt } from './format';
-import { PhotosTab } from './PhotosTab';
-import { TrackEditor } from './TrackEditor';
-import { t, tn } from '../i18n';
+import { deletePhoto, saveActivityTrackEdit, SplitHidesPartError, updateActivity, updatePhoto, uploadPhoto, type Activity, type ActivityDetail, type Photo, type TrackEdit } from '../api.ts';
+import type { PhotoMarkerOverlay } from '../map/photos.ts';
+import { draftIsEmpty, draftSize, EMPTY_DRAFT, isoSeconds, type PhotoDraft } from './photoDraft.ts';
+import { fieldWrites, saveProblem, type ActivityFields } from './editSave.ts';
+import { MAX_ACTIVITY_DESCRIPTION_LEN, MAX_ACTIVITY_NAME_LEN, MAX_ACTIVITY_TYPE_LEN } from '../limits.ts';
+import type { TypeFacet } from './activityFacets.ts';
+import { ActivityTypePicker } from './ActivityTypePicker.tsx';
+import { ConfirmDialog } from './ConfirmDialog.tsx';
+import { formatStartedAt } from './format.ts';
+import { PhotosTab } from './PhotosTab.tsx';
+import { TrackEditor } from './TrackEditor.tsx';
+import { t, tn } from '../i18n/index.ts';
 
 
 export type EditTab = 'activity' | 'track' | 'photos';

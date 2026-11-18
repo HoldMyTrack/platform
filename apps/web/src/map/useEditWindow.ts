@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityNotFoundError, getActivity, type Activity, type ActivityDetail } from '../api';
-import { mapLimited } from '../limited';
-import { latestRows, missingRows, windowActivities } from './editWindowRows';
-import { editPhotosBlocker, editTrackBlocker } from '../ui/editAvailability';
-import type { EditTab } from '../ui/EditActivityWindow';
-import type { MessageKey } from '../i18n/en';
+import { ActivityNotFoundError, getActivity, type Activity, type ActivityDetail } from '../api.ts';
+import { mapLimited } from '../limited.ts';
+import { latestRows, missingRows, windowActivities } from './editWindowRows.ts';
+import { editPhotosBlocker, editTrackBlocker } from '../ui/editAvailability.ts';
+import type { EditTab } from '../ui/EditActivityWindow.tsx';
+import type { MessageKey } from '../i18n/en.ts';
 
 export interface EditWindowState {
   /** The window's activities, by id; null while it's closed. */

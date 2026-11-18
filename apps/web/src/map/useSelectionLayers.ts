@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { setHiddenTracks, setHoveredTrack, setSelectedTracks, setTrackInteractivityHandlers } from './tracks';
+import { setHiddenTracks, setHoveredTrack, setSelectedTracks, setTrackInteractivityHandlers } from './tracks.ts';
 
 export interface SelectionLayerInputs {
   /** The tracks drawn bold (selection.ts's boldTracks). */

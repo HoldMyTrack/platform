@@ -1,5 +1,5 @@
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
-import type { ActivityTrackMetrics } from '../api';
+import type { ActivityTrackMetrics } from '../api.ts';
 
 /**
  * Fills the layers document's `track-bands` source (bandsGroup.ts) with the focused activity's

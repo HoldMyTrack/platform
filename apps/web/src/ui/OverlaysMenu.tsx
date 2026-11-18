@@ -1,11 +1,11 @@
-import { layersCount, toggleLayer, type LayerPick, type Overlays } from '../map/overlays';
+import { layersCount, toggleLayer, type LayerPick, type Overlays } from '../map/overlays.ts';
 import { Layers } from 'lucide-react';
-import { getTileVersion } from '../map/coverageVersion';
-import { groupOf, type LegendEntry } from '../map/mapLayers';
-import type { Flavor } from '../map/style';
-import { webLayers } from '../map/webLayers';
-import { t } from '../i18n';
-import { PickItem, PickMenu } from './PickMenu';
+import { getTileVersion } from '../map/coverageVersion.ts';
+import { groupOf, type LegendEntry } from '../map/mapLayers.ts';
+import type { Flavor } from '../map/style.ts';
+import { webLayers } from '../map/webLayers.ts';
+import { t } from '../i18n/index.ts';
+import { PickItem, PickMenu } from './PickMenu.tsx';
 
 export interface OverlaysMenuProps {
   overlays: Overlays;

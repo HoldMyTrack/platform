@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { ChevronDown, Lock } from 'lucide-react';
-import { currentLayerState, currentLayers, updateLayers } from '../map/applyLayers';
-import { exploredCount, fogLevelInView, fogLevelPick, levelLabelKey } from '../map/fogLevels';
-import type { Explored } from '../map/useCoverageRefresh';
-import { hasKey, lang, t } from '../i18n';
-import { useDismiss } from './useDismiss';
+import { currentLayerState, currentLayers, updateLayers } from '../map/applyLayers.ts';
+import { exploredCount, fogLevelInView, fogLevelPick, levelLabelKey } from '../map/fogLevels.ts';
+import type { Explored } from '../map/useCoverageRefresh.ts';
+import { hasKey, lang, t } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
 export interface FogLevelMenuProps {
   map: MapLibreMap;

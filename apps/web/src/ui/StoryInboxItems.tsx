@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { t, tn } from '../i18n';
-import type { StoryInboxState } from './useStoryInbox';
+import { t, tn } from '../i18n/index.ts';
+import type { StoryInboxState } from './useStoryInbox.ts';
 
 /**
  * The Story copies others sent, each waiting to be accepted or declined, then the accepted ones

@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
-import { t } from '../i18n';
+import { t } from '../i18n/index.ts';
 
 /** One row of a SearchPicker: `leading` · `label` · `detail` (muted, right-aligned). */
 export interface PickerOption {

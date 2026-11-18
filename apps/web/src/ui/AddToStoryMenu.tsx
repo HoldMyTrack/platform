@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookPlus, Check, Plus } from 'lucide-react';
-import { addStoryActivities, type Activity, type Story } from '../api';
-import { StoryDialog } from './StoryDialog';
-import { useStories } from './useStories';
-import { t, tn } from '../i18n';
-import { useDismiss } from './useDismiss';
+import { addStoryActivities, type Activity, type Story } from '../api.ts';
+import { StoryDialog } from './StoryDialog.tsx';
+import { useStories } from './useStories.ts';
+import { t, tn } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
 export interface AddToStoryMenuProps {
   readOnly: boolean;

@@ -4,9 +4,9 @@ import { bikePathsGroup } from './bikePathsGroup.ts';
 import { coverageGroup } from './coverageGroup.ts';
 import { spotsGroup } from './spotsGroup.ts';
 import { tracksGroup } from './tracksGroup.ts';
-import type { MapMode } from './mapMode';
-import type { Flavor } from './style';
-import type { FogLevelBand } from './fogLevels';
+import type { MapMode } from './mapMode.ts';
+import type { Flavor } from './style.ts';
+import type { FogLevelBand } from './fogLevels.ts';
 
 /**
  * Every layer HoldMyTrack draws over the basemap, as one document per flavor and account

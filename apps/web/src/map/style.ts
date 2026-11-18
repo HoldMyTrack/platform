@@ -6,10 +6,10 @@ import type {
   RasterSourceSpecification,
   StyleSpecification,
 } from 'maplibre-gl';
-import { GLYPHS_PATH, PMTILES_PATH, SPRITE_BASE_PATH } from './config';
-import { globeProjection } from './globe';
+import { GLYPHS_PATH, PMTILES_PATH, SPRITE_BASE_PATH } from './config.ts';
+import { globeProjection } from './globe.ts';
 import { PATH_COLORS, pathDash, PATHS_MIN_ZOOM } from './pathColors.ts';
-import { roadLayerIds } from './roads';
+import { roadLayerIds } from './roads.ts';
 import { liftColor } from './liftColor.ts';
 
 /**

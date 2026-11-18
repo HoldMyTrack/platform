@@ -1,4 +1,4 @@
-import { TRACKS_MIN_ZOOM } from './config';
+import { TRACKS_MIN_ZOOM } from './config.ts';
 import { EARTH_RADIUS_M } from '../geo.ts';
 import type { ExpressionSpecification, GeoJSONSource, LngLat, Map as MapLibreMap, MapLayerMouseEvent, MapLayerTouchEvent } from 'maplibre-gl';
 

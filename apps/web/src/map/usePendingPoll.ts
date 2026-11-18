@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { pendingActivities } from '../api';
-import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from './pending';
-import { retryDelay } from './retryDelay';
+import { pendingActivities } from '../api.ts';
+import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from './pending.ts';
+import { retryDelay } from './retryDelay.ts';
 
 /** How often the Pending check runs while a reprocess is pending: one activity's ingest takes seconds. */
 const POLL_MS = 2000;

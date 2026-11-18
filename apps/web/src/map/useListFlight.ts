@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { flyToBBox, unionBBox } from './bbox';
-import { firstListFit } from './cameraRules';
-import type { Activity } from '../api';
+import { flyToBBox, unionBBox } from './bbox.ts';
+import { firstListFit } from './cameraRules.ts';
+import type { Activity } from '../api.ts';
 
 export interface ListFlightInputs {
   activities: readonly Activity[];

@@ -3,8 +3,8 @@
  * the tour starts by itself or is offered, which first-time card a user's own action earns, and
  * where the popover sits. useTour.ts holds the state around them, Tour.tsx draws it.
  */
-import type { MapMode } from '../../map/mapMode';
-import type { PanelTab } from '../ActivitiesPanel';
+import type { MapMode } from '../../map/mapMode.ts';
+import type { PanelTab } from '../ActivitiesPanel.tsx';
 
 /** A first-time card: the feature's own explanation, shown once per browser. */
 export type CardId = 'fog' | 'stories';

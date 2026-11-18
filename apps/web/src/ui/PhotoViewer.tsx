@@ -1,10 +1,10 @@
 import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent as ReactKeyboardEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, ExternalLink, Maximize, X, ZoomIn, ZoomOut } from 'lucide-react';
-import { API_BASE_URL, type Photo } from '../api';
-import { t } from '../i18n';
-import { formatStartedAt } from './format';
-import { DOUBLE_CLICK_SCALE, FIT_VIEW, MAX_SCALE, ZOOM_STEP, clampView, fitSize, panBy, zoomAt, type Size, type ZoomView } from './photoZoom';
+import { API_BASE_URL, type Photo } from '../api.ts';
+import { t } from '../i18n/index.ts';
+import { formatStartedAt } from './format.ts';
+import { DOUBLE_CLICK_SCALE, FIT_VIEW, MAX_SCALE, ZOOM_STEP, clampView, fitSize, panBy, zoomAt, type Size, type ZoomView } from './photoZoom.ts';
 
 export interface PhotoViewerProps {
   /** The popup's photos: one, or a group's in route order. */

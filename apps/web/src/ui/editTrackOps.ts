@@ -1,4 +1,4 @@
-import type { TrackEdit, TrackPoint } from '../api';
+import type { TrackEdit, TrackPoint } from '../api.ts';
 import { haversineM as distanceM } from '../geo.ts';
 
 /**

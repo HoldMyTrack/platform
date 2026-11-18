@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { MapPin } from 'lucide-react';
-import { getSpotsInArea } from '../api';
-import { setSpotsInArea, SPOTS_IN_AREA_MIN_ZOOM, SPOTS_MIN_ZOOM, type SpotCategory } from '../map/spots';
-import { t, tn } from '../i18n';
-import { areaCount, type AreaLoad } from './showInAreaCount';
+import { getSpotsInArea } from '../api.ts';
+import { setSpotsInArea, SPOTS_IN_AREA_MIN_ZOOM, SPOTS_MIN_ZOOM, type SpotCategory } from '../map/spots.ts';
+import { t, tn } from '../i18n/index.ts';
+import { areaCount, type AreaLoad } from './showInAreaCount.ts';
 
 export interface ShowInAreaProps {
   map: MapLibreMap;

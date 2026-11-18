@@ -1,4 +1,4 @@
-import type { Flavor } from './style';
+import type { Flavor } from './style.ts';
 
 /**
  * The trail and track layers (docs/SPEC.md FR-4.9), part of the map itself rather than the

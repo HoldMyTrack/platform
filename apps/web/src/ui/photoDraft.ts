@@ -1,5 +1,5 @@
-import type { Photo } from '../api';
-import type { PreparedPhoto } from './photoPrep';
+import type { Photo } from '../api.ts';
+import type { PreparedPhoto } from './photoPrep.ts';
 
 /**
  * The Photos tab's unsaved changes (FR-15) — what the Edit window's one Save writes, after the

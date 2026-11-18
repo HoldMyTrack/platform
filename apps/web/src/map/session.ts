@@ -5,10 +5,10 @@
  * it only through events; side effects (flights, the URL) stay with them. The apps' `MapSession`s
  * run the same cases, `testdata/client-rules`'s `webSession` and `panelState`.
  */
-import type { Activity, BBox } from '../api';
+import type { Activity, BBox } from '../api.ts';
 import { passesFilters, type DistanceRange } from '../ui/activityFacets.ts';
 import { ALL_TIME, type DateFilter } from '../ui/dateFilter.ts';
-import type { MapMode } from './mapMode';
+import type { MapMode } from './mapMode.ts';
 import { toggled, toggledVisibility, toolbarTarget, withoutIds } from './selection.ts';
 
 export interface Selection {

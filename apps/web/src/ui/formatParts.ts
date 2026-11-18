@@ -1,4 +1,4 @@
-import type { UnitSystem } from './units';
+import type { UnitSystem } from './units.ts';
 
 /**
  * What format.ts decides before the language writes it: which number, how many decimals, which

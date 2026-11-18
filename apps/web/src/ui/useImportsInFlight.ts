@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { importsInFlight } from './firstRun';
+import { importsInFlight } from './firstRun.ts';
 
 /**
  * The header Upload menu's count of imports in flight (static/upload.js): read from its

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { getStory, StoryNotFoundError, type Story } from '../api';
+import { getStory, StoryNotFoundError, type Story } from '../api.ts';
 
 export interface StoryState {
   /** null outside a Story, until it has loaded, and after an error. */

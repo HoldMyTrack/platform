@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
-import { deleteActivity, type Activity, type Story } from '../api';
-import { rowLabel } from './ActivityRow';
-import { AddToStoryMenu } from './AddToStoryMenu';
-import { ConfirmDialog } from './ConfirmDialog';
-import { formatTotalDistance } from './format';
-import { useUnitSystem } from './units';
-import { t, tn } from '../i18n';
-import { useDismiss } from './useDismiss';
+import { deleteActivity, type Activity, type Story } from '../api.ts';
+import { rowLabel } from './ActivityRow.tsx';
+import { AddToStoryMenu } from './AddToStoryMenu.tsx';
+import { ConfirmDialog } from './ConfirmDialog.tsx';
+import { formatTotalDistance } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { t, tn } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
 export interface ActivitiesToolbarProps {
   readOnly: boolean;

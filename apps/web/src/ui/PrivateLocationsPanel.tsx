@@ -8,9 +8,9 @@ import {
   listPrivateLocations,
   savePrivateLocation,
   type PrivateLocation,
-} from '../api';
-import { beneathBasemapLabels } from '../map/applyLayers';
-import { PRIVATE_LOCATION_MAX_NAME_LEN, PRIVATE_LOCATION_MAX_RADIUS_M, PRIVATE_LOCATION_MIN_RADIUS_M } from '../limits';
+} from '../api.ts';
+import { beneathBasemapLabels } from '../map/applyLayers.ts';
+import { PRIVATE_LOCATION_MAX_NAME_LEN, PRIVATE_LOCATION_MAX_RADIUS_M, PRIVATE_LOCATION_MIN_RADIUS_M } from '../limits.ts';
 import {
   attachPrivateLocationsHandlers,
   clearPrivateLocations,
@@ -18,12 +18,12 @@ import {
   PRIVATE_LOCATIONS_MIN_PLACE_ZOOM,
   setPrivateLocationsData,
   type PrivateLocationsClick,
-} from '../map/privateLocations';
-import { ConfirmDialog } from './ConfirmDialog';
-import { highlightedCircle, openingLocation, pickAction, type PickIntent } from './privateLocationPick';
-import { elevationUnitLabel, metersToFeet } from './format';
-import { useUnitSystem } from './units';
-import { lang, t, tn } from '../i18n';
+} from '../map/privateLocations.ts';
+import { ConfirmDialog } from './ConfirmDialog.tsx';
+import { highlightedCircle, openingLocation, pickAction, type PickIntent } from './privateLocationPick.ts';
+import { elevationUnitLabel, metersToFeet } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { lang, t, tn } from '../i18n/index.ts';
 
 /**
  * The Activities panel's Privacy tab (FR-7.1): the account's circles listed, each with its own

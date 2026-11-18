@@ -1,8 +1,8 @@
-import type { UnitSystem } from './units';
-import { lang, t } from '../i18n';
-import { typeLabel } from './activityTypes';
-import { distanceParts, durationParts, totalDistanceParts, type DistanceParts } from './formatParts';
-import { activityTimeZone } from './timeZone';
+import type { UnitSystem } from './units.ts';
+import { lang, t } from '../i18n/index.ts';
+import { typeLabel } from './activityTypes.ts';
+import { distanceParts, durationParts, totalDistanceParts, type DistanceParts } from './formatParts.ts';
+import { activityTimeZone } from './timeZone.ts';
 
 /**
  * Display formatting for real activity rows and totals. Kept apart from api.ts so the

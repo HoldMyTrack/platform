@@ -1,23 +1,23 @@
 import { Map as MapLibreMap } from 'maplibre-gl';
-import { API_BASE_URL, type ActivityQuery, type ActivityTrackMetrics } from '../api';
-import { lang } from '../i18n';
+import { API_BASE_URL, type ActivityQuery, type ActivityTrackMetrics } from '../api.ts';
+import { lang } from '../i18n/index.ts';
 import logoOnDarkUrl from '../assets/logo-on-dark.png';
 import logoOnLightUrl from '../assets/logo-on-light.png';
-import { basemapOrigin, satelliteSource, ZOOM_LEVELS_TO_OVERSCALE } from './config';
-import { withApiCredentials } from './requestCredentials';
-import { applyLayers, INITIAL_LAYER_STATE } from './applyLayers';
-import { getTileVersion } from './coverageVersion';
-import { webLayers } from './webLayers';
-import type { MapMode } from './mapMode';
-import { setRoadsVisible } from './mapRoads';
-import { setSatelliteVisible } from './satellite';
-import type { BikePathOverlays } from './bikePathsGroup';
-import { drawPhotoMarkers, type ExportPhotos } from './exportPhotos';
-import { statsCardPlacement, stripMetrics, WATERMARK_FONT_SCALE, WATERMARK_LOGO_SCALE } from './exportStats';
-import { photoMarkerLayout } from './photoClusters';
-import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style';
-import { setTrackBands } from './trackBands';
-import { trackQuery } from './tracks';
+import { basemapOrigin, satelliteSource, ZOOM_LEVELS_TO_OVERSCALE } from './config.ts';
+import { withApiCredentials } from './requestCredentials.ts';
+import { applyLayers, INITIAL_LAYER_STATE } from './applyLayers.ts';
+import { getTileVersion } from './coverageVersion.ts';
+import { webLayers } from './webLayers.ts';
+import type { MapMode } from './mapMode.ts';
+import { setRoadsVisible } from './mapRoads.ts';
+import { setSatelliteVisible } from './satellite.ts';
+import type { BikePathOverlays } from './bikePathsGroup.ts';
+import { drawPhotoMarkers, type ExportPhotos } from './exportPhotos.ts';
+import { statsCardPlacement, stripMetrics, WATERMARK_FONT_SCALE, WATERMARK_LOGO_SCALE } from './exportStats.ts';
+import { photoMarkerLayout } from './photoClusters.ts';
+import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style.ts';
+import { setTrackBands } from './trackBands.ts';
+import { trackQuery } from './tracks.ts';
 
 /**
  * `VISION.md` §4.2's "print-grade... export", rendered in the browser (`IMPLEMENTATION.md`

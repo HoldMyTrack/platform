@@ -1,4 +1,4 @@
-import { isFlavor, type Flavor } from './style';
+import { isFlavor, type Flavor } from './style.ts';
 
 /**
  * Two-way sync between the camera plus theme and the URL hash, so a view is

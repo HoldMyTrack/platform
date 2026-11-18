@@ -1,5 +1,5 @@
-import type { ActivityDetail } from '../api';
-import type { MessageKey } from '../i18n/en';
+import type { ActivityDetail } from '../api.ts';
+import type { MessageKey } from '../i18n/en.ts';
 import { MAX_ACTIVITY_DESCRIPTION_LEN, MAX_ACTIVITY_NAME_LEN, MAX_ACTIVITY_TYPE_LEN, MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
 import { waitingPhotos, type PhotoDraft } from './photoDraft.ts';
 

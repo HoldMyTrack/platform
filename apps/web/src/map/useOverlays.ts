@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { BikePathOverlays } from './bikePathsGroup';
-import { satelliteSource } from './config';
-import { satelliteOffered } from './imageryOffered';
-import { loadOverlays, saveOverlays, type Overlays } from './overlays';
-import { useImageryStatus } from './useImageryStatus';
+import type { BikePathOverlays } from './bikePathsGroup.ts';
+import { satelliteSource } from './config.ts';
+import { satelliteOffered } from './imageryOffered.ts';
+import { loadOverlays, saveOverlays, type Overlays } from './overlays.ts';
+import { useImageryStatus } from './useImageryStatus.ts';
 
 export interface OverlayChoices {
   overlays: Overlays;

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { getActivityTrackPoints, type Activity, type TrackEdit, type TrackPoint } from '../api';
-import { beneathBasemapLabels } from '../map/applyLayers';
-import { clearTrackEdit, ensureTrackEditLayer, onTrackEditPointClick, onTrackEditPointDrag, setTrackEditData, type EditPreview } from '../map/trackEdit';
-import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps';
-import { distanceValue, formatClockTime, unitLabel } from './format';
-import { useUnitSystem } from './units';
-import { t, tn } from '../i18n';
+import { getActivityTrackPoints, type Activity, type TrackEdit, type TrackPoint } from '../api.ts';
+import { beneathBasemapLabels } from '../map/applyLayers.ts';
+import { clearTrackEdit, ensureTrackEditLayer, onTrackEditPointClick, onTrackEditPointDrag, setTrackEditData, type EditPreview } from '../map/trackEdit.ts';
+import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps.ts';
+import { distanceValue, formatClockTime, unitLabel } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { t, tn } from '../i18n/index.ts';
 
 /**
  * The Edit window's Track tab (IMPLEMENTATION.md §4.7.7) — one activity's recorded points,

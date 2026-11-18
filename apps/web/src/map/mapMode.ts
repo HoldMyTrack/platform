@@ -1,5 +1,5 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { setHiddenGroups, updateLayers } from './applyLayers';
+import { setHiddenGroups, updateLayers } from './applyLayers.ts';
 
 /**
  * The two mutually exclusive views (docs/SPEC.md FR-4.3), a single toggle. What each shows, and

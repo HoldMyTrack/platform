@@ -1,10 +1,10 @@
 import type { GeoJSONSourceSpecification, LayerSpecification, Map as MapLibreMap, VectorTileSource } from 'maplibre-gl';
-import { API_BASE_URL } from '../api';
-import type { MapMode } from './mapMode';
-import { boundLayer, bindVars, insertionPoint, layerToggle, layerVars, needsLift, placementOrder, viewFor, type GroupSource, type LayerGroup, type MapLayers } from './mapLayers';
-import { SATELLITE_LAYER_ID } from './style';
-import { levelZoomRanges } from './fogLevels';
-import { styleReady } from './styleReady';
+import { API_BASE_URL } from '../api.ts';
+import type { MapMode } from './mapMode.ts';
+import { boundLayer, bindVars, insertionPoint, layerToggle, layerVars, needsLift, placementOrder, viewFor, type GroupSource, type LayerGroup, type MapLayers } from './mapLayers.ts';
+import { SATELLITE_LAYER_ID } from './style.ts';
+import { levelZoomRanges } from './fogLevels.ts';
+import { styleReady } from './styleReady.ts';
 
 /**
  * The layers document (mapLayers.ts) on a live map: this adds what the document describes,

@@ -1,16 +1,16 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import type { MapMode } from '../map/mapMode';
-import type { Overlays } from '../map/overlays';
-import type { SpotCategory } from '../map/spots';
-import type { Flavor } from '../map/style';
-import type { Explored } from '../map/useCoverageRefresh';
-import { BasemapToggle } from './BasemapToggle';
-import { MapModeToggle } from './MapModeToggle';
-import { OverlaysMenu } from './OverlaysMenu';
-import { PlacesMenu } from './PlacesMenu';
-import { ShowInArea } from './ShowInArea';
-import { FogLevelMenu } from './FogLevelMenu';
-import { lang, t } from '../i18n';
+import type { MapMode } from '../map/mapMode.ts';
+import type { Overlays } from '../map/overlays.ts';
+import type { SpotCategory } from '../map/spots.ts';
+import type { Flavor } from '../map/style.ts';
+import type { Explored } from '../map/useCoverageRefresh.ts';
+import { BasemapToggle } from './BasemapToggle.tsx';
+import { MapModeToggle } from './MapModeToggle.tsx';
+import { OverlaysMenu } from './OverlaysMenu.tsx';
+import { PlacesMenu } from './PlacesMenu.tsx';
+import { ShowInArea } from './ShowInArea.tsx';
+import { FogLevelMenu } from './FogLevelMenu.tsx';
+import { lang, t } from '../i18n/index.ts';
 
 export interface MapControlsProps {
   map: MapLibreMap | null;

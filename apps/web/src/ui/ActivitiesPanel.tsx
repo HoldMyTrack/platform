@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import type { Activity, Story } from '../api';
-import { ActivitiesToolbar } from './ActivitiesToolbar';
-import { ActivityFilters, type DatesProps } from './ActivityFilters';
-import { ActivityRow, rowLabel } from './ActivityRow';
-import { targetSummaryKind } from '../map/selection';
-import { listWindow, scrollTopFor } from './listWindow';
-import { FirstRunPanel } from './FirstRunPanel';
-import { PrivateLocationsPanel } from './PrivateLocationsPanel';
-import { StoriesTab } from './StoriesTab';
-import type { StoryInboxState } from './useStoryInbox';
-import { emptyListReason, type DistanceRange, type TypeFacet } from './activityFacets';
-import { formatTotalDistance } from './format';
-import { useUnitSystem } from './units';
-import { lang, t, tn } from '../i18n';
+import type { Activity, Story } from '../api.ts';
+import { ActivitiesToolbar } from './ActivitiesToolbar.tsx';
+import { ActivityFilters, type DatesProps } from './ActivityFilters.tsx';
+import { ActivityRow, rowLabel } from './ActivityRow.tsx';
+import { targetSummaryKind } from '../map/selection.ts';
+import { listWindow, scrollTopFor } from './listWindow.ts';
+import { FirstRunPanel } from './FirstRunPanel.tsx';
+import { PrivateLocationsPanel } from './PrivateLocationsPanel.tsx';
+import { StoriesTab } from './StoriesTab.tsx';
+import type { StoryInboxState } from './useStoryInbox.ts';
+import { emptyListReason, type DistanceRange, type TypeFacet } from './activityFacets.ts';
+import { formatTotalDistance } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { lang, t, tn } from '../i18n/index.ts';
 
 /**
  * The left sidebar, with three tabs, each about what the map shows under it: **Activities** (the

@@ -1,8 +1,8 @@
 import { useEffect, useMemo, type Dispatch } from 'react';
-import type { MapSessionEvent, Selection } from './session';
-import { mapHiddenIds as hiddenOnMap } from './selection';
-import type { Activity } from '../api';
-import { distanceBounds, passesFilters, typeFacets, type DistanceRange, type TypeFacet } from '../ui/activityFacets';
+import type { MapSessionEvent, Selection } from './session.ts';
+import { mapHiddenIds as hiddenOnMap } from './selection.ts';
+import type { Activity } from '../api.ts';
+import { distanceBounds, passesFilters, typeFacets, type DistanceRange, type TypeFacet } from '../ui/activityFacets.ts';
 
 export interface ListView {
   /** Rows with a reprocess pending (a track edit or a Private location change). A Pending track isn't drawn (FR-5.8). */

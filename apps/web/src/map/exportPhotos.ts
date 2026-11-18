@@ -1,6 +1,6 @@
-import type { PhotoMarkerPlacement } from './photoClusters';
-import { PHOTO_MARKER_LOOK, type PhotoMarkerLookSize } from './photoMarkerLook';
-import type { PhotoMarkerItem } from './photos';
+import type { PhotoMarkerPlacement } from './photoClusters.ts';
+import { PHOTO_MARKER_LOOK, type PhotoMarkerLookSize } from './photoMarkerLook.ts';
+import type { PhotoMarkerItem } from './photos.ts';
 
 /**
  * The photo markers on screen, drawn into an exported image (FR-4.7) after the map, under the

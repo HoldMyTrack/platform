@@ -1,16 +1,16 @@
 import { useRef, useState } from 'react';
 import { Pencil, Play, Send, Trash2 } from 'lucide-react';
-import { deleteStory, removeStoryActivities, type Activity, type Story, type StoryTotals } from '../api';
-import { ActivityRow, useScrollFocusedRow } from './ActivityRow';
-import { ConfirmDialog } from './ConfirmDialog';
-import { SendCopyDialog } from './SendCopyDialog';
-import { StoryDialog } from './StoryDialog';
-import { StoryInboxItems } from './StoryInboxItems';
-import { folderClick, isFolded } from './storyFold';
-import type { StoryInboxState } from './useStoryInbox';
-import { formatActivityType, formatDuration, formatTotalDistance } from './format';
-import { useUnitSystem, type UnitSystem } from './units';
-import { t, tn } from '../i18n';
+import { deleteStory, removeStoryActivities, type Activity, type Story, type StoryTotals } from '../api.ts';
+import { ActivityRow, useScrollFocusedRow } from './ActivityRow.tsx';
+import { ConfirmDialog } from './ConfirmDialog.tsx';
+import { SendCopyDialog } from './SendCopyDialog.tsx';
+import { StoryDialog } from './StoryDialog.tsx';
+import { StoryInboxItems } from './StoryInboxItems.tsx';
+import { folderClick, isFolded } from './storyFold.ts';
+import type { StoryInboxState } from './useStoryInbox.ts';
+import { formatActivityType, formatDuration, formatTotalDistance } from './format.ts';
+import { useUnitSystem, type UnitSystem } from './units.ts';
+import { t, tn } from '../i18n/index.ts';
 
 /** A Story's numbers, or one type's share of them, in one line — "3 activities · 58 km · 3h 26m
  *  moving". */

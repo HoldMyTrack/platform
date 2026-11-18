@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import { sendStory, type Story } from '../api';
-import { t } from '../i18n';
-import { useBackdropClose } from './ConfirmDialog';
+import { sendStory, type Story } from '../api.ts';
+import { t } from '../i18n/index.ts';
+import { useBackdropClose } from './ConfirmDialog.tsx';
 
 /**
  * Send a copy (`SPEC.md` FR-13.7): a Stories tab folder's send button, asking for the email

@@ -1,4 +1,4 @@
-import type { Activity, ActivityDetail } from '../api';
+import type { Activity, ActivityDetail } from '../api.ts';
 
 /**
  * The Edit window's activities against the list (useEditWindow.ts). The list follows the map and

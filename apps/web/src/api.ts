@@ -1,8 +1,8 @@
-import { t } from './i18n';
-import { rememberTypeKinds, rememberTypeLabels } from './ui/activityTypes';
-import { deleteDone, parseErrorBody } from './apiError';
-import type { components, paths } from './apiSchema';
-import type { SpotCategory, SpotInArea } from './map/spots';
+import { t } from './i18n/index.ts';
+import { rememberTypeKinds, rememberTypeLabels } from './ui/activityTypes.ts';
+import { deleteDone, parseErrorBody } from './apiError.ts';
+import type { components, paths } from './apiSchema.ts';
+import type { SpotCategory, SpotInArea } from './map/spots.ts';
 
 /**
  * The Go backend's upload endpoint (IMPLEMENTATION.md §4.0).

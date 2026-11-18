@@ -1,6 +1,6 @@
 import { useRef, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { useDismiss } from './useDismiss';
+import { useDismiss } from './useDismiss.ts';
 
 export interface PickMenuProps {
   /** The `data-testid` of the whole control, which the tour anchors on. */

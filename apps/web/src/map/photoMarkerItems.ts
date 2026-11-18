@@ -2,11 +2,11 @@
  * Which photos the map shows and what a marker's click does (FR-15), as plain values.
  * Android: `photos/PhotoMarkerScope.kt`.
  */
-import type { Photo } from '../api';
+import type { Photo } from '../api.ts';
 import { haversineM } from '../geo.ts';
-import type { PhotoScope } from '../ui/usePhotos';
-import type { MapMode } from './mapMode';
-import type { PhotoMarkerItem, PhotoMarkerOverlay } from './photos';
+import type { PhotoScope } from '../ui/usePhotos.ts';
+import type { MapMode } from './mapMode.ts';
+import type { PhotoMarkerItem, PhotoMarkerOverlay } from './photos.ts';
 
 /** How far apart, in metres, a group's photos must be for zooming in to separate them (§4.27). */
 export const GROUP_SPREAD_M = 15;

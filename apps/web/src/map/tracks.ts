@@ -1,10 +1,10 @@
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
-import type { ActivityQuery } from '../api';
-import { currentLayerState, setLayerVars, updateLayers } from './applyLayers';
-import { mapTapsActive } from './mapTaps';
-import { PHOTO_MARKER_CLASS } from './photos';
-import { spotAt } from './spots';
-import { TRACK_HOVER_SOURCE, TRACKS_LAYER_ID, TRACKS_SOURCE_LAYER } from './tracksGroup';
+import type { ActivityQuery } from '../api.ts';
+import { currentLayerState, setLayerVars, updateLayers } from './applyLayers.ts';
+import { mapTapsActive } from './mapTaps.ts';
+import { PHOTO_MARKER_CLASS } from './photos.ts';
+import { spotAt } from './spots.ts';
+import { TRACK_HOVER_SOURCE, TRACKS_LAYER_ID, TRACKS_SOURCE_LAYER } from './tracksGroup.ts';
 
 /**
  * The live tracks MVT layer on the map (IMPLEMENTATION.md §4.3): the layers document draws it

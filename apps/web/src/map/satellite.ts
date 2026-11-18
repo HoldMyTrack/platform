@@ -4,7 +4,7 @@ import {
   SATELLITE_HIDES_METADATA,
   SATELLITE_LAYER_ID,
   SATELLITE_ROAD_OPACITY,
-} from './style';
+} from './style.ts';
 
 /**
  * The Satellite button (BasemapToggle.tsx, docs/SPEC.md FR-4.10, overlays.ts): shows the satellite

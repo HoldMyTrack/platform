@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, X } from 'lucide-react';
-import { DistanceFilter } from './DistanceFilter';
-import type { DistanceRange, TypeFacet } from './activityFacets';
-import { dateFilterLabel, type DateFilter } from './dateFilter';
-import { distanceValue, formatActivityType, formatFilterDate, formatShortDate, unitLabel } from './format';
-import { useUnitSystem } from './units';
-import { t } from '../i18n';
-import { useDismiss } from './useDismiss';
+import { DistanceFilter } from './DistanceFilter.tsx';
+import type { DistanceRange, TypeFacet } from './activityFacets.ts';
+import { dateFilterLabel, type DateFilter } from './dateFilter.ts';
+import { distanceValue, formatActivityType, formatFilterDate, formatShortDate, unitLabel } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { t } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
 export interface DatesProps {
   value: DateFilter;

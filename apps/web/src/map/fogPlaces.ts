@@ -1,8 +1,8 @@
 import { Popup, type Map as MapLibreMap, type MapGeoJSONFeature } from 'maplibre-gl';
-import { hasKey, t, tn } from '../i18n';
-import { PLACE_FILL_LAYERS } from './coverageGroup';
-import { placeLabel } from './fogPlaceLabel';
-import { mapTapsActive } from './mapTaps';
+import { hasKey, t, tn } from '../i18n/index.ts';
+import { PLACE_FILL_LAYERS } from './coverageGroup.ts';
+import { placeLabel } from './fogPlaceLabel.ts';
+import { mapTapsActive } from './mapTaps.ts';
 
 /**
  * In Fog, the outline under the pointer on every level but Exact is highlighted (its `hover`

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { WORLD_VIEW } from './config';
-import type { Flavor } from './style';
-import { flavorForTheme, parseHash, pinnedFlavor, replaceHash, type HashState, type ViewState } from './viewState';
-import { currentTheme, useTheme } from '../ui/useTheme';
+import { WORLD_VIEW } from './config.ts';
+import type { Flavor } from './style.ts';
+import { flavorForTheme, parseHash, pinnedFlavor, replaceHash, type HashState, type ViewState } from './viewState.ts';
+import { currentTheme, useTheme } from '../ui/useTheme.ts';
 
 export interface InitialView {
   /** The URL's hash, the opening camera and flavor, read once per mount. */

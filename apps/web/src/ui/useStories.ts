@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { listStories, type Story } from '../api';
+import { listStories, type Story } from '../api.ts';
 
 export interface StoriesState {
   /** Newest first (`created_at`), as `GET /v1/stories` returns them. */

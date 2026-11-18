@@ -1,4 +1,4 @@
-import type { MessageKey } from './en';
+import type { MessageKey } from './en.ts';
 
 /**
  * The map app's Russian messages. Typed against en.ts's keys, so a message English has and

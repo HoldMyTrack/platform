@@ -1,4 +1,4 @@
-import type { ViewState } from './viewState';
+import type { ViewState } from './viewState.ts';
 
 /**
  * Per-country opening view for the zero-history fallback (useOpeningView.ts, docs/SPEC.md FR-4.4) — a

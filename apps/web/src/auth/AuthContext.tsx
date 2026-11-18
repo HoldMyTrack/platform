@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { SessionUser } from '../api';
+import type { SessionUser } from '../api.ts';
 
 /**
  * The signed-in user (real or demo), reachable from anywhere without prop-drilling — the

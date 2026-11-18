@@ -1,5 +1,5 @@
 import type { LayerSpecification } from 'maplibre-gl';
-import type { MapMode } from './mapMode';
+import type { MapMode } from './mapMode.ts';
 import { tilePath, withView, VARS_METADATA, type GroupPart, type LayerView } from './mapLayers.ts';
 import { EXACT } from './fogLevels.ts';
 

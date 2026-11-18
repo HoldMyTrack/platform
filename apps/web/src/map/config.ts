@@ -1,4 +1,4 @@
-import type { SatelliteSource } from './style';
+import type { SatelliteSource } from './style.ts';
 
 /**
  * Where the self-hosted basemap assets live, and the region the archive covers.

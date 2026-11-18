@@ -1,4 +1,4 @@
-import type { MapMode } from './mapMode';
+import type { MapMode } from './mapMode.ts';
 import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
 
 /**
