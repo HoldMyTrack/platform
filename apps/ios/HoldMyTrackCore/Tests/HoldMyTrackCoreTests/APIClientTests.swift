@@ -337,6 +337,39 @@ struct APIClientTests {
         #expect(try await client().track("a1").description == "Along the river")
     }
 
+    @Test func trackTypesAsksForTheNamedTypesAndReadsWhatTheServerSays() async throws {
+        StubProtocol.answer = { request in
+            let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            #expect(request.url?.path == "/v2/track-types")
+            #expect(items.first { $0.name == "types" }?.value == "kayaking,e_bike")
+            return .init(body: self.json(["types": ["kayaking": ["kind": "other", "label": "Kayaking"]]]))
+        }
+        let types = try await client().trackTypes(["kayaking", "e_bike"])
+        #expect(types == ["kayaking": TrackTypeInfo(kind: .other, label: "Kayaking")])
+        StubProtocol.answer = { request in
+            #expect(request.url?.query == nil)
+            return .init(body: self.json(["types": [:]]))
+        }
+        #expect(try await client().trackTypes([]).isEmpty)
+    }
+
+    @Test func aTripsTracksComeWithTheirTypes() async throws {
+        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "track_type": "walking", "name": NSNull(),
+                                  "distance_meters": 1200.5, "moving_seconds": 600, "duration_seconds": 700, "description": NSNull(),
+                                  "bbox": NSNull(), "pending": false, "edited": false, "private": false, "split": NSNull(), "trips": []]
+        StubProtocol.answer = { request in
+            let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
+            #expect(request.url?.path == "/v2/tracks")
+            #expect(items.first { $0.name == "trip" }?.value == "t1")
+            return .init(body: self.json(["tracks": [row], "types": ["walking": ["kind": "foot", "label": "Walk"]]]))
+        }
+        let read = try await client().tripTracks("t1")
+        #expect(read.tracks.map(\.id) == ["a1"])
+        #expect(read.types == ["walking": TrackTypeInfo(kind: .foot, label: "Walk")])
+        StubProtocol.answer = { _ in .init(body: self.json(["tracks": [row]])) }
+        await #expect(throws: (any Error).self) { try await self.client().tripTracks("t1") }
+    }
+
     @Test func theHandoffSendsTheCodeAndTheVerifier() async throws {
         var body = accountBody
         body["session_token"] = "t"

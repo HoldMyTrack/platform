@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-13.
+Last updated: 2026-11-18.
 
 ## How to read this document
 

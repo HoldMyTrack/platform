@@ -136,8 +136,7 @@ final class TrackTypes {
     /// Asks for the catalog and any of types without a label, unless the catalog was read this
     /// run and every one is known.
     func refresh(_ types: [String], api: APIClient) {
-        let missing = catalog.missing(types)
-        guard !catalogRead || !missing.isEmpty else { return }
+        guard let missing = catalog.toRead(types, catalogRead: catalogRead) else { return }
         Task {
             guard let described = try? await api.trackTypes(missing) else { return }
             catalogRead = true
