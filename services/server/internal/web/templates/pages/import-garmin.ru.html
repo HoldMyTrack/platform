@@ -42,10 +42,7 @@
       <li><strong>Никаких данных о здоровье.</strong> Пульс и другие показатели тела из файла Garmin не читаются.</li>
     </ul>
     <p>Любое другое приложение, которое выгружает GPX, FIT или TCX, работает так же: см. <a href="/gpx-viewer">как открыть файл маршрута</a>.</p>
-    {{if not .User}}<div class="page-actions">
-      <a class="page-button" href="/signup">Создать бесплатный аккаунт</a>
-      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
-    </div>{{end}}
+    {{template "guide-signup" .}}
   </section>
 </main>
 {{end}}

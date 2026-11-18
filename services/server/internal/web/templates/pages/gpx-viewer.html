@@ -44,10 +44,7 @@
       <li><strong>No health data.</strong> Heart rate and other body signals in a file aren't read.</li>
       <li><strong>They stay yours.</strong> Edit a track, delete an activity, or <a href="/help#download-data">download everything</a> at any time.</li>
     </ul>
-    {{if not .User}}<div class="page-actions">
-      <a class="page-button" href="/signup">Create a free account</a>
-      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
-    </div>{{end}}
+    {{template "guide-signup" .}}
   </section>
 </main>
 {{end}}

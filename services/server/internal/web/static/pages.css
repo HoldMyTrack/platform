@@ -1333,14 +1333,11 @@ code {
   min-height: 2px;
   background: var(--fm-accent);
   border-radius: 2px 2px 0 0;
+  cursor: pointer;
 }
 
 .trends__bar:hover {
   background: var(--fm-accent-hover);
-}
-
-.trends__bar {
-  cursor: pointer;
 }
 
 .trends__detail {

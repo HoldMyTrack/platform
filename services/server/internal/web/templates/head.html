@@ -1,0 +1,21 @@
+{{/* What every page's <head> starts and ends its shared part with, the page shell (layout.html)
+     and the map's (app/app.html) alike: the icons first, and after each shell's own lines the
+     theme, the site's stylesheets and the header's scripts. */}}
+{{define "head-icons"}}
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+{{- end}}
+{{define "head-site"}}
+    {{template "theme-head"}}
+    <link rel="stylesheet" href="{{asset "fonts.css"}}" />
+    <link rel="stylesheet" href="{{asset "tokens.css"}}" />
+    <link rel="stylesheet" href="{{asset "header.css"}}" />
+{{- end}}
+{{define "head-scripts"}}
+    <script src="{{asset "header.js"}}" defer></script>
+    <script src="{{asset "upload.js"}}" defer></script>
+{{- end}}
