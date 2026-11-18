@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, ExternalLink, Maximize, X, ZoomIn, ZoomOut }
 import { API_BASE_URL, type Photo } from '../api.ts';
 import { t } from '../i18n/index.ts';
 import { formatStartedAt } from './format.ts';
-import { arrowKeyAction, DOUBLE_CLICK_SCALE, FIT_VIEW, MAX_SCALE, ZOOM_STEP, clampView, fitSize, panBy, zoomAt, type Size, type ZoomView } from './photoZoom.ts';
+import { arrowKeyAction, DOUBLE_CLICK_SCALE, pannable, FIT_VIEW, MAX_SCALE, ZOOM_STEP, clampView, fitSize, panBy, zoomAt, type Size, type ZoomView } from './photoZoom.ts';
 
 interface PhotoViewerProps {
   /** The popup's photos: one, or a group's in route order. */
@@ -148,7 +148,7 @@ export function PhotoViewer({ photos, index, onIndex, onClose }: PhotoViewerProp
       case 'ArrowRight':
       case 'ArrowUp':
       case 'ArrowDown': {
-        const action = arrowKeyAction(event.key, view.scale > 1);
+        const action = arrowKeyAction(event.key, pannable(view, fitted, stage));
         if (action === null) return;
         if (action === 'previous') {
           if (index > 0) onIndex(index - 1);
