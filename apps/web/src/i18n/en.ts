@@ -51,6 +51,7 @@ export const en = {
   'activities.filter_by_type': 'Filter by type',
   'activities.focus_target': 'Zoom to {target}',
   'activities.footer': '{n} checked · {distance}',
+  'activities.footer_focused': '“{label}” · {distance}',
   'activities.group_summary': '{activities} ({distance})',
   'activities.open_story': 'Open “{name}”',
   'activities.story_badge.one': 'Story',

@@ -57,6 +57,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'activities.filter_by_type': 'Фильтр по типу',
   'activities.focus_target': 'Приблизить карту: {target}',
   'activities.footer': 'Отмечено: {n} · {distance}',
+  'activities.footer_focused': '«{label}» · {distance}',
   'activities.group_summary': '{activities} ({distance})',
   'activities.open_story': 'Открыть «{name}»',
   'activities.story_badge.one': '{n} история',
