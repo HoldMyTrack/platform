@@ -69,8 +69,15 @@ export function FogLevelMenu({ map, explored, forceOpen = false }: FogLevelMenuP
   };
   const inView = fogLevelInView(levels, zoom, locked);
 
+  // Picking leaves the menu open, so the arrow keys can walk the levels; a click closes it. Heard on
+  // the group, which a click on a row's text or radio reaches with a `detail` and the synthetic
+  // click an arrow key fires on a radio reaches without one. Closed a task later: a click on a
+  // row's text passes to its radio only once this click is done, and a menu closed now would take
+  // the radio away first, so the level would never be picked.
+  const closeOnClick = (event: { detail: number }) => {
+    if (event.detail > 0) window.setTimeout(() => setOpen(false));
+  };
   const pick = (level: string | null) => {
-    setOpen(false);
     if (level === null) {
       setLocked(null);
       return;
@@ -99,7 +106,8 @@ export function FogLevelMenu({ map, explored, forceOpen = false }: FogLevelMenuP
       </button>
       {open && levels.length > 0 && (
         <div className="overlays-menu__panel" role="dialog" aria-label={t('map.fog.level')}>
-          <fieldset className="overlays-menu__group">
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions -- only tells a pointer's pick from a key's; the keyboard closes with Escape */}
+          <fieldset className="overlays-menu__group" onClick={closeOnClick}>
             <legend>{t('map.fog.level')}</legend>
             <label className="overlays-menu__item">
               <input type="radio" name="fog-level" checked={locked === null} onChange={() => pick(null)} />

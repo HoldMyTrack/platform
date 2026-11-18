@@ -8,10 +8,15 @@
 /** Rows rendered past each edge of the view, so a quick scroll doesn't show blank space first. */
 export const OVERSCAN = 8;
 
+/** Rows rendered before any is measured: enough to fill a tall view, and to measure one. The
+ *  first load and every return from Fog (the panel unmounts there) start unmeasured, and
+ *  rendering the whole list then was the stall the window exists to avoid. */
+export const UNMEASURED_ROWS = 40;
+
 /** Rows `start` (inclusive) to `end` (exclusive) of `count`, for a view `viewHeight` tall
  *  scrolled to `scrollTop`. */
 export function listWindow(count: number, rowHeight: number, scrollTop: number, viewHeight: number): { start: number; end: number } {
-  if (count === 0 || rowHeight <= 0) return { start: 0, end: count };
+  if (rowHeight <= 0) return { start: 0, end: Math.min(count, UNMEASURED_ROWS) };
   const first = Math.floor(Math.max(0, scrollTop) / rowHeight);
   const last = Math.ceil((Math.max(0, scrollTop) + Math.max(0, viewHeight)) / rowHeight);
   return { start: Math.max(0, Math.min(count, first - OVERSCAN)), end: Math.min(count, last + OVERSCAN) };

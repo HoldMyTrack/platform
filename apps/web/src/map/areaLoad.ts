@@ -1,8 +1,5 @@
 import { TRACKS_MIN_ZOOM } from './config.ts';
 
-/** The most activities one area lists, and so its map draws (the server's areaActivitiesLimit). */
-export const AREA_LIMIT = 1000;
-
 /**
  * Whether the list follows the map at `zoom` (docs/SPEC.md FR-5.11): from TRACKS_MIN_ZOOM, where
  * tracks are drawn, on every settled move; further out there's nothing on the map to list. And

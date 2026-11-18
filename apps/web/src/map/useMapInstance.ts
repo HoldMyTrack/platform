@@ -218,10 +218,14 @@ export function useMapInstance({
       imageryTick = now;
       setImagery(satelliteStatus(imageryLoaded, imageryFailed, imageryWaitedMs));
     };
-    const imageryTimer = setInterval(() => {
-      reportImagery();
-      if (imageryLoaded) clearInterval(imageryTimer);
-    }, 1000);
+    // Only with imagery configured: without it no tile ever loads to stop the timer, which would
+    // tick for the page's life.
+    const imageryTimer = satelliteSource() === null
+      ? undefined
+      : setInterval(() => {
+          reportImagery();
+          if (imageryLoaded) clearInterval(imageryTimer);
+        }, 1000);
     instance.on('sourcedata', (e) => {
       if (imageryLoaded || e.sourceId !== SATELLITE_SOURCE || !e.tile) return;
       imageryLoaded = true;
@@ -231,6 +235,15 @@ export function useMapInstance({
       if (imageryLoaded || (e as { sourceId?: string }).sourceId !== SATELLITE_SOURCE) return;
       imageryFailed = true;
       reportImagery();
+    });
+
+    // MapLibre logs an error event only while nothing listens, and the two above do: everything
+    // else, a layer the renderer refused or another source's tiles, would go unseen. The basemap's
+    // and the imagery's own failures are told on the map instead.
+    instance.on('error', (e) => {
+      const sourceId = (e as { sourceId?: string }).sourceId;
+      if (sourceId === BASEMAP_SOURCE || sourceId === SATELLITE_SOURCE) return;
+      console.error('map:', e.error ?? e);
     });
 
     instance.once('load', publish);

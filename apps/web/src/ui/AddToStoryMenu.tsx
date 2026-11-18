@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { BookPlus, Check, Plus } from 'lucide-react';
 import { addStoryActivities, type Activity, type Story } from '../api';
 import { StoryDialog } from './StoryDialog';
@@ -60,6 +60,19 @@ export function AddToStoryMenu({ readOnly, target, targetName, summary, onCreate
   }, [targetKey]);
 
   const ids = target.map((a) => a.id);
+  // Whether each Story holds all of the target, worked out once while the menu is open: a
+  // checked group of 1,000 against a Story of 5,000 is 5 million compares as a list search.
+  // Keyed on the ids, not `target`, which the toolbar builds afresh on every render.
+  const held = useMemo(() => {
+    const result = new Map<string, boolean>();
+    if (!open) return result;
+    const targetIds = targetKey === '' ? [] : targetKey.split(',');
+    for (const story of stories.stories) {
+      const members = new Set(story.activityIds);
+      result.set(story.id, targetIds.every((id) => members.has(id)));
+    }
+    return result;
+  }, [open, stories.stories, targetKey]);
   const title = readOnly
     ? t('stories.demo_add')
     : targetName === null
@@ -119,7 +132,7 @@ export function AddToStoryMenu({ readOnly, target, targetName, summary, onCreate
           {stories.ready && (
             <div className="story-menu__list">
               {stories.stories.map((story) => {
-                const holdsAll = ids.every((id) => story.activityIds.includes(id));
+                const holdsAll = held.get(story.id) ?? false;
                 return (
                   <button
                     key={story.id}

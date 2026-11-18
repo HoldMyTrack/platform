@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs, like editTrackOps.test.mjs: Node strips the types from the imported module itself.
 // Only readExif is tested here; preparePhoto's resizing needs a browser's canvas.
-import { readExif } from '../src/ui/photoPrep.ts';
+import { MAX_WHOLE_DECODE_PIXELS, readExif, tooLargeToDecode } from '../src/ui/photoPrep.ts';
 
 const ASCII = 2;
 const LONG = 4;
@@ -144,4 +144,14 @@ test('not a JPEG, or a JPEG with no EXIF, reads as nothing', () => {
   assert.deepEqual(readExif(new Uint8Array([0x89, 0x50, 0x4e, 0x47]).buffer), {});
   assert.deepEqual(readExif(new Uint8Array([0xff, 0xd8, 0xff, 0xda, 0x00, 0x02]).buffer), {});
   assert.deepEqual(readExif(new ArrayBuffer(0)), {});
+});
+
+test('a large picture other than a JPEG is refused before it is decoded whole', () => {
+  assert.equal(tooLargeToDecode('image/png', 20_000, 20_000), true);
+  assert.equal(tooLargeToDecode('image/png', 10_000, 10_000), false);
+  assert.equal(tooLargeToDecode('image/webp', MAX_WHOLE_DECODE_PIXELS + 1, 1), true);
+  // A JPEG is decoded at a fraction of its size, however large, under any type it may be given.
+  assert.equal(tooLargeToDecode('image/jpeg', 20_000, 20_000), false);
+  assert.equal(tooLargeToDecode('image/pjpeg', 20_000, 20_000), false);
+  assert.equal(tooLargeToDecode('', 20_000, 20_000), false);
 });

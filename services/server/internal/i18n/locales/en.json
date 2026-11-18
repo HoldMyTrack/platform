@@ -429,6 +429,8 @@
   "upload.processing_count": "Processing {done} of {total}",
   "upload.dismiss": "Dismiss",
   "upload.too_many": "Too many files selected ({n}): choose up to 20 at a time.",
+  "upload.gz_refused": "{filename} is compressed. Unpack it first, then upload the GPX, FIT or TCX file inside.",
+  "upload.type_refused": "{filename} isn't a GPX, FIT or TCX file, so it can't be imported.",
   "upload.zip_refused": "{filename} is a .zip archive, which can't be imported. Upload the GPX, FIT or TCX files inside it instead.",
   "upload.already": "{filename} was already uploaded before.",
   "upload.failed_transfer": "{filename}: {error}",

@@ -7,6 +7,7 @@ import { useAuth } from '../auth/AuthContext';
 import { lang, t } from '../i18n';
 import { knownTimeZone } from './timeZone';
 import type { MessageKey } from '../i18n/en';
+import { memorialLabel, spotAddress, wikipediaURL } from './spotText';
 
 export interface SpotPopupProps {
   map: MapLibreMap;
@@ -28,27 +29,6 @@ const CATEGORY_KEYS: Record<SpotCategory, MessageKey> = {
 
 /** How long "Copied" shows in place of Copy address. */
 const COPIED_MS = 1500;
-
-/** What Copy address copies: OSM's address, or the coordinates when it has none — every
- *  navigator accepts "lat, lon". */
-export function spotAddress(spot: Spot): string {
-  return spot.address ?? `${spot.lat.toFixed(6)}, ${spot.lon.toFixed(6)}`;
-}
-
-/** The article OSM's `wikipedia` tag names, "lang:Article title" — the server only keeps that
- *  form — on that language's Wikipedia. */
-export function wikipediaURL(tag: string): string {
-  const colon = tag.indexOf(':');
-  const title = tag.slice(colon + 1).trim().replace(/ /g, '_');
-  return `https://${tag.slice(0, colon)}.wikipedia.org/wiki/${encodeURIComponent(title)}`;
-}
-
-/** OSM's `memorial` type as words: "war_memorial" → "War memorial". OSM's own English
- *  vocabulary, shown as it is in every language. */
-export function memorialLabel(memorial: string): string {
-  const words = memorial.replace(/[_;]+/g, ' ').trim();
-  return words.charAt(0).toUpperCase() + words.slice(1);
-}
 
 /**
  * A spot's popup (IMPLEMENTATION.md §4.25, SPEC.md FR-14.3): its name and category, what OSM
@@ -107,6 +87,7 @@ export function SpotPopup({ map, spot, capturedAt, onClose }: SpotPopupProps) {
     spot.memorial ? memorialLabel(spot.memorial) : null,
     spot.startDate ? t('spots.since', { date: spot.startDate }) : null,
   ].filter((item): item is string => item !== null);
+  const wiki = spot.wikipedia ? wikipediaURL(spot.wikipedia) : null;
   return createPortal(
     <div className="spot-popup__body" data-testid="spot-popup">
       <div className="spot-popup__title">{spot.name ?? category}</div>
@@ -131,8 +112,8 @@ export function SpotPopup({ map, spot, capturedAt, onClose }: SpotPopupProps) {
           {copied ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
           {copied ? t('spots.copied') : spot.address ? t('spots.copy_address') : t('spots.copy_location')}
         </button>
-        {spot.wikipedia && (
-          <a className="spot-popup__btn" href={wikipediaURL(spot.wikipedia)} target="_blank" rel="noopener noreferrer">
+        {wiki && (
+          <a className="spot-popup__btn" href={wiki} target="_blank" rel="noopener noreferrer">
             <BookOpen size={15} aria-hidden="true" />
             {t('spots.wikipedia')}
           </a>

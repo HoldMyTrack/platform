@@ -187,6 +187,22 @@ export interface PreparedPhoto {
 /** Thrown when the browser can't decode the picked file (most HEIC files outside Safari). */
 export class UnreadablePhotoError extends Error {}
 
+/** A picture too large to decode safely here: one that isn't a JPEG is decoded whole, 4 bytes a
+ *  pixel, and 100 MP of PNG is 400 MB of memory before it's scaled down. */
+export class OversizedPhotoError extends Error {}
+
+/** The most pixels a picture other than a JPEG may have, which only a JPEG is decoded at a
+ *  fraction of its size for (preparePhoto). */
+export const MAX_WHOLE_DECODE_PIXELS = 100_000_000;
+
+/** Types that may be a JPEG: some platforms report a .jpg as image/pjpeg or with no type at all. */
+const MAYBE_JPEG = new Set(['image/jpeg', 'image/pjpeg', '']);
+
+/** Whether a picture this size and type would be decoded whole past MAX_WHOLE_DECODE_PIXELS. */
+export function tooLargeToDecode(type: string, width: number, height: number): boolean {
+  return !MAYBE_JPEG.has(type) && width * height > MAX_WHOLE_DECODE_PIXELS;
+}
+
 function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
   return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
 }
@@ -278,6 +294,8 @@ export async function preparePhoto(file: File): Promise<PreparedPhoto> {
   // decodes it whole in all three, even when asked for a smaller one. The thumbnail is drawn
   // from the resized copy.
   const img = await loadImage(file);
+  // The <img> knows its size from the header, before any pixel is decoded.
+  if (tooLargeToDecode(file.type, img.naturalWidth, img.naturalHeight)) throw new OversizedPhotoError();
   const scale = Math.min(1, PHOTO_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
   const width = Math.max(1, Math.round(img.naturalWidth * scale));
   const height = Math.max(1, Math.round(img.naturalHeight * scale));

@@ -1,6 +1,5 @@
 import type { LngLatBoundsLike, Map as MapLibreMap } from 'maplibre-gl';
 import type { BBox } from '../api';
-import type { ViewState } from './viewState';
 
 /**
  * Flying the map to an activity's bounds.
@@ -68,10 +67,4 @@ export function flyToBBox(map: MapLibreMap, bbox: BBox, tag: Record<string, unkn
   const y = (clientHeight * (1 - FLY_FILL)) / 2;
   const padding = { top: y, bottom: y, left: x, right: x };
   map.fitBounds(bounds, { padding, maxZoom: MAX_FLY_ZOOM, duration: FLY_DURATION_MS }, { ...tag, [APP_FLIGHT]: true });
-}
-
-/** For a bare point+zoom target (a country or world view) rather than an activity's bbox —
- *  MapView's zero-history fallback, docs/SPEC.md FR-4.4. */
-export function flyToView(map: MapLibreMap, view: ViewState): void {
-  map.flyTo({ center: [view.longitude, view.latitude], zoom: view.zoom, duration: FLY_DURATION_MS }, { [APP_FLIGHT]: true });
 }

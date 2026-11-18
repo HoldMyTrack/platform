@@ -37,8 +37,9 @@ type Config struct {
 	SMTPUsername   string
 	SMTPPassword   string
 	SMTPFrom       string
-	// AppBaseURL is the app's own origin: the links in its emails point there, and
-	// corsAllowedOrigins (httpapi/server.go) accepts it. Read by `serve` and `work`.
+	// AppBaseURL is the app's own origin: the links in its emails point there, and one on this
+	// machine (IsLocal) lets the dev servers' origins call the API (httpapi's devOrigins). Read
+	// by `serve` and `work`.
 	AppBaseURL string
 	// BasemapOrigin is where the basemap archive, fonts and sprites actually live — the
 	// origin the served style document (internal/mapstyle, ARCHITECTURE.md §2.1) resolves
@@ -281,7 +282,7 @@ func rateLimitsOff(appBaseURL string) (bool, error) {
 	case "on":
 		return false, nil
 	case "off":
-		if !isLocal(appBaseURL) {
+		if !IsLocal(appBaseURL) {
 			return false, fmt.Errorf("config: RATE_LIMITS=off is for local development only, and APP_BASE_URL is %q", appBaseURL)
 		}
 		return true, nil
@@ -293,11 +294,11 @@ func rateLimitsOff(appBaseURL string) (bool, error) {
 // SkipsVerificationInPublic reports a deployment others can reach that skips email
 // verification: a load test's override left behind lets anyone claim any address.
 func (c Config) SkipsVerificationInPublic() bool {
-	return c.SkipEmailVerification && !isLocal(c.AppBaseURL)
+	return c.SkipEmailVerification && !IsLocal(c.AppBaseURL)
 }
 
-// isLocal reports whether rawURL's host is this machine.
-func isLocal(rawURL string) bool {
+// IsLocal reports an APP_BASE_URL on this machine: local development, never a deployment.
+func IsLocal(rawURL string) bool {
 	u, err := url.Parse(rawURL)
 	if err != nil {
 		return false

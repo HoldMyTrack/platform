@@ -6,7 +6,7 @@ import type { PhotoMarkerItem, PhotoMarkerOverlay } from '../map/photos';
 import { formatClockTime } from './format';
 import { draftRows, waitingPhotos, type NewPhoto, type PhotoDraft } from './photoDraft';
 import { fractionAt, photoTrack, pointAt, startFraction, type PhotoTrack, type PlaceAnchor } from './photoTrack';
-import { preparePhoto, UnreadablePhotoError } from './photoPrep';
+import { OversizedPhotoError, preparePhoto, UnreadablePhotoError } from './photoPrep';
 import { MAX_PHOTO_CAPTION_LEN } from '../limits';
 
 /** The slider's steps — fine enough that a step on a long route is a few metres. */
@@ -154,7 +154,14 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
         previous = routeAt !== null ? { t: routeAt } : { waiting: key };
         setDraft((d) => ({ ...d, added: [...d.added, entry] }));
       } catch (err) {
-        const message = err instanceof UnreadablePhotoError ? t('photos.unreadable') : err instanceof Error ? err.message : String(err);
+        const message =
+          err instanceof UnreadablePhotoError
+            ? t('photos.unreadable')
+            : err instanceof OversizedPhotoError
+              ? t('photos.oversized')
+              : err instanceof Error
+                ? err.message
+                : String(err);
         failed.push(t('photos.upload_failed', { name: file.name, message }));
         setFailures([...failed]);
       }

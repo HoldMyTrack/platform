@@ -1001,7 +1001,6 @@ button.activities-panel__story-badge:hover {
    use the same chips. One shared chip look, matching the mockup: a soft tinted square rather than a bare icon, so the group actions read as one
    family regardless of which one is destructive. */
 .activities-panel__edit,
-.activities-panel__edit-track,
 .activities-panel__add-story,
 .activities-panel__delete,
 .activities-panel__visibility,
@@ -1021,7 +1020,6 @@ button.activities-panel__story-badge:hover {
 }
 
 .activities-panel__edit:hover:not(:disabled),
-.activities-panel__edit-track:hover:not(:disabled),
 .activities-panel__add-story:hover:not(:disabled),
 .activities-panel__delete:hover:not(:disabled),
 .activities-panel__visibility:hover:not(:disabled) {
@@ -1033,7 +1031,6 @@ button.activities-panel__story-badge:hover {
    checked yet — visibly inert, not just a hover/click no-op, so "there's nothing to act on"
    reads before anyone hovers for the title tooltip. */
 .activities-panel__edit:disabled,
-.activities-panel__edit-track:disabled,
 .activities-panel__add-story:disabled,
 .activities-panel__delete:disabled,
 .activities-panel__visibility:disabled,
@@ -1536,14 +1533,6 @@ button.activities-panel__story-badge:hover {
 
 .activities-panel__date-hint {
   grid-column: 2;
-  color: var(--fm-ink-muted);
-  font-size: var(--fm-text-xs);
-}
-
-/* The list was cut at the area's limit (FR-5.11): one muted line over the rows. */
-.activities-panel__capped {
-  margin: 0;
-  padding: var(--fm-space-4) var(--fm-space-16);
   color: var(--fm-ink-muted);
   font-size: var(--fm-text-xs);
 }

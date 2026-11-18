@@ -93,7 +93,6 @@ export function ActivityRow({
         className="activities-panel__text"
         disabled={isPending}
         aria-pressed={focused}
-        aria-label={t('activities.fly_to', { label })}
         title={activity.private ? t('activities.private_title') : activity.bbox === null ? t('activities.no_track') : label}
         onClick={onFocus}
       >

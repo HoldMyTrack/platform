@@ -15,7 +15,7 @@ RUN apt-get update \
  && rm -rf /var/lib/apt/lists/*
 # `npm run basemap` with no host binary. The path is /go-pmtiles — verified from the
 # image config; it is NOT /pmtiles.
-COPY --from=protomaps/go-pmtiles:v1.31.2 /go-pmtiles /usr/local/bin/pmtiles
+COPY --from=protomaps/go-pmtiles:v1.31.2@sha256:06574f01f55a78f78f887bc7ebf729a5c093c0d6e17d9876300cfcb0758b59d3 /go-pmtiles /usr/local/bin/pmtiles
 # Staged outside /app/node_modules, because that path is a volume mount at runtime.
 COPY --from=deps /app/node_modules /opt/deps/node_modules
 COPY docker/entrypoint.sh /usr/local/bin/holdmytrack-entrypoint

@@ -150,7 +150,7 @@
         list.append(li);
       });
       if (!shown.length) {
-        var empty = el('li', 'search-picker__empty', (select.dataset.noMatches || '').replace('{query}', query));
+        var empty = el('li', 'search-picker__empty', (select.dataset.noMatches || '').replace('{query}', function () { return query; }));
         empty.setAttribute('role', 'presentation');
         list.append(empty);
       }

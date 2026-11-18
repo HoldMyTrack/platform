@@ -6,7 +6,7 @@
     <div class="profile__head">
       <div>
         {{/* In an app, its own screen's title is the heading, and there is no Upload menu. */}}
-        {{if not $.InApp}}<h2 class="profile__title" id="sync-history">{{t "sync.title"}}</h2>{{end}}
+        {{if not $.InApp}}<h1 class="profile__title" id="sync-history">{{t "sync.title"}}</h1>{{end}}
         <p class="profile__subtext">{{if .IsDemo}}{{t "sync.demo"}}{{else if $.InApp}}{{t "sync.subtext_app"}}{{else}}{{t "sync.subtext"}}{{end}}</p>
       </div>
     </div>

@@ -14,12 +14,11 @@ export const API_BASE_URL: string =
 
 /**
  * The sole place the API's major version lives on this side — mirrors
- * services/server/internal/httpapi/server.go's own `apiPrefix`/`tilesPrefix` constants, so a
- * future `/v2` cutover is a matter of introducing a second constant here, not a
- * hunt-and-replace across every call site below.
+ * services/server/internal/httpapi/server.go's own `apiPrefix` constant, so a future `/v2`
+ * cutover is a matter of introducing a second constant here, not a hunt-and-replace across
+ * every call site below. The tiles' own prefix is mapLayers.ts's TILES.
  */
 export const API_V1 = '/v1';
-export const TILES_V1 = '/tiles/v1';
 
 /** A shape the API contract (services/server/api/) names, as `apiSchema.ts` generates it from the
  *  contract (`npm run gen:api-types`). */

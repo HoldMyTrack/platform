@@ -415,8 +415,14 @@ func writeHTML(w http.ResponseWriter, status int, cacheControl string, body []by
 }
 
 // StaticHandler serves static/ (the pages' stylesheet, the logo) at /static/. Every reference
-// goes through the asset func's ?v= cache-buster, so a year's max-age is safe.
+// goes through the asset func's ?v= cache-buster, so a year's max-age is safe, while the version
+// names a build: an image built without GIT_SHA calls itself "unknown" (services/server/Dockerfile),
+// the same ?v= from one deploy to the next, so its files are revalidated instead.
 func (r *Renderer) StaticHandler() http.Handler {
+	cacheControl := "public, max-age=31536000, immutable"
+	if r.version == "" || r.version == "unknown" {
+		cacheControl = "no-cache"
+	}
 	sub, err := fs.Sub(r.fsys, "static")
 	if err != nil {
 		panic(err) // fs.Sub only fails on an invalid path literal
@@ -429,7 +435,7 @@ func (r *Renderer) StaticHandler() http.Handler {
 			return
 		}
 		if !r.reload {
-			w.Header().Set("Cache-Control", "public, max-age=31536000, immutable")
+			w.Header().Set("Cache-Control", cacheControl)
 		}
 		files.ServeHTTP(w, req)
 	})

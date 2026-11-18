@@ -435,6 +435,8 @@
   "upload.processing_count": "Обработано {done} из {total}",
   "upload.dismiss": "Скрыть",
   "upload.too_many": "Выбрано слишком много файлов ({n}): выбирайте до 20 за раз.",
+  "upload.gz_refused": "{filename} сжат. Сначала распакуйте его, затем загрузите файл GPX, FIT или TCX из него.",
+  "upload.type_refused": "{filename} — не файл GPX, FIT или TCX, его импортировать нельзя.",
   "upload.zip_refused": "{filename} — zip-архив, его импортировать нельзя. Загрузите файлы GPX, FIT или TCX из него.",
   "upload.already": "{filename} уже был загружен раньше.",
   "upload.failed_transfer": "{filename}: {error}",
