@@ -8,7 +8,9 @@ import { overlayInPlace } from './overlayOrder.ts';
  * layer only has the simplified geometry, and is hidden entirely while editing anyway. Four
  * layers over it: the kept line, the preview of what the knobs would remove (faded and
  * dashed), every recorded point, and the two knob points — plus, for a split (§4.7.8), the
- * second piece's line in a color of its own.
+ * second piece's line in a color of its own. A point being dragged is drawn from a second,
+ * three-point source over them: re-sending a five-hour track at 1 Hz to the worker on every
+ * pointer move dropped the drag to a few frames a second on a throttled CPU.
  */
 const TRACK_EDIT_SOURCE_ID = 'track-edit';
 const LINE_LAYER_ID = 'track-edit-line';
@@ -16,6 +18,9 @@ const SECOND_LAYER_ID = 'track-edit-second';
 const PREVIEW_LAYER_ID = 'track-edit-preview';
 const TRACK_EDIT_POINTS_LAYER_ID = 'track-edit-points';
 const KNOBS_LAYER_ID = 'track-edit-knobs';
+const DRAG_SOURCE_ID = 'track-edit-drag';
+const DRAG_LINE_LAYER_ID = 'track-edit-drag-line';
+const DRAG_POINT_LAYER_ID = 'track-edit-drag-point';
 
 const ACCENT = '#b07e2e';
 const REMOVED = '#c53030';
@@ -37,6 +42,9 @@ const EMPTY: { type: 'FeatureCollection'; features: Feature[] } = { type: 'Featu
 export function ensureTrackEditLayer(map: MapLibreMap, beforeId: string | undefined): void {
   if (!map.getSource(TRACK_EDIT_SOURCE_ID)) {
     map.addSource(TRACK_EDIT_SOURCE_ID, { type: 'geojson', data: EMPTY });
+  }
+  if (!map.getSource(DRAG_SOURCE_ID)) {
+    map.addSource(DRAG_SOURCE_ID, { type: 'geojson', data: EMPTY });
   }
   const add = (layer: Parameters<MapLibreMap['addLayer']>[0]) => {
     if (!map.getLayer(layer.id)) map.addLayer(layer, beforeId);
@@ -88,8 +96,31 @@ export function ensureTrackEditLayer(map: MapLibreMap, beforeId: string | undefi
     filter: ['==', ['get', 'role'], 'knob'],
     paint: { 'circle-radius': 7, 'circle-color': ACCENT, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 },
   });
+  add({
+    id: DRAG_LINE_LAYER_ID,
+    type: 'line',
+    source: DRAG_SOURCE_ID,
+    filter: ['==', ['geometry-type'], 'LineString'],
+    layout: { 'line-cap': 'round', 'line-join': 'round' },
+    paint: { 'line-color': ACCENT, 'line-width': 4, 'line-opacity': 0.95 },
+  });
+  add({
+    id: DRAG_POINT_LAYER_ID,
+    type: 'circle',
+    source: DRAG_SOURCE_ID,
+    filter: ['==', ['geometry-type'], 'Point'],
+    paint: { 'circle-radius': 5, 'circle-color': '#ffffff', 'circle-stroke-color': ACCENT, 'circle-stroke-width': 2 },
+  });
   // Back under the labels when a group added since has gone in above (overlayOrder.ts).
-  const ids = [PREVIEW_LAYER_ID, LINE_LAYER_ID, SECOND_LAYER_ID, TRACK_EDIT_POINTS_LAYER_ID, KNOBS_LAYER_ID];
+  const ids = [
+    PREVIEW_LAYER_ID,
+    LINE_LAYER_ID,
+    SECOND_LAYER_ID,
+    TRACK_EDIT_POINTS_LAYER_ID,
+    KNOBS_LAYER_ID,
+    DRAG_LINE_LAYER_ID,
+    DRAG_POINT_LAYER_ID,
+  ];
   if (!overlayInPlace(map.getLayersOrder(), ids, beforeId)) for (const id of ids) map.moveLayer(id, beforeId);
 }
 
@@ -152,8 +183,44 @@ export function setTrackEditData(
   source.setData({ type: 'FeatureCollection', features });
 }
 
+/** Draws the point being dragged and its line to its neighbours (dragPreview), or nothing when
+ *  `line` is empty. The point is the line's middle, or its only end at either end of the track. */
+export function setTrackDragData(map: MapLibreMap, line: readonly number[][], dragged: readonly number[] | null): void {
+  const source = map.getSource(DRAG_SOURCE_ID) as GeoJSONSource | undefined;
+  if (!source) return;
+  const features: Feature[] = [];
+  if (line.length >= 2) features.push({ type: 'Feature', properties: { role: 'drag' }, geometry: { type: 'LineString', coordinates: line.map((c) => [...c]) } });
+  if (dragged) features.push({ type: 'Feature', properties: { role: 'drag' }, geometry: { type: 'Point', coordinates: [...dragged] } });
+  source.setData({ type: 'FeatureCollection', features });
+}
+
+/** Clears the drag's drawing once the whole track has been redrawn from the drop: the worker
+ *  takes a moment over a long track, and clearing sooner shows the point back where it was. The
+ *  source reports the new data ('content') while its old tiles are still the ones drawn, so this
+ *  waits for the tiles loaded after it, or a few seconds at most. The returned function cancels it. */
+export function clearTrackDragAfterRedraw(map: MapLibreMap): () => void {
+  let updated = false;
+  const done = () => {
+    cancel();
+    setTrackDragData(map, [], null);
+  };
+  const onData = (e: { sourceId?: string; sourceDataType?: string; isSourceLoaded?: boolean }) => {
+    if (e.sourceId !== TRACK_EDIT_SOURCE_ID) return;
+    if (e.sourceDataType === 'content') updated = true;
+    else if (updated && e.isSourceLoaded) done();
+  };
+  const timer = setTimeout(done, 3000);
+  const cancel = () => {
+    clearTimeout(timer);
+    map.off('sourcedata', onData);
+  };
+  map.on('sourcedata', onData);
+  return cancel;
+}
+
 export function clearTrackEdit(map: MapLibreMap): void {
   (map.getSource(TRACK_EDIT_SOURCE_ID) as GeoJSONSource | undefined)?.setData(EMPTY);
+  (map.getSource(DRAG_SOURCE_ID) as GeoJSONSource | undefined)?.setData(EMPTY);
 }
 
 /** The recorded point nearest `at`, within a few pixels, by its timestamp — not whichever the

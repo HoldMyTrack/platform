@@ -1,9 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { getActivityTrackPoints, type Activity, type TrackEdit, type TrackPoint } from '../api.ts';
 import { beneathBasemapLabels } from '../map/applyLayers.ts';
-import { clearTrackEdit, ensureTrackEditLayer, onTrackEditPointClick, onTrackEditPointDrag, setTrackEditData, type EditPreview } from '../map/trackEdit.ts';
-import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps.ts';
+import {
+  clearTrackDragAfterRedraw,
+  clearTrackEdit,
+  ensureTrackEditLayer,
+  onTrackEditPointClick,
+  onTrackEditPointDrag,
+  setTrackDragData,
+  setTrackEditData,
+  type EditPreview,
+} from '../map/trackEdit.ts';
+import { applyEdit, chopOp, cumulativeDistances, cutOp, dragPreview, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps.ts';
 import { distanceValue, formatClockTime, unitLabel } from './format.ts';
 import { useUnitSystem } from './units.ts';
 import { t, tn } from '../i18n/index.ts';
@@ -147,23 +156,42 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
 
   // Draw, and redraw after a theme swap discards custom layers (styledata) — this overlay is
   // owned here, not by useMapLayers' reattach, since it only exists during a session.
-  // A point being dragged is drawn where the pointer is, its line segments following it.
-  const shown = useMemo(
-    () => (dragging ? visible.map((p): TrackPoint => (p[2] === dragging.t ? [dragging.lon, dragging.lat, p[2]] : p)) : visible),
-    [visible, dragging],
-  );
   useEffect(() => {
     const draw = () => {
       ensureTrackEditLayer(map, beneathBasemapLabels(map));
-      if (shown.length > 0) setTrackEditData(map, shown, lo, hi, preview, splitShown !== null && splitShown >= 0 ? splitShown : null);
+      if (visible.length > 0) setTrackEditData(map, visible, lo, hi, preview, splitShown !== null && splitShown >= 0 ? splitShown : null);
     };
     draw();
     map.on('styledata', draw);
     return () => {
       map.off('styledata', draw);
     };
-  }, [map, shown, lo, hi, preview, splitShown]);
-  useEffect(() => () => clearTrackEdit(map), [map]);
+  }, [map, visible, lo, hi, preview, splitShown]);
+  // A point being dragged is drawn where the pointer is, with the line to its neighbours, from
+  // the drag's own small source: the whole track is redrawn once, when it's let go. Its index is
+  // found once per drag, not on every pointer move.
+  const dragT = dragging?.t ?? null;
+  const dragIndex = useMemo(() => (dragT === null ? -1 : visible.findIndex((p) => p[2] === dragT)), [visible, dragT]);
+  const pendingDragClear = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    if (!dragging) return;
+    pendingDragClear.current?.();
+    pendingDragClear.current = null;
+    const draw = () => setTrackDragData(map, dragPreview(visible, dragIndex, dragging.lon, dragging.lat), [dragging.lon, dragging.lat]);
+    draw();
+    // A theme swap mid-drag re-adds the drag's source empty (ensureTrackEditLayer, above).
+    map.on('styledata', draw);
+    return () => {
+      map.off('styledata', draw);
+    };
+  }, [map, visible, dragIndex, dragging]);
+  useEffect(
+    () => () => {
+      pendingDragClear.current?.();
+      clearTrackEdit(map);
+    },
+    [map],
+  );
 
   // Delete point mode: a click on a point drops it. Never below two points — a track needs
   // two to stay a track.
@@ -182,7 +210,14 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
       onMove: (t, lon, lat) => setDragging({ t, lon, lat }),
       onEnd: (t, to) => {
         setDragging(null);
-        if (to) push(moveOp(t, to[0], to[1]));
+        if (!to) {
+          // Abandoned or let go unmoved: nothing is redrawn to wait for.
+          setTrackDragData(map, [], null);
+          return;
+        }
+        push(moveOp(t, to[0], to[1]));
+        pendingDragClear.current?.();
+        pendingDragClear.current = clearTrackDragAfterRedraw(map);
       },
     });
   }, [map, pointMode, busy, push]);

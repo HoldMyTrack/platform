@@ -96,6 +96,17 @@ export function moveOp(t: number, lon: number, lat: number): EditOp {
   return { kind: 'move', t, to: [round(lon), round(lat)] };
 }
 
+/** The dragged point, `visible[i]`, moved to `lon`/`lat`, with the line to its neighbours either
+ *  side: what a drag redraws, in place of all of `visible`. Empty for an index not in it. */
+export function dragPreview(visible: readonly TrackPoint[], i: number, lon: number, lat: number): number[][] {
+  if (i < 0 || i >= visible.length) return [];
+  const around = (j: number) => {
+    const p = visible[j];
+    return p ? [[p[0], p[1]]] : [];
+  };
+  return [...around(i - 1), [lon, lat], ...around(i + 1)];
+}
+
 /** The op a Chop press commits for knobs on `visible[lo]` and `visible[hi]`, or null when the
  *  knobs sit on both ends and there's nothing to chop. */
 export function chopOp(visible: readonly TrackPoint[], lo: number, hi: number): EditOp | null {
