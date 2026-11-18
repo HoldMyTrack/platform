@@ -3,7 +3,7 @@ import { haversineM } from '../geo.ts';
 
 /**
  * The Edit route session's history (§4.7.7) — pure functions, no React. Android's
- * `EditRouteOps.kt` runs the same cases, `testdata/client-rules/edit-route-*.json`.
+ * `EditTrackOps.kt` runs the same cases, `testdata/client-rules/edit-route-*.json`.
  *
  * A session is the edit the track already had when the editor opened (`base`) plus a stack of
  * ops committed since. What the map shows is always a replay of the whole stack on top of the
