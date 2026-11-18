@@ -17,7 +17,7 @@ import android.os.LocaleList
  */
 object AppLanguage {
 
-    /** A sign-in or `GET /v1/auth/me`: take the account's language if it has chosen one. */
+    /** A sign-in or `GET /v2/auth/me`: take the account's language if it has chosen one. */
     fun followAccount(context: Context, locale: String) = apply(context, locale, clearOnAutomatic = false)
 
     /**

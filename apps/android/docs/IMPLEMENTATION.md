@@ -43,7 +43,7 @@ stateDiagram-v2
 - **Only a `401` clears the session**, on the map and on the verify screen. Any other failure keeps the token, shows a notice and retries on the next resume.
 - **`MainActivity` checks the session before `setContentView`**, so a signed-out launch creates no `MapView` and requests no style.
 - **Sign-in, verify email and first-run Settings are each the root of a new task**, so no screen that needs a session is left under them and Back leaves the app.
-- **Email confirmation and Country are kept on disk** so a cold start routes before `GET /v1/auth/me` answers; that answer refreshes both.
+- **Email confirmation and Country are kept on disk** so a cold start routes before `GET /v2/auth/me` answers; that answer refreshes both.
 - **The verify screen has no change-email form**: the phone keys its state by email (§2.3), and a change would orphan it. `SyncActivity` checks confirmation too, since Health Connect's rationale intent opens it without the map.
 
 ### 1.3 Tabs
@@ -96,7 +96,7 @@ The shared client's interceptors apply to the map's requests too:
 
 ### 3.1 Layers and the style
 
-The style is `GET /v1/map/style/{flavor}?lang=`, unmodified, fetched beside `GET /v1/map/layers` (root `docs/ARCHITECTURE.md` §2.1), whose groups `MapLayers` builds by type and property name: MapLibre Native can't add a layer from JSON. Another build's document reloads the style once.
+The style is `GET /v2/map/style/{flavor}?lang=`, unmodified, fetched beside `GET /v2/map/layers` (root `docs/ARCHITECTURE.md` §2.1), whose groups `MapLayers` builds by type and property name: MapLibre Native can't add a layer from JSON. Another build's document reloads the style once.
 
 **A style reload discards every custom layer and image**, so everything that adds to the style is idempotent and re-adds on each load: `MapLayers`, `MapOverlays`, `MapSatellite`, `MapRoads`, `MapSpots` with its badge bitmaps, the Sync candidates and the Private location circles. `syncSession()` attaches them once the session is verified.
 
@@ -120,7 +120,7 @@ Where the web has a rule, the app ports it as a pure Kotlin class running the sh
 The split follows the web's: `MapSession` holds the area and Dates or the Trip shown and the camera's next flight, `PanelState` the focus, checked group, hidden set and filters, and `TracksPanel` binds views and redraws from it in one `render()`. `MapFragment` owns the map and composes one controller per feature; `AreaController` binds the session to the list, Dates' dialog and the camera's settling. Trap: a controller that registers a permission request or the photo picker is created as a fragment field, since registering after the fragment starts throws; Back callbacks are asked last-added first, export's before the editors' before the sheet's.
 
 - **The list follows the map, never the app's own flights**: `CameraFramer` marks each camera move it makes, the opening view and every fit, and `AreaController.onCameraIdle` skips the settle that ends one (`consumeAppFlight`), or focusing a row would shrink the list to that row's route; a gesture that cancels a flight clears the mark. Dates' flight asks about where it lands itself, since that may be the view already asked about.
-- **The area's rows are slim** (`GET /v1/activities/area`): `EditController.open` reads each track in full (`GET /v1/activities/{id}`) before the window opens, for the description, the route's edit and the photos.
+- **The area's rows are slim** (`GET /v2/tracks/area`): `EditController.open` reads each track in full (`GET /v2/tracks/{id}`) before the window opens, for the description, the route's edit and the photos.
 - **Touch order**: a tap asks `MapSpots.spotAt` first unless an editor holds the map, so a spot's tap never focuses a track under it. The route editor's point drags and the Private location handle are taken in a touch listener on the `MapView`, which runs before MapLibre's gestures (the web's `dragPan.disable()`). Photo markers are views, so their taps never reach the map.
 - **Edits run one request at a time**: parallel deletes raced each other's coverage re-render. A group edit resends each track's own name and description, since the endpoint replaces them, and skips saves already sent on a retry.
 - **Pending**: a row entering or leaving Pending refetches the routes and starts the coverage watch, and while one is, the Pending check is polled (root `docs/IMPLEMENTATION.md` §4.2.5).
@@ -155,14 +155,14 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 
 ### 4.2 Load
 
-**`sync/WaitingLoader.load` is the only place Health Connect is read**, from a screen's scope. It reads 90 days of sessions with routes, asks `POST /v1/sync/known` which ids the server has (root `docs/IMPLEMENTATION.md` §4.0.3), hands those still processing to `SyncProgress`, prunes hidden sessions only after a read that withheld nothing, and replaces `WaitingStore`'s rows in one transaction. A cancelled or failed read changes nothing, so cancelling needs no cleanup. There is no cursor: each Load asks Health Connect and the server afresh, so a reinstall or second phone agrees and a deleted track is offered again.
+**`sync/WaitingLoader.load` is the only place Health Connect is read**, from a screen's scope. It reads 90 days of sessions with routes, asks `POST /v2/sync/known` which ids the server has (root `docs/IMPLEMENTATION.md` §4.0.3), hands those still processing to `SyncProgress`, prunes hidden sessions only after a read that withheld nothing, and replaces `WaitingStore`'s rows in one transaction. A cancelled or failed read changes nothing, so cancelling needs no cleanup. There is no cursor: each Load asks Health Connect and the server afresh, so a reinstall or second phone agrees and a deleted track is offered again.
 
 **`sync/WaitingStore` keeps what a Load found**, in a second SQLite database, so the tab opens without reading Health Connect. It keeps each session's drawn line, not its route; a session is read again by id when it's sent.
 
 ### 4.3 Sending and landing
 
 - **`sync/SyncRunner.send`** sends sessions in batches below the server's cap, then each recording alone, deleting it from the phone once taken. The JSON is built from the route as read, never the simplified line. A failed request stops the run, leaving the rest ticked.
-- **`sync/SyncProgress` is process-wide**: it reads nothing from Health Connect, so it outlives the tab. While it holds anything and has a listener it polls `/v1/sync/known` (`syncOutcome`). A sent recording stays in the store, marked, until it lands or fails; `resume` takes marked rows back after a restart. **A landing refetches the tracks tile at once**, since the tile version moves only after the coverage render that follows ingest.
+- **`sync/SyncProgress` is process-wide**: it reads nothing from Health Connect, so it outlives the tab. While it holds anything and has a listener it polls `/v2/sync/known` (`syncOutcome`). A sent recording stays in the store, marked, until it lands or fails; `resume` takes marked rows back after a restart. **A landing refetches the tracks tile at once**, since the tile version moves only after the coverage render that follows ingest.
 - **The candidates on the map**: the account's routes step aside on the Sync tab. `map/Simplify` thins each route for drawing only, with speeds by the server's track-metrics rule on the coarser line, so a candidate's pace bands are smoother than the synced track's.
 
 ### 4.4 File upload

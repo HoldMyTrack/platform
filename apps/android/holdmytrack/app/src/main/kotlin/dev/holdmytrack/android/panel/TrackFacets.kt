@@ -54,13 +54,13 @@ object TrackFacets {
         val counts = LinkedHashMap<String, Int>()
         for (track in tracks) {
             if (!passesDistance(track, distanceFilter)) continue
-            counts.merge(track.activityType, 1, Int::plus)
+            counts.merge(track.trackType, 1, Int::plus)
         }
         return counts.map { (type, count) -> TypeFacet(type, count) }.sortedByDescending { it.count }
     }
 
     fun passesFilters(track: Track, excludedTypes: Set<String>, distanceFilter: DistanceRange?): Boolean {
-        if (track.activityType in excludedTypes) return false
+        if (track.trackType in excludedTypes) return false
         return passesDistance(track, distanceFilter)
     }
 }

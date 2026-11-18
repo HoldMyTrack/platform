@@ -3,7 +3,7 @@ package dev.holdmytrack.android.map
 import java.time.Instant
 
 /**
- * What the map asks `GET /v1/spots/captures` for on a return to the app: `since` the newest
+ * What the map asks `GET /v2/spots/captures` for on a return to the app: `since` the newest
  * capture it already has, so the answer is usually empty (`docs/SPEC.md` FR-14.2), or null, for
  * the whole list, when it has none.
  */

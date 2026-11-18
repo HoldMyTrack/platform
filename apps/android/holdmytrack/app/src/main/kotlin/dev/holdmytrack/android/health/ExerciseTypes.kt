@@ -4,7 +4,7 @@ import androidx.health.connect.client.records.ExerciseSessionRecord
 
 /**
  * Health Connect's exercise type (an `Int`) turned into the `activity_type` string
- * `POST /v1/sync/activities` takes.
+ * `POST /v2/sync/tracks` takes.
  *
  * **Written against the library's public constants, deliberately.** The client also ships an
  * `EXERCISE_TYPE_INT_TO_STRING_MAP` that would do most of this for free, but it is annotated

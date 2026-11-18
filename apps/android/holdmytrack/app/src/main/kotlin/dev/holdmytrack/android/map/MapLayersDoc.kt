@@ -13,7 +13,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
 /**
- * The layers document, `GET /v1/map/layers` (root `docs/ARCHITECTURE.md` §2.1, ADR-0048): every
+ * The layers document, `GET /v2/map/layers` (root `docs/ARCHITECTURE.md` §2.1, ADR-0048): every
  * layer HoldMyTrack draws over the basemap, what each mode shows and how, and Fog's levels,
  * defined once in the web's `apps/web/src/map/mapLayers.ts`. This reads it; [MapLayers] puts it
  * on a map. Pure, so nothing here needs MapLibre.

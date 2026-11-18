@@ -6,7 +6,7 @@ import kotlin.math.floor
 /**
  * The pace band rule (`docs/SPEC.md` FR-4.6) for the Sync tab's candidates, which aren't on the
  * server: five equal bins over the track's own range of speeds, slowest 0. The server bands every
- * synced track itself (`GET /v1/activities/{id}/track-metrics`); both run
+ * synced track itself (`GET /v2/tracks/{id}/route-metrics`); both run
  * `testdata/pace-bands.json`.
  */
 object RouteBands {

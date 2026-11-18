@@ -191,7 +191,7 @@ class YouFragment : Fragment(R.layout.fragment_you) {
 
     /**
      * Language, from the server's list ([SettingsOptions.languages]), saved at once. The save is
-     * Settings' — `PATCH /v1/account/settings` replaces Name, Country and Timezone along with it
+     * Settings' — `PATCH /v2/account/settings` replaces Name, Country and Timezone along with it
      * — so it sends the account's own, as just read. A new language recreates the app's screens
      * ([AppLanguage]), this tab coming back as it was.
      */

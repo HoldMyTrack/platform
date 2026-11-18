@@ -41,7 +41,7 @@ class SimilarTest {
         externalId = id,
         startedAt = start,
         endedAt = start + Duration.ofMinutes(minutes),
-        activityType = "walking",
+        trackType = "walking",
         name = "",
         lats = doubleArrayOf(50.0, 50.001),
         lons = doubleArrayOf(10.0, 10.001),

@@ -43,8 +43,8 @@ One screen signs in, starts a demo or continues with Google or Facebook, against
 
 - The app checks only that email and password aren't empty. Every other rule is the server's, and its message is shown as sent, so the two never disagree.
 - The response's session token is kept with the email (empty for the demo account) and whether it's verified.
-- Google and Facebook show only when `GET /v1/auth/providers` reports them configured; when that request fails, neither shows.
-- Google sends the system account picker's ID token with the phone's timezone. Facebook runs the server's own flow in a browser tab, not Meta's SDK, started with the S256 hash of a random verifier the app keeps; the code returned to `holdmytrack://oauth` is redeemed with that verifier at `POST /v1/auth/handoff`.
+- Google and Facebook show only when `GET /v2/auth/providers` reports them configured; when that request fails, neither shows.
+- Google sends the system account picker's ID token with the phone's timezone. Facebook runs the server's own flow in a browser tab, not Meta's SDK, started with the S256 hash of a random verifier the app keeps; the code returned to `holdmytrack://oauth` is redeemed with that verifier at `POST /v2/auth/handoff`.
 - Creating an account opens the web's sign-up page in a browser tab, which passes the new account to the app as Facebook does and leaves the tab's browser signed out (`docs/SPEC.md` FR-1.1).
 - Forgot password opens the web's page (`docs/SPEC.md` FR-1.5) in a browser tab.
 - Without a session this is the first screen. The map is never shown signed out: a base map without the account's layers demonstrates less than the demo does.
@@ -53,19 +53,19 @@ One screen signs in, starts a demo or continues with Google or Facebook, against
 
 A kept session survives a restart but isn't trusted until the server confirms it (`docs/SPEC.md` FR-1.4).
 
-- On a cold start the map attaches no signed-in layer until `GET /v1/auth/me` answers. A `200` trusts the token for the rest of the process.
+- On a cold start the map attaches no signed-in layer until `GET /v2/auth/me` answers. A `200` trusts the token for the rest of the process.
 - Only a `401` clears the token and opens the sign-in screen. Any other failure keeps it, says the server couldn't be reached and retries on the next resume. The map never sits blank on refused tiles.
 
 ### FR-1.3 Sign out
 
-`POST /v1/auth/logout` ends the session on the server; the phone forgets the token whether or not that request succeeded, and opens the sign-in screen with every other screen cleared.
+`POST /v2/auth/logout` ends the session on the server; the phone forgets the token whether or not that request succeeded, and opens the sign-in screen with every other screen cleared.
 
 ### FR-1.4 Email verification
 
 An unverified account (`docs/SPEC.md` FR-1.8) sees a "check your email" screen instead of the map, whose tiles the server would refuse.
 
 - The email's 6-digit code, typed on the screen, verifies the account and opens the map with the app still signed in. The server's refusal of a code is shown as sent.
-- The screen asks `GET /v1/auth/me` again on every resume, and on Confirm with the field empty, and opens the map once the email is verified. A `401` signs out as in FR-1.2.
+- The screen asks `GET /v2/auth/me` again on every resume, and on Confirm with the field empty, and opens the map once the email is verified. A `401` signs out as in FR-1.2.
 - Confirming by the email's link in the phone's browser ends the app's session (`docs/SPEC.md` FR-1.8), so the app returns to Sign in.
 - Resend shows the server's answer as sent, its hourly limit included.
 - Settings › Sync, which Health Connect can open without the map, shows only a notice for such an account.
@@ -95,7 +95,7 @@ The web's `/profile` page, the track graph and Trends (`docs/SPEC.md` FR-6, FR-8
 
 ### FR-1.8 Update screen
 
-When any `/v1` request answers `426` `app_outdated` (`docs/SPEC.md` §1.4), signed in or not, the Update screen opens over whatever showed.
+When any `/v2` request answers `426` `app_outdated` (`docs/SPEC.md` §1.4), signed in or not, the Update screen opens over whatever showed.
 
 - Several refusals at once open it once; a refused request's own screen says nothing.
 - Update opens the app's Play listing.
@@ -106,7 +106,7 @@ When any `/v1` request answers `426` `app_outdated` (`docs/SPEC.md` §1.4), sign
 
 ### FR-2.1 Base map
 
-- The style comes unauthenticated from `GET /v1/map/style/{flavor}?lang=`: `light` or `dark` by the app's theme (the other flavors aren't offered), labels in the app's language (`docs/SPEC.md` FR-12.1).
+- The style comes unauthenticated from `GET /v2/map/style/{flavor}?lang=`: `light` or `dark` by the app's theme (the other flavors aren't offered), labels in the app's language (`docs/SPEC.md` FR-12.1).
 - The camera starts on a world view until FR-2.3 frames the account.
 - The map is flat at every zoom: MapLibre Native has no globe (`docs/SPEC.md` FR-4.4).
 
@@ -229,14 +229,14 @@ sequenceDiagram
     U->>A: Load (app on screen)
     A->>HC: sessions and routes, last 90 days
     HC-->>A: sessions with routes
-    A->>S: POST /v1/sync/known (record ids)
+    A->>S: POST /v2/sync/known (record ids)
     S-->>A: ids it has
     A-->>U: candidates, none ticked, drawn on the map
     U->>A: tick, then Sync
-    A->>S: POST /v1/sync/activities (batches)
+    A->>S: POST /v2/sync/tracks (batches)
     S->>S: ingest job
     loop every 2 s until done
-        A->>S: POST /v1/sync/known
+        A->>S: POST /v2/sync/known
     end
     A-->>U: on the map, or back on the list if ingest failed
 ```
@@ -263,7 +263,7 @@ The Sync sheet lists every candidate and draws it on the map.
 
 - **Load** reads Health Connect, and nothing else does except the first read after switching it on. What it finds is kept on the phone per account until the next Load; opening the sheet shows that and the recordings without reading Health Connect. A failed read keeps what was kept.
 - Health Connect: sessions started in the last 90 days, read 100 at a time. A session is a candidate when its route is readable with at least 2 points. One with no route isn't listed and isn't an error. One whose route Health Connect withholds is counted with advice to keep the app on screen and check the routes permission.
-- The record ids go to `POST /v1/sync/known`; what the account has, in any state, is left out, so a reinstall or second phone agrees and a deleted track is offered again. One still processing shows as on its way.
+- The record ids go to `POST /v2/sync/known`; what the account has, in any state, is left out, so a reinstall or second phone agrees and a deleted track is offered again. One still processing shows as on its way.
 - Every recording on the phone is listed, whatever its age.
 - A row's distance is worked out from its route; no distance is read from Health Connect.
 - A row overlapping another candidate or an account track (`docs/SPEC.md` FR-3.5) is marked, as a hint only. Hidden and on-their-way rows aren't compared.
@@ -307,7 +307,7 @@ The web's `/sync` page (`docs/SPEC.md` FR-3.7) shown in the app (`docs/SPEC.md` 
 
 ## 7. FR-5 — In-App GPS Recording
 
-Recording is separate from Health Connect sync: a finished recording goes straight to `POST /v1/sync/activities` under `recorded` (`docs/SPEC.md` FR-3.6), so Health Connect's foreground rule doesn't apply. Recording and sending are two explicit steps.
+Recording is separate from Health Connect sync: a finished recording goes straight to `POST /v2/sync/tracks` under `recorded` (`docs/SPEC.md` FR-3.6), so Health Connect's foreground rule doesn't apply. Recording and sending are two explicit steps.
 
 ```mermaid
 stateDiagram-v2

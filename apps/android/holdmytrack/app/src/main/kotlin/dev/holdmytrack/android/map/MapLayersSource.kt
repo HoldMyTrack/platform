@@ -8,7 +8,7 @@ import dev.holdmytrack.android.net.Session
 import java.io.File
 
 /**
- * Where the map's layers document ([MapLayersDoc]) comes from: `GET /v1/map/layers`, revalidated
+ * Where the map's layers document ([MapLayersDoc]) comes from: `GET /v2/map/layers`, revalidated
  * by ETag, and the last one kept on disk, so a cold start draws Fog and the rest straight away
  * from cached tiles, as the stored tile version does (`net/Session.tileVersion`). A kept document
  * is used only at the account's stored tile version, which signing out clears, so one account's

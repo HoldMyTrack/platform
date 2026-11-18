@@ -110,14 +110,14 @@ internal data class CodeJson(val code: String)
 // Tracks
 
 @Serializable
-internal data class StoryRefJson(val id: String, val name: String)
+internal data class TripRefJson(val id: String, val name: String)
 
 @Serializable
-internal data class ActivityRowJson(
+internal data class TrackRowJson(
     val id: String,
     @SerialName("started_at") val startedAt: String,
     val timezone: String,
-    @SerialName("activity_type") val activityType: String,
+    @SerialName("track_type") val trackType: String,
     val name: String?,
     @SerialName("distance_meters") val distanceMeters: Double?,
     @SerialName("moving_seconds") val movingSeconds: Long?,
@@ -126,55 +126,55 @@ internal data class ActivityRowJson(
     val pending: Boolean,
     val edited: Boolean,
     val private: Boolean,
-    @SerialName("track_edit") val trackEdit: String? = null,
+    @SerialName("route_edit") val routeEdit: String? = null,
     val photos: String? = null,
-    val stories: List<StoryRefJson>,
+    val trips: List<TripRefJson>,
 )
 
 @Serializable
-internal data class ActivitiesJson(
-    val activities: List<ActivityRowJson>,
-    val types: Map<String, ActivityTypeJson> = emptyMap(),
+internal data class TracksJson(
+    val tracks: List<TrackRowJson>,
+    val types: Map<String, TrackTypeJson> = emptyMap(),
 )
 
-/** A track as the area list's row shows it; `GET /v1/activities/{id}` has the rest. */
+/** A track as the area list's row shows it; `GET /v2/tracks/{id}` has the rest. */
 @Serializable
-internal data class AreaActivityRowJson(
+internal data class AreaTrackRowJson(
     val id: String,
     @SerialName("started_at") val startedAt: String,
     val timezone: String,
-    @SerialName("activity_type") val activityType: String,
+    @SerialName("track_type") val trackType: String,
     val name: String?,
     @SerialName("distance_meters") val distanceMeters: Double?,
     @SerialName("moving_seconds") val movingSeconds: Long?,
     val bbox: List<Double>?,
     val pending: Boolean,
     val private: Boolean,
-    val stories: List<StoryRefJson>,
+    val trips: List<TripRefJson>,
 )
 
-/** `GET /v1/activities/area`. */
+/** `GET /v2/tracks/area`. */
 @Serializable
-internal data class AreaActivitiesJson(
-    val activities: List<AreaActivityRowJson>,
-    val types: Map<String, ActivityTypeJson>,
+internal data class AreaTracksJson(
+    val tracks: List<AreaTrackRowJson>,
+    val types: Map<String, TrackTypeJson>,
     val total: Int? = null,
 )
 
-/** `GET /v1/activities/pending`. */
+/** `GET /v2/tracks/pending`. */
 @Serializable
 internal data class PendingJson(val pending: List<String>)
 
 /** What a client shows for one track type (`panel/TrackTypes`). */
 @Serializable
-internal data class ActivityTypeJson(val kind: String, val label: String)
+internal data class TrackTypeJson(val kind: String, val label: String)
 
 @Serializable
-internal data class ActivityTypesJson(val types: Map<String, ActivityTypeJson>)
+internal data class TrackTypesJson(val types: Map<String, TrackTypeJson>)
 
 @Serializable
-internal data class ActivityPatchJson(
-    @SerialName("activity_type") val activityType: String,
+internal data class TrackPatchJson(
+    @SerialName("track_type") val trackType: String,
     val name: String,
     val description: String,
 )
@@ -202,7 +202,7 @@ internal data class CoverageStatusJson(
 internal data class ExploredJson(val countries: Int, val regions: Int, val counties: Int, val cities: Int)
 
 @Serializable
-internal data class TrackMetricPointJson(
+internal data class RouteMetricPointJson(
     val lon: Double,
     val lat: Double,
     @SerialName("speed_mps") val speedMps: Double,
@@ -213,16 +213,16 @@ internal data class TrackMetricPointJson(
 internal data class PaceBandJson(val band: Int, val start: Int, val end: Int)
 
 @Serializable
-internal data class TrackMetricsJson(
-    @SerialName("activity_id") val activityId: String,
-    val points: List<TrackMetricPointJson>,
+internal data class RouteMetricsJson(
+    @SerialName("track_id") val trackId: String,
+    val points: List<RouteMetricPointJson>,
     val bands: List<PaceBandJson>,
 )
 
 /** A route edit both ways: what the editor opens with and what Apply sends. Times are Unix ms; a
  *  pair is a two-element array, and [move] is keyed by a time, which JSON carries as a string. */
 @Serializable
-internal data class TrackEditJson(
+internal data class RouteEditJson(
     val keep: List<Long>? = null,
     val remove: List<List<Long>>? = null,
     val drop: List<Long>? = null,
@@ -231,11 +231,11 @@ internal data class TrackEditJson(
 
 /** [points] are `[lon, lat, t]`, t in Unix ms. */
 @Serializable
-internal data class TrackPointsJson(val points: List<List<Double>>, val edit: TrackEditJson?)
+internal data class RoutePointsJson(val points: List<List<Double>>, val edit: RouteEditJson?)
 
 @Serializable
-internal data class TrackEditRequestJson(
-    val edit: TrackEditJson?,
+internal data class RouteEditRequestJson(
+    val edit: RouteEditJson?,
     @SerialName("split_at") val splitAt: Long? = null,
     @SerialName("allow_hidden") val allowHidden: Boolean = false,
 )
@@ -246,10 +246,10 @@ internal data class OverlapSpanJson(val key: String, val start: String, val end:
 @Serializable
 internal data class OverlapsRequestJson(val spans: List<OverlapSpanJson>)
 
-/** `POST /v1/activities/stats-card`'s body: [theme] is `light` or `dark`. */
+/** `POST /v2/tracks/stats-card`'s body: [theme] is `light` or `dark`. */
 @Serializable
 internal data class StatsCardRequestJson(
-    @SerialName("activity_ids") val activityIds: List<String>,
+    @SerialName("track_ids") val trackIds: List<String>,
     val width: Int,
     val height: Int,
     val theme: String,
@@ -258,9 +258,9 @@ internal data class StatsCardRequestJson(
 @Serializable
 internal data class OverlapJson(
     val key: String,
-    @SerialName("activity_id") val activityId: String,
+    @SerialName("track_id") val trackId: String,
     val name: String,
-    @SerialName("activity_type") val activityType: String,
+    @SerialName("track_type") val trackType: String,
     @SerialName("started_at") val startedAt: String,
     val timezone: String?,
 )
@@ -284,16 +284,16 @@ internal data class SyncPointJson(
 )
 
 @Serializable
-internal data class SyncActivityJson(
+internal data class SyncTrackJson(
     @SerialName("external_id") val externalId: String,
-    @SerialName("activity_type") val activityType: String,
+    @SerialName("track_type") val trackType: String,
     val name: String? = null,
     val description: String? = null,
     val points: List<SyncPointJson>,
 )
 
 @Serializable
-internal data class SyncActivitiesRequestJson(val source: String, val activities: List<SyncActivityJson>)
+internal data class SyncTracksRequestJson(val source: String, val tracks: List<SyncTrackJson>)
 
 @Serializable
 internal data class SyncResultJson(
@@ -323,7 +323,7 @@ internal data class PrivateLocationJson(
 )
 
 @Serializable
-internal data class HiddenActivitiesJson(val count: Int)
+internal data class HiddenTracksJson(val count: Int)
 
 @Serializable
 internal data class PrivateLocationInputJson(
@@ -336,8 +336,8 @@ internal data class PrivateLocationInputJson(
 // Trips
 
 @Serializable
-internal data class StoryTypeStatsJson(
-    @SerialName("activity_type") val activityType: String,
+internal data class TripTypeStatsJson(
+    @SerialName("track_type") val trackType: String,
     val label: String = "",
     val count: Int,
     @SerialName("distance_meters") val distanceMeters: Double,
@@ -345,61 +345,61 @@ internal data class StoryTypeStatsJson(
 )
 
 @Serializable
-internal data class StoryStatsJson(
+internal data class TripStatsJson(
     val count: Int,
     @SerialName("distance_meters") val distanceMeters: Double,
     @SerialName("moving_seconds") val movingSeconds: Long,
-    @SerialName("by_type") val byType: List<StoryTypeStatsJson>,
+    @SerialName("by_type") val byType: List<TripTypeStatsJson>,
 )
 
 @Serializable
-internal data class StoryJson(
+internal data class TripJson(
     val id: String,
     val name: String,
     val description: String?,
     val from: String?,
-    @SerialName("activity_ids") val activityIds: List<String>,
-    val stats: StoryStatsJson,
+    @SerialName("track_ids") val trackIds: List<String>,
+    val stats: TripStatsJson,
 )
 
 @Serializable
-internal data class StoriesJson(val stories: List<StoryJson>)
+internal data class TripsJson(val trips: List<TripJson>)
 
 /** A new Trip, with its first [trackIds]. */
 @Serializable
-internal data class StoryCreateJson(
+internal data class TripCreateJson(
     val name: String,
     val description: String,
-    @SerialName("activity_ids") val activityIds: List<String>,
+    @SerialName("track_ids") val trackIds: List<String>,
 )
 
 /** A rename: both fields every time, an empty description clearing it. */
 @Serializable
-internal data class StoryInputJson(val name: String, val description: String)
+internal data class TripInputJson(val name: String, val description: String)
 
 @Serializable
-internal data class StoryActivitiesJson(@SerialName("activity_ids") val activityIds: List<String>)
+internal data class TripTracksJson(@SerialName("track_ids") val trackIds: List<String>)
 
 @Serializable
-internal data class StorySendJson(
+internal data class TripSendJson(
     val id: String,
-    @SerialName("story_name") val storyName: String,
+    @SerialName("trip_name") val tripName: String,
     val from: String,
-    @SerialName("activity_count") val activityCount: Int,
+    @SerialName("track_count") val trackCount: Int,
 )
 
 @Serializable
-internal data class StoryCopyingJson(@SerialName("story_name") val storyName: String, val from: String)
+internal data class TripCopyingJson(@SerialName("trip_name") val tripName: String, val from: String)
 
 @Serializable
-internal data class StoryInboxJson(val sends: List<StorySendJson>, val copying: List<StoryCopyingJson>)
+internal data class TripInboxJson(val sends: List<TripSendJson>, val copying: List<TripCopyingJson>)
 
 // Photos
 
 @Serializable
 internal data class PhotoJson(
     val id: String,
-    @SerialName("activity_id") val activityId: String,
+    @SerialName("track_id") val trackId: String,
     @SerialName("taken_at") val takenAt: String?,
     @SerialName("route_at") val routeAt: String,
     val timezone: String,
@@ -417,7 +417,7 @@ internal data class PhotosJson(val photos: List<PhotoJson>)
 
 @Serializable
 internal data class PhotoPlaceRequestJson(
-    @SerialName("activity_id") val activityId: String,
+    @SerialName("track_id") val trackId: String,
     @SerialName("taken_at") val takenAt: String? = null,
     @SerialName("taken_local") val takenLocal: String? = null,
     val lat: Double? = null,
@@ -455,7 +455,7 @@ internal data class SpotsInAreaJson(val spots: List<SpotJson>, val total: Int)
 @Serializable
 internal data class MultiPolygonJson(val coordinates: List<List<List<List<Double>>>>)
 
-/** `GET /v1/spots/{id}`: the place's own fields beside its area, in one object. */
+/** `GET /v2/spots/{id}`: the place's own fields beside its area, in one object. */
 @Serializable
 internal data class SpotDetailJson(
     val id: Long,

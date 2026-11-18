@@ -9,7 +9,7 @@ import dev.holdmytrack.android.UpdateAppActivity
 import java.util.concurrent.atomic.AtomicBoolean
 
 /**
- * The server's refusal of a build older than its minimum: `426 app_outdated` on any `/v1/`
+ * The server's refusal of a build older than its minimum: `426 app_outdated` on any `/v2/`
  * request (root `docs/IMPLEMENTATION.md` §4.33). Seen once, in [HoldMyTrackApi]'s client, for
  * every call the app makes, so no screen has to recognise it; the Update screen covers whatever
  * was showing. A callback caller hears nothing back (`HoldMyTrackApi.refusedBuild`); a suspending

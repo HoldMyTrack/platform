@@ -48,7 +48,7 @@ object PendingDiff {
      *  once each, Pending first. Empty means there's nothing to watch. */
     fun watched(pending: Collection<String>, awaiting: Collection<String>): List<String> = (pending + awaiting).distinct()
 
-    /** The most ids one Pending check request may carry (`GET /v1/activities/pending`). */
+    /** The most ids one Pending check request may carry (`GET /v2/tracks/pending`). */
     const val BATCH = 200
 
     /** [ids] in consecutive batches of at most [size], one Pending check request each; the

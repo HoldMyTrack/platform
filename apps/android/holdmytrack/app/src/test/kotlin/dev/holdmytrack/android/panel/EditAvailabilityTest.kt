@@ -9,7 +9,7 @@ import org.junit.Test
 class EditAvailabilityTest {
 
     private fun track(id: String = "a", routeEdit: String? = null, photos: String? = null) = Track(
-        id = id, startedAt = "2026-09-24T08:00:00Z", activityType = "walking", name = null,
+        id = id, startedAt = "2026-09-24T08:00:00Z", trackType = "walking", name = null,
         distanceMeters = 1000.0, movingSeconds = 600, description = null, bbox = listOf(0.0, 0.0, 1.0, 1.0),
         pending = false, edited = false, routeEdit = routeEdit, photos = photos,
     )

@@ -10,7 +10,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * What the app shows for each track type, as the server says (root `docs/SPEC.md` FR-5.1,
- * `GET /v1/activity-types`, every track list's `types` and every Trip's type labels): its
+ * `GET /v2/track-types`, every track list's `types` and every Trip's type labels): its
  * label and its kind. The app matches no words and keeps no catalog of its own. Kept on the phone
  * for the language it was read in, so a recording or an unsent track shows its type offline
  * too; a type the server hasn't described yet is [TrackKind.OTHER], and its label the type
@@ -81,7 +81,7 @@ object TrackTypes {
     fun refresh(types: Collection<String> = emptyList()) {
         val missing = types.filter { it.isNotEmpty() && !labels.containsKey(it) }.distinct().take(MAX_NAMED)
         if (catalogRead && missing.isEmpty()) return
-        HoldMyTrackApi.activityTypes(missing) { result ->
+        HoldMyTrackApi.trackTypes(missing) { result ->
             result.getOrNull()?.let {
                 catalogRead = true
                 merge(it)

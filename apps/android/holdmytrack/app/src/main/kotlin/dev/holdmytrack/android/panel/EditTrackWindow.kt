@@ -34,7 +34,7 @@ import dev.holdmytrack.android.recording.TypeCount
  *  - **Photos** ([PhotosTab]): one track with a track, else disabled saying why. Its
  *    changes are a draft, like the route edit, written by the same Save.
  *
- * Save writes what changed — the fields first (one `PATCH /v1/activities/{id}` each, one after
+ * Save writes what changed — the fields first (one `PATCH /v2/tracks/{id}` each, one after
  * another, a group's resending each track's own name and description), then the photos,
  * then the route edit — and closes; a refusal keeps the window open with the server's reason,
  * a retried Save skips what already went, and a later step failing still reports the earlier
@@ -107,9 +107,9 @@ class EditTrackWindow(
     private var tracks: List<Track> = emptyList()
     private var known: List<TypeCount> = emptyList()
 
-    /** The raw `activity_type` the Type field holds — the field itself shows its label. Empty
+    /** The raw `track_type` the Type field holds — the field itself shows its label. Empty
      *  for a group of mixed types until one is picked: empty keeps each track's own. */
-    private var activityType = ""
+    private var trackType = ""
 
     /** The group's tracks don't all share one type. */
     private var mixedTypes = false
@@ -215,8 +215,8 @@ class EditTrackWindow(
         fieldsSaved = false
         saving = false
         photoProgress = null
-        mixedTypes = group.any { it.activityType != group.first().activityType }
-        activityType = if (mixedTypes) "" else group.first().activityType
+        mixedTypes = group.any { it.trackType != group.first().trackType }
+        trackType = if (mixedTypes) "" else group.first().trackType
         title.text = if (single != null) {
             res.getString(R.string.edit_title_one)
         } else {
@@ -227,7 +227,7 @@ class EditTrackWindow(
         } else {
             res.getString(R.string.edit_multi_subtitle)
         }
-        typeField.setText(if (activityType.isEmpty()) "" else TrackTypes.label(activityType))
+        typeField.setText(if (trackType.isEmpty()) "" else TrackTypes.label(trackType))
         // "Mixed types" stands in the empty field, shown without focus, until a type is picked.
         typeLayout.isExpandedHintEnabled = !mixedTypes
         typeLayout.placeholderText = if (mixedTypes) res.getString(R.string.edit_type_mixed) else null
@@ -286,8 +286,8 @@ class EditTrackWindow(
 
     private fun openTypePicker() {
         if (saving) return
-        TrackTypePicker.show(context, activityType, known) { picked ->
-            activityType = picked
+        TrackTypePicker.show(context, trackType, known) { picked ->
+            trackType = picked
             typeField.setText(TrackTypes.label(picked))
             showError(null)
         }
@@ -295,7 +295,7 @@ class EditTrackWindow(
 
     private fun save() {
         val single = tracks.singleOrNull()
-        val type = activityType.trim()
+        val type = trackType.trim()
         val name = nameField.text?.toString().orEmpty().trim()
         val description = descriptionField.text?.toString().orEmpty()
         val invalid = when {
@@ -317,9 +317,9 @@ class EditTrackWindow(
             return
         }
         val changed = if (single != null) {
-            type != single.activityType || name != single.name.orEmpty() || description != single.description.orEmpty()
+            type != single.trackType || name != single.name.orEmpty() || description != single.description.orEmpty()
         } else {
-            type.isNotEmpty() && tracks.any { it.activityType != type }
+            type.isNotEmpty() && tracks.any { it.trackType != type }
         }
         if (!changed || fieldsSaved) {
             savePhotos()

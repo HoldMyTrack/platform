@@ -100,7 +100,7 @@ class WaitingStore(context: Context) {
                             externalId = c.getString(c.getColumnIndexOrThrow("external_id")),
                             startedAt = Instant.ofEpochMilli(c.getLong(c.getColumnIndexOrThrow("started_at_ms"))),
                             endedAt = Instant.ofEpochMilli(c.getLong(c.getColumnIndexOrThrow("ended_at_ms"))),
-                            activityType = c.getString(c.getColumnIndexOrThrow("activity_type")),
+                            trackType = c.getString(c.getColumnIndexOrThrow("activity_type")),
                             distanceM = c.getDouble(c.getColumnIndexOrThrow("distance_m")),
                             name = "",
                             line = vertices.map { doubleArrayOf(it.lon, it.lat) },
@@ -179,7 +179,7 @@ class WaitingStore(context: Context) {
                 put("external_id", session.externalId)
                 put("started_at_ms", session.startedAt.toEpochMilli())
                 put("ended_at_ms", session.endedAt.toEpochMilli())
-                put("activity_type", session.activityType)
+                put("activity_type", session.trackType)
                 put("distance_m", session.distanceM)
                 put("point_count", session.pointCount)
                 put("bbox", Vertices.encodeBbox(session.bbox))

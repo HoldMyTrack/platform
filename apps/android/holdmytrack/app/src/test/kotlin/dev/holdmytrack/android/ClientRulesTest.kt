@@ -515,8 +515,7 @@ class ClientRulesTest {
     private fun tracks(json: JsonElement?) = json!!.jsonArray.map { facetTrack(it.jsonObject) }
 
     private fun facetTrack(json: JsonObject) = track("a").copy(
-        // The case's trackType onto the model's activityType, until Android moves to /v2.
-        activityType = json.string("trackType")!!,
+        trackType = json.string("trackType")!!,
         distanceMeters = (json["distanceMeters"] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.double,
         isPrivate = json["private"]?.jsonPrimitive?.booleanOrNull ?: false,
     )
@@ -601,7 +600,7 @@ class ClientRulesTest {
     }
 
     private fun track(id: String) = Track(
-        id = id, startedAt = "2026-10-01T08:00:00Z", activityType = "walking", name = null, distanceMeters = 1000.0,
+        id = id, startedAt = "2026-10-01T08:00:00Z", trackType = "walking", name = null, distanceMeters = 1000.0,
         movingSeconds = 600, description = null, bbox = listOf(0.0, 0.0, 1.0, 1.0), pending = false, edited = false,
     )
 

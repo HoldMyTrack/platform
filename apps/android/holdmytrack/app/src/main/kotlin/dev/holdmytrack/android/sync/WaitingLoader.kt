@@ -16,7 +16,7 @@ import kotlinx.coroutines.CancellationException
  * ([SyncSources.firstLoadPending]), on Settings › Sync or the Sync tab, whichever is in front.
  *
  * The sessions with a route from the last three months ([SyncCandidates.readHealthConnect]), less
- * those the account already has (`POST /v1/sync/known`) — so a reinstall or a second phone
+ * those the account already has (`POST /v2/sync/known`) — so a reinstall or a second phone
  * agrees, and a track deleted on the web is offered again. Those the server is still adding
  * are listed as on their way ([SyncProgress]). A failure keeps what was kept before.
  *

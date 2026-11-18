@@ -12,7 +12,7 @@ import org.junit.Test
 import org.yaml.snakeyaml.Yaml
 
 /**
- * Holds every class in Wire.kt to the API contract, services/server/api: each response class to
+ * Holds every class in Wire.kt to the API contract it calls, services/server/api/v2: each response class to
  * the response it decodes, each request class to the body it sends. A field the server renames,
  * drops or makes nullable fails here, in CI, rather than in a decode on a phone. Gradle reruns this
  * when the contract changes (the test task declares it as an input).
@@ -30,7 +30,7 @@ class WireContractTest {
         fun request(desc: SerialDescriptor, path: String, method: String) =
             WireCheck(seen).compare(desc, contract.request(path, method), "$method $path request", Mode.REQUEST, problems)
 
-        response(ErrorJson.serializer().descriptor, "/stories/{id}", "get", 404)
+        response(ErrorJson.serializer().descriptor, "/trips/{id}", "get", 404)
         response(AccountJson.serializer().descriptor, "/auth/me", "get")
         for (path in listOf("/auth/login", "/auth/handoff", "/auth/google/token")) {
             response(AccountJson.serializer().descriptor, path, "post")
@@ -50,49 +50,49 @@ class WireContractTest {
         request(CodeJson.serializer().descriptor, "/auth/verify-code", "post")
         request(SettingsJson.serializer().descriptor, "/account/settings", "patch")
         request(EmailJson.serializer().descriptor, "/account", "delete")
-        request(EmailJson.serializer().descriptor, "/stories/{id}/send", "post")
+        request(EmailJson.serializer().descriptor, "/trips/{id}/send", "post")
 
-        response(ActivitiesJson.serializer().descriptor, "/activities", "get")
-        response(AreaActivitiesJson.serializer().descriptor, "/activities/area", "get")
-        response(ActivitiesJson.serializer().descriptor, "/activities/{id}", "get")
-        response(ActivityTypesJson.serializer().descriptor, "/activity-types", "get")
-        response(PendingJson.serializer().descriptor, "/activities/pending", "get")
-        response(ActivityRowJson.serializer().descriptor, "/activities/{id}", "patch")
-        request(ActivityPatchJson.serializer().descriptor, "/activities/{id}", "patch")
-        response(HistogramJson.serializer().descriptor, "/activities/histogram", "get")
+        response(TracksJson.serializer().descriptor, "/tracks", "get")
+        response(AreaTracksJson.serializer().descriptor, "/tracks/area", "get")
+        response(TracksJson.serializer().descriptor, "/tracks/{id}", "get")
+        response(TrackTypesJson.serializer().descriptor, "/track-types", "get")
+        response(PendingJson.serializer().descriptor, "/tracks/pending", "get")
+        response(TrackRowJson.serializer().descriptor, "/tracks/{id}", "patch")
+        request(TrackPatchJson.serializer().descriptor, "/tracks/{id}", "patch")
+        response(HistogramJson.serializer().descriptor, "/tracks/histogram", "get")
         response(CoverageStatusJson.serializer().descriptor, "/coverage/status", "get")
-        response(TrackMetricsJson.serializer().descriptor, "/activities/{id}/track-metrics", "get")
-        response(TrackPointsJson.serializer().descriptor, "/activities/{id}/track-points", "get")
-        request(TrackEditRequestJson.serializer().descriptor, "/activities/{id}/track-edit", "post")
-        request(OverlapsRequestJson.serializer().descriptor, "/activities/overlaps", "post")
-        request(StatsCardRequestJson.serializer().descriptor, "/activities/stats-card", "post")
-        response(OverlapsJson.serializer().descriptor, "/activities/overlaps", "post")
-        response(UploadResultJson.serializer().descriptor, "/activities/upload", "post", 202)
-        response(UploadResultJson.serializer().descriptor, "/activities/upload", "post", 200)
+        response(RouteMetricsJson.serializer().descriptor, "/tracks/{id}/route-metrics", "get")
+        response(RoutePointsJson.serializer().descriptor, "/tracks/{id}/route-points", "get")
+        request(RouteEditRequestJson.serializer().descriptor, "/tracks/{id}/route-edit", "post")
+        request(OverlapsRequestJson.serializer().descriptor, "/tracks/overlaps", "post")
+        request(StatsCardRequestJson.serializer().descriptor, "/tracks/stats-card", "post")
+        response(OverlapsJson.serializer().descriptor, "/tracks/overlaps", "post")
+        response(UploadResultJson.serializer().descriptor, "/tracks/upload", "post", 202)
+        response(UploadResultJson.serializer().descriptor, "/tracks/upload", "post", 200)
 
-        request(SyncActivitiesRequestJson.serializer().descriptor, "/sync/activities", "post")
-        response(SyncResultsJson.serializer().descriptor, "/sync/activities", "post")
+        request(SyncTracksRequestJson.serializer().descriptor, "/sync/tracks", "post")
+        response(SyncResultsJson.serializer().descriptor, "/sync/tracks", "post")
         request(SyncKnownRequestJson.serializer().descriptor, "/sync/known", "post")
         response(SyncKnownJson.serializer().descriptor, "/sync/known", "post")
 
         response(ListSerializer(PrivateLocationJson.serializer()).descriptor, "/private-locations", "get")
         response(PrivateLocationJson.serializer().descriptor, "/private-locations", "post", 201)
-        response(HiddenActivitiesJson.serializer().descriptor, "/private-locations/hidden", "get")
+        response(HiddenTracksJson.serializer().descriptor, "/private-locations/hidden", "get")
         response(PrivateLocationJson.serializer().descriptor, "/private-locations/{id}", "patch")
         request(PrivateLocationInputJson.serializer().descriptor, "/private-locations", "post")
         request(PrivateLocationInputJson.serializer().descriptor, "/private-locations/{id}", "patch")
 
-        response(StoriesJson.serializer().descriptor, "/stories", "get")
-        response(StoryJson.serializer().descriptor, "/stories", "post", 201)
-        response(StoryJson.serializer().descriptor, "/stories/{id}", "get")
-        response(StoryJson.serializer().descriptor, "/stories/{id}", "patch")
-        response(StoryJson.serializer().descriptor, "/stories/{id}/activities", "post")
-        response(StoryJson.serializer().descriptor, "/stories/{id}/activities", "delete")
-        request(StoryCreateJson.serializer().descriptor, "/stories", "post")
-        request(StoryInputJson.serializer().descriptor, "/stories/{id}", "patch")
-        request(StoryActivitiesJson.serializer().descriptor, "/stories/{id}/activities", "post")
-        request(StoryActivitiesJson.serializer().descriptor, "/stories/{id}/activities", "delete")
-        response(StoryInboxJson.serializer().descriptor, "/story-sends", "get")
+        response(TripsJson.serializer().descriptor, "/trips", "get")
+        response(TripJson.serializer().descriptor, "/trips", "post", 201)
+        response(TripJson.serializer().descriptor, "/trips/{id}", "get")
+        response(TripJson.serializer().descriptor, "/trips/{id}", "patch")
+        response(TripJson.serializer().descriptor, "/trips/{id}/tracks", "post")
+        response(TripJson.serializer().descriptor, "/trips/{id}/tracks", "delete")
+        request(TripCreateJson.serializer().descriptor, "/trips", "post")
+        request(TripInputJson.serializer().descriptor, "/trips/{id}", "patch")
+        request(TripTracksJson.serializer().descriptor, "/trips/{id}/tracks", "post")
+        request(TripTracksJson.serializer().descriptor, "/trips/{id}/tracks", "delete")
+        response(TripInboxJson.serializer().descriptor, "/trip-sends", "get")
 
         response(PhotosJson.serializer().descriptor, "/photos", "get")
         response(PhotoJson.serializer().descriptor, "/photos", "post", 201)
@@ -222,7 +222,7 @@ internal class WireCheck(private val seen: MutableSet<String>) {
  *  plain tree. The contract has no recursive schemas, so inlining ends. */
 internal class Contract private constructor(root: File) {
     private val files = mutableMapOf<File, Map<String, Any?>>()
-    private val index = File(root, "services/server/api/openapi.yaml")
+    private val index = File(root, "services/server/api/v2/openapi.yaml")
 
     val wireSource: File = File(root, "apps/android/holdmytrack/app/src/main/kotlin/dev/holdmytrack/android/net/Wire.kt")
 
@@ -268,8 +268,8 @@ internal class Contract private constructor(root: File) {
         /** The contract of the checkout this test runs in, found upward from the working directory. */
         fun find(): Contract {
             var dir: File? = File(System.getProperty("user.dir")).absoluteFile
-            while (dir != null && !File(dir, "services/server/api/openapi.yaml").isFile) dir = dir.parentFile
-            return Contract(dir ?: error("services/server/api/openapi.yaml not found above ${System.getProperty("user.dir")}"))
+            while (dir != null && !File(dir, "services/server/api/v2/openapi.yaml").isFile) dir = dir.parentFile
+            return Contract(dir ?: error("services/server/api/v2/openapi.yaml not found above ${System.getProperty("user.dir")}"))
         }
 
         /** `allOf`'s parts as one schema: their properties together, a property two parts

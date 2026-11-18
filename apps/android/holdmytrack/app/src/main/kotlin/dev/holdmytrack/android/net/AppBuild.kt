@@ -14,9 +14,9 @@ object AppBuild {
         "HoldMyTrack-Android/$versionName ($gitSha; $versionCode)"
 
     /** Whether a response to [url] with [code] is the server turning this build away: only
-     *  its own `/v1/`, since nothing else answers 426 for that reason. */
+     *  its own `/v2/`, since nothing else answers 426 for that reason. */
     fun isRefusal(url: String, apiBaseUrl: String, code: Int): Boolean =
-        code == 426 && url.startsWith("$apiBaseUrl/v1/")
+        code == 426 && url.startsWith("$apiBaseUrl/v2/")
 
     /** Where Update leads: the app's Play listing, the only way the app is handed out. */
     fun updateLink(packageName: String): String =

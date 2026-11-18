@@ -81,7 +81,7 @@ class TripsTab(
     private var ready = false
     private var error: String? = null
 
-    /** The open Trip's id, and the Trip as `GET /v1/stories/{id}` last answered. */
+    /** The open Trip's id, and the Trip as `GET /v2/trips/{id}` last answered. */
     var openId: String? = null
         private set
     private var openTrip: Trip? = null
@@ -290,7 +290,7 @@ class TripsTab(
         val gap = res.getDimensionPixelSize(R.dimen.hmt_space_12)
         for (type in trip.byType) {
             val row = TableRow(context)
-            row.addView(typeCell(TrackTypes.label(type.activityType)).apply { setPadding(0, 0, gap, 0) })
+            row.addView(typeCell(TrackTypes.label(type.trackType)).apply { setPadding(0, 0, gap, 0) })
             row.addView(typeCell(statsLine(type)))
             types.addView(row)
         }

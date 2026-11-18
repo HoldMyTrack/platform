@@ -49,7 +49,7 @@ object Session {
      * restored from disk may have been revoked (a sign-out elsewhere) or expired past its
      * 30-day TTL while the app was closed, and the first thing that would notice is a wall of
      * 401s on tile requests — which surface only in logcat, as a blank map. So the map waits
-     * for `GET /v1/auth/me` to confirm the token before attaching any layer that needs it.
+     * for `GET /v2/auth/me` to confirm the token before attaching any layer that needs it.
      * A token that was just minted by a sign-in is verified by definition.
      */
     @Volatile
@@ -79,7 +79,7 @@ object Session {
      * which answers every tile and sync request of an unconfirmed account with `403
      * email_not_verified`. Always true for a demo account (the server says so, since the gate
      * never applies to one). Kept on disk so a cold start goes straight to the right screen,
-     * then refreshed by every `GET /v1/auth/me`; a session stored before this was recorded
+     * then refreshed by every `GET /v2/auth/me`; a session stored before this was recorded
      * reads as confirmed until that first check says otherwise.
      */
     val emailVerified: Boolean get() = prefs.getBoolean(KEY_EMAIL_VERIFIED, true)
@@ -88,7 +88,7 @@ object Session {
      * The account's Country (ISO code), empty until Settings is first saved — which is what the
      * first-run gate keys on (`MapFragment`), and what decides the app's units
      * (`recording/Units`). Kept on disk, like [emailVerified], so a cold start routes and
-     * formats correctly before the first `GET /v1/auth/me` answers; that answer refreshes it.
+     * formats correctly before the first `GET /v2/auth/me` answers; that answer refreshes it.
      */
     val country: String get() = prefs.getString(KEY_COUNTRY, "").orEmpty()
 
@@ -106,7 +106,7 @@ object Session {
     val locale: String get() = prefs.getString(KEY_LOCALE, "").orEmpty()
 
     /**
-     * The account's tile version as `GET /v1/coverage/status` last gave it, sent as every tile
+     * The account's tile version as `GET /v2/coverage/status` last gave it, sent as every tile
      * request's `cv` so MapLibre can keep the tile (`map/MapOverlays`). Kept on disk so a cold
      * start draws from that cache straight away; the map then reads the current one and
      * fetches again only if it moved. Empty until the first read — tiles load uncached.
@@ -127,7 +127,7 @@ object Session {
             .apply()
     }
 
-    /** What `GET /v1/auth/me` just confirmed: the token is live, and the account as it is now. */
+    /** What `GET /v2/auth/me` just confirmed: the token is live, and the account as it is now. */
     fun markVerified(profile: Profile) {
         verified = true
         update(profile)

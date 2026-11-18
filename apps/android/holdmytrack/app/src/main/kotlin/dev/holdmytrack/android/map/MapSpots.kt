@@ -137,7 +137,7 @@ object MapSpots {
         apply(style)
     }
 
-    /** The account's captures, newest from `GET /v1/spots/captures` or one just made. */
+    /** The account's captures, newest from `GET /v2/spots/captures` or one just made. */
     fun setCaptured(style: Style?, captures: Map<Long, Instant>) {
         captured = captures
         style?.let(::apply)

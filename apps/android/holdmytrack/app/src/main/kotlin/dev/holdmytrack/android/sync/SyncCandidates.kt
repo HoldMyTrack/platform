@@ -41,7 +41,7 @@ data class Candidate(
     val startedAt: Instant,
     /** When it ended: what the overlap hint (`docs/SPEC.md` FR-3.5) compares, with [startedAt]. */
     val endedAt: Instant,
-    val activityType: String,
+    val trackType: String,
     val distanceM: Double,
     /** A recording's name, when it was given one; Health Connect's titles aren't read. */
     val name: String,
@@ -60,7 +60,7 @@ data class HealthConnectRead(val sessions: List<Candidate>, val refused: Int)
 
 /**
  * The Sync tab's list (`docs/SPEC.md` FR-3.4): Health Connect sessions with a route from the
- * last [WINDOW], minus what the account already has (`POST /v1/sync/known`), plus every recording
+ * last [WINDOW], minus what the account already has (`POST /v2/sync/known`), plus every recording
  * waiting on the phone, which never ages out — the phone holds its only copy. There is no
  * cursor: each Load works Health Connect's part out afresh from the phone and the server
  * ([WaitingLoader]), so a reinstall or a second phone agrees, and a track deleted on the web
@@ -148,7 +148,7 @@ object SyncCandidates {
                 externalId = record.metadata.id,
                 startedAt = record.startTime,
                 endedAt = record.endTime,
-                activityType = ExerciseTypes.name(record.exerciseType),
+                trackType = ExerciseTypes.name(record.exerciseType),
                 name = "",
                 lats = lats,
                 lons = lons,
@@ -164,7 +164,7 @@ object SyncCandidates {
             externalId = record.id,
             startedAt = Instant.ofEpochMilli(record.startedAtMs),
             endedAt = record.points.lastOrNull()?.time ?: Instant.ofEpochMilli(record.startedAtMs).plusSeconds(record.durationSeconds),
-            activityType = record.activityType,
+            trackType = record.trackType,
             name = record.name,
             lats = DoubleArray(record.points.size) { record.points[it].lat },
             lons = DoubleArray(record.points.size) { record.points[it].lon },
@@ -180,7 +180,7 @@ object SyncCandidates {
         externalId: String,
         startedAt: Instant,
         endedAt: Instant,
-        activityType: String,
+        trackType: String,
         name: String,
         lats: DoubleArray,
         lons: DoubleArray,
@@ -197,7 +197,7 @@ object SyncCandidates {
             externalId = externalId,
             startedAt = startedAt,
             endedAt = endedAt,
-            activityType = activityType,
+            trackType = trackType,
             distanceM = distanceM,
             name = name,
             line = line,
@@ -210,7 +210,7 @@ object SyncCandidates {
 
     /**
      * The [kept] vertices of a route with their speed, by the server's own rule for a synced
-     * track's (`GET /v1/activities/{id}/track-metrics`): the distance from the vertex before over
+     * track's (`GET /v2/tracks/{id}/route-metrics`): the distance from the vertex before over
      * the whole seconds between them ([times] are Unix ms), 0 where no second passed, and the
      * first vertex taking the second's. The phone simplifies more coarsely than the server does
      * ([Simplify] at 15 m, the server about 3 m), so the speeds are a little smoother than the
