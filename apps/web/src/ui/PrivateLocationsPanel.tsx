@@ -9,7 +9,7 @@ import {
   savePrivateLocation,
   type PrivateLocation,
 } from '../api';
-import { labelInsertionPoint } from '../map/layers';
+import { beneathBasemapLabels } from '../map/applyLayers';
 import { PRIVATE_LOCATION_MAX_NAME_LEN, PRIVATE_LOCATION_MAX_RADIUS_M, PRIVATE_LOCATION_MIN_RADIUS_M } from '../limits';
 import {
   attachPrivateLocationsHandlers,
@@ -115,7 +115,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
   // by MapView's reattachOverlays, since the overlay only exists while this tab is showing.
   useEffect(() => {
     const draw = () => {
-      ensurePrivateLocationsLayer(map, labelInsertionPoint(map));
+      ensurePrivateLocationsLayer(map, beneathBasemapLabels(map));
       setPrivateLocationsData(map, locations ?? [], highlightedCircle(locations, draft, focusedId), draft !== null);
     };
     draw();

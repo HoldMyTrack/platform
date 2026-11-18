@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { getActivityTrackPoints, type Activity, type TrackEdit, type TrackPoint } from '../api';
-import { labelInsertionPoint } from '../map/layers';
+import { beneathBasemapLabels } from '../map/applyLayers';
 import { clearTrackEdit, ensureTrackEditLayer, onTrackEditPointClick, onTrackEditPointDrag, setTrackEditData, type EditPreview } from '../map/trackEdit';
 import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps';
 import { distanceValue, formatClockTime, unitLabel } from './format';
@@ -154,7 +154,7 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
   );
   useEffect(() => {
     const draw = () => {
-      ensureTrackEditLayer(map, labelInsertionPoint(map));
+      ensureTrackEditLayer(map, beneathBasemapLabels(map));
       if (shown.length > 0) setTrackEditData(map, shown, lo, hi, preview, splitShown !== null && splitShown >= 0 ? splitShown : null);
     };
     draw();

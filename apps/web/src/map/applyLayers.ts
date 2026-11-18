@@ -78,6 +78,18 @@ function labelPoint(map: MapLibreMap, ownIds: ReadonlySet<string>): string | und
   return map.getLayersOrder().find((id) => !ownIds.has(id) && map.getLayer(id)?.type === 'symbol');
 }
 
+/**
+ * Where an overlay of the client's own goes to sit under the basemap's labels, as the document's
+ * `beneath-labels` groups do: the first basemap label layer. Not the style's first symbol layer,
+ * which since the document has labels of its own (the tracks' arrows) is inside the tracks group.
+ * Undefined, to append, for a style with no basemap labels.
+ */
+export function beneathBasemapLabels(map: MapLibreMap): string | undefined {
+  const doc = applied.get(map)?.doc;
+  const ownIds = new Set((doc?.groups ?? []).flatMap((group) => group.layers.map((layer) => layer.id)));
+  return labelPoint(map, ownIds);
+}
+
 function beforeIdFor(map: MapLibreMap, order: readonly string[], id: string, ownIds: ReadonlySet<string>, fallback: string | undefined): string | undefined {
   return insertionPoint(map.getLayersOrder(), order, id, ownIds, fallback);
 }
