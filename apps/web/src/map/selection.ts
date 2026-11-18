@@ -31,6 +31,12 @@ export function toolbarTarget<S extends ReadonlySet<string>>(checked: S, focused
   return new Set(focused !== null ? [focused] : []);
 }
 
+/** How the panel's footer names the toolbar's target (FR-5.8's words): the Checked group, or the
+ *  Focused row when nothing is checked, so a row that's only focused never reads as checked. */
+export function targetSummaryKind(checkedCount: number, targetCount: number): 'checked' | 'focused' {
+  return checkedCount === 0 && targetCount > 0 ? 'focused' : 'checked';
+}
+
 /** Show/Hide over the toolbar's target: if any of it is hidden, show all; otherwise hide all.
  *  One click never leaves the group mixed. */
 export function toggledVisibility(hidden: ReadonlySet<string>, target: ReadonlySet<string>): Set<string> {

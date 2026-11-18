@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { invertedChecks, mapHiddenIds, toggled, toolbarTarget, withoutIds } from '../src/map/selection.ts';
+import { invertedChecks, mapHiddenIds, targetSummaryKind, toggled, toolbarTarget, withoutIds } from '../src/map/selection.ts';
 
 const activity = (id, activityType = 'walking', distanceMeters = 1000, pending = false) => ({ id, activityType, distanceMeters, pending });
 
@@ -30,4 +30,11 @@ test('the map hides filtered-out, hidden and pending tracks', () => {
   const activities = [activity('walk'), activity('run', 'running'), activity('ride', 'cycling'), activity('busy', 'walking', 1000, true)];
   const hidden = mapHiddenIds(activities, new Set(['running']), null, new Set(['ride']), ['busy']);
   assert.deepEqual([...hidden].sort(), ['busy', 'ride', 'run']);
+});
+
+test("the footer names a focused row as focused, never as checked", () => {
+  assert.equal(targetSummaryKind(0, 1), 'focused');
+  assert.equal(targetSummaryKind(2, 2), 'checked');
+  // Nothing to act on reads as nothing checked.
+  assert.equal(targetSummaryKind(0, 0), 'checked');
 });

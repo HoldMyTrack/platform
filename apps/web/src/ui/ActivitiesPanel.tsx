@@ -5,6 +5,7 @@ import type { Activity, Story } from '../api';
 import { ActivitiesToolbar } from './ActivitiesToolbar';
 import { ActivityFilters, type DatesProps } from './ActivityFilters';
 import { ActivityRow, rowLabel } from './ActivityRow';
+import { targetSummaryKind } from '../map/selection';
 import { listWindow, scrollTopFor } from './listWindow';
 import { FirstRunPanel } from './FirstRunPanel';
 import { PrivateLocationsPanel } from './PrivateLocationsPanel';
@@ -515,7 +516,7 @@ export function ActivitiesPanel({
               as FR-5.8 has it, so a row that's only focused never reads as checked. */}
           <div className="activities-panel__footer">
             <span className="activities-panel__footer-summary">
-              {checked.size === 0 && targetActivities[0]
+              {targetSummaryKind(checked.size, targetActivities.length) === 'focused' && targetActivities[0]
                 ? t('activities.footer_focused', { label: rowLabel(targetActivities[0]), distance: formatTotalDistance(targetMeters, system) })
                 : t('activities.footer', { n: targetActivities.length, distance: formatTotalDistance(targetMeters, system) })}
             </span>
