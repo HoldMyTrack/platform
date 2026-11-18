@@ -1,4 +1,5 @@
 import type { Activity } from '../api';
+import type { DateFilter } from './dateFilter.ts';
 
 /**
  * The TYPE and DISTANCE filters are pure client-side facets
@@ -91,4 +92,10 @@ export function passesFilters(
 ): boolean {
   if (excludedTypes.has(activity.activityType)) return false;
   return passesDistance(activity, distanceFilter);
+}
+
+/** Why the list is empty, to say so: a Type, Distance or Dates filter that's set, or else only
+ *  that this part of the map holds no activity. */
+export function emptyListReason(excludedTypes: ReadonlySet<string>, distanceFilter: DistanceRange | null, dates: DateFilter): 'filters' | 'area' {
+  return excludedTypes.size > 0 || distanceFilter !== null || dates.after !== null || dates.before !== null ? 'filters' : 'area';
 }

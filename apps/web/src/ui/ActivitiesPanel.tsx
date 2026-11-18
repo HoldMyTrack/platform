@@ -11,7 +11,7 @@ import { FirstRunPanel } from './FirstRunPanel';
 import { PrivateLocationsPanel } from './PrivateLocationsPanel';
 import { StoriesTab } from './StoriesTab';
 import type { StoryInboxState } from './useStoryInbox';
-import type { DistanceRange, TypeFacet } from './activityFacets';
+import { emptyListReason, type DistanceRange, type TypeFacet } from './activityFacets';
 import { formatTotalDistance } from './format';
 import { useUnitSystem } from './units';
 import { lang, t, tn } from '../i18n';
@@ -508,7 +508,13 @@ export function ActivitiesPanel({
             {outOfReach ? (
               <li className="activities-panel__note">{t('area.zoom_in')}</li>
             ) : (
-              !loading && !error && activities.length === 0 && <li className="activities-panel__note">{t('activities.none_match')}</li>
+              !loading &&
+              !error &&
+              activities.length === 0 && (
+                <li className="activities-panel__note">
+                  {t(emptyListReason(excludedTypes, distanceFilter, dates.value) === 'filters' ? 'activities.none_match' : 'activities.none_here')}
+                </li>
+              )
             )}
           </ul>
 
