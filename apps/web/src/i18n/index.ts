@@ -76,7 +76,7 @@ export function t<K extends MessageKey>(key: K, ...[vars]: ArgsFor<K>): string {
   return fill(lookup(key), vars);
 }
 
-/** Keys whose messages come in plural forms — `activities` for `activities.one`/`.other`. */
+/** Keys whose messages come in plural forms — `tracks.count` for `tracks.count.one`/`.other`. */
 type PluralBase = MessageKey extends infer K ? (K extends `${infer B}.other` ? B : never) : never;
 
 /** A count's message in the plural form `n` takes, with `{n}` set to it. */

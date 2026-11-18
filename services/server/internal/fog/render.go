@@ -71,7 +71,7 @@ func RenderUser(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, u
 	var skipped atomic.Int64
 	defer func() {
 		if n := skipped.Load(); n > 0 {
-			slog.Warn("fog: render skipped unreadable activity masks", "user", userID, "masks", n)
+			slog.Warn("fog: render skipped unreadable track masks", "user", userID, "masks", n)
 		}
 	}()
 
@@ -193,14 +193,14 @@ func renderAndStoreTile(ctx context.Context, pool *pgxpool.Pool, store *storage.
 		  AND m.zoom = $2 AND m.tile_x = $3 AND m.tile_y = $4
 	`, userID, zoom, x, y)
 	if err != nil {
-		return fmt.Errorf("query activity masks: %w", err)
+		return fmt.Errorf("query track masks: %w", err)
 	}
 	var masks []*image.Gray
 	for rows.Next() {
 		var b []byte
 		if err := rows.Scan(&b); err != nil {
 			rows.Close()
-			return fmt.Errorf("scan activity mask: %w", err)
+			return fmt.Errorf("scan track mask: %w", err)
 		}
 		if b == nil {
 			skipped.Add(1)
@@ -275,7 +275,7 @@ func RenderTrackMasks(ctx context.Context, pool *pgxpool.Pool, trackID string, p
 		x, y := tiles[i][0], tiles[i][1]
 		b, err := encodeTilePNG(renderTrackMask(projectToTile(points, x, y, Zoom)...))
 		if err != nil {
-			return fmt.Errorf("activity mask z%d/%d/%d: %w", Zoom, x, y, err)
+			return fmt.Errorf("track mask z%d/%d/%d: %w", Zoom, x, y, err)
 		}
 		xs[i], ys[i], pngs[i] = int32(x), int32(y), b
 		return nil

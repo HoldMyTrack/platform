@@ -16,7 +16,7 @@ import (
 // Private locations (FR-7.1, IMPLEMENTATION.md §7) — circles on the map whose contents never
 // leave ingest. Stored in privacy_zones (§3.7). Every change enqueues a `reprivacy` job over
 // the tracks the old and new circle could clip, marking them Pending in the same
-// transaction, so the Activity List shows which rows are being reprocessed.
+// transaction, so the track list shows which rows are being reprocessed.
 
 const (
 	minPrivateLocationRadiusM = 50
@@ -125,7 +125,7 @@ func (s *Server) handleHiddenTracks(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("hidden activities count failed", "err", err)
+		s.log.Error("hidden tracks count failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}

@@ -42,7 +42,7 @@ func insertTrack(t *testing.T, pool *pgxpool.Pool, userID string) string {
 	if err := pool.QueryRow(context.Background(), `
 		INSERT INTO tracks (user_id, source, track_type, started_at, timezone)
 		VALUES ($1, 'upload', 'walking', NOW(), 'UTC') RETURNING id`, userID).Scan(&id); err != nil {
-		t.Fatalf("create activity: %v", err)
+		t.Fatalf("create track: %v", err)
 	}
 	return id
 }
@@ -182,6 +182,6 @@ func TestMaskBytesGoWithTheirRow(t *testing.T) {
 		t.Fatal(err)
 	}
 	if n := count(deleted); n != 0 {
-		t.Errorf("deleted activity left %d mask PNGs", n)
+		t.Errorf("deleted track left %d mask PNGs", n)
 	}
 }

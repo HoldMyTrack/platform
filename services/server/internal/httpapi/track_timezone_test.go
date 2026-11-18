@@ -51,7 +51,7 @@ func TestTracksGroupByTheirOwnTimezone(t *testing.T) {
 	// Each row names its zone, for a client to show its times in.
 	for _, a := range d.listTracks(me) {
 		if want := map[string]string{tokyo: "Asia/Tokyo", home: "America/New_York"}[a.ID]; a.Timezone != want {
-			t.Errorf("activity %s: timezone %q, want %q", a.ID, a.Timezone, want)
+			t.Errorf("track %s: timezone %q, want %q", a.ID, a.Timezone, want)
 		}
 	}
 

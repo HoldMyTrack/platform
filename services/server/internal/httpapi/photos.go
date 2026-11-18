@@ -21,7 +21,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// Activity photos (IMPLEMENTATION.md §4.27, ADR-0024) — the user's own pictures on an
+// Track photos (IMPLEMENTATION.md §4.27, ADR-0024) — the user's own pictures on an
 // track, each placed on its route. Stored in track_photos (§3.22), the images under
 // photos/{userID}/ in object storage. The browser resizes a photo and strips its EXIF before
 // upload, sending the capture time and position it read as fields; the server keeps a moment on
@@ -265,7 +265,7 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 	}
 	trackID := r.FormValue("track_id")
 	if ok, err := s.ownsTrack(ctx, userID, trackID); err != nil {
-		s.log.Error("photo upload: activity lookup failed", "err", err)
+		s.log.Error("photo upload: track lookup failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	} else if !ok {

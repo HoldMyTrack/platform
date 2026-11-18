@@ -52,7 +52,7 @@ func TestLoadTimezones(t *testing.T) {
 			INSERT INTO tracks (user_id, source, track_type, started_at, trajectory, timezone)
 			VALUES ($1, 'upload', 'walking', now(), ST_GeomFromText(NULLIF($2, ''), 4326), 'UTC')
 			RETURNING id`, userID, track).Scan(&id); err != nil {
-			t.Fatalf("create activity: %v", err)
+			t.Fatalf("create track: %v", err)
 		}
 		return id
 	}
@@ -82,7 +82,7 @@ func TestLoadTimezones(t *testing.T) {
 		tokyo: "Asia/Tokyo", sea: "Etc/GMT+3", unknown: "America/New_York", nowhere: "America/New_York", hidden: "UTC",
 	} {
 		if got := zone(id); got != want {
-			t.Errorf("activity %s: zone %q, want %q", id, got, want)
+			t.Errorf("track %s: zone %q, want %q", id, got, want)
 		}
 	}
 

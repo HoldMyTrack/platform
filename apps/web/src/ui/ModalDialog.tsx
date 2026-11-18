@@ -16,7 +16,7 @@ interface ModalDialogProps {
 }
 
 /**
- * The shell ConfirmDialog, StoryDialog and SendCopyDialog share: a `<dialog>` opened with
+ * The shell ConfirmDialog, TripDialog and SendCopyDialog share: a `<dialog>` opened with
  * `showModal()`, so Escape, the focus trap and the inert page come from the browser, named by its
  * title, with one way out (the dialog's own `close()`, which runs `onClose`) whether that came
  * from a button, Escape or the backdrop. Nothing closes it while `busy`, so a failure always has

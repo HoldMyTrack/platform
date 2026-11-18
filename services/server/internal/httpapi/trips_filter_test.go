@@ -13,7 +13,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
-// `story` narrows the track list, the summary, the histogram (both modes and `earliest`)
+// `trip` narrows the track list, the summary, the histogram (both modes and `earliest`)
 // and the tracks tiles to one Trip's tracks, alongside the filters they already take.
 func TestTripFilter(t *testing.T) {
 	d := newDBTest(t)
@@ -63,7 +63,7 @@ func TestTripFilter(t *testing.T) {
 	var summary trackSummaryResponse
 	d.decode(d.do(me, "GET", "/v2/tracks/summary?trip="+trip.ID, nil), http.StatusOK, &summary)
 	if summary.Count != 2 || summary.DistanceMeters != 43000 {
-		t.Errorf("summary %+v, want the Story's two activities", summary)
+		t.Errorf("summary %+v, want the Trip's two tracks", summary)
 	}
 
 	days := func(query string) ([]string, string) {
@@ -102,23 +102,23 @@ func TestTripFilter(t *testing.T) {
 		return rec.Body.Len()
 	}
 	if tile(here, "trip="+trip.ID) == 0 {
-		t.Errorf("the Story's tile is empty")
+		t.Errorf("the Trip's tile is empty")
 	}
 	if tile(elsewhere, "") == 0 {
 		t.Errorf("the unfiltered tile elsewhere is empty")
 	}
 	// The installed apps name it story on a tile (tileQuery).
 	if n := tile(elsewhere, "story="+trip.ID); n != 0 {
-		t.Errorf("tile elsewhere ?story= has %d bytes; nothing there is in the Story", n)
+		t.Errorf("tile elsewhere ?trip= has %d bytes; nothing there is in the Trip", n)
 	}
 	for _, query := range []string{"trip=" + trip.ID, "trip=" + empty.ID} {
 		if n := tile(elsewhere, query); n != 0 {
-			t.Errorf("tile elsewhere ?%s has %d bytes; nothing there is in the Story", query, n)
+			t.Errorf("tile elsewhere ?%s has %d bytes; nothing there is in the Trip", query, n)
 		}
 	}
 	// Their Trip's track is right here, but it isn't mine to draw.
 	if n := tile(here, "trip="+theirTrip.ID); n != 0 {
-		t.Errorf("another account's Story drew %d bytes", n)
+		t.Errorf("another account's Trip drew %d bytes", n)
 	}
 
 	for _, path := range []string{"/v2/tracks", "/v2/tracks/summary", "/v2/tracks/histogram?days=5&", "/tiles/v1/tracks/12/0/0.mvt"} {
@@ -127,13 +127,13 @@ func TestTripFilter(t *testing.T) {
 			sep = ""
 		}
 		if rec := d.do(me, "GET", path+sep+"trip=nope", nil); rec.Code != http.StatusBadRequest {
-			t.Errorf("%s with a malformed story: status %d, want 400", path, rec.Code)
+			t.Errorf("%s with a malformed trip: status %d, want 400", path, rec.Code)
 		}
 	}
 }
 
 // A change to which tracks a Trip holds bumps the account's tile version, since the
-// tracks tiles take a `story` filter; anything else about a Trip doesn't.
+// tracks tiles take a `trip` filter; anything else about a Trip doesn't.
 func TestTripMembershipBumpsTileVersion(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
@@ -159,14 +159,14 @@ func TestTripMembershipBumpsTileVersion(t *testing.T) {
 		out    *trip
 	}{
 		{"create empty", false, "POST", func() string { return "/v2/trips" }, map[string]any{"name": "Empty"}, http.StatusCreated, &empty},
-		{"create with an activity", true, "POST", func() string { return "/v2/trips" }, map[string]any{"name": "Trip", "track_ids": []string{a}}, http.StatusCreated, &st},
+		{"create with a track", true, "POST", func() string { return "/v2/trips" }, map[string]any{"name": "Trip", "track_ids": []string{a}}, http.StatusCreated, &st},
 		{"rename", false, "PATCH", func() string { return "/v2/trips/" + st.ID }, map[string]any{"name": "Renamed", "description": "New"}, http.StatusOK, nil},
 		{"add a member again", false, "POST", func() string { return "/v2/trips/" + st.ID + "/tracks" }, map[string]any{"track_ids": []string{a}}, http.StatusOK, nil},
 		{"add", true, "POST", func() string { return "/v2/trips/" + st.ID + "/tracks" }, map[string]any{"track_ids": []string{b}}, http.StatusOK, nil},
 		{"remove a non-member", false, "DELETE", func() string { return "/v2/trips/" + empty.ID + "/tracks" }, map[string]any{"track_ids": []string{a}}, http.StatusOK, nil},
 		{"remove", true, "DELETE", func() string { return "/v2/trips/" + st.ID + "/tracks" }, map[string]any{"track_ids": []string{b}}, http.StatusOK, nil},
-		{"delete an empty Story", false, "DELETE", func() string { return "/v2/trips/" + empty.ID }, nil, http.StatusNoContent, nil},
-		{"delete a Story with activities", true, "DELETE", func() string { return "/v2/trips/" + st.ID }, nil, http.StatusNoContent, nil},
+		{"delete an empty Trip", false, "DELETE", func() string { return "/v2/trips/" + empty.ID }, nil, http.StatusNoContent, nil},
+		{"delete a Trip with tracks", true, "DELETE", func() string { return "/v2/trips/" + st.ID }, nil, http.StatusNoContent, nil},
 	}
 	for _, step := range steps {
 		before := version()

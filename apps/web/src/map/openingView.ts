@@ -5,7 +5,7 @@ import { FLY_FILL, unionBBox } from './bbox.ts';
 const OPENING_ZOOM = 12;
 
 /** How many of the newest tracks the opening view tries to show. */
-export const OPENING_ACTIVITIES = 5;
+export const OPENING_TRACKS = 5;
 
 /** MapLibre's tile size: the world is this many px wide at zoom 0. */
 const WORLD_PX = 512;
@@ -41,7 +41,7 @@ export function openingView(boxes: readonly BBox[], viewport: { width: number; h
     return { width: (x1 - x0) * scale, height: (y1 - y0) * scale, x: (x0 + x1) / 2, y: (y0 + y1) / 2 };
   };
   let chosen = frame(newest);
-  for (let n = Math.min(OPENING_ACTIVITIES, boxes.length); n >= 1; n--) {
+  for (let n = Math.min(OPENING_TRACKS, boxes.length); n >= 1; n--) {
     const union = unionBBox(boxes.slice(0, n));
     if (!union) continue;
     const f = frame(union);

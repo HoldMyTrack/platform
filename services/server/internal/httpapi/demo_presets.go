@@ -30,7 +30,7 @@ const DemoCustomerUserID = "22222222-2222-2222-2222-222222222222"
 
 // demo_data/ holds the account's history as raw track files in any format ingest parses
 // (parse.ByExtensionUpTo: .gpx, .tcx, .fit, .json), plus manifest.json. They are real tracks
-// on a live deployment, written out as GPX by `export-demo-activities` (demo_export.go)
+// on a live deployment, written out as GPX by `export-demo-tracks` (demo_export.go)
 // exactly as their owner sees them, and reviewed by hand before being committed.
 //
 //go:embed demo_data
@@ -71,7 +71,7 @@ type demoManifestTrip struct {
 }
 
 // demoManifestEntry is one file's overrides. Name is the track's display name — no file
-// parser sets parse.Activity.Name, so without it the seeded row gets the generic
+// parser sets parse.Track.Name, so without it the seeded row gets the generic
 // "<Type> - <date>" every unnamed track gets. Type is the track_type, needed for files
 // that don't carry their own: a synced track (Health Connect, in-app recording) reports
 // its type in the sync request, not inside the JSON payload the export copies out.
@@ -173,13 +173,13 @@ func loadDemoManifest(fsys fs.FS, files []string) (demoManifest, error) {
 		}
 		switch {
 		case opensFirst > 1:
-			return demoManifest{}, fmt.Errorf("%s: story %q: only one story opens first", demoManifestFile, st.Name)
+			return demoManifest{}, fmt.Errorf("%s: trip %q: only one trip opens first", demoManifestFile, st.Name)
 		case strings.TrimSpace(st.Name) == "" || len([]rune(st.Name)) > maxTripNameLen:
-			return demoManifest{}, fmt.Errorf("%s: story name %q must be 1–%d characters", demoManifestFile, st.Name, maxTripNameLen)
+			return demoManifest{}, fmt.Errorf("%s: trip name %q must be 1–%d characters", demoManifestFile, st.Name, maxTripNameLen)
 		case len([]rune(st.Description)) > maxTripDescriptionLen:
-			return demoManifest{}, fmt.Errorf("%s: story %q: description over %d characters", demoManifestFile, st.Name, maxTripDescriptionLen)
+			return demoManifest{}, fmt.Errorf("%s: trip %q: description over %d characters", demoManifestFile, st.Name, maxTripDescriptionLen)
 		case names[st.Name]:
-			return demoManifest{}, fmt.Errorf("%s: two stories named %q", demoManifestFile, st.Name)
+			return demoManifest{}, fmt.Errorf("%s: two trips named %q", demoManifestFile, st.Name)
 		case len(st.Tracks) == 0:
 			return demoManifest{}, fmt.Errorf("%s: trip %q has no tracks", demoManifestFile, st.Name)
 		}
@@ -335,7 +335,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		log.Warn("demo customer seed: captured place not loaded here, skipped", "osm_type", c.OSMType, "osm_id", c.OSMID, "name", c.Name)
 	}
 
-	log.Info("demo customer seed: done", "ingested", ingested, "already_present", skipped, "failed", failed, "total", len(names), "stories", len(manifest.Trips),
+	log.Info("demo customer seed: done", "ingested", ingested, "already_present", skipped, "failed", failed, "total", len(names), "trips", len(manifest.Trips),
 		"captures", len(manifest.SpotCaptures)-len(missing))
 	if failed > 0 {
 		return fmt.Errorf("seed demo customer: %d of %d files failed", failed, len(names))
@@ -413,7 +413,7 @@ func seedDemoCaptures(ctx context.Context, pool *pgxpool.Pool, userID string, ca
 // so a plain re-run fixes a Trip that drifted, as it does a track's name. A Trip the
 // manifest doesn't name is left alone; --reset is what removes those. One transaction, and one
 // tile-version bump if any Trip's tracks changed (§4.2.6): the tracks tiles take a
-// `story` filter.
+// `trip` filter.
 //
 // Each Trip is dated the day after its last track ended, as someone would make one after a
 // trip, rather than the moment of the seed: the Trips are listed newest first, so they then
@@ -423,7 +423,7 @@ func seedDemoCaptures(ctx context.Context, pool *pgxpool.Pool, userID string, ca
 func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips []demoManifestTrip, trackIDs map[string]string) error {
 	tx, err := pool.Begin(ctx)
 	if err != nil {
-		return fmt.Errorf("stories: %w", err)
+		return fmt.Errorf("trips: %w", err)
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 	changed := false
@@ -445,17 +445,17 @@ func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips
 				tripID, st.Description)
 		}
 		if err != nil {
-			return fmt.Errorf("story %q: %w", st.Name, err)
+			return fmt.Errorf("trip %q: %w", st.Name, err)
 		}
 		removed, err := tx.Exec(ctx, `DELETE FROM trip_tracks WHERE trip_id = $1 AND NOT track_id = ANY($2::uuid[])`, tripID, ids)
 		if err != nil {
-			return fmt.Errorf("story %q: %w", st.Name, err)
+			return fmt.Errorf("trip %q: %w", st.Name, err)
 		}
 		added, err := tx.Exec(ctx, `
 			INSERT INTO trip_tracks (trip_id, track_id) SELECT $1, unnest($2::uuid[])
 			ON CONFLICT DO NOTHING`, tripID, ids)
 		if err != nil {
-			return fmt.Errorf("story %q: %w", st.Name, err)
+			return fmt.Errorf("trip %q: %w", st.Name, err)
 		}
 		if removed.RowsAffected() > 0 || added.RowsAffected() > 0 {
 			changed = true
@@ -469,7 +469,7 @@ func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips
 			      FROM tracks WHERE id = ANY($2::uuid[])) d
 			WHERE s.id = $1 AND (s.created_at IS DISTINCT FROM d.at OR s.updated_at IS DISTINCT FROM d.at)`,
 			tripID, ids); err != nil {
-			return fmt.Errorf("story %q: %w", st.Name, err)
+			return fmt.Errorf("trip %q: %w", st.Name, err)
 		}
 	}
 	// Dated above, by its own tracks, so a later date only ever moves it on.
@@ -479,12 +479,12 @@ func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips
 			FROM (SELECT MAX(created_at) + INTERVAL '1 day' AS at FROM trips WHERE user_id = $1 AND id <> $2) d
 			WHERE s.id = $2 AND d.at > s.created_at`,
 			userID, first); err != nil {
-			return fmt.Errorf("stories: %w", err)
+			return fmt.Errorf("trips: %w", err)
 		}
 	}
 	if changed {
 		if err := fog.BumpMapVersion(ctx, tx, userID); err != nil {
-			return fmt.Errorf("stories: %w", err)
+			return fmt.Errorf("trips: %w", err)
 		}
 	}
 	return tx.Commit(ctx)
@@ -539,7 +539,7 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	if err := tx.Commit(ctx); err != nil {
 		return fmt.Errorf("reset: commit: %w", err)
 	}
-	log.Info("demo customer reset: done", "activities_removed", removed.RowsAffected())
+	log.Info("demo customer reset: done", "tracks_removed", removed.RowsAffected())
 	return nil
 }
 

@@ -133,7 +133,7 @@ func TestParseFITSport(t *testing.T) {
 		t.Fatalf("parseFIT: %v", err)
 	}
 	if act.TrackType != "gravel_cycling" {
-		t.Fatalf("want activity type gravel_cycling, got %q", act.TrackType)
+		t.Fatalf("want track type gravel_cycling, got %q", act.TrackType)
 	}
 	if len(act.Points) != 1 {
 		t.Fatalf("want 1 point, got %d", len(act.Points))
@@ -149,7 +149,7 @@ func TestParseFITSportGenericSubSportFallsBackToSport(t *testing.T) {
 		t.Fatalf("parseFIT: %v", err)
 	}
 	if act.TrackType != "running" {
-		t.Fatalf("want activity type running (generic sub_sport falls back to sport), got %q", act.TrackType)
+		t.Fatalf("want track type running (generic sub_sport falls back to sport), got %q", act.TrackType)
 	}
 }
 
@@ -162,7 +162,7 @@ func TestParseFITNoSession(t *testing.T) {
 		t.Fatalf("parseFIT: %v", err)
 	}
 	if act.TrackType != "unknown" {
-		t.Fatalf("want activity type unknown (no session message in this fixture), got %q", act.TrackType)
+		t.Fatalf("want track type unknown (no session message in this fixture), got %q", act.TrackType)
 	}
 }
 

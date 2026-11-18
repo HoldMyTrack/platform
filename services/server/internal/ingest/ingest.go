@@ -122,7 +122,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 	// was clipped with: a change made since might not have found this track (LockZones).
 	tx, err := pool.Begin(ctx)
 	if err != nil {
-		return Result{}, nil, fmt.Errorf("ingest: persist activity: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: persist track: %w", err)
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 	if err := LockZones(ctx, tx, job.UserID); err != nil {
@@ -180,10 +180,10 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 		EditableTimestamps(points) == nil,
 	).Scan(&trackID, &inserted, &complete)
 	if err != nil {
-		return Result{}, nil, fmt.Errorf("ingest: persist activity: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: persist track: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
-		return Result{}, nil, fmt.Errorf("ingest: persist activity: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: persist track: %w", err)
 	}
 
 	if !inserted && complete {
@@ -207,7 +207,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 	// tells `render_fog` this tile's aggregate needs recompositing, so the mask it would
 	// composite in should already exist by the time that runs.
 	if err := fog.RenderTrackMasks(ctx, pool, trackID, points, tiles); err != nil {
-		return Result{}, nil, fmt.Errorf("ingest: render activity masks: %w", err)
+		return Result{}, nil, fmt.Errorf("ingest: render track masks: %w", err)
 	}
 
 	if err := MarkFogTilesDirty(ctx, pool, job.UserID, tiles); err != nil {
@@ -312,7 +312,7 @@ func keepValid(points []parse.Point) []parse.Point {
 // as GPX, typically. Every parser leaves a missing time as the zero time.Time, so such a
 // track would otherwise be persisted as starting on 0001-01-01, with no duration, and be
 // unreachable through the date range the whole map is filtered by.
-var errNoTimestamps = errors.New("the file has no timestamps — a planned route, not a recorded activity")
+var errNoTimestamps = errors.New("the file has no timestamps — a planned route, not a recorded track")
 
 // keepTimed drops the points with no timestamp, and fails when none has one. A few untimed
 // points among timed ones (a stray waypoint) are dropped rather than failing the file; kept,

@@ -228,16 +228,16 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 				county_word = COALESCE((SELECT mode() WITHIN GROUP (ORDER BY k.local_type) FROM admin_counties k
 					WHERE k.country_id = o.id AND k.kind = 'county' AND k.local_type IS NOT NULL), '')`, nil},
 		{"analyze", `ANALYZE admin_country_parts, admin_region_parts, admin_county_parts, admin_city_parts`, nil},
-		{"activity countries", `
+		{"track countries", `
 			INSERT INTO track_country (track_id, country_id)
 			SELECT DISTINCT a.id, p.country_id FROM tracks a JOIN admin_country_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCountries},
-		{"activity regions", `
+		{"track regions", `
 			INSERT INTO track_region (track_id, region_id)
 			SELECT DISTINCT a.id, p.region_id FROM tracks a JOIN admin_region_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackRegions},
-		{"activity counties", `
+		{"track counties", `
 			INSERT INTO track_county (track_id, county_id)
 			SELECT DISTINCT a.id, p.county_id FROM tracks a JOIN admin_county_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCounties},
-		{"activity cities", `
+		{"track cities", `
 			INSERT INTO track_city (track_id, city_id)
 			SELECT DISTINCT a.id, p.city_id FROM tracks a JOIN admin_city_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCities},
 	}

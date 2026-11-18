@@ -27,7 +27,7 @@ interface TrackRowProps {
   /** The Trips tab's Remove from trip — an × at the row's end, shown on hover or focus (always
    *  on a phone). */
   remove?: { label: string; disabled: boolean; onRemove: () => void };
-  /** A Trip badge clicked — opens that Trip on the Trips tab (MapView's enterStory). */
+  /** A Trip badge clicked — opens that Trip on the Trips tab (useTripNav's enterTrip). */
   onOpenTrip?: (id: string) => void;
   onFocus: () => void;
   onHover: (id: string | null) => void;

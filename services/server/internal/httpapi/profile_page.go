@@ -148,7 +148,7 @@ func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *page
 	all := statsOf(days)
 	view := profileView{
 		Cards: []statCard{
-			{l.T("profile.card_activities"), l.Int(all.Count)},
+			{l.T("profile.card_tracks"), l.Int(all.Count)},
 			{l.T("profile.card_distance"), web.FormatTotalDistance(l, all.DistanceMeters, imperial)},
 			{l.T("profile.card_active_days"), l.Int(all.ActiveDays)},
 			{l.T("profile.card_longest_streak"), l.N("count.days", all.LongestStreakDays)},
@@ -259,7 +259,7 @@ func buildYearGrid(l *i18n.Localizer, year int, days []histogramBucket, shade st
 			b := byDate[date]
 			cell := gridCell{Level: shadeLevel(b, shade, t1, t2), Title: l.T("profile.cell_empty", "date", date), Today: date == today}
 			if b.Count > 0 {
-				cell.Title = l.T("profile.cell", "date", date, "activities", l.N("count.activities", b.Count), "distance", web.FormatDistance(l, b.DistanceMeters, imperial))
+				cell.Title = l.T("profile.cell", "date", date, "tracks", l.N("count.tracks", b.Count), "distance", web.FormatDistance(l, b.DistanceMeters, imperial))
 			}
 			g.Cells = append(g.Cells, cell)
 		}
@@ -302,7 +302,7 @@ func shadeLevel(b histogramBucket, shade string, t1, t2 float64) int {
 
 func yearStatsLine(l *i18n.Localizer, st trackStatsBlock, imperial bool) string {
 	return l.T("profile.year_stats",
-		"activities", l.N("count.activities", st.Count),
+		"tracks", l.N("count.tracks", st.Count),
 		"distance", web.FormatTotalDistance(l, st.DistanceMeters, imperial),
 		"active_days", l.N("count.active_days", st.ActiveDays),
 		"streak", l.N("count.days", st.LongestStreakDays))
@@ -325,7 +325,7 @@ func buildTrendBars(l *i18n.Localizer, periods []trendPeriod, imperial bool) []t
 			HeightPercent: math.Round(h*10) / 10,
 			Title: l.T("profile.trend_bar",
 				"date", web.ShortDate(l, p.PeriodStart), "distance", web.FormatTotalDistance(l, p.DistanceMeters, imperial),
-				"activities", l.N("count.activities", p.Count), "hours", web.FormatHours(l, p.MovingSeconds),
+				"tracks", l.N("count.tracks", p.Count), "hours", web.FormatHours(l, p.MovingSeconds),
 				"gain", web.FormatElevation(l, p.ElevationGainM, imperial)),
 		})
 	}

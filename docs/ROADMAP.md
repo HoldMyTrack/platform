@@ -22,11 +22,11 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 ### Retiring `/v1`
 
-- [ ] When `MIN_ANDROID_BUILD` reaches the build of release 0.34.3 (its `android/<versionCode>` tag) and `MIN_IOS_BUILD` that of release 0.2.4 (its `ios/<build>` tag), no supported build calls `/v1` (`IMPLEMENTATION.md` §4.31): delete `v1_edge.go`, the frozen contract, the tracks tile's `story` alias and the View on map link's `activity`, make `api/v2/` the contract, and move the OAuth callbacks to `/v2` after registering them with each provider.
+- [ ] When `MIN_ANDROID_BUILD` reaches the build of the first Android release from 0.34.3 on (its `android/<versionCode>` tag) and `MIN_IOS_BUILD` that of release 0.2.4 (its `ios/<build>` tag), no supported build calls `/v1` (`IMPLEMENTATION.md` §4.31): delete `v1_edge.go`, the frozen contract, the tracks tile's `story` alias and the View on map link's `activity`, make `api/v2/` the contract, and move the OAuth callbacks to `/v2` after registering them with each provider.
 
 ### Renamed payloads
 
-- [ ] Once production's `rewrite_sync_payload` jobs are all done and no stored `.json` payload names `activity_type`, delete the job kind and `parse.JSONActivity`'s `OldTrackType` (`IMPLEMENTATION.md` §4.0.3).
+- [ ] Once production's `rewrite_sync_payload` jobs are all done and no stored `.json` payload names `activity_type`, delete the job kind and `parse.JSONTrack`'s `OldTrackType` (`IMPLEMENTATION.md` §4.0.3).
 
 ### Verification by code
 

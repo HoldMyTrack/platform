@@ -14,8 +14,8 @@ func TestSlug(t *testing.T) {
 		"Morning Run":         "Morning Run",
 		"  Lake / Loop #2!  ": "Lake Loop 2",
 		"Прогулка у озера":    "Прогулка у озера",
-		"???":                 "Activity",
-		"":                    "Activity",
+		"???":                 "Track",
+		"":                    "Track",
 	} {
 		if got := Slug(in); got != want {
 			t.Errorf("Slug(%q) = %q, want %q", in, got, want)

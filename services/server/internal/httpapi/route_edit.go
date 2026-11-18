@@ -70,7 +70,7 @@ func (s *Server) handleTrackRoutePoints(w http.ResponseWriter, r *http.Request) 
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("track points load failed", "activity_id", trackID, "err", err)
+		s.log.Error("track points load failed", "track_id", trackID, "err", err)
 		httpErrorT(w, r, http.StatusConflict, "error.track_unreadable")
 		return
 	}
@@ -91,7 +91,7 @@ func (s *Server) handleTrackRoutePoints(w http.ResponseWriter, r *http.Request) 
 	if editJSON != nil {
 		var e ingest.RouteEdit
 		if err := json.Unmarshal(editJSON, &e); err != nil {
-			s.log.Error("stored track edit unreadable", "activity_id", trackID, "err", err)
+			s.log.Error("stored track edit unreadable", "track_id", trackID, "err", err)
 		} else {
 			resp.Edit = &e
 		}

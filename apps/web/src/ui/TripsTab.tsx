@@ -25,16 +25,16 @@ function tripStatsLine(totals: TripTotals, system: UnitSystem): string {
 
 interface TripsTabProps {
   readOnly: boolean;
-  /** Newest first — useStories. */
+  /** Newest first — useTrips. */
   trips: Trip[];
   tripsReady: boolean;
   tripsError: string | null;
-  /** Copies of Trips others sent the account, and the accepted ones still arriving — useStoryInbox. */
+  /** Copies of Trips others sent the account, and the accepted ones still arriving — useTripInbox. */
   inbox: TripInboxState;
-  /** The open Trip's id — MapView's storyId. At most one is open, and once the list has
+  /** The open Trip's id — MapView's tripId. At most one is open, and once the list has
    *  loaded, one always is (MapView opens the newest). */
   openId: string | null;
-  /** The open Trip as `GET /v2/trips/{id}` last returned it (useStory) — its whole-Trip
+  /** The open Trip as `GET /v2/trips/{id}` last returned it (useTrip) — its whole-Trip
    *  statistics for the footer. */
   openTrip: Trip | null;
   /** Why the open Trip couldn't be read — a `?trip=` that doesn't exist or isn't this account's. */

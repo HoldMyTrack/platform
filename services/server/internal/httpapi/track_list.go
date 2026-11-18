@@ -147,7 +147,7 @@ func (s *Server) handleListTracks(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("activity list query failed", "err", err)
+		s.log.Error("track list query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}

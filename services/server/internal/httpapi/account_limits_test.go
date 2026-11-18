@@ -21,8 +21,8 @@ func TestFitWithinLimits(t *testing.T) {
 		refused string
 	}{
 		{"room for all", accountUsage{10, 1000}, []int64{5, 5, 5}, 3, ""},
-		{"the last activity that fits", accountUsage{maxTracksPerAccount - 1, 0}, []int64{1}, 1, ""},
-		{"at the activity limit", accountUsage{maxTracksPerAccount, 0}, []int64{1}, 0, limitTracks},
+		{"the last track that fits", accountUsage{maxTracksPerAccount - 1, 0}, []int64{1}, 1, ""},
+		{"at the track limit", accountUsage{maxTracksPerAccount, 0}, []int64{1}, 0, limitTracks},
 		{"part of a batch fits", accountUsage{maxTracksPerAccount - 2, 0}, []int64{1, 1, 1, 1}, 2, limitTracks},
 		{"exactly filling storage", accountUsage{0, maxOriginalBytesPerAccount - 100}, []int64{100}, 1, ""},
 		{"one byte over storage", accountUsage{0, maxOriginalBytesPerAccount - 100}, []int64{101}, 0, limitStorage},
@@ -39,7 +39,7 @@ func TestFitWithinLimits(t *testing.T) {
 func TestLimitMessage(t *testing.T) {
 	l := i18n.Get("en")
 	if got := limitMessage(l, limitTracks); !strings.Contains(got, "50,000 tracks") {
-		t.Errorf("activity limit message %q", got)
+		t.Errorf("track limit message %q", got)
 	}
 	if got := limitMessage(l, limitStorage); !strings.Contains(got, "5 GB") {
 		t.Errorf("storage limit message %q", got)

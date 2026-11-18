@@ -30,7 +30,7 @@ func TestFontPx(t *testing.T) {
 }
 
 func TestArrange(t *testing.T) {
-	card := Card{Lines: []string{"Hike · 8 mi", "Walk"}, More: "+ 4 more", Totals: "6 activities"}
+	card := Card{Lines: []string{"Hike · 8 mi", "Walk"}, More: "+ 4 more", Totals: "6 tracks, 40.5 km"}
 	l := Arrange(card, 2000, 1000, half)
 	font := FontPx(2000, 1000) // 27
 	if l.FontPx != font {
@@ -56,8 +56,8 @@ func TestArrange(t *testing.T) {
 	if l.RuleY <= l.Runs[2].Y || l.RuleY >= l.Runs[3].Y-font {
 		t.Errorf("RuleY = %v between %v and %v", l.RuleY, l.Runs[2].Y, l.Runs[3].Y)
 	}
-	// As wide as "6 tracks" (12 runes) plus padding; as tall as its four lines, gap and padding.
-	if want := int(12*font/2 + 2*font*padX + 0.999); l.Width != want {
+	// As wide as "6 tracks, 40.5 km" (17 runes) plus padding; as tall as its four lines, gap and padding.
+	if want := int(17*font/2 + 2*font*padX + 0.999); l.Width != want {
 		t.Errorf("Width = %d, want %d", l.Width, want)
 	}
 	if want := int(4*font*lineHeight + font*totalsGap + 2*font*padY + 0.999); l.Height != want {

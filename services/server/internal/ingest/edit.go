@@ -335,10 +335,10 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		return nil, nil // deleted while the job was queued: nothing left to reprocess
 	}
 	if err != nil {
-		return nil, fmt.Errorf("load activity: %w", err)
+		return nil, fmt.Errorf("load track: %w", err)
 	}
 	if rawKey == nil {
-		return nil, errors.New("activity has no raw payload to reprocess")
+		return nil, errors.New("track has no raw payload to reprocess")
 	}
 
 	userEdit := edit != nil
@@ -454,7 +454,7 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 		recStart, recEnd,
 		editable,
 	); err != nil {
-		return fmt.Errorf("update activity: %w", err)
+		return fmt.Errorf("update track: %w", err)
 	}
 	// The places' matches are insert-only (geo.MatchTrack), so a reprocess that removed the
 	// only part of a track inside some place has to clear the old matches first.
@@ -479,7 +479,7 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 	// track still crosses never goes through a moment with no mask for this track.
 	if points != nil {
 		if err := fog.RenderTrackMasks(ctx, pool, trackID, points, newTiles); err != nil {
-			return fmt.Errorf("render activity masks: %w", err)
+			return fmt.Errorf("render track masks: %w", err)
 		}
 	}
 	if err := fog.RemoveTrackMasks(ctx, pool, trackID, tilesNotIn(oldTiles, newTiles)); err != nil {

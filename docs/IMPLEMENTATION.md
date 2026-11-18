@@ -198,7 +198,7 @@ Path 2's endpoint (`sync_tracks.go`); each track gets its own result. It is idem
 
 `POST /v2/sync/known` makes the server the one record of what was sent: an id is known if a `tracks` row or a `pending` job carries it, so a reinstall or a second phone agrees, and a deleted track is offered again.
 
-The stored payload (`parse.JSONActivity`) names the type `track_type`. Payloads stored before migration 0057 said `activity_type`: the migration queues a `rewrite_sync_payload` job for each, and `parse` reads the old name meanwhile, since a job queued before the deploy can reprocess a track before its payload's rewrite runs. Both go once production holds no `.json` payload naming `activity_type` (`ROADMAP.md`).
+The stored payload (`parse.JSONTrack`) names the type `track_type`. Payloads stored before migration 0057 said `activity_type`: the migration queues a `rewrite_sync_payload` job for each, and `parse` reads the old name meanwhile, since a job queued before the deploy can reprocess a track before its payload's rewrite runs. Both go once production holds no `.json` payload naming `activity_type` (`ROADMAP.md`).
 
 #### 4.0.4 In-app GPS recording (Android)
 
@@ -437,7 +437,7 @@ sequenceDiagram
 
 **Seeded at deploy through the real ingest** (`seed-demo-customer`), since seeding per visitor would take minutes. `demo_data/manifest.json` carries what a file can't (names, photos, Trips, captures) and is applied on every run. Its keys are stable across deployments: a capture names its place by OSM type and id, not `spots.id`. `--reset` exists because the idempotent skip is blind to edits.
 
-**The export** (`export-demo-activities`) writes `DisplayedPoints`, never the original, because `demo_data/` is in a public repository: what zones and edits removed must be absent from the file. Captures are those between the run's first and last point, except places reaching into the owner's Private locations. Traps: the demo's own Private locations clip again when seeding, and two people's recordings of one outing both stay (§4.6), so export one.
+**The export** (`export-demo-tracks`) writes `DisplayedPoints`, never the original, because `demo_data/` is in a public repository: what zones and edits removed must be absent from the file. Captures are those between the run's first and last point, except places reaching into the owner's Private locations. Traps: the demo's own Private locations clip again when seeding, and two people's recordings of one outing both stay (§4.6), so export one.
 
 **Per-address limits key on `clientIP`**, which reads Caddy's `X-Forwarded-For`.
 

@@ -145,7 +145,7 @@ body {
   text-align: center;
 }
 
-/* ModalDialog.tsx's shell, sized for a short title and message; StoryDialog and SendCopyDialog
+/* ModalDialog.tsx's shell, sized for a short title and message; TripDialog and SendCopyDialog
    widen it with .trip-dialog. The red confirm button is ConfirmDialog's, tuned for its Delete
    (§4.7.5). */
 .confirm-dialog {
@@ -936,7 +936,7 @@ body {
   background: rgb(var(--fm-accent-rgb) / 12%);
 }
 
-/* The badge is a button (TrackRow.tsx's StoryBadge) that opens its Trip; with several, a
+/* The badge is a button (TrackRow.tsx's TripBadge) that opens its Trip; with several, a
    menu of their names hangs under it, right-aligned to the badge. */
 button.tracks-panel__trip-badge {
   border: 0;
@@ -962,7 +962,7 @@ button.tracks-panel__trip-badge:hover {
 }
 
 /* The reverse direction of the hover above: hovering this track's *track on the map*
-   (not the row itself) also underlines the title, via MapView's shared hoveredActivityId
+   (not the row itself) also underlines the title, via MapView's shared hoveredTrackId
    state rather than a real `:hover` here — the pointer isn't over this row at all. */
 .tracks-panel__title--hovered {
   text-decoration: underline;
@@ -995,7 +995,7 @@ button.tracks-panel__trip-badge:hover {
   white-space: nowrap;
 }
 
-/* The toolbar icon buttons (docs/SPEC.md FR-5.8) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
+/* The toolbar icon buttons (docs/SPEC.md FR-5.8) — Show/Edit/Create trip/Delete/Focus all operate on the toolbar's target:
    the checked group, else the selected row. Row actions on lists without checkboxes (.tracks-panel__row-action)
    use the same chips. One shared chip look, matching the mockup: a soft tinted square rather than a bare icon, so the group actions read as one
    family regardless of which one is destructive. */
@@ -1026,7 +1026,7 @@ button.tracks-panel__trip-badge:hover {
   color: var(--fm-ink);
 }
 
-/* A demo account's disabled Edit/Delete (ActivitiesPanel's readOnly prop), or simply nothing
+/* A demo account's disabled Edit/Delete (TracksPanel's readOnly prop), or simply nothing
    checked yet — visibly inert, not just a hover/click no-op, so "there's nothing to act on"
    reads before anyone hovers for the title tooltip. */
 .tracks-panel__edit:disabled,

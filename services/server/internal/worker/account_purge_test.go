@@ -31,7 +31,7 @@ func TestPurgeDeletedAccountRemovesItsObjectsAndRows(t *testing.T) {
 	if err := pool.QueryRow(ctx, `
 		INSERT INTO tracks (user_id, source, track_type, started_at, timezone) VALUES ($1, 'upload', 'run', NOW(), 'UTC') RETURNING id
 	`, userID).Scan(&trackID); err != nil {
-		t.Fatalf("create activity: %v", err)
+		t.Fatalf("create track: %v", err)
 	}
 	mine := []string{
 		"raw/" + userID + "/a.gpx", "fog/" + userID + "/14/1/2.png",
@@ -80,7 +80,7 @@ func TestPurgeDeletedAccountRemovesItsObjectsAndRows(t *testing.T) {
 	pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE id = $1`, userID).Scan(&users)
 	pool.QueryRow(ctx, `SELECT count(*) FROM tracks WHERE id = $1`, trackID).Scan(&tracks)
 	if users != 0 || tracks != 0 {
-		t.Errorf("rows left: %d users, %d activities", users, tracks)
+		t.Errorf("rows left: %d users, %d tracks", users, tracks)
 	}
 }
 
@@ -116,7 +116,7 @@ func TestPurgeKeepsPhotoFilesAnotherAccountUses(t *testing.T) {
 		if err := pool.QueryRow(ctx, `
 			INSERT INTO tracks (user_id, source, track_type, started_at, timezone) VALUES ($1, 'upload', 'run', NOW(), 'UTC') RETURNING id
 		`, owner).Scan(&id); err != nil {
-			t.Fatalf("create activity: %v", err)
+			t.Fatalf("create track: %v", err)
 		}
 		return id
 	}

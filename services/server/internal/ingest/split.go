@@ -98,7 +98,7 @@ func CheckSplit(points []parse.Point, zones []Zone, edit *RouteEdit, at int64) e
 }
 
 // ErrSplitConflict is a split point outside the piece's current range.
-var ErrSplitConflict = errors.New("this activity can't be split there any more")
+var ErrSplitConflict = errors.New("this track can't be split there any more")
 
 // insertSplitPiece is the split half of EnqueueRouteEdit: inside its transaction, with the
 // track already flipped Pending, it narrows the track to the points up to at and inserts

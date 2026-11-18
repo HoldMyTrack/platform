@@ -601,7 +601,7 @@ func view(ctx context.Context, st *stats, v *visitor) int {
 	wg.Wait()
 	b := windowBBox(v.c, v.z)
 	if v.mode == "normal" && v.z >= tracksMinZoom {
-		get(ctx, st, v, "activities-area", fmt.Sprintf("%s/v2/tracks/area?bbox=%.5f,%.5f,%.5f,%.5f", *base, b[0], b[1], b[2], b[3]))
+		get(ctx, st, v, "tracks-area", fmt.Sprintf("%s/v2/tracks/area?bbox=%.5f,%.5f,%.5f,%.5f", *base, b[0], b[1], b[2], b[3]))
 	}
 	if asksArea(v.spots, v.z, v.r.Intn(areaShare)) {
 		get(ctx, st, v, "spots-area", fmt.Sprintf("%s/v2/spots?bbox=%.5f,%.5f,%.5f,%.5f&categories=%s", *base, b[0], b[1], b[2], b[3], areaCategories))

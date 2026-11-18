@@ -63,7 +63,7 @@ func TestLabel(t *testing.T) {
 func TestCatalogLabels(t *testing.T) {
 	for _, lang := range i18n.Supported {
 		for _, typ := range Catalog {
-			if _, ok := i18n.Raw(lang, "activity_type."+typ); !ok {
+			if _, ok := i18n.Raw(lang, "track_type."+typ); !ok {
 				t.Errorf("%s: no label for %q", lang, typ)
 			}
 		}

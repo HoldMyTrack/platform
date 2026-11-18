@@ -23,7 +23,7 @@ type Point struct {
 	Time      time.Time
 }
 
-// Activity is the parsed result, before privacy trimming or simplification (§4.1 steps 3, 5).
+// Track is the parsed result, before privacy trimming or simplification (§4.1 steps 3, 5).
 type Track struct {
 	TrackType string // 'run' | 'ride' | 'hike' | ... — best-effort from the source file
 	Points    []Point
@@ -106,7 +106,7 @@ func (p *JSONPoint) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// JSONActivity is one track's worth of JSONPoint, the stored raw payload of a synced track
+// JSONTrack is one track's worth of JSONPoint, the stored raw payload of a synced track
 // (`internal/httpapi.syncTrackRequest.payload` builds it).
 //
 // Name and Description are optional and empty for Health Connect/HealthKit sync, which never
@@ -114,7 +114,7 @@ func (p *JSONPoint) UnmarshalJSON(b []byte) error {
 // sets them from its own Name/Description fields, captured before or during a recording, so
 // the resulting track carries them from the moment it's created rather than needing a
 // separate edit afterward.
-type JSONActivity struct {
+type JSONTrack struct {
 	TrackType string `json:"track_type"`
 	// OldTrackType is the type of a payload stored before migration 0057, which named it
 	// activity_type; ParseJSON reads it when TrackType is empty. It goes with the
@@ -125,12 +125,12 @@ type JSONActivity struct {
 	Description  string      `json:"description,omitempty"`
 }
 
-// ParseJSON decodes Path 2's normalized-point wire format into the same Activity shape
+// ParseJSON decodes Path 2's normalized-point wire format into the same Track shape
 // GPX/TCX/FIT parsing produces, so ingest.Process needs no Path-2-specific branch — the
 // on-device app has already read raw samples out of the platform health store itself, so
 // there is no format-specific parsing left to do here, only a field-for-field reshape.
 func ParseJSON(r io.Reader) (Track, error) {
-	var a JSONActivity
+	var a JSONTrack
 	if err := json.NewDecoder(r).Decode(&a); err != nil {
 		return Track{}, fmt.Errorf("parse: decode json: %w", err)
 	}

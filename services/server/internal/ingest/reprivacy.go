@@ -91,8 +91,8 @@ func AffectedHiddenTracks(ctx context.Context, tx pgx.Tx, userID string) ([]stri
 	return pgx.CollectRows(rows, pgx.RowTo[string])
 }
 
-// EnqueueReprivacy marks every given track Pending — the same flag, and the same Activity
-// List badge, as a route edit (§4.7.7) — and enqueues one `reprivacy` job for all of them,
+// EnqueueReprivacy marks every given track Pending — the same flag, and the same track
+// list badge, as a route edit (§4.7.7) — and enqueues one `reprivacy` job for all of them,
 // inside the caller's transaction so a location is never saved without its reprocessing on
 // the way. Unlike EnqueueRouteEdit it doesn't skip a track already pending: an edit in
 // flight was clipped with the old locations, and this job, queued behind it, fixes that.
@@ -179,7 +179,7 @@ func ProcessReprivacy(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	}
 
 	if len(failed) > 0 {
-		return fmt.Errorf("reprivacy: %d of %d activities failed: %s", len(failed), len(job.TrackIDs), strings.Join(failed, "; "))
+		return fmt.Errorf("reprivacy: %d of %d tracks failed: %s", len(failed), len(job.TrackIDs), strings.Join(failed, "; "))
 	}
 	return nil
 }

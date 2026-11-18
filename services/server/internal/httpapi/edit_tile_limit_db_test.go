@@ -64,7 +64,7 @@ func TestRouteEditPastTheTileLimitChangesNothing(t *testing.T) {
 		t.Fatalf("an edit past the tile limit: %v, want refused for its tiles", err)
 	}
 	if after := read(); after != before {
-		t.Fatalf("the refused edit changed the activity: %+v, was %+v", after, before)
+		t.Fatalf("the refused edit changed the track: %+v, was %+v", after, before)
 	}
 }
 

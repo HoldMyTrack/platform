@@ -49,7 +49,7 @@ func (s *Server) handleSendTrip(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(ctx)
 	owns, err := s.ownsTrip(ctx, userID, tripID)
 	if err != nil {
-		s.log.Error("story send: story lookup failed", "err", err)
+		s.log.Error("trip send: trip lookup failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -70,7 +70,7 @@ func (s *Server) handleSendTrip(w http.ResponseWriter, r *http.Request) {
 		RETURNING (SELECT COALESCE(locale, '') FROM users WHERE id = recipient_id)
 	`, tripID, email, userID, DemoCustomerUserID).Scan(&lang)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
-		s.log.Error("story send failed", "err", err)
+		s.log.Error("trip send failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -84,7 +84,7 @@ func (s *Server) handleSendTrip(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err := s.sendTripCopyEmail(context.WithoutCancel(ctx), userID, tripID, email, lang); err != nil {
-			s.log.Error("story copy email failed", "err", err)
+			s.log.Error("trip copy email failed", "err", err)
 		}
 	})
 }
@@ -108,9 +108,9 @@ func (s *Server) sendTripCopyEmail(ctx context.Context, senderID, tripID, email,
 	}
 	l := i18n.Get(lang)
 	return s.mailer.Send(ctx, email,
-		l.T("email.story_copy.subject", "from", from, "story", trip),
-		l.T("email.story_copy.body", "from", from, "story", trip,
-			"activities", l.N("count.activities", tracks), "link", s.appBaseURL+"/?tab=trips"))
+		l.T("email.trip_copy.subject", "from", from, "trip", trip),
+		l.T("email.trip_copy.body", "from", from, "trip", trip,
+			"tracks", l.N("count.tracks", tracks), "link", s.appBaseURL+"/?tab=trips"))
 }
 
 // tripSendJSON is one copy waiting in the recipient's inbox. From is the sender's name, or
@@ -158,7 +158,7 @@ func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("story sends list failed", "err", err)
+		s.log.Error("trip sends list failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -171,7 +171,7 @@ func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("story sends list failed", "err", err)
+		s.log.Error("trip sends list failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -190,7 +190,7 @@ func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("story copies list failed", "err", err)
+		s.log.Error("trip copies list failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -203,7 +203,7 @@ func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("story copies list failed", "err", err)
+		s.log.Error("trip copies list failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -213,7 +213,7 @@ func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, tripSendsResponse{Sends: sends, Copying: copying})
 }
 
-var errTripSendNotFound = errors.New("story send not found")
+var errTripSendNotFound = errors.New("trip send not found")
 
 // takeTripSend removes one of the caller's waiting copies, returning the Trip it offered —
 // errTripSendNotFound when there's no such copy for them.
@@ -267,7 +267,7 @@ func (s *Server) answerTripSend(w http.ResponseWriter, r *http.Request,
 		return
 	}
 	if err != nil {
-		s.log.Error("story send answer failed", "err", err)
+		s.log.Error("trip send answer failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}

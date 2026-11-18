@@ -4,7 +4,7 @@ import XCTest
 /// Skipped where no dev stack answers, as on CI.
 final class PhotoTests: XCTestCase {
     @MainActor
-    func testAStorysPhotoOpensFromItsMarkerAndFullSize() throws {
+    func testATripsPhotoOpensFromItsMarkerAndFullSize() throws {
         try LaunchTests.requireDevStack(self)
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut"]

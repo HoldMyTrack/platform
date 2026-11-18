@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fails on the AGENTS.md writing rules a pattern can catch without ever flagging good text:
-# intensifiers, meta-narration, "selected" for an activity, its route, track or row, and
+# intensifiers, meta-narration, "selected" for a track, its route or row, and
 # source-code paths in a SPEC.
 # The rules a pattern can't judge ("now" as history or as a time, a reason restated beside its
 # pointer) stay with the reviewer.
@@ -25,8 +25,8 @@ RULES = [
      "an intensifier (AGENTS.md, Write tight): cut it"),
     (lambda p: True, re.compile(r"(^|[.:]\s+|^[-*]\s+)(This section|As noted above|As mentioned|It is worth noting|Note that)\b"),
      "meta-narration (AGENTS.md, Write tight): state the fact"),
-    (lambda p: True, re.compile(r"\bselected\s+(activit|routes?\b|tracks?\b|rows?\b|ones?\b)|\b(activit\w*|routes?|tracks?|rows?)\s+((is|are)\s+)?selected\b", re.I),
-     'an activity is Focused or Checked, never "selected" (SPEC.md FR-5.8)'),
+    (lambda p: True, re.compile(r"\bselected\s+(routes?\b|tracks?\b|rows?\b|ones?\b)|\b(routes?|tracks?|rows?)\s+((is|are)\s+)?selected\b", re.I),
+     'a track is Focused or Checked, never "selected" (SPEC.md FR-5.8)'),
     (lambda p: os.path.basename(p) == "SPEC.md", re.compile(r"`[^`\s]+\.(go|ts|tsx|kt|swift|html|sql|mjs|sh|css)`"),
      "a source file in a SPEC (AGENTS.md, One fact, one home): name the behavior, not the file"),
 ]

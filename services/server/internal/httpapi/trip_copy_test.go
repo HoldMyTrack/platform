@@ -110,13 +110,13 @@ func TestTripCopy(t *testing.T) {
 	d.sendAndAccept(dad, kid, trip)
 	trips := d.tripsOf(kid)
 	if len(trips) != 1 || trips[0].Name != "Alps" || len(trips[0].TrackIDs) != 1 {
-		t.Fatalf("kid's stories %+v, want Alps with one activity", trips)
+		t.Fatalf("kid's trips %+v, want Alps with one track", trips)
 	}
 	if from := trips[0].From; from == nil || *from != d.address(dad) {
 		t.Errorf("from %v, want Dad's address (he has no name set)", from)
 	}
 	if own := d.tripsOf(dad); own[0].From != nil {
-		t.Errorf("Dad's own Story says it's from %q", *own[0].From)
+		t.Errorf("Dad's own Trip says it's from %q", *own[0].From)
 	}
 	got := d.copiedTrack(trips[0].TrackIDs[0])
 	if got.name != "Ridge" || got.origin != walk {
@@ -142,14 +142,14 @@ func TestTripCopy(t *testing.T) {
 	d.sendAndAccept(dad, kid, trip)
 	trips = d.tripsOf(kid)
 	if len(trips) != 1 || len(trips[0].TrackIDs) != 2 {
-		t.Fatalf("after the second send: %+v, want one Story with two activities", trips)
+		t.Fatalf("after the second send: %+v, want one Trip with two tracks", trips)
 	}
 
 	// A copy the kid deleted doesn't come back.
 	d.decode(d.do(kid, "DELETE", "/v2/tracks/"+got.id, nil), http.StatusNoContent, nil)
 	d.sendAndAccept(dad, kid, trip)
 	if trips = d.tripsOf(kid); len(trips[0].TrackIDs) != 1 {
-		t.Errorf("after deleting a copy and a third send: %d activities, want 1", len(trips[0].TrackIDs))
+		t.Errorf("after deleting a copy and a third send: %d tracks, want 1", len(trips[0].TrackIDs))
 	}
 	// Its photo files stayed with Dad's row.
 	if !s3.Has(photoKey(dad.id, p.ID)) {
@@ -159,7 +159,7 @@ func TestTripCopy(t *testing.T) {
 	// Sent back to Dad: everything in it is his own, so no Trip is made.
 	d.sendAndAccept(kid, dad, trips[0].ID)
 	if mine := d.tripsOf(dad); len(mine) != 1 {
-		t.Errorf("Dad's stories after the kid sent theirs back: %d, want 1", len(mine))
+		t.Errorf("Dad's trips after the kid sent theirs back: %d, want 1", len(mine))
 	}
 
 	// The kid deletes their Trip; the next send makes a new one with only what's new.
@@ -169,7 +169,7 @@ func TestTripCopy(t *testing.T) {
 	d.sendAndAccept(dad, kid, trip)
 	trips = d.tripsOf(kid)
 	if len(trips) != 1 || len(trips[0].TrackIDs) != 1 || d.copiedTrack(trips[0].TrackIDs[0]).origin != third {
-		t.Fatalf("after deleting the Story: %+v, want a new one with only Summit", trips)
+		t.Fatalf("after deleting the Trip: %+v, want a new one with only Summit", trips)
 	}
 
 	// Dad's edits and deletes don't reach the kid's copies.
@@ -206,6 +206,6 @@ func TestTripCopyOfAnEmptyTrip(t *testing.T) {
 	trip := d.newTrip(dad, "Someday")
 	d.sendAndAccept(dad, kid, trip)
 	if trips := d.tripsOf(kid); len(trips) != 1 || trips[0].Name != "Someday" {
-		t.Errorf("kid's stories %+v, want the empty Someday", trips)
+		t.Errorf("kid's trips %+v, want the empty Someday", trips)
 	}
 }
