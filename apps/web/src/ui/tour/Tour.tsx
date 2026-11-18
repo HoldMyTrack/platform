@@ -113,19 +113,31 @@ function Arrow({ placement }: { placement: Placement | null }) {
  * Makes everything outside `ref`'s element inert while it's shown, the page's header included,
  * so the keyboard and a screen reader stay in the tour as the pointer does behind its blocker.
  * Each sibling of the element and of its ancestors is marked, and only those it marked are freed.
+ * A sibling mounted while the tour runs, as a step's mode change mounts the panel, is marked as
+ * it arrives: each ancestor's children are watched.
  */
 function useInertOutside(ref: { current: HTMLElement | null }) {
   useEffect(() => {
-    const marked: Element[] = [];
-    for (let node = ref.current; node && node !== document.body; node = node.parentElement) {
-      for (const sibling of node.parentElement?.children ?? []) {
-        if (sibling !== node && !sibling.hasAttribute('inert')) {
-          sibling.setAttribute('inert', '');
-          marked.push(sibling);
+    const marked = new Set<Element>();
+    const path = new Set<Element>();
+    for (let node = ref.current; node && node !== document.body; node = node.parentElement) path.add(node);
+    const mark = () => {
+      for (const node of path) {
+        for (const sibling of node.parentElement?.children ?? []) {
+          if (!path.has(sibling) && !sibling.hasAttribute('inert')) {
+            sibling.setAttribute('inert', '');
+            marked.add(sibling);
+          }
         }
       }
-    }
-    return () => marked.forEach((el) => el.removeAttribute('inert'));
+    };
+    mark();
+    const observer = new MutationObserver(mark);
+    for (const node of path) if (node.parentElement) observer.observe(node.parentElement, { childList: true });
+    return () => {
+      observer.disconnect();
+      marked.forEach((el) => el.removeAttribute('inert'));
+    };
   }, [ref]);
 }
 
