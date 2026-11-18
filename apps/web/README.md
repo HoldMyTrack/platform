@@ -27,7 +27,7 @@ npm run dev
 | :-- | :-- |
 | `npm run dev` | Vite dev server; serves the archive from `public/` over range requests |
 | `npm run build` | Typecheck, then build to `dist/` (~346 MB, the archive copied in) |
-| `npm run verify:map` | Headless Playwright checks against the dev server (`tests/smoke.mjs`) |
+| `npm run verify:map` | Headless Playwright checks against the dev server (`tests/smoke.mjs`, `tests/flows.mjs`) |
 | `npm run verify:build` | The same checks against the production bundle |
 | `npm run basemap` | Re-cut the `.pmtiles` extract |
 | `npm run typecheck` | `tsc --noEmit` |
@@ -56,7 +56,7 @@ src/map/
   tracks.ts mapMode.ts     # the tracks overlay and the Normal/Fog switch
   exportMap.ts             # high-resolution export, rendered client-side
   MapView.tsx
-src/ui/                    # ImportPanel, ActivitiesPanel and the rest of the UI
+src/ui/                    # ActivitiesPanel, the Edit window and the rest of the UI
 ```
 
 ## Three things that are easy to break
