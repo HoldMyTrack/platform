@@ -18,6 +18,27 @@ test('leaving Normal sets the checked group and focus aside, and Normal brings t
   assert.equal(back.modeSnapshot, null);
 });
 
+test('a list read in Fog drops what Normal set aside of rows it no longer has', () => {
+  const start = withSelection({ checked: new Set(['a', 'b']), focused: 'c' });
+  const back = reduce(start, { type: 'modeChanged', mode: 'fog' }, { type: 'listLoaded', ids: ['a'] }, { type: 'modeChanged', mode: 'normal' });
+  assert.deepEqual([...back.selection.checked], ['a']);
+  assert.equal(back.selection.focused, null);
+});
+
+test('activities removed in Fog leave what Normal set aside', () => {
+  const start = withSelection({ checked: new Set(['a', 'b']), focused: 'b' });
+  const back = reduce(start, { type: 'modeChanged', mode: 'fog' }, { type: 'activitiesRemoved', ids: ['b'] }, { type: 'modeChanged', mode: 'normal' });
+  assert.deepEqual([...back.selection.checked], ['a']);
+  assert.equal(back.selection.focused, null);
+});
+
+test('a Story opened in Fog clears what Normal set aside', () => {
+  const start = withSelection({ checked: new Set(['a']), focused: 'b' });
+  const back = reduce(start, { type: 'modeChanged', mode: 'fog' }, { type: 'storyEntered', id: 's1' }, { type: 'modeChanged', mode: 'normal' });
+  assert.equal(back.selection.checked.size, 0);
+  assert.equal(back.selection.focused, null);
+});
+
 test('the same mode changes nothing', () => {
   const start = withSelection({ checked: new Set(['a']) });
   assert.equal(reduce(start, { type: 'modeChanged', mode: 'normal' }), start);
