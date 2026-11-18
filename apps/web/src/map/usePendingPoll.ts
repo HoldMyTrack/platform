@@ -59,42 +59,52 @@ export function usePendingPoll(listedIds: readonly string[], pendingIds: string[
     controllerRef.current = controller;
     let timer = 0;
     let failures = 0;
-    const check = () => {
-      timer = window.setTimeout(() => {
-        if (document.hidden) {
-          check();
-          return;
-        }
-        const watched = pendingWatched(heldRef.current, awaitingRef.current);
-        const checks = pendingBatches(watched).map((ids) => pendingActivities(ids, controller.signal));
-        Promise.all(checks).then(
-          (answers) => {
-            if (controller.signal.aborted) return;
-            failures = 0;
-            const { moved, finished } = pendingAnswer(watched, answers.flat(), listed);
-            if (finished.size > 0) {
-              for (const id of finished) {
-                heldRef.current.delete(id);
-                awaitingRef.current.delete(id);
-              }
-              handlersRef.current.onFinished();
-            }
-            // Polling goes on after asking for a reload: a successful one brings a new list and
-            // restarts this, a failed one leaves the same list, and the next check asks again.
-            if (moved && !loadingRef.current) handlersRef.current.reload();
-            if (pendingWatched(heldRef.current, awaitingRef.current).length > 0) check();
-          },
-          () => {
-            if (controller.signal.aborted) return;
-            failures += 1;
-            check();
-          },
-        );
-      }, retryDelay(failures, POLL_MS, MAX_RETRY_MS));
+    // A hidden tab waits to be shown, then checks at once, its failures forgotten: no timer wakes
+    // it meanwhile, and a long backoff doesn't hold a reprocess that finished while it was away.
+    const onShown = () => {
+      if (document.hidden) return;
+      document.removeEventListener('visibilitychange', onShown);
+      failures = 0;
+      run();
     };
+    const check = () => {
+      timer = window.setTimeout(run, retryDelay(failures, POLL_MS, MAX_RETRY_MS));
+    };
+    function run() {
+      if (document.hidden) {
+        document.addEventListener('visibilitychange', onShown);
+        return;
+      }
+      const watched = pendingWatched(heldRef.current, awaitingRef.current);
+      const checks = pendingBatches(watched).map((ids) => pendingActivities(ids, controller.signal));
+      Promise.all(checks).then(
+        (answers) => {
+          if (controller.signal.aborted) return;
+          failures = 0;
+          const { moved, finished } = pendingAnswer(watched, answers.flat(), listed);
+          if (finished.size > 0) {
+            for (const id of finished) {
+              heldRef.current.delete(id);
+              awaitingRef.current.delete(id);
+            }
+            handlersRef.current.onFinished();
+          }
+          // Polling goes on after asking for a reload: a successful one brings a new list and
+          // restarts this, a failed one leaves the same list, and the next check asks again.
+          if (moved && !loadingRef.current) handlersRef.current.reload();
+          if (pendingWatched(heldRef.current, awaitingRef.current).length > 0) check();
+        },
+        () => {
+          if (controller.signal.aborted) return;
+          failures += 1;
+          check();
+        },
+      );
+    }
     check();
     return () => {
       window.clearTimeout(timer);
+      document.removeEventListener('visibilitychange', onShown);
       controller.abort();
     };
   }, [listedIds, pendingIds, restarts]);
