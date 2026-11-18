@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { highlightedCircle, pickAction } from '../src/ui/privateLocationPick.ts';
+import { highlightedCircle, openingLocation, pickAction } from '../src/ui/privateLocationPick.ts';
 
 const closed = { open: false, dirty: false, busy: false };
 
@@ -33,4 +33,9 @@ test('the editor draft is highlighted over the focused location', () => {
   // A focused location deleted since is no longer drawn.
   assert.equal(highlightedCircle(locations, null, 'gone'), null);
   assert.equal(highlightedCircle(null, null, 'a'), null);
+});
+
+test('the Privacy tab opens on the location added last', () => {
+  assert.deepEqual(openingLocation([{ id: 'a' }, { id: 'b' }]), { id: 'b' });
+  assert.equal(openingLocation([]), null);
 });
