@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { onBackdrop } from '../src/ui/backdropPress.ts';
+import { closesOnBackdrop, onBackdrop } from '../src/ui/backdropPress.ts';
 
 const box = { left: 100, right: 300, top: 50, bottom: 250 };
 
@@ -16,4 +16,11 @@ test("a press inside the box is the dialog's own padding", () => {
 
 test('a press on anything inside the dialog is never the backdrop', () => {
   assert.equal(onBackdrop(false, box, 50, 100), false);
+});
+
+test('a click closes the dialog only when pressed and released on the backdrop, and not busy', () => {
+  assert.equal(closesOnBackdrop(true, true, false), true);
+  assert.equal(closesOnBackdrop(false, true, false), false, 'a drag out of a field');
+  assert.equal(closesOnBackdrop(true, false, false), false, 'a drag into the dialog');
+  assert.equal(closesOnBackdrop(true, true, true), false, 'busy');
 });

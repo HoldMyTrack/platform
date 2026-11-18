@@ -145,10 +145,9 @@ body {
   text-align: center;
 }
 
-/* ConfirmDialog.tsx — a real <dialog>/showModal(), sized for
-   a short title+message rather than a form. Generic, not delete-specific, but the one caller
-   today (§4.7.5's Delete button) is what the red confirm button is tuned for — a future
-   non-destructive use of this component can still override confirmLabel/styling as needed. */
+/* ModalDialog.tsx's shell, sized for a short title and message; StoryDialog and SendCopyDialog
+   widen it with .story-dialog. The red confirm button is ConfirmDialog's, tuned for its Delete
+   (§4.7.5). */
 .confirm-dialog {
   width: min(24rem, calc(100vw - 40px));
   margin: auto;

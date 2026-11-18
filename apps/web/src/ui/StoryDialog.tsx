@@ -36,16 +36,11 @@ export function StoryDialog(props: StoryDialogProps) {
   const [description, setDescription] = useState(props.mode === 'edit' ? props.story.description : '');
   const { busy, error, run } = useDialogAction();
 
-  async function handleSubmit(event: React.FormEvent, close: () => void) {
-    event.preventDefault();
-    if (name.trim() === '') return;
-    const saved = await run(async () => {
-      const input = { name: name.trim(), description: description.trim() };
-      const story =
-        props.mode === 'edit' ? await updateStory(props.story.id, input) : await createStory({ ...input, activityIds: props.activityIds });
-      onSaved(story);
-    });
-    if (saved) close();
+  async function save() {
+    const input = { name: name.trim(), description: description.trim() };
+    const story =
+      props.mode === 'edit' ? await updateStory(props.story.id, input) : await createStory({ ...input, activityIds: props.activityIds });
+    onSaved(story);
   }
 
   return (
@@ -57,7 +52,12 @@ export function StoryDialog(props: StoryDialogProps) {
       onClose={onClose}
     >
       {(close) => (
-        <form onSubmit={(event) => void handleSubmit(event, close)}>
+        <form
+          onSubmit={async (event) => {
+            event.preventDefault();
+            if (name.trim() !== '' && (await run(save))) close();
+          }}
+        >
           {props.mode === 'create' && <p className="confirm-dialog__message">{t('stories.create_body', { group: props.summary })}</p>}
           <label className="settings-page__section">
             <span className="settings-page__label">{t('stories.name')}</span>

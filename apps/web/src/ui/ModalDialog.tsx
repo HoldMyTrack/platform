@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useId, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import { useCallback, useEffect, useId, useRef, useState, type MouseEvent, type ReactNode, type RefObject } from 'react';
 import { t } from '../i18n/index.ts';
-import { onBackdrop } from './backdropPress.ts';
+import { closesOnBackdrop, onBackdrop } from './backdropPress.ts';
 
 interface ModalDialogProps {
   title: ReactNode;
@@ -9,6 +9,8 @@ interface ModalDialogProps {
   /** While true, nothing closes the dialog, Escape and the backdrop included. */
   busy: boolean;
   onClose: () => void;
+  /** Focused once the dialog opens, in place of the first focusable element showModal() picks. */
+  initialFocus?: RefObject<HTMLElement | null>;
   /** Gets `close`, for a Cancel button or a dialog that closes itself once its request succeeds. */
   children: (close: () => void) => ReactNode;
 }
@@ -20,17 +22,18 @@ interface ModalDialogProps {
  * from a button, Escape or the backdrop. Nothing closes it while `busy`, so a failure always has
  * somewhere to show.
  */
-export function ModalDialog({ title, className = 'confirm-dialog', testId, busy, onClose, children }: ModalDialogProps) {
+export function ModalDialog({ title, className = 'confirm-dialog', testId, busy, onClose, initialFocus, children }: ModalDialogProps) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
-  // A backdrop click is pressed and released outside the box: a drag that starts in a field and
-  // ends outside is a text selection.
   const pressedOutside = useRef(false);
   const close = useCallback(() => ref.current?.close(), []);
 
   useEffect(() => {
     const el = ref.current;
     if (el && !el.open) el.showModal();
+    initialFocus?.current?.focus();
+    // Once, on open: a later initialFocus doesn't move focus that the user may have moved.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const outside = (event: MouseEvent) => {
@@ -40,7 +43,7 @@ export function ModalDialog({ title, className = 'confirm-dialog', testId, busy,
 
   return (
     // The click is a mouse-only extra: Escape is the keyboard's way out, from the browser.
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-noninteractive-element-interactions
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <dialog
       ref={ref}
       className={className}
@@ -50,11 +53,16 @@ export function ModalDialog({ title, className = 'confirm-dialog', testId, busy,
       onCancel={(event) => {
         if (busy) event.preventDefault();
       }}
+      // Chromium honours a cancelled cancel event once per user activation, so a second Escape
+      // would close a busy dialog; refusing the key itself holds.
+      onKeyDown={(event) => {
+        if (busy && event.key === 'Escape') event.preventDefault();
+      }}
       onPointerDown={(event) => {
         pressedOutside.current = outside(event);
       }}
       onClick={(event) => {
-        if (pressedOutside.current && outside(event) && !busy) close();
+        if (closesOnBackdrop(pressedOutside.current, outside(event), busy)) close();
         pressedOutside.current = false;
       }}
     >
@@ -76,8 +84,11 @@ export function ModalDialog({ title, className = 'confirm-dialog', testId, busy,
 export function useDialogAction() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // `busy` as of the last render would let two calls in one tick both start.
+  const running = useRef(false);
   async function run(action: () => Promise<void>): Promise<boolean> {
-    if (busy) return false;
+    if (running.current) return false;
+    running.current = true;
     setBusy(true);
     setError(null);
     try {
@@ -87,6 +98,7 @@ export function useDialogAction() {
       setError(err instanceof Error ? err.message : t('common.something_wrong'));
       return false;
     } finally {
+      running.current = false;
       setBusy(false);
     }
   }

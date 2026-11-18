@@ -17,7 +17,7 @@ interface PhotoViewerProps {
 /**
  * A photo over the whole page, opened from its popup: zoomed with the wheel, a pinch,
  * a double-click or + and −, and dragged about once zoomed in. Steps through a group as the popup
- * does, and with it — they share the index. A real `<dialog>`/`showModal()`, as ConfirmDialog.tsx
+ * does, and with it — they share the index. A real `<dialog>`/`showModal()`, as ModalDialog.tsx
  * is, for Escape and the focus trap; portaled to the body, so nothing in it reaches the map. The
  * zoom itself is `photoZoom.ts`'s math applied as a CSS transform on the fitted picture.
  */

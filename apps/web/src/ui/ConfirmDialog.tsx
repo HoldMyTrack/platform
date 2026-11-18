@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 import { t } from '../i18n/index.ts';
 import { ModalDialog, useDialogAction } from './ModalDialog.tsx';
 
@@ -34,13 +34,8 @@ export function ConfirmDialog({
   const cancelRef = useRef<HTMLButtonElement>(null);
   const { busy, error, run } = useDialogAction();
 
-  // After ModalDialog's own effect, whose showModal() focuses the first button.
-  useEffect(() => {
-    cancelRef.current?.focus();
-  }, []);
-
   return (
-    <ModalDialog title={title} testId="confirm-dialog" busy={busy} onClose={onClose}>
+    <ModalDialog title={title} testId="confirm-dialog" busy={busy} onClose={onClose} initialFocus={cancelRef}>
       {(close) => (
         <>
           <p className="confirm-dialog__message">{message}</p>
@@ -50,7 +45,9 @@ export function ConfirmDialog({
               type="button"
               className="confirm-dialog__confirm"
               disabled={busy}
-              onClick={() => void run(onConfirm).then((ok) => ok && close())}
+              onClick={async () => {
+                if (await run(onConfirm)) close();
+              }}
             >
               {busy ? busyLabel : confirmLabel}
             </button>
