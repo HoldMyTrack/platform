@@ -194,18 +194,22 @@ export function setTrackDragData(map: MapLibreMap, line: readonly number[][], dr
   source.setData({ type: 'FeatureCollection', features });
 }
 
-/** Clears the drag's drawing once the whole track has been redrawn from the drop (the worker
- *  takes a moment over a long track, and clearing sooner shows the point back where it was), or
- *  after a second, for a drop that changed nothing. The returned function cancels it. */
+/** Clears the drag's drawing once the whole track has been redrawn from the drop: the worker
+ *  takes a moment over a long track, and clearing sooner shows the point back where it was. The
+ *  source reports the new data ('content') while its old tiles are still the ones drawn, so this
+ *  waits for the tiles loaded after it, or a few seconds at most. The returned function cancels it. */
 export function clearTrackDragAfterRedraw(map: MapLibreMap): () => void {
+  let updated = false;
   const done = () => {
     cancel();
     setTrackDragData(map, [], null);
   };
-  const onData = (e: { sourceId?: string; isSourceLoaded?: boolean }) => {
-    if (e.sourceId === TRACK_EDIT_SOURCE_ID && e.isSourceLoaded) done();
+  const onData = (e: { sourceId?: string; sourceDataType?: string; isSourceLoaded?: boolean }) => {
+    if (e.sourceId !== TRACK_EDIT_SOURCE_ID) return;
+    if (e.sourceDataType === 'content') updated = true;
+    else if (updated && e.isSourceLoaded) done();
   };
-  const timer = setTimeout(done, 1000);
+  const timer = setTimeout(done, 3000);
   const cancel = () => {
     clearTimeout(timer);
     map.off('sourcedata', onData);

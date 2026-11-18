@@ -14,8 +14,9 @@ test('replaying an edit leaves the recorded points as they were', () => {
 
 test('dragPreview is the dragged point and the line to its neighbours', () => {
   const pts = [[0, 0, 10], [1, 1, 11], [2, 2, 12]];
-  assert.deepEqual(dragPreview(pts, 11, 5, 6), [[0, 0], [5, 6], [2, 2]]);
-  assert.deepEqual(dragPreview(pts, 10, 5, 6), [[5, 6], [1, 1]], 'the first point has one neighbour');
-  assert.deepEqual(dragPreview(pts, 12, 5, 6), [[1, 1], [5, 6]], 'the last point has one neighbour');
-  assert.deepEqual(dragPreview(pts, 99, 5, 6), [], 'a point no longer visible');
+  assert.deepEqual(dragPreview(pts, 1, 5, 6), [[0, 0], [5, 6], [2, 2]]);
+  assert.deepEqual(dragPreview(pts, 0, 5, 6), [[5, 6], [1, 1]], 'the first point has one neighbour');
+  assert.deepEqual(dragPreview(pts, 2, 5, 6), [[1, 1], [5, 6]], 'the last point has one neighbour');
+  assert.deepEqual(dragPreview(pts, -1, 5, 6), [], 'a point no longer visible');
+  assert.deepEqual(dragPreview(pts, 3, 5, 6), [], 'past the end');
 });
