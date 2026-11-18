@@ -115,7 +115,7 @@ func (p *JSONPoint) UnmarshalJSON(b []byte) error {
 // the resulting track carries them from the moment it's created rather than needing a
 // separate edit afterward.
 type JSONActivity struct {
-	TrackType   string      `json:"activity_type"`
+	TrackType   string      `json:"track_type"`
 	Points      []JSONPoint `json:"points"`
 	Name        string      `json:"name,omitempty"`
 	Description string      `json:"description,omitempty"`

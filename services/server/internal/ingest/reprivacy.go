@@ -20,7 +20,7 @@ import (
 // current set of locations.
 type ReprivacyJob struct {
 	UserID   string   `json:"user_id"`
-	TrackIDs []string `json:"activity_ids"`
+	TrackIDs []string `json:"track_ids"`
 	// Retry is how many runs before this one failed on these tracks (reprivacyRetryDelays).
 	Retry int `json:"retry,omitempty"`
 }
@@ -62,7 +62,7 @@ func AffectedTracks(ctx context.Context, tx pgx.Tx, userID string, lat, lon floa
 		), reach AS (
 			SELECT max(radius_m) AS r FROM zones
 		)
-		SELECT a.id FROM activities a, reach
+		SELECT a.id FROM tracks a, reach
 		WHERE a.user_id = $1 AND a.raw_payload_key IS NOT NULL
 		  AND a.trajectory IS NOT NULL
 		  AND EXISTS (
@@ -81,7 +81,7 @@ func AffectedTracks(ctx context.Context, tx pgx.Tx, userID string, lat, lon floa
 // locations. There are few, and reprocessing one that stays hidden changes nothing.
 func AffectedHiddenTracks(ctx context.Context, tx pgx.Tx, userID string) ([]string, error) {
 	rows, err := tx.Query(ctx, `
-		SELECT id FROM activities
+		SELECT id FROM tracks
 		WHERE user_id = $1 AND raw_payload_key IS NOT NULL
 		  AND trajectory IS NULL
 	`, userID)
@@ -103,7 +103,7 @@ func EnqueueReprivacy(ctx context.Context, tx pgx.Tx, job ReprivacyJob) error {
 		return nil
 	}
 	if _, err := tx.Exec(ctx, `
-		UPDATE activities SET edit_pending = true WHERE user_id = $1 AND id = ANY($2::uuid[])
+		UPDATE tracks SET edit_pending = true WHERE user_id = $1 AND id = ANY($2::uuid[])
 	`, job.UserID, job.TrackIDs); err != nil {
 		return err
 	}
@@ -161,12 +161,12 @@ func ProcessReprivacy(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	// A later location change still queued for any of these will reprocess it again — leave
 	// its badge on until that one lands.
 	if _, err := tx.Exec(ctx, `
-		UPDATE activities a SET edit_pending = false
+		UPDATE tracks a SET edit_pending = false
 		WHERE a.user_id = $1 AND a.id = ANY($2::uuid[])
 		  AND NOT EXISTS (
 			SELECT 1 FROM jobs j
 			WHERE j.user_id = $1 AND j.kind = 'reprivacy' AND j.state = 'pending' AND j.id > $3
-			  AND j.payload->'activity_ids' ? a.id::text
+			  AND j.payload->'track_ids' ? a.id::text
 		  )
 	`, job.UserID, done, jobID); err != nil {
 		return fmt.Errorf("reprivacy: clear edit_pending: %w", err)
@@ -231,13 +231,13 @@ func reprivacyRetryDelay(retry int) (time.Duration, bool) {
 // markPendingTilesDirty flags every z14 tile the given tracks' current masks cover, inside
 // the transaction that marks them Pending — so the reprocess job's first render leaves them out
 // of Fog, and the tiles are already dirty however soon that job runs. The same upsert
-// as MarkFogTilesDirty, fed straight from activity_tile_masks rather than a tile list.
+// as MarkFogTilesDirty, fed straight from track_tile_masks rather than a tile list.
 func markPendingTilesDirty(ctx context.Context, tx pgx.Tx, userID string, trackIDs []string) error {
 	_, err := tx.Exec(ctx, `
 		INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, dirty)
 		SELECT DISTINCT $1::uuid, m.zoom, m.tile_x, m.tile_y, true
-		FROM activity_tile_masks m
-		WHERE m.activity_id = ANY($2::uuid[]) AND m.zoom = $3
+		FROM track_tile_masks m
+		WHERE m.track_id = ANY($2::uuid[]) AND m.zoom = $3
 		ON CONFLICT (user_id, zoom, tile_x, tile_y) DO UPDATE SET dirty = true, dirty_gen = fog_tiles.dirty_gen + 1
 	`, userID, trackIDs, FogZoom)
 	return err

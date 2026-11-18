@@ -149,7 +149,7 @@ func parsePhotoPosition(lonStr, latStr string) (*[2]float64, error) {
 func (s *Server) trackSpan(ctx context.Context, trackID string) (start, end float64, ok bool, err error) {
 	var m0, m1 *float64
 	err = s.pool.QueryRow(ctx, `
-		SELECT ST_M(ST_StartPoint(trajectory)), ST_M(ST_EndPoint(trajectory)) FROM activities WHERE id = $1
+		SELECT ST_M(ST_StartPoint(trajectory)), ST_M(ST_EndPoint(trajectory)) FROM tracks WHERE id = $1
 	`, trackID).Scan(&m0, &m1)
 	if err != nil || m0 == nil || m1 == nil {
 		return 0, 0, false, err
@@ -181,7 +181,7 @@ func (s *Server) placePhoto(ctx context.Context, trackID string, clock photoCloc
 	if clock.local != nil {
 		home := accountLoc
 		var tz string
-		if err := s.pool.QueryRow(ctx, `SELECT timezone FROM activities WHERE id = $1`, trackID).Scan(&tz); err != nil {
+		if err := s.pool.QueryRow(ctx, `SELECT timezone FROM tracks WHERE id = $1`, trackID).Scan(&tz); err != nil {
 			return nil, nil, err
 		}
 		if loc, err := zoneinfo.Load(tz); err == nil {
@@ -259,7 +259,7 @@ func (s *Server) snapToTrack(ctx context.Context, trackID string, lon, lat float
 	err := s.pool.QueryRow(ctx, `
 		SELECT ST_InterpolatePoint(trajectory, pt),
 		       ST_Distance(ST_Force2D(trajectory)::geography, pt::geography)
-		FROM activities, ST_SetSRID(ST_MakePoint($2::float8, $3::float8), 4326) AS pt
+		FROM tracks, ST_SetSRID(ST_MakePoint($2::float8, $3::float8), 4326) AS pt
 		WHERE id = $1 AND trajectory IS NOT NULL
 	`, trackID, lon, lat).Scan(&m, &dist)
 	if errors.Is(err, pgx.ErrNoRows) {

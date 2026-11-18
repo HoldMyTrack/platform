@@ -26,7 +26,7 @@ SELECT j.payload->>'source_detail', j.payload->>'source',
        j.state, j.last_error, j.error_code, j.finished_at,
        to_char(a.started_at AT TIME ZONE a.timezone, 'YYYY-MM-DD'), a.distance_meters, a.id
 FROM jobs j
-LEFT JOIN activities a
+LEFT JOIN tracks a
   ON a.user_id = j.user_id AND a.source = j.payload->>'source' AND a.external_id = j.payload->>'external_id'
 WHERE j.kind = 'ingest' AND j.user_id = $1 AND j.state IN ('done', 'failed')
 ORDER BY j.finished_at DESC NULLS LAST, j.id DESC

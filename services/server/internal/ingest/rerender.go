@@ -73,7 +73,7 @@ const rerenderParallelism = 8
 // can't — Pending (its own reprocess will), or with no upload stored — is logged and left as it
 // is rather than failing the whole run.
 func rerenderUserMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, userID string) error {
-	rows, err := pool.Query(ctx, `SELECT id FROM activities WHERE user_id = $1 ORDER BY started_at`, userID)
+	rows, err := pool.Query(ctx, `SELECT id FROM tracks WHERE user_id = $1 ORDER BY started_at`, userID)
 	if err != nil {
 		return err
 	}

@@ -15,7 +15,7 @@ func TestTrackBBoxAcrossTheAntimeridian(t *testing.T) {
 	ctx := context.Background()
 	track := func(wkt string) string {
 		id := d.newTrack(me, testTrack{trackType: "sailing", at: &[2]float64{0, 0}})
-		if _, err := d.pool.Exec(ctx, `UPDATE activities SET trajectory = ST_GeomFromText($2, 4326) WHERE id = $1`, id, wkt); err != nil {
+		if _, err := d.pool.Exec(ctx, `UPDATE tracks SET trajectory = ST_GeomFromText($2, 4326) WHERE id = $1`, id, wkt); err != nil {
 			t.Fatal(err)
 		}
 		return id

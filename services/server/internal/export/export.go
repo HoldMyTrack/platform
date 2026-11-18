@@ -171,7 +171,7 @@ func waitForEdits(ctx context.Context, pool *pgxpool.Pool, userID string) error 
 	deadline := time.Now().Add(editWait)
 	for {
 		var pending bool
-		if err := pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM activities WHERE user_id = $1 AND edit_pending)`, userID).Scan(&pending); err != nil {
+		if err := pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM tracks WHERE user_id = $1 AND edit_pending)`, userID).Scan(&pending); err != nil {
 			return fmt.Errorf("pending edits: %w", err)
 		}
 		if !pending {
@@ -378,10 +378,10 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 	a.CreatedAt = a.CreatedAt.UTC()
 
 	rows, err := pool.Query(ctx, `
-		SELECT id, COALESCE(name, ''), activity_type, source, COALESCE(description, ''), started_at, timezone,
+		SELECT id, COALESCE(name, ''), track_type, source, COALESCE(description, ''), started_at, timezone,
 		       distance_meters::float8, duration_seconds, moving_seconds, elevation_gain_m::float8,
 		       COALESCE(raw_payload_key, '')
-		FROM activities WHERE user_id = $1 ORDER BY started_at, id`, userID)
+		FROM tracks WHERE user_id = $1 ORDER BY started_at, id`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("activities: %w", err)
 	}
@@ -403,8 +403,8 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 	}
 
 	rows, err = pool.Query(ctx, `
-		SELECT id, activity_id, COALESCE(caption, ''), taken_at, route_at, content_type, image_key
-		FROM activity_photos WHERE user_id = $1 ORDER BY activity_id, route_at, created_at`, userID)
+		SELECT id, track_id, COALESCE(caption, ''), taken_at, route_at, content_type, image_key
+		FROM track_photos WHERE user_id = $1 ORDER BY track_id, route_at, created_at`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("photos: %w", err)
 	}
@@ -437,8 +437,8 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 
 	rows, err = pool.Query(ctx, `
 		SELECT s.name, COALESCE(s.description, ''), s.created_at,
-		       COALESCE(array_agg(sa.activity_id::text ORDER BY sa.activity_id) FILTER (WHERE sa.activity_id IS NOT NULL), '{}')
-		FROM stories s LEFT JOIN story_activities sa ON sa.story_id = s.id
+		       COALESCE(array_agg(sa.track_id::text ORDER BY sa.track_id) FILTER (WHERE sa.track_id IS NOT NULL), '{}')
+		FROM trips s LEFT JOIN trip_tracks sa ON sa.trip_id = s.id
 		WHERE s.user_id = $1 GROUP BY s.id ORDER BY s.created_at`, userID)
 	if err != nil {
 		return nil, fmt.Errorf("stories: %w", err)

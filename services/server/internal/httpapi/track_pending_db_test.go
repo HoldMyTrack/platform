@@ -14,7 +14,7 @@ func TestTracksPending(t *testing.T) {
 	pending := d.newTrack(me, testTrack{trackType: "walking"})
 	done := d.newTrack(me, testTrack{trackType: "walking"})
 	theirs := d.newTrack(other, testTrack{trackType: "walking"})
-	if _, err := d.pool.Exec(context.Background(), `UPDATE activities SET edit_pending = true WHERE id = ANY($1)`, []string{pending, theirs}); err != nil {
+	if _, err := d.pool.Exec(context.Background(), `UPDATE tracks SET edit_pending = true WHERE id = ANY($1)`, []string{pending, theirs}); err != nil {
 		t.Fatal(err)
 	}
 

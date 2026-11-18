@@ -50,14 +50,14 @@ func TestAdminTilesCountTheExploredPlacesBelow(t *testing.T) {
 	me := d.newAccount(false)
 	t.Cleanup(func() {
 		ctx := context.Background()
-		d.pool.Exec(ctx, `DELETE FROM activities WHERE user_id = $1`, me.id)
+		d.pool.Exec(ctx, `DELETE FROM tracks WHERE user_id = $1`, me.id)
 		d.pool.Exec(ctx, `DELETE FROM admin_cities WHERE id = ANY($1)`, []int{town, village, rest})
 		d.pool.Exec(ctx, `DELETE FROM admin_counties WHERE id = ANY($1)`, []int{west, east})
 		d.pool.Exec(ctx, `DELETE FROM admin_regions WHERE id = $1`, region)
 		d.pool.Exec(ctx, `DELETE FROM admin_countries WHERE id = $1`, country)
 	})
 	track := d.newTrack(me, testTrack{trackType: "walking", at: &at})
-	if _, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2)`, track, town); err != nil {
+	if _, err := d.pool.Exec(ctx, `INSERT INTO track_city VALUES ($1, $2)`, track, town); err != nil {
 		t.Fatal(err)
 	}
 

@@ -117,7 +117,7 @@ func TestParseTCX(t *testing.T) {
 }
 
 const sampleSyncJSON = `{
-  "activity_type": "run",
+  "track_type": "run",
   "points": [
     {"lat": 39.9612, "lon": -82.9988, "elevation_m": 240.1, "time": "2026-01-01T12:00:00Z"},
     {"lat": 39.9620, "lon": -82.9990, "time": "2026-01-01T12:00:10Z"}

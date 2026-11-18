@@ -31,7 +31,7 @@ func (s *Server) handleTracksPending(w http.ResponseWriter, r *http.Request) {
 		ids[i] = strings.ToLower(id)
 	}
 	rows, err := s.pool.Query(r.Context(), `
-		SELECT id::text FROM activities WHERE user_id = $1 AND edit_pending AND id = ANY($2::uuid[])
+		SELECT id::text FROM tracks WHERE user_id = $1 AND edit_pending AND id = ANY($2::uuid[])
 	`, userIDFromContext(r.Context()), ids)
 	if err != nil {
 		if clientGone(w, r) {

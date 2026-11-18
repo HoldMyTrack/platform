@@ -49,18 +49,18 @@ type adminLayer struct {
 func visitedCTEs(user string) string {
 	return `
 	mine AS MATERIALIZED (
-		SELECT id FROM activities WHERE user_id = ` + user + ` AND NOT edit_pending
+		SELECT id FROM tracks WHERE user_id = ` + user + ` AND NOT edit_pending
 	), v_city AS MATERIALIZED (
-		SELECT DISTINCT m.city_id AS id FROM mine a JOIN activity_city m ON m.activity_id = a.id
+		SELECT DISTINCT m.city_id AS id FROM mine a JOIN track_city m ON m.track_id = a.id
 	), v_county AS MATERIALIZED (
-		SELECT m.county_id AS id FROM mine a JOIN activity_county m ON m.activity_id = a.id
+		SELECT m.county_id AS id FROM mine a JOIN track_county m ON m.track_id = a.id
 		UNION SELECT c.county_id FROM v_city v JOIN admin_cities c ON c.id = v.id WHERE c.county_id IS NOT NULL
 	), v_region AS MATERIALIZED (
-		SELECT m.region_id AS id FROM mine a JOIN activity_region m ON m.activity_id = a.id
+		SELECT m.region_id AS id FROM mine a JOIN track_region m ON m.track_id = a.id
 		UNION SELECT k.region_id FROM v_county v JOIN admin_counties k ON k.id = v.id WHERE k.region_id IS NOT NULL
 		UNION SELECT c.region_id FROM v_city v JOIN admin_cities c ON c.id = v.id WHERE c.region_id IS NOT NULL
 	), v_country AS MATERIALIZED (
-		SELECT m.country_id AS id FROM mine a JOIN activity_country m ON m.activity_id = a.id
+		SELECT m.country_id AS id FROM mine a JOIN track_country m ON m.track_id = a.id
 		UNION SELECT r.country_id FROM v_region v JOIN admin_regions r ON r.id = v.id
 		UNION SELECT k.country_id FROM v_county v JOIN admin_counties k ON k.id = v.id
 		UNION SELECT c.country_id FROM v_city v JOIN admin_cities c ON c.id = v.id

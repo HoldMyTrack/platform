@@ -23,12 +23,12 @@ const splitGPX = `<?xml version="1.0"?>
 <trkpt lat="50.0050" lon="10.0050"><time>2026-05-01T10:05:00Z</time></trkpt>
 </trkseg></trk></gpx>`
 
-// runEditJob runs the account's newest edit_track job as the worker would.
+// runEditJob runs the account's newest edit_route job as the worker would.
 func (d *dbTest) runEditJob(as account) {
 	d.t.Helper()
 	var payload []byte
 	if err := d.pool.QueryRow(context.Background(),
-		`SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_track' ORDER BY id DESC LIMIT 1`, as.id).Scan(&payload); err != nil {
+		`SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_route' ORDER BY id DESC LIMIT 1`, as.id).Scan(&payload); err != nil {
 		d.t.Fatal(err)
 	}
 	var j ingest.EditJob
@@ -63,10 +63,10 @@ func TestSplit(t *testing.T) {
 	}
 	orig := res.TrackID
 	var tripID string
-	if err := d.pool.QueryRow(ctx, `INSERT INTO stories (user_id, name) VALUES ($1, 'Trip') RETURNING id`, me.id).Scan(&tripID); err != nil {
+	if err := d.pool.QueryRow(ctx, `INSERT INTO trips (user_id, name) VALUES ($1, 'Trip') RETURNING id`, me.id).Scan(&tripID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.pool.Exec(ctx, `INSERT INTO story_activities (story_id, activity_id) VALUES ($1, $2)`, tripID, orig); err != nil {
+	if _, err := d.pool.Exec(ctx, `INSERT INTO trip_tracks (trip_id, track_id) VALUES ($1, $2)`, tripID, orig); err != nil {
 		t.Fatal(err)
 	}
 
@@ -99,7 +99,7 @@ func TestSplit(t *testing.T) {
 		t.Fatalf("pieces %s, %s: the original should keep the earlier part", first.ID, second.ID)
 	}
 	var sizes []int64
-	if err := d.pool.QueryRow(ctx, `SELECT array_agg(raw_bytes) FROM activities WHERE id = ANY($1)`,
+	if err := d.pool.QueryRow(ctx, `SELECT array_agg(raw_bytes) FROM tracks WHERE id = ANY($1)`,
 		[]string{first.ID, second.ID}).Scan(&sizes); err != nil {
 		t.Fatal(err)
 	}

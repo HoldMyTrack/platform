@@ -53,7 +53,7 @@ type pixelPoint struct{ x, y float64 }
 
 // renderTrackMask draws one track's segments through this tile as opaque,
 // anti-aliased, round-capped strokes on an initially-empty (black) canvas — crisp, i.e.
-// *unblurred*: this is the per-track artifact stored in activity_tile_masks, which
+// *unblurred*: this is the per-track artifact stored in track_tile_masks, which
 // compositeFogMask below combines. Each of lines is the track in one copy of the world (projectToTile).
 func renderTrackMask(lines ...[]pixelPoint) *image.Gray {
 	dc := gg.NewContext(TileSize+2*drawMarginPx, TileSize+2*drawMarginPx)

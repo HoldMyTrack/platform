@@ -1,4 +1,4 @@
-// Package tripcopy copies a Trip into another account — the `story_copy` job behind sending
+// Package tripcopy copies a Trip into another account — the `trip_copy` job behind sending
 // a copy of a Trip (IMPLEMENTATION.md §4.23, ADR-0036). Its own package because it writes
 // each track out with export.WriteGPX and reads it back in through ingest.Process, and
 // export already imports ingest.
@@ -21,15 +21,15 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 )
 
-// Job is the `story_copy` job's payload: copy the Trip, as it is when the job runs, into the
+// Job is the `trip_copy` job's payload: copy the Trip, as it is when the job runs, into the
 // recipient's account. Accepting a sent copy enqueues it (httpapi's handleAcceptTripSend).
 type Job struct {
-	TripID      string `json:"story_id"`
+	TripID      string `json:"trip_id"`
 	RecipientID string `json:"recipient_id"`
 }
 
-// Source is activities.source for a track a copy made.
-const Source = "story"
+// Source is tracks.source for a track a copy made.
+const Source = "trip"
 
 // retryAfter is how long a copy waits before trying again the tracks it skipped because
 // their owner had an edit still being applied.
@@ -39,7 +39,7 @@ const retryAfter = time.Minute
 // recipient's inbox.
 type Querier = ingest.Querier
 
-// Enqueue adds a `story_copy` job for the recipient, to run after delay.
+// Enqueue adds a `trip_copy` job for the recipient, to run after delay.
 func Enqueue(ctx context.Context, db Querier, job Job, delay time.Duration) error {
 	payload, err := json.Marshal(job)
 	if err != nil {
@@ -47,7 +47,7 @@ func Enqueue(ctx context.Context, db Querier, job Job, delay time.Duration) erro
 	}
 	_, err = db.Exec(ctx, `
 		INSERT INTO jobs (kind, user_id, payload, run_after)
-		VALUES ('story_copy', $1, $2, NOW() + make_interval(secs => $3))`,
+		VALUES ('trip_copy', $1, $2, NOW() + make_interval(secs => $3))`,
 		job.RecipientID, payload, delay.Seconds())
 	return err
 }
@@ -61,7 +61,7 @@ type source struct {
 
 // Process copies the Trip into the recipient's account (ADR-0036):
 //
-//   - into the Trip an earlier copy of the same Trip made for them (story_copies), or a new
+//   - into the Trip an earlier copy of the same Trip made for them (trip_copies), or a new
 //     one with the Trip's name and description when there's none, or it was deleted;
 //   - each track the recipient hasn't received before — an original is received once,
 //     ever (received_origins), and one they recorded themselves, or hold a copy of, is skipped;
@@ -82,7 +82,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 	var name string
 	var description *string
 	err := pool.QueryRow(ctx, `
-		SELECT st.name, st.description FROM stories st JOIN users u ON u.id = st.user_id
+		SELECT st.name, st.description FROM trips st JOIN users u ON u.id = st.user_id
 		WHERE st.id = $1 AND u.deleted_at IS NULL`, job.TripID).Scan(&name, &description)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
@@ -117,7 +117,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		added = added || copied
 	}
 	if added {
-		if _, err := pool.Exec(ctx, `UPDATE stories SET updated_at = NOW() WHERE id = $1`, target); err != nil {
+		if _, err := pool.Exec(ctx, `UPDATE trips SET updated_at = NOW() WHERE id = $1`, target); err != nil {
 			return fmt.Errorf("story copy: touch story: %w", err)
 		}
 		// The new memberships change what a `?story=` tracks tile returns (§4.23).
@@ -146,12 +146,12 @@ func plan(sources []source) (ready int, retry bool) {
 // from, that the recipient has neither received, recorded nor holds a copy of, oldest first.
 func sourcesToCopy(ctx context.Context, pool *pgxpool.Pool, job Job) ([]source, error) {
 	rows, err := pool.Query(ctx, `
-		SELECT a.id, COALESCE(a.origin_id, a.id), a.activity_type, a.name, a.description, a.edit_pending
-		FROM story_activities sa
-		JOIN activities a ON a.id = sa.activity_id
-		WHERE sa.story_id = $1 AND a.trajectory IS NOT NULL AND a.raw_payload_key IS NOT NULL
+		SELECT a.id, COALESCE(a.origin_id, a.id), a.track_type, a.name, a.description, a.edit_pending
+		FROM trip_tracks sa
+		JOIN tracks a ON a.id = sa.track_id
+		WHERE sa.trip_id = $1 AND a.trajectory IS NOT NULL AND a.raw_payload_key IS NOT NULL
 		  AND NOT EXISTS (SELECT 1 FROM received_origins r WHERE r.user_id = $2 AND r.origin_id = COALESCE(a.origin_id, a.id))
-		  AND NOT EXISTS (SELECT 1 FROM activities mine
+		  AND NOT EXISTS (SELECT 1 FROM tracks mine
 		                  WHERE mine.user_id = $2 AND (mine.id = COALESCE(a.origin_id, a.id) OR mine.origin_id = COALESCE(a.origin_id, a.id)))
 		ORDER BY a.started_at, a.id`, job.TripID, job.RecipientID)
 	if err != nil {
@@ -174,7 +174,7 @@ func sourcesToCopy(ctx context.Context, pool *pgxpool.Pool, job Job) ([]source, 
 // answer is "", since the recipient already has everything in it.
 func targetTrip(ctx context.Context, pool *pgxpool.Pool, job Job, name string, description *string, anything bool) (string, error) {
 	var target string
-	err := pool.QueryRow(ctx, `SELECT copy_story_id FROM story_copies WHERE source_story_id = $1 AND recipient_id = $2`,
+	err := pool.QueryRow(ctx, `SELECT copy_trip_id FROM trip_copies WHERE source_trip_id = $1 AND recipient_id = $2`,
 		job.TripID, job.RecipientID).Scan(&target)
 	if err == nil {
 		return target, nil
@@ -184,7 +184,7 @@ func targetTrip(ctx context.Context, pool *pgxpool.Pool, job Job, name string, d
 	}
 	if !anything {
 		var empty bool
-		if err := pool.QueryRow(ctx, `SELECT NOT EXISTS (SELECT 1 FROM story_activities WHERE story_id = $1)`, job.TripID).Scan(&empty); err != nil {
+		if err := pool.QueryRow(ctx, `SELECT NOT EXISTS (SELECT 1 FROM trip_tracks WHERE trip_id = $1)`, job.TripID).Scan(&empty); err != nil {
 			return "", fmt.Errorf("story copy: empty: %w", err)
 		}
 		if !empty {
@@ -192,10 +192,10 @@ func targetTrip(ctx context.Context, pool *pgxpool.Pool, job Job, name string, d
 		}
 	}
 	err = pool.QueryRow(ctx, `
-		WITH st AS (INSERT INTO stories (user_id, name, description) VALUES ($2, $3, $4) RETURNING id)
-		INSERT INTO story_copies (source_story_id, recipient_id, copy_story_id)
+		WITH st AS (INSERT INTO trips (user_id, name, description) VALUES ($2, $3, $4) RETURNING id)
+		INSERT INTO trip_copies (source_trip_id, recipient_id, copy_trip_id)
 		SELECT $1, $2, id FROM st
-		RETURNING copy_story_id`, job.TripID, job.RecipientID, name, description).Scan(&target)
+		RETURNING copy_trip_id`, job.TripID, job.RecipientID, name, description).Scan(&target)
 	if err != nil {
 		return "", fmt.Errorf("story copy: new story: %w", err)
 	}
@@ -247,7 +247,7 @@ func copyTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, re
 		return false, err
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
-	if _, err := tx.Exec(ctx, `UPDATE activities SET origin_id = $2, name = $3, description = $4 WHERE id = $1`,
+	if _, err := tx.Exec(ctx, `UPDATE tracks SET origin_id = $2, name = $3, description = $4 WHERE id = $1`,
 		res.TrackID, src.origin, src.name, src.description); err != nil {
 		return false, err
 	}
@@ -255,14 +255,14 @@ func copyTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, re
 	// waits, and then finds this copy's row naming its files and leaves them
 	// (ingest.RemoveUnreferencedPhotoFiles).
 	if _, err := tx.Exec(ctx, `
-		WITH src AS (SELECT * FROM activity_photos WHERE activity_id = $1 FOR KEY SHARE)
-		INSERT INTO activity_photos (user_id, activity_id, taken_at, route_at, content_type, thumb_content_type, width, height, bytes, caption, image_key)
+		WITH src AS (SELECT * FROM track_photos WHERE track_id = $1 FOR KEY SHARE)
+		INSERT INTO track_photos (user_id, track_id, taken_at, route_at, content_type, thumb_content_type, width, height, bytes, caption, image_key)
 		SELECT $2, $3, taken_at, route_at, content_type, thumb_content_type, width, height, bytes, caption, image_key FROM src
-		WHERE NOT EXISTS (SELECT 1 FROM activity_photos p WHERE p.activity_id = $3 AND p.image_key = src.image_key)`,
+		WHERE NOT EXISTS (SELECT 1 FROM track_photos p WHERE p.track_id = $3 AND p.image_key = src.image_key)`,
 		src.id, recipientID, res.TrackID); err != nil {
 		return false, err
 	}
-	if _, err := tx.Exec(ctx, `INSERT INTO story_activities (story_id, activity_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+	if _, err := tx.Exec(ctx, `INSERT INTO trip_tracks (trip_id, track_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
 		target, res.TrackID); err != nil {
 		return false, err
 	}

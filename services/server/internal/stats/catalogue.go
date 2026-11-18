@@ -30,7 +30,7 @@ acct AS (
 )
 `
 
-// sources are activities.source's values.
+// sources are tracks.source's values.
 var sources = []string{"upload", "healthconnect", "healthkit", "recorded"}
 
 // activeSince is the SQL for "last seen in the n days ending with D".
@@ -85,31 +85,31 @@ var catalogue = []stat{
 		SELECT coalesce(country, ''), count(*), count(*), ` + smallGroupIDs("id") + ` FROM acct WHERE ` + activeSince(30) + ` GROUP BY 1`},
 	{prefix: "activity_accounts_by_country", fold: true, query: `
 		SELECT c.code, count(DISTINCT a.user_id), count(DISTINCT a.user_id), ` + smallGroupIDs("a.user_id") + `
-		FROM activity_country ac
-		JOIN activities a ON a.id = ac.activity_id
+		FROM track_country ac
+		JOIN tracks a ON a.id = ac.track_id
 		JOIN acct u ON u.id = a.user_id
 		JOIN admin_countries c ON c.id = ac.country_id
 		GROUP BY c.code`},
 	{prefix: "activities_by_country", fold: true, query: `
 		SELECT c.code, count(*), count(DISTINCT a.user_id), ` + smallGroupIDs("a.user_id") + `
-		FROM activity_country ac
-		JOIN activities a ON a.id = ac.activity_id
+		FROM track_country ac
+		JOIN tracks a ON a.id = ac.track_id
 		JOIN acct u ON u.id = a.user_id
 		JOIN admin_countries c ON c.id = ac.country_id
 		GROUP BY c.code`},
 
 	// Tracks.
-	{key: "activities", query: `SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id`},
+	{key: "activities", query: `SELECT count(*) FROM tracks a JOIN acct u ON u.id = a.user_id`},
 	{key: "activities_added", query: `
-		SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id, p
+		SELECT count(*) FROM tracks a JOIN acct u ON u.id = a.user_id, p
 		WHERE a.created_at >= p.d0 AND a.created_at < p.d1`},
 	{prefix: "activities_by_source", groups: sources, query: `
-		SELECT a.source, count(*) FROM activities a JOIN acct u ON u.id = a.user_id GROUP BY a.source`},
+		SELECT a.source, count(*) FROM tracks a JOIN acct u ON u.id = a.user_id GROUP BY a.source`},
 	{prefix: "activities_added_by_source", groups: sources, query: `
-		SELECT a.source, count(*) FROM activities a JOIN acct u ON u.id = a.user_id, p
+		SELECT a.source, count(*) FROM tracks a JOIN acct u ON u.id = a.user_id, p
 		WHERE a.created_at >= p.d0 AND a.created_at < p.d1 GROUP BY a.source`},
 	{prefix: "activities_per_account", query: `
-		, per AS (SELECT count(*)::float8 AS c FROM activities a JOIN acct u ON u.id = a.user_id GROUP BY a.user_id),
+		, per AS (SELECT count(*)::float8 AS c FROM tracks a JOIN acct u ON u.id = a.user_id GROUP BY a.user_id),
 		v AS (
 			SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY c) AS p50,
 			       percentile_cont(0.9) WITHIN GROUP (ORDER BY c) AS p90,
@@ -120,11 +120,11 @@ var catalogue = []stat{
 
 	// Storage the database measures. A photo's files are shared by the copies of a Trip it was
 	// sent in (IMPLEMENTATION.md §4.23), so each image_key counts once.
-	{key: "photos", query: `SELECT count(*) FROM activity_photos ph JOIN acct u ON u.id = ph.user_id`},
+	{key: "photos", query: `SELECT count(*) FROM track_photos ph JOIN acct u ON u.id = ph.user_id`},
 	{key: "storage_bytes.photos", query: `
 		SELECT coalesce(sum(b), 0) FROM (
 			SELECT DISTINCT ON (ph.image_key) ph.bytes AS b
-			FROM activity_photos ph JOIN acct u ON u.id = ph.user_id
+			FROM track_photos ph JOIN acct u ON u.id = ph.user_id
 		) f`},
 	{key: "storage_bytes.exports", query: `
 		SELECT coalesce(sum(s), 0)
@@ -134,12 +134,12 @@ var catalogue = []stat{
 	// counts once. Masks are in the database: pg_column_size reads each one's stored size.
 	{key: "storage_bytes.originals", query: `
 		SELECT coalesce(sum(b), 0) FROM (
-			SELECT max(a.raw_bytes) AS b FROM activities a JOIN acct u ON u.id = a.user_id
+			SELECT max(a.raw_bytes) AS b FROM tracks a JOIN acct u ON u.id = a.user_id
 			WHERE a.raw_payload_key IS NOT NULL GROUP BY a.raw_payload_key
 		) f`},
 	{key: "storage_bytes.masks", query: `
 		SELECT coalesce(sum(pg_column_size(d.png)), 0)
-		FROM activity_tile_mask_data d JOIN activities a ON a.id = d.activity_id JOIN acct u ON u.id = a.user_id`},
+		FROM track_tile_mask_data d JOIN tracks a ON a.id = d.track_id JOIN acct u ON u.id = a.user_id`},
 	{key: "storage_bytes.fog", query: `
 		SELECT coalesce(sum(f.bytes), 0) FROM fog_tiles f JOIN acct u ON u.id = f.user_id`},
 	// Everything an account stores, over accounts storing anything: what a quota would bound.
@@ -147,15 +147,15 @@ var catalogue = []stat{
 	{prefix: "storage_bytes_per_account", query: `
 		, per AS (
 			SELECT user_id, sum(b)::float8 AS b FROM (
-				SELECT a.user_id, max(a.raw_bytes) AS b FROM activities a
+				SELECT a.user_id, max(a.raw_bytes) AS b FROM tracks a
 				WHERE a.raw_payload_key IS NOT NULL GROUP BY a.user_id, a.raw_payload_key
 				UNION ALL
-				SELECT a.user_id, sum(pg_column_size(d.png)) FROM activity_tile_mask_data d
-				JOIN activities a ON a.id = d.activity_id GROUP BY a.user_id
+				SELECT a.user_id, sum(pg_column_size(d.png)) FROM track_tile_mask_data d
+				JOIN tracks a ON a.id = d.track_id GROUP BY a.user_id
 				UNION ALL
 				SELECT user_id, sum(bytes) FROM fog_tiles GROUP BY user_id
 				UNION ALL
-				SELECT user_id, max(bytes) FROM activity_photos GROUP BY user_id, image_key
+				SELECT user_id, max(bytes) FROM track_photos GROUP BY user_id, image_key
 			) x
 			WHERE user_id IN (SELECT id FROM acct)
 			GROUP BY user_id HAVING sum(b) > 0
@@ -172,35 +172,35 @@ var catalogue = []stat{
 	{key: "original_bytes_per_account.max", query: `
 		SELECT coalesce(max(b), 0) FROM (
 			SELECT sum(o) AS b FROM (
-				SELECT a.user_id, max(a.raw_bytes) AS o FROM activities a JOIN acct u ON u.id = a.user_id
+				SELECT a.user_id, max(a.raw_bytes) AS o FROM tracks a JOIN acct u ON u.id = a.user_id
 				WHERE a.raw_payload_key IS NOT NULL GROUP BY a.user_id, a.raw_payload_key
 			) k GROUP BY user_id
 		) per`},
 	// Rows naming an object whose size isn't recorded: 0 unless a write failed to record one.
 	{key: "storage_bytes_unmeasured_rows", query: `
-		SELECT (SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id
+		SELECT (SELECT count(*) FROM tracks a JOIN acct u ON u.id = a.user_id
 		        WHERE a.raw_payload_key IS NOT NULL AND a.raw_bytes IS NULL)
 		     + (SELECT count(*) FROM fog_tiles f JOIN acct u ON u.id = f.user_id
 		        WHERE f.object_key IS NOT NULL AND f.bytes IS NULL)`},
 
 	// Features.
-	{key: "stories", query: `SELECT count(*) FROM stories s JOIN acct u ON u.id = s.user_id`},
+	{key: "stories", query: `SELECT count(*) FROM trips s JOIN acct u ON u.id = s.user_id`},
 	{key: "stories_added", query: `
-		SELECT count(*) FROM stories s JOIN acct u ON u.id = s.user_id, p
+		SELECT count(*) FROM trips s JOIN acct u ON u.id = s.user_id, p
 		WHERE s.created_at >= p.d0 AND s.created_at < p.d1`},
 	{key: "story_sends", query: `
-		SELECT count(*) FROM story_sends ss JOIN stories s ON s.id = ss.story_id JOIN acct u ON u.id = s.user_id, p
+		SELECT count(*) FROM trip_sends ss JOIN trips s ON s.id = ss.trip_id JOIN acct u ON u.id = s.user_id, p
 		WHERE ss.sent_at >= p.d0 AND ss.sent_at < p.d1`},
 	{key: "spot_captures", query: `SELECT count(*) FROM spot_captures c JOIN acct u ON u.id = c.user_id`},
 	{key: "spot_captures_added", query: `
 		SELECT count(*) FROM spot_captures c JOIN acct u ON u.id = c.user_id, p
 		WHERE c.captured_at >= p.d0 AND c.captured_at < p.d1`},
 	{prefix: "accounts_with", groups: []string{"stories", "spots", "photos", "privacy_zones"}, query: `
-		SELECT 'stories', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM stories x WHERE x.user_id = u.id)
+		SELECT 'trips', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM trips x WHERE x.user_id = u.id)
 		UNION ALL
 		SELECT 'spots', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM spot_captures x WHERE x.user_id = u.id)
 		UNION ALL
-		SELECT 'photos', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM activity_photos x WHERE x.user_id = u.id)
+		SELECT 'photos', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM track_photos x WHERE x.user_id = u.id)
 		UNION ALL
 		SELECT 'privacy_zones', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM privacy_zones x WHERE x.user_id = u.id)`},
 	// An export's row stays for its 7 days, so the next day's snapshot still sees it.

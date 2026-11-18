@@ -21,7 +21,7 @@ func TestTrackOverlaps(t *testing.T) {
 	ctx := context.Background()
 	at := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
 	walk := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 3600, startedAt: at})
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET name = 'Morning walk' WHERE id = $1`, walk); err != nil {
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET name = 'Morning walk' WHERE id = $1`, walk); err != nil {
 		t.Fatal(err)
 	}
 	// Someone else's track at the same time is never an answer.
@@ -74,7 +74,7 @@ func TestOverlappingSyncsStayLive(t *testing.T) {
 	a := send("healthconnect", "hc-1", 0)
 	b := send("recorded", "rec-1", time.Minute)
 	var live int
-	if err := d.pool.QueryRow(ctx, `SELECT count(*) FROM activities WHERE id = ANY($1::uuid[])`, []string{a, b}).Scan(&live); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT count(*) FROM tracks WHERE id = ANY($1::uuid[])`, []string{a, b}).Scan(&live); err != nil {
 		t.Fatal(err)
 	}
 	if live != 2 {
@@ -112,7 +112,7 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 		t.Fatal(err)
 	}
 	var started time.Time
-	if err := d.pool.QueryRow(ctx, `SELECT started_at FROM activities WHERE id = $1`, res.TrackID).Scan(&started); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT started_at FROM tracks WHERE id = $1`, res.TrackID).Scan(&started); err != nil {
 		t.Fatal(err)
 	}
 	if !started.After(t0.Add(5 * time.Minute)) {

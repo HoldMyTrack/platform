@@ -29,7 +29,7 @@ func TestPurgeDeletedAccountRemovesItsObjectsAndRows(t *testing.T) {
 	}
 	var trackID string
 	if err := pool.QueryRow(ctx, `
-		INSERT INTO activities (user_id, source, activity_type, started_at, timezone) VALUES ($1, 'upload', 'run', NOW(), 'UTC') RETURNING id
+		INSERT INTO tracks (user_id, source, track_type, started_at, timezone) VALUES ($1, 'upload', 'run', NOW(), 'UTC') RETURNING id
 	`, userID).Scan(&trackID); err != nil {
 		t.Fatalf("create activity: %v", err)
 	}
@@ -78,7 +78,7 @@ func TestPurgeDeletedAccountRemovesItsObjectsAndRows(t *testing.T) {
 	}
 	var users, tracks int
 	pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE id = $1`, userID).Scan(&users)
-	pool.QueryRow(ctx, `SELECT count(*) FROM activities WHERE id = $1`, trackID).Scan(&tracks)
+	pool.QueryRow(ctx, `SELECT count(*) FROM tracks WHERE id = $1`, trackID).Scan(&tracks)
 	if users != 0 || tracks != 0 {
 		t.Errorf("rows left: %d users, %d activities", users, tracks)
 	}
@@ -114,7 +114,7 @@ func TestPurgeKeepsPhotoFilesAnotherAccountUses(t *testing.T) {
 	track := func(owner string) string {
 		var id string
 		if err := pool.QueryRow(ctx, `
-			INSERT INTO activities (user_id, source, activity_type, started_at, timezone) VALUES ($1, 'upload', 'run', NOW(), 'UTC') RETURNING id
+			INSERT INTO tracks (user_id, source, track_type, started_at, timezone) VALUES ($1, 'upload', 'run', NOW(), 'UTC') RETURNING id
 		`, owner).Scan(&id); err != nil {
 			t.Fatalf("create activity: %v", err)
 		}
@@ -122,7 +122,7 @@ func TestPurgeKeepsPhotoFilesAnotherAccountUses(t *testing.T) {
 	}
 	photo := func(owner, trackID, key string) {
 		if _, err := pool.Exec(ctx, `
-			INSERT INTO activity_photos (user_id, activity_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
+			INSERT INTO track_photos (user_id, track_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
 			VALUES ($1, $2, NOW(), 'image/jpeg', 'image/jpeg', 1, 1, 1, $3)`, owner, trackID, key); err != nil {
 			t.Fatalf("photo: %v", err)
 		}

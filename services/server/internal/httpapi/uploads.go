@@ -79,7 +79,7 @@ SELECT j.payload->>'source_detail' AS filename,
        j.state, j.last_error, j.error_code, j.created_at, j.finished_at,
        a.started_at, a.timezone, a.distance_meters, a.id
 FROM jobs j
-LEFT JOIN activities a
+LEFT JOIN tracks a
   ON a.user_id = j.user_id AND a.source = j.payload->>'source' AND a.external_id = j.payload->>'external_id'
 WHERE j.kind = 'ingest' AND j.user_id = $1
   AND ($4::text[] IS NULL OR j.payload->>'source' = ANY($4))

@@ -24,7 +24,7 @@ import (
 // ExportDemoTracks writes the listed tracks into outDir as demo_data/-ready GPX files,
 // their photos' images into outDir/photos/, and outDir/manifest.json with their names, types,
 // descriptions and photos, and the owner's Spots captures over the same span — the
-// `export-demo-activities` CLI subcommand, run against a live deployment to pick real
+// `export-demo-tracks` CLI subcommand, run against a live deployment to pick real
 // tracks for the Demo Customer's history (SeedDemoCustomer). Each file holds the points
 // the owner sees on the map (ingest.DisplayedPoints: clipped by their Private locations, with
 // their route edit applied), never the original upload: demo_data/ is committed to a public
@@ -150,7 +150,7 @@ func exportDemoTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 		description *string
 	)
 	err := pool.QueryRow(ctx,
-		`SELECT user_id, activity_type, name, description FROM activities WHERE id = $1`, trackID,
+		`SELECT user_id, track_type, name, description FROM tracks WHERE id = $1`, trackID,
 	).Scan(&owner, &trackType, &name, &description)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", demoManifestEntry{}, "", demoSpan{}, errors.New("not found")
@@ -209,7 +209,7 @@ func exportDemoTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 func exportDemoPhotos(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, outDir, trackID, base string, points []parse.Point) ([]demoManifestPhoto, error) {
 	rows, err := pool.Query(ctx, `
 		SELECT id, image_key, taken_at, route_at, COALESCE(caption, ''), content_type, thumb_content_type, width, height
-		FROM activity_photos WHERE activity_id = $1 ORDER BY route_at, created_at`, trackID)
+		FROM track_photos WHERE track_id = $1 ORDER BY route_at, created_at`, trackID)
 	if err != nil {
 		return nil, err
 	}

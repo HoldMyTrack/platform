@@ -154,7 +154,7 @@ func purgeAccount(ctx context.Context, pool *pgxpool.Pool, store *storage.Store,
 	}
 	photoPrefix := "photos/" + userID + "/"
 	rows, err := pool.Query(ctx, `
-		SELECT DISTINCT image_key FROM activity_photos WHERE image_key LIKE $1 || '%' AND user_id <> $2`, photoPrefix, userID)
+		SELECT DISTINCT image_key FROM track_photos WHERE image_key LIKE $1 || '%' AND user_id <> $2`, photoPrefix, userID)
 	if err != nil {
 		return fmt.Errorf("shared photos: %w", err)
 	}
@@ -172,9 +172,9 @@ func purgeAccount(ctx context.Context, pool *pgxpool.Pool, store *storage.Store,
 	// The files of copies the account received that no other account's row uses: removed before
 	// the row goes, like the rest, so a failure here leaves nothing behind either.
 	rows, err = pool.Query(ctx, `
-		SELECT DISTINCT p.image_key FROM activity_photos p
+		SELECT DISTINCT p.image_key FROM track_photos p
 		WHERE p.user_id = $1 AND p.image_key NOT LIKE $2 || '%'
-		  AND NOT EXISTS (SELECT 1 FROM activity_photos o WHERE o.image_key = p.image_key AND o.user_id <> $1)
+		  AND NOT EXISTS (SELECT 1 FROM track_photos o WHERE o.image_key = p.image_key AND o.user_id <> $1)
 	`, userID, photoPrefix)
 	if err != nil {
 		return fmt.Errorf("received photos: %w", err)

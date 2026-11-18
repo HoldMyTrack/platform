@@ -20,7 +20,7 @@ import (
 // arrived, and what the `ingest` job needs to know about them.
 type RawItem struct {
 	// "upload" (an uploaded file) or a phone sync's source — the
-	// `activities.source` column's own provenance value, not just a label.
+	// `tracks.source` column's own provenance value, not just a label.
 	Source   string
 	Filename string
 	Ext      string
@@ -83,7 +83,7 @@ func EnqueueRaw(ctx context.Context, db Querier, userID string, items []RawItem)
 	}
 
 	rows, err := db.Query(ctx, `
-		SELECT a.source, a.external_id FROM activities a
+		SELECT a.source, a.external_id FROM tracks a
 		JOIN unnest($2::text[], $3::text[]) AS t(source, external_id)
 		  ON a.source = t.source AND a.external_id = t.external_id
 		WHERE a.user_id = $1 AND a.ingest_complete`,
@@ -152,7 +152,7 @@ func KnownExternalIDs(ctx context.Context, db Querier, userID, source string, id
 		return nil, nil, nil
 	}
 	rows, err := db.Query(ctx, `
-		SELECT external_id, false FROM activities
+		SELECT external_id, false FROM tracks
 		WHERE user_id = $1 AND source = $2 AND external_id = ANY($3::text[])
 		UNION
 		SELECT payload->>'external_id', true FROM jobs
@@ -215,7 +215,7 @@ func PromoteRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, j
 func RawNamed(ctx context.Context, pool *pgxpool.Pool, userID, rawKey string, exceptJob int64) (bool, error) {
 	var named bool
 	err := pool.QueryRow(ctx, `
-		SELECT EXISTS (SELECT 1 FROM activities WHERE user_id = $1 AND raw_payload_key = $2)
+		SELECT EXISTS (SELECT 1 FROM tracks WHERE user_id = $1 AND raw_payload_key = $2)
 		    OR EXISTS (SELECT 1 FROM jobs WHERE user_id = $1 AND kind = 'ingest' AND state = 'pending'
 		                 AND id <> $3 AND payload->>'raw_payload_key' = $2)
 	`, userID, rawKey, exceptJob).Scan(&named)

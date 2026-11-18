@@ -105,7 +105,7 @@ func TestProfileExploration(t *testing.T) {
 	at := [2]float64{-24.5, -44.5}
 	track := d.newTrack(me, testTrack{trackType: "walking", at: &at})
 	must(func() error {
-		_, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2)`, track, inside)
+		_, err := d.pool.Exec(ctx, `INSERT INTO track_city VALUES ($1, $2)`, track, inside)
 		return err
 	}())
 

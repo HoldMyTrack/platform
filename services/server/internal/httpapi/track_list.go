@@ -21,17 +21,17 @@ import (
 // Column order here has to match scanTrackRow's Scan call exactly — trackByIDQuery
 // shares that same order for the same reason.
 var listTracksQuery = `
-SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds,
+SELECT id, started_at, timezone, track_type, name, distance_meters, duration_seconds,
        COALESCE(moving_seconds, duration_seconds), description,
        ` + trackBBoxColumns + `,
-       edit_pending, track_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
+       edit_pending, route_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
        split_group, split_from, split_to,
        ` + trackTripsColumn + `
-FROM activities
+FROM tracks
 WHERE user_id = $1
   AND ` + inDateRange("$2", "$3") + `
-  AND ($4::text[] IS NULL OR activity_type = ANY($4))
-  AND ($5::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $5))
+  AND ($4::text[] IS NULL OR track_type = ANY($4))
+  AND ($5::uuid IS NULL OR tracks.id IN (SELECT track_id FROM trip_tracks WHERE trip_id = $5))
 ORDER BY started_at DESC, id DESC`
 
 // trackRow is one row of the list. The field set is exactly what the Tracks panel

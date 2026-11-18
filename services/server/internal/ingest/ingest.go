@@ -37,13 +37,13 @@ type Job struct {
 	ExternalID    string `json:"external_id"`
 	RawPayloadKey string `json:"raw_payload_key"`
 	// RawBytes is the size of the object at RawPayloadKey, which every enqueuer knows as it
-	// writes it; stored as activities.raw_bytes for the storage statistics. 0 is unknown (a
+	// writes it; stored as tracks.raw_bytes for the storage statistics. 0 is unknown (a
 	// job enqueued before it existed), stored as NULL.
 	RawBytes int64 `json:"raw_bytes,omitempty"`
 	// TrackType overrides whatever the parser itself reports, when set. Empty means "use
 	// the parsed value". A copy of a Trip (tripcopy) and the demo seed set it: their GPX
 	// carries no type of its own, and they already know the track's.
-	TrackType string `json:"activity_type,omitempty"`
+	TrackType string `json:"track_type,omitempty"`
 	// Batch groups the jobs one request enqueued together — a phone sync's tracks — so the
 	// header's Upload menu can show them as one row however the page was reloaded meanwhile.
 	// Empty for a single uploaded file, which is its own row.
@@ -143,9 +143,9 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 	var inserted, complete bool
 	err = tx.QueryRow(ctx, `
 		WITH ins AS (
-			INSERT INTO activities (
+			INSERT INTO tracks (
 				user_id, source, source_detail, external_id,
-				activity_type, distance_meters, duration_seconds, moving_seconds,
+				track_type, distance_meters, duration_seconds, moving_seconds,
 				elevation_gain_m, started_at,
 				trajectory, raw_payload_key, name, description, ingest_complete,
 				timezone, recorded_started_at, recorded_ended_at, raw_bytes,
@@ -165,7 +165,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 		)
 		SELECT id, true, $17 FROM ins
 		UNION ALL
-		SELECT id, false, ingest_complete FROM activities
+		SELECT id, false, ingest_complete FROM tracks
 		WHERE user_id = $1 AND source = $2 AND external_id = $4
 		  AND NOT EXISTS (SELECT 1 FROM ins)
 		LIMIT 1
@@ -216,7 +216,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 
 	// Country/Region-tier unlocking (§4.2.4) — independent of the Fog raster pyramid
 	// above, so it runs alongside it rather than inside fog's own dirty/render pipeline: there
-	// is nothing here to mark dirty or recomposite, matching against activity_id is enough.
+	// is nothing here to mark dirty or recomposite, matching against track_id is enough.
 	if err := geo.MatchTrack(ctx, pool, trackID); err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: match admin boundaries: %w", err)
 	}
@@ -224,7 +224,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 	if err := EnqueueRenderFog(ctx, pool, job.UserID); err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: enqueue render_fog: %w", err)
 	}
-	if _, err := pool.Exec(ctx, `UPDATE activities SET ingest_complete = true WHERE id = $1`, trackID); err != nil {
+	if _, err := pool.Exec(ctx, `UPDATE tracks SET ingest_complete = true WHERE id = $1`, trackID); err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: mark complete: %w", err)
 	}
 
@@ -393,7 +393,7 @@ func mergeTiles(a, b [][2]int) [][2]int {
 }
 
 // FogZoom is exported alongside MarkFogTilesDirty/EnqueueRenderFog — a caller re-triggering a
-// render (handleDeleteTrack) needs the same zoom level activity_tile_masks/fog_tiles are
+// render (handleDeleteTrack) needs the same zoom level track_tile_masks/fog_tiles are
 // actually keyed at to query the right rows.
 const FogZoom = 14
 
@@ -450,7 +450,7 @@ var errTooManyTiles = fmt.Errorf("the track touches more than %d map tiles", max
 // MarkFogTilesDirty upserts a fog_tiles row (dirty = true) for every given z14 tile —
 // computeTouchedTiles' result for a fresh ingest, a deleted track's own already-rendered
 // tiles (`internal/httpapi`'s handleDeleteTrack, which has no raw points to recompute
-// touched tiles from — it reads them back out of activity_tile_masks before the cascade
+// touched tiles from — it reads them back out of track_tile_masks before the cascade
 // removes that row, via TrackTiles below). Exported for those callers;
 // the upsert itself doesn't care which triggered it.
 func MarkFogTilesDirty(ctx context.Context, pool *pgxpool.Pool, userID string, tiles [][2]int) error {
@@ -476,10 +476,10 @@ func MarkFogTilesDirty(ctx context.Context, pool *pgxpool.Pool, userID string, t
 }
 
 // TrackTiles reads back the z14 tiles one track's own crisp masks cover —
-// activity_tile_masks' primary key leads with activity_id, so this is an index-only lookup.
+// track_tile_masks' primary key leads with track_id, so this is an index-only lookup.
 func TrackTiles(ctx context.Context, pool *pgxpool.Pool, trackID string) ([][2]int, error) {
 	rows, err := pool.Query(ctx,
-		`SELECT DISTINCT tile_x, tile_y FROM activity_tile_masks WHERE activity_id = $1 AND zoom = $2`,
+		`SELECT DISTINCT tile_x, tile_y FROM track_tile_masks WHERE track_id = $1 AND zoom = $2`,
 		trackID, FogZoom,
 	)
 	if err != nil {

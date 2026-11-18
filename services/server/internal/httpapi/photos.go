@@ -22,7 +22,7 @@ import (
 )
 
 // Activity photos (IMPLEMENTATION.md §4.27, ADR-0024) — the user's own pictures on an
-// track, each placed on its route. Stored in activity_photos (§3.22), the images under
+// track, each placed on its route. Stored in track_photos (§3.22), the images under
 // photos/{userID}/ in object storage. The browser resizes a photo and strips its EXIF before
 // upload, sending the capture time and position it read as fields; the server keeps a moment on
 // the track (route_at), never a position, and works the position out on every read. Every photo
@@ -101,10 +101,10 @@ type photosResponse struct {
 // (VISION.md §7), so a photo on it shows nothing the track doesn't. %s is the rest of the WHERE
 // clause; $1 is always the owner.
 const photoSelect = `
-SELECT p.id, p.activity_id, p.taken_at, p.route_at, a.timezone, p.caption, p.width, p.height,
+SELECT p.id, p.track_id, p.taken_at, p.route_at, a.timezone, p.caption, p.width, p.height,
        ST_X(pos.pt), ST_Y(pos.pt)
-FROM activity_photos p
-JOIN activities a ON a.id = p.activity_id
+FROM track_photos p
+JOIN tracks a ON a.id = p.track_id
 LEFT JOIN LATERAL (
 	SELECT ST_GeometryN(ST_LocateAlong(a.trajectory,
 	       LEAST(GREATEST(extract(epoch FROM p.route_at)::float8, ST_M(ST_StartPoint(a.trajectory))),
@@ -155,10 +155,10 @@ func (s *Server) handleListPhotos(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case q.Get("track") != "":
 		id, owns = q.Get("track"), s.ownsTrack
-		where = "p.activity_id = $2"
+		where = "p.track_id = $2"
 	case q.Get("trip") != "":
 		id, owns = q.Get("trip"), s.ownsTrip
-		where = `p.activity_id IN (SELECT activity_id FROM story_activities WHERE story_id = $2)`
+		where = `p.track_id IN (SELECT track_id FROM trip_tracks WHERE trip_id = $2)`
 	default:
 		writeAPIError(w, `missing "track" or "trip"`, http.StatusBadRequest)
 		return
@@ -193,7 +193,7 @@ func (s *Server) ownsTrack(ctx context.Context, userID, trackID string) (bool, e
 	}
 	var ok bool
 	err := s.pool.QueryRow(ctx,
-		`SELECT EXISTS(SELECT 1 FROM activities WHERE id = $1 AND user_id = $2)`, trackID, userID,
+		`SELECT EXISTS(SELECT 1 FROM tracks WHERE id = $1 AND user_id = $2)`, trackID, userID,
 	).Scan(&ok)
 	return ok, err
 }
@@ -204,7 +204,7 @@ func (s *Server) ownsTrip(ctx context.Context, userID, tripID string) (bool, err
 	}
 	var ok bool
 	err := s.pool.QueryRow(ctx,
-		`SELECT EXISTS(SELECT 1 FROM stories WHERE id = $1 AND user_id = $2)`, tripID, userID,
+		`SELECT EXISTS(SELECT 1 FROM trips WHERE id = $1 AND user_id = $2)`, tripID, userID,
 	).Scan(&ok)
 	return ok, err
 }
@@ -274,7 +274,7 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var count int
-	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM activity_photos WHERE user_id = $1`, userID).Scan(&count); err != nil {
+	if err := s.pool.QueryRow(ctx, `SELECT count(*) FROM track_photos WHERE user_id = $1`, userID).Scan(&count); err != nil {
 		s.log.Error("photo upload: count failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -317,12 +317,12 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 	// one, under a per-account lock held to commit, is what holds when several uploads race
 	// past it together. An advisory lock rather than the users row, which a render's tile
 	// version bump also writes.
-	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext('activity_photos:' || $1))`, userID); err != nil {
+	if _, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext('track_photos:' || $1))`, userID); err != nil {
 		s.log.Error("photo upload: lock failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
-	if err := tx.QueryRow(ctx, `SELECT count(*) FROM activity_photos WHERE user_id = $1`, userID).Scan(&count); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT count(*) FROM track_photos WHERE user_id = $1`, userID).Scan(&count); err != nil {
 		s.log.Error("photo upload: count failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
@@ -334,7 +334,7 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 	var photoID, imageKey string
 	if err := tx.QueryRow(ctx, `
 		WITH n AS (SELECT gen_random_uuid() AS id)
-		INSERT INTO activity_photos (id, user_id, activity_id, taken_at, route_at, caption, content_type, thumb_content_type, width, height, bytes, image_key)
+		INSERT INTO track_photos (id, user_id, track_id, taken_at, route_at, caption, content_type, thumb_content_type, width, height, bytes, image_key)
 		SELECT n.id, $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'photos/' || $1::uuid::text || '/' || n.id FROM n
 		RETURNING id, image_key
 	`, userID, trackID, takenAt, routeAt, caption, photo.contentType, thumb.contentType, photo.width, photo.height,
@@ -404,7 +404,7 @@ func (s *Server) servePhotoImage(w http.ResponseWriter, r *http.Request, thumb b
 	}
 	var contentType, thumbContentType, key string
 	err := s.pool.QueryRow(ctx,
-		`SELECT content_type, thumb_content_type, image_key FROM activity_photos WHERE id = $1 AND user_id = $2`, photoID, userID,
+		`SELECT content_type, thumb_content_type, image_key FROM track_photos WHERE id = $1 AND user_id = $2`, photoID, userID,
 	).Scan(&contentType, &thumbContentType, &key)
 	if errors.Is(err, pgx.ErrNoRows) {
 		writeAPIError(w, "photo not found", http.StatusNotFound)
@@ -456,7 +456,7 @@ func (s *Server) handleUpdatePhoto(w http.ResponseWriter, r *http.Request) {
 
 	var trackID string
 	err := s.pool.QueryRow(ctx,
-		`SELECT activity_id FROM activity_photos WHERE id = $1 AND user_id = $2`, photoID, userID,
+		`SELECT track_id FROM track_photos WHERE id = $1 AND user_id = $2`, photoID, userID,
 	).Scan(&trackID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		writeAPIError(w, "photo not found", http.StatusNotFound)
@@ -507,7 +507,7 @@ func (s *Server) handleUpdatePhoto(w http.ResponseWriter, r *http.Request) {
 
 	if setCaption || setRouteAt {
 		if _, err := s.pool.Exec(ctx, `
-			UPDATE activity_photos SET
+			UPDATE track_photos SET
 				caption = CASE WHEN $2 THEN $3 ELSE caption END,
 				route_at = CASE WHEN $4 THEN $5::timestamptz ELSE route_at END
 			WHERE id = $1
@@ -539,7 +539,7 @@ func (s *Server) handleDeletePhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var imageKey string
-	err := s.pool.QueryRow(ctx, `DELETE FROM activity_photos WHERE id = $1 AND user_id = $2 RETURNING image_key`,
+	err := s.pool.QueryRow(ctx, `DELETE FROM track_photos WHERE id = $1 AND user_id = $2 RETURNING image_key`,
 		photoID, userID).Scan(&imageKey)
 	if errors.Is(err, pgx.ErrNoRows) {
 		writeAPIError(w, "photo not found", http.StatusNotFound)
@@ -557,7 +557,7 @@ func (s *Server) handleDeletePhoto(w http.ResponseWriter, r *http.Request) {
 // trackPhotoKeys lists a track's photos' image keys, read before the track's own delete
 // cascades their rows away, so their images can be removed after it.
 func (s *Server) trackPhotoKeys(ctx context.Context, trackID string) ([]string, error) {
-	rows, err := s.pool.Query(ctx, `SELECT image_key FROM activity_photos WHERE activity_id = $1`, trackID)
+	rows, err := s.pool.Query(ctx, `SELECT image_key FROM track_photos WHERE track_id = $1`, trackID)
 	if err != nil {
 		return nil, err
 	}

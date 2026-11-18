@@ -98,8 +98,8 @@ func (d *dbTest) newAccount(demo bool) account {
 		a.id = DemoCustomerUserID
 		d.t.Cleanup(func() {
 			for _, q := range []string{
-				`DELETE FROM stories WHERE user_id = $1`,
-				`DELETE FROM activities WHERE user_id = $1`,
+				`DELETE FROM trips WHERE user_id = $1`,
+				`DELETE FROM tracks WHERE user_id = $1`,
 				`DELETE FROM sessions WHERE user_id = $1`,
 			} {
 				if _, err := d.pool.Exec(context.Background(), q, a.id); err != nil {
@@ -156,7 +156,7 @@ func (d *dbTest) newTrack(owner account, a testTrack) string {
 	}
 	var id string
 	if err := d.pool.QueryRow(context.Background(), `
-		INSERT INTO activities (user_id, source, activity_type, distance_meters, moving_seconds, duration_seconds, started_at, trajectory, timezone)
+		INSERT INTO tracks (user_id, source, track_type, distance_meters, moving_seconds, duration_seconds, started_at, trajectory, timezone)
 		VALUES ($1, 'upload', $2, $3, $4, $5, $6, ST_GeomFromText($7, 4326),
 		        COALESCE(NULLIF($8, ''), (SELECT timezone FROM users WHERE id = $1))) RETURNING id
 	`, owner.id, a.trackType, a.distanceMeters, a.movingSeconds, a.durationSecs, a.startedAt, track, a.timezone).Scan(&id); err != nil {

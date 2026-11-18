@@ -22,7 +22,7 @@ func TestListArea(t *testing.T) {
 	day := func(n int) time.Time { return time.Date(2026, 5, n, 10, 0, 0, 0, time.UTC) }
 	track := func(started time.Time, wkt string) string {
 		id := d.newTrack(me, testTrack{trackType: "hiking", startedAt: started, at: &[2]float64{0, 0}})
-		if _, err := d.pool.Exec(ctx, `UPDATE activities SET trajectory = ST_GeomFromText($2, 4326) WHERE id = $1`, id, wkt); err != nil {
+		if _, err := d.pool.Exec(ctx, `UPDATE tracks SET trajectory = ST_GeomFromText($2, 4326) WHERE id = $1`, id, wkt); err != nil {
 			t.Fatal(err)
 		}
 		return id

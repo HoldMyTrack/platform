@@ -176,7 +176,7 @@ func TestFreeDemoFilename(t *testing.T) {
 	}
 }
 
-// A photo through export-demo-activities and back in through the seed (exportDemoPhotos,
+// A photo through export-demo-tracks and back in through the seed (exportDemoPhotos,
 // seedDemoPhotos): its images written out and stored again under the new owner, its place,
 // caption and capture time unchanged, and a re-run of the seed leaving one photo, not two.
 func TestDemoPhotosRoundTrip(t *testing.T) {
@@ -227,7 +227,7 @@ func TestDemoPhotosRoundTrip(t *testing.T) {
 	}
 }
 
-// Captures through export-demo-activities and back in through the seed (exportDemoCaptures,
+// Captures through export-demo-tracks and back in through the seed (exportDemoCaptures,
 // seedDemoCaptures): only the owner's within the span, none reaching into their Private
 // locations, and a re-run of the seed keeping one capture per place at the manifest's time.
 func TestDemoCapturesRoundTrip(t *testing.T) {

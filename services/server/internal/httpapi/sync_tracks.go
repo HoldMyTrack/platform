@@ -40,7 +40,7 @@ const maxSyncPointsPerTrack = 50000
 const maxSyncBodyBytes = 64 << 20 // 64 MiB
 
 // syncTrackRequest is one track in the batch. Its raw payload is parse.JSONActivity
-// (payload), which names the type activity_type, as every payload already stored does and the
+// (payload), which names the type track_type, as every payload already stored does and the
 // data download hands back; the request names it track_type like the rest of /v2.
 type syncTrackRequest struct {
 	// ExternalID is the source's own stable id for this record (a Health Connect session UUID,
@@ -255,7 +255,7 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 		return ingest.RawItem{}, l.T("error.sync_too_many_points", "n", len(act.Points), "max", maxSyncPointsPerTrack)
 	}
 	// The bounds handleUpdateTrack enforces, checked here: a client can send any custom
-	// activity_type (GPS Logger's free-text field), and an over-long value would otherwise fail
+	// track_type (GPS Logger's free-text field), and an over-long value would otherwise fail
 	// on the column's width in the worker instead of being refused here.
 	if utf8.RuneCountInString(act.TrackType) > maxTrackTypeLen {
 		return ingest.RawItem{}, l.T("error.track_type_too_long", "max", maxTrackTypeLen)
@@ -268,7 +268,7 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 	}
 
 	// The payload, not the whole syncTrackRequest: the raw payload stored for the job is
-	// exactly what parse.ParseJSON expects to decode back (activity_type + points), with no
+	// exactly what parse.ParseJSON expects to decode back (track_type + points), with no
 	// external_id or other request-envelope fields mixed in.
 	data, err := json.Marshal(act.payload())
 	if err != nil {
