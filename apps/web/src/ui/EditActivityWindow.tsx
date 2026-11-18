@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useWindowFocus } from './useWindowFocus.ts';
+import { onTabListKeyDown } from './tabKeys.ts';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { deletePhoto, saveActivityTrackEdit, SplitHidesPartError, updateActivity, updatePhoto, uploadPhoto, type Activity, type ActivityDetail, type Photo, type TrackEdit } from '../api.ts';
 import type { PhotoMarkerOverlay } from '../map/photos.ts';
@@ -285,12 +287,15 @@ export function EditActivityWindow({
     }
   }
 
+  const windowRef = useRef<HTMLElement>(null);
+  useWindowFocus(windowRef);
+
   const namedFieldsDisabledReason = single ? undefined : t('edit.multi_reason');
   // As Save would leave them.
   const photoCount = photos.photos.length - photoDraft.deleted.length + photoDraft.added.length;
 
   return (
-    <section className="edit-track edit-window" aria-label={t('edit.title_one')} data-testid="edit-activity-window">
+    <section ref={windowRef} tabIndex={-1} className="edit-track edit-window" aria-label={t('edit.title_one')} data-testid="edit-activity-window">
       <header className="edit-track__head">
         <span className="edit-track__title">{single ? t('edit.title_one') : tn('edit.title_many', activities.length)}</span>
         <span className="edit-track__subtitle">
@@ -298,12 +303,14 @@ export function EditActivityWindow({
         </span>
       </header>
 
-      <div className="edit-window__tabs" role="tablist">
+      <div className="edit-window__tabs" role="tablist" aria-label={t('edit.title_one')}>
         <button
           type="button"
           role="tab"
+          onKeyDown={onTabListKeyDown}
           className="edit-window__tab"
           aria-selected={tab === 'activity'}
+          tabIndex={tab === 'activity' ? 0 : -1}
           onClick={() => openTab('activity')}
           data-testid="edit-tab-activity"
         >
@@ -312,8 +319,10 @@ export function EditActivityWindow({
         <button
           type="button"
           role="tab"
+          onKeyDown={onTabListKeyDown}
           className="edit-window__tab"
           aria-selected={tab === 'track'}
+          tabIndex={tab === 'track' ? 0 : -1}
           disabled={trackUnavailable !== null}
           title={trackUnavailable ?? undefined}
           onClick={() => openTab('track')}
@@ -325,8 +334,10 @@ export function EditActivityWindow({
         <button
           type="button"
           role="tab"
+          onKeyDown={onTabListKeyDown}
           className="edit-window__tab"
           aria-selected={tab === 'photos'}
+          tabIndex={tab === 'photos' ? 0 : -1}
           disabled={photosUnavailable !== null}
           title={photosUnavailable ?? undefined}
           onClick={() => openTab('photos')}

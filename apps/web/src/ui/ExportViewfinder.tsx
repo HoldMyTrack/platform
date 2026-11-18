@@ -22,6 +22,7 @@ import {
 import { statsCardPlacement } from '../map/exportStats.ts';
 import type { StatsCardState } from '../map/useStatsCard.ts';
 import { t } from '../i18n/index.ts';
+import { useWindowFocus } from './useWindowFocus.ts';
 
 /** EXPORT_PRESET_ROWS' names as the toolbar shows them — the ids stay English. */
 const ROW_LABELS = {
@@ -193,12 +194,14 @@ export function ExportViewfinder({
     '--win-h': `${win.h}px`,
     '--settle-ms': `${SETTLE_MS}ms`,
   } as CSSProperties;
+  const windowRef = useRef<HTMLDivElement>(null);
+  useWindowFocus(windowRef);
   const classes = ['export-viewfinder', settling && 'export-viewfinder--settling', gesture && 'export-viewfinder--gesture']
     .filter(Boolean)
     .join(' ');
 
   return (
-    <div className={classes} style={style} data-testid="export-viewfinder" onTransitionEnd={() => setSettling(false)}>
+    <div ref={windowRef} tabIndex={-1} role="group" aria-label={t('export.window')} className={classes} style={style} data-testid="export-viewfinder" onTransitionEnd={() => setSettling(false)}>
       <div className="export-viewfinder__shade export-viewfinder__shade--top" />
       <div className="export-viewfinder__shade export-viewfinder__shade--bottom" />
       <div className="export-viewfinder__shade export-viewfinder__shade--left" />

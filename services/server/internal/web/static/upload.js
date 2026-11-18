@@ -81,15 +81,47 @@
     return li;
   }
 
+  // Brings `container`'s children in line with `items`, keyed by `key`: an item already shown
+  // keeps its element, updated by `update`, and only new ones are made. Rebuilding the lists on
+  // every progress event and poll destroyed a focused dismiss button every 2 seconds and had a
+  // screen reader announce each row again.
+  // Two items may share a key (two files of one name sent in one second), so each key is counted
+  // to stay unique, and whatever is past the last item is removed whatever its key.
+  function syncList(container, items, key, make, update) {
+    var existing = {};
+    var seen = {};
+    Array.prototype.forEach.call(container.children, function (child) { existing[child.dataset.key] = child; });
+    items.forEach(function (item, i) {
+      var base = key(item);
+      seen[base] = (seen[base] || 0) + 1;
+      var k = base + '#' + seen[base];
+      var node = existing[k];
+      delete existing[k];
+      if (node) update(node, item);
+      else {
+        node = make(item);
+        node.dataset.key = k;
+      }
+      if (container.children[i] !== node) container.insertBefore(node, container.children[i] || null);
+    });
+    while (container.children.length > items.length) container.lastElementChild.remove();
+  }
+
+  function setText(node, selector, text) {
+    var target = node.querySelector(selector);
+    if (target.textContent !== text) target.textContent = text;
+  }
+
   function render() {
     guardUnload();
-    list.replaceChildren();
-    transfers.forEach(function (t) {
-      list.appendChild(row(t.name, t.sending ? fill(strings.uploading, { percent: Math.round(t.progress * 100) }) : strings.queued));
-    });
-    active.forEach(function (a) {
-      var status = a.total > 1 ? fill(strings.processing_count, { done: a.done, total: a.total }) : strings.processing;
-      list.appendChild(row(a.title, status));
+    var rows = transfers.map(function (t) {
+      return { key: 't' + t.id, title: t.name, status: t.sending ? fill(strings.uploading, { percent: Math.round(t.progress * 100) }) : strings.queued };
+    }).concat(active.map(function (a) {
+      return { key: 'a' + keyOf(a), title: a.title, status: a.total > 1 ? fill(strings.processing_count, { done: a.done, total: a.total }) : strings.processing };
+    }));
+    syncList(list, rows, function (r) { return r.key; }, function (r) { return row(r.title, r.status); }, function (node, r) {
+      setText(node, '.upload-menu__title', r.title);
+      setText(node, '.upload-menu__status', r.status);
     });
     var busy = transfers.length + active.length;
     idle.hidden = busy > 0;
@@ -101,15 +133,16 @@
       window.dispatchEvent(new CustomEvent('hmt:imports-in-flight', { detail: busy }));
     }
 
-    notes.replaceChildren();
-    noteList.forEach(function (n) {
+    syncList(notes, noteList, function (n) { return 'n' + n.id; }, function (n) {
       var li = el('li', 'upload-menu__note' + (n.error ? ' upload-menu__note--error' : ''));
       li.appendChild(el('span', '', n.text));
       li.appendChild(dismissButton(function () {
         noteList = noteList.filter(function (x) { return x.id !== n.id; });
         render();
       }));
-      notes.appendChild(li);
+      return li;
+    }, function () {
+      // A note never changes once shown.
     });
 
     alertDot.hidden = !noteList.some(function (n) { return n.error; });
