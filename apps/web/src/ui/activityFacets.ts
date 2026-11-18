@@ -34,6 +34,16 @@ export function distanceBounds(activities: Activity[]): DistanceRange | null {
 }
 
 /**
+ * Where the Distance slider draws `band` within `bounds`: each end held inside them. A band set
+ * over another area can fall partly or wholly outside the bounds of the one in view, and drawn
+ * as it is, the fill runs off the track and a dragged knob snaps back out of range.
+ */
+export function bandWithin(bounds: DistanceRange, band: DistanceRange): DistanceRange {
+  const clamp = (v: number) => Math.min(Math.max(v, bounds.min), bounds.max);
+  return { min: clamp(band.min), max: clamp(band.max) };
+}
+
+/**
  * The Distance slider's filter after one knob moved to `value`: the other knob held, the two
  * never crossing, and null — no filter, "any distance" — once both are back at the bounds, so
  * a knob dragged away and back leaves nothing filtered out.

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityNotFoundError, getActivity, type Activity, type ActivityDetail } from '../api';
+import { mapLimited } from '../limited';
 import { latestRows, missingRows, windowActivities } from './editWindowRows';
 import { editPhotosBlocker, editTrackBlocker } from '../ui/editAvailability';
 import type { EditTab } from '../ui/EditActivityWindow';
@@ -22,10 +23,14 @@ export interface EditWindowState {
   startTrack: (id: string) => void;
   /** Closes the window, returning the activity whose track was being edited, if any. */
   close: () => string | null;
-  /** The window closed because one of its activities was deleted elsewhere, until this is read. */
-  closedDeleted: boolean;
-  dismissClosedDeleted: () => void;
+  /** Why the window closed on its own, until this is read: one of its activities was deleted
+   *  elsewhere, or they couldn't be read on opening (the server's message). */
+  closedNotice: { deleted: true } | { failed: string } | null;
+  dismissClosedNotice: () => void;
 }
+
+/** How many of the window's activities are read at once: a group can be the 1,000 rows listed. */
+const READS_AT_ONCE = 6;
 
 /**
  * The Edit window over the toolbar's target. While it's open the panel is inert and the map's own
@@ -43,7 +48,7 @@ export function useEditWindow(listed: readonly Activity[]): EditWindowState {
   const [ids, setIds] = useState<string[] | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [tab, setTab] = useState<EditTab>('activity');
-  const [closedDeleted, setClosedDeleted] = useState(false);
+  const [closedNotice, setClosedNotice] = useState<EditWindowState['closedNotice']>(null);
   const open = ids !== null;
 
   const [details, setDetails] = useState<ActivityDetail[] | null>(null);
@@ -51,12 +56,13 @@ export function useEditWindow(listed: readonly Activity[]): EditWindowState {
     setDetails(null);
     if (ids === null) return;
     const controller = new AbortController();
-    Promise.all(ids.map((id) => getActivity(id, controller.signal)))
+    mapLimited(ids, READS_AT_ONCE, (id) => getActivity(id, controller.signal))
       .then(setDetails)
-      .catch(() => {
+      .catch((error: unknown) => {
         if (controller.signal.aborted) return;
         setIds(null);
         setEditingId(null);
+        setClosedNotice({ failed: error instanceof Error ? error.message : String(error) });
       });
     return () => controller.abort();
   }, [ids]);
@@ -74,12 +80,12 @@ export function useEditWindow(listed: readonly Activity[]): EditWindowState {
   useEffect(() => {
     if (missing === '') return;
     const controller = new AbortController();
-    Promise.all(missing.split(',').map((id) => getActivity(id, controller.signal))).catch((error: unknown) => {
+    mapLimited(missing.split(','), READS_AT_ONCE, (id) => getActivity(id, controller.signal)).catch((error: unknown) => {
       // Any other failure says nothing about the activity.
       if (controller.signal.aborted || !(error instanceof ActivityNotFoundError)) return;
       setIds(null);
       setEditingId(null);
-      setClosedDeleted(true);
+      setClosedNotice({ deleted: true });
     });
     return () => controller.abort();
   }, [missing]);
@@ -108,7 +114,7 @@ export function useEditWindow(listed: readonly Activity[]): EditWindowState {
     openFor,
     startTrack,
     close,
-    closedDeleted,
-    dismissClosedDeleted: useCallback(() => setClosedDeleted(false), []),
+    closedNotice,
+    dismissClosedNotice: useCallback(() => setClosedNotice(null), []),
   };
 }
