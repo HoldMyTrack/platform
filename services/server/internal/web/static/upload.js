@@ -85,11 +85,16 @@
   // keeps its element, updated by `update`, and only new ones are made. Rebuilding the lists on
   // every progress event and poll destroyed a focused dismiss button every 2 seconds and had a
   // screen reader announce each row again.
+  // Two items may share a key (two files of one name sent in one second), so each key is counted
+  // to stay unique, and whatever is past the last item is removed whatever its key.
   function syncList(container, items, key, make, update) {
     var existing = {};
+    var seen = {};
     Array.prototype.forEach.call(container.children, function (child) { existing[child.dataset.key] = child; });
     items.forEach(function (item, i) {
-      var k = key(item);
+      var base = key(item);
+      seen[base] = (seen[base] || 0) + 1;
+      var k = base + '#' + seen[base];
       var node = existing[k];
       delete existing[k];
       if (node) update(node, item);
@@ -99,7 +104,7 @@
       }
       if (container.children[i] !== node) container.insertBefore(node, container.children[i] || null);
     });
-    Object.keys(existing).forEach(function (k) { existing[k].remove(); });
+    while (container.children.length > items.length) container.lastElementChild.remove();
   }
 
   function setText(node, selector, text) {
