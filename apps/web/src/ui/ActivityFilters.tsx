@@ -127,6 +127,12 @@ function DateField({ label, hint, value, bounds, onCommit, testId }: { label: st
   const commit = (next: string) => {
     if (next !== (value ?? '')) onCommit(next === '' ? null : next);
   };
+  // Leaving the field shows what applies: a date the bounds clamp to the value already set
+  // changes no prop, so nothing else would take the typed one out.
+  const settle = () => {
+    commit(draft);
+    setDraft(value ?? '');
+  };
   return (
     <label className="activities-panel__date-field">
       <span className="activities-panel__date-label">{label}</span>
@@ -140,9 +146,9 @@ function DateField({ label, hint, value, bounds, onCommit, testId }: { label: st
           setDraft(next);
           if (/^[1-9]\d{3}-/.test(next)) commit(next);
         }}
-        onBlur={() => commit(draft)}
+        onBlur={settle}
         onKeyDown={(e) => {
-          if (e.key === 'Enter') commit(draft);
+          if (e.key === 'Enter') settle();
         }}
         data-testid={testId}
       />

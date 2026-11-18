@@ -115,7 +115,7 @@ export function ActivityRow({
       </button>
       {(isPending || hidden || activity.private || otherStories.length > 0) && (
         // One right-aligned group, so the badges share one right edge whatever the text beside
-        // them does, and a row that's both stacks them there together.
+        // them does; side by side, so every row is one height (index.css).
         <span className="activities-panel__badges">
           {otherStories.length > 0 && <StoryBadge stories={otherStories} inOpenStory={openStoryId !== undefined} onOpen={onOpenStory} />}
           {isPending && (

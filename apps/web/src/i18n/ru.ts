@@ -150,6 +150,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'edit.discard_title': 'Отменить изменения?',
   'edit.discard_message': 'Изменения, сделанные в этом окне, ещё не сохранены.',
   'edit.deleted_title': 'Маршрут удалён',
+  'edit.unreadable_title': 'Не удалось открыть редактирование',
   'edit.deleted_message': 'Маршрут из окна редактирования был удалён, поэтому окно закрылось. Несохранённые изменения потеряны.',
   'edit.discard': 'Отменить изменения',
   'edit.keep_editing': 'Продолжить',
