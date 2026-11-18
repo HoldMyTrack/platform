@@ -1,10 +1,10 @@
 {
   "rule": "statsOffered",
-  "description": "Whether the export's Show stats can be ticked: something checked in the Activities panel, and no Story open, since the Stories tab has no checkboxes.",
+  "description": "Whether the export's Show stats can be ticked: something checked in the Tracks panel, and no Trip open, since the Trips tab has no checkboxes.",
   "clients": ["web", "android"],
   "cases": [
     { "name": "checked", "input": { "checked": ["a", "b"] }, "expected": true },
     { "name": "nothing checked", "input": { "checked": [] }, "expected": false },
-    { "name": "a Story open counts as nothing checked", "input": { "checked": ["a"], "storyId": "s" }, "expected": false }
+    { "name": "a Trip open counts as nothing checked", "input": { "checked": ["a"], "tripId": "s" }, "expected": false }
   ]
 }

@@ -1,5 +1,5 @@
 // Covers docs/SPEC.md FR-3.8 (an activity's own timezone); the rule runs from
-// testdata/client-rules/activity-zone.json in clientRules.test.mjs.
+// testdata/client-rules/track-zone.json in clientRules.test.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs, like editTrackOps.test.mjs: Node strips the types from the imported .ts module itself.

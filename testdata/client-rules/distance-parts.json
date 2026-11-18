@@ -1,6 +1,6 @@
 {
   "rule": "distanceParts",
-  "description": "An activity's distance (meters) in the account's units (system: metric or imperial). Expected: { value, minDecimals, maxDecimals, grouping, unit (km or mi) }, the number each platform writes in its language with that many decimals, thousands grouped or not.",
+  "description": "A track's distance (meters) in the account's units (system: metric or imperial). Expected: { value, minDecimals, maxDecimals, grouping, unit (km or mi) }, the number each platform writes in its language with that many decimals, thousands grouped or not.",
   "tolerance": 1e-9,
   "cases": [
     { "name": "kilometers, one decimal, never grouped", "input": { "meters": 12345.6, "system": "metric" }, "expected": { "value": 12.3456, "minDecimals": 1, "maxDecimals": 1, "grouping": false, "unit": "km" } },
