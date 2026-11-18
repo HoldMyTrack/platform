@@ -712,7 +712,7 @@ code {
   align-items: center;
   gap: 10px;
   font-size: 11px;
-  color: rgb(var(--fm-ink-rgb) / 40%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .auth-card__divider::before,

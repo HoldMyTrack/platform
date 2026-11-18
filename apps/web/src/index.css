@@ -724,7 +724,7 @@ body {
   display: flex;
   justify-content: space-between;
   font-size: var(--fm-text-2xs);
-  color: rgb(var(--fm-ink-rgb) / 40%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* The list's progress bar (ActivitiesPanel.tsx): a line over the rows while a slow reload is under
