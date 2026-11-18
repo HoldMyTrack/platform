@@ -33,7 +33,7 @@
     <string name="checking_session">Checking your session…</string>
 
     <!-- The You tab's all-time numbers, the web's /profile cards (services/server/internal/i18n/locales/en.json, profile.*). -->
-    <string name="profile_card_activities">Activities</string>
+    <string name="profile_card_activities">Tracks</string>
     <string name="profile_card_distance">Distance</string>
     <string name="profile_card_active_days">Active days</string>
     <string name="profile_card_longest_streak">Longest streak</string>
@@ -119,7 +119,7 @@
     <string name="export_shape">Image shape and size</string>
     <string name="export_close">Close</string>
     <string name="export_show_stats">Show stats</string>
-    <string name="export_show_stats_hint">Check activities to show their stats.</string>
+    <string name="export_show_stats_hint">Check tracks to show their stats.</string>
     <string name="export_capture">Save and share</string>
     <string name="export_custom">Custom · %1$s</string>
     <string name="export_custom_full">Custom · %1$s (%2$d px long side)</string>
@@ -127,7 +127,7 @@
     <string name="export_row_square">Square</string>
     <string name="export_row_portrait">Portrait</string>
     <string name="export_row_landscape">Landscape</string>
-    <string name="export_row_story">Story</string>
+    <string name="export_row_story">Trip</string>
     <string name="export_size" translatable="false">%1$d × %2$d</string>
     <string name="export_failed">Couldn\'t create the image. Please try again.</string>
     <string name="export_saved">Saved to Pictures</string>
@@ -141,15 +141,15 @@
     <string name="dates_between">%1$s – %2$s</string>
     <string name="dates_clear">Clear dates</string>
     <string name="dates_clear_end">Clear %1$s</string>
-    <string name="dates_first_activity">First activity: %1$s</string>
+    <string name="dates_first_activity">First track: %1$s</string>
     <string name="dates_today">Today</string>
     <string name="dates_done">Done</string>
-    <string name="area_capped">Showing the newest %1$s of %2$s activities here. Zoom in or set Dates to see the rest.</string>
-    <string name="edit_open_failed">The activity couldn\'t be opened: %1$s</string>
-    <string name="area_zoom_in">Zoom in to see your activities.</string>
+    <string name="area_capped">Showing the newest %1$s of %2$s tracks here. Zoom in or set Dates to see the rest.</string>
+    <string name="edit_open_failed">The track couldn\'t be opened: %1$s</string>
+    <string name="area_zoom_in">Zoom in to see your tracks.</string>
     <string name="locate_needs_location">HoldMyTrack needs location access to show where you are.</string>
     <string name="nav_map">Map</string>
-    <string name="nav_stories">Stories</string>
+    <string name="nav_stories">Trips</string>
     <string name="nav_sync">Sync</string>
     <string name="nav_you">You</string>
     <string name="menu_about">About</string>
@@ -158,7 +158,7 @@
     <string name="menu_privacy">Privacy</string>
     <string name="menu_version">Version %1$s</string>
     <string name="you_section_app">App</string>
-    <string name="you_graph_link">Activity graph &amp; trends</string>
+    <string name="you_graph_link">Track graph &amp; trends</string>
     <string name="you_privacy_sub">Private locations and your data</string>
     <plurals name="you_privacy_count">
         <item quantity="one">%1$d private location · your data</item>
@@ -172,7 +172,7 @@
     <string name="settings_language_auto">Automatic (phone)</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_export_title">Download your data</string>
-    <string name="settings_export_hint">A copy of everything in your account, as zip archives: the files you uploaded or synced, every activity as GPX, your photos, and your settings, Stories, Private locations and captured places.</string>
+    <string name="settings_export_hint">A copy of everything in your account, as zip archives: the files you uploaded or synced, every track as GPX, your photos, and your settings, Trips, Private locations and captured places.</string>
     <string name="settings_export_request">Request a download</string>
     <string name="settings_export_again">Request a new one</string>
     <string name="settings_export_preparing">Preparing your archive. It usually takes a few minutes; we\'ll email %1$s when it\'s ready, and it will be here too.</string>
@@ -181,7 +181,7 @@
     <string name="settings_export_failed">Your last download couldn\'t be prepared. Please try again, and if it fails again, let us know.</string>
     <string name="settings_export_downloading">Downloading to the Downloads folder.</string>
     <string name="settings_delete_title">Delete account</string>
-    <string name="settings_delete_hint">Deletes your account and everything in it, for good: every activity and the files you uploaded, your photos, Stories, Private locations and captured places, and the recordings on this phone that haven\'t synced. It can\'t be undone, and backups keep it for up to 8 weeks.</string>
+    <string name="settings_delete_hint">Deletes your account and everything in it, for good: every track and the files you uploaded, your photos, Trips, Private locations and captured places, and the recordings on this phone that haven\'t synced. It can\'t be undone, and backups keep it for up to 8 weeks.</string>
     <string name="settings_delete_open">Delete account…</string>
     <string name="settings_delete_confirm">You\'ll be signed out everywhere, and everything in the account will be gone within a few minutes. To confirm, type your email address, %1$s.</string>
     <string name="settings_delete_email">Email address</string>
@@ -194,7 +194,7 @@
     <string name="settings_no_match">Nothing matches.</string>
 
     <string name="recording_name_hint">Name</string>
-    <string name="recording_type_hint">Activity type</string>
+    <string name="recording_type_hint">Track type</string>
     <string name="recording_description_hint">Description (optional)</string>
     <string name="recording_pause">Pause</string>
     <string name="recording_resume">Resume</string>
@@ -256,7 +256,7 @@
     <string name="privacy_policy">Privacy policy</string>
     <string name="sync_needs_account">Sign in to HoldMyTrack first — there is nowhere to sync to until then.</string>
     <string name="sync_needs_verified_email">Confirm your email address first — open HoldMyTrack if you need a new confirmation link.</string>
-    <string name="sync_demo_read_only">The demo account is read-only — it can\'t add, edit, or delete activities. Create an account to sync your own data.</string>
+    <string name="sync_demo_read_only">The demo account is read-only — it can\'t add, edit, or delete tracks. Create an account to sync your own data.</string>
     <string name="sync_unavailable">Health Connect isn\'t available on this device, so there is nothing to sync from.</string>
     <string name="sync_update_required">Health Connect needs updating before it can share anything.</string>
     <string name="sync_needs_exercise_permission">HoldMyTrack can\'t read your exercise sessions yet.</string>
@@ -270,7 +270,7 @@
     <string name="sync_stopped">Stopped early. %1$s</string>
     <string name="sync_refusal_too_many_points">the route has %1$d points, more than one sync request accepts</string>
     <string name="sync_request_failed">the sync request failed</string>
-    <string name="sync_no_report">the server did not report on this activity (status %1$s)</string>
+    <string name="sync_no_report">the server did not report on this track (status %1$s)</string>
     <string name="sync_subtext">What\'s on this phone and not on your map yet. Tick what to add — nothing else is sent.</string>
     <string name="sync_window_note">Health Connect sessions from the last 3 months. Older ones stay in Health Connect.</string>
     <plurals name="sync_routes_refused">
@@ -278,11 +278,11 @@
         <item quantity="other">Health Connect wouldn\'t hand over %1$d routes. Keep HoldMyTrack on screen and check that exercise routes are still allowed.</item>
     </plurals>
     <string name="sync_read_failed">Couldn\'t list Health Connect: %1$s</string>
-    <string name="sync_types">Activity types</string>
+    <string name="sync_types">Track types</string>
     <string name="sync_select_all">Select all</string>
     <string name="sync_select_none">Select none</string>
     <string name="sync_list_loading">Reading what\'s on this phone…</string>
-    <string name="sync_list_empty">Nothing waiting. Activities from Health Connect and recordings from the record button show up here.</string>
+    <string name="sync_list_empty">Nothing waiting. Tracks from Health Connect and recordings from the record button show up here.</string>
     <string name="sync_show_hidden">Show hidden (%1$d)</string>
     <string name="sync_hide_hidden">Don\'t show hidden</string>
     <string name="sync_hidden">Hidden — it won\'t be offered again</string>
@@ -293,8 +293,8 @@
     <string name="sync_send">Sync %1$d</string>
     <string name="sync_progress">Sent %1$d of %2$d…</string>
     <plurals name="sync_summary">
-        <item quantity="one">Sent %1$d activity. It stays listed until it\'s on your map.</item>
-        <item quantity="other">Sent %1$d activities. They stay listed until they\'re on your map.</item>
+        <item quantity="one">Sent %1$d track. It stays listed until it\'s on your map.</item>
+        <item quantity="other">Sent %1$d tracks. They stay listed until they\'re on your map.</item>
     </plurals>
     <string name="sync_summary_with_present">Sent %1$d new, %2$d already in HoldMyTrack. They stay listed until they\'re on your map.</string>
     <string name="sync_row_processing">Adding to your map…</string>
@@ -312,7 +312,7 @@
     <string name="similar_lead">%1$s (%2$s) covers the same time as:</string>
     <string name="similar_waiting">Waiting here</string>
     <string name="similar_on_map">Already on your map</string>
-    <string name="similar_note">Sending more than one gives you two activities of the same journey. Nothing is chosen for you — tick the one you want.</string>
+    <string name="similar_note">Sending more than one gives you two tracks of the same journey. Nothing is chosen for you — tick the one you want.</string>
     <string name="similar_show">Show</string>
     <string name="similar_show_named">Show %1$s, %2$s</string>
     <string name="similar_close">Close</string>
@@ -320,8 +320,8 @@
     <string name="sync_history_hint">Health Connect only shares the past 30 days unless you allow access to past data. HoldMyTrack is built around the whole shape of where you have been, so 30 days is not much of a map.</string>
     <string name="sync_allow_history">Allow access to past data</string>
     <plurals name="stories_waiting">
-        <item quantity="one">%1$d copy of a story waiting</item>
-        <item quantity="other">%1$d copies of stories waiting</item>
+        <item quantity="one">%1$d copy of a trip waiting</item>
+        <item quantity="other">%1$d copies of trips waiting</item>
     </plurals>
     <string name="sync_hc_ready">Ready to read</string>
     <string name="sync_hc_ready_30_days">Ready, the last 30 days only</string>
@@ -365,7 +365,7 @@
     <string name="sync_history_title">Sync history</string>
     <string name="sync_history_sub">Every import and how it went</string>
     <string name="upload_title">Upload</string>
-    <string name="upload_demo">Not available for demo accounts — create an account to upload your own activities.</string>
+    <string name="upload_demo">Not available for demo accounts — create an account to upload your own tracks.</string>
     <string name="upload_see_sync">See them in Sync history</string>
     <string name="upload_hint">.gpx, .fit or .tcx files, up to 20 at a time.</string>
     <string name="upload_choose">Choose files…</string>
@@ -381,8 +381,8 @@
     <string name="upload_network_error">Network error</string>
 
     <!-- The map's Activities panel (panel/ActivitiesPanel.kt), after the web's activities.* and filters.* messages. -->
-    <string name="panel_label">Activities panel</string>
-    <string name="panel_tab_activities">Activities</string>
+    <string name="panel_label">Tracks panel</string>
+    <string name="panel_tab_activities">Tracks</string>
     <string name="panel_unit_m">m</string>
     <string name="panel_unit_ft">ft</string>
     <string name="panel_loading">Loading…</string>
@@ -395,17 +395,17 @@
     <string name="panel_type">Type</string>
     <string name="panel_all_types">All types</string>
     <string name="panel_filter_by_type">Filter by type</string>
-    <string name="panel_type_empty">No activities to filter yet.</string>
+    <string name="panel_type_empty">No tracks to filter yet.</string>
     <string name="panel_distance">Distance</string>
     <string name="panel_any_distance">any distance</string>
     <string name="panel_any_distance_chip">Any distance</string>
     <string name="panel_distance_range">%1$s – %2$s %3$s</string>
-    <string name="panel_check_all">Check all activities</string>
-    <string name="panel_uncheck_all">Uncheck all activities</string>
+    <string name="panel_check_all">Check all tracks</string>
+    <string name="panel_uncheck_all">Uncheck all tracks</string>
     <string name="panel_hide_target">Hide %1$s from the map</string>
     <string name="panel_show_target">Show %1$s on the map</string>
     <string name="panel_focus_target">Zoom to %1$s</string>
-    <string name="panel_no_target">Tap an activity, or check some, first</string>
+    <string name="panel_no_target">Tap a track, or check some, first</string>
     <string name="panel_target_one">“%1$s”</string>
     <string name="panel_footer">%1$d checked · %2$s</string>
     <string name="panel_reset">Reset</string>
@@ -420,15 +420,15 @@
     <string name="card_hide">Hide</string>
     <string name="card_show">Show</string>
     <string name="card_edit">Edit</string>
-    <string name="card_story">Story</string>
+    <string name="card_story">Trip</string>
     <string name="card_focus">Zoom</string>
     <string name="card_delete">Delete</string>
     <string name="card_pace_km">%1$s /km</string>
     <string name="card_pace_mi">%1$s /mi</string>
     <string name="card_speed_km">%1$s km/h</string>
     <string name="card_speed_mi">%1$s mph</string>
-    <string name="panel_none_match">No activities here match the current filters.</string>
-    <string name="panel_none_here">No activities in this part of the map.</string>
+    <string name="panel_none_match">No tracks here match the current filters.</string>
+    <string name="panel_none_here">No tracks in this part of the map.</string>
     <string name="panel_pending">Pending</string>
     <string name="panel_hidden">Hidden</string>
     <string name="activity_private_badge">Private</string>
@@ -442,36 +442,36 @@
     <string name="panel_unit_km">km</string>
     <string name="panel_unit_mi">mi</string>
     <plurals name="panel_checked_count">
-        <item quantity="one">%1$d checked activity</item>
-        <item quantity="other">%1$d checked activities</item>
+        <item quantity="one">%1$d checked track</item>
+        <item quantity="other">%1$d checked tracks</item>
     </plurals>
 
     <!-- The panel's Edit and Delete (panel/EditActivityWindow.kt), after the web's edit.* and activities.delete_* messages. -->
-    <string name="panel_edit_one">Edit %1$s: type, name, description and track</string>
+    <string name="panel_edit_one">Edit %1$s: type, name, description and route</string>
     <string name="panel_edit_many">Edit type for %1$s</string>
     <string name="panel_delete_target">Delete %1$s</string>
-    <string name="panel_delete_one_title">Delete this activity?</string>
+    <string name="panel_delete_one_title">Delete this track?</string>
     <string name="panel_delete_title">Delete this group?</string>
-    <string name="panel_delete_one_body">%1$s will be permanently deleted — its track, fog coverage, and any performance records it contributed to. This can\'t be undone.</string>
-    <string name="panel_delete_many_body">%1$s will be permanently deleted — their tracks, fog coverage, and any performance records they contributed to. This can\'t be undone.</string>
+    <string name="panel_delete_one_body">%1$s will be permanently deleted — its route, fog coverage, and any performance records it contributed to. This can\'t be undone.</string>
+    <string name="panel_delete_many_body">%1$s will be permanently deleted — their routes, fog coverage, and any performance records they contributed to. This can\'t be undone.</string>
     <string name="panel_delete_confirm">Delete</string>
     <string name="panel_deleting">Deleting…</string>
-    <string name="panel_delete_failed">Could not delete the activity: %1$s</string>
+    <string name="panel_delete_failed">Could not delete the track: %1$s</string>
     <string name="panel_group_summary">%1$s (%2$s)</string>
-    <string name="panel_demo_edit">Not available for demo accounts — create an account to edit activities</string>
-    <string name="panel_demo_delete">Not available for demo accounts — create an account to delete activities</string>
-    <string name="edit_tab_activity">Activity</string>
-    <string name="edit_tab_track">Track</string>
-    <string name="edit_track_check_one">Check exactly one activity to edit its track</string>
+    <string name="panel_demo_edit">Not available for demo accounts — create an account to edit tracks</string>
+    <string name="panel_demo_delete">Not available for demo accounts — create an account to delete tracks</string>
+    <string name="edit_tab_activity">Track</string>
+    <string name="edit_tab_track">Route</string>
+    <string name="edit_track_check_one">Check exactly one track to edit its route</string>
     <string name="edit_track_processing">This track is still being processed</string>
-    <string name="edit_track_no_original">This activity\'s original recording isn\'t stored, so its track can\'t be edited</string>
-    <string name="edit_track_bad_times">This track\'s points have no usable times, so it can\'t be edited</string>
+    <string name="edit_track_no_original">This track\'s original recording isn\'t stored, so its route can\'t be edited</string>
+    <string name="edit_track_bad_times">This route\'s points have no usable times, so it can\'t be edited</string>
     <string name="edit_track_chop">Chop</string>
     <string name="edit_track_chop_title">Keep only the part between the knobs</string>
     <string name="edit_track_cut">Cut</string>
     <string name="edit_track_split">Split</string>
-    <string name="edit_track_split_title">Split the activity in two at the knob you moved</string>
-    <string name="edit_track_split_note">Saving splits this activity in two at %1$s. The new part gets the same type, name and description.</string>
+    <string name="edit_track_split_title">Split the track in two at the knob you moved</string>
+    <string name="edit_track_split_note">Saving splits this track in two at %1$s. The new part gets the same type, name and description.</string>
     <string name="edit_track_split_hidden_title">Split into a private location?</string>
     <string name="edit_track_split_hidden_confirm">Split anyway</string>
     <string name="edit_track_cut_title">Remove the part between the knobs and join its two ends. Hold to preview.</string>
@@ -484,21 +484,21 @@
     <string name="edit_track_undo">Undo</string>
     <string name="edit_track_undo_title">Undo the last change</string>
     <string name="edit_track_reset">Reset</string>
-    <string name="edit_track_reset_title">Go back to the track as it was recorded (Undo brings the edits back)</string>
+    <string name="edit_track_reset_title">Go back to the route as it was recorded (Undo brings the edits back)</string>
     <string name="edit_track_range">Range</string>
     <string name="edit_track_range_readout">%1$s – %2$s %3$s · %4$s–%5$s</string>
     <string name="edit_track_loading">Loading points…</string>
-    <string name="edit_track_unsaved">Track, with unsaved changes</string>
+    <string name="edit_track_unsaved">Route, with unsaved changes</string>
     <plurals name="edit_track_points">
         <item quantity="one">%1$d point</item>
         <item quantity="other">%1$d points</item>
     </plurals>
-    <string name="edit_title_one">Edit activity</string>
-    <string name="edit_multi_subtitle">Type and Stories apply to every checked activity; name and description are per-activity.</string>
-    <string name="edit_multi_reason">Editing multiple activities changes their type and Stories — name and description are per-activity.</string>
+    <string name="edit_title_one">Edit track</string>
+    <string name="edit_multi_subtitle">Type and Trips apply to every checked track; name and description are per-track.</string>
+    <string name="edit_multi_reason">Editing multiple tracks changes their type and Trips — name and description are per-track.</string>
     <string name="edit_type">Type</string>
     <string name="edit_name">Name</string>
-    <string name="edit_name_placeholder">Optional — shown instead of the date in the Activities list</string>
+    <string name="edit_name_placeholder">Optional — shown instead of the date in the Tracks list</string>
     <string name="edit_description">Description</string>
     <string name="edit_description_placeholder">Add a note — e.g. \"Roadtrip to California with kids\"</string>
     <string name="edit_type_mixed">Mixed types — pick one to set it for all</string>
@@ -506,25 +506,25 @@
     <string name="edit_type_too_long">Type must be %1$d characters or fewer.</string>
     <string name="edit_name_too_long">Name must be %1$d characters or fewer.</string>
     <string name="edit_description_too_long">Description must be %1$d characters or fewer.</string>
-    <string name="edit_save_failed">Could not save the activity</string>
+    <string name="edit_save_failed">Could not save the track</string>
     <string name="edit_save">Save</string>
     <string name="edit_saving">Saving…</string>
     <string name="edit_cancel">Cancel</string>
     <plurals name="edit_title_many">
-        <item quantity="one">Edit %1$d activity</item>
-        <item quantity="other">Edit %1$d activities</item>
+        <item quantity="one">Edit %1$d track</item>
+        <item quantity="other">Edit %1$d tracks</item>
     </plurals>
 
     <!-- Photos (photos/, panel/PhotosTab.kt, map/PhotoMarkers.kt, map/PhotoPopup.kt), after the
          web's photos.* messages. -->
     <string name="photos_tab">Photos</string>
     <string name="photos_unsaved">Photos, with unsaved changes</string>
-    <string name="photos_check_one">Photos belong to one activity — check just one to add or change them.</string>
-    <string name="photos_no_track">This activity has no track to put photos on.</string>
+    <string name="photos_check_one">Photos belong to one track — check just one to add or change them.</string>
+    <string name="photos_no_track">This track has no route to put photos on.</string>
     <string name="photos_add">Add photos</string>
     <string name="photos_preparing">Preparing %1$d of %2$d…</string>
     <string name="photos_loading">Loading photos…</string>
-    <string name="photos_empty">No photos yet. Add the ones you took on this activity — each goes on the route where it was taken.</string>
+    <string name="photos_empty">No photos yet. Add the ones you took on this track — each goes on the route where it was taken.</string>
     <string name="photos_upload_failed">%1$s: %2$s</string>
     <string name="photos_unreadable">This file can\'t be opened as a photo.</string>
     <string name="photos_needs_place">Couldn\'t tell where this was taken. Move the slider to its place on the route.</string>
@@ -570,7 +570,7 @@
     <string name="photos_unavailable">Couldn\'t load this photo.</string>
 
     <!-- Private locations: the Privacy screen and the editor on the map (privacy/PrivacyActivity.kt, panel/PrivateLocationEditor.kt), after the web's private.* messages. -->
-    <string name="private_subtitle">Tracks never start or end inside these circles — the part inside is clipped off every activity, so nobody can trace a track back to your door.</string>
+    <string name="private_subtitle">Tracks never start or end inside these circles — the part inside is clipped off every track, so nobody can trace a track back to your door.</string>
     <string name="panel_private_title">Private locations</string>
     <string name="private_none">None yet.</string>
     <string name="private_unnamed">Unnamed</string>
@@ -580,14 +580,14 @@
     <string name="private_new_title">New private location</string>
     <string name="private_edit_title">Edit private location</string>
     <string name="private_editor_note">Drag the center to move it. Don\'t center it exactly on your door — a circle\'s middle is the first place anyone looks.</string>
-    <string name="private_hidden_none">No activity lies entirely inside these locations.</string>
+    <string name="private_hidden_none">No track lies entirely inside these locations.</string>
     <plurals name="private_hidden">
-        <item quantity="one">%1$d activity lies entirely inside these locations and shows as Private.</item>
-        <item quantity="other">%1$d activities lie entirely inside these locations and show as Private.</item>
+        <item quantity="one">%1$d track lies entirely inside these locations and shows as Private.</item>
+        <item quantity="other">%1$d tracks lie entirely inside these locations and show as Private.</item>
     </plurals>
-    <string name="private_reprocess_note">Saving a change reprocesses the activities it touches — they show Pending until done.</string>
+    <string name="private_reprocess_note">Saving a change reprocesses the tracks it touches — they show Pending until done.</string>
     <string name="private_delete_title">Delete this private location?</string>
-    <string name="private_delete_body">Activities that start or end inside it will show those parts again once they\'re reprocessed.</string>
+    <string name="private_delete_body">Tracks that start or end inside it will show those parts again once they\'re reprocessed.</string>
     <string name="private_delete_failed">Could not delete it: %1$s</string>
     <string name="private_add_on_map">Add a location on the map</string>
     <string name="private_delete">Delete</string>
@@ -601,74 +601,74 @@
 
     <!-- Stories (panel/StoriesTab.kt, panel/StoryDialog.kt, Add to story (panel/ActivitiesPanel.kt) and the
          rows' Story badge), after the web's stories.* messages. -->
-    <string name="panel_tab_stories">Stories</string>
-    <string name="story_subtext">Hand-picked sets of your activities. Only you can see them.</string>
-    <string name="story_empty">No stories yet. On the Activities tab, check the activities you want, or tap one, then choose Add to story.</string>
-    <string name="story_add_target">Add %1$s to a story</string>
-    <string name="story_demo_add">Not available for demo accounts — create an account to make stories</string>
-    <string name="story_new">New story…</string>
-    <string name="story_holds_all">Already in this story</string>
+    <string name="panel_tab_stories">Trips</string>
+    <string name="story_subtext">Hand-picked sets of your tracks. Only you can see them.</string>
+    <string name="story_empty">No trips yet. On the Tracks tab, check the tracks you want, or tap one, then choose Add to trip.</string>
+    <string name="story_add_target">Add %1$s to a trip</string>
+    <string name="story_demo_add">Not available for demo accounts — create an account to make trips</string>
+    <string name="story_new">New trip…</string>
+    <string name="story_holds_all">Already in this trip</string>
     <string name="story_adding">Adding…</string>
-    <string name="story_remove">Remove from story</string>
-    <string name="story_demo_remove">Not available for demo accounts — create an account to change stories</string>
+    <string name="story_remove">Remove from trip</string>
+    <string name="story_demo_remove">Not available for demo accounts — create an account to change trips</string>
     <string name="panel_open_story">Open “%1$s”</string>
-    <string name="story_no_activities">No activities in this story.</string>
-    <string name="story_not_found">This story doesn\'t exist, or isn\'t yours.</string>
-    <string name="story_load_failed">Could not load your stories</string>
+    <string name="story_no_activities">No tracks in this trip.</string>
+    <string name="story_not_found">This trip doesn\'t exist, or isn\'t yours.</string>
+    <string name="story_load_failed">Could not load your trips</string>
     <string name="story_open">Open</string>
     <string name="story_folded">Folded</string>
     <string name="story_edit">Edit name and description</string>
-    <string name="story_demo_edit">Not available for demo accounts — create an account to edit stories</string>
-    <string name="story_delete">Delete story</string>
-    <string name="story_demo_delete">Not available for demo accounts — create an account to delete stories</string>
-    <string name="story_delete_title">Delete story</string>
-    <string name="story_delete_confirm">Delete “%1$s”? Its activities stay.</string>
-    <string name="story_delete_button">Delete story</string>
-    <string name="story_delete_failed">Could not delete the story: %1$s</string>
+    <string name="story_demo_edit">Not available for demo accounts — create an account to edit trips</string>
+    <string name="story_delete">Delete trip</string>
+    <string name="story_demo_delete">Not available for demo accounts — create an account to delete trips</string>
+    <string name="story_delete_title">Delete trip</string>
+    <string name="story_delete_confirm">Delete “%1$s”? Its tracks stay.</string>
+    <string name="story_delete_button">Delete trip</string>
+    <string name="story_delete_failed">Could not delete the trip: %1$s</string>
     <string name="story_send">Send a copy</string>
-    <string name="story_demo_send">Not available for demo accounts — create an account to send copies of stories</string>
+    <string name="story_demo_send">Not available for demo accounts — create an account to send copies of trips</string>
     <string name="story_send_title">Send a copy of “%1$s”</string>
-    <string name="story_send_body">They get their own copy of this story and its activities in their HoldMyTrack account, once they accept it. It\'s theirs from then on: what you change later doesn\'t reach it. Sending again later adds only the activities they don\'t have yet.</string>
+    <string name="story_send_body">They get their own copy of this trip and its tracks in their HoldMyTrack account, once they accept it. It\'s theirs from then on: what you change later doesn\'t reach it. Sending again later adds only the tracks they don\'t have yet.</string>
     <string name="story_send_email">Their email address</string>
     <string name="story_send_confirm">Send</string>
     <string name="story_sending">Sending…</string>
-    <string name="story_send_done">Sent to %1$s. If that address has a HoldMyTrack account, they\'ll find the copy in their Stories tab.</string>
+    <string name="story_send_done">Sent to %1$s. If that address has a HoldMyTrack account, they\'ll find the copy in their Trips tab.</string>
     <string name="story_send_close">Close</string>
     <string name="story_inbox_sent">%1$s sent you a copy of “%2$s” · %3$s</string>
     <string name="story_inbox_accept">Accept</string>
     <string name="story_inbox_decline">Decline</string>
     <string name="story_inbox_copying">Copying “%1$s” from %2$s…</string>
     <string name="story_from">From %1$s</string>
-    <string name="story_create_title">Create story</string>
-    <string name="story_create_body">A story of %1$s. Only you can see it.</string>
+    <string name="story_create_title">Create trip</string>
+    <string name="story_create_body">A trip of %1$s. Only you can see it.</string>
     <string name="story_name">Name</string>
     <string name="story_name_placeholder">A hike, a holiday, a race weekend</string>
     <string name="story_description">Description</string>
     <string name="story_description_placeholder">Optional</string>
-    <string name="story_create_confirm">Create story</string>
+    <string name="story_create_confirm">Create trip</string>
     <string name="story_creating">Creating…</string>
-    <string name="story_edit_title">Edit story</string>
-    <string name="story_save_failed">Could not save the story</string>
+    <string name="story_edit_title">Edit trip</string>
+    <string name="story_save_failed">Could not save the trip</string>
     <string name="story_stats">%1$s · %2$s · %3$s moving</string>
-    <string name="story_by_type">By activity type</string>
+    <string name="story_by_type">By track type</string>
     <plurals name="story_activity_count">
-        <item quantity="one">%1$d activity</item>
-        <item quantity="other">%1$d activities</item>
+        <item quantity="one">%1$d track</item>
+        <item quantity="other">%1$d tracks</item>
     </plurals>
-    <string name="panel_story_badge_one">Story</string>
+    <string name="panel_story_badge_one">Trip</string>
     <plurals name="panel_story_badge">
-        <item quantity="one">%1$d story</item>
-        <item quantity="other">%1$d stories</item>
+        <item quantity="one">%1$d trip</item>
+        <item quantity="other">%1$d trips</item>
     </plurals>
-    <string name="panel_in_story">In a story: %1$s</string>
+    <string name="panel_in_story">In a trip: %1$s</string>
     <plurals name="panel_in_stories">
-        <item quantity="one">In %1$d story: %2$s</item>
-        <item quantity="other">In %1$d stories: %2$s</item>
+        <item quantity="one">In %1$d trip: %2$s</item>
+        <item quantity="other">In %1$d trips: %2$s</item>
     </plurals>
     <string name="panel_in_other_story">Also in: %1$s</string>
     <plurals name="panel_in_other_stories">
-        <item quantity="one">Also in %1$d other story: %2$s</item>
-        <item quantity="other">Also in %1$d other stories: %2$s</item>
+        <item quantity="one">Also in %1$d other trip: %2$s</item>
+        <item quantity="other">Also in %1$d other trips: %2$s</item>
     </plurals>
 
     <!-- Activity types' display names, the web's activity_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
@@ -682,34 +682,34 @@
     <string name="tour_progress">%1$d of %2$d</string>
     <string name="tour_welcome_title">Welcome to HoldMyTrack</string>
     <string name="tour_welcome_body">It keeps the journeys you choose and turns them into maps. This tour shows where everything is.</string>
-    <string name="tour_activities_title">Your activities</string>
-    <string name="tour_activities_body">Every activity on the map, newest first: the list follows the map as you move it. Tap one to fly to it. Tick several to edit or hide them together.</string>
+    <string name="tour_activities_title">Your tracks</string>
+    <string name="tour_activities_body">Every track on the map, newest first: the list follows the map as you move it. Tap one to fly to it. Tick several to edit or hide them together.</string>
     <string name="tour_range_title">Dates</string>
-    <string name="tour_range_body">All time, unless you set From or To. Picking a date moves the map onto the activities it matches.</string>
-    <string name="tour_stories_title">Stories</string>
-    <string name="tour_stories_body">Group your activities into Stories: a trip, a favorite place, a goal. A Story shows only its own activities, and you can send someone a copy.</string>
+    <string name="tour_range_body">All time, unless you set From or To. Picking a date moves the map onto the tracks it matches.</string>
+    <string name="tour_stories_title">Trips</string>
+    <string name="tour_stories_body">Group your tracks into Trips: a holiday, a multi-day hike, a race weekend. A Trip shows only its own tracks, and you can send someone a copy.</string>
     <string name="tour_layers_title">Layers</string>
     <string name="tour_layers_body">Tick the roads and paths you want on the map. Show layers turns them all on or off at once.</string>
     <string name="tour_places_title">Places</string>
     <string name="tour_places_body">Waterfalls, viewpoints, historic sites and more: tick the kinds you want on the map, and tap one to see what it is. Show places turns them all on or off.</string>
     <string name="tour_export_title">Export</string>
-    <string name="tour_export_body">Save what\'s on the map as an image. Tick activities in the list first to make them bold, and Show stats adds a card with their distance and time.</string>
+    <string name="tour_export_body">Save what\'s on the map as an image. Tick tracks in the list first to make them bold, and Show stats adds a card with their distance and time.</string>
     <string name="tour_fog_title">Fog of War</string>
-    <string name="tour_fog_body">Everywhere you\'ve ever been, for all time: Dates and the filters don\'t apply here. Fog clears whole places, from countries down to towns, and zoomed in, exactly along your tracks. Auto picks the level from the zoom. Pick a level to keep it at every zoom, or Exact to clear the fog only along your tracks.</string>
-    <string name="tour_fog_exact_body">Everywhere you\'ve ever been, for all time: Dates and the filters don\'t apply here. Zoomed in, the fog lifts exactly along your tracks.</string>
+    <string name="tour_fog_body">Everywhere you\'ve ever been, for all time: Dates and the filters don\'t apply here. Fog clears whole places, from countries down to towns, and zoomed in, exactly along your routes. Auto picks the level from the zoom. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes.</string>
+    <string name="tour_fog_exact_body">Everywhere you\'ve ever been, for all time: Dates and the filters don\'t apply here. Zoomed in, the fog lifts exactly along your routes.</string>
     <string name="tour_fog_cities_title">Fog of War: towns</string>
-    <string name="tour_fog_cities_body">Zoomed out, a whole town clears once any activity is in it. Tap a place to see its name and how much of it you\'ve explored.</string>
+    <string name="tour_fog_cities_body">Zoomed out, a whole town clears once any track is in it. Tap a place to see its name and how much of it you\'ve explored.</string>
     <string name="tour_fog_counties_title">Fog of War: counties</string>
     <string name="tour_fog_counties_body">Further out, a whole county clears.</string>
     <string name="tour_fog_regions_title">Fog of War: states and regions</string>
     <string name="tour_fog_regions_body">Then a whole state or region. Every fogged one is a place you haven\'t been yet.</string>
     <string name="tour_fog_countries_title">Fog of War: countries</string>
-    <string name="tour_fog_countries_body">And a whole country. Auto follows the zoom, as you just saw. Pick a level to keep it at every zoom, or Exact to clear the fog only along your tracks.</string>
+    <string name="tour_fog_countries_body">And a whole country. Auto follows the zoom, as you just saw. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes.</string>
     <string name="tour_record_title">Record</string>
     <string name="tour_record_body">Tap to record a walk or a ride with the phone\'s GPS, tap again to pause, and hold to stop. Recordings wait on this phone until you send them from Sync.</string>
     <string name="tour_sync_title">Sync</string>
-    <string name="tour_sync_body">Bring in activities from Health Connect and this phone\'s recordings. Nothing is ticked to start with: only what you tick is sent. You don\'t need to bring everything, only the journeys you want to keep.</string>
-    <string name="tour_sync_demo_body">In your own account, activities from Health Connect and your recordings come in here. The demo can\'t send: create an account from You to start yours.</string>
+    <string name="tour_sync_body">Bring in tracks from Health Connect and this phone\'s recordings. Nothing is ticked to start with: only what you tick is sent. You don\'t need to bring everything, only the journeys you want to keep.</string>
+    <string name="tour_sync_demo_body">In your own account, tracks from Health Connect and your recordings come in here. The demo can\'t send: create an account from You to start yours.</string>
     <string name="tour_done_title">That\'s the tour</string>
     <string name="tour_done_body">Take it again any time from Take a tour, here on the You tab.</string>
     <string name="tour_card_got_it">Got it</string>
