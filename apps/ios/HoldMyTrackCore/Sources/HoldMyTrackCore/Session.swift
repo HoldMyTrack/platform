@@ -1,6 +1,6 @@
 import Foundation
 
-/// The signed-in account as the app uses it, from `GET /v1/auth/me` or a sign-in's response.
+/// The signed-in account as the app uses it, from `GET /v2/auth/me` or a sign-in's response.
 public struct Account: Equatable, Sendable {
     public let email: String
     public let isDemo: Bool

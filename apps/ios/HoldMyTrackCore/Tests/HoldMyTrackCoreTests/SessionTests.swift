@@ -59,32 +59,32 @@ struct ApiOriginTests {
     }
 
     @Test func theAPIsOwnRequestsAreItsOwn() {
-        #expect(isAPI("https://holdmytrack.com/v1/auth/me"))
+        #expect(isAPI("https://holdmytrack.com/v2/auth/me"))
         #expect(isAPI("https://holdmytrack.com/tiles/v1/fog-vector/3/4/5.pbf"))
-        #expect(isAPI("https://HOLDMYTRACK.com:443/v1/activities"))
+        #expect(isAPI("https://HOLDMYTRACK.com:443/v2/tracks"))
     }
 
     @Test func aHostThatOnlyStartsLikeTheAPIsIsNot() {
-        #expect(!isAPI("https://holdmytrack.com.evil.tld/v1/auth/me"))
-        #expect(!isAPI("https://holdmytrack.com@evil.tld/v1/auth/me"))
-        #expect(!isAPI("https://evil.tld/https://holdmytrack.com/v1"))
+        #expect(!isAPI("https://holdmytrack.com.evil.tld/v2/auth/me"))
+        #expect(!isAPI("https://holdmytrack.com@evil.tld/v2/auth/me"))
+        #expect(!isAPI("https://evil.tld/https://holdmytrack.com/v2"))
         #expect(!isAPI("https://api.maptiler.com/tiles/1/2/3.jpg"))
     }
 
     @Test func credentialsInTheURLAreNotTheAPIs() {
-        #expect(!isAPI("https://user@holdmytrack.com/v1/auth/me"))
+        #expect(!isAPI("https://user@holdmytrack.com/v2/auth/me"))
     }
 
     @Test func anotherSchemeOrPortIsNot() {
-        #expect(!isAPI("http://holdmytrack.com/v1/auth/me"))
-        #expect(!isAPI("https://holdmytrack.com:8443/v1/auth/me"))
+        #expect(!isAPI("http://holdmytrack.com/v2/auth/me"))
+        #expect(!isAPI("https://holdmytrack.com:8443/v2/auth/me"))
     }
 
     @Test func aBaseWithAPathMatchesOnlyAtASegmentBoundary() {
         let base = URL(string: "http://localhost:8081/api")!
-        #expect(isAPI("http://localhost:8081/api/v1/auth/me", base: base))
+        #expect(isAPI("http://localhost:8081/api/v2/auth/me", base: base))
         #expect(isAPI("http://localhost:8081/api", base: base))
-        #expect(!isAPI("http://localhost:8081/apix/v1/auth/me", base: base))
+        #expect(!isAPI("http://localhost:8081/apix/v2/auth/me", base: base))
     }
 }
 
@@ -104,7 +104,7 @@ struct OAuthTests {
 
     @Test func theStartURLCarriesTheTimezoneAndTheChallenge() {
         let url = OAuth.startURL(.facebook, base: URL(string: "http://localhost:8081")!, timezone: "America/New_York", challenge: "abc")
-        #expect(url.absoluteString == "http://localhost:8081/v1/auth/facebook/start?tz=America/New_York&app_challenge=abc")
+        #expect(url.absoluteString == "http://localhost:8081/v2/auth/facebook/start?tz=America/New_York&app_challenge=abc")
     }
 
     @Test func theSignupURLCarriesTheChallenge() {

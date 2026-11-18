@@ -40,7 +40,7 @@ public struct SessionGrant: Equatable, Sendable {
     public let account: Account
 }
 
-/// Which sign-in providers the server has configured (`GET /v1/auth/providers`).
+/// Which sign-in providers the server has configured (`GET /v2/auth/providers`).
 public struct Providers: Equatable, Sendable {
     public let google: Bool
     public let facebook: Bool
@@ -77,33 +77,33 @@ public final class APIClient: Sendable {
     // MARK: Sign-in and session
 
     public func providers() async throws -> Providers {
-        let json: ProvidersJSON = try await decode(send("GET", "v1/auth/providers"))
+        let json: ProvidersJSON = try await decode(send("GET", "v2/auth/providers"))
         return Providers(google: json.google, facebook: json.facebook, apple: json.apple)
     }
 
     public func login(email: String, password: String) async throws -> SessionGrant {
-        try await grant(send("POST", "v1/auth/login", body: CredentialsJSON(email: email, password: password)))
+        try await grant(send("POST", "v2/auth/login", body: CredentialsJSON(email: email, password: password)))
     }
 
     public func demo() async throws -> SessionGrant {
-        try await grant(send("POST", "v1/auth/demo"))
+        try await grant(send("POST", "v2/auth/demo"))
     }
 
     /// Signs in with the authorization code Sign in with Apple gave the app, exchanged by the
     /// server under the app's bundle ID (root docs/IMPLEMENTATION.md §4.9). name is Apple's, sent
     /// on the first authorization only; with timezone, it's for an account the sign-in creates.
     public func apple(code: String, name: String?, timezone: String) async throws -> SessionGrant {
-        try await grant(send("POST", "v1/auth/apple/token", body: AppleTokenJSON(authorizationCode: code, name: name, tz: timezone)))
+        try await grant(send("POST", "v2/auth/apple/token", body: AppleTokenJSON(authorizationCode: code, name: name, tz: timezone)))
     }
 
     /// Redeems a browser sign-in's one-time code with the verifier its challenge was made from.
     public func handoff(code: String, verifier: String) async throws -> SessionGrant {
-        try await grant(send("POST", "v1/auth/handoff", body: HandoffJSON(code: code, verifier: verifier)))
+        try await grant(send("POST", "v2/auth/handoff", body: HandoffJSON(code: code, verifier: verifier)))
     }
 
     /// The signed-in account, which is also the check that a kept token still works.
     public func me() async throws -> Account {
-        let json: AccountJSON = try await decode(send("GET", "v1/auth/me"))
+        let json: AccountJSON = try await decode(send("GET", "v2/auth/me"))
         return Account(json)
     }
 
@@ -111,35 +111,35 @@ public final class APIClient: Sendable {
     /// (apps/android/docs/SPEC.md FR-1.3), so the token is passed in rather than read when the
     /// request is built, by which time it's gone.
     public func logout(token: String) async throws {
-        var request = request("POST", "v1/auth/logout")
+        var request = request("POST", "v2/auth/logout")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         _ = try await perform(request)
     }
 
     /// The 6-digit code from the verification email, typed in this session, which stays signed in.
     public func verifyCode(_ code: String) async throws -> Account {
-        let json: AccountJSON = try await decode(send("POST", "v1/auth/verify-code", body: CodeJSON(code: code)))
+        let json: AccountJSON = try await decode(send("POST", "v2/auth/verify-code", body: CodeJSON(code: code)))
         return Account(json)
     }
 
     /// Mails a fresh verification link; the server's answer, its hourly limit included, is the
     /// message to show.
     public func resendVerification() async throws -> String {
-        let json: MessageJSON = try await decode(send("POST", "v1/auth/resend-verification"))
+        let json: MessageJSON = try await decode(send("POST", "v2/auth/resend-verification"))
         return json.message
     }
 
     // MARK: The map
 
-    /// The basemap style, `GET /v1/map/style/{flavor}?lang=`: unauthenticated and the same for
+    /// The basemap style, `GET /v2/map/style/{flavor}?lang=`: unauthenticated and the same for
     /// every account, revalidated with the ETag kept from the last fetch.
     public func mapStyle(flavor: String, language: String, etag: String?) async throws -> Fetched {
-        try await fetch("v1/map/style/\(flavor)", query: [URLQueryItem(name: "lang", value: language)], etag: etag)
+        try await fetch("v2/map/style/\(flavor)", query: [URLQueryItem(name: "lang", value: language)], etag: etag)
     }
 
-    /// The account's layers document, `GET /v1/map/layers?flavor=` (ADR-0048).
+    /// The account's layers document, `GET /v2/map/layers?flavor=` (ADR-0048).
     public func mapLayers(flavor: String, etag: String?) async throws -> Fetched {
-        try await fetch("v1/map/layers", query: [URLQueryItem(name: "flavor", value: flavor)], etag: etag)
+        try await fetch("v2/map/layers", query: [URLQueryItem(name: "flavor", value: flavor)], etag: etag)
     }
 
     /// A page of track days for the date slider, newest first, before a day if given, with the
@@ -147,13 +147,13 @@ public final class APIClient: Sendable {
     public func trackDays(limit: Int, before: String?) async throws -> (days: [String], earliest: String?) {
         var items = [URLQueryItem(name: "days", value: String(limit))]
         if let before { items.append(URLQueryItem(name: "before", value: before)) }
-        let json: HistogramJSON = try await decode(send("GET", "v1/activities/histogram", query: items))
+        let json: HistogramJSON = try await decode(send("GET", "v2/tracks/histogram", query: items))
         return (json.buckets.map(\.date), json.earliest)
     }
 
 
     public func coverageStatus() async throws -> CoverageStatus {
-        let json: CoverageStatusJSON = try await decode(send("GET", "v1/coverage/status"))
+        let json: CoverageStatusJSON = try await decode(send("GET", "v2/coverage/status"))
         return CoverageStatus(rendering: json.rendering, tileVersion: json.tileVersion, explored: json.explored.map {
             FogLevels.Explored(countries: $0.countries, regions: $0.regions, counties: $0.counties, cities: $0.cities)
         })

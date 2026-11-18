@@ -96,7 +96,7 @@ public enum PhotoExifFields {
     }
 }
 
-/// A picked photo ready for `POST /v1/photos`: the redrawn copy, its thumbnail, both JPEG, and
+/// A picked photo ready for `POST /v2/photos`: the redrawn copy, its thumbnail, both JPEG, and
 /// what its EXIF said.
 public struct PreparedPhoto: Equatable, Sendable {
     public let file: Data
@@ -300,16 +300,16 @@ public enum PhotoPlace: Equatable, Sendable {
 }
 
 extension APIClient {
-    /// `POST /v1/photos/place`: where an upload with this EXIF would go on the track's route,
+    /// `POST /v2/photos/place`: where an upload with this EXIF would go on the track's route,
     /// storing nothing, or needsPlace for the user to choose.
     public func checkPhotoPlace(trackID: String, exif: PhotoExif) async throws -> PhotoPlace {
         let placed = exif.lat != nil && exif.lon != nil
         let body = PhotoPlaceRequestJSON(
-            activityID: trackID, takenAt: exif.takenAt.map(ISOMoment.format), takenLocal: exif.takenAt == nil ? exif.takenLocal : nil,
+            trackID: trackID, takenAt: exif.takenAt.map(ISOMoment.format), takenLocal: exif.takenAt == nil ? exif.takenLocal : nil,
             lat: placed ? exif.lat : nil, lon: placed ? exif.lon : nil
         )
         do {
-            let json: PhotoPlaceJSON = try decode(try await send("POST", "v1/photos/place", body: body))
+            let json: PhotoPlaceJSON = try decode(try await send("POST", "v2/photos/place", body: body))
             guard let at = ISOMoment.parse(json.routeAt) else { throw APIError.unreadable }
             return .at(at.timeIntervalSince1970)
         } catch APIError.http(422, "photo_needs_place"?, _) {
@@ -317,11 +317,11 @@ extension APIClient {
         }
     }
 
-    /// `POST /v1/photos`: a prepared photo at routeAt (epoch seconds), the placement check's
+    /// `POST /v2/photos`: a prepared photo at routeAt (epoch seconds), the placement check's
     /// answer or the user's, with its caption, already trimmed.
     public func uploadPhoto(trackID: String, photo: PreparedPhoto, routeAt: Double, caption: String) async throws -> Photo {
         var form = MultipartForm()
-        form.field("activity_id", trackID)
+        form.field("track_id", trackID)
         form.file("file", filename: "photo.jpg", type: "image/jpeg", data: photo.file)
         form.file("thumb", filename: "thumb.jpg", type: "image/jpeg", data: photo.thumb)
         if let takenAt = photo.exif.takenAt {
@@ -335,23 +335,23 @@ extension APIClient {
         }
         form.field("route_at", ISOMoment.format(Date(timeIntervalSince1970: routeAt)))
         if !caption.isEmpty { form.field("caption", caption) }
-        var upload = request("POST", "v1/photos")
+        var upload = request("POST", "v2/photos")
         upload.setValue("multipart/form-data; boundary=\(form.boundary)", forHTTPHeaderField: "Content-Type")
         upload.httpBody = form.finished
         upload.timeoutInterval = 120
         return Photo(try decode(try await perform(upload)) as PhotoJSON)
     }
 
-    /// `PATCH /v1/photos/{id}`: a field given changes; an empty caption clears it, and routeAt is
+    /// `PATCH /v2/photos/{id}`: a field given changes; an empty caption clears it, and routeAt is
     /// the photo's new moment on its track, in epoch seconds.
     public func updatePhoto(_ id: String, caption: String?, routeAt: Double?) async throws {
         let body = PhotoPatchJSON(caption: caption, routeAt: routeAt.map { ISOMoment.format(Date(timeIntervalSince1970: $0)) })
-        _ = try await send("PATCH", "v1/photos/\(id)", body: body)
+        _ = try await send("PATCH", "v2/photos/\(id)", body: body)
     }
 
-    /// `DELETE /v1/photos/{id}`: the photo and both its images; one already gone counts as deleted.
+    /// `DELETE /v2/photos/{id}`: the photo and both its images; one already gone counts as deleted.
     public func deletePhoto(_ id: String) async throws {
-        try await delete("v1/photos/\(id)")
+        try await delete("v2/photos/\(id)")
     }
 }
 

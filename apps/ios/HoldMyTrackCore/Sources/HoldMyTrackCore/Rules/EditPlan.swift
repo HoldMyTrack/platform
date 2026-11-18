@@ -1,5 +1,5 @@
 /// The Edit window's decisions (root docs/SPEC.md FR-5.5, apps/android/docs/SPEC.md FR-2.7):
-/// what it opens with, what it refuses, and which `PATCH /v1/activities/{id}` it sends.
+/// what it opens with, what it refuses, and which `PATCH /v2/tracks/{id}` it sends.
 public enum EditPlan {
     /// The server's bounds on each field.
     public static let maxType = 50
@@ -9,7 +9,7 @@ public enum EditPlan {
     /// One PATCH: the full replace of the three fields.
     public struct Write: Equatable, Sendable {
         public let id: String
-        public let activityType: String
+        public let trackType: String
         public let name: String
         public let description: String
     }
@@ -24,7 +24,7 @@ public enum EditPlan {
     /// The Type the window opens with: the group's one type, or empty for a group of mixed
     /// types, which keeps each its own unless one is picked.
     public static func initialType(_ group: [Track]) -> String {
-        guard let first = group.first?.activityType, group.allSatisfy({ $0.activityType == first }) else { return "" }
+        guard let first = group.first?.trackType, group.allSatisfy({ $0.trackType == first }) else { return "" }
         return first
     }
 
@@ -44,12 +44,12 @@ public enum EditPlan {
         let type = type.trimmingCharacters(in: .whitespacesAndNewlines)
         if group.count == 1, let one = group.first {
             let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
-            let changed = type != one.activityType || name != (one.name ?? "") || description != (one.description ?? "")
-            return changed ? [Write(id: one.id, activityType: type, name: name, description: description)] : []
+            let changed = type != one.trackType || name != (one.name ?? "") || description != (one.description ?? "")
+            return changed ? [Write(id: one.id, trackType: type, name: name, description: description)] : []
         }
         guard !type.isEmpty else { return [] }
-        return group.filter { $0.activityType != type }.map {
-            Write(id: $0.id, activityType: type, name: $0.name ?? "", description: $0.description ?? "")
+        return group.filter { $0.trackType != type }.map {
+            Write(id: $0.id, trackType: type, name: $0.name ?? "", description: $0.description ?? "")
         }
     }
 }

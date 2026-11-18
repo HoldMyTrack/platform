@@ -48,32 +48,32 @@ extension APIClient {
         return try await perform(request)
     }
 
-    /// `GET /v1/private-locations`, oldest first.
+    /// `GET /v2/private-locations`, oldest first.
     public func privateLocations() async throws -> [PrivateLocation] {
-        let json: [PrivateLocationJSON] = try decode(try await send("GET", "v1/private-locations"))
+        let json: [PrivateLocationJSON] = try decode(try await send("GET", "v2/private-locations"))
         return json.map(PrivateLocation.init)
     }
 
-    /// `POST /v1/private-locations`, or with id `PATCH` it: the whole circle either way.
+    /// `POST /v2/private-locations`, or with id `PATCH` it: the whole circle either way.
     public func savePrivateLocation(id: String?, name: String, lon: Double, lat: Double, radiusM: Int) async throws -> PrivateLocation {
         let body = PrivateLocationInputJSON(name: name, lon: lon, lat: lat, radiusM: radiusM)
-        let data = try await send(id == nil ? "POST" : "PATCH", id.map { "v1/private-locations/\($0)" } ?? "v1/private-locations", body: body)
+        let data = try await send(id == nil ? "POST" : "PATCH", id.map { "v2/private-locations/\($0)" } ?? "v2/private-locations", body: body)
         let json: PrivateLocationJSON = try decode(data)
         return PrivateLocation(json)
     }
 
     public func deletePrivateLocation(_ id: String) async throws {
-        try await delete("v1/private-locations/\(id)")
+        try await delete("v2/private-locations/\(id)")
     }
 
-    /// `GET /v1/account/export`.
+    /// `GET /v2/account/export`.
     public func exportStatus() async throws -> ExportStatus {
-        ExportStatus(try decode(try await send("GET", "v1/account/export")) as ExportStatusJSON)
+        ExportStatus(try decode(try await send("GET", "v2/account/export")) as ExportStatusJSON)
     }
 
-    /// `POST /v1/account/export`: asks for a copy, or answers with the one being prepared.
+    /// `POST /v2/account/export`: asks for a copy, or answers with the one being prepared.
     public func requestExport() async throws -> ExportStatus {
-        ExportStatus(try decode(try await send("POST", "v1/account/export")) as ExportStatusJSON)
+        ExportStatus(try decode(try await send("POST", "v2/account/export")) as ExportStatusJSON)
     }
 
     /// A ready part saved to a temporary file named as the server names it.
@@ -89,22 +89,22 @@ extension APIClient {
         return file
     }
 
-    /// `DELETE /v1/account`, confirmed by the account's email.
+    /// `DELETE /v2/account`, confirmed by the account's email.
     public func deleteAccount(email: String) async throws {
-        _ = try await send("DELETE", "v1/account", body: EmailJSON(email: email))
+        _ = try await send("DELETE", "v2/account", body: EmailJSON(email: email))
     }
 
-    /// `GET /v1/uploads/active`: imports still running.
+    /// `GET /v2/uploads/active`: imports still running.
     public func activeImports() async throws -> [ActiveImport] {
-        let json: UploadsActiveJSON = try decode(try await send("GET", "v1/uploads/active"))
+        let json: UploadsActiveJSON = try decode(try await send("GET", "v2/uploads/active"))
         return json.imports.map { ActiveImport(title: $0.title, done: $0.done, total: $0.total) }
     }
 
-    /// `POST /v1/activities/upload` for one file whose multipart body is at body (UploadBody),
+    /// `POST /v2/tracks/upload` for one file whose multipart body is at body (UploadBody),
     /// for a background URLSession, which sends from a file: the session's headers, the
     /// token included, and the body's type.
     public func uploadRequest(boundary: String) -> URLRequest {
-        var request = request("POST", "v1/activities/upload")
+        var request = request("POST", "v2/tracks/upload")
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.timeoutInterval = 600
         return request
@@ -128,7 +128,7 @@ public enum UploadOutcome: Equatable, Sendable {
     case refused(String)
 }
 
-/// A multipart body holding one file under `file`, as `POST /v1/activities/upload` takes it.
+/// A multipart body holding one file under `file`, as `POST /v2/tracks/upload` takes it.
 public enum UploadBody {
     public static func write(file: URL, name: String, boundary: String, to out: URL) throws {
         let safe = name.replacingOccurrences(of: "\"", with: "'").replacingOccurrences(of: "\r", with: "").replacingOccurrences(of: "\n", with: "")

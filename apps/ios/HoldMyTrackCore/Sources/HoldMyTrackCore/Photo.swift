@@ -41,7 +41,7 @@ public struct Photo: Equatable, Sendable {
 
     init(_ json: PhotoJSON) {
         self.init(
-            id: json.id, trackID: json.activityID, takenAt: json.takenAt, routeAt: json.routeAt, timezone: json.timezone,
+            id: json.id, trackID: json.trackID, takenAt: json.takenAt, routeAt: json.routeAt, timezone: json.timezone,
             lon: json.lon, lat: json.lat, caption: json.caption, width: json.width, height: json.height,
             url: json.url, thumbURL: json.thumbURL
         )
@@ -89,13 +89,13 @@ extension PhotoMarkers {
 }
 
 extension APIClient {
-    /// `GET /v1/photos?activity=` or `?story=`: the scope's photos, in route order.
+    /// `GET /v2/photos?track=` or `?trip=`: the scope's photos, in route order.
     public func photos(_ scope: PhotoScope) async throws -> [Photo] {
         let item = switch scope {
-        case .track(let id): URLQueryItem(name: "activity", value: id)
-        case .trip(let id): URLQueryItem(name: "story", value: id)
+        case .track(let id): URLQueryItem(name: "track", value: id)
+        case .trip(let id): URLQueryItem(name: "trip", value: id)
         }
-        let json: PhotosJSON = try decode(try await send("GET", "v1/photos", query: [item]))
+        let json: PhotosJSON = try decode(try await send("GET", "v2/photos", query: [item]))
         return json.photos.map(Photo.init)
     }
 }

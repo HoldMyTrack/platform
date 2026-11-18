@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The files Upload sends to `POST /v1/activities/upload` (apps/android/docs/SPEC.md FR-3.6): the
+/// The files Upload sends to `POST /v2/tracks/upload` (apps/android/docs/SPEC.md FR-3.6): the
 /// web upload's checks (UploadPlan), then each file on a background URLSession, so they carry on
 /// when the app is left. The session allows one connection to the API, which sends the queue one
 /// file at a time without the app waking between them (apps/ios/docs/IMPLEMENTATION.md §4.4).

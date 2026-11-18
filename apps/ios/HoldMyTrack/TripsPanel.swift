@@ -226,7 +226,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             }
         }
         if let trip = openTrip, trip.id == openID, trip.stats.count > 0 {
-            let lines = [line(trip.stats)] + trip.byType.map { "\(TrackTypes.shared.label($0.activityType)): \(line($0))" }
+            let lines = [line(trip.stats)] + trip.byType.map { "\(TrackTypes.shared.label($0.trackType)): \(line($0))" }
             if let at = next.lastIndex(where: { if case .row = $0 { true } else { false } }) {
                 next.insert(.text(lines.joined(separator: "\n"), small: true), at: at + 1)
             }

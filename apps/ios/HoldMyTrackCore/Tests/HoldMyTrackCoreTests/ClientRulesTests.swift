@@ -200,7 +200,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         if let area = state["area"].list { session.areaLoaded(area.map { $0.double! }) }
         var seen = Set<String>()
         let ids = (state.strings("checked") + state.strings("hidden")).filter { seen.insert($0).inserted }
-        session.panel.setTracks(ids.map { TrackSummary(id: $0, activityType: "walking", distanceMeters: 1000, isPrivate: false) })
+        session.panel.setTracks(ids.map { TrackSummary(id: $0, trackType: "walking", distanceMeters: 1000, isPrivate: false) })
         // Hidden first: hiding goes through the toolbar's target, the checked group.
         for id in state.strings("hidden") { session.panel.toggleChecked(id) }
         session.panel.toggleTargetVisibility()
@@ -432,8 +432,7 @@ func distanceJSON(_ range: DistanceRange?) -> RuleJSON {
 }
 
 func track(_ json: RuleJSON, id: String = "a") -> TrackSummary {
-    // The case's trackType onto the model's activityType, until iOS moves to /v2.
-    TrackSummary(id: json["id"].string ?? id, activityType: json["trackType"].string!, distanceMeters: json["distanceMeters"].double, isPrivate: json["private"].bool ?? false)
+    TrackSummary(id: json["id"].string ?? id, trackType: json["trackType"].string!, distanceMeters: json["distanceMeters"].double, isPrivate: json["private"].bool ?? false)
 }
 
 func tracks(_ json: RuleJSON) -> [TrackSummary] { (json.list ?? []).map { track($0) } }

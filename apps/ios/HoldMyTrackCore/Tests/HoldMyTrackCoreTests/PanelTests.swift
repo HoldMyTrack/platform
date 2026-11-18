@@ -7,7 +7,7 @@ import Testing
 /// testdata/client-rules in ClientRulesTests).
 struct PanelTests {
     private func track(_ id: String, _ type: String = "running", name: String? = nil, description: String? = nil) -> Track {
-        Track(id: id, startedAt: "2026-10-11T09:39:00Z", activityType: type, name: name, description: description)
+        Track(id: id, startedAt: "2026-10-11T09:39:00Z", trackType: type, name: name, description: description)
     }
 
     // MARK: Toolbar
@@ -72,7 +72,7 @@ struct PanelTests {
         let one = [track("a", name: "Morning", description: "")]
         #expect(EditPlan.writes(group: one, type: "running", name: " Morning ", description: "").isEmpty)
         #expect(EditPlan.writes(group: one, type: "running", name: "", description: "") == [
-            EditPlan.Write(id: "a", activityType: "running", name: "", description: ""),
+            EditPlan.Write(id: "a", trackType: "running", name: "", description: ""),
         ])
     }
 
@@ -81,7 +81,7 @@ struct PanelTests {
         #expect(EditPlan.initialType(group) == "")
         #expect(EditPlan.writes(group: group, type: "", name: "", description: "").isEmpty)
         #expect(EditPlan.writes(group: group, type: "running", name: "ignored", description: "ignored") == [
-            EditPlan.Write(id: "b", activityType: "running", name: "", description: "d"),
+            EditPlan.Write(id: "b", trackType: "running", name: "", description: "d"),
         ])
     }
 

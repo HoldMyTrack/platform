@@ -79,7 +79,7 @@ struct APIClientTests {
         #expect(account.email == "ann@example.com")
         #expect(account.unitSystem == "imperial")
         let sent = try #require(StubProtocol.sent.first)
-        #expect(sent.url?.absoluteString == "http://localhost:8081/v1/auth/me")
+        #expect(sent.url?.absoluteString == "http://localhost:8081/v2/auth/me")
         #expect(sent.value(forHTTPHeaderField: "User-Agent") == "HoldMyTrack-iOS/0.1.0 (abc1234; 42)")
         #expect(sent.value(forHTTPHeaderField: "Accept-Language") == "ru")
         #expect(sent.value(forHTTPHeaderField: "Authorization") == "Bearer tok")
@@ -112,7 +112,7 @@ struct APIClientTests {
         #expect(grant.account.displayName == "Ann")
         let sent = try #require(StubProtocol.sent.first)
         #expect(sent.httpMethod == "POST")
-        #expect(sent.url?.path == "/v1/auth/login")
+        #expect(sent.url?.path == "/v2/auth/login")
         let credentials = try JSONSerialization.jsonObject(with: try #require(sent.httpBody)) as? [String: String]
         #expect(credentials == ["email": "ann@example.com", "password": "hunter22"])
     }
@@ -146,7 +146,7 @@ struct APIClientTests {
         StubProtocol.answer = { _ in .init(body: self.json(body)) }
         _ = try await client(token: nil).apple(code: "c", name: "Ann Lee", timezone: "Europe/Tallinn")
         let sent = try #require(StubProtocol.sent.first)
-        #expect(sent.url?.path == "/v1/auth/apple/token")
+        #expect(sent.url?.path == "/v2/auth/apple/token")
         let fields = try JSONSerialization.jsonObject(with: try #require(sent.httpBody)) as? [String: String]
         #expect(fields == ["authorization_code": "c", "name": "Ann Lee", "tz": "Europe/Tallinn"])
     }
@@ -167,9 +167,9 @@ struct APIClientTests {
         let api = client()
         #expect(try await api.mapStyle(flavor: "dark", language: "ru", etag: "\"e1\"") == .notModified)
         let sent = try #require(StubProtocol.sent.first)
-        #expect(sent.url?.absoluteString == "http://localhost:8081/v1/map/style/dark?lang=ru")
+        #expect(sent.url?.absoluteString == "http://localhost:8081/v2/map/style/dark?lang=ru")
         guard case .document = try await api.mapLayers(flavor: "dark", etag: nil) else { Issue.record("expected a document"); return }
-        #expect(StubProtocol.sent.last?.url?.absoluteString == "http://localhost:8081/v1/map/layers?flavor=dark")
+        #expect(StubProtocol.sent.last?.url?.absoluteString == "http://localhost:8081/v2/map/layers?flavor=dark")
     }
 
     @Test func mapRequestsCarryTheSessionToTheAPIAndTheOriginElsewhere() {
@@ -186,11 +186,11 @@ struct APIClientTests {
 
 
     @Test func trackMetricsAreReadWithTheirBands() async throws {
-        let body: [String: Any] = ["activity_id": "a1",
+        let body: [String: Any] = ["track_id": "a1",
                                    "points": [["lon": 1.5, "lat": 2.5, "speed_mps": 3, "time_s": 0], ["lon": 1.6, "lat": 2.6, "speed_mps": 4, "time_s": 5]],
                                    "bands": [["band": 2, "start": 0, "end": 1]]]
         StubProtocol.answer = { request in
-            #expect(request.url?.path == "/v1/activities/a1/track-metrics")
+            #expect(request.url?.path == "/v2/tracks/a1/route-metrics")
             return .init(body: self.json(body))
         }
         let metrics = try await client().trackMetrics("a1")
@@ -201,7 +201,7 @@ struct APIClientTests {
         let spot: [String: Any] = ["id": 7, "category": "monument", "name": "Soldiers", "lon": -81.5, "lat": 41.2]
         StubProtocol.answer = { request in
             let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
-            #expect(request.url?.path == "/v1/spots")
+            #expect(request.url?.path == "/v2/spots")
             #expect(items.first { $0.name == "bbox" }?.value == "-81.60000,41.10000,-81.40000,41.30000")
             #expect(items.first { $0.name == "categories" }?.value == "monument,dog_park")
             return .init(body: self.json(["spots": [spot], "total": 12]))
@@ -234,7 +234,7 @@ struct APIClientTests {
     @Test func aCaptureSendsThePositionAndReadsTheAnswer() async throws {
         StubProtocol.answer = { request in
             #expect(request.httpMethod == "POST")
-            #expect(request.url?.path == "/v1/spots/7/captures")
+            #expect(request.url?.path == "/v2/spots/7/captures")
             return .init(status: 201, body: self.json(["spot_id": 7, "captured_at": "2026-11-03T18:36:33Z"]))
         }
         #expect(await client().captureSpot(7, at: GeoPoint(lat: 2.5, lon: 1.5)) == .saved(spotID: 7, at: Date(timeIntervalSince1970: 1_793_730_993)))
@@ -244,15 +244,15 @@ struct APIClientTests {
 
     @Test func aTripsPhotosAreAskedForByTrip() async throws {
         StubProtocol.answer = { _ in .init(body: self.json(["photos": [[
-            "id": "p1", "activity_id": "a1", "taken_at": "2026-10-04T15:00:00Z", "route_at": "2026-10-04T15:00:00Z",
+            "id": "p1", "track_id": "a1", "taken_at": "2026-10-04T15:00:00Z", "route_at": "2026-10-04T15:00:00Z",
             "timezone": "America/New_York", "lon": -81.7, "lat": 41.5, "caption": NSNull(), "width": 2048, "height": 1536,
-            "url": "/v1/photos/p1/image", "thumb_url": "/v1/photos/p1/thumb",
+            "url": "/v2/photos/p1/image", "thumb_url": "/v2/photos/p1/thumb",
         ]]])) }
         let photos = try await client().photos(.trip("s1"))
-        #expect(StubProtocol.sent.first?.url?.absoluteString == "http://localhost:8081/v1/photos?story=s1")
+        #expect(StubProtocol.sent.first?.url?.absoluteString == "http://localhost:8081/v2/photos?trip=s1")
         #expect(photos == [Photo(id: "p1", trackID: "a1", takenAt: "2026-10-04T15:00:00Z", routeAt: "2026-10-04T15:00:00Z",
                                  timezone: "America/New_York", lon: -81.7, lat: 41.5, width: 2048, height: 1536,
-                                 url: "/v1/photos/p1/image", thumbURL: "/v1/photos/p1/thumb")])
+                                 url: "/v2/photos/p1/image", thumbURL: "/v2/photos/p1/thumb")])
     }
 
     @Test func thePlaceCheckSendsTheZonedTimeAloneAndReadsNeedsPlace() async throws {
@@ -268,7 +268,7 @@ struct APIClientTests {
 
     @Test func anUploadIsMultipartWithBothImagesAndThePlace() async throws {
         StubProtocol.answer = { _ in .init(status: 201, body: self.json([
-            "id": "p1", "activity_id": "a1", "taken_at": NSNull(), "route_at": "2026-10-04T15:00:00Z", "timezone": "UTC",
+            "id": "p1", "track_id": "a1", "taken_at": NSNull(), "route_at": "2026-10-04T15:00:00Z", "timezone": "UTC",
             "lon": 1, "lat": 2, "caption": "Lake", "width": 10, "height": 10, "url": "/u", "thumb_url": "/t",
         ])) }
         let prepared = PreparedPhoto(file: Data("FILE".utf8), thumb: Data("THUMB".utf8), exif: PhotoExif(takenLocal: "2026-10-04T11:00:00"))
@@ -277,7 +277,7 @@ struct APIClientTests {
         let sent = try #require(StubProtocol.sent.first)
         #expect(sent.value(forHTTPHeaderField: "Content-Type")?.hasPrefix("multipart/form-data; boundary=") == true)
         let body = String(decoding: try #require(sent.httpBody), as: UTF8.self)
-        for part in ["name=\"activity_id\"\r\n\r\na1", "name=\"file\"; filename=\"photo.jpg\"\r\nContent-Type: image/jpeg\r\n\r\nFILE",
+        for part in ["name=\"track_id\"\r\n\r\na1", "name=\"file\"; filename=\"photo.jpg\"\r\nContent-Type: image/jpeg\r\n\r\nFILE",
                      "name=\"thumb\"; filename=\"thumb.jpg\"", "name=\"taken_local\"\r\n\r\n2026-10-04T11:00:00",
                      "name=\"route_at\"\r\n\r\n2026-10-04T15:00:00Z", "name=\"caption\"\r\n\r\nLake"] {
             #expect(body.contains(part), "\(part)")
@@ -292,7 +292,7 @@ struct APIClientTests {
             "edit": ["keep": [1000, 2000], "move": ["2000": [10.2, 50.2]]],
         ])) }
         let read = try await client().trackPoints("a1")
-        #expect(StubProtocol.sent.first?.url?.path == "/v1/activities/a1/track-points")
+        #expect(StubProtocol.sent.first?.url?.path == "/v2/tracks/a1/route-points")
         #expect(read.points == [RoutePoint(lon: 10, lat: 50, t: 1000), RoutePoint(lon: 10.1, lat: 50.1, t: 2000)])
         #expect(read.edit == RouteEdit(keep: TimeSpan(1000, 2000), move: [2000: [10.2, 50.2]]))
     }
@@ -309,15 +309,15 @@ struct APIClientTests {
     }
 
     @Test func theAreaListSendsTheViewAndDatesAndReadsTheTotal() async throws {
-        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "activity_type": "walking", "name": NSNull(),
-                                  "distance_meters": 1200.5, "moving_seconds": 600, "bbox": [-81.5, 41.2, -81.4, 41.3], "pending": false, "private": false, "stories": []]
+        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "track_type": "walking", "name": NSNull(),
+                                  "distance_meters": 1200.5, "moving_seconds": 600, "bbox": [-81.5, 41.2, -81.4, 41.3], "pending": false, "private": false, "trips": []]
         StubProtocol.answer = { request in
             let items = URLComponents(url: request.url!, resolvingAgainstBaseURL: false)?.queryItems ?? []
-            #expect(request.url?.path == "/v1/activities/area")
+            #expect(request.url?.path == "/v2/tracks/area")
             #expect(items.first { $0.name == "bbox" }?.value == "-81.6,41.1,-81.4,41.3")
             #expect(items.first { $0.name == "from" }?.value == "2026-06-03")
             #expect(items.first { $0.name == "to" } == nil)
-            return .init(body: self.json(["activities": [row], "types": [:], "total": 1500]))
+            return .init(body: self.json(["tracks": [row], "types": [:], "total": 1500]))
         }
         let read = try await client().areaList(box: [-81.6, 41.1, -81.4, 41.3], dates: DateFilter(after: "2026-06-03"))
         #expect(read.tracks.map(\.id) == ["a1"])
@@ -326,13 +326,13 @@ struct APIClientTests {
     }
 
     @Test func oneTrackIsReadInFull() async throws {
-        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "activity_type": "walking", "name": "Walk",
+        let row: [String: Any] = ["id": "a1", "started_at": "2026-11-03T18:36:33Z", "timezone": "UTC", "track_type": "walking", "name": "Walk",
                                   "distance_meters": 1200.5, "moving_seconds": 600, "duration_seconds": 700, "description": "Along the river",
                                   "bbox": [-81.5, 41.2, -81.4, 41.3], "pending": false, "edited": false, "private": false, "split": NSNull(),
-                                  "track_edit": NSNull(), "photos": NSNull(), "stories": []]
+                                  "route_edit": NSNull(), "photos": NSNull(), "trips": []]
         StubProtocol.answer = { request in
-            #expect(request.url?.path == "/v1/activities/a1")
-            return .init(body: self.json(["activities": [row], "types": [:]]))
+            #expect(request.url?.path == "/v2/tracks/a1")
+            return .init(body: self.json(["tracks": [row], "types": [:]]))
         }
         #expect(try await client().track("a1").description == "Along the river")
     }

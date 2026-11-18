@@ -74,14 +74,14 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Docs: root `docs/IMPLEMENTATION.md` §4.33 covers both platforms; `docs/DEPLOY.md` §10 gets the iOS procedure.
   - Done when: a request with an iOS agent below the minimum gets `426`, and the server tests cover it.
 - [ ] **2.2 Sign in with Apple**
-  - Built (root `docs/SPEC.md` FR-1.11): the web flow, `POST /v1/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
+  - Built (root `docs/SPEC.md` FR-1.11): the web flow, `POST /v2/auth/apple/token` taking the app's authorization code, revocation on account deletion, and Apple's notifications. Left: configure it on production once 0.1–0.3 are done (`docs/DEPLOY.md` §4).
   - Done when: a new account, an existing verified email and a relay email each sign in on the web, and deleting the account revokes the token.
 - [x] **2.3 Pages tell the platforms apart**
   - Set `hmt_app` to `android` or `ios` and let a page say the platform's words: Health Connect or Health, Google Play or the App Store. Audit Help, About, Privacy and the in-app pages for Android-only wording.
   - Done when: each in-app page read with `hmt_app=ios` has no Android wording, and the public cache key still separates the values.
 - [ ] **2.4 The native OAuth round trip from iOS**
   - Check that Google's and Facebook's flows complete in `ASWebAuthenticationSession` with `holdmytrack://oauth` as callback, against a dev stack and production. No server change was needed. Google completes against a dev stack (2026-11-08); left: Facebook, and both against production.
-  - Done when: both providers return a code that `POST /v1/auth/handoff` redeems.
+  - Done when: both providers return a code that `POST /v2/auth/handoff` redeems.
 
 ## Phase 3 — Project skeleton
 
@@ -123,7 +123,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 - [x] **5.1 API client and session**
   - `URLSession` with the bearer token sent to the API's own origin only, never to the basemap or imagery origins (`apps/android/docs/SPEC.md` §8). The token in the Keychain, device-only; the Keychain outlives an uninstall, so a first launch with no `UserDefaults` marker deletes what it holds.
-  - Cold start: no signed-in layer until `GET /v1/auth/me` answers; only `401` signs out (`apps/android/docs/SPEC.md` FR-1.2).
+  - Cold start: no signed-in layer until `GET /v2/auth/me` answers; only `401` signs out (`apps/android/docs/SPEC.md` FR-1.2).
   - Done when: the session rules are pure functions with tests, and a restart with the server down keeps the session.
 - [ ] **5.2 Sign-in screen**
   - Built: email and password, sign-up through the web's page in `ASWebAuthenticationSession`, the demo, Sign in with Apple through `ASAuthorizationAppleIDButton` and phase 2.2's endpoint, Google and Facebook through `ASWebAuthenticationSession` and the handoff (D7), and Forgot password in `SFSafariViewController`. Apple and Google complete against a dev stack (2026-11-08); left: Facebook, and every way in on a real device against production.
@@ -151,7 +151,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 `apps/android/docs/SPEC.md` FR-2.1–FR-2.6, FR-2.9 and FR-2.12.
 
 - [x] **7a.1 Two documents**
-  - Fetch `GET /v1/map/style/{flavor}?lang=` and `GET /v1/map/layers?flavor=` in parallel, keep both with their ETags, draw the kept pair at once on a later launch and revalidate; fetch the style again when the two carry different builds (ADR-0048). Insert the layers by `layer-insertion.json`'s rule, binding `["var", …]` from the app's state.
+  - Fetch `GET /v2/map/style/{flavor}?lang=` and `GET /v2/map/layers?flavor=` in parallel, keep both with their ETags, draw the kept pair at once on a later launch and revalidate; fetch the style again when the two carry different builds (ADR-0048). Insert the layers by `layer-insertion.json`'s rule, binding `["var", …]` from the app's state.
   - The bearer token on tile requests to the API's origin only, through MapLibre's network configuration.
   - Done when: a server deploy that changes a layer's color changes it on the phone without an app release.
 - [x] **7a.2 Modes, Layers and framing**
@@ -186,7 +186,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Readiness differs from Android's six states: HealthKit never says whether reading was denied. States: unavailable, not yet asked, asked. When asked and nothing is found, the list says where to check access (Settings › Health › Data Access & Devices).
   - Done when: the readiness rule is a pure function with tests, and no health type beyond the two is in the entitlement or the request.
 - [ ] **7c.2 Load and the list**
-  - Load reads workouts started in the last 90 days with a route of at least 2 points, in the foreground only, with no `HKObserverQuery` or background delivery. External id is the workout's UUID. `POST /v1/sync/known` leaves out what the account has; overlaps are marked as a hint; swiping hides a row (`apps/android/docs/SPEC.md` FR-3.2, FR-3.5).
+  - Load reads workouts started in the last 90 days with a route of at least 2 points, in the foreground only, with no `HKObserverQuery` or background delivery. External id is the workout's UUID. `POST /v2/sync/known` leaves out what the account has; overlaps are marked as a hint; swiping hides a row (`apps/android/docs/SPEC.md` FR-3.2, FR-3.5).
   - Workout types map onto HoldMyTrack's in one table under test, so the Type filter matches Android's.
   - Done when: phase 1's device lists the same workouts as the probe found.
 - [ ] **7c.3 Sending**

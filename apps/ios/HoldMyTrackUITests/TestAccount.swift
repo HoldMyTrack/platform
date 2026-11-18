@@ -16,8 +16,8 @@ final class TestAccount {
     /// country false leaves it unset, for the first run.
     init(base: String, samples: [String] = TestAccount.samples, country: Bool = true) throws {
         self.base = base
-        try call("POST", "/v1/auth/signup", ["email": email, "password": password])
-        if country { try call("PATCH", "/v1/account/settings", ["display_name": "", "country": "US", "timezone": "America/New_York"]) }
+        try call("POST", "/v2/auth/signup", ["email": email, "password": password])
+        if country { try call("PATCH", "/v2/account/settings", ["display_name": "", "country": "US", "timezone": "America/New_York"]) }
         for name in samples { try upload(name, data: try sample(name)) }
         try settle(count: samples.count)
     }
@@ -29,8 +29,8 @@ final class TestAccount {
     func waitForTracks(_ count: Int, timeout: TimeInterval) -> Bool {
         let deadline = Date().addingTimeInterval(timeout)
         while Date() < deadline {
-            let json = try? call("GET", "/v1/activities", nil) as? [String: Any]
-            let rows = json?["activities"] as? [[String: Any]] ?? []
+            let json = try? call("GET", "/v2/tracks", nil) as? [String: Any]
+            let rows = json?["tracks"] as? [[String: Any]] ?? []
             if rows.count == count && !rows.contains(where: { $0["pending"] as? Bool == true }) { return true }
             Thread.sleep(forTimeInterval: 1)
         }
@@ -41,9 +41,9 @@ final class TestAccount {
     /// mean of its outer ring, and one about 120 m north of it.
     func place(_ category: String, in box: [Double]) throws -> (id: Int, inside: (lat: Double, lon: Double), outside: (lat: Double, lon: Double))? {
         let bbox = box.map { String($0) }.joined(separator: ",")
-        let found = try call("GET", "/v1/spots?bbox=\(bbox)&categories=\(category)", nil) as? [String: Any]
+        let found = try call("GET", "/v2/spots?bbox=\(bbox)&categories=\(category)", nil) as? [String: Any]
         guard let id = (found?["spots"] as? [[String: Any]])?.first?["id"] as? Int,
-              let detail = try call("GET", "/v1/spots/\(id)", nil) as? [String: Any],
+              let detail = try call("GET", "/v2/spots/\(id)", nil) as? [String: Any],
               let rings = ((detail["area"] as? [String: Any])?["coordinates"] as? [[[[Double]]]])?.first?.first,
               rings.count > 1 else { return nil }
         let ring = rings.dropLast()
@@ -54,29 +54,29 @@ final class TestAccount {
 
     /// The places the account has captured.
     func captures() -> [Int] {
-        let json = (try? call("GET", "/v1/spots/captures", nil)) as? [String: Any]
+        let json = (try? call("GET", "/v2/spots/captures", nil)) as? [String: Any]
         return (json?["captures"] as? [[String: Any]] ?? []).compactMap { $0["spot_id"] as? Int }
     }
 
     /// The track's photos' captions, in route order, an empty string for none.
     func photoCaptions(_ track: String) -> [String] {
-        let json = (try? call("GET", "/v1/photos?activity=\(track)", nil)) as? [String: Any]
+        let json = (try? call("GET", "/v2/photos?track=\(track)", nil)) as? [String: Any]
         return (json?["photos"] as? [[String: Any]] ?? []).map { $0["caption"] as? String ?? "" }
     }
 
     /// The edit saved on the track's route, as the server sends it, or nil for none.
     func routeEdit(_ track: String) -> [String: Any]? {
-        let json = (try? call("GET", "/v1/activities/\(track)/track-points", nil)) as? [String: Any]
+        let json = (try? call("GET", "/v2/tracks/\(track)/route-points", nil)) as? [String: Any]
         return json?["edit"] as? [String: Any]
     }
 
     /// The account's Private locations, as the server sends them.
     func privateLocations() -> [[String: Any]] {
-        (try? call("GET", "/v1/private-locations", nil)) as? [[String: Any]] ?? []
+        (try? call("GET", "/v2/private-locations", nil)) as? [[String: Any]] ?? []
     }
 
     func delete() {
-        _ = try? call("DELETE", "/v1/account", ["email": email])
+        _ = try? call("DELETE", "/v2/account", ["email": email])
     }
 
     /// The dev stack the Debug build talks to.
@@ -114,8 +114,8 @@ final class TestAccount {
     private func settle(count: Int) throws {
         let deadline = Date().addingTimeInterval(120)
         while Date() < deadline {
-            let json = try call("GET", "/v1/activities", nil) as? [String: Any]
-            let rows = json?["activities"] as? [[String: Any]] ?? []
+            let json = try call("GET", "/v2/tracks", nil) as? [String: Any]
+            let rows = json?["tracks"] as? [[String: Any]] ?? []
             if rows.count == count && !rows.contains(where: { $0["pending"] as? Bool == true }) {
                 ids = rows.compactMap { $0["id"] as? String }
                 return
@@ -130,7 +130,7 @@ final class TestAccount {
         var body = Data("--\(boundary)\r\nContent-Disposition: form-data; name=\"file\"; filename=\"\(name)\"\r\nContent-Type: application/octet-stream\r\n\r\n".utf8)
         body.append(data)
         body.append(Data("\r\n--\(boundary)--\r\n".utf8))
-        var request = URLRequest(url: URL(string: base + "/v1/activities/upload")!)
+        var request = URLRequest(url: URL(string: base + "/v2/tracks/upload")!)
         request.httpMethod = "POST"
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")
         request.httpBody = body

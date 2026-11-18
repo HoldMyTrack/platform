@@ -80,7 +80,7 @@ final class TrackRowCell: UITableViewCell {
         if track.title != nil { parts.append(format.startedAt(track)) }
         // A private track has no track: "0.0 km · 0m" would read as broken data.
         if !track.isPrivate { parts += [format.distance(track.distanceMeters), format.duration(track.movingSeconds)] }
-        parts.append(types.label(track.activityType))
+        parts.append(types.label(track.trackType))
         meta.text = parts.joined(separator: " · ")
         let dim: CGFloat = track.pending ? 0.45 : row.hidden ? 0.55 : 1
         title.alpha = dim
@@ -102,7 +102,7 @@ final class TrackRowCell: UITableViewCell {
         self.onCheck = onCheck
         let ticked = row.checked && onCheck != nil
         var config = tile.configuration ?? .filled()
-        config.image = ticked ? UIImage(resource: .check) : TrackTypes.icon(types.kind(track.activityType))
+        config.image = ticked ? UIImage(resource: .check) : TrackTypes.icon(types.kind(track.trackType))
         config.baseBackgroundColor = ticked ? UIColor(resource: .accent) : UIColor(resource: .surfaceTint)
         config.baseForegroundColor = ticked ? UIColor(resource: .onAccent) : UIColor(resource: .inkSecondary)
         tile.configuration = config

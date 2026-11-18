@@ -156,7 +156,7 @@ extension MapViewController {
     func updateTracksQuery() {
         var parts: [String] = []
         if let trip = session.tripID {
-            parts.append("story=\(trip.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trip)")
+            parts.append("trip=\(trip.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trip)")
         } else {
             parts += session.dates.query.map { "\($0.name)=\($0.value ?? "")" }
         }

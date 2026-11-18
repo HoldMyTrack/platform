@@ -1,5 +1,5 @@
 /// The focused track's pace bands (root docs/SPEC.md FR-4.6), as
-/// `GET /v1/activities/{id}/track-metrics` gives them: the server bands every synced track, so
+/// `GET /v2/tracks/{id}/route-metrics` gives them: the server bands every synced track, so
 /// the app only draws the runs.
 public struct RouteMetrics: Equatable, Sendable {
     public struct Point: Equatable, Sendable {
@@ -35,8 +35,8 @@ public struct RouteMetrics: Equatable, Sendable {
         (self.trackID, self.points, self.bands) = (trackID, points, bands)
     }
 
-    init(_ json: TrackMetricsJSON) {
-        trackID = json.activityID
+    init(_ json: RouteMetricsJSON) {
+        trackID = json.trackID
         points = json.points.map { Point(lon: $0.lon, lat: $0.lat, time: Double($0.timeS)) }
         bands = json.bands.map { Band(band: $0.band, start: $0.start, end: $0.end) }
     }

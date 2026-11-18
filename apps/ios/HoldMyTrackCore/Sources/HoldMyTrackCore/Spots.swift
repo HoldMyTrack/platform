@@ -1,7 +1,7 @@
 import Foundation
 
 /// A place on the Spots layers (root docs/SPEC.md FR-14), from the tiles, "Show in this area" or
-/// `GET /v1/spots`.
+/// `GET /v2/spots`.
 public struct Spot: Equatable, Sendable {
     public let id: Int
     public let category: String
@@ -119,14 +119,14 @@ public enum Spots {
         return .object(["type": .string("FeatureCollection"), "features": .array(features)])
     }
 
-    /// A view's west and east edges as `GET /v1/spots` takes them: bounds more than 180° wide, at
+    /// A view's west and east edges as `GET /v2/spots` takes them: bounds more than 180° wide, at
     /// the zooms "Show in this area" works at, are a view across the antimeridian reported the
     /// long way round, so the edges swap, east past 180.
     public static func viewEdges(west: Double, east: Double) -> (west: Double, east: Double) {
         east - west > 180 ? (east, west + 360) : (west, east)
     }
 
-    /// What `GET /v1/spots/captures` is asked for on a return to the map: since the newest
+    /// What `GET /v2/spots/captures` is asked for on a return to the map: since the newest
     /// capture known, or everything with none.
     public static func capturesSince(_ known: [Int: Date]) -> Date? { known.values.max() }
 
@@ -216,21 +216,21 @@ public struct ShowInArea: Equatable, Sendable {
 }
 
 extension APIClient {
-    /// `GET /v1/spots`: the picked categories' places in the box, up to the server's cap, and how
+    /// `GET /v2/spots`: the picked categories' places in the box, up to the server's cap, and how
     /// many there are in all.
     public func spotsInArea(west: Double, south: Double, east: Double, north: Double, categories: [SpotCategory]) async throws -> (spots: [Spot], total: Int) {
         let box = [west, south, east, north].map { String(format: "%.5f", locale: Locale(identifier: "en_US_POSIX"), $0) }.joined(separator: ",")
-        let json: SpotsInAreaJSON = try decode(try await send("GET", "v1/spots", query: [
+        let json: SpotsInAreaJSON = try decode(try await send("GET", "v2/spots", query: [
             URLQueryItem(name: "bbox", value: box),
             URLQueryItem(name: "categories", value: categories.map(\.rawValue).joined(separator: ",")),
         ]))
         return (json.spots.map(Spot.init), json.total)
     }
 
-    /// `GET /v1/spots/captures`: the account's captures by place, since a time or all of them.
+    /// `GET /v2/spots/captures`: the account's captures by place, since a time or all of them.
     public func spotCaptures(since: Date?) async throws -> [Int: Date] {
         let query = since.map { [URLQueryItem(name: "since", value: Self.instant($0))] } ?? []
-        let json: SpotCapturesJSON = try decode(try await send("GET", "v1/spots/captures", query: query))
+        let json: SpotCapturesJSON = try decode(try await send("GET", "v2/spots/captures", query: query))
         return Dictionary(json.captures.compactMap { c in Self.instant(c.capturedAt).map { (c.spotID, $0) } }, uniquingKeysWith: { _, b in b })
     }
 

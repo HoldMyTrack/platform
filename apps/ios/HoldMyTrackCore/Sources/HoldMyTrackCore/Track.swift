@@ -6,7 +6,7 @@ public struct Track: Equatable, Sendable {
     /// ISO 8601, as the server sends it; formatted in timezone (TrackZone).
     public let startedAt: String
     public let timezone: String
-    public let activityType: String
+    public let trackType: String
     public let name: String?
     public let distanceMeters: Double?
     public let movingSeconds: Int?
@@ -22,14 +22,14 @@ public struct Track: Equatable, Sendable {
     public let photosBlock: String?
 
     public init(
-        id: String, startedAt: String, timezone: String = "", activityType: String, name: String? = nil,
+        id: String, startedAt: String, timezone: String = "", trackType: String, name: String? = nil,
         distanceMeters: Double? = nil, movingSeconds: Int? = nil, description: String? = nil, bbox: [Double]? = nil,
         pending: Bool = false, isPrivate: Bool = false, trips: [TripRef] = [], routeEdit: String? = nil, photosBlock: String? = nil
     ) {
         self.id = id
         self.startedAt = startedAt
         self.timezone = timezone
-        self.activityType = activityType
+        self.trackType = trackType
         self.name = name
         self.distanceMeters = distanceMeters
         self.movingSeconds = movingSeconds
@@ -42,28 +42,28 @@ public struct Track: Equatable, Sendable {
         self.photosBlock = photosBlock
     }
 
-    init(_ json: ActivityRowJSON) {
+    init(_ json: TrackRowJSON) {
         self.init(
-            id: json.id, startedAt: json.startedAt, timezone: json.timezone, activityType: json.activityType, name: json.name,
+            id: json.id, startedAt: json.startedAt, timezone: json.timezone, trackType: json.trackType, name: json.name,
             distanceMeters: json.distanceMeters, movingSeconds: json.movingSeconds, description: json.description,
             bbox: json.bbox?.count == 4 ? json.bbox : nil, pending: json.pending, isPrivate: json.private,
-            trips: json.stories.map { TripRef(id: $0.id, name: $0.name) }, routeEdit: json.trackEdit, photosBlock: json.photos
+            trips: json.trips.map { TripRef(id: $0.id, name: $0.name) }, routeEdit: json.routeEdit, photosBlock: json.photos
         )
     }
 
     /// An area list's row: what the Edit window needs besides, it reads in full (APIClient.track).
-    init(_ json: AreaActivityRowJSON) {
+    init(_ json: AreaTrackRowJSON) {
         self.init(
-            id: json.id, startedAt: json.startedAt, timezone: json.timezone, activityType: json.activityType, name: json.name,
+            id: json.id, startedAt: json.startedAt, timezone: json.timezone, trackType: json.trackType, name: json.name,
             distanceMeters: json.distanceMeters, movingSeconds: json.movingSeconds,
             bbox: json.bbox?.count == 4 ? json.bbox : nil, pending: json.pending, isPrivate: json.private,
-            trips: json.stories.map { TripRef(id: $0.id, name: $0.name) }
+            trips: json.trips.map { TripRef(id: $0.id, name: $0.name) }
         )
     }
 
     /// What the panel's rules read of it.
     public var summary: TrackSummary {
-        TrackSummary(id: id, activityType: activityType, distanceMeters: distanceMeters, isPrivate: isPrivate, isPending: pending)
+        TrackSummary(id: id, trackType: trackType, distanceMeters: distanceMeters, isPrivate: isPrivate, isPending: pending)
     }
 
     /// The name, when it has one that isn't blank.
@@ -87,7 +87,7 @@ public struct TripRef: Equatable, Sendable {
 /// A count, a distance and a moving time: a Trip's, or one type's share of it.
 public struct TripTotals: Equatable, Sendable {
     /// Empty for the whole Trip.
-    public let activityType: String
+    public let trackType: String
     public let count: Int
     public let distanceMeters: Double
     public let movingSeconds: Int
@@ -104,21 +104,21 @@ public struct Trip: Equatable, Sendable {
     public let stats: TripTotals
     public let byType: [TripTotals]
 
-    init(_ json: StoryJSON) {
+    init(_ json: TripJSON) {
         id = json.id
         name = json.name
         description = json.description ?? ""
         from = json.from
-        trackIDs = json.activityIDs
-        stats = TripTotals(activityType: "", count: json.stats.count, distanceMeters: json.stats.distanceMeters, movingSeconds: json.stats.movingSeconds)
+        trackIDs = json.trackIDs
+        stats = TripTotals(trackType: "", count: json.stats.count, distanceMeters: json.stats.distanceMeters, movingSeconds: json.stats.movingSeconds)
         byType = json.stats.byType.map {
-            TripTotals(activityType: $0.activityType, count: $0.count, distanceMeters: $0.distanceMeters, movingSeconds: $0.movingSeconds)
+            TripTotals(trackType: $0.trackType, count: $0.count, distanceMeters: $0.distanceMeters, movingSeconds: $0.movingSeconds)
         }
     }
 
     /// The type labels the Trip's numbers carry, for TrackTypeCatalog.
-    static func labels(_ json: StoryJSON) -> [String: TrackTypeInfo] {
-        Dictionary(json.stats.byType.compactMap { t in t.label.flatMap { $0.isEmpty ? nil : (t.activityType, TrackTypeInfo(kind: nil, label: $0)) } },
+    static func labels(_ json: TripJSON) -> [String: TrackTypeInfo] {
+        Dictionary(json.stats.byType.compactMap { t in t.label.flatMap { $0.isEmpty ? nil : (t.trackType, TrackTypeInfo(kind: nil, label: $0)) } },
                    uniquingKeysWith: { a, _ in a })
     }
 }
@@ -152,7 +152,7 @@ public struct TrackTypeInfo: Equatable, Sendable {
         self.label = label
     }
 
-    init(_ json: ActivityTypeJSON) {
+    init(_ json: TrackTypeJSON) {
         self.init(kind: TrackKind(wire: json.kind), label: json.label.isEmpty ? nil : json.label)
     }
 }

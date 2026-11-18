@@ -3,15 +3,15 @@ import Foundation
 /// What the panel's rules read of a listed track.
 public struct TrackSummary: Equatable, Sendable {
     public let id: String
-    public let activityType: String
+    public let trackType: String
     public let distanceMeters: Double?
     public let isPrivate: Bool
     /// Its track is being reprocessed.
     public let isPending: Bool
 
-    public init(id: String, activityType: String, distanceMeters: Double?, isPrivate: Bool, isPending: Bool = false) {
+    public init(id: String, trackType: String, distanceMeters: Double?, isPrivate: Bool, isPending: Bool = false) {
         self.id = id
-        self.activityType = activityType
+        self.trackType = trackType
         self.distanceMeters = distanceMeters
         self.isPrivate = isPrivate
         self.isPending = isPending
@@ -75,8 +75,8 @@ public enum TrackFacets {
         var order: [String] = []
         var counts: [String: Int] = [:]
         for track in tracks where passesDistance(track, distanceFilter) {
-            if counts[track.activityType] == nil { order.append(track.activityType) }
-            counts[track.activityType, default: 0] += 1
+            if counts[track.trackType] == nil { order.append(track.trackType) }
+            counts[track.trackType, default: 0] += 1
         }
         let facets = order.map { TypeFacet(type: $0, count: counts[$0]!) }
         // A stable sort, by index on ties, as the web's and Android's are.
@@ -86,7 +86,7 @@ public enum TrackFacets {
     }
 
     public static func passesFilters(_ track: TrackSummary, excludedTypes: Set<String>, distanceFilter: DistanceRange?) -> Bool {
-        !excludedTypes.contains(track.activityType) && passesDistance(track, distanceFilter)
+        !excludedTypes.contains(track.trackType) && passesDistance(track, distanceFilter)
     }
 }
 
