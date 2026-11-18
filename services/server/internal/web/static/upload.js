@@ -27,6 +27,8 @@
   var MAX_FILES = 20;
   var ACCEPT = /\.(gpx|fit|tcx)$/i;
   var ZIP = /\.zip$/i;
+  // Strava's archive holds its FIT files gzipped (templates/pages/import-strava.html).
+  var GZ = /\.gz$/i;
 
   var menu = document.querySelector('[data-upload-menu]');
   if (!menu) return;
@@ -222,8 +224,10 @@
 
   function enqueue(fileList) {
     var all = Array.prototype.slice.call(fileList);
-    all.filter(function (f) { return ZIP.test(f.name); }).forEach(function (f) {
-      note(fill(strings.zip_refused, { filename: f.name }), true);
+    // Every file that won't be sent says why, rather than dropping out of the pick unseen.
+    all.filter(function (f) { return !ACCEPT.test(f.name); }).forEach(function (f) {
+      var key = ZIP.test(f.name) ? 'zip_refused' : GZ.test(f.name) ? 'gz_refused' : 'type_refused';
+      note(fill(strings[key], { filename: f.name }), true);
     });
     var files = all.filter(function (f) { return ACCEPT.test(f.name); });
     if (files.length > MAX_FILES) {
