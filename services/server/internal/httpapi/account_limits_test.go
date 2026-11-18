@@ -159,7 +159,7 @@ func TestSettingsShowsTheAccountsLimits(t *testing.T) {
 		t.Fatal(err)
 	}
 	body := getPage(d.srv, "/settings", me.session, "").Body.String()
-	if want := "1,240 of 50,000 activities · 310 MB of 5 GB of original files"; !strings.Contains(body, want) {
+	if want := "1,240 of 50,000 tracks · 310 MB of 5 GB of original files"; !strings.Contains(body, want) {
 		t.Errorf("/settings: %q missing", want)
 	}
 	demo := d.newAccount(true)
