@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pencil, Play, Send, Trash2 } from 'lucide-react';
 import { deleteStory, removeStoryActivities, type Activity, type Story, type StoryTotals } from '../api.ts';
 import { ActivityRow } from './ActivityRow.tsx';
-import { centredScrollTop, listWindow } from './listWindow.ts';
+import { useListWindow } from './useListWindow.ts';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
 import { SendCopyDialog } from './SendCopyDialog.tsx';
 import { StoryDialog } from './StoryDialog.tsx';
@@ -113,45 +113,12 @@ export function StoriesTab({
       setRemoving(null);
     }
   }
-  // The open Story's rows render only those in view (listWindow.ts), as the Activities tab's do: a
-  // Story has no size cap, and every hover re-rendered all of its rows. Its rows sit below the
-  // inbox, the folders above and its description, in the one scrolled list, so the window counts
-  // from where they start.
+  // The open Story's rows render only those in view, as the Activities tab's do: a Story has no
+  // size cap, and every hover re-rendered all of its rows.
   const listRef = useRef<HTMLUListElement>(null);
   const rowsRef = useRef<HTMLUListElement>(null);
-  const [view, setView] = useState({ top: 0, height: 600 });
-  const [rowsTop, setRowsTop] = useState(0);
-  const [rowHeight, setRowHeight] = useState(0);
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const read = () => setView({ top: list.scrollTop, height: list.clientHeight });
-    read();
-    const observer = new ResizeObserver(read);
-    observer.observe(list);
-    return () => observer.disconnect();
-  }, []);
-  useEffect(() => {
-    const list = listRef.current;
-    const rows = rowsRef.current;
-    if (!list || !rows) return;
-    const top = Math.round(rows.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop);
-    if (top !== rowsTop) setRowsTop(top);
-    const row = rows.querySelector<HTMLElement>('li[data-activity-id]');
-    if (row && row.offsetHeight !== rowHeight) setRowHeight(row.offsetHeight);
-  });
-  const { start, end } = listWindow(activities.length, rowHeight, view.top - rowsTop, view.height);
-  // A newly focused row is centred, by its place in the Story: it may not be drawn. Only the list
-  // scrolls, not every ancestor as `scrollIntoView` would: on a phone the collapsed sheet is one,
-  // and scrolling it pushed its header out of reach. A checkbox spree has no single row to centre.
-  useEffect(() => {
-    const list = listRef.current;
-    if (focusedId === null || !list || rowHeight === 0) return;
-    const index = activities.findIndex((a) => a.id === focusedId);
-    if (index >= 0) list.scrollTo({ top: centredScrollTop(index, rowsTop, rowHeight, list.clientHeight), behavior: 'smooth' });
-    // Only a new focus scrolls; the rows reloading under a focus leave the scroll where it is.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [focusedId]);
+  const focusedIndex = useMemo(() => (focusedId === null ? -1 : activities.findIndex((a) => a.id === focusedId)), [activities, focusedId]);
+  const { start, end, rowHeight } = useListWindow(listRef, rowsRef, activities.length, { id: focusedId, index: focusedIndex });
 
   const editTitle = readOnly ? t('stories.demo_edit') : t('stories.edit');
   const deleteTitle = readOnly ? t('stories.demo_delete') : t('stories.delete');
@@ -161,12 +128,7 @@ export function StoriesTab({
 
   return (
     <>
-      <ul
-        className="stories-tab"
-        data-testid="stories-list"
-        ref={listRef}
-        onScroll={(e) => setView({ top: e.currentTarget.scrollTop, height: e.currentTarget.clientHeight })}
-      >
+      <ul className="stories-tab" data-testid="stories-list" ref={listRef}>
         <StoryInboxItems inbox={inbox} />
         {openError && !openListed && <li className="activities-panel__note activities-panel__note--error">{openError}</li>}
         {stories.map((listed) => {
@@ -233,7 +195,8 @@ export function StoriesTab({
                 <div
                   className="stories-tab__body"
                   onClick={(e) => {
-                    if (e.target === e.currentTarget) onClearFocus();
+                    const target = e.target as HTMLElement;
+                    if (target === e.currentTarget || target.classList.contains('activities-panel__spacer')) onClearFocus();
                   }}
                 >
                   {story.from !== null && <p className="stories-tab__from">{t('stories.from', { from: story.from })}</p>}

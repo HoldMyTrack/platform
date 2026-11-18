@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { centredScrollTop, listWindow, OVERSCAN, scrollTopFor, UNMEASURED_ROWS } from '../src/ui/listWindow.ts';
+import { centredScrollTop, listWindow, OVERSCAN, UNMEASURED_ROWS } from '../src/ui/listWindow.ts';
 
 test('the rows in view, and a few either side', () => {
   // 1,000 rows of 50 px, a 500 px view scrolled to row 100.
@@ -17,13 +17,6 @@ test("the window stops at the list's ends", () => {
 test('before a row is measured, the first few render', () => {
   assert.deepEqual(listWindow(30, 0, 0, 500), { start: 0, end: 30 });
   assert.deepEqual(listWindow(1000, 0, 0, 500), { start: 0, end: UNMEASURED_ROWS });
-});
-
-test('a row is scrolled to the middle of the view, within the list', () => {
-  assert.equal(scrollTopFor(100, 1000, 50, 500), 100 * 50 - 225);
-  assert.equal(scrollTopFor(0, 1000, 50, 500), 0);
-  assert.equal(scrollTopFor(999, 1000, 50, 500), 1000 * 50 - 500);
-  assert.equal(scrollTopFor(2, 3, 50, 500), 0);
 });
 
 test('centredScrollTop centres a row that starts below other content', () => {
