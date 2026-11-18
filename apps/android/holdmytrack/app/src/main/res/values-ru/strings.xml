@@ -439,7 +439,8 @@
     <string name="card_pace_mi">%1$s /миля</string>
     <string name="card_speed_km">%1$s км/ч</string>
     <string name="card_speed_mi">%1$s миль/ч</string>
-    <string name="panel_none_match">Нет путешествий, подходящих под фильтры.</string>
+    <string name="panel_none_match">Здесь нет путешествий, подходящих под фильтры.</string>
+    <string name="panel_none_here">В этой части карты нет путешествий.</string>
     <string name="panel_pending">Ожидает</string>
     <string name="panel_hidden">Скрыто</string>
     <string name="activity_private_badge">Приватное</string>

@@ -18,4 +18,8 @@ object PanelRules {
      *  one tap always leaves the group in one state. */
     fun toggledVisibility(hidden: Set<String>, target: Set<String>): Set<String> =
         if (target.any { it in hidden }) hidden - target else hidden + target
+
+    /** Whether an empty list is the filters' doing (a Type, Distance or Dates filter is set), as
+     *  the web's `emptyListReason`: else this part of the map holds no activity, and the note says so. */
+    fun emptyListFiltered(hasActiveFilters: Boolean, datesSet: Boolean): Boolean = hasActiveFilters || datesSet
 }
