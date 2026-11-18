@@ -4,7 +4,7 @@ import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
 /**
  * The focused track's pace-colored segments (docs/SPEC.md FR-4.6) as the layers document's
  * `track-bands` group: a GeoJSON source the client fills with one line per run of
- * `GET /v1/activities/{id}/track-metrics`' `bands` (routeBands.ts), over the shared tracks layer,
+ * `GET /v2/tracks/{id}/route-metrics`' `bands` (routeBands.ts), over the shared tracks layer,
  * since a vector tile can't carry per-vertex color. Each line carries its `band` index, and the
  * layer colors it, so the colors are the server's alone. One more line, the whole route in recording
  * order with a `route` property, carries the direction arrows: on the runs themselves they would

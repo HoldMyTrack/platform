@@ -9,7 +9,7 @@ test('a same-origin API base sends the cookie to the app only', () => {
     url: 'https://holdmytrack.com/tiles/v1/tracks/10/279/382.mvt',
     credentials: 'include',
   });
-  assert.deepEqual(transform('/v1/map/style/light'), { url: '/v1/map/style/light', credentials: 'include' });
+  assert.deepEqual(transform('/v2/map/style/light'), { url: '/v2/map/style/light', credentials: 'include' });
   assert.deepEqual(transform('https://api.maptiler.com/tiles/satellite-v2/9/139/191.jpg?key=k'), {
     url: 'https://api.maptiler.com/tiles/satellite-v2/9/139/191.jpg?key=k',
   });

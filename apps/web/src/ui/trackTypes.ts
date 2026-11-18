@@ -8,7 +8,7 @@ import type { components } from '../apiSchema.ts';
 const labels = new Map<string, string>();
 
 /** The kind picks a row's icon (`trackKindIcon.ts`). */
-export type TrackKind = components['schemas']['ActivityTypes'][string]['kind'];
+export type TrackKind = components['schemas']['TrackTypes'][string]['kind'];
 
 const kinds = new Map<string, TrackKind>();
 
@@ -22,16 +22,16 @@ export function rememberTypeKinds(described: Iterable<[string, TrackKind]>): voi
 }
 
 /** A type's kind: the server's, else `other` for one no track list has carried yet. */
-export function typeKind(activityType: string): TrackKind {
-  return kinds.get(activityType) ?? 'other';
+export function typeKind(trackType: string): TrackKind {
+  return kinds.get(trackType) ?? 'other';
 }
 
 /** A type's label: the server's, else, for one no response has carried yet, the type spaced out
  *  from snake_case and title-cased, as the server falls back. */
-export function typeLabel(activityType: string): string {
+export function typeLabel(trackType: string): string {
   return (
-    labels.get(activityType) ??
-    activityType
+    labels.get(trackType) ??
+    trackType
       .split('_')
       .filter(Boolean)
       .map((word) => word[0]!.toUpperCase() + word.slice(1))

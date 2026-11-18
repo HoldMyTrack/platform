@@ -42,7 +42,7 @@ export function pendingWatched(pending: Iterable<string>, awaiting: Iterable<str
   return [...new Set([...pending, ...awaiting])];
 }
 
-/** The most ids one Pending check request may carry (`GET /v1/activities/pending`). */
+/** The most ids one Pending check request may carry (`GET /v2/tracks/pending`). */
 const PENDING_BATCH = 200;
 
 /** [ids] in consecutive batches of at most [size], one Pending check request each; the answers

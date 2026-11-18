@@ -1,7 +1,7 @@
 import { haversineM } from '../geo.ts';
 /**
  * A track as the Photos tab's slider walks it (IMPLEMENTATION.md §4.27): the display points with
- * their moments (`GET /v1/activities/{id}/track-metrics`'s `time_s`), measured along their
+ * their moments (`GET /v2/tracks/{id}/route-metrics`'s `time_s`), measured along their
  * length. The slider runs by distance, not time, so a long stop doesn't take up half its
  * travel; a photo's place is still saved as a moment (`route_at`), which is what the server
  * keeps. Android's `PhotoRoute.kt` runs the same cases, `testdata/client-rules/photo-route-*.json`.

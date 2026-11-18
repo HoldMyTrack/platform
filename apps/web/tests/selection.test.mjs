@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { invertedChecks, mapHiddenIds, targetSummaryKind, toggled, toolbarTarget, withoutIds } from '../src/map/selection.ts';
 
-const track = (id, activityType = 'walking', distanceMeters = 1000, pending = false) => ({ id, activityType, distanceMeters, pending });
+const track = (id, trackType = 'walking', distanceMeters = 1000, pending = false) => ({ id, trackType, distanceMeters, pending });
 
 test('toggled adds a missing item and removes a present one', () => {
   assert.deepEqual([...toggled(new Set(['a']), 'b')], ['a', 'b']);

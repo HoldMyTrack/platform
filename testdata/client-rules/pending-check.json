@@ -1,6 +1,6 @@
 {
   "rule": "pendingCheck",
-  "description": "While a reprocess runs, the client asks the Pending check (GET /v1/activities/pending) about the rows it holds Pending (pending) and the edits it saved (awaiting). One the list shows (listed) that is no longer Pending means reading the list again (moved); one the list doesn't show has finished by the check alone (finished), since no list will say so. Expected: watched (the ids asked about, once each, pending first), moved, and finished, given the check's answer stillPending.",
+  "description": "While a reprocess runs, the client asks the Pending check (GET /v2/tracks/pending) about the rows it holds Pending (pending) and the edits it saved (awaiting). One the list shows (listed) that is no longer Pending means reading the list again (moved); one the list doesn't show has finished by the check alone (finished), since no list will say so. Expected: watched (the ids asked about, once each, pending first), moved, and finished, given the check's answer stillPending.",
   "cases": [
     { "name": "nothing to watch", "input": { "pending": [], "awaiting": [], "listed": [], "stillPending": [] }, "expected": { "watched": [], "moved": false, "finished": [] } },
     { "name": "every watched row still Pending", "input": { "pending": ["a", "b"], "awaiting": [], "listed": ["a", "b"], "stillPending": ["a", "b"] }, "expected": { "watched": ["a", "b"], "moved": false, "finished": [] } },

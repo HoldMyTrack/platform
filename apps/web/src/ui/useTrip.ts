@@ -14,7 +14,7 @@ export interface TripState {
   set: (trip: Trip) => void;
 }
 
-/** Reader for `GET /v1/stories/{id}` — the open Trip on the Trips tab: its whole-Trip
+/** Reader for `GET /v2/trips/{id}` — the open Trip on the Trips tab: its whole-Trip
  *  statistics (FR-13.1) for the footer, whatever the area and Dates. */
 export function useTrip(id: string | null): TripState {
   const [trip, setTrip] = useState<Trip | null>(null);

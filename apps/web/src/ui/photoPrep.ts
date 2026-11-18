@@ -14,7 +14,7 @@ const PHOTO_MAX_SIDE = 2048;
 const PHOTO_THUMB_SIDE = 320;
 const QUALITY = 0.85;
 
-/** What a photo's EXIF says, as `POST /v1/photos` takes it. `takenAt` is an instant (RFC 3339,
+/** What a photo's EXIF says, as `POST /v2/photos` takes it. `takenAt` is an instant (RFC 3339,
  *  UTC), `takenLocal` a camera clock with no zone (`YYYY-MM-DDTHH:MM:SS`); at most one is set. */
 interface PhotoExif {
   takenAt?: string;
@@ -178,7 +178,7 @@ export function readExif(buf: ArrayBuffer): PhotoExif {
   return out;
 }
 
-/** A picked photo ready for `POST /v1/photos`: the resized copy, its thumbnail, and its EXIF. */
+/** A picked photo ready for `POST /v2/photos`: the resized copy, its thumbnail, and its EXIF. */
 export interface PreparedPhoto {
   file: Blob;
   thumb: Blob;

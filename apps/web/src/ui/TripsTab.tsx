@@ -34,7 +34,7 @@ interface TripsTabProps {
   /** The open Trip's id — MapView's storyId. At most one is open, and once the list has
    *  loaded, one always is (MapView opens the newest). */
   openId: string | null;
-  /** The open Trip as `GET /v1/stories/{id}` last returned it (useStory) — its whole-Trip
+  /** The open Trip as `GET /v2/trips/{id}` last returned it (useStory) — its whole-Trip
    *  statistics for the footer. */
   openTrip: Trip | null;
   /** Why the open Trip couldn't be read — a `?trip=` that doesn't exist or isn't this account's. */
@@ -65,7 +65,7 @@ interface TripsTabProps {
  * list to it, whatever area and Dates the Tracks tab has, and this tab shows that list inside the folder and the whole
  * Trip's statistics in the footer. A row previews on hover and focuses on click, like the
  * Tracks tab's, and its × takes the track out of the Trip (`DELETE
- * /v1/stories/{id}/activities`) — here, where the Trip is open, rather than where tracks are
+ * /v2/trips/{id}/tracks`) — here, where the Trip is open, rather than where tracks are
  * picked, which is where they go in (AddToTripMenu.tsx). A folder's pencil and trash rename and
  * delete that Trip. A click on the open Trip's folder folds its list away or back
  * (tripFold.ts); the Trip stays open.
@@ -259,8 +259,8 @@ export function TripsTab({
               <table className="trips-tab__types" aria-label={t('trips.by_type')}>
                 <tbody>
                   {openTrip.stats.byType.map((type) => (
-                    <tr key={type.activityType}>
-                      <th scope="row">{formatTrackType(type.activityType)}</th>
+                    <tr key={type.trackType}>
+                      <th scope="row">{formatTrackType(type.trackType)}</th>
                       <td>{tripStatsLine(type, system)}</td>
                     </tr>
                   ))}

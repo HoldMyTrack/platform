@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 import * as limits from '../src/limits.ts';
 
-const api = fileURLToPath(new URL('../../../services/server/api/', import.meta.url));
+const api = fileURLToPath(new URL('../../../services/server/api/v2/', import.meta.url));
 const load = (file) => yaml.load(readFileSync(api + file, 'utf8'));
 const paths = (file) => load(`paths/${file}.yaml`);
 const schemas = load('components/schemas.yaml');
@@ -16,12 +16,12 @@ const jsonBody = (op) => op.requestBody.content['application/json'].schema;
 const multipartBody = (op) => op.requestBody.content['multipart/form-data'].schema;
 
 test('the web applies the limits the API contract declares', () => {
-  const track = jsonBody(paths('activities').activities_id.patch).properties;
+  const track = jsonBody(paths('tracks').tracks_id.patch).properties;
   const photos = paths('photos');
-  const trip = schemas.StoryInput.properties;
+  const trip = schemas.TripInput.properties;
   const location = schemas.PrivateLocationInput.properties;
   const cases = [
-    ['MAX_TRACK_TYPE_LEN', track.activity_type.maxLength],
+    ['MAX_TRACK_TYPE_LEN', track.track_type.maxLength],
     ['MAX_TRACK_NAME_LEN', track.name.maxLength],
     ['MAX_TRACK_DESCRIPTION_LEN', track.description.maxLength],
     ['TRIP_MAX_NAME_LEN', trip.name.maxLength],

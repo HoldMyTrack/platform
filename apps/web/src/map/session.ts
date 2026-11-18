@@ -56,7 +56,7 @@ export type MapSessionEvent =
   /** The toolbar's Show/Hide over its target. */
   | { type: 'visibilityToggled' }
   /** A filter changed; a checked row among [tracks] (the range's) that it now hides is unchecked. */
-  | { type: 'typeToggled'; activityType: string; tracks: readonly Track[] }
+  | { type: 'typeToggled'; trackType: string; tracks: readonly Track[] }
   | { type: 'distanceSet'; filter: DistanceRange | null; tracks: readonly Track[] }
   | { type: 'filtersReset' }
   /** A list was read for the area or Trip shown: a row it no longer has leaves the selection. */
@@ -127,7 +127,7 @@ export function mapSessionReducer(state: MapSession, event: MapSessionEvent): Ma
     case 'visibilityToggled':
       return select({ hidden: toggledVisibility(state.selection.hidden, toolbarTarget(state.selection.checked, state.selection.focused)) });
     case 'typeToggled': {
-      const excludedTypes = toggled(state.selection.excludedTypes, event.activityType);
+      const excludedTypes = toggled(state.selection.excludedTypes, event.trackType);
       return select({ excludedTypes, checked: checksPassing(state.selection.checked, event.tracks, excludedTypes, state.selection.distanceFilter) });
     }
     case 'distanceSet':

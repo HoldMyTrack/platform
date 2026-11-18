@@ -1221,14 +1221,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities": {
+    "/tracks": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** The signed-in account's activities, newest first, unpaginated */
+        /** The signed-in account's tracks, newest first, unpaginated */
         get: {
             parameters: {
                 query?: {
@@ -1236,10 +1236,10 @@ export interface paths {
                     from?: components["parameters"]["FilterFrom"];
                     /** @description Local start date, inclusive. */
                     to?: components["parameters"]["FilterTo"];
-                    /** @description Comma-separated activity types. */
+                    /** @description Comma-separated track types. */
                     types?: components["parameters"]["FilterTypes"];
-                    /** @description One Story's activities only. */
-                    story?: components["parameters"]["FilterStory"];
+                    /** @description One Trip's tracks only. */
+                    trip?: components["parameters"]["FilterTrip"];
                 };
                 header?: never;
                 path?: never;
@@ -1247,16 +1247,16 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The activities */
+                /** @description The tracks */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            activities: components["schemas"]["ActivityRow"][];
+                            tracks: components["schemas"]["TrackRow"][];
                             /** @description Every type the rows use, once each. */
-                            types: components["schemas"]["ActivityTypes"];
+                            types: components["schemas"]["TrackTypes"];
                         };
                     };
                 };
@@ -1273,7 +1273,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activity-types": {
+    "/track-types": {
         parameters: {
             query?: never;
             header?: never;
@@ -1281,7 +1281,7 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * What a client shows for the catalog's activity types and any others it names
+         * What a client shows for the catalog's track types and any others it names
          * @description For the Type picker's suggestions and for types not in a list response, such as a phone's unsent recordings.
          */
         get: {
@@ -1303,7 +1303,7 @@ export interface paths {
                     };
                     content: {
                         "application/json": {
-                            types: components["schemas"]["ActivityTypes"];
+                            types: components["schemas"]["TrackTypes"];
                         };
                     };
                 };
@@ -1320,7 +1320,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/upload": {
+    "/tracks/upload": {
         parameters: {
             query?: never;
             header?: never;
@@ -1329,7 +1329,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Upload one activity file; parsing happens in a job */
+        /** Upload one track file; parsing happens in a job */
         post: {
             parameters: {
                 query?: never;
@@ -1383,7 +1383,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/area": {
+    "/tracks/area": {
         parameters: {
             query?: never;
             header?: never;
@@ -1391,8 +1391,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * The newest activities whose track crosses a map view, the web's list and the set its map draws
-         * @description Type and Story filters (types, story) are refused, since the list filters those itself.
+         * The newest tracks whose route crosses a map view, the web's list and the set its map draws
+         * @description Type and Trip filters (types, trip) are refused, since the list filters those itself.
          */
         get: {
             parameters: {
@@ -1412,17 +1412,17 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The activities, slim */
+                /** @description The tracks, slim */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            activities: components["schemas"]["AreaActivityRow"][];
+                            tracks: components["schemas"]["AreaTrackRow"][];
                             /** @description Every type the rows use, once each. */
-                            types: components["schemas"]["ActivityTypes"];
-                            /** @description With `bbox`, how many activities the area holds; more than the rows when they were cut at the limit. */
+                            types: components["schemas"]["TrackTypes"];
+                            /** @description With `bbox`, how many tracks the area holds; more than the rows when they were cut at the limit. */
                             total?: number;
                         };
                     };
@@ -1440,38 +1440,38 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/{id}": {
+    "/tracks/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["ActivityID"];
+                id: components["parameters"]["TrackID"];
             };
             cookie?: never;
         };
-        /** One activity in full, as a one-row list */
+        /** One track in full, as a one-row list */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["ActivityID"];
+                    id: components["parameters"]["TrackID"];
                 };
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description The activity */
+                /** @description The track */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            activities: [
-                                components["schemas"]["ActivityRow"]
+                            tracks: [
+                                components["schemas"]["TrackRow"]
                             ];
-                            types: components["schemas"]["ActivityTypes"];
+                            types: components["schemas"]["TrackTypes"];
                         };
                     };
                 };
@@ -1482,13 +1482,13 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete an activity, its photos and its stored file */
+        /** Delete a track, its photos and its stored file */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["ActivityID"];
+                    id: components["parameters"]["TrackID"];
                 };
                 cookie?: never;
             };
@@ -1508,13 +1508,13 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Change an activity's type, name and description (a full replace) */
+        /** Change a track's type, name and description (a full replace) */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["ActivityID"];
+                    id: components["parameters"]["TrackID"];
                 };
                 cookie?: never;
             };
@@ -1522,7 +1522,7 @@ export interface paths {
                 content: {
                     "application/json": {
                         /** @description Trimmed; blank is a 400. */
-                        activity_type: string;
+                        track_type: string;
                         /** @description Trimmed; missing or empty clears it. */
                         name?: string;
                         /** @description Trimmed; missing or empty clears it. */
@@ -1531,13 +1531,13 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description The activity as saved */
+                /** @description The track as saved */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["ActivityRow"];
+                        "application/json": components["schemas"]["TrackRow"];
                     };
                 };
                 400: components["responses"]["Error"];
@@ -1548,7 +1548,7 @@ export interface paths {
         };
         trace?: never;
     };
-    "/activities/overlaps": {
+    "/tracks/overlaps": {
         parameters: {
             query?: never;
             header?: never;
@@ -1558,7 +1558,7 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Which of these time spans the account already has an activity overlapping
+         * Which of these time spans the account already has a track overlapping
          * @description Lets a client leave out what it would import twice before sending it.
          */
         post: {
@@ -1593,9 +1593,9 @@ export interface paths {
                             overlaps: {
                                 key: string;
                                 /** Format: uuid */
-                                activity_id: string;
+                                track_id: string;
                                 name: string;
-                                activity_type: string;
+                                track_type: string;
                                 /** Format: date-time */
                                 started_at: string;
                                 timezone: string | null;
@@ -1614,7 +1614,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/stats-card": {
+    "/tracks/stats-card": {
         parameters: {
             query?: never;
             header?: never;
@@ -1625,7 +1625,7 @@ export interface paths {
         put?: never;
         /**
          * The stats card a map image export carries, drawn for the image's size and theme
-         * @description One line per activity, newest first, at most five, then "+ N more" and, with more than one, a totals line, in the account's units and language. Pending activities are left out. The PNG is the card's panel alone, at the image's own pixel scale; the client places it.
+         * @description One line per track, newest first, at most five, then "+ N more" and, with more than one, a totals line, in the account's units and language. Pending tracks are left out. The PNG is the card's panel alone, at the image's own pixel scale; the client places it.
          */
         post: {
             parameters: {
@@ -1637,7 +1637,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        activity_ids: string[];
+                        track_ids: string[];
                         /** @description The image's width in pixels. */
                         width: number;
                         /** @description The image's height in pixels. */
@@ -1660,7 +1660,7 @@ export interface paths {
                         "image/png": string;
                     };
                 };
-                /** @description Every activity asked for is Pending, so there is no card */
+                /** @description Every track asked for is Pending, so there is no card */
                 204: {
                     headers: {
                         [name: string]: unknown;
@@ -1680,7 +1680,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/pending": {
+    "/tracks/pending": {
         parameters: {
             query?: never;
             header?: never;
@@ -1688,13 +1688,13 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Which of the given activities are still Pending
+         * Which of the given tracks are still Pending
          * @description What a client polls while it watches a reprocess, reading the whole list again only once the answer changes. An id that isn't the account's, or no longer exists, isn't Pending.
          */
         get: {
             parameters: {
                 query: {
-                    /** @description Comma-separated activity ids, at most 200. */
+                    /** @description Comma-separated track ids, at most 200. */
                     ids: string;
                 };
                 header?: never;
@@ -1727,14 +1727,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/summary": {
+    "/tracks/summary": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Totals over the activities the filter selects */
+        /** Totals over the tracks the filter selects */
         get: {
             parameters: {
                 query?: {
@@ -1742,10 +1742,10 @@ export interface paths {
                     from?: components["parameters"]["FilterFrom"];
                     /** @description Local start date, inclusive. */
                     to?: components["parameters"]["FilterTo"];
-                    /** @description Comma-separated activity types. */
+                    /** @description Comma-separated track types. */
                     types?: components["parameters"]["FilterTypes"];
-                    /** @description One Story's activities only. */
-                    story?: components["parameters"]["FilterStory"];
+                    /** @description One Trip's tracks only. */
+                    trip?: components["parameters"]["FilterTrip"];
                 };
                 header?: never;
                 path?: never;
@@ -1762,7 +1762,7 @@ export interface paths {
                         "application/json": {
                             count: number;
                             distance_meters: number;
-                            /** @description Moving time, or elapsed where an activity has none, as every other total counts it. */
+                            /** @description Moving time, or elapsed where a track has none, as every other total counts it. */
                             duration_seconds: number;
                             elevation_gain_m: number;
                         };
@@ -1781,7 +1781,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/histogram": {
+    "/tracks/histogram": {
         parameters: {
             query?: never;
             header?: never;
@@ -1789,22 +1789,22 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * Per-day totals, by a page of activity days or by a calendar window
-         * @description With days, the most recent days that have an activity (before `before`, when given); otherwise every day with one in from–to, which default to the 12 months up to today. Buckets are in ascending date order either way. No type filter; story narrows it to one Story.
+         * Per-day totals, by a page of track days or by a calendar window
+         * @description With days, the most recent days that have a track (before `before`, when given); otherwise every day with one in from–to, which default to the 12 months up to today. Buckets are in ascending date order either way. No type filter; trip narrows it to one Trip.
          */
         get: {
             parameters: {
                 query?: {
-                    /** @description Activity-day mode, at most this many days (capped by the server). */
+                    /** @description Track-day mode, at most this many days (capped by the server). */
                     days?: number;
-                    /** @description Activity-day mode, only days strictly before this local date. */
+                    /** @description Track-day mode, only days strictly before this local date. */
                     before?: string;
                     /** @description Local start date, inclusive. */
                     from?: components["parameters"]["FilterFrom"];
                     /** @description Local start date, inclusive. */
                     to?: components["parameters"]["FilterTo"];
-                    /** @description One Story's activities only. */
-                    story?: components["parameters"]["FilterStory"];
+                    /** @description One Trip's tracks only. */
+                    trip?: components["parameters"]["FilterTrip"];
                 };
                 header?: never;
                 path?: never;
@@ -1821,9 +1821,9 @@ export interface paths {
                         "application/json": {
                             /** @enum {string} */
                             bucket: "day";
-                            /** @description The window, inclusive; in activity-day mode the first returned day, empty when none was. */
+                            /** @description The window, inclusive; in track-day mode the first returned day, empty when none was. */
                             from: string;
-                            /** @description The window, inclusive; in activity-day mode the last returned day, empty when none was. */
+                            /** @description The window, inclusive; in track-day mode the last returned day, empty when none was. */
                             to: string;
                             buckets: {
                                 /** Format: date */
@@ -1833,7 +1833,7 @@ export interface paths {
                             }[];
                             /**
                              * Format: date
-                             * @description The local day of the first activity at all (in the Story, with story); missing when there is none.
+                             * @description The local day of the first track at all (in the Trip, with trip); missing when there is none.
                              */
                             earliest?: string;
                         };
@@ -1852,14 +1852,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/graph-stats": {
+    "/tracks/graph-stats": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** The activity graph's cards, for one year and for all time */
+        /** The track graph's cards, for one year and for all time */
         get: {
             parameters: {
                 query?: {
@@ -1880,8 +1880,8 @@ export interface paths {
                     content: {
                         "application/json": {
                             year: number;
-                            year_stats: components["schemas"]["ActivityStatsBlock"];
-                            all_time: components["schemas"]["ActivityStatsBlock"];
+                            year_stats: components["schemas"]["TrackStatsBlock"];
+                            all_time: components["schemas"]["TrackStatsBlock"];
                         };
                     };
                 };
@@ -1898,7 +1898,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/trends": {
+    "/tracks/trends": {
         parameters: {
             query?: never;
             header?: never;
@@ -1958,22 +1958,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/{id}/track-metrics": {
+    "/tracks/{id}/route-metrics": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["ActivityID"];
+                id: components["parameters"]["TrackID"];
             };
             cookie?: never;
         };
-        /** The stored track's points with their speed, and its pace bands */
+        /** The stored route's points with their speed, and its pace bands */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["ActivityID"];
+                    id: components["parameters"]["TrackID"];
                 };
                 cookie?: never;
             };
@@ -1987,7 +1987,7 @@ export interface paths {
                     content: {
                         "application/json": {
                             /** Format: uuid */
-                            activity_id: string;
+                            track_id: string;
                             points: {
                                 lon: number;
                                 lat: number;
@@ -1995,7 +1995,7 @@ export interface paths {
                                 /** @description Unix seconds. */
                                 time_s: number;
                             }[];
-                            /** @description Runs of points by pace band, slowest 0 to fastest 4, over the track's own speeds; neighbouring runs share their boundary point. */
+                            /** @description Runs of points by pace band, slowest 0 to fastest 4, over the route's own speeds; neighbouring runs share their boundary point. */
                             bands: {
                                 band: number;
                                 /** @description The run's first point's index. */
@@ -2019,22 +2019,22 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/{id}/track-points": {
+    "/tracks/{id}/route-points": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["ActivityID"];
+                id: components["parameters"]["TrackID"];
             };
             cookie?: never;
         };
-        /** Every point the activity was processed from, clipped by Private locations, and the user's edit of them */
+        /** Every point the track was processed from, clipped by Private locations, and the user's edit of them */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["ActivityID"];
+                    id: components["parameters"]["TrackID"];
                 };
                 cookie?: never;
             };
@@ -2053,7 +2053,7 @@ export interface paths {
                                 number,
                                 number
                             ][];
-                            edit: components["schemas"]["TrackEdit"] | null;
+                            edit: components["schemas"]["RouteEdit"] | null;
                         };
                     };
                 };
@@ -2073,33 +2073,33 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/activities/{id}/track-edit": {
+    "/tracks/{id}/route-edit": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["ActivityID"];
+                id: components["parameters"]["TrackID"];
             };
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /** Replace the activity's track edit, optionally splitting it; reprocessed in a job */
+        /** Replace the track's route edit, optionally splitting it; reprocessed in a job */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["ActivityID"];
+                    id: components["parameters"]["TrackID"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
                     "application/json": {
-                        /** @description The complete new edit, not a delta; null or empty resets to the original track. */
-                        edit?: components["schemas"]["TrackEdit"] | null;
-                        /** @description Also split the activity at this point (unix milliseconds). */
+                        /** @description The complete new edit, not a delta; null or empty resets to the original route. */
+                        edit?: components["schemas"]["RouteEdit"] | null;
+                        /** @description Also split the track at this point (unix milliseconds). */
                         split_at?: number | null;
                         /** @description Go ahead with a split that leaves a piece entirely inside Private locations. */
                         allow_hidden?: boolean;
@@ -2107,7 +2107,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description Queued; the activity reads pending until it's done */
+                /** @description Queued; the track reads pending until it's done */
                 202: {
                     headers: {
                         [name: string]: unknown;
@@ -2119,7 +2119,7 @@ export interface paths {
                 403: components["responses"]["Forbidden"];
                 404: components["responses"]["Error"];
                 409: components["responses"]["Error"];
-                /** @description The split would leave a piece with no track; resend with allow_hidden once the user agrees */
+                /** @description The split would leave a piece with no route; resend with allow_hidden once the user agrees */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -2300,14 +2300,14 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * One activity's photos, or those of every activity in a Story, in route order
-         * @description Exactly one of activity and story; activity wins when both are sent.
+         * One track's photos, or those of every track in a Trip, in route order
+         * @description Exactly one of track and trip; track wins when both are sent.
          */
         get: {
             parameters: {
                 query?: {
-                    activity?: string;
-                    story?: string;
+                    track?: string;
+                    trip?: string;
                 };
                 header?: never;
                 path?: never;
@@ -2334,7 +2334,7 @@ export interface paths {
         };
         put?: never;
         /**
-         * Add a photo to an activity, placed on its track
+         * Add a photo to a track, placed on its route
          * @description The client sends a resized copy and its thumbnail, plus what it read from the original's EXIF before resizing. One the server can't place is refused with 422 photo_needs_place, and the client sends it again with the user's route_at.
          */
         post: {
@@ -2347,7 +2347,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "multipart/form-data": {
-                        activity_id: string;
+                        track_id: string;
                         /**
                          * Format: binary
                          * @description JPEG or WebP, at most 3 MiB and 2560 px on its long side.
@@ -2364,7 +2364,7 @@ export interface paths {
                         taken_local?: string;
                         lat?: number;
                         lon?: number;
-                        /** @description RFC 3339, where on the track the user put it. */
+                        /** @description RFC 3339, where on the route the user put it. */
                         route_at?: string;
                         /** @description Trimmed; empty means none. */
                         caption?: string;
@@ -2385,7 +2385,7 @@ export interface paths {
                 401: components["responses"]["Unauthenticated"];
                 403: components["responses"]["Forbidden"];
                 404: components["responses"]["Error"];
-                /** @description The account has the most photos allowed, or the activity has no track to put it on */
+                /** @description The account has the most photos allowed, or the track has no route to put it on */
                 409: {
                     headers: {
                         [name: string]: unknown;
@@ -2396,7 +2396,7 @@ export interface paths {
                 };
                 413: components["responses"]["Error"];
                 415: components["responses"]["Error"];
-                /** @description photo_needs_place when nothing places the photo on the track (ask the user where and send route_at); photo_dimensions when an image is larger on a side than allowed */
+                /** @description photo_needs_place when nothing places the photo on the route (ask the user where and send route_at); photo_dimensions when an image is larger on a side than allowed */
                 422: {
                     headers: {
                         [name: string]: unknown;
@@ -2437,7 +2437,7 @@ export interface paths {
             requestBody: {
                 content: {
                     "application/json": {
-                        activity_id: string;
+                        track_id: string;
                         /** @description RFC 3339; missing or empty when unknown. */
                         taken_at?: string;
                         /** @description 2006-01-02T15:04:05; missing or empty when unknown. */
@@ -2532,7 +2532,7 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Change a photo's caption or its place on the track; only the fields sent change */
+        /** Change a photo's caption or its place on the route; only the fields sent change */
         patch: {
             parameters: {
                 query?: never;
@@ -2549,7 +2549,7 @@ export interface paths {
                         caption?: string | null;
                         /**
                          * Format: date-time
-                         * @description The photo's new moment on the track, clamped to it. Null is a 400.
+                         * @description The photo's new moment on the route, clamped to it. Null is a 400.
                          */
                         route_at?: string;
                     };
@@ -2691,7 +2691,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** How many of the account's activities its Private locations hide entirely */
+        /** How many of the account's tracks its Private locations hide entirely */
         get: {
             parameters: {
                 query?: never;
@@ -2701,7 +2701,7 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The count, of the activities the list marks private */
+                /** @description The count, of the tracks the list marks private */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -2795,14 +2795,14 @@ export interface paths {
         };
         trace?: never;
     };
-    "/stories": {
+    "/trips": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** The signed-in account's Stories, newest first, each with its members and statistics */
+        /** The signed-in account's Trips, newest first, each with its members and statistics */
         get: {
             parameters: {
                 query?: never;
@@ -2812,14 +2812,14 @@ export interface paths {
             };
             requestBody?: never;
             responses: {
-                /** @description The Stories */
+                /** @description The Trips */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
                         "application/json": {
-                            stories: components["schemas"]["Story"][];
+                            trips: components["schemas"]["Trip"][];
                         };
                     };
                 };
@@ -2829,8 +2829,8 @@ export interface paths {
         };
         put?: never;
         /**
-         * Create a Story, optionally with its first activities
-         * @description Any activity that isn't the caller's own fails the whole request with a 404 and creates nothing.
+         * Create a Trip, optionally with its first tracks
+         * @description Any track that isn't the caller's own fails the whole request with a 404 and creates nothing.
          */
         post: {
             parameters: {
@@ -2841,17 +2841,17 @@ export interface paths {
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["StoryCreateInput"];
+                    "application/json": components["schemas"]["TripCreateInput"];
                 };
             };
             responses: {
-                /** @description The new Story */
+                /** @description The new Trip */
                 201: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["Story"];
+                        "application/json": components["schemas"]["Trip"];
                     };
                 };
                 400: components["responses"]["Error"];
@@ -2866,34 +2866,34 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/stories/{id}": {
+    "/trips/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["StoryID"];
+                id: components["parameters"]["TripID"];
             };
             cookie?: never;
         };
-        /** One of the signed-in account's Stories */
+        /** One of the signed-in account's Trips */
         get: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["StoryID"];
+                    id: components["parameters"]["TripID"];
                 };
                 cookie?: never;
             };
             requestBody?: never;
             responses: {
-                /** @description The Story */
+                /** @description The Trip */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["Story"];
+                        "application/json": components["schemas"]["Trip"];
                     };
                 };
                 401: components["responses"]["Unauthenticated"];
@@ -2903,13 +2903,13 @@ export interface paths {
         };
         put?: never;
         post?: never;
-        /** Delete a Story; its activities stay */
+        /** Delete a Trip; its tracks stay */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["StoryID"];
+                    id: components["parameters"]["TripID"];
                 };
                 cookie?: never;
             };
@@ -2929,29 +2929,29 @@ export interface paths {
         };
         options?: never;
         head?: never;
-        /** Rename a Story or change its description (a full replace) */
+        /** Rename a Trip or change its description (a full replace) */
         patch: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["StoryID"];
+                    id: components["parameters"]["TripID"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["StoryInput"];
+                    "application/json": components["schemas"]["TripInput"];
                 };
             };
             responses: {
-                /** @description The Story as saved */
+                /** @description The Trip as saved */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["Story"];
+                        "application/json": components["schemas"]["Trip"];
                     };
                 };
                 400: components["responses"]["Error"];
@@ -2962,43 +2962,43 @@ export interface paths {
         };
         trace?: never;
     };
-    "/stories/{id}/activities": {
+    "/trips/{id}/tracks": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["StoryID"];
+                id: components["parameters"]["TripID"];
             };
             cookie?: never;
         };
         get?: never;
         put?: never;
         /**
-         * Add activities to a Story
-         * @description One already in the Story is left as it is; one that isn't the caller's own fails the whole request with a 404 and adds nothing.
+         * Add tracks to a Trip
+         * @description One already in the Trip is left as it is; one that isn't the caller's own fails the whole request with a 404 and adds nothing.
          */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["StoryID"];
+                    id: components["parameters"]["TripID"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["StoryActivitiesInput"];
+                    "application/json": components["schemas"]["TripTracksInput"];
                 };
             };
             responses: {
-                /** @description The Story as saved */
+                /** @description The Trip as saved */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["Story"];
+                        "application/json": components["schemas"]["Trip"];
                     };
                 };
                 400: components["responses"]["Error"];
@@ -3007,29 +3007,29 @@ export interface paths {
                 404: components["responses"]["Error"];
             };
         };
-        /** Take activities out of a Story; an id not in it is ignored, and the activities stay */
+        /** Take tracks out of a Trip; an id not in it is ignored, and the tracks stay */
         delete: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["StoryID"];
+                    id: components["parameters"]["TripID"];
                 };
                 cookie?: never;
             };
             requestBody: {
                 content: {
-                    "application/json": components["schemas"]["StoryActivitiesInput"];
+                    "application/json": components["schemas"]["TripTracksInput"];
                 };
             };
             responses: {
-                /** @description The Story as saved */
+                /** @description The Trip as saved */
                 200: {
                     headers: {
                         [name: string]: unknown;
                     };
                     content: {
-                        "application/json": components["schemas"]["Story"];
+                        "application/json": components["schemas"]["Trip"];
                     };
                 };
                 400: components["responses"]["Error"];
@@ -3043,19 +3043,19 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/stories/{id}/send": {
+    "/trips/{id}/send": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["StoryID"];
+                id: components["parameters"]["TripID"];
             };
             cookie?: never;
         };
         get?: never;
         put?: never;
         /**
-         * Send a copy of a Story to another account by email address
+         * Send a copy of a Trip to another account by email address
          * @description 204 whether or not the address belongs to an account that can receive it, so the answer doesn't tell the sender who has an account.
          */
         post: {
@@ -3063,7 +3063,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["StoryID"];
+                    id: components["parameters"]["TripID"];
                 };
                 cookie?: never;
             };
@@ -3095,14 +3095,14 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/story-sends": {
+    "/trip-sends": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** Copies of Stories waiting for the signed-in account, newest first, and accepted ones still being copied */
+        /** Copies of Trips waiting for the signed-in account, newest first, and accepted ones still being copied */
         get: {
             parameters: {
                 query?: never;
@@ -3122,15 +3122,15 @@ export interface paths {
                             sends: {
                                 /** Format: uuid */
                                 id: string;
-                                story_name: string;
+                                trip_name: string;
                                 /** @description The sender's name, or their email address when they've set none. */
                                 from: string;
                                 /** Format: date-time */
                                 sent_at: string;
-                                activity_count: number;
+                                track_count: number;
                             }[];
                             copying: {
-                                story_name: string;
+                                trip_name: string;
                                 from: string;
                             }[];
                         };
@@ -3148,24 +3148,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/story-sends/{id}/accept": {
+    "/trip-sends/{id}/accept": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["StorySendID"];
+                id: components["parameters"]["TripSendID"];
             };
             cookie?: never;
         };
         get?: never;
         put?: never;
-        /** Accept a copy; the Story arrives once its copy job has run */
+        /** Accept a copy; the Trip arrives once its copy job has run */
         post: {
             parameters: {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["StorySendID"];
+                    id: components["parameters"]["TripSendID"];
                 };
                 cookie?: never;
             };
@@ -3191,12 +3191,12 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/story-sends/{id}": {
+    "/trip-sends/{id}": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                id: components["parameters"]["StorySendID"];
+                id: components["parameters"]["TripSendID"];
             };
             cookie?: never;
         };
@@ -3209,7 +3209,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    id: components["parameters"]["StorySendID"];
+                    id: components["parameters"]["TripSendID"];
                 };
                 cookie?: never;
             };
@@ -3282,13 +3282,13 @@ export interface paths {
                                 finished_at?: string;
                                 /**
                                  * Format: date-time
-                                 * @description The activity's start, once there is one, like timezone, distance_meters and activity_id.
+                                 * @description The track's start, once there is one, like timezone, distance_meters and track_id.
                                  */
                                 started_at?: string;
                                 timezone?: string;
                                 distance_meters?: number;
                                 /** Format: uuid */
-                                activity_id?: string;
+                                track_id?: string;
                             }[];
                         };
                     };
@@ -3454,7 +3454,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/sync/activities": {
+    "/sync/tracks": {
         parameters: {
             query?: never;
             header?: never;
@@ -3464,8 +3464,8 @@ export interface paths {
         get?: never;
         put?: never;
         /**
-         * Send activities recorded on the device or read from a health service, as points
-         * @description Each activity gets its own result; one rejected doesn't stop the rest.
+         * Send tracks recorded on the device or read from a health service, as points
+         * @description Each track gets its own result; one rejected doesn't stop the rest.
          */
         post: {
             parameters: {
@@ -3478,10 +3478,10 @@ export interface paths {
                 content: {
                     "application/json": {
                         source: components["schemas"]["SyncSource"];
-                        activities?: {
-                            /** @description The source's own id; one that doesn't match SyncExternalID rejects that activity, not the request. */
+                        tracks?: {
+                            /** @description The source's own id; one that doesn't match SyncExternalID rejects that track, not the request. */
                             external_id: string;
-                            activity_type?: string;
+                            track_type?: string;
                             name?: string;
                             description?: string;
                             points?: {
@@ -3496,7 +3496,7 @@ export interface paths {
                 };
             };
             responses: {
-                /** @description One result per activity, in the order sent */
+                /** @description One result per track, in the order sent */
                 200: {
                     headers: {
                         [name: string]: unknown;
@@ -3856,7 +3856,7 @@ export interface components {
         };
         /** @description Every error the API sends (docs/SPEC.md §1.4). A client branches on error, never on message. */
         Error: {
-            /** @description A stable code: a failure's own (photo_no_track), or its status's generic one (invalid_request, unauthenticated, forbidden, not_found, conflict, gone, payload_too_large, unsupported_type, unprocessable, rate_limited, unavailable, internal). */
+            /** @description A stable code: a failure's own (photo_no_route), or its status's generic one (invalid_request, unauthenticated, forbidden, not_found, conflict, gone, payload_too_large, unsupported_type, unprocessable, rate_limited, unavailable, internal). */
             error: string;
             /** @description For a person, in the request's language when the server has it translated. */
             message: string;
@@ -3907,21 +3907,21 @@ export interface components {
                 url: string;
             }[];
         };
-        ActivityRow: {
+        TrackRow: {
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             started_at: string;
             /** @description The IANA zone it was recorded in; a client shows its times in it. */
             timezone: string;
-            activity_type: string;
+            track_type: string;
             name: string | null;
             distance_meters: number | null;
             duration_seconds: number | null;
-            /** @description The time a client shows for the activity, as Stories and Trends sum it; elapsed time where the source gave no moving time. */
+            /** @description The time a client shows for the track, as Trips and Trends sum it; elapsed time where the source gave no moving time. */
             moving_seconds: number | null;
             description: string | null;
-            /** @description [minLon, minLat, maxLon, maxLat], or null when the activity has no track. */
+            /** @description [minLon, minLat, maxLon, maxLat], or null when the track has no route. */
             bbox: [
                 number,
                 number,
@@ -3932,10 +3932,10 @@ export interface components {
             edited: boolean;
             private: boolean;
             /**
-             * @description Why Edit track can't open for this activity (docs/SPEC.md FR-5.7); absent when it can.
+             * @description Why Edit route can't open for this track (docs/SPEC.md FR-5.7); absent when it can.
              * @enum {string}
              */
-            track_edit?: "pending" | "private" | "no_original" | "bad_times";
+            route_edit?: "pending" | "private" | "no_original" | "bad_times";
             /**
              * @description Why photos can't be added to it (docs/SPEC.md FR-15.1); absent when they can.
              * @enum {string}
@@ -3949,14 +3949,14 @@ export interface components {
                 /** Format: int64 */
                 to: number | null;
             } | null;
-            stories: {
+            trips: {
                 /** Format: uuid */
                 id: string;
                 name: string;
             }[];
         };
-        /** @description What a client shows for each activity type, keyed by the type as stored (docs/SPEC.md FR-5.1). */
-        ActivityTypes: {
+        /** @description What a client shows for each track type, keyed by the type as stored (docs/SPEC.md FR-5.1). */
+        TrackTypes: {
             [key: string]: {
                 /** @description The type's name in the request's language: the catalog's, else the type spaced out from snake_case and title-cased. */
                 label: string;
@@ -3974,14 +3974,14 @@ export interface components {
             external_id: string;
             filename: string;
         };
-        /** @description An activity as a list row shows it; GET /activities/{id} has the rest. */
-        AreaActivityRow: {
+        /** @description A track as a list row shows it; GET /tracks/{id} has the rest. */
+        AreaTrackRow: {
             /** Format: uuid */
             id: string;
             /** Format: date-time */
             started_at: string;
             timezone: string;
-            activity_type: string;
+            track_type: string;
             name: string | null;
             distance_meters: number | null;
             moving_seconds: number | null;
@@ -3993,20 +3993,20 @@ export interface components {
             ] | null;
             pending: boolean;
             private: boolean;
-            stories: {
+            trips: {
                 /** Format: uuid */
                 id: string;
                 name: string;
             }[];
         };
-        ActivityStatsBlock: {
+        TrackStatsBlock: {
             count: number;
             distance_meters: number;
             active_days: number;
             longest_streak_days: number;
         };
         /** @description Points are addressed by their timestamp, in unix milliseconds. */
-        TrackEdit: {
+        RouteEdit: {
             /** @description [first, last]: only the points in this range are kept. */
             keep?: [
                 number,
@@ -4188,7 +4188,7 @@ export interface components {
             /** Format: uuid */
             id: string;
             /** Format: uuid */
-            activity_id: string;
+            track_id: string;
             /**
              * Format: date-time
              * @description When the camera says it was taken; null when it didn't say.
@@ -4196,12 +4196,12 @@ export interface components {
             taken_at: string | null;
             /**
              * Format: date-time
-             * @description Its moment on the track, which places it there.
+             * @description Its moment on the route, which places it there.
              */
             route_at: string;
-            /** @description The activity's IANA zone; a client shows the photo's times in it. */
+            /** @description The track's IANA zone; a client shows the photo's times in it. */
             timezone: string;
-            /** @description Its position on the track at route_at; null when the activity has no track. */
+            /** @description Its position on the route at route_at; null when the track has no route. */
             lon: number | null;
             lat: number | null;
             caption: string | null;
@@ -4226,7 +4226,7 @@ export interface components {
             lat: number;
             radius_m: number;
         };
-        Story: {
+        Trip: {
             /** Format: uuid */
             id: string;
             name: string;
@@ -4235,19 +4235,19 @@ export interface components {
             created_at: string;
             /** Format: date-time */
             updated_at: string;
-            /** @description Who sent the copy this Story came from, while the Story it was copied from still exists; null for the account's own. */
+            /** @description Who sent the copy this Trip came from, while the Trip it was copied from still exists; null for the account's own. */
             from: string | null;
-            /** @description Every member, oldest activity first. */
-            activity_ids: string[];
+            /** @description Every member, oldest track first. */
+            track_ids: string[];
             /** @description Joint statistics over every member, with no date bound. */
             stats: {
                 count: number;
                 distance_meters: number;
                 moving_seconds: number;
                 elapsed_seconds: number;
-                /** @description The same per activity type, most frequent first. */
+                /** @description The same per track type, most frequent first. */
                 by_type: {
-                    activity_type: string;
+                    track_type: string;
                     /** @description The type's name in the request's language. */
                     label: string;
                     count: number;
@@ -4259,29 +4259,29 @@ export interface components {
         };
         /** @description Trimmed; blank is a 400. */
         name: string;
-        /** @description Trimmed; missing or empty leaves the Story without one. */
+        /** @description Trimmed; missing or empty leaves the Trip without one. */
         description: string;
         /** @description Duplicates are ignored; missing or null adds none. */
-        ActivityIDs: string[] | null;
-        /** @description StoryInput, and the Story's first activities. */
-        StoryCreateInput: {
+        TrackIDs: string[] | null;
+        /** @description TripInput, and the Trip's first tracks. */
+        TripCreateInput: {
             name: components["schemas"]["name"];
             description?: components["schemas"]["description"];
-            activity_ids?: components["schemas"]["ActivityIDs"];
+            track_ids?: components["schemas"]["TrackIDs"];
         };
-        StoryInput: {
+        TripInput: {
             /** @description Trimmed; blank is a 400. */
             name: string;
-            /** @description Trimmed; missing or empty leaves the Story without one. */
+            /** @description Trimmed; missing or empty leaves the Trip without one. */
             description?: string;
         };
-        StoryActivitiesInput: {
+        TripTracksInput: {
             /** @description Duplicates are ignored. */
-            activity_ids: string[];
+            track_ids: string[];
         };
         /** @enum {string} */
         SyncSource: "healthconnect" | "healthkit" | "recorded";
-        /** @description The source's own id for the activity. */
+        /** @description The source's own id for the track. */
         SyncExternalID: string;
         /** @description A place; each text field is missing when the map data has none. */
         Spot: {
@@ -4388,7 +4388,7 @@ export interface components {
                 };
             };
         };
-        /** @description The account is at its activity or storage limit */
+        /** @description The account is at its track or storage limit */
         OverLimit: {
             headers: {
                 [name: string]: unknown;
@@ -4400,7 +4400,7 @@ export interface components {
                 };
             };
         };
-        /** @description Nothing places the photo on the track; ask the user where and send route_at */
+        /** @description Nothing places the photo on the route; ask the user where and send route_at */
         PhotoNeedsPlace: {
             headers: {
                 [name: string]: unknown;
@@ -4434,14 +4434,14 @@ export interface components {
         FilterFrom: string;
         /** @description Local start date, inclusive. */
         FilterTo: string;
-        /** @description Comma-separated activity types. */
+        /** @description Comma-separated track types. */
         FilterTypes: string;
-        /** @description One Story's activities only. */
-        FilterStory: string;
-        ActivityID: string;
+        /** @description One Trip's tracks only. */
+        FilterTrip: string;
+        TrackID: string;
         PhotoID: string;
-        StoryID: string;
-        StorySendID: string;
+        TripID: string;
+        TripSendID: string;
         SpotID: string;
     };
     requestBodies: never;

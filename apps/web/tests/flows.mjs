@@ -46,7 +46,7 @@ async function waitForServer(url, timeoutMs = 60_000) {
 }
 
 async function call(method, path, data) {
-  const res = await context.request.fetch(`${API_BASE}/v1${path}`, { method, data });
+  const res = await context.request.fetch(`${API_BASE}/v2${path}`, { method, data });
   if (!res.ok()) throw new Error(`${method} ${path}: ${res.status()} ${await res.text()}`);
   return res.status() === 204 ? null : res.json();
 }
@@ -55,9 +55,9 @@ async function call(method, path, data) {
 async function settledTracks(expected, timeoutMs = 90_000) {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const { activities: tracks } = await call('GET', '/activities');
+    const { tracks } = await call('GET', '/tracks');
     if (tracks.length === expected && tracks.every((a) => !a.pending)) return tracks;
-    if (Date.now() > deadline) throw new Error(`expected ${expected} settled activities, have ${JSON.stringify(tracks.map((a) => [a.id, a.pending]))}`);
+    if (Date.now() > deadline) throw new Error(`expected ${expected} settled tracks, have ${JSON.stringify(tracks.map((a) => [a.id, a.pending]))}`);
     await new Promise((r) => setTimeout(r, 500));
   }
 }
@@ -65,7 +65,7 @@ async function settledTracks(expected, timeoutMs = 90_000) {
 /** The map framed on every track, and the list following it (docs/SPEC.md FR-5.11). A camera
  *  move from here counts as the user's. */
 async function viewAll() {
-  const { activities: tracks } = await call('GET', '/activities');
+  const { tracks } = await call('GET', '/tracks');
   const boxes = tracks.map((a) => a.bbox).filter(Boolean);
   const box = [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
   await page.evaluate((b) => window.__holdmytrack.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 80, animate: false }), box);
@@ -111,7 +111,7 @@ describe('map flows', () => {
     for (const name of SAMPLES) {
       const sample = await context.request.get(`${API_BASE}/static/testing/${name}`);
       assert.ok(sample.ok(), `sample ${name}: ${sample.status()}`);
-      const upload = await context.request.post(`${API_BASE}/v1/activities/upload`, {
+      const upload = await context.request.post(`${API_BASE}/v2/tracks/upload`, {
         multipart: { file: { name, mimeType: 'application/octet-stream', buffer: await sample.body() } },
       });
       assert.ok(upload.ok(), `upload ${name}: ${upload.status()} ${await upload.text()}`);
@@ -145,7 +145,7 @@ describe('map flows', () => {
   });
 
   it('3. the Trips tab opens the newest Trip in the URL, and Back returns to the area', async () => {
-    await call('POST', '/stories', { name: 'Flows trip', activity_ids: [ids['2026-10-01'], ids['2026-10-06']] });
+    await call('POST', '/trips', { name: 'Flows trip', track_ids: [ids['2026-10-01'], ids['2026-10-06']] });
     await page.getByRole('tab', { name: 'Trips' }).click();
     await page.waitForURL(/[?&]trip=/, { timeout: 30_000 });
     await page.waitForFunction(() => document.querySelectorAll('li[data-track-id]').length === 2, undefined, { timeout: 30_000 });
@@ -167,7 +167,7 @@ describe('map flows', () => {
   it('4. an applied track edit goes Pending, and the poll picks up the shorter track', async () => {
     const id = ids['2026-10-05'];
     await viewAll();
-    const before = (await call('GET', '/activities')).activities.find((a) => a.id === id).distance_meters;
+    const before = (await call('GET', '/tracks')).tracks.find((a) => a.id === id).distance_meters;
     const metaBefore = await row(id).locator('.tracks-panel__meta').textContent();
     await row(id).locator('.tracks-panel__text').click();
     await page.locator('.tracks-panel__edit').click();
@@ -204,7 +204,7 @@ describe('map flows', () => {
     await page.locator('.confirm-dialog__confirm').click();
     await row(id).waitFor({ state: 'detached', timeout: 30_000 });
     assert.equal(await checkedBoxes().count(), 0);
-    const { activities: tracks } = await call('GET', '/activities');
+    const { tracks } = await call('GET', '/tracks');
     assert.equal(tracks.some((a) => a.id === id), false);
   });
 
@@ -239,7 +239,7 @@ describe('map flows', () => {
   it('8. the Edit window outlives its row in the list, and its track edit is still followed until it lands', async () => {
     const id = ids['2026-10-01'];
     await viewAll();
-    const before = (await call('GET', '/activities')).activities.find((a) => a.id === id).distance_meters;
+    const before = (await call('GET', '/tracks')).tracks.find((a) => a.id === id).distance_meters;
     await row(id).locator('.tracks-panel__text').click();
     await page.locator('.tracks-panel__edit').click();
     const name = page.getByTestId('edit-track-window').getByLabel('Name');
@@ -258,7 +258,7 @@ describe('map flows', () => {
     // The Pending checks, and the days read again once an edit counts as landed.
     const requests = [];
     const record = (request) => {
-      const kind = ['/v1/activities/pending', '/v1/activities/histogram'].find((path) => request.url().includes(path));
+      const kind = ['/v2/tracks/pending', '/v2/tracks/histogram'].find((path) => request.url().includes(path));
       if (kind) requests.push(kind);
     };
     page.on('request', record);
@@ -277,9 +277,9 @@ describe('map flows', () => {
     page.off('request', record);
     // No list shows the row, so the check alone says the edit has landed: the map reads its data
     // again after the last one, not when the first list came back without the row.
-    const lastCheck = requests.lastIndexOf('/v1/activities/pending');
+    const lastCheck = requests.lastIndexOf('/v2/tracks/pending');
     assert.ok(lastCheck >= 0, 'the Pending check never ran');
-    assert.ok(requests.lastIndexOf('/v1/activities/histogram') > lastCheck, `nothing was read again after the edit landed: ${requests.join(' ')}`);
+    assert.ok(requests.lastIndexOf('/v2/tracks/histogram') > lastCheck, `nothing was read again after the edit landed: ${requests.join(' ')}`);
     await viewAll();
     assert.equal(await row(id).evaluate((el) => el.classList.contains('tracks-panel__row--pending')), false);
   });

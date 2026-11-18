@@ -35,6 +35,6 @@ export function kindIcon(kind: TrackKind): LucideIcon {
   return icons[kind];
 }
 
-export function typeIcon(activityType: string): LucideIcon {
-  return kindIcon(typeKind(activityType));
+export function typeIcon(trackType: string): LucideIcon {
+  return kindIcon(typeKind(trackType));
 }

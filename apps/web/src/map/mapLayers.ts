@@ -12,7 +12,7 @@ import type { FogLevelBand } from './fogLevels.ts';
  * Every layer HoldMyTrack draws over the basemap, as one document per flavor and account
  * (ARCHITECTURE.md §2.1, ADR-0048): the groups in paint order, what each mode shows and how, the
  * zoom tiers and the defaults of the values a client binds at run time. The server serves it as
- * `GET /v1/map/layers`, rendered from this module by build-style.mjs; the web builds it
+ * `GET /v2/map/layers`, rendered from this module by build-style.mjs; the web builds it
  * in-process. Clients apply it as it comes (applyLayers.ts, Android's `MapLayers`), holding no
  * look of their own. Pure and DOM-free, like style.ts.
  *

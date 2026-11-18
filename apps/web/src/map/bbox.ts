@@ -4,7 +4,7 @@ import type { BBox } from '../api.ts';
 /**
  * Flying the map to a track's bounds.
  *
- * The bounds come from `GET /v1/activities`'s per-row `bbox` (§4.7) rather than from the
+ * The bounds come from `GET /v2/tracks`'s per-row `bbox` (§4.7) rather than from the
  * rendered tiles: a track outside the current viewport isn't in any loaded tile, so asking
  * the map where it is would only ever work for tracks already on screen.
  */

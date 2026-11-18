@@ -57,7 +57,7 @@ export function TrackRow({
   // `ORDER BY started_at DESC`, never from this label.
   const displayName = track.name?.trim() || null;
   const label = rowLabel(track);
-  const TypeIcon = typeIcon(track.activityType);
+  const TypeIcon = typeIcon(track.trackType);
   const classes = ['tracks-panel__row'];
   // Only the selected row is bold on the map, so only it gets the row highlight — a checked
   // row's ticked box is its only mark.
@@ -106,7 +106,7 @@ export function TrackRow({
               {formatDistance(track.distanceMeters, system)} · {formatDuration(track.movingSeconds)} ·{' '}
             </>
           )}
-          {formatTrackType(track.activityType)}
+          {formatTrackType(track.trackType)}
         </span>
       </button>
       {(isPending || hidden || track.private || otherTrips.length > 0) && (

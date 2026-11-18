@@ -148,7 +148,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         case "checksCleared": panel.clearChecked()
         case "checksInverted": panel.invertChecked()
         case "visibilityToggled": panel.toggleTargetVisibility()
-        case "typeToggled": panel.toggleType(event["activityType"].string!)
+        case "typeToggled": panel.toggleType(event["trackType"].string!)
         case "distanceSet": panel.distanceFilter = distance(event["filter"])
         case "filtersReset": panel.resetFilters()
         case "listLoaded":
@@ -432,7 +432,8 @@ func distanceJSON(_ range: DistanceRange?) -> RuleJSON {
 }
 
 func track(_ json: RuleJSON, id: String = "a") -> TrackSummary {
-    TrackSummary(id: json["id"].string ?? id, activityType: json["activityType"].string!, distanceMeters: json["distanceMeters"].double, isPrivate: json["private"].bool ?? false)
+    // The case's trackType onto the model's activityType, until iOS moves to /v2.
+    TrackSummary(id: json["id"].string ?? id, activityType: json["trackType"].string!, distanceMeters: json["distanceMeters"].double, isPrivate: json["private"].bool ?? false)
 }
 
 func tracks(_ json: RuleJSON) -> [TrackSummary] { (json.list ?? []).map { track($0) } }

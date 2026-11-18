@@ -52,7 +52,7 @@ const CATEGORY_ICONS: Record<SpotCategory, ComponentType<LucideProps>> = {
   history: Castle,
 };
 
-/** One place as `GET /v1/spots` returns it (api.ts), text fields absent when OSM has none. */
+/** One place as `GET /v2/spots` returns it (api.ts), text fields absent when OSM has none. */
 export type SpotInArea = components['schemas']['Spot'];
 
 /** One spot as the popup needs it — a tile feature's properties, typed. */

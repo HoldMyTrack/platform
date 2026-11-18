@@ -78,7 +78,7 @@ export function typeFacets(tracks: Track[], distanceFilter: DistanceRange | null
   const counts = new Map<string, number>();
   for (const a of tracks) {
     if (!passesDistance(a, distanceFilter)) continue;
-    counts.set(a.activityType, (counts.get(a.activityType) ?? 0) + 1);
+    counts.set(a.trackType, (counts.get(a.trackType) ?? 0) + 1);
   }
   return [...counts.entries()].map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count);
 }
@@ -90,7 +90,7 @@ export function passesFilters(
   excludedTypes: ReadonlySet<string>,
   distanceFilter: DistanceRange | null,
 ): boolean {
-  if (excludedTypes.has(track.activityType)) return false;
+  if (excludedTypes.has(track.trackType)) return false;
   return passesDistance(track, distanceFilter);
 }
 

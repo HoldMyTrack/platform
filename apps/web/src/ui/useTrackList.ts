@@ -19,8 +19,8 @@ interface TrackList {
 }
 
 /**
- * Reader for the list: a Trip's `GET /v1/activities?story=`, else the area's
- * `GET /v1/activities/area` (§4.7). One request, the whole set — the panel renders every row, the
+ * Reader for the list: a Trip's `GET /v2/tracks?trip=`, else the area's
+ * `GET /v2/tracks/area` (§4.7). One request, the whole set — the panel renders every row, the
  * map draws the same set, and the type/distance facets are computed over it. A null request (no
  * area yet) asks for nothing and stays loading.
  *

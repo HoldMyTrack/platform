@@ -7,7 +7,7 @@
  *
  * The page's shell carries the version the account was at when it loaded (`<meta
  * name="tile-version">`, so the first tiles don't wait on a status request); after that it
- * comes from `GET /v1/coverage/status` (useCoverageRefresh.ts). A change under an open page
+ * comes from `GET /v2/coverage/status` (useCoverageRefresh.ts). A change under an open page
  * (an upload, a delete, an Edit route) sets the new one and re-points every coverage source at
  * it, which MapLibre treats as new tiles. Module-level rather than per-map on purpose: a source
  * re-created after a theme swap (`styledata`) has to come back at the current version too.
