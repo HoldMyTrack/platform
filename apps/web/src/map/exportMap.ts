@@ -22,8 +22,8 @@ import { trackQuery } from './tracks.ts';
 /**
  * `VISION.md` §4.2's "print-grade... export", rendered in the browser (`IMPLEMENTATION.md`
  * §5.5 says why, and what to build past its ceiling). The map is already fully
- * client-rendered, so this reuses every overlay module exactly as `MapView.tsx`'s own
- * `reattachOverlays` does, just against a second, temporary, hidden `Map` instead of the live
+ * client-rendered, so this reuses every overlay module exactly as the live map's useMapLayers
+ * reattach does, just against a second, temporary, hidden `Map` instead of the live
  * one — the live map is never resized, never flickers, and never pays `preserveDrawingBuffer`'s
  * cost for a feature used rarely.
  *

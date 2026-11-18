@@ -146,7 +146,7 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
   }, [active, busy, ops.length, undo]);
 
   // Draw, and redraw after a theme swap discards custom layers (styledata) — this overlay is
-  // owned here, not by MapView's reattachOverlays, since it only exists during a session.
+  // owned here, not by useMapLayers' reattach, since it only exists during a session.
   // A point being dragged is drawn where the pointer is, its line segments following it.
   const shown = useMemo(
     () => (dragging ? visible.map((p): TrackPoint => (p[2] === dragging.t ? [dragging.lon, dragging.lat, p[2]] : p)) : visible),

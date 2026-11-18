@@ -334,7 +334,7 @@ function satelliteSourceSpec(satellite: SatelliteSource): RasterSourceSpecificat
 }
 
 /** The imagery right above the background, so everything the vector basemap draws after it —
- *  and every layer group inserted at the first symbol layer — stacks over it. */
+ *  and every layer group inserted beneath the basemap's labels — stacks over it. */
 function withSatelliteLayer(
   base: LayerSpecification[],
   hidden: string[],

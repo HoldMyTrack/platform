@@ -112,7 +112,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
   }, [map]);
 
   // Draw, and redraw after a theme swap discards custom layers (styledata) — owned here, not
-  // by MapView's reattachOverlays, since the overlay only exists while this tab is showing.
+  // by useMapLayers' reattach, since the overlay only exists while this tab is showing.
   useEffect(() => {
     const draw = () => {
       ensurePrivateLocationsLayer(map, beneathBasemapLabels(map));

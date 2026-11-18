@@ -15,7 +15,7 @@ import { t, tn } from '../i18n/index.ts';
  * HTML markers rather than a symbol layer: there are tens of them, not thousands, and each shows
  * its own image (a symbol layer would need every thumbnail added to the style as an icon, and
  * added again after every `setStyle`). Markers live outside the style, so a theme's `setStyle`
- * leaves them alone and `reattachOverlays` has nothing to do.
+ * leaves them alone and useMapLayers' reattach has nothing to do.
  */
 
 export const PHOTO_MARKER_CLASS = 'photo-marker';
