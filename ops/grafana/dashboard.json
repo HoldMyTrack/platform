@@ -887,7 +887,7 @@
     {
       "id": 18,
       "type": "timeseries",
-      "title": "Activities by source",
+      "title": "Tracks by source",
       "datasource": {
         "type": "prometheus",
         "uid": "${PROM}"
@@ -905,7 +905,7 @@
             "type": "prometheus",
             "uid": "${PROM}"
           },
-          "expr": "holdmytrack_stat{deployment=\"${DEPLOYMENT}\", key=~\"activities_by_source\\\\..+\"}",
+          "expr": "holdmytrack_stat{deployment=\"${DEPLOYMENT}\", key=~\"tracks_by_source\\\\..+\"}",
           "legendFormat": "{{key}}"
         }
       ],
@@ -928,7 +928,7 @@
     {
       "id": 19,
       "type": "timeseries",
-      "title": "Activities per account",
+      "title": "Tracks per account",
       "datasource": {
         "type": "prometheus",
         "uid": "${PROM}"
@@ -946,7 +946,7 @@
             "type": "prometheus",
             "uid": "${PROM}"
           },
-          "expr": "holdmytrack_stat{deployment=\"${DEPLOYMENT}\", key=~\"activities_per_account\\\\..+\"}",
+          "expr": "holdmytrack_stat{deployment=\"${DEPLOYMENT}\", key=~\"tracks_per_account\\\\..+\"}",
           "legendFormat": "{{key}}"
         }
       ],
@@ -965,7 +965,7 @@
           "mode": "multi"
         }
       },
-      "description": "Over accounts with at least one activity."
+      "description": "Over accounts with at least one track."
     },
     {
       "id": 20,

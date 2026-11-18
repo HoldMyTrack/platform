@@ -18,7 +18,7 @@ func TestParseArgs(t *testing.T) {
 		{args: nil, want: request{}},
 		{args: []string{"2026-10-01"}, want: request{day: d("2026-10-01")}},
 		{args: []string{"active_30d"}, want: request{key: "active_30d", days: defaultDays}},
-		{args: []string{"activities_by_source", "--days", "90"}, want: request{key: "activities_by_source", days: 90}},
+		{args: []string{"tracks_by_source", "--days", "90"}, want: request{key: "tracks_by_source", days: 90}},
 		{args: []string{"--take"}, want: request{day: d("2026-10-13"), take: true}},
 		{args: []string{"--take", "2026-10-01"}, want: request{day: d("2026-10-01"), take: true}},
 		{args: []string{"--take", "yesterday"}, bad: true},
@@ -58,11 +58,11 @@ func TestSeriesTable(t *testing.T) {
 	d1 := time.Date(2026, 10, 12, 0, 0, 0, 0, time.UTC)
 	d2 := d1.AddDate(0, 0, 1)
 	header, cells := seriesTable([]row{
-		{d2, "activities_by_source.upload", 10},
-		{d1, "activities_by_source.upload", 8},
-		{d2, "activities_by_source.healthconnect", 2},
+		{d2, "tracks_by_source.upload", 10},
+		{d1, "tracks_by_source.upload", 8},
+		{d2, "tracks_by_source.healthconnect", 2},
 	})
-	if want := []string{"day", "activities_by_source.healthconnect", "activities_by_source.upload"}; !slices.Equal(header, want) {
+	if want := []string{"day", "tracks_by_source.healthconnect", "tracks_by_source.upload"}; !slices.Equal(header, want) {
 		t.Errorf("header %v, want %v", header, want)
 	}
 	want := [][]string{{"2026-10-12", "-", "8"}, {"2026-10-13", "2", "10"}}
