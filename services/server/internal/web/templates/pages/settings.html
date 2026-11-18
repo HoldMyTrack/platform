@@ -1,3 +1,7 @@
+{{/* The Country and Timezone pickers are the only ones on these pages. */}}
+{{define "head"}}
+    <link rel="stylesheet" href="{{asset "search-picker.css"}}" />
+{{end}}
 {{define "content"}}{{with .Page}}
 <main class="page-main settings">
   {{if not (or .Onboarding $.InApp)}}<a class="settings__back" href="/">{{t "common.back_to_map"}}</a>{{end}}
