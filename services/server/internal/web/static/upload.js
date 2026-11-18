@@ -253,6 +253,14 @@
     }, Promise.resolve()).then(schedule);
   }
 
+  // Uploads live in this page's memory: leaving it (Sync, the logo, a language) drops the rest,
+  // so the browser asks first while any remain, as the Edit window does for unsaved photos.
+  window.addEventListener('beforeunload', function (event) {
+    if (transfers.length === 0) return;
+    event.preventDefault();
+    event.returnValue = '';
+  });
+
   // A button, not a label around the hidden input, so the keyboard reaches it.
   menu.querySelector('.upload-menu__choose').addEventListener('click', function () {
     input.click();
