@@ -50,6 +50,8 @@ New code puts what it decides (which screen a session goes to, whether a day is 
 
 A rule every client applies has its cases in `testdata/client-rules/` (ADR-0049): change the cases first, then every client's implementation, in the same pull request, and fix a bug in a rule by adding the failing case.
 
+A pull request that changes what an app does, its code or resources outside `docs/` and tests, raises that app's release number in the same change (`docs/DEPLOY.md` §10): patch for a fix, minor with patch reset for a feature.
+
 A file past about 600 lines is a split candidate: when adding to one, move the touched feature out first. This is not a blocker, and an API client or a parser can stay long; `scripts/check-file-size.sh` flags growth on a pull request without failing it.
 
 ## Commits and pull requests
