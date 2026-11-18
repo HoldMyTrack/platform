@@ -53,7 +53,6 @@ export const en = {
   'activities.edit_track_no_original': "This activity's original recording isn't stored, so its track can't be edited",
   'activities.edit_track_bad_times': "This track's points have no usable times, so it can't be edited",
   'activities.filter_by_type': 'Filter by type',
-  'activities.fly_to': 'Fly to {label}',
   'activities.focus_target': 'Zoom to {target}',
   'activities.footer': '{n} checked · {distance}',
   'activities.group_summary': '{activities} ({distance})',

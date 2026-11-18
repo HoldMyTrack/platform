@@ -59,7 +59,6 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'activities.edit_track_no_original': 'Исходная запись этого путешествия не сохранена, поэтому маршрут нельзя редактировать',
   'activities.edit_track_bad_times': 'У точек этого маршрута нет пригодного времени, поэтому его нельзя редактировать',
   'activities.filter_by_type': 'Фильтр по типу',
-  'activities.fly_to': 'Перейти к «{label}»',
   'activities.focus_target': 'Приблизить карту: {target}',
   'activities.footer': 'Отмечено: {n} · {distance}',
   'activities.group_summary': '{activities} ({distance})',
