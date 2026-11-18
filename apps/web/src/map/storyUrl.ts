@@ -1,4 +1,4 @@
-import type { PanelTab } from '../ui/ActivitiesPanel';
+import type { PanelTab } from '../ui/ActivitiesPanel.tsx';
 
 /** The open Story in the URL (FR-13.6), kept there so a refresh or a shared link returns to it. */
 

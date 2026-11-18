@@ -1,22 +1,22 @@
 import { useCallback, useEffect, useRef } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { basemapOrigin, satelliteSource } from './config';
-import { applyLayers, currentLayerState, setLayerToggles } from './applyLayers';
-import type { BikePathOverlays } from './bikePathsGroup';
-import { getTileVersion } from './coverageVersion';
-import { webLayers } from './webLayers';
-import { setMapMode, type MapMode } from './mapMode';
-import { setRoadsVisible } from './mapRoads';
-import { setSatelliteVisible } from './satellite';
-import { ensureSpotsLayer, type SpotCategory } from './spots';
-import { buildStyle, type Flavor } from './style';
-import { setTrackBands } from './trackBands';
-import { attachFogPlaces } from './fogPlaces';
-import { attachTrackInteractivity, refreshTrackLayer, trackQuery } from './tracks';
-import type { ActivityQuery, ActivityTrackMetrics } from '../api';
-import { lang } from '../i18n';
+import { basemapOrigin, satelliteSource } from './config.ts';
+import { applyLayers, currentLayerState, setLayerToggles } from './applyLayers.ts';
+import type { BikePathOverlays } from './bikePathsGroup.ts';
+import { getTileVersion } from './coverageVersion.ts';
+import { webLayers } from './webLayers.ts';
+import { setMapMode, type MapMode } from './mapMode.ts';
+import { setRoadsVisible } from './mapRoads.ts';
+import { setSatelliteVisible } from './satellite.ts';
+import { ensureSpotsLayer, type SpotCategory } from './spots.ts';
+import { buildStyle, type Flavor } from './style.ts';
+import { setTrackBands } from './trackBands.ts';
+import { attachFogPlaces } from './fogPlaces.ts';
+import { attachTrackInteractivity, refreshTrackLayer, trackQuery } from './tracks.ts';
+import type { ActivityQuery, ActivityTrackMetrics } from '../api.ts';
+import { lang } from '../i18n/index.ts';
 
-export interface MapLayersInputs {
+interface MapLayersInputs {
   initialFlavor: Flavor;
   flavor: Flavor;
   /** Satellite is on: its imagery layer is requested. */

@@ -1,5 +1,7 @@
-import { TRACKS_MIN_ZOOM } from './config';
+import { TRACKS_MIN_ZOOM } from './config.ts';
+import { EARTH_RADIUS_M } from '../geo.ts';
 import type { ExpressionSpecification, GeoJSONSource, LngLat, Map as MapLibreMap, MapLayerMouseEvent, MapLayerTouchEvent } from 'maplibre-gl';
+import { overlayInPlace } from './overlayOrder.ts';
 
 /**
  * The Private locations overlay (FR-7.1): every saved circle, the one being edited, and its
@@ -8,17 +10,16 @@ import type { ExpressionSpecification, GeoJSONSource, LngLat, Map as MapLibreMap
  * view or in an Export (which renders its own offscreen map from fog and tracks alone —
  * exportMap.ts).
  */
-export const PRIVATE_LOCATIONS_SOURCE_ID = 'private-locations';
+const PRIVATE_LOCATIONS_SOURCE_ID = 'private-locations';
 const FILL_LAYER_ID = 'private-locations-fill';
 const OUTLINE_LAYER_ID = 'private-locations-outline';
 const CENTER_LAYER_ID = 'private-locations-center';
 const HANDLE_LAYER_ID = 'private-locations-handle';
 
 const COLOR = '#7a4bc2';
-const EARTH_RADIUS_M = 6371008.8;
 const CIRCLE_STEPS = 64;
 
-export interface Circle {
+interface Circle {
   /** Absent for a circle not saved yet. */
   id?: string;
   lon: number;
@@ -104,6 +105,9 @@ export function ensurePrivateLocationsLayer(map: MapLibreMap, beforeId: string |
     filter: ['==', ['get', 'role'], 'handle'],
     paint: { 'circle-radius': 8, 'circle-color': COLOR, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 },
   });
+  // Back under the labels when a group added since has gone in above (overlayOrder.ts).
+  const ids = [FILL_LAYER_ID, OUTLINE_LAYER_ID, CENTER_LAYER_ID, HANDLE_LAYER_ID];
+  if (!overlayInPlace(map.getLayersOrder(), ids, beforeId)) for (const id of ids) map.moveLayer(id, beforeId);
 }
 
 /** Redraws every circle; `selected` (saved or not) is highlighted, with a drag handle when `draggable`. */
@@ -140,7 +144,7 @@ export type PrivateLocationsClick =
   | { kind: 'saved'; id: string }
   | { kind: 'empty'; lngLat: { lng: number; lat: number } };
 
-export interface PrivateLocationsHandlers {
+interface PrivateLocationsHandlers {
   onClick: (target: PrivateLocationsClick) => void;
   /** The handle being dragged, every frame. */
   onDrag: (lngLat: { lng: number; lat: number }) => void;

@@ -4,7 +4,7 @@ import {
   SATELLITE_HIDES_METADATA,
   SATELLITE_LAYER_ID,
   SATELLITE_ROAD_OPACITY,
-} from './style';
+} from './style.ts';
 
 /**
  * The Satellite button (BasemapToggle.tsx, docs/SPEC.md FR-4.10, overlays.ts): shows the satellite
@@ -12,7 +12,7 @@ import {
  * roads at `SATELLITE_ROAD_OPACITY`, or the reverse. Imagery that failed to load
  * (satelliteStatus.ts) keeps its layer, to notice a tile arriving, without the look; boundaries and place labels stay as they are either
  * way, and whether the roads show at all is the Layers menu's (overlays.ts).
- * Diffs before setting, like paths.ts: reattachOverlays calls this on every 'styledata', and an
+ * Diffs before setting, like mapRoads.ts: useMapLayers' reattach calls this on every 'styledata', and an
  * unconditional setLayoutProperty would keep re-firing it (docs/DEVELOPMENT.md). A no-op when
  * the style has no imagery (no deployment config). MapLibre CORS-fetches imagery tiles, since
  * WebGL can't draw a tainted image, so they never taint the export's canvas either.

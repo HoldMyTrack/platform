@@ -1,5 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
-import { t } from './i18n';
+import { t } from './i18n/index.ts';
 
 /**
  * Catches a throw during render or in an effect anywhere below it, which would otherwise unmount

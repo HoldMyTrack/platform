@@ -1,8 +1,8 @@
 /** Why the Edit window's Track or Photos tab can't be used for its activities, as a message key,
  *  or null. Whether one activity allows it is the server's answer (`GET /v1/activities/{id}`'s
  *  `track_edit` and `photos`); the client adds only the rule that depends on the selection. */
-import type { ActivityDetail } from '../api';
-import type { MessageKey } from '../i18n/en';
+import type { ActivityDetail } from '../api.ts';
+import type { MessageKey } from '../i18n/en.ts';
 
 const TRACK_EDIT_MESSAGES: Record<NonNullable<ActivityDetail['trackEdit']>, MessageKey> = {
   pending: 'activities.edit_track_processing',

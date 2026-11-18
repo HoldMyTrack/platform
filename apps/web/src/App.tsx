@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
-import { t } from './i18n';
-import { getCurrentUser, type SessionUser } from './api';
-import { AuthProvider } from './auth/AuthContext';
-import { MapView } from './map/MapView';
-import { setAccountTimeZone } from './ui/timeZone';
-import { VersionBanner } from './ui/VersionBanner';
-import { setFogWords } from './map/webLayers';
+import { t } from './i18n/index.ts';
+import { getCurrentUser, type SessionUser } from './api.ts';
+import { AuthProvider } from './auth/AuthContext.tsx';
+import { MapView } from './map/MapView.tsx';
+import { setAccountTimeZone } from './ui/timeZone.ts';
+import { VersionBanner } from './ui/VersionBanner.tsx';
+import { setFogWords } from './map/webLayers.ts';
 
 /**
  * The map — the one page this app is (ADR-0012): the Go server renders `/` as a shell around

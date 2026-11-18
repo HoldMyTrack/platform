@@ -1,4 +1,4 @@
-import type { MapMode } from './mapMode';
+import type { MapMode } from './mapMode.ts';
 import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
 
 /**
@@ -11,7 +11,7 @@ import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
  * bunch wherever the pace changes often.
  */
 
-export const BANDS_LAYER_ID = 'track-bands-line';
+const BANDS_LAYER_ID = 'track-bands-line';
 const ARROWS_LAYER_ID = 'track-bands-arrows';
 
 /** Blue (slowest) to red (fastest), one per band of internal/httpapi's paceBandCount. */
@@ -34,7 +34,7 @@ const OUTLINE_WIDTH = BAND_WIDTH + 3;
  *  they stay off a wiggle too tight to read, and keeps its size at any zoom. `text-size` is the
  *  chevron's width. MapLibre has no blend modes: translucent white shows the color under it as a
  *  lighter shade. */
-export const ARROW_FONT = 'HoldMyTrack Chevron';
+const ARROW_FONT = 'HoldMyTrack Chevron';
 const ARROW_GROUP = '\uE000\uE000\uE000';
 const ARROW_SPACING = 150;
 const ARROW_MAX_ANGLE = 25;

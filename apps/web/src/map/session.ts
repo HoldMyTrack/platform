@@ -5,10 +5,10 @@
  * it only through events; side effects (flights, the URL) stay with them. The apps' `MapSession`s
  * run the same cases, `testdata/client-rules`'s `webSession` and `panelState`.
  */
-import type { Activity, BBox } from '../api';
+import type { Activity, BBox } from '../api.ts';
 import { passesFilters, type DistanceRange } from '../ui/activityFacets.ts';
 import { ALL_TIME, type DateFilter } from '../ui/dateFilter.ts';
-import type { MapMode } from './mapMode';
+import type { MapMode } from './mapMode.ts';
 import { toggled, toggledVisibility, toolbarTarget, withoutIds } from './selection.ts';
 
 export interface Selection {
@@ -22,7 +22,7 @@ export interface Selection {
   distanceFilter: DistanceRange | null;
 }
 
-export interface MapSession {
+interface MapSession {
   /** The Dates filter (FR-5.12); all time until set. */
   dates: DateFilter;
   /** The map view the list was last asked about (FR-5.11); null until the opening view settles. */
@@ -41,7 +41,7 @@ export type MapSessionEvent =
   /** Dates changed (dateFilter.ts's setDateFilter). The selection stays, as on any reload; the
    *  list then drops what left it (`listLoaded`). [fly] moves the camera onto the matches once. */
   | { type: 'datesSet'; dates: DateFilter; fly: boolean }
-  /** The list is asked about this view: a move from zoom 10, the button, or a flight's end. */
+  /** The list is asked about this view: a move of the map from zoom 4 (FR-5.11), the opening view, Dates' flight's end, or a Story closed. */
   | { type: 'areaLoaded'; area: BBox }
   /** "View on map" for an activity not listed: Dates on its own day, and the camera onto it. */
   | { type: 'dayViewed'; day: string }

@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent } from 'react';
-import { t } from '../../i18n';
-import type { MessageKey } from '../../i18n/en';
+import { t } from '../../i18n/index.ts';
+import type { MessageKey } from '../../i18n/en.ts';
 import { onScreen, placePopover, unionOf, type CardId, type Placement, type Rect } from './tourRules.ts';
-import type { Tour } from './useTour';
+import type { Tour } from './useTour.ts';
 import './tour.css';
 
 /** How long a step's anchor gets to appear after a mode change before the step is skipped: in

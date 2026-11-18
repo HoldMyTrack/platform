@@ -1,5 +1,5 @@
-import { en, type MessageKey } from './en';
-import { ru } from './ru';
+import { en, type MessageKey } from './en.ts';
+import { ru } from './ru.ts';
 
 /**
  * The map app's localization (IMPLEMENTATION.md §4.21) — the client-side twin of
@@ -18,7 +18,7 @@ import { ru } from './ru';
 
 const catalogs = { en, ru } as const;
 
-export type Lang = keyof typeof catalogs;
+type Lang = keyof typeof catalogs;
 
 /** Every language with a catalog — services/server/internal/i18n's Supported. */
 export const LANGS = Object.keys(catalogs) as Lang[];

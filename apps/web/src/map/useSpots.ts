@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { capturesSince, mergeSpotCaptures } from './spotCaptures';
-import { setSpotClickHandler, setSpotsCaptured, setSpotsVisible, type Spot, type SpotCategory } from './spots';
-import { getSpotCaptures, type SpotCapture } from '../api';
+import { capturesSince, mergeSpotCaptures } from './spotCaptures.ts';
+import { setSpotClickHandler, setSpotsCaptured, setSpotsVisible, type Spot, type SpotCategory } from './spots.ts';
+import { getSpotCaptures, type SpotCapture } from '../api.ts';
 
-export interface SpotsState {
+interface SpotsState {
   /** The spot whose popup is open. */
   openSpot: Spot | null;
   closeSpot: () => void;

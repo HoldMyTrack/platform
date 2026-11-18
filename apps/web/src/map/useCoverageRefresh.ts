@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { getCoverageStatus, type CoverageStatus } from '../api';
-import { coveragePollDelay } from './coveragePoll';
-import { getTileVersion, setTileVersion } from './coverageVersion';
-import { applyLayers, currentLayerState, currentLayers } from './applyLayers';
-import { webLayers } from './webLayers';
+import { getCoverageStatus, type CoverageStatus } from '../api.ts';
+import { coveragePollDelay } from './coveragePoll.ts';
+import { getTileVersion, setTileVersion } from './coverageVersion.ts';
+import { applyLayers, currentLayerState, currentLayers } from './applyLayers.ts';
+import { webLayers } from './webLayers.ts';
 
 /**
  * Keeps the Fog layers current after an upload or delete (IMPLEMENTATION.md §4.2.3). Fog is
@@ -32,7 +32,7 @@ import { webLayers } from './webLayers';
  * the coverage rasters don't cover (a Private location change reprocesses whole activities),
  * and which can't otherwise tell when the server has finished.
  */
-export interface CoverageRefresh {
+interface CoverageRefresh {
   /** Starts (or restarts) the watch — see useCoverageRefresh. */
   watch: (onDone?: () => void) => void;
   /** Whether the latest status read found coverage still being worked on. */

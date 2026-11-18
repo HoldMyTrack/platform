@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { answerStorySend, listStorySends, type StoryInbox } from '../api';
+import { answerStorySend, listStorySends, type StoryInbox } from '../api.ts';
 
 /** How often the inbox is re-read while an accepted copy is still arriving — the copy is one
  *  ingest per activity, so a few seconds is the right order of magnitude. */

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { listPhotos, type Photo } from '../api';
+import { listPhotos, type Photo } from '../api.ts';
 
 /** Whose photos to show: one activity's, a Story's, or none. */
 export type PhotoScope = { activity: string } | { story: string } | null;

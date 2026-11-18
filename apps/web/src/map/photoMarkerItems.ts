@@ -2,13 +2,14 @@
  * Which photos the map shows and what a marker's click does (FR-15), as plain values.
  * Android: `photos/PhotoMarkerScope.kt`.
  */
-import type { Photo } from '../api';
-import type { PhotoScope } from '../ui/usePhotos';
-import type { MapMode } from './mapMode';
-import type { PhotoMarkerItem, PhotoMarkerOverlay } from './photos';
+import type { Photo } from '../api.ts';
+import { haversineM } from '../geo.ts';
+import type { PhotoScope } from '../ui/usePhotos.ts';
+import type { MapMode } from './mapMode.ts';
+import type { PhotoMarkerItem, PhotoMarkerOverlay } from './photos.ts';
 
 /** How far apart, in metres, a group's photos must be for zooming in to separate them (§4.27). */
-export const GROUP_SPREAD_M = 15;
+const GROUP_SPREAD_M = 15;
 
 /** The zoom a separable group fits to at most, where GROUP_SPREAD_M is wider than a marker. */
 export const GROUP_MAX_ZOOM = 19;
@@ -57,8 +58,3 @@ export function photoGroupAction(group: readonly { lon: number; lat: number }[])
   return 'open';
 }
 
-export function haversineM(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const rad = Math.PI / 180;
-  const h = Math.sin(((lat2 - lat1) * rad) / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(((lon2 - lon1) * rad) / 2) ** 2;
-  return 2 * 6_371_008.8 * Math.asin(Math.min(1, Math.sqrt(h)));
-}

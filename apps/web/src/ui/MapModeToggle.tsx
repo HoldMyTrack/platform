@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from 'react';
-import type { MapMode } from '../map/mapMode';
-import { t } from '../i18n';
+import type { MapMode } from '../map/mapMode.ts';
+import { t } from '../i18n/index.ts';
 
 const MODES: readonly MapMode[] = ['normal', 'fog'];
 const LABELS: Record<MapMode, 'map.mode_normal' | 'map.mode_fog'> = {

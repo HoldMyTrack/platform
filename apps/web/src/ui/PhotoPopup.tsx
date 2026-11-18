@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Popup, type Map as MapLibreMap } from 'maplibre-gl';
 import { ChevronLeft, ChevronRight, ExternalLink } from 'lucide-react';
-import { API_BASE_URL, type Photo } from '../api';
-import { t } from '../i18n';
-import { formatStartedAt } from './format';
-import { PhotoViewer } from './PhotoViewer';
+import { API_BASE_URL, type Photo } from '../api.ts';
+import { t } from '../i18n/index.ts';
+import { formatStartedAt } from './format.ts';
+import { PhotoViewer } from './PhotoViewer.tsx';
 
-export interface PhotoPopupProps {
+interface PhotoPopupProps {
   map: MapLibreMap;
   /** The photo shown, or a group's photos in route order (a marker standing for several). */
   photos: readonly Photo[];

@@ -1,10 +1,10 @@
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
-import type { ActivityQuery } from '../api';
-import { currentLayerState, setLayerVars, updateLayers } from './applyLayers';
-import { mapTapsActive } from './mapTaps';
-import { PHOTO_MARKER_CLASS } from './photos';
-import { spotAt } from './spots';
-import { TRACK_HOVER_SOURCE, TRACKS_LAYER_ID, TRACKS_SOURCE_LAYER } from './tracksGroup';
+import type { ActivityQuery } from '../api.ts';
+import { currentLayerState, setLayerVars, updateLayers } from './applyLayers.ts';
+import { mapTapsActive } from './mapTaps.ts';
+import { PHOTO_MARKER_CLASS } from './photos.ts';
+import { spotAt } from './spots.ts';
+import { TRACK_HOVER_SOURCE, TRACKS_LAYER_ID, TRACKS_SOURCE_LAYER } from './tracksGroup.ts';
 
 /**
  * The live tracks MVT layer on the map (IMPLEMENTATION.md §4.3): the layers document draws it
@@ -59,12 +59,12 @@ export function trackQuery(range: TrackDateRange): string {
 // every styledata would stack duplicate handlers, firing a click N times after N theme toggles.
 const interactiveMaps = new WeakSet<MapLibreMap>();
 
-export interface TrackInteractivityHandlers {
+interface TrackInteractivityHandlers {
   /** A track was clicked — the caller decides what "selected" means (see MapView). */
   onSelect: (activityId: string) => void;
   /** The pointer entered or left a track — `null` on leave. Reported up rather than applied
-   *  directly (as this used to) so ActivitiesPanel's own row hover can drive the exact same
-   *  feature-state through one place (setHoveredTrack) instead of the two fighting over
+   *  directly so ActivitiesPanel's own row hover can drive the same hover source through one
+   *  place (setHoveredTrack) instead of the two fighting over
    *  which one a mouseleave should clear. */
   onHover: (activityId: string | null) => void;
   /** A click landed on the map somewhere with no track underneath it — reported live as the

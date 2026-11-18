@@ -1,11 +1,11 @@
 import { MapPin } from 'lucide-react';
-import { togglePlace, type Overlays } from '../map/overlays';
-import { SPOT_CATEGORIES, type SpotCategory } from '../map/spots';
-import { t } from '../i18n';
-import type { MessageKey } from '../i18n/en';
-import { PickItem, PickMenu } from './PickMenu';
+import { togglePlace, type Overlays } from '../map/overlays.ts';
+import { SPOT_CATEGORIES, type SpotCategory } from '../map/spots.ts';
+import { t } from '../i18n/index.ts';
+import type { MessageKey } from '../i18n/en.ts';
+import { PickItem, PickMenu } from './PickMenu.tsx';
 
-export interface PlacesMenuProps {
+interface PlacesMenuProps {
   overlays: Overlays;
   onChange: (next: Overlays) => void;
   /** Held open from outside, whatever the button says: the tour's Places step. */

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { getActivityTrackPoints, type Activity, type TrackEdit, type TrackPoint } from '../api';
-import { labelInsertionPoint } from '../map/layers';
-import { clearTrackEdit, ensureTrackEditLayer, onTrackEditPointClick, onTrackEditPointDrag, setTrackEditData, type EditPreview } from '../map/trackEdit';
-import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps';
-import { distanceValue, formatClockTime, unitLabel } from './format';
-import { useUnitSystem } from './units';
-import { t, tn } from '../i18n';
+import { getActivityTrackPoints, type Activity, type TrackEdit, type TrackPoint } from '../api.ts';
+import { beneathBasemapLabels } from '../map/applyLayers.ts';
+import { clearTrackEdit, ensureTrackEditLayer, onTrackEditPointClick, onTrackEditPointDrag, setTrackEditData, type EditPreview } from '../map/trackEdit.ts';
+import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps.ts';
+import { distanceValue, formatClockTime, unitLabel } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { t, tn } from '../i18n/index.ts';
 
 /**
  * The Edit window's Track tab (IMPLEMENTATION.md §4.7.7) — one activity's recorded points,
@@ -30,7 +30,7 @@ import { t, tn } from '../i18n';
  * otherwise change a point the user can't see being edited) and Cmd/Ctrl+Z (which belongs to
  * the text fields).
  */
-export interface TrackEditorProps {
+interface TrackEditorProps {
   map: MapLibreMap;
   activity: Activity;
   /** Whether the Track tab is the one showing. */
@@ -146,7 +146,7 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
   }, [active, busy, ops.length, undo]);
 
   // Draw, and redraw after a theme swap discards custom layers (styledata) — this overlay is
-  // owned here, not by MapView's reattachOverlays, since it only exists during a session.
+  // owned here, not by useMapLayers' reattach, since it only exists during a session.
   // A point being dragged is drawn where the pointer is, its line segments following it.
   const shown = useMemo(
     () => (dragging ? visible.map((p): TrackPoint => (p[2] === dragging.t ? [dragging.lon, dragging.lat, p[2]] : p)) : visible),
@@ -154,7 +154,7 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
   );
   useEffect(() => {
     const draw = () => {
-      ensureTrackEditLayer(map, labelInsertionPoint(map));
+      ensureTrackEditLayer(map, beneathBasemapLabels(map));
       if (shown.length > 0) setTrackEditData(map, shown, lo, hi, preview, splitShown !== null && splitShown >= 0 ? splitShown : null);
     };
     draw();

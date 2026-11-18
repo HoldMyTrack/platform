@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Eye, X } from 'lucide-react';
-import { DEMO_BAR_HIDE_MS, demoBarShown, readHiddenUntil } from './demoBar';
-import { t } from '../i18n';
+import { DEMO_BAR_HIDE_MS, demoBarShown, readHiddenUntil } from './demoBar.ts';
+import { t } from '../i18n/index.ts';
 
 const STORAGE_KEY = 'hmt_demo_bar_hidden_until';
 

@@ -1,10 +1,10 @@
 import type { GeoJSONSourceSpecification, LayerSpecification, Map as MapLibreMap, VectorTileSource } from 'maplibre-gl';
-import { API_BASE_URL } from '../api';
-import type { MapMode } from './mapMode';
-import { boundLayer, bindVars, insertionPoint, layerToggle, layerVars, needsLift, placementOrder, viewFor, type GroupSource, type LayerGroup, type MapLayers } from './mapLayers';
-import { SATELLITE_LAYER_ID } from './style';
-import { levelZoomRanges } from './fogLevels';
-import { styleReady } from './styleReady';
+import { API_BASE_URL } from '../api.ts';
+import type { MapMode } from './mapMode.ts';
+import { boundLayer, bindVars, insertionPoint, layerToggle, layerVars, needsLift, placementOrder, viewFor, type GroupSource, type LayerGroup, type MapLayers } from './mapLayers.ts';
+import { SATELLITE_LAYER_ID } from './style.ts';
+import { levelZoomRanges } from './fogLevels.ts';
+import { styleReady } from './styleReady.ts';
 
 /**
  * The layers document (mapLayers.ts) on a live map: this adds what the document describes,
@@ -16,7 +16,7 @@ import { styleReady } from './styleReady';
  */
 
 /** What the client decides, the rest being the document's. */
-export interface LayerState {
+interface LayerState {
   mode: MapMode;
   /** Satellite imagery is on; its views apply only while the style has the imagery. */
   satellite: boolean;
@@ -76,6 +76,19 @@ function tileURL(source: Extract<GroupSource, { type: 'vector' }>, query: string
 /** The first label layer that isn't the document's: where `beneath-labels` groups go. */
 function labelPoint(map: MapLibreMap, ownIds: ReadonlySet<string>): string | undefined {
   return map.getLayersOrder().find((id) => !ownIds.has(id) && map.getLayer(id)?.type === 'symbol');
+}
+
+/**
+ * Where an overlay of the client's own goes to sit under the basemap's labels, as the document's
+ * `beneath-labels` groups do: the first basemap label layer. Not the style's first symbol layer,
+ * which since the document has labels of its own (the tracks' arrows) is inside the tracks group.
+ * Undefined, to append, for a style with no basemap labels.
+ */
+export function beneathBasemapLabels(map: MapLibreMap): string | undefined {
+  const current = applied.get(map);
+  // The groups applyLayers counts as its own, excluded ones left out, so both aim at one label.
+  const groups = current ? groupsOf(current.doc, current.state) : [];
+  return labelPoint(map, new Set(groups.flatMap((group) => group.layers.map((layer) => layer.id))));
 }
 
 function beforeIdFor(map: MapLibreMap, order: readonly string[], id: string, ownIds: ReadonlySet<string>, fallback: string | undefined): string | undefined {

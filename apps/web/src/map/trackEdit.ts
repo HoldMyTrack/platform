@@ -1,5 +1,6 @@
 import type { GeoJSONSource, Map as MapLibreMap, MapMouseEvent, MapTouchEvent } from 'maplibre-gl';
-import type { TrackPoint } from '../api';
+import type { TrackPoint } from '../api.ts';
+import { overlayInPlace } from './overlayOrder.ts';
 
 /**
  * The Edit track overlay (IMPLEMENTATION.md §4.7.7): one GeoJSON source drawing the track
@@ -9,11 +10,11 @@ import type { TrackPoint } from '../api';
  * dashed), every recorded point, and the two knob points — plus, for a split (§4.7.8), the
  * second piece's line in a color of its own.
  */
-export const TRACK_EDIT_SOURCE_ID = 'track-edit';
+const TRACK_EDIT_SOURCE_ID = 'track-edit';
 const LINE_LAYER_ID = 'track-edit-line';
 const SECOND_LAYER_ID = 'track-edit-second';
 const PREVIEW_LAYER_ID = 'track-edit-preview';
-export const TRACK_EDIT_POINTS_LAYER_ID = 'track-edit-points';
+const TRACK_EDIT_POINTS_LAYER_ID = 'track-edit-points';
 const KNOBS_LAYER_ID = 'track-edit-knobs';
 
 const ACCENT = '#b07e2e';
@@ -87,6 +88,9 @@ export function ensureTrackEditLayer(map: MapLibreMap, beforeId: string | undefi
     filter: ['==', ['get', 'role'], 'knob'],
     paint: { 'circle-radius': 7, 'circle-color': ACCENT, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 },
   });
+  // Back under the labels when a group added since has gone in above (overlayOrder.ts).
+  const ids = [PREVIEW_LAYER_ID, LINE_LAYER_ID, SECOND_LAYER_ID, TRACK_EDIT_POINTS_LAYER_ID, KNOBS_LAYER_ID];
+  if (!overlayInPlace(map.getLayersOrder(), ids, beforeId)) for (const id of ids) map.moveLayer(id, beforeId);
 }
 
 /** What the knobs would do if pressed now — Chop removes outside them, Cut between them,
@@ -198,7 +202,7 @@ export function onTrackEditPointClick(map: MapLibreMap, onPoint: (t: number) => 
   };
 }
 
-export interface PointDrag {
+interface PointDrag {
   /** The point at `t` is under the pointer at `lon`/`lat` — a preview, nothing committed. */
   onMove: (t: number, lon: number, lat: number) => void;
   /** Let go: `to` is where it was dropped, null when it was pressed and let go unmoved. */

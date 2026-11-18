@@ -1,20 +1,20 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { ChevronDown, ChevronUp } from 'lucide-react';
-import type { Activity, Story } from '../api';
-import { ActivitiesToolbar } from './ActivitiesToolbar';
-import { ActivityFilters, type DatesProps } from './ActivityFilters';
-import { ActivityRow, rowLabel } from './ActivityRow';
-import { targetSummaryKind } from '../map/selection';
-import { listWindow, scrollTopFor } from './listWindow';
-import { FirstRunPanel } from './FirstRunPanel';
-import { PrivateLocationsPanel } from './PrivateLocationsPanel';
-import { StoriesTab } from './StoriesTab';
-import type { StoryInboxState } from './useStoryInbox';
-import { emptyListReason, type DistanceRange, type TypeFacet } from './activityFacets';
-import { formatTotalDistance } from './format';
-import { useUnitSystem } from './units';
-import { lang, t, tn } from '../i18n';
+import type { Activity, Story } from '../api.ts';
+import { ActivitiesToolbar } from './ActivitiesToolbar.tsx';
+import { ActivityFilters, type DatesProps } from './ActivityFilters.tsx';
+import { ActivityRow, rowLabel } from './ActivityRow.tsx';
+import { targetSummaryKind } from '../map/selection.ts';
+import { listWindow, scrollTopFor } from './listWindow.ts';
+import { FirstRunPanel } from './FirstRunPanel.tsx';
+import { PrivateLocationsPanel } from './PrivateLocationsPanel.tsx';
+import { StoriesTab } from './StoriesTab.tsx';
+import type { StoryInboxState } from './useStoryInbox.ts';
+import { emptyListReason, type DistanceRange, type TypeFacet } from './activityFacets.ts';
+import { formatTotalDistance } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { lang, t, tn } from '../i18n/index.ts';
 
 /**
  * The left sidebar, with three tabs, each about what the map shows under it: **Activities** (the
@@ -51,7 +51,7 @@ import { lang, t, tn } from '../i18n';
  *  - The toolbar's Show/hide button toggles whether the target's tracks paint on the map at
  *    all, independent of all three of the above; a hidden activity's row dims in place.
  */
-export interface ActivitiesPanelProps {
+interface ActivitiesPanelProps {
   /** A demo account (`docs/SPEC.md` FR-2.1–FR-2.3) — the
    *  backend already rejects every mutation a demo session attempts (requireNotDemo), so this
    *  disables the controls that would otherwise error, with a `title` explaining why, rather
@@ -257,8 +257,7 @@ export function ActivitiesPanel({
 
 
   // Mobile-only bottom sheet (index.css's `@media (max-width: 768px)` layer) — collapsed by
-  // default, same reasoning as typeFilterOpen above. Desktop CSS never reacts to the
-  // `--sheet-expanded` modifier class this drives, so toggling it there is an inert no-op,
+  // default. Desktop CSS never reacts to the `--sheet-expanded` modifier class this drives, so toggling it there is an inert no-op,
   // not a behavior change — safe to leave wired unconditionally rather than gated behind a JS
   // media-query check.
   const [sheetPicked, setSheetExpanded] = useState(false);
@@ -273,12 +272,9 @@ export function ActivitiesPanel({
     setSheetExpanded(true);
   };
 
-  // Wider than the old fixed 320px, and now draggable — a full "Sep 11, 2026, 09:00 AM"
-  // title plus its TYPE label was clipping at 320px. Local state, not lifted to MapView:
-  // nothing outside this component's own layout needs to know the panel's width, the same
-  // reasoning as `typeFilterOpen` above. Not persisted across reloads on purpose — no other UI
-  // preference in this app is, and adding the one-off localStorage-plus-SSR-mismatch
-  // handling for just this value isn't worth it before anything else here does the same.
+  // Draggable, and 380 px to start: a full "Sep 11, 2026, 09:00 AM" title with its type needs
+  // more than 320. Local state, not lifted to MapView: nothing outside this component's own
+  // layout needs the panel's width. Not kept across reloads, as no other UI preference here is.
   const [panelWidth, setPanelWidth] = useState(380);
   const resizeRef = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null);
   const MIN_PANEL_WIDTH = 260;

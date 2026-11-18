@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import { createStory, updateStory, type Story } from '../api';
-import { STORY_MAX_DESCRIPTION_LEN, STORY_MAX_NAME_LEN } from '../limits';
-import { t } from '../i18n';
-import { useBackdropClose } from './ConfirmDialog';
+import { createStory, updateStory, type Story } from '../api.ts';
+import { STORY_MAX_DESCRIPTION_LEN, STORY_MAX_NAME_LEN } from '../limits.ts';
+import { t } from '../i18n/index.ts';
+import { useBackdropClose } from './ConfirmDialog.tsx';
 
 /**
  * A Story's Name, required, and optional Description, in one of two uses:
@@ -18,7 +18,7 @@ import { useBackdropClose } from './ConfirmDialog';
  * A `<form>`, so Enter in the Name field saves; the Description is a textarea, where Enter is
  * a new line.
  */
-export type StoryDialogProps = (
+type StoryDialogProps = (
   | {
       mode: 'create';
       activityIds: string[];

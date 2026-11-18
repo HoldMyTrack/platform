@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { clearTrackBands, setTrackBands } from './trackBands';
-import { getActivityTrackMetrics, type ActivityTrackMetrics } from '../api';
+import { clearTrackBands, setTrackBands } from './trackBands.ts';
+import { getActivityTrackMetrics, type ActivityTrackMetrics } from '../api.ts';
 
 /**
  * The focused activity's pace-colored segments (trackBands.ts, bandsGroup.ts). The metrics are fetched when the

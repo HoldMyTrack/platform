@@ -5,22 +5,13 @@
 <!doctype html>
 <html lang="{{lang}}">
   <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="icon" href="/favicon.ico" sizes="32x32" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <link rel="manifest" href="/site.webmanifest" />
+    {{template "head-icons"}}
     <title>{{.Title}}</title>
     <meta name="robots" content="noindex" />
     {{if .TileVersion}}<meta name="tile-version" content="{{.TileVersion}}" />{{end}}
-    {{template "theme-head"}}
-    <link rel="stylesheet" href="{{asset "fonts.css"}}" />
-    <link rel="stylesheet" href="{{asset "tokens.css"}}" />
-    <link rel="stylesheet" href="{{asset "header.css"}}" />
+    {{template "head-site"}}
     <link rel="stylesheet" href="{{asset "search-picker.css"}}" />
-    <script src="{{asset "header.js"}}" defer></script>
-    <script src="{{asset "upload.js"}}" defer></script>
+    {{template "head-scripts"}}
     {{if .ViteDev}}
     <script type="module" src="{{asset "vite-preamble.js"}}"></script>
     <script type="module" src="/@vite/client"></script>

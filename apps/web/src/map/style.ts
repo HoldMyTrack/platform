@@ -6,10 +6,10 @@ import type {
   RasterSourceSpecification,
   StyleSpecification,
 } from 'maplibre-gl';
-import { GLYPHS_PATH, PMTILES_PATH, SPRITE_BASE_PATH } from './config';
-import { globeProjection } from './globe';
+import { GLYPHS_PATH, PMTILES_PATH, SPRITE_BASE_PATH } from './config.ts';
+import { globeProjection } from './globe.ts';
 import { PATH_COLORS, pathDash, PATHS_MIN_ZOOM } from './pathColors.ts';
-import { roadLayerIds } from './roads';
+import { roadLayerIds } from './roads.ts';
 import { liftColor } from './liftColor.ts';
 
 /**
@@ -80,7 +80,7 @@ export const SATELLITE_HIDES_METADATA = 'holdmytrack:satellite-hides';
 /** The style `metadata` keys naming the road layers satellite mode dims, and to what opacity —
  *  read from the style rather than re-derived, since a dimmed layer no longer looks undimmed. */
 export const SATELLITE_DIMS_METADATA = 'holdmytrack:satellite-dims';
-export const SATELLITE_ROAD_OPACITY_METADATA = 'holdmytrack:satellite-road-opacity';
+const SATELLITE_ROAD_OPACITY_METADATA = 'holdmytrack:satellite-road-opacity';
 
 /** The style `metadata` key listing the road layers the Layers menu's Roads shows and hides
  *  (roads.ts), for Android's `MapRoads` to read rather than re-derive. In every style, imagery
@@ -136,7 +136,7 @@ export const ATTRIBUTION =
  *  reason — canvas `fillText` takes a plain string, not markup). */
 export const ATTRIBUTION_TEXT = ATTRIBUTION.replace(/<[^>]+>/g, '');
 
-export interface BuildStyleOptions {
+interface BuildStyleOptions {
   flavor: Flavor;
   /** Absolute origin, e.g. `https://cdn.example.com` — no trailing slash. */
   origin: string;
@@ -213,7 +213,7 @@ function withPathLayers(base: LayerSpecification[], flavor: Flavor): LayerSpecif
 
 /** How far the dark flavor's colours are mixed toward white: Protomaps' dark land is near-black
  *  (`#1f1f1f`), dark enough to hide its own roads, parks and labels. */
-export const DARK_LIFT = 0.08;
+const DARK_LIFT = 0.08;
 
 /**
  * The dark flavor's land use, water and roads. Protomaps' own sit within a few steps of its land,
@@ -334,7 +334,7 @@ function satelliteSourceSpec(satellite: SatelliteSource): RasterSourceSpecificat
 }
 
 /** The imagery right above the background, so everything the vector basemap draws after it —
- *  and every layer group inserted at the first symbol layer — stacks over it. */
+ *  and every layer group inserted beneath the basemap's labels — stacks over it. */
 function withSatelliteLayer(
   base: LayerSpecification[],
   hidden: string[],

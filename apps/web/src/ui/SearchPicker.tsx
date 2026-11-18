@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { ChevronDown, Search } from 'lucide-react';
-import { t } from '../i18n';
+import { t } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
 /** One row of a SearchPicker: `leading` · `label` · `detail` (muted, right-aligned). */
 export interface PickerOption {
@@ -36,7 +37,7 @@ function search(options: PickerOption[], query: string): PickerOption[] {
   return ranked.flat();
 }
 
-export interface SearchPickerProps {
+interface SearchPickerProps {
   options: PickerOption[];
   value: string;
   onChange: (value: string) => void;
@@ -124,14 +125,8 @@ export function SearchPicker({
     close(true);
   }
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) close(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    return () => document.removeEventListener('pointerdown', onPointerDown);
-  }, [open]);
+  // A press outside closes it where the focus is; Escape closes it from the input, back on the trigger.
+  useDismiss(rootRef, open, setOpen);
 
   // Centres the current selection on open rather than always starting scrolled to the top,
   // then keeps the active row visible as ↑/↓ walk past the list's edge. Sets the list's own

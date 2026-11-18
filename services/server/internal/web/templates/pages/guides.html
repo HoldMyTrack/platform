@@ -24,10 +24,7 @@
         <p>Watch the fog clear wherever your tracks go, and find the streets, parks and trails close to home you have never been to.</p>
       </li>
     </ul>
-    {{if not .User}}<div class="page-actions">
-      <a class="page-button" href="/signup">Create a free account</a>
-      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
-    </div>{{end}}
+    {{template "guide-signup" .}}
   </section>
 </main>
 {{end}}

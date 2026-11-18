@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Marker, type Map as MapLibreMap } from 'maplibre-gl';
-import { photoMarkerGroups, photoMarkerSize } from './photoClusters';
-import { photoMarkerCssVars } from './photoMarkerLook';
-import { t, tn } from '../i18n';
+import { photoMarkerGroups, photoMarkerSize } from './photoClusters.ts';
+import { photoMarkerCssVars } from './photoMarkerLook.ts';
+import { t, tn } from '../i18n/index.ts';
 
 /**
  * Photo markers (FR-15, IMPLEMENTATION.md §4.27): each photo of the selected activity or the
@@ -15,7 +15,7 @@ import { t, tn } from '../i18n';
  * HTML markers rather than a symbol layer: there are tens of them, not thousands, and each shows
  * its own image (a symbol layer would need every thumbnail added to the style as an icon, and
  * added again after every `setStyle`). Markers live outside the style, so a theme's `setStyle`
- * leaves them alone and `reattachOverlays` has nothing to do.
+ * leaves them alone and useMapLayers' reattach has nothing to do.
  */
 
 export const PHOTO_MARKER_CLASS = 'photo-marker';
@@ -42,7 +42,7 @@ export interface PhotoMarkerOverlay {
   activeId: string | null;
 }
 
-export interface PhotoMarkerOptions {
+interface PhotoMarkerOptions {
   /** A marker was clicked: its photo, or its group's photos in route order. */
   onOpen: (ids: string[]) => void;
   /** The photo open in its popup, or in hand in the Photos tab: its marker is drawn larger. */

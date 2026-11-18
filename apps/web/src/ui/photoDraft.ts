@@ -1,5 +1,5 @@
-import type { Photo } from '../api';
-import type { PreparedPhoto } from './photoPrep';
+import type { Photo } from '../api.ts';
+import type { PreparedPhoto } from './photoPrep.ts';
 
 /**
  * The Photos tab's unsaved changes (FR-15) — what the Edit window's one Save writes, after the
@@ -20,7 +20,7 @@ export interface NewPhoto {
 }
 
 /** A saved photo's pending changes; a field present is a change. */
-export interface PhotoChange {
+interface PhotoChange {
   routeAt?: number;
   caption?: string;
 }
@@ -35,7 +35,12 @@ export const EMPTY_DRAFT: PhotoDraft = { added: [], changed: {}, deleted: [] };
 
 /** Epoch seconds as RFC 3339, the way the API takes a `route_at`. */
 export function isoSeconds(seconds: number): string {
-  return new Date(seconds * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  return isoUtc(seconds * 1000);
+}
+
+/** `ms` as an ISO 8601 UTC time to the second, as the API takes times. */
+export function isoUtc(ms: number): string {
+  return new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
 export function draftIsEmpty(draft: PhotoDraft): boolean {
@@ -49,7 +54,7 @@ export function draftSize(draft: PhotoDraft): number {
 }
 
 /** One row of the tab's list: a saved photo as the draft would leave it, or a new one. */
-export type DraftRow =
+type DraftRow =
   | { kind: 'saved'; id: string; photo: Photo; routeAt: number; caption: string; deleted: boolean }
   | { kind: 'new'; id: string; photo: NewPhoto; routeAt: number; caption: string };
 

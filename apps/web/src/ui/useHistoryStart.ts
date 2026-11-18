@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { getActivityDayPage } from '../api';
+import { getActivityDayPage } from '../api.ts';
 
-export interface HistoryStart {
+interface HistoryStart {
   /** The account's first activity's local day, null for an account with none. */
   earliest: string | null;
   /** Its newest activity's local day, null for an account with none. */

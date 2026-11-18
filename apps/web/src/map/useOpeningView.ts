@@ -1,14 +1,14 @@
 import { useEffect, useRef, type Dispatch } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { APP_FLIGHT } from './bbox';
-import { WORLD_VIEW } from './config';
-import { countryView } from './countryView';
-import { OPENING_ACTIVITIES, openingView } from './openingView';
-import type { MapSessionEvent } from './session';
-import { viewArea } from './useAreaList';
-import { listArea, type BBox } from '../api';
+import { APP_FLIGHT } from './bbox.ts';
+import { WORLD_VIEW } from './config.ts';
+import { countryView } from './countryView.ts';
+import { OPENING_ACTIVITIES, openingView } from './openingView.ts';
+import type { MapSessionEvent } from './session.ts';
+import { viewArea } from './useAreaList.ts';
+import { listArea, type BBox } from '../api.ts';
 
-export interface OpeningViewInputs {
+interface OpeningViewInputs {
   /** The URL's camera, a Story or an arriving activity decides the camera instead. */
   keepCamera: boolean;
   country: string;

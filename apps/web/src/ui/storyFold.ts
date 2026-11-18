@@ -3,7 +3,7 @@
  * activities and changes nothing else, so it stays open (FR-13.6) with the map, footer, URL and
  * exports narrowed to it. A click on another folder opens that one unfolded.
  */
-export interface FolderClick {
+interface FolderClick {
   /** The Story whose list is folded, or null when none is. */
   foldedId: string | null;
   /** Whether the clicked folder is another Story, to open. */

@@ -1,7 +1,7 @@
-import type { ViewState } from './viewState';
+import type { ViewState } from './viewState.ts';
 
 /**
- * Per-country opening view for MapView's zero-history fallback (docs/SPEC.md FR-4.4) — a
+ * Per-country opening view for the zero-history fallback (useOpeningView.ts, docs/SPEC.md FR-4.4) — a
  * point + zoom that keeps roughly the whole country in frame, not a real-time lookup.
  *
  * Generated once, offline, from Natural Earth's Admin-0 country polygons:
@@ -20,7 +20,7 @@ import type { ViewState } from './viewState';
  * Kiribati, New Zealand, Antarctica) has a bbox-width/height calculation that breaks outright
  * at the ±180° seam.
  */
-export const COUNTRY_VIEWS: Record<string, ViewState> = {
+const COUNTRY_VIEWS: Record<string, ViewState> = {
   AD: { longitude: 1.5709, latitude: 42.537, zoom: 8.0 }, // Andorra
   AE: { longitude: 55.1254, latitude: 24.3441, zoom: 7.0 }, // United Arab Emirates
   AF: { longitude: 65.1935, latitude: 33.9241, zoom: 5.4 }, // Afghanistan

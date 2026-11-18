@@ -10,13 +10,13 @@ import { PHOTO_MARKER_LOOK } from './photoMarkerLook.ts';
  * and `photo-marker-size.json`.
  */
 
-export interface ScreenPoint {
+interface ScreenPoint {
   id: string;
   x: number;
   y: number;
 }
 
-export interface PhotoCluster {
+interface PhotoCluster {
   /** In the order given (route order), the first being the one the group shows. */
   ids: string[];
   x: number;
@@ -25,16 +25,16 @@ export interface PhotoCluster {
 
 /** How close two markers' centres may be, in CSS pixels, before they're one group: a little
  *  under a marker's width (36 px), so markers that would merely touch stay apart. */
-export const CLUSTER_RADIUS_PX = 32;
+const CLUSTER_RADIUS_PX = 32;
 
 /** The same for a small marker (22 px). */
-export const SMALL_CLUSTER_RADIUS_PX = 18;
+const SMALL_CLUSTER_RADIUS_PX = 18;
 
 /** From this zoom up a marker is drawn full size; below it, small, so the tracks — thin lines
  *  across a whole region at that scale — still show under the photos. */
-export const PHOTO_MARKERS_FULL_ZOOM = 10;
+const PHOTO_MARKERS_FULL_ZOOM = 10;
 
-export type PhotoMarkerSize = 'hidden' | 'small' | 'full';
+type PhotoMarkerSize = 'hidden' | 'small' | 'full';
 
 /** How photo markers are drawn at `zoom`: not at all where tracks aren't either (below
  *  TRACKS_MIN_ZOOM, FR-4.1) — a photo would sit over a continent with no route under it —

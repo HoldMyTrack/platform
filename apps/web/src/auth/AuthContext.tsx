@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react';
-import type { SessionUser } from '../api';
+import type { SessionUser } from '../api.ts';
 
 /**
  * The signed-in user (real or demo), reachable from anywhere without prop-drilling — the
@@ -11,7 +11,7 @@ import type { SessionUser } from '../api';
  * from an `AuthUser` with `'email' in user` — see api.ts's `SessionUser` for why that's
  * enough without a separate discriminant tag.
  */
-export interface AuthContextValue {
+interface AuthContextValue {
   user: SessionUser;
 }
 

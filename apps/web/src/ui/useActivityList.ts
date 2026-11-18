@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import { listActivities, listArea, type Activity } from '../api';
-import type { ListRequest } from '../map/activityQuery';
-import { rowsStandFor } from './listRows';
+import { listActivities, listArea, type Activity } from '../api.ts';
+import type { ListRequest } from '../map/activityQuery.ts';
+import { rowsStandFor } from './listRows.ts';
 
 const NO_ROWS: Activity[] = [];
 
-export interface ActivityList {
+interface ActivityList {
   activities: Activity[];
   /** How many the area holds, past the rows when they were cut at the limit; null without an area. */
   total: number | null;

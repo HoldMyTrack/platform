@@ -1,7 +1,7 @@
-import { distanceValue, unitLabel } from './format';
-import { useUnitSystem } from './units';
-import { bandWithin, nextDistanceFilter, type DistanceRange } from './activityFacets';
-import { t } from '../i18n';
+import { distanceValue, unitLabel } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { bandWithin, nextDistanceFilter, type DistanceRange } from './activityFacets.ts';
+import { t } from '../i18n/index.ts';
 
 /**
  * The Activities panel's DISTANCE dual slider (docs/SPEC.md FR-5.3), inside the filter row's
@@ -11,7 +11,7 @@ import { t } from '../i18n';
  * and the default step of 1, counted from the minimum, can't land on the maximum — a knob
  * dragged back to the end stopped just short of the longest activity and kept it filtered out.
  */
-export interface DistanceFilterProps {
+interface DistanceFilterProps {
   bounds: DistanceRange | null;
   value: DistanceRange | null;
   onChangeDistance: (next: DistanceRange | null) => void;

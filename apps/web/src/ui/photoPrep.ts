@@ -1,3 +1,4 @@
+import { isoUtc } from './photoDraft.ts';
 /**
  * Getting a picked photo ready for upload (IMPLEMENTATION.md §4.27, ADR-0024): read what its
  * EXIF says about when and where it was taken, then redraw it at most 2048 px on its long side,
@@ -9,13 +10,13 @@
  * once its picker converts) hand a browser. Anything else uploads with no metadata, unplaced.
  */
 
-export const PHOTO_MAX_SIDE = 2048;
-export const PHOTO_THUMB_SIDE = 320;
+const PHOTO_MAX_SIDE = 2048;
+const PHOTO_THUMB_SIDE = 320;
 const QUALITY = 0.85;
 
 /** What a photo's EXIF says, as `POST /v1/photos` takes it. `takenAt` is an instant (RFC 3339,
  *  UTC), `takenLocal` a camera clock with no zone (`YYYY-MM-DDTHH:MM:SS`); at most one is set. */
-export interface PhotoExif {
+interface PhotoExif {
   takenAt?: string;
   takenLocal?: string;
   lat?: number;
@@ -117,7 +118,7 @@ function wallMs(local: string): number {
 }
 
 function iso(ms: number): string {
-  return new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  return isoUtc(ms);
 }
 
 /**

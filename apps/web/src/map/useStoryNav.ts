@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef, type Dispatch } from 'react';
-import type { MapSessionEvent } from './session';
-import { storyParam, urlWithStory, type StoryNav } from './storyUrl';
-import type { Story } from '../api';
-import type { PanelTab, StoriesPanel } from '../ui/ActivitiesPanel';
-import type { StoriesState } from '../ui/useStories';
-import type { StoryState } from '../ui/useStory';
-import { useStoryInbox } from '../ui/useStoryInbox';
+import type { MapSessionEvent } from './session.ts';
+import { storyParam, urlWithStory, type StoryNav } from './storyUrl.ts';
+import type { Story } from '../api.ts';
+import type { PanelTab, StoriesPanel } from '../ui/ActivitiesPanel.tsx';
+import type { StoriesState } from '../ui/useStories.ts';
+import type { StoryState } from '../ui/useStory.ts';
+import { useStoryInbox } from '../ui/useStoryInbox.ts';
 
 function moveStoryUrl(id: string | null, nav: StoryNav) {
   if (nav === 'push') window.history.pushState(null, '', urlWithStory(window.location, id));
   else if (nav === 'replace') window.history.replaceState(null, '', urlWithStory(window.location, id));
 }
 
-export interface StoryNavInputs {
+interface StoryNavInputs {
   storyId: string | null;
   dispatch: Dispatch<MapSessionEvent>;
   panelTab: PanelTab;
@@ -28,7 +28,7 @@ export interface StoryNavInputs {
   onActivityRemoved: (id: string) => void;
 }
 
-export interface StoryNavigation {
+interface StoryNavigation {
   enterStory: (id: string, nav?: StoryNav) => void;
   /** `nav` is how opening or leaving the tab's Story moves the URL: the tour replaces, so Back skips its steps. */
   changePanelTab: (tab: PanelTab, nav?: StoryNav) => void;

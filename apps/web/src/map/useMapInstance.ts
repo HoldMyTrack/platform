@@ -6,17 +6,17 @@ import {
   NavigationControl,
   ScaleControl,
 } from 'maplibre-gl';
-import { registerPmtilesProtocol } from './protocol';
-import { configureMapLibreWorker } from './worker';
-import { BASEMAP_SOURCE, buildStyle, SATELLITE_SOURCE, type Flavor } from './style';
-import { basemapStatus, type BasemapStatus } from './basemapStatus';
-import { satelliteStatus, type SatelliteStatus } from './satelliteStatus';
-import { globeMinZoom } from './globe';
-import { basemapOrigin, satelliteSource, ZOOM_LEVELS_TO_OVERSCALE } from './config';
-import { withApiCredentials } from './requestCredentials';
-import type { ViewState } from './viewState';
-import { API_BASE_URL } from '../api';
-import { lang, t } from '../i18n';
+import { registerPmtilesProtocol } from './protocol.ts';
+import { configureMapLibreWorker } from './worker.ts';
+import { BASEMAP_SOURCE, buildStyle, SATELLITE_SOURCE, type Flavor } from './style.ts';
+import { basemapStatus, type BasemapStatus } from './basemapStatus.ts';
+import { satelliteStatus, type SatelliteStatus } from './satelliteStatus.ts';
+import { globeMinZoom } from './globe.ts';
+import { basemapOrigin, satelliteSource, ZOOM_LEVELS_TO_OVERSCALE } from './config.ts';
+import { withApiCredentials } from './requestCredentials.ts';
+import type { ViewState } from './viewState.ts';
+import { API_BASE_URL } from '../api.ts';
+import { lang, t } from '../i18n/index.ts';
 
 /**
  * Owns one MapLibre Map's lifecycle for one container element.
@@ -30,7 +30,7 @@ import { lang, t } from '../i18n';
  * `initialView` and `initialFlavor` are read once, on purpose: later changes to
  * either must move the camera or swap the style, never rebuild the map.
  */
-export interface UseMapInstanceOptions {
+interface UseMapInstanceOptions {
   container: React.RefObject<HTMLDivElement | null>;
   initialView: ViewState;
   initialFlavor: Flavor;
@@ -47,7 +47,7 @@ export interface UseMapInstanceOptions {
   scaleUnit: 'metric' | 'imperial';
 }
 
-export interface MapInstance {
+interface MapInstance {
   /** Set once MapLibre's `load` fires, which a basemap request that never answers holds back. */
   map: MapLibreMap | null;
   basemap: BasemapStatus;

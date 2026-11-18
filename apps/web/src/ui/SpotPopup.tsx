@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Popup, type Map as MapLibreMap } from 'maplibre-gl';
 import { BookOpen, Check, Copy, Flag } from 'lucide-react';
-import type { Spot, SpotCategory } from '../map/spots';
-import { useAuth } from '../auth/AuthContext';
-import { lang, t } from '../i18n';
-import { knownTimeZone } from './timeZone';
-import type { MessageKey } from '../i18n/en';
-import { memorialLabel, spotAddress, wikipediaURL } from './spotText';
+import type { Spot, SpotCategory } from '../map/spots.ts';
+import { useAuth } from '../auth/AuthContext.tsx';
+import { lang, t } from '../i18n/index.ts';
+import { knownTimeZone } from './timeZone.ts';
+import type { MessageKey } from '../i18n/en.ts';
+import { memorialLabel, spotAddress, wikipediaURL } from './spotText.ts';
 
-export interface SpotPopupProps {
+interface SpotPopupProps {
   map: MapLibreMap;
   spot: Spot;
   /** When the account captured the place (FR-14.6), or null. */

@@ -1,5 +1,5 @@
 import type { LayerSpecification } from 'maplibre-gl';
-import type { MapMode } from './mapMode';
+import type { MapMode } from './mapMode.ts';
 import { tilePath, withView, VARS_METADATA, type GroupPart, type LayerView } from './mapLayers.ts';
 import { EXACT } from './fogLevels.ts';
 
@@ -89,7 +89,7 @@ const PICKED_LAYERS = [COUNTRY_PICKED_LAYER, REGION_PICKED_LAYER, COUNTY_PICKED_
 const FOG_LAYERS = [FOG_LAYER, FOG_EDGE_LAYER, ...PLACE_FILL_LAYERS, ...BORDER_LAYERS, ...PICKED_LAYERS];
 
 /** One mode's view over a base that reads `dark`, or over imagery. */
-export function coverageView(mode: MapMode, dark: boolean, satellite = false): LayerView {
+function coverageView(mode: MapMode, dark: boolean, satellite = false): LayerView {
   const veil = satellite ? IMAGERY_VEIL : dark ? DARK_VEIL : LIGHT_VEIL;
   const shown = (on: boolean) => ({ visibility: on ? 'visible' : 'none' });
   const fill = { 'fill-color': veil.color, 'fill-opacity': veil.opacity };

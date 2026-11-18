@@ -7,3 +7,8 @@
 
 {{/* The same inside a sentence, as a button that reads as a link. */}}
 {{define "demo-link"}}{{if not .User}}<form class="page-inline-form" method="post" action="/demo"><button type="submit" class="page-link-button">{{t "pages.demo_open"}}</button></form>{{end}}{{end}}
+{{/* The guides' close for a visitor not signed in: create an account, or try the demo. */}}
+{{define "guide-signup"}}{{if not .User}}<div class="page-actions">
+      <a class="page-button" href="/signup">{{t "pages.create_account"}}</a>
+      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
+    </div>{{end}}{{end}}

@@ -1,6 +1,6 @@
 import type { LayerSpecification } from 'maplibre-gl';
 import { TRACKS_MIN_ZOOM } from './config.ts';
-import type { MapMode } from './mapMode';
+import type { MapMode } from './mapMode.ts';
 import { arrowLayout, arrowPaint } from './bandsGroup.ts';
 import { ROLE_METADATA, tilePath, VARS_METADATA, type GroupPart } from './mapLayers.ts';
 

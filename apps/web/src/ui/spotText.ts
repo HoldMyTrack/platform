@@ -1,4 +1,4 @@
-import type { Spot } from '../map/spots';
+import type { Spot } from '../map/spots.ts';
 
 /** What Copy address copies: OSM's address, or the coordinates when it has none — every
  *  navigator accepts "lat, lon". */

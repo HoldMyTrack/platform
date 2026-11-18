@@ -1,3 +1,4 @@
+import { haversineM } from '../geo.ts';
 /**
  * A track as the Photos tab's slider walks it (IMPLEMENTATION.md §4.27): the display points with
  * their moments (`GET /v1/activities/{id}/track-metrics`'s `time_s`), measured along their
@@ -6,7 +7,7 @@
  * keeps. Android's `PhotoTrack.kt` runs the same cases, `testdata/client-rules/photo-track-*.json`.
  */
 
-export interface TimedPoint {
+interface TimedPoint {
   lon: number;
   lat: number;
   /** Epoch seconds. */
@@ -19,19 +20,13 @@ export interface PhotoTrack {
   along: readonly number[];
 }
 
-const EARTH_RADIUS_M = 6_371_008.8;
-
-function haversineM(a: TimedPoint, b: TimedPoint): number {
-  const rad = Math.PI / 180;
-  const dLat = (b.lat - a.lat) * rad;
-  const dLon = (b.lon - a.lon) * rad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
+function pointDistanceM(a: TimedPoint, b: TimedPoint): number {
+  return haversineM(a.lat, a.lon, b.lat, b.lon);
 }
 
 export function photoTrack(points: readonly TimedPoint[]): PhotoTrack {
   const along = [0];
-  for (let i = 1; i < points.length; i++) along.push(along[i - 1]! + haversineM(points[i - 1]!, points[i]!));
+  for (let i = 1; i < points.length; i++) along.push(along[i - 1]! + pointDistanceM(points[i - 1]!, points[i]!));
   return { points, along };
 }
 
@@ -79,7 +74,7 @@ export type PlaceAnchor = { t: number } | { waiting: string } | null;
 
 /** How far past the previous photo a waiting one's slider starts: just after it, so photos
  *  picked in the order they were taken walk forward along the route. */
-export const NEXT_PHOTO_STEP = 0.01;
+const NEXT_PHOTO_STEP = 0.01;
 
 /**
  * Where a waiting photo's slider starts: just after the photo picked before it, which

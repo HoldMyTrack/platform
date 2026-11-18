@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { API_BASE_URL } from '../api';
-import { APP_VERSION } from '../version';
-import { t } from '../i18n';
+import { API_BASE_URL } from '../api.ts';
+import { APP_VERSION } from '../version.ts';
+import { t } from '../i18n/index.ts';
 
 const POLL_INTERVAL_MS = 5 * 60 * 1000;
 

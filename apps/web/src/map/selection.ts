@@ -5,7 +5,7 @@
  * Focus and the checked group are independent: a row's text or its track focuses it (one at a
  * time); a checkbox builds the group the toolbar acts on.
  */
-import type { Activity } from '../api';
+import type { Activity } from '../api.ts';
 import { passesFilters, type DistanceRange } from '../ui/activityFacets.ts';
 
 /** `set` with `item` added, or removed if it was there. */

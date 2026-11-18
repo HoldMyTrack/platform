@@ -1,4 +1,4 @@
-import type { SpotCapture } from '../api';
+import type { SpotCapture } from '../api.ts';
 
 /**
  * What the map asks `GET /v1/spots/captures` for on a return to its tab: `since` the newest

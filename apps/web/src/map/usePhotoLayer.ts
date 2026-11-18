@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import type { MapMode } from './mapMode';
-import { GROUP_MAX_ZOOM, photoGroupAction, photoMarkerItems, photoScopeFor } from './photoMarkerItems';
-import type { ExportPhotos } from './exportPhotos';
-import { usePhotoMarkers, type PhotoMarkerItem, type PhotoMarkerOverlay } from './photos';
-import { API_BASE_URL, type Photo } from '../api';
-import { usePhotos, type PhotosState } from '../ui/usePhotos';
+import type { MapMode } from './mapMode.ts';
+import { GROUP_MAX_ZOOM, photoGroupAction, photoMarkerItems, photoScopeFor } from './photoMarkerItems.ts';
+import type { ExportPhotos } from './exportPhotos.ts';
+import { usePhotoMarkers, type PhotoMarkerItem, type PhotoMarkerOverlay } from './photos.ts';
+import { API_BASE_URL, type Photo } from '../api.ts';
+import { usePhotos, type PhotosState } from '../ui/usePhotos.ts';
 
-export interface PhotoLayerInputs {
+interface PhotoLayerInputs {
   mode: MapMode;
   editWindowIds: readonly string[] | null;
   focusedId: string | null;
@@ -21,7 +21,7 @@ export interface PhotoLayerInputs {
   mapHiddenIds: ReadonlySet<string>;
 }
 
-export interface PhotoLayer {
+interface PhotoLayer {
   photos: PhotosState;
   /** The photos in the open popup, saved ones only, and which is shown. */
   popup: { photos: Photo[]; index: number } | null;

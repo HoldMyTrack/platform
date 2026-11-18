@@ -3,7 +3,7 @@
  * spans `ExportViewfinder`, `ExportControl` and the map instance capture needs. Windows are in the
  * map container's CSS pixels.
  */
-import type { ExportPreset } from './exportPresets';
+import type { ExportPreset } from './exportPresets.ts';
 import { fitWindow, viewfinderArea, type CustomSizeId, type ExportChoice, type Rect } from './exportViewfinder.ts';
 
 export type ExportFlow =
@@ -11,7 +11,7 @@ export type ExportFlow =
   | { stage: 'framing' | 'capturing'; preset: ExportPreset | 'custom'; customSize: CustomSizeId; window: Rect };
 
 /** The map container's size. */
-export interface ContainerSize {
+interface ContainerSize {
   width: number;
   height: number;
 }

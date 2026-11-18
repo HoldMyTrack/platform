@@ -1,6 +1,6 @@
-import { lang } from '../i18n';
-import { buildLayers, type MapLayers } from './mapLayers';
-import { isDarkFlavor, type Flavor } from './style';
+import { lang } from '../i18n/index.ts';
+import { buildLayers, type MapLayers } from './mapLayers.ts';
+import { isDarkFlavor, type Flavor } from './style.ts';
 
 const built = new Map<Flavor, MapLayers>();
 

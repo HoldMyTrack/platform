@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { ChevronDown, Lock } from 'lucide-react';
-import { currentLayerState, currentLayers, updateLayers } from '../map/applyLayers';
-import { exploredCount, fogLevelInView, fogLevelPick, levelLabelKey } from '../map/fogLevels';
-import type { Explored } from '../map/useCoverageRefresh';
-import { hasKey, lang, t } from '../i18n';
+import { currentLayerState, currentLayers, updateLayers } from '../map/applyLayers.ts';
+import { exploredCount, fogLevelInView, fogLevelPick, levelLabelKey } from '../map/fogLevels.ts';
+import type { Explored } from '../map/useCoverageRefresh.ts';
+import { hasKey, lang, t } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
-export interface FogLevelMenuProps {
+interface FogLevelMenuProps {
   map: MapLibreMap;
   /** The places of each level the account has explored, which the menu counts. */
   explored: Explored | null;
@@ -46,21 +47,7 @@ export function FogLevelMenu({ map, explored, forceOpen = false }: FogLevelMenuP
     updateLayers(map, { fogLevel: locked });
   }, [map, locked]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
+  useDismiss(ref, open, setOpen);
 
   const levels = currentLayers(map)?.levels ?? [];
   const label = (level: string) => {

@@ -1,7 +1,7 @@
 import type { LayerSpecification } from 'maplibre-gl';
 import { tilePath, TOGGLE_METADATA, type GroupPart, type LegendEntry } from './mapLayers.ts';
 import { PATH_COLORS, PATH_LAYER_IDS, pathDash } from './pathColors.ts';
-import type { Flavor } from './style';
+import type { Flavor } from './style.ts';
 
 /**
  * The Layers menu's Bike paths, Shared paths and Mountain bike trails (docs/SPEC.md FR-4.9,
@@ -15,7 +15,7 @@ import type { Flavor } from './style';
  */
 
 /** Where the tiles start (internal/httpapi's bikePathsMinZoom): a region on the screen. */
-export const BIKE_PATHS_MIN_ZOOM = 9;
+const BIKE_PATHS_MIN_ZOOM = 9;
 /** Past it the tiles serve every zoom above by overzooming, like the spots tiles. */
 const BIKE_PATHS_MAX_ZOOM = 14;
 /** internal/httpapi's ST_AsMVT layer name. */
@@ -23,7 +23,7 @@ const BIKE_PATHS_SOURCE_LAYER = 'bike_paths';
 const SOURCE = 'bike-paths';
 
 /** The Layers menu switches, by TOGGLE_METADATA name. */
-export type BikePathToggle = 'bikePaths' | 'sharedPaths' | 'mtbTrails';
+type BikePathToggle = 'bikePaths' | 'sharedPaths' | 'mtbTrails';
 
 /** Which of the three are showing. */
 export type BikePathOverlays = Record<BikePathToggle, boolean>;

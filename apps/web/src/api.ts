@@ -1,8 +1,8 @@
-import { t } from './i18n';
-import { rememberTypeKinds, rememberTypeLabels } from './ui/activityTypes';
-import { deleteDone, parseErrorBody } from './apiError';
-import type { components, paths } from './apiSchema';
-import type { SpotCategory, SpotInArea } from './map/spots';
+import { t } from './i18n/index.ts';
+import { rememberTypeKinds, rememberTypeLabels } from './ui/activityTypes.ts';
+import { deleteDone, parseErrorBody } from './apiError.ts';
+import type { components, paths } from './apiSchema.ts';
+import type { SpotCategory, SpotInArea } from './map/spots.ts';
 
 /**
  * The Go backend's upload endpoint (IMPLEMENTATION.md §4.0).
@@ -18,7 +18,7 @@ export const API_BASE_URL: string =
  * cutover is a matter of introducing a second constant here, not a hunt-and-replace across
  * every call site below. The tiles' own prefix is mapLayers.ts's TILES.
  */
-export const API_V1 = '/v1';
+const API_V1 = '/v1';
 
 /** A shape the API contract (services/server/api/) names, as `apiSchema.ts` generates it from the
  *  contract (`npm run gen:api-types`). */
@@ -34,6 +34,26 @@ type ResponseJson<P extends keyof paths, M extends 'get' | 'post' | 'patch' | 'd
         : never
       : never
     : never;
+
+/** `T` with each optional field also taking undefined, which JSON.stringify leaves out: so a
+ *  body can pass a value that may be missing without spelling out its absence. */
+type Sendable<T> = { [K in keyof T]: T[K] | (undefined extends T[K] ? undefined : never) };
+
+/** The JSON body a `/v1` operation takes, as the contract states it. */
+type RequestJson<P extends keyof paths, M extends 'post' | 'patch' | 'delete'> =
+  NonNullable<paths[P][M]> extends { requestBody?: infer R }
+    ? NonNullable<R> extends { content: { 'application/json': infer B } }
+      ? Sendable<B>
+      : never
+    : never;
+
+/**
+ * A request's body for `P`'s `M`, checked against the contract: a field renamed there no longer
+ * compiles here, where an untyped literal would go on sending the old name.
+ */
+function jsonBody<P extends keyof paths, M extends 'post' | 'patch' | 'delete'>(body: RequestJson<P, M>): string {
+  return JSON.stringify(body);
+}
 
 /** An error response's message, worth putting in front of a person (`parseErrorBody`), for the
  *  `fetch`-based functions below, which all throw through this rather than reading `res.text()`
@@ -227,7 +247,7 @@ function toActivityDetail(a: Schema<'ActivityRow'>): ActivityDetail {
 
 /** A list response: the rows, and for an area how many it holds, more than the rows when they
  *  were cut at the limit; null otherwise. */
-export interface ActivityPage {
+interface ActivityPage {
   activities: Activity[];
   total: number | null;
 }
@@ -312,7 +332,7 @@ export async function updateActivity(
   const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activity_type: patch.activityType, name: patch.name, description: patch.description }),
+    body: jsonBody<'/activities/{id}', 'patch'>({ activity_type: patch.activityType, name: patch.name, description: patch.description }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -323,9 +343,7 @@ export async function updateActivity(
 
 /**
  * §4.7.5's `DELETE /v1/activities/{id}` — a full purge (track, Fog coverage,
- * the raw upload), not a soft delete. `204 No Content` on success, same
- * convention `logout` already uses for "succeeded, nothing to say back" — nothing to parse or
- * return here either.
+ * the raw upload), not a soft delete. `204 No Content` on success: nothing to parse or return.
  */
 export async function deleteActivity(id: string): Promise<void> {
   const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
@@ -337,13 +355,13 @@ export async function deleteActivity(id: string): Promise<void> {
 }
 
 /** One day of §4.7's histogram — a day that actually has activities; days with none are absent. */
-export interface HistogramBucket {
+interface HistogramBucket {
   date: string;
   count: number;
   distanceMeters: number;
 }
 
-export interface ActivityDayPage {
+interface ActivityDayPage {
   /** "day" — §4.7's resolved granularity. Present so a future weekly rollup is detectable. */
   bucket: string;
   /** The first and last day this page actually returned, or "" for an empty page. */
@@ -356,7 +374,7 @@ export interface ActivityDayPage {
   earliest: string | null;
 }
 
-export interface DayPageQuery {
+interface DayPageQuery {
   /** How many days-with-activity to return. */
   limit: number;
   /** Return the `limit` most recent days strictly before this one; omit for the newest. */
@@ -388,7 +406,7 @@ export async function getActivityDayPage(query: DayPageQuery, signal?: AbortSign
   };
 }
 
-export interface TrackMetricPoint {
+interface TrackMetricPoint {
   lon: number;
   lat: number;
   speedMps: number;
@@ -397,7 +415,7 @@ export interface TrackMetricPoint {
 }
 
 /** A run of points in one pace band, slowest 0, by index into the points, `end` inclusive. */
-export interface PaceBand {
+interface PaceBand {
   band: number;
   start: number;
   end: number;
@@ -409,21 +427,18 @@ export interface ActivityTrackMetrics {
   bands: PaceBand[];
 }
 
-/** `POST /v1/activities/stats-card`'s body (IMPLEMENTATION.md §4.3.3). */
-type StatsCardBody = paths['/activities/stats-card']['post']['requestBody']['content']['application/json'];
-
 /** `POST /v1/activities/stats-card`: the export's stats card as a PNG, or null when every activity
  *  asked for is Pending. */
 export async function getStatsCard(
   request: { activityIds: string[]; width: number; height: number; theme: 'light' | 'dark' },
   signal?: AbortSignal,
 ): Promise<Blob | null> {
-  const body: StatsCardBody = { activity_ids: request.activityIds, width: request.width, height: request.height, theme: request.theme };
   const res = await apiFetch(`/activities/stats-card`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     ...(signal ? { signal } : {}),
-    body: JSON.stringify(body),
+    // IMPLEMENTATION.md §4.3.3.
+    body: jsonBody<'/activities/stats-card', 'post'>({ activity_ids: request.activityIds, width: request.width, height: request.height, theme: request.theme }),
   });
   if (res.status === 204) return null;
   if (!res.ok) {
@@ -432,12 +447,6 @@ export async function getStatsCard(
   return res.blob();
 }
 
-/**
- * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one activity's own
- * track, matching the exact vertex sequence its display trajectory already renders. Backs
- * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
- * focus.
- */
 /** `GET /v1/map/imagery`: whether satellite imagery is offered now, which the server stops while
  *  the imagery plan nears its monthly limit (docs/SPEC.md FR-4.10). */
 export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
@@ -461,6 +470,12 @@ export async function pendingActivities(ids: readonly string[], signal?: AbortSi
   return ((await res.json()) as ResponseJson<'/activities/pending', 'get'>).pending;
 }
 
+/**
+ * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one activity's own
+ * track, matching the exact vertex sequence its display trajectory already renders. Backs
+ * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
+ * focus.
+ */
 export async function getActivityTrackMetrics(
   activityId: string,
   signal?: AbortSignal,
@@ -490,7 +505,7 @@ export type TrackEdit = Schema<'TrackEdit'>;
 /** One recorded point: [lon, lat, unix ms]. */
 export type TrackPoint = [number, number, number];
 
-export interface ActivityTrackPoints {
+interface ActivityTrackPoints {
   /** Every point the activity is processed from, clipped by Private locations, before the user's edit. */
   points: TrackPoint[];
   /** The edit currently applied on top of `points`, or null for an unedited track. */
@@ -529,7 +544,7 @@ export async function saveActivityTrackEdit(
   const res = await apiFetch(`/activities/${encodeURIComponent(activityId)}/track-edit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(splitAt === null ? { edit } : { edit, split_at: splitAt, ...(allowHidden ? { allow_hidden: true } : {}) }),
+    body: jsonBody<'/activities/{id}/track-edit', 'post'>(splitAt === null ? { edit } : { edit, split_at: splitAt, ...(allowHidden ? { allow_hidden: true } : {}) }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -588,7 +603,10 @@ export async function savePrivateLocation(input: PrivateLocationInput, id?: stri
   const res = await apiFetch(`/private-locations${id ? `/${encodeURIComponent(id)}` : ''}`, {
     method: id ? 'PATCH' : 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM }),
+    // Each against its own operation, so a difference between them in the contract shows here.
+    body: id
+      ? jsonBody<'/private-locations/{id}', 'patch'>({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM })
+      : jsonBody<'/private-locations', 'post'>({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -673,7 +691,7 @@ export async function updateStory(id: string, input: { name: string; description
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: input.name, description: input.description }),
+    body: jsonBody<'/stories/{id}', 'patch'>({ name: input.name, description: input.description }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -707,7 +725,7 @@ export async function addStoryActivities(id: string, activityIds: string[]): Pro
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activity_ids: activityIds }),
+    body: jsonBody<'/stories/{id}/activities', 'post'>({ activity_ids: activityIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -720,7 +738,7 @@ export async function removeStoryActivities(id: string, activityIds: string[]): 
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activity_ids: activityIds }),
+    body: jsonBody<'/stories/{id}/activities', 'delete'>({ activity_ids: activityIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -734,7 +752,7 @@ export async function sendStory(id: string, email: string): Promise<void> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: jsonBody<'/stories/{id}/send', 'post'>({ email }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -742,7 +760,7 @@ export async function sendStory(id: string, email: string): Promise<void> {
 }
 
 /** A copy of a Story someone sent the account, waiting to be accepted or declined (FR-13.7). */
-export interface StorySend {
+interface StorySend {
   id: string;
   storyName: string;
   /** The sender's name, or their email address when they've set none. */
@@ -751,7 +769,7 @@ export interface StorySend {
 }
 
 /** A copy the account accepted that hasn't finished arriving. */
-export interface StoryCopying {
+interface StoryCopying {
   storyName: string;
   from: string;
 }
@@ -794,7 +812,7 @@ export async function createStory(input: { name: string; description: string; ac
   const res = await apiFetch(`/stories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: input.name, description: input.description, activity_ids: input.activityIds }),
+    body: jsonBody<'/stories', 'post'>({ name: input.name, description: input.description, activity_ids: input.activityIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -822,7 +840,7 @@ export async function getCoverageStatus(signal?: AbortSignal): Promise<CoverageS
 /** `GET /v1/spots` — "Show in this area" (FR-14.4): the places in a box, in the chosen
  *  categories. `total` is how many the box holds; more than `spots.length` when the server cut
  *  the answer at its limit. */
-export interface SpotsInArea {
+interface SpotsInArea {
   spots: SpotInArea[];
   total: number;
 }
@@ -912,7 +930,7 @@ export async function listPhotos(of: { activity: string } | { story: string }, s
 export class PhotoNeedsPlaceError extends Error {}
 
 /** What a photo's EXIF said, as the placement fields `POST /v1/photos` and its check take. */
-export interface PhotoExifFields {
+interface PhotoExifFields {
   takenAt?: string;
   takenLocal?: string;
   lat?: number;
@@ -925,7 +943,7 @@ export async function checkPhotoPlace(activityId: string, exif: PhotoExifFields)
   const res = await apiFetch(`/photos/place`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activity_id: activityId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
+    body: jsonBody<'/photos/place', 'post'>({ activity_id: activityId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -974,7 +992,7 @@ export async function updatePhoto(id: string, change: { caption?: string | undef
   const res = await apiFetch(`/photos/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ caption: change.caption, route_at: change.routeAt }),
+    body: jsonBody<'/photos/{id}', 'patch'>({ caption: change.caption, route_at: change.routeAt }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));

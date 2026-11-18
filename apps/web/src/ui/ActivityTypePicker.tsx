@@ -1,10 +1,10 @@
 import { useCallback, useMemo } from 'react';
-import type { TypeFacet } from './activityFacets';
-import { formatActivityType } from './format';
-import { fold, SearchPicker, type PickerOption } from './SearchPicker';
-import { t } from '../i18n';
+import type { TypeFacet } from './activityFacets.ts';
+import { formatActivityType } from './format.ts';
+import { fold, SearchPicker, type PickerOption } from './SearchPicker.tsx';
+import { t } from '../i18n/index.ts';
 
-export interface ActivityTypePickerProps {
+interface ActivityTypePickerProps {
   /** The raw `activity_type` value, e.g. "dog_walk" or "Solowheel". */
   value: string;
   onChange: (type: string) => void;

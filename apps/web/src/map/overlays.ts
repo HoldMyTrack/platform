@@ -1,4 +1,4 @@
-import type { SpotCategory } from './spots';
+import type { SpotCategory } from './spots.ts';
 // spotsGroup.ts, not spots.ts, which pulls in React and MapLibre: tests read this file in Node.
 import { SPOT_CATEGORY_WIRE } from './spotsGroup.ts';
 

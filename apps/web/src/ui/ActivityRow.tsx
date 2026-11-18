@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { Lock, X } from 'lucide-react';
-import type { Activity } from '../api';
-import { formatActivityType, formatDistance, formatDuration, formatStartedAt } from './format';
-import type { UnitSystem } from './units';
-import { typeIcon } from './activityKindIcon';
-import { t, tn } from '../i18n';
+import type { Activity } from '../api.ts';
+import { formatActivityType, formatDistance, formatDuration, formatStartedAt } from './format.ts';
+import type { UnitSystem } from './units.ts';
+import { typeIcon } from './activityKindIcon.ts';
+import { t, tn } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
 /** A row's primary line: its user-entered name (§4.7) when it has one, else
  *  its start date/time — also how the toolbar names a single selected activity. */
@@ -12,7 +13,7 @@ export function rowLabel(activity: Activity): string {
   return activity.name?.trim() || formatStartedAt(activity.startedAt, activity.timezone);
 }
 
-export interface ActivityRowProps {
+interface ActivityRowProps {
   activity: Activity;
   system: UnitSystem;
   focused: boolean;
@@ -67,10 +68,6 @@ export function ActivityRow({
     <li
       data-activity-id={activity.id}
       className={classes.join(' ')}
-      // The description (docs/SPEC.md FR-5.5) shows as a hover tooltip only — no second visible line, and
-      // undefined (not an empty string) when there is none, so a row with nothing written there
-      // gets no title attribute at all rather than an empty one a browser might still render as
-      // an inert tooltip.
       onMouseEnter={() => onHover(activity.id)}
       onMouseLeave={() => onHover(null)}
     >
@@ -164,21 +161,7 @@ function StoryBadge({
   const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setMenuOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [menuOpen]);
+  useDismiss(ref, menuOpen, setMenuOpen);
 
   const label = tn('activities.story_badge', stories.length);
   const names = tn(inOpenStory ? 'activities.in_other_stories' : 'activities.in_stories', stories.length, {

@@ -1,5 +1,5 @@
 /** Where the camera goes when a Story's list lands (FR-13.6), as plain values. */
-import type { Activity } from '../api';
+import type { Activity } from '../api.ts';
 
 /**
  * A Story's first loaded list fits all of it, a trip; a URL view (`#…`) keeps the camera. Returns

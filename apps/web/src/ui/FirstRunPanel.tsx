@@ -1,9 +1,9 @@
 import { useRef, type ReactNode } from 'react';
 import { ChevronRight, FileUp, Lock, Route, Smartphone, Watch } from 'lucide-react';
-import { StoryInboxItems } from './StoryInboxItems';
-import type { StoryInboxState } from './useStoryInbox';
-import { useImportsInFlight } from './useImportsInFlight';
-import { t, tn } from '../i18n';
+import { StoryInboxItems } from './StoryInboxItems.tsx';
+import type { StoryInboxState } from './useStoryInbox.ts';
+import { useImportsInFlight } from './useImportsInFlight.ts';
+import { t, tn } from '../i18n/index.ts';
 
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=dev.holdmytrack.android';
 

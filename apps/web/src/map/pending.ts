@@ -10,7 +10,7 @@
  * missing row says nothing about its reprocess, so the list speaks only for the rows it holds
  * (`listed`); the Pending check answers for the rest (`pendingAnswer`).
  */
-export interface PendingChange {
+interface PendingChange {
   /** The ids held Pending: the list's, and those it doesn't show that were. */
   pending: Set<string>;
   /** A row entered Pending. */
@@ -43,7 +43,7 @@ export function pendingWatched(pending: Iterable<string>, awaiting: Iterable<str
 }
 
 /** The most ids one Pending check request may carry (`GET /v1/activities/pending`). */
-export const PENDING_BATCH = 200;
+const PENDING_BATCH = 200;
 
 /** [ids] in consecutive batches of at most [size], one Pending check request each; the answers
  *  are read as one. None for no ids. */

@@ -1,10 +1,10 @@
 import { useCallback, type Dispatch } from 'react';
-import type { MapSessionEvent } from './session';
-import { invertedChecks } from './selection';
-import type { Activity } from '../api';
-import type { DistanceRange } from '../ui/activityFacets';
+import type { MapSessionEvent } from './session.ts';
+import { invertedChecks } from './selection.ts';
+import type { Activity } from '../api.ts';
+import type { DistanceRange } from '../ui/activityFacets.ts';
 
-export interface SelectionActions {
+interface SelectionActions {
   toggleChecked: (id: string) => void;
   /** The toolbar's Show/Hide over its target. */
   toggleGroupVisibility: () => void;

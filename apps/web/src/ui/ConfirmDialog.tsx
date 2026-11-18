@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type MouseEvent, type RefObject } from 'react';
-import { t } from '../i18n';
+import { t } from '../i18n/index.ts';
 
 /**
  * A generic "are you sure" confirm/cancel dialog — first used by the Activities panel's
@@ -15,7 +15,7 @@ import { t } from '../i18n';
  * the backdrop — so a failure always has somewhere to show. It opens on Cancel, so a held or
  * repeated Enter from the button that opened it can't confirm what may not be undone.
  */
-export interface ConfirmDialogProps {
+interface ConfirmDialogProps {
   title: string;
   message: string;
   /** Defaults to "Confirm"/"Cancel" — callers name the action explicitly ("Delete") when a

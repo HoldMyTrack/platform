@@ -44,10 +44,7 @@
       <li><strong>Никаких данных о здоровье.</strong> Пульс и другие показатели тела из файла не читаются.</li>
       <li><strong>Они остаются вашими.</strong> Правьте маршрут, удаляйте путешествие или <a href="/help#download-data">скачайте всё</a> в любой момент.</li>
     </ul>
-    {{if not .User}}<div class="page-actions">
-      <a class="page-button" href="/signup">Создать бесплатный аккаунт</a>
-      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
-    </div>{{end}}
+    {{template "guide-signup" .}}
   </section>
 </main>
 {{end}}

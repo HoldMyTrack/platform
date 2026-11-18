@@ -42,10 +42,7 @@
       <li><strong>No health data.</strong> Heart rate and other body signals in a Garmin file aren't read.</li>
     </ul>
     <p>Any other app that exports GPX, FIT or TCX works the same way: see <a href="/gpx-viewer">opening a track file</a>.</p>
-    {{if not .User}}<div class="page-actions">
-      <a class="page-button" href="/signup">Create a free account</a>
-      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
-    </div>{{end}}
+    {{template "guide-signup" .}}
   </section>
 </main>
 {{end}}

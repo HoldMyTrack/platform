@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CSSProperties, PointerEvent as ReactPointerEvent, RefObject } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { Camera, ChevronDown, X } from 'lucide-react';
-import { EXPORT_PLATFORMS, EXPORT_PRESET_ROWS, EXPORT_PRESETS, type ExportPreset } from '../map/exportPresets';
+import { EXPORT_PLATFORMS, EXPORT_PRESET_ROWS, EXPORT_PRESETS, type ExportPreset } from '../map/exportPresets.ts';
 import {
   choiceValue,
   CUSTOM_SIZES,
@@ -18,10 +18,10 @@ import {
   type CustomSizeId,
   type ExportChoice,
   type Rect,
-} from '../map/exportViewfinder';
-import { statsCardPlacement } from '../map/exportStats';
-import type { StatsCardState } from '../map/useStatsCard';
-import { t } from '../i18n';
+} from '../map/exportViewfinder.ts';
+import { statsCardPlacement } from '../map/exportStats.ts';
+import type { StatsCardState } from '../map/useStatsCard.ts';
+import { t } from '../i18n/index.ts';
 
 /** EXPORT_PRESET_ROWS' names as the toolbar shows them — the ids stay English. */
 const ROW_LABELS = {
@@ -36,7 +36,7 @@ const CORNERS: Corner[] = ['nw', 'ne', 'sw', 'se'];
 /** How long a settle takes: the window's CSS transition and the map's ease share it. */
 const SETTLE_MS = 300;
 
-export interface ExportViewfinderProps {
+interface ExportViewfinderProps {
   map: MapLibreMap;
   /** The live map's own container element — its size is the viewfinder's. */
   containerRef: RefObject<HTMLDivElement | null>;

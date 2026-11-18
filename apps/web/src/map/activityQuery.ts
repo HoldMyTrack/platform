@@ -1,5 +1,5 @@
-import type { ActivityQuery, AreaQuery, BBox } from '../api';
-import type { DateFilter } from '../ui/dateFilter';
+import type { ActivityQuery, AreaQuery, BBox } from '../api.ts';
+import type { DateFilter } from '../ui/dateFilter.ts';
 
 /** The Dates filter (docs/SPEC.md FR-5.12) as the server's `from`/`to`, an empty end left out. */
 export function datesQuery({ after, before }: DateFilter): ActivityQuery {

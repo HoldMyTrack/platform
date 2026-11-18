@@ -1,4 +1,4 @@
-import type { UnitSystem } from './units';
+import type { UnitSystem } from './units.ts';
 
 /**
  * What format.ts decides before the language writes it: which number, how many decimals, which
@@ -20,7 +20,7 @@ export interface DistanceParts {
 }
 
 /** A duration message: `duration.hm` ("3h 52m"), `duration.m` ("43m") or `duration.s` ("20s"). */
-export type DurationParts =
+type DurationParts =
   | { key: 'duration.hm'; args: { h: number; m: number } }
   | { key: 'duration.m'; args: { m: number } }
   | { key: 'duration.s'; args: { s: number } };

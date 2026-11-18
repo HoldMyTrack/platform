@@ -1,11 +1,12 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ChevronDown, X } from 'lucide-react';
-import { DistanceFilter } from './DistanceFilter';
-import type { DistanceRange, TypeFacet } from './activityFacets';
-import { dateFilterLabel, type DateFilter } from './dateFilter';
-import { distanceValue, formatActivityType, formatFilterDate, formatShortDate, unitLabel } from './format';
-import { useUnitSystem } from './units';
-import { t } from '../i18n';
+import { DistanceFilter } from './DistanceFilter.tsx';
+import type { DistanceRange, TypeFacet } from './activityFacets.ts';
+import { dateFilterLabel, type DateFilter } from './dateFilter.ts';
+import { distanceValue, formatActivityType, formatFilterDate, formatShortDate, unitLabel } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { t } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
 export interface DatesProps {
   value: DateFilter;
@@ -20,7 +21,7 @@ export interface DatesProps {
   onClear: () => void;
 }
 
-export interface ActivityFiltersProps {
+interface ActivityFiltersProps {
   facets: TypeFacet[];
   excludedTypes: ReadonlySet<string>;
   onToggleType: (type: string) => void;
@@ -28,27 +29,6 @@ export interface ActivityFiltersProps {
   distanceFilter: DistanceRange | null;
   onChangeDistance: (next: DistanceRange | null) => void;
   dates: DatesProps;
-}
-
-/** A dropdown closed by a press outside it or Escape. */
-function useDismiss(open: boolean, close: () => void) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) close();
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') close();
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open, close]);
-  return ref;
 }
 
 /** The trigger every filter dropdown shares: its name, a dot or a value when set, a caret. */
@@ -69,7 +49,8 @@ function Trigger({ open, onClick, children, testId }: { open: boolean; onClick: 
  */
 function FilterDropdown({ text, set, onClear, clearLabel, panelLabel, testId, children }: { text: string; set: boolean; onClear: () => void; clearLabel: string; panelLabel: string; testId: string; children: ReactNode }) {
   const [open, setOpen] = useState(false);
-  const ref = useDismiss(open, useCallback(() => setOpen(false), []));
+  const ref = useRef<HTMLDivElement>(null);
+  useDismiss(ref, open, setOpen);
   return (
     <div className={`activities-panel__type-dropdown activities-panel__filter-dropdown${set ? ' activities-panel__filter-dropdown--set' : ''}`} ref={ref}>
       <Trigger open={open} onClick={() => setOpen((o) => !o)} testId={testId}>
@@ -161,7 +142,8 @@ function DateField({ label, hint, value, bounds, onCommit, testId }: { label: st
  *  only while the listed activities span distances (FR-5.3). */
 export function ActivityFilters({ facets, excludedTypes, onToggleType, distanceBounds, distanceFilter, onChangeDistance, dates }: ActivityFiltersProps) {
   const [typeOpen, setTypeOpen] = useState(false);
-  const typeRef = useDismiss(typeOpen, useCallback(() => setTypeOpen(false), []));
+  const typeRef = useRef<HTMLDivElement>(null);
+  useDismiss(typeRef, typeOpen, setTypeOpen);
   const system = useUnitSystem();
   const distanceText =
     distanceFilter === null

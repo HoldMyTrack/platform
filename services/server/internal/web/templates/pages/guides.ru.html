@@ -24,10 +24,7 @@
         <p>Туман рассеивается везде, где прошли ваши маршруты, и видно улицы, парки и тропы рядом с домом, где вы ещё не были.</p>
       </li>
     </ul>
-    {{if not .User}}<div class="page-actions">
-      <a class="page-button" href="/signup">Создать бесплатный аккаунт</a>
-      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
-    </div>{{end}}
+    {{template "guide-signup" .}}
   </section>
 </main>
 {{end}}

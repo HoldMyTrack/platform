@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type Dispatch } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { APP_FLIGHT } from './bbox';
-import { areaLoad } from './areaLoad';
-import type { MapSessionEvent } from './session';
-import type { BBox } from '../api';
+import { APP_FLIGHT } from './bbox.ts';
+import { areaLoad } from './areaLoad.ts';
+import type { MapSessionEvent } from './session.ts';
+import type { BBox } from '../api.ts';
 
 /** How long the map has to settle before the list follows it, so a pan in steps asks once. */
 const SETTLE_MS = 300;

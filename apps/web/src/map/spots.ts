@@ -4,11 +4,11 @@ import { createRoot } from 'react-dom/client';
 import type { GeoJSONSource, Map as MapLibreMap, MapGeoJSONFeature } from 'maplibre-gl';
 import type { FeatureCollection, Point } from 'geojson';
 import { Binoculars, Castle, createLucideIcon, Dog, Landmark, type LucideProps } from 'lucide-react';
-import type { components } from '../apiSchema';
-import { currentLayers, setLayerToggles, setLayerVars } from './applyLayers';
-import { IMAGES_METADATA } from './mapLayers';
-import { mapTapsActive } from './mapTaps';
-import { SPOT_CATEGORY_WIRE, SPOTS_IN_AREA_LAYER_ID, SPOTS_IN_AREA_SOURCE_ID, SPOTS_LAYER_ID } from './spotsGroup';
+import type { components } from '../apiSchema.ts';
+import { currentLayers, setLayerToggles, setLayerVars } from './applyLayers.ts';
+import { IMAGES_METADATA } from './mapLayers.ts';
+import { mapTapsActive } from './mapTaps.ts';
+import { SPOT_CATEGORY_WIRE, SPOTS_IN_AREA_LAYER_ID, SPOTS_IN_AREA_SOURCE_ID, SPOTS_LAYER_ID } from './spotsGroup.ts';
 
 /**
  * The Spots layers on the map (IMPLEMENTATION.md §4.25): the layers document draws them
@@ -17,7 +17,7 @@ import { SPOT_CATEGORY_WIRE, SPOTS_IN_AREA_LAYER_ID, SPOTS_IN_AREA_SOURCE_ID, SP
  * names, in its colors, with the app's own icons.
  */
 
-export { SPOTS_IN_AREA_MIN_ZOOM, SPOTS_MIN_ZOOM } from './spotsGroup';
+export { SPOTS_IN_AREA_MIN_ZOOM, SPOTS_MIN_ZOOM } from './spotsGroup.ts';
 
 export type SpotCategory = components['schemas']['Spot']['category'];
 

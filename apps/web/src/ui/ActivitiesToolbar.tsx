@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronDown, Eye, EyeOff, Focus, Pencil, Trash2 } from 'lucide-react';
-import { deleteActivity, type Activity, type Story } from '../api';
-import { rowLabel } from './ActivityRow';
-import { AddToStoryMenu } from './AddToStoryMenu';
-import { ConfirmDialog } from './ConfirmDialog';
-import { formatTotalDistance } from './format';
-import { useUnitSystem } from './units';
-import { t, tn } from '../i18n';
+import { deleteActivity, type Activity, type Story } from '../api.ts';
+import { rowLabel } from './ActivityRow.tsx';
+import { AddToStoryMenu } from './AddToStoryMenu.tsx';
+import { ConfirmDialog } from './ConfirmDialog.tsx';
+import { formatTotalDistance } from './format.ts';
+import { useUnitSystem } from './units.ts';
+import { t, tn } from '../i18n/index.ts';
+import { useDismiss } from './useDismiss.ts';
 
-export interface ActivitiesToolbarProps {
+interface ActivitiesToolbarProps {
   readOnly: boolean;
   /** The listed rows, already narrowed by the filters. */
   activities: Activity[];
@@ -52,21 +53,7 @@ export function ActivitiesToolbar({
   // The ▾ menu, dismissed on outside click or Escape.
   const [selectMenuOpen, setSelectMenuOpen] = useState(false);
   const selectMenuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!selectMenuOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!selectMenuRef.current?.contains(event.target as Node)) setSelectMenuOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSelectMenuOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [selectMenuOpen]);
+  useDismiss(selectMenuRef, selectMenuOpen, setSelectMenuOpen);
 
   // The toolbar's Delete is the only delete entry point, for one activity or many.
   const [deletingGroup, setDeletingGroup] = useState(false);

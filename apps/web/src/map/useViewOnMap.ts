@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, type Dispatch } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import type { MapMode } from './mapMode';
-import type { MapSessionEvent } from './session';
-import type { Activity } from '../api';
+import type { MapMode } from './mapMode.ts';
+import type { MapSessionEvent } from './session.ts';
+import type { Activity } from '../api.ts';
 
 /**
  * "View on map" (`/?activity=&day=`, the /sync page's link), once, on arrival. Normal mode first,

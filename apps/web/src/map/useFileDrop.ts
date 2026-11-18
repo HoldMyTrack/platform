@@ -1,6 +1,6 @@
 import { useRef, useState, type DragEvent } from 'react';
 
-export interface FileDrop {
+interface FileDrop {
   /** Files are being dragged over the map. */
   over: boolean;
   handlers: {

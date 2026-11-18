@@ -41,10 +41,7 @@
       <li><strong>Mark home as a Private location</strong> and wherever a track starts or ends there, that part is hidden. See <a href="/help#settings">Settings and privacy</a>.</li>
       <li><strong>Nobody else sees your map.</strong> There are no followers, kudos or leaderboards.</li>
     </ul>
-    {{if not .User}}<div class="page-actions">
-      <a class="page-button" href="/signup">Create a free account</a>
-      {{if not .InApp}}{{template "demo-button-quiet" .}}{{end}}
-    </div>{{end}}
+    {{template "guide-signup" .}}
   </section>
 </main>
 {{end}}

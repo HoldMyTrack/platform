@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { IControl, Map as MapLibreMap } from 'maplibre-gl';
 import { Camera } from 'lucide-react';
-import { t } from '../i18n';
+import { t } from '../i18n/index.ts';
 
-export interface ExportControlProps {
+interface ExportControlProps {
   map: MapLibreMap;
   /** Whether the export viewfinder is shown — the button reads as pressed while it is. */
   active: boolean;

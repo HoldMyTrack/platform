@@ -1,9 +1,9 @@
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { ROADS_METADATA } from './style';
-import { styleReady } from './styleReady';
+import { ROADS_METADATA } from './style.ts';
+import { styleReady } from './styleReady.ts';
 
 /** Shows or hides the layers the style's ROADS_METADATA lists (roads.ts's roadLayerIds). Diffs
- *  before setting, like satellite.ts, since reattachOverlays calls it on every 'styledata'. */
+ *  before setting, like satellite.ts, since useMapLayers' reattach calls it on every 'styledata'. */
 export function setRoadsVisible(map: MapLibreMap, shown: boolean): void {
   if (!styleReady(map)) return;
   const roads = (map.getStyle().metadata as Record<string, unknown> | undefined)?.[ROADS_METADATA];
