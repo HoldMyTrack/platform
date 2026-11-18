@@ -20,7 +20,7 @@ import {
   type PrivateLocationsClick,
 } from '../map/privateLocations';
 import { ConfirmDialog } from './ConfirmDialog';
-import { highlightedCircle, pickAction, type PickIntent } from './privateLocationPick';
+import { highlightedCircle, openingLocation, pickAction, type PickIntent } from './privateLocationPick';
 import { elevationUnitLabel, metersToFeet } from './format';
 import { useUnitSystem } from './units';
 import { lang, t, tn } from '../i18n';
@@ -92,14 +92,24 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
   useEffect(() => {
     const controller = new AbortController();
     listPrivateLocations(controller.signal)
-      .then(setLocations)
+      .then((list) => {
+        setLocations(list);
+        // Opening the tab moves the map onto the location added last, focused.
+        const last = openingLocation(list);
+        if (last) {
+          map.flyTo({ center: [last.lon, last.lat], zoom: Math.max(map.getZoom(), 14) });
+          setFocusedId(last.id);
+        }
+      })
       .catch((err: unknown) => {
         if (!controller.signal.aborted) setLoadError(err instanceof Error ? err.message : String(err));
       });
     // Only a line of context: the tab works without it, so a failure leaves it out.
     hiddenActivityCount(controller.signal).then(setHidden, () => {});
     return () => controller.abort();
-  }, []);
+    // The map is the panel's for its whole life (a theme swap keeps the instance), so this runs
+    // once, when the tab opens.
+  }, [map]);
 
   // Draw, and redraw after a theme swap discards custom layers (styledata) — owned here, not
   // by MapView's reattachOverlays, since the overlay only exists while this tab is showing.
