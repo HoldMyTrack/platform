@@ -51,7 +51,7 @@ type syncRow struct {
 	Detail string
 	// SyncedAt is when the import finished, "Oct 6, 14:31" in the account's timezone.
 	SyncedAt string
-	// MapHref opens the map on the track (`/?activity=…&day=…`), "" when there is none. The
+	// MapHref opens the map on the track (`/?track=…&activity=…&day=…`), "" when there is none. The
 	// day is the track's own local day, which is how the server reads a bare from/to: a UTC
 	// day would put an evening track west of Greenwich a day late, outside the range.
 	MapHref string
@@ -128,7 +128,7 @@ func (s *Server) buildSync(ctx context.Context, l *i18n.Localizer, acct *pageAcc
 				row.Detail += " · " + web.FormatDistance(l, *distance, imperial)
 			}
 			if trackID != nil {
-				// activity is the same id for Android builds that read that name.
+				// activity is the same id, for app builds older than Android 0.34.3 and iOS 0.2.4.
 				row.MapHref = "/?" + url.Values{"track": {*trackID}, "activity": {*trackID}, "day": {day}}.Encode()
 			}
 		}

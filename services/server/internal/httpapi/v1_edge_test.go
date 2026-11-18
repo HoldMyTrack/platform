@@ -90,10 +90,14 @@ func TestRenameV1JSON(t *testing.T) {
 			t.Errorf("%s came out as %s", body, got)
 		}
 	}
-	ids := string(renameV1JSON([]byte(`{"id":"route-bands","sources":{"route-bands":{}},"layers":[{"id":"route-bands-line","source":"route-bands","note":"route-bands x"}]}`),
-		v1Rename{keys: map[string]string{"route-bands": "track-bands"}, values: map[string]string{"route-bands": "track-bands", "route-bands-line": "track-bands-line"}}))
-	if strings.Contains(ids, `"route-bands"`) || strings.Contains(ids, `"route-bands-line"`) || !strings.Contains(ids, `"route-bands x"`) {
-		t.Errorf("layer ids: %s", ids)
+	// Ids by prefix, in keys and in id and source values only; a layer the table doesn't list
+	// follows, and neither a label nor an id that merely starts with the letters does.
+	ids := string(renameV1JSON([]byte(`{"id":"route-bands","sources":{"route-bands":{}},"layout":{"route-bands-casing":{}},"layers":[{"id":"route-bands-line","source":"route-bands","label":"route-bands"},{"id":"route-bandsx"}]}`),
+		v1Rename{prefixes: map[string]string{"route-bands": "track-bands"}}))
+	for _, want := range []string{`"id":"track-bands"`, `"sources":{"track-bands":{}}`, `"track-bands-casing"`, `"id":"track-bands-line"`, `"source":"track-bands"`, `"label":"route-bands"`, `"id":"route-bandsx"`} {
+		if !strings.Contains(ids, want) {
+			t.Errorf("layer ids: %s lacks %s", ids, want)
+		}
 	}
 	urlOut := string(renameV1JSON([]byte(`{"url":"/v2/photos/p","thumb_url":"/v2/photos/p/thumb","caption":"/v2/x"}`), v1Rename{urls: true}))
 	if !strings.Contains(urlOut, `"url":"/v1/photos/p"`) || !strings.Contains(urlOut, `"thumb_url":"/v1/photos/p/thumb"`) || !strings.Contains(urlOut, `"caption":"/v2/x"`) {

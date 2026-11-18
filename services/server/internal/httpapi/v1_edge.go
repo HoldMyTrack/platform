@@ -25,9 +25,10 @@ type v1Endpoint struct {
 	query    map[string]string // old name → new
 	keys     map[string]string // old JSON key → new, at any depth of the request and the answer
 	form     map[string]string // old multipart field → new
-	// values are string values renamed in the answer, old → new, wherever they stand: the
-	// layers document's ids, which an installed app looks its own source up by.
-	values map[string]string
+	// prefixes are id prefixes, old → new, renamed in the answer wherever an object key or an
+	// `id` or `source` value is the prefix or starts with it and a hyphen: the layers document's
+	// ids, which an installed app looks its own source up by.
+	prefixes map[string]string
 	// urls marks an answer carrying a photo's url and thumb_url, given back under /v1 so an
 	// installed app's image cache, keyed by URL, stays valid.
 	urls bool
@@ -38,8 +39,8 @@ var (
 	v1TripKeys     = map[string]string{"stories": "trips", "activity_ids": "track_ids", "activity_type": "track_type"}
 	v1PhotoKeys    = map[string]string{"activity_id": "track_id"}
 	v1TripFilter   = map[string]string{"story": "trip"}
-	// v1BandIDs are the pace bands' group, source and layers in the layers document.
-	v1BandIDs = map[string]string{"track-bands": "route-bands", "track-bands-line": "route-bands-line", "track-bands-arrows": "route-bands-arrows", "track-bands-outline": "route-bands-outline"}
+	// v1BandIDs is the prefix of the pace bands' group, source and layers in the layers document.
+	v1BandIDs = map[string]string{"track-bands": "route-bands"}
 )
 
 var v1Endpoints = []v1Endpoint{
@@ -69,7 +70,7 @@ var v1Endpoints = []v1Endpoint{
 	{old: "/story-sends/{id}/accept", new: "/trip-sends/{id}/accept"},
 	{old: "/story-sends/{id}", new: "/trip-sends/{id}"},
 	{old: "/sync/activities", new: "/sync/tracks", keys: map[string]string{"activities": "tracks", "activity_type": "track_type"}},
-	{old: "/map/layers", new: "/map/layers", keys: v1BandIDs, values: v1BandIDs},
+	{old: "/map/layers", new: "/map/layers", prefixes: v1BandIDs},
 	{old: "/uploads", new: "/uploads", keys: v1PhotoKeys},
 	{old: "/uploads/active", new: "/uploads/active", keys: v1PhotoKeys},
 	{old: "/uploads/{id}", new: "/uploads/{id}", keys: v1PhotoKeys},
@@ -176,7 +177,7 @@ func (s *Server) serveV1(w http.ResponseWriter, r *http.Request) {
 		renameV1MultipartFields(r2, e.form)
 		defer r2.Body.Close()
 	}
-	vw := &v1Writer{ResponseWriter: w, keys: invert(e.keys), values: invert(e.values), urls: e.urls}
+	vw := &v1Writer{ResponseWriter: w, keys: invert(e.keys), prefixes: invert(e.prefixes), urls: e.urls}
 	s.serve(vw, r2)
 	vw.finish()
 }
@@ -238,7 +239,7 @@ func renameV1Query(q map[string][]string, names map[string]string) string {
 // v1Rename is what renameV1JSON renames.
 type v1Rename struct {
 	keys      map[string]string // object keys, at any depth
-	values    map[string]string // string values, at any depth
+	prefixes  map[string]string // id prefixes, in object keys and `id` and `source` values
 	errorCode bool              // the top-level error code, by v1ErrorCodes
 	urls      bool              // url and thumb_url values, from apiPrefix to v1Prefix
 }
@@ -286,11 +287,18 @@ func renameKeys(v any, how v1Rename) (any, bool) {
 					return v, false
 				}
 			}
-			if n, ok := how.keys[k]; ok {
+			if n, ok := renamePrefix(k, how.prefixes); ok {
+				k = n
+			} else if n, ok := how.keys[k]; ok {
 				if _, both := t[n]; both {
 					return v, false
 				}
 				k = n
+			}
+			if str, ok := val.(string); ok && (k == "id" || k == "source") {
+				if n, ok := renamePrefix(str, how.prefixes); ok {
+					val = n
+				}
 			}
 			if str, ok := val.(string); ok && how.urls && (k == "url" || k == "thumb_url") {
 				if rest, ok := strings.CutPrefix(str, apiPrefix+"/"); ok {
@@ -307,12 +315,22 @@ func renameKeys(v any, how v1Rename) (any, bool) {
 				return v, false
 			}
 		}
-	case string:
-		if n, ok := how.values[t]; ok {
-			return n, true
-		}
 	}
 	return v, true
+}
+
+// renamePrefix is s with a prefix in prefixes renamed, when s is that prefix or starts with
+// it and a hyphen.
+func renamePrefix(s string, prefixes map[string]string) (string, bool) {
+	for from, to := range prefixes {
+		if s == from {
+			return to, true
+		}
+		if rest, ok := strings.CutPrefix(s, from+"-"); ok {
+			return to + "-" + rest, true
+		}
+	}
+	return s, false
 }
 
 // renameV1MultipartFields streams r's multipart body through with the fields in names renamed,
@@ -367,12 +385,12 @@ func copyV1Parts(in *multipart.Reader, out *multipart.Writer, names map[string]s
 // be, and writes it renamed on finish; any other answer goes straight through.
 type v1Writer struct {
 	http.ResponseWriter
-	keys    map[string]string // new key → old
-	values  map[string]string // new value → old
-	urls    bool
-	status  int
-	decided bool
-	buf     *bytes.Buffer
+	keys     map[string]string // new key → old
+	prefixes map[string]string // new id prefix → old
+	urls     bool
+	status   int
+	decided  bool
+	buf      *bytes.Buffer
 }
 
 func (w *v1Writer) WriteHeader(status int) {
@@ -381,7 +399,7 @@ func (w *v1Writer) WriteHeader(status int) {
 	}
 	w.decided, w.status = true, status
 	mt, _, _ := mime.ParseMediaType(w.Header().Get("Content-Type"))
-	if mt == "application/json" && (len(w.keys) > 0 || w.urls || status >= 400) {
+	if mt == "application/json" && (len(w.keys) > 0 || len(w.prefixes) > 0 || w.urls || status >= 400) {
 		w.buf = &bytes.Buffer{}
 		return
 	}
@@ -416,7 +434,7 @@ func (w *v1Writer) finish() {
 	if w.buf == nil {
 		return
 	}
-	body := renameV1JSON(w.buf.Bytes(), v1Rename{keys: w.keys, values: w.values, errorCode: w.status >= 400, urls: w.urls})
+	body := renameV1JSON(w.buf.Bytes(), v1Rename{keys: w.keys, prefixes: w.prefixes, errorCode: w.status >= 400, urls: w.urls})
 	w.Header().Del("Content-Length")
 	w.ResponseWriter.WriteHeader(w.status)
 	_, _ = w.ResponseWriter.Write(body)
