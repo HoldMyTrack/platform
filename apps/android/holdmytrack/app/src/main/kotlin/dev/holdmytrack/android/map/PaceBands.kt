@@ -61,6 +61,6 @@ class PaceBands(
         val loaded = style() ?: return
         val drawn = drawn
         if (drawn != null) MapOverlays.setRouteBands(loaded, drawn) else MapOverlays.clearRouteBands(loaded)
-        onShown(drawn?.let { MapLayers.doc(loaded)?.group("track-bands")?.let(::bandColors) })
+        onShown(drawn?.let { MapLayers.doc(loaded)?.group("route-bands")?.let(::bandColors) })
     }
 }

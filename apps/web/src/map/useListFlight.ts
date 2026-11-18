@@ -15,7 +15,7 @@ interface ListFlightInputs {
   mapHiddenIds: ReadonlySet<string>;
   /** The URL carries a camera, which the first list leaves alone. */
   urlView: boolean;
-  /** Arriving on one track (`/?activity=`) flies to it instead of the first list. */
+  /** Arriving on one track (`/?track=`) flies to it instead of the first list. */
   arrivingOnTrack: boolean;
   fitTo: (tracks: Track[]) => void;
 }

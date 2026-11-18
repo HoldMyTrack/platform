@@ -3,7 +3,7 @@ import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
 
 /**
  * The focused track's pace-colored segments (docs/SPEC.md FR-4.6) as the layers document's
- * `track-bands` group: a GeoJSON source the client fills with one line per run of
+ * `route-bands` group: a GeoJSON source the client fills with one line per run of
  * `GET /v2/tracks/{id}/route-metrics`' `bands` (routeBands.ts), over the shared tracks layer,
  * since a vector tile can't carry per-vertex color. Each line carries its `band` index, and the
  * layer colors it, so the colors are the server's alone. One more line, the whole route in recording
@@ -11,15 +11,15 @@ import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
  * bunch wherever the pace changes often.
  */
 
-const BANDS_LAYER_ID = 'track-bands-line';
-const ARROWS_LAYER_ID = 'track-bands-arrows';
+const BANDS_LAYER_ID = 'route-bands-line';
+const ARROWS_LAYER_ID = 'route-bands-arrows';
 
 /** Blue (slowest) to red (fastest), one per band of internal/httpapi's paceBandCount. */
 const BAND_COLORS = ['#2b6cb0', '#38a169', '#d69e2e', '#dd6b20', '#c53030'];
 // The same steps over imagery, where the green above is lost among trees.
 const SATELLITE_BAND_COLORS = ['#4da6ff', '#3df08a', '#ffd23f', '#ff8c2e', '#ff4d4d'];
 const SATELLITE_EDGE_COLOR = '#14140e';
-const OUTLINE_LAYER_ID = 'track-bands-outline';
+const OUTLINE_LAYER_ID = 'route-bands-outline';
 const BAND_OPACITY = 0.95;
 const bandColor = (colors: readonly string[]) => ['match', ['get', 'band'], ...colors.flatMap((color, band) => [band, color]), colors[0]];
 
@@ -61,15 +61,15 @@ export const arrowPaint = { 'text-color': '#ffffff', 'text-opacity': ARROW_OPACI
 export function bandsGroup(): GroupPart {
   return {
     group: {
-      id: 'track-bands',
+      id: 'route-bands',
       placement: 'beneath-labels',
-      sources: { 'track-bands': { type: 'geojson' } },
+      sources: { 'route-bands': { type: 'geojson' } },
       layers: [
         // Over imagery only. The whole route, so the runs' ends don't cut into it.
         {
           id: OUTLINE_LAYER_ID,
           type: 'line',
-          source: 'track-bands',
+          source: 'route-bands',
           filter: ['has', 'route'],
           layout: { 'line-cap': 'round', 'line-join': 'round', visibility: 'none' },
           paint: { 'line-color': SATELLITE_EDGE_COLOR, 'line-width': OUTLINE_WIDTH },
@@ -77,7 +77,7 @@ export function bandsGroup(): GroupPart {
         {
           id: BANDS_LAYER_ID,
           type: 'line',
-          source: 'track-bands',
+          source: 'route-bands',
           filter: ['has', 'band'],
           metadata: { [ROLE_METADATA]: 'pace-bands' },
           layout: { 'line-cap': 'round', 'line-join': 'round' },
@@ -92,7 +92,7 @@ export function bandsGroup(): GroupPart {
         {
           id: ARROWS_LAYER_ID,
           type: 'symbol',
-          source: 'track-bands',
+          source: 'route-bands',
           filter: ['has', 'route'],
           layout: arrowLayout(BAND_WIDTH),
           paint: arrowPaint,

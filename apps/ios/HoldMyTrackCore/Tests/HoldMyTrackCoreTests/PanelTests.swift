@@ -52,6 +52,15 @@ struct PanelTests {
         #expect(catalog.missing(["running", "", "cycling", "cycling"]) == ["cycling"])
     }
 
+    @Test func theCatalogIsReadOnceAndThenOnlyForUnknownTypes() {
+        var catalog = TrackTypeCatalog()
+        #expect(catalog.toRead([], catalogRead: false) == [])
+        #expect(catalog.toRead(["running"], catalogRead: false) == ["running"])
+        catalog.merge(["running": TrackTypeInfo(kind: .foot, label: "Run")])
+        #expect(catalog.toRead(["running"], catalogRead: true) == nil)
+        #expect(catalog.toRead(["running", "kayaking"], catalogRead: true) == ["kayaking"])
+    }
+
     @Test func aKindFromANewerServerIsOther() {
         #expect(TrackKind(wire: "hovercraft") == .other)
         #expect(TrackKind(wire: "e_scooter") == .eScooter)
@@ -122,7 +131,7 @@ struct PanelTests {
         let json = try #require(JSONValue.parse(Data(#"""
         {"views": {}, "groups": [
           {"id": "tracks", "layers": [{"id": "tracks-line", "type": "line"}, {"id": "tracks-arrows", "type": "symbol"}]},
-          {"id": "track-bands", "layers": [{"id": "track-bands-line", "type": "line"}]}
+          {"id": "route-bands", "layers": [{"id": "route-bands-line", "type": "line"}]}
         ]}
         """#.utf8)))
         let document = try #require(LayersDocument(json))

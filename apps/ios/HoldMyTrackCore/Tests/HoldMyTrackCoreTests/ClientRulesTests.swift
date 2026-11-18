@@ -233,7 +233,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         let base = input["base"]
         let route = WebRoute.of(
             scheme: link["scheme"].string, authority: link["authority"].string, path: link["path"].string,
-            track: link["activity"].string, day: link["day"].string,
+            track: link["track"].string, day: link["day"].string,
             baseScheme: base["scheme"].string, baseAuthority: base["authority"].string, page: input["page"].string!,
             leaving: input["leaving"].bool ?? false, onboarding: input["onboarding"].bool ?? false
         )

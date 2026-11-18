@@ -19,5 +19,5 @@ export function setMapMode(map: MapLibreMap, mode: MapMode, satellite: boolean, 
   // The mode's view hides the tracks and their pace bands (FR-4.6) outside Normal; an edit steps
   // them aside.
   updateLayers(map, { mode, satellite });
-  setHiddenGroups(map, 'editingRoute', editingRoute ? ['tracks', 'track-bands'] : []);
+  setHiddenGroups(map, 'editingRoute', editingRoute ? ['tracks', 'route-bands'] : []);
 }

@@ -12,15 +12,15 @@ import { overlayInPlace } from './overlayOrder.ts';
  * three-point source over them: re-sending a five-hour track at 1 Hz to the worker on every
  * pointer move dropped the drag to a few frames a second on a throttled CPU.
  */
-const TRACK_EDIT_SOURCE_ID = 'track-edit';
-const LINE_LAYER_ID = 'track-edit-line';
-const SECOND_LAYER_ID = 'track-edit-second';
-const PREVIEW_LAYER_ID = 'track-edit-preview';
-const TRACK_EDIT_POINTS_LAYER_ID = 'track-edit-points';
-const KNOBS_LAYER_ID = 'track-edit-knobs';
-const DRAG_SOURCE_ID = 'track-edit-drag';
-const DRAG_LINE_LAYER_ID = 'track-edit-drag-line';
-const DRAG_POINT_LAYER_ID = 'track-edit-drag-point';
+const ROUTE_EDIT_SOURCE_ID = 'route-edit';
+const LINE_LAYER_ID = 'route-edit-line';
+const SECOND_LAYER_ID = 'route-edit-second';
+const PREVIEW_LAYER_ID = 'route-edit-preview';
+const ROUTE_EDIT_POINTS_LAYER_ID = 'route-edit-points';
+const KNOBS_LAYER_ID = 'route-edit-knobs';
+const DRAG_SOURCE_ID = 'route-edit-drag';
+const DRAG_LINE_LAYER_ID = 'route-edit-drag-line';
+const DRAG_POINT_LAYER_ID = 'route-edit-drag-point';
 
 const ACCENT = '#b07e2e';
 const REMOVED = '#c53030';
@@ -40,8 +40,8 @@ const EMPTY: { type: 'FeatureCollection'; features: Feature[] } = { type: 'Featu
 /** Adds the source and layers if missing — idempotent for the same styledata reason every
  *  other overlay here is (a theme swap's setStyle discards custom layers). */
 export function ensureRouteEditLayer(map: MapLibreMap, beforeId: string | undefined): void {
-  if (!map.getSource(TRACK_EDIT_SOURCE_ID)) {
-    map.addSource(TRACK_EDIT_SOURCE_ID, { type: 'geojson', data: EMPTY });
+  if (!map.getSource(ROUTE_EDIT_SOURCE_ID)) {
+    map.addSource(ROUTE_EDIT_SOURCE_ID, { type: 'geojson', data: EMPTY });
   }
   if (!map.getSource(DRAG_SOURCE_ID)) {
     map.addSource(DRAG_SOURCE_ID, { type: 'geojson', data: EMPTY });
@@ -52,7 +52,7 @@ export function ensureRouteEditLayer(map: MapLibreMap, beforeId: string | undefi
   add({
     id: PREVIEW_LAYER_ID,
     type: 'line',
-    source: TRACK_EDIT_SOURCE_ID,
+    source: ROUTE_EDIT_SOURCE_ID,
     filter: ['==', ['get', 'role'], 'preview'],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': REMOVED, 'line-width': 3, 'line-opacity': 0.55, 'line-dasharray': [1.5, 1.5] },
@@ -60,7 +60,7 @@ export function ensureRouteEditLayer(map: MapLibreMap, beforeId: string | undefi
   add({
     id: LINE_LAYER_ID,
     type: 'line',
-    source: TRACK_EDIT_SOURCE_ID,
+    source: ROUTE_EDIT_SOURCE_ID,
     filter: ['==', ['get', 'role'], 'kept'],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': ACCENT, 'line-width': 4, 'line-opacity': 0.95 },
@@ -68,15 +68,15 @@ export function ensureRouteEditLayer(map: MapLibreMap, beforeId: string | undefi
   add({
     id: SECOND_LAYER_ID,
     type: 'line',
-    source: TRACK_EDIT_SOURCE_ID,
+    source: ROUTE_EDIT_SOURCE_ID,
     filter: ['==', ['get', 'role'], 'second'],
     layout: { 'line-cap': 'round', 'line-join': 'round' },
     paint: { 'line-color': SECOND, 'line-width': 4, 'line-opacity': 0.95 },
   });
   add({
-    id: TRACK_EDIT_POINTS_LAYER_ID,
+    id: ROUTE_EDIT_POINTS_LAYER_ID,
     type: 'circle',
-    source: TRACK_EDIT_SOURCE_ID,
+    source: ROUTE_EDIT_SOURCE_ID,
     filter: ['==', ['get', 'role'], 'point'],
     paint: {
       'circle-radius': ['interpolate', ['linear'], ['zoom'], 12, 1.5, 16, 3, 19, 5],
@@ -92,7 +92,7 @@ export function ensureRouteEditLayer(map: MapLibreMap, beforeId: string | undefi
   add({
     id: KNOBS_LAYER_ID,
     type: 'circle',
-    source: TRACK_EDIT_SOURCE_ID,
+    source: ROUTE_EDIT_SOURCE_ID,
     filter: ['==', ['get', 'role'], 'knob'],
     paint: { 'circle-radius': 7, 'circle-color': ACCENT, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 },
   });
@@ -116,7 +116,7 @@ export function ensureRouteEditLayer(map: MapLibreMap, beforeId: string | undefi
     PREVIEW_LAYER_ID,
     LINE_LAYER_ID,
     SECOND_LAYER_ID,
-    TRACK_EDIT_POINTS_LAYER_ID,
+    ROUTE_EDIT_POINTS_LAYER_ID,
     KNOBS_LAYER_ID,
     DRAG_LINE_LAYER_ID,
     DRAG_POINT_LAYER_ID,
@@ -142,7 +142,7 @@ export function setRouteEditData(
   preview: EditPreview,
   split: number | null,
 ): void {
-  const source = map.getSource(TRACK_EDIT_SOURCE_ID) as GeoJSONSource | undefined;
+  const source = map.getSource(ROUTE_EDIT_SOURCE_ID) as GeoJSONSource | undefined;
   if (!source) return;
   const coords = (from: number, to: number) => visible.slice(from, to + 1).map(([lon, lat]) => [lon, lat]);
   const line = (role: string, c: number[][]): Feature[] =>
@@ -205,7 +205,7 @@ export function clearRouteDragAfterRedraw(map: MapLibreMap): () => void {
     setRouteDragData(map, [], null);
   };
   const onData = (e: { sourceId?: string; sourceDataType?: string; isSourceLoaded?: boolean }) => {
-    if (e.sourceId !== TRACK_EDIT_SOURCE_ID) return;
+    if (e.sourceId !== ROUTE_EDIT_SOURCE_ID) return;
     if (e.sourceDataType === 'content') updated = true;
     else if (updated && e.isSourceLoaded) done();
   };
@@ -219,21 +219,21 @@ export function clearRouteDragAfterRedraw(map: MapLibreMap): () => void {
 }
 
 export function clearRouteEdit(map: MapLibreMap): void {
-  (map.getSource(TRACK_EDIT_SOURCE_ID) as GeoJSONSource | undefined)?.setData(EMPTY);
+  (map.getSource(ROUTE_EDIT_SOURCE_ID) as GeoJSONSource | undefined)?.setData(EMPTY);
   (map.getSource(DRAG_SOURCE_ID) as GeoJSONSource | undefined)?.setData(EMPTY);
 }
 
 /** The recorded point nearest `at`, within a few pixels, by its timestamp — not whichever the
  *  renderer happened to list first: points at 1 Hz sit a couple of pixels apart once zoomed out. */
 function pointNear(map: MapLibreMap, at: { x: number; y: number }): number | null {
-  if (!map.getLayer(TRACK_EDIT_POINTS_LAYER_ID)) return null;
+  if (!map.getLayer(ROUTE_EDIT_POINTS_LAYER_ID)) return null;
   const { x, y } = at;
   const hits = map.queryRenderedFeatures(
     [
       [x - CLICK_TOLERANCE_PX, y - CLICK_TOLERANCE_PX],
       [x + CLICK_TOLERANCE_PX, y + CLICK_TOLERANCE_PX],
     ],
-    { layers: [TRACK_EDIT_POINTS_LAYER_ID] },
+    { layers: [ROUTE_EDIT_POINTS_LAYER_ID] },
   );
   let best: { t: number; d: number } | null = null;
   for (const hit of hits) {
@@ -259,12 +259,12 @@ export function onRouteEditPointClick(map: MapLibreMap, onPoint: (t: number) => 
   const enter = () => (map.getCanvas().style.cursor = 'crosshair');
   const leave = () => (map.getCanvas().style.cursor = '');
   map.on('click', click);
-  map.on('mouseenter', TRACK_EDIT_POINTS_LAYER_ID, enter);
-  map.on('mouseleave', TRACK_EDIT_POINTS_LAYER_ID, leave);
+  map.on('mouseenter', ROUTE_EDIT_POINTS_LAYER_ID, enter);
+  map.on('mouseleave', ROUTE_EDIT_POINTS_LAYER_ID, leave);
   return () => {
     map.off('click', click);
-    map.off('mouseenter', TRACK_EDIT_POINTS_LAYER_ID, enter);
-    map.off('mouseleave', TRACK_EDIT_POINTS_LAYER_ID, leave);
+    map.off('mouseenter', ROUTE_EDIT_POINTS_LAYER_ID, enter);
+    map.off('mouseleave', ROUTE_EDIT_POINTS_LAYER_ID, leave);
     map.getCanvas().style.cursor = '';
   };
 }
@@ -331,8 +331,8 @@ export function onRouteEditPointDrag(map: MapLibreMap, drag: PointDrag): () => v
   map.on('touchmove', move);
   map.on('mouseup', end);
   map.on('touchend', end);
-  map.on('mouseenter', TRACK_EDIT_POINTS_LAYER_ID, hoverOn);
-  map.on('mouseleave', TRACK_EDIT_POINTS_LAYER_ID, hoverOff);
+  map.on('mouseenter', ROUTE_EDIT_POINTS_LAYER_ID, hoverOn);
+  map.on('mouseleave', ROUTE_EDIT_POINTS_LAYER_ID, hoverOff);
   return () => {
     if (dragging) dragging.to = null; // abandoned, not dropped
     end();
@@ -342,8 +342,8 @@ export function onRouteEditPointDrag(map: MapLibreMap, drag: PointDrag): () => v
     map.off('touchmove', move);
     map.off('mouseup', end);
     map.off('touchend', end);
-    map.off('mouseenter', TRACK_EDIT_POINTS_LAYER_ID, hoverOn);
-    map.off('mouseleave', TRACK_EDIT_POINTS_LAYER_ID, hoverOff);
+    map.off('mouseenter', ROUTE_EDIT_POINTS_LAYER_ID, hoverOn);
+    map.off('mouseleave', ROUTE_EDIT_POINTS_LAYER_ID, hoverOff);
     canvas.style.cursor = '';
   };
 }

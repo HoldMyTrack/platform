@@ -5,7 +5,7 @@ import type { MapSessionEvent } from './session.ts';
 import type { Track } from '../api.ts';
 
 /**
- * "View on map" (`/?activity=&day=`, the /sync page's link), once, on arrival. Normal mode first,
+ * "View on map" (`/?track=&day=`, the /sync page's link), once, on arrival. Normal mode first,
  * since only it focuses. A track already listed is focused at once; else Dates becomes its
  * day, the camera moves onto that day's tracks (useDatesFlight.ts), and the focus waits until the
  * list holds it. The day is the track's local day, as the server reads a bare from/to

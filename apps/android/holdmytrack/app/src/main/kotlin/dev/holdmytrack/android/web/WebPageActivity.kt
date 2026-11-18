@@ -162,7 +162,7 @@ class WebPageActivity : AppCompatActivity() {
     private fun route(uri: Uri): Boolean {
         val base = Uri.parse(BuildConfig.API_BASE_URL)
         val route = WebRoute.of(
-            uri.scheme, uri.authority, uri.path, uri.getQueryParameter("activity"), uri.getQueryParameter("day"),
+            uri.scheme, uri.authority, uri.path, uri.getQueryParameter("track"), uri.getQueryParameter("day"),
             base.scheme, base.authority, page.path, leaving, onboarding,
         )
         when (route) {

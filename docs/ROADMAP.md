@@ -1,6 +1,6 @@
 # Roadmap
 
-Last updated: 2026-11-13.
+Last updated: 2026-11-18.
 
 ## How to read this document
 
@@ -22,7 +22,7 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 ### Retiring `/v1`
 
-- [ ] When `MIN_ANDROID_BUILD` reaches the build of release 0.34.2 (its `android/<versionCode>` tag) and `MIN_IOS_BUILD` that of release 0.2.2 (its `ios/<build>` tag), no supported build calls `/v1` (`IMPLEMENTATION.md` §4.31): delete `v1_edge.go`, the frozen contract and the tracks tile's `story` alias, make `api/v2/` the contract, and move the OAuth callbacks to `/v2` after registering them with each provider.
+- [ ] When `MIN_ANDROID_BUILD` reaches the build of release 0.34.3 (its `android/<versionCode>` tag) and `MIN_IOS_BUILD` that of release 0.2.4 (its `ios/<build>` tag), no supported build calls `/v1` (`IMPLEMENTATION.md` §4.31): delete `v1_edge.go`, the frozen contract, the tracks tile's `story` alias and the View on map link's `activity`, make `api/v2/` the contract, and move the OAuth callbacks to `/v2` after registering them with each provider.
 
 ### Verification by code
 
