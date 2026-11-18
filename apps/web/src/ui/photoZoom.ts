@@ -60,3 +60,29 @@ function clamp(value: number, limit: number): number {
   // + 0 turns a -0 into 0, so a view that hasn't moved compares equal to FIT_VIEW.
   return Math.min(Math.max(value, -limit), limit) + 0;
 }
+
+/** How far one arrow key pans a zoomed photo, in screen pixels. */
+export const PAN_STEP = 80;
+
+/** What an arrow key does in the photo viewer: steps between photos while the photo fits, and
+ *  pans it while zoomed, where the arrows would otherwise leave the keyboard no way to look
+ *  around. The pan moves the photo, so ArrowLeft brings its left side into view. */
+export function arrowKeyAction(key: string, zoomed: boolean): { pan: { dx: number; dy: number } } | 'previous' | 'next' | null {
+  if (zoomed) {
+    switch (key) {
+      case 'ArrowLeft':
+        return { pan: { dx: PAN_STEP, dy: 0 } };
+      case 'ArrowRight':
+        return { pan: { dx: -PAN_STEP, dy: 0 } };
+      case 'ArrowUp':
+        return { pan: { dx: 0, dy: PAN_STEP } };
+      case 'ArrowDown':
+        return { pan: { dx: 0, dy: -PAN_STEP } };
+      default:
+        return null;
+    }
+  }
+  if (key === 'ArrowLeft') return 'previous';
+  if (key === 'ArrowRight') return 'next';
+  return null;
+}
