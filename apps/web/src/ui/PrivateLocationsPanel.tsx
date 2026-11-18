@@ -147,7 +147,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
   );
 
   function create() {
-    const center = map.getCenter();
+    const center = map.getCenter().wrap();
     // Zoomed out, a 200 m circle would be under a pixel — fly in on the same spot first.
     if (map.getZoom() < PRIVATE_LOCATIONS_MIN_PLACE_ZOOM) {
       map.flyTo({ center, zoom: PRIVATE_LOCATIONS_MIN_PLACE_ZOOM + 2 });
