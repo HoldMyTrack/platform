@@ -18,6 +18,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/budget"
+	"github.com/HoldMyTrack/platform/services/server/internal/config"
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 	"github.com/HoldMyTrack/platform/services/server/internal/mail"
 	"github.com/HoldMyTrack/platform/services/server/internal/mapstyle"
@@ -40,11 +41,14 @@ const maxUploadBodyBytes = maxUploadBytes + 1<<20
 // of its own: archives aren't imported (ADR-0039).
 var uploadExts = map[string]bool{".gpx": true, ".fit": true, ".tcx": true}
 
-// corsAllowedOrigins lists the origins a credentialed cross-origin request may come from: a
-// cookie session rules out "*" (serve's doc comment). apps/web's dev server (5173), and the dev
-// servers apps/web/tests/smoke.mjs, flows.mjs and build.mjs spawn for themselves (5180, 5181,
-// 4183), so those suites sign in as a real browser does.
-var corsAllowedOrigins = map[string]bool{
+// devOrigins lists the origins a credentialed cross-origin request may come from in local
+// development, where the app's dev server and the API are separate origins: a cookie session
+// rules out "*" (serve's doc comment). apps/web's dev server (5173), and the dev servers
+// apps/web/tests/smoke.mjs, flows.mjs and build.mjs spawn for themselves (5180, 5181, 4183), so
+// those suites sign in as a real browser does. A deployment serves the app from its own origin
+// and allows none of them: a page on a visitor's own localhost:5173, some other project's dev
+// server, could otherwise post to the API as a trusted origin.
+var devOrigins = map[string]bool{
 	"http://localhost:5173": true,
 	"http://localhost:5180": true,
 	"http://localhost:5181": true,
@@ -70,8 +74,10 @@ type Server struct {
 	mailer mail.Sender
 	// afterResponse runs work whose length would tell a caller something, once
 	// the handler has returned: on its own goroutine, or inline in tests that read its mail.
-	afterResponse         func(func())
-	appBaseURL            string
+	afterResponse func(func())
+	appBaseURL    string
+	// corsOrigins is devOrigins in local development, none on a deployment.
+	corsOrigins           map[string]bool
 	basemapOrigin         string
 	satellite             mapstyle.Satellite
 	imagery               imageryCache
@@ -108,6 +114,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		afterResponse: func(f func()) { go f() },
 		appBaseURL:    appBaseURL, basemapOrigin: basemapOrigin, satellite: satellite, version: version,
 		skipEmailVerification: skipEmailVerification,
+		corsOrigins:           map[string]bool{},
 		google:                newGoogleOAuth(google),
 		facebook:              newFacebookOAuth(facebook),
 		apple:                 newAppleOAuth(apple),
@@ -119,6 +126,9 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		statsCardLimiter:      newFixedWindowLimiter(statsCardsPerHour, time.Hour),
 		syncActivityLimiter:   newFixedWindowLimiter(syncActivitiesPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
+	}
+	if config.IsLocal(appBaseURL) {
+		s.corsOrigins = devOrigins
 	}
 	if pool != nil {
 		s.visitors = &visitorCounter{pool: pool, log: log}
@@ -409,7 +419,7 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter 
 // session.
 func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 	setSecurityHeaders(w.Header())
-	if origin := r.Header.Get("Origin"); corsAllowedOrigins[origin] {
+	if origin := r.Header.Get("Origin"); s.corsOrigins[origin] {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
 		w.Header().Set("Vary", "Origin")
@@ -509,7 +519,7 @@ func (s *Server) crossSiteAPIWrite(r *http.Request) bool {
 	if origin == "" || (r.URL.Path == appleCallbackPath && origin == appleIssuer) {
 		return false
 	}
-	return !corsAllowedOrigins[origin] && !s.isSameOrigin(r)
+	return !s.corsOrigins[origin] && !s.isSameOrigin(r)
 }
 
 // healthzResponse carries MinAndroidBuild and MinIOSBuild for scripts/check-contract-release.sh:
