@@ -17,7 +17,7 @@ func TestErrorCodes(t *testing.T) {
 		status int
 		want   string
 	}{
-		{"error.photo_no_track", http.StatusConflict, "photo_no_track"},
+		{"error.photo_no_route", http.StatusConflict, "photo_no_route"},
 		{"error.demo_read_only", http.StatusForbidden, "demo_read_only"},
 		{"signin.google_failed", http.StatusUnauthorized, "unauthenticated"},
 		{"error.", http.StatusBadRequest, "invalid_request"},
@@ -58,6 +58,7 @@ func TestWriteAPIError(t *testing.T) {
 // Errors under the API's prefixes take its shape; a page's stay HTML.
 func TestIsAPIPath(t *testing.T) {
 	for path, want := range map[string]bool{
+		"/v2/tracks":                 true,
 		"/v1/activities":             true,
 		"/tiles/v1/fog-vector/1/2/3": true,
 		"/v1":                        false,

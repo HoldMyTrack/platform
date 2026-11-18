@@ -18,10 +18,10 @@ func TestDeleteAccountNeedsItsEmail(t *testing.T) {
 	var email string
 	d.pool.QueryRow(ctx, `SELECT email FROM users WHERE id = $1`, a.id).Scan(&email)
 
-	if rec := d.do(a, "DELETE", "/v1/account", map[string]string{"email": "someone@else.example"}); rec.Code != http.StatusBadRequest {
+	if rec := d.do(a, "DELETE", "/v2/account", map[string]string{"email": "someone@else.example"}); rec.Code != http.StatusBadRequest {
 		t.Fatalf("wrong email: status %d", rec.Code)
 	}
-	if rec := d.do(a, "DELETE", "/v1/account", map[string]string{"email": "  " + strings.ToUpper(email) + " "}); rec.Code != http.StatusNoContent {
+	if rec := d.do(a, "DELETE", "/v2/account", map[string]string{"email": "  " + strings.ToUpper(email) + " "}); rec.Code != http.StatusNoContent {
 		t.Fatalf("own email: status %d: %s", rec.Code, rec.Body)
 	}
 
@@ -36,7 +36,7 @@ func TestDeleteAccountNeedsItsEmail(t *testing.T) {
 	if sessions != 0 {
 		t.Errorf("%d sessions left", sessions)
 	}
-	if rec := d.do(a, "GET", "/v1/auth/me", nil); rec.Code != http.StatusUnauthorized {
+	if rec := d.do(a, "GET", "/v2/auth/me", nil); rec.Code != http.StatusUnauthorized {
 		t.Errorf("old session still signed in: %d", rec.Code)
 	}
 	// The address is free again at once.
@@ -52,14 +52,14 @@ func TestDeleteAccountUnverifiedYesDemoNo(t *testing.T) {
 	ctx := context.Background()
 
 	demo := d.newAccount(true)
-	if rec := d.do(demo, "DELETE", "/v1/account", map[string]string{"email": "x"}); rec.Code != http.StatusForbidden {
+	if rec := d.do(demo, "DELETE", "/v2/account", map[string]string{"email": "x"}); rec.Code != http.StatusForbidden {
 		t.Errorf("demo: status %d", rec.Code)
 	}
 
 	a := d.newAccount(false)
 	var email string
 	d.pool.QueryRow(ctx, `UPDATE users SET email_verified = false WHERE id = $1 RETURNING email`, a.id).Scan(&email)
-	if rec := d.do(a, "DELETE", "/v1/account", map[string]string{"email": email}); rec.Code != http.StatusNoContent {
+	if rec := d.do(a, "DELETE", "/v2/account", map[string]string{"email": email}); rec.Code != http.StatusNoContent {
 		t.Errorf("unverified: status %d: %s", rec.Code, rec.Body)
 	}
 }

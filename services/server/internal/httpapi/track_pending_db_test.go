@@ -19,12 +19,12 @@ func TestTracksPending(t *testing.T) {
 	}
 
 	var resp pendingResponse
-	d.decode(d.do(me, http.MethodGet, "/v1/activities/pending?ids="+pending+","+done+","+theirs, nil), http.StatusOK, &resp)
+	d.decode(d.do(me, http.MethodGet, "/v2/tracks/pending?ids="+pending+","+done+","+theirs, nil), http.StatusOK, &resp)
 	if len(resp.Pending) != 1 || resp.Pending[0] != pending {
 		t.Fatalf("pending %v, want only %s", resp.Pending, pending)
 	}
 	for _, bad := range []string{"", "not-an-id", pending + ","} {
-		if rec := d.do(me, http.MethodGet, "/v1/activities/pending?ids="+bad, nil); rec.Code != http.StatusBadRequest {
+		if rec := d.do(me, http.MethodGet, "/v2/tracks/pending?ids="+bad, nil); rec.Code != http.StatusBadRequest {
 			t.Errorf("ids=%q: status %d, want 400", bad, rec.Code)
 		}
 	}

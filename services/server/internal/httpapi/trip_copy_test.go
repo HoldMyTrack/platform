@@ -53,25 +53,25 @@ func (d *dbTest) privateLocation(owner account, lon, lat float64, radiusM int) {
 	}
 }
 
-// sendAndAccept sends the Story from from to to, accepts it as to and runs the copy job.
+// sendAndAccept sends the Trip from from to to, accepts it as to and runs the copy job.
 func (d *dbTest) sendAndAccept(from, to account, tripID string) {
 	d.t.Helper()
-	d.decode(d.do(from, "POST", "/v1/stories/"+tripID+"/send", map[string]any{"email": d.address(to)}), http.StatusNoContent, nil)
+	d.decode(d.do(from, "POST", "/v2/trips/"+tripID+"/send", map[string]any{"email": d.address(to)}), http.StatusNoContent, nil)
 	sends := d.inbox(to)
 	if len(sends) != 1 {
 		d.t.Fatalf("inbox %+v, want the one copy", sends)
 	}
-	d.decode(d.do(to, "POST", "/v1/story-sends/"+sends[0].ID+"/accept", nil), http.StatusAccepted, nil)
+	d.decode(d.do(to, "POST", "/v2/trip-sends/"+sends[0].ID+"/accept", nil), http.StatusAccepted, nil)
 	if err := tripcopy.Process(context.Background(), d.pool, d.srv.store, tripcopy.Job{TripID: tripID, RecipientID: to.id}); err != nil {
 		d.t.Fatalf("copy: %v", err)
 	}
 }
 
-// tripsOf lists the account's Stories, newest first.
+// tripsOf lists the account's Trips, newest first.
 func (d *dbTest) tripsOf(as account) []trip {
 	d.t.Helper()
 	var res tripsResponse
-	d.decode(d.do(as, "GET", "/v1/stories", nil), http.StatusOK, &res)
+	d.decode(d.do(as, "GET", "/v2/trips", nil), http.StatusOK, &res)
 	return res.Trips
 }
 
@@ -104,7 +104,7 @@ func TestTripCopy(t *testing.T) {
 	d.privateLocation(kid, 10.06, 50, 150)
 	walk := d.recorded(s3, dad, "Ridge", day, 10)
 	var p photoJSON
-	d.decode(d.uploadPhoto(dad, testJPEG(t, 40, 30), testJPEG(t, 8, 6), map[string]string{"activity_id": walk, "route_at": day.Add(30 * time.Minute).Format(time.RFC3339)}), http.StatusCreated, &p)
+	d.decode(d.uploadPhoto(dad, testJPEG(t, 40, 30), testJPEG(t, 8, 6), map[string]string{"track_id": walk, "route_at": day.Add(30 * time.Minute).Format(time.RFC3339)}), http.StatusCreated, &p)
 	trip := d.newTrip(dad, "Alps", walk)
 
 	d.sendAndAccept(dad, kid, trip)
@@ -126,7 +126,7 @@ func TestTripCopy(t *testing.T) {
 		t.Errorf("copy runs %v → %v, want both homes clipped off", got.startLon, got.endLon)
 	}
 	var list photosResponse
-	d.decode(d.do(kid, "GET", "/v1/photos?activity="+got.id, nil), http.StatusOK, &list)
+	d.decode(d.do(kid, "GET", "/v2/photos?track="+got.id, nil), http.StatusOK, &list)
 	if len(list.Photos) != 1 {
 		t.Fatalf("copy's photos %+v, want the one", list.Photos)
 	}
@@ -136,9 +136,9 @@ func TestTripCopy(t *testing.T) {
 		t.Errorf("copied photo has its own files, want the original's")
 	}
 
-	// Sent again with a second walk: only the new one arrives, into the same Story.
+	// Sent again with a second walk: only the new one arrives, into the same Trip.
 	second := d.recorded(s3, dad, "Lake", day.Add(24*time.Hour), 11)
-	d.decode(d.do(dad, "POST", "/v1/stories/"+trip+"/activities", map[string]any{"activity_ids": []string{second}}), http.StatusOK, nil)
+	d.decode(d.do(dad, "POST", "/v2/trips/"+trip+"/tracks", map[string]any{"track_ids": []string{second}}), http.StatusOK, nil)
 	d.sendAndAccept(dad, kid, trip)
 	trips = d.tripsOf(kid)
 	if len(trips) != 1 || len(trips[0].TrackIDs) != 2 {
@@ -146,7 +146,7 @@ func TestTripCopy(t *testing.T) {
 	}
 
 	// A copy the kid deleted doesn't come back.
-	d.decode(d.do(kid, "DELETE", "/v1/activities/"+got.id, nil), http.StatusNoContent, nil)
+	d.decode(d.do(kid, "DELETE", "/v2/tracks/"+got.id, nil), http.StatusNoContent, nil)
 	d.sendAndAccept(dad, kid, trip)
 	if trips = d.tripsOf(kid); len(trips[0].TrackIDs) != 1 {
 		t.Errorf("after deleting a copy and a third send: %d activities, want 1", len(trips[0].TrackIDs))
@@ -156,16 +156,16 @@ func TestTripCopy(t *testing.T) {
 		t.Errorf("deleting the copy removed the original's photo")
 	}
 
-	// Sent back to Dad: everything in it is his own, so no Story is made.
+	// Sent back to Dad: everything in it is his own, so no Trip is made.
 	d.sendAndAccept(kid, dad, trips[0].ID)
 	if mine := d.tripsOf(dad); len(mine) != 1 {
 		t.Errorf("Dad's stories after the kid sent theirs back: %d, want 1", len(mine))
 	}
 
-	// The kid deletes their Story; the next send makes a new one with only what's new.
-	d.decode(d.do(kid, "DELETE", "/v1/stories/"+trips[0].ID, nil), http.StatusNoContent, nil)
+	// The kid deletes their Trip; the next send makes a new one with only what's new.
+	d.decode(d.do(kid, "DELETE", "/v2/trips/"+trips[0].ID, nil), http.StatusNoContent, nil)
 	third := d.recorded(s3, dad, "Summit", day.Add(48*time.Hour), 12)
-	d.decode(d.do(dad, "POST", "/v1/stories/"+trip+"/activities", map[string]any{"activity_ids": []string{third}}), http.StatusOK, nil)
+	d.decode(d.do(dad, "POST", "/v2/trips/"+trip+"/tracks", map[string]any{"track_ids": []string{third}}), http.StatusOK, nil)
 	d.sendAndAccept(dad, kid, trip)
 	trips = d.tripsOf(kid)
 	if len(trips) != 1 || len(trips[0].TrackIDs) != 1 || d.copiedTrack(trips[0].TrackIDs[0]).origin != third {
@@ -173,7 +173,7 @@ func TestTripCopy(t *testing.T) {
 	}
 
 	// Dad's edits and deletes don't reach the kid's copies.
-	d.decode(d.do(dad, "DELETE", "/v1/activities/"+third, nil), http.StatusNoContent, nil)
+	d.decode(d.do(dad, "DELETE", "/v2/tracks/"+third, nil), http.StatusNoContent, nil)
 	if trips = d.tripsOf(kid); len(trips[0].TrackIDs) != 1 {
 		t.Errorf("Dad's delete reached the kid's copy")
 	}

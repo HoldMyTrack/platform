@@ -1,5 +1,5 @@
-// Package tripcopy copies a Story into another account — the `story_copy` job behind sending
-// a copy of a Story (IMPLEMENTATION.md §4.23, ADR-0036). Its own package because it writes
+// Package tripcopy copies a Trip into another account — the `story_copy` job behind sending
+// a copy of a Trip (IMPLEMENTATION.md §4.23, ADR-0036). Its own package because it writes
 // each track out with export.WriteGPX and reads it back in through ingest.Process, and
 // export already imports ingest.
 package tripcopy
@@ -21,7 +21,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 )
 
-// Job is the `story_copy` job's payload: copy the Story, as it is when the job runs, into the
+// Job is the `story_copy` job's payload: copy the Trip, as it is when the job runs, into the
 // recipient's account. Accepting a sent copy enqueues it (httpapi's handleAcceptTripSend).
 type Job struct {
 	TripID      string `json:"story_id"`
@@ -52,17 +52,17 @@ func Enqueue(ctx context.Context, db Querier, job Job, delay time.Duration) erro
 	return err
 }
 
-// source is one track of the Story being copied, and the original it stands for.
+// source is one track of the Trip being copied, and the original it stands for.
 type source struct {
 	id, origin, trackType string
 	name, description     *string
 	pending               bool
 }
 
-// Process copies the Story into the recipient's account (ADR-0036):
+// Process copies the Trip into the recipient's account (ADR-0036):
 //
-//   - into the Story an earlier copy of the same Story made for them (story_copies), or a new
-//     one with the Story's name and description when there's none, or it was deleted;
+//   - into the Trip an earlier copy of the same Trip made for them (story_copies), or a new
+//     one with the Trip's name and description when there's none, or it was deleted;
 //   - each track the recipient hasn't received before — an original is received once,
 //     ever (received_origins), and one they recorded themselves, or hold a copy of, is skipped;
 //   - from the points the sender sees (ingest.DisplayedPoints: their Private locations and track
@@ -71,13 +71,13 @@ type source struct {
 //   - with its name, type and description, and its photos as the recipient's rows over the same
 //     image files.
 //
-// An track with no visible track is left out. One whose owner has an edit still being
+// A track with no visible track is left out. One whose owner has an edit still being
 // applied is skipped for now, and the job enqueues itself again for it; a copy with nothing
-// else to add makes no Story until then. Every step is safe to
+// else to add makes no Trip until then. Every step is safe to
 // repeat: the ingest is idempotent on (recipient, 'trip', origin), and the rest are inserts
 // that ignore what's already there, so a copy cut off partway finishes on the next run.
 //
-// A Story deleted meanwhile, or one whose owner is being deleted, copies nothing.
+// A Trip deleted meanwhile, or one whose owner is being deleted, copies nothing.
 func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job) error {
 	var name string
 	var description *string
@@ -97,7 +97,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 	}
 	ready, retry := plan(sources)
 	if ready == 0 && retry {
-		// Everything left to copy waits on an edit: no Story until there's something in it.
+		// Everything left to copy waits on an edit: no Trip until there's something in it.
 		return Enqueue(ctx, pool, job, retryAfter)
 	}
 	target, err := targetTrip(ctx, pool, job, name, description, ready > 0)
@@ -142,7 +142,7 @@ func plan(sources []source) (ready int, retry bool) {
 	return ready, ready < len(sources)
 }
 
-// sourcesToCopy lists the Story's tracks with a track, and a raw payload to rebuild it
+// sourcesToCopy lists the Trip's tracks with a track, and a raw payload to rebuild it
 // from, that the recipient has neither received, recorded nor holds a copy of, oldest first.
 func sourcesToCopy(ctx context.Context, pool *pgxpool.Pool, job Job) ([]source, error) {
 	rows, err := pool.Query(ctx, `
@@ -168,9 +168,9 @@ func sourcesToCopy(ctx context.Context, pool *pgxpool.Pool, job Job) ([]source, 
 	return sources, nil
 }
 
-// targetTrip is the recipient's Story an earlier copy of this one made, or a new one with its
-// name and description. With nothing to copy, a missing Story is made only when the Story being
-// copied is itself empty — accepting an empty Story gives an empty Story — and otherwise the
+// targetTrip is the recipient's Trip an earlier copy of this one made, or a new one with its
+// name and description. With nothing to copy, a missing Trip is made only when the Trip being
+// copied is itself empty — accepting an empty Trip gives an empty Trip — and otherwise the
 // answer is "", since the recipient already has everything in it.
 func targetTrip(ctx context.Context, pool *pgxpool.Pool, job Job, name string, description *string, anything bool) (string, error) {
 	var target string

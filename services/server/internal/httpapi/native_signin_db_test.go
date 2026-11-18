@@ -23,11 +23,11 @@ func TestAuthHandoffStartsSession(t *testing.T) {
 	var got struct {
 		Token string `json:"session_token"`
 	}
-	d.decode(d.do(account{}, "POST", "/v1/auth/handoff", map[string]string{"code": code, "verifier": verifier}), http.StatusOK, &got)
+	d.decode(d.do(account{}, "POST", "/v2/auth/handoff", map[string]string{"code": code, "verifier": verifier}), http.StatusOK, &got)
 	if got.Token == "" {
 		t.Fatal("no session token")
 	}
-	if rec := d.do(account{}, "POST", "/v1/auth/handoff", map[string]string{"code": code, "verifier": verifier}); rec.Code != http.StatusUnauthorized {
+	if rec := d.do(account{}, "POST", "/v2/auth/handoff", map[string]string{"code": code, "verifier": verifier}); rec.Code != http.StatusUnauthorized {
 		t.Fatalf("second use: status %d, want 401", rec.Code)
 	}
 }
@@ -52,7 +52,7 @@ func TestGoogleTokenStartsSession(t *testing.T) {
 	var got struct {
 		Token string `json:"session_token"`
 	}
-	d.decode(d.do(account{}, "POST", "/v1/auth/google/token", map[string]string{"id_token": token, "tz": "Europe/Berlin"}), http.StatusOK, &got)
+	d.decode(d.do(account{}, "POST", "/v2/auth/google/token", map[string]string{"id_token": token, "tz": "Europe/Berlin"}), http.StatusOK, &got)
 	if got.Token == "" {
 		t.Fatal("no session token")
 	}

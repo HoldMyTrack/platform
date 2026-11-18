@@ -44,7 +44,7 @@ func ExportDemoTracks(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		return nil, err
 	}
 	manifestPath := filepath.Join(outDir, demoManifestFile)
-	// An existing manifest's Stories are kept as they are; only track entries are added.
+	// An existing manifest's Trips are kept as they are; only track entries are added.
 	manifest := demoManifest{Tracks: map[string]demoManifestEntry{}}
 	if b, err := os.ReadFile(manifestPath); err == nil {
 		if err := json.Unmarshal(b, &manifest); err != nil {

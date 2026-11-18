@@ -19,7 +19,7 @@ import (
 const areaTracksLimit = 1000
 
 // areaRowColumns is a slim row: what a list row shows and what flying to it needs. The Edit
-// window reads the rest (GET /v1/activities/{id}). Order matches scanAreaRow.
+// window reads the rest (GET /v2/tracks/{id}). Order matches scanAreaRow.
 var areaRowColumns = `id, started_at, timezone, activity_type, name, distance_meters,
        COALESCE(moving_seconds, duration_seconds),
        ` + trackBBoxColumns + `,
@@ -68,14 +68,14 @@ type areaRow struct {
 	ID             string    `json:"id"`
 	StartedAt      time.Time `json:"started_at"`
 	Timezone       string    `json:"timezone"`
-	TrackType      string    `json:"activity_type"`
+	TrackType      string    `json:"track_type"`
 	Name           *string   `json:"name"`
 	DistanceMeters *float64  `json:"distance_meters"`
 	MovingSeconds  *int32    `json:"moving_seconds"`
 	BBox           []float64 `json:"bbox"`
 	Pending        bool      `json:"pending"`
 	Private        bool      `json:"private"`
-	Trips          []tripRef `json:"stories"`
+	Trips          []tripRef `json:"trips"`
 }
 
 func scanAreaRow(row rowScanner) (areaRow, error) {
@@ -92,23 +92,23 @@ func scanAreaRow(row rowScanner) (areaRow, error) {
 }
 
 type areaResponse struct {
-	Tracks []areaRow                 `json:"activities"`
+	Tracks []areaRow                 `json:"tracks"`
 	Types  map[string]tracktype.Info `json:"types"`
 	// Total is how many tracks the area holds, sent with `bbox` alone; more than
 	// len(Tracks) when the list was cut at the limit.
 	Total *int `json:"total,omitempty"`
 }
 
-// handleListArea serves `GET /v1/activities/area?bbox=&from=&to=&limit=`, the web's list and the
+// handleListArea serves `GET /v2/tracks/area?bbox=&from=&to=&limit=`, the web's list and the
 // set its map draws (docs/SPEC.md FR-5.11): the newest tracks whose track crosses the view,
 // areaTracksLimit at most, with the area's total. Without `bbox`, the newest `limit` of the
 // whole history, for the opening view (FR-4.4).
 func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
-	// The list filters by type and Story itself; taking these and answering the whole set
+	// The list filters by type and Trip itself; taking these and answering the whole set
 	// would let a client think it had filtered.
-	if q.Get("types") != "" || q.Get("story") != "" {
-		writeAPIError(w, "types and story don't filter this list", http.StatusBadRequest)
+	if q.Get("types") != "" || q.Get("trip") != "" {
+		writeAPIError(w, "types and trip don't filter this list", http.StatusBadRequest)
 		return
 	}
 	filter, err := parseTrackFilter(q)
@@ -179,8 +179,8 @@ func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// handleGetTrack serves `GET /v1/activities/{id}`: one full row, as the list of a date range
-// or a Story has it, for the Edit window the area list's slim rows don't carry enough for. Another
+// handleGetTrack serves `GET /v2/tracks/{id}`: one full row, as the list of a date range
+// or a Trip has it, for the Edit window the area list's slim rows don't carry enough for. Another
 // account's track is a 404, like a missing one.
 func (s *Server) handleGetTrack(w http.ResponseWriter, r *http.Request) {
 	id, ok := trackIDFromPath(w, r)

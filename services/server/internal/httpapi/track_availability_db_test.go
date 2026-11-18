@@ -60,9 +60,9 @@ func TestEditableTimesStored(t *testing.T) {
 		for i, m := range minutes {
 			points = append(points, map[string]any{"lat": 50.0 + 0.003*float64(i), "lon": 10.0, "time": t0.Add(time.Duration(m) * time.Minute)})
 		}
-		body := map[string]any{"source": "recorded", "activities": []map[string]any{{"external_id": key, "activity_type": "walking", "points": points}}}
+		body := map[string]any{"source": "recorded", "tracks": []map[string]any{{"external_id": key, "track_type": "walking", "points": points}}}
 		var synced syncTracksResponse
-		d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", body), http.StatusOK, &synced)
+		d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", body), http.StatusOK, &synced)
 		res, err := ingest.Process(ctx, d.pool, d.srv.store, d.latestIngestJob(me))
 		if err != nil {
 			t.Fatal(err)

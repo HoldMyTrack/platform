@@ -43,7 +43,7 @@ func TestListArea(t *testing.T) {
 	get := func(query string) listed {
 		t.Helper()
 		var resp areaResponse
-		d.decode(d.do(me, "GET", "/v1/activities/area?"+query, nil), http.StatusOK, &resp)
+		d.decode(d.do(me, "GET", "/v2/tracks/area?"+query, nil), http.StatusOK, &resp)
 		var ids []string
 		for _, a := range resp.Tracks {
 			ids = append(ids, a.ID)
@@ -79,15 +79,15 @@ func TestListArea(t *testing.T) {
 	}
 
 	for _, bad := range []string{"bbox=a,b,c,d", "bbox=-30,-31,-30,-30", "limit=0", "limit=1001", "limit=x"} {
-		if rec := d.do(me, "GET", "/v1/activities/area?"+bad, nil); rec.Code != http.StatusBadRequest {
+		if rec := d.do(me, "GET", "/v2/tracks/area?"+bad, nil); rec.Code != http.StatusBadRequest {
 			t.Errorf("?%s: status %d, want 400", bad, rec.Code)
 		}
 	}
 
-	// A slim row: the Edit window's fields are GET /v1/activities/{id}'s alone.
-	rec := d.do(me, "GET", "/v1/activities/area?"+box, nil)
+	// A slim row: the Edit window's fields are GET /v2/tracks/{id}'s alone.
+	rec := d.do(me, "GET", "/v2/tracks/area?"+box, nil)
 	var raw struct {
-		Tracks []map[string]json.RawMessage `json:"activities"`
+		Tracks []map[string]json.RawMessage `json:"tracks"`
 	}
 	d.decode(rec, http.StatusOK, &raw)
 	for _, field := range []string{"description", "edited", "track_edit", "photos", "split", "duration_seconds"} {
@@ -104,16 +104,16 @@ func TestGetTrack(t *testing.T) {
 	other := d.newAccount(false)
 	id := d.newTrack(me, testTrack{trackType: "hiking", at: &[2]float64{-30.5, -30.5}})
 	var resp tracksResponse
-	d.decode(d.do(me, "GET", "/v1/activities/"+id, nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/tracks/"+id, nil), http.StatusOK, &resp)
 	if len(resp.Tracks) != 1 || resp.Tracks[0].ID != id || resp.Types["hiking"].Label == "" {
 		t.Fatalf("got %+v", resp)
 	}
 	for _, as := range []account{other} {
-		if rec := d.do(as, "GET", "/v1/activities/"+id, nil); rec.Code != http.StatusNotFound {
+		if rec := d.do(as, "GET", "/v2/tracks/"+id, nil); rec.Code != http.StatusNotFound {
 			t.Errorf("another account: status %d, want 404", rec.Code)
 		}
 	}
-	if rec := d.do(me, "GET", "/v1/activities/not-a-uuid", nil); rec.Code != http.StatusNotFound {
+	if rec := d.do(me, "GET", "/v2/tracks/not-a-uuid", nil); rec.Code != http.StatusNotFound {
 		t.Errorf("malformed id: status %d, want 404", rec.Code)
 	}
 }
@@ -145,13 +145,13 @@ func TestTracksTileSince(t *testing.T) {
 	}
 }
 
-// The list doesn't filter by type or Story, so asking it to is refused rather than answered
+// The list doesn't filter by type or Trip, so asking it to is refused rather than answered
 // with the whole set.
 func TestListAreaRefusesFiltersItDoesNotApply(t *testing.T) {
 	s := &Server{}
-	for _, q := range []string{"types=walking", "story=any"} {
+	for _, q := range []string{"types=walking", "trip=any"} {
 		rec := httptest.NewRecorder()
-		s.handleListArea(rec, httptest.NewRequest(http.MethodGet, "/v1/activities/area?"+q, nil))
+		s.handleListArea(rec, httptest.NewRequest(http.MethodGet, "/v2/tracks/area?"+q, nil))
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("%s: %d, want 400", q, rec.Code)
 		}
@@ -162,7 +162,7 @@ func TestListAreaRefusesFiltersItDoesNotApply(t *testing.T) {
 func TestListAreaTakesEmptyFilters(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
-	if rec := d.do(me, http.MethodGet, "/v1/activities/area?types=&story=", nil); rec.Code != http.StatusOK {
+	if rec := d.do(me, http.MethodGet, "/v2/tracks/area?types=&trip=", nil); rec.Code != http.StatusOK {
 		t.Fatalf("empty filters: %d, want 200", rec.Code)
 	}
 }

@@ -21,7 +21,7 @@ func TestMapStyleLanguage(t *testing.T) {
 		{"?lang=RU", "ru"},
 		{"?lang=de", "en"},
 	} {
-		rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodGet, "/v1/map/style/light"+tc.query, nil))
+		rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodGet, "/v2/map/style/light"+tc.query, nil))
 		if rec.Code != http.StatusOK {
 			t.Fatalf("%q: status %d", tc.query, rec.Code)
 		}
@@ -45,7 +45,7 @@ func TestEveryMapStyleMatchesContract(t *testing.T) {
 		s.satellite = sat
 		for _, flavor := range mapstyle.Flavors() {
 			for _, lang := range i18n.Supported {
-				rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodGet, "/v1/map/style/"+flavor+"?lang="+lang, nil))
+				rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodGet, "/v2/map/style/"+flavor+"?lang="+lang, nil))
 				if rec.Code != http.StatusOK {
 					t.Fatalf("%s/%s: status %d", flavor, lang, rec.Code)
 				}

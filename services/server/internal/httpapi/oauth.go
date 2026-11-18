@@ -198,7 +198,7 @@ func (s *Server) createHandoff(ctx context.Context, userID, challenge string) (s
 	return code, err
 }
 
-// handleAuthHandoff serves `POST /v1/auth/handoff` `{code, verifier}` — where a native app
+// handleAuthHandoff serves `POST /v2/auth/handoff` `{code, verifier}` — where a native app
 // redeems the code a browser-tab round trip ended with (finishOAuth) for the same session JSON
 // a password sign-in returns. Single-use: the row is deleted by the very query that reads it.
 // The verifier is what makes a code useless to anyone else: another app that registered the

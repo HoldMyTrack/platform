@@ -50,7 +50,7 @@ func (d *dbTest) uploadPhoto(as account, file, thumb []byte, fields map[string]s
 		part.Write(data)
 	}
 	mw.Close()
-	return d.send(as, "POST", "/v1/photos", mw.FormDataContentType(), body.Bytes())
+	return d.send(as, "POST", "/v2/photos", mw.FormDataContentType(), body.Bytes())
 }
 
 func near(a *float64, b float64) bool { return a != nil && math.Abs(*a-b) < 1e-6 }
@@ -72,7 +72,7 @@ func TestPhotoWallClockInTheTracksZone(t *testing.T) {
 		at: &[2]float64{10, 50}, timezone: "Asia/Tokyo"})
 	var p photoJSON
 	d.decode(d.uploadPhoto(me, testJPEG(t, 400, 300), testJPEG(t, 32, 24), map[string]string{
-		"activity_id": walk, "taken_local": "2026-04-29T08:00:00", "route_at": "2026-05-01T10:00:30Z",
+		"track_id": walk, "taken_local": "2026-04-29T08:00:00", "route_at": "2026-05-01T10:00:30Z",
 	}), http.StatusCreated, &p)
 	if want := time.Date(2026, 4, 28, 23, 0, 0, 0, time.UTC); p.TakenAt == nil || !p.TakenAt.Equal(want) {
 		t.Errorf("taken at %v, want %v (08:00 in Tokyo)", p.TakenAt, want)
@@ -108,7 +108,7 @@ func TestPhotoPlacement(t *testing.T) {
 	}
 	placed := 0
 	for _, c := range cases {
-		fields := map[string]string{"activity_id": walk}
+		fields := map[string]string{"track_id": walk}
 		for k, v := range c.fields {
 			fields[k] = v
 		}
@@ -131,7 +131,7 @@ func TestPhotoPlacement(t *testing.T) {
 
 	// Stored, in route order, and served back to the owner only.
 	var list photosResponse
-	d.decode(d.do(me, "GET", "/v1/photos?activity="+walk, nil), http.StatusOK, &list)
+	d.decode(d.do(me, "GET", "/v2/photos?track="+walk, nil), http.StatusOK, &list)
 	if len(list.Photos) != placed {
 		t.Fatalf("listed %d photos, want %d (refused ones aren't kept)", len(list.Photos), placed)
 	}
@@ -141,7 +141,7 @@ func TestPhotoPlacement(t *testing.T) {
 		}
 	}
 	first := list.Photos[0]
-	if first.Width != 400 || first.Height != 300 || first.URL != "/v1/photos/"+first.ID {
+	if first.Width != 400 || first.Height != 300 || first.URL != "/v2/photos/"+first.ID {
 		t.Errorf("first photo %+v", first)
 	}
 	rec := d.do(me, "GET", first.ThumbURL, nil)
@@ -150,7 +150,7 @@ func TestPhotoPlacement(t *testing.T) {
 	}
 	other := d.newAccount(false)
 	for _, req := range []struct{ method, path string }{
-		{"GET", "/v1/photos?activity=" + walk},
+		{"GET", "/v2/photos?track=" + walk},
 		{"GET", first.URL},
 		{"PATCH", first.URL},
 		{"DELETE", first.URL},
@@ -168,11 +168,11 @@ func TestPhotoEditsAndTrackChanges(t *testing.T) {
 	ctx := context.Background()
 	walk := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
 	var p photoJSON
-	d.decode(d.uploadPhoto(me, testJPEG(t, 40, 30), testJPEG(t, 8, 6), map[string]string{"activity_id": walk, "taken_at": "2026-05-01T10:00:00Z"}), http.StatusCreated, &p)
+	d.decode(d.uploadPhoto(me, testJPEG(t, 40, 30), testJPEG(t, 8, 6), map[string]string{"track_id": walk, "taken_at": "2026-05-01T10:00:00Z"}), http.StatusCreated, &p)
 
 	// The slider's track: the display points with their moments.
 	var metrics routeMetricsResponse
-	d.decode(d.do(me, "GET", "/v1/activities/"+walk+"/track-metrics", nil), http.StatusOK, &metrics)
+	d.decode(d.do(me, "GET", "/v2/tracks/"+walk+"/route-metrics", nil), http.StatusOK, &metrics)
 	if len(metrics.Points) != 2 || metrics.Points[0].TimeS != photoTrackStart.Unix() || metrics.Points[1].TimeS != photoTrackStart.Unix()+60 {
 		t.Errorf("track metrics %+v, want the two points' moments", metrics.Points)
 	}
@@ -201,7 +201,7 @@ func TestPhotoEditsAndTrackChanges(t *testing.T) {
 		t.Fatal(err)
 	}
 	var list photosResponse
-	d.decode(d.do(me, "GET", "/v1/photos?activity="+walk, nil), http.StatusOK, &list)
+	d.decode(d.do(me, "GET", "/v2/photos?track="+walk, nil), http.StatusOK, &list)
 	if len(list.Photos) != 1 || !near(list.Photos[0].Lon, 10.0002) || !list.Photos[0].RouteAt.Equal(p.RouteAt) {
 		t.Errorf("after the track was cut: %+v, want at the new end with route_at kept", list.Photos)
 	}
@@ -235,7 +235,7 @@ func TestPhotoUploadRefusals(t *testing.T) {
 	me := d.newAccount(false)
 	walk := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
 	file, thumb := testJPEG(t, 40, 30), testJPEG(t, 8, 6)
-	fields := map[string]string{"activity_id": walk, "route_at": "2026-05-01T10:00:30Z"}
+	fields := map[string]string{"track_id": walk, "route_at": "2026-05-01T10:00:30Z"}
 
 	cases := []struct {
 		name        string
@@ -249,10 +249,10 @@ func TestPhotoUploadRefusals(t *testing.T) {
 		{"a thumbnail that isn't one", file, testJPEG(t, maxPhotoThumbSide+1, 10), fields, http.StatusUnprocessableEntity},
 		{"no thumbnail", file, nil, fields, http.StatusBadRequest},
 		{"no activity", file, thumb, map[string]string{}, http.StatusNotFound},
-		{"someone else's activity", file, thumb, map[string]string{"activity_id": d.newTrack(d.newAccount(false), testTrack{trackType: "walking"})}, http.StatusNotFound},
-		{"bad capture time", file, thumb, map[string]string{"activity_id": walk, "taken_at": "yesterday"}, http.StatusBadRequest},
-		{"bad place", file, thumb, map[string]string{"activity_id": walk, "route_at": "here"}, http.StatusBadRequest},
-		{"an activity with no track", file, thumb, map[string]string{"activity_id": d.newTrack(me, testTrack{trackType: "walking"}), "route_at": "2026-05-01T10:00:30Z"}, http.StatusConflict},
+		{"someone else's activity", file, thumb, map[string]string{"track_id": d.newTrack(d.newAccount(false), testTrack{trackType: "walking"})}, http.StatusNotFound},
+		{"bad capture time", file, thumb, map[string]string{"track_id": walk, "taken_at": "yesterday"}, http.StatusBadRequest},
+		{"bad place", file, thumb, map[string]string{"track_id": walk, "route_at": "here"}, http.StatusBadRequest},
+		{"an activity with no track", file, thumb, map[string]string{"track_id": d.newTrack(me, testTrack{trackType: "walking"}), "route_at": "2026-05-01T10:00:30Z"}, http.StatusConflict},
 	}
 	for _, c := range cases {
 		if rec := d.uploadPhoto(me, c.file, c.thumb, c.fields); rec.Code != c.want {
@@ -284,11 +284,11 @@ func TestPhotosGoWithTheirTrack(t *testing.T) {
 
 	tracked := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
 	var p photoJSON
-	d.decode(d.uploadPhoto(me, file, thumb, map[string]string{"activity_id": tracked, "taken_at": "2026-05-01T10:00:30Z"}), http.StatusCreated, &p)
+	d.decode(d.uploadPhoto(me, file, thumb, map[string]string{"track_id": tracked, "taken_at": "2026-05-01T10:00:30Z"}), http.StatusCreated, &p)
 	d.decode(d.do(me, "GET", p.URL, nil), http.StatusOK, nil)
 
 	// Deleting the track deletes its photos, images and all.
-	d.decode(d.do(me, "DELETE", "/v1/activities/"+tracked, nil), http.StatusNoContent, nil)
+	d.decode(d.do(me, "DELETE", "/v2/tracks/"+tracked, nil), http.StatusNoContent, nil)
 	if s3.Has(photoKey(me.id, p.ID)) || s3.Has(photoThumbKey(photoKey(me.id, p.ID))) {
 		t.Errorf("images left behind after the activity's delete")
 	}
@@ -306,22 +306,22 @@ func TestTripPhotos(t *testing.T) {
 		id string
 		at time.Time
 	}{{day2, photoTrackStart.Add(24 * time.Hour)}, {day1, photoTrackStart}, {elsewhere, photoTrackStart.Add(48 * time.Hour)}} {
-		d.decode(d.uploadPhoto(me, file, thumb, map[string]string{"activity_id": a.id, "route_at": a.at.Format(time.RFC3339)}), http.StatusCreated, nil)
+		d.decode(d.uploadPhoto(me, file, thumb, map[string]string{"track_id": a.id, "route_at": a.at.Format(time.RFC3339)}), http.StatusCreated, nil)
 	}
 	var st trip
-	d.decode(d.do(me, "POST", "/v1/stories", map[string]any{"name": "Trip", "activity_ids": []string{day1, day2}}), http.StatusCreated, &st)
+	d.decode(d.do(me, "POST", "/v2/trips", map[string]any{"name": "Trip", "track_ids": []string{day1, day2}}), http.StatusCreated, &st)
 
 	var list photosResponse
-	d.decode(d.do(me, "GET", "/v1/photos?story="+st.ID, nil), http.StatusOK, &list)
+	d.decode(d.do(me, "GET", "/v2/photos?trip="+st.ID, nil), http.StatusOK, &list)
 	if len(list.Photos) != 2 || list.Photos[0].TrackID != day1 || list.Photos[1].TrackID != day2 {
 		t.Errorf("story photos %+v, want day 1's then day 2's", list.Photos)
 	}
-	for _, path := range []string{"/v1/photos?story=" + st.ID, "/v1/photos?story=nope"} {
+	for _, path := range []string{"/v2/photos?trip=" + st.ID, "/v2/photos?trip=nope"} {
 		if rec := d.do(d.newAccount(false), "GET", path, nil); rec.Code != http.StatusNotFound {
 			t.Errorf("%s from another account: %d, want 404", path, rec.Code)
 		}
 	}
-	if rec := d.do(me, "GET", "/v1/photos", nil); rec.Code != http.StatusBadRequest {
+	if rec := d.do(me, "GET", "/v2/photos", nil); rec.Code != http.StatusBadRequest {
 		t.Errorf("no activity or story: %d, want 400", rec.Code)
 	}
 }
@@ -339,15 +339,15 @@ func TestPhotoPlaceCheck(t *testing.T) {
 		want int
 		at   time.Time
 	}{
-		{"capture time", map[string]any{"activity_id": walk, "taken_at": "2026-05-01T10:00:30Z"}, http.StatusOK, photoTrackStart.Add(30 * time.Second)},
-		{"position", map[string]any{"activity_id": walk, "lon": lon, "lat": lat}, http.StatusOK, photoTrackStart.Add(30 * time.Second)},
-		{"nothing to go by", map[string]any{"activity_id": walk}, http.StatusUnprocessableEntity, time.Time{}},
-		{"no track", map[string]any{"activity_id": bare, "taken_at": "2026-05-01T10:00:30Z"}, http.StatusConflict, time.Time{}},
-		{"someone else's activity", map[string]any{"activity_id": d.newTrack(d.newAccount(false), testTrack{trackType: "walking"})}, http.StatusNotFound, time.Time{}},
-		{"bad capture time", map[string]any{"activity_id": walk, "taken_at": "noon"}, http.StatusBadRequest, time.Time{}},
+		{"capture time", map[string]any{"track_id": walk, "taken_at": "2026-05-01T10:00:30Z"}, http.StatusOK, photoTrackStart.Add(30 * time.Second)},
+		{"position", map[string]any{"track_id": walk, "lon": lon, "lat": lat}, http.StatusOK, photoTrackStart.Add(30 * time.Second)},
+		{"nothing to go by", map[string]any{"track_id": walk}, http.StatusUnprocessableEntity, time.Time{}},
+		{"no track", map[string]any{"track_id": bare, "taken_at": "2026-05-01T10:00:30Z"}, http.StatusConflict, time.Time{}},
+		{"someone else's activity", map[string]any{"track_id": d.newTrack(d.newAccount(false), testTrack{trackType: "walking"})}, http.StatusNotFound, time.Time{}},
+		{"bad capture time", map[string]any{"track_id": walk, "taken_at": "noon"}, http.StatusBadRequest, time.Time{}},
 	}
 	for _, c := range cases {
-		rec := d.do(me, "POST", "/v1/photos/place", c.body)
+		rec := d.do(me, "POST", "/v2/photos/place", c.body)
 		if rec.Code != c.want {
 			t.Errorf("%s: %d, want %d: %s", c.name, rec.Code, c.want, strings.TrimSpace(rec.Body.String()))
 			continue
@@ -362,24 +362,24 @@ func TestPhotoPlaceCheck(t *testing.T) {
 	}
 	// It stores nothing.
 	var list photosResponse
-	d.decode(d.do(me, "GET", "/v1/photos?activity="+walk, nil), http.StatusOK, &list)
+	d.decode(d.do(me, "GET", "/v2/photos?track="+walk, nil), http.StatusOK, &list)
 	if len(list.Photos) != 0 {
 		t.Errorf("the check stored %d photos", len(list.Photos))
 	}
-	if rec := d.do(d.newAccount(true), "POST", "/v1/photos/place", map[string]any{"activity_id": walk}); rec.Code != http.StatusForbidden {
+	if rec := d.do(d.newAccount(true), "POST", "/v2/photos/place", map[string]any{"track_id": walk}); rec.Code != http.StatusForbidden {
 		t.Errorf("demo: %d, want 403", rec.Code)
 	}
 
 	// An upload carries its caption, trimmed.
 	var p photoJSON
 	d.decode(d.uploadPhoto(me, testJPEG(t, 40, 30), testJPEG(t, 8, 6), map[string]string{
-		"activity_id": walk, "route_at": "2026-05-01T10:00:30Z", "caption": "  The bridge  ",
+		"track_id": walk, "route_at": "2026-05-01T10:00:30Z", "caption": "  The bridge  ",
 	}), http.StatusCreated, &p)
 	if p.Caption == nil || *p.Caption != "The bridge" {
 		t.Errorf("uploaded caption %v", p.Caption)
 	}
 	if rec := d.uploadPhoto(me, testJPEG(t, 40, 30), testJPEG(t, 8, 6), map[string]string{
-		"activity_id": walk, "route_at": "2026-05-01T10:00:30Z", "caption": strings.Repeat("x", maxPhotoCaptionLen+1),
+		"track_id": walk, "route_at": "2026-05-01T10:00:30Z", "caption": strings.Repeat("x", maxPhotoCaptionLen+1),
 	}); rec.Code != http.StatusBadRequest {
 		t.Errorf("long uploaded caption: %d, want 400", rec.Code)
 	}
@@ -395,9 +395,9 @@ func TestPhotoUpdateRefusedLeavesCaptionAlone(t *testing.T) {
 	var photo struct {
 		ID string `json:"id"`
 	}
-	d.decode(d.uploadPhoto(me, testJPEG(t, 40, 30), testJPEG(t, 8, 6), map[string]string{"activity_id": act, "taken_at": "2026-05-01T10:00:00Z"}), http.StatusCreated, &photo)
+	d.decode(d.uploadPhoto(me, testJPEG(t, 40, 30), testJPEG(t, 8, 6), map[string]string{"track_id": act, "taken_at": "2026-05-01T10:00:00Z"}), http.StatusCreated, &photo)
 
-	rec := d.do(me, http.MethodPatch, "/v1/photos/"+photo.ID, map[string]any{"caption": "new", "route_at": "not a time"})
+	rec := d.do(me, http.MethodPatch, "/v2/photos/"+photo.ID, map[string]any{"caption": "new", "route_at": "not a time"})
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("status %d, want 400", rec.Code)
 	}
@@ -429,7 +429,7 @@ func TestPhotoLimitHoldsUnderConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			d.uploadPhoto(me, file, thumb, map[string]string{"activity_id": act, "taken_at": "2026-05-01T10:00:00Z"})
+			d.uploadPhoto(me, file, thumb, map[string]string{"track_id": act, "taken_at": "2026-05-01T10:00:00Z"})
 		}()
 	}
 	wg.Wait()
@@ -442,7 +442,7 @@ func TestPhotoLimitHoldsUnderConcurrency(t *testing.T) {
 	}
 }
 
-// sharePhoto gives owner a row over p's image files, as a copied Story's photo is (§4.23).
+// sharePhoto gives owner a row over p's image files, as a copied Trip's photo is (§4.23).
 func (d *dbTest) sharePhoto(owner account, trackID string, p photoJSON) {
 	d.t.Helper()
 	if _, err := d.pool.Exec(context.Background(), `
@@ -461,14 +461,14 @@ func TestSharedPhotoFilesGoWithTheirLastRow(t *testing.T) {
 	walk := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
 	theirs := d.newTrack(other, testTrack{trackType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
 	var p photoJSON
-	d.decode(d.uploadPhoto(me, file, thumb, map[string]string{"activity_id": walk, "taken_at": "2026-05-01T10:00:30Z"}), http.StatusCreated, &p)
+	d.decode(d.uploadPhoto(me, file, thumb, map[string]string{"track_id": walk, "taken_at": "2026-05-01T10:00:30Z"}), http.StatusCreated, &p)
 	d.sharePhoto(other, theirs, p)
 	key := photoKey(me.id, p.ID)
 	stored := func() bool { return s3.Has(key) && s3.Has(photoThumbKey(key)) }
 
 	// The other account's row is served from the same files.
 	var list photosResponse
-	d.decode(d.do(other, "GET", "/v1/photos?activity="+theirs, nil), http.StatusOK, &list)
+	d.decode(d.do(other, "GET", "/v2/photos?track="+theirs, nil), http.StatusOK, &list)
 	if len(list.Photos) != 1 {
 		t.Fatalf("shared row: %+v", list.Photos)
 	}
@@ -481,16 +481,16 @@ func TestSharedPhotoFilesGoWithTheirLastRow(t *testing.T) {
 	if !stored() {
 		t.Fatalf("files removed while another row still uses them")
 	}
-	d.decode(d.uploadPhoto(me, file, thumb, map[string]string{"activity_id": walk, "taken_at": "2026-05-01T10:00:30Z"}), http.StatusCreated, &p)
+	d.decode(d.uploadPhoto(me, file, thumb, map[string]string{"track_id": walk, "taken_at": "2026-05-01T10:00:30Z"}), http.StatusCreated, &p)
 	d.sharePhoto(other, theirs, p)
 	second := photoKey(me.id, p.ID)
-	d.decode(d.do(me, "DELETE", "/v1/activities/"+walk, nil), http.StatusNoContent, nil)
+	d.decode(d.do(me, "DELETE", "/v2/tracks/"+walk, nil), http.StatusNoContent, nil)
 	if !s3.Has(second) {
 		t.Fatalf("activity delete removed files another row still uses")
 	}
 
 	// The last row takes them.
-	d.decode(d.do(other, "DELETE", "/v1/activities/"+theirs, nil), http.StatusNoContent, nil)
+	d.decode(d.do(other, "DELETE", "/v2/tracks/"+theirs, nil), http.StatusNoContent, nil)
 	if stored() || s3.Has(second) || s3.Has(photoThumbKey(second)) {
 		t.Errorf("files left behind after their last row")
 	}

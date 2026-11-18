@@ -57,7 +57,7 @@ func FileName(requested time.Time, n, of int) string {
 //   - tracks/: every track as GPX, as the owner's map shows it — clipped, with its track
 //     edit applied (ingest.DisplayedPoints).
 //   - photos/: the stored copy of each photo.
-//   - account.json: the account, every track's details and which files are its, Stories,
+//   - account.json: the account, every track's details and which files are its, Trips,
 //     Private locations and captured places. Written last, so it can name every file.
 //
 // Each part is built in a temporary file and uploaded with its size known: an upload of
@@ -299,8 +299,8 @@ func (a *archive) copyObject(w io.Writer, key string) error {
 type document struct {
 	ExportedAt       time.Time         `json:"exported_at"`
 	Account          accountInfo       `json:"account"`
-	Tracks           []track           `json:"activities"`
-	Trips            []trip            `json:"stories"`
+	Tracks           []track           `json:"tracks"`
+	Trips            []trip            `json:"trips"`
 	PrivateLocations []privateLocation `json:"private_locations"`
 	CapturedPlaces   []capturedPlace   `json:"captured_places"`
 }
@@ -327,8 +327,8 @@ type track struct {
 	MovingSeconds  *int64    `json:"moving_s,omitempty"`
 	ElevationGainM *float64  `json:"elevation_gain_m,omitempty"`
 	Original       string    `json:"original,omitempty"`
-	GPX            string    `json:"track,omitempty"`
-	GPXUnavailable bool      `json:"track_unavailable,omitempty"`
+	GPX            string    `json:"route,omitempty"`
+	GPXUnavailable bool      `json:"route_unavailable,omitempty"`
 	Photos         []photo   `json:"photos,omitempty"`
 	rawKey         string
 }
@@ -346,7 +346,7 @@ type trip struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
-	Tracks      []string  `json:"activities"`
+	Tracks      []string  `json:"tracks"`
 }
 
 type privateLocation struct {

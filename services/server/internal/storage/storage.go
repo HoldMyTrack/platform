@@ -117,7 +117,7 @@ func (s *Store) RemoveByPrefix(ctx context.Context, prefix string) error {
 }
 
 // RemoveByPrefixExcept is RemoveByPrefix sparing every object whose key keep reports true for —
-// the account purge's photos, whose files a copied Story's rows in another account still use.
+// the account purge's photos, whose files a copied Trip's rows in another account still use.
 // A nil keep spares nothing.
 //
 // A listing that fails partway is an error too, so a caller never takes a prefix as emptied

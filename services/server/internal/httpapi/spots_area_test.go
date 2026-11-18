@@ -44,7 +44,7 @@ func TestSpotsInArea(t *testing.T) {
 	get := func(query string) spotsAreaResponse {
 		t.Helper()
 		var resp spotsAreaResponse
-		d.decode(d.do(me, "GET", "/v1/spots?"+query, nil), http.StatusOK, &resp)
+		d.decode(d.do(me, "GET", "/v2/spots?"+query, nil), http.StatusOK, &resp)
 		return resp
 	}
 	const box = "bbox=-31,-31,-30,-30"
@@ -91,11 +91,11 @@ func TestSpotsInArea(t *testing.T) {
 		"bbox=-30,-31,-30,-30&categories=playground", // no width
 		"bbox=a,b,c,d&categories=playground",
 	} {
-		if rec := d.do(me, "GET", "/v1/spots?"+bad, nil); rec.Code != http.StatusBadRequest {
+		if rec := d.do(me, "GET", "/v2/spots?"+bad, nil); rec.Code != http.StatusBadRequest {
 			t.Errorf("?%s: status %d, want 400", bad, rec.Code)
 		}
 	}
-	if rec := d.do(account{}, "GET", fmt.Sprintf("/v1/spots?%s&categories=playground", box), nil); rec.Code != http.StatusUnauthorized {
+	if rec := d.do(account{}, "GET", fmt.Sprintf("/v2/spots?%s&categories=playground", box), nil); rec.Code != http.StatusUnauthorized {
 		t.Errorf("signed out: status %d, want 401", rec.Code)
 	}
 }
@@ -123,7 +123,7 @@ func TestSpotsInAreaAcrossTheAntimeridian(t *testing.T) {
 
 	for _, bbox := range []string{"179,-41,181,-40", "179,-41,-179,-40", "-181,-41,-179,-40"} {
 		var resp spotsAreaResponse
-		d.decode(d.do(me, "GET", "/v1/spots?categories=playground&bbox="+bbox, nil), http.StatusOK, &resp)
+		d.decode(d.do(me, "GET", "/v2/spots?categories=playground&bbox="+bbox, nil), http.StatusOK, &resp)
 		got := []int64{}
 		for _, sp := range resp.Spots {
 			got = append(got, sp.ID)

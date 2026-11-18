@@ -149,11 +149,11 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 			ID, Original string
 			GPX          string `json:"track"`
 			Photos       []struct{ File, Caption string }
-		} `json:"activities"`
+		} `json:"tracks"`
 		Trips []struct {
 			Name   string
-			Tracks []string `json:"activities"`
-		} `json:"stories"`
+			Tracks []string `json:"tracks"`
+		} `json:"trips"`
 		PrivateLocations []struct {
 			Name    string
 			RadiusM int `json:"radius_m"`

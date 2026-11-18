@@ -295,7 +295,7 @@ var errFewPointsAfterEdit = errors.New("fewer than 2 points survive the edit")
 // does both straight away; a `reprivacy` job once for the whole batch).
 //
 // edit == nil replays the track's stored track_edit unchanged; otherwise edit replaces it
-// (empty meaning reset). An track deleted meanwhile is skipped without error.
+// (empty meaning reset). A track deleted meanwhile is skipped without error.
 func reprocessTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, trackID string, edit *RouteEdit) error {
 	r, err := prepareReprocess(ctx, pool, store, userID, trackID, edit)
 	if err != nil || r == nil {

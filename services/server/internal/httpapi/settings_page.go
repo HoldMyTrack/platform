@@ -11,8 +11,8 @@ import (
 )
 
 // The Settings page (ADR-0012, IMPLEMENTATION.md §4.9, docs/SPEC.md FR-1.7): Avatar, Name,
-// Country, Timezone as plain forms. Saving calls the same cores `PATCH /v1/account/settings`
-// and `POST`/`DELETE /v1/account/avatar` do (account.go), so the two can't drift. It is also
+// Country, Timezone as plain forms. Saving calls the same cores `PATCH /v2/account/settings`
+// and `POST`/`DELETE /v2/account/avatar` do (account.go), so the two can't drift. It is also
 // the first-run page: a real account that has never saved it (no Country) is sent here from
 // every app page (pageAccount.home) and leaves for the map once it saves.
 

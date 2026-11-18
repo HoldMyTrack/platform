@@ -14,13 +14,13 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tracktype"
 )
 
-// Stories (IMPLEMENTATION.md §4.23) — hand-picked, private sets of tracks, each
+// Trips (IMPLEMENTATION.md §4.23) — hand-picked, private sets of tracks, each
 // with a name, a description and joint statistics. Stored in trips and story_activities
-// (§3.19). Another account's Story answers exactly like a missing one, `404`, on every route.
+// (§3.19). Another account's Trip answers exactly like a missing one, `404`, on every route.
 //
-// Every change to which tracks a Story holds bumps the account's tile version
+// Every change to which tracks a Trip holds bumps the account's tile version
 // (fog.BumpMapVersion, §4.2.6) in the same transaction: the tracks tiles take a `story`
-// filter, so a cached `?story=` tile would otherwise keep showing the old membership. A
+// filter, so a cached `?trip=` tile would otherwise keep showing the old membership. A
 // rename or a new description changes no tile and doesn't bump.
 
 const (
@@ -36,13 +36,13 @@ var (
 	errTrackNotFound = errors.New("activity not found")
 )
 
-// tripTypeStats is one track type's share of a Story's statistics. MovingSeconds falls
+// tripTypeStats is one track type's share of a Trip's statistics. MovingSeconds falls
 // back to duration_seconds per track, as Trends does (trackTrendsQuery), for tracks
 // ingested before moving_seconds was populated.
 type tripTypeStats struct {
-	TrackType string `json:"activity_type"`
+	TrackType string `json:"track_type"`
 	// Label is the type's name in the request's language (internal/tracktype), set as the
-	// Story is written out (withTypeLabels).
+	// Trip is written out (withTypeLabels).
 	Label          string  `json:"label"`
 	Count          int64   `json:"count"`
 	DistanceMeters float64 `json:"distance_meters"`
@@ -50,7 +50,7 @@ type tripTypeStats struct {
 	ElapsedSeconds int64   `json:"elapsed_seconds"`
 }
 
-// tripStats is a Story's joint statistics over its tracks, with no date bound, plus the
+// tripStats is a Trip's joint statistics over its tracks, with no date bound, plus the
 // same per track type, most frequent first.
 type tripStats struct {
 	Count          int64           `json:"count"`
@@ -66,16 +66,16 @@ type trip struct {
 	Description *string   `json:"description"`
 	CreatedAt   time.Time `json:"created_at"`
 	UpdatedAt   time.Time `json:"updated_at"`
-	// From names who sent the copy this Story came from (§4.23, ADR-0036), while the Story it
-	// was copied from still exists; null for a Story of the account's own.
+	// From names who sent the copy this Trip came from (§4.23, ADR-0036), while the Trip it
+	// was copied from still exists; null for a Trip of the account's own.
 	From *string `json:"from"`
-	// Every member, oldest track first — what the Edit window's Stories tab checks its
-	// boxes from without a request per Story.
-	TrackIDs []string  `json:"activity_ids"`
+	// Every member, oldest track first — what the Edit window's Trips tab checks its
+	// boxes from without a request per Trip.
+	TrackIDs []string  `json:"track_ids"`
 	Stats    tripStats `json:"stats"`
 }
 
-// withTypeLabels names each of the Story's types in lang.
+// withTypeLabels names each of the Trip's types in lang.
 func (st *trip) withTypeLabels(lang string) {
 	for i := range st.Stats.ByType {
 		st.Stats.ByType[i].Label = tracktype.Label(st.Stats.ByType[i].TrackType, lang)
@@ -83,7 +83,7 @@ func (st *trip) withTypeLabels(lang string) {
 }
 
 type tripsResponse struct {
-	Trips []trip `json:"stories"`
+	Trips []trip `json:"trips"`
 }
 
 // tripRequest is POST's body; PATCH reads the same fields but activity_ids, a full replace
@@ -91,11 +91,11 @@ type tripsResponse struct {
 type tripRequest struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description"`
-	TrackIDs    []string `json:"activity_ids"`
+	TrackIDs    []string `json:"track_ids"`
 }
 
 type tripTracksRequest struct {
-	TrackIDs []string `json:"activity_ids"`
+	TrackIDs []string `json:"track_ids"`
 }
 
 // validateTripFields trims name and description in place and writes a 400 for a value out of
@@ -105,11 +105,11 @@ func validateTripFields(w http.ResponseWriter, r *http.Request, name, descriptio
 	*description = strings.TrimSpace(*description)
 	switch {
 	case *name == "":
-		httpErrorT(w, r, http.StatusBadRequest, "error.story_name_required")
+		httpErrorT(w, r, http.StatusBadRequest, "error.trip_name_required")
 	case len([]rune(*name)) > maxTripNameLen:
-		httpErrorT(w, r, http.StatusBadRequest, "error.story_name_too_long", "max", maxTripNameLen)
+		httpErrorT(w, r, http.StatusBadRequest, "error.trip_name_too_long", "max", maxTripNameLen)
 	case len([]rune(*description)) > maxTripDescriptionLen:
-		httpErrorT(w, r, http.StatusBadRequest, "error.story_description_too_long", "max", maxTripDescriptionLen)
+		httpErrorT(w, r, http.StatusBadRequest, "error.trip_description_too_long", "max", maxTripDescriptionLen)
 	default:
 		return true
 	}
@@ -144,7 +144,7 @@ func validateTrackIDs(w http.ResponseWriter, ids []string, required bool) ([]str
 	return out, true
 }
 
-// tripIDFromPath reads {id}, writing a 404 for one that isn't a UUID — it can't be a Story.
+// tripIDFromPath reads {id}, writing a 404 for one that isn't a UUID — it can't be a Trip.
 func tripIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 	id := r.PathValue("id")
 	if !uuidPattern.MatchString(id) {
@@ -154,7 +154,7 @@ func tripIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return id, true
 }
 
-// handleListTrips serves `GET /v1/stories`, newest first.
+// handleListTrips serves `GET /v2/trips`, newest first.
 func (s *Server) handleListTrips(w http.ResponseWriter, r *http.Request) {
 	trips, err := s.loadTrips(r.Context(), s.pool, userIDFromContext(r.Context()), nil)
 	if s.writeTripError(w, r, err) {
@@ -167,7 +167,7 @@ func (s *Server) handleListTrips(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, tripsResponse{Trips: trips})
 }
 
-// handleGetTrip serves `GET /v1/stories/{id}`.
+// handleGetTrip serves `GET /v2/trips/{id}`.
 func (s *Server) handleGetTrip(w http.ResponseWriter, r *http.Request) {
 	id, ok := tripIDFromPath(w, r)
 	if !ok {
@@ -182,7 +182,7 @@ func (s *Server) handleGetTrip(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, st)
 }
 
-// handleCreateTrip serves `POST /v1/stories`, responding 201 with the new Story. The
+// handleCreateTrip serves `POST /v2/trips`, responding 201 with the new Trip. The
 // optional activity_ids become its first members in the same transaction, so "Create trip"
 // is one request; any of them that isn't the caller's own track fails the whole request
 // with a 404 and creates nothing.
@@ -229,7 +229,7 @@ func (s *Server) handleCreateTrip(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusCreated, created)
 }
 
-// handleUpdateTrip serves `PATCH /v1/stories/{id}` — name and description, both sent every
+// handleUpdateTrip serves `PATCH /v2/trips/{id}` — name and description, both sent every
 // time; an empty description clears it.
 func (s *Server) handleUpdateTrip(w http.ResponseWriter, r *http.Request) {
 	id, ok := tripIDFromPath(w, r)
@@ -264,7 +264,7 @@ func (s *Server) handleUpdateTrip(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, st)
 }
 
-// handleDeleteTrip serves `DELETE /v1/stories/{id}`, responding 204. Its tracks stay;
+// handleDeleteTrip serves `DELETE /v2/trips/{id}`, responding 204. Its tracks stay;
 // only the memberships cascade away.
 func (s *Server) handleDeleteTrip(w http.ResponseWriter, r *http.Request) {
 	id, ok := tripIDFromPath(w, r)
@@ -277,11 +277,11 @@ func (s *Server) handleDeleteTrip(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// deleteTrip deletes userID's Story, errTripNotFound when it isn't theirs.
+// deleteTrip deletes userID's Trip, errTripNotFound when it isn't theirs.
 func (s *Server) deleteTrip(ctx context.Context, userID, id string) error {
 	return s.inTx(ctx, func(tx pgx.Tx) error {
 		// RETURNING reads the statement's own snapshot, before the cascade removes the
-		// memberships, so it says whether the Story held anything.
+		// memberships, so it says whether the Trip held anything.
 		var hadTracks bool
 		if err := tx.QueryRow(ctx, `
 			DELETE FROM stories WHERE id = $1 AND user_id = $2
@@ -299,15 +299,15 @@ func (s *Server) deleteTrip(ctx context.Context, userID, id string) error {
 	})
 }
 
-// handleAddTripTracks serves `POST /v1/stories/{id}/activities` with `{activity_ids}`,
-// responding with the updated Story. An track already in the Story is left as it is; one
+// handleAddTripTracks serves `POST /v2/trips/{id}/tracks` with `{track_ids}`,
+// responding with the updated Trip. A track already in the Trip is left as it is; one
 // that isn't the caller's own fails the whole request with a 404 and adds nothing.
 func (s *Server) handleAddTripTracks(w http.ResponseWriter, r *http.Request) {
 	s.changeTripTracks(w, r, addTripTracks)
 }
 
-// handleRemoveTripTracks serves `DELETE /v1/stories/{id}/activities` with
-// `{activity_ids}`, responding with the updated Story. An id that isn't in the Story is
+// handleRemoveTripTracks serves `DELETE /v2/trips/{id}/tracks` with
+// `{track_ids}`, responding with the updated Trip. An id that isn't in the Trip is
 // ignored. The tracks themselves stay.
 func (s *Server) handleRemoveTripTracks(w http.ResponseWriter, r *http.Request) {
 	s.changeTripTracks(w, r, func(ctx context.Context, tx pgx.Tx, _, tripID string, ids []string) (bool, error) {
@@ -317,7 +317,7 @@ func (s *Server) handleRemoveTripTracks(w http.ResponseWriter, r *http.Request) 
 	})
 }
 
-// changeTripTracks is the two membership routes' shared shape: lock the caller's Story
+// changeTripTracks is the two membership routes' shared shape: lock the caller's Trip
 // (a 404 when it isn't theirs), apply change, and bump updated_at and the tile version when
 // change reports that the membership actually changed.
 func (s *Server) changeTripTracks(w http.ResponseWriter, r *http.Request,
@@ -370,7 +370,7 @@ func (s *Server) changeTripTracks(w http.ResponseWriter, r *http.Request,
 	writeJSON(w, http.StatusOK, updated)
 }
 
-// addTripTracks adds ids to the Story, all or none: errTrackNotFound when any of them
+// addTripTracks adds ids to the Trip, all or none: errTrackNotFound when any of them
 // isn't one of userID's tracks. FOR KEY SHARE holds those tracks until commit, so a
 // concurrent delete waits rather than failing the insert's foreign key.
 func addTripTracks(ctx context.Context, tx pgx.Tx, userID, tripID string, ids []string) (bool, error) {
@@ -409,13 +409,13 @@ func (s *Server) inTx(ctx context.Context, fn func(pgx.Tx) error) error {
 	return tx.Commit(ctx)
 }
 
-// querier is the common surface of the pool and a transaction, so a Story can be read back
+// querier is the common surface of the pool and a transaction, so a Trip can be read back
 // inside the transaction that just changed it.
 type querier interface {
 	Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error)
 }
 
-// loadTrip is loadTrips for one Story, errTripNotFound when it isn't userID's.
+// loadTrip is loadTrips for one Trip, errTripNotFound when it isn't userID's.
 func (s *Server) loadTrip(ctx context.Context, q querier, userID, tripID string) (trip, error) {
 	trips, err := s.loadTrips(ctx, q, userID, &tripID)
 	if err != nil {
@@ -446,8 +446,8 @@ JOIN activities a ON a.id = sa.activity_id
 WHERE s.user_id = $1 AND ($2::uuid IS NULL OR s.id = $2)
 ORDER BY a.started_at, a.id`
 
-// tripStatsQuery is every Story's statistics per track type in one pass; loadTrips
-// sums the types into each Story's totals.
+// tripStatsQuery is every Trip's statistics per track type in one pass; loadTrips
+// sums the types into each Trip's totals.
 const tripStatsQuery = `
 SELECT sa.story_id, a.activity_type, COUNT(*),
        COALESCE(SUM(a.distance_meters), 0)::float8,
@@ -460,8 +460,8 @@ WHERE s.user_id = $1 AND ($2::uuid IS NULL OR s.id = $2)
 GROUP BY sa.story_id, a.activity_type
 ORDER BY COUNT(*) DESC, a.activity_type`
 
-// loadTrips reads userID's Stories — every one, or only tripID's when it's set — with
-// their members and statistics: three queries, whatever the number of Stories.
+// loadTrips reads userID's Trips — every one, or only tripID's when it's set — with
+// their members and statistics: three queries, whatever the number of Trips.
 func (s *Server) loadTrips(ctx context.Context, q querier, userID string, tripID *string) ([]trip, error) {
 	rows, err := q.Query(ctx, listTripsQuery, userID, tripID)
 	if err != nil {
@@ -519,7 +519,7 @@ func (s *Server) loadTrips(ctx context.Context, q querier, userID string, tripID
 	return trips, nil
 }
 
-// writeTripError maps a Story handler's error to a response, reporting whether it wrote one.
+// writeTripError maps a Trip handler's error to a response, reporting whether it wrote one.
 func (s *Server) writeTripError(w http.ResponseWriter, r *http.Request, err error) bool {
 	switch {
 	case err == nil:

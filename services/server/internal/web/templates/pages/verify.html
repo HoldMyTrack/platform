@@ -11,7 +11,7 @@
     {{else if .Token}}
     {{/* A Facebook-linked account is first verified only in a browser signed in to it (FR-1.8):
          sign in and come back to this link, or reset the password if the account isn't yours. */}}
-    {{if .Facebook}}{{template "facebook-button" (printf "/v1/auth/facebook/start?verify=%s" .Token)}}{{end}}
+    {{if .Facebook}}{{template "facebook-button" (printf "/v2/auth/facebook/start?verify=%s" .Token)}}{{end}}
     <a class="auth-card__link" href="/signin">{{t "header.sign_in"}}</a>
     <a class="auth-card__link" href="/forgot">{{t "forgot.title"}}</a>
     {{else}}

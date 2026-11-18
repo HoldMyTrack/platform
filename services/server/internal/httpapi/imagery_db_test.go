@@ -12,7 +12,7 @@ import (
 )
 
 // The worker's decision reaches both clients (docs/SPEC.md FR-4.10): paused, the style leaves the
-// imagery out and GET /v1/map/imagery says so; offered again, both bring it back.
+// imagery out and GET /v2/map/imagery says so; offered again, both bring it back.
 func TestImageryStatusPublished(t *testing.T) {
 	d := newDBTest(t)
 	ctx := context.Background()
@@ -27,9 +27,9 @@ func TestImageryStatusPublished(t *testing.T) {
 		var style struct {
 			Sources map[string]json.RawMessage `json:"sources"`
 		}
-		d.decode(d.do(account{}, http.MethodGet, "/v1/map/style/light", nil), http.StatusOK, &style)
+		d.decode(d.do(account{}, http.MethodGet, "/v2/map/style/light", nil), http.StatusOK, &style)
 		var res imageryResponse
-		d.decode(d.do(account{}, http.MethodGet, "/v1/map/imagery", nil), http.StatusOK, &res)
+		d.decode(d.do(account{}, http.MethodGet, "/v2/map/imagery", nil), http.StatusOK, &res)
 		_, has := style.Sources["satellite"]
 		return has, res.Available
 	}

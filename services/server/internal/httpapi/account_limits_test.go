@@ -115,10 +115,10 @@ func TestSyncRejectsWhatDoesntFit(t *testing.T) {
 	}
 	var acts []map[string]any
 	for _, id := range []string{"walk-a", "walk-b", "walk-c"} {
-		acts = append(acts, map[string]any{"external_id": id, "activity_type": "walk", "points": points})
+		acts = append(acts, map[string]any{"external_id": id, "track_type": "walk", "points": points})
 	}
 	var resp syncTracksResponse
-	d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", map[string]any{"source": "healthconnect", "activities": acts}), http.StatusOK, &resp)
+	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", map[string]any{"source": "healthconnect", "tracks": acts}), http.StatusOK, &resp)
 	for i, want := range []string{"enqueued", "rejected", "rejected"} {
 		if resp.Results[i].Status != want {
 			t.Errorf("result %d: %s, want %s", i, resp.Results[i].Status, want)
@@ -129,18 +129,18 @@ func TestSyncRejectsWhatDoesntFit(t *testing.T) {
 	}
 }
 
-// An account at its limit can't accept a copy of a Story; the copy stays in its inbox.
+// An account at its limit can't accept a copy of a Trip; the copy stays in its inbox.
 func TestTripCopyRefusedAtTheLimit(t *testing.T) {
 	d := newDBTest(t)
 	me, you := d.newAccount(false), d.newAccount(false)
 	tripID := d.newTrip(me, "Trip", d.newTrack(me, testTrack{}))
-	d.decode(d.do(me, "POST", "/v1/stories/"+tripID+"/send", map[string]any{"email": d.address(you)}), http.StatusNoContent, nil)
+	d.decode(d.do(me, "POST", "/v2/trips/"+tripID+"/send", map[string]any{"email": d.address(you)}), http.StatusNoContent, nil)
 	d.fillToLimit(you, maxTracksPerAccount)
 	sends := d.inbox(you)
 	if len(sends) != 1 {
 		t.Fatalf("inbox %+v", sends)
 	}
-	if rec := d.do(you, "POST", "/v1/story-sends/"+sends[0].ID+"/accept", nil); rec.Code != http.StatusConflict {
+	if rec := d.do(you, "POST", "/v2/trip-sends/"+sends[0].ID+"/accept", nil); rec.Code != http.StatusConflict {
 		t.Fatalf("accept at the limit: %d, want 409", rec.Code)
 	}
 	if len(d.inbox(you)) != 1 {

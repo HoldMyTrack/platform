@@ -64,8 +64,8 @@ func TestLoadDemoManifest(t *testing.T) {
 	}
 
 	fsys := fstest.MapFS{"manifest.json": {Data: []byte(`{
-		"activities": {"a.gpx": {"name": "Lake loop", "type": "walking"}, "b.fit": {"description": "Along the river"}},
-		"stories": [{"name": "Weekend", "description": "Two days out", "activities": ["a.gpx", "b.fit"]}]
+		"tracks": {"a.gpx": {"name": "Lake loop", "type": "walking"}, "b.fit": {"description": "Along the river"}},
+		"trips": [{"name": "Weekend", "description": "Two days out", "tracks": ["a.gpx", "b.fit"]}]
 	}`)}}
 	got, err = loadDemoManifest(fsys, files)
 	if err != nil {
@@ -82,13 +82,13 @@ func TestLoadDemoManifest(t *testing.T) {
 	}
 
 	for name, manifest := range map[string]string{
-		"an entry with no matching file":    `{"activities": {"gone.gpx": {"name": "x"}}}`,
-		"a story naming a missing file":     `{"stories": [{"name": "S", "activities": ["gone.gpx"]}]}`,
-		"a story with no name":              `{"stories": [{"name": " ", "activities": ["a.gpx"]}]}`,
-		"a story with no activities":        `{"stories": [{"name": "S", "activities": []}]}`,
-		"two stories with one name":         `{"stories": [{"name": "S", "activities": ["a.gpx"]}, {"name": "S", "activities": ["b.fit"]}]}`,
-		"two stories opening first":         `{"stories": [{"name": "S", "activities": ["a.gpx"], "opens_first": true}, {"name": "T", "activities": ["b.fit"], "opens_first": true}]}`,
-		"a story name over the API's limit": `{"stories": [{"name": "` + strings.Repeat("x", maxTripNameLen+1) + `", "activities": ["a.gpx"]}]}`,
+		"an entry with no matching file":    `{"tracks": {"gone.gpx": {"name": "x"}}}`,
+		"a story naming a missing file":     `{"trips": [{"name": "S", "tracks": ["gone.gpx"]}]}`,
+		"a story with no name":              `{"trips": [{"name": " ", "tracks": ["a.gpx"]}]}`,
+		"a story with no activities":        `{"trips": [{"name": "S", "tracks": []}]}`,
+		"two stories with one name":         `{"trips": [{"name": "S", "tracks": ["a.gpx"]}, {"name": "S", "tracks": ["b.fit"]}]}`,
+		"two stories opening first":         `{"trips": [{"name": "S", "tracks": ["a.gpx"], "opens_first": true}, {"name": "T", "tracks": ["b.fit"], "opens_first": true}]}`,
+		"a story name over the API's limit": `{"trips": [{"name": "` + strings.Repeat("x", maxTripNameLen+1) + `", "tracks": ["a.gpx"]}]}`,
 	} {
 		fsys["manifest.json"] = &fstest.MapFile{Data: []byte(manifest)}
 		if _, err := loadDemoManifest(fsys, files); err == nil {
@@ -101,7 +101,7 @@ func TestLoadDemoManifestPhotos(t *testing.T) {
 	files := []string{"a.gpx"}
 	fsys := fstest.MapFS{"photos/a 1.jpg": {}, "photos/a 1-thumb.jpg": {}}
 	photo := func(fields string) string {
-		return `{"activities": {"a.gpx": {"photos": [{` + fields + `}]}}}`
+		return `{"tracks": {"a.gpx": {"photos": [{` + fields + `}]}}}`
 	}
 	ok := `"file": "a 1.jpg", "thumb": "a 1-thumb.jpg", "route_at": "2026-10-02T15:04:05Z", "width": 2048, "height": 1536`
 
@@ -187,7 +187,7 @@ func TestDemoPhotosRoundTrip(t *testing.T) {
 	walk := d.newTrack(owner, testTrack{trackType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
 	var uploaded photoJSON
 	d.decode(d.uploadPhoto(owner, testJPEG(t, 400, 300), testJPEG(t, 32, 24), map[string]string{
-		"activity_id": walk, "taken_at": "2026-05-01T10:00:30Z", "caption": "The bridge",
+		"track_id": walk, "taken_at": "2026-05-01T10:00:30Z", "caption": "The bridge",
 	}), http.StatusCreated, &uploaded)
 
 	out := t.TempDir()
@@ -214,7 +214,7 @@ func TestDemoPhotosRoundTrip(t *testing.T) {
 		}
 	}
 	var list photosResponse
-	d.decode(d.do(demo, "GET", "/v1/photos?activity="+seeded, nil), http.StatusOK, &list)
+	d.decode(d.do(demo, "GET", "/v2/photos?track="+seeded, nil), http.StatusOK, &list)
 	if len(list.Photos) != 1 {
 		t.Fatalf("seeded twice: %d photos, want 1", len(list.Photos))
 	}
@@ -288,7 +288,7 @@ func TestDemoCapturesRoundTrip(t *testing.T) {
 		}
 	}
 	var list spotCapturesResponse
-	d.decode(d.do(demo, "GET", "/v1/spots/captures", nil), http.StatusOK, &list)
+	d.decode(d.do(demo, "GET", "/v2/spots/captures", nil), http.StatusOK, &list)
 	if len(list.Captures) != 1 || list.Captures[0].SpotID != inside || !list.Captures[0].CapturedAt.Equal(start.Add(time.Hour)) {
 		t.Errorf("seeded captures %+v", list.Captures)
 	}

@@ -54,7 +54,7 @@ func readUsage(ctx context.Context, db *pgxpool.Pool, userID string) (accountUsa
 
 // Which limit refused something, as the error message key that names it.
 const (
-	limitTracks  = "error.activity_limit"
+	limitTracks  = "error.track_limit"
 	limitStorage = "error.storage_limit"
 )
 
@@ -79,7 +79,7 @@ func fitWithinLimits(u accountUsage, sizes []int64) (n int, refused string) {
 }
 
 // refuseOverLimit answers 409 with the limit's message and reports true when the account has no
-// room for one more track of size bytes (0 for one whose size isn't known yet, a Story copy).
+// room for one more track of size bytes (0 for one whose size isn't known yet, a Trip copy).
 // A failed read is a 500.
 func (s *Server) refuseOverLimit(w http.ResponseWriter, r *http.Request, userID string, size int64) bool {
 	u, err := readUsage(r.Context(), s.pool, userID)

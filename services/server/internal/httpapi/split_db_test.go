@@ -43,7 +43,7 @@ func (d *dbTest) runEditJob(as account) {
 func (d *dbTest) listTracks(as account) []trackRow {
 	d.t.Helper()
 	var resp tracksResponse
-	d.decode(d.do(as, "GET", "/v1/activities", nil), http.StatusOK, &resp)
+	d.decode(d.do(as, "GET", "/v2/tracks", nil), http.StatusOK, &resp)
 	return resp.Tracks
 }
 
@@ -71,7 +71,7 @@ func TestSplit(t *testing.T) {
 	}
 
 	at := func(min int) int64 { return time.Date(2026, 5, 1, 10, min, 0, 0, time.UTC).UnixMilli() }
-	editPath := "/v1/activities/" + orig + "/track-edit"
+	editPath := "/v2/tracks/" + orig + "/route-edit"
 
 	// One point on a side isn't a track.
 	for _, m := range []int{0, 5} {
@@ -124,7 +124,7 @@ func TestSplit(t *testing.T) {
 
 	// The editor opens on the piece's own points: 10:02 to 10:05, the Chop still in its spec.
 	var pts routePointsResponse
-	d.decode(d.do(me, "GET", "/v1/activities/"+second.ID+"/track-points", nil), http.StatusOK, &pts)
+	d.decode(d.do(me, "GET", "/v2/tracks/"+second.ID+"/route-points", nil), http.StatusOK, &pts)
 	if len(pts.Points) != 4 || int64(pts.Points[0][2]) != at(2) || pts.Edit == nil || pts.Edit.Keep == nil {
 		t.Errorf("second piece's points %v edit %+v", pts.Points, pts.Edit)
 	}
@@ -166,7 +166,7 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 		t.Fatalf("ingest: %+v, %v", res, err)
 	}
 	at := func(min int) int64 { return time.Date(2026, 5, 1, 10, min, 0, 0, time.UTC).UnixMilli() }
-	path := "/v1/activities/" + res.TrackID + "/track-edit"
+	path := "/v2/tracks/" + res.TrackID + "/route-edit"
 	dropStray := map[string]any{"drop": []int64{at(6)}}
 
 	rec := d.do(me, "POST", path, map[string]any{"edit": dropStray, "split_at": at(4)})
@@ -206,7 +206,7 @@ func TestSplitCountsAgainstTheEditorsLimit(t *testing.T) {
 	if err != nil || !res.Persisted {
 		t.Fatalf("ingest: %+v, %v", res, err)
 	}
-	path := "/v1/activities/" + res.TrackID + "/track-edit"
+	path := "/v2/tracks/" + res.TrackID + "/route-edit"
 	at := time.Date(2026, 5, 1, 10, 3, 0, 0, time.UTC).UnixMilli()
 	if rec := d.do(me, http.MethodPost, path, map[string]any{"split_at": at + 1}); rec.Code == http.StatusTooManyRequests {
 		t.Fatalf("first split: 429, want it checked")

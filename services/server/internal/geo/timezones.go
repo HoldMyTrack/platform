@@ -58,7 +58,7 @@ type TimezoneStats struct {
 //
 // Re-matching uses the start of the stored trajectory, which ingest's own lookup (the first
 // recorded point, before Private locations clip it) can differ from only when a track
-// starts inside a Private location on a zone border. An track wholly inside one keeps the
+// starts inside a Private location on a zone border. A track wholly inside one keeps the
 // zone it has.
 //
 // Registered as the `seed-timezones` subcommand (cmd/holdmytrack/main.go).

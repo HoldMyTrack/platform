@@ -18,10 +18,10 @@ func TestMapLayers(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 
-	if rec := d.do(account{}, "GET", "/v1/map/layers?flavor=light", nil); rec.Code != http.StatusUnauthorized {
+	if rec := d.do(account{}, "GET", "/v2/map/layers?flavor=light", nil); rec.Code != http.StatusUnauthorized {
 		t.Fatalf("signed out: status %d, want 401", rec.Code)
 	}
-	if rec := d.do(me, "GET", "/v1/map/layers?flavor=neon", nil); rec.Code != http.StatusNotFound {
+	if rec := d.do(me, "GET", "/v2/map/layers?flavor=neon", nil); rec.Code != http.StatusNotFound {
 		t.Fatalf("unknown flavor: status %d, want 404", rec.Code)
 	}
 
@@ -36,7 +36,7 @@ func TestMapLayers(t *testing.T) {
 			} `json:"sources"`
 		} `json:"groups"`
 	}
-	rec := d.do(me, "GET", "/v1/map/layers?flavor=dark", nil)
+	rec := d.do(me, "GET", "/v2/map/layers?flavor=dark", nil)
 	d.decode(rec, http.StatusOK, &doc)
 	want := fog.TileVersion(me.id, 0)
 	if doc.TileVersion != want || doc.Flavor != "dark" || doc.StyleBuild != mapstyle.StyleBuild() {
@@ -58,7 +58,7 @@ func TestMapLayers(t *testing.T) {
 
 	etag := rec.Header().Get("ETag")
 	revalidate := func() int {
-		req := httptest.NewRequest("GET", "/v1/map/layers?flavor=dark", nil)
+		req := httptest.NewRequest("GET", "/v2/map/layers?flavor=dark", nil)
 		req.Header.Set("Authorization", bearerPrefix+me.session)
 		req.Header.Set("If-None-Match", etag)
 		rec := httptest.NewRecorder()
@@ -107,7 +107,7 @@ func TestEveryLayersDocumentMatchesContract(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	for _, flavor := range mapstyle.Flavors() {
-		if rec := d.do(me, "GET", "/v1/map/layers?flavor="+flavor, nil); rec.Code != http.StatusOK {
+		if rec := d.do(me, "GET", "/v2/map/layers?flavor="+flavor, nil); rec.Code != http.StatusOK {
 			t.Errorf("%s: status %d", flavor, rec.Code)
 		}
 	}

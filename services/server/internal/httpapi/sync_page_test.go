@@ -49,7 +49,7 @@ func TestSyncPage(t *testing.T) {
 	}
 
 	var resp activeImportsResponse
-	d.decode(d.do(me, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	if resp.UnseenFailures != 0 {
 		t.Errorf("unseen failures after opening /sync: %d, want 0", resp.UnseenFailures)
 	}

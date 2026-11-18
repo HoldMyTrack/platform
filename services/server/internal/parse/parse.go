@@ -71,7 +71,7 @@ func ByExtensionUpTo(filename string, r io.Reader, maxPoints int) (Track, error)
 }
 
 // JSONPoint is one sample of Path 2's batched normalized-points wire format
-// (`POST /v1/sync/activities`, IMPLEMENTATION.md §4.0.3) — exported so
+// (`POST /v2/sync/tracks`, IMPLEMENTATION.md §4.0.3) — exported so
 // internal/httpapi can decode the incoming request body straight into the same shape this
 // package re-marshals as the raw payload, with no separate wire type to keep in sync.
 type JSONPoint struct {
@@ -106,8 +106,8 @@ func (p *JSONPoint) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// JSONActivity is one track's worth of JSONPoint, the unit both the sync request body and
-// the stored raw payload carry (`internal/httpapi.syncTrackRequest` embeds this).
+// JSONActivity is one track's worth of JSONPoint, the stored raw payload of a synced track
+// (`internal/httpapi.syncTrackRequest.payload` builds it).
 //
 // Name and Description are optional and empty for Health Connect/HealthKit sync, which never
 // sends them. In-app GPS recording (`source = "recorded"`, `docs/IMPLEMENTATION.md` §4.0.4)

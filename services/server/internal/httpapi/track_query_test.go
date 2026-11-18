@@ -19,7 +19,7 @@ func query(t *testing.T, raw string) url.Values {
 }
 
 func TestParseTrackFilter(t *testing.T) {
-	f, err := parseTrackFilter(query(t, "from=2026-03-10&to=2026-03-12&types=running,walking&story=00000000-0000-4000-8000-000000000001"))
+	f, err := parseTrackFilter(query(t, "from=2026-03-10&to=2026-03-12&types=running,walking&trip=00000000-0000-4000-8000-000000000001"))
 	if err != nil || *f.From != "2026-03-10" || *f.To != "2026-03-12" || len(f.Types) != 2 || f.Trip == nil {
 		t.Fatalf("full filter: %+v %v", f, err)
 	}
@@ -27,7 +27,7 @@ func TestParseTrackFilter(t *testing.T) {
 	if f, err := parseTrackFilter(query(t, "")); err != nil || f.From != nil || f.To != nil || f.Types != nil || f.Trip != nil {
 		t.Fatalf("empty filter: %+v %v", f, err)
 	}
-	for _, bad := range []string{"from=2026-3-10", "to=yesterday", "story=42"} {
+	for _, bad := range []string{"from=2026-3-10", "to=yesterday", "trip=42"} {
 		if _, err := parseTrackFilter(query(t, bad)); err == nil {
 			t.Errorf("%s: parsed, want refused", bad)
 		}

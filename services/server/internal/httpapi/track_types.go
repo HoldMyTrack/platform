@@ -8,7 +8,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tracktype"
 )
 
-// maxDescribedTypes bounds `GET /v1/activity-types?types=`: a phone's Sync tab names the types of
+// maxDescribedTypes bounds `GET /v2/track-types?types=`: a phone's Sync tab names the types of
 // what it holds, a few dozen at most.
 const maxDescribedTypes = 100
 
@@ -16,7 +16,7 @@ type trackTypesResponse struct {
 	Types map[string]tracktype.Info `json:"types"`
 }
 
-// handleTrackTypes serves `GET /v1/activity-types` (docs/SPEC.md FR-5.1): what a client shows
+// handleTrackTypes serves `GET /v2/track-types` (docs/SPEC.md FR-5.1): what a client shows
 // for the catalog's types and any others it names — the Type picker's suggestions, and types no
 // list response has carried, such as a phone's unsent recordings.
 func (s *Server) handleTrackTypes(w http.ResponseWriter, r *http.Request) {

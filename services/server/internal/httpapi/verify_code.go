@@ -165,7 +165,7 @@ type verifyCodeRequest struct {
 	Code string `json:"code"`
 }
 
-// handleVerifyCode serves `POST /v1/auth/verify-code`, requireAuth like resend: the account as
+// handleVerifyCode serves `POST /v2/auth/verify-code`, requireAuth like resend: the account as
 // verified.
 func (s *Server) handleVerifyCode(w http.ResponseWriter, r *http.Request) {
 	info := authInfoFromContext(r.Context())

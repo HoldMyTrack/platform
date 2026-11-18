@@ -41,7 +41,7 @@ type Job struct {
 	// job enqueued before it existed), stored as NULL.
 	RawBytes int64 `json:"raw_bytes,omitempty"`
 	// TrackType overrides whatever the parser itself reports, when set. Empty means "use
-	// the parsed value". A copy of a Story (tripcopy) and the demo seed set it: their GPX
+	// the parsed value". A copy of a Trip (tripcopy) and the demo seed set it: their GPX
 	// carries no type of its own, and they already know the track's.
 	TrackType string `json:"activity_type,omitempty"`
 	// Batch groups the jobs one request enqueued together — a phone sync's tracks — so the

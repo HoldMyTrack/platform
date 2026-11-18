@@ -33,7 +33,7 @@ func TestFastTrackIngestsAndEdits(t *testing.T) {
 	// The middle point moved 50 km further out: two 50 km segments a second each.
 	middle := time.Date(2026, 5, 1, 10, 0, 1, 0, time.UTC).UnixMilli()
 	edit := map[string]any{"move": map[int64][2]float64{middle: {10, 50.5}}}
-	d.decode(d.do(me, http.MethodPost, "/v1/activities/"+res.TrackID+"/track-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)
+	d.decode(d.do(me, http.MethodPost, "/v2/tracks/"+res.TrackID+"/route-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)
 	var payload []byte
 	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_track' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
 		t.Fatal(err)

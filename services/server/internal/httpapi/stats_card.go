@@ -19,7 +19,7 @@ import (
 const maxStatsCardSide = 4096
 
 type statsCardRequest struct {
-	TrackIDs []string        `json:"activity_ids"`
+	TrackIDs []string        `json:"track_ids"`
 	Width    int             `json:"width"`
 	Height   int             `json:"height"`
 	Theme    statscard.Theme `json:"theme"`

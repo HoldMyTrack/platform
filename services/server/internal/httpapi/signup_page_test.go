@@ -102,12 +102,12 @@ func TestAppSignupHandsOffToTheApp(t *testing.T) {
 	var got struct {
 		Token string `json:"session_token"`
 	}
-	d.decode(d.do(account{}, http.MethodPost, "/v1/auth/handoff", map[string]string{"code": location.Query().Get("code"), "verifier": appChallengeVerifier}), http.StatusOK, &got)
+	d.decode(d.do(account{}, http.MethodPost, "/v2/auth/handoff", map[string]string{"code": location.Query().Get("code"), "verifier": appChallengeVerifier}), http.StatusOK, &got)
 	var me struct {
 		Email         string `json:"email"`
 		EmailVerified bool   `json:"email_verified"`
 	}
-	d.decode(d.do(account{session: got.Token}, http.MethodGet, "/v1/auth/me", nil), http.StatusOK, &me)
+	d.decode(d.do(account{session: got.Token}, http.MethodGet, "/v2/auth/me", nil), http.StatusOK, &me)
 	if me.Email != email || me.EmailVerified {
 		t.Errorf("the app's session is on %q verified %v, want the new unverified %q", me.Email, me.EmailVerified, email)
 	}

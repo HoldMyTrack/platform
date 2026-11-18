@@ -40,7 +40,7 @@ func TestActiveImports(t *testing.T) {
 	d.insertImportJob(me, "done", "recorded", "d.json", "b2")
 
 	var resp activeImportsResponse
-	d.decode(d.do(me, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	got := map[string][2]int64{}
 	for _, a := range resp.Imports {
 		got[a.Title] = [2]int64{a.Done, a.Total}
@@ -57,7 +57,7 @@ func TestActiveImports(t *testing.T) {
 
 	// Someone else's jobs never show.
 	other := d.newAccount(false)
-	d.decode(d.do(other, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(other, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	if len(resp.Imports) != 0 || resp.UnseenFailures != 0 {
 		t.Errorf("another account sees %+v", resp)
 	}
@@ -75,14 +75,14 @@ func TestUnseenImportFailures(t *testing.T) {
 	d.insertImportJob(me, "done", "upload", "good.gpx", "")
 
 	var resp activeImportsResponse
-	d.decode(d.do(me, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	if resp.UnseenFailures != 1 {
 		t.Fatalf("unseen failures %d, want 1", resp.UnseenFailures)
 	}
 	if res := d.do(me, "GET", "/sync", nil); res.Code != http.StatusOK {
 		t.Fatalf("GET /sync: %d", res.Code)
 	}
-	d.decode(d.do(me, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	if resp.UnseenFailures != 0 {
 		t.Errorf("unseen failures after opening /sync %d, want 0", resp.UnseenFailures)
 	}
@@ -100,7 +100,7 @@ func TestUploadHistoryFinishedAt(t *testing.T) {
 	}
 
 	var resp uploadsResponse
-	d.decode(d.do(me, "GET", "/v1/uploads?limit=10", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads?limit=10", nil), http.StatusOK, &resp)
 	rows := map[string]uploadRow{}
 	for _, u := range resp.Uploads {
 		rows[u.Filename] = u

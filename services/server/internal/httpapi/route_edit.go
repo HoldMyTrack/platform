@@ -23,14 +23,14 @@ type routePointsResponse struct {
 	Edit   *ingest.RouteEdit `json:"edit"`
 }
 
-// handleTrackRoutePoints serves `GET /v1/activities/{id}/track-points`. The points come
+// handleTrackRoutePoints serves `GET /v2/tracks/{id}/route-points`. The points come
 // from the raw payload — the only place full-resolution positions survive (§4.1 step 6) — and
 // are clipped against the account's current Private locations before they leave the server:
 // the raw payload still holds the hidden ends, and returning them would hand the client the
 // very places those locations exist to hide. A piece of a split (§4.7.8) gets its own range
 // of them only.
 func (s *Server) handleTrackRoutePoints(w http.ResponseWriter, r *http.Request) {
-	if limited(w, r, s.routePointsLimiter, "error.track_points_rate_limit") {
+	if limited(w, r, s.routePointsLimiter, "error.route_points_rate_limit") {
 		return
 	}
 	trackID, ok := trackIDFromPath(w, r)
@@ -119,7 +119,7 @@ const splitHidesPartCode = "split_hides_part"
 // Move point one per point dragged, so this is far past any real editing session while still rejecting an absurd payload.
 const maxRouteEditEntries = 10000
 
-// handleTrackRouteEdit serves `POST /v1/activities/{id}/track-edit`: validate the spec,
+// handleTrackRouteEdit serves `POST /v2/tracks/{id}/route-edit`: validate the spec,
 // mark the track pending, and enqueue an `edit_track` job to reprocess it (§4.7.7). The
 // reprocessing itself — reparse, metrics, masks, Fog invalidation — is the same heavy
 // work ingest does, so it goes through the job queue, never inline. Responds 202; the
@@ -142,7 +142,7 @@ func (s *Server) handleTrackRouteEdit(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if len(req.Edit.Remove)+len(req.Edit.Drop)+len(req.Edit.Move) > maxRouteEditEntries {
-			httpErrorT(w, r, http.StatusBadRequest, "error.track_edit_too_large")
+			httpErrorT(w, r, http.StatusBadRequest, "error.route_edit_too_large")
 			return
 		}
 		if req.Edit.IsEmpty() {
@@ -157,7 +157,7 @@ func (s *Server) handleTrackRouteEdit(w http.ResponseWriter, r *http.Request) {
 			writeBudgetPaused(w, r)
 			return
 		}
-		if limited(w, r, s.routePointsLimiter, "error.track_points_rate_limit") {
+		if limited(w, r, s.routePointsLimiter, "error.route_points_rate_limit") {
 			return
 		}
 		status, key := s.checkSplit(r, userID, trackID, req.Edit, *req.SplitAt)

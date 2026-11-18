@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-// maxPendingIDs bounds `GET /v1/activities/pending?ids=`: a client asks about the rows its list
+// maxPendingIDs bounds `GET /v2/tracks/pending?ids=`: a client asks about the rows its list
 // shows Pending and the edits it saved, a handful at a time.
 const maxPendingIDs = 200
 
@@ -13,7 +13,7 @@ type pendingResponse struct {
 	Pending []string `json:"pending"`
 }
 
-// handleTracksPending serves `GET /v1/activities/pending?ids=` (§4.2.5): which of the given
+// handleTracksPending serves `GET /v2/tracks/pending?ids=` (§4.2.5): which of the given
 // tracks are still Pending. A client watching a reprocess asks this every few seconds and
 // reads the whole list again only once the answer changes. An id that isn't the account's, or
 // no longer exists, is simply not Pending.

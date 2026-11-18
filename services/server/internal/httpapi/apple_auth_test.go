@@ -132,7 +132,7 @@ func TestAppleClientSecret(t *testing.T) {
 
 func TestAppleStartRedirectsToFormPost(t *testing.T) {
 	s := testAppleServer(t, "")
-	rec := serveChecked(t, s.handleAppleStart, httptest.NewRequest("GET", "/v1/auth/apple/start?tz=Europe/Berlin", nil))
+	rec := serveChecked(t, s.handleAppleStart, httptest.NewRequest("GET", "/v2/auth/apple/start?tz=Europe/Berlin", nil))
 	if rec.Code != http.StatusFound {
 		t.Fatalf("status %d", rec.Code)
 	}
@@ -148,7 +148,7 @@ func TestAppleStartRedirectsToFormPost(t *testing.T) {
 	if len(cookies) != 1 || cookies[0].Path != appleCookiePath || cookies[0].SameSite != http.SameSiteNoneMode || !cookies[0].Secure {
 		t.Fatalf("bad oauth cookie: %+v", cookies)
 	}
-	if bad := serveChecked(t, s.handleAppleStart, httptest.NewRequest("GET", "/v1/auth/apple/start?app_challenge=short", nil)); bad.Code != http.StatusBadRequest {
+	if bad := serveChecked(t, s.handleAppleStart, httptest.NewRequest("GET", "/v2/auth/apple/start?app_challenge=short", nil)); bad.Code != http.StatusBadRequest {
 		t.Fatalf("bad app_challenge: status %d", bad.Code)
 	}
 }
@@ -165,8 +165,8 @@ func TestAppleCookieLaxWithoutHTTPS(t *testing.T) {
 func TestAppleEndpointsDisabledWithoutServicesID(t *testing.T) {
 	s := &Server{log: slog.New(slog.DiscardHandler), apple: newAppleOAuth(AppleOAuthConfig{})}
 	for _, req := range []*http.Request{
-		httptest.NewRequest("GET", "/v1/auth/apple/start", nil),
-		formRequest("/v1/auth/apple/callback", url.Values{}),
+		httptest.NewRequest("GET", "/v2/auth/apple/start", nil),
+		formRequest("/v2/auth/apple/callback", url.Values{}),
 	} {
 		h := s.handleAppleStart
 		if req.Method == "POST" {
@@ -186,7 +186,7 @@ func formRequest(path string, form url.Values) *http.Request {
 
 func TestAppleCallbackRejectsStateMismatch(t *testing.T) {
 	s := testAppleServer(t, "")
-	req := formRequest("/v1/auth/apple/callback", url.Values{"state": {"forged"}, "code": {"x"}})
+	req := formRequest("/v2/auth/apple/callback", url.Values{"state": {"forged"}, "code": {"x"}})
 	req.AddCookie(&http.Cookie{Name: oauthCookieName, Value: "real..UTC."})
 	rec := serveChecked(t, s.handleAppleCallback, req)
 	if loc := rec.Header().Get("Location"); rec.Code != http.StatusFound || loc != "https://app.example/signin?error=apple" {
@@ -270,14 +270,14 @@ func TestAppleCallbackSignsIn(t *testing.T) {
 	d.srv.apple = testAppleServer(t, apple.serve().URL).apple
 
 	start := httptest.NewRecorder()
-	d.srv.ServeHTTP(start, httptest.NewRequest("GET", "/v1/auth/apple/start?tz=Europe/Berlin", nil))
+	d.srv.ServeHTTP(start, httptest.NewRequest("GET", "/v2/auth/apple/start?tz=Europe/Berlin", nil))
 	state, _ := url.Parse(start.Header().Get("Location"))
 	form := url.Values{
 		"state": {state.Query().Get("state")},
 		"code":  {"the-code"},
 		"user":  {`{"name":{"firstName":"Some","lastName":"One"}}`},
 	}
-	req := formRequest("/v1/auth/apple/callback", form)
+	req := formRequest("/v2/auth/apple/callback", form)
 	req.Header.Set("Origin", appleIssuer)
 	req.AddCookie(start.Result().Cookies()[0])
 	rec := httptest.NewRecorder()
@@ -327,7 +327,7 @@ func TestAppleTokenStartsSession(t *testing.T) {
 	var got struct {
 		Token string `json:"session_token"`
 	}
-	d.decode(d.do(account{}, "POST", "/v1/auth/apple/token", map[string]string{"authorization_code": "ios-code", "name": "Some One", "tz": "Europe/Berlin"}), http.StatusOK, &got)
+	d.decode(d.do(account{}, "POST", "/v2/auth/apple/token", map[string]string{"authorization_code": "ios-code", "name": "Some One", "tz": "Europe/Berlin"}), http.StatusOK, &got)
 	if got.Token == "" {
 		t.Fatal("no session token")
 	}
@@ -344,10 +344,10 @@ func TestAppleTokenStartsSession(t *testing.T) {
 		t.Fatalf("got name %q, client %q", name, client)
 	}
 
-	if rec := d.do(account{}, "POST", "/v1/auth/apple/token", map[string]string{"authorization_code": "bad"}); rec.Code != http.StatusUnauthorized || !strings.Contains(rec.Body.String(), "Apple") {
+	if rec := d.do(account{}, "POST", "/v2/auth/apple/token", map[string]string{"authorization_code": "bad"}); rec.Code != http.StatusUnauthorized || !strings.Contains(rec.Body.String(), "Apple") {
 		t.Fatalf("refused code: %d %s", rec.Code, rec.Body.String())
 	}
-	if rec := d.send(account{}, "POST", "/v1/auth/apple/token", "application/json", []byte("{")); rec.Code != http.StatusBadRequest {
+	if rec := d.send(account{}, "POST", "/v2/auth/apple/token", "application/json", []byte("{")); rec.Code != http.StatusBadRequest {
 		t.Fatalf("bad body: %d", rec.Code)
 	}
 }
@@ -355,7 +355,7 @@ func TestAppleTokenStartsSession(t *testing.T) {
 func TestAppleTokenNeedsBundleID(t *testing.T) {
 	s := testAppleServer(t, "")
 	s.apple.BundleID = ""
-	rec := serveChecked(t, s.handleAppleToken, httptest.NewRequest("POST", "/v1/auth/apple/token", strings.NewReader(`{"authorization_code":"x"}`)))
+	rec := serveChecked(t, s.handleAppleToken, httptest.NewRequest("POST", "/v2/auth/apple/token", strings.NewReader(`{"authorization_code":"x"}`)))
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status %d, want 404", rec.Code)
 	}
@@ -398,17 +398,17 @@ func TestAppleNotificationsUnlink(t *testing.T) {
 		"signed with another key": appleNotification(t, other, testServicesID, map[string]any{"type": "consent-revoked", "sub": sub}),
 		"for another client":      appleNotification(t, key, "com.someone.else", map[string]any{"type": "consent-revoked", "sub": sub}),
 	} {
-		if rec := d.do(account{}, "POST", "/v1/auth/apple/notifications", body); rec.Code != http.StatusBadRequest {
+		if rec := d.do(account{}, "POST", "/v2/auth/apple/notifications", body); rec.Code != http.StatusBadRequest {
 			t.Fatalf("%s: status %d, want 400", name, rec.Code)
 		}
 	}
-	if rec := d.do(account{}, "POST", "/v1/auth/apple/notifications", appleNotification(t, key, testBundleID, map[string]any{"type": "email-disabled", "sub": sub})); rec.Code != http.StatusOK {
+	if rec := d.do(account{}, "POST", "/v2/auth/apple/notifications", appleNotification(t, key, testBundleID, map[string]any{"type": "email-disabled", "sub": sub})); rec.Code != http.StatusOK {
 		t.Fatalf("email-disabled: status %d", rec.Code)
 	}
 	if i, s := links(); i != 1 || s != 1 {
 		t.Fatalf("before revoking: %d identities, %d sessions", i, s)
 	}
-	if rec := d.do(account{}, "POST", "/v1/auth/apple/notifications", appleNotification(t, key, testServicesID, map[string]any{"type": "consent-revoked", "sub": sub})); rec.Code != http.StatusOK {
+	if rec := d.do(account{}, "POST", "/v2/auth/apple/notifications", appleNotification(t, key, testServicesID, map[string]any{"type": "consent-revoked", "sub": sub})); rec.Code != http.StatusOK {
 		t.Fatalf("consent-revoked: status %d", rec.Code)
 	}
 	if i, s := links(); i != 0 || s != 0 {
@@ -418,14 +418,14 @@ func TestAppleNotificationsUnlink(t *testing.T) {
 	if err := d.pool.QueryRow(ctx, `SELECT EXISTS (SELECT 1 FROM users WHERE id = $1 AND deleted_at IS NULL)`, me.id).Scan(&exists); err != nil || !exists {
 		t.Fatalf("account gone: %v", err)
 	}
-	if rec := d.do(account{}, "POST", "/v1/auth/apple/notifications", appleNotification(t, key, testServicesID, map[string]any{"type": "account-delete", "sub": "linked-to-nothing"})); rec.Code != http.StatusOK {
+	if rec := d.do(account{}, "POST", "/v2/auth/apple/notifications", appleNotification(t, key, testServicesID, map[string]any{"type": "account-delete", "sub": "linked-to-nothing"})); rec.Code != http.StatusOK {
 		t.Fatalf("unknown subject: status %d", rec.Code)
 	}
 }
 
 func TestAppleNotificationsNeedApple(t *testing.T) {
 	s := &Server{log: slog.New(slog.DiscardHandler), apple: newAppleOAuth(AppleOAuthConfig{})}
-	rec := serveChecked(t, s.handleAppleNotifications, httptest.NewRequest("POST", "/v1/auth/apple/notifications", strings.NewReader(`{"payload":"a.b.c"}`)))
+	rec := serveChecked(t, s.handleAppleNotifications, httptest.NewRequest("POST", "/v2/auth/apple/notifications", strings.NewReader(`{"payload":"a.b.c"}`)))
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("status %d, want 404", rec.Code)
 	}
@@ -447,7 +447,7 @@ func TestDeleteAccountRevokesApple(t *testing.T) {
 	if err := d.pool.QueryRow(ctx, `SELECT email FROM users WHERE id = $1`, me.id).Scan(&email); err != nil {
 		t.Fatal(err)
 	}
-	if rec := d.do(me, "DELETE", "/v1/account", map[string]string{"email": email}); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, "DELETE", "/v2/account", map[string]string{"email": email}); rec.Code != http.StatusNoContent {
 		t.Fatalf("status %d: %s", rec.Code, rec.Body.String())
 	}
 	if len(apple.revoked) != 1 {

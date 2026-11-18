@@ -12,9 +12,9 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tripcopy"
 )
 
-// Sending a copy of a Story (IMPLEMENTATION.md §4.23, ADR-0036). A Story's owner sends a copy
+// Sending a copy of a Trip (IMPLEMENTATION.md §4.23, ADR-0036). A Trip's owner sends a copy
 // to an email address; the recipient finds it in their inbox and accepts or declines it, and
-// accepting enqueues the `story_copy` job that copies the Story as it is then into their
+// accepting enqueues the `story_copy` job that copies the Trip as it is then into their
 // account (tripcopy.Process). Stored in story_sends until accepted or declined.
 
 // tripSendLimiter bounds how many copies one account sends an hour: each is an email to
@@ -25,7 +25,7 @@ type tripSendRequest struct {
 	Email string `json:"email"`
 }
 
-// handleSendTrip serves `POST /v1/stories/{id}/send` with `{email}`. The answer is `204`
+// handleSendTrip serves `POST /v2/trips/{id}/send` with `{email}`. The answer is `204`
 // whether or not the address belongs to an account that can receive it — anything else would
 // tell the sender who has an account. Only a verified real account other than the sender's
 // own gets the copy, and an email saying so (sendTripCopyEmail); a repeat send while the last
@@ -58,7 +58,7 @@ func (s *Server) handleSendTrip(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if !tripSendLimiter.allow(userID) {
-		httpErrorT(w, r, http.StatusTooManyRequests, "error.story_send_limit")
+		httpErrorT(w, r, http.StatusTooManyRequests, "error.trip_send_limit")
 		return
 	}
 	var lang string
@@ -90,8 +90,8 @@ func (s *Server) handleSendTrip(w http.ResponseWriter, r *http.Request) {
 }
 
 // sendTripCopyEmail tells the recipient at email, in their own language (lang, or English
-// when they've chosen none), that the sender sent them a copy of the Story, with a link to
-// the Stories tab where they answer it.
+// when they've chosen none), that the sender sent them a copy of the Trip, with a link to
+// the Trips tab where they answer it.
 func (s *Server) sendTripCopyEmail(ctx context.Context, senderID, tripID, email, lang string) error {
 	var from, trip string
 	var tracks int64
@@ -117,16 +117,16 @@ func (s *Server) sendTripCopyEmail(ctx context.Context, senderID, tripID, email,
 // their email address when they've set none.
 type tripSendJSON struct {
 	ID         string    `json:"id"`
-	TripName   string    `json:"story_name"`
+	TripName   string    `json:"trip_name"`
 	From       string    `json:"from"`
 	SentAt     time.Time `json:"sent_at"`
-	TrackCount int64     `json:"activity_count"`
+	TrackCount int64     `json:"track_count"`
 }
 
-// tripCopyingJSON is a copy the account accepted that hasn't finished arriving: its Story
+// tripCopyingJSON is a copy the account accepted that hasn't finished arriving: its Trip
 // appears once the `story_copy` job has run.
 type tripCopyingJSON struct {
-	TripName string `json:"story_name"`
+	TripName string `json:"trip_name"`
 	From     string `json:"from"`
 }
 
@@ -138,7 +138,7 @@ type tripSendsResponse struct {
 // senderNameSQL is how a sender is named to the people they send to.
 const senderNameSQL = `COALESCE(NULLIF(u.display_name, ''), u.email)`
 
-// handleListTripSends serves `GET /v1/story-sends`: the copies waiting for the caller, newest
+// handleListTripSends serves `GET /v2/trip-sends`: the copies waiting for the caller, newest
 // first, and the ones they accepted that are still being copied. A send from an account being
 // deleted is left out, as it can no longer be copied.
 func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
@@ -215,7 +215,7 @@ func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
 
 var errTripSendNotFound = errors.New("story send not found")
 
-// takeTripSend removes one of the caller's waiting copies, returning the Story it offered —
+// takeTripSend removes one of the caller's waiting copies, returning the Trip it offered —
 // errTripSendNotFound when there's no such copy for them.
 func takeTripSend(ctx context.Context, tx pgx.Tx, userID, sendID string) (string, error) {
 	var tripID string
@@ -227,8 +227,8 @@ func takeTripSend(ctx context.Context, tx pgx.Tx, userID, sendID string) (string
 	return tripID, err
 }
 
-// handleAcceptTripSend serves `POST /v1/story-sends/{id}/accept`: the copy leaves the inbox and
-// a `story_copy` job is queued for it in the same transaction. `202`: the Story arrives once the
+// handleAcceptTripSend serves `POST /v2/trip-sends/{id}/accept`: the copy leaves the inbox and
+// a `story_copy` job is queued for it in the same transaction. `202`: the Trip arrives once the
 // job has run. An account at its limits (account_limits.go) is refused, and the copy stays in its
 // inbox until there's room; a copy accepted below them is made whole, even past them.
 func (s *Server) handleAcceptTripSend(w http.ResponseWriter, r *http.Request) {
@@ -240,7 +240,7 @@ func (s *Server) handleAcceptTripSend(w http.ResponseWriter, r *http.Request) {
 	}, http.StatusAccepted)
 }
 
-// handleDeclineTripSend serves `DELETE /v1/story-sends/{id}`: the copy leaves the inbox and
+// handleDeclineTripSend serves `DELETE /v2/trip-sends/{id}`: the copy leaves the inbox and
 // nothing is copied.
 func (s *Server) handleDeclineTripSend(w http.ResponseWriter, r *http.Request) {
 	s.answerTripSend(w, r, nil, http.StatusNoContent)

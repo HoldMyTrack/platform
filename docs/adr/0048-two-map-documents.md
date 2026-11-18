@@ -12,7 +12,7 @@ The web, Android and soon iOS draw the same map. The basemap style had one defin
 
 - **The server decides what the map shows, how it looks, and every rule about the data; a client decides only what needs the device**: input and gestures, sensors and recording, offline use, the source gate (ADR-0039), and anything that can't wait for a round trip.
 - **A rule a client applies instantly travels as data ahead of time.** The documents carry every mode's view, and a mode switch applies one locally.
-- **The map loads from two documents, fetched in parallel.** The basemap style, `GET /v1/map/style/{flavor}`, stays unauthenticated and the same for every account. The layers document, `GET /v1/map/layers?flavor=`, holds every layer HoldMyTrack draws over it, at the account's tile version, behind the session.
+- **The map loads from two documents, fetched in parallel.** The basemap style, `GET /v2/map/style/{flavor}`, stays unauthenticated and the same for every account. The layers document, `GET /v2/map/layers?flavor=`, holds every layer HoldMyTrack draws over it, at the account's tile version, behind the session.
 - **Both carry the build they came from**, and a client holding two from different builds fetches the style again.
 - **Runtime state travels as hooks, never values**: a layer names the Layers menu switch that shows it, and the properties that read a run-time value through `["var", name]`, which the client binds with `let`. The document gives every value's default, so a client that doesn't know one still draws.
 - **No backward compatibility for this change.** The Android release and the deploy go live together, and the deploy raises `MIN_ANDROID_BUILD` to it (`IMPLEMENTATION.md` §4.33), so an older build shows the Update screen.

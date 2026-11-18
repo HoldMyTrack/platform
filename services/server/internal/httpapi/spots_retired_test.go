@@ -31,7 +31,7 @@ func TestRetiredSpot(t *testing.T) {
 		t.Fatalf("create spot: %v", err)
 	}
 	t.Cleanup(func() { d.pool.Exec(context.Background(), `DELETE FROM spots WHERE id = $1`, id) })
-	path := fmt.Sprintf("/v1/spots/%d", id)
+	path := fmt.Sprintf("/v2/spots/%d", id)
 	position := map[string]float64{"lat": at[1], "lon": at[0]}
 
 	d.decode(d.do(captor, "POST", path+"/captures", position), http.StatusCreated, nil)
@@ -49,7 +49,7 @@ func TestRetiredSpot(t *testing.T) {
 	inArea := func(as account) spotsAreaResponse {
 		t.Helper()
 		var resp spotsAreaResponse
-		d.decode(d.do(as, "GET", "/v1/spots?bbox=-51,-51,-50,-50&categories=playground", nil), http.StatusOK, &resp)
+		d.decode(d.do(as, "GET", "/v2/spots?bbox=-51,-51,-50,-50&categories=playground", nil), http.StatusOK, &resp)
 		return resp
 	}
 	if mine := inArea(captor); mine.Total != 1 || len(mine.Spots) != 1 || mine.Spots[0].ID != id {

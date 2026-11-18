@@ -46,18 +46,18 @@ func TestContractLimitsMatchTheHandlers(t *testing.T) {
 		return int(*f)
 	}
 
-	track := body("PATCH", "/activities/{id}")
-	trip := body("POST", "/stories")
+	track := body("PATCH", "/tracks/{id}")
+	trip := body("POST", "/trips")
 	location := body("POST", "/private-locations")
 	for _, tc := range []struct {
 		name      string
 		got, want int
 	}{
-		{"activity_type", maxLength(property(track, "activity_type")), maxTrackTypeLen},
-		{"activity name", maxLength(property(track, "name")), maxTrackNameLen},
-		{"activity description", maxLength(property(track, "description")), maxTrackDescriptionLen},
-		{"Story name", maxLength(property(trip, "name")), maxTripNameLen},
-		{"Story description", maxLength(property(trip, "description")), maxTripDescriptionLen},
+		{"track_type", maxLength(property(track, "track_type")), maxTrackTypeLen},
+		{"track name", maxLength(property(track, "name")), maxTrackNameLen},
+		{"track description", maxLength(property(track, "description")), maxTrackDescriptionLen},
+		{"Trip name", maxLength(property(trip, "name")), maxTripNameLen},
+		{"Trip description", maxLength(property(trip, "description")), maxTripDescriptionLen},
 		{"photo caption (upload)", maxLength(property(body("POST", "/photos"), "caption")), maxPhotoCaptionLen},
 		{"photo caption (edit)", maxLength(property(body("PATCH", "/photos/{id}"), "caption")), maxPhotoCaptionLen},
 		{"Private location name", maxLength(property(location, "name")), maxPrivateLocationNameLen},

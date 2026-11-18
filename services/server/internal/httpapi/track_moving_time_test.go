@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// A row carries moving time, the time Stories and Trends sum, and elapsed time where the
+// A row carries moving time, the time Trips and Trends sum, and elapsed time where the
 // source gave no moving time.
 func TestTrackRowCarriesMovingTime(t *testing.T) {
 	d := newDBTest(t)

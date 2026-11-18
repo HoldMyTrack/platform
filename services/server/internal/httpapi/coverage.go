@@ -12,7 +12,7 @@ import (
 // running jobs too. `ingest`, `edit_track`, `reprivacy` and `story_copy` are included, not just
 // `render_fog`: an upload the client has already seen accepted may not have been parsed yet, and
 // until it has, the `render_fog` job it will enqueue doesn't exist to be waited on; an accepted
-// copy of a Story is the same, one track at a time. A job waiting out a retry's delay
+// copy of a Trip is the same, one track at a time. A job waiting out a retry's delay
 // (internal/worker's retryDelays, or a `reprivacy` rerun) is left out: nothing renders until it
 // runs, and a reprivacy rerun's tracks stay off the map meanwhile.
 //
@@ -57,7 +57,7 @@ type explored struct {
 	Cities    int `json:"cities"`
 }
 
-// handleCoverageStatus serves `GET /v1/coverage/status` (IMPLEMENTATION.md §4.2.3): the
+// handleCoverageStatus serves `GET /v2/coverage/status` (IMPLEMENTATION.md §4.2.3): the
 // signal a client polls after an upload or delete to know when refetching Fog tiles
 // will return the new coverage rather than the old. The tile URLs themselves are fixed and
 // the rasters are rendered asynchronously, so without this the client has no way to tell.

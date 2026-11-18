@@ -37,15 +37,15 @@ const DemoCustomerUserID = "22222222-2222-2222-2222-222222222222"
 var demoData embed.FS
 
 // demoManifestFile is demo_data/'s one non-track file: what the raw files can't carry
-// themselves — per-file overrides (not every file needs one), the account's Stories and its
+// themselves — per-file overrides (not every file needs one), the account's Trips and its
 // Spots captures.
 const demoManifestFile = "manifest.json"
 
-// demoManifest is manifest.json: Tracks keyed by filename, Stories naming their
+// demoManifest is manifest.json: Tracks keyed by filename, Trips naming their
 // tracks by filename too, and SpotCaptures.
 type demoManifest struct {
-	Tracks       map[string]demoManifestEntry `json:"activities"`
-	Trips        []demoManifestTrip           `json:"stories,omitempty"`
+	Tracks       map[string]demoManifestEntry `json:"tracks"`
+	Trips        []demoManifestTrip           `json:"trips,omitempty"`
 	SpotCaptures []demoManifestCapture        `json:"spot_captures,omitempty"`
 }
 
@@ -60,13 +60,13 @@ type demoManifestCapture struct {
 	CapturedAt time.Time `json:"captured_at"`
 }
 
-// demoManifestTrip is one Story the seed gives the account (§4.23): a name, a description,
-// and its tracks by filename. Stories are matched by name on a re-run. OpensFirst marks the
-// one Story dated newest, which the Stories tab and the tour open (seedDemoTrips).
+// demoManifestTrip is one Trip the seed gives the account (§4.23): a name, a description,
+// and its tracks by filename. Trips are matched by name on a re-run. OpensFirst marks the
+// one Trip dated newest, which the Trips tab and the tour open (seedDemoTrips).
 type demoManifestTrip struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
-	Tracks      []string `json:"activities"`
+	Tracks      []string `json:"tracks"`
 	OpensFirst  bool     `json:"opens_first,omitempty"`
 }
 
@@ -115,10 +115,10 @@ func demoPhotoContentType(file string) string {
 }
 
 // loadDemoManifest reads demo_data/manifest.json. A missing manifest is an empty one; a
-// manifest naming a file that isn't there fails — a track entry or a Story's track
+// manifest naming a file that isn't there fails — a track entry or a Trip's track
 // alike — since that's a typo or a file deleted without its entry, and would otherwise pass
-// silently. So does a Story the API itself would refuse: no name, a name or description over
-// the limit, two Stories with one name (a re-run couldn't tell them apart), or no tracks;
+// silently. So does a Trip the API itself would refuse: no name, a name or description over
+// the limit, two Trips with one name (a re-run couldn't tell them apart), or no tracks;
 // and a capture with no place or time, or two of one place (the table keeps one per place).
 func loadDemoManifest(fsys fs.FS, files []string) (demoManifest, error) {
 	manifest := demoManifest{Tracks: map[string]demoManifestEntry{}}
@@ -261,7 +261,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	}
 
 	var ingested, skipped, failed int
-	// Each file's track, for the Stories below.
+	// Each file's track, for the Trips below.
 	trackIDs := make(map[string]string, len(names))
 	for _, filename := range names {
 		b, err := fs.ReadFile(fsys, filename)
@@ -408,17 +408,17 @@ func seedDemoCaptures(ctx context.Context, pool *pgxpool.Pool, userID string, ca
 }
 
 // seedDemoTrips gives the account (the Demo Customer, but a parameter so tests can use their
-// own) the manifest's Stories, each matched by name: created if
+// own) the manifest's Trips, each matched by name: created if
 // it isn't there, and otherwise given the manifest's description and exactly its tracks —
-// so a plain re-run fixes a Story that drifted, as it does a track's name. A Story the
+// so a plain re-run fixes a Trip that drifted, as it does a track's name. A Trip the
 // manifest doesn't name is left alone; --reset is what removes those. One transaction, and one
-// tile-version bump if any Story's tracks changed (§4.2.6): the tracks tiles take a
+// tile-version bump if any Trip's tracks changed (§4.2.6): the tracks tiles take a
 // `story` filter.
 //
-// Each Story is dated the day after its last track ended, as someone would make one after a
-// trip, rather than the moment of the seed: the Stories are listed newest first, so they then
+// Each Trip is dated the day after its last track ended, as someone would make one after a
+// trip, rather than the moment of the seed: the Trips are listed newest first, so they then
 // read in the order they were visited, not the manifest's. The one that opens first is dated
-// after its own tracks and a day after every other Story, so the Stories tab, which opens
+// after its own tracks and a day after every other Trip, so the Trips tab, which opens
 // the newest, opens it.
 func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips []demoManifestTrip, trackIDs map[string]string) error {
 	tx, err := pool.Begin(ctx)
@@ -524,7 +524,7 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	}
 	for _, q := range []string{
 		`DELETE FROM jobs WHERE user_id = $1 AND state = 'pending'`,
-		// Its Stories too: the seed recreates the manifest's, and nothing else should survive.
+		// Its Trips too: the seed recreates the manifest's, and nothing else should survive.
 		`DELETE FROM stories WHERE user_id = $1`,
 		// And its captures, which belong to the account rather than to a track.
 		`DELETE FROM spot_captures WHERE user_id = $1`,

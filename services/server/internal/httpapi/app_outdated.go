@@ -7,7 +7,7 @@ import (
 )
 
 // An app build older than its platform's minimum (MIN_ANDROID_BUILD, MIN_IOS_BUILD) is refused
-// on /v1/ with 426 app_outdated, which the app answers with its Update screen
+// on /v1/ and /v2/ with 426 app_outdated, which the app answers with its Update screen
 // (apps/android/docs/SPEC.md FR-1.8, docs/IMPLEMENTATION.md §4.33).
 
 // The apps' User-Agents start with these, then the release number and, in brackets, the commit
@@ -17,13 +17,13 @@ const (
 	iosAgentPrefix     = "HoldMyTrack-iOS/"
 )
 
-// SetMinAndroidBuild sets the oldest Android versionCode /v1/ still answers; 0, the default,
+// SetMinAndroidBuild sets the oldest Android versionCode the API still answers; 0, the default,
 // answers every build.
 func (s *Server) SetMinAndroidBuild(n int) {
 	s.minAndroidBuild = n
 }
 
-// SetMinIOSBuild sets the oldest iOS build number /v1/ still answers; 0, the default, answers
+// SetMinIOSBuild sets the oldest iOS build number the API still answers; 0, the default, answers
 // every build.
 func (s *Server) SetMinIOSBuild(n int) {
 	s.minIOSBuild = n
@@ -68,7 +68,7 @@ func appOutdated(userAgent string, minAndroid, minIOS int) bool {
 	return false
 }
 
-// refuseOutdatedApp answers 426 to a /v1/ request from a build below the minimum, and reports
+// refuseOutdatedApp answers 426 to a /v1/ or /v2/ request from a build below the minimum, and reports
 // whether it did.
 func (s *Server) refuseOutdatedApp(w http.ResponseWriter, r *http.Request) bool {
 	if !strings.HasPrefix(r.URL.Path, apiPrefix+"/") || !appOutdated(r.UserAgent(), s.minAndroidBuild, s.minIOSBuild) {

@@ -12,7 +12,7 @@ func TestSpotsAreaRefusesAWideView(t *testing.T) {
 	s := &Server{}
 	for _, bbox := range []string{"0,40,20,45", "0,30,5,45", "170,40,185,45", "175,40,-170,45"} {
 		rec := httptest.NewRecorder()
-		s.handleSpotsInArea(rec, httptest.NewRequest(http.MethodGet, "/v1/spots?categories=playground&bbox="+bbox, nil))
+		s.handleSpotsInArea(rec, httptest.NewRequest(http.MethodGet, "/v2/spots?categories=playground&bbox="+bbox, nil))
 		if rec.Code != http.StatusBadRequest {
 			t.Errorf("bbox %s: %d, want 400", bbox, rec.Code)
 		}

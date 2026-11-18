@@ -29,7 +29,7 @@ Every built feature of the server and the web app; the Android app's own behavio
 
 ### 1.4 API errors
 
-Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-12.1); `services/server/api/` lists the codes. An app build older than the deployment's minimum for that app is refused on every `/v1` request before anything else is checked, and asked to update (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
+Every error from `/v1`, `/v2` and `/tiles/v1` is JSON `{"error": code, "message": text}`: the code is stable and never changes with language, and the message is a sentence in the request's language (FR-12.1); `services/server/api/` lists the codes. An app build older than the deployment's minimum for that app is refused on every `/v1` request before anything else is checked, and asked to update (`apps/android/docs/SPEC.md` FR-1.8); no other client is ever refused for its version.
 
 ## 2. Actors
 
@@ -44,7 +44,7 @@ The admin panel is the only place an account sees another account's data (FR-7.2
 
 ## 3. FR-1 — Authentication & Account Management
 
-On the web, sign-in, sign-up, password reset and verification are server-rendered pages sharing the JSON endpoints' behavior. A page form, and any `POST`, `PATCH` or `DELETE` under `/v1/` that carries an `Origin`, is refused unless that `Origin` (for a form without one, its `Referer`) is the app's own. A request with no `Origin`, as Android's, is not refused.
+On the web, sign-in, sign-up, password reset and verification are server-rendered pages sharing the JSON endpoints' behavior. A page form, and any `POST`, `PATCH` or `DELETE` under `/v1/` or `/v2/` that carries an `Origin`, is refused unless that `Origin` (for a form without one, its `Referer`) is the app's own. A request with no `Origin`, as Android's, is not refused.
 
 ### FR-1.1 Sign up
 
@@ -68,7 +68,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 ### FR-1.4 Session check / persistence
 
 - Every request checks the session in the database, so a session ended on the server (sign-out, password reset, account deletion) stops at once. A session lasts 30 days from creation, a demo session 24 hours.
-- `GET /v1/auth/me` returns the account and whether its email is verified (always true for a demo session).
+- `GET /v2/auth/me` returns the account and whether its email is verified (always true for a demo session).
 - When the check gets no answer (the server unreachable or failing), the map says it couldn't load the account and offers to retry; it doesn't treat the visitor as signed out. A check the database can't answer is a 503, never the 401 that means the session is gone; a page whose check can't be answered says the site is briefly unavailable, never showing the visitor signed out or sending them to sign in.
 
 ### FR-1.5 Forgot password
@@ -99,7 +99,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 
 A real account must confirm its email before using anything else. Why: a mistyped email strands an account's imported data where nobody can get it back.
 
-- Until verified, every route except `GET /v1/auth/me`, sign-out, resend, change of address and typing the code is refused with a distinguishable error. A demo account is never gated.
+- Until verified, every route except `GET /v2/auth/me`, sign-out, resend, change of address and typing the code is refused with a distinguishable error. A demo account is never gated.
 - Each verification email carries a 6-digit code beside its link. The code verifies only when typed by someone signed in to the account, who stays signed in. It works for 30 minutes and five wrong tries, and only the newest email's code works. Past ten wrong codes in an hour for one address, from any accounts, every code for it is refused until the hour ends.
 - A link is valid for 24 hours, works once and confirms only the address it was sent to, from any device. Opening it confirms the address at once only in a browser already signed in to its account; anywhere else the page asks for a press of its button first, so a mail scanner that opens every link in a message can't confirm an address. A browser already signed in to the link's account carries on; any other, signed out or signed in to another account, gets the address verified but is not signed in to it, and signs in the usual way. A first verification, by link or code, also ends the account's other sessions and app sign-ins not yet completed. An account linked to Facebook is first verified only in a browser signed in to it: anywhere else the link verifies nothing and stays usable. A Facebook sign-in started from the link comes back to it, signed in only when it is the account's own Facebook; a password reset is the other way in (FR-1.6).
 - Verifying, by link or code, ends every other verification link and code, and, when the address changed, every reset link.
@@ -219,7 +219,7 @@ A candidate on the phone covering the same time as an account track, or another 
 
 - Two overlap when their times overlap for at least 80% of the longer one. Type and distance aren't compared, since sources disagree. Touching, a small part of the other, and no duration don't overlap.
 - A track is compared by the time it was recorded over, even where Private locations hide its ends or all of it. A split part covers only its own stretch, so a whole copy of a split track overlaps no part and isn't marked.
-- `POST /v1/activities/overlaps` takes up to 5,000 spans and answers each with the account's own track it overlaps most.
+- `POST /v2/tracks/overlaps` takes up to 5,000 spans and answers each with the account's own track it overlaps most.
 
 ### FR-3.6 In-app GPS recording (Android)
 
@@ -514,7 +514,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 ### FR-9.1 About page
 
 - `/about` says what HoldMyTrack is, isn't and how it's funded. Without a session `/` is the same page, with `/` as canonical; with one, `/` is the map. Opening it never starts a demo.
-- `/robots.txt` disallows `/v1/` and `/tiles/`; `/sitemap.xml` lists the indexable pages.
+- `/robots.txt` disallows `/v1/`, `/v2/` and `/tiles/`; `/sitemap.xml` lists the indexable pages.
 
 ### FR-9.2 Help page
 
@@ -530,7 +530,7 @@ Server-rendered pages that need no JavaScript, with the shared header (FR-9.4).
 
 - Menus work without JavaScript.
 - With a session no page is cached anywhere, since the header names the account; without one, public pages may be cached for five minutes, and a copy cached signed out is never reused signed in.
-- An unknown address gets a "Page not found" page, or a JSON error under `/v1/` and `/tiles/` (§1.4).
+- An unknown address gets a "Page not found" page, or a JSON error under `/v1/`, `/v2/` and `/tiles/` (§1.4).
 
 ### FR-9.5 Privacy policy
 

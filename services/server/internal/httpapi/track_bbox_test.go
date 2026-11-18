@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-// An track's bbox goes the shorter way round in longitude: one across the antimeridian is a
+// A track's bbox goes the shorter way round in longitude: one across the antimeridian is a
 // few tenths of a degree with east past 180, not the whole globe (IMPLEMENTATION.md §4.7).
 func TestTrackBBoxAcrossTheAntimeridian(t *testing.T) {
 	d := newDBTest(t)

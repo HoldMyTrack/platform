@@ -140,7 +140,7 @@ func signup(n int) {
 	for i := 1; i <= n; i++ {
 		email := fmt.Sprintf(*emailFmt, i)
 		body, _ := json.Marshal(map[string]string{"email": email, "password": password, "timezone": "UTC"})
-		resp, err := client.Post(*base+"/v1/auth/signup", "application/json", bytes.NewReader(body))
+		resp, err := client.Post(*base+"/v2/auth/signup", "application/json", bytes.NewReader(body))
 		must(err)
 		rb, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
@@ -161,7 +161,7 @@ func signup(n int) {
 func cleanup() {
 	for _, a := range loadAccts() {
 		body, _ := json.Marshal(map[string]string{"email": a.Email})
-		req, _ := http.NewRequest("DELETE", *base+"/v1/account", bytes.NewReader(body))
+		req, _ := http.NewRequest("DELETE", *base+"/v2/account", bytes.NewReader(body))
 		req.Header.Set("Authorization", "Bearer "+a.Token)
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := client.Do(req)
@@ -183,7 +183,7 @@ func uploadFile(c *http.Client, tok, name string, data []byte) (int, []byte, tim
 	fw, _ := mw.CreateFormFile("file", name)
 	fw.Write(data)
 	mw.Close()
-	req, _ := http.NewRequest("POST", *base+"/v1/activities/upload", &buf)
+	req, _ := http.NewRequest("POST", *base+"/v2/tracks/upload", &buf)
 	req.Header.Set("Authorization", "Bearer "+tok)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	t := time.Now()
@@ -323,7 +323,7 @@ func probe() {
 	}
 	t0 := time.Now()
 	for {
-		req, _ := http.NewRequest("GET", *base+"/v1/uploads/"+r.ExternalID, nil)
+		req, _ := http.NewRequest("GET", *base+"/v2/uploads/"+r.ExternalID, nil)
 		req.Header.Set("Authorization", "Bearer "+a.Token)
 		resp, err := client.Do(req)
 		if err == nil {
@@ -601,10 +601,10 @@ func view(ctx context.Context, st *stats, v *visitor) int {
 	wg.Wait()
 	b := windowBBox(v.c, v.z)
 	if v.mode == "normal" && v.z >= tracksMinZoom {
-		get(ctx, st, v, "activities-area", fmt.Sprintf("%s/v1/activities/area?bbox=%.5f,%.5f,%.5f,%.5f", *base, b[0], b[1], b[2], b[3]))
+		get(ctx, st, v, "activities-area", fmt.Sprintf("%s/v2/tracks/area?bbox=%.5f,%.5f,%.5f,%.5f", *base, b[0], b[1], b[2], b[3]))
 	}
 	if asksArea(v.spots, v.z, v.r.Intn(areaShare)) {
-		get(ctx, st, v, "spots-area", fmt.Sprintf("%s/v1/spots?bbox=%.5f,%.5f,%.5f,%.5f&categories=%s", *base, b[0], b[1], b[2], b[3], areaCategories))
+		get(ctx, st, v, "spots-area", fmt.Sprintf("%s/v2/spots?bbox=%.5f,%.5f,%.5f,%.5f&categories=%s", *base, b[0], b[1], b[2], b[3], areaCategories))
 	}
 	return skipped
 }

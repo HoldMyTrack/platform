@@ -31,7 +31,7 @@ type updateSettingsRequest struct {
 	Locale *string `json:"locale"`
 }
 
-// handleUpdateSettings serves `PATCH /v1/account/settings` — a full replace of all three
+// handleUpdateSettings serves `PATCH /v2/account/settings` — a full replace of all three
 // fields at once, since the Settings page saves as one form rather than auto-saving each
 // field individually. Returns the same authResponse shape handleMe does, so the frontend can
 // update its local state directly from this response instead of a follow-up GET.
@@ -118,7 +118,7 @@ func avatarKey(userID string) string {
 	return "avatars/" + userID
 }
 
-// handleUploadAvatar serves `POST /v1/account/avatar` (multipart, field "file"). Sniffs the
+// handleUploadAvatar serves `POST /v2/account/avatar` (multipart, field "file"). Sniffs the
 // real content type via http.DetectContentType rather than trusting the filename extension
 // or the multipart part's own declared Content-Type — both are entirely client-controlled,
 // and this sniffed value is exactly what handleGetAvatar serves the file back as, so trusting
@@ -175,7 +175,7 @@ func (s *Server) setAvatar(w http.ResponseWriter, r *http.Request, userID string
 	return err
 }
 
-// handleDeleteAvatar serves `DELETE /v1/account/avatar`. Object removal is best-effort and
+// handleDeleteAvatar serves `DELETE /v2/account/avatar`. Object removal is best-effort and
 // logged rather than surfaced as a failure, since a stray orphaned blob is a cleanup nuisance,
 // not a reason to leave the DB still pointing at an avatar the user just asked to remove.
 func (s *Server) handleDeleteAvatar(w http.ResponseWriter, r *http.Request) {
@@ -194,7 +194,7 @@ func (s *Server) removeAvatar(ctx context.Context, userID string) error {
 	return err
 }
 
-// handleGetAvatar serves `GET /v1/account/avatar` — always the signed-in caller's own
+// handleGetAvatar serves `GET /v2/account/avatar` — always the signed-in caller's own
 // avatar, never anyone else's: there is no userID in the path at all, since this app has no
 // social/public-profile surface for one account's avatar to be visible from another's
 // session (VISION.md §5.1 — social is explicitly unscheduled).

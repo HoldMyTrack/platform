@@ -85,7 +85,7 @@ func scanPrivateLocation(row pgx.Row) (privateLocation, error) {
 	return l, err
 }
 
-// handleListPrivateLocations serves `GET /v1/private-locations`, oldest first.
+// handleListPrivateLocations serves `GET /v2/private-locations`, oldest first.
 func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Request) {
 	rows, err := s.pool.Query(r.Context(), selectPrivateLocation+` WHERE user_id = $1 ORDER BY created_at, id`,
 		userIDFromContext(r.Context()))
@@ -115,7 +115,7 @@ func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Reque
 	writeJSON(w, http.StatusOK, locations)
 }
 
-// handleHiddenTracks serves `GET /v1/private-locations/hidden`: how many of the account's
+// handleHiddenTracks serves `GET /v2/private-locations/hidden`: how many of the account's
 // tracks its Private locations hide entirely, the rows the list badges Private (FR-5.1).
 // Account-wide, since a hidden track keeps no track to tell which location hid it.
 func (s *Server) handleHiddenTracks(w http.ResponseWriter, r *http.Request) {
@@ -135,7 +135,7 @@ func (s *Server) handleHiddenTracks(w http.ResponseWriter, r *http.Request) {
 	}{count})
 }
 
-// handleCreatePrivateLocation serves `POST /v1/private-locations`, responding 201 with the
+// handleCreatePrivateLocation serves `POST /v2/private-locations`, responding 201 with the
 // new location.
 func (s *Server) handleCreatePrivateLocation(w http.ResponseWriter, r *http.Request) {
 	req, ok := decodePrivateLocation(w, r)
@@ -169,7 +169,7 @@ func (s *Server) handleCreatePrivateLocation(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusCreated, created)
 }
 
-// handleUpdatePrivateLocation serves `PATCH /v1/private-locations/{id}` — move, resize or
+// handleUpdatePrivateLocation serves `PATCH /v2/private-locations/{id}` — move, resize or
 // rename. Both the old and the new circle's tracks are reprocessed: the old ones may get
 // their hidden ends back, the new ones lose theirs.
 func (s *Server) handleUpdatePrivateLocation(w http.ResponseWriter, r *http.Request) {
@@ -211,7 +211,7 @@ func (s *Server) handleUpdatePrivateLocation(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, updated)
 }
 
-// handleDeletePrivateLocation serves `DELETE /v1/private-locations/{id}`, responding 204.
+// handleDeletePrivateLocation serves `DELETE /v2/private-locations/{id}`, responding 204.
 func (s *Server) handleDeletePrivateLocation(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
 	if !uuidPattern.MatchString(id) {

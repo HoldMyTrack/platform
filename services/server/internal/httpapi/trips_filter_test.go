@@ -14,7 +14,7 @@ import (
 )
 
 // `story` narrows the track list, the summary, the histogram (both modes and `earliest`)
-// and the tracks tiles to one Story's tracks, alongside the filters they already take.
+// and the tracks tiles to one Trip's tracks, alongside the filters they already take.
 func TestTripFilter(t *testing.T) {
 	d := newDBTest(t)
 	me, other := d.newAccount(false), d.newAccount(false)
@@ -30,14 +30,14 @@ func TestTripFilter(t *testing.T) {
 		startedAt: time.Date(2026, 5, 1, 12, 0, 0, 0, time.UTC)})
 
 	var trip, empty, theirTrip trip
-	d.decode(d.do(me, "POST", "/v1/stories", map[string]any{"name": "Trip", "activity_ids": []string{walk, drive}}), http.StatusCreated, &trip)
-	d.decode(d.do(me, "POST", "/v1/stories", map[string]any{"name": "Empty"}), http.StatusCreated, &empty)
-	d.decode(d.do(other, "POST", "/v1/stories", map[string]any{"name": "Theirs", "activity_ids": []string{theirs}}), http.StatusCreated, &theirTrip)
+	d.decode(d.do(me, "POST", "/v2/trips", map[string]any{"name": "Trip", "track_ids": []string{walk, drive}}), http.StatusCreated, &trip)
+	d.decode(d.do(me, "POST", "/v2/trips", map[string]any{"name": "Empty"}), http.StatusCreated, &empty)
+	d.decode(d.do(other, "POST", "/v2/trips", map[string]any{"name": "Theirs", "track_ids": []string{theirs}}), http.StatusCreated, &theirTrip)
 
 	list := func(query string) []string {
 		t.Helper()
 		var resp tracksResponse
-		d.decode(d.do(me, "GET", "/v1/activities?"+query, nil), http.StatusOK, &resp)
+		d.decode(d.do(me, "GET", "/v2/tracks?"+query, nil), http.StatusOK, &resp)
 		ids := []string{}
 		for _, a := range resp.Tracks {
 			ids = append(ids, a.ID)
@@ -49,11 +49,11 @@ func TestTripFilter(t *testing.T) {
 		want  []string
 	}{
 		{"", []string{drive, outside, walk}},
-		{"story=" + trip.ID, []string{drive, walk}},
-		{"story=" + trip.ID + "&types=walking", []string{walk}},
-		{"story=" + trip.ID + "&from=2026-05-02&to=2026-05-03", []string{drive}},
-		{"story=" + empty.ID, []string{}},
-		{"story=" + theirTrip.ID, []string{}},
+		{"trip=" + trip.ID, []string{drive, walk}},
+		{"trip=" + trip.ID + "&types=walking", []string{walk}},
+		{"trip=" + trip.ID + "&from=2026-05-02&to=2026-05-03", []string{drive}},
+		{"trip=" + empty.ID, []string{}},
+		{"trip=" + theirTrip.ID, []string{}},
 	} {
 		if got := list(tc.query); !slices.Equal(got, tc.want) {
 			t.Errorf("list ?%s = %v, want %v", tc.query, got, tc.want)
@@ -61,7 +61,7 @@ func TestTripFilter(t *testing.T) {
 	}
 
 	var summary trackSummaryResponse
-	d.decode(d.do(me, "GET", "/v1/activities/summary?story="+trip.ID, nil), http.StatusOK, &summary)
+	d.decode(d.do(me, "GET", "/v2/tracks/summary?trip="+trip.ID, nil), http.StatusOK, &summary)
 	if summary.Count != 2 || summary.DistanceMeters != 43000 {
 		t.Errorf("summary %+v, want the Story's two activities", summary)
 	}
@@ -69,7 +69,7 @@ func TestTripFilter(t *testing.T) {
 	days := func(query string) ([]string, string) {
 		t.Helper()
 		var resp trackHistogramResponse
-		d.decode(d.do(me, "GET", "/v1/activities/histogram?"+query, nil), http.StatusOK, &resp)
+		d.decode(d.do(me, "GET", "/v2/tracks/histogram?"+query, nil), http.StatusOK, &resp)
 		out := []string{}
 		for _, b := range resp.Buckets {
 			out = append(out, b.Date)
@@ -81,11 +81,11 @@ func TestTripFilter(t *testing.T) {
 		want            []string
 	}{
 		{"days=10", "2026-05-01", []string{"2026-05-01", "2026-05-02", "2026-05-03"}},
-		{"days=10&story=" + trip.ID, "2026-05-01", []string{"2026-05-01", "2026-05-03"}},
-		{"days=10&before=2026-05-03&story=" + trip.ID, "2026-05-01", []string{"2026-05-01"}},
-		{"from=2026-05-01&to=2026-05-31&story=" + trip.ID, "2026-05-01", []string{"2026-05-01", "2026-05-03"}},
-		{"days=10&story=" + empty.ID, "", []string{}},
-		{"days=10&story=" + theirTrip.ID, "", []string{}},
+		{"days=10&trip=" + trip.ID, "2026-05-01", []string{"2026-05-01", "2026-05-03"}},
+		{"days=10&before=2026-05-03&trip=" + trip.ID, "2026-05-01", []string{"2026-05-01"}},
+		{"from=2026-05-01&to=2026-05-31&trip=" + trip.ID, "2026-05-01", []string{"2026-05-01", "2026-05-03"}},
+		{"days=10&trip=" + empty.ID, "", []string{}},
+		{"days=10&trip=" + theirTrip.ID, "", []string{}},
 	} {
 		got, earliest := days(tc.query)
 		if !slices.Equal(got, tc.want) || earliest != tc.earliest {
@@ -101,35 +101,39 @@ func TestTripFilter(t *testing.T) {
 		d.decode(rec, http.StatusOK, nil)
 		return rec.Body.Len()
 	}
-	if tile(here, "story="+trip.ID) == 0 {
+	if tile(here, "trip="+trip.ID) == 0 {
 		t.Errorf("the Story's tile is empty")
 	}
 	if tile(elsewhere, "") == 0 {
 		t.Errorf("the unfiltered tile elsewhere is empty")
 	}
-	for _, query := range []string{"story=" + trip.ID, "story=" + empty.ID} {
+	// The installed apps name it story on a tile (tileQuery).
+	if n := tile(elsewhere, "story="+trip.ID); n != 0 {
+		t.Errorf("tile elsewhere ?story= has %d bytes; nothing there is in the Story", n)
+	}
+	for _, query := range []string{"trip=" + trip.ID, "trip=" + empty.ID} {
 		if n := tile(elsewhere, query); n != 0 {
 			t.Errorf("tile elsewhere ?%s has %d bytes; nothing there is in the Story", query, n)
 		}
 	}
-	// Their Story's track is right here, but it isn't mine to draw.
-	if n := tile(here, "story="+theirTrip.ID); n != 0 {
+	// Their Trip's track is right here, but it isn't mine to draw.
+	if n := tile(here, "trip="+theirTrip.ID); n != 0 {
 		t.Errorf("another account's Story drew %d bytes", n)
 	}
 
-	for _, path := range []string{"/v1/activities", "/v1/activities/summary", "/v1/activities/histogram?days=5&", "/tiles/v1/tracks/12/0/0.mvt"} {
+	for _, path := range []string{"/v2/tracks", "/v2/tracks/summary", "/v2/tracks/histogram?days=5&", "/tiles/v1/tracks/12/0/0.mvt"} {
 		sep := "?"
 		if path[len(path)-1] == '&' {
 			sep = ""
 		}
-		if rec := d.do(me, "GET", path+sep+"story=nope", nil); rec.Code != http.StatusBadRequest {
+		if rec := d.do(me, "GET", path+sep+"trip=nope", nil); rec.Code != http.StatusBadRequest {
 			t.Errorf("%s with a malformed story: status %d, want 400", path, rec.Code)
 		}
 	}
 }
 
-// A change to which tracks a Story holds bumps the account's tile version, since the
-// tracks tiles take a `story` filter; anything else about a Story doesn't.
+// A change to which tracks a Trip holds bumps the account's tile version, since the
+// tracks tiles take a `story` filter; anything else about a Trip doesn't.
 func TestTripMembershipBumpsTileVersion(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
@@ -154,15 +158,15 @@ func TestTripMembershipBumpsTileVersion(t *testing.T) {
 		status int
 		out    *trip
 	}{
-		{"create empty", false, "POST", func() string { return "/v1/stories" }, map[string]any{"name": "Empty"}, http.StatusCreated, &empty},
-		{"create with an activity", true, "POST", func() string { return "/v1/stories" }, map[string]any{"name": "Trip", "activity_ids": []string{a}}, http.StatusCreated, &st},
-		{"rename", false, "PATCH", func() string { return "/v1/stories/" + st.ID }, map[string]any{"name": "Renamed", "description": "New"}, http.StatusOK, nil},
-		{"add a member again", false, "POST", func() string { return "/v1/stories/" + st.ID + "/activities" }, map[string]any{"activity_ids": []string{a}}, http.StatusOK, nil},
-		{"add", true, "POST", func() string { return "/v1/stories/" + st.ID + "/activities" }, map[string]any{"activity_ids": []string{b}}, http.StatusOK, nil},
-		{"remove a non-member", false, "DELETE", func() string { return "/v1/stories/" + empty.ID + "/activities" }, map[string]any{"activity_ids": []string{a}}, http.StatusOK, nil},
-		{"remove", true, "DELETE", func() string { return "/v1/stories/" + st.ID + "/activities" }, map[string]any{"activity_ids": []string{b}}, http.StatusOK, nil},
-		{"delete an empty Story", false, "DELETE", func() string { return "/v1/stories/" + empty.ID }, nil, http.StatusNoContent, nil},
-		{"delete a Story with activities", true, "DELETE", func() string { return "/v1/stories/" + st.ID }, nil, http.StatusNoContent, nil},
+		{"create empty", false, "POST", func() string { return "/v2/trips" }, map[string]any{"name": "Empty"}, http.StatusCreated, &empty},
+		{"create with an activity", true, "POST", func() string { return "/v2/trips" }, map[string]any{"name": "Trip", "track_ids": []string{a}}, http.StatusCreated, &st},
+		{"rename", false, "PATCH", func() string { return "/v2/trips/" + st.ID }, map[string]any{"name": "Renamed", "description": "New"}, http.StatusOK, nil},
+		{"add a member again", false, "POST", func() string { return "/v2/trips/" + st.ID + "/tracks" }, map[string]any{"track_ids": []string{a}}, http.StatusOK, nil},
+		{"add", true, "POST", func() string { return "/v2/trips/" + st.ID + "/tracks" }, map[string]any{"track_ids": []string{b}}, http.StatusOK, nil},
+		{"remove a non-member", false, "DELETE", func() string { return "/v2/trips/" + empty.ID + "/tracks" }, map[string]any{"track_ids": []string{a}}, http.StatusOK, nil},
+		{"remove", true, "DELETE", func() string { return "/v2/trips/" + st.ID + "/tracks" }, map[string]any{"track_ids": []string{b}}, http.StatusOK, nil},
+		{"delete an empty Story", false, "DELETE", func() string { return "/v2/trips/" + empty.ID }, nil, http.StatusNoContent, nil},
+		{"delete a Story with activities", true, "DELETE", func() string { return "/v2/trips/" + st.ID }, nil, http.StatusNoContent, nil},
 	}
 	for _, step := range steps {
 		before := version()

@@ -50,9 +50,9 @@ func TestStatsCard(t *testing.T) {
 	}
 
 	body := func(ids ...string) map[string]any {
-		return map[string]any{"activity_ids": ids, "width": 1920, "height": 1080, "theme": "dark"}
+		return map[string]any{"track_ids": ids, "width": 1920, "height": 1080, "theme": "dark"}
 	}
-	rec := d.do(me, http.MethodPost, "/v1/activities/stats-card", body(older, newer, private))
+	rec := d.do(me, http.MethodPost, "/v2/tracks/stats-card", body(older, newer, private))
 	if rec.Code != http.StatusOK || rec.Header().Get("Content-Type") != "image/png" {
 		t.Fatalf("status %d, type %q: %s", rec.Code, rec.Header().Get("Content-Type"), rec.Body)
 	}
@@ -64,27 +64,27 @@ func TestStatsCard(t *testing.T) {
 		t.Errorf("card %v is shorter than its four lines", img.Bounds().Size())
 	}
 
-	if rec := d.do(me, http.MethodPost, "/v1/activities/stats-card", body(pending)); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, http.MethodPost, "/v2/tracks/stats-card", body(pending)); rec.Code != http.StatusNoContent {
 		t.Errorf("only Pending: status %d, want 204", rec.Code)
 	}
-	if rec := d.do(me, http.MethodPost, "/v1/activities/stats-card", body(older, theirs)); rec.Code != http.StatusNotFound {
+	if rec := d.do(me, http.MethodPost, "/v2/tracks/stats-card", body(older, theirs)); rec.Code != http.StatusNotFound {
 		t.Errorf("another account's: status %d, want 404", rec.Code)
 	}
 	for name, b := range map[string]map[string]any{
 		"no ids":      body(),
 		"bad id":      body("not-an-id"),
-		"zero width":  {"activity_ids": []string{older}, "width": 0, "height": 1080, "theme": "dark"},
-		"too tall":    {"activity_ids": []string{older}, "width": 1080, "height": 5000, "theme": "dark"},
-		"other theme": {"activity_ids": []string{older}, "width": 1080, "height": 1080, "theme": "sepia"},
+		"zero width":  {"track_ids": []string{older}, "width": 0, "height": 1080, "theme": "dark"},
+		"too tall":    {"track_ids": []string{older}, "width": 1080, "height": 5000, "theme": "dark"},
+		"other theme": {"track_ids": []string{older}, "width": 1080, "height": 1080, "theme": "sepia"},
 	} {
-		if rec := d.do(me, http.MethodPost, "/v1/activities/stats-card", b); rec.Code != http.StatusBadRequest {
+		if rec := d.do(me, http.MethodPost, "/v2/tracks/stats-card", b); rec.Code != http.StatusBadRequest {
 			t.Errorf("%s: status %d, want 400", name, rec.Code)
 		}
 	}
 
 	d.srv.statsCardLimiter = newFixedWindowLimiter(1, time.Hour)
-	d.do(me, http.MethodPost, "/v1/activities/stats-card", body(older))
-	if rec := d.do(me, http.MethodPost, "/v1/activities/stats-card", body(older)); rec.Code != http.StatusTooManyRequests {
+	d.do(me, http.MethodPost, "/v2/tracks/stats-card", body(older))
+	if rec := d.do(me, http.MethodPost, "/v2/tracks/stats-card", body(older)); rec.Code != http.StatusTooManyRequests {
 		t.Errorf("past the limit: status %d, want 429", rec.Code)
 	}
 }

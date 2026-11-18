@@ -18,16 +18,16 @@ func TestRequestExportOnceWhilePreparing(t *testing.T) {
 	a := d.newAccount(false)
 
 	var st exportStatus
-	d.decode(d.do(a, "GET", "/v1/account/export", nil), http.StatusOK, &st)
+	d.decode(d.do(a, "GET", "/v2/account/export", nil), http.StatusOK, &st)
 	if st.State != "none" {
 		t.Fatalf("before any request: %q", st.State)
 	}
-	d.decode(d.do(a, "POST", "/v1/account/export", nil), http.StatusAccepted, &st)
+	d.decode(d.do(a, "POST", "/v2/account/export", nil), http.StatusAccepted, &st)
 	if st.State != "preparing" || st.ID == "" {
 		t.Fatalf("after a request: %+v", st)
 	}
 	first := st.ID
-	d.decode(d.do(a, "POST", "/v1/account/export", nil), http.StatusAccepted, &st)
+	d.decode(d.do(a, "POST", "/v2/account/export", nil), http.StatusAccepted, &st)
 	if st.ID != first {
 		t.Error("a second request while preparing made a second export")
 	}
@@ -38,7 +38,7 @@ func TestRequestExportOnceWhilePreparing(t *testing.T) {
 	}
 
 	demo := d.newAccount(true)
-	if rec := d.do(demo, "POST", "/v1/account/export", nil); rec.Code != http.StatusForbidden {
+	if rec := d.do(demo, "POST", "/v2/account/export", nil); rec.Code != http.StatusForbidden {
 		t.Errorf("demo: status %d", rec.Code)
 	}
 }
@@ -50,7 +50,7 @@ func TestDownloadExportPart(t *testing.T) {
 	a, other := d.newAccount(false), d.newAccount(false)
 
 	var st exportStatus
-	d.decode(d.do(a, "POST", "/v1/account/export", nil), http.StatusAccepted, &st)
+	d.decode(d.do(a, "POST", "/v2/account/export", nil), http.StatusAccepted, &st)
 	sizes, err := export.Build(ctx, d.pool, d.srv.store, a.id, st.ID, "en")
 	if err != nil {
 		t.Fatal(err)
@@ -64,7 +64,7 @@ func TestDownloadExportPart(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	d.decode(d.do(a, "GET", "/v1/account/export", nil), http.StatusOK, &st)
+	d.decode(d.do(a, "GET", "/v2/account/export", nil), http.StatusOK, &st)
 	if st.State != "ready" || len(st.Parts) != 1 || st.Parts[0].URL != exportPartURL(st.ID, 1) || st.TotalSize != sizes[0] {
 		t.Fatalf("ready: %+v", st)
 	}

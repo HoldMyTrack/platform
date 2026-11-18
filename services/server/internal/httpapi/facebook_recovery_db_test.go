@@ -66,7 +66,7 @@ func (f facebookRecovery) facebookAccount(verified bool) (a account, email, subj
 func (f facebookRecovery) facebookCallback(query, subject, email, verifyToken string) (location string, as account) {
 	f.t.Helper()
 	f.graph.me = map[string]string{"id": subject, "email": email, "name": "Some One"}
-	req := httptest.NewRequest(http.MethodGet, "/v1/auth/facebook/callback?"+query, nil)
+	req := httptest.NewRequest(http.MethodGet, "/v2/auth/facebook/callback?"+query, nil)
 	req.AddCookie(&http.Cookie{Name: oauthCookieName, Value: "s..UTC.." + verifyToken})
 	rec := serveChecked(f.t, f.srv.ServeHTTP, req)
 	if rec.Code != http.StatusFound {
@@ -103,11 +103,11 @@ func TestFacebookMadeAccountVerifiesOnlyWhenSignedIn(t *testing.T) {
 		t.Fatalf("link opened signed out: %d, want 403", rec.Code)
 	}
 	body := rec.Body.String()
-	if !strings.Contains(body, `href="/v1/auth/facebook/start?verify=`+token+`"`) || !strings.Contains(body, `href="/forgot"`) {
+	if !strings.Contains(body, `href="/v2/auth/facebook/start?verify=`+token+`"`) || !strings.Contains(body, `href="/forgot"`) {
 		t.Errorf("the page offers neither Continue with Facebook back to the link nor a reset:\n%s", body)
 	}
 	var apiErr struct{ Error string }
-	f.decode(f.do(account{}, http.MethodPost, "/v1/auth/verify-email", map[string]any{"token": token}), http.StatusForbidden, &apiErr)
+	f.decode(f.do(account{}, http.MethodPost, "/v2/auth/verify-email", map[string]any{"token": token}), http.StatusForbidden, &apiErr)
 	if apiErr.Error != "verify_needs_facebook" {
 		t.Errorf("verify-email signed out: error %q, want verify_needs_facebook", apiErr.Error)
 	}
@@ -144,11 +144,11 @@ func TestResetDropsAnUnverifiedAccountsFacebookLink(t *testing.T) {
 	f := newFacebookRecovery(t)
 	a, email, subject := f.facebookAccount(false)
 
-	if rec := f.do(account{}, http.MethodPost, "/v1/auth/forgot-password", map[string]any{"email": email}); rec.Code != http.StatusOK {
+	if rec := f.do(account{}, http.MethodPost, "/v2/auth/forgot-password", map[string]any{"email": email}); rec.Code != http.StatusOK {
 		t.Fatalf("forgot-password: %d", rec.Code)
 	}
 	var owner account
-	f.decode(f.do(account{}, http.MethodPost, "/v1/auth/reset-password", map[string]any{
+	f.decode(f.do(account{}, http.MethodPost, "/v2/auth/reset-password", map[string]any{
 		"token": f.mailedToken(email, "/reset"), "password": "the-owners-password",
 	}), http.StatusOK, &struct {
 		SessionToken *string `json:"session_token"`
@@ -157,7 +157,7 @@ func TestResetDropsAnUnverifiedAccountsFacebookLink(t *testing.T) {
 		t.Fatal("the reset kept the Facebook link")
 	}
 	owner.id = a.id
-	f.decode(f.do(owner, http.MethodPost, "/v1/auth/verify-email", map[string]any{"token": f.verificationToken(a)}), http.StatusOK, nil)
+	f.decode(f.do(owner, http.MethodPost, "/v2/auth/verify-email", map[string]any{"token": f.verificationToken(a)}), http.StatusOK, nil)
 
 	if location, _ := f.facebookCallback("state=s&code=x", subject, email, ""); !strings.HasSuffix(location, "/signin?error=facebook_email_in_use") {
 		t.Errorf("the Facebook account after the reset: sent to %q, want refused with facebook_email_in_use", location)
@@ -168,10 +168,10 @@ func TestResetDropsAnUnverifiedAccountsFacebookLink(t *testing.T) {
 func TestResetKeepsAVerifiedAccountsFacebookLink(t *testing.T) {
 	f := newFacebookRecovery(t)
 	a, email, _ := f.facebookAccount(true)
-	if rec := f.do(account{}, http.MethodPost, "/v1/auth/forgot-password", map[string]any{"email": email}); rec.Code != http.StatusOK {
+	if rec := f.do(account{}, http.MethodPost, "/v2/auth/forgot-password", map[string]any{"email": email}); rec.Code != http.StatusOK {
 		t.Fatalf("forgot-password: %d", rec.Code)
 	}
-	if rec := f.do(account{}, http.MethodPost, "/v1/auth/reset-password", map[string]any{
+	if rec := f.do(account{}, http.MethodPost, "/v2/auth/reset-password", map[string]any{
 		"token": f.mailedToken(email, "/reset"), "password": "the-owners-password",
 	}); rec.Code != http.StatusOK {
 		t.Fatalf("reset-password: %d", rec.Code)
@@ -203,7 +203,7 @@ func TestFacebookVerifyRoundTripWithAnotherAccount(t *testing.T) {
 	if rec.Code != http.StatusForbidden || !strings.Contains(rec.Body.String(), "isn&#39;t the one linked") {
 		t.Errorf("the link back from another Facebook account: %d without saying why", rec.Code)
 	}
-	if body := rec.Body.String(); !strings.Contains(body, `href="/v1/auth/facebook/start?verify=`+token+`"`) || strings.Contains(body, `action="/verify"`) {
+	if body := rec.Body.String(); !strings.Contains(body, `href="/v2/auth/facebook/start?verify=`+token+`"`) || strings.Contains(body, `action="/verify"`) {
 		t.Errorf("the link back from another Facebook account offers no Facebook sign-in, or a Confirm button that can't verify it:\n%s", body)
 	}
 
@@ -223,10 +223,10 @@ func TestResetEndsUnredeemedAppSignIns(t *testing.T) {
 	if _, err := f.srv.createHandoff(context.Background(), a.id, testChallenge("the-verifier")); err != nil {
 		t.Fatal(err)
 	}
-	if rec := f.do(account{}, http.MethodPost, "/v1/auth/forgot-password", map[string]any{"email": email}); rec.Code != http.StatusOK {
+	if rec := f.do(account{}, http.MethodPost, "/v2/auth/forgot-password", map[string]any{"email": email}); rec.Code != http.StatusOK {
 		t.Fatalf("forgot-password: %d", rec.Code)
 	}
-	if rec := f.do(account{}, http.MethodPost, "/v1/auth/reset-password", map[string]any{
+	if rec := f.do(account{}, http.MethodPost, "/v2/auth/reset-password", map[string]any{
 		"token": f.mailedToken(email, "/reset"), "password": "the-owners-password",
 	}); rec.Code != http.StatusOK {
 		t.Fatalf("reset-password: %d", rec.Code)

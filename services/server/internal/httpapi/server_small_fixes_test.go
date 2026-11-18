@@ -90,13 +90,13 @@ func TestTrackDeleteRemovesAnOriginalOnlyWithItsLastTrack(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if rec := d.do(me, http.MethodDelete, "/v1/activities/"+first, nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, http.MethodDelete, "/v2/tracks/"+first, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete first: %d", rec.Code)
 	}
 	if !s3.Has(key) {
 		t.Fatal("original removed while another activity still names it")
 	}
-	if rec := d.do(me, http.MethodDelete, "/v1/activities/"+second, nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, http.MethodDelete, "/v2/tracks/"+second, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete second: %d", rec.Code)
 	}
 	if s3.Has(key) {

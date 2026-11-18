@@ -59,7 +59,7 @@ func (g *fakeGraph) serve(t *testing.T) *httptest.Server {
 
 func TestFacebookStartRedirectsToDialog(t *testing.T) {
 	s := testFacebookServer("")
-	rec := serveChecked(t, s.handleFacebookStart, httptest.NewRequest("GET", "/v1/auth/facebook/start?tz=Europe/Berlin", nil))
+	rec := serveChecked(t, s.handleFacebookStart, httptest.NewRequest("GET", "/v2/auth/facebook/start?tz=Europe/Berlin", nil))
 
 	if rec.Code != http.StatusFound {
 		t.Fatalf("status %d", rec.Code)
@@ -105,7 +105,7 @@ func TestFacebookCallbackFailures(t *testing.T) {
 		"no code":       {"?state=s", "s..UTC.", "facebook"},
 		"email missing": {"?state=s&code=x", "s..UTC.", "facebook_no_email"},
 	} {
-		req := httptest.NewRequest("GET", "/v1/auth/facebook/callback"+tc.query, nil)
+		req := httptest.NewRequest("GET", "/v2/auth/facebook/callback"+tc.query, nil)
 		if tc.cookie != "" {
 			req.AddCookie(&http.Cookie{Name: oauthCookieName, Value: tc.cookie})
 		}

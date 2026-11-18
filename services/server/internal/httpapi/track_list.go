@@ -11,7 +11,7 @@ import (
 // listTracksQuery is §4.7's list, with §4.3's "$n IS NULL OR ..." optional-filter
 // treatment. No pagination: the client renders every matching row on the map and computes stats
 // and type/distance facets across all of them at once, so a partial page was never usable. The
-// apps' date range and a Story read it; the web's area list is track_area.go's.
+// apps' date range and a Trip read it; the web's area list is track_area.go's.
 //
 // The four ST_*Min/Max calls are the row's bounding box, so a client can fly the map to an
 // track without a follow-up request per row. They are cheaper than they look: PostGIS
@@ -35,8 +35,8 @@ WHERE user_id = $1
 ORDER BY started_at DESC, id DESC`
 
 // trackRow is one row of the list. The field set is exactly what the Tracks panel
-// renders, no more. MovingSeconds is the time a row shows, the same time Stories and Trends
-// sum, so a Story's total is its rows added up. Like them, it falls back to the elapsed
+// renders, no more. MovingSeconds is the time a row shows, the same time Trips and Trends
+// sum, so a Trip's total is its rows added up. Like them, it falls back to the elapsed
 // DurationSeconds where moving time is unset.
 //
 // Name is a user-entered title, nullable: a row with none has never had one set, and the
@@ -52,7 +52,7 @@ type trackRow struct {
 	// Timezone is the IANA zone it was recorded in (§4.30): a client shows StartedAt, and any
 	// other time of this track's, in it.
 	Timezone        string   `json:"timezone"`
-	TrackType       string   `json:"activity_type"`
+	TrackType       string   `json:"track_type"`
 	Name            *string  `json:"name"`
 	DistanceMeters  *float64 `json:"distance_meters"`
 	DurationSeconds *int32   `json:"duration_seconds"`
@@ -72,13 +72,13 @@ type trackRow struct {
 	Private bool `json:"private"`
 	// RouteEdit and Photos say why the Edit window's Track or Photos tab can't be used for this
 	// track (track_availability.go), omitted when it can.
-	RouteEdit string `json:"track_edit,omitempty"`
+	RouteEdit string `json:"route_edit,omitempty"`
 	Photos    string `json:"photos,omitempty"`
 	// Split is set on a piece of a split track (§4.7.8): which split, and the stretch of the
 	// recording it covers.
 	Split *splitRef `json:"split"`
-	// Stories are the Stories it's in, newest first — the Tracks panel's Story badge.
-	Trips []tripRef `json:"stories"`
+	// Trips are the Trips it's in, newest first — the Tracks panel's Trip badge.
+	Trips []tripRef `json:"trips"`
 }
 
 // splitRef places a piece within its split: From and To are unix-ms point timestamps, null
@@ -89,7 +89,7 @@ type splitRef struct {
 	To    *int64 `json:"to"`
 }
 
-// tripRef names a Story a track is in.
+// tripRef names a Trip a track is in.
 type tripRef struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
@@ -127,12 +127,12 @@ func scanTrackRow(row rowScanner) (trackRow, error) {
 }
 
 type tracksResponse struct {
-	Tracks []trackRow `json:"activities"`
+	Tracks []trackRow `json:"tracks"`
 	// Types is what a client shows for each type the rows use, once per type rather than per row.
 	Types map[string]tracktype.Info `json:"types"`
 }
 
-// handleListTracks serves IMPLEMENTATION.md §4.7's `GET /v1/activities?from=&to=&types=&story=`:
+// handleListTracks serves IMPLEMENTATION.md §4.7's `GET /v2/tracks?from=&to=&types=&trip=`:
 // the user's own history as rows, newest first, unpaginated — see listTracksQuery's doc
 // comment for why.
 func (s *Server) handleListTracks(w http.ResponseWriter, r *http.Request) {

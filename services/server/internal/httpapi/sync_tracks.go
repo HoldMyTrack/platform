@@ -39,23 +39,29 @@ const maxSyncPointsPerTrack = 50000
 // "cap before reading the body fully" posture handleUpload's maxUploadBytes documents.
 const maxSyncBodyBytes = 64 << 20 // 64 MiB
 
-// syncTrackRequest is one track in the batch. parse.JSONActivity is embedded rather than
-// duplicated so the request body's own wire shape and the raw payload persisted to object
-// storage (re-marshaled from the same embedded value, see handleSyncTracks) are guaranteed
-// identical — there is exactly one place that defines what "activity_type" and "points" mean
-// on the wire.
+// syncTrackRequest is one track in the batch. Its raw payload is parse.JSONActivity
+// (payload), which names the type activity_type, as every payload already stored does and the
+// data download hands back; the request names it track_type like the rest of /v2.
 type syncTrackRequest struct {
 	// ExternalID is the source's own stable id for this record (a Health Connect session UUID,
 	// say). (user_id, source, external_id) is what a retried sync is matched on, not a hash of
 	// the bytes below, so the same record is the same track even if its JSON re-serializes
 	// differently.
-	ExternalID string `json:"external_id"`
-	parse.JSONActivity
+	ExternalID  string            `json:"external_id"`
+	TrackType   string            `json:"track_type"`
+	Points      []parse.JSONPoint `json:"points"`
+	Name        string            `json:"name,omitempty"`
+	Description string            `json:"description,omitempty"`
+}
+
+// payload is the raw payload stored for the track.
+func (t syncTrackRequest) payload() parse.JSONActivity {
+	return parse.JSONActivity{TrackType: t.TrackType, Points: t.Points, Name: t.Name, Description: t.Description}
 }
 
 type syncTracksRequest struct {
 	Source string             `json:"source"`
-	Tracks []syncTrackRequest `json:"activities"`
+	Tracks []syncTrackRequest `json:"tracks"`
 }
 
 // syncTrackResult reports what happened to one track in the batch — a batch is never
@@ -70,7 +76,7 @@ type syncTracksResponse struct {
 	Results []syncTrackResult `json:"results"`
 }
 
-// handleSyncTracks serves IMPLEMENTATION.md §4.0's `POST /v1/sync/activities` — Path 2's
+// handleSyncTracks serves IMPLEMENTATION.md §4.0's `POST /v2/sync/tracks` — Path 2's
 // batched normalized points. Like handleUpload (§4.1 step 1), this only validates and
 // enqueues an `ingest` job per track with its raw payload inline (ingest.EnqueueRaw), two
 // queries however large the batch; no parsing or privacy clipping happens inline.
@@ -114,7 +120,7 @@ func (s *Server) handleSyncTracks(w http.ResponseWriter, r *http.Request) {
 	// Every track sent counts, taken or not; a batch that doesn't fit in what's left of
 	// the hour is refused whole and counts nothing.
 	if !s.syncTrackLimiter.allowN(rateKey(authInfoFromContext(r.Context()), rateLimitAddress(r)), len(req.Tracks)) {
-		httpErrorT(w, r, http.StatusTooManyRequests, "error.sync_activity_rate_limit", "max", s.syncTrackLimiter.limit)
+		httpErrorT(w, r, http.StatusTooManyRequests, "error.sync_track_rate_limit", "max", s.syncTrackLimiter.limit)
 		return
 	}
 
@@ -173,7 +179,7 @@ func (s *Server) handleSyncTracks(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, syncTracksResponse{Results: results})
 }
 
-// maxKnownIDs bounds one `POST /v1/sync/known` request: three months of a phone's sessions,
+// maxKnownIDs bounds one `POST /v2/sync/known` request: three months of a phone's sessions,
 // which is what the Sync screen asks about, is a few hundred at most.
 const maxKnownIDs = 5000
 
@@ -188,7 +194,7 @@ type syncKnownResponse struct {
 	Processing []string `json:"processing"`
 }
 
-// handleSyncKnown serves IMPLEMENTATION.md §4.0.3's `POST /v1/sync/known`: which of a phone's
+// handleSyncKnown serves IMPLEMENTATION.md §4.0.3's `POST /v2/sync/known`: which of a phone's
 // candidates the account already has (ingest.KnownExternalIDs). The phone keeps no cursor —
 // its Sync screen lists what's on the device minus what this answers — so a reinstall or a
 // second phone agrees with the server, and a track deleted here is offered again.
@@ -252,20 +258,19 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 	// activity_type (GPS Logger's free-text field), and an over-long value would otherwise fail
 	// on the column's width in the worker instead of being refused here.
 	if utf8.RuneCountInString(act.TrackType) > maxTrackTypeLen {
-		return ingest.RawItem{}, l.T("error.activity_type_too_long", "max", maxTrackTypeLen)
+		return ingest.RawItem{}, l.T("error.track_type_too_long", "max", maxTrackTypeLen)
 	}
 	if utf8.RuneCountInString(act.Name) > maxTrackNameLen {
-		return ingest.RawItem{}, l.T("error.activity_name_too_long", "max", maxTrackNameLen)
+		return ingest.RawItem{}, l.T("error.track_name_too_long", "max", maxTrackNameLen)
 	}
 	if utf8.RuneCountInString(act.Description) > maxTrackDescriptionLen {
-		return ingest.RawItem{}, l.T("error.activity_description_too_long", "max", maxTrackDescriptionLen)
+		return ingest.RawItem{}, l.T("error.track_description_too_long", "max", maxTrackDescriptionLen)
 	}
 
-	// Re-marshal the embedded parse.JSONActivity, not the whole syncTrackRequest — the raw
-	// payload stored for the job is exactly what parse.ParseJSON expects to decode
-	// back (activity_type + points), with no external_id or other request-envelope fields
-	// mixed in.
-	data, err := json.Marshal(act.JSONActivity)
+	// The payload, not the whole syncTrackRequest: the raw payload stored for the job is
+	// exactly what parse.ParseJSON expects to decode back (activity_type + points), with no
+	// external_id or other request-envelope fields mixed in.
+	data, err := json.Marshal(act.payload())
 	if err != nil {
 		s.log.Error("sync activity marshal failed", "external_id", act.ExternalID, "err", err)
 		return ingest.RawItem{}, l.T("error.internal")

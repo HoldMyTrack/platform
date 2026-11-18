@@ -1,5 +1,5 @@
 // Package mail sends the app's email: verification and password-reset links, export-ready
-// notices and Story copies (IMPLEMENTATION.md §4.9). Stdlib net/smtp against the SMTP_*
+// notices and Trip copies (IMPLEMENTATION.md §4.9). Stdlib net/smtp against the SMTP_*
 // config, so any provider that speaks SMTP works, or ZeptoMail's HTTPS API where the host
 // blocks outgoing SMTP.
 package mail

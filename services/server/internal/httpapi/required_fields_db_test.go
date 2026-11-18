@@ -13,8 +13,8 @@ func TestMissingRequiredFieldsAreRefused(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	point := func(fields string) map[string]any {
-		return map[string]any{"source": "recorded", "activities": []any{map[string]any{
-			"external_id": "00000000-0000-4000-8000-000000000001", "activity_type": "walking",
+		return map[string]any{"source": "recorded", "tracks": []any{map[string]any{
+			"external_id": "00000000-0000-4000-8000-000000000001", "track_type": "walking",
 			"points": []json.RawMessage{json.RawMessage(fields)},
 		}}}
 	}
@@ -23,11 +23,11 @@ func TestMissingRequiredFieldsAreRefused(t *testing.T) {
 		body               any
 		want               string
 	}{
-		{"private location without lat", "POST", "/v1/private-locations", map[string]any{"lon": 10.0, "radius_m": 200}, "location_position"},
-		{"private location without lon", "PATCH", "/v1/private-locations/00000000-0000-4000-8000-000000000000", map[string]any{"lat": 50.0, "radius_m": 200}, "location_position"},
-		{"sync point without lat", "POST", "/v1/sync/activities", point(`{"lon": 1, "time": "2026-01-01T12:00:00Z"}`), `needs \"lat\"`},
-		{"sync point without time", "POST", "/v1/sync/activities", point(`{"lat": 1, "lon": 1}`), `needs \"lat\"`},
-		{"overlap span without end", "POST", "/v1/activities/overlaps", map[string]any{"spans": []any{map[string]any{"key": "a", "start": "2026-01-01T12:00:00Z"}}}, `needs \"start\" and \"end\"`},
+		{"private location without lat", "POST", "/v2/private-locations", map[string]any{"lon": 10.0, "radius_m": 200}, "location_position"},
+		{"private location without lon", "PATCH", "/v2/private-locations/00000000-0000-4000-8000-000000000000", map[string]any{"lat": 50.0, "radius_m": 200}, "location_position"},
+		{"sync point without lat", "POST", "/v2/sync/tracks", point(`{"lon": 1, "time": "2026-01-01T12:00:00Z"}`), `needs \"lat\"`},
+		{"sync point without time", "POST", "/v2/sync/tracks", point(`{"lat": 1, "lon": 1}`), `needs \"lat\"`},
+		{"overlap span without end", "POST", "/v2/tracks/overlaps", map[string]any{"spans": []any{map[string]any{"key": "a", "start": "2026-01-01T12:00:00Z"}}}, `needs \"start\" and \"end\"`},
 	} {
 		rec := d.do(me, tc.method, tc.path, tc.body)
 		if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), tc.want) {

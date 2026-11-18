@@ -22,7 +22,7 @@ func TestTrendsFillEmptyPeriods(t *testing.T) {
 	trends := func(query string) []trendPeriod {
 		t.Helper()
 		var resp trackTrendsResponse
-		d.decode(d.do(me, "GET", "/v1/activities/trends?"+query, nil), http.StatusOK, &resp)
+		d.decode(d.do(me, "GET", "/v2/tracks/trends?"+query, nil), http.StatusOK, &resp)
 		return resp.Periods
 	}
 

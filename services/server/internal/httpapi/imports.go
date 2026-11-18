@@ -72,7 +72,7 @@ func sourceLabel(l *i18n.Localizer, source string) string {
 	}
 }
 
-// handleActiveUploads serves `GET /v1/uploads/active`: the imports still being processed, and
+// handleActiveUploads serves `GET /v2/uploads/active`: the imports still being processed, and
 // how many failures the account hasn't seen yet.
 func (s *Server) handleActiveUploads(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

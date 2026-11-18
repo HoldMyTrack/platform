@@ -105,7 +105,7 @@ func (d *dbTest) secondSession(a account) account {
 
 func (d *dbTest) typeCode(as account, code string) (int, string) {
 	d.t.Helper()
-	rec := d.do(as, http.MethodPost, "/v1/auth/verify-code", map[string]string{"code": code})
+	rec := d.do(as, http.MethodPost, "/v2/auth/verify-code", map[string]string{"code": code})
 	var body struct{ Error string }
 	_ = json.Unmarshal(rec.Body.Bytes(), &body)
 	return rec.Code, body.Error
@@ -132,14 +132,14 @@ func TestVerificationCodeKeepsTheSessionThatTypesIt(t *testing.T) {
 	var me struct {
 		EmailVerified bool `json:"email_verified"`
 	}
-	d.decode(d.do(a, http.MethodPost, "/v1/auth/verify-code", map[string]string{"code": code[:3] + " " + code[3:]}), http.StatusOK, &me)
+	d.decode(d.do(a, http.MethodPost, "/v2/auth/verify-code", map[string]string{"code": code[:3] + " " + code[3:]}), http.StatusOK, &me)
 	if !me.EmailVerified {
 		t.Fatal("the answer isn't the verified account")
 	}
-	if rec := d.do(a, http.MethodGet, "/v1/auth/me", nil); rec.Code != http.StatusOK {
+	if rec := d.do(a, http.MethodGet, "/v2/auth/me", nil); rec.Code != http.StatusOK {
 		t.Errorf("the session that typed the code: %d, want still signed in", rec.Code)
 	}
-	if rec := d.do(elsewhere, http.MethodGet, "/v1/auth/me", nil); rec.Code != http.StatusUnauthorized {
+	if rec := d.do(elsewhere, http.MethodGet, "/v2/auth/me", nil); rec.Code != http.StatusUnauthorized {
 		t.Errorf("another session of the account: %d, want 401", rec.Code)
 	}
 	if status, errCode := d.typeCode(a, code); status != http.StatusBadRequest || errCode != "code_expired" {
@@ -199,7 +199,7 @@ func TestVerificationCodeForAnAddressTakenMeanwhile(t *testing.T) {
 	d := newDBTest(t)
 	a, email := d.unverifiedWithCode()
 	target := "taken-" + email
-	d.decode(d.do(a, http.MethodPatch, "/v1/auth/email", map[string]string{"email": target}), http.StatusOK, nil)
+	d.decode(d.do(a, http.MethodPatch, "/v2/auth/email", map[string]string{"email": target}), http.StatusOK, nil)
 	code := d.mailedCode(target)
 	other := d.newAccount(false)
 	if _, err := d.pool.Exec(context.Background(), `UPDATE users SET email = $2 WHERE id = $1`, other.id, target); err != nil {
@@ -266,10 +266,10 @@ func TestAddressChangeToAnAddressPendingElsewhere(t *testing.T) {
 	d := newDBTest(t)
 	a, email := d.unverifiedWithCode()
 	target := "pending-" + email
-	d.decode(d.do(a, http.MethodPatch, "/v1/auth/email", map[string]string{"email": target}), http.StatusOK, nil)
+	d.decode(d.do(a, http.MethodPatch, "/v2/auth/email", map[string]string{"email": target}), http.StatusOK, nil)
 	b, _ := d.unverifiedWithCode()
 	var body struct{ Error string }
-	d.decode(d.do(b, http.MethodPatch, "/v1/auth/email", map[string]string{"email": target}), http.StatusConflict, &body)
+	d.decode(d.do(b, http.MethodPatch, "/v2/auth/email", map[string]string{"email": target}), http.StatusConflict, &body)
 	if body.Error != "email_pending" {
 		t.Errorf("error %q, want email_pending", body.Error)
 	}

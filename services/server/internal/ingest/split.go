@@ -103,7 +103,7 @@ var ErrSplitConflict = errors.New("this activity can't be split there any more")
 // insertSplitPiece is the split half of EnqueueRouteEdit: inside its transaction, with the
 // track already flipped Pending, it narrows the track to the points up to at and inserts
 // a new Pending row for the points from at on, returning the new row's id. The new row copies
-// the track's type, name, description, raw payload and route edit, joins its Stories, and
+// the track's type, name, description, raw payload and route edit, joins its Trips, and
 // takes over the photos placed after at. Its external_id is the original's with a suffix, so
 // re-importing the original still finds the original row and stays a no-op.
 func insertSplitPiece(ctx context.Context, tx pgx.Tx, userID, trackID string, at int64) (string, error) {

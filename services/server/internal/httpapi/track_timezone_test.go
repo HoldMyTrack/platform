@@ -30,7 +30,7 @@ func TestTracksGroupByTheirOwnTimezone(t *testing.T) {
 	list := func(query string) []string {
 		t.Helper()
 		var resp tracksResponse
-		d.decode(d.do(me, "GET", "/v1/activities?"+query, nil), http.StatusOK, &resp)
+		d.decode(d.do(me, "GET", "/v2/tracks?"+query, nil), http.StatusOK, &resp)
 		ids := []string{}
 		for _, a := range resp.Tracks {
 			ids = append(ids, a.ID)
@@ -56,29 +56,29 @@ func TestTracksGroupByTheirOwnTimezone(t *testing.T) {
 	}
 
 	var summary trackSummaryResponse
-	d.decode(d.do(me, "GET", "/v1/activities/summary?from=2026-03-10&to=2026-03-10", nil), http.StatusOK, &summary)
+	d.decode(d.do(me, "GET", "/v2/tracks/summary?from=2026-03-10&to=2026-03-10", nil), http.StatusOK, &summary)
 	if summary.Count != 1 || summary.DistanceMeters != 5000 {
 		t.Errorf("summary of the 10th %+v, want the Tokyo run alone", summary)
 	}
 
 	var hist trackHistogramResponse
-	d.decode(d.do(me, "GET", "/v1/activities/histogram?from=2026-03-01&to=2026-03-31", nil), http.StatusOK, &hist)
+	d.decode(d.do(me, "GET", "/v2/tracks/histogram?from=2026-03-01&to=2026-03-31", nil), http.StatusOK, &hist)
 	if len(hist.Buckets) != 2 || hist.Buckets[0].Date != "2026-03-09" || hist.Buckets[1].Date != "2026-03-10" || hist.Earliest != "2026-03-09" {
 		t.Errorf("histogram %+v, want the 9th and the 10th, earliest the 9th", hist)
 	}
-	d.decode(d.do(me, "GET", "/v1/activities/histogram?days=5&before=2026-03-10", nil), http.StatusOK, &hist)
+	d.decode(d.do(me, "GET", "/v2/tracks/histogram?days=5&before=2026-03-10", nil), http.StatusOK, &hist)
 	if len(hist.Buckets) != 1 || hist.Buckets[0].Date != "2026-03-09" {
 		t.Errorf("days before the 10th %+v, want the 9th alone", hist.Buckets)
 	}
 
 	var stats trackGraphStatsResponse
-	d.decode(d.do(me, "GET", "/v1/activities/graph-stats?year=2026", nil), http.StatusOK, &stats)
+	d.decode(d.do(me, "GET", "/v2/tracks/graph-stats?year=2026", nil), http.StatusOK, &stats)
 	if stats.YearStats.ActiveDays != 2 || stats.YearStats.LongestStreakDays != 2 {
 		t.Errorf("graph stats %+v, want two days in a row", stats.YearStats)
 	}
 
 	var trends trackTrendsResponse
-	d.decode(d.do(me, "GET", "/v1/activities/trends?bucket=week&from=2026-03-01&to=2026-03-31", nil), http.StatusOK, &trends)
+	d.decode(d.do(me, "GET", "/v2/tracks/trends?bucket=week&from=2026-03-01&to=2026-03-31", nil), http.StatusOK, &trends)
 	// Monday the 9th's week holds both; the weeks of February 23 to March 30 are the window's.
 	if len(trends.Periods) != 6 || trends.Periods[2].PeriodStart != "2026-03-09" || trends.Periods[2].Count != 2 {
 		t.Errorf("trends %+v, want both in the week of the 9th", trends.Periods)

@@ -8,7 +8,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// maxOverlapSpans bounds one `POST /v1/activities/overlaps` request: what the Android Sync tab
+// maxOverlapSpans bounds one `POST /v2/tracks/overlaps` request: what the Android Sync tab
 // lists, three months of a phone's sessions plus its recordings, is a few hundred at most.
 const maxOverlapSpans = 5000
 
@@ -25,9 +25,9 @@ type overlapsRequest struct {
 
 type overlapJSON struct {
 	Key       string    `json:"key"`
-	TrackID   string    `json:"activity_id"`
+	TrackID   string    `json:"track_id"`
 	Name      string    `json:"name"`
-	TrackType string    `json:"activity_type"`
+	TrackType string    `json:"track_type"`
 	StartedAt time.Time `json:"started_at"`
 	Timezone  *string   `json:"timezone"`
 }

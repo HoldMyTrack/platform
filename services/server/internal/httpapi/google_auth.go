@@ -28,8 +28,9 @@ const (
 	googleAuthURL  = "https://accounts.google.com/o/oauth2/v2/auth"
 	googleTokenURL = "https://oauth2.googleapis.com/token"
 
-	// googleCookiePath scopes oauth.go's round-trip cookie to this flow alone.
-	googleCookiePath = apiPrefix + "/auth/google"
+	// googleCookiePath scopes oauth.go's round-trip cookie to this flow alone, under /v1, where
+	// the callback URL registered with Google is (config.GoogleRedirectURL).
+	googleCookiePath = v1Prefix + "/auth/google"
 )
 
 // GoogleOAuthConfig is what cmd/holdmytrack hands New — config.Config's three Google* values.
@@ -57,7 +58,7 @@ func newGoogleOAuth(cfg GoogleOAuthConfig) googleOAuth {
 
 func (g googleOAuth) enabled() bool { return g.ClientID != "" }
 
-// handleAuthProviders serves `GET /v1/auth/providers` — which optional sign-in methods this
+// handleAuthProviders serves `GET /v2/auth/providers` — which optional sign-in methods this
 // deployment has configured, so a client decides whether to render the Google, Facebook and
 // Apple buttons from the server's own config rather than a build-time flag that could disagree with it.
 // google_client_id is the web client's ID, which the Android app passes to Credential Manager
@@ -76,7 +77,7 @@ func (s *Server) handleAuthProviders(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// handleGoogleStart serves `GET /v1/auth/google/start?tz=<IANA name>` — a full-page navigation,
+// handleGoogleStart serves `GET /v2/auth/google/start?tz=<IANA name>` — a full-page navigation,
 // not a fetch(). tz is the browser's own timezone, carried through the round trip so a brand
 // new account gets it the same way handleSignup's caller sends it; anything invalid is dropped
 // here and falls back to UTC at account creation.
@@ -141,7 +142,7 @@ func (s *Server) handleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleGoogleToken serves `POST /v1/auth/google/token` `{id_token, tz}` — Sign in with Google
+// handleGoogleToken serves `POST /v2/auth/google/token` `{id_token, tz}` — Sign in with Google
 // for a native client (docs/IMPLEMENTATION.md §4.9). The Android app gets the id_token from
 // Credential Manager's account picker and posts it here; its signature is verified
 // (verifyGoogleIDToken), the account resolved exactly as the web callback does, and the answer

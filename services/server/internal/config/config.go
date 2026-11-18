@@ -135,7 +135,7 @@ type Config struct {
 	// §4): what every account together may spend on object store requests in a UTC day before
 	// the service starts giving things up. Read by `serve` and `work`.
 	R2DailyBudgetUSD float64
-	// MinAndroidBuild is the oldest Android versionCode /v1/ still answers (internal/httpapi's
+	// MinAndroidBuild is the oldest Android versionCode the API still answers (internal/httpapi's
 	// SetMinAndroidBuild, docs/DEPLOY.md §4); 0, the default, answers every build. Only read
 	// by `serve`.
 	MinAndroidBuild int

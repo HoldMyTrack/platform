@@ -13,7 +13,7 @@ import (
 // the panel's own "1,284 km · 186 tracks · 42 h · 9,120 m up" line. Same filter shape as
 // the list above, deliberately — the totals have to describe exactly the set of tracks
 // the list is showing, which only holds if both read the same filter, and the time is moving
-// time, as the list, Stories and Trends total it.
+// time, as the list, Trips and Trends total it.
 //
 // COALESCE to 0 here, unlike the per-row nullability the list preserves: SUM already skips
 // NULL inputs, and a total over zero rows is legitimately zero rather than unknown. The
@@ -37,7 +37,7 @@ type trackSummaryResponse struct {
 	ElevationGainM  float64 `json:"elevation_gain_m"`
 }
 
-// handleTrackSummary serves §4.7's `GET /v1/activities/summary`. No cursor and no rows:
+// handleTrackSummary serves §4.7's `GET /v2/tracks/summary`. No cursor and no rows:
 // the whole point is that a client showing totals doesn't have to page through the history
 // to add them up itself.
 func (s *Server) handleTrackSummary(w http.ResponseWriter, r *http.Request) {
@@ -69,10 +69,10 @@ const histogramWindowMonths = 12
 const maxHistogramDays = 366
 
 // trackHistogramQuery is §4.7's per-bucket aggregate over a calendar window.
-// Deliberately unfiltered beyond the window, the user and the optional Story ($5): this chart
+// Deliberately unfiltered beyond the window, the user and the optional Trip ($5): this chart
 // is the backdrop a selected sub-range is highlighted against, so narrowing it by the same
-// type filter as the list would defeat its purpose. A Story is different — inside one, the
-// picker's whole world is the Story's tracks (§4.23).
+// type filter as the list would defeat its purpose. A Trip is different — inside one, the
+// picker's whole world is the Trip's tracks (§4.23).
 //
 // Days with no track are simply absent from the result rather than returned as zeroes —
 // GROUP BY produces no row for them, and a client that has the window's start and end can
@@ -141,12 +141,12 @@ type trackHistogramResponse struct {
 	Earliest string `json:"earliest,omitempty"`
 }
 
-// handleTrackHistogram serves §4.7's `GET /v1/activities/histogram` in two modes, both
+// handleTrackHistogram serves §4.7's `GET /v2/tracks/histogram` in two modes, both
 // returning the same body. The filter is deliberately not applied (no `types`) in either —
 // this chart is the backdrop a selected sub-range highlights against, and narrowing it the
 // same way as the list would defeat that. `story` is the exception: both modes, and
-// `earliest`, then cover only that Story's tracks, since inside a Story the picker spans
-// the Story alone (§4.23).
+// `earliest`, then cover only that Trip's tracks, since inside a Trip the picker spans
+// the Trip alone (§4.23).
 //
 //   - `?days=N[&before=YYYY-MM-DD]` — track-day pagination: the N most recent distinct
 //     days-with-track, or the N most recent strictly before `before`. This is what the
@@ -205,7 +205,7 @@ func (s *Server) handleTrackHistogram(w http.ResponseWriter, r *http.Request) {
 }
 
 // earliestTrack is the local date the account's first track started on — or the
-// Story's, when trip is set — nil when there is none: the histogram's `earliest`, and how far
+// Trip's, when trip is set — nil when there is none: the histogram's `earliest`, and how far
 // back the Profile page's year grids go. A date, at midnight UTC.
 func (s *Server) earliestTrack(ctx context.Context, userID string, trip *string) (*time.Time, error) {
 	var earliest *time.Time
@@ -219,7 +219,7 @@ func (s *Server) earliestTrack(ctx context.Context, userID string, trip *string)
 }
 
 // dailyTotals is the histogram's calendar-window query for the local dates [first, end): one
-// bucket per local day with track, ascending, over one Story's tracks when trip is
+// bucket per local day with track, ascending, over one Trip's tracks when trip is
 // set — the JSON endpoint's `?from=&to=` mode and the Profile page's year grids both read it.
 func (s *Server) dailyTotals(ctx context.Context, userID string, first, end time.Time, trip *string) ([]histogramBucket, error) {
 	return s.scanHistogramBuckets(ctx, trackHistogramQuery, userID, sqlDate(first), sqlDate(end), trip)
@@ -431,7 +431,7 @@ func graphStatsYear(q url.Values, now time.Time) (int, error) {
 	return y, nil
 }
 
-// handleTrackGraphStats serves §4.8's `GET /v1/activities/graph-stats?year=YYYY`: the four
+// handleTrackGraphStats serves §4.8's `GET /v2/tracks/graph-stats?year=YYYY`: the four
 // stat-card numbers (count, distance, active days, longest streak) for one calendar year and
 // for all time. The grid's cells themselves need no new endpoint — they are exactly
 // handleTrackHistogram's existing `?from=&to=` calendar-window mode, year-scoped
@@ -549,7 +549,7 @@ func trendBucket(q url.Values) (string, error) {
 	return "", errors.New(`invalid "bucket", want "week" or "month"`)
 }
 
-// handleTrackTrends serves `GET /v1/activities/trends?bucket=week|month&from=&to=`.
+// handleTrackTrends serves `GET /v2/tracks/trends?bucket=week|month&from=&to=`.
 // `from`/`to` default to the trailing histogramWindowMonths months, the same default the
 // calendar-window histogram mode already uses — there's no reason a trend line's default
 // window should be a different length than the graph's.

@@ -22,7 +22,7 @@ import (
 // the owner; these endpoints say where it stands and serve its parts. The Settings page
 // (settings_page.go) shares requestExport and latestExport.
 
-// exportStatus is an account's latest export, as GET /v1/account/export answers and the
+// exportStatus is an account's latest export, as GET /v2/account/export answers and the
 // Settings page shows it.
 type exportStatus struct {
 	// State is "none" (never asked, or the last one expired and was removed), "preparing",
@@ -43,7 +43,7 @@ type exportPart struct {
 }
 
 func exportPartURL(exportID string, n int) string {
-	return fmt.Sprintf("/v1/account/exports/%s/parts/%d", exportID, n)
+	return fmt.Sprintf(apiPrefix+"/account/exports/%s/parts/%d", exportID, n)
 }
 
 // latestExport is the account's most recent export request, or State "none".
@@ -151,7 +151,7 @@ func (s *Server) requestExport(ctx context.Context, userID string, isDemo bool, 
 	return s.latestExport(ctx, userID)
 }
 
-// POST /v1/account/export.
+// POST /v2/account/export.
 func (s *Server) handleRequestExport(w http.ResponseWriter, r *http.Request) {
 	info := authInfoFromContext(r.Context())
 	st, err := s.requestExport(r.Context(), info.userID, info.isDemo, requestLang(r))
@@ -162,7 +162,7 @@ func (s *Server) handleRequestExport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusAccepted, st)
 }
 
-// GET /v1/account/export.
+// GET /v2/account/export.
 func (s *Server) handleGetExport(w http.ResponseWriter, r *http.Request) {
 	st, err := s.latestExport(r.Context(), userIDFromContext(r.Context()))
 	if err != nil {
@@ -173,7 +173,7 @@ func (s *Server) handleGetExport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, st)
 }
 
-// GET /v1/account/exports/{id}/parts/{n} — one part, while its export is ready and the
+// GET /v2/account/exports/{id}/parts/{n} — one part, while its export is ready and the
 // caller's. Served with http.ServeContent, so a dropped download resumes with a Range request.
 func (s *Server) handleDownloadExportPart(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

@@ -21,7 +21,7 @@ func TestBodyLimitFollowsTheRouteNotTheContentType(t *testing.T) {
 		}
 		read[r.Method+" "+r.URL.Path] = n
 	}
-	for _, p := range []string{"POST /v1/auth/login", "POST /v1/activities/upload", "POST /signin", "POST /settings/avatar"} {
+	for _, p := range []string{"POST /v2/auth/login", "POST /v2/tracks/upload", "POST /signin", "POST /settings/avatar"} {
 		s.mux.HandleFunc(p, record)
 	}
 
@@ -30,9 +30,9 @@ func TestBodyLimitFollowsTheRouteNotTheContentType(t *testing.T) {
 		path string
 		want int64
 	}{
-		{"/v1/auth/login", -1},
+		{"/v2/auth/login", -1},
 		{"/signin", -1},
-		{"/v1/activities/upload", big},
+		{"/v2/tracks/upload", big},
 		{"/settings/avatar", big},
 	} {
 		req := httptest.NewRequest("POST", tc.path, bytes.NewReader(make([]byte, big)))

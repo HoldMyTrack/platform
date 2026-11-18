@@ -40,7 +40,7 @@ type uploadRow struct {
 	DistanceMeters *float64   `json:"distance_meters,omitempty"`
 	// The resulting track's own id, for a row's "View on map"; absent while the job has no
 	// track (still processing, or failed).
-	TrackID *string `json:"activity_id,omitempty"`
+	TrackID *string `json:"track_id,omitempty"`
 }
 
 type uploadsResponse struct {
@@ -100,7 +100,7 @@ func jobErrorMessage(l *i18n.Localizer, errorCode, lastError *string) string {
 	return ""
 }
 
-// handleListUploads serves §4.0's `GET /v1/uploads?limit=&offset=`.
+// handleListUploads serves §4.0's `GET /v2/uploads?limit=&offset=`.
 func (s *Server) handleListUploads(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	limit := defaultUploadsLimit

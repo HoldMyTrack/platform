@@ -15,7 +15,7 @@ func TestRequestsMarkTheirClient(t *testing.T) {
 	me := d.newAccount(false)
 	get := func(agent string, inApp bool) {
 		t.Helper()
-		req := httptest.NewRequest(http.MethodGet, "/v1/coverage/status", nil)
+		req := httptest.NewRequest(http.MethodGet, "/v2/coverage/status", nil)
 		req.Header.Set("Authorization", bearerPrefix+me.session)
 		req.Header.Set("User-Agent", agent)
 		if inApp {

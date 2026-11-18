@@ -25,9 +25,9 @@ type trackFilter struct {
 	From  *string
 	To    *string
 	Types []string
-	// Story narrows to one Story's tracks (§4.23). No ownership check is needed: the
-	// queries are already scoped to the caller's own tracks, and a Story only ever holds
-	// its owner's, so another account's Story matches nothing — the same as an empty one.
+	// Trip narrows to one Trip's tracks (§4.23). No ownership check is needed: the
+	// queries are already scoped to the caller's own tracks, and a Trip only ever holds
+	// its owner's, so another account's Trip matches nothing — the same as an empty one.
 	Trip *string
 }
 
@@ -95,20 +95,20 @@ func inDateRange(from, to string) string {
 // sqlDate is t's calendar date in its own location, as a ::date parameter takes it.
 func sqlDate(t time.Time) string { return t.Format(dateLayout) }
 
-// parseTripParam reads the optional `story` Story id, nil when absent.
+// parseTripParam reads the optional `trip` Trip id, nil when absent.
 func parseTripParam(q url.Values) (*string, error) {
-	v := q.Get("story")
+	v := q.Get("trip")
 	if v == "" {
 		return nil, nil
 	}
 	if !uuidPattern.MatchString(v) {
-		return nil, errors.New(`invalid "story", want a Story id`)
+		return nil, errors.New(`invalid "trip", want a Trip id`)
 	}
 	return &v, nil
 }
 
-// trackTripsColumn is the Stories a track is in (§4.23), newest first, as a JSON array
-// of {id, name} — one indexed lookup per row (idx_story_activities_activity). A Story only ever
+// trackTripsColumn is the Trips a track is in (§4.23), newest first, as a JSON array
+// of {id, name} — one indexed lookup per row (idx_story_activities_activity). A Trip only ever
 // holds its owner's tracks, so it needs no user filter of its own.
 const trackTripsColumn = `COALESCE((
          SELECT json_agg(json_build_object('id', s.id, 'name', s.name) ORDER BY s.created_at DESC, s.id DESC)
@@ -144,7 +144,7 @@ FROM activities
 WHERE id = $1 AND user_id = $2`
 
 type updateTrackRequest struct {
-	TrackType   string `json:"activity_type"`
+	TrackType   string `json:"track_type"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
@@ -162,7 +162,7 @@ func trackIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return strings.ToLower(id), true
 }
 
-// handleUpdateTrack serves `PATCH /v1/activities/{id}` (docs/SPEC.md FR-5.5) — the "rename a
+// handleUpdateTrack serves `PATCH /v2/tracks/{id}` (docs/SPEC.md FR-5.5) — the "rename a
 // mis-tagged upload" / "describe a non-sport GPS trace" feature. activity_type is free-form
 // (IMPLEMENTATION.md §4.7), not a controlled vocabulary, so a manual rename here is
 // architecturally identical to what ingest itself already writes — nothing to validate
@@ -190,19 +190,19 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 	req.Name = strings.TrimSpace(req.Name)
 	req.Description = strings.TrimSpace(req.Description)
 	if req.TrackType == "" {
-		httpErrorT(w, r, http.StatusBadRequest, "error.activity_type_required")
+		httpErrorT(w, r, http.StatusBadRequest, "error.track_type_required")
 		return
 	}
 	if utf8.RuneCountInString(req.TrackType) > maxTrackTypeLen {
-		httpErrorT(w, r, http.StatusBadRequest, "error.activity_type_too_long", "max", maxTrackTypeLen)
+		httpErrorT(w, r, http.StatusBadRequest, "error.track_type_too_long", "max", maxTrackTypeLen)
 		return
 	}
 	if utf8.RuneCountInString(req.Name) > maxTrackNameLen {
-		httpErrorT(w, r, http.StatusBadRequest, "error.activity_name_too_long", "max", maxTrackNameLen)
+		httpErrorT(w, r, http.StatusBadRequest, "error.track_name_too_long", "max", maxTrackNameLen)
 		return
 	}
 	if utf8.RuneCountInString(req.Description) > maxTrackDescriptionLen {
-		httpErrorT(w, r, http.StatusBadRequest, "error.activity_description_too_long", "max", maxTrackDescriptionLen)
+		httpErrorT(w, r, http.StatusBadRequest, "error.track_description_too_long", "max", maxTrackDescriptionLen)
 		return
 	}
 
@@ -234,7 +234,7 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, row)
 }
 
-// handleDeleteTrack serves `DELETE /v1/activities/{id}` (§4.7.5) — a full purge, not a
+// handleDeleteTrack serves `DELETE /v2/tracks/{id}` (§4.7.5) — a full purge, not a
 // soft delete: the DB cascade already handles activity_tile_masks and their mask data
 // (`ON DELETE CASCADE` back to tracks.id), and Trends is live-aggregated over whatever
 // rows remain, so neither needs any explicit cleanup here. Two things do:
@@ -283,7 +283,7 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The track's photos (§4.27) go with it; the cascade takes their rows, so their images
-	// have to be removed explicitly — after the rows, since a copied Story's photo (§4.23) can
+	// have to be removed explicitly — after the rows, since a copied Trip's photo (§4.23) can
 	// share them and keeps them.
 	photoKeys, err := s.trackPhotoKeys(ctx, trackID)
 	if err != nil {
@@ -346,7 +346,7 @@ type routeMetricPoint struct {
 }
 
 type routeMetricsResponse struct {
-	TrackID string             `json:"activity_id"`
+	TrackID string             `json:"track_id"`
 	Points  []routeMetricPoint `json:"points"`
 	Bands   []paceBand         `json:"bands"`
 }
@@ -384,7 +384,7 @@ func pointSpeeds(lons, lats, ms []float64, edit *ingest.RouteEdit) []float64 {
 	return speed
 }
 
-// handleTrackRouteMetrics serves `GET /v1/activities/{id}/track-metrics` — per-simplified-
+// handleTrackRouteMetrics serves `GET /v2/tracks/{id}/route-metrics` — per-simplified-
 // vertex speed, and the pace bands (paceBands) the web and Android clients draw over whichever
 // single track is selected. Pace only: HoldMyTrack keeps no heart rate (VISION.md §1.1).
 // Scoped to the caller's user_id in the query itself, same as every other per-track lookup

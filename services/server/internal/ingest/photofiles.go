@@ -11,7 +11,7 @@ import (
 )
 
 // RemoveUnreferencedPhotoFiles removes the image and thumbnail at each of keys that no
-// activity_photos row refers to any more (IMPLEMENTATION.md §4.27). A copied Story's photos
+// activity_photos row refers to any more (IMPLEMENTATION.md §4.27). A copied Trip's photos
 // (§4.23) are rows of the recipient's over the original's files, so a photo's files can outlive
 // the row that first stored them: callers delete rows first and pass the keys those rows had.
 //

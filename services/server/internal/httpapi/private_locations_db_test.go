@@ -152,13 +152,13 @@ func TestPrivateLocationReprocessesTracks(t *testing.T) {
 	}
 	move := func(id string, body map[string]any) {
 		t.Helper()
-		d.decode(d.do(me, "PATCH", "/v1/private-locations/"+id, body), http.StatusOK, nil)
+		d.decode(d.do(me, "PATCH", "/v2/private-locations/"+id, body), http.StatusOK, nil)
 	}
 
 	// Add one at walk's start: only walk is queued and marked Pending, and once the job runs its
 	// start is gone up to past the location's edge.
 	var home privateLocation
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": radiusM}), http.StatusCreated, &home)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": radiusM}), http.StatusCreated, &home)
 	if jobs := d.reprivacyJobs(me); len(jobs) != 1 || !slices.Equal(jobs[0].TrackIDs, []string{walk}) {
 		t.Fatalf("after create, jobs %+v, want one for walk only", jobs)
 	}
@@ -194,7 +194,7 @@ func TestPrivateLocationReprocessesTracks(t *testing.T) {
 	whole("moved away, other", other)
 
 	// Delete it: hidden walk has no track to find it by, and still comes back whole.
-	if rec := d.do(me, "DELETE", "/v1/private-locations/"+home.ID, nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, "DELETE", "/v2/private-locations/"+home.ID, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete: %d %s", rec.Code, rec.Body)
 	}
 	d.runReprivacyJob(me)
@@ -209,19 +209,19 @@ func TestListPrivateLocations(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	var none []privateLocation
-	d.decode(d.do(me, "GET", "/v1/private-locations", nil), http.StatusOK, &none)
+	d.decode(d.do(me, "GET", "/v2/private-locations", nil), http.StatusOK, &none)
 	if len(none) != 0 {
 		t.Fatalf("new account has %d, want none", len(none))
 	}
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 200}), http.StatusCreated, nil)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 200}), http.StatusCreated, nil)
 	var got []privateLocation
-	d.decode(d.do(me, "GET", "/v1/private-locations", nil), http.StatusOK, &got)
+	d.decode(d.do(me, "GET", "/v2/private-locations", nil), http.StatusOK, &got)
 	if len(got) != 1 || got[0].Name != "Home" {
 		t.Fatalf("got %+v, want Home", got)
 	}
 }
 
-// An track the reprocess fails on stays Pending, and so off the map with its old geometry,
+// A track the reprocess fails on stays Pending, and so off the map with its old geometry,
 // until a rerun queued after a delay succeeds; the rest of the batch comes back at once
 // (IMPLEMENTATION.md §4.2.5). The waiting rerun doesn't count as rendering.
 func TestPrivateLocationReprocessFailureKeepsTrackHidden(t *testing.T) {
@@ -235,7 +235,7 @@ func TestPrivateLocationReprocessFailureKeepsTrackHidden(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0005, "lat": 50.0, "radius_m": 250}), http.StatusCreated, nil)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0005, "lat": 50.0, "radius_m": 250}), http.StatusCreated, nil)
 	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = 'raw/missing.gpx' WHERE id = $1`, broken); err != nil {
 		t.Fatal(err)
 	}
@@ -276,7 +276,7 @@ func TestPrivateLocationReprocessFailureKeepsTrackHidden(t *testing.T) {
 		t.Fatal(err)
 	}
 	var status coverageStatusResponse
-	d.decode(d.do(me, "GET", "/v1/coverage/status", nil), http.StatusOK, &status)
+	d.decode(d.do(me, "GET", "/v2/coverage/status", nil), http.StatusOK, &status)
 	if status.Rendering {
 		t.Error("coverage status: rendering while only a delayed rerun waits")
 	}
@@ -307,7 +307,7 @@ func TestHiddenTracksCount(t *testing.T) {
 	var resp struct {
 		Count int `json:"count"`
 	}
-	d.decode(d.do(me, "GET", "/v1/private-locations/hidden", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/private-locations/hidden", nil), http.StatusOK, &resp)
 	if resp.Count != 2 {
 		t.Errorf("count %d, want 2", resp.Count)
 	}
@@ -324,8 +324,8 @@ func TestDeletingAnOverlappingLocationFindsEndsPastItsOwnReach(t *testing.T) {
 	north := func(m float64) float64 { return 50.0 + m/111195.0 }
 
 	var big, small privateLocation
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 300}), http.StatusCreated, &big)
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Yard", "lon": 10.0, "lat": north(290), "radius_m": 100}), http.StatusCreated, &small)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 300}), http.StatusCreated, &big)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Yard", "lon": 10.0, "lat": north(290), "radius_m": 100}), http.StatusCreated, &small)
 	// The track as the two clipped it: starting 690 m north, 400 m from the small one's center,
 	// past the 225 m twice its own radius reaches.
 	if _, err := d.pool.Exec(ctx, `
@@ -338,7 +338,7 @@ func TestDeletingAnOverlappingLocationFindsEndsPastItsOwnReach(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if rec := d.do(me, "DELETE", "/v1/private-locations/"+small.ID, nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, "DELETE", "/v2/private-locations/"+small.ID, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete: %d %s", rec.Code, rec.Body)
 	}
 	if jobs := d.reprivacyJobs(me); len(jobs) != 1 || !slices.Contains(jobs[0].TrackIDs, walk) {

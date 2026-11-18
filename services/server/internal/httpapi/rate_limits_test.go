@@ -78,10 +78,10 @@ func TestSyncPastTheHourlyLimitIsRefused(t *testing.T) {
 	d := newDBTest(t)
 	d.srv.syncLimiter = newFixedWindowLimiter(1, time.Hour)
 	me := d.newAccount(false)
-	if rec := d.do(me, "POST", "/v1/sync/activities", map[string]any{"activities": []any{}}); rec.Code == http.StatusTooManyRequests {
+	if rec := d.do(me, "POST", "/v2/sync/tracks", map[string]any{"tracks": []any{}}); rec.Code == http.StatusTooManyRequests {
 		t.Fatal("first sync refused")
 	}
-	rec := d.do(me, "POST", "/v1/sync/activities", map[string]any{"activities": []any{}})
+	rec := d.do(me, "POST", "/v2/sync/tracks", map[string]any{"tracks": []any{}})
 	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), "at most 1") {
 		t.Fatalf("second sync: status %d, body %q; want 429 naming the limit", rec.Code, rec.Body.String())
 	}
@@ -106,19 +106,19 @@ func TestExportOnceAWeek(t *testing.T) {
 	}
 
 	// Never built: a failed request doesn't start the week.
-	d.decode(d.do(a, "POST", "/v1/account/export", nil), http.StatusAccepted, nil)
+	d.decode(d.do(a, "POST", "/v2/account/export", nil), http.StatusAccepted, nil)
 	failPending()
-	d.decode(d.do(a, "POST", "/v1/account/export", nil), http.StatusAccepted, nil)
+	d.decode(d.do(a, "POST", "/v2/account/export", nil), http.StatusAccepted, nil)
 	failPending()
 
 	setLastReady(24 * time.Hour)
-	rec := d.do(a, "POST", "/v1/account/export", nil)
+	rec := d.do(a, "POST", "/v2/account/export", nil)
 	if rec.Code != http.StatusTooManyRequests || !strings.Contains(rec.Body.String(), "once a week") {
 		t.Fatalf("a day after a build: status %d, body %q; want 429", rec.Code, rec.Body.String())
 	}
 
 	setLastReady(8 * 24 * time.Hour)
-	d.decode(d.do(a, "POST", "/v1/account/export", nil), http.StatusAccepted, nil)
+	d.decode(d.do(a, "POST", "/v2/account/export", nil), http.StatusAccepted, nil)
 }
 
 func TestFixedWindowAllowN(t *testing.T) {
@@ -145,12 +145,12 @@ func TestSyncTracksPastTheHourlyLimitAreRefused(t *testing.T) {
 	batch := func(ids ...string) *httptest.ResponseRecorder {
 		var acts []map[string]any
 		for _, id := range ids {
-			acts = append(acts, map[string]any{"external_id": id, "activity_type": "walk", "points": []map[string]any{
+			acts = append(acts, map[string]any{"external_id": id, "track_type": "walk", "points": []map[string]any{
 				{"lat": 50.0, "lon": 10.0, "time": "2026-05-01T10:00:00Z"},
 				{"lat": 50.001, "lon": 10.001, "time": "2026-05-01T10:01:00Z"},
 			}})
 		}
-		return d.do(me, "POST", "/v1/sync/activities", map[string]any{"source": "healthconnect", "activities": acts})
+		return d.do(me, "POST", "/v2/sync/tracks", map[string]any{"source": "healthconnect", "tracks": acts})
 	}
 	if rec := batch("a", "b"); rec.Code != http.StatusOK {
 		t.Fatalf("first batch: %d %s", rec.Code, rec.Body.String())
@@ -175,7 +175,7 @@ func TestSignupsPastTheHourlyLimitAreRefused(t *testing.T) {
 	})
 	signup := func(email string) int {
 		body := strings.NewReader(fmt.Sprintf(`{"email": %q, "password": "a long enough password"}`, email))
-		req := httptest.NewRequest("POST", "/v1/auth/signup", body)
+		req := httptest.NewRequest("POST", "/v2/auth/signup", body)
 		req.Header.Set("Content-Type", "application/json")
 		rec := serveChecked(t, d.srv.ServeHTTP, req)
 		return rec.Code
@@ -224,7 +224,7 @@ func TestParallelSignupsStayWithinTheLimit(t *testing.T) {
 		go func() {
 			defer wg.Done()
 			body := strings.NewReader(fmt.Sprintf(`{"email": "%s%d@holdmytrack.invalid", "password": "a long enough password"}`, prefix, i))
-			req := httptest.NewRequest("POST", "/v1/auth/signup", body)
+			req := httptest.NewRequest("POST", "/v2/auth/signup", body)
 			req.Header.Set("Content-Type", "application/json")
 			d.srv.ServeHTTP(httptest.NewRecorder(), req)
 		}()

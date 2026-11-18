@@ -1,5 +1,5 @@
 {
-  "activities": {
+  "tracks": {
     "2026-01-20 Vietnam.gpx": {
       "name": "Day #1 – along the coast to Mui Ne",
       "type": "walking"
@@ -488,11 +488,11 @@
       "type": "Solowheel"
     }
   },
-  "stories": [
+  "trips": [
     {
       "name": "Brecksville Reservation trip",
       "description": "Weekend family vacation.",
-      "activities": [
+      "tracks": [
         "2026-09-26 Brecksville Reservation trip.gpx",
         "2026-09-26 Brecksville Reservation trip-2.gpx",
         "2026-09-26 Brecksville Reservation trip-3.gpx"
@@ -501,7 +501,7 @@
     {
       "name": "Emerald Necklace Trail",
       "description": "I decided to ride the whole trail from start to finish.",
-      "activities": [
+      "tracks": [
         "2026-07-01 Emerald Necklace Trail.gpx",
         "2026-07-03 Day 2.gpx",
         "2026-07-07 Day 3.gpx"
@@ -511,7 +511,7 @@
       "name": "Greater Cleveland trails",
       "opens_first": true,
       "description": "I want to ride every bike trail in the Greater Cleveland area.",
-      "activities": [
+      "tracks": [
         "2026-07-01 Emerald Necklace Trail.gpx",
         "2026-07-03 Day 2.gpx",
         "2026-07-07 Day 3.gpx",
@@ -530,7 +530,7 @@
     {
       "name": "Niagara Falls trip",
       "description": "Five days of summer at Niagara Falls: a drive there, three days around the Falls, and a drive home.",
-      "activities": [
+      "tracks": [
         "2026-07-13 Niagara Falls trip.gpx",
         "2026-07-14 Niagara Falls trip.gpx",
         "2026-07-14 Niagara Falls trip-2.gpx",
@@ -541,7 +541,7 @@
     },
     {
       "name": "Preston's H.O.P.E. Playground Park",
-      "activities": [
+      "tracks": [
         "2026-10-03 driving.gpx",
         "2026-10-03 Preston s H O P E Playground Park.gpx",
         "2026-10-03 driving-2.gpx"
@@ -550,7 +550,7 @@
     {
       "name": "Italy",
       "description": "Five days in Rome: the city on foot, Vatican City and the sea at Ostia.",
-      "activities": [
+      "tracks": [
         "2026-08-02 Italy.gpx",
         "2026-08-03 Italy.gpx",
         "2026-08-03 Italy-2.gpx",
@@ -564,7 +564,7 @@
     {
       "name": "Estonia",
       "description": "Three days in Tallinn on foot: Kadriorg Park and the seafront to Kalamaja, the Old Town and Toompea, and the coast out to Pirita.",
-      "activities": [
+      "tracks": [
         "2026-05-07 Estonia.gpx",
         "2026-05-08 Estonia.gpx",
         "2026-05-09 Estonia.gpx"
@@ -573,7 +573,7 @@
     {
       "name": "Vietnam",
       "description": "Five days in Vietnam: walks by the sea at Mui Ne, a sleeper bus the length of the country to Hanoi, and two days on foot in Hanoi, along the Red River and up to Hoan Kiem Lake.",
-      "activities": [
+      "tracks": [
         "2026-01-20 Vietnam.gpx",
         "2026-01-21 Vietnam.gpx",
         "2026-01-22 Vietnam.gpx",
@@ -584,7 +584,7 @@
     {
       "name": "Florida road trip",
       "description": "A drive down to Miami Beach from Orlando, four days by the ocean, then across the state to the Gulf at Madeira Beach.",
-      "activities": [
+      "tracks": [
         "2026-05-19 Florida road trip.gpx",
         "2026-05-23 Florida road trip.gpx"
       ]
@@ -592,7 +592,7 @@
     {
       "name": "Grand Canyon rim to rim",
       "description": "A drive from Las Vegas to the South Rim, a day crossing the Grand Canyon on foot from the South Kaibab Trail to the North Kaibab Trail by way of Phantom Ranch, and the long drive home from the North Rim.",
-      "activities": [
+      "tracks": [
         "2026-06-08 Grand Canyon rim to rim.gpx",
         "2026-06-09 Grand Canyon rim to rim.gpx",
         "2026-06-10 Grand Canyon rim to rim.gpx"

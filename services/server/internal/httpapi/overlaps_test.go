@@ -31,7 +31,7 @@ func TestTrackOverlaps(t *testing.T) {
 		return map[string]any{"key": key, "start": at.Add(from), "end": at.Add(to)}
 	}
 	var resp overlapsResponse
-	d.decode(d.do(me, http.MethodPost, "/v1/activities/overlaps", map[string]any{"spans": []map[string]any{
+	d.decode(d.do(me, http.MethodPost, "/v2/tracks/overlaps", map[string]any{"spans": []map[string]any{
 		span("copy", 2*time.Minute, 61*time.Minute),
 		span("inside", 0, 10*time.Minute),
 		span("empty", 0, 0),
@@ -43,7 +43,7 @@ func TestTrackOverlaps(t *testing.T) {
 		t.Errorf("overlap %+v, want copy → %s, Morning walk", o, walk)
 	}
 
-	if code := d.do(me, http.MethodPost, "/v1/activities/overlaps", map[string]any{"spans": []map[string]any{span("", 0, time.Hour)}}).Code; code != http.StatusBadRequest {
+	if code := d.do(me, http.MethodPost, "/v2/tracks/overlaps", map[string]any{"spans": []map[string]any{span("", 0, time.Hour)}}).Code; code != http.StatusBadRequest {
 		t.Errorf("empty key: status %d, want 400", code)
 	}
 }
@@ -55,8 +55,8 @@ func TestOverlappingSyncsStayLive(t *testing.T) {
 	ctx := context.Background()
 	send := func(source, id string, offset time.Duration) string {
 		t0 := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC).Add(offset)
-		body := map[string]any{"source": source, "activities": []map[string]any{{
-			"external_id": id, "activity_type": "walking",
+		body := map[string]any{"source": source, "tracks": []map[string]any{{
+			"external_id": id, "track_type": "walking",
 			"points": []map[string]any{
 				{"lat": 50.0, "lon": 10.0, "time": t0},
 				{"lat": 50.01, "lon": 10.01, "time": t0.Add(30 * time.Minute)},
@@ -64,7 +64,7 @@ func TestOverlappingSyncsStayLive(t *testing.T) {
 			},
 		}}}
 		var resp syncTracksResponse
-		d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", body), http.StatusOK, &resp)
+		d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", body), http.StatusOK, &resp)
 		res, err := ingest.Process(ctx, d.pool, d.srv.store, d.latestIngestJob(me))
 		if err != nil {
 			t.Fatal(err)
@@ -98,15 +98,15 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 	point := func(lat float64, m int) map[string]any {
 		return map[string]any{"lat": lat, "lon": 10.0, "time": t0.Add(time.Duration(m) * time.Minute)}
 	}
-	body := map[string]any{"source": "recorded", "activities": []map[string]any{{
-		"external_id": "rec-1", "activity_type": "walking",
+	body := map[string]any{"source": "recorded", "tracks": []map[string]any{{
+		"external_id": "rec-1", "track_type": "walking",
 		"points": []map[string]any{
 			point(50.0, 0), point(50.0003, 3), point(50.0006, 6),
 			point(50.003, 7), point(50.006, 12), point(50.009, 16), point(50.012, 20),
 		},
 	}}}
 	var synced syncTracksResponse
-	d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", body), http.StatusOK, &synced)
+	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", body), http.StatusOK, &synced)
 	res, err := ingest.Process(ctx, d.pool, d.srv.store, d.latestIngestJob(me))
 	if err != nil {
 		t.Fatal(err)
@@ -121,7 +121,7 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 
 	overlaps := func() []overlapJSON {
 		var resp overlapsResponse
-		d.decode(d.do(me, http.MethodPost, "/v1/activities/overlaps", map[string]any{"spans": []map[string]any{
+		d.decode(d.do(me, http.MethodPost, "/v2/tracks/overlaps", map[string]any{"spans": []map[string]any{
 			{"key": "hc", "start": t0, "end": t0.Add(20 * time.Minute)},
 		}}), http.StatusOK, &resp)
 		return resp.Overlaps
@@ -152,7 +152,7 @@ func TestOverlapsTakesItsLargestRequest(t *testing.T) {
 	if len(body) <= maxJSONBodyBytes {
 		t.Fatalf("request of %d bytes, want one past %d", len(body), maxJSONBodyBytes)
 	}
-	if rec := d.send(me, http.MethodPost, "/v1/activities/overlaps", "application/json", body); rec.Code != http.StatusOK {
+	if rec := d.send(me, http.MethodPost, "/v2/tracks/overlaps", "application/json", body); rec.Code != http.StatusOK {
 		t.Fatalf("the largest overlaps request: %d %s", rec.Code, rec.Body.String())
 	}
 }

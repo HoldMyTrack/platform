@@ -8,7 +8,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/web"
 )
 
-// settingsOption is one choice in a Settings list: the value `PATCH /v1/account/settings`
+// settingsOption is one choice in a Settings list: the value `PATCH /v2/account/settings`
 // takes, and what to show for it.
 type settingsOption struct {
 	Value string `json:"value"`
@@ -23,14 +23,14 @@ type settingsTimezoneGroup struct {
 	Options []settingsOption `json:"options"`
 }
 
-// settingsOptionsResponse is what `GET /v1/account/settings/options` answers with.
+// settingsOptionsResponse is what `GET /v2/account/settings/options` answers with.
 type settingsOptionsResponse struct {
 	Countries []settingsOption        `json:"countries"`
 	Timezones []settingsTimezoneGroup `json:"timezones"`
 	Languages []settingsOption        `json:"languages"`
 }
 
-// handleSettingsOptions serves `GET /v1/account/settings/options` — the Country, Timezone and
+// handleSettingsOptions serves `GET /v2/account/settings/options` — the Country, Timezone and
 // Language lists the Settings page renders (settings_page.go's renderSettings), for a native
 // client that has no page to read them from. The same functions build both, so the app offers
 // exactly what saveSettings accepts: a client-side list (Android's own ISO countries, its own

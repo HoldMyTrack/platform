@@ -50,7 +50,7 @@ func TestRouteEditPastTheTileLimitChangesNothing(t *testing.T) {
 	// more map tiles than one track may touch.
 	middle := time.Date(2026, 5, 11, 10, 0, 0, 0, time.UTC).UnixMilli()
 	edit := map[string]any{"move": map[int64][2]float64{middle: {-170, -50}}}
-	d.decode(d.do(me, http.MethodPost, "/v1/activities/"+res.TrackID+"/track-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)
+	d.decode(d.do(me, http.MethodPost, "/v2/tracks/"+res.TrackID+"/route-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)
 
 	var payload []byte
 	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_track' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
@@ -92,7 +92,7 @@ func TestSplitEditPastTheTileLimitChangesNoPiece(t *testing.T) {
 	// The second piece is days 21, 31 and 41 (June 10); its middle point moved to the far side
 	// of the Earth gives it two segments past the tile limit, while the first piece is fine.
 	edit := map[string]any{"move": map[int64][2]float64{day(31): {-170, -50}}}
-	d.decode(d.do(me, http.MethodPost, "/v1/activities/"+res.TrackID+"/track-edit", map[string]any{"edit": edit, "split_at": day(16)}), http.StatusAccepted, nil)
+	d.decode(d.do(me, http.MethodPost, "/v2/tracks/"+res.TrackID+"/route-edit", map[string]any{"edit": edit, "split_at": day(16)}), http.StatusAccepted, nil)
 
 	pieces := func() string {
 		var out string

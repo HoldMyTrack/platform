@@ -126,7 +126,7 @@ func writePhotos() {
 				File    string `json:"file"`
 				TakenAt string `json:"taken_at"`
 			} `json:"photos"`
-		} `json:"activities"`
+		} `json:"tracks"`
 	}
 	must(json.Unmarshal(read(filepath.Join(demoDir, "manifest.json")), &manifest))
 	photos := manifest.Tracks[westSide].Photos

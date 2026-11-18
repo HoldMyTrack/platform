@@ -44,7 +44,7 @@ func (s *Server) placeFromFields(w http.ResponseWriter, r *http.Request, trackID
 	}
 	takenAt, routeAt, err = s.placePhoto(ctx, trackID, clock, locationFromContext(ctx), at, chosen)
 	if errors.Is(err, errPhotoNoTrack) {
-		httpErrorT(w, r, http.StatusConflict, "error.photo_no_track")
+		httpErrorT(w, r, http.StatusConflict, "error.photo_no_route")
 		return nil, nil, false
 	}
 	if err != nil {
@@ -59,9 +59,9 @@ func (s *Server) placeFromFields(w http.ResponseWriter, r *http.Request, trackID
 	return takenAt, routeAt, true
 }
 
-// placeRequest is `POST /v1/photos/place`'s body: the upload's placement fields, as JSON.
+// placeRequest is `POST /v2/photos/place`'s body: the upload's placement fields, as JSON.
 type placeRequest struct {
-	TrackID    string   `json:"activity_id"`
+	TrackID    string   `json:"track_id"`
 	TakenAt    string   `json:"taken_at"`
 	TakenLocal string   `json:"taken_local"`
 	Lat        *float64 `json:"lat"`
@@ -73,7 +73,7 @@ type placeResponse struct {
 	TakenAt *time.Time `json:"taken_at"`
 }
 
-// handlePlacePhoto serves `POST /v1/photos/place` — where an upload with these fields would be
+// handlePlacePhoto serves `POST /v2/photos/place` — where an upload with these fields would be
 // placed, storing nothing: `{route_at, taken_at}`, or the upload's own refusals (placeFromFields).
 // The Edit window asks it as photos are picked, so it can ask the user about the ones that need a
 // place and upload all of them only on Save, each with the place it settled on.

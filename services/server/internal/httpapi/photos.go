@@ -63,7 +63,7 @@ var (
 )
 
 // photoKey is where a newly uploaded photo's image goes, and the image_key its row records. A
-// copy of the photo in a copied Story (§4.23) keeps the original's key, so the key, not the
+// copy of the photo in a copied Trip (§4.23) keeps the original's key, so the key, not the
 // row's owner and id, names the files from then on.
 func photoKey(userID, photoID string) string { return "photos/" + userID + "/" + photoID }
 
@@ -74,7 +74,7 @@ func photoThumbKey(imageKey string) string { return imageKey + "-thumb" }
 // track with no route left at all.
 type photoJSON struct {
 	ID      string     `json:"id"`
-	TrackID string     `json:"activity_id"`
+	TrackID string     `json:"track_id"`
 	TakenAt *time.Time `json:"taken_at"`
 	RouteAt time.Time  `json:"route_at"`
 	// Timezone is its track's (§4.30), which a client shows TakenAt and RouteAt in.
@@ -144,8 +144,8 @@ func (s *Server) loadPhoto(ctx context.Context, userID, photoID string) (photoJS
 	return photos[0], nil
 }
 
-// handleListPhotos serves `GET /v1/photos?activity={id}` — one track's photos — and
-// `?story={id}`, the photos of every track in a Story (§4.23), for its map.
+// handleListPhotos serves `GET /v2/photos?track={id}` — one track's photos — and
+// `?trip={id}`, the photos of every track in a Trip (§4.23), for its map.
 func (s *Server) handleListPhotos(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())
 	ctx := r.Context()
@@ -153,14 +153,14 @@ func (s *Server) handleListPhotos(w http.ResponseWriter, r *http.Request) {
 	var where, id string
 	var owns func(context.Context, string, string) (bool, error)
 	switch {
-	case q.Get("activity") != "":
-		id, owns = q.Get("activity"), s.ownsTrack
+	case q.Get("track") != "":
+		id, owns = q.Get("track"), s.ownsTrack
 		where = "p.activity_id = $2"
-	case q.Get("story") != "":
-		id, owns = q.Get("story"), s.ownsTrip
+	case q.Get("trip") != "":
+		id, owns = q.Get("trip"), s.ownsTrip
 		where = `p.activity_id IN (SELECT activity_id FROM story_activities WHERE story_id = $2)`
 	default:
-		writeAPIError(w, `missing "activity" or "story"`, http.StatusBadRequest)
+		writeAPIError(w, `missing "track" or "trip"`, http.StatusBadRequest)
 		return
 	}
 	if ok, err := owns(ctx, userID, id); err != nil {
@@ -247,7 +247,7 @@ func readPhotoPart(r *http.Request, name string, maxBytes int64, maxSide int) (p
 	return photoPart{data: data, contentType: contentType, width: cfg.Width, height: cfg.Height}, nil
 }
 
-// handleUploadPhoto serves `POST /v1/photos` — multipart: `activity_id`; `file`, the resized
+// handleUploadPhoto serves `POST /v2/photos` — multipart: `track_id`; `file`, the resized
 // copy, and `thumb`, its thumbnail; and what the browser read from the original's EXIF before
 // resizing, all optional: `taken_at` (RFC 3339, when the file says its time zone or carries a
 // GPS time) or `taken_local` (`2006-01-02T15:04:05`, a camera clock with no zone), and
@@ -263,7 +263,7 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 		s.writeAccountError(w, r, "photo upload", accountFailure(http.StatusRequestEntityTooLarge, "error.photo_too_large"))
 		return
 	}
-	trackID := r.FormValue("activity_id")
+	trackID := r.FormValue("track_id")
 	if ok, err := s.ownsTrack(ctx, userID, trackID); err != nil {
 		s.log.Error("photo upload: activity lookup failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
@@ -384,7 +384,7 @@ func photoCaption(w http.ResponseWriter, r *http.Request, caption string) (*stri
 	return &trimmed, true
 }
 
-// handleGetPhoto serves `GET /v1/photos/{id}` and handleGetPhotoThumb `…/thumb` — the stored
+// handleGetPhoto serves `GET /v2/photos/{id}` and handleGetPhotoThumb `…/thumb` — the stored
 // image, to its owner only. A photo's images never change under its id, so they cache for good.
 func (s *Server) handleGetPhoto(w http.ResponseWriter, r *http.Request) {
 	s.servePhotoImage(w, r, false)
@@ -432,7 +432,7 @@ func (s *Server) servePhotoImage(w http.ResponseWriter, r *http.Request, thumb b
 	}
 }
 
-// handleUpdatePhoto serves `PATCH /v1/photos/{id}`. Each field is optional and only a field
+// handleUpdatePhoto serves `PATCH /v2/photos/{id}`. Each field is optional and only a field
 // present changes: `caption` (empty clears it), and `route_at` — RFC 3339, the photo's new
 // moment on the track (the Edit window's slider), clamped to the track. A photo can't be taken
 // off the track: null is refused.
@@ -499,7 +499,7 @@ func (s *Server) handleUpdatePhoto(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if !hasTrack {
-			httpErrorT(w, r, http.StatusConflict, "error.photo_no_track")
+			httpErrorT(w, r, http.StatusConflict, "error.photo_no_route")
 			return
 		}
 		routeAt, setRouteAt = clampToSpan(*at, start, end), true
@@ -527,8 +527,8 @@ func (s *Server) handleUpdatePhoto(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, p)
 }
 
-// handleDeletePhoto serves `DELETE /v1/photos/{id}`: the row, then both images unless another
-// row still uses them (a copied Story's photo, §4.23), best-effort — an orphaned blob is a
+// handleDeletePhoto serves `DELETE /v2/photos/{id}`: the row, then both images unless another
+// row still uses them (a copied Trip's photo, §4.23), best-effort — an orphaned blob is a
 // cleanup nuisance, never a reason to keep a photo the user removed.
 func (s *Server) handleDeletePhoto(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())

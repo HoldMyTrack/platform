@@ -130,7 +130,7 @@ func EnqueueReprivacy(ctx context.Context, tx pgx.Tx, job ReprivacyJob) error {
 // Pending therefore clears just before the second render; the client refreshes Fog
 // off the coverage status (this job counts as rendering until it returns), not off the badge.
 //
-// An track that fails stays Pending: clearing the flag would put its old geometry, clipped
+// A track that fails stays Pending: clearing the flag would put its old geometry, clipped
 // without the new location, back on the map. A later job reruns it (reprivacyRetryDelays),
 // queued in the transaction that clears the rest, and this job still fails, naming them.
 func ProcessReprivacy(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, jobID int64, job ReprivacyJob) error {
