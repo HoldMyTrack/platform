@@ -16,17 +16,17 @@ import (
 )
 
 // The Profile page (ADR-0012, IMPLEMENTATION.md §4.8, docs/SPEC.md FR-6 and FR-8): the
-// all-time stat cards, one activity grid per year back to the account's first activity, and
+// all-time stat cards, one track grid per year back to the account's first track, and
 // the Trends chart — rendered on the server, no script. The shading toggle and the Trends
 // week/month switch are links (`?shade=`, `?bucket=`), and a cell's or a bar's detail is its
 // native tooltip (`title`).
 //
-// One query covers every grid: the daily totals from the first activity's year to now
+// One query covers every grid: the daily totals from the first track's year to now
 // (dailyTotals, the histogram endpoint's own query). Each year's stats and the all-time cards
 // are derived from those days here, rather than asked for one year at a time — count and
 // distance are sums, active days the number of days, the longest streak the longest run of
 // consecutive ones — so the page costs three queries however many years it shows: that,
-// the earliest activity, and Trends.
+// the earliest track, and Trends.
 
 // profileView is what templates/pages/profile.html reads from PageData.Page.
 type profileView struct {
@@ -39,7 +39,7 @@ type profileView struct {
 	Trends    []trendBar
 	TrendFrom string
 	TrendTo   string
-	// Legend is the grid legend's own words: "Shaded by activity count: less".
+	// Legend is the grid legend's own words: "Shaded by track count: less".
 	Legend string
 	// Exploration is the explored places, opened down to `?place=` (profile_exploration.go).
 	Exploration explorationView
@@ -125,7 +125,7 @@ func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *page
 	currentYear := now.Year()
 
 	firstYear := currentYear
-	earliest, err := s.earliestActivity(ctx, userID, nil)
+	earliest, err := s.earliestTrack(ctx, userID, nil)
 	if err != nil {
 		return profileView{}, err
 	}
@@ -140,7 +140,7 @@ func (s *Server) buildProfile(ctx context.Context, l *i18n.Localizer, acct *page
 	}
 
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
-	periods, err := s.activityTrends(ctx, userID, bucket, today.AddDate(0, -histogramWindowMonths, 0), today.AddDate(0, 0, 1))
+	periods, err := s.trackTrends(ctx, userID, bucket, today.AddDate(0, -histogramWindowMonths, 0), today.AddDate(0, 0, 1))
 	if err != nil {
 		return profileView{}, err
 	}
@@ -194,10 +194,10 @@ func profileHref(shade, bucket, place string) string {
 	return href
 }
 
-// statsOf is activityStats computed from daily totals instead of in SQL: the same four
-// numbers, since a day's bucket is exactly the day activityStats' queries group by.
-func statsOf(days []histogramBucket) activityStatsBlock {
-	var b activityStatsBlock
+// statsOf is trackStats computed from daily totals instead of in SQL: the same four
+// numbers, since a day's bucket is exactly the day trackStats' queries group by.
+func statsOf(days []histogramBucket) trackStatsBlock {
+	var b trackStatsBlock
 	var run int64
 	var prev time.Time
 	for i, d := range days {
@@ -284,7 +284,7 @@ func distanceThresholds(days []histogramBucket) (float64, float64) {
 	return at(1.0 / 3), at(2.0 / 3)
 }
 
-// shadeLevel is 0–3: by count, 1, 2, and 3-or-more activities; by distance, the year's thirds.
+// shadeLevel is 0–3: by count, 1, 2, and 3-or-more tracks; by distance, the year's thirds.
 func shadeLevel(b histogramBucket, shade string, t1, t2 float64) int {
 	if shade == "count" {
 		return int(min(b.Count, 3))
@@ -300,7 +300,7 @@ func shadeLevel(b histogramBucket, shade string, t1, t2 float64) int {
 	return 3
 }
 
-func yearStatsLine(l *i18n.Localizer, st activityStatsBlock, imperial bool) string {
+func yearStatsLine(l *i18n.Localizer, st trackStatsBlock, imperial bool) string {
 	return l.T("profile.year_stats",
 		"activities", l.N("count.activities", st.Count),
 		"distance", web.FormatTotalDistance(l, st.DistanceMeters, imperial),

@@ -29,7 +29,7 @@ func TestAccountFlow(t *testing.T) {
 	const password = "a long enough password"
 
 	var signedUp authResponseWithSession
-	d.decode(d.do(account{}, "POST", "/v1/auth/signup", map[string]any{
+	d.decode(d.do(account{}, "POST", "/v2/auth/signup", map[string]any{
 		"email": email, "password": password, "timezone": "Europe/Berlin",
 	}), http.StatusCreated, &signedUp)
 	if signedUp.EmailVerified || signedUp.Timezone != "Europe/Berlin" || signedUp.SessionToken == "" || signedUp.UnitSystem != "metric" {
@@ -39,16 +39,16 @@ func TestAccountFlow(t *testing.T) {
 	if err := d.pool.QueryRow(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&me.id); err != nil {
 		t.Fatal(err)
 	}
-	d.decode(d.do(me, "GET", "/v1/auth/me", nil), http.StatusOK, nil)
-	d.decode(d.do(me, "POST", "/v1/auth/resend-verification", nil), http.StatusOK, nil)
+	d.decode(d.do(me, "GET", "/v2/auth/me", nil), http.StatusOK, nil)
+	d.decode(d.do(me, "POST", "/v2/auth/resend-verification", nil), http.StatusOK, nil)
 	var verified authResponseWithSession
-	d.decode(d.do(me, "POST", "/v1/auth/verify-email", map[string]any{"token": d.verificationToken(me)}), http.StatusOK, &verified)
+	d.decode(d.do(me, "POST", "/v2/auth/verify-email", map[string]any{"token": d.verificationToken(me)}), http.StatusOK, &verified)
 	if !verified.EmailVerified {
 		t.Fatalf("verify: %+v", verified)
 	}
 
 	var saved authResponse
-	d.decode(d.do(me, "PATCH", "/v1/account/settings", map[string]any{
+	d.decode(d.do(me, "PATCH", "/v2/account/settings", map[string]any{
 		"display_name": " Sam ", "country": "us", "timezone": "America/New_York", "locale": "",
 	}), http.StatusOK, &saved)
 	if saved.DisplayName != "Sam" || saved.Country != "US" || saved.Timezone != "America/New_York" || saved.UnitSystem != "imperial" {
@@ -64,35 +64,35 @@ func TestAccountFlow(t *testing.T) {
 	part, _ := mw.CreateFormFile("file", "me.png")
 	part.Write(img.Bytes())
 	mw.Close()
-	d.decode(d.send(me, "POST", "/v1/account/avatar", mw.FormDataContentType(), body.Bytes()), http.StatusOK, &saved)
+	d.decode(d.send(me, "POST", "/v2/account/avatar", mw.FormDataContentType(), body.Bytes()), http.StatusOK, &saved)
 	if saved.AvatarURL == "" {
 		t.Fatalf("avatar upload: %+v", saved)
 	}
 	// Stored re-encoded (internal/avatar), so the same picture, not the same bytes.
-	rec := d.do(me, "GET", "/v1/account/avatar", nil)
+	rec := d.do(me, "GET", "/v2/account/avatar", nil)
 	if rec.Code != http.StatusOK || rec.Header().Get("Content-Type") != "image/png" {
 		t.Fatalf("avatar read: %d %s", rec.Code, rec.Header().Get("Content-Type"))
 	}
 	if read, err := png.Decode(rec.Body); err != nil || read.Bounds() != image.Rect(0, 0, 8, 8) {
 		t.Fatalf("avatar read back: %v", err)
 	}
-	d.decode(d.do(me, "DELETE", "/v1/account/avatar", nil), http.StatusOK, &saved)
+	d.decode(d.do(me, "DELETE", "/v2/account/avatar", nil), http.StatusOK, &saved)
 	if saved.AvatarURL != "" {
 		t.Fatalf("avatar removal: %+v", saved)
 	}
 
-	if rec := d.do(me, "POST", "/v1/auth/logout", nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, "POST", "/v2/auth/logout", nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("logout: %d", rec.Code)
 	}
-	if rec := d.do(me, "GET", "/v1/auth/me", nil); rec.Code != http.StatusUnauthorized {
+	if rec := d.do(me, "GET", "/v2/auth/me", nil); rec.Code != http.StatusUnauthorized {
 		t.Fatalf("me after logout: %d", rec.Code)
 	}
-	d.decode(d.do(account{}, "POST", "/v1/auth/login", map[string]any{"email": email, "password": password}), http.StatusOK, nil)
+	d.decode(d.do(account{}, "POST", "/v2/auth/login", map[string]any{"email": email, "password": password}), http.StatusOK, nil)
 
-	d.decode(d.do(account{}, "POST", "/v1/auth/forgot-password", map[string]any{"email": email}), http.StatusOK, nil)
+	d.decode(d.do(account{}, "POST", "/v2/auth/forgot-password", map[string]any{"email": email}), http.StatusOK, nil)
 	token := d.mailedToken(email, "/reset")
-	d.decode(d.do(account{}, "POST", "/v1/auth/reset-password", map[string]any{"token": token, "password": "another long password"}), http.StatusOK, nil)
-	if rec := d.do(account{}, "POST", "/v1/auth/login", map[string]any{"email": email, "password": password}); rec.Code != http.StatusUnauthorized {
+	d.decode(d.do(account{}, "POST", "/v2/auth/reset-password", map[string]any{"token": token, "password": "another long password"}), http.StatusOK, nil)
+	if rec := d.do(account{}, "POST", "/v2/auth/login", map[string]any{"email": email, "password": password}); rec.Code != http.StatusUnauthorized {
 		t.Fatalf("old password after reset: %d", rec.Code)
 	}
 }
@@ -102,7 +102,7 @@ func TestAccountFlow(t *testing.T) {
 func TestDemoStart(t *testing.T) {
 	d := newDBTest(t)
 	var demo authResponseWithSession
-	d.decode(d.do(account{}, "POST", "/v1/auth/demo", nil), http.StatusCreated, &demo)
+	d.decode(d.do(account{}, "POST", "/v2/auth/demo", nil), http.StatusCreated, &demo)
 	t.Cleanup(func() {
 		if _, err := d.pool.Exec(context.Background(), `DELETE FROM sessions WHERE token_hash = $1`, tokenHash(demo.SessionToken)); err != nil {
 			t.Errorf("delete demo session: %v", err)

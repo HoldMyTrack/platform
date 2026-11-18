@@ -45,7 +45,7 @@ flowchart LR
     end
     subgraph VPS["One VPS — compose.prod.yml"]
         caddy["Caddy<br/>TLS (Let's Encrypt) · serves /assets/* ·<br/>reverse-proxies everything else"]
-        api["api<br/>Go binary, serve mode<br/>/v1/* API · tracks + fog tiles · pages"]
+        api["api<br/>Go binary, serve mode<br/>/v2/* API, /v1/* for installed apps · tracks + fog tiles · pages"]
         worker["worker<br/>same binary, work mode<br/>ingest · fog rendering"]
         pg[("PostgreSQL 16 + PostGIS<br/>all tables + job queue ·<br/>users.map_version")]
     end
@@ -100,9 +100,9 @@ The API, tracks and fog tiles and every page come from one origin through Caddy.
 
 `buildStyle()` in the web client (`apps/web/src/map/style.ts`) is pure and DOM-free, and is the single definition of the map style. It drives MapLibre GL JS on the web, MapLibre Native on mobile, and a headless export renderer if one is ever built (`IMPLEMENTATION.md` §5.5). **The API serves it as a document** instead of each client reimplementing it, since three hand-kept copies of a 71-layer style would diverge.
 
-`GET /v1/map/style/{flavor}` (`services/server/internal/mapstyle`) answers with that document. The Go side holds no style definition: `apps/web/scripts/build-style.mjs` renders `buildStyle()` to one JSON file per label language and flavor, embedded with `go:embed` and picked by `?lang=`, and `npm run verify:style` fails on drift. Asset URLs carry a placeholder origin filled from `BASEMAP_ORIGIN` per request, so one artifact serves a bundled archive and a CDN alike. The satellite source is filled from `SATELLITE_*` or removed. The endpoint is unauthenticated, since the document carries no per-user data, and answers `If-None-Match` with `304`, so a phone re-fetches ~100 KB only when the document changed. The web builds both documents in-process: a round trip before first paint buys nothing.
+`GET /v2/map/style/{flavor}` (`services/server/internal/mapstyle`) answers with that document. The Go side holds no style definition: `apps/web/scripts/build-style.mjs` renders `buildStyle()` to one JSON file per label language and flavor, embedded with `go:embed` and picked by `?lang=`, and `npm run verify:style` fails on drift. Asset URLs carry a placeholder origin filled from `BASEMAP_ORIGIN` per request, so one artifact serves a bundled archive and a CDN alike. The satellite source is filled from `SATELLITE_*` or removed. The endpoint is unauthenticated, since the document carries no per-user data, and answers `If-None-Match` with `304`, so a phone re-fetches ~100 KB only when the document changed. The web builds both documents in-process: a round trip before first paint buys nothing.
 
-**Every layer drawn over the basemap is a second document** (ADR-0048), `GET /v1/map/layers?flavor=` from `mapLayers.ts`, rendered with the styles: sources and layers in paint order, a view per mode with and without imagery, the zoom tiers and the defaults of values a client binds. It carries the account's tile version in its tile paths, so it needs the session while the style stays shared. Each client inserts the groups and switches views, holding no look of its own.
+**Every layer drawn over the basemap is a second document** (ADR-0048), `GET /v2/map/layers?flavor=` from `mapLayers.ts`, rendered with the styles: sources and layers in paint order, a view per mode with and without imagery, the zoom tiers and the defaults of values a client binds. It carries the account's tile version in its tile paths, so it needs the session while the style stays shared. Each client inserts the groups and switches views, holding no look of its own.
 
 ---
 

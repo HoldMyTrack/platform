@@ -12,7 +12,7 @@ import (
 )
 
 // A failed ingest leaves no original behind (docs/DPIA.md: originals are kept as long as their
-// activity): neither the job row's inline copy nor the object at its raw key, unless an activity
+// track): neither the job row's inline copy nor the object at its raw key, unless a track
 // still names that key.
 func TestFailedIngestDiscardsItsOriginal(t *testing.T) {
 	pool, userID := testPool(t)
@@ -57,7 +57,7 @@ func TestFailedIngestDiscardsItsOriginal(t *testing.T) {
 		t.Errorf("failed ingest's original %s is still stored", key)
 	}
 
-	// The same bytes again while an activity names the key: the object stays.
+	// The same bytes again while a track names the key: the object stays.
 	if _, err := pool.Exec(ctx, `
 		INSERT INTO activities (user_id, source, external_id, activity_type, started_at, timezone, raw_payload_key)
 		VALUES ($1, 'upload', 'other', 'run', NOW(), 'UTC', $2)`, userID, key); err != nil {

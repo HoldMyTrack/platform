@@ -21,7 +21,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/metrics"
 	"github.com/HoldMyTrack/platform/services/server/internal/stats"
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
-	"github.com/HoldMyTrack/platform/services/server/internal/storycopy"
+	"github.com/HoldMyTrack/platform/services/server/internal/tripcopy"
 )
 
 const pollInterval = 500 * time.Millisecond
@@ -532,7 +532,7 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		if err := json.Unmarshal(j.payload, &ej); err != nil {
 			return fmt.Errorf("unmarshal edit_track job: %w", err)
 		}
-		return ingest.ProcessTrackEdit(ctx, pool, store, ej)
+		return ingest.ProcessRouteEdit(ctx, pool, store, ej)
 	case "reprivacy":
 		var rj ingest.ReprivacyJob
 		if err := json.Unmarshal(j.payload, &rj); err != nil {
@@ -540,11 +540,11 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		}
 		return ingest.ProcessReprivacy(ctx, pool, store, j.id, rj)
 	case "story_copy":
-		var sj storycopy.Job
+		var sj tripcopy.Job
 		if err := json.Unmarshal(j.payload, &sj); err != nil {
 			return fmt.Errorf("unmarshal story_copy job: %w", err)
 		}
-		return storycopy.Process(ctx, pool, store, sj)
+		return tripcopy.Process(ctx, pool, store, sj)
 	case "export":
 		return runExport(ctx, pool, store, log, j.id, j.payload)
 	default:

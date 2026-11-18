@@ -5,7 +5,7 @@ import { fold, SearchPicker, type PickerOption } from './SearchPicker.tsx';
 import { t } from '../i18n/index.ts';
 
 interface TrackTypePickerProps {
-  /** The raw `activity_type` value, e.g. "dog_walk" or "Solowheel". */
+  /** The raw `track_type` value, e.g. "dog_walk" or "Solowheel". */
   value: string;
   onChange: (type: string) => void;
   /** Every type already in this account's loaded tracks, with how many use it — the
@@ -29,7 +29,7 @@ function typeOption(type: string, count?: number): PickerOption {
 /**
  * The Edit window's Type field (EditTrackWindow.tsx) — the same picker as Settings' Country and
  * Timezone (search-picker.js there), over this account's existing types (formatted, with how many tracks use each),
- * but open-ended: activity_type is free-form (§4.7), not a controlled vocabulary, so any
+ * but open-ended: track_type is free-form (§4.7), not a controlled vocabulary, so any
  * search text that doesn't exactly match an existing type offers itself as a last "Add …" row
  * and saves exactly as typed. A value that isn't among the loaded types (just added, or
  * carried by a track whose type no other loaded track shares) still appears in the

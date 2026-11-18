@@ -13,18 +13,17 @@ export const API_BASE_URL: string =
   (import.meta.env.VITE_API_BASE_URL as string | undefined) ?? 'http://localhost:8080';
 
 /**
- * The sole place the API's major version lives on this side — mirrors
- * services/server/internal/httpapi/server.go's own `apiPrefix` constant, so a future `/v2`
- * cutover is a matter of introducing a second constant here, not a hunt-and-replace across
- * every call site below. The tiles' own prefix is mapLayers.ts's TILES.
+ * The sole place the API's major version lives on this side: the web speaks `/v2`
+ * (services/server/api/v2/), and `/v1` is left to the installed apps. The tiles' own prefix is
+ * mapLayers.ts's TILES.
  */
-const API_V1 = '/v1';
+const API_V2 = '/v2';
 
 /** A shape the API contract (services/server/api/) names, as `apiSchema.ts` generates it from the
  *  contract (`npm run gen:api-types`). */
 type Schema<N extends keyof components['schemas']> = components['schemas'][N];
 
-/** The JSON a `/v1` operation answers `status` with, as the contract states it — what a response
+/** The JSON a `/v2` operation answers `status` with, as the contract states it — what a response
  *  body is read as, in place of a hand-written copy of its shape. */
 type ResponseJson<P extends keyof paths, M extends 'get' | 'post' | 'patch' | 'delete', S extends number = 200> =
   NonNullable<paths[P][M]> extends { responses: infer R }
@@ -39,7 +38,7 @@ type ResponseJson<P extends keyof paths, M extends 'get' | 'post' | 'patch' | 'd
  *  body can pass a value that may be missing without spelling out its absence. */
 type Sendable<T> = { [K in keyof T]: T[K] | (undefined extends T[K] ? undefined : never) };
 
-/** The JSON body a `/v1` operation takes, as the contract states it. */
+/** The JSON body a `/v2` operation takes, as the contract states it. */
 type RequestJson<P extends keyof paths, M extends 'post' | 'patch' | 'delete'> =
   NonNullable<paths[P][M]> extends { requestBody?: infer R }
     ? NonNullable<R> extends { content: { 'application/json': infer B } }
@@ -77,7 +76,7 @@ async function errorMessageFromResponse(res: Response, fallback: string): Promis
  *  are `''` when unset, not `undefined` — every caller checks
  *  for an empty string, never an absent field. `country` is an ISO 3166-1 alpha-2 code or
  *  `''`; the server derives `unitSystem` from it, metric when it's `''`. `avatarUrl` is already a
- *  full API path (`/v1/account/avatar?v=...`) — callers prefix `API_BASE_URL`. */
+ *  full API path (`/v2/account/avatar?v=...`) — callers prefix `API_BASE_URL`. */
 export interface UserProfile {
   displayName: string;
   country: string;
@@ -136,7 +135,7 @@ function toSessionUser(body: Schema<'Account'>): SessionUser {
  *  not an error: this is the normal "nobody's signed in yet" state on first load, checked
  *  deliberately rather than treated as a failure. */
 export async function getCurrentUser(): Promise<SessionUser | null> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}/auth/me`, { credentials: 'include' });
+  const res = await fetch(`${API_BASE_URL}${API_V2}/auth/me`, { credentials: 'include' });
   if (res.status === 401) return null;
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -152,7 +151,7 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
  *
  * `name` (§4.7: a user-entered title only, never parsed from a source file) is what a row leads
  * with when set; `startedAt` is the fallback for a row that has none. `null` means never set, not
- * "set to empty." What only the Edit window needs is ActivityDetail's, read per track.
+ * "set to empty." What only the Edit window needs is TrackDetail's, read per track.
  */
 export interface Track {
   id: string;
@@ -160,7 +159,7 @@ export interface Track {
   /** The IANA zone it was recorded in (IMPLEMENTATION.md §4.30): every time of this track
    *  is shown in it, not the browser's or the account's. */
   timezone: string;
-  activityType: string;
+  trackType: string;
   name: string | null;
   distanceMeters: number | null;
   /** The time a row shows: moving time, the same Trips and Trends sum, else elapsed. */
@@ -178,16 +177,16 @@ export interface Track {
 }
 
 /** A track as the Edit window needs it: the row, and what the area list leaves out
- *  (`GET /v1/activities/{id}`). */
+ *  (`GET /v2/tracks/{id}`). */
 export interface TrackDetail extends Track {
   /** Free text (`docs/SPEC.md` FR-5.5); `null` means never set. */
   description: string | null;
   /** The track carries a user edit, so "Reset to original track" has something to undo. */
   edited: boolean;
   /** Why Edit route can't open for it (`docs/SPEC.md` FR-5.7), or null when it can. */
-  routeEdit: Schema<'ActivityRow'>['track_edit'] | null;
+  routeEdit: Schema<'TrackRow'>['route_edit'] | null;
   /** Why photos can't be added to it (FR-15.1), or null when they can. */
-  photos: Schema<'ActivityRow'>['photos'] | null;
+  photos: Schema<'TrackRow'>['photos'] | null;
 }
 
 /** GeoJSON bbox ordering, which is also what MapLibre's fitBounds takes as a flat array. */
@@ -218,31 +217,31 @@ function trackQueryString(query: TrackQuery): string {
   if (query.from) params.set('from', query.from);
   if (query.to) params.set('to', query.to);
   if (query.types?.length) params.set('types', query.types.join(','));
-  if (query.trip) params.set('story', query.trip);
+  if (query.trip) params.set('trip', query.trip);
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }
 
 /** A row of either list as the panel shows it; the area list's rows are slim, so this reads only
  *  what both have. */
-function toTrack(a: Schema<'ActivityRow'> | Schema<'AreaActivityRow'>): Track {
+function toTrack(a: Schema<'TrackRow'> | Schema<'AreaTrackRow'>): Track {
   return {
     id: a.id,
     startedAt: a.started_at,
     timezone: a.timezone,
-    activityType: a.activity_type,
+    trackType: a.track_type,
     name: a.name,
     distanceMeters: a.distance_meters,
     movingSeconds: a.moving_seconds,
     bbox: a.bbox ? [...a.bbox] : null,
     pending: a.pending,
     private: a.private,
-    trips: a.stories,
+    trips: a.trips,
   };
 }
 
-function toTrackDetail(a: Schema<'ActivityRow'>): TrackDetail {
-  return { ...toTrack(a), description: a.description, edited: a.edited, routeEdit: a.track_edit ?? null, photos: a.photos ?? null };
+function toTrackDetail(a: Schema<'TrackRow'>): TrackDetail {
+  return { ...toTrack(a), description: a.description, edited: a.edited, routeEdit: a.route_edit ?? null, photos: a.photos ?? null };
 }
 
 /** A list response: the rows, and for an area how many it holds, more than the rows when they
@@ -252,19 +251,19 @@ interface TrackPage {
   total: number | null;
 }
 
-function rememberTypes(types: Schema<'ActivityTypes'>): void {
+function rememberTypes(types: Schema<'TrackTypes'>): void {
   rememberTypeLabels(Object.entries(types).map(([type, info]) => [type, info.label]));
   rememberTypeKinds(Object.entries(types).map(([type, info]) => [type, info.kind]));
 }
 
 /** [notFound] is what a `404` throws, for a caller that tells it from other failures. */
 /**
- * `fetch` for one of the API's paths under /v1, with the session cookie. A 401 means the session
+ * `fetch` for one of the API's paths under /v2, with the session cookie. A 401 means the session
  * ended under the open tab: the page goes to sign-in, and the promise never settles, so no caller
  * shows the error or asks again on its way out.
  */
 async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
-  const res = await fetch(`${API_BASE_URL}${API_V1}${path}`, { ...init, credentials: 'include' });
+  const res = await fetch(`${API_BASE_URL}${API_V2}${path}`, { ...init, credentials: 'include' });
   if (res.status !== 401) return res;
   window.location.replace('/signin');
   return new Promise<Response>(() => {});
@@ -280,7 +279,7 @@ async function getJson<T>(path: string, signal?: AbortSignal, notFound?: () => E
   return (await res.json()) as T;
 }
 
-/** `GET /v1/activities/area` (`SPEC.md` FR-5.11): the web's list, and the set its map draws. */
+/** `GET /v2/tracks/area` (`SPEC.md` FR-5.11): the web's list, and the set its map draws. */
 export async function listArea(query: AreaQuery, signal?: AbortSignal): Promise<TrackPage> {
   const params = new URLSearchParams();
   if (query.bbox) params.set('bbox', query.bbox.join(','));
@@ -288,37 +287,37 @@ export async function listArea(query: AreaQuery, signal?: AbortSignal): Promise<
   if (query.to) params.set('to', query.to);
   if (query.limit !== undefined) params.set('limit', String(query.limit));
   const qs = params.toString();
-  const body = await getJson<ResponseJson<'/activities/area', 'get'>>(`/activities/area${qs ? `?${qs}` : ''}`, signal);
+  const body = await getJson<ResponseJson<'/tracks/area', 'get'>>(`/tracks/area${qs ? `?${qs}` : ''}`, signal);
   rememberTypes(body.types);
-  return { tracks: body.activities.map(toTrack), total: body.total ?? null };
+  return { tracks: body.tracks.map(toTrack), total: body.total ?? null };
 }
 
 /** Thrown by `getTrack` for a track that was deleted. */
 export class TrackNotFoundError extends Error {}
 
-/** `GET /v1/activities/{id}`: one track in full, for the Edit window. */
+/** `GET /v2/tracks/{id}`: one track in full, for the Edit window. */
 export async function getTrack(id: string, signal?: AbortSignal): Promise<TrackDetail> {
-  const path = `/activities/${encodeURIComponent(id)}`;
-  const body = await getJson<ResponseJson<'/activities/{id}', 'get'>>(path, signal, () => new TrackNotFoundError(t('common.request_failed', { status: 404 })));
+  const path = `/tracks/${encodeURIComponent(id)}`;
+  const body = await getJson<ResponseJson<'/tracks/{id}', 'get'>>(path, signal, () => new TrackNotFoundError(t('common.request_failed', { status: 404 })));
   rememberTypes(body.types);
-  const row = body.activities[0];
+  const row = body.tracks[0];
   if (row === undefined) throw new Error(t('common.bad_response'));
   return toTrackDetail(row);
 }
 
 /**
- * §4.7's `GET /v1/activities`. Unpaginated: every track matching the filter comes back in
+ * §4.7's `GET /v2/tracks`. Unpaginated: every track matching the filter comes back in
  * one response, since the Tracks panel needs the full set at once to draw the map, total
  * the stats and compute its type/distance facets.
  */
 export async function listTracks(query: TrackQuery = {}, signal?: AbortSignal): Promise<TrackPage> {
-  const body = await getJson<ResponseJson<'/activities', 'get'>>(`/activities${trackQueryString(query)}`, signal);
+  const body = await getJson<ResponseJson<'/tracks', 'get'>>(`/tracks${trackQueryString(query)}`, signal);
   rememberTypes(body.types);
-  return { tracks: body.activities.map(toTrack), total: null };
+  return { tracks: body.tracks.map(toTrack), total: null };
 }
 
 /**
- * `PATCH /v1/activities/{id}` (`docs/SPEC.md` FR-5.5) — the Edit window's Save, for its Route tab's
+ * `PATCH /v2/tracks/{id}` (`docs/SPEC.md` FR-5.5) — the Edit window's Save, for its Route tab's
  * fields. Full-replace-on-save, not per-field: all three fields commit together.
  * Returns the updated row so the caller can `reload()` the list (EditTrackWindow.tsx's caller does,
  * matching the "just refetch" convention an upload completion already uses) rather than
@@ -327,26 +326,26 @@ export async function listTracks(query: TrackQuery = {}, signal?: AbortSignal): 
  */
 export async function updateTrack(
   id: string,
-  patch: { activityType: string; name: string; description: string },
+  patch: { trackType: string; name: string; description: string },
 ): Promise<TrackDetail> {
-  const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/tracks/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/activities/{id}', 'patch'>({ activity_type: patch.activityType, name: patch.name, description: patch.description }),
+    body: jsonBody<'/tracks/{id}', 'patch'>({ track_type: patch.trackType, name: patch.name, description: patch.description }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  const body = (await res.json()) as ResponseJson<'/activities/{id}', 'patch'>;
+  const body = (await res.json()) as ResponseJson<'/tracks/{id}', 'patch'>;
   return toTrackDetail(body);
 }
 
 /**
- * §4.7.5's `DELETE /v1/activities/{id}` — a full purge (track, Fog coverage,
+ * §4.7.5's `DELETE /v2/tracks/{id}` — a full purge (track, Fog coverage,
  * the raw upload), not a soft delete. `204 No Content` on success: nothing to parse or return.
  */
 export async function deleteTrack(id: string): Promise<void> {
-  const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/tracks/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
   if (!deleteDone(res.status)) {
@@ -382,7 +381,7 @@ interface DayPageQuery {
 }
 
 /**
- * `GET /v1/activities/histogram?days=&before=` — §4.7's track-day pagination mode, over the
+ * `GET /v2/tracks/histogram?days=&before=` — §4.7's track-day pagination mode, over the
  * whole history, never filtered. The web reads one day of it for `earliest`; the apps' date
  * sliders page through it. The endpoint's other mode (`from`/`to`, a calendar window) has no
  * reader here.
@@ -390,13 +389,13 @@ interface DayPageQuery {
 export async function getTrackDayPage(query: DayPageQuery, signal?: AbortSignal): Promise<TrackDayPage> {
   const params = new URLSearchParams({ days: String(query.limit) });
   if (query.before) params.set('before', query.before);
-  const res = await apiFetch(`/activities/histogram?${params.toString()}`, {
+  const res = await apiFetch(`/tracks/histogram?${params.toString()}`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  const body = (await res.json()) as ResponseJson<'/activities/histogram', 'get'>;
+  const body = (await res.json()) as ResponseJson<'/tracks/histogram', 'get'>;
   return {
     bucket: body.bucket,
     from: body.from,
@@ -427,18 +426,18 @@ export interface TrackRouteMetrics {
   bands: PaceBand[];
 }
 
-/** `POST /v1/activities/stats-card`: the export's stats card as a PNG, or null when every track
+/** `POST /v2/tracks/stats-card`: the export's stats card as a PNG, or null when every track
  *  asked for is Pending. */
 export async function getStatsCard(
   request: { trackIds: string[]; width: number; height: number; theme: 'light' | 'dark' },
   signal?: AbortSignal,
 ): Promise<Blob | null> {
-  const res = await apiFetch(`/activities/stats-card`, {
+  const res = await apiFetch(`/tracks/stats-card`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     ...(signal ? { signal } : {}),
     // IMPLEMENTATION.md §4.3.3.
-    body: jsonBody<'/activities/stats-card', 'post'>({ activity_ids: request.trackIds, width: request.width, height: request.height, theme: request.theme }),
+    body: jsonBody<'/tracks/stats-card', 'post'>({ track_ids: request.trackIds, width: request.width, height: request.height, theme: request.theme }),
   });
   if (res.status === 204) return null;
   if (!res.ok) {
@@ -447,7 +446,7 @@ export async function getStatsCard(
   return res.blob();
 }
 
-/** `GET /v1/map/imagery`: whether satellite imagery is offered now, which the server stops while
+/** `GET /v2/map/imagery`: whether satellite imagery is offered now, which the server stops while
  *  the imagery plan nears its monthly limit (docs/SPEC.md FR-4.10). */
 export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
   const res = await apiFetch(`/map/imagery`, {
@@ -459,19 +458,19 @@ export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
   return ((await res.json()) as ResponseJson<'/map/imagery', 'get'>).available;
 }
 
-/** `GET /v1/activities/pending`: which of [ids] are still Pending (IMPLEMENTATION.md §4.2.5). */
+/** `GET /v2/tracks/pending`: which of [ids] are still Pending (IMPLEMENTATION.md §4.2.5). */
 export async function pendingTracks(ids: readonly string[], signal?: AbortSignal): Promise<string[]> {
-  const res = await apiFetch(`/activities/pending?ids=${ids.map(encodeURIComponent).join(',')}`, {
+  const res = await apiFetch(`/tracks/pending?ids=${ids.map(encodeURIComponent).join(',')}`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return ((await res.json()) as ResponseJson<'/activities/pending', 'get'>).pending;
+  return ((await res.json()) as ResponseJson<'/tracks/pending', 'get'>).pending;
 }
 
 /**
- * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one track's own
+ * `GET /v2/tracks/{id}/route-metrics` — per-simplified-vertex speed for one track's own
  * track, matching the exact vertex sequence its display trajectory already renders. Backs
  * MapView.tsx's pace-colored segments, shown only while exactly one track has row-click
  * focus.
@@ -480,15 +479,15 @@ export async function getTrackRouteMetrics(
   trackId: string,
   signal?: AbortSignal,
 ): Promise<TrackRouteMetrics> {
-  const res = await apiFetch(`/activities/${encodeURIComponent(trackId)}/track-metrics`, {
+  const res = await apiFetch(`/tracks/${encodeURIComponent(trackId)}/route-metrics`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  const body = (await res.json()) as ResponseJson<'/activities/{id}/track-metrics', 'get'>;
+  const body = (await res.json()) as ResponseJson<'/tracks/{id}/route-metrics', 'get'>;
   return {
-    trackId: body.activity_id,
+    trackId: body.track_id,
     points: body.points.map((p) => ({ lon: p.lon, lat: p.lat, speedMps: p.speed_mps, timeS: p.time_s })),
     bands: body.bands,
   };
@@ -500,7 +499,7 @@ export async function getTrackRouteMetrics(
  * outside every `remove` range (inclusive), and not in `drop`; a survivor whose timestamp is a
  * key of `move` is drawn at that [lon, lat] instead. Mirrors `ingest.RouteEdit`.
  */
-export type RouteEdit = Schema<'TrackEdit'>;
+export type RouteEdit = Schema<'RouteEdit'>;
 
 /** One recorded point: [lon, lat, unix ms]. */
 export type RoutePoint = [number, number, number];
@@ -512,15 +511,15 @@ interface TrackRoutePoints {
   edit: RouteEdit | null;
 }
 
-/** `GET /v1/activities/{id}/track-points` — what the route editor opens with. */
+/** `GET /v2/tracks/{id}/route-points` — what the route editor opens with. */
 export async function getTrackRoutePoints(trackId: string, signal?: AbortSignal): Promise<TrackRoutePoints> {
-  const res = await apiFetch(`/activities/${encodeURIComponent(trackId)}/track-points`, {
+  const res = await apiFetch(`/tracks/${encodeURIComponent(trackId)}/route-points`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return (await res.json()) as ResponseJson<'/activities/{id}/track-points', 'get'>;
+  return (await res.json()) as ResponseJson<'/tracks/{id}/route-points', 'get'>;
 }
 
 /** A split would leave one part entirely inside a Private location (`split_hides_part`,
@@ -529,7 +528,7 @@ export async function getTrackRoutePoints(trackId: string, signal?: AbortSignal)
 export class SplitHidesPartError extends Error {}
 
 /**
- * `POST /v1/activities/{id}/track-edit` — the editor's Apply. Sends the complete new edit
+ * `POST /v2/tracks/{id}/route-edit` — the editor's Apply. Sends the complete new edit
  * (null resets to the original track), and `splitAt`, a point's unix ms, to also split the
  * track there (§4.7.8); the server marks the track — both pieces, for a split — pending
  * and reprocesses it in the background, so this resolves as soon as that's queued (`202`).
@@ -541,10 +540,10 @@ export async function saveTrackRouteEdit(
   splitAt: number | null = null,
   allowHidden = false,
 ): Promise<void> {
-  const res = await apiFetch(`/activities/${encodeURIComponent(trackId)}/track-edit`, {
+  const res = await apiFetch(`/tracks/${encodeURIComponent(trackId)}/route-edit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/activities/{id}/track-edit', 'post'>(splitAt === null ? { edit } : { edit, split_at: splitAt, ...(allowHidden ? { allow_hidden: true } : {}) }),
+    body: jsonBody<'/tracks/{id}/route-edit', 'post'>(splitAt === null ? { edit } : { edit, split_at: splitAt, ...(allowHidden ? { allow_hidden: true } : {}) }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -640,10 +639,10 @@ export interface Trip {
   from: string | null;
   /** Every member, earliest track first. */
   trackIds: string[];
-  stats: TripTotals & { byType: (TripTotals & { activityType: string })[] };
+  stats: TripTotals & { byType: (TripTotals & { trackType: string })[] };
 }
 
-function toTripTotals(body: Omit<Schema<'Story'>['stats'], 'by_type'>): TripTotals {
+function toTripTotals(body: Omit<Schema<'Trip'>['stats'], 'by_type'>): TripTotals {
   return {
     count: body.count,
     distanceMeters: body.distance_meters,
@@ -652,18 +651,18 @@ function toTripTotals(body: Omit<Schema<'Story'>['stats'], 'by_type'>): TripTota
   };
 }
 
-function toTrip(body: Schema<'Story'>): Trip {
+function toTrip(body: Schema<'Trip'>): Trip {
   return {
     id: body.id,
     name: body.name,
     description: body.description ?? '',
     from: body.from,
-    trackIds: body.activity_ids,
+    trackIds: body.track_ids,
     stats: {
       ...toTripTotals(body.stats),
       byType: body.stats.by_type.map((t) => {
-        rememberTypeLabels([[t.activity_type, t.label]]);
-        return { ...toTripTotals(t), activityType: t.activity_type };
+        rememberTypeLabels([[t.track_type, t.label]]);
+        return { ...toTripTotals(t), trackType: t.track_type };
       }),
     },
   };
@@ -674,45 +673,45 @@ function toTrip(body: Schema<'Story'>): Trip {
  *  one `404` on purpose (`SPEC.md` FR-13.5). */
 export class TripNotFoundError extends Error {}
 
-/** `GET /v1/stories/{id}`. */
+/** `GET /v2/trips/{id}`. */
 export async function getTrip(id: string, signal?: AbortSignal): Promise<Trip> {
-  const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/trips/${encodeURIComponent(id)}`, {
     ...(signal ? { signal } : {}),
   });
   if (res.status === 404) throw new TripNotFoundError(t('trips.not_found'));
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toTrip((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Trip'>);
 }
 
-/** `PATCH /v1/stories/{id}` — name and description, both every time. */
+/** `PATCH /v2/trips/{id}` — name and description, both every time. */
 export async function updateTrip(id: string, input: { name: string; description: string }): Promise<Trip> {
-  const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/trips/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/stories/{id}', 'patch'>({ name: input.name, description: input.description }),
+    body: jsonBody<'/trips/{id}', 'patch'>({ name: input.name, description: input.description }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toTrip((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Trip'>);
 }
 
-/** `GET /v1/stories` — every Trip of the account, newest first. */
+/** `GET /v2/trips` — every Trip of the account, newest first. */
 export async function listTrips(signal?: AbortSignal): Promise<Trip[]> {
-  const res = await apiFetch(`/stories`, {
+  const res = await apiFetch(`/trips`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return ((await res.json()) as ResponseJson<'/stories', 'get'>).stories.map(toTrip);
+  return ((await res.json()) as ResponseJson<'/trips', 'get'>).trips.map(toTrip);
 }
 
-/** `DELETE /v1/stories/{id}` — the Trip only; its tracks stay. */
+/** `DELETE /v2/trips/{id}` — the Trip only; its tracks stay. */
 export async function deleteTrip(id: string): Promise<void> {
-  const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
+  const res = await apiFetch(`/trips/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
   if (!deleteDone(res.status)) {
@@ -720,39 +719,39 @@ export async function deleteTrip(id: string): Promise<void> {
   }
 }
 
-/** `POST /v1/stories/{id}/activities` — puts them in the Trip; any already there stay as they are. */
+/** `POST /v2/trips/{id}/tracks` — puts them in the Trip; any already there stay as they are. */
 export async function addTripTracks(id: string, trackIds: string[]): Promise<Trip> {
-  const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
+  const res = await apiFetch(`/trips/${encodeURIComponent(id)}/tracks`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/stories/{id}/activities', 'post'>({ activity_ids: trackIds }),
+    body: jsonBody<'/trips/{id}/tracks', 'post'>({ track_ids: trackIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toTrip((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Trip'>);
 }
 
-/** `DELETE /v1/stories/{id}/activities` — takes them out of the Trip; the tracks stay. */
+/** `DELETE /v2/trips/{id}/tracks` — takes them out of the Trip; the tracks stay. */
 export async function removeTripTracks(id: string, trackIds: string[]): Promise<Trip> {
-  const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
+  const res = await apiFetch(`/trips/${encodeURIComponent(id)}/tracks`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/stories/{id}/activities', 'delete'>({ activity_ids: trackIds }),
+    body: jsonBody<'/trips/{id}/tracks', 'delete'>({ track_ids: trackIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toTrip((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Trip'>);
 }
 
-/** `POST /v1/stories/{id}/send` — a copy of the Trip to `email` (FR-13.7). Succeeds whether or
+/** `POST /v2/trips/{id}/send` — a copy of the Trip to `email` (FR-13.7). Succeeds whether or
  *  not the address has an account: the server never says. */
 export async function sendTrip(id: string, email: string): Promise<void> {
-  const res = await apiFetch(`/stories/${encodeURIComponent(id)}/send`, {
+  const res = await apiFetch(`/trips/${encodeURIComponent(id)}/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/stories/{id}/send', 'post'>({ email }),
+    body: jsonBody<'/trips/{id}/send', 'post'>({ email }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -779,25 +778,25 @@ export interface TripInbox {
   copying: TripCopying[];
 }
 
-/** `GET /v1/story-sends` — the copies waiting for the account, newest first, and the accepted
+/** `GET /v2/trip-sends` — the copies waiting for the account, newest first, and the accepted
  *  ones still being copied. */
 export async function listTripSends(signal?: AbortSignal): Promise<TripInbox> {
-  const res = await apiFetch(`/story-sends`, {
+  const res = await apiFetch(`/trip-sends`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  const body = (await res.json()) as ResponseJson<'/story-sends', 'get'>;
+  const body = (await res.json()) as ResponseJson<'/trip-sends', 'get'>;
   return {
-    sends: body.sends.map((s) => ({ id: s.id, tripName: s.story_name, from: s.from, trackCount: s.activity_count })),
-    copying: body.copying.map((c) => ({ tripName: c.story_name, from: c.from })),
+    sends: body.sends.map((s) => ({ id: s.id, tripName: s.trip_name, from: s.from, trackCount: s.track_count })),
+    copying: body.copying.map((c) => ({ tripName: c.trip_name, from: c.from })),
   };
 }
 
-/** `POST /v1/story-sends/{id}/accept` (accept) or `DELETE /v1/story-sends/{id}` (decline). */
+/** `POST /v2/trip-sends/{id}/accept` (accept) or `DELETE /v2/trip-sends/{id}` (decline). */
 export async function answerTripSend(id: string, accept: boolean): Promise<void> {
-  const res = await apiFetch(`/story-sends/${encodeURIComponent(id)}${accept ? '/accept' : ''}`, {
+  const res = await apiFetch(`/trip-sends/${encodeURIComponent(id)}${accept ? '/accept' : ''}`, {
     method: accept ? 'POST' : 'DELETE',
   });
   // A copy its sender withdrew is gone: declining it is done, accepting it brings nothing.
@@ -807,21 +806,21 @@ export async function answerTripSend(id: string, accept: boolean): Promise<void>
   }
 }
 
-/** `POST /v1/stories` — a new Trip holding `trackIds` from the start, in one request. */
+/** `POST /v2/trips` — a new Trip holding `trackIds` from the start, in one request. */
 export async function createTrip(input: { name: string; description: string; trackIds: string[] }): Promise<Trip> {
-  const res = await apiFetch(`/stories`, {
+  const res = await apiFetch(`/trips`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/stories', 'post'>({ name: input.name, description: input.description, activity_ids: input.trackIds }),
+    body: jsonBody<'/trips', 'post'>({ name: input.name, description: input.description, track_ids: input.trackIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toTrip((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Trip'>);
 }
 
 /**
- * `GET /v1/coverage/status` — whether the account still has an unfinished job that changes its
+ * `GET /v2/coverage/status` — whether the account still has an unfinished job that changes its
  * Fog (an upload not yet parsed, a route edit, a re-render). Polled after an upload or delete by
  * `useCoverageRefresh.ts`, which refetches Fog once this reports nothing left.
  */
@@ -837,7 +836,7 @@ export async function getCoverageStatus(signal?: AbortSignal): Promise<CoverageS
   return (await res.json()) as ResponseJson<'/coverage/status', 'get'>;
 }
 
-/** `GET /v1/spots` — "Show in this area" (FR-14.4): the places in a box, in the chosen
+/** `GET /v2/spots` — "Show in this area" (FR-14.4): the places in a box, in the chosen
  *  categories. `total` is how many the box holds; more than `spots.length` when the server cut
  *  the answer at its limit. */
 interface SpotsInArea {
@@ -863,7 +862,7 @@ export async function getSpotsInArea(
 /** One place the account has captured with the Android app (FR-14.6). */
 export type SpotCapture = Schema<'SpotCapture'>;
 
-/** `GET /v1/spots/captures` — the account's captured places, newest first; with [since] (a
+/** `GET /v2/spots/captures` — the account's captured places, newest first; with [since] (a
  *  `captured_at` as the server wrote it), only those captured at or after it. */
 export async function getSpotCaptures(signal?: AbortSignal, since?: string): Promise<SpotCapture[]> {
   const query = since ? `?since=${encodeURIComponent(since)}` : '';
@@ -878,7 +877,7 @@ export async function getSpotCaptures(signal?: AbortSignal, since?: string): Pro
 
 /** One photo on a track (FR-15), always with a place on its track (`routeAt`, a moment on
  *  it). `lon`/`lat` are null only for a track with no route left at all. `url` and
- *  `thumbUrl` are API paths (`/v1/photos/…`) — callers prefix `API_BASE_URL`. */
+ *  `thumbUrl` are API paths (`/v2/photos/…`) — callers prefix `API_BASE_URL`. */
 export interface Photo {
   id: string;
   trackId: string;
@@ -898,7 +897,7 @@ export interface Photo {
 function toPhoto(b: Schema<'Photo'>): Photo {
   return {
     id: b.id,
-    trackId: b.activity_id,
+    trackId: b.track_id,
     takenAt: b.taken_at,
     routeAt: b.route_at,
     timezone: b.timezone,
@@ -912,11 +911,10 @@ function toPhoto(b: Schema<'Photo'>): Photo {
   };
 }
 
-/** `GET /v1/photos` — one track's photos, or every photo in a Trip; placed ones in route
+/** `GET /v2/photos` — one track's photos, or every photo in a Trip; placed ones in route
  *  order, then unplaced ones. */
 export async function listPhotos(of: { track: string } | { trip: string }, signal?: AbortSignal): Promise<Photo[]> {
-  // The API still names its parameters activity and story.
-  const params = new URLSearchParams('track' in of ? { activity: of.track } : { story: of.trip });
+  const params = new URLSearchParams('track' in of ? { track: of.track } : { trip: of.trip });
   const res = await apiFetch(`/photos?${params}`, {
     ...(signal ? { signal } : {}),
   });
@@ -930,7 +928,7 @@ export async function listPhotos(of: { track: string } | { trip: string }, signa
  *  nothing was stored, and it goes again with the user's `routeAt`. */
 export class PhotoNeedsPlaceError extends Error {}
 
-/** What a photo's EXIF said, as the placement fields `POST /v1/photos` and its check take. */
+/** What a photo's EXIF said, as the placement fields `POST /v2/photos` and its check take. */
 interface PhotoExifFields {
   takenAt?: string;
   takenLocal?: string;
@@ -938,13 +936,13 @@ interface PhotoExifFields {
   lon?: number;
 }
 
-/** `POST /v1/photos/place` — where an upload of a photo with this EXIF would be placed (`routeAt`,
+/** `POST /v2/photos/place` — where an upload of a photo with this EXIF would be placed (`routeAt`,
  *  RFC 3339), storing nothing; `PhotoNeedsPlaceError` when the server can't tell. */
 export async function checkPhotoPlace(trackId: string, exif: PhotoExifFields): Promise<{ routeAt: string }> {
   const res = await apiFetch(`/photos/place`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/photos/place', 'post'>({ activity_id: trackId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
+    body: jsonBody<'/photos/place', 'post'>({ track_id: trackId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -955,7 +953,7 @@ export async function checkPhotoPlace(trackId: string, exif: PhotoExifFields): P
   return { routeAt: ((await res.json()) as ResponseJson<'/photos/place', 'post'>).route_at };
 }
 
-/** `POST /v1/photos` — a photo already resized by `photoPrep.ts`, with what its EXIF said, where
+/** `POST /v2/photos` — a photo already resized by `photoPrep.ts`, with what its EXIF said, where
  *  on the track it goes (`routeAt`, RFC 3339 — the placement check's answer or the user's), and
  *  its caption. */
 export async function uploadPhoto(
@@ -965,7 +963,7 @@ export async function uploadPhoto(
   caption?: string,
 ): Promise<Photo> {
   const form = new FormData();
-  form.set('activity_id', trackId);
+  form.set('track_id', trackId);
   form.set('file', photo.file, 'photo');
   form.set('thumb', photo.thumb, 'thumb');
   const { takenAt, takenLocal, lat, lon } = photo.exif;
@@ -987,7 +985,7 @@ export async function uploadPhoto(
   return toPhoto((await res.json()) as Schema<'Photo'>);
 }
 
-/** `PATCH /v1/photos/{id}` — a field present changes. `routeAt` (RFC 3339) is the photo's new
+/** `PATCH /v2/photos/{id}` — a field present changes. `routeAt` (RFC 3339) is the photo's new
  *  moment on its track; the server clamps it to the track. */
 export async function updatePhoto(id: string, change: { caption?: string | undefined; routeAt?: string | undefined }): Promise<Photo> {
   const res = await apiFetch(`/photos/${encodeURIComponent(id)}`, {
@@ -1001,7 +999,7 @@ export async function updatePhoto(id: string, change: { caption?: string | undef
   return toPhoto((await res.json()) as Schema<'Photo'>);
 }
 
-/** `DELETE /v1/photos/{id}`. */
+/** `DELETE /v2/photos/{id}`. */
 export async function deletePhoto(id: string): Promise<void> {
   const res = await apiFetch(`/photos/${encodeURIComponent(id)}`, { method: 'DELETE' });
   if (!deleteDone(res.status)) {

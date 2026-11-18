@@ -11,7 +11,7 @@ export interface TripInboxState extends TripInbox {
 }
 
 /**
- * Reader for `GET /v1/story-sends`, the Trips tab's inbox (`SPEC.md` FR-13.7): the copies of
+ * Reader for `GET /v2/trip-sends`, the Trips tab's inbox (`SPEC.md` FR-13.7): the copies of
  * Trips others sent, and the accepted ones still being copied. Read once on mount, for the
  * tab's count of waiting copies, then each time the tab opens (`enabled`), after each answer,
  * and every few seconds while a copy is arriving, whichever tab is open: the first-run panel

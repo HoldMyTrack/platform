@@ -48,7 +48,7 @@ func TestCheckSplit(t *testing.T) {
 		}
 	}
 	// The edit counts: with points 0–2 chopped away, point 4 leaves one side only 3 and 4.
-	chop := &TrackEdit{Keep: &[2]int64{at[3], at[9]}}
+	chop := &RouteEdit{Keep: &[2]int64{at[3], at[9]}}
 	if err := CheckSplit(points, nil, chop, at[4]); err != nil {
 		t.Errorf("split at 4 after a chop: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestCheckSplitInsidePrivateLocation(t *testing.T) {
 	stray := pt(points[0].Lat, points[0].Lon+0.001, points[9].Time.Add(time.Second))
 	points = append(points, stray)
 	zones := []Zone{{Lat: points[8].Lat, Lon: points[8].Lon, RadiusM: 30}} // points 6–9 inside
-	dropStray := &TrackEdit{Drop: []int64{stray.Time.UnixMilli()}}
+	dropStray := &RouteEdit{Drop: []int64{stray.Time.UnixMilli()}}
 	if err := CheckSplit(points, zones, dropStray, at[7]); err != ErrSplitHidden {
 		t.Errorf("split inside the location: %v, want ErrSplitHidden", err)
 	}

@@ -26,7 +26,7 @@ func northGPX(lon float64) []byte {
 	return []byte(b.String())
 }
 
-// ingestNorth uploads northGPX(lon) as name and ingests it, returning the activity's id.
+// ingestNorth uploads northGPX(lon) as name and ingests it, returning the track's id.
 func (d *dbTest) ingestNorth(as account, name string, lon float64) string {
 	d.t.Helper()
 	if resp := d.uploadFile(as, name, northGPX(lon)); resp.Status != "enqueued" {
@@ -36,7 +36,7 @@ func (d *dbTest) ingestNorth(as account, name string, lon float64) string {
 	if err != nil || !res.Persisted {
 		d.t.Fatalf("ingest %s: %+v, %v", name, res, err)
 	}
-	return res.ActivityID
+	return res.TrackID
 }
 
 // reprivacyJobs returns the account's pending reprivacy jobs, oldest first.
@@ -64,7 +64,7 @@ func (d *dbTest) reprivacyJobs(as account) []ingest.ReprivacyJob {
 }
 
 // runReprivacyJob runs the account's one pending reprivacy job as the worker would, returning
-// the activities it reprocessed.
+// the tracks it reprocessed.
 func (d *dbTest) runReprivacyJob(as account) []string {
 	d.t.Helper()
 	ctx := context.Background()
@@ -84,21 +84,21 @@ func (d *dbTest) runReprivacyJob(as account) []string {
 	if _, err := d.pool.Exec(ctx, `UPDATE jobs SET state = 'done' WHERE id = $1`, id); err != nil {
 		d.t.Fatal(err)
 	}
-	return j.ActivityIDs
+	return j.TrackIDs
 }
 
-func (d *dbTest) activity(as account, id string) activityRow {
+func (d *dbTest) track(as account, id string) trackRow {
 	d.t.Helper()
-	for _, a := range d.listActivities(as) {
+	for _, a := range d.listTracks(as) {
 		if a.ID == id {
 			return a
 		}
 	}
 	d.t.Fatalf("activity %s not listed", id)
-	return activityRow{}
+	return trackRow{}
 }
 
-// nearestM is how close the activity's stored trajectory comes to (lon, lat), in metres.
+// nearestM is how close the track's stored trajectory comes to (lon, lat), in metres.
 func (d *dbTest) nearestM(id string, lon, lat float64) float64 {
 	d.t.Helper()
 	var m float64
@@ -110,11 +110,11 @@ func (d *dbTest) nearestM(id string, lon, lat float64) float64 {
 	return m
 }
 
-// Adding, moving, resizing and deleting a Private location reprocesses the activities it
+// Adding, moving, resizing and deleting a Private location reprocesses the tracks it
 // touches, from their original uploads, against the account's locations as they are now
 // (FR-7.1, IMPLEMENTATION.md §7): a track's hidden end follows the location and comes back
-// once it leaves, and an activity it covers entirely is hidden and then restored.
-func TestPrivateLocationReprocessesActivities(t *testing.T) {
+// once it leaves, and a track it covers entirely is hidden and then restored.
+func TestPrivateLocationReprocessesTracks(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me := d.newAccount(false)
 	walk := d.ingestNorth(me, "walk.gpx", 10.0)
@@ -122,13 +122,13 @@ func TestPrivateLocationReprocessesActivities(t *testing.T) {
 
 	distance := func(id string) float64 {
 		t.Helper()
-		a := d.activity(me, id)
+		a := d.track(me, id)
 		if a.DistanceMeters == nil {
 			return 0
 		}
 		return *a.DistanceMeters
 	}
-	full := d.activity(me, walk)
+	full := d.track(me, walk)
 	fullDistance := distance(walk)
 	if full.BBox == nil || fullDistance < 1000 || math.Abs(distance(other)-fullDistance) > 1 {
 		t.Fatalf("before any location: walk %+v, other %.0f m", full, distance(other))
@@ -152,27 +152,27 @@ func TestPrivateLocationReprocessesActivities(t *testing.T) {
 	}
 	move := func(id string, body map[string]any) {
 		t.Helper()
-		d.decode(d.do(me, "PATCH", "/v1/private-locations/"+id, body), http.StatusOK, nil)
+		d.decode(d.do(me, "PATCH", "/v2/private-locations/"+id, body), http.StatusOK, nil)
 	}
 
 	// Add one at walk's start: only walk is queued and marked Pending, and once the job runs its
 	// start is gone up to past the location's edge.
 	var home privateLocation
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": radiusM}), http.StatusCreated, &home)
-	if jobs := d.reprivacyJobs(me); len(jobs) != 1 || !slices.Equal(jobs[0].ActivityIDs, []string{walk}) {
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": radiusM}), http.StatusCreated, &home)
+	if jobs := d.reprivacyJobs(me); len(jobs) != 1 || !slices.Equal(jobs[0].TrackIDs, []string{walk}) {
 		t.Fatalf("after create, jobs %+v, want one for walk only", jobs)
 	}
-	if !d.activity(me, walk).Pending || d.activity(me, other).Pending {
+	if !d.track(me, walk).Pending || d.track(me, other).Pending {
 		t.Error("after create, want only walk Pending")
 	}
 	d.runReprivacyJob(me)
-	if a := d.activity(me, walk); a.Pending || a.Private {
+	if a := d.track(me, walk); a.Pending || a.Private {
 		t.Errorf("after create's job: %+v, want shown and no longer Pending", a)
 	}
 	clippedBy("created", walk, 10.0, 50.0)
 	whole("created, other", other)
 
-	// Move it to other's end: the old circle's activities are reprocessed as well as the new
+	// Move it to other's end: the old circle's tracks are reprocessed as well as the new
 	// one's, so walk gets its start back.
 	move(home.ID, map[string]any{"name": "Home", "lon": 11.0, "lat": 50.01, "radius_m": radiusM})
 	d.runReprivacyJob(me)
@@ -188,17 +188,17 @@ func TestPrivateLocationReprocessesActivities(t *testing.T) {
 	// Move and grow it over the whole of walk: walk is kept but hidden, with no track at all.
 	move(home.ID, map[string]any{"name": "Flat", "lon": 10.0, "lat": 50.005, "radius_m": 2000})
 	d.runReprivacyJob(me)
-	if a := d.activity(me, walk); !a.Private || a.BBox != nil || a.Pending {
+	if a := d.track(me, walk); !a.Private || a.BBox != nil || a.Pending {
 		t.Errorf("covered: %+v, want kept, Private, with no track", a)
 	}
 	whole("moved away, other", other)
 
 	// Delete it: hidden walk has no track to find it by, and still comes back whole.
-	if rec := d.do(me, "DELETE", "/v1/private-locations/"+home.ID, nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, "DELETE", "/v2/private-locations/"+home.ID, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete: %d %s", rec.Code, rec.Body)
 	}
 	d.runReprivacyJob(me)
-	restored := d.activity(me, walk)
+	restored := d.track(me, walk)
 	if restored.Private || restored.Pending || !slices.Equal(restored.BBox, full.BBox) {
 		t.Errorf("after delete: %+v, want walk back as it was (bbox %v)", restored, full.BBox)
 	}
@@ -209,22 +209,22 @@ func TestListPrivateLocations(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	var none []privateLocation
-	d.decode(d.do(me, "GET", "/v1/private-locations", nil), http.StatusOK, &none)
+	d.decode(d.do(me, "GET", "/v2/private-locations", nil), http.StatusOK, &none)
 	if len(none) != 0 {
 		t.Fatalf("new account has %d, want none", len(none))
 	}
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 200}), http.StatusCreated, nil)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 200}), http.StatusCreated, nil)
 	var got []privateLocation
-	d.decode(d.do(me, "GET", "/v1/private-locations", nil), http.StatusOK, &got)
+	d.decode(d.do(me, "GET", "/v2/private-locations", nil), http.StatusOK, &got)
 	if len(got) != 1 || got[0].Name != "Home" {
 		t.Fatalf("got %+v, want Home", got)
 	}
 }
 
-// An activity the reprocess fails on stays Pending, and so off the map with its old geometry,
+// A track the reprocess fails on stays Pending, and so off the map with its old geometry,
 // until a rerun queued after a delay succeeds; the rest of the batch comes back at once
 // (IMPLEMENTATION.md §4.2.5). The waiting rerun doesn't count as rendering.
-func TestPrivateLocationReprocessFailureKeepsActivityHidden(t *testing.T) {
+func TestPrivateLocationReprocessFailureKeepsTrackHidden(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	ctx := context.Background()
 	me := d.newAccount(false)
@@ -235,7 +235,7 @@ func TestPrivateLocationReprocessFailureKeepsActivityHidden(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0005, "lat": 50.0, "radius_m": 250}), http.StatusCreated, nil)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0005, "lat": 50.0, "radius_m": 250}), http.StatusCreated, nil)
 	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = 'raw/missing.gpx' WHERE id = $1`, broken); err != nil {
 		t.Fatal(err)
 	}
@@ -256,14 +256,14 @@ func TestPrivateLocationReprocessFailureKeepsActivityHidden(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if d.activity(me, ok).Pending {
+	if d.track(me, ok).Pending {
 		t.Error("the activity that reprocessed: still Pending")
 	}
-	if !d.activity(me, broken).Pending {
+	if !d.track(me, broken).Pending {
 		t.Error("the activity that failed: no longer Pending, its old geometry back on the map")
 	}
 	jobs := d.reprivacyJobs(me)
-	if len(jobs) != 1 || !slices.Equal(jobs[0].ActivityIDs, []string{broken}) || jobs[0].Retry != 1 {
+	if len(jobs) != 1 || !slices.Equal(jobs[0].TrackIDs, []string{broken}) || jobs[0].Retry != 1 {
 		t.Fatalf("after the failure, jobs %+v, want one rerun of the failed activity", jobs)
 	}
 	var later bool
@@ -276,7 +276,7 @@ func TestPrivateLocationReprocessFailureKeepsActivityHidden(t *testing.T) {
 		t.Fatal(err)
 	}
 	var status coverageStatusResponse
-	d.decode(d.do(me, "GET", "/v1/coverage/status", nil), http.StatusOK, &status)
+	d.decode(d.do(me, "GET", "/v2/coverage/status", nil), http.StatusOK, &status)
 	if status.Rendering {
 		t.Error("coverage status: rendering while only a delayed rerun waits")
 	}
@@ -285,7 +285,7 @@ func TestPrivateLocationReprocessFailureKeepsActivityHidden(t *testing.T) {
 		t.Fatal(err)
 	}
 	d.runReprivacyJob(me)
-	if d.activity(me, broken).Pending {
+	if d.track(me, broken).Pending {
 		t.Error("after a successful rerun: still Pending")
 	}
 	if near := d.nearestM(broken, 10.0005, 50.0); near < 249 {
@@ -293,28 +293,28 @@ func TestPrivateLocationReprocessFailureKeepsActivityHidden(t *testing.T) {
 	}
 }
 
-// The hidden count is the account's own activities with no track, the rows the list marks
+// The hidden count is the account's own tracks with no track, the rows the list marks
 // private (FR-5.1), and none of another account's.
-func TestHiddenActivitiesCount(t *testing.T) {
+func TestHiddenTracksCount(t *testing.T) {
 	d := newDBTest(t)
 	me, other := d.newAccount(false), d.newAccount(false)
 	at := [2]float64{-81.60, 41.30}
-	d.newActivity(me, testActivity{activityType: "walking", at: &at})
-	d.newActivity(me, testActivity{activityType: "walking"})
-	d.newActivity(me, testActivity{activityType: "walking"})
-	d.newActivity(other, testActivity{activityType: "walking"})
+	d.newTrack(me, testTrack{trackType: "walking", at: &at})
+	d.newTrack(me, testTrack{trackType: "walking"})
+	d.newTrack(me, testTrack{trackType: "walking"})
+	d.newTrack(other, testTrack{trackType: "walking"})
 
 	var resp struct {
 		Count int `json:"count"`
 	}
-	d.decode(d.do(me, "GET", "/v1/private-locations/hidden", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/private-locations/hidden", nil), http.StatusOK, &resp)
 	if resp.Count != 2 {
 		t.Errorf("count %d, want 2", resp.Count)
 	}
 }
 
 // Overlapping locations clip as one shape, so an end can lie past where a small location's own
-// radius reaches. Deleting it still reprocesses that activity, which would otherwise stay
+// radius reaches. Deleting it still reprocesses that track, which would otherwise stay
 // clipped by a location that no longer exists.
 func TestDeletingAnOverlappingLocationFindsEndsPastItsOwnReach(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
@@ -324,8 +324,8 @@ func TestDeletingAnOverlappingLocationFindsEndsPastItsOwnReach(t *testing.T) {
 	north := func(m float64) float64 { return 50.0 + m/111195.0 }
 
 	var big, small privateLocation
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 300}), http.StatusCreated, &big)
-	d.decode(d.do(me, "POST", "/v1/private-locations", map[string]any{"name": "Yard", "lon": 10.0, "lat": north(290), "radius_m": 100}), http.StatusCreated, &small)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 300}), http.StatusCreated, &big)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Yard", "lon": 10.0, "lat": north(290), "radius_m": 100}), http.StatusCreated, &small)
 	// The track as the two clipped it: starting 690 m north, 400 m from the small one's center,
 	// past the 225 m twice its own radius reaches.
 	if _, err := d.pool.Exec(ctx, `
@@ -338,10 +338,10 @@ func TestDeletingAnOverlappingLocationFindsEndsPastItsOwnReach(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if rec := d.do(me, "DELETE", "/v1/private-locations/"+small.ID, nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, "DELETE", "/v2/private-locations/"+small.ID, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete: %d %s", rec.Code, rec.Body)
 	}
-	if jobs := d.reprivacyJobs(me); len(jobs) != 1 || !slices.Contains(jobs[0].ActivityIDs, walk) {
+	if jobs := d.reprivacyJobs(me); len(jobs) != 1 || !slices.Contains(jobs[0].TrackIDs, walk) {
 		t.Fatalf("after deleting the small location, jobs %+v, want one reprocessing walk", jobs)
 	}
 }
@@ -400,7 +400,7 @@ func TestLocationSavedDuringIngestStillClipsIt(t *testing.T) {
 	if got.err != nil || !got.res.Persisted {
 		t.Fatalf("ingest: %+v, %v", got.res, got.err)
 	}
-	if near := d.nearestM(got.res.ActivityID, 10.0, 50.0); near < 249 {
+	if near := d.nearestM(got.res.TrackID, 10.0, 50.0); near < 249 {
 		t.Fatalf("the track comes within %.0f m of the location saved during its ingest, want at least 250", near)
 	}
 }

@@ -21,13 +21,13 @@ func TestFitWithinLimits(t *testing.T) {
 		refused string
 	}{
 		{"room for all", accountUsage{10, 1000}, []int64{5, 5, 5}, 3, ""},
-		{"the last activity that fits", accountUsage{maxActivitiesPerAccount - 1, 0}, []int64{1}, 1, ""},
-		{"at the activity limit", accountUsage{maxActivitiesPerAccount, 0}, []int64{1}, 0, limitActivities},
-		{"part of a batch fits", accountUsage{maxActivitiesPerAccount - 2, 0}, []int64{1, 1, 1, 1}, 2, limitActivities},
+		{"the last activity that fits", accountUsage{maxTracksPerAccount - 1, 0}, []int64{1}, 1, ""},
+		{"at the activity limit", accountUsage{maxTracksPerAccount, 0}, []int64{1}, 0, limitTracks},
+		{"part of a batch fits", accountUsage{maxTracksPerAccount - 2, 0}, []int64{1, 1, 1, 1}, 2, limitTracks},
 		{"exactly filling storage", accountUsage{0, maxOriginalBytesPerAccount - 100}, []int64{100}, 1, ""},
 		{"one byte over storage", accountUsage{0, maxOriginalBytesPerAccount - 100}, []int64{101}, 0, limitStorage},
 		{"storage refuses mid-batch", accountUsage{0, maxOriginalBytesPerAccount - 100}, []int64{60, 60}, 1, limitStorage},
-		{"nothing arriving", accountUsage{maxActivitiesPerAccount, maxOriginalBytesPerAccount}, nil, 0, ""},
+		{"nothing arriving", accountUsage{maxTracksPerAccount, maxOriginalBytesPerAccount}, nil, 0, ""},
 	} {
 		fit, refused := fitWithinLimits(tc.u, tc.sizes)
 		if fit != tc.fit || refused != tc.refused {
@@ -38,7 +38,7 @@ func TestFitWithinLimits(t *testing.T) {
 
 func TestLimitMessage(t *testing.T) {
 	l := i18n.Get("en")
-	if got := limitMessage(l, limitActivities); !strings.Contains(got, "50,000 tracks") {
+	if got := limitMessage(l, limitTracks); !strings.Contains(got, "50,000 tracks") {
 		t.Errorf("activity limit message %q", got)
 	}
 	if got := limitMessage(l, limitStorage); !strings.Contains(got, "5 GB") {
@@ -46,7 +46,7 @@ func TestLimitMessage(t *testing.T) {
 	}
 }
 
-// fillToLimit gives the account activities up to n, in one statement.
+// fillToLimit gives the account tracks up to n, in one statement.
 func (d *dbTest) fillToLimit(as account, n int) {
 	d.t.Helper()
 	if _, err := d.pool.Exec(context.Background(), `
@@ -57,12 +57,12 @@ func (d *dbTest) fillToLimit(as account, n int) {
 	}
 }
 
-// At the activity limit an upload is refused with the limit's message, before anything is
-// queued; a waiting ingest job counts as an activity already.
-func TestUploadRefusedAtTheActivityLimit(t *testing.T) {
+// At the track limit an upload is refused with the limit's message, before anything is
+// queued; a waiting ingest job counts as a track already.
+func TestUploadRefusedAtTheTrackLimit(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
-	d.fillToLimit(me, maxActivitiesPerAccount-1)
+	d.fillToLimit(me, maxTracksPerAccount-1)
 	if _, err := d.pool.Exec(context.Background(), `
 		INSERT INTO jobs (kind, user_id, payload, run_after) VALUES ('ingest', $1, '{"raw_bytes": 10}', '2999-01-01')`, me.id); err != nil {
 		t.Fatal(err)
@@ -84,7 +84,7 @@ func TestUploadRefusedAtTheStorageLimit(t *testing.T) {
 	me := d.newAccount(false)
 	half := int64(maxOriginalBytesPerAccount / 2)
 	for range 2 { // two pieces of one original: half the limit, not all of it
-		d.newActivity(me, testActivity{})
+		d.newTrack(me, testTrack{})
 	}
 	if _, err := d.pool.Exec(context.Background(),
 		`UPDATE activities SET raw_payload_key = 'raw/x', raw_bytes = $2 WHERE user_id = $1`, me.id, half); err != nil {
@@ -108,17 +108,17 @@ func TestUploadRefusedAtTheStorageLimit(t *testing.T) {
 func TestSyncRejectsWhatDoesntFit(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
-	d.fillToLimit(me, maxActivitiesPerAccount-1)
+	d.fillToLimit(me, maxTracksPerAccount-1)
 	points := []map[string]any{
 		{"lat": 50.0, "lon": 10.0, "time": "2026-05-01T10:00:00Z"},
 		{"lat": 50.001, "lon": 10.001, "time": "2026-05-01T10:01:00Z"},
 	}
 	var acts []map[string]any
 	for _, id := range []string{"walk-a", "walk-b", "walk-c"} {
-		acts = append(acts, map[string]any{"external_id": id, "activity_type": "walk", "points": points})
+		acts = append(acts, map[string]any{"external_id": id, "track_type": "walk", "points": points})
 	}
-	var resp syncActivitiesResponse
-	d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", map[string]any{"source": "healthconnect", "activities": acts}), http.StatusOK, &resp)
+	var resp syncTracksResponse
+	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", map[string]any{"source": "healthconnect", "tracks": acts}), http.StatusOK, &resp)
 	for i, want := range []string{"enqueued", "rejected", "rejected"} {
 		if resp.Results[i].Status != want {
 			t.Errorf("result %d: %s, want %s", i, resp.Results[i].Status, want)
@@ -129,18 +129,18 @@ func TestSyncRejectsWhatDoesntFit(t *testing.T) {
 	}
 }
 
-// An account at its limit can't accept a copy of a Story; the copy stays in its inbox.
-func TestStoryCopyRefusedAtTheLimit(t *testing.T) {
+// An account at its limit can't accept a copy of a Trip; the copy stays in its inbox.
+func TestTripCopyRefusedAtTheLimit(t *testing.T) {
 	d := newDBTest(t)
 	me, you := d.newAccount(false), d.newAccount(false)
-	storyID := d.newStory(me, "Trip", d.newActivity(me, testActivity{}))
-	d.decode(d.do(me, "POST", "/v1/stories/"+storyID+"/send", map[string]any{"email": d.address(you)}), http.StatusNoContent, nil)
-	d.fillToLimit(you, maxActivitiesPerAccount)
+	tripID := d.newTrip(me, "Trip", d.newTrack(me, testTrack{}))
+	d.decode(d.do(me, "POST", "/v2/trips/"+tripID+"/send", map[string]any{"email": d.address(you)}), http.StatusNoContent, nil)
+	d.fillToLimit(you, maxTracksPerAccount)
 	sends := d.inbox(you)
 	if len(sends) != 1 {
 		t.Fatalf("inbox %+v", sends)
 	}
-	if rec := d.do(you, "POST", "/v1/story-sends/"+sends[0].ID+"/accept", nil); rec.Code != http.StatusConflict {
+	if rec := d.do(you, "POST", "/v2/trip-sends/"+sends[0].ID+"/accept", nil); rec.Code != http.StatusConflict {
 		t.Fatalf("accept at the limit: %d, want 409", rec.Code)
 	}
 	if len(d.inbox(you)) != 1 {

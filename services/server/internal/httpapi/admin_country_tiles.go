@@ -43,7 +43,7 @@ type adminLayer struct {
 }
 
 // visitedCTEs are the places of every level the account `user` (a parameter, $4 in a tile) has
-// been in, from its activities that aren't Pending: each level's own matches (internal/geo.MatchActivity, at ingest, never at
+// been in, from its tracks that aren't Pending: each level's own matches (internal/geo.MatchTrack, at ingest, never at
 // request time), and the places above those visited on a level below, through the parent ids,
 // so a cleared city never sits in a fogged county and the counts agree with the map.
 func visitedCTEs(user string) string {
@@ -229,7 +229,7 @@ func veilOutside(rows string) string {
 // name, the places it lies in (`within`) and its counts, and the sea. Fog veils the sea and the unvisited,
 // draws every outline's border, and names the one under the pointer from the rest.
 //
-// visited starts from the account's own activities, so its cost is the account's history,
+// visited starts from the account's own tracks, so its cost is the account's history,
 // not every account's matches in the outlines the tile covers. It answers two columns: whether
 // the tile is in admin_tile_geoms yet (always true for a live one) and the tile itself, its
 // features in outline order whichever way it was drawn.

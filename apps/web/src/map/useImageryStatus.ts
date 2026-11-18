@@ -5,7 +5,7 @@ import { getMapImagery } from '../api.ts';
 const IMAGERY_POLL_MS = 5 * 60_000;
 
 /**
- * The server's word on satellite imagery (`GET /v1/map/imagery`), asked at load and every
+ * The server's word on satellite imagery (`GET /v2/map/imagery`), asked at load and every
  * IMAGERY_POLL_MS: true or false, or null until it answers. A failed read keeps the last answer.
  * Only asked when the build configures imagery at all.
  */

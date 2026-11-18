@@ -9,7 +9,7 @@ interface SelectionActions {
   /** The toolbar's Show/Hide over its target. */
   toggleGroupVisibility: () => void;
   /** A toggle: the type stays in the dropdown either way, so it can be turned back on without Reset filters. */
-  toggleType: (activityType: string) => void;
+  toggleType: (trackType: string) => void;
   setDistanceFilter: (filter: DistanceRange | null) => void;
   /** Focuses one track and flies to it, unless it's hidden (an empty fit is a no-op). With
    *  Focus on map, the only fly to a track. */
@@ -44,7 +44,7 @@ export function useSelectionActions(
   );
   const toggleChecked = useCallback((id: string) => dispatch({ type: 'checkToggled', id }), [dispatch]);
   const toggleGroupVisibility = useCallback(() => dispatch({ type: 'visibilityToggled' }), [dispatch]);
-  const toggleType = useCallback((activityType: string) => dispatch({ type: 'typeToggled', activityType, tracks }), [dispatch, tracks]);
+  const toggleType = useCallback((trackType: string) => dispatch({ type: 'typeToggled', trackType, tracks }), [dispatch, tracks]);
   const setDistanceFilter = useCallback((filter: DistanceRange | null) => dispatch({ type: 'distanceSet', filter, tracks }), [dispatch, tracks]);
   const clearFocus = useCallback(() => dispatch({ type: 'focused', id: null }), [dispatch]);
   const clearChecked = useCallback(() => dispatch({ type: 'checkedSet', ids: [] }), [dispatch]);

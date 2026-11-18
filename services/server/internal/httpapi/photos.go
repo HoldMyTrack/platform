@@ -22,13 +22,13 @@ import (
 )
 
 // Activity photos (IMPLEMENTATION.md §4.27, ADR-0024) — the user's own pictures on an
-// activity, each placed on its route. Stored in activity_photos (§3.22), the images under
+// track, each placed on its route. Stored in activity_photos (§3.22), the images under
 // photos/{userID}/ in object storage. The browser resizes a photo and strips its EXIF before
 // upload, sending the capture time and position it read as fields; the server keeps a moment on
 // the track (route_at), never a position, and works the position out on every read. Every photo
 // has one: a photo the server can't place is refused until the user says where it goes.
 //
-// Another account's photo or activity answers exactly like a missing one, `404`.
+// Another account's photo or track answers exactly like a missing one, `404`.
 
 const (
 	// The resized copy is at most 2048 px on its long side (the web's photoPrep.ts) and a
@@ -58,12 +58,12 @@ var allowedPhotoContentType = map[string]string{
 
 var (
 	errPhotoNotFound    = errors.New("photo not found")
-	errPhotoNoTrack     = errors.New("activity has no track")
+	errPhotoNoTrack     = errors.New("track has no route")
 	errPhotoInvalidJSON = errors.New("invalid request body")
 )
 
 // photoKey is where a newly uploaded photo's image goes, and the image_key its row records. A
-// copy of the photo in a copied Story (§4.23) keeps the original's key, so the key, not the
+// copy of the photo in a copied Trip (§4.23) keeps the original's key, so the key, not the
 // row's owner and id, names the files from then on.
 func photoKey(userID, photoID string) string { return "photos/" + userID + "/" + photoID }
 
@@ -71,13 +71,13 @@ func photoKey(userID, photoID string) string { return "photos/" + userID + "/" +
 func photoThumbKey(imageKey string) string { return imageKey + "-thumb" }
 
 // photoJSON is one photo as every photo endpoint returns it. Lon/Lat are null only for an
-// activity with no track left at all.
+// track with no route left at all.
 type photoJSON struct {
-	ID         string     `json:"id"`
-	ActivityID string     `json:"activity_id"`
-	TakenAt    *time.Time `json:"taken_at"`
-	RouteAt    time.Time  `json:"route_at"`
-	// Timezone is its activity's (§4.30), which a client shows TakenAt and RouteAt in.
+	ID      string     `json:"id"`
+	TrackID string     `json:"track_id"`
+	TakenAt *time.Time `json:"taken_at"`
+	RouteAt time.Time  `json:"route_at"`
+	// Timezone is its track's (§4.30), which a client shows TakenAt and RouteAt in.
 	Timezone string   `json:"timezone"`
 	Lon      *float64 `json:"lon"`
 	Lat      *float64 `json:"lat"`
@@ -123,7 +123,7 @@ func (s *Server) loadPhotos(ctx context.Context, where string, args ...any) ([]p
 	photos := []photoJSON{}
 	for rows.Next() {
 		var p photoJSON
-		if err := rows.Scan(&p.ID, &p.ActivityID, &p.TakenAt, &p.RouteAt, &p.Timezone, &p.Caption, &p.Width, &p.Height, &p.Lon, &p.Lat); err != nil {
+		if err := rows.Scan(&p.ID, &p.TrackID, &p.TakenAt, &p.RouteAt, &p.Timezone, &p.Caption, &p.Width, &p.Height, &p.Lon, &p.Lat); err != nil {
 			return nil, err
 		}
 		p.URL = apiPrefix + "/photos/" + p.ID
@@ -144,8 +144,8 @@ func (s *Server) loadPhoto(ctx context.Context, userID, photoID string) (photoJS
 	return photos[0], nil
 }
 
-// handleListPhotos serves `GET /v1/photos?activity={id}` — one activity's photos — and
-// `?story={id}`, the photos of every activity in a Story (§4.23), for its map.
+// handleListPhotos serves `GET /v2/photos?track={id}` — one track's photos — and
+// `?trip={id}`, the photos of every track in a Trip (§4.23), for its map.
 func (s *Server) handleListPhotos(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())
 	ctx := r.Context()
@@ -153,14 +153,14 @@ func (s *Server) handleListPhotos(w http.ResponseWriter, r *http.Request) {
 	var where, id string
 	var owns func(context.Context, string, string) (bool, error)
 	switch {
-	case q.Get("activity") != "":
-		id, owns = q.Get("activity"), s.ownsActivity
+	case q.Get("track") != "":
+		id, owns = q.Get("track"), s.ownsTrack
 		where = "p.activity_id = $2"
-	case q.Get("story") != "":
-		id, owns = q.Get("story"), s.ownsStory
+	case q.Get("trip") != "":
+		id, owns = q.Get("trip"), s.ownsTrip
 		where = `p.activity_id IN (SELECT activity_id FROM story_activities WHERE story_id = $2)`
 	default:
-		writeAPIError(w, `missing "activity" or "story"`, http.StatusBadRequest)
+		writeAPIError(w, `missing "track" or "trip"`, http.StatusBadRequest)
 		return
 	}
 	if ok, err := owns(ctx, userID, id); err != nil {
@@ -187,24 +187,24 @@ func (s *Server) handleListPhotos(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, photosResponse{Photos: photos})
 }
 
-func (s *Server) ownsActivity(ctx context.Context, userID, activityID string) (bool, error) {
-	if !uuidPattern.MatchString(activityID) {
+func (s *Server) ownsTrack(ctx context.Context, userID, trackID string) (bool, error) {
+	if !uuidPattern.MatchString(trackID) {
 		return false, nil
 	}
 	var ok bool
 	err := s.pool.QueryRow(ctx,
-		`SELECT EXISTS(SELECT 1 FROM activities WHERE id = $1 AND user_id = $2)`, activityID, userID,
+		`SELECT EXISTS(SELECT 1 FROM activities WHERE id = $1 AND user_id = $2)`, trackID, userID,
 	).Scan(&ok)
 	return ok, err
 }
 
-func (s *Server) ownsStory(ctx context.Context, userID, storyID string) (bool, error) {
-	if !uuidPattern.MatchString(storyID) {
+func (s *Server) ownsTrip(ctx context.Context, userID, tripID string) (bool, error) {
+	if !uuidPattern.MatchString(tripID) {
 		return false, nil
 	}
 	var ok bool
 	err := s.pool.QueryRow(ctx,
-		`SELECT EXISTS(SELECT 1 FROM stories WHERE id = $1 AND user_id = $2)`, storyID, userID,
+		`SELECT EXISTS(SELECT 1 FROM stories WHERE id = $1 AND user_id = $2)`, tripID, userID,
 	).Scan(&ok)
 	return ok, err
 }
@@ -247,7 +247,7 @@ func readPhotoPart(r *http.Request, name string, maxBytes int64, maxSide int) (p
 	return photoPart{data: data, contentType: contentType, width: cfg.Width, height: cfg.Height}, nil
 }
 
-// handleUploadPhoto serves `POST /v1/photos` — multipart: `activity_id`; `file`, the resized
+// handleUploadPhoto serves `POST /v2/photos` — multipart: `track_id`; `file`, the resized
 // copy, and `thumb`, its thumbnail; and what the browser read from the original's EXIF before
 // resizing, all optional: `taken_at` (RFC 3339, when the file says its time zone or carries a
 // GPS time) or `taken_local` (`2006-01-02T15:04:05`, a camera clock with no zone), and
@@ -263,13 +263,13 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 		s.writeAccountError(w, r, "photo upload", accountFailure(http.StatusRequestEntityTooLarge, "error.photo_too_large"))
 		return
 	}
-	activityID := r.FormValue("activity_id")
-	if ok, err := s.ownsActivity(ctx, userID, activityID); err != nil {
+	trackID := r.FormValue("track_id")
+	if ok, err := s.ownsTrack(ctx, userID, trackID); err != nil {
 		s.log.Error("photo upload: activity lookup failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	} else if !ok {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
 
@@ -299,7 +299,7 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	takenAt, routeAt, ok := s.placeFromFields(w, r, activityID, r.FormValue)
+	takenAt, routeAt, ok := s.placeFromFields(w, r, trackID, r.FormValue)
 	if !ok {
 		return
 	}
@@ -337,7 +337,7 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 		INSERT INTO activity_photos (id, user_id, activity_id, taken_at, route_at, caption, content_type, thumb_content_type, width, height, bytes, image_key)
 		SELECT n.id, $1::uuid, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'photos/' || $1::uuid::text || '/' || n.id FROM n
 		RETURNING id, image_key
-	`, userID, activityID, takenAt, routeAt, caption, photo.contentType, thumb.contentType, photo.width, photo.height,
+	`, userID, trackID, takenAt, routeAt, caption, photo.contentType, thumb.contentType, photo.width, photo.height,
 		len(photo.data)+len(thumb.data)).Scan(&photoID, &imageKey); err != nil {
 		s.log.Error("photo upload: insert failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
@@ -384,7 +384,7 @@ func photoCaption(w http.ResponseWriter, r *http.Request, caption string) (*stri
 	return &trimmed, true
 }
 
-// handleGetPhoto serves `GET /v1/photos/{id}` and handleGetPhotoThumb `…/thumb` — the stored
+// handleGetPhoto serves `GET /v2/photos/{id}` and handleGetPhotoThumb `…/thumb` — the stored
 // image, to its owner only. A photo's images never change under its id, so they cache for good.
 func (s *Server) handleGetPhoto(w http.ResponseWriter, r *http.Request) {
 	s.servePhotoImage(w, r, false)
@@ -432,7 +432,7 @@ func (s *Server) servePhotoImage(w http.ResponseWriter, r *http.Request, thumb b
 	}
 }
 
-// handleUpdatePhoto serves `PATCH /v1/photos/{id}`. Each field is optional and only a field
+// handleUpdatePhoto serves `PATCH /v2/photos/{id}`. Each field is optional and only a field
 // present changes: `caption` (empty clears it), and `route_at` — RFC 3339, the photo's new
 // moment on the track (the Edit window's slider), clamped to the track. A photo can't be taken
 // off the track: null is refused.
@@ -454,10 +454,10 @@ func (s *Server) handleUpdatePhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var activityID string
+	var trackID string
 	err := s.pool.QueryRow(ctx,
 		`SELECT activity_id FROM activity_photos WHERE id = $1 AND user_id = $2`, photoID, userID,
-	).Scan(&activityID)
+	).Scan(&trackID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		writeAPIError(w, "photo not found", http.StatusNotFound)
 		return
@@ -492,14 +492,14 @@ func (s *Server) handleUpdatePhoto(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, `invalid "route_at", want an RFC 3339 time`, http.StatusBadRequest)
 			return
 		}
-		start, end, hasTrack, err := s.trackSpan(ctx, activityID)
+		start, end, hasTrack, err := s.trackSpan(ctx, trackID)
 		if err != nil {
 			s.log.Error("photo update: track lookup failed", "err", err)
 			writeAPIError(w, "internal error", http.StatusInternalServerError)
 			return
 		}
 		if !hasTrack {
-			httpErrorT(w, r, http.StatusConflict, "error.photo_no_track")
+			httpErrorT(w, r, http.StatusConflict, "error.photo_no_route")
 			return
 		}
 		routeAt, setRouteAt = clampToSpan(*at, start, end), true
@@ -527,8 +527,8 @@ func (s *Server) handleUpdatePhoto(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, p)
 }
 
-// handleDeletePhoto serves `DELETE /v1/photos/{id}`: the row, then both images unless another
-// row still uses them (a copied Story's photo, §4.23), best-effort — an orphaned blob is a
+// handleDeletePhoto serves `DELETE /v2/photos/{id}`: the row, then both images unless another
+// row still uses them (a copied Trip's photo, §4.23), best-effort — an orphaned blob is a
 // cleanup nuisance, never a reason to keep a photo the user removed.
 func (s *Server) handleDeletePhoto(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())
@@ -554,10 +554,10 @@ func (s *Server) handleDeletePhoto(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// activityPhotoKeys lists an activity's photos' image keys, read before the activity's own delete
+// trackPhotoKeys lists a track's photos' image keys, read before the track's own delete
 // cascades their rows away, so their images can be removed after it.
-func (s *Server) activityPhotoKeys(ctx context.Context, activityID string) ([]string, error) {
-	rows, err := s.pool.Query(ctx, `SELECT image_key FROM activity_photos WHERE activity_id = $1`, activityID)
+func (s *Server) trackPhotoKeys(ctx context.Context, trackID string) ([]string, error) {
+	rows, err := s.pool.Query(ctx, `SELECT image_key FROM activity_photos WHERE activity_id = $1`, trackID)
 	if err != nil {
 		return nil, err
 	}

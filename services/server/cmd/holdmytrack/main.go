@@ -200,9 +200,9 @@ func main() {
 
 	case "seed-demo-customer":
 		// One-time (idempotent — safe to re-run on redeploy) seed of the persistent demo
-		// account's activity history — httpapi.SeedDemoCustomer's own doc comment explains
+		// account's track history — httpapi.SeedDemoCustomer's own doc comment explains
 		// why this runs here, out of band, rather than per "Try Demo" request. --reset wipes
-		// the account's existing activities first, for when demo_data/ itself changed.
+		// the account's existing tracks first, for when demo_data/ itself changed.
 		reset := len(os.Args) == 3 && os.Args[2] == "--reset"
 		if len(os.Args) > 3 || (len(os.Args) == 3 && !reset) {
 			fmt.Fprintln(os.Stderr, "usage: holdmytrack seed-demo-customer [--reset]")
@@ -225,8 +225,8 @@ func main() {
 		log.Info("seed-demo-customer: done")
 
 	case "export-demo-activities":
-		// Writes picked activities out of this deployment, as their owner sees them, as demo_data/ GPX files for
-		// the Demo Customer's history — httpapi.ExportDemoActivities's doc comment has the
+		// Writes picked tracks out of this deployment, as their owner sees them, as demo_data/ GPX files for
+		// the Demo Customer's history — httpapi.ExportDemoTracks's doc comment has the
 		// details. Writes only to the local directory given; the DB and storage are only read.
 		if len(os.Args) < 4 {
 			fmt.Fprintln(os.Stderr, "usage: holdmytrack export-demo-activities <out-dir> <activity-id>...")
@@ -237,7 +237,7 @@ func main() {
 			log.Error("storage", "err", err)
 			os.Exit(1)
 		}
-		files, err := httpapi.ExportDemoActivities(ctx, pool, store, os.Args[2], os.Args[3:])
+		files, err := httpapi.ExportDemoTracks(ctx, pool, store, os.Args[2], os.Args[3:])
 		for _, f := range files {
 			log.Info("export-demo-activities: wrote", "file", f)
 		}
@@ -250,7 +250,7 @@ func main() {
 	case "rerender-coverage":
 		// One-off, on deploying a change to how Fog tiles are drawn (docs/DEPLOY.md):
 		// queues a full re-render of every account's tiles, or of one account's with --user;
-		// --masks redraws every activity's stored masks first, for a change to the stroke.
+		// --masks redraws every track's stored masks first, for a change to the stroke.
 		// Idempotent. See internal/ingest.RerenderCoverage's doc comment.
 		userID, masks := "", false
 		for i := 2; i < len(os.Args); i++ {
@@ -277,7 +277,7 @@ func main() {
 
 	case "seed-admin-boundaries":
 		// The outlines of Fog's levels, from the extract scripts/boundaries-extract.sh makes
-		// (docs/DEPLOY.md §6), and a re-match of every activity against them. Safe to re-run: the
+		// (docs/DEPLOY.md §6), and a re-match of every track against them. Safe to re-run: the
 		// extract already loaded is skipped unless --force. Reads geo.BoundariesKey from the app
 		// bucket, or --file's local copy; --partial takes one with some countries' counties and
 		// cities only. See internal/geo.SeedAdminBoundaries's own doc comment.
@@ -326,8 +326,8 @@ func main() {
 		log.Info("seed-admin-boundaries: done", "countries", stats.Countries, "regions", stats.Regions,
 			"counties", stats.Counties, "cities", stats.Cities,
 			"skipped_regions", stats.SkippedRegions, "whole_country_regions", stats.WholeCountryRegions,
-			"activity_countries", stats.ActivityCountries, "activity_regions", stats.ActivityRegions,
-			"activity_counties", stats.ActivityCounties, "activity_cities", stats.ActivityCities)
+			"activity_countries", stats.TrackCountries, "activity_regions", stats.TrackRegions,
+			"activity_counties", stats.TrackCounties, "activity_cities", stats.TrackCities)
 
 	case "build-admin-tiles":
 		// Fog's outline tiles from zoom 0 to httpapi.PrebuildMaxZoom, which seed-admin-boundaries
@@ -345,9 +345,9 @@ func main() {
 		log.Info("build-admin-tiles: done", "took", time.Since(start).Round(time.Second))
 
 	case "seed-timezones":
-		// The timezone polygons each activity's own zone is looked up in (IMPLEMENTATION.md
+		// The timezone polygons each track's own zone is looked up in (IMPLEMENTATION.md
 		// §4.30), from timezone-boundary-builder's release zip (docs/DEPLOY.md §6), and a
-		// re-match of every activity against them. Safe to re-run: the file already loaded is
+		// re-match of every track against them. Safe to re-run: the file already loaded is
 		// skipped unless --force. Reads geo.TimezonesKey from the app bucket, or --file's local
 		// copy. See internal/geo.SeedTimezones's own doc comment.
 		var file string
@@ -390,7 +390,7 @@ func main() {
 			log.Info("seed-timezones: already loaded, nothing to do (--force reloads it)", "file", name)
 			break
 		}
-		log.Info("seed-timezones: done", "zones", stats.Zones, "unknown_zones", len(stats.UnknownZones), "activities", stats.Activities)
+		log.Info("seed-timezones: done", "zones", stats.Zones, "unknown_zones", len(stats.UnknownZones), "activities", stats.Tracks)
 
 	case "import-spots":
 		// The load, and each quarterly refresh, of the Spots places from an OpenStreetMap extract

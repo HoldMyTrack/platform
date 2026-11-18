@@ -1,0 +1,164 @@
+openapi: 3.0.3
+info:
+  title: HoldMyTrack API
+  version: v2
+  description: >-
+    The JSON contract between the Go server and its clients: this file indexes every path, each
+    area's operations are in paths/, and the shapes they share in components/. The httpapi
+    package's tests check every request and response they make against it, so a handler that
+    stops matching it fails CI. Every error is components/schemas.yaml's Error (docs/SPEC.md §1.4). A
+    browser's write from another site is refused with a 403 forbidden before any operation
+    runs, and so is an Android build older than the deployment's minimum, with a 426
+    app_outdated; the operations don't repeat either. /v1 serves the same operations under
+    their names before Tracks and Trips, frozen in ../openapi.yaml.
+servers:
+  - url: /v2
+security:
+  - session: []
+paths:
+  /auth/signup:
+    $ref: "paths/auth.yaml#/auth_signup"
+  /auth/login:
+    $ref: "paths/auth.yaml#/auth_login"
+  /auth/logout:
+    $ref: "paths/auth.yaml#/auth_logout"
+  /auth/me:
+    $ref: "paths/auth.yaml#/auth_me"
+  /auth/demo:
+    $ref: "paths/auth.yaml#/auth_demo"
+  /auth/forgot-password:
+    $ref: "paths/auth.yaml#/auth_forgot-password"
+  /auth/reset-password:
+    $ref: "paths/auth.yaml#/auth_reset-password"
+  /auth/verify-email:
+    $ref: "paths/auth.yaml#/auth_verify-email"
+  /auth/verify-code:
+    $ref: "paths/auth.yaml#/auth_verify-code"
+  /auth/providers:
+    $ref: "paths/auth.yaml#/auth_providers"
+  /auth/google/start:
+    $ref: "paths/auth.yaml#/auth_google_start"
+  /auth/google/callback:
+    $ref: "paths/auth.yaml#/auth_google_callback"
+  /auth/facebook/start:
+    $ref: "paths/auth.yaml#/auth_facebook_start"
+  /auth/facebook/callback:
+    $ref: "paths/auth.yaml#/auth_facebook_callback"
+  /auth/apple/start:
+    $ref: "paths/auth.yaml#/auth_apple_start"
+  /auth/apple/callback:
+    $ref: "paths/auth.yaml#/auth_apple_callback"
+  /auth/apple/notifications:
+    $ref: "paths/auth.yaml#/auth_apple_notifications"
+  /auth/google/token:
+    $ref: "paths/auth.yaml#/auth_google_token"
+  /auth/apple/token:
+    $ref: "paths/auth.yaml#/auth_apple_token"
+  /auth/handoff:
+    $ref: "paths/auth.yaml#/auth_handoff"
+  /auth/resend-verification:
+    $ref: "paths/auth.yaml#/auth_resend-verification"
+  /auth/email:
+    $ref: "paths/auth.yaml#/auth_email"
+  /account:
+    $ref: "paths/account.yaml#/account"
+  /account/settings:
+    $ref: "paths/account.yaml#/account_settings"
+  /account/settings/options:
+    $ref: "paths/account.yaml#/account_settings_options"
+  /account/avatar:
+    $ref: "paths/account.yaml#/account_avatar"
+  /account/export:
+    $ref: "paths/account.yaml#/account_export"
+  /account/exports/{id}/parts/{n}:
+    $ref: "paths/account.yaml#/account_exports_id_parts_n"
+  /tracks:
+    $ref: "paths/tracks.yaml#/tracks"
+  /track-types:
+    $ref: "paths/tracks.yaml#/track_types"
+  /tracks/upload:
+    $ref: "paths/tracks.yaml#/tracks_upload"
+  /tracks/area:
+    $ref: "paths/tracks.yaml#/tracks_area"
+  /tracks/{id}:
+    $ref: "paths/tracks.yaml#/tracks_id"
+  /tracks/overlaps:
+    $ref: "paths/tracks.yaml#/tracks_overlaps"
+  /tracks/stats-card:
+    $ref: "paths/tracks.yaml#/tracks_stats-card"
+  /tracks/pending:
+    $ref: "paths/tracks.yaml#/tracks_pending"
+  /tracks/summary:
+    $ref: "paths/tracks.yaml#/tracks_summary"
+  /tracks/histogram:
+    $ref: "paths/tracks.yaml#/tracks_histogram"
+  /tracks/graph-stats:
+    $ref: "paths/tracks.yaml#/tracks_graph-stats"
+  /tracks/trends:
+    $ref: "paths/tracks.yaml#/tracks_trends"
+  /tracks/{id}/route-metrics:
+    $ref: "paths/tracks.yaml#/tracks_id_route-metrics"
+  /tracks/{id}/route-points:
+    $ref: "paths/tracks.yaml#/tracks_id_route-points"
+  /tracks/{id}/route-edit:
+    $ref: "paths/tracks.yaml#/tracks_id_route-edit"
+  /map/style/{flavor}:
+    $ref: "paths/map.yaml#/map_style_flavor"
+  /map/imagery:
+    $ref: "paths/map.yaml#/map_imagery"
+  /map/layers:
+    $ref: "paths/map.yaml#/map_layers"
+  /photos:
+    $ref: "paths/photos.yaml#/photos"
+  /photos/place:
+    $ref: "paths/photos.yaml#/photos_place"
+  /photos/{id}:
+    $ref: "paths/photos.yaml#/photos_id"
+  /photos/{id}/thumb:
+    $ref: "paths/photos.yaml#/photos_id_thumb"
+  /private-locations:
+    $ref: "paths/private-locations.yaml#/private-locations"
+  /private-locations/hidden:
+    $ref: "paths/private-locations.yaml#/private-locations_hidden"
+  /private-locations/{id}:
+    $ref: "paths/private-locations.yaml#/private-locations_id"
+  /trips:
+    $ref: "paths/trips.yaml#/trips"
+  /trips/{id}:
+    $ref: "paths/trips.yaml#/trips_id"
+  /trips/{id}/tracks:
+    $ref: "paths/trips.yaml#/trips_id_tracks"
+  /trips/{id}/send:
+    $ref: "paths/trips.yaml#/trips_id_send"
+  /trip-sends:
+    $ref: "paths/trips.yaml#/trip-sends"
+  /trip-sends/{id}/accept:
+    $ref: "paths/trips.yaml#/trip-sends_id_accept"
+  /trip-sends/{id}:
+    $ref: "paths/trips.yaml#/trip-sends_id"
+  /uploads:
+    $ref: "paths/uploads.yaml#/uploads"
+  /uploads/active:
+    $ref: "paths/uploads.yaml#/uploads_active"
+  /uploads/{external_id}:
+    $ref: "paths/uploads.yaml#/uploads_external_id"
+  /coverage/status:
+    $ref: "paths/map.yaml#/coverage_status"
+  /sync/tracks:
+    $ref: "paths/sync.yaml#/sync_tracks"
+  /sync/known:
+    $ref: "paths/sync.yaml#/sync_known"
+  /spots:
+    $ref: "paths/spots.yaml#/spots"
+  /spots/captures:
+    $ref: "paths/spots.yaml#/spots_captures"
+  /spots/{id}:
+    $ref: "paths/spots.yaml#/spots_id"
+  /spots/{id}/captures:
+    $ref: "paths/spots.yaml#/spots_id_captures"
+components:
+  securitySchemes:
+    session:
+      type: http
+      scheme: bearer
+      description: A session id, as a bearer token or the session cookie.

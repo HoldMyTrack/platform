@@ -37,7 +37,7 @@ const (
 	// neighbor rendered too, not just the tile its coordinate floors into.
 	TileMarginPx = strokeRadiusPx
 
-	// drawMarginPx is how much larger than the tile renderActivityMask's canvas is on every
+	// drawMarginPx is how much larger than the tile renderTrackMask's canvas is on every
 	// side. gg's rasterizer folds coverage from just left of and above its canvas into the first
 	// column and row, so drawn on the tile alone, a corridor along a neighbour's edge painted a
 	// false strip along this tile's left or top edge, and Fog showed a seam there. On the larger
@@ -51,11 +51,11 @@ const (
 // tile's edge; gg's rasterizer clips that itself, so callers don't need to.
 type pixelPoint struct{ x, y float64 }
 
-// renderActivityMask draws one activity's segments through this tile as opaque,
+// renderTrackMask draws one track's segments through this tile as opaque,
 // anti-aliased, round-capped strokes on an initially-empty (black) canvas — crisp, i.e.
-// *unblurred*: this is the per-activity artifact stored in activity_tile_masks, which
+// *unblurred*: this is the per-track artifact stored in activity_tile_masks, which
 // compositeFogMask below combines. Each of lines is the track in one copy of the world (projectToTile).
-func renderActivityMask(lines ...[]pixelPoint) *image.Gray {
+func renderTrackMask(lines ...[]pixelPoint) *image.Gray {
 	dc := gg.NewContext(TileSize+2*drawMarginPx, TileSize+2*drawMarginPx)
 	dc.SetRGBA(0, 0, 0, 1) // nothing here yet: opaque black = coverage 0
 	dc.Clear()
@@ -71,7 +71,7 @@ func renderActivityMask(lines ...[]pixelPoint) *image.Gray {
 		case 0:
 			// nothing to draw; fall through to the blank canvas
 		case 1:
-			// An isolated point (a one-point activity, or a segment that only touches this
+			// An isolated point (a one-point track, or a segment that only touches this
 			// tile at a single vertex) still deserves a dot of reveal, not nothing.
 			dc.DrawCircle(pts[0].x, pts[0].y, strokeRadiusPx)
 			dc.Fill()
@@ -90,12 +90,12 @@ func renderActivityMask(lines ...[]pixelPoint) *image.Gray {
 	return gray
 }
 
-// minStepPx is the shortest move renderActivityMask draws: a point closer than this to the
+// minStepPx is the shortest move renderTrackMask draws: a point closer than this to the
 // last one drawn is skipped. gg's stroker breaks on segments a small fraction of a pixel long —
 // GPS jitter while standing still, a repeated fix, which at 128 px are hundredths of a pixel —
 // and a single one can leave the whole track undrawn. Half a pixel (~10 m at z14, a tenth of
 // the stroke's width) is clear of that with room to spare and changes nothing visible; a
-// tenth of a pixel still failed a jittery walk (TestActivityMaskSurvivesJitter).
+// tenth of a pixel still failed a jittery walk (TestTrackMaskSurvivesJitter).
 const minStepPx = 0.5
 
 // thinPoints drops every point within minStepPx of the last one kept, keeping the first and
@@ -114,7 +114,7 @@ func thinPoints(pts []pixelPoint) []pixelPoint {
 	return append(out, pts[len(pts)-1])
 }
 
-// compositeFogMask combines several activities' crisp masks into §4.2's coverage mask: a
+// compositeFogMask combines several tracks' crisp masks into §4.2's coverage mask: a
 // true per-pixel max — a once-ridden road and a daily commute converge on full reveal rather
 // than accumulating past it. Sequential source-over drawing of several strokes would come out
 // slightly brighter than a true max at their anti-aliased edges.

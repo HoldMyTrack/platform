@@ -144,7 +144,7 @@ func TestChangeEmailIsPendingUntilConfirmed(t *testing.T) {
 	before, _ := d.email(a)
 	target := "new-" + before
 
-	d.decode(d.do(a, http.MethodPatch, "/v1/auth/email", map[string]string{"email": target}), http.StatusOK, nil)
+	d.decode(d.do(a, http.MethodPatch, "/v2/auth/email", map[string]string{"email": target}), http.StatusOK, nil)
 	if email, verified := d.email(a); email != before || !verified {
 		t.Fatalf("after change: email %q verified %v, want %q still verified", email, verified, before)
 	}
@@ -153,7 +153,7 @@ func TestChangeEmailIsPendingUntilConfirmed(t *testing.T) {
 	}
 
 	token := d.verificationToken(a)
-	if rec := d.do(account{}, http.MethodPost, "/v1/auth/verify-email", map[string]string{"token": token}); rec.Code != http.StatusNoContent {
+	if rec := d.do(account{}, http.MethodPost, "/v2/auth/verify-email", map[string]string{"token": token}); rec.Code != http.StatusNoContent {
 		t.Fatalf("confirming from elsewhere: %d, want 204 and no session", rec.Code)
 	}
 	if email, verified := d.email(a); email != target || !verified {
@@ -168,7 +168,7 @@ func TestChangedAddressLinkSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 	d.srv.mailer = &sentMail{}
 	sender := d.newAccount(false)
 	before, _ := d.email(sender)
-	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "second-" + before}), http.StatusOK, nil)
+	d.decode(d.do(sender, http.MethodPatch, "/v2/auth/email", map[string]string{"email": "second-" + before}), http.StatusOK, nil)
 
 	rec := d.confirmLink(account{}, d.verificationToken(sender))
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/signin?verified" {
@@ -185,7 +185,7 @@ func TestChangedAddressLinkSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 
 	// Opened in a browser signed in to another account: verified, and that browser stays its own.
 	reader := d.newAccount(false)
-	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "third-" + before}), http.StatusOK, nil)
+	d.decode(d.do(sender, http.MethodPatch, "/v2/auth/email", map[string]string{"email": "third-" + before}), http.StatusOK, nil)
 	rec = d.confirmLink(reader, d.verificationToken(sender))
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/signin?verified" {
 		t.Fatalf("link opened in another account's browser: %d to %q, want a redirect to /signin?verified", rec.Code, rec.Header().Get("Location"))
@@ -196,13 +196,13 @@ func TestChangedAddressLinkSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 		}
 	}
 	var me struct{ Email string }
-	d.decode(d.do(reader, http.MethodGet, "/v1/auth/me", nil), http.StatusOK, &me)
+	d.decode(d.do(reader, http.MethodGet, "/v2/auth/me", nil), http.StatusOK, &me)
 	if readerEmail, _ := d.email(reader); me.Email != readerEmail {
 		t.Fatalf("the reader's browser is signed in as %q, want its own account %q", me.Email, readerEmail)
 	}
 
 	// Opened in the account's own browser: it carries on with the session it has.
-	d.decode(d.do(sender, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "fourth-" + before}), http.StatusOK, nil)
+	d.decode(d.do(sender, http.MethodPatch, "/v2/auth/email", map[string]string{"email": "fourth-" + before}), http.StatusOK, nil)
 	rec = d.confirmLink(sender, d.verificationToken(sender))
 	if rec.Code != http.StatusSeeOther || rec.Header().Get("Location") != "/" {
 		t.Fatalf("link opened in the account's own browser: %d to %q, want a redirect to /", rec.Code, rec.Header().Get("Location"))
@@ -212,7 +212,7 @@ func TestChangedAddressLinkSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 			t.Errorf("started a second session for a browser already signed in: %v", c)
 		}
 	}
-	if rec := d.do(sender, http.MethodGet, "/v1/auth/me", nil); rec.Code != http.StatusOK {
+	if rec := d.do(sender, http.MethodGet, "/v2/auth/me", nil); rec.Code != http.StatusOK {
 		t.Errorf("the account's own browser after confirming: %d, want still signed in", rec.Code)
 	}
 }
@@ -232,8 +232,8 @@ func TestVerificationLinkConfirmsOnlyItsOwnAddress(t *testing.T) {
 	}
 	oldToken := d.verificationToken(a)
 
-	d.decode(d.do(a, http.MethodPatch, "/v1/auth/email", map[string]string{"email": "other-" + before}), http.StatusOK, nil)
-	rec := d.do(account{}, http.MethodPost, "/v1/auth/verify-email", map[string]string{"token": oldToken})
+	d.decode(d.do(a, http.MethodPatch, "/v2/auth/email", map[string]string{"email": "other-" + before}), http.StatusOK, nil)
+	rec := d.do(account{}, http.MethodPost, "/v2/auth/verify-email", map[string]string{"token": oldToken})
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("old link: status %d, want 400", rec.Code)
 	}
@@ -247,7 +247,7 @@ func TestChangeEmailToAnotherAccountsAddressIsRefused(t *testing.T) {
 	d.srv.mailer = &sentMail{}
 	a, b := d.newAccount(false), d.newAccount(false)
 	taken, _ := d.email(b)
-	rec := d.do(a, http.MethodPatch, "/v1/auth/email", map[string]string{"email": taken})
+	rec := d.do(a, http.MethodPatch, "/v2/auth/email", map[string]string{"email": taken})
 	if rec.Code != http.StatusConflict {
 		t.Fatalf("status %d, want 409", rec.Code)
 	}
@@ -267,7 +267,7 @@ func TestSignInFailuresAreLimitedPerEmail(t *testing.T) {
 		t.Fatal(err)
 	}
 	login := func(password string) int {
-		return d.do(account{}, http.MethodPost, "/v1/auth/login", map[string]string{"email": email, "password": password}).Code
+		return d.do(account{}, http.MethodPost, "/v2/auth/login", map[string]string{"email": email, "password": password}).Code
 	}
 	if code := login("right-password"); code != http.StatusOK {
 		t.Fatalf("first sign-in: %d", code)
@@ -317,7 +317,7 @@ func TestSignInFailuresAreLimitedPerAddress(t *testing.T) {
 	d := newDBTest(t)
 	login := func(i int) int {
 		body := fmt.Sprintf(`{"email":"nobody-%d-%d@holdmytrack.invalid","password":"wrong-password"}`, time.Now().UnixNano(), i)
-		req := httptest.NewRequest(http.MethodPost, "/v1/auth/login", strings.NewReader(body))
+		req := httptest.NewRequest(http.MethodPost, "/v2/auth/login", strings.NewReader(body))
 		req.RemoteAddr = "198.51.100.77:4321"
 		rec := serveChecked(t, d.srv.ServeHTTP, req)
 		return rec.Code
@@ -364,20 +364,20 @@ func TestFirstVerificationSignsInOnlyTheAccountsOwnBrowser(t *testing.T) {
 	if _, verified := d.email(squatter); !verified {
 		t.Fatal("the address wasn't verified")
 	}
-	if rec := d.do(squatter, http.MethodGet, "/v1/auth/me", nil); rec.Code != http.StatusUnauthorized {
+	if rec := d.do(squatter, http.MethodGet, "/v2/auth/me", nil); rec.Code != http.StatusUnauthorized {
 		t.Errorf("the sign-up's own session after verification elsewhere: %d, want 401", rec.Code)
 	}
 
 	// The JSON endpoint likewise: 204, no session.
 	other := unverified()
-	if rec := d.do(account{}, http.MethodPost, "/v1/auth/verify-email", map[string]any{"token": d.verificationToken(other)}); rec.Code != http.StatusNoContent {
+	if rec := d.do(account{}, http.MethodPost, "/v2/auth/verify-email", map[string]any{"token": d.verificationToken(other)}); rec.Code != http.StatusNoContent {
 		t.Errorf("verify-email from elsewhere: %d, want 204", rec.Code)
 	}
 
 	// The signing-up browser opens its own link: signed in, and its session kept.
 	owner := unverified()
-	d.decode(d.do(owner, http.MethodPost, "/v1/auth/verify-email", map[string]any{"token": d.verificationToken(owner)}), http.StatusOK, nil)
-	if rec := d.do(owner, http.MethodGet, "/v1/auth/me", nil); rec.Code != http.StatusOK {
+	d.decode(d.do(owner, http.MethodPost, "/v2/auth/verify-email", map[string]any{"token": d.verificationToken(owner)}), http.StatusOK, nil)
+	if rec := d.do(owner, http.MethodGet, "/v2/auth/me", nil); rec.Code != http.StatusOK {
 		t.Errorf("the verifying browser's own session: %d, want 200", rec.Code)
 	}
 }
@@ -408,7 +408,7 @@ func TestForgotPasswordAnswersBeforeMailing(t *testing.T) {
 	d.srv.mailer = mail
 	defer close(mail.release)
 
-	req := httptest.NewRequest(http.MethodPost, "/v1/auth/forgot-password", strings.NewReader(`{"email":"`+email+`"}`))
+	req := httptest.NewRequest(http.MethodPost, "/v2/auth/forgot-password", strings.NewReader(`{"email":"`+email+`"}`))
 	req.Header.Set("Content-Type", "application/json")
 	req.RemoteAddr = "198.51.100.31:4321" // the forgot-password limit is per address, and shared by the package's tests
 	rec := httptest.NewRecorder()

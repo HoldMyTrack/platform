@@ -15,13 +15,13 @@ import (
 )
 
 // The admin panel (IMPLEMENTATION.md §4.20, docs/SPEC.md FR-11): every account, and
-// any one account's activities with their ids — rendered on the server like /profile, read-only.
+// any one account's tracks with their ids — rendered on the server like /profile, read-only.
 // Only an account with users.is_admin (granted by the `set-admin` CLI subcommand, nowhere on
 // the web) gets in; everyone else, signed out or not, gets the ordinary 404 page, so the panel
 // doesn't announce that it exists.
 
-// adminActivitiesPerPage is how many activities one page of /admin/users/{id} lists.
-const adminActivitiesPerPage = 100
+// adminTracksPerPage is how many tracks one page of /admin/users/{id} lists.
+const adminTracksPerPage = 100
 
 // adminUsersPerPage is how many accounts one page of /admin/users lists.
 const adminUsersPerPage = 100
@@ -45,9 +45,9 @@ type adminUserRow struct {
 	IsDemo      bool
 	IsAdmin     bool
 	Verified    bool
-	Activities  string
-	// ActivityCount is Activities as a number, for its plural form.
-	ActivityCount int64
+	Tracks      string
+	// TrackCount is Tracks as a number, for its plural form.
+	TrackCount int64
 	// LastSeen is the last UTC day the account made a signed-in request; "" when never recorded.
 	LastSeen string
 	Distance string
@@ -79,15 +79,15 @@ func clientsInUse(web, android, ios *time.Time) adminClients {
 
 // adminUserView is what templates/pages/admin-user.html reads from PageData.Page.
 type adminUserView struct {
-	User       adminUserRow
-	Activities []adminActivityRow
-	// Range is "1–100 of 250"; "" when the account has no activities.
+	User   adminUserRow
+	Tracks []adminTrackRow
+	// Range is "1–100 of 250"; "" when the account has no tracks.
 	Range    string
 	PrevHref string
 	NextHref string
 }
 
-type adminActivityRow struct {
+type adminTrackRow struct {
 	ID        string
 	Started   string
 	Type      string
@@ -174,7 +174,7 @@ func (s *Server) handleAdminUserPage(w http.ResponseWriter, r *http.Request) {
 	}
 	var view adminUserView
 	if err == nil {
-		view, err = s.adminUserActivities(r.Context(), l, user, adminPageParam(r), imperial)
+		view, err = s.adminUserTracks(r.Context(), l, user, adminPageParam(r), imperial)
 	}
 	if err != nil {
 		s.log.Error("admin user page failed", "err", err, "user_id", userID)
@@ -185,7 +185,7 @@ func (s *Server) handleAdminUserPage(w http.ResponseWriter, r *http.Request) {
 }
 
 // adminUsersSQL selects adminUserRow's columns, newest first, for the open accounts whose ids
-// picked selects. Counts and distance are over every activity, totalled only for those: picked
+// picked selects. Counts and distance are over every track, totalled only for those: picked
 // is a subquery so a page's LIMIT applies before the totals, which a join in the same FROM
 // would compute for every account first.
 func adminUsersSQL(picked string) string {
@@ -268,8 +268,8 @@ func (s *Server) adminUserRows(ctx context.Context, l *i18n.Localizer, imperial 
 		u.Clients = clientsInUse(webSeen, androidSeen, iosSeen)
 		loc := adminLocation(u.Timezone)
 		u.SignedUp = created.In(loc).Format("2006-01-02")
-		u.ActivityCount = count
-		u.Activities = l.Int(count)
+		u.TrackCount = count
+		u.Tracks = l.Int(count)
 		u.Distance = web.FormatTotalDistance(l, meters, imperial)
 		if lastSeen != nil {
 			u.LastSeen = lastSeen.In(loc).Format("2006-01-02")
@@ -279,12 +279,12 @@ func (s *Server) adminUserRows(ctx context.Context, l *i18n.Localizer, imperial 
 	return users, rows.Err()
 }
 
-// adminUserActivities is one page of u's activities, newest first — hidden ones included,
+// adminUserTracks is one page of u's tracks, newest first — hidden ones included,
 // marked as such, since the panel is for seeing what's actually stored.
-func (s *Server) adminUserActivities(ctx context.Context, l *i18n.Localizer, u adminUserRow, page int, imperial bool) (adminUserView, error) {
+func (s *Server) adminUserTracks(ctx context.Context, l *i18n.Localizer, u adminUserRow, page int, imperial bool) (adminUserView, error) {
 	view := adminUserView{User: u}
-	total := int(u.ActivityCount)
-	offset, past, prev, next := adminPages(page, total, adminActivitiesPerPage)
+	total := int(u.TrackCount)
+	offset, past, prev, next := adminPages(page, total, adminTracksPerPage)
 	if total == 0 {
 		return view, nil
 	}
@@ -310,13 +310,13 @@ func (s *Server) adminUserActivities(ctx context.Context, l *i18n.Localizer, u a
 		WHERE a.user_id = $1
 		ORDER BY a.started_at DESC, a.id
 		LIMIT $2 OFFSET $3
-	`, u.ID, adminActivitiesPerPage, offset)
+	`, u.ID, adminTracksPerPage, offset)
 	if err != nil {
 		return view, fmt.Errorf("admin: list activities: %w", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
-		var a adminActivityRow
+		var a adminTrackRow
 		var meters float64
 		var seconds int64
 		if err := rows.Scan(&a.ID, &a.Started, &a.Type, &a.Name, &meters, &seconds, &a.Source,
@@ -325,13 +325,13 @@ func (s *Server) adminUserActivities(ctx context.Context, l *i18n.Localizer, u a
 		}
 		a.Distance = web.FormatDistance(l, meters, imperial)
 		a.Duration = adminDuration(seconds)
-		view.Activities = append(view.Activities, a)
+		view.Tracks = append(view.Tracks, a)
 	}
 	if err := rows.Err(); err != nil {
 		return view, fmt.Errorf("admin: list activities: %w", err)
 	}
 
-	view.Range = adminRange(l, offset, len(view.Activities), total)
+	view.Range = adminRange(l, offset, len(view.Tracks), total)
 	if prev {
 		view.PrevHref = adminUserHref(u.ID, page-1)
 	}

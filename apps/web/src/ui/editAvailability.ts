@@ -1,6 +1,6 @@
 /** Why the Edit window's Track or Photos tab can't be used for its tracks, as a message key,
- *  or null. Whether one track allows it is the server's answer (`GET /v1/activities/{id}`'s
- *  `track_edit` and `photos`); the client adds only the rule that depends on the selection. */
+ *  or null. Whether one track allows it is the server's answer (`GET /v2/tracks/{id}`'s
+ *  `route_edit` and `photos`); the client adds only the rule that depends on the selection. */
 import type { TrackDetail } from '../api.ts';
 import type { MessageKey } from '../i18n/en.ts';
 

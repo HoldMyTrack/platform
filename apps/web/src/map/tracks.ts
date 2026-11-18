@@ -48,7 +48,7 @@ export function tracksTileQuery(range: TracksTileRange): string {
   const params = new URLSearchParams();
   if (range.from) params.set('from', range.from);
   if (range.to) params.set('to', range.to);
-  if (range.trip) params.set('story', range.trip);
+  if (range.trip) params.set('trip', range.trip);
   if (range.since) params.set('since', range.since);
   if (tracksVersion > 0) params.set('v', `${pageLoaded}.${tracksVersion}`);
   return params.toString();

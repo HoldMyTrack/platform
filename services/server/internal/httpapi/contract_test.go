@@ -22,13 +22,17 @@ import (
 	"github.com/getkin/kin-openapi/routers/legacy"
 )
 
-// The API contract, api/openapi.yaml with the paths/ and components/ files it refers to, is
+// The API contract, api/v2/openapi.yaml with the paths/ and components/ files it refers to, is
 // enforced here rather than by generating handlers from it: dbTest.do, dbTest.send and
 // serveChecked check every exchange a test makes on a path it describes, so a handler whose real
 // JSON stops matching the contract fails its own tests, and TestContractCoversEveryRoute keeps
-// every route described.
+// every route described. An exchange on /v1 is checked against the frozen /v1 contract instead,
+// which proves v1_edge.go still serves it.
 
-const contractPath = "../../api/openapi.yaml"
+const (
+	contractPath   = "../../api/v2/openapi.yaml"
+	v1ContractPath = "../../api/openapi.yaml"
+)
 
 // newContractLoader reads the contract across its files: openapi.yaml's paths and their shared
 // components live in files of their own.
@@ -38,43 +42,54 @@ func newContractLoader() *openapi3.Loader {
 	return loader
 }
 
-var (
-	contractOnce   sync.Once
-	contractRouter routers.Router
-	contractErr    error
-)
-
-func loadContract() (routers.Router, error) {
-	contractOnce.Do(func() {
-		// Lenient on version bits: ids are any hex UUID, not only RFC 4122 ones.
-		openapi3.DefineStringFormatValidator("uuid", openapi3.NewRegexpFormatValidator(uuidPattern.String()))
-		loader := newContractLoader()
-		doc, err := loader.LoadFromFile(contractPath)
-		if err != nil {
-			contractErr = err
-			return
-		}
-		if err := doc.Validate(loader.Context); err != nil {
-			contractErr = err
-			return
-		}
-		// checkContract matches paths with apiPrefix already cut, which the router can't do
-		// for a relative servers entry.
-		doc.Servers = nil
-		contractRouter, contractErr = legacy.NewRouter(doc)
-	})
-	return contractRouter, contractErr
+type loadedContract struct {
+	router routers.Router
+	err    error
 }
 
-// TestContractIsValid fails on a malformed api/openapi.yaml, with or without a database.
+var (
+	contractsMu sync.Mutex
+	contracts   = map[string]loadedContract{}
+)
+
+// loadContract is the router for the contract at path, read once.
+func loadContract(path string) (routers.Router, error) {
+	contractsMu.Lock()
+	defer contractsMu.Unlock()
+	if c, ok := contracts[path]; ok {
+		return c.router, c.err
+	}
+	// Lenient on version bits: ids are any hex UUID, not only RFC 4122 ones.
+	openapi3.DefineStringFormatValidator("uuid", openapi3.NewRegexpFormatValidator(uuidPattern.String()))
+	var c loadedContract
+	loader := newContractLoader()
+	doc, err := loader.LoadFromFile(path)
+	if err == nil {
+		err = doc.Validate(loader.Context)
+	}
+	if err != nil {
+		c.err = err
+	} else {
+		// checkContract matches paths with the prefix already cut, which the router can't do
+		// for a relative servers entry.
+		doc.Servers = nil
+		c.router, c.err = legacy.NewRouter(doc)
+	}
+	contracts[path] = c
+	return c.router, c.err
+}
+
+// TestContractIsValid fails on a malformed contract, /v2's or /v1's, with or without a database.
 func TestContractIsValid(t *testing.T) {
-	if _, err := loadContract(); err != nil {
-		t.Fatal(err)
+	for _, path := range []string{contractPath, v1ContractPath} {
+		if _, err := loadContract(path); err != nil {
+			t.Errorf("%s: %v", path, err)
+		}
 	}
 }
 
-// TestContractCoversEveryRoute fails when a /v1 route the server registers isn't in
-// api/openapi.yaml, or the file describes one it doesn't register: an undescribed route would
+// TestContractCoversEveryRoute fails when a route the server registers isn't in
+// api/v2/openapi.yaml, or the file describes one it doesn't register: an undescribed route would
 // otherwise go unchecked without anyone noticing. The routes are read from the package's
 // source, every route(method, path) call, so each needs literal arguments.
 func TestContractCoversEveryRoute(t *testing.T) {
@@ -160,13 +175,17 @@ func serveChecked(t *testing.T, h http.HandlerFunc, req *http.Request) *httptest
 // contract violation.
 func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptest.ResponseRecorder) {
 	t.Helper()
-	router, err := loadContract()
-	if err != nil {
-		t.Fatalf("load %s: %v", contractPath, err)
-	}
+	contract := contractPath
 	path, ok := strings.CutPrefix(req.URL.Path, apiPrefix+"/")
 	if !ok {
-		return
+		if path, ok = strings.CutPrefix(req.URL.Path, v1Prefix+"/"); !ok {
+			return
+		}
+		contract = v1ContractPath
+	}
+	router, err := loadContract(contract)
+	if err != nil {
+		t.Fatalf("load %s: %v", contract, err)
 	}
 	probe := req.Clone(context.Background())
 	probe.URL.Path = "/" + path
@@ -184,11 +203,13 @@ func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptes
 		IncludeResponseStatus: true,
 		MultiError:            true,
 	}
-	recordContractHit(req.Method, route.Path, rec.Code)
+	if contract == contractPath {
+		recordContractHit(req.Method, route.Path, rec.Code)
+	}
 	in := &openapi3filter.RequestValidationInput{Request: probe, PathParams: params, Route: route, Options: opts}
 	if rec.Code < 400 {
 		if err := openapi3filter.ValidateRequest(context.Background(), in); err != nil {
-			t.Errorf("contract: request %s %s doesn't match %s:\n%v", req.Method, req.URL.Path, contractPath, err)
+			t.Errorf("contract: request %s %s doesn't match %s:\n%v", req.Method, req.URL.Path, contract, err)
 		}
 	}
 	out := &openapi3filter.ResponseValidationInput{
@@ -200,7 +221,7 @@ func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptes
 	out.SetBodyBytes(rec.Body.Bytes())
 	if err := openapi3filter.ValidateResponse(context.Background(), out); err != nil {
 		t.Errorf("contract: %d response to %s %s doesn't match %s:\n%v\nbody: %s",
-			rec.Code, req.Method, req.URL.Path, contractPath, err, strings.TrimSpace(rec.Body.String()))
+			rec.Code, req.Method, req.URL.Path, contract, err, strings.TrimSpace(rec.Body.String()))
 	}
 }
 

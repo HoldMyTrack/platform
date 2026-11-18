@@ -53,7 +53,7 @@ type RoutePending = { edit: RouteEdit | null; splitAt: number | null };
  * must not change underneath it.
  *
  * Type is TrackTypePicker.tsx — the same searchable picker as Settings' Country and
- * Timezone, listing this account's existing types, but open-ended: activity_type is free
+ * Timezone, listing this account's existing types, but open-ended: track_type is free
  * text, not a controlled vocabulary (§4.7). Picking an existing type is a
  * convenience, never a constraint: typing something nobody has used before offers an "Add" row
  * that saves it exactly as typed, to every checked track. Name is optional — a track
@@ -64,7 +64,7 @@ interface EditTrackWindowProps {
   map: MapLibreMap;
   /** At least one — the checked group, whatever its size. */
   tracks: TrackDetail[];
-  /** Every distinct activity_type already in this account's loaded tracks, with counts —
+  /** Every distinct track_type already in this account's loaded tracks, with counts —
    *  the same facets the Type filter is built from (trackFacets.ts), reused as the Type
    *  picker's list rather than recomputed. */
   knownTypes: TypeFacet[];
@@ -127,8 +127,8 @@ export function EditTrackWindow({
   }, [photoDraft]);
   // A group whose tracks share one type starts on it; a mixed group starts empty ("Mixed
   // types"), and stays that way unless a type is picked — empty keeps each track's own type.
-  const mixedTypes = tracks.some((a) => a.activityType !== tracks[0]!.activityType);
-  const [activityType, setActivityType] = useState(mixedTypes ? '' : tracks[0]!.activityType);
+  const mixedTypes = tracks.some((a) => a.trackType !== tracks[0]!.trackType);
+  const [trackType, setTrackType] = useState(mixedTypes ? '' : tracks[0]!.trackType);
   const [name, setName] = useState(single?.name ?? '');
   const [description, setDescription] = useState(single?.description ?? '');
   const [routePending, setRoutePending] = useState<RoutePending | null>(null);
@@ -158,7 +158,7 @@ export function EditTrackWindow({
   const unsaved =
     !draftIsEmpty(photoDraft) ||
     routePending !== null ||
-    fieldWrites(tracks, single !== null, activityType.trim(), name.trim(), description, written.current).length > 0;
+    fieldWrites(tracks, single !== null, trackType.trim(), name.trim(), description, written.current).length > 0;
   const unsavedRef = useRef(unsaved);
   unsavedRef.current = unsaved;
 
@@ -206,13 +206,13 @@ export function EditTrackWindow({
 
   async function save() {
     // Nothing is written until every tab's input passes (editSave.ts).
-    const problem = saveProblem({ activityType, name, description, mixedTypes, photoDraft });
+    const problem = saveProblem({ trackType, name, description, mixedTypes, photoDraft });
     if (problem) {
       setError(t(problem.key, problem.vars));
       openTab(problem.tab);
       return;
     }
-    const trimmedType = activityType.trim();
+    const trimmedType = trackType.trim();
     const trimmedName = name.trim();
     setSaving(true);
     setError(null);
@@ -357,8 +357,8 @@ export function EditTrackWindow({
             {t('tracks.type')}
           </span>
           <TrackTypePicker
-            value={activityType}
-            onChange={setActivityType}
+            value={trackType}
+            onChange={setTrackType}
             known={knownTypes}
             labelledBy="edit-track-type-label"
             maxLength={MAX_TRACK_TYPE_LEN}

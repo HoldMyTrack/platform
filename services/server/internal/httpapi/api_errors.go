@@ -30,7 +30,7 @@ func writeAPIError(w http.ResponseWriter, message string, status int) {
 }
 
 // httpErrorT sends the message key in the request's language, the key without its "error."
-// prefix as the code: error.photo_no_track is photo_no_track. Renaming a key a client branches
+// prefix as the code: error.photo_no_route is photo_no_route. Renaming a key a client branches
 // on renames its code.
 func httpErrorT(w http.ResponseWriter, r *http.Request, status int, key string, args ...any) {
 	writeError(w, status, errorCodeFromKey(key, status), i18n.Get(requestLang(r)).T(key, args...))
@@ -81,5 +81,5 @@ func statusErrorCode(status int) string {
 
 // isAPIPath reports a path whose errors take this shape rather than a page's.
 func isAPIPath(path string) bool {
-	return strings.HasPrefix(path, apiPrefix+"/") || strings.HasPrefix(path, tilesPrefix+"/")
+	return strings.HasPrefix(path, apiPrefix+"/") || strings.HasPrefix(path, v1Prefix+"/") || strings.HasPrefix(path, tilesPrefix+"/")
 }

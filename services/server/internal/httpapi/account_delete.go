@@ -9,13 +9,13 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/db"
 )
 
-// deleteAccountRequest is DELETE /v1/account's body: the account's own email address, typed
+// deleteAccountRequest is DELETE /v2/account's body: the account's own email address, typed
 // by the person deleting it, as the confirmation.
 type deleteAccountRequest struct {
 	Email string `json:"email"`
 }
 
-// handleDeleteAccount serves `DELETE /v1/account` (SPEC FR-1.12): it closes the caller's
+// handleDeleteAccount serves `DELETE /v2/account` (SPEC FR-1.12): it closes the caller's
 // account and ends the request's session; the worker's sweep removes the data (closeAccount).
 // Behind requireAuth, not requireVerified: an account whose email was never confirmed can be
 // deleted too.

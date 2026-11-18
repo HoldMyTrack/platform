@@ -6,8 +6,8 @@ import (
 	"strings"
 )
 
-// mapArea is a map view, the `bbox` of "Show in this area" (spots_area.go) and of the activity
-// list (activity_list.go), as boxes within −180…180: one, or two when the view crosses the
+// mapArea is a map view, the `bbox` of "Show in this area" (spots_area.go) and of the track
+// list (track_list.go), as boxes within −180…180: one, or two when the view crosses the
 // antimeridian, west[i] to east[i] each, all between south and north.
 type mapArea struct {
 	south, north float64

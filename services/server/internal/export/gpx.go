@@ -14,16 +14,16 @@ import (
 )
 
 // WriteGPX writes points as a one-segment GPX 1.1 track with everything parse.ParseGPX reads
-// back — position, elevation and time — and the activity's type, and nothing else: no creator
+// back — position, elevation and time — and the track's type, and nothing else: no creator
 // device, no author metadata. Coordinates and elevation keep their full precision, so a
 // re-ingest derives the same metrics and trajectory. The demo export (httpapi's
-// ExportDemoActivities) and a user's archive (Build) both write their tracks with it.
-func WriteGPX(w io.Writer, activityType string, points []parse.Point) error {
+// ExportDemoTracks) and a user's archive (Build) both write their tracks with it.
+func WriteGPX(w io.Writer, trackType string, points []parse.Point) error {
 	var b strings.Builder
 	b.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` + "\n")
 	b.WriteString(`<gpx version="1.1" creator="HoldMyTrack" xmlns="http://www.topografix.com/GPX/1/1">` + "\n")
 	b.WriteString("  <trk>\n    <type>")
-	xml.EscapeText(&b, []byte(activityType))
+	xml.EscapeText(&b, []byte(trackType))
 	b.WriteString("</type>\n    <trkseg>\n")
 	for _, p := range points {
 		fmt.Fprintf(&b, `      <trkpt lat="%s" lon="%s">`,

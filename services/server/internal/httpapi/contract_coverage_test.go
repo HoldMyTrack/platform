@@ -11,7 +11,7 @@ import (
 	"testing"
 )
 
-// Every response api/openapi.yaml describes must come out of some test, or its shape is never
+// Every response api/v2/openapi.yaml describes must come out of some test, or its shape is never
 // checked against the handler's JSON. checkContract records each (method, path, status) it
 // validates; after a full run with a database, TestMain fails on a described response no test
 // produced, and on an allowlist entry a test now produces.

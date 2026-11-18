@@ -8,7 +8,7 @@ import { ModalDialog, useDialogAction } from './ModalDialog.tsx';
  * A Trip's Name, required, and optional Description, in one of two uses:
  *
  *  - **Create** (`SPEC.md` FR-13.2) — the Tracks panel toolbar's Create trip, making a Trip
- *    of the checked tracks with one `POST /v1/stories` that carries them too.
+ *    of the checked tracks with one `POST /v2/trips` that carries them too.
  *  - **Edit** (FR-13.6) — a Trips tab folder's pencil, renaming it or changing its description.
  *
  * A ModalDialog that closes itself once the request has succeeded; `onSaved` gets the Trip as the

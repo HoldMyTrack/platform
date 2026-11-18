@@ -8,7 +8,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// maxOverlapSpans bounds one `POST /v1/activities/overlaps` request: what the Android Sync tab
+// maxOverlapSpans bounds one `POST /v2/tracks/overlaps` request: what the Android Sync tab
 // lists, three months of a phone's sessions plus its recordings, is a few hundred at most.
 const maxOverlapSpans = 5000
 
@@ -24,23 +24,23 @@ type overlapsRequest struct {
 }
 
 type overlapJSON struct {
-	Key          string    `json:"key"`
-	ActivityID   string    `json:"activity_id"`
-	Name         string    `json:"name"`
-	ActivityType string    `json:"activity_type"`
-	StartedAt    time.Time `json:"started_at"`
-	Timezone     *string   `json:"timezone"`
+	Key       string    `json:"key"`
+	TrackID   string    `json:"track_id"`
+	Name      string    `json:"name"`
+	TrackType string    `json:"track_type"`
+	StartedAt time.Time `json:"started_at"`
+	Timezone  *string   `json:"timezone"`
 }
 
 type overlapsResponse struct {
 	Overlaps []overlapJSON `json:"overlaps"`
 }
 
-// handleActivityOverlaps answers, for each time span a client is about to offer for import,
-// the activity it overlaps (§4.6, SPEC FR-3.5): the hint that ticking it would make a
+// handleTrackOverlaps answers, for each time span a client is about to offer for import,
+// the track it overlaps (§4.6, SPEC FR-3.5): the hint that ticking it would make a
 // second copy of something the account already has. It decides nothing; the spans not listed
 // overlap nothing.
-func (s *Server) handleActivityOverlaps(w http.ResponseWriter, r *http.Request) {
+func (s *Server) handleTrackOverlaps(w http.ResponseWriter, r *http.Request) {
 	r.Body = http.MaxBytesReader(w, r.Body, maxSyncBodyBytes)
 	var req overlapsRequest
 	if err := decodeJSON(r.Body, &req); err != nil {
@@ -57,7 +57,7 @@ func (s *Server) handleActivityOverlaps(w http.ResponseWriter, r *http.Request) 
 			writeAPIError(w, fmt.Sprintf(`invalid "key", want 1 to %d characters`, maxOverlapKeyLen), http.StatusBadRequest)
 			return
 		}
-		// A missing time decodes as the zero time, which no activity starts at.
+		// A missing time decodes as the zero time, which no track starts at.
 		if sp.Start.IsZero() || sp.End.IsZero() {
 			writeAPIError(w, `a span needs "start" and "end"`, http.StatusBadRequest)
 			return
@@ -74,7 +74,7 @@ func (s *Server) handleActivityOverlaps(w http.ResponseWriter, r *http.Request) 
 	resp := overlapsResponse{Overlaps: make([]overlapJSON, 0, len(found))}
 	for _, o := range found {
 		resp.Overlaps = append(resp.Overlaps, overlapJSON{
-			Key: o.Key, ActivityID: o.ActivityID, Name: o.Name, ActivityType: o.ActivityType,
+			Key: o.Key, TrackID: o.TrackID, Name: o.Name, TrackType: o.TrackType,
 			StartedAt: o.StartedAt, Timezone: o.Timezone,
 		})
 	}

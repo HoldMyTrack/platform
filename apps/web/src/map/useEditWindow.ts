@@ -14,7 +14,7 @@ interface EditWindowState {
   editingId: string | null;
   tab: EditTab;
   setTab: (tab: EditTab) => void;
-  /** The window's tracks in full (`GET /v1/activities/{id}`), with the newest list row seen
+  /** The window's tracks in full (`GET /v2/tracks/{id}`), with the newest list row seen
    *  for each over it; null while closed or while they load. */
   tracks: TrackDetail[] | null;
   routeBlocker: MessageKey | null;

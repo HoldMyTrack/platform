@@ -1,0 +1,351 @@
+auth_signup:
+  post:
+    summary: Create a password account and sign in to it
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "../components/schemas.yaml#/Credentials" }
+    responses:
+      "201": { $ref: "../components/responses.yaml#/Session" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "409": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+auth_login:
+  post:
+    summary: Sign in with email and password
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema: { $ref: "../components/schemas.yaml#/Credentials" }
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Session" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+auth_logout:
+  post:
+    summary: End the current session, if any, and clear its cookie
+    security: []
+    responses:
+      "204":
+        description: Signed out
+auth_me:
+  get:
+    summary: The signed-in account
+    security: []
+    responses:
+      "200":
+        description: The account
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/Account" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "503":
+        description: The session couldn't be checked, which is not a sign-out; try again.
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/Error" }
+auth_demo:
+  post:
+    summary: Start a session on the shared, read-only demo account
+    security: []
+    responses:
+      "201": { $ref: "../components/responses.yaml#/Session" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+auth_forgot-password:
+  post:
+    summary: Email a password reset link, if the address has an account
+    description: The same answer whether or not it has one.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email]
+            properties:
+              email: { type: string }
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Message" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+auth_reset-password:
+  post:
+    summary: Set a new password with a reset link's token, ending every other session, and sign in
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [token, password]
+            properties:
+              token: { type: string }
+              password: { type: string }
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Session" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+auth_verify-email:
+  post:
+    summary: Verify an address with a verification link's token
+    description: Signs in only a caller already signed in to the account; any other caller gets 204 and signs in with the password, or, on a first verification of an account made through Facebook, 403 verify_needs_facebook, whose token stays usable. A first verification also ends the account's other sessions (SPEC FR-1.8).
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [token]
+            properties:
+              token: { type: string }
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Session" }
+      "204":
+        description: Verified, not signed in
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "403": { $ref: "../components/responses.yaml#/Error" }
+      "409": { $ref: "../components/responses.yaml#/Error" }
+auth_verify-code:
+  post:
+    summary: Verify the caller's address with the 6-digit code from its newest verification email
+    description: Works before the account is verified. The caller's session stays signed in; a first verification ends the account's other sessions (SPEC FR-1.8). A wrong code answers code_wrong, the fifth answers code_used_up, and a code past 30 minutes or its tries answers code_expired; a resend sends a new one. Ten wrong codes in an hour for one address, across accounts, answer 429 code_rate_limited.
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [code]
+            properties:
+              code: { type: string }
+    responses:
+      "200":
+        description: The account, verified
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/Account" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "409": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+auth_providers:
+  get:
+    summary: Which sign-in providers this server has configured
+    security: []
+    responses:
+      "200":
+        description: The providers
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [google, facebook, apple]
+              additionalProperties: false
+              properties:
+                google: { type: boolean }
+                facebook: { type: boolean }
+                apple: { type: boolean }
+                google_client_id:
+                  type: string
+                  description: The web client id a native app asks Google for an id_token with; only when google is true.
+auth_google_start:
+  get:
+    summary: Start Sign in with Google in a browser
+    description: A page navigation, not a fetch.
+    security: []
+    parameters:
+      - $ref: "../components/parameters.yaml#/OAuthTZ"
+      - $ref: "../components/parameters.yaml#/OAuthAppChallenge"
+    responses:
+      "302": { $ref: "../components/responses.yaml#/Redirect" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_google_callback:
+  get:
+    summary: Where Google sends the browser back
+    description: >-
+      Redirects to the app with a session cookie, to the sign-in page with ?error=, or for a
+      round trip an app started, to holdmytrack://oauth with ?code= or ?error=.
+    security: []
+    responses:
+      "302": { $ref: "../components/responses.yaml#/Redirect" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_facebook_start:
+  get:
+    summary: Start Sign in with Facebook in a browser
+    description: A page navigation, not a fetch.
+    security: []
+    parameters:
+      - $ref: "../components/parameters.yaml#/OAuthTZ"
+      - $ref: "../components/parameters.yaml#/OAuthAppChallenge"
+      - $ref: "../components/parameters.yaml#/OAuthVerify"
+    responses:
+      "302": { $ref: "../components/responses.yaml#/Redirect" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_facebook_callback:
+  get:
+    summary: Where Facebook sends the browser back; redirects as Google's callback does
+    security: []
+    responses:
+      "302": { $ref: "../components/responses.yaml#/Redirect" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_apple_start:
+  get:
+    summary: Start Sign in with Apple in a browser
+    description: A page navigation, not a fetch.
+    security: []
+    parameters:
+      - $ref: "../components/parameters.yaml#/OAuthTZ"
+      - $ref: "../components/parameters.yaml#/OAuthAppChallenge"
+    responses:
+      "302": { $ref: "../components/responses.yaml#/Redirect" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_apple_callback:
+  post:
+    summary: Where Apple posts the browser back; redirects as Google's callback does
+    description: Apple's own site posts this form, so it's the one write that may carry a foreign Origin, Apple's.
+    security: []
+    requestBody:
+      content:
+        application/x-www-form-urlencoded:
+          schema:
+            type: object
+            properties:
+              code: { type: string }
+              state: { type: string }
+              user:
+                type: string
+                description: JSON with the person's name, sent only on their first authorization.
+              error: { type: string }
+    responses:
+      "302": { $ref: "../components/responses.yaml#/Redirect" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_apple_notifications:
+  post:
+    summary: Apple's server-to-server notifications about Sign in with Apple
+    description: Apple posts these to the URL registered on the App ID; the payload is a JWT Apple signs.
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [payload]
+            properties:
+              payload: { type: string }
+    responses:
+      "200": { description: Received }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_google_token:
+  post:
+    summary: Sign in with a Google id_token a native app got from the platform
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [id_token]
+            properties:
+              id_token: { type: string }
+              tz:
+                type: string
+                description: The device's IANA zone, for a new account.
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Session" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_apple_token:
+  post:
+    summary: Sign in with an authorization code the iOS app got from Sign in with Apple
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [authorization_code]
+            properties:
+              authorization_code: { type: string }
+              name:
+                type: string
+                description: The name the platform gave the app, sent on the first authorization only; for a new account.
+              tz:
+                type: string
+                description: The device's IANA zone, for a new account.
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Session" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Error" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+auth_handoff:
+  post:
+    summary: Redeem the one-time code a browser-tab sign-in handed an app, with the app's PKCE verifier
+    security: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [code, verifier]
+            properties:
+              code: { type: string }
+              verifier: { type: string }
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Session" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Error" }
+auth_resend-verification:
+  post:
+    summary: Email a new verification code and link; works before the account is verified
+    responses:
+      "200": { $ref: "../components/responses.yaml#/Message" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
+auth_email:
+  patch:
+    summary: Change the address of an account that isn't verified yet, and send it a new link
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            type: object
+            additionalProperties: false
+            required: [email]
+            properties:
+              email: { type: string }
+    responses:
+      "200":
+        description: The account as saved
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/Account" }
+      "400": { $ref: "../components/responses.yaml#/Error" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "409": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }

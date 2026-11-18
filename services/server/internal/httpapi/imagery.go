@@ -69,7 +69,7 @@ type imageryResponse struct {
 	Available bool `json:"available"`
 }
 
-// handleMapImagery serves `GET /v1/map/imagery`: whether Satellite is offered now. The web reads
+// handleMapImagery serves `GET /v2/map/imagery`: whether Satellite is offered now. The web reads
 // its imagery from its build, so it asks this at load and every few minutes; native clients read
 // the same answer from the served style.
 func (s *Server) handleMapImagery(w http.ResponseWriter, r *http.Request) {

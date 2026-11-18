@@ -1,0 +1,584 @@
+package httpapi
+
+import (
+	"context"
+	"errors"
+	"net/http"
+	"net/url"
+	"strconv"
+	"time"
+)
+
+// trackSummaryQuery is §4.7's range summary: one query, one row, the aggregate behind
+// the panel's own "1,284 km · 186 tracks · 42 h · 9,120 m up" line. Same filter shape as
+// the list above, deliberately — the totals have to describe exactly the set of tracks
+// the list is showing, which only holds if both read the same filter, and the time is moving
+// time, as the list, Trips and Trends total it.
+//
+// COALESCE to 0 here, unlike the per-row nullability the list preserves: SUM already skips
+// NULL inputs, and a total over zero rows is legitimately zero rather than unknown. The
+// distinction that matters is between "this track recorded no distance" (a row value,
+// null) and "these tracks add up to nothing" (a total, 0).
+var trackSummaryQuery = `
+SELECT COUNT(*),
+       COALESCE(SUM(distance_meters), 0),
+       COALESCE(SUM(COALESCE(moving_seconds, duration_seconds)), 0),
+       COALESCE(SUM(elevation_gain_m), 0)
+FROM activities
+WHERE user_id = $1
+  AND ` + inDateRange("$2", "$3") + `
+  AND ($4::text[] IS NULL OR activity_type = ANY($4))
+  AND ($5::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $5))`
+
+type trackSummaryResponse struct {
+	Count           int64   `json:"count"`
+	DistanceMeters  float64 `json:"distance_meters"`
+	DurationSeconds int64   `json:"duration_seconds"`
+	ElevationGainM  float64 `json:"elevation_gain_m"`
+}
+
+// handleTrackSummary serves §4.7's `GET /v2/tracks/summary`. No cursor and no rows:
+// the whole point is that a client showing totals doesn't have to page through the history
+// to add them up itself.
+func (s *Server) handleTrackSummary(w http.ResponseWriter, r *http.Request) {
+	filter, err := parseTrackFilter(r.URL.Query())
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var resp trackSummaryResponse
+	if err := s.pool.QueryRow(r.Context(), trackSummaryQuery,
+		userIDFromContext(r.Context()), filter.From, filter.To, filter.Types, filter.Trip,
+	).Scan(&resp.Count, &resp.DistanceMeters, &resp.DurationSeconds, &resp.ElevationGainM); err != nil {
+		s.log.Error("activity summary query failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// histogramWindowMonths is the calendar-window mode's window when a caller sends no `days`
+// and no `from`/`to`: a year, a first paint for a caller with nothing else to go on.
+const histogramWindowMonths = 12
+
+// maxHistogramDays bounds the track-day mode's LIMIT. A page is meant to be one strip of
+// bars, not a whole history in one request, and an unbounded `days=` is an unbounded LIMIT.
+const maxHistogramDays = 366
+
+// trackHistogramQuery is §4.7's per-bucket aggregate over a calendar window.
+// Deliberately unfiltered beyond the window, the user and the optional Trip ($5): this chart
+// is the backdrop a selected sub-range is highlighted against, so narrowing it by the same
+// type filter as the list would defeat its purpose. A Trip is different — inside one, the
+// picker's whole world is the Trip's tracks (§4.23).
+//
+// Days with no track are simply absent from the result rather than returned as zeroes —
+// GROUP BY produces no row for them, and a client that has the window's start and end can
+// place what it did get. That keeps the response proportional to how much a user actually
+// recorded rather than to how long the window is.
+//
+// The bucket is each track's own local day (localStartedAt, §4.30), and the window
+// [$2, $3) is in local dates too.
+const trackHistogramQuery = `
+SELECT ` + localStartedAt + `::date AS day,
+       COUNT(*),
+       COALESCE(SUM(distance_meters), 0)
+FROM activities
+WHERE user_id = $1
+  AND ` + localStartedAt + ` >= $2::date
+  AND ` + localStartedAt + ` < $3::date
+  AND ($4::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $4))
+GROUP BY day
+ORDER BY day`
+
+// trackDayPageQuery is the same aggregate paginated by *track-day* rather than by
+// calendar range: the `days` most recent distinct days-with-track, optionally restricted
+// to those strictly before some day. It exists because the date slider has one slot per
+// day-with-track with the empty days removed entirely (apps/web/src/ui/DateRangeSlider.tsx,
+// and the Android app's footer), so "one window of days" is a count of real days, not a width
+// of calendar time. Asking for that with a calendar window would mean the client guessing a
+// window and widening it until enough days came back — several round trips per page over a
+// sparse history, and a guess that is wrong in a different direction for every user. One page
+// here is exactly `days` days, every time.
+//
+// The anchor is a local date like the days themselves, so each track is compared in its
+// own zone; the account's tracks are read through idx_activities_user_time either way.
+const trackDayPageQuery = `
+SELECT ` + localStartedAt + `::date AS day,
+       COUNT(*),
+       COALESCE(SUM(distance_meters), 0)
+FROM activities
+WHERE user_id = $1
+  AND ($2::date IS NULL OR ` + localStartedAt + ` < $2::date)
+  AND ($4::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $4))
+GROUP BY day
+ORDER BY day DESC
+LIMIT $3`
+
+type histogramBucket struct {
+	Date           string  `json:"date"` // YYYY-MM-DD, the local day its tracks happened on
+	Count          int64   `json:"count"`
+	DistanceMeters float64 `json:"distance_meters"`
+}
+
+type trackHistogramResponse struct {
+	Bucket string `json:"bucket"` // "day"
+	// The window the buckets came from, inclusive at both ends. In calendar-window mode it
+	// is whatever was asked for, so a client can lay out the empty days in between; in
+	// track-day mode it is the first and last day the page actually returned, since the
+	// page is defined by a bar count rather than by a window. Both are empty when a page
+	// came back with nothing.
+	From    string            `json:"from"`
+	To      string            `json:"to"`
+	Buckets []histogramBucket `json:"buckets"`
+	// The local day of the account's very first track, omitted when they have none. Not
+	// bounded by From/To — it answers a different question ("how far back is there
+	// anything at all") than the window does, so the client's date slider knows
+	// when it has paged back as far as there is anything to page back to, however far
+	// back `from` currently is.
+	Earliest string `json:"earliest,omitempty"`
+}
+
+// handleTrackHistogram serves §4.7's `GET /v2/tracks/histogram` in two modes, both
+// returning the same body. The filter is deliberately not applied (no `types`) in either —
+// this chart is the backdrop a selected sub-range highlights against, and narrowing it the
+// same way as the list would defeat that. `story` is the exception: both modes, and
+// `earliest`, then cover only that Trip's tracks, since inside a Trip the picker spans
+// the Trip alone (§4.23).
+//
+//   - `?days=N[&before=YYYY-MM-DD]` — track-day pagination: the N most recent distinct
+//     days-with-track, or the N most recent strictly before `before`. This is what the
+//     range picker's strip pages through, one screen of bars per request.
+//   - `?from=&to=` — a calendar window, both optional, defaulting to the trailing
+//     histogramWindowMonths months. Still the endpoint's default behaviour, and still what
+//     a caller laying days out against real elapsed time (§4.8's year grid) wants.
+//
+// There is no `after=` counterpart to `before=`: a client paging this way starts at the
+// newest end and only ever walks backwards, so everything between its anchor and today is
+// already in hand by construction.
+func (s *Server) handleTrackHistogram(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	loc := locationFromContext(r.Context())
+	trip, err := parseTripParam(q)
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	var (
+		buckets []histogramBucket
+		from    string
+		to      string
+	)
+	if q.Get("days") != "" {
+		buckets, err = s.trackDayPage(r, q, trip)
+	} else {
+		buckets, from, to, err = s.trackCalendarWindow(r, q, loc, trip)
+	}
+	if err != nil {
+		s.writeHistogramError(w, r, err)
+		return
+	}
+	if q.Get("days") != "" && len(buckets) > 0 {
+		from, to = buckets[0].Date, buckets[len(buckets)-1].Date
+	}
+
+	earliest, err := s.earliestTrack(r.Context(), userIDFromContext(r.Context()), trip)
+	if err != nil {
+		if clientGone(w, r) {
+			return
+		}
+		s.log.Error("activity earliest-date query failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	resp := trackHistogramResponse{Bucket: "day", From: from, To: to, Buckets: buckets}
+	if earliest != nil {
+		resp.Earliest = earliest.Format(dateLayout)
+	}
+
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// earliestTrack is the local date the account's first track started on — or the
+// Trip's, when trip is set — nil when there is none: the histogram's `earliest`, and how far
+// back the Profile page's year grids go. A date, at midnight UTC.
+func (s *Server) earliestTrack(ctx context.Context, userID string, trip *string) (*time.Time, error) {
+	var earliest *time.Time
+	err := s.pool.QueryRow(ctx,
+		`SELECT MIN(`+localStartedAt+`)::date FROM activities
+		 WHERE user_id = $1
+		   AND ($2::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $2))`,
+		userID, trip,
+	).Scan(&earliest)
+	return earliest, err
+}
+
+// dailyTotals is the histogram's calendar-window query for the local dates [first, end): one
+// bucket per local day with track, ascending, over one Trip's tracks when trip is
+// set — the JSON endpoint's `?from=&to=` mode and the Profile page's year grids both read it.
+func (s *Server) dailyTotals(ctx context.Context, userID string, first, end time.Time, trip *string) ([]histogramBucket, error) {
+	return s.scanHistogramBuckets(ctx, trackHistogramQuery, userID, sqlDate(first), sqlDate(end), trip)
+}
+
+// badRequest marks an error as the client's fault, so the two mode helpers can return plain
+// errors and let one caller decide the status code.
+type badRequest struct{ error }
+
+func (s *Server) writeHistogramError(w http.ResponseWriter, r *http.Request, err error) {
+	var bad badRequest
+	if errors.As(err, &bad) {
+		writeAPIError(w, bad.Error(), http.StatusBadRequest)
+		return
+	}
+	if clientGone(w, r) {
+		return
+	}
+	s.log.Error("activity histogram query failed", "err", err)
+	writeAPIError(w, "internal error", http.StatusInternalServerError)
+}
+
+// trackDayPage is the `?days=N&before=` mode. Buckets come back newest-first from the
+// LIMIT and are reversed here, so every response this endpoint sends is in ascending date
+// order regardless of which mode produced it — a client should not have to check.
+func (s *Server) trackDayPage(r *http.Request, q url.Values, trip *string) ([]histogramBucket, error) {
+	limit, before, err := parseDayPage(q)
+	if err != nil {
+		return nil, err
+	}
+	buckets, err := s.scanHistogramBuckets(r.Context(), trackDayPageQuery, userIDFromContext(r.Context()), before, limit, trip)
+	if err != nil {
+		return nil, err
+	}
+	for i, j := 0, len(buckets)-1; i < j; i, j = i+1, j-1 {
+		buckets[i], buckets[j] = buckets[j], buckets[i]
+	}
+	return buckets, nil
+}
+
+// parseDayPage reads the track-day mode's `days`, capped at maxHistogramDays, and its
+// optional `before` anchor, nil when absent so the query's "$2::date IS NULL OR …" applies.
+func parseDayPage(q url.Values) (int, *string, error) {
+	limit, err := strconv.Atoi(q.Get("days"))
+	if err != nil || limit < 1 {
+		return 0, nil, badRequest{errors.New(`invalid "days", want a positive integer`)}
+	}
+	limit = min(limit, maxHistogramDays)
+	var before *string
+	if v := q.Get("before"); v != "" {
+		if _, err := time.Parse(dateLayout, v); err != nil {
+			return 0, nil, badRequest{errors.New(`invalid "before" date, want YYYY-MM-DD`)}
+		}
+		before = &v
+	}
+	return limit, before, nil
+}
+
+// dateWindow is the calendar window a `from`/`to` query asks for, both inclusive local dates in
+// loc: `to` defaults to today, `from` to histogramWindowMonths before `to`. The histogram's
+// calendar mode and Trends share it.
+func dateWindow(q url.Values, now time.Time, loc *time.Location) (first, last time.Time, err error) {
+	now = now.In(loc)
+	last = time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, loc)
+	if v := q.Get("to"); v != "" {
+		if last, err = time.ParseInLocation(dateLayout, v, loc); err != nil {
+			return first, last, badRequest{errors.New(`invalid "to" date, want YYYY-MM-DD`)}
+		}
+	}
+	first = last.AddDate(0, -histogramWindowMonths, 0)
+	if v := q.Get("from"); v != "" {
+		if first, err = time.ParseInLocation(dateLayout, v, loc); err != nil {
+			return first, last, badRequest{errors.New(`invalid "from" date, want YYYY-MM-DD`)}
+		}
+	}
+	if first.After(last) {
+		return first, last, badRequest{errors.New(`"from" must not be after "to"`)}
+	}
+	// Every bucket in the window is a row: 0001-01-01 to 9999-12-31 would be half a million
+	// weekly ones. 1970 is before any GPS track, and the Android profile asks from it.
+	if earliest := time.Date(1970, 1, 1, 0, 0, 0, 0, loc); first.Before(earliest) {
+		return first, last, badRequest{errors.New(`"from" must be 1970-01-01 or later`)}
+	}
+	if latest := now.AddDate(2, 0, 0); last.After(latest) {
+		return first, last, badRequest{errors.New(`"to" must be within two years from now`)}
+	}
+	return first, last, nil
+}
+
+// trackCalendarWindow is the `?from=&to=` mode: one bucket per day with track in the
+// window, and the window echoed back so the caller can lay out the days that have none.
+func (s *Server) trackCalendarWindow(r *http.Request, q url.Values, loc *time.Location, trip *string) ([]histogramBucket, string, string, error) {
+	first, last, err := dateWindow(q, time.Now(), loc)
+	if err != nil {
+		return nil, "", "", err
+	}
+	end := last.AddDate(0, 0, 1) // exclusive upper bound for the query
+
+	buckets, err := s.dailyTotals(r.Context(), userIDFromContext(r.Context()), first, end, trip)
+	if err != nil {
+		return nil, "", "", err
+	}
+	return buckets, first.Format(dateLayout), last.Format(dateLayout), nil
+}
+
+// scanHistogramBuckets runs either histogram query — they return the same three columns in
+// the same order, and differ only in how they choose which days to return.
+func (s *Server) scanHistogramBuckets(ctx context.Context, query string, args ...any) ([]histogramBucket, error) {
+	rows, err := s.pool.Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	buckets := make([]histogramBucket, 0)
+	for rows.Next() {
+		var day time.Time
+		var b histogramBucket
+		if err := rows.Scan(&day, &b.Count, &b.DistanceMeters); err != nil {
+			return nil, err
+		}
+		b.Date = day.Format(dateLayout)
+		buckets = append(buckets, b)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return buckets, nil
+}
+
+// trackStatsAggregateQuery is count/distance/active-days over an optional [from, to) window
+// — the same three numbers trackSummaryQuery above already computes, minus the `types`
+// filter §4.8's graph has no use for (the grid and its cards describe a whole year, not a
+// narrowed view of one), plus active-days, which nothing existing exposes as a single number:
+// a caller wanting it today would have to count histogram buckets itself.
+const trackStatsAggregateQuery = `
+SELECT COUNT(*),
+       COALESCE(SUM(distance_meters), 0),
+       COUNT(DISTINCT ` + localStartedAt + `::date)
+FROM activities
+WHERE user_id = $1
+  AND ($2::date IS NULL OR ` + localStartedAt + ` >= $2::date)
+  AND ($3::date IS NULL OR ` + localStartedAt + ` < $3::date)`
+
+// trackLongestStreakQuery finds the longest run of consecutive calendar days with at least
+// one track, over the same optional window — a classic gaps-and-islands query, not
+// something any existing query here computes. `day` minus its own row number (as whole days)
+// is constant across a run of consecutive dates and changes at every gap, so grouping by that
+// expression groups exactly the consecutive runs; the largest group is the longest streak.
+const trackLongestStreakQuery = `
+WITH days AS (
+  SELECT DISTINCT ` + localStartedAt + `::date AS day
+  FROM activities
+  WHERE user_id = $1
+    AND ($2::date IS NULL OR ` + localStartedAt + ` >= $2::date)
+    AND ($3::date IS NULL OR ` + localStartedAt + ` < $3::date)
+),
+islands AS (
+  SELECT day - (ROW_NUMBER() OVER (ORDER BY day))::int * INTERVAL '1 day' AS run
+  FROM days
+)
+SELECT COALESCE(MAX(run_length), 0)
+FROM (SELECT COUNT(*) AS run_length FROM islands GROUP BY run) AS runs`
+
+// trackStatsBlock is one of §4.8's two stat-card rows (a selected year, or all-time) — the
+// same four numbers repeat under each year's grid and again as the page's
+// all-time header cards.
+type trackStatsBlock struct {
+	Count             int64   `json:"count"`
+	DistanceMeters    float64 `json:"distance_meters"`
+	ActiveDays        int64   `json:"active_days"`
+	LongestStreakDays int64   `json:"longest_streak_days"`
+}
+
+// trackStats runs both queries above for one optional [from, to) window. Combined, they
+// would compute the window once per CTE anyway, so they stay two.
+func (s *Server) trackStats(ctx context.Context, userID string, from, to *string) (trackStatsBlock, error) {
+	var b trackStatsBlock
+	if err := s.pool.QueryRow(ctx, trackStatsAggregateQuery, userID, from, to).
+		Scan(&b.Count, &b.DistanceMeters, &b.ActiveDays); err != nil {
+		return trackStatsBlock{}, err
+	}
+	if err := s.pool.QueryRow(ctx, trackLongestStreakQuery, userID, from, to).
+		Scan(&b.LongestStreakDays); err != nil {
+		return trackStatsBlock{}, err
+	}
+	return b, nil
+}
+
+type trackGraphStatsResponse struct {
+	Year int `json:"year"`
+	// The requested calendar year's own numbers — repeated under each year's
+	// grid.
+	YearStats trackStatsBlock `json:"year_stats"`
+	// Every track ever recorded, regardless of year — the page's own header cards.
+	AllTime trackStatsBlock `json:"all_time"`
+}
+
+// graphStatsYear is the `year` asked for, or now's when there is none.
+func graphStatsYear(q url.Values, now time.Time) (int, error) {
+	v := q.Get("year")
+	if v == "" {
+		return now.Year(), nil
+	}
+	y, err := strconv.Atoi(v)
+	if err != nil || y < 1 {
+		return 0, errors.New(`invalid "year", want a 4-digit year`)
+	}
+	return y, nil
+}
+
+// handleTrackGraphStats serves §4.8's `GET /v2/tracks/graph-stats?year=YYYY`: the four
+// stat-card numbers (count, distance, active days, longest streak) for one calendar year and
+// for all time. The grid's cells themselves need no new endpoint — they are exactly
+// handleTrackHistogram's existing `?from=&to=` calendar-window mode, year-scoped
+// (`?from=YYYY-01-01&to=YYYY-12-31`), which already returns per-day count/distance buckets and
+// this user's earliest track date for bounding the year switcher.
+//
+// `year` defaults to the account's own current local year when omitted, so a bare request
+// from the graph's first paint (before it knows what to ask for) still gets something
+// sensible back.
+func (s *Server) handleTrackGraphStats(w http.ResponseWriter, r *http.Request) {
+	year, err := graphStatsYear(r.URL.Query(), time.Now().In(locationFromContext(r.Context())))
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	yearStart := sqlDate(time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC))
+	yearEnd := sqlDate(time.Date(year+1, time.January, 1, 0, 0, 0, 0, time.UTC))
+	userID := userIDFromContext(r.Context())
+
+	yearStats, err := s.trackStats(r.Context(), userID, &yearStart, &yearEnd)
+	if err != nil {
+		s.log.Error("activity year-stats query failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	allTime, err := s.trackStats(r.Context(), userID, nil, nil)
+	if err != nil {
+		s.log.Error("activity all-time-stats query failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, trackGraphStatsResponse{Year: year, YearStats: yearStats, AllTime: allTime})
+}
+
+// trackTrendsQuery is docs/SPEC.md FR-8's "trends": count/distance/moving-time/
+// elevation-gain per calendar bucket (week or month), over the [from, to) window. Every bucket
+// the window touches comes back, an empty one as zeroes: generate_series lists them from the
+// bucket holding $3 to the one holding the day before $4, and the account's sums are left-joined
+// onto that list, so a chart drawn one bar per period spans the whole window.
+// $1 (the bucket) is a bound parameter, not string-interpolated — date_trunc accepts its
+// first argument as a plain value, so this is not an injection vector — but the handler
+// still validates it against an allow-list first, so a bad value gets a clean 400 instead
+// of a Postgres error.
+//
+// moving_seconds falls back to duration_seconds per row where it is NULL, so a period of
+// tracks without a moving time isn't undercounted.
+const trackTrendsQuery = `
+WITH sums AS (
+  SELECT date_trunc($1::text, ` + localStartedAt + `)::date AS period,
+         COUNT(*) AS count,
+         COALESCE(SUM(distance_meters), 0) AS distance,
+         COALESCE(SUM(COALESCE(moving_seconds, duration_seconds)), 0) AS moving,
+         COALESCE(SUM(elevation_gain_m), 0) AS gain
+  FROM activities
+  WHERE user_id = $2
+    AND ` + localStartedAt + ` >= $3::date
+    AND ` + localStartedAt + ` < $4::date
+  GROUP BY period
+)
+SELECT b.ts::date, COALESCE(s.count, 0), COALESCE(s.distance, 0), COALESCE(s.moving, 0), COALESCE(s.gain, 0)
+FROM generate_series(date_trunc($1::text, $3::date::timestamp),
+                     date_trunc($1::text, ($4::date - 1)::timestamp),
+                     ('1 ' || $1::text)::interval) AS b(ts)
+LEFT JOIN sums s ON s.period = b.ts::date
+ORDER BY b.ts`
+
+type trendPeriod struct {
+	PeriodStart    string  `json:"period_start"` // YYYY-MM-DD, the bucket's own start day
+	Count          int64   `json:"count"`
+	DistanceMeters float64 `json:"distance_meters"`
+	MovingSeconds  int64   `json:"moving_seconds"`
+	ElevationGainM float64 `json:"elevation_gain_m"`
+}
+
+type trackTrendsResponse struct {
+	Bucket  string        `json:"bucket"` // "week" or "month"
+	From    string        `json:"from"`
+	To      string        `json:"to"`
+	Periods []trendPeriod `json:"periods"`
+}
+
+// trackTrends runs trackTrendsQuery for the local dates [first, end) — the JSON endpoint
+// below and the Profile page's Trends chart both read it. bucket must already be "week" or
+// "month".
+func (s *Server) trackTrends(ctx context.Context, userID, bucket string, first, end time.Time) ([]trendPeriod, error) {
+	rows, err := s.pool.Query(ctx, trackTrendsQuery, bucket, userID, sqlDate(first), sqlDate(end))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	periods := make([]trendPeriod, 0)
+	for rows.Next() {
+		var period time.Time
+		var p trendPeriod
+		if err := rows.Scan(&period, &p.Count, &p.DistanceMeters, &p.MovingSeconds, &p.ElevationGainM); err != nil {
+			return nil, err
+		}
+		p.PeriodStart = period.Format(dateLayout)
+		periods = append(periods, p)
+	}
+	return periods, rows.Err()
+}
+
+// trendBucket is the `bucket` asked for, "week" when there is none.
+func trendBucket(q url.Values) (string, error) {
+	switch b := q.Get("bucket"); b {
+	case "":
+		return "week", nil
+	case "week", "month":
+		return b, nil
+	}
+	return "", errors.New(`invalid "bucket", want "week" or "month"`)
+}
+
+// handleTrackTrends serves `GET /v2/tracks/trends?bucket=week|month&from=&to=`.
+// `from`/`to` default to the trailing histogramWindowMonths months, the same default the
+// calendar-window histogram mode already uses — there's no reason a trend line's default
+// window should be a different length than the graph's.
+func (s *Server) handleTrackTrends(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	bucket, err := trendBucket(q)
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	first, last, err := dateWindow(q, time.Now(), locationFromContext(r.Context()))
+	if err != nil {
+		writeAPIError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	end := last.AddDate(0, 0, 1) // exclusive upper bound, matching trackCalendarWindow
+
+	periods, err := s.trackTrends(r.Context(), userIDFromContext(r.Context()), bucket, first, end)
+	if err != nil {
+		s.log.Error("activity trends query failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Cache-Control", "no-store")
+	writeJSON(w, http.StatusOK, trackTrendsResponse{
+		Bucket:  bucket,
+		From:    first.Format(dateLayout),
+		To:      last.Format(dateLayout),
+		Periods: periods,
+	})
+}

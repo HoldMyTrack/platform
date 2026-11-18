@@ -5,7 +5,7 @@ import { waitingPhotos, type PhotoDraft } from './photoDraft.ts';
 
 /** What `updateTrack` writes — the PATCH endpoint is a full replace of all three. */
 export interface TrackFields {
-  activityType: string;
+  trackType: string;
   name: string;
   description: string;
 }
@@ -19,7 +19,7 @@ export interface TrackFields {
  * ("Mixed types") keeps each track's own type too.
  */
 export function fieldWrites(
-  tracks: readonly Pick<TrackDetail, 'id' | 'activityType' | 'name' | 'description'>[],
+  tracks: readonly Pick<TrackDetail, 'id' | 'trackType' | 'name' | 'description'>[],
   single: boolean,
   type: string,
   name: string,
@@ -28,12 +28,12 @@ export function fieldWrites(
 ): { id: string; fields: TrackFields }[] {
   return tracks.flatMap((track) => {
     const held = written.get(track.id) ?? {
-      activityType: track.activityType,
+      trackType: track.trackType,
       name: track.name ?? '',
       description: track.description ?? '',
     };
-    const fields = single ? { activityType: type, name, description } : { ...held, activityType: type || held.activityType };
-    const same = fields.activityType === held.activityType && fields.name === held.name && fields.description === held.description;
+    const fields = single ? { trackType: type, name, description } : { ...held, trackType: type || held.trackType };
+    const same = fields.trackType === held.trackType && fields.name === held.name && fields.description === held.description;
     return same ? [] : [{ id: track.id, fields }];
   });
 }
@@ -53,13 +53,13 @@ interface SaveProblem {
  * is sent as typed.
  */
 export function saveProblem(form: {
-  activityType: string;
+  trackType: string;
   name: string;
   description: string;
   mixedTypes: boolean;
   photoDraft: PhotoDraft;
 }): SaveProblem | null {
-  const type = form.activityType.trim();
+  const type = form.trackType.trim();
   if (!type && !form.mixedTypes) return { key: 'edit.type_required', tab: 'track' };
   if (type.length > MAX_TRACK_TYPE_LEN) return { key: 'edit.type_too_long', vars: { max: MAX_TRACK_TYPE_LEN }, tab: 'track' };
   if (form.name.trim().length > MAX_TRACK_NAME_LEN) return { key: 'edit.name_too_long', vars: { max: MAX_TRACK_NAME_LEN }, tab: 'track' };

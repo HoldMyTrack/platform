@@ -15,27 +15,27 @@ import (
 // its fields' declared widths, so the stream stays aligned. Developer fields' values are
 // skipped, and CRCs aren't checked. It refuses a file past maxPoints positioned points, 0 for
 // no cap.
-func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
+func parseFIT(r io.Reader, maxPoints int) (Track, error) {
 	br := bufio.NewReader(r)
 
 	hdr := make([]byte, 12)
 	if _, err := io.ReadFull(br, hdr); err != nil {
-		return Activity{}, fmt.Errorf("parse fit: header: %w", err)
+		return Track{}, fmt.Errorf("parse fit: header: %w", err)
 	}
 	headerSize := int(hdr[0])
 	if string(hdr[8:12]) != ".FIT" {
-		return Activity{}, fmt.Errorf("parse fit: missing .FIT signature")
+		return Track{}, fmt.Errorf("parse fit: missing .FIT signature")
 	}
 	dataSize := binary.LittleEndian.Uint32(hdr[4:8])
 	if headerSize > 12 {
 		extra := make([]byte, headerSize-12)
 		if _, err := io.ReadFull(br, extra); err != nil {
-			return Activity{}, fmt.Errorf("parse fit: header CRC bytes: %w", err)
+			return Track{}, fmt.Errorf("parse fit: header CRC bytes: %w", err)
 		}
 	}
 
 	defs := map[byte]*fitDef{}
-	act := Activity{ActivityType: "unknown"}
+	act := Track{TrackType: "unknown"}
 	var read uint32
 
 	const fitEpoch = 631065600 // seconds between Unix epoch and 1989-12-31T00:00:00Z
@@ -43,12 +43,12 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 	for read < dataSize {
 		recHdr, err := br.ReadByte()
 		if err != nil {
-			return Activity{}, fmt.Errorf("parse fit: record header: %w", err)
+			return Track{}, fmt.Errorf("parse fit: record header: %w", err)
 		}
 		read++
 
 		if recHdr&0x80 != 0 {
-			return Activity{}, fmt.Errorf("parse fit: compressed timestamp headers are not supported")
+			return Track{}, fmt.Errorf("parse fit: compressed timestamp headers are not supported")
 		}
 		localType := recHdr & 0x0F
 		isDefinition := recHdr&0x40 != 0
@@ -57,7 +57,7 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 			hasDevFields := recHdr&0x20 != 0
 			def, n, err := readDefinition(br, hasDevFields)
 			if err != nil {
-				return Activity{}, fmt.Errorf("parse fit: definition: %w", err)
+				return Track{}, fmt.Errorf("parse fit: definition: %w", err)
 			}
 			read += n
 			defs[localType] = def
@@ -66,19 +66,19 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 
 		def, ok := defs[localType]
 		if !ok {
-			return Activity{}, fmt.Errorf("parse fit: data message for undefined local type %d", localType)
+			return Track{}, fmt.Errorf("parse fit: data message for undefined local type %d", localType)
 		}
 
 		if def.data == nil {
 			def.data = make([]byte, def.size)
 		}
 		if _, err := io.ReadFull(br, def.data); err != nil {
-			return Activity{}, fmt.Errorf("parse fit: field data: %w", err)
+			return Track{}, fmt.Errorf("parse fit: field data: %w", err)
 		}
 		read += uint32(len(def.data))
 
 		switch def.globalMesgNum {
-		case 18: // session — carries the activity's own sport/sub_sport (fields 5, 6).
+		case 18: // session — carries the track's own sport/sub_sport (fields 5, 6).
 			// A multi-sport file has a session per sport; the last one read wins, since no one
 			// of them is the whole file's type.
 			var sport, subSport byte = 0xFF, 0xFF
@@ -88,7 +88,7 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 			if raw := def.value(6); len(raw) > 0 {
 				subSport = raw[0]
 			}
-			act.ActivityType = sportName(sport, subSport)
+			act.TrackType = sportName(sport, subSport)
 
 		case 20: // record — the point stream
 			// A field's width comes from the file's own definition, so each read checks it
@@ -140,7 +140,7 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 			}
 			if haveLat && haveLon {
 				if maxPoints > 0 && len(act.Points) == maxPoints {
-					return Activity{}, ErrTooManyPoints
+					return Track{}, ErrTooManyPoints
 				}
 				act.Points = append(act.Points, p)
 			}
@@ -151,7 +151,7 @@ func parseFIT(r io.Reader, maxPoints int) (Activity, error) {
 	}
 
 	if len(act.Points) == 0 {
-		return Activity{}, fmt.Errorf("parse fit: %w", ErrNoPoints)
+		return Track{}, fmt.Errorf("parse fit: %w", ErrNoPoints)
 	}
 	return act, nil
 }

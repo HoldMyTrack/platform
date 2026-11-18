@@ -6,7 +6,7 @@
 // it came to is the header's Sync item's, the /sync page, whose red dot this script also keeps
 // — a failure the account hasn't seen there.
 //
-// The server's GET /v1/uploads/active is the list of what's still processing — a phone sync's
+// The server's GET /v2/uploads/active is the list of what's still processing — a phone sync's
 // too — and the count of unseen failures, read every POLL_MS while anything is in flight and
 // every IDLE_MS otherwise. Whenever an import finishes, or a file's upload lands, the menu
 // fires `hmt:imports-changed` on window, which the map listens to (MapView.tsx) to redraw its
@@ -44,7 +44,7 @@
   var alertDot = menu.querySelector('.upload-menu__alert');
 
   var transfers = []; // { id, name, progress, sending } — files still to send, or being sent
-  var active = []; // GET /v1/uploads/active's imports
+  var active = []; // GET /v2/uploads/active's imports
   var unseenFailures = 0;
   var inFlight = -1; // the last count announced; -1 until the first render
   var noteList = []; // { id, text, error } — this page's own messages, dismissed one by one
@@ -178,7 +178,7 @@
 
   function refresh() {
     var read = ++reads;
-    return fetch('/v1/uploads/active', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+    return fetch('/v2/uploads/active', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
       .then(function (res) { return res.ok ? res.json() : null; })
       .then(function (body) {
         if (!body || read < applied) return;
@@ -234,7 +234,7 @@
   function send(file, transfer) {
     return new Promise(function (resolve) {
       var xhr = new XMLHttpRequest();
-      xhr.open('POST', '/v1/activities/upload');
+      xhr.open('POST', '/v2/tracks/upload');
       xhr.withCredentials = true;
       xhr.upload.onprogress = function (event) {
         if (!event.lengthComputable) return;

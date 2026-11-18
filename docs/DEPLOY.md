@@ -153,7 +153,7 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
 - A new `geo.BoundariesKey`: steps 1, 3's `seed-admin-boundaries` and 4. On a database with users, take a backup and turn maintenance mode on first (§7, §11): it re-matches every track in one transaction, and ingest waits on it; the world's outlines took 31 minutes on a dev database capped at the droplet's 2 CPUs and 4 GB, which spilled 570 MB into swap, and the droplet's vCPUs are slower. It also empties Fog's tile cache (`IMPLEMENTATION.md` §3.26): once maintenance is off, run step 3's `build-admin-tiles`.
 - A new `geo.TimezonesKey`: steps 2, 3's `seed-timezones` and 4; a couple of minutes. It logs and skips any zone the database's tz data doesn't know yet: after a newer `postgis/postgis` image, `seed-timezones --force` brings those in. Check: `select count(*) from tz_parts` is non-zero.
 - A change to `services/server/internal/httpapi/demo_data/`: `… run --rm api seed-demo-customer --reset`. A plain re-run leaves seeded tracks as they were.
-- A change to how Fog tiles are drawn (`internal/fog`, `IMPLEMENTATION.md` §4.2): `… run --rm api rerender-coverage`. Add `--masks` when the stroke width, `fog.TileSize`, how a mask is drawn (`fog.renderActivityMask`) or which tiles a route reaches (`internal/tilemath`) changed; that redraws every stored mask first and takes a while. It only queues renders, so the worker must be up.
+- A change to how Fog tiles are drawn (`internal/fog`, `IMPLEMENTATION.md` §4.2): `… run --rm api rerender-coverage`. Add `--masks` when the stroke width, `fog.TileSize`, how a mask is drawn (`fog.renderTrackMask`) or which tiles a route reaches (`internal/tilemath`) changed; that redraws every stored mask first and takes a while. It only queues renders, so the worker must be up.
 
 **Copy demo tracks out of a deployment.** With track ids from the admin panel:
 
@@ -162,7 +162,7 @@ mkdir -p /tmp/demo-export && chmod 777 /tmp/demo-export
 … run --rm -v /tmp/demo-export:/out api export-demo-activities /out <activity-id> <activity-id> ...
 ```
 
-Copy the GPX files into `demo_data/`, `photos/` into `demo_data/photos/`, and merge `manifest.json`'s `activities` into the one there (`httpapi.ExportDemoActivities` says what it writes). Review every route and photo before committing: the repository is public.
+Copy the GPX files into `demo_data/`, `photos/` into `demo_data/photos/`, and merge `manifest.json`'s `tracks` into the one there (`httpapi.ExportDemoTracks` says what it writes). Review every route and photo before committing: the repository is public.
 
 **Load or refresh Spots** (`SPEC.md` FR-14), about once a quarter; until the first load no category in the Places menu shows anything.
 
@@ -266,7 +266,7 @@ sequenceDiagram
 1. `curl https://<your-domain>/healthz` returns `200`, with `version` equal to the deployed short SHA.
 2. In a browser, sign up, upload a `.gpx` file and confirm it appears on the map.
 3. Switch to Fog and zoom out below city zoom: countries with a track show clear. A uniformly fogged world means the outlines are empty: run §6's `seed-admin-boundaries` and hard-refresh.
-4. If satellite imagery is configured, choose Satellite under Overlays: imagery under the roads, with MapTiler's credit. Land and water gone with no imagery means refused tiles: look for a `403` in the network tab (the key or its origins), and check `curl https://<your-domain>/v1/map/style/light` has a `satellite` source.
+4. If satellite imagery is configured, choose Satellite under Overlays: imagery under the roads, with MapTiler's credit. Land and water gone with no imagery means refused tiles: look for a `403` in the network tab (the key or its origins), and check `curl https://<your-domain>/v2/map/style/light` has a `satellite` source.
 5. If Google sign-in is configured, "Continue with Google" lands on the map. `redirect_uri_mismatch` means §4 step 2's URI doesn't match `APP_BASE_URL` + `/v1/auth/google/callback`; "Couldn't sign in with Google" means the callback failed, and `… logs api | grep "google sign-in"` says why.
 6. Sign-in that silently returns to the sign-in screen means `APP_BASE_URL`'s scheme doesn't match the browser's connection (§4).
 

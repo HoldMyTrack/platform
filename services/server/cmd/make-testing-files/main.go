@@ -46,9 +46,9 @@ var sampleZip = []string{
 	"2026-09-19 Radlick Park.gpx", "2026-09-27 Clague Park-2.gpx",
 }
 
-// The single-file samples, each a track not in sampleZip, so uploading one adds an activity.
+// The single-file samples, each a track not in sampleZip, so uploading one adds a track.
 const (
-	westSide    = "2026-10-01 Cleveland s West Side.gpx" // west-side.gpx, and the photos' activity
+	westSide    = "2026-10-01 Cleveland s West Side.gpx" // west-side.gpx, and the photos' track
 	eveningLoop = "2026-10-05 Evening loop.gpx"          // evening-loop.tcx
 	millCreek   = "2026-10-06 Mill Creek Falls.gpx"      // mill-creek-falls.fit
 	clague      = "2026-09-27 Clague Park-2.gpx"         // duplicate.tcx: in sampleZip
@@ -85,7 +85,7 @@ func generate() {
 	write("evening-loop.tcx", tcx(load(eveningLoop), "Biking", true))
 	write("mill-creek-falls.fit", fit(load(millCreek)))
 	// The same outing as the zip's Clague Park walk, without elevation: uploaded, it's a second
-	// activity beside the GPX copy, since nothing is merged on ingest (SPEC.md FR-3.5).
+	// track beside the GPX copy, since nothing is merged on ingest (SPEC.md FR-3.5).
 	write("duplicate.tcx", tcx(load(clague), "Other", false))
 
 	broken := demoFile(playArea)
@@ -118,18 +118,18 @@ func generate() {
 
 // writePhotos re-encodes three of the West Side ride's photos as JPEG, with the capture time
 // the Demo Customer's manifest gives each, so the app places them on west-side.gpx by time
-// alone; and a fourth with a time on no activity, which has to be placed by hand.
+// alone; and a fourth with a time on no track, which has to be placed by hand.
 func writePhotos() {
 	var manifest struct {
-		Activities map[string]struct {
+		Tracks map[string]struct {
 			Photos []struct {
 				File    string `json:"file"`
 				TakenAt string `json:"taken_at"`
 			} `json:"photos"`
-		} `json:"activities"`
+		} `json:"tracks"`
 	}
 	must(json.Unmarshal(read(filepath.Join(demoDir, "manifest.json")), &manifest))
-	photos := manifest.Activities[westSide].Photos
+	photos := manifest.Tracks[westSide].Photos
 	if len(photos) < 4 {
 		log.Fatalf("%s: want at least 4 photos in the manifest, have %d", westSide, len(photos))
 	}
@@ -203,7 +203,7 @@ func withExif(jpg []byte, t time.Time) []byte {
 
 // tcx writes a Garmin Training Center file, the way a Garmin export lays one out: one
 // Activity, one Lap, one Track.
-func tcx(a parse.Activity, sport string, elevation bool) []byte {
+func tcx(a parse.Track, sport string, elevation bool) []byte {
 	var b strings.Builder
 	start := a.Points[0].Time.UTC().Format(time.RFC3339)
 	fmt.Fprintf(&b, `<?xml version="1.0" encoding="UTF-8"?>
@@ -232,10 +232,10 @@ func tcx(a parse.Activity, sport string, elevation bool) []byte {
 	return []byte(b.String())
 }
 
-// fit writes a FIT activity file holding what a watch's would: file_id, a record per point
+// fit writes a FIT track file holding what a watch's would: file_id, a record per point
 // (position, altitude, timestamp) and a session saying the sport. Little-endian throughout;
 // the header and file CRCs are FIT's CRC-16.
-func fit(a parse.Activity) []byte {
+func fit(a parse.Track) []byte {
 	const fitEpoch = 631065600
 	le := binary.LittleEndian
 	var data bytes.Buffer
@@ -254,7 +254,7 @@ func fit(a parse.Activity) []byte {
 		}
 	}
 
-	// file_id: type (0) = activity (4), manufacturer (1) = development (255), time_created (4).
+	// file_id: type (0) = track (4), manufacturer (1) = development (255), time_created (4).
 	define(0, 0, [][3]byte{{0, 1, 0x00}, {1, 2, 0x84}, {4, 4, 0x86}})
 	put(byte(0))
 	put(byte(4))
@@ -330,7 +330,7 @@ func untimed(gpx []byte) []byte {
 
 func demoFile(name string) []byte { return read(filepath.Join(demoDir, name)) }
 
-func load(name string) parse.Activity {
+func load(name string) parse.Track {
 	a, err := parse.ParseGPX(bytes.NewReader(demoFile(name)))
 	if err != nil {
 		log.Fatalf("%s: %v", name, err)

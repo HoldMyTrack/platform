@@ -28,29 +28,29 @@ import (
 // the demo (authInfo.isDemo): read-only and exempt from email verification.
 const DemoCustomerUserID = "22222222-2222-2222-2222-222222222222"
 
-// demo_data/ holds the account's history as raw activity files in any format ingest parses
-// (parse.ByExtensionUpTo: .gpx, .tcx, .fit, .json), plus manifest.json. They are real activities
+// demo_data/ holds the account's history as raw track files in any format ingest parses
+// (parse.ByExtensionUpTo: .gpx, .tcx, .fit, .json), plus manifest.json. They are real tracks
 // on a live deployment, written out as GPX by `export-demo-activities` (demo_export.go)
 // exactly as their owner sees them, and reviewed by hand before being committed.
 //
 //go:embed demo_data
 var demoData embed.FS
 
-// demoManifestFile is demo_data/'s one non-activity file: what the raw files can't carry
-// themselves — per-file overrides (not every file needs one), the account's Stories and its
+// demoManifestFile is demo_data/'s one non-track file: what the raw files can't carry
+// themselves — per-file overrides (not every file needs one), the account's Trips and its
 // Spots captures.
 const demoManifestFile = "manifest.json"
 
-// demoManifest is manifest.json: Activities keyed by filename, Stories naming their
-// activities by filename too, and SpotCaptures.
+// demoManifest is manifest.json: Tracks keyed by filename, Trips naming their
+// tracks by filename too, and SpotCaptures.
 type demoManifest struct {
-	Activities   map[string]demoManifestEntry `json:"activities"`
-	Stories      []demoManifestStory          `json:"stories,omitempty"`
+	Tracks       map[string]demoManifestEntry `json:"tracks"`
+	Trips        []demoManifestTrip           `json:"trips,omitempty"`
 	SpotCaptures []demoManifestCapture        `json:"spot_captures,omitempty"`
 }
 
 // demoManifestCapture is one place the account has captured (§4.25). A capture belongs to the
-// account, not to an activity. The place is named by its OSM key, which, unlike spots.id, is
+// account, not to a track. The place is named by its OSM key, which, unlike spots.id, is
 // the same on every deployment that loaded it. Name is only for someone reading the manifest;
 // the seed ignores it.
 type demoManifestCapture struct {
@@ -60,23 +60,23 @@ type demoManifestCapture struct {
 	CapturedAt time.Time `json:"captured_at"`
 }
 
-// demoManifestStory is one Story the seed gives the account (§4.23): a name, a description,
-// and its activities by filename. Stories are matched by name on a re-run. OpensFirst marks the
-// one Story dated newest, which the Stories tab and the tour open (seedDemoStories).
-type demoManifestStory struct {
+// demoManifestTrip is one Trip the seed gives the account (§4.23): a name, a description,
+// and its tracks by filename. Trips are matched by name on a re-run. OpensFirst marks the
+// one Trip dated newest, which the Trips tab and the tour open (seedDemoTrips).
+type demoManifestTrip struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
-	Activities  []string `json:"activities"`
+	Tracks      []string `json:"tracks"`
 	OpensFirst  bool     `json:"opens_first,omitempty"`
 }
 
-// demoManifestEntry is one file's overrides. Name is the activity's display name — no file
+// demoManifestEntry is one file's overrides. Name is the track's display name — no file
 // parser sets parse.Activity.Name, so without it the seeded row gets the generic
-// "<Type> - <date>" every unnamed activity gets. Type is the activity_type, needed for files
-// that don't carry their own: a synced activity (Health Connect, in-app recording) reports
+// "<Type> - <date>" every unnamed track gets. Type is the activity_type, needed for files
+// that don't carry their own: a synced track (Health Connect, in-app recording) reports
 // its type in the sync request, not inside the JSON payload the export copies out.
-// Description is the activity's free-text description, which no file carries either.
-// Photos are the activity's photos (§4.27), their images in demo_data/photos/.
+// Description is the track's free-text description, which no file carries either.
+// Photos are the track's photos (§4.27), their images in demo_data/photos/.
 type demoManifestEntry struct {
 	Name        string              `json:"name,omitempty"`
 	Type        string              `json:"type,omitempty"`
@@ -85,12 +85,12 @@ type demoManifestEntry struct {
 }
 
 // demoPhotoDir is the demo_data/ subdirectory the photos' images are in — a directory, so
-// demoFiles never mistakes one for an activity file.
+// demoFiles never mistakes one for a track file.
 const demoPhotoDir = "photos"
 
-// demoManifestPhoto is one photo on a demo activity: its resized image and thumbnail as stored
+// demoManifestPhoto is one photo on a demo track: its resized image and thumbnail as stored
 // (files in demoPhotoDir, JPEG or WebP by extension), and the activity_photos fields that
-// aren't the image itself. RouteAt is a moment on the activity's track, which the exported GPX
+// aren't the image itself. RouteAt is a moment on the track's route, which the exported GPX
 // keeps the timestamps of, so it lands on the same spot after a re-ingest.
 type demoManifestPhoto struct {
 	File    string     `json:"file"`
@@ -115,13 +115,13 @@ func demoPhotoContentType(file string) string {
 }
 
 // loadDemoManifest reads demo_data/manifest.json. A missing manifest is an empty one; a
-// manifest naming a file that isn't there fails — an activity entry or a Story's activity
+// manifest naming a file that isn't there fails — a track entry or a Trip's track
 // alike — since that's a typo or a file deleted without its entry, and would otherwise pass
-// silently. So does a Story the API itself would refuse: no name, a name or description over
-// the limit, two Stories with one name (a re-run couldn't tell them apart), or no activities;
+// silently. So does a Trip the API itself would refuse: no name, a name or description over
+// the limit, two Trips with one name (a re-run couldn't tell them apart), or no tracks;
 // and a capture with no place or time, or two of one place (the table keeps one per place).
 func loadDemoManifest(fsys fs.FS, files []string) (demoManifest, error) {
-	manifest := demoManifest{Activities: map[string]demoManifestEntry{}}
+	manifest := demoManifest{Tracks: map[string]demoManifestEntry{}}
 	b, err := fs.ReadFile(fsys, demoManifestFile)
 	if errors.Is(err, fs.ErrNotExist) {
 		return manifest, nil
@@ -132,15 +132,15 @@ func loadDemoManifest(fsys fs.FS, files []string) (demoManifest, error) {
 	if err := json.Unmarshal(b, &manifest); err != nil {
 		return demoManifest{}, fmt.Errorf("%s: %w", demoManifestFile, err)
 	}
-	if manifest.Activities == nil {
-		manifest.Activities = map[string]demoManifestEntry{}
+	if manifest.Tracks == nil {
+		manifest.Tracks = map[string]demoManifestEntry{}
 	}
 	present := make(map[string]bool, len(files))
 	for _, f := range files {
 		present[f] = true
 	}
 	photoFiles := map[string]bool{}
-	for f, entry := range manifest.Activities {
+	for f, entry := range manifest.Tracks {
 		if !present[f] {
 			return demoManifest{}, fmt.Errorf("%s: entry %q has no matching file", demoManifestFile, f)
 		}
@@ -167,26 +167,26 @@ func loadDemoManifest(fsys fs.FS, files []string) (demoManifest, error) {
 	}
 	names := map[string]bool{}
 	opensFirst := 0
-	for _, st := range manifest.Stories {
+	for _, st := range manifest.Trips {
 		if st.OpensFirst {
 			opensFirst++
 		}
 		switch {
 		case opensFirst > 1:
 			return demoManifest{}, fmt.Errorf("%s: story %q: only one story opens first", demoManifestFile, st.Name)
-		case strings.TrimSpace(st.Name) == "" || len([]rune(st.Name)) > maxStoryNameLen:
-			return demoManifest{}, fmt.Errorf("%s: story name %q must be 1–%d characters", demoManifestFile, st.Name, maxStoryNameLen)
-		case len([]rune(st.Description)) > maxStoryDescriptionLen:
-			return demoManifest{}, fmt.Errorf("%s: story %q: description over %d characters", demoManifestFile, st.Name, maxStoryDescriptionLen)
+		case strings.TrimSpace(st.Name) == "" || len([]rune(st.Name)) > maxTripNameLen:
+			return demoManifest{}, fmt.Errorf("%s: story name %q must be 1–%d characters", demoManifestFile, st.Name, maxTripNameLen)
+		case len([]rune(st.Description)) > maxTripDescriptionLen:
+			return demoManifest{}, fmt.Errorf("%s: story %q: description over %d characters", demoManifestFile, st.Name, maxTripDescriptionLen)
 		case names[st.Name]:
 			return demoManifest{}, fmt.Errorf("%s: two stories named %q", demoManifestFile, st.Name)
-		case len(st.Activities) == 0:
-			return demoManifest{}, fmt.Errorf("%s: story %q has no activities", demoManifestFile, st.Name)
+		case len(st.Tracks) == 0:
+			return demoManifest{}, fmt.Errorf("%s: trip %q has no tracks", demoManifestFile, st.Name)
 		}
 		names[st.Name] = true
-		for _, f := range st.Activities {
+		for _, f := range st.Tracks {
 			if !present[f] {
-				return demoManifest{}, fmt.Errorf("%s: story %q: activity %q has no matching file", demoManifestFile, st.Name, f)
+				return demoManifest{}, fmt.Errorf("%s: trip %q: track %q has no matching file", demoManifestFile, st.Name, f)
 			}
 		}
 	}
@@ -206,7 +206,7 @@ func loadDemoManifest(fsys fs.FS, files []string) (demoManifest, error) {
 	return manifest, nil
 }
 
-// demoFiles lists demo_data/'s activity files, sorted, failing on any extension ingest can't
+// demoFiles lists demo_data/'s track files, sorted, failing on any extension ingest can't
 // parse — a stray README or .DS_Store would otherwise fail one by one at ingest time, after
 // the files sorted ahead of it were already seeded.
 func demoFiles(fsys fs.FS) ([]string, error) {
@@ -230,7 +230,7 @@ func demoFiles(fsys fs.FS) ([]string, error) {
 	return names, nil
 }
 
-// SeedDemoCustomer ingests every embedded activity file in demo_data/ into DemoCustomerUserID,
+// SeedDemoCustomer ingests every embedded track file in demo_data/ into DemoCustomerUserID,
 // through the same real pipeline (internal/ingest.Process — parse, persist, Fog mask render) a
 // real upload uses. Meant to run once, out of band (the `seed-demo-customer` CLI subcommand),
 // not per visitor: re-ingesting the whole history on every "Try Demo" click would be far too
@@ -238,7 +238,7 @@ func demoFiles(fsys fs.FS) ([]string, error) {
 // this safe: already-ingested files are skipped, not duplicated.
 //
 // That same skip means a plain re-run never picks up a changed or removed file — reset wipes
-// the account's activities first (resetDemoCustomer), so the seeded history ends up matching
+// the account's tracks first (resetDemoCustomer), so the seeded history ends up matching
 // demo_data/ exactly.
 func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, reset bool) error {
 	fsys, err := fs.Sub(demoData, "demo_data")
@@ -261,8 +261,8 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	}
 
 	var ingested, skipped, failed int
-	// Each file's activity, for the Stories below.
-	activityIDs := make(map[string]string, len(names))
+	// Each file's track, for the Trips below.
+	trackIDs := make(map[string]string, len(names))
 	for _, filename := range names {
 		b, err := fs.ReadFile(fsys, filename)
 		if err != nil {
@@ -280,7 +280,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 			continue
 		}
 
-		entry := manifest.Activities[filename]
+		entry := manifest.Tracks[filename]
 		job := ingest.Job{
 			UserID:        DemoCustomerUserID,
 			Source:        "demo-customer-history",
@@ -288,7 +288,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 			ExternalID:    externalID,
 			RawPayloadKey: rawKey,
 			RawBytes:      int64(len(b)),
-			ActivityType:  entry.Type,
+			TrackType:     entry.Type,
 		}
 		result, err := ingest.Process(ctx, pool, store, job)
 		if err != nil {
@@ -301,7 +301,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		} else {
 			skipped++
 		}
-		activityIDs[filename] = result.ActivityID
+		trackIDs[filename] = result.TrackID
 
 		// Applied after every ingest.Process call, whether it persisted a new row or found
 		// one already there (ON CONFLICT DO NOTHING still returns the existing row's id) — so
@@ -310,20 +310,20 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		if entry.Name != "" || entry.Description != "" {
 			if _, err := pool.Exec(ctx,
 				`UPDATE activities SET name = COALESCE(NULLIF($1, ''), name), description = COALESCE(NULLIF($2, ''), description) WHERE id = $3`,
-				entry.Name, entry.Description, result.ActivityID,
+				entry.Name, entry.Description, result.TrackID,
 			); err != nil {
 				log.Error("demo customer seed: name/description override failed", "err", err, "file", filename)
 				failed++
 			}
 		}
-		if err := seedDemoPhotos(ctx, pool, store, fsys, DemoCustomerUserID, result.ActivityID, entry.Photos); err != nil {
+		if err := seedDemoPhotos(ctx, pool, store, fsys, DemoCustomerUserID, result.TrackID, entry.Photos); err != nil {
 			log.Error("demo customer seed: photos failed", "err", err, "file", filename)
 			failed++
 		}
 	}
 
 	if failed == 0 {
-		if err := seedDemoStories(ctx, pool, DemoCustomerUserID, manifest.Stories, activityIDs); err != nil {
+		if err := seedDemoTrips(ctx, pool, DemoCustomerUserID, manifest.Trips, trackIDs); err != nil {
 			return fmt.Errorf("seed demo customer: %w", err)
 		}
 	}
@@ -335,7 +335,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		log.Warn("demo customer seed: captured place not loaded here, skipped", "osm_type", c.OSMType, "osm_id", c.OSMID, "name", c.Name)
 	}
 
-	log.Info("demo customer seed: done", "ingested", ingested, "already_present", skipped, "failed", failed, "total", len(names), "stories", len(manifest.Stories),
+	log.Info("demo customer seed: done", "ingested", ingested, "already_present", skipped, "failed", failed, "total", len(names), "stories", len(manifest.Trips),
 		"captures", len(manifest.SpotCaptures)-len(missing))
 	if failed > 0 {
 		return fmt.Errorf("seed demo customer: %d of %d files failed", failed, len(names))
@@ -343,12 +343,12 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	return nil
 }
 
-// seedDemoPhotos gives a seeded activity of userID's (the Demo Customer, but a parameter so
+// seedDemoPhotos gives a seeded track of userID's (the Demo Customer, but a parameter so
 // tests can use their own) the manifest's photos: both images into storage where the photo
 // endpoints read them (photoKey, photoThumbKey), and the row. Each photo's id is derived from
 // the account and its file name, so a re-run updates the same row and objects rather than
-// adding a copy, as it does an activity's name.
-func seedDemoPhotos(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, fsys fs.FS, userID, activityID string, photos []demoManifestPhoto) error {
+// adding a copy, as it does a track's name.
+func seedDemoPhotos(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, fsys fs.FS, userID, trackID string, photos []demoManifestPhoto) error {
 	for _, p := range photos {
 		var photoID string
 		if err := pool.QueryRow(ctx, `SELECT md5('demo-photo/' || $1 || '/' || $2)::uuid::text`, userID, p.File).Scan(&photoID); err != nil {
@@ -375,7 +375,7 @@ func seedDemoPhotos(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 				route_at = EXCLUDED.route_at, caption = EXCLUDED.caption, content_type = EXCLUDED.content_type,
 				thumb_content_type = EXCLUDED.thumb_content_type, width = EXCLUDED.width, height = EXCLUDED.height,
 				bytes = EXCLUDED.bytes`,
-			photoID, userID, activityID, p.TakenAt, p.RouteAt, p.Caption,
+			photoID, userID, trackID, p.TakenAt, p.RouteAt, p.Caption,
 			demoPhotoContentType(p.File), demoPhotoContentType(p.Thumb), p.Width, p.Height, size, photoKey(userID, photoID),
 		); err != nil {
 			return fmt.Errorf("photo %q: %w", p.File, err)
@@ -407,20 +407,20 @@ func seedDemoCaptures(ctx context.Context, pool *pgxpool.Pool, userID string, ca
 	return missing, nil
 }
 
-// seedDemoStories gives the account (the Demo Customer, but a parameter so tests can use their
-// own) the manifest's Stories, each matched by name: created if
-// it isn't there, and otherwise given the manifest's description and exactly its activities —
-// so a plain re-run fixes a Story that drifted, as it does an activity's name. A Story the
+// seedDemoTrips gives the account (the Demo Customer, but a parameter so tests can use their
+// own) the manifest's Trips, each matched by name: created if
+// it isn't there, and otherwise given the manifest's description and exactly its tracks —
+// so a plain re-run fixes a Trip that drifted, as it does a track's name. A Trip the
 // manifest doesn't name is left alone; --reset is what removes those. One transaction, and one
-// tile-version bump if any Story's activities changed (§4.2.6): the tracks tiles take a
+// tile-version bump if any Trip's tracks changed (§4.2.6): the tracks tiles take a
 // `story` filter.
 //
-// Each Story is dated the day after its last activity ended, as someone would make one after a
-// trip, rather than the moment of the seed: the Stories are listed newest first, so they then
+// Each Trip is dated the day after its last track ended, as someone would make one after a
+// trip, rather than the moment of the seed: the Trips are listed newest first, so they then
 // read in the order they were visited, not the manifest's. The one that opens first is dated
-// after its own activities and a day after every other Story, so the Stories tab, which opens
+// after its own tracks and a day after every other Trip, so the Trips tab, which opens
 // the newest, opens it.
-func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, stories []demoManifestStory, activityIDs map[string]string) error {
+func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips []demoManifestTrip, trackIDs map[string]string) error {
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return fmt.Errorf("stories: %w", err)
@@ -428,32 +428,32 @@ func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, sto
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 	changed := false
 	first := ""
-	for _, st := range stories {
-		ids := make([]string, 0, len(st.Activities))
-		for _, f := range st.Activities {
-			ids = append(ids, activityIDs[f])
+	for _, st := range trips {
+		ids := make([]string, 0, len(st.Tracks))
+		for _, f := range st.Tracks {
+			ids = append(ids, trackIDs[f])
 		}
-		var storyID string
+		var tripID string
 		err := tx.QueryRow(ctx, `SELECT id FROM stories WHERE user_id = $1 AND name = $2 ORDER BY created_at LIMIT 1`,
-			userID, st.Name).Scan(&storyID)
+			userID, st.Name).Scan(&tripID)
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
 			err = tx.QueryRow(ctx, `INSERT INTO stories (user_id, name, description) VALUES ($1, $2, NULLIF($3, '')) RETURNING id`,
-				userID, st.Name, st.Description).Scan(&storyID)
+				userID, st.Name, st.Description).Scan(&tripID)
 		case err == nil:
 			_, err = tx.Exec(ctx, `UPDATE stories SET description = NULLIF($2, ''), updated_at = NOW() WHERE id = $1 AND description IS DISTINCT FROM NULLIF($2, '')`,
-				storyID, st.Description)
+				tripID, st.Description)
 		}
 		if err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
 		}
-		removed, err := tx.Exec(ctx, `DELETE FROM story_activities WHERE story_id = $1 AND NOT activity_id = ANY($2::uuid[])`, storyID, ids)
+		removed, err := tx.Exec(ctx, `DELETE FROM story_activities WHERE story_id = $1 AND NOT activity_id = ANY($2::uuid[])`, tripID, ids)
 		if err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
 		}
 		added, err := tx.Exec(ctx, `
 			INSERT INTO story_activities (story_id, activity_id) SELECT $1, unnest($2::uuid[])
-			ON CONFLICT DO NOTHING`, storyID, ids)
+			ON CONFLICT DO NOTHING`, tripID, ids)
 		if err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
 		}
@@ -461,18 +461,18 @@ func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, sto
 			changed = true
 		}
 		if st.OpensFirst {
-			first = storyID
+			first = tripID
 		}
 		if _, err := tx.Exec(ctx, `
 			UPDATE stories s SET created_at = d.at, updated_at = d.at
 			FROM (SELECT MAX(started_at + make_interval(secs => COALESCE(duration_seconds, 0))) + INTERVAL '1 day' AS at
 			      FROM activities WHERE id = ANY($2::uuid[])) d
 			WHERE s.id = $1 AND (s.created_at IS DISTINCT FROM d.at OR s.updated_at IS DISTINCT FROM d.at)`,
-			storyID, ids); err != nil {
+			tripID, ids); err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
 		}
 	}
-	// Dated above, by its own activities, so a later date only ever moves it on.
+	// Dated above, by its own tracks, so a later date only ever moves it on.
 	if first != "" {
 		if _, err := tx.Exec(ctx, `
 			UPDATE stories s SET created_at = d.at, updated_at = d.at
@@ -490,10 +490,10 @@ func seedDemoStories(ctx context.Context, pool *pgxpool.Pool, userID string, sto
 	return tx.Commit(ctx)
 }
 
-// resetDemoCustomer deletes every activity the demo account has, with everything derived from
-// them, so the seed that follows starts from nothing. The DB side cascades from activities
-// (tile masks, country/region matches, photos); fog_tiles is per user, not per activity, so
-// it's deleted explicitly — ingest recreates each row a new activity touches, and a row left
+// resetDemoCustomer deletes every track the demo account has, with everything derived from
+// them, so the seed that follows starts from nothing. The DB side cascades from tracks
+// (tile masks, country/region matches, photos); fog_tiles is per user, not per track, so
+// it's deleted explicitly — ingest recreates each row a new track touches, and a row left
 // behind would keep a tile only the old history reached. Object storage has no foreign keys,
 // so its prefixes are swept first, logging a failure and carrying on.
 //
@@ -524,9 +524,9 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	}
 	for _, q := range []string{
 		`DELETE FROM jobs WHERE user_id = $1 AND state = 'pending'`,
-		// Its Stories too: the seed recreates the manifest's, and nothing else should survive.
+		// Its Trips too: the seed recreates the manifest's, and nothing else should survive.
 		`DELETE FROM stories WHERE user_id = $1`,
-		// And its captures, which belong to the account rather than to an activity.
+		// And its captures, which belong to the account rather than to a track.
 		`DELETE FROM spot_captures WHERE user_id = $1`,
 		`DELETE FROM fog_tiles WHERE user_id = $1`,
 		// Its tiles are about to be rendered from scratch; nothing cached before this is its.

@@ -18,10 +18,10 @@ import (
 
 // placeFromFields places a photo from what the client read of its EXIF and where the user put
 // it — `taken_at` or `taken_local`, `lat`/`lon`, `route_at`, read through get — writing the
-// response itself when it can't: 400 for a field that doesn't parse, 409 for an activity with no
+// response itself when it can't: 400 for a field that doesn't parse, 409 for a track with no
 // track, and 422 photo_needs_place when nothing places it. The upload and the placement check
 // (handlePlacePhoto) share it, so the check's answer is the upload's.
-func (s *Server) placeFromFields(w http.ResponseWriter, r *http.Request, activityID string, get func(string) string) (takenAt, routeAt *time.Time, ok bool) {
+func (s *Server) placeFromFields(w http.ResponseWriter, r *http.Request, trackID string, get func(string) string) (takenAt, routeAt *time.Time, ok bool) {
 	ctx := r.Context()
 	clock, err := parsePhotoClock(get("taken_at"), get("taken_local"))
 	if err != nil {
@@ -42,9 +42,9 @@ func (s *Server) placeFromFields(w http.ResponseWriter, r *http.Request, activit
 		}
 		chosen = &t
 	}
-	takenAt, routeAt, err = s.placePhoto(ctx, activityID, clock, locationFromContext(ctx), at, chosen)
+	takenAt, routeAt, err = s.placePhoto(ctx, trackID, clock, locationFromContext(ctx), at, chosen)
 	if errors.Is(err, errPhotoNoTrack) {
-		httpErrorT(w, r, http.StatusConflict, "error.photo_no_track")
+		httpErrorT(w, r, http.StatusConflict, "error.photo_no_route")
 		return nil, nil, false
 	}
 	if err != nil {
@@ -59,9 +59,9 @@ func (s *Server) placeFromFields(w http.ResponseWriter, r *http.Request, activit
 	return takenAt, routeAt, true
 }
 
-// placeRequest is `POST /v1/photos/place`'s body: the upload's placement fields, as JSON.
+// placeRequest is `POST /v2/photos/place`'s body: the upload's placement fields, as JSON.
 type placeRequest struct {
-	ActivityID string   `json:"activity_id"`
+	TrackID    string   `json:"track_id"`
 	TakenAt    string   `json:"taken_at"`
 	TakenLocal string   `json:"taken_local"`
 	Lat        *float64 `json:"lat"`
@@ -73,7 +73,7 @@ type placeResponse struct {
 	TakenAt *time.Time `json:"taken_at"`
 }
 
-// handlePlacePhoto serves `POST /v1/photos/place` — where an upload with these fields would be
+// handlePlacePhoto serves `POST /v2/photos/place` — where an upload with these fields would be
 // placed, storing nothing: `{route_at, taken_at}`, or the upload's own refusals (placeFromFields).
 // The Edit window asks it as photos are picked, so it can ask the user about the ones that need a
 // place and upload all of them only on Save, each with the place it settled on.
@@ -84,12 +84,12 @@ func (s *Server) handlePlacePhoto(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, bodyError(err, errPhotoInvalidJSON.Error()), http.StatusBadRequest)
 		return
 	}
-	if ok, err := s.ownsActivity(r.Context(), userID, req.ActivityID); err != nil {
+	if ok, err := s.ownsTrack(r.Context(), userID, req.TrackID); err != nil {
 		s.log.Error("photo place: activity lookup failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	} else if !ok {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
 	coord := func(v *float64) string {
@@ -99,7 +99,7 @@ func (s *Server) handlePlacePhoto(w http.ResponseWriter, r *http.Request) {
 		return strconv.FormatFloat(*v, 'f', -1, 64)
 	}
 	fields := map[string]string{"taken_at": req.TakenAt, "taken_local": req.TakenLocal, "lat": coord(req.Lat), "lon": coord(req.Lon)}
-	takenAt, routeAt, ok := s.placeFromFields(w, r, req.ActivityID, func(k string) string { return fields[k] })
+	takenAt, routeAt, ok := s.placeFromFields(w, r, req.TrackID, func(k string) string { return fields[k] })
 	if !ok {
 		return
 	}
@@ -144,13 +144,13 @@ func parsePhotoPosition(lonStr, latStr string) (*[2]float64, error) {
 	return &[2]float64{lon, lat}, nil
 }
 
-// trackSpan is an activity's track's first and last moment, epoch seconds; ok is false when
+// trackSpan is a track's route's first and last moment, epoch seconds; ok is false when
 // it has no track.
-func (s *Server) trackSpan(ctx context.Context, activityID string) (start, end float64, ok bool, err error) {
+func (s *Server) trackSpan(ctx context.Context, trackID string) (start, end float64, ok bool, err error) {
 	var m0, m1 *float64
 	err = s.pool.QueryRow(ctx, `
 		SELECT ST_M(ST_StartPoint(trajectory)), ST_M(ST_EndPoint(trajectory)) FROM activities WHERE id = $1
-	`, activityID).Scan(&m0, &m1)
+	`, trackID).Scan(&m0, &m1)
 	if err != nil || m0 == nil || m1 == nil {
 		return 0, 0, false, err
 	}
@@ -162,13 +162,13 @@ func (s *Server) trackSpan(ctx context.Context, activityID string) (start, end f
 // when it falls within the track, photoTimeSlack either side clamped to that end; failing that,
 // its EXIF position places it at the nearest point of the track, if that's within
 // photoSnapMaxM. With none of these, routeAt is nil: the user has to say. errPhotoNoTrack for an
-// activity with no track, which can't hold a photo.
+// track with no route, which can't hold a photo.
 //
-// A wall-clock time with no zone is read in the activity's own zone first (§4.30: where the
+// A wall-clock time with no zone is read in the track's own zone first (§4.30: where the
 // camera's clock was, most likely), or the account's (accountLoc) if that one can't be loaded;
 // if that misses the track, in whichever UTC offset puts it on the track, the nearest to it.
-func (s *Server) placePhoto(ctx context.Context, activityID string, clock photoClock, accountLoc *time.Location, at *[2]float64, chosen *time.Time) (takenAt, routeAt *time.Time, err error) {
-	start, end, hasTrack, err := s.trackSpan(ctx, activityID)
+func (s *Server) placePhoto(ctx context.Context, trackID string, clock photoClock, accountLoc *time.Location, at *[2]float64, chosen *time.Time) (takenAt, routeAt *time.Time, err error) {
+	start, end, hasTrack, err := s.trackSpan(ctx, trackID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -181,7 +181,7 @@ func (s *Server) placePhoto(ctx context.Context, activityID string, clock photoC
 	if clock.local != nil {
 		home := accountLoc
 		var tz string
-		if err := s.pool.QueryRow(ctx, `SELECT timezone FROM activities WHERE id = $1`, activityID).Scan(&tz); err != nil {
+		if err := s.pool.QueryRow(ctx, `SELECT timezone FROM activities WHERE id = $1`, trackID).Scan(&tz); err != nil {
 			return nil, nil, err
 		}
 		if loc, err := zoneinfo.Load(tz); err == nil {
@@ -192,7 +192,7 @@ func (s *Server) placePhoto(ctx context.Context, activityID string, clock photoC
 	if routeAt = photoMoment(start, end, takenAt, chosen); routeAt != nil || at == nil {
 		return takenAt, routeAt, nil
 	}
-	routeAt, err = s.snapToTrack(ctx, activityID, at[0], at[1], photoSnapMaxM)
+	routeAt, err = s.snapToTrack(ctx, trackID, at[0], at[1], photoSnapMaxM)
 	return takenAt, routeAt, err
 }
 
@@ -254,14 +254,14 @@ func resolveWallClock(local time.Time, home *time.Location, onTrack func(time.Ti
 
 // snapToTrack is the moment of the track's point nearest lon/lat, or nil when that point is
 // further than maxM away. ST_InterpolatePoint reads it from the M axis at the nearest point.
-func (s *Server) snapToTrack(ctx context.Context, activityID string, lon, lat float64, maxM float64) (*time.Time, error) {
+func (s *Server) snapToTrack(ctx context.Context, trackID string, lon, lat float64, maxM float64) (*time.Time, error) {
 	var m, dist *float64
 	err := s.pool.QueryRow(ctx, `
 		SELECT ST_InterpolatePoint(trajectory, pt),
 		       ST_Distance(ST_Force2D(trajectory)::geography, pt::geography)
 		FROM activities, ST_SetSRID(ST_MakePoint($2::float8, $3::float8), 4326) AS pt
 		WHERE id = $1 AND trajectory IS NOT NULL
-	`, activityID, lon, lat).Scan(&m, &dist)
+	`, trackID, lon, lat).Scan(&m, &dist)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errPhotoNoTrack
 	}

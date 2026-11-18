@@ -20,10 +20,10 @@ func TestSyncPage(t *testing.T) {
 	if _, err := d.pool.Exec(ctx, `UPDATE users SET imports_seen_at = NOW() - INTERVAL '1 hour' WHERE id = $1`, me.id); err != nil {
 		t.Fatal(err)
 	}
-	activity := d.newActivity(me, testActivity{activityType: "walking", durationSecs: 60,
+	track := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 60,
 		startedAt: time.Date(2026, 5, 2, 10, 0, 0, 0, time.UTC)})
 	var source string
-	if err := d.pool.QueryRow(ctx, `UPDATE activities SET external_id = 'walk-1' WHERE id = $1 RETURNING source`, activity).Scan(&source); err != nil {
+	if err := d.pool.QueryRow(ctx, `UPDATE activities SET external_id = 'walk-1' WHERE id = $1 RETURNING source`, track).Scan(&source); err != nil {
 		t.Fatal(err)
 	}
 	externalID := "walk-1"
@@ -39,7 +39,7 @@ func TestSyncPage(t *testing.T) {
 		t.Fatalf("GET /sync: %d", rec.Code)
 	}
 	body := rec.Body.String()
-	for _, want := range []string{"morning-walk.gpx", "broken.gpx", `href="/?activity=` + activity + `&amp;day=2026-05-02"`} {
+	for _, want := range []string{"morning-walk.gpx", "broken.gpx", `href="/?activity=` + track + `&amp;day=2026-05-02"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page is missing %q", want)
 		}
@@ -49,7 +49,7 @@ func TestSyncPage(t *testing.T) {
 	}
 
 	var resp activeImportsResponse
-	d.decode(d.do(me, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	if resp.UnseenFailures != 0 {
 		t.Errorf("unseen failures after opening /sync: %d, want 0", resp.UnseenFailures)
 	}

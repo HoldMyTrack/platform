@@ -11,7 +11,7 @@ import (
 )
 
 // A track whose points imply more than 1 km/s, a GPS jump or a clock glitch, ingests, and an
-// edit that makes it faster still is saved: no stored column bounds an activity's speed.
+// edit that makes it faster still is saved: no stored column bounds a track's speed.
 func TestFastTrackIngestsAndEdits(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	ctx := context.Background()
@@ -33,7 +33,7 @@ func TestFastTrackIngestsAndEdits(t *testing.T) {
 	// The middle point moved 50 km further out: two 50 km segments a second each.
 	middle := time.Date(2026, 5, 1, 10, 0, 1, 0, time.UTC).UnixMilli()
 	edit := map[string]any{"move": map[int64][2]float64{middle: {10, 50.5}}}
-	d.decode(d.do(me, http.MethodPost, "/v1/activities/"+res.ActivityID+"/track-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)
+	d.decode(d.do(me, http.MethodPost, "/v2/tracks/"+res.TrackID+"/route-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)
 	var payload []byte
 	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_track' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
 		t.Fatal(err)
@@ -42,11 +42,11 @@ func TestFastTrackIngestsAndEdits(t *testing.T) {
 	if err := json.Unmarshal(payload, &job); err != nil {
 		t.Fatal(err)
 	}
-	if err := ingest.ProcessTrackEdit(ctx, d.pool, d.srv.store, job); err != nil {
+	if err := ingest.ProcessRouteEdit(ctx, d.pool, d.srv.store, job); err != nil {
 		t.Fatalf("edit implying 50 km/s: %v", err)
 	}
 	var meters float64
-	if err := d.pool.QueryRow(ctx, `SELECT distance_meters FROM activities WHERE id = $1`, res.ActivityID).Scan(&meters); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT distance_meters FROM activities WHERE id = $1`, res.TrackID).Scan(&meters); err != nil {
 		t.Fatal(err)
 	}
 	if meters < 90_000 {

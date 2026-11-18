@@ -78,7 +78,7 @@ func TestPagesRenderSignedOut(t *testing.T) {
 	}
 }
 
-// TestSampleFiles: the sample activities the web and Android end-to-end suites upload are
+// TestSampleFiles: the sample tracks the web and Android end-to-end suites upload are
 // served, and nothing else answers at /testing.
 func TestSampleFiles(t *testing.T) {
 	s := newPagesTestServer(t)
@@ -241,7 +241,7 @@ func TestAuthFormsRequireSameOrigin(t *testing.T) {
 // another site — inline scripts and type sniffing.
 func TestResponsesCarrySecurityHeaders(t *testing.T) {
 	s := newPagesTestServer(t)
-	for _, path := range []string{"/signin", "/v1/auth/me", "/no-such-page"} {
+	for _, path := range []string{"/signin", "/v2/auth/me", "/no-such-page"} {
 		rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodGet, path, nil))
 		h := rec.Header()
 		if !strings.Contains(h.Get("Content-Security-Policy"), "script-src 'self';") || !strings.Contains(h.Get("Content-Security-Policy"), "frame-ancestors 'none'") || h.Get("X-Frame-Options") != "DENY" || h.Get("X-Content-Type-Options") != "nosniff" {
@@ -255,7 +255,7 @@ func TestResponsesCarrySecurityHeaders(t *testing.T) {
 func TestAPIBodiesAreBounded(t *testing.T) {
 	s := newPagesTestServer(t)
 	body := `{"email":"` + strings.Repeat("a", maxJSONBodyBytes) + `@example.com","password":"long-enough"}`
-	rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodPost, "/v1/auth/login", strings.NewReader(body)))
+	rec := serveChecked(t, s.ServeHTTP, httptest.NewRequest(http.MethodPost, "/v2/auth/login", strings.NewReader(body)))
 	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "invalid request body") {
 		t.Fatalf("status %d: %s", rec.Code, rec.Body.String())
 	}
@@ -276,7 +276,7 @@ func TestAPIWritesRefuseForeignOrigins(t *testing.T) {
 		{"https://app.example", http.StatusBadRequest},
 		{"", http.StatusBadRequest},
 	} {
-		req := httptest.NewRequest(http.MethodPost, "/v1/auth/login", strings.NewReader("not json"))
+		req := httptest.NewRequest(http.MethodPost, "/v2/auth/login", strings.NewReader("not json"))
 		req.Header.Set("Content-Type", "text/plain")
 		if tc.origin != "" {
 			req.Header.Set("Origin", tc.origin)
@@ -419,10 +419,10 @@ func TestSignInOffersProvidersOnlyWhenConfigured(t *testing.T) {
 		rec := httptest.NewRecorder()
 		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 		body := rec.Body.String()
-		if !strings.Contains(body, `href="/v1/auth/google/start"`) || !strings.Contains(body, "Continue with Google") {
+		if !strings.Contains(body, `href="/v2/auth/google/start"`) || !strings.Contains(body, "Continue with Google") {
 			t.Errorf("%s: no Google button with Google configured", path)
 		}
-		if !strings.Contains(body, `href="/v1/auth/facebook/start"`) || !strings.Contains(body, "Continue with Facebook") {
+		if !strings.Contains(body, `href="/v2/auth/facebook/start"`) || !strings.Contains(body, "Continue with Facebook") {
 			t.Errorf("%s: no Facebook button with Facebook configured", path)
 		}
 		// The browser's timezone rides along for an account a provider creates (FR-1.9, FR-1.10).
@@ -434,7 +434,7 @@ func TestSignInOffersProvidersOnlyWhenConfigured(t *testing.T) {
 	bare := newPagesTestServer(t)
 	rec := httptest.NewRecorder()
 	bare.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/signin", nil))
-	if body := rec.Body.String(); strings.Contains(body, "/v1/auth/google/start") || strings.Contains(body, "/v1/auth/facebook/start") {
+	if body := rec.Body.String(); strings.Contains(body, "/v2/auth/google/start") || strings.Contains(body, "/v2/auth/facebook/start") {
 		t.Error("provider buttons shown with no provider configured")
 	}
 }
@@ -479,7 +479,7 @@ func TestNotFound(t *testing.T) {
 	if rec.Code != http.StatusNotFound || !strings.Contains(rec.Body.String(), "Page not found") || !strings.Contains(rec.Body.String(), `class="page-header"`) {
 		t.Errorf("/no-such-page: status %d, want the 404 page with the shared header", rec.Code)
 	}
-	for _, path := range []string{"/v1/no-such-endpoint", "/tiles/v1/nope/1/2/3"} {
+	for _, path := range []string{"/v2/no-such-endpoint", "/tiles/v1/nope/1/2/3"} {
 		rec := httptest.NewRecorder()
 		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
 		if rec.Code != http.StatusNotFound || strings.Contains(rec.Body.String(), "<html") {

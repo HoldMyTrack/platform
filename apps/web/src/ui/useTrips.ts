@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { listTrips, type Trip } from '../api.ts';
 
 export interface TripsState {
-  /** Newest first (`created_at`), as `GET /v1/stories` returns them. */
+  /** Newest first (`created_at`), as `GET /v2/trips` returns them. */
   trips: Trip[];
   /** A list fetched since the tab last opened is in hand. */
   ready: boolean;
@@ -17,7 +17,7 @@ export interface TripsState {
   reload: () => void;
 }
 
-/** Reader for `GET /v1/stories`, the Trips tab's list (`SPEC.md` FR-13.6). Fetched each time
+/** Reader for `GET /v2/trips`, the Trips tab's list (`SPEC.md` FR-13.6). Fetched each time
  *  the tab opens (`enabled`), so a Trip made or changed elsewhere — Create trip included — is
  *  there without a reload. */
 export function useTrips(enabled: boolean): TripsState {

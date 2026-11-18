@@ -11,9 +11,9 @@ import (
 // parseTCX streams Trackpoint elements, refusing a file past maxPoints positioned points, 0
 // for no cap. Garmin Training Center XML nests position and altitude under a Trackpoint —
 // heart rate too, which is not read (VISION.md §1.1).
-func parseTCX(r io.Reader, maxPoints int) (Activity, error) {
+func parseTCX(r io.Reader, maxPoints int) (Track, error) {
 	dec := xml.NewDecoder(r)
-	act := Activity{ActivityType: "unknown"}
+	act := Track{TrackType: "unknown"}
 
 	// cur is set only between a Trackpoint's start and end, so it is what says an element is
 	// inside one. path is only for the innermost element's name: scanning it for "Trackpoint"
@@ -28,7 +28,7 @@ func parseTCX(r io.Reader, maxPoints int) (Activity, error) {
 			break
 		}
 		if err != nil {
-			return Activity{}, fmt.Errorf("parse tcx: %w", err)
+			return Track{}, fmt.Errorf("parse tcx: %w", err)
 		}
 
 		switch t := tok.(type) {
@@ -38,7 +38,7 @@ func parseTCX(r io.Reader, maxPoints int) (Activity, error) {
 			case "Activity":
 				for _, a := range t.Attr {
 					if a.Name.Local == "Sport" {
-						act.ActivityType = strings.ToLower(a.Value)
+						act.TrackType = strings.ToLower(a.Value)
 					}
 				}
 			case "Trackpoint":
@@ -81,7 +81,7 @@ func parseTCX(r io.Reader, maxPoints int) (Activity, error) {
 				// meridian, a line across the map.
 				if haveLat && haveLon {
 					if maxPoints > 0 && len(act.Points) == maxPoints {
-						return Activity{}, ErrTooManyPoints
+						return Track{}, ErrTooManyPoints
 					}
 					act.Points = append(act.Points, *cur)
 				}
@@ -91,7 +91,7 @@ func parseTCX(r io.Reader, maxPoints int) (Activity, error) {
 	}
 
 	if len(act.Points) == 0 {
-		return Activity{}, fmt.Errorf("parse tcx: %w", ErrNoPoints)
+		return Track{}, fmt.Errorf("parse tcx: %w", ErrNoPoints)
 	}
 	return act, nil
 }

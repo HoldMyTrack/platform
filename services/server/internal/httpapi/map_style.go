@@ -71,7 +71,7 @@ func (s *Server) handleMapStyle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleMapLayers serves `GET /v1/map/layers?flavor=` (ADR-0048): every layer HoldMyTrack draws
+// handleMapLayers serves `GET /v2/map/layers?flavor=` (ADR-0048): every layer HoldMyTrack draws
 // over the basemap, at the account's tile version, for a native client to apply beside the style.
 // Per account, so private and behind the session; it changes with a deploy or the tile version,
 // and the ETag is built from those alone, so a client revalidating it costs one query and no body.

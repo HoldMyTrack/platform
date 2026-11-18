@@ -27,7 +27,7 @@ const metersPerFoot = 0.3048
 // Unit labels and number separators come from the page's language (l): "12.3 km" in English,
 // "12,3 км" in Russian.
 
-// FormatDistance is one day's or one activity's distance, one decimal: "12.3 km" / "7.6 mi".
+// FormatDistance is one day's or one track's distance, one decimal: "12.3 km" / "7.6 mi".
 func FormatDistance(l *i18n.Localizer, meters float64, imperial bool) string {
 	if imperial {
 		return l.T("unit.distance.mi", "v", l.Float(meters/metersPerMile, 1))
@@ -35,7 +35,7 @@ func FormatDistance(l *i18n.Localizer, meters float64, imperial bool) string {
 	return l.T("unit.distance.km", "v", l.Float(meters/1000, 1))
 }
 
-// FormatTotalDistance is a sum over many activities: one decimal below 10, whole numbers
+// FormatTotalDistance is a sum over many tracks: one decimal below 10, whole numbers
 // with thousands separators above — "8.4 km", "1,234 km".
 func FormatTotalDistance(l *i18n.Localizer, meters float64, imperial bool) string {
 	v, key := meters/1000, "unit.distance.km"
@@ -62,7 +62,7 @@ func FormatElevation(l *i18n.Localizer, meters float64, imperial bool) string {
 	return l.T("unit.elevation.m", "v", l.Int(int64(math.Round(meters))))
 }
 
-// FormatDuration is a time as the Activities panel shows it, apps/web/src/ui/formatParts.ts's
+// FormatDuration is a time as the Tracks panel shows it, apps/web/src/ui/formatParts.ts's
 // durationParts: "3h 41m", "27m", "45s".
 func FormatDuration(l *i18n.Localizer, seconds int64) string {
 	h, m := seconds/3600, seconds%3600/60

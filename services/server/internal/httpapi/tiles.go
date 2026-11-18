@@ -2,6 +2,7 @@ package httpapi
 
 import (
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -12,7 +13,7 @@ import (
 // tracksQuery is IMPLEMENTATION.md §4.3 verbatim, with three changes: user_id
 // is the authenticated caller (userIDFromContext — requireAuth, server.go), from/to/types/story
 // each become "$n IS NULL OR ..." so an absent query param means "no filter" instead of
-// requiring the caller to pass an explicit wide-open range, and a Pending activity
+// requiring the caller to pass an explicit wide-open range, and a Pending track
 // (edit_pending, §4.7.7) is left out — its trajectory is the pre-reprocess one, and it comes
 // back once the reprocess lands.
 //
@@ -47,8 +48,8 @@ FROM (
 
 const dateLayout = "2006-01-02"
 
-// parseSince reads the tracks tile's optional `since`, an RFC 3339 moment: only activities
-// starting at or after it. The web sends the start of the oldest activity its area list holds
+// parseSince reads the tracks tile's optional `since`, an RFC 3339 moment: only tracks
+// starting at or after it. The web sends the start of the oldest track its area list holds
 // while that list is cut at its cap (docs/SPEC.md FR-5.11), so a low-zoom tile over a long
 // history carries about the listed tracks rather than every one; the newest 1,000 in view are
 // exactly the tracks in view starting at or after it. Nil when absent; a 400 answered otherwise.
@@ -85,7 +86,7 @@ func tileCoords(w http.ResponseWriter, r *http.Request, ext string) (z, x, y int
 }
 
 // handleTracksTile serves §4.3's live MVT query. Unlike fog, tracks are never precomputed:
-// they have to answer filters (date range, activity type) that can't be baked into a raster
+// they have to answer filters (date range, track type) that can't be baked into a raster
 // ahead of time, so this runs the query per request rather than reading a stored tile.
 //
 // Registered as "GET /tiles/v1/tracks/{z}/{x}/{y}", with ".mvt" trimmed from the last segment
@@ -96,9 +97,9 @@ func (s *Server) handleTracksTile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// The same from/to/types/story shape §4.7's listing endpoints parse — one parser, so the
+	// The same from/to/types/trip shape §4.7's listing endpoints parse — one parser, so the
 	// "absent means no restriction" convention can't drift between the map and the list.
-	filter, err := parseActivityFilter(r.URL.Query())
+	filter, err := parseTrackFilter(tileQuery(r.URL.Query()))
 	if err != nil {
 		writeAPIError(w, err.Error(), http.StatusBadRequest)
 		return
@@ -110,7 +111,7 @@ func (s *Server) handleTracksTile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var tile []byte
-	err = s.pool.QueryRow(r.Context(), tracksQuery, z, x, y, userIDFromContext(r.Context()), filter.From, filter.To, filter.Types, filter.Story, since).Scan(&tile)
+	err = s.pool.QueryRow(r.Context(), tracksQuery, z, x, y, userIDFromContext(r.Context()), filter.From, filter.To, filter.Types, filter.Trip, since).Scan(&tile)
 	if err != nil {
 		if clientGone(w, r) {
 			return
@@ -122,11 +123,21 @@ func (s *Server) handleTracksTile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// A tile with no matching activities scans as a zero-length (non-nil) []byte, verified
+	// A tile with no matching tracks scans as a zero-length (non-nil) []byte, verified
 	// directly against a live instance — ST_AsMVT still returns one row over zero input
 	// rows, just with an empty bytea, not NULL and not an error. Writing zero bytes with a
 	// 200 is the correct "no data here" response; MapLibre treats it as an empty tile.
 	w.Header().Set("Content-Type", "application/vnd.mapbox-vector-tile")
 	setTileCacheControl(w, r)
 	_, _ = w.Write(tile)
+}
+
+// tileQuery is a tile's query with the installed apps' `story` taken as `trip`: tiles keep their
+// path when the API moves to /v2, so v1_edge.go never sees them.
+func tileQuery(q url.Values) url.Values {
+	if v := q.Get("story"); v != "" && q.Get("trip") == "" {
+		q.Set("trip", v)
+	}
+	q.Del("story")
+	return q
 }

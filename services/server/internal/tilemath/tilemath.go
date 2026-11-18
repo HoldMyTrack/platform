@@ -30,7 +30,7 @@ func WorldPixel(lon, lat float64, zoom int, tileSize float64) (x, y float64) {
 // strokeRadiusPx-wide, then featherPx-blurred line, not an infinitesimal one. A segment that
 // runs within marginPx of a tile edge has part of that drawn line geometrically inside the
 // neighboring tile even though the segment itself never crosses over — without this, that
-// neighbor is never rendered for the activity and gg's rasterizer silently clips the overflow
+// neighbor is never rendered for the track and gg's rasterizer silently clips the overflow
 // at the canvas edge instead.
 //
 // It works on the segment's exact pixel coordinates, one tile column at a time: the part of

@@ -33,10 +33,10 @@ var goldenSizes = []struct {
 }
 
 // sevenChecked is docs' example: seven checked, the last two under "+ 2 more".
-func sevenChecked() []Activity {
-	walk := Activity{Type: "walk", DistanceMeters: f(1770), MovingSeconds: s(1620), ElevationGainM: f(0)}
-	ride := Activity{Type: "ride", DistanceMeters: f(39429), MovingSeconds: s(7500), ElevationGainM: f(341)}
-	return []Activity{hike(), ride, walk, hike(), ride, walk, hike()}
+func sevenChecked() []Track {
+	walk := Track{Type: "walk", DistanceMeters: f(1770), MovingSeconds: s(1620), ElevationGainM: f(0)}
+	ride := Track{Type: "ride", DistanceMeters: f(39429), MovingSeconds: s(7500), ElevationGainM: f(341)}
+	return []Track{hike(), ride, walk, hike(), ride, walk, hike()}
 }
 
 func TestRenderGolden(t *testing.T) {

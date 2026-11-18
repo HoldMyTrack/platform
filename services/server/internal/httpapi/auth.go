@@ -30,7 +30,7 @@ const sessionCookieName = "holdmytrack_session"
 const sessionTTL = 30 * 24 * time.Hour
 
 // demoSessionTTL bounds how long a no-signup demo session (VISION.md §8.2) stays signed in
-// before needing a fresh `POST /v1/auth/demo` call — the persistent DemoCustomerUserID
+// before needing a fresh `POST /v2/auth/demo` call — the persistent DemoCustomerUserID
 // (demo_presets.go) it points at never itself expires or gets purged, only this session
 // cookie does. Long enough to try the app and share a link same day.
 const demoSessionTTL = 24 * time.Hour
@@ -156,7 +156,7 @@ func (s *Server) loadAuthResponse(ctx context.Context, userID string) (authRespo
 		// ?v= is a cache-busting param, not a real query param the endpoint reads — it just
 		// needs to change whenever the underlying image does, so a browser that cached the
 		// previous avatar at the old URL never mistakes it for the new one.
-		avatarURL = fmt.Sprintf("/v1/account/avatar?v=%d", avatarUpdatedAt.Unix())
+		avatarURL = fmt.Sprintf(apiPrefix+"/account/avatar?v=%d", avatarUpdatedAt.Unix())
 	}
 	return authResponse{
 		Email:         email,
@@ -292,7 +292,7 @@ func normalizeEmail(raw string) (string, error) {
 	return email, nil
 }
 
-// handleSignup serves `POST /v1/auth/signup`. Always a plain new account, whether or not the
+// handleSignup serves `POST /v2/auth/signup`. Always a plain new account, whether or not the
 // caller holds a demo session: every demo session shares the one DemoCustomerUserID
 // (demo_presets.go), so there is nothing per-session to keep (docs/SPEC.md FR-2.3). The new
 // account starts unverified and gets a verification email; requireVerified gates on that.
@@ -401,7 +401,7 @@ func (s *Server) sendVerificationEmail(ctx context.Context, userID, email, lang 
 	return s.mailer.Send(ctx, email, l.T("email.verify.subject", "code", code), l.T("email.verify.body", "code", code, "link", link))
 }
 
-// handleLogin serves `POST /v1/auth/login`.
+// handleLogin serves `POST /v2/auth/login`.
 func (s *Server) handleLogin(w http.ResponseWriter, r *http.Request) {
 	req, err := decodeAuthRequest(r)
 	if err != nil {
@@ -485,7 +485,7 @@ var (
 	signInFailuresByIP    = newFixedWindowLimiter(50, 15*time.Minute)
 )
 
-// handleLogout serves `POST /v1/auth/logout` — deletes the session server-side (not just
+// handleLogout serves `POST /v2/auth/logout` — deletes the session server-side (not just
 // clearing the cookie), so a captured-but-not-yet-expired token stops working immediately.
 // Reads the session id via sessionIDFromRequest (cookie or bearer token), not r.Cookie
 // directly, so a mobile caller presenting only Authorization: Bearer actually revokes its
@@ -513,7 +513,7 @@ func (s *Server) endSession(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// handleMe serves `GET /v1/auth/me` — how the frontend learns whether a session cookie it's
+// handleMe serves `GET /v2/auth/me` — how the frontend learns whether a session cookie it's
 // already holding is still valid, and whose it is, on first load (App.tsx).
 func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 	userID, ok, err := s.currentUserID(r)
@@ -538,7 +538,7 @@ func (s *Server) handleMe(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// handleDemoStart serves `POST /v1/auth/demo`, VISION.md §8.2's no-signup look around: a
+// handleDemoStart serves `POST /v2/auth/demo`, VISION.md §8.2's no-signup look around: a
 // session on the one shared, pre-seeded DemoCustomerUserID (demo_presets.go), read-only
 // (requireNotDemo). One shared row rather than one per visitor, which would re-ingest the demo's
 // whole history each time; handleSignup never reuses it, so a demo account can't become a real

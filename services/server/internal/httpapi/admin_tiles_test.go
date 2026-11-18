@@ -20,7 +20,7 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 	ctx := context.Background()
 	at := [2]float64{-24.75, -44.5} // lon, lat: open ocean in the South Atlantic
 
-	// Two countries side by side, each a region of its own, the account's activity in the west.
+	// Two countries side by side, each a region of its own, the account's track in the west.
 	stamp := time.Now().UnixNano()
 	var visited, unvisited, region, eastRegion int
 	if err := d.pool.QueryRow(ctx, `
@@ -83,13 +83,13 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 	})
 
 	me := d.newAccount(false) // deleted, with its matches, before the outlines above
-	activity := d.newActivity(me, testActivity{activityType: "walking", at: &at})
+	track := d.newTrack(me, testTrack{trackType: "walking", at: &at})
 	for _, s := range []struct {
 		sql  string
 		args []any
 	}{
-		{`INSERT INTO activity_country VALUES ($1, $2)`, []any{activity, visited}},
-		{`INSERT INTO activity_region VALUES ($1, $2)`, []any{activity, region}},
+		{`INSERT INTO activity_country VALUES ($1, $2)`, []any{track, visited}},
+		{`INSERT INTO activity_region VALUES ($1, $2)`, []any{track, region}},
 	} {
 		if _, err := d.pool.Exec(ctx, s.sql, s.args...); err != nil {
 			t.Fatal(err)
@@ -246,8 +246,8 @@ func TestCityTileMergesThePlacesNotBeenInBelowItsBand(t *testing.T) {
 	})
 
 	me := d.newAccount(false) // deleted, with its matches, before the outlines above
-	activity := d.newActivity(me, testActivity{activityType: "walking", at: &at})
-	if _, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2), ($1, $3)`, activity, west, speck); err != nil {
+	track := d.newTrack(me, testTrack{trackType: "walking", at: &at})
+	if _, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2), ($1, $3)`, track, west, speck); err != nil {
 		t.Fatal(err)
 	}
 

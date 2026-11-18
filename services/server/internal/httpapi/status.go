@@ -14,9 +14,9 @@ type statusResponse struct {
 	Error  string `json:"error,omitempty"`
 }
 
-// handleUploadStatus serves `GET /v1/uploads/{external_id}`: what an upload's "enqueued" answer
-// resolved to, from the caller's own latest ingest job for that id. The job, not the activities
-// table, since a failed job leaves no activity, so "failed" and "never uploaded" would read alike.
+// handleUploadStatus serves `GET /v2/uploads/{external_id}`: what an upload's "enqueued" answer
+// resolved to, from the caller's own latest ingest job for that id. The job, not the tracks
+// table, since a failed job leaves no track, so "failed" and "never uploaded" would read alike.
 // Only the caller's: an upload's id is its file's SHA-256, which would otherwise tell anyone
 // holding a file whether another account uploaded it.
 func (s *Server) handleUploadStatus(w http.ResponseWriter, r *http.Request) {

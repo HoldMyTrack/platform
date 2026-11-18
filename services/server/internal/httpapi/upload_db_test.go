@@ -33,7 +33,7 @@ func (d *dbTest) uploadRaw(as account, name string, data []byte) *httptest.Respo
 	part, _ := mw.CreateFormFile("file", name)
 	part.Write(data)
 	mw.Close()
-	return d.send(as, http.MethodPost, "/v1/activities/upload", mw.FormDataContentType(), body.Bytes())
+	return d.send(as, http.MethodPost, "/v2/tracks/upload", mw.FormDataContentType(), body.Bytes())
 }
 
 func (d *dbTest) uploadFile(as account, name string, data []byte) uploadResponse {
@@ -69,7 +69,7 @@ func (d *dbTest) latestIngestJob(as account) ingest.Job {
 	return j
 }
 
-// An ingest cut off after its activity row commits isn't "already processed": uploading the
+// An ingest cut off after its track row commits isn't "already processed": uploading the
 // file again enqueues it, and the job finishes what the first one didn't.
 func TestInterruptedIngestResumes(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
@@ -92,7 +92,7 @@ func TestInterruptedIngestResumes(t *testing.T) {
 		`UPDATE activities SET ingest_complete = false WHERE id = $1`,
 		`DELETE FROM activity_tile_masks WHERE activity_id = $1`,
 	} {
-		if _, err := d.pool.Exec(ctx, q, res.ActivityID); err != nil {
+		if _, err := d.pool.Exec(ctx, q, res.TrackID); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -101,7 +101,7 @@ func TestInterruptedIngestResumes(t *testing.T) {
 		t.Fatalf("re-upload of an unfinished ingest: %q", resp.Status)
 	}
 	res2, err := ingest.Process(ctx, d.pool, d.srv.store, d.latestIngestJob(me))
-	if err != nil || !res2.Persisted || res2.ActivityID != res.ActivityID {
+	if err != nil || !res2.Persisted || res2.TrackID != res.TrackID {
 		t.Fatalf("resumed ingest: %+v, %v", res2, err)
 	}
 	var complete bool
@@ -109,7 +109,7 @@ func TestInterruptedIngestResumes(t *testing.T) {
 	if err := d.pool.QueryRow(ctx, `
 		SELECT a.ingest_complete,
 		       (SELECT count(*) FROM activity_tile_masks WHERE activity_id = a.id)
-		FROM activities a WHERE a.id = $1`, res.ActivityID).Scan(&complete, &masks); err != nil {
+		FROM activities a WHERE a.id = $1`, res.TrackID).Scan(&complete, &masks); err != nil {
 		t.Fatal(err)
 	}
 	if !complete || masks == 0 {
@@ -126,7 +126,7 @@ func TestOversizedFileUploadIsRefused(t *testing.T) {
 	part, _ := mw.CreateFormFile("file", "huge.gpx")
 	part.Write(make([]byte, maxUploadBytes+1))
 	mw.Close()
-	if rec := d.send(me, http.MethodPost, "/v1/activities/upload", mw.FormDataContentType(), body.Bytes()); rec.Code != http.StatusRequestEntityTooLarge {
+	if rec := d.send(me, http.MethodPost, "/v2/tracks/upload", mw.FormDataContentType(), body.Bytes()); rec.Code != http.StatusRequestEntityTooLarge {
 		t.Fatalf("status %d, want 413", rec.Code)
 	}
 }
@@ -156,20 +156,20 @@ func TestUploadsPastTheHourlyLimitAreRefused(t *testing.T) {
 
 // A job's status is its owner's to read: another account asking after the same file (the
 // same external_id, its SHA-256) learns nothing.
-func TestActivityStatusIsPerAccount(t *testing.T) {
+func TestTrackStatusIsPerAccount(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me, other := d.newAccount(false), d.newAccount(false)
 	resp := d.uploadFile(me, "ride.gpx", []byte(resumeGPX))
 
 	var mine, theirs statusResponse
-	d.decode(d.do(me, http.MethodGet, "/v1/uploads/"+resp.ExternalID, nil), http.StatusOK, &mine)
-	d.decode(d.do(other, http.MethodGet, "/v1/uploads/"+resp.ExternalID, nil), http.StatusOK, &theirs)
+	d.decode(d.do(me, http.MethodGet, "/v2/uploads/"+resp.ExternalID, nil), http.StatusOK, &mine)
+	d.decode(d.do(other, http.MethodGet, "/v2/uploads/"+resp.ExternalID, nil), http.StatusOK, &theirs)
 	if mine.Status != "processing" || theirs.Status != "unknown" {
 		t.Fatalf("owner sees %q, another account %q; want processing, unknown", mine.Status, theirs.Status)
 	}
 }
 
-// A synced activity's external_id becomes part of an object key and of two VARCHAR(255)
+// A synced track's external_id becomes part of an object key and of two VARCHAR(255)
 // columns, so one that could nest the key or overflow them is rejected up front.
 func TestSyncRejectsAnUnsafeExternalID(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
@@ -181,10 +181,10 @@ func TestSyncRejectsAnUnsafeExternalID(t *testing.T) {
 	ids := []string{"../other", "a/b", strings.Repeat("x", 201), "3f2c9a1e-7b4d-4e8a-9c1f-2b6d8e0a4c57"}
 	var acts []map[string]any
 	for _, id := range ids {
-		acts = append(acts, map[string]any{"external_id": id, "activity_type": "walk", "points": points})
+		acts = append(acts, map[string]any{"external_id": id, "track_type": "walk", "points": points})
 	}
-	var resp syncActivitiesResponse
-	d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", map[string]any{"source": "healthconnect", "activities": acts}), http.StatusOK, &resp)
+	var resp syncTracksResponse
+	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", map[string]any{"source": "healthconnect", "tracks": acts}), http.StatusOK, &resp)
 	want := []string{"rejected", "rejected", "rejected", "enqueued"}
 	for i, r := range resp.Results {
 		if r.Status != want[i] {
@@ -193,17 +193,17 @@ func TestSyncRejectsAnUnsafeExternalID(t *testing.T) {
 	}
 }
 
-// An activity route given an id that isn't a UUID answers 404, not the 500 Postgres's refusal
+// A track route given an id that isn't a UUID answers 404, not the 500 Postgres's refusal
 // to parse it used to become.
-func TestActivityRoutesRefuseMalformedIDs(t *testing.T) {
+func TestTrackRoutesRefuseMalformedIDs(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	for _, tc := range []struct{ method, path string }{
-		{http.MethodPatch, "/v1/activities/not-a-uuid"},
-		{http.MethodDelete, "/v1/activities/not-a-uuid"},
-		{http.MethodGet, "/v1/activities/not-a-uuid/track-metrics"},
-		{http.MethodGet, "/v1/activities/not-a-uuid/track-points"},
-		{http.MethodPost, "/v1/activities/not-a-uuid/track-edit"},
+		{http.MethodPatch, "/v2/tracks/not-a-uuid"},
+		{http.MethodDelete, "/v2/tracks/not-a-uuid"},
+		{http.MethodGet, "/v2/tracks/not-a-uuid/route-metrics"},
+		{http.MethodGet, "/v2/tracks/not-a-uuid/route-points"},
+		{http.MethodPost, "/v2/tracks/not-a-uuid/route-edit"},
 	} {
 		if rec := d.do(me, tc.method, tc.path, map[string]any{}); rec.Code != http.StatusNotFound {
 			t.Errorf("%s %s: %d, want 404", tc.method, tc.path, rec.Code)
@@ -237,7 +237,7 @@ func TestPrivateLocationLimitHoldsUnderConcurrency(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			d.do(me, http.MethodPost, "/v1/private-locations", map[string]any{"lat": 10 + float64(i)*0.01, "lon": 20, "radius_m": 200})
+			d.do(me, http.MethodPost, "/v2/private-locations", map[string]any{"lat": 10 + float64(i)*0.01, "lon": 20, "radius_m": 200})
 		}(i)
 	}
 	wg.Wait()
@@ -279,7 +279,7 @@ func TestIngestDropsImpossiblePoints(t *testing.T) {
 	var maxLat float64
 	if err := d.pool.QueryRow(context.Background(), `
 		SELECT ST_NPoints(a.trajectory), ST_YMax(a.trajectory)
-		FROM activities a WHERE a.id = $1`, res.ActivityID).Scan(&points, &maxLat); err != nil {
+		FROM activities a WHERE a.id = $1`, res.TrackID).Scan(&points, &maxLat); err != nil {
 		t.Fatal(err)
 	}
 	if points != 2 || maxLat > 90 {
@@ -291,20 +291,20 @@ func TestIngestDropsImpossiblePoints(t *testing.T) {
 func TestSyncRefusesTimelineSource(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me := d.newAccount(false)
-	body := map[string]any{"source": "timeline", "activities": []map[string]any{{
-		"external_id":   "seg-1777629600-1777630200",
-		"activity_type": "driving",
+	body := map[string]any{"source": "timeline", "tracks": []map[string]any{{
+		"external_id": "seg-1777629600-1777630200",
+		"track_type":  "driving",
 		"points": []map[string]any{
 			{"lat": 50.0, "lon": 10.0, "time": "2026-05-01T10:00:00Z"},
 			{"lat": 50.01, "lon": 10.01, "time": "2026-05-01T10:05:00Z"},
 		},
 	}}}
-	if code := d.do(me, http.MethodPost, "/v1/sync/activities", body).Code; code != http.StatusBadRequest {
+	if code := d.do(me, http.MethodPost, "/v2/sync/tracks", body).Code; code != http.StatusBadRequest {
 		t.Errorf("status %d, want 400", code)
 	}
 }
 
-// A sync request answers without touching object storage: each new activity's job carries its
+// A sync request answers without touching object storage: each new track's job carries its
 // raw payload inline, already-ingested ones are found in one query, and the worker's
 // PromoteRaw moves the bytes to the raw key and clears them from the row.
 func TestSyncEnqueuesRawPayloadsInline(t *testing.T) {
@@ -317,13 +317,13 @@ func TestSyncEnqueuesRawPayloadsInline(t *testing.T) {
 		{"lat": 50.001, "lon": 10.001, "time": "2026-05-01T10:01:00Z"},
 		{"lat": 50.002, "lon": 10.002, "time": "2026-05-01T10:02:00Z"},
 	}
-	sync := func(ids ...string) []syncActivityResult {
+	sync := func(ids ...string) []syncTrackResult {
 		var acts []map[string]any
 		for _, id := range ids {
-			acts = append(acts, map[string]any{"external_id": id, "activity_type": "walk", "points": points})
+			acts = append(acts, map[string]any{"external_id": id, "track_type": "walk", "points": points})
 		}
-		var resp syncActivitiesResponse
-		d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", map[string]any{"source": "healthconnect", "activities": acts}), http.StatusOK, &resp)
+		var resp syncTracksResponse
+		d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", map[string]any{"source": "healthconnect", "tracks": acts}), http.StatusOK, &resp)
 		return resp.Results
 	}
 
@@ -359,7 +359,7 @@ func TestSyncEnqueuesRawPayloadsInline(t *testing.T) {
 		t.Fatal(err)
 	}
 	var rawBytes *int64
-	if err := d.pool.QueryRow(ctx, `SELECT raw_bytes FROM activities WHERE id = $1`, res.ActivityID).Scan(&rawBytes); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT raw_bytes FROM activities WHERE id = $1`, res.TrackID).Scan(&rawBytes); err != nil {
 		t.Fatal(err)
 	}
 	if rawBytes == nil || *rawBytes != int64(len(stored)) {
@@ -378,8 +378,8 @@ func TestSyncEnqueuesRawPayloadsInline(t *testing.T) {
 	}
 }
 
-// `POST /v1/sync/known` answers which of a phone's sessions the account has: ingested or still
-// queued, and no longer once the activity is deleted. Only the asker's own, only that source.
+// `POST /v2/sync/known` answers which of a phone's sessions the account has: ingested or still
+// queued, and no longer once the track is deleted. Only the asker's own, only that source.
 func TestSyncKnownAnswersWhatTheAccountHas(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me := d.newAccount(false)
@@ -392,13 +392,13 @@ func TestSyncKnownAnswersWhatTheAccountHas(t *testing.T) {
 	sync := func(as account, source string, ids ...string) {
 		var acts []map[string]any
 		for _, id := range ids {
-			acts = append(acts, map[string]any{"external_id": id, "activity_type": "walk", "points": points})
+			acts = append(acts, map[string]any{"external_id": id, "track_type": "walk", "points": points})
 		}
-		d.decode(d.do(as, http.MethodPost, "/v1/sync/activities", map[string]any{"source": source, "activities": acts}), http.StatusOK, nil)
+		d.decode(d.do(as, http.MethodPost, "/v2/sync/tracks", map[string]any{"source": source, "tracks": acts}), http.StatusOK, nil)
 	}
 	ask := func(ids ...string) syncKnownResponse {
 		var resp syncKnownResponse
-		d.decode(d.do(me, http.MethodPost, "/v1/sync/known", map[string]any{"source": "healthconnect", "external_ids": ids}), http.StatusOK, &resp)
+		d.decode(d.do(me, http.MethodPost, "/v2/sync/known", map[string]any{"source": "healthconnect", "external_ids": ids}), http.StatusOK, &resp)
 		slices.Sort(resp.Known)
 		slices.Sort(resp.Processing)
 		return resp
@@ -436,7 +436,7 @@ func TestSyncKnownAnswersWhatTheAccountHas(t *testing.T) {
 		t.Fatalf("failed job: %+v, want neither known nor processing", got)
 	}
 
-	if rec := d.do(me, http.MethodDelete, "/v1/activities/"+res.ActivityID, nil); rec.Code != http.StatusNoContent && rec.Code != http.StatusOK {
+	if rec := d.do(me, http.MethodDelete, "/v2/tracks/"+res.TrackID, nil); rec.Code != http.StatusNoContent && rec.Code != http.StatusOK {
 		t.Fatalf("delete: %d %s", rec.Code, rec.Body.String())
 	}
 	if got, want := known("ingested", "queued"), []string{"queued"}; !slices.Equal(got, want) {
@@ -447,12 +447,12 @@ func TestSyncKnownAnswersWhatTheAccountHas(t *testing.T) {
 		{"source": "strava", "external_ids": []string{"x"}},
 		{"source": "healthconnect", "external_ids": []string{"../x"}},
 	} {
-		if rec := d.do(me, http.MethodPost, "/v1/sync/known", body); rec.Code != http.StatusBadRequest {
+		if rec := d.do(me, http.MethodPost, "/v2/sync/known", body); rec.Code != http.StatusBadRequest {
 			t.Errorf("%v: %d, want 400", body, rec.Code)
 		}
 	}
 	demo := d.newAccount(true)
-	if rec := d.do(demo, http.MethodPost, "/v1/sync/known", map[string]any{"source": "healthconnect", "external_ids": []string{"x"}}); rec.Code != http.StatusForbidden {
+	if rec := d.do(demo, http.MethodPost, "/v2/sync/known", map[string]any{"source": "healthconnect", "external_ids": []string{"x"}}); rec.Code != http.StatusForbidden {
 		t.Errorf("demo: %d, want 403", rec.Code)
 	}
 }

@@ -7,8 +7,8 @@ import (
 )
 
 // recordedSpan is the stretch of time a recording, or the split piece rng narrows it to, covers
-// as recorded: before Private locations clip its ends and before any track edit. It's what the
-// hint compares an activity by (recorded_started_at, recorded_ended_at), since another source's
+// as recorded: before Private locations clip its ends and before any route edit. It's what the
+// hint compares a track by (recorded_started_at, recorded_ended_at), since another source's
 // copy of the same walk still covers the minutes spent inside a Private location. Nil when the
 // piece has no points.
 func recordedSpan(points []parse.Point, rng SplitRange) (start, end *time.Time) {

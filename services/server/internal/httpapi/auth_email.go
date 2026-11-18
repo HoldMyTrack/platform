@@ -20,7 +20,7 @@ type forgotPasswordRequest struct {
 	Email string `json:"email"`
 }
 
-// handleForgotPassword serves `POST /v1/auth/forgot-password`. Always responds 200 with the
+// handleForgotPassword serves `POST /v2/auth/forgot-password`. Always responds 200 with the
 // same generic body whether or not the email matches a real, claimed account — the same
 // "don't leak which emails are registered" reasoning handleLogin already applies; a failure
 // sending the actual email isn't surfaced to the caller either, for the same reason. Rate
@@ -104,7 +104,7 @@ type resetPasswordRequest struct {
 	Password string `json:"password"`
 }
 
-// handleResetPassword serves `POST /v1/auth/reset-password`. A generic error for a missing or
+// handleResetPassword serves `POST /v2/auth/reset-password`. A generic error for a missing or
 // expired token, same reasoning as everywhere else here — distinguishing "no such token" from
 // "expired" would tell a caller more than it needs to know. On success: sets the new password,
 // retires every outstanding reset token for the account (not just the one used — a reset
@@ -190,7 +190,7 @@ type verifyEmailRequest struct {
 	Token string `json:"token"`
 }
 
-// handleVerifyEmail serves `POST /v1/auth/verify-email` — the link handleSignup/
+// handleVerifyEmail serves `POST /v2/auth/verify-email` — the link handleSignup/
 // handleChangeEmail/handleResendVerification email out. Token-based, so the link verifies from
 // any device; it answers with a session only to a caller already signed in to the account
 // (verifyEmail), and 204 to anyone else. A generic error for a missing or expired token, same
@@ -328,7 +328,7 @@ func (s *Server) pendingEmail(ctx context.Context, userID string) (string, error
 	return email, err
 }
 
-// handleResendVerification serves `POST /v1/auth/resend-verification` — plain requireAuth,
+// handleResendVerification serves `POST /v2/auth/resend-verification` — plain requireAuth,
 // deliberately not requireVerified, since the whole point is helping an account that hasn't
 // verified yet. Rate-limited per account rather than per IP (resendVerificationLimiter): the
 // caller is already an authenticated user at this point, not an anonymous one, so the abuse
@@ -371,7 +371,7 @@ type changeEmailRequest struct {
 	Email string `json:"email"`
 }
 
-// handleChangeEmail serves `PATCH /v1/auth/email` — plain requireAuth like
+// handleChangeEmail serves `PATCH /v2/auth/email` — plain requireAuth like
 // handleResendVerification, reachable before verification specifically so a mistyped signup
 // email can be corrected: resending alone doesn't help someone who typed the address wrong.
 // The change is pending until the link sent to the new

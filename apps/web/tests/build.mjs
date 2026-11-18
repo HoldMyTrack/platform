@@ -35,11 +35,11 @@ const TEST_EMAIL = 'smoke-test@holdmytrack.local';
 const TEST_PASSWORD = 'smoke-test-password';
 
 async function ensureSignedIn(context) {
-  const signup = await context.request.post(`${API_BASE}/v1/auth/signup`, {
+  const signup = await context.request.post(`${API_BASE}/v2/auth/signup`, {
     data: { email: TEST_EMAIL, password: TEST_PASSWORD },
   });
   if (signup.status() === 409) {
-    const login = await context.request.post(`${API_BASE}/v1/auth/login`, {
+    const login = await context.request.post(`${API_BASE}/v2/auth/login`, {
       data: { email: TEST_EMAIL, password: TEST_PASSWORD },
     });
     if (!login.ok()) {
@@ -51,7 +51,7 @@ async function ensureSignedIn(context) {
   // A fresh account opens on the first-run setup screen, not the map, until it has a Country
   // (App.tsx, FR-1.7). Saving the same settings on every run is a no-op after the first, and
   // makes a run against an empty database (CI's) reach the map like a long-used one does.
-  const settings = await context.request.patch(`${API_BASE}/v1/account/settings`, {
+  const settings = await context.request.patch(`${API_BASE}/v2/account/settings`, {
     data: { display_name: '', country: 'US', timezone: 'America/New_York' },
   });
   if (!settings.ok()) {

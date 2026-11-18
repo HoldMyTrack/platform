@@ -21,37 +21,37 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 )
 
-// ExportDemoActivities writes the listed activities into outDir as demo_data/-ready GPX files,
+// ExportDemoTracks writes the listed tracks into outDir as demo_data/-ready GPX files,
 // their photos' images into outDir/photos/, and outDir/manifest.json with their names, types,
 // descriptions and photos, and the owner's Spots captures over the same span — the
 // `export-demo-activities` CLI subcommand, run against a live deployment to pick real
-// activities for the Demo Customer's history (SeedDemoCustomer). Each file holds the points
+// tracks for the Demo Customer's history (SeedDemoCustomer). Each file holds the points
 // the owner sees on the map (ingest.DisplayedPoints: clipped by their Private locations, with
-// their track edit applied), never the original upload: demo_data/ is committed to a public
+// their route edit applied), never the original upload: demo_data/ is committed to a public
 // repository, so what the owner's zones and edits removed must not be in it at all, not just
 // hidden behind the demo account's own.
 //
-// Files are named "<YYYY-MM-DD> <slug>.gpx" from the start date in UTC and the activity's name
+// Files are named "<YYYY-MM-DD> <slug>.gpx" from the start date in UTC and the track's name
 // (or type). A file already in outDir is never overwritten; the name gets a -2, -3, ... suffix
 // instead, so several exports into one directory accumulate. Any failure stops the export,
-// naming the activity id.
+// naming the track id.
 //
-// Captures belong to the account, not to an activity, so they're picked by time: every one the
+// Captures belong to the account, not to a track, so they're picked by time: every one the
 // owner made from the first exported point to the last (exportDemoCaptures). That takes in a
-// place captured between two of a trip's activities, so a trip is exported in one run.
-func ExportDemoActivities(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, outDir string, activityIDs []string) ([]string, error) {
+// place captured between two of a trip's tracks, so a trip is exported in one run.
+func ExportDemoTracks(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, outDir string, trackIDs []string) ([]string, error) {
 	if err := os.MkdirAll(outDir, 0o755); err != nil {
 		return nil, err
 	}
 	manifestPath := filepath.Join(outDir, demoManifestFile)
-	// An existing manifest's Stories are kept as they are; only activity entries are added.
-	manifest := demoManifest{Activities: map[string]demoManifestEntry{}}
+	// An existing manifest's Trips are kept as they are; only track entries are added.
+	manifest := demoManifest{Tracks: map[string]demoManifestEntry{}}
 	if b, err := os.ReadFile(manifestPath); err == nil {
 		if err := json.Unmarshal(b, &manifest); err != nil {
 			return nil, fmt.Errorf("%s: %w", manifestPath, err)
 		}
-		if manifest.Activities == nil {
-			manifest.Activities = map[string]demoManifestEntry{}
+		if manifest.Tracks == nil {
+			manifest.Tracks = map[string]demoManifestEntry{}
 		}
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return nil, err
@@ -66,12 +66,12 @@ func ExportDemoActivities(ctx context.Context, pool *pgxpool.Pool, store *storag
 	}
 	var written []string
 	spans := map[string]demoSpan{}
-	for _, id := range activityIDs {
-		filename, entry, owner, span, err := exportDemoActivity(ctx, pool, store, outDir, id)
+	for _, id := range trackIDs {
+		filename, entry, owner, span, err := exportDemoTrack(ctx, pool, store, outDir, id)
 		if err != nil {
 			return written, fmt.Errorf("activity %s: %w", id, err)
 		}
-		manifest.Activities[filename] = entry
+		manifest.Tracks[filename] = entry
 		written = append(written, filename)
 		if s, ok := spans[owner]; ok {
 			span = demoSpan{min(s.start, span.start), max(s.end, span.end)}
@@ -140,25 +140,25 @@ func mergeDemoCaptures(existing, captures []demoManifestCapture) []demoManifestC
 	return existing
 }
 
-// exportDemoActivity writes one activity's GPX file and photos, and returns its manifest
+// exportDemoTrack writes one track's GPX file and photos, and returns its manifest
 // entry, its owner and the span of its exported points.
-func exportDemoActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, outDir, activityID string) (string, demoManifestEntry, string, demoSpan, error) {
+func exportDemoTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, outDir, trackID string) (string, demoManifestEntry, string, demoSpan, error) {
 	var (
-		owner        string
-		activityType string
-		name         *string
-		description  *string
+		owner       string
+		trackType   string
+		name        *string
+		description *string
 	)
 	err := pool.QueryRow(ctx,
-		`SELECT user_id, activity_type, name, description FROM activities WHERE id = $1`, activityID,
-	).Scan(&owner, &activityType, &name, &description)
+		`SELECT user_id, activity_type, name, description FROM activities WHERE id = $1`, trackID,
+	).Scan(&owner, &trackType, &name, &description)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", demoManifestEntry{}, "", demoSpan{}, errors.New("not found")
 	}
 	if err != nil {
 		return "", demoManifestEntry{}, "", demoSpan{}, err
 	}
-	points, err := ingest.DisplayedPoints(ctx, pool, store, activityID)
+	points, err := ingest.DisplayedPoints(ctx, pool, store, trackID)
 	if err != nil {
 		return "", demoManifestEntry{}, "", demoSpan{}, err
 	}
@@ -166,8 +166,8 @@ func exportDemoActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.
 		return "", demoManifestEntry{}, "", demoSpan{}, errors.New("no visible track: hidden entirely by Private locations")
 	}
 
-	entry := demoManifestEntry{Type: activityType}
-	label := activityType
+	entry := demoManifestEntry{Type: trackType}
+	label := trackType
 	if name != nil && *name != "" {
 		entry.Name = *name
 		label = *name
@@ -184,7 +184,7 @@ func exportDemoActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.
 	if err != nil {
 		return "", demoManifestEntry{}, "", demoSpan{}, err
 	}
-	if err := export.WriteGPX(f, activityType, points); err != nil {
+	if err := export.WriteGPX(f, trackType, points); err != nil {
 		f.Close()
 		os.Remove(f.Name())
 		return "", demoManifestEntry{}, "", demoSpan{}, err
@@ -192,7 +192,7 @@ func exportDemoActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.
 	if err := f.Close(); err != nil {
 		return "", demoManifestEntry{}, "", demoSpan{}, err
 	}
-	photos, err := exportDemoPhotos(ctx, pool, store, outDir, activityID, strings.TrimSuffix(filename, ".gpx"), points)
+	photos, err := exportDemoPhotos(ctx, pool, store, outDir, trackID, strings.TrimSuffix(filename, ".gpx"), points)
 	if err != nil {
 		return "", demoManifestEntry{}, "", demoSpan{}, err
 	}
@@ -200,16 +200,16 @@ func exportDemoActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.
 	return filename, entry, owner, demoSpan{points[0].Time.UnixMilli(), points[len(points)-1].Time.UnixMilli()}, nil
 }
 
-// exportDemoPhotos copies an activity's photos out: each one's stored image and thumbnail —
+// exportDemoPhotos copies a track's photos out: each one's stored image and thumbnail —
 // already resized, with no EXIF, as the upload left them (§4.27) — into outDir/photos/ as
 // "<base> <n>.<ext>" and "<base> <n>-thumb.<ext>", base being the GPX file's name, and its
 // fields for the manifest. route_at is clamped to the exported track's span, as every read
 // clamps it to the drawn track (photoSelect), so a moment Private locations or Edit track cut
 // away isn't carried into the file.
-func exportDemoPhotos(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, outDir, activityID, base string, points []parse.Point) ([]demoManifestPhoto, error) {
+func exportDemoPhotos(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, outDir, trackID, base string, points []parse.Point) ([]demoManifestPhoto, error) {
 	rows, err := pool.Query(ctx, `
 		SELECT id, image_key, taken_at, route_at, COALESCE(caption, ''), content_type, thumb_content_type, width, height
-		FROM activity_photos WHERE activity_id = $1 ORDER BY route_at, created_at`, activityID)
+		FROM activity_photos WHERE activity_id = $1 ORDER BY route_at, created_at`, trackID)
 	if err != nil {
 		return nil, err
 	}
@@ -297,7 +297,7 @@ func copyDemoObject(ctx context.Context, store *storage.Store, key, file string)
 }
 
 // freeDemoFilename returns base+ext, or base-2+ext, base-3+ext, ... — the first not already in
-// dir. The manifest keys files by name, so two activities must never share one.
+// dir. The manifest keys files by name, so two tracks must never share one.
 func freeDemoFilename(dir, base, ext string) (string, error) {
 	for n := 1; ; n++ {
 		name := base + ext

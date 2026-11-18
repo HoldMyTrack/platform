@@ -27,7 +27,7 @@ func TestAdminPagesSignedOutAreNotFound(t *testing.T) {
 func TestAdminPagesRender(t *testing.T) {
 	s := newPagesTestServer(t)
 	admin := &web.User{Email: "admin@example.com", IsAdmin: true}
-	user := adminUserRow{ID: "u-1", Email: "rider@example.com", DisplayName: "Rider", SignedUp: "2026-08-01", Timezone: "Europe/Rome", Verified: true, Activities: "2", Distance: "12 km", LastSeen: "2026-09-20", Clients: adminClients{Web: true, IOS: true}}
+	user := adminUserRow{ID: "u-1", Email: "rider@example.com", DisplayName: "Rider", SignedUp: "2026-08-01", Timezone: "Europe/Rome", Verified: true, Tracks: "2", Distance: "12 km", LastSeen: "2026-09-20", Clients: adminClients{Web: true, IOS: true}}
 
 	rec := httptest.NewRecorder()
 	s.pages.Render(rec, http.StatusOK, "admin", web.PageData{Title: "Accounts", Path: "/admin/users", NoIndex: true, User: admin, Page: adminUsersView{Users: []adminUserRow{user}, Range: "101–101 of 101", PrevHref: "/admin/users"}})
@@ -43,7 +43,7 @@ func TestAdminPagesRender(t *testing.T) {
 		User:     user,
 		Range:    "1–2 of 2",
 		NextHref: "/admin/users/u-1?page=2",
-		Activities: []adminActivityRow{
+		Tracks: []adminTrackRow{
 			{ID: "a-1", Started: "2026-09-20 08:15", Type: "walk", Countries: "Italy", Regions: "Emilia-Romagna", Edited: true},
 			{ID: "a-2", Started: "2026-09-19 18:00", Type: "walk", Hidden: true},
 		},

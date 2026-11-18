@@ -1,5 +1,5 @@
 // cmd/loadtest drives the load-test sessions docs/PERFORMANCE.md logs: it creates test accounts,
-// uploads activities, browses the map the way the web client does and reports latency, and
+// uploads tracks, browses the map the way the web client does and reports latency, and
 // deletes the accounts again. Run it from services/server against a deployment you may load:
 //
 //	go run ./cmd/loadtest -base https://example.com -dir /tmp/lt signup 21
@@ -24,9 +24,9 @@
 //	browse VUS DUR  VUS people at the map for DUR, each in Normal or Fog mode (or all in
 //	                -mode), panning and zooming and requesting the tiles the web client would;
 //	                each keeps a browser-like tile cache unless -cold; Normal visitors from z4 ask
-//	                for the area's activity list on every view, as the web does after each settled
+//	                for the area's track list on every view, as the web does after each settled
 //	                move, and Spots visitors at z10-12 also ask "Show in this area". Latency per
-//	                tile layer, activities-area and spots-area every 30 s
+//	                tile layer, tracks-area and spots-area every 30 s
 //	probe           upload one new track from the last account and time it until it's processed
 //	cleanup         delete every account in tokens.json
 //
@@ -140,7 +140,7 @@ func signup(n int) {
 	for i := 1; i <= n; i++ {
 		email := fmt.Sprintf(*emailFmt, i)
 		body, _ := json.Marshal(map[string]string{"email": email, "password": password, "timezone": "UTC"})
-		resp, err := client.Post(*base+"/v1/auth/signup", "application/json", bytes.NewReader(body))
+		resp, err := client.Post(*base+"/v2/auth/signup", "application/json", bytes.NewReader(body))
 		must(err)
 		rb, _ := io.ReadAll(resp.Body)
 		resp.Body.Close()
@@ -161,7 +161,7 @@ func signup(n int) {
 func cleanup() {
 	for _, a := range loadAccts() {
 		body, _ := json.Marshal(map[string]string{"email": a.Email})
-		req, _ := http.NewRequest("DELETE", *base+"/v1/account", bytes.NewReader(body))
+		req, _ := http.NewRequest("DELETE", *base+"/v2/account", bytes.NewReader(body))
 		req.Header.Set("Authorization", "Bearer "+a.Token)
 		req.Header.Set("Content-Type", "application/json")
 		resp, err := client.Do(req)
@@ -183,7 +183,7 @@ func uploadFile(c *http.Client, tok, name string, data []byte) (int, []byte, tim
 	fw, _ := mw.CreateFormFile("file", name)
 	fw.Write(data)
 	mw.Close()
-	req, _ := http.NewRequest("POST", *base+"/v1/activities/upload", &buf)
+	req, _ := http.NewRequest("POST", *base+"/v2/tracks/upload", &buf)
 	req.Header.Set("Authorization", "Bearer "+tok)
 	req.Header.Set("Content-Type", mw.FormDataContentType())
 	t := time.Now()
@@ -323,7 +323,7 @@ func probe() {
 	}
 	t0 := time.Now()
 	for {
-		req, _ := http.NewRequest("GET", *base+"/v1/uploads/"+r.ExternalID, nil)
+		req, _ := http.NewRequest("GET", *base+"/v2/uploads/"+r.ExternalID, nil)
 		req.Header.Set("Authorization", "Bearer "+a.Token)
 		resp, err := client.Do(req)
 		if err == nil {
@@ -508,7 +508,7 @@ func browse(vus int, dur time.Duration) {
 		go func(i int) {
 			defer wg.Done()
 			r := mrand.New(mrand.NewSource(int64(i) + time.Now().UnixNano()))
-			// Opening the map frames the account's latest activity, at city zoom (SPEC.md FR-4.4).
+			// Opening the map frames the account's latest track, at city zoom (SPEC.md FR-4.4).
 			v := &visitor{r: r, tok: accts[i%len(accts)].Token, mode: pickMode(r), spots: r.Intn(5) == 0,
 				c: cs[r.Intn(len(cs))], z: 12 + r.Intn(3), cache: map[string]bool{}}
 			time.Sleep(time.Duration(r.Intn(3000)) * time.Millisecond)
@@ -601,10 +601,10 @@ func view(ctx context.Context, st *stats, v *visitor) int {
 	wg.Wait()
 	b := windowBBox(v.c, v.z)
 	if v.mode == "normal" && v.z >= tracksMinZoom {
-		get(ctx, st, v, "activities-area", fmt.Sprintf("%s/v1/activities/area?bbox=%.5f,%.5f,%.5f,%.5f", *base, b[0], b[1], b[2], b[3]))
+		get(ctx, st, v, "activities-area", fmt.Sprintf("%s/v2/tracks/area?bbox=%.5f,%.5f,%.5f,%.5f", *base, b[0], b[1], b[2], b[3]))
 	}
 	if asksArea(v.spots, v.z, v.r.Intn(areaShare)) {
-		get(ctx, st, v, "spots-area", fmt.Sprintf("%s/v1/spots?bbox=%.5f,%.5f,%.5f,%.5f&categories=%s", *base, b[0], b[1], b[2], b[3], areaCategories))
+		get(ctx, st, v, "spots-area", fmt.Sprintf("%s/v2/spots?bbox=%.5f,%.5f,%.5f,%.5f&categories=%s", *base, b[0], b[1], b[2], b[3], areaCategories))
 	}
 	return skipped
 }

@@ -24,17 +24,17 @@ type SeedStats struct {
 	// Countries with no region of their own (Aruba, Antarctica, a disputed area), given one
 	// that is the whole country, so the Region level veils and reveals them too.
 	WholeCountryRegions int64
-	ActivityCountries   int64
-	ActivityRegions     int64
-	ActivityCounties    int64
-	ActivityCities      int64
+	TrackCountries      int64
+	TrackRegions        int64
+	TrackCounties       int64
+	TrackCities         int64
 	// The extract was the one already loaded, so nothing was done.
 	Unchanged bool
 }
 
 // The fewest outlines a world extract has: 2026-09's has 272 countries and dependencies and
 // 3,922 regions. Fewer means a cut-short or mis-made file, which would otherwise wipe out the
-// rest of the world's outlines and every activity's matches with them. A partial extract
+// rest of the world's outlines and every track's matches with them. A partial extract
 // (scripts/boundaries-extract.sh's PLACES) is checked on its countries and regions only.
 const (
 	minCountries = 250
@@ -53,7 +53,7 @@ const (
 )
 
 // SeedAdminBoundaries replaces every outline of every level with the extract's and re-matches
-// every activity against them, in one transaction, so the tiles and matches go from the old
+// every track against them, in one transaction, so the tiles and matches go from the old
 // outlines to the new without a moment of neither. name is the extract's file name: a run whose
 // name matches the extract already loaded does nothing, unless force is set. partial accepts an
 // extract with the counties and cities of some countries only.
@@ -230,16 +230,16 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 		{"analyze", `ANALYZE admin_country_parts, admin_region_parts, admin_county_parts, admin_city_parts`, nil},
 		{"activity countries", `
 			INSERT INTO activity_country (activity_id, country_id)
-			SELECT DISTINCT a.id, p.country_id FROM activities a JOIN admin_country_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.ActivityCountries},
+			SELECT DISTINCT a.id, p.country_id FROM activities a JOIN admin_country_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCountries},
 		{"activity regions", `
 			INSERT INTO activity_region (activity_id, region_id)
-			SELECT DISTINCT a.id, p.region_id FROM activities a JOIN admin_region_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.ActivityRegions},
+			SELECT DISTINCT a.id, p.region_id FROM activities a JOIN admin_region_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackRegions},
 		{"activity counties", `
 			INSERT INTO activity_county (activity_id, county_id)
-			SELECT DISTINCT a.id, p.county_id FROM activities a JOIN admin_county_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.ActivityCounties},
+			SELECT DISTINCT a.id, p.county_id FROM activities a JOIN admin_county_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCounties},
 		{"activity cities", `
 			INSERT INTO activity_city (activity_id, city_id)
-			SELECT DISTINCT a.id, p.city_id FROM activities a JOIN admin_city_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.ActivityCities},
+			SELECT DISTINCT a.id, p.city_id FROM activities a JOIN admin_city_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCities},
 	}
 	for _, s := range steps {
 		start := time.Now()

@@ -7,15 +7,15 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// An original is named by its owner's activity or pending ingest, unless that ingest is the
+// An original is named by its owner's track or pending ingest, unless that ingest is the
 // one asking.
 func TestRawNamed(t *testing.T) {
 	d := newDBTest(t)
 	ctx := context.Background()
 	rider := d.newAccount(false)
 	kept, queued := "raw/"+rider.id+"/kept.gpx", "raw/"+rider.id+"/queued.gpx"
-	activity := d.newActivity(rider, testActivity{activityType: "walk"})
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = $1 WHERE id = $2`, kept, activity); err != nil {
+	track := d.newTrack(rider, testTrack{trackType: "walk"})
+	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = $1 WHERE id = $2`, kept, track); err != nil {
 		t.Fatal(err)
 	}
 	var job int64

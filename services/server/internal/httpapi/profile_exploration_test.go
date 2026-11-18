@@ -103,9 +103,9 @@ func TestProfileExploration(t *testing.T) {
 
 	me := d.newAccount(false)
 	at := [2]float64{-24.5, -44.5}
-	activity := d.newActivity(me, testActivity{activityType: "walking", at: &at})
+	track := d.newTrack(me, testTrack{trackType: "walking", at: &at})
 	must(func() error {
-		_, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2)`, activity, inside)
+		_, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2)`, track, inside)
 		return err
 	}())
 

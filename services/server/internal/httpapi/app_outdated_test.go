@@ -75,7 +75,7 @@ func TestAppOutdated(t *testing.T) {
 
 func TestServeHTTPRefusesAnOutdatedAppOnV1Only(t *testing.T) {
 	s := &Server{log: slog.New(slog.DiscardHandler), mux: http.NewServeMux()}
-	s.mux.HandleFunc("GET /v1/test", func(w http.ResponseWriter, r *http.Request) {})
+	s.mux.HandleFunc("GET /v2/test", func(w http.ResponseWriter, r *http.Request) {})
 	s.mux.HandleFunc("GET /tiles/v1/test", func(w http.ResponseWriter, r *http.Request) {})
 	s.mux.HandleFunc("GET /help", func(w http.ResponseWriter, r *http.Request) {})
 	s.SetMinAndroidBuild(813)
@@ -89,21 +89,21 @@ func TestServeHTTPRefusesAnOutdatedAppOnV1Only(t *testing.T) {
 		return w
 	}
 	old := "HoldMyTrack-Android/0.14 (62da50b; 812)"
-	w := get("/v1/test", old)
+	w := get("/v2/test", old)
 	var body apiErrorBody
 	if err := json.Unmarshal(w.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
 	if w.Code != http.StatusUpgradeRequired || body.Error != "app_outdated" || body.Message == "" {
-		t.Errorf("an old build on /v1/ got %d %+v, want 426 app_outdated with a message", w.Code, body)
+		t.Errorf("an old build on /v2/ got %d %+v, want 426 app_outdated with a message", w.Code, body)
 	}
-	if w := get("/v1/test", "HoldMyTrack-iOS/0.1 (62da50b; 1400)"); w.Code != http.StatusUpgradeRequired {
-		t.Errorf("an old iOS build on /v1/ got %d, want 426", w.Code)
+	if w := get("/v2/test", "HoldMyTrack-iOS/0.1 (62da50b; 1400)"); w.Code != http.StatusUpgradeRequired {
+		t.Errorf("an old iOS build on /v2/ got %d, want 426", w.Code)
 	}
 	for _, tc := range []struct{ path, ua string }{
-		{"/v1/test", "HoldMyTrack-Android/0.14 (62da50b; 813)"},
-		{"/v1/test", "HoldMyTrack-iOS/0.1 (62da50b; 1401)"},
-		{"/v1/test", "Mozilla/5.0"},
+		{"/v2/test", "HoldMyTrack-Android/0.14 (62da50b; 813)"},
+		{"/v2/test", "HoldMyTrack-iOS/0.1 (62da50b; 1401)"},
+		{"/v2/test", "Mozilla/5.0"},
 		{"/tiles/v1/test", old},
 		{"/help", old},
 	} {

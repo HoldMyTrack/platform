@@ -51,9 +51,9 @@ func varints(b []byte) []uint64 {
 
 func unzigzag(v uint64) int { return int(v>>1) ^ -int(v&1) }
 
-// lineMask is one activity's mask with a horizontal stroke at tile-local y, edge to edge.
+// lineMask is one track's mask with a horizontal stroke at tile-local y, edge to edge.
 func lineMask(y float64) *image.Gray {
-	return renderActivityMask([]pixelPoint{{-10, y}, {TileSize + 10, y}})
+	return renderTrackMask([]pixelPoint{{-10, y}, {TileSize + 10, y}})
 }
 
 // decodedFog is a fog tile read back: its veil rings and edge lines, in coverage pixels.
@@ -198,7 +198,7 @@ func TestFogTileIsland(t *testing.T) {
 		a := 2 * math.Pi * float64(k) / 64
 		loop = append(loop, pixelPoint{c + r*math.Cos(a), c + r*math.Sin(a)})
 	}
-	got := decodeFogTile(t, EncodeFogTile(renderActivityMask(loop), Sides{}, false))
+	got := decodeFogTile(t, EncodeFogTile(renderTrackMask(loop), Sides{}, false))
 	var outer, holes int
 	for _, ring := range got.veil {
 		if signedArea(ring) > 0 {
@@ -223,8 +223,8 @@ func TestFogTileIsland(t *testing.T) {
 // pixel; given each other as sides, at the same place.
 func TestFogTileEdgesMeetAcrossTiles(t *testing.T) {
 	// A diagonal through the shared edge x = 128 of a left and a right tile.
-	left := renderActivityMask([]pixelPoint{{40, 20}, {TileSize + 40, 100}})
-	right := renderActivityMask([]pixelPoint{{40 - TileSize, 20}, {40, 100}})
+	left := renderTrackMask([]pixelPoint{{40, 20}, {TileSize + 40, 100}})
+	right := renderTrackMask([]pixelPoint{{40 - TileSize, 20}, {40, 100}})
 	crossing := func(edges [][]pt, x float64) []float64 {
 		var ys []float64
 		for _, e := range edges {
@@ -293,7 +293,7 @@ func TestFogTileEdgesMeetExactlyWithTheirSides(t *testing.T) {
 		return out
 	}
 	// Left and right.
-	a, b := renderActivityMask(road), renderActivityMask(shifted(-TileSize, 0))
+	a, b := renderTrackMask(road), renderTrackMask(shifted(-TileSize, 0))
 	l := crossingX(decodeFogTile(t, EncodeFogTile(a, Sides{Right: b}, false)).edges, TileSize)
 	r := crossingX(decodeFogTile(t, EncodeFogTile(b, Sides{Left: a}, false)).edges, 0)
 	// Top and bottom: the same road turned on its side.
@@ -334,7 +334,7 @@ func TestFogTilePooledDiagonal(t *testing.T) {
 		level[ty] = make([]*image.Gray, 8)
 		for tx := range 8 {
 			ox, oy := float64(tx*TileSize), float64(ty*TileSize)
-			level[ty][tx] = renderActivityMask([]pixelPoint{{30 - ox, 100 - oy}, {1000 - ox, 400 - oy}})
+			level[ty][tx] = renderTrackMask([]pixelPoint{{30 - ox, 100 - oy}, {1000 - ox, 400 - oy}})
 		}
 	}
 	for n := 8; n > 1; n /= 2 {

@@ -26,17 +26,17 @@ func SetRateLimitsOff(off bool) { rateLimitsOff.Store(off) }
 // TILES_PER_MINUTE overrides it, for a load test's target.
 const defaultTilesPerMinute = 1200
 
-// syncRequestsPerHour bounds `POST /v1/sync/activities` per account. A batch carries up to
-// maxSyncBatchActivities, so a first sync of a long Health Connect history still brings in
+// syncRequestsPerHour bounds `POST /v2/sync/tracks` per account. A batch carries up to
+// maxSyncBatchTracks, so a first sync of a long Health Connect history still brings in
 // thousands an hour; the upload limit (defaultUploadsPerHour) doesn't reach this path.
 const syncRequestsPerHour = 60
 
-// syncActivitiesPerHour bounds the activities `POST /v1/sync/activities` takes from one account
+// syncTracksPerHour bounds the tracks `POST /v2/sync/tracks` takes from one account
 // in an hour, beside syncRequestsPerHour's count of requests: at 100 a batch, that one alone
 // would take 6,000 an hour. A phone lists three months of Health Connect sessions and its own
 // recordings, a few hundred at most, so this only slows an account syncing, deleting and
 // syncing again, which costs a render each time and stores nothing (IMPLEMENTATION.md §5.7).
-const syncActivitiesPerHour = 1000
+const syncTracksPerHour = 1000
 
 // defaultSignupsPerHour bounds the accounts one address creates with an email and password in
 // an hour. Each sends a verification email to whatever address was typed, and every
@@ -46,12 +46,12 @@ const syncActivitiesPerHour = 1000
 // test creating its accounts.
 const defaultSignupsPerHour = 5
 
-// trackPointsPerHour bounds `GET /v1/activities/{id}/track-points` per account: each request
+// routePointsPerHour bounds `GET /v2/tracks/{id}/route-points` per account: each request
 // reads an original upload from object storage and parses it, and a person opens the track
 // editor a few times an hour at most.
-const trackPointsPerHour = 120
+const routePointsPerHour = 120
 
-// statsCardsPerHour bounds `POST /v1/activities/stats-card` per account. A client asks again
+// statsCardsPerHour bounds `POST /v2/tracks/stats-card` per account. A client asks again
 // after each pause in changing the frame's size, theme or checked set, a few dozen times in one
 // export at most; each is a query and a PNG drawn in memory.
 const statsCardsPerHour = 600

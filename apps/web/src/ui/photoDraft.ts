@@ -5,7 +5,7 @@ import type { PreparedPhoto } from './photoPrep.ts';
  * The Photos tab's unsaved changes (FR-15) — what the Edit window's one Save writes, after the
  * track's fields and before its route edit, and what its Cancel throws away. Nothing here has
  * reached the server: a new photo is prepared in the browser and its place settled by the
- * placement check (`POST /v1/photos/place`) or by the user, and goes up only on Save.
+ * placement check (`POST /v2/photos/place`) or by the user, and goes up only on Save.
  */
 
 /** A picked photo, not yet uploaded. `routeAt` (epoch seconds) is null while it waits for the

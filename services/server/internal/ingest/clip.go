@@ -23,9 +23,9 @@ type Zone struct {
 }
 
 // LockZones takes the per-account lock every Private location change holds for its
-// transaction. Ingest takes it to save an activity, so the two see each other: a change
-// committed first is in ingest's second read of the locations, and an activity saved first is
-// in the change's AffectedActivities.
+// transaction. Ingest takes it to save a track, so the two see each other: a change
+// committed first is in ingest's second read of the locations, and a track saved first is
+// in the change's AffectedTracks.
 func LockZones(ctx context.Context, tx pgx.Tx, userID string) error {
 	_, err := tx.Exec(ctx, `SELECT pg_advisory_xact_lock(hashtext('privacy_zones:' || $1))`, userID)
 	return err
@@ -77,7 +77,7 @@ func LoadZones(ctx context.Context, q Querier, userID string) ([]Zone, error) {
 // *through* a zone mid-way is returned untouched there — splitting it needs a multi-part
 // trajectory (docs/ROADMAP.md).
 //
-// Returns nil when fewer than two points would survive: the activity lies entirely inside
+// Returns nil when fewer than two points would survive: the track lies entirely inside
 // Private locations, or so close to one that the extra stretch takes the rest.
 func ClipEnds(points []parse.Point, zones []Zone) []parse.Point {
 	if len(zones) == 0 || len(points) < 2 {
@@ -100,15 +100,15 @@ func ClipEnds(points []parse.Point, zones []Zone) []parse.Point {
 // fix the circle, and its center with it; spread over a band past the edge, and cut at real
 // points rather than ones placed on a curve, they fit no circle.
 //
-// The distance is random but fixed for the end (trimFraction), so reprocessing the activity
+// The distance is random but fixed for the end (trimFraction), so reprocessing the track
 // gives the same track: a new draw each time would let the ends seen over several reprocesses
 // average back to the edge. When the point reached lies more than a radius past the edge, the
 // recorded point before it is the end instead, which keeps the end within twice the radius of
-// the center, where AffectedActivities looks for it. When there is none, a sparse recording's
+// the center, where AffectedTracks looks for it. When there is none, a sparse recording's
 // first segment out, the end is that segment's far point: any point placed on the segment
 // would lie on the line to the hidden one, so two such tracks would cross at it. Such an end
-// can lie past where AffectedActivities looks, so removing the location may leave the
-// activity clipped further than it needs until it's next reprocessed, never less. An end that
+// can lie past where AffectedTracks looks, so removing the location may leave the
+// track clipped further than it needs until it's next reprocessed, never less. An end that
 // lands back inside a zone, on a track curving back in, starts over from where the track
 // leaves it again.
 func clipStart(points []parse.Point, zones []Zone, end byte) []parse.Point {

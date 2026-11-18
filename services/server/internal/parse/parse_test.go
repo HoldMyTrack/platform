@@ -31,8 +31,8 @@ func TestParseGPX(t *testing.T) {
 	if p.Time.Unix() != 1767268800 {
 		t.Fatalf("point 0 time wrong: %v (unix %d)", p.Time, p.Time.Unix())
 	}
-	if act.ActivityType != "unknown" {
-		t.Fatalf("want activity type unknown (no <type> in this fixture), got %q", act.ActivityType)
+	if act.TrackType != "unknown" {
+		t.Fatalf("want activity type unknown (no <type> in this fixture), got %q", act.TrackType)
 	}
 }
 
@@ -47,8 +47,8 @@ func TestParseGPXType(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseGPX: %v", err)
 	}
-	if act.ActivityType != "gravel riding" {
-		t.Fatalf("want activity type %q, got %q", "gravel riding", act.ActivityType)
+	if act.TrackType != "gravel riding" {
+		t.Fatalf("want activity type %q, got %q", "gravel riding", act.TrackType)
 	}
 	if len(act.Points) != 2 {
 		t.Fatalf("want 2 points, got %d", len(act.Points))
@@ -101,8 +101,8 @@ func TestParseTCX(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseTCX: %v", err)
 	}
-	if act.ActivityType != "running" {
-		t.Fatalf("want activity type running, got %q", act.ActivityType)
+	if act.TrackType != "running" {
+		t.Fatalf("want activity type running, got %q", act.TrackType)
 	}
 	if len(act.Points) != 2 {
 		t.Fatalf("want 2 points, got %d", len(act.Points))
@@ -129,8 +129,8 @@ func TestParseJSON(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseJSON: %v", err)
 	}
-	if act.ActivityType != "run" {
-		t.Fatalf("want activity type run, got %q", act.ActivityType)
+	if act.TrackType != "run" {
+		t.Fatalf("want activity type run, got %q", act.TrackType)
 	}
 	if len(act.Points) != 2 {
 		t.Fatalf("want 2 points, got %d", len(act.Points))
@@ -152,8 +152,8 @@ func TestParseJSONNoType(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ParseJSON: %v", err)
 	}
-	if act.ActivityType != "unknown" {
-		t.Fatalf("want activity type unknown (no activity_type in this fixture), got %q", act.ActivityType)
+	if act.TrackType != "unknown" {
+		t.Fatalf("want activity type unknown (no activity_type in this fixture), got %q", act.TrackType)
 	}
 }
 
@@ -267,9 +267,9 @@ func TestParseGPXWhitespaceAndZonelessTimes(t *testing.T) {
 	}
 }
 
-// Only a <trk>'s own <type> names the activity: a waypoint's ("Summit"), even one after the
+// Only a <trk>'s own <type> names the track: a waypoint's ("Summit"), even one after the
 // track, doesn't.
-func TestParseGPXWaypointTypeIsNotTheActivitys(t *testing.T) {
+func TestParseGPXWaypointTypeIsNotTheTracks(t *testing.T) {
 	gpx := `<gpx><trk><type>Hiking</type><trkseg>
 <trkpt lat="50.0" lon="10.0"><time>2024-05-01T10:00:00Z</time></trkpt>
 </trkseg></trk>
@@ -278,8 +278,8 @@ func TestParseGPXWaypointTypeIsNotTheActivitys(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if act.ActivityType != "hiking" {
-		t.Errorf("type %q, want hiking", act.ActivityType)
+	if act.TrackType != "hiking" {
+		t.Errorf("type %q, want hiking", act.TrackType)
 	}
 }
 

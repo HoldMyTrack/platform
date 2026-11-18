@@ -11,7 +11,7 @@ import (
 )
 
 // The server-rendered pages (ADR-0012, IMPLEMENTATION.md §4.19): internal/web renders them,
-// this file decides who is asking. Unlike the /v1 JSON routes, a page never answers 401 — a
+// this file decides who is asking. Unlike the API JSON routes, a page never answers 401 — a
 // signed-out visitor gets the page with a "Sign in" link where the account menu would be.
 // The auth pages themselves — sign in, sign up, reset, verify — are in auth_pages.go.
 
@@ -41,7 +41,7 @@ func (s *Server) staticPage(page, titleKey, descriptionKey, canonicalPath string
 }
 
 // handleLogoutPage serves `POST /logout` — the header's Sign out form. The same revocation as
-// `POST /v1/auth/logout` (endSession), then a redirect to the map rather than a 204.
+// `POST /v2/auth/logout` (endSession), then a redirect to the map rather than a 204.
 func (s *Server) handleLogoutPage(w http.ResponseWriter, r *http.Request) {
 	s.endSession(w, r)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
@@ -101,7 +101,7 @@ func (s *Server) appShell(titleKey string) http.HandlerFunc {
 			return
 		}
 		// The map's first tile requests carry this as `cv` (setTileCacheControl), so they're
-		// cacheable without a GET /v1/coverage/status round trip before the first paint. A
+		// cacheable without a GET /v2/coverage/status round trip before the first paint. A
 		// failed read just leaves it empty: the tiles still load, uncached.
 		var mapVersion int64
 		tileVersion := ""

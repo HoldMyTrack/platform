@@ -19,7 +19,7 @@ func TestFailedSessionLookupIsNotUnauthorized(t *testing.T) {
 		"requireAuth": s.requireAuth(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(http.StatusOK) }),
 		"me":          s.handleMe,
 	} {
-		req := httptest.NewRequest(http.MethodGet, "/v1/auth/me", nil)
+		req := httptest.NewRequest(http.MethodGet, "/v2/auth/me", nil)
 		req.Header.Set("Authorization", bearerPrefix+"a-session")
 		rec := serveChecked(t, h, req)
 		if rec.Code != http.StatusServiceUnavailable {

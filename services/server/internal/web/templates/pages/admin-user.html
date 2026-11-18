@@ -8,7 +8,7 @@
     {{if .IsAdmin}}<span class="admin__badge">{{t "admin.badge_admin"}}</span>{{end}}
     {{if .IsDemo}}<span class="admin__badge">{{t "admin.badge_demo"}}</span>{{else if not .Verified}}<span class="admin__badge admin__badge--warn">{{t "admin.badge_unverified"}}</span>{{end}}
   </p>
-  <p class="profile__subtext">{{tn "admin.live_activities" .ActivityCount}} · {{.Distance}}. {{t "admin.times_note"}}</p>
+  <p class="profile__subtext">{{tn "admin.live_activities" .TrackCount}} · {{.Distance}}. {{t "admin.times_note"}}</p>
   {{end}}
 
   {{if .Range}}
@@ -19,14 +19,14 @@
   </nav>
   {{end}}
 
-  {{if .Activities}}
+  {{if .Tracks}}
   <div class="admin__scroll">
     <table class="admin__table">
       <thead>
         <tr><th>{{t "admin.col_activity_id"}}</th><th>{{t "admin.col_started"}}</th><th>{{t "admin.col_type"}}</th><th>{{t "admin.col_name"}}</th><th class="admin__num">{{t "admin.col_distance"}}</th><th class="admin__num">{{t "admin.col_duration"}}</th><th>{{t "admin.col_source"}}</th><th>{{t "admin.col_countries"}}</th><th>{{t "admin.col_regions"}}</th><th>{{t "admin.col_state"}}</th></tr>
       </thead>
       <tbody>
-        {{range .Activities}}
+        {{range .Tracks}}
         <tr id="{{.ID}}">
           <td><code class="admin__id">{{.ID}}</code></td>
           <td>{{.Started}}</td>

@@ -13,7 +13,7 @@ func TestCoverageStatusRendering(t *testing.T) {
 	me := d.newAccount(false)
 	rendering := func() bool {
 		var resp coverageStatusResponse
-		d.decode(d.do(me, "GET", "/v1/coverage/status", nil), http.StatusOK, &resp)
+		d.decode(d.do(me, "GET", "/v2/coverage/status", nil), http.StatusOK, &resp)
 		return resp.Rendering
 	}
 	if rendering() {

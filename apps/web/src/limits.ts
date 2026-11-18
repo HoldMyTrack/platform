@@ -1,7 +1,7 @@
 /**
  * The server's limits on what a user types, applied here too so a limit shows before a 400
  * does. tests/apiLimits.test.mjs checks each against the API contract
- * (services/server/api/), and the server's own test checks the contract against its handlers.
+ * (services/server/api/v2/), and the server's own test checks the contract against its handlers.
  * Lengths are in characters.
  */
 export const MAX_TRACK_TYPE_LEN = 50;

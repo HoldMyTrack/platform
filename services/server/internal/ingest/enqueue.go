@@ -16,7 +16,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 )
 
-// RawItem is one file or synced activity a request hands to the worker: its bytes as they
+// RawItem is one file or synced track a request hands to the worker: its bytes as they
 // arrived, and what the `ingest` job needs to know about them.
 type RawItem struct {
 	// "upload" (an uploaded file) or a phone sync's source — the
@@ -26,8 +26,8 @@ type RawItem struct {
 	Ext      string
 	Data     []byte
 	// ExternalID, when set, is the idempotency key as given instead of a content hash of
-	// Data. Only a phone sync sets it: its activities carry the platform's own stable record
-	// id, and hashing the synced JSON instead would mint a new activity on every retry that
+	// Data. Only a phone sync sets it: its tracks carry the platform's own stable record
+	// id, and hashing the synced JSON instead would mint a new track on every retry that
 	// reserialized a field differently. A file has no such id, so it's hashed.
 	ExternalID string
 	// Batch is Job's — set when one request enqueues many items.
@@ -37,7 +37,7 @@ type RawItem struct {
 // Enqueued is what EnqueueRaw did with one item.
 type Enqueued struct {
 	ExternalID string
-	// AlreadyProcessed means the account already has this activity, fully ingested, so no job
+	// AlreadyProcessed means the account already has this track, fully ingested, so no job
 	// was added. One whose ingest never finished isn't a repeat: enqueuing it again resumes it.
 	AlreadyProcessed bool
 }
@@ -55,7 +55,7 @@ type Querier interface {
 //
 // The existence check is the fast path of §4.0's idempotency invariant, not the guarantee —
 // that is Process's ON CONFLICT DO NOTHING, which still holds when two identical uploads race
-// past this check. It's scoped by source, matching activities' (user_id, source, external_id)
+// past this check. It's scoped by source, matching tracks' (user_id, source, external_id)
 // unique index. The jobs go in with one INSERT, so either every new item is enqueued or none.
 func EnqueueRaw(ctx context.Context, db Querier, userID string, items []RawItem) ([]Enqueued, error) {
 	out := make([]Enqueued, len(items))
@@ -139,12 +139,12 @@ func EnqueueRaw(ctx context.Context, db Querier, userID string, items []RawItem)
 	return out, nil
 }
 
-// KnownExternalIDs returns which of ids the account already has from source: an activity row
+// KnownExternalIDs returns which of ids the account already has from source: a track row
 // in any state, or an ingest job still waiting to run. It answers a phone's "is this synced
-// yet?" (IMPLEMENTATION.md §4.0.3's `POST /v1/sync/known`), so it counts everything a repeat
+// yet?" (IMPLEMENTATION.md §4.0.3's `POST /v2/sync/known`), so it counts everything a repeat
 // sync would answer `already_processed` for, plus what's
 // queued, so a session sent a moment ago doesn't come back while the worker catches up. A
-// deleted activity's row is gone and its job finished, so its id isn't known any more.
+// deleted track's row is gone and its job finished, so its id isn't known any more.
 // processing is the known ids whose ingest job is still pending — queued or running — the ones
 // sent and not on the map yet; a job that ended, done or failed, isn't.
 func KnownExternalIDs(ctx context.Context, db Querier, userID, source string, ids []string) (known, processing []string, err error) {
@@ -206,10 +206,10 @@ func PromoteRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, j
 	return nil
 }
 
-// RawNamed reports whether userID's activities or pending ingests other than exceptJob (0 for
+// RawNamed reports whether userID's tracks or pending ingests other than exceptJob (0 for
 // none) still name rawKey. An upload's key is content-addressed (raw/{userID}/{sha256}{ext}),
 // so the same file uploaded twice, a split's pieces, or a re-upload still waiting for ingest
-// can share one; a synced activity's is its source and external id. Every key sits under its
+// can share one; a synced track's is its source and external id. Every key sits under its
 // owner's prefix, so only the owner's rows are read,
 // through their user_id indexes; raw_payload_key has none.
 func RawNamed(ctx context.Context, pool *pgxpool.Pool, userID, rawKey string, exceptJob int64) (bool, error) {
@@ -223,10 +223,10 @@ func RawNamed(ctx context.Context, pool *pgxpool.Pool, userID, rawKey string, ex
 }
 
 // DiscardRaw drops the original of an ingest that failed: the job row's inline copy, and the
-// object at its raw key unless an activity or another pending ingest still names it. Nothing
-// else removes it before the account's purge, and with no activity the user can neither see
+// object at its raw key unless a track or another pending ingest still names it. Nothing
+// else removes it before the account's purge, and with no track the user can neither see
 // it, delete it nor find it in their data download (docs/DPIA.md keeps originals only as long
-// as their activity). The worker runs it inside the failed job, while the account's other
+// as their track). The worker runs it inside the failed job, while the account's other
 // ingests wait their turn, so none can promote the same key in between.
 func DiscardRaw(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, jobID int64, userID, rawKey string) error {
 	if _, err := pool.Exec(ctx, `UPDATE jobs SET raw = NULL WHERE id = $1`, jobID); err != nil {

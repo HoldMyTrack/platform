@@ -27,10 +27,10 @@ func TestPurgeDeletedAccountRemovesItsObjectsAndRows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("store: %v", err)
 	}
-	var activityID string
+	var trackID string
 	if err := pool.QueryRow(ctx, `
 		INSERT INTO activities (user_id, source, activity_type, started_at, timezone) VALUES ($1, 'upload', 'run', NOW(), 'UTC') RETURNING id
-	`, userID).Scan(&activityID); err != nil {
+	`, userID).Scan(&trackID); err != nil {
 		t.Fatalf("create activity: %v", err)
 	}
 	mine := []string{
@@ -76,11 +76,11 @@ func TestPurgeDeletedAccountRemovesItsObjectsAndRows(t *testing.T) {
 			t.Errorf("%s removed, but isn't the account's", k)
 		}
 	}
-	var users, activities int
+	var users, tracks int
 	pool.QueryRow(ctx, `SELECT count(*) FROM users WHERE id = $1`, userID).Scan(&users)
-	pool.QueryRow(ctx, `SELECT count(*) FROM activities WHERE id = $1`, activityID).Scan(&activities)
-	if users != 0 || activities != 0 {
-		t.Errorf("rows left: %d users, %d activities", users, activities)
+	pool.QueryRow(ctx, `SELECT count(*) FROM activities WHERE id = $1`, trackID).Scan(&tracks)
+	if users != 0 || tracks != 0 {
+		t.Errorf("rows left: %d users, %d activities", users, tracks)
 	}
 }
 
@@ -111,7 +111,7 @@ func TestPurgeKeepsPhotoFilesAnotherAccountUses(t *testing.T) {
 	if err != nil {
 		t.Fatalf("store: %v", err)
 	}
-	activity := func(owner string) string {
+	track := func(owner string) string {
 		var id string
 		if err := pool.QueryRow(ctx, `
 			INSERT INTO activities (user_id, source, activity_type, started_at, timezone) VALUES ($1, 'upload', 'run', NOW(), 'UTC') RETURNING id
@@ -120,16 +120,16 @@ func TestPurgeKeepsPhotoFilesAnotherAccountUses(t *testing.T) {
 		}
 		return id
 	}
-	photo := func(owner, activityID, key string) {
+	photo := func(owner, trackID, key string) {
 		if _, err := pool.Exec(ctx, `
 			INSERT INTO activity_photos (user_id, activity_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
-			VALUES ($1, $2, NOW(), 'image/jpeg', 'image/jpeg', 1, 1, 1, $3)`, owner, activityID, key); err != nil {
+			VALUES ($1, $2, NOW(), 'image/jpeg', 'image/jpeg', 1, 1, 1, $3)`, owner, trackID, key); err != nil {
 			t.Fatalf("photo: %v", err)
 		}
 		s3.Put(key, []byte("x"))
 		s3.Put(key+"-thumb", []byte("x"))
 	}
-	mine, theirs := activity(userID), activity(otherID)
+	mine, theirs := track(userID), track(otherID)
 	sharedKey, ownKey := "photos/"+userID+"/shared", "photos/"+userID+"/own"
 	receivedKey, receivedAlone := "photos/"+otherID+"/sent", "photos/someone-gone/sent"
 	photo(userID, mine, sharedKey)

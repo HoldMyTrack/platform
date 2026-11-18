@@ -19,10 +19,10 @@ import (
 const maxStatsCardSide = 4096
 
 type statsCardRequest struct {
-	ActivityIDs []string        `json:"activity_ids"`
-	Width       int             `json:"width"`
-	Height      int             `json:"height"`
-	Theme       statscard.Theme `json:"theme"`
+	TrackIDs []string        `json:"track_ids"`
+	Width    int             `json:"width"`
+	Height   int             `json:"height"`
+	Theme    statscard.Theme `json:"theme"`
 }
 
 const statsCardQuery = `
@@ -33,7 +33,7 @@ SELECT activity_type, distance_meters, COALESCE(moving_seconds, duration_seconds
  ORDER BY started_at DESC, id DESC`
 
 // handleStatsCard draws the stats card for a map image export (SPEC FR-4.7): the checked
-// activities' numbers as a PNG the client lays over its image. Every id must be the account's;
+// tracks' numbers as a PNG the client lays over its image. Every id must be the account's;
 // Pending ones are left out, and with none left there is no card (204).
 func (s *Server) handleStatsCard(w http.ResponseWriter, r *http.Request) {
 	var req statsCardRequest
@@ -41,7 +41,7 @@ func (s *Server) handleStatsCard(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, bodyError(err, "invalid request body"), http.StatusBadRequest)
 		return
 	}
-	ids, ok := validateActivityIDs(w, req.ActivityIDs, true)
+	ids, ok := validateTrackIDs(w, req.TrackIDs, true)
 	if !ok {
 		return
 	}
@@ -58,8 +58,8 @@ func (s *Server) handleStatsCard(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
-	acts, country, err := s.statsCardActivities(ctx, userIDFromContext(ctx), ids)
-	if errors.Is(err, errActivityNotFound) {
+	acts, country, err := s.statsCardTracks(ctx, userIDFromContext(ctx), ids)
+	if errors.Is(err, errTrackNotFound) {
 		writeAPIError(w, err.Error(), http.StatusNotFound)
 		return
 	}
@@ -85,9 +85,9 @@ func (s *Server) handleStatsCard(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(png)
 }
 
-// statsCardActivities is the card's rows of ids, newest first, Pending ones left out, and the
-// account's country; errActivityNotFound when any id isn't the account's.
-func (s *Server) statsCardActivities(ctx context.Context, userID string, ids []string) ([]statscard.Activity, string, error) {
+// statsCardTracks is the card's rows of ids, newest first, Pending ones left out, and the
+// account's country; errTrackNotFound when any id isn't the account's.
+func (s *Server) statsCardTracks(ctx context.Context, userID string, ids []string) ([]statscard.Track, string, error) {
 	var country string
 	if err := s.pool.QueryRow(ctx, `SELECT COALESCE(country, '') FROM users WHERE id = $1`, userID).Scan(&country); err != nil {
 		return nil, "", err
@@ -97,7 +97,7 @@ func (s *Server) statsCardActivities(ctx context.Context, userID string, ids []s
 		return nil, "", err
 	}
 	type row struct {
-		a       statscard.Activity
+		a       statscard.Track
 		pending bool
 	}
 	found, err := pgx.CollectRows(rows, func(rr pgx.CollectableRow) (row, error) {
@@ -109,9 +109,9 @@ func (s *Server) statsCardActivities(ctx context.Context, userID string, ids []s
 		return nil, "", err
 	}
 	if len(found) != len(ids) {
-		return nil, "", errActivityNotFound
+		return nil, "", errTrackNotFound
 	}
-	acts := make([]statscard.Activity, 0, len(found))
+	acts := make([]statscard.Track, 0, len(found))
 	for _, x := range found {
 		if !x.pending {
 			acts = append(acts, x.a)

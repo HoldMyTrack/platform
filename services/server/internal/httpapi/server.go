@@ -28,7 +28,7 @@ import (
 )
 
 // maxUploadBytes bounds an uploaded file, which handleUpload reads into memory before the
-// worker streams it from object storage (IMPLEMENTATION.md §5.1). An activity of a few hours is
+// worker streams it from object storage (IMPLEMENTATION.md §5.1). A track of a few hours is
 // a few MB of GPX or TCX and far less as FIT; only a day or more recorded once a second as GPX
 // or TCX comes near this, and such a file has to be split or sent as FIT.
 const maxUploadBytes = 16 << 20 // 16 MiB
@@ -37,7 +37,7 @@ const maxUploadBytes = 16 << 20 // 16 MiB
 // ParseMultipartForm keeps all of it in memory, so no upload is written to a temp file.
 const maxUploadBodyBytes = maxUploadBytes + 1<<20
 
-// uploadExts is the activity file types an upload may be. A `.zip` is refused with a message
+// uploadExts is the track file types an upload may be. A `.zip` is refused with a message
 // of its own: archives aren't imported (ADR-0039).
 var uploadExts = map[string]bool{".gpx": true, ".fit": true, ".tcx": true}
 
@@ -55,12 +55,11 @@ var devOrigins = map[string]bool{
 	"http://localhost:4183": true,
 }
 
-// apiPrefix and tilesPrefix are the sole place the API's major version lives — route() and
-// tileRoute() below are the only things that reference them, so a future /v2 (a real breaking
-// change; additive changes need no bump at all) is a matter of adding a second constant and a
-// second set of registrations, not a hunt-and-replace across every route below and every
-// frontend call site.
-const apiPrefix = "/v1"
+// apiPrefix and tilesPrefix are where the API's major version lives: route() and tileRoute()
+// register under them. v1Prefix is the API before Tracks and Trips, which v1_edge.go translates
+// onto apiPrefix for installed apps; nothing registers under it.
+const apiPrefix = "/v2"
+const v1Prefix = "/v1"
 const tilesPrefix = "/tiles/v1"
 
 func route(method, path string) string     { return method + " " + apiPrefix + path }
@@ -90,23 +89,23 @@ type Server struct {
 	google                googleOAuth
 	facebook              facebookOAuth
 	// visitors counts unique web visitors (visitors.go); nil without a database.
-	visitors            *visitorCounter
-	apple               appleOAuth
-	turnstile           turnstile
-	pages               *web.Renderer
-	uploadLimiter       *fixedWindowLimiter
-	tileLimiter         *fixedWindowLimiter
-	syncLimiter         *fixedWindowLimiter
-	trackPointsLimiter  *fixedWindowLimiter
-	statsCardLimiter    *fixedWindowLimiter
-	syncActivityLimiter *fixedWindowLimiter
-	signupLimiter       *fixedWindowLimiter
-	budget              *budget.Gate
-	minAndroidBuild     int
-	minIOSBuild         int
+	visitors           *visitorCounter
+	apple              appleOAuth
+	turnstile          turnstile
+	pages              *web.Renderer
+	uploadLimiter      *fixedWindowLimiter
+	tileLimiter        *fixedWindowLimiter
+	syncLimiter        *fixedWindowLimiter
+	routePointsLimiter *fixedWindowLimiter
+	statsCardLimiter   *fixedWindowLimiter
+	syncTrackLimiter   *fixedWindowLimiter
+	signupLimiter      *fixedWindowLimiter
+	budget             *budget.Gate
+	minAndroidBuild    int
+	minIOSBuild        int
 }
 
-// defaultUploadsPerHour is how many files one account may send to `POST /v1/activities/upload`
+// defaultUploadsPerHour is how many files one account may send to `POST /v2/tracks/upload`
 // in an hour: five of the clients' 20-file batches, plenty to bring a season in by hand, and a
 // stop to a script pouring a whole archive in one file at a time (ADR-0039). UPLOADS_PER_HOUR
 // overrides it, for a load test's target.
@@ -126,9 +125,9 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		uploadLimiter:         newFixedWindowLimiter(defaultUploadsPerHour, time.Hour),
 		tileLimiter:           newFixedWindowLimiter(defaultTilesPerMinute, time.Minute),
 		syncLimiter:           newFixedWindowLimiter(syncRequestsPerHour, time.Hour),
-		trackPointsLimiter:    newFixedWindowLimiter(trackPointsPerHour, time.Hour),
+		routePointsLimiter:    newFixedWindowLimiter(routePointsPerHour, time.Hour),
 		statsCardLimiter:      newFixedWindowLimiter(statsCardsPerHour, time.Hour),
-		syncActivityLimiter:   newFixedWindowLimiter(syncActivitiesPerHour, time.Hour),
+		syncTrackLimiter:      newFixedWindowLimiter(syncTracksPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
 	}
 	local := config.IsLocal(appBaseURL)
@@ -170,7 +169,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/auth/resend-verification"), s.requireAuth(s.handleResendVerification))
 	s.mux.HandleFunc(route("PATCH", "/auth/email"), s.requireAuth(s.handleChangeEmail))
 	s.mux.HandleFunc(route("POST", "/auth/verify-code"), s.requireAuth(s.handleVerifyCode))
-	// requireNotDemo below: account and activity changes a demo account must never reach
+	// requireNotDemo below: account and track changes a demo account must never reach
 	// (docs/SPEC.md FR-2.1). requireVerified alone covers everything else a signed-in but
 	// unverified real account must not reach yet.
 	s.mux.HandleFunc(route("PATCH", "/account/settings"), s.requireNotDemo(s.handleUpdateSettings))
@@ -185,40 +184,40 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/account/export"), s.requireNotDemo(s.handleRequestExport))
 	s.mux.HandleFunc(route("GET", "/account/export"), s.requireVerified(s.handleGetExport))
 	s.mux.HandleFunc(route("GET", "/account/exports/{id}/parts/{n}"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleDownloadExportPart)))
-	s.mux.HandleFunc(route("POST", "/activities/upload"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUpload)))
-	s.mux.HandleFunc(route("GET", "/activities"), s.requireVerified(s.handleListActivities))
-	s.mux.HandleFunc(route("GET", "/activities/area"), s.requireVerified(s.handleListArea))
-	s.mux.HandleFunc(route("GET", "/activities/{id}"), s.requireVerified(s.handleGetActivity))
-	s.mux.HandleFunc(route("GET", "/activity-types"), s.requireVerified(s.handleActivityTypes))
-	s.mux.HandleFunc(route("PATCH", "/activities/{id}"), s.requireNotDemo(s.handleUpdateActivity))
-	s.mux.HandleFunc(route("DELETE", "/activities/{id}"), s.requireNotDemo(s.handleDeleteActivity))
-	s.mux.HandleFunc(route("POST", "/activities/overlaps"), s.requireVerified(s.handleActivityOverlaps))
-	s.mux.HandleFunc(route("POST", "/activities/stats-card"), s.requireVerified(s.handleStatsCard))
-	s.mux.HandleFunc(route("GET", "/activities/pending"), s.requireVerified(s.handleActivitiesPending))
-	s.mux.HandleFunc(route("GET", "/activities/summary"), s.requireVerified(s.handleActivitySummary))
-	s.mux.HandleFunc(route("GET", "/activities/histogram"), s.requireVerified(s.handleActivityHistogram))
-	s.mux.HandleFunc(route("GET", "/activities/graph-stats"), s.requireVerified(s.handleActivityGraphStats))
-	s.mux.HandleFunc(route("GET", "/activities/trends"), s.requireVerified(s.handleActivityTrends))
-	s.mux.HandleFunc(route("GET", "/activities/{id}/track-metrics"), s.requireVerified(s.handleActivityTrackMetrics))
-	s.mux.HandleFunc(route("GET", "/activities/{id}/track-points"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleActivityTrackPoints)))
-	s.mux.HandleFunc(route("POST", "/activities/{id}/track-edit"), s.requireNotDemo(s.handleActivityTrackEdit))
+	s.mux.HandleFunc(route("POST", "/tracks/upload"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUpload)))
+	s.mux.HandleFunc(route("GET", "/tracks"), s.requireVerified(s.handleListTracks))
+	s.mux.HandleFunc(route("GET", "/tracks/area"), s.requireVerified(s.handleListArea))
+	s.mux.HandleFunc(route("GET", "/tracks/{id}"), s.requireVerified(s.handleGetTrack))
+	s.mux.HandleFunc(route("GET", "/track-types"), s.requireVerified(s.handleTrackTypes))
+	s.mux.HandleFunc(route("PATCH", "/tracks/{id}"), s.requireNotDemo(s.handleUpdateTrack))
+	s.mux.HandleFunc(route("DELETE", "/tracks/{id}"), s.requireNotDemo(s.handleDeleteTrack))
+	s.mux.HandleFunc(route("POST", "/tracks/overlaps"), s.requireVerified(s.handleTrackOverlaps))
+	s.mux.HandleFunc(route("POST", "/tracks/stats-card"), s.requireVerified(s.handleStatsCard))
+	s.mux.HandleFunc(route("GET", "/tracks/pending"), s.requireVerified(s.handleTracksPending))
+	s.mux.HandleFunc(route("GET", "/tracks/summary"), s.requireVerified(s.handleTrackSummary))
+	s.mux.HandleFunc(route("GET", "/tracks/histogram"), s.requireVerified(s.handleTrackHistogram))
+	s.mux.HandleFunc(route("GET", "/tracks/graph-stats"), s.requireVerified(s.handleTrackGraphStats))
+	s.mux.HandleFunc(route("GET", "/tracks/trends"), s.requireVerified(s.handleTrackTrends))
+	s.mux.HandleFunc(route("GET", "/tracks/{id}/route-metrics"), s.requireVerified(s.handleTrackRouteMetrics))
+	s.mux.HandleFunc(route("GET", "/tracks/{id}/route-points"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleTrackRoutePoints)))
+	s.mux.HandleFunc(route("POST", "/tracks/{id}/route-edit"), s.requireNotDemo(s.handleTrackRouteEdit))
 	s.mux.HandleFunc(route("GET", "/private-locations"), s.requireVerified(s.handleListPrivateLocations))
-	s.mux.HandleFunc(route("GET", "/private-locations/hidden"), s.requireVerified(s.handleHiddenActivities))
+	s.mux.HandleFunc(route("GET", "/private-locations/hidden"), s.requireVerified(s.handleHiddenTracks))
 	s.mux.HandleFunc(route("POST", "/private-locations"), s.requireNotDemo(s.handleCreatePrivateLocation))
 	s.mux.HandleFunc(route("PATCH", "/private-locations/{id}"), s.requireNotDemo(s.handleUpdatePrivateLocation))
 	s.mux.HandleFunc(route("DELETE", "/private-locations/{id}"), s.requireNotDemo(s.handleDeletePrivateLocation))
-	s.mux.HandleFunc(route("GET", "/stories"), s.requireVerified(s.handleListStories))
-	s.mux.HandleFunc(route("POST", "/stories"), s.requireNotDemo(s.handleCreateStory))
-	s.mux.HandleFunc(route("GET", "/stories/{id}"), s.requireVerified(s.handleGetStory))
-	s.mux.HandleFunc(route("PATCH", "/stories/{id}"), s.requireNotDemo(s.handleUpdateStory))
-	s.mux.HandleFunc(route("DELETE", "/stories/{id}"), s.requireNotDemo(s.handleDeleteStory))
-	s.mux.HandleFunc(route("POST", "/stories/{id}/activities"), s.requireNotDemo(s.handleAddStoryActivities))
-	s.mux.HandleFunc(route("DELETE", "/stories/{id}/activities"), s.requireNotDemo(s.handleRemoveStoryActivities))
-	// Sending a copy of a Story (story_sends.go).
-	s.mux.HandleFunc(route("POST", "/stories/{id}/send"), s.requireNotDemo(s.handleSendStory))
-	s.mux.HandleFunc(route("GET", "/story-sends"), s.requireVerified(s.handleListStorySends))
-	s.mux.HandleFunc(route("POST", "/story-sends/{id}/accept"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleAcceptStorySend)))
-	s.mux.HandleFunc(route("DELETE", "/story-sends/{id}"), s.requireNotDemo(s.handleDeclineStorySend))
+	s.mux.HandleFunc(route("GET", "/trips"), s.requireVerified(s.handleListTrips))
+	s.mux.HandleFunc(route("POST", "/trips"), s.requireNotDemo(s.handleCreateTrip))
+	s.mux.HandleFunc(route("GET", "/trips/{id}"), s.requireVerified(s.handleGetTrip))
+	s.mux.HandleFunc(route("PATCH", "/trips/{id}"), s.requireNotDemo(s.handleUpdateTrip))
+	s.mux.HandleFunc(route("DELETE", "/trips/{id}"), s.requireNotDemo(s.handleDeleteTrip))
+	s.mux.HandleFunc(route("POST", "/trips/{id}/tracks"), s.requireNotDemo(s.handleAddTripTracks))
+	s.mux.HandleFunc(route("DELETE", "/trips/{id}/tracks"), s.requireNotDemo(s.handleRemoveTripTracks))
+	// Sending a copy of a Trip (trip_sends.go).
+	s.mux.HandleFunc(route("POST", "/trips/{id}/send"), s.requireNotDemo(s.handleSendTrip))
+	s.mux.HandleFunc(route("GET", "/trip-sends"), s.requireVerified(s.handleListTripSends))
+	s.mux.HandleFunc(route("POST", "/trip-sends/{id}/accept"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleAcceptTripSend)))
+	s.mux.HandleFunc(route("DELETE", "/trip-sends/{id}"), s.requireNotDemo(s.handleDeclineTripSend))
 	// Activity photos (photos.go).
 	s.mux.HandleFunc(route("GET", "/photos"), s.requireVerified(s.handleListPhotos))
 	s.mux.HandleFunc(route("POST", "/photos"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUploadPhoto)))
@@ -232,7 +231,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/uploads/{external_id}"), s.requireVerified(s.handleUploadStatus))
 	s.mux.HandleFunc(route("GET", "/coverage/status"), s.requireVerified(s.handleCoverageStatus))
 	s.mux.HandleFunc(route("GET", "/map/layers"), s.requireVerified(s.handleMapLayers))
-	s.mux.HandleFunc(route("POST", "/sync/activities"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleSyncActivities)))
+	s.mux.HandleFunc(route("POST", "/sync/tracks"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleSyncTracks)))
 	s.mux.HandleFunc(route("POST", "/sync/known"), s.requireNotDemo(s.handleSyncKnown))
 	s.tile("/tracks/{z}/{x}/{y}", s.handleTracksTile)
 	s.tile("/fog-vector/{z}/{x}/{y}", s.budgeted(budget.ReadsPaused, s.handleFogVectorTile))
@@ -249,7 +248,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.tile("/cities/{z}/{x}/{y}", s.handleCityFogTile)
 	// An empty tile for installed Android builds, until MIN_ANDROID_BUILD next goes up.
 	s.tile("/heat-points/{z}/{x}/{y}", s.handleHeatPointsTile)
-	// Deliberately not behind requireAuth, unlike every /v1 route above it. The style
+	// Deliberately not behind requireAuth, unlike every API route above it. The style
 	// document is derived entirely from the public Protomaps basemap and contains no
 	// per-user data — only layer definitions and the asset URLs a client would need
 	// anyway to fetch an archive this server already publishes unauthenticated. Requiring
@@ -262,7 +261,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 }
 
 // registerPages adds the server-rendered HTML pages (pages.go, auth_pages.go, ADR-0012) —
-// outside /v1, since they're pages a browser navigates to, not API. In production Caddy sends
+// outside the API, since they're pages a browser navigates to, not API. In production Caddy sends
 // this server everything that isn't a static asset (apps/web/docker/Caddyfile); in dev, Vite's
 // proxy (apps/web/vite.config.ts) lists these paths one by one, so a new page goes there too.
 func (s *Server) registerPages() {
@@ -369,6 +368,10 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			}()
 		}
 	}()
+	if strings.HasPrefix(r.URL.Path, v1Prefix+"/") {
+		s.serveV1(rec, r)
+		return
+	}
 	s.serve(rec, r)
 }
 
@@ -452,22 +455,22 @@ func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
 
 // maxJSONBodyBytes bounds every request body that doesn't set a limit of its own. The handlers
 // decode JSON or a form straight from the body and check lengths after, so without it one huge
-// "name", or a track edit's list of millions of point indexes, is held whole in memory first.
-// The largest legitimate body, a Story's 10,000 activity ids or a 10,000-entry track edit, is a
+// "name", or a route edit's list of millions of point indexes, is held whole in memory first.
+// The largest legitimate body, a Trip's 10,000 track ids or a 10,000-entry route edit, is a
 // few hundred KB.
 const maxJSONBodyBytes = 1 << 20
 
 // ownBodyLimitRoutes are the routes whose handler bounds the body itself, at a size above
-// maxJSONBodyBytes: the multipart uploads (an activity file, a photo, an avatar), a phone
-// sync's batch of activities, and the overlap check over everything a phone could offer. Matched by route, never by the client's Content-Type, which any
+// maxJSONBodyBytes: the multipart uploads (a track file, a photo, an avatar), a phone
+// sync's batch of tracks, and the overlap check over everything a phone could offer. Matched by route, never by the client's Content-Type, which any
 // caller can set to skip the cap on a JSON route.
 var ownBodyLimitRoutes = map[string]bool{
-	"POST " + apiPrefix + "/activities/upload":   true,
-	"POST " + apiPrefix + "/photos":              true,
-	"POST " + apiPrefix + "/account/avatar":      true,
-	"POST " + apiPrefix + "/sync/activities":     true,
-	"POST " + apiPrefix + "/activities/overlaps": true,
-	"POST /settings/avatar":                      true,
+	"POST " + apiPrefix + "/tracks/upload":   true,
+	"POST " + apiPrefix + "/photos":          true,
+	"POST " + apiPrefix + "/account/avatar":  true,
+	"POST " + apiPrefix + "/sync/tracks":     true,
+	"POST " + apiPrefix + "/tracks/overlaps": true,
+	"POST /settings/avatar":                  true,
 }
 
 // setsOwnBodyLimit reports whether r's handler bounds the body itself (ownBodyLimitRoutes).
@@ -482,9 +485,9 @@ func (s *Server) setSecurityHeaders(h http.Header) {
 	h.Set("Referrer-Policy", "strict-origin-when-cross-origin")
 }
 
-// crossSiteAPIWrite reports a state-changing /v1/ request a browser sent from another site.
+// crossSiteAPIWrite reports a state-changing /v2/ request a browser sent from another site.
 // SameSite=Lax keeps the session cookie off such a request, but not off the response: a
-// hostile page's auto-submitted form to /v1/auth/login, with an enctype="text/plain" body
+// hostile page's auto-submitted form to /v2/auth/login, with an enctype="text/plain" body
 // shaped into valid JSON, set the attacker's session in the victim's browser, so whatever the
 // victim uploaded next went to the attacker's account. A browser always sends Origin on a
 // POST, PATCH or DELETE, so one naming a different origin than this app's (or the dev

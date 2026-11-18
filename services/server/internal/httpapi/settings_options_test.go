@@ -10,7 +10,7 @@ import (
 
 func settingsOptionsFor(t *testing.T, info authInfo) settingsOptionsResponse {
 	t.Helper()
-	r := httptest.NewRequest(http.MethodGet, "/v1/account/settings/options", nil)
+	r := httptest.NewRequest(http.MethodGet, "/v2/account/settings/options", nil)
 	r = r.WithContext(context.WithValue(r.Context(), authContextKey, info))
 	w := serveChecked(t, (&Server{}).handleSettingsOptions, r)
 	if w.Code != http.StatusOK {

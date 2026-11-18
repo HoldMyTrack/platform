@@ -102,7 +102,7 @@ func TestDownsampleMatchesTheReference(t *testing.T) {
 // points — still draws. At 128 px those moves are a small fraction of a pixel, and a stroke
 // through them used to come out empty: the rasterizer works in 1/64-pixel fixed point, where
 // such a segment has no length.
-func TestActivityMaskSurvivesJitter(t *testing.T) {
+func TestTrackMaskSurvivesJitter(t *testing.T) {
 	rng := rand.New(rand.NewPCG(5, 6))
 	var line []pixelPoint
 	x := 5.0
@@ -115,7 +115,7 @@ func TestActivityMaskSurvivesJitter(t *testing.T) {
 			line = append(line, line[len(line)-1]) // the same fix twice
 		}
 	}
-	m := renderActivityMask(line)
+	m := renderTrackMask(line)
 	lit := 0
 	for _, v := range m.Pix {
 		if v > 128 {
@@ -130,7 +130,7 @@ func TestActivityMaskSurvivesJitter(t *testing.T) {
 // A stroke just past a tile's edge paints nothing inside it, on every side alike. The drawing
 // library folds coverage from just left of and above its canvas into the first column and row,
 // which put a strip of false coverage along a tile's left and top edges, a seam in Fog where a
-// corridor ran along one (renderActivityMask's margin).
+// corridor ran along one (renderTrackMask's margin).
 func TestAStrokeOutsideTheTilePaintsNothingInIt(t *testing.T) {
 	for _, centre := range []float64{-3, -2.6, -4} {
 		far := TileSize - centre
@@ -138,10 +138,10 @@ func TestAStrokeOutsideTheTilePaintsNothingInIt(t *testing.T) {
 			mask *image.Gray
 			x, y int
 		}{
-			"left":   {renderActivityMask([]pixelPoint{{centre, 20}, {centre, 100}}), 0, 60},
-			"right":  {renderActivityMask([]pixelPoint{{far, 20}, {far, 100}}), TileSize - 1, 60},
-			"top":    {renderActivityMask([]pixelPoint{{20, centre}, {100, centre}}), 60, 0},
-			"bottom": {renderActivityMask([]pixelPoint{{20, far}, {100, far}}), 60, TileSize - 1},
+			"left":   {renderTrackMask([]pixelPoint{{centre, 20}, {centre, 100}}), 0, 60},
+			"right":  {renderTrackMask([]pixelPoint{{far, 20}, {far, 100}}), TileSize - 1, 60},
+			"top":    {renderTrackMask([]pixelPoint{{20, centre}, {100, centre}}), 60, 0},
+			"bottom": {renderTrackMask([]pixelPoint{{20, far}, {100, far}}), 60, TileSize - 1},
 		}
 		for side, s := range sides {
 			if v := s.mask.GrayAt(s.x, s.y).Y; v != 0 {
@@ -163,7 +163,7 @@ func TestNeighbouringTilesMeetAtTheirEdge(t *testing.T) {
 	for i, p := range left {
 		right[i] = pixelPoint{x: p.x - TileSize, y: p.y}
 	}
-	a, b := renderActivityMask(left), renderActivityMask(right)
+	a, b := renderTrackMask(left), renderTrackMask(right)
 
 	dc := gg.NewContext(2*TileSize, TileSize)
 	dc.SetRGBA(0, 0, 0, 1)

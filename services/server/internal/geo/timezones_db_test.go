@@ -11,9 +11,9 @@ import (
 	"time"
 )
 
-// A load puts each activity in the zone its track starts in, leaves a zone the database's tz
+// A load puts each track in the zone its track starts in, leaves a zone the database's tz
 // data doesn't know out, falls back to the account's zone where no polygon covers the start,
-// leaves an activity with no track as it is, and skips a file it has already loaded; one with
+// leaves a track with no route as it is, and skips a file it has already loaded; one with
 // too few zones is refused.
 func TestLoadTimezones(t *testing.T) {
 	tx := testTx(t)
@@ -46,7 +46,7 @@ func TestLoadTimezones(t *testing.T) {
 		fmt.Sprintf("geo-tz-%d@holdmytrack.invalid", time.Now().UnixNano())).Scan(&userID); err != nil {
 		t.Fatalf("create account: %v", err)
 	}
-	activity := func(track string) string {
+	track := func(track string) string {
 		var id string
 		if err := tx.QueryRow(ctx, `
 			INSERT INTO activities (user_id, source, activity_type, started_at, trajectory, timezone)
@@ -58,11 +58,11 @@ func TestLoadTimezones(t *testing.T) {
 	}
 	// Starts in "Tokyo", ends at "sea"; starts at sea; starts in the unknown zone; starts where
 	// no polygon is; and one with no track.
-	tokyo := activity("LINESTRING M(-40.5 -60.5 0, -39.5 -60.5 60)")
-	sea := activity("LINESTRING M(-39.5 -60.5 0, -40.5 -60.5 60)")
-	unknown := activity("LINESTRING M(-38.5 -60.5 0, -38.4 -60.5 60)")
-	nowhere := activity("LINESTRING M(-30.5 -60.5 0, -30.4 -60.5 60)")
-	hidden := activity("")
+	tokyo := track("LINESTRING M(-40.5 -60.5 0, -39.5 -60.5 60)")
+	sea := track("LINESTRING M(-39.5 -60.5 0, -40.5 -60.5 60)")
+	unknown := track("LINESTRING M(-38.5 -60.5 0, -38.4 -60.5 60)")
+	nowhere := track("LINESTRING M(-30.5 -60.5 0, -30.4 -60.5 60)")
+	hidden := track("")
 	zone := func(id string) string {
 		var tz string
 		if err := tx.QueryRow(ctx, `SELECT timezone FROM activities WHERE id = $1`, id).Scan(&tz); err != nil {
@@ -75,7 +75,7 @@ func TestLoadTimezones(t *testing.T) {
 	if err != nil {
 		t.Fatalf("load: %v", err)
 	}
-	if stats.Zones != 2 || len(stats.UnknownZones) != 1 || stats.UnknownZones[0] != "Mars/Olympus_Mons" || stats.Activities != 4 {
+	if stats.Zones != 2 || len(stats.UnknownZones) != 1 || stats.UnknownZones[0] != "Mars/Olympus_Mons" || stats.Tracks != 4 {
 		t.Errorf("stats %+v", stats)
 	}
 	for id, want := range map[string]string{

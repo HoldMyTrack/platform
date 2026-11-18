@@ -68,7 +68,7 @@ type spotsAreaResponse struct {
 	Total int `json:"total"`
 }
 
-// handleSpotsInArea serves `GET /v1/spots?bbox=west,south,east,north&categories=a,b` — "Show in
+// handleSpotsInArea serves `GET /v2/spots?bbox=west,south,east,north&categories=a,b` — "Show in
 // this area" below the zoom the spots tiles start at (FR-14.4). The places are the same for
 // everyone but the retired ones, which only an account that captured one gets back; it's behind
 // the session like the tiles.

@@ -37,8 +37,9 @@ const (
 	facebookDialogURL    = "https://www.facebook.com/" + facebookGraphVersion + "/dialog/oauth"
 	facebookGraphURL     = "https://graph.facebook.com/" + facebookGraphVersion
 
-	// facebookCookiePath scopes oauth.go's round-trip cookie to this flow alone.
-	facebookCookiePath = apiPrefix + "/auth/facebook"
+	// facebookCookiePath scopes oauth.go's round-trip cookie to this flow alone, under /v1, where
+	// the callback URL registered with Facebook is (config.FacebookRedirectURL).
+	facebookCookiePath = v1Prefix + "/auth/facebook"
 )
 
 var (
@@ -73,7 +74,7 @@ func newFacebookOAuth(cfg FacebookOAuthConfig) facebookOAuth {
 
 func (f facebookOAuth) enabled() bool { return f.AppID != "" }
 
-// handleFacebookStart serves `GET /v1/auth/facebook/start?tz=<IANA name>` — a full-page
+// handleFacebookStart serves `GET /v2/auth/facebook/start?tz=<IANA name>` — a full-page
 // navigation, as handleGoogleStart is. No PKCE: Facebook's manual web flow doesn't document
 // it, and the code is only redeemable with the app secret, which never leaves this server;
 // state still ties the callback to this browser. The Android app opens this same URL in a

@@ -42,10 +42,11 @@ const (
 	appleRevokeURL = appleIssuer + "/auth/revoke"
 	appleKeysURL   = appleIssuer + "/auth/keys"
 
-	// appleCookiePath scopes oauth.go's round-trip cookie to this flow alone.
-	appleCookiePath = apiPrefix + "/auth/apple"
-	// appleCallbackPath is the one /v1 write Apple's own site posts to.
-	appleCallbackPath = appleCookiePath + "/callback"
+	// appleCookiePath scopes oauth.go's round-trip cookie to this flow alone, under /v1, where
+	// the callback URL registered with Apple is (config.AppleRedirectURL).
+	appleCookiePath = v1Prefix + "/auth/apple"
+	// appleCallbackPath is the one API write Apple's own site posts to, as v1_edge.go hands it on.
+	appleCallbackPath = apiPrefix + "/auth/apple/callback"
 
 	// appleClientSecretTTL is how long each client secret is good for. Apple allows six
 	// months; one is signed per request, so minutes are plenty.
@@ -80,7 +81,7 @@ func newAppleOAuth(cfg AppleOAuthConfig) appleOAuth {
 
 func (a appleOAuth) enabled() bool { return a.ServicesID != "" && a.PrivateKey != nil }
 
-// handleAppleStart serves `GET /v1/auth/apple/start?tz=<IANA name>` — a full-page navigation,
+// handleAppleStart serves `GET /v2/auth/apple/start?tz=<IANA name>` — a full-page navigation,
 // as handleGoogleStart is. No PKCE: Apple's web flow doesn't document it, and the code is only
 // redeemable with a client secret signed by a key that never leaves this server; state still
 // ties the callback to this browser. A native app adds `&app_challenge=` as for Google (oauth.go).
@@ -137,7 +138,7 @@ func (s *Server) handleAppleCallback(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// handleAppleToken serves `POST /v1/auth/apple/token` `{authorization_code, name, tz}` — Sign
+// handleAppleToken serves `POST /v2/auth/apple/token` `{authorization_code, name, tz}` — Sign
 // in with Apple for the iOS app (docs/IMPLEMENTATION.md §4.9). The app gets the code from
 // AuthenticationServices and posts it here; the code is exchanged under the bundle ID, which
 // checks it with Apple and returns the refresh token the web flow keeps too. The platform hands

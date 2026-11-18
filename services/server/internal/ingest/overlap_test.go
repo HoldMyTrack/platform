@@ -41,7 +41,7 @@ func TestOverlapMatches(t *testing.T) {
 }
 
 // Every pair overlapMatches accepts must start within overlapStartSlack of the incoming
-// activity's duration, or the SQL prefilter would drop a real match before the exact test.
+// track's duration, or the SQL prefilter would drop a real match before the exact test.
 func TestStartSlackCoversEveryMatch(t *testing.T) {
 	t0 := time.Date(2026, 9, 1, 8, 0, 0, 0, time.UTC)
 	d := 1000 * time.Second

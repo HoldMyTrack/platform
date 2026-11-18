@@ -48,7 +48,7 @@ func seenSince(column string, n int) string {
 var clients = []string{"web_only", "android_only", "ios_only", "both"}
 
 var catalogue = []stat{
-	// Accounts and activity.
+	// Accounts and track.
 	{key: "accounts", query: `SELECT count(*) FROM acct`},
 	{key: "accounts_verified", query: `SELECT count(*) FROM acct WHERE email_verified`},
 	// Deleted accounts count until their row is purged; deletions are derived when read.
@@ -98,7 +98,7 @@ var catalogue = []stat{
 		JOIN admin_countries c ON c.id = ac.country_id
 		GROUP BY c.code`},
 
-	// Activities.
+	// Tracks.
 	{key: "activities", query: `SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id`},
 	{key: "activities_added", query: `
 		SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id, p
@@ -118,7 +118,7 @@ var catalogue = []stat{
 		)
 		SELECT g, x FROM v, LATERAL (VALUES ('p50', v.p50), ('p90', v.p90), ('max', v.mx)) AS t(g, x)`},
 
-	// Storage the database measures. A photo's files are shared by the copies of a Story it was
+	// Storage the database measures. A photo's files are shared by the copies of a Trip it was
 	// sent in (IMPLEMENTATION.md §4.23), so each image_key counts once.
 	{key: "photos", query: `SELECT count(*) FROM activity_photos ph JOIN acct u ON u.id = ph.user_id`},
 	{key: "storage_bytes.photos", query: `
@@ -143,7 +143,7 @@ var catalogue = []stat{
 	{key: "storage_bytes.fog", query: `
 		SELECT coalesce(sum(f.bytes), 0) FROM fog_tiles f JOIN acct u ON u.id = f.user_id`},
 	// Everything an account stores, over accounts storing anything: what a quota would bound.
-	// A photo shared with a Story copy counts for each account holding it.
+	// A photo shared with a Trip copy counts for each account holding it.
 	{prefix: "storage_bytes_per_account", query: `
 		, per AS (
 			SELECT user_id, sum(b)::float8 AS b FROM (

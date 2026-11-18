@@ -165,7 +165,7 @@ func TestCacheMaxAge(t *testing.T) {
 
 func TestHandleGoogleToken(t *testing.T) {
 	disabled := &Server{google: newGoogleOAuth(GoogleOAuthConfig{})}
-	rec := serveChecked(t, disabled.handleGoogleToken, httptest.NewRequest("POST", "/v1/auth/google/token", strings.NewReader(`{}`)))
+	rec := serveChecked(t, disabled.handleGoogleToken, httptest.NewRequest("POST", "/v2/auth/google/token", strings.NewReader(`{}`)))
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("disabled: status %d, want 404", rec.Code)
 	}
@@ -173,7 +173,7 @@ func TestHandleGoogleToken(t *testing.T) {
 	// A token that fails verification never reaches account resolution (no database here).
 	certs := &fakeCerts{keys: map[string]*rsa.PublicKey{"k1": &newRSAKey(t).PublicKey}}
 	s := testGoogleKeyServer(certs.serve(t).URL)
-	rec = serveChecked(t, s.handleGoogleToken, httptest.NewRequest("POST", "/v1/auth/google/token", strings.NewReader(`{"id_token":"a.b.c","tz":"Europe/Berlin"}`)))
+	rec = serveChecked(t, s.handleGoogleToken, httptest.NewRequest("POST", "/v2/auth/google/token", strings.NewReader(`{"id_token":"a.b.c","tz":"Europe/Berlin"}`)))
 	if rec.Code != http.StatusUnauthorized || !strings.Contains(rec.Body.String(), "Google") {
 		t.Fatalf("bad token: %d %q", rec.Code, rec.Body.String())
 	}
@@ -187,7 +187,7 @@ func TestAuthProviders(t *testing.T) {
 		"all on":  {&Server{google: testGoogleServer("").google, facebook: testFacebookServer("").facebook, apple: testAppleServer(t, "").apple}, `{"google":true,"facebook":true,"apple":true,"google_client_id":"` + testClientID + `"}`},
 		"all off": {&Server{google: newGoogleOAuth(GoogleOAuthConfig{}), facebook: newFacebookOAuth(FacebookOAuthConfig{}), apple: newAppleOAuth(AppleOAuthConfig{})}, `{"google":false,"facebook":false,"apple":false}`},
 	} {
-		rec := serveChecked(t, tc.s.handleAuthProviders, httptest.NewRequest("GET", "/v1/auth/providers", nil))
+		rec := serveChecked(t, tc.s.handleAuthProviders, httptest.NewRequest("GET", "/v2/auth/providers", nil))
 		if got := strings.TrimSpace(rec.Body.String()); got != tc.want {
 			t.Errorf("%s: got %s, want %s", name, got, tc.want)
 		}

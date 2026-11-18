@@ -23,7 +23,7 @@ func TestCountsAsVisitor(t *testing.T) {
 		{"redirected", "GET /settings", 303, firefox, false, false},
 		{"admin panel", "GET /admin", 200, firefox, false, false},
 		{"form post", "POST /signin", 200, firefox, false, false},
-		{"api", "GET /v1/activities", 200, firefox, false, false},
+		{"api", "GET /v2/tracks", 200, firefox, false, false},
 		{"app webview", "GET /help", 200, firefox, true, false},
 		{"no user agent", "GET /about", 200, "", false, false},
 		{"crawler", "GET /about", 200, "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", false, false},

@@ -60,7 +60,7 @@ func tileDirty(t *testing.T, pool *pgxpool.Pool, userID string, zoom, x, y int) 
 }
 
 // A render clears the tile's dirty flag only if nothing marked it again while it was drawn —
-// an activity deleted mid-render must not leave its old mask in the stored tile for good —
+// a track deleted mid-render must not leave its old mask in the stored tile for good —
 // and always leaves its parent dirty, so the pyramid above survives an interrupted pass. It
 // stores both objects' sizes.
 func TestUpsertTileRenderedKeepsAMidRenderMark(t *testing.T) {

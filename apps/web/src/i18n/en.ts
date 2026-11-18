@@ -1,7 +1,7 @@
 /**
  * The map app's English messages — the source of truth for every other catalog (ru.ts is typed
  * against these keys). A key ending .one/.other is one plural form of a count's message (tn).
- * Activity types' names come from the server (ui/activityTypes.ts).
+ * Track types' names come from the server (ui/trackTypes.ts).
  */
 export const en = {
   'app.load_failed': "Couldn't load your account: {message}",

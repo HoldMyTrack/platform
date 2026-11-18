@@ -29,7 +29,7 @@ func TestSpotCaptures(t *testing.T) {
 		t.Fatalf("create spot: %v", err)
 	}
 	t.Cleanup(func() { d.pool.Exec(context.Background(), `DELETE FROM spots WHERE id = $1`, id) })
-	path := fmt.Sprintf("/v1/spots/%d", id)
+	path := fmt.Sprintf("/v2/spots/%d", id)
 
 	var detail spotDetailJSON
 	d.decode(d.do(me, "GET", path, nil), http.StatusOK, &detail)
@@ -50,8 +50,8 @@ func TestSpotCaptures(t *testing.T) {
 	}
 
 	var mine, theirs spotCapturesResponse
-	d.decode(d.do(me, "GET", "/v1/spots/captures", nil), http.StatusOK, &mine)
-	d.decode(d.do(other, "GET", "/v1/spots/captures", nil), http.StatusOK, &theirs)
+	d.decode(d.do(me, "GET", "/v2/spots/captures", nil), http.StatusOK, &mine)
+	d.decode(d.do(other, "GET", "/v2/spots/captures", nil), http.StatusOK, &theirs)
 	if len(mine.Captures) != 1 || mine.Captures[0].SpotID != id {
 		t.Errorf("my captures: %+v", mine)
 	}
@@ -68,7 +68,7 @@ func TestSpotCaptures(t *testing.T) {
 			t.Errorf("body %v: status %d, want 400", bad, rec.Code)
 		}
 	}
-	for _, missing := range []string{"/v1/spots/0", "/v1/spots/abc", fmt.Sprintf("/v1/spots/%d", id+1_000_000_000)} {
+	for _, missing := range []string{"/v2/spots/0", "/v2/spots/abc", fmt.Sprintf("/v2/spots/%d", id+1_000_000_000)} {
 		if rec := d.do(me, "GET", missing, nil); rec.Code != http.StatusNotFound {
 			t.Errorf("GET %s: status %d, want 404", missing, rec.Code)
 		}
@@ -76,7 +76,7 @@ func TestSpotCaptures(t *testing.T) {
 	if rec := d.do(d.newAccount(true), "POST", path+"/captures", map[string]float64{"lat": -40.5, "lon": -40.5}); rec.Code != http.StatusForbidden {
 		t.Errorf("demo: status %d, want 403", rec.Code)
 	}
-	if rec := d.do(account{}, "GET", "/v1/spots/captures", nil); rec.Code != http.StatusUnauthorized {
+	if rec := d.do(account{}, "GET", "/v2/spots/captures", nil); rec.Code != http.StatusUnauthorized {
 		t.Errorf("signed out: status %d, want 401", rec.Code)
 	}
 
@@ -127,16 +127,16 @@ func TestSpotCapturesSince(t *testing.T) {
 	}
 
 	var all, newer spotCapturesResponse
-	d.decode(d.do(me, "GET", "/v1/spots/captures", nil), http.StatusOK, &all)
+	d.decode(d.do(me, "GET", "/v2/spots/captures", nil), http.StatusOK, &all)
 	if len(all.Captures) != 3 || all.Captures[0].SpotID != ids[2] {
 		t.Fatalf("whole list: %+v", all.Captures)
 	}
 	since := url.QueryEscape(base.Add(time.Hour).Format(time.RFC3339Nano))
-	d.decode(d.do(me, "GET", "/v1/spots/captures?since="+since, nil), http.StatusOK, &newer)
+	d.decode(d.do(me, "GET", "/v2/spots/captures?since="+since, nil), http.StatusOK, &newer)
 	if len(newer.Captures) != 2 || newer.Captures[0].SpotID != ids[2] || newer.Captures[1].SpotID != ids[1] {
 		t.Fatalf("since the second: %+v, want the second and third", newer.Captures)
 	}
-	if rec := d.do(me, "GET", "/v1/spots/captures?since=yesterday", nil); rec.Code != http.StatusBadRequest {
+	if rec := d.do(me, "GET", "/v2/spots/captures?since=yesterday", nil); rec.Code != http.StatusBadRequest {
 		t.Errorf("a since that isn't a time: status %d, want 400", rec.Code)
 	}
 }

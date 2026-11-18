@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Fails when the API contract breaks an app release production still lets in: each
+# Fails when an API contract breaks an app release production still lets in: each
 # android/<versionCode> tag at or above the min_android_build that /healthz reports, and each
 # ios/<build> tag at or above its min_ios_build. Only breaks this change adds count; one already
 # on the base ref waits for the deploy that raises MIN_ANDROID_BUILD or MIN_IOS_BUILD
-# (docs/DEPLOY.md §10).
+# (docs/DEPLOY.md §10). A release is checked against each contract its tag has, /v1's
+# openapi.yaml and /v2's v2/openapi.yaml, since the tag doesn't say which one its build calls.
 #
 # --needed-floor <commit> prints, per app, the minimum that deploying <commit> needs: the first
 # release tag above the newest one its contract breaks, every break counted, or the current
@@ -55,18 +56,24 @@ contract_at() {
   git archive "$1" services/server/api | tar -x -C "$work" && mv "$work/services/server/api" "$work/$2"
 }
 
-# breaks <old contract> <new contract>: one line per error-level break, without file positions,
-# less those services/server/api/breaking-ignore.txt accepts.
+# breaks <old contract dir> <new contract dir>: one line per error-level break in each contract
+# both directories have (openapi.yaml, v2/openapi.yaml), without file positions, less those the
+# new directory's breaking-ignore.txt accepts.
 breaks() {
-  go run "$OASDIFF" breaking "$1" "$2" --format json --err-ignore services/server/api/breaking-ignore.txt |
-    jq -r '.[] | select(.level == 3) | [.operation, .path, .id, .text] | join(" ")' | sort -u
+  local rel
+  for rel in . v2; do
+    [[ -f "$1/$rel/openapi.yaml" && -f "$2/$rel/openapi.yaml" ]] || continue
+    go run "$OASDIFF" breaking "$1/$rel/openapi.yaml" "$2/$rel/openapi.yaml" --format json \
+      --err-ignore "services/server/api/$rel/breaking-ignore.txt" |
+      jq -r --arg v "$rel" '.[] | select(.level == 3) | [($v | sub("^\\.$"; "v1")), .operation, .path, .id, .text] | join(" ")'
+  done | sort -u
 }
 
 if [[ -n $target ]]; then
   sha=$(git rev-parse --short "$target^{commit}")
   contract_at "$sha" target
   # A value added to a response enum breaks only a client that decodes the field as an enum.
-  enum_added='^[A-Z]+ [^ ]+ response-[a-z-]*enum-value-added '
+  enum_added='^v[12] [A-Z]+ [^ ]+ response-[a-z-]*enum-value-added '
   status=0
   for app in $apps; do
     var=MIN_$(tr '[:lower:]' '[:upper:]' <<<"$app")_BUILD
@@ -76,7 +83,7 @@ if [[ -n $target ]]; then
     for build in $builds; do
       if (( build < floor )); then continue; fi
       contract_at "$app/$build" release
-      breaks "$work/release/openapi.yaml" "$work/target/openapi.yaml" > "$work/all-$build"
+      breaks "$work/release" "$work/target" > "$work/all-$build"
       grep -Ev "$enum_added" "$work/all-$build" > "$work/counted-$build" || true
       grep -E "$enum_added" "$work/all-$build" > "$work/enum-$build" || true
       if [[ -s "$work/counted-$build" ]]; then broken=$build; fi
@@ -114,8 +121,8 @@ for app in $apps; do
     [[ $build =~ ^[0-9]+$ ]] || continue
     if (( build < floor )); then continue; fi
     contract_at "$tag" release
-    added=$(comm -13 <(breaks "$work/release/openapi.yaml" "$work/base/openapi.yaml") \
-      <(breaks "$work/release/openapi.yaml" services/server/api/openapi.yaml))
+    added=$(comm -13 <(breaks "$work/release" "$work/base") \
+      <(breaks "$work/release" services/server/api))
     if [[ -n "$added" ]]; then
       echo "Breaks build $build ($tag):"
       sed 's/^/  /' <<<"$added"

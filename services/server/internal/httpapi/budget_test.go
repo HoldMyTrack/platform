@@ -62,10 +62,10 @@ func TestBudgetStages(t *testing.T) {
 	if after, err := strconv.Atoi(rec.Header().Get("Retry-After")); err != nil || after < 1 || after > 86401 {
 		t.Errorf("Retry-After %q, want the seconds to midnight UTC", rec.Header().Get("Retry-After"))
 	}
-	if rec := d.do(me, "POST", "/v1/sync/activities", map[string]any{"source": "healthconnect", "activities": []any{}}); rec.Code != http.StatusServiceUnavailable {
+	if rec := d.do(me, "POST", "/v2/sync/tracks", map[string]any{"source": "healthconnect", "tracks": []any{}}); rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("sync: %d, want 503", rec.Code)
 	}
-	if rec := d.do(me, "POST", "/v1/account/export", nil); rec.Code != http.StatusServiceUnavailable {
+	if rec := d.do(me, "POST", "/v2/account/export", nil); rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("data download request: %d, want 503", rec.Code)
 	}
 	if rec := d.do(me, "GET", "/tiles/v1/fog-vector/14/8800/5370.mvt", nil); rec.Code == http.StatusServiceUnavailable {
@@ -80,8 +80,8 @@ func TestBudgetStages(t *testing.T) {
 		t.Error("track tile refused: it reads only the database")
 	}
 	// Checking a split reads the original, as opening the editor does.
-	walk := d.newActivity(me, testActivity{activityType: "walking"})
-	if rec := d.do(me, "POST", "/v1/activities/"+walk+"/track-edit", map[string]any{"split_at": time.Now().UnixMilli()}); rec.Code != http.StatusServiceUnavailable {
+	walk := d.newTrack(me, testTrack{trackType: "walking"})
+	if rec := d.do(me, "POST", "/v2/tracks/"+walk+"/route-edit", map[string]any{"split_at": time.Now().UnixMilli()}); rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("split check: %d, want 503", rec.Code)
 	}
 

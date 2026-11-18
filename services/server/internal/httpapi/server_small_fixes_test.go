@@ -68,8 +68,8 @@ func TestSignInLimitHoldsUnderParallelGuesses(t *testing.T) {
 	}
 }
 
-// Deleting one of two activities that share an original keeps it; deleting the other removes it.
-func TestActivityDeleteRemovesAnOriginalOnlyWithItsLastActivity(t *testing.T) {
+// Deleting one of two tracks that share an original keeps it; deleting the other removes it.
+func TestTrackDeleteRemovesAnOriginalOnlyWithItsLastTrack(t *testing.T) {
 	s3 := newMemS3()
 	d := newDBTestWithS3(t, s3)
 	ctx := context.Background()
@@ -90,13 +90,13 @@ func TestActivityDeleteRemovesAnOriginalOnlyWithItsLastActivity(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if rec := d.do(me, http.MethodDelete, "/v1/activities/"+first, nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, http.MethodDelete, "/v2/tracks/"+first, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete first: %d", rec.Code)
 	}
 	if !s3.Has(key) {
 		t.Fatal("original removed while another activity still names it")
 	}
-	if rec := d.do(me, http.MethodDelete, "/v1/activities/"+second, nil); rec.Code != http.StatusNoContent {
+	if rec := d.do(me, http.MethodDelete, "/v2/tracks/"+second, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete second: %d", rec.Code)
 	}
 	if s3.Has(key) {

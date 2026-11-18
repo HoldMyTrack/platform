@@ -16,9 +16,9 @@ import (
 // person records, so only a script or a runaway import ever meets them, and one limit holds for
 // every account: a raised one for some would be a tier (VISION.md §6.1).
 const (
-	// maxActivitiesPerAccount is about nine activities a day for fifteen years.
-	maxActivitiesPerAccount = 50_000
-	// maxOriginalBytesPerAccount bounds the originals an account's activities keep (5 GB,
+	// maxTracksPerAccount is about nine tracks a day for fifteen years.
+	maxTracksPerAccount = 50_000
+	// maxOriginalBytesPerAccount bounds the originals an account's tracks keep (5 GB,
 	// decimal, as the Settings page words it), which the count alone doesn't: 16 MiB files.
 	maxOriginalBytesPerAccount = 5_000_000_000
 )
@@ -26,13 +26,13 @@ const (
 // accountUsage is what an account holds against its limits, counting the ingest jobs still
 // waiting as if they had landed, so a large import can't slip past the check while it's queued.
 type accountUsage struct {
-	activities    int64
+	tracks        int64
 	originalBytes int64
 }
 
 // usageQuery reads accountUsage. An original shared by split pieces counts once; one whose
 // size isn't recorded counts nothing. idx_jobs_user serves
-// the jobs half, the activities' user index the rest.
+// the jobs half, the tracks' user index the rest.
 const usageQuery = `
 	SELECT
 		(SELECT count(*) FROM activities WHERE user_id = $1)
@@ -46,7 +46,7 @@ const usageQuery = `
 
 func readUsage(ctx context.Context, db *pgxpool.Pool, userID string) (accountUsage, error) {
 	var u accountUsage
-	if err := db.QueryRow(ctx, usageQuery, userID).Scan(&u.activities, &u.originalBytes); err != nil {
+	if err := db.QueryRow(ctx, usageQuery, userID).Scan(&u.tracks, &u.originalBytes); err != nil {
 		return u, fmt.Errorf("account usage: %w", err)
 	}
 	return u, nil
@@ -54,11 +54,11 @@ func readUsage(ctx context.Context, db *pgxpool.Pool, userID string) (accountUsa
 
 // Which limit refused something, as the error message key that names it.
 const (
-	limitActivities = "error.activity_limit"
-	limitStorage    = "error.storage_limit"
+	limitTracks  = "error.track_limit"
+	limitStorage = "error.storage_limit"
 )
 
-// fitWithinLimits reports how many of the items arriving, in order and each a new activity of
+// fitWithinLimits reports how many of the items arriving, in order and each a new track of
 // the given original size, fit under the limits on top of u, and for the first that doesn't,
 // which limit refused it ("" when they all fit). Checked before the jobs are queued, so two
 // requests at once can each fit and together go a little over; the limits are far enough above
@@ -66,12 +66,12 @@ const (
 func fitWithinLimits(u accountUsage, sizes []int64) (n int, refused string) {
 	for _, size := range sizes {
 		switch {
-		case u.activities+1 > maxActivitiesPerAccount:
-			return n, limitActivities
+		case u.tracks+1 > maxTracksPerAccount:
+			return n, limitTracks
 		case u.originalBytes+size > maxOriginalBytesPerAccount:
 			return n, limitStorage
 		}
-		u.activities++
+		u.tracks++
 		u.originalBytes += size
 		n++
 	}
@@ -79,7 +79,7 @@ func fitWithinLimits(u accountUsage, sizes []int64) (n int, refused string) {
 }
 
 // refuseOverLimit answers 409 with the limit's message and reports true when the account has no
-// room for one more activity of size bytes (0 for one whose size isn't known yet, a Story copy).
+// room for one more track of size bytes (0 for one whose size isn't known yet, a Trip copy).
 // A failed read is a 500.
 func (s *Server) refuseOverLimit(w http.ResponseWriter, r *http.Request, userID string, size int64) bool {
 	u, err := readUsage(r.Context(), s.pool, userID)
@@ -99,10 +99,10 @@ func writeLimitError(w http.ResponseWriter, r *http.Request, refused string) {
 	writeError(w, http.StatusConflict, "account_limit", limitMessage(i18n.Get(requestLang(r)), refused))
 }
 
-// usageLine is Settings' "1,240 of 50,000 activities · 310 MB of 5 GB of original files".
+// usageLine is Settings' "1,240 of 50,000 tracks · 310 MB of 5 GB of original files".
 func usageLine(l *i18n.Localizer, u accountUsage) string {
 	return l.T("settings.usage_line",
-		"activities", l.Int(u.activities), "max_activities", l.Int(maxActivitiesPerAccount),
+		"activities", l.Int(u.tracks), "max_activities", l.Int(maxTracksPerAccount),
 		"storage", web.FormatBytes(l, u.originalBytes), "max_storage", maxStorageText(l))
 }
 
@@ -112,8 +112,8 @@ func maxStorageText(l *i18n.Localizer) string {
 
 // limitMessage is refused's message, naming its limit in l's language ("50,000", "5 GB").
 func limitMessage(l *i18n.Localizer, refused string) string {
-	if refused == limitActivities {
-		return l.T(limitActivities, "max", l.Int(maxActivitiesPerAccount))
+	if refused == limitTracks {
+		return l.T(limitTracks, "max", l.Int(maxTracksPerAccount))
 	}
 	return l.T(limitStorage, "max", maxStorageText(l))
 }

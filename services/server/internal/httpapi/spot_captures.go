@@ -27,7 +27,7 @@ CROSS JOIN LATERAL (SELECT ST_PointOnSurface(s.geom) AS pt) p
 LEFT JOIN spot_captures c ON c.spot_id = s.id AND c.user_id = $2
 WHERE s.id = $1 AND (s.retired_at IS NULL OR c.user_id IS NOT NULL)`
 
-// spotDetailJSON is `GET /v1/spots/{id}`: the place as "Show in this area" has it, its area as a
+// spotDetailJSON is `GET /v2/spots/{id}`: the place as "Show in this area" has it, its area as a
 // GeoJSON MultiPolygon, and when the caller captured it (absent when they haven't).
 type spotDetailJSON struct {
 	spotJSON
@@ -58,7 +58,7 @@ func spotIDFromPath(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	return id, true
 }
 
-// handleSpotDetail serves `GET /v1/spots/{id}` (FR-14.6).
+// handleSpotDetail serves `GET /v2/spots/{id}` (FR-14.6).
 func (s *Server) handleSpotDetail(w http.ResponseWriter, r *http.Request) {
 	id, ok := spotIDFromPath(w, r)
 	if !ok {
@@ -83,7 +83,7 @@ func (s *Server) handleSpotDetail(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, sp)
 }
 
-// capturesSince reads `GET /v1/spots/captures`' `since` parameter: nil when it's absent, for the
+// capturesSince reads `GET /v2/spots/captures`' `since` parameter: nil when it's absent, for the
 // whole list, else the time from which captures are wanted (an RFC 3339 time, as the list's own
 // `captured_at` values are written).
 func capturesSince(q string) (*time.Time, error) {
@@ -97,7 +97,7 @@ func capturesSince(q string) (*time.Time, error) {
 	return &t, nil
 }
 
-// handleListSpotCaptures serves `GET /v1/spots/captures` (FR-14.6): every place the caller has
+// handleListSpotCaptures serves `GET /v2/spots/captures` (FR-14.6): every place the caller has
 // captured, newest first — what the maps draw the captured badge from — or with `since`, only
 // those captured at or after it. A capture is never changed or removed (§4.25), so a client
 // that has the list adds what this returns to it: what the web map does on every return to
@@ -141,7 +141,7 @@ func (s *Server) handleListSpotCaptures(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// handleCaptureSpot serves `POST /v1/spots/{id}/captures` (FR-14.6): the phone has held the caller
+// handleCaptureSpot serves `POST /v2/spots/{id}/captures` (FR-14.6): the phone has held the caller
 // inside the place for 30 s, and sends the last position it measured. The server checks that
 // position against the area once more, within spotCaptureSlackM, and keeps the first capture —
 // 201 for a new one, 200 with the earlier one's time when the place was already captured. A

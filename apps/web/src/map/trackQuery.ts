@@ -6,8 +6,8 @@ export function datesQuery({ after, before }: DateFilter): TrackQuery {
   return { ...(after !== null && { from: after }), ...(before !== null && { to: before }) };
 }
 
-/** What the list reads: the open Trip's tracks (`GET /v1/activities?story=`), else the area
- *  under Dates (`GET /v1/activities/area`, FR-5.11); null until the map has an area to ask about. */
+/** What the list reads: the open Trip's tracks (`GET /v2/tracks?trip=`), else the area
+ *  under Dates (`GET /v2/tracks/area`, FR-5.11); null until the map has an area to ask about. */
 export type ListRequest = { trip: TrackQuery } | { area: AreaQuery };
 
 export function listQuery(tripId: string | null, dates: DateFilter, area: BBox | null): ListRequest | null {

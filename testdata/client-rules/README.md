@@ -27,13 +27,13 @@ The geometric and numeric rules (`editRoute*`, `photoClusters`, `photoMarkerLayo
 | `toolbarTarget` | `checked` (ids), `focused` | ids |
 | `statsOffered` | `checked` (ids), `tripId` | boolean |
 | `statsCardPlacement` | `width`, `height` (the image), `card` (`{ width, height }`) | `{ x, y }` |
-| `panelState` | `tracks` (`{ id, activityType, distanceMeters }`), `state` (`checked`, `focused`, `hidden`, `excludedTypes`, `distanceFilter`), `event` | the state after it |
+| `panelState` | `tracks` (`{ id, trackType, distanceMeters }`), `state` (`checked`, `focused`, `hidden`, `excludedTypes`, `distanceFilter`), `event` | the state after it |
 | `boldTracks` | `checked` (ids), `focused` | ids |
 | `targetVisibility` | `hidden`, `target` (ids) | hidden ids |
 | `photoScope` | `mode` (`normal`, `fog`), `editWindowIds`, `focused`, `tripId` | `{ track }`, `{ trip }` or `null` |
 | `photoGroup` | `photos` (`{ lat, lon }`) | `"open"` or `{ fit: [west, south, east, north] }` |
 | `webSession` | `state` (`dates`, `area`, `tripId`, `checked`, `hidden`, `excludedTypes`), `event` | the state after it, with `flyRequest` |
-| `distanceBounds` | `tracks` (`{ activityType, distanceMeters, private }`) | `{ min, max }` or `null` |
+| `distanceBounds` | `tracks` (`{ trackType, distanceMeters, private }`) | `{ min, max }` or `null` |
 | `distanceFilter` | `bounds`, `current` (`{ min, max }`), `knob` (`min`, `max`), `value` | `{ min, max }` or `null` |
 | `typeFacets` | `tracks`, `distanceFilter` | `[{ type, count }]` |
 | `passesFilters` | `track`, `excludedTypes`, `distanceFilter` | boolean |

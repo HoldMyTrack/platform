@@ -50,7 +50,7 @@ func TestUnknownField(t *testing.T) {
 func TestMisspelledRequestFieldIsRefused(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
-	rec := d.do(me, "POST", "/v1/private-locations", map[string]any{"lon": 10.0, "lat": 50.0, "radius": 200})
+	rec := d.do(me, "POST", "/v2/private-locations", map[string]any{"lon": 10.0, "lat": 50.0, "radius": 200})
 	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), `unknown field \"radius\"`) {
 		t.Fatalf("status %d %s, want 400 naming the field", rec.Code, rec.Body)
 	}

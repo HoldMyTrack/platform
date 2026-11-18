@@ -40,7 +40,7 @@ func TestActiveImports(t *testing.T) {
 	d.insertImportJob(me, "done", "recorded", "d.json", "b2")
 
 	var resp activeImportsResponse
-	d.decode(d.do(me, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	got := map[string][2]int64{}
 	for _, a := range resp.Imports {
 		got[a.Title] = [2]int64{a.Done, a.Total}
@@ -57,7 +57,7 @@ func TestActiveImports(t *testing.T) {
 
 	// Someone else's jobs never show.
 	other := d.newAccount(false)
-	d.decode(d.do(other, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(other, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	if len(resp.Imports) != 0 || resp.UnseenFailures != 0 {
 		t.Errorf("another account sees %+v", resp)
 	}
@@ -75,38 +75,38 @@ func TestUnseenImportFailures(t *testing.T) {
 	d.insertImportJob(me, "done", "upload", "good.gpx", "")
 
 	var resp activeImportsResponse
-	d.decode(d.do(me, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	if resp.UnseenFailures != 1 {
 		t.Fatalf("unseen failures %d, want 1", resp.UnseenFailures)
 	}
 	if res := d.do(me, "GET", "/sync", nil); res.Code != http.StatusOK {
 		t.Fatalf("GET /sync: %d", res.Code)
 	}
-	d.decode(d.do(me, "GET", "/v1/uploads/active", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads/active", nil), http.StatusOK, &resp)
 	if resp.UnseenFailures != 0 {
 		t.Errorf("unseen failures after opening /sync %d, want 0", resp.UnseenFailures)
 	}
 }
 
-// The history says when each import finished, and links a finished one to its activity.
+// The history says when each import finished, and links a finished one to its track.
 func TestUploadHistoryFinishedAt(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	d.insertImportJob(me, "done", "upload", "walk.gpx", "")
 	d.insertImportJob(me, "pending", "upload", "next.gpx", "")
-	walk := d.newActivity(me, testActivity{activityType: "walk", distanceMeters: 1000})
+	walk := d.newTrack(me, testTrack{trackType: "walk", distanceMeters: 1000})
 	if _, err := d.pool.Exec(context.Background(), `UPDATE activities SET source = 'upload', external_id = 'walk.gpx' WHERE id = $1`, walk); err != nil {
 		t.Fatal(err)
 	}
 
 	var resp uploadsResponse
-	d.decode(d.do(me, "GET", "/v1/uploads?limit=10", nil), http.StatusOK, &resp)
+	d.decode(d.do(me, "GET", "/v2/uploads?limit=10", nil), http.StatusOK, &resp)
 	rows := map[string]uploadRow{}
 	for _, u := range resp.Uploads {
 		rows[u.Filename] = u
 	}
-	if w := rows["walk.gpx"]; w.Status != "done" || w.FinishedAt == nil || w.ActivityID == nil || *w.ActivityID != walk {
-		t.Errorf("finished row: status %q, finished_at %v, activity %v; want done, set, %s", w.Status, w.FinishedAt, w.ActivityID, walk)
+	if w := rows["walk.gpx"]; w.Status != "done" || w.FinishedAt == nil || w.TrackID == nil || *w.TrackID != walk {
+		t.Errorf("finished row: status %q, finished_at %v, activity %v; want done, set, %s", w.Status, w.FinishedAt, w.TrackID, walk)
 	}
 	if n := rows["next.gpx"]; n.Status != "processing" || n.FinishedAt != nil {
 		t.Errorf("pending row: status %q, finished_at %v; want processing with none", n.Status, n.FinishedAt)

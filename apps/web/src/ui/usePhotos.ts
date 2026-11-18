@@ -16,7 +16,7 @@ function scopeKey(scope: PhotoScope): string | null {
 }
 
 /**
- * The photos (FR-15) of the focused track or the open Trip — `GET /v1/photos`, refetched
+ * The photos (FR-15) of the focused track or the open Trip — `GET /v2/photos`, refetched
  * whenever the scope or `version` changes or `reload` is called (after the Edit window saved). `version` is
  * whatever else should refetch them: MapView's `routeMetricsVersion`, bumped when a route edit
  * or a Private location change has been reprocessed — either can move a photo, or take it off

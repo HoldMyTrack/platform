@@ -116,7 +116,7 @@ export function formatDuration(seconds: number | null): string {
 }
 
 /**
- * The range-summary numbers (§4.7's `GET /v1/activities/summary`), rounded for a one-line
+ * The range-summary numbers (§4.7's `GET /v2/tracks/summary`), rounded for a one-line
  * stats display. These are totals, so they are never null — a sum over no tracks is 0.
  *
  * Distance keeps one decimal below 10 (km or mi): rounding a real but small history to a
@@ -140,7 +140,7 @@ export function formatFilterDate(date: string, today: string): string {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString(lang, { day: 'numeric', month: 'short', ...(!sameYear && { year: 'numeric' }), timeZone: 'UTC' });
 }
 
-/** An `activity_type`'s name, as the server gave it (trackTypes.ts). */
-export function formatTrackType(activityType: string): string {
-  return typeLabel(activityType);
+/** An `track_type`'s name, as the server gave it (trackTypes.ts). */
+export function formatTrackType(trackType: string): string {
+  return typeLabel(trackType);
 }

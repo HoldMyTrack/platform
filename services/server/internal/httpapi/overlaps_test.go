@@ -13,25 +13,25 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// A span is answered with the activity it overlaps by 80% of the longer of the two; a walk
+// A span is answered with the track it overlaps by 80% of the longer of the two; a walk
 // inside it and an empty span are not.
-func TestActivityOverlaps(t *testing.T) {
+func TestTrackOverlaps(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	ctx := context.Background()
 	at := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
-	walk := d.newActivity(me, testActivity{activityType: "walking", durationSecs: 3600, startedAt: at})
+	walk := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 3600, startedAt: at})
 	if _, err := d.pool.Exec(ctx, `UPDATE activities SET name = 'Morning walk' WHERE id = $1`, walk); err != nil {
 		t.Fatal(err)
 	}
-	// Someone else's activity at the same time is never an answer.
-	d.newActivity(d.newAccount(false), testActivity{activityType: "walking", durationSecs: 3600, startedAt: at})
+	// Someone else's track at the same time is never an answer.
+	d.newTrack(d.newAccount(false), testTrack{trackType: "walking", durationSecs: 3600, startedAt: at})
 
 	span := func(key string, from, to time.Duration) map[string]any {
 		return map[string]any{"key": key, "start": at.Add(from), "end": at.Add(to)}
 	}
 	var resp overlapsResponse
-	d.decode(d.do(me, http.MethodPost, "/v1/activities/overlaps", map[string]any{"spans": []map[string]any{
+	d.decode(d.do(me, http.MethodPost, "/v2/tracks/overlaps", map[string]any{"spans": []map[string]any{
 		span("copy", 2*time.Minute, 61*time.Minute),
 		span("inside", 0, 10*time.Minute),
 		span("empty", 0, 0),
@@ -39,37 +39,37 @@ func TestActivityOverlaps(t *testing.T) {
 	if len(resp.Overlaps) != 1 {
 		t.Fatalf("overlaps %+v, want only the copy", resp.Overlaps)
 	}
-	if o := resp.Overlaps[0]; o.Key != "copy" || o.ActivityID != walk || o.Name != "Morning walk" || o.ActivityType != "walking" {
+	if o := resp.Overlaps[0]; o.Key != "copy" || o.TrackID != walk || o.Name != "Morning walk" || o.TrackType != "walking" {
 		t.Errorf("overlap %+v, want copy → %s, Morning walk", o, walk)
 	}
 
-	if code := d.do(me, http.MethodPost, "/v1/activities/overlaps", map[string]any{"spans": []map[string]any{span("", 0, time.Hour)}}).Code; code != http.StatusBadRequest {
+	if code := d.do(me, http.MethodPost, "/v2/tracks/overlaps", map[string]any{"spans": []map[string]any{span("", 0, time.Hour)}}).Code; code != http.StatusBadRequest {
 		t.Errorf("empty key: status %d, want 400", code)
 	}
 }
 
-// The same walk synced twice from two sources is two live activities: ingest hides nothing.
+// The same walk synced twice from two sources is two live tracks: ingest hides nothing.
 func TestOverlappingSyncsStayLive(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me := d.newAccount(false)
 	ctx := context.Background()
 	send := func(source, id string, offset time.Duration) string {
 		t0 := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC).Add(offset)
-		body := map[string]any{"source": source, "activities": []map[string]any{{
-			"external_id": id, "activity_type": "walking",
+		body := map[string]any{"source": source, "tracks": []map[string]any{{
+			"external_id": id, "track_type": "walking",
 			"points": []map[string]any{
 				{"lat": 50.0, "lon": 10.0, "time": t0},
 				{"lat": 50.01, "lon": 10.01, "time": t0.Add(30 * time.Minute)},
 				{"lat": 50.02, "lon": 10.02, "time": t0.Add(time.Hour)},
 			},
 		}}}
-		var resp syncActivitiesResponse
-		d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", body), http.StatusOK, &resp)
+		var resp syncTracksResponse
+		d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", body), http.StatusOK, &resp)
 		res, err := ingest.Process(ctx, d.pool, d.srv.store, d.latestIngestJob(me))
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.ActivityID
+		return res.TrackID
 	}
 	a := send("healthconnect", "hc-1", 0)
 	b := send("recorded", "rec-1", time.Minute)
@@ -83,7 +83,7 @@ func TestOverlappingSyncsStayLive(t *testing.T) {
 }
 
 // A walk from home is compared as recorded: the minutes its Private location clipped off the
-// start still count, so the other source's full copy of it is marked — also once an activity
+// start still count, so the other source's full copy of it is marked — also once a track
 // stored before the recorded span existed has been backfilled.
 func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
@@ -98,21 +98,21 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 	point := func(lat float64, m int) map[string]any {
 		return map[string]any{"lat": lat, "lon": 10.0, "time": t0.Add(time.Duration(m) * time.Minute)}
 	}
-	body := map[string]any{"source": "recorded", "activities": []map[string]any{{
-		"external_id": "rec-1", "activity_type": "walking",
+	body := map[string]any{"source": "recorded", "tracks": []map[string]any{{
+		"external_id": "rec-1", "track_type": "walking",
 		"points": []map[string]any{
 			point(50.0, 0), point(50.0003, 3), point(50.0006, 6),
 			point(50.003, 7), point(50.006, 12), point(50.009, 16), point(50.012, 20),
 		},
 	}}}
-	var synced syncActivitiesResponse
-	d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", body), http.StatusOK, &synced)
+	var synced syncTracksResponse
+	d.decode(d.do(me, http.MethodPost, "/v2/sync/tracks", body), http.StatusOK, &synced)
 	res, err := ingest.Process(ctx, d.pool, d.srv.store, d.latestIngestJob(me))
 	if err != nil {
 		t.Fatal(err)
 	}
 	var started time.Time
-	if err := d.pool.QueryRow(ctx, `SELECT started_at FROM activities WHERE id = $1`, res.ActivityID).Scan(&started); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT started_at FROM activities WHERE id = $1`, res.TrackID).Scan(&started); err != nil {
 		t.Fatal(err)
 	}
 	if !started.After(t0.Add(5 * time.Minute)) {
@@ -121,12 +121,12 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 
 	overlaps := func() []overlapJSON {
 		var resp overlapsResponse
-		d.decode(d.do(me, http.MethodPost, "/v1/activities/overlaps", map[string]any{"spans": []map[string]any{
+		d.decode(d.do(me, http.MethodPost, "/v2/tracks/overlaps", map[string]any{"spans": []map[string]any{
 			{"key": "hc", "start": t0, "end": t0.Add(20 * time.Minute)},
 		}}), http.StatusOK, &resp)
 		return resp.Overlaps
 	}
-	if o := overlaps(); len(o) != 1 || o[0].ActivityID != res.ActivityID {
+	if o := overlaps(); len(o) != 1 || o[0].TrackID != res.TrackID {
 		t.Fatalf("overlaps %+v, want the recorded walk", o)
 	}
 }
@@ -152,7 +152,7 @@ func TestOverlapsTakesItsLargestRequest(t *testing.T) {
 	if len(body) <= maxJSONBodyBytes {
 		t.Fatalf("request of %d bytes, want one past %d", len(body), maxJSONBodyBytes)
 	}
-	if rec := d.send(me, http.MethodPost, "/v1/activities/overlaps", "application/json", body); rec.Code != http.StatusOK {
+	if rec := d.send(me, http.MethodPost, "/v2/tracks/overlaps", "application/json", body); rec.Code != http.StatusOK {
 		t.Fatalf("the largest overlaps request: %d %s", rec.Code, rec.Body.String())
 	}
 }
