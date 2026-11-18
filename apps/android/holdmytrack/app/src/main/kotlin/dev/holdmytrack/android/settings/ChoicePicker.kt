@@ -21,7 +21,7 @@ import java.text.Normalizer
 /**
  * Settings' Country and Timezone fields: a long list to pick one entry from, with a search field
  * over it — the web page's native `<select>` with type-to-find, as a dialog, the way
- * `recording/ActivityTypePicker` does the Type field, and for the same reason (a dialog keeps the
+ * `recording/TrackTypePicker` does the Type field, and for the same reason (a dialog keeps the
  * list and the search field both above the keyboard). Closed, unlike the Type picker: only the
  * listed values can be chosen, since those are what the server accepts.
  *

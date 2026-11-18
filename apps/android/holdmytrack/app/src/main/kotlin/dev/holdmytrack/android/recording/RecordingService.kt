@@ -24,7 +24,7 @@ import androidx.core.content.ContextCompat
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.db.LiveRecordingJournal
-import dev.holdmytrack.android.recording.db.RecordedActivityRecord
+import dev.holdmytrack.android.recording.db.RecordedTrackRecord
 import java.time.Instant
 import java.util.UUID
 import java.util.concurrent.Executors
@@ -38,7 +38,7 @@ import kotlinx.coroutines.withContext
 
 enum class RecordingState { IDLE, RECORDING, PAUSED }
 
-/** One GPS fix kept for the wire payload — see `RecordedActivityRecord.toSyncActivity`. */
+/** One GPS fix kept for the wire payload — see `RecordedTrackRecord.toSyncTrack`. */
 data class RecordedPoint(val lat: Double, val lon: Double, val elevationM: Float?, val time: Instant)
 
 /** What the notification redraws on every fix — recomputed, not accumulated field by field,
@@ -113,7 +113,7 @@ class RecordingService : Service() {
     var onChange: (() -> Unit)? = null
 
     /** The journal's key for the recording in progress, and the `external_id` it syncs under
-     *  (`RecordedActivityRecord`) — minted at Start, so the journal and the saved row share it. */
+     *  (`RecordedTrackRecord`) — minted at Start, so the journal and the saved row share it. */
     private var recordingId = ""
 
     /** Fixed at Start: the recording belongs to whoever was signed in when it began, even if
@@ -281,7 +281,7 @@ class RecordingService : Service() {
 
     /** Moves recording [id] out of the journal — into `recorded_activities` as [record], then
      *  the Save screen on it, or, with no [record] (too short), nowhere. */
-    private fun finish(context: Context, id: String, record: RecordedActivityRecord?, owner: String) {
+    private fun finish(context: Context, id: String, record: RecordedTrackRecord?, owner: String) {
         if (record == null) {
             Toast.makeText(context, R.string.recording_too_short, Toast.LENGTH_SHORT).show()
         }
@@ -477,9 +477,9 @@ class RecordingService : Service() {
             movingMs: Long,
             distanceM: Double,
             points: List<RecordedPoint>,
-        ): RecordedActivityRecord? {
+        ): RecordedTrackRecord? {
             if (!RecordingRules.keeps(movingMs, points.size)) return null
-            return RecordedActivityRecord(
+            return RecordedTrackRecord(
                 id = id,
                 name = "",
                 description = "",

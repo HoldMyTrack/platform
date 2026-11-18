@@ -2,7 +2,7 @@ package dev.holdmytrack.android.panel
 
 import android.content.res.Resources
 import dev.holdmytrack.android.R
-import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.RecordingFormat
 import java.text.NumberFormat
@@ -14,7 +14,7 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 /**
- * The Activities panel's numbers and dates in the app's language: [FormatParts]' decisions
+ * The Tracks panel's numbers and dates in the app's language: [FormatParts]' decisions
  * written out, and a start time as a medium date with a short time, as the web's `format.ts`
  * does. Units follow the account's Country (`RecordingFormat.imperial`).
  */
@@ -74,9 +74,9 @@ object PanelFormat {
         is DurationParts.Seconds -> res.getString(R.string.panel_duration_s, parts.s)
     }
 
-    /** The selected activity's third number: pace on foot ("8:47 /mi"), speed otherwise
+    /** The selected track's third number: pace on foot ("8:47 /mi"), speed otherwise
      *  ("17.1 km/h") — the account's units either way; a dash with no distance or no time. */
-    fun paceOrSpeed(res: Resources, kind: ActivityKind, meters: Double?, seconds: Long?): String {
+    fun paceOrSpeed(res: Resources, kind: TrackKind, meters: Double?, seconds: Long?): String {
         val imperial = RecordingFormat.imperial()
         val unitMeters = if (imperial) METERS_PER_MILE else 1000.0
         if (kind.showsPace) {
@@ -92,14 +92,14 @@ object PanelFormat {
     }
 
     /** A row's primary line: its name when it has one, else its start time — also how the
-     *  toolbar names one selected activity. */
-    fun rowLabel(res: Resources, activity: Activity): String =
-        activity.name?.trim()?.takeIf { it.isNotEmpty() } ?: startedAt(res, activity.startedAt, activity.timezone)
+     *  toolbar names one selected track. */
+    fun rowLabel(res: Resources, track: Track): String =
+        track.name?.trim()?.takeIf { it.isNotEmpty() } ?: startedAt(res, track.startedAt, track.timezone)
 
-    /** The zone an activity's times are shown in, from its own [timezone] ([ActivityZone]). */
-    fun zone(timezone: String?): ZoneId = ActivityZone.of(timezone, Session.timezone)
+    /** The zone a track's times are shown in, from its own [timezone] ([TrackZone]). */
+    fun zone(timezone: String?): ZoneId = TrackZone.of(timezone, Session.timezone)
 
-    /** "Sep 24, 2026, 4:00 AM", in [timezone], the zone the activity was recorded in
+    /** "Sep 24, 2026, 4:00 AM", in [timezone], the zone the track was recorded in
      *  (`docs/IMPLEMENTATION.md` §4.30), as the web shows it. */
     fun startedAt(res: Resources, iso: String, timezone: String?): String =
         runCatching {

@@ -133,7 +133,7 @@
                         android:orientation="horizontal">
 
                         <include
-                            android:id="@+id/you_stat_activities"
+                            android:id="@+id/you_stat_tracks"
                             layout="@layout/item_you_stat" />
 
                         <include

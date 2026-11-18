@@ -17,21 +17,21 @@ object PhotoMarkerScope {
     /** How far a group's tap zooms in: where [GROUP_SPREAD_M] is wider than a marker. */
     const val GROUP_MAX_ZOOM = 19.0
 
-    /** Whose photos show, in Normal mode only: the Edit window's single activity (none for a
-     *  group), else the selected activity, else the open Story. As `"activity:<id>"` or `"story:<id>"`. */
-    fun scope(mode: MapMode, editOpen: Boolean, editSingleId: String?, focused: String?, storyId: String?): String? = when {
+    /** Whose photos show, in Normal mode only: the Edit window's single track (none for a
+     *  group), else the selected track, else the open Trip. As `"track:<id>"` or `"trip:<id>"`. */
+    fun scope(mode: MapMode, editOpen: Boolean, editSingleId: String?, focused: String?, tripId: String?): String? = when {
         mode != MapMode.NORMAL -> null
-        editOpen -> editSingleId?.let { "activity:$it" }
-        focused != null -> "activity:$focused"
-        storyId != null -> "story:$storyId"
+        editOpen -> editSingleId?.let { "track:$it" }
+        focused != null -> "track:$focused"
+        tripId != null -> "trip:$tripId"
         else -> null
     }
 
-    /** Whether markers show: a scope, no recording, the Track tab not open, and an activity
+    /** Whether markers show: a scope, no recording, the Route tab not open, and a track
      *  scope's route not hidden. */
-    fun shown(scope: String?, recording: Boolean, showingTrack: Boolean, mapHidden: Set<String>): Boolean {
-        val activityScope = scope?.removePrefix("activity:")?.takeIf { scope.startsWith("activity:") }
-        return scope != null && !recording && !showingTrack && activityScope !in mapHidden
+    fun shown(scope: String?, recording: Boolean, showingRoute: Boolean, mapHidden: Set<String>): Boolean {
+        val trackScope = scope?.removePrefix("track:")?.takeIf { scope.startsWith("track:") }
+        return scope != null && !recording && !showingRoute && trackScope !in mapHidden
     }
 
     /** The scope's located photos on visible routes, with the Photos tab's unsaved changes merged in. */
@@ -39,7 +39,7 @@ object PhotoMarkerScope {
         val items = photos.mapNotNull { p ->
             val lat = p.lat ?: return@mapNotNull null
             val lon = p.lon ?: return@mapNotNull null
-            if (p.activityId in mapHidden) return@mapNotNull null
+            if (p.trackId in mapHidden) return@mapNotNull null
             PhotoMarkerItem(p.id, lon, lat, p.caption, thumbPath = p.thumbUrl)
         }
         if (overlay == null) return items

@@ -3,7 +3,7 @@ package dev.holdmytrack.android.map
 import android.net.Uri
 import dev.holdmytrack.android.net.PaceBand
 import dev.holdmytrack.android.net.TrackMetricPoint
-import dev.holdmytrack.android.net.TrackMetrics
+import dev.holdmytrack.android.net.RouteMetrics
 import dev.holdmytrack.android.recording.RecordedPoint
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
@@ -26,7 +26,7 @@ enum class MapMode { NORMAL, FOG }
 
 /**
  * The user layers on top of the served basemap, as the layers document draws them ([MapLayers]),
- * and what the app decides about them: the tracks' range or Story, which tracks are hidden and
+ * and what the app decides about them: the tracks' range or Trip, which tracks are hidden and
  * selected, and when the tracks step aside. Also the live recording, drawn from the device.
  *
  * Every tile is behind `requireAuth` (`services/server/internal/httpapi/server.go`), which is
@@ -38,7 +38,7 @@ object MapOverlays {
     /** The track lines everyone taps: the layers document's `tracks-line`. */
     const val TRACKS_LAYER_ID = "tracks-line"
 
-    /** The selected activity's pace bands, the document's `track-bands` group. */
+    /** The selected track's pace bands, the document's `track-bands` group. */
     const val BAND_LAYER_ID = "track-bands-line"
     private const val BAND_SOURCE_ID = "track-bands"
 
@@ -54,8 +54,8 @@ object MapOverlays {
      */
     const val TRACKS_MIN_ZOOM = 4f
 
-    /** The open Story the tracks are narrowed to, or null — kept for every new tracks URL. */
-    private var trackStory: String? = null
+    /** The open Trip the tracks are narrowed to, or null — kept for every new tracks URL. */
+    private var trackTrip: String? = null
 
     /**
      * Bumped by [refreshTracks] and sent as `v` (the server ignores it), the web's
@@ -65,9 +65,9 @@ object MapOverlays {
      */
     private var tracksVersion = 0
 
-    /** A track is being edited (`TrackEditOverlay`): every other track and the bands step
+    /** A track is being edited (`RouteEditOverlay`): every other track and the bands step
      *  aside for it, as the web's `setMapMode(…, editingRoute)` has them. */
-    private var editingTrack = false
+    private var editingRoute = false
 
     /** The Sync tab shows: the account's tracks and bands step aside, so the map draws only
      *  what's on offer (`SyncCandidatesOverlay`), not a slice of what's already synced. */
@@ -89,10 +89,10 @@ object MapOverlays {
      * style that already has them: a style reload (a day/night flavor swap) discards custom
      * layers, so this has to be re-runnable rather than one-shot.
      *
-     * Only the tracks tile carries a filter: `from`/`to`, or an open Story's `story` in their
-     * place ([setTrackStory]) — the same as the web, whose date range and Story narrow the
+     * Only the tracks tile carries a filter: `from`/`to`, or an open Trip's `trip` in their
+     * place ([setTrackTrip]) — the same as the web, whose date range and Trip narrow the
      * tracks alone: Fog shows coverage no filter narrows
-     * (`docs/SPEC.md` FR-4.2). The Activities panel's TYPE/DISTANCE filters, hidden
+     * (`docs/SPEC.md` FR-4.2). The Tracks panel's TYPE/DISTANCE filters, hidden
      * set and selection are vars the layers bind ([setTrackFilter]).
      *
      * [satellite] says imagery is drawn, which picks the views over it.
@@ -103,10 +103,10 @@ object MapOverlays {
         mode: MapMode,
         dates: DateFilter,
         satellite: Boolean,
-        story: String?,
+        trip: String?,
         excluded: Set<String> = emptySet(),
     ) {
-        trackStory = story
+        trackTrip = trip
         MapLayers.update(null) { it.copy(mode = mode, satellite = satellite, queries = it.queries + (TRACKS_SOURCE_ID to trackQuery(dates))) }
         MapLayers.attach(style, doc, excluded)
         setMode(style, mode)
@@ -118,17 +118,17 @@ object MapOverlays {
     }
 
     /**
-     * Draws [metrics]' pace bands — the selected activity's, `GET /v1/activities/{id}/track-metrics` —
+     * Draws [metrics]' pace bands — the selected track's, `GET /v1/activities/{id}/track-metrics` —
      * one line per run the server worked out, each with its `band` for the layer to colour, then
      * [routeFeature] for the group's direction arrows. The web's `setRouteBands`.
      */
-    fun setTrackBands(style: Style, metrics: TrackMetrics) {
+    fun setRouteBands(style: Style, metrics: RouteMetrics) {
         val features = bandFeatures(metrics.points, metrics.bands) + listOfNotNull(routeFeature(metrics.points))
         style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(features))
     }
 
     /** [points] as one line in recording order, marked `route`, or null with too few to have a
-     *  direction. The Sync tab's candidates draw no arrows, so only [setTrackBands] adds it. */
+     *  direction. The Sync tab's candidates draw no arrows, so only [setRouteBands] adds it. */
     fun routeFeature(points: List<TrackMetricPoint>): Feature? {
         if (points.size < 2) return null
         return Feature.fromGeometry(LineString.fromLngLats(points.map { Point.fromLngLat(it.lon, it.lat) })).apply { addBooleanProperty("route", true) }
@@ -140,7 +140,7 @@ object MapOverlays {
         Feature.fromGeometry(line).apply { addNumberProperty("band", run.band) }
     }
 
-    fun clearTrackBands(style: Style) {
+    fun clearRouteBands(style: Style) {
         style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(emptyList()))
     }
 
@@ -157,10 +157,10 @@ object MapOverlays {
         MapLayers.update(style) { it.copy(queries = it.queries + (TRACKS_SOURCE_ID to trackQuery(dates))) }
     }
 
-    /** Narrows the tracks to [story]'s activities, all of them, the tile's `story` filter
+    /** Narrows the tracks to [trip]'s tracks, all of them, the tile's `trip` filter
      *  (`docs/SPEC.md` FR-13.4) with no Dates; or, with null, back to [dates]. */
-    fun setTrackStory(style: Style, story: String?, dates: DateFilter) {
-        trackStory = story
+    fun setTrackTrip(style: Style, trip: String?, dates: DateFilter) {
+        trackTrip = trip
         setTrackDates(style, dates)
     }
 
@@ -182,9 +182,9 @@ object MapOverlays {
         MapLayers.update(style) { it.copy(vars = it.vars + mapOf("hidden" to ids(hidden), "focused" to ids(selected))) }
     }
 
-    /** See [editingTrack]. */
-    fun setEditingTrack(style: Style, editing: Boolean, mode: MapMode) {
-        editingTrack = editing
+    /** See [editingRoute]. */
+    fun setEditingRoute(style: Style, editing: Boolean, mode: MapMode) {
+        editingRoute = editing
         setMode(style, mode)
     }
 
@@ -197,7 +197,7 @@ object MapOverlays {
     /** [mode]'s view, labels included ([MapLayers]), the tracks stepping aside while a track is
      *  edited, the Sync tab shows or a recording runs. */
     fun setMode(style: Style, mode: MapMode) {
-        val aside = editingTrack || syncing || recording
+        val aside = editingRoute || syncing || recording
         MapLayers.update(style) { it.copy(mode = if (recording) MapMode.NORMAL else mode, hiddenGroups = it.hiddenGroups + ("tracksAside" to if (aside) TRACK_GROUPS else emptySet())) }
     }
 
@@ -257,12 +257,12 @@ object MapOverlays {
         }
     }
 
-    /** The query the app appends to the tracks tiles: an open Story whole, whatever Dates
+    /** The query the app appends to the tracks tiles: an open Trip whole, whatever Dates
      *  (`docs/SPEC.md` FR-13.6), else Dates' ends, and the refresh counter. */
     private fun trackQuery(dates: DateFilter): String = buildList {
-        val story = trackStory
-        if (story != null) {
-            add("story=${Uri.encode(story)}")
+        val trip = trackTrip
+        if (trip != null) {
+            add("story=${Uri.encode(trip)}")
         } else {
             dates.after?.let { add("from=$it") }
             dates.before?.let { add("to=$it") }

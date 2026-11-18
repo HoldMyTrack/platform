@@ -68,9 +68,9 @@ data class SettingsOptions(
 data class Providers(val google: Boolean, val facebook: Boolean, val googleClientId: String)
 
 /**
- * What the server did with one activity in a sync batch. [status] is `"enqueued"`,
+ * What the server did with one track in a sync batch. [status] is `"enqueued"`,
  * `"already_processed"` or `"rejected"`, and [error] carries the reason for the last of those —
- * an activity with no usable geometry, most often, which is a permanent verdict about that
+ * a track with no usable geometry, most often, which is a permanent verdict about that
  * record rather than a transient failure worth retrying.
  */
 data class SyncResult(val externalId: String, val status: String, val error: String)
@@ -85,17 +85,17 @@ data class SyncKnown(val known: Set<String>, val processing: Set<String>)
 data class UploadOutcome(val status: String)
 
 /**
- * One row of `GET /v1/activities` (`docs/IMPLEMENTATION.md` §4.7) — what the map's Activities
+ * One row of `GET /v1/activities` (`docs/IMPLEMENTATION.md` §4.7) — what the map's Tracks
  * panel lists, the web's `Activity`. [startedAt] is the server's RFC 3339 instant, shown in
  * [timezone], the zone it was recorded in (§4.30; empty from an older server). [name],
  * [description], [distanceMeters] and [movingSeconds] are null when the source never set
- * them; [movingSeconds] is moving time, as Stories sum it, else elapsed; [bbox] (`[minLon, minLat, maxLon, maxLat]`) is null for an activity with no drawn
- * track. [pending] is a reprocess still running (a track edit, a Private location change):
- * the tracks tile leaves such a row out until it lands (`docs/SPEC.md` FR-5.8). [isPrivate] is an
- * activity entirely inside the account's Private locations (FR-5.1): kept, with no track, so its
+ * them; [movingSeconds] is moving time, as Trips sum it, else elapsed; [bbox] (`[minLon, minLat, maxLon, maxLat]`) is null for a track with no drawn
+ * route. [pending] is a reprocess still running (a route edit, a Private location change):
+ * the tracks tile leaves such a row out until it lands (`docs/SPEC.md` FR-5.8). [isPrivate] is a
+ * track entirely inside the account's Private locations (FR-5.1): kept, with no route, so its
  * zero distance and duration mean nothing.
  */
-data class Activity(
+data class Track(
     val id: String,
     val startedAt: String,
     val activityType: String,
@@ -108,37 +108,37 @@ data class Activity(
     val pending: Boolean,
     val edited: Boolean,
     val isPrivate: Boolean = false,
-    /** Why Edit track or photos can't be used for it, as the server's code, or null when they
+    /** Why Edit route or photos can't be used for it, as the server's code, or null when they
      *  can (`panel/EditAvailability`). */
-    val trackEdit: String? = null,
+    val routeEdit: String? = null,
     val photos: String? = null,
-    /** The Stories it's in, newest first — what its row's Story badge names. */
-    val stories: List<StoryRef> = emptyList(),
+    /** The Trips it's in, newest first — what its row's Trip badge names. */
+    val trips: List<TripRef> = emptyList(),
 )
 
-/** `GET /v1/activities/area`: the area's newest [activities], and with an area how many it holds,
+/** `GET /v1/activities/area`: the area's newest [tracks], and with an area how many it holds,
  *  more than listed when they were cut at the limit (`docs/SPEC.md` FR-5.11). */
-data class AreaPage(val activities: List<Activity>, val total: Int?)
+data class AreaPage(val tracks: List<Track>, val total: Int?)
 
-/** One of an activity's Stories, as a row of `GET /v1/activities` names it (`docs/SPEC.md`
+/** One of a track's Trips, as a row of `GET /v1/activities` names it (`docs/SPEC.md`
  *  FR-5.1). */
-data class StoryRef(val id: String, val name: String)
+data class TripRef(val id: String, val name: String)
 
-/** A copy of a Story someone sent the account, waiting to be accepted or declined
+/** A copy of a Trip someone sent the account, waiting to be accepted or declined
  *  (`docs/SPEC.md` FR-13.7). [from] is the sender's name, or their email address. */
-data class StorySend(val id: String, val storyName: String, val from: String, val activityCount: Int)
+data class TripSend(val id: String, val tripName: String, val from: String, val trackCount: Int)
 
 /** A copy the account accepted that hasn't finished arriving. */
-data class StoryCopying(val storyName: String, val from: String)
+data class TripCopying(val tripName: String, val from: String)
 
 /** `GET /v1/story-sends`: the copies waiting, newest first, and the accepted ones arriving. */
-data class StoryInbox(val sends: List<StorySend>, val copying: List<StoryCopying>)
+data class TripInbox(val sends: List<TripSend>, val copying: List<TripCopying>)
 
 /**
- * A Story's numbers, or one activity type's share of them (`docs/SPEC.md` FR-13.1): [count]
- * activities, their distance and moving time. [activityType] is empty for the whole Story.
+ * A Trip's numbers, or one track type's share of them (`docs/SPEC.md` FR-13.1): [count]
+ * tracks, their distance and moving time. [activityType] is empty for the whole Trip.
  */
-data class StoryTotals(
+data class TripTotals(
     val activityType: String,
     val count: Int,
     val distanceMeters: Double,
@@ -146,24 +146,24 @@ data class StoryTotals(
 )
 
 /**
- * A Story — a hand-picked set of the account's activities (`docs/SPEC.md` FR-13.1), the web's
- * `Story`. [description] is empty when none is set; [from] names who sent the copy it came from
- * (FR-13.8), null for the account's own; [activityIds] is every member, earliest activity
- * first; [stats] covers the whole Story, whatever the date range, and [byType] the same per
- * activity type, the most frequent first.
+ * A Trip — a hand-picked set of the account's tracks (`docs/SPEC.md` FR-13.1), the web's
+ * `Trip`. [description] is empty when none is set; [from] names who sent the copy it came from
+ * (FR-13.8), null for the account's own; [trackIds] is every member, earliest track
+ * first; [stats] covers the whole Trip, whatever the date range, and [byType] the same per
+ * track type, the most frequent first.
  */
-data class Story(
+data class Trip(
     val id: String,
     val name: String,
     val description: String,
     val from: String? = null,
-    val activityIds: List<String>,
-    val stats: StoryTotals,
-    val byType: List<StoryTotals>,
+    val trackIds: List<String>,
+    val stats: TripTotals,
+    val byType: List<TripTotals>,
 )
 
 /**
- * One vertex of an activity's display track, as `GET /v1/activities/{id}/track-metrics`
+ * One vertex of a track's display route, as `GET /v1/activities/{id}/track-metrics`
  * measures it: its speed from the vertex before, and its moment ([timeS], epoch seconds) —
  * what the Photos tab's slider turns a place on the track into (`docs/SPEC.md` FR-15.4).
  */
@@ -174,10 +174,10 @@ data class TrackMetricPoint(
     val timeS: Long = 0,
 )
 
-/** What the selected activity's pace bands are drawn from: its points, and the server's runs of
+/** What the selected track's pace bands are drawn from: its points, and the server's runs of
  *  them by band. */
-data class TrackMetrics(
-    val activityId: String,
+data class RouteMetrics(
+    val trackId: String,
     val points: List<TrackMetricPoint>,
     val bands: List<PaceBand> = emptyList(),
 )
@@ -186,17 +186,17 @@ data class TrackMetrics(
  *  boundary point, so the coloured pieces join up without a gap. */
 data class PaceBand(val band: Int, val start: Int, val end: Int)
 
-/** One recorded point of an activity, as `GET /v1/activities/{id}/track-points` returns it — its
- *  time ([t], Unix ms) is what a track edit names it by. */
-data class TrackPoint(val lon: Double, val lat: Double, val t: Long)
+/** One recorded point of a track, as `GET /v1/activities/{id}/track-points` returns it — its
+ *  time ([t], Unix ms) is what a route edit names it by. */
+data class RoutePoint(val lon: Double, val lat: Double, val t: Long)
 
 /**
- * A track edit, as the server stores and replays it (`docs/IMPLEMENTATION.md` §4.7.7): a point
+ * A route edit, as the server stores and replays it (`docs/IMPLEMENTATION.md` §4.7.7): a point
  * survives when it's inside [keep] (inclusive, null for no limit), outside every [remove]
  * range (inclusive), and not in [drop]; a survivor whose time is a key of [move] is drawn at
  * that lon/lat instead. All times are Unix ms.
  */
-data class TrackEdit(
+data class RouteEdit(
     val keep: Pair<Long, Long>? = null,
     val remove: List<Pair<Long, Long>> = emptyList(),
     val drop: List<Long> = emptyList(),
@@ -206,19 +206,19 @@ data class TrackEdit(
         get() = keep == null && remove.isEmpty() && drop.isEmpty() && move.isEmpty()
 }
 
-/** An activity's recorded points and the edit already applied to them, if any. */
-data class TrackPoints(val points: List<TrackPoint>, val edit: TrackEdit?)
+/** A track's recorded points and the edit already applied to them, if any. */
+data class RoutePoints(val points: List<RoutePoint>, val edit: RouteEdit?)
 
 /**
- * One photo on an activity (`docs/SPEC.md` FR-15.3), always with a place on its track:
+ * One photo on a track (`docs/SPEC.md` FR-15.3), always with a place on its track:
  * [routeAt], a moment on it. [lon]/[lat] are that moment's point on the track as drawn, null
- * only for an activity with no track left at all. [url] and [thumbUrl] are API paths
- * (`/v1/photos/…`); [width]/[height] are the stored copy's. [timezone] is its activity's, which
+ * only for a track with no route left at all. [url] and [thumbUrl] are API paths
+ * (`/v1/photos/…`); [width]/[height] are the stored copy's. [timezone] is its track's, which
  * its times are shown in.
  */
 data class Photo(
     val id: String,
-    val activityId: String,
+    val trackId: String,
     val takenAt: Instant?,
     val routeAt: Instant,
     val lon: Double?,
@@ -302,15 +302,15 @@ data class SpotDetail(val spot: Spot, val area: SpotArea, val capturedAt: Instan
 /** One place the account has captured (`GET /v1/spots/captures`, `POST /v1/spots/{id}/captures`). */
 data class SpotCapture(val spotId: Long, val capturedAt: Instant)
 
-/** One day that has activity, as `GET /v1/activities/histogram` counts it; [date] is `YYYY-MM-DD`
+/** One day that has tracks, as `GET /v1/activities/histogram` counts it; [date] is `YYYY-MM-DD`
  *  in the account's timezone. Days with none are never returned. */
-data class ActivityDay(val date: String, val count: Int, val distanceMeters: Double)
+data class TrackDay(val date: String, val count: Int, val distanceMeters: Double)
 
 /**
- * A page of [ActivityDay]s, ascending, and the account's first activity day — how far back
- * paging can go, independent of this page's own bounds; null for an account with no activity.
+ * A page of [TrackDay]s, ascending, and the account's first track day — how far back
+ * paging can go, independent of this page's own bounds; null for an account with no tracks.
  */
-data class ActivityDayPage(val days: List<ActivityDay>, val earliest: String?)
+data class TrackDayPage(val days: List<TrackDay>, val earliest: String?)
 
 /**
  * A request the server answered with a non-2xx status. Every API error is

@@ -12,7 +12,7 @@ import androidx.core.view.isVisible
 import com.google.android.material.button.MaterialButton
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.Session
-import dev.holdmytrack.android.panel.ActivityZone
+import dev.holdmytrack.android.panel.TrackZone
 import dev.holdmytrack.android.net.Spot
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
@@ -26,7 +26,7 @@ import java.util.Locale
  * and following it as the camera moves ([place]). One at a time; [show] replaces it.
  *
  * MapFragment closes it on a tap elsewhere on the map, when its category is unticked and when a
- * track edit takes the map. Capture ([onCapture]) starts capture mode on the place
+ * route edit takes the map. Capture ([onCapture]) starts capture mode on the place
  * ([CaptureMode]) — offered for a place not yet captured, and not to a demo account, which
  * can't capture.
  */
@@ -102,7 +102,7 @@ class SpotPopup(private val view: View, private val top: () -> Int, private val 
     fun renderCaptured() {
         val at = spot?.let { MapSpots.captured[it.id] }
         captured.text = at?.let {
-            val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()).format(it.atZone(ActivityZone.of(null, Session.timezone)))
+            val date = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(Locale.getDefault()).format(it.atZone(TrackZone.of(null, Session.timezone)))
             res.getString(R.string.spots_captured_on, date)
         }
         captured.isVisible = at != null

@@ -12,7 +12,7 @@ import dev.holdmytrack.android.map.PhotoMarkers
 import dev.holdmytrack.android.map.PhotoPopup
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Photo
-import dev.holdmytrack.android.panel.EditActivityWindow
+import dev.holdmytrack.android.panel.EditTrackWindow
 import dev.holdmytrack.android.panel.PanelState
 import org.maplibre.android.maps.MapLibreMap
 
@@ -27,9 +27,9 @@ class PhotosController(
     private val fragment: Fragment,
     private val panelState: PanelState,
     private val map: () -> MapLibreMap?,
-    private val editWindow: () -> EditActivityWindow,
+    private val editWindow: () -> EditTrackWindow,
     private val mode: () -> MapMode,
-    private val storyId: () -> String?,
+    private val tripId: () -> String?,
     private val recording: () -> Boolean,
     /** Flies to a group's bounds, at most to the zoom given. */
     private val frame: (DoubleArray, Double) -> Unit,
@@ -39,7 +39,7 @@ class PhotosController(
     private lateinit var markers: PhotoMarkers
     private lateinit var popup: PhotoPopup
 
-    /** `"activity:<id>"` or `"story:<id>"` ([PhotoMarkerScope.scope]). */
+    /** `"track:<id>"` or `"trip:<id>"` ([PhotoMarkerScope.scope]). */
     private var scope: String? = null
 
     /** The scope's saved photos, in route order, and why they couldn't be read. */
@@ -73,7 +73,7 @@ class PhotosController(
         render()
     }
 
-    /** The Edit window closed: back to the selection's or the Story's photos, read again when any was written. */
+    /** The Edit window closed: back to the selection's or the Trip's photos, read again when any was written. */
     fun editClosed(photosSaved: Boolean) {
         overlay = null
         refresh(force = photosSaved)
@@ -97,13 +97,13 @@ class PhotosController(
 
     /**
      * The photos for the scope now: read when the scope moves, or with [force] when they may have
-     * changed (a Photos tab save, a reprocess, a Story's members). A new scope starts empty rather
+     * changed (a Photos tab save, a reprocess, a Trip's members). A new scope starts empty rather
      * than showing the last one's while it loads.
      */
     fun refresh(force: Boolean) {
         val edit = editWindow()
         val single = edit.single
-        val next = PhotoMarkerScope.scope(mode(), edit.isOpen, single?.id, panelState.focused, storyId())
+        val next = PhotoMarkerScope.scope(mode(), edit.isOpen, single?.id, panelState.focused, tripId())
         if (next == scope && !force) {
             if (loaded && single != null) edit.setPhotos(photos, error)
             render()
@@ -120,7 +120,7 @@ class PhotosController(
         render()
         if (next == null) return
         val (kind, id) = next.split(':', limit = 2)
-        HoldMyTrackApi.photos(activity = id.takeIf { kind == "activity" }, story = id.takeIf { kind == "story" }) { result ->
+        HoldMyTrackApi.photos(track = id.takeIf { kind == "track" }, trip = id.takeIf { kind == "trip" }) { result ->
             if (gen != generation) return@photos
             photos = result.getOrDefault(emptyList())
             loaded = true
@@ -133,10 +133,10 @@ class PhotosController(
     }
 
     /** The markers: the scope's photos on their tracks, with the Photos tab's unsaved changes
-     *  merged in. Not while recording, while the Track tab has the map, nor for a hidden route. */
+     *  merged in. Not while recording, while the Route tab has the map, nor for a hidden route. */
     fun render() {
         if (!::markers.isInitialized) return
-        val shown = PhotoMarkerScope.shown(scope, recording(), editWindow().showingTrack, panelState.mapHidden)
+        val shown = PhotoMarkerScope.shown(scope, recording(), editWindow().showingRoute, panelState.mapHidden)
         val overlay = overlay
         val items = if (shown) PhotoMarkerScope.markers(photos, panelState.mapHidden, overlay) else emptyList()
         if (!shown) popup.close()

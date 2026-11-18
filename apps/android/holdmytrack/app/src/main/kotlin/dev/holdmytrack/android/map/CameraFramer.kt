@@ -3,9 +3,9 @@ package dev.holdmytrack.android.map
 import android.view.View
 import androidx.core.view.isVisible
 import dev.holdmytrack.android.R
-import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.HoldMyTrackApi
-import dev.holdmytrack.android.panel.ActivitiesPanel
+import dev.holdmytrack.android.panel.TracksPanel
 import org.maplibre.android.camera.CameraPosition
 import org.maplibre.android.camera.CameraUpdateFactory
 import org.maplibre.android.geometry.LatLng
@@ -13,12 +13,12 @@ import org.maplibre.android.geometry.LatLngBounds
 import org.maplibre.android.maps.MapLibreMap
 
 /**
- * Moves the camera onto activities, into the map left showing between the top row and the sheet
+ * Moves the camera onto tracks, into the map left showing between the top row and the sheet
  * or an editor ([FrameRules]): any box ([flyTo]), and the opening view once per session ([open]).
  */
 class CameraFramer(
     view: View,
-    private val panel: ActivitiesPanel,
+    private val panel: TracksPanel,
     private val map: () -> MapLibreMap?,
     private val recording: () -> Boolean,
     /** What [open] found: whether the account has no track yet. */
@@ -29,7 +29,7 @@ class CameraFramer(
     private val topStart: View = view.findViewById(R.id.top_start)
     private val topChrome: View = view.findViewById(R.id.top_chrome)
     private val banner: View = view.findViewById(R.id.capture_banner)
-    private val sheet: View = view.findViewById(R.id.activities_sheet)
+    private val sheet: View = view.findViewById(R.id.tracks_sheet)
     private val editors: List<View> = listOf(R.id.edit_window, R.id.private_editor).map { view.findViewById(it) }
     private val density = view.resources.displayMetrics.density
 
@@ -48,10 +48,10 @@ class CameraFramer(
     fun open(onOpened: () -> Unit) {
         if (framed) return onOpened()
         framed = true
-        HoldMyTrackApi.areaActivities(null, DateFilter.ALL_TIME, OpeningView.ACTIVITIES) { result ->
+        HoldMyTrackApi.areaTracks(null, DateFilter.ALL_TIME, OpeningView.TRACKS) { result ->
             val page = result.getOrNull()
-            if (page == null) return@areaActivities onOpened()
-            val boxes = page.activities.filter { !it.pending }.mapNotNull { it.bbox }
+            if (page == null) return@areaTracks onOpened()
+            val boxes = page.tracks.filter { !it.pending }.mapNotNull { it.bbox }
             val instance = map()
             val view = OpeningView.of(boxes, root.width / density.toDouble(), root.height / density.toDouble())
             onEmpty(view == null)
@@ -73,9 +73,9 @@ class CameraFramer(
     /** Whether the camera just settled from the app's own flight, which this answer uses up. */
     fun consumeAppFlight(): Boolean = appFlight.also { appFlight = false }
 
-    /** Frames every one of [activities] that has a track. */
-    fun flyTo(activities: List<Activity>) {
-        flyTo(BoxUnion.of(activities.mapNotNull { it.bbox }) ?: return)
+    /** Frames every one of [tracks] that has a track. */
+    fun flyTo(tracks: List<Track>) {
+        flyTo(BoxUnion.of(tracks.mapNotNull { it.bbox }) ?: return)
     }
 
     /**

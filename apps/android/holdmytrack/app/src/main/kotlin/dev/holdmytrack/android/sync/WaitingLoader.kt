@@ -17,7 +17,7 @@ import kotlinx.coroutines.CancellationException
  *
  * The sessions with a route from the last three months ([SyncCandidates.readHealthConnect]), less
  * those the account already has (`POST /v1/sync/known`) — so a reinstall or a second phone
- * agrees, and an activity deleted on the web is offered again. Those the server is still adding
+ * agrees, and a track deleted on the web is offered again. Those the server is still adding
  * are listed as on their way ([SyncProgress]). A failure keeps what was kept before.
  *
  * **Foreground only** (`docs/IMPLEMENTATION.md` §4.0): its caller cancels it when its screen

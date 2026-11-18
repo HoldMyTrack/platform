@@ -53,8 +53,8 @@ class TourController(private val activity: AppCompatActivity, private val host: 
     private var card: TourOverlay? = null
     private var dir = 1
 
-    /** Whether the account has activities, once the map knows; null until then. */
-    private var hasActivities: Boolean? = null
+    /** Whether the account has tracks, once the map knows; null until then. */
+    private var hasTracks: Boolean? = null
     private var requested = false
     private var decided = false
 
@@ -62,7 +62,7 @@ class TourController(private val activity: AppCompatActivity, private val host: 
 
     /** The map found the account's history: the tour starts or is offered, once. */
     fun historyKnown(any: Boolean) {
-        hasActivities = any
+        hasTracks = any
         decide()
     }
 
@@ -75,7 +75,7 @@ class TourController(private val activity: AppCompatActivity, private val host: 
 
     private fun decide() {
         if (decided) return
-        when (TourRules.start(requested, host.isDemo, hasActivities, seen)) {
+        when (TourRules.start(requested, host.isDemo, hasTracks, seen)) {
             TourStart.WAIT -> return
             TourStart.START -> start()
             TourStart.OFFER -> offer()

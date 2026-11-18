@@ -1,17 +1,17 @@
 package dev.holdmytrack.android.panel
 
-import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.Track
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The Activities panel's rules (`apps/android/docs/SPEC.md` FR-2.7). */
+/** The Tracks panel's rules (`apps/android/docs/SPEC.md` FR-2.7). */
 class PanelStateTest {
 
-    private fun activity(id: String, type: String = "walking", meters: Double? = 1000.0, pending: Boolean = false) =
-        Activity(
+    private fun track(id: String, type: String = "walking", meters: Double? = 1000.0, pending: Boolean = false) =
+        Track(
             id = id,
             startedAt = "2026-09-24T08:00:00Z",
             activityType = type,
@@ -24,11 +24,11 @@ class PanelStateTest {
             edited = false,
         )
 
-    private val walk = activity("a", "walking", 1200.0)
-    private val run = activity("b", "running", 10400.0)
-    private val ride = activity("c", "cycling", 21000.0)
+    private val walk = track("a", "walking", 1200.0)
+    private val run = track("b", "running", 10400.0)
+    private val ride = track("c", "cycling", 21000.0)
 
-    private fun state(vararg activities: Activity) = PanelState().apply { setActivities(activities.toList()) }
+    private fun state(vararg tracks: Track) = PanelState().apply { setTracks(tracks.toList()) }
 
     @Test
     fun `the toolbar acts on the checked group, else the selected row`() {
@@ -68,7 +68,7 @@ class PanelStateTest {
 
     @Test
     fun `the map hides filtered-out, hidden and pending tracks`() {
-        val pending = activity("e", pending = true)
+        val pending = track("e", pending = true)
         val s = state(walk, run, ride, pending)
         s.toggleType("cycling")
         s.focus("a")
@@ -104,12 +104,12 @@ class PanelStateTest {
     fun `a refreshed list keeps what still exists`() {
         val s = state(walk, run)
         s.focus("b")
-        s.setActivities(listOf(walk))
+        s.setTracks(listOf(walk))
         assertNull(s.focused)
-        s.setActivities(listOf(walk, run))
+        s.setTracks(listOf(walk, run))
         s.toggleChecked("a")
         s.toggleChecked("b")
-        s.setActivities(listOf(walk))
+        s.setTracks(listOf(walk))
         assertEquals(setOf("a"), s.checked)
     }
 
@@ -134,7 +134,7 @@ class PanelStateTest {
     }
 
     @Test
-    fun `selecting one activity ends selecting`() {
+    fun `selecting one track ends selecting`() {
         val s = state(walk, run)
         s.toggleChecked("a")
         s.focus("b")

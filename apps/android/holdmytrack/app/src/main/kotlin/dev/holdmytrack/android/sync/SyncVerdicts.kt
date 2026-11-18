@@ -2,7 +2,7 @@ package dev.holdmytrack.android.sync
 
 import dev.holdmytrack.android.net.SyncResult
 
-/** A sync batch sorted by the server's answer to each of its activities, in the batch's order. */
+/** A sync batch sorted by the server's answer to each of its tracks, in the batch's order. */
 data class SyncVerdicts(
     /** Queued for ingest. */
     val enqueued: List<Candidate>,

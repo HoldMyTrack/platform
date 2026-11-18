@@ -27,7 +27,7 @@ object FormatParts {
 
     private fun unit(imperial: Boolean) = if (imperial) DistanceUnit.MI else DistanceUnit.KM
 
-    /** An activity's distance: always one decimal, never grouped. */
+    /** A track's distance: always one decimal, never grouped. */
     fun distance(meters: Double, imperial: Boolean) = DistanceParts(converted(meters, imperial), 1, 1, false, unit(imperial))
 
     /** A range's total: one decimal below 10 (km or mi), so a short history never reads as a flat

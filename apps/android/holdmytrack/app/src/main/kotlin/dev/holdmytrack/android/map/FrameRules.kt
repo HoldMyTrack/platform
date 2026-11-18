@@ -1,6 +1,6 @@
 package dev.holdmytrack.android.map
 
-/** Where a camera fit may put activities: the map left between the top chrome and what covers the bottom. */
+/** Where a camera fit may put tracks: the map left between the top chrome and what covers the bottom. */
 object FrameRules {
     const val PADDING_PX = 64
 

@@ -15,14 +15,14 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/hmt_space_8"
-        android:text="@string/story_send_body"
+        android:text="@string/trip_send_body"
         android:textColor="@color/hmt_ink_secondary"
         android:textSize="@dimen/hmt_text_md" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:hint="@string/story_send_email">
+        android:hint="@string/trip_send_email">
 
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/send_copy_email"

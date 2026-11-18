@@ -8,14 +8,14 @@ import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.SyncActivityJson
 import dev.holdmytrack.android.net.SyncPointJson
-import dev.holdmytrack.android.recording.db.RecordedActivityStore
-import dev.holdmytrack.android.recording.db.toSyncActivity
+import dev.holdmytrack.android.recording.db.RecordedTrackStore
+import dev.holdmytrack.android.recording.db.toSyncTrack
 import java.io.IOException
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-/** One ticked activity the server refused, or that it could never accept, with the reason why. */
+/** One ticked track the server refused, or that it could never accept, with the reason why. */
 data class Rejection(val key: String, val startedAt: Instant, val activityType: String, val reason: String)
 
 /** What a finished (or curtailed) run did. */
@@ -46,7 +46,7 @@ data class SyncReport(
  * cancels a run when it leaves.
  */
 class SyncRunner(
-    private val store: RecordedActivityStore,
+    private val store: RecordedTrackStore,
     /** For the reasons a run reports — the refusals and why it stopped — in the app's language. */
     private val res: Resources,
     /** Reads a kept row's route again; null when Health Connect can't be read. */
@@ -124,7 +124,7 @@ class SyncRunner(
     private suspend fun flush(batch: List<Candidate>, source: String, report: Boolean = true): String? {
         if (batch.isEmpty()) return null
         val results = try {
-            HoldMyTrackApi.syncActivities(batch.map { prepare(it) }, source)
+            HoldMyTrackApi.syncTracks(batch.map { prepare(it) }, source)
         } catch (e: IOException) {
             Log.w(TAG, "sync batch failed", e)
             return e.message ?: res.getString(R.string.sync_request_failed)
@@ -147,8 +147,8 @@ class SyncRunner(
      * from the route as read — never the simplified line the map draws.
      *
      * `external_id` is Health Connect's own record id, or the recording's UUID: the endpoint keys
-     * idempotency on `(user_id, source, external_id)`, which is what makes a re-sent activity the
-     * same activity rather than a new one.
+     * idempotency on `(user_id, source, external_id)`, which is what makes a re-sent track the
+     * same track rather than a new one.
      *
      * Elevation is sent when the location carries it and omitted otherwise, rather than defaulted
      * to zero — an unknown altitude is not sea level. Heart rate is never read or sent: HoldMyTrack
@@ -158,7 +158,7 @@ class SyncRunner(
      */
     private suspend fun prepare(candidate: Candidate): SyncActivityJson = withContext(Dispatchers.Default) {
         when (val origin = candidate.origin) {
-            is Recording -> origin.record.toSyncActivity()
+            is Recording -> origin.record.toSyncTrack()
             is HealthConnectSession -> SyncActivityJson(
                 externalId = candidate.externalId,
                 activityType = candidate.activityType,

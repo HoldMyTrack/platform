@@ -112,7 +112,7 @@ class LiveRecordingJournal(context: Context) {
 
     /** Ends recording [id]: saves [record] under [account] when there is one (a recording too
      *  short to keep has none) and clears the journal, both in one transaction. */
-    fun finish(id: String, record: RecordedActivityRecord?, account: String) {
+    fun finish(id: String, record: RecordedTrackRecord?, account: String) {
         val db = helper.writableDatabase
         db.beginTransaction()
         try {

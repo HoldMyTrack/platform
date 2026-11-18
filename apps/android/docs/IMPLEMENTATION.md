@@ -113,11 +113,11 @@ Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATIO
 
 ### 3.3 Logic ported from the web
 
-Where the web has a rule, the app ports it as a pure Kotlin class running the shared cases (`testdata/client-rules/`, ADR-0049); `TrackBands` runs the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
+Where the web has a rule, the app ports it as a pure Kotlin class running the shared cases (`testdata/client-rules/`, ADR-0049); `RouteBands` runs the server's (`testdata/pace-bands.json`). The rest copy the web's cases; a change to one side needs the other: `BoxUnion`, `CoverageWatch`, `Viewfinder`, `PhotoDraft`, `PhotoPrep`, `PhotoExifFields`, `SpotText`, and `sync/Similar`, whose test runs the server's overlap cases both ways round.
 
 ### 3.4 The panel, editors and touches
 
-The split follows the web's: `MapSession` holds the area and Dates or the Trip shown and the camera's next flight, `PanelState` the focus, checked group, hidden set and filters, and `ActivitiesPanel` binds views and redraws from it in one `render()`. `MapFragment` owns the map and composes one controller per feature; `AreaController` binds the session to the list, Dates' dialog and the camera's settling. Trap: a controller that registers a permission request or the photo picker is created as a fragment field, since registering after the fragment starts throws; Back callbacks are asked last-added first, export's before the editors' before the sheet's.
+The split follows the web's: `MapSession` holds the area and Dates or the Trip shown and the camera's next flight, `PanelState` the focus, checked group, hidden set and filters, and `TracksPanel` binds views and redraws from it in one `render()`. `MapFragment` owns the map and composes one controller per feature; `AreaController` binds the session to the list, Dates' dialog and the camera's settling. Trap: a controller that registers a permission request or the photo picker is created as a fragment field, since registering after the fragment starts throws; Back callbacks are asked last-added first, export's before the editors' before the sheet's.
 
 - **The list follows the map, never the app's own flights**: `CameraFramer` marks each camera move it makes, the opening view and every fit, and `AreaController.onCameraIdle` skips the settle that ends one (`consumeAppFlight`), or focusing a row would shrink the list to that row's route; a gesture that cancels a flight clears the mark. Dates' flight asks about where it lands itself, since that may be the view already asked about.
 - **The area's rows are slim** (`GET /v1/activities/area`): `EditController.open` reads each track in full (`GET /v1/activities/{id}`) before the window opens, for the description, the route's edit and the photos.
@@ -189,7 +189,7 @@ A foreground service survives the screen going away, not the process. So each fi
 
 ### 5.3 The store
 
-`recording/db/RecordedActivityStore` (its KDoc says why not Room) scopes rows per account (§2.3). Upgrades drop and recreate except tables holding unsynced recordings, the only copy anywhere.
+`recording/db/RecordedTrackStore` (its KDoc says why not Room) scopes rows per account (§2.3). Upgrades drop and recreate except tables holding unsynced recordings, the only copy anywhere.
 
 ## 6. Build traps
 

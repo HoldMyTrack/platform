@@ -16,8 +16,8 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputLayout
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
-import dev.holdmytrack.android.panel.ActivityTypes
-import dev.holdmytrack.android.recording.db.RecordedActivityStore
+import dev.holdmytrack.android.panel.TrackTypes
+import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.recording.db.toGpx
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
  */
 class RecordingActivity : AppCompatActivity() {
 
-    private lateinit var store: RecordedActivityStore
+    private lateinit var store: RecordedTrackStore
 
     private lateinit var nameField: EditText
     private lateinit var typeField: TextView
@@ -66,7 +66,7 @@ class RecordingActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_recording)
-        store = RecordedActivityStore(this)
+        store = RecordedTrackStore(this)
 
         nameField = findViewById(R.id.recording_name)
         typeField = findViewById(R.id.recording_type)
@@ -89,7 +89,7 @@ class RecordingActivity : AppCompatActivity() {
                 setOnClickListener { confirmDiscard() }
             }
         }
-        HoldMyTrackApi.activityTypeCounts { result -> result.onSuccess { serverTypeCounts = it } }
+        HoldMyTrackApi.trackTypeCounts { result -> result.onSuccess { serverTypeCounts = it } }
 
         lifecycleScope.launch {
             val record = store.get(editingId) ?: run { finish(); return@launch }
@@ -103,13 +103,13 @@ class RecordingActivity : AppCompatActivity() {
 
     private fun setType(type: String) {
         selectedType = type
-        typeField.text = ActivityTypes.label(type).ifEmpty { type }
+        typeField.text = TrackTypes.label(type).ifEmpty { type }
     }
 
     private fun openTypePicker() {
         lifecycleScope.launch {
             val known = RecordingTypes.known(serverTypeCounts, store.all())
-            ActivityTypePicker.show(this@RecordingActivity, selectedType, known, ::setType)
+            TrackTypePicker.show(this@RecordingActivity, selectedType, known, ::setType)
         }
     }
 

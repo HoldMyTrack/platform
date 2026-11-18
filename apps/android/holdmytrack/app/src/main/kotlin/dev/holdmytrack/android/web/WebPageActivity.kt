@@ -177,7 +177,7 @@ class WebPageActivity : AppCompatActivity() {
             }
             is WebRoute.Route.ViewOnMap -> {
                 leaving = true
-                MainActivity.viewOnMap(this, route.activity, route.day)
+                MainActivity.viewOnMap(this, route.track, route.day)
                 finish()
             }
             // The map gates on Session.country, which only the server has heard about so far,

@@ -1,12 +1,12 @@
 package dev.holdmytrack.android.map
 
 import dev.holdmytrack.android.net.HoldMyTrackApi
-import dev.holdmytrack.android.net.TrackMetrics
+import dev.holdmytrack.android.net.RouteMetrics
 import dev.holdmytrack.android.panel.PanelState
 import org.maplibre.android.maps.Style
 
 /**
- * The selected activity's pace bands: its metrics fetched when the selection moves, again after
+ * The selected track's pace bands: its metrics fetched when the selection moves, again after
  * its reprocess lands, and dropped when it clears. Drawn while its track is drawn: not hidden,
  * filtered out or Pending (its metrics would show the old points), and not on the Sync tab, whose
  * picked candidate has its own (`map/SyncCandidatesOverlay`).
@@ -26,10 +26,10 @@ class PaceBands(
     private val onRefetch: () -> Unit,
 ) {
     /** Null with nothing selected, and while a new selection's are loading. */
-    private var metrics: TrackMetrics? = null
+    private var metrics: RouteMetrics? = null
     private var metricsFor: String? = null
 
-    /** The selection moved, or with [refetch] the selected activity's reprocess landed. */
+    /** The selection moved, or with [refetch] the selected track's reprocess landed. */
     fun update(refetch: Boolean) {
         val focused = panelState.focused
         if (focused == null) {
@@ -54,13 +54,13 @@ class PaceBands(
     }
 
     /** The bands the map draws, or null: the export's hidden map draws the same. */
-    val drawn: TrackMetrics?
-        get() = metrics?.takeIf { val focused = panelState.focused; focused == it.activityId && focused !in panelState.mapHidden && !onSyncTab() }
+    val drawn: RouteMetrics?
+        get() = metrics?.takeIf { val focused = panelState.focused; focused == it.trackId && focused !in panelState.mapHidden && !onSyncTab() }
 
     fun render() {
         val loaded = style() ?: return
         val drawn = drawn
-        if (drawn != null) MapOverlays.setTrackBands(loaded, drawn) else MapOverlays.clearTrackBands(loaded)
+        if (drawn != null) MapOverlays.setRouteBands(loaded, drawn) else MapOverlays.clearRouteBands(loaded)
         onShown(drawn?.let { MapLayers.doc(loaded)?.group("track-bands")?.let(::bandColors) })
     }
 }

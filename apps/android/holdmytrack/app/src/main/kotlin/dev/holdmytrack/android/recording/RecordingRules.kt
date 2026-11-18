@@ -3,7 +3,7 @@ package dev.holdmytrack.android.recording
 /** What a recording keeps, as values: whether Stop saves it, and the distance it covered. */
 object RecordingRules {
     /** A recording shorter than this, moving time with pauses excluded, is dropped on Stop
-     *  rather than saved: an accidental tap, not an activity anyone meant to keep. */
+     *  rather than saved: an accidental tap, not a track anyone meant to keep. */
     const val MIN_DURATION_MS = 60_000L
 
     /** Whether Stop saves a recording of [movingMs] moving time and [points] fixes: at least a

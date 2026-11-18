@@ -9,8 +9,8 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.holdmytrack.android.R
-import dev.holdmytrack.android.net.ActivityOverlap
-import dev.holdmytrack.android.panel.ActivityTypes
+import dev.holdmytrack.android.net.TrackOverlap
+import dev.holdmytrack.android.panel.TrackTypes
 import dev.holdmytrack.android.panel.PanelFormat
 import dev.holdmytrack.android.panel.typeIcon
 import dev.holdmytrack.android.recording.RecordingTypes
@@ -22,7 +22,7 @@ import java.time.format.FormatStyle
  * Similar tracks (`docs/SPEC.md` FR-3.5; `apps/android/docs/SPEC.md` FR-3.2), over
  * `dialog_similar_tracks`: a Sync row's ⓘ. What else covers the same time as [of] — rows
  * waiting on this phone ([Similar.waiting]), each picked out on the map when tapped ([onPick]),
- * and the account's activity it overlaps the most (`HoldMyTrackApi.activityOverlaps`), opened on
+ * and the account's track it overlaps the most (`HoldMyTrackApi.trackOverlaps`), opened on
  * the Map tab ([onOpen]). It says what sending both does and chooses nothing.
  */
 object SimilarTracksDialog {
@@ -32,9 +32,9 @@ object SimilarTracksDialog {
         context: Context,
         of: Candidate,
         waiting: List<Candidate>,
-        onMap: ActivityOverlap?,
+        onMap: TrackOverlap?,
         onPick: (Candidate) -> Unit,
-        onOpen: (ActivityOverlap) -> Unit,
+        onOpen: (TrackOverlap) -> Unit,
     ) {
         val res = context.resources
         val content = LayoutInflater.from(context).inflate(R.layout.dialog_similar_tracks, null)
@@ -62,7 +62,7 @@ object SimilarTracksDialog {
         if (onMap != null) {
             val started = PanelFormat.startedAt(res, onMap.startedAt, onMap.timezone)
             val named = onMap.name.isNotBlank()
-            val meta = listOfNotNull(started.takeIf { named }, ActivityTypes.label(onMap.activityType)).joinToString(" · ")
+            val meta = listOfNotNull(started.takeIf { named }, TrackTypes.label(onMap.activityType)).joinToString(" · ")
             onMapList.addView(row(context, onMapList, onMap.activityType, if (named) onMap.name.trim() else started, meta) {
                 dialog.dismiss()
                 onOpen(onMap)
@@ -92,7 +92,7 @@ object SimilarTracksDialog {
         return listOfNotNull(
             dateTime(candidate).takeIf { candidate.name.isNotBlank() },
             PanelFormat.distance(res, candidate.distanceM),
-            ActivityTypes.label(candidate.activityType),
+            TrackTypes.label(candidate.activityType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
     }

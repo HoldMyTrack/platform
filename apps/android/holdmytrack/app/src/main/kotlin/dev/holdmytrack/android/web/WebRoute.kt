@@ -24,7 +24,7 @@ object WebRoute {
         data object Onboarded : Route
 
         /** Sync history's View on map. */
-        data class ViewOnMap(val activity: String, val day: String) : Route
+        data class ViewOnMap(val track: String, val day: String) : Route
     }
 
     /**
@@ -36,7 +36,7 @@ object WebRoute {
         scheme: String?,
         authority: String?,
         path: String?,
-        activity: String?,
+        track: String?,
         day: String?,
         baseScheme: String?,
         baseAuthority: String?,
@@ -51,7 +51,7 @@ object WebRoute {
         return when (at) {
             "/signin", "/verify-pending" -> Route.Close
             "/" -> when {
-                activity != null && day != null -> Route.ViewOnMap(activity, day)
+                track != null && day != null -> Route.ViewOnMap(track, day)
                 onboarding -> Route.Onboarded
                 else -> Route.Close
             }

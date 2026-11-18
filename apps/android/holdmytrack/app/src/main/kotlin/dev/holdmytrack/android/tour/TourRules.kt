@@ -5,7 +5,7 @@ import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.panel.PanelTab
 
 /** A first-time card: a feature's own explanation, shown once per phone. */
-enum class TourCard { FOG, STORIES }
+enum class TourCard { FOG, TRIPS }
 
 /** What the tour has shown on this phone: [tour] once it was started or its offer answered. */
 data class TourSeen(val tour: Boolean = false, val cards: Set<TourCard> = emptySet())
@@ -30,44 +30,46 @@ sealed interface TourEvent {
  * The web's `tourRules.ts`; both run `testdata/client-rules/tour-*.json`.
  */
 object TourRules {
-    /** [hasActivities] is null until the account's history is known. */
-    fun start(requested: Boolean, isDemo: Boolean, hasActivities: Boolean?, seen: TourSeen): TourStart = when {
-        hasActivities == null -> TourStart.WAIT
+    /** [hasTracks] is null until the account's history is known. */
+    fun start(requested: Boolean, isDemo: Boolean, hasTracks: Boolean?, seen: TourSeen): TourStart = when {
+        hasTracks == null -> TourStart.WAIT
         requested -> TourStart.START
         seen.tour -> TourStart.NONE
         isDemo -> TourStart.START
-        hasActivities -> TourStart.OFFER
+        hasTracks -> TourStart.OFFER
         else -> TourStart.NONE
     }
 
-    /** The cards kept as seen, by name; a name this build has no card for is dropped. */
-    fun seenCards(names: Set<String>): Set<TourCard> = names.mapNotNull { name -> TourCard.entries.firstOrNull { it.name == name } }.toSet()
+    /** The cards kept as seen, by name; a name this build has no card for is dropped. STORIES is
+     *  the Trips card's name from before the rename. */
+    fun seenCards(names: Set<String>): Set<TourCard> =
+        names.mapNotNull { name -> TourCard.entries.firstOrNull { it.name == (if (name == "STORIES") "TRIPS" else name) } }.toSet()
 
     /** The card [event] earns, once, and never while the tour runs, whose steps say the same. */
     fun card(event: TourEvent, seen: TourSeen, touring: Boolean): TourCard? {
         if (touring) return null
         val card = when (event) {
             is TourEvent.Mode -> TourCard.FOG.takeIf { event.mode == MapMode.FOG }
-            is TourEvent.Tab -> TourCard.STORIES.takeIf { event.tab == PanelTab.STORIES }
+            is TourEvent.Tab -> TourCard.TRIPS.takeIf { event.tab == PanelTab.TRIPS }
         }
         return card?.takeUnless { it in seen.cards }
     }
 
     /**
      * Where the camera goes for a step with [view] on [tab], [current] being the map's view now.
-     * The first step with its own view or on Stories keeps [current] as the start, since the map's
-     * own first flight may still be under way when the tour starts; Stories frames its Story
+     * The first step with its own view or on Trips keeps [current] as the start, since the map's
+     * own first flight may still be under way when the tour starts; Trips frames its Trip
      * itself, so after it the camera is unknown. The second value is the move, null for none.
      */
     fun camera(camera: TourCamera, view: TourView?, tab: MainActivity.Tab, current: TourView): Pair<TourCamera, TourView?> {
-        val stories = tab == MainActivity.Tab.STORIES
+        val trips = tab == MainActivity.Tab.TRIPS
         var start = camera.start
         var shown = camera.shown
-        if (start == null && (view != null || stories)) {
+        if (start == null && (view != null || trips)) {
             start = current
             shown = current
         }
-        if (view == null && stories) return TourCamera(start, null) to null
+        if (view == null && trips) return TourCamera(start, null) to null
         val target = view ?: start
         if (target == null || shown?.sameSpot(target) == true) return TourCamera(start, shown) to null
         return TourCamera(start, target) to target

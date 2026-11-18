@@ -39,13 +39,13 @@ import dev.holdmytrack.android.map.SatelliteWatch
 import dev.holdmytrack.android.map.SheetChrome
 import dev.holdmytrack.android.map.SpotsController
 import dev.holdmytrack.android.map.StyleMetadata
-import dev.holdmytrack.android.map.TrackEditOverlay
-import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.map.RouteEditOverlay
+import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.SessionGate
-import dev.holdmytrack.android.panel.ActivitiesPanel
-import dev.holdmytrack.android.panel.ActivityTypes
-import dev.holdmytrack.android.panel.EditActivityWindow
+import dev.holdmytrack.android.panel.TracksPanel
+import dev.holdmytrack.android.panel.TrackTypes
+import dev.holdmytrack.android.panel.EditTrackWindow
 import dev.holdmytrack.android.panel.EditController
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.panel.PanelTab
@@ -70,10 +70,10 @@ import org.maplibre.android.maps.Style
  * The map: the served basemap, the session the user layers need, and the Normal / Fog of War
  * toggle floating top-start, as on the web (`apps/web/src/map/MapView.tsx`).
  *
- * In Normal mode the Activities sheet (`panel/ActivitiesPanel`) lists the visible area's
- * activities under Dates (`docs/SPEC.md` FR-5.11, FR-5.12, [AreaController]). Tapping a track
- * selects it; tapping empty map clears the selection. On the Stories tab one Story is open, and
- * the tracks and the list are its activities only ([AreaController.enterStory]).
+ * In Normal mode the Tracks sheet (`panel/TracksPanel`) lists the visible area's
+ * tracks under Dates (`docs/SPEC.md` FR-5.11, FR-5.12, [AreaController]). Tapping a track
+ * selects it; tapping empty map clears the selection. On the Trips tab one Trip is open, and
+ * the tracks and the list are its tracks only ([AreaController.enterTrip]).
  *
  * GPS recording is controlled from here: the record button in `MainActivity`'s bottom bar taps
  * to start, pause and resume, and a two-second hold stops (`RecordingService` does the rest; its
@@ -96,14 +96,14 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The Normal / Fog toggle and what it says about the mode. */
     private lateinit var modes: ModeBar
 
-    /** The Activities sheet, the list's summary at its head. */
+    /** The Tracks sheet, the list's summary at its head. */
     private lateinit var sheet: View
     private lateinit var sheetChrome: SheetChrome
-    private lateinit var panel: ActivitiesPanel
+    private lateinit var panel: TracksPanel
     private val panelState = PanelState()
     /** The Edit window and the Private location editor along the bottom of the map. */
     private lateinit var edit: EditController
-    private val editWindow: EditActivityWindow get() = edit.window
+    private val editWindow: EditTrackWindow get() = edit.window
 
     /** The map image export's viewfinder, from the rail's camera. */
     private lateinit var export: ExportController
@@ -116,7 +116,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         onRenderingChanged = { if (::modes.isInitialized) modes.renderCoverage() },
     )
 
-    /** The selected activity's pace bands. */
+    /** The selected track's pace bands. */
     private val bands = PaceBands(
         panelState,
         style = { style?.takeIf { overlaysAttached } },
@@ -126,23 +126,23 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         onRefetch = { photos.refresh(force = true) },
     )
 
-    /** A View on map from the Sync screen ([viewOnMap]), the activity and its day, waiting for
+    /** A View on map from the Sync screen ([viewOnMap]), the track and its day, waiting for
      *  the session to be confirmed. */
     private var viewOnMapRequest: Pair<String, String>? = null
 
     /** Something the Sync tab sent has landed, whichever tab shows: the list, its days and the
      *  tiles catch up. Until then its job is only queued, with no row to show Pending. */
     private val syncProgressListener = SyncProgress.Listener(onChange = {}, onLanded = { onSyncedFromPhone() })
-    /** The area and Dates or the Story the list and tracks show, and whether the camera moves next. */
+    /** The area and Dates or the Trip the list and tracks show, and whether the camera moves next. */
     private val session = MapSession(panelState)
-    /** The list for the session's area under Dates or its Story, Dates' dialog and the cap. */
+    /** The list for the session's area under Dates or its Trip, Dates' dialog and the cap. */
     private lateinit var area: AreaController
     private lateinit var refresh: DataRefresh
     private lateinit var camera: CameraFramer
     private lateinit var basemap: BasemapWatch
     private lateinit var imagery: SatelliteWatch
     private var imageryStatus = SatelliteStatus.LOADING
-    private val storyId: String? get() = session.storyId
+    private val tripId: String? get() = session.tripId
 
     /** Set on every resume, since Sync or a recording may have added days; `syncSession`
      *  reloads them once the session allows. */
@@ -153,7 +153,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The mode the map shows ([MapChromeRules.tabMode]): [pickedMode] on the Map tab, else Normal. */
     private var mode = MapMode.NORMAL
 
-    /** The mode picked on the Map tab, which comes back there after Stories or Sync. */
+    /** The mode picked on the Map tab, which comes back there after Trips or Sync. */
     private var pickedMode = MapMode.NORMAL
 
     /** The chrome's and MapLibre's controls' margins against the system bars and the panels. */
@@ -199,7 +199,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         map = { map },
         editWindow = { editWindow },
         mode = { mode },
-        storyId = { storyId },
+        tripId = { tripId },
         recording = ::isRecording,
         frame = { box, maxZoom -> camera.flyTo(box, maxZoom) },
         onPopupOpening = {
@@ -220,9 +220,9 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** The window this map is a tab of; null while the fragment is detached. */
     private val host get() = activity as? MainActivity
 
-    /** The bottom bar's Stories: the panel's Stories tab. */
-    fun showStories() {
-        if (::panel.isInitialized) panel.showStories()
+    /** The bottom bar's Trips: the panel's Trips tab. */
+    fun showTrips() {
+        if (::panel.isInitialized) panel.showTrips()
     }
 
     /** The bottom bar's Sync: the panel's Sync tab, in Normal mode, where the sheet is. */
@@ -245,12 +245,12 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         edit.privacy.onStyleReady()
     }
 
-    /** The bottom bar's Map: the panel's Activities tab, collapsed. */
-    fun showActivities() {
-        if (::panel.isInitialized) panel.showActivities()
+    /** The bottom bar's Map: the panel's Tracks tab, collapsed. */
+    fun showTracks() {
+        if (::panel.isInitialized) panel.showTracks()
     }
 
-    /** Which panel tab shows, for the bottom bar's Stories mark. Null before the panel is built. */
+    /** Which panel tab shows, for the bottom bar's Trips mark. Null before the panel is built. */
     val panelTab: PanelTab? get() = if (::panel.isInitialized) panel.tab else null
 
     // What the tour (tour/TourController, through MainActivity) reads and holds on the map.
@@ -314,7 +314,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
                 editOpen = ::edit.isInitialized && editWindow.isOpen,
                 selectionShown = ::sheetChrome.isInitialized && sheetChrome.selectionShown(),
                 coverageRendering = coverage.rendering,
-                tab = if (::panel.isInitialized) panel.tab else PanelTab.ACTIVITIES,
+                tab = if (::panel.isInitialized) panel.tab else PanelTab.TRACKS,
             )
         }
         layers.bind(view)
@@ -324,7 +324,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         recording.bind(view)
 
         locate.bind(view)
-        sheet = findViewById(R.id.activities_sheet)
+        sheet = findViewById(R.id.tracks_sheet)
         export = ExportController(
             view,
             map = { map },
@@ -334,7 +334,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             prepare = ::prepareExportStyle,
             photos = photos::markersSnapshot,
             checked = { panelState.checked },
-            storyId = { storyId },
+            tripId = { tripId },
             chrome = listOf(topChrome, sheet),
             onShown = { shown ->
                 renderBottomBar()
@@ -359,7 +359,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onFrame = { candidates -> BoxUnion.of(candidates.map { it.bbox }.filter { it.isNotEmpty() })?.let { camera.flyTo(it) } },
             onSynced = ::onSyncedFromPhone,
         )
-        panel = ActivitiesPanel(
+        panel = TracksPanel(
             sheet,
             findViewById(R.id.selection_bar),
             panelState,
@@ -368,42 +368,42 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onEdit = ::openEditWindow,
             onDeleted = { refresh.afterDelete(it) },
             onTabChanged = { tab ->
-                // Leaving the Stories tab closes its Story.
-                if (tab != PanelTab.STORIES && storyId != null) area.exitStory()
-                // Stories and Sync are Normal mode's; the Map tab gets its pick back.
+                // Leaving the Trips tab closes its Trip.
+                if (tab != PanelTab.TRIPS && tripId != null) area.exitTrip()
+                // Trips and Sync are Normal mode's; the Map tab gets its pick back.
                 applyTabMode()
-                // The summary is the Activities tab's; renderSheet renders Privacy too.
+                // The summary is the Tracks tab's; renderSheet renders Privacy too.
                 renderSheet()
                 // The empty map's notice points to Sync, so it steps aside there.
                 notices.render()
                 // What's already synced steps aside for what's on offer.
                 style?.takeIf { overlaysAttached }?.let { MapOverlays.setSyncing(it, tab == PanelTab.SYNC, mode) }
-                // The bottom bar's Stories is this tab, so the bar follows it.
+                // The bottom bar's Trips is this tab, so the bar follows it.
                 host?.onPanelTabChanged(tab)
             },
-            onOpenStory = { area.enterStory(it) },
-            onCloseStory = { area.exitStory() },
-            // A Story just made opens straight away, on the Stories tab.
-            onStoryCreated = { story -> area.enterStory(story.id) },
-            onStoriesChanged = {
+            onOpenTrip = { area.enterTrip(it) },
+            onCloseTrip = { area.exitTrip() },
+            // A Trip just made opens straight away, on the Trips tab.
+            onTripCreated = { trip -> area.enterTrip(trip.id) },
+            onTripsChanged = {
                 area.reloadList()
-                // A Story's photos change with its members.
+                // A Trip's photos change with its members.
                 photos.refresh(force = true)
             },
-            onRemovedFromStory = { refresh.afterRemovedFromStory(it) },
+            onRemovedFromTrip = { refresh.afterRemovedFromTrip(it) },
             // The map has history now, so the empty notice goes.
-            onStoryCopyArrived = {
+            onTripCopyArrived = {
                 notices.hide(MapNotice.EMPTY)
-                refresh.afterStoryCopy()
+                refresh.afterTripCopy()
             },
-            onStoriesWaiting = { host?.setStoriesWaiting(it) },
+            onTripsWaiting = { host?.setTripsWaiting(it) },
             onSheetChanged = { if (::sheetChrome.isInitialized) sheetChrome.onSheetChanged() },
             syncTab = syncTab,
         )
         camera = CameraFramer(view, panel, map = { map }, recording = ::isRecording, onEmpty = ::onEmptyChecked)
         area = AreaController(
             this,
-            findViewById(R.id.activities_sheet),
+            findViewById(R.id.tracks_sheet),
             session,
             panelState,
             panel,
@@ -472,7 +472,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         // Carried through a recreation (a theme or language change), since the mode buttons
         // restore their own checked state and would otherwise show a mode the map isn't in.
         savedInstanceState?.let { pickedMode = MapChromeRules.restoredMode(it.getString(STATE_MODE)) }
-        setMode(MapChromeRules.tabMode(pickedMode, if (::panel.isInitialized) panel.tab else PanelTab.ACTIVITIES))
+        setMode(MapChromeRules.tabMode(pickedMode, if (::panel.isInitialized) panel.tab else PanelTab.TRACKS))
 
         chrome.install()
         if (savedInstanceState == null) {
@@ -496,7 +496,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         mapView.getMapAsync { instance ->
             map = instance
             // A whole-world view is the honest starting camera until the session is verified
-            // and the activity extent is known; `CameraFramer.open` replaces it with the user's
+            // and the track extent is known; `CameraFramer.open` replaces it with the user's
             // own, and leaves it for an account with no geometry yet. Not over a camera a
             // recreation brought back.
             if (!restoringCamera) {
@@ -585,7 +585,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     }
 
     /** The Sync screen's View on map ([viewOnMap]): kept until the session is confirmed
-     *  (`syncSession`); the opening camera is skipped, since this activity is the view. */
+     *  (`syncSession`); the opening camera is skipped, since this track is the view. */
     private fun takeViewOnMap(intent: Intent) {
         // A relaunch from recents replays the intent; it has been handled.
         if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
@@ -598,27 +598,27 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     /** Brings the map in line with the stored credential ([SessionGate]), on style load and on every resume. */
     private fun syncSession() {
         if (!gate.passes()) return
-        ActivityTypes.refresh()
+        TrackTypes.refresh()
 
         modeBarReady = true
         renderModeBar()
         if (daysStale) {
             daysStale = false
             area.reloadHistory()
-            // Sync or a recording may have changed the area's activities and an open Story too.
+            // Sync or a recording may have changed the area's tracks and an open Trip too.
             area.reloadList()
-            panel.storiesTab.reloadOpen()
+            panel.tripsTab.reloadOpen()
         }
         renderSheet()
         viewOnMapRequest?.let { (id, day) ->
             viewOnMapRequest = null
-            viewActivityOnMap(id, day)
+            viewTrackOnMap(id, day)
         }
 
         val loaded = style ?: return
         val doc = layersDoc?.takeIf { it.styleBuild == StyleMetadata.build(loaded) } ?: return
         if (!overlaysAttached) {
-            MapOverlays.attach(loaded, doc, mode, session.dates, layers.satelliteDrawn(loaded), storyId)
+            MapOverlays.attach(loaded, doc, mode, session.dates, layers.satelliteDrawn(loaded), tripId)
             // The bike-path layers attach just added start hidden.
             layers.applyPaths(loaded)
             MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
@@ -639,17 +639,17 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         }
     }
 
-    /** A Sync history row's View on map: Normal mode, the collapsed Activities tab, and the
-     *  activity selected and flown to ([AreaController.viewActivity]). */
-    private fun viewActivityOnMap(activityId: String, day: String) {
+    /** A Sync history row's View on map: Normal mode, the collapsed Tracks tab, and the
+     *  track selected and flown to ([AreaController.viewTrack]). */
+    private fun viewTrackOnMap(trackId: String, day: String) {
         pickMode(MapMode.NORMAL)
         // The expanded sheet would stay drawn over the very map the link is meant to show.
-        panel.showActivities()
-        area.viewActivity(activityId, day)
+        panel.showTracks()
+        area.viewTrack(trackId, day)
     }
 
     /** The toolbar's Edit ([EditController.open]). */
-    private fun openEditWindow(group: List<Activity>) = edit.open(group)
+    private fun openEditWindow(group: List<Track>) = edit.open(group)
 
     /** The Edit window opened or closed: the chrome steps aside for it or comes back. */
     private fun onEditWindowChanged(open: Boolean) {
@@ -690,7 +690,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         if (modeBarReady && !normalMode()) edit.privacy.stop()
     }
 
-    /** The Sync tab sent activities; an empty map frames them once they're in. */
+    /** The Sync tab sent tracks; an empty map frames them once they're in. */
     private fun onSyncedFromPhone() {
         refresh.afterSync()
         if (notices.shown == MapNotice.EMPTY) camera.openAgain { area.followArea() }
@@ -738,8 +738,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         }
         // The Edit window's group mustn't change under it; a tap only serves Delete point.
         if (editWindow.isOpen) {
-            if (editWindow.trackEditor.deleteMode) {
-                TrackEditOverlay.pointAt(instance, point, resources.displayMetrics.density)?.let(editWindow.trackEditor::dropPoint)
+            if (editWindow.routeEditor.deleteMode) {
+                RouteEditOverlay.pointAt(instance, point, resources.displayMetrics.density)?.let(editWindow.routeEditor::dropPoint)
             }
             return true
         }
@@ -748,7 +748,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         val box = RectF(screen.x - tolerance, screen.y - tolerance, screen.x + tolerance, screen.y + tolerance)
         val id = instance.queryRenderedFeatures(box, MapOverlays.TRACKS_LAYER_ID)
             .firstNotNullOfOrNull { it.getStringProperty("id") }
-        if (id != null && panelState.activities.any { it.id == id }) panel.trackTapped(id) else panel.clearFocus()
+        if (id != null && panelState.tracks.any { it.id == id }) panel.trackTapped(id) else panel.clearFocus()
         return true
     }
 
@@ -787,7 +787,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     /** The mode for the tab showing, and the toggle that's only the Map tab's. */
     private fun applyTabMode() {
-        val shown = MapChromeRules.tabMode(pickedMode, if (::panel.isInitialized) panel.tab else PanelTab.ACTIVITIES)
+        val shown = MapChromeRules.tabMode(pickedMode, if (::panel.isInitialized) panel.tab else PanelTab.TRACKS)
         if (shown != mode) setMode(shown)
         renderModeBar()
     }
@@ -810,10 +810,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         layers.applyPaths(loaded)
         layers.applyBasemap(loaded)
         val doc = layersDoc ?: return
-        MapOverlays.attach(loaded, doc, mode, session.dates, layers.satelliteDrawn(loaded), storyId, EXPORT_EXCLUDED)
+        MapOverlays.attach(loaded, doc, mode, session.dates, layers.satelliteDrawn(loaded), tripId, EXPORT_EXCLUDED)
         layers.applyPaths(loaded)
         MapOverlays.setTrackFilter(loaded, panelState.mapHidden, panelState.highlighted)
-        bands.drawn?.let { MapOverlays.setTrackBands(loaded, it) }
+        bands.drawn?.let { MapOverlays.setRouteBands(loaded, it) }
     }
 
     /** What [CameraFramer.open] found. An account with no geometry stays at the world view,

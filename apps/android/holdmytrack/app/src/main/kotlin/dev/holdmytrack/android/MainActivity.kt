@@ -24,9 +24,9 @@ import dev.holdmytrack.android.tour.TourMenu
 import dev.holdmytrack.android.tour.TourTarget
 
 /**
- * The app's main window: the bottom bar — Map, Stories, Record, Sync, You — and the tab above it
- * (`apps/android/docs/IMPLEMENTATION.md` §1.3). Map, Stories
- * and Sync are all the map ([MapFragment]): Stories and Sync are its panel's Stories and Sync
+ * The app's main window: the bottom bar — Map, Trips, Record, Sync, You — and the tab above it
+ * (`apps/android/docs/IMPLEMENTATION.md` §1.3). Map, Trips
+ * and Sync are all the map ([MapFragment]): Trips and Sync are its panel's Trips and Sync
  * tabs, Sync's list drawn on the map it covers. You is [YouFragment]. Tabs are shown and hidden
  * rather than replaced, so the map — its camera, its layers, a recording on it — is just as it
  * was on coming back to it. The record button over the bar's middle slot is the map's to drive
@@ -41,7 +41,7 @@ import dev.holdmytrack.android.tour.TourTarget
 class MainActivity : AppCompatActivity() {
 
     /** The bottom bar's tabs, Record aside — a button rather than a tab. */
-    enum class Tab { MAP, STORIES, SYNC, YOU }
+    enum class Tab { MAP, TRIPS, SYNC, YOU }
 
     private lateinit var nav: BottomNavigationView
     private var tab = Tab.MAP
@@ -80,7 +80,7 @@ class MainActivity : AppCompatActivity() {
             if (!selectingInCode) {
                 tabOf(item.itemId)?.let { picked ->
                     showTab(picked)
-                    if (picked == Tab.STORIES) tour.notice(TourEvent.Tab(PanelTab.STORIES))
+                    if (picked == Tab.TRIPS) tour.notice(TourEvent.Tab(PanelTab.TRIPS))
                 }
             }
             true
@@ -112,17 +112,17 @@ class MainActivity : AppCompatActivity() {
         } else {
             tab = savedInstanceState.getString(STATE_TAB)?.let(Tab::valueOf) ?: Tab.MAP
             markTab(tab)
-            // The map's panel comes back on its Activities tab; Stories and Sync put it back on
+            // The map's panel comes back on its Tracks tab; Trips and Sync put it back on
             // their own once the map's view is up.
-            if (tab == Tab.STORIES) nav.post { map()?.showStories() }
+            if (tab == Tab.TRIPS) nav.post { map()?.showTrips() }
             if (tab == Tab.SYNC) nav.post { map()?.showSync() }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        // Copies of Stories may have been sent while the app was away.
-        if (::nav.isInitialized) refreshStoriesBadge()
+        // Copies of Trips may have been sent while the app was away.
+        if (::nav.isInitialized) refreshTripsBadge()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -141,8 +141,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Shows [next]'s fragment and hides the others, adding it the first time. Map, Stories and
-     * Sync are the same fragment: moving between them moves its panel between Activities, Stories
+     * Shows [next]'s fragment and hides the others, adding it the first time. Map, Trips and
+     * Sync are the same fragment: moving between them moves its panel between Tracks, Trips
      * and Sync, and Map takes it off Private locations too.
      */
     fun showTab(next: Tab) {
@@ -161,40 +161,40 @@ class MainActivity : AppCompatActivity() {
         transaction.commitNow()
         tab = next
         when (next) {
-            Tab.STORIES -> map()?.showStories()
+            Tab.TRIPS -> map()?.showTrips()
             Tab.SYNC -> map()?.showSync()
-            Tab.MAP -> if (map()?.panelTab.let { it != null && it != PanelTab.ACTIVITIES }) map()?.showActivities()
+            Tab.MAP -> if (map()?.panelTab.let { it != null && it != PanelTab.TRACKS }) map()?.showTracks()
             else -> Unit
         }
         markTab(next)
     }
 
     /** The map, when a start of a recording, a View on map or the notification's Stop needs it
-     *  — left on Stories if that's where it is, since that's the map too. */
+     *  — left on Trips if that's where it is, since that's the map too. */
     fun showMap() {
         if (tab == Tab.SYNC || tab == Tab.YOU) showTab(Tab.MAP)
     }
 
-    /** The Stories tab's badge: the copies of Stories others sent, waiting to be accepted or
+    /** The Trips tab's badge: the copies of Trips others sent, waiting to be accepted or
      *  declined (`docs/SPEC.md` FR-13.7) — in the accent, an invitation rather than a chore. */
-    fun setStoriesWaiting(count: Int) {
+    fun setTripsWaiting(count: Int) {
         if (count <= 0 || Session.isDemo) {
-            nav.removeBadge(R.id.nav_stories)
+            nav.removeBadge(R.id.nav_trips)
             return
         }
-        nav.getOrCreateBadge(R.id.nav_stories).apply {
+        nav.getOrCreateBadge(R.id.nav_trips).apply {
             backgroundColor = getColor(R.color.hmt_accent)
             badgeTextColor = getColor(R.color.hmt_surface)
             number = count
-            setContentDescriptionQuantityStringsResource(R.plurals.stories_waiting)
+            setContentDescriptionQuantityStringsResource(R.plurals.trips_waiting)
         }
     }
 
-    /** The inbox read on launch and on every return to the app; the Stories tab reads it again
+    /** The inbox read on launch and on every return to the app; the Trips tab reads it again
      *  as it opens and after every answer. A failed read leaves the badge as it was. */
-    private fun refreshStoriesBadge() {
+    private fun refreshTripsBadge() {
         if (Session.isDemo) return
-        HoldMyTrackApi.storySends { result -> result.onSuccess { setStoriesWaiting(it.sends.size) } }
+        HoldMyTrackApi.tripSends { result -> result.onSuccess { setTripsWaiting(it.sends.size) } }
     }
 
     /** The bottom bar, and the record button over it, gone while something on the map has the
@@ -215,9 +215,9 @@ class MainActivity : AppCompatActivity() {
         if (tab == Tab.YOU) return
         markTab(
             when (panelTab) {
-                PanelTab.STORIES -> Tab.STORIES
+                PanelTab.TRIPS -> Tab.TRIPS
                 PanelTab.SYNC -> Tab.SYNC
-                PanelTab.ACTIVITIES -> Tab.MAP
+                PanelTab.TRACKS -> Tab.MAP
             },
         )
     }
@@ -255,7 +255,7 @@ class MainActivity : AppCompatActivity() {
         override fun targets(target: TourTarget): List<View> {
             fun mapView(id: Int) = listOfNotNull(map()?.view?.findViewById<View>(id))
             return when (target) {
-                TourTarget.SHEET -> mapView(R.id.activities_sheet)
+                TourTarget.SHEET -> mapView(R.id.tracks_sheet)
                 TourTarget.RANGE -> mapView(R.id.panel_dates)
                 TourTarget.LAYERS -> mapView(R.id.layers_panel) + listOfNotNull(map()?.layersMenu)
                 TourTarget.PLACES -> mapView(R.id.places_panel) + listOfNotNull(map()?.placesMenu)
@@ -274,7 +274,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tagOf(tab: Tab) = when (tab) {
-        Tab.MAP, Tab.STORIES, Tab.SYNC -> TAG_MAP
+        Tab.MAP, Tab.TRIPS, Tab.SYNC -> TAG_MAP
         Tab.YOU -> TAG_YOU
     }
 
@@ -285,14 +285,14 @@ class MainActivity : AppCompatActivity() {
 
     private fun itemOf(tab: Tab) = when (tab) {
         Tab.MAP -> R.id.nav_map
-        Tab.STORIES -> R.id.nav_stories
+        Tab.TRIPS -> R.id.nav_trips
         Tab.SYNC -> R.id.nav_sync
         Tab.YOU -> R.id.nav_you
     }
 
     private fun tabOf(itemId: Int) = when (itemId) {
         R.id.nav_map -> Tab.MAP
-        R.id.nav_stories -> Tab.STORIES
+        R.id.nav_trips -> Tab.TRIPS
         R.id.nav_sync -> Tab.SYNC
         R.id.nav_you -> Tab.YOU
         else -> null
@@ -330,13 +330,13 @@ class MainActivity : AppCompatActivity() {
             )
         }
 
-        /** Opens the map on [activityId], on [day] (`YYYY-MM-DD`, its local date where it was
+        /** Opens the map on [trackId], on [day] (`YYYY-MM-DD`, its local date where it was
          *  recorded) — the sync history's View on map. Clears whatever is over an existing map,
          *  which then selects it. */
-        fun viewOnMap(context: Context, activityId: String, day: String) {
+        fun viewOnMap(context: Context, trackId: String, day: String) {
             context.startActivity(
                 Intent(context, MainActivity::class.java)
-                    .putExtra(EXTRA_VIEW_ACTIVITY, activityId)
+                    .putExtra(EXTRA_VIEW_ACTIVITY, trackId)
                     .putExtra(EXTRA_VIEW_DAY, day)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             )

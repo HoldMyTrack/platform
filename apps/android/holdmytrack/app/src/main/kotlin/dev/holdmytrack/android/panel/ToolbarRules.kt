@@ -1,12 +1,12 @@
 package dev.holdmytrack.android.panel
 
-/** Which of the Activities toolbar's actions apply, and the master checkbox's state. */
+/** Which of the Tracks toolbar's actions apply, and the master checkbox's state. */
 object ToolbarRules {
 
     /** Why an action can or can't be used. */
     enum class Use { READY, NO_TARGET, DEMO, PENDING }
 
-    data class Actions(val visibility: Use, val edit: Use, val addToStory: Use, val delete: Use, val focus: Use)
+    data class Actions(val visibility: Use, val edit: Use, val addToTrip: Use, val delete: Use, val focus: Use)
 
     /**
      * The actions over [targets]. The demo account looks but can't change (the server's
@@ -21,7 +21,7 @@ object ToolbarRules {
             else -> Use.READY
         }
         val delete = if (change == Use.READY && anyPending) Use.PENDING else change
-        return Actions(visibility = look, edit = change, addToStory = change, delete = delete, focus = look)
+        return Actions(visibility = look, edit = change, addToTrip = change, delete = delete, focus = look)
     }
 
     enum class CheckAll { NONE, SOME, ALL }

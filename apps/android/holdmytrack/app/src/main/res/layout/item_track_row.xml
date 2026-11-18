@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One Tracks row, after the web's .tracks-panel__row: a tile of the track's kind
+     (panel/TrackKind), which is also its checkbox — a tap checks it, and a checked one is a ✓
+     on the accent — then the text — the name or start time over "[date ·] distance · duration ·
+     type" — which is the row's own tap target (select and fly to, or check while selecting; a
+     long press checks), and the Pending / Hidden / Trip badges at the end, the Trip badge
+     opening its Trip (panel/TrackRows.kt). An open Trip's rows on the Trips tab keep the
+     tile plain and end in an × instead. A hairline under it; selected, the accent
+     tint and a bar down its left edge (bg_panel_row). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/bg_panel_row"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="@dimen/hmt_space_4"
+    android:paddingEnd="@dimen/hmt_space_16">
+
+    <!-- The tile's 48dp target around its 40dp tile. -->
+    <FrameLayout
+        android:id="@+id/track_tile_target"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="@dimen/hmt_space_8"
+        android:layout_marginEnd="@dimen/hmt_space_8"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:focusable="true">
+
+        <ImageView
+            android:id="@+id/track_type_icon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_gravity="center"
+            android:background="@drawable/bg_type_tile"
+            android:importantForAccessibility="no"
+            android:padding="9dp"
+            android:src="@drawable/ic_route"
+            app:tint="@color/hmt_ink_secondary" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:id="@+id/track_text"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:minHeight="48dp"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:paddingTop="@dimen/hmt_space_10"
+        android:paddingBottom="@dimen/hmt_space_10">
+
+        <TextView
+            android:id="@+id/track_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleSmall"
+            tools:text="Sep 24, 2026, 4:00 AM" />
+
+        <TextView
+            android:id="@+id/track_meta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="@dimen/hmt_space_2"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:textColor="@color/hmt_ink_meta"
+            android:textSize="@dimen/hmt_text_xs"
+            tools:text="10.4 km · 1h 2m · Running" />
+    </LinearLayout>
+
+    <!-- One right-aligned column, so the badges share one edge whatever the text does, and a
+         row that's both stacks them together (.tracks-panel__badges). -->
+    <LinearLayout
+        android:id="@+id/track_badges"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/hmt_space_10"
+        android:gravity="end"
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <TextView
+            android:id="@+id/track_pending"
+            style="@style/Widget.HoldMyTrack.PanelStatusBadge"
+            android:text="@string/panel_pending" />
+
+        <TextView
+            android:id="@+id/track_hidden"
+            style="@style/Widget.HoldMyTrack.PanelStatusBadge"
+            android:layout_marginTop="@dimen/hmt_space_2"
+            android:text="@string/panel_hidden" />
+
+        <TextView
+            android:id="@+id/track_private"
+            style="@style/Widget.HoldMyTrack.PanelStatusBadge"
+            android:layout_marginTop="@dimen/hmt_space_2"
+            android:drawablePadding="@dimen/hmt_space_2"
+            android:text="@string/track_private_badge" />
+
+        <TextView
+            android:id="@+id/track_trip"
+            style="@style/Widget.HoldMyTrack.PanelStatusBadge.Story"
+            android:layout_marginTop="@dimen/hmt_space_2"
+            android:clickable="true"
+            android:focusable="true" />
+    </LinearLayout>
+
+    <!-- An open Trip's row only: takes the track out of the Trip (.trips-tab__remove). -->
+    <Button
+        android:id="@+id/track_remove"
+        style="@style/Widget.HoldMyTrack.Button.RowIcon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="-12dp"
+        android:visibility="gone"
+        app:icon="@drawable/ic_x"
+        app:iconSize="16dp"
+        app:iconTint="@color/hmt_ink_muted" />
+</LinearLayout>

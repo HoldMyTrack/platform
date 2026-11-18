@@ -6,7 +6,7 @@ import android.os.Bundle
 
 /**
  * Where a browser-tab sign-in comes back to the app: the server's callback redirects to
- * `holdmytrack://oauth?code=…` (or `?error=…`), and the browser hands that to this activity —
+ * `holdmytrack://oauth?code=…` (or `?error=…`), and the browser hands that to this track —
  * the only exported entry point for it, so [SignInActivity] itself stays unexported.
  *
  * It shows nothing and forwards the URI straight to [SignInActivity] with CLEAR_TOP, which

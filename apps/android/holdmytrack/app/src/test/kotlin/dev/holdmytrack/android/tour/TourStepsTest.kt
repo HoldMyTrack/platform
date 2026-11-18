@@ -42,8 +42,8 @@ class TourStepsTest {
     @Test
     fun `steps open what they explain and end on the You tab`() {
         val steps = TourSteps.of(isDemo = false).associateBy { it.id }
-        assertEquals(MainActivity.Tab.STORIES, steps.getValue("stories").tab)
-        assertTrue(steps.getValue("stories").sheet && steps.getValue("activities").sheet)
+        assertEquals(MainActivity.Tab.TRIPS, steps.getValue("trips").tab)
+        assertTrue(steps.getValue("trips").sheet && steps.getValue("tracks").sheet)
         assertTrue(steps.getValue("layers").layers && !steps.getValue("layers").places)
         assertTrue(steps.getValue("places").places && !steps.getValue("places").layers)
         assertEquals(TourTarget.PLACES, steps.getValue("places").target)
@@ -62,7 +62,7 @@ class TourStepsTest {
     @Test
     fun `a step holds the sheet and the menus it says, and the end gives the sheet back`() {
         val steps = TourSteps.of(isDemo = false).associateBy { it.id }
-        assertEquals(TourSteps.Held(sheet = true), TourSteps.held(steps.getValue("activities"), restoreSheet = false))
+        assertEquals(TourSteps.Held(sheet = true), TourSteps.held(steps.getValue("tracks"), restoreSheet = false))
         assertEquals(TourSteps.Held(sheet = false, layers = true), TourSteps.held(steps.getValue("layers"), restoreSheet = true))
         assertEquals(TourSteps.Held(sheet = false, places = true), TourSteps.held(steps.getValue("places"), restoreSheet = true))
         assertEquals(TourSteps.Held(sheet = true), TourSteps.held(null, restoreSheet = true))

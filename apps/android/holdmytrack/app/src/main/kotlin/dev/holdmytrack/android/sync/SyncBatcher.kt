@@ -1,11 +1,11 @@
 package dev.holdmytrack.android.sync
 
 /**
- * Groups the sessions a sync sends into requests: a request goes once it holds [maxActivities]
- * activities or [maxPoints] points, whichever comes first, and what's left goes at the end.
+ * Groups the sessions a sync sends into requests: a request goes once it holds [maxTracks]
+ * tracks or [maxPoints] points, whichever comes first, and what's left goes at the end.
  */
 class SyncBatcher<T>(
-    private val maxActivities: Int = MAX_BATCH_ACTIVITIES,
+    private val maxTracks: Int = MAX_BATCH_ACTIVITIES,
     private val maxPoints: Int = MAX_BATCH_POINTS,
 ) {
     private val batch = mutableListOf<T>()
@@ -15,7 +15,7 @@ class SyncBatcher<T>(
     fun add(item: T, pointCount: Int): List<T>? {
         batch += item
         points += pointCount
-        return if (batch.size >= maxActivities || points >= maxPoints) take() else null
+        return if (batch.size >= maxTracks || points >= maxPoints) take() else null
     }
 
     /** What's left to send once the last item is in; empty when nothing is. */

@@ -26,7 +26,7 @@
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Not typed into directly: a tap opens ActivityTypePicker, a searchable list of the
+        <!-- Not typed into directly: a tap opens TrackTypePicker, a searchable list of the
              account's existing types with an "Add …" row for a new one — free text, not a
              closed vocabulary, but steered toward the types already in use. -->
         <com.google.android.material.textfield.TextInputLayout

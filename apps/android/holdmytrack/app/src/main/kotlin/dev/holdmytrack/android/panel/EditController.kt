@@ -9,11 +9,11 @@ import dev.holdmytrack.android.map.EditPreview
 import dev.holdmytrack.android.map.MapMode
 import dev.holdmytrack.android.map.MapOverlays
 import dev.holdmytrack.android.map.SpotsController
-import dev.holdmytrack.android.map.TrackEditOverlay
-import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.map.RouteEditOverlay
+import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.HoldMyTrackApi
-import dev.holdmytrack.android.net.TrackPoint
+import dev.holdmytrack.android.net.RoutePoint
 import dev.holdmytrack.android.photos.PhotosController
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
@@ -21,14 +21,14 @@ import org.maplibre.android.maps.Style
 
 /**
  * The two editors that open along the bottom of the map and hold it meanwhile: the Edit window
- * over the toolbar's target, with its Track tab's session, and the Private location editor. Back
+ * over the toolbar's target, with its Route tab's session, and the Private location editor. Back
  * closes each; a press on a Private location's handle or on a track point in Move point mode takes
  * the touch before the map pans.
  */
 class EditController(
     private val root: View,
     private val panelState: PanelState,
-    private val panel: () -> ActivitiesPanel,
+    private val panel: () -> TracksPanel,
     private val photos: PhotosController,
     private val spots: SpotsController,
     private val map: () -> MapLibreMap?,
@@ -37,8 +37,8 @@ class EditController(
     /** The style once the user layers are on it. */
     private val attached: () -> Style?,
     private val mode: () -> MapMode,
-    /** Frames activities between the chrome and the window. */
-    private val frame: (List<Activity>) -> Unit,
+    /** Frames tracks between the chrome and the window. */
+    private val frame: (List<Track>) -> Unit,
     /** Where the Private location editor opens a new circle, between the top row and what covers the bottom. */
     openAreaCenterY: () -> Float,
     onPrivateLocationsChanged: () -> Unit,
@@ -46,18 +46,18 @@ class EditController(
     private val onWindowChanged: (open: Boolean) -> Unit,
     /** The Private location editor opened or closed: the chrome around it follows. */
     onPrivacyChanged: (open: Boolean) -> Unit,
-    /** The window closed: [saved] when something was written, [editedTrack] when a track edit was applied. */
+    /** The window closed: [saved] when something was written, [editedTrack] when a route edit was applied. */
     private val onWindowClosed: (saved: Boolean, editedTrack: String?) -> Unit,
 ) {
-    /** The activity whose track the Track tab is editing, while it is. */
+    /** The track whose track the Route tab is editing, while it is. */
     private var editingTrackId: String? = null
     private val windowView: View = root.findViewById(R.id.edit_window)
 
-    val window: EditActivityWindow = EditActivityWindow(
+    val window: EditTrackWindow = EditTrackWindow(
         windowView,
         root.findViewById(R.id.edit_bar),
-        onStartTrack = ::startTrack,
-        onDrawTrack = ::drawTrack,
+        onStartRoute = ::startRoute,
+        onDrawRoute = ::drawRoute,
         onPickPhotos = photos::pick,
         onPhotoOverlay = photos::setOverlay,
         onTabChanged = photos::render,
@@ -100,25 +100,25 @@ class EditController(
     /** Whether the Private location editor is open over the map. */
     val privacyEditing: Boolean get() = privacy.isEditing
 
-    /** An Edit is reading its activities, so a second tap opens nothing. */
+    /** An Edit is reading its tracks, so a second tap opens nothing. */
     private var opening = false
 
     /**
-     * The toolbar's Edit: the window over its target, each activity read in full first, since the
+     * The toolbar's Edit: the window over its target, each track read in full first, since the
      * area list's rows leave out the description, the track's edit and the photos (`docs/SPEC.md`
      * FR-5.11). A read that fails says so, and nothing opens.
      */
-    fun open(group: List<Activity>) {
+    fun open(group: List<Track>) {
         if (opening || window.isOpen) return
         opening = true
-        val full = mutableListOf<Activity>()
+        val full = mutableListOf<Track>()
         fun next() {
             if (full.size == group.size) {
                 opening = false
                 openWindow(full)
                 return
             }
-            HoldMyTrackApi.activity(group[full.size].id) { result ->
+            HoldMyTrackApi.track(group[full.size].id) { result ->
                 result.onSuccess {
                     full += it
                     next()
@@ -132,11 +132,11 @@ class EditController(
         next()
     }
 
-    private fun openWindow(group: List<Activity>) {
+    private fun openWindow(group: List<Track>) {
         panel().dismissPopups()
         panel().hold(true)
-        window.open(group, ActivityFacets.typeFacets(panelState.activities, null))
-        // The photos follow the window: its one activity's, which its Photos tab manages.
+        window.open(group, TrackFacets.typeFacets(panelState.tracks, null))
+        // The photos follow the window: its one track's, which its Photos tab manages.
         photos.refresh(force = false)
         closeWindowOnBack.isEnabled = true
         onWindowChanged(true)
@@ -148,32 +148,32 @@ class EditController(
         mapView.setOnTouchListener { _, event ->
             when {
                 privacy.isShowing -> privacy.onMapTouch(event)
-                window.isOpen -> map()?.let { window.trackEditor.onMapTouch(event, it, mapView.resources.displayMetrics.density) } ?: false
+                window.isOpen -> map()?.let { window.routeEditor.onMapTouch(event, it, mapView.resources.displayMetrics.density) } ?: false
                 else -> false
             }
         }
     }
 
-    /** The Track tab opened: the other tracks and the bands away, and the camera on this one. */
-    private fun startTrack(activity: Activity) {
-        editingTrackId = activity.id
-        attached()?.let { MapOverlays.setEditingTrack(it, true, mode()) }
+    /** The Route tab opened: the other tracks and the bands away, and the camera on this one. */
+    private fun startRoute(track: Track) {
+        editingTrackId = track.id
+        attached()?.let { MapOverlays.setEditingRoute(it, true, mode()) }
         spots.setEditing(true)
-        // Once the Track tab has laid out, so the fit leaves room under the window as it now is.
-        windowView.post { frame(listOf(activity)) }
+        // Once the Route tab has laid out, so the fit leaves room under the window as it now is.
+        windowView.post { frame(listOf(track)) }
     }
 
-    /** The track editor's overlay: the points as edited, its knobs and what would go. */
-    private fun drawTrack(visible: List<TrackPoint>?, lo: Int, hi: Int, preview: EditPreview, split: Int?) {
+    /** The route editor's overlay: the points as edited, its knobs and what would go. */
+    private fun drawRoute(visible: List<RoutePoint>?, lo: Int, hi: Int, preview: EditPreview, split: Int?) {
         val loaded = style() ?: return
-        if (visible == null) TrackEditOverlay.clear(loaded) else TrackEditOverlay.set(loaded, visible, lo, hi, preview, split)
+        if (visible == null) RouteEditOverlay.clear(loaded) else RouteEditOverlay.set(loaded, visible, lo, hi, preview, split)
     }
 
     private fun onClosed(saved: Boolean, trackApplied: Boolean, photosSaved: Boolean) {
         photos.editClosed(photosSaved)
         val edited = editingTrackId?.also {
-            style()?.let(TrackEditOverlay::clear)
-            attached()?.let { loaded -> MapOverlays.setEditingTrack(loaded, false, mode()) }
+            style()?.let(RouteEditOverlay::clear)
+            attached()?.let { loaded -> MapOverlays.setEditingRoute(loaded, false, mode()) }
             spots.setEditing(false)
         }
         editingTrackId = null

@@ -9,7 +9,7 @@ import android.view.View
 import dev.holdmytrack.android.R
 
 /**
- * The You tab's glance at the activity graph: [ProfileStats.recentWeeks]' cells, a week to a
+ * The You tab's glance at the track graph: [ProfileStats.recentWeeks]' cells, a week to a
  * column, in the year grid's shades (`profile_level_0`–`3`) — small, and not to be read day by
  * day; the whole graph is a tap away. A blank (-1) cell isn't drawn.
  */

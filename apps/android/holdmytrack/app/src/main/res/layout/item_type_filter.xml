@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One Type dropdown row (.activity-filters__type-item): its checkbox, the type's name, and
+<!-- One Type dropdown row (.track-filters__type-item): its checkbox, the type's name, and
      its count in the monospace face at ink 50%. The whole row toggles the checkbox. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"

@@ -38,7 +38,7 @@ android {
         // versionName is the release number, major.minor.patch, raised by hand (docs/DEPLOY.md §10);
         // GIT_SHA is the exact commit, the same short SHA the server's /healthz reports.
         versionCode = gitOutput("rev-list", "--count", "HEAD")?.toIntOrNull() ?: 1
-        versionName = "0.34.0"
+        versionName = "0.34.1"
         buildConfigField("String", "GIT_SHA", "\"${gitOutput("rev-parse", "--short", "HEAD") ?: "dev"}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -98,7 +98,7 @@ android {
     sourceSets["androidTest"].java.srcDirs("src/androidTest/kotlin")
 }
 
-// WireContractTest reads the API contract, ClientRulesTest and TrackBandsTest the shared cases and
+// WireContractTest reads the API contract, ClientRulesTest and RouteBandsTest the shared cases and
 // MapLayersDocTest the served map documents, all outside this project, so a change to any reruns
 // the unit tests rather than leaving them up to date.
 tasks.withType<Test>().configureEach {

@@ -1,19 +1,19 @@
 package dev.holdmytrack.android.map
 
-import dev.holdmytrack.android.panel.ActivitiesPanel
+import dev.holdmytrack.android.panel.TracksPanel
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.photos.PhotosController
 import org.maplibre.android.maps.Style
 
 /**
- * What the map reads again when activities change under it, as the web's `useDataRefresh.ts`: the
- * track tiles, the list and Dates' bounds ([AreaController]), the open Story, the bands, the photos,
+ * What the map reads again when tracks change under it, as the web's `useDataRefresh.ts`: the
+ * track tiles, the list and Dates' bounds ([AreaController]), the open Trip, the bands, the photos,
  * and Fog once re-rendered ([CoverageController]).
  */
 class DataRefresh(
     private val area: AreaController,
     private val session: MapSession,
-    private val panel: ActivitiesPanel,
+    private val panel: TracksPanel,
     private val panelState: PanelState,
     /** The style once the user layers are on it. */
     private val style: () -> Style?,
@@ -25,10 +25,10 @@ class DataRefresh(
         style()?.let { MapOverlays.refreshTracks(it, session.dates) }
     }
 
-    /** An activity taken out of the open Story: its track and row go, and its selection. The
+    /** A track taken out of the open Trip: its track and row go, and its selection. The
      *  tile version moved, and the tiles follow. */
-    fun afterRemovedFromStory(activityId: String) {
-        if (panelState.focused == activityId) panel.clearFocus()
+    fun afterRemovedFromTrip(trackId: String) {
+        if (panelState.focused == trackId) panel.clearFocus()
         photos.refresh(force = true)
         coverage.checkTileVersion()
         refreshTracks()
@@ -36,7 +36,7 @@ class DataRefresh(
     }
 
     /**
-     * A Private location saved or deleted: the activities it touches are reprocessed. The list is
+     * A Private location saved or deleted: the tracks it touches are reprocessed. The list is
      * read at once, and everything again once the server drains, since a batch that finishes
      * before the first read never shows a row Pending.
      */
@@ -48,19 +48,19 @@ class DataRefresh(
             area.reloadHistory()
             bands.update(refetch = true)
             photos.refresh(force = true)
-            panel.storiesTab.reloadOpen()
+            panel.tripsTab.reloadOpen()
         }
     }
 
-    /** A Story copy arrived (`docs/SPEC.md` FR-13.8): new activities, refreshed as after an upload. */
-    fun afterStoryCopy() {
+    /** A Trip copy arrived (`docs/SPEC.md` FR-13.8): new tracks, refreshed as after an upload. */
+    fun afterTripCopy() {
         refreshTracks()
         area.reloadList()
         area.reloadHistory()
         coverage.watch()
     }
 
-    /** The Sync tab sent activities: the list, Dates' bounds and the tiles catch up. */
+    /** The Sync tab sent tracks: the list, Dates' bounds and the tiles catch up. */
     fun afterSync() {
         area.reloadHistory()
         area.reloadList()
@@ -77,7 +77,7 @@ class DataRefresh(
         area.reloadList()
         area.reloadHistory()
         coverage.watch()
-        panel.storiesTab.reloadOpen()
+        panel.tripsTab.reloadOpen()
         photos.refresh(force = true)
     }
 }

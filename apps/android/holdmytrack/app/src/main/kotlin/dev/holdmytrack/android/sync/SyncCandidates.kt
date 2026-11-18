@@ -11,7 +11,7 @@ import dev.holdmytrack.android.map.Geo
 import dev.holdmytrack.android.map.Simplify
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.TrackMetricPoint
-import dev.holdmytrack.android.recording.db.RecordedActivityRecord
+import dev.holdmytrack.android.recording.db.RecordedTrackRecord
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.CancellationException
@@ -25,10 +25,10 @@ sealed interface CandidateOrigin
 class HealthConnectSession(val record: ExerciseSessionRecord, val route: List<ExerciseRoute.Location>) : CandidateOrigin
 
 /** A GPS recording waiting on this phone — its only copy. */
-class Recording(val record: RecordedActivityRecord) : CandidateOrigin
+class Recording(val record: RecordedTrackRecord) : CandidateOrigin
 
 /**
- * One thing the Sync tab offers (`docs/SPEC.md` FR-3.4): an activity on this phone that isn't in
+ * One thing the Sync tab offers (`docs/SPEC.md` FR-3.4): a track on this phone that isn't in
  * the account yet. [key] is unique across both origins and is what the hidden set stores;
  * [line] is the route simplified for drawing ([Simplify]), as `[lon, lat]` pairs, [metrics] the
  * same vertices with their speed — what its pace bands are drawn from when it's picked
@@ -63,7 +63,7 @@ data class HealthConnectRead(val sessions: List<Candidate>, val refused: Int)
  * last [WINDOW], minus what the account already has (`POST /v1/sync/known`), plus every recording
  * waiting on the phone, which never ages out — the phone holds its only copy. There is no
  * cursor: each Load works Health Connect's part out afresh from the phone and the server
- * ([WaitingLoader]), so a reinstall or a second phone agrees, and an activity deleted on the web
+ * ([WaitingLoader]), so a reinstall or a second phone agrees, and a track deleted on the web
  * is offered again; between loads it's kept as last read ([WaitingStore]).
  */
 object SyncCandidates {
@@ -158,7 +158,7 @@ object SyncCandidates {
             )
         }
 
-    suspend fun fromRecording(record: RecordedActivityRecord): Candidate = withContext(Dispatchers.Default) {
+    suspend fun fromRecording(record: RecordedTrackRecord): Candidate = withContext(Dispatchers.Default) {
         build(
             source = HoldMyTrackApi.SOURCE_RECORDED,
             externalId = record.id,
@@ -210,11 +210,11 @@ object SyncCandidates {
 
     /**
      * The [kept] vertices of a route with their speed, by the server's own rule for a synced
-     * activity's (`GET /v1/activities/{id}/track-metrics`): the distance from the vertex before over
+     * track's (`GET /v1/activities/{id}/track-metrics`): the distance from the vertex before over
      * the whole seconds between them ([times] are Unix ms), 0 where no second passed, and the
      * first vertex taking the second's. The phone simplifies more coarsely than the server does
      * ([Simplify] at 15 m, the server about 3 m), so the speeds are a little smoother than the
-     * same activity's once it's synced; the bands are relative to the activity's own range either way.
+     * same track's once it's synced; the bands are relative to the track's own range either way.
      */
     fun metrics(lats: DoubleArray, lons: DoubleArray, times: LongArray, kept: IntArray): List<TrackMetricPoint> {
         val n = kept.size

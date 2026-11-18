@@ -1,13 +1,13 @@
 package dev.holdmytrack.android.profile
 
-import dev.holdmytrack.android.net.ActivityDay
+import dev.holdmytrack.android.net.TrackDay
 import java.time.LocalDate
 import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class ProfileStatsTest {
 
-    private fun day(date: String, count: Int = 1, meters: Double = 1000.0) = ActivityDay(date, count, meters)
+    private fun day(date: String, count: Int = 1, meters: Double = 1000.0) = TrackDay(date, count, meters)
 
     @Test
     fun `stats sum the days and find the longest run of consecutive ones`() {

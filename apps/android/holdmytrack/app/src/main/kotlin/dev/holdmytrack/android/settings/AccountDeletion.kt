@@ -11,7 +11,7 @@ import dev.holdmytrack.android.SignInActivity
 import dev.holdmytrack.android.map.EmptyNoticeDismissal
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
-import dev.holdmytrack.android.recording.db.RecordedActivityStore
+import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.sync.HiddenCandidates
 import dev.holdmytrack.android.sync.SyncSources
 import dev.holdmytrack.android.sync.WaitingStore
@@ -64,7 +64,7 @@ object AccountDeletion {
         val email = Session.email
         val context = activity.applicationContext
         activity.lifecycleScope.launch {
-            RecordedActivityStore(context).deleteAll()
+            RecordedTrackStore(context).deleteAll()
             HiddenCandidates(context, email).clear()
             SyncSources(context, email).clear()
             EmptyNoticeDismissal(context, email).clear()

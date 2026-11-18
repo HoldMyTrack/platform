@@ -10,7 +10,7 @@ class ToolbarRulesTest {
     @Test
     fun `nothing targeted, everything says so`() {
         val a = ToolbarRules.actions(targets = 0, anyPending = false, demo = false)
-        assertEquals(listOf(Use.NO_TARGET, Use.NO_TARGET, Use.NO_TARGET, Use.NO_TARGET, Use.NO_TARGET), listOf(a.visibility, a.edit, a.addToStory, a.delete, a.focus))
+        assertEquals(listOf(Use.NO_TARGET, Use.NO_TARGET, Use.NO_TARGET, Use.NO_TARGET, Use.NO_TARGET), listOf(a.visibility, a.edit, a.addToTrip, a.delete, a.focus))
     }
 
     @Test
@@ -18,14 +18,14 @@ class ToolbarRulesTest {
         val a = ToolbarRules.actions(targets = 2, anyPending = false, demo = true)
         assertEquals(Use.READY, a.visibility)
         assertEquals(Use.READY, a.focus)
-        assertEquals(listOf(Use.DEMO, Use.DEMO, Use.DEMO), listOf(a.edit, a.addToStory, a.delete))
+        assertEquals(listOf(Use.DEMO, Use.DEMO, Use.DEMO), listOf(a.edit, a.addToTrip, a.delete))
     }
 
     @Test
     fun `a pending row blocks only delete`() {
         val a = ToolbarRules.actions(targets = 3, anyPending = true, demo = false)
         assertEquals(Use.PENDING, a.delete)
-        assertEquals(listOf(Use.READY, Use.READY, Use.READY, Use.READY), listOf(a.visibility, a.edit, a.addToStory, a.focus))
+        assertEquals(listOf(Use.READY, Use.READY, Use.READY, Use.READY), listOf(a.visibility, a.edit, a.addToTrip, a.focus))
         // The demo's reason comes first: it couldn't delete either way.
         assertEquals(Use.DEMO, ToolbarRules.actions(targets = 3, anyPending = true, demo = true).delete)
     }

@@ -17,12 +17,12 @@ import org.maplibre.geojson.LineString
 import org.maplibre.geojson.Point
 
 /**
- * The Sync tab's candidates on the map (`docs/SPEC.md` FR-3.4): every activity listed there,
+ * The Sync tab's candidates on the map (`docs/SPEC.md` FR-3.4): every track listed there,
  * drawn dashed from the phone's own data — none of it is on the server yet — and the one picked
- * on the list or the map as the Map tab draws a selected activity: solid and wider over a dark
- * halo, coloured by pace ([Candidate.metrics], [TrackBands]). One GeoJSON source
+ * on the list or the map as the Map tab draws a selected track: solid and wider over a dark
+ * halo, coloured by pace ([Candidate.metrics], [RouteBands]). One GeoJSON source
  * whose layers filter on a `role` property, and one for the bands, all under the basemap's
- * labels, as [TrackEditOverlay] is. The lines are the candidates' simplified ones ([Candidate.line]).
+ * labels, as [RouteEditOverlay] is. The lines are the candidates' simplified ones ([Candidate.line]).
  */
 object SyncCandidatesOverlay {
 
@@ -48,7 +48,7 @@ object SyncCandidatesOverlay {
         }
         fun role(name: String) = Expression.eq(Expression.get("role"), name)
         // Halo first, then the dashed lines, then the picked line and its bands over them: the
-        // halo, picked line and bands as the layers document draws a selected activity's.
+        // halo, picked line and bands as the layers document draws a selected track's.
         add(LineLayer(HALO_LAYER_ID, SOURCE_ID).withFilter(role("highlight")).withProperties(*MapLayers.propertiesOf(style, "casing")))
         add(
             LineLayer(LINE_LAYER_ID, SOURCE_ID).withFilter(role("line")).withProperties(
@@ -77,7 +77,7 @@ object SyncCandidatesOverlay {
         }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
         val bands = candidates.firstOrNull { it.key == highlight }
-            ?.let { MapOverlays.bandFeatures(it.metrics, TrackBands.runs(it.metrics.map { point -> point.speedMps })) }.orEmpty()
+            ?.let { MapOverlays.bandFeatures(it.metrics, RouteBands.runs(it.metrics.map { point -> point.speedMps })) }.orEmpty()
         style.getSourceAs<GeoJsonSource>(BAND_SOURCE_ID)?.setGeoJson(FeatureCollection.fromFeatures(bands))
     }
 

@@ -22,7 +22,7 @@ import dev.holdmytrack.android.R
  * or the pick would seem to do nothing; with nothing picked it can't be changed — and, where the
  * served style has imagery ([satellite] isn't null), Satellite (`MapSatellite`). Roads
  * (`MapRoads`) is a pick like the paths, on until unpicked. A tap on the
- * button toggles the menu, and a tap outside it or Back closes it, like the Activities panel's
+ * button toggles the menu, and a tap outside it or Back closes it, like the Tracks panel's
  * Type dropdown.
  */
 class LayersMenu(

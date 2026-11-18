@@ -319,7 +319,7 @@
         <item name="android:textColor">@color/hmt_ink</item>
     </style>
 
-    <!-- ‹ › beside the date range in the Activities sheet (include_activities_sheet): a 44dp round
+    <!-- ‹ › beside the date range in the Tracks sheet (include_tracks_sheet): a 44dp round
          icon button on the tinted surface, a faint outline when it can't move the range. The
          tints are state lists: a plain colour here would override Material's disabled look and
          leave a disabled button looking pressable. -->
@@ -355,7 +355,7 @@
         <item name="cornerRadius">6dp</item>
     </style>
 
-    <!-- One of the selected activity's numbers (include_activity_card): a tinted box, its label
+    <!-- One of the selected track's numbers (include_track_card): a tinted box, its label
          over its value. -->
     <style name="Widget.HoldMyTrack.CardStat" parent="">
         <item name="android:background">@drawable/bg_card_stat</item>
@@ -378,7 +378,7 @@
         <item name="android:layout_marginTop">2dp</item>
     </style>
 
-    <!-- The selected activity's actions (include_activity_card): an icon over a short label, in
+    <!-- The selected track's actions (include_track_card): an icon over a short label, in
          ink, filling a 60dp-tall share of the row. -->
     <style name="Widget.HoldMyTrack.Button.CardAction" parent="Widget.Material3.Button.TextButton.Icon">
         <item name="android:minHeight">60dp</item>
@@ -400,7 +400,7 @@
         <item name="iconTint">@color/card_action_danger</item>
     </style>
 
-    <!-- A filter in the Activities sheet (Type, Distance): a bordered pill holding its label and
+    <!-- A filter in the Tracks sheet (Type, Distance): a bordered pill holding its label and
          a ▾, 40dp tall. -->
     <style name="Widget.HoldMyTrack.FilterChip" parent="">
         <item name="android:background">@drawable/bg_filter_chip</item>
@@ -635,8 +635,8 @@
         <item name="android:paddingStart">@dimen/hmt_space_4</item>
     </style>
 
-    <!-- The Activities panel's toolbar actions (Show/Hide, Edit, Delete), after the web's
-         .activities-panel__edit & co. at phone width: a 34dp tinted square around a 16dp icon,
+    <!-- The Tracks panel's toolbar actions (Show/Hide, Edit, Delete), after the web's
+         .tracks-panel__edit & co. at phone width: a 34dp tinted square around a 16dp icon,
          drawn inset in a 48dp touch target (bg_panel_chip). -->
     <style name="Widget.HoldMyTrack.PanelChip" parent="">
         <item name="android:layout_width">48dp</item>
@@ -647,13 +647,13 @@
         <item name="tint">@color/panel_chip_icon</item>
     </style>
 
-    <!-- Focus on map, the toolbar's accent-tinted main action (.activities-panel__focus). -->
+    <!-- Focus on map, the toolbar's accent-tinted main action (.tracks-panel__focus). -->
     <style name="Widget.HoldMyTrack.PanelChip.Accent">
         <item name="android:background">@drawable/bg_panel_chip_accent</item>
         <item name="tint">@color/panel_chip_accent_icon</item>
     </style>
 
-    <!-- A row's Pending / Hidden badge, the web's .activities-panel__hidden-badge: 10sp
+    <!-- A row's Pending / Hidden badge, the web's .tracks-panel__hidden-badge: 10sp
          semibold uppercase at ink 55% on an ink 8% tint. -->
     <style name="Widget.HoldMyTrack.PanelStatusBadge" parent="">
         <item name="android:layout_width">wrap_content</item>
@@ -671,19 +671,19 @@
         <item name="android:maxLines">1</item>
     </style>
 
-    <!-- A row's Story badge (.activities-panel__story-badge): the accent on the accent at 12%. -->
+    <!-- A row's Trip badge (.tracks-panel__trip-badge): the accent on the accent at 12%. -->
     <style name="Widget.HoldMyTrack.PanelStatusBadge.Story">
-        <item name="android:background">@drawable/bg_panel_story_badge</item>
+        <item name="android:background">@drawable/bg_panel_trip_badge</item>
         <item name="android:textColor">@color/hmt_accent</item>
     </style>
 
-    <!-- A Track tab action (Chop, Cut, Delete point, Undo, Reset), the web's .edit-track__btn: a
+    <!-- A Route tab action (Chop, Cut, Delete point, Undo, Reset), the web's .edit-route__btn: a
          tinted chip with the small radius and a 13sp semibold label, inset in a 44dp-tall
          target. Checkable, for Delete point's on state. -->
     <style name="Widget.HoldMyTrack.Button.EditTrack" parent="Widget.Material3.Button.UnelevatedButton">
         <item name="shapeAppearance">@style/ShapeAppearance.HoldMyTrack.Small</item>
-        <item name="backgroundTint">@color/edit_track_btn_bg</item>
-        <item name="android:textColor">@color/edit_track_btn_text</item>
+        <item name="backgroundTint">@color/edit_route_btn_bg</item>
+        <item name="android:textColor">@color/edit_route_btn_text</item>
         <item name="android:textAppearance">@style/TextAppearance.HoldMyTrack.TitleSmall</item>
         <item name="android:minWidth">48dp</item>
         <item name="android:minHeight">48dp</item>
@@ -693,7 +693,7 @@
         <item name="android:paddingEnd">@dimen/hmt_space_10</item>
     </style>
 
-    <!-- The track editor's four tools (include_track_editor): the edit-track look, an icon over
+    <!-- The route editor's four tools (include_route_editor): the edit-track look, an icon over
          its label, 64dp tall, a quarter of the row each; checked (Move point, Delete point), the
          accent tint. -->
     <style name="Widget.HoldMyTrack.Button.EditTool" parent="Widget.HoldMyTrack.Button.EditTrack">
@@ -708,18 +708,18 @@
         <item name="iconGravity">top</item>
         <item name="iconPadding">@dimen/hmt_space_4</item>
         <item name="iconSize">22dp</item>
-        <item name="iconTint">@color/edit_track_btn_text</item>
+        <item name="iconTint">@color/edit_route_btn_text</item>
     </style>
 
     <!-- Undo and Reset, the quiet ones (the web's quiet edit-track button): no fill, ink at 65%,
          faint while disabled. -->
     <style name="Widget.HoldMyTrack.Button.EditTrack.Quiet">
         <item name="backgroundTint">@android:color/transparent</item>
-        <item name="android:textColor">@color/edit_track_quiet_text</item>
-        <item name="iconTint">@color/edit_track_quiet_text</item>
+        <item name="android:textColor">@color/edit_route_quiet_text</item>
+        <item name="iconTint">@color/edit_route_quiet_text</item>
     </style>
 
-    <!-- A tab's title in the Activities panel's head, the web's .activities-panel__heading-text:
+    <!-- A tab's title in the Tracks panel's head, the web's .tracks-panel__heading-text:
          the serif, semibold, text-xl. -->
     <style name="TextAppearance.HoldMyTrack.PanelTab" parent="TextAppearance.HoldMyTrack.TitleMedium">
         <item name="fontFamily">@font/hmt_serif</item>
@@ -727,7 +727,7 @@
         <item name="android:textColor">@color/hmt_ink</item>
     </style>
 
-    <!-- A filter's label (DISTANCE), the web's .activity-filters__label: 11sp heavy, uppercase,
+    <!-- A filter's label (DISTANCE), the web's .track-filters__label: 11sp heavy, uppercase,
          tracked, ink 50%. -->
     <style name="TextAppearance.HoldMyTrack.PanelFilterLabel" parent="TextAppearance.HoldMyTrack.LabelSmall">
         <item name="android:textFontWeight">800</item>
@@ -736,7 +736,7 @@
         <item name="android:textColor">@color/panel_ink_50</item>
     </style>
 
-    <!-- The DISTANCE slider, the web's .activity-filters__range: a 2dp track, the band in the
+    <!-- The DISTANCE slider, the web's .track-filters__range: a 2dp track, the band in the
          accent, round white knobs ringed in the accent. The pre-Material 3 slider, whose knob is
          a circle rather than Material 3's bar. -->
     <style name="Widget.HoldMyTrack.PanelSlider" parent="Widget.MaterialComponents.Slider">

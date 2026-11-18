@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The map tab (MapFragment). A CoordinatorLayout so the Activities sheet at the bottom
-     (include_activities_sheet) can be dragged between its heights; everything else is laid over
+<!-- The map tab (MapFragment). A CoordinatorLayout so the Tracks sheet at the bottom
+     (include_tracks_sheet) can be dragged between its heights; everything else is laid over
      the map as in a FrameLayout. -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -181,11 +181,11 @@
                         android:text="@string/recording_stop" />
                 </LinearLayout>
 
-                <!-- While any of the Activities sheet's rows is checked, the selection bar in the mode
+                <!-- While any of the Tracks sheet's rows is checked, the selection bar in the mode
                      toggle's place, the rail stepping aside for it: × unchecks all, ending selecting,
                      then the master checkbox and its All / None / Invert, and the actions over the
-                     checked group — Show/Hide, Edit, Add to story, Delete, then Focus on map in the
-                     accent (panel/ActivitiesPanel; MapFragment.renderSelectionBar). -->
+                     checked group — Show/Hide, Edit, Add to trip, Delete, then Focus on map in the
+                     accent (panel/TracksPanel; MapFragment.renderSelectionBar). -->
                 <LinearLayout
                     android:id="@+id/selection_bar"
                     style="@style/Widget.HoldMyTrack.MapPanel"
@@ -244,7 +244,7 @@
                         android:src="@drawable/ic_pencil" />
 
                     <ImageButton
-                        android:id="@+id/panel_add_to_story"
+                        android:id="@+id/panel_add_to_trip"
                         style="@style/Widget.HoldMyTrack.PanelChip"
                         android:contentDescription="@string/panel_no_target"
                         android:src="@drawable/ic_book_plus" />
@@ -263,7 +263,7 @@
                         android:src="@drawable/ic_focus" />
                 </LinearLayout>
 
-                <!-- While the Edit window is open (panel/EditActivityWindow), the edit bar in the mode
+                <!-- While the Edit window is open (panel/EditTrackWindow), the edit bar in the mode
                      toggle's place, the rail away: Cancel, the window's title and whose it is, and
                      Save. -->
                 <LinearLayout
@@ -343,7 +343,7 @@
                  the camera already follows the recording — then Export map image, also hidden while
                  recording. The rail steps aside while an editor opens over the top of the map
                  (MapFragment.renderRail). A column, but a row in landscape, where stacked it took
-                 most of the height the Activities sheet needs (Widget.HoldMyTrack.MapRail). -->
+                 most of the height the Tracks sheet needs (Widget.HoldMyTrack.MapRail). -->
             <LinearLayout
                 android:id="@+id/map_rail"
                 style="@style/Widget.HoldMyTrack.MapRail"
@@ -566,15 +566,15 @@
         <include layout="@layout/view_capture_banner" />
     </LinearLayout>
 
-    <!-- The Edit window (include_edit_window, panel/EditActivityWindow), under the chrome row. -->
+    <!-- The Edit window (include_edit_window, panel/EditTrackWindow), under the chrome row. -->
     <include layout="@layout/include_edit_window" />
 
     <!-- The Private location editor (include_private_location_editor, panel/PrivateLocationEditor), where the
          Edit window would be. -->
     <include layout="@layout/include_private_location_editor" />
 
-    <!-- The Activities sheet, Normal mode's alone, at the bottom of the map
-         (include_activities_sheet, panel/ActivitiesPanel). -->
-    <include layout="@layout/include_activities_sheet" />
+    <!-- The Tracks sheet, Normal mode's alone, at the bottom of the map
+         (include_tracks_sheet, panel/TracksPanel). -->
+    <include layout="@layout/include_tracks_sheet" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

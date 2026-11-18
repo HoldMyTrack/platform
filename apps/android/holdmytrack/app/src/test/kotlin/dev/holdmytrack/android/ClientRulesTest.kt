@@ -14,24 +14,24 @@ import dev.holdmytrack.android.map.OpeningView
 import dev.holdmytrack.android.map.PendingDiff
 import dev.holdmytrack.android.map.SatelliteStatus
 import dev.holdmytrack.android.net.deleteDone
-import dev.holdmytrack.android.net.Activity
-import dev.holdmytrack.android.net.TrackEdit
-import dev.holdmytrack.android.net.TrackPoint
-import dev.holdmytrack.android.panel.ActivityFacets
-import dev.holdmytrack.android.panel.ActivityZone
+import dev.holdmytrack.android.net.Track
+import dev.holdmytrack.android.net.RouteEdit
+import dev.holdmytrack.android.net.RoutePoint
+import dev.holdmytrack.android.panel.TrackFacets
+import dev.holdmytrack.android.panel.TrackZone
 import dev.holdmytrack.android.panel.DistanceKnob
 import dev.holdmytrack.android.panel.DistanceRange
 import dev.holdmytrack.android.panel.DistanceParts
 import dev.holdmytrack.android.panel.DurationParts
 import dev.holdmytrack.android.panel.EditOp
-import dev.holdmytrack.android.panel.EditTrackOps
+import dev.holdmytrack.android.panel.EditRouteOps
 import dev.holdmytrack.android.panel.FormatParts
 import dev.holdmytrack.android.panel.PanelRules
 import dev.holdmytrack.android.panel.PanelState
 import dev.holdmytrack.android.panel.PanelTab
 import dev.holdmytrack.android.photos.PhotoClusters
 import dev.holdmytrack.android.photos.PhotoMarkerScope
-import dev.holdmytrack.android.photos.PhotoTrack
+import dev.holdmytrack.android.photos.PhotoRoute
 import dev.holdmytrack.android.photos.PhotoZoom
 import dev.holdmytrack.android.photos.PlaceAnchor
 import dev.holdmytrack.android.photos.ScreenPoint
@@ -102,11 +102,8 @@ class ClientRulesTest {
         FogLevels.Level(l.string("level")!!, (l["from"] as? JsonPrimitive)?.doubleOrNull, (l["below"] as? JsonPrimitive)?.doubleOrNull)
     }
 
-    /** The cases say tracks and trips; the app's enums still say activities and stories until they are renamed. */
-    private val oldNames = mapOf("tracks" to "activities", "trips" to "stories")
-    private val newNames = oldNames.entries.associate { (new, old) -> old to new }
-    private fun enumName(name: String) = (oldNames[name] ?: name).uppercase()
-    private fun caseName(enumName: String) = enumName.lowercase().let { newNames[it] ?: it }
+    private fun enumName(name: String) = name.uppercase()
+    private fun caseName(enumName: String) = enumName.lowercase()
 
     /** A case's tab: the web's panel tabs, Android's bottom bar, whose Map shows the Tracks tab. */
     private fun tourTab(name: String) = if (name == "tracks") MainActivity.Tab.MAP else MainActivity.Tab.valueOf(enumName(name))
@@ -226,10 +223,9 @@ class ClientRulesTest {
                 editOpen = edit != null,
                 editSingleId = edit?.singleOrNull(),
                 focused = input.string("focused"),
-                storyId = input.string("tripId"),
+                tripId = input.string("tripId"),
             )
-            val kinds = mapOf("activity" to "track", "story" to "trip")
-            scope?.split(':', limit = 2)?.let { (kind, id) -> buildJsonObject { put(kinds[kind] ?: kind, id) } } ?: JsonNull
+            scope?.split(':', limit = 2)?.let { (kind, id) -> buildJsonObject { put(kind, id) } } ?: JsonNull
         },
         "photoGroup" to { input ->
             val points = input["photos"]!!.jsonArray.map { it.jsonObject["lat"]!!.jsonPrimitive.double to it.jsonObject["lon"]!!.jsonPrimitive.double }
@@ -237,25 +233,25 @@ class ClientRulesTest {
                 buildJsonObject { put("fit", buildJsonArray { box.forEach { add(JsonPrimitive(it)) } }) }
             } ?: JsonPrimitive("open")
         },
-        "distanceBounds" to { input -> distanceJson(ActivityFacets.distanceBounds(activities(input["tracks"]))) },
+        "distanceBounds" to { input -> distanceJson(TrackFacets.distanceBounds(tracks(input["tracks"]))) },
         "distanceFilter" to { input ->
             val knob = DistanceKnob.valueOf(input.string("knob")!!.uppercase())
-            distanceJson(ActivityFacets.nextDistanceFilter(distance(input["bounds"])!!, distance(input["current"])!!, knob, input.number("value")))
+            distanceJson(TrackFacets.nextDistanceFilter(distance(input["bounds"])!!, distance(input["current"])!!, knob, input.number("value")))
         },
         "typeFacets" to { input ->
             buildJsonArray {
-                ActivityFacets.typeFacets(activities(input["tracks"]), distance(input["distanceFilter"])).forEach { facet ->
+                TrackFacets.typeFacets(tracks(input["tracks"]), distance(input["distanceFilter"])).forEach { facet ->
                     add(buildJsonObject { put("type", facet.type); put("count", facet.count) })
                 }
             }
         },
         "passesFilters" to { input ->
-            JsonPrimitive(ActivityFacets.passesFilters(facetActivity(input["track"]!!.jsonObject), input.strings("excludedTypes").toSet(), distance(input["distanceFilter"])))
+            JsonPrimitive(TrackFacets.passesFilters(facetTrack(input["track"]!!.jsonObject), input.strings("excludedTypes").toSet(), distance(input["distanceFilter"])))
         },
         "trackZone" to { input ->
             // A phone zone no case names, so falling through to it reads as null.
             val phone = ZoneId.of("Pacific/Kiritimati")
-            JsonPrimitive(ActivityZone.of(input.string("own"), input.string("account"), phone).takeIf { it != phone }?.id)
+            JsonPrimitive(TrackZone.of(input.string("own"), input.string("account"), phone).takeIf { it != phone }?.id)
         },
         "photoClusters" to { input ->
             val points = input["points"]!!.jsonArray.map { it.jsonObject }.map { ScreenPoint(it.string("id")!!, it.number("x").toFloat(), it.number("y").toFloat()) }
@@ -309,14 +305,14 @@ class ClientRulesTest {
             }
         },
         "photoRoutePoint" to { input ->
-            val point = photoTrack(input).pointAt(input.number("fraction"))
+            val point = photoRoute(input).pointAt(input.number("fraction"))
             buildJsonObject { put("lon", point.lon); put("lat", point.lat); put("t", point.t) }
         },
-        "photoRouteFraction" to { input -> JsonPrimitive(photoTrack(input).fractionAt(input["t"]!!.jsonPrimitive.long)) },
+        "photoRouteFraction" to { input -> JsonPrimitive(photoRoute(input).fractionAt(input["t"]!!.jsonPrimitive.long)) },
         "photoRouteStart" to { input ->
             val placed = input["placed"]!!.jsonObject.mapValues { (it.value as? JsonPrimitive)?.takeIf { v -> v !is JsonNull }?.double }
             val anchors = input["anchors"]!!.jsonObject.mapValues { anchor(it.value) }
-            JsonPrimitive(photoTrack(input).startFraction(anchor(input["anchor"]), placed, anchors))
+            JsonPrimitive(photoRoute(input).startFraction(anchor(input["anchor"]), placed, anchors))
         },
         "photoFit" to { input -> sizeJson(PhotoZoom.fitSize(size(input["image"]), size(input["stage"]))) },
         "photoZoom" to { input ->
@@ -337,14 +333,14 @@ class ClientRulesTest {
             }
             buildJsonObject { put("key", key); put("args", args) }
         },
-        "editRouteFold" to { input -> editJson(EditTrackOps.fold(edit(input["base"]), ops(input))) },
-        "editRouteApply" to { input -> buildJsonArray { EditTrackOps.apply(points(input["points"]), edit(input["edit"])!!).forEach { add(pointJson(it)) } } },
-        "editRouteChop" to { input -> opJson(EditTrackOps.chop(points(input["visible"]), input.int("lo"), input.int("hi"))) },
-        "editRouteCut" to { input -> opJson(EditTrackOps.cut(points(input["visible"]), input.int("lo"), input.int("hi"))) },
-        "editRouteSplitIndex" to { input -> JsonPrimitive(EditTrackOps.splitIndex(points(input["visible"]), input.int("lo"), input.int("hi"))) },
-        "editRouteSplitPoint" to { input -> JsonPrimitive(EditTrackOps.splitPoint(ops(input))) },
-        "editRouteMove" to { input -> opJson(EditTrackOps.move(input["t"]!!.jsonPrimitive.long, input.number("lon"), input.number("lat"))) },
-        "editRouteDistances" to { input -> buildJsonArray { EditTrackOps.cumulativeDistances(points(input["points"])).forEach { add(JsonPrimitive(it)) } } },
+        "editRouteFold" to { input -> editJson(EditRouteOps.fold(edit(input["base"]), ops(input))) },
+        "editRouteApply" to { input -> buildJsonArray { EditRouteOps.apply(points(input["points"]), edit(input["edit"])!!).forEach { add(pointJson(it)) } } },
+        "editRouteChop" to { input -> opJson(EditRouteOps.chop(points(input["visible"]), input.int("lo"), input.int("hi"))) },
+        "editRouteCut" to { input -> opJson(EditRouteOps.cut(points(input["visible"]), input.int("lo"), input.int("hi"))) },
+        "editRouteSplitIndex" to { input -> JsonPrimitive(EditRouteOps.splitIndex(points(input["visible"]), input.int("lo"), input.int("hi"))) },
+        "editRouteSplitPoint" to { input -> JsonPrimitive(EditRouteOps.splitPoint(ops(input))) },
+        "editRouteMove" to { input -> opJson(EditRouteOps.move(input["t"]!!.jsonPrimitive.long, input.number("lon"), input.number("lat"))) },
+        "editRouteDistances" to { input -> buildJsonArray { EditRouteOps.cumulativeDistances(points(input["points"])).forEach { add(JsonPrimitive(it)) } } },
         "layerInsertion" to { input ->
             MapLayersDoc.insertionPoint(input.strings("current"), input.strings("order"), input.string("id")!!, input.strings("own").toSet(), input.string("fallback"))
                 ?.let(::JsonPrimitive) ?: JsonNull
@@ -364,16 +360,16 @@ class ClientRulesTest {
                 WebRoute.Route.Close -> JsonPrimitive("close")
                 WebRoute.Route.Onboarded -> JsonPrimitive("onboarded")
                 is WebRoute.Route.ViewOnMap -> buildJsonObject {
-                    put("viewOnMap", buildJsonObject { put("track", route.activity); put("day", route.day) })
+                    put("viewOnMap", buildJsonObject { put("track", route.track); put("day", route.day) })
                 }
             }
         },
         "layerLift" to { input -> JsonPrimitive(MapLayersDoc.needsLift(input.strings("current"), input.string("id")!!, input.strings("own").toSet())) },
         "panelState" to { input ->
-            val all = input["tracks"]!!.jsonArray.map { it.jsonObject }.map { facetActivity(it).copy(id = it.string("id")!!) }
+            val all = input["tracks"]!!.jsonArray.map { it.jsonObject }.map { facetTrack(it).copy(id = it.string("id")!!) }
             val state = input["state"]!!.jsonObject
             val panel = PanelState()
-            panel.setActivities(all)
+            panel.setTracks(all)
             // Hidden first: hiding goes through the toolbar's target, the checked group.
             state.strings("hidden").forEach { panel.toggleChecked(it) }
             panel.toggleTargetVisibility()
@@ -393,7 +389,7 @@ class ClientRulesTest {
                 "typeToggled" -> panel.toggleType(event.string("activityType")!!)
                 "distanceSet" -> panel.setDistanceFilter(distance(event["filter"]))
                 "filtersReset" -> panel.resetFilters()
-                "listLoaded" -> event.strings("ids").toSet().let { ids -> panel.setActivities(all.filter { it.id in ids }) }
+                "listLoaded" -> event.strings("ids").toSet().let { ids -> panel.setTracks(all.filter { it.id in ids }) }
                 else -> error("no Android event $type")
             }
             buildJsonObject {
@@ -460,12 +456,12 @@ class ClientRulesTest {
             val state = input["state"]!!.jsonObject
             val panel = PanelState()
             val session = MapSession(panel)
-            // The Story first: opening one starts the selection set up below over.
-            state.string("tripId")?.let { session.enterStory(it); session.consumeFly() }
+            // The Trip first: opening one starts the selection set up below over.
+            state.string("tripId")?.let { session.enterTrip(it); session.consumeFly() }
             (state["dates"] as? JsonObject)?.let { session.setDates(dates(it), fly = false) }
             (state["area"] as? JsonArray)?.let { area -> session.areaLoaded(area.map { it.jsonPrimitive.double }) }
             val ids = (state.strings("checked") + state.strings("hidden")).distinct()
-            panel.setActivities(ids.map(::activity))
+            panel.setTracks(ids.map(::track))
             // Hidden first: hiding goes through the toolbar's target, the checked group.
             state.strings("hidden").forEach { panel.toggleChecked(it) }
             panel.toggleTargetVisibility()
@@ -477,14 +473,14 @@ class ClientRulesTest {
                 "datesSet" -> session.setDates(dates(event["dates"]!!.jsonObject), event.bool("fly"))
                 "areaLoaded" -> session.areaLoaded(event["area"]!!.jsonArray.map { it.jsonPrimitive.double })
                 "dayViewed" -> session.viewDay(event.string("day")!!)
-                "tripEntered" -> session.enterStory(event.string("id")!!)
-                "tripExited" -> session.exitStory()
+                "tripEntered" -> session.enterTrip(event.string("id")!!)
+                "tripExited" -> session.exitTrip()
                 else -> error("no Android event $type")
             }
             buildJsonObject {
                 put("dates", datesJson(session.dates))
                 put("area", session.area?.let { area -> buildJsonArray { area.forEach { add(JsonPrimitive(it)) } } } ?: JsonNull)
-                session.storyId?.let { put("tripId", it) }
+                session.tripId?.let { put("tripId", it) }
                 put("checked", ids(panel.checked))
                 put("hidden", ids(panel.hidden))
                 put("excludedTypes", ids(panel.excludedTypes))
@@ -516,15 +512,15 @@ class ClientRulesTest {
 
     private fun distanceJson(range: DistanceRange?): JsonElement = range?.let { buildJsonObject { put("min", it.min); put("max", it.max) } } ?: JsonNull
 
-    private fun activities(json: JsonElement?) = json!!.jsonArray.map { facetActivity(it.jsonObject) }
+    private fun tracks(json: JsonElement?) = json!!.jsonArray.map { facetTrack(it.jsonObject) }
 
-    private fun facetActivity(json: JsonObject) = activity("a").copy(
+    private fun facetTrack(json: JsonObject) = track("a").copy(
         activityType = json.string("activityType")!!,
         distanceMeters = (json["distanceMeters"] as? JsonPrimitive)?.takeIf { it !is JsonNull }?.double,
         isPrivate = json["private"]?.jsonPrimitive?.booleanOrNull ?: false,
     )
 
-    private fun photoTrack(input: JsonObject) = PhotoTrack(
+    private fun photoRoute(input: JsonObject) = PhotoRoute(
         input["points"]!!.jsonArray.map { it.jsonObject }.map { TimedPoint(it.number("lon"), it.number("lat"), it["t"]!!.jsonPrimitive.long) },
     )
 
@@ -540,12 +536,12 @@ class ClientRulesTest {
 
     private fun viewJson(view: PhotoZoom.View) = buildJsonObject { put("scale", view.scale); put("x", view.x); put("y", view.y) }
 
-    private fun points(json: JsonElement?): List<TrackPoint> = json!!.jsonArray.map { point ->
+    private fun points(json: JsonElement?): List<RoutePoint> = json!!.jsonArray.map { point ->
         val (lon, lat, t) = point.jsonArray.map { it.jsonPrimitive }
-        TrackPoint(lon.double, lat.double, t.long)
+        RoutePoint(lon.double, lat.double, t.long)
     }
 
-    private fun pointJson(point: TrackPoint) = buildJsonArray {
+    private fun pointJson(point: RoutePoint) = buildJsonArray {
         add(JsonPrimitive(point.lon))
         add(JsonPrimitive(point.lat))
         add(JsonPrimitive(point.t))
@@ -558,8 +554,8 @@ class ClientRulesTest {
         add(JsonPrimitive(span.second))
     }
 
-    private fun edit(json: JsonElement?): TrackEdit? = (json as? JsonObject)?.let { edit ->
-        TrackEdit(
+    private fun edit(json: JsonElement?): RouteEdit? = (json as? JsonObject)?.let { edit ->
+        RouteEdit(
             keep = (edit["keep"] as? JsonArray)?.let(::span),
             remove = (edit["remove"] as? JsonArray)?.map(::span).orEmpty(),
             drop = (edit["drop"] as? JsonArray)?.map { it.jsonPrimitive.long }.orEmpty(),
@@ -568,7 +564,7 @@ class ClientRulesTest {
     }
 
     /** The edit with its empty fields left out, as the web folds it. */
-    private fun editJson(edit: TrackEdit) = buildJsonObject {
+    private fun editJson(edit: RouteEdit) = buildJsonObject {
         edit.keep?.let { put("keep", spanJson(it)) }
         if (edit.remove.isNotEmpty()) put("remove", buildJsonArray { edit.remove.forEach { add(spanJson(it)) } })
         if (edit.drop.isNotEmpty()) put("drop", buildJsonArray { edit.drop.forEach { add(JsonPrimitive(it)) } })
@@ -603,7 +599,7 @@ class ClientRulesTest {
         is EditOp.Split -> buildJsonObject { put("kind", "split"); put("t", op.t) }
     }
 
-    private fun activity(id: String) = Activity(
+    private fun track(id: String) = Track(
         id = id, startedAt = "2026-10-01T08:00:00Z", activityType = "walking", name = null, distanceMeters = 1000.0,
         movingSeconds = 600, description = null, bbox = listOf(0.0, 0.0, 1.0, 1.0), pending = false, edited = false,
     )

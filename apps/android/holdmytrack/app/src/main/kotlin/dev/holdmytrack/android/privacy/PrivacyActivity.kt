@@ -19,7 +19,7 @@ import dev.holdmytrack.android.panel.PrivateLocationEditor
  * Privacy, from the You tab: the account's Private locations (`docs/SPEC.md` FR-7.1), each a
  * row with its circle drawn small ([CirclePreviewView]) that opens the editor on the map
  * ([PrivateLocationEditor], through `MainActivity.editPrivateLocation`), and Add a location on
- * the map, and how many activities they hide entirely (the list's Private rows); then what
+ * the map, and how many tracks they hide entirely (the list's Private rows); then what
  * HoldMyTrack keeps, three facts; then Download your data ([DataExportActivity]) and the privacy
  * policy. The list and the count are read each time the screen shows.
  *
@@ -97,8 +97,8 @@ class PrivacyActivity : AppCompatActivity() {
 
     /** Only a line of context: the screen works without it, so a failure leaves it out. */
     private fun showHidden() {
-        HoldMyTrackApi.hiddenActivityCount { result ->
-            if (isDestroyed) return@hiddenActivityCount
+        HoldMyTrackApi.hiddenTrackCount { result ->
+            if (isDestroyed) return@hiddenTrackCount
             result.onSuccess { count ->
                 hidden.text = if (count == 0) {
                     getString(R.string.private_hidden_none)

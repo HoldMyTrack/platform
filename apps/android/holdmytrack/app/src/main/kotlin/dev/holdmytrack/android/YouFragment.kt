@@ -30,7 +30,7 @@ import java.util.Locale
 
 /**
  * The bottom bar's You tab: the account — avatar, name, email, and "country · timezone · units"
- * — over its all-time numbers and the last weeks of its activity graph, one card whose halves
+ * — over its all-time numbers and the last weeks of its track graph, one card whose halves
  * open Settings and Profile, the web's own pages shown in the app ([WebPageActivity]); then
  * Privacy; this phone's Theme ([AppTheme]) and the account's Language; the web's About, in the
  * app too, and its Help and Contacts, opened in a browser tab; Sign out and Delete account ([AccountDeletion]); and last the app's version, a line to read rather than an action.
@@ -123,11 +123,11 @@ class YouFragment : Fragment(R.layout.fragment_you) {
             }
         }
         val today = LocalDate.now(runCatching { ZoneId.of(Session.timezone) }.getOrDefault(ZoneId.systemDefault()))
-        HoldMyTrackApi.activityDays(EPOCH_DAY, "${today.year}-12-31") { result ->
-            val days = result.getOrNull() ?: return@activityDays
-            if (view == null) return@activityDays
+        HoldMyTrackApi.trackDays(EPOCH_DAY, "${today.year}-12-31") { result ->
+            val days = result.getOrNull() ?: return@trackDays
+            if (view == null) return@trackDays
             val stats = ProfileStats.statsOf(days.days)
-            setStat(R.id.you_stat_activities, R.string.profile_card_activities, PanelFormat.count(resources, stats.count))
+            setStat(R.id.you_stat_tracks, R.string.profile_card_tracks, PanelFormat.count(resources, stats.count))
             setStat(R.id.you_stat_distance, R.string.profile_card_distance, PanelFormat.totalDistance(resources, stats.distanceMeters))
             setStat(R.id.you_stat_active_days, R.string.profile_card_active_days, PanelFormat.count(resources, stats.activeDays))
             setStat(R.id.you_stat_streak, R.string.profile_card_longest_streak, PanelFormat.count(resources, stats.longestStreakDays))

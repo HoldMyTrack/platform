@@ -10,14 +10,14 @@ import org.junit.Test
 class SyncBatcherTest {
 
     /** Adds each (name, points) and returns the requests sent, the leftover last. */
-    private fun requests(items: List<Pair<String, Int>>, maxActivities: Int = 3, maxPoints: Int = 100): List<List<String>> {
-        val batcher = SyncBatcher<String>(maxActivities, maxPoints)
+    private fun requests(items: List<Pair<String, Int>>, maxTracks: Int = 3, maxPoints: Int = 100): List<List<String>> {
+        val batcher = SyncBatcher<String>(maxTracks, maxPoints)
         val sent = items.mapNotNull { (name, points) -> batcher.add(name, points) }
         return sent + listOf(batcher.rest()).filter { it.isNotEmpty() }
     }
 
     @Test
-    fun `a request goes once it holds the most activities`() {
+    fun `a request goes once it holds the most tracks`() {
         assertEquals(listOf(listOf("a", "b", "c"), listOf("d")), requests(listOf("a" to 1, "b" to 1, "c" to 1, "d" to 1)))
     }
 
