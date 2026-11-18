@@ -8,8 +8,8 @@ import UIKit
 /// and layers, added on every style load as capture's guide is, under the basemap's labels. While
 /// the Route tab shows, every other track, the pace bands and the photos step aside.
 extension MapViewController {
-    static let routeEditSource = "track-edit"
-    static let routeEditPoints = "track-edit-points"
+    static let routeEditSource = "route-edit"
+    static let routeEditPoints = "route-edit-points"
 
     /// The editor's drawing, or nil once its tab closes.
     func setRouteEdit(_ shape: RouteEditDrawing.Shape?) {
@@ -61,16 +61,16 @@ extension MapViewController {
         points.circleStrokeWidth = NSExpression(forConstantValue: 1.2)
         points.circleOpacity = NSExpression(mglJSONObject: ["case", ["get", "removed"], 0.5, 1])
         points.circleStrokeOpacity = NSExpression(mglJSONObject: ["case", ["get", "removed"], 0.5, 1])
-        let knobs = MLNCircleStyleLayer(identifier: "track-edit-knobs", source: source)
+        let knobs = MLNCircleStyleLayer(identifier: "route-edit-knobs", source: source)
         knobs.predicate = NSPredicate(format: "role == 'knob'")
         knobs.circleRadius = NSExpression(forConstantValue: 7)
         knobs.circleColor = NSExpression(forConstantValue: accent)
         knobs.circleStrokeColor = NSExpression(forConstantValue: UIColor.white)
         knobs.circleStrokeWidth = NSExpression(forConstantValue: 2.5)
         let below = style.layers.first { $0 is MLNSymbolStyleLayer }
-        for layer in [line("track-edit-preview", "preview", removed, width: 3, opacity: 0.55, dashed: true),
-                      line("track-edit-line", "kept", accent, width: 4, opacity: 0.95),
-                      line("track-edit-second", "second", second, width: 4, opacity: 0.95), points, knobs] as [MLNStyleLayer] {
+        for layer in [line("route-edit-preview", "preview", removed, width: 3, opacity: 0.55, dashed: true),
+                      line("route-edit-line", "kept", accent, width: 4, opacity: 0.95),
+                      line("route-edit-second", "second", second, width: 4, opacity: 0.95), points, knobs] as [MLNStyleLayer] {
             if let below { style.insertLayer(layer, below: below) } else { style.addLayer(layer) }
         }
     }

@@ -38,14 +38,14 @@ object MapOverlays {
     /** The track lines everyone taps: the layers document's `tracks-line`. */
     const val TRACKS_LAYER_ID = "tracks-line"
 
-    /** The selected track's pace bands, the document's `track-bands` group. */
-    const val BAND_LAYER_ID = "track-bands-line"
-    private const val BAND_SOURCE_ID = "track-bands"
+    /** The selected track's pace bands, the document's `route-bands` group. */
+    const val BAND_LAYER_ID = "route-bands-line"
+    private const val BAND_SOURCE_ID = "route-bands"
 
     private const val TRACKS_SOURCE_ID = "tracks"
 
     /** What the tracks and their bands are, as groups to step aside. */
-    private val TRACK_GROUPS = setOf("tracks", "track-bands")
+    private val TRACK_GROUPS = setOf("tracks", "route-bands")
 
     /**
      * Tracks draw from z4 inward (the document's tracks layers start there), and so does

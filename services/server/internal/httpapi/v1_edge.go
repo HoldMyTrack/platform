@@ -25,6 +25,9 @@ type v1Endpoint struct {
 	query    map[string]string // old name → new
 	keys     map[string]string // old JSON key → new, at any depth of the request and the answer
 	form     map[string]string // old multipart field → new
+	// values are string values renamed in the answer, old → new, wherever they stand: the
+	// layers document's ids, which an installed app looks its own source up by.
+	values map[string]string
 	// urls marks an answer carrying a photo's url and thumb_url, given back under /v1 so an
 	// installed app's image cache, keyed by URL, stays valid.
 	urls bool
@@ -35,6 +38,8 @@ var (
 	v1TripKeys     = map[string]string{"stories": "trips", "activity_ids": "track_ids", "activity_type": "track_type"}
 	v1PhotoKeys    = map[string]string{"activity_id": "track_id"}
 	v1TripFilter   = map[string]string{"story": "trip"}
+	// v1BandIDs are the pace bands' group, source and layers in the layers document.
+	v1BandIDs = map[string]string{"track-bands": "route-bands", "track-bands-line": "route-bands-line", "track-bands-arrows": "route-bands-arrows", "track-bands-outline": "route-bands-outline"}
 )
 
 var v1Endpoints = []v1Endpoint{
@@ -64,6 +69,7 @@ var v1Endpoints = []v1Endpoint{
 	{old: "/story-sends/{id}/accept", new: "/trip-sends/{id}/accept"},
 	{old: "/story-sends/{id}", new: "/trip-sends/{id}"},
 	{old: "/sync/activities", new: "/sync/tracks", keys: map[string]string{"activities": "tracks", "activity_type": "track_type"}},
+	{old: "/map/layers", new: "/map/layers", keys: v1BandIDs, values: v1BandIDs},
 	{old: "/uploads", new: "/uploads", keys: v1PhotoKeys},
 	{old: "/uploads/active", new: "/uploads/active", keys: v1PhotoKeys},
 	{old: "/uploads/{id}", new: "/uploads/{id}", keys: v1PhotoKeys},
@@ -170,7 +176,7 @@ func (s *Server) serveV1(w http.ResponseWriter, r *http.Request) {
 		renameV1MultipartFields(r2, e.form)
 		defer r2.Body.Close()
 	}
-	vw := &v1Writer{ResponseWriter: w, keys: invert(e.keys), urls: e.urls}
+	vw := &v1Writer{ResponseWriter: w, keys: invert(e.keys), values: invert(e.values), urls: e.urls}
 	s.serve(vw, r2)
 	vw.finish()
 }
@@ -232,6 +238,7 @@ func renameV1Query(q map[string][]string, names map[string]string) string {
 // v1Rename is what renameV1JSON renames.
 type v1Rename struct {
 	keys      map[string]string // object keys, at any depth
+	values    map[string]string // string values, at any depth
 	errorCode bool              // the top-level error code, by v1ErrorCodes
 	urls      bool              // url and thumb_url values, from apiPrefix to v1Prefix
 }
@@ -300,6 +307,10 @@ func renameKeys(v any, how v1Rename) (any, bool) {
 				return v, false
 			}
 		}
+	case string:
+		if n, ok := how.values[t]; ok {
+			return n, true
+		}
 	}
 	return v, true
 }
@@ -357,6 +368,7 @@ func copyV1Parts(in *multipart.Reader, out *multipart.Writer, names map[string]s
 type v1Writer struct {
 	http.ResponseWriter
 	keys    map[string]string // new key → old
+	values  map[string]string // new value → old
 	urls    bool
 	status  int
 	decided bool
@@ -404,7 +416,7 @@ func (w *v1Writer) finish() {
 	if w.buf == nil {
 		return
 	}
-	body := renameV1JSON(w.buf.Bytes(), v1Rename{keys: w.keys, errorCode: w.status >= 400, urls: w.urls})
+	body := renameV1JSON(w.buf.Bytes(), v1Rename{keys: w.keys, values: w.values, errorCode: w.status >= 400, urls: w.urls})
 	w.Header().Del("Content-Length")
 	w.ResponseWriter.WriteHeader(w.status)
 	_, _ = w.ResponseWriter.Write(body)

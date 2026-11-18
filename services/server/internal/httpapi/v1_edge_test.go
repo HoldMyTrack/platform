@@ -90,6 +90,11 @@ func TestRenameV1JSON(t *testing.T) {
 			t.Errorf("%s came out as %s", body, got)
 		}
 	}
+	ids := string(renameV1JSON([]byte(`{"id":"route-bands","sources":{"route-bands":{}},"layers":[{"id":"route-bands-line","source":"route-bands","note":"route-bands x"}]}`),
+		v1Rename{keys: map[string]string{"route-bands": "track-bands"}, values: map[string]string{"route-bands": "track-bands", "route-bands-line": "track-bands-line"}}))
+	if strings.Contains(ids, `"route-bands"`) || strings.Contains(ids, `"route-bands-line"`) || !strings.Contains(ids, `"route-bands x"`) {
+		t.Errorf("layer ids: %s", ids)
+	}
 	urlOut := string(renameV1JSON([]byte(`{"url":"/v2/photos/p","thumb_url":"/v2/photos/p/thumb","caption":"/v2/x"}`), v1Rename{urls: true}))
 	if !strings.Contains(urlOut, `"url":"/v1/photos/p"`) || !strings.Contains(urlOut, `"thumb_url":"/v1/photos/p/thumb"`) || !strings.Contains(urlOut, `"caption":"/v2/x"`) {
 		t.Errorf("photo URLs: %s", urlOut)
@@ -261,6 +266,13 @@ func TestV1EdgeServesTheOldNames(t *testing.T) {
 		t.Errorf("POST /v1/sync/activities: %+v", sync)
 	}
 
+	// Android builds on /v1 fill the pace bands' source by its old id.
+	if body := d.do(me, "GET", "/v1/map/layers?flavor=light", nil).Body.String(); !strings.Contains(body, `"track-bands-line"`) || strings.Contains(body, "route-bands") {
+		t.Errorf("GET /v1/map/layers still names route-bands, or lost track-bands")
+	}
+	if body := d.do(me, "GET", "/v2/map/layers?flavor=light", nil).Body.String(); !strings.Contains(body, `"route-bands-line"`) {
+		t.Errorf("GET /v2/map/layers has no route-bands")
+	}
 	if rec := d.do(me, "GET", "/v1/tracks", nil); rec.Code != http.StatusNotFound {
 		t.Errorf("GET /v1/tracks: %d, want 404", rec.Code)
 	}

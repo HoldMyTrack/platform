@@ -2,12 +2,12 @@ import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
 import type { TrackRouteMetrics } from '../api.ts';
 
 /**
- * Fills the layers document's `track-bands` source (bandsGroup.ts) with the focused track's
+ * Fills the layers document's `route-bands` source (bandsGroup.ts) with the focused track's
  * pace bands: one line per run the server worked out (`GET /v2/tracks/{id}/route-metrics`), each
  * with its `band` index for the layer to color. Neighbouring runs share their boundary point, so
  * the pieces join without a gap. Then the whole route, for the group's direction arrows.
  */
-const BAND_SOURCE_ID = 'track-bands';
+const BAND_SOURCE_ID = 'route-bands';
 
 const EMPTY = { type: 'FeatureCollection' as const, features: [] };
 

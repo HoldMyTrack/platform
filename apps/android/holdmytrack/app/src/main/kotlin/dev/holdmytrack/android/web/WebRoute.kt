@@ -28,7 +28,7 @@ object WebRoute {
     }
 
     /**
-     * The route for a link of [scheme], [authority] and [path], with the map's [activity] and [day]
+     * The route for a link of [scheme], [authority] and [path], with the map's [track] and [day]
      * query parameters, against the API's [baseScheme] and [baseAuthority], on the screen showing
      * [page]. [leaving] is whether an earlier navigation already sent the user elsewhere.
      */

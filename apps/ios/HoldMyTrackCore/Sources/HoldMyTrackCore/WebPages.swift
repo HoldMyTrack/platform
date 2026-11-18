@@ -35,13 +35,13 @@ public enum WebPageSession {
     }
 
     /// The shared webPageRoute rule over a URL: its scheme, host and port, path, and the map's
-    /// `activity` and `day` parameters, against the API's base.
+    /// `track` and `day` parameters, against the API's base.
     public static func route(_ url: URL, base: URL, page: SitePage, leaving: Bool, onboarding: Bool) -> WebRoute {
         let query = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []
         func param(_ name: String) -> String? { query.first { $0.name == name }?.value }
         return WebRoute.of(
             scheme: url.scheme?.lowercased(), authority: authority(url), path: URLComponents(url: url, resolvingAgainstBaseURL: false)?.path,
-            track: param("activity"), day: param("day"),
+            track: param("track"), day: param("day"),
             baseScheme: base.scheme?.lowercased(), baseAuthority: authority(base), page: page.path, leaving: leaving, onboarding: onboarding
         )
     }

@@ -25,9 +25,9 @@ function AuthenticatedApp() {
  *  already gone. */
 const openPrivateLocations = takeFlagParam('private-locations');
 
-/** `?activity=<id>&day=<YYYY-MM-DD>` is the map arriving on one track — the /sync page's
- *  "View on map" (`SPEC.md` FR-3.7), which works out the track's day on the server. Taken
- *  once and stripped, like `?private-locations`, so a refresh doesn't set Dates to its day again. */
+/** `?track=<id>&day=<YYYY-MM-DD>` is the map arriving on one track — the /sync page's
+ *  "View on map" (`SPEC.md` FR-3.7), which works out the track's day on the server. Its
+ *  `activity`, the same id for installed apps that read that name, goes too. Taken once and stripped, like `?private-locations`, so a refresh doesn't set Dates to its day again. */
 const openTrack = takeTrackParam();
 
 /** `?tour` is the map arriving to start the tour: the header's Take a tour from any other page (`SPEC.md` FR-4.14). Taken once and stripped, so a refresh doesn't start it again. */
@@ -35,9 +35,10 @@ const openTour = takeFlagParam('tour');
 
 function takeTrackParam(): { id: string; day: string } | null {
   const params = new URLSearchParams(window.location.search);
-  const id = params.get('activity');
+  const id = params.get('track');
   const day = params.get('day');
   if (id === null) return null;
+  params.delete('track');
   params.delete('activity');
   params.delete('day');
   const rest = params.toString();

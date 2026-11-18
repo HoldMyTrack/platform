@@ -128,7 +128,8 @@ func (s *Server) buildSync(ctx context.Context, l *i18n.Localizer, acct *pageAcc
 				row.Detail += " · " + web.FormatDistance(l, *distance, imperial)
 			}
 			if trackID != nil {
-				row.MapHref = "/?" + url.Values{"activity": {*trackID}, "day": {day}}.Encode()
+				// activity is the same id for Android builds that read that name.
+				row.MapHref = "/?" + url.Values{"track": {*trackID}, "activity": {*trackID}, "day": {day}}.Encode()
 			}
 		}
 		view.Rows = append(view.Rows, row)

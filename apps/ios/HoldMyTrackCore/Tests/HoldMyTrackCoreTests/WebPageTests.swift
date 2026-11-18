@@ -26,7 +26,7 @@ struct WebPageTests {
         #expect(route("http://localhost:8081/sync?page=2") == .stay)
         #expect(route("http://LOCALHOST:8081/sync") == .stay)
         #expect(route("http://localhost:8080/sync") == .outside)
-        #expect(route("http://localhost:8081/?activity=a1&day=2026-10-01") == .viewOnMap(track: "a1", day: "2026-10-01"))
+        #expect(route("http://localhost:8081/?track=a1&day=2026-10-01") == .viewOnMap(track: "a1", day: "2026-10-01"))
         #expect(route("http://localhost:8081", .settings, onboarding: true) == .onboarded)
         #expect(route("mailto:hello@holdmytrack.com") == .outside)
         #expect(route("http://localhost:8081/signin") == .close)

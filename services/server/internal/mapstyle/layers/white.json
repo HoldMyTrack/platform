@@ -1,5 +1,5 @@
 {
-  "styleBuild": "2205345033fc",
+  "styleBuild": "0653b99ed804",
   "flavor": "white",
   "tileVersion": "__HOLDMYTRACK_TILE_VERSION__",
   "tiers": [
@@ -140,13 +140,13 @@
           "tracks-outline": {
             "visibility": "none"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "visibility": "visible"
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "visibility": "visible"
           },
-          "track-bands-outline": {
+          "route-bands-outline": {
             "visibility": "none"
           }
         },
@@ -551,7 +551,7 @@
           "tracks-arrows": {
             "text-color": "#ffffff"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "line-color": [
               "match",
               [
@@ -572,7 +572,7 @@
             ],
             "line-opacity": 0.95
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "text-color": "#ffffff"
           },
           "spots-in-area-icons": {
@@ -645,13 +645,13 @@
           "tracks-outline": {
             "visibility": "none"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "visibility": "none"
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "visibility": "none"
           },
-          "track-bands-outline": {
+          "route-bands-outline": {
             "visibility": "none"
           }
         },
@@ -1056,7 +1056,7 @@
           "tracks-arrows": {
             "text-color": "#ffffff"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "line-color": [
               "match",
               [
@@ -1077,7 +1077,7 @@
             ],
             "line-opacity": 0.95
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "text-color": "#ffffff"
           },
           "spots-in-area-icons": {
@@ -1150,13 +1150,13 @@
           "tracks-outline": {
             "visibility": "none"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "visibility": "visible"
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "visibility": "visible"
           },
-          "track-bands-outline": {
+          "route-bands-outline": {
             "visibility": "none"
           }
         },
@@ -1561,7 +1561,7 @@
           "tracks-arrows": {
             "text-color": "#ffffff"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "line-color": [
               "match",
               [
@@ -1582,7 +1582,7 @@
             ],
             "line-opacity": 0.95
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "text-color": "#ffffff"
           },
           "spots-in-area-icons": {
@@ -1657,13 +1657,13 @@
           "tracks-outline": {
             "visibility": "visible"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "visibility": "visible"
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "visibility": "visible"
           },
-          "track-bands-outline": {
+          "route-bands-outline": {
             "visibility": "visible"
           }
         },
@@ -2068,7 +2068,7 @@
           "tracks-arrows": {
             "text-color": "#14140e"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "line-color": [
               "match",
               [
@@ -2089,7 +2089,7 @@
             ],
             "line-opacity": 1
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "text-color": "#14140e"
           },
           "spots-in-area-icons": {
@@ -2162,13 +2162,13 @@
           "tracks-outline": {
             "visibility": "none"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "visibility": "none"
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "visibility": "none"
           },
-          "track-bands-outline": {
+          "route-bands-outline": {
             "visibility": "none"
           }
         },
@@ -2573,7 +2573,7 @@
           "tracks-arrows": {
             "text-color": "#14140e"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "line-color": [
               "match",
               [
@@ -2594,7 +2594,7 @@
             ],
             "line-opacity": 1
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "text-color": "#14140e"
           },
           "spots-in-area-icons": {
@@ -2667,13 +2667,13 @@
           "tracks-outline": {
             "visibility": "visible"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "visibility": "visible"
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "visibility": "visible"
           },
-          "track-bands-outline": {
+          "route-bands-outline": {
             "visibility": "visible"
           }
         },
@@ -3078,7 +3078,7 @@
           "tracks-arrows": {
             "text-color": "#14140e"
           },
-          "track-bands-line": {
+          "route-bands-line": {
             "line-color": [
               "match",
               [
@@ -3099,7 +3099,7 @@
             ],
             "line-opacity": 1
           },
-          "track-bands-arrows": {
+          "route-bands-arrows": {
             "text-color": "#14140e"
           },
           "spots-in-area-icons": {
@@ -4465,18 +4465,18 @@
       ]
     },
     {
-      "id": "track-bands",
+      "id": "route-bands",
       "placement": "beneath-labels",
       "sources": {
-        "track-bands": {
+        "route-bands": {
           "type": "geojson"
         }
       },
       "layers": [
         {
-          "id": "track-bands-outline",
+          "id": "route-bands-outline",
           "type": "line",
-          "source": "track-bands",
+          "source": "route-bands",
           "filter": [
             "has",
             "route"
@@ -4492,9 +4492,9 @@
           }
         },
         {
-          "id": "track-bands-line",
+          "id": "route-bands-line",
           "type": "line",
-          "source": "track-bands",
+          "source": "route-bands",
           "filter": [
             "has",
             "band"
@@ -4530,9 +4530,9 @@
           }
         },
         {
-          "id": "track-bands-arrows",
+          "id": "route-bands-arrows",
           "type": "symbol",
-          "source": "track-bands",
+          "source": "route-bands",
           "filter": [
             "has",
             "route"

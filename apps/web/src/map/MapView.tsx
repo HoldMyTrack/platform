@@ -61,7 +61,7 @@ import { lazyChunk } from '../lazyChunk.ts';
 interface MapViewProps {
   /** Mount with the Tracks panel on its Privacy tab: `/?private-locations` (App.tsx). */
   initialPrivateLocationsOpen?: boolean;
-  /** Mount on one track, its day selected and it focused: `/?activity=&day=`, the /sync page's "View on map". */
+  /** Mount on one track, its day selected and it focused: `/?track=&day=`, the /sync page's "View on map". */
   initialTrack?: { id: string; day: string } | null;
   /** Start the tour once the map is ready: `/?tour`, the header's Take a tour from another page. */
   initialTour?: boolean;

@@ -122,7 +122,7 @@ struct PanelTests {
         let json = try #require(JSONValue.parse(Data(#"""
         {"views": {}, "groups": [
           {"id": "tracks", "layers": [{"id": "tracks-line", "type": "line"}, {"id": "tracks-arrows", "type": "symbol"}]},
-          {"id": "track-bands", "layers": [{"id": "track-bands-line", "type": "line"}]}
+          {"id": "route-bands", "layers": [{"id": "route-bands-line", "type": "line"}]}
         ]}
         """#.utf8)))
         let document = try #require(LayersDocument(json))
