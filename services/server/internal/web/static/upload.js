@@ -82,6 +82,7 @@
   }
 
   function render() {
+    guardUnload();
     list.replaceChildren();
     transfers.forEach(function (t) {
       list.appendChild(row(t.name, t.sending ? fill(strings.uploading, { percent: Math.round(t.progress * 100) }) : strings.queued));
@@ -135,17 +136,20 @@
     return a.title + '|' + a.submitted_at;
   }
 
-  // The poll and each landed upload both read the list, and can overlap: only the newest read
-  // applies, or an older answer would put a finished import back for one poll and announce
-  // `hmt:imports-changed` again when it left once more.
+  // The poll and each landed upload both read the list, and can overlap: an answer older than the
+  // last one applied is dropped, or it would put a finished import back for one poll and announce
+  // `hmt:imports-changed` again when it left once more. One overtaken by a read that then fails
+  // still applies.
   var reads = 0;
+  var applied = 0;
 
   function refresh() {
     var read = ++reads;
     return fetch('/v1/uploads/active', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
       .then(function (res) { return res.ok ? res.json() : null; })
       .then(function (body) {
-        if (!body || read !== reads) return;
+        if (!body || read < applied) return;
+        applied = read;
         var before = {};
         active.forEach(function (a) { before[keyOf(a)] = a.done; });
         var now = {};
@@ -257,6 +261,7 @@
         render();
         return send(t.file, t).then(function () {
           transfers = transfers.filter(function (x) { return x.id !== t.id; });
+          guardUnload();
           return refresh().then(changed);
         });
       });
@@ -264,12 +269,21 @@
   }
 
   // Uploads live in this page's memory: leaving it (Sync, the logo, a language) drops the rest,
-  // so the browser asks first while any remain, as the Edit window does for unsaved photos.
-  window.addEventListener('beforeunload', function (event) {
-    if (transfers.length === 0) return;
+  // so the browser asks first while any remain, as the Edit window does for unsaved photos. Only
+  // while any remain (render keeps it): Firefox keeps a page with the listener out of its
+  // back/forward cache.
+  function onBeforeUnload(event) {
     event.preventDefault();
     event.returnValue = '';
-  });
+  }
+  var guarding = false;
+  function guardUnload() {
+    var needed = transfers.length > 0;
+    if (needed === guarding) return;
+    guarding = needed;
+    if (needed) window.addEventListener('beforeunload', onBeforeUnload);
+    else window.removeEventListener('beforeunload', onBeforeUnload);
+  }
 
   // A button, not a label around the hidden input, so the keyboard reaches it.
   menu.querySelector('.upload-menu__choose').addEventListener('click', function () {
