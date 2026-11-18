@@ -1,0 +1,16 @@
+package dev.holdmytrack.android.panel
+
+import java.time.ZoneId
+
+/**
+ * The zone a track's times are shown in (`docs/IMPLEMENTATION.md` §4.30): the one it was
+ * recorded in, else the account's, else the phone's. A zone the phone's tz data doesn't know yet
+ * falls through to the next rather than failing to format. The web's `activityTimeZone`; both run
+ * `testdata/client-rules/track-zone.json`.
+ */
+object TrackZone {
+    fun of(own: String?, account: String?, phone: ZoneId = ZoneId.systemDefault()): ZoneId =
+        sequenceOf(own, account).firstNotNullOfOrNull { id ->
+            id?.takeIf { it.isNotEmpty() }?.let { runCatching { ZoneId.of(it) }.getOrNull() }
+        } ?: phone
+}

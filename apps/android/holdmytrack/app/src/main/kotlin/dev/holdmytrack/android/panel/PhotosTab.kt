@@ -22,7 +22,7 @@ import com.google.android.material.textfield.TextInputEditText
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.PhotoMarkerItem
 import dev.holdmytrack.android.map.PhotoMarkerOverlay
-import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Photo
 import dev.holdmytrack.android.net.PhotoNeedsPlaceException
@@ -31,7 +31,7 @@ import dev.holdmytrack.android.photos.NewPhoto
 import dev.holdmytrack.android.photos.PhotoDraft
 import dev.holdmytrack.android.photos.PhotoImages
 import dev.holdmytrack.android.photos.PhotoPrep
-import dev.holdmytrack.android.photos.PhotoTrack
+import dev.holdmytrack.android.photos.PhotoRoute
 import dev.holdmytrack.android.photos.PlaceAnchor
 import dev.holdmytrack.android.photos.PreparedPhoto
 import dev.holdmytrack.android.photos.TimedPoint
@@ -43,7 +43,7 @@ import java.util.concurrent.Executors
 import kotlin.math.roundToInt
 
 /**
- * The Edit window's Photos tab (`apps/android/docs/SPEC.md` FR-2.10), the web's `PhotosTab.tsx`: the activity's
+ * The Edit window's Photos tab (`apps/android/docs/SPEC.md` FR-2.10), the web's `PhotosTab.tsx`: the track's
  * photos as a list, each with Edit and Delete, and Add photos. Nothing here is written until the
  * window's Save ([save]); Cancel throws it all away. The tab edits [draft] ([PhotoDraft]), and the
  * list and the map ([onOverlay]) show the photos as Save would leave them.
@@ -52,7 +52,7 @@ import kotlin.math.roundToInt
  * the server where it goes (`POST /v1/photos/place`, which stores nothing); one it can't place
  * waits at the top of the list with a slider, starting just after the photo picked before it,
  * until the user puts it somewhere (Place here) or removes it. Edit opens the same slider on a
- * photo, with its caption. The slider walks the track as drawn ([PhotoTrack]) and the photo
+ * photo, with its caption. The slider walks the track as drawn ([PhotoRoute]) and the photo
  * moves along the map with it; a place is kept as the moment at that point.
  */
 class PhotosTab(
@@ -83,11 +83,11 @@ class PhotosTab(
     private val waitingPlace: MaterialButton = root.findViewById(R.id.photos_waiting_place)
     private val waitingSlider = PlaceSlider(root.findViewById(R.id.photos_waiting_slider))
 
-    private var activity: Activity? = null
+    private var track: Track? = null
     private var photos: List<Photo> = emptyList()
     private var photosLoaded = false
     private var photosError: String? = null
-    private var track: PhotoTrack? = null
+    private var route: PhotoRoute? = null
     private var trackError: String? = null
     private var generation = 0
 
@@ -122,7 +122,7 @@ class PhotosTab(
     private var waitingAt: Pair<String, Double>? = null
 
     /** What each waiting photo was picked after, and which were removed rather than placed —
-     *  what a waiting photo's slider starts from ([PhotoTrack.startFraction]). */
+     *  what a waiting photo's slider starts from ([PhotoRoute.startFraction]). */
     private val anchors = HashMap<String, PlaceAnchor?>()
     private val removed = HashSet<String>()
 
@@ -136,7 +136,7 @@ class PhotosTab(
         waitingPlace.setOnClickListener {
             val photo = draft.waiting.firstOrNull() ?: return@setOnClickListener
             val at = waitingAt?.takeIf { it.first == photo.key } ?: return@setOnClickListener
-            val t = track?.pointAt(at.second)?.t ?: return@setOnClickListener
+            val t = route?.pointAt(at.second)?.t ?: return@setOnClickListener
             update(draft.withNew(photo.key) { it.copy(routeAt = t) })
         }
         waitingSlider.onMove = { fraction ->
@@ -151,22 +151,22 @@ class PhotosTab(
      * The tab first opened on [opened]: its track is read for the slider. The session lasts
      * until [close], so switching tabs loses nothing.
      */
-    fun open(opened: Activity) {
-        if (activity?.id == opened.id) {
+    fun open(opened: Track) {
+        if (track?.id == opened.id) {
             render()
             return
         }
-        activity = opened
-        track = null
+        track = opened
+        route = null
         trackError = null
         val gen = generation
         HoldMyTrackApi.trackMetrics(opened.id) { result ->
             if (gen != generation) return@trackMetrics
             result.onSuccess { metrics ->
                 if (metrics.points.isEmpty()) {
-                    trackError = res.getString(R.string.photos_no_track)
+                    trackError = res.getString(R.string.photos_no_route)
                 } else {
-                    track = PhotoTrack(metrics.points.map { TimedPoint(it.lon, it.lat, it.timeS) })
+                    route = PhotoRoute(metrics.points.map { TimedPoint(it.lon, it.lat, it.timeS) })
                 }
             }.onFailure { trackError = it.message?.takeIf { m -> m.isNotBlank() } ?: res.getString(R.string.edit_save_failed) }
             render()
@@ -174,7 +174,7 @@ class PhotosTab(
         render()
     }
 
-    /** The activity's saved photos as the map has them, or why they couldn't be read. */
+    /** The track's saved photos as the map has them, or why they couldn't be read. */
     fun setPhotos(saved: List<Photo>, failure: String?) {
         photos = saved
         photosLoaded = failure == null
@@ -195,14 +195,14 @@ class PhotosTab(
 
     /** The photos the system picker handed back, prepared and placed one at a time. */
     fun add(uris: List<Uri>) {
-        val opened = activity ?: return
+        val opened = track ?: return
         if (uris.isEmpty() || busy || progress != null) return
         failures.clear()
         val gen = generation
         prepareNext(opened.id, uris, 0, previous = null, gen)
     }
 
-    private fun prepareNext(activityId: String, uris: List<Uri>, index: Int, previous: PlaceAnchor?, gen: Int) {
+    private fun prepareNext(trackId: String, uris: List<Uri>, index: Int, previous: PlaceAnchor?, gen: Int) {
         if (gen != generation) return
         if (index == uris.size) {
             progress = null
@@ -220,22 +220,22 @@ class PhotosTab(
                 if (gen != generation) return@post
                 prepared.onFailure { failure ->
                     fail(name, failure)
-                    prepareNext(activityId, uris, index + 1, previous, gen)
+                    prepareNext(trackId, uris, index + 1, previous, gen)
                 }.onSuccess { photo ->
-                    HoldMyTrackApi.checkPhotoPlace(activityId, photo.exif) { placed ->
+                    HoldMyTrackApi.checkPhotoPlace(trackId, photo.exif) { placed ->
                         if (gen != generation) return@checkPhotoPlace
                         val key = "new-${System.currentTimeMillis()}-$index"
                         placed.onSuccess { at ->
                             addNew(key, name, photo, at.epochSecond)
-                            prepareNext(activityId, uris, index + 1, PlaceAnchor.At(at.epochSecond), gen)
+                            prepareNext(trackId, uris, index + 1, PlaceAnchor.At(at.epochSecond), gen)
                         }.onFailure { failure ->
                             if (failure is PhotoNeedsPlaceException) {
                                 anchors[key] = previous
                                 addNew(key, name, photo, null)
-                                prepareNext(activityId, uris, index + 1, PlaceAnchor.Waiting(key), gen)
+                                prepareNext(trackId, uris, index + 1, PlaceAnchor.Waiting(key), gen)
                             } else {
                                 fail(name, failure)
-                                prepareNext(activityId, uris, index + 1, previous, gen)
+                                prepareNext(trackId, uris, index + 1, previous, gen)
                             }
                         }
                     }
@@ -260,12 +260,12 @@ class PhotosTab(
     }
 
     /**
-     * Writes the draft to [activityId], one request at a time: uploads (each at the place it
+     * Writes the draft to [trackId], one request at a time: uploads (each at the place it
      * settled on), then moves and captions, then deletes. Each write that lands leaves the draft,
      * so a Save retried after a failure picks up where this stopped. [onProgress] counts the
      * writes; [onDone] gets the failure, or null once everything is written.
      */
-    fun save(activityId: String, onProgress: (done: Int, total: Int) -> Unit, onDone: (Throwable?) -> Unit) {
+    fun save(trackId: String, onProgress: (done: Int, total: Int) -> Unit, onDone: (Throwable?) -> Unit) {
         val snapshot = draft
         val total = snapshot.size
         var done = 0
@@ -273,7 +273,7 @@ class PhotosTab(
         for (photo in snapshot.added) {
             steps += { next, fail ->
                 val p = photo.prepared
-                HoldMyTrackApi.uploadPhoto(activityId, p.file, p.thumb, p.exif, Instant.ofEpochSecond(photo.routeAt ?: 0), photo.caption.trim()) { result ->
+                HoldMyTrackApi.uploadPhoto(trackId, p.file, p.thumb, p.exif, Instant.ofEpochSecond(photo.routeAt ?: 0), photo.caption.trim()) { result ->
                     result.onSuccess {
                         photosSaved = true
                         localThumbs.remove(photo.key)
@@ -329,11 +329,11 @@ class PhotosTab(
     /** The window closed: the draft, the track and the overlay go. */
     fun close() {
         generation += 1
-        activity = null
+        track = null
         photos = emptyList()
         photosLoaded = false
         photosError = null
-        track = null
+        route = null
         trackError = null
         draft = PhotoDraft()
         photosSaved = false
@@ -369,8 +369,8 @@ class PhotosTab(
     }
 
     private fun render() {
-        if (activity == null) return
-        val t = track
+        if (track == null) return
+        val t = route
         val waitingList = draft.waiting
         val waiting = waitingList.firstOrNull()
         // A waiting photo's slider starts just after the photo picked before it — worked out
@@ -440,7 +440,7 @@ class PhotosTab(
 
     /** The map shows the photos as Save would leave them, while this tab shows. */
     private fun renderOverlay(rows: List<DraftRow>, waiting: NewPhoto?) {
-        val t = track
+        val t = route
         if (!active || t == null) {
             onOverlay(null)
             return
@@ -462,11 +462,11 @@ class PhotosTab(
         onOverlay(PhotoMarkerOverlay(upserts, draft.deleted.toSet(), waiting?.key ?: editingId))
     }
 
-    /** A moment's time of day in the zone the activity was recorded in. */
+    /** A moment's time of day in the zone the track was recorded in. */
     private fun clock(seconds: Long): String =
         DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT)
             .withLocale(res.configuration.locales[0])
-            .withZone(PanelFormat.zone(activity?.timezone))
+            .withZone(PanelFormat.zone(track?.timezone))
             .format(Instant.ofEpochSecond(seconds))
 
     /** A slider along the track (`include_photo_slider`) and the time at its point. [onMove]
@@ -478,7 +478,7 @@ class PhotosTab(
         var onMove: (Double) -> Unit = {}
 
         init {
-            slider.setLabelFormatter { value -> track?.let { clock(it.pointAt(value / STEPS.toDouble()).t) }.orEmpty() }
+            slider.setLabelFormatter { value -> route?.let { clock(it.pointAt(value / STEPS.toDouble()).t) }.orEmpty() }
             slider.addOnChangeListener { _, value, fromUser -> if (fromUser) onMove(value / STEPS.toDouble()) }
             slider.addOnSliderTouchListener(object : Slider.OnSliderTouchListener {
                 override fun onStartTrackingTouch(slider: Slider) {
@@ -492,11 +492,11 @@ class PhotosTab(
         }
 
         /** At [fraction] of [track], unless the finger has it. */
-        fun bind(track: PhotoTrack?, fraction: Double?, busy: Boolean) {
-            slider.isEnabled = track != null && fraction != null && !busy
+        fun bind(route: PhotoRoute?, fraction: Double?, busy: Boolean) {
+            slider.isEnabled = route != null && fraction != null && !busy
             if (fraction == null) return
             if (!dragging) slider.value = (fraction * STEPS).roundToInt().coerceIn(0, STEPS).toFloat()
-            time.text = track?.let { clock(it.pointAt(fraction).t) }
+            time.text = route?.let { clock(it.pointAt(fraction).t) }
         }
     }
 
@@ -538,7 +538,7 @@ class PhotosTab(
                 render()
             }
             slider.onMove = { fraction ->
-                val t = track?.pointAt(fraction)?.t
+                val t = route?.pointAt(fraction)?.t
                 if (t != null) {
                     when (val r = row) {
                         is DraftRow.New -> update(draft.withNew(r.id) { it.copy(routeAt = t) })
@@ -598,15 +598,15 @@ class PhotosTab(
             edit.isVisible = !deleted
             delete.isVisible = !deleted
             undo.isVisible = deleted
-            edit.isEnabled = track != null && !busy
+            edit.isEnabled = route != null && !busy
             delete.isEnabled = !busy
             undo.isEnabled = !busy
             edit.contentDescription = res.getString(R.string.photos_edit_one, label)
             delete.contentDescription = res.getString(R.string.photos_delete_one, label)
             TooltipCompat.setTooltipText(undo, res.getString(R.string.photos_undo_delete))
-            editor.isVisible = open && track != null
+            editor.isVisible = open && route != null
             if (open) {
-                track?.let { slider.bind(it, it.fractionAt(next.routeAt), busy) }
+                route?.let { slider.bind(it, it.fractionAt(next.routeAt), busy) }
                 if (caption.text?.toString() != next.caption) caption.setText(next.caption)
                 caption.isEnabled = !busy
             }

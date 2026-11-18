@@ -10,7 +10,7 @@ import android.os.Looper
  * the card the window previews and never asks a second time. The web's `useStatsCard`.
  */
 class ExportStatsCard(
-    /** `HoldMyTrackApi.statsCard`, for the request; null when every activity is Pending. */
+    /** `HoldMyTrackApi.statsCard`, for the request; null when every track is Pending. */
     private val fetch: (ExportStatsRules.Request, (Result<Bitmap?>) -> Unit) -> Unit,
     /** The card, [ready] or [error] changed. */
     private val onChange: () -> Unit,

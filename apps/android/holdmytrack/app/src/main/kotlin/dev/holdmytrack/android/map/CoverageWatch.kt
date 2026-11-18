@@ -13,7 +13,7 @@ import dev.holdmytrack.android.net.Session
  *
  * [watch] polls `GET /v1/coverage/status` and calls [onRefetch] once the account has no
  * coverage-changing job left — and also mid-job, whenever the status's `version` moves, since a
- * reprocess renders once with its Pending activities left out and again once they're back. Each
+ * reprocess renders once with its Pending tracks left out and again once they're back. Each
  * call restarts the watch rather than joining a running one: a second delete can enqueue its job
  * just after a read came back "done". Reads go every 2 seconds for about three minutes, then
  * every 10, a failed read included, until one finds nothing left: a big import can keep the
@@ -30,7 +30,7 @@ class CoverageWatch(private val onRendering: (Boolean) -> Unit, private val onRe
     private var shownVersion: Long? = null
 
     /** Runs once the account has no coverage-changing job left — for a change that moves more
-     *  than coverage (a Private location reprocesses whole activities) and has no other way
+     *  than coverage (a Private location reprocesses whole tracks) and has no other way
      *  of telling when the server is done. A later [watch] without one keeps it. */
     private var onDone: (() -> Unit)? = null
 

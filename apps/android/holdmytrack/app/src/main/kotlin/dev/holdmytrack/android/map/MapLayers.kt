@@ -41,7 +41,7 @@ object MapLayers {
         val toggles: Map<String, Boolean> = emptyMap(),
         /** By var name, the value bound in place of the document's default. */
         val vars: Map<String, JsonElement> = emptyMap(),
-        /** Groups the app steps aside, drawn hidden, by who hides them (the track editor hides the
+        /** Groups the app steps aside, drawn hidden, by who hides them (the route editor hides the
          *  tracks): each caller sets only its own, and a group hidden by any is hidden. */
         val hiddenGroups: Map<String, Set<String>> = emptyMap(),
         /** By source id, the app's own query appended to its tiles (the tracks' range). */

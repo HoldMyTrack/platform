@@ -22,7 +22,7 @@ import java.util.Locale
 
 /**
  * The Dates filter's From and To (`docs/SPEC.md` FR-5.12): each its day or the web's hint, a tap
- * that picks it in a calendar bounded by the first activity and today, which applies at once, as
+ * that picks it in a calendar bounded by the first track and today, which applies at once, as
  * the web's does, and ✕ while it's set; Clear dates clears both ([onClear]). What a change does
  * is [DateFilter.setting]'s, reported through [onChange].
  */
@@ -71,7 +71,7 @@ class DatesDialog(
         val view = content ?: return
         val res = view.resources
         view.findViewById<TextView>(R.id.dates_after_value).text =
-            next.after?.let { short(it, today) } ?: earliest?.let { res.getString(R.string.dates_first_activity, short(it, today)) }.orEmpty()
+            next.after?.let { short(it, today) } ?: earliest?.let { res.getString(R.string.dates_first_track, short(it, today)) }.orEmpty()
         view.findViewById<TextView>(R.id.dates_before_value).text = next.before?.let { short(it, today) } ?: res.getString(R.string.dates_today)
         view.findViewById<View>(R.id.dates_after_clear).apply {
             isVisible = next.after != null

@@ -14,7 +14,7 @@ class PhotoDraftTest {
 
     private fun saved(id: String, routeAt: Long, caption: String? = null) = Photo(
         id = id,
-        activityId = "a1",
+        trackId = "a1",
         takenAt = null,
         routeAt = Instant.ofEpochSecond(routeAt),
         lon = 0.0,

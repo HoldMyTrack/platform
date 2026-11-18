@@ -36,7 +36,7 @@ import kotlin.math.roundToInt
  * along the bottom: Name, Radius, Delete for a saved one, Cancel and Save. A new one is a 200 m
  * circle at the map's centre, flying in first when the map is too far out to place one
  * sensibly; moving it is dragging its handle, and another circle tapped on the map opens that
- * one instead. Saving or deleting one reprocesses the activities it touches ([onChanged]).
+ * one instead. Saving or deleting one reprocesses the tracks it touches ([onChanged]).
  *
  * The map is this editor's from [start] to [stop], which clears the circles and throws an
  * unsaved draft away; the editor closing ([onEditorClose]) is the end of it. The demo account

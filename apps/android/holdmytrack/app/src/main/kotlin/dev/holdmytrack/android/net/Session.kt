@@ -98,7 +98,7 @@ object Session {
     val imperial: Boolean get() = prefs.getBoolean(KEY_IMPERIAL, false)
 
     /** The account's Timezone (an IANA name), which decides which day is today and stands in
-     *  for an activity's own zone where that isn't known (`docs/IMPLEMENTATION.md` §4.30).
+     *  for a track's own zone where that isn't known (`docs/IMPLEMENTATION.md` §4.30).
      *  Empty until the first profile that carries it. */
     val timezone: String get() = prefs.getString(KEY_TIMEZONE, "").orEmpty()
 

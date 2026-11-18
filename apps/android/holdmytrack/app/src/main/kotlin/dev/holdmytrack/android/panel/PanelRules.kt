@@ -20,6 +20,6 @@ object PanelRules {
         if (target.any { it in hidden }) hidden - target else hidden + target
 
     /** Whether an empty list is the filters' doing (a Type, Distance or Dates filter is set), as
-     *  the web's `emptyListReason`: else this part of the map holds no activity, and the note says so. */
+     *  the web's `emptyListReason`: else this part of the map holds no track, and the note says so. */
     fun emptyListFiltered(hasActiveFilters: Boolean, datesSet: Boolean): Boolean = hasActiveFilters || datesSet
 }

@@ -24,13 +24,13 @@ import dev.holdmytrack.android.R
 import dev.holdmytrack.android.SyncActivity
 import dev.holdmytrack.android.UploadActivity
 import dev.holdmytrack.android.health.HealthConnect
-import dev.holdmytrack.android.net.ActivityOverlap
+import dev.holdmytrack.android.net.TrackOverlap
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.OverlapSpan
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.recording.RecordingActivity
 import dev.holdmytrack.android.recording.RecordingTypes
-import dev.holdmytrack.android.recording.db.RecordedActivityStore
+import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.sync.Candidate
 import dev.holdmytrack.android.sync.HealthConnectCard.Companion.isReadable
 import dev.holdmytrack.android.sync.HiddenCandidates
@@ -57,13 +57,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 
 /**
- * The Activities sheet's Sync tab — the bottom bar's Sync (`docs/SPEC.md` FR-3.4, FR-3.6): every
- * activity on this phone that isn't on the map yet, the user's to choose. Health Connect's
+ * The Tracks sheet's Sync tab — the bottom bar's Sync (`docs/SPEC.md` FR-3.4, FR-3.6): every
+ * track on this phone that isn't on the map yet, the user's to choose. Health Connect's
  * sessions with a route from the last three months, and every recording waiting on the phone,
  * newest first ([SyncCandidates]), each drawn dashed on the map while the tab shows
  * ([onCandidates]). **Nothing is ticked**: only what the user ticks is sent ([SyncRunner]), and
  * an unticked row never reaches the server. A row that covers the same time as another, or as an
- * activity the account has, carries an ⓘ ([SimilarTracksDialog]) — a hint, never a choice made
+ * track the account has, carries an ⓘ ([SimilarTracksDialog]) — a hint, never a choice made
  * for the user. A row swiped aside is hidden ([HiddenCandidates]) —
  * Show hidden brings it back. Under the list, Upload files and Sync history, each a screen of its
  * own, and the way to Settings › Sync (`SyncActivity`), where Health Connect is switched on and
@@ -87,11 +87,11 @@ class SyncTab(
     private val onCandidates: (candidates: List<Candidate>, highlight: String?) -> Unit,
     /** Frame these on the map. */
     private val onFrame: (List<Candidate>) -> Unit,
-    /** A run sent something: the map's activities, its days and its tiles are out of date. */
+    /** A run sent something: the map's tracks, its days and its tiles are out of date. */
     private val onSynced: () -> Unit,
 ) {
     private val res = content.resources
-    private val store = RecordedActivityStore(activity)
+    private val store = RecordedTrackStore(activity)
 
     // Its layout manager first: the head and foot are inflated against it.
     private val list: RecyclerView = content.findViewById<RecyclerView>(R.id.sync_list).apply {
@@ -138,8 +138,8 @@ class SyncTab(
     private val keepAgain = mutableListOf<Candidate>()
     private var recordings: List<Candidate> = emptyList()
     private var hidden: Set<String> = emptySet()
-    /** The account's activity each candidate overlaps, by key — the hint, nothing more. */
-    private var overlaps: Map<String, ActivityOverlap> = emptyMap()
+    /** The account's track each candidate overlaps, by key — the hint, nothing more. */
+    private var overlaps: Map<String, TrackOverlap> = emptyMap()
     /** The other waiting rows each one overlaps, by key ([Similar.waiting]), as last rendered. */
     private var similar: Map<String, List<Candidate>> = emptyMap()
     private var showHidden = false
@@ -162,11 +162,11 @@ class SyncTab(
     /** A row on its way landed — it leaves the list — or failed: it's back, and says so. */
     private val progressListener = SyncProgress.Listener(onChange = ::progressed, onLanded = {})
 
-    /** A type described after the rows showed changes their icons ([ActivityTypes]). */
+    /** A type described after the rows showed changes their icons ([TrackTypes]). */
     private val onTypes: () -> Unit = { list.post { render() } }
 
     init {
-        ActivityTypes.addListener(onTypes)
+        TrackTypes.addListener(onTypes)
         list.adapter = ConcatAdapter(ViewAdapter(head), rows, ViewAdapter(foot))
         ItemTouchHelper(SwipeToHide()).attachToRecyclerView(list)
         syncNow.setOnClickListener { startSync() }
@@ -236,7 +236,7 @@ class SyncTab(
 
     /**
      * Lists what's kept: the recordings on the phone and Health Connect's sessions as Load
-     * last read them, and asks the server which activities they overlap. Then, if Health Connect
+     * last read them, and asks the server which tracks they overlap. Then, if Health Connect
      * was just switched on and hasn't been read yet, it reads it — the one load the user didn't
      * tap for ([SyncSources.firstLoadPending]).
      */
@@ -321,14 +321,14 @@ class SyncTab(
         }
     }
 
-    /** The account's activity each listed row overlaps (`POST /v1/activities/overlaps`). A hint
+    /** The account's track each listed row overlaps (`POST /v1/activities/overlaps`). A hint
      *  only: when the server can't say, the rows go without it. */
-    private suspend fun askOverlaps(): Map<String, ActivityOverlap> {
+    private suspend fun askOverlaps(): Map<String, TrackOverlap> {
         if (Session.isDemo) return emptyMap()
         return try {
             // What's on its way would only overlap itself once it lands.
             val listed = all().filterNot { SyncProgress.isProcessing(it.key) }
-            HoldMyTrackApi.activityOverlaps(listed.map { OverlapSpan(it.key, it.startedAt, it.endedAt) })
+            HoldMyTrackApi.trackOverlaps(listed.map { OverlapSpan(it.key, it.startedAt, it.endedAt) })
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
@@ -356,7 +356,7 @@ class SyncTab(
 
     private fun render() {
         if (!showing) return
-        ActivityTypes.refresh(all().map { it.activityType })
+        TrackTypes.refresh(all().map { it.activityType })
         val demo = Session.isDemo
         accountNotice.text = if (demo) res.getString(R.string.sync_demo_read_only) else null
         accountNotice.visibility = if (demo) View.VISIBLE else View.GONE
@@ -441,7 +441,7 @@ class SyncTab(
 
     /** One chip per type listed, when there's more than one to choose between. */
     private fun renderTypes(everything: List<Candidate>) {
-        val listedTypes = everything.map { it.activityType }.distinct().sortedBy { ActivityTypes.label(it) }
+        val listedTypes = everything.map { it.activityType }.distinct().sortedBy { TrackTypes.label(it) }
         types.retainAll(listedTypes.toSet())
         typeChips.visibility = if (listedTypes.size > 1) View.VISIBLE else View.GONE
         val current = (0 until typeChips.childCount).map { typeChips.getChildAt(it).tag as String }
@@ -451,7 +451,7 @@ class SyncTab(
                 val chip = LayoutInflater.from(activity).inflate(R.layout.item_sync_type_chip, typeChips, false) as Chip
                 typeChips.addView(chip.apply {
                     tag = type
-                    text = ActivityTypes.label(type)
+                    text = TrackTypes.label(type)
                     setOnCheckedChangeListener { _, checked ->
                         if (checked) types += type else types -= type
                         render()
@@ -598,7 +598,7 @@ class SyncTab(
         val failed = SyncProgress.takeFailed()
         if (failed.isEmpty()) return false
         val format = DATE_FORMAT.withZone(ZoneId.systemDefault())
-        val lines = failed.map { res.getString(R.string.sync_row_failed, format.format(it.startedAt), ActivityTypes.label(it.activityType)) }
+        val lines = failed.map { res.getString(R.string.sync_row_failed, format.format(it.startedAt), TrackTypes.label(it.activityType)) }
         val earlier = problems.text.takeIf { problems.visibility == View.VISIBLE && it.isNotEmpty() }?.toString()
         showProblems(listOfNotNull(earlier) + lines)
         known = known - failed.map { it.externalId }.toSet()
@@ -621,7 +621,7 @@ class SyncTab(
             results.visibility = View.VISIBLE
         }
         val trouble = report.rejected.map {
-            res.getString(R.string.sync_rejected_row, DATE_FORMAT.withZone(ZoneId.systemDefault()).format(it.startedAt), ActivityTypes.label(it.activityType), it.reason)
+            res.getString(R.string.sync_rejected_row, DATE_FORMAT.withZone(ZoneId.systemDefault()).format(it.startedAt), TrackTypes.label(it.activityType), it.reason)
         }.toMutableList()
         report.stoppedBecause?.let { trouble += res.getString(R.string.sync_stopped, it) }
         showProblems(trouble)
@@ -638,7 +638,7 @@ class SyncTab(
         val meta = listOfNotNull(
             date.takeIf { named },
             PanelFormat.distance(res, candidate.distanceM),
-            ActivityTypes.label(candidate.activityType),
+            TrackTypes.label(candidate.activityType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
         val processing = processing(candidate)
@@ -671,7 +671,7 @@ class SyncTab(
         /** Sent, and not on the map yet ([SyncProgress]): nothing to tick, hide or edit. */
         val processing: Boolean,
         /** How many tracks cover the same time (`docs/SPEC.md` FR-3.5): other rows, and the
-         *  account's activity it overlaps the most. Its ⓘ shows while there are any. */
+         *  account's track it overlaps the most. Its ⓘ shows while there are any. */
         val similar: Int,
         val type: String,
         val recording: Boolean,

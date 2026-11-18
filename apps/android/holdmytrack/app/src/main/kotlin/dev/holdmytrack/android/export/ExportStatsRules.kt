@@ -9,18 +9,18 @@ package dev.holdmytrack.android.export
 object ExportStatsRules {
 
     /** What the server is asked to draw: the Checked ids, sorted, and the image's size and theme. */
-    data class Request(val activityIds: List<String>, val width: Int, val height: Int, val dark: Boolean) {
+    data class Request(val trackIds: List<String>, val width: Int, val height: Int, val dark: Boolean) {
         /** Equal for equal requests: what the held card is checked against. */
-        val key: String get() = "${width}x$height:${if (dark) "dark" else "light"}:${activityIds.joinToString(",")}"
+        val key: String get() = "${width}x$height:${if (dark) "dark" else "light"}:${trackIds.joinToString(",")}"
     }
 
-    /** Whether Show stats can be ticked: something Checked, and no Story open, since the Stories
+    /** Whether Show stats can be ticked: something Checked, and no Trip open, since the Trips
      *  tab has no checkboxes. */
-    fun offered(checked: Set<String>, storyId: String?): Boolean = storyId == null && checked.isNotEmpty()
+    fun offered(checked: Set<String>, tripId: String?): Boolean = tripId == null && checked.isNotEmpty()
 
     /** The card asked for an image [width] × [height], or null when none is shown. */
-    fun request(show: Boolean, checked: Set<String>, storyId: String?, width: Int, height: Int, dark: Boolean): Request? =
-        if (show && offered(checked, storyId)) Request(checked.sorted(), width, height, dark) else null
+    fun request(show: Boolean, checked: Set<String>, tripId: String?, width: Int, height: Int, dark: Boolean): Request? =
+        if (show && offered(checked, tripId)) Request(checked.sorted(), width, height, dark) else null
 
     /**
      * Where a card [cardWidth] × [cardHeight] goes on an image [width] × [height]: at the strip's

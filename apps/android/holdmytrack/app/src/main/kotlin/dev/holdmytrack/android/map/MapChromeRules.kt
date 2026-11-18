@@ -16,11 +16,11 @@ object MapChromeRules {
 
     /** The mode toggle: the Map tab's, hidden while recording, editing or checking rows. */
     fun modeBarShown(recording: Boolean, editOpen: Boolean, selectionShown: Boolean, tab: PanelTab): Boolean =
-        tab == PanelTab.ACTIVITIES && !recording && !editOpen && !selectionShown
+        tab == PanelTab.TRACKS && !recording && !editOpen && !selectionShown
 
-    /** The mode the map shows: the one picked on the Map tab there, Normal on Stories and Sync,
+    /** The mode the map shows: the one picked on the Map tab there, Normal on Trips and Sync,
      *  whose sheet and tracks are Normal mode's; back on Map, the pick comes back. */
-    fun tabMode(picked: MapMode, tab: PanelTab): MapMode = if (tab == PanelTab.ACTIVITIES) picked else MapMode.NORMAL
+    fun tabMode(picked: MapMode, tab: PanelTab): MapMode = if (tab == PanelTab.TRACKS) picked else MapMode.NORMAL
 
     /** The mode carried through a recreation, by name; Normal for none or one this build lacks. */
     fun restoredMode(saved: String?): MapMode = MapMode.entries.firstOrNull { it.name == saved } ?: MapMode.NORMAL
@@ -40,18 +40,18 @@ object MapChromeRules {
         !editOpen && !privacyEditing && !exportOpen
 
     /** The image export's own button under the selection bar, while rows are checked and the rail
-     *  is away, so an image can show the Checked activities' stats (`docs/SPEC.md` FR-4.7). */
+     *  is away, so an image can show the Checked tracks' stats (`docs/SPEC.md` FR-4.7). */
     fun checkedExportShown(editing: Boolean, selectionShown: Boolean): Boolean = !editing && selectionShown
 
     /** Whether rows are being checked where the selection bar can show: the sheet up on the
-     *  Activities tab, no Edit window. */
+     *  Tracks tab, no Edit window. */
     fun selectionShown(sheetVisible: Boolean, selecting: Boolean, tab: PanelTab, editOpen: Boolean): Boolean =
-        sheetVisible && selecting && tab == PanelTab.ACTIVITIES && !editOpen
+        sheetVisible && selecting && tab == PanelTab.TRACKS && !editOpen
 
-    /** The list's summary at the sheet's head: the Activities tab's, in Normal mode, unless the
-     *  selected activity's card has the head. */
+    /** The list's summary at the sheet's head: the Tracks tab's, in Normal mode, unless the
+     *  selected track's card has the head. */
     fun summaryShown(normal: Boolean, tab: PanelTab, showsCard: Boolean): Boolean =
-        normal && tab == PanelTab.ACTIVITIES && !showsCard
+        normal && tab == PanelTab.TRACKS && !showsCard
 
     /** The sheet: Normal mode's, and the Sync tab's even while recording, so what's on the phone
      *  can be sent mid-walk; hidden while an editor has the screen. */

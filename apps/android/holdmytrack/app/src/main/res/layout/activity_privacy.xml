@@ -87,7 +87,7 @@
                 </LinearLayout>
             </LinearLayout>
 
-            <!-- How many activities they hide entirely; gone with no locations (PrivacyActivity.showHidden). -->
+            <!-- How many tracks they hide entirely; gone with no locations (PrivacyActivity.showHidden). -->
             <TextView
                 android:id="@+id/privacy_hidden"
                 android:layout_width="match_parent"

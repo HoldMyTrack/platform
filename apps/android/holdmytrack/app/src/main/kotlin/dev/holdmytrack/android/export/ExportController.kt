@@ -25,9 +25,9 @@ class ExportController(
     prepare: (Style) -> Unit,
     /** The photo markers on screen, drawn into the image. */
     photos: () -> PhotoMarkers.Snapshot,
-    /** The Checked ids and the open Story, for the image's stats card. */
+    /** The Checked ids and the open Trip, for the image's stats card. */
     checked: () -> Set<String>,
-    storyId: () -> String?,
+    tripId: () -> String?,
     /** The chrome that steps aside while the viewfinder shows. */
     private val chrome: List<View>,
     /** The viewfinder opened or closed: popups close. */
@@ -42,7 +42,7 @@ class ExportController(
         satelliteOn = { layers.satelliteShown },
         photos = photos,
         checked = checked,
-        storyId = storyId,
+        tripId = tripId,
         onShown = ::render,
     )
 

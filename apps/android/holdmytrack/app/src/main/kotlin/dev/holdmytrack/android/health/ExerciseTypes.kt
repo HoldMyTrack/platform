@@ -11,14 +11,14 @@ import androidx.health.connect.client.records.ExerciseSessionRecord
  * `@RestrictTo` — library-group internal, removable without a semantic-version bump — so the
  * table is spelled out here instead. Every left-hand side is a named constant rather than a
  * bare integer, which is what keeps a transcription slip a compile error instead of a silently
- * mislabelled activity; `internal/parse/fit_sport.go` avoids the same hazard the other way,
+ * mislabelled track; `internal/parse/fit_sport.go` avoids the same hazard the other way,
  * by generating its own enum names from a verified source.
  *
  * **The names are not Health Connect's own everywhere, and that matters.** HoldMyTrack's existing
  * ingest paths speak the FIT vocabulary — a bike ride uploaded as a `.FIT` file lands as
  * `cycling` — while Health Connect calls the same thing `biking`. Left alone, one ride synced
- * from a watch and uploaded from a file would be two different activity types, which splits
- * the Activities panel's TYPE facets (`docs/IMPLEMENTATION.md` §4.7). The handful of renames marked
+ * from a watch and uploaded from a file would be two different track types, which splits
+ * the Tracks panel's TYPE facets (`docs/IMPLEMENTATION.md` §4.7). The handful of renames marked
  * below are what keep the two sources describing the same thing the same way.
  *
  * Indoor types are here for completeness rather than need: a session with no route never
@@ -92,6 +92,6 @@ object ExerciseTypes {
     )
 
     /** `"unknown"` for a type this version of Health Connect has and this table doesn't —
-     *  the same value the server falls back to for an activity that arrives without one. */
+     *  the same value the server falls back to for a track that arrives without one. */
     fun name(exerciseType: Int): String = NAMES[exerciseType] ?: "unknown"
 }

@@ -4,16 +4,16 @@ import android.view.View
 import androidx.activity.OnBackPressedCallback
 import androidx.core.view.isVisible
 import dev.holdmytrack.android.R
-import dev.holdmytrack.android.panel.ActivitiesPanel
+import dev.holdmytrack.android.panel.TracksPanel
 
 /**
- * The Activities sheet and the chrome that follows it ([MapChromeRules]): the sheet itself, the
+ * The Tracks sheet and the chrome that follows it ([MapChromeRules]): the sheet itself, the
  * list's summary at its head, the selection bar in the top row's place while rows are checked, and the
  * rail. Back ends selecting, then collapses an open sheet.
  */
 class SheetChrome(
     view: View,
-    private val panel: ActivitiesPanel,
+    private val panel: TracksPanel,
     /** Normal mode, session ready, not recording ([MapChromeRules.normalMode]). */
     private val normalMode: () -> Boolean,
     private val sessionReady: () -> Boolean,
@@ -28,7 +28,7 @@ class SheetChrome(
     private val onRendered: () -> Unit,
     private val dismissLayers: () -> Unit,
 ) {
-    private val sheet: View = view.findViewById(R.id.activities_sheet)
+    private val sheet: View = view.findViewById(R.id.tracks_sheet)
     private val summaryHead: View = view.findViewById(R.id.panel_summary_head)
     private val selectionBar: View = view.findViewById(R.id.selection_bar)
     private val rail: View = view.findViewById(R.id.map_rail)
@@ -45,10 +45,10 @@ class SheetChrome(
     }
 
     /** The sheet is Normal mode's only (`docs/SPEC.md` FR-4.2), hidden while recording, and waits
-     *  for the session. The summary at its head is the Activities tab's. */
+     *  for the session. The summary at its head is the Tracks tab's. */
     fun render() {
         val normal = normalMode()
-        // The selected activity's card takes the summary's place at the head.
+        // The selected track's card takes the summary's place at the head.
         summaryHead.isVisible = MapChromeRules.summaryShown(normal, panel.tab, panel.showsCard)
         // An editor over the map hides the sheet. The Sync tab stays while recording: what's on
         // the phone can be sent mid-walk.
@@ -60,7 +60,7 @@ class SheetChrome(
     }
 
     /** Whether rows are being checked where the selection bar can show: Normal mode, the
-     *  Activities tab, no Edit window. */
+     *  Tracks tab, no Edit window. */
     fun selectionShown(): Boolean = MapChromeRules.selectionShown(sheet.isVisible, panel.selecting, panel.tab, editOpen())
 
     /** The selection bar replaces the top row while [selectionShown]. */

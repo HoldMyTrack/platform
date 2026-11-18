@@ -5,7 +5,7 @@ import kotlin.math.floor
 /**
  * The smallest box (`[west, south, east, north]`) containing all of [boxes], or null for none —
  * the web's `unionBBox` (`apps/web/src/map/bbox.ts`). Longitude goes the shorter way round, as
- * each activity's own bbox does (`docs/IMPLEMENTATION.md` §4.7): New Zealand and Hawaii make a
+ * each track's own bbox does (`docs/IMPLEMENTATION.md` §4.7): New Zealand and Hawaii make a
  * box across the Pacific, east past 180, which `LatLngBounds.from` takes as it is. Each box's
  * west edge is tried as the start, every box moved to begin at or after it; the narrowest wins.
  */

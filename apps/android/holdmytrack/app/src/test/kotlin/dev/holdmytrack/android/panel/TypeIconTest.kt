@@ -8,12 +8,12 @@ class TypeIconTest {
 
     @Test
     fun `each kind has its icon`() {
-        assertEquals(R.drawable.ic_footprints, kindIcon(ActivityKind.FOOT))
-        assertEquals(R.drawable.ic_bike, kindIcon(ActivityKind.WHEELS))
-        assertEquals(R.drawable.ic_car, kindIcon(ActivityKind.MOTOR))
-        assertEquals(R.drawable.ic_monowheel, kindIcon(ActivityKind.SOLOWHEEL))
-        assertEquals(R.drawable.ic_electric_scooter, kindIcon(ActivityKind.E_SCOOTER))
-        assertEquals(R.drawable.ic_route, kindIcon(ActivityKind.OTHER))
+        assertEquals(R.drawable.ic_footprints, kindIcon(TrackKind.FOOT))
+        assertEquals(R.drawable.ic_bike, kindIcon(TrackKind.WHEELS))
+        assertEquals(R.drawable.ic_car, kindIcon(TrackKind.MOTOR))
+        assertEquals(R.drawable.ic_monowheel, kindIcon(TrackKind.SOLOWHEEL))
+        assertEquals(R.drawable.ic_electric_scooter, kindIcon(TrackKind.E_SCOOTER))
+        assertEquals(R.drawable.ic_route, kindIcon(TrackKind.OTHER))
     }
 
     @Test

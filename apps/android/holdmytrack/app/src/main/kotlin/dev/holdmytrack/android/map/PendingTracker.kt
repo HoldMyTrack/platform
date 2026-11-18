@@ -1,7 +1,7 @@
 package dev.holdmytrack.android.map
 
 import android.view.View
-import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.HoldMyTrackApi
 
 /**
@@ -32,7 +32,7 @@ class PendingTracker(
     private var generation = 0
 
     /**
-     * Activities whose track edit was saved here and whose reprocess hasn't been seen finishing.
+     * Tracks whose route edit was saved here and whose reprocess hasn't been seen finishing.
      * Trap: the job often finishes before the reload after the save answers, so the row is never
      * seen Pending at all.
      */
@@ -52,10 +52,10 @@ class PendingTracker(
         var outstanding = batches.size
         var failed = false
         for (batch in batches) {
-            HoldMyTrackApi.pendingActivities(batch) { result ->
+            HoldMyTrackApi.pendingTracks(batch) { result ->
                 result.onSuccess { still += it }.onFailure { failed = true }
-                if (--outstanding > 0 || sent != generation) return@pendingActivities
-                if (failed) return@pendingActivities schedule()
+                if (--outstanding > 0 || sent != generation) return@pendingTracks
+                if (failed) return@pendingTracks schedule()
                 val answer = PendingDiff.answer(watched, still, listed)
                 if (answer.finished.isNotEmpty()) {
                     pendingIds = pendingIds - answer.finished
@@ -74,10 +74,10 @@ class PendingTracker(
     }
 
     /** A list was read: what it says about reprocesses, with the poll scheduled while any runs. */
-    fun track(activities: List<Activity>): PendingChange {
+    fun track(tracks: List<Track>): PendingChange {
         generation++
-        listedIds = activities.mapTo(HashSet()) { it.id }
-        val change = PendingDiff.of(pendingIds, activities.filter { it.pending }.mapTo(HashSet()) { it.id }, awaiting, listedIds)
+        listedIds = tracks.mapTo(HashSet()) { it.id }
+        val change = PendingDiff.of(pendingIds, tracks.filter { it.pending }.mapTo(HashSet()) { it.id }, awaiting, listedIds)
         awaiting.retainAll(change.awaiting)
         pendingIds = change.pending
         schedule()

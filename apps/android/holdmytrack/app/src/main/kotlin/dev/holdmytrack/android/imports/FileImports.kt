@@ -107,9 +107,9 @@ object FileImports {
             try {
                 // Redrawn once a percent, not once a chunk: a 16 MiB file is 256 chunks.
                 var shown = -1L
-                val outcome = HoldMyTrackApi.uploadActivityFile(context.contentResolver, next.uri, transfer.name, transfer.size) { sent ->
+                val outcome = HoldMyTrackApi.uploadTrackFile(context.contentResolver, next.uri, transfer.name, transfer.size) { sent ->
                     val percent = if (transfer.size > 0) sent * 100 / transfer.size else sent shr 20
-                    if (percent == shown) return@uploadActivityFile
+                    if (percent == shown) return@uploadTrackFile
                     shown = percent
                     main.post {
                         transfer.sent = sent

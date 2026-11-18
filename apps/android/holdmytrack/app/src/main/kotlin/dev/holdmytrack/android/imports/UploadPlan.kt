@@ -18,7 +18,7 @@ data class UploadPlan(
         /** Not a `.gpx`, `.fit` or `.tcx`. */
         data class WrongType(val name: String) : Refusal
 
-        /** More than [MAX_FILES] activity files at once: none of them is sent. */
+        /** More than [MAX_FILES] track files at once: none of them is sent. */
         data class TooMany(val count: Int) : Refusal
 
         /** Past the server's size limit. */
@@ -44,13 +44,13 @@ data class UploadPlan(
                 if (ACCEPTED.containsMatchIn(file.name)) continue
                 refusals += if (ZIP.containsMatchIn(file.name)) Refusal.Zip(file.name) else Refusal.WrongType(file.name)
             }
-            var activityFiles = picked.indices.filter { ACCEPTED.containsMatchIn(picked[it].name) }
-            if (activityFiles.size > MAX_FILES) {
-                refusals += Refusal.TooMany(activityFiles.size)
-                activityFiles = emptyList()
+            var trackFiles = picked.indices.filter { ACCEPTED.containsMatchIn(picked[it].name) }
+            if (trackFiles.size > MAX_FILES) {
+                refusals += Refusal.TooMany(trackFiles.size)
+                trackFiles = emptyList()
             }
             val send = mutableListOf<Int>()
-            for (i in activityFiles) {
+            for (i in trackFiles) {
                 if (picked[i].size > MAX_FILE_BYTES) refusals += Refusal.TooLarge(picked[i].name) else send += i
             }
             return UploadPlan(send, refusals)

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One row of the Sync tab (panel/SyncTab), after the Activities rows (item_activity_row): a tile
-     of the activity's kind that is also its tick box — ticked, a ✓ on the accent — then its day
+<!-- One row of the Sync tab (panel/SyncTab), after the Tracks rows (item_activity_row): a tile
+     of the track's kind that is also its tick box — ticked, a ✓ on the accent — then its day
      and time (or a recording's name) over "[date ·] distance · type · where it is"; that text is
      the row's tap target: its line picked out on the map and flown to. An ⓘ when something else
-     covers the same time — another row, or an activity the account has — opening Similar tracks.
+     covers the same time — another row, or a track the account has — opening Similar tracks.
      A Hidden badge while hidden rows are shown, and a recording's Edit and Delete. Swiped aside,
      it's hidden. Once sent and until it's on the map, the tile spins and the note line says
      "Adding to your map…". -->

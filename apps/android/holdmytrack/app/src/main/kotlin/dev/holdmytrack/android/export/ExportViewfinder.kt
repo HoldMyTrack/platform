@@ -63,9 +63,9 @@ class ExportViewfinder(
     private val satelliteOn: () -> Boolean,
     /** The photo markers on screen, drawn into the image as they're shown. */
     private val photos: () -> PhotoMarkers.Snapshot,
-    /** The Activities panel's Checked ids and the open Story, which the stats card is drawn from. */
+    /** The Tracks panel's Checked ids and the open Trip, which the stats card is drawn from. */
     private val checked: () -> Set<String>,
-    private val storyId: () -> String?,
+    private val tripId: () -> String?,
     private val onShown: (Boolean) -> Unit,
 ) {
     private val context: Context = host.context
@@ -84,7 +84,7 @@ class ExportViewfinder(
     private lateinit var statsCheck: MaterialButton
     private val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
     private val stats = ExportStatsCard(
-        fetch = { r, done -> HoldMyTrackApi.statsCard(r.activityIds, r.width, r.height, r.dark, done) },
+        fetch = { r, done -> HoldMyTrackApi.statsCard(r.trackIds, r.width, r.height, r.dark, done) },
         onChange = ::renderStats,
     )
 
@@ -112,7 +112,7 @@ class ExportViewfinder(
         sizeLine = view.findViewById(R.id.export_size)
         errorLine = view.findViewById(R.id.export_error)
         statsCheck = view.findViewById(R.id.export_stats)
-        val offered = ExportStatsRules.offered(checked(), storyId())
+        val offered = ExportStatsRules.offered(checked(), tripId())
         statsCheck.isChecked = offered && prefs.getBoolean(KEY_SHOW_STATS, false)
         setStatsEnabled(offered)
         statsCheck.addOnCheckedChangeListener { _, on ->
@@ -207,7 +207,7 @@ class ExportViewfinder(
         if (!isOpen) return
         val (w, h) = frame.imageSize
         if (w <= 0 || h <= 0) return
-        stats.want(ExportStatsRules.request(statsCheck.isChecked, checked(), storyId(), w, h, darkBase()))
+        stats.want(ExportStatsRules.request(statsCheck.isChecked, checked(), tripId(), w, h, darkBase()))
     }
 
     /** The held card in the window; Capture waits for the one this frame asked for. */
@@ -327,7 +327,7 @@ class ExportViewfinder(
         busy = on
         frame.locked = on
         captureButton.isEnabled = !on && stats.ready
-        setStatsEnabled(!on && ExportStatsRules.offered(checked(), storyId()))
+        setStatsEnabled(!on && ExportStatsRules.offered(checked(), tripId()))
         captureButton.icon = if (on) null else AppCompatResources.getDrawable(context, R.drawable.ic_camera)
         busyIndicator.visibility = if (on) View.VISIBLE else View.GONE
         choiceButton.isEnabled = !on

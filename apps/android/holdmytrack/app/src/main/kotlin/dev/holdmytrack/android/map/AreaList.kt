@@ -1,6 +1,6 @@
 package dev.holdmytrack.android.map
 
-import dev.holdmytrack.android.panel.ActivityZone
+import dev.holdmytrack.android.panel.TrackZone
 import java.time.Instant
 import java.time.LocalDate
 import kotlin.math.PI
@@ -19,7 +19,7 @@ import kotlin.math.sinh
  * `areaLoad.ts`; both run `testdata/client-rules/area-load.json`.
  */
 object AreaLoad {
-    /** The most activities one area lists, and so its map draws (the server's areaActivitiesLimit). */
+    /** The most tracks one area lists, and so its map draws (the server's areaActivitiesLimit). */
     const val LIMIT = 1000
 
     /** Where tracks start being drawn, and the list with them ([MapOverlays.TRACKS_MIN_ZOOM]). */
@@ -51,8 +51,8 @@ object AreaLoad {
 object OpeningView {
     const val ZOOM = 12.0
 
-    /** How many of the newest activities it tries to show. */
-    const val ACTIVITIES = 5
+    /** How many of the newest tracks it tries to show. */
+    const val TRACKS = 5
 
     /** The share of the screen a flight's box may fill. */
     private const val FILL = 0.75
@@ -73,7 +73,7 @@ object OpeningView {
             return doubleArrayOf((x1 - x0) * scale, (y1 - y0) * scale, (x0 + x1) / 2, (y0 + y1) / 2)
         }
         var chosen = frame(newest)
-        for (n in minOf(ACTIVITIES, boxes.size) downTo 1) {
+        for (n in minOf(TRACKS, boxes.size) downTo 1) {
             val union = BoxUnion.of(boxes.take(n)) ?: continue
             val f = frame(union.toList())
             if (f[0] <= width * FILL && f[1] <= height * FILL) {
@@ -146,14 +146,14 @@ data class DateFilter(val after: String? = null, val before: String? = null) {
     companion object {
         val ALL_TIME = DateFilter()
 
-        /** What the pickers allow: the first activity's day, today without one, to today, the
-         *  account's, or the newest activity's day when that's later: one recorded in a zone ahead
+        /** What the pickers allow: the first track's day, today without one, to today, the
+         *  account's, or the newest track's day when that's later: one recorded in a zone ahead
          *  can be dated tomorrow. */
         fun bounds(earliest: String?, latest: String?, today: String): Bounds =
             Bounds(earliest?.takeIf { it < today } ?: today, latest?.takeIf { it > today } ?: today)
 
         /** Today in the account's zone (`docs/SPEC.md` FR-1.7), as YYYY-MM-DD. */
         fun today(zone: String?, now: Instant = Instant.now()): String =
-            LocalDate.ofInstant(now, ActivityZone.of(null, zone)).toString()
+            LocalDate.ofInstant(now, TrackZone.of(null, zone)).toString()
     }
 }

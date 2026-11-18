@@ -30,7 +30,7 @@ const icons: Record<ActivityKind, LucideIcon> = {
   other: Route,
 };
 
-/** The icon on an activity's row: its kind's. Android: `panel/ActivityRows.kt` `kindIcon`. */
+/** The icon on an activity's row: its kind's. Android: `panel/TrackRows.kt` `kindIcon`. */
 export function kindIcon(kind: ActivityKind): LucideIcon {
   return icons[kind];
 }

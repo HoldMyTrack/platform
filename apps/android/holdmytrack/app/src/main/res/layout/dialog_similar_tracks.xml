@@ -2,7 +2,7 @@
 <!-- Similar tracks (sync/SimilarTracksDialog.kt), opened from a Sync row's ⓘ: which row it is,
      then what covers the same time — waiting on this phone, each picked out on the map when
      tapped, and already on the map, each opened on the Map tab — and that sending more than one
-     makes two activities. Close is the dialog's own button. -->
+     makes two tracks. Close is the dialog's own button. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">

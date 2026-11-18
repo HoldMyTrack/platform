@@ -6,7 +6,7 @@ import type { DateFilter } from './dateFilter.ts';
  * over the activities already fetched (the web's area, the apps' date range) — no backend
  * involvement, since §4.7's list endpoint doesn't paginate and the panel always holds every
  * row already. "Reset filters" is instant for the same reason: there is nothing to refetch.
- * Android's `ActivityFacets.kt` runs the same cases, `testdata/client-rules`' `distance-bounds`,
+ * Android's `TrackFacets.kt` runs the same cases, `testdata/client-rules`' `distance-bounds`,
  * `distance-filter`, `type-facets` and `passes-filters`.
  */
 

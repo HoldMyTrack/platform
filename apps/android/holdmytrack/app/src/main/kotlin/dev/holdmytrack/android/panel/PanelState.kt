@@ -1,10 +1,10 @@
 package dev.holdmytrack.android.panel
 
-import dev.holdmytrack.android.net.Activity
+import dev.holdmytrack.android.net.Track
 
 /**
- * What the Activities panel and the map agree on: the date range's activities, the two
- * filters, the checked group, the one selected (focused) activity, and the tracks hidden for
+ * What the Tracks panel and the map agree on: the date range's tracks, the two
+ * filters, the checked group, the one selected (focused) track, and the tracks hidden for
  * the session. The web keeps the same state in `apps/web/src/map/MapView.tsx`, its rules in
  * `selection.ts`. Plain data and rules, no views, so it's what the unit tests exercise.
  *
@@ -15,13 +15,13 @@ import dev.holdmytrack.android.net.Activity
  */
 class PanelState {
 
-    var activities: List<Activity> = emptyList()
+    var tracks: List<Track> = emptyList()
         private set
 
     var checked: Set<String> = emptySet()
         private set
 
-    /** The selected activity, if any. */
+    /** The selected track, if any. */
     var focused: String? = null
         private set
 
@@ -47,15 +47,15 @@ class PanelState {
 
     /** A fresh list for the same range — after a sync or an edit. Selection, the group and the
      *  hidden set keep whatever of theirs still exists. */
-    fun setActivities(next: List<Activity>) {
-        activities = next
+    fun setTracks(next: List<Track>) {
+        tracks = next
         val ids = next.mapTo(HashSet()) { it.id }
         checked = checked intersect ids
         hidden = hidden intersect ids
         if (focused !in ids) focused = null
     }
 
-    /** A Story opened or closed changes which rows exist, so everything built against the old ones
+    /** A Trip opened or closed changes which rows exist, so everything built against the old ones
      *  goes; a stale Distance band in particular could exclude everything. */
     fun startOver() {
         checked = emptySet()
@@ -65,16 +65,16 @@ class PanelState {
         distanceFilter = null
     }
 
-    /** The rows the panel lists: the range's activities narrowed by TYPE and DISTANCE. */
-    val listed: List<Activity>
-        get() = activities.filter { ActivityFacets.passesFilters(it, excludedTypes, distanceFilter) }
+    /** The rows the panel lists: the range's tracks narrowed by TYPE and DISTANCE. */
+    val listed: List<Track>
+        get() = tracks.filter { TrackFacets.passesFilters(it, excludedTypes, distanceFilter) }
 
     /** Every track the map shouldn't paint: filtered out, hidden, or Pending — all the same
      *  answer for the map (don't draw it, don't fly to it). Pending isn't folded into [hidden],
      *  so the user's own Show/Hide survives the reprocess. */
     val mapHidden: Set<String>
-        get() = activities.filter {
-            it.pending || it.id in hidden || !ActivityFacets.passesFilters(it, excludedTypes, distanceFilter)
+        get() = tracks.filter {
+            it.pending || it.id in hidden || !TrackFacets.passesFilters(it, excludedTypes, distanceFilter)
         }.mapTo(HashSet()) { it.id }
 
     /** What the toolbar acts on ([PanelRules.targetIds]). */
@@ -83,7 +83,7 @@ class PanelState {
 
     /** [targetIds]' rows among the ones listed — none when every one is filtered out, which
      *  disables the toolbar the same as having no target at all. */
-    val targets: List<Activity>
+    val targets: List<Track>
         get() {
             val ids = targetIds
             return listed.filter { it.id in ids }
@@ -100,7 +100,7 @@ class PanelState {
     }
 
     /** Checks [id], or unchecks it; true when it's now checked. The first check starts
-     *  selecting, and the selected activity, if any, joins the group rather than vanishing. */
+     *  selecting, and the selected track, if any, joins the group rather than vanishing. */
     fun toggleChecked(id: String): Boolean {
         if (id in checked) {
             checked = checked - id

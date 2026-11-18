@@ -42,7 +42,7 @@ class TourStepsTest {
     @Test
     fun `steps open what they explain and end on the You tab`() {
         val steps = TourSteps.of(isDemo = false).associateBy { it.id }
-        assertEquals(MainActivity.Tab.STORIES, steps.getValue("stories").tab)
+        assertEquals(MainActivity.Tab.TRIPS, steps.getValue("stories").tab)
         assertTrue(steps.getValue("stories").sheet && steps.getValue("activities").sheet)
         assertTrue(steps.getValue("layers").layers && !steps.getValue("layers").places)
         assertTrue(steps.getValue("places").places && !steps.getValue("places").layers)

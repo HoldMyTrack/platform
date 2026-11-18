@@ -129,7 +129,7 @@ class SpotsController(
 
     fun closePopup() = popup.close()
 
-    /** The Track tab has the map: the places step aside, and a capture stops. */
+    /** The Route tab has the map: the places step aside, and a capture stops. */
     fun setEditing(editing: Boolean) {
         style()?.let { MapSpots.setEditing(it, editing) }
         if (!editing) return

@@ -24,20 +24,20 @@ import java.util.zip.ZipInputStream
 
 /**
  * A fresh account on the dev stack the app was built against (`BuildConfig.API_BASE_URL`),
- * with the sample activities under `/static/testing/`: three in October 2026 and three from the sample
- * zip's Italy days in August, six activity days in all, so the default range (the five most
+ * with the sample tracks under `/static/testing/`: three in October 2026 and three from the sample
+ * zip's Italy days in August, six track days in all, so the default range (the five most
  * recent) leaves one out and can move earlier. Deleted at the end of the run.
  */
 class TestAccount private constructor(val email: String, val password: String, private val client: OkHttpClient) {
 
-    /** The account's activity ids by start day (`2026-10-01`, …). */
+    /** The account's track ids by start day (`2026-10-01`, …). */
     lateinit var idsByDay: Map<String, String>
         private set
 
-    fun createStory(name: String, activityIds: List<String>) {
+    fun createTrip(name: String, trackIds: List<String>) {
         call("POST", "/v1/stories", buildJsonObject {
             put("name", name)
-            put("activity_ids", buildJsonArray { activityIds.forEach { add(JsonPrimitive(it)) } })
+            put("activity_ids", buildJsonArray { trackIds.forEach { add(JsonPrimitive(it)) } })
         })
     }
 
@@ -58,16 +58,16 @@ class TestAccount private constructor(val email: String, val password: String, p
             response.body!!.bytes()
         }
 
-    /** Waits until the uploads are parsed: [count] activities, none pending. */
+    /** Waits until the uploads are parsed: [count] tracks, none pending. */
     private fun settle(count: Int) {
         val deadline = System.currentTimeMillis() + SETTLE_TIMEOUT_MS
         while (true) {
-            val activities = call("GET", "/v1/activities", null)!!.jsonObject["activities"]!!.jsonArray.map { it.jsonObject }
-            if (activities.size == count && activities.none { it["pending"]!!.jsonPrimitive.boolean }) {
-                idsByDay = activities.associate { it["started_at"]!!.jsonPrimitive.content.take(10) to it["id"]!!.jsonPrimitive.content }
+            val tracks = call("GET", "/v1/activities", null)!!.jsonObject["activities"]!!.jsonArray.map { it.jsonObject }
+            if (tracks.size == count && tracks.none { it["pending"]!!.jsonPrimitive.boolean }) {
+                idsByDay = tracks.associate { it["started_at"]!!.jsonPrimitive.content.take(10) to it["id"]!!.jsonPrimitive.content }
                 return
             }
-            check(System.currentTimeMillis() < deadline) { "uploads not settled: ${activities.size} of $count" }
+            check(System.currentTimeMillis() < deadline) { "uploads not settled: ${tracks.size} of $count" }
             Thread.sleep(500)
         }
     }

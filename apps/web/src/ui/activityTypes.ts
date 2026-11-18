@@ -3,7 +3,7 @@ import type { components } from '../apiSchema.ts';
 /**
  * What the page shows for each activity type, as the server says (`docs/SPEC.md` FR-5.1): every
  * activity list carries a `types` map of labels and kinds, and every Story its types' labels, in
- * the page's language. Android: `panel/ActivityTypes.kt`.
+ * the page's language. Android: `panel/TrackTypes.kt`.
  */
 const labels = new Map<string, string>();
 

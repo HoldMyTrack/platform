@@ -7,7 +7,7 @@ import kotlin.math.hypot
  * Douglas–Peucker over a route, in metres: the points a line drawn on the map needs, not the
  * one-a-second thousands a phone records. For drawing only — what is sent is always the route as
  * recorded. Distances are measured on a local equirectangular plane around the route's first
- * point, close enough over the extent of one activity.
+ * point, close enough over the extent of one track.
  */
 object Simplify {
 

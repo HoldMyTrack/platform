@@ -32,7 +32,7 @@ import kotlin.concurrent.thread
 /**
  * End-to-end flows over the map's state rules, on an emulator against the dev stack the app was
  * built for (`docs/DEVELOPMENT.md`, "Android verification"): a new date range clearing the
- * selection, a Story opened from the Stories tab and closed by Back, and a recording reaching the
+ * selection, a Trip opened from the Trips tab and closed by Back, and a recording reaching the
  * Sync sheet. One fresh account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
@@ -61,7 +61,7 @@ class MapFlowsTest {
     fun b_theStoriesTabOpensTheNewestStoryAndBackReturnsToTheRange() {
         signIn()
         val members = listOf(account.idsByDay.getValue("2026-10-01"), account.idsByDay.getValue("2026-10-06"))
-        account.createStory(STORY, members)
+        account.createTrip(STORY, members)
         need(id("nav_stories")).click()
         expandSheet()
         need(By.text(STORY))
@@ -122,7 +122,7 @@ class MapFlowsTest {
             runCatching { locations.removeTestProvider(LocationManager.GPS_PROVIDER) }
         }
         need(id("date_range_label"))
-        // The tap can land while the Save screen's activity is still leaving; tap until the sheet answers.
+        // The tap can land while the Save screen's track is still leaving; tap until the sheet answers.
         tapUntil({ need(id("nav_sync")) }) { device.hasObject(id("panel_handle")) }
         expandSheet()
         // The row sits below the source notes. Half-expanded, the sheet's bottom is past the
@@ -175,7 +175,7 @@ class MapFlowsTest {
         fail("tapped three times, nothing changed")
     }
 
-    /** The Activities sheet open full height, so its rows are on screen. */
+    /** The Tracks sheet open full height, so its rows are on screen. */
     private fun expandSheet() {
         val expanded = { device.hasObject(id("panel_handle").descStartsWith("Collapse")) }
         need(id("panel_handle"))

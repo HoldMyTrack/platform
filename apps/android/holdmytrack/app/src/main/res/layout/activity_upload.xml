@@ -71,7 +71,7 @@
             android:textIsSelectable="true"
             android:visibility="gone" />
 
-        <!-- Once a file has gone: where its activities can be followed as they're processed. -->
+        <!-- Once a file has gone: where its tracks can be followed as they're processed. -->
         <Button
             android:id="@+id/upload_see_sync"
             style="@style/Widget.HoldMyTrack.Button.Outlined"

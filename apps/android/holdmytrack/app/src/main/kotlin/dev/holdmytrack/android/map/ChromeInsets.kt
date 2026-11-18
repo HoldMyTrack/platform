@@ -8,7 +8,7 @@ import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 import dev.holdmytrack.android.R
-import dev.holdmytrack.android.panel.ActivitiesPanel
+import dev.holdmytrack.android.panel.TracksPanel
 import org.maplibre.android.maps.MapLibreMap
 import org.maplibre.android.maps.MapView
 
@@ -27,7 +27,7 @@ class ChromeInsets(
     private val topChrome: View,
     private val notice: View,
     private val sheet: View,
-    private val panel: ActivitiesPanel,
+    private val panel: TracksPanel,
     private val map: () -> MapLibreMap?,
 ) {
     /** The Edit window and the Private location editor, along the bottom of the map. */

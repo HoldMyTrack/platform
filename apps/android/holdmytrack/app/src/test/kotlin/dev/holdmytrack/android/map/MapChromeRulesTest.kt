@@ -33,12 +33,12 @@ class MapChromeRulesTest {
 
     @Test
     fun `Stories and Sync show Normal with no toggle, and the Map tab gets its pick back`() {
-        for (tab in listOf(PanelTab.STORIES, PanelTab.SYNC)) {
+        for (tab in listOf(PanelTab.TRIPS, PanelTab.SYNC)) {
             assertEquals(MapMode.NORMAL, MapChromeRules.tabMode(MapMode.FOG, tab))
             assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, tab))
         }
-        assertEquals(MapMode.FOG, MapChromeRules.tabMode(MapMode.FOG, PanelTab.ACTIVITIES))
-        assertTrue(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, PanelTab.ACTIVITIES))
+        assertEquals(MapMode.FOG, MapChromeRules.tabMode(MapMode.FOG, PanelTab.TRACKS))
+        assertTrue(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, PanelTab.TRACKS))
     }
 
     @Test
@@ -51,9 +51,9 @@ class MapChromeRulesTest {
 
     @Test
     fun `checking rows hides the mode toggle and the rail`() {
-        assertTrue(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.ACTIVITIES, editOpen = false))
-        assertFalse(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.STORIES, editOpen = false))
-        assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = true, PanelTab.ACTIVITIES))
+        assertTrue(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.TRACKS, editOpen = false))
+        assertFalse(MapChromeRules.selectionShown(sheetVisible = true, selecting = true, PanelTab.TRIPS, editOpen = false))
+        assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = true, PanelTab.TRACKS))
         assertFalse(MapChromeRules.railShown(editing = false, selectionShown = true))
         assertTrue(MapChromeRules.railShown(editing = false, selectionShown = false))
     }
@@ -68,16 +68,16 @@ class MapChromeRulesTest {
     @Test
     fun `the Sync tab keeps the sheet while recording, an editor hides it`() {
         assertTrue(MapChromeRules.sheetShown(normal = false, sessionReady = true, MapMode.NORMAL, PanelTab.SYNC, editing = false))
-        assertFalse(MapChromeRules.sheetShown(normal = false, sessionReady = true, MapMode.NORMAL, PanelTab.ACTIVITIES, editing = false))
-        assertFalse(MapChromeRules.sheetShown(normal = true, sessionReady = true, MapMode.NORMAL, PanelTab.ACTIVITIES, editing = true))
+        assertFalse(MapChromeRules.sheetShown(normal = false, sessionReady = true, MapMode.NORMAL, PanelTab.TRACKS, editing = false))
+        assertFalse(MapChromeRules.sheetShown(normal = true, sessionReady = true, MapMode.NORMAL, PanelTab.TRACKS, editing = true))
     }
 
     @Test
-    fun `the summary is the Activities tab's head unless the card has it`() {
-        assertTrue(MapChromeRules.summaryShown(normal = true, PanelTab.ACTIVITIES, showsCard = false))
-        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.ACTIVITIES, showsCard = true))
-        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.STORIES, showsCard = false))
-        assertFalse(MapChromeRules.summaryShown(normal = false, PanelTab.ACTIVITIES, showsCard = false))
+    fun `the summary is the Tracks tab's head unless the card has it`() {
+        assertTrue(MapChromeRules.summaryShown(normal = true, PanelTab.TRACKS, showsCard = false))
+        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.TRACKS, showsCard = true))
+        assertFalse(MapChromeRules.summaryShown(normal = true, PanelTab.TRIPS, showsCard = false))
+        assertFalse(MapChromeRules.summaryShown(normal = false, PanelTab.TRACKS, showsCard = false))
     }
 
     @Test

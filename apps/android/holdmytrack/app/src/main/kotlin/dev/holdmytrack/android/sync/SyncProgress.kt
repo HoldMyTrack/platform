@@ -4,7 +4,7 @@ import android.content.Context
 import android.util.Log
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
-import dev.holdmytrack.android.recording.db.RecordedActivityStore
+import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 /**
  * What the Sync tab sent and the server hasn't finished yet (`docs/SPEC.md` FR-3.4): the server
- * queues each activity and answers at once, and until the worker has done it the activity is
+ * queues each track and answers at once, and until the worker has done it the track is
  * neither on the phone's list nor on the map. Each stays here, and on the Sync tab as "Adding to
  * your map…", until `POST /v1/sync/known` says its job has ended: known and not processing, it
  * has landed — [addListener]'s map reads its list and tiles again, and a recording leaves the
@@ -39,7 +39,7 @@ object SyncProgress {
     private var account: String? = null
     private val inFlight = LinkedHashMap<String, Candidate>()
     private val failed = mutableListOf<Candidate>()
-    private var store: RecordedActivityStore? = null
+    private var store: RecordedTrackStore? = null
     private var poll: Job? = null
 
     /** Sent, not on the map yet. */
@@ -71,7 +71,7 @@ object SyncProgress {
         if (sent.isEmpty()) return
         if (!forThisAccount()) clear()
         account = Session.email
-        if (store == null) store = RecordedActivityStore(context.applicationContext)
+        if (store == null) store = RecordedTrackStore(context.applicationContext)
         var added = false
         for (candidate in sent) if (inFlight.put(candidate.key, candidate) == null) added = true
         if (added) {
@@ -103,7 +103,7 @@ object SyncProgress {
         val email = Session.email
         if (email == null || resumedFor == email) return
         resumedFor = email
-        val store = RecordedActivityStore(context.applicationContext)
+        val store = RecordedTrackStore(context.applicationContext)
         scope.launch {
             val sent = try {
                 store.sent()
@@ -195,7 +195,7 @@ object SyncProgress {
 
 enum class Outcome { LANDED, FAILED }
 
-/** What `POST /v1/sync/known`'s answer means for one sent activity: still at work (null), landed,
+/** What `POST /v1/sync/known`'s answer means for one sent track: still at work (null), landed,
  *  or failed — known and not processing is on the map, in neither its job ended without one. */
 fun syncOutcome(externalId: String, known: Collection<String>, processing: Collection<String>): Outcome? = when (externalId) {
     in processing -> null

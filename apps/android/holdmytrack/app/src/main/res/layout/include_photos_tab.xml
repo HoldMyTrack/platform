@@ -28,7 +28,7 @@
             app:icon="@drawable/ic_image_plus"
             app:iconPadding="@dimen/hmt_space_6"
             app:iconSize="16dp"
-            app:iconTint="@color/edit_track_btn_text" />
+            app:iconTint="@color/edit_route_btn_text" />
 
         <TextView
             android:id="@+id/photos_status"

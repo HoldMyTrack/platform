@@ -107,7 +107,7 @@ internal data class EmailJson(val email: String)
 @Serializable
 internal data class CodeJson(val code: String)
 
-// Activities
+// Tracks
 
 @Serializable
 internal data class StoryRefJson(val id: String, val name: String)
@@ -137,7 +137,7 @@ internal data class ActivitiesJson(
     val types: Map<String, ActivityTypeJson> = emptyMap(),
 )
 
-/** An activity as the area list's row shows it; `GET /v1/activities/{id}` has the rest. */
+/** A track as the area list's row shows it; `GET /v1/activities/{id}` has the rest. */
 @Serializable
 internal data class AreaActivityRowJson(
     val id: String,
@@ -165,7 +165,7 @@ internal data class AreaActivitiesJson(
 @Serializable
 internal data class PendingJson(val pending: List<String>)
 
-/** What a client shows for one activity type (`panel/ActivityTypes`). */
+/** What a client shows for one track type (`panel/ActivityTypes`). */
 @Serializable
 internal data class ActivityTypeJson(val kind: String, val label: String)
 
@@ -219,7 +219,7 @@ internal data class TrackMetricsJson(
     val bands: List<PaceBandJson>,
 )
 
-/** A track edit both ways: what the editor opens with and what Apply sends. Times are Unix ms; a
+/** A route edit both ways: what the editor opens with and what Apply sends. Times are Unix ms; a
  *  pair is a two-element array, and [move] is keyed by a time, which JSON carries as a string. */
 @Serializable
 internal data class TrackEditJson(
@@ -273,7 +273,7 @@ internal data class UploadResultJson(val status: String)
 
 // Sync
 
-/** One point of a synced activity. [elevationM] is left out when unknown: no altitude is not
+/** One point of a synced track. [elevationM] is left out when unknown: no altitude is not
  *  sea level. */
 @Serializable
 internal data class SyncPointJson(
@@ -333,7 +333,7 @@ internal data class PrivateLocationInputJson(
     @SerialName("radius_m") val radiusM: Int,
 )
 
-// Stories
+// Trips
 
 @Serializable
 internal data class StoryTypeStatsJson(
@@ -365,7 +365,7 @@ internal data class StoryJson(
 @Serializable
 internal data class StoriesJson(val stories: List<StoryJson>)
 
-/** A new Story, with its first [activityIds]. */
+/** A new Trip, with its first [trackIds]. */
 @Serializable
 internal data class StoryCreateJson(
     val name: String,

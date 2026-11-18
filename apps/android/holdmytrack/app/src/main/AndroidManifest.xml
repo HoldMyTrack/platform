@@ -150,7 +150,7 @@
             android:exported="true"
             android:label="@string/upload_title"
             android:theme="@style/Theme.HoldMyTrack">
-            <!-- An activity file another app opens or shares with HoldMyTrack —
+            <!-- A track file another app opens or shares with HoldMyTrack —
                  uploaded as if picked here (imports/FileImports). A .fit has no type of its own
                  most apps agree on, and most hand a .gpx over as a generic binary, which isn't
                  claimed, so those are picked in the screen. -->

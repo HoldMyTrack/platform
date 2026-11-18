@@ -11,12 +11,12 @@ import java.time.Instant
 
 class PhotoMarkerScopeTest {
 
-    private fun photo(id: String, activityId: String = "a", lat: Double? = 59.43, lon: Double? = 24.75) =
-        Photo(id, activityId, null, Instant.EPOCH, lon, lat, null, 1, 1, "u", "t/$id")
+    private fun photo(id: String, trackId: String = "a", lat: Double? = 59.43, lon: Double? = 24.75) =
+        Photo(id, trackId, null, Instant.EPOCH, lon, lat, null, 1, 1, "u", "t/$id")
 
     @Test
     fun `markers leave out photos without a place and on hidden routes`() {
-        val items = PhotoMarkerScope.markers(listOf(photo("p"), photo("q", lat = null), photo("r", activityId = "hidden")), setOf("hidden"), null)
+        val items = PhotoMarkerScope.markers(listOf(photo("p"), photo("q", lat = null), photo("r", trackId = "hidden")), setOf("hidden"), null)
         assertEquals(listOf("p"), items.map { it.id })
         assertEquals("t/p", items.single().thumbPath)
     }
@@ -32,11 +32,11 @@ class PhotoMarkerScopeTest {
 
     @Test
     fun `markers hide while recording, on the Track tab and for a hidden route`() {
-        assertTrue(PhotoMarkerScope.shown("activity:a", recording = false, showingTrack = false, mapHidden = emptySet()))
-        assertFalse(PhotoMarkerScope.shown("activity:a", recording = true, showingTrack = false, mapHidden = emptySet()))
-        assertFalse(PhotoMarkerScope.shown("activity:a", recording = false, showingTrack = true, mapHidden = emptySet()))
-        assertFalse(PhotoMarkerScope.shown("activity:a", recording = false, showingTrack = false, mapHidden = setOf("a")))
-        assertTrue(PhotoMarkerScope.shown("story:a", recording = false, showingTrack = false, mapHidden = setOf("a")))
-        assertFalse(PhotoMarkerScope.shown(null, recording = false, showingTrack = false, mapHidden = emptySet()))
+        assertTrue(PhotoMarkerScope.shown("track:a", recording = false, showingRoute = false, mapHidden = emptySet()))
+        assertFalse(PhotoMarkerScope.shown("track:a", recording = true, showingRoute = false, mapHidden = emptySet()))
+        assertFalse(PhotoMarkerScope.shown("track:a", recording = false, showingRoute = true, mapHidden = emptySet()))
+        assertFalse(PhotoMarkerScope.shown("track:a", recording = false, showingRoute = false, mapHidden = setOf("a")))
+        assertTrue(PhotoMarkerScope.shown("trip:a", recording = false, showingRoute = false, mapHidden = setOf("a")))
+        assertFalse(PhotoMarkerScope.shown(null, recording = false, showingRoute = false, mapHidden = emptySet()))
     }
 }

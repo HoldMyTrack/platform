@@ -6,7 +6,7 @@ import java.time.Instant
 /**
  * Which waiting rows cover the same stretch of time as each other — the phone's half of the
  * Sync tab's similar-tracks hint (`docs/SPEC.md` FR-3.5); the server answers for the account's
- * own activities (`POST /v1/activities/overlaps`). A hint only: nothing is unticked, hidden or
+ * own tracks (`POST /v1/activities/overlaps`). A hint only: nothing is unticked, hidden or
  * chosen on the user's behalf (ADR-0039).
  *
  * The rule is the server's `overlapMatches` (`services/server/internal/ingest/overlap.go`), so

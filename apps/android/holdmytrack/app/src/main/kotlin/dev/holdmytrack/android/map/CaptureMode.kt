@@ -42,7 +42,7 @@ import kotlin.math.roundToInt
  * Location is read only while the app is in the foreground ([resume]/[pause], from
  * MapFragment's own), the same platform GPS provider the recording uses: the app asks for no
  * background location, and a hold pauses while the app is away. The screen stays on while it
- * runs. Stop, Back, a track edit, unticking the spot's category, or the capture itself ends it.
+ * runs. Stop, Back, a route edit, unticking the spot's category, or the capture itself ends it.
  */
 class CaptureMode(
     private val activity: AppCompatActivity,
@@ -349,7 +349,7 @@ class CaptureMode(
         }
     }
 
-    @Suppress("DEPRECATION") // activity.display needs API 30; the window manager's works on all.
+    @Suppress("DEPRECATION") // track.display needs API 30; the window manager's works on all.
     private fun screenRotation(): Float = when (activity.windowManager.defaultDisplay.rotation) {
         Surface.ROTATION_90 -> 90f
         Surface.ROTATION_180 -> 180f

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Lucide "book-plus" (lucide-static 1.48.0, the web's version; ISC, assets/licenses/lucide-LICENSE.txt),
-     its 24-unit grid and 2-unit round stroke unchanged — the Activities toolbar's Create story.
+     its 24-unit grid and 2-unit round stroke unchanged — the Tracks toolbar's Create trip.
      White, and tinted where it's used, the way the web's icons take currentColor. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"

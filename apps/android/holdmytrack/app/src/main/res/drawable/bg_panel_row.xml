@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- An Activities row, the web's .activities-panel__row: a hairline under it at ink 6%, and,
+<!-- A Tracks row, the web's .activities-panel__row: a hairline under it at ink 6%, and,
      selected, the accent at 8% with a 3dp strong-accent bar down its left edge
      (the web's selected-row modifier). -->
 <selector xmlns:android="http://schemas.android.com/apk/res/android">

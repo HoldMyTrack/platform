@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The bottom bar (activity_main.xml, MainActivity): Map, Stories, an empty middle slot the
+<!-- The bottom bar (activity_main.xml, MainActivity): Map, Trips, an empty middle slot the
      record button sits over, Sync and You. -->
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
@@ -7,9 +7,9 @@
         android:icon="@drawable/ic_map"
         android:title="@string/nav_map" />
     <item
-        android:id="@+id/nav_stories"
+        android:id="@+id/nav_trips"
         android:icon="@drawable/ic_book_open"
-        android:title="@string/nav_stories" />
+        android:title="@string/nav_trips" />
     <item
         android:id="@+id/nav_record"
         android:enabled="false"

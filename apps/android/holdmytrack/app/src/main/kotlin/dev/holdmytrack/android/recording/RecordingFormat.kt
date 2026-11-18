@@ -6,7 +6,7 @@ import dev.holdmytrack.android.net.Session
 import java.util.Locale
 
 /** Distances, heights and speeds as text — shared by `RecordingService`'s notification, the
- *  Edit screen, Recorded Activities and sync history, so none disagrees about how a number
+ *  Edit screen, Recorded Tracks and sync history, so none disagrees about how a number
  *  reads. The numbers follow the app's language (a decimal comma in Russian), and so do the
  *  units, which are string resources. The unit system is the server's for the account
  *  ([Session.imperial], the Account's `unit_system`), as on the web. */

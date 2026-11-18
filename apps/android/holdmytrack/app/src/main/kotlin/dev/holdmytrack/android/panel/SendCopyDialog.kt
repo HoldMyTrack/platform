@@ -13,11 +13,11 @@ import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
-import dev.holdmytrack.android.net.Story
+import dev.holdmytrack.android.net.Trip
 
 /**
  * Send a copy, the web's `SendCopyDialog.tsx` (`docs/SPEC.md` FR-13.6, FR-13.7): a
- * Story folder's send button, asking for the email address to send a copy of the Story to,
+ * Trip folder's send button, asking for the email address to send a copy of the Trip to,
  * over `dialog_send_copy`. Send stays disabled until the field has something in it, and the
  * keyboard's Send does the same as tapping it. Once sent it stays up on "Sent to …", with the
  * same words whether or not the address has an account — the server answers the same either
@@ -26,14 +26,14 @@ import dev.holdmytrack.android.net.Story
 object SendCopyDialog {
 
     @SuppressLint("InflateParams") // A dialog's content has no parent to inflate against.
-    fun show(context: Context, story: Story) {
+    fun show(context: Context, trip: Trip) {
         val content = LayoutInflater.from(context).inflate(R.layout.dialog_send_copy, null)
         val email: TextInputEditText = content.findViewById(R.id.send_copy_email)
         val status: TextView = content.findViewById(R.id.send_copy_status)
         val dialog = MaterialAlertDialogBuilder(context)
-            .setTitle(context.getString(R.string.story_send_title, story.name))
+            .setTitle(context.getString(R.string.trip_send_title, trip.name))
             .setView(content)
-            .setPositiveButton(R.string.story_send_confirm, null)
+            .setPositiveButton(R.string.trip_send_confirm, null)
             .setNegativeButton(android.R.string.cancel, null)
             .create()
         var sending = false
@@ -43,10 +43,10 @@ object SendCopyDialog {
         fun renderButtons() {
             val positive = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             positive.isEnabled = !sending && address().isNotEmpty()
-            positive.setText(if (sending) R.string.story_sending else R.string.story_send_confirm)
+            positive.setText(if (sending) R.string.trip_sending else R.string.trip_send_confirm)
             dialog.getButton(AlertDialog.BUTTON_NEGATIVE).apply {
                 isEnabled = !sending
-                setText(if (sent) R.string.story_send_close else android.R.string.cancel)
+                setText(if (sent) R.string.trip_send_close else android.R.string.cancel)
             }
             email.isEnabled = !sending
             dialog.setCancelable(!sending)
@@ -58,15 +58,15 @@ object SendCopyDialog {
             sending = true
             status.visibility = View.GONE
             renderButtons()
-            HoldMyTrackApi.sendStory(story.id, to) { result ->
+            HoldMyTrackApi.sendTrip(trip.id, to) { result ->
                 sending = false
                 result.onSuccess {
                     sent = true
                     email.setText("")
-                    status.text = context.getString(R.string.story_send_done, to)
+                    status.text = context.getString(R.string.trip_send_done, to)
                     status.setTextColor(context.getColor(R.color.hmt_ink))
                 }.onFailure { failure ->
-                    status.text = failure.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.story_save_failed)
+                    status.text = failure.message?.takeIf { it.isNotBlank() } ?: context.getString(R.string.trip_save_failed)
                     status.setTextColor(context.getColor(R.color.hmt_danger))
                 }
                 status.visibility = View.VISIBLE
