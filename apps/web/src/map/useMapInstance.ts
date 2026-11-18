@@ -237,6 +237,15 @@ export function useMapInstance({
       reportImagery();
     });
 
+    // MapLibre logs an error event only while nothing listens, and the two above do: everything
+    // else, a layer the renderer refused or another source's tiles, would go unseen. The basemap's
+    // and the imagery's own failures are told on the map instead.
+    instance.on('error', (e) => {
+      const sourceId = (e as { sourceId?: string }).sourceId;
+      if (sourceId === BASEMAP_SOURCE || sourceId === SATELLITE_SOURCE) return;
+      console.error('map:', e.error ?? e);
+    });
+
     instance.once('load', publish);
 
     return () => {
