@@ -133,13 +133,13 @@
         }
       }
     },
-    "%@ will be deleted for good, with its track and its part of Fog of War." : {
+    "%@ will be deleted for good, with its route and its part of Fog of War." : {
       "comment" : "Activities panel: Delete's confirmation; the placeholder names what is deleted and its distance.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%@ — будет удалено навсегда вместе с маршрутом и его вкладом в «туман войны»."
+            "value" : "%@ — будет удалён навсегда вместе с маршрутом и его вкладом в «туман войны»."
           }
         }
       }
@@ -276,24 +276,24 @@
         }
       }
     },
-    "A Story shows its own activities instead of what's on the map." : {
+    "A Trip shows its own tracks instead of what's on the map." : {
       "comment" : "Stories tab: the line under the title.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "История показывает свои путешествия вместо тех, что на карте."
+            "value" : "Путешествие показывает свои треки вместо тех, что на карте."
           }
         }
       }
     },
-    "A copy of your activities, Stories, photos and settings, as zip files. We email you when it's ready; the download lasts 7 days." : {
+    "A copy of your tracks, Trips, photos and settings, as zip files. We email you when it's ready; the download lasts 7 days." : {
       "comment" : "Download your data: what the download holds.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Копия ваших путешествий, историй, фото и настроек в zip-архивах. Мы напишем, когда она будет готова; скачать её можно в течение 7 дней."
+            "value" : "Копия ваших треков, путешествий, фото и настроек в zip-архивах. Мы напишем, когда она будет готова; скачать её можно в течение 7 дней."
           }
         }
       }
@@ -320,68 +320,13 @@
         }
       }
     },
-    "Activities couldn't load." : {
-      "comment" : "Activities panel: the list's read failed and the server gave no reason.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не удалось загрузить путешествия."
-          }
-        }
-      }
-    },
-    "Activities that start or end inside it will show those parts again once they're reprocessed." : {
-      "comment" : "Private location editor: what deleting a Private location brings back.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Путешествия, которые начинаются или заканчиваются внутри него, снова покажут эти части после повторной обработки."
-          }
-        }
-      }
-    },
-    "Activities: %@" : {
-      "comment" : "A count of activities, written as label: N.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Путешествия: %@"
-          }
-        }
-      }
-    },
-    "Activity" : {
-      "comment" : "Edit window's tab: the activity's type, name and description.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Путешествие"
-          }
-        }
-      }
-    },
-    "Activity graph & trends" : {
-      "comment" : "The Profile page's title, and its row on the You tab.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "График и тренды"
-          }
-        }
-      }
-    },
-    "Add %@ to a Story" : {
+    "Add %@ to a Trip" : {
       "comment" : "Activities panel: Add to story's label; the placeholder names the target.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавить в историю: %@"
+            "value" : "Добавить в путешествие: %@"
           }
         }
       }
@@ -419,13 +364,13 @@
         }
       }
     },
-    "Add to story" : {
+    "Add to trip" : {
       "comment" : "Activities panel: the toolbar's Add to story, and its menu's title.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Добавить в историю"
+            "value" : "Добавить в путешествие"
           }
         }
       }
@@ -628,13 +573,13 @@
         }
       }
     },
-    "Check exactly one activity to edit its track" : {
+    "Check exactly one track to edit its route" : {
       "comment" : "Edit window: why the Track tab can't be used for a group.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отметьте ровно одно путешествие, чтобы редактировать его маршрут"
+            "value" : "Отметьте ровно один трек, чтобы редактировать его маршрут"
           }
         }
       }
@@ -1068,24 +1013,13 @@
         }
       }
     },
-    "Delete story" : {
-      "comment" : "Stories tab: the confirmation's button.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Удалить историю"
-          }
-        }
-      }
-    },
-    "Delete these activities?" : {
+    "Delete these tracks?" : {
       "comment" : "Activities panel: Delete's confirmation title for a group.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Удалить эти путешествия?"
+            "value" : "Удалить эти треки?"
           }
         }
       }
@@ -1101,24 +1035,35 @@
         }
       }
     },
-    "Delete this Story?" : {
+    "Delete this Trip?" : {
       "comment" : "Stories tab: the delete confirmation's title.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Удалить эту историю?"
+            "value" : "Удалить это путешествие?"
           }
         }
       }
     },
-    "Delete this activity?" : {
+    "Delete this track?" : {
       "comment" : "Activities panel: Delete's confirmation title for one activity.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Удалить это путешествие?"
+            "value" : "Удалить этот трек?"
+          }
+        }
+      }
+    },
+    "Delete trip" : {
+      "comment" : "Stories tab: the confirmation's button.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Удалить путешествие"
           }
         }
       }
@@ -1299,24 +1244,24 @@
         }
       }
     },
-    "Edit activities: %lld" : {
-      "comment" : "Edit window's title for a group, written as label: N.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Изменить путешествия: %lld"
-          }
-        }
-      }
-    },
-    "Edit activity" : {
+    "Edit track" : {
       "comment" : "Edit window's title for one activity.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Изменить путешествие"
+            "value" : "Изменить трек"
+          }
+        }
+      }
+    },
+    "Edit tracks: %lld" : {
+      "comment" : "Edit window's title for a group, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Изменить треки: %lld"
           }
         }
       }
@@ -1365,13 +1310,13 @@
         }
       }
     },
-    "Every activity, any date" : {
+    "Every track, any date" : {
       "comment" : "Map: the chip under Fog of War, which shows every activity whatever the date range.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Все путешествия, за всё время"
+            "value" : "Все треки, за всё время"
           }
         }
       }
@@ -1420,13 +1365,13 @@
         }
       }
     },
-    "First activity: %@" : {
+    "First track: %@" : {
       "comment" : "Dates: From's hint while unset.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Первое путешествие: %@"
+            "value" : "Первый трек: %@"
           }
         }
       }
@@ -1563,7 +1508,7 @@
         }
       }
     },
-    "Go back to the track as it was recorded (Undo brings the edits back)" : {
+    "Go back to the route as it was recorded (Undo brings the edits back)" : {
       "comment" : "Track editor: Reset's hint.",
       "localizations" : {
         "ru" : {
@@ -1662,13 +1607,13 @@
         }
       }
     },
-    "In Stories: %@" : {
+    "In Trips: %@" : {
       "comment" : "Activities panel: a row's Story badge for several Stories; the placeholder lists their names.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В историях: %@"
+            "value" : "В путешествиях: %@"
           }
         }
       }
@@ -1937,13 +1882,13 @@
         }
       }
     },
-    "Name and description stay each activity's own." : {
+    "Name and description stay each track's own." : {
       "comment" : "Edit window, for a group.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Название и описание у каждого путешествия останутся своими."
+            "value" : "Название и описание у каждого трека останутся своими."
           }
         }
       }
@@ -1970,24 +1915,24 @@
         }
       }
     },
-    "New story" : {
+    "New trip" : {
       "comment" : "Stories tab: the button and the dialog that make a Story.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Новая история"
+            "value" : "Новое путешествие"
           }
         }
       }
     },
-    "New story…" : {
+    "New trip…" : {
       "comment" : "Activities panel: Add to story's menu: makes a Story of the target.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Новая история…"
+            "value" : "Новое путешествие…"
           }
         }
       }
@@ -2009,51 +1954,18 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Приватных мест пока нет. Если маршрут начинается или заканчивается внутри такого места, эта часть скрыта везде, в том числе на вашей карте."
+            "value" : "Приватных мест пока нет. Если трек начинается или заканчивается внутри такого места, эта часть скрыта везде, в том числе на вашей карте."
           }
         }
       }
     },
-    "No Stories yet. Check activities on the Activities tab and use Add to story, or make one with +." : {
+    "No Trips yet. Check tracks on the Tracks tab and use Add to trip, or make one with +." : {
       "comment" : "Stories tab: the account has no Story.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Историй пока нет. Отметьте путешествия на вкладке «Карта» и нажмите «Добавить в историю» или создайте историю кнопкой +."
-          }
-        }
-      }
-    },
-    "No activities in this Story yet. Add some with Add to story." : {
-      "comment" : "Stories tab: the open Story is empty.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В этой истории пока нет путешествий. Добавьте их через «Добавить в историю»."
-          }
-        }
-      }
-    },
-    "No activities in this range." : {
-      "comment" : "Activities panel: the range has no activities.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "В этом диапазоне нет путешествий."
-          }
-        }
-      }
-    },
-    "No activities match these filters." : {
-      "comment" : "Activities panel: the filters leave no row.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Нет путешествий, подходящих под фильтры."
+            "value" : "Путешествий пока нет. Отметьте треки на вкладке «Карта» и нажмите «Добавить в путешествие» или создайте путешествие кнопкой +."
           }
         }
       }
@@ -2069,13 +1981,13 @@
         }
       }
     },
-    "No photos yet. Add the ones you took on this activity — each goes on the route where it was taken." : {
+    "No photos yet. Add the ones you took on this track — each goes on the route where it was taken." : {
       "comment" : "Photos tab: an activity with no photos.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Фотографий пока нет. Добавьте снимки с этого путешествия — каждый встанет на маршрут там, где был сделан."
+            "value" : "Фотографий пока нет. Добавьте снимки с этого трека — каждый встанет на маршрут там, где был сделан."
           }
         }
       }
@@ -2087,6 +1999,39 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "В этой области мест нет"
+          }
+        }
+      }
+    },
+    "No tracks in this Trip yet. Add some with Add to trip." : {
+      "comment" : "Stories tab: the open Story is empty.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этом путешествии пока нет треков. Добавьте их через «Добавить в путешествие»."
+          }
+        }
+      }
+    },
+    "No tracks in this range." : {
+      "comment" : "Activities panel: the range has no activities.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В этом диапазоне нет треков."
+          }
+        }
+      }
+    },
+    "No tracks match these filters." : {
+      "comment" : "Activities panel: the filters leave no row.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Нет треков, подходящих под фильтры."
           }
         }
       }
@@ -2135,13 +2080,13 @@
         }
       }
     },
-    "Nothing to act on: focus or check an activity" : {
+    "Nothing to act on: focus or check a track" : {
       "comment" : "Activities panel: why a toolbar action is off: no target.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не с чем работать: выберите или отметьте путешествие"
+            "value" : "Не с чем работать: выберите или отметьте трек"
           }
         }
       }
@@ -2168,13 +2113,13 @@
         }
       }
     },
-    "Open the Story %@" : {
+    "Open the Trip %@" : {
       "comment" : "Activities panel: a row's Story badge; the placeholder is the Story's name.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Открыть историю %@"
+            "value" : "Открыть путешествие %@"
           }
         }
       }
@@ -2542,13 +2487,13 @@
         }
       }
     },
-    "Private: inside a Private location, so it has no track or numbers." : {
+    "Private: inside a Private location, so it has no route or numbers." : {
       "comment" : "Activities panel: the focused activity's card for a private one.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Приватное: оно внутри приватного места, поэтому у него нет маршрута и показателей."
+            "value" : "Приватный: он внутри приватного места, поэтому у него нет маршрута и показателей."
           }
         }
       }
@@ -2630,13 +2575,13 @@
         }
       }
     },
-    "Rename story" : {
+    "Rename trip" : {
       "comment" : "Stories tab: the rename dialog's title.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Переименовать историю"
+            "value" : "Переименовать путешествие"
           }
         }
       }
@@ -2685,6 +2630,39 @@
         }
       }
     },
+    "Route" : {
+      "comment" : "Edit window's tab: the track editor.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Маршрут"
+          }
+        }
+      }
+    },
+    "Route •" : {
+      "comment" : "Edit window's tab with unsaved track changes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Маршрут •"
+          }
+        }
+      }
+    },
+    "Route, with unsaved changes" : {
+      "comment" : "Edit window's Track tab, for VoiceOver, while it has unsaved changes.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Маршрут, есть несохранённые изменения"
+          }
+        }
+      }
+    },
     "Satellite" : {
       "comment" : "Layers menu: satellite imagery under the map.",
       "localizations" : {
@@ -2729,13 +2707,13 @@
         }
       }
     },
-    "Saving splits this activity in two at %@. The new part gets the same type, name and description." : {
+    "Saving splits this track in two at %@. The new part gets the same type, name and description." : {
       "comment" : "Track editor: a split made, saved on Save.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "При сохранении путешествие разделится на два в %@. Новая часть получит тот же тип, название и описание."
+            "value" : "При сохранении трек разделится на два в %@. Новая часть получит тот же тип, название и описание."
           }
         }
       }
@@ -2817,13 +2795,13 @@
         }
       }
     },
-    "Sent. If %@ has an account, the copy waits on their Stories tab." : {
+    "Sent. If %@ has an account, the copy waits on their Trips tab." : {
       "comment" : "Stories tab: a copy was sent; the placeholder is the email address.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Отправлено. Если у %@ есть аккаунт, копия появится на вкладке «Истории»."
+            "value" : "Отправлено. Если у %@ есть аккаунт, копия появится на вкладке «Путешествия»."
           }
         }
       }
@@ -2916,13 +2894,13 @@
         }
       }
     },
-    "Showing the newest %@ of %@ activities here. Zoom in or set Dates to see the rest." : {
+    "Showing the newest %@ of %@ tracks here. Zoom in or set Dates to see the rest." : {
       "comment" : "Map: the area holds more activities than the list's cap; the placeholders are the counts.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Показаны последние %@ из %@ путешествий здесь. Приблизьте карту или задайте даты, чтобы увидеть остальные."
+            "value" : "Показаны последние %@ из %@ треков здесь. Приблизьте карту или задайте даты, чтобы увидеть остальные."
           }
         }
       }
@@ -2955,7 +2933,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Войдите, чтобы увидеть свои маршруты и «туман войны». Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять."
+            "value" : "Войдите, чтобы увидеть свои треки и «туман войны». Демо не требует регистрации: это общий готовый аккаунт, его можно смотреть, но не изменять."
           }
         }
       }
@@ -2993,17 +2971,6 @@
         }
       }
     },
-    "Some activities are being processed. They'll show on the map when they're done." : {
-      "comment" : "Map notice: rows are Pending.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Некоторые путешествия обрабатываются. Они появятся на карте, когда обработка закончится."
-          }
-        }
-      }
-    },
     "Some checked" : {
       "comment" : "Activities panel: the master checkbox's state when only some rows are checked.",
       "localizations" : {
@@ -3011,6 +2978,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Отмечены некоторые"
+          }
+        }
+      }
+    },
+    "Some tracks are being processed. They'll show on the map when they're done." : {
+      "comment" : "Map notice: rows are Pending.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Некоторые треки обрабатываются. Они появятся на карте, когда обработка закончится."
           }
         }
       }
@@ -3059,13 +3037,13 @@
         }
       }
     },
-    "Split the activity in two at the knob you moved" : {
+    "Split the track in two at the knob you moved" : {
       "comment" : "Track editor: Split's hint.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Разделить путешествие на два у сдвинутой ручки"
+            "value" : "Разделить трек на два у сдвинутой ручки"
           }
         }
       }
@@ -3114,50 +3092,6 @@
         }
       }
     },
-    "Stories" : {
-      "comment" : "Tab bar: Stories.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Истории"
-          }
-        }
-      }
-    },
-    "Stories couldn't load." : {
-      "comment" : "Stories tab: the list's read failed and the server gave no reason.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не удалось загрузить истории."
-          }
-        }
-      }
-    },
-    "Stories: %lld" : {
-      "comment" : "Activities panel: a row's badge for several Stories, written as label: N.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Истории: %lld"
-          }
-        }
-      }
-    },
-    "Story" : {
-      "comment" : "Activities panel: a row's badge for one Story.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "История"
-          }
-        }
-      }
-    },
     "Sync" : {
       "comment" : "Tab bar: Sync.",
       "localizations" : {
@@ -3202,13 +3136,13 @@
         }
       }
     },
-    "Take %@ out of this Story" : {
+    "Take %@ out of this Trip" : {
       "comment" : "Stories tab: a row's ×; the placeholder is the row's title.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Убрать из истории: %@"
+            "value" : "Убрать из путешествия: %@"
           }
         }
       }
@@ -3268,24 +3202,24 @@
         }
       }
     },
-    "The Story couldn't be deleted." : {
+    "The Trip couldn't be deleted." : {
       "comment" : "Stories tab: delete failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось удалить историю."
+            "value" : "Не удалось удалить путешествие."
           }
         }
       }
     },
-    "The Story couldn't be saved." : {
+    "The Trip couldn't be saved." : {
       "comment" : "Stories tab: a change failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Не удалось сохранить историю."
+            "value" : "Не удалось сохранить путешествие."
           }
         }
       }
@@ -3297,17 +3231,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось удалить аккаунт. Попробуйте ещё раз."
-          }
-        }
-      }
-    },
-    "The activity couldn't be opened: %@" : {
-      "comment" : "Edit: reading the activity in full failed; the placeholder is why.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Не удалось открыть путешествие: %@"
           }
         }
       }
@@ -3345,46 +3268,46 @@
         }
       }
     },
-    "The demo account can't change a Story" : {
+    "The demo account can't change a Trip" : {
       "comment" : "Why a Story action is off for the demo account.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В демо-аккаунте нельзя менять истории"
+            "value" : "В демо-аккаунте нельзя менять путешествия"
           }
         }
       }
     },
-    "The demo account can't delete activities" : {
+    "The demo account can't delete tracks" : {
       "comment" : "Activities panel: why Delete is off for the demo account.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В демо-аккаунте нельзя удалять путешествия"
+            "value" : "В демо-аккаунте нельзя удалять треки"
           }
         }
       }
     },
-    "The demo account can't edit activities" : {
+    "The demo account can't edit tracks" : {
       "comment" : "Activities panel: why Edit is off for the demo account.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В демо-аккаунте нельзя изменять путешествия"
+            "value" : "В демо-аккаунте нельзя изменять треки"
           }
         }
       }
     },
-    "The demo account can't upload. Sign up to add your own activities." : {
+    "The demo account can't upload. Sign up to add your own tracks." : {
       "comment" : "You tab: a file was opened in the app on the demo account.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "В демо-аккаунте нельзя загружать файлы. Зарегистрируйтесь, чтобы добавить свои путешествия."
+            "value" : "В демо-аккаунте нельзя загружать файлы. Зарегистрируйтесь, чтобы добавить свои треки."
           }
         }
       }
@@ -3466,7 +3389,7 @@
         }
       }
     },
-    "The photos and track changes in this window haven't been saved yet." : {
+    "The photos and route changes in this window haven't been saved yet." : {
       "comment" : "Edit window: why Cancel asks.",
       "localizations" : {
         "ru" : {
@@ -3484,6 +3407,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Не удалось связаться с сервером."
+          }
+        }
+      }
+    },
+    "The track couldn't be opened: %@" : {
+      "comment" : "Edit: reading the activity in full failed; the placeholder is why.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось открыть трек: %@"
           }
         }
       }
@@ -3510,35 +3444,13 @@
         }
       }
     },
-    "This Story no longer exists." : {
+    "This Trip no longer exists." : {
       "comment" : "Stories tab: the open Story was deleted elsewhere.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Этой истории больше нет."
-          }
-        }
-      }
-    },
-    "This activity has no track to put photos on." : {
-      "comment" : "Photos tab: an activity with no track.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "У этого путешествия нет маршрута, на который можно поместить фотографии."
-          }
-        }
-      }
-    },
-    "This activity's original recording isn't stored, so its track can't be edited" : {
-      "comment" : "Edit window: why the Track tab can't be used.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Исходная запись этого путешествия не сохранена, поэтому маршрут нельзя редактировать"
+            "value" : "Этого путешествия больше нет."
           }
         }
       }
@@ -3576,24 +3488,46 @@
         }
       }
     },
-    "This track is still being processed" : {
-      "comment" : "Edit window: why the Track or Photos tab can't be used yet.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Этот маршрут ещё обрабатывается"
-          }
-        }
-      }
-    },
-    "This track's points have no usable times, so it can't be edited" : {
+    "This route's points have no usable times, so it can't be edited" : {
       "comment" : "Edit window: why the Track tab can't be used.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "У точек этого маршрута нет пригодного времени, поэтому его нельзя редактировать"
+          }
+        }
+      }
+    },
+    "This track has no route to put photos on." : {
+      "comment" : "Photos tab: an activity with no track.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "У этого трека нет маршрута, на который можно поместить фотографии."
+          }
+        }
+      }
+    },
+    "This track is still being processed" : {
+      "comment" : "Edit window: why the Track or Photos tab can't be used yet.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Этот трек ещё обрабатывается"
+          }
+        }
+      }
+    },
+    "This track's original recording isn't stored, so its route can't be edited" : {
+      "comment" : "Edit window: why the Track tab can't be used.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Исходная запись этого трека не сохранена, поэтому маршрут нельзя редактировать"
           }
         }
       }
@@ -3632,34 +3566,100 @@
       }
     },
     "Track" : {
-      "comment" : "Edit window's tab: the track editor.",
+      "comment" : "Edit window's tab: the activity's type, name and description.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Маршрут"
+            "value" : "Трек"
           }
         }
       }
     },
-    "Track •" : {
-      "comment" : "Edit window's tab with unsaved track changes.",
+    "Track graph & trends" : {
+      "comment" : "The Profile page's title, and its row on the You tab.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Маршрут •"
+            "value" : "График и тренды"
           }
         }
       }
     },
-    "Track, with unsaved changes" : {
-      "comment" : "Edit window's Track tab, for VoiceOver, while it has unsaved changes.",
+    "Tracks couldn't load." : {
+      "comment" : "Activities panel: the list's read failed and the server gave no reason.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Маршрут, есть несохранённые изменения"
+            "value" : "Не удалось загрузить треки."
+          }
+        }
+      }
+    },
+    "Tracks that start or end inside it will show those parts again once they're reprocessed." : {
+      "comment" : "Private location editor: what deleting a Private location brings back.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Треки, которые начинаются или заканчиваются внутри него, снова покажут эти части после повторной обработки."
+          }
+        }
+      }
+    },
+    "Tracks: %@" : {
+      "comment" : "A count of activities, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Треки: %@"
+          }
+        }
+      }
+    },
+    "Trip" : {
+      "comment" : "Activities panel: a row's badge for one Story.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Путешествие"
+          }
+        }
+      }
+    },
+    "Trips" : {
+      "comment" : "Tab bar: Stories.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Путешествия"
+          }
+        }
+      }
+    },
+    "Trips couldn't load." : {
+      "comment" : "Stories tab: the list's read failed and the server gave no reason.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не удалось загрузить путешествия."
+          }
+        }
+      }
+    },
+    "Trips: %lld" : {
+      "comment" : "Activities panel: a row's badge for several Stories, written as label: N.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Путешествия: %lld"
           }
         }
       }
@@ -3906,13 +3906,13 @@
         }
       }
     },
-    "You picked %lld activity files. Upload at most %lld at a time." : {
+    "You picked %lld track files. Upload at most %lld at a time." : {
       "comment" : "Upload: too many files: how many were picked and the cap.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Выбрано файлов путешествий: %lld. За раз можно загрузить не больше %lld."
+            "value" : "Выбрано файлов треков: %lld. За раз можно загрузить не больше %lld."
           }
         }
       }
@@ -3928,17 +3928,6 @@
         }
       }
     },
-    "Your activities, Stories, photos and settings are deleted for good. Type %@ to confirm." : {
-      "comment" : "You tab: the delete confirmation; the placeholder is the account's email.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ваши путешествия, истории, фото и настройки будут удалены навсегда. Чтобы подтвердить, введите %@."
-          }
-        }
-      }
-    },
     "Your map is still being updated, so Fog may be incomplete for now. It'll refresh on its own." : {
       "comment" : "Map: coverage is still being redrawn.",
       "localizations" : {
@@ -3946,6 +3935,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Карта ещё обновляется, поэтому Туман пока может быть неполным. Он обновится сам."
+          }
+        }
+      }
+    },
+    "Your tracks, Trips, photos and settings are deleted for good. Type %@ to confirm." : {
+      "comment" : "You tab: the delete confirmation; the placeholder is the account's email.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваши треки, путешествия, фото и настройки будут удалены навсегда. Чтобы подтвердить, введите %@."
           }
         }
       }
@@ -3961,13 +3961,13 @@
         }
       }
     },
-    "Zoom in to see your activities." : {
+    "Zoom in to see your tracks." : {
       "comment" : "Activities tab: the map is too far out to list anything.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Приблизьте карту, чтобы увидеть свои путешествия."
+            "value" : "Приблизьте карту, чтобы увидеть свои треки."
           }
         }
       }
@@ -8497,13 +8497,13 @@
         }
       }
     },
-    "“%@” will be deleted. Its activities stay on your map." : {
+    "“%@” will be deleted. Its tracks stay on your map." : {
       "comment" : "Stories tab: Delete story's confirmation; the placeholder is the Story's name.",
       "localizations" : {
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "«%@» будет удалена. Её путешествия останутся на карте."
+            "value" : "«%@» будет удалено. Его треки останутся на карте."
           }
         }
       }

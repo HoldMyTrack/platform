@@ -59,7 +59,7 @@ final class Uploads: NSObject, URLSessionDataDelegate {
             let text = switch refusal {
             case .zip(let name): String(localized: "\(name): archives aren't imported. Upload the GPX, FIT or TCX files inside it.")
             case .wrongType(let name): String(localized: "\(name) isn't a GPX, FIT or TCX file.")
-            case .tooMany(let count): String(localized: "You picked \(count) activity files. Upload at most \(UploadPlan.maxFiles) at a time.")
+            case .tooMany(let count): String(localized: "You picked \(count) track files. Upload at most \(UploadPlan.maxFiles) at a time.")
             case .tooLarge(let name): String(localized: "\(name) is over \(UploadPlan.maxFileBytes >> 20) MB.")
             }
             notes.append(Note(text: text, error: true))

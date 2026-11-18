@@ -114,7 +114,7 @@ final class ActivityRowCell: UITableViewCell {
 
         remove.isHidden = onRemove == nil
         remove.isEnabled = !demo
-        remove.accessibilityLabel = demo ? String(localized: "The demo account can't change a Story") : String(localized: "Take \(label) out of this Story")
+        remove.accessibilityLabel = demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Take \(label) out of this Trip")
         self.onRemove = onRemove
 
         accessibilityIdentifier = "activityRow"
@@ -127,15 +127,15 @@ final class ActivityRowCell: UITableViewCell {
     }
 
     private func storyBadge(_ stories: [StoryRef], onOpenStory: @escaping (String) -> Void) -> UIButton {
-        let text = stories.count == 1 ? String(localized: "Story") : String(localized: "Stories: \(stories.count)")
+        let text = stories.count == 1 ? String(localized: "Trip") : String(localized: "Trips: \(stories.count)")
         let button = Self.badge(text, id: "badgeStory", icon: UIImage(resource: .bookOpen), accent: true)
         if stories.count == 1 {
             button.addAction(UIAction { _ in onOpenStory(stories[0].id) }, for: .primaryActionTriggered)
-            button.accessibilityLabel = String(localized: "Open the Story \(stories[0].name)")
+            button.accessibilityLabel = String(localized: "Open the Trip \(stories[0].name)")
         } else {
             button.menu = UIMenu(children: stories.map { ref in UIAction(title: ref.name) { _ in onOpenStory(ref.id) } })
             button.showsMenuAsPrimaryAction = true
-            button.accessibilityLabel = String(localized: "In Stories: \(stories.map(\.name).joined(separator: ", "))")
+            button.accessibilityLabel = String(localized: "In Trips: \(stories.map(\.name).joined(separator: ", "))")
         }
         return button
     }

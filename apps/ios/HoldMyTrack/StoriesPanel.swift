@@ -59,15 +59,15 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         self.format = format
         self.demo = demo
         super.init()
-        let title = Controls.label(String(localized: "Stories"), font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
-        let create = Controls.iconButton(UIImage(resource: .plus), label: demo ? String(localized: "The demo account can't change a Story") : String(localized: "New story"), id: "newStory")
+        let title = Controls.label(String(localized: "Trips"), font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
+        let create = Controls.iconButton(UIImage(resource: .plus), label: demo ? String(localized: "The demo account can't change a Trip") : String(localized: "New trip"), id: "newStory")
         create.isEnabled = !demo
         create.addAction(UIAction { [weak self] _ in self?.create() }, for: .primaryActionTriggered)
         let row = UIStackView(arrangedSubviews: [title, UIView(), create])
         row.alignment = .center
         head.axis = .vertical
         head.addArrangedSubview(row)
-        head.addArrangedSubview(Controls.label(String(localized: "A Story shows its own activities instead of what's on the map."), font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary)))
+        head.addArrangedSubview(Controls.label(String(localized: "A Trip shows its own tracks instead of what's on the map."), font: Typeface.sans(DesignTokens.Text.sm, relativeTo: .footnote), color: UIColor(resource: .inkSecondary)))
 
         table.dataSource = self
         table.delegate = self
@@ -123,7 +123,7 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 ready = true
                 if openID == nil, let newest = stories.first { onEvent?(.open(newest.id, collapse: false)) }
             } catch {
-                self.error = Self.message(error, String(localized: "Stories couldn't load."))
+                self.error = Self.message(error, String(localized: "Trips couldn't load."))
             }
             render()
         }
@@ -175,9 +175,9 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 guard id == openID else { return }
                 openStory = nil
                 if case APIError.http(status: 404, _, _) = error {
-                    openError = String(localized: "This Story no longer exists.")
+                    openError = String(localized: "This Trip no longer exists.")
                 } else {
-                    openError = Self.message(error, String(localized: "Stories couldn't load."))
+                    openError = Self.message(error, String(localized: "Trips couldn't load."))
                 }
             }
             render()
@@ -222,7 +222,7 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             if let rowsNote {
                 next.append(.note(rowsNote.text, failed: rowsNote.failed))
             } else if rows.isEmpty {
-                next.append(.note(story.stats.count == 0 ? String(localized: "No activities in this Story yet. Add some with Add to story.") : String(localized: "No activities match these filters."), failed: false))
+                next.append(.note(story.stats.count == 0 ? String(localized: "No tracks in this Trip yet. Add some with Add to trip.") : String(localized: "No tracks match these filters."), failed: false))
             }
         }
         if let story = openStory, story.id == openID, story.stats.count > 0 {
@@ -236,7 +236,7 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         } else if !ready && stories.isEmpty {
             next.append(.note(String(localized: "Loading…"), failed: false))
         } else if ready && stories.isEmpty {
-            next.append(.note(String(localized: "No Stories yet. Check activities on the Activities tab and use Add to story, or make one with +."), failed: false))
+            next.append(.note(String(localized: "No Trips yet. Check tracks on the Tracks tab and use Add to trip, or make one with +."), failed: false))
         }
         items = next
         table.reloadData()
@@ -312,9 +312,9 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         cell.accessibilityIdentifier = "storyFolder"
         cell.accessibilityValue = open ? String(localized: "Open") : String(localized: "Folded")
 
-        let edit = Controls.iconButton(UIImage(resource: .pencil), label: demo ? String(localized: "The demo account can't change a Story") : String(localized: "Rename \(story.name)"), id: "storyEdit")
-        let send = Controls.iconButton(UIImage(resource: .send), label: demo ? String(localized: "The demo account can't change a Story") : String(localized: "Send a copy of \(story.name)"), id: "storySend")
-        let delete = Controls.iconButton(UIImage(resource: .trash2), label: demo ? String(localized: "The demo account can't change a Story") : String(localized: "Delete \(story.name)"), id: "storyDelete")
+        let edit = Controls.iconButton(UIImage(resource: .pencil), label: demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Rename \(story.name)"), id: "storyEdit")
+        let send = Controls.iconButton(UIImage(resource: .send), label: demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Send a copy of \(story.name)"), id: "storySend")
+        let delete = Controls.iconButton(UIImage(resource: .trash2), label: demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Delete \(story.name)"), id: "storyDelete")
         for b in [edit, send, delete] { b.isEnabled = !demo }
         edit.addAction(UIAction { [weak self] _ in self?.rename(story) }, for: .primaryActionTriggered)
         send.addAction(UIAction { [weak self] _ in self?.sendCopy(story) }, for: .primaryActionTriggered)
@@ -358,7 +358,7 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         render()
         Task {
             do { try await api.answerStorySend(send.id, accept: accept) } catch {
-                answerError = Self.message(error, String(localized: "The Story couldn't be saved."))
+                answerError = Self.message(error, String(localized: "The Trip couldn't be saved."))
             }
             answering = false
             render()
@@ -376,14 +376,14 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 if read.story.id == openID { openStory = read.story }
                 onEvent?(.removed(activityID))
             } catch {
-                removeError = Self.message(error, String(localized: "The Story couldn't be saved."))
+                removeError = Self.message(error, String(localized: "The Trip couldn't be saved."))
             }
             render()
         }
     }
 
     private func create() {
-        StoryDialogs.name(over: table, title: String(localized: "New story"), name: "", description: "", action: String(localized: "Create")) { [weak self] name, description in
+        StoryDialogs.name(over: table, title: String(localized: "New trip"), name: "", description: "", action: String(localized: "Create")) { [weak self] name, description in
             guard let self else { return nil }
             do {
                 let read = try await self.api.createStory(name: name, description: description, activityIDs: [])
@@ -391,13 +391,13 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 self.onEvent?(.open(read.story.id, collapse: false))
                 return nil
             } catch {
-                return Self.message(error, String(localized: "The Story couldn't be saved."))
+                return Self.message(error, String(localized: "The Trip couldn't be saved."))
             }
         }
     }
 
     private func rename(_ story: Story) {
-        StoryDialogs.name(over: table, title: String(localized: "Rename story"), name: story.name, description: story.description, action: String(localized: "Save")) { [weak self] name, description in
+        StoryDialogs.name(over: table, title: String(localized: "Rename trip"), name: story.name, description: story.description, action: String(localized: "Save")) { [weak self] name, description in
             guard let self else { return nil }
             do {
                 let read = try await self.api.updateStory(story.id, name: name, description: description)
@@ -407,7 +407,7 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
                 self.render()
                 return nil
             } catch {
-                return Self.message(error, String(localized: "The Story couldn't be saved."))
+                return Self.message(error, String(localized: "The Trip couldn't be saved."))
             }
         }
     }
@@ -425,14 +425,14 @@ final class StoriesPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     private func confirmDelete(_ story: Story) {
-        StoryDialogs.confirm(over: table, title: String(localized: "Delete this Story?"),
-                             message: String(localized: "“\(story.name)” will be deleted. Its activities stay on your map."),
-                             action: String(localized: "Delete story")) { [weak self] in
+        StoryDialogs.confirm(over: table, title: String(localized: "Delete this Trip?"),
+                             message: String(localized: "“\(story.name)” will be deleted. Its tracks stay on your map."),
+                             action: String(localized: "Delete trip")) { [weak self] in
             guard let self else { return nil }
             do {
                 try await self.api.deleteStory(story.id)
             } catch {
-                return Self.message(error, String(localized: "The Story couldn't be deleted."))
+                return Self.message(error, String(localized: "The Trip couldn't be deleted."))
             }
             self.stories.removeAll { $0.id == story.id }
             self.onEvent?(.storiesChanged)

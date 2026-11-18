@@ -73,7 +73,7 @@ extension MapViewController {
         state.vars["listed"] = .array(capped ? activities.map { .string($0.id) } : [])
         if capped, let total = areaTotal {
             let count = { (n: Int) in NumberFormatter.localizedString(from: NSNumber(value: n), number: .decimal) }
-            notice(.capped, String(localized: "Showing the newest \(count(activities.count)) of \(count(total)) activities here. Zoom in or set Dates to see the rest."))
+            notice(.capped, String(localized: "Showing the newest \(count(activities.count)) of \(count(total)) tracks here. Zoom in or set Dates to see the rest."))
         } else {
             hideNotice(.capped)
         }
