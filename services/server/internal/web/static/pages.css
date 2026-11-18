@@ -1621,10 +1621,6 @@ code {
   max-width: 760px;
 }
 
-.sync__section + .sync__section {
-  margin-top: 40px;
-}
-
 .sync__list {
   margin: 0;
   padding: 0;
