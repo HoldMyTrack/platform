@@ -9,7 +9,7 @@ import { useUnitSystem } from './units.ts';
 import { t, tn } from '../i18n/index.ts';
 import { useDismiss } from './useDismiss.ts';
 
-export interface ActivitiesToolbarProps {
+interface ActivitiesToolbarProps {
   readOnly: boolean;
   /** The listed rows, already narrowed by the filters. */
   activities: Activity[];

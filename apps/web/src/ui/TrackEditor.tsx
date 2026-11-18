@@ -30,7 +30,7 @@ import { t, tn } from '../i18n/index.ts';
  * otherwise change a point the user can't see being edited) and Cmd/Ctrl+Z (which belongs to
  * the text fields).
  */
-export interface TrackEditorProps {
+interface TrackEditorProps {
   map: MapLibreMap;
   activity: Activity;
   /** Whether the Track tab is the one showing. */

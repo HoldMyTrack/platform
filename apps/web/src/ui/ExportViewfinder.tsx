@@ -36,7 +36,7 @@ const CORNERS: Corner[] = ['nw', 'ne', 'sw', 'se'];
 /** How long a settle takes: the window's CSS transition and the map's ease share it. */
 const SETTLE_MS = 300;
 
-export interface ExportViewfinderProps {
+interface ExportViewfinderProps {
   map: MapLibreMap;
   /** The live map's own container element — its size is the viewfinder's. */
   containerRef: RefObject<HTMLDivElement | null>;

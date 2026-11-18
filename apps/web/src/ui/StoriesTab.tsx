@@ -22,7 +22,7 @@ function storyStatsLine(totals: StoryTotals, system: UnitSystem): string {
   });
 }
 
-export interface StoriesTabProps {
+interface StoriesTabProps {
   readOnly: boolean;
   /** Newest first — useStories. */
   stories: Story[];

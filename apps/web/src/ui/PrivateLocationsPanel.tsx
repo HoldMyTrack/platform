@@ -42,7 +42,7 @@ import { lang, t, tn } from '../i18n/index.ts';
  *
  * Read-only for the demo account: its circle is listed, shown and highlighted, nothing is editable.
  */
-export interface PrivateLocationsPanelProps {
+interface PrivateLocationsPanelProps {
   map: MapLibreMap;
   readOnly: boolean;
   onChanged: () => void;

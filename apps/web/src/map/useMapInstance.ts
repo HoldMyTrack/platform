@@ -30,7 +30,7 @@ import { lang, t } from '../i18n/index.ts';
  * `initialView` and `initialFlavor` are read once, on purpose: later changes to
  * either must move the camera or swap the style, never rebuild the map.
  */
-export interface UseMapInstanceOptions {
+interface UseMapInstanceOptions {
   container: React.RefObject<HTMLDivElement | null>;
   initialView: ViewState;
   initialFlavor: Flavor;
@@ -47,7 +47,7 @@ export interface UseMapInstanceOptions {
   scaleUnit: 'metric' | 'imperial';
 }
 
-export interface MapInstance {
+interface MapInstance {
   /** Set once MapLibre's `load` fires, which a basemap request that never answers holds back. */
   map: MapLibreMap | null;
   basemap: BasemapStatus;

@@ -3,7 +3,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { refreshTrackLayer } from './tracks.ts';
 import type { ActivityQuery } from '../api.ts';
 
-export interface DataRefreshInputs {
+interface DataRefreshInputs {
   tracksQuery: ActivityQuery;
   reloadActivities: () => void;
   reloadDays: () => void;
@@ -14,7 +14,7 @@ export interface DataRefreshInputs {
   bumpMetrics: () => void;
 }
 
-export interface DataRefresh {
+interface DataRefresh {
   /** The tracks layer at the current query, fetched again. */
   refreshTracks: () => void;
   /** A finished import or a delete: tracks, list, days, the open Story and coverage all refresh. */

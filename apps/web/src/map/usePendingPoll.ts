@@ -8,7 +8,7 @@ const POLL_MS = 2000;
 /** The longest wait between checks while they keep failing. */
 const MAX_RETRY_MS = 60_000;
 
-export interface PendingPollHandlers {
+interface PendingPollHandlers {
   reload: () => void;
   /** A row entered Pending: it was drawn from tiles fetched before, and the server now leaves it out. */
   onStarted: () => void;

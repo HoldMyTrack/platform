@@ -1,7 +1,7 @@
 import { Satellite } from 'lucide-react';
 import { t } from '../i18n/index.ts';
 
-export interface BasemapToggleProps {
+interface BasemapToggleProps {
   satellite: boolean;
   onChange: (satellite: boolean) => void;
 }

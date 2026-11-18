@@ -22,7 +22,7 @@ export interface Selection {
   distanceFilter: DistanceRange | null;
 }
 
-export interface MapSession {
+interface MapSession {
   /** The Dates filter (FR-5.12); all time until set. */
   dates: DateFilter;
   /** The map view the list was last asked about (FR-5.11); null until the opening view settles. */

@@ -11,7 +11,7 @@ import type { SessionUser } from '../api.ts';
  * from an `AuthUser` with `'email' in user` — see api.ts's `SessionUser` for why that's
  * enough without a separate discriminant tag.
  */
-export interface AuthContextValue {
+interface AuthContextValue {
   user: SessionUser;
 }
 

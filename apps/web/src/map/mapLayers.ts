@@ -73,17 +73,17 @@ export interface LayerView {
   paint: Record<string, Record<string, unknown>>;
 }
 
-export type ZoomTier = 'country' | 'region' | 'city';
+type ZoomTier = 'country' | 'region' | 'city';
 
 /** A tier, drawn below `below`; the last has none. */
-export interface LayerTier {
+interface LayerTier {
   tier: ZoomTier;
   below?: number;
 }
 
 /** A Fog level (fogLevels.ts): its band, the layers that draw it, and what the account's country
  *  calls its places (a local_type, as the tooltip's kinds: `state`), empty for the generic name. */
-export interface FogLevel extends FogLevelBand {
+interface FogLevel extends FogLevelBand {
   layers: string[];
   word?: string;
 }
@@ -140,7 +140,7 @@ function mergeViews(parts: readonly GroupPart[], mode: MapMode, dark: boolean, s
   return view;
 }
 
-export interface BuildLayersOptions {
+interface BuildLayersOptions {
   flavor: Flavor;
   /** Whether the flavor draws light on dark (style.ts's isDarkFlavor). */
   dark: boolean;

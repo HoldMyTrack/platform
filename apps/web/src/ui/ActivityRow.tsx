@@ -13,7 +13,7 @@ export function rowLabel(activity: Activity): string {
   return activity.name?.trim() || formatStartedAt(activity.startedAt, activity.timezone);
 }
 
-export interface ActivityRowProps {
+interface ActivityRowProps {
   activity: Activity;
   system: UnitSystem;
   focused: boolean;

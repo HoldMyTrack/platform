@@ -5,7 +5,7 @@ import { statsCardKey, type StatsCardRequest } from './exportStats.ts';
 /** How long the request waits after the size, theme or checked set last changed. */
 const STATS_CARD_DELAY_MS = 400;
 
-export interface StatsCard {
+interface StatsCard {
   /** The request it was drawn for (statsCardKey). */
   key: string;
   /** An object URL of the PNG, for the preview's <img>. */

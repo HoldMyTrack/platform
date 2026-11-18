@@ -7,7 +7,7 @@ import { usePhotoMarkers, type PhotoMarkerItem, type PhotoMarkerOverlay } from '
 import { API_BASE_URL, type Photo } from '../api.ts';
 import { usePhotos, type PhotosState } from '../ui/usePhotos.ts';
 
-export interface PhotoLayerInputs {
+interface PhotoLayerInputs {
   mode: MapMode;
   editWindowIds: readonly string[] | null;
   focusedId: string | null;
@@ -21,7 +21,7 @@ export interface PhotoLayerInputs {
   mapHiddenIds: ReadonlySet<string>;
 }
 
-export interface PhotoLayer {
+interface PhotoLayer {
   photos: PhotosState;
   /** The photos in the open popup, saved ones only, and which is shown. */
   popup: { photos: Photo[]; index: number } | null;

@@ -9,7 +9,7 @@ import type { PanelTab } from '../ActivitiesPanel.tsx';
 /** A first-time card: the feature's own explanation, shown once per browser. */
 export type CardId = 'fog' | 'stories';
 
-export type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'places' | 'export' | 'fog' | 'fog_cities' | 'fog_counties' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
+type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'places' | 'export' | 'fog' | 'fog_cities' | 'fog_counties' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
 
 /**
  * Where a step puts the camera: `center` and `zoom`, then a slow turn of the globe through each
@@ -119,7 +119,7 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
   ];
 }
 
-export function sameView(a: TourView, b: TourView): boolean {
+function sameView(a: TourView, b: TourView): boolean {
   return a.center[0] === b.center[0] && a.center[1] === b.center[1] && a.zoom === b.zoom;
 }
 
@@ -184,7 +184,7 @@ export function readTourSeen(raw: string | null): TourSeen {
   }
 }
 
-export type TourStart = 'start' | 'offer' | 'none' | 'wait';
+type TourStart = 'start' | 'offer' | 'none' | 'wait';
 
 /**
  * What the map does about the tour when it opens. `requested` is the header's Take a tour or

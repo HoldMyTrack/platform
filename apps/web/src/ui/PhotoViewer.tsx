@@ -6,7 +6,7 @@ import { t } from '../i18n/index.ts';
 import { formatStartedAt } from './format.ts';
 import { DOUBLE_CLICK_SCALE, FIT_VIEW, MAX_SCALE, ZOOM_STEP, clampView, fitSize, panBy, zoomAt, type Size, type ZoomView } from './photoZoom.ts';
 
-export interface PhotoViewerProps {
+interface PhotoViewerProps {
   /** The popup's photos: one, or a group's in route order. */
   photos: readonly Photo[];
   index: number;

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { getMapImagery } from '../api.ts';
 
 /** How often the web asks again: the server decides at most every 30 minutes. */
-export const IMAGERY_POLL_MS = 5 * 60_000;
+const IMAGERY_POLL_MS = 5 * 60_000;
 
 /**
  * The server's word on satellite imagery (`GET /v1/map/imagery`), asked at load and every

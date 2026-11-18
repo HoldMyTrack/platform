@@ -18,7 +18,7 @@ import { useBackdropClose } from './ConfirmDialog.tsx';
  * A `<form>`, so Enter in the Name field saves; the Description is a textarea, where Enter is
  * a new line.
  */
-export type StoryDialogProps = (
+type StoryDialogProps = (
   | {
       mode: 'create';
       activityIds: string[];

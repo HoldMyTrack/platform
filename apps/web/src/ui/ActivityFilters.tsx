@@ -21,7 +21,7 @@ export interface DatesProps {
   onClear: () => void;
 }
 
-export interface ActivityFiltersProps {
+interface ActivityFiltersProps {
   facets: TypeFacet[];
   excludedTypes: ReadonlySet<string>;
   onToggleType: (type: string) => void;

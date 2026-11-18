@@ -9,7 +9,7 @@ import type { ExpressionSpecification, GeoJSONSource, LngLat, Map as MapLibreMap
  * view or in an Export (which renders its own offscreen map from fog and tracks alone —
  * exportMap.ts).
  */
-export const PRIVATE_LOCATIONS_SOURCE_ID = 'private-locations';
+const PRIVATE_LOCATIONS_SOURCE_ID = 'private-locations';
 const FILL_LAYER_ID = 'private-locations-fill';
 const OUTLINE_LAYER_ID = 'private-locations-outline';
 const CENTER_LAYER_ID = 'private-locations-center';
@@ -18,7 +18,7 @@ const HANDLE_LAYER_ID = 'private-locations-handle';
 const COLOR = '#7a4bc2';
 const CIRCLE_STEPS = 64;
 
-export interface Circle {
+interface Circle {
   /** Absent for a circle not saved yet. */
   id?: string;
   lon: number;
@@ -140,7 +140,7 @@ export type PrivateLocationsClick =
   | { kind: 'saved'; id: string }
   | { kind: 'empty'; lngLat: { lng: number; lat: number } };
 
-export interface PrivateLocationsHandlers {
+interface PrivateLocationsHandlers {
   onClick: (target: PrivateLocationsClick) => void;
   /** The handle being dragged, every frame. */
   onDrag: (lngLat: { lng: number; lat: number }) => void;

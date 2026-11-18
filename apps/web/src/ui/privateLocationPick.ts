@@ -6,9 +6,9 @@
 export type PickIntent = 'focus' | 'edit';
 
 /** `apply` does the intent; `keep` leaves the open editor as it is (the target is already in it). */
-export type PickAction = 'ignore' | 'keep' | 'confirm' | 'apply';
+type PickAction = 'ignore' | 'keep' | 'confirm' | 'apply';
 
-export interface EditorState {
+interface EditorState {
   open: boolean;
   /** The location in the editor; absent for a new one not saved yet. */
   id?: string | undefined;

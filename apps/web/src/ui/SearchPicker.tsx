@@ -36,7 +36,7 @@ function search(options: PickerOption[], query: string): PickerOption[] {
   return ranked.flat();
 }
 
-export interface SearchPickerProps {
+interface SearchPickerProps {
   options: PickerOption[];
   value: string;
   onChange: (value: string) => void;

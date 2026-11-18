@@ -9,7 +9,7 @@ import type { MapMode } from './mapMode.ts';
 import type { PhotoMarkerItem, PhotoMarkerOverlay } from './photos.ts';
 
 /** How far apart, in metres, a group's photos must be for zooming in to separate them (§4.27). */
-export const GROUP_SPREAD_M = 15;
+const GROUP_SPREAD_M = 15;
 
 /** The zoom a separable group fits to at most, where GROUP_SPREAD_M is wider than a marker. */
 export const GROUP_MAX_ZOOM = 19;

@@ -59,7 +59,7 @@ export function trackQuery(range: TrackDateRange): string {
 // every styledata would stack duplicate handlers, firing a click N times after N theme toggles.
 const interactiveMaps = new WeakSet<MapLibreMap>();
 
-export interface TrackInteractivityHandlers {
+interface TrackInteractivityHandlers {
   /** A track was clicked — the caller decides what "selected" means (see MapView). */
   onSelect: (activityId: string) => void;
   /** The pointer entered or left a track — `null` on leave. Reported up rather than applied

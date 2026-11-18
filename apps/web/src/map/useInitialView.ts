@@ -5,7 +5,7 @@ import type { Flavor } from './style.ts';
 import { flavorForTheme, parseHash, pinnedFlavor, replaceHash, type HashState, type ViewState } from './viewState.ts';
 import { currentTheme, useTheme } from '../ui/useTheme.ts';
 
-export interface InitialView {
+interface InitialView {
   /** The URL's hash, the opening camera and flavor, read once per mount. */
   initial: { hash: HashState; view: ViewState; flavor: Flavor };
   /** The basemap flavor now. */

@@ -11,7 +11,7 @@ import { t } from '../i18n/index.ts';
  * and the default step of 1, counted from the minimum, can't land on the maximum — a knob
  * dragged back to the end stopped just short of the longest activity and kept it filtered out.
  */
-export interface DistanceFilterProps {
+interface DistanceFilterProps {
   bounds: DistanceRange | null;
   value: DistanceRange | null;
   onChangeDistance: (next: DistanceRange | null) => void;

@@ -20,7 +20,7 @@ export interface NewPhoto {
 }
 
 /** A saved photo's pending changes; a field present is a change. */
-export interface PhotoChange {
+interface PhotoChange {
   routeAt?: number;
   caption?: string;
 }
@@ -49,7 +49,7 @@ export function draftSize(draft: PhotoDraft): number {
 }
 
 /** One row of the tab's list: a saved photo as the draft would leave it, or a new one. */
-export type DraftRow =
+type DraftRow =
   | { kind: 'saved'; id: string; photo: Photo; routeAt: number; caption: string; deleted: boolean }
   | { kind: 'new'; id: string; photo: NewPhoto; routeAt: number; caption: string };
 

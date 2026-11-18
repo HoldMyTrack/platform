@@ -7,7 +7,7 @@ import { haversineM as distanceM } from '../geo.ts';
  * keeps. Android's `PhotoTrack.kt` runs the same cases, `testdata/client-rules/photo-track-*.json`.
  */
 
-export interface TimedPoint {
+interface TimedPoint {
   lon: number;
   lat: number;
   /** Epoch seconds. */
@@ -74,7 +74,7 @@ export type PlaceAnchor = { t: number } | { waiting: string } | null;
 
 /** How far past the previous photo a waiting one's slider starts: just after it, so photos
  *  picked in the order they were taken walk forward along the route. */
-export const NEXT_PHOTO_STEP = 0.01;
+const NEXT_PHOTO_STEP = 0.01;
 
 /**
  * Where a waiting photo's slider starts: just after the photo picked before it, which

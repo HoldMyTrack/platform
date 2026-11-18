@@ -42,7 +42,7 @@ export function fogLevelPick(
 const MAX_ZOOM = 24;
 
 /** A level with the layers that draw it (the layers document's `levels`). */
-export interface FogLevelLayers extends FogLevelBand {
+interface FogLevelLayers extends FogLevelBand {
   layers: readonly string[];
 }
 

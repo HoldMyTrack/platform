@@ -23,9 +23,9 @@ export type Corner = 'nw' | 'ne' | 'sw' | 'se';
 
 /** Room kept clear around the window: the toolbar's row above it, the output size's label
  *  below it, and a margin at the sides. */
-export const VIEWFINDER_TOP_PX = 64;
-export const VIEWFINDER_BOTTOM_PX = 44;
-export const VIEWFINDER_SIDE_PX = 16;
+const VIEWFINDER_TOP_PX = 64;
+const VIEWFINDER_BOTTOM_PX = 44;
+const VIEWFINDER_SIDE_PX = 16;
 /** The smallest a corner drag can crop the window to. */
 export const MIN_WINDOW_PX = 64;
 

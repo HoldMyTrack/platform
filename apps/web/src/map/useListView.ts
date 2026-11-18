@@ -4,7 +4,7 @@ import { mapHiddenIds as hiddenOnMap } from './selection.ts';
 import type { Activity } from '../api.ts';
 import { distanceBounds, passesFilters, typeFacets, type DistanceRange, type TypeFacet } from '../ui/activityFacets.ts';
 
-export interface ListView {
+interface ListView {
   /** Rows with a reprocess pending (a track edit or a Private location change). A Pending track isn't drawn (FR-5.8). */
   pendingIds: string[];
   distanceBounds: DistanceRange | null;

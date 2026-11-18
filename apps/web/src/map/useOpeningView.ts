@@ -8,7 +8,7 @@ import type { MapSessionEvent } from './session.ts';
 import { viewArea } from './useAreaList.ts';
 import { listArea, type BBox } from '../api.ts';
 
-export interface OpeningViewInputs {
+interface OpeningViewInputs {
   /** The URL's camera, a Story or an arriving activity decides the camera instead. */
   keepCamera: boolean;
   country: string;

@@ -7,7 +7,7 @@ import { t } from '../i18n/index.ts';
 import { formatStartedAt } from './format.ts';
 import { PhotoViewer } from './PhotoViewer.tsx';
 
-export interface PhotoPopupProps {
+interface PhotoPopupProps {
   map: MapLibreMap;
   /** The photo shown, or a group's photos in route order (a marker standing for several). */
   photos: readonly Photo[];

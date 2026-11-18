@@ -4,7 +4,7 @@
  * that shape (a proxy's error page in front of the server, an empty body) has no code; its text,
  * or the fallback when there's none, is the message.
  */
-export interface ApiErrorBody {
+interface ApiErrorBody {
   code: string | null;
   message: string;
 }

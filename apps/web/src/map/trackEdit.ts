@@ -9,11 +9,11 @@ import type { TrackPoint } from '../api.ts';
  * dashed), every recorded point, and the two knob points — plus, for a split (§4.7.8), the
  * second piece's line in a color of its own.
  */
-export const TRACK_EDIT_SOURCE_ID = 'track-edit';
+const TRACK_EDIT_SOURCE_ID = 'track-edit';
 const LINE_LAYER_ID = 'track-edit-line';
 const SECOND_LAYER_ID = 'track-edit-second';
 const PREVIEW_LAYER_ID = 'track-edit-preview';
-export const TRACK_EDIT_POINTS_LAYER_ID = 'track-edit-points';
+const TRACK_EDIT_POINTS_LAYER_ID = 'track-edit-points';
 const KNOBS_LAYER_ID = 'track-edit-knobs';
 
 const ACCENT = '#b07e2e';
@@ -198,7 +198,7 @@ export function onTrackEditPointClick(map: MapLibreMap, onPoint: (t: number) => 
   };
 }
 
-export interface PointDrag {
+interface PointDrag {
   /** The point at `t` is under the pointer at `lon`/`lat` — a preview, nothing committed. */
   onMove: (t: number, lon: number, lat: number) => void;
   /** Let go: `to` is where it was dropped, null when it was pressed and let go unmoved. */

@@ -31,7 +31,7 @@ function saveShowStats(show: boolean): void {
 }
 
 /** What the stats card is drawn from: the Activities panel's checked set and the open Story. */
-export interface ExportStatsSource {
+interface ExportStatsSource {
   checked: ReadonlySet<string>;
   storyId: string | null;
 }

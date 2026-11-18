@@ -9,7 +9,7 @@
 export type SatelliteStatus = 'loading' | 'loaded' | 'failed';
 
 /** How long Satellite waits on screen for its first imagery tile. */
-export const SATELLITE_WAIT_MS = 15_000;
+const SATELLITE_WAIT_MS = 15_000;
 
 export function satelliteStatus(loaded: boolean, failed: boolean, waitedMs: number): SatelliteStatus {
   if (loaded) return 'loaded';

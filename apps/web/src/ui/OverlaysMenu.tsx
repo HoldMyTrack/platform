@@ -7,7 +7,7 @@ import { webLayers } from '../map/webLayers.ts';
 import { t } from '../i18n/index.ts';
 import { PickItem, PickMenu } from './PickMenu.tsx';
 
-export interface OverlaysMenuProps {
+interface OverlaysMenuProps {
   overlays: Overlays;
   onChange: (next: Overlays) => void;
   /** The basemap's flavor, whose layers document gives the legend. */

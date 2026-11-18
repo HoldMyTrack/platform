@@ -42,7 +42,7 @@ export interface PhotoMarkerOverlay {
   activeId: string | null;
 }
 
-export interface PhotoMarkerOptions {
+interface PhotoMarkerOptions {
   /** A marker was clicked: its photo, or its group's photos in route order. */
   onOpen: (ids: string[]) => void;
   /** The photo open in its popup, or in hand in the Photos tab: its marker is drawn larger. */

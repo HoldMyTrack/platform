@@ -11,7 +11,7 @@ export type ExportFlow =
   | { stage: 'framing' | 'capturing'; preset: ExportPreset | 'custom'; customSize: CustomSizeId; window: Rect };
 
 /** The map container's size. */
-export interface ContainerSize {
+interface ContainerSize {
   width: number;
   height: number;
 }

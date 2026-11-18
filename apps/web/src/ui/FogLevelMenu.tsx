@@ -7,7 +7,7 @@ import type { Explored } from '../map/useCoverageRefresh.ts';
 import { hasKey, lang, t } from '../i18n/index.ts';
 import { useDismiss } from './useDismiss.ts';
 
-export interface FogLevelMenuProps {
+interface FogLevelMenuProps {
   map: MapLibreMap;
   /** The places of each level the account has explored, which the menu counts. */
   explored: Explored | null;

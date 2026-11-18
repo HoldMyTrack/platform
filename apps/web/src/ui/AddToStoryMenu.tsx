@@ -6,7 +6,7 @@ import { useStories } from './useStories.ts';
 import { t, tn } from '../i18n/index.ts';
 import { useDismiss } from './useDismiss.ts';
 
-export interface AddToStoryMenuProps {
+interface AddToStoryMenuProps {
   readOnly: boolean;
   /** The toolbar's target — the checked group, else the selected row (MapView's toolbarTargetIds). */
   target: Activity[];

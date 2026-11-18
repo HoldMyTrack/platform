@@ -58,7 +58,7 @@ type TrackPending = { edit: TrackEdit | null; splitAt: number | null };
  * with none falls back to its start datetime as the row's primary line; it's never parsed from
  * a source file, only typed in here, one activity at a time.
  */
-export interface EditActivityWindowProps {
+interface EditActivityWindowProps {
   map: MapLibreMap;
   /** At least one — the checked group, whatever its size. */
   activities: ActivityDetail[];

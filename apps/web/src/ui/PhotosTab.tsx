@@ -12,7 +12,7 @@ import { MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
 /** The slider's steps — fine enough that a step on a long route is a few metres. */
 const SLIDER_STEPS = 1000;
 
-export interface PhotosTabProps {
+interface PhotosTabProps {
   activity: Activity;
   /** The saved photos, as the server has them. */
   photos: readonly Photo[];

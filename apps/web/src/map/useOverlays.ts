@@ -5,7 +5,7 @@ import { satelliteOffered } from './imageryOffered.ts';
 import { loadOverlays, saveOverlays, type Overlays } from './overlays.ts';
 import { useImageryStatus } from './useImageryStatus.ts';
 
-export interface OverlayChoices {
+interface OverlayChoices {
   overlays: Overlays;
   change: (next: Overlays) => void;
   /** The paths drawn: each picked, while the Layers checkbox is on. */

@@ -18,7 +18,7 @@ export const API_BASE_URL: string =
  * cutover is a matter of introducing a second constant here, not a hunt-and-replace across
  * every call site below. The tiles' own prefix is mapLayers.ts's TILES.
  */
-export const API_V1 = '/v1';
+const API_V1 = '/v1';
 
 /** A shape the API contract (services/server/api/) names, as `apiSchema.ts` generates it from the
  *  contract (`npm run gen:api-types`). */
@@ -243,7 +243,7 @@ function toActivityDetail(a: Schema<'ActivityRow'>): ActivityDetail {
 
 /** A list response: the rows, and for an area how many it holds, more than the rows when they
  *  were cut at the limit; null otherwise. */
-export interface ActivityPage {
+interface ActivityPage {
   activities: Activity[];
   total: number | null;
 }
@@ -351,13 +351,13 @@ export async function deleteActivity(id: string): Promise<void> {
 }
 
 /** One day of §4.7's histogram — a day that actually has activities; days with none are absent. */
-export interface HistogramBucket {
+interface HistogramBucket {
   date: string;
   count: number;
   distanceMeters: number;
 }
 
-export interface ActivityDayPage {
+interface ActivityDayPage {
   /** "day" — §4.7's resolved granularity. Present so a future weekly rollup is detectable. */
   bucket: string;
   /** The first and last day this page actually returned, or "" for an empty page. */
@@ -370,7 +370,7 @@ export interface ActivityDayPage {
   earliest: string | null;
 }
 
-export interface DayPageQuery {
+interface DayPageQuery {
   /** How many days-with-activity to return. */
   limit: number;
   /** Return the `limit` most recent days strictly before this one; omit for the newest. */
@@ -402,7 +402,7 @@ export async function getActivityDayPage(query: DayPageQuery, signal?: AbortSign
   };
 }
 
-export interface TrackMetricPoint {
+interface TrackMetricPoint {
   lon: number;
   lat: number;
   speedMps: number;
@@ -411,7 +411,7 @@ export interface TrackMetricPoint {
 }
 
 /** A run of points in one pace band, slowest 0, by index into the points, `end` inclusive. */
-export interface PaceBand {
+interface PaceBand {
   band: number;
   start: number;
   end: number;
@@ -504,7 +504,7 @@ export type TrackEdit = Schema<'TrackEdit'>;
 /** One recorded point: [lon, lat, unix ms]. */
 export type TrackPoint = [number, number, number];
 
-export interface ActivityTrackPoints {
+interface ActivityTrackPoints {
   /** Every point the activity is processed from, clipped by Private locations, before the user's edit. */
   points: TrackPoint[];
   /** The edit currently applied on top of `points`, or null for an unedited track. */
@@ -756,7 +756,7 @@ export async function sendStory(id: string, email: string): Promise<void> {
 }
 
 /** A copy of a Story someone sent the account, waiting to be accepted or declined (FR-13.7). */
-export interface StorySend {
+interface StorySend {
   id: string;
   storyName: string;
   /** The sender's name, or their email address when they've set none. */
@@ -765,7 +765,7 @@ export interface StorySend {
 }
 
 /** A copy the account accepted that hasn't finished arriving. */
-export interface StoryCopying {
+interface StoryCopying {
   storyName: string;
   from: string;
 }
@@ -836,7 +836,7 @@ export async function getCoverageStatus(signal?: AbortSignal): Promise<CoverageS
 /** `GET /v1/spots` — "Show in this area" (FR-14.4): the places in a box, in the chosen
  *  categories. `total` is how many the box holds; more than `spots.length` when the server cut
  *  the answer at its limit. */
-export interface SpotsInArea {
+interface SpotsInArea {
   spots: SpotInArea[];
   total: number;
 }
@@ -926,7 +926,7 @@ export async function listPhotos(of: { activity: string } | { story: string }, s
 export class PhotoNeedsPlaceError extends Error {}
 
 /** What a photo's EXIF said, as the placement fields `POST /v1/photos` and its check take. */
-export interface PhotoExifFields {
+interface PhotoExifFields {
   takenAt?: string;
   takenLocal?: string;
   lat?: number;

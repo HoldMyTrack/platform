@@ -10,13 +10,13 @@ import { isoSeconds } from './photoDraft.ts';
  * once its picker converts) hand a browser. Anything else uploads with no metadata, unplaced.
  */
 
-export const PHOTO_MAX_SIDE = 2048;
-export const PHOTO_THUMB_SIDE = 320;
+const PHOTO_MAX_SIDE = 2048;
+const PHOTO_THUMB_SIDE = 320;
 const QUALITY = 0.85;
 
 /** What a photo's EXIF says, as `POST /v1/photos` takes it. `takenAt` is an instant (RFC 3339,
  *  UTC), `takenLocal` a camera clock with no zone (`YYYY-MM-DDTHH:MM:SS`); at most one is set. */
-export interface PhotoExif {
+interface PhotoExif {
   takenAt?: string;
   takenLocal?: string;
   lat?: number;

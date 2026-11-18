@@ -6,7 +6,7 @@ import { editPhotosBlocker, editTrackBlocker } from '../ui/editAvailability.ts';
 import type { EditTab } from '../ui/EditActivityWindow.tsx';
 import type { MessageKey } from '../i18n/en.ts';
 
-export interface EditWindowState {
+interface EditWindowState {
   /** The window's activities, by id; null while it's closed. */
   ids: string[] | null;
   open: boolean;

@@ -37,7 +37,7 @@ export const WORLD_VIEW = {
  * keeps style construction pure: the print pipeline passes its own origin
  * instead of borrowing the browser's.
  */
-export function browserOrigin(): string {
+function browserOrigin(): string {
   return window.location.origin;
 }
 

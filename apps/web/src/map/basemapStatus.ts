@@ -8,7 +8,7 @@
 export type BasemapStatus = 'loading' | 'loaded' | 'unreachable';
 
 /** How long the map waits on screen for its first basemap tile. */
-export const BASEMAP_WAIT_MS = 15_000;
+const BASEMAP_WAIT_MS = 15_000;
 
 export function basemapStatus(loaded: boolean, failed: boolean, waitedMs: number): BasemapStatus {
   if (loaded) return 'loaded';

@@ -12,7 +12,7 @@ import { ShowInArea } from './ShowInArea.tsx';
 import { FogLevelMenu } from './FogLevelMenu.tsx';
 import { lang, t } from '../i18n/index.ts';
 
-export interface MapControlsProps {
+interface MapControlsProps {
   map: MapLibreMap | null;
   mode: MapMode;
   onModeChange: (mode: MapMode) => void;

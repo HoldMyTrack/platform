@@ -57,7 +57,7 @@ import { TourLayer } from '../ui/tour/Tour.tsx';
 import { useTour } from '../ui/tour/useTour.ts';
 import { t } from '../i18n/index.ts';
 
-export interface MapViewProps {
+interface MapViewProps {
   /** Mount with the Activities panel on its Privacy tab: `/?private-locations` (App.tsx). */
   initialPrivateLocationsOpen?: boolean;
   /** Mount on one activity, its day selected and it focused: `/?activity=&day=`, the /sync page's "View on map". */

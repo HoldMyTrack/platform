@@ -3,7 +3,7 @@ import type { MessageKey } from '../i18n/en.ts';
 /** What the Fog tooltip says about an outline (fogPlaces.ts). */
 
 /** What an outline's tile feature carries (internal/httpapi's adminLayer.tileQuery). */
-export interface PlaceProps {
+interface PlaceProps {
   kind?: unknown;
   type?: unknown;
   name?: unknown;
@@ -14,13 +14,13 @@ export interface PlaceProps {
 
 /** Of a level below the place, how many of its places in it the account has been in out of
  *  `total`, and the plural catalog key (`.one`, `.other`, …) naming them in its country's words. */
-export interface PlaceCount {
+interface PlaceCount {
   key: string;
   explored: number;
   total: number;
 }
 
-export interface PlaceLabel {
+interface PlaceLabel {
   name: string;
   kindKey: MessageKey;
   /** The places it lies in, nearest first, or '' for a country. */

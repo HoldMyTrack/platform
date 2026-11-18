@@ -32,7 +32,7 @@ import { webLayers } from './webLayers.ts';
  * the coverage rasters don't cover (a Private location change reprocesses whole activities),
  * and which can't otherwise tell when the server has finished.
  */
-export interface CoverageRefresh {
+interface CoverageRefresh {
   /** Starts (or restarts) the watch — see useCoverageRefresh. */
   watch: (onDone?: () => void) => void;
   /** Whether the latest status read found coverage still being worked on. */

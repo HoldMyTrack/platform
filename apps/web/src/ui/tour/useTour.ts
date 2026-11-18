@@ -5,7 +5,7 @@ import type { PanelTab } from '../ActivitiesPanel.tsx';
 import { CAMERA_UNMOVED, NARROW_WIDTH, cameraEnd, cameraStep, cardFor, isPlainClick, nextStep, onScreen, stepChanges, stepsFor, tourStart, withCard, type TourCamera, type CardId, type TourSeen, type TourOpen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
 import { loadTourSeen, saveTourSeen } from './tourStore.ts';
 
-export interface TourOptions {
+interface TourOptions {
   map: MapLibreMap | null;
   isDemo: boolean;
   /** Null until the account's history and the map are both ready, so every step has something to point at. */

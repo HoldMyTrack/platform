@@ -63,7 +63,7 @@ export interface ExportViewState {
   photos: ExportPhotos;
 }
 
-export interface ExportFrameCapture {
+interface ExportFrameCapture {
   /** The window's center, as a map position. */
   center: { lng: number; lat: number };
   /** The window's on-screen size in CSS pixels, at the live map's current zoom. */

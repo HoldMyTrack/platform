@@ -16,7 +16,7 @@ import { attachTrackInteractivity, refreshTrackLayer, trackQuery } from './track
 import type { ActivityQuery, ActivityTrackMetrics } from '../api.ts';
 import { lang } from '../i18n/index.ts';
 
-export interface MapLayersInputs {
+interface MapLayersInputs {
   initialFlavor: Flavor;
   flavor: Flavor;
   /** Satellite is on: its imagery layer is requested. */

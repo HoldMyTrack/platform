@@ -39,7 +39,7 @@ export function fieldWrites(
 }
 
 /** Why Save can't go ahead yet: the message, its values, and the tab that shows the problem. */
-export interface SaveProblem {
+interface SaveProblem {
   key: MessageKey;
   vars?: { max: number };
   tab: 'activity' | 'photos';

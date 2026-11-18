@@ -12,7 +12,7 @@ function moveStoryUrl(id: string | null, nav: StoryNav) {
   else if (nav === 'replace') window.history.replaceState(null, '', urlWithStory(window.location, id));
 }
 
-export interface StoryNavInputs {
+interface StoryNavInputs {
   storyId: string | null;
   dispatch: Dispatch<MapSessionEvent>;
   panelTab: PanelTab;
@@ -28,7 +28,7 @@ export interface StoryNavInputs {
   onActivityRemoved: (id: string) => void;
 }
 
-export interface StoryNavigation {
+interface StoryNavigation {
   enterStory: (id: string, nav?: StoryNav) => void;
   /** `nav` is how opening or leaving the tab's Story moves the URL: the tour replaces, so Back skips its steps. */
   changePanelTab: (tab: PanelTab, nav?: StoryNav) => void;

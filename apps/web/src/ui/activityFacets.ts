@@ -63,7 +63,7 @@ export function nextDistanceFilter(
 /** A row with no recorded distance can't be said to lie inside a distance band — same
  *  nullability stance format.ts and the backend already take on this field — nor can a
  *  private one, whose distance is no track at all. */
-export function passesDistance(activity: Activity, filter: DistanceRange | null): boolean {
+function passesDistance(activity: Activity, filter: DistanceRange | null): boolean {
   if (!filter) return true;
   return activity.distanceMeters !== null && !activity.private && activity.distanceMeters >= filter.min && activity.distanceMeters <= filter.max;
 }

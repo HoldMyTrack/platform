@@ -10,7 +10,7 @@ export interface DateFilter {
 export const ALL_TIME: DateFilter = { after: null, before: null };
 
 /** What the filter's button says, before wording: all time, both ends, or one. */
-export type DateFilterLabel =
+type DateFilterLabel =
   | { kind: 'all' }
   | { kind: 'between'; after: string; before: string }
   | { kind: 'after'; after: string }

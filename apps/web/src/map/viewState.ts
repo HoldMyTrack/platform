@@ -61,7 +61,7 @@ export function parseHash(hash: string): HashState {
   return result;
 }
 
-export function formatHash(view: ViewState, flavor?: Flavor): string {
+function formatHash(view: ViewState, flavor?: Flavor): string {
   const map = [
     view.zoom.toFixed(ZOOM_PRECISION),
     view.latitude.toFixed(COORD_PRECISION),

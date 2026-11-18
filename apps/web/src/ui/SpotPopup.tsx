@@ -9,7 +9,7 @@ import { knownTimeZone } from './timeZone.ts';
 import type { MessageKey } from '../i18n/en.ts';
 import { memorialLabel, spotAddress, wikipediaURL } from './spotText.ts';
 
-export interface SpotPopupProps {
+interface SpotPopupProps {
   map: MapLibreMap;
   spot: Spot;
   /** When the account captured the place (FR-14.6), or null. */

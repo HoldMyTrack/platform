@@ -51,7 +51,7 @@ import { lang, t, tn } from '../i18n/index.ts';
  *  - The toolbar's Show/hide button toggles whether the target's tracks paint on the map at
  *    all, independent of all three of the above; a hidden activity's row dims in place.
  */
-export interface ActivitiesPanelProps {
+interface ActivitiesPanelProps {
   /** A demo account (`docs/SPEC.md` FR-2.1–FR-2.3) — the
    *  backend already rejects every mutation a demo session attempts (requireNotDemo), so this
    *  disables the controls that would otherwise error, with a `title` explaining why, rather

@@ -16,7 +16,7 @@ import { styleReady } from './styleReady.ts';
  */
 
 /** What the client decides, the rest being the document's. */
-export interface LayerState {
+interface LayerState {
   mode: MapMode;
   /** Satellite imagery is on; its views apply only while the style has the imagery. */
   satellite: boolean;
