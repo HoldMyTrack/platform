@@ -35,6 +35,22 @@ type ResponseJson<P extends keyof paths, M extends 'get' | 'post' | 'patch' | 'd
       : never
     : never;
 
+/** The JSON body a `/v1` operation takes, as the contract states it. */
+type RequestJson<P extends keyof paths, M extends 'post' | 'patch' | 'delete'> =
+  NonNullable<paths[P][M]> extends { requestBody?: infer R }
+    ? NonNullable<R> extends { content: { 'application/json': infer B } }
+      ? B
+      : never
+    : never;
+
+/**
+ * A request's body for `P`'s `M`, checked against the contract: a field renamed there no longer
+ * compiles here, where an untyped literal would go on sending the old name.
+ */
+function jsonBody<P extends keyof paths, M extends 'post' | 'patch' | 'delete'>(body: RequestJson<P, M>): string {
+  return JSON.stringify(body);
+}
+
 /** An error response's message, worth putting in front of a person (`parseErrorBody`), for the
  *  `fetch`-based functions below, which all throw through this rather than reading `res.text()`
  *  and constructing an `Error` themselves. One that branches on the code reads the body itself. */
@@ -312,7 +328,7 @@ export async function updateActivity(
   const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activity_type: patch.activityType, name: patch.name, description: patch.description }),
+    body: jsonBody<'/activities/{id}', 'patch'>({ activity_type: patch.activityType, name: patch.name, description: patch.description }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -527,7 +543,7 @@ export async function saveActivityTrackEdit(
   const res = await apiFetch(`/activities/${encodeURIComponent(activityId)}/track-edit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(splitAt === null ? { edit } : { edit, split_at: splitAt, ...(allowHidden ? { allow_hidden: true } : {}) }),
+    body: jsonBody<'/activities/{id}/track-edit', 'post'>(splitAt === null ? { edit } : { edit, split_at: splitAt, ...(allowHidden ? { allow_hidden: true } : {}) }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -586,7 +602,7 @@ export async function savePrivateLocation(input: PrivateLocationInput, id?: stri
   const res = await apiFetch(`/private-locations${id ? `/${encodeURIComponent(id)}` : ''}`, {
     method: id ? 'PATCH' : 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM }),
+    body: jsonBody<'/private-locations', 'post'>({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -671,7 +687,7 @@ export async function updateStory(id: string, input: { name: string; description
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: input.name, description: input.description }),
+    body: jsonBody<'/stories/{id}', 'patch'>({ name: input.name, description: input.description }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -705,7 +721,7 @@ export async function addStoryActivities(id: string, activityIds: string[]): Pro
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activity_ids: activityIds }),
+    body: jsonBody<'/stories/{id}/activities', 'post'>({ activity_ids: activityIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -718,7 +734,7 @@ export async function removeStoryActivities(id: string, activityIds: string[]): 
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activity_ids: activityIds }),
+    body: jsonBody<'/stories/{id}/activities', 'delete'>({ activity_ids: activityIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -732,7 +748,7 @@ export async function sendStory(id: string, email: string): Promise<void> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: jsonBody<'/stories/{id}/send', 'post'>({ email }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -792,7 +808,7 @@ export async function createStory(input: { name: string; description: string; ac
   const res = await apiFetch(`/stories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ name: input.name, description: input.description, activity_ids: input.activityIds }),
+    body: jsonBody<'/stories', 'post'>({ name: input.name, description: input.description, activity_ids: input.activityIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
@@ -923,7 +939,13 @@ export async function checkPhotoPlace(activityId: string, exif: PhotoExifFields)
   const res = await apiFetch(`/photos/place`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ activity_id: activityId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
+    body: jsonBody<'/photos/place', 'post'>({
+      activity_id: activityId,
+      ...(exif.takenAt !== undefined && { taken_at: exif.takenAt }),
+      ...(exif.takenLocal !== undefined && { taken_local: exif.takenLocal }),
+      ...(exif.lat !== undefined && { lat: exif.lat }),
+      ...(exif.lon !== undefined && { lon: exif.lon }),
+    }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -972,7 +994,10 @@ export async function updatePhoto(id: string, change: { caption?: string | undef
   const res = await apiFetch(`/photos/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ caption: change.caption, route_at: change.routeAt }),
+    body: jsonBody<'/photos/{id}', 'patch'>({
+      ...(change.caption !== undefined && { caption: change.caption }),
+      ...(change.routeAt !== undefined && { route_at: change.routeAt }),
+    }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
