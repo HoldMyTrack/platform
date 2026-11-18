@@ -100,7 +100,7 @@ export function AddToStoryMenu({ readOnly, target, targetName, summary, onCreate
         <BookPlus size={16} />
       </button>
       {open && (
-        <div className="story-menu__panel" aria-label={title} data-testid="add-to-story-menu">
+        <div className="story-menu__panel" role="group" aria-label={title} data-testid="add-to-story-menu">
           <button
             type="button"
             className="story-menu__item story-menu__item--new"
