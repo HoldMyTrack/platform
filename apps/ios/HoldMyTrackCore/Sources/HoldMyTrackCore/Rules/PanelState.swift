@@ -16,7 +16,10 @@ public struct PanelState: Equatable, Sendable {
     public private(set) var excludedTypes: Set<String> = []
     /// nil is "any distance": the band at the list's own ends is stored as nil, so it doesn't
     /// count as an active filter.
-    public var distanceFilter: DistanceRange?
+    /// Setting it unchecks a checked row it now hides.
+    public var distanceFilter: DistanceRange? {
+        didSet { dropFilteredChecks() }
+    }
 
     public init() {}
 
@@ -113,6 +116,13 @@ public struct PanelState: Equatable, Sendable {
     /// A toggle, so a type is always one tap from coming back without "Reset filters".
     public mutating func toggleType(_ type: String) {
         if excludedTypes.remove(type) == nil { excludedTypes.insert(type) }
+        dropFilteredChecks()
+    }
+
+    /// A checked row the filters now hide is unchecked, as Invert drops one: the toolbar acts only
+    /// on rows the list shows.
+    private mutating func dropFilteredChecks() {
+        checked.formIntersection(listed.map(\.id))
     }
 
     /// The TYPE dropdown's "All types": only ever re-includes everything.

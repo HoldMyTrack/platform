@@ -1,6 +1,6 @@
 import { distanceValue, unitLabel } from './format';
 import { useUnitSystem } from './units';
-import { nextDistanceFilter, type DistanceRange } from './activityFacets';
+import { bandWithin, nextDistanceFilter, type DistanceRange } from './activityFacets';
 import { t } from '../i18n';
 
 /**
@@ -19,9 +19,9 @@ export interface DistanceFilterProps {
 
 export function DistanceFilter({ bounds, value, onChangeDistance }: DistanceFilterProps) {
   const system = useUnitSystem();
-  const current = value ?? bounds;
-
-  if (!bounds || bounds.min >= bounds.max || !current) return null;
+  if (!bounds || bounds.min >= bounds.max) return null;
+  // The knobs and fill, inside the bounds; the readout says the band as it filters.
+  const current = bandWithin(bounds, value ?? bounds);
 
   return (
     <div className="activity-filters" data-testid="distance-filter">
@@ -31,7 +31,7 @@ export function DistanceFilter({ bounds, value, onChangeDistance }: DistanceFilt
           <span className="activity-filters__readout" data-testid="distance-readout">
             {value === null
               ? t('filters.any_distance')
-              : `${distanceValue(current.min, system)} – ${distanceValue(current.max, system)} ${unitLabel(system)}`}
+              : `${distanceValue(value.min, system)} – ${distanceValue(value.max, system)} ${unitLabel(system)}`}
           </span>
         </div>
         <div className="activity-filters__track-wrap">

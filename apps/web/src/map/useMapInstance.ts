@@ -152,11 +152,37 @@ export function useMapInstance({
     // with the page shown counts, since a hidden tab requests no tiles.
     let loaded = false;
     let failed = false;
+    // The map is handed out on `load`, which a stalled basemap holds back for good. Once the
+    // basemap is reported unreachable it's handed out anyway, as soon as the style is in, so the
+    // list and the app's own layers, which need only the API, still come.
+    let published = false;
+    let styleIn = false;
+    let unreachable = false;
+    const publish = () => {
+      if (published || cancelled) return;
+      published = true;
+      setMap(instance);
+      // Handle for the headless verification run. Dev-only: the production bundle
+      // should not hand a live WebGL map to anything that asks.
+      if (import.meta.env.DEV) {
+        (window as unknown as { __holdmytrack?: MapLibreMap }).__holdmytrack = instance;
+      }
+    };
+    const publishIfUnreachable = () => {
+      if (styleIn && unreachable) publish();
+    };
+    instance.once('style.load', () => {
+      styleIn = true;
+      publishIfUnreachable();
+    });
     let waitedMs = 0;
     let shownSince = document.hidden ? null : performance.now();
     const reportBasemap = () => {
       const shown = shownSince === null ? 0 : performance.now() - shownSince;
-      setBasemap(basemapStatus(loaded, failed, waitedMs + shown));
+      const status = basemapStatus(loaded, failed, waitedMs + shown);
+      setBasemap(status);
+      unreachable = status === 'unreachable';
+      publishIfUnreachable();
       if (loaded) clearInterval(basemapTimer);
     };
     const basemapTimer = setInterval(reportBasemap, 1000);
@@ -207,15 +233,7 @@ export function useMapInstance({
       reportImagery();
     });
 
-    instance.once('load', () => {
-      if (cancelled) return;
-      setMap(instance);
-      // Handle for the headless verification run. Dev-only: the production bundle
-      // should not hand a live WebGL map to anything that asks.
-      if (import.meta.env.DEV) {
-        (window as unknown as { __holdmytrack?: MapLibreMap }).__holdmytrack = instance;
-      }
-    });
+    instance.once('load', publish);
 
     return () => {
       cancelled = true;

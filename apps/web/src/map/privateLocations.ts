@@ -1,5 +1,5 @@
 import { TRACKS_MIN_ZOOM } from './config';
-import type { ExpressionSpecification, GeoJSONSource, Map as MapLibreMap, MapLayerMouseEvent, MapLayerTouchEvent } from 'maplibre-gl';
+import type { ExpressionSpecification, GeoJSONSource, LngLat, Map as MapLibreMap, MapLayerMouseEvent, MapLayerTouchEvent } from 'maplibre-gl';
 
 /**
  * The Private locations overlay (FR-7.1): every saved circle, the one being edited, and its
@@ -154,8 +154,9 @@ export interface PrivateLocationsHandlers {
 export function attachPrivateLocationsHandlers(map: MapLibreMap, handlers: PrivateLocationsHandlers): () => void {
   let dragging = false;
 
-  const move = (e: { lngLat: { lng: number; lat: number } }) => {
-    if (dragging) handlers.onDrag(e.lngLat);
+  const move = (e: { lngLat: LngLat }) => {
+    // Wrapped: past the antimeridian the map reports 181°, which the server refuses.
+    if (dragging) handlers.onDrag(e.lngLat.wrap());
   };
   // The map's own mouseup/touchend fire only for a release over the map; a drag can end
   // anywhere — over the side panel, outside the window — so the document's pointerup ends it
