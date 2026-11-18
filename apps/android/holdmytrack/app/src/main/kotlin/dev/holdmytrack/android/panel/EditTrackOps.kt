@@ -35,7 +35,7 @@ sealed interface EditOp {
  * fold into one [TrackEdit], which is what's sent, and replaying it over the recorded points is
  * what's drawn. Points are named by their time rather than their index, so a deleted point never
  * shifts what an earlier step meant. The web's `editTrackOps.ts`; both run
- * `testdata/client-rules/edit-track-*.json`.
+ * `testdata/client-rules/edit-route-*.json`.
  */
 object EditTrackOps {
 

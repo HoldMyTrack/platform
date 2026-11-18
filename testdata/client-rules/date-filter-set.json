@@ -24,7 +24,7 @@
       "expected": {"filter": {"after": null, "before": null}, "fly": false}
     },
     {
-      "name": "before the first activity clamps to it",
+      "name": "before the first track clamps to it",
       "input": {"current": {"after": null, "before": null}, "end": "after", "value": "2001-01-01", "bounds": {"min": "2019-03-14", "max": "2026-11-10"}},
       "expected": {"filter": {"after": "2019-03-14", "before": null}, "fly": true}
     },

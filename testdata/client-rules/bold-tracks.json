@@ -1,6 +1,6 @@
 {
   "rule": "boldTracks",
-  "description": "The tracks drawn bold, on the live map and in the exported image: the checked group and the focused activity.",
+  "description": "The tracks drawn bold, on the live map and in the exported image: the checked group and the focused track.",
   "cases": [
     { "name": "nothing", "input": { "checked": [] }, "expected": [] },
     { "name": "focus alone", "input": { "checked": [], "focused": "c" }, "expected": ["c"] },

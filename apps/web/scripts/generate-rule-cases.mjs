@@ -108,20 +108,20 @@ function draw(random) {
 
 /** Input generators by rule, each inside the domain its implementations accept. */
 const inputs = {
-  editTrackFold: (d) => {
+  editRouteFold: (d) => {
     const points = d.track(2, 12);
     return { base: d.chance(0.4) ? foldEdit(null, d.ops(points, 4, false)) : null, ops: d.ops(points, 8) };
   },
-  editTrackApply: (d) => {
+  editRouteApply: (d) => {
     const points = d.track(0, 15);
     return { points, edit: points.length ? foldEdit(null, d.ops(points, 6, false)) : {} };
   },
-  editTrackChop: (d) => knobs(d),
-  editTrackCut: (d) => knobs(d),
-  editTrackSplitIndex: (d) => knobs(d),
-  editTrackSplitPoint: (d) => ({ ops: d.ops(d.track(2, 12), 8) }),
-  editTrackMove: (d) => ({ t: 1788249600000 + d.int(0, 1e9), lon: (d.random() - 0.5) * 360, lat: (d.random() - 0.5) * 170 }),
-  editTrackDistances: (d) => ({ points: d.track(0, 20) }),
+  editRouteChop: (d) => knobs(d),
+  editRouteCut: (d) => knobs(d),
+  editRouteSplitIndex: (d) => knobs(d),
+  editRouteSplitPoint: (d) => ({ ops: d.ops(d.track(2, 12), 8) }),
+  editRouteMove: (d) => ({ t: 1788249600000 + d.int(0, 1e9), lon: (d.random() - 0.5) * 360, lat: (d.random() - 0.5) * 170 }),
+  editRouteDistances: (d) => ({ points: d.track(0, 20) }),
   photoClusters: (d) => ({ points: d.screen(15), radius: d.pick([18, 32, d.int(5, 60)]) }),
   photoMarkerLayout: (d) => {
     const width = d.int(80, 400);
@@ -130,12 +130,12 @@ const inputs = {
     const id = () => (points.length && d.chance(0.4) ? d.pick(points).id : null);
     return { points, zoom: d.round6(d.random() * 16), activeId: id(), loneId: id(), width, height, scale: d.pick([1, 1.5, 2, 3]) };
   },
-  photoTrackPoint: (d) => ({ points: d.timed(1, 10), fraction: d.chance(0.1) ? d.pick([0, 1]) : d.random() }),
-  photoTrackFraction: (d) => {
+  photoRoutePoint: (d) => ({ points: d.timed(1, 10), fraction: d.chance(0.1) ? d.pick([0, 1]) : d.random() }),
+  photoRouteFraction: (d) => {
     const points = d.timed(1, 10);
     return { points, t: d.int(points[0].t - 200, points.at(-1).t + 200) };
   },
-  photoTrackStart: (d) => {
+  photoRouteStart: (d) => {
     const points = d.timed(1, 8);
     const t = () => ({ t: d.int(points[0].t - 100, points.at(-1).t + 100) });
     const ids = ['a', 'b', 'c', 'd', 'e'].slice(0, d.int(0, 5));
