@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type RefObject } from 'react';
+import { useRef, useState } from 'react';
 import { Lock, X } from 'lucide-react';
 import type { Activity } from '../api.ts';
 import { formatActivityType, formatDistance, formatDuration, formatStartedAt } from './format.ts';
@@ -211,32 +211,4 @@ function StoryBadge({
       )}
     </span>
   );
-}
-
-/**
- * Scrolls the newly row-click-focused activity into view, centered — reported live as having
- * to hunt for the now-bolded row by eye after clicking a track on the map, since a long list
- * scrolled it out of view as often as not. Keyed on focusedId alone (not the checked group): a
- * row click always has exactly one target to center on, while a checkbox spree building up a
- * multi-row group has no single row to scroll to, and would otherwise jerk the list around
- * after every click. `data-activity-id` on the row is what this looks up.
- *
- * Scrolls the list alone, not `row.scrollIntoView()`: that scrolls every ancestor too, and on a
- * phone the collapsed sheet (`overflow: hidden`, its tab row tall) is one — a tap on a track scrolled
- * the whole sheet up by its own content, pushing the header and the expand strip out of its
- * visible box, where no gesture could bring them back.
- */
-export function useScrollFocusedRow(listRef: RefObject<HTMLElement | null>, focusedId: string | null) {
-  useEffect(() => {
-    if (focusedId === null) return;
-    const list = listRef.current;
-    const row = list?.querySelector(`[data-activity-id="${CSS.escape(focusedId)}"]`);
-    if (!list || !row) return;
-    const rowRect = row.getBoundingClientRect();
-    const offset = rowRect.top - list.getBoundingClientRect().top;
-    list.scrollTo({
-      top: list.scrollTop + offset - (list.clientHeight - rowRect.height) / 2,
-      behavior: 'smooth',
-    });
-  }, [listRef, focusedId]);
 }

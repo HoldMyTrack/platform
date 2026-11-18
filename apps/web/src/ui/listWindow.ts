@@ -22,6 +22,13 @@ export function listWindow(count: number, rowHeight: number, scrollTop: number, 
   return { start: Math.max(0, Math.min(count, first - OVERSCAN)), end: Math.min(count, last + OVERSCAN) };
 }
 
+/** The scroll position that puts row `index` in the middle of a view `viewHeight` tall, for rows
+ *  that start `offset` down a list that also scrolls what's above them; past either end the
+ *  browser clamps it. */
+export function centredScrollTop(index: number, offset: number, rowHeight: number, viewHeight: number): number {
+  return offset + index * rowHeight - (viewHeight - rowHeight) / 2;
+}
+
 /** The scroll position that puts row `index` in the middle of a view `viewHeight` tall, within
  *  the list's `count` rows. */
 export function scrollTopFor(index: number, count: number, rowHeight: number, viewHeight: number): number {

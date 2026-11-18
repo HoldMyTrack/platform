@@ -242,8 +242,8 @@ export function ActivitiesPanel({
   }, [focusedId]);
 
   // The tab strip scrolls sideways when the tabs don't fit (index.css); the selected tab is
-  // brought into view, scrolling the strip alone, for the reason ActivityRow.tsx's
-  // useScrollFocusedRow gives.
+  // brought into view, scrolling the strip alone: on a phone the collapsed sheet is an ancestor,
+  // and `scrollIntoView` scrolling it pushed its header out of reach.
   const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const strip = tabsRef.current;
