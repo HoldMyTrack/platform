@@ -4,7 +4,7 @@ import Foundation
 public enum EditBlock: Equatable, Sendable { case checkOne, pending, isPrivate, noOriginal, badTimes }
 
 /// Whether the Route and Photos tabs can be used for the Edit window's tracks, Android's and
-/// the web's EditAvailability. One track's answer is the server's (the list's `track_edit` and
+/// the web's EditAvailability. One track's answer is the server's (the list's `route_edit` and
 /// `photos`, root docs/SPEC.md FR-5.7 and FR-15.1); the app adds only the rule that depends on
 /// the selection: one track.
 public enum EditAvailability {
