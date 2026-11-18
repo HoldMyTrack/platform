@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { listQuery, tracksQuery as tracksQueryFor } from './activityQuery.ts';
 import { areaLoad } from './areaLoad.ts';
@@ -39,9 +39,8 @@ import { useViewOnMap } from './useViewOnMap.ts';
 import type { Activity } from '../api.ts';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { ActivitiesPanel, type PanelTab } from '../ui/ActivitiesPanel.tsx';
-import { EditActivityWindow, type EditWindowResult } from '../ui/EditActivityWindow.tsx';
+import type { EditWindowResult } from '../ui/EditActivityWindow.tsx';
 import { MapControls } from '../ui/MapControls.tsx';
-import { MapExport } from '../ui/MapExport.tsx';
 import { PhotoPopup } from '../ui/PhotoPopup.tsx';
 import { SpotPopup } from '../ui/SpotPopup.tsx';
 import { todayIn } from '../ui/dateMath.ts';
@@ -53,9 +52,11 @@ import { DemoBar } from '../ui/DemoBar.tsx';
 import { useActivityList } from '../ui/useActivityList.ts';
 import { useStories } from '../ui/useStories.ts';
 import { useStory } from '../ui/useStory.ts';
-import { TourLayer } from '../ui/tour/Tour.tsx';
 import { useTour } from '../ui/tour/useTour.ts';
 import { t } from '../i18n/index.ts';
+import { MapExport } from '../ui/MapExport.tsx';
+import { TourLayer } from '../ui/tour/Tour.tsx';
+import { lazyChunk } from '../lazyChunk.ts';
 
 interface MapViewProps {
   /** Mount with the Activities panel on its Privacy tab: `/?private-locations` (App.tsx). */
@@ -64,6 +65,19 @@ interface MapViewProps {
   initialActivity?: { id: string; day: string } | null;
   /** Start the tour once the map is ready: `/?tour`, the header's Take a tour from another page. */
   initialTour?: boolean;
+}
+
+// Loaded when first opened, not with the map: the Edit window, with the track editor and photo
+// preparation, is a large part of the app that most visits never open (lazyChunk.ts).
+const EditActivityWindow = lazyChunk(() => import('../ui/EditActivityWindow.tsx').then((m) => m.EditActivityWindow));
+
+/** The Edit window's place while its activities, or its code, are on their way. */
+function EditWindowLoading() {
+  return (
+    <section className="edit-track edit-window" aria-busy="true" data-testid="edit-window-loading">
+      <p className="activities-panel__note" role="status">{t('common.loading')}</p>
+    </section>
+  );
 }
 
 /**
@@ -427,6 +441,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               draw the tracks without the edit, and Escape would reach both. */}
           {map && !editOpen && <MapExport map={map} container={container} exporter={exporter} />}
           {map && edit.activities && (
+            <Suspense fallback={<EditWindowLoading />}>
             <EditActivityWindow
               map={map}
               activities={edit.activities}
@@ -438,12 +453,9 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               onTabChange={edit.setTab}
               onClose={closeEditWindow}
             />
+            </Suspense>
           )}
-          {edit.open && !edit.activities && (
-            <section className="edit-track edit-window" aria-busy="true" data-testid="edit-window-loading">
-              <p className="activities-panel__note" role="status">{t('common.loading')}</p>
-            </section>
-          )}
+          {edit.open && !edit.activities && <EditWindowLoading />}
           {edit.closedNotice && (
             <ConfirmDialog
               title={t('deleted' in edit.closedNotice ? 'edit.deleted_title' : 'edit.unreadable_title')}
