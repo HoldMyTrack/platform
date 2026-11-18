@@ -178,7 +178,7 @@ export function readTourSeen(raw: string | null): TourSeen {
   try {
     const saved = JSON.parse(raw) as Partial<TourSeen> | null;
     // 'stories' is the Trips card's id from before the rename.
-    const cards: unknown[] = (Array.isArray(saved?.cards) ? saved.cards : []).map((c) => (c === 'stories' ? 'trips' : c));
+    const cards = ((Array.isArray(saved?.cards) ? saved.cards : []) as unknown[]).map((c) => (c === 'stories' ? 'trips' : c));
     return { tour: saved?.tour === true, cards: CARDS.filter((c) => cards.includes(c)) };
   } catch {
     return NOTHING_SEEN;
