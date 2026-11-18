@@ -56,6 +56,13 @@
 			not path /assets/app.*
 		}
 		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		# The basemap's archive, fonts and sprites, the icons, robots.txt and the sitemap keep their
+		# names from one deploy to the next, so a day: a change reaches every browser by the next.
+		@named {
+			path *
+			not path /assets/*
+		}
+		header @named Cache-Control "public, max-age=86400"
 		file_server
 	}
 
