@@ -1,6 +1,9 @@
 {{define "content"}}{{with .Page}}
 <main class="page-main profile">
   {{if not $.InApp}}<a class="settings__back" href="/">{{t "common.back_to_map"}}</a>{{end}}
+  {{/* The page's own title, for the heading outline; the sections' titles are what it shows. In
+       an app, its screen's title is the heading. */}}
+  {{if not $.InApp}}<h1 class="visually-hidden">{{t "header.profile"}}</h1>{{end}}
 
   <section class="activity-graph" aria-label="{{t "profile.graph_label"}}">
     <div class="activity-graph__cards">

@@ -65,6 +65,17 @@ code {
   text-wrap: pretty;
 }
 
+/* There for a screen reader's outline of the page, not drawn. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
 /* A guide's link back to /guides, above its heading. */
 .page-crumb {
   margin: 0 0 12px;
@@ -333,7 +344,7 @@ code {
   grid-column: 1 / -1;
 }
 
-.page-cards h3 {
+.page-cards h2 {
   margin: 0 0 6px;
   font-family: var(--fm-font-serif);
   font-size: 18px;
