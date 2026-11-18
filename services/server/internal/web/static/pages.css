@@ -487,9 +487,9 @@ code {
   margin: 0;
 }
 
-/* Turnstile's widget is 65px tall; reserving it keeps the button from jumping when it loads. */
+/* The widget shows only when Turnstile asks for a click; until then its hidden box takes no gap in the form. */
 .auth-card__turnstile {
-  min-height: 65px;
+  display: contents;
 }
 
 .auth-card__field {

@@ -129,13 +129,13 @@ func TestSignupPageTurnstile(t *testing.T) {
 	}
 	// Without a token, or with a forged one, the form is refused and shown again with the widget.
 	rec = postSignup(s, "email=someone%40example.com&password=long+enough")
-	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "Complete the check above the button") || !strings.Contains(rec.Body.String(), `data-sitekey="site-key"`) {
+	if rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "If a check appears above the button") || !strings.Contains(rec.Body.String(), `data-sitekey="site-key"`) {
 		t.Errorf("no token: status %d, body without the Turnstile message or widget", rec.Code)
 	}
 	if csp := rec.Header().Get("Content-Security-Policy"); !strings.Contains(csp, turnstileScriptOrigin) {
 		t.Errorf("refused /signup CSP %q doesn't allow the widget's script", csp)
 	}
-	if rec = postSignup(s, "email=someone%40example.com&password=long+enough&cf-turnstile-response=forged"); rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "Complete the check above the button") {
+	if rec = postSignup(s, "email=someone%40example.com&password=long+enough&cf-turnstile-response=forged"); rec.Code != http.StatusBadRequest || !strings.Contains(rec.Body.String(), "If a check appears above the button") {
 		t.Errorf("forged token: status %d, body without the Turnstile message", rec.Code)
 	}
 	if len(*calls) != 1 {
