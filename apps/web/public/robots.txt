@@ -1,5 +1,7 @@
 User-agent: *
 Disallow: /v1/
 Disallow: /tiles/
+# The test suites' sample files: public so the web, Android and iOS suites can fetch them.
+Disallow: /static/testing/
 
 Sitemap: https://holdmytrack.com/sitemap.xml
