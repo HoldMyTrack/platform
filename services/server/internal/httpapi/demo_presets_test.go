@@ -78,17 +78,17 @@ func TestLoadDemoManifest(t *testing.T) {
 		t.Fatalf("got %+v, want %+v", got.Tracks["b.fit"], want)
 	}
 	if want := []demoManifestTrip{{Name: "Weekend", Description: "Two days out", Tracks: []string{"a.gpx", "b.fit"}}}; !reflect.DeepEqual(got.Trips, want) {
-		t.Fatalf("stories %+v, want %+v", got.Trips, want)
+		t.Fatalf("trips %+v, want %+v", got.Trips, want)
 	}
 
 	for name, manifest := range map[string]string{
-		"an entry with no matching file":    `{"tracks": {"gone.gpx": {"name": "x"}}}`,
-		"a story naming a missing file":     `{"trips": [{"name": "S", "tracks": ["gone.gpx"]}]}`,
-		"a story with no name":              `{"trips": [{"name": " ", "tracks": ["a.gpx"]}]}`,
-		"a story with no activities":        `{"trips": [{"name": "S", "tracks": []}]}`,
-		"two stories with one name":         `{"trips": [{"name": "S", "tracks": ["a.gpx"]}, {"name": "S", "tracks": ["b.fit"]}]}`,
-		"two stories opening first":         `{"trips": [{"name": "S", "tracks": ["a.gpx"], "opens_first": true}, {"name": "T", "tracks": ["b.fit"], "opens_first": true}]}`,
-		"a story name over the API's limit": `{"trips": [{"name": "` + strings.Repeat("x", maxTripNameLen+1) + `", "tracks": ["a.gpx"]}]}`,
+		"an entry with no matching file":   `{"tracks": {"gone.gpx": {"name": "x"}}}`,
+		"a trip naming a missing file":     `{"trips": [{"name": "S", "tracks": ["gone.gpx"]}]}`,
+		"a trip with no name":              `{"trips": [{"name": " ", "tracks": ["a.gpx"]}]}`,
+		"a trip with no tracks":            `{"trips": [{"name": "S", "tracks": []}]}`,
+		"two trips with one name":          `{"trips": [{"name": "S", "tracks": ["a.gpx"]}, {"name": "S", "tracks": ["b.fit"]}]}`,
+		"two trips opening first":          `{"trips": [{"name": "S", "tracks": ["a.gpx"], "opens_first": true}, {"name": "T", "tracks": ["b.fit"], "opens_first": true}]}`,
+		"a trip name over the API's limit": `{"trips": [{"name": "` + strings.Repeat("x", maxTripNameLen+1) + `", "tracks": ["a.gpx"]}]}`,
 	} {
 		fsys["manifest.json"] = &fstest.MapFile{Data: []byte(manifest)}
 		if _, err := loadDemoManifest(fsys, files); err == nil {
@@ -176,7 +176,7 @@ func TestFreeDemoFilename(t *testing.T) {
 	}
 }
 
-// A photo through export-demo-activities and back in through the seed (exportDemoPhotos,
+// A photo through export-demo-tracks and back in through the seed (exportDemoPhotos,
 // seedDemoPhotos): its images written out and stored again under the new owner, its place,
 // caption and capture time unchanged, and a re-run of the seed leaving one photo, not two.
 func TestDemoPhotosRoundTrip(t *testing.T) {
@@ -227,7 +227,7 @@ func TestDemoPhotosRoundTrip(t *testing.T) {
 	}
 }
 
-// Captures through export-demo-activities and back in through the seed (exportDemoCaptures,
+// Captures through export-demo-tracks and back in through the seed (exportDemoCaptures,
 // seedDemoCaptures): only the owner's within the span, none reaching into their Private
 // locations, and a re-run of the seed keeping one capture per place at the manifest's time.
 func TestDemoCapturesRoundTrip(t *testing.T) {

@@ -84,7 +84,7 @@ export function typeFacets(tracks: Track[], distanceFilter: DistanceRange | null
 }
 
 /** Whether a row survives both filters at once — what the list renders, what the map draws,
- *  and what the ACTIVITIES badge counts. */
+ *  and what the panel's count badge counts. */
 export function passesFilters(
   track: Track,
   excludedTypes: ReadonlySet<string>,

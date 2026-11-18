@@ -7,7 +7,7 @@ test('the Trip and the Trips tab are read from the query', () => {
   assert.equal(tripParam('?trip='), null);
   assert.equal(tripParam(''), null);
   assert.equal(tripsTabParam('?tab=trips'), true);
-  assert.equal(tripsTabParam('?tab=activities'), false);
+  assert.equal(tripsTabParam('?tab=tracks'), false);
 });
 
 test('setting and removing the Trip keeps the hash and other parameters', () => {

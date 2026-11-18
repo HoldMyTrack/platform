@@ -25,7 +25,7 @@ import dev.holdmytrack.android.recording.TypeCount
  * FR-5.5, FR-5.7, FR-15): a card over the top of the map, opened from the Tracks
  * toolbar's Edit over its target, with three tabs behind one Save and Cancel.
  *
- *  - **Activity**: one route edits Type, Name and Description; several edit Type only —
+ *  - **Track**: one track edits Type, Name and Description; several edit Type only —
  *    Name and Description have nothing to set consistently across different tracks, so
  *    they're disabled with a note saying why rather than silently skipped.
  *  - **Track** ([RouteEditor]): one track with a finished track, else disabled saying why.
@@ -45,7 +45,7 @@ class EditTrackWindow(
     private val card: View,
     /** The edit bar over the top of the map — Cancel, the title, Save — shown with [card]. */
     private val bar: View,
-    /** The Route tab opened on [Activity] for the first time. */
+    /** The Route tab opened on [Track] for the first time. */
     private val onStartRoute: (Track) -> Unit,
     /** The route editor's overlay — see [RouteEditor]. */
     onDrawRoute: (visible: List<RoutePoint>?, lo: Int, hi: Int, preview: EditPreview, split: Int?) -> Unit,
@@ -469,7 +469,7 @@ class EditTrackWindow(
         /** The window's tallest, as a share of the screen, before it scrolls. */
         const val MAX_HEIGHT_FRACTION = 0.55f
 
-        /** The server's own bounds (`tracks.go`'s maxActivityTypeLen and friends). */
+        /** The server's own bounds (`tracks.go`'s maxTrackTypeLen and friends). */
         const val MAX_TYPE = TrackTypePicker.MAX_LENGTH
         const val MAX_NAME = 200
         const val MAX_DESCRIPTION = 2000

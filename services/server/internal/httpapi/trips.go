@@ -19,7 +19,7 @@ import (
 // (§3.19). Another account's Trip answers exactly like a missing one, `404`, on every route.
 //
 // Every change to which tracks a Trip holds bumps the account's tile version
-// (fog.BumpMapVersion, §4.2.6) in the same transaction: the tracks tiles take a `story`
+// (fog.BumpMapVersion, §4.2.6) in the same transaction: the tracks tiles take a `trip`
 // filter, so a cached `?trip=` tile would otherwise keep showing the old membership. A
 // rename or a new description changes no tile and doesn't bump.
 
@@ -32,7 +32,7 @@ const (
 )
 
 var (
-	errTripNotFound  = errors.New("story not found")
+	errTripNotFound  = errors.New("trip not found")
 	errTrackNotFound = errors.New("track not found")
 )
 
@@ -528,7 +528,7 @@ func (s *Server) writeTripError(w http.ResponseWriter, r *http.Request, err erro
 		writeAPIError(w, err.Error(), http.StatusNotFound)
 	case clientGone(w, r):
 	default:
-		s.log.Error("story request failed", "err", err)
+		s.log.Error("trip request failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 	}
 	return true

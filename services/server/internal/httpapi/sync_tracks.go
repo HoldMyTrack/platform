@@ -39,7 +39,7 @@ const maxSyncPointsPerTrack = 50000
 // "cap before reading the body fully" posture handleUpload's maxUploadBytes documents.
 const maxSyncBodyBytes = 64 << 20 // 64 MiB
 
-// syncTrackRequest is one track in the batch. Its raw payload is parse.JSONActivity
+// syncTrackRequest is one track in the batch. Its raw payload is parse.JSONTrack
 // (payload), which names the type track_type, as every payload already stored does and the
 // data download hands back; the request names it track_type like the rest of /v2.
 type syncTrackRequest struct {
@@ -55,8 +55,8 @@ type syncTrackRequest struct {
 }
 
 // payload is the raw payload stored for the track.
-func (t syncTrackRequest) payload() parse.JSONActivity {
-	return parse.JSONActivity{TrackType: t.TrackType, Points: t.Points, Name: t.Name, Description: t.Description}
+func (t syncTrackRequest) payload() parse.JSONTrack {
+	return parse.JSONTrack{TrackType: t.TrackType, Points: t.Points, Name: t.Name, Description: t.Description}
 }
 
 type syncTracksRequest struct {
@@ -162,7 +162,7 @@ func (s *Server) handleSyncTracks(w http.ResponseWriter, r *http.Request) {
 	}
 	enqueued, err := ingest.EnqueueRaw(ctx, s.pool, userID, items)
 	if err != nil {
-		s.log.Error("sync enqueue failed", "err", err, "activities", len(items))
+		s.log.Error("sync enqueue failed", "err", err, "tracks", len(items))
 	}
 	for k, i := range slots {
 		switch {
@@ -272,7 +272,7 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 	// external_id or other request-envelope fields mixed in.
 	data, err := json.Marshal(act.payload())
 	if err != nil {
-		s.log.Error("sync activity marshal failed", "external_id", act.ExternalID, "err", err)
+		s.log.Error("sync track marshal failed", "external_id", act.ExternalID, "err", err)
 		return ingest.RawItem{}, l.T("error.internal")
 	}
 	return ingest.RawItem{

@@ -94,12 +94,12 @@ func TestTrackDeleteRemovesAnOriginalOnlyWithItsLastTrack(t *testing.T) {
 		t.Fatalf("delete first: %d", rec.Code)
 	}
 	if !s3.Has(key) {
-		t.Fatal("original removed while another activity still names it")
+		t.Fatal("original removed while another track still names it")
 	}
 	if rec := d.do(me, http.MethodDelete, "/v2/tracks/"+second, nil); rec.Code != http.StatusNoContent {
 		t.Fatalf("delete second: %d", rec.Code)
 	}
 	if s3.Has(key) {
-		t.Error("original kept after its last activity was deleted")
+		t.Error("original kept after its last track was deleted")
 	}
 }

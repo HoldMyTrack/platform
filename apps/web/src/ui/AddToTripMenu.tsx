@@ -24,7 +24,7 @@ interface AddToTripMenuProps {
  * The Tracks toolbar's Add to trip (`SPEC.md` FR-13): the one place tracks go into a
  * Trip — where they're picked. A menu over the toolbar's target: "New trip…" (TripDialog.tsx
  * in its create mode, a Trip made of the target), then every Trip, newest first, fetched each
- * time the menu opens (useStories). Clicking a Trip adds the target to it with one
+ * time the menu opens (useTrips). Clicking a Trip adds the target to it with one
  * `POST /v2/trips/{id}/tracks` and closes the menu; a Trip already holding all of the
  * target is ticked and can't be picked. Taking a track out of a Trip is the Trips tab's
  * (TripsTab.tsx), where the Trip is open.

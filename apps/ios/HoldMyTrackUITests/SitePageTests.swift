@@ -63,7 +63,7 @@ final class SitePageTests: XCTestCase {
         let link = app.webViews["webPage"].links["View on map"].firstMatch
         XCTAssertTrue(link.waitForExistence(timeout: 15))
         link.tap()
-        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 15), "the activity is focused on the map")
+        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 15), "the track is focused on the map")
         XCTAssertTrue(app.tabBars.buttons["tabMap"].isSelected)
     }
 }

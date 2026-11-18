@@ -96,14 +96,14 @@ func rerenderUserMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	// deadlock each other.
 	err = parallel.ForEach(ctx, len(ids), rerenderParallelism, func(ctx context.Context, i int) error {
 		if err := RerenderTrackMasks(ctx, pool, store, userID, ids[i]); err != nil {
-			log.Warn("rerender-coverage: masks skipped", "activity", ids[i], "err", err)
+			log.Warn("rerender-coverage: masks skipped", "track", ids[i], "err", err)
 		}
 		return nil
 	})
 	if err != nil {
 		return err
 	}
-	log.Info("rerender-coverage: masks redrawn", "user", userID, "activities", len(ids))
+	log.Info("rerender-coverage: masks redrawn", "user", userID, "tracks", len(ids))
 	return nil
 }
 

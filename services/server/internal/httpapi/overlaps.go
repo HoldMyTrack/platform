@@ -67,7 +67,7 @@ func (s *Server) handleTrackOverlaps(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	found, err := ingest.Overlaps(ctx, s.pool, userIDFromContext(ctx), spans)
 	if err != nil {
-		s.log.Error("activity overlaps failed", "err", err)
+		s.log.Error("track overlaps failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}

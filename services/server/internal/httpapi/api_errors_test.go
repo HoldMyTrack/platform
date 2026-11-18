@@ -44,13 +44,13 @@ func TestErrorCodes(t *testing.T) {
 func TestWriteAPIError(t *testing.T) {
 	rec := httptest.NewRecorder()
 	rec.Header().Set("Content-Length", "1234")
-	writeAPIError(rec, "activity not found", http.StatusNotFound)
+	writeAPIError(rec, "track not found", http.StatusNotFound)
 	var body apiErrorBody
 	if err := json.Unmarshal(rec.Body.Bytes(), &body); err != nil {
 		t.Fatal(err)
 	}
 	if rec.Code != http.StatusNotFound || rec.Header().Get("Content-Type") != "application/json" ||
-		rec.Header().Get("Content-Length") != "" || body != (apiErrorBody{Error: "not_found", Message: "activity not found"}) {
+		rec.Header().Get("Content-Length") != "" || body != (apiErrorBody{Error: "not_found", Message: "track not found"}) {
 		t.Fatalf("got %d %v %+v", rec.Code, rec.Header(), body)
 	}
 }

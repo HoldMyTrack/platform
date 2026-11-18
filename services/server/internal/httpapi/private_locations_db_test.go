@@ -94,7 +94,7 @@ func (d *dbTest) track(as account, id string) trackRow {
 			return a
 		}
 	}
-	d.t.Fatalf("activity %s not listed", id)
+	d.t.Fatalf("track %s not listed", id)
 	return trackRow{}
 }
 
@@ -257,14 +257,14 @@ func TestPrivateLocationReprocessFailureKeepsTrackHidden(t *testing.T) {
 	}
 
 	if d.track(me, ok).Pending {
-		t.Error("the activity that reprocessed: still Pending")
+		t.Error("the track that reprocessed: still Pending")
 	}
 	if !d.track(me, broken).Pending {
-		t.Error("the activity that failed: no longer Pending, its old geometry back on the map")
+		t.Error("the track that failed: no longer Pending, its old geometry back on the map")
 	}
 	jobs := d.reprivacyJobs(me)
 	if len(jobs) != 1 || !slices.Equal(jobs[0].TrackIDs, []string{broken}) || jobs[0].Retry != 1 {
-		t.Fatalf("after the failure, jobs %+v, want one rerun of the failed activity", jobs)
+		t.Fatalf("after the failure, jobs %+v, want one rerun of the failed track", jobs)
 	}
 	var later bool
 	if err := d.pool.QueryRow(ctx,

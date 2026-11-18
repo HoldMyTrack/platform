@@ -34,7 +34,7 @@ type Stage int
 const (
 	Normal        Stage = iota
 	RendersPaused       // Fog renders wait for the next day
-	AddingPaused        // uploads, syncs, photos, avatars, Story copies and data downloads are refused
+	AddingPaused        // uploads, syncs, photos, avatars, Trip copies and data downloads are refused
 	ReadsPaused         // Fog tiles, photo images and download archives are refused
 )
 

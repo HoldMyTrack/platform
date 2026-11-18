@@ -45,7 +45,7 @@ var countInAreaQuery = `SELECT count(*) FROM tracks WHERE ` + areaFilterSQL + ` 
 // trajectoryInAreaSQL is "the track crosses one of the area's two boxes" (mapArea.boxes), with
 // the parameters from $first: south, north, then each box's west and east. A track stored past
 // ±180 (§4.1) is matched by the boxes moved a world's width, as the tracks tile matches it. Each
-// test is its own && against constant parameters, so idx_activities_spatial answers the OR; exact
+// test is its own && against constant parameters, so idx_tracks_spatial answers the OR; exact
 // then drops, with ST_Intersects, a track whose box reaches the view while the line doesn't.
 func trajectoryInAreaSQL(first int, exact bool) string {
 	p := func(i int) string { return fmt.Sprintf("$%d::float8", first+i) }
@@ -149,7 +149,7 @@ func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("activity area query failed", "err", err)
+		s.log.Error("track area query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -163,7 +163,7 @@ func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {
 				if clientGone(w, r) {
 					return
 				}
-				s.log.Error("activity area count failed", "err", err)
+				s.log.Error("track area count failed", "err", err)
 				writeAPIError(w, "internal error", http.StatusInternalServerError)
 				return
 			}
@@ -196,7 +196,7 @@ func (s *Server) handleGetTrack(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("activity read failed", "err", err)
+		s.log.Error("track read failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}

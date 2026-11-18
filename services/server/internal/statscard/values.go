@@ -17,7 +17,7 @@ import (
 // MaxLines is how many tracks the card lists before "+ N more".
 const MaxLines = 5
 
-// Activity is one checked track, as the Tracks panel row has it.
+// Track is one checked track, as the Tracks panel row has it.
 type Track struct {
 	Type           string
 	DistanceMeters *float64
@@ -63,7 +63,7 @@ func Values(acts []Track, l *i18n.Localizer, imperial bool) Card {
 		c.More = l.T("stats_card.more", "n", n)
 	}
 	if len(acts) > 1 {
-		parts := []string{l.N("count.activities", int64(len(acts)))}
+		parts := []string{l.N("count.tracks", int64(len(acts)))}
 		if dist > 0 {
 			parts = append(parts, web.FormatTotalDistance(l, dist, imperial))
 		}

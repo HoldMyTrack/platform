@@ -106,7 +106,7 @@
 
         <TextView
             android:id="@+id/track_trip"
-            style="@style/Widget.HoldMyTrack.PanelStatusBadge.Story"
+            style="@style/Widget.HoldMyTrack.PanelStatusBadge.Trip"
             android:layout_marginTop="@dimen/hmt_space_2"
             android:clickable="true"
             android:focusable="true" />

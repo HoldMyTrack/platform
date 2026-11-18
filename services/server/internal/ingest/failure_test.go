@@ -34,7 +34,7 @@ func TestFailureCode(t *testing.T) {
 		{"no timestamps", errNoTimestamps, FailNoTimestamps},
 		{"too many points", parseError{fmt.Errorf("parse fit: %w", parse.ErrTooManyPoints)}, FailTooManyPoints},
 		{"too few points", fmt.Errorf("ingest: %w (%d)", errTooFewPoints, 1), FailTooFewPoints},
-		{"a later pipeline step", fmt.Errorf("ingest: persist activity: %w", errors.New("connection reset")), FailInternal},
+		{"a later pipeline step", fmt.Errorf("ingest: persist track: %w", errors.New("connection reset")), FailInternal},
 	}
 	for _, c := range cases {
 		if got := FailureCode(c.err); got != c.want {

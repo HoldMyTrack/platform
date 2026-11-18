@@ -312,7 +312,7 @@ func (s *Server) adminUserTracks(ctx context.Context, l *i18n.Localizer, u admin
 		LIMIT $2 OFFSET $3
 	`, u.ID, adminTracksPerPage, offset)
 	if err != nil {
-		return view, fmt.Errorf("admin: list activities: %w", err)
+		return view, fmt.Errorf("admin: list tracks: %w", err)
 	}
 	defer rows.Close()
 	for rows.Next() {
@@ -321,14 +321,14 @@ func (s *Server) adminUserTracks(ctx context.Context, l *i18n.Localizer, u admin
 		var seconds int64
 		if err := rows.Scan(&a.ID, &a.Started, &a.Type, &a.Name, &meters, &seconds, &a.Source,
 			&a.Hidden, &a.Edited, &a.Countries, &a.Regions); err != nil {
-			return view, fmt.Errorf("admin: scan activity: %w", err)
+			return view, fmt.Errorf("admin: scan track: %w", err)
 		}
 		a.Distance = web.FormatDistance(l, meters, imperial)
 		a.Duration = adminDuration(seconds)
 		view.Tracks = append(view.Tracks, a)
 	}
 	if err := rows.Err(); err != nil {
-		return view, fmt.Errorf("admin: list activities: %w", err)
+		return view, fmt.Errorf("admin: list tracks: %w", err)
 	}
 
 	view.Range = adminRange(l, offset, len(view.Tracks), total)

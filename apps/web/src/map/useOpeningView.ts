@@ -3,7 +3,7 @@ import type { Map as MapLibreMap } from 'maplibre-gl';
 import { APP_FLIGHT } from './bbox.ts';
 import { WORLD_VIEW } from './config.ts';
 import { countryView } from './countryView.ts';
-import { OPENING_ACTIVITIES, openingView } from './openingView.ts';
+import { OPENING_TRACKS, openingView } from './openingView.ts';
 import type { MapSessionEvent } from './session.ts';
 import { viewArea } from './useAreaList.ts';
 import { listArea, type BBox } from '../api.ts';
@@ -37,7 +37,7 @@ export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSe
       if (event.originalEvent) controller.abort();
     };
     m.on('movestart', onMoveStart);
-    return listArea({ limit: OPENING_ACTIVITIES }, signal)
+    return listArea({ limit: OPENING_TRACKS }, signal)
       .then(({ tracks }) => {
         if (signal.aborted) return;
         const boxes = tracks.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : []));

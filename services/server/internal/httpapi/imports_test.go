@@ -106,7 +106,7 @@ func TestUploadHistoryFinishedAt(t *testing.T) {
 		rows[u.Filename] = u
 	}
 	if w := rows["walk.gpx"]; w.Status != "done" || w.FinishedAt == nil || w.TrackID == nil || *w.TrackID != walk {
-		t.Errorf("finished row: status %q, finished_at %v, activity %v; want done, set, %s", w.Status, w.FinishedAt, w.TrackID, walk)
+		t.Errorf("finished row: status %q, finished_at %v, track %v; want done, set, %s", w.Status, w.FinishedAt, w.TrackID, walk)
 	}
 	if n := rows["next.gpx"]; n.Status != "processing" || n.FinishedAt != nil {
 		t.Errorf("pending row: status %q, finished_at %v; want processing with none", n.Status, n.FinishedAt)

@@ -96,7 +96,7 @@ func TestLoadBoundaries(t *testing.T) {
 		INSERT INTO tracks (user_id, source, track_type, started_at, trajectory, timezone)
 		VALUES ($1, 'upload', 'walking', now(), ST_GeomFromText('LINESTRING M(-40.8 -60.5 0, -39.5 -60.5 60)', 4326), 'UTC')
 		RETURNING id`, userID).Scan(&trackID); err != nil {
-		t.Fatalf("create activity: %v", err)
+		t.Fatalf("create track: %v", err)
 	}
 	version := func() int64 {
 		var v int64

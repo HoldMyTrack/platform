@@ -22,7 +22,7 @@ class SyncBatcherTest {
     }
 
     @Test
-    fun `a request goes once its points reach the most, the activity that filled it included`() {
+    fun `a request goes once its points reach the most, the track that filled it included`() {
         assertEquals(listOf(listOf("a", "b"), listOf("c")), requests(listOf("a" to 60, "b" to 40, "c" to 10)))
     }
 
@@ -37,7 +37,7 @@ class SyncBatcherTest {
 
     @Test
     fun `a route past the server's ceiling isn't sent`() {
-        assertFalse(SyncBatcher.tooLarge(SyncBatcher.MAX_POINTS_PER_ACTIVITY))
-        assertTrue(SyncBatcher.tooLarge(SyncBatcher.MAX_POINTS_PER_ACTIVITY + 1))
+        assertFalse(SyncBatcher.tooLarge(SyncBatcher.MAX_POINTS_PER_TRACK))
+        assertTrue(SyncBatcher.tooLarge(SyncBatcher.MAX_POINTS_PER_TRACK + 1))
     }
 }

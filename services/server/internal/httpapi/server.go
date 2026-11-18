@@ -218,7 +218,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("GET", "/trip-sends"), s.requireVerified(s.handleListTripSends))
 	s.mux.HandleFunc(route("POST", "/trip-sends/{id}/accept"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleAcceptTripSend)))
 	s.mux.HandleFunc(route("DELETE", "/trip-sends/{id}"), s.requireNotDemo(s.handleDeclineTripSend))
-	// Activity photos (photos.go).
+	// Track photos (photos.go).
 	s.mux.HandleFunc(route("GET", "/photos"), s.requireVerified(s.handleListPhotos))
 	s.mux.HandleFunc(route("POST", "/photos"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUploadPhoto)))
 	s.mux.HandleFunc(route("POST", "/photos/place"), s.requireNotDemo(s.handlePlacePhoto))

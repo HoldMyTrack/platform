@@ -102,7 +102,7 @@ func writeLimitError(w http.ResponseWriter, r *http.Request, refused string) {
 // usageLine is Settings' "1,240 of 50,000 tracks · 310 MB of 5 GB of original files".
 func usageLine(l *i18n.Localizer, u accountUsage) string {
 	return l.T("settings.usage_line",
-		"activities", l.Int(u.tracks), "max_activities", l.Int(maxTracksPerAccount),
+		"tracks", l.Int(u.tracks), "max_tracks", l.Int(maxTracksPerAccount),
 		"storage", web.FormatBytes(l, u.originalBytes), "max_storage", maxStorageText(l))
 }
 

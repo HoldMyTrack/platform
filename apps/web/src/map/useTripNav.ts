@@ -119,7 +119,7 @@ export function useTripNav(inputs: TripNavInputs): TripNavigation {
   const handleTripEdited = useCallback(
     (edited: Trip) => {
       trips.replace(edited);
-      trip.set(edited); // only if it's still the open one (useStory)
+      trip.set(edited); // only if it's still the open one (useTrip)
     },
     [trips.replace, trip.set],
   );

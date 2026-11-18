@@ -60,7 +60,7 @@ class TripsTab(
     /** A Trip renamed or deleted — the rows' Trip badges name it. */
     private val onBadgesChanged: () -> Unit,
     /** [trackId] was taken out of the open Trip: the list and the tracks are out of date. */
-    private val onActivityRemoved: (trackId: String) -> Unit,
+    private val onTrackRemoved: (trackId: String) -> Unit,
     /** A copy of a Trip someone sent has arrived: new tracks, and Fog coming. */
     private val onCopyArrived: () -> Unit,
     /** The inbox read: [waiting] copies others sent wait to be answered — the bar's badge. */
@@ -108,7 +108,7 @@ class TripsTab(
         list.layoutManager = LinearLayoutManager(context)
         // In landscape the statistics are the list's last item, scrolling with the rows: pinned
         // under them, they left the rows a sliver of the sheet.
-        list.adapter = if (res.getBoolean(R.bool.stories_stats_scroll)) {
+        list.adapter = if (res.getBoolean(R.bool.trips_stats_scroll)) {
             (stats.parent as ViewGroup).removeView(stats)
             ConcatAdapter(adapter, FooterAdapter(stats))
         } else {
@@ -367,7 +367,7 @@ class TripsTab(
                 removeError = null
                 trips = trips.map { if (it.id == trip.id) trip else it }
                 if (trip.id == openId) openTrip = trip
-                onActivityRemoved(trackId)
+                onTrackRemoved(trackId)
             }.onFailure { failure ->
                 removeError = failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.trip_save_failed)
             }

@@ -83,14 +83,14 @@ var catalogue = []stat{
 		SELECT coalesce(country, ''), count(*), count(*), ` + smallGroupIDs("id") + ` FROM acct GROUP BY 1`},
 	{prefix: "active_30d_by_country", fold: true, query: `
 		SELECT coalesce(country, ''), count(*), count(*), ` + smallGroupIDs("id") + ` FROM acct WHERE ` + activeSince(30) + ` GROUP BY 1`},
-	{prefix: "activity_accounts_by_country", fold: true, query: `
+	{prefix: "track_accounts_by_country", fold: true, query: `
 		SELECT c.code, count(DISTINCT a.user_id), count(DISTINCT a.user_id), ` + smallGroupIDs("a.user_id") + `
 		FROM track_country ac
 		JOIN tracks a ON a.id = ac.track_id
 		JOIN acct u ON u.id = a.user_id
 		JOIN admin_countries c ON c.id = ac.country_id
 		GROUP BY c.code`},
-	{prefix: "activities_by_country", fold: true, query: `
+	{prefix: "tracks_by_country", fold: true, query: `
 		SELECT c.code, count(*), count(DISTINCT a.user_id), ` + smallGroupIDs("a.user_id") + `
 		FROM track_country ac
 		JOIN tracks a ON a.id = ac.track_id
@@ -99,16 +99,16 @@ var catalogue = []stat{
 		GROUP BY c.code`},
 
 	// Tracks.
-	{key: "activities", query: `SELECT count(*) FROM tracks a JOIN acct u ON u.id = a.user_id`},
-	{key: "activities_added", query: `
+	{key: "tracks", query: `SELECT count(*) FROM tracks a JOIN acct u ON u.id = a.user_id`},
+	{key: "tracks_added", query: `
 		SELECT count(*) FROM tracks a JOIN acct u ON u.id = a.user_id, p
 		WHERE a.created_at >= p.d0 AND a.created_at < p.d1`},
-	{prefix: "activities_by_source", groups: sources, query: `
+	{prefix: "tracks_by_source", groups: sources, query: `
 		SELECT a.source, count(*) FROM tracks a JOIN acct u ON u.id = a.user_id GROUP BY a.source`},
-	{prefix: "activities_added_by_source", groups: sources, query: `
+	{prefix: "tracks_added_by_source", groups: sources, query: `
 		SELECT a.source, count(*) FROM tracks a JOIN acct u ON u.id = a.user_id, p
 		WHERE a.created_at >= p.d0 AND a.created_at < p.d1 GROUP BY a.source`},
-	{prefix: "activities_per_account", query: `
+	{prefix: "tracks_per_account", query: `
 		, per AS (SELECT count(*)::float8 AS c FROM tracks a JOIN acct u ON u.id = a.user_id GROUP BY a.user_id),
 		v AS (
 			SELECT percentile_cont(0.5) WITHIN GROUP (ORDER BY c) AS p50,
@@ -184,19 +184,19 @@ var catalogue = []stat{
 		        WHERE f.object_key IS NOT NULL AND f.bytes IS NULL)`},
 
 	// Features.
-	{key: "stories", query: `SELECT count(*) FROM trips s JOIN acct u ON u.id = s.user_id`},
-	{key: "stories_added", query: `
+	{key: "trips", query: `SELECT count(*) FROM trips s JOIN acct u ON u.id = s.user_id`},
+	{key: "trips_added", query: `
 		SELECT count(*) FROM trips s JOIN acct u ON u.id = s.user_id, p
 		WHERE s.created_at >= p.d0 AND s.created_at < p.d1`},
-	{key: "story_sends", query: `
+	{key: "trip_sends", query: `
 		SELECT count(*) FROM trip_sends ss JOIN trips s ON s.id = ss.trip_id JOIN acct u ON u.id = s.user_id, p
 		WHERE ss.sent_at >= p.d0 AND ss.sent_at < p.d1`},
 	{key: "spot_captures", query: `SELECT count(*) FROM spot_captures c JOIN acct u ON u.id = c.user_id`},
 	{key: "spot_captures_added", query: `
 		SELECT count(*) FROM spot_captures c JOIN acct u ON u.id = c.user_id, p
 		WHERE c.captured_at >= p.d0 AND c.captured_at < p.d1`},
-	{prefix: "accounts_with", groups: []string{"stories", "spots", "photos", "privacy_zones"}, query: `
-		SELECT 'stories', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM trips x WHERE x.user_id = u.id)
+	{prefix: "accounts_with", groups: []string{"trips", "spots", "photos", "privacy_zones"}, query: `
+		SELECT 'trips', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM trips x WHERE x.user_id = u.id)
 		UNION ALL
 		SELECT 'spots', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM spot_captures x WHERE x.user_id = u.id)
 		UNION ALL

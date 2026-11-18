@@ -35,4 +35,4 @@ Against that, `VISION.md` §1 promises to keep the journeys people choose, and `
 - **A real user could one day meet them**, and then the only fix is raising them for everyone; lowering them later would strand accounts above the new line, so they only go up.
 - **The limit is a promise apps see**: the clients show the server's message as it is, so a change of limit needs no app release, but the error's shape does.
 - **Racing requests can overshoot slightly**, and a Trip copy can carry an account past a limit. Neither changes what the limits are for.
-- **The heaviest account is watched**: the daily snapshot's `activities_per_account.max` and `storage_bytes_per_account.max` feed an alert at half a limit, so a real person nearing one is noticed long before they reach it.
+- **The heaviest account is watched**: the daily snapshot's `tracks_per_account.max` and `storage_bytes_per_account.max` feed an alert at half a limit, so a real person nearing one is noticed long before they reach it.

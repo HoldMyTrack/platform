@@ -22,7 +22,9 @@ object TrackTypes {
     /** What the server said about one type; either part may be missing. */
     data class Info(val kind: TrackKind?, val label: String?)
 
-    private const val PREFS = "holdmytrack.activity_types"
+    private const val PREFS = "holdmytrack.track_types"
+    // The same cache under its name before the rename, carried over at start (carryOver).
+    private const val OLD_PREFS = "holdmytrack.activity_types"
     private const val KEY_TYPES = "types"
     private const val KEY_LANGUAGE = "language"
 
@@ -36,6 +38,7 @@ object TrackTypes {
      *  screen shows. */
     fun init(appContext: Context) {
         context = appContext.applicationContext
+        carryOver(appContext)
         val prefs = prefs() ?: return
         if (prefs.getString(KEY_LANGUAGE, null) != language()) return
         val saved = prefs.getString(KEY_TYPES, null) ?: return
@@ -105,6 +108,21 @@ object TrackTypes {
     private fun language(): String = LocaleList.getDefault().toLanguageTags()
 
     private fun prefs() = context?.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+
+    /** Moves the cache kept under [OLD_PREFS] into [PREFS], unless [PREFS] has one, and deletes the
+     *  old file, so an update keeps the labels it had offline. */
+    private fun carryOver(context: Context) {
+        val old = context.getSharedPreferences(OLD_PREFS, Context.MODE_PRIVATE)
+        if (old.all.isEmpty()) return
+        val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        if (!prefs.contains(KEY_TYPES)) {
+            prefs.edit()
+                .putString(KEY_TYPES, old.getString(KEY_TYPES, null))
+                .putString(KEY_LANGUAGE, old.getString(KEY_LANGUAGE, null))
+                .commit()
+        }
+        context.deleteSharedPreferences(OLD_PREFS)
+    }
 
     /** The server's bound on named types. */
     private const val MAX_NAMED = 100

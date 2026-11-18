@@ -703,7 +703,7 @@
         <item quantity="other">Также в %1$d других путешествиях: %2$s</item>
     </plurals>
 
-    <!-- Activity types' display names, the web's activity_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
+    <!-- Track types' display names, the server's track_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
 
     <!-- Тур (tour/TourController), его предложение и карточки. -->
     <string name="you_tour">Пройти тур</string>

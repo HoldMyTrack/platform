@@ -11,7 +11,7 @@ import (
 )
 
 // tracksQuery is IMPLEMENTATION.md §4.3 verbatim, with three changes: user_id
-// is the authenticated caller (userIDFromContext — requireAuth, server.go), from/to/types/story
+// is the authenticated caller (userIDFromContext — requireAuth, server.go), from/to/types/trip
 // each become "$n IS NULL OR ..." so an absent query param means "no filter" instead of
 // requiring the caller to pass an explicit wide-open range, and a Pending track
 // (edit_pending, §4.7.7) is left out — its trajectory is the pre-reprocess one, and it comes

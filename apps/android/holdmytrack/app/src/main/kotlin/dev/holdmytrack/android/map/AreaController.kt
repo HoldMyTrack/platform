@@ -120,7 +120,7 @@ class AreaController(
         }
         val failed = { failure: Throwable ->
             if (id == request) {
-                Log.w(TAG, "could not load the activity list", failure)
+                Log.w(TAG, "could not load the track list", failure)
                 session.consumeFly()
                 panel.setError(unreachable)
                 // A failed read doesn't end the polling: a Pending row still has to be seen finishing.

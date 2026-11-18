@@ -114,10 +114,10 @@ func Describe(types []string, lang string) map[string]Info {
 // matched case-insensitively, else the type itself, spaced out from snake_case and title-cased.
 // Never a remapping of what the value means.
 func Label(trackType, lang string) string {
-	if msg, ok := i18n.Raw(lang, "activity_type."+strings.ToLower(trackType)); ok {
+	if msg, ok := i18n.Raw(lang, "track_type."+strings.ToLower(trackType)); ok {
 		return msg
 	}
-	if msg, ok := i18n.Raw(i18n.Default, "activity_type."+strings.ToLower(trackType)); ok {
+	if msg, ok := i18n.Raw(i18n.Default, "track_type."+strings.ToLower(trackType)); ok {
 		return msg
 	}
 	words := strings.Split(trackType, "_")

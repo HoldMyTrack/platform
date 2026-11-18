@@ -46,8 +46,8 @@ func TestSchemaHasNoOldNames(t *testing.T) {
 	}
 }
 
-// 0057 rewrites what the release before it left: a Trip copy's source, the queue's kinds and
-// payload keys, a pending sync's bytes, and a job per stored sync payload.
+// 0057 and 0058 rewrite what the release before them left: a Trip copy's source, the queue's kinds
+// and payload keys, a pending sync's bytes, a job per stored sync payload, and the daily stats' keys.
 func TestMigrationRenamesStoredValues(t *testing.T) {
 	ctx := context.Background()
 	pool, err := pgxpool.NewWithConfig(ctx, scratchDatabase(t))
@@ -96,7 +96,11 @@ func TestMigrationRenamesStoredValues(t *testing.T) {
 		INSERT INTO jobs (kind, payload, state, raw) VALUES
 		 ('ingest', '{"source":"recorded","raw_payload_key":"raw/u/recorded/r2.json","activity_type":"walking","raw_bytes":39}', 'pending', convert_to('{"activity_type":"walking","points":[]}', 'UTF8')),
 		 ('ingest', '{"source":"recorded","raw_payload_key":"raw/u/recorded/r3.json"}', 'pending', NULL),
-		 ('ingest', '{"source":"upload","raw_payload_key":"raw/u/f.fit"}', 'pending', '\x0e10ff'::bytea);`); err != nil {
+		 ('ingest', '{"source":"upload","raw_payload_key":"raw/u/f.fit"}', 'pending', '\x0e10ff'::bytea);
+		INSERT INTO daily_stats (day, key, value) VALUES
+		 ('2026-11-01', 'activities', 7), ('2026-11-01', 'activities_per_account.max', 5),
+		 ('2026-11-01', 'accounts_with.stories', 2), ('2026-11-01', 'storage_bytes.photos', 9),
+		 ('2026-11-01', 'jobs.edit_track.pending', 1), ('2026-11-01', 'jobs.story_copy.done', 3), ('2026-11-01', 'jobs.trip_copy.done', 4);`); err != nil {
 		t.Fatal(err)
 	}
 	if err := Migrate(ctx, pool); err != nil {
@@ -106,6 +110,14 @@ func TestMigrationRenamesStoredValues(t *testing.T) {
 	var source string
 	if err := pool.QueryRow(ctx, `SELECT source FROM tracks WHERE id = '00000000-0000-0000-0000-0000000000b2'`).Scan(&source); err != nil || source != "trip" {
 		t.Errorf("Trip copy's source %q, %v; want trip", source, err)
+	}
+	var keys string
+	if err := pool.QueryRow(ctx, `SELECT string_agg(key, ' ' ORDER BY key) FROM daily_stats`).Scan(&keys); err != nil || keys != "accounts_with.trips jobs.edit_route.pending jobs.trip_copy.done storage_bytes.photos tracks tracks_per_account.max" {
+		t.Errorf("daily stats keys %q, %v", keys, err)
+	}
+	var copies float64
+	if err := pool.QueryRow(ctx, `SELECT value FROM daily_stats WHERE key = 'jobs.trip_copy.done'`).Scan(&copies); err != nil || copies != 4 {
+		t.Errorf("jobs.trip_copy.done %v, %v; want the new name's 4", copies, err)
 	}
 	var lines []string
 	rows, err := pool.Query(ctx, `SELECT kind || ' ' || payload::text || ' ' || coalesce(CASE WHEN payload->>'raw_payload_key' LIKE '%.json' THEN convert_from(raw, 'UTF8') ELSE encode(raw, 'hex') END, '') FROM jobs ORDER BY id`)

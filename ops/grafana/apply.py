@@ -56,7 +56,7 @@ RULES = [
     dict(uid="hmt-mail-failed", title="Email failed to send",
          expr=f'sum(increase(holdmytrack_mail_sent_total{{{D}, outcome="failed"}}[1h]))',
          op=">", threshold=0, for_="0m", nodata="OK",
-         summary="{{ $values.A.Value }} emails failed to send in the last hour: sign-up verifications, password resets or Story sends didn't arrive. Check ZeptoMail's credits and their expiry (Subscription page), then the logs: {service=\"api\"} |~ \"email failed|send failed|forgot-password failed\"."),
+         summary="{{ $values.A.Value }} emails failed to send in the last hour: sign-up verifications, password resets or Trip sends didn't arrive. Check ZeptoMail's credits and their expiry (Subscription page), then the logs: {service=\"api\"} |~ \"email failed|send failed|forgot-password failed\"."),
     # The worker checks the provider every 5 minutes without sending (mail.RunCheck), so an
     # outage shows with nobody signing up. Three failed checks in a row; no data is the worker
     # being down, which "api or worker not answering" covers.
@@ -107,10 +107,10 @@ RULES = [
     # The daily statistics' heaviest account (IMPLEMENTATION.md §4.32) against the per-account
     # limits (ADR-0043, httpapi/account_limits.go, which these thresholds halve): a real person
     # nearing one is noticed long before they reach it. No data is fine: the snapshot is daily.
-    dict(uid="hmt-account-activities", title="An account holds half the activity limit",
-         expr=f'max(holdmytrack_stat{{{D}, key="activities_per_account.max"}})',
+    dict(uid="hmt-account-tracks", title="An account holds half the track limit",
+         expr=f'max(holdmytrack_stat{{{D}, key="tracks_per_account.max"}})',
          op=">", threshold=25000, for_="0m", nodata="OK",
-         summary="The heaviest account holds {{ $values.A.Value }} activities, of the 50,000 every account can keep. A script, or a real person to raise the limit for (ADR-0043)?"),
+         summary="The heaviest account holds {{ $values.A.Value }} tracks, of the 50,000 every account can keep. A script, or a real person to raise the limit for (ADR-0043)?"),
     dict(uid="hmt-account-originals", title="An account holds half the storage limit",
          expr=f'max(holdmytrack_stat{{{D}, key="original_bytes_per_account.max"}})',
          op=">", threshold=2.5e9, for_="0m", nodata="OK",

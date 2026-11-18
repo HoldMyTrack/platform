@@ -32,7 +32,7 @@ func TestParseGPX(t *testing.T) {
 		t.Fatalf("point 0 time wrong: %v (unix %d)", p.Time, p.Time.Unix())
 	}
 	if act.TrackType != "unknown" {
-		t.Fatalf("want activity type unknown (no <type> in this fixture), got %q", act.TrackType)
+		t.Fatalf("want track type unknown (no <type> in this fixture), got %q", act.TrackType)
 	}
 }
 
@@ -48,7 +48,7 @@ func TestParseGPXType(t *testing.T) {
 		t.Fatalf("ParseGPX: %v", err)
 	}
 	if act.TrackType != "gravel riding" {
-		t.Fatalf("want activity type %q, got %q", "gravel riding", act.TrackType)
+		t.Fatalf("want track type %q, got %q", "gravel riding", act.TrackType)
 	}
 	if len(act.Points) != 2 {
 		t.Fatalf("want 2 points, got %d", len(act.Points))
@@ -102,7 +102,7 @@ func TestParseTCX(t *testing.T) {
 		t.Fatalf("parseTCX: %v", err)
 	}
 	if act.TrackType != "running" {
-		t.Fatalf("want activity type running, got %q", act.TrackType)
+		t.Fatalf("want track type running, got %q", act.TrackType)
 	}
 	if len(act.Points) != 2 {
 		t.Fatalf("want 2 points, got %d", len(act.Points))
@@ -130,7 +130,7 @@ func TestParseJSON(t *testing.T) {
 		t.Fatalf("ParseJSON: %v", err)
 	}
 	if act.TrackType != "run" {
-		t.Fatalf("want activity type run, got %q", act.TrackType)
+		t.Fatalf("want track type run, got %q", act.TrackType)
 	}
 	if len(act.Points) != 2 {
 		t.Fatalf("want 2 points, got %d", len(act.Points))
@@ -153,7 +153,7 @@ func TestParseJSONNoType(t *testing.T) {
 		t.Fatalf("ParseJSON: %v", err)
 	}
 	if act.TrackType != "unknown" {
-		t.Fatalf("want activity type unknown (no activity_type in this fixture), got %q", act.TrackType)
+		t.Fatalf("want track type unknown (no activity_type in this fixture), got %q", act.TrackType)
 	}
 }
 
@@ -177,7 +177,7 @@ func TestParseJSONRefusesIncompleteOrUnknownPointFields(t *testing.T) {
 }
 
 func TestByExtensionJSON(t *testing.T) {
-	act, err := ByExtensionUpTo("activity.json", strings.NewReader(sampleSyncJSON), 0)
+	act, err := ByExtensionUpTo("track.json", strings.NewReader(sampleSyncJSON), 0)
 	if err != nil {
 		t.Fatalf("ByExtensionUpTo: %v", err)
 	}

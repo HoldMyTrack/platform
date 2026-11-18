@@ -7,7 +7,7 @@ const size = { widthPx: 1920, heightPx: 1080 };
 test('the card is asked for only with Show stats ticked and offered', () => {
   assert.equal(statsCardRequest(false, new Set(['a']), null, size, false), null);
   assert.equal(statsCardRequest(true, new Set(), null, size, false), null);
-  assert.equal(statsCardRequest(true, new Set(['a']), 'story', size, false), null);
+  assert.equal(statsCardRequest(true, new Set(['a']), 't1', size, false), null);
 });
 
 test('the request carries the image size and theme, its ids sorted', () => {

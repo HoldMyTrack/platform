@@ -28,10 +28,10 @@ data class TypeCount(val type: String, val count: Int)
  * `RecordingActivity`'s Type field — the Android counterpart of the web edit dialog's
  * `TrackTypePicker.tsx`: a searchable list of the types this account already uses
  * (formatted, with how many tracks use each), filtered as you type, and open-ended —
- * `activity_type` is free-form, not a controlled vocabulary, so any search text that doesn't
+ * `track_type` is free-form, not a controlled vocabulary, so any search text that doesn't
  * exactly match an existing type offers itself as a last "Add …" row and saves exactly as
- * typed, up to the server's 50-character limit (`maxActivityTypeLen`,
- * `services/server/internal/httpapi/activities.go`). A current value missing from [known] is
+ * typed, up to the server's 50-character limit (`maxTrackTypeLen`,
+ * `services/server/internal/httpapi/tracks.go`). A current value missing from [known] is
  * still listed, so the current choice is always there to see.
  *
  * A plain `AlertDialog` over a `ListView` rather than a popup under the field: on a phone the

@@ -11,7 +11,7 @@ class ExportStatsRulesTest {
     fun theCardIsAskedForOnlyWithShowStatsTickedAndOffered() {
         assertNull(ExportStatsRules.request(false, setOf("a"), null, 1920, 1080, false))
         assertNull(ExportStatsRules.request(true, emptySet(), null, 1920, 1080, false))
-        assertNull(ExportStatsRules.request(true, setOf("a"), "story", 1920, 1080, false))
+        assertNull(ExportStatsRules.request(true, setOf("a"), "t1", 1920, 1080, false))
     }
 
     @Test

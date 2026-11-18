@@ -75,7 +75,7 @@ final class PanelTests: XCTestCase {
         app.buttons["cardDelete"].tap()
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
         app.alerts.buttons.element(boundBy: 1).tap()
-        XCTAssertTrue(app.otherElements["trackCard"].waitForNonExistence(timeout: 15), "the deleted activity's card closes")
+        XCTAssertTrue(app.otherElements["trackCard"].waitForNonExistence(timeout: 15), "the deleted track's card closes")
         app.buttons["panelHandle"].tap()
         let fewer = NSPredicate(format: "count == %d", listed - 1)
         XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: fewer, object: rows)], timeout: 15), .completed)
@@ -96,7 +96,7 @@ final class PanelTests: XCTestCase {
 
         app.tabBars.buttons["tabTrips"].tap()
         XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
-        XCTAssertFalse(modes.exists, "no mode toggle on Stories")
+        XCTAssertFalse(modes.exists, "no mode toggle on Trips")
 
         app.tabBars.buttons["tabMap"].tap()
         XCTAssertTrue(modes.waitForExistence(timeout: 5))

@@ -2,7 +2,7 @@
 <!-- Add to trip's menu (the web's .trip-menu, AddToTripMenu.tsx): "New trip…", a divider,
      then every Trip, newest first, with how many tracks it holds — one that already holds
      all of the target ticked and disabled — and a note while loading or after a failure. Rows
-     (item_type_filter) are added by TracksPanel.showAddToStory; the list scrolls past about
+     (item_type_filter) are added by TracksPanel.showAddToTrip; the list scrolls past about
      twelve. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"

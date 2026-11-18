@@ -51,7 +51,7 @@ func (s *Server) handleTrackSummary(w http.ResponseWriter, r *http.Request) {
 	if err := s.pool.QueryRow(r.Context(), trackSummaryQuery,
 		userIDFromContext(r.Context()), filter.From, filter.To, filter.Types, filter.Trip,
 	).Scan(&resp.Count, &resp.DistanceMeters, &resp.DurationSeconds, &resp.ElevationGainM); err != nil {
-		s.log.Error("activity summary query failed", "err", err)
+		s.log.Error("track summary query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -104,7 +104,7 @@ ORDER BY day`
 // here is exactly `days` days, every time.
 //
 // The anchor is a local date like the days themselves, so each track is compared in its
-// own zone; the account's tracks are read through idx_activities_user_time either way.
+// own zone; the account's tracks are read through idx_tracks_user_time either way.
 const trackDayPageQuery = `
 SELECT ` + localStartedAt + `::date AS day,
        COUNT(*),
@@ -144,7 +144,7 @@ type trackHistogramResponse struct {
 // handleTrackHistogram serves §4.7's `GET /v2/tracks/histogram` in two modes, both
 // returning the same body. The filter is deliberately not applied (no `types`) in either —
 // this chart is the backdrop a selected sub-range highlights against, and narrowing it the
-// same way as the list would defeat that. `story` is the exception: both modes, and
+// same way as the list would defeat that. `trip` is the exception: both modes, and
 // `earliest`, then cover only that Trip's tracks, since inside a Trip the picker spans
 // the Trip alone (§4.23).
 //
@@ -190,7 +190,7 @@ func (s *Server) handleTrackHistogram(w http.ResponseWriter, r *http.Request) {
 		if clientGone(w, r) {
 			return
 		}
-		s.log.Error("activity earliest-date query failed", "err", err)
+		s.log.Error("track earliest-date query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -238,7 +238,7 @@ func (s *Server) writeHistogramError(w http.ResponseWriter, r *http.Request, err
 	if clientGone(w, r) {
 		return
 	}
-	s.log.Error("activity histogram query failed", "err", err)
+	s.log.Error("track histogram query failed", "err", err)
 	writeAPIError(w, "internal error", http.StatusInternalServerError)
 }
 
@@ -454,13 +454,13 @@ func (s *Server) handleTrackGraphStats(w http.ResponseWriter, r *http.Request) {
 
 	yearStats, err := s.trackStats(r.Context(), userID, &yearStart, &yearEnd)
 	if err != nil {
-		s.log.Error("activity year-stats query failed", "err", err)
+		s.log.Error("track year-stats query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 	allTime, err := s.trackStats(r.Context(), userID, nil, nil)
 	if err != nil {
-		s.log.Error("activity all-time-stats query failed", "err", err)
+		s.log.Error("track all-time-stats query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -569,7 +569,7 @@ func (s *Server) handleTrackTrends(w http.ResponseWriter, r *http.Request) {
 
 	periods, err := s.trackTrends(r.Context(), userIDFromContext(r.Context()), bucket, first, end)
 	if err != nil {
-		s.log.Error("activity trends query failed", "err", err)
+		s.log.Error("track trends query failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}

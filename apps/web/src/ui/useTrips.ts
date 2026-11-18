@@ -13,7 +13,7 @@ export interface TripsState {
    *  old list, deleted Trip included, ready until it lands. */
   remove: (id: string) => void;
   /** Reads the list again, keeping the one in hand until it lands — a copy someone sent has
-   *  arrived (useStoryInbox). */
+   *  arrived (useTripInbox). */
   reload: () => void;
 }
 

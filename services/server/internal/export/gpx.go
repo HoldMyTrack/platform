@@ -49,7 +49,7 @@ func Slug(s string) string {
 		s = strings.TrimSpace(string(r[:60]))
 	}
 	if s == "" {
-		return "Activity"
+		return "Track"
 	}
 	return s
 }

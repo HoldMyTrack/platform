@@ -23,7 +23,7 @@ func TestTrackRowCarriesMovingTime(t *testing.T) {
 	for _, a := range d.listTracks(me) {
 		w := want[a.ID]
 		if a.DurationSeconds == nil || a.MovingSeconds == nil || *a.DurationSeconds != w[0] || *a.MovingSeconds != w[1] {
-			t.Errorf("activity %s: duration %v, moving %v, want %d and %d", a.ID, a.DurationSeconds, a.MovingSeconds, w[0], w[1])
+			t.Errorf("track %s: duration %v, moving %v, want %d and %d", a.ID, a.DurationSeconds, a.MovingSeconds, w[0], w[1])
 		}
 	}
 }

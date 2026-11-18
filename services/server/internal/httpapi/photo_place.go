@@ -85,7 +85,7 @@ func (s *Server) handlePlacePhoto(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if ok, err := s.ownsTrack(r.Context(), userID, req.TrackID); err != nil {
-		s.log.Error("photo place: activity lookup failed", "err", err)
+		s.log.Error("photo place: track lookup failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	} else if !ok {

@@ -30,7 +30,7 @@ func (d *dbTest) inbox(as account) []tripSendJSON {
 	return res.Sends
 }
 
-func TestSendAStoryCopy(t *testing.T) {
+func TestSendATripCopy(t *testing.T) {
 	d := newDBTest(t)
 	ctx := context.Background()
 	me, you := d.newAccount(false), d.newAccount(false)
@@ -91,11 +91,11 @@ func TestSendAStoryCopy(t *testing.T) {
 	d.decode(d.do(me, "POST", "/v2/trips/"+trip+"/send", map[string]any{"email": d.address(you)}), http.StatusNoContent, nil)
 	d.decode(d.do(me, "DELETE", "/v2/trips/"+trip, nil), http.StatusNoContent, nil)
 	if left := d.inbox(you); len(left) != 0 {
-		t.Errorf("after the Story's delete: %+v", left)
+		t.Errorf("after the Trip's delete: %+v", left)
 	}
 }
 
-func TestSendAStoryCopyRevealsNoAccount(t *testing.T) {
+func TestSendATripCopyRevealsNoAccount(t *testing.T) {
 	d := newDBTest(t)
 	ctx := context.Background()
 	me := d.newAccount(false)
@@ -121,7 +121,7 @@ func TestSendAStoryCopyRevealsNoAccount(t *testing.T) {
 
 	other := d.newAccount(false)
 	if rec := d.do(other, "POST", "/v2/trips/"+trip+"/send", map[string]any{"email": d.address(other)}); rec.Code != http.StatusNotFound {
-		t.Errorf("someone else's Story: %d, want 404", rec.Code)
+		t.Errorf("someone else's Trip: %d, want 404", rec.Code)
 	}
 	if rec := d.do(me, "POST", "/v2/trips/"+trip+"/send", map[string]any{"email": "Dad <dad@example.com>"}); rec.Code != http.StatusBadRequest {
 		t.Errorf("not a bare address: %d, want 400", rec.Code)
@@ -134,7 +134,7 @@ func TestSendAStoryCopyRevealsNoAccount(t *testing.T) {
 	}
 }
 
-func TestSendAStoryCopyIsRateLimited(t *testing.T) {
+func TestSendATripCopyIsRateLimited(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	trip := d.newTrip(me, "Alps")

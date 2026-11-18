@@ -671,7 +671,7 @@
         <item quantity="other">Also in %1$d other trips: %2$s</item>
     </plurals>
 
-    <!-- Activity types' display names, the web's activity_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
+    <!-- Track types' display names, the server's track_type.* (RecordingTypes.label); a type without one is title-cased from its raw value. -->
 
     <!-- The tour (tour/TourController), its offer and its first-time cards. -->
     <string name="you_tour">Take a tour</string>

@@ -118,7 +118,7 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 			} else {
 				file := "originals/" + base + strings.ToLower(path.Ext(act.rawKey))
 				if err := a.add(file, false, func(w io.Writer) error { return a.copyObject(w, act.rawKey) }); err != nil {
-					return nil, fmt.Errorf("activity %s: original: %w", act.ID, err)
+					return nil, fmt.Errorf("track %s: original: %w", act.ID, err)
 				}
 				originals[act.rawKey] = file
 				act.Original = file
@@ -134,7 +134,7 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 		case points != nil:
 			file := "tracks/" + base + ".gpx"
 			if err := a.add(file, true, func(w io.Writer) error { return WriteGPX(w, act.Type, points) }); err != nil {
-				return nil, fmt.Errorf("activity %s: track: %w", act.ID, err)
+				return nil, fmt.Errorf("track %s: route: %w", act.ID, err)
 			}
 			act.GPX = file
 		}
@@ -143,7 +143,7 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 			p := &act.Photos[n]
 			file := fmt.Sprintf("photos/%s %d.%s", base, n+1, p.ext)
 			if err := a.add(file, false, func(w io.Writer) error { return a.copyObject(w, p.key) }); err != nil {
-				return nil, fmt.Errorf("activity %s: photo: %w", act.ID, err)
+				return nil, fmt.Errorf("track %s: photo: %w", act.ID, err)
 			}
 			p.File = file
 		}
@@ -383,7 +383,7 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 		       COALESCE(raw_payload_key, '')
 		FROM tracks WHERE user_id = $1 ORDER BY started_at, id`, userID)
 	if err != nil {
-		return nil, fmt.Errorf("activities: %w", err)
+		return nil, fmt.Errorf("tracks: %w", err)
 	}
 	index := map[string]int{}
 	for rows.Next() {
@@ -391,7 +391,7 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 		if err := rows.Scan(&v.ID, &v.Name, &v.Type, &v.Source, &v.Description, &v.StartedAt, &v.Timezone,
 			&v.DistanceMeters, &v.ElapsedSeconds, &v.MovingSeconds, &v.ElevationGainM, &v.rawKey); err != nil {
 			rows.Close()
-			return nil, fmt.Errorf("activities: %w", err)
+			return nil, fmt.Errorf("tracks: %w", err)
 		}
 		v.StartedAt = v.StartedAt.UTC()
 		index[v.ID] = len(doc.Tracks)
@@ -399,7 +399,7 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("activities: %w", err)
+		return nil, fmt.Errorf("tracks: %w", err)
 	}
 
 	rows, err = pool.Query(ctx, `
@@ -441,20 +441,20 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 		FROM trips s LEFT JOIN trip_tracks sa ON sa.trip_id = s.id
 		WHERE s.user_id = $1 GROUP BY s.id ORDER BY s.created_at`, userID)
 	if err != nil {
-		return nil, fmt.Errorf("stories: %w", err)
+		return nil, fmt.Errorf("trips: %w", err)
 	}
 	for rows.Next() {
 		var s trip
 		if err := rows.Scan(&s.Name, &s.Description, &s.CreatedAt, &s.Tracks); err != nil {
 			rows.Close()
-			return nil, fmt.Errorf("stories: %w", err)
+			return nil, fmt.Errorf("trips: %w", err)
 		}
 		s.CreatedAt = s.CreatedAt.UTC()
 		doc.Trips = append(doc.Trips, s)
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("stories: %w", err)
+		return nil, fmt.Errorf("trips: %w", err)
 	}
 
 	rows, err = pool.Query(ctx, `

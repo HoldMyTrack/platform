@@ -160,7 +160,7 @@ func (d *dbTest) newTrack(owner account, a testTrack) string {
 		VALUES ($1, 'upload', $2, $3, $4, $5, $6, ST_GeomFromText($7, 4326),
 		        COALESCE(NULLIF($8, ''), (SELECT timezone FROM users WHERE id = $1))) RETURNING id
 	`, owner.id, a.trackType, a.distanceMeters, a.movingSeconds, a.durationSecs, a.startedAt, track, a.timezone).Scan(&id); err != nil {
-		d.t.Fatalf("create activity: %v", err)
+		d.t.Fatalf("create track: %v", err)
 	}
 	return id
 }

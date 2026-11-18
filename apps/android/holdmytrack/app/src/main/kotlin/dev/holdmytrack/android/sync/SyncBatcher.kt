@@ -5,7 +5,7 @@ package dev.holdmytrack.android.sync
  * tracks or [maxPoints] points, whichever comes first, and what's left goes at the end.
  */
 class SyncBatcher<T>(
-    private val maxTracks: Int = MAX_BATCH_ACTIVITIES,
+    private val maxTracks: Int = MAX_BATCH_TRACKS,
     private val maxPoints: Int = MAX_BATCH_POINTS,
 ) {
     private val batch = mutableListOf<T>()
@@ -29,14 +29,14 @@ class SyncBatcher<T>(
     companion object {
         /** The endpoint accepts 100 per request; a smaller batch keeps one request modest on
          *  mobile data. */
-        const val MAX_BATCH_ACTIVITIES = 25
+        const val MAX_BATCH_TRACKS = 25
         const val MAX_BATCH_POINTS = 20_000
 
         /** The server's ceiling, checked here so a route it could never accept is reported as
          *  such instead of being sent to be refused. */
-        const val MAX_POINTS_PER_ACTIVITY = 50_000
+        const val MAX_POINTS_PER_TRACK = 50_000
 
         /** Whether a route of [pointCount] points is past what the server accepts. */
-        fun tooLarge(pointCount: Int): Boolean = pointCount > MAX_POINTS_PER_ACTIVITY
+        fun tooLarge(pointCount: Int): Boolean = pointCount > MAX_POINTS_PER_TRACK
     }
 }

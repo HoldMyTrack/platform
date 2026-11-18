@@ -55,7 +55,7 @@ func main() {
 	slog.SetDefault(log)
 
 	if len(os.Args) < 2 {
-		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-activities|seed-admin-boundaries|build-admin-tiles|seed-timezones|rerender-coverage|import-spots|import-bike-paths|set-admin|stats>")
+		fmt.Fprintln(os.Stderr, "usage: holdmytrack <serve|work|migrate|seed-demo-customer|export-demo-tracks|seed-admin-boundaries|build-admin-tiles|seed-timezones|rerender-coverage|import-spots|import-bike-paths|set-admin|stats>")
 		os.Exit(2)
 	}
 
@@ -224,12 +224,12 @@ func main() {
 		}
 		log.Info("seed-demo-customer: done")
 
-	case "export-demo-activities":
+	case "export-demo-tracks":
 		// Writes picked tracks out of this deployment, as their owner sees them, as demo_data/ GPX files for
 		// the Demo Customer's history — httpapi.ExportDemoTracks's doc comment has the
 		// details. Writes only to the local directory given; the DB and storage are only read.
 		if len(os.Args) < 4 {
-			fmt.Fprintln(os.Stderr, "usage: holdmytrack export-demo-activities <out-dir> <activity-id>...")
+			fmt.Fprintln(os.Stderr, "usage: holdmytrack export-demo-tracks <out-dir> <track-id>...")
 			os.Exit(2)
 		}
 		store, err := storage.New(cfg.S3Endpoint, cfg.S3AccessKey, cfg.S3SecretKey, cfg.S3Bucket)
@@ -239,13 +239,13 @@ func main() {
 		}
 		files, err := httpapi.ExportDemoTracks(ctx, pool, store, os.Args[2], os.Args[3:])
 		for _, f := range files {
-			log.Info("export-demo-activities: wrote", "file", f)
+			log.Info("export-demo-tracks: wrote", "file", f)
 		}
 		if err != nil {
-			log.Error("export-demo-activities", "err", err)
+			log.Error("export-demo-tracks", "err", err)
 			os.Exit(1)
 		}
-		log.Info("export-demo-activities: done", "files", len(files))
+		log.Info("export-demo-tracks: done", "files", len(files))
 
 	case "rerender-coverage":
 		// One-off, on deploying a change to how Fog tiles are drawn (docs/DEPLOY.md):
@@ -326,8 +326,8 @@ func main() {
 		log.Info("seed-admin-boundaries: done", "countries", stats.Countries, "regions", stats.Regions,
 			"counties", stats.Counties, "cities", stats.Cities,
 			"skipped_regions", stats.SkippedRegions, "whole_country_regions", stats.WholeCountryRegions,
-			"activity_countries", stats.TrackCountries, "activity_regions", stats.TrackRegions,
-			"activity_counties", stats.TrackCounties, "activity_cities", stats.TrackCities)
+			"track_countries", stats.TrackCountries, "track_regions", stats.TrackRegions,
+			"track_counties", stats.TrackCounties, "track_cities", stats.TrackCities)
 
 	case "build-admin-tiles":
 		// Fog's outline tiles from zoom 0 to httpapi.PrebuildMaxZoom, which seed-admin-boundaries
@@ -390,7 +390,7 @@ func main() {
 			log.Info("seed-timezones: already loaded, nothing to do (--force reloads it)", "file", name)
 			break
 		}
-		log.Info("seed-timezones: done", "zones", stats.Zones, "unknown_zones", len(stats.UnknownZones), "activities", stats.Tracks)
+		log.Info("seed-timezones: done", "zones", stats.Zones, "unknown_zones", len(stats.UnknownZones), "tracks", stats.Tracks)
 
 	case "import-spots":
 		// The load, and each quarterly refresh, of the Spots places from an OpenStreetMap extract
@@ -478,7 +478,7 @@ func main() {
 		}
 
 	default:
-		fmt.Fprintf(os.Stderr, "unknown subcommand %q; want serve, work, migrate, seed-demo-customer, export-demo-activities, rerender-coverage, seed-admin-boundaries, build-admin-tiles, seed-timezones, import-spots, import-bike-paths, set-admin, or stats\n", os.Args[1])
+		fmt.Fprintf(os.Stderr, "unknown subcommand %q; want serve, work, migrate, seed-demo-customer, export-demo-tracks, rerender-coverage, seed-admin-boundaries, build-admin-tiles, seed-timezones, import-spots, import-bike-paths, set-admin, or stats\n", os.Args[1])
 		os.Exit(2)
 	}
 	// What a one-off subcommand asked of the object store counts toward the day's R2 budget

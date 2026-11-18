@@ -88,7 +88,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		return nil
 	}
 	if err != nil {
-		return fmt.Errorf("story copy: story: %w", err)
+		return fmt.Errorf("trip copy: trip: %w", err)
 	}
 
 	sources, err := sourcesToCopy(ctx, pool, job)
@@ -112,17 +112,17 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		}
 		copied, err := copyTrack(ctx, pool, store, job.RecipientID, target, src)
 		if err != nil {
-			return fmt.Errorf("story copy: activity %s: %w", src.id, err)
+			return fmt.Errorf("trip copy: track %s: %w", src.id, err)
 		}
 		added = added || copied
 	}
 	if added {
 		if _, err := pool.Exec(ctx, `UPDATE trips SET updated_at = NOW() WHERE id = $1`, target); err != nil {
-			return fmt.Errorf("story copy: touch story: %w", err)
+			return fmt.Errorf("trip copy: touch trip: %w", err)
 		}
-		// The new memberships change what a `?story=` tracks tile returns (§4.23).
+		// The new memberships change what a `?trip=` tracks tile returns (§4.23).
 		if err := fog.BumpMapVersion(ctx, pool, job.RecipientID); err != nil {
-			return fmt.Errorf("story copy: bump map version: %w", err)
+			return fmt.Errorf("trip copy: bump map version: %w", err)
 		}
 	}
 	if retry {
@@ -155,7 +155,7 @@ func sourcesToCopy(ctx context.Context, pool *pgxpool.Pool, job Job) ([]source, 
 		                  WHERE mine.user_id = $2 AND (mine.id = COALESCE(a.origin_id, a.id) OR mine.origin_id = COALESCE(a.origin_id, a.id)))
 		ORDER BY a.started_at, a.id`, job.TripID, job.RecipientID)
 	if err != nil {
-		return nil, fmt.Errorf("story copy: activities: %w", err)
+		return nil, fmt.Errorf("trip copy: tracks: %w", err)
 	}
 	sources, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (source, error) {
 		var s source
@@ -163,7 +163,7 @@ func sourcesToCopy(ctx context.Context, pool *pgxpool.Pool, job Job) ([]source, 
 		return s, err
 	})
 	if err != nil {
-		return nil, fmt.Errorf("story copy: activities: %w", err)
+		return nil, fmt.Errorf("trip copy: tracks: %w", err)
 	}
 	return sources, nil
 }
@@ -180,12 +180,12 @@ func targetTrip(ctx context.Context, pool *pgxpool.Pool, job Job, name string, d
 		return target, nil
 	}
 	if !errors.Is(err, pgx.ErrNoRows) {
-		return "", fmt.Errorf("story copy: earlier copy: %w", err)
+		return "", fmt.Errorf("trip copy: earlier copy: %w", err)
 	}
 	if !anything {
 		var empty bool
 		if err := pool.QueryRow(ctx, `SELECT NOT EXISTS (SELECT 1 FROM trip_tracks WHERE trip_id = $1)`, job.TripID).Scan(&empty); err != nil {
-			return "", fmt.Errorf("story copy: empty: %w", err)
+			return "", fmt.Errorf("trip copy: empty: %w", err)
 		}
 		if !empty {
 			return "", nil
@@ -197,7 +197,7 @@ func targetTrip(ctx context.Context, pool *pgxpool.Pool, job Job, name string, d
 		SELECT $1, $2, id FROM st
 		RETURNING copy_trip_id`, job.TripID, job.RecipientID, name, description).Scan(&target)
 	if err != nil {
-		return "", fmt.Errorf("story copy: new story: %w", err)
+		return "", fmt.Errorf("trip copy: new trip: %w", err)
 	}
 	return target, nil
 }

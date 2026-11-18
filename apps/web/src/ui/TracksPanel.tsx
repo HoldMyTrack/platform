@@ -109,10 +109,10 @@ interface TracksPanelProps {
    *  toggleGroupVisibility for the exact rule. */
   onToggleGroupVisibility: () => void;
   /** §4.7.5's toolbar Delete — the only delete entry point (over the toolbar's target: the
-   *  checked group, or the selected row alone), so always an array even for one id. Unlike onActivityUpdated, this also has to drop every deleted id from
+   *  checked group, or the selected row alone), so always an array even for one id. Unlike an edit, this also has to drop every deleted id from
    *  `checked`/`hiddenIds`/`focusedId` and refresh the map's track layer and the first track's day
    *  (deleting changes distance/duration, editing never does) — MapView's own
-   *  handleActivitiesDeleted does more than a plain reload. */
+   *  handleTracksDeleted does more than a plain reload. */
   onTracksDeleted: (ids: string[]) => void;
   /** The toolbar's Edit button, over the toolbar's target — MapView opens the Edit window
    *  (EditTrackWindow.tsx: Track and Route tabs) over the map. */

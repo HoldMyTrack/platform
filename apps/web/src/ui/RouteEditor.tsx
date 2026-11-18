@@ -20,7 +20,7 @@ import { t, tn } from '../i18n/index.ts';
 /**
  * The Edit window's Route tab (IMPLEMENTATION.md §4.7.7) — one track's recorded points,
  * edited on the map. MapView owns entering and leaving the session (hiding the other tracks,
- * flying to this one); EditActivityWindow owns saving it, alongside the Route tab's fields,
+ * flying to this one); EditTrackWindow owns saving it, alongside the Route tab's fields,
  * behind the window's shared Save/Cancel. This component owns the session itself.
  *
  * The session is `base` (the edit the track already had) plus a stack of ops (editRouteOps.ts).

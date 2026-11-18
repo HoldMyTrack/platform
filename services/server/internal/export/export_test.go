@@ -168,11 +168,11 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 	}
 	for _, a := range doc.Tracks {
 		if a.Original != "originals/2026-05-01 1200 Lake Loop.gpx" {
-			t.Errorf("activity %s: original %q", a.ID, a.Original)
+			t.Errorf("track %s: original %q", a.ID, a.Original)
 		}
 	}
 	if doc.Tracks[0].ID != walk || doc.Tracks[1].ID != copyOf || len(doc.Tracks[0].Photos) != 1 || doc.Tracks[0].Photos[0].Caption != "The bridge" {
-		t.Errorf("activities: %+v", doc.Tracks)
+		t.Errorf("tracks: %+v", doc.Tracks)
 	}
 	if !strings.Contains(string(files["README.txt"]), "originals/") {
 		t.Error("README doesn't explain the folders")

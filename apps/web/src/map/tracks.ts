@@ -63,7 +63,7 @@ interface TrackInteractivityHandlers {
   /** A track was clicked — the caller decides what "selected" means (see MapView). */
   onSelect: (trackId: string) => void;
   /** The pointer entered or left a track — `null` on leave. Reported up rather than applied
-   *  directly so ActivitiesPanel's own row hover can drive the same hover source through one
+   *  directly so TracksPanel's own row hover can drive the same hover source through one
    *  place (setHoveredTrack) instead of the two fighting over
    *  which one a mouseleave should clear. */
   onHover: (trackId: string | null) => void;
@@ -162,7 +162,7 @@ function isTouch(event: MouseEvent): boolean {
 
 /**
  * The one hovered track, drawn widest: fed by both directions, the map's own mousemove and
- * mouseleave above (via onHover) and ActivitiesPanel's row hover (via MapView's hoveredActivityId),
+ * mouseleave above (via onHover) and TracksPanel's row hover (via MapView's hoveredTrackId),
  * so a row hover and a map hover share one piece of state.
  */
 export function setHoveredTrack(map: MapLibreMap, trackId: string | null): void {

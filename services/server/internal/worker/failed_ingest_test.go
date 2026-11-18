@@ -61,9 +61,9 @@ func TestFailedIngestDiscardsItsOriginal(t *testing.T) {
 	if _, err := pool.Exec(ctx, `
 		INSERT INTO tracks (user_id, source, external_id, track_type, started_at, timezone, raw_payload_key)
 		VALUES ($1, 'upload', 'other', 'run', NOW(), 'UTC', $2)`, userID, key); err != nil {
-		t.Fatalf("activity: %v", err)
+		t.Fatalf("track: %v", err)
 	}
 	if _, kept := failing("not a track"); !s3.Has(kept) {
-		t.Errorf("original %s removed while an activity still names it", kept)
+		t.Errorf("original %s removed while a track still names it", kept)
 	}
 }

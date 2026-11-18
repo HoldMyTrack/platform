@@ -22,7 +22,7 @@ func TestAdminUserRows(t *testing.T) {
 		t.Fatalf("adminUser: %v, found %v", err, found)
 	}
 	if u.ID != rider.id || u.TrackCount != 2 || u.Distance != "3.5 km" {
-		t.Errorf("adminUser = %s with %d activities, %s; want %s with 2, 3.5 km", u.ID, u.TrackCount, u.Distance, rider.id)
+		t.Errorf("adminUser = %s with %d tracks, %s; want %s with 2, 3.5 km", u.ID, u.TrackCount, u.Distance, rider.id)
 	}
 	if _, found, err := d.srv.adminUser(ctx, l, "00000000-0000-4000-8000-000000000000", false); err != nil || found {
 		t.Errorf("adminUser of no account: found %v, %v", found, err)

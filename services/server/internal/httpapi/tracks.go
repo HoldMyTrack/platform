@@ -15,7 +15,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// trackFilter is the from/to/types/story filter shape shared by §4.3's tracks tiles and
+// trackFilter is the from/to/types/trip filter shape shared by §4.3's tracks tiles and
 // all three of §4.7's listing endpoints. Every field is optional and a nil field means "no
 // restriction" — the convention both sections specify, so a caller that wants everything
 // sends nothing rather than an explicit wide-open range.
@@ -108,7 +108,7 @@ func parseTripParam(q url.Values) (*string, error) {
 }
 
 // trackTripsColumn is the Trips a track is in (§4.23), newest first, as a JSON array
-// of {id, name} — one indexed lookup per row (idx_story_activities_activity). A Trip only ever
+// of {id, name} — one indexed lookup per row (idx_trip_tracks_track). A Trip only ever
 // holds its owner's tracks, so it needs no user filter of its own.
 const trackTripsColumn = `COALESCE((
          SELECT json_agg(json_build_object('id', s.id, 'name', s.name) ORDER BY s.created_at DESC, s.id DESC)
@@ -212,7 +212,7 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 		WHERE id = $1 AND user_id = $2
 	`, trackID, userID, req.TrackType, req.Name, req.Description)
 	if err != nil {
-		s.log.Error("activity update failed", "err", err)
+		s.log.Error("track update failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -222,12 +222,12 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 	}
 	// track_type is in every tracks tile this track crosses, and no render follows.
 	if err := fog.BumpMapVersion(ctx, s.pool, userID); err != nil {
-		s.log.Error("activity update: bump map version failed", "activity_id", trackID, "err", err)
+		s.log.Error("track update: bump map version failed", "track_id", trackID, "err", err)
 	}
 
 	row, err := scanTrackRow(s.pool.QueryRow(ctx, trackByIDQuery, trackID, userID))
 	if err != nil {
-		s.log.Error("activity lookup after update failed", "err", err)
+		s.log.Error("track lookup after update failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -270,14 +270,14 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, "track not found", http.StatusNotFound)
 			return
 		}
-		s.log.Error("activity lookup before delete failed", "err", err)
+		s.log.Error("track lookup before delete failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
 
 	tiles, err := ingest.TrackTiles(ctx, s.pool, trackID)
 	if err != nil {
-		s.log.Error("activity tile lookup before delete failed", "err", err)
+		s.log.Error("track tile lookup before delete failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -287,11 +287,11 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	// share them and keeps them.
 	photoKeys, err := s.trackPhotoKeys(ctx, trackID)
 	if err != nil {
-		s.log.Error("activity delete: photo lookup failed, deleting row anyway", "activity_id", trackID, "err", err)
+		s.log.Error("track delete: photo lookup failed, deleting row anyway", "track_id", trackID, "err", err)
 	}
 	tag, err := s.pool.Exec(ctx, `DELETE FROM tracks WHERE id = $1 AND user_id = $2`, trackID, userID)
 	if err != nil {
-		s.log.Error("activity delete failed", "err", err)
+		s.log.Error("track delete failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
@@ -305,7 +305,7 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	s.removeUnreferencedPhotoFiles(ctx, photoKeys)
 	// The track is gone from the tracks tiles now; the render below only bumps once it runs.
 	if err := fog.BumpMapVersion(ctx, s.pool, userID); err != nil {
-		s.log.Error("activity delete: bump map version failed", "activity_id", trackID, "err", err)
+		s.log.Error("track delete: bump map version failed", "track_id", trackID, "err", err)
 	}
 
 	// The deleted track's tiles are marked dirty and rendered again, as ingest does: a render
@@ -313,9 +313,9 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	// this track's.
 	if len(tiles) > 0 {
 		if err := ingest.MarkFogTilesDirty(ctx, s.pool, userID, tiles); err != nil {
-			s.log.Error("activity delete: mark fog tiles dirty failed", "activity_id", trackID, "err", err)
+			s.log.Error("track delete: mark fog tiles dirty failed", "track_id", trackID, "err", err)
 		} else if err := ingest.EnqueueRenderFog(ctx, s.pool, userID); err != nil {
-			s.log.Error("activity delete: enqueue render_fog failed", "activity_id", trackID, "err", err)
+			s.log.Error("track delete: enqueue render_fog failed", "track_id", trackID, "err", err)
 		}
 	}
 
@@ -429,13 +429,13 @@ func (s *Server) handleTrackRouteMetrics(w http.ResponseWriter, r *http.Request)
 func (s *Server) removeUnreferencedRaw(ctx context.Context, userID, trackID, rawKey string) {
 	named, err := ingest.RawNamed(ctx, s.pool, userID, rawKey, 0)
 	if err != nil {
-		s.log.Error("activity delete: raw key reference check failed, keeping the original", "activity_id", trackID, "err", err)
+		s.log.Error("track delete: raw key reference check failed, keeping the original", "track_id", trackID, "err", err)
 		return
 	}
 	if named {
 		return
 	}
 	if err := s.store.Remove(ctx, rawKey); err != nil {
-		s.log.Error("activity delete: raw payload cleanup failed", "activity_id", trackID, "err", err)
+		s.log.Error("track delete: raw payload cleanup failed", "track_id", trackID, "err", err)
 	}
 }

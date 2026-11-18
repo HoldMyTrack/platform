@@ -26,7 +26,7 @@ class SyncVerdictsTest {
     )
 
     @Test
-    fun `each activity is sorted by its own answer, in the batch's order`() {
+    fun `each track is sorted by its own answer, in the batch's order`() {
         val (a, b, c, d) = listOf("a", "b", "c", "d").map(::candidate)
         val refusal = SyncResult("c", "rejected", "too many points")
         val verdicts = SyncVerdicts.of(

@@ -34,7 +34,7 @@ func TestTrackBBoxAcrossTheAntimeridian(t *testing.T) {
 			got[i] = math.Round(v*1000) / 1000 // float noise from the shift
 		}
 		if !slices.Equal(got, want[a.ID]) {
-			t.Errorf("activity %s: bbox %v, want %v", a.ID, a.BBox, want[a.ID])
+			t.Errorf("track %s: bbox %v, want %v", a.ID, a.BBox, want[a.ID])
 		}
 	}
 }

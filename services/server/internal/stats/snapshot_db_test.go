@@ -82,7 +82,7 @@ func TestTake(t *testing.T) {
 			INSERT INTO tracks (user_id, source, track_type, started_at, timezone, created_at)
 			VALUES ($1, $2, 'run', $3, 'UTC', $3) RETURNING id`, userID, source, created,
 		).Scan(&id); err != nil {
-			t.Fatalf("create activity: %v", err)
+			t.Fatalf("create track: %v", err)
 		}
 		return id
 	}
@@ -171,39 +171,39 @@ func TestTake(t *testing.T) {
 		t.Fatal(err)
 	}
 	for key, want := range map[string]float64{
-		"accounts":                           10,
-		"signups":                            1,
-		"active_1d":                          1,
-		"active_7d":                          2,
-		"active_30d":                         3,
-		"activities":                         7,
-		"activities_added":                   3,
-		"activities_by_source.upload":        3,
-		"activities_by_source.healthconnect": 1,
-		"activities_by_source.recorded":      3,
-		"activities_by_source.healthkit":     0,
-		"activities_added_by_source.upload":  2,
-		"photos":                             3,
-		"storage_bytes.photos":               1500,
-		"accounts_by_country.qq":             5,
-		"accounts_by_country.qz":             0,
-		"accounts_by_country.other":          5,
-		"accounts_with.photos":               1,
-		"activity_accounts_by_country.qq":    0, // one account: folded
-		"activity_accounts_by_country.other": 7,
-		"activities_by_country.other":        7,
-		"storage_bytes.originals":            2000,
-		"r2_ops.class_a":                     70,
-		"r2_ops.class_b":                     900,
-		"storage_bytes.fog":                  300,
-		"storage_bytes_unmeasured_rows":      2, // raw-b, and the second tile
-		"clients_30d.both":                   1,
-		"clients_30d.web_only":               1,
-		"clients_30d.android_only":           1,
-		"clients_30d.ios_only":               1,
-		"ios_builds_30d.1400":                1,
-		"android_builds_30d.9001":            1,
-		"android_builds_30d.9000":            1,
+		"accounts":                        10,
+		"signups":                         1,
+		"active_1d":                       1,
+		"active_7d":                       2,
+		"active_30d":                      3,
+		"tracks":                          7,
+		"tracks_added":                    3,
+		"tracks_by_source.upload":         3,
+		"tracks_by_source.healthconnect":  1,
+		"tracks_by_source.recorded":       3,
+		"tracks_by_source.healthkit":      0,
+		"tracks_added_by_source.upload":   2,
+		"photos":                          3,
+		"storage_bytes.photos":            1500,
+		"accounts_by_country.qq":          5,
+		"accounts_by_country.qz":          0,
+		"accounts_by_country.other":       5,
+		"accounts_with.photos":            1,
+		"track_accounts_by_country.qq":    0, // one account: folded
+		"track_accounts_by_country.other": 7,
+		"tracks_by_country.other":         7,
+		"storage_bytes.originals":         2000,
+		"r2_ops.class_a":                  70,
+		"r2_ops.class_b":                  900,
+		"storage_bytes.fog":               300,
+		"storage_bytes_unmeasured_rows":   2, // raw-b, and the second tile
+		"clients_30d.both":                1,
+		"clients_30d.web_only":            1,
+		"clients_30d.android_only":        1,
+		"clients_30d.ios_only":            1,
+		"ios_builds_30d.1400":             1,
+		"android_builds_30d.9001":         1,
+		"android_builds_30d.9000":         1,
 	} {
 		if got := after[key] - before[key]; got != want {
 			t.Errorf("%s: went up by %v, want %v", key, got, want)

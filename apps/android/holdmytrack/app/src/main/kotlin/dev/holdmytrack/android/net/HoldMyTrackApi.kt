@@ -605,7 +605,7 @@ object HoldMyTrackApi {
     /**
      * `GET /v2/tracks/area`: the newest tracks, at most [limit], whose track crosses [box]
      * (`[west, south, east, north]`), all of them without one, under [dates] (`docs/SPEC.md`
-     * FR-5.11). Its rows are slim: the Edit window reads [activity] for the rest.
+     * FR-5.11). Its rows are slim: the Edit window reads [track] for the rest.
      */
     fun areaTracks(box: List<Double>?, dates: DateFilter, limit: Int? = null, onResult: (Result<AreaPage>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks/area").toHttpUrl().newBuilder()

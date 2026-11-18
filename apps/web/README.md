@@ -55,7 +55,7 @@ src/map/
   tracks.ts mapMode.ts     # the tracks overlay and the Normal/Fog switch
   exportMap.ts             # high-resolution export, rendered client-side
   MapView.tsx
-src/ui/                    # ActivitiesPanel, the Edit window and the rest of the UI
+src/ui/                    # TracksPanel, the Edit window and the rest of the UI
 ```
 
 ## Three things that are easy to break

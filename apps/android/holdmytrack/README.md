@@ -84,7 +84,7 @@ Everything is under `app/src/main/kotlin/dev/holdmytrack/android/`:
 - `map/SyncCandidatesOverlay.kt` — the Sync tab's candidates on the map, dashed, the picked one solid.
 - `SyncActivity.kt` — Health Connect's setup on its own, registered for `ACTION_SHOW_PERMISSIONS_RATIONALE`, so Health Connect opens it as the app's own explanation of what it reads.
 - `health/HealthConnect.kt` — availability, the three permissions, and the readiness states the onboarding walks through.
-- `health/ExerciseTypes.kt` — Health Connect's exercise type to HoldMyTrack's `activity_type`, normalised onto the vocabulary the other ingest paths already produce.
+- `health/ExerciseTypes.kt` — Health Connect's exercise type to HoldMyTrack's `track_type`, normalised onto the vocabulary the other ingest paths already produce.
 - `sync/SyncCandidates.kt` — what's waiting: Health Connect's sessions from the last three months the server doesn't have, and the recordings on the phone.
 - `sync/SyncRunner.kt` — sends what's ticked, in batches, and reports what happened to each.
 - `sync/HiddenCandidates.kt` — the rows swiped aside, per account.

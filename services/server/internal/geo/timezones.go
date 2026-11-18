@@ -136,7 +136,7 @@ func loadTimezones(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reader
 			SELECT tzid, (ST_Dump(ST_Subdivide(
 				ST_CollectionExtract(ST_MakeValid(ST_SetSRID(ST_GeomFromGeoJSON(geom), 4326)), 3), 256))).geom
 			FROM tz_geojson WHERE tzid IN (SELECT name FROM pg_timezone_names)`, nil},
-		{"activities", `
+		{"tracks", `
 			UPDATE tracks a SET timezone = ` + TimezoneAtSQL("ST_X(ST_StartPoint(a.trajectory))", "ST_Y(ST_StartPoint(a.trajectory))", "a.user_id") + `
 			WHERE a.trajectory IS NOT NULL`, &stats.Tracks},
 	}

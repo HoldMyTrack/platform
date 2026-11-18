@@ -92,7 +92,7 @@ func TestSplit(t *testing.T) {
 
 	list = d.listTracks(me)
 	if len(list) != 2 {
-		t.Fatalf("after the job: %d activities", len(list))
+		t.Fatalf("after the job: %d tracks", len(list))
 	}
 	second, first := list[0], list[1] // newest first
 	if first.ID != orig || second.ID == orig {
@@ -115,7 +115,7 @@ func TestSplit(t *testing.T) {
 			!c.row.StartedAt.Equal(time.UnixMilli(at(c.start))) ||
 			c.row.DurationSeconds == nil || *c.row.DurationSeconds != c.duration ||
 			len(c.row.Trips) != 1 {
-			t.Errorf("piece %+v, want starting 10:0%d, %ds, in the Story", c.row, c.start, c.duration)
+			t.Errorf("piece %+v, want starting 10:0%d, %ds, in the Trip", c.row, c.start, c.duration)
 		}
 	}
 	if *first.Split.To != at(2) || first.Split.From != nil || *second.Split.From != at(2) || second.Split.To != nil {
@@ -183,7 +183,7 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 	d.runEditJob(me)
 	list := d.listTracks(me)
 	if len(list) != 2 {
-		t.Fatalf("after split: %d activities", len(list))
+		t.Fatalf("after split: %d tracks", len(list))
 	}
 	later, earlier := list[0], list[1]
 	if later.Pending || later.BBox != nil || !later.Private || (later.DistanceMeters != nil && *later.DistanceMeters != 0) {

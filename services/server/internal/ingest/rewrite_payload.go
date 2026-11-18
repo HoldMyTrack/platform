@@ -13,7 +13,7 @@ import (
 
 // RewriteSyncPayloadJob is a `rewrite_sync_payload` job's payload: one stored phone-sync
 // payload whose type is still named activity_type. Migration 0057 queues one per object;
-// parse.JSONActivity reads the old name meanwhile, and both go once every payload is rewritten.
+// parse.JSONTrack reads the old name meanwhile, and both go once every payload is rewritten.
 type RewriteSyncPayloadJob struct {
 	Key string `json:"key"`
 }
