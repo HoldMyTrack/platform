@@ -371,10 +371,11 @@ class ClientRulesTest {
             state.strings("hidden").forEach { panel.toggleChecked(it) }
             panel.toggleTargetVisibility()
             panel.clearChecked()
-            state.strings("checked").forEach { panel.toggleChecked(it) }
-            state.string("focused")?.let(panel::focus)
+            // Filters before checks: setting a filter unchecks what it hides.
             state.strings("excludedTypes").forEach(panel::toggleType)
             panel.setDistanceFilter(distance(state["distanceFilter"]))
+            state.strings("checked").forEach { panel.toggleChecked(it) }
+            state.string("focused")?.let(panel::focus)
             val event = input["event"]!!.jsonObject
             when (val type = event.string("type")) {
                 "checkToggled" -> panel.toggleChecked(event.string("id")!!)
