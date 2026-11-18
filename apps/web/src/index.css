@@ -3384,3 +3384,11 @@ button.activities-panel__story-badge:hover {
     opacity: 1;
   }
 }
+
+/* The floating windows take focus as a whole when they open (useWindowFocus.ts); the window
+   isn't a control, so it draws no ring, and its controls draw theirs. */
+.edit-window:focus,
+.private-locations__window:focus,
+.export-viewfinder:focus {
+  outline: none;
+}
