@@ -161,7 +161,9 @@ func (s *Server) renderAuthFailure(w http.ResponseWriter, r *http.Request, acct 
 		data.Description = l.T("meta.site_description")
 	}
 	if origins := pageScriptOrigins(form); len(origins) > 0 {
-		w.Header().Set("Content-Security-Policy", cspWithScripts(origins...))
+		parts := s.cspParts
+		parts.widgets = origins
+		w.Header().Set("Content-Security-Policy", contentSecurityPolicy(parts))
 	}
 	s.pages.Render(w, status, page, data)
 }

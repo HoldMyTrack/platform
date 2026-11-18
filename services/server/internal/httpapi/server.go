@@ -77,7 +77,11 @@ type Server struct {
 	afterResponse func(func())
 	appBaseURL    string
 	// corsOrigins is devOrigins in local development, none on a deployment.
-	corsOrigins           map[string]bool
+	corsOrigins map[string]bool
+	// csp is every response's Content-Security-Policy (csp.go), and cspParts what it's built from,
+	// for a page that adds a widget's origin (renderAuthPage).
+	csp                   string
+	cspParts              cspParts
 	basemapOrigin         string
 	satellite             mapstyle.Satellite
 	imagery               imageryCache
@@ -127,9 +131,12 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		syncActivityLimiter:   newFixedWindowLimiter(syncActivitiesPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
 	}
-	if config.IsLocal(appBaseURL) {
+	local := config.IsLocal(appBaseURL)
+	if local {
 		s.corsOrigins = devOrigins
 	}
+	s.cspParts = cspParts{assets: assetOrigins(appBaseURL, basemapOrigin, satellite.Tiles), local: local}
+	s.csp = contentSecurityPolicy(s.cspParts)
 	if pool != nil {
 		s.visitors = &visitorCounter{pool: pool, log: log}
 	}
@@ -418,7 +425,7 @@ func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter 
 // back when it's on the allowlist, never any origin, which would let any site ride a visitor's
 // session.
 func (s *Server) serve(w http.ResponseWriter, r *http.Request) {
-	setSecurityHeaders(w.Header())
+	s.setSecurityHeaders(w.Header())
 	if origin := r.Header.Get("Origin"); s.corsOrigins[origin] {
 		w.Header().Set("Access-Control-Allow-Origin", origin)
 		w.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -468,32 +475,8 @@ func setsOwnBodyLimit(r *http.Request) bool {
 	return ownBodyLimitRoutes[r.Method+" "+r.URL.Path]
 }
 
-// contentSecurityPolicy is every response's CSP (setSecurityHeaders), unless a page loads
-// scripts from elsewhere too (pageScriptOrigins). It is cspWithScripts() written out as a
-// constant; TestContentSecurityPolicyParts holds the two equal.
-const contentSecurityPolicy = "script-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"
-
-// cspWithScripts is the CSP allowing scripts from this origin and scriptOrigins.
-func cspWithScripts(scriptOrigins ...string) string {
-	scripts := append([]string{"'self'"}, scriptOrigins...)
-	return strings.Join([]string{
-		"script-src " + strings.Join(scripts, " "),
-		"object-src 'none'",
-		"base-uri 'self'",
-		"frame-ancestors 'none'",
-	}, "; ")
-}
-
-// setSecurityHeaders applies to every response. No page here is meant to be framed, so none
-// may be (frame-ancestors, and X-Frame-Options for browsers without CSP): framed invisibly by
-// another site, a signed-in page's buttons could be clicked through — and the click is
-// same-origin, so neither SameSite nor the Origin checks would stop it. nosniff keeps a
-// browser from reading a response as a type other than the one it's served as. Scripts load
-// only from this origin's files, never inline, so an injected <script> or handler doesn't run;
-// templates keep their scripts in static/. HSTS is Caddy's (apps/web/docker/Caddyfile), which
-// terminates TLS.
-func setSecurityHeaders(h http.Header) {
-	h.Set("Content-Security-Policy", contentSecurityPolicy)
+func (s *Server) setSecurityHeaders(h http.Header) {
+	h.Set("Content-Security-Policy", s.csp)
 	h.Set("X-Frame-Options", "DENY")
 	h.Set("X-Content-Type-Options", "nosniff")
 	h.Set("Referrer-Policy", "strict-origin-when-cross-origin")

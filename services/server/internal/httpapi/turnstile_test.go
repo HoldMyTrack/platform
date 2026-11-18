@@ -114,12 +114,12 @@ func TestSignupPageTurnstile(t *testing.T) {
 			t.Errorf("/signup: missing %q", w)
 		}
 	}
-	if csp := rec.Header().Get("Content-Security-Policy"); !strings.Contains(csp, "script-src 'self' https://challenges.cloudflare.com;") {
-		t.Errorf("/signup CSP %q doesn't allow the widget's script", csp)
+	if csp := rec.Header().Get("Content-Security-Policy"); !strings.Contains(csp, "script-src 'self' https://challenges.cloudflare.com;") || !strings.Contains(csp, "frame-src https://challenges.cloudflare.com;") {
+		t.Errorf("/signup CSP %q doesn't allow the widget's script and frame", csp)
 	}
 	rec = httptest.NewRecorder()
 	s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/signin", nil))
-	if csp := rec.Header().Get("Content-Security-Policy"); csp != contentSecurityPolicy {
+	if csp := rec.Header().Get("Content-Security-Policy"); csp != s.csp {
 		t.Errorf("/signin CSP %q, want the default", csp)
 	}
 
@@ -178,7 +178,7 @@ func TestSignupPageWithoutTurnstile(t *testing.T) {
 	if body := rec.Body.String(); strings.Contains(body, "cf-turnstile") || strings.Contains(body, "challenges.cloudflare.com") {
 		t.Errorf("/signup shows Turnstile with no site key")
 	}
-	if csp := rec.Header().Get("Content-Security-Policy"); csp != contentSecurityPolicy {
+	if csp := rec.Header().Get("Content-Security-Policy"); csp != s.csp {
 		t.Errorf("/signup CSP %q, want the default", csp)
 	}
 }
@@ -210,14 +210,5 @@ func TestPageScriptOrigins(t *testing.T) {
 	}
 	if got := pageScriptOrigins(authForm{}); got != nil {
 		t.Errorf("form without the widget: %v, want none", got)
-	}
-}
-
-func TestContentSecurityPolicyParts(t *testing.T) {
-	if got := cspWithScripts(); got != contentSecurityPolicy {
-		t.Errorf("cspWithScripts() = %q, want contentSecurityPolicy %q", got, contentSecurityPolicy)
-	}
-	if got, want := cspWithScripts(turnstileScriptOrigin), "script-src 'self' "+turnstileScriptOrigin+"; object-src 'none'; base-uri 'self'; frame-ancestors 'none'"; got != want {
-		t.Errorf("cspWithScripts(Turnstile) = %q, want %q", got, want)
 	}
 }
