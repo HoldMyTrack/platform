@@ -6,7 +6,7 @@ import UIKit
 /// or Hidden badge, a Private badge, and a Trip badge for the Trips it's in but the open one.
 /// Its kind's tile is its checkbox: a tap on it, or a long press on the row, checks it.
 final class TrackRowCell: UITableViewCell {
-    static let reuse = "activity"
+    static let reuse = "track"
 
     struct Row {
         let track: Track

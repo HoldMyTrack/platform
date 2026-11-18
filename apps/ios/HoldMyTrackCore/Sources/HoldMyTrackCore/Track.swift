@@ -3,7 +3,7 @@ import Foundation
 /// A track as the Tracks panel lists it (root docs/SPEC.md FR-5.1).
 public struct Track: Equatable, Sendable {
     public let id: String
-    /// ISO 8601, as the server sends it; formatted in timezone (ActivityZone).
+    /// ISO 8601, as the server sends it; formatted in timezone (TrackZone).
     public let startedAt: String
     public let timezone: String
     public let activityType: String
@@ -100,7 +100,7 @@ public struct Trip: Equatable, Sendable {
     public let description: String
     /// Who sent it, for a copy accepted from someone else (FR-13.7).
     public let from: String?
-    public let activityIDs: [String]
+    public let trackIDs: [String]
     public let stats: TripTotals
     public let byType: [TripTotals]
 
@@ -109,14 +109,14 @@ public struct Trip: Equatable, Sendable {
         name = json.name
         description = json.description ?? ""
         from = json.from
-        activityIDs = json.activityIDs
+        trackIDs = json.activityIDs
         stats = TripTotals(activityType: "", count: json.stats.count, distanceMeters: json.stats.distanceMeters, movingSeconds: json.stats.movingSeconds)
         byType = json.stats.byType.map {
             TripTotals(activityType: $0.activityType, count: $0.count, distanceMeters: $0.distanceMeters, movingSeconds: $0.movingSeconds)
         }
     }
 
-    /// The type labels the Trip's numbers carry, for ActivityTypeCatalog.
+    /// The type labels the Trip's numbers carry, for TrackTypeCatalog.
     static func labels(_ json: StoryJSON) -> [String: TrackTypeInfo] {
         Dictionary(json.stats.byType.compactMap { t in t.label.flatMap { $0.isEmpty ? nil : (t.activityType, TrackTypeInfo(kind: nil, label: $0)) } },
                    uniquingKeysWith: { a, _ in a })

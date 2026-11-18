@@ -64,7 +64,7 @@ final class TestAccount {
         return (json?["photos"] as? [[String: Any]] ?? []).map { $0["caption"] as? String ?? "" }
     }
 
-    /// The edit saved on the track's track, as the server sends it, or nil for none.
+    /// The edit saved on the track's route, as the server sends it, or nil for none.
     func routeEdit(_ track: String) -> [String: Any]? {
         let json = (try? call("GET", "/v1/activities/\(track)/track-points", nil)) as? [String: Any]
         return json?["edit"] as? [String: Any]

@@ -89,10 +89,10 @@ struct RouteEditSessionTests {
     @Test func availabilityIsTheServersAnswerForOneTrack() {
         let ok = Track(id: "a", startedAt: "", activityType: "ride")
         let pending = Track(id: "b", startedAt: "", activityType: "ride", routeEdit: "pending", photosBlock: "no_original")
-        #expect(EditAvailability.track([ok]) == nil)
-        #expect(EditAvailability.track([ok, pending]) == .checkOne)
-        #expect(EditAvailability.track([pending]) == .pending)
+        #expect(EditAvailability.route([ok]) == nil)
+        #expect(EditAvailability.route([ok, pending]) == .checkOne)
+        #expect(EditAvailability.route([pending]) == .pending)
         #expect(EditAvailability.photos([pending]) == .noOriginal)
-        #expect(EditAvailability.track([Track(id: "c", startedAt: "", activityType: "ride", routeEdit: "from_the_future")]) == nil)
+        #expect(EditAvailability.route([Track(id: "c", startedAt: "", activityType: "ride", routeEdit: "from_the_future")]) == nil)
     }
 }

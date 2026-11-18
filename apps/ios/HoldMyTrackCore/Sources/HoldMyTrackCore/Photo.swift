@@ -3,7 +3,7 @@ import Foundation
 /// A saved photo (root docs/SPEC.md FR-15), at its point on its track's route.
 public struct Photo: Equatable, Sendable {
     public let id: String
-    public let activityID: String
+    public let trackID: String
     /// When it was taken, ISO 8601, formatted in timezone; nil when the photo didn't say.
     public let takenAt: String?
     /// The moment on the route it sits at.
@@ -21,12 +21,12 @@ public struct Photo: Equatable, Sendable {
     public let thumbURL: String
 
     public init(
-        id: String, activityID: String, takenAt: String? = nil, routeAt: String = "", timezone: String = "",
+        id: String, trackID: String, takenAt: String? = nil, routeAt: String = "", timezone: String = "",
         lon: Double? = nil, lat: Double? = nil, caption: String? = nil, width: Int = 0, height: Int = 0,
         url: String = "", thumbURL: String = ""
     ) {
         self.id = id
-        self.activityID = activityID
+        self.trackID = trackID
         self.takenAt = takenAt
         self.routeAt = routeAt
         self.timezone = timezone
@@ -41,7 +41,7 @@ public struct Photo: Equatable, Sendable {
 
     init(_ json: PhotoJSON) {
         self.init(
-            id: json.id, activityID: json.activityID, takenAt: json.takenAt, routeAt: json.routeAt, timezone: json.timezone,
+            id: json.id, trackID: json.activityID, takenAt: json.takenAt, routeAt: json.routeAt, timezone: json.timezone,
             lon: json.lon, lat: json.lat, caption: json.caption, width: json.width, height: json.height,
             url: json.url, thumbURL: json.thumbURL
         )
@@ -82,14 +82,14 @@ extension PhotoMarkers {
     /// The markers for photos in route order: those placed on a route, on routes not hidden.
     public static func items(_ photos: [Photo], mapHidden: Set<String>) -> [PhotoMarkerItem] {
         photos.compactMap { p in
-            guard let lon = p.lon, let lat = p.lat, !mapHidden.contains(p.activityID) else { return nil }
+            guard let lon = p.lon, let lat = p.lat, !mapHidden.contains(p.trackID) else { return nil }
             return PhotoMarkerItem(id: p.id, lon: lon, lat: lat, caption: p.caption, thumbPath: p.thumbURL)
         }
     }
 }
 
 extension APIClient {
-    /// `GET /v1/photos?activity=` or `?trip=`: the scope's photos, in route order.
+    /// `GET /v1/photos?activity=` or `?story=`: the scope's photos, in route order.
     public func photos(_ scope: PhotoScope) async throws -> [Photo] {
         let item = switch scope {
         case .track(let id): URLQueryItem(name: "activity", value: id)

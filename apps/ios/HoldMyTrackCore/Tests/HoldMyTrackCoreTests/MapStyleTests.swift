@@ -325,7 +325,7 @@ struct MapStyleTests {
     // MARK: Pace bands
 
     private let metrics = RouteMetrics(
-        activityID: "a1",
+        trackID: "a1",
         points: [.init(lon: 0, lat: 0), .init(lon: 1, lat: 0), .init(lon: 2, lat: 0), .init(lon: 3, lat: 0)],
         bands: [.init(band: 0, start: 0, end: 2), .init(band: 4, start: 2, end: 3)]
     )
@@ -343,7 +343,7 @@ struct MapStyleTests {
     }
 
     @Test func aRunPastThePointsIsSkipped() {
-        let broken = RouteMetrics(activityID: "a1", points: metrics.points, bands: [.init(band: 1, start: 2, end: 9)])
+        let broken = RouteMetrics(trackID: "a1", points: metrics.points, bands: [.init(band: 1, start: 2, end: 9)])
         #expect(PaceBands.features(broken)["features"]?.array?.count == 1, "the route alone")
     }
 

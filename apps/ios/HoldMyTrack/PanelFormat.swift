@@ -4,7 +4,7 @@ import UIKit
 
 /// The Tracks panel's numbers and dates in the app's language: FormatParts' decisions
 /// written out, a start time as a medium date with a short time in the zone the track was
-/// recorded in (ActivityZone), units by the account's Country.
+/// recorded in (TrackZone), units by the account's Country.
 @MainActor
 struct PanelFormat {
     let imperial: Bool
@@ -78,7 +78,7 @@ struct PanelFormat {
     /// "Oct 11, 2026, 9:39 AM", in the zone the track was recorded in.
     func startedAt(_ track: Track) -> String { moment(track.startedAt, zone: track.timezone) }
 
-    /// An ISO 8601 moment as "Oct 11, 2026, 9:39 AM", in zone, else the account's (ActivityZone).
+    /// An ISO 8601 moment as "Oct 11, 2026, 9:39 AM", in zone, else the account's (TrackZone).
     func moment(_ iso: String, zone: String) -> String {
         guard let date = Self.iso(iso) else { return iso }
         let formatter = DateFormatter()
@@ -116,12 +116,12 @@ struct PanelFormat {
     }
 }
 
-/// The account's track types, as the server describes them (ActivityTypeCatalog), for every
+/// The account's track types, as the server describes them (TrackTypeCatalog), for every
 /// screen at once; a change is announced so rows drawn with a fallback label redraw.
 @MainActor
 final class TrackTypes {
     static let shared = TrackTypes()
-    static let changed = Notification.Name("ActivityTypes.changed")
+    static let changed = Notification.Name("TrackTypes.changed")
 
     private(set) var catalog = TrackTypeCatalog()
     private var catalogRead = false

@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import UIKit
 
 /// The Edit window's Route tab (root docs/SPEC.md FR-5.7, FR-5.9), Android's TrackEditor: the
-/// track's recorded points and the edit saved on them (TrackEditSession), a two-knob range over
+/// track's recorded points and the edit saved on them (RouteEditSession), a two-knob range over
 /// the points as the edit leaves them, and Chop, Cut, Split, Delete point, Move point, Undo and
 /// Reset. Nothing is sent from here: the window's Save sends session.pending and session.splitAt.
 /// Every change is drawn over the map through onDraw. Cut and Split preview while held; the tap

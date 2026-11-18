@@ -3,12 +3,12 @@ import Foundation
 /// Why the Edit window's Track or Photos tab can't be used.
 public enum EditBlock: Equatable, Sendable { case checkOne, pending, isPrivate, noOriginal, badTimes }
 
-/// Whether the Track and Photos tabs can be used for the Edit window's tracks, Android's and
+/// Whether the Route and Photos tabs can be used for the Edit window's tracks, Android's and
 /// the web's EditAvailability. One track's answer is the server's (the list's `track_edit` and
 /// `photos`, root docs/SPEC.md FR-5.7 and FR-15.1); the app adds only the rule that depends on
 /// the selection: one track.
 public enum EditAvailability {
-    public static func track(_ group: [Track]) -> EditBlock? {
+    public static func route(_ group: [Track]) -> EditBlock? {
         guard group.count == 1 else { return .checkOne }
         return block(group[0].routeEdit)
     }

@@ -192,8 +192,8 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         render()
     }
 
-    func scrollTo(_ activityID: String) {
-        guard let index = items.firstIndex(where: { if case .row(let r, _) = $0 { r.track.id == activityID } else { false } }) else { return }
+    func scrollTo(_ trackID: String) {
+        guard let index = items.firstIndex(where: { if case .row(let r, _) = $0 { r.track.id == trackID } else { false } }) else { return }
         table.scrollToRow(at: IndexPath(row: index, section: 0), at: .middle, animated: true)
     }
 
@@ -255,7 +255,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
             let id = row.track.id
             cell.bind(row, format: format, openTripID: tripID, demo: demo, onCheck: nil,
                       onOpenTrip: { [weak self] in self?.onEvent?(.open($0, collapse: true)) },
-                      onRemove: { [weak self] in self?.remove(tripID: tripID, activityID: id) })
+                      onRemove: { [weak self] in self?.remove(tripID: tripID, trackID: id) })
             cell.contentView.directionalLayoutMargins.leading = 36
             return cell
         case .folder(let trip, let open):
@@ -367,14 +367,14 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     }
 
     /// × on a row: out of the Trip at once, with no confirmation; the track stays.
-    private func remove(tripID: String, activityID: String) {
+    private func remove(tripID: String, trackID: String) {
         Task {
             do {
-                let read = try await api.changeTripTracks(tripID, activityIDs: [activityID], add: false)
+                let read = try await api.changeTripTracks(tripID, trackIDs: [trackID], add: false)
                 removeError = nil
                 trips = trips.map { $0.id == read.trip.id ? read.trip : $0 }
                 if read.trip.id == openID { openTrip = read.trip }
-                onEvent?(.removed(activityID))
+                onEvent?(.removed(trackID))
             } catch {
                 removeError = Self.message(error, String(localized: "The Trip couldn't be saved."))
             }
@@ -386,7 +386,7 @@ final class TripsPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         TripDialogs.name(over: table, title: String(localized: "New trip"), name: "", description: "", action: String(localized: "Create")) { [weak self] name, description in
             guard let self else { return nil }
             do {
-                let read = try await self.api.createTrip(name: name, description: description, activityIDs: [])
+                let read = try await self.api.createTrip(name: name, description: description, trackIDs: [])
                 self.added(read.trip)
                 self.onEvent?(.open(read.trip.id, collapse: false))
                 return nil

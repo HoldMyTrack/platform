@@ -63,7 +63,7 @@ public enum EditOp: Equatable, Sendable {
 /// The Edit route session's history. A session is the edit the track already had when the
 /// editor opened (base) plus a stack of ops committed since. What the map shows is always a
 /// replay of the whole stack on top of the original points, never a mutated copy: Undo pops one
-/// op, Cancel drops the stack, and Apply folds it into the one TrackEdit the server stores.
+/// op, Cancel drops the stack, and Apply folds it into the one RouteEdit the server stores.
 /// Every op addresses points by time, as the server's edit does, so the fold is collecting them.
 public enum EditRouteOps {
     /// Folds base and the op stack into one edit; an unedited track folds to an empty one.

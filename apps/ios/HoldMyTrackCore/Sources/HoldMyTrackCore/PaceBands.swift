@@ -27,16 +27,16 @@ public struct RouteMetrics: Equatable, Sendable {
         }
     }
 
-    public let activityID: String
+    public let trackID: String
     public let points: [Point]
     public let bands: [Band]
 
-    public init(activityID: String, points: [Point], bands: [Band]) {
-        (self.activityID, self.points, self.bands) = (activityID, points, bands)
+    public init(trackID: String, points: [Point], bands: [Band]) {
+        (self.trackID, self.points, self.bands) = (trackID, points, bands)
     }
 
     init(_ json: TrackMetricsJSON) {
-        activityID = json.activityID
+        trackID = json.activityID
         points = json.points.map { Point(lon: $0.lon, lat: $0.lat, time: Double($0.timeS)) }
         bands = json.bands.map { Band(band: $0.band, start: $0.start, end: $0.end) }
     }
@@ -47,10 +47,10 @@ public enum PaceBands {
     /// The layers document's group and its GeoJSON source.
     public static let group = "track-bands"
 
-    /// Drawn while the focused track's track is: its own metrics, and the track not hidden,
+    /// Drawn while the focused track's route is: its own metrics, and the track not hidden,
     /// filtered out or Pending (PanelState.mapHidden), whose metrics would show the old points.
     public static func drawn(_ metrics: RouteMetrics?, focused: String?, mapHidden: Set<String>) -> RouteMetrics? {
-        guard let metrics, let focused, metrics.activityID == focused, !mapHidden.contains(focused) else { return nil }
+        guard let metrics, let focused, metrics.trackID == focused, !mapHidden.contains(focused) else { return nil }
         return metrics
     }
 

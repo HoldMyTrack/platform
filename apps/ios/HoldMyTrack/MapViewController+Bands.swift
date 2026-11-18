@@ -10,7 +10,7 @@ extension MapViewController {
     /// the caller renders.
     func updateBands(refetch: Bool = false) {
         let focused = session.panel.focused
-        if focused != bands.metrics?.activityID || refetch {
+        if focused != bands.metrics?.trackID || refetch {
             if !refetch { bands.metrics = nil }
             bands.task?.cancel()
             bands.task = focused.map { id in

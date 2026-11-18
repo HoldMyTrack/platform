@@ -74,9 +74,9 @@ extension APIClient {
         try tripRead(try await send("GET", "v1/stories/\(id)"))
     }
 
-    /// `POST /v1/stories`: a new Trip with activityIDs in it, in one step.
-    public func createTrip(name: String, description: String, activityIDs: [String]) async throws -> TripRead {
-        try tripRead(try await send("POST", "v1/stories", body: StoryCreateJSON(name: name, description: description, activityIDs: activityIDs)))
+    /// `POST /v1/stories`: a new Trip with trackIDs in it, in one step.
+    public func createTrip(name: String, description: String, trackIDs: [String]) async throws -> TripRead {
+        try tripRead(try await send("POST", "v1/stories", body: StoryCreateJSON(name: name, description: description, activityIDs: trackIDs)))
     }
 
     /// `PATCH /v1/stories/{id}`: both fields every time; an empty description clears it.
@@ -89,9 +89,9 @@ extension APIClient {
         try await delete("v1/stories/\(id)")
     }
 
-    /// `POST` (add) or `DELETE /v1/stories/{id}/activities`: activityIDs into the Trip or out.
-    public func changeTripTracks(_ id: String, activityIDs: [String], add: Bool) async throws -> TripRead {
-        try tripRead(try await send(add ? "POST" : "DELETE", "v1/stories/\(id)/activities", body: StoryActivitiesJSON(activityIDs: activityIDs)))
+    /// `POST` (add) or `DELETE /v1/stories/{id}/activities`: trackIDs into the Trip or out.
+    public func changeTripTracks(_ id: String, trackIDs: [String], add: Bool) async throws -> TripRead {
+        try tripRead(try await send(add ? "POST" : "DELETE", "v1/stories/\(id)/activities", body: StoryActivitiesJSON(activityIDs: trackIDs)))
     }
 
     /// `POST /v1/stories/{id}/send`: a copy to email, which succeeds whether or not the address

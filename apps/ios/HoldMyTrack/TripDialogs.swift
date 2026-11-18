@@ -97,7 +97,7 @@ enum TripDialogs {
             guard let view else { return }
             name(over: view, title: String(localized: "New trip"), name: "", description: "", action: String(localized: "Create")) { name, description in
                 do {
-                    let read = try await api.createTrip(name: name, description: description, activityIDs: targets())
+                    let read = try await api.createTrip(name: name, description: description, trackIDs: targets())
                     added(read.trip, true)
                     return nil
                 } catch {
@@ -115,7 +115,7 @@ enum TripDialogs {
                     UIAction(title: item.trip.name) { [weak view] _ in
                         Task {
                             do {
-                                let changed = try await api.changeTripTracks(item.trip.id, activityIDs: targets(), add: true)
+                                let changed = try await api.changeTripTracks(item.trip.id, trackIDs: targets(), add: true)
                                 added(changed.trip, false)
                             } catch {
                                 if let view { inform(over: view, TripsPanel.message(error, String(localized: "The Trip couldn't be saved."))) }

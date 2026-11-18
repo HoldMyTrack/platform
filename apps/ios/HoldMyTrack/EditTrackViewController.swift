@@ -6,7 +6,7 @@ import UniformTypeIdentifiers
 /// Edit (root docs/SPEC.md FR-5.5, apps/android/docs/SPEC.md FR-2.7) over the toolbar's target:
 /// one track's type, name and description, or a group's type alone. Save writes only what
 /// changed, one track at a time (EditPlan); a group of mixed types starts with Type empty, and
-/// leaving it empty keeps each its own. One track also has a Route tab (TrackEditorView) and a
+/// leaving it empty keeps each its own. One track also has a Route tab (RouteEditorView) and a
 /// Photos tab (PhotosTabView), each open only when the server allows it (EditAvailability); the
 /// same Save writes the fields, then the photos, then the route edit.
 ///
@@ -25,7 +25,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
     /// One track's Route tab, else nil; the map hands it Delete point's and Move point's touches.
     let routeEditor: RouteEditorView?
     /// Why the Track or Photos tab can't be used, shown in its place.
-    private let trackBlock: String?
+    private let routeBlock: String?
     private let photosBlock: String?
     private let blocked = Controls.body()
     private let onRouteOpened: () -> Void
@@ -51,11 +51,11 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         self.onDone = onDone
         self.onRouteOpened = onRouteOpened
         let single = group.count == 1 ? group[0] : nil
-        let trackBlock = EditAvailability.track(group).map(EditTrackViewController.message)
+        let routeBlock = EditAvailability.route(group).map(EditTrackViewController.message)
         let photosBlock = EditAvailability.photos(group).map(EditTrackViewController.message)
-        self.trackBlock = trackBlock
+        self.routeBlock = routeBlock
         self.photosBlock = photosBlock
-        routeEditor = single.flatMap { trackBlock == nil ? RouteEditorView(api: api, format: format, track: $0) : nil }
+        routeEditor = single.flatMap { routeBlock == nil ? RouteEditorView(api: api, format: format, track: $0) : nil }
         routeEditor?.onDraw = onRouteDraw
         photos = single.flatMap { photosBlock == nil ? PhotosTabView(api: api, images: images, format: format, track: $0) : nil }
         photos?.onOverlay = onOverlay
@@ -151,23 +151,23 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
         } else {
             routeEditor?.hide()
         }
-        let reason = tab == 1 ? trackBlock : tab == 2 ? photosBlock : nil
+        let reason = tab == 1 ? routeBlock : tab == 2 ? photosBlock : nil
         blocked.text = reason
         blocked.isHidden = reason == nil
     }
 
-    /// The tabs' labels: Track and Photos marked while they have unsaved changes, Photos with
+    /// The tabs' labels: Route and Photos marked while they have unsaved changes, Photos with
     /// the count Save would leave.
     private func renderTabs() {
-        let trackChanged = routeEditor?.session?.changed == true
-        tabs.setTitle(trackChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved route changes.") : String(localized: "Route"), forSegmentAt: 1)
+        let routeChanged = routeEditor?.session?.changed == true
+        tabs.setTitle(routeChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved route changes.") : String(localized: "Route"), forSegmentAt: 1)
         if let photos {
             let count = format.count(photos.count)
             let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the track's photos, written as label: N.")
                 : String(localized: "Photos: \(count) •", comment: "Edit window's tab with unsaved photo changes.")
             tabs.setTitle(title, forSegmentAt: 2)
         }
-        let unsaved = [trackChanged ? String(localized: "Route, with unsaved changes") : nil,
+        let unsaved = [routeChanged ? String(localized: "Route, with unsaved changes") : nil,
                        photos?.draft.isEmpty == false ? String(localized: "Photos, with unsaved changes") : nil].compactMap { $0 }
         tabs.accessibilityValue = unsaved.isEmpty ? nil : unsaved.joined(separator: ", ")
     }
@@ -263,8 +263,8 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
             return
         }
         let writes = EditPlan.writes(group: group, type: type, name: nameText, description: aboutText).filter { !written.contains($0.id) }
-        let trackChanged = routeEditor?.session?.changed == true
-        guard !writes.isEmpty || photos?.draft.isEmpty == false || trackChanged else { return finish() }
+        let routeChanged = routeEditor?.session?.changed == true
+        guard !writes.isEmpty || photos?.draft.isEmpty == false || routeChanged else { return finish() }
         saving = true
         photos?.busy = true
         routeEditor?.busy = true
@@ -298,7 +298,7 @@ final class EditTrackViewController: UIViewController, PHPickerViewControllerDel
                     return
                 }
             }
-            if trackChanged, !(await saveRoute(allowHidden: false)) { return }
+            if routeChanged, !(await saveRoute(allowHidden: false)) { return }
             finish()
         }
     }

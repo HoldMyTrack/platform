@@ -93,7 +93,7 @@ extension MapViewController {
     /// the list has it; one not listed sets Dates to its day, which flies the camera there.
     func viewOnMap(track: String, day: String) {
         loadViewIfNeeded()
-        // The track's track is Normal mode's.
+        // The track's route is Normal mode's.
         if pickedMode != .normal { pickMode(.normal) }
         focusWhenListed = track
         if session.tripID == nil && tracks.contains(where: { $0.id == track }) {

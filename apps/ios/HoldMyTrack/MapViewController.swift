@@ -68,7 +68,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     let privateLocations = PrivateLocationsState()
     /// Photos on the map (MapViewController+Photos).
     var photos = PhotosState()
-    /// The Edit window while it's open, and the track it edits (MapViewController+TrackEdit).
+    /// The Edit window while it's open, and the track it edits (MapViewController+RouteEdit).
     weak var editWindow: EditTrackViewController?
     var routeEdit = RouteEditState()
     lazy var photoViews = PhotoViews(api: flow.api, format: { [unowned self] in self.format }, onOpen: { [weak self] in self?.openPhotos($0) })

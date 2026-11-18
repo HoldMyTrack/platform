@@ -78,7 +78,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
         let a = ActionButtons(
             visibility: Controls.iconButton(UIImage(resource: .eye), label: String(localized: "Hide"), id: "\(prefix)Visibility"),
             edit: Controls.iconButton(UIImage(resource: .pencil), label: String(localized: "Edit"), id: "\(prefix)Edit"),
-            addToTrip: Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to trip"), id: "\(prefix)AddToStory"),
+            addToTrip: Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to trip"), id: "\(prefix)AddToTrip"),
             delete: Controls.iconButton(UIImage(resource: .trash2), label: String(localized: "Delete"), id: "\(prefix)Delete"),
             focus: Controls.iconButton(UIImage(resource: .focus), label: String(localized: "Fly to"), id: "\(prefix)Focus")
         )
@@ -427,7 +427,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 }
 
 /// The Distance filter's two knobs (root docs/SPEC.md FR-5.3), each a slider between the list's
-/// shortest and longest distance; both back at the ends is no filter (ActivityFacets).
+/// shortest and longest distance; both back at the ends is no filter (TrackFacets).
 final class DistanceFilterViewController: UIViewController, UIPopoverPresentationControllerDelegate {
     private let bounds: DistanceRange
     private var current: DistanceRange?

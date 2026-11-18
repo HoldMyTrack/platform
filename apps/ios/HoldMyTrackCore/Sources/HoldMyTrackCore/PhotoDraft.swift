@@ -300,12 +300,12 @@ public enum PhotoPlace: Equatable, Sendable {
 }
 
 extension APIClient {
-    /// `POST /v1/photos/place`: where an upload with this EXIF would go on the track's track,
+    /// `POST /v1/photos/place`: where an upload with this EXIF would go on the track's route,
     /// storing nothing, or needsPlace for the user to choose.
-    public func checkPhotoPlace(activityID: String, exif: PhotoExif) async throws -> PhotoPlace {
+    public func checkPhotoPlace(trackID: String, exif: PhotoExif) async throws -> PhotoPlace {
         let placed = exif.lat != nil && exif.lon != nil
         let body = PhotoPlaceRequestJSON(
-            activityID: activityID, takenAt: exif.takenAt.map(ISOMoment.format), takenLocal: exif.takenAt == nil ? exif.takenLocal : nil,
+            activityID: trackID, takenAt: exif.takenAt.map(ISOMoment.format), takenLocal: exif.takenAt == nil ? exif.takenLocal : nil,
             lat: placed ? exif.lat : nil, lon: placed ? exif.lon : nil
         )
         do {
@@ -319,9 +319,9 @@ extension APIClient {
 
     /// `POST /v1/photos`: a prepared photo at routeAt (epoch seconds), the placement check's
     /// answer or the user's, with its caption, already trimmed.
-    public func uploadPhoto(activityID: String, photo: PreparedPhoto, routeAt: Double, caption: String) async throws -> Photo {
+    public func uploadPhoto(trackID: String, photo: PreparedPhoto, routeAt: Double, caption: String) async throws -> Photo {
         var form = MultipartForm()
-        form.field("activity_id", activityID)
+        form.field("activity_id", trackID)
         form.file("file", filename: "photo.jpg", type: "image/jpeg", data: photo.file)
         form.file("thumb", filename: "thumb.jpg", type: "image/jpeg", data: photo.thumb)
         if let takenAt = photo.exif.takenAt {

@@ -8,7 +8,7 @@ import UIKit
 ///
 /// Add prepares each picked photo (PhotoPrep) and asks the server where it goes (the placement
 /// check, which stores nothing); one it can't place waits at the top with a slider, starting just
-/// after the photo picked before it (PhotoTrack.startFraction), until the user puts it somewhere
+/// after the photo picked before it (PhotoRoute.startFraction), until the user puts it somewhere
 /// or removes it. Edit opens the same slider on a photo, with its caption. The slider walks the
 /// track as drawn, and the photo moves along the map with it.
 final class PhotosTabView: UIView {
@@ -35,7 +35,7 @@ final class PhotosTabView: UIView {
     private var photosLoaded = false
     private var photosError: String?
     private var route: PhotoRoute?
-    private var trackError: String?
+    private var routeError: String?
     private var progress: (done: Int, total: Int)?
     private var failures: [String] = []
     private var editingID: String?
@@ -127,7 +127,7 @@ final class PhotosTabView: UIView {
         ])
     }
 
-    /// The track's saved photos and its track, for the list and the slider.
+    /// The track's saved photos and its route, for the list and the slider.
     private func load() {
         Task { [weak self] in
             guard let self else { return }
@@ -145,12 +145,12 @@ final class PhotosTabView: UIView {
             do {
                 let metrics = try await self.api.trackMetrics(self.track.id)
                 if metrics.points.isEmpty {
-                    self.trackError = String(localized: "This track has no route to put photos on.")
+                    self.routeError = String(localized: "This track has no route to put photos on.")
                 } else {
                     self.route = PhotoRoute(metrics.points.map { TimedPoint(lon: $0.lon, lat: $0.lat, t: $0.time) })
                 }
             } catch {
-                self.trackError = (error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved.")
+                self.routeError = (error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved.")
             }
             self.render()
         }
@@ -190,7 +190,7 @@ final class PhotosTabView: UIView {
                 self.nextKey += 1
                 let key = "new-\(self.nextKey)"
                 do {
-                    switch try await self.api.checkPhotoPlace(activityID: self.track.id, exif: prepared.exif) {
+                    switch try await self.api.checkPhotoPlace(trackID: self.track.id, exif: prepared.exif) {
                     case .at(let t):
                         self.addNew(key, file.name, prepared, routeAt: t)
                         previous = .at(t: t)
@@ -253,7 +253,7 @@ final class PhotosTabView: UIView {
         defer { changed() }
         do {
             for photo in snapshot.added {
-                _ = try await api.uploadPhoto(activityID: track.id, photo: photo.prepared, routeAt: photo.routeAt ?? 0,
+                _ = try await api.uploadPhoto(trackID: track.id, photo: photo.prepared, routeAt: photo.routeAt ?? 0,
                                               caption: photo.caption.trimmingCharacters(in: .whitespacesAndNewlines))
                 photosSaved = true
                 draft.removeNew(photo.key)
@@ -298,7 +298,7 @@ final class PhotosTabView: UIView {
         add.isEnabled = !busy && progress == nil && route != nil
         status.text = progress.map { String(localized: "Preparing \($0.done + 1) of \($0.total)…") }
         status.isHidden = progress == nil
-        let shownError = photosError ?? trackError
+        let shownError = photosError ?? routeError
         error.text = shownError
         error.isHidden = shownError == nil
         failuresLabel.text = failures.joined(separator: "\n")
