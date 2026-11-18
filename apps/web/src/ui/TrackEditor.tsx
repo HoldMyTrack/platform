@@ -219,7 +219,7 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
             min={0}
             max={last}
             value={lo}
-            disabled={busy}
+            disabled={busy || splitting}
             onChange={(e) => setKnobs((k) => ({ ...k, lo: visible[Math.min(Number(e.target.value), hi)]![2] }))}
           />
           <input
@@ -229,7 +229,7 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
             min={0}
             max={last}
             value={hi}
-            disabled={busy}
+            disabled={busy || splitting}
             onChange={(e) => setKnobs((k) => ({ ...k, hi: visible[Math.max(Number(e.target.value), lo)]![2] }))}
           />
         </div>
