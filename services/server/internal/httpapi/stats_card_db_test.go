@@ -25,10 +25,10 @@ func TestStatsCard(t *testing.T) {
 	pending := d.newTrack(me, testTrack{trackType: "running", distanceMeters: 5000, startedAt: day(4), at: at})
 	theirs := d.newTrack(other, testTrack{trackType: "walking", at: at})
 	ctx := context.Background()
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET elevation_gain_m = 120 WHERE id = $1`, newer); err != nil {
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET elevation_gain_m = 120 WHERE id = $1`, newer); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET edit_pending = true WHERE id = $1`, pending); err != nil {
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET edit_pending = true WHERE id = $1`, pending); err != nil {
 		t.Fatal(err)
 	}
 

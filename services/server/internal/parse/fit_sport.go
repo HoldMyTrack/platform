@@ -125,7 +125,7 @@ var fitSubSportNames = map[byte]string{
 }
 
 // sportName resolves a session message's sport/sub_sport enum pair to the single string
-// activity_type stores. sub_sport wins whenever it says something sport alone doesn't —
+// track_type stores. sub_sport wins whenever it says something sport alone doesn't —
 // "gravel_cycling" over "cycling" — since that's the whole reason this gap mattered
 // (IMPLEMENTATION.md §4.7). 0 ("generic") and 254 ("all") aren't real
 // distinctions, so those fall back to sport. 0xFF is the FIT invalid-value sentinel for a

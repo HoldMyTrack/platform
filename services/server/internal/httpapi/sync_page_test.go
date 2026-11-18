@@ -23,7 +23,7 @@ func TestSyncPage(t *testing.T) {
 	track := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 60,
 		startedAt: time.Date(2026, 5, 2, 10, 0, 0, 0, time.UTC)})
 	var source string
-	if err := d.pool.QueryRow(ctx, `UPDATE activities SET external_id = 'walk-1' WHERE id = $1 RETURNING source`, track).Scan(&source); err != nil {
+	if err := d.pool.QueryRow(ctx, `UPDATE tracks SET external_id = 'walk-1' WHERE id = $1 RETURNING source`, track).Scan(&source); err != nil {
 		t.Fatal(err)
 	}
 	externalID := "walk-1"
@@ -39,7 +39,7 @@ func TestSyncPage(t *testing.T) {
 		t.Fatalf("GET /sync: %d", rec.Code)
 	}
 	body := rec.Body.String()
-	for _, want := range []string{"morning-walk.gpx", "broken.gpx", `href="/?activity=` + track + `&amp;day=2026-05-02"`} {
+	for _, want := range []string{"morning-walk.gpx", "broken.gpx", `href="/?activity=` + track + `&amp;day=2026-05-02&amp;track=` + track + `"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page is missing %q", want)
 		}

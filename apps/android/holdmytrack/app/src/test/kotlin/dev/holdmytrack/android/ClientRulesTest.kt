@@ -349,7 +349,7 @@ class ClientRulesTest {
             val link = input["link"]!!.jsonObject
             val base = input["base"]!!.jsonObject
             val route = WebRoute.of(
-                link.string("scheme"), link.string("authority"), link.string("path"), link.string("activity"), link.string("day"),
+                link.string("scheme"), link.string("authority"), link.string("path"), link.string("track"), link.string("day"),
                 base.string("scheme"), base.string("authority"), input.string("page")!!,
                 input["leaving"]?.jsonPrimitive?.booleanOrNull == true, input["onboarding"]?.jsonPrimitive?.booleanOrNull == true,
             )

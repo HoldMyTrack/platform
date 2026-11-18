@@ -26,9 +26,9 @@ type statsCardRequest struct {
 }
 
 const statsCardQuery = `
-SELECT activity_type, distance_meters, COALESCE(moving_seconds, duration_seconds), elevation_gain_m,
+SELECT track_type, distance_meters, COALESCE(moving_seconds, duration_seconds), elevation_gain_m,
        trajectory IS NULL, edit_pending
-  FROM activities
+  FROM tracks
  WHERE user_id = $1 AND id = ANY($2::uuid[])
  ORDER BY started_at DESC, id DESC`
 

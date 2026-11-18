@@ -59,7 +59,7 @@ func TestFailedIngestDiscardsItsOriginal(t *testing.T) {
 
 	// The same bytes again while a track names the key: the object stays.
 	if _, err := pool.Exec(ctx, `
-		INSERT INTO activities (user_id, source, external_id, activity_type, started_at, timezone, raw_payload_key)
+		INSERT INTO tracks (user_id, source, external_id, track_type, started_at, timezone, raw_payload_key)
 		VALUES ($1, 'upload', 'other', 'run', NOW(), 'UTC', $2)`, userID, key); err != nil {
 		t.Fatalf("activity: %v", err)
 	}

@@ -72,7 +72,7 @@ type demoManifestTrip struct {
 
 // demoManifestEntry is one file's overrides. Name is the track's display name — no file
 // parser sets parse.Activity.Name, so without it the seeded row gets the generic
-// "<Type> - <date>" every unnamed track gets. Type is the activity_type, needed for files
+// "<Type> - <date>" every unnamed track gets. Type is the track_type, needed for files
 // that don't carry their own: a synced track (Health Connect, in-app recording) reports
 // its type in the sync request, not inside the JSON payload the export copies out.
 // Description is the track's free-text description, which no file carries either.
@@ -89,7 +89,7 @@ type demoManifestEntry struct {
 const demoPhotoDir = "photos"
 
 // demoManifestPhoto is one photo on a demo track: its resized image and thumbnail as stored
-// (files in demoPhotoDir, JPEG or WebP by extension), and the activity_photos fields that
+// (files in demoPhotoDir, JPEG or WebP by extension), and the track_photos fields that
 // aren't the image itself. RouteAt is a moment on the track's route, which the exported GPX
 // keeps the timestamps of, so it lands on the same spot after a re-ingest.
 type demoManifestPhoto struct {
@@ -309,7 +309,7 @@ func SeedDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		// time a row is first inserted.
 		if entry.Name != "" || entry.Description != "" {
 			if _, err := pool.Exec(ctx,
-				`UPDATE activities SET name = COALESCE(NULLIF($1, ''), name), description = COALESCE(NULLIF($2, ''), description) WHERE id = $3`,
+				`UPDATE tracks SET name = COALESCE(NULLIF($1, ''), name), description = COALESCE(NULLIF($2, ''), description) WHERE id = $3`,
 				entry.Name, entry.Description, result.TrackID,
 			); err != nil {
 				log.Error("demo customer seed: name/description override failed", "err", err, "file", filename)
@@ -369,9 +369,9 @@ func seedDemoPhotos(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 			size += len(b)
 		}
 		if _, err := pool.Exec(ctx, `
-			INSERT INTO activity_photos (id, user_id, activity_id, taken_at, route_at, caption, content_type, thumb_content_type, width, height, bytes, image_key)
+			INSERT INTO track_photos (id, user_id, track_id, taken_at, route_at, caption, content_type, thumb_content_type, width, height, bytes, image_key)
 			VALUES ($1, $2, $3, $4, $5, NULLIF($6, ''), $7, $8, $9, $10, $11, $12)
-			ON CONFLICT (id) DO UPDATE SET activity_id = EXCLUDED.activity_id, taken_at = EXCLUDED.taken_at,
+			ON CONFLICT (id) DO UPDATE SET track_id = EXCLUDED.track_id, taken_at = EXCLUDED.taken_at,
 				route_at = EXCLUDED.route_at, caption = EXCLUDED.caption, content_type = EXCLUDED.content_type,
 				thumb_content_type = EXCLUDED.thumb_content_type, width = EXCLUDED.width, height = EXCLUDED.height,
 				bytes = EXCLUDED.bytes`,
@@ -434,25 +434,25 @@ func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips
 			ids = append(ids, trackIDs[f])
 		}
 		var tripID string
-		err := tx.QueryRow(ctx, `SELECT id FROM stories WHERE user_id = $1 AND name = $2 ORDER BY created_at LIMIT 1`,
+		err := tx.QueryRow(ctx, `SELECT id FROM trips WHERE user_id = $1 AND name = $2 ORDER BY created_at LIMIT 1`,
 			userID, st.Name).Scan(&tripID)
 		switch {
 		case errors.Is(err, pgx.ErrNoRows):
-			err = tx.QueryRow(ctx, `INSERT INTO stories (user_id, name, description) VALUES ($1, $2, NULLIF($3, '')) RETURNING id`,
+			err = tx.QueryRow(ctx, `INSERT INTO trips (user_id, name, description) VALUES ($1, $2, NULLIF($3, '')) RETURNING id`,
 				userID, st.Name, st.Description).Scan(&tripID)
 		case err == nil:
-			_, err = tx.Exec(ctx, `UPDATE stories SET description = NULLIF($2, ''), updated_at = NOW() WHERE id = $1 AND description IS DISTINCT FROM NULLIF($2, '')`,
+			_, err = tx.Exec(ctx, `UPDATE trips SET description = NULLIF($2, ''), updated_at = NOW() WHERE id = $1 AND description IS DISTINCT FROM NULLIF($2, '')`,
 				tripID, st.Description)
 		}
 		if err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
 		}
-		removed, err := tx.Exec(ctx, `DELETE FROM story_activities WHERE story_id = $1 AND NOT activity_id = ANY($2::uuid[])`, tripID, ids)
+		removed, err := tx.Exec(ctx, `DELETE FROM trip_tracks WHERE trip_id = $1 AND NOT track_id = ANY($2::uuid[])`, tripID, ids)
 		if err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
 		}
 		added, err := tx.Exec(ctx, `
-			INSERT INTO story_activities (story_id, activity_id) SELECT $1, unnest($2::uuid[])
+			INSERT INTO trip_tracks (trip_id, track_id) SELECT $1, unnest($2::uuid[])
 			ON CONFLICT DO NOTHING`, tripID, ids)
 		if err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
@@ -464,9 +464,9 @@ func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips
 			first = tripID
 		}
 		if _, err := tx.Exec(ctx, `
-			UPDATE stories s SET created_at = d.at, updated_at = d.at
+			UPDATE trips s SET created_at = d.at, updated_at = d.at
 			FROM (SELECT MAX(started_at + make_interval(secs => COALESCE(duration_seconds, 0))) + INTERVAL '1 day' AS at
-			      FROM activities WHERE id = ANY($2::uuid[])) d
+			      FROM tracks WHERE id = ANY($2::uuid[])) d
 			WHERE s.id = $1 AND (s.created_at IS DISTINCT FROM d.at OR s.updated_at IS DISTINCT FROM d.at)`,
 			tripID, ids); err != nil {
 			return fmt.Errorf("story %q: %w", st.Name, err)
@@ -475,8 +475,8 @@ func seedDemoTrips(ctx context.Context, pool *pgxpool.Pool, userID string, trips
 	// Dated above, by its own tracks, so a later date only ever moves it on.
 	if first != "" {
 		if _, err := tx.Exec(ctx, `
-			UPDATE stories s SET created_at = d.at, updated_at = d.at
-			FROM (SELECT MAX(created_at) + INTERVAL '1 day' AS at FROM stories WHERE user_id = $1 AND id <> $2) d
+			UPDATE trips s SET created_at = d.at, updated_at = d.at
+			FROM (SELECT MAX(created_at) + INTERVAL '1 day' AS at FROM trips WHERE user_id = $1 AND id <> $2) d
 			WHERE s.id = $2 AND d.at > s.created_at`,
 			userID, first); err != nil {
 			return fmt.Errorf("stories: %w", err)
@@ -518,14 +518,14 @@ func resetDemoCustomer(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 		return fmt.Errorf("reset: begin: %w", err)
 	}
 	defer tx.Rollback(ctx)
-	removed, err := tx.Exec(ctx, `DELETE FROM activities WHERE user_id = $1`, DemoCustomerUserID)
+	removed, err := tx.Exec(ctx, `DELETE FROM tracks WHERE user_id = $1`, DemoCustomerUserID)
 	if err != nil {
 		return fmt.Errorf("reset: %w", err)
 	}
 	for _, q := range []string{
 		`DELETE FROM jobs WHERE user_id = $1 AND state = 'pending'`,
 		// Its Trips too: the seed recreates the manifest's, and nothing else should survive.
-		`DELETE FROM stories WHERE user_id = $1`,
+		`DELETE FROM trips WHERE user_id = $1`,
 		// And its captures, which belong to the account rather than to a track.
 		`DELETE FROM spot_captures WHERE user_id = $1`,
 		`DELETE FROM fog_tiles WHERE user_id = $1`,

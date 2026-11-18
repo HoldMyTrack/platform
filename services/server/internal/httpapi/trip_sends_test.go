@@ -74,7 +74,7 @@ func TestSendAStoryCopy(t *testing.T) {
 	}
 	d.decode(d.do(you, "POST", "/v2/trip-sends/"+got[0].ID+"/accept", nil), http.StatusAccepted, nil)
 	var jobs int
-	d.pool.QueryRow(ctx, `SELECT count(*) FROM jobs WHERE kind = 'story_copy' AND user_id = $1 AND payload->>'story_id' = $2`, you.id, trip).Scan(&jobs)
+	d.pool.QueryRow(ctx, `SELECT count(*) FROM jobs WHERE kind = 'trip_copy' AND user_id = $1 AND payload->>'trip_id' = $2`, you.id, trip).Scan(&jobs)
 	if jobs != 1 || len(d.inbox(you)) != 0 {
 		t.Errorf("after accept: %d copy jobs, inbox %+v", jobs, d.inbox(you))
 	}
@@ -111,7 +111,7 @@ func TestSendAStoryCopyRevealsNoAccount(t *testing.T) {
 		d.decode(d.do(me, "POST", "/v2/trips/"+trip+"/send", map[string]any{"email": email}), http.StatusNoContent, nil)
 	}
 	var sends int
-	d.pool.QueryRow(ctx, `SELECT count(*) FROM story_sends WHERE story_id = $1`, trip).Scan(&sends)
+	d.pool.QueryRow(ctx, `SELECT count(*) FROM trip_sends WHERE trip_id = $1`, trip).Scan(&sends)
 	if sends != 0 {
 		t.Errorf("%d copies stored for accounts that can't receive one", sends)
 	}

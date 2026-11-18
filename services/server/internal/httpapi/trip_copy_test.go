@@ -38,7 +38,7 @@ func (d *dbTest) recorded(s3 *memS3, owner account, name string, start time.Time
 	if err != nil {
 		d.t.Fatalf("ingest %s: %v", name, err)
 	}
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET name = $2, description = 'Day out' WHERE id = $1`, res.TrackID, name); err != nil {
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET name = $2, description = 'Day out' WHERE id = $1`, res.TrackID, name); err != nil {
 		d.t.Fatal(err)
 	}
 	return res.TrackID
@@ -86,7 +86,7 @@ func (d *dbTest) copiedTrack(id string) copied {
 	var c copied
 	if err := d.pool.QueryRow(context.Background(), `
 		SELECT id, COALESCE(name, ''), COALESCE(origin_id::text, ''), ST_X(ST_StartPoint(trajectory)), ST_X(ST_EndPoint(trajectory))
-		FROM activities WHERE id = $1`, id).Scan(&c.id, &c.name, &c.origin, &c.startLon, &c.endLon); err != nil {
+		FROM tracks WHERE id = $1`, id).Scan(&c.id, &c.name, &c.origin, &c.startLon, &c.endLon); err != nil {
 		d.t.Fatal(err)
 	}
 	return c
@@ -131,7 +131,7 @@ func TestTripCopy(t *testing.T) {
 		t.Fatalf("copy's photos %+v, want the one", list.Photos)
 	}
 	var keys int
-	d.pool.QueryRow(ctx, `SELECT count(DISTINCT image_key) FROM activity_photos WHERE id IN ($1, $2)`, p.ID, list.Photos[0].ID).Scan(&keys)
+	d.pool.QueryRow(ctx, `SELECT count(DISTINCT image_key) FROM track_photos WHERE id IN ($1, $2)`, p.ID, list.Photos[0].ID).Scan(&keys)
 	if keys != 1 {
 		t.Errorf("copied photo has its own files, want the original's")
 	}
@@ -186,7 +186,7 @@ func TestTripCopyWaitsForAPendingEdit(t *testing.T) {
 	dad, kid := d.newAccount(false), d.newAccount(false)
 	walk := d.recorded(s3, dad, "Ridge", time.Date(2026, 5, 1, 9, 0, 0, 0, time.UTC), 10)
 	trip := d.newTrip(dad, "Alps", walk)
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET edit_pending = true WHERE id = $1`, walk); err != nil {
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET edit_pending = true WHERE id = $1`, walk); err != nil {
 		t.Fatal(err)
 	}
 	d.sendAndAccept(dad, kid, trip)
@@ -194,7 +194,7 @@ func TestTripCopyWaitsForAPendingEdit(t *testing.T) {
 		t.Errorf("copied mid-edit: %+v", trips)
 	}
 	var waiting int
-	d.pool.QueryRow(ctx, `SELECT count(*) FROM jobs WHERE kind = 'story_copy' AND user_id = $1 AND run_after > NOW()`, kid.id).Scan(&waiting)
+	d.pool.QueryRow(ctx, `SELECT count(*) FROM jobs WHERE kind = 'trip_copy' AND user_id = $1 AND run_after > NOW()`, kid.id).Scan(&waiting)
 	if waiting != 1 {
 		t.Errorf("%d retries queued, want 1", waiting)
 	}

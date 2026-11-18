@@ -86,7 +86,7 @@ func TestTripsLifecycle(t *testing.T) {
 	d.decode(d.do(me, "GET", "/v2/trips/"+created.ID, nil), http.StatusNotFound, nil)
 	// Deleting a Trip deletes none of its tracks.
 	var n int
-	if err := d.pool.QueryRow(context.Background(), `SELECT count(*) FROM activities WHERE user_id = $1`, me.id).Scan(&n); err != nil || n != 3 {
+	if err := d.pool.QueryRow(context.Background(), `SELECT count(*) FROM tracks WHERE user_id = $1`, me.id).Scan(&n); err != nil || n != 3 {
 		t.Errorf("activities after deleting the Story: %d (%v), want 3", n, err)
 	}
 }
@@ -190,11 +190,11 @@ func TestTripsDemoReadOnly(t *testing.T) {
 	track := d.newTrack(demo, testTrack{trackType: "walking", distanceMeters: 1000, durationSecs: 600})
 	var tripID string
 	if err := d.pool.QueryRow(context.Background(),
-		`INSERT INTO stories (user_id, name) VALUES ($1, 'Seeded') RETURNING id`, demo.id).Scan(&tripID); err != nil {
+		`INSERT INTO trips (user_id, name) VALUES ($1, 'Seeded') RETURNING id`, demo.id).Scan(&tripID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := d.pool.Exec(context.Background(),
-		`INSERT INTO story_activities (story_id, activity_id) VALUES ($1, $2)`, tripID, track); err != nil {
+		`INSERT INTO trip_tracks (trip_id, track_id) VALUES ($1, $2)`, tripID, track); err != nil {
 		t.Fatal(err)
 	}
 

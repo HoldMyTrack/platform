@@ -13,7 +13,7 @@ import (
 )
 
 // SplitRange is the stretch of the recorded points one piece of a split track covers
-// (IMPLEMENTATION.md §4.7.8): activities.split_from and split_to, unix milliseconds, both ends
+// (IMPLEMENTATION.md §4.7.8): tracks.split_from and split_to, unix milliseconds, both ends
 // inclusive, so the two pieces either side of a split share the point it was made at. A nil
 // end is that end of the recording; a track never split has both nil.
 type SplitRange struct {
@@ -110,7 +110,7 @@ func insertSplitPiece(ctx context.Context, tx pgx.Tx, userID, trackID string, at
 	var from, to *int64
 	var rawKey *string
 	if err := tx.QueryRow(ctx,
-		`SELECT split_from, split_to, raw_payload_key FROM activities WHERE id = $1 AND user_id = $2`,
+		`SELECT split_from, split_to, raw_payload_key FROM tracks WHERE id = $1 AND user_id = $2`,
 		trackID, userID,
 	).Scan(&from, &to, &rawKey); err != nil {
 		return "", err
@@ -121,35 +121,35 @@ func insertSplitPiece(ctx context.Context, tx pgx.Tx, userID, trackID string, at
 
 	var pieceID string
 	if err := tx.QueryRow(ctx, `
-		INSERT INTO activities (
-			user_id, source, source_detail, external_id, activity_type, started_at,
-			raw_payload_key, raw_bytes, name, description, track_edit, edit_pending,
+		INSERT INTO tracks (
+			user_id, source, source_detail, external_id, track_type, started_at,
+			raw_payload_key, raw_bytes, name, description, route_edit, edit_pending,
 			split_group, split_from, split_to, timezone
 		)
 		SELECT user_id, source, source_detail,
 		       CASE WHEN external_id IS NULL THEN NULL
 		            ELSE left(split_part(external_id, '#split:', 1), 200) || '#split:' || $3::bigint::text END,
-		       activity_type, to_timestamp($3::bigint / 1000.0), raw_payload_key, raw_bytes, name, description,
-		       track_edit, true, COALESCE(split_group, id), $3::bigint, split_to, timezone
-		FROM activities WHERE id = $1 AND user_id = $2
+		       track_type, to_timestamp($3::bigint / 1000.0), raw_payload_key, raw_bytes, name, description,
+		       route_edit, true, COALESCE(split_group, id), $3::bigint, split_to, timezone
+		FROM tracks WHERE id = $1 AND user_id = $2
 		RETURNING id
 	`, trackID, userID, at).Scan(&pieceID); err != nil {
 		return "", fmt.Errorf("insert split piece: %w", err)
 	}
 	if _, err := tx.Exec(ctx, `
-		UPDATE activities SET split_group = COALESCE(split_group, id), split_to = $2 WHERE id = $1
+		UPDATE tracks SET split_group = COALESCE(split_group, id), split_to = $2 WHERE id = $1
 	`, trackID, at); err != nil {
 		return "", err
 	}
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO story_activities (story_id, activity_id)
-		SELECT story_id, $2 FROM story_activities WHERE activity_id = $1
+		INSERT INTO trip_tracks (trip_id, track_id)
+		SELECT trip_id, $2 FROM trip_tracks WHERE track_id = $1
 	`, trackID, pieceID); err != nil {
 		return "", err
 	}
 	if _, err := tx.Exec(ctx, `
-		UPDATE activity_photos SET activity_id = $2
-		WHERE activity_id = $1 AND route_at > to_timestamp($3::bigint / 1000.0)
+		UPDATE track_photos SET track_id = $2
+		WHERE track_id = $1 AND route_at > to_timestamp($3::bigint / 1000.0)
 	`, trackID, pieceID, at); err != nil {
 		return "", err
 	}

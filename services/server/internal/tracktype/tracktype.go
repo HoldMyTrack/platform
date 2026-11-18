@@ -110,7 +110,7 @@ func Describe(types []string, lang string) map[string]Info {
 	return out
 }
 
-// Label is trackType's name in lang: the catalog's (`activity_type.*` in the locales),
+// Label is trackType's name in lang: the catalog's (`track_type.*` in the locales),
 // matched case-insensitively, else the type itself, spaced out from snake_case and title-cased.
 // Never a remapping of what the value means.
 func Label(trackType, lang string) string {

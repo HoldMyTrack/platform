@@ -31,12 +31,12 @@ enum class EditPreview { CHOP, CUT, SPLIT }
  */
 object RouteEditOverlay {
 
-    private const val SOURCE_ID = "track-edit"
-    private const val PREVIEW_LAYER_ID = "track-edit-preview"
-    private const val LINE_LAYER_ID = "track-edit-line"
-    private const val SECOND_LAYER_ID = "track-edit-second"
-    private const val POINTS_LAYER_ID = "track-edit-points"
-    private const val KNOBS_LAYER_ID = "track-edit-knobs"
+    private const val SOURCE_ID = "route-edit"
+    private const val PREVIEW_LAYER_ID = "route-edit-preview"
+    private const val LINE_LAYER_ID = "route-edit-line"
+    private const val SECOND_LAYER_ID = "route-edit-second"
+    private const val POINTS_LAYER_ID = "route-edit-points"
+    private const val KNOBS_LAYER_ID = "route-edit-knobs"
 
     private const val ACCENT = "#b07e2e"
     private const val REMOVED = "#c53030"

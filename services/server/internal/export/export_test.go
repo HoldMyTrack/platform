@@ -63,21 +63,21 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 	var walk, copyOf string
 	started := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
 	if err := pool.QueryRow(ctx, `
-		INSERT INTO activities (user_id, source, source_detail, activity_type, name, started_at, raw_payload_key, distance_meters, timezone)
+		INSERT INTO tracks (user_id, source, source_detail, track_type, name, started_at, raw_payload_key, distance_meters, timezone)
 		VALUES ($1, 'upload', 'walk.gpx', 'walking', 'Lake / Loop', $2, $3, 260, 'Europe/Berlin') RETURNING id`, userID, started, rawKey).Scan(&walk); err != nil {
 		t.Fatal(err)
 	}
 	// A second track on the same raw file (the same file through two paths): the original is
 	// written once, and both point at it.
 	if err := pool.QueryRow(ctx, `
-		INSERT INTO activities (user_id, source, source_detail, activity_type, name, started_at, raw_payload_key, timezone)
+		INSERT INTO tracks (user_id, source, source_detail, track_type, name, started_at, raw_payload_key, timezone)
 		VALUES ($1, 'takeout', 'walk.gpx', 'walking', 'Lake / Loop', $2, $3, 'Europe/Berlin') RETURNING id`, userID, started.Add(time.Minute), rawKey).Scan(&copyOf); err != nil {
 		t.Fatal(err)
 	}
 	var photoID string
 	if err := pool.QueryRow(ctx, `
 		WITH n AS (SELECT gen_random_uuid() AS id)
-		INSERT INTO activity_photos (id, user_id, activity_id, route_at, width, height, bytes, caption, content_type, thumb_content_type, image_key)
+		INSERT INTO track_photos (id, user_id, track_id, route_at, width, height, bytes, caption, content_type, thumb_content_type, image_key)
 		SELECT n.id, $1::uuid, $2, $3, 10, 10, 3, 'The bridge', 'image/jpeg', 'image/jpeg', 'photos/' || $1::uuid::text || '/' || n.id FROM n RETURNING id`, userID, walk, started).Scan(&photoID); err != nil {
 		t.Fatal(err)
 	}
@@ -86,10 +86,10 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 		t.Fatal(err)
 	}
 	var tripID string
-	if err := pool.QueryRow(ctx, `INSERT INTO stories (user_id, name) VALUES ($1, 'Spring') RETURNING id`, userID).Scan(&tripID); err != nil {
+	if err := pool.QueryRow(ctx, `INSERT INTO trips (user_id, name) VALUES ($1, 'Spring') RETURNING id`, userID).Scan(&tripID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := pool.Exec(ctx, `INSERT INTO story_activities (story_id, activity_id) VALUES ($1, $2)`, tripID, walk); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO trip_tracks (trip_id, track_id) VALUES ($1, $2)`, tripID, walk); err != nil {
 		t.Fatal(err)
 	}
 

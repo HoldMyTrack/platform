@@ -74,8 +74,8 @@ class MapLayersDocTest {
 
     @Test
     fun theArrowsRideTheRouteOverTheBands() {
-        val bands = light.group("track-bands")!!
-        assertEquals(listOf("track-bands-outline", "track-bands-line", "track-bands-arrows"), bands.layers.map { it.id })
+        val bands = light.group("route-bands")!!
+        assertEquals(listOf("route-bands-outline", "route-bands-line", "route-bands-arrows"), bands.layers.map { it.id })
         assertEquals("""["has","route"]""", bands.layers[2].filter.toString())
         assertEquals("symbol", bands.layers[2].type)
     }
@@ -123,7 +123,7 @@ class MapLayersDocTest {
         assertEquals(listOf("focused", "hidden", "capped", "listed"), tracks.layers.first { it.id == "tracks-focused" }.vars.getValue("filter"))
         // `capped` is the web's cap (root docs/SPEC.md FR-5.11); unbound, it draws every track.
         assertTrue(light.vars.keys.containsAll(setOf("hidden", "focused", "capped", "listed")))
-        assertEquals(MapOverlays.BAND_LAYER_ID, light.group("track-bands")!!.layers[1].id)
+        assertEquals(MapOverlays.BAND_LAYER_ID, light.group("route-bands")!!.layers[1].id)
         assertEquals(MapOverlays.TRACKS_MIN_ZOOM, tracks.layers.first().minZoom)
         val beneath = MapLayersDoc.order(light.groups, MapLayersDoc.Placement.BENEATH_LABELS)
         assertTrue(beneath.indexOf(MapOverlays.TRACKS_LAYER_ID) < beneath.indexOf(MapOverlays.BAND_LAYER_ID))

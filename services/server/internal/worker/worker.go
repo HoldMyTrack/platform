@@ -527,10 +527,10 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		// A big account's first render can outlast claimLease.
 		defer keepClaimed(ctx, pool, log, j.id)()
 		return fog.RenderUser(ctx, pool, store, rj.UserID)
-	case "edit_track":
+	case "edit_route":
 		var ej ingest.EditJob
 		if err := json.Unmarshal(j.payload, &ej); err != nil {
-			return fmt.Errorf("unmarshal edit_track job: %w", err)
+			return fmt.Errorf("unmarshal edit_route job: %w", err)
 		}
 		return ingest.ProcessRouteEdit(ctx, pool, store, ej)
 	case "reprivacy":
@@ -539,14 +539,20 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 			return fmt.Errorf("unmarshal reprivacy job: %w", err)
 		}
 		return ingest.ProcessReprivacy(ctx, pool, store, j.id, rj)
-	case "story_copy":
+	case "trip_copy":
 		var sj tripcopy.Job
 		if err := json.Unmarshal(j.payload, &sj); err != nil {
-			return fmt.Errorf("unmarshal story_copy job: %w", err)
+			return fmt.Errorf("unmarshal trip_copy job: %w", err)
 		}
 		return tripcopy.Process(ctx, pool, store, sj)
 	case "export":
 		return runExport(ctx, pool, store, log, j.id, j.payload)
+	case "rewrite_sync_payload":
+		var rj ingest.RewriteSyncPayloadJob
+		if err := json.Unmarshal(j.payload, &rj); err != nil {
+			return fmt.Errorf("unmarshal rewrite_sync_payload job: %w", err)
+		}
+		return ingest.RewriteSyncPayload(ctx, pool, store, rj)
 	default:
 		return fmt.Errorf("unhandled job kind %q", j.kind)
 	}

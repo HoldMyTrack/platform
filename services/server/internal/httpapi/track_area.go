@@ -20,7 +20,7 @@ const areaTracksLimit = 1000
 
 // areaRowColumns is a slim row: what a list row shows and what flying to it needs. The Edit
 // window reads the rest (GET /v2/tracks/{id}). Order matches scanAreaRow.
-var areaRowColumns = `id, started_at, timezone, activity_type, name, distance_meters,
+var areaRowColumns = `id, started_at, timezone, track_type, name, distance_meters,
        COALESCE(moving_seconds, duration_seconds),
        ` + trackBBoxColumns + `,
        edit_pending, trajectory IS NULL,
@@ -33,14 +33,14 @@ var areaFilterSQL = `user_id = $1 AND ` + inDateRange("$2", "$3")
 // listInAreaQuery is those crossing it ($5–$10), and countInAreaQuery their total past the limit.
 // The total counts tracks whose box reaches the view, which the index answers alone: testing every
 // line took 400 ms for an area of 15,000 tracks against 70 ms, and miscounted 2 of them.
-var listAreaQuery = `SELECT ` + areaRowColumns + ` FROM activities WHERE ` + areaFilterSQL + `
+var listAreaQuery = `SELECT ` + areaRowColumns + ` FROM tracks WHERE ` + areaFilterSQL + `
 ORDER BY started_at DESC, id DESC LIMIT $4`
 
-var listInAreaQuery = `SELECT ` + areaRowColumns + ` FROM activities WHERE ` + areaFilterSQL + `
+var listInAreaQuery = `SELECT ` + areaRowColumns + ` FROM tracks WHERE ` + areaFilterSQL + `
   AND ` + trajectoryInAreaSQL(5, true) + `
 ORDER BY started_at DESC, id DESC LIMIT $4`
 
-var countInAreaQuery = `SELECT count(*) FROM activities WHERE ` + areaFilterSQL + ` AND ` + trajectoryInAreaSQL(4, false)
+var countInAreaQuery = `SELECT count(*) FROM tracks WHERE ` + areaFilterSQL + ` AND ` + trajectoryInAreaSQL(4, false)
 
 // trajectoryInAreaSQL is "the track crosses one of the area's two boxes" (mapArea.boxes), with
 // the parameters from $first: south, north, then each box's west and east. A track stored past

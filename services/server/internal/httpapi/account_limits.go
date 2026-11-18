@@ -35,10 +35,10 @@ type accountUsage struct {
 // the jobs half, the tracks' user index the rest.
 const usageQuery = `
 	SELECT
-		(SELECT count(*) FROM activities WHERE user_id = $1)
+		(SELECT count(*) FROM tracks WHERE user_id = $1)
 		+ (SELECT count(*) FROM jobs WHERE user_id = $1 AND kind = 'ingest' AND state = 'pending'),
 		(SELECT coalesce(sum(b), 0) FROM (
-			SELECT max(raw_bytes) AS b FROM activities
+			SELECT max(raw_bytes) AS b FROM tracks
 			WHERE user_id = $1 AND raw_payload_key IS NOT NULL GROUP BY raw_payload_key
 		) o)
 		+ (SELECT coalesce(sum(coalesce((payload->>'raw_bytes')::bigint, octet_length(raw), 0)), 0)

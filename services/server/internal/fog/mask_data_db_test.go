@@ -40,7 +40,7 @@ func insertTrack(t *testing.T, pool *pgxpool.Pool, userID string) string {
 	t.Helper()
 	var id string
 	if err := pool.QueryRow(context.Background(), `
-		INSERT INTO activities (user_id, source, activity_type, started_at, timezone)
+		INSERT INTO tracks (user_id, source, track_type, started_at, timezone)
 		VALUES ($1, 'upload', 'walking', NOW(), 'UTC') RETURNING id`, userID).Scan(&id); err != nil {
 		t.Fatalf("create activity: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestRenderedMaskIsReadBackWithoutTheStore(t *testing.T) {
 	}
 	var size int
 	if err := pool.QueryRow(ctx,
-		`SELECT length(png) FROM activity_tile_mask_data WHERE activity_id = $1`, trackID).Scan(&size); err != nil || size == 0 {
+		`SELECT length(png) FROM track_tile_mask_data WHERE track_id = $1`, trackID).Scan(&size); err != nil || size == 0 {
 		t.Fatalf("mask PNG: %d bytes, %v; want it in the database", size, err)
 	}
 
@@ -131,7 +131,7 @@ func TestRenderCountsMasksWithoutPNG(t *testing.T) {
 		t.Fatal(err)
 	}
 	missing := insertTrack(t, pool, userID)
-	if _, err := pool.Exec(ctx, `INSERT INTO activity_tile_masks (activity_id, zoom, tile_x, tile_y) VALUES ($1, $2, $3, $4)`,
+	if _, err := pool.Exec(ctx, `INSERT INTO track_tile_masks (track_id, zoom, tile_x, tile_y) VALUES ($1, $2, $3, $4)`,
 		missing, Zoom, tile[0], tile[1]); err != nil {
 		t.Fatal(err)
 	}
@@ -157,7 +157,7 @@ func TestMaskBytesGoWithTheirRow(t *testing.T) {
 	neighbour := [2]int{tile[0] + 1, tile[1]}
 	count := func(trackID string) int {
 		var n int
-		if err := pool.QueryRow(ctx, `SELECT count(*) FROM activity_tile_mask_data WHERE activity_id = $1`, trackID).Scan(&n); err != nil {
+		if err := pool.QueryRow(ctx, `SELECT count(*) FROM track_tile_mask_data WHERE track_id = $1`, trackID).Scan(&n); err != nil {
 			t.Fatal(err)
 		}
 		return n
@@ -178,7 +178,7 @@ func TestMaskBytesGoWithTheirRow(t *testing.T) {
 	if err := RenderTrackMasks(ctx, pool, deleted, pts, [][2]int{tile}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := pool.Exec(ctx, `DELETE FROM activities WHERE id = $1`, deleted); err != nil {
+	if _, err := pool.Exec(ctx, `DELETE FROM tracks WHERE id = $1`, deleted); err != nil {
 		t.Fatal(err)
 	}
 	if n := count(deleted); n != 0 {

@@ -112,10 +112,10 @@ func parseTripParam(q url.Values) (*string, error) {
 // holds its owner's tracks, so it needs no user filter of its own.
 const trackTripsColumn = `COALESCE((
          SELECT json_agg(json_build_object('id', s.id, 'name', s.name) ORDER BY s.created_at DESC, s.id DESC)
-         FROM story_activities sa JOIN stories s ON s.id = sa.story_id
-         WHERE sa.activity_id = activities.id), '[]'::json)`
+         FROM trip_tracks sa JOIN trips s ON s.id = sa.trip_id
+         WHERE sa.track_id = tracks.id), '[]'::json)`
 
-// maxTrackTypeLen matches activities.activity_type's own VARCHAR(50) — rejecting an
+// maxTrackTypeLen matches tracks.track_type's own VARCHAR(50) — rejecting an
 // over-length value here is a clearer 400 than letting Postgres reject the UPDATE. These limits
 // count characters (runes), as VARCHAR and SPEC FR-5.5 do, not bytes: a Cyrillic name takes
 // two bytes a letter.
@@ -134,13 +134,13 @@ const maxTrackNameLen = 200
 // (scanTrackRow's Scan call is shared between both), scoped by id and owner exactly like
 // routeMetricsQuery — a non-owned or nonexistent id is indistinguishable from "not found."
 var trackByIDQuery = `
-SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds,
+SELECT id, started_at, timezone, track_type, name, distance_meters, duration_seconds,
        COALESCE(moving_seconds, duration_seconds), description,
        ` + trackBBoxColumns + `,
-       edit_pending, track_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
+       edit_pending, route_edit IS NOT NULL, trajectory IS NULL, raw_payload_key IS NOT NULL, editable_times,
        split_group, split_from, split_to,
        ` + trackTripsColumn + `
-FROM activities
+FROM tracks
 WHERE id = $1 AND user_id = $2`
 
 type updateTrackRequest struct {
@@ -149,7 +149,7 @@ type updateTrackRequest struct {
 	Description string `json:"description"`
 }
 
-// trackIDFromPath is the {id} of an /activities/…/{id} route, lowercased, or a 404 for one
+// trackIDFromPath is the {id} of an /tracks/…/{id} route, lowercased, or a 404 for one
 // that isn't a UUID. Postgres refuses a malformed uuid with an error, which reached the client
 // as a 500; and it accepts an uppercase one, which would then miss object keys built from the
 // id (the delete's mask prefix) while still matching the row.
@@ -163,7 +163,7 @@ func trackIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 }
 
 // handleUpdateTrack serves `PATCH /v2/tracks/{id}` (docs/SPEC.md FR-5.5) — the "rename a
-// mis-tagged upload" / "describe a non-sport GPS trace" feature. activity_type is free-form
+// mis-tagged upload" / "describe a non-sport GPS trace" feature. track_type is free-form
 // (IMPLEMENTATION.md §4.7), not a controlled vocabulary, so a manual rename here is
 // architecturally identical to what ingest itself already writes — nothing to validate
 // against an allow-list, just a length bound matching the column.
@@ -171,7 +171,7 @@ func trackIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 // Full-replace-on-save, not per-field PATCH semantics, matching account.go's
 // handleUpdateSettings: one Save button in the edit dialog commits all three fields at once.
 // Empty name/description means "clear it," written as NULLIF the same way every other
-// optional text column here already is; activity_type has no such escape hatch since the
+// optional text column here already is; track_type has no such escape hatch since the
 // column is NOT NULL — an empty value is rejected outright rather than silently kept
 // unchanged.
 func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
@@ -208,7 +208,7 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	tag, err := s.pool.Exec(ctx, `
-		UPDATE activities SET activity_type = $3, name = NULLIF($4, ''), description = NULLIF($5, '')
+		UPDATE tracks SET track_type = $3, name = NULLIF($4, ''), description = NULLIF($5, '')
 		WHERE id = $1 AND user_id = $2
 	`, trackID, userID, req.TrackType, req.Name, req.Description)
 	if err != nil {
@@ -220,7 +220,7 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
-	// activity_type is in every tracks tile this track crosses, and no render follows.
+	// track_type is in every tracks tile this track crosses, and no render follows.
 	if err := fog.BumpMapVersion(ctx, s.pool, userID); err != nil {
 		s.log.Error("activity update: bump map version failed", "activity_id", trackID, "err", err)
 	}
@@ -235,14 +235,14 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleDeleteTrack serves `DELETE /v2/tracks/{id}` (§4.7.5) — a full purge, not a
-// soft delete: the DB cascade already handles activity_tile_masks and their mask data
+// soft delete: the DB cascade already handles track_tile_masks and their mask data
 // (`ON DELETE CASCADE` back to tracks.id), and Trends is live-aggregated over whatever
 // rows remain, so neither needs any explicit cleanup here. Two things do:
 //
 //   - Object storage has no foreign keys, so the raw upload has to be removed explicitly,
 //     unless another track (a split piece, a re-import) still names it.
 //   - Fog reads a precomputed per-user, per-tile cache that ingest builds by
-//     compositing activity_tile_masks rows together, but only ingest ever marks a tile dirty
+//     compositing track_tile_masks rows together, but only ingest ever marks a tile dirty
 //     or enqueues its re-render — deleting a track would otherwise cascade its masks away
 //     while leaving that cache's already-rendered PNGs stale indefinitely, still showing
 //     coverage for a track that no longer exists.
@@ -264,7 +264,7 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	// for cleanup below, and both would be gone (or unrecoverable) once the DELETE runs.
 	var rawKey *string
 	if err := s.pool.QueryRow(ctx,
-		`SELECT raw_payload_key FROM activities WHERE id = $1 AND user_id = $2`, trackID, userID,
+		`SELECT raw_payload_key FROM tracks WHERE id = $1 AND user_id = $2`, trackID, userID,
 	).Scan(&rawKey); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			writeAPIError(w, "track not found", http.StatusNotFound)
@@ -289,7 +289,7 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		s.log.Error("activity delete: photo lookup failed, deleting row anyway", "activity_id", trackID, "err", err)
 	}
-	tag, err := s.pool.Exec(ctx, `DELETE FROM activities WHERE id = $1 AND user_id = $2`, trackID, userID)
+	tag, err := s.pool.Exec(ctx, `DELETE FROM tracks WHERE id = $1 AND user_id = $2`, trackID, userID)
 	if err != nil {
 		s.log.Error("activity delete failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
@@ -309,7 +309,7 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// The deleted track's tiles are marked dirty and rendered again, as ingest does: a render
-	// recomposites each tile from the activity_tile_masks rows left, which no longer include
+	// recomposites each tile from the track_tile_masks rows left, which no longer include
 	// this track's.
 	if len(tiles) > 0 {
 		if err := ingest.MarkFogTilesDirty(ctx, s.pool, userID, tiles); err != nil {
@@ -330,8 +330,8 @@ const routeMetricsQuery = `
 SELECT array_agg(ST_X(pt.geom) ORDER BY pt.path),
        array_agg(ST_Y(pt.geom) ORDER BY pt.path),
        array_agg(ST_M(pt.geom) ORDER BY pt.path),
-       a.track_edit
-FROM activities a
+       a.route_edit
+FROM tracks a
 CROSS JOIN LATERAL ST_DumpPoints(a.trajectory) AS pt
 WHERE a.id = $1 AND a.user_id = $2
 GROUP BY a.id`

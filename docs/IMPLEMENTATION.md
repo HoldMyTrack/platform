@@ -10,23 +10,23 @@ The migrations in `services/server/migrations/` are the authority on columns, ke
 
 ```mermaid
 erDiagram
-    users ||--o{ activities : owns
+    users ||--o{ tracks : owns
     users ||--o{ privacy_zones : sets
     users ||--o{ fog_tiles : "z0-z14"
-    users ||--o{ stories : owns
+    users ||--o{ trips : owns
     users ||--o{ spot_captures : makes
-    activities ||--o{ activity_tile_masks : "z14 masks"
-    activity_tile_masks ||--|| activity_tile_mask_data : PNG
-    activities ||--o{ activity_photos : has
-    stories ||--o{ story_activities : holds
-    activities ||--o{ story_activities : "member of"
+    tracks ||--o{ track_tile_masks : "z14 masks"
+    track_tile_masks ||--|| track_tile_mask_data : PNG
+    tracks ||--o{ track_photos : has
+    trips ||--o{ trip_tracks : holds
+    tracks ||--o{ trip_tracks : "member of"
     spots ||--o{ spot_captures : "captured in"
     users {
         uuid id PK
         bigint map_version
         timestamptz deleted_at
     }
-    activities {
+    tracks {
         uuid id PK
         text source
         text external_id
@@ -43,7 +43,7 @@ erDiagram
         bool dirty
         bigint dirty_gen
     }
-    activity_photos {
+    track_photos {
         timestamptz route_at
         text image_key
     }
@@ -58,9 +58,9 @@ erDiagram
 
 No `tier` column (`VISION.md` §6.1). The demo account is a row recognized by its fixed id (§4.10). `password_hash` is NULL for an account that signs in only through `user_identities`. `map_version` only goes up (§4.2.6). `is_admin` is written only by `set-admin` (§4.20). `deleted_at` marks a closed account until the purge deletes the row (§4.28). A NULL `country` means Settings was never saved, which is the first-run gate (FR-1.7); a NULL `locale` means automatic.
 
-### 3.3 `activities`
+### 3.3 `tracks`
 
-Idempotency is `idx_activities_dedupe` on `(user_id, source, external_id)` plus the persist step's `ON CONFLICT` (§4.0). `trajectory` is simplified display geometry, and coverage never comes from it. Its M is epoch seconds, which photos are placed by (§3.22), and its longitudes continue past ±180 (§4.1). A NULL `trajectory` has one cause: the route lies entirely inside Private locations. `split_group` and `origin_id` have no foreign key: a split group outlives its first row (§4.7.8) and a copy outlives its original (§3.25). No bbox column: PostGIS has no default GiST operator class for `box2d`, and the GiST index on `trajectory` already serves `&&`.
+Idempotency is `idx_tracks_dedupe` on `(user_id, source, external_id)` plus the persist step's `ON CONFLICT` (§4.0). `trajectory` is simplified display geometry, and coverage never comes from it. Its M is epoch seconds, which photos are placed by (§3.22), and its longitudes continue past ±180 (§4.1). A NULL `trajectory` has one cause: the route lies entirely inside Private locations. `split_group` and `origin_id` have no foreign key: a split group outlives its first row (§4.7.8) and a copy outlives its original (§3.25). No bbox column: PostGIS has no default GiST operator class for `box2d`, and the GiST index on `trajectory` already serves `&&`.
 
 ### 3.6 `fog_tiles`
 
@@ -82,9 +82,9 @@ The cookie value is a random UUID (`newToken`); the row keeps only its SHA-256, 
 
 Same shape as `sessions`, much shorter-lived (§4.9).
 
-### 3.11 `activity_tile_masks`
+### 3.11 `track_tile_masks`
 
-One unblurred mask per track per z14 tile it touches, drawn at ingest (§4.2.3). The PNG is in `activity_tile_mask_data`, cascading from the mask row: a separate table keeps this one narrow for render scans and lets backups skip the bytes, which `rerender-coverage --masks` rebuilds. Masks live in Postgres because R2 round trips were most of a render (`PERFORMANCE.md`, 2026-10-09); at ~600 bytes a mask stays under the TOAST threshold. SQLite on the worker is the fallback if mask reads compete with map queries.
+One unblurred mask per track per z14 tile it touches, drawn at ingest (§4.2.3). The PNG is in `track_tile_mask_data`, cascading from the mask row: a separate table keeps this one narrow for render scans and lets backups skip the bytes, which `rerender-coverage --masks` rebuilds. Masks live in Postgres because R2 round trips were most of a render (`PERFORMANCE.md`, 2026-10-09); at ~600 bytes a mask stays under the TOAST threshold. SQLite on the worker is the fallback if mask reads compete with map queries.
 
 ### 3.12 `admin_countries`
 
@@ -94,9 +94,9 @@ Overture's countries less OpenStreetMap's sea. `geom` is simplified for drawing;
 
 The same two forms, the pieces in `admin_region_parts`. Keyed by `overture_id`, since not every region has an ISO code. A country without regions gets one row covering it. `local_type` is Overture's word for the kind of place (state, province, prefecture). `admin_boundaries_source` names the loaded extract, so seeding the same file again is skipped.
 
-### 3.14 `activity_country` / 3.15 `activity_region`
+### 3.14 `track_country` / 3.15 `track_region`
 
-Which countries and regions each trajectory touches, matched once at ingest and redone on every reseed; `activity_county` and `activity_city` (§3.32) the same a level down each. The cascade on `activity_id` is the whole cleanup, since the tiles read these rows live. Matching reads the simplified `trajectory`: a ~3 m tolerance can't change a kilometre-scale intersection.
+Which countries and regions each trajectory touches, matched once at ingest and redone on every reseed; `track_county` and `track_city` (§3.32) the same a level down each. The cascade on `track_id` is the whole cleanup, since the tiles read these rows live. Matching reads the simplified `trajectory`: a ~3 m tolerance can't change a kilometre-scale intersection.
 
 ### 3.16 `email_verifications`
 
@@ -110,9 +110,9 @@ Google, Facebook and Apple links (ADR-0009), keyed by the provider's stable `sub
 
 One-time codes for a native app's browser sign-in (§4.9), hashed like `sessions`. Redeeming deletes the row in the statement that reads it; expired rows are purged on the next insert, so there is no sweeper.
 
-### 3.19 `stories` / `story_activities`
+### 3.19 `trips` / `trip_tracks`
 
-`story_activities` cascades from both sides: deleting a track removes it from every Trip, an emptied Trip stays, and deleting a Trip deletes no track.
+`trip_tracks` cascades from both sides: deleting a track removes it from every Trip, an emptied Trip stays, and deleting a Trip deletes no track.
 
 ### 3.20 `spots`
 
@@ -122,7 +122,7 @@ Upserted on `(osm_type, osm_id)`. A place a planet import no longer sees is reti
 
 The primary key keeps the first capture, and no row is ever updated (§4.25).
 
-### 3.22 `activity_photos`
+### 3.22 `track_photos`
 
 Several rows can name one image: a Trip copy's photo keeps the original's `image_key`, so the files go only with the last row naming them. No position column: `route_at` is a moment on the trajectory's M axis, located on every read, so route edits and Private locations apply to the photo (§4.27).
 
@@ -134,9 +134,9 @@ No state column: until `ready_at` is set, a request's state is its job's. Parts 
 
 timezone-boundary-builder's polygons in ≤256-vertex pieces (§4.30); `tz_boundaries_source` skips reloading the same file.
 
-### 3.25 `story_sends` / `story_copies` / `received_origins`
+### 3.25 `trip_sends` / `trip_copies` / `received_origins`
 
-`story_sends` is the inbox, one row per Trip and recipient however often it's sent. `story_copies` maps a sent Trip and recipient to the Trip the copy made, so a later copy adds to it. `received_origins` keeps every original an account has received, after the copy is deleted, so each arrives once ever (§4.23).
+`trip_sends` is the inbox, one row per Trip and recipient however often it's sent. `trip_copies` maps a sent Trip and recipient to the Trip the copy made, so a later copy adds to it. `received_origins` keeps every original an account has received, after the copy is deleted, so each arrives once ever (§4.23).
 
 ### 3.26 `admin_tile_geoms` / `admin_tiles_built`
 
@@ -164,7 +164,7 @@ One row: whether Satellite's imagery is offered to everyone, why not, and the us
 
 ### 3.32 `admin_counties` / `admin_cities`
 
-The County and City levels' outlines in the same two forms, pieces in `admin_county_parts` and `admin_city_parts`, matched into `activity_county` and `activity_city`. The `*_total` columns here and on the regions and countries count each level's own places below a place, for its tooltip; a country's `region_word` and `county_word` are what most of its regions and counties are. Each row is a place on its level, or the place above standing in for land the level's own leave uncovered (`kind`, §4.2.4). `region_id` and a city's `county_id` are the places it lies in; a stand-in's `county_id` is the County-level row it stands in for.
+The County and City levels' outlines in the same two forms, pieces in `admin_county_parts` and `admin_city_parts`, matched into `track_county` and `track_city`. The `*_total` columns here and on the regions and countries count each level's own places below a place, for its tooltip; a country's `region_word` and `county_word` are what most of its regions and counties are. Each row is a place on its level, or the place above standing in for land the level's own leave uncovered (`kind`, §4.2.4). `region_id` and a city's `county_id` are the places it lies in; a stand-in's `county_id` is the County-level row it stands in for.
 
 ## 4. Core Technical Workflows
 
@@ -188,7 +188,7 @@ flowchart LR
 - **Path 1** is a design only (`VISION.md` §4.1): webhook receivers answer at once and enqueue, and the backfill at connect is a separate, resumable, rate-limited job (§5.1).
 - **Path 2** on Android: Health Connect routes written by other apps can't be read in the background (`ConsentRequired` even with "Always allow", checked on a device), so sync is foreground-only. Don't build a background route sync: it would bring in tracks with nothing to draw. Samsung Health exposes no routes at all.
 
-**All three are idempotent on `(user_id, source, external_id)`**, under concurrent duplicates too. The check at receive time is a fast path; the guarantee is `idx_activities_dedupe` plus the persist step's `ON CONFLICT DO NOTHING` (§4.1 step 6).
+**All three are idempotent on `(user_id, source, external_id)`**, under concurrent duplicates too. The check at receive time is a fast path; the guarantee is `idx_tracks_dedupe` plus the persist step's `ON CONFLICT DO NOTHING` (§4.1 step 6).
 
 **The import history is the `jobs` table** (`kind = 'ingest'`): every file and synced track is a job carrying its file name, source, state and error, so the Upload menu, `/sync` and the Android Sync history read one history with no uploads table (`imports.go`, `uploads.go`). A daily sweep deletes finished jobs 90 days after they finish (`worker/job_history.go`). `GET /v2/uploads/{external_id}` answers only from the caller's own jobs: an upload's id is its file's hash, which would otherwise tell anyone holding a file whether someone uploaded it. Clients refresh the map when an import finishes, not when its request returns, since the request only enqueued it.
 
@@ -196,11 +196,13 @@ flowchart LR
 
 Path 2's endpoint (`sync_tracks.go`); each track gets its own result. It is idempotent on the caller's record id, not a content hash, since a retry may serialize the JSON differently, and the raw key is scoped by source (`raw/{user}/{source}/{id}`) because that id is unique only within its source. `external_id` is pattern-checked because it goes into an object key, and type, name and description are held to the track edit's bounds, so a bad value is refused here instead of failing in the worker. `parse.ParseJSON` decodes the body into the same structs the file parsers produce, so the pipeline has no Path 2 branch.
 
-`POST /v2/sync/known` makes the server the one record of what was sent: an id is known if an `activities` row or a `pending` job carries it, so a reinstall or a second phone agrees, and a deleted track is offered again.
+`POST /v2/sync/known` makes the server the one record of what was sent: an id is known if a `tracks` row or a `pending` job carries it, so a reinstall or a second phone agrees, and a deleted track is offered again.
+
+The stored payload (`parse.JSONActivity`) names the type `track_type`. Payloads stored before migration 0057 said `activity_type`: the migration queues a `rewrite_sync_payload` job for each, and `parse` reads the old name meanwhile, since a job queued before the deploy can reprocess a track before its payload's rewrite runs. Both go once production holds no `.json` payload naming `activity_type` (`ROADMAP.md`).
 
 #### 4.0.4 In-app GPS recording (Android)
 
-A stopped recording posts to §4.0.3 with `source = "recorded"` and a UUID minted at recording start, so a retried submit is recognized. It goes there directly, not into Health Connect or HealthKit for Path 2 to read back: writing would need a route-write permission, and reading back would bring Health Connect's foreground-only route reads to points the app already holds. The cost is that other apps on the phone never see a recording. It is the one path that sets `name` and `description` at ingest. Its `activity_type` is free text, which is why §4.0.3 bounds it. The app side is `apps/android/docs/IMPLEMENTATION.md` §5.
+A stopped recording posts to §4.0.3 with `source = "recorded"` and a UUID minted at recording start, so a retried submit is recognized. It goes there directly, not into Health Connect or HealthKit for Path 2 to read back: writing would need a route-write permission, and reading back would bring Health Connect's foreground-only route reads to points the app already holds. The cost is that other apps on the phone never see a recording. It is the one path that sets `name` and `description` at ingest. Its `track_type` is free text, which is why §4.0.3 bounds it. The app side is `apps/android/docs/IMPLEMENTATION.md` §5.
 
 ### 4.1 Ingestion pipeline
 
@@ -313,7 +315,7 @@ A route has four looks (normal, Checked, Focused, hovered), each with and withou
 
 #### 4.3.1 Pace-colored segments
 
-A GeoJSON layer over the routes for the focused track, since a vector tile can't carry per-vertex colour; `GET /v2/tracks/{id}/route-metrics` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Each client adds the whole line in recording order, marked `route`, for the direction chevrons; on the runs they would bunch wherever the pace changes. The chevrons are text in the layers document, in a one-glyph font beside the basemap's (`apps/web/scripts/chevronFont.mjs`), since only text placed along a line honours `text-max-angle`: an icon or a line pattern piles up into a blot on a wiggle, and a pattern also stretches up to 2× within a zoom level. **The font must be on the basemap's origin before a document naming it ships**, or no client draws chevrons. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. A Cut's join (`RouteEdit.JoinsCut`) keeps the speed before it, since its own would be a line across time spent elsewhere; the stored route has no mark for it, so `track-metrics` reads it from `track_edit`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused track's raw payload, as Edit route does.
+A GeoJSON layer over the routes for the focused track, since a vector tile can't carry per-vertex colour; `GET /v2/tracks/{id}/route-metrics` computes speeds from `trajectory`'s vertices and their M times, and the runs of points by band (`paceBands`), which clients slice the points by. Each client adds the whole line in recording order, marked `route`, for the direction chevrons; on the runs they would bunch wherever the pace changes. The chevrons are text in the layers document, in a one-glyph font beside the basemap's (`apps/web/scripts/chevronFont.mjs`), since only text placed along a line honours `text-max-angle`: an icon or a line pattern piles up into a blot on a wiggle, and a pattern also stretches up to 2× within a zoom level. **The font must be on the basemap's origin before a document naming it ships**, or no client draws chevrons. Android bands the Sync tab's candidates, not yet uploaded, by the same rule; both run `testdata/pace-bands.json`. A Cut's join (`RouteEdit.JoinsCut`) keeps the speed before it, since its own would be a line across time spent elsewhere; the stored route has no mark for it, so `track-metrics` reads it from `route_edit`. Douglas-Peucker keeps vertices by shape, not speed, so a straight stretch shows coarse bands; the fix is re-parsing the focused track's raw payload, as Edit route does.
 
 #### 4.3.3 Map image export
 
@@ -331,11 +333,11 @@ Pace is route context on one track (§4.3.1) and trends a plain rollup per perio
 
 ### 4.6 Overlapping tracks
 
-One ride synced from a watch and uploaded as its `.fit` has two `external_id`s, and nothing on ingest matches them (ADR-0039); the hint is FR-3.5 (`ingest/overlap.go`). Time is compared because it is what every copy agrees on, and measuring against the longer duration keeps a short walk inside a long hike apart. Each track is compared by `recorded_started_at`/`recorded_ended_at`, its parsed first and last point narrowed to its split range but before clipping and edits, since Private locations shorten the shown span. The lookup stays a range scan on `idx_activities_user_recorded_start`: an 80% overlap bounds the start difference to a quarter of the span. **Android's Sync tab applies the same rule** (`sync/Similar.kt`, tested against the same cases); change both. Splits are unknown to it (`KNOWN_ISSUES.md`).
+One ride synced from a watch and uploaded as its `.fit` has two `external_id`s, and nothing on ingest matches them (ADR-0039); the hint is FR-3.5 (`ingest/overlap.go`). Time is compared because it is what every copy agrees on, and measuring against the longer duration keeps a short walk inside a long hike apart. Each track is compared by `recorded_started_at`/`recorded_ended_at`, its parsed first and last point narrowed to its split range but before clipping and edits, since Private locations shorten the shown span. The lookup stays a range scan on `idx_tracks_user_recorded_start`: an 80% overlap bounds the start difference to a quarter of the span. **Android's Sync tab applies the same rule** (`sync/Similar.kt`, tested against the same cases); change both. Splits are unknown to it (`KNOWN_ISSUES.md`).
 
 ### 4.7 Track listing and filtering
 
-**One filter parser** (`parseTrackFilter`) serves the list, its totals, the day histogram and the tracks tiles, so the panel and the map can't disagree. **The web's area list is an endpoint of its own** (`GET /v2/tracks/area`, `track_area.go`): slim rows, since it reloads on every settled move, and `GET /v2/tracks` stays what the apps and a Trip read; the Edit window reads its tracks in full (`GET /v2/tracks/{id}`) and keeps them while it is open, since a move of the map or Back takes rows out of the list: a missing row is read again, and only a `404` closes the window (`useEditWindow.ts`); a missing row's reprocess is the Pending check's to finish (§4.2.5). A view across the antimeridian is two boxes, parsed as Spots' are (§4.25), each `&&` against constant parameters so `idx_activities_spatial` answers the OR; a route stored past ±180 (§4.1) also matches the boxes shifted 360°. It returns the newest 1,000 and the area's `total`; without `bbox`, the newest `limit` of the whole history, for the opening view. **On the web only a camera move the app didn't make reloads the area**: `flyToBBox` and the opening view's jump mark theirs (`APP_FLIGHT`) for `useAreaList.ts` to skip, and the opening view and Dates' flight ask for their area once they land; a new way of moving the camera must mark itself or decide to reload. **No pagination**: the facets, the routes' id sets and Check all need the whole result, so Type and Distance filter client-side over it, and the map draws every match; a future cursor must be `(started_at, id)`, since two sources' copies of a ride share a start time. **`bbox` is computed, the short way round**: PostGIS keeps the box in the geometry header, and one wider than 180° is recomputed from `ST_ShiftLongitude` with the narrower kept. **Every day is the track's local day** (§4.30); the account's zone decides only what "today" is. The histogram pages by track-day, since the slider packs only days with track. `activity_type` is the source's free text, never normalized; how to show one (`internal/tracktype`) comes beside the rows, once per type, in `requestLang`'s language.
+**One filter parser** (`parseTrackFilter`) serves the list, its totals, the day histogram and the tracks tiles, so the panel and the map can't disagree. **The web's area list is an endpoint of its own** (`GET /v2/tracks/area`, `track_area.go`): slim rows, since it reloads on every settled move, and `GET /v2/tracks` stays what the apps and a Trip read; the Edit window reads its tracks in full (`GET /v2/tracks/{id}`) and keeps them while it is open, since a move of the map or Back takes rows out of the list: a missing row is read again, and only a `404` closes the window (`useEditWindow.ts`); a missing row's reprocess is the Pending check's to finish (§4.2.5). A view across the antimeridian is two boxes, parsed as Spots' are (§4.25), each `&&` against constant parameters so `idx_tracks_spatial` answers the OR; a route stored past ±180 (§4.1) also matches the boxes shifted 360°. It returns the newest 1,000 and the area's `total`; without `bbox`, the newest `limit` of the whole history, for the opening view. **On the web only a camera move the app didn't make reloads the area**: `flyToBBox` and the opening view's jump mark theirs (`APP_FLIGHT`) for `useAreaList.ts` to skip, and the opening view and Dates' flight ask for their area once they land; a new way of moving the camera must mark itself or decide to reload. **No pagination**: the facets, the routes' id sets and Check all need the whole result, so Type and Distance filter client-side over it, and the map draws every match; a future cursor must be `(started_at, id)`, since two sources' copies of a ride share a start time. **`bbox` is computed, the short way round**: PostGIS keeps the box in the geometry header, and one wider than 180° is recomputed from `ST_ShiftLongitude` with the narrower kept. **Every day is the track's local day** (§4.30); the account's zone decides only what "today" is. The histogram pages by track-day, since the slider packs only days with track. `track_type` is the source's free text, never normalized; how to show one (`internal/tracktype`) comes beside the rows, once per type, in `requestLang`'s language.
 
 **Device rules are one set on every client**: the web, Android and iOS run the same cases for each rule `testdata/client-rules/README.md` lists, so a rule can't change on one platform alone.
 
@@ -355,7 +357,7 @@ flowchart TD
     E[Edit route save] --> P
     S["Split: route edit<br/>plus new piece row"] --> P
     Z[Private location change] --> P
-    P["one transaction: edit_pending,<br/>current tiles dirty, version bump,<br/>edit_track or reprivacy job"] --> R1["render: Pending dropped"]
+    P["one transaction: edit_pending,<br/>current tiles dirty, version bump,<br/>edit_route or reprivacy job"] --> R1["render: Pending dropped"]
     R1 --> RE["reprocess from raw: clip,<br/>narrow to piece, apply edit, clip again"]
     RE --> U["UPDATE row, overwrite masks,<br/>rematch regions, old and new tiles dirty"]
     U --> C[clear edit_pending]
@@ -364,15 +366,15 @@ flowchart TD
     C --> R2["render: back with new masks"]
 ```
 
-**The edit is a spec replayed over the raw payload** (`activities.track_edit`, `ingest.RouteEdit`): keep, remove, drop and move, every point named by its unix-ms timestamp. The original is untouched, so Reset is a NULL spec. Timestamps rather than indices, since indices into the clipped list shift when a Private location changes and `reprivacy` replays the stored edit over a differently clipped list; so a route without forward-running timestamps can't be edited.
+**The edit is a spec replayed over the raw payload** (`tracks.route_edit`, `ingest.RouteEdit`): keep, remove, drop and move, every point named by its unix-ms timestamp. The original is untouched, so Reset is a NULL spec. Timestamps rather than indices, since indices into the clipped list shift when a Private location changes and `reprivacy` replays the stored edit over a differently clipped list; so a route without forward-running timestamps can't be edited.
 
-**Reprocessing is ingest's own pipeline ending in an UPDATE** (`reprocessTrack`, shared by the `edit_track` and `reprivacy` jobs): the same load and clip (§4.1 steps 2–3), the edit, and **a second clip**, because chopping away the first point outside a zone would otherwise expose the points behind it. It clears region rows before re-matching, since matching only inserts, and overwrites masks in place so a tile the route still crosses never lacks one. `edit_pending` is set with the enqueue, guarded by `AND NOT edit_pending` so a track can't be edited twice at once, and cleared on any failure, leaving the previous route. Each reprocess is worked out and checked, the tile limit included, before anything is written (`prepareReprocess`), and an edit job prepares every piece of a split before applying any, so a refused edit leaves every piece as it was.
+**Reprocessing is ingest's own pipeline ending in an UPDATE** (`reprocessTrack`, shared by the `edit_route` and `reprivacy` jobs): the same load and clip (§4.1 steps 2–3), the edit, and **a second clip**, because chopping away the first point outside a zone would otherwise expose the points behind it. It clears region rows before re-matching, since matching only inserts, and overwrites masks in place so a tile the route still crosses never lacks one. `edit_pending` is set with the enqueue, guarded by `AND NOT edit_pending` so a track can't be edited twice at once, and cleared on any failure, leaving the previous route. Each reprocess is worked out and checked, the tile limit included, before anything is written (`prepareReprocess`), and an edit job prepares every piece of a split before applying any, so a refused edit leaves every piece as it was.
 
-**The editor's points** (`GET /v2/tracks/{id}/route-points`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The web's editing session folds its ops with the server's predicate (`editRouteOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`track_edit`); NULL, not yet looked at, passes.
+**The editor's points** (`GET /v2/tracks/{id}/route-points`) are re-parsed from the raw payload and clipped as the job will clip them, since the raw payload still holds the hidden ends. The web's editing session folds its ops with the server's predicate (`editRouteOps.ts`). Ingest and every reprocess store whether those points' timestamps run forward (`editable_times`), so the list can say so (`route_edit`); NULL, not yet looked at, passes.
 
 #### 4.7.8 Split a track (FR-5.9)
 
-**A piece is a row over the same raw payload, narrowed to a stretch** (`split_group`, `split_from`, `split_to`, inclusive, so pieces share the point they meet at). Everything that turns a raw payload into points narrows through `LoadPiecePoints`, after the Private location clip and before the edit (the reprocess, `DisplayedPoints`, the editor), and clips the narrowed ends again, since a split made at home leaves an end inside a zone. The range sits outside `track_edit`, so Reset returns a piece to its own stretch.
+**A piece is a row over the same raw payload, narrowed to a stretch** (`split_group`, `split_from`, `split_to`, inclusive, so pieces share the point they meet at). Everything that turns a raw payload into points narrows through `LoadPiecePoints`, after the Private location clip and before the edit (the reprocess, `DisplayedPoints`, the editor), and clips the narrowed ends again, since a split made at home leaves an end inside a zone. The range sits outside `route_edit`, so Reset returns a piece to its own stretch.
 
 **Split rides on the route edit**: one request and job, with the new piece Pending from its insert. Its `external_id` is the original's plus `#split:<ms>`, so a re-import still matches the original row and pieces never collide. If the job fails, the new piece has no geometry.
 
@@ -489,15 +491,15 @@ sequenceDiagram
     participant W as worker
     participant R as Recipient
     S->>A: send a copy to an email
-    A->>DB: INSERT story_sends SELECT a verified account, else nothing
+    A->>DB: INSERT trip_sends SELECT a verified account, else nothing
     A-->>S: same answer either way
     A-)R: email in the recipient's language
     R->>A: accept
-    A->>DB: DELETE story_sends, INSERT story_copy job, one transaction
+    A->>DB: DELETE trip_sends, INSERT trip_copy job, one transaction
     W->>DB: Trip's tracks not yet received
     W->>W: DisplayedPoints as GPX under the recipient's raw prefix
-    W->>W: ingest.Process as the recipient, source story
-    W->>DB: story_copies, received_origins, photo rows sharing files
+    W->>W: ingest.Process as the recipient, source trip
+    W->>DB: trip_copies, received_origins, photo rows sharing files
     W->>DB: bump the recipient's version
 ```
 
@@ -587,20 +589,20 @@ A request is an `exports` row and an `export` job, made under a lock on the `use
 
 **The track's zone, for labels and grouping alike.** The account's zone would show a 07:00 run in Tokyo at 18:00 the day before, and the viewing device's would group the same history differently on a laptop and a phone. Labels in one zone and grouping in another would put a row near midnight in a different day from its slider slot. A source's own offset is no substitute: GPX and TCX carry none, and an offset has no history. The polygons sit in PostGIS like the country outlines (§4.2.4), not in a Go library such as `tzf`, whose simplified copy would be a second geography. A track entirely inside a Private location still carries its zone, far coarser than the location it hides.
 
-`activities.timezone` is an IANA name, never an offset, so `AT TIME ZONE` gives the offset in force on the track's date. It is looked up at ingest from the first recorded point, before clipping, with the account's zone where no polygon contains it; a reprocess looks again, which changes only split pieces. The `timezones-with-oceans` set gives a point at sea a zone, where the `-now` variant would merge zones whose clocks agree only today. `seed-timezones` re-matches every track in its transaction; a zone the database's tzdata doesn't know is skipped and logged, since converting to it would fail. Grouping reads `localStartedAt` per row, and no local-time column is stored, since one would freeze each offset. `ORDER BY started_at` stays: across zones, local times can disagree with the order things happened.
+`tracks.timezone` is an IANA name, never an offset, so `AT TIME ZONE` gives the offset in force on the track's date. It is looked up at ingest from the first recorded point, before clipping, with the account's zone where no polygon contains it; a reprocess looks again, which changes only split pieces. The `timezones-with-oceans` set gives a point at sea a zone, where the `-now` variant would merge zones whose clocks agree only today. `seed-timezones` re-matches every track in its transaction; a zone the database's tzdata doesn't know is skipped and logged, since converting to it would fail. Grouping reads `localStartedAt` per row, and no local-time column is stored, since one would freeze each offset. `ORDER BY started_at` stays: across zones, local times can disagree with the order things happened.
 
 ### 4.31 The API contract (`services/server/api/`)
 
 `v2/openapi.yaml` is the contract the server speaks: it indexes every path, each a `$ref` into its area's file in `v2/paths/`, with shared shapes in `v2/components/`. **The server's tests hold the handlers to it**: every exchange they make is validated (`contract_test.go`, kin-openapi). That checks the bytes sent (a nil slice as `null`, an `omitempty` dropping a required field), which generated types can't. `TestContractCoversEveryRoute` fails on a route the contract lacks or an operation no route registers. The web's `apiSchema.ts` is generated from it, Android's `WireContractTest` checks `net/Wire.kt` against it and iOS's `WireContractTests` `Wire.swift`.
 
-**`/v1` is the same API under its names before Tracks and Trips**, frozen in `openapi.yaml` with its own `paths/` and `components/` for installed app builds older than Android release 0.34.2 and iOS release 0.2.2 (`ROADMAP.md` retires it). No route registers under `/v1`: `v1_edge.go` rewrites each request onto its `/v2` route and the answer back, by one table per endpoint of paths, query names, JSON keys and multipart fields, plus one table of error codes. A table names only what its endpoint carries, so a key in another document, such as `tracks` in the layers document, is never renamed, and the `types` map's keys are track types, never renamed either. A test's exchange on `/v1` is validated against `openapi.yaml`, which proves the edge still serves it, `TestV1RouteCoversTheV1Contract` fails on a `/v1` operation with no `/v2` counterpart, and `TestV1TablesMatchTheContracts` on a key or query name a table misses, at any depth, so a field added to `/v2` needs its table entry. The edge renames a request body only when the handler reads it, after the session check and within the route's body limit. Three things keep `/v1` names outside the edge: the OAuth callbacks stay under `/v1/auth/`, the URLs registered with each provider (`DEPLOY.md` §4), so the round-trip cookie's path is there too; tiles keep `/tiles/v1/`, so the tracks tile takes those builds' `story` as `trip` (`tileQuery`); and job payloads and table names keep theirs until the database is renamed. Traps:
+**`/v1` is the same API under its names before Tracks and Trips**, frozen in `openapi.yaml` with its own `paths/` and `components/` for installed app builds older than Android release 0.34.3 and iOS release 0.2.4 (`ROADMAP.md` retires it). No route registers under `/v1`: `v1_edge.go` rewrites each request onto its `/v2` route and the answer back, by one table per endpoint of paths, query names, JSON keys and multipart fields, plus one table of error codes. A table names only what its endpoint carries, so a key in another document, such as `tracks` in the layers document, is never renamed, and the `types` map's keys are track types, never renamed either. The layers document's table renames only the pace bands' ids, `route-bands*` back to `track-bands*`, keys and values alike, since the builds on `/v1` fill that source by its old id; it renames by prefix, in object keys and `id` and `source` values, so a layer added to the group follows. A test's exchange on `/v1` is validated against `openapi.yaml`, which proves the edge still serves it, `TestV1RouteCoversTheV1Contract` fails on a `/v1` operation with no `/v2` counterpart, and `TestV1TablesMatchTheContracts` on a key or query name a table misses, at any depth, so a field added to `/v2` needs its table entry. The edge renames a request body only when the handler reads it, after the session check and within the route's body limit. Three things keep `/v1` names outside the edge: the OAuth callbacks stay under `/v1/auth/`, the URLs registered with each provider (`DEPLOY.md` §4), so the round-trip cookie's path is there too; tiles keep `/tiles/v1/`, so the tracks tile takes those builds' `story` as `trip` (`tileQuery`); and the sync page's View on map link names its track as `activity` beside `track`, for the app builds on `/v1` that catch it. Traps:
 - The file describes what the handler accepts: a field it doesn't insist on is optional, an optional array also `nullable`, and an undeclared request field is refused (`decodeJSON`), so request objects are closed.
 - Every error is one JSON shape (`SPEC.md` §1.4), so an error that later needs a code keeps its shape under installed clients. A code is its message key (`api_errors.go`), pinned by enums, so renaming a key a client branches on fails a test; a code chosen at each of some 250 call sites was rejected, since few have a client branching on them. RFC 9457 Problem Details was rejected too: it wants a URI per error type and splits a translated message between `title` and `detail`, for third-party consumers HoldMyTrack doesn't have.
 - The cross-origin 403 and the 426 (§4.33) answer before any operation and aren't in the contract; paths outside `/v1` and `/v2` aren't checked.
 
 ### 4.32 Service statistics
 
-**A daily snapshot, because past state can't be rebuilt**: `last_seen_at` holds only the latest visit, and a deleted account's row is gone. Once per UTC day the worker (`internal/stats`) stores each value in `daily_stats`; Grafana keeps about 14 days, so Postgres is the record. It takes only yesterday, so a missed day stays a gap. **Aggregates only**: the demo account is left out, and a country group standing for fewer than 5 accounts folds into `other`, judged by the accounts behind a value, not the value. `other` counts the distinct accounts behind the groups it took, from the ids a small group's query returns, since one account counts in every country its tracks were in; when those are fewer than 5 it takes the smallest kept group with it, or is left out when none is kept (`foldSmallGroups`). Object sizes are recorded as each object is written (`activities.raw_bytes`, `fog_tiles.bytes`), since asking R2 costs a request per object.
+**A daily snapshot, because past state can't be rebuilt**: `last_seen_at` holds only the latest visit, and a deleted account's row is gone. Once per UTC day the worker (`internal/stats`) stores each value in `daily_stats`; Grafana keeps about 14 days, so Postgres is the record. It takes only yesterday, so a missed day stays a gap. **Aggregates only**: the demo account is left out, and a country group standing for fewer than 5 accounts folds into `other`, judged by the accounts behind a value, not the value. `other` counts the distinct accounts behind the groups it took, from the ids a small group's query returns, since one account counts in every country its tracks were in; when those are fewer than 5 it takes the smallest kept group with it, or is left out when none is kept (`foldSmallGroups`). Object sizes are recorded as each object is written (`tracks.raw_bytes`, `fog_tiles.bytes`), since asking R2 costs a request per object.
 
 **Visits**: an account's first authenticated request each UTC day writes `last_seen_at` (never the demo's), and `web_seen_at`, or an app's `android_seen_at` or `ios_seen_at` with its build, again when the build changes; an app's WebView marks neither. `android_builds_30d` and `ios_builds_30d` show when each app's minimum (§4.33) can rise.
 

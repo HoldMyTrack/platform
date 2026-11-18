@@ -16,11 +16,11 @@ func TestRetryable(t *testing.T) {
 		{"ingest", outage, true},
 		{"ingest", panicError{"index out of range"}, false},
 		{"render_fog", outage, true},
-		{"story_copy", outage, true},
+		{"trip_copy", outage, true},
 		{"export", outage, true},
-		{"edit_track", outage, false},
+		{"edit_route", outage, false},
 		{"reprivacy", outage, false},
-		{"story_copy", panicError{"nil map"}, false},
+		{"trip_copy", panicError{"nil map"}, false},
 		{"test_unknown", outage, false},
 	} {
 		if got := retryable(tc.kind, tc.err); got != tc.want {

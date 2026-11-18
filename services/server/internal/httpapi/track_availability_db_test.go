@@ -17,7 +17,7 @@ func TestTrackListAvailability(t *testing.T) {
 	at := [2]float64{-81.6, 41.5}
 	set := func(id, sql string) {
 		t.Helper()
-		if _, err := d.pool.Exec(context.Background(), `UPDATE activities SET `+sql+` WHERE id = $1`, id); err != nil {
+		if _, err := d.pool.Exec(context.Background(), `UPDATE tracks SET `+sql+` WHERE id = $1`, id); err != nil {
 			t.Fatalf("update %s: %v", id, err)
 		}
 	}
@@ -72,7 +72,7 @@ func TestEditableTimesStored(t *testing.T) {
 	stored := func(id string) *bool {
 		t.Helper()
 		var v *bool
-		if err := d.pool.QueryRow(ctx, `SELECT editable_times FROM activities WHERE id = $1`, id).Scan(&v); err != nil {
+		if err := d.pool.QueryRow(ctx, `SELECT editable_times FROM tracks WHERE id = $1`, id).Scan(&v); err != nil {
 			t.Fatal(err)
 		}
 		return v

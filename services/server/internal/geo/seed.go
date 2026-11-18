@@ -142,10 +142,10 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 			       ST_Multi(ST_CollectionExtract(ST_MakeValid(ST_SetSRID(geom::geometry, 4326)), 3)) AS geom
 			FROM boundary_csv`, nil},
 		{"outline index", `CREATE INDEX ON boundary (level, key)`, nil},
-		{"old city matches", `DELETE FROM activity_city`, nil},
-		{"old county matches", `DELETE FROM activity_county`, nil},
-		{"old region matches", `DELETE FROM activity_region`, nil},
-		{"old country matches", `DELETE FROM activity_country`, nil},
+		{"old city matches", `DELETE FROM track_city`, nil},
+		{"old county matches", `DELETE FROM track_county`, nil},
+		{"old region matches", `DELETE FROM track_region`, nil},
+		{"old country matches", `DELETE FROM track_country`, nil},
 		{"old cities", `DELETE FROM admin_cities`, nil},
 		{"old counties", `DELETE FROM admin_counties`, nil},
 		{"old regions", `DELETE FROM admin_regions`, nil},
@@ -229,17 +229,17 @@ func loadBoundaries(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reade
 					WHERE k.country_id = o.id AND k.kind = 'county' AND k.local_type IS NOT NULL), '')`, nil},
 		{"analyze", `ANALYZE admin_country_parts, admin_region_parts, admin_county_parts, admin_city_parts`, nil},
 		{"activity countries", `
-			INSERT INTO activity_country (activity_id, country_id)
-			SELECT DISTINCT a.id, p.country_id FROM activities a JOIN admin_country_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCountries},
+			INSERT INTO track_country (track_id, country_id)
+			SELECT DISTINCT a.id, p.country_id FROM tracks a JOIN admin_country_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCountries},
 		{"activity regions", `
-			INSERT INTO activity_region (activity_id, region_id)
-			SELECT DISTINCT a.id, p.region_id FROM activities a JOIN admin_region_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackRegions},
+			INSERT INTO track_region (track_id, region_id)
+			SELECT DISTINCT a.id, p.region_id FROM tracks a JOIN admin_region_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackRegions},
 		{"activity counties", `
-			INSERT INTO activity_county (activity_id, county_id)
-			SELECT DISTINCT a.id, p.county_id FROM activities a JOIN admin_county_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCounties},
+			INSERT INTO track_county (track_id, county_id)
+			SELECT DISTINCT a.id, p.county_id FROM tracks a JOIN admin_county_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCounties},
 		{"activity cities", `
-			INSERT INTO activity_city (activity_id, city_id)
-			SELECT DISTINCT a.id, p.city_id FROM activities a JOIN admin_city_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCities},
+			INSERT INTO track_city (track_id, city_id)
+			SELECT DISTINCT a.id, p.city_id FROM tracks a JOIN admin_city_parts p ON ST_Intersects(p.geom, ` + WrappedSQL("a.trajectory") + `)`, &stats.TrackCities},
 	}
 	for _, s := range steps {
 		start := time.Now()

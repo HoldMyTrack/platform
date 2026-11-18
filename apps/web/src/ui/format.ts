@@ -111,8 +111,15 @@ export function formatDistance(meters: number | null, system: UnitSystem): strin
 /** "3h 52m" / "43m" / "20s". */
 export function formatDuration(seconds: number | null): string {
   if (seconds === null) return EM_DASH;
-  const { key, args } = durationParts(seconds);
-  return t(key, args);
+  const parts = durationParts(seconds);
+  switch (parts.key) {
+    case 'duration.hm':
+      return t(parts.key, parts.args);
+    case 'duration.m':
+      return t(parts.key, parts.args);
+    case 'duration.s':
+      return t(parts.key, parts.args);
+  }
 }
 
 /**

@@ -89,8 +89,8 @@ func TestInterruptedIngestResumes(t *testing.T) {
 
 	// The state a worker killed right after the insert leaves behind.
 	for _, q := range []string{
-		`UPDATE activities SET ingest_complete = false WHERE id = $1`,
-		`DELETE FROM activity_tile_masks WHERE activity_id = $1`,
+		`UPDATE tracks SET ingest_complete = false WHERE id = $1`,
+		`DELETE FROM track_tile_masks WHERE track_id = $1`,
 	} {
 		if _, err := d.pool.Exec(ctx, q, res.TrackID); err != nil {
 			t.Fatal(err)
@@ -108,8 +108,8 @@ func TestInterruptedIngestResumes(t *testing.T) {
 	var masks int
 	if err := d.pool.QueryRow(ctx, `
 		SELECT a.ingest_complete,
-		       (SELECT count(*) FROM activity_tile_masks WHERE activity_id = a.id)
-		FROM activities a WHERE a.id = $1`, res.TrackID).Scan(&complete, &masks); err != nil {
+		       (SELECT count(*) FROM track_tile_masks WHERE track_id = a.id)
+		FROM tracks a WHERE a.id = $1`, res.TrackID).Scan(&complete, &masks); err != nil {
 		t.Fatal(err)
 	}
 	if !complete || masks == 0 {
@@ -279,7 +279,7 @@ func TestIngestDropsImpossiblePoints(t *testing.T) {
 	var maxLat float64
 	if err := d.pool.QueryRow(context.Background(), `
 		SELECT ST_NPoints(a.trajectory), ST_YMax(a.trajectory)
-		FROM activities a WHERE a.id = $1`, res.TrackID).Scan(&points, &maxLat); err != nil {
+		FROM tracks a WHERE a.id = $1`, res.TrackID).Scan(&points, &maxLat); err != nil {
 		t.Fatal(err)
 	}
 	if points != 2 || maxLat > 90 {
@@ -359,7 +359,7 @@ func TestSyncEnqueuesRawPayloadsInline(t *testing.T) {
 		t.Fatal(err)
 	}
 	var rawBytes *int64
-	if err := d.pool.QueryRow(ctx, `SELECT raw_bytes FROM activities WHERE id = $1`, res.TrackID).Scan(&rawBytes); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT raw_bytes FROM tracks WHERE id = $1`, res.TrackID).Scan(&rawBytes); err != nil {
 		t.Fatal(err)
 	}
 	if rawBytes == nil || *rawBytes != int64(len(stored)) {

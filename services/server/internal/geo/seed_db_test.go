@@ -93,7 +93,7 @@ func TestLoadBoundaries(t *testing.T) {
 	}
 	// From West Aland into Bland, never touching Aland's east half on its own.
 	if err := tx.QueryRow(ctx, `
-		INSERT INTO activities (user_id, source, activity_type, started_at, trajectory, timezone)
+		INSERT INTO tracks (user_id, source, track_type, started_at, trajectory, timezone)
 		VALUES ($1, 'upload', 'walking', now(), ST_GeomFromText('LINESTRING M(-40.8 -60.5 0, -39.5 -60.5 60)', 4326), 'UTC')
 		RETURNING id`, userID).Scan(&trackID); err != nil {
 		t.Fatalf("create activity: %v", err)
@@ -130,21 +130,21 @@ func TestLoadBoundaries(t *testing.T) {
 		t.Errorf("stats %+v", stats)
 	}
 	if got := matched(`SELECT string_agg(c.code || ' ' || c.name, ', ' ORDER BY c.code)
-		FROM activity_country ac JOIN admin_countries c ON c.id = ac.country_id WHERE ac.activity_id = $1`); got != "AA Aland, BB Bland, the" {
+		FROM track_country ac JOIN admin_countries c ON c.id = ac.country_id WHERE ac.track_id = $1`); got != "AA Aland, BB Bland, the" {
 		t.Errorf("countries %q", got)
 	}
 	if got := matched(`SELECT string_agg(r.overture_id || ' ' || COALESCE(r.code, '-'), ', ' ORDER BY r.overture_id)
-		FROM activity_region ar JOIN admin_regions r ON r.id = ar.region_id WHERE ar.activity_id = $1`); got != "country:BB -, div-aa-1 AA-1" {
+		FROM track_region ar JOIN admin_regions r ON r.id = ar.region_id WHERE ar.track_id = $1`); got != "country:BB -, div-aa-1 AA-1" {
 		t.Errorf("regions %q", got)
 	}
 	if got := matched(`SELECT string_agg(k.overture_id || ' ' || k.kind || ' ' || COALESCE(r.overture_id, '-'), ', ' ORDER BY k.overture_id)
-		FROM activity_county ak JOIN admin_counties k ON k.id = ak.county_id
-		LEFT JOIN admin_regions r ON r.id = k.region_id WHERE ak.activity_id = $1`); got != "div-aa-c1 county div-aa-1, rest:country:BB country country:BB" {
+		FROM track_county ak JOIN admin_counties k ON k.id = ak.county_id
+		LEFT JOIN admin_regions r ON r.id = k.region_id WHERE ak.track_id = $1`); got != "div-aa-c1 county div-aa-1, rest:country:BB country country:BB" {
 		t.Errorf("counties %q", got)
 	}
 	if got := matched(`SELECT string_agg(c.overture_id || ' ' || c.kind || ' ' || k.overture_id || ' ' || c.local_type, ', ' ORDER BY c.overture_id)
-		FROM activity_city ac JOIN admin_cities c ON c.id = ac.city_id
-		JOIN admin_counties k ON k.id = c.county_id WHERE ac.activity_id = $1`); got != "div-aa-t1 city div-aa-c1 town, rest:div-aa-c1 county div-aa-c1 county" {
+		FROM track_city ac JOIN admin_cities c ON c.id = ac.city_id
+		JOIN admin_counties k ON k.id = c.county_id WHERE ac.track_id = $1`); got != "div-aa-t1 city div-aa-c1 town, rest:div-aa-c1 county div-aa-c1 county" {
 		t.Errorf("cities %q", got)
 	}
 	if got := matched(`SELECT names ->> 'ru' || ' ' || local_type FROM admin_regions WHERE overture_id = 'div-aa-1' AND $1::uuid IS NOT NULL`); got != "Западный Аланд state" {
@@ -206,7 +206,7 @@ func TestMatchAcrossTheAntimeridian(t *testing.T) {
 		t.Fatal(err)
 	}
 	if err := tx.QueryRow(ctx, `
-		INSERT INTO activities (user_id, source, activity_type, started_at, trajectory, timezone)
+		INSERT INTO tracks (user_id, source, track_type, started_at, trajectory, timezone)
 		VALUES ($1, 'upload', 'sailing', now(), ST_GeomFromText('LINESTRING M(179.5 -60.5 0, 180.5 -60.5 60)', 4326), 'UTC')
 		RETURNING id`, userID).Scan(&trackID); err != nil {
 		t.Fatal(err)
@@ -216,7 +216,7 @@ func TestMatchAcrossTheAntimeridian(t *testing.T) {
 	}
 	var got string
 	if err := tx.QueryRow(ctx, `SELECT string_agg(c.code, ',' ORDER BY c.code)
-		FROM activity_country ac JOIN admin_countries c ON c.id = ac.country_id WHERE ac.activity_id = $1`, trackID).Scan(&got); err != nil {
+		FROM track_country ac JOIN admin_countries c ON c.id = ac.country_id WHERE ac.track_id = $1`, trackID).Scan(&got); err != nil {
 		t.Fatal(err)
 	}
 	if got != "EE,WW" {

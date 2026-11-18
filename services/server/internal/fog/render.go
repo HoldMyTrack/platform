@@ -165,10 +165,10 @@ func dirtyTiles(ctx context.Context, pool *pgxpool.Pool, userID string, zoom int
 }
 
 // renderAndStoreTile is one z14 tile, re-rendered from the per-track masks on file for it,
-// which RenderTrackMasks draws once per track at ingest. activity_tile_masks holds only
+// which RenderTrackMasks draws once per track at ingest. track_tile_masks holds only
 // the tiles the raw trajectory's stroke reaches.
 //
-// The masks' bytes come in the same query, from activity_tile_mask_data (IMPLEMENTATION.md §3.11), so a tile
+// The masks' bytes come in the same query, from track_tile_mask_data (IMPLEMENTATION.md §3.11), so a tile
 // costs one SQL read rather than a round trip to object storage per track through it. A
 // mask that can't be read — no bytes (a restore leaves them out until `rerender-coverage
 // --masks` redraws them), or bytes that don't decode — is left out of the tile and counted in
@@ -186,9 +186,9 @@ func renderAndStoreTile(ctx context.Context, pool *pgxpool.Pool, store *storage.
 	}
 	rows, err := pool.Query(ctx, `
 		SELECT d.png
-		FROM activity_tile_masks m
-		JOIN activities a ON a.id = m.activity_id
-		LEFT JOIN activity_tile_mask_data d USING (activity_id, zoom, tile_x, tile_y)
+		FROM track_tile_masks m
+		JOIN tracks a ON a.id = m.track_id
+		LEFT JOIN track_tile_mask_data d USING (track_id, zoom, tile_x, tile_y)
 		WHERE a.user_id = $1 AND NOT a.edit_pending
 		  AND m.zoom = $2 AND m.tile_x = $3 AND m.tile_y = $4
 	`, userID, zoom, x, y)
@@ -255,7 +255,7 @@ func decodeGray(r io.Reader) (*image.Gray, error) {
 
 // RenderTrackMasks renders exactly one track's own crisp (unblurred) stroke mask for
 // each of its already-computed touched z14 tiles (internal/ingest's computeTouchedTiles), and
-// upserts one activity_tile_masks row per tile with its PNG in activity_tile_mask_data, both
+// upserts one track_tile_masks row per tile with its PNG in track_tile_mask_data, both
 // in one transaction (IMPLEMENTATION.md §3.11). Idempotent: safe to re-run for the same track (a
 // redelivered ingest job).
 //
@@ -289,19 +289,19 @@ func RenderTrackMasks(ctx context.Context, pool *pgxpool.Pool, trackID string, p
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op if already committed
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO activity_tile_masks (activity_id, zoom, tile_x, tile_y, rendered_at)
+		INSERT INTO track_tile_masks (track_id, zoom, tile_x, tile_y, rendered_at)
 		SELECT $1, $2, x, y, NOW()
 		FROM unnest($3::int[], $4::int[]) AS t(x, y)
-		ON CONFLICT (activity_id, zoom, tile_x, tile_y)
+		ON CONFLICT (track_id, zoom, tile_x, tile_y)
 		DO UPDATE SET rendered_at = NOW()
 	`, trackID, Zoom, xs, ys); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(ctx, `
-		INSERT INTO activity_tile_mask_data (activity_id, zoom, tile_x, tile_y, png)
+		INSERT INTO track_tile_mask_data (track_id, zoom, tile_x, tile_y, png)
 		SELECT $1, $2, x, y, png
 		FROM unnest($3::int[], $4::int[], $5::bytea[]) AS t(x, y, png)
-		ON CONFLICT (activity_id, zoom, tile_x, tile_y)
+		ON CONFLICT (track_id, zoom, tile_x, tile_y)
 		DO UPDATE SET png = EXCLUDED.png
 	`, trackID, Zoom, xs, ys, pngs); err != nil {
 		return err
@@ -311,7 +311,7 @@ func RenderTrackMasks(ctx context.Context, pool *pgxpool.Pool, trackID string, p
 
 // RemoveTrackMasks deletes one track's masks for the given tiles — the tiles an edited
 // track (internal/ingest's ProcessRouteEdit) no longer touches. Their bytes go with them (the
-// cascade from activity_tile_masks to activity_tile_mask_data); a render_fog pass running
+// cascade from track_tile_masks to track_tile_mask_data); a render_fog pass running
 // alongside simply composites without them.
 func RemoveTrackMasks(ctx context.Context, pool *pgxpool.Pool, trackID string, tiles [][2]int) error {
 	if len(tiles) == 0 {
@@ -324,9 +324,9 @@ func RemoveTrackMasks(ctx context.Context, pool *pgxpool.Pool, trackID string, t
 		ys = append(ys, int32(t[1]))
 	}
 	_, err := pool.Exec(ctx, `
-		DELETE FROM activity_tile_masks m
+		DELETE FROM track_tile_masks m
 		USING unnest($3::int[], $4::int[]) AS t(x, y)
-		WHERE m.activity_id = $1 AND m.zoom = $2 AND m.tile_x = t.x AND m.tile_y = t.y
+		WHERE m.track_id = $1 AND m.zoom = $2 AND m.tile_x = t.x AND m.tile_y = t.y
 	`, trackID, Zoom, xs, ys)
 	return err
 }

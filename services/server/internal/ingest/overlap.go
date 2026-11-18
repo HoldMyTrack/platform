@@ -66,9 +66,9 @@ func Overlaps(ctx context.Context, pool *pgxpool.Pool, userID string, spans []Sp
 			SELECT key, s, e, extract(epoch FROM e - s)::float8 AS secs
 			FROM unnest($2::text[], $3::timestamptz[], $4::timestamptz[]) AS t(key, s, e)
 		)
-		SELECT DISTINCT ON (span.key) span.key, a.id::text, COALESCE(a.name, ''), a.activity_type, a.started_at, a.timezone
+		SELECT DISTINCT ON (span.key) span.key, a.id::text, COALESCE(a.name, ''), a.track_type, a.started_at, a.timezone
 		FROM span
-		JOIN activities a ON a.user_id = $1
+		JOIN tracks a ON a.user_id = $1
 		  AND COALESCE(a.recorded_started_at, a.started_at)
 		      BETWEEN span.s - make_interval(secs => span.secs * $5::float8)
 		          AND span.s + make_interval(secs => span.secs * $5::float8)

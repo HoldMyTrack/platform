@@ -1,7 +1,7 @@
 package httpapi
 
 // Why a track's Edit window tabs can't be used (docs/SPEC.md FR-5.7, FR-15.1), as the
-// track list's track_edit and photos codes. Empty is allowed. The clients map a code to their
+// track list's route_edit and photos codes. Empty is allowed. The clients map a code to their
 // own message and add the one rule that depends on the selection: exactly one track checked.
 const (
 	blockedPending    = "pending"

@@ -45,8 +45,8 @@ func (s *Server) handleTrackRoutePoints(w http.ResponseWriter, r *http.Request) 
 	var editJSON []byte
 	var rng ingest.SplitRange
 	err := s.pool.QueryRow(ctx, `
-		SELECT COALESCE(source_detail, ''), raw_payload_key, track_edit, split_from, split_to
-		FROM activities WHERE id = $1 AND user_id = $2
+		SELECT COALESCE(source_detail, ''), raw_payload_key, route_edit, split_from, split_to
+		FROM tracks WHERE id = $1 AND user_id = $2
 	`, trackID, userID).Scan(&sourceDetail, &rawKey, &editJSON, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) {
 		writeAPIError(w, "track not found", http.StatusNotFound)
@@ -120,7 +120,7 @@ const splitHidesPartCode = "split_hides_part"
 const maxRouteEditEntries = 10000
 
 // handleTrackRouteEdit serves `POST /v2/tracks/{id}/route-edit`: validate the spec,
-// mark the track pending, and enqueue an `edit_track` job to reprocess it (§4.7.7). The
+// mark the track pending, and enqueue an `edit_route` job to reprocess it (§4.7.7). The
 // reprocessing itself — reparse, metrics, masks, Fog invalidation — is the same heavy
 // work ingest does, so it goes through the job queue, never inline. Responds 202; the
 // track list reports `pending` until the job finishes.
@@ -204,7 +204,7 @@ func (s *Server) checkSplit(r *http.Request, userID, trackID string, edit *inges
 	var rng ingest.SplitRange
 	err := s.pool.QueryRow(ctx, `
 		SELECT COALESCE(source_detail, ''), raw_payload_key, split_from, split_to
-		FROM activities WHERE id = $1 AND user_id = $2
+		FROM tracks WHERE id = $1 AND user_id = $2
 	`, trackID, userID).Scan(&sourceDetail, &rawKey, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) || (err == nil && rawKey == nil) {
 		return http.StatusConflict, "error.track_busy"

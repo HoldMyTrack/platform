@@ -11,7 +11,7 @@ import (
 )
 
 // RemoveUnreferencedPhotoFiles removes the image and thumbnail at each of keys that no
-// activity_photos row refers to any more (IMPLEMENTATION.md §4.27). A copied Trip's photos
+// track_photos row refers to any more (IMPLEMENTATION.md §4.27). A copied Trip's photos
 // (§4.23) are rows of the recipient's over the original's files, so a photo's files can outlive
 // the row that first stored them: callers delete rows first and pass the keys those rows had.
 //
@@ -23,7 +23,7 @@ func RemoveUnreferencedPhotoFiles(ctx context.Context, db Querier, store *storag
 	}
 	rows, err := db.Query(ctx, `
 		SELECT k FROM unnest($1::text[]) AS k
-		WHERE NOT EXISTS (SELECT 1 FROM activity_photos WHERE image_key = k)`, keys)
+		WHERE NOT EXISTS (SELECT 1 FROM track_photos WHERE image_key = k)`, keys)
 	if err != nil {
 		return fmt.Errorf("photo files: reference check: %w", err)
 	}

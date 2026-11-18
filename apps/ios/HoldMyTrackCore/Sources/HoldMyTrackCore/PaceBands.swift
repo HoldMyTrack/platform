@@ -42,10 +42,10 @@ public struct RouteMetrics: Equatable, Sendable {
     }
 }
 
-/// What the map's `track-bands` group draws, the web's bandsGroup.ts and Android's PaceBands.
+/// What the map's `route-bands` group draws, the web's bandsGroup.ts and Android's PaceBands.
 public enum PaceBands {
     /// The layers document's group and its GeoJSON source.
-    public static let group = "track-bands"
+    public static let group = "route-bands"
 
     /// Drawn while the focused track's route is: its own metrics, and the track not hidden,
     /// filtered out or Pending (PanelState.mapHidden), whose metrics would show the old points.

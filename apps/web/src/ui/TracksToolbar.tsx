@@ -82,7 +82,7 @@ export function TracksToolbar({
   }, [someChecked]);
 
   const groupSummary = t('tracks.group_summary', {
-    tracks: targetName ?? '',
+    name: targetName ?? '',
     distance: formatTotalDistance(targetMeters, system),
   });
   // Show all of the target once any of it is hidden (selection.ts's toggledVisibility).

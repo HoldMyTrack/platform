@@ -28,7 +28,7 @@ var tracksQuery = `
 SELECT ST_AsMVT(t, 'tracks', 4096, 'geom')
 FROM (
     SELECT id,
-           activity_type,
+           track_type,
            ST_AsMVTGeom(
                ST_Transform(ST_Force2D(
                    CASE WHEN ST_XMin(trajectory) < -180 OR ST_XMax(trajectory) > 180
@@ -36,13 +36,13 @@ FROM (
                ST_TileEnvelope($1, $2, $3),
                4096, 64, true
            ) AS geom
-    FROM activities, ST_Transform(ST_TileEnvelope($1, $2, $3), 4326) AS env
+    FROM tracks, ST_Transform(ST_TileEnvelope($1, $2, $3), 4326) AS env
     WHERE user_id = $4
       AND NOT edit_pending
       AND (trajectory && env OR trajectory && ST_Translate(env, 360, 0) OR trajectory && ST_Translate(env, -360, 0))
       AND ` + inDateRange("$5", "$6") + `
-      AND ($7::text[] IS NULL OR activity_type = ANY($7))
-      AND ($8::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $8))
+      AND ($7::text[] IS NULL OR track_type = ANY($7))
+      AND ($8::uuid IS NULL OR tracks.id IN (SELECT track_id FROM trip_tracks WHERE trip_id = $8))
       AND ($9::timestamptz IS NULL OR started_at >= $9)
 ) t;`
 

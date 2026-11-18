@@ -57,9 +57,9 @@ struct MapStyleTests {
         "layers": [{"id": "tracks-line", "type": "line", "source": "tracks",
                     "filter": ["!", ["in", ["get", "id"], ["var", "hidden"]]],
                     "metadata": {"holdmytrack:vars": {"filter": ["hidden"]}, "holdmytrack:role": "track"}}]},
-       {"id": "track-bands", "placement": "beneath-labels",
-        "sources": {"track-bands": {"type": "geojson"}},
-        "layers": [{"id": "track-bands-line", "type": "line", "source": "track-bands"}],
+       {"id": "route-bands", "placement": "beneath-labels",
+        "sources": {"route-bands": {"type": "geojson"}},
+        "layers": [{"id": "route-bands-line", "type": "line", "source": "route-bands"}],
         "legend": {"band-10": {"color": "#c00"}, "band-0": {"color": "#00b"}, "band-2": {"color": "#0b0"}, "other": {"color": "#fff"}}},
        {"id": "spots", "placement": "top",
         "sources": {"spots": {"type": "vector", "tiles": "/tiles/v1/spots/{z}/{x}/{y}.mvt?cv=7.1"}},
@@ -82,7 +82,7 @@ struct MapStyleTests {
     @Test func ownLayersGoBeneathTheLabelsWithLiftedTrailsAboveCoverageAndTopGroupsLast() {
         #expect(ids(compose()) == [
             "background", "satellite", "earth", "roads_major",
-            "fog-veil", "country-fog-fill", "region-fog-fill", "paths_trail", "bike-paths-cycleway", "tracks-line", "track-bands-line",
+            "fog-veil", "country-fog-fill", "region-fog-fill", "paths_trail", "bike-paths-cycleway", "tracks-line", "route-bands-line",
             "place_label", "country_label", "spots-icons",
         ])
     }
@@ -93,7 +93,7 @@ struct MapStyleTests {
         let sources = compose(state)["sources"]
         #expect(sources?["tracks"]?["tiles"] == .array([.string("http://localhost:8081/tiles/v1/tracks/{z}/{x}/{y}.mvt?cv=7.1&from=2026-10-01&to=2026-10-16")]))
         #expect(sources?["fog-vector"]?["tiles"] == .array([.string("http://localhost:8081/tiles/v1/fog-vector/{z}/{x}/{y}.mvt?cv=7.1")]))
-        #expect(sources?["track-bands"]?["data"]?["type"] == .string("FeatureCollection"))
+        #expect(sources?["route-bands"]?["data"]?["type"] == .string("FeatureCollection"))
         #expect(sources?["protomaps"] == .object(["type": .string("vector")]))
     }
 
@@ -127,7 +127,7 @@ struct MapStyleTests {
 
     @Test func aLayerTheViewDoesntNameIsShownOnceAViewApplies() {
         // As on Android: what a layer is added with holds only until a view applies.
-        #expect(layer(compose(), "track-bands-line")?["layout"]?["visibility"] == .string("visible"))
+        #expect(layer(compose(), "route-bands-line")?["layout"]?["visibility"] == .string("visible"))
     }
 
     @Test func aSwitchedLayerShowsOnlyWithItsSwitchAndShowLayersOn() {
@@ -318,8 +318,8 @@ struct MapStyleTests {
         let bands = PaceBands.features(metrics)
         state.geojson[PaceBands.group] = bands
         let drawn = compose(state)
-        #expect(drawn["sources"]?["track-bands"]?["data"] == bands)
-        #expect(try #require(MapStyle.changes(from: empty, to: drawn)) == [MapStyle.Change(layer: "track-bands", kind: "data", name: "data", value: bands)])
+        #expect(drawn["sources"]?["route-bands"]?["data"] == bands)
+        #expect(try #require(MapStyle.changes(from: empty, to: drawn)) == [MapStyle.Change(layer: "route-bands", kind: "data", name: "data", value: bands)])
     }
 
     // MARK: Pace bands

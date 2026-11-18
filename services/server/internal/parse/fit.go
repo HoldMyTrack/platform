@@ -10,7 +10,7 @@ import (
 )
 
 // parseFIT reads a subset of the FIT binary format: the `record` (global message 20) and
-// `session` (global message 18, for activity_type, fit_sport.go) fields of files from
+// `session` (global message 18, for track_type, fit_sport.go) fields of files from
 // mainstream encoders, with no compressed-timestamp headers. Every other message is walked by
 // its fields' declared widths, so the stream stays aligned. Developer fields' values are
 // skipped, and CRCs aren't checked. It refuses a file past maxPoints positioned points, 0 for
