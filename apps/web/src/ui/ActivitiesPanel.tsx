@@ -257,8 +257,7 @@ export function ActivitiesPanel({
 
 
   // Mobile-only bottom sheet (index.css's `@media (max-width: 768px)` layer) — collapsed by
-  // default. Desktop CSS never reacts to the
-  // `--sheet-expanded` modifier class this drives, so toggling it there is an inert no-op,
+  // default. Desktop CSS never reacts to the `--sheet-expanded` modifier class this drives, so toggling it there is an inert no-op,
   // not a behavior change — safe to leave wired unconditionally rather than gated behind a JS
   // media-query check.
   const [sheetPicked, setSheetExpanded] = useState(false);
@@ -273,11 +272,9 @@ export function ActivitiesPanel({
     setSheetExpanded(true);
   };
 
-  // Wider than the old fixed 320px, and now draggable — a full "Sep 11, 2026, 09:00 AM"
-  // title plus its TYPE label was clipping at 320px. Local state, not lifted to MapView:
-  // nothing outside this component's own layout needs to know the panel's width. Not persisted across reloads on purpose — no other UI
-  // preference in this app is, and adding the one-off localStorage-plus-SSR-mismatch
-  // handling for just this value isn't worth it before anything else here does the same.
+  // Draggable, and 380 px to start: a full "Sep 11, 2026, 09:00 AM" title with its type needs
+  // more than 320. Local state, not lifted to MapView: nothing outside this component's own
+  // layout needs the panel's width. Not kept across reloads, as no other UI preference here is.
   const [panelWidth, setPanelWidth] = useState(380);
   const resizeRef = useRef<{ pointerId: number; startX: number; startWidth: number } | null>(null);
   const MIN_PANEL_WIDTH = 260;
