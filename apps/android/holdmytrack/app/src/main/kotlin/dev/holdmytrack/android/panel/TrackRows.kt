@@ -99,7 +99,7 @@ class TrackRowHolder(view: View) : RecyclerView.ViewHolder(view) {
                 append(PanelFormat.distance(res, track.distanceMeters)).append(" · ")
                 append(PanelFormat.duration(res, track.movingSeconds)).append(" · ")
             }
-            append(TrackTypes.label(track.activityType))
+            append(TrackTypes.label(track.trackType))
         }
         val dim = when {
             track.pending -> PENDING_ALPHA
@@ -161,7 +161,7 @@ class TrackRowHolder(view: View) : RecyclerView.ViewHolder(view) {
 
         val context = itemView.context
         val ticked = isChecked && onCheck != null
-        kindTile.setImageResource(if (ticked) R.drawable.ic_check else typeIcon(track.activityType))
+        kindTile.setImageResource(if (ticked) R.drawable.ic_check else typeIcon(track.trackType))
         kindTile.backgroundTintList = if (ticked) ColorStateList.valueOf(context.getColor(R.color.hmt_accent)) else null
         kindTile.imageTintList = ColorStateList.valueOf(context.getColor(if (ticked) R.color.hmt_on_accent else R.color.hmt_ink_secondary))
         val checkLabel = res.getString(if (isChecked) R.string.panel_row_uncheck else R.string.panel_row_check, label)

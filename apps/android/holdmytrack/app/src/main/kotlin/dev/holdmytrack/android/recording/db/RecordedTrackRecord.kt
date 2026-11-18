@@ -1,6 +1,6 @@
 package dev.holdmytrack.android.recording.db
 
-import dev.holdmytrack.android.net.SyncActivityJson
+import dev.holdmytrack.android.net.SyncTrackJson
 import dev.holdmytrack.android.net.SyncPointJson
 import dev.holdmytrack.android.recording.RecordedPoint
 import java.time.Instant
@@ -21,7 +21,7 @@ data class RecordedTrackRecord(
     val id: String,
     val name: String,
     val description: String,
-    val activityType: String,
+    val trackType: String,
     val startedAtMs: Long,
     val distanceMeters: Double,
     val durationSeconds: Long,
@@ -29,11 +29,11 @@ data class RecordedTrackRecord(
     val createdAtMs: Long,
 )
 
-/** The recording as one batch entry of `POST /v1/sync/activities` (`docs/IMPLEMENTATION.md`
+/** The recording as one batch entry of `POST /v2/sync/tracks` (`docs/IMPLEMENTATION.md`
  *  §4.0.3/§4.0.4). */
-internal fun RecordedTrackRecord.toSyncTrack() = SyncActivityJson(
+internal fun RecordedTrackRecord.toSyncTrack() = SyncTrackJson(
     externalId = id,
-    activityType = activityType,
+    trackType = trackType,
     name = name,
     description = description,
     points = points.map { SyncPointJson(lat = it.lat, lon = it.lon, elevationM = it.elevationM?.toDouble(), time = it.time.toString()) },
@@ -51,7 +51,7 @@ fun RecordedTrackRecord.toGpx(): String = buildString {
     append("  <trk>\n")
     if (name.isNotBlank()) append("    <name>").append(xmlEscape(name)).append("</name>\n")
     if (description.isNotBlank()) append("    <desc>").append(xmlEscape(description)).append("</desc>\n")
-    append("    <type>").append(xmlEscape(activityType)).append("</type>\n")
+    append("    <type>").append(xmlEscape(trackType)).append("</type>\n")
     append("    <trkseg>\n")
     for (point in points) {
         append("""      <trkpt lat="${point.lat}" lon="${point.lon}">""")

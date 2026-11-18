@@ -4,7 +4,7 @@ import dev.holdmytrack.android.net.Photo
 import dev.holdmytrack.android.net.PhotoExif
 import dev.holdmytrack.android.net.PhotoImage
 
-/** A picked photo ready for `POST /v1/photos`: the resized copy, its thumbnail, and its EXIF. */
+/** A picked photo ready for `POST /v2/photos`: the resized copy, its thumbnail, and its EXIF. */
 class PreparedPhoto(val file: PhotoImage, val thumb: PhotoImage, val exif: PhotoExif)
 
 /** A picked photo, not yet uploaded. [routeAt] (epoch seconds) is null while it waits for the
@@ -46,7 +46,7 @@ sealed interface DraftRow {
  * `apps/web/src/ui/photoDraft.ts`: what the Edit window's one Save writes, after the track's
  * fields and before its route edit, and what its Cancel throws away. Nothing here has reached
  * the server: a new photo is prepared on the phone and its place settled by the placement check
- * (`POST /v1/photos/place`) or by the user, and goes up only on Save.
+ * (`POST /v2/photos/place`) or by the user, and goes up only on Save.
  */
 data class PhotoDraft(
     val added: List<NewPhoto> = emptyList(),

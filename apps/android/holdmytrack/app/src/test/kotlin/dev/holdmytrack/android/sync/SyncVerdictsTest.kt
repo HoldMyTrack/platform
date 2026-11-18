@@ -16,7 +16,7 @@ class SyncVerdictsTest {
         externalId = id,
         startedAt = t0,
         endedAt = t0 + Duration.ofMinutes(30),
-        activityType = "walking",
+        trackType = "walking",
         name = "",
         lats = doubleArrayOf(50.0, 50.001),
         lons = doubleArrayOf(10.0, 10.001),

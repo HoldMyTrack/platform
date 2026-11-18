@@ -483,7 +483,7 @@ class RecordingService : Service() {
                 id = id,
                 name = "",
                 description = "",
-                activityType = RecordingTypes.lastUsed(context, account),
+                trackType = RecordingTypes.lastUsed(context, account),
                 startedAtMs = points.first().time.toEpochMilli(),
                 distanceMeters = distanceM,
                 durationSeconds = movingMs / 1000,

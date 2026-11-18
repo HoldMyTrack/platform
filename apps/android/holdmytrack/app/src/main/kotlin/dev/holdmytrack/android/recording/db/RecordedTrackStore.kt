@@ -195,7 +195,7 @@ class RecordedTrackStore(context: Context) {
         id = getString(getColumnIndexOrThrow("id")),
         name = getString(getColumnIndexOrThrow("name")),
         description = getString(getColumnIndexOrThrow("description")),
-        activityType = getString(getColumnIndexOrThrow("activity_type")),
+        trackType = getString(getColumnIndexOrThrow("activity_type")),
         startedAtMs = getLong(getColumnIndexOrThrow("started_at_ms")),
         distanceMeters = getDouble(getColumnIndexOrThrow("distance_meters")),
         durationSeconds = getLong(getColumnIndexOrThrow("duration_seconds")),
@@ -211,7 +211,7 @@ internal fun RecordedTrackRecord.toContentValues(account: String) = ContentValue
     put("account", account)
     put("name", name)
     put("description", description)
-    put("activity_type", activityType)
+    put("activity_type", trackType)
     put("started_at_ms", startedAtMs)
     put("distance_meters", distanceMeters)
     put("duration_seconds", durationSeconds)

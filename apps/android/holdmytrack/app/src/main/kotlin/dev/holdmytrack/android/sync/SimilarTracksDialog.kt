@@ -49,7 +49,7 @@ object SimilarTracksDialog {
 
         val waitingList: LinearLayout = content.findViewById(R.id.similar_waiting)
         for (candidate in waiting) {
-            waitingList.addView(row(context, waitingList, candidate.activityType, title(context, candidate), meta(context, candidate)) {
+            waitingList.addView(row(context, waitingList, candidate.trackType, title(context, candidate), meta(context, candidate)) {
                 dialog.dismiss()
                 onPick(candidate)
             })
@@ -62,8 +62,8 @@ object SimilarTracksDialog {
         if (onMap != null) {
             val started = PanelFormat.startedAt(res, onMap.startedAt, onMap.timezone)
             val named = onMap.name.isNotBlank()
-            val meta = listOfNotNull(started.takeIf { named }, TrackTypes.label(onMap.activityType)).joinToString(" · ")
-            onMapList.addView(row(context, onMapList, onMap.activityType, if (named) onMap.name.trim() else started, meta) {
+            val meta = listOfNotNull(started.takeIf { named }, TrackTypes.label(onMap.trackType)).joinToString(" · ")
+            onMapList.addView(row(context, onMapList, onMap.trackType, if (named) onMap.name.trim() else started, meta) {
                 dialog.dismiss()
                 onOpen(onMap)
             })
@@ -92,7 +92,7 @@ object SimilarTracksDialog {
         return listOfNotNull(
             dateTime(candidate).takeIf { candidate.name.isNotBlank() },
             PanelFormat.distance(res, candidate.distanceM),
-            TrackTypes.label(candidate.activityType),
+            TrackTypes.label(candidate.trackType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
     }

@@ -26,7 +26,7 @@ object BoxUnion {
         return doubleArrayOf(best.first, boxes.minOf { it[1] }, best.second, boxes.maxOf { it[3] })
     }
 
-    /** A view's west and east edges as `GET /v1/spots` takes them. Bounds the map gives as
+    /** A view's west and east edges as `GET /v2/spots` takes them. Bounds the map gives as
      *  more than 180° wide, at the zooms Show in this area works at, are a view across the
      *  antimeridian reported the long way round: the edges are swapped, east past 180. */
     fun viewEdges(west: Double, east: Double): Pair<Double, Double> =

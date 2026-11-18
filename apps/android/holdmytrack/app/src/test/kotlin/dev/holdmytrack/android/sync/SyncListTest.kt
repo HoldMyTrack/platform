@@ -15,7 +15,7 @@ class SyncListTest {
         externalId = id,
         startedAt = t0 - Duration.ofHours(hoursAgo),
         endedAt = t0 - Duration.ofHours(hoursAgo) + Duration.ofMinutes(30),
-        activityType = type,
+        trackType = type,
         name = "",
         lats = doubleArrayOf(50.0, 50.001),
         lons = doubleArrayOf(10.0, 10.001),

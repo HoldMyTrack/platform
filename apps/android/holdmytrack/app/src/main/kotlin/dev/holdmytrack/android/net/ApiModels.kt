@@ -7,7 +7,7 @@ import okio.source
 
 /**
  * The account's latest copy of its data (root `docs/SPEC.md` FR-1.13), as
- * `GET /v1/account/export` describes it: [state] is "none", "preparing", "ready" or "failed";
+ * `GET /v2/account/export` describes it: [state] is "none", "preparing", "ready" or "failed";
  * [expiresAt] and [parts] only when ready.
  */
 data class ExportStatus(
@@ -21,8 +21,8 @@ data class ExportStatus(
 data class ExportPart(val n: Int, val size: Long, val name: String, val url: String)
 
 /**
- * The account as the server describes it — `GET /v1/auth/me`, and the same shape every
- * sign-in answers with and `PATCH /v1/account/settings` returns (`authResponse`,
+ * The account as the server describes it — `GET /v2/auth/me`, and the same shape every
+ * sign-in answers with and `PATCH /v2/account/settings` returns (`authResponse`,
  * `services/server/internal/httpapi/auth.go`). [email] is empty for a demo account, which the
  * server never names. [emailVerified] is false for a new email-and-password account (when the
  * server sends verification emails) and for a new Sign in with Facebook account, until the
@@ -51,7 +51,7 @@ data class SettingsOption(val value: String, val label: String)
 /** A region of the Timezone list ("Europe", named in the request's language). */
 data class TimezoneGroup(val label: String, val options: List<SettingsOption>)
 
-/** `GET /v1/account/settings/options` — the lists Settings chooses from, the server's own, so
+/** `GET /v2/account/settings/options` — the lists Settings chooses from, the server's own, so
  *  a choice is always one the save accepts. */
 data class SettingsOptions(
     val countries: List<SettingsOption>,
@@ -60,7 +60,7 @@ data class SettingsOptions(
 )
 
 /**
- * The optional sign-in methods this deployment has configured (`GET /v1/auth/providers`).
+ * The optional sign-in methods this deployment has configured (`GET /v2/auth/providers`).
  * [googleClientId] is the server's *web* client ID, which Credential Manager needs as its
  * `serverClientId` for the ID token it returns to be one the server accepts; empty when Google
  * is off.
@@ -76,16 +76,16 @@ data class Providers(val google: Boolean, val facebook: Boolean, val googleClien
 data class SyncResult(val externalId: String, val status: String, val error: String)
 
 /**
- * What `POST /v1/sync/known` said: the ids the account has from that source, and, of those, the
+ * What `POST /v2/sync/known` said: the ids the account has from that source, and, of those, the
  * ones still [processing] — sent, their ingest not finished, so not on the map yet.
  */
 data class SyncKnown(val known: Set<String>, val processing: Set<String>)
 
-/** What `POST /v1/activities/upload` said about one file: "enqueued" or "already_processed". */
+/** What `POST /v2/tracks/upload` said about one file: "enqueued" or "already_processed". */
 data class UploadOutcome(val status: String)
 
 /**
- * One row of `GET /v1/activities` (`docs/IMPLEMENTATION.md` §4.7) — what the map's Tracks
+ * One row of `GET /v2/tracks` (`docs/IMPLEMENTATION.md` §4.7) — what the map's Tracks
  * panel lists, the web's `Activity`. [startedAt] is the server's RFC 3339 instant, shown in
  * [timezone], the zone it was recorded in (§4.30; empty from an older server). [name],
  * [description], [distanceMeters] and [movingSeconds] are null when the source never set
@@ -98,7 +98,7 @@ data class UploadOutcome(val status: String)
 data class Track(
     val id: String,
     val startedAt: String,
-    val activityType: String,
+    val trackType: String,
     val timezone: String = "",
     val name: String?,
     val distanceMeters: Double?,
@@ -116,11 +116,11 @@ data class Track(
     val trips: List<TripRef> = emptyList(),
 )
 
-/** `GET /v1/activities/area`: the area's newest [tracks], and with an area how many it holds,
+/** `GET /v2/tracks/area`: the area's newest [tracks], and with an area how many it holds,
  *  more than listed when they were cut at the limit (`docs/SPEC.md` FR-5.11). */
 data class AreaPage(val tracks: List<Track>, val total: Int?)
 
-/** One of a track's Trips, as a row of `GET /v1/activities` names it (`docs/SPEC.md`
+/** One of a track's Trips, as a row of `GET /v2/tracks` names it (`docs/SPEC.md`
  *  FR-5.1). */
 data class TripRef(val id: String, val name: String)
 
@@ -131,15 +131,15 @@ data class TripSend(val id: String, val tripName: String, val from: String, val 
 /** A copy the account accepted that hasn't finished arriving. */
 data class TripCopying(val tripName: String, val from: String)
 
-/** `GET /v1/story-sends`: the copies waiting, newest first, and the accepted ones arriving. */
+/** `GET /v2/trip-sends`: the copies waiting, newest first, and the accepted ones arriving. */
 data class TripInbox(val sends: List<TripSend>, val copying: List<TripCopying>)
 
 /**
  * A Trip's numbers, or one track type's share of them (`docs/SPEC.md` FR-13.1): [count]
- * tracks, their distance and moving time. [activityType] is empty for the whole Trip.
+ * tracks, their distance and moving time. [trackType] is empty for the whole Trip.
  */
 data class TripTotals(
-    val activityType: String,
+    val trackType: String,
     val count: Int,
     val distanceMeters: Double,
     val movingSeconds: Long,
@@ -163,7 +163,7 @@ data class Trip(
 )
 
 /**
- * One vertex of a track's display route, as `GET /v1/activities/{id}/track-metrics`
+ * One vertex of a track's display route, as `GET /v2/tracks/{id}/route-metrics`
  * measures it: its speed from the vertex before, and its moment ([timeS], epoch seconds) —
  * what the Photos tab's slider turns a place on the track into (`docs/SPEC.md` FR-15.4).
  */
@@ -186,7 +186,7 @@ data class RouteMetrics(
  *  boundary point, so the coloured pieces join up without a gap. */
 data class PaceBand(val band: Int, val start: Int, val end: Int)
 
-/** One recorded point of a track, as `GET /v1/activities/{id}/track-points` returns it — its
+/** One recorded point of a track, as `GET /v2/tracks/{id}/route-points` returns it — its
  *  time ([t], Unix ms) is what a route edit names it by. */
 data class RoutePoint(val lon: Double, val lat: Double, val t: Long)
 
@@ -213,7 +213,7 @@ data class RoutePoints(val points: List<RoutePoint>, val edit: RouteEdit?)
  * One photo on a track (`docs/SPEC.md` FR-15.3), always with a place on its track:
  * [routeAt], a moment on it. [lon]/[lat] are that moment's point on the track as drawn, null
  * only for a track with no route left at all. [url] and [thumbUrl] are API paths
- * (`/v1/photos/…`); [width]/[height] are the stored copy's. [timezone] is its track's, which
+ * (`/v2/photos/…`); [width]/[height] are the stored copy's. [timezone] is its track's, which
  * its times are shown in.
  */
 data class Photo(
@@ -232,7 +232,7 @@ data class Photo(
 )
 
 /**
- * What a photo's EXIF said about when and where it was taken, as `POST /v1/photos` and its
+ * What a photo's EXIF said about when and where it was taken, as `POST /v2/photos` and its
  * placement check take it (FR-15.1): [takenAt] an instant, or [takenLocal] a camera clock with
  * no zone (`YYYY-MM-DDTHH:MM:SS`) — at most one is set — and a position.
  */
@@ -263,7 +263,7 @@ data class PrivateLocation(val id: String, val name: String, val lon: Double, va
     }
 }
 
-/** `GET /v1/coverage/status`: a Fog re-render still to come, the account's map version
+/** `GET /v2/coverage/status`: a Fog re-render still to come, the account's map version
  *  (it moves whenever any of its tiles may have), and that version as the `cv` tile URLs carry
  *  ([Session.tileVersion]). */
 data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVersion: String, val explored: Explored?)
@@ -273,7 +273,7 @@ data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVer
 data class Explored(val countries: Int, val regions: Int, val counties: Int, val cities: Int)
 
 /**
- * One Spots place (`docs/SPEC.md` FR-14), as a tile's `spots` feature or `GET /v1/spots` carries
+ * One Spots place (`docs/SPEC.md` FR-14), as a tile's `spots` feature or `GET /v2/spots` carries
  * it: [category] is the wire name (`playground`, `dog_park`, `monument`, `viewpoint`,
  * `waterfall`, `history`), [lon]/[lat] its anchor, and each text null when OSM has none. [wikipedia] is OSM's
  * tag in its "lang:Article title" form, the only one the server keeps.
@@ -292,17 +292,17 @@ data class Spot(
     val lat: Double,
 )
 
-/** `GET /v1/spots`: the places in a box, up to the server's cap, and how many there are in all. */
+/** `GET /v2/spots`: the places in a box, up to the server's cap, and how many there are in all. */
 data class SpotsInArea(val spots: List<Spot>, val total: Int)
 
-/** `GET /v1/spots/{id}` (`docs/SPEC.md` FR-14.6): the place, its whole [area] — what capture
+/** `GET /v2/spots/{id}` (`docs/SPEC.md` FR-14.6): the place, its whole [area] — what capture
  *  mode measures against — and when the account captured it, or null. */
 data class SpotDetail(val spot: Spot, val area: SpotArea, val capturedAt: Instant?)
 
-/** One place the account has captured (`GET /v1/spots/captures`, `POST /v1/spots/{id}/captures`). */
+/** One place the account has captured (`GET /v2/spots/captures`, `POST /v2/spots/{id}/captures`). */
 data class SpotCapture(val spotId: Long, val capturedAt: Instant)
 
-/** One day that has tracks, as `GET /v1/activities/histogram` counts it; [date] is `YYYY-MM-DD`
+/** One day that has tracks, as `GET /v2/tracks/histogram` counts it; [date] is `YYYY-MM-DD`
  *  in the account's timezone. Days with none are never returned. */
 data class TrackDay(val date: String, val count: Int, val distanceMeters: Double)
 

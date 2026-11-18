@@ -57,7 +57,7 @@ flowchart LR
     browser -.->|"tiles with ?cv=<br/>(hit: no request)"| bcache
     android -.->|"tiles with ?cv=<br/>(hit: no request)"| acache
     browser -->|"HTTPS holdmytrack.com<br/>(DNS-only, not proxied)"| caddy
-    android -->|"HTTPS /v1/* · /tiles/v1/*"| caddy
+    android -->|"HTTPS /v2/* · /tiles/v1/*"| caddy
     caddy --> api
     api -->|queries · enqueue| pg
     worker -->|dequeue SKIP LOCKED · writes| pg

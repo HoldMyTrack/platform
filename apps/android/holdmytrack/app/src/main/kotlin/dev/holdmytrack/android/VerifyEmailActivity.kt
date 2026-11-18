@@ -26,7 +26,7 @@ import dev.holdmytrack.android.net.Session
  *
  * The email's 6-digit code is typed here and confirms the address in this session, which stays
  * signed in. Its link, opened in a browser, signs the app out instead, and the app never hears
- * about it, so this screen asks `GET /v1/auth/me` again on every resume and on Confirm with the
+ * about it, so this screen asks `GET /v2/auth/me` again on every resume and on Confirm with the
  * field empty ([VerifyAction]). Resend and Sign out are the web page's other ways forward;
  * changing a mistyped address stays on the web, since the app's local recordings and hidden Sync
  * rows are keyed by the email and would be orphaned.
@@ -41,7 +41,7 @@ class VerifyEmailActivity : AppCompatActivity() {
     private lateinit var code: EditText
     private lateinit var buttons: List<Button>
 
-    /** Guards against a second `GET /v1/auth/me` while one is in flight. */
+    /** Guards against a second `GET /v2/auth/me` while one is in flight. */
     private var checking = false
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -5,7 +5,7 @@ The Android app's open work: testing and releasing it on Google Play. The produc
 ## Ongoing
 
 - [ ] **Sign in with Apple, for accounts made on an iPhone**
-  - An account made with Sign in with Apple has no password, often a Hide My Email address, and no way into the Android app. Run the server's Apple flow in a Custom Tab with the app's challenge and redeem the handoff code, as Facebook does (root `docs/IMPLEMENTATION.md` §4.9); no Apple SDK. Declare `app_challenge` on `/v1/auth/apple/start` in `services/server/api/`, which the server already accepts.
+  - An account made with Sign in with Apple has no password, often a Hide My Email address, and no way into the Android app. Run the server's Apple flow in a Custom Tab with the app's challenge and redeem the handoff code, as Facebook does (root `docs/IMPLEMENTATION.md` §4.9); no Apple SDK. Declare `app_challenge` on `/v2/auth/apple/start` in `services/server/api/v2/`, which the server already accepts.
   - Apple accepts only an `https://` return URL on the registered domain, so it is tested against production.
   - Done when: an account made on iOS with Hide My Email signs in on Android.
 - [ ] **No donation link in the web pages the app opens, once donations open**

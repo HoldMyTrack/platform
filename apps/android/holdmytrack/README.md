@@ -1,6 +1,6 @@
 # holdmytrack-android
 
-The HoldMyTrack Android app (`apps/android/docs/ROADMAP.md`). It renders the map, holds a session, and syncs exercise sessions in from Health Connect: a full-screen MapLibre Native map drawing the style document the API serves at `GET /v1/map/style/{flavor}`, sign-in against the same accounts the web client uses, the Normal / Fog of War toggle over the user's own layers, and Path 2 on-device ingest into `POST /v1/sync/activities`.
+The HoldMyTrack Android app (`apps/android/docs/ROADMAP.md`). It renders the map, holds a session, and syncs exercise sessions in from Health Connect: a full-screen MapLibre Native map drawing the style document the API serves at `GET /v2/map/style/{flavor}`, sign-in against the same accounts the web client uses, the Normal / Fog of War toggle over the user's own layers, and Path 2 on-device ingest into `POST /v2/sync/tracks`.
 
 The basemap draws whether or not anyone is signed in — the style endpoint is unauthenticated and the archive it points at is a plain `pmtiles://` URL that MapLibre Native reads natively — so a signed-out HoldMyTrack is a working map rather than a login wall. Signing in is what adds the three user layers, every one of which is behind `requireAuth` server-side.
 
@@ -61,7 +61,7 @@ Without the properties, `bundleRelease` stops at `validateSigningRelease` ("Keys
 
 ## Sign in with Google and Facebook
 
-Both buttons appear only when the API the app points at has them configured (`GET /v1/auth/providers`).
+Both buttons appear only when the API the app points at has them configured (`GET /v2/auth/providers`).
 
 - **Google** needs an Android OAuth client for your signing key in the same Google Cloud project as the server's web client (`docs/DEPLOY.md`, Sign in with Google, step 4). For a debug build, that's the SHA-1 of your debug key: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1`. Without it the account picker fails and the app logs `google sign-in failed` under the `SignInActivity` tag.
 - **Facebook** runs in a browser tab against the server's own callback URL. Against a local stack, forward the API's port (`adb reverse tcp:8081 tcp:8081`) so the tab's `http://localhost:8081/v1/auth/facebook/callback` reaches it, and use a Facebook account with a role on the Meta app while it's in Development mode.
@@ -102,8 +102,8 @@ Alongside:
 
 Three permissions, one data type. `READ_EXERCISE` and `READ_HEALTH_DATA_HISTORY` are ordinary requests; **`READ_EXERCISE_ROUTES` cannot be requested at all** and has to be granted in Health Connect → HoldMyTrack → *Additional access* → *Access exercise routes* → *Always allow*. The Sync tab says so, because that screen is two levels down and nothing links to it. Without the history permission Health Connect serves only the last 30 days — measured, not assumed.
 
-Reading and sending are foreground-only and stop when the Sync tab leaves the screen, which is a platform constraint rather than a choice: routes written by other apps read back as `ConsentRequired` in the background whatever is granted. That is safe rather than lossy because the phone keeps no cursor: each time the tab opens, it lists what's on the phone minus what the server says it already has (`POST /v1/sync/known`), so an interrupted run leaves its unsent rows listed. Nothing is ticked by default, and only what the user ticks is sent.
+Reading and sending are foreground-only and stop when the Sync tab leaves the screen, which is a platform constraint rather than a choice: routes written by other apps read back as `ConsentRequired` in the background whatever is granted. That is safe rather than lossy because the phone keeps no cursor: each time the tab opens, it lists what's on the phone minus what the server says it already has (`POST /v2/sync/known`), so an interrupted run leaves its unsent rows listed. Nothing is ticked by default, and only what the user ticks is sent.
 
 ## Signing in against a dev stack
 
-There is no seeded Android account. Create one from the app itself (**Create account**), or tap **Try the demo** for the shared, read-only Demo Customer account, which needs no signup (root `docs/SPEC.md` FR-2.1). A session survives restarts, and is checked against `GET /v1/auth/me` at startup before any user layer is attached — a token revoked or expired while the app was closed would otherwise show up only as 401s in logcat, behind a map that looks merely empty.
+There is no seeded Android account. Create one from the app itself (**Create account**), or tap **Try the demo** for the shared, read-only Demo Customer account, which needs no signup (root `docs/SPEC.md` FR-2.1). A session survives restarts, and is checked against `GET /v2/auth/me` at startup before any user layer is attached — a token revoked or expired while the app was closed would otherwise show up only as 401s in logcat, behind a map that looks merely empty.

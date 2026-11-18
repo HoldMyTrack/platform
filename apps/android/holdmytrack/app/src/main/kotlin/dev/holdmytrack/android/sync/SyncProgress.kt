@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
  * What the Sync tab sent and the server hasn't finished yet (`docs/SPEC.md` FR-3.4): the server
  * queues each track and answers at once, and until the worker has done it the track is
  * neither on the phone's list nor on the map. Each stays here, and on the Sync tab as "Adding to
- * your map…", until `POST /v1/sync/known` says its job has ended: known and not processing, it
+ * your map…", until `POST /v2/sync/known` says its job has ended: known and not processing, it
  * has landed — [addListener]'s map reads its list and tiles again, and a recording leaves the
  * phone's store; in neither, its job failed — it goes back on the list, a recording back among
  * the store's unsent ones, since the phone holds its only copy. A recording sent before the app
@@ -195,7 +195,7 @@ object SyncProgress {
 
 enum class Outcome { LANDED, FAILED }
 
-/** What `POST /v1/sync/known`'s answer means for one sent track: still at work (null), landed,
+/** What `POST /v2/sync/known`'s answer means for one sent track: still at work (null), landed,
  *  or failed — known and not processing is on the map, in neither its job ended without one. */
 fun syncOutcome(externalId: String, known: Collection<String>, processing: Collection<String>): Outcome? = when (externalId) {
     in processing -> null

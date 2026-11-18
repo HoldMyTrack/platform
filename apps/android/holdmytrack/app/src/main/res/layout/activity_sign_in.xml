@@ -52,7 +52,7 @@
                     android:layout_height="wrap_content"
                     android:text="@string/sign_in_intro" />
 
-                <!-- Hidden until GET /v1/auth/providers says the server has each configured
+                <!-- Hidden until GET /v2/auth/providers says the server has each configured
                      (SignInActivity), above the email form as on the web's sign-in page. -->
                 <Button
                     android:id="@+id/google"

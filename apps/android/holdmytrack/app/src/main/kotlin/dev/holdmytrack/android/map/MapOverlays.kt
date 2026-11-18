@@ -118,7 +118,7 @@ object MapOverlays {
     }
 
     /**
-     * Draws [metrics]' pace bands — the selected track's, `GET /v1/activities/{id}/track-metrics` —
+     * Draws [metrics]' pace bands — the selected track's, `GET /v2/tracks/{id}/route-metrics` —
      * one line per run the server worked out, each with its `band` for the layer to colour, then
      * [routeFeature] for the group's direction arrows. The web's `setRouteBands`.
      */
@@ -262,7 +262,7 @@ object MapOverlays {
     private fun trackQuery(dates: DateFilter): String = buildList {
         val trip = trackTrip
         if (trip != null) {
-            add("story=${Uri.encode(trip)}")
+            add("trip=${Uri.encode(trip)}")
         } else {
             dates.after?.let { add("from=$it") }
             dates.before?.let { add("to=$it") }

@@ -94,7 +94,7 @@ class RecordingActivity : AppCompatActivity() {
         lifecycleScope.launch {
             val record = store.get(editingId) ?: run { finish(); return@launch }
             nameField.setText(record.name)
-            setType(record.activityType)
+            setType(record.trackType)
             descriptionField.setText(record.description)
             timeValue.text = RecordingFormat.duration(record.durationSeconds * 1000)
             distanceValue.text = RecordingFormat.distance(resources, record.distanceMeters)
@@ -120,7 +120,7 @@ class RecordingActivity : AppCompatActivity() {
             store.update(
                 record.copy(
                     name = nameField.text.toString().trim(),
-                    activityType = newType,
+                    trackType = newType,
                     description = descriptionField.text.toString().trim(),
                 ),
             )

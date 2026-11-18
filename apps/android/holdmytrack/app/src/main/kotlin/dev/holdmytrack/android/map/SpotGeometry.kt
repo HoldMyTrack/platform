@@ -10,7 +10,7 @@ import kotlin.math.sin
  *  geometry below testable on the JVM. */
 data class GeoPoint(val lat: Double, val lon: Double)
 
-/** A spot's area as `GET /v1/spots/{id}` sends it: polygons, each an outer ring then its holes,
+/** A spot's area as `GET /v2/spots/{id}` sends it: polygons, each an outer ring then its holes,
  *  each ring closed (first point repeated last). */
 typealias SpotArea = List<List<List<GeoPoint>>>
 

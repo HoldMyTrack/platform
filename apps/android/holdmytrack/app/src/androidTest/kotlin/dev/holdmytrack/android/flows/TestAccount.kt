@@ -35,21 +35,21 @@ class TestAccount private constructor(val email: String, val password: String, p
         private set
 
     fun createTrip(name: String, trackIds: List<String>) {
-        call("POST", "/v1/stories", buildJsonObject {
+        call("POST", "/v2/trips", buildJsonObject {
             put("name", name)
-            put("activity_ids", buildJsonArray { trackIds.forEach { add(JsonPrimitive(it)) } })
+            put("track_ids", buildJsonArray { trackIds.forEach { add(JsonPrimitive(it)) } })
         })
     }
 
     fun delete() {
-        runCatching { call("DELETE", "/v1/account", buildJsonObject { put("email", email) }) }
+        runCatching { call("DELETE", "/v2/account", buildJsonObject { put("email", email) }) }
     }
 
     private fun upload(name: String, bytes: ByteArray) {
         val body = MultipartBody.Builder().setType(MultipartBody.FORM)
             .addFormDataPart("file", name, bytes.toRequestBody("application/octet-stream".toMediaType()))
             .build()
-        send(Request.Builder().url("$BASE/v1/activities/upload").post(body).build())
+        send(Request.Builder().url("$BASE/v2/tracks/upload").post(body).build())
     }
 
     private fun download(path: String): ByteArray =
@@ -62,7 +62,7 @@ class TestAccount private constructor(val email: String, val password: String, p
     private fun settle(count: Int) {
         val deadline = System.currentTimeMillis() + SETTLE_TIMEOUT_MS
         while (true) {
-            val tracks = call("GET", "/v1/activities", null)!!.jsonObject["activities"]!!.jsonArray.map { it.jsonObject }
+            val tracks = call("GET", "/v2/tracks", null)!!.jsonObject["tracks"]!!.jsonArray.map { it.jsonObject }
             if (tracks.size == count && tracks.none { it["pending"]!!.jsonPrimitive.boolean }) {
                 idsByDay = tracks.associate { it["started_at"]!!.jsonPrimitive.content.take(10) to it["id"]!!.jsonPrimitive.content }
                 return
@@ -104,12 +104,12 @@ class TestAccount private constructor(val email: String, val password: String, p
                 })
                 .build()
             val account = TestAccount("flows-${System.currentTimeMillis()}@holdmytrack.local", "flows-test-password", client)
-            account.call("POST", "/v1/auth/signup", buildJsonObject {
+            account.call("POST", "/v2/auth/signup", buildJsonObject {
                 put("email", account.email)
                 put("password", account.password)
             })
             // A fresh account goes to the first-run setup until it has a Country.
-            account.call("PATCH", "/v1/account/settings", buildJsonObject {
+            account.call("PATCH", "/v2/account/settings", buildJsonObject {
                 put("display_name", "")
                 put("country", "US")
                 put("timezone", "America/New_York")

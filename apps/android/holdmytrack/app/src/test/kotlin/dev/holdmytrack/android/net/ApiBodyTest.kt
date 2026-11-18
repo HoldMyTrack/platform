@@ -20,7 +20,7 @@ import org.junit.Test
 class ApiBodyTest {
 
     private fun response(body: ResponseBody) = Response.Builder()
-        .request(Request.Builder().url("https://holdmytrack.app/v1/auth/me").build())
+        .request(Request.Builder().url("https://holdmytrack.app/v2/auth/me").build())
         .protocol(Protocol.HTTP_1_1)
         .code(200)
         .message("OK")

@@ -13,7 +13,7 @@ class SyncCandidatesTest {
         externalId = id,
         startedAt = Instant.parse(startedAt),
         endedAt = Instant.parse(startedAt).plusSeconds(3600),
-        activityType = "walking",
+        trackType = "walking",
         name = "",
         lats = doubleArrayOf(50.0, 50.001),
         lons = doubleArrayOf(10.0, 10.001),

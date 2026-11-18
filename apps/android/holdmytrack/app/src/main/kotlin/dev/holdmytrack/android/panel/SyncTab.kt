@@ -321,7 +321,7 @@ class SyncTab(
         }
     }
 
-    /** The account's track each listed row overlaps (`POST /v1/activities/overlaps`). A hint
+    /** The account's track each listed row overlaps (`POST /v2/tracks/overlaps`). A hint
      *  only: when the server can't say, the rows go without it. */
     private suspend fun askOverlaps(): Map<String, TrackOverlap> {
         if (Session.isDemo) return emptyMap()
@@ -356,7 +356,7 @@ class SyncTab(
 
     private fun render() {
         if (!showing) return
-        TrackTypes.refresh(all().map { it.activityType })
+        TrackTypes.refresh(all().map { it.trackType })
         val demo = Session.isDemo
         accountNotice.text = if (demo) res.getString(R.string.sync_demo_read_only) else null
         accountNotice.visibility = if (demo) View.VISIBLE else View.GONE
@@ -441,7 +441,7 @@ class SyncTab(
 
     /** One chip per type listed, when there's more than one to choose between. */
     private fun renderTypes(everything: List<Candidate>) {
-        val listedTypes = everything.map { it.activityType }.distinct().sortedBy { TrackTypes.label(it) }
+        val listedTypes = everything.map { it.trackType }.distinct().sortedBy { TrackTypes.label(it) }
         types.retainAll(listedTypes.toSet())
         typeChips.visibility = if (listedTypes.size > 1) View.VISIBLE else View.GONE
         val current = (0 until typeChips.childCount).map { typeChips.getChildAt(it).tag as String }
@@ -598,7 +598,7 @@ class SyncTab(
         val failed = SyncProgress.takeFailed()
         if (failed.isEmpty()) return false
         val format = DATE_FORMAT.withZone(ZoneId.systemDefault())
-        val lines = failed.map { res.getString(R.string.sync_row_failed, format.format(it.startedAt), TrackTypes.label(it.activityType)) }
+        val lines = failed.map { res.getString(R.string.sync_row_failed, format.format(it.startedAt), TrackTypes.label(it.trackType)) }
         val earlier = problems.text.takeIf { problems.visibility == View.VISIBLE && it.isNotEmpty() }?.toString()
         showProblems(listOfNotNull(earlier) + lines)
         known = known - failed.map { it.externalId }.toSet()
@@ -621,7 +621,7 @@ class SyncTab(
             results.visibility = View.VISIBLE
         }
         val trouble = report.rejected.map {
-            res.getString(R.string.sync_rejected_row, DATE_FORMAT.withZone(ZoneId.systemDefault()).format(it.startedAt), TrackTypes.label(it.activityType), it.reason)
+            res.getString(R.string.sync_rejected_row, DATE_FORMAT.withZone(ZoneId.systemDefault()).format(it.startedAt), TrackTypes.label(it.trackType), it.reason)
         }.toMutableList()
         report.stoppedBecause?.let { trouble += res.getString(R.string.sync_stopped, it) }
         showProblems(trouble)
@@ -638,7 +638,7 @@ class SyncTab(
         val meta = listOfNotNull(
             date.takeIf { named },
             PanelFormat.distance(res, candidate.distanceM),
-            TrackTypes.label(candidate.activityType),
+            TrackTypes.label(candidate.trackType),
             res.getString(if (candidate.isRecording) R.string.sync_origin_recorded else R.string.sync_origin_health_connect),
         ).joinToString(" · ")
         val processing = processing(candidate)
@@ -651,7 +651,7 @@ class SyncTab(
             note = note,
             processing = processing,
             similar = similarCount,
-            type = candidate.activityType,
+            type = candidate.trackType,
             recording = candidate.isRecording,
             ticked = candidate.key in ticked,
             hidden = candidate.key in hidden,

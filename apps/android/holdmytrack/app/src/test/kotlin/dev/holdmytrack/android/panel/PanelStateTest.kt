@@ -14,7 +14,7 @@ class PanelStateTest {
         Track(
             id = id,
             startedAt = "2026-09-24T08:00:00Z",
-            activityType = type,
+            trackType = type,
             name = null,
             distanceMeters = meters,
             movingSeconds = 600,

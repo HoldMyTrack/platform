@@ -49,7 +49,7 @@ import kotlin.math.roundToInt
  * list and the map ([onOverlay]) show the photos as Save would leave them.
  *
  * Every photo has a place on the track. Add prepares each picked photo ([PhotoPrep]) and asks
- * the server where it goes (`POST /v1/photos/place`, which stores nothing); one it can't place
+ * the server where it goes (`POST /v2/photos/place`, which stores nothing); one it can't place
  * waits at the top of the list with a slider, starting just after the photo picked before it,
  * until the user puts it somewhere (Place here) or removes it. Edit opens the same slider on a
  * photo, with its caption. The slider walks the track as drawn ([PhotoRoute]) and the photo

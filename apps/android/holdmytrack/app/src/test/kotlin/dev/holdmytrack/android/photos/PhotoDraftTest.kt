@@ -22,8 +22,8 @@ class PhotoDraftTest {
         caption = caption,
         width = 2048,
         height = 1365,
-        url = "/v1/photos/$id",
-        thumbUrl = "/v1/photos/$id/thumb",
+        url = "/v2/photos/$id",
+        thumbUrl = "/v2/photos/$id/thumb",
     )
 
     private val image = PhotoImage(ByteArray(0), "image/webp")

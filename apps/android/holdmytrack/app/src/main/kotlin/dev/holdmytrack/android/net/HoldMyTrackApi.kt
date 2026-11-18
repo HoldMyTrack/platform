@@ -48,9 +48,9 @@ object HoldMyTrackApi {
      *  location (`docs/SPEC.md` FR-5.9) — asked about, then sent with allowHidden. */
     const val SPLIT_HIDES_PART = "split_hides_part"
 
-    private const val API_V1 = "/v1"
+    private const val API_V2 = "/v2"
 
-    /** The `source` values this app posts to `POST /v1/sync/activities` — Health Connect
+    /** The `source` values this app posts to `POST /v2/sync/tracks` — Health Connect
      *  sync (`sync/SyncRunner.kt`), in-app GPS recording (`recording/RecordingActivity.kt`,
      *  `docs/IMPLEMENTATION.md` §4.0.4). iOS's own is `"healthkit"`; an
      *  uploaded file has its own endpoint ([uploadTrackFile]). */
@@ -204,7 +204,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `POST /v1/sync/activities` — Path 2's batched sync (`docs/IMPLEMENTATION.md` §4.0.3).
+     * `POST /v2/sync/tracks` — Path 2's batched sync (`docs/IMPLEMENTATION.md` §4.0.3).
      *
      * Suspending rather than callback-based like everything above it, because its only caller
      * is the sync run, which is a coroutine from end to end (Health Connect's read API leaves
@@ -217,11 +217,11 @@ object HoldMyTrackApi {
      * them off its list. A non-2xx status is the whole request failing and throws instead;
      * nothing in the batch was decided.
      */
-    internal suspend fun syncTracks(tracks: List<SyncActivityJson>, source: String): List<SyncResult> =
+    internal suspend fun syncTracks(tracks: List<SyncTrackJson>, source: String): List<SyncResult> =
         withContext(Dispatchers.IO) {
             val request = Request.Builder()
-                .url(BuildConfig.API_BASE_URL + API_V1 + "/sync/activities")
-                .post(jsonBody(SyncActivitiesRequestJson(source, tracks)))
+                .url(BuildConfig.API_BASE_URL + API_V2 + "/sync/tracks")
+                .post(jsonBody(SyncTracksRequestJson(source, tracks)))
                 .build()
             val response = client.newCall(request).execute()
             val text = response.use { it.body?.string().orEmpty() }
@@ -230,7 +230,7 @@ object HoldMyTrackApi {
         }
 
     /**
-     * `POST /v1/sync/known` (`docs/IMPLEMENTATION.md` §4.0.3): which of [externalIds] the
+     * `POST /v2/sync/known` (`docs/IMPLEMENTATION.md` §4.0.3): which of [externalIds] the
      * account already has from [source] — the Sync tab's list is what's on the phone minus these,
      * so a reinstall or a second phone agrees with the server — and, of those, which are still
      * processing: sent, not on the map yet. Suspending, like [syncTracks], for the same
@@ -242,7 +242,7 @@ object HoldMyTrackApi {
             val processing = mutableSetOf<String>()
             for (chunk in externalIds.chunked(MAX_KNOWN_IDS)) {
                 val request = Request.Builder()
-                    .url(BuildConfig.API_BASE_URL + API_V1 + "/sync/known")
+                    .url(BuildConfig.API_BASE_URL + API_V2 + "/sync/known")
                     .post(jsonBody(SyncKnownRequestJson(source, chunk)))
                     .build()
                 val response = client.newCall(request).execute()
@@ -256,7 +256,7 @@ object HoldMyTrackApi {
         }
 
     /**
-     * `POST /v1/activities/overlaps` (root `docs/IMPLEMENTATION.md` §4.6): for each of [spans],
+     * `POST /v2/tracks/overlaps` (root `docs/IMPLEMENTATION.md` §4.6): for each of [spans],
      * keyed by the caller, the live track it overlaps, if any — the Already on your map half
      * of the Sync tab's similar tracks (`docs/SPEC.md` FR-3.5). Keys with no overlap aren't in
      * the map.
@@ -267,20 +267,20 @@ object HoldMyTrackApi {
             for (chunk in spans.chunked(MAX_KNOWN_IDS)) {
                 val spansJson = chunk.map { OverlapSpanJson(it.key, it.start.toString(), it.end.toString()) }
                 val request = Request.Builder()
-                    .url(BuildConfig.API_BASE_URL + API_V1 + "/activities/overlaps")
+                    .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/overlaps")
                     .post(jsonBody(OverlapsRequestJson(spansJson)))
                     .build()
                 val response = client.newCall(request).execute()
                 val text = response.use { it.body?.string().orEmpty() }
                 if (!response.isSuccessful) throw ApiException.from(response.code, text)
                 for (row in decode<OverlapsJson>(text).overlaps) {
-                    found[row.key] = TrackOverlap(row.activityId, row.name, row.activityType, row.startedAt, row.timezone)
+                    found[row.key] = TrackOverlap(row.trackId, row.name, row.trackType, row.startedAt, row.timezone)
                 }
             }
             found
         }
 
-    /** The server's `maxKnownIDs`: one `POST /v1/sync/known` asks about at most this many. */
+    /** The server's `maxKnownIDs`: one `POST /v2/sync/known` asks about at most this many. */
     private const val MAX_KNOWN_IDS = 5000
 
     /**
@@ -296,7 +296,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `POST /v1/activities/upload` — the web's Upload menu's request (root `docs/SPEC.md`
+     * `POST /v2/tracks/upload` — the web's Upload menu's request (root `docs/SPEC.md`
      * FR-3.1): one `.gpx`, `.fit` or `.tcx`. The file is streamed from [uri] rather than read into
      * memory first, since it can be 16 MiB; [onProgress] gets the bytes sent so far, on the
      * I/O thread sending them. Suspending, like [syncTracks]: its caller (`imports/FileImports.kt`)
@@ -314,7 +314,7 @@ object HoldMyTrackApi {
             .addFormDataPart("file", name, UriRequestBody(resolver, uri, size, onProgress))
             .build()
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/activities/upload")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/upload")
             .post(body)
             .build()
         val response = uploadClient.newCall(request).execute()
@@ -350,9 +350,9 @@ object HoldMyTrackApi {
         }
     }
 
-    /** `GET /v1/auth/providers` — which of the Google and Facebook buttons to show. */
+    /** `GET /v2/auth/providers` — which of the Google and Facebook buttons to show. */
     fun providers(onResult: (Result<Providers>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/auth/providers").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/auth/providers").build()
         call(request, { body ->
             val json = decode<ProvidersJson>(body)
             Providers(google = json.google, facebook = json.facebook, googleClientId = json.googleClientId)
@@ -360,7 +360,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `POST /v1/auth/google/token` — trades the ID token Credential Manager returned for a
+     * `POST /v2/auth/google/token` — trades the ID token Credential Manager returned for a
      * session. The server checks the token's signature against Google's keys before trusting
      * anything in it (`docs/IMPLEMENTATION.md` §4.9).
      */
@@ -374,7 +374,7 @@ object HoldMyTrackApi {
      * `holdmytrack://oauth?code=…`, redeemed with [exchangeHandoff].
      */
     fun facebookStartUri(timezone: String, challenge: String): Uri =
-        Uri.parse(BuildConfig.API_BASE_URL + API_V1 + "/auth/facebook/start").buildUpon()
+        Uri.parse(BuildConfig.API_BASE_URL + API_V2 + "/auth/facebook/start").buildUpon()
             .appendQueryParameter("tz", timezone)
             .appendQueryParameter("app_challenge", challenge)
             .build()
@@ -391,10 +391,10 @@ object HoldMyTrackApi {
             .build()
 
     /** One of the web's own pages — "Forgot password?", About, Help — served by the API's own
-     *  origin, outside `/v1`. */
+     *  origin, outside `/v2`. */
     fun webPageUri(path: String): Uri = Uri.parse(BuildConfig.API_BASE_URL + path)
 
-    /** `POST /v1/auth/handoff` — redeems a browser-tab round trip's one-time code, once. */
+    /** `POST /v2/auth/handoff` — redeems a browser-tab round trip's one-time code, once. */
     fun exchangeHandoff(code: String, verifier: String, onResult: (Result<Account>) -> Unit) {
         authenticate("/auth/handoff", jsonBody(HandoffJson(code, verifier)), onResult)
     }
@@ -412,7 +412,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * Revokes the session server-side, not just locally: `POST /v1/auth/logout` deletes the
+     * Revokes the session server-side, not just locally: `POST /v2/auth/logout` deletes the
      * row, so a token copied off the device stops working immediately rather than staying
      * valid for the rest of its 30-day TTL.
      *
@@ -423,7 +423,7 @@ object HoldMyTrackApi {
      */
     fun signOut(onDone: () -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/auth/logout")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/auth/logout")
             .post(EMPTY_BODY)
             .build()
         client.newCall(request).enqueue(object : Callback {
@@ -437,7 +437,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * Checks a token restored from disk against the server — `GET /v1/auth/me`, the same
+     * Checks a token restored from disk against the server — `GET /v2/auth/me`, the same
      * question the web client asks on first load. A 401 means the session is gone (revoked,
      * or expired past its TTL while the app was closed) and the token should be dropped; any
      * other failure is the network's fault and says nothing about the token.
@@ -446,13 +446,13 @@ object HoldMyTrackApi {
      * for the map: an unconfirmed email gets `403` on every tile (`VerifyEmailActivity`).
      */
     fun verifySession(onResult: (Result<Profile>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/auth/me").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/auth/me").build()
         call(request, { body -> decode<AccountJson>(body).toProfile() }, onResult)
     }
 
-    /** `GET /v1/account/settings/options` — see [SettingsOptions]. */
+    /** `GET /v2/account/settings/options` — see [SettingsOptions]. */
     fun settingsOptions(onResult: (Result<SettingsOptions>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/account/settings/options").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/account/settings/options").build()
         call(request, { body ->
             val json = decode<SettingsOptionsJson>(body)
             fun options(list: List<SettingsOptionJson>) = list.map { SettingsOption(it.value, it.label) }
@@ -465,7 +465,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `PATCH /v1/account/settings` — Name, Country, Timezone and Language as one save, as the
+     * `PATCH /v2/account/settings` — Name, Country, Timezone and Language as one save, as the
      * web page saves them. [locale] is empty for "automatic". Answers with the saved profile;
      * a refusal (a missing country, a demo account) is the server's own wording.
      */
@@ -477,36 +477,36 @@ object HoldMyTrackApi {
         onResult: (Result<Profile>) -> Unit,
     ) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/account/settings")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/account/settings")
             .patch(jsonBody(SettingsJson(displayName, country, timezone, locale)))
             .build()
         call(request, { text -> decode<AccountJson>(text).toProfile() }, onResult)
     }
 
     /**
-     * `DELETE /v1/account` (root `docs/SPEC.md` FR-1.12) — [email] typed as confirmation. The
+     * `DELETE /v2/account` (root `docs/SPEC.md` FR-1.12) — [email] typed as confirmation. The
      * server closes the account and ends every session of it; a mismatch is its own wording.
      * The caller clears what this device holds for the account ([Session.clear] and the rest).
      */
     fun deleteAccount(email: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/account")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/account")
             .delete(jsonBody(EmailJson(email)))
             .build()
         call(request, { }, onResult)
     }
 
-    /** `GET /v1/account/export` — where the account's latest copy of its data stands. */
+    /** `GET /v2/account/export` — where the account's latest copy of its data stands. */
     fun exportStatus(onResult: (Result<ExportStatus>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/account/export").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/account/export").build()
         call(request, { body -> decode<ExportStatusJson>(body).toExportStatus() }, onResult)
     }
 
-    /** `POST /v1/account/export` — asks for a copy; one already being prepared is returned
+    /** `POST /v2/account/export` — asks for a copy; one already being prepared is returned
      *  instead. The server emails the account when it's ready, in the app's language. */
     fun requestExport(onResult: (Result<ExportStatus>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/account/export")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/account/export")
             .post(EMPTY_BODY)
             .build()
         call(request, { body -> decode<ExportStatusJson>(body).toExportStatus() }, onResult)
@@ -566,108 +566,108 @@ object HoldMyTrackApi {
             ?: Result.failure(IOException("not an image"))
     }
 
-    /** `POST /v1/auth/verify-code` — the 6-digit code from the verification email, typed in this
+    /** `POST /v2/auth/verify-code` — the 6-digit code from the verification email, typed in this
      *  session, which stays signed in. The account as verified, or the server's refusal. */
     fun verifyCode(code: String, onResult: (Result<Profile>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/auth/verify-code")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/auth/verify-code")
             .post(jsonBody(CodeJson(code)))
             .build()
         call(request, { body -> decode<AccountJson>(body).toProfile() }, onResult)
     }
 
     /**
-     * `POST /v1/auth/resend-verification` — mails a fresh confirmation link. Answers with the
+     * `POST /v2/auth/resend-verification` — mails a fresh confirmation link. Answers with the
      * server's own confirmation text ("Verification email sent."), in the app's language.
      */
     fun resendVerification(onResult: (Result<String>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/auth/resend-verification")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/auth/resend-verification")
             .post(EMPTY_BODY)
             .build()
         call(request, { body -> decode<MessageJson>(body).message }, onResult)
     }
 
 
-    /** `GET /v1/activities?story=`: that whole Trip's tracks (`docs/SPEC.md` FR-13.6), newest
+    /** `GET /v2/tracks?trip=`: that whole Trip's tracks (`docs/SPEC.md` FR-13.6), newest
      *  first, in one response. */
     fun tripTracks(trip: String, onResult: (Result<List<Track>>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities").toHttpUrl().newBuilder()
-            .addQueryParameter("story", trip)
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks").toHttpUrl().newBuilder()
+            .addQueryParameter("trip", trip)
             .build()
         call(Request.Builder().url(url).build(), { body ->
-            val decoded = decode<ActivitiesJson>(body)
+            val decoded = decode<TracksJson>(body)
             TrackTypes.merge(decoded.types.described())
-            decoded.activities.map { it.toTrack() }
+            decoded.tracks.map { it.toTrack() }
         }, onResult)
     }
 
     /**
-     * `GET /v1/activities/area`: the newest tracks, at most [limit], whose track crosses [box]
+     * `GET /v2/tracks/area`: the newest tracks, at most [limit], whose track crosses [box]
      * (`[west, south, east, north]`), all of them without one, under [dates] (`docs/SPEC.md`
      * FR-5.11). Its rows are slim: the Edit window reads [activity] for the rest.
      */
     fun areaTracks(box: List<Double>?, dates: DateFilter, limit: Int? = null, onResult: (Result<AreaPage>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities/area").toHttpUrl().newBuilder()
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks/area").toHttpUrl().newBuilder()
             .apply { if (box != null) addQueryParameter("bbox", box.joinToString(",")) }
             .apply { dates.after?.let { addQueryParameter("from", it) } }
             .apply { dates.before?.let { addQueryParameter("to", it) } }
             .apply { if (limit != null) addQueryParameter("limit", limit.toString()) }
             .build()
         call(Request.Builder().url(url).build(), { body ->
-            val decoded = decode<AreaActivitiesJson>(body)
+            val decoded = decode<AreaTracksJson>(body)
             TrackTypes.merge(decoded.types.described())
-            AreaPage(decoded.activities.map { it.toTrack() }, decoded.total)
+            AreaPage(decoded.tracks.map { it.toTrack() }, decoded.total)
         }, onResult)
     }
 
-    /** `GET /v1/activities/{id}`: one track in full, for the Edit window. */
+    /** `GET /v2/tracks/{id}`: one track in full, for the Edit window. */
     fun track(id: String, onResult: (Result<Track>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + Uri.encode(id)).build()
-        call(request, { body -> decode<ActivitiesJson>(body).activities.first().toTrack() }, onResult)
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + Uri.encode(id)).build()
+        call(request, { body -> decode<TracksJson>(body).tracks.first().toTrack() }, onResult)
     }
 
-    /** `GET /v1/activities/pending`: which of [ids] are still Pending (`map/PendingTracker`). */
+    /** `GET /v2/tracks/pending`: which of [ids] are still Pending (`map/PendingTracker`). */
     fun pendingTracks(ids: List<String>, onResult: (Result<List<String>>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities/pending").toHttpUrl().newBuilder()
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks/pending").toHttpUrl().newBuilder()
             .addQueryParameter("ids", ids.joinToString(","))
             .build()
         call(Request.Builder().url(url).build(), { body -> decode<PendingJson>(body).pending }, onResult)
     }
 
-    /** `GET /v1/activity-types`: what to show for the catalog's types and [types] (`panel/TrackTypes`). */
-    fun activityTypes(types: List<String>, onResult: (Result<Map<String, TrackTypes.Info>>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activity-types").toHttpUrl().newBuilder()
+    /** `GET /v2/track-types`: what to show for the catalog's types and [types] (`panel/TrackTypes`). */
+    fun trackTypes(types: List<String>, onResult: (Result<Map<String, TrackTypes.Info>>) -> Unit) {
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/track-types").toHttpUrl().newBuilder()
             .apply { if (types.isNotEmpty()) addQueryParameter("types", types.joinToString(",")) }
             .build()
-        call(Request.Builder().url(url).build(), { body -> decode<ActivityTypesJson>(body).types.described() }, onResult)
+        call(Request.Builder().url(url).build(), { body -> decode<TrackTypesJson>(body).types.described() }, onResult)
     }
 
-    private fun Map<String, ActivityTypeJson>.described(): Map<String, TrackTypes.Info> =
+    private fun Map<String, TrackTypeJson>.described(): Map<String, TrackTypes.Info> =
         mapValues { TrackTypes.Info(TrackKind.fromWire(it.value.kind), it.value.label) }
 
     /**
-     * `PATCH /v1/activities/{id}` — a full replace of the three fields a person can set
+     * `PATCH /v2/tracks/{id}` — a full replace of the three fields a person can set
      * (`docs/SPEC.md` FR-5.5): an empty [name] or [description] clears it. Answers
      * with the row as it now is. A refusal (too long, a demo account) is the server's own
      * wording, in the app's language.
      */
-    fun updateTrack(id: String, activityType: String, name: String, description: String, onResult: (Result<Track>) -> Unit) {
+    fun updateTrack(id: String, trackType: String, name: String, description: String, onResult: (Result<Track>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id)
-            .patch(jsonBody(ActivityPatchJson(activityType, name, description)))
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id)
+            .patch(jsonBody(TrackPatchJson(trackType, name, description)))
             .build()
-        call(request, { text -> decode<ActivityRowJson>(text).toTrack() }, onResult)
+        call(request, { text -> decode<TrackRowJson>(text).toTrack() }, onResult)
     }
 
     /**
-     * `POST /v1/activities/stats-card` (`docs/IMPLEMENTATION.md` §4.3.3): the export's stats card
+     * `POST /v2/tracks/stats-card` (`docs/IMPLEMENTATION.md` §4.3.3): the export's stats card
      * for [trackIds] as a PNG drawn for an image [width] × [height], or null when every one of
      * them is Pending (204). Decoded off the main thread.
      */
     fun statsCard(trackIds: List<String>, width: Int, height: Int, dark: Boolean, onResult: (Result<Bitmap?>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/activities/stats-card")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/stats-card")
             .post(jsonBody(StatsCardRequestJson(trackIds, width, height, if (dark) "dark" else "light")))
             .build()
         client.newCall(request).enqueue(object : Callback {
@@ -692,20 +692,20 @@ object HoldMyTrackApi {
         })
     }
 
-    /** `DELETE /v1/activities/{id}` (`docs/IMPLEMENTATION.md` §4.7.5) — the track, its
+    /** `DELETE /v2/tracks/{id}` (`docs/IMPLEMENTATION.md` §4.7.5) — the track, its
      *  track and its share of Fog coverage, for good. */
     fun deleteTrack(id: String, onResult: (Result<Unit>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id).delete().build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
     /**
-     * `GET /v1/coverage/status` — whether the account still has a job that changes its Fog
+     * `GET /v2/coverage/status` — whether the account still has a job that changes its Fog
      * tiles, and its map version. What the map polls after a delete or a reprocess, to
      * know when to fetch those tiles again (`map/CoverageWatch`).
      */
     fun coverageStatus(onResult: (Result<CoverageStatus>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/coverage/status").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/coverage/status").build()
         call(request, { text ->
             val json = decode<CoverageStatusJson>(text)
             CoverageStatus(json.rendering, json.version, json.tileVersion, json.explored?.let { Explored(it.countries, it.regions, it.counties, it.cities) })
@@ -713,11 +713,11 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `GET /v1/map/layers` (ADR-0048) — every layer drawn over the basemap, at the account's tile
+     * `GET /v2/map/layers` (ADR-0048) — every layer drawn over the basemap, at the account's tile
      * version: the document's text and ETag, or null while [etag] is still current (`304`).
      */
     fun mapLayers(flavor: String, etag: String?, onResult: (Result<MapLayersResponse?>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/map/layers").toHttpUrl().newBuilder()
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/map/layers").toHttpUrl().newBuilder()
             .addQueryParameter("flavor", flavor)
             .build()
         val request = Request.Builder().url(url).apply { etag?.let { header("If-None-Match", it) } }.build()
@@ -742,14 +742,14 @@ object HoldMyTrackApi {
         })
     }
 
-    /** `GET /v1/spots` (`docs/IMPLEMENTATION.md` §4.25) — [categories]' places whose anchor is
+    /** `GET /v2/spots` (`docs/IMPLEMENTATION.md` §4.25) — [categories]' places whose anchor is
      *  inside the box, named first, up to the server's 2,000. */
     fun spotsInArea(
         west: Double, south: Double, east: Double, north: Double,
         categories: List<String>,
         onResult: (Result<SpotsInArea>) -> Unit,
     ) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/spots").toHttpUrl().newBuilder()
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/spots").toHttpUrl().newBuilder()
             .addQueryParameter("bbox", listOf(west, south, east, north).joinToString(",") { "%.5f".format(java.util.Locale.ROOT, it) })
             .addQueryParameter("categories", categories.joinToString(","))
             .build()
@@ -759,9 +759,9 @@ object HoldMyTrackApi {
         }, onResult)
     }
 
-    /** `GET /v1/spots/{id}` (`docs/IMPLEMENTATION.md` §4.25) — see [SpotDetail]. */
+    /** `GET /v2/spots/{id}` (`docs/IMPLEMENTATION.md` §4.25) — see [SpotDetail]. */
     fun spotDetail(id: Long, onResult: (Result<SpotDetail>) -> Unit) {
-        call(Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/spots/" + id).build(), { text ->
+        call(Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/spots/" + id).build(), { text ->
             val json = decode<SpotDetailJson>(text)
             SpotDetail(
                 spot = Spot(json.id, json.category, json.name, json.address, json.description, json.inscription, json.memorial, json.startDate, json.wikipedia, json.lon, json.lat),
@@ -771,20 +771,20 @@ object HoldMyTrackApi {
         }, onResult)
     }
 
-    /** `GET /v1/spots/captures` — every place the account has captured, newest first; with
+    /** `GET /v2/spots/captures` — every place the account has captured, newest first; with
      *  [since], only those captured at or after it. */
     fun spotCaptures(since: Instant?, onResult: (Result<List<SpotCapture>>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/spots/captures").toHttpUrl().newBuilder()
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/spots/captures").toHttpUrl().newBuilder()
         if (since != null) url.addQueryParameter("since", since.toString())
         call(Request.Builder().url(url.build()).build(), { text -> decode<SpotCapturesJson>(text).captures.map { it.toSpotCapture() } }, onResult)
     }
 
-    /** `POST /v1/spots/{id}/captures` — captures the place at the position last measured inside
+    /** `POST /v2/spots/{id}/captures` — captures the place at the position last measured inside
      *  it; the server checks it against the area. A place already captured answers the first
      *  capture. Outside the area is an [ApiException] with code 422. */
     fun captureSpot(id: Long, lat: Double, lon: Double, onResult: (Result<SpotCapture>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/spots/" + id + "/captures")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/spots/" + id + "/captures")
             .post(jsonBody(SpotCaptureRequestJson(lat, lon)))
             .build()
         call(request, { text -> decode<SpotCaptureJson>(text).toSpotCapture() }, onResult)
@@ -796,33 +796,33 @@ object HoldMyTrackApi {
 
     private fun SpotJson.toSpot() = Spot(id, category, name, address, description, inscription, memorial, startDate, wikipedia, lon, lat)
 
-    /** `GET /v1/activities/{id}/track-metrics` (`docs/IMPLEMENTATION.md` §4.3.1) — see
+    /** `GET /v2/tracks/{id}/route-metrics` (`docs/IMPLEMENTATION.md` §4.3.1) — see
      *  [RouteMetrics]. */
     fun trackMetrics(id: String, onResult: (Result<RouteMetrics>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id + "/track-metrics").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id + "/route-metrics").build()
         call(request, { text ->
-            val json = decode<TrackMetricsJson>(text)
+            val json = decode<RouteMetricsJson>(text)
             RouteMetrics(
-                json.activityId,
+                json.trackId,
                 json.points.map { TrackMetricPoint(it.lon, it.lat, it.speedMps, it.timeS) },
                 json.bands.map { PaceBand(it.band, it.start, it.end) },
             )
         }, onResult)
     }
 
-    /** `GET /v1/activities/{id}/track-points` — the recorded points, unedited and with any
+    /** `GET /v2/tracks/{id}/route-points` — the recorded points, unedited and with any
      *  Private location already clipped off, and the saved edit. A refusal (`409`: no
      *  recording kept, points without times) is the server's own wording. */
     fun trackPoints(id: String, onResult: (Result<RoutePoints>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id + "/track-points").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id + "/route-points").build()
         call(request, { text ->
-            val json = decode<TrackPointsJson>(text)
+            val json = decode<RoutePointsJson>(text)
             RoutePoints(json.points.map { RoutePoint(it[0], it[1], it[2].toLong()) }, json.edit?.toRouteEdit())
         }, onResult)
     }
 
     /**
-     * `POST /v1/activities/{id}/track-edit` — the whole new edit, or null (or an empty one) to
+     * `POST /v2/tracks/{id}/route-edit` — the whole new edit, or null (or an empty one) to
      * go back to the track as recorded, and [splitAt], a point's time, to also split the track
      * there (`docs/SPEC.md` FR-5.9). The server answers `202` and reprocesses it in the
      * background, the track Pending meanwhile; `409` when a reprocess is already running; a
@@ -830,15 +830,15 @@ object HoldMyTrackApi {
      * which goes ahead when sent again with [allowHidden].
      */
     fun routeEdit(id: String, edit: RouteEdit?, splitAt: Long? = null, allowHidden: Boolean = false, onResult: (Result<Unit>) -> Unit) {
-        val body = TrackEditRequestJson(edit?.toJson(), splitAt, allowHidden = splitAt != null && allowHidden)
+        val body = RouteEditRequestJson(edit?.toJson(), splitAt, allowHidden = splitAt != null && allowHidden)
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/activities/" + id + "/track-edit")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id + "/route-edit")
             .post(jsonBody(body))
             .build()
         call(request, { }, onResult)
     }
 
-    private fun TrackEditJson.toRouteEdit() = RouteEdit(
+    private fun RouteEditJson.toRouteEdit() = RouteEdit(
         keep = keep?.let { it[0] to it[1] },
         remove = remove.orEmpty().map { it[0] to it[1] },
         drop = drop.orEmpty(),
@@ -846,7 +846,7 @@ object HoldMyTrackApi {
         move = move.orEmpty().entries.associate { (t, at) -> t.toLong() to (at[0] to at[1]) },
     )
 
-    private fun RouteEdit.toJson() = TrackEditJson(
+    private fun RouteEdit.toJson() = RouteEditJson(
         keep = keep?.let { listOf(it.first, it.second) },
         remove = remove.map { listOf(it.first, it.second) }.ifEmpty { null },
         drop = drop.ifEmpty { null },
@@ -854,33 +854,33 @@ object HoldMyTrackApi {
     )
 
     /**
-     * `GET /v1/photos?activity=` or `?trip=` (`docs/SPEC.md` FR-15.3) — one track's photos,
+     * `GET /v2/photos?track=` or `?trip=` (`docs/SPEC.md` FR-15.3) — one track's photos,
      * or every photo of a Trip's tracks, in route order. Exactly one of the two is given.
      */
     fun photos(track: String?, trip: String?, onResult: (Result<List<Photo>>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/photos").toHttpUrl().newBuilder()
-            .apply { if (track != null) addQueryParameter("activity", track) }
-            .apply { if (trip != null) addQueryParameter("story", trip) }
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/photos").toHttpUrl().newBuilder()
+            .apply { if (track != null) addQueryParameter("track", track) }
+            .apply { if (trip != null) addQueryParameter("trip", trip) }
             .build()
         call(Request.Builder().url(url).build(), { text -> decode<PhotosJson>(text).photos.map { it.toPhoto() } }, onResult)
     }
 
     /**
-     * `POST /v1/photos/place` (FR-15.1) — where an upload of a photo with this EXIF would be
+     * `POST /v2/photos/place` (FR-15.1) — where an upload of a photo with this EXIF would be
      * placed on [trackId]'s track, storing nothing: its `route_at`. A
      * [PhotoNeedsPlaceException] when the server can't tell, for the user to choose.
      */
     fun checkPhotoPlace(trackId: String, exif: PhotoExif, onResult: (Result<Instant>) -> Unit) {
         val placed = exif.lat != null && exif.lon != null
         val body = PhotoPlaceRequestJson(
-            activityId = trackId,
+            trackId = trackId,
             takenAt = exif.takenAt?.toString(),
             takenLocal = exif.takenLocal.takeIf { exif.takenAt == null },
             lat = exif.lat.takeIf { placed },
             lon = exif.lon.takeIf { placed },
         )
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/photos/place")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/photos/place")
             .post(jsonBody(body))
             .build()
         call(request, { text -> parseInstant(decode<PhotoPlaceJson>(text).routeAt) }) { result ->
@@ -889,7 +889,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `POST /v1/photos` (FR-15.1) — a photo already resized ([file] and its [thumb]), what its
+     * `POST /v2/photos` (FR-15.1) — a photo already resized ([file] and its [thumb]), what its
      * EXIF said, where on the track it goes ([routeAt]: the placement check's answer or the
      * user's, which wins at upload) and its [caption]. Answers with the photo as stored.
      */
@@ -904,7 +904,7 @@ object HoldMyTrackApi {
     ) {
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
-            .addFormDataPart("activity_id", trackId)
+            .addFormDataPart("track_id", trackId)
             .addFormDataPart("file", "photo", file.bytes.toRequestBody(file.contentType.toMediaType()))
             .addFormDataPart("thumb", "thumb", thumb.bytes.toRequestBody(thumb.contentType.toMediaType()))
             .apply {
@@ -918,25 +918,25 @@ object HoldMyTrackApi {
                 if (caption.isNotEmpty()) addFormDataPart("caption", caption)
             }
             .build()
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/photos").post(body).build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/photos").post(body).build()
         call(request, { text -> decode<PhotoJson>(text).toPhoto() }) { result ->
             onResult(result.recoverCatching { throw needsPlace(it) })
         }
     }
 
-    /** `PATCH /v1/photos/{id}` (FR-15.4) — a field given changes: [caption] (empty clears it),
+    /** `PATCH /v2/photos/{id}` (FR-15.4) — a field given changes: [caption] (empty clears it),
      *  [routeAt] the photo's new moment on its track, which the server clamps to the track. */
     fun updatePhoto(id: String, caption: String?, routeAt: Instant?, onResult: (Result<Photo>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/photos/" + id)
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/photos/" + id)
             .patch(jsonBody(PhotoPatchJson(caption, routeAt?.toString())))
             .build()
         call(request, { text -> decode<PhotoJson>(text).toPhoto() }, onResult)
     }
 
-    /** `DELETE /v1/photos/{id}` (FR-15.5) — the photo and both its images. */
+    /** `DELETE /v2/photos/{id}` (FR-15.5) — the photo and both its images. */
     fun deletePhoto(id: String, onResult: (Result<Unit>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/photos/" + id).delete().build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/photos/" + id).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
@@ -950,7 +950,7 @@ object HoldMyTrackApi {
 
     private fun PhotoJson.toPhoto() = Photo(
         id = id,
-        trackId = activityId,
+        trackId = trackId,
         takenAt = takenAt?.let(::parseInstant),
         routeAt = parseInstant(routeAt),
         lon = lon,
@@ -963,20 +963,20 @@ object HoldMyTrackApi {
         timezone = timezone,
     )
 
-    /** `GET /v1/private-locations` — every one, oldest first. */
+    /** `GET /v2/private-locations` — every one, oldest first. */
     fun privateLocations(onResult: (Result<List<PrivateLocation>>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/private-locations").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/private-locations").build()
         call(request, { text -> decode<List<PrivateLocationJson>>(text).map { it.toPrivateLocation() } }, onResult)
     }
 
-    /** `GET /v1/private-locations/hidden` — how many of the account's tracks they hide entirely. */
+    /** `GET /v2/private-locations/hidden` — how many of the account's tracks they hide entirely. */
     fun hiddenTrackCount(onResult: (Result<Int>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/private-locations/hidden").build()
-        call(request, { text -> decode<HiddenActivitiesJson>(text).count }, onResult)
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/private-locations/hidden").build()
+        call(request, { text -> decode<HiddenTracksJson>(text).count }, onResult)
     }
 
     /**
-     * `POST /v1/private-locations`, or with [id] `PATCH /v1/private-locations/{id}` — the
+     * `POST /v2/private-locations`, or with [id] `PATCH /v2/private-locations/{id}` — the
      * whole circle either way. Answers with it as saved (the name trimmed). A refusal — a
      * radius or place out of range, a 21st location, the demo account — is the server's own
      * wording, in the app's language.
@@ -990,118 +990,118 @@ object HoldMyTrackApi {
         onResult: (Result<PrivateLocation>) -> Unit,
     ) {
         val body = jsonBody(PrivateLocationInputJson(name, lon, lat, radiusM))
-        val url = BuildConfig.API_BASE_URL + API_V1 + "/private-locations" + (id?.let { "/$it" } ?: "")
+        val url = BuildConfig.API_BASE_URL + API_V2 + "/private-locations" + (id?.let { "/$it" } ?: "")
         val request = Request.Builder().url(url).apply { if (id == null) post(body) else patch(body) }.build()
         call(request, { text -> decode<PrivateLocationJson>(text).toPrivateLocation() }, onResult)
     }
 
-    /** `DELETE /v1/private-locations/{id}`. */
+    /** `DELETE /v2/private-locations/{id}`. */
     fun deletePrivateLocation(id: String, onResult: (Result<Unit>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/private-locations/" + id).delete().build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/private-locations/" + id).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
     private fun PrivateLocationJson.toPrivateLocation() = PrivateLocation(id, name, lon, lat, radiusM)
 
-    /** `GET /v1/stories` — every Trip of the account, newest first (`docs/SPEC.md` FR-13). */
+    /** `GET /v2/trips` — every Trip of the account, newest first (`docs/SPEC.md` FR-13). */
     fun trips(onResult: (Result<List<Trip>>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/stories").build()
-        call(request, { text -> decode<StoriesJson>(text).stories.map { it.toTrip() } }, onResult)
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/trips").build()
+        call(request, { text -> decode<TripsJson>(text).trips.map { it.toTrip() } }, onResult)
     }
 
-    /** `GET /v1/stories/{id}` — one Trip. A `404` ([ApiException]) is one that doesn't exist
+    /** `GET /v2/trips/{id}` — one Trip. A `404` ([ApiException]) is one that doesn't exist
      *  or isn't this account's, which the server doesn't tell apart (FR-13.5). */
     fun trip(id: String, onResult: (Result<Trip>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/stories/" + id).build()
-        call(request, { text -> decode<StoryJson>(text).toTrip() }, onResult)
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id).build()
+        call(request, { text -> decode<TripJson>(text).toTrip() }, onResult)
     }
 
-    /** `POST /v1/stories` — a new Trip with [trackIds] in it, in one step (FR-13.2). A
+    /** `POST /v2/trips` — a new Trip with [trackIds] in it, in one step (FR-13.2). A
      *  refusal (a blank or long name, a demo account) is the server's own wording. */
     fun createTrip(name: String, description: String, trackIds: Collection<String>, onResult: (Result<Trip>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/stories")
-            .post(jsonBody(StoryCreateJson(name, description, trackIds.toList())))
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/trips")
+            .post(jsonBody(TripCreateJson(name, description, trackIds.toList())))
             .build()
-        call(request, { text -> decode<StoryJson>(text).toTrip() }, onResult)
+        call(request, { text -> decode<TripJson>(text).toTrip() }, onResult)
     }
 
-    /** `PATCH /v1/stories/{id}` — both fields every time: an empty [description] clears it. */
+    /** `PATCH /v2/trips/{id}` — both fields every time: an empty [description] clears it. */
     fun updateTrip(id: String, name: String, description: String, onResult: (Result<Trip>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/stories/" + id)
-            .patch(jsonBody(StoryInputJson(name, description)))
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id)
+            .patch(jsonBody(TripInputJson(name, description)))
             .build()
-        call(request, { text -> decode<StoryJson>(text).toTrip() }, onResult)
+        call(request, { text -> decode<TripJson>(text).toTrip() }, onResult)
     }
 
-    /** `DELETE /v1/stories/{id}` — the Trip alone; its tracks stay. */
+    /** `DELETE /v2/trips/{id}` — the Trip alone; its tracks stay. */
     fun deleteTrip(id: String, onResult: (Result<Unit>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/stories/" + id).delete().build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
-    /** `POST` ([add]) or `DELETE /v1/stories/{id}/activities` with [trackIds] (FR-13.3): puts
+    /** `POST` ([add]) or `DELETE /v2/trips/{id}/tracks` with [trackIds] (FR-13.3): puts
      *  them in the Trip, or takes them out. Answers with the Trip as it now is. */
     fun changeTripTracks(id: String, trackIds: Collection<String>, add: Boolean, onResult: (Result<Trip>) -> Unit) {
-        val body = jsonBody(StoryActivitiesJson(trackIds.toList()))
+        val body = jsonBody(TripTracksJson(trackIds.toList()))
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/stories/" + id + "/activities")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id + "/tracks")
             .apply { if (add) post(body) else delete(body) }
             .build()
-        call(request, { text -> decode<StoryJson>(text).toTrip() }, onResult)
+        call(request, { text -> decode<TripJson>(text).toTrip() }, onResult)
     }
 
-    /** `POST /v1/stories/{id}/send` — a copy of the Trip to [email] (FR-13.7). Succeeds
+    /** `POST /v2/trips/{id}/send` — a copy of the Trip to [email] (FR-13.7). Succeeds
      *  whether or not the address has an account: the server never says. */
     fun sendTrip(id: String, email: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V1 + "/stories/" + id + "/send")
+            .url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id + "/send")
             .post(jsonBody(EmailJson(email)))
             .build()
         call(request, { }, onResult)
     }
 
-    /** `GET /v1/story-sends` — the Trips tab's inbox. */
+    /** `GET /v2/trip-sends` — the Trips tab's inbox. */
     fun tripSends(onResult: (Result<TripInbox>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/story-sends").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/trip-sends").build()
         call(request, { text ->
-            val json = decode<StoryInboxJson>(text)
+            val json = decode<TripInboxJson>(text)
             TripInbox(
-                sends = json.sends.map { TripSend(it.id, it.storyName, it.from, it.activityCount) },
-                copying = json.copying.map { TripCopying(it.storyName, it.from) },
+                sends = json.sends.map { TripSend(it.id, it.tripName, it.from, it.trackCount) },
+                copying = json.copying.map { TripCopying(it.tripName, it.from) },
             )
         }, onResult)
     }
 
-    /** `POST /v1/story-sends/{id}/accept` ([accept]) or `DELETE /v1/story-sends/{id}` (decline). */
+    /** `POST /v2/trip-sends/{id}/accept` ([accept]) or `DELETE /v2/trip-sends/{id}` (decline). */
     fun answerTripSend(id: String, accept: Boolean, onResult: (Result<Unit>) -> Unit) {
-        val url = BuildConfig.API_BASE_URL + API_V1 + "/story-sends/" + id + if (accept) "/accept" else ""
+        val url = BuildConfig.API_BASE_URL + API_V2 + "/trip-sends/" + id + if (accept) "/accept" else ""
         val request = Request.Builder().url(url)
             .apply { if (accept) post(EMPTY_BODY) else delete() }
             .build()
         call(request, { }, onResult)
     }
 
-    private fun StoryJson.toTrip(): Trip {
-        TrackTypes.merge(stats.byType.filter { it.label.isNotEmpty() }.associate { it.activityType to TrackTypes.Info(null, it.label) })
+    private fun TripJson.toTrip(): Trip {
+        TrackTypes.merge(stats.byType.filter { it.label.isNotEmpty() }.associate { it.trackType to TrackTypes.Info(null, it.label) })
         return toTripOnly()
     }
 
-    private fun StoryJson.toTripOnly() = Trip(
+    private fun TripJson.toTripOnly() = Trip(
         id = id,
         name = name,
         description = description.orEmpty(),
         from = from,
-        trackIds = activityIds,
+        trackIds = trackIds,
         stats = TripTotals("", stats.count, stats.distanceMeters, stats.movingSeconds),
-        byType = stats.byType.map { TripTotals(it.activityType, it.count, it.distanceMeters, it.movingSeconds) },
+        byType = stats.byType.map { TripTotals(it.trackType, it.count, it.distanceMeters, it.movingSeconds) },
     )
 
-    private fun AreaActivityRowJson.toTrack() = Track(
+    private fun AreaTrackRowJson.toTrack() = Track(
         id = id,
         startedAt = startedAt,
-        activityType = activityType,
+        trackType = trackType,
         timezone = timezone,
         name = name,
         distanceMeters = distanceMeters,
@@ -1111,13 +1111,13 @@ object HoldMyTrackApi {
         pending = pending,
         edited = false,
         isPrivate = private,
-        trips = stories.map { TripRef(it.id, it.name) },
+        trips = trips.map { TripRef(it.id, it.name) },
     )
 
-    private fun ActivityRowJson.toTrack() = Track(
+    private fun TrackRowJson.toTrack() = Track(
         id = id,
         startedAt = startedAt,
-        activityType = activityType,
+        trackType = trackType,
         timezone = timezone,
         name = name,
         distanceMeters = distanceMeters,
@@ -1127,9 +1127,9 @@ object HoldMyTrackApi {
         pending = pending,
         edited = edited,
         isPrivate = private,
-        routeEdit = trackEdit,
+        routeEdit = routeEdit,
         photos = photos,
-        trips = stories.map { TripRef(it.id, it.name) },
+        trips = trips.map { TripRef(it.id, it.name) },
     )
 
     private fun AccountJson.toProfile() =
@@ -1143,13 +1143,13 @@ object HoldMyTrackApi {
     )
 
     /**
-     * `GET /v1/activities/histogram?days=&before=` — one page of the days that have track
+     * `GET /v2/tracks/histogram?days=&before=` — one page of the days that have track
      * (`docs/IMPLEMENTATION.md` §4.7's track-day pagination mode): the [limit] most recent,
      * or the [limit] most recent strictly before [before]. The newest day and the account's first
      * are the Dates filter's bounds (`map/AreaController`).
      */
     fun trackDayPage(limit: Int, before: String?, onResult: (Result<TrackDayPage>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities/histogram").toHttpUrl().newBuilder()
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks/histogram").toHttpUrl().newBuilder()
             .addQueryParameter("days", limit.toString())
             .apply { if (before != null) addQueryParameter("before", before) }
             .build()
@@ -1157,12 +1157,12 @@ object HoldMyTrackApi {
     }
 
     /**
-     * `GET /v1/activities/histogram?from=&to=` — every day with track in a calendar window,
+     * `GET /v2/tracks/histogram?from=&to=` — every day with track in a calendar window,
      * both ends inclusive (`docs/IMPLEMENTATION.md` §4.8). Profile asks for everything up to the
      * end of this year in one call, the same single query the web's page runs for its grids.
      */
     fun trackDays(from: String, to: String, onResult: (Result<TrackDayPage>) -> Unit) {
-        val url = (BuildConfig.API_BASE_URL + API_V1 + "/activities/histogram").toHttpUrl().newBuilder()
+        val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks/histogram").toHttpUrl().newBuilder()
             .addQueryParameter("from", from)
             .addQueryParameter("to", to)
             .build()
@@ -1177,23 +1177,23 @@ object HoldMyTrackApi {
     /**
      * How many of the account's tracks use each `activity_type` — what the recording Edit screen's
      * Type picker lists, the same per-type counts the web client's Type facet is built from.
-     * Read from the same unpaginated `GET /v1/activities` as [tracks], since there is
+     * Read from the same unpaginated `GET /v2/tracks` as [tracks], since there is
      * no dedicated facets endpoint and this list already carries every live row.
      */
     fun trackTypeCounts(onResult: (Result<Map<String, Int>>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + "/activities").build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks").build()
         call(request, { body ->
-            val decoded = decode<ActivitiesJson>(body)
+            val decoded = decode<TracksJson>(body)
             TrackTypes.merge(decoded.types.described())
             buildMap {
-                for (row in decoded.activities) {
-                    if (row.activityType.isNotEmpty()) merge(row.activityType, 1, Int::plus)
+                for (row in decoded.tracks) {
+                    if (row.trackType.isNotEmpty()) merge(row.trackType, 1, Int::plus)
                 }
             }
         }, onResult)
     }
 
-    /** Each row of a `GET /v1/activities` body the tracks tile draws — one with a bbox and
+    /** Each row of a `GET /v2/tracks` body the tracks tile draws — one with a bbox and
      *  not Pending — with that bbox as `[minLon, minLat, maxLon, maxLat]`. */
 
     /** A response body as its wire class (Wire.kt). */
@@ -1210,7 +1210,7 @@ object HoldMyTrackApi {
      * `Set-Cookie`) and a native client exists to read.
      */
     private fun authenticate(path: String, body: RequestBody, onResult: (Result<Account>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V1 + path).post(body).build()
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + path).post(body).build()
         call(request, { text ->
             val token = decode<SessionTokenJson>(text).sessionToken
             if (token.isEmpty()) throw IOException("the server returned no session token")
@@ -1243,7 +1243,7 @@ object HoldMyTrackApi {
     }
 }
 
-/** What `GET /v1/map/layers` answered: the document, and its ETag to revalidate with. */
+/** What `GET /v2/map/layers` answered: the document, and its ETag to revalidate with. */
 data class MapLayersResponse(val text: String, val etag: String?)
 
 /** One time span asked about in [HoldMyTrackApi.trackOverlaps], under the caller's [key]. */
@@ -1252,4 +1252,4 @@ data class OverlapSpan(val key: String, val start: Instant, val end: Instant)
 /** The live track a span overlaps: its [id], to open it on the map, its [name] (empty when it
  *  has none) and type, and its start in the zone it was recorded in, which titles it when it has
  *  no name and gives the day the map opens on. */
-data class TrackOverlap(val id: String, val name: String, val activityType: String, val startedAt: String, val timezone: String?)
+data class TrackOverlap(val id: String, val name: String, val trackType: String, val startedAt: String, val timezone: String?)

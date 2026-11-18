@@ -11,7 +11,7 @@ import dev.holdmytrack.android.net.Session
  * and its tile URLs never change by themselves, so the map would otherwise go on showing
  * coverage from before the change.
  *
- * [watch] polls `GET /v1/coverage/status` and calls [onRefetch] once the account has no
+ * [watch] polls `GET /v2/coverage/status` and calls [onRefetch] once the account has no
  * coverage-changing job left — and also mid-job, whenever the status's `version` moves, since a
  * reprocess renders once with its Pending tracks left out and again once they're back. Each
  * call restarts the watch rather than joining a running one: a second delete can enqueue its job

@@ -53,7 +53,7 @@ object RecordingTypes {
      */
     fun known(server: Map<String, Int>, local: List<RecordedTrackRecord>): List<TypeCount> {
         val counts = server.toMutableMap()
-        for (record in local) counts.merge(record.activityType, 1, Int::plus)
+        for (record in local) counts.merge(record.trackType, 1, Int::plus)
         counts.remove(DEFAULT)
         val used = counts.entries.sortedByDescending { it.value }.map { TypeCount(it.key, it.value) }
         return used + PRESETS.filter { it !in counts }.map { TypeCount(it, 0) }

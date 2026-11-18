@@ -6,7 +6,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.ExerciseRoute
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
-import dev.holdmytrack.android.net.SyncActivityJson
+import dev.holdmytrack.android.net.SyncTrackJson
 import dev.holdmytrack.android.net.SyncPointJson
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.recording.db.toSyncTrack
@@ -16,7 +16,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** One ticked track the server refused, or that it could never accept, with the reason why. */
-data class Rejection(val key: String, val startedAt: Instant, val activityType: String, val reason: String)
+data class Rejection(val key: String, val startedAt: Instant, val trackType: String, val reason: String)
 
 /** What a finished (or curtailed) run did. */
 data class SyncReport(
@@ -31,13 +31,13 @@ data class SyncReport(
 
 /**
  * Sends what the user ticked on the Sync tab (`docs/SPEC.md` FR-3.4, FR-3.6) to
- * `POST /v1/sync/activities`, and nothing else: an unticked candidate never reaches the server.
+ * `POST /v2/sync/tracks`, and nothing else: an unticked candidate never reaches the server.
  * Health Connect sessions go in batches under `healthconnect`; each recording in a request of its
  * own under `recorded`, kept on the phone until its ingest lands ([SyncProgress]).
  *
  * Interrupting a run is safe: the server is idempotent on `(user_id, source, external_id)`, so
  * whatever was sent before the cut is simply known next time the list is read (`POST
- * /v1/sync/known`), and sending one again answers `already_processed`.
+ * /v2/sync/known`), and sending one again answers `already_processed`.
  *
  * **Foreground only** (`docs/IMPLEMENTATION.md` §4.0): routes written by other apps read back as
  * `ConsentRequired` in the background, so the routes sent here are the ones the Sync tab read
@@ -77,7 +77,7 @@ class SyncRunner(
             val candidate = withRoute(ticked) ?: continue
             if (SyncBatcher.tooLarge(candidate.pointCount)) {
                 val refusal = res.getString(R.string.sync_refusal_too_many_points, candidate.pointCount)
-                rejected += Rejection(candidate.key, candidate.startedAt, candidate.activityType, refusal)
+                rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, refusal)
                 continue
             }
             val full = batches.add(candidate, candidate.pointCount) ?: continue
@@ -98,7 +98,7 @@ class SyncRunner(
             SyncCandidates.Reread.Gone -> R.string.sync_refusal_gone
             SyncCandidates.Reread.Refused, null -> R.string.sync_refusal_route
         }
-        rejected += Rejection(candidate.key, candidate.startedAt, candidate.activityType, res.getString(reason))
+        rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, res.getString(reason))
         return null
     }
 
@@ -136,14 +136,14 @@ class SyncRunner(
         landed += now.map { it.key }
         for ((candidate, result) in verdicts.refused) {
             val reason = result?.error?.ifBlank { null } ?: res.getString(R.string.sync_no_report, result?.status ?: "missing")
-            rejected += Rejection(candidate.key, candidate.startedAt, candidate.activityType, reason)
+            rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, reason)
         }
         if (report && now.isNotEmpty()) onLanded(now)
         return null
     }
 
     /**
-     * The wire shape `POST /v1/sync/activities` accepts (`docs/IMPLEMENTATION.md` §4.0.3), built
+     * The wire shape `POST /v2/sync/tracks` accepts (`docs/IMPLEMENTATION.md` §4.0.3), built
      * from the route as read — never the simplified line the map draws.
      *
      * `external_id` is Health Connect's own record id, or the recording's UUID: the endpoint keys
@@ -156,12 +156,12 @@ class SyncRunner(
      *
      * Built off the main thread: a long ride is tens of thousands of points.
      */
-    private suspend fun prepare(candidate: Candidate): SyncActivityJson = withContext(Dispatchers.Default) {
+    private suspend fun prepare(candidate: Candidate): SyncTrackJson = withContext(Dispatchers.Default) {
         when (val origin = candidate.origin) {
             is Recording -> origin.record.toSyncTrack()
-            is HealthConnectSession -> SyncActivityJson(
+            is HealthConnectSession -> SyncTrackJson(
                 externalId = candidate.externalId,
-                activityType = candidate.activityType,
+                trackType = candidate.trackType,
                 points = origin.route.map {
                     SyncPointJson(lat = it.latitude, lon = it.longitude, elevationM = it.altitude?.inMeters, time = it.time.toString())
                 },

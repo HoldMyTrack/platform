@@ -757,14 +757,14 @@ class TracksPanel(
         val shown = showsCard && track != null
         card.visibility = if (shown) View.VISIBLE else View.GONE
         if (!shown || track == null) return
-        val kind = TrackTypes.kind(track.activityType)
-        cardIcon.setImageResource(typeIcon(track.activityType))
+        val kind = TrackTypes.kind(track.trackType)
+        cardIcon.setImageResource(typeIcon(track.trackType))
         cardTitle.text = PanelFormat.rowLabel(res, track)
         // The start moves under the title once a name has taken it, as on a row.
         val named = track.name?.trim()?.isNotEmpty() == true
         cardMeta.text = listOfNotNull(
             PanelFormat.startedAt(res, track.startedAt, track.timezone).takeIf { named },
-            TrackTypes.label(track.activityType),
+            TrackTypes.label(track.trackType),
         ).joinToString(" · ")
         // A private track has no stats worth showing (FR-5.1): what it is stands in for them.
         cardStats.visibility = if (track.isPrivate) View.GONE else View.VISIBLE

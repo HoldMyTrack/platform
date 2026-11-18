@@ -35,7 +35,7 @@ data class SyncList(
             fun withInFlight(listed: List<Candidate>) = (listed + inFlight).distinctBy { it.key }.sortedByDescending { it.startedAt }
             val everything = withInFlight(SyncCandidates.listed(sessions, known, recordings, hidden, showHidden = true))
             val shown = withInFlight(SyncCandidates.listed(sessions, known, recordings, hidden, showHidden))
-                .filter { types.isEmpty() || it.activityType in types }
+                .filter { types.isEmpty() || it.trackType in types }
             val tickable = shown.filter { it.key !in hidden && it.key !in onItsWay }
             return SyncList(
                 everything = everything,
