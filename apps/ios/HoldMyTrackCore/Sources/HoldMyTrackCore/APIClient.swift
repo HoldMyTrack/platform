@@ -142,9 +142,9 @@ public final class APIClient: Sendable {
         try await fetch("v1/map/layers", query: [URLQueryItem(name: "flavor", value: flavor)], etag: etag)
     }
 
-    /// A page of activity days for the date slider, newest first, before a day if given, with the
-    /// account's first activity day.
-    public func activityDays(limit: Int, before: String?) async throws -> (days: [String], earliest: String?) {
+    /// A page of track days for the date slider, newest first, before a day if given, with the
+    /// account's first track day.
+    public func trackDays(limit: Int, before: String?) async throws -> (days: [String], earliest: String?) {
         var items = [URLQueryItem(name: "days", value: String(limit))]
         if let before { items.append(URLQueryItem(name: "before", value: before)) }
         let json: HistogramJSON = try await decode(send("GET", "v1/activities/histogram", query: items))

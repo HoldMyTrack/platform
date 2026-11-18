@@ -1,15 +1,15 @@
 import HoldMyTrackCore
 import UIKit
 
-/// One activity row (root docs/SPEC.md FR-5.1, the web's TrackRow), on the Activities tab and
-/// under an open Story: the title, "[date ·] distance · duration · type", dimmed with a Pending
-/// or Hidden badge, a Private badge, and a Story badge for the Stories it's in but the open one.
+/// One track row (root docs/SPEC.md FR-5.1, the web's TrackRow), on the Tracks tab and
+/// under an open Trip: the title, "[date ·] distance · duration · type", dimmed with a Pending
+/// or Hidden badge, a Private badge, and a Trip badge for the Trips it's in but the open one.
 /// Its kind's tile is its checkbox: a tap on it, or a long press on the row, checks it.
-final class ActivityRowCell: UITableViewCell {
-    static let reuse = "activity"
+final class TrackRowCell: UITableViewCell {
+    static let reuse = "track"
 
     struct Row {
-        let activity: Activity
+        let track: Track
         let checked: Bool
         let focused: Bool
         let hidden: Bool
@@ -47,7 +47,7 @@ final class ActivityRowCell: UITableViewCell {
         removeConfig.baseForegroundColor = UIColor(resource: .inkSecondary)
         remove.configuration = removeConfig
         remove.widthAnchor.constraint(equalToConstant: 44).isActive = true
-        remove.accessibilityIdentifier = "removeFromStory"
+        remove.accessibilityIdentifier = "removeFromTrip"
         remove.addAction(UIAction { [weak self] _ in self?.onRemove?() }, for: .primaryActionTriggered)
 
         let text = Controls.column([title, meta, badges], spacing: DesignTokens.Space.s2)
@@ -68,33 +68,33 @@ final class ActivityRowCell: UITableViewCell {
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
-    /// onCheck nil leaves the tile a plain icon (an open Story's rows); onRemove shows the ×
-    /// that takes the row out of the open Story; openStoryID's badge is left off.
-    func bind(_ row: Row, format: PanelFormat, openStoryID: String?, demo: Bool,
-              onCheck: (() -> Void)?, onOpenStory: @escaping (String) -> Void, onRemove: (() -> Void)?) {
-        let activity = row.activity
-        let types = ActivityTypes.shared
-        let label = format.label(activity)
+    /// onCheck nil leaves the tile a plain icon (an open Trip's rows); onRemove shows the ×
+    /// that takes the row out of the open Trip; openStoryID's badge is left off.
+    func bind(_ row: Row, format: PanelFormat, openTripID: String?, demo: Bool,
+              onCheck: (() -> Void)?, onOpenTrip: @escaping (String) -> Void, onRemove: (() -> Void)?) {
+        let track = row.track
+        let types = TrackTypes.shared
+        let label = format.label(track)
         title.text = label
         var parts: [String] = []
-        if activity.title != nil { parts.append(format.startedAt(activity)) }
-        // A private activity has no track: "0.0 km · 0m" would read as broken data.
-        if !activity.isPrivate { parts += [format.distance(activity.distanceMeters), format.duration(activity.movingSeconds)] }
-        parts.append(types.label(activity.activityType))
+        if track.title != nil { parts.append(format.startedAt(track)) }
+        // A private track has no track: "0.0 km · 0m" would read as broken data.
+        if !track.isPrivate { parts += [format.distance(track.distanceMeters), format.duration(track.movingSeconds)] }
+        parts.append(types.label(track.activityType))
         meta.text = parts.joined(separator: " · ")
-        let dim: CGFloat = activity.pending ? 0.45 : row.hidden ? 0.55 : 1
+        let dim: CGFloat = track.pending ? 0.45 : row.hidden ? 0.55 : 1
         title.alpha = dim
         meta.alpha = dim
         contentView.backgroundColor = row.focused ? UIColor(resource: .surfaceTint) : .clear
 
         badges.arrangedSubviews.forEach { $0.removeFromSuperview() }
-        if activity.pending { badges.addArrangedSubview(Self.badge(String(localized: "Pending"), id: "badgePending")) }
+        if track.pending { badges.addArrangedSubview(Self.badge(String(localized: "Pending"), id: "badgePending")) }
         if row.hidden { badges.addArrangedSubview(Self.badge(String(localized: "Hidden"), id: "badgeHidden")) }
-        if activity.isPrivate && !activity.pending {
+        if track.isPrivate && !track.pending {
             badges.addArrangedSubview(Self.badge(String(localized: "Private"), id: "badgePrivate", icon: UIImage(resource: .lock)))
         }
-        let others = activity.stories.filter { $0.id != openStoryID }
-        if !others.isEmpty { badges.addArrangedSubview(storyBadge(others, onOpenStory: onOpenStory)) }
+        let others = track.trips.filter { $0.id != openTripID }
+        if !others.isEmpty { badges.addArrangedSubview(tripBadge(others, onOpenTrip: onOpenTrip)) }
         badges.isHidden = badges.arrangedSubviews.isEmpty
         // Each badge as wide as its word.
         badges.addArrangedSubview(UIView())
@@ -102,12 +102,12 @@ final class ActivityRowCell: UITableViewCell {
         self.onCheck = onCheck
         let ticked = row.checked && onCheck != nil
         var config = tile.configuration ?? .filled()
-        config.image = ticked ? UIImage(resource: .check) : ActivityTypes.icon(types.kind(activity.activityType))
+        config.image = ticked ? UIImage(resource: .check) : TrackTypes.icon(types.kind(track.activityType))
         config.baseBackgroundColor = ticked ? UIColor(resource: .accent) : UIColor(resource: .surfaceTint)
         config.baseForegroundColor = ticked ? UIColor(resource: .onAccent) : UIColor(resource: .inkSecondary)
         tile.configuration = config
         // A Pending row can't be checked until its reprocess lands; a checked one can be unchecked.
-        let checkable = onCheck != nil && (!activity.pending || row.checked)
+        let checkable = onCheck != nil && (!track.pending || row.checked)
         tile.isEnabled = checkable
         tile.isAccessibilityElement = onCheck != nil
         tile.accessibilityLabel = row.checked ? String(localized: "Uncheck \(label)") : String(localized: "Check \(label)")
@@ -117,7 +117,7 @@ final class ActivityRowCell: UITableViewCell {
         remove.accessibilityLabel = demo ? String(localized: "The demo account can't change a Trip") : String(localized: "Take \(label) out of this Trip")
         self.onRemove = onRemove
 
-        accessibilityIdentifier = "activityRow"
+        accessibilityIdentifier = "trackRow"
         contentView.accessibilityLabel = [label, meta.text].compactMap { $0 }.joined(separator: ". ")
     }
 
@@ -126,16 +126,16 @@ final class ActivityRowCell: UITableViewCell {
         onCheck?()
     }
 
-    private func storyBadge(_ stories: [StoryRef], onOpenStory: @escaping (String) -> Void) -> UIButton {
-        let text = stories.count == 1 ? String(localized: "Trip") : String(localized: "Trips: \(stories.count)")
-        let button = Self.badge(text, id: "badgeStory", icon: UIImage(resource: .bookOpen), accent: true)
-        if stories.count == 1 {
-            button.addAction(UIAction { _ in onOpenStory(stories[0].id) }, for: .primaryActionTriggered)
-            button.accessibilityLabel = String(localized: "Open the Trip \(stories[0].name)")
+    private func tripBadge(_ trips: [TripRef], onOpenTrip: @escaping (String) -> Void) -> UIButton {
+        let text = trips.count == 1 ? String(localized: "Trip") : String(localized: "Trips: \(trips.count)")
+        let button = Self.badge(text, id: "badgeTrip", icon: UIImage(resource: .bookOpen), accent: true)
+        if trips.count == 1 {
+            button.addAction(UIAction { _ in onOpenTrip(trips[0].id) }, for: .primaryActionTriggered)
+            button.accessibilityLabel = String(localized: "Open the Trip \(trips[0].name)")
         } else {
-            button.menu = UIMenu(children: stories.map { ref in UIAction(title: ref.name) { _ in onOpenStory(ref.id) } })
+            button.menu = UIMenu(children: trips.map { ref in UIAction(title: ref.name) { _ in onOpenTrip(ref.id) } })
             button.showsMenuAsPrimaryAction = true
-            button.accessibilityLabel = String(localized: "In Trips: \(stories.map(\.name).joined(separator: ", "))")
+            button.accessibilityLabel = String(localized: "In Trips: \(trips.map(\.name).joined(separator: ", "))")
         }
         return button
     }

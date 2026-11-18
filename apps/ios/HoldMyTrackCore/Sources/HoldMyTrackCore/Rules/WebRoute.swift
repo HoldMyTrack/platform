@@ -12,13 +12,13 @@ public enum WebRoute: Equatable, Sendable {
     /// The first run's save reached the map: the session is read before the map opens.
     case onboarded
     /// Sync history's View on map.
-    case viewOnMap(activity: String, day: String)
+    case viewOnMap(track: String, day: String)
 
-    /// The route for a link of scheme, authority and path, with the map's activity and day query
+    /// The route for a link of scheme, authority and path, with the map's track and day query
     /// parameters, against the API's baseScheme and baseAuthority, on the screen showing page.
     /// leaving is whether an earlier navigation already sent the user elsewhere.
     public static func of(
-        scheme: String?, authority: String?, path: String?, activity: String?, day: String?,
+        scheme: String?, authority: String?, path: String?, track: String?, day: String?,
         baseScheme: String?, baseAuthority: String?, page: String, leaving: Bool, onboarding: Bool
     ) -> WebRoute {
         if scheme != baseScheme || authority != baseAuthority { return .outside }
@@ -28,7 +28,7 @@ public enum WebRoute: Equatable, Sendable {
         switch at {
         case "/signin", "/verify-pending": return .close
         case "/":
-            if let activity, let day { return .viewOnMap(activity: activity, day: day) }
+            if let track, let day { return .viewOnMap(track: track, day: day) }
             return onboarding ? .onboarded : .close
         default: return .outside
         }

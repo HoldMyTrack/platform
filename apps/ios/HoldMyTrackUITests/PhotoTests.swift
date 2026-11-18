@@ -1,6 +1,6 @@
 import XCTest
 
-/// Photos on the map, end to end against the dev stack's demo, whose Stories carry photos.
+/// Photos on the map, end to end against the dev stack's demo, whose Trips carry photos.
 /// Skipped where no dev stack answers, as on CI.
 final class PhotoTests: XCTestCase {
     @MainActor
@@ -12,12 +12,12 @@ final class PhotoTests: XCTestCase {
         app.buttons["demo"].tap()
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
 
-        app.tabBars.buttons["tabStories"].tap()
-        let story = app.cells.matching(identifier: "storyFolder").containing(.staticText, identifier: "Greater Cleveland trails").firstMatch
-        XCTAssertTrue(story.waitForExistence(timeout: 10))
-        story.tap()
+        app.tabBars.buttons["tabTrips"].tap()
+        let trip = app.cells.matching(identifier: "tripFolder").containing(.staticText, identifier: "Greater Cleveland trails").firstMatch
+        XCTAssertTrue(trip.waitForExistence(timeout: 10))
+        trip.tap()
 
-        // The Story's photos come as markers once the camera is on it; a group zooms in to split.
+        // The Trip's photos come as markers once the camera is on it; a group zooms in to split.
         let marker = app.buttons.matching(identifier: "photoMarker").firstMatch
         XCTAssertTrue(marker.waitForExistence(timeout: 15))
         attach("Markers")
@@ -56,7 +56,7 @@ final class PhotoTests: XCTestCase {
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.buttons["panelHandle"].tap()
-        let row = app.cells.matching(identifier: "activityRow").firstMatch
+        let row = app.cells.matching(identifier: "trackRow").firstMatch
         XCTAssertTrue(row.waitForExistence(timeout: 10))
         row.tap()
         app.buttons["cardEdit"].tap()

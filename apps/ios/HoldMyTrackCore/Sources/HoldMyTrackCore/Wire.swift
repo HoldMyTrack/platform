@@ -144,7 +144,7 @@ struct CodeJSON: Codable, Sendable, Equatable {
     let code: String
 }
 
-// Activities
+// Tracks
 
 struct StoryRefJSON: Codable, Sendable, Equatable {
     let id: String
@@ -183,7 +183,7 @@ struct ActivitiesJSON: Codable, Sendable, Equatable {
     let types: [String: ActivityTypeJSON]?
 }
 
-/// An activity as the area list's row shows it; `GET /v1/activities/{id}` has the rest.
+/// A track as the area list's row shows it; `GET /v1/activities/{id}` has the rest.
 struct AreaActivityRowJSON: Codable, Sendable, Equatable {
     let id: String
     let startedAt: String
@@ -218,7 +218,7 @@ struct PendingJSON: Codable, Sendable, Equatable {
     let pending: [String]
 }
 
-/// What a client shows for one activity type.
+/// What a client shows for one track type.
 struct ActivityTypeJSON: Codable, Sendable, Equatable {
     let kind: String
     let label: String
@@ -304,7 +304,7 @@ struct TrackMetricsJSON: Codable, Sendable, Equatable {
     }
 }
 
-/// A track edit both ways: what the editor opens with and what Apply sends. Times are Unix ms; a
+/// A route edit both ways: what the editor opens with and what Apply sends. Times are Unix ms; a
 /// pair is a two-element array, and move is keyed by a time, which JSON carries as a string.
 struct TrackEditJSON: Codable, Sendable, Equatable {
     let keep: [Int]?
@@ -385,7 +385,7 @@ struct UploadsActiveJSON: Codable, Sendable, Equatable {
 
 // Sync
 
-/// One point of a synced activity. elevationM is left out when unknown: no altitude is not sea
+/// One point of a synced track. elevationM is left out when unknown: no altitude is not sea
 /// level.
 struct SyncPointJSON: Codable, Sendable, Equatable {
     let lat: Double
@@ -475,7 +475,7 @@ struct PrivateLocationInputJSON: Codable, Sendable, Equatable {
     }
 }
 
-// Stories
+// Trips
 
 struct StoryTypeStatsJSON: Codable, Sendable, Equatable {
     let activityType: String
@@ -524,7 +524,7 @@ struct StoriesJSON: Codable, Sendable, Equatable {
     let stories: [StoryJSON]
 }
 
-/// A new Story, with its first activityIDs.
+/// A new Trip, with its first activityIDs.
 struct StoryCreateJSON: Codable, Sendable, Equatable {
     let name: String
     let description: String

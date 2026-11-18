@@ -1,10 +1,10 @@
 import XCTest
 
-/// The Activities and Stories panel, end to end against the dev stack: read on the demo, changed
+/// The Tracks and Trips panel, end to end against the dev stack: read on the demo, changed
 /// only on a fresh account (TestAccount). Skipped where no dev stack answers, as on CI.
 final class PanelTests: XCTestCase {
     @MainActor
-    func testTheDemoListsItsActivitiesAndCantChangeThem() throws {
+    func testTheDemoListsItsTracksAndCantChangeThem() throws {
         try LaunchTests.requireDevStack(self)
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut"]
@@ -12,12 +12,12 @@ final class PanelTests: XCTestCase {
         app.buttons["demo"].tap()
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.buttons["panelHandle"].tap()
-        let rows = app.cells.matching(identifier: "activityRow")
+        let rows = app.cells.matching(identifier: "trackRow")
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
 
         // A row's tap focuses it: its card takes the range's place.
         rows.firstMatch.tap()
-        XCTAssertTrue(app.otherElements["activityCard"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["cardEdit"].isEnabled, "the demo account can't edit")
         XCTAssertTrue(app.buttons["cardFocus"].isEnabled)
         // The map draws its pace bands, and the card their legend.
@@ -38,9 +38,9 @@ final class PanelTests: XCTestCase {
         XCTAssertFalse(app.buttons["barDelete"].isEnabled)
         app.buttons["endSelecting"].tap()
 
-        app.tabBars.buttons["tabStories"].tap()
-        XCTAssertTrue(app.cells["storyFolder"].firstMatch.waitForExistence(timeout: 10))
-        XCTAssertFalse(app.buttons["newStory"].isEnabled)
+        app.tabBars.buttons["tabTrips"].tap()
+        XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
+        XCTAssertFalse(app.buttons["newTrip"].isEnabled)
     }
 
     @MainActor
@@ -54,7 +54,7 @@ final class PanelTests: XCTestCase {
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.buttons["panelHandle"].tap()
-        let rows = app.cells.matching(identifier: "activityRow")
+        let rows = app.cells.matching(identifier: "trackRow")
         XCTAssertTrue(rows.firstMatch.waitForExistence(timeout: 10))
         // The list is the opening view's area, which may not hold every sample.
         let listed = rows.count
@@ -75,15 +75,15 @@ final class PanelTests: XCTestCase {
         app.buttons["cardDelete"].tap()
         XCTAssertTrue(app.alerts.firstMatch.waitForExistence(timeout: 5))
         app.alerts.buttons.element(boundBy: 1).tap()
-        XCTAssertTrue(app.otherElements["activityCard"].waitForNonExistence(timeout: 15), "the deleted activity's card closes")
+        XCTAssertTrue(app.otherElements["trackCard"].waitForNonExistence(timeout: 15), "the deleted activity's card closes")
         app.buttons["panelHandle"].tap()
         let fewer = NSPredicate(format: "count == %d", listed - 1)
         XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: fewer, object: rows)], timeout: 15), .completed)
     }
 
-    /// Stories shows its Story in Normal, with no mode toggle, and the Map tab gets its mode back.
+    /// Trips shows its Trip in Normal, with no mode toggle, and the Map tab gets its mode back.
     @MainActor
-    func testStoriesShowNormalAndTheMapTabKeepsItsMode() throws {
+    func testTripsShowNormalAndTheMapTabKeepsItsMode() throws {
         try LaunchTests.requireDevStack(self)
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut"]
@@ -94,8 +94,8 @@ final class PanelTests: XCTestCase {
         modes.buttons.element(boundBy: 1).tap()
         XCTAssertFalse(app.buttons["panelHandle"].isHittable, "the sheet is Normal mode's")
 
-        app.tabBars.buttons["tabStories"].tap()
-        XCTAssertTrue(app.cells["storyFolder"].firstMatch.waitForExistence(timeout: 10))
+        app.tabBars.buttons["tabTrips"].tap()
+        XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
         XCTAssertFalse(modes.exists, "no mode toggle on Stories")
 
         app.tabBars.buttons["tabMap"].tap()

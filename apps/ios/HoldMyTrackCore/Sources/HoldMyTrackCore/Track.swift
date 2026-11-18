@@ -1,9 +1,9 @@
 import Foundation
 
-/// An activity as the Activities panel lists it (root docs/SPEC.md FR-5.1).
-public struct Activity: Equatable, Sendable {
+/// A track as the Tracks panel lists it (root docs/SPEC.md FR-5.1).
+public struct Track: Equatable, Sendable {
     public let id: String
-    /// ISO 8601, as the server sends it; formatted in timezone (ActivityZone).
+    /// ISO 8601, as the server sends it; formatted in timezone (TrackZone).
     public let startedAt: String
     public let timezone: String
     public let activityType: String
@@ -15,16 +15,16 @@ public struct Activity: Equatable, Sendable {
     public let bbox: [Double]?
     public let pending: Bool
     public let isPrivate: Bool
-    public let stories: [StoryRef]
+    public let trips: [TripRef]
     /// Why its track can't be edited, or nil when it can: the server's code (EditAvailability).
-    public let trackEdit: String?
+    public let routeEdit: String?
     /// Why photos can't be added to it, or nil when they can.
     public let photosBlock: String?
 
     public init(
         id: String, startedAt: String, timezone: String = "", activityType: String, name: String? = nil,
         distanceMeters: Double? = nil, movingSeconds: Int? = nil, description: String? = nil, bbox: [Double]? = nil,
-        pending: Bool = false, isPrivate: Bool = false, stories: [StoryRef] = [], trackEdit: String? = nil, photosBlock: String? = nil
+        pending: Bool = false, isPrivate: Bool = false, trips: [TripRef] = [], routeEdit: String? = nil, photosBlock: String? = nil
     ) {
         self.id = id
         self.startedAt = startedAt
@@ -37,8 +37,8 @@ public struct Activity: Equatable, Sendable {
         self.bbox = bbox
         self.pending = pending
         self.isPrivate = isPrivate
-        self.stories = stories
-        self.trackEdit = trackEdit
+        self.trips = trips
+        self.routeEdit = routeEdit
         self.photosBlock = photosBlock
     }
 
@@ -47,23 +47,23 @@ public struct Activity: Equatable, Sendable {
             id: json.id, startedAt: json.startedAt, timezone: json.timezone, activityType: json.activityType, name: json.name,
             distanceMeters: json.distanceMeters, movingSeconds: json.movingSeconds, description: json.description,
             bbox: json.bbox?.count == 4 ? json.bbox : nil, pending: json.pending, isPrivate: json.private,
-            stories: json.stories.map { StoryRef(id: $0.id, name: $0.name) }, trackEdit: json.trackEdit, photosBlock: json.photos
+            trips: json.stories.map { TripRef(id: $0.id, name: $0.name) }, routeEdit: json.trackEdit, photosBlock: json.photos
         )
     }
 
-    /// An area list's row: what the Edit window needs besides, it reads in full (APIClient.activity).
+    /// An area list's row: what the Edit window needs besides, it reads in full (APIClient.track).
     init(_ json: AreaActivityRowJSON) {
         self.init(
             id: json.id, startedAt: json.startedAt, timezone: json.timezone, activityType: json.activityType, name: json.name,
             distanceMeters: json.distanceMeters, movingSeconds: json.movingSeconds,
             bbox: json.bbox?.count == 4 ? json.bbox : nil, pending: json.pending, isPrivate: json.private,
-            stories: json.stories.map { StoryRef(id: $0.id, name: $0.name) }
+            trips: json.stories.map { TripRef(id: $0.id, name: $0.name) }
         )
     }
 
     /// What the panel's rules read of it.
-    public var summary: ActivitySummary {
-        ActivitySummary(id: id, activityType: activityType, distanceMeters: distanceMeters, isPrivate: isPrivate, isPending: pending)
+    public var summary: TrackSummary {
+        TrackSummary(id: id, activityType: activityType, distanceMeters: distanceMeters, isPrivate: isPrivate, isPending: pending)
     }
 
     /// The name, when it has one that isn't blank.
@@ -73,8 +73,8 @@ public struct Activity: Equatable, Sendable {
     }
 }
 
-/// A Story an activity is in, as its row's badge names it.
-public struct StoryRef: Equatable, Sendable {
+/// A Trip a track is in, as its row's badge names it.
+public struct TripRef: Equatable, Sendable {
     public let id: String
     public let name: String
 
@@ -84,82 +84,82 @@ public struct StoryRef: Equatable, Sendable {
     }
 }
 
-/// A count, a distance and a moving time: a Story's, or one type's share of it.
-public struct StoryTotals: Equatable, Sendable {
-    /// Empty for the whole Story.
+/// A count, a distance and a moving time: a Trip's, or one type's share of it.
+public struct TripTotals: Equatable, Sendable {
+    /// Empty for the whole Trip.
     public let activityType: String
     public let count: Int
     public let distanceMeters: Double
     public let movingSeconds: Int
 }
 
-/// A Story (root docs/SPEC.md FR-13): a named set of activities, whatever their dates.
-public struct Story: Equatable, Sendable {
+/// A Trip (root docs/SPEC.md FR-13): a named set of tracks, whatever their dates.
+public struct Trip: Equatable, Sendable {
     public let id: String
     public let name: String
     public let description: String
     /// Who sent it, for a copy accepted from someone else (FR-13.7).
     public let from: String?
-    public let activityIDs: [String]
-    public let stats: StoryTotals
-    public let byType: [StoryTotals]
+    public let trackIDs: [String]
+    public let stats: TripTotals
+    public let byType: [TripTotals]
 
     init(_ json: StoryJSON) {
         id = json.id
         name = json.name
         description = json.description ?? ""
         from = json.from
-        activityIDs = json.activityIDs
-        stats = StoryTotals(activityType: "", count: json.stats.count, distanceMeters: json.stats.distanceMeters, movingSeconds: json.stats.movingSeconds)
+        trackIDs = json.activityIDs
+        stats = TripTotals(activityType: "", count: json.stats.count, distanceMeters: json.stats.distanceMeters, movingSeconds: json.stats.movingSeconds)
         byType = json.stats.byType.map {
-            StoryTotals(activityType: $0.activityType, count: $0.count, distanceMeters: $0.distanceMeters, movingSeconds: $0.movingSeconds)
+            TripTotals(activityType: $0.activityType, count: $0.count, distanceMeters: $0.distanceMeters, movingSeconds: $0.movingSeconds)
         }
     }
 
-    /// The type labels the Story's numbers carry, for ActivityTypeCatalog.
-    static func labels(_ json: StoryJSON) -> [String: ActivityTypeInfo] {
-        Dictionary(json.stats.byType.compactMap { t in t.label.flatMap { $0.isEmpty ? nil : (t.activityType, ActivityTypeInfo(kind: nil, label: $0)) } },
+    /// The type labels the Trip's numbers carry, for TrackTypeCatalog.
+    static func labels(_ json: StoryJSON) -> [String: TrackTypeInfo] {
+        Dictionary(json.stats.byType.compactMap { t in t.label.flatMap { $0.isEmpty ? nil : (t.activityType, TrackTypeInfo(kind: nil, label: $0)) } },
                    uniquingKeysWith: { a, _ in a })
     }
 }
 
-/// A copy of a Story someone sent, waiting to be accepted or declined (FR-13.7).
-public struct StorySend: Equatable, Sendable {
+/// A copy of a Trip someone sent, waiting to be accepted or declined (FR-13.7).
+public struct TripSend: Equatable, Sendable {
     public let id: String
-    public let storyName: String
+    public let tripName: String
     public let from: String
-    public let activityCount: Int
+    public let trackCount: Int
 }
 
 /// An accepted copy still arriving.
-public struct StoryCopying: Equatable, Sendable {
-    public let storyName: String
+public struct TripCopying: Equatable, Sendable {
+    public let tripName: String
     public let from: String
 }
 
-public struct StoryInbox: Equatable, Sendable {
-    public let sends: [StorySend]
-    public let copying: [StoryCopying]
+public struct TripInbox: Equatable, Sendable {
+    public let sends: [TripSend]
+    public let copying: [TripCopying]
 }
 
-/// What the server says about one activity type; either part may be missing.
-public struct ActivityTypeInfo: Equatable, Sendable {
-    public let kind: ActivityKind?
+/// What the server says about one track type; either part may be missing.
+public struct TrackTypeInfo: Equatable, Sendable {
+    public let kind: TrackKind?
     public let label: String?
 
-    public init(kind: ActivityKind?, label: String?) {
+    public init(kind: TrackKind?, label: String?) {
         self.kind = kind
         self.label = label
     }
 
     init(_ json: ActivityTypeJSON) {
-        self.init(kind: ActivityKind(wire: json.kind), label: json.label.isEmpty ? nil : json.label)
+        self.init(kind: TrackKind(wire: json.kind), label: json.label.isEmpty ? nil : json.label)
     }
 }
 
-/// What kind of moving an activity type is, as the server says (root docs/SPEC.md FR-5.1): its
+/// What kind of moving a track type is, as the server says (root docs/SPEC.md FR-5.1): its
 /// icon, and pace or speed.
-public enum ActivityKind: String, Equatable, Sendable, CaseIterable {
+public enum TrackKind: String, Equatable, Sendable, CaseIterable {
     /// Walking, hiking, running: pace.
     case foot
     /// Cycling, skating: speed.
@@ -172,7 +172,7 @@ public enum ActivityKind: String, Equatable, Sendable, CaseIterable {
     case other
 
     public init(wire: String) {
-        self = ActivityKind(rawValue: wire) ?? .other
+        self = TrackKind(rawValue: wire) ?? .other
     }
 
     /// Pace reads naturally only on foot.

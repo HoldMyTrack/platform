@@ -1,9 +1,9 @@
 import XCTest
 
-/// The Edit window's Track tab, end to end on a fresh account against the dev stack. Skipped
+/// The Edit window's Route tab, end to end on a fresh account against the dev stack. Skipped
 /// where no dev stack answers, as on CI.
-final class TrackEditTests: XCTestCase {
-    /// Chop and Undo on the map, then a Chop saved, then a Split saved: a second activity.
+final class RouteEditTests: XCTestCase {
+    /// Chop and Undo on the map, then a Chop saved, then a Split saved: a second track.
     @MainActor
     func testAChopAndASplitAreSaved() throws {
         try LaunchTests.requireDevStack(self)
@@ -14,35 +14,35 @@ final class TrackEditTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        openTrackTab(app)
+        openRouteTab(app)
 
         // The low knob a third of the way: Chop keeps the rest; Undo brings it back.
-        let range = app.otherElements["trackRange"]
+        let range = app.otherElements["routeRange"]
         XCTAssertTrue(range.waitForExistence(timeout: 15))
         moveLowKnob(range, to: 0.33)
-        app.buttons["trackChop"].tap()
+        app.buttons["routeChop"].tap()
         attach("Chopped")
-        XCTAssertTrue(app.buttons["trackUndo"].isEnabled)
-        app.buttons["trackUndo"].tap()
-        XCTAssertFalse(app.buttons["trackUndo"].isEnabled)
+        XCTAssertTrue(app.buttons["routeUndo"].isEnabled)
+        app.buttons["routeUndo"].tap()
+        XCTAssertFalse(app.buttons["routeUndo"].isEnabled)
 
         moveLowKnob(range, to: 0.25)
-        app.buttons["trackChop"].tap()
+        app.buttons["routeChop"].tap()
         app.buttons["editSave"].tap()
         XCTAssertTrue(app.segmentedControls["editTabs"].waitForNonExistence(timeout: 30))
-        XCTAssertNotNil(account.trackEdit(account.ids[0])?["keep"], "the chop is saved")
-        XCTAssertTrue(account.waitForActivities(1, timeout: 60), "reprocessed")
+        XCTAssertNotNil(account.routeEdit(account.ids[0])?["keep"], "the chop is saved")
+        XCTAssertTrue(account.waitForTracks(1, timeout: 60), "reprocessed")
 
-        // Split at a knob: two activities once both parts are processed.
-        openTrackTab(app)
+        // Split at a knob: two tracks once both parts are processed.
+        openRouteTab(app)
         XCTAssertTrue(range.waitForExistence(timeout: 15))
         moveLowKnob(range, to: 0.5)
-        app.buttons["trackSplit"].tap()
+        app.buttons["routeSplit"].tap()
         XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Saving splits'")).firstMatch.exists)
         attach("Split")
         app.buttons["editSave"].tap()
         XCTAssertTrue(app.segmentedControls["editTabs"].waitForNonExistence(timeout: 30))
-        XCTAssertTrue(account.waitForActivities(2, timeout: 90), "split in two")
+        XCTAssertTrue(account.waitForTracks(2, timeout: 90), "split in two")
     }
 
     /// Delete point takes out the point tapped on the map; Move point drags one.
@@ -56,14 +56,14 @@ final class TrackEditTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
-        openTrackTab(app)
-        XCTAssertTrue(app.otherElements["trackRange"].waitForExistence(timeout: 15))
+        openRouteTab(app)
+        XCTAssertTrue(app.otherElements["routeRange"].waitForExistence(timeout: 15))
         sleep(2) // the camera onto the track
         let count = app.staticTexts.containing(NSPredicate(format: "label BEGINSWITH 'Points:'")).firstMatch
         let before = count.label
 
         // A grid of taps over the map above the sheet until one lands on a point.
-        app.buttons["trackDeletePoint"].tap()
+        app.buttons["routeDeletePoint"].tap()
         let map = app.otherElements["map"]
         var hit: XCUICoordinate?
         search: for row in stride(from: 0.2, through: 0.45, by: 0.025) {
@@ -79,7 +79,7 @@ final class TrackEditTests: XCTestCase {
         let point = try XCTUnwrap(hit, "a tap on the track deletes a point")
         attach("Deleted")
         // Undo takes each delete back, however many taps landed.
-        let undo = app.buttons["trackUndo"]
+        let undo = app.buttons["routeUndo"]
         var steps = 0
         while undo.isEnabled {
             undo.tap()
@@ -89,19 +89,19 @@ final class TrackEditTests: XCTestCase {
         XCTAssertEqual(count.label, before)
 
         // The same place pressed and dragged in Move point mode: one step, no point fewer.
-        app.buttons["trackMovePoint"].tap()
+        app.buttons["routeMovePoint"].tap()
         point.press(forDuration: 0.2, thenDragTo: point.withOffset(CGVector(dx: 60, dy: 30)))
-        XCTAssertTrue(app.buttons["trackUndo"].isEnabled, "the move is a step")
+        XCTAssertTrue(app.buttons["routeUndo"].isEnabled, "the move is a step")
         XCTAssertEqual(count.label, before)
         attach("Moved")
     }
 
     @MainActor
-    private func openTrackTab(_ app: XCUIApplication) {
-        let card = app.otherElements["activityCard"]
+    private func openRouteTab(_ app: XCUIApplication) {
+        let card = app.otherElements["trackCard"]
         if !card.exists {
             app.buttons["panelHandle"].tap()
-            let row = app.cells.matching(identifier: "activityRow").firstMatch
+            let row = app.cells.matching(identifier: "trackRow").firstMatch
             XCTAssertTrue(row.waitForExistence(timeout: 15))
             row.tap()
         }

@@ -1,15 +1,15 @@
-/// What the app shows for each activity type, as the server says (root docs/SPEC.md FR-5.1,
-/// `GET /v1/activity-types`, every activity list's `types` and every Story's labels): its label
+/// What the app shows for each track type, as the server says (root docs/SPEC.md FR-5.1,
+/// `GET /v1/activity-types`, every track list's `types` and every Trip's labels): its label
 /// and its kind. The app matches no words and keeps no catalog of its own; a type the server
 /// hasn't described is `.other`, its label spaced out from snake_case and title-cased, as the
 /// server falls back.
-public struct ActivityTypeCatalog: Equatable, Sendable {
-    public private(set) var kinds: [String: ActivityKind] = [:]
+public struct TrackTypeCatalog: Equatable, Sendable {
+    public private(set) var kinds: [String: TrackKind] = [:]
     public private(set) var labels: [String: String] = [:]
 
     public init() {}
 
-    public func kind(_ type: String) -> ActivityKind { kinds[type] ?? .other }
+    public func kind(_ type: String) -> TrackKind { kinds[type] ?? .other }
 
     public func label(_ type: String) -> String { labels[type] ?? Self.fallbackLabel(type) }
 
@@ -20,7 +20,7 @@ public struct ActivityTypeCatalog: Equatable, Sendable {
 
     /// What a response said about its types; true when anything changed.
     @discardableResult
-    public mutating func merge(_ described: [String: ActivityTypeInfo]) -> Bool {
+    public mutating func merge(_ described: [String: TrackTypeInfo]) -> Bool {
         var changed = false
         for (type, info) in described {
             if let kind = info.kind, kinds[type] != kind {

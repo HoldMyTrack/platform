@@ -20,13 +20,13 @@ public enum PlaceAnchor: Equatable, Sendable {
     case waiting(String)
 }
 
-public struct EmptyTrack: Error {}
+public struct EmptyRoute: Error {}
 
 /// A track as the Photos tab's slider walks it (root docs/IMPLEMENTATION.md §4.27): the display
 /// points with their moments, measured along their length. The slider runs by distance, not
 /// time, so a long stop doesn't take up half its travel; a photo's place is still saved as a
 /// moment (route_at), which is what the server keeps.
-public struct PhotoTrack: Sendable {
+public struct PhotoRoute: Sendable {
     public let points: [TimedPoint]
     /// Meters from the first point to each point.
     public let along: [Double]
@@ -46,7 +46,7 @@ public struct PhotoTrack: Sendable {
 
     /// The place fraction (0...1) of the way along the track, with its moment.
     public func point(at fraction: Double) throws -> TimedPoint {
-        guard let first = points.first, let last = points.last else { throw EmptyTrack() }
+        guard let first = points.first, let last = points.last else { throw EmptyRoute() }
         let total = along[along.count - 1]
         let f = min(1, max(0, fraction))
         if points.count == 1 || total == 0 {

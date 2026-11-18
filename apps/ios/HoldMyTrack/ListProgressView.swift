@@ -1,6 +1,6 @@
 import UIKit
 
-/// The list's progress bar, the web's `.activities-panel__progress`: a 2-point strip over the rows
+/// The list's progress bar, the web's `.tracks-panel__progress`: a 2-point strip over the rows
 /// with an accent segment sliding across while a slow reload is under way. Always 2 points tall,
 /// so showing it never moves the list; with Reduce Motion the segment is the whole strip, still.
 final class ListProgressView: UIView {

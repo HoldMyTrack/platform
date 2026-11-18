@@ -2,28 +2,28 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The sheet's tabs: the tab bar's Map shows Activities, its Stories the Stories tab.
-enum PanelTab { case activities, stories }
+/// The sheet's tabs: the tab bar's Map shows Tracks, its Trips the Trips tab.
+enum PanelTab { case tracks, trips }
 
 /// The sheet over the map (apps/android/docs/SPEC.md FR-2.7): the list for the range or the open
-/// Story, the selection bound into the map's `focused` and `hidden` vars, Pending watched, and the
-/// toolbar's Edit, Delete and Add to story. How it fits together is
+/// Trip, the selection bound into the map's `focused` and `hidden` vars, Pending watched, and the
+/// toolbar's Edit, Delete and Add to trip. How it fits together is
 /// apps/ios/docs/IMPLEMENTATION.md §3.4.
 extension MapViewController {
     func buildPanel() {
-        activitiesPanel = ActivitiesPanel(format: format, demo: account.isDemo)
-        storiesPanel = StoriesPanel(api: flow.api, format: format, demo: account.isDemo)
-        activitiesPanel.onEvent = { [weak self] in self?.handle($0) }
-        storiesPanel.onEvent = { [weak self] in self?.handle($0) }
-        for button in activitiesPanel.addToStoryButtons {
-            button.menu = StoryDialogs.addToStoryMenu(api: flow.api, over: view, targets: { [weak self] in
+        tracksPanel = TracksPanel(format: format, demo: account.isDemo)
+        tripsPanel = TripsPanel(api: flow.api, format: format, demo: account.isDemo)
+        tracksPanel.onEvent = { [weak self] in self?.handle($0) }
+        tripsPanel.onEvent = { [weak self] in self?.handle($0) }
+        for button in tracksPanel.addToTripButtons {
+            button.menu = TripDialogs.addToTripMenu(api: flow.api, over: view, targets: { [weak self] in
                 guard let self else { return [] }
                 return self.session.panel.targets.map(\.id)
-            }, added: { [weak self] story, created in self?.addedToStory(story, created: created) })
+            }, added: { [weak self] trip, created in self?.addedToTrip(trip, created: created) })
         }
 
-        for v in [activitiesPanel.card, activitiesPanel.summary, storiesPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
-        for v in [activitiesPanel.content, storiesPanel.content] {
+        for v in [tracksPanel.card, tracksPanel.summary, tripsPanel.head] as [UIView] { sheet.head.addArrangedSubview(v) }
+        for v in [tracksPanel.content, tripsPanel.content] {
             v.translatesAutoresizingMaskIntoConstraints = false
             sheet.content.addSubview(v)
             NSLayoutConstraint.activate([
@@ -45,8 +45,8 @@ extension MapViewController {
             tap.require(toFail: other)
         }
         mapView.addGestureRecognizer(tap)
-        bindTrackEditDrag()
-        NotificationCenter.default.addObserver(forName: ActivityTypes.changed, object: nil, queue: .main) { [weak self] _ in
+        bindRouteEditDrag()
+        NotificationCenter.default.addObserver(forName: TrackTypes.changed, object: nil, queue: .main) { [weak self] _ in
             MainActor.assumeIsolated { self?.renderPanel() }
         }
         renderPanel()
@@ -54,23 +54,23 @@ extension MapViewController {
 
     // MARK: Tabs
 
-    /// The tab bar's Map or Stories brought the map forward.
-    func show(_ next: PanelTab, story: String? = nil) {
+    /// The tab bar's Map or Trips brought the map forward.
+    func show(_ next: PanelTab, trip: String? = nil) {
         loadViewIfNeeded()
         if next == panelTab {
-            if let story { open(story) }
+            if let trip { open(trip) }
             return
         }
         panelTab = next
-        if next == .stories {
-            storiesPanel.start()
+        if next == .trips {
+            tripsPanel.start()
             sheet.setDetent(.half, animated: false)
-            if let story { open(story) }
+            if let trip { open(trip) }
         } else {
-            storiesPanel.stop()
-            if session.storyID != nil {
-                session.exitStory()
-                storiesPanel.setOpen(nil)
+            tripsPanel.stop()
+            if session.tripID != nil {
+                session.exitTrip()
+                tripsPanel.setOpen(nil)
                 updateTracksQuery()
                 followArea(always: true)
             }
@@ -80,26 +80,26 @@ extension MapViewController {
         panelChanged()
     }
 
-    private func open(_ story: String) {
-        session.enterStory(story)
-        storiesPanel.setOpen(story)
-        activities = []
+    private func open(_ trip: String) {
+        session.enterTrip(trip)
+        tripsPanel.setOpen(trip)
+        tracks = []
         updateTracksQuery()
         loadList()
         panelChanged()
     }
 
-    /// Sync history's View on map (apps/android/docs/SPEC.md FR-4.1): the activity focused once
+    /// Sync history's View on map (apps/android/docs/SPEC.md FR-4.1): the track focused once
     /// the list has it; one not listed sets Dates to its day, which flies the camera there.
-    func viewOnMap(activity: String, day: String) {
+    func viewOnMap(track: String, day: String) {
         loadViewIfNeeded()
-        // The activity's track is Normal mode's.
+        // The track's route is Normal mode's.
         if pickedMode != .normal { pickMode(.normal) }
-        focusWhenListed = activity
-        if session.storyID == nil && activities.contains(where: { $0.id == activity }) {
+        focusWhenListed = track
+        if session.tripID == nil && tracks.contains(where: { $0.id == track }) {
             loadList()
         } else {
-            if session.storyID != nil { show(.activities) }
+            if session.tripID != nil { show(.tracks) }
             session.viewDay(day)
             datesChanged()
         }
@@ -107,13 +107,13 @@ extension MapViewController {
 
     // MARK: The list
 
-    /// The open Story's activities, else the area's under Dates, read for each and on every
+    /// The open Trip's tracks, else the area's under Dates, read for each and on every
     /// return to the map. Too far out the list is empty, asking nothing.
     func loadList() {
         guard isViewLoaded else { return }
         listTask?.cancel()
-        let story = session.storyID, dates = session.dates, area = session.area
-        if story == nil {
+        let trip = session.tripID, dates = session.dates, area = session.area
+        if trip == nil {
             // Not until the opening view has asked about an area.
             guard area != nil else { return }
             zoomedOut = listZoomedOut
@@ -128,18 +128,18 @@ extension MapViewController {
         renderPanel()
         listTask = Task {
             do {
-                let read: (activities: [Activity], total: Int?, types: [String: ActivityTypeInfo])
-                if let story {
-                    let r = try await flow.api.storyActivities(story)
-                    read = (r.activities, nil, r.types)
+                let read: (tracks: [Track], total: Int?, types: [String: TrackTypeInfo])
+                if let trip {
+                    let r = try await flow.api.tripTracks(trip)
+                    read = (r.tracks, nil, r.types)
                 } else {
                     read = try await flow.api.areaList(box: area, dates: dates)
                 }
                 guard !Task.isCancelled else { return }
-                ActivityTypes.shared.merge(read.types)
-                ActivityTypes.shared.refresh(read.activities.map(\.activityType), api: flow.api)
+                TrackTypes.shared.merge(read.types)
+                TrackTypes.shared.refresh(read.tracks.map(\.activityType), api: flow.api)
                 areaTotal = read.total
-                listed(read.activities)
+                listed(read.tracks)
             } catch is CancellationError {
             } catch {
                 guard !Task.isCancelled else { return }
@@ -153,15 +153,15 @@ extension MapViewController {
     }
 
     /// A fresh list: what of the selection still exists stays, a finished reprocess fetches the
-    /// tracks again, and a picked range or an opened Story flies onto it.
-    private func listed(_ next: [Activity]) {
+    /// tracks again, and a picked range or an opened Trip flies onto it.
+    private func listed(_ next: [Track]) {
         let change = PendingDiff.of(previous: pendingIDs, now: Set(next.filter(\.pending).map(\.id)), awaiting: awaiting, listed: Set(next.map(\.id)))
         pendingIDs = change.pending
         awaiting = change.awaiting
-        activities = next
+        tracks = next
         listLoading = false
         listError = nil
-        session.panel.setActivities(next.map(\.summary))
+        session.panel.setTracks(next.map(\.summary))
         renderCap()
         renderPendingNotice()
         if session.consumeFly() {
@@ -178,7 +178,7 @@ extension MapViewController {
     }
 
     /// Reprocesses of ids finished, seen by a list or by the Pending check: the tracks' tiles,
-    /// Dates' bounds and the photos follow the new points, and the focused activity's bands if it
+    /// Dates' bounds and the photos follow the new points, and the focused track's bands if it
     /// is among them.
     private func reprocessFinished(_ ids: Set<String>) {
         tracksVersion += 1
@@ -216,7 +216,7 @@ extension MapViewController {
                 still += answer
             }
             guard !Task.isCancelled else { return }
-            let answer = PendingDiff.answer(watched: watched, stillPending: still, listed: Set(activities.map(\.id)))
+            let answer = PendingDiff.answer(watched: watched, stillPending: still, listed: Set(tracks.map(\.id)))
             if !answer.finished.isEmpty {
                 pendingIDs.subtract(answer.finished)
                 awaiting.subtract(answer.finished)
@@ -241,28 +241,28 @@ extension MapViewController {
     }
 
     func renderPanel() {
-        guard activitiesPanel != nil else { return }
+        guard tracksPanel != nil else { return }
         let format = format
-        let zoomNote = zoomedOut && session.storyID == nil ? String(localized: "Zoom in to see your tracks.") : nil
+        let zoomNote = zoomedOut && session.tripID == nil ? String(localized: "Zoom in to see your tracks.") : nil
         let note: (text: String, failed: Bool)? = zoomNote.map { ($0, false) }
-            ?? (listLoading && activities.isEmpty ? (String(localized: "Loading…"), false) : listError.map { ($0, true) })
-        activitiesPanel.render(session.panel, activities: activities, format: format, note: note)
-        activitiesPanel.setLoading(listLoading && !(zoomedOut && session.storyID == nil))
-        if panelTab == .stories {
+            ?? (listLoading && tracks.isEmpty ? (String(localized: "Loading…"), false) : listError.map { ($0, true) })
+        tracksPanel.render(session.panel, tracks: tracks, format: format, note: note)
+        tracksPanel.setLoading(listLoading && !(zoomedOut && session.tripID == nil))
+        if panelTab == .trips {
             let panel = session.panel
-            let byID = Dictionary(activities.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-            let rows = session.storyID == nil ? [] : panel.listed.compactMap { byID[$0.id] }.map {
-                ActivityRowCell.Row(activity: $0, checked: false, focused: panel.focused == $0.id, hidden: panel.hidden.contains($0.id), selecting: false)
+            let byID = Dictionary(tracks.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+            let rows = session.tripID == nil ? [] : panel.listed.compactMap { byID[$0.id] }.map {
+                TrackRowCell.Row(track: $0, checked: false, focused: panel.focused == $0.id, hidden: panel.hidden.contains($0.id), selecting: false)
             }
-            storiesPanel.setRows(rows, note: session.storyID == nil ? nil : note, format: format)
+            tripsPanel.setRows(rows, note: session.tripID == nil ? nil : note, format: format)
         }
-        let activitiesTab = panelTab == .activities
-        let card = activitiesTab && activitiesPanel.showsCard
-        activitiesPanel.summary.isHidden = !activitiesTab || card
-        activitiesPanel.card.isHidden = !card
-        storiesPanel.head.isHidden = activitiesTab
-        activitiesPanel.content.isHidden = !activitiesTab
-        storiesPanel.content.isHidden = activitiesTab
+        let tracksTab = panelTab == .tracks
+        let card = tracksTab && tracksPanel.showsCard
+        tracksPanel.summary.isHidden = !tracksTab || card
+        tracksPanel.card.isHidden = !card
+        tripsPanel.head.isHidden = tracksTab
+        tracksPanel.content.isHidden = !tracksTab
+        tripsPanel.content.isHidden = tracksTab
         // Normal mode only (apps/android/docs/SPEC.md FR-2.7).
         sheet.isHidden = state.mode != .normal || privateLocations.open
         sheet.setNeedsLayout()
@@ -270,7 +270,7 @@ extension MapViewController {
 
     // MARK: Events
 
-    private func handle(_ event: ActivitiesPanel.Event) {
+    private func handle(_ event: TracksPanel.Event) {
         switch event {
         case .tapRow(let id):
             session.panel.focus(id)
@@ -291,21 +291,21 @@ extension MapViewController {
         case .distance(let band): session.panel.distanceFilter = band
         case .resetFilters: session.panel.resetFilters()
         case .dates: showDates()
-        case .openStory(let id):
-            onWantsStories?(id)
+        case .openTrip(let id):
+            onWantsTrips?(id)
             return
         }
         panelChanged()
     }
 
-    private func handle(_ event: StoriesPanel.Event) {
+    private func handle(_ event: TripsPanel.Event) {
         switch event {
         case .open(let id, let collapse):
             if collapse { sheet.setDetent(.collapsed, animated: true) }
             open(id)
         case .close:
-            session.exitStory()
-            storiesPanel.setOpen(nil)
+            session.exitTrip()
+            tripsPanel.setOpen(nil)
             updateTracksQuery()
             followArea(always: true)
         case .select(let id):
@@ -315,9 +315,9 @@ extension MapViewController {
         case .clearFocus:
             session.panel.clearFocus()
             panelChanged()
-        case .storiesChanged:
+        case .tripsChanged:
             loadList()
-            // A Story's photos change with its members.
+            // A Trip's photos change with its members.
             refreshPhotos(force: true)
         case .removed:
             tracksVersion += 1
@@ -333,15 +333,15 @@ extension MapViewController {
         }
     }
 
-    /// A Story made or added to from the toolbar: the badges, and a new one opened on the
-    /// Stories tab.
-    private func addedToStory(_ story: Story, created: Bool) {
+    /// A Trip made or added to from the toolbar: the badges, and a new one opened on the
+    /// Trips tab.
+    private func addedToTrip(_ trip: Trip, created: Bool) {
         loadList()
         if created {
-            storiesPanel.added(story)
-            onWantsStories?(story.id)
+            tripsPanel.added(trip)
+            onWantsTrips?(trip.id)
         } else {
-            StoryDialogs.inform(over: view, String(localized: "Added to “\(story.name)”."))
+            TripDialogs.inform(over: view, String(localized: "Added to “\(trip.name)”."))
         }
     }
 
@@ -351,7 +351,7 @@ extension MapViewController {
     func fly(_ ids: [String]) {
         let hidden = session.panel.mapHidden
         let wanted = Set(ids)
-        let boxes = activities.filter { wanted.contains($0.id) && !hidden.contains($0.id) }.compactMap(\.bbox)
+        let boxes = tracks.filter { wanted.contains($0.id) && !hidden.contains($0.id) }.compactMap(\.bbox)
         guard let box = MapFraming.union(boxes) else { return }
         fit(box, animated: true)
     }
@@ -360,7 +360,7 @@ extension MapViewController {
     /// without opening the sheet. Empty map clears the focus.
     @objc private func tappedMap(_ tap: UITapGestureRecognizer) {
         // The Edit window's group mustn't change under it; a tap serves only Delete point.
-        guard !editOpen else { return trackEditTapped(at: tap.location(in: mapView)) }
+        guard !editOpen else { return routeEditTapped(at: tap.location(in: mapView)) }
         // The Private location editor holds the map: a tap serves only its circles.
         guard !privateLocations.open else { return privateLocationTapped(at: tap.location(in: mapView)) }
         // A place's badge first, in every mode; a tap elsewhere closes its popup.
@@ -372,7 +372,7 @@ extension MapViewController {
             _ = tapFogPlace(at: tap.location(in: mapView))
             return
         }
-        guard state.mode == .normal, !sheet.isHidden || panelTab == .stories else { return }
+        guard state.mode == .normal, !sheet.isHidden || panelTab == .trips else { return }
         let point = tap.location(in: mapView)
         let r = TrackTap.radius
         let rect = CGRect(x: point.x - r, y: point.y - r, width: 2 * r, height: 2 * r)
@@ -385,39 +385,39 @@ extension MapViewController {
             }
             return
         }
-        if panelTab == .activities && session.panel.selecting {
+        if panelTab == .tracks && session.panel.selecting {
             session.panel.toggleChecked(id)
-            activitiesPanel.scrollTo(id)
+            tracksPanel.scrollTo(id)
         } else {
             session.panel.focus(id)
             fly([id])
-            if panelTab == .stories { storiesPanel.scrollTo(id) } else { activitiesPanel.scrollTo(id) }
+            if panelTab == .trips { tripsPanel.scrollTo(id) } else { tracksPanel.scrollTo(id) }
         }
         panelChanged()
     }
 
     // MARK: Edit and Delete
 
-    private var targets: [Activity] {
+    private var targets: [Track] {
         let ids = Set(session.panel.targets.map(\.id))
-        return activities.filter { ids.contains($0.id) }
+        return tracks.filter { ids.contains($0.id) }
     }
 
-    /// The Edit window over the toolbar's target, each activity read in full first: the area's
+    /// The Edit window over the toolbar's target, each track read in full first: the area's
     /// rows leave out the description, the track's edit and the photos (root docs/SPEC.md FR-5.11).
     private func edit() {
         let ids = targets.map(\.id)
         guard !ids.isEmpty, !account.isDemo, !editOpen else { return }
         editOpen = true
         Task {
-            var group: [Activity] = []
+            var group: [Track] = []
             for id in ids {
                 do {
-                    group.append(try await flow.api.activity(id))
+                    group.append(try await flow.api.track(id))
                 } catch {
                     editOpen = false
                     let reason = (error as? APIError)?.serverMessage ?? String(localized: "The server couldn't be reached.")
-                    StoryDialogs.inform(over: view, String(localized: "The track couldn't be opened: \(reason)"))
+                    TripDialogs.inform(over: view, String(localized: "The track couldn't be opened: \(reason)"))
                     return
                 }
             }
@@ -425,19 +425,19 @@ extension MapViewController {
         }
     }
 
-    private func openEditor(_ group: [Activity]) {
+    private func openEditor(_ group: [Track]) {
         photos.editIDs = group.map(\.id)
         refreshPhotos(force: false)
-        let facets = ActivityFacets.typeFacets(session.panel.activities, distanceFilter: nil)
-        let editor = EditActivityViewController(
+        let facets = TrackFacets.typeFacets(session.panel.tracks, distanceFilter: nil)
+        let editor = EditTrackViewController(
             api: flow.api, group: group, facets: facets, format: format, images: photoViews.images,
             onOverlay: { [weak self] in self?.setPhotoOverlay($0) },
-            onTrackDraw: { [weak self] in self?.setTrackEdit($0) },
-            onTrackOpened: { [weak self] in self?.frameEditedTrack(group[0]) }
+            onRouteDraw: { [weak self] in self?.setRouteEdit($0) },
+            onRouteOpened: { [weak self] in self?.frameEditedTrack(group[0]) }
         ) { [weak self] written, photosSaved in
             guard let self else { return }
             self.editOpen = false
-            self.setTrackEdit(nil)
+            self.setRouteEdit(nil)
             self.photosEditClosed(saved: photosSaved)
             guard !written.isEmpty else { return }
             self.awaiting.formUnion(written)
@@ -468,13 +468,13 @@ extension MapViewController {
         let title = group.count == 1 ? String(localized: "Delete this track?") : String(localized: "Delete these tracks?")
         let message = String(localized: "\(summary) will be deleted for good, with its route and its part of Fog of War.")
         var done: [String] = []
-        StoryDialogs.confirm(over: view, title: title, message: message, action: String(localized: "Delete")) { [weak self] in
+        TripDialogs.confirm(over: view, title: title, message: message, action: String(localized: "Delete")) { [weak self] in
             guard let self else { return nil }
             defer { if !done.isEmpty { self.deleted(done) } }
-            for activity in group where !done.contains(activity.id) {
+            for track in group where !done.contains(track.id) {
                 do {
-                    try await self.flow.api.deleteActivity(activity.id)
-                    done.append(activity.id)
+                    try await self.flow.api.deleteTrack(track.id)
+                    done.append(track.id)
                 } catch {
                     let reason = (error as? APIError)?.serverMessage ?? String(localized: "The server couldn't be reached.")
                     return String(localized: "Deleted: \(done.count). The rest couldn't be deleted: \(reason)")
@@ -489,17 +489,17 @@ extension MapViewController {
         updateTracksQuery()
         loadHistory()
         loadList()
-        if panelTab == .stories { storiesPanel.reloadOpen() }
+        if panelTab == .trips { tripsPanel.reloadOpen() }
     }
 }
 
-/// The tab bar's Map or Stories: both are the one map screen, moved into whichever of the two
+/// The tab bar's Map or Trips: both are the one map screen, moved into whichever of the two
 /// shows, so the camera, range and selection are as they were (apps/android/docs/SPEC.md FR-2.9).
 final class MapHostViewController: UIViewController {
     private let map: MapViewController
     private let panelTab: PanelTab
-    /// A Story to open when this host next shows.
-    var pendingStory: String?
+    /// A Trip to open when this host next shows.
+    var pendingTrip: String?
 
     init(map: MapViewController, tab: PanelTab) {
         self.map = map
@@ -527,7 +527,7 @@ final class MapHostViewController: UIViewController {
             view.addSubview(map.view)
             map.didMove(toParent: self)
         }
-        map.show(panelTab, story: pendingStory)
-        pendingStory = nil
+        map.show(panelTab, trip: pendingTrip)
+        pendingTrip = nil
     }
 }

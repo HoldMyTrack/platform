@@ -4,7 +4,7 @@ import Foundation
 /// drawn, on every settled move; further out there's nothing on the map to list. And whether the
 /// last area's list was cut at the limit, so the map draws only the listed tracks and says so.
 public enum AreaLoad {
-    /// The most activities one area lists, and so its map draws (the server's areaActivitiesLimit).
+    /// The most tracks one area lists, and so its map draws (the server's areaActivitiesLimit).
     public static let limit = 1000
     /// Where tracks start being drawn, and the list with them.
     public static let minZoom = 4.0
@@ -33,8 +33,8 @@ public enum AreaLoad {
 /// when even the newest alone doesn't fit, still centred on it.
 public enum OpeningView {
     public static let zoom = 12.0
-    /// How many of the newest activities it tries to show.
-    public static let activities = 5
+    /// How many of the newest tracks it tries to show.
+    public static let tracks = 5
     /// The share of the screen a flight's box may fill.
     static let fill = 0.75
     /// The world's width in points at zoom 0.
@@ -49,7 +49,7 @@ public enum OpeningView {
             return ((x1 - x0) * scale, (y1 - y0) * scale, (x0 + x1) / 2, (y0 + y1) / 2)
         }
         var chosen = frame(newest)
-        for n in stride(from: min(activities, boxes.count), through: 1, by: -1) {
+        for n in stride(from: min(tracks, boxes.count), through: 1, by: -1) {
             guard let union = MapFraming.union(Array(boxes.prefix(n))) else { continue }
             let f = frame(union)
             if f.width <= width * fill && f.height <= height * fill {
@@ -136,8 +136,8 @@ public struct DateFilter: Equatable, Sendable {
         [after.map { URLQueryItem(name: "from", value: $0) }, before.map { URLQueryItem(name: "to", value: $0) }].compactMap { $0 }
     }
 
-    /// What the pickers allow: the first activity's day, today without one, to today, the
-    /// account's, or the newest activity's day when that's later: one recorded in a zone ahead
+    /// What the pickers allow: the first track's day, today without one, to today, the
+    /// account's, or the newest track's day when that's later: one recorded in a zone ahead
     /// can be dated tomorrow.
     public static func bounds(earliest: String?, latest: String?, today: String) -> (min: String, max: String) {
         (earliest.map { $0 < today ? $0 : today } ?? today, latest.map { $0 > today ? $0 : today } ?? today)

@@ -1,12 +1,12 @@
 /// What the controls over the map show, beside the modes (apps/android/docs/SPEC.md FR-2.2).
 public enum MapChrome {
     /// The chip naming what Fog shows, since it doesn't take the date range.
-    public enum Chip: Equatable, Sendable { case everyActivity }
+    public enum Chip: Equatable, Sendable { case everyTrack }
 
     public static func chip(_ mode: MapMode) -> Chip? {
         switch mode {
         case .normal: nil
-        case .fog: .everyActivity
+        case .fog: .everyTrack
         }
     }
 

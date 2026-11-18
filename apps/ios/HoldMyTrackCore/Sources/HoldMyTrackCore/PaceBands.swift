@@ -1,7 +1,7 @@
-/// The focused activity's pace bands (root docs/SPEC.md FR-4.6), as
-/// `GET /v1/activities/{id}/track-metrics` gives them: the server bands every synced activity, so
+/// The focused track's pace bands (root docs/SPEC.md FR-4.6), as
+/// `GET /v1/activities/{id}/track-metrics` gives them: the server bands every synced track, so
 /// the app only draws the runs.
-public struct TrackMetrics: Equatable, Sendable {
+public struct RouteMetrics: Equatable, Sendable {
     public struct Point: Equatable, Sendable {
         public let lon: Double
         public let lat: Double
@@ -27,16 +27,16 @@ public struct TrackMetrics: Equatable, Sendable {
         }
     }
 
-    public let activityID: String
+    public let trackID: String
     public let points: [Point]
     public let bands: [Band]
 
-    public init(activityID: String, points: [Point], bands: [Band]) {
-        (self.activityID, self.points, self.bands) = (activityID, points, bands)
+    public init(trackID: String, points: [Point], bands: [Band]) {
+        (self.trackID, self.points, self.bands) = (trackID, points, bands)
     }
 
     init(_ json: TrackMetricsJSON) {
-        activityID = json.activityID
+        trackID = json.activityID
         points = json.points.map { Point(lon: $0.lon, lat: $0.lat, time: Double($0.timeS)) }
         bands = json.bands.map { Band(band: $0.band, start: $0.start, end: $0.end) }
     }
@@ -47,17 +47,17 @@ public enum PaceBands {
     /// The layers document's group and its GeoJSON source.
     public static let group = "track-bands"
 
-    /// Drawn while the focused activity's track is: its own metrics, and the track not hidden,
+    /// Drawn while the focused track's route is: its own metrics, and the track not hidden,
     /// filtered out or Pending (PanelState.mapHidden), whose metrics would show the old points.
-    public static func drawn(_ metrics: TrackMetrics?, focused: String?, mapHidden: Set<String>) -> TrackMetrics? {
-        guard let metrics, let focused, metrics.activityID == focused, !mapHidden.contains(focused) else { return nil }
+    public static func drawn(_ metrics: RouteMetrics?, focused: String?, mapHidden: Set<String>) -> RouteMetrics? {
+        guard let metrics, let focused, metrics.trackID == focused, !mapHidden.contains(focused) else { return nil }
         return metrics
     }
 
     /// The source's data: one line per run with its `band`, which the layer colors, and the whole
     /// route in recording order marked `route`, which carries the direction arrows: on the runs
     /// they'd bunch wherever the pace changes often. Nil metrics are no lines.
-    public static func features(_ metrics: TrackMetrics?) -> JSONValue {
+    public static func features(_ metrics: RouteMetrics?) -> JSONValue {
         var features: [JSONValue] = []
         if let metrics {
             let points = metrics.points
@@ -77,7 +77,7 @@ public enum PaceBands {
             .compactMap { legend[$0] }
     }
 
-    private static func feature(_ points: ArraySlice<TrackMetrics.Point>, _ properties: [String: JSONValue]) -> JSONValue {
+    private static func feature(_ points: ArraySlice<RouteMetrics.Point>, _ properties: [String: JSONValue]) -> JSONValue {
         .object([
             "type": .string("Feature"),
             "properties": .object(properties),

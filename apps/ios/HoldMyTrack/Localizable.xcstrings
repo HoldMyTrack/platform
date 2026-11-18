@@ -1437,7 +1437,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Свёрнута"
+            "value" : "Свёрнуто"
           }
         }
       }
@@ -2108,7 +2108,7 @@
         "ru" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Открыта"
+            "value" : "Открыто"
           }
         }
       }

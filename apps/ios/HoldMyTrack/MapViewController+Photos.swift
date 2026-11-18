@@ -5,14 +5,14 @@ import UIKit
 /// Photos on the map (apps/android/docs/SPEC.md FR-2.10): the scope's photos (PhotoMarkers.scope)
 /// as markers on their routes, the popup a marker's tap opens, and the viewer it leads to.
 extension MapViewController {
-    /// Whose photos show now: the Edit window's activity while it edits one, else the focus,
-    /// else the open Story; none in Fog.
+    /// Whose photos show now: the Edit window's track while it edits one, else the focus,
+    /// else the open Trip; none in Fog.
     private var photoScope: PhotoScope? {
-        PhotoMarkers.scope(mode: state.mode, editWindowIDs: photos.editIDs, focused: session.panel.focused, storyID: session.storyID)
+        PhotoMarkers.scope(mode: state.mode, editWindowIDs: photos.editIDs, focused: session.panel.focused, tripID: session.tripID)
     }
 
     /// The photos for the scope now: read when the scope moves, or with force when they may have
-    /// changed (a reprocess, a Story's members). A new scope starts empty rather than showing the
+    /// changed (a reprocess, a Trip's members). A new scope starts empty rather than showing the
     /// last one's while it loads.
     func refreshPhotos(force: Bool) {
         let next = photoScope
@@ -43,8 +43,8 @@ extension MapViewController {
     /// The markers: the scope's photos on their tracks, with the Photos tab's unsaved changes
     /// merged in, unless its route is hidden.
     func renderPhotos() {
-        // The Track tab has the map to itself.
-        let shown = trackEdit.shape == nil && PhotoMarkers.shown(photos.scope, mapHidden: session.panel.mapHidden)
+        // The Route tab has the map to itself.
+        let shown = routeEdit.shape == nil && PhotoMarkers.shown(photos.scope, mapHidden: session.panel.mapHidden)
         if !shown { photoViews.popup.close() }
         let overlay = photos.overlay
         let items = shown ? PhotoMarkers.items(photos.items, mapHidden: session.panel.mapHidden, overlay: overlay) : []
@@ -126,7 +126,7 @@ struct PhotosState {
     /// The scope's saved photos, in route order.
     var items: [Photo] = []
     var task: Task<Void, Never>?
-    /// The Edit window's activities while it's open.
+    /// The Edit window's tracks while it's open.
     var editIDs: [String]?
     /// The Photos tab's unsaved changes, while it shows.
     var overlay: PhotoMarkerOverlay?

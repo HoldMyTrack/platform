@@ -4,7 +4,7 @@ import XCTest
 /// Skipped where no dev stack answers, as on CI.
 final class YouTests: XCTestCase {
     /// A GPX opened in the app, as from Files (the Debug build's -hmtUpload), goes to Upload once
-    /// signed in and lands as an activity.
+    /// signed in and lands as a track.
     @MainActor
     func testAFileOpenedInTheAppIsUploaded() throws {
         try LaunchTests.requireDevStack(self)
@@ -18,7 +18,7 @@ final class YouTests: XCTestCase {
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.buttons["chooseFiles"].waitForExistence(timeout: 15), "Upload opens with the file")
-        XCTAssertTrue(account.waitForActivities(1, timeout: 90))
+        XCTAssertTrue(account.waitForTracks(1, timeout: 90))
         XCTAssertFalse(app.staticTexts["uploadNote"].exists, "nothing refused")
     }
 

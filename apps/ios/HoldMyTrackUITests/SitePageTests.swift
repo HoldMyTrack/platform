@@ -47,10 +47,10 @@ final class SitePageTests: XCTestCase {
         // stack's isn't (docs/DEVELOPMENT.md), so the save itself isn't driven here.
     }
 
-    /// Sync history's View on map opens the native map with that activity focused, its day the
+    /// Sync history's View on map opens the native map with that track focused, its day the
     /// range when it was outside it.
     @MainActor
-    func testViewOnMapFocusesTheActivity() throws {
+    func testViewOnMapFocusesTheTrack() throws {
         try LaunchTests.requireDevStack(self)
         let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
         defer { account.delete() }
@@ -63,7 +63,7 @@ final class SitePageTests: XCTestCase {
         let link = app.webViews["webPage"].links["View on map"].firstMatch
         XCTAssertTrue(link.waitForExistence(timeout: 15))
         link.tap()
-        XCTAssertTrue(app.otherElements["activityCard"].waitForExistence(timeout: 15), "the activity is focused on the map")
+        XCTAssertTrue(app.otherElements["trackCard"].waitForExistence(timeout: 15), "the activity is focused on the map")
         XCTAssertTrue(app.tabBars.buttons["tabMap"].isSelected)
     }
 }

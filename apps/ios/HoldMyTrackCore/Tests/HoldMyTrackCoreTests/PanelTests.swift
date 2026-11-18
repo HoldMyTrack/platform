@@ -3,30 +3,30 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// The Activities panel's decisions that aren't shared rules (those run from
+/// The Tracks panel's decisions that aren't shared rules (those run from
 /// testdata/client-rules in ClientRulesTests).
 struct PanelTests {
-    private func activity(_ id: String, _ type: String = "running", name: String? = nil, description: String? = nil) -> Activity {
-        Activity(id: id, startedAt: "2026-10-11T09:39:00Z", activityType: type, name: name, description: description)
+    private func track(_ id: String, _ type: String = "running", name: String? = nil, description: String? = nil) -> Track {
+        Track(id: id, startedAt: "2026-10-11T09:39:00Z", activityType: type, name: name, description: description)
     }
 
     // MARK: Toolbar
 
     @Test func withNoTargetNothingButTheMasterCheckboxApplies() {
         let use = ToolbarRules.actions(targets: 0, anyPending: false, demo: false)
-        #expect([use.visibility, use.edit, use.addToStory, use.delete, use.focus].allSatisfy { $0 == .noTarget })
+        #expect([use.visibility, use.edit, use.addToTrip, use.delete, use.focus].allSatisfy { $0 == .noTarget })
     }
 
     @Test func theDemoAccountLooksButCantChange() {
         let use = ToolbarRules.actions(targets: 2, anyPending: true, demo: true)
         #expect(use.visibility == .ready && use.focus == .ready)
-        #expect(use.edit == .demo && use.addToStory == .demo && use.delete == .demo)
+        #expect(use.edit == .demo && use.addToTrip == .demo && use.delete == .demo)
     }
 
     @Test func aPendingTargetBlocksDeleteAlone() {
         let use = ToolbarRules.actions(targets: 3, anyPending: true, demo: false)
         #expect(use.delete == .pending && !use.delete.enabled)
-        #expect(use.edit == .ready && use.addToStory == .ready)
+        #expect(use.edit == .ready && use.addToTrip == .ready)
     }
 
     @Test func theMasterCheckboxReadsTheListedRows() {
@@ -38,24 +38,24 @@ struct PanelTests {
     // MARK: Types
 
     @Test func anUndescribedTypeFallsBackAsTheServerDoes() {
-        let catalog = ActivityTypeCatalog()
+        let catalog = TrackTypeCatalog()
         #expect(catalog.label("open_water_swimming") == "Open Water Swimming")
         #expect(catalog.kind("open_water_swimming") == .other)
     }
 
     @Test func aMergeKeepsWhatEachPartSaysAndReportsChange() {
-        var catalog = ActivityTypeCatalog()
-        let first = catalog.merge(["running": ActivityTypeInfo(kind: .foot, label: "Run")])
-        let again = catalog.merge(["running": ActivityTypeInfo(kind: nil, label: "Run")])
+        var catalog = TrackTypeCatalog()
+        let first = catalog.merge(["running": TrackTypeInfo(kind: .foot, label: "Run")])
+        let again = catalog.merge(["running": TrackTypeInfo(kind: nil, label: "Run")])
         #expect(first && !again)
         #expect(catalog.kind("running") == .foot && catalog.label("running") == "Run")
         #expect(catalog.missing(["running", "", "cycling", "cycling"]) == ["cycling"])
     }
 
     @Test func aKindFromANewerServerIsOther() {
-        #expect(ActivityKind(wire: "hovercraft") == .other)
-        #expect(ActivityKind(wire: "e_scooter") == .eScooter)
-        #expect(ActivityKind.foot.showsPace && !ActivityKind.wheels.showsPace)
+        #expect(TrackKind(wire: "hovercraft") == .other)
+        #expect(TrackKind(wire: "e_scooter") == .eScooter)
+        #expect(TrackKind.foot.showsPace && !TrackKind.wheels.showsPace)
     }
 
     @Test func paceAndSpeedNeedADistanceAndATime() {
@@ -68,8 +68,8 @@ struct PanelTests {
 
     // MARK: Edit
 
-    @Test func oneActivityWritesAllThreeFieldsOnlyWhenOneChanged() {
-        let one = [activity("a", name: "Morning", description: "")]
+    @Test func oneTrackWritesAllThreeFieldsOnlyWhenOneChanged() {
+        let one = [track("a", name: "Morning", description: "")]
         #expect(EditPlan.writes(group: one, type: "running", name: " Morning ", description: "").isEmpty)
         #expect(EditPlan.writes(group: one, type: "running", name: "", description: "") == [
             EditPlan.Write(id: "a", activityType: "running", name: "", description: ""),
@@ -77,7 +77,7 @@ struct PanelTests {
     }
 
     @Test func aGroupWritesAPickedTypeToTheOnesNotOfItAlready() {
-        let group = [activity("a", "running", name: "A"), activity("b", "cycling", description: "d")]
+        let group = [track("a", "running", name: "A"), track("b", "cycling", description: "d")]
         #expect(EditPlan.initialType(group) == "")
         #expect(EditPlan.writes(group: group, type: "", name: "", description: "").isEmpty)
         #expect(EditPlan.writes(group: group, type: "running", name: "ignored", description: "ignored") == [
@@ -86,9 +86,9 @@ struct PanelTests {
     }
 
     @Test func editRefusesWhatTheServerWould() {
-        let one = [activity("a")]
+        let one = [track("a")]
         #expect(EditPlan.invalid(group: one, type: " ", name: "", description: "") == .typeRequired)
-        #expect(EditPlan.invalid(group: [activity("a"), activity("b", "cycling")], type: "", name: "", description: "") == nil)
+        #expect(EditPlan.invalid(group: [track("a"), track("b", "cycling")], type: "", name: "", description: "") == nil)
         #expect(EditPlan.invalid(group: one, type: String(repeating: "x", count: 51), name: "", description: "") == .typeTooLong)
         #expect(EditPlan.invalid(group: one, type: "running", name: String(repeating: "x", count: 201), description: "") == .nameTooLong)
         #expect(EditPlan.invalid(group: one, type: "running", name: "", description: String(repeating: "x", count: 2001)) == .descriptionTooLong)
@@ -155,9 +155,9 @@ struct AccountTests {
     }
 }
 
-/// Stories is Normal mode's; the Map tab keeps its own pick.
+/// Trips is Normal mode's; the Map tab keeps its own pick.
 struct TabModeTests {
-    @Test func storiesShowNormalWithNoToggleAndTheMapTabGetsItsPickBack() {
+    @Test func tripsShowNormalWithNoToggleAndTheMapTabGetsItsPickBack() {
         #expect(TabMode.shown(picked: .fog, onMapTab: false) == .normal)
         #expect(!TabMode.toggleShown(onMapTab: false))
         #expect(TabMode.shown(picked: .fog, onMapTab: true) == .fog)

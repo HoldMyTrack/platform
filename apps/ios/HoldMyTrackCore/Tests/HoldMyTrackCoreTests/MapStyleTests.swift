@@ -191,7 +191,7 @@ struct MapStyleTests {
 
     @Test func fogHasAChipNormalHasNone() {
         #expect(MapChrome.chip(.normal) == nil)
-        #expect(MapChrome.chip(.fog) == .everyActivity)
+        #expect(MapChrome.chip(.fog) == .everyTrack)
     }
 
     @Test func theEmptyNoticeShowsForARealAccountWithNothingOnTheMapUntilClosed() {
@@ -324,8 +324,8 @@ struct MapStyleTests {
 
     // MARK: Pace bands
 
-    private let metrics = TrackMetrics(
-        activityID: "a1",
+    private let metrics = RouteMetrics(
+        trackID: "a1",
         points: [.init(lon: 0, lat: 0), .init(lon: 1, lat: 0), .init(lon: 2, lat: 0), .init(lon: 3, lat: 0)],
         bands: [.init(band: 0, start: 0, end: 2), .init(band: 4, start: 2, end: 3)]
     )
@@ -343,11 +343,11 @@ struct MapStyleTests {
     }
 
     @Test func aRunPastThePointsIsSkipped() {
-        let broken = TrackMetrics(activityID: "a1", points: metrics.points, bands: [.init(band: 1, start: 2, end: 9)])
+        let broken = RouteMetrics(trackID: "a1", points: metrics.points, bands: [.init(band: 1, start: 2, end: 9)])
         #expect(PaceBands.features(broken)["features"]?.array?.count == 1, "the route alone")
     }
 
-    @Test func bandsAreDrawnOnlyForTheFocusedActivityWhileItsTrackIs() {
+    @Test func bandsAreDrawnOnlyForTheFocusedTrackWhileItsRouteIs() {
         #expect(PaceBands.drawn(metrics, focused: "a1", mapHidden: []) == metrics)
         #expect(PaceBands.drawn(metrics, focused: "a2", mapHidden: []) == nil, "a new focus's are still loading")
         #expect(PaceBands.drawn(metrics, focused: nil, mapHidden: []) == nil)

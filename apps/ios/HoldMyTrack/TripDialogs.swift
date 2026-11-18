@@ -1,11 +1,11 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The panel's small dialogs: a Story's name and description, sending a copy, a confirmation,
-/// and Add to story's menu. Each runs its request after the alert closes and, when it fails,
+/// The panel's small dialogs: a Trip's name and description, sending a copy, a confirmation,
+/// and Add to trip's menu. Each runs its request after the alert closes and, when it fails,
 /// opens again with the server's reason and what was typed.
 @MainActor
-enum StoryDialogs {
+enum TripDialogs {
     /// What a dialog's request answers: nil once done, else why it failed.
     typealias Outcome = String?
 
@@ -22,13 +22,13 @@ enum StoryDialogs {
             $0.placeholder = String(localized: "Name")
             $0.text = name
             $0.autocapitalizationType = .sentences
-            $0.accessibilityIdentifier = "storyName"
+            $0.accessibilityIdentifier = "tripName"
         }
         alert.addTextField {
             $0.placeholder = String(localized: "Description (optional)")
             $0.text = description
             $0.autocapitalizationType = .sentences
-            $0.accessibilityIdentifier = "storyDescription"
+            $0.accessibilityIdentifier = "tripDescription"
         }
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))
         alert.addAction(UIAlertAction(title: action, style: .default) { [weak view] _ in
@@ -43,8 +43,8 @@ enum StoryDialogs {
     }
 
     /// FR-13.7: a copy to an email address; the server never says whether it has an account.
-    static func sendCopy(over view: UIView, story: Story, email: String = "", error: String? = nil, run: @escaping (String) async -> Outcome) {
-        let message = error ?? String(localized: "If the address has a HoldMyTrack account, it gets a copy of “\(story.name)” to accept.")
+    static func sendCopy(over view: UIView, trip: Trip, email: String = "", error: String? = nil, run: @escaping (String) async -> Outcome) {
+        let message = error ?? String(localized: "If the address has a HoldMyTrack account, it gets a copy of “\(trip.name)” to accept.")
         let alert = UIAlertController(title: String(localized: "Send a copy"), message: message, preferredStyle: .alert)
         alert.addTextField {
             $0.placeholder = String(localized: "Email")
@@ -61,7 +61,7 @@ enum StoryDialogs {
                 let failure = await run(typed)
                 guard let view else { return }
                 if let failure {
-                    Self.sendCopy(over: view, story: story, email: typed, error: failure, run: run)
+                    Self.sendCopy(over: view, trip: trip, email: typed, error: failure, run: run)
                 } else {
                     Self.inform(over: view, String(localized: "Sent. If \(typed) has an account, the copy waits on their Trips tab."))
                 }
@@ -89,42 +89,42 @@ enum StoryDialogs {
         top(view)?.present(alert, animated: true)
     }
 
-    /// Add to story (FR-13.2, FR-13.3): the account's Stories, read as the menu opens, and New
-    /// story…; either takes targets() in one request. added reports the Story, and whether it's new.
-    static func addToStoryMenu(api: APIClient, over view: UIView, targets: @escaping () -> [String],
-                               added: @escaping (Story, _ created: Bool) -> Void) -> UIMenu {
+    /// Add to trip (FR-13.2, FR-13.3): the account's Trips, read as the menu opens, and New
+    /// trip…; either takes targets() in one request. added reports the Trip, and whether it's new.
+    static func addToTripMenu(api: APIClient, over view: UIView, targets: @escaping () -> [String],
+                               added: @escaping (Trip, _ created: Bool) -> Void) -> UIMenu {
         let create = UIAction(title: String(localized: "New trip…"), image: UIImage(resource: .plus)) { [weak view] _ in
             guard let view else { return }
             name(over: view, title: String(localized: "New trip"), name: "", description: "", action: String(localized: "Create")) { name, description in
                 do {
-                    let read = try await api.createStory(name: name, description: description, activityIDs: targets())
-                    added(read.story, true)
+                    let read = try await api.createTrip(name: name, description: description, trackIDs: targets())
+                    added(read.trip, true)
                     return nil
                 } catch {
-                    return StoriesPanel.message(error, String(localized: "The Trip couldn't be saved."))
+                    return TripsPanel.message(error, String(localized: "The Trip couldn't be saved."))
                 }
             }
         }
-        let stories = UIDeferredMenuElement.uncached { [weak view] completion in
+        let trips = UIDeferredMenuElement.uncached { [weak view] completion in
             Task { @MainActor in
-                guard let read = try? await api.stories() else {
+                guard let read = try? await api.trips() else {
                     completion([UIAction(title: String(localized: "Trips couldn't load."), attributes: .disabled) { _ in }])
                     return
                 }
                 completion(read.map { item in
-                    UIAction(title: item.story.name) { [weak view] _ in
+                    UIAction(title: item.trip.name) { [weak view] _ in
                         Task {
                             do {
-                                let changed = try await api.changeStoryActivities(item.story.id, activityIDs: targets(), add: true)
-                                added(changed.story, false)
+                                let changed = try await api.changeTripTracks(item.trip.id, trackIDs: targets(), add: true)
+                                added(changed.trip, false)
                             } catch {
-                                if let view { inform(over: view, StoriesPanel.message(error, String(localized: "The Trip couldn't be saved."))) }
+                                if let view { inform(over: view, TripsPanel.message(error, String(localized: "The Trip couldn't be saved."))) }
                             }
                         }
                     }
                 })
             }
         }
-        return UIMenu(title: String(localized: "Add to trip"), children: [create, UIMenu(options: .displayInline, children: [stories])])
+        return UIMenu(title: String(localized: "Add to trip"), children: [create, UIMenu(options: .displayInline, children: [trips])])
     }
 }

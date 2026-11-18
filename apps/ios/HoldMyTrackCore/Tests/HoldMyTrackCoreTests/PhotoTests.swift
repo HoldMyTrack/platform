@@ -8,21 +8,21 @@ struct PhotoTests {
         #expect(!PhotoMarkers.shown(nil, mapHidden: []))
     }
 
-    @Test func anActivitysMarkersHideWithItsRoute() {
-        #expect(PhotoMarkers.shown(.activity("a"), mapHidden: ["b"]))
-        #expect(!PhotoMarkers.shown(.activity("a"), mapHidden: ["a"]))
+    @Test func aTracksMarkersHideWithItsRoute() {
+        #expect(PhotoMarkers.shown(.track("a"), mapHidden: ["b"]))
+        #expect(!PhotoMarkers.shown(.track("a"), mapHidden: ["a"]))
     }
 
-    @Test func aStorysMarkersShowWhateverIsHidden() {
-        #expect(PhotoMarkers.shown(.story("s"), mapHidden: ["a"]))
+    @Test func aTripsMarkersShowWhateverIsHidden() {
+        #expect(PhotoMarkers.shown(.trip("s"), mapHidden: ["a"]))
     }
 
     @Test func markersLeaveOutUnplacedPhotosAndHiddenRoutes() {
         let photos = [
-            Photo(id: "1", activityID: "a", lon: 1, lat: 2, caption: "Lake", thumbURL: "/t/1"),
-            Photo(id: "2", activityID: "a"),
-            Photo(id: "3", activityID: "b", lon: 3, lat: 4, thumbURL: "/t/3"),
-            Photo(id: "4", activityID: "a", lon: 5, lat: 6, thumbURL: "/t/4"),
+            Photo(id: "1", trackID: "a", lon: 1, lat: 2, caption: "Lake", thumbURL: "/t/1"),
+            Photo(id: "2", trackID: "a"),
+            Photo(id: "3", trackID: "b", lon: 3, lat: 4, thumbURL: "/t/3"),
+            Photo(id: "4", trackID: "a", lon: 5, lat: 6, thumbURL: "/t/4"),
         ]
         let items = PhotoMarkers.items(photos, mapHidden: ["b"])
         #expect(items == [
