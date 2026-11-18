@@ -33,25 +33,16 @@ git diff $DEPLOYED origin/main -- compose.prod.yml
 
 Tell the user: what's deployed, the target `origin/main` short SHA, the commits in between, and whether there are **new migrations** (files under `services/server/migrations/`) and whether any **needs maintenance mode** (its first line is `-- Deploy: maintenance — <why>`, `docs/DEVELOPMENT.md`'s "Writing a migration"), **Android changes** (anything under `apps/android/` outside `docs/`) and **one-time server steps** (step 3's last part). Read every new migration without that line too, and if one looks unsafe to run beside the old code (a drop, a rename, a new `NOT NULL`, a long rewrite or backfill), say why and ask whether to deploy it with maintenance mode instead. For each column, table or index the `DROP`/`RENAME` grep finds, check whether the running release still uses it: `git grep -n <name> $DEPLOYED -- services/server ':!services/server/migrations'`. A hit means the migration fails every request that reaches that code between `migrate` and the swap, so it needs maintenance mode whether or not it carries the line; when it doesn't, tell the user the line is missing — the migration should have carried it, or been split over two releases (`docs/DEVELOPMENT.md`'s "Writing a migration"). If the `db` image's tag changed, stop: a routine `up -d` would start the new image on the data without `DEPLOY.md` §9's steps. Tell the user and run `DEPLOY.md` §9 as its own maintenance window instead, with the release's other changes going out in that section's step 6. Any other `compose.prod.yml` hunk inside the `db` service or the `x-logging` block it uses makes `up -d` recreate `db`: deploy by the maintenance path, so `worker` stops while Postgres is still up (`DEPLOY.md` §7). Read the `DEPLOY.md` diff whole: a feature that needs an operator step (a file to load, a command to run once) adds it there, and nothing else in this plan would show it. Only `origin/main` deploys — unmerged branches never do. If `/healthz` doesn't answer, say so and ask before going on. Confirm with the user before starting; a deploy changes the live site.
 
-### Android version bump (only if the app changed)
+### Android version (only if the app changed)
 
-`versionCode` is the commit count and takes care of itself; `versionName` is the release number, `major.minor.patch`, raised by hand (`docs/DEPLOY.md` §10). Show the user where it stands:
+Every pull request that changes the app raises `versionName` itself (`docs/DEPLOY.md` §10), so `origin/main` already carries the number this release goes out with. Show the user where it stands:
 
 ```
 git show origin/main:apps/android/holdmytrack/app/build.gradle.kts | grep 'versionName ='
-BUMPED=$(git log -1 --format=%h -G'versionName = ' origin/main -- apps/android/holdmytrack/app/build.gradle.kts)
-git log --oneline --no-merges $BUMPED..origin/main -- apps/android ':!apps/android/docs'
+git tag --list 'android/*' --sort=-v:refname | head -1
 ```
 
-Give the current `versionName`, the commit that last set it, and the app's commits since — summarised as features, not a raw list — and ask whether this release deserves a bump, suggesting the next number by `DEPLOY.md` §10's rule (a feature: 0.31.0 → 0.32.0, with a one-word theme; fixes alone: 0.31.0 → 0.31.1). Each step is 1, and major moves only when the user says so. Ask together with the deploy confirmation, so it's one question.
-
-The app goes out through Google Play, built separately from the deploy (`apps/android/holdmytrack/README.md`, Release build), but a build reads `versionName` from the commit it's built from, so a bump goes on `origin/main` with the deploy rather than after it. If the user wants one, before step 2:
-
-1. Branch off `origin/main` (`android-version-0.32.0`) and change the number everywhere it's written: `versionName` in `apps/android/holdmytrack/app/build.gradle.kts`, the examples of it in the KDoc of `appVersion` and `UserAgentInterceptor` in `net/HoldMyTrackApi.kt` and of `userAgent` in `net/AppBuild.kt`, and the case in `AppBuildTest`. `git grep -nF '0.31.0' apps/android` finds them.
-2. One commit, `Android: version 0.32.0 — <theme>` (for fixes alone, `Android: version 0.31.1`), with a body naming what the release brings; push it and give the user the compare URL to open the PR (`gh` may not be installed).
-3. Wait for the user to say it's merged, then re-run the plan above: the target SHA is now the merge commit.
-
-No bump: go on with the target as it is.
+Give the `versionName` and whether it's past the last tagged release's. If the app changed since that release but the number didn't, a pull request skipped its bump: say so and offer one, as its own pull request, before step 2.
 
 ## 2. Deploy
 
@@ -109,4 +100,4 @@ Then run `scripts/check-contract-release.sh --needed-floor <deployed sha>` again
 
 ## 5. Report and record
 
-Tell the user the deployed SHA, whether migrations ran (and the backup's name, and whether the site went into maintenance mode), which one-time steps ran or were skipped and why, whether `versionName` was bumped, whether a release was tagged, and what was verified. If you keep notes on the deployment's state between sessions, record the deployed SHA there.
+Tell the user the deployed SHA, whether migrations ran (and the backup's name, and whether the site went into maintenance mode), which one-time steps ran or were skipped and why, the app's `versionName`, whether a release was tagged, and what was verified. If you keep notes on the deployment's state between sessions, record the deployed SHA there.
