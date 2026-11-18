@@ -1,7 +1,6 @@
 // Covers docs/SPEC.md FR-12.1 (every message in every language).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
 // Plain .mjs, like editTrackOps.test.mjs: Node strips the types from the catalogs itself.
 // tsc already refuses a ru.ts missing one of en.ts's keys; this checks what a type can't.
 import { en } from '../src/i18n/en.ts';
@@ -64,41 +63,4 @@ test('no message is empty or padded', () => {
       assert.ok(msg !== '' && msg.trim() === msg, `${lang} ${key}`);
     }
   }
-});
-
-test("each t() call passes every placeholder its message names", () => {
-  // A placeholder t() can't fill shows as written, "{activities}", so a variable renamed on one
-  // side only is caught here. Reads the literal calls t('key', { … }) in src/.
-  const files = readdirSync(new URL('../src', import.meta.url), { recursive: true })
-    .filter((f) => /\.tsx?$/.test(f) && !f.startsWith('i18n'));
-  const problems = [];
-  for (const file of files) {
-    const src = readFileSync(new URL(`../src/${file}`, import.meta.url), 'utf8');
-    for (const call of src.matchAll(/\bt\(\s*'([\w.]+)'\s*,\s*\{/g)) {
-      const key = call[1];
-      if (!(key in en)) continue;
-      // The object literal, braces balanced.
-      let depth = 0;
-      let end = call.index + call[0].length - 1;
-      for (; end < src.length; end++) {
-        if (src[end] === '{') depth++;
-        else if (src[end] === '}' && --depth === 0) break;
-      }
-      const body = src.slice(call.index + call[0].length, end);
-      const passed = new Set();
-      depth = 0;
-      for (const part of body.split(/(,|[{}()[\]])/)) {
-        if (/^[{([]$/.test(part)) depth++;
-        else if (/^[})\]]$/.test(part)) depth--;
-        else if (depth === 0) {
-          const name = part.match(/^\s*(\w+)\s*(?::|$)/);
-          if (name) passed.add(name[1]);
-        }
-      }
-      for (const p of placeholders(en[key])) {
-        if (!passed.has(p.slice(1, -1))) problems.push(`${file}: ${key} names ${p}, the call passes ${[...passed].join(', ')}`);
-      }
-    }
-  }
-  assert.deepEqual(problems, []);
 });

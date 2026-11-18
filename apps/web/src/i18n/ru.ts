@@ -58,7 +58,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'tracks.focus_target': 'Приблизить карту: {target}',
   'tracks.footer': 'Отмечено: {n} · {distance}',
   'tracks.footer_focused': '«{label}» · {distance}',
-  'tracks.group_summary': '{tracks} ({distance})',
+  'tracks.group_summary': '{name} ({distance})',
   'tracks.open_trip': 'Открыть «{name}»',
   'tracks.trip_badge.one': '{n} путешествие',
   'tracks.trip_badge.few': '{n} путешествия',

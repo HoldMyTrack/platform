@@ -52,7 +52,7 @@ export const en = {
   'tracks.focus_target': 'Zoom to {target}',
   'tracks.footer': '{n} checked · {distance}',
   'tracks.footer_focused': '“{label}” · {distance}',
-  'tracks.group_summary': '{tracks} ({distance})',
+  'tracks.group_summary': '{name} ({distance})',
   'tracks.open_trip': 'Open “{name}”',
   'tracks.trip_badge.one': 'Trip',
   'tracks.trip_badge.other': '{n} trips',

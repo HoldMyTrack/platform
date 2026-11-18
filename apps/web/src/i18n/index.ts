@@ -57,8 +57,22 @@ export function hasKey(key: string): key is MessageKey {
   return key in fallback;
 }
 
+/** The `{name}`s in a message. */
+type Placeholders<S> = S extends `${string}{${infer P}}${infer R}` ? P | Placeholders<R> : never;
+
+/** What t() takes for key: every placeholder its English message names, or nothing when there
+ *  is none. A key only known as a MessageKey, built from data, is checked at run time instead. */
+type ArgsFor<K extends MessageKey, Except extends string = never> = MessageKey extends K ? [vars?: Vars] : ArgsForEach<K, Except>;
+
+/** ArgsFor for each key of a union on its own, so a call passes what its own message names. */
+type ArgsForEach<K extends MessageKey, Except extends string> = K extends unknown
+  ? [Exclude<Placeholders<(typeof en)[K]>, Except>] extends [never]
+    ? [vars?: Vars]
+    : [vars: Record<Exclude<Placeholders<(typeof en)[K]>, Except>, string | number> & Vars]
+  : never;
+
 /** A catalog message, `{name}`s filled from `vars` (numbers get this language's separators). */
-export function t(key: MessageKey, vars?: Vars): string {
+export function t<K extends MessageKey>(key: K, ...[vars]: ArgsFor<K>): string {
   return fill(lookup(key), vars);
 }
 
@@ -66,7 +80,7 @@ export function t(key: MessageKey, vars?: Vars): string {
 type PluralBase = MessageKey extends infer K ? (K extends `${infer B}.other` ? B : never) : never;
 
 /** A count's message in the plural form `n` takes, with `{n}` set to it. */
-export function tn(key: PluralBase, n: number, vars?: Vars): string {
+export function tn<B extends PluralBase>(key: B, n: number, ...[vars]: ArgsFor<`${B}.other` & MessageKey, 'n'>): string {
   const form = plurals.select(n);
   const msg = messages[`${key}.${form}`] ?? messages[`${key}.other`] ?? fallback[`${key}.${form === 'one' ? 'one' : 'other'}`] ?? key;
   return fill(msg, { n, ...vars });
