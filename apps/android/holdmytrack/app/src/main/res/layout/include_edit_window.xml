@@ -2,7 +2,7 @@
 <!-- The Edit window (panel/EditTrackWindow.kt), after the web's EditTrackWindow.tsx: a card
      along the bottom of the map, the map left showing between it and the edit bar at the top
      (fragment_map's edit_bar: Cancel, the title and whose it is, Save), rather than a modal
-     dialog, so its Track and Photos tabs can edit on the map. The Activity, Track and Photos tabs
+     dialog, so its Route and Photos tabs can edit on the map. The Track, Route and Photos tabs
      — Type, Name and Description on the first, the route editor (panel/RouteEditor) on the
      second, the photos (panel/PhotosTab) on the third — then an error line. It scrolls past most
      of the screen's height, and its bottom margin clears the gesture bar (MapFragment

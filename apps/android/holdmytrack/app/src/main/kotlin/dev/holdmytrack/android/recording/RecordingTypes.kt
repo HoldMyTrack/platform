@@ -18,7 +18,7 @@ object RecordingTypes {
 
     /** The "no type yet" value — never blank: an untyped track is still something, and
      *  this is the same fallback `internal/parse/parse.go`'s `ParseJSON` already applies
-     *  server-side to an empty `activity_type`. */
+     *  server-side to an empty `track_type`. */
     const val DEFAULT = "unknown"
 
     private const val PREFS_NAME = "holdmytrack.recording"

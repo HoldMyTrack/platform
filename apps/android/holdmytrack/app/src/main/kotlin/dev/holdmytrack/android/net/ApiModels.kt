@@ -86,7 +86,7 @@ data class UploadOutcome(val status: String)
 
 /**
  * One row of `GET /v2/tracks` (`docs/IMPLEMENTATION.md` §4.7) — what the map's Tracks
- * panel lists, the web's `Activity`. [startedAt] is the server's RFC 3339 instant, shown in
+ * panel lists, the web's `Track`. [startedAt] is the server's RFC 3339 instant, shown in
  * [timezone], the zone it was recorded in (§4.30; empty from an older server). [name],
  * [description], [distanceMeters] and [movingSeconds] are null when the source never set
  * them; [movingSeconds] is moving time, as Trips sum it, else elapsed; [bbox] (`[minLon, minLat, maxLon, maxLat]`) is null for a track with no drawn

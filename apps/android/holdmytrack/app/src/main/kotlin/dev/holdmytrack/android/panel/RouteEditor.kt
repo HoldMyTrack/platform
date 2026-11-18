@@ -151,7 +151,7 @@ class RouteEditor(
         TooltipCompat.setTooltipText(reset, res.getString(R.string.edit_route_reset_title))
     }
 
-    /** Loads [activity]'s points the first time the tab opens; the session then lasts until
+    /** Loads [track]'s points the first time the tab opens; the session then lasts until
      *  [close], so switching back to the Track tab loses nothing. */
     fun open(track: Track) {
         if (trackId == track.id) {

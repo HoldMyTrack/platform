@@ -19,7 +19,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/hmt_ink"
         android:textSize="@dimen/hmt_text_md"
-        tools:text="Dad sent you a copy of “Vietnam” · 2 activities" />
+        tools:text="Dad sent you a copy of “Vietnam” · 2 tracks" />
 
     <LinearLayout
         android:id="@+id/trip_inbox_actions"

@@ -298,7 +298,7 @@
                             android:ellipsize="end"
                             android:maxLines="1"
                             android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleMedium"
-                            tools:text="Edit activity" />
+                            tools:text="Edit track" />
 
                         <TextView
                             android:id="@+id/edit_subtitle"

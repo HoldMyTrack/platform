@@ -3,7 +3,7 @@ package dev.holdmytrack.android.health
 import androidx.health.connect.client.records.ExerciseSessionRecord
 
 /**
- * Health Connect's exercise type (an `Int`) turned into the `activity_type` string
+ * Health Connect's exercise type (an `Int`) turned into the `track_type` string
  * `POST /v2/sync/tracks` takes.
  *
  * **Written against the library's public constants, deliberately.** The client also ships an

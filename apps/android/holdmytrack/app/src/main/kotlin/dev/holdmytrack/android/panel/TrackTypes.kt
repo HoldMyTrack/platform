@@ -22,7 +22,9 @@ object TrackTypes {
     /** What the server said about one type; either part may be missing. */
     data class Info(val kind: TrackKind?, val label: String?)
 
-    private const val PREFS = "holdmytrack.activity_types"
+    private const val PREFS = "holdmytrack.track_types"
+    // The same cache under its name before the rename, dropped at start; refresh refills PREFS.
+    private const val OLD_PREFS = "holdmytrack.activity_types"
     private const val KEY_TYPES = "types"
     private const val KEY_LANGUAGE = "language"
 
@@ -36,6 +38,7 @@ object TrackTypes {
      *  screen shows. */
     fun init(appContext: Context) {
         context = appContext.applicationContext
+        appContext.deleteSharedPreferences(OLD_PREFS)
         val prefs = prefs() ?: return
         if (prefs.getString(KEY_LANGUAGE, null) != language()) return
         val saved = prefs.getString(KEY_TYPES, null) ?: return

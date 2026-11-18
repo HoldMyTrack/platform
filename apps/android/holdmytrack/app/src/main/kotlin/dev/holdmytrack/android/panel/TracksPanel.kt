@@ -193,7 +193,7 @@ class TracksPanel(
         onSelect = ::select,
         onClearFocus = ::clearFocus,
         onBadgesChanged = { onTripsChanged() },
-        onActivityRemoved = { id -> onRemovedFromTrip(id) },
+        onTrackRemoved = { id -> onRemovedFromTrip(id) },
         onCopyArrived = { onTripCopyArrived() },
         onInboxRead = { onTripsWaiting(it) },
     )

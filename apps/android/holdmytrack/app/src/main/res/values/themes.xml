@@ -672,7 +672,7 @@
     </style>
 
     <!-- A row's Trip badge (.tracks-panel__trip-badge): the accent on the accent at 12%. -->
-    <style name="Widget.HoldMyTrack.PanelStatusBadge.Story">
+    <style name="Widget.HoldMyTrack.PanelStatusBadge.Trip">
         <item name="android:background">@drawable/bg_panel_trip_badge</item>
         <item name="android:textColor">@color/hmt_accent</item>
     </style>

@@ -73,7 +73,7 @@
                 android:maxLines="1"
                 android:textColor="@color/hmt_ink_meta"
                 android:textSize="@dimen/hmt_text_sm"
-                tools:text="6 activities · 74.8 km · 9h 6m" />
+                tools:text="6 tracks · 74.8 km · 9h 6m" />
         </LinearLayout>
 
         <!-- The selected track, in the range's place while one is selected. -->
@@ -98,7 +98,7 @@
                 android:layout_weight="1"
                 android:accessibilityHeading="true"
                 android:textAppearance="@style/TextAppearance.HoldMyTrack.TitleLarge"
-                tools:text="Stories" />
+                tools:text="Trips" />
         </LinearLayout>
 
         <!-- What the Trips or Sync content is (.tracks-panel__subtext);
@@ -112,7 +112,7 @@
             android:textColor="@color/hmt_ink_meta"
             android:textSize="@dimen/hmt_text_sm"
             android:visibility="gone"
-            tools:text="Hand-picked sets of your activities. Only you can see them." />
+            tools:text="Hand-picked sets of your tracks. Only you can see them." />
     </LinearLayout>
 
     <View
@@ -334,7 +334,7 @@
                     android:textColor="@color/hmt_ink"
                     android:textFontWeight="600"
                     android:textSize="@dimen/hmt_text_md"
-                    tools:text="3 activities · 58 km · 3h 26m moving" />
+                    tools:text="3 tracks · 58 km · 3h 26m moving" />
 
                 <!-- Per track type (.trips-tab__types): its name, then its own line. -->
                 <TableLayout
