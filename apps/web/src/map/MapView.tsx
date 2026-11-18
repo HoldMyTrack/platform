@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { listQuery, tracksQuery as tracksQueryFor } from './activityQuery.ts';
 import { areaLoad } from './areaLoad.ts';
@@ -54,6 +54,9 @@ import { useStories } from '../ui/useStories.ts';
 import { useStory } from '../ui/useStory.ts';
 import { useTour } from '../ui/tour/useTour.ts';
 import { t } from '../i18n/index.ts';
+import { MapExport } from '../ui/MapExport.tsx';
+import { TourLayer } from '../ui/tour/Tour.tsx';
+import { lazyChunk } from '../lazyChunk.ts';
 
 interface MapViewProps {
   /** Mount with the Activities panel on its Privacy tab: `/?private-locations` (App.tsx). */
@@ -64,17 +67,9 @@ interface MapViewProps {
   initialTour?: boolean;
 }
 
-/**
- * The map page: the map and its layers, the Activities panel beside it, and the Edit window, the
- * export and the popups over it. It composes the map's state (session.ts) with each feature's
- * hook; the hooks are called in the order their effects must run.
- */
-// Loaded when first shown, not with the map: the Edit window (with the track editor and photo
-// preparation), the export viewfinder and the tour are each a large part of the app that most
-// visits never open, and the map shouldn't wait for them.
-const EditActivityWindow = lazy(() => import('../ui/EditActivityWindow.tsx').then((m) => ({ default: m.EditActivityWindow })));
-const MapExport = lazy(() => import('../ui/MapExport.tsx').then((m) => ({ default: m.MapExport })));
-const TourLayer = lazy(() => import('../ui/tour/Tour.tsx').then((m) => ({ default: m.TourLayer })));
+// Loaded when first opened, not with the map: the Edit window, with the track editor and photo
+// preparation, is a large part of the app that most visits never open (lazyChunk.ts).
+const EditActivityWindow = lazyChunk(() => import('../ui/EditActivityWindow.tsx').then((m) => m.EditActivityWindow));
 
 /** The Edit window's place while its activities, or its code, are on their way. */
 function EditWindowLoading() {
@@ -85,6 +80,11 @@ function EditWindowLoading() {
   );
 }
 
+/**
+ * The map page: the map and its layers, the Activities panel beside it, and the Edit window, the
+ * export and the popups over it. It composes the map's state (session.ts) with each feature's
+ * hook; the hooks are called in the order their effects must run.
+ */
 export function MapView({ initialPrivateLocationsOpen = false, initialActivity = null, initialTour = false }: MapViewProps) {
   // A demo account is read-only (docs/SPEC.md FR-2.1); `'email' in user` tells a DemoUser from an AuthUser.
   const { user } = useAuth();
@@ -439,11 +439,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
           <div ref={container} className="map-canvas" data-testid="map-canvas" />
           {/* Edit owns the map while it's open, as the other controls step aside: an export would
               draw the tracks without the edit, and Escape would reach both. */}
-          {map && !editOpen && (
-            <Suspense fallback={null}>
-              <MapExport map={map} container={container} exporter={exporter} />
-            </Suspense>
-          )}
+          {map && !editOpen && <MapExport map={map} container={container} exporter={exporter} />}
           {map && edit.activities && (
             <Suspense fallback={<EditWindowLoading />}>
             <EditActivityWindow
@@ -501,11 +497,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
           )}
           {map && spots.openSpot && <SpotPopup map={map} spot={spots.openSpot} capturedAt={spots.capturedAt(spots.openSpot.id)} onClose={spots.closeSpot} />}
         </div>
-        {!editOpen && (
-          <Suspense fallback={null}>
-            <TourLayer tour={tour} />
-          </Suspense>
-        )}
+        {!editOpen && <TourLayer tour={tour} />}
       </div>
     </div>
   );
