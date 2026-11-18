@@ -17,6 +17,9 @@ set -euo pipefail
 umask 077  # the downloaded dump is the whole database (backup.sh)
 
 cd "$(dirname "$0")/.."
+# The tables backup.sh leaves out.
+# shellcheck source=scripts/lib/backup-tables.sh
+source scripts/lib/backup-tables.sh
 
 ENV_FILE=.env.prod
 COMPOSE=(docker compose -f compose.prod.yml --env-file "$ENV_FILE")
@@ -104,7 +107,7 @@ log "newest migration: restored $restored_migration, checked out $newest_migrati
 # on the way: one left out of the dump by mistake (REBUILT_TABLES), or a dump cut short.
 shrunk=()
 printf '%-18s %10s %10s\n' table restored live
-for table in users activities activity_photos stories privacy_zones spot_captures spots bike_paths admin_countries tz_parts; do
+for table in users tracks track_photos trips privacy_zones spot_captures spots bike_paths admin_countries tz_parts; do
   restored=$(drill_psql "SELECT count(*) FROM $table")
   live=$(live_psql "SELECT count(*) FROM $table")
   printf '%-18s %10s %10s\n' "$table" "$restored" "$live"
@@ -113,17 +116,26 @@ done
 (( ${#shrunk[@]} == 0 )) || fail "restored far fewer rows than live in: ${shrunk[*]}"
 [[ $(drill_psql 'SELECT count(*) FROM users') -gt 0 ]] || fail "the restored database has no users"
 [[ $(drill_psql 'SELECT count(*) FROM admin_countries') -gt 0 ]] || fail "the restored database has no countries — is the reference dump empty?"
-# The masks' PNGs are left out of the dump (backup.sh) but their table isn't.
-[[ $(drill_psql 'SELECT count(*) FROM activity_tile_mask_data') -eq 0 ]] ||
-  fail "the restored activity_tile_mask_data isn't empty — is backup.sh still leaving its data out?"
+# What backup.sh leaves the data of out is in the dump as empty tables.
+missing=$(missing_backup_tables drill_psql)
+if [[ -z "$missing" ]]; then
+  for table in "${REBUILT_TABLES[@]}" "${SHORT_LIVED_TABLES[@]}"; do
+    [[ $(drill_psql "SELECT count(*) FROM $table") -eq 0 ]] ||
+      fail "the restored $table isn't empty — is backup.sh still leaving its data out?"
+  done
+elif at_newest_migration drill_psql; then
+  fail "scripts/lib/backup-tables.sh names tables the restored database doesn't have: $missing"
+else
+  log "warning: not checking the left-out tables are empty: the restored database, behind this checkout, doesn't have $missing"
+fi
 
 # Every key the restored database refers to, against what's in the backup bucket, built with
 # the server's own key expressions. A new kind of stored object goes here and in backup.sh's
 # --include filter.
 drill_psql "
-  SELECT raw_payload_key FROM activities WHERE raw_payload_key IS NOT NULL
-  UNION ALL SELECT image_key FROM activity_photos
-  UNION ALL SELECT image_key || '-thumb' FROM activity_photos
+  SELECT raw_payload_key FROM tracks WHERE raw_payload_key IS NOT NULL
+  UNION ALL SELECT image_key FROM track_photos
+  UNION ALL SELECT image_key || '-thumb' FROM track_photos
   UNION ALL SELECT avatar_key FROM users WHERE avatar_key IS NOT NULL" | sort -u > "$work/expected"
 rclone lsf -R --files-only --fast-list backup:objects | sort -u > "$work/present"
 comm -23 "$work/expected" "$work/present" > "$work/missing"
