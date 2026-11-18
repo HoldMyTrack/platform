@@ -71,16 +71,9 @@ KEEP_DELETED_DAYS=30
 MAX_SHRINK_PERCENT=10
 MIN_SHRINK_OBJECTS=500
 
-# Written only by `import-spots`, `import-bike-paths`, `seed-admin-boundaries` and
-# `seed-timezones`.
-REFERENCE_TABLES=(spots bike_paths admin_countries admin_country_parts admin_regions admin_region_parts
-  admin_counties admin_county_parts admin_cities admin_city_parts admin_boundaries_source tz_parts
-  tz_boundaries_source)
-# Left out of every dump: rebuilt on demand (the tile cache) or by `rerender-coverage --masks`.
-REBUILT_TABLES=(admin_tile_geoms admin_tiles_built track_tile_mask_data)
-# Left out of every dump: the visitor salts and hashes, deleted within 2 days (docs/DPIA.md), which
-# a dump kept for weeks would otherwise outlive.
-SHORT_LIVED_TABLES=(visitor_salts visitor_days)
+# REFERENCE_TABLES, REBUILT_TABLES and SHORT_LIVED_TABLES.
+# shellcheck source=scripts/lib/backup-tables.sh
+source scripts/lib/backup-tables.sh
 
 nightly=false
 case "${1:-}" in
@@ -125,6 +118,16 @@ partial="$BACKUP_DIR/postgres/$name.partial"
 trap 'rm -f "$partial" "$BACKUP_DIR/postgres/reference/"*.partial' EXIT
 
 db_psql() { "${COMPOSE[@]}" exec -T db sh -c 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -At -c "$0"' "$1"; }
+
+# A left-out table under a name the database doesn't have would have its data dumped.
+missing=$(missing_backup_tables db_psql)
+if [[ -n "$missing" ]]; then
+  if at_newest_migration db_psql; then
+    echo "scripts/lib/backup-tables.sh names tables the database doesn't have: $missing. Rename them there." >&2
+    exit 1
+  fi
+  log "warning: the database, behind this checkout's migrations, doesn't have $missing yet; this dump keeps their old names' data"
+fi
 
 # How often each reference table has had rows inserted, updated and deleted, from Postgres's
 # own counters: any import or seed moves them. They're kept across a clean restart and reset
