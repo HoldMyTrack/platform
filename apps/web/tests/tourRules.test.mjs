@@ -33,6 +33,7 @@ test('a card shows once, for Fog or the Trips tab, and never during the tour', (
 test('a stored record keeps only the cards this build shows, and a broken one counts as nothing seen', () => {
   assert.deepEqual(readTourSeen(JSON.stringify({ tour: true, cards: ['fog', 'heatmap', 'trips'] })), { tour: true, cards: ['fog', 'trips'] });
   assert.deepEqual(readTourSeen(JSON.stringify({ cards: ['heatmap'] })), NOTHING_SEEN);
+  assert.deepEqual(readTourSeen(JSON.stringify({ tour: true, cards: ['stories'] })), { tour: true, cards: ['trips'] });
   assert.equal(readTourSeen(null), NOTHING_SEEN);
   assert.equal(readTourSeen('{'), NOTHING_SEEN);
   assert.deepEqual(readTourSeen('null'), NOTHING_SEEN);
