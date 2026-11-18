@@ -603,7 +603,10 @@ export async function savePrivateLocation(input: PrivateLocationInput, id?: stri
   const res = await apiFetch(`/private-locations${id ? `/${encodeURIComponent(id)}` : ''}`, {
     method: id ? 'PATCH' : 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/private-locations', 'post'>({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM }),
+    // Each against its own operation, so a difference between them in the contract shows here.
+    body: id
+      ? jsonBody<'/private-locations/{id}', 'patch'>({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM })
+      : jsonBody<'/private-locations', 'post'>({ name: input.name, lon: input.lon, lat: input.lat, radius_m: input.radiusM }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
