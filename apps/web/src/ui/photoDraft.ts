@@ -35,7 +35,12 @@ export const EMPTY_DRAFT: PhotoDraft = { added: [], changed: {}, deleted: [] };
 
 /** Epoch seconds as RFC 3339, the way the API takes a `route_at`. */
 export function isoSeconds(seconds: number): string {
-  return new Date(seconds * 1000).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  return isoUtc(seconds * 1000);
+}
+
+/** `ms` as an ISO 8601 UTC time to the second, as the API takes times. */
+export function isoUtc(ms: number): string {
+  return new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
 export function draftIsEmpty(draft: PhotoDraft): boolean {
