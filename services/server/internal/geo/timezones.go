@@ -20,18 +20,18 @@ import (
 // uploaded by hand (docs/DEPLOY.md §6). A newer release changes both.
 //
 // The full set, not the -now variant: that one merges zones whose clocks agree only today, which
-// would give an older activity the wrong offset. The ocean zones (Etc/GMT±N) mean a point at sea
+// would give an older track the wrong offset. The ocean zones (Etc/GMT±N) mean a point at sea
 // has a zone too.
 const TimezonesKey = "timezones/timezones-with-oceans-2026d.geojson.zip"
 
 // The fewest zones a whole-world release has: 2026d has 444 with the ocean ones. Fewer means a
-// wrong or cut-short file, which would otherwise move most activities back to their account's zone.
+// wrong or cut-short file, which would otherwise move most tracks back to their account's zone.
 const minTimezones = 400
 
 // TimezoneAtSQL is the SQL for the zone of the point (lon, lat), each a float8 SQL expression:
 // the IANA name of the polygon it lies in, or userID's own zone (users.timezone) where there is
 // none — before seed-timezones has run, or for a point no polygon covers. Ingest stores it as
-// activities.timezone from the activity's first recorded point (IMPLEMENTATION.md §4.30).
+// tracks.timezone from the track's first recorded point (IMPLEMENTATION.md §4.30).
 func TimezoneAtSQL(lon, lat, userID string) string {
 	return `COALESCE(
 		(SELECT tzid FROM tz_parts
@@ -46,19 +46,19 @@ type TimezoneStats struct {
 	// Zones the database's own tz data doesn't know, left out: a release newer than the
 	// Postgres image's tz data. Their areas fall back to the account's zone until it's updated.
 	UnknownZones []string
-	Activities   int64
+	Tracks       int64
 	// The file was the one already loaded, so nothing was done.
 	Unchanged bool
 }
 
-// SeedTimezones replaces the zone polygons with the file's and re-matches every activity that
+// SeedTimezones replaces the zone polygons with the file's and re-matches every track that
 // has a track, in one transaction. r is timezone-boundary-builder's GeoJSON zip; name is its
 // file name, and a run whose name matches the file already loaded does nothing unless force is
 // set.
 //
 // Re-matching uses the start of the stored trajectory, which ingest's own lookup (the first
-// recorded point, before Private locations clip it) can differ from only when an activity
-// starts inside a Private location on a zone border. An activity wholly inside one keeps the
+// recorded point, before Private locations clip it) can differ from only when a track
+// starts inside a Private location on a zone border. An track wholly inside one keeps the
 // zone it has.
 //
 // Registered as the `seed-timezones` subcommand (cmd/holdmytrack/main.go).
@@ -108,7 +108,7 @@ func loadTimezones(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reader
 		return stats, fmt.Errorf("geo: load %s: %w", name, err)
 	}
 
-	// A zone Postgres can't resolve would make every query that reads the activity fail, so it
+	// A zone Postgres can't resolve would make every query that reads the track fail, so it
 	// is left out rather than stored.
 	unknown, err := tx.Query(ctx, `
 		SELECT tzid FROM tz_geojson WHERE tzid NOT IN (SELECT name FROM pg_timezone_names) ORDER BY tzid
@@ -138,7 +138,7 @@ func loadTimezones(ctx context.Context, tx pgx.Tx, log *slog.Logger, r io.Reader
 			FROM tz_geojson WHERE tzid IN (SELECT name FROM pg_timezone_names)`, nil},
 		{"activities", `
 			UPDATE activities a SET timezone = ` + TimezoneAtSQL("ST_X(ST_StartPoint(a.trajectory))", "ST_Y(ST_StartPoint(a.trajectory))", "a.user_id") + `
-			WHERE a.trajectory IS NOT NULL`, &stats.Activities},
+			WHERE a.trajectory IS NOT NULL`, &stats.Tracks},
 	}
 	for _, s := range steps {
 		tag, err := tx.Exec(ctx, s.sql)

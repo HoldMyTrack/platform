@@ -59,7 +59,7 @@ func TestLoadDemoManifest(t *testing.T) {
 	files := []string{"a.gpx", "b.fit"}
 
 	got, err := loadDemoManifest(fstest.MapFS{}, files)
-	if err != nil || len(got.Activities) != 0 || len(got.Stories) != 0 {
+	if err != nil || len(got.Tracks) != 0 || len(got.Trips) != 0 {
 		t.Fatalf("missing manifest: got %+v, %v; want empty, nil", got, err)
 	}
 
@@ -71,14 +71,14 @@ func TestLoadDemoManifest(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := (demoManifestEntry{Name: "Lake loop", Type: "walking"}); !reflect.DeepEqual(got.Activities["a.gpx"], want) {
-		t.Fatalf("got %+v, want %+v", got.Activities["a.gpx"], want)
+	if want := (demoManifestEntry{Name: "Lake loop", Type: "walking"}); !reflect.DeepEqual(got.Tracks["a.gpx"], want) {
+		t.Fatalf("got %+v, want %+v", got.Tracks["a.gpx"], want)
 	}
-	if want := (demoManifestEntry{Description: "Along the river"}); !reflect.DeepEqual(got.Activities["b.fit"], want) {
-		t.Fatalf("got %+v, want %+v", got.Activities["b.fit"], want)
+	if want := (demoManifestEntry{Description: "Along the river"}); !reflect.DeepEqual(got.Tracks["b.fit"], want) {
+		t.Fatalf("got %+v, want %+v", got.Tracks["b.fit"], want)
 	}
-	if want := []demoManifestStory{{Name: "Weekend", Description: "Two days out", Activities: []string{"a.gpx", "b.fit"}}}; !reflect.DeepEqual(got.Stories, want) {
-		t.Fatalf("stories %+v, want %+v", got.Stories, want)
+	if want := []demoManifestTrip{{Name: "Weekend", Description: "Two days out", Tracks: []string{"a.gpx", "b.fit"}}}; !reflect.DeepEqual(got.Trips, want) {
+		t.Fatalf("stories %+v, want %+v", got.Trips, want)
 	}
 
 	for name, manifest := range map[string]string{
@@ -88,7 +88,7 @@ func TestLoadDemoManifest(t *testing.T) {
 		"a story with no activities":        `{"stories": [{"name": "S", "activities": []}]}`,
 		"two stories with one name":         `{"stories": [{"name": "S", "activities": ["a.gpx"]}, {"name": "S", "activities": ["b.fit"]}]}`,
 		"two stories opening first":         `{"stories": [{"name": "S", "activities": ["a.gpx"], "opens_first": true}, {"name": "T", "activities": ["b.fit"], "opens_first": true}]}`,
-		"a story name over the API's limit": `{"stories": [{"name": "` + strings.Repeat("x", maxStoryNameLen+1) + `", "activities": ["a.gpx"]}]}`,
+		"a story name over the API's limit": `{"stories": [{"name": "` + strings.Repeat("x", maxTripNameLen+1) + `", "activities": ["a.gpx"]}]}`,
 	} {
 		fsys["manifest.json"] = &fstest.MapFile{Data: []byte(manifest)}
 		if _, err := loadDemoManifest(fsys, files); err == nil {
@@ -111,8 +111,8 @@ func TestLoadDemoManifestPhotos(t *testing.T) {
 		t.Fatal(err)
 	}
 	want := []demoManifestPhoto{{File: "a 1.jpg", Thumb: "a 1-thumb.jpg", RouteAt: time.Date(2026, 10, 2, 15, 4, 5, 0, time.UTC), Caption: "Lake view", Width: 2048, Height: 1536}}
-	if !reflect.DeepEqual(got.Activities["a.gpx"].Photos, want) {
-		t.Fatalf("photos %+v, want %+v", got.Activities["a.gpx"].Photos, want)
+	if !reflect.DeepEqual(got.Tracks["a.gpx"].Photos, want) {
+		t.Fatalf("photos %+v, want %+v", got.Tracks["a.gpx"].Photos, want)
 	}
 
 	for name, manifest := range map[string]string{
@@ -176,7 +176,7 @@ func TestFreeDemoFilename(t *testing.T) {
 	}
 }
 
-// A photo through export-demo-activities and back in through the seed (exportDemoPhotos,
+// A photo through export-demo-tracks and back in through the seed (exportDemoPhotos,
 // seedDemoPhotos): its images written out and stored again under the new owner, its place,
 // caption and capture time unchanged, and a re-run of the seed leaving one photo, not two.
 func TestDemoPhotosRoundTrip(t *testing.T) {
@@ -184,7 +184,7 @@ func TestDemoPhotosRoundTrip(t *testing.T) {
 	d := newDBTestWithS3(t, s3)
 	ctx := context.Background()
 	owner, demo := d.newAccount(false), d.newAccount(false)
-	walk := d.newActivity(owner, testActivity{activityType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
+	walk := d.newTrack(owner, testTrack{trackType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
 	var uploaded photoJSON
 	d.decode(d.uploadPhoto(owner, testJPEG(t, 400, 300), testJPEG(t, 32, 24), map[string]string{
 		"activity_id": walk, "taken_at": "2026-05-01T10:00:30Z", "caption": "The bridge",
@@ -207,7 +207,7 @@ func TestDemoPhotosRoundTrip(t *testing.T) {
 		}
 	}
 
-	seeded := d.newActivity(demo, testActivity{activityType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
+	seeded := d.newTrack(demo, testTrack{trackType: "walking", durationSecs: 60, startedAt: photoTrackStart, at: &[2]float64{10, 50}})
 	for run := 1; run <= 2; run++ {
 		if err := seedDemoPhotos(ctx, d.pool, d.srv.store, os.DirFS(out), demo.id, seeded, photos); err != nil {
 			t.Fatalf("seed run %d: %v", run, err)
@@ -227,7 +227,7 @@ func TestDemoPhotosRoundTrip(t *testing.T) {
 	}
 }
 
-// Captures through export-demo-activities and back in through the seed (exportDemoCaptures,
+// Captures through export-demo-tracks and back in through the seed (exportDemoCaptures,
 // seedDemoCaptures): only the owner's within the span, none reaching into their Private
 // locations, and a re-run of the seed keeping one capture per place at the manifest's time.
 func TestDemoCapturesRoundTrip(t *testing.T) {

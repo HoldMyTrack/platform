@@ -38,9 +38,9 @@ type uploadRow struct {
 	StartedAt      *time.Time `json:"started_at,omitempty"`
 	Timezone       *string    `json:"timezone,omitempty"` // StartedAt's zone, where it was recorded (§4.30)
 	DistanceMeters *float64   `json:"distance_meters,omitempty"`
-	// The resulting activity's own id, for a row's "View on map"; absent while the job has no
-	// activity (still processing, or failed).
-	ActivityID *string `json:"activity_id,omitempty"`
+	// The resulting track's own id, for a row's "View on map"; absent while the job has no
+	// track (still processing, or failed).
+	TrackID *string `json:"activity_id,omitempty"`
 }
 
 type uploadsResponse struct {
@@ -56,7 +56,7 @@ type uploadsResponse struct {
 // uploadsCountQuery and uploadsListQuery read the `jobs` table directly rather than a
 // dedicated uploads table — every upload already is an `ingest` job (handleUpload), and `jobs` already carries everything a history row needs (filename via
 // `payload->>'source_detail'`, external_id, state, last_error, created_at). LIMIT/OFFSET,
-// not the keyset pagination §4.7's histogram uses: unlike the activity list, an upload log
+// not the keyset pagination §4.7's histogram uses: unlike the track list, an upload log
 // only grows, and a caller wants "page 3", not "everything since some cursor."
 // The `$2::text[] IS NULL OR ...` treatment is §4.3's own optional-filter pattern
 // (activity_list.go's listActivitiesQuery) — an absent/nil sources filter means "every source",
@@ -71,7 +71,7 @@ const uploadsProcessingCountQuery = `SELECT COUNT(*) FROM jobs WHERE kind = 'ing
 // The LEFT JOIN is what turns a "done" job into a "9 Sep · 34.7 km" row instead of just a
 // bare status. Joined on `a.source = j.payload->>'source'`, not a literal 'upload': every
 // source's jobs are `kind = 'ingest'` jobs this query selects, and each one's own persisted
-// activity carries the matching source, not always 'upload'.
+// track carries the matching source, not always 'upload'.
 const uploadsListQuery = `
 SELECT j.payload->>'source_detail' AS filename,
        j.payload->>'external_id' AS external_id,
@@ -165,7 +165,7 @@ func (s *Server) handleListUploads(w http.ResponseWriter, r *http.Request) {
 		var state string
 		var lastError, errorCode *string
 		if err := rows.Scan(&u.Filename, &u.ExternalID, &u.Source, &state, &lastError, &errorCode, &u.SubmittedAt, &u.FinishedAt,
-			&u.StartedAt, &u.Timezone, &u.DistanceMeters, &u.ActivityID); err != nil {
+			&u.StartedAt, &u.Timezone, &u.DistanceMeters, &u.TrackID); err != nil {
 			s.log.Error("uploads scan failed", "err", err)
 			writeAPIError(w, "internal error", http.StatusInternalServerError)
 			return

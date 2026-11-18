@@ -75,7 +75,7 @@ func TestTake(t *testing.T) {
 		return id
 	}
 	at := func(d time.Duration) *time.Time { v := day.Add(d); return &v }
-	activity := func(userID, source string, created time.Time) string {
+	track := func(userID, source string, created time.Time) string {
 		t.Helper()
 		var id string
 		if err := tx.QueryRow(ctx, `
@@ -115,18 +115,18 @@ func TestTake(t *testing.T) {
 		}
 	}
 
-	// Activities: three of one account's on the day (two uploads, one sync), one each for two
+	// Tracks: three of one account's on the day (two uploads, one sync), one each for two
 	// more accounts the day before; the demo's and the deleted account's count nowhere.
-	a1 := activity(qq[0], "upload", day.Add(3*time.Hour))
-	activity(qq[0], "upload", day.Add(4*time.Hour))
-	activity(qq[0], "healthconnect", day.Add(5*time.Hour))
-	a2 := activity(qq[1], "recorded", day.Add(-time.Hour))
-	a3 := activity(qz[0], "upload", day.Add(-time.Hour))
-	a4 := activity(qq[2], "recorded", day.Add(-time.Hour))
-	a5 := activity(qq[3], "recorded", day.Add(-time.Hour))
-	activity(demoUserID, "upload", day.Add(3*time.Hour))
-	activity(deleted, "upload", day.Add(3*time.Hour))
-	// By the countries their activities are in: QQ one account, QZ three, QY three. All three
+	a1 := track(qq[0], "upload", day.Add(3*time.Hour))
+	track(qq[0], "upload", day.Add(4*time.Hour))
+	track(qq[0], "healthconnect", day.Add(5*time.Hour))
+	a2 := track(qq[1], "recorded", day.Add(-time.Hour))
+	a3 := track(qz[0], "upload", day.Add(-time.Hour))
+	a4 := track(qq[2], "recorded", day.Add(-time.Hour))
+	a5 := track(qq[3], "recorded", day.Add(-time.Hour))
+	track(demoUserID, "upload", day.Add(3*time.Hour))
+	track(deleted, "upload", day.Add(3*time.Hour))
+	// By the countries their tracks are in: QQ one account, QZ three, QY three. All three
 	// fold, into an other of the five distinct accounts behind them; an account counts under
 	// each country it was in.
 	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2), ($1, $3)`, a1, qqCountry, qzCountry)
@@ -136,15 +136,15 @@ func TestTake(t *testing.T) {
 	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2)`, a5, qzCountry)
 
 	// Photos: two rows over the same files (a copy) count their bytes once.
-	photo := func(userID, activityID, key string, bytes int) {
+	photo := func(userID, trackID, key string, bytes int) {
 		exec(`INSERT INTO activity_photos (user_id, activity_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
-			VALUES ($1, $2, $3, 'image/jpeg', 'image/jpeg', 10, 10, $4, $5)`, userID, activityID, day, bytes, key)
+			VALUES ($1, $2, $3, 'image/jpeg', 'image/jpeg', 10, 10, $4, $5)`, userID, trackID, day, bytes, key)
 	}
 	photo(qq[0], a1, "stats-test/a", 1000)
 	photo(qq[0], a1, "stats-test/a", 1000)
 	photo(qq[0], a1, "stats-test/b", 500)
 
-	// Stored objects: two activities over one original (a split) count it once; one more
+	// Stored objects: two tracks over one original (a split) count it once; one more
 	// original isn't measured yet. A Fog tile with its size, one rendered before it was
 	// recorded, and a mask.
 	exec(`UPDATE activities SET raw_payload_key = 'stats-test/raw-a', raw_bytes = 2000 WHERE user_id = $1 AND source = 'upload'`, qq[0])

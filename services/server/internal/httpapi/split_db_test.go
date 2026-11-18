@@ -35,19 +35,19 @@ func (d *dbTest) runEditJob(as account) {
 	if err := json.Unmarshal(payload, &j); err != nil {
 		d.t.Fatal(err)
 	}
-	if err := ingest.ProcessTrackEdit(context.Background(), d.pool, d.srv.store, j); err != nil {
+	if err := ingest.ProcessRouteEdit(context.Background(), d.pool, d.srv.store, j); err != nil {
 		d.t.Fatal(err)
 	}
 }
 
-func (d *dbTest) listActivities(as account) []activityRow {
+func (d *dbTest) listTracks(as account) []trackRow {
 	d.t.Helper()
-	var resp activitiesResponse
+	var resp tracksResponse
 	d.decode(d.do(as, "GET", "/v1/activities", nil), http.StatusOK, &resp)
-	return resp.Activities
+	return resp.Tracks
 }
 
-// Split one activity in two (§4.7.8): each piece is a full activity with its own numbers and
+// Split one track in two (§4.7.8): each piece is a full track with its own numbers and
 // track, and the original file still counts as imported.
 func TestSplit(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
@@ -61,12 +61,12 @@ func TestSplit(t *testing.T) {
 	if err != nil || !res.Persisted {
 		t.Fatalf("ingest: %+v, %v", res, err)
 	}
-	orig := res.ActivityID
-	var storyID string
-	if err := d.pool.QueryRow(ctx, `INSERT INTO stories (user_id, name) VALUES ($1, 'Trip') RETURNING id`, me.id).Scan(&storyID); err != nil {
+	orig := res.TrackID
+	var tripID string
+	if err := d.pool.QueryRow(ctx, `INSERT INTO stories (user_id, name) VALUES ($1, 'Trip') RETURNING id`, me.id).Scan(&tripID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := d.pool.Exec(ctx, `INSERT INTO story_activities (story_id, activity_id) VALUES ($1, $2)`, storyID, orig); err != nil {
+	if _, err := d.pool.Exec(ctx, `INSERT INTO story_activities (story_id, activity_id) VALUES ($1, $2)`, tripID, orig); err != nil {
 		t.Fatal(err)
 	}
 
@@ -84,13 +84,13 @@ func TestSplit(t *testing.T) {
 	if rec := d.do(me, "POST", editPath, map[string]any{"edit": chop, "split_at": at(2)}); rec.Code != http.StatusAccepted {
 		t.Fatalf("split: %d %s", rec.Code, rec.Body.String())
 	}
-	list := d.listActivities(me)
+	list := d.listTracks(me)
 	if len(list) != 2 || !list[0].Pending || !list[1].Pending {
 		t.Fatalf("after split: %+v, want two Pending pieces", list)
 	}
 	d.runEditJob(me)
 
-	list = d.listActivities(me)
+	list = d.listTracks(me)
 	if len(list) != 2 {
 		t.Fatalf("after the job: %d activities", len(list))
 	}
@@ -107,14 +107,14 @@ func TestSplit(t *testing.T) {
 		t.Errorf("pieces' raw_bytes %v, want both %d: they share the original", sizes, len(splitGPX))
 	}
 	for _, c := range []struct {
-		row      activityRow
+		row      trackRow
 		start    int
 		duration int32
 	}{{first, 0, 120}, {second, 2, 120}} {
 		if c.row.Pending || c.row.Split == nil || c.row.Split.Group != orig ||
 			!c.row.StartedAt.Equal(time.UnixMilli(at(c.start))) ||
 			c.row.DurationSeconds == nil || *c.row.DurationSeconds != c.duration ||
-			len(c.row.Stories) != 1 {
+			len(c.row.Trips) != 1 {
 			t.Errorf("piece %+v, want starting 10:0%d, %ds, in the Story", c.row, c.start, c.duration)
 		}
 	}
@@ -123,7 +123,7 @@ func TestSplit(t *testing.T) {
 	}
 
 	// The editor opens on the piece's own points: 10:02 to 10:05, the Chop still in its spec.
-	var pts trackPointsResponse
+	var pts routePointsResponse
 	d.decode(d.do(me, "GET", "/v1/activities/"+second.ID+"/track-points", nil), http.StatusOK, &pts)
 	if len(pts.Points) != 4 || int64(pts.Points[0][2]) != at(2) || pts.Edit == nil || pts.Edit.Keep == nil {
 		t.Errorf("second piece's points %v edit %+v", pts.Points, pts.Edit)
@@ -166,7 +166,7 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 		t.Fatalf("ingest: %+v, %v", res, err)
 	}
 	at := func(min int) int64 { return time.Date(2026, 5, 1, 10, min, 0, 0, time.UTC).UnixMilli() }
-	path := "/v1/activities/" + res.ActivityID + "/track-edit"
+	path := "/v1/activities/" + res.TrackID + "/track-edit"
 	dropStray := map[string]any{"drop": []int64{at(6)}}
 
 	rec := d.do(me, "POST", path, map[string]any{"edit": dropStray, "split_at": at(4)})
@@ -175,13 +175,13 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 	if body["error"] != splitHidesPartCode || body["message"] == "" {
 		t.Fatalf("hidden part: %v, want %s with a message", body, splitHidesPartCode)
 	}
-	if list := d.listActivities(me); len(list) != 1 || list[0].Pending {
+	if list := d.listTracks(me); len(list) != 1 || list[0].Pending {
 		t.Fatalf("the warning changed something: %+v", list)
 	}
 
 	d.decode(d.do(me, "POST", path, map[string]any{"edit": dropStray, "split_at": at(4), "allow_hidden": true}), http.StatusAccepted, nil)
 	d.runEditJob(me)
-	list := d.listActivities(me)
+	list := d.listTracks(me)
 	if len(list) != 2 {
 		t.Fatalf("after split: %d activities", len(list))
 	}
@@ -198,7 +198,7 @@ func TestSplitIntoPrivateLocation(t *testing.T) {
 func TestSplitCountsAgainstTheEditorsLimit(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me := d.newAccount(false)
-	d.srv.trackPointsLimiter = newFixedWindowLimiter(1, time.Hour)
+	d.srv.routePointsLimiter = newFixedWindowLimiter(1, time.Hour)
 	if resp := d.uploadFile(me, "day.gpx", []byte(splitGPX)); resp.Status != "enqueued" {
 		t.Fatalf("upload: %q", resp.Status)
 	}
@@ -206,7 +206,7 @@ func TestSplitCountsAgainstTheEditorsLimit(t *testing.T) {
 	if err != nil || !res.Persisted {
 		t.Fatalf("ingest: %+v, %v", res, err)
 	}
-	path := "/v1/activities/" + res.ActivityID + "/track-edit"
+	path := "/v1/activities/" + res.TrackID + "/track-edit"
 	at := time.Date(2026, 5, 1, 10, 3, 0, 0, time.UTC).UnixMilli()
 	if rec := d.do(me, http.MethodPost, path, map[string]any{"split_at": at + 1}); rec.Code == http.StatusTooManyRequests {
 		t.Fatalf("first split: 429, want it checked")

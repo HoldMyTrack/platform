@@ -30,7 +30,7 @@ acct AS (
 )
 `
 
-// sources are activities.source's values.
+// sources are tracks.source's values.
 var sources = []string{"upload", "healthconnect", "healthkit", "recorded"}
 
 // activeSince is the SQL for "last seen in the n days ending with D".
@@ -48,7 +48,7 @@ func seenSince(column string, n int) string {
 var clients = []string{"web_only", "android_only", "ios_only", "both"}
 
 var catalogue = []stat{
-	// Accounts and activity.
+	// Accounts and track.
 	{key: "accounts", query: `SELECT count(*) FROM acct`},
 	{key: "accounts_verified", query: `SELECT count(*) FROM acct WHERE email_verified`},
 	// Deleted accounts count until their row is purged; deletions are derived when read.
@@ -98,7 +98,7 @@ var catalogue = []stat{
 		JOIN admin_countries c ON c.id = ac.country_id
 		GROUP BY c.code`},
 
-	// Activities.
+	// Tracks.
 	{key: "activities", query: `SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id`},
 	{key: "activities_added", query: `
 		SELECT count(*) FROM activities a JOIN acct u ON u.id = a.user_id, p

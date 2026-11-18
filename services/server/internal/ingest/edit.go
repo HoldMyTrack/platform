@@ -16,9 +16,9 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 )
 
-// TrackEdit is a user's edit to an activity's recorded points (IMPLEMENTATION.md §4.7.7),
+// RouteEdit is a user's edit to a track's recorded points (IMPLEMENTATION.md §4.7.7),
 // stored in activities.track_edit and replayed on top of the parsed, privacy-clipped points
-// every time the activity is processed. Every value is a point timestamp in unix
+// every time the track is processed. Every value is a point timestamp in unix
 // milliseconds, never a point index: indices shift whenever a Private location changes,
 // timestamps don't.
 //
@@ -30,7 +30,7 @@ import (
 // for the outliers a sparse track (a point every few minutes) is full of; its elevation and time
 // stay as recorded. Points sharing one timestamp are kept, removed or moved together — see
 // EditableTimestamps for the one ordering the spec relies on.
-type TrackEdit struct {
+type RouteEdit struct {
 	Keep   *[2]int64            `json:"keep,omitempty"`
 	Remove [][2]int64           `json:"remove,omitempty"`
 	Drop   []int64              `json:"drop,omitempty"`
@@ -38,13 +38,13 @@ type TrackEdit struct {
 }
 
 // IsEmpty reports whether the edit changes nothing — stored as NULL, not as an empty object.
-func (e TrackEdit) IsEmpty() bool {
+func (e RouteEdit) IsEmpty() bool {
 	return e.Keep == nil && len(e.Remove) == 0 && len(e.Drop) == 0 && len(e.Move) == 0
 }
 
 // Validate rejects a malformed spec — a range whose start is after its end. It says nothing
 // about whether enough points survive; only Apply against the real points can tell that.
-func (e TrackEdit) Validate() error {
+func (e RouteEdit) Validate() error {
 	if e.Keep != nil && e.Keep[0] > e.Keep[1] {
 		return errors.New("keep range starts after it ends")
 	}
@@ -67,7 +67,7 @@ func (e TrackEdit) Validate() error {
 // two ends of a Cut (unix milliseconds). The segment is a line across time spent elsewhere, so
 // it isn't movement: it has no pace of its own and counts in no total but elapsed time. A nil
 // edit has no Cuts.
-func (e *TrackEdit) JoinsCut(from, to int64) bool {
+func (e *RouteEdit) JoinsCut(from, to int64) bool {
 	if e == nil {
 		return false
 	}
@@ -80,7 +80,7 @@ func (e *TrackEdit) JoinsCut(from, to int64) bool {
 }
 
 // Apply returns the points that survive the edit, in their original order.
-func (e TrackEdit) Apply(points []parse.Point) []parse.Point {
+func (e RouteEdit) Apply(points []parse.Point) []parse.Point {
 	if e.IsEmpty() {
 		return points
 	}
@@ -121,7 +121,7 @@ func (e TrackEdit) Apply(points []parse.Point) []parse.Point {
 // edit that removes the first or last point outside one — a stray GPS fix before leaving home,
 // a Chop of the track's end — leaves the new end inside it, and those points would otherwise
 // be shown. Clipping an unedited end again changes nothing: it already lies outside every zone.
-func (e TrackEdit) ApplyClipped(points []parse.Point, zones []Zone) []parse.Point {
+func (e RouteEdit) ApplyClipped(points []parse.Point, zones []Zone) []parse.Point {
 	return ClipEnds(e.Apply(points), zones)
 }
 
@@ -130,7 +130,7 @@ func (e TrackEdit) ApplyClipped(points []parse.Point, zones []Zone) []parse.Poin
 // a file whose clock jumps backwards, has no way to say "the points from here to there."
 var ErrNotEditable = errors.New("this track's points have no usable timestamps, so it can't be edited")
 
-// EditableTimestamps checks the one property TrackEdit relies on: timestamps never decrease
+// EditableTimestamps checks the one property RouteEdit relies on: timestamps never decrease
 // and the track spans some time at all. Repeated timestamps are tolerated — those points are
 // simply edited together.
 func EditableTimestamps(points []parse.Point) error {
@@ -149,31 +149,31 @@ func EditableTimestamps(points []parse.Point) error {
 // nil means "reset to the original track". SplitID is the piece a split saved with the edit
 // just inserted (§4.7.8), reprocessed with the same spec in the same job.
 type EditJob struct {
-	UserID     string     `json:"user_id"`
-	ActivityID string     `json:"activity_id"`
-	Edit       *TrackEdit `json:"edit"`
-	SplitID    string     `json:"split_id,omitempty"`
+	UserID  string     `json:"user_id"`
+	TrackID string     `json:"activity_id"`
+	Edit    *RouteEdit `json:"edit"`
+	SplitID string     `json:"split_id,omitempty"`
 }
 
-// activityIDs is every activity the job reprocesses.
-func (j EditJob) activityIDs() []string {
+// activityIDs is every track the job reprocesses.
+func (j EditJob) trackIDs() []string {
 	if j.SplitID == "" {
-		return []string{j.ActivityID}
+		return []string{j.TrackID}
 	}
-	return []string{j.ActivityID, j.SplitID}
+	return []string{j.TrackID, j.SplitID}
 }
 
-// ProcessTrackEdit reprocesses one activity with a new edit spec: the same parse → clip →
+// ProcessRouteEdit reprocesses one track with a new edit spec: the same parse → clip →
 // metrics → simplify → masks pipeline as Process, ending in an UPDATE of the existing row
-// instead of an INSERT. On any failure the activity's edit_pending flag is cleared again and
-// its tiles re-rendered, so a failed edit leaves the activity as it was — back in Fog
+// instead of an INSERT. On any failure the track's edit_pending flag is cleared again and
+// its tiles re-rendered, so a failed edit leaves the track as it was — back in Fog
 // with its old masks — rather than stuck showing Pending.
-func ProcessTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job EditJob) error {
-	err := processTrackEdit(ctx, pool, store, job)
+func ProcessRouteEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job EditJob) error {
+	err := processRouteEdit(ctx, pool, store, job)
 	if err != nil {
 		if _, uerr := pool.Exec(ctx,
 			`UPDATE activities SET edit_pending = false WHERE id = ANY($1::uuid[]) AND user_id = $2`,
-			job.activityIDs(), job.UserID,
+			job.trackIDs(), job.UserID,
 		); uerr != nil {
 			return fmt.Errorf("%w (and clearing edit_pending failed: %v)", err, uerr)
 		}
@@ -184,22 +184,22 @@ func ProcessTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	return err
 }
 
-func processTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job EditJob) error {
+func processRouteEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job EditJob) error {
 	edit := job.Edit
 	if edit == nil {
-		edit = &TrackEdit{} // reset: an explicitly empty spec, not "keep the stored one"
+		edit = &RouteEdit{} // reset: an explicitly empty spec, not "keep the stored one"
 	}
 	// Rendered here, in the job, rather than enqueued as `render_fog` jobs the way ingest does
 	// it, so each pass is done before the step after it. A `render_fog` job an earlier upload
 	// left can still run in its own lane beside this one; RenderUser runs one account's passes
-	// one at a time, so the two never race over the same dirty flags. First, with the activity
-	// Pending (EnqueueTrackEdit dirtied its tiles), so it drops out of Fog while it's
+	// one at a time, so the two never race over the same dirty flags. First, with the track
+	// Pending (EnqueueRouteEdit dirtied its tiles), so it drops out of Fog while it's
 	// reprocessed.
 	if err := fog.RenderUser(ctx, pool, store, job.UserID); err != nil {
 		return fmt.Errorf("edit: render fog: %w", err)
 	}
 	var prepared []*reprocess
-	for _, id := range job.activityIDs() {
+	for _, id := range job.trackIDs() {
 		r, err := prepareReprocess(ctx, pool, store, job.UserID, id, edit)
 		if err != nil {
 			return fmt.Errorf("edit: %w", err)
@@ -213,7 +213,7 @@ func processTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 			return fmt.Errorf("edit: %w", err)
 		}
 	}
-	// A Private location change queued while this edit ran reprocesses the activity again;
+	// A Private location change queued while this edit ran reprocesses the track again;
 	// its badge stays on until that lands.
 	if _, err := pool.Exec(ctx, `
 		UPDATE activities a SET edit_pending = false
@@ -223,7 +223,7 @@ func processTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 			WHERE j.user_id = $2 AND j.kind = 'reprivacy' AND j.state = 'pending'
 			  AND j.payload->'activity_ids' ? a.id::text
 		  )
-	`, job.activityIDs(), job.UserID); err != nil {
+	`, job.trackIDs(), job.UserID); err != nil {
 		return fmt.Errorf("edit: clear edit_pending: %w", err)
 	}
 	// Then again once Pending is cleared, which brings it back with its new masks. The badge
@@ -236,13 +236,13 @@ func processTrackEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	return nil
 }
 
-// DisplayedPoints returns an activity's points as its owner sees them: parsed from the raw
-// payload, clipped against the owner's current Private locations, with the stored track edit
+// DisplayedPoints returns a track's points as its owner sees them: parsed from the raw
+// payload, clipped against the owner's current Private locations, with the stored route edit
 // applied, narrowed to its piece of a split (§4.7.8) — the full-resolution points the displayed
 // trajectory was simplified from. Nil when
-// nothing is left to show. Used by the demo export (httpapi's ExportDemoActivities), which
+// nothing is left to show. Used by the demo export (httpapi's ExportDemoTracks), which
 // must never carry what the owner's zones and edits removed.
-func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, activityID string) ([]parse.Point, error) {
+func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, trackID string) ([]parse.Point, error) {
 	var userID, sourceDetail string
 	var rawKey *string
 	var storedEdit []byte
@@ -252,7 +252,7 @@ func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 		SELECT user_id, COALESCE(source_detail, ''), raw_payload_key, track_edit, edit_pending,
 		       split_from, split_to
 		FROM activities WHERE id = $1
-	`, activityID).Scan(&userID, &sourceDetail, &rawKey, &storedEdit, &editPending, &rng.From, &rng.To)
+	`, trackID).Scan(&userID, &sourceDetail, &rawKey, &storedEdit, &editPending, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errors.New("not found")
 	}
@@ -271,7 +271,7 @@ func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 		return nil, err
 	}
 	if storedEdit != nil && points != nil {
-		var edit TrackEdit
+		var edit RouteEdit
 		if err := json.Unmarshal(storedEdit, &edit); err != nil {
 			return nil, fmt.Errorf("stored track edit unreadable: %w", err)
 		}
@@ -284,31 +284,31 @@ func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 }
 
 // errFewPointsAfterEdit is a user's edit leaving less than a line — rejected, unlike a Private
-// location hiding the whole track, which is a valid outcome (the activity just has no geometry).
+// location hiding the whole track, which is a valid outcome (the track just has no geometry).
 var errFewPointsAfterEdit = errors.New("fewer than 2 points survive the edit")
 
-// reprocessActivity re-derives one activity from its raw payload: parse, clip against the
-// account's current Private locations, apply a track edit, then update metrics, trajectory,
+// reprocessActivity re-derives one track from its raw payload: parse, clip against the
+// account's current Private locations, apply a route edit, then update metrics, trajectory,
 // masks and regions, and mark every tile it touched before or after dirty. A piece of
 // a split (§4.7.8) is narrowed to its range before the edit is applied. It neither
 // renders those tiles nor clears edit_pending — its callers decide when (§4.7.7's edit_track
 // does both straight away; a `reprivacy` job once for the whole batch).
 //
-// edit == nil replays the activity's stored track_edit unchanged; otherwise edit replaces it
-// (empty meaning reset). An activity deleted meanwhile is skipped without error.
-func reprocessActivity(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, activityID string, edit *TrackEdit) error {
-	r, err := prepareReprocess(ctx, pool, store, userID, activityID, edit)
+// edit == nil replays the track's stored track_edit unchanged; otherwise edit replaces it
+// (empty meaning reset). An track deleted meanwhile is skipped without error.
+func reprocessTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, trackID string, edit *RouteEdit) error {
+	r, err := prepareReprocess(ctx, pool, store, userID, trackID, edit)
 	if err != nil || r == nil {
 		return err
 	}
 	return r.apply(ctx, pool)
 }
 
-// reprocess is one activity's reprocess worked out and checked, the tile limit included, with
-// nothing written yet (prepareReprocess). A job over several activities prepares them all
+// reprocess is one track's reprocess worked out and checked, the tile limit included, with
+// nothing written yet (prepareReprocess). A job over several tracks prepares them all
 // before applying any, so one refused piece of a split leaves the others as they were.
 type reprocess struct {
-	userID, activityID string
+	userID, trackID    string
 	points             []parse.Point
 	pp                 preparedTrack
 	startedAt          time.Time
@@ -321,8 +321,8 @@ type reprocess struct {
 }
 
 // prepareReprocess works out activityID's reprocess without writing anything; nil when the
-// activity was deleted meanwhile.
-func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, activityID string, edit *TrackEdit) (*reprocess, error) {
+// track was deleted meanwhile.
+func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, trackID string, edit *RouteEdit) (*reprocess, error) {
 	var sourceDetail string
 	var rawKey *string
 	var storedEdit []byte
@@ -330,7 +330,7 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	err := pool.QueryRow(ctx, `
 		SELECT COALESCE(source_detail, ''), raw_payload_key, track_edit, split_from, split_to
 		FROM activities WHERE id = $1 AND user_id = $2
-	`, activityID, userID).Scan(&sourceDetail, &rawKey, &storedEdit, &rng.From, &rng.To)
+	`, trackID, userID).Scan(&sourceDetail, &rawKey, &storedEdit, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil // deleted while the job was queued: nothing left to reprocess
 	}
@@ -343,7 +343,7 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 
 	userEdit := edit != nil
 	if !userEdit && storedEdit != nil {
-		edit = &TrackEdit{}
+		edit = &RouteEdit{}
 		if err := json.Unmarshal(storedEdit, edit); err != nil {
 			return nil, fmt.Errorf("stored track edit unreadable: %w", err)
 		}
@@ -402,12 +402,12 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 		}
 		startedAt = points[0].Time
 	}
-	oldTiles, err := ActivityTiles(ctx, pool, activityID)
+	oldTiles, err := TrackTiles(ctx, pool, trackID)
 	if err != nil {
 		return nil, fmt.Errorf("read old tiles: %w", err)
 	}
 	// Before anything is written, as Process checks it: a track past the tile limit leaves the
-	// activity as it was.
+	// track as it was.
 	var newTiles [][2]int
 	if points != nil {
 		if newTiles, err = computeTouchedTiles(points, FogZoom); err != nil {
@@ -416,7 +416,7 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	}
 
 	return &reprocess{
-		userID: userID, activityID: activityID, points: points, pp: pp, startedAt: startedAt,
+		userID: userID, trackID: trackID, points: points, pp: pp, startedAt: startedAt,
 		editJSON: editJSON, userEdit: userEdit, zonePoint: zonePoint, recStart: recStart,
 		recEnd: recEnd, editable: editable, oldTiles: oldTiles, newTiles: newTiles,
 	}, nil
@@ -425,7 +425,7 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 // apply writes a prepared reprocess: the row and its place matches in one transaction, then
 // the masks, the matches and the dirty tiles.
 func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
-	activityID, userID, points, pp, m := r.activityID, r.userID, r.points, r.pp, r.pp.m
+	trackID, userID, points, pp, m := r.trackID, r.userID, r.points, r.pp, r.pp.m
 	startedAt, editJSON, userEdit, zonePoint := r.startedAt, r.editJSON, r.userEdit, r.zonePoint
 	recStart, recEnd, editable, oldTiles, newTiles := r.recStart, r.recEnd, r.editable, r.oldTiles, r.newTiles
 	tx, err := pool.Begin(ctx)
@@ -434,7 +434,7 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 
-	// started_at moves with a Chop — the activity now starts where its first kept point does.
+	// started_at moves with a Chop — the track now starts where its first kept point does.
 	// track_edit is only rewritten by a user's edit; a reprivacy pass leaves it as stored.
 	if _, err := tx.Exec(ctx, `
 		UPDATE activities SET
@@ -446,7 +446,7 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 			recorded_started_at = $15, recorded_ended_at = $16,
 			editable_times = $17
 		WHERE id = $1 AND user_id = $2
-	`, activityID, userID,
+	`, trackID, userID,
 		m.distanceM, m.durationS, m.movingS, m.elevationGainM, startedAt,
 		pp.simpLons, pp.simpLats, pp.simpTs,
 		editJSON, userEdit,
@@ -456,18 +456,18 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 	); err != nil {
 		return fmt.Errorf("update activity: %w", err)
 	}
-	// The places' matches are insert-only (geo.MatchActivity), so a reprocess that removed the
+	// The places' matches are insert-only (geo.MatchTrack), so a reprocess that removed the
 	// only part of a track inside some place has to clear the old matches first.
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_country WHERE activity_id = $1`, activityID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM activity_country WHERE activity_id = $1`, trackID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_region WHERE activity_id = $1`, activityID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM activity_region WHERE activity_id = $1`, trackID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_county WHERE activity_id = $1`, activityID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM activity_county WHERE activity_id = $1`, trackID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_city WHERE activity_id = $1`, activityID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM activity_city WHERE activity_id = $1`, trackID); err != nil {
 		return err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -476,18 +476,18 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 
 	// Masks: re-render every tile the new track touches (overwriting in place), then drop
 	// the ones it no longer touches. Overwriting rather than clearing first means a tile the
-	// track still crosses never goes through a moment with no mask for this activity.
+	// track still crosses never goes through a moment with no mask for this track.
 	if points != nil {
-		if err := fog.RenderActivityMasks(ctx, pool, activityID, points, newTiles); err != nil {
+		if err := fog.RenderTrackMasks(ctx, pool, trackID, points, newTiles); err != nil {
 			return fmt.Errorf("render activity masks: %w", err)
 		}
 	}
-	if err := fog.RemoveActivityMasks(ctx, pool, activityID, tilesNotIn(oldTiles, newTiles)); err != nil {
+	if err := fog.RemoveTrackMasks(ctx, pool, trackID, tilesNotIn(oldTiles, newTiles)); err != nil {
 		return fmt.Errorf("remove stale masks: %w", err)
 	}
 
 	if points != nil {
-		if err := geo.MatchActivity(ctx, pool, activityID); err != nil {
+		if err := geo.MatchTrack(ctx, pool, trackID); err != nil {
 			return fmt.Errorf("match admin boundaries: %w", err)
 		}
 	}
@@ -515,15 +515,15 @@ func tilesNotIn(a, b [][2]int) [][2]int {
 	return out
 }
 
-// EnqueueTrackEdit marks the activity pending (and its tiles dirty — markPendingTilesDirty) and
-// enqueues its `edit_track` job in one transaction, so an activity is never shown Pending
+// EnqueueRouteEdit marks the track pending (and its tiles dirty — markPendingTilesDirty) and
+// enqueues its `edit_track` job in one transaction, so a track is never shown Pending
 // without a job on its way, nor gets a job while already pending. Returns false when the
-// activity isn't this user's or already has an edit pending.
+// track isn't this user's or already has an edit pending.
 //
-// splitAt, when set, also splits the activity at that point timestamp (§4.7.8) in the same
+// splitAt, when set, also splits the track at that point timestamp (§4.7.8) in the same
 // transaction — insertSplitPiece — and the job reprocesses both pieces with job.Edit.
-// ErrSplitConflict when splitAt is outside the activity's own range.
-func EnqueueTrackEdit(ctx context.Context, pool *pgxpool.Pool, job EditJob, splitAt *int64) (bool, error) {
+// ErrSplitConflict when splitAt is outside the track's own range.
+func EnqueueRouteEdit(ctx context.Context, pool *pgxpool.Pool, job EditJob, splitAt *int64) (bool, error) {
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return false, err
@@ -533,18 +533,18 @@ func EnqueueTrackEdit(ctx context.Context, pool *pgxpool.Pool, job EditJob, spli
 	tag, err := tx.Exec(ctx, `
 		UPDATE activities SET edit_pending = true
 		WHERE id = $1 AND user_id = $2 AND NOT edit_pending
-	`, job.ActivityID, job.UserID)
+	`, job.TrackID, job.UserID)
 	if err != nil {
 		return false, err
 	}
 	if tag.RowsAffected() == 0 {
 		return false, nil
 	}
-	if err := markPendingTilesDirty(ctx, tx, job.UserID, []string{job.ActivityID}); err != nil {
+	if err := markPendingTilesDirty(ctx, tx, job.UserID, []string{job.TrackID}); err != nil {
 		return false, err
 	}
 	if splitAt != nil {
-		if job.SplitID, err = insertSplitPiece(ctx, tx, job.UserID, job.ActivityID, *splitAt); err != nil {
+		if job.SplitID, err = insertSplitPiece(ctx, tx, job.UserID, job.TrackID, *splitAt); err != nil {
 			return false, err
 		}
 	}

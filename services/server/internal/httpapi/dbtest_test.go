@@ -71,7 +71,7 @@ func newDBTestWithS3(t *testing.T, s3Handler http.Handler) *dbTest {
 	return &dbTest{t: t, pool: pool, srv: srv}
 }
 
-// emptyS3 answers the S3 calls an activity delete makes as a bucket with nothing in it.
+// emptyS3 answers the S3 calls a track delete makes as a bucket with nothing in it.
 func emptyS3(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/xml")
 	if _, ok := r.URL.Query()["location"]; ok {
@@ -130,20 +130,20 @@ func (d *dbTest) newAccount(demo bool) account {
 	return a
 }
 
-// testActivity is the part of an activities row the tests care about.
-type testActivity struct {
-	activityType   string
+// testActivity is the part of a tracks row the tests care about.
+type testTrack struct {
+	trackType      string
 	distanceMeters float64
 	movingSeconds  *int
 	durationSecs   int
 	startedAt      time.Time
-	// at, when set, gives the activity a short track starting at this [lon, lat].
+	// at, when set, gives the track a short track starting at this [lon, lat].
 	at *[2]float64
 	// timezone is the zone it was recorded in; the owner's when empty.
 	timezone string
 }
 
-func (d *dbTest) newActivity(owner account, a testActivity) string {
+func (d *dbTest) newTrack(owner account, a testTrack) string {
 	d.t.Helper()
 	if a.startedAt.IsZero() {
 		a.startedAt = time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
@@ -159,7 +159,7 @@ func (d *dbTest) newActivity(owner account, a testActivity) string {
 		INSERT INTO activities (user_id, source, activity_type, distance_meters, moving_seconds, duration_seconds, started_at, trajectory, timezone)
 		VALUES ($1, 'upload', $2, $3, $4, $5, $6, ST_GeomFromText($7, 4326),
 		        COALESCE(NULLIF($8, ''), (SELECT timezone FROM users WHERE id = $1))) RETURNING id
-	`, owner.id, a.activityType, a.distanceMeters, a.movingSeconds, a.durationSecs, a.startedAt, track, a.timezone).Scan(&id); err != nil {
+	`, owner.id, a.trackType, a.distanceMeters, a.movingSeconds, a.durationSecs, a.startedAt, track, a.timezone).Scan(&id); err != nil {
 		d.t.Fatalf("create activity: %v", err)
 	}
 	return id

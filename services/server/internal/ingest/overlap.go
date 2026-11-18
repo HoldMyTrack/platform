@@ -8,14 +8,14 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// Overlapping activities — IMPLEMENTATION.md §4.6.
+// Overlapping tracks — IMPLEMENTATION.md §4.6.
 //
 // Nothing is matched or hidden on ingest (ADR-0039): the same ride from two sources is two
-// activities if the user ticks both. What's here is the hint that says so before they do.
+// tracks if the user ticks both. What's here is the hint that says so before they do.
 //
-// Two activities overlap when their time ranges overlap by at least overlapMinShare of the
+// Two tracks overlap when their time ranges overlap by at least overlapMinShare of the
 // *longer* one's duration. One person is not on two rides at once, so the stretch of time an
-// activity covers is the one thing every copy of it agrees on. Type and distance are not
+// track covers is the one thing every copy of it agrees on. Type and distance are not
 // compared: sources disagree on both for the same ride. Measuring against the longer duration
 // keeps back-to-back recordings with a few seconds of clock skew, a ten-minute walk inside a
 // two-hour hike and a day hike inside a multi-day log apart.
@@ -34,18 +34,18 @@ type Span struct {
 	End   time.Time
 }
 
-// Overlap is the activity a Span overlaps the most.
+// Overlap is the track a Span overlaps the most.
 type Overlap struct {
-	Key          string
-	ActivityID   string
-	Name         string
-	ActivityType string
-	StartedAt    time.Time
-	Timezone     *string
+	Key       string
+	TrackID   string
+	Name      string
+	TrackType string
+	StartedAt time.Time
+	Timezone  *string
 }
 
-// Overlaps answers, for each span, the account's activity it overlaps the most, if any,
-// each activity taken as recorded (recordedSpan). A span with no duration overlaps nothing.
+// Overlaps answers, for each span, the account's track it overlaps the most, if any,
+// each track taken as recorded (recordedSpan). A span with no duration overlaps nothing.
 func Overlaps(ctx context.Context, pool *pgxpool.Pool, userID string, spans []Span) ([]Overlap, error) {
 	keys := make([]string, 0, len(spans))
 	starts := make([]time.Time, 0, len(spans))
@@ -94,7 +94,7 @@ func Overlaps(ctx context.Context, pool *pgxpool.Pool, userID string, spans []Sp
 	var out []Overlap
 	for rows.Next() {
 		var o Overlap
-		if err := rows.Scan(&o.Key, &o.ActivityID, &o.Name, &o.ActivityType, &o.StartedAt, &o.Timezone); err != nil {
+		if err := rows.Scan(&o.Key, &o.TrackID, &o.Name, &o.TrackType, &o.StartedAt, &o.Timezone); err != nil {
 			return nil, fmt.Errorf("ingest: scan overlap: %w", err)
 		}
 		out = append(out, o)

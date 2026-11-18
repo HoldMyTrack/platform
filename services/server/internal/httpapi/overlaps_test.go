@@ -13,19 +13,19 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// A span is answered with the activity it overlaps by 80% of the longer of the two; a walk
+// A span is answered with the track it overlaps by 80% of the longer of the two; a walk
 // inside it and an empty span are not.
-func TestActivityOverlaps(t *testing.T) {
+func TestTrackOverlaps(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	ctx := context.Background()
 	at := time.Date(2026, 5, 1, 10, 0, 0, 0, time.UTC)
-	walk := d.newActivity(me, testActivity{activityType: "walking", durationSecs: 3600, startedAt: at})
+	walk := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 3600, startedAt: at})
 	if _, err := d.pool.Exec(ctx, `UPDATE activities SET name = 'Morning walk' WHERE id = $1`, walk); err != nil {
 		t.Fatal(err)
 	}
-	// Someone else's activity at the same time is never an answer.
-	d.newActivity(d.newAccount(false), testActivity{activityType: "walking", durationSecs: 3600, startedAt: at})
+	// Someone else's track at the same time is never an answer.
+	d.newTrack(d.newAccount(false), testTrack{trackType: "walking", durationSecs: 3600, startedAt: at})
 
 	span := func(key string, from, to time.Duration) map[string]any {
 		return map[string]any{"key": key, "start": at.Add(from), "end": at.Add(to)}
@@ -39,7 +39,7 @@ func TestActivityOverlaps(t *testing.T) {
 	if len(resp.Overlaps) != 1 {
 		t.Fatalf("overlaps %+v, want only the copy", resp.Overlaps)
 	}
-	if o := resp.Overlaps[0]; o.Key != "copy" || o.ActivityID != walk || o.Name != "Morning walk" || o.ActivityType != "walking" {
+	if o := resp.Overlaps[0]; o.Key != "copy" || o.TrackID != walk || o.Name != "Morning walk" || o.TrackType != "walking" {
 		t.Errorf("overlap %+v, want copy → %s, Morning walk", o, walk)
 	}
 
@@ -48,7 +48,7 @@ func TestActivityOverlaps(t *testing.T) {
 	}
 }
 
-// The same walk synced twice from two sources is two live activities: ingest hides nothing.
+// The same walk synced twice from two sources is two live tracks: ingest hides nothing.
 func TestOverlappingSyncsStayLive(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
 	me := d.newAccount(false)
@@ -63,13 +63,13 @@ func TestOverlappingSyncsStayLive(t *testing.T) {
 				{"lat": 50.02, "lon": 10.02, "time": t0.Add(time.Hour)},
 			},
 		}}}
-		var resp syncActivitiesResponse
+		var resp syncTracksResponse
 		d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", body), http.StatusOK, &resp)
 		res, err := ingest.Process(ctx, d.pool, d.srv.store, d.latestIngestJob(me))
 		if err != nil {
 			t.Fatal(err)
 		}
-		return res.ActivityID
+		return res.TrackID
 	}
 	a := send("healthconnect", "hc-1", 0)
 	b := send("recorded", "rec-1", time.Minute)
@@ -83,7 +83,7 @@ func TestOverlappingSyncsStayLive(t *testing.T) {
 }
 
 // A walk from home is compared as recorded: the minutes its Private location clipped off the
-// start still count, so the other source's full copy of it is marked — also once an activity
+// start still count, so the other source's full copy of it is marked — also once a track
 // stored before the recorded span existed has been backfilled.
 func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 	d := newDBTestWithS3(t, newMemS3())
@@ -105,14 +105,14 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 			point(50.003, 7), point(50.006, 12), point(50.009, 16), point(50.012, 20),
 		},
 	}}}
-	var synced syncActivitiesResponse
+	var synced syncTracksResponse
 	d.decode(d.do(me, http.MethodPost, "/v1/sync/activities", body), http.StatusOK, &synced)
 	res, err := ingest.Process(ctx, d.pool, d.srv.store, d.latestIngestJob(me))
 	if err != nil {
 		t.Fatal(err)
 	}
 	var started time.Time
-	if err := d.pool.QueryRow(ctx, `SELECT started_at FROM activities WHERE id = $1`, res.ActivityID).Scan(&started); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT started_at FROM activities WHERE id = $1`, res.TrackID).Scan(&started); err != nil {
 		t.Fatal(err)
 	}
 	if !started.After(t0.Add(5 * time.Minute)) {
@@ -126,7 +126,7 @@ func TestOverlapIgnoresPrivateLocationClip(t *testing.T) {
 		}}), http.StatusOK, &resp)
 		return resp.Overlaps
 	}
-	if o := overlaps(); len(o) != 1 || o[0].ActivityID != res.ActivityID {
+	if o := overlaps(); len(o) != 1 || o[0].TrackID != res.TrackID {
 		t.Fatalf("overlaps %+v, want the recorded walk", o)
 	}
 }

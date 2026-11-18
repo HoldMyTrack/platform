@@ -36,7 +36,7 @@ func maskStore(t *testing.T) (*storage.Store, *storagetest.MemS3, *atomic.Int64)
 	return store, mem, &gets
 }
 
-func insertActivity(t *testing.T, pool *pgxpool.Pool, userID string) string {
+func insertTrack(t *testing.T, pool *pgxpool.Pool, userID string) string {
 	t.Helper()
 	var id string
 	if err := pool.QueryRow(context.Background(), `
@@ -93,15 +93,15 @@ func TestRenderedMaskIsReadBackWithoutTheStore(t *testing.T) {
 	pool, userID := testAccount(t)
 	ctx := context.Background()
 	store, mem, gets := maskStore(t)
-	activityID := insertActivity(t, pool, userID)
+	trackID := insertTrack(t, pool, userID)
 	pts, tile := walkInOneTile()
 
-	if err := RenderActivityMasks(ctx, pool, activityID, pts, [][2]int{tile}); err != nil {
+	if err := RenderTrackMasks(ctx, pool, trackID, pts, [][2]int{tile}); err != nil {
 		t.Fatal(err)
 	}
 	var size int
 	if err := pool.QueryRow(ctx,
-		`SELECT length(png) FROM activity_tile_mask_data WHERE activity_id = $1`, activityID).Scan(&size); err != nil || size == 0 {
+		`SELECT length(png) FROM activity_tile_mask_data WHERE activity_id = $1`, trackID).Scan(&size); err != nil || size == 0 {
 		t.Fatalf("mask PNG: %d bytes, %v; want it in the database", size, err)
 	}
 
@@ -119,18 +119,18 @@ func TestRenderedMaskIsReadBackWithoutTheStore(t *testing.T) {
 }
 
 // A mask row with no PNG (a restore leaves them out until rerender-coverage --masks) is left
-// out of the tile and counted; the activities beside it still show.
+// out of the tile and counted; the tracks beside it still show.
 func TestRenderCountsMasksWithoutPNG(t *testing.T) {
 	pool, userID := testAccount(t)
 	ctx := context.Background()
 	store, mem, _ := maskStore(t)
 	pts, tile := walkInOneTile()
 
-	drawn := insertActivity(t, pool, userID)
-	if err := RenderActivityMasks(ctx, pool, drawn, pts, [][2]int{tile}); err != nil {
+	drawn := insertTrack(t, pool, userID)
+	if err := RenderTrackMasks(ctx, pool, drawn, pts, [][2]int{tile}); err != nil {
 		t.Fatal(err)
 	}
-	missing := insertActivity(t, pool, userID)
+	missing := insertTrack(t, pool, userID)
 	if _, err := pool.Exec(ctx, `INSERT INTO activity_tile_masks (activity_id, zoom, tile_x, tile_y) VALUES ($1, $2, $3, $4)`,
 		missing, Zoom, tile[0], tile[1]); err != nil {
 		t.Fatal(err)
@@ -149,33 +149,33 @@ func TestRenderCountsMasksWithoutPNG(t *testing.T) {
 	}
 }
 
-// A mask's bytes go with it: removing an edited track's mask, or deleting the activity.
+// A mask's bytes go with it: removing an edited track's mask, or deleting the track.
 func TestMaskBytesGoWithTheirRow(t *testing.T) {
 	pool, userID := testAccount(t)
 	ctx := context.Background()
 	pts, tile := walkInOneTile()
 	neighbour := [2]int{tile[0] + 1, tile[1]}
-	count := func(activityID string) int {
+	count := func(trackID string) int {
 		var n int
-		if err := pool.QueryRow(ctx, `SELECT count(*) FROM activity_tile_mask_data WHERE activity_id = $1`, activityID).Scan(&n); err != nil {
+		if err := pool.QueryRow(ctx, `SELECT count(*) FROM activity_tile_mask_data WHERE activity_id = $1`, trackID).Scan(&n); err != nil {
 			t.Fatal(err)
 		}
 		return n
 	}
 
-	edited := insertActivity(t, pool, userID)
-	if err := RenderActivityMasks(ctx, pool, edited, pts, [][2]int{tile, neighbour}); err != nil {
+	edited := insertTrack(t, pool, userID)
+	if err := RenderTrackMasks(ctx, pool, edited, pts, [][2]int{tile, neighbour}); err != nil {
 		t.Fatal(err)
 	}
-	if err := RemoveActivityMasks(ctx, pool, edited, [][2]int{neighbour}); err != nil {
+	if err := RemoveTrackMasks(ctx, pool, edited, [][2]int{neighbour}); err != nil {
 		t.Fatal(err)
 	}
 	if n := count(edited); n != 1 {
 		t.Errorf("after removing one of two masks, %d PNGs left, want 1", n)
 	}
 
-	deleted := insertActivity(t, pool, userID)
-	if err := RenderActivityMasks(ctx, pool, deleted, pts, [][2]int{tile}); err != nil {
+	deleted := insertTrack(t, pool, userID)
+	if err := RenderTrackMasks(ctx, pool, deleted, pts, [][2]int{tile}); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := pool.Exec(ctx, `DELETE FROM activities WHERE id = $1`, deleted); err != nil {

@@ -63,7 +63,7 @@ const accountPurgeBatchSize = 20
 
 // purgeDeletedAccounts finishes what httpapi's closeAccount started (SPEC FR-1.12): for every
 // account with deleted_at set, it removes the account's stored objects, then its users row,
-// whose cascade takes every other row it owns — activities, photos, Stories, Private
+// whose cascade takes every other row it owns — tracks, photos, Stories, Private
 // locations, captures, imports, jobs.
 //
 // An account with a job still running (claimed within claimLease) waits for the next tick:
@@ -73,7 +73,7 @@ const accountPurgeBatchSize = 20
 // Objects first, row second: a removal that fails leaves the account for the next sweep, since
 // once the row is gone nothing names what was left behind, the account's unclipped originals
 // among it. The account is closed from the start (closeAccount), so waiting costs only the
-// storage. The activity masks are keyed by activity id, so those ids are read before the row
+// storage. The track masks are keyed by track id, so those ids are read before the row
 // goes.
 //
 // Photos are the exception, since a copied Story's photo (IMPLEMENTATION.md §4.23) is another

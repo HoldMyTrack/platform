@@ -56,8 +56,8 @@ func TestAdminTilesCountTheExploredPlacesBelow(t *testing.T) {
 		d.pool.Exec(ctx, `DELETE FROM admin_regions WHERE id = $1`, region)
 		d.pool.Exec(ctx, `DELETE FROM admin_countries WHERE id = $1`, country)
 	})
-	activity := d.newActivity(me, testActivity{activityType: "walking", at: &at})
-	if _, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2)`, activity, town); err != nil {
+	track := d.newTrack(me, testTrack{trackType: "walking", at: &at})
+	if _, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2)`, track, town); err != nil {
 		t.Fatal(err)
 	}
 

@@ -12,14 +12,14 @@ import (
 // running jobs too. `ingest`, `edit_track`, `reprivacy` and `story_copy` are included, not just
 // `render_fog`: an upload the client has already seen accepted may not have been parsed yet, and
 // until it has, the `render_fog` job it will enqueue doesn't exist to be waited on; an accepted
-// copy of a Story is the same, one activity at a time. A job waiting out a retry's delay
+// copy of a Story is the same, one track at a time. A job waiting out a retry's delay
 // (internal/worker's retryDelays, or a `reprivacy` rerun) is left out: nothing renders until it
-// runs, and a reprivacy rerun's activities stay off the map meanwhile.
+// runs, and a reprivacy rerun's tracks stay off the map meanwhile.
 //
 // The second column is the version: the account's map_version, bumped at the end of every
 // render pass and by every request-time change to what a tile returns (fog.BumpMapVersion). A
-// job can render more than once before it finishes — a track edit or Private location change
-// renders once with its activities left out (Pending) and again once they're back — so a
+// job can render more than once before it finishes — a route edit or Private location change
+// renders once with its tracks left out (Pending) and again once they're back — so a
 // client that should show the in-between state refetches whenever this changes, not only once
 // rendering is over.
 const coverageRenderingQuery = `
@@ -31,7 +31,7 @@ SELECT EXISTS (
 (SELECT map_version FROM users WHERE id = $1)`
 
 // exploredQuery counts the places of each level the account has been in, as the map clears them
-// (visitedCTEs): derived from the matches on every request, so a deletion, a track edit or a
+// (visitedCTEs): derived from the matches on every request, so a deletion, a route edit or a
 // Private location can't leave a stored count behind. Stand-ins aside.
 var exploredQuery = `
 WITH ` + visitedCTEs("$1") + `

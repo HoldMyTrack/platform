@@ -23,13 +23,13 @@ import (
 //     timestamp: a file listing the return leg before the outbound one would otherwise have
 //     its start in the middle, where no clip reaches.
 //   - A point whose lat or lon is missing or unreadable is skipped, not read as 0.
-func ParseGPX(r io.Reader) (Activity, error) { return parseGPX(r, 0) }
+func ParseGPX(r io.Reader) (Track, error) { return parseGPX(r, 0) }
 
 // parseGPX is ParseGPX refusing a file past maxPoints positioned points, 0 for no cap.
-func parseGPX(r io.Reader, maxPoints int) (Activity, error) {
+func parseGPX(r io.Reader, maxPoints int) (Track, error) {
 	var total int // points of either kind kept so far, against maxPoints
 	dec := xml.NewDecoder(r)
-	act := Activity{ActivityType: "unknown"}
+	act := Track{TrackType: "unknown"}
 
 	var trkSegs, rteSegs [][]Point
 	var cur *Point
@@ -45,7 +45,7 @@ func parseGPX(r io.Reader, maxPoints int) (Activity, error) {
 			break
 		}
 		if err != nil {
-			return Activity{}, fmt.Errorf("parse gpx: %w", err)
+			return Track{}, fmt.Errorf("parse gpx: %w", err)
 		}
 
 		switch t := tok.(type) {
@@ -92,7 +92,7 @@ func parseGPX(r io.Reader, maxPoints int) (Activity, error) {
 		case xml.CharData:
 			if inType {
 				if v := strings.TrimSpace(string(t)); v != "" {
-					act.ActivityType = strings.ToLower(v)
+					act.TrackType = strings.ToLower(v)
 				}
 				continue
 			}
@@ -132,7 +132,7 @@ func parseGPX(r io.Reader, maxPoints int) (Activity, error) {
 						*segs = append(*segs, nil)
 					}
 					if total++; maxPoints > 0 && total > maxPoints {
-						return Activity{}, ErrTooManyPoints
+						return Track{}, ErrTooManyPoints
 					}
 					last := len(*segs) - 1
 					(*segs)[last] = append((*segs)[last], *cur)
@@ -148,7 +148,7 @@ func parseGPX(r io.Reader, maxPoints int) (Activity, error) {
 	}
 	act.Points = inTimeOrder(segs)
 	if len(act.Points) == 0 {
-		return Activity{}, fmt.Errorf("parse gpx: %w", ErrNoPoints)
+		return Track{}, fmt.Errorf("parse gpx: %w", ErrNoPoints)
 	}
 	return act, nil
 }

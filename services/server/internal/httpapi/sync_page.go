@@ -20,7 +20,7 @@ import (
 const syncPageSize = 20
 
 // syncHistoryQuery is uploadsListQuery's finished rows only, most recently finished first:
-// each with when it finished and its activity's local date where it was recorded (§4.30).
+// each with when it finished and its track's local date where it was recorded (§4.30).
 const syncHistoryQuery = `
 SELECT j.payload->>'source_detail', j.payload->>'source',
        j.state, j.last_error, j.error_code, j.finished_at,
@@ -51,9 +51,9 @@ type syncRow struct {
 	Detail string
 	// SyncedAt is when the import finished, "Oct 6, 14:31" in the account's timezone.
 	SyncedAt string
-	// MapHref opens the map on the activity (`/?activity=…&day=…`), "" when there is none. The
-	// day is the activity's own local day, which is how the server reads a bare from/to: a UTC
-	// day would put an evening activity west of Greenwich a day late, outside the range.
+	// MapHref opens the map on the track (`/?activity=…&day=…`), "" when there is none. The
+	// day is the track's own local day, which is how the server reads a bare from/to: a UTC
+	// day would put an evening track west of Greenwich a day late, outside the range.
 	MapHref string
 }
 
@@ -108,10 +108,10 @@ func (s *Server) buildSync(ctx context.Context, l *i18n.Localizer, acct *pageAcc
 	defer rows.Close()
 	for rows.Next() {
 		var filename, source, state string
-		var lastError, errorCode, startedOn, activityID *string
+		var lastError, errorCode, startedOn, trackID *string
 		var finishedAt *time.Time
 		var distance *float64
-		if err := rows.Scan(&filename, &source, &state, &lastError, &errorCode, &finishedAt, &startedOn, &distance, &activityID); err != nil {
+		if err := rows.Scan(&filename, &source, &state, &lastError, &errorCode, &finishedAt, &startedOn, &distance, &trackID); err != nil {
 			return view, err
 		}
 		row := syncRow{Title: importTitle(l, source, filename), Failed: state == "failed"}
@@ -127,8 +127,8 @@ func (s *Server) buildSync(ctx context.Context, l *i18n.Localizer, acct *pageAcc
 			if distance != nil {
 				row.Detail += " · " + web.FormatDistance(l, *distance, imperial)
 			}
-			if activityID != nil {
-				row.MapHref = "/?" + url.Values{"activity": {*activityID}, "day": {day}}.Encode()
+			if trackID != nil {
+				row.MapHref = "/?" + url.Values{"activity": {*trackID}, "day": {day}}.Encode()
 			}
 		}
 		view.Rows = append(view.Rows, row)

@@ -136,11 +136,11 @@ func TestFixedWindowAllowN(t *testing.T) {
 	}
 }
 
-// Synced activities are limited per hour beside sync requests: a batch that doesn't fit is
+// Synced tracks are limited per hour beside sync requests: a batch that doesn't fit is
 // refused whole and counts nothing, so a smaller one still fits.
-func TestSyncActivitiesPastTheHourlyLimitAreRefused(t *testing.T) {
+func TestSyncTracksPastTheHourlyLimitAreRefused(t *testing.T) {
 	d := newDBTest(t)
-	d.srv.syncActivityLimiter = newFixedWindowLimiter(3, time.Hour)
+	d.srv.syncTrackLimiter = newFixedWindowLimiter(3, time.Hour)
 	me := d.newAccount(false)
 	batch := func(ids ...string) *httptest.ResponseRecorder {
 		var acts []map[string]any

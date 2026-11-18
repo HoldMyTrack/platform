@@ -45,9 +45,9 @@ func TestClampToSpanRoundsToTheSecond(t *testing.T) {
 	}
 }
 
-// A camera clock with no zone is read where the activity was first; failing that, in the UTC
+// A camera clock with no zone is read where the track was first; failing that, in the UTC
 // offset nearest home's that lands on the track, which is the near edge of the offsets that do;
-// failing that, where the activity was anyway.
+// failing that, where the track was anyway.
 func TestResolveWallClock(t *testing.T) {
 	berlin, _ := time.LoadLocation("Europe/Berlin") // UTC+2 in May
 	onTrack := func(t time.Time) bool { return nearTrack(t, trackStart, trackEnd) }

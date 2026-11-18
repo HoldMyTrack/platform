@@ -31,12 +31,12 @@ const defaultTilesPerMinute = 1200
 // thousands an hour; the upload limit (defaultUploadsPerHour) doesn't reach this path.
 const syncRequestsPerHour = 60
 
-// syncActivitiesPerHour bounds the activities `POST /v1/sync/activities` takes from one account
+// syncActivitiesPerHour bounds the tracks `POST /v1/sync/activities` takes from one account
 // in an hour, beside syncRequestsPerHour's count of requests: at 100 a batch, that one alone
 // would take 6,000 an hour. A phone lists three months of Health Connect sessions and its own
 // recordings, a few hundred at most, so this only slows an account syncing, deleting and
 // syncing again, which costs a render each time and stores nothing (IMPLEMENTATION.md §5.7).
-const syncActivitiesPerHour = 1000
+const syncTracksPerHour = 1000
 
 // defaultSignupsPerHour bounds the accounts one address creates with an email and password in
 // an hour. Each sends a verification email to whatever address was typed, and every
@@ -49,7 +49,7 @@ const defaultSignupsPerHour = 5
 // trackPointsPerHour bounds `GET /v1/activities/{id}/track-points` per account: each request
 // reads an original upload from object storage and parses it, and a person opens the track
 // editor a few times an hour at most.
-const trackPointsPerHour = 120
+const routePointsPerHour = 120
 
 // statsCardsPerHour bounds `POST /v1/activities/stats-card` per account. A client asks again
 // after each pause in changing the frame's size, theme or checked set, a few dozen times in one

@@ -142,7 +142,7 @@ func TestClipEndsStableAndSalted(t *testing.T) {
 }
 
 // Clipping a clipped track again changes nothing: its ends already lie outside every zone. A
-// track edit relies on it (TrackEdit.ApplyClipped).
+// route edit relies on it (RouteEdit.ApplyClipped).
 func TestClipEndsIdempotent(t *testing.T) {
 	points := line(41.4, -81.7, 201, 5)
 	end := points[len(points)-1]

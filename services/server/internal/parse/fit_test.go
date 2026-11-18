@@ -82,7 +82,7 @@ func abs(f float64) float64 {
 // buildFITWithSession adds a `session` (global mesg 18) definition + data message, carrying
 // sport and sub_sport, ahead of the same record message buildMinimalFIT produces. Real
 // encoders write the session summary *after* the records it summarizes, but parseFIT
-// doesn't care about order — it just overwrites ActivityType whenever it sees one — so
+// doesn't care about order — it just overwrites TrackType whenever it sees one — so
 // putting it first here is a simpler test, not a claim about real file layout.
 func buildFITWithSession(t *testing.T, sport, subSport byte, latSemi, lonSemi int32, ts uint32) []byte {
 	t.Helper()
@@ -132,8 +132,8 @@ func TestParseFITSport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseFIT: %v", err)
 	}
-	if act.ActivityType != "gravel_cycling" {
-		t.Fatalf("want activity type gravel_cycling, got %q", act.ActivityType)
+	if act.TrackType != "gravel_cycling" {
+		t.Fatalf("want activity type gravel_cycling, got %q", act.TrackType)
 	}
 	if len(act.Points) != 1 {
 		t.Fatalf("want 1 point, got %d", len(act.Points))
@@ -148,8 +148,8 @@ func TestParseFITSportGenericSubSportFallsBackToSport(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseFIT: %v", err)
 	}
-	if act.ActivityType != "running" {
-		t.Fatalf("want activity type running (generic sub_sport falls back to sport), got %q", act.ActivityType)
+	if act.TrackType != "running" {
+		t.Fatalf("want activity type running (generic sub_sport falls back to sport), got %q", act.TrackType)
 	}
 }
 
@@ -161,8 +161,8 @@ func TestParseFITNoSession(t *testing.T) {
 	if err != nil {
 		t.Fatalf("parseFIT: %v", err)
 	}
-	if act.ActivityType != "unknown" {
-		t.Fatalf("want activity type unknown (no session message in this fixture), got %q", act.ActivityType)
+	if act.TrackType != "unknown" {
+		t.Fatalf("want activity type unknown (no session message in this fixture), got %q", act.TrackType)
 	}
 }
 

@@ -42,20 +42,20 @@ func equalInts(a, b []int) bool {
 	return true
 }
 
-func TestTrackEditApply(t *testing.T) {
+func TestRouteEditApply(t *testing.T) {
 	points, ms := editFixture()
 
 	cases := []struct {
 		name string
-		edit TrackEdit
+		edit RouteEdit
 		want []int
 	}{
-		{"empty keeps everything", TrackEdit{}, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}},
-		{"chop keeps the range inclusive", TrackEdit{Keep: &[2]int64{ms[2], ms[7]}}, []int{2, 3, 4, 5, 6, 7}},
+		{"empty keeps everything", RouteEdit{}, []int{0, 1, 2, 3, 4, 5, 6, 7, 8, 9}},
+		{"chop keeps the range inclusive", RouteEdit{Keep: &[2]int64{ms[2], ms[7]}}, []int{2, 3, 4, 5, 6, 7}},
 		// A Cut between knobs on points 3 and 7 removes 4..6 and keeps both knob points.
-		{"cut removes the inner range", TrackEdit{Remove: [][2]int64{{ms[4], ms[6]}}}, []int{0, 1, 2, 3, 7, 8, 9}},
-		{"drop removes single points", TrackEdit{Drop: []int64{ms[0], ms[5]}}, []int{1, 2, 3, 4, 6, 7, 8, 9}},
-		{"all three combine", TrackEdit{
+		{"cut removes the inner range", RouteEdit{Remove: [][2]int64{{ms[4], ms[6]}}}, []int{0, 1, 2, 3, 7, 8, 9}},
+		{"drop removes single points", RouteEdit{Drop: []int64{ms[0], ms[5]}}, []int{1, 2, 3, 4, 6, 7, 8, 9}},
+		{"all three combine", RouteEdit{
 			Keep:   &[2]int64{ms[1], ms[8]},
 			Remove: [][2]int64{{ms[3], ms[4]}},
 			Drop:   []int64{ms[7]},
@@ -71,9 +71,9 @@ func TestTrackEditApply(t *testing.T) {
 
 // The spec addresses points by time, so a different Private location clip — which removes a
 // different number of points off each end — must leave the edit meaning the same points.
-func TestTrackEditSurvivesDifferentTrim(t *testing.T) {
+func TestRouteEditSurvivesDifferentTrim(t *testing.T) {
 	points, ms := editFixture()
-	edit := TrackEdit{Remove: [][2]int64{{ms[4], ms[5]}}}
+	edit := RouteEdit{Remove: [][2]int64{{ms[4], ms[5]}}}
 
 	full := survivors(edit.Apply(points), ms[0])
 	trimmed := survivors(edit.Apply(points[2:8]), ms[0])
@@ -87,7 +87,7 @@ func TestTrackEditSurvivesDifferentTrim(t *testing.T) {
 
 // A stray fix outside a Private location keeps ClipEnds from trimming the points after it that
 // are back inside; deleting that fix must let the location hide them.
-func TestTrackEditApplyClippedReclipsNewEnds(t *testing.T) {
+func TestRouteEditApplyClippedReclipsNewEnds(t *testing.T) {
 	points := line(41.4, -81.7, 201, 5) // 1 km north, 5 m apart
 	zone := Zone{Lat: 41.4, Lon: -81.7, RadiusM: 175}
 	stray := points[0]
@@ -98,7 +98,7 @@ func TestTrackEditApplyClippedReclipsNewEnds(t *testing.T) {
 	if clipped[0] != stray || clipped[1] != points[1] {
 		t.Fatal("fixture: the stray fix should stop ClipEnds from trimming the start")
 	}
-	got := TrackEdit{Drop: []int64{stray.Time.UnixMilli()}}.ApplyClipped(clipped, []Zone{zone})
+	got := RouteEdit{Drop: []int64{stray.Time.UnixMilli()}}.ApplyClipped(clipped, []Zone{zone})
 	if want := expectedStart(points[1:], zone, 's'); got[0] != want {
 		t.Errorf("first point %+v, want %+v as a fresh clip would cut it", got[0], want)
 	}
@@ -109,43 +109,43 @@ func TestTrackEditApplyClippedReclipsNewEnds(t *testing.T) {
 	}
 
 	// An edit that doesn't touch an already-clipped end leaves it where it was.
-	again := TrackEdit{Drop: []int64{points[150].Time.UnixMilli()}}.ApplyClipped(got, []Zone{zone})
+	again := RouteEdit{Drop: []int64{points[150].Time.UnixMilli()}}.ApplyClipped(got, []Zone{zone})
 	if again[0] != got[0] || len(again) != len(got)-1 {
 		t.Errorf("re-clipping moved an end already clipped")
 	}
 }
 
-func TestTrackEditValidate(t *testing.T) {
-	if err := (TrackEdit{Keep: &[2]int64{5, 1}}).Validate(); err == nil {
+func TestRouteEditValidate(t *testing.T) {
+	if err := (RouteEdit{Keep: &[2]int64{5, 1}}).Validate(); err == nil {
 		t.Error("backwards keep range must be rejected")
 	}
-	if err := (TrackEdit{Remove: [][2]int64{{9, 3}}}).Validate(); err == nil {
+	if err := (RouteEdit{Remove: [][2]int64{{9, 3}}}).Validate(); err == nil {
 		t.Error("backwards remove range must be rejected")
 	}
-	if err := (TrackEdit{Keep: &[2]int64{1, 1}, Remove: [][2]int64{{2, 2}}}).Validate(); err != nil {
+	if err := (RouteEdit{Keep: &[2]int64{1, 1}, Remove: [][2]int64{{2, 2}}}).Validate(); err != nil {
 		t.Errorf("single-instant ranges are valid: %v", err)
 	}
-	if err := (TrackEdit{Move: map[int64][2]float64{1: {541, 0}}}).Validate(); err == nil {
+	if err := (RouteEdit{Move: map[int64][2]float64{1: {541, 0}}}).Validate(); err == nil {
 		t.Error("a point moved off the map must be rejected")
 	}
-	if err := (TrackEdit{Move: map[int64][2]float64{1: {0, 91}}}).Validate(); err == nil {
+	if err := (RouteEdit{Move: map[int64][2]float64{1: {0, 91}}}).Validate(); err == nil {
 		t.Error("a point moved past the pole must be rejected")
 	}
-	if err := (TrackEdit{Move: map[int64][2]float64{1: {180.5, 0}}}).Validate(); err != nil {
+	if err := (RouteEdit{Move: map[int64][2]float64{1: {180.5, 0}}}).Validate(); err != nil {
 		t.Errorf("a point moved on a track continuing past 180 is valid: %v", err)
 	}
-	if err := (TrackEdit{Move: map[int64][2]float64{1: {-180, 90}}}).Validate(); err != nil {
+	if err := (RouteEdit{Move: map[int64][2]float64{1: {-180, 90}}}).Validate(); err != nil {
 		t.Errorf("a point moved to the map's edge is valid: %v", err)
 	}
 }
 
 // A moved point keeps its time and elevation and takes the new position; a move of a point the
 // rest of the edit removes changes nothing, and a move alone is not an empty edit.
-func TestTrackEditMove(t *testing.T) {
+func TestRouteEditMove(t *testing.T) {
 	points, ms := editFixture()
 	elev := float32(120)
 	points[4].Elevation = &elev
-	edit := TrackEdit{Drop: []int64{ms[2]}, Move: map[int64][2]float64{ms[4]: {13.5, 52.5}, ms[2]: {14, 53}}}
+	edit := RouteEdit{Drop: []int64{ms[2]}, Move: map[int64][2]float64{ms[4]: {13.5, 52.5}, ms[2]: {14, 53}}}
 	got := edit.Apply(points)
 	if !equalInts(survivors(got, ms[0]), []int{0, 1, 3, 4, 5, 6, 7, 8, 9}) {
 		t.Fatalf("move must not change which points survive: %v", survivors(got, ms[0]))
@@ -157,18 +157,18 @@ func TestTrackEditMove(t *testing.T) {
 	if points[4].Lon != 13.0 {
 		t.Error("Apply must not move the caller's points")
 	}
-	if (TrackEdit{Move: map[int64][2]float64{ms[1]: {13, 52}}}).IsEmpty() {
+	if (RouteEdit{Move: map[int64][2]float64{ms[1]: {13, 52}}}).IsEmpty() {
 		t.Error("a move alone is an edit")
 	}
 }
 
 // An empty spec round-trips as {} and reads back as empty — the handler stores NULL for it.
-func TestTrackEditJSON(t *testing.T) {
-	b, err := json.Marshal(TrackEdit{})
+func TestRouteEditJSON(t *testing.T) {
+	b, err := json.Marshal(RouteEdit{})
 	if err != nil || string(b) != "{}" {
 		t.Fatalf("empty edit marshals to %s (%v)", b, err)
 	}
-	var e TrackEdit
+	var e RouteEdit
 	if err := json.Unmarshal([]byte(`{"keep":[1,2],"remove":[[3,4]],"drop":[5]}`), &e); err != nil {
 		t.Fatal(err)
 	}
@@ -224,7 +224,7 @@ func TestMetricsAfterCut(t *testing.T) {
 		after,
 		pt(52.0102, 13.0, t0.Add(20*time.Minute+5*time.Second)),
 	}
-	edit := &TrackEdit{Remove: [][2]int64{{t0.Add(6 * time.Second).UnixMilli(), t0.Add(19 * time.Minute).UnixMilli()}}}
+	edit := &RouteEdit{Remove: [][2]int64{{t0.Add(6 * time.Second).UnixMilli(), t0.Add(19 * time.Minute).UnixMilli()}}}
 
 	m := computeMetrics(points, edit)
 	if m.durationS != 1205 {
@@ -246,7 +246,7 @@ func TestMetricsAfterCut(t *testing.T) {
 }
 
 func TestJoinsCut(t *testing.T) {
-	edit := &TrackEdit{Remove: [][2]int64{{100, 200}, {200, 300}}, Drop: []int64{500}, Keep: &[2]int64{0, 1000}}
+	edit := &RouteEdit{Remove: [][2]int64{{100, 200}, {200, 300}}, Drop: []int64{500}, Keep: &[2]int64{0, 1000}}
 	for _, c := range []struct {
 		from, to int64
 		want     bool
@@ -262,7 +262,7 @@ func TestJoinsCut(t *testing.T) {
 			t.Errorf("JoinsCut(%d, %d) = %v, want %v", c.from, c.to, got, c.want)
 		}
 	}
-	if (*TrackEdit)(nil).JoinsCut(0, 1000) {
+	if (*RouteEdit)(nil).JoinsCut(0, 1000) {
 		t.Error("no edit has no Cuts")
 	}
 }

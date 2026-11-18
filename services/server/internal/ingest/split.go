@@ -12,10 +12,10 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/storage"
 )
 
-// SplitRange is the stretch of the recorded points one piece of a split activity covers
+// SplitRange is the stretch of the recorded points one piece of a split track covers
 // (IMPLEMENTATION.md §4.7.8): activities.split_from and split_to, unix milliseconds, both ends
 // inclusive, so the two pieces either side of a split share the point it was made at. A nil
-// end is that end of the recording; an activity never split has both nil.
+// end is that end of the recording; a track never split has both nil.
 type SplitRange struct {
 	From *int64
 	To   *int64
@@ -32,7 +32,7 @@ func (r SplitRange) contains(t int64) bool {
 // Apply returns the points inside the range, with its ends clipped against zones again. The
 // points come in clipped already, but a split made inside a Private location — at home,
 // between a ride there and a walk from there — leaves a new end inside it, the same way an
-// edit's Chop can (TrackEdit.ApplyClipped).
+// edit's Chop can (RouteEdit.ApplyClipped).
 func (r SplitRange) Apply(points []parse.Point, zones []Zone) []parse.Point {
 	if r.IsWhole() {
 		return points
@@ -64,9 +64,9 @@ func LoadPiecePoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 var ErrSplitTooClose = errors.New("a split needs at least two points on each side")
 
 // ErrSplitHidden is a split leaving one side entirely inside Private locations — a part saved
-// with no track, as any activity entirely inside them is (FR-7.1), which comes back when the
+// with no track, as any track entirely inside them is (FR-7.1), which comes back when the
 // location moves. Allowed once the user has been told. Reachable from the editor, whose preview
-// shows the points a track edit's second clip (TrackEdit.ApplyClipped) hides: a walk home
+// shows the points a route edit's second clip (RouteEdit.ApplyClipped) hides: a walk home
 // ending in a stray fix outside the circle, that fix deleted, keeps every point inside the
 // circle on show there.
 var ErrSplitHidden = errors.New("one side of the split lies inside a private location")
@@ -77,7 +77,7 @@ var ErrSplitHidden = errors.New("one side of the split lies inside a private loc
 // loses them when it's worked out the way reprocessActivity will — narrowed to its side of at
 // (the point itself on both), clipped against zones, edit applied, clipped again — lies inside
 // a Private location (ErrSplitHidden).
-func CheckSplit(points []parse.Point, zones []Zone, edit *TrackEdit, at int64) error {
+func CheckSplit(points []parse.Point, zones []Zone, edit *RouteEdit, at int64) error {
 	for _, side := range []SplitRange{{To: &at}, {From: &at}} {
 		plain := side.Apply(points, nil)
 		if edit != nil {
@@ -100,18 +100,18 @@ func CheckSplit(points []parse.Point, zones []Zone, edit *TrackEdit, at int64) e
 // ErrSplitConflict is a split point outside the piece's current range.
 var ErrSplitConflict = errors.New("this activity can't be split there any more")
 
-// insertSplitPiece is the split half of EnqueueTrackEdit: inside its transaction, with the
-// activity already flipped Pending, it narrows the activity to the points up to at and inserts
+// insertSplitPiece is the split half of EnqueueRouteEdit: inside its transaction, with the
+// track already flipped Pending, it narrows the track to the points up to at and inserts
 // a new Pending row for the points from at on, returning the new row's id. The new row copies
-// the activity's type, name, description, raw payload and track edit, joins its Stories, and
+// the track's type, name, description, raw payload and route edit, joins its Stories, and
 // takes over the photos placed after at. Its external_id is the original's with a suffix, so
 // re-importing the original still finds the original row and stays a no-op.
-func insertSplitPiece(ctx context.Context, tx pgx.Tx, userID, activityID string, at int64) (string, error) {
+func insertSplitPiece(ctx context.Context, tx pgx.Tx, userID, trackID string, at int64) (string, error) {
 	var from, to *int64
 	var rawKey *string
 	if err := tx.QueryRow(ctx,
 		`SELECT split_from, split_to, raw_payload_key FROM activities WHERE id = $1 AND user_id = $2`,
-		activityID, userID,
+		trackID, userID,
 	).Scan(&from, &to, &rawKey); err != nil {
 		return "", err
 	}
@@ -133,24 +133,24 @@ func insertSplitPiece(ctx context.Context, tx pgx.Tx, userID, activityID string,
 		       track_edit, true, COALESCE(split_group, id), $3::bigint, split_to, timezone
 		FROM activities WHERE id = $1 AND user_id = $2
 		RETURNING id
-	`, activityID, userID, at).Scan(&pieceID); err != nil {
+	`, trackID, userID, at).Scan(&pieceID); err != nil {
 		return "", fmt.Errorf("insert split piece: %w", err)
 	}
 	if _, err := tx.Exec(ctx, `
 		UPDATE activities SET split_group = COALESCE(split_group, id), split_to = $2 WHERE id = $1
-	`, activityID, at); err != nil {
+	`, trackID, at); err != nil {
 		return "", err
 	}
 	if _, err := tx.Exec(ctx, `
 		INSERT INTO story_activities (story_id, activity_id)
 		SELECT story_id, $2 FROM story_activities WHERE activity_id = $1
-	`, activityID, pieceID); err != nil {
+	`, trackID, pieceID); err != nil {
 		return "", err
 	}
 	if _, err := tx.Exec(ctx, `
 		UPDATE activity_photos SET activity_id = $2
 		WHERE activity_id = $1 AND route_at > to_timestamp($3::bigint / 1000.0)
-	`, activityID, pieceID, at); err != nil {
+	`, trackID, pieceID, at); err != nil {
 		return "", err
 	}
 	return pieceID, nil

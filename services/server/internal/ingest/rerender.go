@@ -20,9 +20,9 @@ import (
 // drop the tiles they cached. Queued rather than rendered here, so it never races the worker
 // over the same tiles. Idempotent: running it twice only renders twice.
 //
-// masks also redraws every activity's stored per-tile masks first (RerenderActivityMasks) —
+// masks also redraws every track's stored per-tile masks first (RerenderTrackMasks) —
 // needed when the stroke itself changes (fog's strokeRadiusPx), not for a change to how masks
-// are composited or coloured. It re-parses every activity's upload, so it takes a while.
+// are composited or coloured. It re-parses every track's upload, so it takes a while.
 func RerenderCoverage(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, userID string, masks bool) error {
 	rows, err := pool.Query(ctx, `
 		SELECT DISTINCT user_id FROM fog_tiles
@@ -64,12 +64,12 @@ func RerenderCoverage(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	return nil
 }
 
-// rerenderParallelism is how many of an account's activities rerenderUserMasks redraws at
-// once. Each already stores its masks side by side (fog.RenderActivityMasks), so a few is
+// rerenderParallelism is how many of an account's tracks rerenderUserMasks redraws at
+// once. Each already stores its masks side by side (fog.RenderTrackMasks), so a few is
 // plenty.
 const rerenderParallelism = 8
 
-// rerenderUserMasks redraws every activity of one account whose masks can be redrawn. One that
+// rerenderUserMasks redraws every track of one account whose masks can be redrawn. One that
 // can't — Pending (its own reprocess will), or with no upload stored — is logged and left as it
 // is rather than failing the whole run.
 func rerenderUserMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, userID string) error {
@@ -90,12 +90,12 @@ func rerenderUserMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	if err := rows.Err(); err != nil {
 		return err
 	}
-	// Side by side: an activity's redraw is mostly object-storage round trips, and one after
+	// Side by side: a track's redraw is mostly object-storage round trips, and one after
 	// another it took about 0.4 s each on production (docs/PERFORMANCE.md, 2026-10-09).
-	// MarkFogTilesDirty takes its rows in tile order, so two activities sharing tiles can't
+	// MarkFogTilesDirty takes its rows in tile order, so two tracks sharing tiles can't
 	// deadlock each other.
 	err = parallel.ForEach(ctx, len(ids), rerenderParallelism, func(ctx context.Context, i int) error {
-		if err := RerenderActivityMasks(ctx, pool, store, userID, ids[i]); err != nil {
+		if err := RerenderTrackMasks(ctx, pool, store, userID, ids[i]); err != nil {
 			log.Warn("rerender-coverage: masks skipped", "activity", ids[i], "err", err)
 		}
 		return nil
@@ -107,17 +107,17 @@ func rerenderUserMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 	return nil
 }
 
-// RerenderActivityMasks redraws one activity's stored per-tile masks from the points it's shown
-// with (DisplayedPoints: the upload parsed, clipped to Private locations, its track edit applied)
+// RerenderTrackMasks redraws one track's stored per-tile masks from the points it's shown
+// with (DisplayedPoints: the upload parsed, clipped to Private locations, its route edit applied)
 // at the current stroke, drops the masks of tiles it no longer reaches, and marks every tile
 // before or after dirty — reprocessActivity's mask step alone, since nothing else about the
-// activity changes.
-func RerenderActivityMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, activityID string) error {
-	points, err := DisplayedPoints(ctx, pool, store, activityID)
+// track changes.
+func RerenderTrackMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, trackID string) error {
+	points, err := DisplayedPoints(ctx, pool, store, trackID)
 	if err != nil {
 		return err
 	}
-	oldTiles, err := ActivityTiles(ctx, pool, activityID)
+	oldTiles, err := TrackTiles(ctx, pool, trackID)
 	if err != nil {
 		return err
 	}
@@ -126,11 +126,11 @@ func RerenderActivityMasks(ctx context.Context, pool *pgxpool.Pool, store *stora
 		if newTiles, err = computeTouchedTiles(points, FogZoom); err != nil {
 			return err
 		}
-		if err := fog.RenderActivityMasks(ctx, pool, activityID, points, newTiles); err != nil {
+		if err := fog.RenderTrackMasks(ctx, pool, trackID, points, newTiles); err != nil {
 			return fmt.Errorf("render masks: %w", err)
 		}
 	}
-	if err := fog.RemoveActivityMasks(ctx, pool, activityID, tilesNotIn(oldTiles, newTiles)); err != nil {
+	if err := fog.RemoveTrackMasks(ctx, pool, trackID, tilesNotIn(oldTiles, newTiles)); err != nil {
 		return fmt.Errorf("remove stale masks: %w", err)
 	}
 	return MarkFogTilesDirty(ctx, pool, userID, mergeTiles(oldTiles, newTiles))

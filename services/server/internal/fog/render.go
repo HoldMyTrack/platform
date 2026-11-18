@@ -34,9 +34,9 @@ const renderParallelism = 16
 
 // RenderUser is the `render_fog` job body: re-render every tile currently marked dirty for
 // this user, z14 first and then each pyramid level up to z0. Idempotent and complete per
-// tile, not incremental — each render gathers *every* activity intersecting a tile, not just
+// tile, not incremental — each render gathers *every* track intersecting a tile, not just
 // whichever one triggered the dirty flag, because a tile's mask has to represent the user's
-// entire history through it every time, not just the newest activity.
+// entire history through it every time, not just the newest track.
 //
 // Rendering a tile marks its parent dirty, so the pyramid's pending work is in the database,
 // not in memory: a pass cut off partway (a storage error, a deploy) leaves the parents of
@@ -137,10 +137,10 @@ func lockRenders(ctx context.Context, pool *pgxpool.Pool, userID string) (unlock
 	}, nil
 }
 
-// Private locations are never re-applied here: RenderActivityMasks renders from points
+// Private locations are never re-applied here: RenderTrackMasks renders from points
 // already clipped at ingest, and renderAndStoreTile composites those masks rather than
 // re-parsing raw payloads. A location change goes through the `reprivacy` job instead, which
-// re-renders each affected activity's own masks from freshly clipped points (internal/ingest's
+// re-renders each affected track's own masks from freshly clipped points (internal/ingest's
 // ProcessReprivacy) before this recomposites.
 
 func dirtyTiles(ctx context.Context, pool *pgxpool.Pool, userID string, zoom int) ([][2]int, error) {
@@ -164,19 +164,19 @@ func dirtyTiles(ctx context.Context, pool *pgxpool.Pool, userID string, zoom int
 	return out, rows.Err()
 }
 
-// renderAndStoreTile is one z14 tile, re-rendered from the per-activity masks on file for it,
-// which RenderActivityMasks draws once per activity at ingest. activity_tile_masks holds only
+// renderAndStoreTile is one z14 tile, re-rendered from the per-track masks on file for it,
+// which RenderTrackMasks draws once per track at ingest. activity_tile_masks holds only
 // the tiles the raw trajectory's stroke reaches.
 //
 // The masks' bytes come in the same query, from activity_tile_mask_data (IMPLEMENTATION.md §3.11), so a tile
-// costs one SQL read rather than a round trip to object storage per activity through it. A
+// costs one SQL read rather than a round trip to object storage per track through it. A
 // mask that can't be read — no bytes (a restore leaves them out until `rerender-coverage
 // --masks` redraws them), or bytes that don't decode — is left out of the tile and counted in
-// skipped, rather than failing it: every other activity through the tile is still real
+// skipped, rather than failing it: every other track through the tile is still real
 // coverage, the same "one bad file doesn't abort the batch" principle §5.1 applies to bulk
 // ingest.
 //
-// A Pending activity (edit_pending, §4.7.7) is left out: its masks are the pre-reprocess ones,
+// A Pending track (edit_pending, §4.7.7) is left out: its masks are the pre-reprocess ones,
 // or mid-rewrite. The reprocess marks its tiles dirty when it goes Pending and renders them
 // again after clearing the flag, so it drops out of the tile for the duration.
 func renderAndStoreTile(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID string, zoom, x, y int, skipped *atomic.Int64) error {
@@ -234,7 +234,7 @@ var errTileSize = errors.New("fog: stored tile is not TileSize")
 // One of another size is refused: every raster here indexes a TileSize square, so a tile or
 // mask drawn before TileSize last changed (IMPLEMENTATION.md §4.2) — until `rerender-coverage --masks` redraws
 // it — would read past a smaller one's end (downsampleQuadrants) or land squashed in a corner of
-// the tile (compositeFogMask) instead. A child tile refused fails its render; an activity's
+// the tile (compositeFogMask) instead. A child tile refused fails its render; a track's
 // mask refused is skipped and counted, as an unreadable one is.
 func decodeGray(r io.Reader) (*image.Gray, error) {
 	img, err := png.Decode(r)
@@ -253,16 +253,16 @@ func decodeGray(r io.Reader) (*image.Gray, error) {
 	return gray, nil
 }
 
-// RenderActivityMasks renders exactly one activity's own crisp (unblurred) stroke mask for
+// RenderTrackMasks renders exactly one track's own crisp (unblurred) stroke mask for
 // each of its already-computed touched z14 tiles (internal/ingest's computeTouchedTiles), and
 // upserts one activity_tile_masks row per tile with its PNG in activity_tile_mask_data, both
-// in one transaction (IMPLEMENTATION.md §3.11). Idempotent: safe to re-run for the same activity (a
+// in one transaction (IMPLEMENTATION.md §3.11). Idempotent: safe to re-run for the same track (a
 // redelivered ingest job).
 //
 // Called from ingest.Process with the points in memory (before simplification, after Private
 // locations), so it never reads an original back from object storage, and costs this
-// activity's own tiles however many other activities share them.
-func RenderActivityMasks(ctx context.Context, pool *pgxpool.Pool, activityID string, points []parse.Point, tiles [][2]int) error {
+// track's own tiles however many other tracks share them.
+func RenderTrackMasks(ctx context.Context, pool *pgxpool.Pool, trackID string, points []parse.Point, tiles [][2]int) error {
 	if len(tiles) == 0 {
 		return nil
 	}
@@ -273,7 +273,7 @@ func RenderActivityMasks(ctx context.Context, pool *pgxpool.Pool, activityID str
 	// Rendered side by side: a long track crosses hundreds of tiles.
 	if err := parallel.ForEach(ctx, len(tiles), renderParallelism, func(ctx context.Context, i int) error {
 		x, y := tiles[i][0], tiles[i][1]
-		b, err := encodeTilePNG(renderActivityMask(projectToTile(points, x, y, Zoom)...))
+		b, err := encodeTilePNG(renderTrackMask(projectToTile(points, x, y, Zoom)...))
 		if err != nil {
 			return fmt.Errorf("activity mask z%d/%d/%d: %w", Zoom, x, y, err)
 		}
@@ -294,7 +294,7 @@ func RenderActivityMasks(ctx context.Context, pool *pgxpool.Pool, activityID str
 		FROM unnest($3::int[], $4::int[]) AS t(x, y)
 		ON CONFLICT (activity_id, zoom, tile_x, tile_y)
 		DO UPDATE SET rendered_at = NOW()
-	`, activityID, Zoom, xs, ys); err != nil {
+	`, trackID, Zoom, xs, ys); err != nil {
 		return err
 	}
 	if _, err := tx.Exec(ctx, `
@@ -303,17 +303,17 @@ func RenderActivityMasks(ctx context.Context, pool *pgxpool.Pool, activityID str
 		FROM unnest($3::int[], $4::int[], $5::bytea[]) AS t(x, y, png)
 		ON CONFLICT (activity_id, zoom, tile_x, tile_y)
 		DO UPDATE SET png = EXCLUDED.png
-	`, activityID, Zoom, xs, ys, pngs); err != nil {
+	`, trackID, Zoom, xs, ys, pngs); err != nil {
 		return err
 	}
 	return tx.Commit(ctx)
 }
 
-// RemoveActivityMasks deletes one activity's masks for the given tiles — the tiles an edited
-// track (internal/ingest's ProcessTrackEdit) no longer touches. Their bytes go with them (the
+// RemoveTrackMasks deletes one track's masks for the given tiles — the tiles an edited
+// track (internal/ingest's ProcessRouteEdit) no longer touches. Their bytes go with them (the
 // cascade from activity_tile_masks to activity_tile_mask_data); a render_fog pass running
 // alongside simply composites without them.
-func RemoveActivityMasks(ctx context.Context, pool *pgxpool.Pool, activityID string, tiles [][2]int) error {
+func RemoveTrackMasks(ctx context.Context, pool *pgxpool.Pool, trackID string, tiles [][2]int) error {
 	if len(tiles) == 0 {
 		return nil
 	}
@@ -327,7 +327,7 @@ func RemoveActivityMasks(ctx context.Context, pool *pgxpool.Pool, activityID str
 		DELETE FROM activity_tile_masks m
 		USING unnest($3::int[], $4::int[]) AS t(x, y)
 		WHERE m.activity_id = $1 AND m.zoom = $2 AND m.tile_x = t.x AND m.tile_y = t.y
-	`, activityID, Zoom, xs, ys)
+	`, trackID, Zoom, xs, ys)
 	return err
 }
 
@@ -490,7 +490,7 @@ func tileDirtyGen(ctx context.Context, pool *pgxpool.Pool, userID string, zoom, 
 // UPDATE: a pyramid tile (z13..z0) may have no fog_tiles row yet the first time it's built.
 //
 // dirty clears only if dirty_gen is still gen, the value read before the render gathered its
-// masks (tileDirtyGen). A change that lands mid-render — an activity deleted while its old mask
+// masks (tileDirtyGen). A change that lands mid-render — a track deleted while its old mask
 // was being composited in — marks the tile again (bumping dirty_gen), and the tile stays dirty
 // for the render the change enqueued, instead of keeping the deleted track until something else
 // touches that tile.

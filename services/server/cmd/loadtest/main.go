@@ -1,5 +1,5 @@
 // cmd/loadtest drives the load-test sessions docs/PERFORMANCE.md logs: it creates test accounts,
-// uploads activities, browses the map the way the web client does and reports latency, and
+// uploads tracks, browses the map the way the web client does and reports latency, and
 // deletes the accounts again. Run it from services/server against a deployment you may load:
 //
 //	go run ./cmd/loadtest -base https://example.com -dir /tmp/lt signup 21
@@ -24,9 +24,9 @@
 //	browse VUS DUR  VUS people at the map for DUR, each in Normal or Fog mode (or all in
 //	                -mode), panning and zooming and requesting the tiles the web client would;
 //	                each keeps a browser-like tile cache unless -cold; Normal visitors from z4 ask
-//	                for the area's activity list on every view, as the web does after each settled
+//	                for the area's track list on every view, as the web does after each settled
 //	                move, and Spots visitors at z10-12 also ask "Show in this area". Latency per
-//	                tile layer, activities-area and spots-area every 30 s
+//	                tile layer, tracks-area and spots-area every 30 s
 //	probe           upload one new track from the last account and time it until it's processed
 //	cleanup         delete every account in tokens.json
 //
@@ -508,7 +508,7 @@ func browse(vus int, dur time.Duration) {
 		go func(i int) {
 			defer wg.Done()
 			r := mrand.New(mrand.NewSource(int64(i) + time.Now().UnixNano()))
-			// Opening the map frames the account's latest activity, at city zoom (SPEC.md FR-4.4).
+			// Opening the map frames the account's latest track, at city zoom (SPEC.md FR-4.4).
 			v := &visitor{r: r, tok: accts[i%len(accts)].Token, mode: pickMode(r), spots: r.Intn(5) == 0,
 				c: cs[r.Intn(len(cs))], z: 12 + r.Intn(3), cache: map[string]bool{}}
 			time.Sleep(time.Duration(r.Intn(3000)) * time.Millisecond)

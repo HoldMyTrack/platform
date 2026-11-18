@@ -24,9 +24,9 @@ type Point struct {
 }
 
 // Activity is the parsed result, before privacy trimming or simplification (§4.1 steps 3, 5).
-type Activity struct {
-	ActivityType string // 'run' | 'ride' | 'hike' | ... — best-effort from the source file
-	Points       []Point
+type Track struct {
+	TrackType string // 'run' | 'ride' | 'hike' | ... — best-effort from the source file
+	Points    []Point
 	// Name and Description are empty from every file format and from Health Connect sync. Only
 	// the app's own recording sets them, through Path 2's JSON wire format (IMPLEMENTATION.md
 	// §4.0.4); ingest.Process stores them when non-empty.
@@ -47,7 +47,7 @@ var (
 )
 
 // MaxPoints bounds a new upload's positioned points (ByExtensionUpTo): two days at one a
-// second, past any real activity. A 16 MiB FIT file of bare records holds about 1.9 million, half a gigabyte decoded.
+// second, past any real track. A 16 MiB FIT file of bare records holds about 1.9 million, half a gigabyte decoded.
 const MaxPoints = 200_000
 
 // ByExtensionUpTo dispatches on the uploaded filename's extension and streams from r — callers
@@ -55,7 +55,7 @@ const MaxPoints = 200_000
 // 36,000+ points). It refuses a file past maxPoints positioned points with ErrTooManyPoints,
 // as soon as the parser reaches it; 0 is no cap. A new upload is held to
 // MaxPoints; a stored original is read without one, so one kept before the cap still opens.
-func ByExtensionUpTo(filename string, r io.Reader, maxPoints int) (Activity, error) {
+func ByExtensionUpTo(filename string, r io.Reader, maxPoints int) (Track, error) {
 	switch strings.ToLower(filepath.Ext(filename)) {
 	case ".gpx":
 		return parseGPX(r, maxPoints)
@@ -66,7 +66,7 @@ func ByExtensionUpTo(filename string, r io.Reader, maxPoints int) (Activity, err
 	case ".json":
 		return ParseJSON(r)
 	default:
-		return Activity{}, fmt.Errorf("parse: %w %q", ErrUnsupportedFormat, filepath.Ext(filename))
+		return Track{}, fmt.Errorf("parse: %w %q", ErrUnsupportedFormat, filepath.Ext(filename))
 	}
 }
 
@@ -106,39 +106,39 @@ func (p *JSONPoint) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// JSONActivity is one activity's worth of JSONPoint, the unit both the sync request body and
+// JSONActivity is one track's worth of JSONPoint, the unit both the sync request body and
 // the stored raw payload carry (`internal/httpapi.syncActivityRequest` embeds this).
 //
 // Name and Description are optional and empty for Health Connect/HealthKit sync, which never
 // sends them. In-app GPS recording (`source = "recorded"`, `docs/IMPLEMENTATION.md` §4.0.4)
 // sets them from its own Name/Description fields, captured before or during a recording, so
-// the resulting activity carries them from the moment it's created rather than needing a
+// the resulting track carries them from the moment it's created rather than needing a
 // separate edit afterward.
 type JSONActivity struct {
-	ActivityType string      `json:"activity_type"`
-	Points       []JSONPoint `json:"points"`
-	Name         string      `json:"name,omitempty"`
-	Description  string      `json:"description,omitempty"`
+	TrackType   string      `json:"activity_type"`
+	Points      []JSONPoint `json:"points"`
+	Name        string      `json:"name,omitempty"`
+	Description string      `json:"description,omitempty"`
 }
 
 // ParseJSON decodes Path 2's normalized-point wire format into the same Activity shape
 // GPX/TCX/FIT parsing produces, so ingest.Process needs no Path-2-specific branch — the
 // on-device app has already read raw samples out of the platform health store itself, so
 // there is no format-specific parsing left to do here, only a field-for-field reshape.
-func ParseJSON(r io.Reader) (Activity, error) {
+func ParseJSON(r io.Reader) (Track, error) {
 	var a JSONActivity
 	if err := json.NewDecoder(r).Decode(&a); err != nil {
-		return Activity{}, fmt.Errorf("parse: decode json: %w", err)
+		return Track{}, fmt.Errorf("parse: decode json: %w", err)
 	}
 	points := make([]Point, len(a.Points))
 	for i, p := range a.Points {
 		points[i] = Point{Lat: p.Lat, Lon: p.Lon, Elevation: p.ElevationM, Time: p.Time}
 	}
-	activityType := a.ActivityType
-	if activityType == "" {
-		activityType = "unknown"
+	trackType := a.TrackType
+	if trackType == "" {
+		trackType = "unknown"
 	}
-	return Activity{ActivityType: activityType, Points: points, Name: a.Name, Description: a.Description}, nil
+	return Track{TrackType: trackType, Points: points, Name: a.Name, Description: a.Description}, nil
 }
 
 // WrapLon brings a longitude into −180…180 (180 itself stays 180): a point of a track stored

@@ -52,12 +52,12 @@ func FileName(requested time.Time, n, of int) string {
 // The archive holds, spread over the parts as they fill (extracted into one folder they make
 // one tree):
 //   - README.txt: what is where.
-//   - originals/: every file uploaded or synced, as it arrived, once each — the activity's own
+//   - originals/: every file uploaded or synced, as it arrived, once each — the track's own
 //     data, before Private locations clipped it.
-//   - tracks/: every activity as GPX, as the owner's map shows it — clipped, with its track
+//   - tracks/: every track as GPX, as the owner's map shows it — clipped, with its track
 //     edit applied (ingest.DisplayedPoints).
 //   - photos/: the stored copy of each photo.
-//   - account.json: the account, every activity's details and which files are its, Stories,
+//   - account.json: the account, every track's details and which files are its, Stories,
 //     Private locations and captured places. Written last, so it can name every file.
 //
 // Each part is built in a temporary file and uploaded with its size known: an upload of
@@ -86,10 +86,10 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 		return nil, err
 	}
 
-	// Each activity is named by its local start where it was recorded (IMPLEMENTATION.md §4.30).
+	// Each track is named by its local start where it was recorded (IMPLEMENTATION.md §4.30).
 	accountLoc := zoneinfo.LoadOr(doc.Account.Timezone, time.UTC)
 	// zoneinfo keeps only zones that load, so one that doesn't is remembered here, not looked
-	// up again for each activity recorded in it.
+	// up again for each track recorded in it.
 	unloadable := map[string]bool{}
 	locationOf := func(tz string) *time.Location {
 		if unloadable[tz] {
@@ -104,8 +104,8 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 	}
 	names := map[string]bool{}
 	originals := map[string]string{} // raw key -> its file in the archive
-	for i := range doc.Activities {
-		act := &doc.Activities[i]
+	for i := range doc.Tracks {
+		act := &doc.Tracks[i]
 		label := act.Type
 		if act.Name != "" {
 			label = act.Name
@@ -162,8 +162,8 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 	return a.sizes, nil
 }
 
-// editWait bounds how long Build waits for the account's track edits and Private location
-// changes to finish: until they do, an activity's track can't be rebuilt (DisplayedPoints).
+// editWait bounds how long Build waits for the account's route edits and Private location
+// changes to finish: until they do, a track's route can't be rebuilt (DisplayedPoints).
 // They take seconds; a variable so a test needn't wait.
 var editWait = 2 * time.Minute
 
@@ -299,8 +299,8 @@ func (a *archive) copyObject(w io.Writer, key string) error {
 type document struct {
 	ExportedAt       time.Time         `json:"exported_at"`
 	Account          accountInfo       `json:"account"`
-	Activities       []activity        `json:"activities"`
-	Stories          []story           `json:"stories"`
+	Tracks           []track           `json:"activities"`
+	Trips            []trip            `json:"stories"`
 	PrivateLocations []privateLocation `json:"private_locations"`
 	CapturedPlaces   []capturedPlace   `json:"captured_places"`
 }
@@ -314,7 +314,7 @@ type accountInfo struct {
 	CreatedAt   time.Time `json:"created_at"`
 }
 
-type activity struct {
+type track struct {
 	ID               string    `json:"id"`
 	Name             string    `json:"name,omitempty"`
 	Type             string    `json:"type"`
@@ -342,11 +342,11 @@ type photo struct {
 	ext     string
 }
 
-type story struct {
+type trip struct {
 	Name        string    `json:"name"`
 	Description string    `json:"description,omitempty"`
 	CreatedAt   time.Time `json:"created_at"`
-	Activities  []string  `json:"activities"`
+	Tracks      []string  `json:"activities"`
 }
 
 type privateLocation struct {
@@ -367,7 +367,7 @@ type capturedPlace struct {
 var photoExt = map[string]string{"image/jpeg": "jpg", "image/webp": "webp"}
 
 func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*document, error) {
-	doc := &document{Activities: []activity{}, Stories: []story{}, PrivateLocations: []privateLocation{}, CapturedPlaces: []capturedPlace{}}
+	doc := &document{Tracks: []track{}, Trips: []trip{}, PrivateLocations: []privateLocation{}, CapturedPlaces: []capturedPlace{}}
 	a := &doc.Account
 	if err := pool.QueryRow(ctx, `
 		SELECT email, COALESCE(display_name, ''), COALESCE(country, ''), timezone, COALESCE(locale, ''), created_at
@@ -387,15 +387,15 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 	}
 	index := map[string]int{}
 	for rows.Next() {
-		var v activity
+		var v track
 		if err := rows.Scan(&v.ID, &v.Name, &v.Type, &v.Source, &v.Description, &v.StartedAt, &v.Timezone,
 			&v.DistanceMeters, &v.ElapsedSeconds, &v.MovingSeconds, &v.ElevationGainM, &v.rawKey); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("activities: %w", err)
 		}
 		v.StartedAt = v.StartedAt.UTC()
-		index[v.ID] = len(doc.Activities)
-		doc.Activities = append(doc.Activities, v)
+		index[v.ID] = len(doc.Tracks)
+		doc.Tracks = append(doc.Tracks, v)
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
@@ -409,13 +409,13 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 		return nil, fmt.Errorf("photos: %w", err)
 	}
 	for rows.Next() {
-		var id, activityID, contentType, imageKey string
+		var id, trackID, contentType, imageKey string
 		var p photo
-		if err := rows.Scan(&id, &activityID, &p.Caption, &p.TakenAt, &p.RouteAt, &contentType, &imageKey); err != nil {
+		if err := rows.Scan(&id, &trackID, &p.Caption, &p.TakenAt, &p.RouteAt, &contentType, &imageKey); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("photos: %w", err)
 		}
-		i, ok := index[activityID]
+		i, ok := index[trackID]
 		if !ok {
 			continue
 		}
@@ -428,7 +428,7 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 			t := p.TakenAt.UTC()
 			p.TakenAt = &t
 		}
-		doc.Activities[i].Photos = append(doc.Activities[i].Photos, p)
+		doc.Tracks[i].Photos = append(doc.Tracks[i].Photos, p)
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {
@@ -444,13 +444,13 @@ func loadAccount(ctx context.Context, pool *pgxpool.Pool, userID string) (*docum
 		return nil, fmt.Errorf("stories: %w", err)
 	}
 	for rows.Next() {
-		var s story
-		if err := rows.Scan(&s.Name, &s.Description, &s.CreatedAt, &s.Activities); err != nil {
+		var s trip
+		if err := rows.Scan(&s.Name, &s.Description, &s.CreatedAt, &s.Tracks); err != nil {
 			rows.Close()
 			return nil, fmt.Errorf("stories: %w", err)
 		}
 		s.CreatedAt = s.CreatedAt.UTC()
-		doc.Stories = append(doc.Stories, s)
+		doc.Trips = append(doc.Trips, s)
 	}
 	rows.Close()
 	if err := rows.Err(); err != nil {

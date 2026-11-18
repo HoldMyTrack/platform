@@ -7,22 +7,22 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/i18n"
 )
 
-// An account's row totals its own activities only, found by id or on the newest page.
+// An account's row totals its own tracks only, found by id or on the newest page.
 func TestAdminUserRows(t *testing.T) {
 	d := newDBTest(t)
 	ctx := context.Background()
 	l := i18n.Get("en")
 	rider, other := d.newAccount(false), d.newAccount(false)
-	d.newActivity(rider, testActivity{activityType: "walk", distanceMeters: 1000})
-	d.newActivity(rider, testActivity{activityType: "walk", distanceMeters: 2500})
-	d.newActivity(other, testActivity{activityType: "walk", distanceMeters: 9000})
+	d.newTrack(rider, testTrack{trackType: "walk", distanceMeters: 1000})
+	d.newTrack(rider, testTrack{trackType: "walk", distanceMeters: 2500})
+	d.newTrack(other, testTrack{trackType: "walk", distanceMeters: 9000})
 
 	u, found, err := d.srv.adminUser(ctx, l, rider.id, false)
 	if err != nil || !found {
 		t.Fatalf("adminUser: %v, found %v", err, found)
 	}
-	if u.ID != rider.id || u.ActivityCount != 2 || u.Distance != "3.5 km" {
-		t.Errorf("adminUser = %s with %d activities, %s; want %s with 2, 3.5 km", u.ID, u.ActivityCount, u.Distance, rider.id)
+	if u.ID != rider.id || u.TrackCount != 2 || u.Distance != "3.5 km" {
+		t.Errorf("adminUser = %s with %d activities, %s; want %s with 2, 3.5 km", u.ID, u.TrackCount, u.Distance, rider.id)
 	}
 	if _, found, err := d.srv.adminUser(ctx, l, "00000000-0000-4000-8000-000000000000", false); err != nil || found {
 		t.Errorf("adminUser of no account: found %v, %v", found, err)

@@ -18,7 +18,7 @@ import (
 )
 
 // testTx is a transaction on TEST_DATABASE_URL, rolled back when the test ends (skipped without
-// one — docs/DEVELOPMENT.md). The load replaces every outline and every activity's matches, so
+// one — docs/DEVELOPMENT.md). The load replaces every outline and every track's matches, so
 // it runs here: no other test sees what it did.
 func testTx(t *testing.T) pgx.Tx {
 	t.Helper()
@@ -45,7 +45,7 @@ func testTx(t *testing.T) pgx.Tx {
 
 // A load replaces the outlines of every level, gives a country with no regions one region that is
 // all of it, leaves out a region whose country isn't there, links each county and city to the
-// places above, re-matches activities against the full-detail pieces and moves the tile version;
+// places above, re-matches tracks against the full-detail pieces and moves the tile version;
 // loading the same extract again does nothing, and one with too few outlines is refused.
 func TestLoadBoundaries(t *testing.T) {
 	tx := testTx(t)
@@ -86,7 +86,7 @@ func TestLoadBoundaries(t *testing.T) {
 		)
 	}
 
-	var userID, activityID string
+	var userID, trackID string
 	if err := tx.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`,
 		fmt.Sprintf("geo-seed-%d@holdmytrack.invalid", time.Now().UnixNano())).Scan(&userID); err != nil {
 		t.Fatalf("create account: %v", err)
@@ -95,7 +95,7 @@ func TestLoadBoundaries(t *testing.T) {
 	if err := tx.QueryRow(ctx, `
 		INSERT INTO activities (user_id, source, activity_type, started_at, trajectory, timezone)
 		VALUES ($1, 'upload', 'walking', now(), ST_GeomFromText('LINESTRING M(-40.8 -60.5 0, -39.5 -60.5 60)', 4326), 'UTC')
-		RETURNING id`, userID).Scan(&activityID); err != nil {
+		RETURNING id`, userID).Scan(&trackID); err != nil {
 		t.Fatalf("create activity: %v", err)
 	}
 	version := func() int64 {
@@ -107,7 +107,7 @@ func TestLoadBoundaries(t *testing.T) {
 	}
 	matched := func(sql string) string {
 		var s string
-		if err := tx.QueryRow(ctx, sql, activityID).Scan(&s); err != nil {
+		if err := tx.QueryRow(ctx, sql, trackID).Scan(&s); err != nil {
 			t.Fatal(err)
 		}
 		return s
@@ -200,7 +200,7 @@ func TestMatchAcrossTheAntimeridian(t *testing.T) {
 	}, "\n") + "\n"))
 	gz.Close()
 
-	var userID, activityID string
+	var userID, trackID string
 	if err := tx.QueryRow(ctx, `INSERT INTO users (email) VALUES ($1) RETURNING id`,
 		fmt.Sprintf("geo-am-%d@holdmytrack.invalid", time.Now().UnixNano())).Scan(&userID); err != nil {
 		t.Fatal(err)
@@ -208,7 +208,7 @@ func TestMatchAcrossTheAntimeridian(t *testing.T) {
 	if err := tx.QueryRow(ctx, `
 		INSERT INTO activities (user_id, source, activity_type, started_at, trajectory, timezone)
 		VALUES ($1, 'upload', 'sailing', now(), ST_GeomFromText('LINESTRING M(179.5 -60.5 0, 180.5 -60.5 60)', 4326), 'UTC')
-		RETURNING id`, userID).Scan(&activityID); err != nil {
+		RETURNING id`, userID).Scan(&trackID); err != nil {
 		t.Fatal(err)
 	}
 	if _, err := loadBoundaries(ctx, tx, log, &buf, "am.csv.gz", true, minimums{3, 0, 0, 0}); err != nil {
@@ -216,7 +216,7 @@ func TestMatchAcrossTheAntimeridian(t *testing.T) {
 	}
 	var got string
 	if err := tx.QueryRow(ctx, `SELECT string_agg(c.code, ',' ORDER BY c.code)
-		FROM activity_country ac JOIN admin_countries c ON c.id = ac.country_id WHERE ac.activity_id = $1`, activityID).Scan(&got); err != nil {
+		FROM activity_country ac JOIN admin_countries c ON c.id = ac.country_id WHERE ac.activity_id = $1`, trackID).Scan(&got); err != nil {
 		t.Fatal(err)
 	}
 	if got != "EE,WW" {

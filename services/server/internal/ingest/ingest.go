@@ -1,6 +1,6 @@
 // Package ingest is the worker's half of the ingestion pipeline (IMPLEMENTATION.md §4.1): it
-// parses an original, applies Private locations, stores the activity with its simplified
-// display track, and draws the activity's own Fog masks (fog.RenderActivityMasks) from the raw
+// parses an original, applies Private locations, stores the track with its simplified
+// display track, and draws the track's own Fog masks (fog.RenderTrackMasks) from the raw
 // points while they're in memory, since coverage can't come from the simplified track
 // (ARCHITECTURE.md §1.1). Compositing the tiles, and the z13..z0 pyramid above them, is
 // internal/fog's, run by a `render_fog` job this package enqueues.
@@ -40,22 +40,22 @@ type Job struct {
 	// writes it; stored as activities.raw_bytes for the storage statistics. 0 is unknown (a
 	// job enqueued before it existed), stored as NULL.
 	RawBytes int64 `json:"raw_bytes,omitempty"`
-	// ActivityType overrides whatever the parser itself reports, when set. Empty means "use
+	// TrackType overrides whatever the parser itself reports, when set. Empty means "use
 	// the parsed value". A copy of a Story (storycopy) and the demo seed set it: their GPX
-	// carries no type of its own, and they already know the activity's.
-	ActivityType string `json:"activity_type,omitempty"`
-	// Batch groups the jobs one request enqueued together — a phone sync's activities — so the
+	// carries no type of its own, and they already know the track's.
+	TrackType string `json:"activity_type,omitempty"`
+	// Batch groups the jobs one request enqueued together — a phone sync's tracks — so the
 	// header's Upload menu can show them as one row however the page was reloaded meanwhile.
 	// Empty for a single uploaded file, which is its own row.
 	Batch string `json:"batch,omitempty"`
 }
 
-// Result reports what happened, distinguishing "persisted a new activity" from "this was
+// Result reports what happened, distinguishing "persisted a new track" from "this was
 // already processed" — IMPLEMENTATION.md §4.0's idempotency invariant: a
 // conflict at persist time is a successful no-op, not an error.
 type Result struct {
-	ActivityID string
-	Persisted  bool // false means ON CONFLICT DO NOTHING fired: already processed.
+	TrackID   string
+	Persisted bool // false means ON CONFLICT DO NOTHING fired: already processed.
 }
 
 func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job) (Result, error) {
@@ -86,17 +86,17 @@ var errZonesChanged = errors.New("ingest: Private locations changed while the tr
 
 // processClipped clips the parsed recording with zones and saves it, unless the account's
 // locations changed since zones was read: then errZonesChanged, with the current ones.
-func processClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job, act parse.Activity, zones []Zone) (Result, []Zone, error) {
+func processClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job, act parse.Track, zones []Zone) (Result, []Zone, error) {
 	act.Points = slices.Clone(act.Points)
 	points := ClipEnds(act.Points, zones)
 	res, current, err := persistClipped(ctx, pool, store, job, act, points, zones)
 	return res, current, err
 }
 
-func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job, act parse.Activity, points []parse.Point, zones []Zone) (Result, []Zone, error) {
+func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job Job, act parse.Track, points []parse.Point, zones []Zone) (Result, []Zone, error) {
 	var err error
-	if job.ActivityType != "" {
-		act.ActivityType = job.ActivityType
+	if job.TrackType != "" {
+		act.TrackType = job.TrackType
 	}
 	// A track entirely inside Private locations is still persisted, just with no geometry:
 	// dropping it would lose it for good, even after the location that hides it is deleted.
@@ -119,7 +119,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 	m := pp.m
 
 	// Saved under the Private locations' lock, after checking they are still the ones the track
-	// was clipped with: a change made since might not have found this activity (LockZones).
+	// was clipped with: a change made since might not have found this track (LockZones).
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: persist activity: %w", err)
@@ -139,7 +139,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 	// this function): a hidden track has none, so it is complete as inserted.
 	// timezone is the zone of the first recorded point, before Private locations clip it, so
 	// a track hidden by them still shows its times where it was recorded (§4.30).
-	var activityID string
+	var trackID string
 	var inserted, complete bool
 	err = tx.QueryRow(ctx, `
 		WITH ins AS (
@@ -171,14 +171,14 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 		LIMIT 1
 	`,
 		job.UserID, job.Source, job.SourceDetail, job.ExternalID,
-		act.ActivityType, m.distanceM, m.durationS, m.movingS,
+		act.TrackType, m.distanceM, m.durationS, m.movingS,
 		m.elevationGainM, startedAt,
 		pp.simpLons, pp.simpLats, pp.simpTs,
 		job.RawPayloadKey, act.Name, act.Description, hidden,
 		act.Points[0].Lon, act.Points[0].Lat,
 		recStart, recEnd, job.RawBytes,
 		EditableTimestamps(points) == nil,
-	).Scan(&activityID, &inserted, &complete)
+	).Scan(&trackID, &inserted, &complete)
 	if err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: persist activity: %w", err)
 	}
@@ -190,23 +190,23 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 		// Idempotency requirement: a duplicate that reached persist is a no-op, not an
 		// error. Fog is skipped too: nothing new happened, so no tile needs marking dirty
 		// again.
-		return Result{ActivityID: activityID, Persisted: false}, nil, nil
+		return Result{TrackID: trackID, Persisted: false}, nil, nil
 	}
 	// Otherwise this is a new row, or one an earlier run of this ingest inserted and then
 	// didn't finish (cut off, or failed partway): every step below is safe to run again.
 	if hidden {
 		// No masks, tiles or regions: there is nothing visible to derive them from.
-		return Result{ActivityID: activityID, Persisted: true}, nil, nil
+		return Result{TrackID: trackID, Persisted: true}, nil, nil
 	}
 
-	// §4.1 step 4: render this activity's own Fog masks and mark every z14 tile it
+	// §4.1 step 4: render this track's own Fog masks and mark every z14 tile it
 	// touches dirty, both from `points` (pre-simplification), not the simplified trajectory
 	// just persisted — a straight line between two of Douglas-Peucker's surviving vertices
 	// can cut across tiles the real GPS path never entered, which would render/reveal tiles
 	// the user never actually visited. Rendering first, dirty-marking second: dirty is what
 	// tells `render_fog` this tile's aggregate needs recompositing, so the mask it would
 	// composite in should already exist by the time that runs.
-	if err := fog.RenderActivityMasks(ctx, pool, activityID, points, tiles); err != nil {
+	if err := fog.RenderTrackMasks(ctx, pool, trackID, points, tiles); err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: render activity masks: %w", err)
 	}
 
@@ -217,18 +217,18 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 	// Country/Region-tier unlocking (§4.2.4) — independent of the Fog raster pyramid
 	// above, so it runs alongside it rather than inside fog's own dirty/render pipeline: there
 	// is nothing here to mark dirty or recomposite, matching against activity_id is enough.
-	if err := geo.MatchActivity(ctx, pool, activityID); err != nil {
+	if err := geo.MatchTrack(ctx, pool, trackID); err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: match admin boundaries: %w", err)
 	}
 
 	if err := EnqueueRenderFog(ctx, pool, job.UserID); err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: enqueue render_fog: %w", err)
 	}
-	if _, err := pool.Exec(ctx, `UPDATE activities SET ingest_complete = true WHERE id = $1`, activityID); err != nil {
+	if _, err := pool.Exec(ctx, `UPDATE activities SET ingest_complete = true WHERE id = $1`, trackID); err != nil {
 		return Result{}, nil, fmt.Errorf("ingest: mark complete: %w", err)
 	}
 
-	return Result{ActivityID: activityID, Persisted: true}, nil, nil
+	return Result{TrackID: trackID, Persisted: true}, nil, nil
 }
 
 // loadClippedPoints is §4.1 steps 2–3: fetch the raw payload, parse it, and clip it against
@@ -238,12 +238,12 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 //
 // The returned points are nil when the whole track lies inside Private locations; act still
 // carries the parsed metadata (type, name, start time) the caller persists either way. The
-// zones clipped with are returned too, for a caller that applies a track edit and has to clip
-// its result again (TrackEdit.ApplyClipped).
-func loadClippedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, sourceDetail, rawKey string) (parse.Activity, []parse.Point, []Zone, error) {
+// zones clipped with are returned too, for a caller that applies a route edit and has to clip
+// its result again (RouteEdit.ApplyClipped).
+func loadClippedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, sourceDetail, rawKey string) (parse.Track, []parse.Point, []Zone, error) {
 	act, err := loadRecorded(ctx, store, sourceDetail, rawKey, 0)
 	if err != nil {
-		return parse.Activity{}, nil, nil, err
+		return parse.Track{}, nil, nil, err
 	}
 
 	// Continuous across the antimeridian from here on: every reader of these points, and the
@@ -252,17 +252,17 @@ func loadClippedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 
 	zones, err := LoadZones(ctx, pool, userID)
 	if err != nil {
-		return parse.Activity{}, nil, nil, fmt.Errorf("ingest: load private locations: %w", err)
+		return parse.Track{}, nil, nil, fmt.Errorf("ingest: load private locations: %w", err)
 	}
 	return act, ClipEnds(act.Points, zones), zones, nil
 }
 
 // loadRecorded fetches and parses the raw payload, keeping the points every reader can use:
 // the whole recording, before Private locations.
-func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKey string, maxPoints int) (parse.Activity, error) {
+func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKey string, maxPoints int) (parse.Track, error) {
 	obj, err := store.Get(ctx, rawKey)
 	if err != nil {
-		return parse.Activity{}, fmt.Errorf("ingest: fetch raw payload: %w", err)
+		return parse.Track{}, fmt.Errorf("ingest: fetch raw payload: %w", err)
 	}
 	defer obj.Close()
 
@@ -272,15 +272,15 @@ func loadRecorded(ctx context.Context, store *storage.Store, sourceDetail, rawKe
 	act, err := parse.ByExtensionUpTo(sourceDetail, src, maxPoints)
 	if err != nil {
 		if src.err != nil {
-			return parse.Activity{}, fmt.Errorf("ingest: read raw payload: %w", src.err)
+			return parse.Track{}, fmt.Errorf("ingest: read raw payload: %w", src.err)
 		}
-		return parse.Activity{}, parseError{err}
+		return parse.Track{}, parseError{err}
 	}
 	if act.Points, err = keepTimed(keepValid(act.Points)); err != nil {
-		return parse.Activity{}, err
+		return parse.Track{}, err
 	}
 	if len(act.Points) < 2 {
-		return parse.Activity{}, fmt.Errorf("ingest: %w (%d)", errTooFewPoints, len(act.Points))
+		return parse.Track{}, fmt.Errorf("ingest: %w (%d)", errTooFewPoints, len(act.Points))
 	}
 	return act, nil
 }
@@ -331,7 +331,7 @@ func keepTimed(points []parse.Point) ([]parse.Point, error) {
 }
 
 // trajectorySQL builds the display LineStringM from three parallel lon/lat/epoch-seconds
-// array parameters, or NULL when they hold fewer than two points — an activity entirely
+// array parameters, or NULL when they hold fewer than two points — a track entirely
 // inside Private locations (§3.3 allows a null trajectory, and every reader already copes).
 func trajectorySQL(lons, lats, ts string) string {
 	return `CASE WHEN cardinality(` + lons + `::float8[]) >= 2 THEN ST_SetSRID(
@@ -349,7 +349,7 @@ type preparedTrack struct {
 	simpLons, simpLats, simpTs []float64
 }
 
-func prepareTrack(ctx context.Context, pool *pgxpool.Pool, points []parse.Point, edit *TrackEdit) (preparedTrack, error) {
+func prepareTrack(ctx context.Context, pool *pgxpool.Pool, points []parse.Point, edit *RouteEdit) (preparedTrack, error) {
 	pp := preparedTrack{m: computeMetrics(points, edit)}
 
 	lons := make([]float64, len(points))
@@ -401,7 +401,7 @@ const FogZoom = 14
 // tile it passes through — including tiles between consecutive points, not just the tiles
 // containing a point (see tilemath.SegmentTilesBuffered), and including any tile a point or
 // segment never enters but sits close enough to (within fog.TileMarginPx) that the rendered
-// stroke's own drawn width still reaches into. Shared by RenderActivityMasks (which tiles to
+// stroke's own drawn width still reaches into. Shared by RenderTrackMasks (which tiles to
 // render a mask for) and MarkFogTilesDirty (which tiles to flag for aggregate rebuild) — the
 // two need to agree exactly, or a rendered mask could sit in a tile never marked dirty (never
 // composited in) or vice versa.
@@ -416,7 +416,7 @@ func computeTouchedTiles(points []parse.Point, zoom int) ([][2]int, error) {
 		for _, t := range tiles {
 			seen[t] = struct{}{}
 		}
-		if len(seen) > maxActivityTiles {
+		if len(seen) > maxTrackTiles {
 			return errTooManyTiles
 		}
 		return nil
@@ -440,18 +440,18 @@ func computeTouchedTiles(points []parse.Point, zoom int) ([][2]int, error) {
 	return out, nil
 }
 
-// maxActivityTiles bounds how many z14 tiles (about 2.4 km across) one activity may touch. A
+// maxActivityTiles bounds how many z14 tiles (about 2.4 km across) one track may touch. A
 // 10,000 km road trip, buffered on both sides, is around 12,000.
-const maxActivityTiles = 20000
+const maxTrackTiles = 20000
 
 // errTooManyTiles fails a track that covers more ground than maxActivityTiles allows.
-var errTooManyTiles = fmt.Errorf("the track touches more than %d map tiles", maxActivityTiles)
+var errTooManyTiles = fmt.Errorf("the track touches more than %d map tiles", maxTrackTiles)
 
 // MarkFogTilesDirty upserts a fog_tiles row (dirty = true) for every given z14 tile —
-// computeTouchedTiles' result for a fresh ingest, a deleted activity's own already-rendered
+// computeTouchedTiles' result for a fresh ingest, a deleted track's own already-rendered
 // tiles (`internal/httpapi`'s handleDeleteActivity, which has no raw points to recompute
 // touched tiles from — it reads them back out of activity_tile_masks before the cascade
-// removes that row, via ActivityTiles below). Exported for those callers;
+// removes that row, via TrackTiles below). Exported for those callers;
 // the upsert itself doesn't care which triggered it.
 func MarkFogTilesDirty(ctx context.Context, pool *pgxpool.Pool, userID string, tiles [][2]int) error {
 	if len(tiles) == 0 {
@@ -475,12 +475,12 @@ func MarkFogTilesDirty(ctx context.Context, pool *pgxpool.Pool, userID string, t
 	return err
 }
 
-// ActivityTiles reads back the z14 tiles one activity's own crisp masks cover —
+// TrackTiles reads back the z14 tiles one track's own crisp masks cover —
 // activity_tile_masks' primary key leads with activity_id, so this is an index-only lookup.
-func ActivityTiles(ctx context.Context, pool *pgxpool.Pool, activityID string) ([][2]int, error) {
+func TrackTiles(ctx context.Context, pool *pgxpool.Pool, trackID string) ([][2]int, error) {
 	rows, err := pool.Query(ctx,
 		`SELECT DISTINCT tile_x, tile_y FROM activity_tile_masks WHERE activity_id = $1 AND zoom = $2`,
-		activityID, FogZoom,
+		trackID, FogZoom,
 	)
 	if err != nil {
 		return nil, err
@@ -516,7 +516,7 @@ type RenderFogJob struct {
 // caller has committed its marks (they all mark before enqueueing). A claimed one may have
 // read them already, so it doesn't count, and nor does one waiting out a retry delay
 // (run_after ahead), which would hold this change's render back until it ran. Without this, a
-// 584-activity import queued 584 renders of ~40 s each, every one after the first redrawing
+// 584-track import queued 584 renders of ~40 s each, every one after the first redrawing
 // nothing new.
 func EnqueueRenderFog(ctx context.Context, pool *pgxpool.Pool, userID string) error {
 	payload, err := json.Marshal(RenderFogJob{UserID: userID})
@@ -550,7 +550,7 @@ type metrics struct {
 const movingSpeedThresholdMps = 0.5
 
 // computeMetrics sums points after edit. Elapsed time alone spans a Cut's join (JoinsCut).
-func computeMetrics(points []parse.Point, edit *TrackEdit) metrics {
+func computeMetrics(points []parse.Point, edit *RouteEdit) metrics {
 	var m metrics
 	// Summed in seconds as fractions and rounded once: rounding each segment down dropped
 	// every sub-second gap of a millisecond-stamped recording (the phone's) to nothing.

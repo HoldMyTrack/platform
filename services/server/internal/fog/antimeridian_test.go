@@ -17,7 +17,7 @@ func TestMaskAcrossTheAntimeridian(t *testing.T) {
 	}
 	east, y := tilemathtest.LonLatToTile(179.999, -16.82, Zoom)
 	for _, x := range []int{east, 0} {
-		mask := renderActivityMask(projectToTile(points, x, y, Zoom)...)
+		mask := renderTrackMask(projectToTile(points, x, y, Zoom)...)
 		lit := 0
 		for _, px := range mask.Pix {
 			if px > 0 {

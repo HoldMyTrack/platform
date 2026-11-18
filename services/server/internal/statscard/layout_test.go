@@ -56,7 +56,7 @@ func TestArrange(t *testing.T) {
 	if l.RuleY <= l.Runs[2].Y || l.RuleY >= l.Runs[3].Y-font {
 		t.Errorf("RuleY = %v between %v and %v", l.RuleY, l.Runs[2].Y, l.Runs[3].Y)
 	}
-	// As wide as "6 activities" (12 runes) plus padding; as tall as its four lines, gap and padding.
+	// As wide as "6 tracks" (12 runes) plus padding; as tall as its four lines, gap and padding.
 	if want := int(12*font/2 + 2*font*padX + 0.999); l.Width != want {
 		t.Errorf("Width = %d, want %d", l.Width, want)
 	}

@@ -115,8 +115,7 @@ func (s *Server) requestExport(ctx context.Context, userID string, isDemo bool, 
 	// The account's row as a lock: two requests at once make one export, not two.
 	var lastReady *time.Time
 	var timezone string
-	if err := tx.QueryRow(ctx, `SELECT last_export_ready_at, timezone FROM users WHERE id = $1 FOR UPDATE`, userID,
-	).Scan(&lastReady, &timezone); err != nil {
+	if err := tx.QueryRow(ctx, `SELECT last_export_ready_at, timezone FROM users WHERE id = $1 FOR UPDATE`, userID).Scan(&lastReady, &timezone); err != nil {
 		return exportStatus{}, fmt.Errorf("request export: lock: %w", err)
 	}
 	var preparing bool

@@ -1,6 +1,6 @@
 package httpapi
 
-// Covers docs/SPEC.md FR-6 (the activity graph).
+// Covers docs/SPEC.md FR-6 (the track graph).
 
 import (
 	"strings"
@@ -29,7 +29,7 @@ func TestStatsOf(t *testing.T) {
 	if st := statsOf(daysInYear(days, 2026)); st.Count != 6 || st.ActiveDays != 4 || st.LongestStreakDays != 2 {
 		t.Errorf("2026: %+v", st)
 	}
-	if st := statsOf(nil); st != (activityStatsBlock{}) {
+	if st := statsOf(nil); st != (trackStatsBlock{}) {
 		t.Errorf("no days: %+v", st)
 	}
 	if got := daysInYear(days, 2024); len(got) != 0 {

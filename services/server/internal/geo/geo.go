@@ -7,8 +7,8 @@
 // (OpenStreetMap's borders) less OpenStreetMap's sea, loaded by SeedAdminBoundaries from an extract made off
 // the server by scripts/boundaries-extract.sh: simplified there for the tiles, and in full detail,
 // cut into pieces, in admin_country_parts/admin_region_parts for matching.
-// activity_country/activity_region record, once per activity, which of them its trajectory
-// touches — computed by MatchActivity, called from internal/ingest right after an activity is
+// activity_country/activity_region record, once per track, which of them its trajectory
+// touches — computed by MatchTrack, called from internal/ingest right after a track is
 // persisted — so the "is this country unlocked" tile queries (internal/httpapi's
 // admin_country_tiles.go/admin_region_tiles.go) only ever do a cheap indexed EXISTS/NOT EXISTS
 // lookup, never the geometry test itself.

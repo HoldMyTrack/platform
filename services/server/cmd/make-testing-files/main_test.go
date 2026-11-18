@@ -50,7 +50,7 @@ func TestCommittedFilesAreGenerated(t *testing.T) {
 // doesn't, as its name says.
 func TestFilesIngestAsNamed(t *testing.T) {
 	t.Chdir("../..")
-	parseFile := func(name string) (parse.Activity, error) {
+	parseFile := func(name string) (parse.Track, error) {
 		f, err := os.Open(filepath.Join(committed, name))
 		if err != nil {
 			t.Fatal(err)
@@ -58,7 +58,7 @@ func TestFilesIngestAsNamed(t *testing.T) {
 		defer f.Close()
 		return parse.ByExtensionUpTo(name, f, 0)
 	}
-	timed := func(a parse.Activity) int {
+	timed := func(a parse.Track) int {
 		n := 0
 		for _, p := range a.Points {
 			if !p.Time.IsZero() {
@@ -80,8 +80,8 @@ func TestFilesIngestAsNamed(t *testing.T) {
 	}
 	// The FIT file carries every point of its source, and says it's a ride.
 	fitAct, _ := parseFile("mill-creek-falls.fit")
-	if src := load(millCreek); len(fitAct.Points) != len(src.Points) || fitAct.ActivityType != "cycling" {
-		t.Errorf("mill-creek-falls.fit: %d points of type %q, want %d of cycling", len(fitAct.Points), fitAct.ActivityType, len(src.Points))
+	if src := load(millCreek); len(fitAct.Points) != len(src.Points) || fitAct.TrackType != "cycling" {
+		t.Errorf("mill-creek-falls.fit: %d points of type %q, want %d of cycling", len(fitAct.Points), fitAct.TrackType, len(src.Points))
 	}
 	// The duplicate is the same outing as a track in the sample zip, without elevation.
 	dup, _ := parseFile("duplicate.tcx")

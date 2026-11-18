@@ -7,10 +7,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// MatchActivity records which places on every level activityID's trajectory touches: countries,
+// MatchTrack records which places on every level activityID's trajectory touches: countries,
 // regions, counties and cities, the latter two with the stand-ins that fill their levels' gaps.
-// Called once from ingest.Process right after the activity row is persisted; each query reads
-// activities.trajectory back by id rather than taking geometry as a parameter, so nothing
+// Called once from ingest.Process right after the track row is persisted; each query reads
+// tracks.trajectory back by id rather than taking geometry as a parameter, so nothing
 // upstream needs to hold onto it for this.
 //
 // Matches against the already-persisted display trajectory, not the raw pre-simplification
@@ -20,7 +20,7 @@ import (
 // touched gets a row, however briefly, matching the product requirement that a visit's size or
 // duration doesn't matter, only whether it happened. A place above a matched one is cleared
 // through the tiles' parent chain, not here (internal/httpapi's adminLayer).
-func MatchActivity(ctx context.Context, pool *pgxpool.Pool, activityID string) error {
+func MatchTrack(ctx context.Context, pool *pgxpool.Pool, trackID string) error {
 	for _, level := range []struct{ matches, id, parts string }{
 		{"activity_country", "country_id", "admin_country_parts"},
 		{"activity_region", "region_id", "admin_region_parts"},
@@ -32,7 +32,7 @@ func MatchActivity(ctx context.Context, pool *pgxpool.Pool, activityID string) e
 			SELECT DISTINCT $1::uuid, p.`+level.id+` FROM `+level.parts+` p
 			WHERE ST_Intersects(p.geom, (SELECT `+WrappedSQL("trajectory")+` FROM activities WHERE id = $1))
 			ON CONFLICT DO NOTHING
-		`, activityID)
+		`, trackID)
 		if err != nil {
 			return fmt.Errorf("geo: match %s: %w", level.matches, err)
 		}

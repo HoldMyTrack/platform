@@ -78,7 +78,7 @@ func TestPagesRenderSignedOut(t *testing.T) {
 	}
 }
 
-// TestSampleFiles: the sample activities the web and Android end-to-end suites upload are
+// TestSampleFiles: the sample tracks the web and Android end-to-end suites upload are
 // served, and nothing else answers at /testing.
 func TestSampleFiles(t *testing.T) {
 	s := newPagesTestServer(t)

@@ -68,8 +68,8 @@ func TestSignInLimitHoldsUnderParallelGuesses(t *testing.T) {
 	}
 }
 
-// Deleting one of two activities that share an original keeps it; deleting the other removes it.
-func TestActivityDeleteRemovesAnOriginalOnlyWithItsLastActivity(t *testing.T) {
+// Deleting one of two tracks that share an original keeps it; deleting the other removes it.
+func TestTrackDeleteRemovesAnOriginalOnlyWithItsLastTrack(t *testing.T) {
 	s3 := newMemS3()
 	d := newDBTestWithS3(t, s3)
 	ctx := context.Background()

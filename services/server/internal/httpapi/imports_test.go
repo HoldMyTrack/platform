@@ -88,13 +88,13 @@ func TestUnseenImportFailures(t *testing.T) {
 	}
 }
 
-// The history says when each import finished, and links a finished one to its activity.
+// The history says when each import finished, and links a finished one to its track.
 func TestUploadHistoryFinishedAt(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)
 	d.insertImportJob(me, "done", "upload", "walk.gpx", "")
 	d.insertImportJob(me, "pending", "upload", "next.gpx", "")
-	walk := d.newActivity(me, testActivity{activityType: "walk", distanceMeters: 1000})
+	walk := d.newTrack(me, testTrack{trackType: "walk", distanceMeters: 1000})
 	if _, err := d.pool.Exec(context.Background(), `UPDATE activities SET source = 'upload', external_id = 'walk.gpx' WHERE id = $1`, walk); err != nil {
 		t.Fatal(err)
 	}
@@ -105,8 +105,8 @@ func TestUploadHistoryFinishedAt(t *testing.T) {
 	for _, u := range resp.Uploads {
 		rows[u.Filename] = u
 	}
-	if w := rows["walk.gpx"]; w.Status != "done" || w.FinishedAt == nil || w.ActivityID == nil || *w.ActivityID != walk {
-		t.Errorf("finished row: status %q, finished_at %v, activity %v; want done, set, %s", w.Status, w.FinishedAt, w.ActivityID, walk)
+	if w := rows["walk.gpx"]; w.Status != "done" || w.FinishedAt == nil || w.TrackID == nil || *w.TrackID != walk {
+		t.Errorf("finished row: status %q, finished_at %v, activity %v; want done, set, %s", w.Status, w.FinishedAt, w.TrackID, walk)
 	}
 	if n := rows["next.gpx"]; n.Status != "processing" || n.FinishedAt != nil {
 		t.Errorf("pending row: status %q, finished_at %v; want processing with none", n.Status, n.FinishedAt)

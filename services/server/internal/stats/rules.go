@@ -23,7 +23,7 @@ func dayDue(lastDay *time.Time, now time.Time) (day time.Time, due bool) {
 // its value stands for, and members the ids of those accounts for a group under min; a group
 // missing from accounts counts as none. "other" stands for the distinct accounts of the groups
 // it took, since one account can count in several groups (the countries an account's
-// activities are in). When those are fewer than min, "other" also takes the smallest group
+// tracks are in). When those are fewer than min, "other" also takes the smallest group
 // kept, which has min on its own, and with none kept there is no "other" at all. With nothing
 // to fold there is no "other" key.
 func foldSmallGroups(groups map[string]float64, accounts map[string]float64, members map[string][]string, min int) map[string]float64 {

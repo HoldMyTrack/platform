@@ -67,7 +67,7 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 		VALUES ($1, 'upload', 'walk.gpx', 'walking', 'Lake / Loop', $2, $3, 260, 'Europe/Berlin') RETURNING id`, userID, started, rawKey).Scan(&walk); err != nil {
 		t.Fatal(err)
 	}
-	// A second activity on the same raw file (the same file through two paths): the original is
+	// A second track on the same raw file (the same file through two paths): the original is
 	// written once, and both point at it.
 	if err := pool.QueryRow(ctx, `
 		INSERT INTO activities (user_id, source, source_detail, activity_type, name, started_at, raw_payload_key, timezone)
@@ -85,11 +85,11 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 	if _, err := pool.Exec(ctx, `INSERT INTO privacy_zones (user_id, center, radius_m, name) VALUES ($1, ST_MakePoint(13.4, 52.5)::geography, 300, 'Home')`, userID); err != nil {
 		t.Fatal(err)
 	}
-	var storyID string
-	if err := pool.QueryRow(ctx, `INSERT INTO stories (user_id, name) VALUES ($1, 'Spring') RETURNING id`, userID).Scan(&storyID); err != nil {
+	var tripID string
+	if err := pool.QueryRow(ctx, `INSERT INTO stories (user_id, name) VALUES ($1, 'Spring') RETURNING id`, userID).Scan(&tripID); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := pool.Exec(ctx, `INSERT INTO story_activities (story_id, activity_id) VALUES ($1, $2)`, storyID, walk); err != nil {
+	if _, err := pool.Exec(ctx, `INSERT INTO story_activities (story_id, activity_id) VALUES ($1, $2)`, tripID, walk); err != nil {
 		t.Fatal(err)
 	}
 
@@ -145,14 +145,14 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 		Account struct {
 			DisplayName string `json:"display_name"`
 		}
-		Activities []struct {
+		Tracks []struct {
 			ID, Original, Track string
 			Photos              []struct{ File, Caption string }
-		}
-		Stories []struct {
-			Name       string
-			Activities []string
-		}
+		} `json:"activities"`
+		Trips []struct {
+			Name   string
+			Tracks []string `json:"activities"`
+		} `json:"stories"`
 		PrivateLocations []struct {
 			Name    string
 			RadiusM int `json:"radius_m"`
@@ -161,17 +161,17 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 	if err := json.Unmarshal(files["account.json"], &doc); err != nil {
 		t.Fatal(err)
 	}
-	if doc.Account.DisplayName != "Ann" || len(doc.Activities) != 2 || len(doc.Stories) != 1 || doc.Stories[0].Activities[0] != walk ||
+	if doc.Account.DisplayName != "Ann" || len(doc.Tracks) != 2 || len(doc.Trips) != 1 || doc.Trips[0].Tracks[0] != walk ||
 		len(doc.PrivateLocations) != 1 || doc.PrivateLocations[0].RadiusM != 300 {
 		t.Fatalf("account.json: %+v (walk %s)", doc, walk)
 	}
-	for _, a := range doc.Activities {
+	for _, a := range doc.Tracks {
 		if a.Original != "originals/2026-05-01 1200 Lake Loop.gpx" {
 			t.Errorf("activity %s: original %q", a.ID, a.Original)
 		}
 	}
-	if doc.Activities[0].ID != walk || doc.Activities[1].ID != copyOf || len(doc.Activities[0].Photos) != 1 || doc.Activities[0].Photos[0].Caption != "The bridge" {
-		t.Errorf("activities: %+v", doc.Activities)
+	if doc.Tracks[0].ID != walk || doc.Tracks[1].ID != copyOf || len(doc.Tracks[0].Photos) != 1 || doc.Tracks[0].Photos[0].Caption != "The bridge" {
+		t.Errorf("activities: %+v", doc.Tracks)
 	}
 	if !strings.Contains(string(files["README.txt"]), "originals/") {
 		t.Error("README doesn't explain the folders")

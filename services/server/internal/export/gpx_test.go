@@ -40,8 +40,8 @@ func TestWriteGPXRoundTrip(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if act.ActivityType != "hiking & walking" {
-		t.Errorf("type = %q", act.ActivityType)
+	if act.TrackType != "hiking & walking" {
+		t.Errorf("type = %q", act.TrackType)
 	}
 	if !reflect.DeepEqual(act.Points, points) {
 		t.Fatalf("got %+v, want %+v", act.Points, points)

@@ -15,7 +15,7 @@ import (
 
 // Private locations (FR-7.1, IMPLEMENTATION.md §7) — circles on the map whose contents never
 // leave ingest. Stored in privacy_zones (§3.7). Every change enqueues a `reprivacy` job over
-// the activities the old and new circle could clip, marking them Pending in the same
+// the tracks the old and new circle could clip, marking them Pending in the same
 // transaction, so the Activity List shows which rows are being reprocessed.
 
 const (
@@ -116,9 +116,9 @@ func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Reque
 }
 
 // handleHiddenActivities serves `GET /v1/private-locations/hidden`: how many of the account's
-// activities its Private locations hide entirely, the rows the list badges Private (FR-5.1).
-// Account-wide, since a hidden activity keeps no track to tell which location hid it.
-func (s *Server) handleHiddenActivities(w http.ResponseWriter, r *http.Request) {
+// tracks its Private locations hide entirely, the rows the list badges Private (FR-5.1).
+// Account-wide, since a hidden track keeps no track to tell which location hid it.
+func (s *Server) handleHiddenTracks(w http.ResponseWriter, r *http.Request) {
 	var count int
 	if err := s.pool.QueryRow(r.Context(), `SELECT count(*) FROM activities WHERE user_id = $1 AND trajectory IS NULL`,
 		userIDFromContext(r.Context())).Scan(&count); err != nil {
@@ -170,7 +170,7 @@ func (s *Server) handleCreatePrivateLocation(w http.ResponseWriter, r *http.Requ
 }
 
 // handleUpdatePrivateLocation serves `PATCH /v1/private-locations/{id}` — move, resize or
-// rename. Both the old and the new circle's activities are reprocessed: the old ones may get
+// rename. Both the old and the new circle's tracks are reprocessed: the old ones may get
 // their hidden ends back, the new ones lose theirs.
 func (s *Server) handleUpdatePrivateLocation(w http.ResponseWriter, r *http.Request) {
 	id := r.PathValue("id")
@@ -242,14 +242,14 @@ var errTooManyLocations = accountFailure(http.StatusConflict, "error.location_to
 
 // changePrivateLocations runs one privacy_zones change and enqueues the reprocessing it
 // causes in a single transaction: change returns the circles (old and/or new) whose
-// activities need reprocessing.
+// tracks need reprocessing.
 func (s *Server) changePrivateLocations(ctx context.Context, userID string, change func(pgx.Tx) ([]circle, error)) error {
 	tx, err := s.pool.Begin(ctx)
 	if err != nil {
 		return err
 	}
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
-	// Shared with ingest's save (ingest.LockZones), so an activity saved meanwhile is either
+	// Shared with ingest's save (ingest.LockZones), so a track saved meanwhile is either
 	// found below or clipped with this change.
 	if err := ingest.LockZones(ctx, tx, userID); err != nil {
 		return err
@@ -271,18 +271,18 @@ func (s *Server) changePrivateLocations(ctx context.Context, userID string, chan
 			}
 		}
 		for _, c := range circles {
-			found, err := ingest.AffectedActivities(ctx, tx, userID, c.lat, c.lon, c.radiusM)
+			found, err := ingest.AffectedTracks(ctx, tx, userID, c.lat, c.lon, c.radiusM)
 			if err != nil {
 				return err
 			}
 			add(found)
 		}
-		hidden, err := ingest.AffectedHiddenActivities(ctx, tx, userID)
+		hidden, err := ingest.AffectedHiddenTracks(ctx, tx, userID)
 		if err != nil {
 			return err
 		}
 		add(hidden)
-		if err := ingest.EnqueueReprivacy(ctx, tx, ingest.ReprivacyJob{UserID: userID, ActivityIDs: ids}); err != nil {
+		if err := ingest.EnqueueReprivacy(ctx, tx, ingest.ReprivacyJob{UserID: userID, TrackIDs: ids}); err != nil {
 			return err
 		}
 	}
