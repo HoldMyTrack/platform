@@ -8,13 +8,13 @@ Accepted.
 
 The web client started as one React single-page app (`ARCHITECTURE.md` §2: "no SSR framework — a single WebGL page with no SEO surface"). As it grew past the map, everything else was fitted into that one page: Profile and Settings became in-memory views switched by local state in `App.tsx`, with no URL of their own, so a refresh on Settings landed back on the map and the browser's Back button left the app instead of returning to it. The public About page, which has to be readable by a visitor or a crawler without an account or the ~1.5 MB map bundle, was split out as a static `about.html` built by Vite — and a Help page after it — each needing a copy of the header, first by hand and then via a build-time injected partial (`staticHeader.ts`). That left the header existing three times (React's `Header.tsx`, the static partial, and its stylesheet), kept in step by hand.
 
-The pages coming next make the pattern worse, not better: Contacts, a Cloud-integrations page, and Profile and Settings themselves. Each is the same layout for every visitor with a few per-user values in it — a name, an avatar, a year's worth of activity counts. A static file can only carry values known at build time, so none of them can be a static page; within the single-page app they can only be client-rendered views that fetch their values after load.
+The pages coming next make the pattern worse, not better: Contacts, a Cloud-integrations page, and Profile and Settings themselves. Each is the same layout for every visitor with a few per-user values in it — a name, an avatar, a year's worth of track counts. A static file can only carry values known at build time, so none of them can be a static page; within the single-page app they can only be client-rendered views that fetch their values after load.
 
 ## Decision
 
 **HoldMyTrack is a web app made of real HTML pages.** The Go server renders every page from `html/template` templates (`services/server/internal/web`, embedded in the binary), all sharing one layout and one header template. The header's menus are `<details>` dropdowns, and its Sign out is a form POST, so a page needs no JavaScript to navigate or sign out.
 
-**React is kept for the map page only**, where it earns its place: the map, the Activities panel, filters, the date-range picker and export are one tightly interactive WebGL surface. Import moved out of the header into the Activities panel (its Sync tab) as part of this, because the header becomes shared page chrome, not a toolbar for the map.
+**React is kept for the map page only**, where it earns its place: the map, the Tracks panel, filters, the date-range picker and export are one tightly interactive WebGL surface. Import moved out of the header into the Tracks panel (its Sync tab) as part of this, because the header becomes shared page chrome, not a toolbar for the map.
 
 ## Alternatives considered
 

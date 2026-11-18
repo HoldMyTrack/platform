@@ -2,7 +2,7 @@
 
 How the system is put together: the top-level shape, the key decisions behind it, the stack, and what is not built yet. `docs/IMPLEMENTATION.md` picks up from here with the schema and how each feature is built; the Android app's own implementation is `apps/android/docs/IMPLEMENTATION.md`.
 
-> **Scope note.** Besides ingesting activities it didn't record, HoldMyTrack records casual GPS-only tracks in the mobile app (`SPEC.md` FR-3.6); a stopped recording submits through the same ingest pipeline as every other source.
+> **Scope note.** Besides ingesting tracks it didn't record, HoldMyTrack records casual GPS-only tracks in the mobile app (`SPEC.md` FR-3.6); a stopped recording submits through the same ingest pipeline as every other source.
 
 ---
 
@@ -45,7 +45,7 @@ flowchart LR
     end
     subgraph VPS["One VPS — compose.prod.yml"]
         caddy["Caddy<br/>TLS (Let's Encrypt) · serves /assets/* ·<br/>reverse-proxies everything else"]
-        api["api<br/>Go binary, serve mode<br/>/v1/* API · track + fog tiles · pages"]
+        api["api<br/>Go binary, serve mode<br/>/v1/* API · tracks + fog tiles · pages"]
         worker["worker<br/>same binary, work mode<br/>ingest · fog rendering"]
         pg[("PostgreSQL 16 + PostGIS<br/>all tables + job queue ·<br/>users.map_version")]
     end
@@ -70,7 +70,7 @@ flowchart LR
 
 Everything server-side runs as one binary in two modes (`serve` and `work`) against one database, deployed on a single VPS at `https://holdmytrack.com` (`IMPLEMENTATION.md` §5.8).
 
-The API, track and fog tiles and every page come from one origin through Caddy. That origin is not proxied through Cloudflare, whose proxy caps uploads at 100 MB, so each browser or phone caches the app's tiles itself under a per-account version that moves whenever any of them may have changed (`IMPLEMENTATION.md` §4.2.6). The CDN serves only the basemap, and its free plan edge-caches only fonts and sprites; range reads into the archive reach R2 (`IMPLEMENTATION.md` §5.4). Postgres stores keys for object-storage items, never their bytes. Local dev reads the same planet basemap, with RustFS standing in for the private bucket (`docs/DEVELOPMENT.md`).
+The API, tracks and fog tiles and every page come from one origin through Caddy. That origin is not proxied through Cloudflare, whose proxy caps uploads at 100 MB, so each browser or phone caches the app's tiles itself under a per-account version that moves whenever any of them may have changed (`IMPLEMENTATION.md` §4.2.6). The CDN serves only the basemap, and its free plan edge-caches only fonts and sprites; range reads into the archive reach R2 (`IMPLEMENTATION.md` §5.4). Postgres stores keys for object-storage items, never their bytes. Local dev reads the same planet basemap, with RustFS standing in for the private bucket (`docs/DEVELOPMENT.md`).
 
 **All ingest paths converge on one pipeline.** They differ only in how bytes arrive; from `IMPLEMENTATION.md` §4.1 step 2 on the code is shared, so each added path is cheap to maintain. Path 1 cloud connectors aren't built yet, and the iOS app is a skeleton (`docs/ROADMAP.md`).
 

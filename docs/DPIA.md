@@ -18,10 +18,10 @@ A DPIA is required: the processing meets two of the nine criteria in the EDPB's 
 
 | WP248 criterion | Met? | Why |
 | --- | --- | --- |
-| Systematic monitoring | Yes | A user's tracks, kept over years, form a record of their movements. |
+| Systematic monitoring | Yes | A user's routes, kept over years, form a record of their movements. |
 | Sensitive or highly personal data | Yes | Precise location reveals home, work and routines. Not an Article 9 special category; no health data is processed. |
 | Large scale | Not yet | Few accounts so far; revisit as it grows. |
-| Matching or combining datasets | Partly | Tracks from several sources are combined, for the same purpose and controller. |
+| Matching or combining datasets | Partly | Routes from several sources are combined, for the same purpose and controller. |
 | Vulnerable data subjects | No | Not for children under 16. |
 
 Innovative technology, evaluation or scoring, automated decisions with legal effect, and preventing a right or a service don't apply.
@@ -30,20 +30,20 @@ The ICO and the CNIL also list location tracking as needing one.
 
 ## 2. The processing
 
-HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws them as private maps and stats, shown to no one but the account holder.
+HoldMyTrack keeps the outdoor tracks a user chooses to bring in and draws them as private maps and stats, shown to no one but the account holder.
 
 **Purposes:** run the service the user signed up for and keep it working and secure. No advertising, analytics, profiling or data sale. To measure cost per active user and which clients are still in use, it keeps daily counts across all accounts (`IMPLEMENTATION.md` §4.32), which describe no one.
 
-**Data subjects:** registered users aged 16 and over. Third parties appear only incidentally, as faces in photos or a Story copy recipient's email address.
+**Data subjects:** registered users aged 16 and over. Third parties appear only incidentally, as faces in photos or a Trip copy recipient's email address.
 
 **How data comes in** (each opt-in, section 3):
 
 1. File upload on the web or in the app (GPX, FIT, TCX).
 2. Health Connect on Android: exercise sessions and their routes, read only while the Sync screen is open.
 3. In-app GPS recording on Android, kept on the phone until the user syncs it.
-4. A Story copy another user sends, added only once the recipient accepts it.
+4. A Trip copy another user sends, added only once the recipient accepts it.
 
-**What happens on the server.** Private locations are applied when an activity is processed, before tracks, tiles or stats are stored. The original upload is kept unclipped so tracks can be rebuilt after an edit or a Private location change.
+**What happens on the server.** Private locations are applied when a track is processed, before routes, tiles or stats are stored. The original upload is kept unclipped so routes can be rebuilt after an edit or a Private location change.
 
 ### Data inventory
 
@@ -51,16 +51,16 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 | --- | --- | --- | --- |
 | Email, password hash, Google/Facebook/Apple id and name; Apple's refresh token, kept only to revoke the link | User, sign-in provider | Database (DigitalOcean, US) | Until the account is deleted; an account never verified, from 7 days after signup once no link is valid |
 | Display name, avatar without EXIF, country, timezone, language | User | Database; avatar image in R2 | Until the account is deleted |
-| Activity tracks: points, times, elevation, derived stats, the places they pass through (country to city) | Uploads, Health Connect, recording | Database, map tiles in R2 | Until the activity or account is deleted |
-| Original uploads, unclipped, points inside Private locations included | Uploads, Health Connect, recording | Cloudflare R2 | Until the activity or account is deleted; no expiry yet |
+| Track routes: points, times, elevation, derived stats, the places they pass through (country to city) | Uploads, Health Connect, recording | Database, map tiles in R2 | Until the track or account is deleted |
+| Original uploads, unclipped, points inside Private locations included | Uploads, Health Connect, recording | Cloudflare R2 | Until the track or account is deleted; no expiry yet |
 | Private locations (circles around home, work) | User | Database | Until deleted |
-| Stories, names, descriptions | User | Database | Until deleted |
+| Trips, names, descriptions | User | Database | Until deleted |
 | Photos, resized and stripped of EXIF | User | Cloudflare R2 | Until deleted |
 | Spot captures (place and time, not position) | Android app | Database | Until deleted |
 | Import records | System | Database | 90 days after the import finishes |
 | Sessions and emailed links, with a pending address | System | Database | Until expiry: 30 days, links 1 day |
 | The day an account last used the service, the website and each app, and the app's version | System | Database | Until the account is deleted |
-| Server logs with account ids, no tracks or emails | System | Server, then Grafana Cloud (US) | Rotated on the server; 14 days at Grafana |
+| Server logs with account ids, no routes or emails | System | Server, then Grafana Cloud (US) | Rotated on the server; 14 days at Grafana |
 | Daily service statistics: counts, sums and percentiles across all accounts, never one account's; country groups under 5 accounts folded into one, itself of at least 5 or left out | System | Database; the newest day also at Grafana Cloud (US) | Indefinitely; 14 days at Grafana |
 | A web visitor's hash of address and browser under a random daily salt, for the unique-visitor count | System | Database | Deleted with the salt once that day's statistics are taken, within 2 days |
 | Nightly backups: database dump, originals, photos, avatars | System | Cloudflare R2 | Up to 8 weeks after deletion; newest 3 dumps also on the server |
@@ -69,8 +69,8 @@ HoldMyTrack keeps the outdoor activities a user chooses to bring in and draws th
 **Who can see it:**
 
 - **The user:** all of their own data.
-- **A Story recipient:** the sender's display name, else email address, and the copy they accepted, with the sender's Private locations applied, theirs from then on.
-- **The operator:** in the admin panel, each account's email, name, which clients it uses (web, Android, iOS) and activities (dates, names, types, distances, places), not their tracks.
+- **A Trip recipient:** the sender's display name, else email address, and the copy they accepted, with the sender's Private locations applied, theirs from then on.
+- **The operator:** in the admin panel, each account's email, name, which clients it uses (web, Android, iOS) and tracks (dates, names, types, distances, places), not their routes.
 - **Processors:** DigitalOcean (servers), Cloudflare (R2 storage, the basemap's CDN, the sign-up bot check), Grafana Labs (monitoring) and Zoho (email, US).
 
 Cloudflare's CDN (basemap tiles, so which areas are viewed), Cloudflare Turnstile (the sign-up page, where the apps sign up too, which also reads browser signals; the server sends it the visitor's IP address with the check), MapTiler (Satellite only) and Google/Facebook/Apple sign-in receive the user's IP address from their browser or app directly.
@@ -79,10 +79,10 @@ Cloudflare's CDN (basemap tiles, so which areas are viewed), Cloudflare Turnstil
 
 | Processing | Lawful basis (GDPR Art. 6) |
 | --- | --- |
-| Account, activities, Private locations, Stories, photos, captures | (1)(b) contract: the service the user signed up for |
+| Account, tracks, Private locations, Trips, photos, captures | (1)(b) contract: the service the user signed up for |
 | Reading Health Connect and the phone's location | (1)(a) consent, withdrawable in Android settings or Health Connect |
 | Server logs, backups, sign-in rate limits, the sign-up bot check, the visitor count | (1)(f) legitimate interest in a working, secure service |
-| Account emails (confirm address, reset password, data download, Story copy) | (1)(b) contract |
+| Account emails (confirm address, reset password, data download, Trip copy) | (1)(b) contract |
 
 No Article 9 special-category data is processed. Heart rate and other body data inside an uploaded file is never read out of it (ADR-0017).
 
@@ -93,7 +93,7 @@ No Article 9 special-category data is processed. Heart rate and other body data 
 - **No health data.** Only exercise sessions and their routes are read from Health Connect, one declared data type.
 - **Photos are stored stripped.** The file is re-encoded before upload, without EXIF. Its capture time and position are sent to place it; only the time is kept.
 - **A Spot capture sends the place and the time,** not the user's position.
-- **Logs leave the server scrubbed.** Tracks, places, names, emails and IP addresses are removed first.
+- **Logs leave the server scrubbed.** Routes, places, names, emails and IP addresses are removed first.
 
 ## 4. Data subjects' rights
 
@@ -102,14 +102,14 @@ Users exercise most rights in the product, and the rest by email to hello@holdmy
 | Right | How it is met |
 | --- | --- |
 | Information (Art. 13) | Privacy policy at `/privacy`, linked from the site, the app and the Health Connect rationale |
-| Access and portability (Art. 15, 20) | Settings › Download your data: originals, GPX tracks, photos and `account.json` |
+| Access and portability (Art. 15, 20) | Settings › Download your data: originals, GPX routes, photos and `account.json` |
 | Rectification (Art. 16) | Settings and the Edit window; anything else by email |
 | Erasure (Art. 17) | Settings › Delete account on the web and in the app, gone within minutes; by email if the user cannot sign in. Backups hold it for up to 8 weeks. |
 | Restriction and objection (Art. 18, 21) | By email |
 | Withdrawing consent (Art. 7(3)) | Android settings or Health Connect; data already sent stays until the user deletes it |
 | Complaint to an authority (Art. 77) | Stated in the privacy policy |
 
-**Story copies limit erasure:** an accepted copy is the recipient's, so deleting the sender's account leaves it (section 2, R6).
+**Trip copies limit erasure:** an accepted copy is the recipient's, so deleting the sender's account leaves it (section 2, R6).
 
 ## 5. Risks to individuals
 
@@ -117,12 +117,12 @@ Risks to users, rated before the measures in section 6 on the ICO template's sca
 
 | # | Risk | Likelihood | Severity | Overall |
 | --- | --- | --- | --- | --- |
-| R1 | A breach of the server, database or storage exposes users' tracks, revealing home, work and routines | Possible | Severe | High |
+| R1 | A breach of the server, database or storage exposes users' routes, revealing home, work and routines | Possible | Severe | High |
 | R2 | The original, unclipped uploads leak, exposing points inside Private locations that users chose to hide | Possible | Severe | High |
-| R3 | A software bug shows one user's tracks or tiles to another | Possible | Severe | High |
+| R3 | A software bug shows one user's routes or tiles to another | Possible | Severe | High |
 | R4 | Someone takes over an account and reads its history | Possible | Significant | Medium |
 | R5 | The operator, or someone with operator access, looks at a user's data without need | Remote | Significant | Low |
-| R6 | An exported map image, or a Story copy sent to someone, reveals more than the user meant | Possible | Significant | Medium |
+| R6 | An exported map image, or a Trip copy sent to someone, reveals more than the user meant | Possible | Significant | Medium |
 | R7 | Data of EU users stored in the US is accessed by US authorities | Remote | Significant | Medium |
 | R8 | A processor misuses or mishandles data, or one is used without a data processing agreement | Remote | Significant | Medium |
 | R9 | Data is kept long after it is needed, for example in a dormant account, increasing what any breach exposes | Probable | Significant | Medium |
@@ -133,12 +133,12 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 
 | # | Measures in place | Still missing | Residual |
 | --- | --- | --- | --- |
-| R1 | Private locations applied at ingest, before tracks or tiles are stored (ADR-0002). TLS everywhere through Caddy. Separate R2 token for backups, with no access to the app bucket. No public profiles, so there is nothing to scrape. | Encryption at rest of the VPS disk, which holds the database and the newest dumps (section 7) | Low |
-| R2 | Originals sit in a private R2 bucket, never publicly addressable. Exports and Story copies are built from clipped tracks, never from originals. | A decision on how long originals are kept, after launch (`docs/ROADMAP.md`, "After launch") | Medium |
-| R3 | The tile and API endpoints take the user from the session, never from a parameter. Server tests check handlers against the API contract. | A test that one account cannot read another's activities, tiles or photos, if none exists | Low |
+| R1 | Private locations applied at ingest, before routes or tiles are stored (ADR-0002). TLS everywhere through Caddy. Separate R2 token for backups, with no access to the app bucket. No public profiles, so there is nothing to scrape. | Encryption at rest of the VPS disk, which holds the database and the newest dumps (section 7) | Low |
+| R2 | Originals sit in a private R2 bucket, never publicly addressable. Exports and Trip copies are built from clipped routes, never from originals. | A decision on how long originals are kept, after launch (`docs/ROADMAP.md`, "After launch") | Medium |
+| R3 | The tile and API endpoints take the user from the session, never from a parameter. Server tests check handlers against the API contract. | A test that one account cannot read another's tracks, tiles or photos, if none exists | Low |
 | R4 | bcrypt password hashes. HttpOnly, SameSite=Lax session cookie for up to 30 days. Sign-in rate limits. Email verification. | Optional second factor; not needed for launch | Low |
-| R5 | The admin panel never shows tracks (section 2). Admin rights can be set only from the server's own command line. The daily statistics hold only aggregates (section 2). | An audit log, needed once an admin can see or change a track | Low |
-| R6 | Exports leave out Private locations and draw only clipped tracks, whose ends stop a secret, random distance past each circle so many tracks together don't outline it. A Story copy needs the recipient to accept it and carries the sender's Private locations. The policy warns that a copy is the recipient's. | — | Low |
+| R5 | The admin panel never shows routes (section 2). Admin rights can be set only from the server's own command line. The daily statistics hold only aggregates (section 2). | An audit log, needed once an admin can see or change a route | Low |
+| R6 | Exports leave out Private locations and draw only clipped routes, whose ends stop a secret, random distance past each circle so many routes together don't outline it. A Trip copy needs the recipient to accept it and carries the sender's Private locations. The policy warns that a copy is the recipient's. | — | Low |
 | R7 | Transfers rely on the processors' Standard Contractual Clauses or EU–US Data Privacy Framework certification, stated in the privacy policy, and are assessed in section 8. | — | Low |
 | R8 | Processors are named in the privacy policy. Logs are scrubbed before they reach Grafana (section 3). | Accepted DPAs with DigitalOcean, Cloudflare, Grafana Labs and Zoho on file | Medium |
 | R9 | Deletion is complete within minutes and reaches backups within 8 weeks; the rest expires as section 2 lists. | — | Medium |
@@ -149,7 +149,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 
 - [x] Decide who the controller is: the operator personally, named in the privacy policy's "Who we are" (2026-10-25).
 - [ ] Appoint an EU representative (Art. 27) and give a postal address in "Who we are", before the app is listed or promoted in the EU.
-- [ ] Keep a record of processing activities (Art. 30), drawn from sections 2, 3, 6 and 8, and give the EU representative a copy whenever it changes.
+- [ ] Keep a record of processing tracks (Art. 30), drawn from sections 2, 3, 6 and 8, and give the EU representative a copy whenever it changes.
 - [ ] Have DPAs on file with DigitalOcean, Cloudflare, Grafana Labs and Zoho (R8).
 - [x] Assess the transfers to the US (R7, section 8).
 - [x] R2 encrypts every object and its metadata at rest with AES-256, by default (Cloudflare's R2 data security docs, checked 2026-10-25).
@@ -158,11 +158,11 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 
 **Soon after:**
 
-- [ ] Add or confirm a test that one account cannot read another's activities, tiles or photos (R3).
+- [ ] Add or confirm a test that one account cannot read another's tracks, tiles or photos (R3).
 - [ ] Re-check that the cookies and browser storage the site sets still match the Cookies list on `/privacy`.
 - [x] Align `VISION.md` §7 with the privacy policy's lawful basis (section 3) (2026-10-31).
 
-**Review this DPIA** before a cloud connector or the iOS app ships, when an admin can see tracks, or when the user base becomes large-scale. At large scale, systematic monitoring as a core activity also makes a Data Protection Officer mandatory (Art. 37(1)(b)).
+**Review this DPIA** before a cloud connector or the iOS app ships, when an admin can see routes, or when the user base becomes large-scale. At large scale, systematic monitoring as a core activity also makes a Data Protection Officer mandatory (Art. 37(1)(b)).
 
 ### Sign-off
 

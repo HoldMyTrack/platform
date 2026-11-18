@@ -4,17 +4,17 @@
 
 The Android app is Path 2 (`docs/VISION.md` §4.1), reading Health Connect in the foreground; a map viewer on the same accounts and style document as the web; and GPS recording that submits straight to the server (`docs/IMPLEMENTATION.md` §4.0.4). It is one Gradle module on the platform SDK: Views styled with Material 3 and hand-built `OkHttp` calls, with no Compose, Retrofit, ORM or dependency-injection library. A handful of screens and endpoints don't amortize a framework. How it is built is `IMPLEMENTATION.md`, what it does `SPEC.md`.
 
-**Sync and display are separate one-way pipes.** The sync engine reads Health Connect and posts to `POST /v1/sync/activities`; the map draws the account from the server's tiles. The only lines drawn from the phone's own data are the Sync tab's candidates and a recording in progress, and once synced an activity carries no trace of its source. The phone holds two things the server lacks: unsynced recordings, deleted once their activity lands, and what the last Health Connect read found.
+**Sync and display are separate one-way pipes.** The sync engine reads Health Connect and posts to `POST /v1/sync/activities`; the map draws the account from the server's tiles. The only lines drawn from the phone's own data are the Sync tab's candidates and a recording in progress, and once synced a track carries no trace of its source. The phone holds two things the server lacks: unsynced recordings, deleted once their track lands, and what the last Health Connect read found.
 
 ## 1. Key decisions
 
 | Decision | Reason |
 | :--- | :--- |
 | Material 3 on Views, not Compose, without dynamic color | Compose would rewrite every screen and host the `MapView` through `AndroidView` with its lifecycle forwarded by hand. Material supplies the color and type roles the web's tokens map onto, 48 dp targets and TalkBack support. Dynamic color would replace the brand palette with the wallpaper's |
-| Main screens are tabs of one Activity | Tabs are shown and hidden, so the map's camera and layers survive a trip to another tab; an Activity per tab makes every switch a window change and splits the bar's state across windows |
+| Main screens are tabs of one Track | Tabs are shown and hidden, so the map's camera and layers survive a trip to another tab; a Track per tab makes every switch a window change and splits the bar's state across windows |
 | Bearer token, not a cookie jar | MapLibre Native's tile fetcher never sees a cookie jar; one interceptor on the `OkHttpClient` the app shares with MapLibre reaches both |
-| The web's Settings, Activity graph, Sync history and About in a WebView | ADR-0042; signed in by cookie, since WebView requests skip the app's client |
-| Foreground-only Health Connect sync, no background job | A background read gets no routes whatever was granted (root `docs/IMPLEMENTATION.md` §4.0), so it would send activities with nothing to draw |
+| The web's Settings, Track graph, Sync history and About in a WebView | ADR-0042; signed in by cookie, since WebView requests skip the app's client |
+| Foreground-only Health Connect sync, no background job | A background read gets no routes whatever was granted (root `docs/IMPLEMENTATION.md` §4.0), so it would send tracks with nothing to draw |
 | Session token in plain `SharedPreferences` | The file is private to the app, and an attacker who can read it has everything else the app holds. Revocation bounds a leaked token: sign-out deletes the server's row |
 | API calls use OkHttp's callbacks; only sync and upload calls suspend | Health Connect's API is `suspend` and each sync or upload request waits for the last; elsewhere a coroutine layer over OkHttp's async API buys nothing |
 | `minSdk` 34 | Health Connect is part of the platform from Android 14; below it, it is a Play-installed app to detect and install, a second state machine never measured on a device |

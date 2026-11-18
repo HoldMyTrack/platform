@@ -2,7 +2,7 @@
 
 > **Scope note.** The app's shape, the decisions that set it and its stack. Where it sits among the system's parts is root `docs/ARCHITECTURE.md` §1.2; what is left to build is `ROADMAP.md`.
 
-The iOS app is to be Path 2 for HealthKit (`docs/VISION.md` §4.1), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (`docs/IMPLEMENTATION.md` §4.0.4), as the Android app is. Native where the platform is the point, and the site's own pages in a `WKWebView` for the rest (ADR-0042). So far it is one Xcode project with the app, its visual language and both languages, and the `HoldMyTrackCore` package for what needs no UIKit: sign-in, the map with its Activities and Stories panel, the You tab, Privacy and Upload.
+The iOS app is to be Path 2 for HealthKit (`docs/VISION.md` §4.1), a map viewer on the same accounts and documents as the web, and GPS recording that submits straight to the server (`docs/IMPLEMENTATION.md` §4.0.4), as the Android app is. Native where the platform is the point, and the site's own pages in a `WKWebView` for the rest (ADR-0042). So far it is one Xcode project with the app, its visual language and both languages, and the `HoldMyTrackCore` package for what needs no UIKit: sign-in, the map with its Tracks and Trips panel, the You tab, Privacy and Upload.
 
 ## 1. Key decisions
 
@@ -11,7 +11,7 @@ Settled by the owner on 2026-10-24; the plan's steps cite them by number. A chan
 | # | Decision | Reason |
 | :-- | :-- | :-- |
 | D1 | UIKit for the shell and the map, a `UITabBarController`; SwiftUI allowed for leaf screens in a `UIHostingController` | The map's camera and layers survive a tab switch, as Android's tabs do. MapLibre's map is a UIKit view, which SwiftUI would host through a representable with its lifecycle forwarded by hand |
-| D2 | iOS 17 and later | Interactive Live Activities, `CLBackgroundActivitySession` for recording, `@Observable` and the String Catalog tooling |
+| D2 | iOS 17 and later | Interactive Live Tracks, `CLBackgroundActivitySession` for recording, `@Observable` and the String Catalog tooling |
 | D3 | iPhone only | An iPad runs it in compatibility mode, so no iPad layouts or screenshots |
 | D4 | One Xcode project with folder-synchronized groups and Swift Package Manager; no CocoaPods, XcodeGen or Tuist | A file in a target's folder joins the target with no project-file edit, which keeps merges clean without a generator to install |
 | D5 | Bundle ID `dev.holdmytrack.ios` | Beside Android's `dev.holdmytrack.android`; it can't change once registered |

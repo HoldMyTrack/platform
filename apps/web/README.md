@@ -62,6 +62,6 @@ src/ui/                    # ActivitiesPanel, the Edit window and the rest of th
 
 **`style.ts` must stay pure and DOM-free.** No React, no `window`: `npm run build:style` renders it in Node for the API to serve (`docs/ARCHITECTURE.md` §2.1). That is why `buildStyle` takes an `origin` argument instead of reading `window.location`, since MapLibre 6 rejects relative sprite URLs.
 
-**Fog and track layers go *beneath* the basemap's labels.** Fog painted over labels buries every place name and reads as a rendering bug. `applyLayers.ts` places the layers document's groups there, and `beneathBasemapLabels` gives the same point to the client's own overlays: the first basemap label, not the first symbol layer, which is the tracks' arrows.
+**Fog and route layers go *beneath* the basemap's labels.** Fog painted over labels buries every place name and reads as a rendering bug. `applyLayers.ts` places the layers document's groups there, and `beneathBasemapLabels` gives the same point to the client's own overlays: the first basemap label, not the first symbol layer, which is the routes' arrows.
 
 **Dev passing says nothing about the bundle.** MapLibre derives its worker URL from its own `import.meta.url`, which bundling invalidates, leaving a blank grey map with no console error and no failed request. `src/map/worker.ts` pins the URL explicitly and `npm run verify:build` guards it.

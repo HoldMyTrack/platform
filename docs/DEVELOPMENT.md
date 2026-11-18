@@ -12,7 +12,7 @@ Everything runs in Docker, the Vite dev server included: `docker compose up`, th
 
 ### Server-rendered pages in dev
 
-Every page, the map's shell included, is rendered by Go (`IMPLEMENTATION.md` §4.19), but you open everything at `localhost:5173`. Vite proxies the page paths (`pageRoutes` in `vite.config.ts`) to `API_PROXY_TARGET` (`http://api:8080` in compose, `localhost:8080` by default on the host) and marks each request `X-HoldMyTrack-Vite: dev`; a dev Go server then answers with a shell that loads the app from Vite, with Fast Refresh. `vite preview` proxies without the marker, so the shell loads the build. `verify:map` and `verify:build` need a running Go server; `verify:map`'s flows, which upload activities, the worker too.
+Every page, the map's shell included, is rendered by Go (`IMPLEMENTATION.md` §4.19), but you open everything at `localhost:5173`. Vite proxies the page paths (`pageRoutes` in `vite.config.ts`) to `API_PROXY_TARGET` (`http://api:8080` in compose, `localhost:8080` by default on the host) and marks each request `X-HoldMyTrack-Vite: dev`; a dev Go server then answers with a shell that loads the app from Vite, with Fast Refresh. `vite preview` proxies without the marker, so the shell loads the build. `verify:map` and `verify:build` need a running Go server; `verify:map`'s flows, which upload tracks, the worker too.
 
 `compose.yaml` mounts `services/server/internal/web` into `api` with `WEB_DEV_DIR` set, so templates and stylesheets are re-read on every request; a Go handler change needs `docker compose up -d --build api`. A new page path goes in both `registerPages` (`server.go`) and `pageRoutes`, whose patterns must allow a query string; a path missing from either 404s in dev only, since production's Caddy sends every non-static path to Go.
 
@@ -40,7 +40,7 @@ Adding a language takes a catalog on each surface, `about`/`help` translations, 
 
 ### Seeding a fresh database
 
-`migrate` creates the schema and the Demo Customer's `users` row but no data, and `docker compose up` runs no seeds. Without them "Try the demo" opens an empty account, Fog's levels have no boundaries, and activities show their account's timezone. Make the boundaries file with `scripts/boundaries-extract.sh ~/boundaries` (`docs/DEPLOY.md` §6; needs the [duckdb](https://duckdb.org/docs/installation) CLI), then:
+`migrate` creates the schema and the Demo Customer's `users` row but no data, and `docker compose up` runs no seeds. Without them "Try the demo" opens an empty account, Fog's levels have no boundaries, and tracks show their account's timezone. Make the boundaries file with `scripts/boundaries-extract.sh ~/boundaries` (`docs/DEPLOY.md` §6; needs the [duckdb](https://duckdb.org/docs/installation) CLI), then:
 
 ```bash
 curl -sSfL -o ~/boundaries/timezones-with-oceans-2026d.geojson.zip https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026d/timezones-with-oceans.geojson.zip
@@ -51,7 +51,7 @@ docker compose run --rm api seed-demo-customer   # IMPLEMENTATION.md §4.10, SPE
 
 The world's counties and cities take a long extract. `PLACES=US scripts/boundaries-extract.sh ~/boundaries` takes them for the listed countries only, into a file named for them, which the seed loads with `--partial`.
 
-Each takes a few minutes. Seeding boundaries and timezones first matches the demo at ingest; either order works. All three skip what is already loaded (`--force` makes either seed reload). `seed-demo-customer` never changes an activity already seeded, so after `demo_data/` changes run it once with `--reset`, which deletes the demo's activities first.
+Each takes a few minutes. Seeding boundaries and timezones first matches the demo at ingest; either order works. All three skip what is already loaded (`--force` makes either seed reload). `seed-demo-customer` never changes a track already seeded, so after `demo_data/` changes run it once with `--reset`, which deletes the demo's tracks first.
 
 After a change to how Fog tiles are drawn (`internal/fog`), `docker compose run --rm api rerender-coverage` queues a re-render of every account's tiles (`--user <id>` for one; `--masks` to redraw masks first, after a stroke change).
 
@@ -101,7 +101,7 @@ Every request `internal/httpapi`'s tests send through `dbTest.do`, `dbTest.send`
 
 ### Android verification
 
-The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and UI Automator flows over the map (`connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:8081`, on an emulator); there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and an activity deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
+The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and UI Automator flows over the map (`connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:8081`, on an emulator); there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
 
 ### CI
 

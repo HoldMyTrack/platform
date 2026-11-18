@@ -16,11 +16,11 @@ Numbered in rough order of how foundational the decision is, not strictly chrono
 | [0009](0009-external-sign-in.md) | Google, Facebook and Apple sign-in run server-side with no library, and link by email only when the provider vouches for it |
 | [0012](0012-server-rendered-pages-react-for-the-map.md) | Every page is server-rendered HTML sharing one header; React is kept for the map page |
 | [0017](0017-no-health-data.md) | No health data: heart rate is never read, stored or shown |
-| [0024](0024-activity-photos-resized-and-route-bound.md) | An activity can carry the user's photos, kept as resized copies on our own storage, each placed on the route by the time it was taken |
-| [0036](0036-send-a-copy-of-a-story.md) | A Story can be sent as a copy to another account, which accepts it into a Story and activities of its own; nothing syncs afterwards |
+| [0024](0024-track-photos-resized-and-route-bound.md) | A track can carry the user's photos, kept as resized copies on our own storage, each placed on the route by the time it was taken |
+| [0036](0036-send-a-copy-of-a-trip.md) | A Trip can be sent as a copy to another account, which accepts it into a Trip and tracks of its own; nothing syncs afterwards |
 | [0039](0039-the-app-is-the-gate.md) | The app is the gate: every source brings in only what the user ticks, and nothing is guessed on their behalf |
 | [0042](0042-mobile-apps-show-the-sites-pages.md) | The mobile apps are native where the platform is the point, and show the site's own pages for the rest |
-| [0043](0043-per-account-limits.md) | Every account can keep up to 50,000 activities and 5 GB of original files, the same limits for all |
+| [0043](0043-per-account-limits.md) | Every account can keep up to 50,000 tracks and 5 GB of original files, the same limits for all |
 | [0048](0048-two-map-documents.md) | The server shapes the map as two documents, a shared basemap style and the account's layers, which native maps apply |
 | [0049](0049-shared-rules-written-natively.md) | Rules every client applies are written natively in each, and defined once by shared test cases |
 

@@ -4,9 +4,9 @@ Orientation for coding agents working in this repository. Read this first, then 
 
 ## What HoldMyTrack is
 
-HoldMyTrack is a free, open-source platform that keeps the outdoor journeys people choose, from watches, the phone, cloud services and files, and turns them into maps and exploration stats: Stories, one map of everywhere those journeys went, Fog of War and Spots. `docs/VISION.md` §1 says what it is and §1.1 what it is not. Four boundaries apply to every change:
+HoldMyTrack is a free, open-source platform that keeps the outdoor journeys people choose, from watches, the phone, cloud services and files, and turns them into maps and exploration stats: Trips, one map of everywhere those journeys went, Fog of War and Spots. `docs/VISION.md` §1 says what it is and §1.1 what it is not. Four boundaries apply to every change:
 - No health data: no heart rate or other body signal is read, stored or shown (ADR-0017).
-- Every source is a gate: only what the user ticks comes in, nothing starts ticked, and no heuristic changes or hides an activity on their behalf (ADR-0039).
+- Every source is a gate: only what the user ticks comes in, nothing starts ticked, and no heuristic changes or hides a track on their behalf (ADR-0039).
 - No social graph: no feed, follows or public pages (`VISION.md` §5, Milestone 3).
 - Every account has every feature, with no tiers (`VISION.md` §6.1).
 
@@ -32,7 +32,7 @@ When `VISION.md` or an ADR changes a position, scan the other documents, the And
 
 **Draw instead of describe.** A flow, sequence, state machine or set of relations is a Mermaid diagram, followed by a few lines for what it cannot show: invariants and traps.
 
-**One word per activity state.** Lifecycle, Hidden, Focused, Checked and Bold mean what `SPEC.md` FR-5.8 says; never write "selected" for any of them.
+**One word per track state.** Lifecycle, Hidden, Focused, Checked and Bold mean what `SPEC.md` FR-5.8 says; never write "selected" for any of them.
 
 **Write tight.** One statement per fact, and at most one cross-reference per paragraph unless more are load-bearing. Cut intensifiers ("deliberately", "genuinely", "actually", "simply", "just", "really"); "not X but Y" contrasts where nobody proposed X; meta-narration ("This section…", "As noted above…", "It is worth noting…"); history ("now", "no longer", "originally", "used to"); em-dash chains and stacked parentheticals; a reason restated beside the pointer to it; lists of three where one item carries the point; closing sentences that summarize the paragraph. The same applies to code comments, diagram labels, commit messages and pull request descriptions.
 

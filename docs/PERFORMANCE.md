@@ -29,7 +29,7 @@ Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATIO
 ### Scenarios
 
 - **Seed**: `seed` uploads the 53 demo tracks (`internal/httpapi/demo_data`) to every account, 1,113 jobs, and the queue is timed to empty. Three tracks cross 200+ z14 tiles each (the "2026-01-22 Vietnam" drive 756).
-- **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal and Fog and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A Normal visitor from z4 asks for the area's activity list on every view (`SPEC.md` FR-5.11), reported as `activities-area`; a Spots visitor at z10–12 asks "Show in this area" on one view in three (`SPEC.md` FR-14.4), reported as `spots-area`. A view costs 2.3–4 requests with the cache, about 7.5 cold.
+- **Browse ramp**: `browse` with 10, 25, 50, 100 and 200 people for 3 minutes each, the worker idle. Each person mixes Normal and Fog and every 1.5–4 s pans, zooms or switches mode, requesting what the web client would for a 1280×800 window and keeping fetched tiles per tile version as a browser does (`IMPLEMENTATION.md` §4.2.6). `-cold` drops that cache; `-mode` keeps everyone in one mode. A Normal visitor from z4 asks for the area's track list on every view (`SPEC.md` FR-5.11), reported as `activities-area`; a Spots visitor at z10–12 asks "Show in this area" on one view in three (`SPEC.md` FR-14.4), reported as `spots-area`. A view costs 2.3–4 requests with the cache, about 7.5 cold.
 - **Import**: `gen 5 1000` then `import 5`: five accounts each upload a 1,000-track set at once, one file at a time as the web's Upload menu does. Two minutes in, and again deep into the backlog, `probe` uploads one track from another account and times it to processed, the fairness check. A 12-person `browse` runs meanwhile.
 - **Stop** a step on more than 2% errors, a p95 over 5 s on two consecutive steps, under 10% memory available, or an out-of-memory kill.
 
@@ -37,7 +37,7 @@ Afterwards `loadtest cleanup` deletes the accounts and the purge (`IMPLEMENTATIO
 
 ### Heavy accounts — 2026-11-09, dev stack
 
-Two accounts seeded straight into the database with 5,000 and 20,000 activities of 245 points each, random walks in one region of about 65 × 55 km: what a long history around home looks like. Times are the query alone, run twice; the region fits one tile up to z8, so those tiles carry every track.
+Two accounts seeded straight into the database with 5,000 and 20,000 tracks of 245 points each, random walks in one region of about 65 × 55 km: what a long history around home looks like. Times are the query alone, run twice; the region fits one tile up to z8, so those tiles carry every route.
 
 | Tracks tile, centre of the region | 5,000: warm | tile | 20,000: warm | tile |
 | :-- | --: | --: | --: | --: |
@@ -47,10 +47,10 @@ Two accounts seeded straight into the database with 5,000 and 20,000 activities 
 | z10 | 79 ms | 0.7 MB | 315 ms | 2.7 MB |
 | z12 | 8 ms | 53 KB | 30 ms | 214 KB |
 
-- **Low-zoom tiles grow with the whole history** in their square, in time and in bytes: a tile below z10 reads and sends every stored point of every track in it, though at that zoom most fall on one pixel. Past the list's 1,000 the browser draws only the listed tracks (FR-5.11), so most of a heavy tile is sent to be hidden.
-- **The area list** (`GET /v1/activities/area`, a 1,000×750 px view, HTTP round trip, warm): z8 0.15 s and 0.33 s, z10 0.11 s and 0.22 s, z12 11 ms and 34 ms; 1,000 rows are 330 KB, 67 KB gzipped. The total behind a cut list was most of the time: testing every line against the view took 400 ms for 15,000 tracks, the tracks' boxes alone 72 ms, 2 apart, so the total counts boxes.
-- **Past the cap the tiles carry `since`** (`IMPLEMENTATION.md` §4.3), the start of the oldest listed activity, and stop growing with the history: z4 156 ms and 211 KB, z6 156 ms and 440 KB, z8 60 ms and 364 KB, z10 24 ms and 193 KB, the same for both accounts.
-- **In the browser** (Chrome with the GPU, the dev build, 6 pans at z10 over 1,000 listed): the map was never the cost, hiding every track changed nothing. Rendering 1,000 list rows on each reload was, 5.3 s of long tasks, the longest 254 ms: a new `Intl` formatter per date and number (1.8 s), then React. With formatters kept and only the rows in view rendered (`listWindow.ts`), no long task at all.
+- **Low-zoom tiles grow with the whole history** in their square, in time and in bytes: a tile below z10 reads and sends every stored point of every route in it, though at that zoom most fall on one pixel. Past the list's 1,000 the browser draws only the listed routes (FR-5.11), so most of a heavy tile is sent to be hidden.
+- **The area list** (`GET /v1/activities/area`, a 1,000×750 px view, HTTP round trip, warm): z8 0.15 s and 0.33 s, z10 0.11 s and 0.22 s, z12 11 ms and 34 ms; 1,000 rows are 330 KB, 67 KB gzipped. The total behind a cut list was most of the time: testing every line against the view took 400 ms for 15,000 routes, the routes' boxes alone 72 ms, 2 apart, so the total counts boxes.
+- **Past the cap the tiles carry `since`** (`IMPLEMENTATION.md` §4.3), the start of the oldest listed track, and stop growing with the history: z4 156 ms and 211 KB, z6 156 ms and 440 KB, z8 60 ms and 364 KB, z10 24 ms and 193 KB, the same for both accounts.
+- **In the browser** (Chrome with the GPU, the dev build, 6 pans at z10 over 1,000 listed): the map was never the cost, hiding every route changed nothing. Rendering 1,000 list rows on each reload was, 5.3 s of long tasks, the longest 254 ms: a new `Intl` formatter per date and number (1.8 s), then React. With formatters kept and only the rows in view rendered (`listWindow.ts`), no long task at all.
 - A 10-person `-mode normal` browse over these accounts (`browse 10 60s`, the demo tracks' centres): `activities-area` p95 147 ms, `tracks` p95 117 ms, no errors.
 
 ### Production load test — 2026-10-22, `9a298d5a`
@@ -69,23 +69,23 @@ The production VPS (2 vCPU, 4 GB), two render loops beside four main ones (`IMPL
 - Views rose in step with people to 200; nothing saturated. Postgres averaged 18–39% CPU over the mixed steps and 56% Fog-only, with bursts to 193% at 25 people while its cache warmed, which is the Region p95 at 10 and 25. The API averaged 15% at 200 people and 21% Fog-only, peaking at 88% while many first views traced Fog at once. At least 2.3 GB of memory stayed free.
 - "Show in this area" (`SPEC.md` FR-14.4) stayed under 0.5 s p95 at every step.
 - Seed: 1,113 uploads accepted in 32 s, ingested in about 6.5 minutes; the renders' end went unrecorded.
-- Import: 5,000 files sent in 2 min 40 s without a failure, ingested in about 17 minutes (about 300 a minute), renders done 33 minutes later. Each importing account went through two or three renders, as more of its activities landed while one ran.
+- Import: 5,000 files sent in 2 min 40 s without a failure, ingested in about 17 minutes (about 300 a minute), renders done 33 minutes later. Each importing account went through two or three renders, as more of its tracks landed while one ran.
 - Fairness: a `probe` upload was processed in 5 s both times, once with 3,363 ingests queued and once with eight renders waiting.
 - Browsing during the import: every 30-second p95 under 309 ms and no server error; 42 requests failed in one 30-second drop of the laptop's network.
-- The purge removed the 21 accounts in 22 minutes, about 3–4 minutes for each 1,000-activity account, leaving no row, pending job or object. Its worker sat under 1% CPU, waiting on object deletes sent one at a time.
+- The purge removed the 21 accounts in 22 minutes, about 3–4 minutes for each 1,000-track account, leaving no row, pending job or object. Its worker sat under 1% CPU, waiting on object deletes sent one at a time.
 - The run's object-store requests cost about $2.33, past the default daily budget, which `R2_DAILY_BUDGET_USD` was raised over.
 
 Earlier findings behind current choices:
 - 2026-10-08: the API saturated at about 6 views/s decoding, colouring and encoding each Fog and Heatmap tile per request, which led to serving stored bytes. One first-in-first-out worker left another account's upload waiting over 55 minutes, which led to the fair worker (`IMPLEMENTATION.md` §4.1). Renders ran at about 1.3 tiles/s on sequential object-store round trips, which led to running them side by side (`IMPLEMENTATION.md` §4.2).
 - 2026-10-09, `c040021`: once tiles were served from stored bytes, Postgres ran out first, at 110–145% CPU on the live Country, Region and Tracks tiles.
-- 2026-10-09, `7d013f0`: redrawing 835 activities' masks one at a time took about 0.4 s each, nearly all R2 round trips, which led to masks in Postgres and redraws side by side.
+- 2026-10-09, `7d013f0`: redrawing 835 tracks' masks one at a time took about 0.4 s each, nearly all R2 round trips, which led to masks in Postgres and redraws side by side.
 - 2026-10-09, `f3f28d2`: a probe sent while four accounts' renders held all four worker loops waited 7 min 35 s, which led to the render lane.
 - 2026-10-10, `535cec9`: the same three scenarios before Fog vector tiles and Heatmap counts: Fog p95 0.67 s at 200 people, import ingested in 11 minutes and rendered 25 minutes later.
 
 ### Render round trips — 2026-10-10, dev stack
 
 A tile's object-store round trips run side by side (`internal/fog`'s package comment, Rendering): its Fog and Heatmap PUTs together, a pyramid tile's children read in one query and fetched together. With `delayproxy` and two render loops, re-rendering two 1,000-track accounts in full (7,813 and 8,134 z14 tiles plus pyramid) took 152 / 180 s against 365 / 423 s before. Served tiles were byte-identical between builds.
-- 2026-10-09: rendering sixteen tiles at a time took the Vietnam track's render from 780 s to 52 s. Redrawing a 1,000-activity account's masks in parallel took 37 s against 311 s, and purging it 36 s against 225 s.
+- 2026-10-09: rendering sixteen tiles at a time took the Vietnam track's render from 780 s to 52 s. Redrawing a 1,000-track account's masks in parallel took 37 s against 311 s, and purging it 36 s against 225 s.
 - 2026-10-10: moving masks into Postgres alone made a full render about 10% faster; the tile's own round trips were the rest.
 
 ### Tile size — 2026-10-09, dev stack
@@ -98,20 +98,20 @@ The choice of 128 px Fog and Heatmap tiles (`IMPLEMENTATION.md` §4.2). One seed
 | A pyramid step | 7.8 µs | 31 µs |
 | A stored mask, average | about 275 bytes | 616 bytes |
 
-- At zoom 10 the 64 px tracks merged where they ran close; at 128 px they stayed apart. At zoom 13 the 128 px lines followed their roads where 64 px drew a staircase.
+- At zoom 10 the 64 px routes merged where they ran close; at 128 px they stayed apart. At zoom 13 the 128 px lines followed their roads where 64 px drew a staircase.
 - 300 random jittery walks all drew at 128 px with `minStepPx` at half a pixel; without that skip, GPS jitter while standing still made segments too short to stroke (`fog.minStepPx`).
 - 512 px composited Fog in 1.1 ms and Heatmap in 3.3 ms and stored about 5 times the bytes of 128 px; 256 px looked the same as 512.
 
 ### Country and Region tiles — 2026-10-09, dev stack
 
-What keeping clipped outlines per tile (`admin_tile_geoms`, `IMPLEMENTATION.md` §4.2.4) saves. Queries run in `psql` as an account with 611 activities, third of three runs.
+What keeping clipped outlines per tile (`admin_tile_geoms`, `IMPLEMENTATION.md` §4.2.4) saves. Queries run in `psql` as an account with 611 tracks, third of three runs.
 
 | Tile | Live | Outlines alone | Account filter alone | Built once | Kept |
 | :-- | :-- | :-- | :-- | :-- | :-- |
 | Country z0/0/0 | 80 ms | 85 ms | 0.8 ms | 191 ms | 2.3 ms |
 | Region z4/4/5 | 29 ms | 29 ms | 0.8 ms | 56 ms | 0.9 ms |
 
-- Transforming and clipping the outlines is nearly all of an expensive tile. The account filter starts from the account's own activities, since an `EXISTS` over a shared region scanned every account's matches.
+- Transforming and clipping the outlines is nearly all of an expensive tile. The account filter starts from the account's own tracks, since an `EXISTS` over a shared region scanned every account's matches.
 - A kept tile serves the same bytes in 0.7–2.3 ms; its first request costs about twice the live query, once per tile for all accounts.
 
 ### Bike-path tiles — 2026-10-10, dev stack
@@ -128,7 +128,7 @@ Storing the Heatmap as pass counts drawn as MapLibre heatmap circles against the
 | Five uploads replayed, object-store requests | 316 / 522 | 316 / 520 |
 | Stored Heatmap, z14 / zoomed out | 1,041 / 753 KB | 679 / 634 KB |
 
-- Counting a z14 tile with three activities takes 136 µs, the narrowing done as a row pass and a column pass.
+- Counting a z14 tile with three tracks takes 136 µs, the narrowing done as a row pass and a column pass.
 - A heat-points tile takes 3–6 ms to serve from z9, mostly the object read, and is up to 51 KB at z15 over a dense area. Up to z8, cells counted from mask rows took 11–25 ms a tile.
 
 ### Heat-points tiles encoded in Go — 2026-10-15, dev stack
