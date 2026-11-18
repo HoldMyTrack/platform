@@ -34,7 +34,7 @@ import dev.holdmytrack.android.net.StoryTotals
 import dev.holdmytrack.android.recording.RecordingTypes
 
 /**
- * The Activities panel's Stories tab, the web's `apps/web/src/ui/StoriesTab.tsx` and the Story
+ * The Activities panel's Stories tab, the web's `apps/web/src/ui/TripsTab.tsx` and the Story
  * half of `MapView.tsx` (`docs/SPEC.md` FR-13.6): every Story as a folder, newest first,
  * exactly one of them open while the tab shows — the newest, until another is tapped. Opening
  * one is viewing it: `MapFragment` shows the tracks and the list of all its activities,

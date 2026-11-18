@@ -40,7 +40,7 @@ import kotlin.math.abs
 enum class PanelTab { ACTIVITIES, STORIES, SYNC }
 
 /**
- * The map's Activities sheet (`apps/web/src/ui/ActivitiesPanel.tsx`, redrawn for a phone): a
+ * The map's Activities sheet (`apps/web/src/ui/TracksPanel.tsx`, redrawn for a phone): a
  * bottom sheet dragged between collapsed — its head alone — half the map and nearly all of it
  * (`BottomSheetBehavior`), a tap on its handle opening it halfway or closing it. On the
  * Activities tab its head is the listed activities' totals ([render]), the visible area's under

@@ -21,12 +21,12 @@ import dev.holdmytrack.android.panel.ActivityTypes
 import java.text.Normalizer
 
 /** One type the account already uses, and how many activities use it — the same facet the
- *  web client's Activities panel and Type picker are built from (`activityFacets.ts`). */
+ *  web client's Activities panel and Type picker are built from (`trackFacets.ts`). */
 data class TypeCount(val type: String, val count: Int)
 
 /**
  * `RecordingActivity`'s Type field — the Android counterpart of the web edit dialog's
- * `ActivityTypePicker.tsx`: a searchable list of the types this account already uses
+ * `TrackTypePicker.tsx`: a searchable list of the types this account already uses
  * (formatted, with how many activities use each), filtered as you type, and open-ended —
  * `activity_type` is free-form, not a controlled vocabulary, so any search text that doesn't
  * exactly match an existing type offers itself as a last "Add …" row and saves exactly as

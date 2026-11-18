@@ -23,7 +23,7 @@ import kotlin.math.roundToInt
 import org.maplibre.android.maps.MapLibreMap
 
 /**
- * The Edit window's Track tab — the web's `apps/web/src/ui/TrackEditor.tsx` (`docs/SPEC.md`
+ * The Edit window's Track tab — the web's `apps/web/src/ui/RouteEditor.tsx` (`docs/SPEC.md`
  * FR-5.7): one activity's recorded points and the edit already saved on them, a two-knob range
  * over the points as the edit leaves them, and **Chop** (keep the range), **Cut** (take out
  * what's between the knobs and join them), **Split** (split the activity in two at the one

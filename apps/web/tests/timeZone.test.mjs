@@ -1,16 +1,16 @@
-// Covers docs/SPEC.md FR-3.8 (an activity's own timezone); the rule runs from
+// Covers docs/SPEC.md FR-3.8 (a track's own timezone); the rule runs from
 // testdata/client-rules/track-zone.json in clientRules.test.mjs.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs, like editTrackOps.test.mjs: Node strips the types from the imported .ts module itself.
-import { activityTimeZone } from '../src/ui/timeZone.ts';
+import { trackTimeZone } from '../src/ui/timeZone.ts';
 import { todayIn } from '../src/ui/dateMath.ts';
 
-test('the zone formats in the activity\'s wall clock, and an unknown one in the browser\'s without throwing', () => {
+test('the zone formats in the track\'s wall clock, and an unknown one in the browser\'s without throwing', () => {
   const at = new Date('2026-03-09T22:30:00Z');
-  const tokyo = at.toLocaleString('en-GB', { timeZone: activityTimeZone('Asia/Tokyo', undefined), dateStyle: 'medium', timeStyle: 'short' });
+  const tokyo = at.toLocaleString('en-GB', { timeZone: trackTimeZone('Asia/Tokyo', undefined), dateStyle: 'medium', timeStyle: 'short' });
   assert.equal(tokyo, '10 Mar 2026, 07:30');
-  assert.doesNotThrow(() => at.toLocaleString('en-GB', { timeZone: activityTimeZone('Mars/Olympus_Mons', undefined) }));
+  assert.doesNotThrow(() => at.toLocaleString('en-GB', { timeZone: trackTimeZone('Mars/Olympus_Mons', undefined) }));
 });
 
 test("today is the account's calendar day, read at the moment asked (FR-1.7)", () => {

@@ -8,7 +8,7 @@ import { ROLE_METADATA, tilePath, VARS_METADATA, type GroupPart } from './mapLay
  * The account's track lines (IMPLEMENTATION.md §4.3) as the layers document's `tracks` group:
  * every line, the focused one bold over a halo, and the hovered one widest, each its own
  * layer filtered by id set, since MapLibre Native Android has no feature-state. The client binds
- * the sets as vars and appends its own query (the range or Story) to the tiles.
+ * the sets as vars and appends its own query (the range or Trip) to the tiles.
  */
 
 export const TRACKS_LAYER_ID = 'tracks-line';

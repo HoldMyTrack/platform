@@ -1,5 +1,5 @@
 import { t } from './i18n/index.ts';
-import { rememberTypeKinds, rememberTypeLabels } from './ui/activityTypes.ts';
+import { rememberTypeKinds, rememberTypeLabels } from './ui/trackTypes.ts';
 import { deleteDone, parseErrorBody } from './apiError.ts';
 import type { components, paths } from './apiSchema.ts';
 import type { SpotCategory, SpotInArea } from './map/spots.ts';
@@ -84,9 +84,9 @@ export interface UserProfile {
   avatarUrl: string;
   /** IANA zone name (e.g. "America/New_York"), never `''` — unlike displayName/country there
    *  is no "unset" state (services/server/migrations/0001_users_and_auth.sql's column is
-   *  `NOT NULL DEFAULT 'UTC'`). Decides "today" server-side and stands in for an activity's own
+   *  `NOT NULL DEFAULT 'UTC'`). Decides "today" server-side and stands in for a track's own
    *  zone where that isn't known (IMPLEMENTATION.md §4.30); the client shows a time with no
-   *  activity of its own in it (a Spot's capture). */
+   *  track of its own in it (a Spot's capture). */
   timezone: string;
   /** Miles or kilometers, as the server decides it from `country` (ADR-0048). */
   unitSystem: 'metric' | 'imperial';
@@ -146,46 +146,46 @@ export async function getCurrentUser(): Promise<SessionUser | null> {
 }
 
 /**
- * One row of IMPLEMENTATION.md §4.7's activity list. `distanceMeters` and `movingSeconds`
+ * One row of IMPLEMENTATION.md §4.7's track list. `distanceMeters` and `movingSeconds`
  * are nullable because the schema is — a file that carried no distance is not a
- * zero-distance activity, and the UI says "—" rather than "0.0 km".
+ * zero-distance track, and the UI says "—" rather than "0.0 km".
  *
  * `name` (§4.7: a user-entered title only, never parsed from a source file) is what a row leads
  * with when set; `startedAt` is the fallback for a row that has none. `null` means never set, not
- * "set to empty." What only the Edit window needs is ActivityDetail's, read per activity.
+ * "set to empty." What only the Edit window needs is ActivityDetail's, read per track.
  */
-export interface Activity {
+export interface Track {
   id: string;
   startedAt: string;
-  /** The IANA zone it was recorded in (IMPLEMENTATION.md §4.30): every time of this activity
+  /** The IANA zone it was recorded in (IMPLEMENTATION.md §4.30): every time of this track
    *  is shown in it, not the browser's or the account's. */
   timezone: string;
   activityType: string;
   name: string | null;
   distanceMeters: number | null;
-  /** The time a row shows: moving time, the same Stories and Trends sum, else elapsed. */
+  /** The time a row shows: moving time, the same Trips and Trends sum, else elapsed. */
   movingSeconds: number | null;
   /** [minLon, minLat, maxLon, maxLat], or null for a row with no trajectory. */
   bbox: BBox | null;
-  /** An Edit track reprocess (§4.7.7) is queued or running — the row's numbers and geometry
+  /** An Edit route reprocess (§4.7.7) is queued or running — the row's numbers and geometry
    *  are still the pre-edit ones until it finishes. */
   pending: boolean;
   /** Entirely inside the account's Private locations (FR-7.1): kept with no track, so its
    *  distance and duration mean nothing — the row shows a Private badge instead. */
   private: boolean;
-  /** The Stories it's in, newest first — the Activities panel's Story badge. */
-  stories: { id: string; name: string }[];
+  /** The Trips it's in, newest first — the Tracks panel's Trip badge. */
+  trips: { id: string; name: string }[];
 }
 
-/** An activity as the Edit window needs it: the row, and what the area list leaves out
+/** A track as the Edit window needs it: the row, and what the area list leaves out
  *  (`GET /v1/activities/{id}`). */
-export interface ActivityDetail extends Activity {
+export interface TrackDetail extends Track {
   /** Free text (`docs/SPEC.md` FR-5.5); `null` means never set. */
   description: string | null;
   /** The track carries a user edit, so "Reset to original track" has something to undo. */
   edited: boolean;
-  /** Why Edit track can't open for it (`docs/SPEC.md` FR-5.7), or null when it can. */
-  trackEdit: Schema<'ActivityRow'>['track_edit'] | null;
+  /** Why Edit route can't open for it (`docs/SPEC.md` FR-5.7), or null when it can. */
+  routeEdit: Schema<'ActivityRow'>['track_edit'] | null;
   /** Why photos can't be added to it (FR-15.1), or null when they can. */
   photos: Schema<'ActivityRow'>['photos'] | null;
 }
@@ -194,13 +194,13 @@ export interface ActivityDetail extends Activity {
 export type BBox = [number, number, number, number];
 
 /** Filters, all optional — an absent one means "no restriction", per §4.7's convention. */
-export interface ActivityQuery {
+export interface TrackQuery {
   from?: string;
   to?: string;
   types?: string[];
-  /** One Story's activities only (`SPEC.md` FR-13.4). */
-  story?: string;
-  /** Tracks tiles only: activities starting at or after this moment (`SPEC.md` FR-5.11). */
+  /** One Trip's tracks only (`SPEC.md` FR-13.4). */
+  trip?: string;
+  /** Tracks tiles only: tracks starting at or after this moment (`SPEC.md` FR-5.11). */
   since?: string;
 }
 
@@ -213,19 +213,19 @@ export interface AreaQuery {
   limit?: number;
 }
 
-function activityQueryString(query: ActivityQuery): string {
+function trackQueryString(query: TrackQuery): string {
   const params = new URLSearchParams();
   if (query.from) params.set('from', query.from);
   if (query.to) params.set('to', query.to);
   if (query.types?.length) params.set('types', query.types.join(','));
-  if (query.story) params.set('story', query.story);
+  if (query.trip) params.set('story', query.trip);
   const qs = params.toString();
   return qs ? `?${qs}` : '';
 }
 
 /** A row of either list as the panel shows it; the area list's rows are slim, so this reads only
  *  what both have. */
-function toActivity(a: Schema<'ActivityRow'> | Schema<'AreaActivityRow'>): Activity {
+function toTrack(a: Schema<'ActivityRow'> | Schema<'AreaActivityRow'>): Track {
   return {
     id: a.id,
     startedAt: a.started_at,
@@ -237,18 +237,18 @@ function toActivity(a: Schema<'ActivityRow'> | Schema<'AreaActivityRow'>): Activ
     bbox: a.bbox ? [...a.bbox] : null,
     pending: a.pending,
     private: a.private,
-    stories: a.stories,
+    trips: a.stories,
   };
 }
 
-function toActivityDetail(a: Schema<'ActivityRow'>): ActivityDetail {
-  return { ...toActivity(a), description: a.description, edited: a.edited, trackEdit: a.track_edit ?? null, photos: a.photos ?? null };
+function toTrackDetail(a: Schema<'ActivityRow'>): TrackDetail {
+  return { ...toTrack(a), description: a.description, edited: a.edited, routeEdit: a.track_edit ?? null, photos: a.photos ?? null };
 }
 
 /** A list response: the rows, and for an area how many it holds, more than the rows when they
  *  were cut at the limit; null otherwise. */
-interface ActivityPage {
-  activities: Activity[];
+interface TrackPage {
+  tracks: Track[];
   total: number | null;
 }
 
@@ -281,7 +281,7 @@ async function getJson<T>(path: string, signal?: AbortSignal, notFound?: () => E
 }
 
 /** `GET /v1/activities/area` (`SPEC.md` FR-5.11): the web's list, and the set its map draws. */
-export async function listArea(query: AreaQuery, signal?: AbortSignal): Promise<ActivityPage> {
+export async function listArea(query: AreaQuery, signal?: AbortSignal): Promise<TrackPage> {
   const params = new URLSearchParams();
   if (query.bbox) params.set('bbox', query.bbox.join(','));
   if (query.from) params.set('from', query.from);
@@ -290,45 +290,45 @@ export async function listArea(query: AreaQuery, signal?: AbortSignal): Promise<
   const qs = params.toString();
   const body = await getJson<ResponseJson<'/activities/area', 'get'>>(`/activities/area${qs ? `?${qs}` : ''}`, signal);
   rememberTypes(body.types);
-  return { activities: body.activities.map(toActivity), total: body.total ?? null };
+  return { tracks: body.activities.map(toTrack), total: body.total ?? null };
 }
 
-/** Thrown by `getActivity` for an activity that was deleted. */
-export class ActivityNotFoundError extends Error {}
+/** Thrown by `getTrack` for a track that was deleted. */
+export class TrackNotFoundError extends Error {}
 
-/** `GET /v1/activities/{id}`: one activity in full, for the Edit window. */
-export async function getActivity(id: string, signal?: AbortSignal): Promise<ActivityDetail> {
+/** `GET /v1/activities/{id}`: one track in full, for the Edit window. */
+export async function getTrack(id: string, signal?: AbortSignal): Promise<TrackDetail> {
   const path = `/activities/${encodeURIComponent(id)}`;
-  const body = await getJson<ResponseJson<'/activities/{id}', 'get'>>(path, signal, () => new ActivityNotFoundError(t('common.request_failed', { status: 404 })));
+  const body = await getJson<ResponseJson<'/activities/{id}', 'get'>>(path, signal, () => new TrackNotFoundError(t('common.request_failed', { status: 404 })));
   rememberTypes(body.types);
   const row = body.activities[0];
   if (row === undefined) throw new Error(t('common.bad_response'));
-  return toActivityDetail(row);
+  return toTrackDetail(row);
 }
 
 /**
- * §4.7's `GET /v1/activities`. Unpaginated: every activity matching the filter comes back in
- * one response, since the Activities panel needs the full set at once to draw the map, total
+ * §4.7's `GET /v1/activities`. Unpaginated: every track matching the filter comes back in
+ * one response, since the Tracks panel needs the full set at once to draw the map, total
  * the stats and compute its type/distance facets.
  */
-export async function listActivities(query: ActivityQuery = {}, signal?: AbortSignal): Promise<ActivityPage> {
-  const body = await getJson<ResponseJson<'/activities', 'get'>>(`/activities${activityQueryString(query)}`, signal);
+export async function listTracks(query: TrackQuery = {}, signal?: AbortSignal): Promise<TrackPage> {
+  const body = await getJson<ResponseJson<'/activities', 'get'>>(`/activities${trackQueryString(query)}`, signal);
   rememberTypes(body.types);
-  return { activities: body.activities.map(toActivity), total: null };
+  return { tracks: body.activities.map(toTrack), total: null };
 }
 
 /**
- * `PATCH /v1/activities/{id}` (`docs/SPEC.md` FR-5.5) — the Edit window's Save, for its Activity tab's
+ * `PATCH /v1/activities/{id}` (`docs/SPEC.md` FR-5.5) — the Edit window's Save, for its Route tab's
  * fields. Full-replace-on-save, not per-field: all three fields commit together.
- * Returns the updated row so the caller can `reload()` the list (EditActivityWindow.tsx's caller does,
+ * Returns the updated row so the caller can `reload()` the list (EditTrackWindow.tsx's caller does,
  * matching the "just refetch" convention an upload completion already uses) rather than
  * needing this return value directly — returned anyway: one fewer thing for a caller to
  * assume about the request.
  */
-export async function updateActivity(
+export async function updateTrack(
   id: string,
   patch: { activityType: string; name: string; description: string },
-): Promise<ActivityDetail> {
+): Promise<TrackDetail> {
   const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -338,14 +338,14 @@ export async function updateActivity(
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
   const body = (await res.json()) as ResponseJson<'/activities/{id}', 'patch'>;
-  return toActivityDetail(body);
+  return toTrackDetail(body);
 }
 
 /**
  * §4.7.5's `DELETE /v1/activities/{id}` — a full purge (track, Fog coverage,
  * the raw upload), not a soft delete. `204 No Content` on success: nothing to parse or return.
  */
-export async function deleteActivity(id: string): Promise<void> {
+export async function deleteTrack(id: string): Promise<void> {
   const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
@@ -354,14 +354,14 @@ export async function deleteActivity(id: string): Promise<void> {
   }
 }
 
-/** One day of §4.7's histogram — a day that actually has activities; days with none are absent. */
+/** One day of §4.7's histogram — a day that actually has tracks; days with none are absent. */
 interface HistogramBucket {
   date: string;
   count: number;
   distanceMeters: number;
 }
 
-interface ActivityDayPage {
+interface TrackDayPage {
   /** "day" — §4.7's resolved granularity. Present so a future weekly rollup is detectable. */
   bucket: string;
   /** The first and last day this page actually returned, or "" for an empty page. */
@@ -369,25 +369,25 @@ interface ActivityDayPage {
   to: string;
   /** Ascending by date, exactly `limit` entries unless the history ran out. */
   days: HistogramBucket[];
-  /** This user's first activity's day, or null if they have none, independent of this page's
+  /** This user's first track's day, or null if they have none, independent of this page's
    *  own bounds — the Dates filter's earliest (useHistoryStart.ts). */
   earliest: string | null;
 }
 
 interface DayPageQuery {
-  /** How many days-with-activity to return. */
+  /** How many days-with-track to return. */
   limit: number;
   /** Return the `limit` most recent days strictly before this one; omit for the newest. */
   before?: string;
 }
 
 /**
- * `GET /v1/activities/histogram?days=&before=` — §4.7's activity-day pagination mode, over the
+ * `GET /v1/activities/histogram?days=&before=` — §4.7's track-day pagination mode, over the
  * whole history, never filtered. The web reads one day of it for `earliest`; the apps' date
  * sliders page through it. The endpoint's other mode (`from`/`to`, a calendar window) has no
  * reader here.
  */
-export async function getActivityDayPage(query: DayPageQuery, signal?: AbortSignal): Promise<ActivityDayPage> {
+export async function getTrackDayPage(query: DayPageQuery, signal?: AbortSignal): Promise<TrackDayPage> {
   const params = new URLSearchParams({ days: String(query.limit) });
   if (query.before) params.set('before', query.before);
   const res = await apiFetch(`/activities/histogram?${params.toString()}`, {
@@ -406,7 +406,7 @@ export async function getActivityDayPage(query: DayPageQuery, signal?: AbortSign
   };
 }
 
-interface TrackMetricPoint {
+interface RouteMetricPoint {
   lon: number;
   lat: number;
   speedMps: number;
@@ -421,16 +421,16 @@ interface PaceBand {
   end: number;
 }
 
-export interface ActivityTrackMetrics {
-  activityId: string;
-  points: TrackMetricPoint[];
+export interface TrackRouteMetrics {
+  trackId: string;
+  points: RouteMetricPoint[];
   bands: PaceBand[];
 }
 
-/** `POST /v1/activities/stats-card`: the export's stats card as a PNG, or null when every activity
+/** `POST /v1/activities/stats-card`: the export's stats card as a PNG, or null when every track
  *  asked for is Pending. */
 export async function getStatsCard(
-  request: { activityIds: string[]; width: number; height: number; theme: 'light' | 'dark' },
+  request: { trackIds: string[]; width: number; height: number; theme: 'light' | 'dark' },
   signal?: AbortSignal,
 ): Promise<Blob | null> {
   const res = await apiFetch(`/activities/stats-card`, {
@@ -438,7 +438,7 @@ export async function getStatsCard(
     headers: { 'Content-Type': 'application/json' },
     ...(signal ? { signal } : {}),
     // IMPLEMENTATION.md §4.3.3.
-    body: jsonBody<'/activities/stats-card', 'post'>({ activity_ids: request.activityIds, width: request.width, height: request.height, theme: request.theme }),
+    body: jsonBody<'/activities/stats-card', 'post'>({ activity_ids: request.trackIds, width: request.width, height: request.height, theme: request.theme }),
   });
   if (res.status === 204) return null;
   if (!res.ok) {
@@ -460,7 +460,7 @@ export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
 }
 
 /** `GET /v1/activities/pending`: which of [ids] are still Pending (IMPLEMENTATION.md §4.2.5). */
-export async function pendingActivities(ids: readonly string[], signal?: AbortSignal): Promise<string[]> {
+export async function pendingTracks(ids: readonly string[], signal?: AbortSignal): Promise<string[]> {
   const res = await apiFetch(`/activities/pending?ids=${ids.map(encodeURIComponent).join(',')}`, {
     ...(signal ? { signal } : {}),
   });
@@ -471,16 +471,16 @@ export async function pendingActivities(ids: readonly string[], signal?: AbortSi
 }
 
 /**
- * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one activity's own
+ * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one track's own
  * track, matching the exact vertex sequence its display trajectory already renders. Backs
- * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
+ * MapView.tsx's pace-colored segments, shown only while exactly one track has row-click
  * focus.
  */
-export async function getActivityTrackMetrics(
-  activityId: string,
+export async function getTrackRouteMetrics(
+  trackId: string,
   signal?: AbortSignal,
-): Promise<ActivityTrackMetrics> {
-  const res = await apiFetch(`/activities/${encodeURIComponent(activityId)}/track-metrics`, {
+): Promise<TrackRouteMetrics> {
+  const res = await apiFetch(`/activities/${encodeURIComponent(trackId)}/track-metrics`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
@@ -488,33 +488,33 @@ export async function getActivityTrackMetrics(
   }
   const body = (await res.json()) as ResponseJson<'/activities/{id}/track-metrics', 'get'>;
   return {
-    activityId: body.activity_id,
+    trackId: body.activity_id,
     points: body.points.map((p) => ({ lon: p.lon, lat: p.lat, speedMps: p.speed_mps, timeS: p.time_s })),
     bands: body.bands,
   };
 }
 
 /**
- * A track edit (§4.7.7), as the server stores it: every timestamp a point's in unix
+ * A route edit (§4.7.7), as the server stores it: every timestamp a point's in unix
  * milliseconds. A point survives when it's inside `keep` (inclusive; absent keeps everything),
  * outside every `remove` range (inclusive), and not in `drop`; a survivor whose timestamp is a
- * key of `move` is drawn at that [lon, lat] instead. Mirrors `ingest.TrackEdit`.
+ * key of `move` is drawn at that [lon, lat] instead. Mirrors `ingest.RouteEdit`.
  */
-export type TrackEdit = Schema<'TrackEdit'>;
+export type RouteEdit = Schema<'TrackEdit'>;
 
 /** One recorded point: [lon, lat, unix ms]. */
-export type TrackPoint = [number, number, number];
+export type RoutePoint = [number, number, number];
 
-interface ActivityTrackPoints {
-  /** Every point the activity is processed from, clipped by Private locations, before the user's edit. */
-  points: TrackPoint[];
+interface TrackRoutePoints {
+  /** Every point the track is processed from, clipped by Private locations, before the user's edit. */
+  points: RoutePoint[];
   /** The edit currently applied on top of `points`, or null for an unedited track. */
-  edit: TrackEdit | null;
+  edit: RouteEdit | null;
 }
 
-/** `GET /v1/activities/{id}/track-points` — what the track editor opens with. */
-export async function getActivityTrackPoints(activityId: string, signal?: AbortSignal): Promise<ActivityTrackPoints> {
-  const res = await apiFetch(`/activities/${encodeURIComponent(activityId)}/track-points`, {
+/** `GET /v1/activities/{id}/track-points` — what the route editor opens with. */
+export async function getTrackRoutePoints(trackId: string, signal?: AbortSignal): Promise<TrackRoutePoints> {
+  const res = await apiFetch(`/activities/${encodeURIComponent(trackId)}/track-points`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
@@ -531,17 +531,17 @@ export class SplitHidesPartError extends Error {}
 /**
  * `POST /v1/activities/{id}/track-edit` — the editor's Apply. Sends the complete new edit
  * (null resets to the original track), and `splitAt`, a point's unix ms, to also split the
- * activity there (§4.7.8); the server marks the activity — both pieces, for a split — pending
+ * track there (§4.7.8); the server marks the track — both pieces, for a split — pending
  * and reprocesses it in the background, so this resolves as soon as that's queued (`202`).
  * Throws `SplitHidesPartError` for a split the user hasn't yet agreed may hide a part.
  */
-export async function saveActivityTrackEdit(
-  activityId: string,
-  edit: TrackEdit | null,
+export async function saveTrackRouteEdit(
+  trackId: string,
+  edit: RouteEdit | null,
   splitAt: number | null = null,
   allowHidden = false,
 ): Promise<void> {
-  const res = await apiFetch(`/activities/${encodeURIComponent(activityId)}/track-edit`, {
+  const res = await apiFetch(`/activities/${encodeURIComponent(trackId)}/track-edit`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: jsonBody<'/activities/{id}/track-edit', 'post'>(splitAt === null ? { edit } : { edit, split_at: splitAt, ...(allowHidden ? { allow_hidden: true } : {}) }),
@@ -582,9 +582,9 @@ export async function listPrivateLocations(signal?: AbortSignal): Promise<Privat
   return ((await res.json()) as ResponseJson<'/private-locations', 'get'>).map(toPrivateLocation);
 }
 
-/** How many of the account's activities its Private locations hide entirely: the rows the list
+/** How many of the account's tracks its Private locations hide entirely: the rows the list
  *  marks private, counted across the whole account. */
-export async function hiddenActivityCount(signal?: AbortSignal): Promise<number> {
+export async function hiddenTrackCount(signal?: AbortSignal): Promise<number> {
   const res = await apiFetch(`/private-locations/hidden`, {
     ...(signal ? { signal } : {}),
   });
@@ -595,9 +595,9 @@ export async function hiddenActivityCount(signal?: AbortSignal): Promise<number>
 }
 
 /**
- * Creates (no `id`) or replaces a Private location. The server marks every activity the old or
+ * Creates (no `id`) or replaces a Private location. The server marks every track the old or
  * new circle could clip as pending and reprocesses them in the background, so this resolves as
- * soon as that's queued — the Activity List's Pending badges show the rest.
+ * soon as that's queued — the Track List's Pending badges show the rest.
  */
 export async function savePrivateLocation(input: PrivateLocationInput, id?: string): Promise<PrivateLocation> {
   const res = await apiFetch(`/private-locations${id ? `/${encodeURIComponent(id)}` : ''}`, {
@@ -621,29 +621,29 @@ export async function deletePrivateLocation(id: string): Promise<void> {
   }
 }
 
-/** A Story's joint statistics, or one activity type's share of them (`SPEC.md` FR-13.1). */
-export interface StoryTotals {
+/** A Trip's joint statistics, or one track type's share of them (`SPEC.md` FR-13.1). */
+export interface TripTotals {
   count: number;
   distanceMeters: number;
   movingSeconds: number;
   elapsedSeconds: number;
 }
 
-/** A hand-picked, private set of the account's activities (`SPEC.md` FR-13). `description` is
+/** A hand-picked, private set of the account's tracks (`SPEC.md` FR-13). `description` is
  *  `''` when unset. */
-export interface Story {
+export interface Trip {
   id: string;
   name: string;
   description: string;
-  /** Who sent the copy this Story came from (FR-13.8) — their name or email address — while the
-   *  Story it was copied from still exists; null for the account's own. */
+  /** Who sent the copy this Trip came from (FR-13.8) — their name or email address — while the
+   *  Trip it was copied from still exists; null for the account's own. */
   from: string | null;
-  /** Every member, earliest activity first. */
-  activityIds: string[];
-  stats: StoryTotals & { byType: (StoryTotals & { activityType: string })[] };
+  /** Every member, earliest track first. */
+  trackIds: string[];
+  stats: TripTotals & { byType: (TripTotals & { activityType: string })[] };
 }
 
-function toStoryTotals(body: Omit<Schema<'Story'>['stats'], 'by_type'>): StoryTotals {
+function toTripTotals(body: Omit<Schema<'Story'>['stats'], 'by_type'>): TripTotals {
   return {
     count: body.count,
     distanceMeters: body.distance_meters,
@@ -652,42 +652,42 @@ function toStoryTotals(body: Omit<Schema<'Story'>['stats'], 'by_type'>): StoryTo
   };
 }
 
-function toStory(body: Schema<'Story'>): Story {
+function toTrip(body: Schema<'Story'>): Trip {
   return {
     id: body.id,
     name: body.name,
     description: body.description ?? '',
     from: body.from,
-    activityIds: body.activity_ids,
+    trackIds: body.activity_ids,
     stats: {
-      ...toStoryTotals(body.stats),
+      ...toTripTotals(body.stats),
       byType: body.stats.by_type.map((t) => {
         rememberTypeLabels([[t.activity_type, t.label]]);
-        return { ...toStoryTotals(t), activityType: t.activity_type };
+        return { ...toTripTotals(t), activityType: t.activity_type };
       }),
     },
   };
 }
 
 
-/** Thrown by `getStory` for a Story that doesn't exist or isn't this account's — the two are
+/** Thrown by `getTrip` for a Trip that doesn't exist or isn't this account's — the two are
  *  one `404` on purpose (`SPEC.md` FR-13.5). */
-export class StoryNotFoundError extends Error {}
+export class TripNotFoundError extends Error {}
 
 /** `GET /v1/stories/{id}`. */
-export async function getStory(id: string, signal?: AbortSignal): Promise<Story> {
+export async function getTrip(id: string, signal?: AbortSignal): Promise<Trip> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     ...(signal ? { signal } : {}),
   });
-  if (res.status === 404) throw new StoryNotFoundError(t('stories.not_found'));
+  if (res.status === 404) throw new TripNotFoundError(t('trips.not_found'));
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toStory((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Story'>);
 }
 
 /** `PATCH /v1/stories/{id}` — name and description, both every time. */
-export async function updateStory(id: string, input: { name: string; description: string }): Promise<Story> {
+export async function updateTrip(id: string, input: { name: string; description: string }): Promise<Trip> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -696,22 +696,22 @@ export async function updateStory(id: string, input: { name: string; description
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toStory((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Story'>);
 }
 
-/** `GET /v1/stories` — every Story of the account, newest first. */
-export async function listStories(signal?: AbortSignal): Promise<Story[]> {
+/** `GET /v1/stories` — every Trip of the account, newest first. */
+export async function listTrips(signal?: AbortSignal): Promise<Trip[]> {
   const res = await apiFetch(`/stories`, {
     ...(signal ? { signal } : {}),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return ((await res.json()) as ResponseJson<'/stories', 'get'>).stories.map(toStory);
+  return ((await res.json()) as ResponseJson<'/stories', 'get'>).stories.map(toTrip);
 }
 
-/** `DELETE /v1/stories/{id}` — the Story only; its activities stay. */
-export async function deleteStory(id: string): Promise<void> {
+/** `DELETE /v1/stories/{id}` — the Trip only; its tracks stay. */
+export async function deleteTrip(id: string): Promise<void> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}`, {
     method: 'DELETE',
   });
@@ -720,35 +720,35 @@ export async function deleteStory(id: string): Promise<void> {
   }
 }
 
-/** `POST /v1/stories/{id}/activities` — puts them in the Story; any already there stay as they are. */
-export async function addStoryActivities(id: string, activityIds: string[]): Promise<Story> {
+/** `POST /v1/stories/{id}/activities` — puts them in the Trip; any already there stay as they are. */
+export async function addTripTracks(id: string, trackIds: string[]): Promise<Trip> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/stories/{id}/activities', 'post'>({ activity_ids: activityIds }),
+    body: jsonBody<'/stories/{id}/activities', 'post'>({ activity_ids: trackIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toStory((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Story'>);
 }
 
-/** `DELETE /v1/stories/{id}/activities` — takes them out of the Story; the activities stay. */
-export async function removeStoryActivities(id: string, activityIds: string[]): Promise<Story> {
+/** `DELETE /v1/stories/{id}/activities` — takes them out of the Trip; the tracks stay. */
+export async function removeTripTracks(id: string, trackIds: string[]): Promise<Trip> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/activities`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/stories/{id}/activities', 'delete'>({ activity_ids: activityIds }),
+    body: jsonBody<'/stories/{id}/activities', 'delete'>({ activity_ids: trackIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toStory((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Story'>);
 }
 
-/** `POST /v1/stories/{id}/send` — a copy of the Story to `email` (FR-13.7). Succeeds whether or
+/** `POST /v1/stories/{id}/send` — a copy of the Trip to `email` (FR-13.7). Succeeds whether or
  *  not the address has an account: the server never says. */
-export async function sendStory(id: string, email: string): Promise<void> {
+export async function sendTrip(id: string, email: string): Promise<void> {
   const res = await apiFetch(`/stories/${encodeURIComponent(id)}/send`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -759,29 +759,29 @@ export async function sendStory(id: string, email: string): Promise<void> {
   }
 }
 
-/** A copy of a Story someone sent the account, waiting to be accepted or declined (FR-13.7). */
-interface StorySend {
+/** A copy of a Trip someone sent the account, waiting to be accepted or declined (FR-13.7). */
+interface TripSend {
   id: string;
-  storyName: string;
+  tripName: string;
   /** The sender's name, or their email address when they've set none. */
   from: string;
-  activityCount: number;
+  trackCount: number;
 }
 
 /** A copy the account accepted that hasn't finished arriving. */
-interface StoryCopying {
-  storyName: string;
+interface TripCopying {
+  tripName: string;
   from: string;
 }
 
-export interface StoryInbox {
-  sends: StorySend[];
-  copying: StoryCopying[];
+export interface TripInbox {
+  sends: TripSend[];
+  copying: TripCopying[];
 }
 
 /** `GET /v1/story-sends` — the copies waiting for the account, newest first, and the accepted
  *  ones still being copied. */
-export async function listStorySends(signal?: AbortSignal): Promise<StoryInbox> {
+export async function listTripSends(signal?: AbortSignal): Promise<TripInbox> {
   const res = await apiFetch(`/story-sends`, {
     ...(signal ? { signal } : {}),
   });
@@ -790,39 +790,39 @@ export async function listStorySends(signal?: AbortSignal): Promise<StoryInbox> 
   }
   const body = (await res.json()) as ResponseJson<'/story-sends', 'get'>;
   return {
-    sends: body.sends.map((s) => ({ id: s.id, storyName: s.story_name, from: s.from, activityCount: s.activity_count })),
-    copying: body.copying.map((c) => ({ storyName: c.story_name, from: c.from })),
+    sends: body.sends.map((s) => ({ id: s.id, tripName: s.story_name, from: s.from, trackCount: s.activity_count })),
+    copying: body.copying.map((c) => ({ tripName: c.story_name, from: c.from })),
   };
 }
 
 /** `POST /v1/story-sends/{id}/accept` (accept) or `DELETE /v1/story-sends/{id}` (decline). */
-export async function answerStorySend(id: string, accept: boolean): Promise<void> {
+export async function answerTripSend(id: string, accept: boolean): Promise<void> {
   const res = await apiFetch(`/story-sends/${encodeURIComponent(id)}${accept ? '/accept' : ''}`, {
     method: accept ? 'POST' : 'DELETE',
   });
   // A copy its sender withdrew is gone: declining it is done, accepting it brings nothing.
-  if (accept && res.status === 404) throw new Error(t('stories.inbox_withdrawn'));
+  if (accept && res.status === 404) throw new Error(t('trips.inbox_withdrawn'));
   if (!deleteDone(res.status)) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
 }
 
-/** `POST /v1/stories` — a new Story holding `activityIds` from the start, in one request. */
-export async function createStory(input: { name: string; description: string; activityIds: string[] }): Promise<Story> {
+/** `POST /v1/stories` — a new Trip holding `trackIds` from the start, in one request. */
+export async function createTrip(input: { name: string; description: string; trackIds: string[] }): Promise<Trip> {
   const res = await apiFetch(`/stories`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/stories', 'post'>({ name: input.name, description: input.description, activity_ids: input.activityIds }),
+    body: jsonBody<'/stories', 'post'>({ name: input.name, description: input.description, activity_ids: input.trackIds }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
   }
-  return toStory((await res.json()) as Schema<'Story'>);
+  return toTrip((await res.json()) as Schema<'Story'>);
 }
 
 /**
  * `GET /v1/coverage/status` — whether the account still has an unfinished job that changes its
- * Fog (an upload not yet parsed, a track edit, a re-render). Polled after an upload or delete by
+ * Fog (an upload not yet parsed, a route edit, a re-render). Polled after an upload or delete by
  * `useCoverageRefresh.ts`, which refetches Fog once this reports nothing left.
  */
 export type CoverageStatus = ResponseJson<'/coverage/status', 'get'>;
@@ -876,15 +876,15 @@ export async function getSpotCaptures(signal?: AbortSignal, since?: string): Pro
   return ((await res.json()) as ResponseJson<'/spots/captures', 'get'>).captures;
 }
 
-/** One photo on an activity (FR-15), always with a place on its track (`routeAt`, a moment on
- *  it). `lon`/`lat` are null only for an activity with no track left at all. `url` and
+/** One photo on a track (FR-15), always with a place on its track (`routeAt`, a moment on
+ *  it). `lon`/`lat` are null only for a track with no route left at all. `url` and
  *  `thumbUrl` are API paths (`/v1/photos/…`) — callers prefix `API_BASE_URL`. */
 export interface Photo {
   id: string;
-  activityId: string;
+  trackId: string;
   takenAt: string | null;
   routeAt: string;
-  /** Its activity's zone, which `takenAt` and `routeAt` are shown in. */
+  /** Its track's zone, which `takenAt` and `routeAt` are shown in. */
   timezone: string;
   lon: number | null;
   lat: number | null;
@@ -898,7 +898,7 @@ export interface Photo {
 function toPhoto(b: Schema<'Photo'>): Photo {
   return {
     id: b.id,
-    activityId: b.activity_id,
+    trackId: b.activity_id,
     takenAt: b.taken_at,
     routeAt: b.route_at,
     timezone: b.timezone,
@@ -912,10 +912,11 @@ function toPhoto(b: Schema<'Photo'>): Photo {
   };
 }
 
-/** `GET /v1/photos` — one activity's photos, or every photo in a Story; placed ones in route
+/** `GET /v1/photos` — one track's photos, or every photo in a Trip; placed ones in route
  *  order, then unplaced ones. */
-export async function listPhotos(of: { activity: string } | { story: string }, signal?: AbortSignal): Promise<Photo[]> {
-  const params = new URLSearchParams(of);
+export async function listPhotos(of: { track: string } | { trip: string }, signal?: AbortSignal): Promise<Photo[]> {
+  // The API still names its parameters activity and story.
+  const params = new URLSearchParams('track' in of ? { activity: of.track } : { story: of.trip });
   const res = await apiFetch(`/photos?${params}`, {
     ...(signal ? { signal } : {}),
   });
@@ -939,11 +940,11 @@ interface PhotoExifFields {
 
 /** `POST /v1/photos/place` — where an upload of a photo with this EXIF would be placed (`routeAt`,
  *  RFC 3339), storing nothing; `PhotoNeedsPlaceError` when the server can't tell. */
-export async function checkPhotoPlace(activityId: string, exif: PhotoExifFields): Promise<{ routeAt: string }> {
+export async function checkPhotoPlace(trackId: string, exif: PhotoExifFields): Promise<{ routeAt: string }> {
   const res = await apiFetch(`/photos/place`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/photos/place', 'post'>({ activity_id: activityId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
+    body: jsonBody<'/photos/place', 'post'>({ activity_id: trackId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -958,13 +959,13 @@ export async function checkPhotoPlace(activityId: string, exif: PhotoExifFields)
  *  on the track it goes (`routeAt`, RFC 3339 — the placement check's answer or the user's), and
  *  its caption. */
 export async function uploadPhoto(
-  activityId: string,
+  trackId: string,
   photo: { file: Blob; thumb: Blob; exif: PhotoExifFields },
   routeAt?: string,
   caption?: string,
 ): Promise<Photo> {
   const form = new FormData();
-  form.set('activity_id', activityId);
+  form.set('activity_id', trackId);
   form.set('file', photo.file, 'photo');
   form.set('thumb', photo.thumb, 'thumb');
   const { takenAt, takenLocal, lat, lon } = photo.exif;

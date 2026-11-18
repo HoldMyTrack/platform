@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { ImagePlus, Pencil, Trash2, Undo2 } from 'lucide-react';
-import { API_BASE_URL, checkPhotoPlace, getActivityTrackMetrics, PhotoNeedsPlaceError, type Activity, type Photo } from '../api.ts';
+import { API_BASE_URL, checkPhotoPlace, getTrackRouteMetrics, PhotoNeedsPlaceError, type Track, type Photo } from '../api.ts';
 import { t } from '../i18n/index.ts';
 import type { PhotoMarkerItem, PhotoMarkerOverlay } from '../map/photos.ts';
 import { formatClockTime } from './format.ts';
 import { draftRows, waitingPhotos, type NewPhoto, type PhotoDraft } from './photoDraft.ts';
-import { fractionAt, photoTrack, pointAt, startFraction, type PhotoTrack, type PlaceAnchor } from './photoTrack.ts';
+import { fractionAt, photoRoute, pointAt, startFraction, type PhotoRoute, type PlaceAnchor } from './photoRoute.ts';
 import { OversizedPhotoError, preparePhoto, UnreadablePhotoError } from './photoPrep.ts';
 import { MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
 
@@ -13,7 +13,7 @@ import { MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
 const SLIDER_STEPS = 1000;
 
 interface PhotosTabProps {
-  activity: Activity;
+  track: Track;
   /** The saved photos, as the server has them. */
   photos: readonly Photo[];
   error: string | null;
@@ -31,7 +31,7 @@ interface PhotosTabProps {
 }
 
 /**
- * The Edit window's Photos tab (FR-15): the activity's photos as a list, each with Edit and
+ * The Edit window's Photos tab (FR-15): the track's photos as a list, each with Edit and
  * Delete, and Add photos. Nothing here is written until the window's Save; Cancel throws it all
  * away. The tab edits `draft` (photoDraft.ts), and the list and the map show the photos as Save
  * would leave them.
@@ -40,13 +40,13 @@ interface PhotosTabProps {
  * the server where it goes (`checkPhotoPlace`, which stores nothing); one it can't place waits at
  * the top of the list with a slider, starting just after the photo picked before it, until the
  * user puts it somewhere (Place here) or removes it. Edit opens the same slider on a photo, with
- * its caption. The slider walks the track as drawn (photoTrack.ts) and the photo moves along the
+ * its caption. The slider walks the track as drawn (photoRoute.ts) and the photo moves along the
  * map with it; a place is kept as the moment at that point.
  */
-export function PhotosTab({ activity, photos, error, draft, setDraft, active, busy, onPreparingChange, onOverlay }: PhotosTabProps) {
+export function PhotosTab({ track, photos, error, draft, setDraft, active, busy, onPreparingChange, onOverlay }: PhotosTabProps) {
   const input = useRef<HTMLInputElement>(null);
-  const [track, setTrack] = useState<PhotoTrack | null>(null);
-  const [trackError, setTrackError] = useState<string | null>(null);
+  const [route, setRoute] = useState<PhotoRoute | null>(null);
+  const [routeError, setRouteError] = useState<string | null>(null);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [failures, setFailures] = useState<string[]>([]);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -73,16 +73,16 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
 
   useEffect(() => {
     const controller = new AbortController();
-    getActivityTrackMetrics(activity.id, controller.signal)
+    getTrackRouteMetrics(track.id, controller.signal)
       .then((m) => {
-        if (m.points.length === 0) throw new Error(t('photos.no_track'));
-        setTrack(photoTrack(m.points.map((p) => ({ lon: p.lon, lat: p.lat, t: p.timeS }))));
+        if (m.points.length === 0) throw new Error(t('photos.no_route'));
+        setRoute(photoRoute(m.points.map((p) => ({ lon: p.lon, lat: p.lat, t: p.timeS }))));
       })
       .catch((err: unknown) => {
-        if (!controller.signal.aborted) setTrackError(err instanceof Error ? err.message : String(err));
+        if (!controller.signal.aborted) setRouteError(err instanceof Error ? err.message : String(err));
       });
     return () => controller.abort();
-  }, [activity.id]);
+  }, [track.id]);
 
   const sorted = useMemo(() => draftRows(photos, draft), [photos, draft]);
   // The list keeps its order while a row is open — re-sorting under a slider being dragged would
@@ -101,20 +101,20 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
   // A waiting photo's slider starts just after the photo picked before it — worked out when its
   // turn comes, since the one before may only just have been placed.
   useEffect(() => {
-    if (!waiting || !track || waitingAt?.key === waiting.key) return;
+    if (!waiting || !route || waitingAt?.key === waiting.key) return;
     const placed = new Map<string, number | null>();
-    for (const p of draft.added) if (p.routeAt !== null) placed.set(p.key, fractionAt(track, p.routeAt));
+    for (const p of draft.added) if (p.routeAt !== null) placed.set(p.key, fractionAt(route, p.routeAt));
     for (const key of removed.current) placed.set(key, null);
-    setWaitingAt({ key: waiting.key, fraction: startFraction(track, anchors.current.get(waiting.key) ?? null, placed, anchors.current) });
-  }, [waiting, track, waitingAt, draft.added]);
+    setWaitingAt({ key: waiting.key, fraction: startFraction(route, anchors.current.get(waiting.key) ?? null, placed, anchors.current) });
+  }, [waiting, route, waitingAt, draft.added]);
 
   // The map shows the photos as Save would leave them.
   useEffect(() => {
-    if (!active || !track) {
+    if (!active || !route) {
       onOverlay(null);
       return;
     }
-    const at = (routeAt: number) => pointAt(track, fractionAt(track, routeAt));
+    const at = (routeAt: number) => pointAt(route, fractionAt(route, routeAt));
     const upserts: PhotoMarkerItem[] = [];
     for (const row of rows) {
       if (row.kind === 'saved' && (row.deleted || draft.changed[row.id] === undefined)) continue;
@@ -123,11 +123,11 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
       upserts.push({ id: row.id, lon: p.lon, lat: p.lat, thumbSrc, caption: row.caption || null });
     }
     if (waiting && waitingAt?.key === waiting.key) {
-      const p = pointAt(track, waitingAt.fraction);
+      const p = pointAt(route, waitingAt.fraction);
       upserts.push({ id: waiting.key, lon: p.lon, lat: p.lat, thumbSrc: waiting.thumbSrc, caption: null });
     }
     onOverlay({ upserts, hidden: [...draft.deleted], activeId: waiting?.key ?? editingId });
-  }, [active, track, rows, draft, waiting, waitingAt, editingId, onOverlay]);
+  }, [active, route, rows, draft, waiting, waitingAt, editingId, onOverlay]);
   useEffect(() => () => onOverlay(null), [onOverlay]);
 
   async function add(files: File[]) {
@@ -144,7 +144,7 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
         let routeAt: number | null = null;
         const key = `new-${Date.now()}-${i}`;
         try {
-          routeAt = Date.parse((await checkPhotoPlace(activity.id, prepared.exif)).routeAt) / 1000;
+          routeAt = Date.parse((await checkPhotoPlace(track.id, prepared.exif)).routeAt) / 1000;
         } catch (err) {
           if (!(err instanceof PhotoNeedsPlaceError)) throw err;
           anchors.current.set(key, previous);
@@ -199,19 +199,19 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
   }
 
   function slider(fraction: number, onChange: (fraction: number) => void) {
-    const at = track ? pointAt(track, fraction) : null;
+    const at = route ? pointAt(route, fraction) : null;
     return (
       <label className="photos-tab__slider">
         <span className="photos-tab__slider-label">
           {t('photos.slider')}
-          {at && <span className="photos-tab__slider-time">{formatClockTime(at.t * 1000, activity.timezone)}</span>}
+          {at && <span className="photos-tab__slider-time">{formatClockTime(at.t * 1000, track.timezone)}</span>}
         </span>
         <input
           type="range"
           min={0}
           max={SLIDER_STEPS}
           value={Math.round(fraction * SLIDER_STEPS)}
-          disabled={!track || busy}
+          disabled={!route || busy}
           onChange={(event) => onChange(Number(event.target.value) / SLIDER_STEPS)}
           data-testid="photo-slider"
         />
@@ -234,7 +234,7 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
   return (
     <div className="photos-tab" data-testid="photos-tab">
       <div className="photos-tab__head">
-        <button type="button" className="edit-track__btn" disabled={picking || busy} onClick={() => input.current?.click()} data-testid="photo-add">
+        <button type="button" className="edit-route__btn" disabled={picking || busy} onClick={() => input.current?.click()} data-testid="photo-add">
           <ImagePlus size={16} aria-hidden="true" />
           {t('photos.add')}
         </button>
@@ -258,7 +258,7 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
         )}
       </div>
 
-      {(error || trackError) && <p className="edit-track__error">{error ?? trackError}</p>}
+      {(error || routeError) && <p className="edit-route__error">{error ?? routeError}</p>}
       {failures.length > 0 && (
         <ul className="photos-tab__failures" aria-live="polite">
           {failures.map((f, i) => (
@@ -279,15 +279,15 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
           {waitingAt?.key === waiting.key && slider(waitingAt.fraction, (fraction) => setWaitingAt({ key: waiting.key, fraction }))}
           <div className="photos-tab__actions">
             {waitingList.length > 1 && <span className="photos-tab__meta">{t('photos.more_waiting', { n: waitingList.length - 1 })}</span>}
-            <span className="edit-track__spacer" aria-hidden="true" />
-            <button type="button" className="edit-track__btn" disabled={busy} onClick={() => removeNew(waiting)}>
+            <span className="edit-route__spacer" aria-hidden="true" />
+            <button type="button" className="edit-route__btn" disabled={busy} onClick={() => removeNew(waiting)}>
               {t('photos.remove')}
             </button>
             <button
               type="button"
-              className="edit-track__btn edit-track__btn--primary"
-              disabled={busy || !track || waitingAt?.key !== waiting.key}
-              onClick={() => track && waitingAt && updateNew(waiting.key, { routeAt: pointAt(track, waitingAt.fraction).t })}
+              className="edit-route__btn edit-route__btn--primary"
+              disabled={busy || !route || waitingAt?.key !== waiting.key}
+              onClick={() => route && waitingAt && updateNew(waiting.key, { routeAt: pointAt(route, waitingAt.fraction).t })}
               data-testid="photo-place-here"
             >
               {t('photos.place_here')}
@@ -313,7 +313,7 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
                 <span className="photos-tab__text">
                   <span className="photos-tab__title">{row.caption || t('photos.photo_n', { n: i + 1 })}</span>
                   <span className="photos-tab__meta">
-                    {formatClockTime(row.routeAt * 1000, activity.timezone)}
+                    {formatClockTime(row.routeAt * 1000, track.timezone)}
                     {row.kind === 'new' && <span className="photos-tab__badge">{t('photos.new')}</span>}
                     {changed && !deleted && <span className="photos-tab__badge">{t('photos.changed')}</span>}
                     {deleted && <span className="photos-tab__badge photos-tab__badge--deleted">{t('photos.deleted')}</span>}
@@ -339,7 +339,7 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
                       aria-label={t('photos.edit')}
                       title={t('photos.edit')}
                       aria-pressed={isEditing}
-                      disabled={!track || busy}
+                      disabled={!route || busy}
                       onClick={() => setEditingId(isEditing ? null : row.id)}
                       data-testid="photo-edit"
                     >
@@ -359,15 +359,15 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
                   </>
                 )}
               </div>
-              {isEditing && track && (
+              {isEditing && route && (
                 <>
                   {slider(
-                    slidTo?.id === row.id && pointAt(track, slidTo.fraction).t === row.routeAt
+                    slidTo?.id === row.id && pointAt(route, slidTo.fraction).t === row.routeAt
                       ? slidTo.fraction
-                      : fractionAt(track, row.routeAt),
+                      : fractionAt(route, row.routeAt),
                     (fraction) => {
                       setSlidTo({ id: row.id, fraction });
-                      const routeAt = pointAt(track, fraction).t;
+                      const routeAt = pointAt(route, fraction).t;
                       if (row.kind === 'new') updateNew(row.id, { routeAt });
                       else changeSaved(row.photo, { routeAt });
                     },
@@ -387,8 +387,8 @@ export function PhotosTab({ activity, photos, error, draft, setDraft, active, bu
                     data-testid="photo-caption"
                   />
                   <div className="photos-tab__actions">
-                    <span className="edit-track__spacer" aria-hidden="true" />
-                    <button type="button" className="edit-track__btn" onClick={() => setEditingId(null)} data-testid="photo-done">
+                    <span className="edit-route__spacer" aria-hidden="true" />
+                    <button type="button" className="edit-route__btn" onClick={() => setEditingId(null)} data-testid="photo-done">
                       {t('photos.done')}
                     </button>
                   </div>

@@ -1,20 +1,20 @@
 import { useRef, type ReactNode } from 'react';
 import { ChevronRight, FileUp, Lock, Route, Smartphone, Watch } from 'lucide-react';
-import { StoryInboxItems } from './StoryInboxItems.tsx';
-import type { StoryInboxState } from './useStoryInbox.ts';
+import { TripInboxItems } from './TripInboxItems.tsx';
+import type { TripInboxState } from './useTripInbox.ts';
 import { useImportsInFlight } from './useImportsInFlight.ts';
 import { t, tn } from '../i18n/index.ts';
 
 const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=dev.holdmytrack.android';
 
 /**
- * The Activities tab of an account with no activities (docs/SPEC.md FR-5.10; firstRun.ts says
+ * The Tracks tab of an account with no tracks (docs/SPEC.md FR-5.10; firstRun.ts says
  * when): the ways to bring some in, named by where people record rather than by file format,
- * with any Story copy waiting for the account first, since accepting one brings activities too.
+ * with any Trip copy waiting for the account first, since accepting one brings tracks too.
  * The Strava and Garmin rows open their export guides; Files hands its pick to the header's
  * Upload menu as a drop on the map does (`hmt:upload-files`), so the menu shows its progress.
  */
-export function FirstRunPanel({ inbox, onPrivacy }: { inbox: StoryInboxState; onPrivacy: () => void }) {
+export function FirstRunPanel({ inbox, onPrivacy }: { inbox: TripInboxState; onPrivacy: () => void }) {
   const inFlight = useImportsInFlight();
   const fileInput = useRef<HTMLInputElement>(null);
   const hasInbox = inbox.sends.length > 0 || inbox.copying.length > 0;
@@ -30,7 +30,7 @@ export function FirstRunPanel({ inbox, onPrivacy }: { inbox: StoryInboxState; on
       <p className="first-run__lead">{t('first_run.lead')}</p>
       {hasInbox && (
         <ul className="first-run__inbox">
-          <StoryInboxItems inbox={inbox} />
+          <TripInboxItems inbox={inbox} />
         </ul>
       )}
       <ul className="first-run__sources">

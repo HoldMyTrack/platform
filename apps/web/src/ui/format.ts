@@ -1,11 +1,11 @@
 import type { UnitSystem } from './units.ts';
 import { lang, t } from '../i18n/index.ts';
-import { typeLabel } from './activityTypes.ts';
+import { typeLabel } from './trackTypes.ts';
 import { distanceParts, durationParts, totalDistanceParts, type DistanceParts } from './formatParts.ts';
-import { activityTimeZone } from './timeZone.ts';
+import { trackTimeZone } from './timeZone.ts';
 
 /**
- * Display formatting for real activity rows and totals. Kept apart from api.ts so the
+ * Display formatting for real track rows and totals. Kept apart from api.ts so the
  * transport layer stays about the wire shape and nothing else, and apart from units.ts so
  * this stays plain, React-free presentation logic — `system` is just a parameter here, not
  * something this file resolves for itself.
@@ -47,16 +47,16 @@ export function metersToFeet(meters: number): number {
 }
 
 /**
- * A date and time of an activity's, in `timeZone`, the zone it was recorded in
- * (IMPLEMENTATION.md §4.30): a row's fallback primary line for an activity with no name set
- * (ActivitiesPanel.tsx prefers `activity.name` when present — §4.7), and a
+ * A date and time of a track's, in `timeZone`, the zone it was recorded in
+ * (IMPLEMENTATION.md §4.30): a row's fallback primary line for a track with no name set
+ * (TracksPanel.tsx prefers `track.name` when present — §4.7), and a
  * photo's capture time. The full datetime, not a bare date, since it's carrying the whole
  * "when" on its own.
  */
 export function formatStartedAt(iso: string, timeZone: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso;
-  const zone = activityTimeZone(timeZone);
+  const zone = trackTimeZone(timeZone);
   return cached(`started|${zone ?? ''}`, () =>
     new Intl.DateTimeFormat(lang, { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', ...(zone !== undefined && { timeZone: zone }) }),
   ).format(d);
@@ -77,10 +77,10 @@ function cached<F extends Intl.DateTimeFormat | Intl.NumberFormat>(key: string, 
   return f;
 }
 
-/** The time of day of `ms` (epoch milliseconds) in `timeZone`, an activity's own: the times of
+/** The time of day of `ms` (epoch milliseconds) in `timeZone`, a track's own: the times of
  *  its points and photos in the Edit window. */
 export function formatClockTime(ms: number, timeZone: string): string {
-  const zone = activityTimeZone(timeZone);
+  const zone = trackTimeZone(timeZone);
   return cached(`clock|${zone ?? ''}`, () => new Intl.DateTimeFormat(lang, { hour: '2-digit', minute: '2-digit', ...(zone !== undefined && { timeZone: zone }) })).format(ms);
 }
 
@@ -117,7 +117,7 @@ export function formatDuration(seconds: number | null): string {
 
 /**
  * The range-summary numbers (§4.7's `GET /v1/activities/summary`), rounded for a one-line
- * stats display. These are totals, so they are never null — a sum over no activities is 0.
+ * stats display. These are totals, so they are never null — a sum over no tracks is 0.
  *
  * Distance keeps one decimal below 10 (km or mi): rounding a real but small history to a
  * flat "0 km" reads as broken, where "0.5 km" reads as a short one.
@@ -126,7 +126,7 @@ export function formatTotalDistance(meters: number, system: UnitSystem): string 
   return withUnit(totalDistanceParts(meters, system));
 }
 
-/** "Jun 3, 2026" in the page's language — the Dates filter's labels (ActivityFilters.tsx). Takes
+/** "Jun 3, 2026" in the page's language — the Dates filter's labels (TrackFilters.tsx). Takes
  *  a YYYY-MM-DD day, read as UTC so the label is exactly that calendar day in every browser time
  *  zone. */
 export function formatShortDate(date: string): string {
@@ -140,7 +140,7 @@ export function formatFilterDate(date: string, today: string): string {
   return new Date(`${date}T00:00:00Z`).toLocaleDateString(lang, { day: 'numeric', month: 'short', ...(!sameYear && { year: 'numeric' }), timeZone: 'UTC' });
 }
 
-/** An `activity_type`'s name, as the server gave it (activityTypes.ts). */
-export function formatActivityType(activityType: string): string {
+/** An `activity_type`'s name, as the server gave it (trackTypes.ts). */
+export function formatTrackType(activityType: string): string {
   return typeLabel(activityType);
 }

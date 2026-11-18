@@ -5,7 +5,7 @@
 // in CI: `npm run gen:rule-cases`. The same seed always writes the same cases.
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { rules } from '../tests/clientRuleAdapters.mjs';
-import { foldEdit } from '../src/ui/editTrackOps.ts';
+import { foldEdit } from '../src/ui/editRouteOps.ts';
 
 const dir = new URL('../../../testdata/client-rules/', import.meta.url);
 const COUNT = 200;
@@ -66,7 +66,7 @@ function draw(random) {
     }
     return out;
   };
-  /** Ascending, distinct activity-days, starting near 2026-09-01. */
+  /** Ascending, distinct track-days, starting near 2026-09-01. */
   const days = (min, max) => {
     const out = [];
     let day = Date.UTC(2026, 8, int(1, 28));

@@ -42,7 +42,7 @@ fun kindIcon(kind: ActivityKind): Int = when (kind) {
 }
 
 /**
- * One activity row over `item_activity_row` — the web's `ActivityRow.tsx`, shared the same way
+ * One activity row over `item_activity_row` — the web's `TrackRow.tsx`, shared the same way
  * by the Activities tab and an open Story's rows on the Stories tab ([StoriesTab]). The title
  * and the "[date ·] distance · duration · type" line, dimmed with a Pending or Hidden badge,
  * and a Story badge for the Stories it's in — all but [openStoryId]'s, since every row under

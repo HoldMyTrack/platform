@@ -94,9 +94,9 @@ test('the one menu names a Custom size or a preset, and reads back the same choi
   assert.equal(choiceValue('custom', '2k'), 'custom-2k');
   const presets = [{ id: 'instagram-story', group: 'Instagram', row: 'Story', widthPx: 1080, heightPx: 1920 }];
   assert.deepEqual(parseChoice('custom-2k', presets), { preset: 'custom', customSize: '2k' });
-  const story = parseChoice('instagram-story', presets);
-  assert.equal(story.preset.id, 'instagram-story');
-  assert.equal(choiceValue(story.preset, 'hd'), 'instagram-story');
+  const trip = parseChoice('instagram-story', presets);
+  assert.equal(trip.preset.id, 'instagram-story');
+  assert.equal(choiceValue(trip.preset, 'hd'), 'instagram-story');
   assert.equal(parseChoice('custom-8k', presets), null);
   assert.equal(parseChoice('custom', presets), null);
 });

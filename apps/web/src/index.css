@@ -146,7 +146,7 @@ body {
 }
 
 /* ModalDialog.tsx's shell, sized for a short title and message; StoryDialog and SendCopyDialog
-   widen it with .story-dialog. The red confirm button is ConfirmDialog's, tuned for its Delete
+   widen it with .trip-dialog. The red confirm button is ConfirmDialog's, tuned for its Delete
    (§4.7.5). */
 .confirm-dialog {
   width: min(24rem, calc(100vw - 40px));
@@ -200,23 +200,23 @@ body {
   cursor: default;
 }
 
-/* StoryDialog.tsx — ConfirmDialog's card, a little wider for its two fields. */
-.story-dialog {
+/* TripDialog.tsx — ConfirmDialog's card, a little wider for its two fields. */
+.trip-dialog {
   width: min(28rem, calc(100vw - 40px));
 }
 
-.story-dialog .settings-page__section {
+.trip-dialog .settings-page__section {
   margin-bottom: var(--fm-space-12);
 }
 
 /* A permanent left sidebar now (docs/UI/main-screen-v2.png), not a dropdown floating over
-   the map — there is always at least one activity to show once anything's been uploaded, so
+   the map — there is always at least one track to show once anything's been uploaded, so
    there was nothing to gain by hiding the list behind an open/close toggle. Width is inline
-   style now (ActivitiesPanel.tsx's own `panelWidth` state, draggable — see the resize handle
+   style now (TracksPanel.tsx's own `panelWidth` state, draggable — see the resize handle
    below), not this fixed 320px — a full "Sep 11, 2026, 09:00 AM" title plus its TYPE label
    was clipping at that width, and a fixed default couldn't fit every row either. `position:
    relative` is for the handle, which is positioned against this element, not the viewport. */
-.activities-panel {
+.tracks-panel {
   position: relative;
   flex: none;
   width: var(--panel-width);
@@ -231,11 +231,11 @@ body {
    it's actually easy to grab, but not so wide it eats into the map underneath. Transparent
    until hovered, so it doesn't read as a visible UI element sitting on top of the map when
    the pointer isn't there. */
-.activities-panel__resize-handle {
+.tracks-panel__resize-handle {
   position: absolute;
   top: 0;
   bottom: 0;
-  /* Fully inside the panel's own box, not straddling its edge — `.activities-panel` has
+  /* Fully inside the panel's own box, not straddling its edge — `.tracks-panel` has
      `overflow: hidden` for its scrolling list, which clips (and makes unclickable) anything
      positioned outside that box, which a `right: -3px` offset used to do. */
   right: 0;
@@ -245,18 +245,18 @@ body {
   z-index: 1;
 }
 
-.activities-panel__resize-handle:hover,
-.activities-panel__resize-handle:active {
+.tracks-panel__resize-handle:hover,
+.tracks-panel__resize-handle:active {
   background: rgb(var(--fm-accent-rgb) / 35%);
 }
 
-/* The panel's tab strip (ActivitiesPanel.tsx: Activities | Stories | Privacy), and on a phone the
+/* The panel's tab strip (TracksPanel.tsx: Tracks | Trips | Privacy), and on a phone the
    sheet's chevron at its end. Each tab keeps the serif heading look the panel title had before
    there were two; the inactive one is just dimmed, and the active one carries an accent
    underline like the other tab strips here. `flex: none`: the tabs' own `overflow-x` would
    otherwise let the panel's column squeeze the row down to nothing, as the phone's short
    collapsed sheet did. */
-.activities-panel__head {
+.tracks-panel__head {
   flex: none;
   display: flex;
   align-items: center;
@@ -267,8 +267,8 @@ body {
 }
 
 /* Tabs don't always fit a narrow panel or a phone, Russian's least of all, so the strip scrolls
-   sideways rather than widening the panel; ActivitiesPanel.tsx keeps the selected tab in view. */
-.activities-panel__tabs {
+   sideways rather than widening the panel; TracksPanel.tsx keeps the selected tab in view. */
+.tracks-panel__tabs {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -278,18 +278,18 @@ body {
   scrollbar-width: none;
 }
 
-.activities-panel__tabs::-webkit-scrollbar {
+.tracks-panel__tabs::-webkit-scrollbar {
   display: none;
 }
 
 /* Hidden at desktop width — the phone's bottom sheet alone has anything to expand. */
-.activities-panel__sheet-toggle {
+.tracks-panel__sheet-toggle {
   display: none;
 }
 
-/* The Stories tab (StoriesTab.tsx, FR-13.6): one scrolling list of folders, one of them open
-   with its activities inside, and the open Story's numbers pinned below in the footer. */
-.stories-tab {
+/* The Trips tab (TripsTab.tsx, FR-13.6): one scrolling list of folders, one of them open
+   with its tracks inside, and the open Trip's numbers pinned below in the footer. */
+.trips-tab {
   flex: 1;
   min-height: 0;
   list-style: none;
@@ -299,18 +299,18 @@ body {
   border-top: 1px solid rgb(var(--fm-ink-rgb) / 8%);
 }
 
-.stories-tab__story {
+.trips-tab__trip {
   border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
 }
 
-.stories-tab__folder {
+.trips-tab__folder {
   display: flex;
   align-items: center;
   gap: var(--fm-space-6);
   padding: var(--fm-space-6) var(--fm-space-16) var(--fm-space-6) var(--fm-space-10);
 }
 
-.stories-tab__toggle {
+.trips-tab__toggle {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -326,23 +326,23 @@ body {
 }
 
 /* The Play triangle points right while the list is folded and down while it shows; the open
-   Story's is accent-coloured either way. */
-.stories-tab__chevron {
+   Trip's is accent-coloured either way. */
+.trips-tab__chevron {
   flex: none;
   fill: currentColor;
   color: rgb(var(--fm-ink-rgb) / 68%);
   transition: transform 150ms ease;
 }
 
-.stories-tab__story--open .stories-tab__chevron {
+.trips-tab__trip--open .trips-tab__chevron {
   color: var(--fm-accent-strong);
 }
 
-.stories-tab__story--expanded .stories-tab__chevron {
+.trips-tab__trip--expanded .trips-tab__chevron {
   transform: rotate(90deg);
 }
 
-.stories-tab__name {
+.trips-tab__name {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -352,24 +352,24 @@ body {
   font-weight: var(--fm-weight-semibold);
 }
 
-/* A row's own actions, on lists without checkboxes (a Story folder's pencil, send and trash; a
+/* A row's own actions, on lists without checkboxes (a Trip folder's pencil, send and trash; a
    Private location's pencil and trash), show on hover and for keyboard focus; the `hover: none`
    query at the end keeps them visible on a touch screen. A list with checkboxes
-   acts from its header toolbar instead (ActivitiesToolbar.tsx). */
-.activities-panel__row-action {
+   acts from its header toolbar instead (TracksToolbar.tsx). */
+.tracks-panel__row-action {
   opacity: 0;
 }
 
-.stories-tab__folder:hover .activities-panel__row-action,
-.stories-tab__folder:focus-within .activities-panel__row-action,
-.activities-panel__row:hover .activities-panel__row-action,
-.activities-panel__row:focus-within .activities-panel__row-action {
+.trips-tab__folder:hover .tracks-panel__row-action,
+.trips-tab__folder:focus-within .tracks-panel__row-action,
+.tracks-panel__row:hover .tracks-panel__row-action,
+.tracks-panel__row:focus-within .tracks-panel__row-action {
   opacity: 1;
 }
 
 /* A copy someone sent, waiting at the top of the tab to be accepted or declined (FR-13.7), and
    one accepted and still arriving. */
-.stories-tab__inbox {
+.trips-tab__inbox {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -379,33 +379,33 @@ body {
   background: rgb(var(--fm-accent-rgb) / 8%);
 }
 
-.stories-tab__inbox-text {
+.trips-tab__inbox-text {
   flex: 1 1 12rem;
   margin: 0;
   font-size: var(--fm-text-md);
   overflow-wrap: anywhere;
 }
 
-.stories-tab__inbox-count {
+.trips-tab__inbox-count {
   color: var(--fm-ink-secondary);
 }
 
-.stories-tab__inbox-actions {
+.trips-tab__inbox-actions {
   display: flex;
   gap: var(--fm-space-6);
 }
 
-.stories-tab__inbox-actions button {
+.trips-tab__inbox-actions button {
   padding: var(--fm-space-6) var(--fm-space-12);
   font-size: var(--fm-text-md);
 }
 
-.stories-tab__inbox--copying .stories-tab__inbox-text {
+.trips-tab__inbox--copying .trips-tab__inbox-text {
   color: var(--fm-ink-secondary);
 }
 
-/* Who sent the copy a Story came from (FR-13.8). */
-.stories-tab__from {
+/* Who sent the copy a Trip came from (FR-13.8). */
+.trips-tab__from {
   margin: 0;
   padding: 0 var(--fm-space-16) var(--fm-space-4) 36px;
   font-size: var(--fm-text-sm);
@@ -424,11 +424,11 @@ body {
   overflow-wrap: anywhere;
 }
 
-.stories-tab__body {
+.trips-tab__body {
   padding-bottom: var(--fm-space-6);
 }
 
-.stories-tab__description {
+.trips-tab__description {
   margin: 0;
   padding: 0 var(--fm-space-16) var(--fm-space-8) 36px;
   font-size: var(--fm-text-md);
@@ -437,7 +437,7 @@ body {
   overflow-wrap: anywhere;
 }
 
-.stories-tab__rows {
+.trips-tab__rows {
   list-style: none;
   margin: 0;
   padding: 0;
@@ -445,45 +445,45 @@ body {
 }
 
 /* Set in under the folder's name, which is what makes them its contents. */
-.stories-tab__rows .activities-panel__row {
+.trips-tab__rows .tracks-panel__row {
   padding-left: 36px;
 }
 
-.stories-tab__rows .activities-panel__row:last-child {
+.trips-tab__rows .tracks-panel__row:last-child {
   border-bottom: 0;
 }
 
-/* Two classes, to win over .activities-panel__footer's row layout further down. */
-.activities-panel__footer.stories-tab__stats {
+/* Two classes, to win over .tracks-panel__footer's row layout further down. */
+.tracks-panel__footer.trips-tab__stats {
   flex-direction: column;
   align-items: flex-start;
   gap: var(--fm-space-4);
   text-align: left;
 }
 
-.stories-tab__stats-line {
+.trips-tab__stats-line {
   margin: 0;
   font-size: var(--fm-text-md);
   font-weight: var(--fm-weight-semibold);
 }
 
-.stories-tab__types {
+.trips-tab__types {
   border-collapse: collapse;
   font-size: var(--fm-text-sm);
   color: rgb(var(--fm-ink-rgb) / 70%);
 }
 
-.stories-tab__types th {
+.trips-tab__types th {
   padding: 1px var(--fm-space-12) 1px 0;
   font-weight: var(--fm-weight-regular);
   text-align: left;
 }
 
-.stories-tab__types td {
+.trips-tab__types td {
   padding: 1px 0;
 }
 
-.activities-panel__tab {
+.tracks-panel__tab {
   flex: none;
   display: flex;
   align-items: center;
@@ -497,21 +497,21 @@ body {
   --tab-opacity: 0.45;
 }
 
-.activities-panel__tab:hover {
+.tracks-panel__tab:hover {
   --tab-opacity: 0.75;
 }
 
-.activities-panel__tab[aria-selected='true'] {
+.tracks-panel__tab[aria-selected='true'] {
   border-bottom-color: var(--fm-accent);
   --tab-opacity: 1;
 }
 
 /* On the tab's contents, not the tab, so a waiting badge can stay at full strength. */
-.activities-panel__tab > * {
+.tracks-panel__tab > * {
   opacity: var(--tab-opacity);
 }
 
-.activities-panel__heading-text {
+.tracks-panel__heading-text {
   font-family: var(--fm-font-serif);
   font-weight: var(--fm-weight-semibold);
   font-size: var(--fm-text-xl);
@@ -520,7 +520,7 @@ body {
   color: var(--fm-ink);
 }
 
-.activities-panel__badge {
+.tracks-panel__badge {
   background: rgb(var(--fm-accent-rgb) / 14%);
   color: var(--fm-accent-strong);
   border-radius: var(--fm-radius-sm);
@@ -529,14 +529,14 @@ body {
   font-weight: var(--fm-weight-bold);
 }
 
-/* Copies of Stories waiting to be answered (FR-13.7): filled, and never dimmed with its tab. */
-.activities-panel__tab > .activities-panel__badge--waiting {
+/* Copies of Trips waiting to be answered (FR-13.7): filled, and never dimmed with its tab. */
+.tracks-panel__tab > .tracks-panel__badge--waiting {
   opacity: 1;
   background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
 }
 
-.activities-panel__subtext {
+.tracks-panel__subtext {
   margin: 0 0 var(--fm-space-8);
   padding: 0 var(--fm-space-16);
   color: rgb(var(--fm-ink-rgb) / 68%);
@@ -545,9 +545,9 @@ body {
 
 /* DistanceFilter.tsx — the DISTANCE dual slider, standalone and always visible (docs/SPEC.md FR-5.3)
    between the subtext line and the header toolbar, not hidden behind any toggle. TYPE moved
-   out to its own dropdown (checkboxes inline in ActivitiesPanel.tsx, reusing
-   .activity-filters__type-* below directly). */
-.activity-filters {
+   out to its own dropdown (checkboxes inline in TracksPanel.tsx, reusing
+   .track-filters__type-* below directly). */
+.track-filters {
   flex: 1;
   min-width: 0;
   display: flex;
@@ -555,9 +555,9 @@ body {
   gap: var(--fm-space-12);
 }
 
-/* The filter row (ActivityFilters.tsx): Type's, Dates' and Distance's dropdowns on one line, a
+/* The filter row (TrackFilters.tsx): Type's, Dates' and Distance's dropdowns on one line, a
    long value cut short rather than wrapping. */
-.activities-panel__filters {
+.tracks-panel__filters {
   display: flex;
   align-items: center;
   gap: var(--fm-space-8);
@@ -568,30 +568,30 @@ body {
 /* Dates' and Distance's panels fit what they hold (the date fields, the slider and its bounds)
    instead of Type's fixed width. The last dropdown's panel opens leftward from its right edge, or
    it would run past the sidebar, which clips it. */
-.activities-panel__filters .activities-panel__filter-panel {
+.tracks-panel__filters .tracks-panel__filter-panel {
   width: max-content;
   min-width: 15rem;
   box-sizing: border-box;
 }
 
-.activities-panel__filters > .activities-panel__type-dropdown:last-child .activities-panel__type-panel {
+.tracks-panel__filters > .tracks-panel__type-dropdown:last-child .tracks-panel__type-panel {
   left: auto;
   right: 0;
 }
 
-.activity-filters__section {
+.track-filters__section {
   display: flex;
   flex-direction: column;
   gap: var(--fm-space-6);
 }
 
-.activity-filters__head {
+.track-filters__head {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
 }
 
-.activity-filters__label {
+.track-filters__label {
   font-size: var(--fm-text-xs);
   font-weight: var(--fm-weight-heavy);
   letter-spacing: 0.06em;
@@ -599,7 +599,7 @@ body {
   color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
-.activity-filters__readout {
+.track-filters__readout {
   font-size: var(--fm-text-xs);
   color: rgb(var(--fm-ink-rgb) / 68%);
 }
@@ -608,7 +608,7 @@ body {
    dropdown already has a natural height budget a scrollbar fits inside cleanly. Checked means
    "shown", unchecked means excluded — the same toggle this always was, just a real checkbox
    input instead of a click-to-toggle-a-✕-box chip. */
-.activity-filters__type-list {
+.track-filters__type-list {
   display: flex;
   flex-direction: column;
   gap: var(--fm-space-2);
@@ -616,7 +616,7 @@ body {
   overflow-y: auto;
 }
 
-.activity-filters__type-item {
+.track-filters__type-item {
   display: flex;
   align-items: center;
   gap: var(--fm-space-8);
@@ -627,7 +627,7 @@ body {
   cursor: pointer;
 }
 
-.activity-filters__type-item input[type='checkbox'] {
+.track-filters__type-item input[type='checkbox'] {
   flex: none;
   width: 14px;
   height: 14px;
@@ -635,7 +635,7 @@ body {
   cursor: pointer;
 }
 
-.activity-filters__type-label {
+.track-filters__type-label {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -643,23 +643,23 @@ body {
   white-space: nowrap;
 }
 
-.activity-filters__type-count {
+.track-filters__type-count {
   flex: none;
   font: 400 11px ui-monospace, Menlo, monospace;
   color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* Two overlapping native range inputs sharing one track — a well-known dual-thumb-slider
-   technique. Each input's own track/fill is made transparent so only .activity-filters__fill
+   technique. Each input's own track/fill is made transparent so only .track-filters__fill
    below shows through, and pointer-events is disabled on the input everywhere except its
    thumb, so a click between the two thumbs falls through to whichever is actually closer
    rather than always grabbing one specific input. */
-.activity-filters__track-wrap {
+.track-filters__track-wrap {
   position: relative;
   height: 20px;
 }
 
-.activity-filters__track {
+.track-filters__track {
   position: absolute;
   top: 9px;
   left: 0;
@@ -669,7 +669,7 @@ body {
   border-radius: var(--fm-radius-xs);
 }
 
-.activity-filters__fill {
+.track-filters__fill {
   position: absolute;
   top: 9px;
   height: 2px;
@@ -677,7 +677,7 @@ body {
   border-radius: var(--fm-radius-xs);
 }
 
-.activity-filters__range {
+.track-filters__range {
   position: absolute;
   top: 0;
   left: 0;
@@ -689,15 +689,15 @@ body {
   pointer-events: none;
 }
 
-.activity-filters__range::-webkit-slider-runnable-track {
+.track-filters__range::-webkit-slider-runnable-track {
   background: transparent;
 }
 
-.activity-filters__range::-moz-range-track {
+.track-filters__range::-moz-range-track {
   background: transparent;
 }
 
-.activity-filters__range::-webkit-slider-thumb {
+.track-filters__range::-webkit-slider-thumb {
   appearance: none;
   pointer-events: auto;
   width: 16px;
@@ -709,7 +709,7 @@ body {
   cursor: pointer;
 }
 
-.activity-filters__range::-moz-range-thumb {
+.track-filters__range::-moz-range-thumb {
   pointer-events: auto;
   width: 12px;
   height: 12px;
@@ -719,32 +719,32 @@ body {
   cursor: pointer;
 }
 
-.activity-filters__bounds {
+.track-filters__bounds {
   display: flex;
   justify-content: space-between;
   font-size: var(--fm-text-2xs);
   color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
-/* The list's progress bar (ActivitiesPanel.tsx): a line over the rows while a slow reload is under
+/* The list's progress bar (TracksPanel.tsx): a line over the rows while a slow reload is under
    way. Always 2px tall, so showing it never moves the list. */
-.activities-panel__progress {
+.tracks-panel__progress {
   position: relative;
   flex: none;
   height: 2px;
   overflow: hidden;
 }
 
-.activities-panel__progress--on::after {
+.tracks-panel__progress--on::after {
   content: '';
   position: absolute;
   inset: 0 auto 0 0;
   width: 40%;
   background: var(--fm-accent);
-  animation: activities-progress 1.1s ease-in-out infinite;
+  animation: tracks-progress 1.1s ease-in-out infinite;
 }
 
-@keyframes activities-progress {
+@keyframes tracks-progress {
   from {
     transform: translateX(-100%);
   }
@@ -754,14 +754,14 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .activities-panel__progress--on::after {
+  .tracks-panel__progress--on::after {
     width: 100%;
     animation: none;
     opacity: 0.6;
   }
 }
 
-.activities-panel__list {
+.tracks-panel__list {
   flex: 1;
   min-height: 0;
   list-style: none;
@@ -771,7 +771,7 @@ body {
   border-top: 1px solid rgb(var(--fm-ink-rgb) / 8%);
 }
 
-.activities-panel__row {
+.tracks-panel__row {
   display: flex;
   align-items: center;
   gap: var(--fm-space-10);
@@ -779,15 +779,15 @@ body {
   border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 6%);
 }
 
-/* The one row being viewed, on every tab: a focused activity (ActivityRow.tsx, reached by clicking
-   its text or its track on the map), the highlighted Private location and the open Story's folder.
+/* The one row being viewed, on every tab: a focused track (TrackRow.tsx, reached by clicking
+   its text or its track on the map), the highlighted Private location and the open Trip's folder.
    A checked row doesn't get this: its ticked checkbox is its only mark (docs/SPEC.md FR-5.8). */
-.activities-panel__row--current {
+.tracks-panel__row--current {
   background: rgb(var(--fm-accent-rgb) / 8%);
   box-shadow: inset 3px 0 0 var(--fm-accent-strong);
 }
 
-.activities-panel__checkbox {
+.tracks-panel__checkbox {
   flex: none;
   width: 15px;
   height: 15px;
@@ -798,27 +798,27 @@ body {
 
 /* A button, because clicking it flies the map — but it has to keep looking like the row
    text it replaced, so every button default is reset here rather than styled around. */
-.activities-panel__type-icon {
+.tracks-panel__type-icon {
   flex: none;
   color: rgb(var(--fm-ink-rgb) / 60%);
 }
 
-.activities-panel__row--hidden .activities-panel__type-icon {
+.tracks-panel__row--hidden .tracks-panel__type-icon {
   opacity: 0.55;
 }
 
-.activities-panel__row--pending .activities-panel__type-icon {
+.tracks-panel__row--pending .tracks-panel__type-icon {
   opacity: 0.45;
 }
 
-.activities-panel__text {
+.tracks-panel__text {
   flex: 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
   /* Not flex-start: that sizes each line to its own content width (shrink-to-fit) rather
      than this box's actual available width, which is exactly what let a long line overflow
-     into .activities-panel__type instead of respecting its own overflow/ellipsis rules —
+     into .tracks-panel__type instead of respecting its own overflow/ellipsis rules —
      text-align: left below already left-aligns the text regardless of the box's width. */
   align-items: stretch;
   gap: var(--fm-space-2);
@@ -830,39 +830,39 @@ body {
   cursor: pointer;
 }
 
-.activities-panel__text:hover .activities-panel__title {
+.tracks-panel__text:hover .tracks-panel__title {
   text-decoration: underline;
 }
 
 /* Hidden from the map, not from the list — the row stays in place and fully readable, just
    dimmed, since there's no per-row eye icon any more to show open/closed at a glance (hiding
-   a single activity now goes through check-then-toolbar like every other single-item action;
+   a single track now goes through check-then-toolbar like every other single-item action;
    see the toolbar's Show/Hide checked-group button above). The dim alone turned out too subtle
    to notice at a glance (reported directly by a user who lost track of which rows they'd
    hidden), so a standalone "Hidden" badge sits next to it as the actual scannable cue — the
-   badge is a sibling of .activities-panel__text, not nested under it, so it stays at full
+   badge is a sibling of .tracks-panel__text, not nested under it, so it stays at full
    opacity rather than dimming along with the title/meta text it's flagging. */
-.activities-panel__row--hidden .activities-panel__title,
-.activities-panel__row--hidden .activities-panel__meta {
+.tracks-panel__row--hidden .tracks-panel__title,
+.tracks-panel__row--hidden .tracks-panel__meta {
   opacity: 0.55;
 }
 
-/* §4.7.7: a row whose track edit is still being reprocessed — its numbers are the pre-edit
+/* §4.7.7: a row whose route edit is still being reprocessed — its numbers are the pre-edit
    ones until the job lands, so it reads as unavailable rather than as current data. */
-.activities-panel__row--pending .activities-panel__title,
-.activities-panel__row--pending .activities-panel__meta {
+.tracks-panel__row--pending .tracks-panel__title,
+.tracks-panel__row--pending .tracks-panel__meta {
   opacity: 0.45;
 }
 
-.activities-panel__row--pending .activities-panel__text {
+.tracks-panel__row--pending .tracks-panel__text {
   cursor: progress;
 }
 
 /* Pinned to the row's right edge explicitly (margin-left: auto), not just left there by the
    text column's flex: 1 — so Pending and Hidden end at the same edge on every row. Side by side,
    never stacked: the list draws only the rows in view and takes every row to be the first one's
-   height (ActivitiesPanel.tsx), so a row with three badges must be no taller than one with none. */
-.activities-panel__badges {
+   height (TracksPanel.tsx), so a row with three badges must be no taller than one with none. */
+.tracks-panel__badges {
   flex: none;
   margin-left: auto;
   display: flex;
@@ -870,9 +870,9 @@ body {
   gap: var(--fm-space-4);
 }
 
-/* An open Story's row's Remove from story (StoriesTab.tsx) — hidden until the row is hovered or
-   has focus, like a Story folder's pencil and bin; always shown on a touch screen. */
-.activities-panel__row-remove {
+/* An open Trip's row's Remove from trip (TripsTab.tsx) — hidden until the row is hovered or
+   has focus, like a Trip folder's pencil and bin; always shown on a touch screen. */
+.tracks-panel__row-remove {
   flex: none;
   display: flex;
   align-items: center;
@@ -889,26 +889,26 @@ body {
   opacity: 0;
 }
 
-.activities-panel__badges + .activities-panel__row-remove {
+.tracks-panel__badges + .tracks-panel__row-remove {
   margin-left: 0;
 }
 
-.activities-panel__row:hover .activities-panel__row-remove,
-.activities-panel__row:focus-within .activities-panel__row-remove {
+.tracks-panel__row:hover .tracks-panel__row-remove,
+.tracks-panel__row:focus-within .tracks-panel__row-remove {
   opacity: 1;
 }
 
-.activities-panel__row-remove:hover:not(:disabled) {
+.tracks-panel__row-remove:hover:not(:disabled) {
   background: var(--fm-surface-tint-strong);
   color: var(--fm-ink);
 }
 
-.activities-panel__row-remove:disabled {
+.tracks-panel__row-remove:disabled {
   color: var(--fm-ink-faint);
   cursor: not-allowed;
 }
 
-.activities-panel__hidden-badge {
+.tracks-panel__hidden-badge {
   flex: none;
   font-size: var(--fm-text-2xs);
   font-weight: var(--fm-weight-semibold);
@@ -921,39 +921,39 @@ body {
   white-space: nowrap;
 }
 
-/* Private (FR-7.1): an activity entirely inside a Private location, kept with no track. A lock
+/* Private (FR-7.1): a track entirely inside a Private location, kept with no track. A lock
    before the word, in the same neutral chip as Pending and Hidden — it's a state, not an error. */
-.activities-panel__private-badge {
+.tracks-panel__private-badge {
   display: inline-flex;
   align-items: center;
   gap: var(--fm-space-2);
 }
 
-/* Story sits beside Pending and Hidden, in the accent: it says where an activity belongs, not
+/* Trip sits beside Pending and Hidden, in the accent: it says where a track belongs, not
    a state it's in. */
-.activities-panel__story-badge {
+.tracks-panel__trip-badge {
   color: var(--fm-accent-strong);
   background: rgb(var(--fm-accent-rgb) / 12%);
 }
 
-/* The badge is a button (ActivityRow.tsx's StoryBadge) that opens its Story; with several, a
+/* The badge is a button (TrackRow.tsx's StoryBadge) that opens its Trip; with several, a
    menu of their names hangs under it, right-aligned to the badge. */
-button.activities-panel__story-badge {
+button.tracks-panel__trip-badge {
   border: 0;
   font-family: inherit;
   cursor: pointer;
 }
 
-button.activities-panel__story-badge:hover {
+button.tracks-panel__trip-badge:hover {
   background: rgb(var(--fm-accent-rgb) / 20%);
 }
 
-.activities-panel__story-badge-wrap {
+.tracks-panel__trip-badge-wrap {
   position: relative;
   display: inline-flex;
 }
 
-.story-menu__panel.activities-panel__story-badge-menu {
+.trip-menu__panel.tracks-panel__trip-badge-menu {
   top: calc(100% + 4px);
   left: auto;
   right: 0;
@@ -961,19 +961,19 @@ button.activities-panel__story-badge:hover {
   max-width: calc(100vw - 48px);
 }
 
-/* The reverse direction of the hover above: hovering this activity's *track on the map*
+/* The reverse direction of the hover above: hovering this track's *track on the map*
    (not the row itself) also underlines the title, via MapView's shared hoveredActivityId
    state rather than a real `:hover` here — the pointer isn't over this row at all. */
-.activities-panel__title--hovered {
+.tracks-panel__title--hovered {
   text-decoration: underline;
 }
 
-.activities-panel__title {
+.tracks-panel__title {
   /* Without this, a flex item's default min-width:auto keeps it from shrinking below its
      content's natural width even inside a column flex container — the same rule applies
-     independently at every flex nesting level, not just on .activities-panel__text's own
+     independently at every flex nesting level, not just on .tracks-panel__text's own
      row — so overflow/ellipsis below had nothing to actually clip against until this was
-     added (confirmed: without it, long metadata visibly overlapped .activities-panel__type
+     added (confirmed: without it, long metadata visibly overlapped .tracks-panel__type
      instead of eliding). */
   min-width: 0;
   font-size: var(--fm-text-md);
@@ -984,8 +984,8 @@ button.activities-panel__story-badge:hover {
   white-space: nowrap;
 }
 
-.activities-panel__meta {
-  /* See .activities-panel__title's comment just above — same nested-flex min-width gotcha. */
+.tracks-panel__meta {
+  /* See .tracks-panel__title's comment just above — same nested-flex min-width gotcha. */
   min-width: 0;
   max-width: 100%;
   font-size: var(--fm-text-xs);
@@ -996,14 +996,14 @@ button.activities-panel__story-badge:hover {
 }
 
 /* The toolbar icon buttons (docs/SPEC.md FR-5.8) — Show/Edit/Create story/Delete/Focus all operate on the toolbar's target:
-   the checked group, else the selected row. Row actions on lists without checkboxes (.activities-panel__row-action)
+   the checked group, else the selected row. Row actions on lists without checkboxes (.tracks-panel__row-action)
    use the same chips. One shared chip look, matching the mockup: a soft tinted square rather than a bare icon, so the group actions read as one
    family regardless of which one is destructive. */
-.activities-panel__edit,
-.activities-panel__add-story,
-.activities-panel__delete,
-.activities-panel__visibility,
-.activities-panel__focus {
+.tracks-panel__edit,
+.tracks-panel__add-trip,
+.tracks-panel__delete,
+.tracks-panel__visibility,
+.tracks-panel__focus {
   flex: none;
   display: flex;
   align-items: center;
@@ -1018,10 +1018,10 @@ button.activities-panel__story-badge:hover {
   cursor: pointer;
 }
 
-.activities-panel__edit:hover:not(:disabled),
-.activities-panel__add-story:hover:not(:disabled),
-.activities-panel__delete:hover:not(:disabled),
-.activities-panel__visibility:hover:not(:disabled) {
+.tracks-panel__edit:hover:not(:disabled),
+.tracks-panel__add-trip:hover:not(:disabled),
+.tracks-panel__delete:hover:not(:disabled),
+.tracks-panel__visibility:hover:not(:disabled) {
   background: var(--fm-surface-tint-strong);
   color: var(--fm-ink);
 }
@@ -1029,42 +1029,42 @@ button.activities-panel__story-badge:hover {
 /* A demo account's disabled Edit/Delete (ActivitiesPanel's readOnly prop), or simply nothing
    checked yet — visibly inert, not just a hover/click no-op, so "there's nothing to act on"
    reads before anyone hovers for the title tooltip. */
-.activities-panel__edit:disabled,
-.activities-panel__add-story:disabled,
-.activities-panel__delete:disabled,
-.activities-panel__visibility:disabled,
-.activities-panel__focus:disabled {
+.tracks-panel__edit:disabled,
+.tracks-panel__add-trip:disabled,
+.tracks-panel__delete:disabled,
+.tracks-panel__visibility:disabled,
+.tracks-panel__focus:disabled {
   color: var(--fm-ink-faint);
   cursor: not-allowed;
 }
 
 /* The one primary action in the group — tinted with the accent rather than the neutral chip
    the others share, so "focus the map on this" reads as the toolbar's main affordance. */
-.activities-panel__focus {
+.tracks-panel__focus {
   background: rgb(var(--fm-accent-rgb) / 12%);
   color: var(--fm-accent-strong);
 }
 
-.activities-panel__focus:hover:not(:disabled) {
+.tracks-panel__focus:hover:not(:disabled) {
   background: rgb(var(--fm-accent-rgb) / 20%);
 }
 
-.activities-panel__focus:disabled {
+.tracks-panel__focus:disabled {
   background: var(--fm-surface-tint);
 }
 
-.activities-panel__note {
+.tracks-panel__note {
   padding: var(--fm-space-16) var(--fm-space-16);
   font-size: var(--fm-text-md);
   color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
-.activities-panel__note--error {
+.tracks-panel__note--error {
   color: var(--fm-danger);
 }
 
-/* The Activities tab of an account with no activities (FirstRunPanel.tsx, FR-5.10): where to
-   bring some in from, a waiting Story copy first, imports in flight above both. */
+/* The Tracks tab of an account with no tracks (FirstRunPanel.tsx, FR-5.10): where to
+   bring some in from, a waiting Trip copy first, imports in flight above both. */
 .first-run {
   display: flex;
   flex-direction: column;
@@ -1223,8 +1223,8 @@ button.activities-panel__story-badge:hover {
 /* The header toolbar (docs/SPEC.md FR-5.1) — right above the row list, a compact strip: the select-all checkbox, the Type
    dropdown, a flex spacer pushing the rest right, the group action chips, a divider, then the
    one accent-tinted "focus on map" action. */
-.activities-panel__toolbar {
-  /* The containing block for Add to story's menu (.story-menu__panel). */
+.tracks-panel__toolbar {
+  /* The containing block for Add to trip's menu (.trip-menu__panel). */
   position: relative;
   display: flex;
   align-items: center;
@@ -1233,12 +1233,12 @@ button.activities-panel__story-badge:hover {
   border-bottom: 1px solid rgb(var(--fm-ink-rgb) / 8%);
 }
 
-.activities-panel__toolbar-spacer {
+.tracks-panel__toolbar-spacer {
   flex: 1;
   min-width: 0;
 }
 
-.activities-panel__toolbar-divider {
+.tracks-panel__toolbar-divider {
   flex: none;
   width: 1px;
   height: 20px;
@@ -1247,12 +1247,12 @@ button.activities-panel__story-badge:hover {
 
 /* Anchors the dropdown panel under its trigger's trailing edge. No fixed width any more (nothing below it to stay
    column-aligned with) — sized to its own label/caret like the mockup's chip. */
-.activities-panel__type-dropdown {
+.tracks-panel__type-dropdown {
   position: relative;
   flex: none;
 }
 
-.activities-panel__type-trigger {
+.tracks-panel__type-trigger {
   display: flex;
   align-items: center;
   gap: var(--fm-space-8);
@@ -1267,12 +1267,12 @@ button.activities-panel__story-badge:hover {
   cursor: pointer;
 }
 
-.activities-panel__type-trigger:hover {
+.tracks-panel__type-trigger:hover {
   background: var(--fm-surface-tint-strong);
 }
 
-/* The header checkbox's ▾ (ActivitiesPanel.tsx): a menu of All, None and Invert under it, in
-   Add to story's look (.story-menu__panel/__item), anchored to the checkbox's left edge. */
+/* The header checkbox's ▾ (TracksPanel.tsx): a menu of All, None and Invert under it, in
+   Add to trip's look (.trip-menu__panel/__item), anchored to the checkbox's left edge. */
 .select-menu {
   position: relative;
   display: flex;
@@ -1304,7 +1304,7 @@ button.activities-panel__story-badge:hover {
   cursor: default;
 }
 
-.story-menu__panel.select-menu__panel {
+.trip-menu__panel.select-menu__panel {
   top: calc(100% + 6px);
   left: calc(-1 * var(--fm-space-16));
   right: auto;
@@ -1313,7 +1313,7 @@ button.activities-panel__story-badge:hover {
 
 /* A plain dot, not a count — the trigger's own label already says "Type"; a badge repeating
    "filters active" as a number would just be noise next to one word. */
-.activities-panel__type-trigger-dot {
+.tracks-panel__type-trigger-dot {
   flex: none;
   width: 6px;
   height: 6px;
@@ -1321,7 +1321,7 @@ button.activities-panel__story-badge:hover {
   background: var(--fm-accent);
 }
 
-.activities-panel__type-trigger-caret {
+.tracks-panel__type-trigger-caret {
   display: inline-flex;
   flex: none;
   color: rgb(var(--fm-ink-rgb) / 68%);
@@ -1330,13 +1330,13 @@ button.activities-panel__story-badge:hover {
 /* Right-aligned to the trigger, not left — the trigger sits mid-row now (above the TYPE
    column, not at the panel's left edge), so anchoring the panel's right edge to the
    trigger's is what keeps it from overflowing the panel's own narrow end. */
-.activities-panel__type-panel {
+.tracks-panel__type-panel {
   position: absolute;
   top: calc(100% + 8px);
   /* left, not right: the trigger sits at the filter row's left edge, not mid-row above a
      TYPE column any more — anchoring the panel's right edge to that narrow, left-positioned
      trigger pushed a 13rem-wide panel leftward past x: 0, clipped
-     out of view entirely by .activities-panel's own overflow: hidden. */
+     out of view entirely by .tracks-panel's own overflow: hidden. */
   left: 0;
   z-index: 3;
   width: 13rem;
@@ -1348,7 +1348,7 @@ button.activities-panel__story-badge:hover {
   padding: var(--fm-space-8);
 }
 
-.activities-panel__type-panel-empty {
+.tracks-panel__type-panel-empty {
   margin: 0;
   padding: var(--fm-space-4) var(--fm-space-2);
   font-size: var(--fm-text-md);
@@ -1358,20 +1358,20 @@ button.activities-panel__story-badge:hover {
 /* The "All types" convenience row above the divider — a select-all, not a real toggle: it
    only ever clears every exclusion (there is no "hide every type" action here), matching
    "Reset filters"'s own always-clears-forward behavior elsewhere in this panel. */
-.activity-filters__type-item--all {
+.track-filters__type-item--all {
   font-weight: var(--fm-weight-semibold);
   color: var(--fm-ink);
 }
 
-/* AddToStoryMenu.tsx — anchored to the toolbar, not to its own button: the panel is
+/* AddToTripMenu.tsx — anchored to the toolbar, not to its own button: the panel is
    `overflow: hidden` and as narrow as 260px, so a menu hanging off a mid-toolbar button would be
    clipped. Spanning the toolbar's width below it always fits. */
-.story-menu {
+.trip-menu {
   flex: none;
   display: flex;
 }
 
-.story-menu__panel {
+.trip-menu__panel {
   position: absolute;
   top: calc(100% - 4px);
   left: var(--fm-space-16);
@@ -1384,12 +1384,12 @@ button.activities-panel__story-badge:hover {
   padding: var(--fm-space-6);
 }
 
-.story-menu__list {
+.trip-menu__list {
   max-height: 16rem;
   overflow-y: auto;
 }
 
-.story-menu__item {
+.trip-menu__item {
   display: flex;
   align-items: center;
   gap: var(--fm-space-8);
@@ -1405,28 +1405,28 @@ button.activities-panel__story-badge:hover {
   cursor: pointer;
 }
 
-.story-menu__item:hover:not(:disabled),
-.story-menu__item:focus-visible {
+.trip-menu__item:hover:not(:disabled),
+.trip-menu__item:focus-visible {
   background: var(--fm-surface-tint);
 }
 
-.story-menu__item:disabled {
+.trip-menu__item:disabled {
   cursor: default;
 }
 
-.story-menu__item--new {
+.trip-menu__item--new {
   font-weight: var(--fm-weight-semibold);
   color: var(--fm-accent-strong);
 }
 
-.story-menu__check {
+.trip-menu__check {
   flex: none;
   display: inline-flex;
   width: 14px;
   color: var(--fm-accent-strong);
 }
 
-.story-menu__name {
+.trip-menu__name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -1434,63 +1434,63 @@ button.activities-panel__story-badge:hover {
   white-space: nowrap;
 }
 
-.story-menu__item:disabled .story-menu__name {
+.trip-menu__item:disabled .trip-menu__name {
   color: var(--fm-ink-muted);
 }
 
-.story-menu__count {
+.trip-menu__count {
   flex: none;
   font-size: var(--fm-text-2xs);
   color: var(--fm-ink-muted);
 }
 
-.story-menu__divider {
+.trip-menu__divider {
   height: 1px;
   background: var(--fm-divider-tint);
   margin: var(--fm-space-4) 0;
 }
 
-.story-menu__note {
+.trip-menu__note {
   margin: 0;
   padding: var(--fm-space-6) var(--fm-space-8);
   font-size: var(--fm-text-sm);
   color: var(--fm-ink-muted);
 }
 
-.story-menu__note--error {
+.trip-menu__note--error {
   color: var(--fm-danger);
 }
 
-/* Dates' and Distance's dropdowns (ActivityFilters.tsx): the type dropdown's trigger and panel,
+/* Dates' and Distance's dropdowns (TrackFilters.tsx): the type dropdown's trigger and panel,
    with the value in the trigger and a clear button beside it while set. */
-.activities-panel__filter-dropdown {
+.tracks-panel__filter-dropdown {
   display: inline-flex;
   flex: none;
   align-items: center;
 }
 
 /* Only a button showing a value gives way; a bare name always fits. */
-.activities-panel__filter-dropdown--set {
+.tracks-panel__filter-dropdown--set {
   flex: 0 1 auto;
   min-width: 0;
 }
 
-.activities-panel__filter-dropdown > .activities-panel__type-trigger {
+.tracks-panel__filter-dropdown > .tracks-panel__type-trigger {
   min-width: 0;
 }
 
-.activities-panel__filter-value {
+.tracks-panel__filter-value {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.activities-panel__filter-value--set {
+.tracks-panel__filter-value--set {
   color: var(--fm-accent-strong);
   font-weight: var(--fm-weight-semibold);
 }
 
-.activities-panel__filter-clear {
+.tracks-panel__filter-clear {
   display: inline-flex;
   align-items: center;
   padding: var(--fm-space-4);
@@ -1500,11 +1500,11 @@ button.activities-panel__story-badge:hover {
   cursor: pointer;
 }
 
-.activities-panel__filter-clear:hover {
+.tracks-panel__filter-clear:hover {
   color: var(--fm-ink);
 }
 
-.activities-panel__filter-panel {
+.tracks-panel__filter-panel {
   display: flex;
   flex-direction: column;
   gap: var(--fm-space-10);
@@ -1512,7 +1512,7 @@ button.activities-panel__story-badge:hover {
   padding: var(--fm-space-12);
 }
 
-.activities-panel__date-field {
+.tracks-panel__date-field {
   display: grid;
   grid-template-columns: 4.5em 1fr;
   align-items: center;
@@ -1521,7 +1521,7 @@ button.activities-panel__story-badge:hover {
   font-size: var(--fm-text-sm);
 }
 
-.activities-panel__date-field input {
+.tracks-panel__date-field input {
   font: inherit;
   color: var(--fm-ink);
   background: var(--fm-surface);
@@ -1530,19 +1530,19 @@ button.activities-panel__story-badge:hover {
   padding: var(--fm-space-4) var(--fm-space-6);
 }
 
-.activities-panel__date-hint {
+.tracks-panel__date-hint {
   grid-column: 2;
   color: var(--fm-ink-muted);
   font-size: var(--fm-text-xs);
 }
 
-.activities-panel__type-panel-divider {
+.tracks-panel__type-panel-divider {
   height: 1px;
   background: var(--fm-divider-tint);
   margin: var(--fm-space-6) 0;
 }
 
-.activities-panel__footer {
+.tracks-panel__footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1551,7 +1551,7 @@ button.activities-panel__story-badge:hover {
   border-top: 1px solid rgb(var(--fm-ink-rgb) / 8%);
 }
 
-.activities-panel__footer-summary {
+.tracks-panel__footer-summary {
   font-size: var(--fm-text-md);
   color: rgb(var(--fm-ink-rgb) / 65%);
 }
@@ -1946,7 +1946,7 @@ button.activities-panel__story-badge:hover {
 }
 
 /* The Overlays dropdown (OverlaysMenu.tsx): a toggle group whose one button opens a panel of
-   checkboxes, laid out like the Activities panel's Type dropdown. */
+   checkboxes, laid out like the Tracks panel's Type dropdown. */
 .overlays-menu {
   position: relative;
 }
@@ -2074,7 +2074,7 @@ button.activities-panel__story-badge:hover {
   gap: var(--fm-space-4);
 }
 
-/* The area's pills centered over the map, under the toggles (MapControls.tsx): "Show activities
+/* The area's pills centered over the map, under the toggles (MapControls.tsx): "Show tracks
    in this area", places' "Show in this area" (ShowInArea.tsx) and the list's cap notice. */
 .map-area {
   position: absolute;
@@ -2626,12 +2626,12 @@ button.activities-panel__story-badge:hover {
   background: rgb(var(--fm-ink-rgb) / 7%);
 }
 
-/* The Edit window (EditActivityWindow.tsx, IMPLEMENTATION.md §4.7.7) — floats over the map's top-left
+/* The Edit window (EditTrackWindow.tsx, IMPLEMENTATION.md §4.7.7) — floats over the map's top-left
    while it's open, the same white card treatment as the mode toggle.
    The top-left is free because the mode toggle is hidden while it's open; the top-right
-   belongs to MapLibre's own zoom/locate controls. Class names are the Edit track window's,
-   which it grew out of; its Track tab (TrackEditor.tsx) still uses the rest of them. */
-.edit-track {
+   belongs to MapLibre's own zoom/locate controls. Class names are the Edit route window's,
+   which it grew out of; its Route tab (RouteEditor.tsx) still uses the rest of them. */
+.edit-route {
   position: absolute;
   top: 10px;
   left: 10px;
@@ -2649,20 +2649,20 @@ button.activities-panel__story-badge:hover {
   color: var(--fm-ink);
 }
 
-.edit-track__head {
+.edit-route__head {
   display: flex;
   flex-direction: column;
   gap: var(--fm-space-2);
   min-width: 0;
 }
 
-.edit-track__title {
+.edit-route__title {
   font-size: var(--fm-text-lg);
   font-weight: var(--fm-weight-heavy);
   letter-spacing: 0.02em;
 }
 
-.edit-track__subtitle {
+.edit-route__subtitle {
   overflow: hidden;
   font-size: var(--fm-text-sm);
   color: rgb(var(--fm-ink-rgb) / 60%);
@@ -2670,23 +2670,23 @@ button.activities-panel__story-badge:hover {
   white-space: nowrap;
 }
 
-.edit-track__row {
+.edit-route__row {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: var(--fm-space-6);
 }
 
-.edit-track__row--footer {
+.edit-route__row--footer {
   padding-top: var(--fm-space-10);
   border-top: 1px solid rgb(var(--fm-ink-rgb) / 8%);
 }
 
-.edit-track__spacer {
+.edit-route__spacer {
   flex: 1;
 }
 
-.edit-track__btn {
+.edit-route__btn {
   border: 0;
   border-radius: var(--fm-radius-sm);
   padding: var(--fm-space-6) var(--fm-space-10);
@@ -2698,54 +2698,54 @@ button.activities-panel__story-badge:hover {
   cursor: pointer;
 }
 
-.edit-track__btn:hover:not(:disabled) {
+.edit-route__btn:hover:not(:disabled) {
   background: var(--fm-surface-tint-strong);
 }
 
-.edit-track__btn:disabled {
+.edit-route__btn:disabled {
   color: var(--fm-ink-faint);
   cursor: not-allowed;
 }
 
 /* Delete point and Move point modes' toggles, while on. */
-.edit-track__btn[aria-pressed='true'] {
+.edit-route__btn[aria-pressed='true'] {
   background: rgb(var(--fm-accent-rgb) / 20%);
   color: var(--fm-accent-strong);
 }
 
-.edit-track__btn--quiet {
+.edit-route__btn--quiet {
   background: transparent;
   color: rgb(var(--fm-ink-rgb) / 65%);
 }
 
-.edit-track__btn--primary {
+.edit-route__btn--primary {
   background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
 }
 
-.edit-track__btn--primary:hover:not(:disabled) {
+.edit-route__btn--primary:hover:not(:disabled) {
   background: var(--fm-accent-hover);
 }
 
-.edit-track__btn--primary:disabled {
+.edit-route__btn--primary:disabled {
   background: rgb(var(--fm-accent-rgb) / 35%);
   color: var(--fm-on-accent);
 }
 
-.edit-track__note {
+.edit-route__note {
   margin: 0;
   font-size: var(--fm-text-sm);
   color: rgb(var(--fm-ink-rgb) / 60%);
 }
 
-.edit-track__error {
+.edit-route__error {
   margin: 0;
   font-size: var(--fm-text-sm);
   color: var(--fm-danger);
 }
 
-/* EditActivityWindow.tsx — the Edit window is the .edit-track card above with two tabs, the
-   Activities panel's own tab look at a smaller size. Its Activity form reuses the
+/* EditTrackWindow.tsx — the Edit window is the .edit-route card above with two tabs, the
+   Tracks panel's own tab look at a smaller size. Its Track form reuses the
    .settings-page__* field classes. */
 .edit-window__tabs {
   display: flex;
@@ -2780,7 +2780,7 @@ button.activities-panel__story-badge:hover {
   opacity: 0.3;
 }
 
-/* The Track tab holds unsaved edits — visible from the Activity tab too. */
+/* The Route tab holds unsaved edits — visible from the Route tab too. */
 .edit-window__tab-dot {
   width: 6px;
   height: 6px;
@@ -2816,8 +2816,8 @@ button.activities-panel__story-badge:hover {
   gap: var(--fm-space-10);
 }
 
-.photos-tab__head .edit-track__btn,
-.photos-tab__actions .edit-track__btn {
+.photos-tab__head .edit-route__btn,
+.photos-tab__actions .edit-route__btn {
   display: inline-flex;
   align-items: center;
   gap: var(--fm-space-6);
@@ -2996,7 +2996,7 @@ button.activities-panel__story-badge:hover {
   font: inherit;
 }
 
-/* The Activities panel's Privacy tab (PrivateLocationsPanel.tsx) — built from the Activities
+/* The Tracks panel's Privacy tab (PrivateLocationsPanel.tsx) — built from the Tracks
    tab's own toolbar/list/row/footer classes; this only makes it the panel's flexible body. */
 .private-locations {
   display: flex;
@@ -3021,8 +3021,8 @@ button.activities-panel__story-badge:hover {
   accent-color: var(--fm-accent);
 }
 
-/* The editor window — Edit track's shell, but below the map-mode toggle rather than over it:
-   unlike Edit track, which hides that toggle, this keeps Normal visible. Scrolls rather than
+/* The editor window — Edit route's shell, but below the map-mode toggle rather than over it:
+   unlike Edit route, which hides that toggle, this keeps Normal visible. Scrolls rather than
    running off a short screen. */
 .private-locations__window {
   top: 54px;
@@ -3036,19 +3036,19 @@ button.activities-panel__story-badge:hover {
   gap: var(--fm-space-4);
 }
 
-/* MapView wraps the Activities panel in this for the session, `inert` while
+/* MapView wraps the Tracks panel in this for the session, `inert` while
    a track is being edited. display: contents keeps the wrapper out of the flex layout; the
    dimming goes on its children, since a display: contents box has no rendering of its own. */
-.edit-track-lock {
+.edit-route-lock {
   display: contents;
 }
 
-.edit-track-lock[inert] > * {
+.edit-route-lock[inert] > * {
   opacity: 0.5;
 }
 
 @media (max-width: 768px) {
-  .edit-track {
+  .edit-route {
     right: 10px;
     width: auto;
   }
@@ -3081,7 +3081,7 @@ button.activities-panel__story-badge:hover {
   font-size: var(--fm-text-md);
 }
 
-/* Form fields in the Edit window's Activity tab (EditActivityWindow.tsx). Named for the React
+/* Form fields in the Edit window's Route tab (EditTrackWindow.tsx). Named for the React
    Settings page they came from, which is now a server-rendered page with its own styles
    (services/server/internal/web/static/pages.css). */
 .settings-page__section {
@@ -3111,8 +3111,8 @@ button.activities-panel__story-badge:hover {
   outline-offset: 1px;
 }
 
-/* EditActivityWindow.tsx's Name/Description fields when editing more than one checked
-   activity at once — visibly inert, not just inert on click, so "why can't I type here"
+/* EditTrackWindow.tsx's Name/Description fields when editing more than one checked
+   track at once — visibly inert, not just inert on click, so "why can't I type here"
    reads before anyone hovers long enough for the field's own title tooltip. */
 .settings-page__input:disabled {
   background: var(--fm-surface-tint);
@@ -3183,7 +3183,7 @@ button.activities-panel__story-badge:hover {
    One layer, isolated here rather than scattered inline through the file above — every
    rule above this point is the desktop layout, unmodified and unaffected outside this
    query. Scope is "core flows fully touch-usable," a direct decision, not full parity with
-   every desktop interaction: the map-track-hover ↔ Activities-row-underline two-way
+   every desktop interaction: the map-track-hover ↔ Tracks-row-underline two-way
    highlight stays mouse-only — a continuous-position hover read with no discrete point to
    tap (docs/SPEC.md §20). Desktop phone emulation has a fixed viewport, no browser toolbar,
    no iOS focus-zoom and a pointer-precise "tap", so it passes layouts that fail on a phone:
@@ -3226,21 +3226,21 @@ button.activities-panel__story-badge:hover {
      the map's own bottom-anchored controls (the scale control and attribution) end above the
      sheet rather than under it. Only while the sheet exists — it renders in Normal map mode
      alone. */
-  .app-body:has(.activities-panel) {
+  .app-body:has(.tracks-panel) {
     padding-bottom: var(--phone-sheet-peek);
   }
 
-  /* The Activities panel becomes a bottom sheet: `position: fixed` removes it from
+  /* The Tracks panel becomes a bottom sheet: `position: fixed` removes it from
      `.app-body`'s flex row entirely, so `.map-root` (the only flex child left in that row,
      `flex: 1`) naturally expands to the full width with no `.app-body`/`.map-root` change
-     needed at all. Collapsed by default (ActivitiesPanel.tsx's `sheetExpanded`, `false`
+     needed at all. Collapsed by default (TracksPanel.tsx's `sheetExpanded`, `false`
      initially) to a peek strip that is its tab row — the map stays fully interactive around and
      under it; expanding it (the row's chevron, or any tab) grows it upward to cover most of the
      screen.
      No `map.resize()` call is needed either
      way, since the map's own container dimensions never change with the sheet's state —
      only what's drawn on top of it does. */
-  .activities-panel {
+  .tracks-panel {
     position: fixed;
     left: 0;
     right: 0;
@@ -3258,22 +3258,22 @@ button.activities-panel__story-badge:hover {
   }
 
   /* Its top edge stays where it was when the sheet sat on the viewport's bottom. */
-  .activities-panel--sheet-expanded {
+  .tracks-panel--sheet-expanded {
     height: calc(78dvh - var(--sheet-bottom));
   }
 
-  /* Edit track is started from the sheet's toolbar, so the sheet is expanded at that moment —
+  /* Edit route is started from the sheet's toolbar, so the sheet is expanded at that moment —
      and, inert for the session, it couldn't be collapsed again, leaving it drawn over both the
-     map and the Edit track window (z-index 3). Collapsed to the peek strip for the session
+     map and the Edit route window (z-index 3). Collapsed to the peek strip for the session
      instead; `sheetExpanded` itself is untouched, so the sheet comes back as it was. */
-  .edit-track-lock[inert] > .activities-panel {
+  .edit-route-lock[inert] > .tracks-panel {
     height: var(--phone-sheet-peek);
   }
 
   /* The width-drag resize handle is meaningless once the panel is full-width and
      bottom-anchored — no JS branching needed, the handle simply never renders visibly or
      receives pointer events once hidden. */
-  .activities-panel__resize-handle {
+  .tracks-panel__resize-handle {
     display: none;
   }
 
@@ -3281,7 +3281,7 @@ button.activities-panel__story-badge:hover {
      Larger than the 14px carets elsewhere (the icon's own size={20}): it's the sheet's whole
      expand/collapse affordance on a touchscreen. A finger-sized box, pulled into the row's
      right padding so the icon lines up with the content below it. */
-  .activities-panel__sheet-toggle {
+  .tracks-panel__sheet-toggle {
     display: inline-flex;
     flex: none;
     align-items: center;
@@ -3305,22 +3305,22 @@ button.activities-panel__story-badge:hover {
      Bigger touch targets for the row checkbox and the toolbar's four icon actions, which
      stay at their desktop size otherwise (15px/30px/30px/30px/30px — comfortably clickable
      with a mouse, tight with a finger). The chips are shared by the toolbar and the row
-     actions of Stories and Privacy, so both widen here. */
-  .activities-panel__checkbox {
+     actions of Trips and Privacy, so both widen here. */
+  .tracks-panel__checkbox {
     width: 20px;
     height: 20px;
   }
 
-  .activities-panel__edit,
-  .activities-panel__add-story,
-  .activities-panel__delete,
-  .activities-panel__visibility,
-  .activities-panel__focus {
+  .tracks-panel__edit,
+  .tracks-panel__add-trip,
+  .tracks-panel__delete,
+  .tracks-panel__visibility,
+  .tracks-panel__focus {
     width: 34px;
     height: 34px;
   }
 
-  .activities-panel__type-trigger {
+  .tracks-panel__type-trigger {
     padding: var(--fm-space-8) var(--fm-space-6);
   }
 
@@ -3376,10 +3376,10 @@ button.activities-panel__story-badge:hover {
 }
 
 /* A screen that can't hover (a phone, a tablet, a touch laptop at any width) keeps row actions
-   and a Story's rows' × in view. */
+   and a Trip's rows' × in view. */
 @media (hover: none) {
-  .activities-panel__row-action,
-  .activities-panel__row-remove {
+  .tracks-panel__row-action,
+  .tracks-panel__row-remove {
     opacity: 1;
   }
 }

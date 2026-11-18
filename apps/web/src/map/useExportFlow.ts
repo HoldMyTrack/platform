@@ -6,7 +6,7 @@ import { DEFAULT_CUSTOM_SIZE, outputSize, usableCustomSize, type CustomSizeId, t
 import type { Rect } from './exportViewfinder.ts';
 import { t } from '../i18n/index.ts';
 import { todayIn } from '../ui/dateMath.ts';
-import { activityTimeZone } from '../ui/timeZone.ts';
+import { trackTimeZone } from '../ui/timeZone.ts';
 import { statsCardRequest, statsOffered } from './exportStats.ts';
 import { isDarkBase } from './style.ts';
 import { useStatsCard, type StatsCardState } from './useStatsCard.ts';
@@ -30,10 +30,10 @@ function saveShowStats(show: boolean): void {
   }
 }
 
-/** What the stats card is drawn from: the Activities panel's checked set and the open Story. */
+/** What the stats card is drawn from: the Tracks panel's checked set and the open Trip. */
 interface ExportStatsSource {
   checked: ReadonlySet<string>;
-  storyId: string | null;
+  tripId: string | null;
 }
 
 export interface ExportControls {
@@ -73,14 +73,14 @@ export function useExportFlow(
     setShowStatsState(show);
     saveShowStats(show);
   }, []);
-  const offered = statsOffered(source.checked, source.storyId);
+  const offered = statsOffered(source.checked, source.tripId);
   const target = flow.stage === 'idle' ? null : outputSize(flow.preset, flow.customSize, flow.window);
   const widthPx = target?.widthPx ?? 0;
   const heightPx = target?.heightPx ?? 0;
   const dark = isDarkBase(scene.flavor, scene.satellite);
   const request = useMemo(
-    () => (widthPx > 0 ? statsCardRequest(showStats, source.checked, source.storyId, { widthPx, heightPx }, dark) : null),
-    [showStats, source.checked, source.storyId, widthPx, heightPx, dark],
+    () => (widthPx > 0 ? statsCardRequest(showStats, source.checked, source.tripId, { widthPx, heightPx }, dark) : null),
+    [showStats, source.checked, source.tripId, widthPx, heightPx, dark],
   );
   const stats = useStatsCard(request);
 
@@ -128,7 +128,7 @@ export function useExportFlow(
       const a = document.createElement('a');
       a.href = url;
       // Named for the account's day (FR-1.7), not UTC's: at 8 pm in New York, UTC is tomorrow.
-      a.download = `holdmytrack-${todayIn(activityTimeZone(undefined))}.png`;
+      a.download = `holdmytrack-${todayIn(trackTimeZone(undefined))}.png`;
       document.body.appendChild(a);
       a.click();
       a.remove();

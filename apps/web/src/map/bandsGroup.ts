@@ -2,9 +2,9 @@ import type { MapMode } from './mapMode.ts';
 import { ROLE_METADATA, type GroupPart } from './mapLayers.ts';
 
 /**
- * The focused activity's pace-colored segments (docs/SPEC.md FR-4.6) as the layers document's
+ * The focused track's pace-colored segments (docs/SPEC.md FR-4.6) as the layers document's
  * `track-bands` group: a GeoJSON source the client fills with one line per run of
- * `GET /v1/activities/{id}/track-metrics`' `bands` (trackBands.ts), over the shared tracks layer,
+ * `GET /v1/activities/{id}/track-metrics`' `bands` (routeBands.ts), over the shared tracks layer,
  * since a vector tile can't carry per-vertex color. Each line carries its `band` index, and the
  * layer colors it, so the colors are the server's alone. One more line, the whole route in recording
  * order with a `route` property, carries the direction arrows: on the runs themselves they would
@@ -98,7 +98,7 @@ export function bandsGroup(): GroupPart {
           paint: arrowPaint,
         },
       ],
-      // The selected activity's card shows the five steps, slowest first.
+      // The selected track's card shows the five steps, slowest first.
       legend: Object.fromEntries(BAND_COLORS.map((color, band) => [`band-${band}`, { color }])),
     },
     // Fog already shows where; lines over it read as noise.

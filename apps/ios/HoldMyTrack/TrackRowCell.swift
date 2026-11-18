@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// One track row (root docs/SPEC.md FR-5.1, the web's ActivityRow), on the Tracks tab and
+/// One track row (root docs/SPEC.md FR-5.1, the web's TrackRow), on the Tracks tab and
 /// under an open Trip: the title, "[date ·] distance · duration · type", dimmed with a Pending
 /// or Hidden badge, a Private badge, and a Trip badge for the Trips it's in but the open one.
 /// Its kind's tile is its checkbox: a tap on it, or a long press on the row, checks it.

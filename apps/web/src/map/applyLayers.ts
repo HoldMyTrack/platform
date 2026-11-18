@@ -24,7 +24,7 @@ interface LayerState {
   toggles: Readonly<Record<string, boolean>>;
   /** By var name, the value bound in place of the document's default. */
   vars: Readonly<Record<string, unknown>>;
-  /** Groups the client steps aside, drawn hidden, by who hides them (the track editor hides the
+  /** Groups the client steps aside, drawn hidden, by who hides them (the route editor hides the
    *  tracks): each caller sets only its own, and a group hidden by any is hidden. */
   hiddenGroups: Readonly<Record<string, readonly string[]>>;
   /** By source id, the client's own query appended to its tiles (the tracks' range). */

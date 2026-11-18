@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listPhotos, type Photo } from '../api.ts';
 
-/** Whose photos to show: one activity's, a Story's, or none. */
-export type PhotoScope = { activity: string } | { story: string } | null;
+/** Whose photos to show: one track's, a Trip's, or none. */
+export type PhotoScope = { track: string } | { trip: string } | null;
 
 export interface PhotosState {
   photos: readonly Photo[];
@@ -12,15 +12,15 @@ export interface PhotosState {
 
 function scopeKey(scope: PhotoScope): string | null {
   if (scope === null) return null;
-  return 'activity' in scope ? `activity:${scope.activity}` : `story:${scope.story}`;
+  return 'track' in scope ? `track:${scope.track}` : `trip:${scope.trip}`;
 }
 
 /**
- * The photos (FR-15) of the focused activity or the open Story — `GET /v1/photos`, refetched
+ * The photos (FR-15) of the focused track or the open Trip — `GET /v1/photos`, refetched
  * whenever the scope or `version` changes or `reload` is called (after the Edit window saved). `version` is
- * whatever else should refetch them: MapView's `trackMetricsVersion`, bumped when a track edit
+ * whatever else should refetch them: MapView's `routeMetricsVersion`, bumped when a route edit
  * or a Private location change has been reprocessed — either can move a photo, or take it off
- * the map — and an open Story's members. A new scope starts empty
+ * the map — and an open Trip's members. A new scope starts empty
  * rather than showing the last one's photos while it loads.
  */
 export function usePhotos(scope: PhotoScope, version: number | string = 0): PhotosState {
@@ -37,9 +37,9 @@ export function usePhotos(scope: PhotoScope, version: number | string = 0): Phot
       setLoadedKey(null);
       return;
     }
-    const [kind, id] = key.split(':') as ['activity' | 'story', string];
+    const [kind, id] = key.split(':') as ['track' | 'trip', string];
     const controller = new AbortController();
-    listPhotos(kind === 'activity' ? { activity: id } : { story: id }, controller.signal)
+    listPhotos(kind === 'track' ? { track: id } : { trip: id }, controller.signal)
       .then((list) => {
         setPhotos(list);
         setLoadedKey(key);

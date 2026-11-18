@@ -19,7 +19,7 @@ export const GLYPHS_PATH = '/basemap/fonts/{fontstack}/{range}.pbf';
 export const SPRITE_BASE_PATH = '/basemap/sprites/v4';
 
 /**
- * The fallback camera target once there is no saved URL position, no activity history to fly
+ * The fallback camera target once there is no saved URL position, no track history to fly
  * to, and no Country setting to fall back to first (useOpeningView.ts, docs/SPEC.md FR-4.4):
  * zoomed out far enough to keep every continent in frame.
  */
@@ -88,7 +88,7 @@ function positiveOr(value: unknown, fallback: number): number {
 
 // Tracks draw from z4 — a few states on screen — down to street level. Below that a track is a
 // few pixels long; above it the only cost is tile payload, and ST_AsMVTGeom's 4096-unit grid
-// already bounds that: measured with the demo's 611 activities and no date filter, the tile
+// already bounds that: measured with the demo's 611 tracks and no date filter, the tile
 // over Cleveland is 40KB at z4 against 44KB at z8 (IMPLEMENTATION.md §5.3). Not Fog's city
 // tier (z7, coverageGroup.ts): Fog switches to Country/Region fills below it, but Normal mode has no
 // such fallback, so tracks hidden there left an empty map — and a focused road trip too long

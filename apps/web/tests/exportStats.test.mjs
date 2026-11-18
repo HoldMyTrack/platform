@@ -11,7 +11,7 @@ test('the card is asked for only with Show stats ticked and offered', () => {
 });
 
 test('the request carries the image size and theme, its ids sorted', () => {
-  assert.deepEqual(statsCardRequest(true, new Set(['b', 'a']), null, size, true), { activityIds: ['a', 'b'], width: 1920, height: 1080, theme: 'dark' });
+  assert.deepEqual(statsCardRequest(true, new Set(['b', 'a']), null, size, true), { trackIds: ['a', 'b'], width: 1920, height: 1080, theme: 'dark' });
   assert.equal(statsCardRequest(true, new Set(['a']), null, size, false).theme, 'light');
 });
 

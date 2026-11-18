@@ -33,7 +33,7 @@ function unitOf(system: UnitSystem): 'km' | 'mi' {
   return system === 'imperial' ? 'mi' : 'km';
 }
 
-/** An activity's distance: always one decimal, never grouped. */
+/** A track's distance: always one decimal, never grouped. */
 export function distanceParts(meters: number, system: UnitSystem): DistanceParts {
   return { value: converted(meters, system), minDecimals: 1, maxDecimals: 1, grouping: false, unit: unitOf(system) };
 }

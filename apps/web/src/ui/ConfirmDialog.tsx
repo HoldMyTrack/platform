@@ -4,8 +4,8 @@ import { ModalDialog, useDialogAction } from './ModalDialog.tsx';
 
 /**
  * A generic "are you sure" confirm/cancel dialog, for any action that needs a confirm step before
- * committing; first used by the Activities panel's Delete (§4.7.5). A ModalDialog that owns
- * `onConfirm`'s busy and error state, as `EditActivityWindow.tsx`'s Save does, and closes once
+ * committing; first used by the Tracks panel's Delete (§4.7.5). A ModalDialog that owns
+ * `onConfirm`'s busy and error state, as `EditTrackWindow.tsx`'s Save does, and closes once
  * `onConfirm` resolves. It opens on Cancel, so a held or repeated Enter from the button that
  * opened it can't confirm what may not be undone.
  */

@@ -1,15 +1,15 @@
 import { distanceValue, unitLabel } from './format.ts';
 import { useUnitSystem } from './units.ts';
-import { bandWithin, nextDistanceFilter, type DistanceRange } from './activityFacets.ts';
+import { bandWithin, nextDistanceFilter, type DistanceRange } from './trackFacets.ts';
 import { t } from '../i18n/index.ts';
 
 /**
- * The Activities panel's DISTANCE dual slider (docs/SPEC.md FR-5.3), inside the filter row's
- * Distance dropdown (ActivityFilters.tsx).
+ * The Tracks panel's DISTANCE dual slider (docs/SPEC.md FR-5.3), inside the filter row's
+ * Distance dropdown (TrackFilters.tsx).
  *
  * `step="any"`: the bounds are real distances in meters with centimeters (a 16093.44 m ride),
  * and the default step of 1, counted from the minimum, can't land on the maximum — a knob
- * dragged back to the end stopped just short of the longest activity and kept it filtered out.
+ * dragged back to the end stopped just short of the longest track and kept it filtered out.
  */
 interface DistanceFilterProps {
   bounds: DistanceRange | null;
@@ -24,20 +24,20 @@ export function DistanceFilter({ bounds, value, onChangeDistance }: DistanceFilt
   const current = bandWithin(bounds, value ?? bounds);
 
   return (
-    <div className="activity-filters" data-testid="distance-filter">
-      <div className="activity-filters__section">
-        <div className="activity-filters__head">
-          <span className="activity-filters__label">{t('filters.distance')}</span>
-          <span className="activity-filters__readout" data-testid="distance-readout">
+    <div className="track-filters" data-testid="distance-filter">
+      <div className="track-filters__section">
+        <div className="track-filters__head">
+          <span className="track-filters__label">{t('filters.distance')}</span>
+          <span className="track-filters__readout" data-testid="distance-readout">
             {value === null
               ? t('filters.any_distance')
               : `${distanceValue(value.min, system)} – ${distanceValue(value.max, system)} ${unitLabel(system)}`}
           </span>
         </div>
-        <div className="activity-filters__track-wrap">
-          <div className="activity-filters__track" />
+        <div className="track-filters__track-wrap">
+          <div className="track-filters__track" />
           <div
-            className="activity-filters__fill"
+            className="track-filters__fill"
             style={{
               left: `${((current.min - bounds.min) / (bounds.max - bounds.min)) * 100}%`,
               right: `${100 - ((current.max - bounds.min) / (bounds.max - bounds.min)) * 100}%`,
@@ -45,7 +45,7 @@ export function DistanceFilter({ bounds, value, onChangeDistance }: DistanceFilt
           />
           <input
             type="range"
-            className="activity-filters__range activity-filters__range--min"
+            className="track-filters__range track-filters__range--min"
             aria-label={t('filters.min_distance')}
             min={bounds.min}
             max={bounds.max}
@@ -55,7 +55,7 @@ export function DistanceFilter({ bounds, value, onChangeDistance }: DistanceFilt
           />
           <input
             type="range"
-            className="activity-filters__range activity-filters__range--max"
+            className="track-filters__range track-filters__range--max"
             aria-label={t('filters.max_distance')}
             min={bounds.min}
             max={bounds.max}
@@ -64,7 +64,7 @@ export function DistanceFilter({ bounds, value, onChangeDistance }: DistanceFilt
             onChange={(event) => onChangeDistance(nextDistanceFilter(bounds, current, 'max', Number(event.target.value)))}
           />
         </div>
-        <div className="activity-filters__bounds">
+        <div className="track-filters__bounds">
           <span>
             {distanceValue(bounds.min, system)} {unitLabel(system)}
           </span>

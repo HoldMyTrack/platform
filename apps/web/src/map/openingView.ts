@@ -4,7 +4,7 @@ import { FLY_FILL, unionBBox } from './bbox.ts';
 /** The zoom the web's map opens at (docs/SPEC.md FR-4.4): a town or a few valleys. */
 const OPENING_ZOOM = 12;
 
-/** How many of the newest activities the opening view tries to show. */
+/** How many of the newest tracks the opening view tries to show. */
 export const OPENING_ACTIVITIES = 5;
 
 /** MapLibre's tile size: the world is this many px wide at zoom 0. */

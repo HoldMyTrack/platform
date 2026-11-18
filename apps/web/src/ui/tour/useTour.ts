@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import type { MapMode } from '../../map/mapMode.ts';
-import type { PanelTab } from '../ActivitiesPanel.tsx';
+import type { PanelTab } from '../TracksPanel.tsx';
 import { CAMERA_UNMOVED, NARROW_WIDTH, cameraEnd, cameraStep, cardFor, isPlainClick, nextStep, onScreen, stepChanges, stepsFor, tourStart, withCard, type TourCamera, type CardId, type TourSeen, type TourOpen, type TourStep, type TourView, type UserEvent } from './tourRules.ts';
 import { loadTourSeen, saveTourSeen } from './tourStore.ts';
 
@@ -9,13 +9,13 @@ interface TourOptions {
   map: MapLibreMap | null;
   isDemo: boolean;
   /** Null until the account's history and the map are both ready, so every step has something to point at. */
-  hasActivities: boolean | null;
+  hasTracks: boolean | null;
   /** The map opened at `/?tour` (App.tsx). */
   requested: boolean;
   mode: MapMode;
   setMode: (mode: MapMode) => void;
   tab: PanelTab;
-  /** Changes the panel's tab for the tour, its Story's URL replaced rather than pushed. */
+  /** Changes the panel's tab for the tour, its Trip's URL replaced rather than pushed. */
   setTab: (tab: PanelTab) => void;
   /** The Edit window is open: its lock holds the panel, and the map's controls are gone. */
   blocked: boolean;
@@ -64,7 +64,7 @@ function shownNow(step: TourStep, mode: MapMode): boolean {
 }
 
 /** The tour, its offer and the first-time cards (docs/SPEC.md FR-4.14): the state around tourRules.ts. */
-export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, tab, setTab, blocked }: TourOptions): Tour {
+export function useTour({ map, isDemo, hasTracks, requested, mode, setMode, tab, setTab, blocked }: TourOptions): Tour {
   const [seen, setSeen] = useState<TourSeen>(loadTourSeen);
   const [running, setRunning] = useState<Running | null>(null);
   const [offer, setOffer] = useState(false);
@@ -123,12 +123,12 @@ export function useTour({ map, isDemo, hasActivities, requested, mode, setMode, 
   const decided = useRef(false);
   useEffect(() => {
     if (decided.current) return;
-    const decision = tourStart({ requested, isDemo, hasActivities, seen });
+    const decision = tourStart({ requested, isDemo, hasTracks, seen });
     if (decision === 'wait') return;
     decided.current = true;
     if (decision === 'start') start();
     if (decision === 'offer') setOffer(true);
-  }, [requested, isDemo, hasActivities, seen, start]);
+  }, [requested, isDemo, hasTracks, seen, start]);
 
   useTourStartLink(start);
   useTourCamera(map, running?.steps[running.index] ?? null);
