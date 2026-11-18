@@ -71,9 +71,11 @@ export function FogLevelMenu({ map, explored, forceOpen = false }: FogLevelMenuP
 
   // Picking leaves the menu open, so the arrow keys can walk the levels; a click closes it. Heard on
   // the group, which a click on a row's text or radio reaches with a `detail` and the synthetic
-  // click an arrow key fires on a radio reaches without one.
+  // click an arrow key fires on a radio reaches without one. Closed a task later: a click on a
+  // row's text passes to its radio only once this click is done, and a menu closed now would take
+  // the radio away first, so the level would never be picked.
   const closeOnClick = (event: { detail: number }) => {
-    if (event.detail > 0) setOpen(false);
+    if (event.detail > 0) window.setTimeout(() => setOpen(false));
   };
   const pick = (level: string | null) => {
     if (level === null) {
