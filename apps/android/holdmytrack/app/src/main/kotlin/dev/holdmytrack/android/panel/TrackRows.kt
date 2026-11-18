@@ -42,7 +42,7 @@ fun kindIcon(kind: TrackKind): Int = when (kind) {
 }
 
 /**
- * One track row over `item_track_row` — the web's `ActivityRow.tsx`, shared the same way
+ * One track row over `item_track_row` — the web's `TrackRow.tsx`, shared the same way
  * by the Tracks tab and an open Trip's rows on the Trips tab ([TripsTab]). The title
  * and the "[date ·] distance · duration · type" line, dimmed with a Pending or Hidden badge,
  * and a Trip badge for the Trips it's in — all but [openTripId]'s, since every row under

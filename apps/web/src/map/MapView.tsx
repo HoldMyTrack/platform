@@ -1,6 +1,6 @@
 import { Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { listQuery, tracksQuery as tracksQueryFor } from './activityQuery.ts';
+import { listQuery, tracksQuery as tracksQueryFor } from './trackQuery.ts';
 import { areaLoad } from './areaLoad.ts';
 import { flyToBBox, unionBBox } from './bbox.ts';
 import { mapTapsAct } from './exportFlow.ts';
@@ -9,7 +9,7 @@ import { setMapTapsActive } from './mapTaps.ts';
 import { initialSession, mapSessionReducer } from './session.ts';
 import { setListedTracks } from './tracks.ts';
 import { boldTracks, toolbarTarget } from './selection.ts';
-import { initialPanelTab, storyParam } from './storyUrl.ts';
+import { initialPanelTab, tripParam } from './tripUrl.ts';
 import type { SpotCategory } from './spots.ts';
 import { useAreaList } from './useAreaList.ts';
 import { useCoverageRefresh } from './useCoverageRefresh.ts';
@@ -33,13 +33,13 @@ import { usePhotoLayer } from './usePhotoLayer.ts';
 import { useSelectionActions } from './useSelectionActions.ts';
 import { useSelectionLayers } from './useSelectionLayers.ts';
 import { useSpots } from './useSpots.ts';
-import { useStoryNav } from './useStoryNav.ts';
-import { useTrackMetrics } from './useTrackMetrics.ts';
+import { useTripNav } from './useTripNav.ts';
+import { useRouteMetrics } from './useRouteMetrics.ts';
 import { useViewOnMap } from './useViewOnMap.ts';
-import type { Activity } from '../api.ts';
+import type { Track } from '../api.ts';
 import { useAuth } from '../auth/AuthContext.tsx';
-import { ActivitiesPanel, type PanelTab } from '../ui/ActivitiesPanel.tsx';
-import type { EditWindowResult } from '../ui/EditActivityWindow.tsx';
+import { TracksPanel, type PanelTab } from '../ui/TracksPanel.tsx';
+import type { EditWindowResult } from '../ui/EditTrackWindow.tsx';
 import { MapControls } from '../ui/MapControls.tsx';
 import { PhotoPopup } from '../ui/PhotoPopup.tsx';
 import { SpotPopup } from '../ui/SpotPopup.tsx';
@@ -49,9 +49,9 @@ import { useUnitSystem } from '../ui/units.ts';
 import { useHistoryStart } from '../ui/useHistoryStart.ts';
 import { showsFirstRun } from '../ui/firstRun.ts';
 import { DemoBar } from '../ui/DemoBar.tsx';
-import { useActivityList } from '../ui/useActivityList.ts';
-import { useStories } from '../ui/useStories.ts';
-import { useStory } from '../ui/useStory.ts';
+import { useTrackList } from '../ui/useTrackList.ts';
+import { useTrips } from '../ui/useTrips.ts';
+import { useTrip } from '../ui/useTrip.ts';
 import { useTour } from '../ui/tour/useTour.ts';
 import { t } from '../i18n/index.ts';
 import { MapExport } from '../ui/MapExport.tsx';
@@ -59,33 +59,33 @@ import { TourLayer } from '../ui/tour/Tour.tsx';
 import { lazyChunk } from '../lazyChunk.ts';
 
 interface MapViewProps {
-  /** Mount with the Activities panel on its Privacy tab: `/?private-locations` (App.tsx). */
+  /** Mount with the Tracks panel on its Privacy tab: `/?private-locations` (App.tsx). */
   initialPrivateLocationsOpen?: boolean;
-  /** Mount on one activity, its day selected and it focused: `/?activity=&day=`, the /sync page's "View on map". */
-  initialActivity?: { id: string; day: string } | null;
+  /** Mount on one track, its day selected and it focused: `/?activity=&day=`, the /sync page's "View on map". */
+  initialTrack?: { id: string; day: string } | null;
   /** Start the tour once the map is ready: `/?tour`, the header's Take a tour from another page. */
   initialTour?: boolean;
 }
 
-// Loaded when first opened, not with the map: the Edit window, with the track editor and photo
+// Loaded when first opened, not with the map: the Edit window, with the route editor and photo
 // preparation, is a large part of the app that most visits never open (lazyChunk.ts).
-const EditActivityWindow = lazyChunk(() => import('../ui/EditActivityWindow.tsx').then((m) => m.EditActivityWindow));
+const EditTrackWindow = lazyChunk(() => import('../ui/EditTrackWindow.tsx').then((m) => m.EditTrackWindow));
 
-/** The Edit window's place while its activities, or its code, are on their way. */
+/** The Edit window's place while its tracks, or its code, are on their way. */
 function EditWindowLoading() {
   return (
-    <section className="edit-track edit-window" aria-busy="true" data-testid="edit-window-loading">
-      <p className="activities-panel__note" role="status">{t('common.loading')}</p>
+    <section className="edit-route edit-window" aria-busy="true" data-testid="edit-window-loading">
+      <p className="tracks-panel__note" role="status">{t('common.loading')}</p>
     </section>
   );
 }
 
 /**
- * The map page: the map and its layers, the Activities panel beside it, and the Edit window, the
+ * The map page: the map and its layers, the Tracks panel beside it, and the Edit window, the
  * export and the popups over it. It composes the map's state (session.ts) with each feature's
  * hook; the hooks are called in the order their effects must run.
  */
-export function MapView({ initialPrivateLocationsOpen = false, initialActivity = null, initialTour = false }: MapViewProps) {
+export function MapView({ initialPrivateLocationsOpen = false, initialTrack = null, initialTour = false }: MapViewProps) {
   // A demo account is read-only (docs/SPEC.md FR-2.1); `'email' in user` tells a DemoUser from an AuthUser.
   const { user } = useAuth();
   const isDemo = !('email' in user);
@@ -93,10 +93,10 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const { initial, flavor, pinned } = useInitialView();
 
   const container = useRef<HTMLDivElement>(null);
-  // The area and Dates or the Story shown, the selection over it and the mode (session.ts).
-  const [session, dispatch] = useReducer(mapSessionReducer, null, () => initialSession(storyParam(window.location.search)));
-  const { dates, area, storyId, mode: mapMode } = session;
-  const { checked: checkedActivityIds, focused: focusedActivityId, hidden: hiddenActivityIds, excludedTypes, distanceFilter } = session.selection;
+  // The area and Dates or the Trip shown, the selection over it and the mode (session.ts).
+  const [session, dispatch] = useReducer(mapSessionReducer, null, () => initialSession(tripParam(window.location.search)));
+  const { dates, area, tripId, mode: mapMode } = session;
+  const { checked: checkedTrackIds, focused: focusedTrackId, hidden: hiddenTrackIds, excludedTypes, distanceFilter } = session.selection;
   const { overlays, change: changeOverlays, paths, roads, satelliteAvailable, satellite } = useOverlays();
 
   // The account's today (FR-1.7), read again on every render: a tab left open runs past midnight.
@@ -104,37 +104,37 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
 
   // The row or track under the pointer, from either surface, so one effect owns the map's hover
   // feature-state. A preview only: it never moves the camera.
-  const [hoveredActivityId, setHoveredActivityId] = useState<string | null>(null);
+  const [hoveredTrackId, setHoveredTrackId] = useState<string | null>(null);
 
   // Bumped when a reprocess finishes, so the bands refetch against the new points.
-  const [trackMetricsVersion, setTrackMetricsVersion] = useState(0);
-  const bumpMetrics = useCallback(() => setTrackMetricsVersion((v) => v + 1), []);
+  const [routeMetricsVersion, setRouteMetricsVersion] = useState(0);
+  const bumpMetrics = useCallback(() => setRouteMetricsVersion((v) => v + 1), []);
 
-  // The panel's tab lives here so `/?private-locations` (FR-7.1) and `/?story=` (FR-13.6) can open
+  // The panel's tab lives here so `/?private-locations` (FR-7.1) and `/?trip=` (FR-13.6) can open
   // on it, and so it survives the panel unmounting in Fog.
   const [panelTab, setPanelTab] = useState<PanelTab>(() =>
-    initialPanelTab(window.location.search, initialActivity !== null, initialPrivateLocationsOpen),
+    initialPanelTab(window.location.search, initialTrack !== null, initialPrivateLocationsOpen),
   );
 
-  const storyState = useStory(storyId);
-  const storiesList = useStories(panelTab === 'stories');
+  const tripState = useTrip(tripId);
+  const tripsList = useTrips(panelTab === 'trips');
 
-  const boldIds = useMemo(() => boldTracks(checkedActivityIds, focusedActivityId), [checkedActivityIds, focusedActivityId]);
-  const toolbarTargetIds = useMemo(() => toolbarTarget(checkedActivityIds, focusedActivityId), [checkedActivityIds, focusedActivityId]);
+  const boldIds = useMemo(() => boldTracks(checkedTrackIds, focusedTrackId), [checkedTrackIds, focusedTrackId]);
+  const toolbarTargetIds = useMemo(() => toolbarTarget(checkedTrackIds, focusedTrackId), [checkedTrackIds, focusedTrackId]);
 
-  // A Story, or the area under Dates; the tracks take Dates alone (activityQuery.ts).
-  const activityQuery = useMemo(() => listQuery(storyId, dates, area), [storyId, dates, area]);
+  // A Trip, or the area under Dates; the tracks take Dates alone (trackQuery.ts).
+  const trackQuery = useMemo(() => listQuery(tripId, dates, area), [tripId, dates, area]);
 
   // Fetched once here so the panel and the drawn tracks agree on the same rows.
   const {
-    activities,
+    tracks,
     total: areaTotal,
-    loading: activitiesLoading,
-    error: activitiesError,
-    reload: reloadActivities,
-    loadedKey: activitiesLoadedKey,
-  } = useActivityList(activityQuery);
-  // The first activity's day: the Dates pickers' bound and the empty account's panel.
+    loading: tracksLoading,
+    error: tracksError,
+    reload: reloadTracks,
+    loadedKey: tracksLoadedKey,
+  } = useTrackList(trackQuery);
+  // The first track's day: the Dates pickers' bound and the empty account's panel.
   const { earliest, latest, ready: daysReady, reload: reloadDays } = useHistoryStart();
   const datesBounds = dateFilterBounds(earliest, latest, today);
   const changeDates = useCallback(
@@ -146,27 +146,27 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   );
   const clearDates = useCallback(() => dispatch({ type: 'datesSet', dates: ALL_TIME, fly: false }), []);
 
-  const listedActivityIds = useMemo(() => activities.map((a) => a.id), [activities]);
-  const edit = useEditWindow(activities);
+  const listedTrackIds = useMemo(() => tracks.map((a) => a.id), [tracks]);
+  const edit = useEditWindow(tracks);
   const editOpen = edit.open;
-  // A row a fresh list no longer has (deleted elsewhere, left the Story or the area) leaves the
+  // A row a fresh list no longer has (deleted elsewhere, left the Trip or the area) leaves the
   // selection, except the Edit window's while it's open; only a list read for the query shown says
   // so. Read through a ref: closing the window is not a new list.
   const editIdsRef = useRef(edit.ids);
   editIdsRef.current = edit.ids;
   useEffect(() => {
-    if (activityQuery !== null && activitiesLoadedKey === JSON.stringify(activityQuery)) {
-      dispatch({ type: 'listLoaded', ids: selectionKept(listedActivityIds, editIdsRef.current) });
+    if (trackQuery !== null && tracksLoadedKey === JSON.stringify(trackQuery)) {
+      dispatch({ type: 'listLoaded', ids: selectionKept(listedTrackIds, editIdsRef.current) });
     }
-  }, [listedActivityIds, activitiesLoadedKey, activityQuery]);
-  const editingTrack = edit.editingId !== null;
+  }, [listedTrackIds, tracksLoadedKey, trackQuery]);
+  const editingRoute = edit.editingId !== null;
   const spotsShown = useMemo<readonly SpotCategory[]>(
-    () => (editingTrack || !overlays.placesEnabled ? [] : overlays.spots),
-    [editingTrack, overlays.placesEnabled, overlays.spots],
+    () => (editingRoute || !overlays.placesEnabled ? [] : overlays.spots),
+    [editingRoute, overlays.placesEnabled, overlays.spots],
   );
 
 
-  const { pendingIds, distanceBounds: activityDistanceBounds, facets, listed: filteredActivities, mapHiddenIds } = useListView(activities, session.selection, dispatch);
+  const { pendingIds, distanceBounds: trackDistanceBounds, facets, listed: filteredTracks, mapHiddenIds } = useListView(tracks, session.selection, dispatch);
 
   const unitSystem = useUnitSystem();
   const { map, basemap, imagery } = useMapInstance({
@@ -180,22 +180,22 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   // Failed imagery draws the map as with Satellite off, and its export too (satelliteStatus.ts).
   const satelliteShown = satelliteLook(satellite, imagery);
 
-  // A Story's photos change with its members too.
-  const storyMembers = storyState.story?.activityIds.join(',') ?? '';
+  // A Trip's photos change with its members too.
+  const tripMembers = tripState.trip?.trackIds.join(',') ?? '';
   const photoLayer = usePhotoLayer(map, {
     mode: mapMode,
     editWindowIds: edit.ids,
-    focusedId: focusedActivityId,
-    storyId,
-    version: `${trackMetricsVersion}|${storyMembers}`,
+    focusedId: focusedTrackId,
+    tripId,
+    version: `${routeMetricsVersion}|${tripMembers}`,
     editOpen,
-    trackTabShown: editOpen && edit.tab === 'track',
+    routeTabShown: editOpen && edit.tab === 'route',
     mapHiddenIds,
   });
 
-  // Flies to the combined bounds of the given activities; one activity is its own bbox.
+  // Flies to the combined bounds of the given tracks; one track is its own bbox.
   const fitToSelection = useCallback(
-    (selection: Activity[]) => {
+    (selection: Track[]) => {
       if (!map) return;
       const flyBounds = unionBBox(selection.flatMap((a) => (a.bbox ? [a.bbox] : [])));
       if (flyBounds) flyToBBox(map, flyBounds);
@@ -205,44 +205,44 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
 
   // A mode change never moves the camera.
   const setMapMode = useCallback((mode: MapMode) => dispatch({ type: 'modeChanged', mode }), []);
-  const select = useSelectionActions(dispatch, activities, filteredActivities, checkedActivityIds, toolbarTargetIds, mapHiddenIds, fitToSelection);
-  const focusActivity = select.focus;
+  const select = useSelectionActions(dispatch, tracks, filteredTracks, checkedTrackIds, toolbarTargetIds, mapHiddenIds, fitToSelection);
+  const focusTrack = select.focus;
   const clearFocus = select.clearFocus;
-  useViewOnMap(map, initialActivity, { mode: mapMode, activities }, dispatch, focusActivity);
+  useViewOnMap(map, initialTrack, { mode: mapMode, tracks }, dispatch, focusTrack);
   const urlView = initial.hash.view != null;
-  useOpeningView(map, dispatch, { keepCamera: urlView || storyId !== null || initialActivity !== null, country: user.country, earliest, historyReady: daysReady });
-  const zoom = useAreaList(map, dispatch, storyId);
-  useDatesFlight(map, dispatch, { flyRequest: session.flyRequest, storyId, dates });
-  const areaState = areaLoad(zoom, activities.length, storyId === null ? areaTotal : null);
+  useOpeningView(map, dispatch, { keepCamera: urlView || tripId !== null || initialTrack !== null, country: user.country, earliest, historyReady: daysReady });
+  const zoom = useAreaList(map, dispatch, tripId);
+  useDatesFlight(map, dispatch, { flyRequest: session.flyRequest, tripId, dates });
+  const areaState = areaLoad(zoom, tracks.length, tripId === null ? areaTotal : null);
   // Past the cap the map draws only the listed tracks, so the map and the list stay one set.
-  const listedIds = useMemo(() => (areaState.capped ? activities.map((a) => a.id) : null), [areaState.capped, activities]);
-  // Past the cap the tiles carry only what starts at or after the oldest listed activity: the
+  const listedIds = useMemo(() => (areaState.capped ? tracks.map((a) => a.id) : null), [areaState.capped, tracks]);
+  // Past the cap the tiles carry only what starts at or after the oldest listed track: the
   // listed tracks and newer ones beyond the view, instead of the whole history (IMPLEMENTATION.md §4.3).
-  const since = areaState.capped ? activities[activities.length - 1]?.startedAt : undefined;
-  const tracksQuery = useMemo(() => ({ ...tracksQueryFor(storyId, dates), ...(since !== undefined && { since }) }), [storyId, dates, since]);
+  const since = areaState.capped ? tracks[tracks.length - 1]?.startedAt : undefined;
+  const tracksQuery = useMemo(() => ({ ...tracksQueryFor(tripId, dates), ...(since !== undefined && { since }) }), [tripId, dates, since]);
   useEffect(() => {
     if (map) setListedTracks(map, listedIds);
   }, [map, listedIds]);
 
   useListFlight(map, {
-    activities,
-    loadedKey: activitiesLoadedKey,
-    storyId,
+    tracks,
+    loadedKey: tracksLoadedKey,
+    tripId,
     flyRequest: session.flyRequest,
     onFlown: () => dispatch({ type: 'flyConsumed' }),
     mapHiddenIds,
     urlView,
-    arrivingOnActivity: initialActivity !== null,
+    arrivingOnTrack: initialTrack !== null,
     fitTo: fitToSelection,
   });
 
   const spots = useSpots(map, spotsShown);
-  const bands = useTrackMetrics(map, focusedActivityId, trackMetricsVersion, mapHiddenIds, pendingIds);
+  const bands = useRouteMetrics(map, focusedTrackId, routeMetricsVersion, mapHiddenIds, pendingIds);
   const exportScene = useMemo(
     () => ({ flavor, mode: mapMode, tracksQuery, listedIds, hiddenIds: [...mapHiddenIds], boldIds, bands, paths, satellite: satelliteShown, roads, photos: photoLayer.exportPhotos }),
     [flavor, mapMode, tracksQuery, listedIds, mapHiddenIds, boldIds, bands, paths, satelliteShown, roads, photoLayer.exportPhotos],
   );
-  const exportStats = useMemo(() => ({ checked: checkedActivityIds, storyId }), [checkedActivityIds, storyId]);
+  const exportStats = useMemo(() => ({ checked: checkedTrackIds, tripId }), [checkedTrackIds, tripId]);
   const exporter = useExportFlow(map, container, exportScene, exportStats);
   const tapsAct = mapTapsAct(exporter.flow);
   useEffect(() => setMapTapsActive(tapsAct), [tapsAct]);
@@ -254,11 +254,11 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   useSelectionLayers(map, {
     boldIds,
     // Hover isn't exported, and framing doesn't preview.
-    hoveredId: tapsAct ? hoveredActivityId : null,
+    hoveredId: tapsAct ? hoveredTrackId : null,
     mapHiddenIds,
     editOpen,
-    onFocus: focusActivity,
-    onHover: setHoveredActivityId,
+    onFocus: focusTrack,
+    onHover: setHoveredTrackId,
     onClickAway: clearFocus,
   });
 
@@ -268,75 +268,75 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   const { watch: watchCoverage, rendering: coverageRendering, explored } = useCoverageRefresh(map);
   const refresh = useDataRefresh(map, {
     tracksQuery,
-    reloadActivities,
+    reloadTracks,
     reloadDays,
-    reloadStory: storyState.reload,
+    reloadTrip: tripState.reload,
     watchCoverage,
     bumpMetrics,
   });
 
   const fileDrop = useFileDrop(!isDemo);
 
-  // Deleted activities: the upload refresh (the first activity's day can change too), once per batch, and
+  // Deleted tracks: the upload refresh (the first track's day can change too), once per batch, and
   // their ids dropped from the selection. The focus matters most: left on a deleted id, the bands
   // would keep fetching its metrics.
-  const handleActivitiesDeleted = useCallback(
+  const handleTracksDeleted = useCallback(
     (ids: string[]) => {
       refresh.afterImport();
-      dispatch({ type: 'activitiesRemoved', ids });
+      dispatch({ type: 'tracksRemoved', ids });
     },
     [refresh.afterImport],
   );
 
-  const stories = useStoryNav({
-    storyId,
+  const trips = useTripNav({
+    tripId,
     dispatch,
     panelTab,
     setPanelTab,
-    stories: storiesList,
-    story: storyState,
-    reloadActivities,
+    trips: tripsList,
+    trip: tripState,
+    reloadTracks,
     watchCoverage,
     refreshTracks: refresh.refreshTracks,
     afterImport: refresh.afterImport,
-    onActivityRemoved: (id) => setHoveredActivityId((hovered) => (hovered === id ? null : hovered)),
+    onTrackRemoved: (id) => setHoveredTrackId((hovered) => (hovered === id ? null : hovered)),
   });
 
-  const awaitEdit = usePendingPoll(listedActivityIds, pendingIds, activitiesLoading, { reload: reloadActivities, onStarted: refresh.pendingStarted, onFinished: refresh.pendingFinished });
+  const awaitEdit = usePendingPoll(listedTrackIds, pendingIds, tracksLoading, { reload: reloadTracks, onStarted: refresh.pendingStarted, onFinished: refresh.pendingFinished });
 
   const openEditWindow = useCallback(
-    (group: Activity[]) => {
-      setHoveredActivityId(null);
+    (group: Track[]) => {
+      setHoveredTrackId(null);
       edit.openFor(group);
     },
     [edit.openFor],
   );
-  // The Track tab's session (§4.7.7): flies to the activity, then TrackEditor owns the map until the window closes.
-  const startEditTrack = useCallback(
-    (activity: Activity) => {
-      setHoveredActivityId(null);
-      edit.startTrack(activity.id);
-      fitToSelection([activity]);
+  // The Route tab's session (§4.7.7): flies to the track, then TrackEditor owns the map until the window closes.
+  const startEditRoute = useCallback(
+    (track: Track) => {
+      setHoveredTrackId(null);
+      edit.startRoute(track.id);
+      fitToSelection([track]);
     },
-    [edit.startTrack, fitToSelection],
+    [edit.startRoute, fitToSelection],
   );
   const closeEditWindow = useCallback(
-    ({ saved, trackApplied, photosSaved }: EditWindowResult) => {
-      const editedTrack = edit.close();
-      if (trackApplied && editedTrack !== null) awaitEdit(editedTrack);
-      // A track edit leaves the row Pending; the poll runs until the reprocess lands.
-      if (saved) reloadActivities();
+    ({ saved, routeApplied, photosSaved }: EditWindowResult) => {
+      const editedRoute = edit.close();
+      if (routeApplied && editedRoute !== null) awaitEdit(editedRoute);
+      // A route edit leaves the row Pending; the poll runs until the reprocess lands.
+      if (saved) reloadTracks();
       if (photosSaved) photoLayer.photos.reload();
     },
-    [edit.close, awaitEdit, reloadActivities, photoLayer.photos.reload],
+    [edit.close, awaitEdit, reloadTracks, photoLayer.photos.reload],
   );
 
-  // The tour's tab changes replace the Story's URL, so Back doesn't walk through its steps.
-  const tourTab = useCallback((tab: PanelTab) => stories.changePanelTab(tab, 'replace'), [stories.changePanelTab]);
+  // The tour's tab changes replace the Trip's URL, so Back doesn't walk through its steps.
+  const tourTab = useCallback((tab: PanelTab) => trips.changePanelTab(tab, 'replace'), [trips.changePanelTab]);
   const tour = useTour({
     map,
     isDemo,
-    hasActivities: daysReady && map !== null ? earliest !== null : null,
+    hasTracks: daysReady && map !== null ? earliest !== null : null,
     requested: initialTour,
     mode: mapMode,
     setMode: setMapMode,
@@ -354,10 +354,10 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
   );
   const changePanelTab = useCallback(
     (tab: PanelTab) => {
-      stories.changePanelTab(tab);
+      trips.changePanelTab(tab);
       tour.notice({ kind: 'tab', tab });
     },
-    [stories.changePanelTab, tour.notice],
+    [trips.changePanelTab, tour.notice],
   );
 
   useMapLayers(map, {
@@ -367,7 +367,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
     satelliteLook: satelliteShown,
     roads,
     mode: mapMode,
-    editingTrack,
+    editingRoute,
     paths,
     spotsShown,
     tracksQuery,
@@ -384,37 +384,37 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
         {mapMode === 'normal' && (
           // Inert while the Edit window is open: it is over the toolbar's target, which the panel
           // would change or delete under it. display: contents keeps the wrapper out of the layout.
-          <div className="edit-track-lock" inert={editOpen}>
-            <ActivitiesPanel
+          <div className="edit-route-lock" inert={editOpen}>
+            <TracksPanel
               readOnly={isDemo}
-              activities={filteredActivities}
-              loading={activitiesLoading}
-              error={activitiesError}
+              tracks={filteredTracks}
+              loading={tracksLoading}
+              error={tracksError}
               facets={facets}
               excludedTypes={excludedTypes}
               onToggleType={select.toggleType}
-              distanceBounds={activityDistanceBounds}
+              distanceBounds={trackDistanceBounds}
               distanceFilter={distanceFilter}
               onChangeDistance={select.setDistanceFilter}
-              checked={checkedActivityIds}
+              checked={checkedTrackIds}
               targetIds={toolbarTargetIds}
-              focusedId={focusedActivityId}
-              hoveredId={hoveredActivityId}
+              focusedId={focusedTrackId}
+              hoveredId={hoveredTrackId}
               onToggle={select.toggleChecked}
-              onFocus={focusActivity}
+              onFocus={focusTrack}
               onClearFocus={clearFocus}
-              onHoverActivity={setHoveredActivityId}
+              onHoverTrack={setHoveredTrackId}
               onClear={select.clearChecked}
               onSelectAll={select.checkAll}
               onInvertSelection={select.invertChecked}
               onShowSelected={select.showTarget}
-              hiddenIds={hiddenActivityIds}
+              hiddenIds={hiddenTrackIds}
               onToggleGroupVisibility={select.toggleGroupVisibility}
-              onActivitiesDeleted={handleActivitiesDeleted}
+              onTracksDeleted={handleTracksDeleted}
               onEdit={openEditWindow}
-              onStoryCreated={stories.openCreatedStory}
-              onStoryAdded={stories.handleStoryAdded}
-              stories={stories.storiesPanel}
+              onTripCreated={trips.openCreatedTrip}
+              onTripAdded={trips.handleTripAdded}
+              trips={trips.tripsPanel}
               tab={panelTab}
               onTabChange={changePanelTab}
               sheetOpen={tour.open.sheet === true}
@@ -422,7 +422,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               onPrivateLocationsChanged={refresh.afterPrivateLocations}
               firstRun={showsFirstRun(isDemo, daysReady ? earliest !== null : null)}
               dates={{ value: dates, bounds: datesBounds, earliest, today, onChange: changeDates, onClear: clearDates }}
-              outOfReach={storyId === null && areaState.load === 'none'}
+              outOfReach={tripId === null && areaState.load === 'none'}
             />
           </div>
         )}
@@ -440,14 +440,14 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
           {/* Edit owns the map while it's open, as the other controls step aside: an export would
               draw the tracks without the edit, and Escape would reach both. */}
           {map && !editOpen && <MapExport map={map} container={container} exporter={exporter} />}
-          {map && edit.activities && (
+          {map && edit.tracks && (
             <Suspense fallback={<EditWindowLoading />}>
-            <EditActivityWindow
+            <EditTrackWindow
               map={map}
-              activities={edit.activities}
+              tracks={edit.tracks}
               knownTypes={facets}
-              trackUnavailable={edit.trackBlocker === null ? null : t(edit.trackBlocker)}
-              onStartTrack={startEditTrack}
+              routeUnavailable={edit.routeBlocker === null ? null : t(edit.routeBlocker)}
+              onStartRoute={startEditRoute}
               photosUnavailable={edit.photosBlocker === null ? null : t(edit.photosBlocker)}
               photos={{ photos: photoLayer.photos.photos, error: photoLayer.photos.error, reload: photoLayer.photos.reload, onOverlay: photoLayer.setOverlay }}
               onTabChange={edit.setTab}
@@ -455,7 +455,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
             />
             </Suspense>
           )}
-          {edit.open && !edit.activities && <EditWindowLoading />}
+          {edit.open && !edit.tracks && <EditWindowLoading />}
           {edit.closedNotice && (
             <ConfirmDialog
               title={t('deleted' in edit.closedNotice ? 'edit.deleted_title' : 'edit.unreadable_title')}
@@ -492,7 +492,7 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               layersOpen={tour.open.layers === true}
               placesOpen={tour.open.places === true}
               fogLevelOpen={tour.open.fogLevel === true}
-              capped={mapMode === 'normal' && storyId === null && areaState.capped && areaTotal !== null ? { shown: activities.length, total: areaTotal } : null}
+              capped={mapMode === 'normal' && tripId === null && areaState.capped && areaTotal !== null ? { shown: tracks.length, total: areaTotal } : null}
             />
           )}
           {map && spots.openSpot && <SpotPopup map={map} spot={spots.openSpot} capturedAt={spots.capturedAt(spots.openSpot.id)} onClose={spots.closeSpot} />}

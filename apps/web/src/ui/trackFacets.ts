@@ -1,0 +1,101 @@
+import type { Track } from '../api.ts';
+import type { DateFilter } from './dateFilter.ts';
+
+/**
+ * The TYPE and DISTANCE filters are pure client-side facets
+ * over the tracks already fetched (the web's area, the apps' date range) — no backend
+ * involvement, since §4.7's list endpoint doesn't paginate and the panel always holds every
+ * row already. "Reset filters" is instant for the same reason: there is nothing to refetch.
+ * Android's `TrackFacets.kt` runs the same cases, `testdata/client-rules`' `distance-bounds`,
+ * `distance-filter`, `type-facets` and `passes-filters`.
+ */
+
+export interface DistanceRange {
+  min: number;
+  max: number;
+}
+
+export interface TypeFacet {
+  type: string;
+  count: number;
+}
+
+/** The real min/max distance across the fetched rows, or null when none have a distance at
+ *  all — the slider has nothing to bound itself by in that case. A private track (FR-7.1)
+ *  counts as having none: its stored 0 is no track, not a zero-length one. */
+export function distanceBounds(tracks: Track[]): DistanceRange | null {
+  let min = Infinity;
+  let max = -Infinity;
+  for (const a of tracks) {
+    if (a.distanceMeters === null || a.private) continue;
+    if (a.distanceMeters < min) min = a.distanceMeters;
+    if (a.distanceMeters > max) max = a.distanceMeters;
+  }
+  return Number.isFinite(min) ? { min, max } : null;
+}
+
+/**
+ * Where the Distance slider draws `band` within `bounds`: each end held inside them. A band set
+ * over another area can fall partly or wholly outside the bounds of the one in view, and drawn
+ * as it is, the fill runs off the track and a dragged knob snaps back out of range.
+ */
+export function bandWithin(bounds: DistanceRange, band: DistanceRange): DistanceRange {
+  const clamp = (v: number) => Math.min(Math.max(v, bounds.min), bounds.max);
+  return { min: clamp(band.min), max: clamp(band.max) };
+}
+
+/**
+ * The Distance slider's filter after one knob moved to `value`: the other knob held, the two
+ * never crossing, and null — no filter, "any distance" — once both are back at the bounds, so
+ * a knob dragged away and back leaves nothing filtered out.
+ */
+export function nextDistanceFilter(
+  bounds: DistanceRange,
+  current: DistanceRange,
+  knob: 'min' | 'max',
+  value: number,
+): DistanceRange | null {
+  const next =
+    knob === 'min' ? { min: Math.min(value, current.max), max: current.max } : { min: current.min, max: Math.max(value, current.min) };
+  return next.min <= bounds.min && next.max >= bounds.max ? null : next;
+}
+
+/** A row with no recorded distance can't be said to lie inside a distance band — same
+ *  nullability stance format.ts and the backend already take on this field — nor can a
+ *  private one, whose distance is no track at all. */
+function passesDistance(track: Track, filter: DistanceRange | null): boolean {
+  if (!filter) return true;
+  return track.distanceMeters !== null && !track.private && track.distanceMeters >= filter.min && track.distanceMeters <= filter.max;
+}
+
+/**
+ * Type counts, over whatever survives the *distance* filter — so narrowing distance updates
+ * a row's count — but not the type exclusions themselves, so removing "Run" doesn't also
+ * erase its own count (moot anyway, since an excluded type's row still renders, just unchecked).
+ * Sorted by count descending, busiest type first.
+ */
+export function typeFacets(tracks: Track[], distanceFilter: DistanceRange | null): TypeFacet[] {
+  const counts = new Map<string, number>();
+  for (const a of tracks) {
+    if (!passesDistance(a, distanceFilter)) continue;
+    counts.set(a.activityType, (counts.get(a.activityType) ?? 0) + 1);
+  }
+  return [...counts.entries()].map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count);
+}
+
+/** Whether a row survives both filters at once — what the list renders, what the map draws,
+ *  and what the ACTIVITIES badge counts. */
+export function passesFilters(
+  track: Track,
+  excludedTypes: ReadonlySet<string>,
+  distanceFilter: DistanceRange | null,
+): boolean {
+  if (excludedTypes.has(track.activityType)) return false;
+  return passesDistance(track, distanceFilter);
+}
+
+/** Why the list is empty, to say so: a Type, Distance or Dates filter that's set, or else only
+ *  that this part of the map holds no track. */
+export function emptyListReason(excludedTypes: ReadonlySet<string>, distanceFilter: DistanceRange | null, dates: DateFilter): 'filters' | 'area' {
+  return excludedTypes.size > 0 || distanceFilter !== null || dates.after !== null || dates.before !== null ? 'filters' : 'area';
+}

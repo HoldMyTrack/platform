@@ -279,7 +279,7 @@ describe('basemap foundation', () => {
     await styleLoaded();
     assert.deepEqual(await visibility(PICKS), PICKS.map(() => 'visible'), 'remembered across reload');
 
-    // Every path paints over Fog's veil and under the activity tracks (FR-4.9).
+    // Every path paints over Fog's veil and under the tracks (FR-4.9).
     const order = await page.evaluate(() => window.__holdmytrack.getStyle().layers.map((layer) => layer.id));
     const fogAt = order.indexOf('fog-veil');
     const tracksAt = order.indexOf('tracks-casing');

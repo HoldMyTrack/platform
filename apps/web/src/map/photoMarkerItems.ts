@@ -14,30 +14,30 @@ const GROUP_SPREAD_M = 15;
 /** The zoom a separable group fits to at most, where GROUP_SPREAD_M is wider than a marker. */
 export const GROUP_MAX_ZOOM = 19;
 
-/** Whose photos show, in Normal mode only: the Edit window's single activity (none for a group),
- *  else the focused activity, else the open Story. */
-export function photoScopeFor(mode: MapMode, editWindowIds: readonly string[] | null, focused: string | null, storyId: string | null): PhotoScope {
+/** Whose photos show, in Normal mode only: the Edit window's single track (none for a group),
+ *  else the focused track, else the open Trip. */
+export function photoScopeFor(mode: MapMode, editWindowIds: readonly string[] | null, focused: string | null, tripId: string | null): PhotoScope {
   if (mode !== 'normal') return null;
-  if (editWindowIds !== null) return editWindowIds.length === 1 ? { activity: editWindowIds[0]! } : null;
-  if (focused !== null) return { activity: focused };
-  if (storyId !== null) return { story: storyId };
+  if (editWindowIds !== null) return editWindowIds.length === 1 ? { track: editWindowIds[0]! } : null;
+  if (focused !== null) return { track: focused };
+  if (tripId !== null) return { trip: tripId };
   return null;
 }
 
-/** The markers: the scope's located photos on their routes, not while the Track tab has the map
+/** The markers: the scope's located photos on their routes, not while the Route tab has the map
  *  or the route is hidden. The Photos tab's unsaved moves and new photos are overlaid. */
 export function photoMarkerItems(
   scope: PhotoScope,
-  trackTabShown: boolean,
+  routeTabShown: boolean,
   mapHidden: ReadonlySet<string>,
   photos: readonly Photo[],
   overlay: PhotoMarkerOverlay | null,
   thumbBase: string,
 ): PhotoMarkerItem[] {
-  if (scope === null || trackTabShown) return [];
-  if ('activity' in scope && mapHidden.has(scope.activity)) return [];
+  if (scope === null || routeTabShown) return [];
+  if ('track' in scope && mapHidden.has(scope.track)) return [];
   const items: PhotoMarkerItem[] = photos
-    .filter((p) => p.lon !== null && p.lat !== null && !mapHidden.has(p.activityId))
+    .filter((p) => p.lon !== null && p.lat !== null && !mapHidden.has(p.trackId))
     .map((p) => ({ id: p.id, lon: p.lon!, lat: p.lat!, thumbSrc: thumbBase + p.thumbUrl, caption: p.caption }));
   if (overlay === null) return items;
   const upserts = new Map(overlay.upserts.map((item) => [item.id, item]));

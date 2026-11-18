@@ -27,17 +27,17 @@ export function stripMetrics(width: number, height: number): { fontPx: number; m
 }
 
 /**
- * Whether Show stats can be ticked: with something checked in the Activities panel, and no Story
- * open, since the Stories tab has no checkboxes.
+ * Whether Show stats can be ticked: with something checked in the Tracks panel, and no Trip
+ * open, since the Trips tab has no checkboxes.
  */
-export function statsOffered(checked: Iterable<string>, storyId: string | null): boolean {
-  if (storyId !== null) return false;
+export function statsOffered(checked: Iterable<string>, tripId: string | null): boolean {
+  if (tripId !== null) return false;
   for (const _ of checked) return true;
   return false;
 }
 
 export interface StatsCardRequest {
-  activityIds: string[];
+  trackIds: string[];
   width: number;
   height: number;
   theme: 'light' | 'dark';
@@ -48,17 +48,17 @@ export interface StatsCardRequest {
 export function statsCardRequest(
   show: boolean,
   checked: Iterable<string>,
-  storyId: string | null,
+  tripId: string | null,
   size: { widthPx: number; heightPx: number },
   dark: boolean,
 ): StatsCardRequest | null {
-  if (!show || !statsOffered(checked, storyId)) return null;
-  return { activityIds: [...checked].sort(), width: size.widthPx, height: size.heightPx, theme: dark ? 'dark' : 'light' };
+  if (!show || !statsOffered(checked, tripId)) return null;
+  return { trackIds: [...checked].sort(), width: size.widthPx, height: size.heightPx, theme: dark ? 'dark' : 'light' };
 }
 
 /** A request as a string, equal for equal requests: what the held card is checked against. */
 export function statsCardKey(request: StatsCardRequest | null): string {
-  return request ? `${request.width}x${request.height}:${request.theme}:${request.activityIds.join(',')}` : '';
+  return request ? `${request.width}x${request.height}:${request.theme}:${request.trackIds.join(',')}` : '';
 }
 
 /**

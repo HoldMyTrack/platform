@@ -446,7 +446,7 @@
         <item quantity="other">%1$d checked tracks</item>
     </plurals>
 
-    <!-- The panel's Edit and Delete (panel/EditTrackWindow.kt), after the web's edit.* and activities.delete_* messages. -->
+    <!-- The panel's Edit and Delete (panel/EditTrackWindow.kt), after the web's edit.* and tracks.delete_* messages. -->
     <string name="panel_edit_one">Edit %1$s: type, name, description and route</string>
     <string name="panel_edit_many">Edit type for %1$s</string>
     <string name="panel_delete_target">Delete %1$s</string>

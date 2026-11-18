@@ -15,7 +15,7 @@ const RADIUS = 12;
 
 const CARD_ANCHORS: Record<CardId, string> = {
   fog: '[data-testid="map-mode-toggle"]',
-  stories: '[data-testid="activities-panel-tab-stories"]',
+  trips: '[data-testid="tracks-panel-tab-trips"]',
 };
 
 /** The tour, its offer, the tip after the offer is declined, and the first-time cards (docs/SPEC.md FR-4.14). A card closes on the next press outside it. */

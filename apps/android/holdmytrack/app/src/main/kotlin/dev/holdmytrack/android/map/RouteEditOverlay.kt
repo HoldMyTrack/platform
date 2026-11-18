@@ -23,7 +23,7 @@ import org.maplibre.geojson.Point
 enum class EditPreview { CHOP, CUT, SPLIT }
 
 /**
- * The track being edited, drawn over the map — the web's `apps/web/src/map/trackEdit.ts`: what
+ * The track being edited, drawn over the map — the web's `apps/web/src/map/routeEdit.ts`: what
  * the edit keeps in the track colour, what it would take out dashed in red, every point as a
  * small ring (faded red where it would go), and the two knobs. One GeoJSON source, four layers
  * filtered on a `role` property, under the basemap's labels. While it's up `MapOverlays` hides

@@ -110,7 +110,7 @@ func (s *Server) sendStoryCopyEmail(ctx context.Context, senderID, storyID, emai
 	return s.mailer.Send(ctx, email,
 		l.T("email.story_copy.subject", "from", from, "story", story),
 		l.T("email.story_copy.body", "from", from, "story", story,
-			"activities", l.N("count.activities", activities), "link", s.appBaseURL+"/?tab=stories"))
+			"activities", l.N("count.activities", activities), "link", s.appBaseURL+"/?tab=trips"))
 }
 
 // storySendJSON is one copy waiting in the recipient's inbox. From is the sender's name, or

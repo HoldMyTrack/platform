@@ -1,9 +1,9 @@
 /**
- * What a newly fetched list says about reprocesses (a track edit, a Private location change):
+ * What a newly fetched list says about reprocesses (a route edit, a Private location change):
  * which started, which finished. Android: `map/PendingDiff.kt`; iOS: `Rules/Pending.swift`.
  *
  * Trap: a job often finishes before the list reload after Apply returns, so its row is never
- * seen Pending. An activity applied here (`awaiting`) therefore also counts as finished the first
+ * seen Pending. A track applied here (`awaiting`) therefore also counts as finished the first
  * time a list fetched after Apply shows it not pending.
  *
  * Trap: the list is an area's (FR-5.11), and a move of the map or Back takes rows out of it. A

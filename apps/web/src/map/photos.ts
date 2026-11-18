@@ -5,8 +5,8 @@ import { photoMarkerCssVars } from './photoMarkerLook.ts';
 import { t, tn } from '../i18n/index.ts';
 
 /**
- * Photo markers (FR-15, IMPLEMENTATION.md §4.27): each photo of the selected activity or the
- * open Story, as its own thumbnail in a round frame, at its point on the track — or, where
+ * Photo markers (FR-15, IMPLEMENTATION.md §4.27): each photo of the selected track or the
+ * open Trip, as its own thumbnail in a round frame, at its point on the track — or, where
  * several would overlap on screen, one marker for the group: its first photo, stacked, with a
  * count (photoClusters.ts). Groups are worked out again after every move of the map, so zooming
  * in splits them. Zoomed out the markers are small, and below the zoom tracks start at there are

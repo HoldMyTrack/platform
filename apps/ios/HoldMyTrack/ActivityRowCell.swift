@@ -1,7 +1,7 @@
 import HoldMyTrackCore
 import UIKit
 
-/// One activity row (root docs/SPEC.md FR-5.1, the web's ActivityRow), on the Activities tab and
+/// One activity row (root docs/SPEC.md FR-5.1, the web's TrackRow), on the Activities tab and
 /// under an open Story: the title, "[date ·] distance · duration · type", dimmed with a Pending
 /// or Hidden badge, a Private badge, and a Story badge for the Stories it's in but the open one.
 /// Its kind's tile is its checkbox: a tap on it, or a long press on the row, checks it.

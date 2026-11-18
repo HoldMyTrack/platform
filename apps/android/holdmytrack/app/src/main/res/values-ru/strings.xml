@@ -460,7 +460,7 @@
         <item quantity="other">%1$d отмеченного трека</item>
     </plurals>
 
-    <!-- The panel's Edit and Delete (panel/EditTrackWindow.kt), after the web's edit.* and activities.delete_* messages. -->
+    <!-- The panel's Edit and Delete (panel/EditTrackWindow.kt), after the web's edit.* and tracks.delete_* messages. -->
     <string name="panel_edit_one">Изменить тип, название, описание и маршрут: %1$s</string>
     <string name="panel_edit_many">Изменить тип: %1$s</string>
     <string name="panel_delete_target">Удалить: %1$s</string>
@@ -639,8 +639,8 @@
     <string name="trip_no_tracks">В этом путешествии нет треков.</string>
     <string name="trip_not_found">Такого путешествия нет, или оно не ваше.</string>
     <string name="trip_load_failed">Не удалось загрузить путешествия</string>
-    <string name="trip_open">Открыта</string>
-    <string name="trip_folded">Свёрнута</string>
+    <string name="trip_open">Открыто</string>
+    <string name="trip_folded">Свёрнуто</string>
     <string name="trip_edit">Изменить название и описание</string>
     <string name="trip_demo_edit">Недоступно в демо-аккаунте — создайте аккаунт, чтобы изменять путешествия</string>
     <string name="trip_delete">Удалить путешествие</string>

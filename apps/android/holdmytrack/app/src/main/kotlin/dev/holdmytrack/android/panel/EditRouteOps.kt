@@ -34,7 +34,7 @@ sealed interface EditOp {
  * The route editor's rules (`docs/SPEC.md` FR-5.7): the saved edit and the session's steps
  * fold into one [RouteEdit], which is what's sent, and replaying it over the recorded points is
  * what's drawn. Points are named by their time rather than their index, so a deleted point never
- * shifts what an earlier step meant. The web's `editTrackOps.ts`; both run
+ * shifts what an earlier step meant. The web's `editRouteOps.ts`; both run
  * `testdata/client-rules/edit-route-*.json`.
  */
 object EditRouteOps {

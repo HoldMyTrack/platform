@@ -21,7 +21,7 @@ import dev.holdmytrack.android.panel.TrackTypes
 import java.text.Normalizer
 
 /** One type the account already uses, and how many tracks use it — the same facet the
- *  web client's Tracks panel and Type picker are built from (`activityFacets.ts`). */
+ *  web client's Tracks panel and Type picker are built from (`trackFacets.ts`). */
 data class TypeCount(val type: String, val count: Int)
 
 /**

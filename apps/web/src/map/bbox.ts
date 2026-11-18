@@ -2,15 +2,15 @@ import type { LngLatBoundsLike, Map as MapLibreMap } from 'maplibre-gl';
 import type { BBox } from '../api.ts';
 
 /**
- * Flying the map to an activity's bounds.
+ * Flying the map to a track's bounds.
  *
  * The bounds come from `GET /v1/activities`'s per-row `bbox` (§4.7) rather than from the
  * rendered tiles: a track outside the current viewport isn't in any loaded tile, so asking
- * the map where it is would only ever work for activities already on screen.
+ * the map where it is would only ever work for tracks already on screen.
  */
 
 /**
- * Never zoom past this, however small the box. A short activity — or one clipped to almost
+ * Never zoom past this, however small the box. A short track — or one clipped to almost
  * nothing by a Private location — has near-zero extent, and fitBounds on a degenerate box
  * happily zooms to MapLibre's z22 maximum, where the overzoomed z14 basemap has nothing left
  * to place the track against. z18 is still readable street-level detail.
@@ -29,7 +29,7 @@ const FLY_DURATION_MS = 900;
 
 /**
  * The smallest box containing all of them, or null if there were none. Longitude goes the
- * shorter way round, as each activity's own bbox does (IMPLEMENTATION.md §4.7): New Zealand
+ * shorter way round, as each track's own bbox does (IMPLEMENTATION.md §4.7): New Zealand
  * and Hawaii make a box across the Pacific, east past 180, not one across every other
  * longitude. The box starts at some box's west edge, so each is tried as the start, every box
  * moved to begin at or after it; the narrowest wins. A group's few hundred boxes at most keep

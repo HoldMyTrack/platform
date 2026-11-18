@@ -21,18 +21,18 @@ export function knownTimeZone(zone: string | undefined): string | undefined {
 
 let accountZone: string | undefined;
 
-/** The signed-in account's zone, which `activityTimeZone` falls back to. App.tsx sets it once a
+/** The signed-in account's zone, which `trackTimeZone` falls back to. App.tsx sets it once a
  *  session is confirmed; a Settings change reaches the app on its next load. */
 export function setAccountTimeZone(zone: string | undefined): void {
   accountZone = zone;
 }
 
 /**
- * The zone an activity's times are shown in (IMPLEMENTATION.md §4.30): `own`, the one it was
+ * The zone a track's times are shown in (IMPLEMENTATION.md §4.30): `own`, the one it was
  * recorded in, which the server names from its own, possibly newer, tz data; else the
  * account's; else undefined, the browser's. Android's `TrackZone.kt` runs the same cases,
  * `testdata/client-rules/track-zone.json`.
  */
-export function activityTimeZone(own: string | undefined, account: string | undefined = accountZone): string | undefined {
+export function trackTimeZone(own: string | undefined, account: string | undefined = accountZone): string | undefined {
   return knownTimeZone(own) ?? knownTimeZone(account);
 }

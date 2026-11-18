@@ -9,10 +9,10 @@ import { viewArea } from './useAreaList.ts';
 import { listArea, type BBox } from '../api.ts';
 
 interface OpeningViewInputs {
-  /** The URL's camera, a Story or an arriving activity decides the camera instead. */
+  /** The URL's camera, a Trip or an arriving track decides the camera instead. */
   keepCamera: boolean;
   country: string;
-  /** The first activity's day (useHistoryStart.ts) and whether it's known. */
+  /** The first track's day (useHistoryStart.ts) and whether it's known. */
   earliest: string | null;
   historyReady: boolean;
 }
@@ -21,8 +21,8 @@ interface OpeningViewInputs {
  * The web's opening view (docs/SPEC.md FR-4.4) and the list's first area. The newest few tracks
  * are asked for alone (`limit`), since no area is known yet; openingView.ts picks the camera. An
  * account with none gets its Country's view, else the world, never geolocation. An empty
- * account's first activity opens the same way once it lands, so its track is in view, unless the
- * camera is the URL's, a Story's or an arriving activity's.
+ * account's first track opens the same way once it lands, so its track is in view, unless the
+ * camera is the URL's, a Trip's or an arriving track's.
  */
 export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, inputs: OpeningViewInputs): void {
   const { keepCamera, country, earliest, historyReady } = inputs;
@@ -38,9 +38,9 @@ export function useOpeningView(map: MapLibreMap | null, dispatch: Dispatch<MapSe
     };
     m.on('movestart', onMoveStart);
     return listArea({ limit: OPENING_ACTIVITIES }, signal)
-      .then(({ activities }) => {
+      .then(({ tracks }) => {
         if (signal.aborted) return;
-        const boxes = activities.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : []));
+        const boxes = tracks.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : []));
         const container = m.getContainer();
         const view = openingView(boxes, { width: container.clientWidth, height: container.clientHeight });
         const fallback = countryView(country) ?? WORLD_VIEW;

@@ -25,16 +25,16 @@ test('a list read in Fog drops what Normal set aside of rows it no longer has', 
   assert.equal(back.selection.focused, null);
 });
 
-test('activities removed in Fog leave what Normal set aside', () => {
+test('tracks removed in Fog leave what Normal set aside', () => {
   const start = withSelection({ checked: new Set(['a', 'b']), focused: 'b' });
-  const back = reduce(start, { type: 'modeChanged', mode: 'fog' }, { type: 'activitiesRemoved', ids: ['b'] }, { type: 'modeChanged', mode: 'normal' });
+  const back = reduce(start, { type: 'modeChanged', mode: 'fog' }, { type: 'tracksRemoved', ids: ['b'] }, { type: 'modeChanged', mode: 'normal' });
   assert.deepEqual([...back.selection.checked], ['a']);
   assert.equal(back.selection.focused, null);
 });
 
-test('a Story opened in Fog clears what Normal set aside', () => {
+test('a Trip opened in Fog clears what Normal set aside', () => {
   const start = withSelection({ checked: new Set(['a']), focused: 'b' });
-  const back = reduce(start, { type: 'modeChanged', mode: 'fog' }, { type: 'storyEntered', id: 's1' }, { type: 'modeChanged', mode: 'normal' });
+  const back = reduce(start, { type: 'modeChanged', mode: 'fog' }, { type: 'tripEntered', id: 's1' }, { type: 'modeChanged', mode: 'normal' });
   assert.equal(back.selection.checked.size, 0);
   assert.equal(back.selection.focused, null);
 });
@@ -51,18 +51,18 @@ test('viewing a day sets Dates to it and flies there, keeping the selection', ()
   assert.deepEqual([...next.selection.checked], ['a']);
 });
 
-test('removed activities leave the selection; an unrelated removal keeps the state', () => {
+test('removed tracks leave the selection; an unrelated removal keeps the state', () => {
   const start = withSelection({ checked: new Set(['a', 'b']), focused: 'a', hidden: new Set(['a']) });
-  const next = reduce(start, { type: 'activitiesRemoved', ids: ['a'] });
+  const next = reduce(start, { type: 'tracksRemoved', ids: ['a'] });
   assert.deepEqual([...next.selection.checked], ['b']);
   assert.equal(next.selection.focused, null);
   assert.equal(next.selection.hidden.size, 0);
-  assert.equal(reduce(start, { type: 'activitiesRemoved', ids: ['x'] }), start);
+  assert.equal(reduce(start, { type: 'tracksRemoved', ids: ['x'] }), start);
 });
 
-test('removing from the open Story only drops the focus', () => {
+test('removing from the open Trip only drops the focus', () => {
   const start = withSelection({ checked: new Set(['a']), focused: 'a' });
-  const next = reduce(start, { type: 'activitiesRemoved', ids: ['a'], unfocusOnly: true });
+  const next = reduce(start, { type: 'tracksRemoved', ids: ['a'], unfocusOnly: true });
   assert.equal(next.selection.focused, null);
   assert.deepEqual([...next.selection.checked], ['a']);
 });
@@ -75,7 +75,7 @@ test('Show/Hide acts on the toolbar target', () => {
 });
 
 test('a flight is consumed once', () => {
-  const flying = reduce(initialSession(null), { type: 'storyEntered', id: 's' });
+  const flying = reduce(initialSession(null), { type: 'tripEntered', id: 's' });
   assert.equal(flying.flyRequest, true);
   const done = reduce(flying, { type: 'flyConsumed' });
   assert.equal(done.flyRequest, false);

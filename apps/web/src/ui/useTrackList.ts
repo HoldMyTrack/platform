@@ -1,0 +1,66 @@
+import { useCallback, useEffect, useState } from 'react';
+import { listTracks, listArea, type Track } from '../api.ts';
+import type { ListRequest } from '../map/trackQuery.ts';
+import { rowsStandFor } from './listRows.ts';
+
+const NO_ROWS: Track[] = [];
+
+interface TrackList {
+  tracks: Track[];
+  /** How many the area holds, past the rows when they were cut at the limit; null without an area. */
+  total: number | null;
+  loading: boolean;
+  error: string | null;
+  /** Re-reads the list; the upload widget calls this once a job actually finishes. */
+  reload: () => void;
+  /** The query `tracks` was fetched for (serialised), null before the first fetch lands —
+   *  lets a caller tell a new query's first list from a reload of the same one. */
+  loadedKey: string | null;
+}
+
+/**
+ * Reader for the list: a Trip's `GET /v1/activities?story=`, else the area's
+ * `GET /v1/activities/area` (§4.7). One request, the whole set — the panel renders every row, the
+ * map draws the same set, and the type/distance facets are computed over it. A null request (no
+ * area yet) asks for nothing and stays loading.
+ *
+ * The filter is compared by its serialised form, not by identity, so a caller passing a
+ * fresh object literal every render doesn't restart the fetch on every render.
+ */
+export function useTrackList(query: ListRequest | null): TrackList {
+  const queryKey = query === null ? null : JSON.stringify(query);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [nonce, setNonce] = useState(0);
+  const [loadedKey, setLoadedKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (queryKey === null) return;
+    setLoading(true);
+    const controller = new AbortController();
+    const request = JSON.parse(queryKey) as ListRequest;
+    ('trip' in request ? listTracks(request.trip, controller.signal) : listArea(request.area, controller.signal))
+      .then((page) => {
+        setTracks(page.tracks);
+        setTotal(page.total);
+        setLoadedKey(queryKey);
+        setError(null);
+      })
+      .catch((err: unknown) => {
+        if (controller.signal.aborted) return;
+        setError(err instanceof Error ? err.message : String(err));
+      })
+      .finally(() => {
+        if (controller.signal.aborted) return;
+        setLoading(false);
+      });
+    return () => controller.abort();
+  }, [queryKey, nonce]);
+
+  const reload = useCallback(() => setNonce((n) => n + 1), []);
+  // A Trip's first read shows no rows until it lands, never the last list's (listRows.ts).
+  const shown = rowsStandFor(queryKey, loadedKey) ? tracks : NO_ROWS;
+  return { tracks: shown, total, loading, error, reload, loadedKey };
+}
