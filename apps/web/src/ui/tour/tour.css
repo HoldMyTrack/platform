@@ -138,7 +138,7 @@
 
 .tour-button--primary {
   border-color: var(--fm-accent);
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
   font-weight: var(--fm-weight-semibold);
 }

@@ -12,8 +12,8 @@
     <color name="hmt_divider_tint">#EFEAD9</color>
 
     <color name="hmt_ink">#202B25</color>
-    <color name="hmt_ink_secondary">#6C7A70</color>
-    <color name="hmt_ink_muted">#8B9186</color>
+    <color name="hmt_ink_secondary">#647167</color>
+    <color name="hmt_ink_muted">#6A6F65</color>
     <color name="hmt_ink_faint">#B7AF9A</color>
     <!-- Ink at 6%, 8% and 10% — the web's fm-ink-rgb hover, badge and hairline
          tints, which flip to a cream tint in the dark palette. -->
@@ -31,7 +31,7 @@
     <color name="hmt_accent">#B07E2E</color>
     <!-- The tour's dimmed screen (tour/TourOverlay): the web's 45% shadow ink. -->
     <color name="hmt_tour_scrim">#73202B25</color>
-    <color name="hmt_accent_strong">#93691F</color>
+    <color name="hmt_accent_strong">#8F661E</color>
     <color name="hmt_accent_container">#F3E6CE</color>
 
     <color name="hmt_danger">#AA3333</color>

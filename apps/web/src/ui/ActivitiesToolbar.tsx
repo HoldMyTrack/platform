@@ -135,7 +135,7 @@ export function ActivitiesToolbar({
           <ChevronDown size={12} />
         </button>
         {selectMenuOpen && (
-          <div className="story-menu__panel select-menu__panel" role="menu" aria-label={t('activities.select_menu')}>
+          <div className="story-menu__panel select-menu__panel" role="group" aria-label={t('activities.select_menu')}>
             {(
               [
                 ['all', t('activities.select_all'), allChecked, onSelectAll],
@@ -146,7 +146,6 @@ export function ActivitiesToolbar({
               <button
                 key={key}
                 type="button"
-                role="menuitem"
                 className="story-menu__item"
                 data-testid={`select-${key}`}
                 disabled={disabled}

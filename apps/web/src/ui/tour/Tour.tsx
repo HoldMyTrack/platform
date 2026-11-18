@@ -4,6 +4,7 @@ import type { MessageKey } from '../../i18n/en.ts';
 import { onScreen, placePopover, unionOf, type CardId, type Placement, type Rect } from './tourRules.ts';
 import type { Tour } from './useTour.ts';
 import './tour.css';
+import { useRestoreFocus } from '../useWindowFocus.ts';
 
 /** How long a step's anchor gets to appear after a mode change before the step is skipped: in
  *  time, not frames, which a 120 Hz display runs through twice as fast. */
@@ -109,6 +110,38 @@ function Arrow({ placement }: { placement: Placement | null }) {
   return <span className={`tour-arrow tour-arrow--${placement.side}`} style={along} aria-hidden="true" />;
 }
 
+/**
+ * Makes everything outside `ref`'s element inert while it's shown, the page's header included,
+ * so the keyboard and a screen reader stay in the tour as the pointer does behind its blocker.
+ * Each sibling of the element and of its ancestors is marked, and only those it marked are freed.
+ * A sibling mounted while the tour runs, as a step's mode change mounts the panel, is marked as
+ * it arrives: each ancestor's children are watched.
+ */
+function useInertOutside(ref: { current: HTMLElement | null }) {
+  useEffect(() => {
+    const marked = new Set<Element>();
+    const path = new Set<Element>();
+    for (let node = ref.current; node && node !== document.body; node = node.parentElement) path.add(node);
+    const mark = () => {
+      for (const node of path) {
+        for (const sibling of node.parentElement?.children ?? []) {
+          if (!path.has(sibling) && !sibling.hasAttribute('inert')) {
+            sibling.setAttribute('inert', '');
+            marked.add(sibling);
+          }
+        }
+      }
+    };
+    mark();
+    const observer = new MutationObserver(mark);
+    for (const node of path) if (node.parentElement) observer.observe(node.parentElement, { childList: true });
+    return () => {
+      observer.disconnect();
+      marked.forEach((el) => el.removeAttribute('inert'));
+    };
+  }, [ref]);
+}
+
 /** Keeps Tab inside `container`. */
 function trapTab(event: KeyboardEvent<HTMLElement>) {
   if (event.key !== 'Tab') return;
@@ -130,9 +163,18 @@ function TourStepView({ tour }: { tour: Tour }) {
   const { rects, rect } = useAnchor(step.anchor, tour.missing);
   const { ref, placement } = usePlacement(rect);
   const primary = useRef<HTMLButtonElement>(null);
+  const shell = useRef<HTMLDivElement>(null);
   const last = tour.index === tour.total - 1;
+  useInertOutside(shell);
 
-  useEffect(() => primary.current?.focus(), [step.id]);
+  // Focus moves in once the popover is placed: before, it's still hidden, and focusing a hidden
+  // button leaves focus outside, where the Tab trap never engages.
+  const placed = placement !== null;
+  useEffect(() => {
+    if (placed) primary.current?.focus();
+  }, [step.id, placed]);
+  // Where focus was when the tour began is where it goes back to when it ends.
+  useRestoreFocus();
   useHeaderMenuOpen('.page-header details.upload-menu', tour.open.upload === true);
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
@@ -143,7 +185,7 @@ function TourStepView({ tour }: { tour: Tour }) {
   }, [tour.end]);
 
   return (
-    <div className={placement?.kind === 'sheet' ? 'tour tour--narrow' : 'tour'} data-testid="tour" data-step={step.id}>
+    <div ref={shell} className={placement?.kind === 'sheet' ? 'tour tour--narrow' : 'tour'} data-testid="tour" data-step={step.id}>
       {/* Takes every click, so nothing under the tour changes while it runs. */}
       <div className="tour__blocker" />
       {/* The dim screen with a hole for each lit rect, so a menu's neighbours stay dim. */}

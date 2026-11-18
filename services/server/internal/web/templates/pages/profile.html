@@ -37,7 +37,9 @@
             {{range .Months}}<span class="year-grid__month" style="grid-column-start: {{.Col}}">{{.Label}}</span>{{end}}
           </div>
           <div class="year-grid__cells" style="grid-template-columns: repeat({{.Weeks}}, 12px)">
-            {{- range .Cells}}{{if .Pad}}<span class="year-grid__cell year-grid__cell--pad"></span>{{else}}<span class="year-grid__cell year-grid__cell--level-{{.Level}}" title="{{.Title}}"{{if .Today}} data-today{{end}}></span>{{end}}{{end -}}
+            {{- /* A day with activity is a button the keyboard reaches and a screen reader names by
+                 its title; an empty day is drawn only. */ -}}
+            {{- range .Cells}}{{if .Pad}}<span class="year-grid__cell year-grid__cell--pad" aria-hidden="true"></span>{{else if gt .Level 0}}<button type="button" class="year-grid__cell year-grid__cell--level-{{.Level}}" title="{{.Title}}" aria-label="{{.Title}}"{{if .Today}} data-today{{end}}></button>{{else}}<span class="year-grid__cell year-grid__cell--level-{{.Level}}" title="{{.Title}}" aria-hidden="true"{{if .Today}} data-today{{end}}></span>{{end}}{{end -}}
           </div>
         </div>
       </div>
@@ -72,9 +74,13 @@
     </div>
     {{if .Trends}}
     <div class="trends__chart">
-      <div class="trends__bars">
+      <div class="trends__bars" aria-hidden="true">
         {{range .Trends}}<div class="trends__bar" style="height: {{.HeightPercent}}%" title="{{.Title}}"></div>{{end}}
       </div>
+      {{/* The bars as a screen reader reads them: each one's breakdown, in order. */}}
+      <ul class="visually-hidden">
+        {{range .Trends}}<li>{{.Title}}</li>{{end}}
+      </ul>
       <div class="trends__axis"><span>{{.TrendFrom}}</span><span>{{.TrendTo}}</span></div>
     </div>
     {{/* A bar's breakdown is its tooltip on hover — which a touch screen never shows. This

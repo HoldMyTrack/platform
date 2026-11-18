@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { useWindowFocus } from './useWindowFocus.ts';
 import { Pencil, Trash2 } from 'lucide-react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import {
@@ -317,10 +318,13 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
         !readOnly &&
         windowHost &&
         createPortal(
-          <section
-            className="edit-track private-locations__window"
-            aria-label={t(draft.id === undefined ? 'private.new_title' : 'private.edit_title')}
-            data-testid="private-locations-editor"
+          <PrivateLocationWindow
+            label={t(draft.id === undefined ? 'private.new_title' : 'private.edit_title')}
+            // Escape leaves an editor with nothing to lose, as Cancel does; one with changes waits
+            // for Cancel, rather than dropping them on a reflex.
+            onEscape={() => {
+              if (!dirty && !busy) setDraft(null);
+            }}
           >
             <header className="edit-track__head">
               <span className="edit-track__title">
@@ -371,7 +375,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
                 {busy ? t('common.saving') : t('common.save')}
               </button>
             </div>
-          </section>,
+          </PrivateLocationWindow>,
           windowHost,
         )}
 
@@ -397,5 +401,27 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
         />
       )}
     </div>
+  );
+}
+
+/** The Private location editor's floating window: it takes focus when it opens and gives it back
+ *  when it closes (useWindowFocus.ts), and Escape asks it to close. */
+function PrivateLocationWindow({ label, onEscape, children }: { label: string; onEscape: () => void; children: ReactNode }) {
+  const ref = useRef<HTMLElement>(null);
+  useWindowFocus(ref);
+  return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions -- Escape closes the window, as it does a dialog
+    <section
+      ref={ref}
+      tabIndex={-1}
+      className="edit-track private-locations__window"
+      aria-label={label}
+      data-testid="private-locations-editor"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') onEscape();
+      }}
+    >
+      {children}
+    </section>
   );
 }

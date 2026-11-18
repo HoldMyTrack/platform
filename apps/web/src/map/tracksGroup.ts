@@ -20,7 +20,9 @@ export const TRACK_HOVER_SOURCE = 'track-hover';
 export const TRACKS_SOURCE_LAYER = 'tracks';
 
 const TRACK_COLOR = '#b07e2e'; // --fm-accent
-const HOVER_COLOR = '#93691f'; // --fm-accent-strong
+// A line's own darker gold, not --fm-accent-strong: that token is set for text on the page, and
+// the map's styles (services/server/internal/mapstyle/layers) carry this value.
+const HOVER_COLOR = '#93691f';
 // The opposite of the basemap: ink over a light map, whose white streets a white halo disappears
 // into; a muted grey over a dark map or imagery, where ink does and cream glares.
 const LIGHT_CASING = '#202b25';

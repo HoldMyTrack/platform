@@ -193,12 +193,11 @@ function StoryBadge({
         {label}
       </button>
       {menuOpen && (
-        <span className="story-menu__panel activities-panel__story-badge-menu" role="menu">
+        <span className="story-menu__panel activities-panel__story-badge-menu">
           {stories.map((story) => (
             <button
               key={story.id}
               type="button"
-              role="menuitem"
               className="story-menu__item"
               onClick={() => {
                 setMenuOpen(false);

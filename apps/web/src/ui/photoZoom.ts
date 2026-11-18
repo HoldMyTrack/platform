@@ -60,3 +60,30 @@ function clamp(value: number, limit: number): number {
   // + 0 turns a -0 into 0, so a view that hasn't moved compares equal to FIT_VIEW.
   return Math.min(Math.max(value, -limit), limit) + 0;
 }
+
+/** How far one arrow key pans a zoomed photo, in screen pixels. */
+export const PAN_STEP = 80;
+
+/** Whether a zoomed photo can move along each axis: wider, or taller, than the stage. */
+export function pannable(view: ZoomView, fitted: Size, stage: Size): { x: boolean; y: boolean } {
+  return { x: fitted.width * view.scale > stage.width + 0.5, y: fitted.height * view.scale > stage.height + 0.5 };
+}
+
+/** What an arrow key does in the photo viewer: pans the photo along an axis it can move along,
+ *  where the arrows would otherwise leave the keyboard no way to look around a zoomed photo,
+ *  and otherwise the side arrows step between photos, as while it fits. The pan moves the photo,
+ *  so ArrowLeft brings its left side into view. */
+export function arrowKeyAction(key: string, can: { x: boolean; y: boolean }): { pan: { dx: number; dy: number } } | 'previous' | 'next' | null {
+  switch (key) {
+    case 'ArrowLeft':
+      return can.x ? { pan: { dx: PAN_STEP, dy: 0 } } : 'previous';
+    case 'ArrowRight':
+      return can.x ? { pan: { dx: -PAN_STEP, dy: 0 } } : 'next';
+    case 'ArrowUp':
+      return can.y ? { pan: { dx: 0, dy: PAN_STEP } } : null;
+    case 'ArrowDown':
+      return can.y ? { pan: { dx: 0, dy: -PAN_STEP } } : null;
+    default:
+      return null;
+  }
+}
