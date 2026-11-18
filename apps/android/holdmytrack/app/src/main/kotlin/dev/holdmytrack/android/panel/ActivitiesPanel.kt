@@ -112,6 +112,8 @@ class ActivitiesPanel(
 
     /** The map is too far out to list anything (`docs/SPEC.md` FR-5.11). */
     private var zoomedOut = false
+    /** Dates is set ([setDates]), so an empty list may be its doing. */
+    private var datesSet = false
     private val typeDot: View = sheet.findViewById(R.id.panel_type_dot)
     private val distance: View = sheet.findViewById(R.id.panel_distance)
     private val distanceReadout: TextView = sheet.findViewById(R.id.panel_distance_readout)
@@ -362,6 +364,7 @@ class ActivitiesPanel(
     fun setDates(text: String, set: Boolean) {
         datesLabel.text = text
         datesDot.visibility = if (set) View.VISIBLE else View.GONE
+        datesSet = set
         datesChip.contentDescription = "${res.getString(R.string.dates_filter)}, $text"
     }
 
@@ -542,7 +545,10 @@ class ActivitiesPanel(
             loading && listed.isEmpty() -> Note(res.getString(R.string.panel_loading), failed = false)
             loading -> null
             error != null -> Note(error!!, failed = true)
-            listed.isEmpty() -> Note(res.getString(R.string.panel_none_match), failed = false)
+            listed.isEmpty() -> Note(
+                res.getString(if (PanelRules.emptyListFiltered(state.hasActiveFilters, datesSet)) R.string.panel_none_match else R.string.panel_none_here),
+                failed = false,
+            )
             else -> null
         }
 

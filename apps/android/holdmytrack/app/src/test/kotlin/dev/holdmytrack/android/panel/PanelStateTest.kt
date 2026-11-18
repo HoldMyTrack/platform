@@ -149,4 +149,11 @@ class PanelStateTest {
         s.startOver()
         assertFalse(s.selecting)
     }
+
+    @Test
+    fun `an empty list blames the filters only when one is set`() {
+        assertFalse(PanelRules.emptyListFiltered(hasActiveFilters = false, datesSet = false))
+        assertTrue(PanelRules.emptyListFiltered(hasActiveFilters = true, datesSet = false))
+        assertTrue(PanelRules.emptyListFiltered(hasActiveFilters = false, datesSet = true))
+    }
 }

@@ -427,7 +427,8 @@
     <string name="card_pace_mi">%1$s /mi</string>
     <string name="card_speed_km">%1$s km/h</string>
     <string name="card_speed_mi">%1$s mph</string>
-    <string name="panel_none_match">No activities match the current filters.</string>
+    <string name="panel_none_match">No activities here match the current filters.</string>
+    <string name="panel_none_here">No activities in this part of the map.</string>
     <string name="panel_pending">Pending</string>
     <string name="panel_hidden">Hidden</string>
     <string name="activity_private_badge">Private</string>
