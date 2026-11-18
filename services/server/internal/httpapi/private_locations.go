@@ -120,7 +120,7 @@ func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Reque
 // Account-wide, since a hidden track keeps no track to tell which location hid it.
 func (s *Server) handleHiddenTracks(w http.ResponseWriter, r *http.Request) {
 	var count int
-	if err := s.pool.QueryRow(r.Context(), `SELECT count(*) FROM activities WHERE user_id = $1 AND trajectory IS NULL`,
+	if err := s.pool.QueryRow(r.Context(), `SELECT count(*) FROM tracks WHERE user_id = $1 AND trajectory IS NULL`,
 		userIDFromContext(r.Context())).Scan(&count); err != nil {
 		if clientGone(w, r) {
 			return

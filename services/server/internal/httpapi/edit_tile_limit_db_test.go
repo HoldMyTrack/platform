@@ -38,7 +38,7 @@ func TestRouteEditPastTheTileLimitChangesNothing(t *testing.T) {
 	read := func() row {
 		var r row
 		if err := d.pool.QueryRow(ctx, `
-			SELECT distance_meters, track_edit IS NOT NULL, edit_pending FROM activities WHERE id = $1
+			SELECT distance_meters, route_edit IS NOT NULL, edit_pending FROM tracks WHERE id = $1
 		`, res.TrackID).Scan(&r.distance, &r.edited, &r.pending); err != nil {
 			t.Fatal(err)
 		}
@@ -53,7 +53,7 @@ func TestRouteEditPastTheTileLimitChangesNothing(t *testing.T) {
 	d.decode(d.do(me, http.MethodPost, "/v2/tracks/"+res.TrackID+"/route-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)
 
 	var payload []byte
-	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_track' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_route' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
 		t.Fatal(err)
 	}
 	var job ingest.EditJob
@@ -97,8 +97,8 @@ func TestSplitEditPastTheTileLimitChangesNoPiece(t *testing.T) {
 	pieces := func() string {
 		var out string
 		if err := d.pool.QueryRow(ctx, `
-			SELECT string_agg(concat_ws(' ', distance_meters, track_edit IS NOT NULL), '; ' ORDER BY started_at)
-			FROM activities WHERE user_id = $1
+			SELECT string_agg(concat_ws(' ', distance_meters, route_edit IS NOT NULL), '; ' ORDER BY started_at)
+			FROM tracks WHERE user_id = $1
 		`, me.id).Scan(&out); err != nil {
 			t.Fatal(err)
 		}
@@ -107,7 +107,7 @@ func TestSplitEditPastTheTileLimitChangesNoPiece(t *testing.T) {
 	before := pieces()
 
 	var payload []byte
-	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_track' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_route' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
 		t.Fatal(err)
 	}
 	var job ingest.EditJob

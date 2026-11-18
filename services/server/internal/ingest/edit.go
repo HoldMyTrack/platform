@@ -17,7 +17,7 @@ import (
 )
 
 // RouteEdit is a user's edit to a track's recorded points (IMPLEMENTATION.md §4.7.7),
-// stored in activities.track_edit and replayed on top of the parsed, privacy-clipped points
+// stored in tracks.route_edit and replayed on top of the parsed, privacy-clipped points
 // every time the track is processed. Every value is a point timestamp in unix
 // milliseconds, never a point index: indices shift whenever a Private location changes,
 // timestamps don't.
@@ -145,12 +145,12 @@ func EditableTimestamps(points []parse.Point) error {
 	return nil
 }
 
-// EditJob is the `edit_track` job's payload. Edit is the complete new spec, not a delta —
+// EditJob is the `edit_route` job's payload. Edit is the complete new spec, not a delta —
 // nil means "reset to the original track". SplitID is the piece a split saved with the edit
 // just inserted (§4.7.8), reprocessed with the same spec in the same job.
 type EditJob struct {
 	UserID  string     `json:"user_id"`
-	TrackID string     `json:"activity_id"`
+	TrackID string     `json:"track_id"`
 	Edit    *RouteEdit `json:"edit"`
 	SplitID string     `json:"split_id,omitempty"`
 }
@@ -172,7 +172,7 @@ func ProcessRouteEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	err := processRouteEdit(ctx, pool, store, job)
 	if err != nil {
 		if _, uerr := pool.Exec(ctx,
-			`UPDATE activities SET edit_pending = false WHERE id = ANY($1::uuid[]) AND user_id = $2`,
+			`UPDATE tracks SET edit_pending = false WHERE id = ANY($1::uuid[]) AND user_id = $2`,
 			job.trackIDs(), job.UserID,
 		); uerr != nil {
 			return fmt.Errorf("%w (and clearing edit_pending failed: %v)", err, uerr)
@@ -216,12 +216,12 @@ func processRouteEdit(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	// A Private location change queued while this edit ran reprocesses the track again;
 	// its badge stays on until that lands.
 	if _, err := pool.Exec(ctx, `
-		UPDATE activities a SET edit_pending = false
+		UPDATE tracks a SET edit_pending = false
 		WHERE a.id = ANY($1::uuid[]) AND a.user_id = $2
 		  AND NOT EXISTS (
 			SELECT 1 FROM jobs j
 			WHERE j.user_id = $2 AND j.kind = 'reprivacy' AND j.state = 'pending'
-			  AND j.payload->'activity_ids' ? a.id::text
+			  AND j.payload->'track_ids' ? a.id::text
 		  )
 	`, job.trackIDs(), job.UserID); err != nil {
 		return fmt.Errorf("edit: clear edit_pending: %w", err)
@@ -249,9 +249,9 @@ func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 	var editPending bool
 	var rng SplitRange
 	err := pool.QueryRow(ctx, `
-		SELECT user_id, COALESCE(source_detail, ''), raw_payload_key, track_edit, edit_pending,
+		SELECT user_id, COALESCE(source_detail, ''), raw_payload_key, route_edit, edit_pending,
 		       split_from, split_to
-		FROM activities WHERE id = $1
+		FROM tracks WHERE id = $1
 	`, trackID).Scan(&userID, &sourceDetail, &rawKey, &storedEdit, &editPending, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, errors.New("not found")
@@ -291,10 +291,10 @@ var errFewPointsAfterEdit = errors.New("fewer than 2 points survive the edit")
 // account's current Private locations, apply a route edit, then update metrics, trajectory,
 // masks and regions, and mark every tile it touched before or after dirty. A piece of
 // a split (§4.7.8) is narrowed to its range before the edit is applied. It neither
-// renders those tiles nor clears edit_pending — its callers decide when (§4.7.7's edit_track
+// renders those tiles nor clears edit_pending — its callers decide when (§4.7.7's edit_route
 // does both straight away; a `reprivacy` job once for the whole batch).
 //
-// edit == nil replays the track's stored track_edit unchanged; otherwise edit replaces it
+// edit == nil replays the track's stored route_edit unchanged; otherwise edit replaces it
 // (empty meaning reset). A track deleted meanwhile is skipped without error.
 func reprocessTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, trackID string, edit *RouteEdit) error {
 	r, err := prepareReprocess(ctx, pool, store, userID, trackID, edit)
@@ -328,8 +328,8 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	var storedEdit []byte
 	var rng SplitRange
 	err := pool.QueryRow(ctx, `
-		SELECT COALESCE(source_detail, ''), raw_payload_key, track_edit, split_from, split_to
-		FROM activities WHERE id = $1 AND user_id = $2
+		SELECT COALESCE(source_detail, ''), raw_payload_key, route_edit, split_from, split_to
+		FROM tracks WHERE id = $1 AND user_id = $2
 	`, trackID, userID).Scan(&sourceDetail, &rawKey, &storedEdit, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, nil // deleted while the job was queued: nothing left to reprocess
@@ -435,13 +435,13 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 
 	// started_at moves with a Chop — the track now starts where its first kept point does.
-	// track_edit is only rewritten by a user's edit; a reprivacy pass leaves it as stored.
+	// route_edit is only rewritten by a user's edit; a reprivacy pass leaves it as stored.
 	if _, err := tx.Exec(ctx, `
-		UPDATE activities SET
+		UPDATE tracks SET
 			distance_meters = $3, duration_seconds = $4, moving_seconds = $5,
 			elevation_gain_m = $6, started_at = $7,
 			trajectory = `+trajectorySQL("$8", "$9", "$10")+`,
-			track_edit = CASE WHEN $12 THEN $11::jsonb ELSE track_edit END,
+			route_edit = CASE WHEN $12 THEN $11::jsonb ELSE route_edit END,
 			timezone = `+geo.TimezoneAtSQL("$13::float8", "$14::float8", "$2")+`,
 			recorded_started_at = $15, recorded_ended_at = $16,
 			editable_times = $17
@@ -458,16 +458,16 @@ func (r *reprocess) apply(ctx context.Context, pool *pgxpool.Pool) error {
 	}
 	// The places' matches are insert-only (geo.MatchTrack), so a reprocess that removed the
 	// only part of a track inside some place has to clear the old matches first.
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_country WHERE activity_id = $1`, trackID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM track_country WHERE track_id = $1`, trackID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_region WHERE activity_id = $1`, trackID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM track_region WHERE track_id = $1`, trackID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_county WHERE activity_id = $1`, trackID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM track_county WHERE track_id = $1`, trackID); err != nil {
 		return err
 	}
-	if _, err := tx.Exec(ctx, `DELETE FROM activity_city WHERE activity_id = $1`, trackID); err != nil {
+	if _, err := tx.Exec(ctx, `DELETE FROM track_city WHERE track_id = $1`, trackID); err != nil {
 		return err
 	}
 	if err := tx.Commit(ctx); err != nil {
@@ -516,7 +516,7 @@ func tilesNotIn(a, b [][2]int) [][2]int {
 }
 
 // EnqueueRouteEdit marks the track pending (and its tiles dirty — markPendingTilesDirty) and
-// enqueues its `edit_track` job in one transaction, so a track is never shown Pending
+// enqueues its `edit_route` job in one transaction, so a track is never shown Pending
 // without a job on its way, nor gets a job while already pending. Returns false when the
 // track isn't this user's or already has an edit pending.
 //
@@ -531,7 +531,7 @@ func EnqueueRouteEdit(ctx context.Context, pool *pgxpool.Pool, job EditJob, spli
 	defer tx.Rollback(ctx) //nolint:errcheck // no-op once committed
 
 	tag, err := tx.Exec(ctx, `
-		UPDATE activities SET edit_pending = true
+		UPDATE tracks SET edit_pending = true
 		WHERE id = $1 AND user_id = $2 AND NOT edit_pending
 	`, job.TrackID, job.UserID)
 	if err != nil {
@@ -557,7 +557,7 @@ func EnqueueRouteEdit(ctx context.Context, pool *pgxpool.Pool, job EditJob, spli
 		return false, err
 	}
 	if _, err := tx.Exec(ctx,
-		`INSERT INTO jobs (kind, user_id, payload) VALUES ('edit_track', $1, $2)`,
+		`INSERT INTO jobs (kind, user_id, payload) VALUES ('edit_route', $1, $2)`,
 		job.UserID, payload,
 	); err != nil {
 		return false, err

@@ -50,7 +50,7 @@ func TestLimitMessage(t *testing.T) {
 func (d *dbTest) fillToLimit(as account, n int) {
 	d.t.Helper()
 	if _, err := d.pool.Exec(context.Background(), `
-		INSERT INTO activities (user_id, source, activity_type, started_at, timezone)
+		INSERT INTO tracks (user_id, source, track_type, started_at, timezone)
 		SELECT $1, 'upload', 'walk', NOW() - make_interval(secs => g), 'UTC' FROM generate_series(1, $2) g`,
 		as.id, n); err != nil {
 		d.t.Fatal(err)
@@ -87,14 +87,14 @@ func TestUploadRefusedAtTheStorageLimit(t *testing.T) {
 		d.newTrack(me, testTrack{})
 	}
 	if _, err := d.pool.Exec(context.Background(),
-		`UPDATE activities SET raw_payload_key = 'raw/x', raw_bytes = $2 WHERE user_id = $1`, me.id, half); err != nil {
+		`UPDATE tracks SET raw_payload_key = 'raw/x', raw_bytes = $2 WHERE user_id = $1`, me.id, half); err != nil {
 		t.Fatal(err)
 	}
 	if resp := d.uploadFile(me, "day.gpx", []byte(splitGPX)); resp.Status != "enqueued" {
 		t.Fatalf("upload under the limit: %q", resp.Status)
 	}
 	if _, err := d.pool.Exec(context.Background(),
-		`UPDATE activities SET raw_bytes = $2 WHERE user_id = $1`, me.id, maxOriginalBytesPerAccount-10); err != nil {
+		`UPDATE tracks SET raw_bytes = $2 WHERE user_id = $1`, me.id, maxOriginalBytesPerAccount-10); err != nil {
 		t.Fatal(err)
 	}
 	rec := d.uploadRaw(me, "other.gpx", []byte(strings.Replace(splitGPX, "2026", "2025", 1)))
@@ -155,7 +155,7 @@ func TestSettingsShowsTheAccountsLimits(t *testing.T) {
 	me := d.newAccount(false)
 	d.fillToLimit(me, 1240)
 	if _, err := d.pool.Exec(context.Background(),
-		`UPDATE activities SET raw_payload_key = 'raw/' || id, raw_bytes = 250000 WHERE user_id = $1`, me.id); err != nil {
+		`UPDATE tracks SET raw_payload_key = 'raw/' || id, raw_bytes = 250000 WHERE user_id = $1`, me.id); err != nil {
 		t.Fatal(err)
 	}
 	body := getPage(d.srv, "/settings", me.session, "").Body.String()

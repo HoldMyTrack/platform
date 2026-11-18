@@ -115,10 +115,14 @@ func (p *JSONPoint) UnmarshalJSON(b []byte) error {
 // the resulting track carries them from the moment it's created rather than needing a
 // separate edit afterward.
 type JSONActivity struct {
-	TrackType   string      `json:"activity_type"`
-	Points      []JSONPoint `json:"points"`
-	Name        string      `json:"name,omitempty"`
-	Description string      `json:"description,omitempty"`
+	TrackType string `json:"track_type"`
+	// OldTrackType is the type of a payload stored before migration 0057, which named it
+	// activity_type; ParseJSON reads it when TrackType is empty. It goes with the
+	// rewrite_sync_payload job once every stored payload says track_type.
+	OldTrackType string      `json:"activity_type,omitempty"`
+	Points       []JSONPoint `json:"points"`
+	Name         string      `json:"name,omitempty"`
+	Description  string      `json:"description,omitempty"`
 }
 
 // ParseJSON decodes Path 2's normalized-point wire format into the same Activity shape
@@ -135,6 +139,9 @@ func ParseJSON(r io.Reader) (Track, error) {
 		points[i] = Point{Lat: p.Lat, Lon: p.Lon, Elevation: p.ElevationM, Time: p.Time}
 	}
 	trackType := a.TrackType
+	if trackType == "" {
+		trackType = a.OldTrackType
+	}
 	if trackType == "" {
 		trackType = "unknown"
 	}

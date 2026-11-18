@@ -196,7 +196,7 @@ func TestPhotoEditsAndTrackChanges(t *testing.T) {
 	// A track that loses its second half (Edit track, or a Private location over its end):
 	// the photo stays on what's left, at its end.
 	if _, err := d.pool.Exec(ctx, `
-		UPDATE activities SET trajectory = ST_GeomFromText($2, 4326) WHERE id = $1
+		UPDATE tracks SET trajectory = ST_GeomFromText($2, 4326) WHERE id = $1
 	`, walk, fmt.Sprintf("LINESTRINGM(10 50 %d, 10.0002 50.0002 %d)", photoTrackStart.Unix(), photoTrackStart.Unix()+10)); err != nil {
 		t.Fatal(err)
 	}
@@ -266,7 +266,7 @@ func TestPhotoUploadRefusals(t *testing.T) {
 
 	// The account limit.
 	if _, err := d.pool.Exec(context.Background(), `
-		INSERT INTO activity_photos (user_id, activity_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
+		INSERT INTO track_photos (user_id, track_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
 		SELECT $1::uuid, $2, NOW(), 'image/jpeg', 'image/jpeg', 1, 1, 1, 'photos/' || $1::uuid::text || '/' || gen_random_uuid() FROM generate_series(1, $3)
 	`, me.id, walk, maxPhotosPerAccount); err != nil {
 		t.Fatal(err)
@@ -402,7 +402,7 @@ func TestPhotoUpdateRefusedLeavesCaptionAlone(t *testing.T) {
 		t.Fatalf("status %d, want 400", rec.Code)
 	}
 	var caption *string
-	if err := d.pool.QueryRow(context.Background(), `SELECT caption FROM activity_photos WHERE id = $1`, photo.ID).Scan(&caption); err != nil {
+	if err := d.pool.QueryRow(context.Background(), `SELECT caption FROM track_photos WHERE id = $1`, photo.ID).Scan(&caption); err != nil {
 		t.Fatal(err)
 	}
 	if caption != nil {
@@ -417,7 +417,7 @@ func TestPhotoLimitHoldsUnderConcurrency(t *testing.T) {
 	me := d.newAccount(false)
 	act := d.newTrack(me, testTrack{trackType: "walk", startedAt: photoTrackStart, durationSecs: 60, at: &[2]float64{10, 50}})
 	if _, err := d.pool.Exec(context.Background(), `
-		INSERT INTO activity_photos (user_id, activity_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
+		INSERT INTO track_photos (user_id, track_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
 		SELECT $1::uuid, $2, $3, 'image/jpeg', 'image/jpeg', 40, 30, 1, 'photos/' || $1::uuid::text || '/' || gen_random_uuid() FROM generate_series(1, $4)
 	`, me.id, act, photoTrackStart, maxPhotosPerAccount-1); err != nil {
 		t.Fatal(err)
@@ -434,7 +434,7 @@ func TestPhotoLimitHoldsUnderConcurrency(t *testing.T) {
 	}
 	wg.Wait()
 	var n int
-	if err := d.pool.QueryRow(context.Background(), `SELECT count(*) FROM activity_photos WHERE user_id = $1`, me.id).Scan(&n); err != nil {
+	if err := d.pool.QueryRow(context.Background(), `SELECT count(*) FROM track_photos WHERE user_id = $1`, me.id).Scan(&n); err != nil {
 		t.Fatal(err)
 	}
 	if n != maxPhotosPerAccount {
@@ -446,9 +446,9 @@ func TestPhotoLimitHoldsUnderConcurrency(t *testing.T) {
 func (d *dbTest) sharePhoto(owner account, trackID string, p photoJSON) {
 	d.t.Helper()
 	if _, err := d.pool.Exec(context.Background(), `
-		INSERT INTO activity_photos (user_id, activity_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
+		INSERT INTO track_photos (user_id, track_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
 		SELECT $1, $2, route_at, content_type, thumb_content_type, width, height, bytes, image_key
-		FROM activity_photos WHERE id = $3`, owner.id, trackID, p.ID); err != nil {
+		FROM track_photos WHERE id = $3`, owner.id, trackID, p.ID); err != nil {
 		d.t.Fatal(err)
 	}
 }

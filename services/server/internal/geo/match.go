@@ -22,15 +22,15 @@ import (
 // through the tiles' parent chain, not here (internal/httpapi's adminLayer).
 func MatchTrack(ctx context.Context, pool *pgxpool.Pool, trackID string) error {
 	for _, level := range []struct{ matches, id, parts string }{
-		{"activity_country", "country_id", "admin_country_parts"},
-		{"activity_region", "region_id", "admin_region_parts"},
-		{"activity_county", "county_id", "admin_county_parts"},
-		{"activity_city", "city_id", "admin_city_parts"},
+		{"track_country", "country_id", "admin_country_parts"},
+		{"track_region", "region_id", "admin_region_parts"},
+		{"track_county", "county_id", "admin_county_parts"},
+		{"track_city", "city_id", "admin_city_parts"},
 	} {
 		_, err := pool.Exec(ctx, `
-			INSERT INTO `+level.matches+` (activity_id, `+level.id+`)
+			INSERT INTO `+level.matches+` (track_id, `+level.id+`)
 			SELECT DISTINCT $1::uuid, p.`+level.id+` FROM `+level.parts+` p
-			WHERE ST_Intersects(p.geom, (SELECT `+WrappedSQL("trajectory")+` FROM activities WHERE id = $1))
+			WHERE ST_Intersects(p.geom, (SELECT `+WrappedSQL("trajectory")+` FROM tracks WHERE id = $1))
 			ON CONFLICT DO NOTHING
 		`, trackID)
 		if err != nil {

@@ -79,7 +79,7 @@ func TestTake(t *testing.T) {
 		t.Helper()
 		var id string
 		if err := tx.QueryRow(ctx, `
-			INSERT INTO activities (user_id, source, activity_type, started_at, timezone, created_at)
+			INSERT INTO tracks (user_id, source, track_type, started_at, timezone, created_at)
 			VALUES ($1, $2, 'run', $3, 'UTC', $3) RETURNING id`, userID, source, created,
 		).Scan(&id); err != nil {
 			t.Fatalf("create activity: %v", err)
@@ -129,15 +129,15 @@ func TestTake(t *testing.T) {
 	// By the countries their tracks are in: QQ one account, QZ three, QY three. All three
 	// fold, into an other of the five distinct accounts behind them; an account counts under
 	// each country it was in.
-	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2), ($1, $3)`, a1, qqCountry, qzCountry)
-	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2), ($1, $3)`, a2, qzCountry, qyCountry)
-	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2)`, a3, qyCountry)
-	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2)`, a4, qyCountry)
-	exec(`INSERT INTO activity_country (activity_id, country_id) VALUES ($1, $2)`, a5, qzCountry)
+	exec(`INSERT INTO track_country (track_id, country_id) VALUES ($1, $2), ($1, $3)`, a1, qqCountry, qzCountry)
+	exec(`INSERT INTO track_country (track_id, country_id) VALUES ($1, $2), ($1, $3)`, a2, qzCountry, qyCountry)
+	exec(`INSERT INTO track_country (track_id, country_id) VALUES ($1, $2)`, a3, qyCountry)
+	exec(`INSERT INTO track_country (track_id, country_id) VALUES ($1, $2)`, a4, qyCountry)
+	exec(`INSERT INTO track_country (track_id, country_id) VALUES ($1, $2)`, a5, qzCountry)
 
 	// Photos: two rows over the same files (a copy) count their bytes once.
 	photo := func(userID, trackID, key string, bytes int) {
-		exec(`INSERT INTO activity_photos (user_id, activity_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
+		exec(`INSERT INTO track_photos (user_id, track_id, route_at, content_type, thumb_content_type, width, height, bytes, image_key)
 			VALUES ($1, $2, $3, 'image/jpeg', 'image/jpeg', 10, 10, $4, $5)`, userID, trackID, day, bytes, key)
 	}
 	photo(qq[0], a1, "stats-test/a", 1000)
@@ -147,12 +147,12 @@ func TestTake(t *testing.T) {
 	// Stored objects: two tracks over one original (a split) count it once; one more
 	// original isn't measured yet. A Fog tile with its size, one rendered before it was
 	// recorded, and a mask.
-	exec(`UPDATE activities SET raw_payload_key = 'stats-test/raw-a', raw_bytes = 2000 WHERE user_id = $1 AND source = 'upload'`, qq[0])
-	exec(`UPDATE activities SET raw_payload_key = 'stats-test/raw-b' WHERE user_id = $1`, qq[1])
+	exec(`UPDATE tracks SET raw_payload_key = 'stats-test/raw-a', raw_bytes = 2000 WHERE user_id = $1 AND source = 'upload'`, qq[0])
+	exec(`UPDATE tracks SET raw_payload_key = 'stats-test/raw-b' WHERE user_id = $1`, qq[1])
 	exec(`INSERT INTO fog_tiles (user_id, zoom, tile_x, tile_y, object_key, bytes, dirty)
 		VALUES ($1, 14, 1, 1, 'f', 300, false), ($1, 14, 1, 2, 'f', NULL, false)`, qq[0])
-	exec(`INSERT INTO activity_tile_masks (activity_id, zoom, tile_x, tile_y) VALUES ($1, 14, 1, 1)`, a1)
-	exec(`INSERT INTO activity_tile_mask_data (activity_id, zoom, tile_x, tile_y, png) VALUES ($1, 14, 1, 1, $2)`, a1, make([]byte, 50))
+	exec(`INSERT INTO track_tile_masks (track_id, zoom, tile_x, tile_y) VALUES ($1, 14, 1, 1)`, a1)
+	exec(`INSERT INTO track_tile_mask_data (track_id, zoom, tile_x, tile_y, png) VALUES ($1, 14, 1, 1, $2)`, a1, make([]byte, 50))
 
 	exec(`INSERT INTO r2_ops (day, class, count) VALUES ($1, 'A', 70), ($1, 'B', 900)`, day)
 
@@ -235,7 +235,7 @@ func TestTake(t *testing.T) {
 	}
 
 	// Again for the same day: nothing changes.
-	exec(`UPDATE activities SET source = 'healthkit' WHERE user_id = $1`, qq[0])
+	exec(`UPDATE tracks SET source = 'healthkit' WHERE user_id = $1`, qq[0])
 	if again, err := Take(ctx, tx, day); err != nil || again != 0 {
 		t.Errorf("second Take: wrote %d, err %v; want 0, nil", again, err)
 	}

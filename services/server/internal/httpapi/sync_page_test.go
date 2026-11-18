@@ -23,7 +23,7 @@ func TestSyncPage(t *testing.T) {
 	track := d.newTrack(me, testTrack{trackType: "walking", durationSecs: 60,
 		startedAt: time.Date(2026, 5, 2, 10, 0, 0, 0, time.UTC)})
 	var source string
-	if err := d.pool.QueryRow(ctx, `UPDATE activities SET external_id = 'walk-1' WHERE id = $1 RETURNING source`, track).Scan(&source); err != nil {
+	if err := d.pool.QueryRow(ctx, `UPDATE tracks SET external_id = 'walk-1' WHERE id = $1 RETURNING source`, track).Scan(&source); err != nil {
 		t.Fatal(err)
 	}
 	externalID := "walk-1"

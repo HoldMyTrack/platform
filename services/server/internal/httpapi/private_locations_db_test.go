@@ -104,7 +104,7 @@ func (d *dbTest) nearestM(id string, lon, lat float64) float64 {
 	var m float64
 	if err := d.pool.QueryRow(context.Background(), `
 		SELECT ST_Distance(trajectory::geography, ST_SetSRID(ST_MakePoint($2, $3), 4326)::geography)
-		FROM activities WHERE id = $1`, id, lon, lat).Scan(&m); err != nil {
+		FROM tracks WHERE id = $1`, id, lon, lat).Scan(&m); err != nil {
 		d.t.Fatal(err)
 	}
 	return m
@@ -231,12 +231,12 @@ func TestPrivateLocationReprocessFailureKeepsTrackHidden(t *testing.T) {
 	ok := d.ingestNorth(me, "ok.gpx", 10.0)
 	broken := d.ingestNorth(me, "broken.gpx", 10.001)
 	var rawKey string
-	if err := d.pool.QueryRow(ctx, `SELECT raw_payload_key FROM activities WHERE id = $1`, broken).Scan(&rawKey); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT raw_payload_key FROM tracks WHERE id = $1`, broken).Scan(&rawKey); err != nil {
 		t.Fatal(err)
 	}
 
 	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0005, "lat": 50.0, "radius_m": 250}), http.StatusCreated, nil)
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = 'raw/missing.gpx' WHERE id = $1`, broken); err != nil {
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET raw_payload_key = 'raw/missing.gpx' WHERE id = $1`, broken); err != nil {
 		t.Fatal(err)
 	}
 	var jobID int64
@@ -281,7 +281,7 @@ func TestPrivateLocationReprocessFailureKeepsTrackHidden(t *testing.T) {
 		t.Error("coverage status: rendering while only a delayed rerun waits")
 	}
 
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = $2 WHERE id = $1`, broken, rawKey); err != nil {
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET raw_payload_key = $2 WHERE id = $1`, broken, rawKey); err != nil {
 		t.Fatal(err)
 	}
 	d.runReprivacyJob(me)
@@ -329,7 +329,7 @@ func TestDeletingAnOverlappingLocationFindsEndsPastItsOwnReach(t *testing.T) {
 	// The track as the two clipped it: starting 690 m north, 400 m from the small one's center,
 	// past the 225 m twice its own radius reaches.
 	if _, err := d.pool.Exec(ctx, `
-		UPDATE activities SET trajectory = ST_SetSRID(ST_MakeLine(ST_MakePointM(10.0, $2, 0), ST_MakePointM(10.0, $3, 1)), 4326)
+		UPDATE tracks SET trajectory = ST_SetSRID(ST_MakeLine(ST_MakePointM(10.0, $2, 0), ST_MakePointM(10.0, $3, 1)), 4326)
 		WHERE id = $1
 	`, walk, north(690), north(2000)); err != nil {
 		t.Fatal(err)

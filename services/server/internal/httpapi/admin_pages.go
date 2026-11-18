@@ -197,7 +197,7 @@ func adminUsersSQL(picked string) string {
 	JOIN users u ON u.id = p.id
 	CROSS JOIN LATERAL (
 		SELECT count(*), COALESCE(sum(distance_meters), 0)::float8
-		FROM activities WHERE user_id = u.id
+		FROM tracks WHERE user_id = u.id
 	) a (n, meters)
 	ORDER BY u.created_at DESC, u.id`
 }
@@ -297,16 +297,16 @@ func (s *Server) adminUserTracks(ctx context.Context, l *i18n.Localizer, u admin
 
 	rows, err := s.pool.Query(ctx, `
 		SELECT a.id, to_char(a.started_at AT TIME ZONE a.timezone, 'YYYY-MM-DD HH24:MI') || ' ' || a.timezone,
-		       a.activity_type, COALESCE(a.name, ''),
+		       a.track_type, COALESCE(a.name, ''),
 		       COALESCE(a.distance_meters, 0)::float8, COALESCE(a.duration_seconds, 0), a.source,
-		       a.trajectory IS NULL, a.track_edit IS NOT NULL,
+		       a.trajectory IS NULL, a.route_edit IS NOT NULL,
 		       COALESCE((SELECT string_agg(c.name, ', ' ORDER BY c.name)
-		                 FROM activity_country ac JOIN admin_countries c ON c.id = ac.country_id
-		                 WHERE ac.activity_id = a.id), ''),
+		                 FROM track_country ac JOIN admin_countries c ON c.id = ac.country_id
+		                 WHERE ac.track_id = a.id), ''),
 		       COALESCE((SELECT string_agg(rg.name, ', ' ORDER BY rg.name)
-		                 FROM activity_region ar JOIN admin_regions rg ON rg.id = ar.region_id
-		                 WHERE ar.activity_id = a.id), '')
-		FROM activities a
+		                 FROM track_region ar JOIN admin_regions rg ON rg.id = ar.region_id
+		                 WHERE ar.track_id = a.id), '')
+		FROM tracks a
 		WHERE a.user_id = $1
 		ORDER BY a.started_at DESC, a.id
 		LIMIT $2 OFFSET $3

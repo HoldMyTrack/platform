@@ -88,8 +88,8 @@ func TestAdminTilesAreBuiltOnceAndMatchTheLiveQuery(t *testing.T) {
 		sql  string
 		args []any
 	}{
-		{`INSERT INTO activity_country VALUES ($1, $2)`, []any{track, visited}},
-		{`INSERT INTO activity_region VALUES ($1, $2)`, []any{track, region}},
+		{`INSERT INTO track_country VALUES ($1, $2)`, []any{track, visited}},
+		{`INSERT INTO track_region VALUES ($1, $2)`, []any{track, region}},
 	} {
 		if _, err := d.pool.Exec(ctx, s.sql, s.args...); err != nil {
 			t.Fatal(err)
@@ -247,7 +247,7 @@ func TestCityTileMergesThePlacesNotBeenInBelowItsBand(t *testing.T) {
 
 	me := d.newAccount(false) // deleted, with its matches, before the outlines above
 	track := d.newTrack(me, testTrack{trackType: "walking", at: &at})
-	if _, err := d.pool.Exec(ctx, `INSERT INTO activity_city VALUES ($1, $2), ($1, $3)`, track, west, speck); err != nil {
+	if _, err := d.pool.Exec(ctx, `INSERT INTO track_city VALUES ($1, $2), ($1, $3)`, track, west, speck); err != nil {
 		t.Fatal(err)
 	}
 

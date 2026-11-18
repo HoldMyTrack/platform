@@ -95,7 +95,7 @@ func TestUploadHistoryFinishedAt(t *testing.T) {
 	d.insertImportJob(me, "done", "upload", "walk.gpx", "")
 	d.insertImportJob(me, "pending", "upload", "next.gpx", "")
 	walk := d.newTrack(me, testTrack{trackType: "walk", distanceMeters: 1000})
-	if _, err := d.pool.Exec(context.Background(), `UPDATE activities SET source = 'upload', external_id = 'walk.gpx' WHERE id = $1`, walk); err != nil {
+	if _, err := d.pool.Exec(context.Background(), `UPDATE tracks SET source = 'upload', external_id = 'walk.gpx' WHERE id = $1`, walk); err != nil {
 		t.Fatal(err)
 	}
 

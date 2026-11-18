@@ -14,8 +14,8 @@ import (
 
 // Sending a copy of a Trip (IMPLEMENTATION.md §4.23, ADR-0036). A Trip's owner sends a copy
 // to an email address; the recipient finds it in their inbox and accepts or declines it, and
-// accepting enqueues the `story_copy` job that copies the Trip as it is then into their
-// account (tripcopy.Process). Stored in story_sends until accepted or declined.
+// accepting enqueues the `trip_copy` job that copies the Trip as it is then into their
+// account (tripcopy.Process). Stored in trip_sends until accepted or declined.
 
 // tripSendLimiter bounds how many copies one account sends an hour: each is an email to
 // someone else's inbox.
@@ -63,10 +63,10 @@ func (s *Server) handleSendTrip(w http.ResponseWriter, r *http.Request) {
 	}
 	var lang string
 	err = s.pool.QueryRow(ctx, `
-		INSERT INTO story_sends (story_id, recipient_id)
+		INSERT INTO trip_sends (trip_id, recipient_id)
 		SELECT $1, id FROM users
 		WHERE email = $2 AND id <> $3 AND id <> $4 AND email_verified AND deleted_at IS NULL
-		ON CONFLICT (story_id, recipient_id) DO UPDATE SET sent_at = NOW()
+		ON CONFLICT (trip_id, recipient_id) DO UPDATE SET sent_at = NOW()
 		RETURNING (SELECT COALESCE(locale, '') FROM users WHERE id = recipient_id)
 	`, tripID, email, userID, DemoCustomerUserID).Scan(&lang)
 	if err != nil && !errors.Is(err, pgx.ErrNoRows) {
@@ -97,9 +97,9 @@ func (s *Server) sendTripCopyEmail(ctx context.Context, senderID, tripID, email,
 	var tracks int64
 	if err := s.pool.QueryRow(ctx, `
 		SELECT `+senderNameSQL+`, st.name,
-		       (SELECT count(*) FROM story_activities sa JOIN activities a ON a.id = sa.activity_id
-		        WHERE sa.story_id = st.id)
-		FROM stories st JOIN users u ON u.id = st.user_id
+		       (SELECT count(*) FROM trip_tracks sa JOIN tracks a ON a.id = sa.track_id
+		        WHERE sa.trip_id = st.id)
+		FROM trips st JOIN users u ON u.id = st.user_id
 		WHERE st.id = $1 AND u.id = $2`, tripID, senderID).Scan(&from, &trip, &tracks); err != nil {
 		return err
 	}
@@ -124,7 +124,7 @@ type tripSendJSON struct {
 }
 
 // tripCopyingJSON is a copy the account accepted that hasn't finished arriving: its Trip
-// appears once the `story_copy` job has run.
+// appears once the `trip_copy` job has run.
 type tripCopyingJSON struct {
 	TripName string `json:"trip_name"`
 	From     string `json:"from"`
@@ -146,10 +146,10 @@ func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(ctx)
 	rows, err := s.pool.Query(ctx, `
 		SELECT ss.id, st.name, `+senderNameSQL+`, ss.sent_at,
-		       (SELECT count(*) FROM story_activities sa JOIN activities a ON a.id = sa.activity_id
-		        WHERE sa.story_id = st.id)
-		FROM story_sends ss
-		JOIN stories st ON st.id = ss.story_id
+		       (SELECT count(*) FROM trip_tracks sa JOIN tracks a ON a.id = sa.track_id
+		        WHERE sa.trip_id = st.id)
+		FROM trip_sends ss
+		JOIN trips st ON st.id = ss.trip_id
 		JOIN users u ON u.id = st.user_id
 		WHERE ss.recipient_id = $1 AND u.deleted_at IS NULL
 		ORDER BY ss.sent_at DESC, ss.id DESC
@@ -181,9 +181,9 @@ func (s *Server) handleListTripSends(w http.ResponseWriter, r *http.Request) {
 	rows, err = s.pool.Query(ctx, `
 		SELECT st.name, `+senderNameSQL+`
 		FROM jobs j
-		JOIN stories st ON st.id = (j.payload->>'story_id')::uuid
+		JOIN trips st ON st.id = (j.payload->>'trip_id')::uuid
 		JOIN users u ON u.id = st.user_id
-		WHERE j.user_id = $1 AND j.kind = 'story_copy' AND j.state = 'pending'
+		WHERE j.user_id = $1 AND j.kind = 'trip_copy' AND j.state = 'pending'
 		ORDER BY j.id
 	`, userID)
 	if err != nil {
@@ -219,7 +219,7 @@ var errTripSendNotFound = errors.New("story send not found")
 // errTripSendNotFound when there's no such copy for them.
 func takeTripSend(ctx context.Context, tx pgx.Tx, userID, sendID string) (string, error) {
 	var tripID string
-	err := tx.QueryRow(ctx, `DELETE FROM story_sends WHERE id = $1 AND recipient_id = $2 RETURNING story_id`,
+	err := tx.QueryRow(ctx, `DELETE FROM trip_sends WHERE id = $1 AND recipient_id = $2 RETURNING trip_id`,
 		sendID, userID).Scan(&tripID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", errTripSendNotFound
@@ -228,7 +228,7 @@ func takeTripSend(ctx context.Context, tx pgx.Tx, userID, sendID string) (string
 }
 
 // handleAcceptTripSend serves `POST /v2/trip-sends/{id}/accept`: the copy leaves the inbox and
-// a `story_copy` job is queued for it in the same transaction. `202`: the Trip arrives once the
+// a `trip_copy` job is queued for it in the same transaction. `202`: the Trip arrives once the
 // job has run. An account at its limits (account_limits.go) is refused, and the copy stays in its
 // inbox until there's room; a copy accepted below them is made whole, even past them.
 func (s *Server) handleAcceptTripSend(w http.ResponseWriter, r *http.Request) {

@@ -49,7 +49,7 @@ func TestLoadTimezones(t *testing.T) {
 	track := func(track string) string {
 		var id string
 		if err := tx.QueryRow(ctx, `
-			INSERT INTO activities (user_id, source, activity_type, started_at, trajectory, timezone)
+			INSERT INTO tracks (user_id, source, track_type, started_at, trajectory, timezone)
 			VALUES ($1, 'upload', 'walking', now(), ST_GeomFromText(NULLIF($2, ''), 4326), 'UTC')
 			RETURNING id`, userID, track).Scan(&id); err != nil {
 			t.Fatalf("create activity: %v", err)
@@ -65,7 +65,7 @@ func TestLoadTimezones(t *testing.T) {
 	hidden := track("")
 	zone := func(id string) string {
 		var tz string
-		if err := tx.QueryRow(ctx, `SELECT timezone FROM activities WHERE id = $1`, id).Scan(&tz); err != nil {
+		if err := tx.QueryRow(ctx, `SELECT timezone FROM tracks WHERE id = $1`, id).Scan(&tz); err != nil {
 			t.Fatal(err)
 		}
 		return tz

@@ -84,7 +84,7 @@ func parseGPX(r io.Reader, maxPoints int) (Track, error) {
 				}
 			case "type":
 				// The optional GPX track type ("Hiking", "Running", ...) — IMPLEMENTATION.md
-				// §4.7: activity_type is whatever the source reports, not a controlled
+				// §4.7: track_type is whatever the source reports, not a controlled
 				// vocabulary. Only a <trk>'s or <rte>'s own: a <wpt> has a <type> too
 				// ("Summit"), and extension schemas add per-point ones.
 				inType = parent == "trk" || parent == "rte"

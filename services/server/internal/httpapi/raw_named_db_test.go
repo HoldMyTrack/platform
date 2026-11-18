@@ -15,7 +15,7 @@ func TestRawNamed(t *testing.T) {
 	rider := d.newAccount(false)
 	kept, queued := "raw/"+rider.id+"/kept.gpx", "raw/"+rider.id+"/queued.gpx"
 	track := d.newTrack(rider, testTrack{trackType: "walk"})
-	if _, err := d.pool.Exec(ctx, `UPDATE activities SET raw_payload_key = $1 WHERE id = $2`, kept, track); err != nil {
+	if _, err := d.pool.Exec(ctx, `UPDATE tracks SET raw_payload_key = $1 WHERE id = $2`, kept, track); err != nil {
 		t.Fatal(err)
 	}
 	var job int64

@@ -35,7 +35,7 @@ func TestFastTrackIngestsAndEdits(t *testing.T) {
 	edit := map[string]any{"move": map[int64][2]float64{middle: {10, 50.5}}}
 	d.decode(d.do(me, http.MethodPost, "/v2/tracks/"+res.TrackID+"/route-edit", map[string]any{"edit": edit}), http.StatusAccepted, nil)
 	var payload []byte
-	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_track' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT payload FROM jobs WHERE user_id = $1 AND kind = 'edit_route' ORDER BY id DESC LIMIT 1`, me.id).Scan(&payload); err != nil {
 		t.Fatal(err)
 	}
 	var job ingest.EditJob
@@ -46,7 +46,7 @@ func TestFastTrackIngestsAndEdits(t *testing.T) {
 		t.Fatalf("edit implying 50 km/s: %v", err)
 	}
 	var meters float64
-	if err := d.pool.QueryRow(ctx, `SELECT distance_meters FROM activities WHERE id = $1`, res.TrackID).Scan(&meters); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT distance_meters FROM tracks WHERE id = $1`, res.TrackID).Scan(&meters); err != nil {
 		t.Fatal(err)
 	}
 	if meters < 90_000 {

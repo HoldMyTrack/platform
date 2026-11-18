@@ -76,7 +76,7 @@ func TestTrackDeleteRemovesAnOriginalOnlyWithItsLastTrack(t *testing.T) {
 	me := d.newAccount(false)
 	first := d.ingestNorth(me, "walk.gpx", 10.0)
 	var key string
-	if err := d.pool.QueryRow(ctx, `SELECT raw_payload_key FROM activities WHERE id = $1`, first).Scan(&key); err != nil {
+	if err := d.pool.QueryRow(ctx, `SELECT raw_payload_key FROM tracks WHERE id = $1`, first).Scan(&key); err != nil {
 		t.Fatal(err)
 	}
 	// The test ran the ingest itself; a pending job naming the key would keep it.
@@ -85,7 +85,7 @@ func TestTrackDeleteRemovesAnOriginalOnlyWithItsLastTrack(t *testing.T) {
 	}
 	var second string
 	if err := d.pool.QueryRow(ctx, `
-		INSERT INTO activities (user_id, source, external_id, activity_type, started_at, timezone, raw_payload_key)
+		INSERT INTO tracks (user_id, source, external_id, track_type, started_at, timezone, raw_payload_key)
 		VALUES ($1, 'upload', 'copy', 'walking', NOW(), 'UTC', $2) RETURNING id`, me.id, key).Scan(&second); err != nil {
 		t.Fatal(err)
 	}

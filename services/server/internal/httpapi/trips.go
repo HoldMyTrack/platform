@@ -15,7 +15,7 @@ import (
 )
 
 // Trips (IMPLEMENTATION.md §4.23) — hand-picked, private sets of tracks, each
-// with a name, a description and joint statistics. Stored in trips and story_activities
+// with a name, a description and joint statistics. Stored in trips and trip_tracks
 // (§3.19). Another account's Trip answers exactly like a missing one, `404`, on every route.
 //
 // Every change to which tracks a Trip holds bumps the account's tile version
@@ -26,7 +26,7 @@ import (
 const (
 	maxTripNameLen        = 200
 	maxTripDescriptionLen = 2000
-	// maxTripTrackIDs bounds one request's activity_ids — "Create trip" sends every
+	// maxTripTrackIDs bounds one request's track_ids — "Create trip" sends every
 	// checked track, which with select-all can be a whole history, so this is generous.
 	maxTripTrackIDs = 10000
 )
@@ -86,7 +86,7 @@ type tripsResponse struct {
 	Trips []trip `json:"trips"`
 }
 
-// tripRequest is POST's body; PATCH reads the same fields but activity_ids, a full replace
+// tripRequest is POST's body; PATCH reads the same fields but track_ids, a full replace
 // of name and description, the same one-form shape handleUpdateTrack uses.
 type tripRequest struct {
 	Name        string   `json:"name"`
@@ -183,7 +183,7 @@ func (s *Server) handleGetTrip(w http.ResponseWriter, r *http.Request) {
 }
 
 // handleCreateTrip serves `POST /v2/trips`, responding 201 with the new Trip. The
-// optional activity_ids become its first members in the same transaction, so "Create trip"
+// optional track_ids become its first members in the same transaction, so "Create trip"
 // is one request; any of them that isn't the caller's own track fails the whole request
 // with a 404 and creates nothing.
 func (s *Server) handleCreateTrip(w http.ResponseWriter, r *http.Request) {
@@ -205,7 +205,7 @@ func (s *Server) handleCreateTrip(w http.ResponseWriter, r *http.Request) {
 	err := s.inTx(r.Context(), func(tx pgx.Tx) error {
 		var id string
 		if err := tx.QueryRow(r.Context(), `
-			INSERT INTO stories (user_id, name, description) VALUES ($1, $2, NULLIF($3, ''))
+			INSERT INTO trips (user_id, name, description) VALUES ($1, $2, NULLIF($3, ''))
 			RETURNING id
 		`, userID, req.Name, req.Description).Scan(&id); err != nil {
 			return err
@@ -247,7 +247,7 @@ func (s *Server) handleUpdateTrip(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())
 
 	tag, err := s.pool.Exec(r.Context(), `
-		UPDATE stories SET name = $3, description = NULLIF($4, ''), updated_at = NOW()
+		UPDATE trips SET name = $3, description = NULLIF($4, ''), updated_at = NOW()
 		WHERE id = $1 AND user_id = $2
 	`, id, userID, req.Name, req.Description)
 	if err == nil && tag.RowsAffected() == 0 {
@@ -284,8 +284,8 @@ func (s *Server) deleteTrip(ctx context.Context, userID, id string) error {
 		// memberships, so it says whether the Trip held anything.
 		var hadTracks bool
 		if err := tx.QueryRow(ctx, `
-			DELETE FROM stories WHERE id = $1 AND user_id = $2
-			RETURNING EXISTS (SELECT 1 FROM story_activities WHERE story_id = $1)
+			DELETE FROM trips WHERE id = $1 AND user_id = $2
+			RETURNING EXISTS (SELECT 1 FROM trip_tracks WHERE trip_id = $1)
 		`, id, userID).Scan(&hadTracks); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return errTripNotFound
@@ -311,7 +311,7 @@ func (s *Server) handleAddTripTracks(w http.ResponseWriter, r *http.Request) {
 // ignored. The tracks themselves stay.
 func (s *Server) handleRemoveTripTracks(w http.ResponseWriter, r *http.Request) {
 	s.changeTripTracks(w, r, func(ctx context.Context, tx pgx.Tx, _, tripID string, ids []string) (bool, error) {
-		tag, err := tx.Exec(ctx, `DELETE FROM story_activities WHERE story_id = $1 AND activity_id = ANY($2::uuid[])`,
+		tag, err := tx.Exec(ctx, `DELETE FROM trip_tracks WHERE trip_id = $1 AND track_id = ANY($2::uuid[])`,
 			tripID, ids)
 		return tag.RowsAffected() > 0, err
 	})
@@ -341,7 +341,7 @@ func (s *Server) changeTripTracks(w http.ResponseWriter, r *http.Request,
 	var updated trip
 	err := s.inTx(ctx, func(tx pgx.Tx) error {
 		var found string
-		if err := tx.QueryRow(ctx, `SELECT id FROM stories WHERE id = $1 AND user_id = $2 FOR UPDATE`,
+		if err := tx.QueryRow(ctx, `SELECT id FROM trips WHERE id = $1 AND user_id = $2 FOR UPDATE`,
 			tripID, userID).Scan(&found); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return errTripNotFound
@@ -353,7 +353,7 @@ func (s *Server) changeTripTracks(w http.ResponseWriter, r *http.Request,
 			return err
 		}
 		if changed {
-			if _, err := tx.Exec(ctx, `UPDATE stories SET updated_at = NOW() WHERE id = $1`, tripID); err != nil {
+			if _, err := tx.Exec(ctx, `UPDATE trips SET updated_at = NOW() WHERE id = $1`, tripID); err != nil {
 				return err
 			}
 			if err := fog.BumpMapVersion(ctx, tx, userID); err != nil {
@@ -377,7 +377,7 @@ func addTripTracks(ctx context.Context, tx pgx.Tx, userID, tripID string, ids []
 	if len(ids) == 0 {
 		return false, nil
 	}
-	rows, err := tx.Query(ctx, `SELECT id FROM activities WHERE user_id = $1 AND id = ANY($2::uuid[]) FOR KEY SHARE`,
+	rows, err := tx.Query(ctx, `SELECT id FROM tracks WHERE user_id = $1 AND id = ANY($2::uuid[]) FOR KEY SHARE`,
 		userID, ids)
 	if err != nil {
 		return false, err
@@ -390,7 +390,7 @@ func addTripTracks(ctx context.Context, tx pgx.Tx, userID, tripID string, ids []
 		return false, errTrackNotFound
 	}
 	tag, err := tx.Exec(ctx, `
-		INSERT INTO story_activities (story_id, activity_id)
+		INSERT INTO trip_tracks (trip_id, track_id)
 		SELECT $1, unnest($2::uuid[])
 		ON CONFLICT DO NOTHING
 	`, tripID, ids)
@@ -429,36 +429,36 @@ func (s *Server) loadTrip(ctx context.Context, q querier, userID, tripID string)
 
 const listTripsQuery = `
 SELECT id, name, description, created_at, updated_at,
-       (SELECT ` + senderNameSQL + ` FROM story_copies sc
-        JOIN stories src ON src.id = sc.source_story_id
+       (SELECT ` + senderNameSQL + ` FROM trip_copies sc
+        JOIN trips src ON src.id = sc.source_trip_id
         JOIN users u ON u.id = src.user_id
-        WHERE sc.copy_story_id = stories.id
-        ORDER BY sc.source_story_id LIMIT 1)
-FROM stories
+        WHERE sc.copy_trip_id = trips.id
+        ORDER BY sc.source_trip_id LIMIT 1)
+FROM trips
 WHERE user_id = $1 AND ($2::uuid IS NULL OR id = $2)
 ORDER BY created_at DESC, id DESC`
 
 const tripMembersQuery = `
-SELECT sa.story_id, sa.activity_id
-FROM story_activities sa
-JOIN stories s ON s.id = sa.story_id
-JOIN activities a ON a.id = sa.activity_id
+SELECT sa.trip_id, sa.track_id
+FROM trip_tracks sa
+JOIN trips s ON s.id = sa.trip_id
+JOIN tracks a ON a.id = sa.track_id
 WHERE s.user_id = $1 AND ($2::uuid IS NULL OR s.id = $2)
 ORDER BY a.started_at, a.id`
 
 // tripStatsQuery is every Trip's statistics per track type in one pass; loadTrips
 // sums the types into each Trip's totals.
 const tripStatsQuery = `
-SELECT sa.story_id, a.activity_type, COUNT(*),
+SELECT sa.trip_id, a.track_type, COUNT(*),
        COALESCE(SUM(a.distance_meters), 0)::float8,
        COALESCE(SUM(COALESCE(a.moving_seconds, a.duration_seconds)), 0),
        COALESCE(SUM(a.duration_seconds), 0)
-FROM story_activities sa
-JOIN stories s ON s.id = sa.story_id
-JOIN activities a ON a.id = sa.activity_id
+FROM trip_tracks sa
+JOIN trips s ON s.id = sa.trip_id
+JOIN tracks a ON a.id = sa.track_id
 WHERE s.user_id = $1 AND ($2::uuid IS NULL OR s.id = $2)
-GROUP BY sa.story_id, a.activity_type
-ORDER BY COUNT(*) DESC, a.activity_type`
+GROUP BY sa.trip_id, a.track_type
+ORDER BY COUNT(*) DESC, a.track_type`
 
 // loadTrips reads userID's Trips — every one, or only tripID's when it's set — with
 // their members and statistics: three queries, whatever the number of Trips.

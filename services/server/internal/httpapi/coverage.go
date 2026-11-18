@@ -9,7 +9,7 @@ import (
 // coverageRenderingQuery reports whether any job that changes this account's Fog
 // rasters is still unfinished. A claimed job keeps state = 'pending' until the worker marks it
 // done or failed (internal/worker's claimAndRun only sets locked_at), so this covers
-// running jobs too. `ingest`, `edit_track`, `reprivacy` and `story_copy` are included, not just
+// running jobs too. `ingest`, `edit_route`, `reprivacy` and `trip_copy` are included, not just
 // `render_fog`: an upload the client has already seen accepted may not have been parsed yet, and
 // until it has, the `render_fog` job it will enqueue doesn't exist to be waited on; an accepted
 // copy of a Trip is the same, one track at a time. A job waiting out a retry's delay
@@ -25,7 +25,7 @@ import (
 const coverageRenderingQuery = `
 SELECT EXISTS (
     SELECT 1 FROM jobs
-    WHERE user_id = $1 AND state = 'pending' AND kind IN ('ingest', 'edit_track', 'reprivacy', 'render_fog', 'story_copy')
+    WHERE user_id = $1 AND state = 'pending' AND kind IN ('ingest', 'edit_route', 'reprivacy', 'render_fog', 'trip_copy')
       AND NOT (run_after > NOW() AND (attempts > 0 OR kind = 'reprivacy'))
 ),
 (SELECT map_version FROM users WHERE id = $1)`

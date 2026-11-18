@@ -24,11 +24,11 @@ SELECT COUNT(*),
        COALESCE(SUM(distance_meters), 0),
        COALESCE(SUM(COALESCE(moving_seconds, duration_seconds)), 0),
        COALESCE(SUM(elevation_gain_m), 0)
-FROM activities
+FROM tracks
 WHERE user_id = $1
   AND ` + inDateRange("$2", "$3") + `
-  AND ($4::text[] IS NULL OR activity_type = ANY($4))
-  AND ($5::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $5))`
+  AND ($4::text[] IS NULL OR track_type = ANY($4))
+  AND ($5::uuid IS NULL OR tracks.id IN (SELECT track_id FROM trip_tracks WHERE trip_id = $5))`
 
 type trackSummaryResponse struct {
 	Count           int64   `json:"count"`
@@ -85,11 +85,11 @@ const trackHistogramQuery = `
 SELECT ` + localStartedAt + `::date AS day,
        COUNT(*),
        COALESCE(SUM(distance_meters), 0)
-FROM activities
+FROM tracks
 WHERE user_id = $1
   AND ` + localStartedAt + ` >= $2::date
   AND ` + localStartedAt + ` < $3::date
-  AND ($4::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $4))
+  AND ($4::uuid IS NULL OR tracks.id IN (SELECT track_id FROM trip_tracks WHERE trip_id = $4))
 GROUP BY day
 ORDER BY day`
 
@@ -109,10 +109,10 @@ const trackDayPageQuery = `
 SELECT ` + localStartedAt + `::date AS day,
        COUNT(*),
        COALESCE(SUM(distance_meters), 0)
-FROM activities
+FROM tracks
 WHERE user_id = $1
   AND ($2::date IS NULL OR ` + localStartedAt + ` < $2::date)
-  AND ($4::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $4))
+  AND ($4::uuid IS NULL OR tracks.id IN (SELECT track_id FROM trip_tracks WHERE trip_id = $4))
 GROUP BY day
 ORDER BY day DESC
 LIMIT $3`
@@ -210,9 +210,9 @@ func (s *Server) handleTrackHistogram(w http.ResponseWriter, r *http.Request) {
 func (s *Server) earliestTrack(ctx context.Context, userID string, trip *string) (*time.Time, error) {
 	var earliest *time.Time
 	err := s.pool.QueryRow(ctx,
-		`SELECT MIN(`+localStartedAt+`)::date FROM activities
+		`SELECT MIN(`+localStartedAt+`)::date FROM tracks
 		 WHERE user_id = $1
-		   AND ($2::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $2))`,
+		   AND ($2::uuid IS NULL OR tracks.id IN (SELECT track_id FROM trip_tracks WHERE trip_id = $2))`,
 		userID, trip,
 	).Scan(&earliest)
 	return earliest, err
@@ -359,7 +359,7 @@ const trackStatsAggregateQuery = `
 SELECT COUNT(*),
        COALESCE(SUM(distance_meters), 0),
        COUNT(DISTINCT ` + localStartedAt + `::date)
-FROM activities
+FROM tracks
 WHERE user_id = $1
   AND ($2::date IS NULL OR ` + localStartedAt + ` >= $2::date)
   AND ($3::date IS NULL OR ` + localStartedAt + ` < $3::date)`
@@ -372,7 +372,7 @@ WHERE user_id = $1
 const trackLongestStreakQuery = `
 WITH days AS (
   SELECT DISTINCT ` + localStartedAt + `::date AS day
-  FROM activities
+  FROM tracks
   WHERE user_id = $1
     AND ($2::date IS NULL OR ` + localStartedAt + ` >= $2::date)
     AND ($3::date IS NULL OR ` + localStartedAt + ` < $3::date)
@@ -488,7 +488,7 @@ WITH sums AS (
          COALESCE(SUM(distance_meters), 0) AS distance,
          COALESCE(SUM(COALESCE(moving_seconds, duration_seconds)), 0) AS moving,
          COALESCE(SUM(elevation_gain_m), 0) AS gain
-  FROM activities
+  FROM tracks
   WHERE user_id = $2
     AND ` + localStartedAt + ` >= $3::date
     AND ` + localStartedAt + ` < $4::date
