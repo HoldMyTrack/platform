@@ -5,6 +5,7 @@ package httpapi
 import (
 	"context"
 	"net/http"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -164,5 +165,19 @@ func TestSettingsShowsTheAccountsLimits(t *testing.T) {
 	demo := d.newAccount(true)
 	if strings.Contains(getPage(d.srv, "/settings", demo.session, "").Body.String(), `id="account-limits"`) {
 		t.Error("/settings for the demo: the limits shown")
+	}
+}
+
+// A zone saved under the name it had before a rename is the one Settings selects, under its
+// current name; none selected would leave the list's first zone to be saved over it.
+func TestSettingsSelectsARenamedSavedTimezone(t *testing.T) {
+	d := newDBTest(t)
+	me := d.newAccount(false)
+	if _, err := d.pool.Exec(context.Background(), `UPDATE users SET timezone = 'Europe/Kiev' WHERE id = $1`, me.id); err != nil {
+		t.Fatal(err)
+	}
+	body := getPage(d.srv, "/settings", me.session, "").Body.String()
+	if !regexp.MustCompile(`<option value="Europe/Kyiv"[^>]*\bselected\b`).MatchString(body) {
+		t.Error("/settings: Europe/Kyiv not selected for an account saved as Europe/Kiev")
 	}
 }

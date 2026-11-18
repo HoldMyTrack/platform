@@ -91,8 +91,11 @@ func (s *Server) renderSettings(w http.ResponseWriter, r *http.Request, status i
 	l := i18n.Get(lang)
 	form.Countries = web.CountriesIn(lang)
 	now := time.Now()
+	// Under its current name, as the list has it: a zone saved as Europe/Kiev selects Europe/Kyiv,
+	// where none matching would select the list's first zone and the next save would store that.
+	form.Timezone = web.CurrentTimezoneName(form.Timezone)
 	form.Timezones = web.TimezoneGroups(now, form.Timezone)
-	form.LocalTime = web.LocalTime(l, now, web.CurrentTimezoneName(form.Timezone))
+	form.LocalTime = web.LocalTime(l, now, form.Timezone)
 	if form.NoticeKey != "" {
 		form.Notice = l.T(form.NoticeKey)
 	}
