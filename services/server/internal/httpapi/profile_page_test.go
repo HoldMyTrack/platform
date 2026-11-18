@@ -48,10 +48,10 @@ func TestBuildYearGrid(t *testing.T) {
 			t.Errorf("cell %d should pad before Jan 1", i)
 		}
 	}
-	if c := g.Cells[4]; c.Pad || c.Level != 2 || c.Title != "2026-01-01: 2 activities, 5.0 km" {
+	if c := g.Cells[4]; c.Pad || c.Level != 2 || c.Title != "2026-01-01: 2 tracks, 5.0 km" {
 		t.Errorf("Jan 1: %+v", c)
 	}
-	if c := g.Cells[5]; c.Level != 0 || c.Title != "2026-01-02: no activity" || !c.Today {
+	if c := g.Cells[5]; c.Level != 0 || c.Title != "2026-01-02: no track" || !c.Today {
 		t.Errorf("Jan 2: %+v", c)
 	}
 	for i, c := range g.Cells {
@@ -62,7 +62,7 @@ func TestBuildYearGrid(t *testing.T) {
 	if len(g.Months) != 12 || g.Months[0] != (monthTick{"JAN", 1}) {
 		t.Errorf("months: %v", g.Months)
 	}
-	if !strings.HasPrefix(g.Stats, "3 activities · 5.1 km · 2 active days · longest streak 1 day") {
+	if !strings.HasPrefix(g.Stats, "3 tracks · 5.1 km · 2 active days · longest streak 1 day") {
 		t.Errorf("stats line %q", g.Stats)
 	}
 }
@@ -107,7 +107,7 @@ func TestTrendBars(t *testing.T) {
 	if bars[0].HeightPercent != 100 || bars[1].HeightPercent != 0 {
 		t.Errorf("heights %v, %v", bars[0].HeightPercent, bars[1].HeightPercent)
 	}
-	if bars[0].Title != "Sep 7: 6.2 mi · 3 activities · 2 h moving · 394 ft gain" {
+	if bars[0].Title != "Sep 7: 6.2 mi · 3 tracks · 2 h moving · 394 ft gain" {
 		t.Errorf("title %q", bars[0].Title)
 	}
 }
@@ -115,17 +115,17 @@ func TestTrendBars(t *testing.T) {
 func TestProfileInRussian(t *testing.T) {
 	ru := i18n.Get("ru")
 	g := buildYearGrid(ru, 2026, []histogramBucket{day("2026-01-01", 2, 5000), day("2026-01-02", 5, 1234567)}, "count", false, "")
-	if c := g.Cells[4]; c.Title != "2026-01-01: 2 путешествия, 5,0 км" {
+	if c := g.Cells[4]; c.Title != "2026-01-01: 2 трека, 5,0 км" {
 		t.Errorf("Jan 1: %q", c.Title)
 	}
-	if c := g.Cells[5]; c.Title != "2026-01-02: 5 путешествий, 1\u00a0234,6 км" {
+	if c := g.Cells[5]; c.Title != "2026-01-02: 5 треков, 1\u00a0234,6 км" {
 		t.Errorf("Jan 2: %q", c.Title)
 	}
 	if g.Months[0].Label != "ЯНВ." {
 		t.Errorf("month label %q", g.Months[0].Label)
 	}
 	bars := buildTrendBars(ru, []trendPeriod{{PeriodStart: "2026-09-07", Count: 1, DistanceMeters: 10000, MovingSeconds: 7200, ElevationGainM: 120}}, false)
-	if bars[0].Title != "7 сент.: 10 км · 1 путешествие · 2 ч в движении · набор 120 м" {
+	if bars[0].Title != "7 сент.: 10 км · 1 трек · 2 ч в движении · набор 120 м" {
 		t.Errorf("title %q", bars[0].Title)
 	}
 }

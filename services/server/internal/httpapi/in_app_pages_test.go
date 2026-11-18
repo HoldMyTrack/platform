@@ -95,7 +95,7 @@ func TestInAppAccountPages(t *testing.T) {
 	web := getPage(d.srv, "/settings", me.session, "").Body.String()
 	app := getPage(d.srv, "/settings", me.session, "android").Body.String()
 	for _, page := range []string{web, app} {
-		if !strings.Contains(page, `id="account-limits"`) || !strings.Contains(page, "0 of 50,000 activities") {
+		if !strings.Contains(page, `id="account-limits"`) || !strings.Contains(page, "0 of 50,000 tracks") {
 			t.Error("/settings: the account's limits missing")
 		}
 	}

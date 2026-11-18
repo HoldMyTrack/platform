@@ -36,20 +36,20 @@ func TestValues(t *testing.T) {
 		{"private", []Activity{private}, en, false, Card{Lines: []string{"Walking"}}},
 		{"private in totals", []Activity{hike(), private}, en, false, Card{
 			Lines:  []string{"Hiking · 13.2 km · 3h 41m · 591 m", "Walking"},
-			Totals: "2 activities · 13 km · 3h 41m · 591 m",
+			Totals: "2 tracks · 13 km · 3h 41m · 591 m",
 		}},
 		{"five", six[:5], en, false, Card{
 			Lines:  []string{"Hiking · 13.2 km · 3h 41m · 591 m", "Cycling · 39.4 km · 2h 5m · 341 m", "Walking · 1.8 km · 27m", "Hiking · 13.2 km · 3h 41m · 591 m", "Cycling · 39.4 km · 2h 5m · 341 m"},
-			Totals: "5 activities · 107 km · 11h 59m · 1,864 m",
+			Totals: "5 tracks · 107 km · 11h 59m · 1,864 m",
 		}},
 		{"six", six, en, false, Card{
 			Lines:  []string{"Hiking · 13.2 km · 3h 41m · 591 m", "Cycling · 39.4 km · 2h 5m · 341 m", "Walking · 1.8 km · 27m", "Hiking · 13.2 km · 3h 41m · 591 m", "Cycling · 39.4 km · 2h 5m · 341 m"},
 			More:   "+ 1 more",
-			Totals: "6 activities · 109 km · 12h 26m · 1,864 m",
+			Totals: "6 tracks · 109 km · 12h 26m · 1,864 m",
 		}},
 		{"russian", []Activity{hike(), flat}, ru, false, Card{
 			Lines:  []string{"Поход · 13,2 км · 3 ч 41 мин · 591 м", "Ходьба · 1,8 км · 27 мин"},
-			Totals: "2 путешествия · 15 км · 4 ч 8 мин · 591 м",
+			Totals: "2 трека · 15 км · 4 ч 8 мин · 591 м",
 		}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

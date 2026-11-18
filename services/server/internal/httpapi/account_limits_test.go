@@ -38,7 +38,7 @@ func TestFitWithinLimits(t *testing.T) {
 
 func TestLimitMessage(t *testing.T) {
 	l := i18n.Get("en")
-	if got := limitMessage(l, limitActivities); !strings.Contains(got, "50,000 activities") {
+	if got := limitMessage(l, limitActivities); !strings.Contains(got, "50,000 tracks") {
 		t.Errorf("activity limit message %q", got)
 	}
 	if got := limitMessage(l, limitStorage); !strings.Contains(got, "5 GB") {
@@ -68,7 +68,7 @@ func TestUploadRefusedAtTheActivityLimit(t *testing.T) {
 		t.Fatal(err)
 	}
 	rec := d.uploadRaw(me, "day.gpx", []byte(splitGPX))
-	if rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "50,000 activities") {
+	if rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "50,000 tracks") {
 		t.Fatalf("upload at the limit: %d %q, want 409 naming the limit", rec.Code, rec.Body.String())
 	}
 	var queued int
@@ -124,7 +124,7 @@ func TestSyncRejectsWhatDoesntFit(t *testing.T) {
 			t.Errorf("result %d: %s, want %s", i, resp.Results[i].Status, want)
 		}
 	}
-	if !strings.Contains(resp.Results[2].Error, "50,000 activities") {
+	if !strings.Contains(resp.Results[2].Error, "50,000 tracks") {
 		t.Errorf("rejection %q, want the limit's message", resp.Results[2].Error)
 	}
 }
