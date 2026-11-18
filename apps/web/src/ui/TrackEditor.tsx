@@ -2,8 +2,17 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { getActivityTrackPoints, type Activity, type TrackEdit, type TrackPoint } from '../api.ts';
 import { beneathBasemapLabels } from '../map/applyLayers.ts';
-import { clearTrackEdit, ensureTrackEditLayer, onTrackEditPointClick, onTrackEditPointDrag, setTrackEditData, type EditPreview } from '../map/trackEdit.ts';
-import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps.ts';
+import {
+  clearTrackDragAfterRedraw,
+  clearTrackEdit,
+  ensureTrackEditLayer,
+  onTrackEditPointClick,
+  onTrackEditPointDrag,
+  setTrackDragData,
+  setTrackEditData,
+  type EditPreview,
+} from '../map/trackEdit.ts';
+import { applyEdit, chopOp, cumulativeDistances, cutOp, dragPreview, foldEdit, isEmptyEdit, moveOp, splitIndex, splitPoint, type EditOp } from './editTrackOps.ts';
 import { distanceValue, formatClockTime, unitLabel } from './format.ts';
 import { useUnitSystem } from './units.ts';
 import { t, tn } from '../i18n/index.ts';
@@ -147,22 +156,23 @@ export function TrackEditor({ map, activity, active, busy, onChange }: TrackEdit
 
   // Draw, and redraw after a theme swap discards custom layers (styledata) — this overlay is
   // owned here, not by useMapLayers' reattach, since it only exists during a session.
-  // A point being dragged is drawn where the pointer is, its line segments following it.
-  const shown = useMemo(
-    () => (dragging ? visible.map((p): TrackPoint => (p[2] === dragging.t ? [dragging.lon, dragging.lat, p[2]] : p)) : visible),
-    [visible, dragging],
-  );
   useEffect(() => {
     const draw = () => {
       ensureTrackEditLayer(map, beneathBasemapLabels(map));
-      if (shown.length > 0) setTrackEditData(map, shown, lo, hi, preview, splitShown !== null && splitShown >= 0 ? splitShown : null);
+      if (visible.length > 0) setTrackEditData(map, visible, lo, hi, preview, splitShown !== null && splitShown >= 0 ? splitShown : null);
     };
     draw();
     map.on('styledata', draw);
     return () => {
       map.off('styledata', draw);
     };
-  }, [map, shown, lo, hi, preview, splitShown]);
+  }, [map, visible, lo, hi, preview, splitShown]);
+  // A point being dragged is drawn where the pointer is, with the line to its neighbours, from
+  // the drag's own small source: the whole track is redrawn once, when it's let go.
+  useEffect(() => {
+    if (!dragging) return clearTrackDragAfterRedraw(map);
+    setTrackDragData(map, dragPreview(visible, dragging.t, dragging.lon, dragging.lat), [dragging.lon, dragging.lat]);
+  }, [map, visible, dragging]);
   useEffect(() => () => clearTrackEdit(map), [map]);
 
   // Delete point mode: a click on a point drops it. Never below two points — a track needs
