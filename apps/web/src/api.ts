@@ -35,11 +35,15 @@ type ResponseJson<P extends keyof paths, M extends 'get' | 'post' | 'patch' | 'd
       : never
     : never;
 
+/** `T` with each optional field also taking undefined, which JSON.stringify leaves out: so a
+ *  body can pass a value that may be missing without spelling out its absence. */
+type Sendable<T> = { [K in keyof T]: T[K] | (undefined extends T[K] ? undefined : never) };
+
 /** The JSON body a `/v1` operation takes, as the contract states it. */
 type RequestJson<P extends keyof paths, M extends 'post' | 'patch' | 'delete'> =
   NonNullable<paths[P][M]> extends { requestBody?: infer R }
     ? NonNullable<R> extends { content: { 'application/json': infer B } }
-      ? B
+      ? Sendable<B>
       : never
     : never;
 
@@ -423,21 +427,18 @@ export interface ActivityTrackMetrics {
   bands: PaceBand[];
 }
 
-/** `POST /v1/activities/stats-card`'s body (IMPLEMENTATION.md §4.3.3). */
-type StatsCardBody = paths['/activities/stats-card']['post']['requestBody']['content']['application/json'];
-
 /** `POST /v1/activities/stats-card`: the export's stats card as a PNG, or null when every activity
  *  asked for is Pending. */
 export async function getStatsCard(
   request: { activityIds: string[]; width: number; height: number; theme: 'light' | 'dark' },
   signal?: AbortSignal,
 ): Promise<Blob | null> {
-  const body: StatsCardBody = { activity_ids: request.activityIds, width: request.width, height: request.height, theme: request.theme };
   const res = await apiFetch(`/activities/stats-card`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     ...(signal ? { signal } : {}),
-    body: JSON.stringify(body),
+    // IMPLEMENTATION.md §4.3.3.
+    body: jsonBody<'/activities/stats-card', 'post'>({ activity_ids: request.activityIds, width: request.width, height: request.height, theme: request.theme }),
   });
   if (res.status === 204) return null;
   if (!res.ok) {
@@ -939,13 +940,7 @@ export async function checkPhotoPlace(activityId: string, exif: PhotoExifFields)
   const res = await apiFetch(`/photos/place`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/photos/place', 'post'>({
-      activity_id: activityId,
-      ...(exif.takenAt !== undefined && { taken_at: exif.takenAt }),
-      ...(exif.takenLocal !== undefined && { taken_local: exif.takenLocal }),
-      ...(exif.lat !== undefined && { lat: exif.lat }),
-      ...(exif.lon !== undefined && { lon: exif.lon }),
-    }),
+    body: jsonBody<'/photos/place', 'post'>({ activity_id: activityId, taken_at: exif.takenAt, taken_local: exif.takenLocal, lat: exif.lat, lon: exif.lon }),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => '');
@@ -994,10 +989,7 @@ export async function updatePhoto(id: string, change: { caption?: string | undef
   const res = await apiFetch(`/photos/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: jsonBody<'/photos/{id}', 'patch'>({
-      ...(change.caption !== undefined && { caption: change.caption }),
-      ...(change.routeAt !== undefined && { route_at: change.routeAt }),
-    }),
+    body: jsonBody<'/photos/{id}', 'patch'>({ caption: change.caption, route_at: change.routeAt }),
   });
   if (!res.ok) {
     throw new Error(await errorMessageFromResponse(res, t('common.request_failed', { status: res.status })));
