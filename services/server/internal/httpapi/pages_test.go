@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"regexp"
 	"strings"
 	"testing"
 
@@ -554,5 +555,35 @@ func TestSignedOutHome(t *testing.T) {
 	s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/signin", nil))
 	if strings.Contains(rec.Body.String(), `content="noindex"`) {
 		t.Errorf("/signin isn't indexable")
+	}
+}
+
+// Pages load their typefaces from the site itself: a page view tells no font CDN the visitor's
+// address (docs/DPIA.md §2), and every face fonts.css names is a file /static/ serves.
+func TestPagesLoadTheirOwnFonts(t *testing.T) {
+	s := newPagesTestServer(t)
+	for _, path := range []string{"/about", "/privacy", "/signin"} {
+		rec := httptest.NewRecorder()
+		s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, path, nil))
+		body := rec.Body.String()
+		if strings.Contains(body, "fonts.googleapis.com") || strings.Contains(body, "fonts.gstatic.com") {
+			t.Errorf("%s: still loads Google Fonts", path)
+		}
+		if !strings.Contains(body, "/static/fonts.css?v=") {
+			t.Errorf("%s: no fonts.css", path)
+		}
+	}
+	rec := httptest.NewRecorder()
+	s.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/static/fonts.css", nil))
+	files := regexp.MustCompile(`url\((fonts/[^)]+)\)`).FindAllStringSubmatch(rec.Body.String(), -1)
+	if len(files) == 0 {
+		t.Fatal("fonts.css names no font files")
+	}
+	for _, f := range files {
+		file := httptest.NewRecorder()
+		s.ServeHTTP(file, httptest.NewRequest(http.MethodGet, "/static/"+f[1], nil))
+		if file.Code != http.StatusOK {
+			t.Errorf("/static/%s: %d", f[1], file.Code)
+		}
 	}
 }

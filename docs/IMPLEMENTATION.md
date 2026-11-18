@@ -612,7 +612,7 @@ Android builds that still offer a Heatmap mode get `/tiles/v1/heat-points/` as a
 
 ### 4.34 Design tokens
 
-`tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded first by the page layout and the map shell alike; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there. The iOS app's are written from these files and Android's by `apps/ios/scripts/make-design.py`, which CI runs with `--check`.
+`tokens.css` is the one source of the palette and the spacing, radius, type and elevation scales, loaded by the page layout and the map shell alike right after `fonts.css`, the self-hosted typefaces; every colour has a light and a dark value. The Android theme carries the same palette, fonts, scales and Lucide icon set (`apps/android/docs/IMPLEMENTATION.md` §6), so a change to either needs the matching change there. The iOS app's are written from these files and Android's by `apps/ios/scripts/make-design.py`, which CI runs with `--check`.
 
 ## 5. Engineering Risks & Mitigations
 
