@@ -15,7 +15,7 @@ data class TimedPoint(val lon: Double, val lat: Double, val t: Long)
  * points with their moments (`GET /v1/activities/{id}/track-metrics`'s `time_s`), measured along
  * their length. The slider runs by distance, not time, so a long stop doesn't take up half its
  * travel; a photo's place is still kept as a moment (`route_at`), which is what the server stores.
- * The web's `photoTrack.ts`; both run `testdata/client-rules/photo-route-*.json`.
+ * The web's `photoRoute.ts`; both run `testdata/client-rules/photo-route-*.json`.
  */
 class PhotoTrack(val points: List<TimedPoint>) {
 

@@ -1,6 +1,6 @@
 import { useEffect, type Dispatch } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
-import { datesQuery } from './activityQuery.ts';
+import { datesQuery } from './trackQuery.ts';
 import { flyToBBox, unionBBox } from './bbox.ts';
 import { viewArea } from './useAreaList.ts';
 import { listArea, type BBox } from '../api.ts';
@@ -18,10 +18,10 @@ let flights = 0;
  * FR-5.12): asked for without an area, since the area holds only what's in view. The list then
  * follows the camera's new view. Nothing matched leaves the camera.
  */
-export function useDatesFlight(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, state: { flyRequest: boolean; storyId: string | null; dates: DateFilter }): void {
-  const { flyRequest, storyId, dates } = state;
+export function useDatesFlight(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, state: { flyRequest: boolean; tripId: string | null; dates: DateFilter }): void {
+  const { flyRequest, tripId, dates } = state;
   useEffect(() => {
-    if (!map || !flyRequest || storyId !== null) return;
+    if (!map || !flyRequest || tripId !== null) return;
     const controller = new AbortController();
     let flight = 0;
     const onMoveEnd = (event: object) => {
@@ -30,8 +30,8 @@ export function useDatesFlight(map: MapLibreMap | null, dispatch: Dispatch<MapSe
       if (flight === flights) dispatch({ type: 'areaLoaded', area: viewArea(map) });
     };
     listArea(datesQuery(dates), controller.signal)
-      .then(({ activities }) => {
-        const bounds = unionBBox(activities.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : [])));
+      .then(({ tracks }) => {
+        const bounds = unionBBox(tracks.flatMap((a): BBox[] => (a.bbox !== null && !a.pending ? [a.bbox] : [])));
         if (!bounds) return;
         flight = ++flights;
         map.on('moveend', onMoveEnd);
@@ -45,5 +45,5 @@ export function useDatesFlight(map: MapLibreMap | null, dispatch: Dispatch<MapSe
         if (!controller.signal.aborted) dispatch({ type: 'flyConsumed' });
       });
     return () => controller.abort();
-  }, [map, flyRequest, storyId, dates, dispatch]);
+  }, [map, flyRequest, tripId, dates, dispatch]);
 }

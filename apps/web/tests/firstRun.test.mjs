@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { importsInFlight, showsFirstRun } from '../src/ui/firstRun.ts';
 
-test('the first-run panel shows only for a real account known to have no activities', () => {
+test('the first-run panel shows only for a real account known to have no tracks', () => {
   assert.equal(showsFirstRun(false, false), true);
   assert.equal(showsFirstRun(false, true), false);
   assert.equal(showsFirstRun(false, null), false, 'not before the first page of days lands');

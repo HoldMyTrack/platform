@@ -296,7 +296,7 @@
                 tools:text="1 selected · 10 km" />
         </LinearLayout>
 
-        <!-- The Stories tab (apps/web/src/ui/StoriesTab.tsx): every Story as a folder, the open
+        <!-- The Stories tab (apps/web/src/ui/TripsTab.tsx): every Story as a folder, the open
              one's description and rows under it, then the open Story's statistics as the
              footer (.stories-tab__stats). Filled by panel/StoriesTab. -->
         <LinearLayout

@@ -67,14 +67,14 @@ interface SearchPickerProps {
 /**
  * A searchable combobox (trigger button + popover with a search input over a listbox), in
  * place of a native `<select>`, which can't show a right-aligned detail and offers no
- * type-to-filter beyond first-letter jumping. The Edit activity dialog's Type field uses it;
+ * type-to-filter beyond first-letter jumping. The Edit route dialog's Type field uses it;
  * the server-rendered Settings page's Country and Timezone use its plain-script port
  * (services/server/internal/web/static/search-picker.js — keep the two in step), and both
  * are styled by that directory's search-picker.css. Follows the WAI-ARIA combobox pattern: focus stays in
  * the search input while ↑/↓ move the active option (`aria-activedescendant`), Enter picks
  * it, Escape closes and returns focus to the trigger. Dismisses on an outside `pointerdown`,
- * like the Activities panel's Type dropdown. ActivityTypePicker.tsx builds the option list,
- * open-ended (`createOption`), since activity types are free-form text rather than a fixed
+ * like the Tracks panel's Type dropdown. TrackTypePicker.tsx builds the option list,
+ * open-ended (`createOption`), since track types are free-form text rather than a fixed
  * vocabulary.
  */
 export function SearchPicker({

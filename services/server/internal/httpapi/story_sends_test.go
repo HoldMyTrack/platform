@@ -50,7 +50,7 @@ func TestSendAStoryCopy(t *testing.T) {
 	}
 	mails := d.srv.mailer.(*sentMail)
 	if len(mails.to) != 2 || mails.to[0] != d.address(you) || mails.subjects[0] != "Dad sent you a copy of “Alps”" ||
-		!strings.Contains(mails.bodies[0], "(1 track)") || !strings.Contains(mails.bodies[0], "https://app.example/?tab=stories") {
+		!strings.Contains(mails.bodies[0], "(1 track)") || !strings.Contains(mails.bodies[0], "https://app.example/?tab=trips") {
 		t.Errorf("emails %q / %q / %q, want one per send to the recipient", mails.to, mails.subjects, mails.bodies)
 	}
 	if mine := d.inbox(me); len(mine) != 0 {

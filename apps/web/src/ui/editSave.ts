@@ -1,40 +1,40 @@
-import type { ActivityDetail } from '../api.ts';
+import type { TrackDetail } from '../api.ts';
 import type { MessageKey } from '../i18n/en.ts';
-import { MAX_ACTIVITY_DESCRIPTION_LEN, MAX_ACTIVITY_NAME_LEN, MAX_ACTIVITY_TYPE_LEN, MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
+import { MAX_TRACK_DESCRIPTION_LEN, MAX_TRACK_NAME_LEN, MAX_TRACK_TYPE_LEN, MAX_PHOTO_CAPTION_LEN } from '../limits.ts';
 import { waitingPhotos, type PhotoDraft } from './photoDraft.ts';
 
-/** What `updateActivity` writes — the PATCH endpoint is a full replace of all three. */
-export interface ActivityFields {
+/** What `updateTrack` writes — the PATCH endpoint is a full replace of all three. */
+export interface TrackFields {
   activityType: string;
   name: string;
   description: string;
 }
 
 /**
- * The field writes Save has to make: one per activity whose fields, as the form now has them,
+ * The field writes Save has to make: one per track whose fields, as the form now has them,
  * differ from what the server holds — what an earlier Save in this window wrote (`written`),
- * else what the window opened with. One activity takes all three fields from the form. A group
- * takes only the type, and keeps each activity's own name and description: the endpoint
+ * else what the window opened with. One track takes all three fields from the form. A group
+ * takes only the type, and keeps each track's own name and description: the endpoint
  * replaces all three, so a group edit still sends them unchanged. An empty type on a group
- * ("Mixed types") keeps each activity's own type too.
+ * ("Mixed types") keeps each track's own type too.
  */
 export function fieldWrites(
-  activities: readonly Pick<ActivityDetail, 'id' | 'activityType' | 'name' | 'description'>[],
+  tracks: readonly Pick<TrackDetail, 'id' | 'activityType' | 'name' | 'description'>[],
   single: boolean,
   type: string,
   name: string,
   description: string,
-  written: ReadonlyMap<string, ActivityFields>,
-): { id: string; fields: ActivityFields }[] {
-  return activities.flatMap((activity) => {
-    const held = written.get(activity.id) ?? {
-      activityType: activity.activityType,
-      name: activity.name ?? '',
-      description: activity.description ?? '',
+  written: ReadonlyMap<string, TrackFields>,
+): { id: string; fields: TrackFields }[] {
+  return tracks.flatMap((track) => {
+    const held = written.get(track.id) ?? {
+      activityType: track.activityType,
+      name: track.name ?? '',
+      description: track.description ?? '',
     };
     const fields = single ? { activityType: type, name, description } : { ...held, activityType: type || held.activityType };
     const same = fields.activityType === held.activityType && fields.name === held.name && fields.description === held.description;
-    return same ? [] : [{ id: activity.id, fields }];
+    return same ? [] : [{ id: track.id, fields }];
   });
 }
 
@@ -42,11 +42,11 @@ export function fieldWrites(
 interface SaveProblem {
   key: MessageKey;
   vars?: { max: number };
-  tab: 'activity' | 'photos';
+  tab: 'track' | 'photos';
 }
 
 /**
- * The first reason Save refuses, before anything is written, or null: the Activity tab's fields
+ * The first reason Save refuses, before anything is written, or null: the Route tab's fields
  * first (a type, unless a group keeps its mixed types, and every field within the server's
  * limit), then the Photos tab's draft (every new photo placed, every caption within its limit).
  * Lengths are of the trimmed text, as the server counts them, except the description's, which
@@ -60,11 +60,11 @@ export function saveProblem(form: {
   photoDraft: PhotoDraft;
 }): SaveProblem | null {
   const type = form.activityType.trim();
-  if (!type && !form.mixedTypes) return { key: 'edit.type_required', tab: 'activity' };
-  if (type.length > MAX_ACTIVITY_TYPE_LEN) return { key: 'edit.type_too_long', vars: { max: MAX_ACTIVITY_TYPE_LEN }, tab: 'activity' };
-  if (form.name.trim().length > MAX_ACTIVITY_NAME_LEN) return { key: 'edit.name_too_long', vars: { max: MAX_ACTIVITY_NAME_LEN }, tab: 'activity' };
-  if (form.description.length > MAX_ACTIVITY_DESCRIPTION_LEN) {
-    return { key: 'edit.description_too_long', vars: { max: MAX_ACTIVITY_DESCRIPTION_LEN }, tab: 'activity' };
+  if (!type && !form.mixedTypes) return { key: 'edit.type_required', tab: 'track' };
+  if (type.length > MAX_TRACK_TYPE_LEN) return { key: 'edit.type_too_long', vars: { max: MAX_TRACK_TYPE_LEN }, tab: 'track' };
+  if (form.name.trim().length > MAX_TRACK_NAME_LEN) return { key: 'edit.name_too_long', vars: { max: MAX_TRACK_NAME_LEN }, tab: 'track' };
+  if (form.description.length > MAX_TRACK_DESCRIPTION_LEN) {
+    return { key: 'edit.description_too_long', vars: { max: MAX_TRACK_DESCRIPTION_LEN }, tab: 'track' };
   }
   const draft = form.photoDraft;
   if (waitingPhotos(draft).length > 0) return { key: 'photos.place_first', tab: 'photos' };

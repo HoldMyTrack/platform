@@ -1,0 +1,153 @@
+import type { RouteEdit, RoutePoint } from '../api.ts';
+import { haversineM } from '../geo.ts';
+
+/**
+ * The Edit route session's history (§4.7.7) — pure functions, no React. Android's
+ * `EditTrackOps.kt` runs the same cases, `testdata/client-rules/edit-route-*.json`.
+ *
+ * A session is the edit the track already had when the editor opened (`base`) plus a stack of
+ * ops committed since. What the map shows is always a replay of the whole stack on top of the
+ * original points, never a mutated copy: Undo pops one op, Cancel drops the stack, and Apply
+ * folds it into the one `RouteEdit` the server stores. Every op addresses points by timestamp,
+ * the same way the server's spec does, so the fold is just collecting them.
+ */
+export type EditOp =
+  /** Keep only the points from one timestamp to another (inclusive) — the Chop button. */
+  | { kind: 'chop'; keep: [number, number] }
+  /** Remove the points between two knobs, keeping both knob points — the Cut button. */
+  | { kind: 'cut'; remove: [number, number] }
+  /** Remove one point — a click in Delete point mode. */
+  | { kind: 'drop'; t: number }
+  /** Put one point somewhere else — a drag in Move point mode. */
+  | { kind: 'move'; t: number; to: [number, number] }
+  /** Discard every earlier edit, including the one saved before this session. */
+  | { kind: 'reset' }
+  /** Split the track in two at one point (§4.7.8) — the Split button. Not part of the
+   *  edit: Save sends it beside the folded edit, which then applies to both pieces. */
+  | { kind: 'split'; t: number };
+
+/** Folds `base` and the op stack into one edit. Never returns empty arrays — an unedited
+ *  track folds to `{}`. */
+export function foldEdit(base: RouteEdit | null, ops: readonly EditOp[]): RouteEdit {
+  let keep = base?.keep ? ([...base.keep] as [number, number]) : undefined;
+  let remove = base?.remove ? base.remove.map((r) => [...r] as [number, number]) : [];
+  let drop = base?.drop ? [...base.drop] : [];
+  let move: Record<string, [number, number]> = { ...base?.move };
+  for (const op of ops) {
+    switch (op.kind) {
+      case 'reset':
+        keep = undefined;
+        remove = [];
+        drop = [];
+        move = {};
+        break;
+      case 'chop':
+        keep = keep ? [Math.max(keep[0], op.keep[0]), Math.min(keep[1], op.keep[1])] : op.keep;
+        break;
+      case 'cut':
+        remove.push(op.remove);
+        break;
+      case 'drop':
+        drop.push(op.t);
+        break;
+      case 'move':
+        // A point dragged twice ends where it was dropped last.
+        move[String(op.t)] = op.to;
+        break;
+      case 'split':
+        break;
+    }
+  }
+  return {
+    ...(keep ? { keep } : {}),
+    ...(remove.length > 0 ? { remove } : {}),
+    ...(drop.length > 0 ? { drop } : {}),
+    ...(Object.keys(move).length > 0 ? { move } : {}),
+  };
+}
+
+export function isEmptyEdit(edit: RouteEdit): boolean {
+  return !edit.keep && !edit.remove?.length && !edit.drop?.length && Object.keys(edit.move ?? {}).length === 0;
+}
+
+/** The points that survive `edit`, in order, moved where it moves them — the same as the
+ *  server's `RouteEdit.Apply`, so what the editor shows is exactly what Apply will produce. */
+export function applyEdit(points: readonly RoutePoint[], edit: RouteEdit): RoutePoint[] {
+  if (isEmptyEdit(edit)) return [...points];
+  const drop = new Set(edit.drop ?? []);
+  const remove = edit.remove ?? [];
+  const move = edit.move ?? {};
+  return points
+    .filter(([, , t]) => {
+      if (edit.keep && (t < edit.keep[0] || t > edit.keep[1])) return false;
+      if (drop.has(t)) return false;
+      return !remove.some(([a, b]) => t >= a && t <= b);
+    })
+    .map((p) => {
+      const to = move[String(p[2])];
+      return to ? [to[0], to[1], p[2]] : p;
+    });
+}
+
+/** The op a Move point drag commits: the point at `t` dropped at `lon`/`lat`, rounded to the
+ *  1e-6° (~0.1 m) the server sends points in. */
+export function moveOp(t: number, lon: number, lat: number): EditOp {
+  const round = (v: number) => Math.round(v * 1e6) / 1e6;
+  return { kind: 'move', t, to: [round(lon), round(lat)] };
+}
+
+/** The dragged point, `visible[i]`, moved to `lon`/`lat`, with the line to its neighbours either
+ *  side: what a drag redraws, in place of all of `visible`. Empty for an index not in it. */
+export function dragPreview(visible: readonly RoutePoint[], i: number, lon: number, lat: number): number[][] {
+  if (i < 0 || i >= visible.length) return [];
+  const around = (j: number) => {
+    const p = visible[j];
+    return p ? [[p[0], p[1]]] : [];
+  };
+  return [...around(i - 1), [lon, lat], ...around(i + 1)];
+}
+
+/** The op a Chop press commits for knobs on `visible[lo]` and `visible[hi]`, or null when the
+ *  knobs sit on both ends and there's nothing to chop. */
+export function chopOp(visible: readonly RoutePoint[], lo: number, hi: number): EditOp | null {
+  if (lo <= 0 && hi >= visible.length - 1) return null;
+  if (hi - lo < 1) return null; // a track needs two points to stay a track
+  return { kind: 'chop', keep: [visible[lo]![2], visible[hi]![2]] };
+}
+
+/** The op a Cut press commits: removes every point strictly between the knobs, so the two
+ *  knob points survive and are joined. Null when there's nothing between them. */
+export function cutOp(visible: readonly RoutePoint[], lo: number, hi: number): EditOp | null {
+  if (hi - lo < 2) return null;
+  return { kind: 'cut', remove: [visible[lo + 1]![2], visible[hi - 1]![2]] };
+}
+
+/** The point the session splits the track at, or null — at most one split per session. */
+export function splitPoint(ops: readonly EditOp[]): number | null {
+  const op = ops.find((o) => o.kind === 'split');
+  return op?.kind === 'split' ? op.t : null;
+}
+
+/** The index the Split button would split `visible` at: the one knob moved off its end, as
+ *  long as it leaves two points on each side (the point itself counting on both). Null with
+ *  both knobs at the ends, or both moved — a split is one point, not a range. */
+export function splitIndex(visible: readonly RoutePoint[], lo: number, hi: number): number | null {
+  const last = visible.length - 1;
+  const at = lo > 0 && hi >= last ? lo : lo <= 0 && hi < last ? hi : null;
+  return at !== null && at >= 1 && at <= last - 1 ? at : null;
+}
+
+/** Cumulative walked distance in metres at each point — the slider's readout. */
+export function cumulativeDistances(points: readonly RoutePoint[]): number[] {
+  const out = new Array<number>(points.length);
+  let acc = 0;
+  for (let i = 0; i < points.length; i++) {
+    if (i > 0) acc += pointDistanceM(points[i - 1]!, points[i]!);
+    out[i] = acc;
+  }
+  return out;
+}
+
+function pointDistanceM(a: RoutePoint, b: RoutePoint): number {
+  return haversineM(a[1], a[0], b[1], b[0]);
+}

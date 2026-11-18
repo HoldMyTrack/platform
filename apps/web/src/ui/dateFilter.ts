@@ -23,8 +23,8 @@ export function dateFilterLabel({ after, before }: DateFilter): DateFilterLabel 
   return { kind: 'all' };
 }
 
-/** What the pickers allow: the first activity's day (today without one) to today, the account's,
- *  or the newest activity's day when that's later: one recorded in a zone ahead can be dated
+/** What the pickers allow: the first track's day (today without one) to today, the account's,
+ *  or the newest track's day when that's later: one recorded in a zone ahead can be dated
  *  tomorrow. */
 export function dateFilterBounds(earliest: string | null, latest: string | null, today: string): { min: string; max: string } {
   return { min: earliest !== null && earliest < today ? earliest : today, max: latest !== null && latest > today ? latest : today };

@@ -23,7 +23,7 @@ interface PickMenuProps {
 
 /**
  * A dropdown of picks beside the map-mode toggle, the shell of the Layers and Places menus: the
- * same open/close rules as the Activities panel's Type dropdown, the button toggling it and a
+ * same open/close rules as the Tracks panel's Type dropdown, the button toggling it and a
  * press outside or Escape closing it. The button shows how many are picked, and the checkbox
  * before it shows or hides all of them at once, keeping the picks.
  */

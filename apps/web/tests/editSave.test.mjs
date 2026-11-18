@@ -1,5 +1,5 @@
 // The Edit window's Save (docs/SPEC.md FR-5.5): what it refuses before writing anything, and
-// which activities' fields it writes.
+// which tracks' fields it writes.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { fieldWrites, saveProblem } from '../src/ui/editSave.ts';
@@ -12,14 +12,14 @@ test('a valid form saves', () => {
   assert.equal(saveProblem(form()), null);
 });
 
-test('the Activity tab is checked first, in field order, in characters after trimming', () => {
-  assert.deepEqual(saveProblem(form({ activityType: '  ' })), { key: 'edit.type_required', tab: 'activity' });
+test('the Track tab is checked first, in field order, in characters after trimming', () => {
+  assert.deepEqual(saveProblem(form({ activityType: '  ' })), { key: 'edit.type_required', tab: 'track' });
   assert.equal(saveProblem(form({ activityType: '', mixedTypes: true })), null);
   assert.equal(saveProblem(form({ activityType: 'ж'.repeat(50) })), null);
   assert.equal(saveProblem(form({ activityType: 'ж'.repeat(51) })).key, 'edit.type_too_long');
   assert.equal(saveProblem(form({ name: ` ${'n'.repeat(200)} ` })), null);
   assert.deepEqual(saveProblem(form({ name: 'n'.repeat(201), description: 'd'.repeat(2001) })), {
-    key: 'edit.name_too_long', vars: { max: 200 }, tab: 'activity',
+    key: 'edit.name_too_long', vars: { max: 200 }, tab: 'track',
   });
   assert.equal(saveProblem(form({ description: 'd'.repeat(2001) })).key, 'edit.description_too_long');
 });
@@ -29,14 +29,14 @@ test('then the Photos tab: every new photo placed, every caption within its limi
   assert.equal(saveProblem(form({ photoDraft: { ...EMPTY_DRAFT, added: [photo(10, 'c'.repeat(501))] } })).key, 'photos.caption_too_long');
   assert.equal(saveProblem(form({ photoDraft: { ...EMPTY_DRAFT, changed: { p1: { caption: 'c'.repeat(501) } } } })).key, 'photos.caption_too_long');
   assert.equal(saveProblem(form({ photoDraft: { ...EMPTY_DRAFT, changed: { p1: { routeAt: 5 } } } })), null);
-  // An Activity-tab problem is reported first.
-  assert.equal(saveProblem(form({ activityType: '', photoDraft: { ...EMPTY_DRAFT, added: [photo(null)] } })).tab, 'activity');
+  // A Track-tab problem is reported first.
+  assert.equal(saveProblem(form({ activityType: '', photoDraft: { ...EMPTY_DRAFT, added: [photo(null)] } })).tab, 'track');
 });
 
 const walk = { id: 'a', activityType: 'walking', name: 'Walk', description: null };
 const ride = { id: 'b', activityType: 'cycling', name: null, description: 'Fast' };
 
-test('one activity writes all three fields, only when something changed', () => {
+test('one track writes all three fields, only when something changed', () => {
   assert.deepEqual(fieldWrites([walk], true, 'walking', 'Walk', '', new Map()), []);
   assert.deepEqual(fieldWrites([walk], true, 'hiking', 'Walk', 'Steep', new Map()), [
     { id: 'a', fields: { activityType: 'hiking', name: 'Walk', description: 'Steep' } },

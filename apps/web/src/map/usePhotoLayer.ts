@@ -11,13 +11,13 @@ interface PhotoLayerInputs {
   mode: MapMode;
   editWindowIds: readonly string[] | null;
   focusedId: string | null;
-  storyId: string | null;
-  /** Changes when the photos may have moved under the scope: a reprocess, a Story's members. */
+  tripId: string | null;
+  /** Changes when the photos may have moved under the scope: a reprocess, a Trip's members. */
   version: string;
   /** The Edit window is open: it opens with nothing being moved on the map. */
   editOpen: boolean;
-  /** The Edit window's Track tab has the map, which hides the photos. */
-  trackTabShown: boolean;
+  /** The Edit window's Route tab has the map, which hides the photos. */
+  routeTabShown: boolean;
   mapHiddenIds: ReadonlySet<string>;
 }
 
@@ -36,8 +36,8 @@ interface PhotoLayer {
 /** Photos on the map (FR-15): the scope's photos as markers on their routes, and the popup a
  *  marker's click opens. The popup closes when the scope changes. */
 export function usePhotoLayer(map: MapLibreMap | null, inputs: PhotoLayerInputs): PhotoLayer {
-  const { mode, editWindowIds, focusedId, storyId, version, editOpen, trackTabShown, mapHiddenIds } = inputs;
-  const scope = useMemo(() => photoScopeFor(mode, editWindowIds, focusedId, storyId), [mode, editWindowIds, focusedId, storyId]);
+  const { mode, editWindowIds, focusedId, tripId, version, editOpen, routeTabShown, mapHiddenIds } = inputs;
+  const scope = useMemo(() => photoScopeFor(mode, editWindowIds, focusedId, tripId), [mode, editWindowIds, focusedId, tripId]);
   const photos = usePhotos(scope, version);
   const [openGroup, setOpenGroup] = useState<{ ids: string[]; index: number } | null>(null);
   const openPhotos = useMemo(
@@ -50,8 +50,8 @@ export function usePhotoLayer(map: MapLibreMap | null, inputs: PhotoLayerInputs)
   useEffect(() => setOpenGroup(null), [scopeKey]);
 
   const markers = useMemo<PhotoMarkerItem[]>(
-    () => photoMarkerItems(scope, trackTabShown, mapHiddenIds, photos.photos, overlay, API_BASE_URL),
-    [scope, trackTabShown, mapHiddenIds, photos.photos, overlay],
+    () => photoMarkerItems(scope, routeTabShown, mapHiddenIds, photos.photos, overlay, API_BASE_URL),
+    [scope, routeTabShown, mapHiddenIds, photos.photos, overlay],
   );
   // A marker's click: a spread group zooms to fit, else the popup opens on its first photo.
   const openMarker = useCallback(

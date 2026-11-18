@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Create story and Edit story (panel/StoryDialog.kt), after the web's StoryDialog.tsx: what the
+<!-- Create story and Edit story (panel/StoryDialog.kt), after the web's TripDialog.tsx: what the
      Story is made of (Create only), Name and Description, and the server's reason when a request
      fails. The dialog's own buttons are Cancel and Create story / Save. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

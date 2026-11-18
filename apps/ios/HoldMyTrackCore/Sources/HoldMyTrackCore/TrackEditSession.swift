@@ -152,7 +152,7 @@ public struct TrackEditSession: Equatable, Sendable {
 }
 
 /// What the editor's overlay draws: lines by role (kept, preview, second), every point with
-/// whether it would go, and the knobs, the web's trackEdit.ts and Android's TrackEditOverlay.
+/// whether it would go, and the knobs, the web's routeEdit.ts and Android's TrackEditOverlay.
 public enum TrackEditDrawing {
     public struct Point: Equatable, Sendable {
         public let point: TrackPoint
