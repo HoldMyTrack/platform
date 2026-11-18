@@ -97,7 +97,6 @@ export const en = {
   'activities.panel': 'Activities panel',
   'activities.pending': 'Pending',
   'activities.pending_title': 'Applying your track edit',
-  'activities.resize': 'Resize the activities panel',
   'activities.row_check': 'Check {label}',
   'activities.row_uncheck': 'Uncheck {label}',
   'activities.select_menu': 'Check',

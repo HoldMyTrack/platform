@@ -111,7 +111,6 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'activities.panel': 'Панель путешествий',
   'activities.pending': 'Ожидает',
   'activities.pending_title': 'Применяется ваше изменение маршрута',
-  'activities.resize': 'Изменить ширину панели путешествий',
   'activities.row_check': 'Отметить «{label}»',
   'activities.row_uncheck': 'Снять отметку с «{label}»',
   'activities.select_menu': 'Отметить',
