@@ -67,9 +67,9 @@ object TourSteps {
         }
         return listOf(
             TourStep("welcome", null),
-            TourStep("activities", TourTarget.SHEET, sheet = true),
+            TourStep("tracks", TourTarget.SHEET, sheet = true),
             TourStep("range", TourTarget.RANGE, sheet = true),
-            TourStep("stories", TourTarget.SHEET, tab = MainActivity.Tab.TRIPS, sheet = true, card = TourCard.TRIPS),
+            TourStep("trips", TourTarget.SHEET, tab = MainActivity.Tab.TRIPS, sheet = true, card = TourCard.TRIPS),
             TourStep("layers", TourTarget.LAYERS, layers = true),
             TourStep("places", TourTarget.PLACES, places = true),
             TourStep("export", TourTarget.EXPORT),
@@ -103,7 +103,7 @@ object TourSteps {
     /** A first-time card's text and what it points at. */
     fun card(card: TourCard): Pair<String, TourTarget> = when (card) {
         TourCard.FOG -> "tour_fog" to TourTarget.MODES
-        TourCard.TRIPS -> "tour_stories" to TourTarget.SHEET
+        TourCard.TRIPS -> "tour_trips" to TourTarget.SHEET
     }
 
     enum class Edge { TOP, BOTTOM }

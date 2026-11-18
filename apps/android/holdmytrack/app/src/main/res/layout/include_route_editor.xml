@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Edit window's Route tab (panel/TrackEditor), after the web's TrackEditor.tsx: RANGE with
+<!-- The Edit window's Route tab (panel/RouteEditor), after the web's RouteEditor.tsx: RANGE with
      the knobs' distances and times, a two-knob slider over the track's points — by point, not
      distance, so a stretch of standing still gets room to be picked out — the ends and the
      point count under it, Undo and Reset beside RANGE, and the five tools under it all, in two

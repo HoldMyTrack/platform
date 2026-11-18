@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Tracks sheet (include_activities_sheet): the surface, its top corners rounded so it
+<!-- The Tracks sheet (include_tracks_sheet): the surface, its top corners rounded so it
      reads as a sheet over the map. Its shadow is the view's elevation. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">

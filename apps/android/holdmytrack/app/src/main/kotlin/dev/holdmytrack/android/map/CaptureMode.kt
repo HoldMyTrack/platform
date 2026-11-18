@@ -349,7 +349,7 @@ class CaptureMode(
         }
     }
 
-    @Suppress("DEPRECATION") // track.display needs API 30; the window manager's works on all.
+    @Suppress("DEPRECATION") // activity.display needs API 30; the window manager's works on all.
     private fun screenRotation(): Float = when (activity.windowManager.defaultDisplay.rotation) {
         Surface.ROTATION_90 -> 90f
         Surface.ROTATION_180 -> 180f

@@ -76,7 +76,7 @@ internal class RecordingDbHelper(context: Context) :
         )
     }
 
-    // Version 2 added `account` (see RecordedActivityStore's class doc for why it was
+    // Version 2 added `account` (see RecordedTrackStore's class doc for why it was
     // missing). No real users predate that, so from version 1 a plain drop-and-recreate is the
     // same "no migration tooling needed pre-launch" call the server side already makes.
     // Version 3 changed no columns: a synced row is now deleted rather than kept with a

@@ -13,7 +13,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
 /** The tables [WaitingStore] keeps, a plain `SQLiteOpenHelper` like the recordings'
- *  (`recording/db/RecordedActivityStore`, which says why not Room). */
+ *  (`recording/db/RecordedTrackStore`, which says why not Room). */
 internal class WaitingDbHelper(context: Context) :
     SQLiteOpenHelper(context.applicationContext, "holdmytrack-sync.db", null, 1) {
 
@@ -73,7 +73,7 @@ internal class WaitingDbHelper(context: Context) :
  * route. A row restored from here has no [Candidate.origin]; when it's sent, [SyncRunner] reads
  * its route from Health Connect again ([SyncCandidates.reread]), since a route goes to the server
  * as read, never as drawn. Recordings aren't kept here: they're on the phone already
- * (`recording/db/RecordedActivityStore`).
+ * (`recording/db/RecordedTrackStore`).
  */
 class WaitingStore(context: Context) {
 

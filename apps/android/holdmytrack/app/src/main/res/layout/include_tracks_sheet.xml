@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The map's Tracks sheet (panel/ActivitiesPanel.kt): a bottom sheet the user drags between
+<!-- The map's Tracks sheet (panel/TracksPanel.kt): a bottom sheet the user drags between
      collapsed — its head alone — half the map and nearly all of it (BottomSheetBehavior; the
      expanded top stops under the map's top row). Its head is the date range on the Tracks
      tab — the range as a heading, ‹ › to move it, and the day scrubber under them — or the
@@ -25,7 +25,7 @@
     app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
     <!-- Everything the collapsed sheet shows; its bottom edge is the peek height
-         (ActivitiesPanel). Its bottom padding clears the record button, raised out of the bottom
+         (TracksPanel). Its bottom padding clears the record button, raised out of the bottom
          bar into the sheet's last few dp (activity_main.xml). -->
     <LinearLayout
         android:id="@+id/panel_head"
@@ -271,7 +271,7 @@
 
             <!-- The rows, then a note while empty and loading, when nothing matches, or when the read failed
                  (.activities-panel__note, item_panel_note). A tap on the list's own empty space, or on
-                 the note, clears the selection (ActivitiesPanel.kt). -->
+                 the note, clears the selection (TracksPanel.kt). -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/panel_list"
                 android:layout_width="match_parent"
@@ -296,9 +296,9 @@
                 tools:text="1 selected · 10 km" />
         </LinearLayout>
 
-        <!-- The Trips tab (apps/web/src/ui/StoriesTab.tsx): every Trip as a folder, the open
+        <!-- The Trips tab (apps/web/src/ui/TripsTab.tsx): every Trip as a folder, the open
              one's description and rows under it, then the open Trip's statistics as the
-             footer (.stories-tab__stats). Filled by panel/StoriesTab. -->
+             footer (.trips-tab__stats). Filled by panel/TripsTab. -->
         <LinearLayout
             android:id="@+id/panel_trips_content"
             android:layout_width="match_parent"

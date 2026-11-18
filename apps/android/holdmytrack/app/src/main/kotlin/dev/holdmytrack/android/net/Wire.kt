@@ -165,7 +165,7 @@ internal data class AreaActivitiesJson(
 @Serializable
 internal data class PendingJson(val pending: List<String>)
 
-/** What a client shows for one track type (`panel/ActivityTypes`). */
+/** What a client shows for one track type (`panel/TrackTypes`). */
 @Serializable
 internal data class ActivityTypeJson(val kind: String, val label: String)
 

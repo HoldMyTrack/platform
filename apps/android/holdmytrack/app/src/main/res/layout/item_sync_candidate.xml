@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One row of the Sync tab (panel/SyncTab), after the Tracks rows (item_activity_row): a tile
+<!-- One row of the Sync tab (panel/SyncTab), after the Tracks rows (item_track_row): a tile
      of the track's kind that is also its tick box — ticked, a ✓ on the accent — then its day
      and time (or a recording's name) over "[date ·] distance · type · where it is"; that text is
      the row's tap target: its line picked out on the map and flown to. An ⓘ when something else

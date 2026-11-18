@@ -40,8 +40,10 @@ object TourRules {
         else -> TourStart.NONE
     }
 
-    /** The cards kept as seen, by name; a name this build has no card for is dropped. */
-    fun seenCards(names: Set<String>): Set<TourCard> = names.mapNotNull { name -> TourCard.entries.firstOrNull { it.name == name } }.toSet()
+    /** The cards kept as seen, by name; a name this build has no card for is dropped. STORIES is
+     *  the Trips card's name from before the rename. */
+    fun seenCards(names: Set<String>): Set<TourCard> =
+        names.mapNotNull { name -> TourCard.entries.firstOrNull { it.name == (if (name == "STORIES") "TRIPS" else name) } }.toSet()
 
     /** The card [event] earns, once, and never while the tour runs, whose steps say the same. */
     fun card(event: TourEvent, seen: TourSeen, touring: Boolean): TourCard? {

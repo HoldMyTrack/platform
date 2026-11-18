@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Create trip and Edit trip (panel/StoryDialog.kt), after the web's StoryDialog.tsx: what the
+<!-- Create trip and Edit trip (panel/TripDialog.kt), after the web's TripDialog.tsx: what the
      Trip is made of (Create only), Name and Description, and the server's reason when a request
      fails. The dialog's own buttons are Cancel and Create trip / Save. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

@@ -21,7 +21,7 @@ import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.recording.TypeCount
 
 /**
- * The Edit window, after the web's `apps/web/src/ui/EditActivityWindow.tsx` (`docs/SPEC.md`
+ * The Edit window, after the web's `apps/web/src/ui/EditTrackWindow.tsx` (`docs/SPEC.md`
  * FR-5.5, FR-5.7, FR-15): a card over the top of the map, opened from the Tracks
  * toolbar's Edit over its target, with three tabs behind one Save and Cancel.
  *

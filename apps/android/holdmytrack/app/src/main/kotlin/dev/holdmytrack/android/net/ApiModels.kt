@@ -90,9 +90,9 @@ data class UploadOutcome(val status: String)
  * [timezone], the zone it was recorded in (§4.30; empty from an older server). [name],
  * [description], [distanceMeters] and [movingSeconds] are null when the source never set
  * them; [movingSeconds] is moving time, as Trips sum it, else elapsed; [bbox] (`[minLon, minLat, maxLon, maxLat]`) is null for a track with no drawn
- * track. [pending] is a reprocess still running (a route edit, a Private location change):
- * the tracks tile leaves such a row out until it lands (`docs/SPEC.md` FR-5.8). [isPrivate] is an
- * track entirely inside the account's Private locations (FR-5.1): kept, with no track, so its
+ * route. [pending] is a reprocess still running (a route edit, a Private location change):
+ * the tracks tile leaves such a row out until it lands (`docs/SPEC.md` FR-5.8). [isPrivate] is a
+ * track entirely inside the account's Private locations (FR-5.1): kept, with no route, so its
  * zero distance and duration mean nothing.
  */
 data class Track(
@@ -163,7 +163,7 @@ data class Trip(
 )
 
 /**
- * One vertex of a track's display track, as `GET /v1/activities/{id}/track-metrics`
+ * One vertex of a track's display route, as `GET /v1/activities/{id}/track-metrics`
  * measures it: its speed from the vertex before, and its moment ([timeS], epoch seconds) —
  * what the Photos tab's slider turns a place on the track into (`docs/SPEC.md` FR-15.4).
  */
@@ -212,7 +212,7 @@ data class RoutePoints(val points: List<RoutePoint>, val edit: RouteEdit?)
 /**
  * One photo on a track (`docs/SPEC.md` FR-15.3), always with a place on its track:
  * [routeAt], a moment on it. [lon]/[lat] are that moment's point on the track as drawn, null
- * only for a track with no track left at all. [url] and [thumbUrl] are API paths
+ * only for a track with no route left at all. [url] and [thumbUrl] are API paths
  * (`/v1/photos/…`); [width]/[height] are the stored copy's. [timezone] is its track's, which
  * its times are shown in.
  */
@@ -302,13 +302,13 @@ data class SpotDetail(val spot: Spot, val area: SpotArea, val capturedAt: Instan
 /** One place the account has captured (`GET /v1/spots/captures`, `POST /v1/spots/{id}/captures`). */
 data class SpotCapture(val spotId: Long, val capturedAt: Instant)
 
-/** One day that has track, as `GET /v1/activities/histogram` counts it; [date] is `YYYY-MM-DD`
+/** One day that has tracks, as `GET /v1/activities/histogram` counts it; [date] is `YYYY-MM-DD`
  *  in the account's timezone. Days with none are never returned. */
 data class TrackDay(val date: String, val count: Int, val distanceMeters: Double)
 
 /**
  * A page of [TrackDay]s, ascending, and the account's first track day — how far back
- * paging can go, independent of this page's own bounds; null for an account with no track.
+ * paging can go, independent of this page's own bounds; null for an account with no tracks.
  */
 data class TrackDayPage(val days: List<TrackDay>, val earliest: String?)
 

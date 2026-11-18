@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- One Tracks row, after the web's .activities-panel__row: a tile of the track's kind
-     (panel/ActivityKind), which is also its checkbox — a tap checks it, and a checked one is a ✓
+     (panel/TrackKind), which is also its checkbox — a tap checks it, and a checked one is a ✓
      on the accent — then the text — the name or start time over "[date ·] distance · duration ·
      type" — which is the row's own tap target (select and fly to, or check while selecting; a
      long press checks), and the Pending / Hidden / Trip badges at the end, the Trip badge
-     opening its Trip (panel/ActivityRows.kt). An open Trip's rows on the Trips tab keep the
+     opening its Trip (panel/TrackRows.kt). An open Trip's rows on the Trips tab keep the
      tile plain and end in an × instead. A hairline under it; selected, the accent
      tint and a bar down its left edge (bg_panel_row). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

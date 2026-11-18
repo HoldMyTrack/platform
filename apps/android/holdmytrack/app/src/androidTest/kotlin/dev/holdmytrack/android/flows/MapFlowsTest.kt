@@ -58,7 +58,7 @@ class MapFlowsTest {
     }
 
     @Test
-    fun b_theStoriesTabOpensTheNewestStoryAndBackReturnsToTheRange() {
+    fun b_theTripsTabOpensTheNewestTripAndBackReturnsToTheRange() {
         signIn()
         val members = listOf(account.idsByDay.getValue("2026-10-01"), account.idsByDay.getValue("2026-10-06"))
         account.createTrip(STORY, members)

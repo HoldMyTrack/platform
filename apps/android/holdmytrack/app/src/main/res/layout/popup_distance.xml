@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- DISTANCE's popup, under its chip in the Tracks sheet (panel/ActivitiesPanel): the
+<!-- DISTANCE's popup, under its chip in the Tracks sheet (panel/TracksPanel): the
      two-knob slider between the range's shortest and longest track, those two under its
-     ends. 288dp wide (ActivitiesPanel.showDistanceFilter). -->
+     ends. 288dp wide (TracksPanel.showDistanceFilter). -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"

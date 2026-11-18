@@ -79,9 +79,9 @@ class ViewfinderTest {
 
     @Test
     fun `a preset makes its own size whatever the window's shape`() {
-        val trip = EXPORT_PRESETS.first { it.id == "instagram-story" }
-        assertEquals(1080 to 1920, outputSize(ExportChoice.Preset(trip), 300f, 300f))
-        assertEquals(1080f / 1920f, ExportChoice.Preset(trip).aspect!!, 1e-6f)
+        val story = EXPORT_PRESETS.first { it.id == "instagram-story" }
+        assertEquals(1080 to 1920, outputSize(ExportChoice.Preset(story), 300f, 300f))
+        assertEquals(1080f / 1920f, ExportChoice.Preset(story).aspect!!, 1e-6f)
         assertNull(ExportChoice.Custom(CustomSize.HD).aspect)
     }
 

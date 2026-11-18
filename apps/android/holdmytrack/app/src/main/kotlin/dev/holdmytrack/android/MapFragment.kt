@@ -70,7 +70,7 @@ import org.maplibre.android.maps.Style
  * The map: the served basemap, the session the user layers need, and the Normal / Fog of War
  * toggle floating top-start, as on the web (`apps/web/src/map/MapView.tsx`).
  *
- * In Normal mode the Tracks sheet (`panel/ActivitiesPanel`) lists the visible area's
+ * In Normal mode the Tracks sheet (`panel/TracksPanel`) lists the visible area's
  * tracks under Dates (`docs/SPEC.md` FR-5.11, FR-5.12, [AreaController]). Tapping a track
  * selects it; tapping empty map clears the selection. On the Trips tab one Trip is open, and
  * the tracks and the list are its tracks only ([AreaController.enterTrip]).

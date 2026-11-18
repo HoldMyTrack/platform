@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The Tracks list's note, after its rows (.activities-panel__note): loading, nothing
-     matching the filters, or the read failing (then in the danger color, ActivitiesPanel). -->
+     matching the filters, or the read failing (then in the danger color, TracksPanel). -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

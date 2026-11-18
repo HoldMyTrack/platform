@@ -635,7 +635,7 @@ object HoldMyTrackApi {
         call(Request.Builder().url(url).build(), { body -> decode<PendingJson>(body).pending }, onResult)
     }
 
-    /** `GET /v1/activity-types`: what to show for the catalog's types and [types] (`panel/ActivityTypes`). */
+    /** `GET /v1/activity-types`: what to show for the catalog's types and [types] (`panel/TrackTypes`). */
     fun activityTypes(types: List<String>, onResult: (Result<Map<String, TrackTypes.Info>>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V1 + "/activity-types").toHttpUrl().newBuilder()
             .apply { if (types.isNotEmpty()) addQueryParameter("types", types.joinToString(",")) }

@@ -380,7 +380,7 @@
     <string name="upload_failed_transfer">%1$s: %2$s</string>
     <string name="upload_network_error">Network error</string>
 
-    <!-- The map's Tracks panel (panel/ActivitiesPanel.kt), after the web's tracks.* and filters.* messages. -->
+    <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->
     <string name="panel_label">Tracks panel</string>
     <string name="panel_tab_tracks">Tracks</string>
     <string name="panel_unit_m">m</string>
@@ -446,7 +446,7 @@
         <item quantity="other">%1$d checked tracks</item>
     </plurals>
 
-    <!-- The panel's Edit and Delete (panel/EditActivityWindow.kt), after the web's edit.* and activities.delete_* messages. -->
+    <!-- The panel's Edit and Delete (panel/EditTrackWindow.kt), after the web's edit.* and activities.delete_* messages. -->
     <string name="panel_edit_one">Edit %1$s: type, name, description and route</string>
     <string name="panel_edit_many">Edit type for %1$s</string>
     <string name="panel_delete_target">Delete %1$s</string>
@@ -599,7 +599,7 @@
     <string name="privacy_download_sub">A copy of everything, emailed when it\'s ready</string>
     <string name="privacy_opens_browser">Opens in the browser</string>
 
-    <!-- Trips (panel/StoriesTab.kt, panel/StoryDialog.kt, Add to trip (panel/ActivitiesPanel.kt) and the
+    <!-- Trips (panel/TripsTab.kt, panel/TripDialog.kt, Add to trip (panel/TracksPanel.kt) and the
          rows' Trip badge), after the web's trips.* messages. -->
     <string name="panel_tab_trips">Trips</string>
     <string name="trip_subtext">Hand-picked sets of your tracks. Only you can see them.</string>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The selected track, at the head of the Tracks sheet in the range's place
-     (panel/ActivitiesPanel.renderCard): its kind, name and start, a close button that clears the
+     (panel/TracksPanel.renderCard): its kind, name and start, a close button that clears the
      selection; its distance, moving time and pace or speed; the pace bands' legend while the map
      draws them; and its actions — the toolbar's, over it. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

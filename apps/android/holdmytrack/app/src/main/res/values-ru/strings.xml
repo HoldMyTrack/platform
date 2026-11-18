@@ -392,7 +392,7 @@
     <string name="upload_failed_transfer">%1$s: %2$s</string>
     <string name="upload_network_error">Ошибка сети</string>
 
-    <!-- The map's Tracks panel (panel/ActivitiesPanel.kt), after the web's tracks.* and filters.* messages. -->
+    <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->
     <string name="panel_label">Панель треков</string>
     <string name="panel_tab_tracks">Треки</string>
     <string name="panel_unit_m">м</string>
@@ -460,7 +460,7 @@
         <item quantity="other">%1$d отмеченного трека</item>
     </plurals>
 
-    <!-- The panel's Edit and Delete (panel/EditActivityWindow.kt), after the web's edit.* and activities.delete_* messages. -->
+    <!-- The panel's Edit and Delete (panel/EditTrackWindow.kt), after the web's edit.* and activities.delete_* messages. -->
     <string name="panel_edit_one">Изменить тип, название, описание и маршрут: %1$s</string>
     <string name="panel_edit_many">Изменить тип: %1$s</string>
     <string name="panel_delete_target">Удалить: %1$s</string>
@@ -623,7 +623,7 @@
     <string name="privacy_download_sub">Копия всего, письмо придёт, когда она будет готова</string>
     <string name="privacy_opens_browser">Откроется в браузере</string>
 
-    <!-- Trips (panel/StoriesTab.kt, panel/StoryDialog.kt, Add to trip (panel/ActivitiesPanel.kt) and the
+    <!-- Trips (panel/TripsTab.kt, panel/TripDialog.kt, Add to trip (panel/TracksPanel.kt) and the
          rows' Trip badge), after the web's trips.* messages. -->
     <string name="panel_tab_trips">Путешествия</string>
     <string name="trip_subtext">Подборки ваших треков. Видны только вам.</string>

@@ -40,7 +40,7 @@ import kotlin.math.abs
 enum class PanelTab { TRACKS, TRIPS, SYNC }
 
 /**
- * The map's Tracks sheet (`apps/web/src/ui/ActivitiesPanel.tsx`, redrawn for a phone): a
+ * The map's Tracks sheet (`apps/web/src/ui/TracksPanel.tsx`, redrawn for a phone): a
  * bottom sheet dragged between collapsed — its head alone — half the map and nearly all of it
  * (`BottomSheetBehavior`), a tap on its handle opening it halfway or closing it. On the
  * Tracks tab its head is the listed tracks' totals ([render]), the visible area's under
@@ -751,7 +751,7 @@ class TracksPanel(
         }
     }
 
-    /** The selected track's card (`include_activity_card`), at the head while [showsCard]. */
+    /** The selected track's card (`include_track_card`), at the head while [showsCard]. */
     private fun renderCard() {
         val track = state.focused?.let { id -> state.tracks.firstOrNull { it.id == id } }
         val shown = showsCard && track != null

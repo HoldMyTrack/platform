@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- After the web's edit window (EditActivityWindow.tsx, .edit-window): its 10dp gap between
+<!-- After the web's edit window (EditTrackWindow.tsx, .edit-window): its 10dp gap between
      fields, the time and distance as labelled figures, and Discard marked as destructive. -->
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -26,7 +26,7 @@
                 android:inputType="text" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Not typed into directly: a tap opens ActivityTypePicker, a searchable list of the
+        <!-- Not typed into directly: a tap opens TrackTypePicker, a searchable list of the
              account's existing types with an "Add …" row for a new one — free text, not a
              closed vocabulary, but steered toward the types already in use. -->
         <com.google.android.material.textfield.TextInputLayout

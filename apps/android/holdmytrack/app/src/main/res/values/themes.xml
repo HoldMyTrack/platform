@@ -319,7 +319,7 @@
         <item name="android:textColor">@color/hmt_ink</item>
     </style>
 
-    <!-- ‹ › beside the date range in the Tracks sheet (include_activities_sheet): a 44dp round
+    <!-- ‹ › beside the date range in the Tracks sheet (include_tracks_sheet): a 44dp round
          icon button on the tinted surface, a faint outline when it can't move the range. The
          tints are state lists: a plain colour here would override Material's disabled look and
          leave a disabled button looking pressable. -->
@@ -355,7 +355,7 @@
         <item name="cornerRadius">6dp</item>
     </style>
 
-    <!-- One of the selected track's numbers (include_activity_card): a tinted box, its label
+    <!-- One of the selected track's numbers (include_track_card): a tinted box, its label
          over its value. -->
     <style name="Widget.HoldMyTrack.CardStat" parent="">
         <item name="android:background">@drawable/bg_card_stat</item>
@@ -378,7 +378,7 @@
         <item name="android:layout_marginTop">2dp</item>
     </style>
 
-    <!-- The selected track's actions (include_activity_card): an icon over a short label, in
+    <!-- The selected track's actions (include_track_card): an icon over a short label, in
          ink, filling a 60dp-tall share of the row. -->
     <style name="Widget.HoldMyTrack.Button.CardAction" parent="Widget.Material3.Button.TextButton.Icon">
         <item name="android:minHeight">60dp</item>
@@ -693,7 +693,7 @@
         <item name="android:paddingEnd">@dimen/hmt_space_10</item>
     </style>
 
-    <!-- The route editor's four tools (include_track_editor): the edit-track look, an icon over
+    <!-- The route editor's four tools (include_route_editor): the edit-track look, an icon over
          its label, 64dp tall, a quarter of the row each; checked (Move point, Delete point), the
          accent tint. -->
     <style name="Widget.HoldMyTrack.Button.EditTool" parent="Widget.HoldMyTrack.Button.EditTrack">

@@ -18,7 +18,7 @@ import dev.holdmytrack.android.net.Trip
 /**
  * Create trip and Edit trip, the web's `TripDialog.tsx` (`docs/SPEC.md` FR-13.2, FR-13.6
  * item 7): Name (required, up to 200 characters) and Description (optional, up to 2000) over
- * `dialog_story`. The confirm button stays disabled until Name has something besides spaces,
+ * `dialog_trip`. The confirm button stays disabled until Name has something besides spaces,
  * and the keyboard's Done in Name does the same as tapping it. The dialog stays up while its
  * request runs and keeps a refusal on screen, the fields as typed, closing only once the server
  * has answered with the Trip.
