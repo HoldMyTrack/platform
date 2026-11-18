@@ -35,6 +35,13 @@ public struct TrackTypeCatalog: Equatable, Sendable {
         return changed
     }
 
+    /// What to ask the server for: nil when the catalog was read this run and every one of types
+    /// has a label, else the types still missing (empty asks for the catalog alone).
+    public func toRead(_ types: [String], catalogRead: Bool) -> [String]? {
+        let missing = missing(types)
+        return catalogRead && missing.isEmpty ? nil : missing
+    }
+
     /// The types among types that have no label yet, at most limit (the server's bound on named
     /// types), each once.
     public func missing(_ types: [String], limit: Int = 100) -> [String] {

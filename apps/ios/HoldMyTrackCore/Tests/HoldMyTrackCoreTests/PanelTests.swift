@@ -52,6 +52,15 @@ struct PanelTests {
         #expect(catalog.missing(["running", "", "cycling", "cycling"]) == ["cycling"])
     }
 
+    @Test func theCatalogIsReadOnceAndThenOnlyForUnknownTypes() {
+        var catalog = TrackTypeCatalog()
+        #expect(catalog.toRead([], catalogRead: false) == [])
+        #expect(catalog.toRead(["running"], catalogRead: false) == ["running"])
+        catalog.merge(["running": TrackTypeInfo(kind: .foot, label: "Run")])
+        #expect(catalog.toRead(["running"], catalogRead: true) == nil)
+        #expect(catalog.toRead(["running", "kayaking"], catalogRead: true) == ["kayaking"])
+    }
+
     @Test func aKindFromANewerServerIsOther() {
         #expect(TrackKind(wire: "hovercraft") == .other)
         #expect(TrackKind(wire: "e_scooter") == .eScooter)
