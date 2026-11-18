@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { ChevronDown } from 'lucide-react';
+import { useDismiss } from './useDismiss';
 
 export interface PickMenuProps {
   /** The `data-testid` of the whole control, which the tour anchors on. */
@@ -31,21 +32,7 @@ export function PickMenu({ testId, label, icon, count, enabled, onEnabledChange,
   const open = picked || forceOpen;
   const ref = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
+  useDismiss(ref, open, setOpen);
 
   const shown = enabled && count > 0;
   return (

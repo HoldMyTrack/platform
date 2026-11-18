@@ -5,6 +5,7 @@ import { formatActivityType, formatDistance, formatDuration, formatStartedAt } f
 import type { UnitSystem } from './units';
 import { typeIcon } from './activityKindIcon';
 import { t, tn } from '../i18n';
+import { useDismiss } from './useDismiss';
 
 /** A row's primary line: its user-entered name (§4.7) when it has one, else
  *  its start date/time — also how the toolbar names a single selected activity. */
@@ -160,21 +161,7 @@ function StoryBadge({
   const [menuOpen, setMenuOpen] = useState(false);
   const ref = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setMenuOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setMenuOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [menuOpen]);
+  useDismiss(ref, menuOpen, setMenuOpen);
 
   const label = tn('activities.story_badge', stories.length);
   const names = tn(inOpenStory ? 'activities.in_other_stories' : 'activities.in_stories', stories.length, {

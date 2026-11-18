@@ -5,6 +5,7 @@ import { currentLayerState, currentLayers, updateLayers } from '../map/applyLaye
 import { exploredCount, fogLevelInView, fogLevelPick, levelLabelKey } from '../map/fogLevels';
 import type { Explored } from '../map/useCoverageRefresh';
 import { hasKey, lang, t } from '../i18n';
+import { useDismiss } from './useDismiss';
 
 export interface FogLevelMenuProps {
   map: MapLibreMap;
@@ -46,21 +47,7 @@ export function FogLevelMenu({ map, explored, forceOpen = false }: FogLevelMenuP
     updateLayers(map, { fogLevel: locked });
   }, [map, locked]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
+  useDismiss(ref, open, setOpen);
 
   const levels = currentLayers(map)?.levels ?? [];
   const label = (level: string) => {

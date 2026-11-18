@@ -4,6 +4,7 @@ import { addStoryActivities, type Activity, type Story } from '../api';
 import { StoryDialog } from './StoryDialog';
 import { useStories } from './useStories';
 import { t, tn } from '../i18n';
+import { useDismiss } from './useDismiss';
 
 export interface AddToStoryMenuProps {
   readOnly: boolean;
@@ -36,21 +37,7 @@ export function AddToStoryMenu({ readOnly, target, targetName, summary, onCreate
   const ref = useRef<HTMLDivElement>(null);
   const stories = useStories(open);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [open]);
+  useDismiss(ref, open, setOpen);
 
   // A new target is a new question: close the menu rather than leave it answering the old one.
   const targetKey = target.map((a) => a.id).join(',');

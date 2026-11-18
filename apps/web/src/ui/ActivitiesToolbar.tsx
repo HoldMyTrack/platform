@@ -7,6 +7,7 @@ import { ConfirmDialog } from './ConfirmDialog';
 import { formatTotalDistance } from './format';
 import { useUnitSystem } from './units';
 import { t, tn } from '../i18n';
+import { useDismiss } from './useDismiss';
 
 export interface ActivitiesToolbarProps {
   readOnly: boolean;
@@ -52,21 +53,7 @@ export function ActivitiesToolbar({
   // The ▾ menu, dismissed on outside click or Escape.
   const [selectMenuOpen, setSelectMenuOpen] = useState(false);
   const selectMenuRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    if (!selectMenuOpen) return;
-    const onPointerDown = (event: PointerEvent) => {
-      if (!selectMenuRef.current?.contains(event.target as Node)) setSelectMenuOpen(false);
-    };
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setSelectMenuOpen(false);
-    };
-    document.addEventListener('pointerdown', onPointerDown);
-    document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('pointerdown', onPointerDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
-  }, [selectMenuOpen]);
+  useDismiss(selectMenuRef, selectMenuOpen, setSelectMenuOpen);
 
   // The toolbar's Delete is the only delete entry point, for one activity or many.
   const [deletingGroup, setDeletingGroup] = useState(false);
