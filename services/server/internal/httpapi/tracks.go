@@ -156,7 +156,7 @@ type updateTrackRequest struct {
 func trackIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 	id := r.PathValue("id")
 	if !uuidPattern.MatchString(id) {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return "", false
 	}
 	return strings.ToLower(id), true
@@ -217,7 +217,7 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if tag.RowsAffected() == 0 {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
 	// activity_type is in every tracks tile this track crosses, and no render follows.
@@ -267,7 +267,7 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 		`SELECT raw_payload_key FROM activities WHERE id = $1 AND user_id = $2`, trackID, userID,
 	).Scan(&rawKey); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			writeAPIError(w, "activity not found", http.StatusNotFound)
+			writeAPIError(w, "track not found", http.StatusNotFound)
 			return
 		}
 		s.log.Error("activity lookup before delete failed", "err", err)
@@ -296,7 +296,7 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if tag.RowsAffected() == 0 {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
 	if rawKey != nil {
@@ -402,7 +402,7 @@ func (s *Server) handleTrackRouteMetrics(w http.ResponseWriter, r *http.Request)
 		Scan(&lons, &lats, &ms, &edit)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			writeAPIError(w, "activity not found", http.StatusNotFound)
+			writeAPIError(w, "track not found", http.StatusNotFound)
 			return
 		}
 		if clientGone(w, r) {

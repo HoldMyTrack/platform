@@ -89,7 +89,7 @@ func (s *Server) handlePlacePhoto(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	} else if !ok {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
 	coord := func(v *float64) string {

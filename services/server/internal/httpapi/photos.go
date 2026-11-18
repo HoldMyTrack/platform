@@ -58,7 +58,7 @@ var allowedPhotoContentType = map[string]string{
 
 var (
 	errPhotoNotFound    = errors.New("photo not found")
-	errPhotoNoTrack     = errors.New("activity has no track")
+	errPhotoNoTrack     = errors.New("track has no route")
 	errPhotoInvalidJSON = errors.New("invalid request body")
 )
 
@@ -269,7 +269,7 @@ func (s *Server) handleUploadPhoto(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	} else if !ok {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
 

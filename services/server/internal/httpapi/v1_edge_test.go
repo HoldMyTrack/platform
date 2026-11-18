@@ -3,6 +3,7 @@ package httpapi
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -10,6 +11,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/getkin/kin-openapi/openapi3"
 )
 
 // Every operation the frozen /v1 contract describes reaches an operation the /v2 contract
@@ -66,7 +69,7 @@ func TestRenameV1JSON(t *testing.T) {
 	names := map[string]string{"tracks": "activities", "track_type": "activity_type"}
 	in := `{"tracks":[{"id":"a","track_type":"walking","n":12345678901234567890}],"types":{"tracks":{"label":"Tracks"}}}`
 	var got, want any
-	if err := json.Unmarshal(renameV1JSON([]byte(in), names, false), &got); err != nil {
+	if err := json.Unmarshal(renameV1JSON([]byte(in), v1Rename{keys: names}), &got); err != nil {
 		t.Fatal(err)
 	}
 	// A type named like a key stays: the types map is keyed by data.
@@ -74,15 +77,52 @@ func TestRenameV1JSON(t *testing.T) {
 	if g, w := mustJSON(t, got), mustJSON(t, want); g != w {
 		t.Errorf("got %s\nwant %s", g, w)
 	}
-	if got := string(renameV1JSON([]byte(`{"error":"track_limit","message":"m"}`), nil, true)); !strings.Contains(got, `"activity_limit"`) {
+	if got := string(renameV1JSON([]byte(`{"error":"track_limit","message":"m"}`), v1Rename{errorCode: true})); !strings.Contains(got, `"activity_limit"`) {
 		t.Errorf("error code not renamed: %s", got)
 	}
-	if got := string(renameV1JSON([]byte(`{"error":"not_found","message":"m"}`), nil, true)); !strings.Contains(got, `"not_found"`) {
+	if got := string(renameV1JSON([]byte(`{"error":"not_found","message":"m"}`), v1Rename{errorCode: true})); !strings.Contains(got, `"not_found"`) {
 		t.Errorf("unchanged code changed: %s", got)
 	}
-	if got := string(renameV1JSON([]byte(`not json`), names, false)); got != "not json" {
-		t.Errorf("non-JSON body changed: %s", got)
+	// What /v2 would refuse comes through as it is, for the handler to refuse.
+	for _, body := range []string{`not json`, `{"tracks":[]} trailing`, `{"tracks":[],"activities":[]}`} {
+		old := map[string]string{"activities": "tracks"}
+		if got := string(renameV1JSON([]byte(body), v1Rename{keys: old})); got != body {
+			t.Errorf("%s came out as %s", body, got)
+		}
 	}
+	urlOut := string(renameV1JSON([]byte(`{"url":"/v2/photos/p","thumb_url":"/v2/photos/p/thumb","caption":"/v2/x"}`), v1Rename{urls: true}))
+	if !strings.Contains(urlOut, `"url":"/v1/photos/p"`) || !strings.Contains(urlOut, `"thumb_url":"/v1/photos/p/thumb"`) || !strings.Contains(urlOut, `"caption":"/v2/x"`) {
+		t.Errorf("photo URLs: %s", urlOut)
+	}
+}
+
+// A /v1 body is read and renamed only when the handler reads it, and no further than its limit.
+func TestV1RenamedBody(t *testing.T) {
+	src := &countingReader{r: strings.NewReader(`{"activity_ids":["a"]}`)}
+	b := &v1RenamedBody{src: io.NopCloser(src), limit: 100, names: map[string]string{"activity_ids": "track_ids"}}
+	if src.n != 0 {
+		t.Fatal("read before the handler asked")
+	}
+	got, err := io.ReadAll(b)
+	if err != nil || strings.TrimSpace(string(got)) != `{"track_ids":["a"]}` {
+		t.Errorf("got %s, %v", got, err)
+	}
+	long := &v1RenamedBody{src: io.NopCloser(strings.NewReader(strings.Repeat(" ", 101) + "{}")), limit: 100}
+	var tooLarge *http.MaxBytesError
+	if _, err := io.ReadAll(long); !errors.As(err, &tooLarge) {
+		t.Errorf("over the limit: %v, want a MaxBytesError", err)
+	}
+}
+
+type countingReader struct {
+	r io.Reader
+	n int
+}
+
+func (c *countingReader) Read(p []byte) (int, error) {
+	n, err := c.r.Read(p)
+	c.n += n
+	return n, err
 }
 
 func mustJSON(t *testing.T, v any) string {
@@ -198,6 +238,9 @@ func TestV1EdgeServesTheOldNames(t *testing.T) {
 	if len(photos.Photos) != 1 || photos.Photos[0].ActivityID != walk {
 		t.Errorf("GET /v1/photos?story=: %+v", photos)
 	}
+	if !strings.HasPrefix(photo.URL, "/v1/photos/") {
+		t.Errorf("POST /v1/photos: url %q, want it under /v1", photo.URL)
+	}
 	if rec := d.do(me, "GET", photo.URL, nil); rec.Code != http.StatusOK {
 		t.Errorf("GET %s: %d", photo.URL, rec.Code)
 	}
@@ -222,4 +265,130 @@ func TestV1EdgeServesTheOldNames(t *testing.T) {
 		t.Errorf("GET /v1/tracks: %d, want 404", rec.Code)
 	}
 	d.decode(d.do(me, "DELETE", "/v1/stories/"+story.ID, nil), http.StatusNoContent, nil)
+}
+
+// Every key /v1 sends or takes is the /v2 key its endpoint's table renames, at every depth of
+// every request and answer, and every query name likewise: a field added to /v2 without its
+// table entry, or a key a table misses, fails here with no database.
+func TestV1TablesMatchTheContracts(t *testing.T) {
+	v1, err := newContractLoader().LoadFromFile(v1ContractPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	v2, err := newContractLoader().LoadFromFile(contractPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, op := range contractOperations(v1) {
+		newPath, e, ok := v1Route(op.path)
+		if !ok {
+			continue // TestV1RouteCoversTheV1Contract reports it
+		}
+		if e == nil {
+			e = &v1Endpoint{}
+		}
+		op2 := v2.Paths.Find(newPath).GetOperation(op.method)
+		if op2 == nil {
+			continue
+		}
+		at := op.method + " " + op.path
+		for _, p := range op.op.Parameters {
+			if p.Value.In != "query" {
+				continue
+			}
+			name := p.Value.Name
+			if n, ok := e.query[name]; ok {
+				name = n
+			}
+			if op2.Parameters.GetByInAndName("query", name) == nil {
+				t.Errorf("%s: query %q becomes %q, which /v2 doesn't take", at, p.Value.Name, name)
+			}
+		}
+		if op.op.RequestBody != nil {
+			for mt, media := range op.op.RequestBody.Value.Content {
+				media2 := op2.RequestBody.Value.Content.Get(mt)
+				if media2 == nil {
+					t.Errorf("%s: /v2 takes no %s body", at, mt)
+					continue
+				}
+				names := e.keys
+				if mt == "multipart/form-data" {
+					names = e.form
+				}
+				compareV1Schemas(t, at+" request", media.Schema, media2.Schema, names, 0)
+			}
+		}
+		for status, resp := range op.op.Responses.Map() {
+			resp2 := op2.Responses.Value(status)
+			if resp2 == nil {
+				t.Errorf("%s: /v2 has no %s answer", at, status)
+				continue
+			}
+			for mt, media := range resp.Value.Content {
+				if media2 := resp2.Value.Content.Get(mt); media2 != nil {
+					compareV1Schemas(t, at+" "+status, media.Schema, media2.Schema, e.keys, 0)
+				}
+			}
+		}
+	}
+}
+
+// compareV1Schemas fails on a property of s1 (/v1) that isn't names' rename of one of s2
+// (/v2), or the other way round, and goes on into each pair.
+func compareV1Schemas(t *testing.T, at string, r1, r2 *openapi3.SchemaRef, names map[string]string, depth int) {
+	t.Helper()
+	if r1 == nil || r2 == nil || r1.Value == nil || r2.Value == nil || depth > 20 {
+		return
+	}
+	s1, s2 := r1.Value, r2.Value
+	p1, p2 := v1SchemaProperties(s1), v1SchemaProperties(s2)
+	for k1, sub1 := range p1 {
+		k2 := k1
+		if n, ok := names[k1]; ok {
+			k2 = n
+		}
+		sub2, ok := p2[k2]
+		if !ok {
+			t.Errorf("%s: /v1 key %q has no /v2 key %q", at, k1, k2)
+			continue
+		}
+		if !v1OpaqueKeys[k1] {
+			compareV1Schemas(t, at+"."+k1, sub1, sub2, names, depth+1)
+		}
+	}
+	old := invert(names)
+	for k2 := range p2 {
+		k1 := k2
+		if o, ok := old[k2]; ok {
+			k1 = o
+		}
+		if _, ok := p1[k1]; !ok {
+			t.Errorf("%s: /v2 key %q reaches /v1 as %q, which /v1 doesn't have", at, k2, k1)
+		}
+	}
+	compareV1Schemas(t, at+"[]", s1.Items, s2.Items, names, depth+1)
+	if s1.AdditionalProperties.Schema != nil && s2.AdditionalProperties.Schema != nil {
+		compareV1Schemas(t, at+"{}", s1.AdditionalProperties.Schema, s2.AdditionalProperties.Schema, names, depth+1)
+	}
+	for i := range s1.OneOf {
+		if i < len(s2.OneOf) {
+			compareV1Schemas(t, at, s1.OneOf[i], s2.OneOf[i], names, depth+1)
+		}
+	}
+}
+
+// v1SchemaProperties is s's properties with those of its allOf members.
+func v1SchemaProperties(s *openapi3.Schema) map[string]*openapi3.SchemaRef {
+	out := map[string]*openapi3.SchemaRef{}
+	for k, v := range s.Properties {
+		out[k] = v
+	}
+	for _, sub := range s.AllOf {
+		if sub.Value != nil {
+			for k, v := range v1SchemaProperties(sub.Value) {
+				out[k] = v
+			}
+		}
+	}
+	return out
 }

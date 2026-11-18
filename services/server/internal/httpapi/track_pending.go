@@ -25,7 +25,7 @@ func (s *Server) handleTracksPending(w http.ResponseWriter, r *http.Request) {
 	}
 	for i, id := range ids {
 		if !uuidPattern.MatchString(id) {
-			writeAPIError(w, "ids must be activity ids, comma-separated", http.StatusBadRequest)
+			writeAPIError(w, "ids must be track ids, comma-separated", http.StatusBadRequest)
 			return
 		}
 		ids[i] = strings.ToLower(id)

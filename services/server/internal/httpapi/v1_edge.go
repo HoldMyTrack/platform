@@ -3,7 +3,6 @@ package httpapi
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"io"
 	"mime"
 	"mime/multipart"
@@ -26,6 +25,9 @@ type v1Endpoint struct {
 	query    map[string]string // old name → new
 	keys     map[string]string // old JSON key → new, at any depth of the request and the answer
 	form     map[string]string // old multipart field → new
+	// urls marks an answer carrying a photo's url and thumb_url, given back under /v1 so an
+	// installed app's image cache, keyed by URL, stays valid.
+	urls bool
 }
 
 var (
@@ -51,9 +53,9 @@ var v1Endpoints = []v1Endpoint{
 	{old: "/activities/{id}/track-points", new: "/tracks/{id}/route-points"},
 	{old: "/activities/{id}/track-edit", new: "/tracks/{id}/route-edit"},
 	{old: "/activity-types", new: "/track-types"},
-	{old: "/photos", new: "/photos", query: map[string]string{"activity": "track", "story": "trip"}, keys: v1PhotoKeys, form: v1PhotoKeys},
+	{old: "/photos", new: "/photos", query: map[string]string{"activity": "track", "story": "trip"}, keys: v1PhotoKeys, form: v1PhotoKeys, urls: true},
 	{old: "/photos/place", new: "/photos/place", keys: v1PhotoKeys},
-	{old: "/photos/{id}", new: "/photos/{id}", keys: v1PhotoKeys},
+	{old: "/photos/{id}", new: "/photos/{id}", keys: v1PhotoKeys, urls: true},
 	{old: "/stories", new: "/trips", keys: v1TripKeys},
 	{old: "/stories/{id}", new: "/trips/{id}", keys: v1TripKeys},
 	{old: "/stories/{id}/activities", new: "/trips/{id}/tracks", keys: v1TripKeys},
@@ -156,29 +158,53 @@ func (s *Server) serveV1(w http.ResponseWriter, r *http.Request) {
 		r2.RequestURI = r2.URL.RequestURI()
 	}
 	if len(e.keys) > 0 && r.Body != nil && isJSONRequest(r) {
-		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, maxSyncBodyBytes))
-		if err != nil {
-			s.setSecurityHeaders(w.Header())
-			var tooLarge *http.MaxBytesError
-			if errors.As(err, &tooLarge) {
-				writeAPIError(w, "request body too large", http.StatusRequestEntityTooLarge)
-			} else {
-				writeAPIError(w, "unreadable request body", http.StatusBadRequest)
-			}
-			return
+		limit := int64(maxJSONBodyBytes)
+		if setsOwnBodyLimit(r2) {
+			limit = maxSyncBodyBytes
 		}
-		body = renameV1JSON(body, e.keys, false)
-		r2.Body, r2.ContentLength = io.NopCloser(bytes.NewReader(body)), int64(len(body))
+		r2.Body = &v1RenamedBody{src: r.Body, limit: limit, names: e.keys}
+		r2.ContentLength = -1
 		r2.Header.Del("Content-Length")
 	}
 	if len(e.form) > 0 && r.Body != nil {
 		renameV1MultipartFields(r2, e.form)
 		defer r2.Body.Close()
 	}
-	vw := &v1Writer{ResponseWriter: w, keys: invert(e.keys)}
+	vw := &v1Writer{ResponseWriter: w, keys: invert(e.keys), urls: e.urls}
 	s.serve(vw, r2)
 	vw.finish()
 }
+
+// v1RenamedBody is a /v1 JSON request body, renamed when the handler first reads it: after
+// the handler's own checks, such as the session, so a request refused before its body is read
+// costs no memory. Reading more than limit fails as an over-long body does.
+type v1RenamedBody struct {
+	src   io.ReadCloser
+	limit int64
+	names map[string]string
+	r     *bytes.Reader
+	err   error
+}
+
+func (b *v1RenamedBody) Read(p []byte) (int, error) {
+	if b.r == nil && b.err == nil {
+		data, err := io.ReadAll(io.LimitReader(b.src, b.limit+1))
+		switch {
+		case err != nil:
+			b.err = err
+		case int64(len(data)) > b.limit:
+			b.err = &http.MaxBytesError{Limit: b.limit}
+		default:
+			b.r = bytes.NewReader(renameV1JSON(data, v1Rename{keys: b.names}))
+		}
+	}
+	if b.err != nil {
+		return 0, b.err
+	}
+	return b.r.Read(p)
+}
+
+func (b *v1RenamedBody) Close() error { return b.src.Close() }
 
 func isJSONRequest(r *http.Request) bool {
 	mt, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
@@ -203,18 +229,31 @@ func renameV1Query(q map[string][]string, names map[string]string) string {
 	return url.Values(q).Encode()
 }
 
-// renameV1JSON renames body's object keys by names at any depth, and with errorCode the
-// top-level error code by v1ErrorCodes. A body that isn't JSON comes back as it is, for the
-// handler to refuse.
-func renameV1JSON(body []byte, names map[string]string, errorCode bool) []byte {
+// v1Rename is what renameV1JSON renames.
+type v1Rename struct {
+	keys      map[string]string // object keys, at any depth
+	errorCode bool              // the top-level error code, by v1ErrorCodes
+	urls      bool              // url and thumb_url values, from apiPrefix to v1Prefix
+}
+
+// renameV1JSON renames body by how. A body that isn't one JSON value, or that has one key
+// under both of the names a rename joins, comes back as it is, for the handler to refuse as
+// /v2 would.
+func renameV1JSON(body []byte, how v1Rename) []byte {
 	d := json.NewDecoder(bytes.NewReader(body))
 	d.UseNumber()
 	var v any
 	if err := d.Decode(&v); err != nil {
 		return body
 	}
-	v = renameKeys(v, names)
-	if obj, ok := v.(map[string]any); ok && errorCode {
+	if _, err := d.Token(); err != io.EOF {
+		return body
+	}
+	v, ok := renameKeys(v, how)
+	if !ok {
+		return body
+	}
+	if obj, ok := v.(map[string]any); ok && how.errorCode {
 		if code, ok := obj["error"].(string); ok {
 			if old, ok := v1ErrorCodes[code]; ok {
 				obj["error"] = old
@@ -228,26 +267,41 @@ func renameV1JSON(body []byte, names map[string]string, errorCode bool) []byte {
 	return out.Bytes()
 }
 
-func renameKeys(v any, names map[string]string) any {
+// renameKeys is v renamed by how, and false when an object holds both names of one rename.
+func renameKeys(v any, how v1Rename) (any, bool) {
 	switch t := v.(type) {
 	case map[string]any:
 		out := make(map[string]any, len(t))
 		for k, val := range t {
 			if !v1OpaqueKeys[k] {
-				val = renameKeys(val, names)
+				var ok bool
+				if val, ok = renameKeys(val, how); !ok {
+					return v, false
+				}
 			}
-			if n, ok := names[k]; ok {
+			if n, ok := how.keys[k]; ok {
+				if _, both := t[n]; both {
+					return v, false
+				}
 				k = n
+			}
+			if str, ok := val.(string); ok && how.urls && (k == "url" || k == "thumb_url") {
+				if rest, ok := strings.CutPrefix(str, apiPrefix+"/"); ok {
+					val = v1Prefix + "/" + rest
+				}
 			}
 			out[k] = val
 		}
-		return out
+		return out, true
 	case []any:
 		for i := range t {
-			t[i] = renameKeys(t[i], names)
+			var ok bool
+			if t[i], ok = renameKeys(t[i], how); !ok {
+				return v, false
+			}
 		}
 	}
-	return v
+	return v, true
 }
 
 // renameV1MultipartFields streams r's multipart body through with the fields in names renamed,
@@ -303,6 +357,7 @@ func copyV1Parts(in *multipart.Reader, out *multipart.Writer, names map[string]s
 type v1Writer struct {
 	http.ResponseWriter
 	keys    map[string]string // new key → old
+	urls    bool
 	status  int
 	decided bool
 	buf     *bytes.Buffer
@@ -314,7 +369,7 @@ func (w *v1Writer) WriteHeader(status int) {
 	}
 	w.decided, w.status = true, status
 	mt, _, _ := mime.ParseMediaType(w.Header().Get("Content-Type"))
-	if mt == "application/json" && (len(w.keys) > 0 || status >= 400) {
+	if mt == "application/json" && (len(w.keys) > 0 || w.urls || status >= 400) {
 		w.buf = &bytes.Buffer{}
 		return
 	}
@@ -333,12 +388,23 @@ func (w *v1Writer) Write(b []byte) (int, error) {
 
 func (w *v1Writer) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 
+// Flush passes a flush through only when the answer isn't held back, so http.ResponseController
+// can't send the status before finish has the renamed body.
+func (w *v1Writer) Flush() {
+	if w.buf != nil {
+		return
+	}
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
 // finish writes a held-back answer; serveV1 calls it once serve has returned.
 func (w *v1Writer) finish() {
 	if w.buf == nil {
 		return
 	}
-	body := renameV1JSON(w.buf.Bytes(), w.keys, w.status >= 400)
+	body := renameV1JSON(w.buf.Bytes(), v1Rename{keys: w.keys, errorCode: w.status >= 400, urls: w.urls})
 	w.Header().Del("Content-Length")
 	w.ResponseWriter.WriteHeader(w.status)
 	_, _ = w.ResponseWriter.Write(body)

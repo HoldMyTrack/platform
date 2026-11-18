@@ -110,11 +110,11 @@ func (s *Server) handleSyncTracks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if len(req.Tracks) == 0 {
-		writeAPIError(w, "activities must not be empty", http.StatusBadRequest)
+		writeAPIError(w, "tracks must not be empty", http.StatusBadRequest)
 		return
 	}
 	if len(req.Tracks) > maxSyncBatchTracks {
-		writeAPIError(w, fmt.Sprintf("too many activities in one batch (%d), want %d or fewer", len(req.Tracks), maxSyncBatchTracks), http.StatusBadRequest)
+		writeAPIError(w, fmt.Sprintf("too many tracks in one batch (%d), want %d or fewer", len(req.Tracks), maxSyncBatchTracks), http.StatusBadRequest)
 		return
 	}
 	// Every track sent counts, taken or not; a batch that doesn't fit in what's left of

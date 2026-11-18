@@ -189,7 +189,7 @@ func (s *Server) handleGetTrack(w http.ResponseWriter, r *http.Request) {
 	}
 	a, err := scanTrackRow(s.pool.QueryRow(r.Context(), trackByIDQuery, id, userIDFromContext(r.Context())))
 	if errors.Is(err, pgx.ErrNoRows) {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
 	if err != nil {

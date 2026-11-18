@@ -181,12 +181,12 @@ func loadDemoManifest(fsys fs.FS, files []string) (demoManifest, error) {
 		case names[st.Name]:
 			return demoManifest{}, fmt.Errorf("%s: two stories named %q", demoManifestFile, st.Name)
 		case len(st.Tracks) == 0:
-			return demoManifest{}, fmt.Errorf("%s: story %q has no activities", demoManifestFile, st.Name)
+			return demoManifest{}, fmt.Errorf("%s: trip %q has no tracks", demoManifestFile, st.Name)
 		}
 		names[st.Name] = true
 		for _, f := range st.Tracks {
 			if !present[f] {
-				return demoManifest{}, fmt.Errorf("%s: story %q: activity %q has no matching file", demoManifestFile, st.Name, f)
+				return demoManifest{}, fmt.Errorf("%s: trip %q: track %q has no matching file", demoManifestFile, st.Name, f)
 			}
 		}
 	}

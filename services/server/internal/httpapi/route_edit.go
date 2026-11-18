@@ -49,7 +49,7 @@ func (s *Server) handleTrackRoutePoints(w http.ResponseWriter, r *http.Request) 
 		FROM activities WHERE id = $1 AND user_id = $2
 	`, trackID, userID).Scan(&sourceDetail, &rawKey, &editJSON, &rng.From, &rng.To)
 	if errors.Is(err, pgx.ErrNoRows) {
-		writeAPIError(w, "activity not found", http.StatusNotFound)
+		writeAPIError(w, "track not found", http.StatusNotFound)
 		return
 	}
 	if err != nil {

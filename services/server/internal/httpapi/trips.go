@@ -33,7 +33,7 @@ const (
 
 var (
 	errTripNotFound  = errors.New("story not found")
-	errTrackNotFound = errors.New("activity not found")
+	errTrackNotFound = errors.New("track not found")
 )
 
 // tripTypeStats is one track type's share of a Trip's statistics. MovingSeconds falls
@@ -121,18 +121,18 @@ func validateTripFields(w http.ResponseWriter, r *http.Request, name, descriptio
 // use for.
 func validateTrackIDs(w http.ResponseWriter, ids []string, required bool) ([]string, bool) {
 	if required && len(ids) == 0 {
-		writeAPIError(w, "activity_ids must not be empty", http.StatusBadRequest)
+		writeAPIError(w, "track_ids must not be empty", http.StatusBadRequest)
 		return nil, false
 	}
 	if len(ids) > maxTripTrackIDs {
-		writeAPIError(w, "too many activity_ids", http.StatusBadRequest)
+		writeAPIError(w, "too many track_ids", http.StatusBadRequest)
 		return nil, false
 	}
 	seen := make(map[string]bool, len(ids))
 	out := make([]string, 0, len(ids))
 	for _, id := range ids {
 		if !uuidPattern.MatchString(id) {
-			writeAPIError(w, "invalid activity id", http.StatusBadRequest)
+			writeAPIError(w, "invalid track id", http.StatusBadRequest)
 			return nil, false
 		}
 		id = strings.ToLower(id)
