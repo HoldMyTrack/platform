@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { listQuery, tracksQuery as tracksQueryFor } from './activityQuery.ts';
 import { areaLoad } from './areaLoad.ts';
@@ -39,9 +39,8 @@ import { useViewOnMap } from './useViewOnMap.ts';
 import type { Activity } from '../api.ts';
 import { useAuth } from '../auth/AuthContext.tsx';
 import { ActivitiesPanel, type PanelTab } from '../ui/ActivitiesPanel.tsx';
-import { EditActivityWindow, type EditWindowResult } from '../ui/EditActivityWindow.tsx';
+import type { EditWindowResult } from '../ui/EditActivityWindow.tsx';
 import { MapControls } from '../ui/MapControls.tsx';
-import { MapExport } from '../ui/MapExport.tsx';
 import { PhotoPopup } from '../ui/PhotoPopup.tsx';
 import { SpotPopup } from '../ui/SpotPopup.tsx';
 import { todayIn } from '../ui/dateMath.ts';
@@ -53,7 +52,6 @@ import { DemoBar } from '../ui/DemoBar.tsx';
 import { useActivityList } from '../ui/useActivityList.ts';
 import { useStories } from '../ui/useStories.ts';
 import { useStory } from '../ui/useStory.ts';
-import { TourLayer } from '../ui/tour/Tour.tsx';
 import { useTour } from '../ui/tour/useTour.ts';
 import { t } from '../i18n/index.ts';
 
@@ -71,6 +69,22 @@ interface MapViewProps {
  * export and the popups over it. It composes the map's state (session.ts) with each feature's
  * hook; the hooks are called in the order their effects must run.
  */
+// Loaded when first shown, not with the map: the Edit window (with the track editor and photo
+// preparation), the export viewfinder and the tour are each a large part of the app that most
+// visits never open, and the map shouldn't wait for them.
+const EditActivityWindow = lazy(() => import('../ui/EditActivityWindow.tsx').then((m) => ({ default: m.EditActivityWindow })));
+const MapExport = lazy(() => import('../ui/MapExport.tsx').then((m) => ({ default: m.MapExport })));
+const TourLayer = lazy(() => import('../ui/tour/Tour.tsx').then((m) => ({ default: m.TourLayer })));
+
+/** The Edit window's place while its activities, or its code, are on their way. */
+function EditWindowLoading() {
+  return (
+    <section className="edit-track edit-window" aria-busy="true" data-testid="edit-window-loading">
+      <p className="activities-panel__note" role="status">{t('common.loading')}</p>
+    </section>
+  );
+}
+
 export function MapView({ initialPrivateLocationsOpen = false, initialActivity = null, initialTour = false }: MapViewProps) {
   // A demo account is read-only (docs/SPEC.md FR-2.1); `'email' in user` tells a DemoUser from an AuthUser.
   const { user } = useAuth();
@@ -425,8 +439,13 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
           <div ref={container} className="map-canvas" data-testid="map-canvas" />
           {/* Edit owns the map while it's open, as the other controls step aside: an export would
               draw the tracks without the edit, and Escape would reach both. */}
-          {map && !editOpen && <MapExport map={map} container={container} exporter={exporter} />}
+          {map && !editOpen && (
+            <Suspense fallback={null}>
+              <MapExport map={map} container={container} exporter={exporter} />
+            </Suspense>
+          )}
           {map && edit.activities && (
+            <Suspense fallback={<EditWindowLoading />}>
             <EditActivityWindow
               map={map}
               activities={edit.activities}
@@ -438,12 +457,9 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
               onTabChange={edit.setTab}
               onClose={closeEditWindow}
             />
+            </Suspense>
           )}
-          {edit.open && !edit.activities && (
-            <section className="edit-track edit-window" aria-busy="true" data-testid="edit-window-loading">
-              <p className="activities-panel__note" role="status">{t('common.loading')}</p>
-            </section>
-          )}
+          {edit.open && !edit.activities && <EditWindowLoading />}
           {edit.closedNotice && (
             <ConfirmDialog
               title={t('deleted' in edit.closedNotice ? 'edit.deleted_title' : 'edit.unreadable_title')}
@@ -485,7 +501,11 @@ export function MapView({ initialPrivateLocationsOpen = false, initialActivity =
           )}
           {map && spots.openSpot && <SpotPopup map={map} spot={spots.openSpot} capturedAt={spots.capturedAt(spots.openSpot.id)} onClose={spots.closeSpot} />}
         </div>
-        {!editOpen && <TourLayer tour={tour} />}
+        {!editOpen && (
+          <Suspense fallback={null}>
+            <TourLayer tour={tour} />
+          </Suspense>
+        )}
       </div>
     </div>
   );
