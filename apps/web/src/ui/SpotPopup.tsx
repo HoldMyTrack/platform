@@ -38,7 +38,7 @@ const COPIED_MS = 1500;
  * ExportControl renders into its map control.
  */
 export function SpotPopup({ map, spot, capturedAt, onClose }: SpotPopupProps) {
-  // A capture belongs to no activity, so its date is the account's (FR-1.7), like "today".
+  // A capture belongs to no track, so its date is the account's (FR-1.7), like "today".
   const { user } = useAuth();
   const [container, setContainer] = useState<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);

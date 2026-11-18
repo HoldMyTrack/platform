@@ -15,7 +15,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  * for the language it was read in, so a recording or an unsent activity shows its type offline
  * too; a type the server hasn't described yet is [ActivityKind.OTHER], and its label the type
  * spaced out from snake_case and title-cased, as the server falls back. The web's
- * `ui/activityTypes.ts`.
+ * `ui/trackTypes.ts`.
  */
 object ActivityTypes {
 

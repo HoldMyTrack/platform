@@ -17,14 +17,14 @@ export function viewArea(map: MapLibreMap): BBox {
 
 /**
  * The list follows the map (docs/SPEC.md FR-5.11): from zoom 4 every move reloads it once the map
- * settles. The app's own flights (APP_FLIGHT: focusing a row, Focus on map, a Story) leave the list
+ * settles. The app's own flights (APP_FLIGHT: focusing a row, Focus on map, a Trip) leave the list
  * as it is, or clicking a row would shrink the list to that row's track; the opening view and
- * Dates' flight ask for their area themselves. Closing a Story asks about wherever the map is then,
- * or where its flight ends if the camera is still framing the Story: a mid-flight view can hold
+ * Dates' flight ask for their area themselves. Closing a Trip asks about wherever the map is then,
+ * or where its flight ends if the camera is still framing the Trip: a mid-flight view can hold
  * none of what the user was looking at, and the rest of the flight wouldn't reload the list.
  * Returns the map's zoom as of its last move.
  */
-export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, storyId: string | null): number {
+export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessionEvent>, tripId: string | null): number {
   const [zoom, setZoom] = useState(() => map?.getZoom() ?? 0);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -48,10 +48,10 @@ export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessi
     };
   }, [map, loadHere]);
 
-  const storyRef = useRef(storyId);
+  const tripRef = useRef(tripId);
   useEffect(() => {
-    const closed = storyRef.current !== null && storyId === null;
-    storyRef.current = storyId;
+    const closed = tripRef.current !== null && tripId === null;
+    tripRef.current = tripId;
     if (!closed || !map) return;
     if (!map.isMoving()) {
       loadHere();
@@ -61,7 +61,7 @@ export function useAreaList(map: MapLibreMap | null, dispatch: Dispatch<MapSessi
     return () => {
       map.off('moveend', loadHere);
     };
-  }, [storyId, map, loadHere]);
+  }, [tripId, map, loadHere]);
 
   return zoom;
 }

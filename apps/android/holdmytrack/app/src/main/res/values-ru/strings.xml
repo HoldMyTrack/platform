@@ -129,7 +129,7 @@
     <string name="export_row_square">Квадрат</string>
     <string name="export_row_portrait">Портретная</string>
     <string name="export_row_landscape">Альбомная</string>
-    <string name="export_row_story">Путешествие</string>
+    <string name="export_row_story">История</string>
     <string name="export_failed">Не удалось создать изображение. Попробуйте ещё раз.</string>
     <string name="export_saved">Сохранено в «Изображения»</string>
     <string name="export_share_title">Поделиться картой</string>
@@ -392,7 +392,7 @@
     <string name="upload_failed_transfer">%1$s: %2$s</string>
     <string name="upload_network_error">Ошибка сети</string>
 
-    <!-- The map's Activities panel (panel/ActivitiesPanel.kt), after the web's activities.* and filters.* messages. -->
+    <!-- The map's Activities panel (panel/ActivitiesPanel.kt), after the web's tracks.* and filters.* messages. -->
     <string name="panel_label">Панель треков</string>
     <string name="panel_tab_activities">Треки</string>
     <string name="panel_unit_m">м</string>
@@ -460,7 +460,7 @@
         <item quantity="other">%1$d отмеченного трека</item>
     </plurals>
 
-    <!-- The panel's Edit and Delete (panel/EditActivityWindow.kt), after the web's edit.* and activities.delete_* messages. -->
+    <!-- The panel's Edit and Delete (panel/EditActivityWindow.kt), after the web's edit.* and tracks.delete_* messages. -->
     <string name="panel_edit_one">Изменить тип, название, описание и маршрут: %1$s</string>
     <string name="panel_edit_many">Изменить тип: %1$s</string>
     <string name="panel_delete_target">Удалить: %1$s</string>
@@ -624,7 +624,7 @@
     <string name="privacy_opens_browser">Откроется в браузере</string>
 
     <!-- Stories (panel/StoriesTab.kt, panel/StoryDialog.kt, Add to story (panel/ActivitiesPanel.kt) and the
-         rows' Story badge), after the web's stories.* messages. -->
+         rows' Story badge), after the web's trips.* messages. -->
     <string name="panel_tab_stories">Путешествия</string>
     <string name="story_subtext">Подборки ваших треков. Видны только вам.</string>
     <string name="story_empty">Путешествий пока нет. На вкладке «Треки» отметьте нужные треки или нажмите на один из них, затем — «Добавить в путешествие».</string>

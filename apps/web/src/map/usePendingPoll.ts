@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { pendingActivities } from '../api.ts';
+import { pendingTracks } from '../api.ts';
 import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from './pending.ts';
 import { retryDelay } from './retryDelay.ts';
 
-/** How often the Pending check runs while a reprocess is pending: one activity's ingest takes seconds. */
+/** How often the Pending check runs while a reprocess is pending: one track's ingest takes seconds. */
 const POLL_MS = 2000;
 /** The longest wait between checks while they keep failing. */
 const MAX_RETRY_MS = 60_000;
@@ -17,7 +17,7 @@ interface PendingPollHandlers {
 }
 
 /**
- * Rows with a reprocess running (a track edit, a Private location change): while any is held
+ * Rows with a reprocess running (a route edit, a Private location change): while any is held
  * Pending or an edit applied here ([awaitEdit]) is awaited, the small Pending check runs every few
  * seconds (`pendingBatches`), and a failed check is tried again, less often after each failure in
  * a row (retryDelay.ts). A hidden tab asks nothing until it's shown. Each fetched list (a new
@@ -76,7 +76,7 @@ export function usePendingPoll(listedIds: readonly string[], pendingIds: string[
         return;
       }
       const watched = pendingWatched(heldRef.current, awaitingRef.current);
-      const checks = pendingBatches(watched).map((ids) => pendingActivities(ids, controller.signal));
+      const checks = pendingBatches(watched).map((ids) => pendingTracks(ids, controller.signal));
       Promise.all(checks).then(
         (answers) => {
           if (controller.signal.aborted) return;

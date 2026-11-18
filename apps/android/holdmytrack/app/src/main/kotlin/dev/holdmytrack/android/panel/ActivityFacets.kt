@@ -14,7 +14,7 @@ data class TypeFacet(val type: String, val count: Int)
 /**
  * The Activities panel's two client-side filters, TYPE and DISTANCE (`docs/SPEC.md` FR-5.2,
  * FR-5.3). Both narrow a list already fetched for the date range; neither is sent to the server.
- * The web's `activityFacets.ts`; both run `testdata/client-rules`' `distance-bounds.json`,
+ * The web's `trackFacets.ts`; both run `testdata/client-rules`' `distance-bounds.json`,
  * `distance-filter.json`, `type-facets.json` and `passes-filters.json`.
  */
 object ActivityFacets {

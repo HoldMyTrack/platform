@@ -1,5 +1,5 @@
 import { Map as MapLibreMap } from 'maplibre-gl';
-import { API_BASE_URL, type ActivityQuery, type ActivityTrackMetrics } from '../api.ts';
+import { API_BASE_URL, type TrackQuery, type TrackRouteMetrics } from '../api.ts';
 import { lang } from '../i18n/index.ts';
 import logoOnDarkUrl from '../assets/logo-on-dark.png';
 import logoOnLightUrl from '../assets/logo-on-light.png';
@@ -16,8 +16,8 @@ import { drawPhotoMarkers, type ExportPhotos } from './exportPhotos.ts';
 import { statsCardPlacement, stripMetrics, WATERMARK_FONT_SCALE, WATERMARK_LOGO_SCALE } from './exportStats.ts';
 import { photoMarkerLayout } from './photoClusters.ts';
 import { ATTRIBUTION_TEXT, buildStyle, isDarkBase, type Flavor } from './style.ts';
-import { setTrackBands } from './trackBands.ts';
-import { trackQuery } from './tracks.ts';
+import { setRouteBands } from './routeBands.ts';
+import { tracksTileQuery } from './tracks.ts';
 
 /**
  * `VISION.md` §4.2's "print-grade... export", rendered in the browser (`IMPLEMENTATION.md`
@@ -45,14 +45,14 @@ const WATERMARK_ALPHA = 0.8;
 export interface ExportViewState {
   flavor: Flavor;
   mode: MapMode;
-  tracksQuery: ActivityQuery;
+  tracksQuery: TrackQuery;
   /** Past the list's cap, the only tracks drawn (tracks.ts's setListedTracks); null for all. */
   listedIds: readonly string[] | null;
   hiddenIds: string[];
   /** The tracks drawn bold (selection.ts's boldTracks). */
   boldIds: readonly string[];
-  /** The focused activity's pace bands as the live map draws them (useTrackMetrics), or null. */
-  bands: ActivityTrackMetrics | null;
+  /** The focused track's pace bands as the live map draws them (useTrackMetrics), or null. */
+  bands: TrackRouteMetrics | null;
   /** The Layers menu's paths (overlays.ts), so the image shows what the screen does. */
   paths: BikePathOverlays;
   /** The Satellite button (FR-4.10): satellite imagery, when the deployment has any. */
@@ -392,12 +392,12 @@ async function renderOffscreen(
       satellite: state.satellite,
       toggles: { ...state.paths },
       vars: { hidden: state.hiddenIds, focused: [...state.boldIds], capped: state.listedIds !== null, listed: [...(state.listedIds ?? [])] },
-      queries: { tracks: trackQuery(state.tracksQuery) },
+      queries: { tracks: tracksTileQuery(state.tracksQuery) },
       // No Spots, as on Android.
       excludedGroups: new Set(['spots']),
     });
     // The band source is added empty.
-    if (state.bands) setTrackBands(instance, state.bands);
+    if (state.bands) setRouteBands(instance, state.bands);
     setSatelliteVisible(instance, state.satellite);
     setRoadsVisible(instance, state.roads);
 

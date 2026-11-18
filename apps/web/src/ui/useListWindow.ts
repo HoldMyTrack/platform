@@ -8,10 +8,10 @@ function rowsOffset(list: HTMLElement, rows: HTMLElement): number {
 }
 
 /**
- * The window of a long list's rows to render (listWindow.ts), for the Activities tab's list and an
- * open Story's. `listRef` is the element that scrolls; `rowsRef` holds the rows, the list itself
- * or an element inside it below other content (a Story's rows sit under the inbox, the folders and
- * its description). Either may come and go: the Activities list unmounts in Fog, a Story's rows
+ * The window of a long list's rows to render (listWindow.ts), for the Tracks tab's list and an
+ * open Trip's. `listRef` is the element that scrolls; `rowsRef` holds the rows, the list itself
+ * or an element inside it below other content (a Trip's rows sit under the inbox, the folders and
+ * its description). Either may come and go: the Tracks list unmounts in Fog, a Trip's rows
  * when it folds. Where the rows start and how tall one is are read on scroll and resize, not on
  * every render, which would force a layout per scroll frame.
  *
@@ -36,7 +36,7 @@ export function useListWindow(
   const [view, setView] = useState({ top: 0, height: 600 });
   const [rowHeight, setRowHeight] = useState(0);
   const measureRow = (rows: HTMLElement | null) => {
-    const row = rows?.querySelector<HTMLElement>('li[data-activity-id]');
+    const row = rows?.querySelector<HTMLElement>('li[data-track-id]');
     if (row) setRowHeight(row.offsetHeight);
   };
   useEffect(() => {

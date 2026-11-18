@@ -1,13 +1,13 @@
 import { useCallback, useEffect } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { refreshTrackLayer } from './tracks.ts';
-import type { ActivityQuery } from '../api.ts';
+import type { TrackQuery } from '../api.ts';
 
 interface DataRefreshInputs {
-  tracksQuery: ActivityQuery;
-  reloadActivities: () => void;
+  tracksQuery: TrackQuery;
+  reloadTracks: () => void;
   reloadDays: () => void;
-  reloadStory: () => void;
+  reloadTrip: () => void;
   /** Waits for the account's coverage jobs to drain, then refetches Fog (useCoverageRefresh.ts). */
   watchCoverage: (then?: () => void) => void;
   /** The bands refetch against new points. */
@@ -17,10 +17,10 @@ interface DataRefreshInputs {
 interface DataRefresh {
   /** The tracks layer at the current query, fetched again. */
   refreshTracks: () => void;
-  /** A finished import or a delete: tracks, list, days, the open Story and coverage all refresh. */
+  /** A finished import or a delete: tracks, list, days, the open Trip and coverage all refresh. */
   afterImport: () => void;
   /**
-   * A saved or deleted Private location reprocesses every activity it could clip. The reload shows
+   * A saved or deleted Private location reprocesses every track it could clip. The reload shows
    * them Pending and the Pending poll refreshes the map, but a batch that finishes before the
    * reload returns is never seen Pending, so the coverage watch refreshes everything once the
    * server drains.
@@ -31,26 +31,26 @@ interface DataRefresh {
    * since the server clears Pending just before its last render.
    */
   pendingStarted: () => void;
-  /** A row left Pending with new points: tracks, days, the open Story, the bands and coverage
+  /** A row left Pending with new points: tracks, days, the open Trip, the bands and coverage
    *  refresh; the camera stays (FR-5.8). */
   pendingFinished: () => void;
 }
 
-/** What the map reads again when activities change under it. The header's Upload menu
+/** What the map reads again when tracks change under it. The header's Upload menu
  *  (static/upload.js) says when an upload or import has landed (`hmt:imports-changed`). */
 export function useDataRefresh(map: MapLibreMap | null, inputs: DataRefreshInputs): DataRefresh {
-  const { tracksQuery, reloadActivities, reloadDays, reloadStory, watchCoverage, bumpMetrics } = inputs;
+  const { tracksQuery, reloadTracks, reloadDays, reloadTrip, watchCoverage, bumpMetrics } = inputs;
   const refreshTracks = useCallback(() => {
     if (map) refreshTrackLayer(map, tracksQuery);
   }, [map, tracksQuery]);
 
   const afterImport = useCallback(() => {
     refreshTracks();
-    reloadActivities();
+    reloadTracks();
     reloadDays();
-    reloadStory();
+    reloadTrip();
     watchCoverage();
-  }, [refreshTracks, reloadActivities, reloadDays, reloadStory, watchCoverage]);
+  }, [refreshTracks, reloadTracks, reloadDays, reloadTrip, watchCoverage]);
 
   useEffect(() => {
     window.addEventListener('hmt:imports-changed', afterImport);
@@ -58,15 +58,15 @@ export function useDataRefresh(map: MapLibreMap | null, inputs: DataRefreshInput
   }, [afterImport]);
 
   const afterPrivateLocations = useCallback(() => {
-    reloadActivities();
+    reloadTracks();
     watchCoverage(() => {
       refreshTracks();
-      reloadActivities();
+      reloadTracks();
       reloadDays();
-      reloadStory();
+      reloadTrip();
       bumpMetrics();
     });
-  }, [refreshTracks, reloadActivities, reloadDays, reloadStory, watchCoverage, bumpMetrics]);
+  }, [refreshTracks, reloadTracks, reloadDays, reloadTrip, watchCoverage, bumpMetrics]);
 
   const pendingStarted = useCallback(() => {
     refreshTracks();
@@ -78,9 +78,9 @@ export function useDataRefresh(map: MapLibreMap | null, inputs: DataRefreshInput
     // Includes the Country/Region tiers: an edit can un-visit a region.
     watchCoverage();
     reloadDays();
-    reloadStory();
+    reloadTrip();
     bumpMetrics();
-  }, [refreshTracks, watchCoverage, reloadDays, reloadStory, bumpMetrics]);
+  }, [refreshTracks, watchCoverage, reloadDays, reloadTrip, bumpMetrics]);
 
   return { refreshTracks, afterImport, afterPrivateLocations, pendingStarted, pendingFinished };
 }

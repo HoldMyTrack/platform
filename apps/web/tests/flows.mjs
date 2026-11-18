@@ -1,8 +1,8 @@
 /**
  * End-to-end flows over the map's state rules: an upload reaching an empty account, Dates
- * narrowing the list and keeping the selection, a Story opened and closed by Back, a track edit's
+ * narrowing the list and keeping the selection, a Trip opened and closed by Back, a route edit's
  * reprocess, a delete, the list following the map from zoom 4, the Dates menu, the Edit window
- * outliving its activity's row, the header's menus closing, and the tour's offer and header link.
+ * outliving its track's row, the header's menus closing, and the tour's offer and header link.
  * Each run signs up a fresh account, uploads the sample files, and deletes the account at the end.
  *
  *   npm run verify:map
@@ -27,10 +27,10 @@ let browser;
 let context;
 let page;
 
-const rows = () => page.locator('li[data-activity-id]');
-const checkedBoxes = () => page.locator('li[data-activity-id] input.activities-panel__checkbox:checked');
-const hiddenRows = () => page.locator('li.activities-panel__row--hidden');
-const row = (id) => page.locator(`li[data-activity-id="${id}"]`);
+const rows = () => page.locator('li[data-track-id]');
+const checkedBoxes = () => page.locator('li[data-track-id] input.tracks-panel__checkbox:checked');
+const hiddenRows = () => page.locator('li.tracks-panel__row--hidden');
+const row = (id) => page.locator(`li[data-track-id="${id}"]`);
 
 async function waitForServer(url, timeoutMs = 60_000) {
   const deadline = Date.now() + timeoutMs;
@@ -51,25 +51,25 @@ async function call(method, path, data) {
   return res.status() === 204 ? null : res.json();
 }
 
-/** The account's activities, newest first, once none is pending. */
-async function settledActivities(expected, timeoutMs = 90_000) {
+/** The account's tracks, newest first, once none is pending. */
+async function settledTracks(expected, timeoutMs = 90_000) {
   const deadline = Date.now() + timeoutMs;
   for (;;) {
-    const { activities } = await call('GET', '/activities');
-    if (activities.length === expected && activities.every((a) => !a.pending)) return activities;
-    if (Date.now() > deadline) throw new Error(`expected ${expected} settled activities, have ${JSON.stringify(activities.map((a) => [a.id, a.pending]))}`);
+    const { activities: tracks } = await call('GET', '/activities');
+    if (tracks.length === expected && tracks.every((a) => !a.pending)) return tracks;
+    if (Date.now() > deadline) throw new Error(`expected ${expected} settled activities, have ${JSON.stringify(tracks.map((a) => [a.id, a.pending]))}`);
     await new Promise((r) => setTimeout(r, 500));
   }
 }
 
-/** The map framed on every activity, and the list following it (docs/SPEC.md FR-5.11). A camera
+/** The map framed on every track, and the list following it (docs/SPEC.md FR-5.11). A camera
  *  move from here counts as the user's. */
 async function viewAll() {
-  const { activities } = await call('GET', '/activities');
-  const boxes = activities.map((a) => a.bbox).filter(Boolean);
+  const { activities: tracks } = await call('GET', '/activities');
+  const boxes = tracks.map((a) => a.bbox).filter(Boolean);
   const box = [Math.min(...boxes.map((b) => b[0])), Math.min(...boxes.map((b) => b[1])), Math.max(...boxes.map((b) => b[2])), Math.max(...boxes.map((b) => b[3]))];
   await page.evaluate((b) => window.__holdmytrack.fitBounds([[b[0], b[1]], [b[2], b[3]]], { padding: 80, animate: false }), box);
-  await page.waitForFunction((n) => document.querySelectorAll('li[data-activity-id]').length === n, activities.length, { timeout: 30_000 });
+  await page.waitForFunction((n) => document.querySelectorAll('li[data-track-id]').length === n, tracks.length, { timeout: 30_000 });
 }
 
 before(async () => {
@@ -116,8 +116,8 @@ describe('map flows', () => {
       });
       assert.ok(upload.ok(), `upload ${name}: ${upload.status()} ${await upload.text()}`);
     }
-    const activities = await settledActivities(SAMPLES.length);
-    ids = Object.fromEntries(activities.map((a) => [a.started_at.slice(0, 10), a.id]));
+    const tracks = await settledTracks(SAMPLES.length);
+    ids = Object.fromEntries(tracks.map((a) => [a.started_at.slice(0, 10), a.id]));
     // What the header's Upload menu sends once its imports are done.
     await page.evaluate(() => window.dispatchEvent(new Event('hmt:imports-changed')));
     await rows().nth(SAMPLES.length - 1).waitFor({ timeout: 30_000 });
@@ -125,17 +125,17 @@ describe('map flows', () => {
   });
 
   it('2. Dates narrow the list, keeping the checked group and the hidden tracks on what stays', async () => {
-    const boxes = page.locator('li[data-activity-id] input.activities-panel__checkbox');
+    const boxes = page.locator('li[data-track-id] input.tracks-panel__checkbox');
     // Newest first: 6 and 5 Oct.
     await boxes.nth(0).check();
     await boxes.nth(1).check();
-    await page.locator('.activities-panel__visibility').click();
+    await page.locator('.tracks-panel__visibility').click();
     assert.equal(await checkedBoxes().count(), 2);
     assert.equal(await hiddenRows().count(), 2);
     await page.getByTestId('dates-filter').click();
     await page.getByTestId('dates-after').fill('2026-10-05');
     await page.getByTestId('dates-after').press('Enter');
-    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 2, undefined, { timeout: 30_000 });
+    await page.waitForFunction(() => document.querySelectorAll('li[data-track-id]').length === 2, undefined, { timeout: 30_000 });
     assert.equal(await row(ids['2026-10-01']).count(), 0);
     assert.equal(await checkedBoxes().count(), 2);
     assert.equal(await hiddenRows().count(), 2);
@@ -144,22 +144,22 @@ describe('map flows', () => {
     assert.equal((await page.getByTestId('dates-filter').textContent()).trim(), 'Dates');
   });
 
-  it('3. the Stories tab opens the newest Story in the URL, and Back returns to the area', async () => {
+  it('3. the Trips tab opens the newest Trip in the URL, and Back returns to the area', async () => {
     await call('POST', '/stories', { name: 'Flows trip', activity_ids: [ids['2026-10-01'], ids['2026-10-06']] });
     await page.getByRole('tab', { name: 'Trips' }).click();
-    await page.waitForURL(/[?&]story=/, { timeout: 30_000 });
-    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 2, undefined, { timeout: 30_000 });
+    await page.waitForURL(/[?&]trip=/, { timeout: 30_000 });
+    await page.waitForFunction(() => document.querySelectorAll('li[data-track-id]').length === 2, undefined, { timeout: 30_000 });
     await row(ids['2026-10-01']).waitFor({ timeout: 30_000 });
     assert.equal(await row(ids['2026-10-05']).count(), 0);
-    // Back reads the area under the camera, so the camera has to finish framing the Story first.
+    // Back reads the area under the camera, so the camera has to finish framing the Trip first.
     await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
     await page.goBack();
-    await page.waitForURL((url) => !url.searchParams.has('story'), { timeout: 30_000 });
+    await page.waitForURL((url) => !url.searchParams.has('trip'), { timeout: 30_000 });
     assert.equal(await page.getByRole('tab', { name: 'Tracks' }).getAttribute('aria-selected'), 'true');
-    // The area is wherever the Story left the camera, which frames both of its tracks.
+    // The area is wherever the Trip left the camera, which frames both of its tracks.
     await row(ids['2026-10-01']).waitFor({ timeout: 30_000 });
     await row(ids['2026-10-06']).waitFor({ timeout: 30_000 });
-    // The Stories tab's first-time card floats over the list's top rows until put away.
+    // The Trips tab's first-time card floats over the list's top rows until put away.
     const card = page.getByTestId('tour-card');
     if (await card.count()) await card.locator('.tour-card__close').click();
   });
@@ -168,64 +168,64 @@ describe('map flows', () => {
     const id = ids['2026-10-05'];
     await viewAll();
     const before = (await call('GET', '/activities')).activities.find((a) => a.id === id).distance_meters;
-    const metaBefore = await row(id).locator('.activities-panel__meta').textContent();
-    await row(id).locator('.activities-panel__text').click();
-    await page.locator('.activities-panel__edit').click();
-    await page.getByTestId('edit-tab-track').click();
+    const metaBefore = await row(id).locator('.tracks-panel__meta').textContent();
+    await row(id).locator('.tracks-panel__text').click();
+    await page.locator('.tracks-panel__edit').click();
+    await page.getByTestId('edit-tab-route').click();
     const startKnob = page.getByLabel('Start of range');
     await startKnob.waitFor({ timeout: 30_000 });
     const max = Number(await startKnob.getAttribute('max'));
     await startKnob.fill(String(Math.round(max / 2)));
     await page.getByRole('button', { name: 'Chop', exact: true }).click();
     await page.getByTestId('edit-save').click();
-    await page.getByTestId('edit-activity-window').waitFor({ state: 'detached', timeout: 30_000 });
+    await page.getByTestId('edit-track-window').waitFor({ state: 'detached', timeout: 30_000 });
     // The row comes back from Pending on its own, with the shorter distance.
     await page.waitForFunction(
       (rowId) => {
-        const el = document.querySelector(`li[data-activity-id="${rowId}"]`);
-        return el !== null && !el.classList.contains('activities-panel__row--pending');
+        const el = document.querySelector(`li[data-track-id="${rowId}"]`);
+        return el !== null && !el.classList.contains('tracks-panel__row--pending');
       },
       id,
       { timeout: 60_000 },
     );
-    const [after] = (await settledActivities(SAMPLES.length)).filter((a) => a.id === id);
+    const [after] = (await settledTracks(SAMPLES.length)).filter((a) => a.id === id);
     assert.ok(after.distance_meters < before, `distance ${after.distance_meters} not below ${before}`);
     await page.waitForFunction(
-      ({ rowId, text }) => document.querySelector(`li[data-activity-id="${rowId}"] .activities-panel__meta`)?.textContent !== text,
+      ({ rowId, text }) => document.querySelector(`li[data-track-id="${rowId}"] .tracks-panel__meta`)?.textContent !== text,
       { rowId: id, text: metaBefore },
       { timeout: 30_000 },
     );
   });
 
-  it('5. a deleted activity leaves the list, the map and the selection', async () => {
+  it('5. a deleted track leaves the list, the map and the selection', async () => {
     const id = ids['2026-10-06'];
-    await row(id).locator('input.activities-panel__checkbox').check();
-    await page.locator('.activities-panel__delete').click();
+    await row(id).locator('input.tracks-panel__checkbox').check();
+    await page.locator('.tracks-panel__delete').click();
     await page.locator('.confirm-dialog__confirm').click();
     await row(id).waitFor({ state: 'detached', timeout: 30_000 });
     assert.equal(await checkedBoxes().count(), 0);
-    const { activities } = await call('GET', '/activities');
-    assert.equal(activities.some((a) => a.id === id), false);
+    const { activities: tracks } = await call('GET', '/activities');
+    assert.equal(tracks.some((a) => a.id === id), false);
   });
 
   it('6. the list follows the map from zoom 4, and further out asks to zoom in', async () => {
     await viewAll();
     // Zoom 6 over open ocean: the list follows on its own.
     await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [0, 0], zoom: 6 }));
-    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 0, undefined, { timeout: 30_000 });
+    await page.waitForFunction(() => document.querySelectorAll('li[data-track-id]').length === 0, undefined, { timeout: 30_000 });
     // No track is drawn below zoom 4, so there's nothing to list.
     await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [-81.7, 41.45], zoom: 3 }));
     await page.getByText('Zoom in to see your tracks.').waitFor({ timeout: 10_000 });
     assert.equal(await rows().count(), 0);
   });
 
-  it('7. the Dates menu offers the first activity as a hint, and ✕ clears it without moving the camera', async () => {
+  it('7. the Dates menu offers the first track as a hint, and ✕ clears it without moving the camera', async () => {
     await viewAll();
     await page.getByTestId('dates-filter').click();
-    assert.match(await page.locator('.activities-panel__date-hint').first().textContent(), /Oct 1, 2026/);
+    assert.match(await page.locator('.tracks-panel__date-hint').first().textContent(), /Oct 1, 2026/);
     await page.getByTestId('dates-before').fill('2026-10-01');
     await page.getByTestId('dates-before').press('Enter');
-    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 1, undefined, { timeout: 30_000 });
+    await page.waitForFunction(() => document.querySelectorAll('li[data-track-id]').length === 1, undefined, { timeout: 30_000 });
     assert.match(await page.getByTestId('dates-filter').textContent(), /Until Oct 1/);
     await page.keyboard.press('Escape');
     // Setting Dates flew the camera onto the match; clearing them must leave it where it landed.
@@ -240,20 +240,20 @@ describe('map flows', () => {
     const id = ids['2026-10-01'];
     await viewAll();
     const before = (await call('GET', '/activities')).activities.find((a) => a.id === id).distance_meters;
-    await row(id).locator('.activities-panel__text').click();
-    await page.locator('.activities-panel__edit').click();
-    const name = page.getByTestId('edit-activity-window').getByLabel('Name');
+    await row(id).locator('.tracks-panel__text').click();
+    await page.locator('.tracks-panel__edit').click();
+    const name = page.getByTestId('edit-track-window').getByLabel('Name');
     await name.fill('Kept through a move');
-    await page.getByTestId('edit-tab-track').click();
+    await page.getByTestId('edit-tab-route').click();
     const startKnob = page.getByLabel('Start of range');
     await startKnob.waitFor({ timeout: 30_000 });
     await startKnob.fill(String(Math.round(Number(await startKnob.getAttribute('max')) / 2)));
     await page.getByRole('button', { name: 'Chop', exact: true }).click();
-    // Open ocean: the list follows the map there and holds no activity.
+    // Open ocean: the list follows the map there and holds no track.
     await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
     await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [0, 0], zoom: 6 }));
-    await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 0, undefined, { timeout: 30_000 });
-    await page.getByTestId('edit-tab-activity').click();
+    await page.waitForFunction(() => document.querySelectorAll('li[data-track-id]').length === 0, undefined, { timeout: 30_000 });
+    await page.getByTestId('edit-tab-track').click();
     assert.equal(await name.inputValue(), 'Kept through a move');
     // The Pending checks, and the days read again once an edit counts as landed.
     const requests = [];
@@ -263,8 +263,8 @@ describe('map flows', () => {
     };
     page.on('request', record);
     await page.getByTestId('edit-save').click();
-    await page.getByTestId('edit-activity-window').waitFor({ state: 'detached', timeout: 30_000 });
-    const [after] = (await settledActivities(SAMPLES.length - 1)).filter((a) => a.id === id);
+    await page.getByTestId('edit-track-window').waitFor({ state: 'detached', timeout: 30_000 });
+    const [after] = (await settledTracks(SAMPLES.length - 1)).filter((a) => a.id === id);
     assert.equal(after.name, 'Kept through a move');
     assert.ok(after.distance_meters < before, `distance ${after.distance_meters} not below ${before}`);
     // The check stops by itself: two of its 2-second intervals pass with no request.
@@ -281,7 +281,7 @@ describe('map flows', () => {
     assert.ok(lastCheck >= 0, 'the Pending check never ran');
     assert.ok(requests.lastIndexOf('/v1/activities/histogram') > lastCheck, `nothing was read again after the edit landed: ${requests.join(' ')}`);
     await viewAll();
-    assert.equal(await row(id).evaluate((el) => el.classList.contains('activities-panel__row--pending')), false);
+    assert.equal(await row(id).evaluate((el) => el.classList.contains('tracks-panel__row--pending')), false);
   });
 
   it("9. the header's menus close on another menu, a click on the map and Escape", async () => {
@@ -299,8 +299,8 @@ describe('map flows', () => {
     assert.deepEqual(await open(), []);
   });
 
-  it("10. an account with activities is offered the tour once; the header's link starts it in place, and it puts the mode back", async () => {
-    // Loaded with activities from the start, the map offers the tour.
+  it("10. an account with tracks is offered the tour once; the header's link starts it in place, and it puts the mode back", async () => {
+    // Loaded with tracks from the start, the map offers the tour.
     await page.reload();
     await page.getByTestId('tour-offer').waitFor({ timeout: 60_000 });
     await page.getByTestId('tour-offer-later').click();

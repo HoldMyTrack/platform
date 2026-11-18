@@ -1,11 +1,11 @@
 /**
- * Whether the Activities tab shows the first-run panel (docs/SPEC.md FR-5.10): a real account
- * with no activities at all. `hasActivities` is null until the account's first page of
- * activity-days has come back, and the panel waits for it, so an account with history never
- * flashes it. A demo always has activities and can't import.
+ * Whether the Tracks tab shows the first-run panel (docs/SPEC.md FR-5.10): a real account
+ * with no tracks at all. `hasTracks` is null until the account's first page of
+ * track-days has come back, and the panel waits for it, so an account with history never
+ * flashes it. A demo always has tracks and can't import.
  */
-export function showsFirstRun(isDemo: boolean, hasActivities: boolean | null): boolean {
-  return !isDemo && hasActivities === false;
+export function showsFirstRun(isDemo: boolean, hasTracks: boolean | null): boolean {
+  return !isDemo && hasTracks === false;
 }
 
 /**

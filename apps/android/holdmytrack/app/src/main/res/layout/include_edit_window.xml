@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Edit window (panel/EditActivityWindow.kt), after the web's EditActivityWindow.tsx: a card
+<!-- The Edit window (panel/EditActivityWindow.kt), after the web's EditTrackWindow.tsx: a card
      along the bottom of the map, the map left showing between it and the edit bar at the top
      (fragment_map's edit_bar: Cancel, the title and whose it is, Save), rather than a modal
      dialog, so its Track and Photos tabs can edit on the map. The Activity, Track and Photos tabs

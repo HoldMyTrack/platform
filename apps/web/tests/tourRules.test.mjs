@@ -2,15 +2,15 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { CAMERA_UNMOVED, DEMO_VIEWS, NOTHING_SEEN, cameraStep, cardFor, unionOf, isPlainClick, nextStep, onScreen, placePopover, readTourSeen, stepsFor, tourStart, withCard } from '../src/ui/tour/tourRules.ts';
 
-const start = (over) => tourStart({ requested: false, isDemo: false, hasActivities: true, seen: NOTHING_SEEN, ...over });
+const start = (over) => tourStart({ requested: false, isDemo: false, hasTracks: true, seen: NOTHING_SEEN, ...over });
 
-test('the tour waits for the history, then starts for a demo and is offered to an account with activities', () => {
-  assert.equal(start({ hasActivities: null }), 'wait');
-  assert.equal(start({ hasActivities: null, requested: true }), 'wait');
+test('the tour waits for the history, then starts for a demo and is offered to an account with tracks', () => {
+  assert.equal(start({ hasTracks: null }), 'wait');
+  assert.equal(start({ hasTracks: null, requested: true }), 'wait');
   assert.equal(start({ isDemo: true }), 'start');
   assert.equal(start({}), 'offer');
   // An empty map has nothing to show.
-  assert.equal(start({ hasActivities: false }), 'none');
+  assert.equal(start({ hasTracks: false }), 'none');
 });
 
 test('once seen it never comes back by itself, but a request always starts it', () => {
@@ -18,20 +18,20 @@ test('once seen it never comes back by itself, but a request always starts it', 
   assert.equal(start({ seen }), 'none');
   assert.equal(start({ seen, isDemo: true }), 'none');
   assert.equal(start({ seen, requested: true }), 'start');
-  assert.equal(start({ requested: true, hasActivities: false }), 'start');
+  assert.equal(start({ requested: true, hasTracks: false }), 'start');
 });
 
-test('a card shows once, for Fog or the Stories tab, and never during the tour', () => {
+test('a card shows once, for Fog or the Trips tab, and never during the tour', () => {
   assert.equal(cardFor({ kind: 'mode', mode: 'fog' }, NOTHING_SEEN, false), 'fog');
   assert.equal(cardFor({ kind: 'mode', mode: 'normal' }, NOTHING_SEEN, false), null);
-  assert.equal(cardFor({ kind: 'tab', tab: 'stories' }, NOTHING_SEEN, false), 'stories');
-  assert.equal(cardFor({ kind: 'tab', tab: 'activities' }, NOTHING_SEEN, false), null);
+  assert.equal(cardFor({ kind: 'tab', tab: 'trips' }, NOTHING_SEEN, false), 'trips');
+  assert.equal(cardFor({ kind: 'tab', tab: 'tracks' }, NOTHING_SEEN, false), null);
   assert.equal(cardFor({ kind: 'mode', mode: 'fog' }, withCard(NOTHING_SEEN, 'fog'), false), null);
   assert.equal(cardFor({ kind: 'mode', mode: 'fog' }, NOTHING_SEEN, true), null);
 });
 
 test('a stored record keeps only the cards this build shows, and a broken one counts as nothing seen', () => {
-  assert.deepEqual(readTourSeen(JSON.stringify({ tour: true, cards: ['fog', 'heatmap', 'stories'] })), { tour: true, cards: ['fog', 'stories'] });
+  assert.deepEqual(readTourSeen(JSON.stringify({ tour: true, cards: ['fog', 'heatmap', 'trips'] })), { tour: true, cards: ['fog', 'trips'] });
   assert.deepEqual(readTourSeen(JSON.stringify({ cards: ['heatmap'] })), NOTHING_SEEN);
   assert.equal(readTourSeen(null), NOTHING_SEEN);
   assert.equal(readTourSeen('{'), NOTHING_SEEN);
@@ -84,12 +84,12 @@ test("the demo's steps fly through its views and back; a real account's never mo
   assert.equal(at('fog'), DEMO_VIEWS.exact);
   assert.equal(at('fog_counties'), DEMO_VIEWS.counties);
   assert.equal(at('fog_countries'), DEMO_VIEWS.countries);
-  // The step after Fog goes back to the view before the tour's first move, the Stories tab's.
+  // The step after Fog goes back to the view before the tour's first move, the Trips tab's.
   assert.deepEqual(at('add'), current);
-  // A real account's Stories step lets the map frame its Story, and the next step brings it back.
+  // A real account's Trips step lets the map frame its Trip, and the next step brings it back.
   const real = stepsFor({ isDemo: false });
   const realMoves = walk(real);
-  assert.equal(realMoves[real.findIndex((s) => s.id === 'stories')], null);
+  assert.equal(realMoves[real.findIndex((s) => s.id === 'trips')], null);
   assert.deepEqual(realMoves[real.findIndex((s) => s.id === 'layers')], current);
   for (const move of realMoves.filter((m) => m !== null)) assert.deepEqual(move, current);
 });
@@ -111,12 +111,12 @@ test("the globe's turn goes east in legs under 180°, from the US to Vietnam", (
   }
 });
 
-test("a step opens what it explains: the Stories tab, the sheet, Layers, Places, Fog's levels, and Upload for an account that can upload", () => {
+test("a step opens what it explains: the Trips tab, the sheet, Layers, Places, Fog's levels, and Upload for an account that can upload", () => {
   const steps = (isDemo) => Object.fromEntries(stepsFor({ isDemo }).map((s) => [s.id, s]));
   const real = steps(false);
   const demo = steps(true);
-  assert.equal(real.stories.tab, 'stories');
-  assert.ok(real.stories.open.sheet && real.activities.open.sheet);
+  assert.equal(real.trips.tab, 'trips');
+  assert.ok(real.trips.open.sheet && real.tracks.open.sheet);
   assert.ok(real.layers.open.layers && !real.layers.open.places);
   assert.ok(real.places.open.places && !real.places.open.layers);
   // Fog's level menu opens on its last step: a real account's only one, the demo's countries.
@@ -124,21 +124,21 @@ test("a step opens what it explains: the Stories tab, the sheet, Layers, Places,
   assert.deepEqual(Object.values(demo).filter((s) => s.open.fogLevel).map((s) => s.id), ['fog_countries']);
   assert.ok(real.add.open.upload);
   assert.equal(steps(true).add.open.upload, undefined);
-  // Every other step is on the Activities tab, which the tour leaves for the Stories step alone.
-  assert.ok(Object.values(real).filter((s) => s.id !== 'stories').every((s) => s.tab === 'activities'));
+  // Every other step is on the Tracks tab, which the tour leaves for the Trips step alone.
+  assert.ok(Object.values(real).filter((s) => s.id !== 'trips').every((s) => s.tab === 'tracks'));
 });
 
 test('nextStep skips steps off screen and stops at either end', () => {
   const steps = stepsFor({ isDemo: false });
-  const hidden = new Set(['range', 'stories']);
+  const hidden = new Set(['range', 'trips']);
   const shown = (s) => !hidden.has(s.id);
   const at = (id) => steps.findIndex((s) => s.id === id);
-  assert.equal(nextStep(steps, at('activities'), 1, shown), at('layers'));
-  assert.equal(nextStep(steps, at('layers'), -1, shown), at('activities'));
+  assert.equal(nextStep(steps, at('tracks'), 1, shown), at('layers'));
+  assert.equal(nextStep(steps, at('layers'), -1, shown), at('tracks'));
   assert.equal(nextStep(steps, at('done'), 1, shown), null);
   assert.equal(nextStep(steps, 0, -1, shown), null);
   // The welcome has no anchor, so it shows whatever `shown` says.
-  assert.equal(nextStep(steps, at('activities'), -1, () => false), 0);
+  assert.equal(nextStep(steps, at('tracks'), -1, () => false), 0);
 });
 
 test('the popover goes below its anchor, else above, else beside, clamped in the viewport', () => {

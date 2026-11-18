@@ -5,7 +5,7 @@ import java.time.ZoneId
 /**
  * The zone an activity's times are shown in (`docs/IMPLEMENTATION.md` §4.30): the one it was
  * recorded in, else the account's, else the phone's. A zone the phone's tz data doesn't know yet
- * falls through to the next rather than failing to format. The web's `activityTimeZone`; both run
+ * falls through to the next rather than failing to format. The web's `trackTimeZone`; both run
  * `testdata/client-rules/track-zone.json`.
  */
 object ActivityZone {

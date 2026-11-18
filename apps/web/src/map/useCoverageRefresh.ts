@@ -17,8 +17,8 @@ import { webLayers } from './webLayers.ts';
  * upload or delete can enqueue its jobs just after an in-flight read already came back
  * "done", and restarting is what guarantees that read isn't the last word.
  *
- * While it waits, it also refetches whenever the status's `version` changes: a track edit or
- * Private location change renders once with its Pending activities left out of coverage and
+ * While it waits, it also refetches whenever the status's `version` changes: a route edit or
+ * Private location change renders once with its Pending tracks left out of coverage and
  * again once they're back (IMPLEMENTATION.md §4.2.5), and the first of those is only shown if
  * picked up mid-job. The first read of a page only sets the baseline.
  *
@@ -29,7 +29,7 @@ import { webLayers } from './webLayers.ts';
  * `rendering` is what the latest read said, for the map's "still being updated" notice.
  *
  * `onDone`, when given, runs after that refetch — for a caller whose change also moves things
- * the coverage rasters don't cover (a Private location change reprocesses whole activities),
+ * the coverage rasters don't cover (a Private location change reprocesses whole tracks),
  * and which can't otherwise tell when the server has finished.
  */
 interface CoverageRefresh {

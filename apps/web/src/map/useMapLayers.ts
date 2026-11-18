@@ -10,10 +10,10 @@ import { setRoadsVisible } from './mapRoads.ts';
 import { setSatelliteVisible } from './satellite.ts';
 import { ensureSpotsLayer, type SpotCategory } from './spots.ts';
 import { buildStyle, type Flavor } from './style.ts';
-import { setTrackBands } from './trackBands.ts';
+import { setRouteBands } from './routeBands.ts';
 import { attachFogPlaces } from './fogPlaces.ts';
-import { attachTrackInteractivity, refreshTrackLayer, trackQuery } from './tracks.ts';
-import type { ActivityQuery, ActivityTrackMetrics } from '../api.ts';
+import { attachTrackInteractivity, refreshTrackLayer, tracksTileQuery } from './tracks.ts';
+import type { TrackQuery, TrackRouteMetrics } from '../api.ts';
 import { lang } from '../i18n/index.ts';
 
 interface MapLayersInputs {
@@ -26,16 +26,16 @@ interface MapLayersInputs {
   /** The basemap's roads are drawn (overlays.ts). */
   roads: boolean;
   mode: MapMode;
-  /** The Edit window's Track tab has the map. */
-  editingTrack: boolean;
+  /** The Edit window's Route tab has the map. */
+  editingRoute: boolean;
   paths: BikePathOverlays;
   spotsShown: readonly SpotCategory[];
-  tracksQuery: ActivityQuery;
+  tracksQuery: TrackQuery;
   mapHiddenIds: ReadonlySet<string>;
   /** The tracks drawn bold (selection.ts's boldTracks). */
   boldIds: readonly string[];
-  /** The focused activity's metrics, if its bands are drawn. */
-  bands: ActivityTrackMetrics | null;
+  /** The focused track's metrics, if its bands are drawn. */
+  bands: TrackRouteMetrics | null;
 }
 
 /**
@@ -44,7 +44,7 @@ interface MapLayersInputs {
  * tracks' query between loads. A theme change swaps the style in place.
  */
 export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): void {
-  const { initialFlavor, flavor, satellite, satelliteLook, roads, mode, editingTrack, paths, spotsShown, tracksQuery, mapHiddenIds, boldIds, bands } = inputs;
+  const { initialFlavor, flavor, satellite, satelliteLook, roads, mode, editingRoute, paths, spotsShown, tracksQuery, mapHiddenIds, boldIds, bands } = inputs;
 
   // Points the tracks source at the new query, as a new URL.
   useEffect(() => {
@@ -63,19 +63,19 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
         satellite: satelliteLook,
         toggles: { ...state.toggles, ...paths },
         vars: { ...state.vars, hidden: [...mapHiddenIds], focused: [...boldIds] },
-        queries: { ...state.queries, tracks: trackQuery(tracksQuery) },
+        queries: { ...state.queries, tracks: tracksTileQuery(tracksQuery) },
       });
       attachTrackInteractivity(instance);
       attachFogPlaces(instance);
       // Spots last, above the basemap's labels too (spots.ts).
       ensureSpotsLayer(instance, spotsShown);
-      setMapMode(instance, mode, satelliteLook, editingTrack);
+      setMapMode(instance, mode, satelliteLook, editingRoute);
       setSatelliteVisible(instance, satellite, satelliteLook);
       setRoadsVisible(instance, roads);
       // The band source is recreated empty.
-      if (bands) setTrackBands(instance, bands);
+      if (bands) setRouteBands(instance, bands);
     },
-    [flavor, satellite, satelliteLook, roads, mode, editingTrack, paths, spotsShown, mapHiddenIds, tracksQuery, bands, boldIds],
+    [flavor, satellite, satelliteLook, roads, mode, editingRoute, paths, spotsShown, mapHiddenIds, tracksQuery, bands, boldIds],
   );
 
   useEffect(() => {
@@ -106,8 +106,8 @@ export function useMapLayers(map: MapLibreMap | null, inputs: MapLayersInputs): 
   // Mode, paths, satellite and roads changes between style loads flip the layers in place.
   useEffect(() => {
     if (!map) return;
-    setMapMode(map, mode, satelliteLook, editingTrack);
-  }, [map, mode, satelliteLook, editingTrack]);
+    setMapMode(map, mode, satelliteLook, editingRoute);
+  }, [map, mode, satelliteLook, editingRoute]);
 
   useEffect(() => {
     if (!map) return;

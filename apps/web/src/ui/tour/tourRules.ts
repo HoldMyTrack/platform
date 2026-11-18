@@ -4,12 +4,12 @@
  * where the popover sits. useTour.ts holds the state around them, Tour.tsx draws it.
  */
 import type { MapMode } from '../../map/mapMode.ts';
-import type { PanelTab } from '../ActivitiesPanel.tsx';
+import type { PanelTab } from '../TracksPanel.tsx';
 
 /** A first-time card: the feature's own explanation, shown once per browser. */
-export type CardId = 'fog' | 'stories';
+export type CardId = 'fog' | 'trips';
 
-type StepId = 'welcome' | 'activities' | 'range' | 'stories' | 'layers' | 'places' | 'export' | 'fog' | 'fog_cities' | 'fog_counties' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
+type StepId = 'welcome' | 'tracks' | 'range' | 'trips' | 'layers' | 'places' | 'export' | 'fog' | 'fog_cities' | 'fog_counties' | 'fog_regions' | 'fog_countries' | 'add' | 'done';
 
 /**
  * Where a step puts the camera: `center` and `zoom`, then a slow turn of the globe through each
@@ -89,7 +89,7 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
     card: null,
     text: `tour.${id}`,
     view: null,
-    tab: 'activities',
+    tab: 'tracks',
     open: {},
     ...more,
   });
@@ -104,9 +104,9 @@ export function stepsFor({ isDemo, narrow = false }: { isDemo: boolean; narrow?:
     : [step('fog', withPanel(MODES), { mode: 'fog', card: 'fog', open: { fogLevel: true } })];
   return [
     step('welcome', null),
-    step('activities', '[data-testid="activities-panel"]', { open: { sheet: true } }),
+    step('tracks', '[data-testid="tracks-panel"]', { open: { sheet: true } }),
     step('range', '[data-testid="dates-filter"]'),
-    step('stories', '[data-testid="activities-panel"]', { card: 'stories', tab: 'stories', open: { sheet: true } }),
+    step('trips', '[data-testid="tracks-panel"]', { card: 'trips', tab: 'trips', open: { sheet: true } }),
     step('layers', withPanel('[data-testid="map-overlays"]'), { open: { layers: true } }),
     step('places', withPanel('[data-testid="map-places"]'), { open: { places: true } }),
     step('export', '[data-testid="export-button"]'),
@@ -134,13 +134,13 @@ export const CAMERA_UNMOVED: TourCamera = { start: null, shown: null };
 /**
  * Where the camera goes for `step` (`testdata/client-rules/tour-camera.json`). The view before the
  * tour's first move (`current`, read then) is kept, since the map's own first flight may still be
- * under way when the tour starts. The Stories tab frames its Story itself, so the camera after it
+ * under way when the tour starts. The Trips tab frames its Trip itself, so the camera after it
  * is unknown and the next step moves it whatever it is. `move` is null for no move.
  */
 export function cameraStep(camera: TourCamera, step: Pick<TourStep, 'view' | 'tab'>, current: TourView): { camera: TourCamera; move: TourView | null } {
   let { start, shown } = camera;
-  if (start === null && (step.view !== null || step.tab === 'stories')) start = shown = current;
-  if (step.view === null && step.tab === 'stories') return { camera: { start, shown: null }, move: null };
+  if (start === null && (step.view !== null || step.tab === 'trips')) start = shown = current;
+  if (step.view === null && step.tab === 'trips') return { camera: { start, shown: null }, move: null };
   const target = step.view ?? start;
   if (target === null || (shown !== null && sameView(shown, target))) return { camera: { start, shown }, move: null };
   return { camera: { start, shown: target }, move: target };
@@ -170,7 +170,7 @@ export interface TourSeen {
 
 export const NOTHING_SEEN: TourSeen = { tour: false, cards: [] };
 
-const CARDS: readonly CardId[] = ['fog', 'stories'];
+const CARDS: readonly CardId[] = ['fog', 'trips'];
 
 /** What `raw`, the browser's stored record (tourStore.ts), says was seen: a card this build doesn't show, or a record that doesn't parse, counts as unseen. */
 export function readTourSeen(raw: string | null): TourSeen {
@@ -188,16 +188,16 @@ type TourStart = 'start' | 'offer' | 'none' | 'wait';
 
 /**
  * What the map does about the tour when it opens. `requested` is the header's Take a tour or
- * `/?tour`. `hasActivities` is null until the account's history is known. A demo visitor gets the
+ * `/?tour`. `hasTracks` is null until the account's history is known. A demo visitor gets the
  * tour unasked, since the demo's data is there to show; a real account is only offered it, and not
  * before it has something on the map.
  */
-export function tourStart({ requested, isDemo, hasActivities, seen }: { requested: boolean; isDemo: boolean; hasActivities: boolean | null; seen: TourSeen }): TourStart {
-  if (hasActivities === null) return 'wait';
+export function tourStart({ requested, isDemo, hasTracks, seen }: { requested: boolean; isDemo: boolean; hasTracks: boolean | null; seen: TourSeen }): TourStart {
+  if (hasTracks === null) return 'wait';
   if (requested) return 'start';
   if (seen.tour) return 'none';
   if (isDemo) return 'start';
-  return hasActivities ? 'offer' : 'none';
+  return hasTracks ? 'offer' : 'none';
 }
 
 /** Something the user did that may earn a first-time card. */
@@ -208,7 +208,7 @@ export function cardFor(event: UserEvent, seen: TourSeen, touring: boolean): Car
   if (touring) return null;
   let card: CardId | null = null;
   if (event.kind === 'mode' && event.mode !== 'normal') card = event.mode;
-  if (event.kind === 'tab' && event.tab === 'stories') card = 'stories';
+  if (event.kind === 'tab' && event.tab === 'trips') card = 'trips';
   return card !== null && !seen.cards.includes(card) ? card : null;
 }
 

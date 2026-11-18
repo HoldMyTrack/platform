@@ -1,5 +1,5 @@
 import type { GeoJSONSource, Map as MapLibreMap } from 'maplibre-gl';
-import type { ActivityQuery } from '../api.ts';
+import type { TrackQuery } from '../api.ts';
 import { currentLayerState, setLayerVars, updateLayers } from './applyLayers.ts';
 import { mapTapsActive } from './mapTaps.ts';
 import { PHOTO_MARKER_CLASS } from './photos.ts';
@@ -20,10 +20,10 @@ const CLICK_TOLERANCE_PX = 4;
 // box above missed a track under the finger most of the time — and a miss clears the focus.
 const TAP_TOLERANCE_PX = 14;
 
-/** `from`/`to` and a Story (FR-13.4) — `types` stays a client-side-only filter (activityFacets.ts,
+/** `from`/`to` and a Trip (FR-13.4) — `types` stays a client-side-only filter (trackFacets.ts,
  *  setHiddenTracks below), matching DISTANCE, which has no server-side equivalent at all;
  *  keeping both narrowed the same way is simpler than half server-side, half client-side. */
-type TrackDateRange = Pick<ActivityQuery, 'from' | 'to' | 'story' | 'since'>;
+type TracksTileRange = Pick<TrackQuery, 'from' | 'to' | 'trip' | 'since'>;
 
 /**
  * Bumped by every refreshTrackLayer, and sent as `v` (the handler ignores it) so each refresh
@@ -40,15 +40,15 @@ let tracksVersion = 0;
 const pageLoaded = Date.now().toString(36);
 
 /**
- * The query the client appends to the tracks tiles: `from`/`to`, or a Story. An omitted filter
+ * The query the client appends to the tracks tiles: `from`/`to`, or a Trip. An omitted filter
  * means "no restriction" to the server, so a bare tile request asks for every track ever
- * uploaded; the Activities list and the map disagreed about what was in view until this was sent.
+ * uploaded; the Tracks list and the map disagreed about what was in view until this was sent.
  */
-export function trackQuery(range: TrackDateRange): string {
+export function tracksTileQuery(range: TracksTileRange): string {
   const params = new URLSearchParams();
   if (range.from) params.set('from', range.from);
   if (range.to) params.set('to', range.to);
-  if (range.story) params.set('story', range.story);
+  if (range.trip) params.set('story', range.trip);
   if (range.since) params.set('since', range.since);
   if (tracksVersion > 0) params.set('v', `${pageLoaded}.${tracksVersion}`);
   return params.toString();
@@ -61,16 +61,16 @@ const interactiveMaps = new WeakSet<MapLibreMap>();
 
 interface TrackInteractivityHandlers {
   /** A track was clicked — the caller decides what "selected" means (see MapView). */
-  onSelect: (activityId: string) => void;
+  onSelect: (trackId: string) => void;
   /** The pointer entered or left a track — `null` on leave. Reported up rather than applied
    *  directly so ActivitiesPanel's own row hover can drive the same hover source through one
    *  place (setHoveredTrack) instead of the two fighting over
    *  which one a mouseleave should clear. */
-  onHover: (activityId: string | null) => void;
+  onHover: (trackId: string | null) => void;
   /** A click landed on the map somewhere with no track underneath it — reported live as the
-   *  missing counterpart to onSelect: a focused activity had no way to lose that focus by
+   *  missing counterpart to onSelect: a focused track had no way to lose that focus by
    *  clicking away from it on the map itself (only by focusing a different one, or via the
-   *  Activities panel). MapView clears its own row-click focus on this; it does not touch
+   *  Tracks panel). MapView clears its own row-click focus on this; it does not touch
    *  the checkbox group, matching that the two are independent everywhere else. */
   onClickAway: () => void;
 }
@@ -96,7 +96,7 @@ export function attachTrackInteractivity(map: MapLibreMap): void {
   map.on('mousemove', TRACKS_LAYER_ID, (e) => {
     if (!mapTapsActive()) return;
     map.getCanvas().style.cursor = 'pointer';
-    // The activity's id as the tile carries it (the tracks query's `id` column).
+    // The track's id as the tile carries it (the tracks query's `id` column).
     const id = e.features?.[0]?.properties?.id as string | undefined;
     if (id === undefined || id === hoveredId) return;
     hoveredId = id;
@@ -115,7 +115,7 @@ export function attachTrackInteractivity(map: MapLibreMap): void {
   // onClickAway are two outcomes of the exact same hit-test ("did this click land on a
   // track, or not"), so they share one query instead of running it twice and risking the
   // two disagreeing. Queries TRACKS_LAYER_ID specifically rather than the band overlay:
-  // every visible band already sits directly on top of that same activity's own
+  // every visible band already sits directly on top of that same track's own
   // tracks-layer feature, so checking the tracks layer alone is sufficient to tell "on a
   // track" from "not."
   //
@@ -123,8 +123,8 @@ export function attachTrackInteractivity(map: MapLibreMap): void {
   // leaves almost no room for error — a click landing a couple of pixels off the rendered
   // line (easy to do aiming at something this thin) used to just do nothing (harmless), but
   // once a miss started clearing the current focus (onClickAway), the same near-miss became
-  // destructive instead. Found live: clicking within 3px of a second activity's track, while
-  // a first one was already focused, cleared the first activity's focus and never applied a
+  // destructive instead. Found live: clicking within 3px of a second track's track, while
+  // a first one was already focused, cleared the first track's focus and never applied a
   // new one — the exact-pixel query saw neither track under the cursor. CLICK_TOLERANCE_PX
   // is larger than half the hover width (tracksGroup.ts) so a hover-widened line is still
   // comfortably inside its own tolerance box, not just barely.
@@ -165,21 +165,21 @@ function isTouch(event: MouseEvent): boolean {
  * mouseleave above (via onHover) and ActivitiesPanel's row hover (via MapView's hoveredActivityId),
  * so a row hover and a map hover share one piece of state.
  */
-export function setHoveredTrack(map: MapLibreMap, activityId: string | null): void {
+export function setHoveredTrack(map: MapLibreMap, trackId: string | null): void {
   const source = map.getSource(TRACK_HOVER_SOURCE) as GeoJSONSource | undefined;
   if (!source) return;
   // A hidden track stays hidden under the pointer; the rest are drawn, or past the cap listed.
   const hidden = currentLayerState(map).vars.hidden as readonly string[] | undefined;
   const pieces =
-    activityId === null || hidden?.includes(activityId)
+    trackId === null || hidden?.includes(trackId)
       ? []
-      : map.querySourceFeatures('tracks', { sourceLayer: TRACKS_SOURCE_LAYER, filter: ['==', ['get', 'id'], activityId] });
+      : map.querySourceFeatures('tracks', { sourceLayer: TRACKS_SOURCE_LAYER, filter: ['==', ['get', 'id'], trackId] });
   source.setData({ type: 'FeatureCollection', features: pieces.map((f) => ({ type: 'Feature', geometry: f.geometry, properties: {} })) });
 }
 
 /** The tracks drawn bold over their halo (selection.ts's boldTracks). */
-export function setSelectedTracks(map: MapLibreMap, activityIds: readonly string[]): void {
-  setLayerVars(map, { focused: [...activityIds] });
+export function setSelectedTracks(map: MapLibreMap, trackIds: readonly string[]): void {
+  setLayerVars(map, { focused: [...trackIds] });
 }
 
 /**
@@ -191,13 +191,13 @@ export function setSelectedTracks(map: MapLibreMap, activityIds: readonly string
  * the request URL (maplibre-gl 6.9.0's `_getOverzoomTile`), so with the URL unchanged an edited
  * track kept its old shape close in until the next zoom level (found live).
  */
-export function refreshTrackLayer(map: MapLibreMap, range: TrackDateRange): void {
+export function refreshTrackLayer(map: MapLibreMap, range: TracksTileRange): void {
   tracksVersion += 1;
-  updateLayers(map, { queries: { tracks: trackQuery(range) } });
+  updateLayers(map, { queries: { tracks: tracksTileQuery(range) } });
 }
 
 /**
- * Per-activity show/hide (the list's eye icon), Type and Distance, and Pending, client-side only:
+ * Per-track show/hide (the list's eye icon), Type and Distance, and Pending, client-side only:
  * the tracks endpoint already returns everything in range, and hiding a track is a question of
  * which fetched features get painted, which is what a layer filter is for.
  */

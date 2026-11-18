@@ -637,7 +637,7 @@ A Trip is a hand-picked, private set of the account's tracks with a name, an opt
 ### FR-13.6 The Trips tab
 
 - One Trip is open at a time. While open, the routes, rows, photos and exports are its tracks, whatever Dates. Normal mode only: Fog stays all-time.
-- The URL carries it (`/?story=<id>`); `/?tab=stories` opens the tab. Leaving the tab restores the Tracks tab's range.
+- The URL carries it (`/?trip=<id>`); `/?tab=trips` opens the tab. Leaving the tab restores the Tracks tab's range.
 
 ### FR-13.7 Send a copy
 

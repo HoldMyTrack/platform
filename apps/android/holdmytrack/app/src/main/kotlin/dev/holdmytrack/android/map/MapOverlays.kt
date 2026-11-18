@@ -66,7 +66,7 @@ object MapOverlays {
     private var tracksVersion = 0
 
     /** A track is being edited (`TrackEditOverlay`): every other track and the bands step
-     *  aside for it, as the web's `setMapMode(…, editingTrack)` has them. */
+     *  aside for it, as the web's `setMapMode(…, editingRoute)` has them. */
     private var editingTrack = false
 
     /** The Sync tab shows: the account's tracks and bands step aside, so the map draws only
@@ -120,7 +120,7 @@ object MapOverlays {
     /**
      * Draws [metrics]' pace bands — the selected activity's, `GET /v1/activities/{id}/track-metrics` —
      * one line per run the server worked out, each with its `band` for the layer to colour, then
-     * [routeFeature] for the group's direction arrows. The web's `setTrackBands`.
+     * [routeFeature] for the group's direction arrows. The web's `setRouteBands`.
      */
     fun setTrackBands(style: Style, metrics: TrackMetrics) {
         val features = bandFeatures(metrics.points, metrics.bands) + listOfNotNull(routeFeature(metrics.points))

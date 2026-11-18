@@ -6,7 +6,7 @@ Accepted. Built in the Android app: Settings, Track graph & trends, Sync history
 
 ## Context
 
-The Android app had copied the web client screen by screen: Trips, Photos, the route editor, the Private location editor, Profile's graph and Trends, Settings and Sync history. About half its Kotlin, roughly 11,000 of 22,000 lines, reproduced something the web already had, and about 180 comments named the web code each piece had to match ("the web's `activityFacets.ts`, rule for rule"). Every feature shipped twice, a fix to one copy had to be carried to the other by hand, and nothing noticed when the two disagreed. An iOS app built the same way would make three copies.
+The Android app had copied the web client screen by screen: Trips, Photos, the route editor, the Private location editor, Profile's graph and Trends, Settings and Sync history. About half its Kotlin, roughly 11,000 of 22,000 lines, reproduced something the web already had, and about 180 comments named the web code each piece had to match ("the web's `trackFacets.ts`, rule for rule"). Every feature shipped twice, a fix to one copy had to be carried to the other by hand, and nothing noticed when the two disagreed. An iOS app built the same way would make three copies.
 
 The parts that have to be native are few and known. Health Connect and HealthKit hand out routes only to a native app on the phone (ARCHITECTURE.md §2), and recording GPS in the background, the platform's sign-in pickers and sharing a file into the app are native APIs too. Most of the rest — forms, lists, a graph — the server already renders as pages (ADR-0012), and those pages already work in a phone's browser (`IMPLEMENTATION.md` §5.9).
 

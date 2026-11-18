@@ -1,12 +1,12 @@
 /**
- * The Activities panel's selection rules, as plain values so they're unit-tested apart from
+ * The Tracks panel's selection rules, as plain values so they're unit-tested apart from
  * `MapView.tsx`. Android keeps the same rules in `panel/PanelState.kt`.
  *
  * Focus and the checked group are independent: a row's text or its track focuses it (one at a
  * time); a checkbox builds the group the toolbar acts on.
  */
-import type { Activity } from '../api.ts';
-import { passesFilters, type DistanceRange } from '../ui/activityFacets.ts';
+import type { Track } from '../api.ts';
+import { passesFilters, type DistanceRange } from '../ui/trackFacets.ts';
 
 /** `set` with `item` added, or removed if it was there. */
 export function toggled<T>(set: ReadonlySet<T>, item: T): Set<T> {
@@ -16,7 +16,7 @@ export function toggled<T>(set: ReadonlySet<T>, item: T): Set<T> {
   return next;
 }
 
-/** The tracks drawn bold: the checked group and the focused activity, sorted. Android:
+/** The tracks drawn bold: the checked group and the focused track, sorted. Android:
  *  `PanelRules.boldIds`. */
 export function boldTracks(checked: ReadonlySet<string>, focused: string | null): string[] {
   const ids = new Set(checked);
@@ -58,19 +58,19 @@ export function withoutIds<T extends ReadonlySet<string>>(set: T, ids: ReadonlyS
 }
 
 /** Inverts the check over the listed rows; a checked row the filters hide is dropped. */
-export function invertedChecks(listed: readonly Pick<Activity, 'id'>[], checked: ReadonlySet<string>): Set<string> {
+export function invertedChecks(listed: readonly Pick<Track, 'id'>[], checked: ReadonlySet<string>): Set<string> {
   return new Set(listed.filter((a) => !checked.has(a.id)).map((a) => a.id));
 }
 
 /** Tracks the map doesn't draw or fly to: filtered out, hidden, or Pending (FR-5.8). Pending
  *  stays out of `hidden` so the user's own choice survives the reprocess. */
 export function mapHiddenIds(
-  activities: readonly Activity[],
+  tracks: readonly Track[],
   excludedTypes: ReadonlySet<string>,
   distanceFilter: DistanceRange | null,
   hidden: ReadonlySet<string>,
   pendingIds: readonly string[],
 ): Set<string> {
-  const filteredOut = activities.filter((a) => !passesFilters(a, excludedTypes, distanceFilter)).map((a) => a.id);
+  const filteredOut = tracks.filter((a) => !passesFilters(a, excludedTypes, distanceFilter)).map((a) => a.id);
   return new Set([...filteredOut, ...hidden, ...pendingIds]);
 }

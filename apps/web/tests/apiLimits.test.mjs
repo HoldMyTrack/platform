@@ -16,16 +16,16 @@ const jsonBody = (op) => op.requestBody.content['application/json'].schema;
 const multipartBody = (op) => op.requestBody.content['multipart/form-data'].schema;
 
 test('the web applies the limits the API contract declares', () => {
-  const activity = jsonBody(paths('activities').activities_id.patch).properties;
+  const track = jsonBody(paths('activities').activities_id.patch).properties;
   const photos = paths('photos');
-  const story = schemas.StoryInput.properties;
+  const trip = schemas.StoryInput.properties;
   const location = schemas.PrivateLocationInput.properties;
   const cases = [
-    ['MAX_ACTIVITY_TYPE_LEN', activity.activity_type.maxLength],
-    ['MAX_ACTIVITY_NAME_LEN', activity.name.maxLength],
-    ['MAX_ACTIVITY_DESCRIPTION_LEN', activity.description.maxLength],
-    ['STORY_MAX_NAME_LEN', story.name.maxLength],
-    ['STORY_MAX_DESCRIPTION_LEN', story.description.maxLength],
+    ['MAX_TRACK_TYPE_LEN', track.activity_type.maxLength],
+    ['MAX_TRACK_NAME_LEN', track.name.maxLength],
+    ['MAX_TRACK_DESCRIPTION_LEN', track.description.maxLength],
+    ['TRIP_MAX_NAME_LEN', trip.name.maxLength],
+    ['TRIP_MAX_DESCRIPTION_LEN', trip.description.maxLength],
     ['MAX_PHOTO_CAPTION_LEN', multipartBody(photos.photos.post).properties.caption.maxLength],
     ['MAX_PHOTO_CAPTION_LEN', jsonBody(photos.photos_id.patch).properties.caption.maxLength],
     ['PRIVATE_LOCATION_MAX_NAME_LEN', location.name.maxLength],

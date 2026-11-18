@@ -5,7 +5,7 @@ import { Pencil, Trash2 } from 'lucide-react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import {
   deletePrivateLocation,
-  hiddenActivityCount,
+  hiddenTrackCount,
   listPrivateLocations,
   savePrivateLocation,
   type PrivateLocation,
@@ -27,7 +27,7 @@ import { useUnitSystem } from './units.ts';
 import { lang, t, tn } from '../i18n/index.ts';
 
 /**
- * The Activities panel's Privacy tab (FR-7.1): the account's circles listed, each with its own
+ * The Tracks panel's Privacy tab (FR-7.1): the account's circles listed, each with its own
  * Edit and Delete, and a Create that puts a new circle in the middle of the map. Clicking a row
  * flies to its circle and highlights it, as clicking the circle on the map does; Edit opens the
  * editor, a window floating over the map like the Edit window's (portaled into the map's
@@ -36,9 +36,9 @@ import { lang, t, tn } from '../i18n/index.ts';
  * the editor to it. The circles are drawn, and clickable, for exactly as long as this is
  * mounted: switching tabs, or to Fog (which unmounts the whole panel), clears them and drops an
  * unsaved edit. Save
- * and Delete go straight to the server, which reprocesses every activity the change could clip
+ * and Delete go straight to the server, which reprocesses every track the change could clip
  * — `onChanged` has MapView reload the list so those rows show Pending straight away. The footer
- * counts the activities they hide entirely, the list's Private rows; it's read when the tab opens,
+ * counts the tracks they hide entirely, the list's Private rows; it's read when the tab opens,
  * so a change shows there once reprocessing ends and the tab is opened again.
  *
  * Read-only for the demo account: its circle is listed, shown and highlighted, nothing is editable.
@@ -106,7 +106,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
         if (!controller.signal.aborted) setLoadError(err instanceof Error ? err.message : String(err));
       });
     // Only a line of context: the tab works without it, so a failure leaves it out.
-    hiddenActivityCount(controller.signal).then(setHidden, () => {});
+    hiddenTrackCount(controller.signal).then(setHidden, () => {});
     return () => controller.abort();
     // The map is the panel's for its whole life (a theme swap keeps the instance), so this runs
     // once, when the tab opens.
@@ -233,20 +233,20 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
 
   const unit = elevationUnitLabel(system);
   const radiusDisplay = (m: number) => Math.round(system === 'imperial' ? metersToFeet(m) : m).toLocaleString(lang);
-  // The map's own container: `.map-root`, which Edit track's window is positioned in too.
+  // The map's own container: `.map-root`, which Edit route's window is positioned in too.
   const windowHost = map.getContainer().parentElement;
   // With no locations, nothing can be hidden and the line would only be noise.
   const showHidden = hidden !== null && (locations?.length ?? 0) > 0;
 
   return (
     <div className="private-locations" data-testid="private-locations">
-      {/* Laid out the way the Activities tab is — a toolbar strip, the same rows, a footer
+      {/* Laid out the way the Tracks tab is — a toolbar strip, the same rows, a footer
           strip — so the three tabs read as one panel. */}
       {!readOnly && (
-        <div className="activities-panel__toolbar">
+        <div className="tracks-panel__toolbar">
           <button
             type="button"
-            className="edit-track__btn edit-track__btn--primary"
+            className="edit-route__btn edit-route__btn--primary"
             data-testid="private-locations-create"
             disabled={!locations}
             onClick={create}
@@ -256,23 +256,23 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
         </div>
       )}
 
-      <ul className="activities-panel__list">
-        {loadError && <li className="activities-panel__note activities-panel__note--error">{loadError}</li>}
-        {!locations && !loadError && <li className="activities-panel__note">{t('common.loading')}</li>}
-        {locations?.length === 0 && <li className="activities-panel__note">{t('private.none')}</li>}
+      <ul className="tracks-panel__list">
+        {loadError && <li className="tracks-panel__note tracks-panel__note--error">{loadError}</li>}
+        {!locations && !loadError && <li className="tracks-panel__note">{t('common.loading')}</li>}
+        {locations?.length === 0 && <li className="tracks-panel__note">{t('private.none')}</li>}
         {locations?.map((l) => {
           const label = l.name || t('private.unnamed');
           const highlighted = draft ? draft.id === l.id : focusedId === l.id;
           return (
-            <li key={l.id} className={`activities-panel__row${highlighted ? ' activities-panel__row--current' : ''}`}>
+            <li key={l.id} className={`tracks-panel__row${highlighted ? ' tracks-panel__row--current' : ''}`}>
               <button
                 type="button"
-                className="activities-panel__text"
+                className="tracks-panel__text"
                 aria-pressed={highlighted}
                 onClick={() => pick(l, 'focus', true)}
               >
-                <span className="activities-panel__title">{label}</span>
-                <span className="activities-panel__meta">
+                <span className="tracks-panel__title">{label}</span>
+                <span className="tracks-panel__meta">
                   {t('private.radius')} · {radiusDisplay(l.radiusM)} {unit}
                 </span>
               </button>
@@ -280,7 +280,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
                 <>
                   <button
                     type="button"
-                    className="activities-panel__edit activities-panel__row-action"
+                    className="tracks-panel__edit tracks-panel__row-action"
                     aria-label={t('private.edit_label', { label })}
                     title={t('private.edit_title')}
                     onClick={() => pick(l, 'edit', true)}
@@ -289,7 +289,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
                   </button>
                   <button
                     type="button"
-                    className="activities-panel__delete activities-panel__row-action"
+                    className="tracks-panel__delete tracks-panel__row-action"
                     aria-label={t('private.delete_label', { label })}
                     title={t('common.delete')}
                     onClick={() => setDeleting(l)}
@@ -304,7 +304,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
       </ul>
 
       {(!readOnly || showHidden) && (
-        <div className="activities-panel__footer private-locations__footer">
+        <div className="tracks-panel__footer private-locations__footer">
           {showHidden && (
             <span className="private-locations__footer-note" data-testid="private-locations-hidden">
               {hidden === 0 ? t('private.hidden_none') : tn('private.hidden', hidden)}
@@ -326,13 +326,13 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
               if (!dirty && !busy) setDraft(null);
             }}
           >
-            <header className="edit-track__head">
-              <span className="edit-track__title">
+            <header className="edit-route__head">
+              <span className="edit-route__title">
                 {t(draft.id === undefined ? 'private.new_title' : 'private.edit_title')}
               </span>
             </header>
             <label className="private-locations__field">
-              <span className="activity-filters__label">{t('edit.name')}</span>
+              <span className="track-filters__label">{t('edit.name')}</span>
               <input
                 className="settings-page__input"
                 type="text"
@@ -343,9 +343,9 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
               />
             </label>
             <label className="private-locations__field">
-              <span className="activity-filters__head">
-                <span className="activity-filters__label">{t('private.radius')}</span>
-                <span className="activity-filters__readout">
+              <span className="track-filters__head">
+                <span className="track-filters__label">{t('private.radius')}</span>
+                <span className="track-filters__readout">
                   {radiusDisplay(draft.radiusM)} {unit}
                 </span>
               </span>
@@ -359,16 +359,16 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
                 onChange={(e) => setDraft({ ...draft, radiusM: Number(e.target.value) })}
               />
             </label>
-            <p className="edit-track__note">{t('private.editor_note')}</p>
-            {error && <p className="edit-track__error">{error}</p>}
-            <div className="edit-track__row edit-track__row--footer">
-              <span className="edit-track__spacer" />
-              <button type="button" className="edit-track__btn" disabled={busy} onClick={() => setDraft(null)}>
+            <p className="edit-route__note">{t('private.editor_note')}</p>
+            {error && <p className="edit-route__error">{error}</p>}
+            <div className="edit-route__row edit-route__row--footer">
+              <span className="edit-route__spacer" />
+              <button type="button" className="edit-route__btn" disabled={busy} onClick={() => setDraft(null)}>
                 {t('common.cancel')}
               </button>
               <button
                 type="button"
-                className="edit-track__btn edit-track__btn--primary"
+                className="edit-route__btn edit-route__btn--primary"
                 disabled={busy || !dirty}
                 onClick={() => void save()}
               >
@@ -414,7 +414,7 @@ function PrivateLocationWindow({ label, onEscape, children }: { label: string; o
     <section
       ref={ref}
       tabIndex={-1}
-      className="edit-track private-locations__window"
+      className="edit-route private-locations__window"
       aria-label={label}
       data-testid="private-locations-editor"
       onKeyDown={(event) => {
