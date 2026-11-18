@@ -146,16 +146,16 @@ struct CodeJSON: Codable, Sendable, Equatable {
 
 // Tracks
 
-struct StoryRefJSON: Codable, Sendable, Equatable {
+struct TripRefJSON: Codable, Sendable, Equatable {
     let id: String
     let name: String
 }
 
-struct ActivityRowJSON: Codable, Sendable, Equatable {
+struct TrackRowJSON: Codable, Sendable, Equatable {
     let id: String
     let startedAt: String
     let timezone: String
-    let activityType: String
+    let trackType: String
     let name: String?
     let distanceMeters: Double?
     let movingSeconds: Int?
@@ -164,78 +164,78 @@ struct ActivityRowJSON: Codable, Sendable, Equatable {
     let pending: Bool
     let edited: Bool
     let `private`: Bool
-    let trackEdit: String?
+    let routeEdit: String?
     let photos: String?
-    let stories: [StoryRefJSON]
+    let trips: [TripRefJSON]
 
     enum CodingKeys: String, CodingKey {
-        case id, timezone, name, description, bbox, pending, edited, `private`, photos, stories
+        case id, timezone, name, description, bbox, pending, edited, `private`, photos, trips
         case startedAt = "started_at"
-        case activityType = "activity_type"
+        case trackType = "track_type"
         case distanceMeters = "distance_meters"
         case movingSeconds = "moving_seconds"
-        case trackEdit = "track_edit"
+        case routeEdit = "route_edit"
     }
 }
 
-struct ActivitiesJSON: Codable, Sendable, Equatable {
-    let activities: [ActivityRowJSON]
-    let types: [String: ActivityTypeJSON]?
+struct TracksJSON: Codable, Sendable, Equatable {
+    let tracks: [TrackRowJSON]
+    let types: [String: TrackTypeJSON]?
 }
 
-/// A track as the area list's row shows it; `GET /v1/activities/{id}` has the rest.
-struct AreaActivityRowJSON: Codable, Sendable, Equatable {
+/// A track as the area list's row shows it; `GET /v2/tracks/{id}` has the rest.
+struct AreaTrackRowJSON: Codable, Sendable, Equatable {
     let id: String
     let startedAt: String
     let timezone: String
-    let activityType: String
+    let trackType: String
     let name: String?
     let distanceMeters: Double?
     let movingSeconds: Int?
     let bbox: [Double]?
     let pending: Bool
     let `private`: Bool
-    let stories: [StoryRefJSON]
+    let trips: [TripRefJSON]
 
     enum CodingKeys: String, CodingKey {
-        case id, timezone, name, bbox, pending, `private`, stories
+        case id, timezone, name, bbox, pending, `private`, trips
         case startedAt = "started_at"
-        case activityType = "activity_type"
+        case trackType = "track_type"
         case distanceMeters = "distance_meters"
         case movingSeconds = "moving_seconds"
     }
 }
 
-/// `GET /v1/activities/area`.
-struct AreaActivitiesJSON: Codable, Sendable, Equatable {
-    let activities: [AreaActivityRowJSON]
-    let types: [String: ActivityTypeJSON]
+/// `GET /v2/tracks/area`.
+struct AreaTracksJSON: Codable, Sendable, Equatable {
+    let tracks: [AreaTrackRowJSON]
+    let types: [String: TrackTypeJSON]
     let total: Int?
 }
 
-/// `GET /v1/activities/pending`.
+/// `GET /v2/tracks/pending`.
 struct PendingJSON: Codable, Sendable, Equatable {
     let pending: [String]
 }
 
 /// What a client shows for one track type.
-struct ActivityTypeJSON: Codable, Sendable, Equatable {
+struct TrackTypeJSON: Codable, Sendable, Equatable {
     let kind: String
     let label: String
 }
 
-struct ActivityTypesJSON: Codable, Sendable, Equatable {
-    let types: [String: ActivityTypeJSON]
+struct TrackTypesJSON: Codable, Sendable, Equatable {
+    let types: [String: TrackTypeJSON]
 }
 
-struct ActivityPatchJSON: Codable, Sendable, Equatable {
-    let activityType: String
+struct TrackPatchJSON: Codable, Sendable, Equatable {
+    let trackType: String
     let name: String
     let description: String
 
     enum CodingKeys: String, CodingKey {
         case name, description
-        case activityType = "activity_type"
+        case trackType = "track_type"
     }
 }
 
@@ -274,7 +274,7 @@ struct CoverageStatusJSON: Codable, Sendable, Equatable {
     }
 }
 
-struct TrackMetricPointJSON: Codable, Sendable, Equatable {
+struct RouteMetricPointJSON: Codable, Sendable, Equatable {
     let lon: Double
     let lat: Double
     let speedMps: Double
@@ -293,20 +293,20 @@ struct PaceBandJSON: Codable, Sendable, Equatable {
     let end: Int
 }
 
-struct TrackMetricsJSON: Codable, Sendable, Equatable {
-    let activityID: String
-    let points: [TrackMetricPointJSON]
+struct RouteMetricsJSON: Codable, Sendable, Equatable {
+    let trackID: String
+    let points: [RouteMetricPointJSON]
     let bands: [PaceBandJSON]
 
     enum CodingKeys: String, CodingKey {
         case points, bands
-        case activityID = "activity_id"
+        case trackID = "track_id"
     }
 }
 
 /// A route edit both ways: what the editor opens with and what Apply sends. Times are Unix ms; a
 /// pair is a two-element array, and move is keyed by a time, which JSON carries as a string.
-struct TrackEditJSON: Codable, Sendable, Equatable {
+struct RouteEditJSON: Codable, Sendable, Equatable {
     let keep: [Int]?
     let remove: [[Int]]?
     let drop: [Int]?
@@ -314,13 +314,13 @@ struct TrackEditJSON: Codable, Sendable, Equatable {
 }
 
 /// points are `[lon, lat, t]`, t in Unix ms.
-struct TrackPointsJSON: Codable, Sendable, Equatable {
+struct RoutePointsJSON: Codable, Sendable, Equatable {
     let points: [[Double]]
-    let edit: TrackEditJSON?
+    let edit: RouteEditJSON?
 }
 
-struct TrackEditRequestJSON: Codable, Sendable, Equatable {
-    let edit: TrackEditJSON?
+struct RouteEditRequestJSON: Codable, Sendable, Equatable {
+    let edit: RouteEditJSON?
     let splitAt: Int?
     let allowHidden: Bool?
 
@@ -343,16 +343,16 @@ struct OverlapsRequestJSON: Codable, Sendable, Equatable {
 
 struct OverlapJSON: Codable, Sendable, Equatable {
     let key: String
-    let activityID: String
+    let trackID: String
     let name: String
-    let activityType: String
+    let trackType: String
     let startedAt: String
     let timezone: String?
 
     enum CodingKeys: String, CodingKey {
         case key, name, timezone
-        case activityID = "activity_id"
-        case activityType = "activity_type"
+        case trackID = "track_id"
+        case trackType = "track_type"
         case startedAt = "started_at"
     }
 }
@@ -365,7 +365,7 @@ struct UploadResultJSON: Codable, Sendable, Equatable {
     let status: String
 }
 
-/// One batch of imports still running, `GET /v1/uploads/active`.
+/// One batch of imports still running, `GET /v2/uploads/active`.
 struct ActiveImportJSON: Codable, Sendable, Equatable {
     let title: String
     let source: String
@@ -399,9 +399,9 @@ struct SyncPointJSON: Codable, Sendable, Equatable {
     }
 }
 
-struct SyncActivityJSON: Codable, Sendable, Equatable {
+struct SyncTrackJSON: Codable, Sendable, Equatable {
     let externalID: String
-    let activityType: String
+    let trackType: String
     let name: String?
     let description: String?
     let points: [SyncPointJSON]
@@ -409,13 +409,13 @@ struct SyncActivityJSON: Codable, Sendable, Equatable {
     enum CodingKeys: String, CodingKey {
         case name, description, points
         case externalID = "external_id"
-        case activityType = "activity_type"
+        case trackType = "track_type"
     }
 }
 
-struct SyncActivitiesRequestJSON: Codable, Sendable, Equatable {
+struct SyncTracksRequestJSON: Codable, Sendable, Equatable {
     let source: String
-    let activities: [SyncActivityJSON]
+    let tracks: [SyncTrackJSON]
 }
 
 struct SyncResultJSON: Codable, Sendable, Equatable {
@@ -477,8 +477,8 @@ struct PrivateLocationInputJSON: Codable, Sendable, Equatable {
 
 // Trips
 
-struct StoryTypeStatsJSON: Codable, Sendable, Equatable {
-    let activityType: String
+struct TripTypeStatsJSON: Codable, Sendable, Equatable {
+    let trackType: String
     let label: String?
     let count: Int
     let distanceMeters: Double
@@ -486,17 +486,17 @@ struct StoryTypeStatsJSON: Codable, Sendable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case label, count
-        case activityType = "activity_type"
+        case trackType = "track_type"
         case distanceMeters = "distance_meters"
         case movingSeconds = "moving_seconds"
     }
 }
 
-struct StoryStatsJSON: Codable, Sendable, Equatable {
+struct TripStatsJSON: Codable, Sendable, Equatable {
     let count: Int
     let distanceMeters: Double
     let movingSeconds: Int
-    let byType: [StoryTypeStatsJSON]
+    let byType: [TripTypeStatsJSON]
 
     enum CodingKeys: String, CodingKey {
         case count
@@ -506,83 +506,83 @@ struct StoryStatsJSON: Codable, Sendable, Equatable {
     }
 }
 
-struct StoryJSON: Codable, Sendable, Equatable {
+struct TripJSON: Codable, Sendable, Equatable {
     let id: String
     let name: String
     let description: String?
     let from: String?
-    let activityIDs: [String]
-    let stats: StoryStatsJSON
+    let trackIDs: [String]
+    let stats: TripStatsJSON
 
     enum CodingKeys: String, CodingKey {
         case id, name, description, from, stats
-        case activityIDs = "activity_ids"
+        case trackIDs = "track_ids"
     }
 }
 
-struct StoriesJSON: Codable, Sendable, Equatable {
-    let stories: [StoryJSON]
+struct TripsJSON: Codable, Sendable, Equatable {
+    let trips: [TripJSON]
 }
 
-/// A new Trip, with its first activityIDs.
-struct StoryCreateJSON: Codable, Sendable, Equatable {
+/// A new Trip, with its first trackIDs.
+struct TripCreateJSON: Codable, Sendable, Equatable {
     let name: String
     let description: String
-    let activityIDs: [String]
+    let trackIDs: [String]
 
     enum CodingKeys: String, CodingKey {
         case name, description
-        case activityIDs = "activity_ids"
+        case trackIDs = "track_ids"
     }
 }
 
 /// A rename: both fields every time, an empty description clearing it.
-struct StoryInputJSON: Codable, Sendable, Equatable {
+struct TripInputJSON: Codable, Sendable, Equatable {
     let name: String
     let description: String
 }
 
-struct StoryActivitiesJSON: Codable, Sendable, Equatable {
-    let activityIDs: [String]
+struct TripTracksJSON: Codable, Sendable, Equatable {
+    let trackIDs: [String]
 
     enum CodingKeys: String, CodingKey {
-        case activityIDs = "activity_ids"
+        case trackIDs = "track_ids"
     }
 }
 
-struct StorySendJSON: Codable, Sendable, Equatable {
+struct TripSendJSON: Codable, Sendable, Equatable {
     let id: String
-    let storyName: String
+    let tripName: String
     let from: String
-    let activityCount: Int
+    let trackCount: Int
 
     enum CodingKeys: String, CodingKey {
         case id, from
-        case storyName = "story_name"
-        case activityCount = "activity_count"
+        case tripName = "trip_name"
+        case trackCount = "track_count"
     }
 }
 
-struct StoryCopyingJSON: Codable, Sendable, Equatable {
-    let storyName: String
+struct TripCopyingJSON: Codable, Sendable, Equatable {
+    let tripName: String
     let from: String
 
     enum CodingKeys: String, CodingKey {
         case from
-        case storyName = "story_name"
+        case tripName = "trip_name"
     }
 }
 
-struct StoryInboxJSON: Codable, Sendable, Equatable {
-    let sends: [StorySendJSON]
-    let copying: [StoryCopyingJSON]
+struct TripInboxJSON: Codable, Sendable, Equatable {
+    let sends: [TripSendJSON]
+    let copying: [TripCopyingJSON]
 }
 
 // Photos
 
 struct PhotoJSON: Codable, Sendable, Equatable {
     let id: String
-    let activityID: String
+    let trackID: String
     let takenAt: String?
     let routeAt: String
     let timezone: String
@@ -596,7 +596,7 @@ struct PhotoJSON: Codable, Sendable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case id, timezone, lon, lat, caption, width, height, url
-        case activityID = "activity_id"
+        case trackID = "track_id"
         case takenAt = "taken_at"
         case routeAt = "route_at"
         case thumbURL = "thumb_url"
@@ -608,7 +608,7 @@ struct PhotosJSON: Codable, Sendable, Equatable {
 }
 
 struct PhotoPlaceRequestJSON: Codable, Sendable, Equatable {
-    let activityID: String
+    let trackID: String
     let takenAt: String?
     let takenLocal: String?
     let lat: Double?
@@ -616,7 +616,7 @@ struct PhotoPlaceRequestJSON: Codable, Sendable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case lat, lon
-        case activityID = "activity_id"
+        case trackID = "track_id"
         case takenAt = "taken_at"
         case takenLocal = "taken_local"
     }
@@ -672,7 +672,7 @@ struct MultiPolygonJSON: Codable, Sendable, Equatable {
     let coordinates: [[[[Double]]]]
 }
 
-/// `GET /v1/spots/{id}`: the place's own fields beside its area, in one object.
+/// `GET /v2/spots/{id}`: the place's own fields beside its area, in one object.
 struct SpotDetailJSON: Codable, Sendable, Equatable {
     let id: Int
     let category: String

@@ -11,7 +11,7 @@ public struct GeoPoint: Equatable, Sendable {
     }
 }
 
-/// A place's area as `GET /v1/spots/{id}` sends it: polygons, each an outer ring then its holes,
+/// A place's area as `GET /v2/spots/{id}` sends it: polygons, each an outer ring then its holes,
 /// each ring closed.
 public typealias SpotArea = [[[GeoPoint]]]
 
@@ -179,18 +179,18 @@ public enum CaptureOutcome: Equatable, Sendable {
 }
 
 extension APIClient {
-    /// `GET /v1/spots/{id}`: the place's area, what capture measures against. A place retired
+    /// `GET /v2/spots/{id}`: the place's area, what capture measures against. A place retired
     /// since the map loaded it is a 404 to an account that hasn't captured it.
     public func spotArea(_ id: Int) async throws -> SpotArea {
-        let json: SpotDetailJSON = try decode(try await send("GET", "v1/spots/\(id)"))
+        let json: SpotDetailJSON = try decode(try await send("GET", "v2/spots/\(id)"))
         return json.area.coordinates.map { polygon in polygon.map { ring in ring.compactMap { $0.count >= 2 ? GeoPoint(lat: $0[1], lon: $0[0]) : nil } } }
     }
 
-    /// `POST /v1/spots/{id}/captures` at the last position inside; the server checks it against
+    /// `POST /v2/spots/{id}/captures` at the last position inside; the server checks it against
     /// the area, and a place already captured answers the first capture.
     public func captureSpot(_ id: Int, at point: GeoPoint) async -> CaptureOutcome {
         do {
-            let json: SpotCaptureJSON = try decode(try await send("POST", "v1/spots/\(id)/captures", body: SpotCaptureRequestJSON(lat: point.lat, lon: point.lon)))
+            let json: SpotCaptureJSON = try decode(try await send("POST", "v2/spots/\(id)/captures", body: SpotCaptureRequestJSON(lat: point.lat, lon: point.lon)))
             guard let at = Self.instant(json.capturedAt) else { return .retry }
             return .saved(spotID: json.spotID, at: at)
         } catch {

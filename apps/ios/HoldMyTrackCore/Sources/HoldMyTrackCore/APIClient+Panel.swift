@@ -2,60 +2,60 @@ import Foundation
 
 /// The Tracks panel's calls: the list, its types, Pending, Edit, Delete, and Trips.
 extension APIClient {
-    /// `GET /v1/activities?story=`: that whole Trip's tracks (root docs/SPEC.md FR-13.6),
+    /// `GET /v2/tracks?trip=`: that whole Trip's tracks (root docs/SPEC.md FR-13.6),
     /// newest first, with what the server says about their types.
     public func tripTracks(_ trip: String) async throws -> (tracks: [Track], types: [String: TrackTypeInfo]) {
-        let json: ActivitiesJSON = try decode(try await send("GET", "v1/activities", query: [URLQueryItem(name: "story", value: trip)]))
-        return (json.activities.map(Track.init), (json.types ?? [:]).mapValues(TrackTypeInfo.init))
+        let json: TracksJSON = try decode(try await send("GET", "v2/tracks", query: [URLQueryItem(name: "trip", value: trip)]))
+        return (json.tracks.map(Track.init), (json.types ?? [:]).mapValues(TrackTypeInfo.init))
     }
 
-    /// `GET /v1/activities/area`: the newest tracks, at most limit, whose track crosses box
+    /// `GET /v2/tracks/area`: the newest tracks, at most limit, whose track crosses box
     /// (`[west, south, east, north]`), all of them without one, under dates; total is how many the
     /// box holds, more than listed when they were cut at the limit (root docs/SPEC.md FR-5.11).
     public func areaList(box: [Double]?, dates: DateFilter, limit: Int? = nil) async throws -> (tracks: [Track], total: Int?, types: [String: TrackTypeInfo]) {
         var items = dates.query
         if let box { items.append(URLQueryItem(name: "bbox", value: box.map { String($0) }.joined(separator: ","))) }
         if let limit { items.append(URLQueryItem(name: "limit", value: String(limit))) }
-        let json: AreaActivitiesJSON = try decode(try await send("GET", "v1/activities/area", query: items))
-        return (json.activities.map(Track.init), json.total, json.types.mapValues(TrackTypeInfo.init))
+        let json: AreaTracksJSON = try decode(try await send("GET", "v2/tracks/area", query: items))
+        return (json.tracks.map(Track.init), json.total, json.types.mapValues(TrackTypeInfo.init))
     }
 
-    /// `GET /v1/activities/{id}`: one track in full, for the Edit window.
+    /// `GET /v2/tracks/{id}`: one track in full, for the Edit window.
     public func track(_ id: String) async throws -> Track {
-        let json: ActivitiesJSON = try decode(try await send("GET", "v1/activities/\(id)"))
-        guard let row = json.activities.first else { throw APIError.unreadable }
+        let json: TracksJSON = try decode(try await send("GET", "v2/tracks/\(id)"))
+        guard let row = json.tracks.first else { throw APIError.unreadable }
         return Track(row)
     }
 
-    /// `GET /v1/activities/pending`: which of ids are still Pending, at most PendingDiff.batch.
+    /// `GET /v2/tracks/pending`: which of ids are still Pending, at most PendingDiff.batch.
     public func pending(_ ids: [String]) async throws -> [String] {
-        let json: PendingJSON = try decode(try await send("GET", "v1/activities/pending", query: [URLQueryItem(name: "ids", value: ids.joined(separator: ","))]))
+        let json: PendingJSON = try decode(try await send("GET", "v2/tracks/pending", query: [URLQueryItem(name: "ids", value: ids.joined(separator: ","))]))
         return json.pending
     }
 
-    /// `GET /v1/activities/{id}/track-metrics`: the track's points and their pace bands.
+    /// `GET /v2/tracks/{id}/route-metrics`: the track's points and their pace bands.
     public func trackMetrics(_ id: String) async throws -> RouteMetrics {
-        RouteMetrics(try decode(try await send("GET", "v1/activities/\(id)/track-metrics")) as TrackMetricsJSON)
+        RouteMetrics(try decode(try await send("GET", "v2/tracks/\(id)/route-metrics")) as RouteMetricsJSON)
     }
 
-    /// `GET /v1/activity-types`: the catalog, and types by name.
+    /// `GET /v2/track-types`: the catalog, and types by name.
     public func activityTypes(_ types: [String]) async throws -> [String: TrackTypeInfo] {
         let query = types.isEmpty ? [] : [URLQueryItem(name: "types", value: types.joined(separator: ","))]
-        let json: ActivityTypesJSON = try decode(try await send("GET", "v1/activity-types", query: query))
+        let json: TrackTypesJSON = try decode(try await send("GET", "v2/track-types", query: query))
         return json.types.mapValues(TrackTypeInfo.init)
     }
 
-    /// `PATCH /v1/activities/{id}`: a full replace of the three fields; an empty name or
+    /// `PATCH /v2/tracks/{id}`: a full replace of the three fields; an empty name or
     /// description clears it.
     public func updateTrack(_ write: EditPlan.Write) async throws -> Track {
-        let body = ActivityPatchJSON(activityType: write.activityType, name: write.name, description: write.description)
-        let json: ActivityRowJSON = try decode(try await send("PATCH", "v1/activities/\(write.id)", body: body))
+        let body = TrackPatchJSON(trackType: write.trackType, name: write.name, description: write.description)
+        let json: TrackRowJSON = try decode(try await send("PATCH", "v2/tracks/\(write.id)", body: body))
         return Track(json)
     }
 
-    /// `DELETE /v1/activities/{id}`: one already gone counts as deleted (DeleteOutcome).
+    /// `DELETE /v2/tracks/{id}`: one already gone counts as deleted (DeleteOutcome).
     public func deleteTrack(_ id: String) async throws {
-        try await delete("v1/activities/\(id)")
+        try await delete("v2/tracks/\(id)")
     }
 
     // MARK: Trips (root docs/SPEC.md FR-13)
@@ -63,59 +63,59 @@ extension APIClient {
     /// The Trip and the type labels its numbers carry.
     public typealias TripRead = (trip: Trip, types: [String: TrackTypeInfo])
 
-    /// `GET /v1/stories`: every Trip, newest first.
+    /// `GET /v2/trips`: every Trip, newest first.
     public func trips() async throws -> [TripRead] {
-        let json: StoriesJSON = try decode(try await send("GET", "v1/stories"))
-        return json.stories.map { (Trip($0), Trip.labels($0)) }
+        let json: TripsJSON = try decode(try await send("GET", "v2/trips"))
+        return json.trips.map { (Trip($0), Trip.labels($0)) }
     }
 
-    /// `GET /v1/stories/{id}`; a `404` is one that doesn't exist or isn't this account's.
+    /// `GET /v2/trips/{id}`; a `404` is one that doesn't exist or isn't this account's.
     public func trip(_ id: String) async throws -> TripRead {
-        try tripRead(try await send("GET", "v1/stories/\(id)"))
+        try tripRead(try await send("GET", "v2/trips/\(id)"))
     }
 
-    /// `POST /v1/stories`: a new Trip with trackIDs in it, in one step.
+    /// `POST /v2/trips`: a new Trip with trackIDs in it, in one step.
     public func createTrip(name: String, description: String, trackIDs: [String]) async throws -> TripRead {
-        try tripRead(try await send("POST", "v1/stories", body: StoryCreateJSON(name: name, description: description, activityIDs: trackIDs)))
+        try tripRead(try await send("POST", "v2/trips", body: TripCreateJSON(name: name, description: description, trackIDs: trackIDs)))
     }
 
-    /// `PATCH /v1/stories/{id}`: both fields every time; an empty description clears it.
+    /// `PATCH /v2/trips/{id}`: both fields every time; an empty description clears it.
     public func updateTrip(_ id: String, name: String, description: String) async throws -> TripRead {
-        try tripRead(try await send("PATCH", "v1/stories/\(id)", body: StoryInputJSON(name: name, description: description)))
+        try tripRead(try await send("PATCH", "v2/trips/\(id)", body: TripInputJSON(name: name, description: description)))
     }
 
-    /// `DELETE /v1/stories/{id}`: the Trip alone; its tracks stay.
+    /// `DELETE /v2/trips/{id}`: the Trip alone; its tracks stay.
     public func deleteTrip(_ id: String) async throws {
-        try await delete("v1/stories/\(id)")
+        try await delete("v2/trips/\(id)")
     }
 
-    /// `POST` (add) or `DELETE /v1/stories/{id}/activities`: trackIDs into the Trip or out.
+    /// `POST` (add) or `DELETE /v2/trips/{id}/tracks`: trackIDs into the Trip or out.
     public func changeTripTracks(_ id: String, trackIDs: [String], add: Bool) async throws -> TripRead {
-        try tripRead(try await send(add ? "POST" : "DELETE", "v1/stories/\(id)/activities", body: StoryActivitiesJSON(activityIDs: trackIDs)))
+        try tripRead(try await send(add ? "POST" : "DELETE", "v2/trips/\(id)/tracks", body: TripTracksJSON(trackIDs: trackIDs)))
     }
 
-    /// `POST /v1/stories/{id}/send`: a copy to email, which succeeds whether or not the address
+    /// `POST /v2/trips/{id}/send`: a copy to email, which succeeds whether or not the address
     /// has an account.
     public func sendTrip(_ id: String, email: String) async throws {
-        _ = try await send("POST", "v1/stories/\(id)/send", body: EmailJSON(email: email))
+        _ = try await send("POST", "v2/trips/\(id)/send", body: EmailJSON(email: email))
     }
 
-    /// `GET /v1/story-sends`: copies others sent, and accepted ones arriving.
+    /// `GET /v2/trip-sends`: copies others sent, and accepted ones arriving.
     public func tripInbox() async throws -> TripInbox {
-        let json: StoryInboxJSON = try decode(try await send("GET", "v1/story-sends"))
+        let json: TripInboxJSON = try decode(try await send("GET", "v2/trip-sends"))
         return TripInbox(
-            sends: json.sends.map { TripSend(id: $0.id, tripName: $0.storyName, from: $0.from, trackCount: $0.activityCount) },
-            copying: json.copying.map { TripCopying(tripName: $0.storyName, from: $0.from) }
+            sends: json.sends.map { TripSend(id: $0.id, tripName: $0.tripName, from: $0.from, trackCount: $0.trackCount) },
+            copying: json.copying.map { TripCopying(tripName: $0.tripName, from: $0.from) }
         )
     }
 
-    /// `POST /v1/story-sends/{id}/accept`, or `DELETE /v1/story-sends/{id}` to decline.
+    /// `POST /v2/trip-sends/{id}/accept`, or `DELETE /v2/trip-sends/{id}` to decline.
     public func answerTripSend(_ id: String, accept: Bool) async throws {
-        _ = try await send(accept ? "POST" : "DELETE", accept ? "v1/story-sends/\(id)/accept" : "v1/story-sends/\(id)")
+        _ = try await send(accept ? "POST" : "DELETE", accept ? "v2/trip-sends/\(id)/accept" : "v2/trip-sends/\(id)")
     }
 
     private func tripRead(_ data: Data) throws -> TripRead {
-        let json: StoryJSON = try decode(data)
+        let json: TripJSON = try decode(data)
         return (Trip(json), Trip.labels(json))
     }
 

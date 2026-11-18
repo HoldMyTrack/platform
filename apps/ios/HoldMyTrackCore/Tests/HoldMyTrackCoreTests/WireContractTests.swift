@@ -3,7 +3,7 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// Holds every type in Wire.swift to the API contract, services/server/api: each response type to
+/// Holds every type in Wire.swift to the API contract, services/server/api/v2: each response type to
 /// the response it decodes, each request type to the body it sends. A field the server renames,
 /// drops or makes nullable fails here, in CI, rather than in a decode on a phone.
 struct WireContractTests {
@@ -17,7 +17,7 @@ struct WireContractTests {
             check.check(T.self, try contract.request(path, method), at: "\(method) \(path) request", .request)
         }
 
-        try response(ErrorJSON.self, "/stories/{id}", "get", 404)
+        try response(ErrorJSON.self, "/trips/{id}", "get", 404)
         try response(AccountJSON.self, "/auth/me", "get")
         for path in ["/auth/login", "/auth/handoff", "/auth/apple/token"] {
             try response(AccountJSON.self, path, "post")
@@ -37,28 +37,28 @@ struct WireContractTests {
         try request(CodeJSON.self, "/auth/verify-code", "post")
         try request(SettingsJSON.self, "/account/settings", "patch")
         try request(EmailJSON.self, "/account", "delete")
-        try request(EmailJSON.self, "/stories/{id}/send", "post")
+        try request(EmailJSON.self, "/trips/{id}/send", "post")
 
-        try response(ActivitiesJSON.self, "/activities", "get")
-        try response(AreaActivitiesJSON.self, "/activities/area", "get")
-        try response(ActivitiesJSON.self, "/activities/{id}", "get")
-        try response(ActivityTypesJSON.self, "/activity-types", "get")
-        try response(PendingJSON.self, "/activities/pending", "get")
-        try response(ActivityRowJSON.self, "/activities/{id}", "patch")
-        try request(ActivityPatchJSON.self, "/activities/{id}", "patch")
-        try response(HistogramJSON.self, "/activities/histogram", "get")
+        try response(TracksJSON.self, "/tracks", "get")
+        try response(AreaTracksJSON.self, "/tracks/area", "get")
+        try response(TracksJSON.self, "/tracks/{id}", "get")
+        try response(TrackTypesJSON.self, "/track-types", "get")
+        try response(PendingJSON.self, "/tracks/pending", "get")
+        try response(TrackRowJSON.self, "/tracks/{id}", "patch")
+        try request(TrackPatchJSON.self, "/tracks/{id}", "patch")
+        try response(HistogramJSON.self, "/tracks/histogram", "get")
         try response(CoverageStatusJSON.self, "/coverage/status", "get")
-        try response(TrackMetricsJSON.self, "/activities/{id}/track-metrics", "get")
-        try response(TrackPointsJSON.self, "/activities/{id}/track-points", "get")
-        try request(TrackEditRequestJSON.self, "/activities/{id}/track-edit", "post")
-        try request(OverlapsRequestJSON.self, "/activities/overlaps", "post")
-        try response(OverlapsJSON.self, "/activities/overlaps", "post")
-        try response(UploadResultJSON.self, "/activities/upload", "post", 202)
-        try response(UploadResultJSON.self, "/activities/upload", "post", 200)
+        try response(RouteMetricsJSON.self, "/tracks/{id}/route-metrics", "get")
+        try response(RoutePointsJSON.self, "/tracks/{id}/route-points", "get")
+        try request(RouteEditRequestJSON.self, "/tracks/{id}/route-edit", "post")
+        try request(OverlapsRequestJSON.self, "/tracks/overlaps", "post")
+        try response(OverlapsJSON.self, "/tracks/overlaps", "post")
+        try response(UploadResultJSON.self, "/tracks/upload", "post", 202)
+        try response(UploadResultJSON.self, "/tracks/upload", "post", 200)
         try response(UploadsActiveJSON.self, "/uploads/active", "get")
 
-        try request(SyncActivitiesRequestJSON.self, "/sync/activities", "post")
-        try response(SyncResultsJSON.self, "/sync/activities", "post")
+        try request(SyncTracksRequestJSON.self, "/sync/tracks", "post")
+        try response(SyncResultsJSON.self, "/sync/tracks", "post")
         try request(SyncKnownRequestJSON.self, "/sync/known", "post")
         try response(SyncKnownJSON.self, "/sync/known", "post")
 
@@ -68,17 +68,17 @@ struct WireContractTests {
         try request(PrivateLocationInputJSON.self, "/private-locations", "post")
         try request(PrivateLocationInputJSON.self, "/private-locations/{id}", "patch")
 
-        try response(StoriesJSON.self, "/stories", "get")
-        try response(StoryJSON.self, "/stories", "post", 201)
-        try response(StoryJSON.self, "/stories/{id}", "get")
-        try response(StoryJSON.self, "/stories/{id}", "patch")
-        try response(StoryJSON.self, "/stories/{id}/activities", "post")
-        try response(StoryJSON.self, "/stories/{id}/activities", "delete")
-        try request(StoryCreateJSON.self, "/stories", "post")
-        try request(StoryInputJSON.self, "/stories/{id}", "patch")
-        try request(StoryActivitiesJSON.self, "/stories/{id}/activities", "post")
-        try request(StoryActivitiesJSON.self, "/stories/{id}/activities", "delete")
-        try response(StoryInboxJSON.self, "/story-sends", "get")
+        try response(TripsJSON.self, "/trips", "get")
+        try response(TripJSON.self, "/trips", "post", 201)
+        try response(TripJSON.self, "/trips/{id}", "get")
+        try response(TripJSON.self, "/trips/{id}", "patch")
+        try response(TripJSON.self, "/trips/{id}/tracks", "post")
+        try response(TripJSON.self, "/trips/{id}/tracks", "delete")
+        try request(TripCreateJSON.self, "/trips", "post")
+        try request(TripInputJSON.self, "/trips/{id}", "patch")
+        try request(TripTracksJSON.self, "/trips/{id}/tracks", "post")
+        try request(TripTracksJSON.self, "/trips/{id}/tracks", "delete")
+        try response(TripInboxJSON.self, "/trip-sends", "get")
 
         try response(PhotosJSON.self, "/photos", "get")
         try response(PhotoJSON.self, "/photos", "post", 201)

@@ -15,7 +15,7 @@ final class SessionStore {
     nonisolated let token = TokenBox()
 
     private(set) var stored: StoredSession?
-    /// The account the server confirmed this run; nil until `GET /v1/auth/me` has answered, so a
+    /// The account the server confirmed this run; nil until `GET /v2/auth/me` has answered, so a
     /// restored token is never trusted before then (apps/android/docs/SPEC.md FR-1.2).
     private(set) var confirmed: Account?
 

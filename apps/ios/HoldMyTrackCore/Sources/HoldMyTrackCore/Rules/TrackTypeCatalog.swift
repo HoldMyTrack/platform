@@ -1,5 +1,5 @@
 /// What the app shows for each track type, as the server says (root docs/SPEC.md FR-5.1,
-/// `GET /v1/activity-types`, every track list's `types` and every Trip's labels): its label
+/// `GET /v2/track-types`, every track list's `types` and every Trip's labels): its label
 /// and its kind. The app matches no words and keeps no catalog of its own; a type the server
 /// hasn't described is `.other`, its label spaced out from snake_case and title-cased, as the
 /// server falls back.

@@ -368,10 +368,10 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
 
     private func renderCard() {
         guard showsCard, let id = state.focused, let track = byID[id] else { return }
-        let kind = TrackTypes.shared.kind(track.activityType)
+        let kind = TrackTypes.shared.kind(track.trackType)
         cardIcon.image = TrackTypes.icon(kind)
         cardTitle.text = format.label(track)
-        cardMeta.text = ([track.title != nil ? format.startedAt(track) : nil, TrackTypes.shared.label(track.activityType)] as [String?])
+        cardMeta.text = ([track.title != nil ? format.startedAt(track) : nil, TrackTypes.shared.label(track.trackType)] as [String?])
             .compactMap { $0 }.joined(separator: " · ")
         if track.isPrivate {
             cardStats.text = String(localized: "Private: inside a Private location, so it has no route or numbers.")

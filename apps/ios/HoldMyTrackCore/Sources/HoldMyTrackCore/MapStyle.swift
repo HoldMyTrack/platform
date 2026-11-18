@@ -1,6 +1,6 @@
 import Foundation
 
-/// The layers document, `GET /v1/map/layers` (root docs/ARCHITECTURE.md §2.1, ADR-0048): every
+/// The layers document, `GET /v2/map/layers` (root docs/ARCHITECTURE.md §2.1, ADR-0048): every
 /// layer HoldMyTrack draws over the basemap, each mode's view, and the defaults of the values a
 /// layer reads at run time. Defined once in the web's mapLayers.ts; read here, decided nowhere.
 public struct LayersDocument: Equatable, Sendable {

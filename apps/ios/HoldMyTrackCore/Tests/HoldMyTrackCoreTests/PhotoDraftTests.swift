@@ -7,7 +7,7 @@ import Testing
 struct PhotoDraftTests {
     private func saved(_ id: String, _ routeAt: Double, caption: String? = nil) -> Photo {
         Photo(id: id, trackID: "a1", routeAt: ISOMoment.format(Date(timeIntervalSince1970: routeAt)), lon: 0, lat: 0, caption: caption,
-              width: 2048, height: 1365, url: "/v1/photos/\(id)", thumbURL: "/v1/photos/\(id)/thumb")
+              width: 2048, height: 1365, url: "/v2/photos/\(id)", thumbURL: "/v2/photos/\(id)/thumb")
     }
 
     private func new(_ key: String, _ routeAt: Double?) -> NewPhoto {

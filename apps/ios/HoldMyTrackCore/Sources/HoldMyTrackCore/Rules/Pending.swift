@@ -50,7 +50,7 @@ public enum PendingDiff {
         return (pending + awaiting).filter { seen.insert($0).inserted }
     }
 
-    /// The most ids one Pending check request may carry (`GET /v1/activities/pending`).
+    /// The most ids one Pending check request may carry (`GET /v2/tracks/pending`).
     public static let batch = 200
 
     /// [ids] in consecutive batches of at most size, one Pending check request each; the answers

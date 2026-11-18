@@ -137,7 +137,7 @@ extension MapViewController {
                 }
                 guard !Task.isCancelled else { return }
                 TrackTypes.shared.merge(read.types)
-                TrackTypes.shared.refresh(read.tracks.map(\.activityType), api: flow.api)
+                TrackTypes.shared.refresh(read.tracks.map(\.trackType), api: flow.api)
                 areaTotal = read.total
                 listed(read.tracks)
             } catch is CancellationError {

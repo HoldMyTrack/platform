@@ -216,7 +216,7 @@ public enum RouteEditOutcome: Equatable, Sendable {
 }
 
 extension RouteEdit {
-    init(_ json: TrackEditJSON) {
+    init(_ json: RouteEditJSON) {
         self.init(
             keep: json.keep.flatMap { $0.count == 2 ? TimeSpan($0[0], $0[1]) : nil },
             remove: (json.remove ?? []).compactMap { $0.count == 2 ? TimeSpan($0[0], $0[1]) : nil },
@@ -225,8 +225,8 @@ extension RouteEdit {
         )
     }
 
-    var json: TrackEditJSON {
-        TrackEditJSON(
+    var json: RouteEditJSON {
+        RouteEditJSON(
             keep: keep.map { [$0.from, $0.to] },
             remove: remove.isEmpty ? nil : remove.map { [$0.from, $0.to] },
             drop: drop.isEmpty ? nil : drop,
@@ -236,20 +236,20 @@ extension RouteEdit {
 }
 
 extension APIClient {
-    /// `GET /v1/activities/{id}/track-points`: every point the track was processed from,
+    /// `GET /v2/tracks/{id}/route-points`: every point the track was processed from,
     /// clipped by Private locations, and the edit saved on them.
     public func trackPoints(_ id: String) async throws -> (points: [RoutePoint], edit: RouteEdit?) {
-        let json: TrackPointsJSON = try decode(try await send("GET", "v1/activities/\(id)/track-points"))
+        let json: RoutePointsJSON = try decode(try await send("GET", "v2/tracks/\(id)/route-points"))
         let points = json.points.compactMap { p in p.count >= 3 ? RoutePoint(lon: p[0], lat: p[1], t: Int(p[2])) : nil }
         return (points, json.edit.map(RouteEdit.init))
     }
 
-    /// `POST /v1/activities/{id}/track-edit`: the whole new edit (nil resets the track), and the
+    /// `POST /v2/tracks/{id}/route-edit`: the whole new edit (nil resets the track), and the
     /// split beside it; the track reads Pending until reprocessed.
     public func saveRouteEdit(_ id: String, edit: RouteEdit?, splitAt: Int?, allowHidden: Bool) async throws -> RouteEditOutcome {
-        let body = TrackEditRequestJSON(edit: edit?.json, splitAt: splitAt, allowHidden: allowHidden ? true : nil)
+        let body = RouteEditRequestJSON(edit: edit?.json, splitAt: splitAt, allowHidden: allowHidden ? true : nil)
         do {
-            _ = try await send("POST", "v1/activities/\(id)/track-edit", body: body)
+            _ = try await send("POST", "v2/tracks/\(id)/route-edit", body: body)
             return .queued
         } catch APIError.http(422, "split_hides_part"?, let message) {
             return .splitHidesPart(message ?? "")

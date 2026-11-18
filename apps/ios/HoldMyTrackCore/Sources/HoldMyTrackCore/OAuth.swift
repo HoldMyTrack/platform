@@ -25,10 +25,10 @@ public enum OAuth {
         base64url(Data(SHA256.hash(data: Data(verifier.utf8))))
     }
 
-    /// Where the browser starts provider's round trip: `/v1/auth/<provider>/start` with the
+    /// Where the browser starts provider's round trip: `/v2/auth/<provider>/start` with the
     /// phone's timezone, for an account it creates, and the app's challenge.
     public static func startURL(_ provider: Provider, base: URL, timezone: String, challenge: String) -> URL {
-        var c = URLComponents(url: base.appending(path: "v1/auth/\(provider.rawValue)/start"), resolvingAgainstBaseURL: false)!
+        var c = URLComponents(url: base.appending(path: "v2/auth/\(provider.rawValue)/start"), resolvingAgainstBaseURL: false)!
         c.queryItems = [URLQueryItem(name: "tz", value: timezone), URLQueryItem(name: "app_challenge", value: challenge)]
         return c.url!
     }
