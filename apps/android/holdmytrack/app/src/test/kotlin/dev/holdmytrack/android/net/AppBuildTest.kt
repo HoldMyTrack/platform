@@ -11,14 +11,14 @@ class AppBuildTest {
     private val api = "https://holdmytrack.com"
 
     @Test
-    fun `a 426 from the API's own v1 is the server turning this build away`() {
+    fun `a 426 from the API's own v2 is the server turning this build away`() {
         assertTrue(AppBuild.isRefusal("$api/v2/auth/me", api, 426))
     }
 
     @Test
     fun `anything else is not`() {
         assertFalse(AppBuild.isRefusal("$api/v2/auth/me", api, 401))
-        assertFalse(AppBuild.isRefusal("$api/tiles/v2/fog-vector/3/4/5.pbf", api, 426))
+        assertFalse(AppBuild.isRefusal("$api/tiles/v1/fog-vector/3/4/5.pbf", api, 426))
         assertFalse(AppBuild.isRefusal("https://api.maptiler.com/v1/tiles", api, 426))
     }
 

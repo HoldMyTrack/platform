@@ -1175,7 +1175,7 @@ object HoldMyTrackApi {
     }
 
     /**
-     * How many of the account's tracks use each `activity_type` — what the recording Edit screen's
+     * How many of the account's tracks use each `track_type` — what the recording Edit screen's
      * Type picker lists, the same per-type counts the web client's Type facet is built from.
      * Read from the same unpaginated `GET /v2/tracks` as [tracks], since there is
      * no dedicated facets endpoint and this list already carries every live row.

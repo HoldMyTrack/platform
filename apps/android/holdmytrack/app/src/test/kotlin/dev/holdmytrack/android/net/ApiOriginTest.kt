@@ -15,7 +15,7 @@ class ApiOriginTest {
     @Test
     fun `the API's own requests are its own`() {
         assertTrue(isApi("https://holdmytrack.app/v2/auth/me"))
-        assertTrue(isApi("https://holdmytrack.app/tiles/v2/fog-vector/3/4/5.pbf"))
+        assertTrue(isApi("https://holdmytrack.app/tiles/v1/fog-vector/3/4/5.pbf"))
         assertTrue(isApi("https://HOLDMYTRACK.app:443/v2/tracks"))
     }
 

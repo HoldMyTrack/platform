@@ -45,7 +45,7 @@ class RecordingActivity : AppCompatActivity() {
     private lateinit var typeField: TextView
     private lateinit var descriptionField: EditText
 
-    /** The raw `activity_type` the Type field currently holds — [typeField] only shows its
+    /** The raw `track_type` the Type field currently holds — [typeField] only shows its
      *  formatted label. */
     private var selectedType = RecordingTypes.DEFAULT
 

@@ -107,7 +107,7 @@ class EditTrackWindow(
     private var tracks: List<Track> = emptyList()
     private var known: List<TypeCount> = emptyList()
 
-    /** The raw `activity_type` the Type field holds — the field itself shows its label. Empty
+    /** The raw `track_type` the Type field holds — the field itself shows its label. Empty
      *  for a group of mixed types until one is picked: empty keeps each track's own. */
     private var trackType = ""
 
