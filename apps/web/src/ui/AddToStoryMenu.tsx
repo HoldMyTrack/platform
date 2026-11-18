@@ -62,15 +62,17 @@ export function AddToStoryMenu({ readOnly, target, targetName, summary, onCreate
   const ids = target.map((a) => a.id);
   // Whether each Story holds all of the target, worked out once while the menu is open: a
   // checked group of 1,000 against a Story of 5,000 is 5 million compares as a list search.
+  // Keyed on the ids, not `target`, which the toolbar builds afresh on every render.
   const held = useMemo(() => {
     const result = new Map<string, boolean>();
     if (!open) return result;
+    const targetIds = targetKey === '' ? [] : targetKey.split(',');
     for (const story of stories.stories) {
       const members = new Set(story.activityIds);
-      result.set(story.id, target.every((a) => members.has(a.id)));
+      result.set(story.id, targetIds.every((id) => members.has(id)));
     }
     return result;
-  }, [open, stories.stories, target]);
+  }, [open, stories.stories, targetKey]);
   const title = readOnly
     ? t('stories.demo_add')
     : targetName === null
