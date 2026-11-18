@@ -4,18 +4,12 @@ import { MapPin } from 'lucide-react';
 import { getSpotsInArea } from '../api';
 import { setSpotsInArea, SPOTS_IN_AREA_MIN_ZOOM, SPOTS_MIN_ZOOM, type SpotCategory } from '../map/spots';
 import { t, tn } from '../i18n';
+import { areaCount, type AreaLoad } from './showInAreaCount';
 
 export interface ShowInAreaProps {
   map: MapLibreMap;
   /** The Spots categories the Places menu has on; none hides this control. */
   categories: readonly SpotCategory[];
-}
-
-/** What the last load found, and for which categories. */
-interface Loaded {
-  categories: readonly SpotCategory[];
-  shown: number;
-  total: number;
 }
 
 /**
@@ -28,7 +22,7 @@ interface Loaded {
  */
 export function ShowInArea({ map, categories }: ShowInAreaProps) {
   const [zoom, setZoom] = useState(() => map.getZoom());
-  const [loaded, setLoaded] = useState<Loaded | null>(null);
+  const [loaded, setLoaded] = useState<AreaLoad | null>(null);
   const [moved, setMoved] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
@@ -63,7 +57,7 @@ export function ShowInArea({ map, categories }: ShowInAreaProps) {
     getSpotsInArea([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()], wanted, controller.signal)
       .then(({ spots, total }) => {
         setSpotsInArea(map, spots);
-        setLoaded({ categories: wanted, shown: spots.length, total });
+        setLoaded({ categories: wanted, spotCategories: spots.map((s) => s.category), total });
       })
       .catch(() => {
         if (!controller.signal.aborted) setError(true);
@@ -73,12 +67,12 @@ export function ShowInArea({ map, categories }: ShowInAreaProps) {
       });
   };
 
-  const current = loaded !== null && !moved && !loading && categories.every((c) => loaded.categories.includes(c));
+  const count = loaded !== null && !moved && !loading && !error ? areaCount(loaded, categories) : null;
   let status: string | null = null;
-  if (current && !error) {
-    if (loaded.total === 0) status = t('spots.in_area_none');
-    else if (loaded.shown < loaded.total) status = t('spots.in_area_truncated', { shown: loaded.shown, total: loaded.total });
-    else status = tn('spots.in_area_count', loaded.total);
+  if (count !== null) {
+    if (count.total === 0) status = t('spots.in_area_none');
+    else if (count.shown < count.total) status = t('spots.in_area_truncated', { shown: count.shown, total: count.total });
+    else status = tn('spots.in_area_count', count.total);
   }
 
   return (

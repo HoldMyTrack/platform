@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { listActivities, listArea, type Activity } from '../api';
 import type { ListRequest } from '../map/activityQuery';
+import { rowsStandFor } from './listRows';
+
+const NO_ROWS: Activity[] = [];
 
 export interface ActivityList {
   activities: Activity[];
@@ -57,5 +60,7 @@ export function useActivityList(query: ListRequest | null): ActivityList {
   }, [queryKey, nonce]);
 
   const reload = useCallback(() => setNonce((n) => n + 1), []);
-  return { activities, total, loading, error, reload, loadedKey };
+  // A Story's first read shows no rows until it lands, never the last list's (listRows.ts).
+  const shown = rowsStandFor(queryKey, loadedKey) ? activities : NO_ROWS;
+  return { activities: shown, total, loading, error, reload, loadedKey };
 }
