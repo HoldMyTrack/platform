@@ -69,7 +69,7 @@ final class TrackRowCell: UITableViewCell {
     required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
 
     /// onCheck nil leaves the tile a plain icon (an open Trip's rows); onRemove shows the ×
-    /// that takes the row out of the open Trip; openStoryID's badge is left off.
+    /// that takes the row out of the open Trip; openTripID's badge is left off.
     func bind(_ row: Row, format: PanelFormat, openTripID: String?, demo: Bool,
               onCheck: (() -> Void)?, onOpenTrip: @escaping (String) -> Void, onRemove: (() -> Void)?) {
         let track = row.track

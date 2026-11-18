@@ -180,7 +180,7 @@ struct TrackRowJSON: Codable, Sendable, Equatable {
 
 struct TracksJSON: Codable, Sendable, Equatable {
     let tracks: [TrackRowJSON]
-    let types: [String: TrackTypeJSON]?
+    let types: [String: TrackTypeJSON]
 }
 
 /// A track as the area list's row shows it; `GET /v2/tracks/{id}` has the rest.

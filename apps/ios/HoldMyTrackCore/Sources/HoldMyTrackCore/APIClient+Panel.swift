@@ -6,7 +6,7 @@ extension APIClient {
     /// newest first, with what the server says about their types.
     public func tripTracks(_ trip: String) async throws -> (tracks: [Track], types: [String: TrackTypeInfo]) {
         let json: TracksJSON = try decode(try await send("GET", "v2/tracks", query: [URLQueryItem(name: "trip", value: trip)]))
-        return (json.tracks.map(Track.init), (json.types ?? [:]).mapValues(TrackTypeInfo.init))
+        return (json.tracks.map(Track.init), json.types.mapValues(TrackTypeInfo.init))
     }
 
     /// `GET /v2/tracks/area`: the newest tracks, at most limit, whose track crosses box
@@ -39,7 +39,7 @@ extension APIClient {
     }
 
     /// `GET /v2/track-types`: the catalog, and types by name.
-    public func activityTypes(_ types: [String]) async throws -> [String: TrackTypeInfo] {
+    public func trackTypes(_ types: [String]) async throws -> [String: TrackTypeInfo] {
         let query = types.isEmpty ? [] : [URLQueryItem(name: "types", value: types.joined(separator: ","))]
         let json: TrackTypesJSON = try decode(try await send("GET", "v2/track-types", query: query))
         return json.types.mapValues(TrackTypeInfo.init)

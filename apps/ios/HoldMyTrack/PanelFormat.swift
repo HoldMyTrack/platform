@@ -139,7 +139,7 @@ final class TrackTypes {
         let missing = catalog.missing(types)
         guard !catalogRead || !missing.isEmpty else { return }
         Task {
-            guard let described = try? await api.activityTypes(missing) else { return }
+            guard let described = try? await api.trackTypes(missing) else { return }
             catalogRead = true
             merge(described)
         }

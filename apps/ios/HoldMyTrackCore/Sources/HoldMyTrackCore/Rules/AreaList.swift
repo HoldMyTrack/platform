@@ -4,7 +4,7 @@ import Foundation
 /// drawn, on every settled move; further out there's nothing on the map to list. And whether the
 /// last area's list was cut at the limit, so the map draws only the listed tracks and says so.
 public enum AreaLoad {
-    /// The most tracks one area lists, and so its map draws (the server's areaActivitiesLimit).
+    /// The most tracks one area lists, and so its map draws (the server's areaTracksLimit).
     public static let limit = 1000
     /// Where tracks start being drawn, and the list with them.
     public static let minZoom = 4.0
