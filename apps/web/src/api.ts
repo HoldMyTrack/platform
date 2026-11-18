@@ -323,9 +323,7 @@ export async function updateActivity(
 
 /**
  * §4.7.5's `DELETE /v1/activities/{id}` — a full purge (track, Fog coverage,
- * the raw upload), not a soft delete. `204 No Content` on success, same
- * convention `logout` already uses for "succeeded, nothing to say back" — nothing to parse or
- * return here either.
+ * the raw upload), not a soft delete. `204 No Content` on success: nothing to parse or return.
  */
 export async function deleteActivity(id: string): Promise<void> {
   const res = await apiFetch(`/activities/${encodeURIComponent(id)}`, {
@@ -432,12 +430,6 @@ export async function getStatsCard(
   return res.blob();
 }
 
-/**
- * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one activity's own
- * track, matching the exact vertex sequence its display trajectory already renders. Backs
- * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
- * focus.
- */
 /** `GET /v1/map/imagery`: whether satellite imagery is offered now, which the server stops while
  *  the imagery plan nears its monthly limit (docs/SPEC.md FR-4.10). */
 export async function getMapImagery(signal?: AbortSignal): Promise<boolean> {
@@ -461,6 +453,12 @@ export async function pendingActivities(ids: readonly string[], signal?: AbortSi
   return ((await res.json()) as ResponseJson<'/activities/pending', 'get'>).pending;
 }
 
+/**
+ * `GET /v1/activities/{id}/track-metrics` — per-simplified-vertex speed for one activity's own
+ * track, matching the exact vertex sequence its display trajectory already renders. Backs
+ * MapView.tsx's pace-colored segments, shown only while exactly one activity has row-click
+ * focus.
+ */
 export async function getActivityTrackMetrics(
   activityId: string,
   signal?: AbortSignal,

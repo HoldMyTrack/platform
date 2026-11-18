@@ -348,8 +348,7 @@ async function renderOffscreen(
       transformRequest: withApiCredentials(API_BASE_URL, window.location.href),
       // The one thing the live map deliberately doesn't set — see this module's own doc
       // comment for why it's confined to this temporary instance instead. Nested under
-      // canvasContextAttributes, not a top-level MapOptions field, in this maplibre-gl version
-      // (confirmed against the installed 6.9.0 type declarations, not assumed).
+      // canvasContextAttributes, not a top-level MapOptions field, in maplibre-gl's MapOptions.
       canvasContextAttributes: { preserveDrawingBuffer: true },
     });
   } catch (err) {

@@ -20,9 +20,8 @@ export const SPRITE_BASE_PATH = '/basemap/sprites/v4';
 
 /**
  * The fallback camera target once there is no saved URL position, no activity history to fly
- * to, and no Country setting to fall back to first (MapView.tsx's zero-history fallback,
- * docs/SPEC.md FR-4.4) — deliberately zoomed out far enough to keep every continent in frame,
- * not a regional point like the old Columbus, OH default this replaced.
+ * to, and no Country setting to fall back to first (useOpeningView.ts, docs/SPEC.md FR-4.4):
+ * zoomed out far enough to keep every continent in frame.
  */
 export const WORLD_VIEW = {
   longitude: 10,

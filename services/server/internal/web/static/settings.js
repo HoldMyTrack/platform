@@ -8,7 +8,7 @@
   document.getElementById('avatar-upload').hidden = true;
 })();
 
-// The local time beside the timezone, for whichever zone is picked and once a minute, in the
+// The local time beside the timezone, for whichever zone is picked and every 30 seconds, in the
 // same shape as web.LocalTime.
 (function () {
   var select = document.getElementById('timezone');

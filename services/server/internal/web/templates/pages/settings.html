@@ -55,7 +55,7 @@
           {{$tz := .Timezone}}{{range .Timezones}}<optgroup label="{{t (printf "tz.region.%s" .Region)}}">{{range .Options}}<option value="{{.ID}}" data-keywords="{{.ID}}" {{if eq .ID $tz}}selected{{end}}>{{.Label}}</option>{{end}}</optgroup>{{end}}
         </select>
         {{/* Rendered for the saved zone; static/settings.js re-renders it for whichever zone is picked,
-             and once a minute, in the same shape as web.LocalTime. */}}
+             and every 30 seconds, in the same shape as web.LocalTime. */}}
         <span class="settings__local-time" id="timezone-local-time" data-template="{{t "settings.timezone_local_time" "time" "{time}"}}" {{if not .LocalTime}}hidden{{end}}>{{with .LocalTime}}{{t "settings.timezone_local_time" "time" .}}{{end}}</span>
         <span class="settings__hint">{{t "settings.timezone_hint"}}</span>
       </label>

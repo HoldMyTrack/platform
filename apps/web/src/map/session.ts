@@ -41,7 +41,7 @@ export type MapSessionEvent =
   /** Dates changed (dateFilter.ts's setDateFilter). The selection stays, as on any reload; the
    *  list then drops what left it (`listLoaded`). [fly] moves the camera onto the matches once. */
   | { type: 'datesSet'; dates: DateFilter; fly: boolean }
-  /** The list is asked about this view: a move from zoom 10, the button, or a flight's end. */
+  /** The list is asked about this view: a move of the map from zoom 4 (FR-5.11), the opening view, Dates' flight's end, or a Story closed. */
   | { type: 'areaLoaded'; area: BBox }
   /** "View on map" for an activity not listed: Dates on its own day, and the camera onto it. */
   | { type: 'dayViewed'; day: string }
