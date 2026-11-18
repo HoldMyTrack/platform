@@ -27,5 +27,5 @@ export function firstSymbolLayerId(layers: readonly LayerSpecification[]): strin
  * `styledata`, since a `setStyle` swap replaces the layer list wholesale.
  */
 export function labelInsertionPoint(map: MapLibreMap): string | undefined {
-  return firstSymbolLayerId(map.getStyle().layers);
+  return firstSymbolLayerId(map.getStyle()?.layers ?? []);
 }
