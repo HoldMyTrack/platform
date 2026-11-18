@@ -1,4 +1,5 @@
 import type { TrackEdit, TrackPoint } from '../api';
+import { haversineM as distanceM } from '../geo.ts';
 
 /**
  * The Edit track session's history (§4.7.7) — pure functions, no React. Android's
@@ -136,12 +137,6 @@ export function cumulativeDistances(points: readonly TrackPoint[]): number[] {
   return out;
 }
 
-const EARTH_RADIUS_M = 6371008.8;
-
 function haversineM(a: TrackPoint, b: TrackPoint): number {
-  const toRad = Math.PI / 180;
-  const dLat = (b[1] - a[1]) * toRad;
-  const dLon = (b[0] - a[0]) * toRad;
-  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a[1] * toRad) * Math.cos(b[1] * toRad) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS_M * Math.asin(Math.min(1, Math.sqrt(h)));
+  return distanceM(a[1], a[0], b[1], b[0]);
 }

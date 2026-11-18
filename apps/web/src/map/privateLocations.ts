@@ -1,4 +1,5 @@
 import { TRACKS_MIN_ZOOM } from './config';
+import { EARTH_RADIUS_M } from '../geo.ts';
 import type { ExpressionSpecification, GeoJSONSource, LngLat, Map as MapLibreMap, MapLayerMouseEvent, MapLayerTouchEvent } from 'maplibre-gl';
 
 /**
@@ -15,7 +16,6 @@ const CENTER_LAYER_ID = 'private-locations-center';
 const HANDLE_LAYER_ID = 'private-locations-handle';
 
 const COLOR = '#7a4bc2';
-const EARTH_RADIUS_M = 6371008.8;
 const CIRCLE_STEPS = 64;
 
 export interface Circle {

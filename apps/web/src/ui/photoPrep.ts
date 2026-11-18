@@ -1,3 +1,4 @@
+import { isoSeconds } from './photoDraft.ts';
 /**
  * Getting a picked photo ready for upload (IMPLEMENTATION.md §4.27, ADR-0024): read what its
  * EXIF says about when and where it was taken, then redraw it at most 2048 px on its long side,
@@ -117,7 +118,7 @@ function wallMs(local: string): number {
 }
 
 function iso(ms: number): string {
-  return new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+  return isoSeconds(ms / 1000);
 }
 
 /**
