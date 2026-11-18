@@ -1,4 +1,4 @@
-import { haversineM as distanceM } from '../geo.ts';
+import { haversineM } from '../geo.ts';
 /**
  * A track as the Photos tab's slider walks it (IMPLEMENTATION.md §4.27): the display points with
  * their moments (`GET /v1/activities/{id}/track-metrics`'s `time_s`), measured along their
@@ -20,13 +20,13 @@ export interface PhotoTrack {
   along: readonly number[];
 }
 
-function haversineM(a: TimedPoint, b: TimedPoint): number {
-  return distanceM(a.lat, a.lon, b.lat, b.lon);
+function pointDistanceM(a: TimedPoint, b: TimedPoint): number {
+  return haversineM(a.lat, a.lon, b.lat, b.lon);
 }
 
 export function photoTrack(points: readonly TimedPoint[]): PhotoTrack {
   const along = [0];
-  for (let i = 1; i < points.length; i++) along.push(along[i - 1]! + haversineM(points[i - 1]!, points[i]!));
+  for (let i = 1; i < points.length; i++) along.push(along[i - 1]! + pointDistanceM(points[i - 1]!, points[i]!));
   return { points, along };
 }
 

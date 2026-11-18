@@ -1,5 +1,5 @@
 import type { TrackEdit, TrackPoint } from '../api.ts';
-import { haversineM as distanceM } from '../geo.ts';
+import { haversineM } from '../geo.ts';
 
 /**
  * The Edit track session's history (§4.7.7) — pure functions, no React. Android's
@@ -131,12 +131,12 @@ export function cumulativeDistances(points: readonly TrackPoint[]): number[] {
   const out = new Array<number>(points.length);
   let acc = 0;
   for (let i = 0; i < points.length; i++) {
-    if (i > 0) acc += haversineM(points[i - 1]!, points[i]!);
+    if (i > 0) acc += pointDistanceM(points[i - 1]!, points[i]!);
     out[i] = acc;
   }
   return out;
 }
 
-function haversineM(a: TrackPoint, b: TrackPoint): number {
-  return distanceM(a[1], a[0], b[1], b[0]);
+function pointDistanceM(a: TrackPoint, b: TrackPoint): number {
+  return haversineM(a[1], a[0], b[1], b[0]);
 }
