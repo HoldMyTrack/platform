@@ -218,10 +218,14 @@ export function useMapInstance({
       imageryTick = now;
       setImagery(satelliteStatus(imageryLoaded, imageryFailed, imageryWaitedMs));
     };
-    const imageryTimer = setInterval(() => {
-      reportImagery();
-      if (imageryLoaded) clearInterval(imageryTimer);
-    }, 1000);
+    // Only with imagery configured: without it no tile ever loads to stop the timer, which would
+    // tick for the page's life.
+    const imageryTimer = satelliteSource() === null
+      ? undefined
+      : setInterval(() => {
+          reportImagery();
+          if (imageryLoaded) clearInterval(imageryTimer);
+        }, 1000);
     instance.on('sourcedata', (e) => {
       if (imageryLoaded || e.sourceId !== SATELLITE_SOURCE || !e.tile) return;
       imageryLoaded = true;
