@@ -6,7 +6,7 @@ Accepted. Every client implements every rule in `testdata/client-rules/` that na
 
 ## Context
 
-Some rules can't live on the server (ADR-0048) because they answer a tap or a drag before any round trip: the date slider's knobs, which activities the toolbar acts on, the track editor's operations, where photo markers sit. The web implements them in TypeScript and Android in Kotlin; iOS will need them in Swift. Each rule has a JSON file of cases in `testdata/client-rules/`, and the web and Android suites run every file, failing on one they don't implement.
+Some rules can't live on the server (ADR-0048) because they answer a tap or a drag before any round trip: the date slider's knobs, which tracks the toolbar acts on, the route editor's operations, where photo markers sit. The web implements them in TypeScript and Android in Kotlin; iOS will need them in Swift. Each rule has a JSON file of cases in `testdata/client-rules/`, and the web and Android suites run every file, failing on one they don't implement.
 
 The code is written by agents. That changes the cost of writing a rule three times, which is small, but not the cost of three implementations disagreeing, which a user sees as the apps behaving differently.
 

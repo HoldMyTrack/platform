@@ -81,7 +81,7 @@ final class DatesViewController: UIViewController {
 
     private func render() {
         let format = { (day: String) in DateFilter.short(day, today: self.today, locale: .current) }
-        fromRow.show(value: filter.after.map(format), hint: earliest.map { String(localized: "First activity: \(format($0))") }, open: open == .after)
+        fromRow.show(value: filter.after.map(format), hint: earliest.map { String(localized: "First track: \(format($0))") }, open: open == .after)
         toRow.show(value: filter.before.map(format), hint: String(localized: "Today"), open: open == .before)
         calendar.isHidden = open == nil
         clear.isEnabled = filter != .allTime

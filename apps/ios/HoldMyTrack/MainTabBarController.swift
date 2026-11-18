@@ -16,7 +16,7 @@ final class MainTabBarController: UITabBarController {
         mapHost.tabBarItem = UITabBarItem(title: String(localized: "Map"), image: UIImage(resource: .map), tag: 0)
         mapHost.tabBarItem.accessibilityIdentifier = "tabMap"
         let stories = MapHostViewController(map: map, tab: .stories)
-        stories.tabBarItem = UITabBarItem(title: String(localized: "Stories"), image: UIImage(resource: .bookOpen), tag: 1)
+        stories.tabBarItem = UITabBarItem(title: String(localized: "Trips"), image: UIImage(resource: .bookOpen), tag: 1)
         stories.tabBarItem.accessibilityIdentifier = "tabStories"
         let history = WebPageViewController(flow: flow, page: .syncHistory)
         let sync = UINavigationController(rootViewController: history)

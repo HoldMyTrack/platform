@@ -42,7 +42,7 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
     static func title(_ page: SitePage) -> String {
         switch page {
         case .settings: String(localized: "Settings")
-        case .profile: String(localized: "Activity graph & trends")
+        case .profile: String(localized: "Track graph & trends")
         case .syncHistory: String(localized: "Sync history")
         case .about: String(localized: "About")
         }

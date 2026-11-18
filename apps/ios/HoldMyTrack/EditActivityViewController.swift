@@ -70,7 +70,7 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)
         let single = group.count == 1 ? group[0] : nil
-        title = single != nil ? String(localized: "Edit activity") : String(localized: "Edit activities: \(group.count)")
+        title = single != nil ? String(localized: "Edit track") : String(localized: "Edit tracks: \(group.count)")
         navigationItem.leftBarButtonItem = UIBarButtonItem(systemItem: .cancel, primaryAction: UIAction { [weak self] _ in self?.cancel() })
         let save = UIBarButtonItem(title: String(localized: "Save"), primaryAction: UIAction { [weak self] _ in self?.save() })
         save.style = .done
@@ -107,15 +107,15 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
         if single != nil {
             views += [Self.caption(String(localized: "Name")), name, Self.caption(String(localized: "Description")), about]
         } else {
-            views.append(Controls.body(String(localized: "Name and description stay each activity's own.")))
+            views.append(Controls.body(String(localized: "Name and description stay each track's own.")))
         }
         for v in views { fields.addArrangedSubview(v) }
         fields.axis = .vertical
         fields.spacing = DesignTokens.Space.s12
         var column: [UIView] = [subtitle]
         if single != nil {
-            tabs.insertSegment(withTitle: String(localized: "Activity"), at: 0, animated: false)
-            tabs.insertSegment(withTitle: String(localized: "Track"), at: 1, animated: false)
+            tabs.insertSegment(withTitle: String(localized: "Track"), at: 0, animated: false)
+            tabs.insertSegment(withTitle: String(localized: "Route"), at: 1, animated: false)
             tabs.insertSegment(withTitle: String(localized: "Photos"), at: 2, animated: false)
             tabs.selectedSegmentIndex = 0
             tabs.accessibilityIdentifier = "editTabs"
@@ -160,14 +160,14 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     /// the count Save would leave.
     private func renderTabs() {
         let trackChanged = trackEditor?.session?.changed == true
-        tabs.setTitle(trackChanged ? String(localized: "Track •", comment: "Edit window's tab with unsaved track changes.") : String(localized: "Track"), forSegmentAt: 1)
+        tabs.setTitle(trackChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved route changes.") : String(localized: "Route"), forSegmentAt: 1)
         if let photos {
             let count = format.count(photos.count)
-            let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the activity's photos, written as label: N.")
+            let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the track's photos, written as label: N.")
                 : String(localized: "Photos: \(count) •", comment: "Edit window's tab with unsaved photo changes.")
             tabs.setTitle(title, forSegmentAt: 2)
         }
-        let unsaved = [trackChanged ? String(localized: "Track, with unsaved changes") : nil,
+        let unsaved = [trackChanged ? String(localized: "Route, with unsaved changes") : nil,
                        photos?.draft.isEmpty == false ? String(localized: "Photos, with unsaved changes") : nil].compactMap { $0 }
         tabs.accessibilityValue = unsaved.isEmpty ? nil : unsaved.joined(separator: ", ")
     }
@@ -175,11 +175,11 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     /// Why a tab can't be used, in the server's terms (EditAvailability).
     private static func message(_ block: EditBlock) -> String {
         switch block {
-        case .checkOne: String(localized: "Check exactly one activity to edit its track")
+        case .checkOne: String(localized: "Check exactly one track to edit its route")
         case .pending: String(localized: "This track is still being processed")
         case .isPrivate: String(localized: "Entirely inside one of your private locations, so it isn't on the map and has no distance. Moving or removing that location brings it back.")
-        case .noOriginal: String(localized: "This activity's original recording isn't stored, so its track can't be edited")
-        case .badTimes: String(localized: "This track's points have no usable times, so it can't be edited")
+        case .noOriginal: String(localized: "This track's original recording isn't stored, so its route can't be edited")
+        case .badTimes: String(localized: "This route's points have no usable times, so it can't be edited")
         }
     }
 
@@ -344,7 +344,7 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
         guard !saving else { return }
         guard photos?.draft.isEmpty == false || trackEditor?.session?.changed == true else { return finish() }
         let alert = UIAlertController(title: String(localized: "Discard changes?"),
-                                      message: String(localized: "The photos and track changes in this window haven't been saved yet."), preferredStyle: .alert)
+                                      message: String(localized: "The photos and route changes in this window haven't been saved yet."), preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: String(localized: "Keep editing"), style: .cancel))
         alert.addAction(UIAlertAction(title: String(localized: "Discard"), style: .destructive) { [weak self] _ in self?.finish() })
         present(alert, animated: true)

@@ -162,7 +162,7 @@ extension MapViewController {
         guard let id = privateLocations.draft?.id else { return }
         let alert = UIAlertController(
             title: String(localized: "Delete this Private location?"),
-            message: String(localized: "Activities that start or end inside it will show those parts again once they're reprocessed.",
+            message: String(localized: "Tracks that start or end inside it will show those parts again once they're reprocessed.",
                             comment: "Private location editor: what deleting a Private location brings back."),
             preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: String(localized: "Cancel"), style: .cancel))

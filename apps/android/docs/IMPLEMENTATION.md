@@ -48,19 +48,19 @@ stateDiagram-v2
 
 ### 1.3 Tabs
 
-Map, Stories and Sync are one `MapFragment` whose panel switches tabs; You is `YouFragment`. `MainActivity` shows and hides them, never replaces them, so the `MapView`, its camera, its layers and a recording survive a trip to You.
+Map, Trips and Sync are one `MapFragment` whose panel switches tabs; You is `YouFragment`. `MainActivity` shows and hides them, never replaces them, so the `MapView`, its camera, its layers and a recording survive a trip to You.
 
 What survives a recreation is chosen item by item, and each was a bug: the fragment is added only on a first create; the once-per-process camera fit, the map mode and the logo's and attribution's base margins go into the saved state. Without the mode, the buttons restored their own checked state and showed Fog over a map in Normal; without the margins, MapLibre's restored values were lifted a second time.
 
-Every screen draws edge-to-edge: Android 15+ does at `targetSdk` 35+, and `HoldMyTrackApplication` calls `enableEdgeToEdge()` before each activity's `onCreate` so Android 14 matches. The map's chrome adds the bottom inset to each view's padding (`insetSystemBars`) and passes the insets on unconsumed; the side insets are applied once, on the tabs' container.
+Every screen draws edge-to-edge: Android 15+ does at `targetSdk` 35+, and `HoldMyTrackApplication` calls `enableEdgeToEdge()` before each track's `onCreate` so Android 14 matches. The map's chrome adds the bottom inset to each view's padding (`insetSystemBars`) and passes the insets on unconsumed; the side insets are applied once, on the tabs' container.
 
 ### 1.4 The web's pages in a WebView
 
-Settings, Activity graph & trends, Sync history and About are the server's pages in `web/WebPageActivity` (ADR-0042); how the server renders a page for the app is root `docs/IMPLEMENTATION.md` §4.19.
+Settings, Track graph & trends, Sync history and About are the server's pages in `web/WebPageActivity` (ADR-0042); how the server renders a page for the app is root `docs/IMPLEMENTATION.md` §4.19.
 
 - **Signed in by cookie.** WebView requests never pass through the app's `OkHttpClient`, so the session, the in-app marker and the language are written into the WebView's cookie store before every load. A header would reach only the first request; a cookie rides on every link, form POST and redirect.
 - **`route` acts on where a navigation goes**, decided by `web/WebRoute` from the link's parts (`testdata/client-rules/web-page-route.json`): the page's own path stays, `/` opens the native map, the sign-in pages finish and leave the map's session check to act, anything else opens in a Custom Tab. Trap: `shouldOverrideUrlLoading` is never offered a POST or reliably the redirect after one, so `route` runs again in `onPageStarted`. That is how first-run Settings' save, redirecting to `/`, reaches the map; `route` reads the session first, because the map gates on a Country only the server has heard of.
-- **View on map** is a link to `/` with the activity's id and local day, handed to `MainActivity` (`onNewIntent` when the map exists; ignored when replayed from recents). The map acts once the session is confirmed: inside the range it focuses the activity, outside it applies that day as the range first. The fit is padded by the height the sheet is heading to, since fitting to the sheet mid-collapse put the activity at the top of the screen.
+- **View on map** is a link to `/` with the track's id and local day, handed to `MainActivity` (`onNewIntent` when the map exists; ignored when replayed from recents). The map acts once the session is confirmed: inside the range it focuses the track, outside it applies that day as the range first. The fit is padded by the height the sheet is heading to, since fitting to the sheet mid-collapse put the track at the top of the screen.
 
 ## 2. Session and auth
 
@@ -100,16 +100,16 @@ The style is `GET /v1/map/style/{flavor}?lang=`, unmodified, fetched beside `GET
 
 **A style reload discards every custom layer and image**, so everything that adds to the style is idempotent and re-adds on each load: `MapLayers`, `MapOverlays`, `MapSatellite`, `MapRoads`, `MapSpots` with its badge bitmaps, the Sync candidates and the Private location circles. `syncSession()` attaches them once the session is verified.
 
-**Order, bottom to top, matches the web's layer by layer**: Fog's coverage, the trails and tracks lifted out of the basemap's roads, the bike paths, the account's tracks, all under the basemap's first symbol layer; Spots over everything. MapLibre Native has no `moveLayer`, so lifting a layer is remove and re-add, as is a coverage refresh.
+**Order, bottom to top, matches the web's layer by layer**: Fog's coverage, the trails and dirt tracks lifted out of the basemap's roads, the bike paths, the account's routes, all under the basemap's first symbol layer; Spots over everything. MapLibre Native has no `moveLayer`, so lifting a layer is remove and re-add, as is a coverage refresh.
 
 - **`setMode` applies the document's view**, properties only, so a switch is instant and a reload re-applies it.
-- **Only the tracks URL carries a filter**: Dates or the open Story, appended to the document's path. `VectorSource` can't change its URL, so a Dates change replaces the source and its layers. The area is the list's alone: past its cap the tracks layer's `capped` and `listed` vars draw only the listed tracks (`MapOverlays.setTrackCap`).
+- **Only the tracks URL carries a filter**: Dates or the open Trip, appended to the document's path. `VectorSource` can't change its URL, so a Dates change replaces the source and its layers. The area is the list's alone: past its cap the tracks layer's `capped` and `listed` vars draw only the listed routes (`MapOverlays.setTrackCap`).
 - **The hidden, focused and checked ids are vars** the document's filters bind. The live recording and the Sync candidates draw like the layers whose role they share.
 - **An unreachable basemap is caught by the clock** (`BasemapWatch`, root `docs/IMPLEMENTATION.md` §5.4): a failed PMTiles header fails the source, not a tile, so no tile `Error` arrives.
 
 ### 3.2 Tile versions
 
-Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The status is read only once attached, so a `304` hands back the kept document even at another stored version. Tracks also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed.
+Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The status is read only once attached, so a `304` hands back the kept document even at another stored version. Routes also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed.
 
 ### 3.3 Logic ported from the web
 
@@ -117,21 +117,21 @@ Where the web has a rule, the app ports it as a pure Kotlin class running the sh
 
 ### 3.4 The panel, editors and touches
 
-The split follows the web's: `MapSession` holds the area and Dates or the Story shown and the camera's next flight, `PanelState` the focus, checked group, hidden set and filters, and `ActivitiesPanel` binds views and redraws from it in one `render()`. `MapFragment` owns the map and composes one controller per feature; `AreaController` binds the session to the list, Dates' dialog and the camera's settling. Trap: a controller that registers a permission request or the photo picker is created as a fragment field, since registering after the fragment starts throws; Back callbacks are asked last-added first, export's before the editors' before the sheet's.
+The split follows the web's: `MapSession` holds the area and Dates or the Trip shown and the camera's next flight, `PanelState` the focus, checked group, hidden set and filters, and `ActivitiesPanel` binds views and redraws from it in one `render()`. `MapFragment` owns the map and composes one controller per feature; `AreaController` binds the session to the list, Dates' dialog and the camera's settling. Trap: a controller that registers a permission request or the photo picker is created as a fragment field, since registering after the fragment starts throws; Back callbacks are asked last-added first, export's before the editors' before the sheet's.
 
-- **The list follows the map, never the app's own flights**: `CameraFramer` marks each camera move it makes, the opening view and every fit, and `AreaController.onCameraIdle` skips the settle that ends one (`consumeAppFlight`), or focusing a row would shrink the list to that row's track; a gesture that cancels a flight clears the mark. Dates' flight asks about where it lands itself, since that may be the view already asked about.
-- **The area's rows are slim** (`GET /v1/activities/area`): `EditController.open` reads each activity in full (`GET /v1/activities/{id}`) before the window opens, for the description, the track's edit and the photos.
-- **Touch order**: a tap asks `MapSpots.spotAt` first unless an editor holds the map, so a spot's tap never focuses a track under it. The track editor's point drags and the Private location handle are taken in a touch listener on the `MapView`, which runs before MapLibre's gestures (the web's `dragPan.disable()`). Photo markers are views, so their taps never reach the map.
-- **Edits run one request at a time**: parallel deletes raced each other's coverage re-render. A group edit resends each activity's own name and description, since the endpoint replaces them, and skips saves already sent on a retry.
-- **Pending**: a row entering or leaving Pending refetches the tracks and starts the coverage watch, and while one is, the Pending check is polled (root `docs/IMPLEMENTATION.md` §4.2.5).
-- **A Private location change reprocesses whole activities**, so the editor hands the coverage watch a callback that re-reads tracks, list, days and metrics once the server has drained.
+- **The list follows the map, never the app's own flights**: `CameraFramer` marks each camera move it makes, the opening view and every fit, and `AreaController.onCameraIdle` skips the settle that ends one (`consumeAppFlight`), or focusing a row would shrink the list to that row's route; a gesture that cancels a flight clears the mark. Dates' flight asks about where it lands itself, since that may be the view already asked about.
+- **The area's rows are slim** (`GET /v1/activities/area`): `EditController.open` reads each track in full (`GET /v1/activities/{id}`) before the window opens, for the description, the route's edit and the photos.
+- **Touch order**: a tap asks `MapSpots.spotAt` first unless an editor holds the map, so a spot's tap never focuses a track under it. The route editor's point drags and the Private location handle are taken in a touch listener on the `MapView`, which runs before MapLibre's gestures (the web's `dragPan.disable()`). Photo markers are views, so their taps never reach the map.
+- **Edits run one request at a time**: parallel deletes raced each other's coverage re-render. A group edit resends each track's own name and description, since the endpoint replaces them, and skips saves already sent on a retry.
+- **Pending**: a row entering or leaving Pending refetches the routes and starts the coverage watch, and while one is, the Pending check is polled (root `docs/IMPLEMENTATION.md` §4.2.5).
+- **A Private location change reprocesses whole tracks**, so the editor hands the coverage watch a callback that re-reads routes, list, days and metrics once the server has drained.
 
 ### 3.5 Map image export
 
 The web's design (root `docs/IMPLEMENTATION.md` §4.3.3).
 
 - **The image is drawn on a second, hidden `MapView`**: `MapSnapshotter` takes layers only before its style loads, while the overlays add to a loaded style. `MapFragment.prepareExportStyle` replays the live map's overlay calls on it, so **a change to how the live map attaches its layers has to reach the export too**.
-- **It's read on map idle with `TextureView.getBitmap`**: "fully rendered" never comes when a tile fails, and `MapLibreMap.snapshot` never answered for a 4K image. Idle can fail to come too, seen with satellite imagery refused while tracks are bold, so a map that has drawn and then drawn nothing for 2 s counts as done.
+- **It's read on map idle with `TextureView.getBitmap`**: "fully rendered" never comes when a tile fails, and `MapLibreMap.snapshot` never answered for a 4K image. Idle can fail to come too, seen with satellite imagery refused while routes are bold, so a map that has drawn and then drawn nothing for 2 s counts as done.
 - **The credit comes from the style document**: a loaded source reports its archive's attribution, which leaves Protomaps out.
 - **The stats card is the one previewed**: `ExportStatsCard` holds the server's PNG for the frame's size and theme, and Capture waits for it, then draws it on the image before the credit and the mark.
 
@@ -155,7 +155,7 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 
 ### 4.2 Load
 
-**`sync/WaitingLoader.load` is the only place Health Connect is read**, from a screen's scope. It reads 90 days of sessions with routes, asks `POST /v1/sync/known` which ids the server has (root `docs/IMPLEMENTATION.md` §4.0.3), hands those still processing to `SyncProgress`, prunes hidden sessions only after a read that withheld nothing, and replaces `WaitingStore`'s rows in one transaction. A cancelled or failed read changes nothing, so cancelling needs no cleanup. There is no cursor: each Load asks Health Connect and the server afresh, so a reinstall or second phone agrees and a deleted activity is offered again.
+**`sync/WaitingLoader.load` is the only place Health Connect is read**, from a screen's scope. It reads 90 days of sessions with routes, asks `POST /v1/sync/known` which ids the server has (root `docs/IMPLEMENTATION.md` §4.0.3), hands those still processing to `SyncProgress`, prunes hidden sessions only after a read that withheld nothing, and replaces `WaitingStore`'s rows in one transaction. A cancelled or failed read changes nothing, so cancelling needs no cleanup. There is no cursor: each Load asks Health Connect and the server afresh, so a reinstall or second phone agrees and a deleted track is offered again.
 
 **`sync/WaitingStore` keeps what a Load found**, in a second SQLite database, so the tab opens without reading Health Connect. It keeps each session's drawn line, not its route; a session is read again by id when it's sent.
 
@@ -163,7 +163,7 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 
 - **`sync/SyncRunner.send`** sends sessions in batches below the server's cap, then each recording alone, deleting it from the phone once taken. The JSON is built from the route as read, never the simplified line. A failed request stops the run, leaving the rest ticked.
 - **`sync/SyncProgress` is process-wide**: it reads nothing from Health Connect, so it outlives the tab. While it holds anything and has a listener it polls `/v1/sync/known` (`syncOutcome`). A sent recording stays in the store, marked, until it lands or fails; `resume` takes marked rows back after a restart. **A landing refetches the tracks tile at once**, since the tile version moves only after the coverage render that follows ingest.
-- **The candidates on the map**: the account's tracks step aside on the Sync tab. `map/Simplify` thins each route for drawing only, with speeds by the server's track-metrics rule on the coarser line, so a candidate's pace bands are smoother than the synced activity's.
+- **The candidates on the map**: the account's routes step aside on the Sync tab. `map/Simplify` thins each route for drawing only, with speeds by the server's track-metrics rule on the coarser line, so a candidate's pace bands are smoother than the synced track's.
 
 ### 4.4 File upload
 
@@ -171,7 +171,7 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 
 ## 5. Recording and crash recovery
 
-The lifecycle is the state diagram in `apps/android/docs/SPEC.md` FR-5, and the wire contract root `docs/IMPLEMENTATION.md` §4.0.4. `recording/RecordingService`, a foreground location service, holds the recording; the map binds to it only to watch, which is also how reopening the app mid-recording redraws the track so far. The record button and the notification send intents.
+The lifecycle is the state diagram in `apps/android/docs/SPEC.md` FR-5, and the wire contract root `docs/IMPLEMENTATION.md` §4.0.4. `recording/RecordingService`, a foreground location service, holds the recording; the map binds to it only to watch, which is also how reopening the app mid-recording redraws the route so far. The record button and the notification send intents.
 
 ### 5.1 Stop
 

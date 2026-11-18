@@ -2,7 +2,7 @@
 
 [![Go coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=go&logo=go&logoColor=white&label=Go%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=go) [![TypeScript coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=typescript&logo=typescript&logoColor=white&label=TypeScript%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=typescript) [![Kotlin coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=kotlin&logo=kotlin&logoColor=white&label=Kotlin%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=kotlin) [![Swift coverage](https://img.shields.io/codecov/c/github/HoldMyTrack/platform?flag=swift&logo=swift&logoColor=white&label=Swift%20coverage)](https://app.codecov.io/gh/HoldMyTrack/platform?flags%5B0%5D=swift)
 
-A free, open-source platform for outdoor activities. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats: one map of every place they reached and the nearby streets, parks and trails they haven't, so the next walk, run or ride can go somewhere new, and each trip can be kept as a Story with its photos. What it is and isn't: [`docs/VISION.md` §1](docs/VISION.md#1-executive-summary).
+A free, open-source platform for outdoor activities. It keeps the journeys you choose, from a watch, the phone, a cloud service or a file, and turns them into maps and exploration stats: one map of every place they reached and the nearby streets, parks and trails they haven't, so the next walk, run or ride can go somewhere new, and each holiday or multi-day hike can be kept as a Trip with its photos. What it is and isn't: [`docs/VISION.md` §1](docs/VISION.md#1-executive-summary).
 
 Live at [holdmytrack.com](https://holdmytrack.com), with a no-signup demo account to explore.
 
@@ -10,14 +10,14 @@ Live at [holdmytrack.com](https://holdmytrack.com), with a no-signup demo accoun
 
 Each feature links to the part of [`docs/SPEC.md`](docs/SPEC.md) that defines its behavior.
 
-- **Bring in what you choose.** GPX, FIT and TCX files, plus Health Connect sync and GPS recording from the Android app, through one ingest pipeline. Nothing comes in that you didn't pick, and a hint marks a likely second copy ([FR-3](docs/SPEC.md#5-fr-3--activity-upload--ingestion)).
+- **Bring in what you choose.** GPX, FIT and TCX files, plus Health Connect sync and GPS recording from the Android app, through one ingest pipeline. Nothing comes in that you didn't pick, and a hint marks a likely second copy ([FR-3](docs/SPEC.md#5-fr-3--track-upload--ingestion)).
 - **One map, two views.** Every track drawn together, and Fog of War, which clears wherever you have ever been. Pick a track and it is colored by pace ([FR-4](docs/SPEC.md#6-fr-4--map-visualization)).
 - **Somewhere new, close to home.** The fog shows which streets, parks and trails nearby you haven't been to.
 - **Points of interest.** Playgrounds, dog parks, monuments, viewpoints, waterfalls and historic sites from OpenStreetMap, with what OSM knows about each; the Android app captures one when you stand in it for 30 seconds ([FR-14](docs/SPEC.md#16-fr-14--spots)).
-- **Stories.** Hand-picked sets of activities, such as a multi-day hike, a holiday or a race weekend, each with its own name, map and totals ([FR-13](docs/SPEC.md#15-fr-13--stories)).
-- **Photos.** Your photos on an activity, placed on the route by capture time and adjustable in the Edit window, shown on the focused route and across a Story; kept as a resized copy, never the original ([FR-15](docs/SPEC.md#17-fr-15--activity-photos)).
-- **Activity graph and trends.** A private, GitHub-style daily grid of your activity, and weekly or monthly totals of the ground you covered ([FR-6](docs/SPEC.md#8-fr-6--activity-graph-profile), [FR-8](docs/SPEC.md#10-fr-8--trends)).
-- **Private by default.** Nobody else sees your map. Private locations hide where tracks start and end near home or work, and no heart rate or other health data is read or stored ([FR-7](docs/SPEC.md#9-fr-7--privacy-controls), [ADR-0017](docs/adr/0017-no-health-data.md)).
+- **Trips.** Hand-picked sets of tracks, such as a multi-day hike, a holiday or a race weekend, each with its own name, map and totals ([FR-13](docs/SPEC.md#15-fr-13--trips)).
+- **Photos.** Your photos on a track, placed on the route by capture time and adjustable in the Edit window, shown on the focused route and across a Trip; kept as a resized copy, never the original ([FR-15](docs/SPEC.md#17-fr-15--track-photos)).
+- **Track graph and trends.** A private, GitHub-style daily grid of your tracks, and weekly or monthly totals of the ground you covered ([FR-6](docs/SPEC.md#8-fr-6--track-graph-profile), [FR-8](docs/SPEC.md#10-fr-8--trends)).
+- **Private by default.** Nobody else sees your map. Private locations hide where routes start and end near home or work, and no heart rate or other health data is read or stored ([FR-7](docs/SPEC.md#9-fr-7--privacy-controls), [ADR-0017](docs/adr/0017-no-health-data.md)).
 - **Share an image, not your map.** Frame any view and export it as a high-resolution image, sized for social media if you like ([FR-4.7](docs/SPEC.md#fr-47-map-image-export)).
 
 ## Layout

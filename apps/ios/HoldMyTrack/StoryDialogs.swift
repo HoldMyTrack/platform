@@ -63,7 +63,7 @@ enum StoryDialogs {
                 if let failure {
                     Self.sendCopy(over: view, story: story, email: typed, error: failure, run: run)
                 } else {
-                    Self.inform(over: view, String(localized: "Sent. If \(typed) has an account, the copy waits on their Stories tab."))
+                    Self.inform(over: view, String(localized: "Sent. If \(typed) has an account, the copy waits on their Trips tab."))
                 }
             }
         })
@@ -93,22 +93,22 @@ enum StoryDialogs {
     /// story…; either takes targets() in one request. added reports the Story, and whether it's new.
     static func addToStoryMenu(api: APIClient, over view: UIView, targets: @escaping () -> [String],
                                added: @escaping (Story, _ created: Bool) -> Void) -> UIMenu {
-        let create = UIAction(title: String(localized: "New story…"), image: UIImage(resource: .plus)) { [weak view] _ in
+        let create = UIAction(title: String(localized: "New trip…"), image: UIImage(resource: .plus)) { [weak view] _ in
             guard let view else { return }
-            name(over: view, title: String(localized: "New story"), name: "", description: "", action: String(localized: "Create")) { name, description in
+            name(over: view, title: String(localized: "New trip"), name: "", description: "", action: String(localized: "Create")) { name, description in
                 do {
                     let read = try await api.createStory(name: name, description: description, activityIDs: targets())
                     added(read.story, true)
                     return nil
                 } catch {
-                    return StoriesPanel.message(error, String(localized: "The Story couldn't be saved."))
+                    return StoriesPanel.message(error, String(localized: "The Trip couldn't be saved."))
                 }
             }
         }
         let stories = UIDeferredMenuElement.uncached { [weak view] completion in
             Task { @MainActor in
                 guard let read = try? await api.stories() else {
-                    completion([UIAction(title: String(localized: "Stories couldn't load."), attributes: .disabled) { _ in }])
+                    completion([UIAction(title: String(localized: "Trips couldn't load."), attributes: .disabled) { _ in }])
                     return
                 }
                 completion(read.map { item in
@@ -118,13 +118,13 @@ enum StoryDialogs {
                                 let changed = try await api.changeStoryActivities(item.story.id, activityIDs: targets(), add: true)
                                 added(changed.story, false)
                             } catch {
-                                if let view { inform(over: view, StoriesPanel.message(error, String(localized: "The Story couldn't be saved."))) }
+                                if let view { inform(over: view, StoriesPanel.message(error, String(localized: "The Trip couldn't be saved."))) }
                             }
                         }
                     }
                 })
             }
         }
-        return UIMenu(title: String(localized: "Add to story"), children: [create, UIMenu(options: .displayInline, children: [stories])])
+        return UIMenu(title: String(localized: "Add to trip"), children: [create, UIMenu(options: .displayInline, children: [stories])])
     }
 }

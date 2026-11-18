@@ -125,7 +125,7 @@ Check from any machine: `curl -s -o /dev/null -w '%{http_code}\n' -H 'Range: byt
 
 Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… logs` reaches back only that far. Postgres's memory is set for a 4 GB droplet in `compose.prod.yml`'s `db` command: scale both values on another size, as a `db` change (§7).
 
-**Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try the demo" opens an empty account (`SPEC.md` FR-2.2), Fog's levels draw nothing, and every activity shows its account's timezone. All three are idempotent.
+**Seed a new or recreated database.** `migrate` creates the Demo Customer's account but no data, and `up` runs no seed. Without the seeds, "Try the demo" opens an empty account (`SPEC.md` FR-2.2), Fog's levels draw nothing, and every track shows its account's timezone. All three are idempotent.
 
 1. Make every Fog level's outlines (`IMPLEMENTATION.md` §4.2.4) off the server, with the duckdb CLI and about 30 GB of disk free (20 minutes on 10 cores), then copy the file into the app bucket under the key `geo.BoundariesKey` names:
    ```
@@ -139,7 +139,7 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
    ssh holdmytrack 'curl -sSfL -o /tmp/timezones-with-oceans-2026d.geojson.zip https://github.com/evansiroky/timezone-boundary-builder/releases/download/2026d/timezones-with-oceans.geojson.zip'
    … run --rm -v /tmp:/in:ro rclone copyto /in/timezones-with-oceans-2026d.geojson.zip data:timezones/timezones-with-oceans-2026d.geojson.zip
    ```
-3. Seed, in this order, so the demo's activities are matched as they're ingested (`docs/DEVELOPMENT.md`'s "Seeding a fresh database"):
+3. Seed, in this order, so the demo's tracks are matched as they're ingested (`docs/DEVELOPMENT.md`'s "Seeding a fresh database"):
    ```
    … run --rm api seed-admin-boundaries
    … run --rm api seed-timezones
@@ -150,19 +150,19 @@ Container logs rotate at 5 × 10 MB per container (`compose.prod.yml`), so `… 
 
 **One-time steps a deploy can bring.** The deploy skill's plan finds these:
 
-- A new `geo.BoundariesKey`: steps 1, 3's `seed-admin-boundaries` and 4. On a database with users, take a backup and turn maintenance mode on first (§7, §11): it re-matches every activity in one transaction, and ingest waits on it; the world's outlines took 31 minutes on a dev database capped at the droplet's 2 CPUs and 4 GB, which spilled 570 MB into swap, and the droplet's vCPUs are slower. It also empties Fog's tile cache (`IMPLEMENTATION.md` §3.26): once maintenance is off, run step 3's `build-admin-tiles`.
+- A new `geo.BoundariesKey`: steps 1, 3's `seed-admin-boundaries` and 4. On a database with users, take a backup and turn maintenance mode on first (§7, §11): it re-matches every track in one transaction, and ingest waits on it; the world's outlines took 31 minutes on a dev database capped at the droplet's 2 CPUs and 4 GB, which spilled 570 MB into swap, and the droplet's vCPUs are slower. It also empties Fog's tile cache (`IMPLEMENTATION.md` §3.26): once maintenance is off, run step 3's `build-admin-tiles`.
 - A new `geo.TimezonesKey`: steps 2, 3's `seed-timezones` and 4; a couple of minutes. It logs and skips any zone the database's tz data doesn't know yet: after a newer `postgis/postgis` image, `seed-timezones --force` brings those in. Check: `select count(*) from tz_parts` is non-zero.
-- A change to `services/server/internal/httpapi/demo_data/`: `… run --rm api seed-demo-customer --reset`. A plain re-run leaves seeded activities as they were.
-- A change to how Fog tiles are drawn (`internal/fog`, `IMPLEMENTATION.md` §4.2): `… run --rm api rerender-coverage`. Add `--masks` when the stroke width, `fog.TileSize`, how a mask is drawn (`fog.renderActivityMask`) or which tiles a track reaches (`internal/tilemath`) changed; that redraws every stored mask first and takes a while. It only queues renders, so the worker must be up.
+- A change to `services/server/internal/httpapi/demo_data/`: `… run --rm api seed-demo-customer --reset`. A plain re-run leaves seeded tracks as they were.
+- A change to how Fog tiles are drawn (`internal/fog`, `IMPLEMENTATION.md` §4.2): `… run --rm api rerender-coverage`. Add `--masks` when the stroke width, `fog.TileSize`, how a mask is drawn (`fog.renderActivityMask`) or which tiles a route reaches (`internal/tilemath`) changed; that redraws every stored mask first and takes a while. It only queues renders, so the worker must be up.
 
-**Copy demo activities out of a deployment.** With activity ids from the admin panel:
+**Copy demo tracks out of a deployment.** With track ids from the admin panel:
 
 ```
 mkdir -p /tmp/demo-export && chmod 777 /tmp/demo-export
 … run --rm -v /tmp/demo-export:/out api export-demo-activities /out <activity-id> <activity-id> ...
 ```
 
-Copy the GPX files into `demo_data/`, `photos/` into `demo_data/photos/`, and merge `manifest.json`'s `activities` into the one there (`httpapi.ExportDemoActivities` says what it writes). Review every track and photo before committing: the repository is public.
+Copy the GPX files into `demo_data/`, `photos/` into `demo_data/photos/`, and merge `manifest.json`'s `activities` into the one there (`httpapi.ExportDemoActivities` says what it writes). Review every route and photo before committing: the repository is public.
 
 **Load or refresh Spots** (`SPEC.md` FR-14), about once a quarter; until the first load no category in the Places menu shows anything.
 
@@ -265,7 +265,7 @@ sequenceDiagram
 
 1. `curl https://<your-domain>/healthz` returns `200`, with `version` equal to the deployed short SHA.
 2. In a browser, sign up, upload a `.gpx` file and confirm it appears on the map.
-3. Switch to Fog and zoom out below city zoom: countries with an activity show clear. A uniformly fogged world means the outlines are empty: run §6's `seed-admin-boundaries` and hard-refresh.
+3. Switch to Fog and zoom out below city zoom: countries with a track show clear. A uniformly fogged world means the outlines are empty: run §6's `seed-admin-boundaries` and hard-refresh.
 4. If satellite imagery is configured, choose Satellite under Overlays: imagery under the roads, with MapTiler's credit. Land and water gone with no imagery means refused tiles: look for a `403` in the network tab (the key or its origins), and check `curl https://<your-domain>/v1/map/style/light` has a `satellite` source.
 5. If Google sign-in is configured, "Continue with Google" lands on the map. `redirect_uri_mismatch` means §4 step 2's URI doesn't match `APP_BASE_URL` + `/v1/auth/google/callback`; "Couldn't sign in with Google" means the callback failed, and `… logs api | grep "google sign-in"` says why.
 6. Sign-in that silently returns to the sign-in screen means `APP_BASE_URL`'s scheme doesn't match the browser's connection (§4).
@@ -396,7 +396,7 @@ After changing a reference table by hand (one `backup.sh` lists), run `./scripts
    On a new server, run `… up -d db` alone first. The reference dump must be the one paired with the dump: re-running the imports would renumber ids user tables point at.
 3. If objects were lost, `… run --rm rclone copy backup:objects data:`. Use `copy`, never `sync`, which would delete from the app bucket. An object removed by mistake in the last 30 days is in `objects-deleted/`, under the stamp of the first backup after its removal.
 4. `GIT_SHA=$(git rev-parse --short HEAD) docker compose -f compose.prod.yml --env-file .env.prod up -d`, which runs any newer migrations.
-5. `… run --rm api rerender-coverage --masks` (§6): the dump has no activity masks, so Fog shows none of the restored activities until it has run.
+5. `… run --rm api rerender-coverage --masks` (§6): the dump has no track masks, so Fog shows none of the restored tracks until it has run.
 6. Check `/healthz` and the map, then `./scripts/maintenance.sh off`.
 
 ## 12. Host hardening

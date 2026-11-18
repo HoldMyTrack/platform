@@ -146,7 +146,7 @@ describe('map flows', () => {
 
   it('3. the Stories tab opens the newest Story in the URL, and Back returns to the area', async () => {
     await call('POST', '/stories', { name: 'Flows trip', activity_ids: [ids['2026-10-01'], ids['2026-10-06']] });
-    await page.getByRole('tab', { name: 'Stories' }).click();
+    await page.getByRole('tab', { name: 'Trips' }).click();
     await page.waitForURL(/[?&]story=/, { timeout: 30_000 });
     await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 2, undefined, { timeout: 30_000 });
     await row(ids['2026-10-01']).waitFor({ timeout: 30_000 });
@@ -155,7 +155,7 @@ describe('map flows', () => {
     await page.waitForFunction(() => !window.__holdmytrack.isMoving(), undefined, { timeout: 10_000 });
     await page.goBack();
     await page.waitForURL((url) => !url.searchParams.has('story'), { timeout: 30_000 });
-    assert.equal(await page.getByRole('tab', { name: 'Activities' }).getAttribute('aria-selected'), 'true');
+    assert.equal(await page.getByRole('tab', { name: 'Tracks' }).getAttribute('aria-selected'), 'true');
     // The area is wherever the Story left the camera, which frames both of its tracks.
     await row(ids['2026-10-01']).waitFor({ timeout: 30_000 });
     await row(ids['2026-10-06']).waitFor({ timeout: 30_000 });
@@ -215,7 +215,7 @@ describe('map flows', () => {
     await page.waitForFunction(() => document.querySelectorAll('li[data-activity-id]').length === 0, undefined, { timeout: 30_000 });
     // No track is drawn below zoom 4, so there's nothing to list.
     await page.evaluate(() => window.__holdmytrack.jumpTo({ center: [-81.7, 41.45], zoom: 3 }));
-    await page.getByText('Zoom in to see your activities.').waitFor({ timeout: 10_000 });
+    await page.getByText('Zoom in to see your tracks.').waitFor({ timeout: 10_000 });
     assert.equal(await rows().count(), 0);
   });
 

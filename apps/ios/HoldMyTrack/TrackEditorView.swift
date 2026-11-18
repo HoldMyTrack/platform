@@ -37,7 +37,7 @@ final class TrackEditorView: UIView {
     private let end = Controls.body()
     private lazy var chop = tool(String(localized: "Chop"), "trackChop", hint: String(localized: "Keep only the part between the knobs")) { $0.perform { $0.chop() } }
     private lazy var cut = tool(String(localized: "Cut"), "trackCut", hint: String(localized: "Remove the part between the knobs and join its two ends. Hold to preview.")) { $0.preview = .chop; $0.perform { $0.cut() } }
-    private lazy var split = tool(String(localized: "Split"), "trackSplit", hint: String(localized: "Split the activity in two at the knob you moved")) { view in
+    private lazy var split = tool(String(localized: "Split"), "trackSplit", hint: String(localized: "Split the track in two at the knob you moved")) { view in
         view.preview = .chop
         view.pointModesOff()
         view.perform { $0.split() }
@@ -53,7 +53,7 @@ final class TrackEditorView: UIView {
         view.render()
     }
     private lazy var undo = tool(String(localized: "Undo"), "trackUndo", hint: String(localized: "Undo the last change")) { $0.perform { $0.undo() } }
-    private lazy var reset = tool(String(localized: "Reset"), "trackReset", hint: String(localized: "Go back to the track as it was recorded (Undo brings the edits back)")) { $0.perform { $0.reset() } }
+    private lazy var reset = tool(String(localized: "Reset"), "trackReset", hint: String(localized: "Go back to the route as it was recorded (Undo brings the edits back)")) { $0.perform { $0.reset() } }
     private let modeNote = Controls.body()
 
     init(api: APIClient, format: PanelFormat, activity: Activity) {
@@ -188,9 +188,9 @@ final class TrackEditorView: UIView {
         slider.set(lower: lo, upper: hi, maximum: visible.count - 1)
         slider.isEnabled = !busy
         readout.text = String(localized: "\(format.distanceValue(distances[lo])) – \(format.distanceValue(distances[hi])) \(format.unit) · \(clock(visible[lo].t))–\(clock(visible[hi].t))",
-                              comment: "Track editor: the range's distances along the track, its unit, and the times at its ends.")
+                              comment: "Route editor: the range's distances along the route, its unit, and the times at its ends.")
         start.text = format.distance(0)
-        count.text = String(localized: "Points: \(format.count(visible.count))", comment: "Track editor: how many points the track has, written as label: N.")
+        count.text = String(localized: "Points: \(format.count(visible.count))", comment: "Route editor: how many points the route has, written as label: N.")
         end.text = format.distance(distances[visible.count - 1])
 
         let splitting = session.splitAt
@@ -206,7 +206,7 @@ final class TrackEditorView: UIView {
         reset.isHidden = !session.canReset
         reset.isEnabled = !busy
         if let splitting {
-            modeNote.text = String(localized: "Saving splits this activity in two at \(clock(splitting)). The new part gets the same type, name and description.")
+            modeNote.text = String(localized: "Saving splits this track in two at \(clock(splitting)). The new part gets the same type, name and description.")
         } else if deleteMode {
             modeNote.text = String(localized: "Tap a point on the map to delete it.")
         } else if moveMode {

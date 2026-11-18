@@ -151,7 +151,7 @@ final class DataExportViewController: UIViewController {
         super.viewDidLoad()
         view.backgroundColor = UIColor(resource: .bg)
         status.accessibilityIdentifier = "exportStatus"
-        let about = Controls.body(String(localized: "A copy of your activities, Stories, photos and settings, as zip files. We email you when it's ready; the download lasts 7 days."))
+        let about = Controls.body(String(localized: "A copy of your tracks, Trips, photos and settings, as zip files. We email you when it's ready; the download lasts 7 days."))
         request.addAction(UIAction { [weak self] _ in self?.ask() }, for: .primaryActionTriggered)
         Controls.host(Controls.column([about, status, request, parts]), in: self)
     }

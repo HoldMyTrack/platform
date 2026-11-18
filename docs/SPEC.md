@@ -19,13 +19,13 @@ Every built feature of the server and the web app; the Android app's own behavio
 
 | Term | Meaning |
 | :-- | :-- |
-| **Activity** | One recorded outing with a start time and usually a GPS track. Never any heart rate or other health data (ADR-0017). |
-| **Original** | The file uploaded or the record synced, kept as it arrived so the activity can be rebuilt from it. |
+| **Track** | One recorded outing with a start time and usually a GPS route. Never any heart rate or other health data (ADR-0017). |
+| **Original** | The file uploaded or the record synced, kept as it arrived so the track can be rebuilt from it. |
 | **Registered user** | An account with an email and password, a linked Google or Facebook identity, or both. |
 | **Demo user** | A visitor in a session on the shared, read-only Demo Customer account (FR-2). |
-| **Fog of War** | A map mode that veils everywhere the account has never recorded an activity. |
+| **Fog of War** | A map mode that veils everywhere the account has never recorded a track. |
 | **Per-address limit** | A limit counted per caller IP address ("from one address"), an IPv6 one together with the rest of its /64. |
-| **Ingest** | Turning an original into a stored activity: parsing, clipping against Private locations (FR-7.1), simplifying, storing. |
+| **Ingest** | Turning an original into a stored track: parsing, clipping against Private locations (FR-7.1), simplifying, storing. |
 
 ### 1.4 API errors
 
@@ -35,7 +35,7 @@ Every error from `/v1` and `/tiles/v1` is JSON `{"error": code, "message": text}
 
 | Actor | Can |
 | :-- | :-- |
-| **Anonymous visitor** | Read the public pages (FR-9), sign up, sign in, start a demo. Sees no activity data. |
+| **Anonymous visitor** | Read the public pages (FR-9), sign up, sign in, start a demo. Sees no track data. |
 | **Demo user** | Read everything the Demo Customer account holds and change nothing (FR-2.1). |
 | **Registered user** | Everything in this document, for their own account. |
 | **Admin** | A registered user made admin from the command line, who can also read every account (FR-11). |
@@ -89,7 +89,7 @@ Signing out deletes the session on the server; its cookie or token stops working
 - **Avatar**: PNG, JPEG or WebP up to 5 MB, stored upright without its metadata.
 - **Name**: an optional label; not unique, and nothing signs in with it.
 - **Country** (required in every save) decides the units everywhere: imperial for the United States, Liberia and Myanmar, metric for every other country and for an account that has never saved one.
-- **Timezone** (IANA, UTC until changed, a former name stored under its current one) decides "today": where Dates' pickers and Trends' default window end, and the activity graph's current year. It stands in for an activity's zone where that isn't known (FR-3.8).
+- **Timezone** (IANA, UTC until changed, a former name stored under its current one) decides "today": where Dates' pickers and Trends' default window end, and the track graph's current year. It stands in for a track's zone where that isn't known (FR-3.8).
 - **Language**: automatic (the default), English or Russian (FR-12).
 - Name, Country and Timezone (and Language, over the API) save together: one invalid value and nothing is saved.
 - **First run**: a real, verified account that has never saved Country is sent to Settings from the map, Profile and sign-in until it saves Country and Timezone once.
@@ -138,8 +138,8 @@ Every provider: a provider-only account has no password and can set one through 
 
 - A real account, verified or not, confirms by typing its email (case and surrounding spaces ignored). A demo session can't.
 - At once: every session ends, the provider links and every unused reset, verification or app sign-in link stop working, nothing can sign in, and the email is free for a new account. An Apple link's access is revoked at Apple too (FR-1.11).
-- Within minutes: activities and originals, tiles, photos, Stories, Private locations, captures, import history, data downloads, avatar and settings are deleted. A file being processed finishes first, and an object-storage outage holds the deletion until storage is back, so nothing is left behind.
-- Backups keep the data for up to 8 weeks. Story copies others accepted stay theirs (FR-13.8).
+- Within minutes: tracks and originals, tiles, photos, Trips, Private locations, captures, import history, data downloads, avatar and settings are deleted. A file being processed finishes first, and an object-storage outage holds the deletion until storage is back, so nothing is left behind.
+- Backups keep the data for up to 8 weeks. Trip copies others accepted stay theirs (FR-13.8).
 - The Android app also clears the account's unsynced recordings on that phone. An unverified account deletes on the web by verifying first, or by email (FR-9.2).
 
 ### FR-1.13 Download your data
@@ -147,16 +147,16 @@ Every provider: a provider-only account has no password and can set one through 
 - For a real, verified account. One copy is prepared at a time; a new request ends the earlier one's downloads.
 - Once every 7 days from when the last was ready; a failed copy doesn't count. A refusal says when the next is allowed, in the account's timezone.
 - When ready, an email in the request's language links to Settings, which needs signing in.
-- Archives of about 2 GB, downloadable only by the account, resumable. Together: `README.txt`; `originals/`, every original as it arrived, before Private locations; `tracks/`, every activity as GPX as the map shows it; `photos/`, the stored copies; `account.json`, the account, settings, activity details, Stories, Private locations and captured places.
+- Archives of about 2 GB, downloadable only by the account, resumable. Together: `README.txt`; `originals/`, every original as it arrived, before Private locations; `tracks/`, every track as GPX as the map shows it; `photos/`, the stored copies; `account.json`, the account, settings, track details, Trips, Private locations and captured places.
 - Downloadable for 7 days, then deleted; deleted with the account.
 
 ### FR-1.14 Account limits
 
-Every account can keep up to 50,000 activities and 5 GB of originals, the same for everyone, to stop a runaway import (ADR-0043).
+Every account can keep up to 50,000 tracks and 5 GB of originals, the same for everyone, to stop a runaway import (ADR-0043).
 
-- An activity counts from the moment it's sent. An original shared by a split's parts (FR-5.9) counts once.
-- At a limit only adding stops: an upload (FR-3.1), a phone sync (FR-3.4) and accepting a Story copy (FR-13.7) are refused naming the limit. Nothing is deleted or hidden to make room.
-- Simultaneous requests are checked each on its own, so together they can go a little over. A Story copy accepted below the limits is made whole.
+- A track counts from the moment it's sent. An original shared by a split's parts (FR-5.9) counts once.
+- At a limit only adding stops: an upload (FR-3.1), a phone sync (FR-3.4) and accepting a Trip copy (FR-13.7) are refused naming the limit. Nothing is deleted or hidden to make room.
+- Simultaneous requests are checked each on its own, so together they can go a little over. A Trip copy accepted below the limits is made whole.
 - Settings shows the account's use of both limits.
 
 ## 4. FR-2 — No-Signup Demo
@@ -165,20 +165,20 @@ Every account can keep up to 50,000 activities and 5 GB of originals, the same f
 
 - At most 5 demo starts an hour from one address.
 - Every demo session is on the one persistent Demo Customer account, so every visitor sees the same data. A demo session lasts 24 hours.
-- Every write (upload, sync, edit, delete, settings, avatar, Private locations, Stories, photos, captures, data download, account deletion) is refused, whatever the client sends. On Android a demo session can record on the phone but not sync.
-- It holds a real history from a live deployment: 55 activities from 2026 around Cleveland, OH and on trips to Niagara Falls, Rome, Tallinn and Vietnam, with photos, Stories and captures; a preset profile (Demo User, United States, America/New_York); three 305 m Private locations where the history starts and ends.
+- Every write (upload, sync, edit, delete, settings, avatar, Private locations, Trips, photos, captures, data download, account deletion) is refused, whatever the client sends. On Android a demo session can record on the phone but not sync.
+- It holds a real history from a live deployment: 55 tracks from 2026 around Cleveland, OH and on trips to Niagara Falls, Rome, Tallinn and Vietnam, with photos, Trips and captures; a preset profile (Demo User, United States, America/New_York); three 305 m Private locations where the history starts and ends.
 
 ### FR-2.2 Demo account seeding and lifetime
 
-- Seeded by the operator, never by a request. Seeding again fills in what's missing and holds the Stories to the manifest; a reset deletes its activities (with tiles, photos and files), Stories and captures and seeds again to match the shipped history exactly.
-- The shipped history is GPX files and a manifest in the repository: each track as its owner sees it after Private locations and edits, never the original; photos as stored; names, types, descriptions, Stories, and captures between the first and last exported point except places reaching into a Private location.
+- Seeded by the operator, never by a request. Seeding again fills in what's missing and holds the Trips to the manifest; a reset deletes its tracks (with tiles, photos and files), Trips and captures and seeds again to match the shipped history exactly.
+- The shipped history is GPX files and a manifest in the repository: each route as its owner sees it after Private locations and edits, never the original; photos as stored; names, types, descriptions, Trips, and captures between the first and last exported point except places reaching into a Private location.
 - The account is recognized by its fixed id, which keeps it read-only, and is never deleted.
 
 ### FR-2.3 Create a registered account from a demo session
 
 Signing up from a demo session makes an ordinary new account (FR-1.1). Nothing carries over and the shared account is unchanged. Leaving without signing up keeps the demo session.
 
-## 5. FR-3 — Activity Upload & Ingestion
+## 5. FR-3 — Track Upload & Ingestion
 
 Every ingest path needs a session and goes through one pipeline; a demo session can't add anything. Health measurements in an original are never read (ADR-0017). Only what the user picks comes in, and nothing is changed or hidden on their behalf (ADR-0039).
 
@@ -189,41 +189,41 @@ Every ingest path needs a session and goes through one pipeline; a demo session 
 - Each file is processed on its own; one failing doesn't affect the others.
 - At most 100 files an hour per account, refused and duplicate ones included, checked before the file is read.
 - An empty file, another type, a file too large or one past the account's limits (FR-1.14) is refused at once.
-- A file that can't be read, has no timestamps (a planned route), has no positioned point, has fewer than 2 points or more than 200,000 fails in processing, with the reason on the Sync page. Untimed points inside a timed track are dropped.
-- The activity reaches the list, map and totals without a reload; Fog follows once redrawn (FR-4.2).
+- A file that can't be read, has no timestamps (a planned route), has no positioned point, has fewer than 2 points or more than 200,000 fails in processing, with the reason on the Sync page. Untimed points inside a timed route are dropped.
+- The track reaches the list, map and totals without a reload; Fog follows once redrawn (FR-4.2).
 
 ### FR-3.2 Import status
 
 - Files, Health Connect sessions and recordings are one history, shown for 90 days (FR-3.7).
-- A phone sync of several activities is one import. The web can't start a phone sync.
+- A phone sync of several tracks is one import. The web can't start a phone sync.
 
 ### FR-3.3 Duplicate detection
 
-- An original identical to one the account has makes no new activity or job, and the client says so. Two identical uploads at once still make one activity.
-- A split activity's original is still recognized (FR-5.9). A deleted activity's original can be uploaded again.
-- The same outing from two sources is two activities if both are sent (FR-3.5).
+- An original identical to one the account has makes no new track or job, and the client says so. Two identical uploads at once still make one track.
+- A split track's original is still recognized (FR-5.9). A deleted track's original can be uploaded again.
+- The same outing from two sources is two tracks if both are sent (FR-3.5).
 
 ### FR-3.4 Mobile sync (Android / Health Connect)
 
 The Android app sends the Health Connect sessions and recordings (FR-3.6) the user ticks: nothing is ticked by default, and nothing unticked reaches the server. The app side is `apps/android/docs/SPEC.md` FR-3.
 
 - Only a session with a route is offered (not an indoor workout, nor any Samsung Galaxy Watch session). Routes can only be read in the foreground, a Health Connect constraint. Only the session and its positions, times and altitudes are read; no other health permission is requested.
-- The server says which Health Connect records the account already has (in any state, or queued) and which are still processing. The phone keeps no record of what it sent, so a reinstall or second phone agrees, and a record whose activity was deleted is offered again.
-- Each activity is idempotent on its source and id. Types map onto HoldMyTrack's names (`biking` becomes `cycling`).
-- Per account: at most 60 sync requests and 1,000 activities sent an hour (every activity sent counts, taken or not; a refused request counts none).
-- Activities past the account's limits are refused one by one in the order sent; what fits is taken.
+- The server says which Health Connect records the account already has (in any state, or queued) and which are still processing. The phone keeps no record of what it sent, so a reinstall or second phone agrees, and a record whose track was deleted is offered again.
+- Each track is idempotent on its source and id. Types map onto HoldMyTrack's names (`biking` becomes `cycling`).
+- Per account: at most 60 sync requests and 1,000 tracks sent an hour (every track sent counts, taken or not; a refused request counts none).
+- Tracks past the account's limits are refused one by one in the order sent; what fits is taken.
 
 ### FR-3.5 Overlap hint
 
-A candidate on the phone covering the same time as an account activity, or another candidate, is marked so the user can leave one unticked. A hint only: nothing is matched or hidden on ingest (ADR-0039).
+A candidate on the phone covering the same time as an account track, or another candidate, is marked so the user can leave one unticked. A hint only: nothing is matched or hidden on ingest (ADR-0039).
 
 - Two overlap when their times overlap for at least 80% of the longer one. Type and distance aren't compared, since sources disagree. Touching, a small part of the other, and no duration don't overlap.
-- An activity is compared by the time it was recorded over, even where Private locations hide its ends or all of it. A split part covers only its own stretch, so a whole copy of a split activity overlaps no part and isn't marked.
-- `POST /v1/activities/overlaps` takes up to 5,000 spans and answers each with the account's own activity it overlaps most.
+- A track is compared by the time it was recorded over, even where Private locations hide its ends or all of it. A split part covers only its own stretch, so a whole copy of a split track overlaps no part and isn't marked.
+- `POST /v1/activities/overlaps` takes up to 5,000 spans and answers each with the account's own track it overlaps most.
 
 ### FR-3.6 In-app GPS recording (Android)
 
-The Android app records GPS-only activities on the phone; nothing reaches the server until the user ticks a recording and sends it (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
+The Android app records GPS-only tracks on the phone; nothing reaches the server until the user ticks a recording and sends it (`IMPLEMENTATION.md` §4.0.4; app side `apps/android/docs/SPEC.md` FR-5).
 
 - Each recording is sent on its own under source `recorded`, with an id made at recording start: 1–200 letters, digits, `.`, `_` or `-`, not starting with `.`. A type over 50 characters is refused with the reason.
 - It is the only path that sets a name and description at ingest.
@@ -231,17 +231,17 @@ The Android app records GPS-only activities on the phone; nothing reaches the se
 
 ### FR-3.7 The Sync page
 
-- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the activity, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed.
+- `/sync` lists finished imports from every source, newest first, in the account's timezone: ready ones with a link to the track, failed ones with the reason in the reader's language (FR-12.1). Imports still processing aren't listed.
 - An unseen failed import marks the header's Sync item until the page is opened.
 
-### FR-3.8 An activity's own timezone
+### FR-3.8 A track's own timezone
 
-An activity's times and dates are the wall clock where it was recorded, whatever the account's or viewer's zone.
+A track's times and dates are the wall clock where it was recorded, whatever the account's or viewer's zone.
 
 - The zone is the one the first recorded point lies in, before Private locations clip it; at sea, the nautical zone. A split part takes its own first point's. With no zone known, the account's at ingest.
-- Every time of the activity, its points and photos is shown in that zone, on the web and Android; a browser or phone that doesn't know the zone shows its own.
-- An activity counts on its local date everywhere days are counted: date filtering, totals, drawn tracks, the activity graph and Trends.
-- The offset is the one in force on the activity's date.
+- Every time of the track, its points and photos is shown in that zone, on the web and Android; a browser or phone that doesn't know the zone shows its own.
+- A track counts on its local date everywhere days are counted: date filtering, totals, drawn routes, the track graph and Trends.
+- The offset is the one in force on the track's date.
 
 ## 6. FR-4 — Map Visualization
 
@@ -249,14 +249,14 @@ Every map and export choice is kept by the browser or phone, never by the accoun
 
 ### FR-4.1 Track rendering (Normal mode)
 
-- Normal mode draws every activity passing the filters that isn't Hidden or Pending (FR-5.8): Dates (FR-5.12), Type and Distance, and past the list's cap only the listed ones (FR-5.11). With a Story open, its activities (FR-13.6).
-- Tracks are drawn from zoom 4 in.
-- A track across the 180° meridian is drawn the short way and counts in Fog on both sides.
+- Normal mode draws every track passing the filters that isn't Hidden or Pending (FR-5.8): Dates (FR-5.12), Type and Distance, and past the list's cap only the listed ones (FR-5.11). With a Trip open, its tracks (FR-13.6).
+- Routes are drawn from zoom 4 in.
+- A route across the 180° meridian is drawn the short way and counts in Fog on both sides.
 
 ### FR-4.2 Fog of War mode
 
-- Fog is all-time: everywhere any activity went is clear, whatever Dates, the filters, the hidden set or Stories. Only Pending activities drop out.
-- Zoomed out it clears whole places once any activity is inside one: countries (zoom 0–2), states or regions (3–5), counties (6–7) and cities (8–10), then exact coverage; the levels never blend. A place clears with every place it lies in. Where a level has no place, the one above stands in: a country without regions is one region, a region without counties one county, and land outside every city shows its county. Water no county covers in a region that has counties is veiled on the County and City levels, as the sea is. Boundaries are OpenStreetMap's on land, without lakes of 1,000 km² or more (`IMPLEMENTATION.md` §4.2.4): a track on the sea or such a lake counts in no place, so the water stays veiled until exact coverage.
+- Fog is all-time: everywhere any track went is clear, whatever Dates, the filters, the hidden set or Trips. Only Pending tracks drop out.
+- Zoomed out it clears whole places once any track is inside one: countries (zoom 0–2), states or regions (3–5), counties (6–7) and cities (8–10), then exact coverage; the levels never blend. A place clears with every place it lies in. Where a level has no place, the one above stands in: a country without regions is one region, a region without counties one county, and land outside every city shows its county. Water no county covers in a region that has counties is veiled on the County and City levels, as the sea is. Boundaries are OpenStreetMap's on land, without lakes of 1,000 km² or more (`IMPLEMENTATION.md` §4.2.4): a route on the sea or such a lake counts in no place, so the water stays veiled until exact coverage.
 - On the web and the apps the level in view is named as the zoom changes it, in the account's country's words where it has its own (State, Department). Its menu offers Auto, which follows the zoom, and each level, all but Exact with how many of its places the account has explored; a place's tooltip on the web, or a tap on it in the apps, counts, of each level below it, how many of its places the account has explored out of how many it holds. Picking a level draws it at every zoom until Auto is picked, the page reloads or the app restarts; picked while zoomed in past it, the map zooms out to it, keeping its centre, and it never zooms in. A place under about 4 pixels across shows veiled until zoomed in, visited or not.
 - The edge of cleared ground is a smooth outline, traced to about 19 m at zoom 14 and twice that per zoom out, with no seams between tiles.
 - While a coverage change is still being worked on, the map says Fog may be incomplete; the veil then updates without a reload.
@@ -270,7 +270,7 @@ Exactly one of Normal and Fog of War shows at a time.
 
 - A self-hosted vector base map covering the whole planet at every zoom, light or dark with the theme (FR-4.8). A URL can pin `white`, `black` or `grayscale` until the theme changes.
 - The camera is kept in the URL (`#map=<zoom>/<lat>/<lon>`); an incomplete or out-of-range one is ignored.
-- The opening view: the URL's camera; else zoom 12 centred on the newest five activities with a track, or fewer when five don't fit the screen there, down to the newest alone; else the account's Country; else a world view. It never asks for the browser's location, and a new session doesn't inherit an earlier one's camera.
+- The opening view: the URL's camera; else zoom 12 centred on the newest five tracks with a route, or fewer when five don't fit the screen there, down to the newest alone; else the account's Country; else a world view. It never asks for the browser's location, and a new session doesn't inherit an earlier one's camera.
 - The web map is a globe out to zoom 3 and flat from 4; Android's is flat. Zoomed all the way out, the globe fills 80% of the map's shorter side.
 - If no base map tile arrives within 15 seconds on screen, or one fails first, the map says its tile server is unreachable until one arrives.
 
@@ -280,7 +280,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 
 ### FR-4.6 Pace-colored segments
 
-- The focused activity's track is drawn in five bands, slowest blue to fastest red, scaled to its own speed range. No legend, no values, no heart-rate alternative (ADR-0017).
+- The focused track's route is drawn in five bands, slowest blue to fastest red, scaled to its own speed range. No legend, no values, no heart-rate alternative (ADR-0017).
 - Chevrons along its straighter stretches point the way it was recorded; a tight bend gets none.
 - Bands follow the simplified line, so a straight stretch can read coarser than its data (`IMPLEMENTATION.md` §4.3.1).
 - Not in Fog.
@@ -289,9 +289,9 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 
 - Any framed view as a PNG, on the web and Android: Custom with a long side of 1920, 2560 or 3840 px, or an Instagram, Facebook or X preset. A size the browser can't draw isn't offered.
 - While the frame is open the map only pans and zooms: a tap selects, opens and clears nothing.
-- The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Story with its bold tracks, pace bands and photo markers as on screen, Fog's all-time coverage. Spots and Private location circles are never drawn.
+- The image is what's in the frame at the current zoom, theme and mode: Normal's filters or open Trip with its bold routes, pace bands and photo markers as on screen, Fog's all-time coverage. Spots and Private location circles are never drawn.
 - OpenStreetMap's attribution, the imagery credit with Satellite on, and a HoldMyTrack watermark are drawn in and can't be removed: the basemap is an ODbL Produced Work (`IMPLEMENTATION.md` §5.6).
-- On the web and Android, a stats card of the Checked activities (FR-5.8), none with a Story open: newest first, five at most and a count of the rest, each with type, distance, moving time (FR-5.1) and elevation gain, or type alone inside Private locations; with more than one, their totals.
+- On the web and Android, a stats card of the Checked tracks (FR-5.8), none with a Trip open: newest first, five at most and a count of the rest, each with type, distance, moving time (FR-5.1) and elevation gain, or type alone inside Private locations; with more than one, their totals.
 
 ### FR-4.8 Light and dark theme
 
@@ -304,7 +304,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 - Bike paths, shared paths and mountain-bike trails come from an OSM import of their own (FR-4.12), are off until ticked in Layers, drawn from zoom 9.
 - From OSM tags, the first that fits: **mountain-bike trail**, a cycleway, path, footway or bridleway with `mtb:scale`, or a cycleway or shared path with an unpaved `surface`; **bike path**, `highway=cycleway`; **shared path**, `highway=path`, `footway` or `bridleway` with `bicycle=designated`. Separately, **trail**: `highway=path`, `footway` or `bridleway`; **dirt track**: `highway=track`.
 - A street's painted bike lane and untagged singletrack are none of these. Sidewalks, crossings, steps and named route networks aren't drawn.
-- Paths draw over Fog at full strength, under the tracks, in every mode and export. Layers has a switch that hides every ticked road (FR-4.13) and path, and Places one that hides every ticked place (FR-14.2); each keeps its picks.
+- Paths draw over Fog at full strength, under the routes, in every mode and export. Layers has a switch that hides every ticked road (FR-4.13) and path, and Places one that hides every ticked place (FR-14.2); each keeps its picks.
 
 ### FR-4.10 Satellite mode
 
@@ -316,7 +316,7 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 
 ### FR-4.11 What the map draws
 
-| Zoom | Tracks | Fog | Bike kinds | Trails, dirt tracks | Spots | Photos |
+| Zoom | Routes | Fog | Bike kinds | Trails, dirt tracks | Spots | Photos |
 | :-- | :-- | :-- | :-- | :-- | :-- | :-- |
 | 0–2 | — | Countries | — | — | — | — |
 | 3 | — | Regions | — | — | — | — |
@@ -328,8 +328,8 @@ A one-shot move to the device's location; nothing about it is recorded or sent t
 | 13+ | Drawn | Exact | Drawn | Drawn | Drawn | Drawn |
 
 - Each band runs up to the next band's first zoom. The Android app follows the same bands.
-- Bottom to top: base map or imagery, Fog, paths, tracks and pace bands, labels, Spots, photos.
-- Past the deepest stored level the map enlarges it: tracks, Fog, bike kinds and Spots past zoom 14, the base map past 15, imagery past the deployment's deepest level (18 on holdmytrack.com).
+- Bottom to top: base map or imagery, Fog, paths, routes and pace bands, labels, Spots, photos.
+- Past the deepest stored level the map enlarges it: routes, Fog, bike kinds and Spots past zoom 14, the base map past 15, imagery past the deployment's deepest level (18 on holdmytrack.com).
 - At most 1,200 tile requests a minute per account across every layer (per address for the demo account); past that a tile is refused for the minute and an export that meets one fails. Caching is `IMPLEMENTATION.md` §4.2.6.
 
 ### FR-4.12 Bike-path tiles
@@ -344,72 +344,72 @@ The same paths for every account, behind the session and cached like every map t
 ### FR-4.14 Tour
 
 - A tour points at the web map's features in turn, putting the map in each step's mode; in a demo session it also flies over the demo's history to show Fog at every level, from exact coverage out to countries. It can be left at any step and restores the mode and camera.
-- A demo session gets it unasked on its first map in a browser. A real account is offered it once, after it has an activity. Anyone signed in can start it from the header.
-- The first time a user opens Fog of War or the Stories tab outside the tour, a card says what it is for. A tour step on the same feature counts as its card.
+- A demo session gets it unasked on its first map in a browser. A real account is offered it once, after it has a track. Anyone signed in can start it from the header.
+- The first time a user opens Fog of War or the Trips tab outside the tour, a card says what it is for. A tour step on the same feature counts as its card.
 - What has been shown is kept by the browser, not the account.
 
-## 7. FR-5 — Activities Panel
+## 7. FR-5 — Tracks Panel
 
-### FR-5.1 Activity list
+### FR-5.1 Track list
 
-- Lists the activities in the visible area (FR-5.11), that pass the Type and Distance filters, newest first by start time, not paginated. Count and total distance cover every listed activity.
-- A row shows the activity's name, which exists only once a person types one (FR-5.5), else its local start time.
-- A row's time is moving time, as Trends counts it (FR-8.1), so a Story's total is its rows' sum.
-- How a type shows is the server's to say, in the app's language, and never changes the activity: its name, from a catalog of common types, else the type spaced out and capitalized; and its kind (on foot, on wheels, motor, solowheel, e-scooter or other), from the words in it, which picks the row's icon and whether pace or speed shows.
-- Badges: Pending and Hidden (FR-5.8); Story, naming its Stories; Private, for an activity entirely inside Private locations (FR-7.1), which has no track, distance or duration.
+- Lists the tracks in the visible area (FR-5.11), that pass the Type and Distance filters, newest first by start time, not paginated. Count and total distance cover every listed track.
+- A row shows the track's name, which exists only once a person types one (FR-5.5), else its local start time.
+- A row's time is moving time, as Trends counts it (FR-8.1), so a Trip's total is its rows' sum.
+- How a type shows is the server's to say, in the app's language, and never changes the track: its name, from a catalog of common types, else the type spaced out and capitalized; and its kind (on foot, on wheels, motor, solowheel, e-scooter or other), from the words in it, which picks the row's icon and whether pace or speed shows.
+- Badges: Pending and Hidden (FR-5.8); Trip, naming its Trips; Private, for a track entirely inside Private locations (FR-7.1), which has no route, distance or duration.
 - Focusing, checking and what the toolbar acts on: FR-5.8.
 
 ### FR-5.2 TYPE filter
 
-Lists the types present among the activities FR-5.1 starts from; types are free text, not a fixed vocabulary. It filters in the client and narrows the list, the tracks and the count.
+Lists the types present among the tracks FR-5.1 starts from; types are free text, not a fixed vocabulary. It filters in the client and narrows the list, the routes and the count.
 
 ### FR-5.3 DISTANCE filter
 
-- Bounded by the shortest and longest of the activities FR-5.1 starts from; both knobs at the ends means no filter.
+- Bounded by the shortest and longest of the tracks FR-5.1 starts from; both knobs at the ends means no filter.
 - Not offered while they don't span distances, and a filter set before is cleared.
-- A Private activity sets no bound and is left out once a filter is on.
+- A Private track sets no bound and is left out once a filter is on.
 
 ### FR-5.4 Hide/show a track
 
-- Hiding is per browser tab, never stored, and only affects Normal mode's tracks.
-- Over several activities, show/hide shows them all if any is hidden, else hides them all.
-- It stays on activities still listed when the list reloads (FR-5.11).
+- Hiding is per browser tab, never stored, and only affects Normal mode's routes.
+- Over several tracks, show/hide shows them all if any is hidden, else hides them all.
+- It stays on tracks still listed when the list reloads (FR-5.11).
 
-### FR-5.5 Edit activity type, name, and description
+### FR-5.5 Edit track type, name, and description
 
 - Type is required, 1–50 characters; name up to 200; description up to 2,000. Type is free text; the picker's list is only a convenience.
-- Editing several activities sets only their type, never their names or descriptions.
+- Editing several tracks sets only their type, never their names or descriptions.
 - An edit doesn't change distance, coverage, Trends or the list's order.
 - When a save over several fails partway, what was written stays written.
-- Another account's activity can't be told apart from a missing one.
+- Another account's track can't be told apart from a missing one.
 
-### FR-5.6 Delete an activity
+### FR-5.6 Delete a track
 
-- A full purge with no undo: the activity, track, coverage, photos (FR-15.5), and its original once no other activity (a split part, a Story copy) shares it. It leaves every Story; copies others accepted stay theirs (FR-13.8).
+- A full purge with no undo: the track, route, coverage, photos (FR-15.5), and its original once no other track (a split part, a Trip copy) shares it. It leaves every Trip; copies others accepted stay theirs (FR-13.8).
 - Fog reverts where it was the only source, without a reload once redrawn.
 - When one of several deletes fails, the others stay deleted.
 
-### FR-5.7 Edit track
+### FR-5.7 Edit route
 
-Chop (keep the part between two points), Cut (remove it and join the ends), Delete point and Move point. The original is never changed, so Reset returns the track as recorded.
+Chop (keep the part between two points), Cut (remove it and join the ends), Delete point and Move point. The original is never changed, so Reset returns the route as recorded.
 
-- Needs a real account and one non-Pending activity with a stored original and a track whose timestamps exist and run forward. The activity list says which of these an activity lacks, and whether photos can be added (FR-15.1).
+- Needs a real account and one non-Pending track with a stored original and a route whose timestamps exist and run forward. The track list says which of these a track lacks, and whether photos can be added (FR-15.1).
 - The editor gets the points already clipped against Private locations, so hidden ends never reach the client.
 - A moved point keeps its time and elevation. No edit can leave fewer than two points.
-- Saving reprocesses the activity from its original: distance, duration, moving time, elevation gain, start time, track, coverage, the places it clears (FR-4.2). A Cut's join counts only toward elapsed time: not distance, moving time or elevation gain. Its pace bands (FR-4.6) carry the pace before it.
+- Saving reprocesses the track from its original: distance, duration, moving time, elevation gain, start time, route, coverage, the places it clears (FR-4.2). A Cut's join counts only toward elapsed time: not distance, moving time or elevation gain. Its pace bands (FR-4.6) carry the pace before it.
 - The result is clipped against Private locations again, so an edit can't uncover an end inside one; the editor's preview doesn't show that clip.
-- Pending until reprocessed; on failure it keeps its previous track and numbers.
+- Pending until reprocessed; on failure it keeps its previous route and numbers.
 - An edit is stored by recording time, so it keeps meaning the same points when a Private location changes.
 - At most 120 editor openings an hour per account.
 
-### FR-5.8 Activity states and selection
+### FR-5.8 Track states and selection
 
-An activity's state has three independent parts: lifecycle, on the server; Hidden; and Focused or Checked, per tab or app session. "Selected" names none of them.
+A track's state has three independent parts: lifecycle, on the server; Hidden; and Focused or Checked, per tab or app session. "Selected" names none of them.
 
 ```mermaid
 stateDiagram-v2
     [*] --> Normal: ingested
-    Normal --> Pending: track edit, split, merge, privacy change
+    Normal --> Pending: route edit, split, merge, privacy change
     Pending --> Normal: reprocess done, or an edit failed
     Normal --> Deleted: delete, or merged away
     Deleted --> [*]
@@ -419,7 +419,7 @@ stateDiagram-v2
     }
 ```
 
-| State | Track | Fog | Row | Survives reload |
+| State | Route | Fog | Row | Survives reload |
 | :-- | :-- | :-- | :-- | :-- |
 | Normal | Drawn | Counted | Plain | Yes |
 | Pending | Not drawn | Not counted, at any zoom | Badge, old numbers; can't be focused, checked, edited or deleted | Yes |
@@ -427,53 +427,53 @@ stateDiagram-v2
 | Focused | Bold, in pace bands (FR-4.6) | Counted | Highlighted | No |
 | Checked | Bold | Counted | Ticked | No |
 
-- At most one activity is Focused, by clicking its row or track; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one. A Type or Distance filter that hides a Checked activity unchecks it.
+- At most one track is Focused, by clicking its row or route; any number are Checked. Bold is either, on the map and in its image (FR-4.7). The toolbar acts on the Checked ones when any are, else the Focused one. A Type or Distance filter that hides a Checked track unchecks it.
 - On the web they're independent and checking never moves the camera; on Android focusing unchecks the rest, and the first check takes the Focused one in (`apps/android/docs/SPEC.md` FR-2.7).
-- Hiding keeps Focused and Checked; camera fits skip Hidden. Opening or closing a Story clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on activities still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
-- Pending wins over Hidden, and reprocessing never changes visibility: a hidden activity stays hidden after Pending clears.
-- Leaving Pending brings the track back at once, and Fog once redrawn.
-- An activity entirely inside Private locations is Normal with no geometry.
+- Hiding keeps Focused and Checked; camera fits skip Hidden. Opening or closing a Trip clears Hidden, Focused and Checked; a list reloaded for a new area or Dates keeps them on tracks still listed (FR-5.11). Fog sets Focused and Checked aside until Normal.
+- Pending wins over Hidden, and reprocessing never changes visibility: a hidden track stays hidden after Pending clears.
+- Leaving Pending brings the route back at once, and Fog once redrawn.
+- A track entirely inside Private locations is Normal with no geometry.
 
-### FR-5.9 Split an activity
+### FR-5.9 Split a track
 
-An activity is split in two at a point on its track. Each part is a full activity, and the original is never changed.
+A track is split in two at a point on its route. Each part is a full track, and the original is never changed.
 
-- A split needs what Edit track needs (FR-5.7). The split point belongs to both parts, each needing at least two points. One split per edit session, whose edit applies to both.
-- The activity keeps the part before the point. A new activity gets the rest with the same type, name, description and edit, joins the original's Stories, and takes the photos after the point.
+- A split needs what Edit route needs (FR-5.7). The split point belongs to both parts, each needing at least two points. One split per edit session, whose edit applies to both.
+- The track keeps the part before the point. A new track gets the rest with the same type, name, description and edit, joins the original's Trips, and takes the photos after the point.
 - Both parts are Pending until reprocessed; each starts at its first point.
-- A split point inside a Private location leaves both parts ending outside it. A split leaving a part entirely inside Private locations is refused unless the client confirms; that part is then kept with no track (FR-7.1).
-- A part is edited like any activity, split again included; Reset returns its own stretch.
+- A split point inside a Private location leaves both parts ending outside it. A split leaving a part entirely inside Private locations is refused unless the client confirms; that part is then kept with no route (FR-7.1).
+- A part is edited like any track, split again included; Reset returns its own stretch.
 - The original is still recognized on re-import (FR-3.3) and counts once against the limits.
 
 ### FR-5.10 An empty account
 
-- With no activities at all, the Activities tab shows, in place of the list and its filters, the ways to bring activities in, any Story copy waiting for the account (FR-13.7) and how many imports are still in progress. The first activity, Hidden or not, brings the list back.
+- With no tracks at all, the Tracks tab shows, in place of the list and its filters, the ways to bring tracks in, any Trip copy waiting for the account (FR-13.7) and how many imports are still in progress. The first track, Hidden or not, brings the list back.
 - A demo session never shows it.
 
 ### FR-5.11 The visible area
 
-The list holds every activity whose track crosses the visible map, of all time unless the Dates filter (FR-5.12) narrows it, and the map draws the same set.
+The list holds every track whose route crosses the visible map, of all time unless the Dates filter (FR-5.12) narrows it, and the map draws the same set.
 
-- An activity with no track (FR-7.1) is never in it.
-- From zoom 4, where tracks are drawn (FR-4.1), the list follows the map each time it settles after a move; further out it lists nothing. The camera moving onto an activity or a Story leaves the list as it is.
-- At most the newest 1,000. Past that the map draws only the listed tracks and says how many the area holds, and only zooming in or Dates bring the rest in.
-- A reload keeps Focused, Checked and Hidden on activities still listed, and every filter as set.
+- A track with no route (FR-7.1) is never in it.
+- From zoom 4, where routes are drawn (FR-4.1), the list follows the map each time it settles after a move; further out it lists nothing. The camera moving onto a track or a Trip leaves the list as it is.
+- At most the newest 1,000. Past that the map draws only the listed routes and says how many the area holds, and only zooming in or Dates bring the rest in.
+- A reload keeps Focused, Checked and Hidden on tracks still listed, and every filter as set.
 
 ### FR-5.12 DATES filter
 
-- From and To, local dates (FR-3.8), both inclusive and either optional; none set is all time. Each is bounded by the first activity and today (the account's, FR-1.7), or the newest activity when it's later, recorded in a zone ahead.
-- Setting it moves the camera once onto the activities it matches, wherever they are; clearing it leaves the camera.
-- It filters the Activities tab and Normal mode's tracks only, not Stories, the Privacy tab or Fog.
+- From and To, local dates (FR-3.8), both inclusive and either optional; none set is all time. Each is bounded by the first track and today (the account's, FR-1.7), or the newest track when it's later, recorded in a zone ahead.
+- Setting it moves the camera once onto the tracks it matches, wherever they are; clearing it leaves the camera.
+- It filters the Tracks tab and Normal mode's routes only, not Trips, the Privacy tab or Fog.
 
-## 8. FR-6 — Activity Graph (Profile)
+## 8. FR-6 — Track Graph (Profile)
 
 ### FR-6.1 Contribution grid
 
-A private page, `/profile`: one cell per calendar day by local date, one block per year back to the first activity, shaded by count (none, one, two, three or more) or by distance in quantiles of the account's own active days that year.
+A private page, `/profile`: one cell per calendar day by local date, one block per year back to the first track, shaded by count (none, one, two, three or more) or by distance in quantiles of the account's own active days that year.
 
 ### FR-6.2 All-time and per-year stat cards
 
-Activities, Distance, Active Days and Longest Streak (consecutive days with an activity), all-time and per year.
+Tracks, Distance, Active Days and Longest Streak (consecutive days with a track), all-time and per year.
 
 ### FR-6.3 Explored places
 
@@ -483,18 +483,18 @@ The places the account has explored, on the same page and as private: every coun
 
 ### FR-7.1 Private locations
 
-Circles a user marks so tracks don't reveal where they start and end. The part of an activity that starts or ends inside one is hidden everywhere, the user's own map included. A track that only passes through one is shown whole.
+Circles a user marks so routes don't reveal where they start and end. The part of a track that starts or ends inside one is hidden everywhere, the user's own map included. A route that only passes through one is shown whole.
 
 - A center, a radius of 50–2,000 m (200 by default) and an optional name up to 100 characters; at most 20 per account. The demo account's are read-only.
-- Applied at ingest, before anything is stored: the leading points inside any Private location are dropped, and so is a further stretch past the edge, between 0 and the radius long along the track. The track starts at the first point that stretch reaches, or the one before when that lies more than a radius past the edge; a recording with no point in that first radius starts at its first point past it, never at one placed on the way, which would point back at what the circle hides. The trailing points likewise.
-- Each end's stretch is random but fixed per activity, so the ends of many tracks scatter over a band outside the circle instead of outlining it, and reprocessing doesn't move them.
-- An end the stretch carries back inside a Private location is cut again where the track next leaves it. The same clip runs on an edited track (FR-5.7).
+- Applied at ingest, before anything is stored: the leading points inside any Private location are dropped, and so is a further stretch past the edge, between 0 and the radius long along the route. The route starts at the first point that stretch reaches, or the one before when that lies more than a radius past the edge; a recording with no point in that first radius starts at its first point past it, never at one placed on the way, which would point back at what the circle hides. The trailing points likewise.
+- Each end's stretch is random but fixed per track, so the ends of many routes scatter over a band outside the circle instead of outlining it, and reprocessing doesn't move them.
+- An end the stretch carries back inside a Private location is cut again where the route next leaves it. The same clip runs on an edited route (FR-5.7).
 - Distance, duration, elevation gain, pace, coverage and the places it clears come from the visible part.
-- An activity left with fewer than two points is kept with no geometry and a Private badge (FR-5.1), and the Privacy tab counts them; moving or deleting the location brings it back.
-- Every change is retroactive: activities whose track comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure. Locations that overlap clip as one shape, so for them the reach is each one's radius plus the largest among them. An upload being processed when a location is saved is clipped with it too. A track that started at its first recorded point past the edge (a recording with no point in the first radius) can end beyond that reach, and then stays clipped after its location is moved or deleted until something else reprocesses it.
+- A track left with fewer than two points is kept with no geometry and a Private badge (FR-5.1), and the Privacy tab counts them; moving or deleting the location brings it back.
+- Every change is retroactive: tracks whose route comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure. Locations that overlap clip as one shape, so for them the reach is each one's radius plus the largest among them. An upload being processed when a location is saved is clipped with it too. A route that started at its first recorded point past the edge (a recording with no point in the first radius) can end beyond that reach, and then stays clipped after its location is moved or deleted until something else reprocesses it.
 - Circles are drawn only on the Privacy tab, from zoom 4, never in an export. On the web, opening the tab highlights the location added last and moves the map onto it.
-- Originals stay unclipped and are in the data download (FR-1.13). A Story copy carries the sender's clipped track (FR-13.8).
-- An activity ingested before Private locations existed keeps its fixed 100 m endpoint trim until reprocessed.
+- Originals stay unclipped and are in the data download (FR-1.13). A Trip copy carries the sender's clipped route (FR-13.8).
+- A track ingested before Private locations existed keeps its fixed 100 m endpoint trim until reprocessed.
 
 ### FR-7.2 Data isolation
 
@@ -505,7 +505,7 @@ An account only sees its own data. Every endpoint takes the account from the ses
 ### FR-8.1 Trends
 
 - Weekly (Monday to Sunday) or monthly totals of count, distance, moving time and elevation gain by local date (FR-3.8), for a window defaulting to the trailing 12 months, every bucket returned, empty ones as zeroes.
-- An activity with no moving time counts its elapsed time. Shown on the Profile page. Best efforts and personal bests are out of scope (§21).
+- A track with no moving time counts its elapsed time. Shown on the Profile page. Best efforts and personal bests are out of scope (§21).
 
 ## 11. FR-9 — Public pages: About, Help, Contacts, privacy policy, Android test suite
 
@@ -550,7 +550,7 @@ Donate opens the configured Open Collective's donation page in a new tab. With n
 
 ## 13. FR-11 — Admin panel
 
-A read-only view of every account, its activities and the service's daily statistics for the operators, at `/admin` (the statistics), `/admin/users` and `/admin/users/{id}`, `noindex`.
+A read-only view of every account, its tracks and the service's daily statistics for the operators, at `/admin` (the statistics), `/admin/users` and `/admin/users/{id}`, `noindex`.
 
 ### FR-11.1 Access
 
@@ -560,12 +560,12 @@ A read-only view of every account, its activities and the service's daily statis
 
 ### FR-11.2 Accounts
 
-`/admin/users` lists every account, demo included, newest first, 100 per page, with its email, display name, signup date, country, timezone, activity count, total distance, last day seen, and which of the website, the Android app and the iOS app it used in the 30 days before that day.
+`/admin/users` lists every account, demo included, newest first, 100 per page, with its email, display name, signup date, country, timezone, track count, total distance, last day seen, and which of the website, the Android app and the iOS app it used in the 30 days before that day.
 
-### FR-11.3 An account's activities
+### FR-11.3 An account's tracks
 
-- `/admin/users/{id}` lists the account's activities, newest first, 100 per page: id, local start time and zone, type, name, distance, duration, source, countries and regions.
-- Activities entirely inside a Private location are included and badged; edited tracks are badged. Nothing on either page changes anything.
+- `/admin/users/{id}` lists the account's tracks, newest first, 100 per page: id, local start time and zone, type, name, distance, duration, source, countries and regions.
+- Tracks entirely inside a Private location are included and badged; edited routes are badged. Nothing on either page changes anything.
 
 ### FR-11.4 Service statistics
 
@@ -593,7 +593,7 @@ flowchart TD
 - Error codes never change; messages follow the request reading them, so an old import failure reads in today's language.
 - Map labels use the language where OpenStreetMap has it, else English, with the local name beneath when it's in another script.
 - The Android app follows its per-app language, else the phone's; its Language setting sets that and the account's together, signing in applies the account's, and it sends `Accept-Language`.
-- Not translated: names and descriptions people type, place names OSM lacks in either language, uncommon activity types.
+- Not translated: names and descriptions people type, place names OSM lacks in either language, uncommon track types.
 
 ### FR-12.2 The language menu
 
@@ -602,65 +602,65 @@ flowchart TD
 - Automatic forgets the browser's choice and sets the account back to automatic.
 - It applies from that page's reload; other open pages change on their next load.
 
-## 15. FR-13 — Stories
+## 15. FR-13 — Trips
 
-A Story is a hand-picked, private set of the account's activities with a name, an optional description and joint totals (`VISION.md` §4.2). An activity can be in any number. Activities go in with the Activities toolbar's Add to story, into a new or existing Story, and come out on the Stories tab.
+A Trip is a hand-picked, private set of the account's tracks with a name, an optional description and joint totals (`VISION.md` §4.2). A track can be in any number. Tracks go in with the Tracks toolbar's Add to trip, into a new or existing Trip, and come out on the Trips tab.
 
-### FR-13.1 A Story
+### FR-13.1 A Trip
 
-- Totals (count, distance, moving and elapsed time, and per activity type) cover all its activities with no date bound; an activity with no moving time counts its elapsed time.
-- A Story copied from someone else's (FR-13.8) names them while the original Story exists.
+- Totals (count, distance, moving and elapsed time, and per track type) cover all its tracks with no date bound; a track with no moving time counts its elapsed time.
+- A Trip copied from someone else's (FR-13.8) names them while the original Trip exists.
 
 ### FR-13.2 Create, rename and delete
 
 - Name required, up to 200 characters; description up to 2,000; both trimmed.
-- A Story can be created with its first activities; if any isn't the account's own, nothing is created.
-- Deleting a Story keeps its activities.
+- A Trip can be created with its first tracks; if any isn't the account's own, nothing is created.
+- Deleting a Trip keeps its tracks.
 
-### FR-13.3 Add and remove activities
+### FR-13.3 Add and remove tracks
 
 - Adding a member, or removing a non-member, changes nothing. At most 10,000 ids per request; if any isn't the account's own, none is added.
-- Removing an activity from a Story keeps the activity. Deleting an activity removes it from every Story; an emptied Story stays.
-- An activity is in a Story only once added, never by its dates.
+- Removing a track from a Trip keeps the track. Deleting a track removes it from every Trip; an emptied Trip stays.
+- A track is in a Trip only once added, never by its dates.
 
 ### FR-13.4 The `story` filter
 
-- The activity list, its totals, the day histogram and the tracks tiles take `story`, narrowing them to its activities; inside a Story the histogram counts only its days.
-- Another account's Story, or an empty one, matches nothing.
-- A change to a Story's activities moves the tile version; renaming doesn't.
+- The track list, its totals, the day histogram and the tracks tiles take `story`, narrowing them to its tracks; inside a Trip the histogram counts only its days.
+- Another account's Trip, or an empty one, matches nothing.
+- A change to a Trip's tracks moves the tile version; renaming doesn't.
 
 ### FR-13.5 Privacy and the demo
 
-- A Story is visible only to its account; another account's can't be told apart from a missing one.
-- A demo session reads the Demo Customer's Stories; every write is refused.
+- A Trip is visible only to its account; another account's can't be told apart from a missing one.
+- A demo session reads the Demo Customer's Trips; every write is refused.
 
-### FR-13.6 The Stories tab
+### FR-13.6 The Trips tab
 
-- One Story is open at a time. While open, the tracks, rows, photos and exports are its activities, whatever Dates. Normal mode only: Fog stays all-time.
-- The URL carries it (`/?story=<id>`); `/?tab=stories` opens the tab. Leaving the tab restores the Activities tab's range.
+- One Trip is open at a time. While open, the routes, rows, photos and exports are its tracks, whatever Dates. Normal mode only: Fog stays all-time.
+- The URL carries it (`/?story=<id>`); `/?tab=stories` opens the tab. Leaving the tab restores the Tracks tab's range.
 
 ### FR-13.7 Send a copy
 
-A Story's owner sends a copy to another account by email address; the recipient accepts or declines (ADR-0036).
+A Trip's owner sends a copy to another account by email address; the recipient accepts or declines (ADR-0036).
 
 - The answer is the same whether or not the address has an account. Only a verified real account, not the sender's and not being deleted, receives it; otherwise nothing is stored. The address is trimmed and compared without case.
-- Any owned Story can be sent, a received copy included. Sending again while one waits refreshes it.
+- Any owned Trip can be sent, a received copy included. Sending again while one waits refreshes it.
 - The recipient is emailed in their language (English if none), with the sender's display name, else email address; an address that receives nothing gets no email.
-- Declining copies nothing, and the sender isn't told. Deleting the Story withdraws waiting copies; copies from an account being deleted leave the inbox.
+- Declining copies nothing, and the sender isn't told. Deleting the Trip withdraws waiting copies; copies from an account being deleted leave the inbox.
 - At most 30 sends an hour per account. Accepting at the account's limits (FR-1.14) is refused and the copy keeps waiting.
 - A demo session's inbox is empty, and it can't send, accept or decline.
 
 ### FR-13.8 The copy
 
-Accepting puts a Story and activities in the recipient's account that are theirs from then on (ADR-0036).
+Accepting puts a Trip and tracks in the recipient's account that are theirs from then on (ADR-0036).
 
-- The Story is copied as it is when the copy is made, not when sent.
-- The first accepted copy makes a new Story with its name and description; a later one adds to it, or, if the recipient deleted it, makes a new one with only what they haven't received.
-- Each activity is made from its track as the sender sees it, with the sender's Private locations and edits applied, then treated as the recipient's upload: their Private locations apply too, and it counts in their Fog, totals, regions and Trends. Type, name, description and photos come with it.
-- An account receives each original activity once, ever: one it already received, recorded or holds is left out, so a deleted copy doesn't return and a copy sent back to its recorder adds nothing. With nothing to add, no Story is made unless the Story is empty.
-- An activity with no track, or hidden entirely by the sender's Private locations, isn't copied; one being reprocessed is copied once that finishes.
+- The Trip is copied as it is when the copy is made, not when sent.
+- The first accepted copy makes a new Trip with its name and description; a later one adds to it, or, if the recipient deleted it, makes a new one with only what they haven't received.
+- Each track is made from its route as the sender sees it, with the sender's Private locations and edits applied, then treated as the recipient's upload: their Private locations apply too, and it counts in their Fog, totals, regions and Trends. Type, name, description and photos come with it.
+- An account receives each original track once, ever: one it already received, recorded or holds is left out, so a deleted copy doesn't return and a copy sent back to its recorder adds nothing. With nothing to add, no Trip is made unless the Trip is empty.
+- A track with no route, or hidden entirely by the sender's Private locations, isn't copied; one being reprocessed is copied once that finishes.
 - Neither side's later changes, deletions or account deletion reach the other.
-- A Story deleted, or whose owner is being deleted, before the copy is made adds nothing.
+- A Trip deleted, or whose owner is being deleted, before the copy is made adds nothing.
 
 ## 16. FR-14 — Spots
 
@@ -678,7 +678,7 @@ Outdoor places from OpenStreetMap in six categories, with what OSM says about ea
 
 - One Places toggle per category, off by default.
 - From zoom 13 ticked places show as badges with their areas; from 10 to 13 only on request (FR-14.4); below 10 none. A captured place's badge is filled.
-- Drawn over Fog and labels; hidden during Edit track. A retired place shows only to an account that captured it.
+- Drawn over Fog and labels; hidden during Edit route. A retired place shows only to an account that captured it.
 
 ### FR-14.3 The popup
 
@@ -701,38 +701,38 @@ A place is captured by staying inside it for 30 seconds with the Android app's c
 - A retired place keeps its captures, answers its details only to them, and can't be captured.
 - A demo session can read captures but not capture.
 
-## 17. FR-15 — Activity photos
+## 17. FR-15 — Track photos
 
-The user's own photos on an activity, each at a moment on its route, so an activity or Story shows its pictures on the map (`VISION.md` §4.2, ADR-0024). Each is stored as a resized copy and thumbnail without EXIF, visible only to the account. The web and Android add and show them (`apps/android/docs/SPEC.md` FR-2.10).
+The user's own photos on a track, each at a moment on its route, so a track or Trip shows its pictures on the map (`VISION.md` §4.2, ADR-0024). Each is stored as a resized copy and thumbnail without EXIF, visible only to the account. The web and Android add and show them (`apps/android/docs/SPEC.md` FR-2.10).
 
 ### FR-15.1 Upload
 
 - The client resizes first: the copy at most 2,560 px a side and 3 MiB, the thumbnail 640 px and 256 KiB, JPEG or WebP (the web sends 2,048 px and 320 px). Larger is refused; the type is read from the bytes.
 - EXIF capture time and position are sent for placement only. Captions are up to 500 characters.
-- At most 2,000 photos per account, on the account's own activities that have a track.
+- At most 2,000 photos per account, on the account's own tracks that have a route.
 - A photo that can't be placed is refused, nothing stored, for the client to ask the user. A placement check answers where a photo would go without storing anything.
 - A demo session can't add photos.
 
 ### FR-15.2 Placement
 
-- A photo's place is a moment on the track, never a stored position; its position is worked out on every read.
-- A moment the user chose places it there, clamped to the track.
-- Otherwise its capture time does, on the track or within 5 minutes of either end (placing it at that end).
-- A capture time without a zone is read in the activity's zone (FR-3.8), else in the UTC offset nearest it, in 15-minute steps from −12:00 to +14:00, that puts it on the track.
-- Else an EXIF position within 500 m of the track places it at the nearest point. Else the upload is refused for the user to choose.
-- A moment outside the drawn track (cut off by Edit track or a Private location) shows at the nearest end, and is kept so the photo returns if the track does. A photo on a stretch passing through a Private location shows nothing the track doesn't (FR-7.1).
+- A photo's place is a moment on the route, never a stored position; its position is worked out on every read.
+- A moment the user chose places it there, clamped to the route.
+- Otherwise its capture time does, on the route or within 5 minutes of either end (placing it at that end).
+- A capture time without a zone is read in the track's zone (FR-3.8), else in the UTC offset nearest it, in 15-minute steps from −12:00 to +14:00, that puts it on the route.
+- Else an EXIF position within 500 m of the route places it at the nearest point. Else the upload is refused for the user to choose.
+- A moment outside the drawn route (cut off by Edit route or a Private location) shows at the nearest end, and is kept so the photo returns if the route does. A photo on a stretch passing through a Private location shows nothing the route doesn't (FR-7.1).
 
 ### FR-15.3 Listing and images
 
-Photos are listed per activity or Story in route order. Images are served only to their owner and never change, so they're cacheable for good.
+Photos are listed per track or Trip in route order. Images are served only to their owner and never change, so they're cacheable for good.
 
 ### FR-15.4 Editing
 
-The caption and the moment can change; the moment is clamped to the track, and a photo can't leave it.
+The caption and the moment can change; the moment is clamped to the route, and a photo can't leave it.
 
 ### FR-15.5 Deleting
 
-Deleting a photo deletes both images. Deleting an activity deletes its photos (FR-5.6), except images a copied Story's photo still uses.
+Deleting a photo deletes both images. Deleting a track deletes its photos (FR-5.6), except images a copied Trip's photo still uses.
 
 ## 18. FR-16 — Daily capacity
 
@@ -740,9 +740,9 @@ Deleting a photo deletes both images. Deleting an activity deletes its photos (F
 
 The service spends up to `R2_DAILY_BUDGET_USD` a day ($2 by default) on object-store requests, across every account, reset at midnight UTC. Nearing it, the service gives things up in stages, keeping what everyone sees for last.
 
-- **At 70%**, Fog stops being redrawn: new and edited activities reach the tracks, and their coverage follows after midnight UTC, the map saying it's updating.
-- **At 85%**, everything that adds to storage is refused: uploads, phone syncs, photos, avatars, accepting a Story copy and asking for a data download. A download already asked for is built after midnight. Refusals carry `Retry-After` until midnight UTC and say nothing stored is affected; the Android app keeps what it didn't send.
-- **At 100%**, reads of stored files are refused the same way: Fog tiles, photos, avatars, download archives and the track editor's points. Tracks, lists, Stories, totals, Spots and pages keep working.
+- **At 70%**, Fog stops being redrawn: new and edited tracks reach the routes, and their coverage follows after midnight UTC, the map saying it's updating.
+- **At 85%**, everything that adds to storage is refused: uploads, phone syncs, photos, avatars, accepting a Trip copy and asking for a data download. A download already asked for is built after midnight. Refusals carry `Retry-After` until midnight UTC and say nothing stored is affected; the Android app keeps what it didn't send.
+- **At 100%**, reads of stored files are refused the same way: Fog tiles, photos, avatars, download archives and the route editor's points. Routes, lists, Trips, totals, Spots and pages keep working.
 - The stages lift at midnight UTC, or when the budget is raised past the day's spend. A stage can start up to a minute after the spend that crosses it.
 
 ## 19. Non-Functional Requirements (summary)
@@ -751,7 +751,7 @@ The service spends up to `R2_DAILY_BUDGET_USD` a day ($2 by default) on object-s
 | :-- | :-- |
 | **Password storage** | bcrypt; plain text never stored or logged (FR-1.1). |
 | **Sessions** | Server-side, revocable, checked on every request (FR-1.4). |
-| **Rate limits** | Per address: signup, sign-in, password reset, demo (FR-1.1, FR-1.2, FR-1.5, FR-2.1). Per account: uploads, syncs, track editor, tiles, Story sends (FR-3.1, FR-3.4, FR-5.7, FR-4.11, FR-13.7). Counts restart with the server. |
+| **Rate limits** | Per address: signup, sign-in, password reset, demo (FR-1.1, FR-1.2, FR-1.5, FR-2.1). Per account: uploads, syncs, route editor, tiles, Trip sends (FR-3.1, FR-3.4, FR-5.7, FR-4.11, FR-13.7). Counts restart with the server. |
 | **Non-blocking uploads** | The app stays usable while files are processed (FR-3.1). |
 | **No reload required** | Lists, totals and the map update as processing finishes. |
 | **Idempotency** | The same original (FR-3.3), sync record (FR-3.4) or reset token (FR-1.6) has no effect beyond the first. |
@@ -764,7 +764,7 @@ The web app works in a phone browser as on a desktop. Taps stand in for hover.
 
 Not built by design, and not planned:
 
-- Performance analysis (best-effort curves, personal bests, power curves, training load) and recovery data (sleep, HRV, readiness): `VISION.md` §1.1. Pace stays per-activity route context (FR-4.6), and health measurements are never read, stored or shown (ADR-0017).
-- Splitting a track that passes through a Private location mid-way: FR-7.1 hides only the ends.
+- Performance analysis (best-effort curves, personal bests, power curves, training load) and recovery data (sleep, HRV, readiness): `VISION.md` §1.1. Pace stays per-track route context (FR-4.6), and health measurements are never read, stored or shown (ADR-0017).
+- Splitting a route that passes through a Private location mid-way: FR-7.1 hides only the ends.
 
 What is planned is in `docs/ROADMAP.md`.

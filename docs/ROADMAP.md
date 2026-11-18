@@ -27,7 +27,7 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 ### After launch
 
 - [ ] DPIA: drafted in `docs/DPIA.md`; left are its section 7 actions and the controller's sign-off.
-- [ ] Review how long original uploads are kept (today, until the activity is deleted) once real accounts show what they cost. They're the most sensitive thing held (`DPIA.md` R2) and likely the largest storage line; an expired one can't be re-clipped, rebuilt or exported (`IMPLEMENTATION.md` §5.7).
+- [ ] Review how long original uploads are kept (today, until the track is deleted) once real accounts show what they cost. They're the most sensitive thing held (`DPIA.md` R2) and likely the largest storage line; an expired one can't be re-clipped, rebuilt or exported (`IMPLEMENTATION.md` §5.7).
 - [ ] The iOS app (`VISION.md` §4.1 Path 2, `ARCHITECTURE.md` §2), no date set; its plan is `apps/ios/docs/ROADMAP.md`.
 
 ---

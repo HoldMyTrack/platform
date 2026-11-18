@@ -10,7 +10,7 @@ extension MapViewController {
     func renderModeChrome() {
         let chip = MapChrome.chip(state.mode)
         chrome.chip.text = switch chip {
-        case .everyActivity: String(localized: "Every activity, any date")
+        case .everyActivity: String(localized: "Every track, any date")
         case nil: nil
         }
         chrome.chip.isHidden = chip == nil

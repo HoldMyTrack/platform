@@ -2,11 +2,11 @@
 
 ## Status
 
-Accepted. Built for every layer HoldMyTrack draws: Fog, the bike paths, the track lines, the pace bands and Spots (`ARCHITECTURE.md` §2.1). Closes ADR-0042's open question of a WebView map.
+Accepted. Built for every layer HoldMyTrack draws: Fog, the bike paths, the route lines, the pace bands and Spots (`ARCHITECTURE.md` §2.1). Closes ADR-0042's open question of a WebView map.
 
 ## Context
 
-The web, Android and soon iOS draw the same map. The basemap style had one definition, served as a document (`ARCHITECTURE.md` §2.1), but each client built every layer HoldMyTrack draws over it by hand: the veil colours and edge widths, the zoom tiers, which layers each mode shows, the track lines, the pace bands, the bike paths and Spots. The web and Android held about 65 such values each, kept equal by comments, with the pace-band binning rule implemented twice. An iOS app would have made a third copy, and every change to the look shipped as an app release. Those layers' sources carry the account's tile version, which a style shared by every account can't hold, and MapLibre Native can't change a source's URL, so a native client already replaced sources from their specifications whenever the version moved.
+The web, Android and soon iOS draw the same map. The basemap style had one definition, served as a document (`ARCHITECTURE.md` §2.1), but each client built every layer HoldMyTrack draws over it by hand: the veil colours and edge widths, the zoom tiers, which layers each mode shows, the route lines, the pace bands, the bike paths and Spots. The web and Android held about 65 such values each, kept equal by comments, with the pace-band binning rule implemented twice. An iOS app would have made a third copy, and every change to the look shipped as an app release. Those layers' sources carry the account's tile version, which a style shared by every account can't hold, and MapLibre Native can't change a source's URL, so a native client already replaced sources from their specifications whenever the version moved.
 
 ## Decision
 

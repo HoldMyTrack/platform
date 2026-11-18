@@ -144,7 +144,7 @@ extension MapViewController {
             } catch {
                 guard !Task.isCancelled else { return }
                 listLoading = false
-                listError = (error as? APIError)?.serverMessage ?? String(localized: "Activities couldn't load.")
+                listError = (error as? APIError)?.serverMessage ?? String(localized: "Tracks couldn't load.")
                 renderPanel()
                 // A failed read doesn't end the polling: a Pending row still has to be seen finishing.
                 watchPending()
@@ -190,7 +190,7 @@ extension MapViewController {
 
     private func renderPendingNotice() {
         if !pendingIDs.isEmpty {
-            notice(.pending, String(localized: "Some activities are being processed. They'll show on the map when they're done."))
+            notice(.pending, String(localized: "Some tracks are being processed. They'll show on the map when they're done."))
         } else {
             hideNotice(.pending)
         }
@@ -243,7 +243,7 @@ extension MapViewController {
     func renderPanel() {
         guard activitiesPanel != nil else { return }
         let format = format
-        let zoomNote = zoomedOut && session.storyID == nil ? String(localized: "Zoom in to see your activities.") : nil
+        let zoomNote = zoomedOut && session.storyID == nil ? String(localized: "Zoom in to see your tracks.") : nil
         let note: (text: String, failed: Bool)? = zoomNote.map { ($0, false) }
             ?? (listLoading && activities.isEmpty ? (String(localized: "Loading…"), false) : listError.map { ($0, true) })
         activitiesPanel.render(session.panel, activities: activities, format: format, note: note)
@@ -417,7 +417,7 @@ extension MapViewController {
                 } catch {
                     editOpen = false
                     let reason = (error as? APIError)?.serverMessage ?? String(localized: "The server couldn't be reached.")
-                    StoryDialogs.inform(over: view, String(localized: "The activity couldn't be opened: \(reason)"))
+                    StoryDialogs.inform(over: view, String(localized: "The track couldn't be opened: \(reason)"))
                     return
                 }
             }
@@ -465,8 +465,8 @@ extension MapViewController {
         let format = format
         let name = group.count == 1 ? format.label(group[0]) : String(localized: "Checked: \(group.count)")
         let summary = "\(name) (\(format.totalDistance(group.compactMap(\.distanceMeters).reduce(0, +))))"
-        let title = group.count == 1 ? String(localized: "Delete this activity?") : String(localized: "Delete these activities?")
-        let message = String(localized: "\(summary) will be deleted for good, with its track and its part of Fog of War.")
+        let title = group.count == 1 ? String(localized: "Delete this track?") : String(localized: "Delete these tracks?")
+        let message = String(localized: "\(summary) will be deleted for good, with its route and its part of Fog of War.")
         var done: [String] = []
         StoryDialogs.confirm(over: view, title: title, message: message, action: String(localized: "Delete")) { [weak self] in
             guard let self else { return nil }

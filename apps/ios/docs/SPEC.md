@@ -14,7 +14,7 @@ What the iOS app does, as a user can rely on it: where it differs from the Andro
 
 ### 1.2 Scope
 
-Every built feature of the app: so far signing in and out, email verification, the first run, the Update screen, the map and its Activities and Stories panel, the site's pages, the You tab, Privacy, deleting the account, and Upload.
+Every built feature of the app: so far signing in and out, email verification, the first run, the Update screen, the map and its Tracks and Trips panel, the site's pages, the You tab, Privacy, deleting the account, and Upload.
 
 ## 3. FR-1 — Authentication & Session
 
@@ -50,7 +50,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 ### FR-2.2 Two map modes: Normal and Fog of War
 
-- Stories is Normal mode's, as on Android; the Sync tab is a page with no map.
+- Trips is Normal mode's, as on Android; the Sync tab is a page with no map.
 - There is no recording to hide the modes.
 
 ### FR-2.3 Initial camera framing
@@ -61,10 +61,10 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 - Each end of Dates is picked in a calendar in a sheet, and applies at once.
 
-### FR-2.7 Activities panel
+### FR-2.7 Tracks panel
 
 - Leaving the Map tab drops the Private location editor's draft: iOS has no Back.
-- While any activity is Pending, a notice over the map says so, including one the list no longer shows.
+- While any track is Pending, a notice over the map says so, including one the list no longer shows.
 
 ### FR-2.8 Spots
 
@@ -73,8 +73,8 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 ### FR-2.9 The bottom bar
 
-- Map, Stories, Sync and You, with no record button yet. Sync is Sync history (FR-4.1).
-- You leads to Settings, Activity graph & trends, Upload, Privacy, Theme, Language, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
+- Map, Trips, Sync and You, with no record button yet. Sync is Sync history (FR-4.1).
+- You leads to Settings, Track graph & trends, Upload, Privacy, Theme, Language, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
 
 ### FR-2.10 Photos

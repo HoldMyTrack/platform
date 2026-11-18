@@ -145,7 +145,7 @@ final class PhotosTabView: UIView {
             do {
                 let metrics = try await self.api.trackMetrics(self.activity.id)
                 if metrics.points.isEmpty {
-                    self.trackError = String(localized: "This activity has no track to put photos on.")
+                    self.trackError = String(localized: "This track has no route to put photos on.")
                 } else {
                     self.track = PhotoTrack(metrics.points.map { TimedPoint(lon: $0.lon, lat: $0.lat, t: $0.time) })
                 }
@@ -330,7 +330,7 @@ final class PhotosTabView: UIView {
         if !photosLoaded && photosError == nil {
             note.text = String(localized: "Loading photos…")
         } else if rows.isEmpty && waiting == nil && shownError == nil {
-            note.text = String(localized: "No photos yet. Add the ones you took on this activity — each goes on the route where it was taken.")
+            note.text = String(localized: "No photos yet. Add the ones you took on this track — each goes on the route where it was taken.")
         } else {
             note.text = nil
         }

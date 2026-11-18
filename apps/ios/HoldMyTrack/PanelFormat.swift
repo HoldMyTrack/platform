@@ -105,7 +105,7 @@ struct PanelFormat {
         [activityCount(count), totalDistance(meters), duration(seconds)].joined(separator: " · ")
     }
 
-    func activityCount(_ n: Int) -> String { String(localized: "Activities: \(count(n))", comment: "A count of activities, written as label: N.") }
+    func activityCount(_ n: Int) -> String { String(localized: "Tracks: \(count(n))", comment: "A count of tracks, written as label: N.") }
 
     private static func iso(_ text: String) -> Date? {
         let plain = ISO8601DateFormatter()

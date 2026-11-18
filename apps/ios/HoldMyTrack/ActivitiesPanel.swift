@@ -78,7 +78,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         let a = ActionButtons(
             visibility: Controls.iconButton(UIImage(resource: .eye), label: String(localized: "Hide"), id: "\(prefix)Visibility"),
             edit: Controls.iconButton(UIImage(resource: .pencil), label: String(localized: "Edit"), id: "\(prefix)Edit"),
-            addToStory: Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to story"), id: "\(prefix)AddToStory"),
+            addToStory: Controls.iconButton(UIImage(resource: .bookPlus), label: String(localized: "Add to trip"), id: "\(prefix)AddToStory"),
             delete: Controls.iconButton(UIImage(resource: .trash2), label: String(localized: "Delete"), id: "\(prefix)Delete"),
             focus: Controls.iconButton(UIImage(resource: .focus), label: String(localized: "Fly to"), id: "\(prefix)Focus")
         )
@@ -226,7 +226,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
             note.text = loadNote.text
             note.textColor = UIColor(resource: loadNote.failed ? .danger : .inkSecondary)
         } else {
-            note.text = listed.isEmpty && !activities.isEmpty ? String(localized: "No activities match these filters.") : listed.isEmpty ? String(localized: "No activities in this range.") : nil
+            note.text = listed.isEmpty && !activities.isEmpty ? String(localized: "No tracks match these filters.") : listed.isEmpty ? String(localized: "No tracks in this range.") : nil
             note.textColor = UIColor(resource: .inkSecondary)
         }
         note.isHidden = note.text == nil
@@ -328,9 +328,9 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         for actions in [barActions!, cardActions!] {
             describe(actions.visibility, use.visibility, image: UIImage(resource: anyHidden ? .eyeOff : .eye),
                      anyHidden ? String(localized: "Show \(name ?? "")") : String(localized: "Hide \(name ?? "")"))
-            describe(actions.edit, use.edit, demo: String(localized: "The demo account can't edit activities"), String(localized: "Edit \(name ?? "")"))
-            describe(actions.addToStory, use.addToStory, demo: String(localized: "The demo account can't change a Story"), String(localized: "Add \(name ?? "") to a Story"))
-            describe(actions.delete, use.delete, demo: String(localized: "The demo account can't delete activities"), String(localized: "Delete \(name ?? "")"))
+            describe(actions.edit, use.edit, demo: String(localized: "The demo account can't edit tracks"), String(localized: "Edit \(name ?? "")"))
+            describe(actions.addToStory, use.addToStory, demo: String(localized: "The demo account can't change a Trip"), String(localized: "Add \(name ?? "") to a Trip"))
+            describe(actions.delete, use.delete, demo: String(localized: "The demo account can't delete tracks"), String(localized: "Delete \(name ?? "")"))
             describe(actions.focus, use.focus, String(localized: "Fly to \(name ?? "")"))
         }
     }
@@ -345,7 +345,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         }
         button.accessibilityLabel = switch use {
         case .demo: demo ?? ready
-        case .noTarget: String(localized: "Nothing to act on: focus or check an activity")
+        case .noTarget: String(localized: "Nothing to act on: focus or check a track")
         case .pending: String(localized: "Can't delete while it's being processed")
         case .ready: ready
         }
@@ -374,7 +374,7 @@ final class ActivitiesPanel: NSObject, UITableViewDataSource, UITableViewDelegat
         cardMeta.text = ([activity.title != nil ? format.startedAt(activity) : nil, ActivityTypes.shared.label(activity.activityType)] as [String?])
             .compactMap { $0 }.joined(separator: " · ")
         if activity.isPrivate {
-            cardStats.text = String(localized: "Private: inside a Private location, so it has no track or numbers.")
+            cardStats.text = String(localized: "Private: inside a Private location, so it has no route or numbers.")
         } else {
             let speed = kind.showsPace ? String(localized: "Pace") : String(localized: "Speed")
             cardStats.text = [

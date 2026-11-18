@@ -167,7 +167,7 @@ final class YouViewController: UITableViewController {
     /// Upload with files already picked; the demo account is told it can't.
     func upload(_ files: [URL]) {
         guard !account.isDemo else {
-            StoryDialogs.inform(over: view, String(localized: "The demo account can't upload. Sign up to add your own activities."))
+            StoryDialogs.inform(over: view, String(localized: "The demo account can't upload. Sign up to add your own tracks."))
             return
         }
         navigationController?.popToRootViewController(animated: false)
@@ -193,7 +193,7 @@ final class YouViewController: UITableViewController {
         let row = sections[indexPath.section][indexPath.row]
         switch row {
         case .settings: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Settings"), UIImage(resource: .user), "youSettings")
-        case .profile: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Activity graph & trends"), UIImage(resource: .chart), "youProfile")
+        case .profile: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Track graph & trends"), UIImage(resource: .chart), "youProfile")
         case .upload: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Upload"), UIImage(resource: .upload), "youUpload")
         case .privacy: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Privacy"), UIImage(resource: .shield), "youPrivacy")
         case .theme:
@@ -261,7 +261,7 @@ final class YouViewController: UITableViewController {
     private func confirmDelete(error: String? = nil) {
         let alert = UIAlertController(
             title: String(localized: "Delete your account?"),
-            message: error ?? String(localized: "Your activities, Stories, photos and settings are deleted for good. Type \(account.email) to confirm."),
+            message: error ?? String(localized: "Your tracks, Trips, photos and settings are deleted for good. Type \(account.email) to confirm."),
             preferredStyle: .alert
         )
         var deleteAction: UIAlertAction!

@@ -143,7 +143,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Set the session cookie and `hmt_app=ios` in the web view's `WKHTTPCookieStore` before the first load. Where a link goes is the `webPageRoute` rule (`testdata/client-rules/web-page-route.json`), shared with Android. Read the session again on leaving a page, since a page may change units, the name or the language.
   - Done when: the rule's cases pass, and saving Settings changes the map's units on return. Built; left: a save, which the stock dev stack refuses as cross-origin (`docs/DEVELOPMENT.md`).
 - [ ] **6.2 Settings, Profile, Sync history, About**
-  - First run: a verified account with no Country opens Settings, and only saving gets past it. The avatar uses the page's file input, which iOS answers with its own photo picker. Sync history's View on map opens the native map on that activity (`apps/android/docs/SPEC.md` FR-4.1).
+  - First run: a verified account with no Country opens Settings, and only saving gets past it. The avatar uses the page's file input, which iOS answers with its own photo picker. Sync history's View on map opens the native map on that track (`apps/android/docs/SPEC.md` FR-4.1).
   - Done when: each page works offline with an error and Try again, and in both languages and themes. Built, with the first-run gate and View on map checked against a dev stack; left: offline, both languages and themes, and the avatar's upload.
 
 ## Phase 7a — The map
@@ -158,7 +158,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Normal and Fog of War; the Layers menu; first framing; the empty account's pointer to Sync; attribution kept visible; Find my location; theme and language reloading the style and keeping the camera; the basemap's loading and unreachable notice (root `docs/SPEC.md` FR-4.4).
   - Done when: `apps/android/docs/SPEC.md` FR-2.2–FR-2.5 hold on iOS, and `ios` is in `testdata/client-rules/basemap-status.json`'s `clients` with its cases passing.
 - [x] **7a.3 Tab bar and date range**
-  - Map, Stories, the record button, Sync and You (`apps/android/docs/SPEC.md` FR-2.9), each keeping its state. The date slider (`apps/android/docs/SPEC.md` FR-2.6) from the slider rules.
+  - Map, Trips, the record button, Sync and You (`apps/android/docs/SPEC.md` FR-2.9), each keeping its state. The date slider (`apps/android/docs/SPEC.md` FR-2.6) from the slider rules.
   - Done when: a picked range survives a trip to every tab and a rotation.
 - [ ] **7a.4 Tour**
   - The first-run tour and its three cards (`apps/android/docs/SPEC.md` FR-2.12), from the `tour-*` rules: which steps show, the camera each one moves to, and what restores after.
@@ -171,8 +171,8 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 `apps/android/docs/SPEC.md` FR-2.7, FR-2.8, FR-2.10 and FR-2.11.
 
-- [x] **7b.1 Activities and Stories panel**: rows, filters, selection, checked group, toolbar, Edit, Delete, Add to story, Pending polling, the Stories tab with copies to accept or decline. Done when: the panel rules' cases drive it and it behaves as `apps/android/docs/SPEC.md` FR-2.7 describes.
-- [ ] **7b.2 Track editor and Private location editor**. Done when: each operation matches the `edit-track-*` cases on a real track, and a Private location saves and clips. Built, and a Private location is added, saved and deleted against a dev stack; left: its clip checked on a real track.
+- [x] **7b.1 Tracks and Trips panel**: rows, filters, selection, checked group, toolbar, Edit, Delete, Add to trip, Pending polling, the Trips tab with copies to accept or decline. Done when: the panel rules' cases drive it and it behaves as `apps/android/docs/SPEC.md` FR-2.7 describes.
+- [ ] **7b.2 Route editor and Private location editor**. Done when: each operation matches the `edit-track-*` cases on a real route, and a Private location saves and clips. Built, and a Private location is added, saved and deleted against a dev stack; left: its clip checked on a real route.
 - [ ] **7b.3 Spots and capture**: layers per category, the popup, capture by 30 seconds within 25 m in the foreground with precise location, the screen kept awake. Done when: a capture at a real place is accepted by the server.
 - [x] **7b.4 Photos**: `PHPickerViewController`, redrawn upright at most 2,048 px with a 320 px thumbnail, placed by the server's check or by hand. iOS's picker may keep a photo's location, unlike Android's: measure it and say so in this app's `SPEC.md`. Done when: photos added, moved and deleted through Save survive a reload.
 - [ ] **7b.5 Map image export**: the viewfinder and presets, saved to Photos with add-only access and offered to the share sheet. Port Android's approach (`apps/android/docs/IMPLEMENTATION.md` §3.5), with the server's stats card (`docs/IMPLEMENTATION.md` §4.3.3). Done when: an exported image shows exactly the window, with the credit, the mark and, when asked for, the stats card.
@@ -190,8 +190,8 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - Workout types map onto HoldMyTrack's in one table under test, so the Type filter matches Android's.
   - Done when: phase 1's device lists the same workouts as the probe found.
 - [ ] **7c.3 Sending**
-  - Ticked rows under `healthkit`, in batches of at most 25 activities or 20,000 points, the route read again by UUID; a route over 50,000 points refused by the app; ingest polled every 2 seconds; refused rows kept ticked with their reason (`apps/android/docs/SPEC.md` FR-3.4).
-  - Done when: a ticked workout lands on the map, a second send makes no second activity, and leaving mid-run loses nothing.
+  - Ticked rows under `healthkit`, in batches of at most 25 tracks or 20,000 points, the route read again by UUID; a route over 50,000 points refused by the app; ingest polled every 2 seconds; refused rows kept ticked with their reason (`apps/android/docs/SPEC.md` FR-3.4).
+  - Done when: a ticked workout lands on the map, a second send makes no second track, and leaving mid-run loses nothing.
 
 ## Phase 7d — Recording
 
@@ -199,7 +199,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 - [ ] **7d.1 Recording**
   - `CLLocationManager` with the `location` background mode, `allowsBackgroundLocationUpdates` and the background indicator, on When In Use access only; precise location required (ask for temporary full accuracy when reduced). Pause and resume by tap, stop by a 2-second hold, the map showing only the recording.
-  - A Live Activity in place of Android's notification, with Pause or Resume; its Stop opens the app to confirm.
+  - A Live Track in place of Android's notification, with Pause or Resume; its Stop opens the app to confirm.
   - Difference: swiping the app away on iOS ends location updates, where Android's foreground service keeps going. 7d.2 brings the recording back; the first recording says once that swiping the app away stops it.
   - Done when: a 30-minute walk with the screen off records every fix.
 - [ ] **7d.2 Journal and recovery**
@@ -229,7 +229,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
   - The privacy policy, `docs/DPIA.md` and Help name HealthKit and what is read from it.
   - Done when: an archive uploads with no privacy-manifest warning, and the declarations match the DPIA.
 - [ ] **8.3 Listing**: description and keywords naming no other platform and promising no device Apple's or HealthKit's data can't deliver; 6.9-inch iPhone screenshots in English and Russian with no real account's details; age rating; support URL `https://holdmytrack.com/contacts`; privacy policy URL. Done when: the listing is complete in both languages.
-- [ ] **8.4 Review notes**: a reviewer account, verified and holding activities, kept apart from the demo account; a short screen recording of HealthKit sync and of recording in the background, since the reviewer has neither a watch history nor a walk; one line on each permission's use. Done when: the notes are in App Store Connect.
+- [ ] **8.4 Review notes**: a reviewer account, verified and holding tracks, kept apart from the demo account; a short screen recording of HealthKit sync and of recording in the background, since the reviewer has neither a watch history nor a walk; one line on each permission's use. Done when: the notes are in App Store Connect.
 
 ## Phase 9 — TestFlight
 
