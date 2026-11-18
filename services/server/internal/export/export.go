@@ -130,13 +130,13 @@ func Build(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID
 		points, err := ingest.DisplayedPoints(ctx, pool, store, act.ID)
 		switch {
 		case err != nil:
-			act.TrackUnavailable = true
+			act.GPXUnavailable = true
 		case points != nil:
 			file := "tracks/" + base + ".gpx"
 			if err := a.add(file, true, func(w io.Writer) error { return WriteGPX(w, act.Type, points) }); err != nil {
 				return nil, fmt.Errorf("activity %s: track: %w", act.ID, err)
 			}
-			act.Track = file
+			act.GPX = file
 		}
 
 		for n := range act.Photos {
@@ -315,22 +315,22 @@ type accountInfo struct {
 }
 
 type track struct {
-	ID               string    `json:"id"`
-	Name             string    `json:"name,omitempty"`
-	Type             string    `json:"type"`
-	Source           string    `json:"source"`
-	Description      string    `json:"description,omitempty"`
-	StartedAt        time.Time `json:"started_at"`
-	Timezone         string    `json:"timezone"` // where it was recorded, an IANA name
-	DistanceMeters   *float64  `json:"distance_m,omitempty"`
-	ElapsedSeconds   *int64    `json:"elapsed_s,omitempty"`
-	MovingSeconds    *int64    `json:"moving_s,omitempty"`
-	ElevationGainM   *float64  `json:"elevation_gain_m,omitempty"`
-	Original         string    `json:"original,omitempty"`
-	Track            string    `json:"track,omitempty"`
-	TrackUnavailable bool      `json:"track_unavailable,omitempty"`
-	Photos           []photo   `json:"photos,omitempty"`
-	rawKey           string
+	ID             string    `json:"id"`
+	Name           string    `json:"name,omitempty"`
+	Type           string    `json:"type"`
+	Source         string    `json:"source"`
+	Description    string    `json:"description,omitempty"`
+	StartedAt      time.Time `json:"started_at"`
+	Timezone       string    `json:"timezone"` // where it was recorded, an IANA name
+	DistanceMeters *float64  `json:"distance_m,omitempty"`
+	ElapsedSeconds *int64    `json:"elapsed_s,omitempty"`
+	MovingSeconds  *int64    `json:"moving_s,omitempty"`
+	ElevationGainM *float64  `json:"elevation_gain_m,omitempty"`
+	Original       string    `json:"original,omitempty"`
+	GPX            string    `json:"track,omitempty"`
+	GPXUnavailable bool      `json:"track_unavailable,omitempty"`
+	Photos         []photo   `json:"photos,omitempty"`
+	rawKey         string
 }
 
 type photo struct {

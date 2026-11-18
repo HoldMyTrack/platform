@@ -214,7 +214,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("DELETE", "/stories/{id}"), s.requireNotDemo(s.handleDeleteTrip))
 	s.mux.HandleFunc(route("POST", "/stories/{id}/activities"), s.requireNotDemo(s.handleAddTripTracks))
 	s.mux.HandleFunc(route("DELETE", "/stories/{id}/activities"), s.requireNotDemo(s.handleRemoveTripTracks))
-	// Sending a copy of a Story (story_sends.go).
+	// Sending a copy of a Story (trip_sends.go).
 	s.mux.HandleFunc(route("POST", "/stories/{id}/send"), s.requireNotDemo(s.handleSendTrip))
 	s.mux.HandleFunc(route("GET", "/story-sends"), s.requireVerified(s.handleListTripSends))
 	s.mux.HandleFunc(route("POST", "/story-sends/{id}/accept"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleAcceptTripSend)))

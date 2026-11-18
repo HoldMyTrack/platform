@@ -291,7 +291,7 @@ func TestTrackListNamesTrips(t *testing.T) {
 	}
 }
 
-// The demo seed's Stories (seedDemoStories): created by name, then held to the manifest on
+// The demo seed's Stories (seedDemoTrips): created by name, then held to the manifest on
 // every re-run — its description and exactly its tracks — with the tile version bumped only
 // when a Story's tracks actually changed.
 func TestSeedDemoTrips(t *testing.T) {

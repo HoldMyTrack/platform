@@ -110,7 +110,7 @@ func rerenderUserMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.S
 // RerenderTrackMasks redraws one track's stored per-tile masks from the points it's shown
 // with (DisplayedPoints: the upload parsed, clipped to Private locations, its route edit applied)
 // at the current stroke, drops the masks of tiles it no longer reaches, and marks every tile
-// before or after dirty — reprocessActivity's mask step alone, since nothing else about the
+// before or after dirty — reprocessTrack's mask step alone, since nothing else about the
 // track changes.
 func RerenderTrackMasks(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, trackID string) error {
 	points, err := DisplayedPoints(ctx, pool, store, trackID)

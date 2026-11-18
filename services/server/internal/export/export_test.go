@@ -146,8 +146,9 @@ func TestBuildWritesEverythingAcrossParts(t *testing.T) {
 			DisplayName string `json:"display_name"`
 		}
 		Tracks []struct {
-			ID, Original, Track string
-			Photos              []struct{ File, Caption string }
+			ID, Original string
+			GPX          string `json:"track"`
+			Photos       []struct{ File, Caption string }
 		} `json:"activities"`
 		Trips []struct {
 			Name   string

@@ -27,11 +27,11 @@ func SetRateLimitsOff(off bool) { rateLimitsOff.Store(off) }
 const defaultTilesPerMinute = 1200
 
 // syncRequestsPerHour bounds `POST /v1/sync/activities` per account. A batch carries up to
-// maxSyncBatchActivities, so a first sync of a long Health Connect history still brings in
+// maxSyncBatchTracks, so a first sync of a long Health Connect history still brings in
 // thousands an hour; the upload limit (defaultUploadsPerHour) doesn't reach this path.
 const syncRequestsPerHour = 60
 
-// syncActivitiesPerHour bounds the tracks `POST /v1/sync/activities` takes from one account
+// syncTracksPerHour bounds the tracks `POST /v1/sync/activities` takes from one account
 // in an hour, beside syncRequestsPerHour's count of requests: at 100 a batch, that one alone
 // would take 6,000 an hour. A phone lists three months of Health Connect sessions and its own
 // recordings, a few hundred at most, so this only slows an account syncing, deleting and
@@ -46,7 +46,7 @@ const syncTracksPerHour = 1000
 // test creating its accounts.
 const defaultSignupsPerHour = 5
 
-// trackPointsPerHour bounds `GET /v1/activities/{id}/track-points` per account: each request
+// routePointsPerHour bounds `GET /v1/activities/{id}/track-points` per account: each request
 // reads an original upload from object storage and parses it, and a person opens the track
 // editor a few times an hour at most.
 const routePointsPerHour = 120

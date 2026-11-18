@@ -145,7 +145,7 @@ func (s *Server) loadPhoto(ctx context.Context, userID, photoID string) (photoJS
 }
 
 // handleListPhotos serves `GET /v1/photos?activity={id}` — one track's photos — and
-// `?trip={id}`, the photos of every track in a Story (§4.23), for its map.
+// `?story={id}`, the photos of every track in a Story (§4.23), for its map.
 func (s *Server) handleListPhotos(w http.ResponseWriter, r *http.Request) {
 	userID := userIDFromContext(r.Context())
 	ctx := r.Context()
@@ -554,7 +554,7 @@ func (s *Server) handleDeletePhoto(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// activityPhotoKeys lists a track's photos' image keys, read before the track's own delete
+// trackPhotoKeys lists a track's photos' image keys, read before the track's own delete
 // cascades their rows away, so their images can be removed after it.
 func (s *Server) trackPhotoKeys(ctx context.Context, trackID string) ([]string, error) {
 	rows, err := s.pool.Query(ctx, `SELECT image_key FROM activity_photos WHERE activity_id = $1`, trackID)

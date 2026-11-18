@@ -41,7 +41,7 @@ type Job struct {
 	// job enqueued before it existed), stored as NULL.
 	RawBytes int64 `json:"raw_bytes,omitempty"`
 	// TrackType overrides whatever the parser itself reports, when set. Empty means "use
-	// the parsed value". A copy of a Story (storycopy) and the demo seed set it: their GPX
+	// the parsed value". A copy of a Story (tripcopy) and the demo seed set it: their GPX
 	// carries no type of its own, and they already know the track's.
 	TrackType string `json:"activity_type,omitempty"`
 	// Batch groups the jobs one request enqueued together — a phone sync's tracks — so the
@@ -233,7 +233,7 @@ func persistClipped(ctx context.Context, pool *pgxpool.Pool, store *storage.Stor
 
 // loadClippedPoints is §4.1 steps 2–3: fetch the raw payload, parse it, and clip it against
 // the account's Private locations, read now rather than when the job was enqueued. Shared by
-// Process and reprocessActivity (edit.go) — an edit replays the user's spec on top of exactly
+// Process and reprocessTrack (edit.go) — an edit replays the user's spec on top of exactly
 // the points a fresh ingest would have kept, never on hidden ones.
 //
 // The returned points are nil when the whole track lies inside Private locations; act still
@@ -393,7 +393,7 @@ func mergeTiles(a, b [][2]int) [][2]int {
 }
 
 // FogZoom is exported alongside MarkFogTilesDirty/EnqueueRenderFog — a caller re-triggering a
-// render (handleDeleteActivity) needs the same zoom level activity_tile_masks/fog_tiles are
+// render (handleDeleteTrack) needs the same zoom level activity_tile_masks/fog_tiles are
 // actually keyed at to query the right rows.
 const FogZoom = 14
 
@@ -406,7 +406,7 @@ const FogZoom = 14
 // two need to agree exactly, or a rendered mask could sit in a tile never marked dirty (never
 // composited in) or vice versa.
 //
-// It fails with errTooManyTiles past maxActivityTiles, checked as it goes: each tile is a
+// It fails with errTooManyTiles past maxTrackTiles, checked as it goes: each tile is a
 // mask rendered and stored, and a track zigzagging between far-apart points (a crafted file,
 // or a corrupt one) could otherwise reach millions of them, held in memory here and then
 // rendered one by one on the single worker.
@@ -440,16 +440,16 @@ func computeTouchedTiles(points []parse.Point, zoom int) ([][2]int, error) {
 	return out, nil
 }
 
-// maxActivityTiles bounds how many z14 tiles (about 2.4 km across) one track may touch. A
+// maxTrackTiles bounds how many z14 tiles (about 2.4 km across) one track may touch. A
 // 10,000 km road trip, buffered on both sides, is around 12,000.
 const maxTrackTiles = 20000
 
-// errTooManyTiles fails a track that covers more ground than maxActivityTiles allows.
+// errTooManyTiles fails a track that covers more ground than maxTrackTiles allows.
 var errTooManyTiles = fmt.Errorf("the track touches more than %d map tiles", maxTrackTiles)
 
 // MarkFogTilesDirty upserts a fog_tiles row (dirty = true) for every given z14 tile —
 // computeTouchedTiles' result for a fresh ingest, a deleted track's own already-rendered
-// tiles (`internal/httpapi`'s handleDeleteActivity, which has no raw points to recompute
+// tiles (`internal/httpapi`'s handleDeleteTrack, which has no raw points to recompute
 // touched tiles from — it reads them back out of activity_tile_masks before the cascade
 // removes that row, via TrackTiles below). Exported for those callers;
 // the upsert itself doesn't care which triggered it.
@@ -508,7 +508,7 @@ type RenderFogJob struct {
 // query (`SELECT ... FROM fog_tiles WHERE user_id = $1 AND dirty`) is what actually decides
 // what to render, so several ingests (or a delete, or both) landing before the worker gets to
 // them coalesce into one render pass instead of redoing the same tiles repeatedly. Exported
-// for handleDeleteActivity, which needs the exact same "something changed, re-render this
+// for handleDeleteTrack, which needs the exact same "something changed, re-render this
 // user's dirty tiles" trigger ingest already has.
 //
 // The coalescing is this INSERT's: it adds no job while the user already has a render_fog

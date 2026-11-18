@@ -85,8 +85,8 @@ func (s *Server) handleStatsCard(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(png)
 }
 
-// statsCardActivities is the card's rows of ids, newest first, Pending ones left out, and the
-// account's country; errActivityNotFound when any id isn't the account's.
+// statsCardTracks is the card's rows of ids, newest first, Pending ones left out, and the
+// account's country; errTrackNotFound when any id isn't the account's.
 func (s *Server) statsCardTracks(ctx context.Context, userID string, ids []string) ([]statscard.Track, string, error) {
 	var country string
 	if err := s.pool.QueryRow(ctx, `SELECT COALESCE(country, '') FROM users WHERE id = $1`, userID).Scan(&country); err != nil {

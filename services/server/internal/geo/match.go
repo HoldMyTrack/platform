@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// MatchTrack records which places on every level activityID's trajectory touches: countries,
+// MatchTrack records which places on every level trackID's trajectory touches: countries,
 // regions, counties and cities, the latter two with the stand-ins that fill their levels' gaps.
 // Called once from ingest.Process right after the track row is persisted; each query reads
 // tracks.trajectory back by id rather than taking geometry as a parameter, so nothing

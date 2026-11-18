@@ -20,7 +20,7 @@ import (
 // the web) gets in; everyone else, signed out or not, gets the ordinary 404 page, so the panel
 // doesn't announce that it exists.
 
-// adminActivitiesPerPage is how many tracks one page of /admin/users/{id} lists.
+// adminTracksPerPage is how many tracks one page of /admin/users/{id} lists.
 const adminTracksPerPage = 100
 
 // adminUsersPerPage is how many accounts one page of /admin/users lists.
@@ -279,7 +279,7 @@ func (s *Server) adminUserRows(ctx context.Context, l *i18n.Localizer, imperial 
 	return users, rows.Err()
 }
 
-// adminUserActivities is one page of u's tracks, newest first — hidden ones included,
+// adminUserTracks is one page of u's tracks, newest first — hidden ones included,
 // marked as such, since the panel is for seeing what's actually stored.
 func (s *Server) adminUserTracks(ctx context.Context, l *i18n.Localizer, u adminUserRow, page int, imperial bool) (adminUserView, error) {
 	view := adminUserView{User: u}

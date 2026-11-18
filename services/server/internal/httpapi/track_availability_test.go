@@ -18,7 +18,7 @@ func TestTrackAvailability(t *testing.T) {
 		{"pending allows photos", trackAvailability{pending: true, hasOriginal: true}, blockedPending, ""},
 	} {
 		if got := tc.a.routeEdit(); got != tc.routeEdit {
-			t.Errorf("%s: trackEdit = %q, want %q", tc.name, got, tc.routeEdit)
+			t.Errorf("%s: routeEdit = %q, want %q", tc.name, got, tc.routeEdit)
 		}
 		if got := tc.a.photos(); got != tc.photos {
 			t.Errorf("%s: photos = %q, want %q", tc.name, got, tc.photos)

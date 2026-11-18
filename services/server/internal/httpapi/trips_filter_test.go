@@ -13,7 +13,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tilemath/tilemathtest"
 )
 
-// `trip` narrows the track list, the summary, the histogram (both modes and `earliest`)
+// `story` narrows the track list, the summary, the histogram (both modes and `earliest`)
 // and the tracks tiles to one Story's tracks, alongside the filters they already take.
 func TestTripFilter(t *testing.T) {
 	d := newDBTest(t)
@@ -129,7 +129,7 @@ func TestTripFilter(t *testing.T) {
 }
 
 // A change to which tracks a Story holds bumps the account's tile version, since the
-// tracks tiles take a `trip` filter; anything else about a Story doesn't.
+// tracks tiles take a `story` filter; anything else about a Story doesn't.
 func TestTripMembershipBumpsTileVersion(t *testing.T) {
 	d := newDBTest(t)
 	me := d.newAccount(false)

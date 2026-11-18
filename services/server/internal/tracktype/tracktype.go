@@ -1,4 +1,4 @@
-// Package activitytype says what the clients show for a track type (docs/SPEC.md FR-5.1):
+// Package tracktype says what the clients show for a track type (docs/SPEC.md FR-5.1):
 // its label in the request's language, and which kind of moving it is, for a row's icon and
 // whether its card reads pace or speed. Types
 // are free text, so a kind comes from the words in one ("gravel_cycling" is on wheels,
@@ -57,7 +57,7 @@ var (
 	startWords = map[string]bool{"ice": true}
 )
 
-// KindOf is the kind of activityType.
+// KindOf is the kind of trackType.
 func KindOf(trackType string) Kind {
 	t := strings.ToLower(trackType)
 	words := strings.FieldsFunc(t, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) })
@@ -110,7 +110,7 @@ func Describe(types []string, lang string) map[string]Info {
 	return out
 }
 
-// Label is activityType's name in lang: the catalog's (`activity_type.*` in the locales),
+// Label is trackType's name in lang: the catalog's (`activity_type.*` in the locales),
 // matched case-insensitively, else the type itself, spaced out from snake_case and title-cased.
 // Never a remapping of what the value means.
 func Label(trackType, lang string) string {

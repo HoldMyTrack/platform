@@ -16,7 +16,7 @@ type trackTypesResponse struct {
 	Types map[string]tracktype.Info `json:"types"`
 }
 
-// handleActivityTypes serves `GET /v1/activity-types` (docs/SPEC.md FR-5.1): what a client shows
+// handleTrackTypes serves `GET /v1/activity-types` (docs/SPEC.md FR-5.1): what a client shows
 // for the catalog's types and any others it names — the Type picker's suggestions, and types no
 // list response has carried, such as a phone's unsent recordings.
 func (s *Server) handleTrackTypes(w http.ResponseWriter, r *http.Request) {

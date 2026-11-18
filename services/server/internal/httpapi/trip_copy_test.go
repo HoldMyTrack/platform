@@ -67,7 +67,7 @@ func (d *dbTest) sendAndAccept(from, to account, tripID string) {
 	}
 }
 
-// storiesOf lists the account's Stories, newest first.
+// tripsOf lists the account's Stories, newest first.
 func (d *dbTest) tripsOf(as account) []trip {
 	d.t.Helper()
 	var res tripsResponse

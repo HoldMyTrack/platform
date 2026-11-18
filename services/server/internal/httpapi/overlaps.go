@@ -36,7 +36,7 @@ type overlapsResponse struct {
 	Overlaps []overlapJSON `json:"overlaps"`
 }
 
-// handleActivityOverlaps answers, for each time span a client is about to offer for import,
+// handleTrackOverlaps answers, for each time span a client is about to offer for import,
 // the track it overlaps (§4.6, SPEC FR-3.5): the hint that ticking it would make a
 // second copy of something the account already has. It decides nothing; the spans not listed
 // overlap nothing.

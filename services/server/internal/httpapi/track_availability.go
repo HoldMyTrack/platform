@@ -10,7 +10,7 @@ const (
 	blockedBadTimes   = "bad_times"
 )
 
-// activityAvailability is what the list reports from a row's stored state. editableTimes is
+// trackAvailability is what the list reports from a row's stored state. editableTimes is
 // NULL until ingest or a reprocess has looked: an unknown is allowed, and the points request
 // still refuses.
 type trackAvailability struct {
@@ -18,7 +18,7 @@ type trackAvailability struct {
 	editableTimes                 *bool
 }
 
-// trackEdit is why Edit track can't open, first reason first.
+// routeEdit is why Edit track can't open, first reason first.
 func (a trackAvailability) routeEdit() string {
 	switch {
 	case a.pending:

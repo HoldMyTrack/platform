@@ -26,22 +26,22 @@ var syncSources = map[string]bool{"healthconnect": true, "healthkit": true, "rec
 // only for the worker's insert to fail on it.
 var syncExternalIDPattern = regexp.MustCompile(`^[A-Za-z0-9_-][A-Za-z0-9._-]{0,199}$`)
 
-// maxSyncBatchActivities bounds one request to a page of a sync run: a first backfill makes
+// maxSyncBatchTracks bounds one request to a page of a sync run: a first backfill makes
 // several requests, each retried on its own when interrupted (IMPLEMENTATION.md §4.0).
 const maxSyncBatchTracks = 100
 
-// maxSyncPointsPerActivity bounds one synced track: nearly 14 hours at a point a second,
+// maxSyncPointsPerTrack bounds one synced track: nearly 14 hours at a point a second,
 // with room above a 100-mile ride's 36,000. A file upload's bound is parse.MaxPoints.
 const maxSyncPointsPerTrack = 50000
 
 // maxSyncBodyBytes bounds the whole batched request body: generously above
-// maxSyncBatchActivities tracks at maxSyncPointsPerActivity points each, the same
+// maxSyncBatchTracks tracks at maxSyncPointsPerTrack points each, the same
 // "cap before reading the body fully" posture handleUpload's maxUploadBytes documents.
 const maxSyncBodyBytes = 64 << 20 // 64 MiB
 
-// syncActivityRequest is one track in the batch. parse.JSONActivity is embedded rather than
+// syncTrackRequest is one track in the batch. parse.JSONActivity is embedded rather than
 // duplicated so the request body's own wire shape and the raw payload persisted to object
-// storage (re-marshaled from the same embedded value, see handleSyncActivities) are guaranteed
+// storage (re-marshaled from the same embedded value, see handleSyncTracks) are guaranteed
 // identical — there is exactly one place that defines what "activity_type" and "points" mean
 // on the wire.
 type syncTrackRequest struct {
@@ -58,7 +58,7 @@ type syncTracksRequest struct {
 	Tracks []syncTrackRequest `json:"activities"`
 }
 
-// syncActivityResult reports what happened to one track in the batch — a batch is never
+// syncTrackResult reports what happened to one track in the batch — a batch is never
 // all-or-nothing: one bad entry doesn't abort the rest.
 type syncTrackResult struct {
 	ExternalID string `json:"external_id"`
@@ -70,7 +70,7 @@ type syncTracksResponse struct {
 	Results []syncTrackResult `json:"results"`
 }
 
-// handleSyncActivities serves IMPLEMENTATION.md §4.0's `POST /v1/sync/activities` — Path 2's
+// handleSyncTracks serves IMPLEMENTATION.md §4.0's `POST /v1/sync/activities` — Path 2's
 // batched normalized points. Like handleUpload (§4.1 step 1), this only validates and
 // enqueues an `ingest` job per track with its raw payload inline (ingest.EnqueueRaw), two
 // queries however large the batch; no parsing or privacy clipping happens inline.
@@ -248,7 +248,7 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 	if len(act.Points) > maxSyncPointsPerTrack {
 		return ingest.RawItem{}, l.T("error.sync_too_many_points", "n", len(act.Points), "max", maxSyncPointsPerTrack)
 	}
-	// The bounds handleUpdateActivity enforces, checked here: a client can send any custom
+	// The bounds handleUpdateTrack enforces, checked here: a client can send any custom
 	// activity_type (GPS Logger's free-text field), and an over-long value would otherwise fail
 	// on the column's width in the worker instead of being refused here.
 	if utf8.RuneCountInString(act.TrackType) > maxTrackTypeLen {
@@ -261,7 +261,7 @@ func (s *Server) syncItem(l *i18n.Localizer, source, batch string, act syncTrack
 		return ingest.RawItem{}, l.T("error.activity_description_too_long", "max", maxTrackDescriptionLen)
 	}
 
-	// Re-marshal the embedded parse.JSONActivity, not the whole syncActivityRequest — the raw
+	// Re-marshal the embedded parse.JSONActivity, not the whole syncTrackRequest — the raw
 	// payload stored for the job is exactly what parse.ParseJSON expects to decode
 	// back (activity_type + points), with no external_id or other request-envelope fields
 	// mixed in.

@@ -59,7 +59,7 @@ type uploadsResponse struct {
 // not the keyset pagination §4.7's histogram uses: unlike the track list, an upload log
 // only grows, and a caller wants "page 3", not "everything since some cursor."
 // The `$2::text[] IS NULL OR ...` treatment is §4.3's own optional-filter pattern
-// (activity_list.go's listActivitiesQuery) — an absent/nil sources filter means "every source",
+// (track_list.go's listTracksQuery) — an absent/nil sources filter means "every source",
 // not "no rows".
 const uploadsCountQuery = `
 SELECT COUNT(*) FROM jobs

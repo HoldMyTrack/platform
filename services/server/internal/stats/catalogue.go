@@ -30,7 +30,7 @@ acct AS (
 )
 `
 
-// sources are tracks.source's values.
+// sources are activities.source's values.
 var sources = []string{"upload", "healthconnect", "healthkit", "recorded"}
 
 // activeSince is the SQL for "last seen in the n days ending with D".

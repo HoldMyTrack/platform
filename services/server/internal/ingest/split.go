@@ -74,7 +74,7 @@ var ErrSplitHidden = errors.New("one side of the split lies inside a private loc
 // CheckSplit reports whether splitting at the point timestamped at leaves both pieces a track.
 // points are the piece's own clipped points, before the edit. A side with fewer than two
 // points once the edit is applied is too close (ErrSplitTooClose); one that has them, but
-// loses them when it's worked out the way reprocessActivity will — narrowed to its side of at
+// loses them when it's worked out the way reprocessTrack will — narrowed to its side of at
 // (the point itself on both), clipped against zones, edit applied, clipped again — lies inside
 // a Private location (ErrSplitHidden).
 func CheckSplit(points []parse.Point, zones []Zone, edit *RouteEdit, at int64) error {

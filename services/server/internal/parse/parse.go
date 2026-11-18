@@ -107,7 +107,7 @@ func (p *JSONPoint) UnmarshalJSON(b []byte) error {
 }
 
 // JSONActivity is one track's worth of JSONPoint, the unit both the sync request body and
-// the stored raw payload carry (`internal/httpapi.syncActivityRequest` embeds this).
+// the stored raw payload carry (`internal/httpapi.syncTrackRequest` embeds this).
 //
 // Name and Description are optional and empty for Health Connect/HealthKit sync, which never
 // sends them. In-app GPS recording (`source = "recorded"`, `docs/IMPLEMENTATION.md` §4.0.4)

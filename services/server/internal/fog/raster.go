@@ -37,7 +37,7 @@ const (
 	// neighbor rendered too, not just the tile its coordinate floors into.
 	TileMarginPx = strokeRadiusPx
 
-	// drawMarginPx is how much larger than the tile renderActivityMask's canvas is on every
+	// drawMarginPx is how much larger than the tile renderTrackMask's canvas is on every
 	// side. gg's rasterizer folds coverage from just left of and above its canvas into the first
 	// column and row, so drawn on the tile alone, a corridor along a neighbour's edge painted a
 	// false strip along this tile's left or top edge, and Fog showed a seam there. On the larger
@@ -51,7 +51,7 @@ const (
 // tile's edge; gg's rasterizer clips that itself, so callers don't need to.
 type pixelPoint struct{ x, y float64 }
 
-// renderActivityMask draws one track's segments through this tile as opaque,
+// renderTrackMask draws one track's segments through this tile as opaque,
 // anti-aliased, round-capped strokes on an initially-empty (black) canvas — crisp, i.e.
 // *unblurred*: this is the per-track artifact stored in activity_tile_masks, which
 // compositeFogMask below combines. Each of lines is the track in one copy of the world (projectToTile).
@@ -90,7 +90,7 @@ func renderTrackMask(lines ...[]pixelPoint) *image.Gray {
 	return gray
 }
 
-// minStepPx is the shortest move renderActivityMask draws: a point closer than this to the
+// minStepPx is the shortest move renderTrackMask draws: a point closer than this to the
 // last one drawn is skipped. gg's stroker breaks on segments a small fraction of a pixel long —
 // GPS jitter while standing still, a repeated fix, which at 128 px are hundredths of a pixel —
 // and a single one can leave the whole track undrawn. Half a pixel (~10 m at z14, a tenth of

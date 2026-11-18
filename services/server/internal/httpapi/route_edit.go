@@ -13,7 +13,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// trackPointsResponse is what the route editor (§4.7.7) opens with: every point the track
+// routePointsResponse is what the route editor (§4.7.7) opens with: every point the track
 // was processed from, before the user's own edit, plus that edit — the client replays one on
 // the other, so it can both show the current track and offer to reset it.
 //
@@ -23,7 +23,7 @@ type routePointsResponse struct {
 	Edit   *ingest.RouteEdit `json:"edit"`
 }
 
-// handleActivityTrackPoints serves `GET /v1/activities/{id}/track-points`. The points come
+// handleTrackRoutePoints serves `GET /v1/activities/{id}/track-points`. The points come
 // from the raw payload — the only place full-resolution positions survive (§4.1 step 6) — and
 // are clipped against the account's current Private locations before they leave the server:
 // the raw payload still holds the hidden ends, and returning them would hand the client the
@@ -101,7 +101,7 @@ func (s *Server) handleTrackRoutePoints(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// trackEditRequest is the complete new edit, not a delta. A null or empty edit resets the
+// routeEditRequest is the complete new edit, not a delta. A null or empty edit resets the
 // track to its original track. SplitAt, a point timestamp in unix milliseconds, also splits
 // the track there (§4.7.8), the edit applying to both pieces. AllowHidden goes ahead with a
 // split that leaves a piece entirely inside Private locations, once the user has been told.
@@ -115,11 +115,11 @@ type routeEditRequest struct {
 // which the client asks about and resends with allow_hidden.
 const splitHidesPartCode = "split_hides_part"
 
-// maxTrackEditEntries bounds the spec's size — Delete point adds one timestamp per click and
+// maxRouteEditEntries bounds the spec's size — Delete point adds one timestamp per click and
 // Move point one per point dragged, so this is far past any real editing session while still rejecting an absurd payload.
 const maxRouteEditEntries = 10000
 
-// handleActivityTrackEdit serves `POST /v1/activities/{id}/track-edit`: validate the spec,
+// handleTrackRouteEdit serves `POST /v1/activities/{id}/track-edit`: validate the spec,
 // mark the track pending, and enqueue an `edit_track` job to reprocess it (§4.7.7). The
 // reprocessing itself — reparse, metrics, masks, Fog invalidation — is the same heavy
 // work ingest does, so it goes through the job queue, never inline. Responds 202; the

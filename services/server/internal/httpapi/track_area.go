@@ -13,7 +13,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tracktype"
 )
 
-// areaActivitiesLimit caps the web's area list, and so its map (docs/SPEC.md FR-5.11): a heavy
+// areaTracksLimit caps the web's area list, and so its map (docs/SPEC.md FR-5.11): a heavy
 // user's home area holds thousands, and the response says how many, so the client can say the
 // rest is out of view.
 const areaTracksLimit = 1000
@@ -101,7 +101,7 @@ type areaResponse struct {
 
 // handleListArea serves `GET /v1/activities/area?bbox=&from=&to=&limit=`, the web's list and the
 // set its map draws (docs/SPEC.md FR-5.11): the newest tracks whose track crosses the view,
-// areaActivitiesLimit at most, with the area's total. Without `bbox`, the newest `limit` of the
+// areaTracksLimit at most, with the area's total. Without `bbox`, the newest `limit` of the
 // whole history, for the opening view (FR-4.4).
 func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
@@ -179,7 +179,7 @@ func (s *Server) handleListArea(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, resp)
 }
 
-// handleGetActivity serves `GET /v1/activities/{id}`: one full row, as the list of a date range
+// handleGetTrack serves `GET /v1/activities/{id}`: one full row, as the list of a date range
 // or a Story has it, for the Edit window the area list's slim rows don't carry enough for. Another
 // account's track is a 404, like a missing one.
 func (s *Server) handleGetTrack(w http.ResponseWriter, r *http.Request) {

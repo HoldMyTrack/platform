@@ -16,7 +16,7 @@ import (
 // person records, so only a script or a runaway import ever meets them, and one limit holds for
 // every account: a raised one for some would be a tier (VISION.md §6.1).
 const (
-	// maxActivitiesPerAccount is about nine tracks a day for fifteen years.
+	// maxTracksPerAccount is about nine tracks a day for fifteen years.
 	maxTracksPerAccount = 50_000
 	// maxOriginalBytesPerAccount bounds the originals an account's tracks keep (5 GB,
 	// decimal, as the Settings page words it), which the count alone doesn't: 16 MiB files.

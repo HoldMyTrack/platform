@@ -155,7 +155,7 @@ type EditJob struct {
 	SplitID string     `json:"split_id,omitempty"`
 }
 
-// activityIDs is every track the job reprocesses.
+// trackIDs is every track the job reprocesses.
 func (j EditJob) trackIDs() []string {
 	if j.SplitID == "" {
 		return []string{j.TrackID}
@@ -287,7 +287,7 @@ func DisplayedPoints(ctx context.Context, pool *pgxpool.Pool, store *storage.Sto
 // location hiding the whole track, which is a valid outcome (the track just has no geometry).
 var errFewPointsAfterEdit = errors.New("fewer than 2 points survive the edit")
 
-// reprocessActivity re-derives one track from its raw payload: parse, clip against the
+// reprocessTrack re-derives one track from its raw payload: parse, clip against the
 // account's current Private locations, apply a route edit, then update metrics, trajectory,
 // masks and regions, and mark every tile it touched before or after dirty. A piece of
 // a split (§4.7.8) is narrowed to its range before the edit is applied. It neither
@@ -320,7 +320,7 @@ type reprocess struct {
 	oldTiles, newTiles [][2]int
 }
 
-// prepareReprocess works out activityID's reprocess without writing anything; nil when the
+// prepareReprocess works out trackID's reprocess without writing anything; nil when the
 // track was deleted meanwhile.
 func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, userID, trackID string, edit *RouteEdit) (*reprocess, error) {
 	var sourceDetail string
@@ -350,7 +350,7 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 	}
 
 	// Clipped with the account's current Private locations — the same points the editor's own
-	// list was built from (handleActivityTrackPoints), so what the user saw is what's processed.
+	// list was built from (handleTrackRoutePoints), so what the user saw is what's processed.
 	act, points, zones, err := loadClippedPoints(ctx, pool, store, userID, sourceDetail, *rawKey)
 	if err != nil {
 		return nil, err
@@ -367,7 +367,7 @@ func prepareReprocess(ctx context.Context, pool *pgxpool.Pool, store *storage.St
 			points = nil // this piece lies entirely inside Private locations
 		}
 	}
-	// The points the editor would get (handleActivityTrackPoints), before the edit.
+	// The points the editor would get (handleTrackRoutePoints), before the edit.
 	editable := EditableTimestamps(points) == nil
 	var editJSON []byte
 	if edit != nil && !edit.IsEmpty() {

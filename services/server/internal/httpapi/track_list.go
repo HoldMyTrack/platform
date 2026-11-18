@@ -8,17 +8,17 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/tracktype"
 )
 
-// listActivitiesQuery is §4.7's list, with §4.3's "$n IS NULL OR ..." optional-filter
+// listTracksQuery is §4.7's list, with §4.3's "$n IS NULL OR ..." optional-filter
 // treatment. No pagination: the client renders every matching row on the map and computes stats
 // and type/distance facets across all of them at once, so a partial page was never usable. The
-// apps' date range and a Story read it; the web's area list is activity_area.go's.
+// apps' date range and a Story read it; the web's area list is track_area.go's.
 //
 // The four ST_*Min/Max calls are the row's bounding box, so a client can fly the map to an
 // track without a follow-up request per row. They are cheaper than they look: PostGIS
 // caches a geometry's bounding box in its header, so this reads that rather than walking
 // the vertices. §3.3 has no bbox column and doesn't need one back.
 //
-// Column order here has to match scanActivityRow's Scan call exactly — activityByIDQuery
+// Column order here has to match scanTrackRow's Scan call exactly — trackByIDQuery
 // shares that same order for the same reason.
 var listTracksQuery = `
 SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds,
@@ -34,7 +34,7 @@ WHERE user_id = $1
   AND ($5::uuid IS NULL OR activities.id IN (SELECT activity_id FROM story_activities WHERE story_id = $5))
 ORDER BY started_at DESC, id DESC`
 
-// activityRow is one row of the list. The field set is exactly what the Tracks panel
+// trackRow is one row of the list. The field set is exactly what the Tracks panel
 // renders, no more. MovingSeconds is the time a row shows, the same time Stories and Trends
 // sum, so a Story's total is its rows added up. Like them, it falls back to the elapsed
 // DurationSeconds where moving time is unset.
@@ -71,7 +71,7 @@ type trackRow struct {
 	// A NULL trajectory has no other cause (§3.3).
 	Private bool `json:"private"`
 	// RouteEdit and Photos say why the Edit window's Track or Photos tab can't be used for this
-	// track (activity_availability.go), omitted when it can.
+	// track (track_availability.go), omitted when it can.
 	RouteEdit string `json:"track_edit,omitempty"`
 	Photos    string `json:"photos,omitempty"`
 	// Split is set on a piece of a split track (§4.7.8): which split, and the stretch of the
@@ -89,13 +89,13 @@ type splitRef struct {
 	To    *int64 `json:"to"`
 }
 
-// storyRef names a Story a track is in.
+// tripRef names a Story a track is in.
 type tripRef struct {
 	ID   string `json:"id"`
 	Name string `json:"name"`
 }
 
-// rowScanner is the common surface of pgx.Row and pgx.Rows, so scanActivityRow serves the
+// rowScanner is the common surface of pgx.Row and pgx.Rows, so scanTrackRow serves the
 // single-row lookup and the list loop alike.
 type rowScanner interface {
 	Scan(dest ...any) error
@@ -132,8 +132,8 @@ type tracksResponse struct {
 	Types map[string]tracktype.Info `json:"types"`
 }
 
-// handleListActivities serves IMPLEMENTATION.md §4.7's `GET /v1/activities?from=&to=&types=&story=`:
-// the user's own history as rows, newest first, unpaginated — see listActivitiesQuery's doc
+// handleListTracks serves IMPLEMENTATION.md §4.7's `GET /v1/activities?from=&to=&types=&story=`:
+// the user's own history as rows, newest first, unpaginated — see listTracksQuery's doc
 // comment for why.
 func (s *Server) handleListTracks(w http.ResponseWriter, r *http.Request) {
 	filter, err := parseTrackFilter(r.URL.Query())

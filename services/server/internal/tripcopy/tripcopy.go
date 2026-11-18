@@ -1,4 +1,4 @@
-// Package storycopy copies a Story into another account — the `story_copy` job behind sending
+// Package tripcopy copies a Story into another account — the `story_copy` job behind sending
 // a copy of a Story (IMPLEMENTATION.md §4.23, ADR-0036). Its own package because it writes
 // each track out with export.WriteGPX and reads it back in through ingest.Process, and
 // export already imports ingest.
@@ -22,13 +22,13 @@ import (
 )
 
 // Job is the `story_copy` job's payload: copy the Story, as it is when the job runs, into the
-// recipient's account. Accepting a sent copy enqueues it (httpapi's handleAcceptStorySend).
+// recipient's account. Accepting a sent copy enqueues it (httpapi's handleAcceptTripSend).
 type Job struct {
 	TripID      string `json:"story_id"`
 	RecipientID string `json:"recipient_id"`
 }
 
-// Source is tracks.source for a track a copy made.
+// Source is activities.source for a track a copy made.
 const Source = "story"
 
 // retryAfter is how long a copy waits before trying again the tracks it skipped because
@@ -120,7 +120,7 @@ func Process(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, job 
 		if _, err := pool.Exec(ctx, `UPDATE stories SET updated_at = NOW() WHERE id = $1`, target); err != nil {
 			return fmt.Errorf("story copy: touch story: %w", err)
 		}
-		// The new memberships change what a `?trip=` tracks tile returns (§4.23).
+		// The new memberships change what a `?story=` tracks tile returns (§4.23).
 		if err := fog.BumpMapVersion(ctx, pool, job.RecipientID); err != nil {
 			return fmt.Errorf("story copy: bump map version: %w", err)
 		}
@@ -168,7 +168,7 @@ func sourcesToCopy(ctx context.Context, pool *pgxpool.Pool, job Job) ([]source, 
 	return sources, nil
 }
 
-// targetStory is the recipient's Story an earlier copy of this one made, or a new one with its
+// targetTrip is the recipient's Story an earlier copy of this one made, or a new one with its
 // name and description. With nothing to copy, a missing Story is made only when the Story being
 // copied is itself empty — accepting an empty Story gives an empty Story — and otherwise the
 // answer is "", since the recipient already has everything in it.
@@ -211,7 +211,7 @@ func sourceDetail(src source) string {
 	return export.Slug(label) + ".gpx"
 }
 
-// copyActivity makes the recipient's copy of src in target, reporting whether it added one. An
+// copyTrack makes the recipient's copy of src in target, reporting whether it added one. An
 // track whose track the sender's Private locations hide entirely adds nothing.
 func copyTrack(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, recipientID, target string, src source) (bool, error) {
 	points, err := ingest.DisplayedPoints(ctx, pool, store, src.id)

@@ -76,7 +76,7 @@ func TestComputeTouchedTilesFarFromEdgeStaysSingleTile(t *testing.T) {
 	}
 }
 
-// A track whose segments cross more than maxActivityTiles tiles is refused as it's walked —
+// A track whose segments cross more than maxTrackTiles tiles is refused as it's walked —
 // here a zigzag between two far-apart longitudes, every segment thousands of tiles long.
 func TestComputeTouchedTilesRefusesTooManyTiles(t *testing.T) {
 	var points []parse.Point

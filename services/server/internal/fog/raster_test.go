@@ -130,7 +130,7 @@ func TestTrackMaskSurvivesJitter(t *testing.T) {
 // A stroke just past a tile's edge paints nothing inside it, on every side alike. The drawing
 // library folds coverage from just left of and above its canvas into the first column and row,
 // which put a strip of false coverage along a tile's left and top edges, a seam in Fog where a
-// corridor ran along one (renderActivityMask's margin).
+// corridor ran along one (renderTrackMask's margin).
 func TestAStrokeOutsideTheTilePaintsNothingInIt(t *testing.T) {
 	for _, centre := range []float64{-3, -2.6, -4} {
 		far := TileSize - centre

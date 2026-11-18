@@ -15,7 +15,7 @@ import (
 	"github.com/HoldMyTrack/platform/services/server/internal/ingest"
 )
 
-// activityFilter is the from/to/types/story filter shape shared by §4.3's tracks tiles and
+// trackFilter is the from/to/types/story filter shape shared by §4.3's tracks tiles and
 // all three of §4.7's listing endpoints. Every field is optional and a nil field means "no
 // restriction" — the convention both sections specify, so a caller that wants everything
 // sends nothing rather than an explicit wide-open range.
@@ -31,7 +31,7 @@ type trackFilter struct {
 	Trip *string
 }
 
-// parseActivityFilter reads that filter off a query string. A `from`/`to` date is a local
+// parseTrackFilter reads that filter off a query string. A `from`/`to` date is a local
 // date, matched against each track's own (IMPLEMENTATION.md §4.30): `?from=2026-03-10`
 // means "the 10th where each track happened," so a run at 07:00 in Tokyo is on the 10th
 // whatever the account's or the browser's zone. The returned error is already phrased for the
@@ -63,7 +63,7 @@ func parseTrackFilter(q url.Values) (trackFilter, error) {
 	return f, nil
 }
 
-// activityBBoxColumns is a track's bbox as four columns, west, south, east, north, the
+// trackBBoxColumns is a track's bbox as four columns, west, south, east, north, the
 // shorter way round in longitude. A track across the antimeridian is stored continuing past
 // ±180 (§4.1), so its plain bbox already is (179.9…180.1, east past 180, the form MapLibre
 // fits as it is). One stored jumping back across the world, before that and with no raw
@@ -95,7 +95,7 @@ func inDateRange(from, to string) string {
 // sqlDate is t's calendar date in its own location, as a ::date parameter takes it.
 func sqlDate(t time.Time) string { return t.Format(dateLayout) }
 
-// parseStoryParam reads the optional `trip` Story id, nil when absent.
+// parseTripParam reads the optional `story` Story id, nil when absent.
 func parseTripParam(q url.Values) (*string, error) {
 	v := q.Get("story")
 	if v == "" {
@@ -107,7 +107,7 @@ func parseTripParam(q url.Values) (*string, error) {
 	return &v, nil
 }
 
-// activityStoriesColumn is the Stories a track is in (§4.23), newest first, as a JSON array
+// trackTripsColumn is the Stories a track is in (§4.23), newest first, as a JSON array
 // of {id, name} — one indexed lookup per row (idx_story_activities_activity). A Story only ever
 // holds its owner's tracks, so it needs no user filter of its own.
 const trackTripsColumn = `COALESCE((
@@ -115,24 +115,24 @@ const trackTripsColumn = `COALESCE((
          FROM story_activities sa JOIN stories s ON s.id = sa.story_id
          WHERE sa.activity_id = activities.id), '[]'::json)`
 
-// maxActivityTypeLen matches activities.activity_type's own VARCHAR(50) — rejecting an
+// maxTrackTypeLen matches activities.activity_type's own VARCHAR(50) — rejecting an
 // over-length value here is a clearer 400 than letting Postgres reject the UPDATE. These limits
 // count characters (runes), as VARCHAR and SPEC FR-5.5 do, not bytes: a Cyrillic name takes
 // two bytes a letter.
 const maxTrackTypeLen = 50
 
-// maxActivityDescriptionLen is a generous free-text bound (about the length of a couple of
+// maxTrackDescriptionLen is a generous free-text bound (about the length of a couple of
 // paragraphs), not a claim that anyone needs that much — the same "reject an obvious mistake,
 // not opine on reasonable length" reasoning.
 const maxTrackDescriptionLen = 2000
 
-// maxActivityNameLen matches tracks.name's varchar(200): a single-line title, shorter than
-// maxActivityDescriptionLen, since anything longer belongs in the description.
+// maxTrackNameLen matches tracks.name's varchar(200): a single-line title, shorter than
+// maxTrackDescriptionLen, since anything longer belongs in the description.
 const maxTrackNameLen = 200
 
-// activityByIDQuery is the single-row counterpart to listActivitiesQuery, same column order
-// (scanActivityRow's Scan call is shared between both), scoped by id and owner exactly like
-// trackMetricsQuery — a non-owned or nonexistent id is indistinguishable from "not found."
+// trackByIDQuery is the single-row counterpart to listTracksQuery, same column order
+// (scanTrackRow's Scan call is shared between both), scoped by id and owner exactly like
+// routeMetricsQuery — a non-owned or nonexistent id is indistinguishable from "not found."
 var trackByIDQuery = `
 SELECT id, started_at, timezone, activity_type, name, distance_meters, duration_seconds,
        COALESCE(moving_seconds, duration_seconds), description,
@@ -149,7 +149,7 @@ type updateTrackRequest struct {
 	Description string `json:"description"`
 }
 
-// activityIDFromPath is the {id} of an /activities/…/{id} route, lowercased, or a 404 for one
+// trackIDFromPath is the {id} of an /activities/…/{id} route, lowercased, or a 404 for one
 // that isn't a UUID. Postgres refuses a malformed uuid with an error, which reached the client
 // as a 500; and it accepts an uppercase one, which would then miss object keys built from the
 // id (the delete's mask prefix) while still matching the row.
@@ -162,7 +162,7 @@ func trackIDFromPath(w http.ResponseWriter, r *http.Request) (string, bool) {
 	return strings.ToLower(id), true
 }
 
-// handleUpdateActivity serves `PATCH /v1/activities/{id}` (docs/SPEC.md FR-5.5) — the "rename a
+// handleUpdateTrack serves `PATCH /v1/activities/{id}` (docs/SPEC.md FR-5.5) — the "rename a
 // mis-tagged upload" / "describe a non-sport GPS trace" feature. activity_type is free-form
 // (IMPLEMENTATION.md §4.7), not a controlled vocabulary, so a manual rename here is
 // architecturally identical to what ingest itself already writes — nothing to validate
@@ -234,7 +234,7 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, row)
 }
 
-// handleDeleteActivity serves `DELETE /v1/activities/{id}` (§4.7.5) — a full purge, not a
+// handleDeleteTrack serves `DELETE /v1/activities/{id}` (§4.7.5) — a full purge, not a
 // soft delete: the DB cascade already handles activity_tile_masks and their mask data
 // (`ON DELETE CASCADE` back to tracks.id), and Trends is live-aggregated over whatever
 // rows remain, so neither needs any explicit cleanup here. Two things do:
@@ -247,7 +247,7 @@ func (s *Server) handleUpdateTrack(w http.ResponseWriter, r *http.Request) {
 //     while leaving that cache's already-rendered PNGs stale indefinitely, still showing
 //     coverage for a track that no longer exists.
 //
-// Runs synchronously in the handler, like handleUpdateActivity/handleDeleteAvatar: unlike
+// Runs synchronously in the handler, like handleUpdateTrack/handleDeleteAvatar: unlike
 // ingest's parsing, everything here (a row delete, a couple of small queries, an
 // object-storage prefix removal) is cheap enough not to need the job queue itself — only the
 // actual tile re-render at the end goes through it, the same render_fog job ingest already
@@ -322,7 +322,7 @@ func (s *Server) handleDeleteTrack(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-// trackMetricsQuery reads one track's already-simplified display trajectory back out
+// routeMetricsQuery reads one track's already-simplified display trajectory back out
 // (ST_DumpPoints, same shape simplifyXY already produces at ingest — this just reads it
 // instead of simplifying fresh). The M ordinate is epoch seconds per §3.3, which is all a
 // per-vertex speed needs besides position.
@@ -384,7 +384,7 @@ func pointSpeeds(lons, lats, ms []float64, edit *ingest.RouteEdit) []float64 {
 	return speed
 }
 
-// handleActivityTrackMetrics serves `GET /v1/activities/{id}/track-metrics` — per-simplified-
+// handleTrackRouteMetrics serves `GET /v1/activities/{id}/track-metrics` — per-simplified-
 // vertex speed, and the pace bands (paceBands) the web and Android clients draw over whichever
 // single track is selected. Pace only: HoldMyTrack keeps no heart rate (VISION.md §1.1).
 // Scoped to the caller's user_id in the query itself, same as every other per-track lookup

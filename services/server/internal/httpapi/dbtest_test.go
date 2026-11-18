@@ -130,7 +130,7 @@ func (d *dbTest) newAccount(demo bool) account {
 	return a
 }
 
-// testActivity is the part of a tracks row the tests care about.
+// testTrack is the part of a tracks row the tests care about.
 type testTrack struct {
 	trackType      string
 	distanceMeters float64

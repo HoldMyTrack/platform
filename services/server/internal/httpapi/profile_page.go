@@ -194,8 +194,8 @@ func profileHref(shade, bucket, place string) string {
 	return href
 }
 
-// statsOf is activityStats computed from daily totals instead of in SQL: the same four
-// numbers, since a day's bucket is exactly the day activityStats' queries group by.
+// statsOf is trackStats computed from daily totals instead of in SQL: the same four
+// numbers, since a day's bucket is exactly the day trackStats' queries group by.
 func statsOf(days []histogramBucket) trackStatsBlock {
 	var b trackStatsBlock
 	var run int64

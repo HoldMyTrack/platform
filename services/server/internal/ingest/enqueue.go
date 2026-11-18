@@ -20,7 +20,7 @@ import (
 // arrived, and what the `ingest` job needs to know about them.
 type RawItem struct {
 	// "upload" (an uploaded file) or a phone sync's source — the
-	// `tracks.source` column's own provenance value, not just a label.
+	// `activities.source` column's own provenance value, not just a label.
 	Source   string
 	Filename string
 	Ext      string

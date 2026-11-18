@@ -30,7 +30,7 @@ const DemoCustomerUserID = "22222222-2222-2222-2222-222222222222"
 
 // demo_data/ holds the account's history as raw track files in any format ingest parses
 // (parse.ByExtensionUpTo: .gpx, .tcx, .fit, .json), plus manifest.json. They are real tracks
-// on a live deployment, written out as GPX by `export-demo-tracks` (demo_export.go)
+// on a live deployment, written out as GPX by `export-demo-activities` (demo_export.go)
 // exactly as their owner sees them, and reviewed by hand before being committed.
 //
 //go:embed demo_data
@@ -60,9 +60,9 @@ type demoManifestCapture struct {
 	CapturedAt time.Time `json:"captured_at"`
 }
 
-// demoManifestStory is one Story the seed gives the account (§4.23): a name, a description,
+// demoManifestTrip is one Story the seed gives the account (§4.23): a name, a description,
 // and its tracks by filename. Stories are matched by name on a re-run. OpensFirst marks the
-// one Story dated newest, which the Stories tab and the tour open (seedDemoStories).
+// one Story dated newest, which the Stories tab and the tour open (seedDemoTrips).
 type demoManifestTrip struct {
 	Name        string   `json:"name"`
 	Description string   `json:"description,omitempty"`
@@ -407,13 +407,13 @@ func seedDemoCaptures(ctx context.Context, pool *pgxpool.Pool, userID string, ca
 	return missing, nil
 }
 
-// seedDemoStories gives the account (the Demo Customer, but a parameter so tests can use their
+// seedDemoTrips gives the account (the Demo Customer, but a parameter so tests can use their
 // own) the manifest's Stories, each matched by name: created if
 // it isn't there, and otherwise given the manifest's description and exactly its tracks —
 // so a plain re-run fixes a Story that drifted, as it does a track's name. A Story the
 // manifest doesn't name is left alone; --reset is what removes those. One transaction, and one
 // tile-version bump if any Story's tracks changed (§4.2.6): the tracks tiles take a
-// `trip` filter.
+// `story` filter.
 //
 // Each Story is dated the day after its last track ended, as someone would make one after a
 // trip, rather than the moment of the seed: the Stories are listed newest first, so they then
