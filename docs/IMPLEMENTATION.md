@@ -505,7 +505,7 @@ sequenceDiagram
 
 **Sending never reveals an account**: the inbox row comes from an `INSERT … SELECT` matching only a verified, non-demo, non-deleted account other than the sender's. **The copy is the recipient's own data, made like an upload** (ADR-0036, `internal/storycopy`), so the recipient's Private locations, masks and region matching apply. Photo rows share the original's files (§3.22), read `FOR KEY SHARE` so a racing photo delete sees the copy's row. Each original arrives once ever, every step is idempotent, and a track whose owner has an edit pending is retried later.
 
-**The web** keeps the open Trip in its map session and `?story=`; with one open, the track query is the Trip alone and the selected range is left as it was.
+**The web** keeps the open Trip in its map session and `?trip=`; with one open, the track query is the Trip alone and the selected range is left as it was.
 
 ### 4.24 Trails and bike paths (FR-4.9)
 
