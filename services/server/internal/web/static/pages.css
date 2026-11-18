@@ -1209,8 +1209,20 @@ code {
   display: inline-block;
   width: 12px;
   height: 12px;
+  border: 0;
   border-radius: 2px;
+  padding: 0;
   background: rgb(var(--fm-ink-rgb) / 6%);
+}
+
+/* A day with activity is a button: drawn as the other days, with a ring when focused. */
+button.year-grid__cell {
+  cursor: pointer;
+}
+
+button.year-grid__cell:focus-visible {
+  outline: 2px solid var(--fm-accent-strong);
+  outline-offset: 1px;
 }
 
 .year-grid__cell--pad {
