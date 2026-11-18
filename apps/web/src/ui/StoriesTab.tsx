@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Pencil, Play, Send, Trash2 } from 'lucide-react';
 import { deleteStory, removeStoryActivities, type Activity, type Story, type StoryTotals } from '../api.ts';
-import { ActivityRow, useScrollFocusedRow } from './ActivityRow.tsx';
+import { ActivityRow } from './ActivityRow.tsx';
+import { useListWindow } from './useListWindow.ts';
 import { ConfirmDialog } from './ConfirmDialog.tsx';
 import { SendCopyDialog } from './SendCopyDialog.tsx';
 import { StoryDialog } from './StoryDialog.tsx';
@@ -112,8 +113,12 @@ export function StoriesTab({
       setRemoving(null);
     }
   }
+  // The open Story's rows render only those in view, as the Activities tab's do: a Story has no
+  // size cap, and every hover re-rendered all of its rows.
   const listRef = useRef<HTMLUListElement>(null);
-  useScrollFocusedRow(listRef, focusedId);
+  const rowsRef = useRef<HTMLUListElement>(null);
+  const focusedIndex = useMemo(() => (focusedId === null ? -1 : activities.findIndex((a) => a.id === focusedId)), [activities, focusedId]);
+  const { start, end, rowHeight } = useListWindow(listRef, rowsRef, activities.length, { id: focusedId, index: focusedIndex });
 
   const editTitle = readOnly ? t('stories.demo_edit') : t('stories.edit');
   const deleteTitle = readOnly ? t('stories.demo_delete') : t('stories.delete');
@@ -190,14 +195,16 @@ export function StoriesTab({
                 <div
                   className="stories-tab__body"
                   onClick={(e) => {
-                    if (e.target === e.currentTarget) onClearFocus();
+                    const target = e.target as HTMLElement;
+                    if (target === e.currentTarget || target.classList.contains('activities-panel__spacer')) onClearFocus();
                   }}
                 >
                   {story.from !== null && <p className="stories-tab__from">{t('stories.from', { from: story.from })}</p>}
                   {story.description !== '' && <p className="stories-tab__description">{story.description}</p>}
                   {removeError && <p className="activities-panel__note activities-panel__note--error">{removeError}</p>}
-                  <ul className="stories-tab__rows">
-                    {activities.map((activity) => (
+                  <ul className="stories-tab__rows" ref={rowsRef}>
+                    {start > 0 && <li className="activities-panel__spacer" style={{ height: start * rowHeight }} aria-hidden="true" />}
+                    {activities.slice(start, end).map((activity) => (
                       <ActivityRow
                         key={activity.id}
                         activity={activity}
@@ -220,6 +227,9 @@ export function StoriesTab({
                         onHover={onHoverActivity}
                       />
                     ))}
+                    {end < activities.length && (
+                      <li className="activities-panel__spacer" style={{ height: (activities.length - end) * rowHeight }} aria-hidden="true" />
+                    )}
                     {activitiesLoading && <li className="activities-panel__note">{t('common.loading')}</li>}
                     {activitiesError && !activitiesLoading && (
                       <li className="activities-panel__note activities-panel__note--error">{activitiesError}</li>

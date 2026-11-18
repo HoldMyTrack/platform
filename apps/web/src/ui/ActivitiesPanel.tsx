@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { Map as MapLibreMap } from 'maplibre-gl';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import type { Activity, Story } from '../api.ts';
@@ -6,7 +6,7 @@ import { ActivitiesToolbar } from './ActivitiesToolbar.tsx';
 import { ActivityFilters, type DatesProps } from './ActivityFilters.tsx';
 import { ActivityRow, rowLabel } from './ActivityRow.tsx';
 import { targetSummaryKind } from '../map/selection.ts';
-import { listWindow, scrollTopFor } from './listWindow.ts';
+import { useListWindow } from './useListWindow.ts';
 import { FirstRunPanel } from './FirstRunPanel.tsx';
 import { PrivateLocationsPanel } from './PrivateLocationsPanel.tsx';
 import { StoriesTab } from './StoriesTab.tsx';
@@ -202,24 +202,12 @@ export function ActivitiesPanel({
   outOfReach,
   firstRun = false,
 }: ActivitiesPanelProps) {
-  // The row list renders only the rows in view (listWindow.ts): up to 1,000 again on every reload
-  // of the area stalled the page. All rows are one line high, measured from the first drawn.
+  // The row list renders only the rows in view (useListWindow.ts): up to 1,000 again on every
+  // reload of the area stalled the page. All rows are one line high, measured from the first drawn.
   const listRef = useRef<HTMLUListElement>(null);
-  const [scroll, setScroll] = useState({ top: 0, height: 600 });
-  const [rowHeight, setRowHeight] = useState(0);
-  useEffect(() => {
-    const list = listRef.current;
-    if (!list) return;
-    const read = () => setScroll({ top: list.scrollTop, height: list.clientHeight });
-    read();
-    const observer = new ResizeObserver(read);
-    observer.observe(list);
-    return () => observer.disconnect();
-  }, [tab, firstRun]);
-  useEffect(() => {
-    const row = listRef.current?.querySelector<HTMLElement>('li[data-activity-id]');
-    if (row && row.offsetHeight !== rowHeight) setRowHeight(row.offsetHeight);
-  });
+  const shownCount = outOfReach ? 0 : activities.length;
+  const focusedIndex = useMemo(() => (focusedId === null ? -1 : activities.findIndex((a) => a.id === focusedId)), [activities, focusedId]);
+  const { start, end, rowHeight } = useListWindow(listRef, listRef, shownCount, { id: focusedId, index: focusedIndex });
   // A reload of the area keeps the old rows until the new ones land; the bar over the list says
   // one is under way, only once it has taken long enough to notice, so a quick pan doesn't flicker.
   const [slowLoad, setSlowLoad] = useState(false);
@@ -231,19 +219,10 @@ export function ActivitiesPanel({
     const timer = setTimeout(() => setSlowLoad(true), PROGRESS_DELAY_MS);
     return () => clearTimeout(timer);
   }, [loading]);
-  const { start, end } = listWindow(outOfReach ? 0 : activities.length, rowHeight, scroll.top, scroll.height);
-  // A newly focused row scrolls into view, by its place in the list: it may not be drawn yet.
-  useEffect(() => {
-    const list = listRef.current;
-    if (focusedId === null || !list || rowHeight === 0) return;
-    const index = activities.findIndex((a) => a.id === focusedId);
-    if (index >= 0) list.scrollTo({ top: scrollTopFor(index, activities.length, rowHeight, list.clientHeight), behavior: 'smooth' });
-    // Only a new focus scrolls; the list reloading under a focus leaves the scroll where it is.
-  }, [focusedId]);
 
   // The tab strip scrolls sideways when the tabs don't fit (index.css); the selected tab is
-  // brought into view, scrolling the strip alone, for the reason ActivityRow.tsx's
-  // useScrollFocusedRow gives.
+  // brought into view, scrolling the strip alone: on a phone the collapsed sheet is an ancestor,
+  // and `scrollIntoView` scrolling it pushed its header out of reach.
   const tabsRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const strip = tabsRef.current;
@@ -475,7 +454,6 @@ export function ActivitiesPanel({
             className="activities-panel__list"
             data-testid="activities-list"
             ref={listRef}
-            onScroll={(e) => setScroll({ top: e.currentTarget.scrollTop, height: e.currentTarget.clientHeight })}
             onClick={(e) => {
               const target = e.target as HTMLElement;
               if (target === e.currentTarget || target.classList.contains('activities-panel__note') || target.classList.contains('activities-panel__spacer')) onClearFocus();
