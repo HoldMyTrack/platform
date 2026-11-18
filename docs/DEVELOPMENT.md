@@ -34,7 +34,7 @@ Every piece of text a person reads is a catalog key in English and Russian (`IMP
 - **Map app:** `apps/web/src/i18n/en.ts` and `ru.ts`, as `t('key')` or `tn('key', n)`; `tsc` fails until `ru.ts` has the key.
 - **Android:** `res/values/strings.xml` and `res/values-ru/strings.xml`; Lint's `MissingTranslation` catches a gap.
 
-A count needs every plural form: `.one`/`.other` in English, `.one`/`.few`/`.many`/`.other` in Russian. Placeholders stay identical. `go test ./internal/i18n` and `npm run test:unit` check both. To see Russian, use the language menu or `curl -H 'Accept-Language: ru' localhost:5173/help`; the menu's `hmt_lang` cookie beats the header and an account's Language setting beats both.
+A count needs every plural form: `.one`/`.other` in English, `.one`/`.few`/`.many`/`.other` in Russian. Placeholders stay identical. `go test ./internal/i18n` and `npm run test:unit` check both, and the web's type check refuses a `t()` or `tn()` call that leaves out a placeholder its English message names. To see Russian, use the language menu or `curl -H 'Accept-Language: ru' localhost:5173/help`; the menu's `hmt_lang` cookie beats the header and an account's Language setting beats both.
 
 Adding a language takes a catalog on each surface, `about`/`help` translations, its plural rule (`i18n.PluralForm`) and separators (`Localizer.separators`), its code in `i18n.Supported`/`Names`, `locales_config.xml` and `build.gradle.kts`'s `localeFilters`, then `npm run build:style`.
 
