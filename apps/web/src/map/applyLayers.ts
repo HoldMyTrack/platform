@@ -85,9 +85,10 @@ function labelPoint(map: MapLibreMap, ownIds: ReadonlySet<string>): string | und
  * Undefined, to append, for a style with no basemap labels.
  */
 export function beneathBasemapLabels(map: MapLibreMap): string | undefined {
-  const doc = applied.get(map)?.doc;
-  const ownIds = new Set((doc?.groups ?? []).flatMap((group) => group.layers.map((layer) => layer.id)));
-  return labelPoint(map, ownIds);
+  const current = applied.get(map);
+  // The groups applyLayers counts as its own, excluded ones left out, so both aim at one label.
+  const groups = current ? groupsOf(current.doc, current.state) : [];
+  return labelPoint(map, new Set(groups.flatMap((group) => group.layers.map((layer) => layer.id))));
 }
 
 function beforeIdFor(map: MapLibreMap, order: readonly string[], id: string, ownIds: ReadonlySet<string>, fallback: string | undefined): string | undefined {
