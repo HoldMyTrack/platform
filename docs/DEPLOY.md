@@ -26,6 +26,7 @@ Every compose command below is `docker compose -f compose.prod.yml --env-file .e
 1. `cp .env.prod.example .env.prod` and fill in every value; the file's comments say what each is. Nothing in it is safe to leave as a placeholder.
 2. `APP_BASE_URL` and `DOMAIN` take the domain from §3. `APP_BASE_URL` must start with `https://`: the session cookie's `Secure` flag and the password-reset links come from it.
 3. `chmod 600 .env.prod` (§12).
+4. On a domain other than holdmytrack.com, replace it in `apps/web/public/robots.txt` and `sitemap.xml`. They are files built into the web image, so without the edit search engines are pointed at holdmytrack.com.
 
 The tuning values have defaults to leave alone. A change to one needs `… up -d` for the services named:
 
