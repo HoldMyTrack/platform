@@ -135,11 +135,17 @@
     return a.title + '|' + a.submitted_at;
   }
 
+  // The poll and each landed upload both read the list, and can overlap: only the newest read
+  // applies, or an older answer would put a finished import back for one poll and announce
+  // `hmt:imports-changed` again when it left once more.
+  var reads = 0;
+
   function refresh() {
+    var read = ++reads;
     return fetch('/v1/uploads/active', { credentials: 'same-origin', headers: { Accept: 'application/json' } })
       .then(function (res) { return res.ok ? res.json() : null; })
       .then(function (body) {
-        if (!body) return;
+        if (!body || read !== reads) return;
         var before = {};
         active.forEach(function (a) { before[keyOf(a)] = a.done; });
         var now = {};
