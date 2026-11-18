@@ -481,7 +481,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'export.row_landscape': 'Альбомная',
   'export.row_portrait': 'Портретная',
   'export.row_square': 'Квадрат',
-  'export.row_story': 'Путешествие',
+  'export.row_story': 'История',
   'export.shape': 'Форма и размер снимка',
   'edit_track.chop': 'Обрезать',
   'edit_track.chop_title': 'Оставить только часть между ручками',

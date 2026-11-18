@@ -127,7 +127,7 @@
     <string name="export_row_square">Square</string>
     <string name="export_row_portrait">Portrait</string>
     <string name="export_row_landscape">Landscape</string>
-    <string name="export_row_story">Trip</string>
+    <string name="export_row_story">Story</string>
     <string name="export_size" translatable="false">%1$d × %2$d</string>
     <string name="export_failed">Couldn\'t create the image. Please try again.</string>
     <string name="export_saved">Saved to Pictures</string>

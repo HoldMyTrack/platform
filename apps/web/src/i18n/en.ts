@@ -371,7 +371,7 @@ export const en = {
   'export.row_landscape': 'Landscape',
   'export.row_portrait': 'Portrait',
   'export.row_square': 'Square',
-  'export.row_story': 'Trip',
+  'export.row_story': 'Story',
   'export.shape': 'Image shape and size',
   'edit_track.chop': 'Chop',
   'edit_track.chop_title': 'Keep only the part between the knobs',

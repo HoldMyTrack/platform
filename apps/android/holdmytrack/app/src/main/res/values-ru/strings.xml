@@ -129,7 +129,7 @@
     <string name="export_row_square">Квадрат</string>
     <string name="export_row_portrait">Портретная</string>
     <string name="export_row_landscape">Альбомная</string>
-    <string name="export_row_story">Путешествие</string>
+    <string name="export_row_story">История</string>
     <string name="export_failed">Не удалось создать изображение. Попробуйте ещё раз.</string>
     <string name="export_saved">Сохранено в «Изображения»</string>
     <string name="export_share_title">Поделиться картой</string>
