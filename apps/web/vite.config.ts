@@ -83,6 +83,12 @@ export default defineConfig({
       input: { app: 'src/main.tsx' },
       output: {
         entryFileNames: 'assets/[name].js',
+        // MapLibre and React change only with a dependency bump, so they go in a content-hashed
+        // chunk the fixed-name entry imports: a deploy that changes only the app's own code
+        // re-downloads only that.
+        codeSplitting: {
+          groups: [{ name: 'vendor', test: /[\\/]node_modules[\\/](maplibre-gl|react|react-dom|scheduler)[\\/].*\.[cm]?js$/ }],
+        },
         assetFileNames: (asset) =>
           asset.names.includes('app.css') ? 'assets/app.css' : 'assets/[name]-[hash][extname]',
       },
