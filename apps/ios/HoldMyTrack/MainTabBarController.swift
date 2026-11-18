@@ -1,9 +1,9 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The signed-in app: Map, Stories, Sync and You (apps/android/docs/SPEC.md FR-2.9), each keeping
-/// its state across a switch. Map and Stories are one map screen with its sheet on the Activities
-/// or the Stories tab (MapHostViewController); Stories counts copies waiting to be answered. The
+/// The signed-in app: Map, Trips, Sync and You (apps/android/docs/SPEC.md FR-2.9), each keeping
+/// its state across a switch. Map and Trips are one map screen with its sheet on the Tracks
+/// or the Trips tab (MapHostViewController); Trips counts copies waiting to be answered. The
 /// record button comes with recording (ROADMAP.md, 7d).
 final class MainTabBarController: UITabBarController {
     private let map: MapViewController
@@ -12,12 +12,12 @@ final class MainTabBarController: UITabBarController {
         let map = MapViewController(flow: flow, account: account)
         self.map = map
         super.init(nibName: nil, bundle: nil)
-        let mapHost = MapHostViewController(map: map, tab: .activities)
+        let mapHost = MapHostViewController(map: map, tab: .tracks)
         mapHost.tabBarItem = UITabBarItem(title: String(localized: "Map"), image: UIImage(resource: .map), tag: 0)
         mapHost.tabBarItem.accessibilityIdentifier = "tabMap"
-        let stories = MapHostViewController(map: map, tab: .stories)
-        stories.tabBarItem = UITabBarItem(title: String(localized: "Trips"), image: UIImage(resource: .bookOpen), tag: 1)
-        stories.tabBarItem.accessibilityIdentifier = "tabStories"
+        let trips = MapHostViewController(map: map, tab: .trips)
+        trips.tabBarItem = UITabBarItem(title: String(localized: "Trips"), image: UIImage(resource: .bookOpen), tag: 1)
+        trips.tabBarItem.accessibilityIdentifier = "tabTrips"
         let history = WebPageViewController(flow: flow, page: .syncHistory)
         let sync = UINavigationController(rootViewController: history)
         sync.tabBarItem = UITabBarItem(title: String(localized: "Sync"), image: UIImage(resource: .refreshCw), tag: 2)
@@ -25,20 +25,20 @@ final class MainTabBarController: UITabBarController {
         you.navigationBar.prefersLargeTitles = false
         you.tabBarItem = UITabBarItem(title: String(localized: "You"), image: UIImage(resource: .user), tag: 3)
         you.tabBarItem.accessibilityIdentifier = "tabYou"
-        viewControllers = [mapHost, stories, sync, you]
+        viewControllers = [mapHost, trips, sync, you]
         tabBar.tintColor = UIColor(resource: .accent)
         tabBar.backgroundColor = UIColor(resource: .surface)
         sync.tabBarItem.accessibilityIdentifier = "tabSync"
-        history.onViewOnMap = { [weak self, weak mapHost, weak map] activity, day in
+        history.onViewOnMap = { [weak self, weak mapHost, weak map] track, day in
             guard let self, let mapHost, let map else { return }
             self.selectedViewController = mapHost
-            map.viewOnMap(activity: activity, day: day)
+            map.viewOnMap(track: track, day: day)
         }
-        map.onWaiting = { [weak stories] count in stories?.tabBarItem.badgeValue = count > 0 ? "\(count)" : nil }
-        map.onWantsStories = { [weak self, weak stories] id in
-            guard let self, let stories else { return }
-            stories.pendingStory = id
-            self.selectedViewController = stories
+        map.onWaiting = { [weak trips] count in trips?.tabBarItem.badgeValue = count > 0 ? "\(count)" : nil }
+        map.onWantsTrips = { [weak self, weak trips] id in
+            guard let self, let trips else { return }
+            trips.pendingTrip = id
+            self.selectedViewController = trips
         }
     }
 

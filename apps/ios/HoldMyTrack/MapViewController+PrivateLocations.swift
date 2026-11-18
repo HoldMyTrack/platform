@@ -8,7 +8,7 @@ import UIKit
 /// to drag it by. A new one is 200 m at the middle of the map left showing, flying in first from
 /// too far out; a tap on another circle opens that one. Cancel, a mode change or leaving the Map
 /// tab drops the draft. The circles are the app's own source and layers, added on every style
-/// load as the track editor's are, and drawn only while the editor is open: they point straight
+/// load as the route editor's are, and drawn only while the editor is open: they point straight
 /// at the places they hide.
 extension MapViewController {
     static let privateSource = "private-locations"
@@ -48,7 +48,7 @@ extension MapViewController {
             } catch {
                 guard editing.opening == opening else { return }
                 closePrivateEditor()
-                StoryDialogs.inform(over: view, (error as? APIError)?.serverMessage ?? String(localized: "Private locations couldn't load."))
+                TripDialogs.inform(over: view, (error as? APIError)?.serverMessage ?? String(localized: "Private locations couldn't load."))
             }
         }
     }
@@ -193,7 +193,7 @@ extension MapViewController {
         }
     }
 
-    /// A change reprocesses every activity it touches, which the server marks Pending with the
+    /// A change reprocesses every track it touches, which the server marks Pending with the
     /// change itself: the list shows them at once, and the tracks are fetched again once coverage
     /// stops rendering, the listed ones and any off the list alike. A newer change's wait
     /// replaces this one's.

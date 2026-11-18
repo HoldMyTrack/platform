@@ -1,7 +1,7 @@
 import Foundation
 
 /// One point of a track: where, and when in Unix milliseconds.
-public struct TrackPoint: Equatable, Sendable {
+public struct RoutePoint: Equatable, Sendable {
     public let lon: Double
     public let lat: Double
     public let t: Int
@@ -26,7 +26,7 @@ public struct TimeSpan: Equatable, Sendable {
 
 /// The edit the server stores for a track (root docs/IMPLEMENTATION.md §4.7.7), by timestamp:
 /// keep one span, remove others, drop single points, move points elsewhere.
-public struct TrackEdit: Equatable, Sendable {
+public struct RouteEdit: Equatable, Sendable {
     public var keep: TimeSpan?
     public var remove: [TimeSpan] = []
     public var drop: [Int] = []
@@ -43,7 +43,7 @@ public struct TrackEdit: Equatable, Sendable {
     public var isEmpty: Bool { keep == nil && remove.isEmpty && drop.isEmpty && move.isEmpty }
 }
 
-/// One step of an Edit track session.
+/// One step of an Edit route session.
 public enum EditOp: Equatable, Sendable {
     /// Keep only the points from one time to another (inclusive): the Chop button.
     case chop(keep: TimeSpan)
@@ -55,23 +55,23 @@ public enum EditOp: Equatable, Sendable {
     case move(t: Int, lon: Double, lat: Double)
     /// Discard every earlier edit, including the one saved before this session.
     case reset
-    /// Split the activity in two at one point (§4.7.8). Not part of the edit: Save sends it beside
+    /// Split the track in two at one point (§4.7.8). Not part of the edit: Save sends it beside
     /// the folded edit, which then applies to both pieces.
     case split(t: Int)
 }
 
-/// The Edit track session's history. A session is the edit the track already had when the
+/// The Edit route session's history. A session is the edit the track already had when the
 /// editor opened (base) plus a stack of ops committed since. What the map shows is always a
 /// replay of the whole stack on top of the original points, never a mutated copy: Undo pops one
-/// op, Cancel drops the stack, and Apply folds it into the one TrackEdit the server stores.
+/// op, Cancel drops the stack, and Apply folds it into the one RouteEdit the server stores.
 /// Every op addresses points by time, as the server's edit does, so the fold is collecting them.
-public enum EditTrackOps {
+public enum EditRouteOps {
     /// Folds base and the op stack into one edit; an unedited track folds to an empty one.
-    public static func fold(_ base: TrackEdit?, _ ops: [EditOp]) -> TrackEdit {
-        var edit = base ?? TrackEdit()
+    public static func fold(_ base: RouteEdit?, _ ops: [EditOp]) -> RouteEdit {
+        var edit = base ?? RouteEdit()
         for op in ops {
             switch op {
-            case .reset: edit = TrackEdit()
+            case .reset: edit = RouteEdit()
             case .chop(let keep):
                 edit.keep = edit.keep.map { TimeSpan(max($0.from, keep.from), min($0.to, keep.to)) } ?? keep
             case .cut(let remove): edit.remove.append(remove)
@@ -86,7 +86,7 @@ public enum EditTrackOps {
 
     /// The points that survive edit, in order, moved where it moves them: the same as the
     /// server's, so what the editor shows is exactly what Apply will produce.
-    public static func apply(_ points: [TrackPoint], _ edit: TrackEdit) -> [TrackPoint] {
+    public static func apply(_ points: [RoutePoint], _ edit: RouteEdit) -> [RoutePoint] {
         if edit.isEmpty { return points }
         let drop = Set(edit.drop)
         return points.filter { p in
@@ -96,7 +96,7 @@ public enum EditTrackOps {
         }.map { p in
             // A move from the server that isn't a [lon, lat] pair leaves the point where it was.
             guard let to = edit.move[p.t], to.count >= 2 else { return p }
-            return TrackPoint(lon: to[0], lat: to[1], t: p.t)
+            return RoutePoint(lon: to[0], lat: to[1], t: p.t)
         }
     }
 
@@ -109,7 +109,7 @@ public enum EditTrackOps {
 
     /// The op a Chop press commits for knobs on visible[lo] and visible[hi], or nil when the
     /// knobs sit on both ends and there's nothing to chop.
-    public static func chop(_ visible: [TrackPoint], lo: Int, hi: Int) -> EditOp? {
+    public static func chop(_ visible: [RoutePoint], lo: Int, hi: Int) -> EditOp? {
         if lo <= 0 && hi >= visible.count - 1 { return nil }
         if hi - lo < 1 { return nil } // a track needs two points to stay a track
         return .chop(keep: TimeSpan(visible[lo].t, visible[hi].t))
@@ -117,12 +117,12 @@ public enum EditTrackOps {
 
     /// The op a Cut press commits: removes every point strictly between the knobs, so the two
     /// knob points survive and are joined. nil when there's nothing between them.
-    public static func cut(_ visible: [TrackPoint], lo: Int, hi: Int) -> EditOp? {
+    public static func cut(_ visible: [RoutePoint], lo: Int, hi: Int) -> EditOp? {
         if hi - lo < 2 { return nil }
         return .cut(remove: TimeSpan(visible[lo + 1].t, visible[hi - 1].t))
     }
 
-    /// The point the session splits the activity at, or nil: at most one split per session.
+    /// The point the session splits the track at, or nil: at most one split per session.
     public static func splitPoint(_ ops: [EditOp]) -> Int? {
         for case .split(let t) in ops { return t }
         return nil
@@ -131,7 +131,7 @@ public enum EditTrackOps {
     /// The index the Split button would split visible at: the one knob moved off its end, as long
     /// as it leaves two points on each side (the point itself counting on both). nil with both
     /// knobs at the ends, or both moved: a split is one point, not a range.
-    public static func splitIndex(_ visible: [TrackPoint], lo: Int, hi: Int) -> Int? {
+    public static func splitIndex(_ visible: [RoutePoint], lo: Int, hi: Int) -> Int? {
         let last = visible.count - 1
         let at: Int? = lo > 0 && hi >= last ? lo : lo <= 0 && hi < last ? hi : nil
         guard let at, at >= 1, at <= last - 1 else { return nil }
@@ -139,7 +139,7 @@ public enum EditTrackOps {
     }
 
     /// Cumulative walked distance in meters at each point: the slider's readout.
-    public static func cumulativeDistances(_ points: [TrackPoint]) -> [Double] {
+    public static func cumulativeDistances(_ points: [RoutePoint]) -> [Double] {
         var out: [Double] = []
         var acc = 0.0
         for i in points.indices {
@@ -151,7 +151,7 @@ public enum EditTrackOps {
 
     private static let earthRadius = 6371008.8
 
-    private static func haversine(_ a: TrackPoint, _ b: TrackPoint) -> Double {
+    private static func haversine(_ a: RoutePoint, _ b: RoutePoint) -> Double {
         let toRad = Double.pi / 180
         let dLat = (b.lat - a.lat) * toRad
         let dLon = (b.lon - a.lon) * toRad

@@ -1,22 +1,22 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The Edit window's Track tab (root docs/SPEC.md FR-5.7, FR-5.9), Android's TrackEditor: the
-/// activity's recorded points and the edit saved on them (TrackEditSession), a two-knob range over
+/// The Edit window's Route tab (root docs/SPEC.md FR-5.7, FR-5.9), Android's TrackEditor: the
+/// track's recorded points and the edit saved on them (RouteEditSession), a two-knob range over
 /// the points as the edit leaves them, and Chop, Cut, Split, Delete point, Move point, Undo and
 /// Reset. Nothing is sent from here: the window's Save sends session.pending and session.splitAt.
 /// Every change is drawn over the map through onDraw. Cut and Split preview while held; the tap
 /// that follows performs them.
-final class TrackEditorView: UIView {
+final class RouteEditorView: UIView {
     private let api: APIClient
     private let format: PanelFormat
-    private let activity: Activity
+    private let track: Track
     /// The overlay: what the session would leave, or nil to clear it.
-    var onDraw: ((TrackEditDrawing.Shape?) -> Void)?
+    var onDraw: ((RouteEditDrawing.Shape?) -> Void)?
     /// The session changed, or finished loading: the window's tab and Save follow it.
     var onChange: (() -> Void)?
 
-    private(set) var session: TrackEditSession?
+    private(set) var session: RouteEditSession?
     private var loading = false
     private var preview = EditPreview.chop
     /// Delete point is on: a tap on a point on the map deletes it.
@@ -35,34 +35,34 @@ final class TrackEditorView: UIView {
     private let start = Controls.body()
     private let count = Controls.body()
     private let end = Controls.body()
-    private lazy var chop = tool(String(localized: "Chop"), "trackChop", hint: String(localized: "Keep only the part between the knobs")) { $0.perform { $0.chop() } }
-    private lazy var cut = tool(String(localized: "Cut"), "trackCut", hint: String(localized: "Remove the part between the knobs and join its two ends. Hold to preview.")) { $0.preview = .chop; $0.perform { $0.cut() } }
-    private lazy var split = tool(String(localized: "Split"), "trackSplit", hint: String(localized: "Split the track in two at the knob you moved")) { view in
+    private lazy var chop = tool(String(localized: "Chop"), "routeChop", hint: String(localized: "Keep only the part between the knobs")) { $0.perform { $0.chop() } }
+    private lazy var cut = tool(String(localized: "Cut"), "routeCut", hint: String(localized: "Remove the part between the knobs and join its two ends. Hold to preview.")) { $0.preview = .chop; $0.perform { $0.cut() } }
+    private lazy var split = tool(String(localized: "Split"), "routeSplit", hint: String(localized: "Split the track in two at the knob you moved")) { view in
         view.preview = .chop
         view.pointModesOff()
         view.perform { $0.split() }
     }
-    private lazy var deletePoint = tool(String(localized: "Delete point"), "trackDeletePoint", hint: String(localized: "Tap points on the map to delete them")) { view in
+    private lazy var deletePoint = tool(String(localized: "Delete point"), "routeDeletePoint", hint: String(localized: "Tap points on the map to delete them")) { view in
         view.deleteMode.toggle()
         if view.deleteMode { view.moveMode = false }
         view.render()
     }
-    private lazy var movePoint = tool(String(localized: "Move point"), "trackMovePoint", hint: String(localized: "Drag points on the map to move them")) { view in
+    private lazy var movePoint = tool(String(localized: "Move point"), "routeMovePoint", hint: String(localized: "Drag points on the map to move them")) { view in
         view.moveMode.toggle()
         if view.moveMode { view.deleteMode = false } else { view.dragging = nil }
         view.render()
     }
-    private lazy var undo = tool(String(localized: "Undo"), "trackUndo", hint: String(localized: "Undo the last change")) { $0.perform { $0.undo() } }
-    private lazy var reset = tool(String(localized: "Reset"), "trackReset", hint: String(localized: "Go back to the route as it was recorded (Undo brings the edits back)")) { $0.perform { $0.reset() } }
+    private lazy var undo = tool(String(localized: "Undo"), "routeUndo", hint: String(localized: "Undo the last change")) { $0.perform { $0.undo() } }
+    private lazy var reset = tool(String(localized: "Reset"), "routeReset", hint: String(localized: "Go back to the route as it was recorded (Undo brings the edits back)")) { $0.perform { $0.reset() } }
     private let modeNote = Controls.body()
 
-    init(api: APIClient, format: PanelFormat, activity: Activity) {
+    init(api: APIClient, format: PanelFormat, track: Track) {
         self.api = api
         self.format = format
-        self.activity = activity
+        self.track = track
         super.init(frame: .zero)
-        accessibilityIdentifier = "trackEditor"
-        slider.accessibilityIdentifier = "trackRange"
+        accessibilityIdentifier = "routeEditor"
+        slider.accessibilityIdentifier = "routeRange"
         slider.addAction(UIAction { [weak self] _ in
             guard let self else { return }
             self.session?.setKnobs(lo: self.slider.lower, hi: self.slider.upper)
@@ -111,8 +111,8 @@ final class TrackEditorView: UIView {
         Task { [weak self] in
             guard let self else { return }
             do {
-                let read = try await self.api.trackPoints(self.activity.id)
-                self.session = TrackEditSession(points: read.points, base: read.edit)
+                let read = try await self.api.trackPoints(self.track.id)
+                self.session = RouteEditSession(points: read.points, base: read.edit)
                 self.note.isHidden = true
                 self.render()
                 self.onChange?()
@@ -167,7 +167,7 @@ final class TrackEditorView: UIView {
 
     // MARK: Rendering
 
-    private func perform(_ change: (inout TrackEditSession) -> Void) {
+    private func perform(_ change: (inout RouteEditSession) -> Void) {
         guard session != nil, !busy else { return }
         change(&session!)
         render()
@@ -183,7 +183,7 @@ final class TrackEditorView: UIView {
             return
         }
         body.isHidden = false
-        let distances = EditTrackOps.cumulativeDistances(visible)
+        let distances = EditRouteOps.cumulativeDistances(visible)
         let (lo, hi) = session.knobs(in: visible)
         slider.set(lower: lo, upper: hi, maximum: visible.count - 1)
         slider.isEnabled = !busy
@@ -224,27 +224,27 @@ final class TrackEditorView: UIView {
         let visible = session.visible
         guard visible.count >= 2 else { return }
         let (lo, hi) = session.knobs(in: visible)
-        let shown = dragging.map { held in visible.map { $0.t == held.t ? TrackPoint(lon: held.lon, lat: held.lat, t: $0.t) : $0 } } ?? visible
+        let shown = dragging.map { held in visible.map { $0.t == held.t ? RoutePoint(lon: held.lon, lat: held.lat, t: $0.t) : $0 } } ?? visible
         // The split made, else the one Split would make while it's held.
         let splitIndex = session.splitAt.flatMap { t in visible.firstIndex { $0.t == t } }
             ?? (preview == .split ? session.splitIndex : nil)
         let shownPreview: EditPreview = preview == .cut && session.cutOp != nil ? .cut : .chop
-        onDraw?(TrackEditDrawing.shape(shown, lo: lo, hi: hi, preview: shownPreview, split: splitIndex))
+        onDraw?(RouteEditDrawing.shape(shown, lo: lo, hi: hi, preview: shownPreview, split: splitIndex))
     }
 
-    /// A point's time of day, in the zone the activity was recorded in.
-    private func clock(_ ms: Int) -> String { format.clock(Double(ms) / 1000, zone: activity.timezone) }
+    /// A point's time of day, in the zone the track was recorded in.
+    private func clock(_ ms: Int) -> String { format.clock(Double(ms) / 1000, zone: track.timezone) }
 
     /// What VoiceOver says of a knob at index.
     private func place(_ index: Int) -> String {
         guard let visible = session?.visible, visible.indices.contains(index) else { return "" }
-        let distances = EditTrackOps.cumulativeDistances(visible)
+        let distances = EditRouteOps.cumulativeDistances(visible)
         return "\(format.distance(distances[index])), \(clock(visible[index].t))"
     }
 
     // MARK: Buttons
 
-    private func tool(_ title: String, _ id: String, hint: String, _ action: @escaping (TrackEditorView) -> Void) -> UIButton {
+    private func tool(_ title: String, _ id: String, hint: String, _ action: @escaping (RouteEditorView) -> Void) -> UIButton {
         var config = UIButton.Configuration.bordered()
         config.title = title
         config.baseForegroundColor = UIColor(resource: .ink)

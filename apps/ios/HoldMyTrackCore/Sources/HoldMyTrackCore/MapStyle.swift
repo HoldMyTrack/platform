@@ -57,7 +57,7 @@ public struct LayersDocument: Equatable, Sendable {
 }
 
 /// The mode the map shows for the tab bar's tab (apps/android/docs/SPEC.md FR-2.2): the one picked
-/// on the Map tab there, Normal on Stories, whose sheet and tracks are Normal mode's. The toggle is
+/// on the Map tab there, Normal on Trips, whose sheet and tracks are Normal mode's. The toggle is
 /// the Map tab's, so back there the pick comes back.
 public enum TabMode {
     public static func shown(picked: MapMode, onMapTab: Bool) -> MapMode { onMapTab ? picked : .normal }
@@ -79,7 +79,7 @@ public struct MapState: Equatable, Sendable {
     public var toggles: [String: Bool] = [:]
     /// By var name, the value bound in place of the document's default.
     public var vars: [String: JSONValue] = [:]
-    /// Groups drawn hidden: the track editor hides the tracks.
+    /// Groups drawn hidden: the route editor hides the tracks.
     public var hiddenGroups: Set<String> = []
     /// By source id, a query appended to its tiles: the tracks' date range.
     public var queries: [String: String] = [:]

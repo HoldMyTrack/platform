@@ -26,7 +26,7 @@ public enum FormatParts {
         imperial ? meters / metersPerMile : meters / 1000
     }
 
-    /// An activity's distance: always one decimal, never grouped.
+    /// A track's distance: always one decimal, never grouped.
     public static func distance(meters: Double, imperial: Bool) -> DistanceParts {
         DistanceParts(value: converted(meters, imperial: imperial), minDecimals: 1, maxDecimals: 1, grouping: false, unit: imperial ? .mi : .km)
     }

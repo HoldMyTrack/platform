@@ -10,8 +10,8 @@ struct ServerDataGuardsTests {
     }
 
     @Test func aMoveThatIsntAPairLeavesThePoint() {
-        let points = [TrackPoint(lon: 10, lat: 50, t: 1), TrackPoint(lon: 11, lat: 51, t: 2)]
-        let moved = EditTrackOps.apply(points, TrackEdit(move: [1: [12], 2: [13, 53]]))
-        #expect(moved == [TrackPoint(lon: 10, lat: 50, t: 1), TrackPoint(lon: 13, lat: 53, t: 2)])
+        let points = [RoutePoint(lon: 10, lat: 50, t: 1), RoutePoint(lon: 11, lat: 51, t: 2)]
+        let moved = EditRouteOps.apply(points, RouteEdit(move: [1: [12], 2: [13, 53]]))
+        #expect(moved == [RoutePoint(lon: 10, lat: 50, t: 1), RoutePoint(lon: 13, lat: 53, t: 2)])
     }
 }

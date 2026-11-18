@@ -167,7 +167,7 @@ final class YouViewController: UITableViewController {
     /// Upload with files already picked; the demo account is told it can't.
     func upload(_ files: [URL]) {
         guard !account.isDemo else {
-            StoryDialogs.inform(over: view, String(localized: "The demo account can't upload. Sign up to add your own tracks."))
+            TripDialogs.inform(over: view, String(localized: "The demo account can't upload. Sign up to add your own tracks."))
             return
         }
         navigationController?.popToRootViewController(animated: false)

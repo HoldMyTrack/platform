@@ -16,7 +16,7 @@ export const PATH_LAYER_IDS = ['paths_trail', 'paths_track', 'paths_bridges_trai
 export const PATHS_MIN_ZOOM = 12;
 
 /** Blue for cycleways, teal for shared paths, purple for mountain-bike trails (bikePathsGroup.ts),
- *  green for trails, brown for tracks, all clear of the ochre track tracks (tracks.ts). Teal sits between the cycleway blue and
+ *  green for trails, brown for OSM tracks, all clear of the ochre lines of the account's tracks (tracks.ts). Teal sits between the cycleway blue and
  *  the trail green, so a shared path reads as a bike route people walk too, and the hue alone
  *  tells it from a cycleway when the map is zoomed out too far for a dash to show. On the light
  *  flavors the two bike colors are dark enough to hold up on Fog's grey veil; on the dark and

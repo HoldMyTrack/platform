@@ -4,31 +4,31 @@ import UIKit
 import UniformTypeIdentifiers
 
 /// Edit (root docs/SPEC.md FR-5.5, apps/android/docs/SPEC.md FR-2.7) over the toolbar's target:
-/// one activity's type, name and description, or a group's type alone. Save writes only what
-/// changed, one activity at a time (EditPlan); a group of mixed types starts with Type empty, and
-/// leaving it empty keeps each its own. One activity also has a Track tab (TrackEditorView) and a
+/// one track's type, name and description, or a group's type alone. Save writes only what
+/// changed, one track at a time (EditPlan); a group of mixed types starts with Type empty, and
+/// leaving it empty keeps each its own. One track also has a Route tab (RouteEditorView) and a
 /// Photos tab (PhotosTabView), each open only when the server allows it (EditAvailability); the
-/// same Save writes the fields, then the photos, then the track edit.
+/// same Save writes the fields, then the photos, then the route edit.
 ///
 /// A sheet that stops at half height with the map live above it, so the track's edits and the
 /// Photos tab's slider show on the route in sight.
-final class EditActivityViewController: UIViewController, PHPickerViewControllerDelegate {
+final class EditTrackViewController: UIViewController, PHPickerViewControllerDelegate {
     private let api: APIClient
-    private let group: [Activity]
+    private let group: [Track]
     /// The range's types with their counts, listed first in the Type menu.
     private let facets: [TypeFacet]
     private let format: PanelFormat
     /// The ids written, and whether any photo was, once Save is done or Cancel follows a partial save.
     private let onDone: ([String], Bool) -> Void
-    /// One activity's Photos tab, else nil.
+    /// One track's Photos tab, else nil.
     private let photos: PhotosTabView?
-    /// One activity's Track tab, else nil; the map hands it Delete point's and Move point's touches.
-    let trackEditor: TrackEditorView?
+    /// One track's Route tab, else nil; the map hands it Delete point's and Move point's touches.
+    let routeEditor: RouteEditorView?
     /// Why the Track or Photos tab can't be used, shown in its place.
-    private let trackBlock: String?
+    private let routeBlock: String?
     private let photosBlock: String?
     private let blocked = Controls.body()
-    private let onTrackOpened: () -> Void
+    private let onRouteOpened: () -> Void
     private let tabs = UISegmentedControl()
     private let fields = UIStackView()
     private let status = Controls.body()
@@ -41,23 +41,23 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     private let about = UITextView()
     private let error = Controls.error(id: "editError")
 
-    init(api: APIClient, group: [Activity], facets: [TypeFacet], format: PanelFormat, images: PhotoImages,
-         onOverlay: @escaping (PhotoMarkerOverlay?) -> Void, onTrackDraw: @escaping (TrackEditDrawing.Shape?) -> Void,
-         onTrackOpened: @escaping () -> Void, onDone: @escaping ([String], Bool) -> Void) {
+    init(api: APIClient, group: [Track], facets: [TypeFacet], format: PanelFormat, images: PhotoImages,
+         onOverlay: @escaping (PhotoMarkerOverlay?) -> Void, onRouteDraw: @escaping (RouteEditDrawing.Shape?) -> Void,
+         onRouteOpened: @escaping () -> Void, onDone: @escaping ([String], Bool) -> Void) {
         self.api = api
         self.group = group
         self.facets = facets
         self.format = format
         self.onDone = onDone
-        self.onTrackOpened = onTrackOpened
+        self.onRouteOpened = onRouteOpened
         let single = group.count == 1 ? group[0] : nil
-        let trackBlock = EditAvailability.track(group).map(EditActivityViewController.message)
-        let photosBlock = EditAvailability.photos(group).map(EditActivityViewController.message)
-        self.trackBlock = trackBlock
+        let routeBlock = EditAvailability.route(group).map(EditTrackViewController.message)
+        let photosBlock = EditAvailability.photos(group).map(EditTrackViewController.message)
+        self.routeBlock = routeBlock
         self.photosBlock = photosBlock
-        trackEditor = single.flatMap { trackBlock == nil ? TrackEditorView(api: api, format: format, activity: $0) : nil }
-        trackEditor?.onDraw = onTrackDraw
-        photos = single.flatMap { photosBlock == nil ? PhotosTabView(api: api, images: images, format: format, activity: $0) : nil }
+        routeEditor = single.flatMap { routeBlock == nil ? RouteEditorView(api: api, format: format, track: $0) : nil }
+        routeEditor?.onDraw = onRouteDraw
+        photos = single.flatMap { photosBlock == nil ? PhotosTabView(api: api, images: images, format: format, track: $0) : nil }
         photos?.onOverlay = onOverlay
         type = EditPlan.initialType(group)
         super.init(nibName: nil, bundle: nil)
@@ -122,9 +122,9 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
             tabs.addAction(UIAction { [weak self] _ in self?.showTab() }, for: .valueChanged)
             photos?.onPick = { [weak self] in self?.pick() }
             photos?.onChange = { [weak self] in self?.renderTabs() }
-            trackEditor?.onChange = { [weak self] in self?.renderTabs() }
+            routeEditor?.onChange = { [weak self] in self?.renderTabs() }
             blocked.accessibilityIdentifier = "editTabBlocked"
-            column += [tabs, fields, trackEditor, photos, blocked].compactMap { $0 }
+            column += [tabs, fields, routeEditor, photos, blocked].compactMap { $0 }
             showTab()
         } else {
             column.append(fields)
@@ -136,38 +136,38 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
         renderTabs()
     }
 
-    /// The tab picked: the Track tab draws its edit on the map and the Photos tab its draft while
+    /// The tab picked: the Route tab draws its edit on the map and the Photos tab its draft while
     /// each shows; one the server doesn't allow says why in its place.
     private func showTab() {
         let tab = tabs.selectedSegmentIndex
         view.endEditing(true)
         fields.isHidden = tab != 0
-        trackEditor?.isHidden = tab != 1
+        routeEditor?.isHidden = tab != 1
         photos?.isHidden = tab != 2
         photos?.active = tab == 2
-        if tab == 1, let trackEditor {
-            trackEditor.open()
-            onTrackOpened()
+        if tab == 1, let routeEditor {
+            routeEditor.open()
+            onRouteOpened()
         } else {
-            trackEditor?.hide()
+            routeEditor?.hide()
         }
-        let reason = tab == 1 ? trackBlock : tab == 2 ? photosBlock : nil
+        let reason = tab == 1 ? routeBlock : tab == 2 ? photosBlock : nil
         blocked.text = reason
         blocked.isHidden = reason == nil
     }
 
-    /// The tabs' labels: Track and Photos marked while they have unsaved changes, Photos with
+    /// The tabs' labels: Route and Photos marked while they have unsaved changes, Photos with
     /// the count Save would leave.
     private func renderTabs() {
-        let trackChanged = trackEditor?.session?.changed == true
-        tabs.setTitle(trackChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved route changes.") : String(localized: "Route"), forSegmentAt: 1)
+        let routeChanged = routeEditor?.session?.changed == true
+        tabs.setTitle(routeChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved route changes.") : String(localized: "Route"), forSegmentAt: 1)
         if let photos {
             let count = format.count(photos.count)
             let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the track's photos, written as label: N.")
                 : String(localized: "Photos: \(count) •", comment: "Edit window's tab with unsaved photo changes.")
             tabs.setTitle(title, forSegmentAt: 2)
         }
-        let unsaved = [trackChanged ? String(localized: "Route, with unsaved changes") : nil,
+        let unsaved = [routeChanged ? String(localized: "Route, with unsaved changes") : nil,
                        photos?.draft.isEmpty == false ? String(localized: "Photos, with unsaved changes") : nil].compactMap { $0 }
         tabs.accessibilityValue = unsaved.isEmpty ? nil : unsaved.joined(separator: ", ")
     }
@@ -226,7 +226,7 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
 
     /// The range's types with how many use each, then every other type the server described.
     private func renderType() {
-        let types = ActivityTypes.shared
+        let types = TrackTypes.shared
         var config = typeButton.configuration
         config?.title = type.isEmpty ? String(localized: "Mixed types") : types.label(type)
         typeButton.configuration = config
@@ -236,11 +236,11 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
             self?.renderType()
         }
         let inRange = facets.map { f in
-            UIAction(title: types.label(f.type), subtitle: format.count(f.count), image: ActivityTypes.icon(types.kind(f.type)), state: f.type == type ? .on : .off) { _ in pick(f.type) }
+            UIAction(title: types.label(f.type), subtitle: format.count(f.count), image: TrackTypes.icon(types.kind(f.type)), state: f.type == type ? .on : .off) { _ in pick(f.type) }
         }
         let shown = Set(facets.map(\.type))
         let others = types.known.filter { !shown.contains($0) }.map { t in
-            UIAction(title: types.label(t), image: ActivityTypes.icon(types.kind(t)), state: t == type ? .on : .off) { _ in pick(t) }
+            UIAction(title: types.label(t), image: TrackTypes.icon(types.kind(t)), state: t == type ? .on : .off) { _ in pick(t) }
         }
         typeButton.menu = UIMenu(children: [UIMenu(options: .displayInline, children: inRange), UIMenu(options: .displayInline, children: others)])
     }
@@ -263,11 +263,11 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
             return
         }
         let writes = EditPlan.writes(group: group, type: type, name: nameText, description: aboutText).filter { !written.contains($0.id) }
-        let trackChanged = trackEditor?.session?.changed == true
-        guard !writes.isEmpty || photos?.draft.isEmpty == false || trackChanged else { return finish() }
+        let routeChanged = routeEditor?.session?.changed == true
+        guard !writes.isEmpty || photos?.draft.isEmpty == false || routeChanged else { return finish() }
         saving = true
         photos?.busy = true
-        trackEditor?.busy = true
+        routeEditor?.busy = true
         error.isHidden = true
         navigationItem.rightBarButtonItem?.isEnabled = false
         view.endEditing(true)
@@ -275,13 +275,13 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
             defer {
                 saving = false
                 photos?.busy = false
-                trackEditor?.busy = false
+                routeEditor?.busy = false
                 status.isHidden = true
                 navigationItem.rightBarButtonItem?.isEnabled = true
             }
             for write in writes {
                 do {
-                    _ = try await api.updateActivity(write)
+                    _ = try await api.updateTrack(write)
                     written.append(write.id)
                 } catch {
                     show((error as? APIError)?.serverMessage ?? String(localized: "The changes couldn't be saved."))
@@ -298,17 +298,17 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
                     return
                 }
             }
-            if trackChanged, !(await saveTrack(allowHidden: false)) { return }
+            if routeChanged, !(await saveRoute(allowHidden: false)) { return }
             finish()
         }
     }
 
-    /// The track edit, once the fields and photos are in; false when it isn't written. A split
+    /// The route edit, once the fields and photos are in; false when it isn't written. A split
     /// leaving a part inside a Private location asks first (root docs/SPEC.md FR-5.9).
-    private func saveTrack(allowHidden: Bool) async -> Bool {
-        guard let id = group.first?.id, let session = trackEditor?.session else { return true }
+    private func saveRoute(allowHidden: Bool) async -> Bool {
+        guard let id = group.first?.id, let session = routeEditor?.session else { return true }
         do {
-            switch try await api.saveTrackEdit(id, edit: session.pending, splitAt: session.splitAt, allowHidden: allowHidden) {
+            switch try await api.saveRouteEdit(id, edit: session.pending, splitAt: session.splitAt, allowHidden: allowHidden) {
             case .queued:
                 written.append(id)
                 return true
@@ -328,11 +328,11 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
         alert.addAction(UIAlertAction(title: String(localized: "Split anyway"), style: .destructive) { [weak self] _ in
             guard let self else { return }
             self.saving = true
-            self.trackEditor?.busy = true
+            self.routeEditor?.busy = true
             Task {
-                let done = await self.saveTrack(allowHidden: true)
+                let done = await self.saveRoute(allowHidden: true)
                 self.saving = false
-                self.trackEditor?.busy = false
+                self.routeEditor?.busy = false
                 if done { self.finish() }
             }
         })
@@ -342,7 +342,7 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     /// Cancel asks first when photo changes would be thrown away.
     private func cancel() {
         guard !saving else { return }
-        guard photos?.draft.isEmpty == false || trackEditor?.session?.changed == true else { return finish() }
+        guard photos?.draft.isEmpty == false || routeEditor?.session?.changed == true else { return finish() }
         let alert = UIAlertController(title: String(localized: "Discard changes?"),
                                       message: String(localized: "The photos and route changes in this window haven't been saved yet."), preferredStyle: .alert)
         alert.addAction(UIAlertAction(title: String(localized: "Keep editing"), style: .cancel))
@@ -353,7 +353,7 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     private func finish() {
         let done = written, photosSaved = photos?.photosSaved ?? false
         photos?.active = false
-        trackEditor?.hide()
+        routeEditor?.hide()
         dismiss(animated: true) { self.onDone(done, photosSaved) }
     }
 

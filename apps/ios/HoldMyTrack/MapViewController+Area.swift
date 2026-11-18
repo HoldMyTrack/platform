@@ -15,12 +15,12 @@ extension MapViewController {
     func openOnce() {
         guard !Self.framed.contains(accountKey) else { return }
         Task {
-            guard let newest = try? await flow.api.areaList(box: nil, dates: .allTime, limit: OpeningView.activities) else {
+            guard let newest = try? await flow.api.areaList(box: nil, dates: .allTime, limit: OpeningView.tracks) else {
                 followArea()
                 return
             }
             Self.framed.insert(accountKey)
-            let boxes = newest.activities.filter { !$0.pending }.compactMap(\.bbox)
+            let boxes = newest.tracks.filter { !$0.pending }.compactMap(\.bbox)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {
                 hideNotice(.empty)
                 if !session.flyRequest {
@@ -41,7 +41,7 @@ extension MapViewController {
     // MARK: Following the map
 
     /// The camera settled: from zoom 4 the list follows it once it has been still for a moment, so
-    /// a pan in steps asks once. The app's own flights (a focused row, a Story) leave the list as
+    /// a pan in steps asks once. The app's own flights (a focused row, a Trip) leave the list as
     /// it is, or focusing a row would shrink the list to that row's track.
     func cameraSettled() {
         settleTask?.cancel()
@@ -53,13 +53,13 @@ extension MapViewController {
         }
     }
 
-    /// The list asked about the view as it is, unless it already was; always, on closing a Story.
-    /// An open Story's list is its own: the view is only kept for when it closes.
+    /// The list asked about the view as it is, unless it already was; always, on closing a Trip.
+    /// An open Trip's list is its own: the view is only kept for when it closes.
     func followArea(always: Bool = false) {
         let b = mapView.visibleCoordinateBounds
         let box = AreaLoad.box(west: b.sw.longitude, south: b.sw.latitude, east: b.ne.longitude, north: b.ne.latitude)
         let moved = session.areaLoaded(box)
-        guard session.storyID == nil else { return }
+        guard session.tripID == nil else { return }
         if moved || always || listZoomedOut != zoomedOut { loadList() }
     }
 
@@ -68,12 +68,12 @@ extension MapViewController {
 
     /// Past the cap the map draws only the listed tracks and says how many the area holds.
     func renderCap() {
-        let capped = session.storyID == nil && AreaLoad.of(zoom: mapView.zoomLevel, listed: activities.count, total: areaTotal).capped
+        let capped = session.tripID == nil && AreaLoad.of(zoom: mapView.zoomLevel, listed: tracks.count, total: areaTotal).capped
         state.vars["capped"] = .bool(capped)
-        state.vars["listed"] = .array(capped ? activities.map { .string($0.id) } : [])
+        state.vars["listed"] = .array(capped ? tracks.map { .string($0.id) } : [])
         if capped, let total = areaTotal {
             let count = { (n: Int) in NumberFormatter.localizedString(from: NSNumber(value: n), number: .decimal) }
-            notice(.capped, String(localized: "Showing the newest \(count(activities.count)) of \(count(total)) tracks here. Zoom in or set Dates to see the rest."))
+            notice(.capped, String(localized: "Showing the newest \(count(tracks.count)) of \(count(total)) tracks here. Zoom in or set Dates to see the rest."))
         } else {
             hideNotice(.capped)
         }
@@ -81,11 +81,11 @@ extension MapViewController {
 
     // MARK: Dates
 
-    /// Dates' bounds: the first and newest activities' days, asked again on every return to the
+    /// Dates' bounds: the first and newest tracks' days, asked again on every return to the
     /// map and after an import or a delete, which can change them.
     func loadHistory() {
         Task {
-            guard let page = try? await flow.api.activityDays(limit: 1, before: nil) else { return }
+            guard let page = try? await flow.api.trackDays(limit: 1, before: nil) else { return }
             history = (page.earliest, page.days.last)
         }
     }
@@ -126,11 +126,11 @@ extension MapViewController {
         let text = switch session.dates.label {
         case .all: String(localized: "Dates")
         case let .between(a, b): String(localized: "\(format(a)) – \(format(b))", comment: "Dates: both ends set.")
-        // Its own key: "From %@" is a Story copy's sender, which Russian words differently.
+        // Its own key: "From %@" is a Trip copy's sender, which Russian words differently.
         case let .after(a): String(localized: "dates.from", defaultValue: "From \(format(a))", comment: "Dates: only the first day set.")
         case let .before(b): String(localized: "Until \(format(b))")
         }
-        activitiesPanel.setDates(text, set: session.dates != .allTime)
+        tracksPanel.setDates(text, set: session.dates != .allTime)
     }
 
     /// Setting Dates moves the camera once onto what they match, wherever it is, asked for without
@@ -141,7 +141,7 @@ extension MapViewController {
         Task {
             let read = try? await flow.api.areaList(box: nil, dates: dates)
             guard dates == session.dates else { return }
-            guard let box = MapFraming.union((read?.activities ?? []).filter { !$0.pending }.compactMap(\.bbox)) else { return loadList() }
+            guard let box = MapFraming.union((read?.tracks ?? []).filter { !$0.pending }.compactMap(\.bbox)) else { return loadList() }
             fit(box, animated: true) { [weak self] in
                 guard let self else { return }
                 self.followArea()
@@ -150,13 +150,13 @@ extension MapViewController {
         }
     }
 
-    /// The tiles' query: an open Story whole (root docs/SPEC.md FR-13.6), else every track Dates
+    /// The tiles' query: an open Trip whole (root docs/SPEC.md FR-13.6), else every track Dates
     /// pass, and a counter bumped whenever tracks change under the same query. The area is the
     /// list's alone: past the cap the listed vars choose (renderCap).
     func updateTracksQuery() {
         var parts: [String] = []
-        if let story = session.storyID {
-            parts.append("story=\(story.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? story)")
+        if let trip = session.tripID {
+            parts.append("story=\(trip.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed) ?? trip)")
         } else {
             parts += session.dates.query.map { "\($0.name)=\($0.value ?? "")" }
         }

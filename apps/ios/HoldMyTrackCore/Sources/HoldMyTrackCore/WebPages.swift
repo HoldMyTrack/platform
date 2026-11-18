@@ -41,7 +41,7 @@ public enum WebPageSession {
         func param(_ name: String) -> String? { query.first { $0.name == name }?.value }
         return WebRoute.of(
             scheme: url.scheme?.lowercased(), authority: authority(url), path: URLComponents(url: url, resolvingAgainstBaseURL: false)?.path,
-            activity: param("activity"), day: param("day"),
+            track: param("activity"), day: param("day"),
             baseScheme: base.scheme?.lowercased(), baseAuthority: authority(base), page: page.path, leaving: leaving, onboarding: onboarding
         )
     }
