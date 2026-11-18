@@ -116,19 +116,19 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     "boldTracks": { input in .ids(PanelRules.boldIDs(checked: Set(input.strings("checked")), focused: input["focused"].string)) },
     "toolbarTarget": { input in .ids(PanelRules.targetIDs(checked: Set(input.strings("checked")), focused: input["focused"].string)) },
     "targetVisibility": { input in .ids(PanelRules.toggledVisibility(hidden: Set(input.strings("hidden")), target: Set(input.strings("target")))) },
-    "distanceBounds": { input in distanceJSON(ActivityFacets.distanceBounds(activities(input["activities"]))) },
+    "distanceBounds": { input in distanceJSON(ActivityFacets.distanceBounds(activities(input["tracks"]))) },
     "distanceFilter": { input in
         let knob: DistanceKnob = input["knob"].string == "min" ? .min : .max
         return distanceJSON(ActivityFacets.nextDistanceFilter(bounds: distance(input["bounds"])!, current: distance(input["current"])!, knob: knob, value: input.number("value")))
     },
     "typeFacets": { input in
-        .array(ActivityFacets.typeFacets(activities(input["activities"]), distanceFilter: distance(input["distanceFilter"])).map { ["type": .string($0.type), "count": .num($0.count)] })
+        .array(ActivityFacets.typeFacets(activities(input["tracks"]), distanceFilter: distance(input["distanceFilter"])).map { ["type": .string($0.type), "count": .num($0.count)] })
     },
     "passesFilters": { input in
-        .bool(ActivityFacets.passesFilters(activity(input["activity"]), excludedTypes: Set(input.strings("excludedTypes")), distanceFilter: distance(input["distanceFilter"])))
+        .bool(ActivityFacets.passesFilters(activity(input["track"]), excludedTypes: Set(input.strings("excludedTypes")), distanceFilter: distance(input["distanceFilter"])))
     },
     "panelState": { input in
-        let all = (input["activities"].list ?? []).map { activity($0) }
+        let all = (input["tracks"].list ?? []).map { activity($0) }
         let state = input["state"]
         var panel = PanelState()
         panel.setActivities(all)
@@ -192,7 +192,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         let state = input["state"]
         var session = MapSession()
         // The Story first: opening one starts the selection set up below over.
-        if let story = state["storyId"].string {
+        if let story = state["tripId"].string {
             session.enterStory(story)
             _ = session.consumeFly()
         }
@@ -212,8 +212,8 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         case "datesSet": session.setDates(dates(event["dates"]), fly: event["fly"].bool!)
         case "areaLoaded": session.areaLoaded(event["area"].list!.map { $0.double! })
         case "dayViewed": session.viewDay(event["day"].string!)
-        case "storyEntered": session.enterStory(event["id"].string!)
-        case "storyExited": session.exitStory()
+        case "tripEntered": session.enterStory(event["id"].string!)
+        case "tripExited": session.exitStory()
         case let type: throw RuleError("no iOS event \(type ?? "?")")
         }
         var out: [String: RuleJSON] = [
@@ -221,7 +221,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
             "checked": .ids(session.panel.checked), "hidden": .ids(session.panel.hidden), "excludedTypes": .ids(session.panel.excludedTypes),
             "flyRequest": .bool(session.flyRequest),
         ]
-        if let story = session.storyID { out["storyId"] = .string(story) }
+        if let story = session.storyID { out["tripId"] = .string(story) }
         return .object(out)
     },
     "layerInsertion": { input in
@@ -243,22 +243,22 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         case .ignore: return "ignore"
         case .close: return "close"
         case .onboarded: return "onboarded"
-        case .viewOnMap(let activity, let day): return ["viewOnMap": ["activity": .string(activity), "day": .string(day)]]
+        case .viewOnMap(let activity, let day): return ["viewOnMap": ["track": .string(activity), "day": .string(day)]]
         }
     },
-    "editTrackFold": { input in editJSON(EditTrackOps.fold(edit(input["base"]), try ops(input["ops"]))) },
-    "editTrackApply": { input in .array(EditTrackOps.apply(points(input["points"]), edit(input["edit"])!).map(pointJSON)) },
-    "editTrackChop": { input in opJSON(EditTrackOps.chop(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi"))) },
-    "editTrackCut": { input in opJSON(EditTrackOps.cut(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi"))) },
-    "editTrackSplitIndex": { input in EditTrackOps.splitIndex(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi")).map { .num($0) } ?? nil },
-    "editTrackSplitPoint": { input in try EditTrackOps.splitPoint(ops(input["ops"])).map { .num($0) } ?? nil },
-    "editTrackMove": { input in opJSON(EditTrackOps.move(t: input.int("t"), lon: input.number("lon"), lat: input.number("lat"))) },
-    "editTrackDistances": { input in .array(EditTrackOps.cumulativeDistances(points(input["points"])).map { .num($0) }) },
+    "editRouteFold": { input in editJSON(EditTrackOps.fold(edit(input["base"]), try ops(input["ops"]))) },
+    "editRouteApply": { input in .array(EditTrackOps.apply(points(input["points"]), edit(input["edit"])!).map(pointJSON)) },
+    "editRouteChop": { input in opJSON(EditTrackOps.chop(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi"))) },
+    "editRouteCut": { input in opJSON(EditTrackOps.cut(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi"))) },
+    "editRouteSplitIndex": { input in EditTrackOps.splitIndex(points(input["visible"]), lo: input.int("lo"), hi: input.int("hi")).map { .num($0) } ?? nil },
+    "editRouteSplitPoint": { input in try EditTrackOps.splitPoint(ops(input["ops"])).map { .num($0) } ?? nil },
+    "editRouteMove": { input in opJSON(EditTrackOps.move(t: input.int("t"), lon: input.number("lon"), lat: input.number("lat"))) },
+    "editRouteDistances": { input in .array(EditTrackOps.cumulativeDistances(points(input["points"])).map { .num($0) }) },
     "photoScope": { input in
-        let scope = PhotoMarkers.scope(mode: MapMode(rawValue: input["mode"].string!)!, editWindowIDs: input["editWindowIds"].list?.compactMap(\.string), focused: input["focused"].string, storyID: input["storyId"].string)
+        let scope = PhotoMarkers.scope(mode: MapMode(rawValue: input["mode"].string!)!, editWindowIDs: input["editWindowIds"].list?.compactMap(\.string), focused: input["focused"].string, storyID: input["tripId"].string)
         switch scope {
-        case .activity(let id): return ["activity": .string(id)]
-        case .story(let id): return ["story": .string(id)]
+        case .activity(let id): return ["track": .string(id)]
+        case .story(let id): return ["trip": .string(id)]
         case nil: return nil
         }
     },
@@ -277,12 +277,12 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         )
         return .array(placed.map { ["ids": .list($0.ids), "x": .num($0.x), "y": .num($0.y), "diameter": .num($0.diameter), "active": .bool($0.active), "small": .bool($0.small)] })
     },
-    "photoTrackPoint": { input in
+    "photoRoutePoint": { input in
         let point = try photoTrack(input).point(at: input.number("fraction"))
         return ["lon": .num(point.lon), "lat": .num(point.lat), "t": .num(point.t)]
     },
-    "photoTrackFraction": { input in .num(photoTrack(input).fraction(at: input.number("t"))) },
-    "photoTrackStart": { input in
+    "photoRouteFraction": { input in .num(photoTrack(input).fraction(at: input.number("t"))) },
+    "photoRouteStart": { input in
         let placed = (input["placed"].object ?? [:]).mapValues { $0.double }
         let anchors = (input["anchors"].object ?? [:]).mapValues(anchor)
         return .num(photoTrack(input).startFraction(anchor: anchor(input["anchor"]), placed: placed, anchors: anchors))
@@ -294,7 +294,7 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
     },
     "photoPan": { input in viewJSON(PhotoZoom.pan(view(input), dx: input.number("dx"), dy: input.number("dy"), fitted: size(input["fitted"]), stage: size(input["stage"]))) },
     "photoClamp": { input in viewJSON(PhotoZoom.clamp(view(input), fitted: size(input["fitted"]), stage: size(input["stage"]))) },
-    "activityZone": { input in .opt(ActivityZone.of(own: input["own"].string, account: input["account"].string)) },
+    "trackZone": { input in .opt(ActivityZone.of(own: input["own"].string, account: input["account"].string)) },
     "distanceParts": { input in partsJSON(FormatParts.distance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
     "totalDistanceParts": { input in partsJSON(FormatParts.totalDistance(meters: input.number("meters"), imperial: input["system"].string == "imperial")) },
     "durationParts": { input in

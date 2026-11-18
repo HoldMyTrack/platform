@@ -27,6 +27,22 @@ import { cameraEnd, cameraStep, cardFor, nextStep, stepChanges, tourStart } from
 
 const sorted = (set) => [...set].sort();
 
+// The cases say tracks and trips; the map code still says activities and stories until it is
+// renamed. Maps the tab and card ids across, both ways, and nothing else.
+const OLD = { tracks: 'activities', trips: 'stories' };
+const NEW = { activities: 'tracks', stories: 'trips' };
+const id = (names) => (value) => (typeof value === 'string' ? (names[value] ?? value) : value);
+const ids = (names) => (value) => {
+  if (!value || typeof value !== 'object') return value;
+  const out = { ...value };
+  for (const key of ['tab', 'card']) if (key in out) out[key] = id(names)(out[key]);
+  if (Array.isArray(out.cards)) out.cards = out.cards.map(id(names));
+  return out;
+};
+const toOld = ids(OLD);
+const toNew = ids(NEW);
+const SESSION_EVENT = { tripEntered: 'storyEntered', tripExited: 'storyExited' };
+
 export const rules = {
   openingView: ({ boxes, viewport }) => openingView(boxes, viewport),
   areaLoad: ({ zoom, listed, total }) => areaLoad(zoom, listed, total ?? null),
@@ -40,17 +56,17 @@ export const rules = {
     const status = satelliteStatus(loaded, failed, waitedMs);
     return { status, look: satelliteLook(on, status) };
   },
-  tourStart: ({ requested, isDemo, hasActivities, seen }) => tourStart({ requested, isDemo, hasActivities: hasActivities ?? null, seen }),
-  tourCard: ({ event, seen, touring }) => cardFor(event, seen, touring),
+  tourStart: ({ requested, isDemo, hasTracks, seen }) => tourStart({ requested, isDemo, hasActivities: hasTracks ?? null, seen: toOld(seen) }),
+  tourCard: ({ event, seen, touring }) => id(NEW)(cardFor(toOld(event), toOld(seen), touring)),
   tourCamera: ({ start, shown, current, step }) => {
     const toView = (v) => (v ? { center: [v.lon, v.lat], zoom: v.zoom } : null);
     const fromView = (v) => (v ? { lon: v.center[0], lat: v.center[1], zoom: v.zoom } : null);
     const camera = { start: toView(start), shown: toView(shown) };
     if (!step) return { start: null, shown: null, move: fromView(cameraEnd(camera)) };
-    const { camera: next, move } = cameraStep(camera, { view: toView(step.view), tab: step.tab }, toView(current));
+    const { camera: next, move } = cameraStep(camera, { view: toView(step.view), tab: id(OLD)(step.tab) }, toView(current));
     return { start: fromView(next.start), shown: fromView(next.shown), move: fromView(move) };
   },
-  tourStep: ({ now, step, restore }) => stepChanges(now, step ?? null, restore),
+  tourStep: ({ now, step, restore }) => toNew(stepChanges(toOld(now), toOld(step ?? null), toOld(restore))),
   tourNextStep: ({ shown, from, dir }) => {
     const steps = shown.map(() => ({ anchor: 'shared' }));
     return nextStep(steps, from, dir, (step) => shown[steps.indexOf(step)]);
@@ -68,24 +84,27 @@ export const rules = {
   },
   boldTracks: ({ checked, focused }) => boldTracks(new Set(checked), focused ?? null),
   toolbarTarget: ({ checked, focused }) => sorted(toolbarTarget(new Set(checked), focused ?? null)),
-  statsOffered: ({ checked, storyId }) => statsOffered(new Set(checked), storyId ?? null),
+  statsOffered: ({ checked, tripId }) => statsOffered(new Set(checked), tripId ?? null),
   statsCardPlacement: ({ width, height, card }) => statsCardPlacement(width, height, card),
   targetVisibility: ({ hidden, target }) => sorted(toggledVisibility(new Set(hidden), new Set(target))),
-  photoScope: ({ mode, editWindowIds, focused, storyId }) => photoScopeFor(mode, editWindowIds ?? null, focused ?? null, storyId ?? null),
+  photoScope: ({ mode, editWindowIds, focused, tripId }) => {
+    const scope = photoScopeFor(mode, editWindowIds ?? null, focused ?? null, tripId ?? null);
+    return scope === null ? null : 'activity' in scope ? { track: scope.activity } : { trip: scope.story };
+  },
   photoGroup: ({ photos }) => photoGroupAction(photos),
-  distanceBounds: ({ activities }) => distanceBounds(activities),
+  distanceBounds: ({ tracks }) => distanceBounds(tracks),
   distanceFilter: ({ bounds, current, knob, value }) => nextDistanceFilter(bounds, current, knob, value),
-  typeFacets: ({ activities, distanceFilter }) => typeFacets(activities, distanceFilter ?? null),
-  passesFilters: ({ activity, excludedTypes, distanceFilter }) => passesFilters(activity, new Set(excludedTypes), distanceFilter ?? null),
-  activityZone: ({ own, account }) => activityTimeZone(own ?? undefined, account ?? undefined) ?? null,
+  typeFacets: ({ tracks, distanceFilter }) => typeFacets(tracks, distanceFilter ?? null),
+  passesFilters: ({ track, excludedTypes, distanceFilter }) => passesFilters(track, new Set(excludedTypes), distanceFilter ?? null),
+  trackZone: ({ own, account }) => activityTimeZone(own ?? undefined, account ?? undefined) ?? null,
   photoClusters: ({ points, radius }) => clusterPoints(points, radius),
   photoMarkerSize: ({ zoom }) => photoMarkerSize(zoom),
   basemapStatus: ({ loaded, failed, waitedMs }) => basemapStatus(loaded, failed, waitedMs),
   photoMarkerLayout: ({ points, zoom, activeId, loneId, width, height, scale }) =>
     photoMarkerLayout(points, zoom, activeId ?? null, loneId ?? null, { width, height }, scale),
-  photoTrackPoint: ({ points, fraction }) => pointAt(photoTrack(points), fraction),
-  photoTrackFraction: ({ points, t }) => fractionAt(photoTrack(points), t),
-  photoTrackStart: ({ points, anchor, placed, anchors }) =>
+  photoRoutePoint: ({ points, fraction }) => pointAt(photoTrack(points), fraction),
+  photoRouteFraction: ({ points, t }) => fractionAt(photoTrack(points), t),
+  photoRouteStart: ({ points, anchor, placed, anchors }) =>
     startFraction(photoTrack(points), anchor ?? null, new Map(Object.entries(placed)), new Map(Object.entries(anchors))),
   photoFit: ({ image, stage }) => fitSize(image, stage),
   photoZoom: ({ view, factor, point, fitted, stage }) => zoomAt(view, factor, point, fitted, stage),
@@ -94,17 +113,17 @@ export const rules = {
   distanceParts: ({ meters, system }) => distanceParts(meters, system),
   totalDistanceParts: ({ meters, system }) => totalDistanceParts(meters, system),
   durationParts: ({ seconds }) => durationParts(seconds),
-  editTrackFold: ({ base, ops }) => foldEdit(base ?? null, ops),
-  editTrackApply: ({ points, edit }) => applyEdit(points, edit),
-  editTrackChop: ({ visible, lo, hi }) => chopOp(visible, lo, hi),
-  editTrackCut: ({ visible, lo, hi }) => cutOp(visible, lo, hi),
-  editTrackSplitIndex: ({ visible, lo, hi }) => splitIndex(visible, lo, hi),
-  editTrackSplitPoint: ({ ops }) => splitPoint(ops),
-  editTrackMove: ({ t, lon, lat }) => moveOp(t, lon, lat),
-  editTrackDistances: ({ points }) => cumulativeDistances(points),
+  editRouteFold: ({ base, ops }) => foldEdit(base ?? null, ops),
+  editRouteApply: ({ points, edit }) => applyEdit(points, edit),
+  editRouteChop: ({ visible, lo, hi }) => chopOp(visible, lo, hi),
+  editRouteCut: ({ visible, lo, hi }) => cutOp(visible, lo, hi),
+  editRouteSplitIndex: ({ visible, lo, hi }) => splitIndex(visible, lo, hi),
+  editRouteSplitPoint: ({ ops }) => splitPoint(ops),
+  editRouteMove: ({ t, lon, lat }) => moveOp(t, lon, lat),
+  editRouteDistances: ({ points }) => cumulativeDistances(points),
   layerInsertion: ({ current, order, id, own, fallback }) => insertionPoint(current, order, id, new Set(own), fallback ?? undefined) ?? null,
   layerLift: ({ current, id, own }) => needsLift(current, id, new Set(own)),
-  panelState: ({ activities, state, event }) => {
+  panelState: ({ tracks, state, event }) => {
     const selection = {
       checked: new Set(state.checked ?? []),
       focused: state.focused ?? null,
@@ -112,14 +131,14 @@ export const rules = {
       excludedTypes: new Set(state.excludedTypes ?? []),
       distanceFilter: state.distanceFilter ?? null,
     };
-    const listed = activities.filter((a) => passesFilters(a, selection.excludedTypes, selection.distanceFilter));
+    const listed = tracks.filter((a) => passesFilters(a, selection.excludedTypes, selection.distanceFilter));
     // The master checkbox's and Invert's events, as useSelectionActions.ts sends them.
     const sent = {
       checkAll: () => ({ type: 'checkedSet', ids: listed.map((a) => a.id) }),
       checksCleared: () => ({ type: 'checkedSet', ids: [] }),
       checksInverted: () => ({ type: 'checkedSet', ids: invertedChecks(listed, selection.checked) }),
-      typeToggled: () => ({ ...event, activities }),
-      distanceSet: () => ({ ...event, activities }),
+      typeToggled: () => ({ ...event, activities: tracks }),
+      distanceSet: () => ({ ...event, activities: tracks }),
     }[event.type]?.() ?? event;
     const next = mapSessionReducer({ ...initialSession(null), selection }, sent).selection;
     return {
@@ -132,16 +151,16 @@ export const rules = {
   },
   webSession: ({ state, event }) => {
     const start = {
-      ...initialSession(state.storyId ?? null),
+      ...initialSession(state.tripId ?? null),
       dates: { after: state.dates?.after ?? null, before: state.dates?.before ?? null },
       area: state.area ?? null,
       selection: { ...emptySelection(), checked: new Set(state.checked ?? []), hidden: new Set(state.hidden ?? []), excludedTypes: new Set(state.excludedTypes ?? []) },
     };
-    const next = mapSessionReducer(start, event);
+    const next = mapSessionReducer(start, { ...event, type: SESSION_EVENT[event.type] ?? event.type });
     return {
       dates: next.dates,
       area: next.area,
-      ...(next.storyId !== null && { storyId: next.storyId }),
+      ...(next.storyId !== null && { tripId: next.storyId }),
       checked: sorted(next.selection.checked),
       hidden: sorted(next.selection.hidden),
       excludedTypes: sorted(next.selection.excludedTypes),

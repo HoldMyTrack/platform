@@ -31,7 +31,7 @@ export function setAccountTimeZone(zone: string | undefined): void {
  * The zone an activity's times are shown in (IMPLEMENTATION.md §4.30): `own`, the one it was
  * recorded in, which the server names from its own, possibly newer, tz data; else the
  * account's; else undefined, the browser's. Android's `ActivityZone.kt` runs the same cases,
- * `testdata/client-rules/activity-zone.json`.
+ * `testdata/client-rules/track-zone.json`.
  */
 export function activityTimeZone(own: string | undefined, account: string | undefined = accountZone): string | undefined {
   return knownTimeZone(own) ?? knownTimeZone(account);
