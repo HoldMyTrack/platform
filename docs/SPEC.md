@@ -19,7 +19,7 @@ Every built feature of the server and the web app; the Android app's own behavio
 
 | Term | Meaning |
 | :-- | :-- |
-| **Track** | One recorded outing with a start time and usually a GPS track. Never any heart rate or other health data (ADR-0017). |
+| **Track** | One recorded outing with a start time and usually a GPS route. Never any heart rate or other health data (ADR-0017). |
 | **Original** | The file uploaded or the record synced, kept as it arrived so the track can be rebuilt from it. |
 | **Registered user** | An account with an email and password, a linked Google or Facebook identity, or both. |
 | **Demo user** | A visitor in a session on the shared, read-only Demo Customer account (FR-2). |

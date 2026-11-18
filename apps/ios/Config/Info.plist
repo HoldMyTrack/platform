@@ -24,7 +24,7 @@
 	<array>
 		<dict>
 			<key>CFBundleTypeName</key>
-			<string>Activity file</string>
+			<string>Track file</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSHandlerRank</key>
@@ -63,7 +63,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.garmin.fit</string>
 			<key>UTTypeDescription</key>
-			<string>FIT activity</string>
+			<string>FIT track</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.data</string>
@@ -80,7 +80,7 @@
 			<key>UTTypeIdentifier</key>
 			<string>com.garmin.tcx</string>
 			<key>UTTypeDescription</key>
-			<string>TCX activity</string>
+			<string>TCX track</string>
 			<key>UTTypeConformsTo</key>
 			<array>
 				<string>public.xml</string>

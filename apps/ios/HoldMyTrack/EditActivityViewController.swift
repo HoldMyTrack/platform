@@ -160,10 +160,10 @@ final class EditActivityViewController: UIViewController, PHPickerViewController
     /// the count Save would leave.
     private func renderTabs() {
         let trackChanged = trackEditor?.session?.changed == true
-        tabs.setTitle(trackChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved track changes.") : String(localized: "Route"), forSegmentAt: 1)
+        tabs.setTitle(trackChanged ? String(localized: "Route •", comment: "Edit window's tab with unsaved route changes.") : String(localized: "Route"), forSegmentAt: 1)
         if let photos {
             let count = format.count(photos.count)
-            let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the activity's photos, written as label: N.")
+            let title = photos.draft.isEmpty ? String(localized: "Photos: \(count)", comment: "Edit window's tab: the track's photos, written as label: N.")
                 : String(localized: "Photos: \(count) •", comment: "Edit window's tab with unsaved photo changes.")
             tabs.setTitle(title, forSegmentAt: 2)
         }

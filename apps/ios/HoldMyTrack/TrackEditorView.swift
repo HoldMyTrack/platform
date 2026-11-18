@@ -188,9 +188,9 @@ final class TrackEditorView: UIView {
         slider.set(lower: lo, upper: hi, maximum: visible.count - 1)
         slider.isEnabled = !busy
         readout.text = String(localized: "\(format.distanceValue(distances[lo])) – \(format.distanceValue(distances[hi])) \(format.unit) · \(clock(visible[lo].t))–\(clock(visible[hi].t))",
-                              comment: "Track editor: the range's distances along the track, its unit, and the times at its ends.")
+                              comment: "Route editor: the range's distances along the route, its unit, and the times at its ends.")
         start.text = format.distance(0)
-        count.text = String(localized: "Points: \(format.count(visible.count))", comment: "Track editor: how many points the track has, written as label: N.")
+        count.text = String(localized: "Points: \(format.count(visible.count))", comment: "Route editor: how many points the route has, written as label: N.")
         end.text = format.distance(distances[visible.count - 1])
 
         let splitting = session.splitAt
