@@ -297,7 +297,6 @@ func (c Config) SkipsVerificationInPublic() bool {
 	return c.SkipEmailVerification && !IsLocal(c.AppBaseURL)
 }
 
-// isLocal reports whether rawURL's host is this machine.
 // IsLocal reports an APP_BASE_URL on this machine: local development, never a deployment.
 func IsLocal(rawURL string) bool {
 	u, err := url.Parse(rawURL)

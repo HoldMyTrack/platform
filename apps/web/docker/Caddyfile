@@ -8,10 +8,10 @@
 #
 # Frontend and API are deliberately served from this one origin rather than split across
 # two — apps/web's production build (Dockerfile's `build` stage) already assumes this via
-# VITE_API_BASE_URL="" (a same-origin relative API base), which is also why
-# httpapi/server.go's corsAllowedOrigins needs no production entry added: a same-origin
-# fetch is never a cross-origin request, so CORS never applies to it. Only reconsider that
-# if the frontend and API are ever split onto different origins.
+# VITE_API_BASE_URL="" (a same-origin relative API base), which is also why the API allows
+# no other origin on a deployment (httpapi/server.go's devOrigins, local development only): a
+# same-origin fetch is never a cross-origin request, so CORS never applies to it. Only
+# reconsider that if the frontend and API are ever split onto different origins.
 {$DOMAIN} {
 	# HSTS is set here, where TLS is terminated: every visit after the first goes straight to
 	# https, on every subdomain too (www, tiles), none of which serves plain http. The Go server
