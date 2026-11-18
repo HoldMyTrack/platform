@@ -94,7 +94,8 @@ func TestMigrationRenamesStoredValues(t *testing.T) {
 		 ('story_copy', '{"story_id":"s1","recipient_id":"r"}', 'done'),
 		 ('reprivacy', '{"activity_ids":["b1"]}', 'done');
 		INSERT INTO jobs (kind, payload, state, raw) VALUES
-		 ('ingest', '{"source":"recorded","raw_payload_key":"raw/u/recorded/r2.json","activity_type":"walking"}', 'pending', convert_to('{"activity_type":"walking","points":[]}', 'UTF8')),
+		 ('ingest', '{"source":"recorded","raw_payload_key":"raw/u/recorded/r2.json","activity_type":"walking","raw_bytes":39}', 'pending', convert_to('{"activity_type":"walking","points":[]}', 'UTF8')),
+		 ('ingest', '{"source":"recorded","raw_payload_key":"raw/u/recorded/r3.json"}', 'pending', NULL),
 		 ('ingest', '{"source":"upload","raw_payload_key":"raw/u/f.fit"}', 'pending', '\x0e10ff'::bytea);`); err != nil {
 		t.Fatal(err)
 	}
@@ -123,9 +124,11 @@ func TestMigrationRenamesStoredValues(t *testing.T) {
 		`edit_route {"edit": null, "track_id": "b1"}`,
 		`trip_copy {"trip_id": "s1", "recipient_id": "r"}`,
 		`reprivacy {"track_ids": ["b1"]}`,
-		`ingest {"source": "recorded", "track_type": "walking", "raw_payload_key": "raw/u/recorded/r2.json"} {"track_type":"walking","points":[]}`,
+		`ingest {"source": "recorded", "raw_bytes": 36, "track_type": "walking", "raw_payload_key": "raw/u/recorded/r2.json"} {"track_type":"walking","points":[]}`,
+		`ingest {"source": "recorded", "raw_payload_key": "raw/u/recorded/r3.json"}`,
 		`ingest {"source": "upload", "raw_payload_key": "raw/u/f.fit"} 0e10ff`,
 		`rewrite_sync_payload {"key": "raw/u/recorded/r1.json"}`,
+		`rewrite_sync_payload {"key": "raw/u/recorded/r3.json"}`,
 	}
 	for _, w := range want {
 		found := false

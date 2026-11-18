@@ -30,7 +30,7 @@ const DemoCustomerUserID = "22222222-2222-2222-2222-222222222222"
 
 // demo_data/ holds the account's history as raw track files in any format ingest parses
 // (parse.ByExtensionUpTo: .gpx, .tcx, .fit, .json), plus manifest.json. They are real tracks
-// on a live deployment, written out as GPX by `export-demo-tracks` (demo_export.go)
+// on a live deployment, written out as GPX by `export-demo-activities` (demo_export.go)
 // exactly as their owner sees them, and reviewed by hand before being committed.
 //
 //go:embed demo_data

@@ -24,7 +24,7 @@ import (
 // ExportDemoTracks writes the listed tracks into outDir as demo_data/-ready GPX files,
 // their photos' images into outDir/photos/, and outDir/manifest.json with their names, types,
 // descriptions and photos, and the owner's Spots captures over the same span — the
-// `export-demo-tracks` CLI subcommand, run against a live deployment to pick real
+// `export-demo-activities` CLI subcommand, run against a live deployment to pick real
 // tracks for the Demo Customer's history (SeedDemoCustomer). Each file holds the points
 // the owner sees on the map (ingest.DisplayedPoints: clipped by their Private locations, with
 // their route edit applied), never the original upload: demo_data/ is committed to a public

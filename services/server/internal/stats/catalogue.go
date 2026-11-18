@@ -196,7 +196,7 @@ var catalogue = []stat{
 		SELECT count(*) FROM spot_captures c JOIN acct u ON u.id = c.user_id, p
 		WHERE c.captured_at >= p.d0 AND c.captured_at < p.d1`},
 	{prefix: "accounts_with", groups: []string{"stories", "spots", "photos", "privacy_zones"}, query: `
-		SELECT 'trips', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM trips x WHERE x.user_id = u.id)
+		SELECT 'stories', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM trips x WHERE x.user_id = u.id)
 		UNION ALL
 		SELECT 'spots', count(*) FROM acct u WHERE EXISTS (SELECT 1 FROM spot_captures x WHERE x.user_id = u.id)
 		UNION ALL

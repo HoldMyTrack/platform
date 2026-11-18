@@ -6,6 +6,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"net/url"
@@ -172,4 +173,10 @@ func (s *Store) RemoveByPrefixExcept(ctx context.Context, prefix string, keep fu
 	default:
 		return nil
 	}
+}
+
+// IsNotFound reports whether err is the store saying the object doesn't exist.
+func IsNotFound(err error) bool {
+	var resp minio.ErrorResponse
+	return errors.As(err, &resp) && resp.Code == "NoSuchKey"
 }

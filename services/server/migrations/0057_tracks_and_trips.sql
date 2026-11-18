@@ -69,12 +69,20 @@ UPDATE jobs SET payload = (payload - 'story_id') || jsonb_build_object('trip_id'
 
 -- A phone sync's payload names the type activity_type: in jobs.raw while its ingest hasn't
 -- stored it, and in object storage after. The first is rewritten here (json.Marshal writes no
--- space after a colon); the second by one rewrite_sync_payload job per object, queued to run
--- before anything the release queues after it.
+-- space after a colon), with the size the job stores; the second by one rewrite_sync_payload
+-- job per object, whether a track or a waiting ingest points at it. parse reads the old name
+-- until those have run.
 UPDATE jobs
 SET raw = convert_to(replace(convert_from(raw, 'UTF8'), '"activity_type":', '"track_type":'), 'UTF8')
 WHERE kind = 'ingest' AND raw IS NOT NULL AND payload ->> 'raw_payload_key' LIKE '%.json';
+UPDATE jobs SET payload = jsonb_set(payload, '{raw_bytes}', to_jsonb(octet_length(raw)))
+WHERE kind = 'ingest' AND raw IS NOT NULL AND payload ->> 'raw_payload_key' LIKE '%.json' AND payload ? 'raw_bytes';
 
 INSERT INTO jobs (kind, payload, run_after)
-SELECT 'rewrite_sync_payload', jsonb_build_object('key', raw_payload_key), now() - interval '1 minute'
-FROM (SELECT DISTINCT raw_payload_key FROM tracks WHERE raw_payload_key LIKE '%.json') keys;
+SELECT 'rewrite_sync_payload', jsonb_build_object('key', key), now() - interval '1 minute'
+FROM (
+    SELECT raw_payload_key AS key FROM tracks WHERE raw_payload_key LIKE '%.json'
+    UNION
+    SELECT payload ->> 'raw_payload_key' FROM jobs
+    WHERE kind = 'ingest' AND state = 'pending' AND raw IS NULL AND payload ->> 'raw_payload_key' LIKE '%.json'
+) keys;

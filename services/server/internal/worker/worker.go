@@ -552,7 +552,7 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		if err := json.Unmarshal(j.payload, &rj); err != nil {
 			return fmt.Errorf("unmarshal rewrite_sync_payload job: %w", err)
 		}
-		return ingest.RewriteSyncPayload(ctx, store, rj)
+		return ingest.RewriteSyncPayload(ctx, pool, store, rj)
 	default:
 		return fmt.Errorf("unhandled job kind %q", j.kind)
 	}

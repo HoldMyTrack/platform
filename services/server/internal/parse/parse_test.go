@@ -298,3 +298,17 @@ func TestParseTCXSkipsAPointMissingACoordinate(t *testing.T) {
 		t.Errorf("points %+v, want the first and the one at (0, 0), not the one missing its longitude", act.Points)
 	}
 }
+
+// A payload stored before migration 0057 names its type activity_type; track_type wins.
+func TestParseJSONReadsTheOldTypeName(t *testing.T) {
+	for in, want := range map[string]string{
+		`{"activity_type":"walking","points":[]}`:                        "walking",
+		`{"track_type":"cycling","activity_type":"walking","points":[]}`: "cycling",
+		`{"points":[]}`: "unknown",
+	} {
+		got, err := ParseJSON(strings.NewReader(in))
+		if err != nil || got.TrackType != want {
+			t.Errorf("%s: %q, %v; want %q", in, got.TrackType, err, want)
+		}
+	}
+}
