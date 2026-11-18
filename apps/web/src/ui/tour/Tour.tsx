@@ -109,6 +109,26 @@ function Arrow({ placement }: { placement: Placement | null }) {
   return <span className={`tour-arrow tour-arrow--${placement.side}`} style={along} aria-hidden="true" />;
 }
 
+/**
+ * Makes everything outside `ref`'s element inert while it's shown, the page's header included,
+ * so the keyboard and a screen reader stay in the tour as the pointer does behind its blocker.
+ * Each sibling of the element and of its ancestors is marked, and only those it marked are freed.
+ */
+function useInertOutside(ref: { current: HTMLElement | null }) {
+  useEffect(() => {
+    const marked: Element[] = [];
+    for (let node = ref.current; node && node !== document.body; node = node.parentElement) {
+      for (const sibling of node.parentElement?.children ?? []) {
+        if (sibling !== node && !sibling.hasAttribute('inert')) {
+          sibling.setAttribute('inert', '');
+          marked.push(sibling);
+        }
+      }
+    }
+    return () => marked.forEach((el) => el.removeAttribute('inert'));
+  }, [ref]);
+}
+
 /** Keeps Tab inside `container`. */
 function trapTab(event: KeyboardEvent<HTMLElement>) {
   if (event.key !== 'Tab') return;
@@ -130,9 +150,23 @@ function TourStepView({ tour }: { tour: Tour }) {
   const { rects, rect } = useAnchor(step.anchor, tour.missing);
   const { ref, placement } = usePlacement(rect);
   const primary = useRef<HTMLButtonElement>(null);
+  const shell = useRef<HTMLDivElement>(null);
   const last = tour.index === tour.total - 1;
+  useInertOutside(shell);
 
-  useEffect(() => primary.current?.focus(), [step.id]);
+  // Focus moves in once the popover is placed: before, it's still hidden, and focusing a hidden
+  // button leaves focus outside, where the Tab trap never engages.
+  const placed = placement !== null;
+  useEffect(() => {
+    if (placed) primary.current?.focus();
+  }, [step.id, placed]);
+  // Where focus was when the tour began is where it goes back to when it ends.
+  useEffect(() => {
+    const before = document.activeElement;
+    return () => {
+      if (before instanceof HTMLElement && before.isConnected) before.focus();
+    };
+  }, []);
   useHeaderMenuOpen('.page-header details.upload-menu', tour.open.upload === true);
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
@@ -143,7 +177,7 @@ function TourStepView({ tour }: { tour: Tour }) {
   }, [tour.end]);
 
   return (
-    <div className={placement?.kind === 'sheet' ? 'tour tour--narrow' : 'tour'} data-testid="tour" data-step={step.id}>
+    <div ref={shell} className={placement?.kind === 'sheet' ? 'tour tour--narrow' : 'tour'} data-testid="tour" data-step={step.id}>
       {/* Takes every click, so nothing under the tour changes while it runs. */}
       <div className="tour__blocker" />
       {/* The dim screen with a hole for each lit rect, so a menu's neighbours stay dim. */}
