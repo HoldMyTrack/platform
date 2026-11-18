@@ -1,12 +1,12 @@
 {
   "rule": "photoScope",
-  "description": "Whose photos the map shows, in Normal mode only: the Edit window's single activity (none for a group), else the focused activity, else the open Story.",
+  "description": "Whose photos the map shows, in Normal mode only: the Edit window's single track (none for a group), else the focused track, else the open Trip.",
   "cases": [
-    { "name": "Fog shows none", "input": { "mode": "fog", "focused": "a", "storyId": "s" }, "expected": null },
-    { "name": "the Edit window's one activity", "input": { "mode": "normal", "editWindowIds": ["e"], "focused": "a", "storyId": "s" }, "expected": { "activity": "e" } },
+    { "name": "Fog shows none", "input": { "mode": "fog", "focused": "a", "tripId": "s" }, "expected": null },
+    { "name": "the Edit window's one track", "input": { "mode": "normal", "editWindowIds": ["e"], "focused": "a", "tripId": "s" }, "expected": { "track": "e" } },
     { "name": "an Edit window over a group shows none", "input": { "mode": "normal", "editWindowIds": ["e", "f"], "focused": "a" }, "expected": null },
-    { "name": "the focused activity over the Story", "input": { "mode": "normal", "focused": "a", "storyId": "s" }, "expected": { "activity": "a" } },
-    { "name": "the open Story", "input": { "mode": "normal", "storyId": "s" }, "expected": { "story": "s" } },
+    { "name": "the focused track over the Trip", "input": { "mode": "normal", "focused": "a", "tripId": "s" }, "expected": { "track": "a" } },
+    { "name": "the open Trip", "input": { "mode": "normal", "tripId": "s" }, "expected": { "trip": "s" } },
     { "name": "nothing in view", "input": { "mode": "normal" }, "expected": null }
   ]
 }

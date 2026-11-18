@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs so tsc (which has no Node types here) leaves it alone; Node strips the types
 // from the imported .ts module itself. Run with `npm run test:unit`. The rules run from
-// testdata/client-rules/edit-track-*.json in clientRules.test.mjs.
+// testdata/client-rules/edit-route-*.json in clientRules.test.mjs.
 import { applyEdit, dragPreview, foldEdit, moveOp } from '../src/ui/editTrackOps.ts';
 
 test('replaying an edit leaves the recorded points as they were', () => {
