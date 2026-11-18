@@ -32,8 +32,8 @@
 
   --fm-ink: #202b25;
   --fm-ink-rgb: 32 43 37;
-  --fm-ink-secondary: #6c7a70;
-  --fm-ink-muted: #8b9186;
+  --fm-ink-secondary: #647167;
+  --fm-ink-muted: #6a6f65;
   --fm-ink-faint: #b7af9a;
 
   /* Text and icons on a filled accent, danger or ink button. */
@@ -53,10 +53,12 @@
   /* The outline of a popup over the map: the panels' own border vanishes on a dark map. */
   --fm-map-popup-border: var(--fm-border-panel);
 
+  /* Decoration and large shapes only: as text, or under white text, it reads at 3.3:1, under
+     WCAG AA's 4.5. Filled buttons and accent text use --fm-accent-strong. */
   --fm-accent: #b07e2e;
   --fm-accent-rgb: 176 126 46;
-  --fm-accent-strong: #93691f;
-  --fm-accent-hover: #8a611f;
+  --fm-accent-strong: #8f661e;
+  --fm-accent-hover: #765419;
 
   --fm-donate: #b0532f;
   --fm-donate-hover: #96431f;

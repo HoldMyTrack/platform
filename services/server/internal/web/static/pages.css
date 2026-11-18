@@ -311,7 +311,7 @@ code {
 }
 
 .page-features li::marker {
-  color: var(--fm-accent);
+  color: var(--fm-accent-strong);
 }
 
 .page-features + p {
@@ -394,7 +394,7 @@ code {
   height: 28px;
   border-radius: 50%;
   margin-top: -2px;
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
   font-size: 15px;
 }
@@ -548,7 +548,7 @@ code {
   padding: 0;
   border: 0;
   background: none;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
   cursor: pointer;
 }
 
@@ -621,7 +621,7 @@ code {
 
 .auth-card__submit {
   border: 0;
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
 }
 
@@ -774,7 +774,7 @@ code {
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .settings__input {
@@ -790,7 +790,7 @@ code {
 
 .settings__input:disabled {
   background: var(--fm-surface-tint);
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .settings__input:focus {
@@ -885,7 +885,7 @@ code {
   border: 0;
   border-radius: 8px;
   padding: 10px 20px;
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   font: inherit;
   font-size: 14px;
   font-weight: 600;
@@ -1055,7 +1055,7 @@ code {
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgb(var(--fm-ink-rgb) / 50%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .activity-graph__card-value {
@@ -1085,7 +1085,7 @@ code {
 .profile__subtext {
   margin: 0;
   font-size: 13px;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* A two-way switch made of links — each one is the same page with the other setting. */
@@ -1123,7 +1123,7 @@ code {
 }
 
 .profile__toggle-btn[aria-current='true'] {
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   border-color: var(--fm-accent);
   color: var(--fm-on-accent);
 }
@@ -1151,7 +1151,7 @@ code {
 
 .year-grid__stats {
   font-size: 13px;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* A year is wider than a phone: the grid scrolls sideways inside its own box, the page
@@ -1176,7 +1176,7 @@ code {
   height: 12px;
   font-size: 9px;
   line-height: 12px;
-  color: rgb(var(--fm-ink-rgb) / 45%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .year-grid__chart {
@@ -1194,7 +1194,7 @@ code {
 .year-grid__month {
   font-size: 9px;
   line-height: 14px;
-  color: rgb(var(--fm-ink-rgb) / 45%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
   white-space: nowrap;
 }
 
@@ -1248,7 +1248,7 @@ code {
   gap: 6px;
   margin: 16px 0 0;
   font-size: 11px;
-  color: rgb(var(--fm-ink-rgb) / 50%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .exploration {
@@ -1290,7 +1290,7 @@ code {
 }
 
 .exploration__row:hover .exploration__name {
-  color: var(--fm-accent);
+  color: var(--fm-accent-strong);
 }
 
 .exploration__name {
@@ -1352,7 +1352,7 @@ code {
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: rgb(var(--fm-ink-rgb) / 50%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* The Help page (templates/pages/help.html): a row of jump links under the title, and
@@ -1667,7 +1667,7 @@ code {
 
 .sync__when {
   font-size: 12px;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 
@@ -1677,14 +1677,14 @@ code {
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .sync__map {
   flex: none;
   font-size: 13px;
   font-weight: 600;
-  color: var(--fm-accent);
+  color: var(--fm-accent-strong);
 }
 
 .sync__pager {
@@ -1719,7 +1719,7 @@ a.sync__pager-btn:hover {
 
 .sync__pager-range {
   font-size: 13px;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .sync__empty {

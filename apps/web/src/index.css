@@ -72,7 +72,7 @@ body {
   flex-shrink: 0;
   padding: var(--fm-space-8) var(--fm-space-16);
   border-radius: var(--fm-radius-md);
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
   font-size: var(--fm-text-md);
   font-weight: var(--fm-weight-semibold);
@@ -331,7 +331,7 @@ body {
 .stories-tab__chevron {
   flex: none;
   fill: currentColor;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
   transition: transform 150ms ease;
 }
 
@@ -533,14 +533,14 @@ body {
 /* Copies of Stories waiting to be answered (FR-13.7): filled, and never dimmed with its tab. */
 .activities-panel__tab > .activities-panel__badge--waiting {
   opacity: 1;
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
 }
 
 .activities-panel__subtext {
   margin: 0 0 var(--fm-space-8);
   padding: 0 var(--fm-space-16);
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
   font-size: var(--fm-text-sm);
 }
 
@@ -597,12 +597,12 @@ body {
   font-weight: var(--fm-weight-heavy);
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: rgb(var(--fm-ink-rgb) / 50%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .activity-filters__readout {
   font-size: var(--fm-text-xs);
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* A real checkbox list, scrollable rather than collapsing behind "Show all (N)" — the Type
@@ -647,7 +647,7 @@ body {
 .activity-filters__type-count {
   flex: none;
   font: 400 11px ui-monospace, Menlo, monospace;
-  color: rgb(var(--fm-ink-rgb) / 50%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* Two overlapping native range inputs sharing one track — a well-known dual-thumb-slider
@@ -915,7 +915,7 @@ body {
   font-weight: var(--fm-weight-semibold);
   letter-spacing: 0.02em;
   text-transform: uppercase;
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
   background: rgb(var(--fm-ink-rgb) / 8%);
   border-radius: var(--fm-radius-xs);
   padding: var(--fm-space-2) var(--fm-space-6);
@@ -933,7 +933,7 @@ body {
 /* Story sits beside Pending and Hidden, in the accent: it says where an activity belongs, not
    a state it's in. */
 .activities-panel__story-badge {
-  color: var(--fm-accent);
+  color: var(--fm-accent-strong);
   background: rgb(var(--fm-accent-rgb) / 12%);
 }
 
@@ -990,7 +990,7 @@ button.activities-panel__story-badge:hover {
   min-width: 0;
   max-width: 100%;
   font-size: var(--fm-text-xs);
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1057,7 +1057,7 @@ button.activities-panel__story-badge:hover {
 .activities-panel__note {
   padding: var(--fm-space-16) var(--fm-space-16);
   font-size: var(--fm-text-md);
-  color: rgb(var(--fm-ink-rgb) / 50%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .activities-panel__note--error {
@@ -1325,7 +1325,7 @@ button.activities-panel__story-badge:hover {
 .activities-panel__type-trigger-caret {
   display: inline-flex;
   flex: none;
-  color: rgb(var(--fm-ink-rgb) / 45%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* Right-aligned to the trigger, not left — the trigger sits mid-row now (above the TYPE
@@ -1353,7 +1353,7 @@ button.activities-panel__story-badge:hover {
   margin: 0;
   padding: var(--fm-space-4) var(--fm-space-2);
   font-size: var(--fm-text-md);
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 /* The "All types" convenience row above the divider — a select-all, not a real toggle: it
@@ -1417,14 +1417,14 @@ button.activities-panel__story-badge:hover {
 
 .story-menu__item--new {
   font-weight: var(--fm-weight-semibold);
-  color: var(--fm-accent);
+  color: var(--fm-accent-strong);
 }
 
 .story-menu__check {
   flex: none;
   display: inline-flex;
   width: 14px;
-  color: var(--fm-accent);
+  color: var(--fm-accent-strong);
 }
 
 .story-menu__name {
@@ -1846,7 +1846,7 @@ button.activities-panel__story-badge:hover {
 }
 
 .export-viewfinder__button--capture {
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
 }
 
@@ -2187,7 +2187,7 @@ button.activities-panel__story-badge:hover {
   min-width: var(--photo-marker-full-count-height);
   padding: 0 var(--photo-marker-full-count-pad);
   border-radius: var(--fm-radius-pill);
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
   font-size: var(--photo-marker-full-count-font);
   font-weight: var(--fm-weight-bold);
@@ -2599,7 +2599,7 @@ button.activities-panel__story-badge:hover {
   margin-top: var(--fm-space-6);
   font-size: var(--fm-text-sm);
   font-weight: 600;
-  color: var(--fm-accent);
+  color: var(--fm-accent-strong);
 }
 
 .spot-popup__actions {
@@ -2720,7 +2720,7 @@ button.activities-panel__story-badge:hover {
 }
 
 .edit-track__btn--primary {
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
 }
 
@@ -3014,7 +3014,7 @@ button.activities-panel__story-badge:hover {
 
 .private-locations__footer-note {
   font-size: var(--fm-text-sm);
-  color: rgb(var(--fm-ink-rgb) / 55%);
+  color: rgb(var(--fm-ink-rgb) / 68%);
 }
 
 .private-locations__slider {
@@ -3158,7 +3158,7 @@ button.activities-panel__story-badge:hover {
   border: 0;
   border-radius: var(--fm-radius-md);
   padding: var(--fm-space-10) var(--fm-space-16);
-  background: var(--fm-accent);
+  background: var(--fm-accent-strong);
   color: var(--fm-on-accent);
   font: inherit;
   font-weight: var(--fm-weight-semibold);
@@ -3293,7 +3293,7 @@ button.activities-panel__story-badge:hover {
     padding: 0;
     border: 0;
     background: none;
-    color: rgb(var(--fm-ink-rgb) / 45%);
+    color: rgb(var(--fm-ink-rgb) / 68%);
     cursor: pointer;
   }
 
