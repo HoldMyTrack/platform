@@ -24,10 +24,6 @@ export function getTileVersion(): string {
   return tileVersion;
 }
 
-export function versionedTileURL(url: string): string {
-  return tileVersion ? `${url}?cv=${encodeURIComponent(tileVersion)}` : url;
-}
-
 export function setTileVersion(next: string): void {
   tileVersion = next;
 }

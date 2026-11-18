@@ -114,8 +114,8 @@ export interface GroupPart {
 }
 
 /** A source's tile path for `kind` at `tileVersion`. */
-export function tilePath(kind: string, tileVersion: string, extension = 'mvt'): string {
-  const path = `${TILES}/${kind}/{z}/{x}/{y}.${extension}`;
+export function tilePath(kind: string, tileVersion: string): string {
+  const path = `${TILES}/${kind}/{z}/{x}/{y}.mvt`;
   return tileVersion ? `${path}?cv=${encodeURIComponent(tileVersion)}` : path;
 }
 
