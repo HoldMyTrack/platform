@@ -1,5 +1,6 @@
 import type { GeoJSONSource, Map as MapLibreMap, MapMouseEvent, MapTouchEvent } from 'maplibre-gl';
 import type { TrackPoint } from '../api.ts';
+import { overlayInPlace } from './overlayOrder.ts';
 
 /**
  * The Edit track overlay (IMPLEMENTATION.md §4.7.7): one GeoJSON source drawing the track
@@ -87,6 +88,9 @@ export function ensureTrackEditLayer(map: MapLibreMap, beforeId: string | undefi
     filter: ['==', ['get', 'role'], 'knob'],
     paint: { 'circle-radius': 7, 'circle-color': ACCENT, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 },
   });
+  // Back under the labels when a group added since has gone in above (overlayOrder.ts).
+  const ids = [PREVIEW_LAYER_ID, LINE_LAYER_ID, SECOND_LAYER_ID, TRACK_EDIT_POINTS_LAYER_ID, KNOBS_LAYER_ID];
+  if (!overlayInPlace(map.getLayersOrder(), ids, beforeId)) for (const id of ids) map.moveLayer(id, beforeId);
 }
 
 /** What the knobs would do if pressed now — Chop removes outside them, Cut between them,

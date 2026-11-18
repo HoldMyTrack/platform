@@ -1,6 +1,7 @@
 import { TRACKS_MIN_ZOOM } from './config.ts';
 import { EARTH_RADIUS_M } from '../geo.ts';
 import type { ExpressionSpecification, GeoJSONSource, LngLat, Map as MapLibreMap, MapLayerMouseEvent, MapLayerTouchEvent } from 'maplibre-gl';
+import { overlayInPlace } from './overlayOrder.ts';
 
 /**
  * The Private locations overlay (FR-7.1): every saved circle, the one being edited, and its
@@ -104,6 +105,9 @@ export function ensurePrivateLocationsLayer(map: MapLibreMap, beforeId: string |
     filter: ['==', ['get', 'role'], 'handle'],
     paint: { 'circle-radius': 8, 'circle-color': COLOR, 'circle-stroke-color': '#ffffff', 'circle-stroke-width': 2.5 },
   });
+  // Back under the labels when a group added since has gone in above (overlayOrder.ts).
+  const ids = [FILL_LAYER_ID, OUTLINE_LAYER_ID, CENTER_LAYER_ID, HANDLE_LAYER_ID];
+  if (!overlayInPlace(map.getLayersOrder(), ids, beforeId)) for (const id of ids) map.moveLayer(id, beforeId);
 }
 
 /** Redraws every circle; `selected` (saved or not) is highlighted, with a drag handle when `draggable`. */
