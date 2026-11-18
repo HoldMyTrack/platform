@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The open Trip's description, under its folder (.stories-tab__description), set in with the
+<!-- The open Trip's description, under its folder (.trips-tab__description), set in with the
      rows under it. -->
 <TextView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"

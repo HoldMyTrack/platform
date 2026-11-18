@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A copy of a Trip someone sent, at the top of the Trips tab (the web's .stories-tab__inbox,
+<!-- A copy of a Trip someone sent, at the top of the Trips tab (the web's .trips-tab__inbox,
      docs/SPEC.md FR-13.6): who sent which Trip and how many tracks, then Accept and
      Decline — or, once accepted, "Copying …" with no buttons until it has arrived. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

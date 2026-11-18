@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A toolbar action, the web's .activities-panel__edit/__delete/__visibility: a 34dp tinted
+<!-- A toolbar action, the web's .tracks-panel__edit/__delete/__visibility: a 34dp tinted
      square with the small radius, inset in a 48dp touch target. Pressed, the stronger tint. -->
 <inset xmlns:android="http://schemas.android.com/apk/res/android"
     android:inset="7dp">

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Type dropdown's trigger, the web's .activities-panel__type-trigger: tinted fill, the
+<!-- The Type dropdown's trigger, the web's .tracks-panel__type-trigger: tinted fill, the
      panel border, small radius. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/hmt_surface_tint" />

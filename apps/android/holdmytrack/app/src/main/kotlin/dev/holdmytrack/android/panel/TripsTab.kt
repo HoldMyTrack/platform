@@ -448,7 +448,7 @@ class TripsTab(
                     text = item.text
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.hmt_text_md))
                 }
-                // Who sent the copy, smaller, over the description (.stories-tab__from).
+                // Who sent the copy, smaller, over the description (.trips-tab__from).
                 is Item.From -> (holder.itemView as TextView).apply {
                     text = item.text
                     setTextSize(TypedValue.COMPLEX_UNIT_PX, res.getDimension(R.dimen.hmt_text_sm))

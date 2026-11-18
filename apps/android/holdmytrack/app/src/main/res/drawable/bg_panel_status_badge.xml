@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A row's Pending / Hidden badge, the web's .activities-panel__hidden-badge: ink at 8%, the
+<!-- A row's Pending / Hidden badge, the web's .tracks-panel__hidden-badge: ink at 8%, the
      extra-small radius. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/hmt_ink_tint_8" />

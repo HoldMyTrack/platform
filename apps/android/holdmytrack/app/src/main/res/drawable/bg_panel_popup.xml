@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Type dropdown's panel, the web's .activities-panel__type-panel: white, the panel
+<!-- The Type dropdown's panel, the web's .tracks-panel__type-panel: white, the panel
      border, the large radius. Its shadow is the popup's elevation. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="@color/hmt_surface" />

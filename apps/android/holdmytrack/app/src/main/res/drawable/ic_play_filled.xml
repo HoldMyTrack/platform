@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Lucide "play" (lucide-static 1.48.0, the web's version; ISC, assets/licenses/lucide-LICENSE.txt),
-     filled as the web's .stories-tab__chevron fills it — a Trip folder's triangle, which
+     filled as the web's .trips-tab__chevron fills it — a Trip folder's triangle, which
      panel/TripsTab.kt turns to point down while the Trip is open. White, and tinted where
      it's used. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"

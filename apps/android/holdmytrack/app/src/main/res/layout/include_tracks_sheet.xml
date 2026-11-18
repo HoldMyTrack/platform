@@ -101,7 +101,7 @@
                 tools:text="Stories" />
         </LinearLayout>
 
-        <!-- What the Trips or Sync content is (.activities-panel__subtext);
+        <!-- What the Trips or Sync content is (.tracks-panel__subtext);
              the Tracks tab has none, its range and filters saying what's listed. -->
         <TextView
             android:id="@+id/panel_subtext"
@@ -133,7 +133,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- The filters as chips (.activities-panel__filters): Type's dropdown, DISTANCE's
+            <!-- The filters as chips (.tracks-panel__filters): Type's dropdown, DISTANCE's
                  slider in a popup under its chip, and "Reset" while either is on. -->
             <LinearLayout
                 android:id="@+id/panel_filters"
@@ -256,7 +256,7 @@
                     android:visibility="gone" />
             </LinearLayout>
 
-            <!-- The list's progress bar (.activities-panel__progress): over the rows while a slow
+            <!-- The list's progress bar (.tracks-panel__progress): over the rows while a slow
                  reload is under way. Always 2dp tall, so showing it never moves the list. -->
             <com.google.android.material.progressindicator.LinearProgressIndicator
                 android:id="@+id/panel_progress"
@@ -270,7 +270,7 @@
                 app:trackThickness="2dp" />
 
             <!-- The rows, then a note while empty and loading, when nothing matches, or when the read failed
-                 (.activities-panel__note, item_panel_note). A tap on the list's own empty space, or on
+                 (.tracks-panel__note, item_panel_note). A tap on the list's own empty space, or on
                  the note, clears the selection (TracksPanel.kt). -->
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/panel_list"
@@ -281,7 +281,7 @@
                 android:overScrollMode="never"
                 android:scrollbars="vertical" />
 
-            <!-- The target's summary (.activities-panel__footer): "1 selected · 10 km". -->
+            <!-- The target's summary (.tracks-panel__footer): "1 selected · 10 km". -->
             <TextView
                 android:id="@+id/panel_footer"
                 android:layout_width="match_parent"
@@ -336,7 +336,7 @@
                     android:textSize="@dimen/hmt_text_md"
                     tools:text="3 activities · 58 km · 3h 26m moving" />
 
-                <!-- Per track type (.stories-tab__types): its name, then its own line. -->
+                <!-- Per track type (.trips-tab__types): its name, then its own line. -->
                 <TableLayout
                     android:id="@+id/trips_types"
                     android:layout_width="match_parent"

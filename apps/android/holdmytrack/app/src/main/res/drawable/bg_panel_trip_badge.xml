@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- A row's Trip badge, the web's .activities-panel__story-badge: the accent at 12%, the
+<!-- A row's Trip badge, the web's .tracks-panel__trip-badge: the accent at 12%, the
      extra-small radius. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
     <solid android:color="#1FB07E2E" />

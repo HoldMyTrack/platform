@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One Tracks row, after the web's .activities-panel__row: a tile of the track's kind
+<!-- One Tracks row, after the web's .tracks-panel__row: a tile of the track's kind
      (panel/TrackKind), which is also its checkbox — a tap checks it, and a checked one is a ✓
      on the accent — then the text — the name or start time over "[date ·] distance · duration ·
      type" — which is the row's own tap target (select and fly to, or check while selecting; a
@@ -76,7 +76,7 @@
     </LinearLayout>
 
     <!-- One right-aligned column, so the badges share one edge whatever the text does, and a
-         row that's both stacks them together (.activities-panel__badges). -->
+         row that's both stacks them together (.tracks-panel__badges). -->
     <LinearLayout
         android:id="@+id/track_badges"
         android:layout_width="wrap_content"
@@ -112,7 +112,7 @@
             android:focusable="true" />
     </LinearLayout>
 
-    <!-- An open Trip's row only: takes the track out of the Trip (.stories-tab__remove). -->
+    <!-- An open Trip's row only: takes the track out of the Trip (.trips-tab__remove). -->
     <Button
         android:id="@+id/track_remove"
         style="@style/Widget.HoldMyTrack.Button.RowIcon"

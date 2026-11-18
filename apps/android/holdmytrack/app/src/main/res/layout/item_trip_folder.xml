@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- One Trip on the Trips tab, after the web's .stories-tab__folder: the triangle and the
+<!-- One Trip on the Trips tab, after the web's .trips-tab__folder: the triangle and the
      name, which is the folder's own tap target (open it), then the pencil, send and the bin — always
      shown, as the web shows them at phone width. A hairline over it. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"

@@ -843,7 +843,7 @@ class TracksPanel(
             }
             rows.addView(row)
         }
-        // About twelve rows, then the list scrolls (.activity-filters__type-list's max-height).
+        // About twelve rows, then the list scrolls (.track-filters__type-list's max-height).
         val scroll = content.findViewById<ScrollView>(R.id.type_filter_scroll)
         rows.measure(View.MeasureSpec.UNSPECIFIED, View.MeasureSpec.UNSPECIFIED)
         val max = (TYPE_LIST_MAX_DP * res.displayMetrics.density).toInt()
