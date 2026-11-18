@@ -4,6 +4,7 @@ import type { MessageKey } from '../../i18n/en.ts';
 import { onScreen, placePopover, unionOf, type CardId, type Placement, type Rect } from './tourRules.ts';
 import type { Tour } from './useTour.ts';
 import './tour.css';
+import { useRestoreFocus } from '../useWindowFocus.ts';
 
 /** How long a step's anchor gets to appear after a mode change before the step is skipped: in
  *  time, not frames, which a 120 Hz display runs through twice as fast. */
@@ -173,12 +174,7 @@ function TourStepView({ tour }: { tour: Tour }) {
     if (placed) primary.current?.focus();
   }, [step.id, placed]);
   // Where focus was when the tour began is where it goes back to when it ends.
-  useEffect(() => {
-    const before = document.activeElement;
-    return () => {
-      if (before instanceof HTMLElement && before.isConnected) before.focus();
-    };
-  }, []);
+  useRestoreFocus();
   useHeaderMenuOpen('.page-header details.upload-menu', tour.open.upload === true);
   useEffect(() => {
     const onKey = (event: globalThis.KeyboardEvent) => {
