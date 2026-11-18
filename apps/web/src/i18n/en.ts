@@ -360,6 +360,7 @@ export const en = {
   'spots.since': 'Since {date}',
   'spots.wikipedia': 'Wikipedia',
   'export.cancel': 'Cancel export',
+  'export.window': 'Export',
   'export.capture': 'Capture export',
   'export.show_stats': 'Show stats',
   'export.show_stats_hint': 'Check activities to show their stats.',

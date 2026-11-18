@@ -469,6 +469,7 @@ export const ru: Record<MessageKey, string> & Record<string, string> = {
   'spots.in_area_truncated': 'Показано {shown} из {total} мест — приблизьте карту, чтобы увидеть остальные',
   'spots.since': 'С {date}',
   'spots.wikipedia': 'Википедия',
+  'export.window': 'Экспорт',
   'export.cancel': 'Отменить экспорт',
   'export.capture': 'Сохранить снимок',
   'export.show_stats': 'Показать статистику',
