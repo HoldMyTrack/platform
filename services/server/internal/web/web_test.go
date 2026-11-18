@@ -1,6 +1,7 @@
 package web
 
 import (
+	"net/http"
 	"net/http/httptest"
 	"regexp"
 	"strings"
@@ -212,6 +213,27 @@ func TestPagesRenderInEveryLanguage(t *testing.T) {
 			if !strings.Contains(body, `<html lang="`+lang+`">`) {
 				t.Errorf("%s/%s: no <html lang=%q>", lang, page, lang)
 			}
+		}
+	}
+}
+
+func TestStaticCacheFollowsTheVersion(t *testing.T) {
+	for _, tc := range []struct{ version, want string }{
+		{"abc123", "public, max-age=31536000, immutable"},
+		{"unknown", "no-cache"},
+		{"", "no-cache"},
+	} {
+		r, err := New(Embedded(), false, tc.version, "https://app.example")
+		if err != nil {
+			t.Fatal(err)
+		}
+		rec := httptest.NewRecorder()
+		r.StaticHandler().ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/static/pages.css", nil))
+		if rec.Code != http.StatusOK {
+			t.Fatalf("version %q: status %d", tc.version, rec.Code)
+		}
+		if got := rec.Header().Get("Cache-Control"); got != tc.want {
+			t.Errorf("version %q: Cache-Control %q, want %q", tc.version, got, tc.want)
 		}
 	}
 }
