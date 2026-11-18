@@ -150,6 +150,8 @@ test('a large picture other than a JPEG is refused before it is decoded whole', 
   assert.equal(tooLargeToDecode('image/png', 20_000, 20_000), true);
   assert.equal(tooLargeToDecode('image/png', 10_000, 10_000), false);
   assert.equal(tooLargeToDecode('image/webp', MAX_WHOLE_DECODE_PIXELS + 1, 1), true);
-  // A JPEG is decoded at a fraction of its size, however large.
+  // A JPEG is decoded at a fraction of its size, however large, under any type it may be given.
   assert.equal(tooLargeToDecode('image/jpeg', 20_000, 20_000), false);
+  assert.equal(tooLargeToDecode('image/pjpeg', 20_000, 20_000), false);
+  assert.equal(tooLargeToDecode('', 20_000, 20_000), false);
 });

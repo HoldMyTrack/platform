@@ -195,9 +195,12 @@ export class OversizedPhotoError extends Error {}
  *  fraction of its size for (preparePhoto). */
 export const MAX_WHOLE_DECODE_PIXELS = 100_000_000;
 
+/** Types that may be a JPEG: some platforms report a .jpg as image/pjpeg or with no type at all. */
+const MAYBE_JPEG = new Set(['image/jpeg', 'image/pjpeg', '']);
+
 /** Whether a picture this size and type would be decoded whole past MAX_WHOLE_DECODE_PIXELS. */
 export function tooLargeToDecode(type: string, width: number, height: number): boolean {
-  return type !== 'image/jpeg' && width * height > MAX_WHOLE_DECODE_PIXELS;
+  return !MAYBE_JPEG.has(type) && width * height > MAX_WHOLE_DECODE_PIXELS;
 }
 
 function toBlob(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob | null> {
