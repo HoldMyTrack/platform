@@ -76,7 +76,7 @@ The shared client's interceptors apply to the map's requests too:
 - **User-Agent**, carrying the version and commit (§6) the server's minimum-build check reads.
 - **Outdated** (`net/AppOutdated`): a `426 app_outdated` on any call opens the Update screen, so no screen checks for it.
 
-**The Update screen opens over the app.** The interceptor runs before the refused call's callback, and clearing the task first would hand that callback a destroyed fragment, so Back calls `finishAffinity` instead. A refused call's callback is never delivered (`HoldMyTrackApi.refusedBuild`), since Back can tear the screens down while another refused call is in flight; suspending callers get their exception, and their scopes end with their screens.
+**The Update screen opens over the app.** The interceptor runs before the refused call's callback, and clearing the task first would hand that callback a destroyed fragment, so Back calls `finishAffinity` instead. A refused call's callback is never delivered (`HoldMyTrackApi.refusedBuild`), since Back can tear the screens down while another refused call is in flight; suspending callers get their exception, and their scopes end with their screens. Android drops an activity started from the background, so `AppOutdated` counts the screens in front through the application's activity callbacks and holds a refusal met with none until one comes back (`OutdatedScreen`).
 
 ### 2.2 The wire
 
