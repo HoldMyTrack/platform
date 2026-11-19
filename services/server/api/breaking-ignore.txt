@@ -2,15 +2,8 @@
 # because no installed client is affected. Lines are oasdiff's own wording; remove an entry once
 # every app release the server lets in predates the change it covers.
 #
-# 2026-11: the limits the handlers already enforced were declared in the contract. The server
-# refused longer values with a 400 before, and the web and Android cap the fields to the same
-# lengths, so no request a client sends changes answer.
-PATCH /activities/{id} the `activity_type` request property's maxLength was set to `50`
-PATCH /activities/{id} the `description` request property's maxLength was set to `2000`
-PATCH /activities/{id} the `name` request property's maxLength was set to `200`
-POST /photos the `caption` request property's maxLength was set to `500`
-PATCH /photos/{id} the `caption` request property's maxLength was set to `500`
-POST /stories the `description` request property's maxLength was set to `2000`
-POST /stories the `name` request property's maxLength was set to `200`
-PATCH /stories/{id} the `description` request property's maxLength was set to `2000`
-PATCH /stories/{id} the `name` request property's maxLength was set to `200`
+# 2026-11: the layers document dropped the Heatmap view that Android builds before the Heatmap
+# mode was removed switched to. Every build MIN_ANDROID_BUILD lets in has no Heatmap mode and
+# ignores keys it does not know, and no iOS build reads it.
+GET /map/layers removed the required property `views/plain/heatmap` from the response with the `200` status
+GET /map/layers removed the required property `views/satellite/heatmap` from the response with the `200` status

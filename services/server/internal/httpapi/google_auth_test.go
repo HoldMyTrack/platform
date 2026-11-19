@@ -78,7 +78,7 @@ func TestParseGoogleIDToken(t *testing.T) {
 
 func testGoogleServer(tokenURL string) *Server {
 	g := newGoogleOAuth(GoogleOAuthConfig{
-		ClientID: testClientID, ClientSecret: "secret", RedirectURL: "https://app.example/v1/auth/google/callback",
+		ClientID: testClientID, ClientSecret: "secret", RedirectURL: "https://app.example/v2/auth/google/callback",
 	})
 	if tokenURL != "" {
 		g.tokenURL = tokenURL

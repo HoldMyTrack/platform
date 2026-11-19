@@ -107,10 +107,6 @@ func TestTripFilter(t *testing.T) {
 	if tile(elsewhere, "") == 0 {
 		t.Errorf("the unfiltered tile elsewhere is empty")
 	}
-	// The installed apps name it story on a tile (tileQuery).
-	if n := tile(elsewhere, "story="+trip.ID); n != 0 {
-		t.Errorf("tile elsewhere ?trip= has %d bytes; nothing there is in the Trip", n)
-	}
 	for _, query := range []string{"trip=" + trip.ID, "trip=" + empty.ID} {
 		if n := tile(elsewhere, query); n != 0 {
 			t.Errorf("tile elsewhere ?%s has %d bytes; nothing there is in the Trip", query, n)

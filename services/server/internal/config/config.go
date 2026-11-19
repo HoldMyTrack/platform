@@ -73,10 +73,10 @@ type Config struct {
 	// warns while it's on there (SkipsVerificationInPublic). Only read by `serve`.
 	SkipEmailVerification bool
 	// Google* configure "Sign in with Google" (docs/SPEC.md FR-1.9). An empty GoogleClientID
-	// turns the feature off entirely — GET /v1/auth/providers reports it unavailable and the
+	// turns the feature off entirely — GET /v2/auth/providers reports it unavailable and the
 	// web client hides the button — so, like SMTP_HOST, leaving these unset is a working
 	// default rather than a half-configured one. GoogleRedirectURL defaults to AppBaseURL's
-	// own /v1/auth/google/callback, right for any deployment serving the app and the API
+	// own /v2/auth/google/callback, right for any deployment serving the app and the API
 	// from one origin (docs/IMPLEMENTATION.md §5.8); local dev overrides it because Vite (5173) and the API
 	// (8080) are separate origins there. Only read by `serve`.
 	GoogleClientID     string
@@ -84,7 +84,7 @@ type Config struct {
 	GoogleRedirectURL  string
 	// Facebook* configure "Sign in with Facebook" (docs/SPEC.md FR-1.10) exactly as Google*
 	// configure Google's: an empty FacebookAppID turns it off, and FacebookRedirectURL
-	// defaults to AppBaseURL's own /v1/auth/facebook/callback. Only read by `serve`.
+	// defaults to AppBaseURL's own /v2/auth/facebook/callback. Only read by `serve`.
 	FacebookAppID       string
 	FacebookAppSecret   string
 	FacebookRedirectURL string
@@ -96,7 +96,7 @@ type Config struct {
 	// the web's client id, turns it off; AppleBundleID, the iOS app's, adds the native
 	// endpoint. Either needs the team, and the Sign in with Apple key's id and private key
 	// (the .p8 file), which sign each request's client secret. AppleRedirectURL defaults to
-	// AppBaseURL's own /v1/auth/apple/callback. Only read by `serve`.
+	// AppBaseURL's own /v2/auth/apple/callback. Only read by `serve`.
 	AppleServicesID  string
 	AppleBundleID    string
 	AppleTeamID      string
@@ -221,7 +221,7 @@ func Load() (Config, error) {
 	c.GoogleClientID = env("GOOGLE_CLIENT_ID", "")
 	c.GoogleClientSecret = env("GOOGLE_CLIENT_SECRET", "")
 	if c.GoogleRedirectURL = env("GOOGLE_REDIRECT_URL", ""); c.GoogleRedirectURL == "" {
-		c.GoogleRedirectURL = c.AppBaseURL + "/v1/auth/google/callback"
+		c.GoogleRedirectURL = c.AppBaseURL + "/v2/auth/google/callback"
 	}
 	if c.GoogleClientID != "" && c.GoogleClientSecret == "" {
 		return c, fmt.Errorf("config: GOOGLE_CLIENT_SECRET is required when GOOGLE_CLIENT_ID is set")
@@ -229,7 +229,7 @@ func Load() (Config, error) {
 	c.FacebookAppID = env("FACEBOOK_APP_ID", "")
 	c.FacebookAppSecret = env("FACEBOOK_APP_SECRET", "")
 	if c.FacebookRedirectURL = env("FACEBOOK_REDIRECT_URL", ""); c.FacebookRedirectURL == "" {
-		c.FacebookRedirectURL = c.AppBaseURL + "/v1/auth/facebook/callback"
+		c.FacebookRedirectURL = c.AppBaseURL + "/v2/auth/facebook/callback"
 	}
 	if c.FacebookAppID != "" && c.FacebookAppSecret == "" {
 		return c, fmt.Errorf("config: FACEBOOK_APP_SECRET is required when FACEBOOK_APP_ID is set")
@@ -244,7 +244,7 @@ func Load() (Config, error) {
 	c.AppleTeamID = env("APPLE_TEAM_ID", "")
 	c.AppleKeyID = env("APPLE_KEY_ID", "")
 	if c.AppleRedirectURL = env("APPLE_REDIRECT_URL", ""); c.AppleRedirectURL == "" {
-		c.AppleRedirectURL = c.AppBaseURL + "/v1/auth/apple/callback"
+		c.AppleRedirectURL = c.AppBaseURL + "/v2/auth/apple/callback"
 	}
 	if c.AppleServicesID != "" || c.AppleBundleID != "" {
 		if c.AppleServicesID == "" {

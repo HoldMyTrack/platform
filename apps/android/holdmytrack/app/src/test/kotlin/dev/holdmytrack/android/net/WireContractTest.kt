@@ -12,7 +12,7 @@ import org.junit.Test
 import org.yaml.snakeyaml.Yaml
 
 /**
- * Holds every class in Wire.kt to the API contract it calls, services/server/api/v2: each response class to
+ * Holds every class in Wire.kt to the API contract it calls, services/server/api: each response class to
  * the response it decodes, each request class to the body it sends. A field the server renames,
  * drops or makes nullable fails here, in CI, rather than in a decode on a phone. Gradle reruns this
  * when the contract changes (the test task declares it as an input).
@@ -222,7 +222,7 @@ internal class WireCheck(private val seen: MutableSet<String>) {
  *  plain tree. The contract has no recursive schemas, so inlining ends. */
 internal class Contract private constructor(root: File) {
     private val files = mutableMapOf<File, Map<String, Any?>>()
-    private val index = File(root, "services/server/api/v2/openapi.yaml")
+    private val index = File(root, "services/server/api/openapi.yaml")
 
     val wireSource: File = File(root, "apps/android/holdmytrack/app/src/main/kotlin/dev/holdmytrack/android/net/Wire.kt")
 
@@ -268,8 +268,8 @@ internal class Contract private constructor(root: File) {
         /** The contract of the checkout this test runs in, found upward from the working directory. */
         fun find(): Contract {
             var dir: File? = File(System.getProperty("user.dir")).absoluteFile
-            while (dir != null && !File(dir, "services/server/api/v2/openapi.yaml").isFile) dir = dir.parentFile
-            return Contract(dir ?: error("services/server/api/v2/openapi.yaml not found above ${System.getProperty("user.dir")}"))
+            while (dir != null && !File(dir, "services/server/api/openapi.yaml").isFile) dir = dir.parentFile
+            return Contract(dir ?: error("services/server/api/openapi.yaml not found above ${System.getProperty("user.dir")}"))
         }
 
         /** `allOf`'s parts as one schema: their properties together, a property two parts

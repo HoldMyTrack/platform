@@ -108,7 +108,7 @@ struct MapStyleTests {
     }
 
     @Test func aViewNamedForNoModeIsNeverApplied() {
-        // The server keeps a `heatmap` view and layer for old Android builds.
+        // A view for a mode this build doesn't have, such as one a later server adds.
         let stub = LayersDocument(JSONValue.parse(Data("""
         {"views": {"plain": {
            "normal": {"layout": {"heat": {"visibility": "none"}}},

@@ -1,4 +1,4 @@
-# Responses api/v2/openapi.yaml describes that no test produces yet (contract_coverage_test.go).
+# Responses api/openapi.yaml describes that no test produces yet (contract_coverage_test.go).
 # Each is debt: a test that produces one fails the suite until its line is deleted here.
 # A new operation's responses are tested, not added here.
 DELETE /private-locations/{id} 404       # untested: refusal

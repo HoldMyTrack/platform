@@ -39,7 +39,7 @@ func newAppleKey(t *testing.T) *ecdsa.PrivateKey {
 func testAppleConfig(t *testing.T) AppleOAuthConfig {
 	return AppleOAuthConfig{
 		ServicesID: testServicesID, BundleID: testBundleID, TeamID: "TEAM123456", KeyID: "KEY1234567",
-		PrivateKey: newAppleKey(t), RedirectURL: "https://app.example/v1/auth/apple/callback",
+		PrivateKey: newAppleKey(t), RedirectURL: "https://app.example/v2/auth/apple/callback",
 	}
 }
 

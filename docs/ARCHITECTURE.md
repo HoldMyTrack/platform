@@ -45,7 +45,7 @@ flowchart LR
     end
     subgraph VPS["One VPS — compose.prod.yml"]
         caddy["Caddy<br/>TLS (Let's Encrypt) · serves /assets/* ·<br/>reverse-proxies everything else"]
-        api["api<br/>Go binary, serve mode<br/>/v2/* API, /v1/* for installed apps · tracks + fog tiles · pages"]
+        api["api<br/>Go binary, serve mode<br/>/v2/* API · tracks + fog tiles · pages"]
         worker["worker<br/>same binary, work mode<br/>ingest · fog rendering"]
         pg[("PostgreSQL 16 + PostGIS<br/>all tables + job queue ·<br/>users.map_version")]
     end

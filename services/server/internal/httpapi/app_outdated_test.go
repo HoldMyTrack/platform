@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -73,7 +74,7 @@ func TestAppOutdated(t *testing.T) {
 	}
 }
 
-func TestServeHTTPRefusesAnOutdatedAppOnV1Only(t *testing.T) {
+func TestServeHTTPRefusesAnOutdatedApp(t *testing.T) {
 	s := &Server{log: slog.New(slog.DiscardHandler), mux: http.NewServeMux()}
 	s.mux.HandleFunc("GET /v2/test", func(w http.ResponseWriter, r *http.Request) {})
 	s.mux.HandleFunc("GET /tiles/v1/test", func(w http.ResponseWriter, r *http.Request) {})
@@ -99,6 +100,12 @@ func TestServeHTTPRefusesAnOutdatedAppOnV1Only(t *testing.T) {
 	}
 	if w := get("/v2/test", "HoldMyTrack-iOS/0.1 (62da50b; 1400)"); w.Code != http.StatusUpgradeRequired {
 		t.Errorf("an old iOS build on /v2/ got %d, want 426", w.Code)
+	}
+	// Only builds the minimum turns away call the retired /v1, so all of it answers 426.
+	for _, ua := range []string{old, "HoldMyTrack-Android/0.1", "Mozilla/5.0"} {
+		if w := get("/v1/activities", ua); w.Code != http.StatusUpgradeRequired || !strings.Contains(w.Body.String(), "app_outdated") {
+			t.Errorf("/v1/ from %q got %d %s, want 426 app_outdated", ua, w.Code, w.Body)
+		}
 	}
 	for _, tc := range []struct{ path, ua string }{
 		{"/v2/test", "HoldMyTrack-Android/0.14 (62da50b; 813)"},

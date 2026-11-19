@@ -33,7 +33,7 @@ import (
 const (
 	// oauthCookieName carries state + PKCE verifier + the browser's timezone (+ an app's
 	// challenge, or a verification link's token) across the round trip through the provider.
-	// Each provider scopes it to its own /v1/auth/<provider> path, so no other request ever
+	// Each provider scopes it to its own /v2/auth/<provider> path, so no other request ever
 	// sends it and two flows never read each other's.
 	oauthCookieName = "holdmytrack_oauth"
 	// oauthCookieTTL bounds how long someone can sit on the provider's consent screen before

@@ -12,9 +12,9 @@ Open defects in shipped functionality. A fixed entry is deleted, with any lastin
 
 ### Turnstile doesn't guard the JSON signup endpoint
 
-Turnstile checks only the web `/signup` page (`IMPLEMENTATION.md` §4.19), where the apps sign up. `POST /v1/auth/signup` stays open for Android builds from before that and takes no token, so a script can make unconfirmed accounts there, up to the per-address limit (`SPEC.md` FR-1.1), and each one sends a verification email to an address its owner never gave.
+Turnstile checks only the web `/signup` page (`IMPLEMENTATION.md` §4.19), where the apps sign up. `POST /v2/auth/signup` stays open for Android builds from before that and takes no token, so a script can make unconfirmed accounts there, up to the per-address limit (`SPEC.md` FR-1.1), and each one sends a verification email to an address its owner never gave.
 
-- [ ] Once the minimum Android build signs up on the page, close `POST /v1/auth/signup`, and give the apps' UI tests, which make their accounts through it, another way.
+- [ ] Once the minimum Android build signs up on the page, close `POST /v2/auth/signup`, and give the apps' UI tests, which make their accounts through it, another way.
 
 ### Deleting an account on Android leaves two pieces of its state on the phone
 

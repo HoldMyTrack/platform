@@ -28,9 +28,9 @@ const (
 	googleAuthURL  = "https://accounts.google.com/o/oauth2/v2/auth"
 	googleTokenURL = "https://oauth2.googleapis.com/token"
 
-	// googleCookiePath scopes oauth.go's round-trip cookie to this flow alone, under /v1, where
-	// the callback URL registered with Google is (config.GoogleRedirectURL).
-	googleCookiePath = v1Prefix + "/auth/google"
+	// googleCookiePath scopes oauth.go's round-trip cookie to this flow alone, where the callback
+	// URL registered with Google is (config.GoogleRedirectURL).
+	googleCookiePath = apiPrefix + "/auth/google"
 )
 
 // GoogleOAuthConfig is what cmd/holdmytrack hands New — config.Config's three Google* values.
@@ -107,7 +107,7 @@ func (s *Server) handleGoogleStart(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, googleAuthURL+"?"+q.Encode(), http.StatusFound)
 }
 
-// handleGoogleCallback serves `GET /v1/auth/google/callback` — where Google sends the browser
+// handleGoogleCallback serves `GET /v2/auth/google/callback` — where Google sends the browser
 // back. Every failure, whatever its cause (the user cancelled, a stale or forged state, Google
 // unreachable, an unusable id_token), lands on the same `/signin?error=google` redirect: the
 // detail goes to the log, not the URL, for handleLogin's same "don't tell a caller more than it

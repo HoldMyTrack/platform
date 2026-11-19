@@ -18,7 +18,7 @@ const testAppID = "1234567890123456"
 
 func testFacebookServer(graphURL string) *Server {
 	f := newFacebookOAuth(FacebookOAuthConfig{
-		AppID: testAppID, AppSecret: "secret", RedirectURL: "https://app.example/v1/auth/facebook/callback",
+		AppID: testAppID, AppSecret: "secret", RedirectURL: "https://app.example/v2/auth/facebook/callback",
 	})
 	if graphURL != "" {
 		f.graphURL = graphURL
@@ -70,11 +70,11 @@ func TestFacebookStartRedirectsToDialog(t *testing.T) {
 	}
 	q := loc.Query()
 	if q.Get("client_id") != testAppID || q.Get("response_type") != "code" || q.Get("scope") != "email,public_profile" ||
-		q.Get("redirect_uri") != "https://app.example/v1/auth/facebook/callback" || q.Get("state") == "" {
+		q.Get("redirect_uri") != "https://app.example/v2/auth/facebook/callback" || q.Get("state") == "" {
 		t.Fatalf("bad dialog params: %v", q)
 	}
 	cookies := rec.Result().Cookies()
-	if len(cookies) != 1 || cookies[0].Name != oauthCookieName || cookies[0].Path != "/v1/auth/facebook" || !cookies[0].Secure || !cookies[0].HttpOnly {
+	if len(cookies) != 1 || cookies[0].Name != oauthCookieName || cookies[0].Path != "/v2/auth/facebook" || !cookies[0].Secure || !cookies[0].HttpOnly {
 		t.Fatalf("bad oauth cookie: %+v", cookies)
 	}
 	if want := q.Get("state") + "..Europe/Berlin."; cookies[0].Value != want {
@@ -133,7 +133,7 @@ func TestFetchFacebookProfile(t *testing.T) {
 	}
 	tq := graph.tokenQuery
 	if tq.Get("code") != "the-code" || tq.Get("client_id") != testAppID || tq.Get("client_secret") != "secret" ||
-		tq.Get("redirect_uri") != "https://app.example/v1/auth/facebook/callback" {
+		tq.Get("redirect_uri") != "https://app.example/v2/auth/facebook/callback" {
 		t.Fatalf("unexpected token request %v", tq)
 	}
 	// The token travels in the header, never the URL; appsecret_proof in the URL is keyed

@@ -1,7 +1,7 @@
-sync_activities:
+sync_tracks:
   post:
-    summary: Send activities recorded on the device or read from a health service, as points
-    description: Each activity gets its own result; one rejected doesn't stop the rest.
+    summary: Send tracks recorded on the device or read from a health service, as points
+    description: Each track gets its own result; one rejected doesn't stop the rest.
     requestBody:
       required: true
       content:
@@ -12,7 +12,7 @@ sync_activities:
             required: [source]
             properties:
               source: { $ref: "../components/schemas.yaml#/SyncSource" }
-              activities:
+              tracks:
                 type: array
                 nullable: true
                 maxItems: 100
@@ -23,8 +23,8 @@ sync_activities:
                   properties:
                     external_id:
                       type: string
-                      description: The source's own id; one that doesn't match SyncExternalID rejects that activity, not the request.
-                    activity_type: { type: string }
+                      description: The source's own id; one that doesn't match SyncExternalID rejects that track, not the request.
+                    track_type: { type: string }
                     name: { type: string }
                     description: { type: string }
                     points:
@@ -41,7 +41,7 @@ sync_activities:
                           time: { type: string, format: date-time }
     responses:
       "200":
-        description: One result per activity, in the order sent
+        description: One result per track, in the order sent
         content:
           application/json:
             schema:

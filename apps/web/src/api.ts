@@ -14,8 +14,7 @@ export const API_BASE_URL: string =
 
 /**
  * The sole place the API's major version lives on this side: the web speaks `/v2`
- * (services/server/api/v2/), and `/v1` is left to the installed apps. The tiles' own prefix is
- * mapLayers.ts's TILES.
+ * (services/server/api/). The tiles' own prefix is mapLayers.ts's TILES.
  */
 const API_V2 = '/v2';
 

@@ -47,15 +47,15 @@ Put a load test's raised values back afterwards.
 **Sign in with Google (optional).** Leave `GOOGLE_CLIENT_ID` empty to run without it. To turn it on:
 
 1. In the Google Cloud console, create or reuse a project. Set up the OAuth consent screen: user type External, app name HoldMyTrack, the §3 domain as an authorized domain, and only the `openid`, `email` and `profile` scopes (none needs app verification). Publish it ("In production"); in "Testing" only listed test users can sign in.
-2. Under Credentials, create an OAuth client ID of type **Web application** with the redirect URI `https://<your-domain>/v1/auth/google/callback`, exactly `APP_BASE_URL` plus that path. No JavaScript origins.
+2. Under Credentials, create an OAuth client ID of type **Web application** with the redirect URI `https://<your-domain>/v2/auth/google/callback`, exactly `APP_BASE_URL` plus that path. No JavaScript origins.
 3. Set `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET` in `.env.prod`, leave `GOOGLE_REDIRECT_URL` empty, and run `… up -d api`. No rebuild: the web client asks the API whether to show the button.
-4. For the Android app (`IMPLEMENTATION.md` §4.9), create a second OAuth client ID in the same project, type **Android**, package `dev.holdmytrack.android`, with the SHA-1 of the signing key. Create one per key: the release key and each developer's debug key (`apps/android/holdmytrack/README.md` shows how to get the SHA-1). Nothing goes into `.env.prod`: the app requests tokens for the web client ID it reads from `GET /v1/auth/providers`. Without it, the app's account picker fails with a generic error.
+4. For the Android app (`IMPLEMENTATION.md` §4.9), create a second OAuth client ID in the same project, type **Android**, package `dev.holdmytrack.android`, with the SHA-1 of the signing key. Create one per key: the release key and each developer's debug key (`apps/android/holdmytrack/README.md` shows how to get the SHA-1). Nothing goes into `.env.prod`: the app requests tokens for the web client ID it reads from `GET /v2/auth/providers`. Without it, the app's account picker fails with a generic error.
 
 **Sign in with Facebook (optional).** Leave `FACEBOOK_APP_ID` empty to run without it. Mail must work first: a new Facebook account verifies its email by mail (`SPEC.md` FR-1.10, ADR-0009). Taking the app Live needs a Meta-verified business portfolio (step 6), so without one leave it off; holdmytrack.com does (`ROADMAP.md`). Meta renames dashboard labels; search the dashboard when one below doesn't match.
 
 1. At developers.facebook.com, register as a developer, then **My Apps → Create App**: name HoldMyTrack, a contact email, use case "Authenticate and request data from users with Facebook Login".
 2. Under the use case's **Customize**, make sure `email` is added beside `public_profile`. Neither needs App Review.
-3. In **Facebook Login → Settings**, keep Client OAuth login, Web OAuth login and Enforce HTTPS on. Add `https://<your-domain>/v1/auth/facebook/callback` to **Valid OAuth Redirect URIs**, exactly `APP_BASE_URL` plus that path; for local dev also `http://localhost:<API_PORT>/v1/auth/facebook/callback`.
+3. In **Facebook Login → Settings**, keep Client OAuth login, Web OAuth login and Enforce HTTPS on. Add `https://<your-domain>/v2/auth/facebook/callback` to **Valid OAuth Redirect URIs**, exactly `APP_BASE_URL` plus that path; for local dev also `http://localhost:<API_PORT>/v2/auth/facebook/callback`.
 4. In **App settings → Basic**, copy the **App ID** and the **App secret** (a password: `.env.prod` only; **Reset** it if it leaks). Fill in App domains (the §3 domain), a Privacy Policy URL, "Data deletion instructions URL" `https://<your-domain>/help#delete-account`, a 1024×1024 icon and a category. Save.
 5. Set `FACEBOOK_APP_ID`/`FACEBOOK_APP_SECRET`, leave `FACEBOOK_REDIRECT_URL` empty, and run `… up -d api`. The Android app needs nothing more (`IMPLEMENTATION.md` §4.9).
 6. In Development mode only people under **App roles → Roles** can sign in; test with one. Then **Publish** to go Live. Meta checks step 4's fields and requires Business Verification of a portfolio connected to the app, whatever permissions it uses. Removing the portfolio doesn't lift this, and there is no individual-developer route. Verification takes one business document whose name matches the portfolio's; in the US, an IRS 147C letter, a business bank statement, a business tax document or a DBA filing. Until it's Live, keep `FACEBOOK_APP_ID` empty on the public site.
@@ -64,7 +64,7 @@ Put a load test's raised values back afterwards.
 
 **Sign in with Apple (optional).** Leave `APPLE_SERVICES_ID` empty to run without it. It needs an Apple Developer Program membership. Apple accepts only an `https://` return URL on a registered domain, so test it on a deployment, not a local stack.
 
-1. At developer.apple.com, under **Certificates, Identifiers & Profiles → Identifiers**, register an App ID with Sign in with Apple (the iOS app's, `dev.holdmytrack.ios`), enabled as a primary App ID with `https://<your-domain>/v1/auth/apple/notifications` as its server-to-server notification endpoint, then a **Services ID**, for example `com.holdmytrack.web`. On the Services ID, turn on Sign in with Apple, pick the App ID as primary, and add the §3 domain and the return URL `https://<your-domain>/v1/auth/apple/callback`, exactly `APP_BASE_URL` plus that path. On the App ID's Sign in with Apple settings, set the server-to-server notification endpoint to `https://<your-domain>/v1/auth/apple/notifications`.
+1. At developer.apple.com, under **Certificates, Identifiers & Profiles → Identifiers**, register an App ID with Sign in with Apple (the iOS app's, `dev.holdmytrack.ios`), enabled as a primary App ID with `https://<your-domain>/v2/auth/apple/notifications` as its server-to-server notification endpoint, then a **Services ID**, for example `com.holdmytrack.web`. On the Services ID, turn on Sign in with Apple, pick the App ID as primary, and add the §3 domain and the return URL `https://<your-domain>/v2/auth/apple/callback`, exactly `APP_BASE_URL` plus that path. On the App ID's Sign in with Apple settings, set the server-to-server notification endpoint to `https://<your-domain>/v2/auth/apple/notifications`.
 2. Under **Keys**, create a key with Sign in with Apple for the same App ID and download its `.p8` file, which Apple offers once. It is a password: `.env.prod` only; revoke it and make another if it leaks.
 3. Under **Services → Sign in with Apple for Email Communication**, register the domain and the address mail is sent from (`SMTP_FROM`), and publish SPF for it. Without it, mail to a Hide My Email address bounces.
 4. Set `APPLE_SERVICES_ID`, `APPLE_TEAM_ID` (top right of the developer site), `APPLE_KEY_ID` and `APPLE_PRIVATE_KEY` (the `.p8` on one line, its newlines written as `\n`), leave `APPLE_REDIRECT_URL` empty, and run `… up -d api`. `api` refuses to start on a key it can't read. Set `APPLE_BUNDLE_ID` to the App ID's bundle ID once the iOS app exists, for its endpoint.
@@ -267,7 +267,7 @@ sequenceDiagram
 2. In a browser, sign up, upload a `.gpx` file and confirm it appears on the map.
 3. Switch to Fog and zoom out below city zoom: countries with a track show clear. A uniformly fogged world means the outlines are empty: run §6's `seed-admin-boundaries` and hard-refresh.
 4. If satellite imagery is configured, choose Satellite under Overlays: imagery under the roads, with MapTiler's credit. Land and water gone with no imagery means refused tiles: look for a `403` in the network tab (the key or its origins), and check `curl https://<your-domain>/v2/map/style/light` has a `satellite` source.
-5. If Google sign-in is configured, "Continue with Google" lands on the map. `redirect_uri_mismatch` means §4 step 2's URI doesn't match `APP_BASE_URL` + `/v1/auth/google/callback`; "Couldn't sign in with Google" means the callback failed, and `… logs api | grep "google sign-in"` says why.
+5. If Google sign-in is configured, "Continue with Google" lands on the map. `redirect_uri_mismatch` means §4 step 2's URI doesn't match `APP_BASE_URL` + `/v2/auth/google/callback`; "Couldn't sign in with Google" means the callback failed, and `… logs api | grep "google sign-in"` says why.
 6. Sign-in that silently returns to the sign-in screen means `APP_BASE_URL`'s scheme doesn't match the browser's connection (§4).
 
 ## 9. Upgrading the Postgres image
@@ -343,7 +343,7 @@ The Android app ships only through Google Play, as the release-signed bundle bui
 
 1. Set `MIN_ANDROID_BUILD` in `.env.prod` to the value it prints.
 2. `docker compose -f compose.prod.yml --env-file .env.prod up -d api`
-3. Check: `curl -s -o /dev/null -w '%{http_code}\n' -A 'HoldMyTrack-Android/0.1 (x; 1)' https://<your-domain>/v1/auth/providers` prints `426`.
+3. Check: `curl -s -o /dev/null -w '%{http_code}\n' -A 'HoldMyTrack-Android/0.1 (x; 1)' https://<your-domain>/v2/auth/providers` prints `426`.
 
 An iOS build is turned away the same way, with `MIN_IOS_BUILD`, checked with `-A 'HoldMyTrack-iOS/0.1 (x; 1)'`. iOS builds are tagged `ios/<build>`.
 
