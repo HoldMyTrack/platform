@@ -188,7 +188,7 @@ Map, Trips, the record button (FR-5.1), Sync and You.
 - The You tab leads to Settings (FR-1.5), Track graph & trends (FR-1.6), Settings › Sync (FR-3.1) and Privacy (FR-1.7), and shows the app's version and commit.
 - Theme belongs to the phone, not the account (`docs/SPEC.md` FR-4.8), so the demo account can change it. Language (FR-1.5) does nothing for the demo account.
 - About opens in the app (`docs/SPEC.md` FR-9.6); Help and Contacts in a browser tab, in the browser's language. The app has no Donate: Play doesn't allow pointing to payment outside its billing.
-- Delete account (`docs/SPEC.md` FR-1.12), for a real account, is confirmed by typing the email. On success the app also deletes that account's unsynced recordings, a recording interrupted before Stop, its last recording type, hidden Sync rows, Health Connect switch and last Load, since a new account could take the same email, then signs out.
+- Delete account (`docs/SPEC.md` FR-1.12), for a real account, is confirmed by typing the email. On success the app also deletes that account's unsynced recordings, one under way or interrupted before Stop, its last recording type, hidden Sync rows, Health Connect switch and last Load, since a new account could take the same email, then signs out.
 
 ### FR-2.10 Photos
 

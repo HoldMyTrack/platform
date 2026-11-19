@@ -147,6 +147,7 @@ class RecordingService : Service() {
             ACTION_START -> if (state == RecordingState.IDLE) start() else startForeground()
             ACTION_TOGGLE -> toggle()
             ACTION_STOP -> stop()
+            ACTION_DISCARD -> discard(intent.getStringExtra(EXTRA_ACCOUNT))
         }
         if (state == RecordingState.IDLE) stopSelf(startId)
         return START_NOT_STICKY
@@ -276,6 +277,19 @@ class RecordingService : Service() {
             RecordingState.IDLE -> return
         }
         publish()
+    }
+
+    /** Ends a recording made under [owner] without saving it: the account was deleted
+     *  ([forgetAccount]), so its recording mustn't be saved under an email a new account can take. */
+    private fun discard(owner: String?) {
+        if (state == RecordingState.IDLE || owner == null || account != owner) return
+        state = RecordingState.IDLE
+        locationManager?.removeUpdates(locationListener)
+        locationManager = null
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        recorded.clear()
+        publish()
+        journalWrite { it.clear(owner) }
     }
 
     private fun stop() {
@@ -454,6 +468,8 @@ class RecordingService : Service() {
         const val ACTION_START = "dev.holdmytrack.android.recording.START"
         const val ACTION_TOGGLE = "dev.holdmytrack.android.recording.TOGGLE"
         const val ACTION_STOP = "dev.holdmytrack.android.recording.STOP"
+        private const val ACTION_DISCARD = "dev.holdmytrack.android.recording.DISCARD"
+        private const val EXTRA_ACCOUNT = "account"
 
         fun intent(context: Context, action: String): Intent =
             Intent(context, RecordingService::class.java).setAction(action)
@@ -482,8 +498,11 @@ class RecordingService : Service() {
         private fun journal(context: Context): LiveRecordingJournal =
             journalInstance ?: LiveRecordingJournal(context).also { journalInstance = it }
 
-        /** Drops [account]'s leftover from the journal, queued behind its pending writes. */
+        /** Drops [account]'s recording: one under way is ended unsaved ([discard]), and a
+         *  leftover leaves the journal, queued behind its pending writes. */
         fun forgetAccount(context: Context, account: String) {
+            // From the You tab, so in front; a start refused in the background has nothing to end.
+            runCatching { context.startService(intent(context, ACTION_DISCARD).putExtra(EXTRA_ACCOUNT, account)) }
             val journal = journal(context.applicationContext)
             journalScope.launch { journal.clear(account) }
         }

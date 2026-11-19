@@ -1,5 +1,6 @@
 package dev.holdmytrack.android.settings
 
+import android.util.Log
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -16,6 +17,7 @@ import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.sync.HiddenCandidates
 import dev.holdmytrack.android.sync.SyncSources
 import dev.holdmytrack.android.sync.WaitingStore
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -48,9 +50,12 @@ object AccountDeletion {
             confirm.isEnabled = false
             HoldMyTrackApi.deleteAccount(field.text.toString()) { result ->
                 result.onSuccess {
-                    dialog.dismiss()
+                    // Before the dismiss: after a rotation the dialog belongs to a destroyed
+                    // screen, and closing it can throw.
                     forget(activity)
+                    runCatching { dialog.dismiss() }
                 }.onFailure {
+                    if (activity.isDestroyed) return@onFailure
                     confirm.isEnabled = true
                     layout.error = it.message.orEmpty()
                 }
@@ -61,6 +66,8 @@ object AccountDeletion {
     /** Outlives the screen: the server has deleted the account by now, and a rotation must
      *  not cut the device's half short. */
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
+    private const val TAG = "AccountDeletion"
 
     /**
      * What this device keeps for the deleted account goes too: its unsynced recordings and any
@@ -73,13 +80,26 @@ object AccountDeletion {
         val email = Session.email
         val context = activity.applicationContext
         scope.launch {
-            RecordedTrackStore(context).deleteAll()
-            RecordingService.forgetAccount(context, email)
-            RecordingTypes.forget(context, email)
-            HiddenCandidates(context, email).clear()
-            SyncSources(context, email).clear()
-            EmptyNoticeDismissal(context, email).clear()
-            WaitingStore(context).clear()
+            // Each step on its own: one that fails (a full disk) mustn't keep the rest, or the
+            // sign-out, from running, since the account is already gone on the server.
+            val steps = listOf<suspend () -> Unit>(
+                { RecordedTrackStore(context).deleteAll() },
+                { RecordingService.forgetAccount(context, email) },
+                { RecordingTypes.forget(context, email) },
+                { HiddenCandidates(context, email).clear() },
+                { SyncSources(context, email).clear() },
+                { EmptyNoticeDismissal(context, email).clear() },
+                { WaitingStore(context).clear() },
+            )
+            for (step in steps) {
+                try {
+                    step()
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    Log.w(TAG, "account deletion: a local cleanup step failed", e)
+                }
+            }
             Session.clear()
             SignInActivity.open(context, R.string.account_deleted)
         }
