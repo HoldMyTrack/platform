@@ -36,13 +36,13 @@ import dev.holdmytrack.android.map.PaceBands
 import dev.holdmytrack.android.map.AreaController
 import dev.holdmytrack.android.map.SatelliteStatus
 import dev.holdmytrack.android.map.SatelliteWatch
+import dev.holdmytrack.android.map.SessionGate
 import dev.holdmytrack.android.map.SheetChrome
 import dev.holdmytrack.android.map.SpotsController
 import dev.holdmytrack.android.map.StyleMetadata
 import dev.holdmytrack.android.map.RouteEditOverlay
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.Session
-import dev.holdmytrack.android.net.SessionGate
 import dev.holdmytrack.android.panel.TracksPanel
 import dev.holdmytrack.android.panel.TrackTypes
 import dev.holdmytrack.android.panel.EditTrackWindow

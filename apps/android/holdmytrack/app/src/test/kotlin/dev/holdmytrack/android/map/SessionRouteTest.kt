@@ -1,4 +1,4 @@
-package dev.holdmytrack.android.net
+package dev.holdmytrack.android.map
 
 import org.junit.Assert.assertEquals
 import org.junit.Test

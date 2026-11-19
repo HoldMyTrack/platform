@@ -1,4 +1,4 @@
-package dev.holdmytrack.android.net
+package dev.holdmytrack.android.map
 
 import android.content.Context
 import android.util.Log
@@ -6,8 +6,9 @@ import androidx.fragment.app.Fragment
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.SignInActivity
 import dev.holdmytrack.android.VerifyEmailActivity
-import dev.holdmytrack.android.map.MapNotice
-import dev.holdmytrack.android.map.NoticePanel
+import dev.holdmytrack.android.net.ApiException
+import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.settings.AppLanguage
 import dev.holdmytrack.android.web.WebPageActivity
 
