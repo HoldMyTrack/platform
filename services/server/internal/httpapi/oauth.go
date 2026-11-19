@@ -387,6 +387,7 @@ func endSignIns(ctx context.Context, tx pgx.Tx, userID string) error {
 		`DELETE FROM sessions WHERE user_id = $1`,
 		`DELETE FROM auth_handoffs WHERE user_id = $1`,
 		`DELETE FROM password_resets WHERE user_id = $1`,
+		`DELETE FROM export_links WHERE export_id IN (SELECT id FROM exports WHERE user_id = $1)`,
 	} {
 		if _, err := tx.Exec(ctx, q, userID); err != nil {
 			return err

@@ -233,23 +233,16 @@ type exportLink struct {
 // the table needs no sweeper.
 func (s *Server) handleCreateExportLink(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	userID := userIDFromContext(ctx)
 	exportID, n, ok := exportPartPath(r)
 	if !ok {
 		writeAPIError(w, "not found", http.StatusNotFound)
 		return
 	}
-	_, sizes, err := s.readyExport(ctx, userID, exportID)
-	if errors.Is(err, pgx.ErrNoRows) || (err == nil && n > len(sizes)) {
+	link, err := s.createExportLink(ctx, userIDFromContext(ctx), exportID, n)
+	if errors.Is(err, pgx.ErrNoRows) {
 		writeAPIError(w, "not found", http.StatusNotFound)
 		return
 	}
-	if err != nil {
-		s.log.Error("export link lookup failed", "err", err)
-		writeAPIError(w, "internal error", http.StatusInternalServerError)
-		return
-	}
-	link, err := s.createExportLink(ctx, exportID, n)
 	if err != nil {
 		s.log.Error("export link failed", "err", err)
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
@@ -258,8 +251,9 @@ func (s *Server) handleCreateExportLink(w http.ResponseWriter, r *http.Request) 
 	writeJSON(w, http.StatusCreated, link)
 }
 
-// createExportLink stores a link to part n of a ready export and returns it.
-func (s *Server) createExportLink(ctx context.Context, exportID string, n int) (exportLink, error) {
+// createExportLink stores a link to part n of userID's export exportID and returns it, or
+// pgx.ErrNoRows when the export isn't ready, isn't theirs or has no such part.
+func (s *Server) createExportLink(ctx context.Context, userID, exportID string, n int) (exportLink, error) {
 	if _, err := s.pool.Exec(ctx, `DELETE FROM export_links WHERE expires_at < NOW()`); err != nil {
 		return exportLink{}, fmt.Errorf("purge: %w", err)
 	}
@@ -267,8 +261,9 @@ func (s *Server) createExportLink(ctx context.Context, exportID string, n int) (
 	link := exportLink{URL: apiPrefix + "/export-downloads/" + token}
 	err := s.pool.QueryRow(ctx, `
 		INSERT INTO export_links (token_hash, export_id, part, expires_at)
-		SELECT $1, id, $2, LEAST(expires_at, NOW() + make_interval(secs => $3)) FROM exports WHERE id = $4
-		RETURNING expires_at`, hash, n, exportLinkTTL.Seconds(), exportID,
+		SELECT $1, id, $2, LEAST(expires_at, NOW() + make_interval(secs => $3)) FROM exports
+		WHERE id = $4 AND user_id = $5 AND ready_at IS NOT NULL AND expires_at > NOW() AND cardinality(part_sizes) >= $2
+		RETURNING expires_at`, hash, n, exportLinkTTL.Seconds(), exportID, userID,
 	).Scan(&link.ExpiresAt)
 	return link, err
 }

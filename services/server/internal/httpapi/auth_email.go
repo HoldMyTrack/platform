@@ -310,6 +310,9 @@ func applyVerification(ctx context.Context, tx pgx.Tx, userID, email, current st
 		if _, err := tx.Exec(ctx, `DELETE FROM auth_handoffs WHERE user_id = $1`, userID); err != nil {
 			return err
 		}
+		if _, err := tx.Exec(ctx, `DELETE FROM export_links WHERE export_id IN (SELECT id FROM exports WHERE user_id = $1)`, userID); err != nil {
+			return err
+		}
 	}
 	return nil
 }

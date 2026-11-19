@@ -166,7 +166,7 @@ func TestExportLink(t *testing.T) {
 		t.Errorf("an unknown token: status %d", rec.Code)
 	}
 
-	// The link goes with its own lifetime, and with the export's.
+	// The link goes with its own lifetime.
 	var stale exportLink
 	d.decode(d.do(a, "POST", linkPath, nil), http.StatusCreated, &stale)
 	if _, err := d.pool.Exec(ctx, `UPDATE export_links SET expires_at = NOW() - interval '1 second' WHERE token_hash = $1`, tokenHash(stale.URL[len("/v2/export-downloads/"):])); err != nil {
@@ -175,10 +175,31 @@ func TestExportLink(t *testing.T) {
 	if rec := d.do(account{}, "GET", stale.URL, nil); rec.Code != http.StatusNotFound {
 		t.Errorf("an expired link: status %d", rec.Code)
 	}
-	if _, err := d.pool.Exec(ctx, `UPDATE exports SET expires_at = NOW() WHERE id = $1`, st.ID); err != nil {
+
+	// Ending the account's sign-ins (a password reset, a takeover) ends its links too.
+	tx, err := d.pool.Begin(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := endSignIns(ctx, tx, a.id); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx.Commit(ctx); err != nil {
 		t.Fatal(err)
 	}
 	if rec := d.do(account{}, "GET", link.URL, nil); rec.Code != http.StatusNotFound {
+		t.Errorf("a link after the sign-ins ended: status %d", rec.Code)
+	}
+
+	// And with its export.
+	fresh, err := d.srv.createExportLink(ctx, a.id, st.ID, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := d.pool.Exec(ctx, `UPDATE exports SET expires_at = NOW() WHERE id = $1`, st.ID); err != nil {
+		t.Fatal(err)
+	}
+	if rec := d.do(account{}, "GET", fresh.URL, nil); rec.Code != http.StatusNotFound {
 		t.Errorf("a link to an expired export: status %d", rec.Code)
 	}
 }

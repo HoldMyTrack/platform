@@ -80,12 +80,13 @@ func (s *Server) parseAppleNotification(r *http.Request, payload string) (appleE
 	return e, nil
 }
 
-// unlinkApple removes the Apple link with subject and ends its account's sessions, in one
-// transaction. A subject linked to nothing here is no error.
+// unlinkApple removes the Apple link with subject and ends its account's sessions and data
+// download links, in one transaction. A subject linked to nothing here is no error.
 func (s *Server) unlinkApple(r *http.Request, subject string) error {
 	_, err := s.pool.Exec(r.Context(), `
-		WITH gone AS (DELETE FROM user_identities WHERE provider = 'apple' AND subject = $1 RETURNING user_id)
-		DELETE FROM sessions WHERE user_id IN (SELECT user_id FROM gone)
+		WITH gone AS (DELETE FROM user_identities WHERE provider = 'apple' AND subject = $1 RETURNING user_id),
+		     ended AS (DELETE FROM sessions WHERE user_id IN (SELECT user_id FROM gone))
+		DELETE FROM export_links WHERE export_id IN (SELECT id FROM exports WHERE user_id IN (SELECT user_id FROM gone))
 	`, subject)
 	return err
 }

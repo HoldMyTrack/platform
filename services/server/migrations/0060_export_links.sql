@@ -8,3 +8,6 @@ CREATE TABLE export_links (
     part integer NOT NULL,
     expires_at timestamptz NOT NULL
 );
+
+CREATE INDEX idx_export_links_export ON export_links (export_id);
+CREATE INDEX idx_export_links_expiry ON export_links (expires_at);
