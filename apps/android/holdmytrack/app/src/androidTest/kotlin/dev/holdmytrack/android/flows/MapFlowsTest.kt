@@ -7,8 +7,11 @@ import android.location.Location
 import android.location.LocationManager
 import android.location.provider.ProviderProperties
 import android.os.SystemClock
+import android.view.View
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import androidx.test.uiautomator.By
 import androidx.test.uiautomator.Configurator
 import androidx.test.uiautomator.BySelector
@@ -18,6 +21,7 @@ import androidx.test.uiautomator.UiDevice
 import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import dev.holdmytrack.android.MainActivity
+import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.tour.TourStore
 import org.junit.AfterClass
@@ -35,8 +39,9 @@ import kotlin.concurrent.thread
 /**
  * End-to-end flows over the map's state rules, on an emulator against the dev stack the app was
  * built for (`docs/DEVELOPMENT.md`, "Android verification"): new Dates keeping Checked and Hidden
- * on the tracks still listed, a Trip opened from the Trips tab and closed by Back, and a recording
- * reaching the Sync sheet. One fresh account ([TestAccount]) serves the class, in method-name order.
+ * on the tracks still listed, a Trip opened from the Trips tab and closed by Back, a recording
+ * reaching the Sync sheet, and the keyboard covering the map without shortening it. One fresh
+ * account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
@@ -75,7 +80,7 @@ class MapFlowsTest {
         need(id("nav_trips")).click()
         expandSheet()
         need(By.text(TRIP))
-        assertTrue("the Trip's two rows", device.wait(Until.findObjects(id("track_text")), TIMEOUT_MS).orEmpty().size == 2)
+        expect("the Trip's two rows", count(id("track_text"), 2))
 
         device.pressBack()
         assertTrue("Trip closed", device.wait(Until.gone(By.text(TRIP)), TIMEOUT_MS))
@@ -84,6 +89,44 @@ class MapFlowsTest {
         expandSheet()
         assertTrue("the range's rows", device.wait(Until.hasObject(id("track_text")), TIMEOUT_MS))
     }
+
+    /** The keyboard covers the map and never shortens it
+     *  (`apps/android/docs/IMPLEMENTATION.md` §1.3): a shorter map shows less ground, and the
+     *  next camera move, such as Dates' flight, lists only that, dropping Checked and Hidden from
+     *  the rest (`docs/SPEC.md` FR-5.8). */
+    @Test
+    fun d_theKeyboardCoversTheMapWithoutShorteningIt() {
+        signIn()
+        expandSheet()
+        val before = mapHeight()
+        // Dates' From, typed: the keyboard comes up over the map and the bottom bar.
+        tapUntil({ still(id("panel_dates")) }) { device.hasObject(id("dates_after")) }
+        need(id("dates_after")).click()
+        need(id("mtrl_picker_header_toggle")).click()
+        expect("the keyboard up", waitUntil { keyboardShown() })
+        // A shortened map is so as soon as the keyboard is: watched for a few seconds.
+        val heights = (1..KEYBOARD_SAMPLES).map { Thread.sleep(250); mapHeight() }
+        expect("the map ${before}px tall under the keyboard, not ${heights.distinct()}", heights.all { it == before })
+        // Out without setting anything: the keyboard, the picker, then Dates.
+        device.pressBack()
+        expect("the keyboard down", waitUntil { !keyboardShown() })
+        device.pressBack()
+        still(By.res("android", "button1")).click()
+    }
+
+    /** The map view's height in the app, read on its main thread: UI Automator sees only the
+     *  dialog on top. */
+    private fun mapHeight(): Int {
+        var height = 0
+        instrumentation.runOnMainSync {
+            val main = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                .filterIsInstance<MainActivity>().single()
+            height = main.findViewById<View>(R.id.map_view).height
+        }
+        return height
+    }
+
+    private fun keyboardShown(): Boolean = device.executeShellCommand("dumpsys input_method").contains("mInputShown=true")
 
     @Test
     fun c_aStoppedRecordingReachesTheSyncSheet() {
@@ -185,8 +228,9 @@ class MapFlowsTest {
 
     private fun checkedRows(): Int = device.findObjects(checkedTiles()).size
 
-    /** Sets Dates' From to [day] through its dialog and the picker's calendar, then Done. Not by
-     *  typing it: the keyboard shortens the map, and the list follows the smaller view. */
+    /** Sets Dates' From to [day] through its dialog and the picker's calendar, then Done. Not typed:
+     *  the dialogs slide as the keyboard comes and goes, and taps land on what moved under
+     *  ([d_theKeyboardCoversTheMapWithoutShorteningIt] has the keyboard's own case). */
     private fun pickFrom(day: LocalDate) {
         need(id("panel_dates")).click()
         need(id("dates_after")).click()
@@ -210,6 +254,18 @@ class MapFlowsTest {
         tapUntil({ need(By.descContains(label)) }) { picked.containsMatchIn(need(id("mtrl_picker_header_selection_text")).text) }
         tapUntil({ need(id("confirm_button")) }) { !device.hasObject(id("confirm_button")) }
         need(By.res("android", "button1")).click()
+    }
+
+    /** [selector] once it's on screen and its bounds have held for a quarter second: a dialog
+     *  sliding back down as the keyboard goes takes a tap meant for its button elsewhere. */
+    private fun still(selector: BySelector): UiObject2 {
+        var last = need(selector).visibleBounds
+        expect("still moving: $selector", waitUntil {
+            Thread.sleep(250)
+            val now = need(selector).visibleBounds
+            (now == last).also { last = now }
+        })
+        return need(selector)
     }
 
     /** Taps what [target] finds until [done] holds, for taps the app can drop while it settles. */
@@ -271,6 +327,8 @@ class MapFlowsTest {
         const val SCROLLS = 3
         /** Months the picker may page forward to reach a day: Dates' bounds span the account. */
         const val MONTHS = 24
+        /** Quarter seconds the map's height is read under the keyboard. */
+        const val KEYBOARD_SAMPLES = 12
         /** About a second per swipe: a fling would snap the sheet back. */
         const val SWIPE_STEPS = 200
         const val SIGN_IN_MS = 15_000L

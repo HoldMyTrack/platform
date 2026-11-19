@@ -243,9 +243,6 @@ class EditTrackWindow(
         showError(null)
         renderBusy()
         renderTabs()
-        // Scrolls past most of the screen, so the map keeps a band to edit on above it.
-        card.findViewById<MaxHeightScrollView>(R.id.edit_scroll).maxHeight =
-            (res.displayMetrics.heightPixels * MAX_HEIGHT_FRACTION).toInt()
         card.visibility = View.VISIBLE
         bar.visibility = View.VISIBLE
     }
@@ -466,9 +463,6 @@ class EditTrackWindow(
     }
 
     private companion object {
-        /** The window's tallest, as a share of the screen, before it scrolls. */
-        const val MAX_HEIGHT_FRACTION = 0.55f
-
         /** The server's own bounds (`tracks.go`'s maxTrackTypeLen and friends). */
         const val MAX_TYPE = TrackTypePicker.MAX_LENGTH
         const val MAX_NAME = 200

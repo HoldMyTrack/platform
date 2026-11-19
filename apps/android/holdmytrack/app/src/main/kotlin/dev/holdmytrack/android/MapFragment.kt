@@ -652,8 +652,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun openEditWindow(group: List<Track>) = edit.open(group)
 
     /** The Edit window opened or closed: the chrome steps aside for it or comes back. */
-    private fun onEditWindowChanged(open: Boolean) {
-        if (open) chrome.placeEditors()
+    private fun onEditWindowChanged(@Suppress("UNUSED_PARAMETER") open: Boolean) {
+        chrome.placeEditors()
         renderSheet()
         renderBottomBar()
         sheetChrome.renderSelectionBar()
