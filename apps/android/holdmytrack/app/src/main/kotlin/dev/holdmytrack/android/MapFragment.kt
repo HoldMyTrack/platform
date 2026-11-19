@@ -820,6 +820,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
      *  with a notice pointing at Sync, re-checked on every resume until closed
      *  ([MapChromeRules.emptyNoticeShown]). */
     private fun onEmptyChecked(empty: Boolean) {
+        // The answer can land after the activity was recreated, on a fragment no longer attached.
+        if (!isAdded || view == null) return
         host?.tour?.historyKnown(!empty)
         val dismissal = EmptyNoticeDismissal(requireContext(), Session.email)
         if (!MapChromeRules.emptyNoticeShown(empty, Session.isDemo, dismissal.closed())) {

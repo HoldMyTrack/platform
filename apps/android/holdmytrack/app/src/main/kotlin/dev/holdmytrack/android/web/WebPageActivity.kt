@@ -194,10 +194,12 @@ class WebPageActivity : AppCompatActivity() {
             // so it's read before the map opens.
             WebRoute.Route.Onboarded -> {
                 leaving = true
+                // From the application's context: the answer can land after a rotation, and the
+                // map starts a new task either way.
                 HoldMyTrackApi.verifySession { result ->
                     result.onSuccess { Session.update(it) }
-                    startActivity(
-                        Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
+                    applicationContext.startActivity(
+                        Intent(applicationContext, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
                     )
                     finish()
                 }
