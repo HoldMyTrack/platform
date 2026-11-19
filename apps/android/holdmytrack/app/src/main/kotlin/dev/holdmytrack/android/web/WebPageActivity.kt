@@ -13,6 +13,7 @@ import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Toast
@@ -61,6 +62,11 @@ class WebPageActivity : AppCompatActivity() {
 
     /** Set once [route] has sent the user elsewhere: a navigation can reach it twice. */
     private var leaving = false
+
+    /** The last main-frame POST the page sent (a form: the avatar, Settings' save), noted on the
+     *  WebView's network thread, since `onPageStarted` isn't told a navigation's method. */
+    @Volatile
+    private var posted: String? = null
 
     /** Whether the page on screen failed to load: the WebView's own error page is never shown. */
     private var failed = false
@@ -158,12 +164,13 @@ class WebPageActivity : AppCompatActivity() {
      * Acts on where a navigation to [uri] goes ([WebRoute]), reporting whether this screen took it
      * away from the WebView. Checked as a link is followed and again as a page starts, since a
      * form's redirect (Settings' first run, saved, goes on to `/`) isn't always offered as a link.
+     * [post] is whether it is a form's POST ([posted]).
      */
-    private fun route(uri: Uri): Boolean {
+    private fun route(uri: Uri, post: Boolean = false): Boolean {
         val base = Uri.parse(BuildConfig.API_BASE_URL)
         val route = WebRoute.of(
             uri.scheme, uri.authority, uri.path, uri.getQueryParameter("track"), uri.getQueryParameter("day"),
-            base.scheme, base.authority, page.path, leaving, onboarding,
+            base.scheme, base.authority, page.path, leaving, onboarding, post,
         )
         when (route) {
             WebRoute.Route.Stay -> return false
@@ -211,8 +218,15 @@ class WebPageActivity : AppCompatActivity() {
         override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean =
             request.isForMainFrame && route(request.url)
 
+        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+            if (request.isForMainFrame && request.method == "POST") posted = request.url.toString()
+            return null
+        }
+
         override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-            if (route(Uri.parse(url))) {
+            val post = url == posted
+            posted = null
+            if (route(Uri.parse(url), post)) {
                 view.stopLoading()
                 return
             }

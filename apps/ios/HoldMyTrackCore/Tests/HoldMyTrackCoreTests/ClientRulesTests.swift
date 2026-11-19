@@ -239,7 +239,8 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
             scheme: link["scheme"].string, authority: link["authority"].string, path: link["path"].string,
             track: link["track"].string, day: link["day"].string,
             baseScheme: base["scheme"].string, baseAuthority: base["authority"].string, page: input["page"].string!,
-            leaving: input["leaving"].bool ?? false, onboarding: input["onboarding"].bool ?? false
+            leaving: input["leaving"].bool ?? false, onboarding: input["onboarding"].bool ?? false,
+            post: input["post"].bool ?? false
         )
         switch route {
         case .stay: return "stay"
