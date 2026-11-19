@@ -107,6 +107,43 @@ struct ExportTests {
         #expect(abs(ImageMarks.stripMetrics(width: 3840, height: 3840).margin - 53.76) < 1e-3)
     }
 
+    @Test func theImageReadsDarkUnderTheDarkFlavorOrSatelliteShowing() {
+        #expect(ExportStats.dark(darkFlavor: true, satellite: false, satelliteFailed: false))
+        #expect(ExportStats.dark(darkFlavor: false, satellite: true, satelliteFailed: false))
+        #expect(!ExportStats.dark(darkFlavor: false, satellite: true, satelliteFailed: true))
+        #expect(!ExportStats.dark(darkFlavor: false, satellite: false, satelliteFailed: false))
+    }
+
+    @Test func captureWaitsForTheCardTheWindowAskedFor() {
+        let a = ExportStats.Request(trackIDs: ["a"], width: 1080, height: 1080, dark: false)
+        let b = ExportStats.Request(trackIDs: ["a", "b"], width: 1080, height: 1080, dark: false)
+        var hold = ExportStats.Hold()
+        #expect(hold.ready, "no card wanted")
+        let askA = hold.want(a)
+        #expect(askA && !hold.ready)
+        let again = hold.want(a)
+        #expect(!again, "the same request isn't asked again")
+        let answeredA = hold.answer(a)
+        #expect(answeredA && hold.ready)
+        let askB = hold.want(b)
+        #expect(askB && !hold.ready)
+        let late = hold.answer(a)
+        #expect(!late && !hold.ready, "an answer no longer wanted is dropped")
+        let answeredB = hold.answer(b)
+        #expect(answeredB && hold.ready)
+    }
+
+    @Test func showStatsOffAndOnAgainWaitsForTheCardAgain() {
+        let a = ExportStats.Request(trackIDs: ["a"], width: 1080, height: 1080, dark: false)
+        var hold = ExportStats.Hold()
+        _ = hold.want(a)
+        _ = hold.answer(a)
+        let off = hold.want(nil)
+        #expect(!off && hold.ready)
+        let on = hold.want(a)
+        #expect(on && !hold.ready, "the card dropped with Show stats is fetched again")
+    }
+
     @Test func theImageIsTheLiveMapWithoutSpotsOrATappedPlace() {
         var live = MapState()
         live.mode = .fog

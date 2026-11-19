@@ -13,7 +13,7 @@ final class ExportRenderer {
     private var timeout: Task<Void, Never>?
 
     /// The picture, or why it couldn't be made; never called after cancel.
-    func render(style: JSONValue, center: CLLocationCoordinate2D, zoom: Double, heading: Double, window: CGSize, pixelWidth: Int, pixelHeight: Int,
+    func render(style: JSONValue, center: CLLocationCoordinate2D, zoom: Double, heading: Double, pitch: CGFloat, window: CGSize, pixelWidth: Int, pixelHeight: Int,
                 done: @escaping (Result<UIImage, Error>) -> Void) {
         cancel()
         // The snapshotter loads a style by URL only.
@@ -25,7 +25,7 @@ final class ExportRenderer {
             return
         }
         styleFile = file
-        let camera = MLNMapCamera(lookingAtCenter: center, altitude: 0, pitch: 0, heading: heading)
+        let camera = MLNMapCamera(lookingAtCenter: center, altitude: 0, pitch: pitch, heading: heading)
         let options = MLNMapSnapshotOptions(styleURL: file, camera: camera, size: window)
         options.zoomLevel = zoom
         options.scale = CGFloat(pixelWidth) / window.width
@@ -78,12 +78,24 @@ enum ExportImage {
         let thumbnail: UIImage?
     }
 
-    /// unit is the image's pixels per point of the window, which the markers' look is scaled by.
-    static func compose(picture: UIImage, width: Int, height: Int, markers: [Marker], card: UIImage?, credit: String, dark: Bool, unit: CGFloat) -> UIImage {
+    /// unit is the image's pixels per point of the window, which the markers' look is scaled by;
+    /// traits, the screen's, which their colors resolve in.
+    static func compose(picture: UIImage, width: Int, height: Int, markers: [Marker], card: UIImage?, credit: String, dark: Bool, unit: CGFloat,
+                        traits: UITraitCollection) -> UIImage {
         let format = UIGraphicsImageRendererFormat()
         format.scale = 1
         format.opaque = true
-        return UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format).image { _ in
+        format.preferredRange = .standard
+        var image = UIImage()
+        traits.performAsCurrent {
+            image = draw(picture: picture, width: width, height: height, markers: markers, card: card, credit: credit, dark: dark, unit: unit, format: format)
+        }
+        return image
+    }
+
+    private static func draw(picture: UIImage, width: Int, height: Int, markers: [Marker], card: UIImage?, credit: String, dark: Bool, unit: CGFloat,
+                             format: UIGraphicsImageRendererFormat) -> UIImage {
+        UIGraphicsImageRenderer(size: CGSize(width: width, height: height), format: format).image { _ in
             picture.draw(in: CGRect(x: 0, y: 0, width: width, height: height))
             for m in markers {
                 PhotoMarkerPainter.draw(at: CGPoint(x: m.placement.x, y: m.placement.y), diameter: m.placement.diameter / unit,

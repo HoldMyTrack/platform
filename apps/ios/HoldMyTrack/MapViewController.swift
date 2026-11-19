@@ -151,7 +151,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
                 self.renderPanel()
             }
         }
-        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in self.load() }
+        registerForTraitChanges([UITraitUserInterfaceStyle.self]) { (self: Self, _) in
+            self.load()
+            self.exportLookChanged()
+        }
         location.delegate = self
         load()
     }

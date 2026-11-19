@@ -21,7 +21,12 @@ final class ExportTests: XCTestCase {
         let size = app.staticTexts["exportSize"]
         XCTAssertTrue(size.waitForExistence(timeout: 5))
         XCTAssertTrue(size.label.hasPrefix("1920 × ") || size.label.hasSuffix(" × 1920"), size.label)
-        XCTAssertFalse(app.segmentedControls["modes"].isHittable, "the chrome steps aside")
+        let modes = app.segmentedControls["modes"]
+        XCTAssertFalse(modes.exists && modes.isHittable, "the chrome steps aside")
+        // Nothing checked: Show stats says why it can't, under the window.
+        app.buttons["exportStats"].tap()
+        XCTAssertTrue(app.staticTexts["exportError"].waitForExistence(timeout: 3))
+        XCTAssertEqual(app.staticTexts["exportError"].label, "Check tracks to show their stats.")
         app.buttons["exportClose"].tap()
         XCTAssertTrue(app.segmentedControls["modes"].waitForExistence(timeout: 5))
         XCTAssertFalse(size.exists)
@@ -33,7 +38,9 @@ final class ExportTests: XCTestCase {
         row.buttons["rowTile"].tap()
         app.buttons["panelHandle"].tap()
         export.tap()
-        app.buttons["exportStats"].tap()
+        // Show stats is kept on the phone, so an earlier run may have left it ticked.
+        let stats = app.buttons["exportStats"]
+        if !stats.isSelected { stats.tap() }
         XCTAssertTrue(app.images["exportStatsCard"].waitForExistence(timeout: 15), "the stats card")
         app.buttons["exportChoice"].tap()
         app.buttons["Instagram · Square"].tap()

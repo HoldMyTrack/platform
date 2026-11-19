@@ -216,6 +216,40 @@ public enum ExportStats {
         }
     }
 
+    /// Whether the map under the marks and the card reads dark: the dark flavor, or Satellite
+    /// showing, which a failed imagery doesn't.
+    public static func dark(darkFlavor: Bool, satellite: Bool, satelliteFailed: Bool) -> Bool {
+        darkFlavor || (satellite && !satelliteFailed)
+    }
+
+    /// Which card the window holds: the request wanted now, and the one the held answer (a card,
+    /// no card or an error) is for. Capture draws what's previewed only while they agree.
+    public struct Hold: Equatable, Sendable {
+        public private(set) var wanted: Request?
+        public private(set) var answered: Request?
+
+        public init() {}
+
+        /// Whether Capture would draw the card the window previews.
+        public var ready: Bool { wanted == nil || wanted == answered }
+
+        /// The request now wanted; true when it's a new one to ask the server for. None wanted
+        /// drops the answer with the card, so asking again waits for a fresh one.
+        public mutating func want(_ request: Request?) -> Bool {
+            guard request != wanted else { return false }
+            wanted = request
+            if request == nil { answered = nil }
+            return request != nil
+        }
+
+        /// The server answered request; false for one no longer wanted, whose answer is dropped.
+        public mutating func answer(_ request: Request) -> Bool {
+            guard request == wanted else { return false }
+            answered = request
+            return true
+        }
+    }
+
     /// Whether Show stats can be ticked: something Checked, and no Trip open, since the Trips tab
     /// has no checkboxes.
     public static func offered(checked: Set<String>, tripID: String?) -> Bool { tripID == nil && !checked.isEmpty }

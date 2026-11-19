@@ -41,10 +41,16 @@ extension MapViewController {
         let finder = ExportViewfinderView(frame: view.bounds)
         finder.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         export.view = finder
-        // The chrome would sit inside the picture: hidden, and put back as it was on close.
+        // The chrome would sit inside the picture. Faded out and left alone rather than hidden: the
+        // map's renders set isHidden as they go (Fog's level button on every camera move, the
+        // sheet on a panel change) and would bring it back over the viewfinder.
         let covers: [UIView] = [modesRow.superview, locateButton, export.button, chrome.chip, sheet, fogViews.menuButton, mapView.attributionButton].compactMap { $0 }
-        export.hidden = covers.map { ($0, $0.isHidden) }
-        covers.forEach { $0.isHidden = true }
+        export.covered = covers
+        for cover in covers {
+            cover.alpha = 0
+            cover.isUserInteractionEnabled = false
+            cover.accessibilityElementsHidden = true
+        }
         view.addSubview(finder)
         finder.closeButton.addAction(UIAction { [weak self] _ in self?.closeExport() }, for: .primaryActionTriggered)
         finder.captureButton.addAction(UIAction { [weak self] _ in self?.captureExport() }, for: .primaryActionTriggered)
@@ -66,13 +72,19 @@ extension MapViewController {
         guard let finder = export.view else { return }
         export.renderer.cancel()
         export.clearCard()
+        // A capture still under way finishes into nothing.
+        export.capture += 1
         export.busy = false
         export.failed = false
+        export.hint = nil
         finder.removeFromSuperview()
         export.view = nil
-        for (view, hidden) in export.hidden { view.isHidden = hidden }
-        export.hidden = []
-        renderLevel()
+        for cover in export.covered {
+            cover.alpha = 1
+            cover.isUserInteractionEnabled = true
+            cover.accessibilityElementsHidden = false
+        }
+        export.covered = []
     }
 
     /// A turned phone refits the window in its shape; called on every layout.
@@ -188,15 +200,31 @@ extension MapViewController {
 
     private var exportStatsOffered: Bool { ExportStats.offered(checked: session.panel.checked, tripID: session.tripID) }
 
-    /// The map under the marks and the card reads dark: the dark flavor or Satellite showing.
-    private var exportDark: Bool { traitCollection.userInterfaceStyle == .dark || (state.satellite && !state.satelliteFailed) }
+    private var exportDark: Bool {
+        ExportStats.dark(darkFlavor: traitCollection.userInterfaceStyle == .dark, satellite: state.satellite, satelliteFailed: state.satelliteFailed)
+    }
+
+    /// The theme or Satellite changed: the card is asked for in the map's new look.
+    func exportLookChanged() {
+        guard exportOpen else { return }
+        askExportStats()
+    }
 
     /// Show stats ticks only while something is Checked; tapped otherwise it says so.
     private func toggleExportStats() {
         guard !export.busy else { return }
         guard exportStatsOffered else {
-            notice(.exported, String(localized: "export.showStatsHint", defaultValue: "Check tracks to show their stats.", comment: "Map image export: Show stats tapped with nothing checked."))
-            hideNoticeSoon(.exported)
+            // Under the window: the map's notices are covered while the viewfinder shows.
+            let hint = String(localized: "export.showStatsHint", defaultValue: "Check tracks to show their stats.", comment: "Map image export: Show stats tapped with nothing checked.")
+            export.hint = hint
+            renderExportLines()
+            UIAccessibility.post(notification: .announcement, argument: hint)
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .seconds(3))
+                guard let self, self.export.hint == hint else { return }
+                self.export.hint = nil
+                self.renderExportLines()
+            }
             return
         }
         ExportState.showStats.toggle()
@@ -228,12 +256,12 @@ extension MapViewController {
         renderExportLines()
     }
 
-    /// The size line, or what went wrong in its place.
+    /// The size line, or in its place what went wrong or Show stats' hint.
     private func renderExportLines() {
         guard let finder = export.view else { return }
         let problem = export.failed
             ? String(localized: "export.failed", defaultValue: "Couldn't create the image. Please try again.", comment: "Map image export: Capture failed.")
-            : (export.busy ? nil : export.cardError)
+            : (export.busy ? nil : export.hint ?? export.cardError)
         finder.errorLabel.text = problem
         finder.errorLabel.isHidden = problem == nil
         finder.sizeLabel.isHidden = problem != nil
@@ -256,6 +284,8 @@ extension MapViewController {
     private func captureExport() {
         guard let finder = export.view, let pair, !export.busy, export.ready else { return }
         let card = export.card
+        export.capture += 1
+        let capture = export.capture
         setExportBusy(true)
         export.failed = false
         renderExportLines()
@@ -275,11 +305,14 @@ extension MapViewController {
         let credit = ImageMarks.creditText(basemap: ImageMarks.attribution(pair.style, source: Self.basemapSource),
                                            satellite: state.satellite && !state.satelliteFailed ? ImageMarks.attribution(pair.style, source: MapStyle.satelliteID) : nil)
         let dark = exportDark
+        // The markers' colors as the screen shows them: the image is drawn off the main thread,
+        // where the app's appearance isn't the current one.
+        let traits = traitCollection
         let images = photoViews.markers.images
         let byID = Dictionary(shown.items.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        export.renderer.render(style: style, center: centre, zoom: mapView.zoomLevel, heading: mapView.direction, window: CGSize(width: box.w, height: box.h),
-                               pixelWidth: size.width, pixelHeight: size.height) { [weak self] result in
-            guard let self else { return }
+        export.renderer.render(style: style, center: centre, zoom: mapView.zoomLevel, heading: mapView.direction, pitch: mapView.camera.pitch,
+                               window: CGSize(width: box.w, height: box.h), pixelWidth: size.width, pixelHeight: size.height) { [weak self] result in
+            guard let self, self.export.capture == capture else { return }
             switch result {
             case .failure(let error):
                 Self.log.error("export: \(String(describing: error), privacy: .public)")
@@ -291,10 +324,12 @@ extension MapViewController {
                         let path = byID[placement.ids[0]]?.thumbPath
                         markers.append(ExportImage.Marker(placement: placement, thumbnail: await Self.thumbnail(path, images: images)))
                     }
+                    guard self.export.capture == capture else { return }
                     let png = await Task.detached {
-                        ExportImage.compose(picture: picture, width: size.width, height: size.height, markers: markers, card: card, credit: credit, dark: dark, unit: unit).pngData()
+                        ExportImage.compose(picture: picture, width: size.width, height: size.height, markers: markers, card: card, credit: credit,
+                                            dark: dark, unit: unit, traits: traits).pngData()
                     }.value
-                    guard self.export.busy else { return }
+                    guard self.export.capture == capture, self.export.busy else { return }
                     guard let png else {
                         self.failExport()
                         return
@@ -326,7 +361,9 @@ extension MapViewController {
             failExport()
             return
         }
+        let capture = export.capture
         let saved = await ExportPhotos.save(png)
+        guard export.capture == capture else { return }
         closeExport()
         if saved {
             notice(.exported, String(localized: "export.saved", defaultValue: "Saved to Photos", comment: "Map image export: the image is in the Photos library."))
@@ -388,7 +425,12 @@ final class ExportState {
     /// The last capture failed, and the line under the window says so.
     var failed = false
     let renderer = ExportRenderer()
-    var hidden: [(UIView, Bool)] = []
+    /// The chrome faded out while the viewfinder shows.
+    var covered: [UIView] = []
+    /// Show stats' hint, in the size line's place for a moment.
+    var hint: String?
+    /// Counts captures, and closings, so a capture finishes only if it's still the latest.
+    var capture = 0
     /// The size the window was last fitted to, so a turn refits it.
     var laidOut = CGSize.zero
 
@@ -408,18 +450,16 @@ final class ExportState {
     // The stats card the server draws for the current request: asked for again after a pause in
     // changing it, and held until the next one arrives, so Capture draws the card the window
     // previews and never asks a second time. The web's useStatsCard.
-    private var wanted: ExportStats.Request?
-    private var settled: ExportStats.Request?
+    private var hold = ExportStats.Hold()
     private var asking: Task<Void, Never>?
     private(set) var card: UIImage?
     private(set) var cardError: String?
 
     /// Whether card answers the current request, so Capture would draw what's previewed.
-    var ready: Bool { wanted == nil || wanted == settled }
+    var ready: Bool { hold.ready }
 
     func want(_ request: ExportStats.Request?, api: APIClient, changed: @escaping () -> Void) {
-        guard request != wanted else { return }
-        wanted = request
+        guard hold.want(request) || request == nil else { return }
         asking?.cancel()
         guard let request else {
             card = nil
@@ -433,7 +473,7 @@ final class ExportState {
             guard !Task.isCancelled else { return }
             let result: Result<Data?, Error>
             do { result = .success(try await api.statsCard(request)) } catch { result = .failure(error) }
-            guard let self, !Task.isCancelled, self.wanted == request else { return }
+            guard let self, !Task.isCancelled, self.hold.answer(request) else { return }
             switch result {
             case .success(let data):
                 self.card = data.flatMap { UIImage(data: $0, scale: 1) }
@@ -442,7 +482,6 @@ final class ExportState {
                 self.card = nil
                 self.cardError = (error as? APIError)?.serverMessage ?? String(localized: "export.failed", defaultValue: "Couldn't create the image. Please try again.", comment: "Map image export: Capture failed.")
             }
-            self.settled = request
             changed()
         }
     }
@@ -450,8 +489,7 @@ final class ExportState {
     func clearCard() {
         asking?.cancel()
         asking = nil
-        wanted = nil
-        settled = nil
+        hold = ExportStats.Hold()
         card = nil
         cardError = nil
     }
