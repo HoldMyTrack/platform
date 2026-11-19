@@ -58,7 +58,7 @@ A kept session survives a restart but isn't trusted until the server confirms it
 
 ### FR-1.3 Sign out
 
-`POST /v2/auth/logout` ends the session on the server; the phone forgets the token whether or not that request succeeded, and opens the sign-in screen with every other screen cleared.
+`POST /v2/auth/logout` ends the session on the server; the phone forgets the token whether or not that request succeeded, and opens the sign-in screen with every other screen cleared. The next account to sign in sees nothing of the last one's: its captures, photos, open Trip and queued files go with the session.
 
 ### FR-1.4 Email verification
 

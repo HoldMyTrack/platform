@@ -449,9 +449,12 @@ object HoldMyTrackApi {
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = finish()
             override fun onResponse(call: Call, response: Response) = response.use { finish() }
+            // On the main thread, so the account's state is gone before the next screen opens.
             private fun finish() {
-                Session.clear()
-                main.post(onDone)
+                main.post {
+                    Session.clear()
+                    onDone()
+                }
             }
         })
     }
@@ -556,7 +559,8 @@ object HoldMyTrackApi {
      */
     private val imageClient: OkHttpClient by lazy {
         val dir = imageCacheDir ?: return@lazy client
-        client.newBuilder().cache(Cache(dir, IMAGE_CACHE_BYTES)).build()
+        // Its own dispatcher, so the session's end cancels image calls alone ([clearImageCache]).
+        client.newBuilder().dispatcher(Dispatcher().apply { maxRequestsPerHost = 20 }).cache(Cache(dir, IMAGE_CACHE_BYTES)).build()
     }
 
     /** Where the image cache is emptied or trimmed: off the main thread, since it walks and
@@ -566,6 +570,8 @@ object HoldMyTrackApi {
     /** The account's images go with its session (`Session.clear`): the avatar's path is the
      *  same for every account. Files left by an earlier process go too. */
     fun clearImageCache() {
+        // A call still going would write the last account's image after the eviction.
+        imageClient.dispatcher.cancelAll()
         imageCacheIo.execute { runCatching { imageClient.cache?.evictAll() } }
     }
 

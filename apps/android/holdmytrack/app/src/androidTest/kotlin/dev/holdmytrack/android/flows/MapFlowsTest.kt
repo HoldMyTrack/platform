@@ -302,7 +302,7 @@ class MapFlowsTest {
 
     /** Opens the app signed in to the test account, on the map, whoever it was left signed in as. */
     private fun signIn() {
-        Session.clear()
+        InstrumentationRegistry.getInstrumentation().runOnMainSync { Session.clear() }
         // The tour's offer would cover the map. The phone keeps whether it was offered, not the
         // account (TourStore), so the flows mark it seen.
         TourStore(context).let { it.save(it.load().copy(tour = true)) }

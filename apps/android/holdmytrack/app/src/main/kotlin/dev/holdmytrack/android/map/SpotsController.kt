@@ -10,6 +10,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Spot
 import org.maplibre.android.geometry.LatLng
 import org.maplibre.android.maps.MapLibreMap
@@ -93,7 +94,9 @@ class SpotsController(
      */
     fun loadCaptures(onlyNew: Boolean) {
         val since = if (onlyNew) capturesSince(MapSpots.captured) else null
+        val asked = Session.generation
         HoldMyTrackApi.spotCaptures(since) { result ->
+            if (!Session.isCurrent(asked)) return@spotCaptures
             val fresh = result.getOrNull()?.associate { it.spotId to it.capturedAt } ?: return@spotCaptures
             val captures = if (since != null) mergeCaptures(MapSpots.captured, fresh) else fresh
             MapSpots.setCaptured(style(), captures)

@@ -12,6 +12,7 @@ import androidx.core.content.edit
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.toColorInt
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Spot
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
@@ -89,6 +90,16 @@ object MapSpots {
 
     /** Capture mode's dashed line, from the user to the nearest point of the target's area. */
     private var guide: FeatureCollection = FeatureCollection.fromFeatures(emptyList())
+
+    init {
+        // The next account's captures load as its map attaches; until then, and should that
+        // fail, it shows none rather than these.
+        Session.onClear { _ ->
+            captured = emptyMap()
+            target = null
+            guide = FeatureCollection.fromFeatures(emptyList())
+        }
+    }
 
     /** The zooms "Show in this area" offers places between, its layer's in the layers document:
      *  from a metro area in view to the tiles' first. Null before the document is on [style]. */

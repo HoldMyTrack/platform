@@ -23,4 +23,16 @@ class ImportsAccountTest {
         assertFalse(ImportsAccount.keeps("a@example.com", "b@example.com"))
         assertFalse(ImportsAccount.keeps("a@example.com", null))
     }
+
+    @Test
+    fun `a file still going reports to the account it went for`() {
+        assertTrue(ImportsAccount.reports("a@example.com", "a@example.com"))
+    }
+
+    @Test
+    fun `a file still going after a sign-out reports to no one`() {
+        assertFalse(ImportsAccount.reports("a@example.com", null))
+        assertFalse(ImportsAccount.reports("a@example.com", "b@example.com"))
+        assertFalse(ImportsAccount.reports(null, null))
+    }
 }

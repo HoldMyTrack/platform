@@ -2,10 +2,11 @@ package dev.holdmytrack.android.net
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Looper
+import android.util.Log
 import android.webkit.CookieManager
 import androidx.core.content.edit
-import dev.holdmytrack.android.map.FogPlaces
-import dev.holdmytrack.android.map.MapLayers
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The credential the app holds for the API: an opaque `sessions` row id the server minted at
@@ -40,7 +41,35 @@ object Session {
     private const val KEY_TIMEZONE = "timezone"
     private const val KEY_TILE_VERSION = "tile_version"
 
+    private const val TAG = "HoldMyTrack"
+
     private lateinit var prefs: SharedPreferences
+
+    /** The application, from [init], for [onClear]'s hooks. */
+    private lateinit var app: Context
+
+    /**
+     * Bumped by [clear]. A request records it as it starts, and an answer that lands under
+     * another number ([isCurrent] false) is the last account's, dropped rather than drawn.
+     */
+    @Volatile
+    var generation = 0
+        private set
+
+    fun isCurrent(asked: Int): Boolean = asked == generation
+
+    /** What [clear] runs: see [onClear]. */
+    private val clearHooks = CopyOnWriteArrayList<(Context) -> Unit>()
+
+    /**
+     * Runs [hook] with the application each time the session ends, before [clear] returns, so the
+     * account's state kept outside it (the map's, the upload queue's) goes too and the next
+     * account starts clean. Each holder registers from its own `init`: one never touched holds
+     * nothing to clear. A hook that throws is logged and the rest still run.
+     */
+    fun onClear(hook: (Context) -> Unit) {
+        clearHooks += hook
+    }
 
     @Volatile
     private var cachedToken: String? = null
@@ -58,7 +87,8 @@ object Session {
         private set
 
     fun init(context: Context) {
-        prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        app = context.applicationContext
+        prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         cachedToken = prefs.getString(KEY_TOKEN, null)
     }
 
@@ -149,13 +179,15 @@ object Session {
     }
 
     fun clear() {
-        // The session cookie WebPageActivity gave its WebView goes with the session.
-        runCatching { CookieManager.getInstance().removeAllCookies(null) }
+        check(Looper.myLooper() == Looper.getMainLooper()) { "Session.clear off the main thread" }
+        // The session cookie WebPageActivity gave its WebView goes with the session. Off the main
+        // thread, since the first CookieManager call loads WebView.
+        Thread { runCatching { CookieManager.getInstance().removeAllCookies(null) } }.start()
+        generation++
         cachedToken = null
         verified = false
         HoldMyTrackApi.clearImageCache()
-        // Fog's locked level and picked place are the account's: the next account starts with neither.
-        MapLayers.update(null) { it.copy(fogLevel = null, vars = it.vars - FogPlaces.VAR) }
+        for (hook in clearHooks) runCatching { hook(app) }.onFailure { Log.w(TAG, "a sign-out hook failed", it) }
         prefs.edit {
             remove(KEY_TOKEN)
             remove(KEY_EMAIL)

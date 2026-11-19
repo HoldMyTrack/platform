@@ -78,6 +78,8 @@ The shared client's interceptors apply to the map's requests too:
 
 **Images alone are cached on disk**, through a copy of that client (`HoldMyTrackApi.image`): photos are served immutable and the avatar's URL carries its version, while MapLibre keeps its own tile cache. The cache is emptied by `Session.clear`, since the avatar's path is the same for every account.
 
+**Account state outside `Session` registers to go with it.** A process-wide `object` that holds something of the account's (captures, thumbnails, the upload queue, the map's open Trip and Fog pick) calls `Session.onClear` from its own `init`, and `Session.clear`, main thread only, runs every hook before it returns. A new holder does the same; `net` names none of them. A request that writes such state records `Session.generation` as it starts and drops an answer that lands after a sign-out, which would otherwise write the last account's back.
+
 **The Update screen opens over the app.** The interceptor runs before the refused call's callback, and clearing the task first would hand that callback a destroyed fragment, so Back calls `finishAffinity` instead. A refused call's callback is never delivered (`HoldMyTrackApi.refusedBuild`), since Back can tear the screens down while another refused call is in flight; suspending callers get their exception, and their scopes end with their screens. Android drops an activity started from the background, so `AppOutdated` counts the screens in front through the application's activity callbacks and holds a refusal met with none until one comes back (`OutdatedScreen`).
 
 ### 2.2 The wire

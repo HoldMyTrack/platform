@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.map
 
 import dev.holdmytrack.android.BuildConfig
+import dev.holdmytrack.android.net.Session
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import org.maplibre.android.maps.Style
@@ -48,10 +49,22 @@ object MapLayers {
         val queries: Map<String, String> = emptyMap(),
         /** The Fog level the control locked ([FogLevels]), drawn at every zoom; null follows the zoom. */
         val fogLevel: String? = null,
-    )
+    ) {
+        /** What the next account starts from: the device's choices (mode, satellite, switches,
+         *  Places categories) without the last account's tracks, captures, Fog pick and lock. */
+        fun withoutAccount(): State = copy(vars = vars - ACCOUNT_VARS, hiddenGroups = emptyMap(), queries = emptyMap(), fogLevel = null)
+    }
+
+    /** The vars holding the account's own ids ([MapOverlays.setTrackCap], [MapOverlays.setTrackFilter],
+     *  [MapSpots], [FogPlaces]). */
+    private val ACCOUNT_VARS = setOf("capped", "listed", "hidden", "focused", "captured", "captureTarget", FogPlaces.VAR)
 
     var state = State()
         private set
+
+    init {
+        Session.onClear { update(null, State::withoutAccount) }
+    }
 
     private class Applied(val doc: MapLayersDoc.Doc, val excluded: Set<String>) {
         val urls = mutableMapOf<String, String>()

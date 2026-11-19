@@ -67,6 +67,11 @@ object FileImports {
 
     private val listeners = mutableSetOf<() -> Unit>()
 
+    init {
+        // The copies of the account's files go as it signs out, not when the next one queues.
+        Session.onClear { forAccount(it, null) }
+    }
+
     fun addListener(listener: () -> Unit) {
         listeners += listener
     }
@@ -123,7 +128,7 @@ object FileImports {
     }
 
     /**
-     * Drops what another account left: its queue, its notes and its count. Called on queueing,
+     * Drops what another account left: its queue, its notes and its count. Called on queueing, as the session ends,
      * before each file is sent and when the Upload screen shows, so a phone signed in with
      * someone else never sends or shows the last account's files.
      */
@@ -132,7 +137,8 @@ object FileImports {
         owner = null
         queue.forEach { it.copy.delete() }
         queue.clear()
-        _transfers.removeAll { it.sent < 0 }
+        // The one still going, too: it reports to no one ([ImportsAccount.reports]).
+        _transfers.clear()
         _notes.clear()
         sentCount = 0
         if (!running) clearCopies(context)
@@ -149,6 +155,7 @@ object FileImports {
         running = true
         val res = context.resources
         val transfer = next.transfer
+        val sentFor = owner
         transfer.sent = 0
         changed()
         scope.launch {
@@ -160,15 +167,20 @@ object FileImports {
                     if (percent == shown) return@uploadTrackFile
                     shown = percent
                     main.post {
+                        if (!ImportsAccount.reports(sentFor, owner)) return@post
                         transfer.sent = sent
                         changed()
                     }
                 }
-                sentCount++
-                if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
+                if (ImportsAccount.reports(sentFor, owner)) {
+                    sentCount++
+                    if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
+                }
             } catch (e: Exception) {
-                val reason = FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))
-                _notes += Note(res.getString(R.string.upload_failed_transfer, transfer.name, reason), error = true)
+                if (ImportsAccount.reports(sentFor, owner)) {
+                    val reason = FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))
+                    _notes += Note(res.getString(R.string.upload_failed_transfer, transfer.name, reason), error = true)
+                }
             } finally {
                 next.copy.delete()
                 _transfers -= transfer

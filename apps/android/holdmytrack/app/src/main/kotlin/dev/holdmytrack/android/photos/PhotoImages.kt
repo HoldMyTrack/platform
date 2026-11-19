@@ -3,6 +3,7 @@ package dev.holdmytrack.android.photos
 import android.graphics.Bitmap
 import android.util.LruCache
 import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.net.Session
 
 /**
  * Photo thumbnails, fetched once and kept: the map's markers and the Photos tab's rows show the
@@ -16,6 +17,16 @@ object PhotoImages {
         override fun sizeOf(key: String, value: Bitmap) = value.allocationByteCount
     }
     private val waiting = HashMap<String, MutableList<(Bitmap?) -> Unit>>()
+
+    init {
+        // The account's photos stay with it.
+        Session.onClear { _ ->
+            cache.evictAll()
+            val left = waiting.values.flatten()
+            waiting.clear()
+            left.forEach { it(null) }
+        }
+    }
 
     /** The thumbnail at [path] (a [dev.holdmytrack.android.net.Photo.thumbUrl]) if it's here. */
     fun cached(path: String): Bitmap? = cache.get(path)
@@ -31,7 +42,10 @@ object PhotoImages {
             return
         }
         waiting[path] = mutableListOf(onLoaded)
+        // A fetch the last account started isn't kept.
+        val asked = Session.generation
         HoldMyTrackApi.image(path, maxSide = null) { result ->
+            if (!Session.isCurrent(asked)) return@image
             val bitmap = result.getOrNull()
             if (bitmap != null) cache.put(path, bitmap)
             waiting.remove(path)?.forEach { it(bitmap) }

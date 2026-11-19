@@ -23,6 +23,7 @@ import com.google.android.material.progressindicator.LinearProgressIndicator
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Spot
 import dev.holdmytrack.android.panel.PanelFormat
 import dev.holdmytrack.android.recording.RecordingFormat
@@ -263,8 +264,9 @@ class CaptureMode(
     private fun save() {
         val target = spot ?: return
         val at = (capture?.state as? SpotCapture.State.Captured)?.at ?: return
+        val asked = Session.generation
         HoldMyTrackApi.captureSpot(target.id, at.lat, at.lon) { result ->
-            if (spot?.id != target.id) return@captureSpot
+            if (spot?.id != target.id || !Session.isCurrent(asked)) return@captureSpot
             result.onSuccess { saved ->
                 MapSpots.setCaptured(style(), MapSpots.captured + (saved.spotId to saved.capturedAt))
                 onCaptured()
