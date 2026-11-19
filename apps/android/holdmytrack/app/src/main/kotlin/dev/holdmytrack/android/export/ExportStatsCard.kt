@@ -15,8 +15,10 @@ class ExportStatsCard(
     private val fetch: (ExportStatsRules.Request, (Result<Bitmap?>) -> Unit) -> Unit,
     /** The card, [ready] or [error] changed. */
     private val onChange: () -> Unit,
-    /** [error] for a failure the server didn't word, in the app's language. */
-    private val unreachable: String,
+    /** [error] for a failure the server didn't word ([FailureText]). */
+    private val failed: String,
+    /** [error] for a failed connection. */
+    private val offline: String,
 ) {
     private val main = Handler(Looper.getMainLooper())
     private var wanted: ExportStatsRules.Request? = null
@@ -52,7 +54,7 @@ class ExportStatsCard(
                 // An answer for a request no longer wanted is dropped.
                 if (wanted?.key != request.key) return@fetch
                 card = result.getOrNull()
-                error = result.exceptionOrNull()?.let { FailureText.of(it, unreachable) }
+                error = result.exceptionOrNull()?.let { FailureText.of(it, failed, offline) }
                 settled = request.key
                 onChange()
             }

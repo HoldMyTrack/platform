@@ -167,7 +167,7 @@ object FileImports {
                 sentCount++
                 if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
             } catch (e: Exception) {
-                val reason = FailureText.of(e, res.getString(R.string.network_error))
+                val reason = FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))
                 _notes += Note(res.getString(R.string.upload_failed_transfer, transfer.name, reason), error = true)
             } finally {
                 next.copy.delete()

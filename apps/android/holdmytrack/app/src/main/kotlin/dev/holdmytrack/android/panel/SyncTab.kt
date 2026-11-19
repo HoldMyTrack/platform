@@ -569,7 +569,7 @@ class SyncTab(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                showProblems(listOf(FailureText.of(e, res.getString(R.string.sync_failed))))
+                showProblems(listOf(res.getString(R.string.sync_failed, FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error)))))
             } finally {
                 runJob = null
                 render()

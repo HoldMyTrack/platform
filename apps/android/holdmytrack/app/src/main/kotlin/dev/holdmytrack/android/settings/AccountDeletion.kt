@@ -58,7 +58,7 @@ object AccountDeletion {
                 }.onFailure {
                     if (activity.isDestroyed) return@onFailure
                     confirm.isEnabled = true
-                    layout.error = FailureText.of(it, activity.getString(R.string.network_error))
+                    layout.error = FailureText.of(it, activity.getString(R.string.something_went_wrong), activity.getString(R.string.network_error))
                 }
             }
         }

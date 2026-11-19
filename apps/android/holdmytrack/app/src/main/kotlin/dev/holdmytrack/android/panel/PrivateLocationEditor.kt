@@ -321,7 +321,7 @@ class PrivateLocationEditor(
                     }.onFailure {
                         confirm.isEnabled = true
                         confirm.setText(R.string.panel_delete_confirm)
-                        dialog.setMessage(res.getString(R.string.private_delete_failed, FailureText.of(it, res.getString(R.string.network_error))))
+                        dialog.setMessage(res.getString(R.string.private_delete_failed, FailureText.of(it, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))))
                     }
                 }
             }

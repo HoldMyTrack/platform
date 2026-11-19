@@ -265,7 +265,7 @@
     <string name="sync_allow_access">Allow Health Connect access</string>
     <string name="sync_open_health_connect">Open Health Connect</string>
     <string name="sync_now">Sync</string>
-    <string name="sync_failed">Sync failed.</string>
+    <string name="sync_failed">Sync failed: %1$s</string>
     <string name="sync_rejected_row">Rejected: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Stopped early. %1$s</string>
     <plurals name="sync_refusal_too_many_points">
@@ -388,6 +388,7 @@
     <string name="upload_already">%1$s was already uploaded before.</string>
     <string name="upload_failed_transfer">%1$s: %2$s</string>
     <string name="network_error">Network error</string>
+    <string name="something_went_wrong">Something went wrong</string>
     <string name="upload_unreadable">the file couldn\'t be read</string>
 
     <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->

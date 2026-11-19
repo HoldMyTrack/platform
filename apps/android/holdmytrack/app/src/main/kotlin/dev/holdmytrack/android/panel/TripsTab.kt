@@ -341,7 +341,7 @@ class TripsTab(
                 confirm.isEnabled = true
                 cancel.isEnabled = true
                 confirm.setText(R.string.trip_delete_button)
-                dialog.setMessage(res.getString(R.string.trip_delete_failed, FailureText.of(failure, res.getString(R.string.network_error))))
+                dialog.setMessage(res.getString(R.string.trip_delete_failed, FailureText.of(failure, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))))
             }
         }
     }

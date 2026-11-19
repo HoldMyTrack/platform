@@ -102,7 +102,7 @@ class VerifyEmailActivity : AppCompatActivity() {
                     Session.clear()
                     openSignIn()
                 } else if (!isDestroyed) {
-                    show(FailureText.of(failure, getString(R.string.verify_email_check_failed)), failed = true)
+                    show(FailureText.of(failure, getString(R.string.something_went_wrong), getString(R.string.verify_email_check_failed)), failed = true)
                 }
             }
         }
@@ -150,7 +150,7 @@ class VerifyEmailActivity : AppCompatActivity() {
                     Session.clear()
                     openSignIn()
                 } else if (userAsked && !isDestroyed) {
-                    show(FailureText.of(failure, getString(R.string.verify_email_check_failed)), failed = true)
+                    show(FailureText.of(failure, getString(R.string.something_went_wrong), getString(R.string.verify_email_check_failed)), failed = true)
                 }
             }
         }
@@ -163,7 +163,7 @@ class VerifyEmailActivity : AppCompatActivity() {
             if (isDestroyed) return@resendVerification
             setBusy(false)
             result.onSuccess { text -> show(text, failed = false) }
-                .onFailure { failure -> show(FailureText.of(failure, getString(R.string.verify_email_check_failed)), failed = true) }
+                .onFailure { failure -> show(FailureText.of(failure, getString(R.string.something_went_wrong), getString(R.string.verify_email_check_failed)), failed = true) }
         }
     }
 

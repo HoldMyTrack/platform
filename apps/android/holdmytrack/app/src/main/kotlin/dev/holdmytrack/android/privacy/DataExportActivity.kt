@@ -73,7 +73,7 @@ class DataExportActivity : AppCompatActivity() {
             if (isDestroyed) return@requestExport
             request.isEnabled = true
             result.onSuccess { show(it) }.onFailure {
-                error.text = FailureText.of(it, getString(R.string.network_error))
+                error.text = FailureText.of(it, getString(R.string.something_went_wrong), getString(R.string.network_error))
                 error.visibility = View.VISIBLE
             }
         }
@@ -131,7 +131,7 @@ class DataExportActivity : AppCompatActivity() {
                 notice.setText(R.string.settings_export_downloading)
                 notice.visibility = View.VISIBLE
             }.onFailure {
-                error.text = FailureText.of(it, getString(R.string.network_error))
+                error.text = FailureText.of(it, getString(R.string.something_went_wrong), getString(R.string.network_error))
                 error.visibility = View.VISIBLE
             }
         }
