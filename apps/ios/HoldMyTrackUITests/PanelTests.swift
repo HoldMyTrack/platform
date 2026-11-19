@@ -81,9 +81,9 @@ final class PanelTests: XCTestCase {
         XCTAssertEqual(XCTWaiter().wait(for: [XCTNSPredicateExpectation(predicate: fewer, object: rows)], timeout: 15), .completed)
     }
 
-    /// Trips shows its Trip in Normal, with no mode toggle, and the Map tab gets its mode back.
+    /// Trips shows its Trip in Normal, with no mode toggle, and the Tracks tab gets its mode back.
     @MainActor
-    func testTripsShowNormalAndTheMapTabKeepsItsMode() throws {
+    func testTripsShowNormalAndTheTracksTabKeepsItsMode() throws {
         try LaunchTests.requireDevStack(self)
         let app = XCUIApplication()
         app.launchArguments = ["-hmtSignedOut"]
@@ -98,7 +98,7 @@ final class PanelTests: XCTestCase {
         XCTAssertTrue(app.cells["tripFolder"].firstMatch.waitForExistence(timeout: 10))
         XCTAssertFalse(modes.exists, "no mode toggle on Trips")
 
-        app.tabBars.buttons["tabMap"].tap()
+        app.tabBars.buttons["tabTracks"].tap()
         XCTAssertTrue(modes.waitForExistence(timeout: 5))
         XCTAssertTrue(modes.buttons.element(boundBy: 1).isSelected, "Fog again")
     }

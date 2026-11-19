@@ -20,7 +20,7 @@ data class ModeBarState(
     val selectionShown: Boolean,
     /** Fog is still being re-rendered (`CoverageWatch`). */
     val coverageRendering: Boolean,
-    /** The panel's tab: the toggle is the Map tab's. */
+    /** The panel's tab: the toggle is the Tracks tab's. */
     val tab: PanelTab,
 )
 
@@ -87,7 +87,7 @@ class ModeBar(
         }
     }
 
-    /** The toggle shows once the session allows, on the Map tab, hidden while recording, editing or checking rows.
+    /** The toggle shows once the session allows, on the Tracks tab, hidden while recording, editing or checking rows.
      *  Layers and Places stay while recording: the base map, paths and places are about where the recording goes. */
     fun render() {
         val s = state()

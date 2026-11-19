@@ -164,12 +164,12 @@ struct AccountTests {
     }
 }
 
-/// Trips is Normal mode's; the Map tab keeps its own pick.
+/// Trips is Normal mode's; the Tracks tab keeps its own pick.
 struct TabModeTests {
-    @Test func tripsShowNormalWithNoToggleAndTheMapTabGetsItsPickBack() {
-        #expect(TabMode.shown(picked: .fog, onMapTab: false) == .normal)
-        #expect(!TabMode.toggleShown(onMapTab: false))
-        #expect(TabMode.shown(picked: .fog, onMapTab: true) == .fog)
-        #expect(TabMode.toggleShown(onMapTab: true))
+    @Test func tripsShowNormalWithNoToggleAndTheTracksTabGetsItsPickBack() {
+        #expect(TabMode.shown(picked: .fog, onTracksTab: false) == .normal)
+        #expect(!TabMode.toggleShown(onTracksTab: false))
+        #expect(TabMode.shown(picked: .fog, onTracksTab: true) == .fog)
+        #expect(TabMode.toggleShown(onTracksTab: true))
     }
 }

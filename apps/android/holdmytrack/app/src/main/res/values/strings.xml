@@ -148,7 +148,7 @@
     <string name="edit_open_failed">The track couldn\'t be opened: %1$s</string>
     <string name="area_zoom_in">Zoom in to see your tracks.</string>
     <string name="locate_needs_location">HoldMyTrack needs location access to show where you are.</string>
-    <string name="nav_map">Map</string>
+    <string name="nav_tracks">Tracks</string>
     <string name="nav_trips">Trips</string>
     <string name="nav_sync">Sync</string>
     <string name="nav_you">You</string>
