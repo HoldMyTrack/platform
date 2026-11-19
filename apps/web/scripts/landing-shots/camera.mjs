@@ -34,3 +34,17 @@ export function panOffset(current, target) {
   const y = mercatorY(target.lat, current.zoom) - mercatorY(current.lat, current.zoom);
   return { x, y };
 }
+
+/** The shortest drag steer makes, well past MapLibre's click tolerance. */
+export const MIN_DRAG = 80;
+
+/** The two drags that move the map by (-x, -y), each at least MIN_DRAG long: a drag inside
+ *  MapLibre's click tolerance reads as a click on the map and clears the focused track. The first
+ *  goes past the target by one of four detours, the one that leaves it longest, and the second
+ *  comes back. */
+export function dragSplit(x, y) {
+  const detours = [[1, 1], [-1, 1], [1, -1], [-1, -1]].map(([dx, dy]) => [dx * MIN_DRAG, dy * MIN_DRAG]);
+  const length = ([dx, dy]) => Math.hypot(-x + dx, -y + dy);
+  const [dx, dy] = detours.reduce((best, d) => (length(d) > length(best) ? d : best));
+  return [[-x + dx, -y + dy], [-dx, -dy]];
+}
