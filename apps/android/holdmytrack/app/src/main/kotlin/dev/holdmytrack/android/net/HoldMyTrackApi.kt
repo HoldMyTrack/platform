@@ -154,15 +154,13 @@ object HoldMyTrackApi {
      * the screen.
      */
     private fun refusedBuild(response: Response): Boolean =
-        AppBuild.isRefusal(response.request.url.toString(), BuildConfig.API_BASE_URL, response.code)
+        AppBuild.isRefusal(response.request.url, apiBase, response.code)
 
     /** Hands the server's refusal of this build to [AppOutdated], whichever call met it. */
     private object OutdatedInterceptor : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val response = chain.proceed(chain.request())
-            if (AppBuild.isRefusal(response.request.url.toString(), BuildConfig.API_BASE_URL, response.code)) {
-                AppOutdated.refused()
-            }
+            if (refusedBuild(response)) AppOutdated.refused()
             return response
         }
     }
