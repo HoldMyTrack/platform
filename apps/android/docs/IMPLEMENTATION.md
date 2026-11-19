@@ -52,7 +52,7 @@ Map, Trips and Sync are one `MapFragment` whose panel switches tabs; You is `You
 
 What survives a recreation is chosen item by item, and each was a bug: the fragment is added only on a first create; the once-per-process camera fit, the map mode and the logo's and attribution's base margins go into the saved state. Without the mode, the buttons restored their own checked state and showed Fog over a map in Normal; without the margins, MapLibre's restored values were lifted a second time.
 
-Every screen draws edge-to-edge: Android 15+ does at `targetSdk` 35+, and `HoldMyTrackApplication` calls `enableEdgeToEdge()` before each track's `onCreate` so Android 14 matches. The map's chrome adds the bottom inset to each view's padding (`insetSystemBars`) and passes the insets on unconsumed; the side insets are applied once, on the tabs' container.
+Every screen draws edge-to-edge: Android 15+ does at `targetSdk` 35+, and `HoldMyTrackApplication` calls `enableEdgeToEdge()` before each Activity's `onCreate` so Android 14 matches. The map's chrome adds the bottom inset to each view's padding (`insetSystemBars`) and passes the insets on unconsumed; the side insets are applied once, on the tabs' container. The keyboard covers `MainActivity` and never shrinks it (`adjustResize`, edge to edge): a shorter map shows less ground, and the Tracks list reloads for it and drops Checked and Hidden from what left it (`docs/SPEC.md` FR-5.8). So the bottom bar pads by the navigation bar alone, in place of Material's padding, which adds the keyboard, and the editors along the map's bottom rise over the keyboard themselves (`ChromeInsets.placeEditors`).
 
 ### 1.4 The web's pages in a WebView
 

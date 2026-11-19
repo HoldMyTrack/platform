@@ -7,6 +7,7 @@ import android.location.Location
 import android.location.LocationManager
 import android.location.provider.ProviderProperties
 import android.os.SystemClock
+import android.widget.EditText
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import androidx.test.uiautomator.By
@@ -27,9 +28,10 @@ import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
+import java.text.DateFormat
+import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Locale
 import kotlin.concurrent.thread
 
 /**
@@ -185,29 +187,20 @@ class MapFlowsTest {
 
     private fun checkedRows(): Int = device.findObjects(checkedTiles()).size
 
-    /** Sets Dates' From to [day] through its dialog and the picker's calendar, then Done. Not by
-     *  typing it: the keyboard shortens the map, and the list follows the smaller view. */
+    /** Sets Dates' From to [day] through its dialog, typed into the picker in the format Material's
+     *  picker reads (its `UtcDates.getDefaultTextInputFormat`), then Done. Typed, so the keyboard is
+     *  up meanwhile: it covers the map, never shortens it, and the list keeps its area. */
     private fun pickFrom(day: LocalDate) {
         need(id("panel_dates")).click()
         need(id("dates_after")).click()
-        // The picker opens on the first track's month, so the day is forward of it.
-        val month = day.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
-        fun shown(): String {
-            var text = ""
-            retrying { text = need(id("month_navigation_fragment_toggle")).text }
-            return text
-        }
-        var pages = 0
-        while (shown() != month && pages++ < MONTHS) {
-            retrying { need(id("month_navigation_next")).click() }
-            device.waitForIdle()
-        }
-        expect("the picker shows $month", shown() == month)
-        // By its label, which names the month: the calendar keeps the months either side laid out too.
-        val label = day.format(DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault()))
-        // The header names the selection, "Oct 6, 2026".
-        val picked = Regex("""\b${day.format(DateTimeFormatter.ofPattern("MMM", Locale.getDefault()))}\w*\.? ${day.dayOfMonth}\b""")
-        tapUntil({ need(By.descContains(label)) }) { picked.containsMatchIn(need(id("mtrl_picker_header_selection_text")).text) }
+        need(id("mtrl_picker_header_toggle")).click()
+        val field = need(id("mtrl_picker_text_input_date")).findObject(By.clazz(EditText::class.java))
+            ?: fail("no text field in the date picker")
+        val pattern = (DateFormat.getDateInstance(DateFormat.SHORT) as SimpleDateFormat).toPattern()
+            .replace(Regex("[^dMy/\\-.]"), "")
+            .replace(Regex("d{1,2}"), "dd").replace(Regex("M{1,2}"), "MM").replace(Regex("y{1,4}"), "yyyy")
+        retrying { field.text = day.format(DateTimeFormatter.ofPattern(pattern)) }
+        // The keyboard is still coming up as the field fills, and can take the first tap on OK.
         tapUntil({ need(id("confirm_button")) }) { !device.hasObject(id("confirm_button")) }
         need(By.res("android", "button1")).click()
     }
@@ -269,8 +262,6 @@ class MapFlowsTest {
         const val TIMEOUT_MS = 60_000L
         const val SHORT_MS = 5_000L
         const val SCROLLS = 3
-        /** Months the picker may page forward to reach a day: Dates' bounds span the account. */
-        const val MONTHS = 24
         /** About a second per swipe: a fling would snap the sheet back. */
         const val SWIPE_STEPS = 200
         const val SIGN_IN_MS = 15_000L

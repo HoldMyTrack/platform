@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.holdmytrack.android.map.MapMode
@@ -100,6 +101,14 @@ class MainActivity : AppCompatActivity() {
                 .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, navigation.top, 0, 0))
                 .setInsets(WindowInsetsCompat.Type.displayCutout(), Insets.of(0, cutout.top, 0, cutout.bottom))
                 .build()
+        }
+        // In place of Material's own, which pads the bar by the keyboard too: risen over it, the bar
+        // would squeeze the map, and the Tracks list would follow the shorter view (`docs/SPEC.md`
+        // FR-5.11). The keyboard covers the window instead (`windowSoftInputMode`).
+        val navPaddingBottom = nav.paddingBottom
+        ViewCompat.setOnApplyWindowInsetsListener(nav) { bar, insets ->
+            bar.updatePadding(bottom = navPaddingBottom + insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom)
+            insets
         }
         onBackPressedDispatcher.addCallback(this, backToMap)
 
