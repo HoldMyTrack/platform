@@ -360,6 +360,13 @@ object HoldMyTrackApi {
         }, onResult)
     }
 
+    /** `POST /v2/auth/google/nonce` — the nonce to ask Credential Manager to put in the ID
+     *  token, which [signInWithGoogle] then spends, so a copy of the token signs nobody in. */
+    fun googleNonce(onResult: (Result<String>) -> Unit) {
+        val request = Request.Builder().url(v2("auth", "google", "nonce")).post(EMPTY_BODY).build()
+        call(request, { body -> decode<GoogleNonceJson>(body).nonce }, onResult)
+    }
+
     /**
      * `POST /v2/auth/google/token` — trades the ID token Credential Manager returned for a
      * session. The server checks the token's signature against Google's keys before trusting

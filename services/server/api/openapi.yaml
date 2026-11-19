@@ -49,6 +49,8 @@ paths:
     $ref: "paths/auth.yaml#/auth_apple_callback"
   /auth/apple/notifications:
     $ref: "paths/auth.yaml#/auth_apple_notifications"
+  /auth/google/nonce:
+    $ref: "paths/auth.yaml#/auth_google_nonce"
   /auth/google/token:
     $ref: "paths/auth.yaml#/auth_google_token"
   /auth/apple/token:

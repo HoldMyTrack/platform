@@ -171,6 +171,13 @@ func (s *Server) handleGoogleToken(w http.ResponseWriter, r *http.Request) {
 		fail("id_token", err)
 		return
 	}
+	// A token without a nonce comes from a build before the nonce; root ROADMAP.md has requiring it.
+	if claims.Nonce != "" {
+		if err := s.spendGoogleNonce(ctx, claims.Nonce); err != nil {
+			fail("nonce", err)
+			return
+		}
+	}
 	tz, _ := normalizeTimezone(req.TZ)
 	userID, err := s.resolveVerifiedUser(ctx, "google", claims.Sub, claims.Email, claims.Name, tz)
 	if err != nil {
@@ -191,6 +198,9 @@ type googleClaims struct {
 	// accept either rather than failing on a representation change.
 	EmailVerified any    `json:"email_verified"`
 	Name          string `json:"name"`
+	// Nonce is what the Android app asked Credential Manager to put in the token
+	// (handleGoogleNonce); the web flow sets none.
+	Nonce string `json:"nonce"`
 }
 
 // exchangeGoogleCode trades the authorization code for tokens at Google's token endpoint and

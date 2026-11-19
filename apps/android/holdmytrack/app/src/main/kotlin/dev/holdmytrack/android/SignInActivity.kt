@@ -137,13 +137,22 @@ class SignInActivity : AppCompatActivity() {
 
     /**
      * Credential Manager's account picker, asked for an ID token for the server's web client
-     * (the audience the server checks). Closing the picker is not an error, so it shows none.
+     * (the audience the server checks), carrying a nonce the server issued and spends on the
+     * sign-in. Closing the picker is not an error, so it shows none.
      */
     private fun signInWithGoogle() {
         val clientId = providers?.googleClientId?.takeIf { it.isNotEmpty() } ?: return
         setBusy(true)
+        HoldMyTrackApi.googleNonce { result ->
+            if (isDestroyed) return@googleNonce
+            result.onSuccess { nonce -> pickGoogleAccount(clientId, nonce) }
+                .onFailure { googleFailed(it as? Exception ?: IllegalStateException(it)) }
+        }
+    }
+
+    private fun pickGoogleAccount(clientId: String, nonce: String) {
         val request = GetCredentialRequest.Builder()
-            .addCredentialOption(GetSignInWithGoogleOption.Builder(clientId).build())
+            .addCredentialOption(GetSignInWithGoogleOption.Builder(clientId).setNonce(nonce).build())
             .build()
         lifecycleScope.launch {
             try {

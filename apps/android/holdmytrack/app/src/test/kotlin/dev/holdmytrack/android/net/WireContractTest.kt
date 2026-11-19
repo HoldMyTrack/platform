@@ -41,6 +41,7 @@ class WireContractTest {
         response(MessageJson.serializer().descriptor, "/auth/resend-verification", "post")
         response(AccountJson.serializer().descriptor, "/auth/verify-code", "post")
         response(ProvidersJson.serializer().descriptor, "/auth/providers", "get")
+        response(GoogleNonceJson.serializer().descriptor, "/auth/google/nonce", "post", 201)
         response(SettingsOptionsJson.serializer().descriptor, "/account/settings/options", "get")
         response(ExportStatusJson.serializer().descriptor, "/account/export", "get")
         response(ExportStatusJson.serializer().descriptor, "/account/export", "post", 202)

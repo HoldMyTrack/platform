@@ -94,6 +94,9 @@ internal data class CredentialsJson(val email: String, val password: String)
 internal data class GoogleTokenJson(@SerialName("id_token") val idToken: String, val tz: String)
 
 @Serializable
+internal data class GoogleNonceJson(val nonce: String)
+
+@Serializable
 internal data class HandoffJson(val code: String, val verifier: String)
 
 @Serializable

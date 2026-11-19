@@ -159,6 +159,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/auth/apple/notifications"), s.handleAppleNotifications)
 	// Native clients (docs/IMPLEMENTATION.md §4.9): an id_token from Android's Credential
 	// Manager, and the one-time code a browser-tab round trip above ends with for an app.
+	s.mux.HandleFunc(route("POST", "/auth/google/nonce"), s.handleGoogleNonce)
 	s.mux.HandleFunc(route("POST", "/auth/google/token"), s.handleGoogleToken)
 	s.mux.HandleFunc(route("POST", "/auth/apple/token"), s.handleAppleToken)
 	s.mux.HandleFunc(route("POST", "/auth/handoff"), s.handleAuthHandoff)
