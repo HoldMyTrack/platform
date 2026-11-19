@@ -78,10 +78,13 @@ async function pickPlaces(page) {
   await page.waitForTimeout(1000);
 }
 
-/** Clicks the photo marker at point, failing when there is none: a click on the map instead would
- *  clear the focused track and still be shot. */
+/** Clicks the photo marker at point, failing when there is none, or a group's is there instead: a
+ *  click on the map would clear the focused track and still be shot. */
 async function openPhotoAt(page, point) {
-  const found = await page.evaluate(({ x, y }) => !!document.elementFromPoint(x, y)?.closest('.photo-marker'), point);
+  const found = await page.evaluate(({ x, y }) => {
+    const marker = document.elementFromPoint(x, y)?.closest('.photo-marker');
+    return !!marker && !marker.classList.contains('photo-marker--group');
+  }, point);
   if (!found) throw new Error(`no photo marker at ${point.x},${point.y}; set TUNNEL_PHOTO from a trial shot`);
   await page.mouse.click(point.x, point.y);
   await page.getByTestId('photo-popup').waitFor({ timeout: 5000 });
@@ -142,6 +145,7 @@ async function signIn(browser, statePath) {
   if (new URL(page.url()).pathname !== '/') throw new Error(`demo sign-in failed at ${page.url()} (5 an hour per address)`);
   await page.getByTestId('tour-skip').click({ timeout: 15000 }).catch(() => {});
   await page.locator('.demo-bar__hide').click({ timeout: 5000 }).catch(() => {});
+  await assertNoOverlay(page);
   await ctx.storageState({ path: statePath });
   await ctx.close();
 }

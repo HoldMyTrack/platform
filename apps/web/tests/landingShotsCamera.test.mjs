@@ -41,3 +41,8 @@ test('dragSplit makes two drags that sum to the offset, neither short enough to 
     for (const [dx, dy] of drags) assert.ok(Math.hypot(dx, dy) >= MIN_DRAG, `(${x}, ${y}): a drag of ${Math.hypot(dx, dy)} px`);
   }
 });
+
+test("dragSplit keeps a long pan's first drag no longer than it needs", () => {
+  const [[fx, fy]] = dragSplit(0, -400);
+  assert.ok(Math.hypot(fx, fy) < 400, `first drag ${Math.hypot(fx, fy)} px for a 400 px pan`);
+});

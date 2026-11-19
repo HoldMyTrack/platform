@@ -40,11 +40,14 @@ export const MIN_DRAG = 80;
 
 /** The two drags that move the map by (-x, -y), each at least MIN_DRAG long: a drag inside
  *  MapLibre's click tolerance reads as a click on the map and clears the focused track. The first
- *  goes past the target by one of four detours, the one that leaves it longest, and the second
- *  comes back. */
+ *  goes past the target by one of four diagonal detours and the second comes back: the detour that
+ *  keeps the first shortest, so a long pan stays on screen, among those that keep it MIN_DRAG long
+ *  (one always does). */
 export function dragSplit(x, y) {
-  const detours = [[1, 1], [-1, 1], [1, -1], [-1, -1]].map(([dx, dy]) => [dx * MIN_DRAG, dy * MIN_DRAG]);
-  const length = ([dx, dy]) => Math.hypot(-x + dx, -y + dy);
-  const [dx, dy] = detours.reduce((best, d) => (length(d) > length(best) ? d : best));
-  return [[-x + dx, -y + dy], [-dx, -dy]];
+  const first = ([dx, dy]) => [-x + dx, -y + dy];
+  const long = [[1, 1], [-1, 1], [1, -1], [-1, -1]]
+    .map(([sx, sy]) => [sx * MIN_DRAG, sy * MIN_DRAG])
+    .filter((d) => Math.hypot(...first(d)) >= MIN_DRAG);
+  const d = long.reduce((best, c) => (Math.hypot(...first(c)) < Math.hypot(...first(best)) ? c : best));
+  return [first(d), [-d[0], -d[1]]];
 }
