@@ -38,8 +38,8 @@ import java.util.concurrent.Executors
  * hands the WebView the session as the cookie a browser would hold.
  *
  * Where a link goes ([route]): the map (`/`, Sync history's View on map) opens the native map;
- * the same page again (a pager, Week/Month, Shade by, a form's redirect back to it) stays here;
- * anything else opens in a browser tab. The page follows the app's Theme with no help from
+ * the same page again (a pager, Week/Month, Shade by, a form's redirect back to it) and a form's
+ * POST to the site stay here; anything else opens in a browser tab. The page follows the app's Theme with no help from
  * here: a WebView answers `prefers-color-scheme` from the screen's own light or dark theme.
  */
 class WebPageActivity : AppCompatActivity() {
@@ -136,6 +136,7 @@ class WebPageActivity : AppCompatActivity() {
     }
 
     private fun load() {
+        posted = null
         setCookies()
         failed = false
         error.visibility = View.GONE
@@ -239,6 +240,7 @@ class WebPageActivity : AppCompatActivity() {
 
         override fun onReceivedError(view: WebView, request: WebResourceRequest, err: WebResourceError) {
             if (!request.isForMainFrame) return
+            posted = null
             failed = true
             progress.visibility = View.GONE
             web.visibility = View.INVISIBLE

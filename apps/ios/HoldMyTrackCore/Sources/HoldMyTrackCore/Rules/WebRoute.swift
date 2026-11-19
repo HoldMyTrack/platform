@@ -25,8 +25,9 @@ public enum WebRoute: Equatable, Sendable {
     ) -> WebRoute {
         if scheme != baseScheme || authority != baseAuthority { return .outside }
         let at = path.flatMap { $0.isEmpty ? nil : $0 } ?? "/"
-        if at == page || post { return .stay }
+        if at == page { return .stay }
         if leaving { return .ignore }
+        if post { return .stay }
         switch at {
         case "/signin", "/verify-pending": return .close
         case "/":

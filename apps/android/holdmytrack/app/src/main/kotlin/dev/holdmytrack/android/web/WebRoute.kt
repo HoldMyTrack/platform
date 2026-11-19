@@ -49,8 +49,9 @@ object WebRoute {
     ): Route {
         if (scheme != baseScheme || authority != baseAuthority) return Route.Outside
         val at = path.orEmpty().ifEmpty { "/" }
-        if (at == page || post) return Route.Stay
+        if (at == page) return Route.Stay
         if (leaving) return Route.Ignore
+        if (post) return Route.Stay
         return when (at) {
             "/signin", "/verify-pending" -> Route.Close
             "/" -> when {
