@@ -32,6 +32,7 @@ class HoldMyTrackApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         Session.init(this)
+        HoldMyTrackApi.initImageCache(this)
         AppOutdated.init(this)
         TrackTypes.init(this)
         // Before any screen inflates, so the first one already has the chosen theme's colors.
