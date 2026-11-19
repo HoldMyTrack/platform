@@ -360,6 +360,8 @@ Recordings are candidates on the Sync tab (FR-3.2), sent only when ticked.
 
 Recordings belong to the account signed in when they began (the demo account has a key of its own). Hidden Sync rows, the Health Connect switch and the last Load are kept the same way. One account never sees, or sends, another's recordings on a shared phone.
 
+Nothing the app keeps on the phone goes into a backup or moves to a new phone: unsent recordings are sent from the phone they were made on, and the new phone signs in again.
+
 ## 8. Non-Functional Requirements (summary)
 
 | Concern | Behavior |
