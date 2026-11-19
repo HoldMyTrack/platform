@@ -93,6 +93,20 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
+    // CI runs lintDebug (.github/workflows/ci.yml): a warning fails it unless lint-baseline.xml
+    // lists it, so only new ones stop a pull request. The checks that compare against what was
+    // published since (a newer library, AGP or SDK) are off, since they would fail a build that
+    // changed nothing; versions are raised on purpose. So are two that aren't about the app's
+    // code: a library's check that won't load on this lint (named by a path in the Gradle
+    // cache, different on every machine), and a library's advice to log through Timber.
+    lint {
+        baseline = file("lint-baseline.xml")
+        warningsAsErrors = true
+        disable += setOf(
+            "GradleDependency", "NewerVersionAvailable", "AndroidGradlePluginVersion", "OldTargetApi",
+            "ObsoleteLintCustomCheck", "LogNotTimber",
+        )
+    }
     sourceSets["main"].java.srcDirs("src/main/kotlin")
     sourceSets["test"].java.srcDirs("src/test/kotlin")
     sourceSets["androidTest"].java.srcDirs("src/androidTest/kotlin")
