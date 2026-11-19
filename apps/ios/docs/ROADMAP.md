@@ -199,7 +199,7 @@ Server changes the app depends on, deployed before any iOS build reaches a teste
 
 - [ ] **7d.1 Recording**
   - `CLLocationManager` with the `location` background mode, `allowsBackgroundLocationUpdates` and the background indicator, on When In Use access only; precise location required (ask for temporary full accuracy when reduced). Pause and resume by tap, stop by a 2-second hold, the map showing only the recording.
-  - A Live Track in place of Android's notification, with Pause or Resume; its Stop opens the app to confirm.
+  - A Live Activity in place of Android's notification, with Pause or Resume; its Stop opens the app to confirm.
   - Difference: swiping the app away on iOS ends location updates, where Android's foreground service keeps going. 7d.2 brings the recording back; the first recording says once that swiping the app away stops it.
   - Done when: a 30-minute walk with the screen off records every fix.
 - [ ] **7d.2 Journal and recovery**

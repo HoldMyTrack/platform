@@ -11,7 +11,7 @@ Settled by the owner on 2026-10-24; the plan's steps cite them by number. A chan
 | # | Decision | Reason |
 | :-- | :-- | :-- |
 | D1 | UIKit for the shell and the map, a `UITabBarController`; SwiftUI allowed for leaf screens in a `UIHostingController` | The map's camera and layers survive a tab switch, as Android's tabs do. MapLibre's map is a UIKit view, which SwiftUI would host through a representable with its lifecycle forwarded by hand |
-| D2 | iOS 17 and later | Interactive Live Tracks, `CLBackgroundActivitySession` for recording, `@Observable` and the String Catalog tooling |
+| D2 | iOS 17 and later | Interactive Live Activities, `CLBackgroundActivitySession` for recording, `@Observable` and the String Catalog tooling |
 | D3 | iPhone only | An iPad runs it in compatibility mode, so no iPad layouts or screenshots |
 | D4 | One Xcode project with folder-synchronized groups and Swift Package Manager; no CocoaPods, XcodeGen or Tuist | A file in a target's folder joins the target with no project-file edit, which keeps merges clean without a generator to install |
 | D5 | Bundle ID `dev.holdmytrack.ios` | Beside Android's `dev.holdmytrack.android`; it can't change once registered |
