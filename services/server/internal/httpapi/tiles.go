@@ -2,7 +2,6 @@ package httpapi
 
 import (
 	"net/http"
-	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -99,7 +98,7 @@ func (s *Server) handleTracksTile(w http.ResponseWriter, r *http.Request) {
 
 	// The same from/to/types/trip shape §4.7's listing endpoints parse — one parser, so the
 	// "absent means no restriction" convention can't drift between the map and the list.
-	filter, err := parseTrackFilter(tileQuery(r.URL.Query()))
+	filter, err := parseTrackFilter(r.URL.Query())
 	if err != nil {
 		writeAPIError(w, err.Error(), http.StatusBadRequest)
 		return
@@ -130,14 +129,4 @@ func (s *Server) handleTracksTile(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/vnd.mapbox-vector-tile")
 	setTileCacheControl(w, r)
 	_, _ = w.Write(tile)
-}
-
-// tileQuery is a tile's query with the installed apps' `story` taken as `trip`: tiles keep their
-// path when the API moves to /v2, so v1_edge.go never sees them.
-func tileQuery(q url.Values) url.Values {
-	if v := q.Get("story"); v != "" && q.Get("trip") == "" {
-		q.Set("trip", v)
-	}
-	q.Del("story")
-	return q
 }

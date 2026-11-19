@@ -37,9 +37,9 @@ const (
 	facebookDialogURL    = "https://www.facebook.com/" + facebookGraphVersion + "/dialog/oauth"
 	facebookGraphURL     = "https://graph.facebook.com/" + facebookGraphVersion
 
-	// facebookCookiePath scopes oauth.go's round-trip cookie to this flow alone, under /v1, where
-	// the callback URL registered with Facebook is (config.FacebookRedirectURL).
-	facebookCookiePath = v1Prefix + "/auth/facebook"
+	// facebookCookiePath scopes oauth.go's round-trip cookie to this flow alone, where the callback
+	// URL registered with Facebook is (config.FacebookRedirectURL).
+	facebookCookiePath = apiPrefix + "/auth/facebook"
 )
 
 var (
@@ -109,7 +109,7 @@ func (s *Server) handleFacebookStart(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, facebookDialogURL+"?"+q.Encode(), http.StatusFound)
 }
 
-// handleFacebookCallback serves `GET /v1/auth/facebook/callback`. Failures redirect to
+// handleFacebookCallback serves `GET /v2/auth/facebook/callback`. Failures redirect to
 // `/signin?error=facebook` (or back to the app, for a round trip it started — failOAuth), with
 // the detail in the log — except the two a person can act on (no email shared, email already
 // has an account), which get their own error codes.

@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 // Plain .mjs, like bbox.test.mjs: Node strips the types from the imported .ts module itself.
 import { CHEVRON_FONT } from '../scripts/chevronFont.mjs';
-import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor, withInstalledAndroidViews } from '../src/map/mapLayers.ts';
+import { bindVars, boundLayer, buildLayers, groupOf, tilePath, viewFor } from '../src/map/mapLayers.ts';
 
 const doc = buildLayers({ flavor: 'light', dark: false, tileVersion: 'abcd1234.7', lang: 'en' });
 const MODES = ['normal', 'fog'];
@@ -41,18 +41,6 @@ test("a picked outline's border draws only for the outline the apps bind, none b
   }
   assert.equal(doc.vars.fogPlace, null);
   for (const level of doc.levels.filter((l) => l.level !== 'exact')) assert.ok(level.layers.some((id) => id.endsWith('-fog-picked')));
-});
-
-test('the served document gives Android builds that still offer Heatmap the Normal view, and nothing to draw it with', () => {
-  const served = withInstalledAndroidViews(doc);
-  for (const base of ['plain', 'satellite']) {
-    assert.deepEqual(Object.keys(served.views[base]).sort(), ['fog', 'heatmap', 'normal']);
-    assert.equal(served.views[base].heatmap, doc.views[base].normal);
-  }
-  assert.deepEqual(Object.keys(doc.views.plain).sort(), ['fog', 'normal']);
-  assert.deepEqual(served.groups, doc.groups);
-  const ids = doc.groups.flatMap((g) => [...Object.keys(g.sources), ...g.layers.map((l) => l.id)]);
-  assert.deepEqual(ids.filter((id) => id.startsWith('heat')), []);
 });
 
 test('fog is darker than the map it covers, and a cream mist over imagery', () => {

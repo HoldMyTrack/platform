@@ -26,7 +26,7 @@ func newFacebookRecovery(t *testing.T) facebookRecovery {
 	d.srv.mailer = &sentMail{}
 	graph := &fakeGraph{}
 	f := newFacebookOAuth(FacebookOAuthConfig{
-		AppID: testAppID, AppSecret: "secret", RedirectURL: "https://app.example/v1/auth/facebook/callback",
+		AppID: testAppID, AppSecret: "secret", RedirectURL: "https://app.example/v2/auth/facebook/callback",
 	})
 	f.graphURL = graph.serve(t).URL
 	d.srv.facebook = f

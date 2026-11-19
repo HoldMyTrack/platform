@@ -42,10 +42,10 @@ const (
 	appleRevokeURL = appleIssuer + "/auth/revoke"
 	appleKeysURL   = appleIssuer + "/auth/keys"
 
-	// appleCookiePath scopes oauth.go's round-trip cookie to this flow alone, under /v1, where
-	// the callback URL registered with Apple is (config.AppleRedirectURL).
-	appleCookiePath = v1Prefix + "/auth/apple"
-	// appleCallbackPath is the one API write Apple's own site posts to, as v1_edge.go hands it on.
+	// appleCookiePath scopes oauth.go's round-trip cookie to this flow alone, where the callback
+	// URL registered with Apple is (config.AppleRedirectURL).
+	appleCookiePath = apiPrefix + "/auth/apple"
+	// appleCallbackPath is the one API write Apple's own site posts to.
 	appleCallbackPath = apiPrefix + "/auth/apple/callback"
 
 	// appleClientSecretTTL is how long each client secret is good for. Apple allows six
@@ -105,7 +105,7 @@ func (s *Server) handleAppleStart(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, appleAuthURL+"?"+q.Encode(), http.StatusFound)
 }
 
-// handleAppleCallback serves `POST /v1/auth/apple/callback` — Apple's form post back. Every
+// handleAppleCallback serves `POST /v2/auth/apple/callback` — Apple's form post back. Every
 // failure redirects to `/signin?error=apple` (or back to the app, for a round trip it started),
 // with the detail in the log.
 func (s *Server) handleAppleCallback(w http.ResponseWriter, r *http.Request) {

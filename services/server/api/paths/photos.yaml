@@ -1,12 +1,12 @@
 photos:
   get:
-    summary: One activity's photos, or those of every activity in a Story, in route order
-    description: Exactly one of activity and story; activity wins when both are sent.
+    summary: One track's photos, or those of every track in a Trip, in route order
+    description: Exactly one of track and trip; track wins when both are sent.
     parameters:
-      - name: activity
+      - name: track
         in: query
         schema: { type: string }
-      - name: story
+      - name: trip
         in: query
         schema: { type: string }
     responses:
@@ -27,7 +27,7 @@ photos:
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
       "404": { $ref: "../components/responses.yaml#/Error" }
   post:
-    summary: Add a photo to an activity, placed on its track
+    summary: Add a photo to a track, placed on its route
     description: >-
       The client sends a resized copy and its thumbnail, plus what it read from the original's
       EXIF before resizing. One the server can't place is refused with 422 photo_needs_place,
@@ -38,9 +38,9 @@ photos:
         multipart/form-data:
           schema:
             type: object
-            required: [activity_id, file, thumb]
+            required: [track_id, file, thumb]
             properties:
-              activity_id: { type: string }
+              track_id: { type: string }
               file:
                 type: string
                 format: binary
@@ -59,7 +59,7 @@ photos:
               lon: { type: number }
               route_at:
                 type: string
-                description: RFC 3339, where on the track the user put it.
+                description: RFC 3339, where on the route the user put it.
               caption:
                 type: string
                 maxLength: 500
@@ -75,7 +75,7 @@ photos:
       "403": { $ref: "../components/responses.yaml#/Forbidden" }
       "404": { $ref: "../components/responses.yaml#/Error" }
       "409":
-        description: The account has the most photos allowed, or the activity has no track to put it on
+        description: The account has the most photos allowed, or the track has no route to put it on
         content:
           application/json:
             schema: { $ref: "../components/schemas.yaml#/Error" }
@@ -83,7 +83,7 @@ photos:
       "415": { $ref: "../components/responses.yaml#/Error" }
       "422":
         description: >-
-          photo_needs_place when nothing places the photo on the track (ask the user where and
+          photo_needs_place when nothing places the photo on the route (ask the user where and
           send route_at); photo_dimensions when an image is larger on a side than allowed
         content:
           application/json:
@@ -103,9 +103,9 @@ photos_place:
           schema:
             type: object
             additionalProperties: false
-            required: [activity_id]
+            required: [track_id]
             properties:
-              activity_id: { type: string }
+              track_id: { type: string }
               taken_at:
                 type: string
                 description: RFC 3339; missing or empty when unknown.
@@ -144,7 +144,7 @@ photos_id:
       "404": { $ref: "../components/responses.yaml#/Error" }
       "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
   patch:
-    summary: Change a photo's caption or its place on the track; only the fields sent change
+    summary: Change a photo's caption or its place on the route; only the fields sent change
     requestBody:
       required: true
       content:
@@ -161,7 +161,7 @@ photos_id:
               route_at:
                 type: string
                 format: date-time
-                description: The photo's new moment on the track, clamped to it. Null is a 400.
+                description: The photo's new moment on the route, clamped to it. Null is a 400.
     responses:
       "200":
         description: The photo as saved

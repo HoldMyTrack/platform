@@ -3,8 +3,8 @@
 # android/<versionCode> tag at or above the min_android_build that /healthz reports, and each
 # ios/<build> tag at or above its min_ios_build. Only breaks this change adds count; one already
 # on the base ref waits for the deploy that raises MIN_ANDROID_BUILD or MIN_IOS_BUILD
-# (docs/DEPLOY.md §10). A release is checked against each contract its tag has, /v1's
-# openapi.yaml and /v2's v2/openapi.yaml, since the tag doesn't say which one its build calls.
+# (docs/DEPLOY.md §10). A tag from while /v1 was served keeps the /v2 contract its build calls in
+# api/v2/, and that copy is the one compared.
 #
 # --needed-floor <commit> prints, per app, the minimum that deploying <commit> needs: the first
 # release tag above the newest one its contract breaks, every break counted, or the current
@@ -50,30 +50,31 @@ floor_of() { if [[ $1 == ios ]]; then echo "$ios_floor"; else echo "$android_flo
 work=$(mktemp -d)
 trap 'rm -rf "$work"' EXIT
 
-# contract_at <ref> <name>: the contract at <ref>, in $work/<name>.
+# contract_at <ref> <name>: the /v2 contract at <ref>, in $work/<name>.
 contract_at() {
   rm -rf "${work:?}/services" "${work:?}/$2"
-  git archive "$1" services/server/api | tar -x -C "$work" && mv "$work/services/server/api" "$work/$2"
+  git archive "$1" services/server/api | tar -x -C "$work"
+  if [[ -d $work/services/server/api/v2 ]]; then
+    mv "$work/services/server/api/v2" "$work/$2"
+  else
+    mv "$work/services/server/api" "$work/$2"
+  fi
 }
 
-# breaks <old contract dir> <new contract dir>: one line per error-level break in each contract
-# both directories have (openapi.yaml, v2/openapi.yaml), without file positions, less those the
-# new directory's breaking-ignore.txt accepts.
+# breaks <old contract dir> <new contract dir>: one line per error-level break, without file
+# positions, less those breaking-ignore.txt accepts.
 breaks() {
-  local rel
-  for rel in . v2; do
-    [[ -f "$1/$rel/openapi.yaml" && -f "$2/$rel/openapi.yaml" ]] || continue
-    go run "$OASDIFF" breaking "$1/$rel/openapi.yaml" "$2/$rel/openapi.yaml" --format json \
-      --err-ignore "services/server/api/$rel/breaking-ignore.txt" |
-      jq -r --arg v "$rel" '.[] | select(.level == 3) | [($v | sub("^\\.$"; "v1")), .operation, .path, .id, .text] | join(" ")'
-  done | sort -u
+  [[ -f "$1/openapi.yaml" && -f "$2/openapi.yaml" ]] || return 0
+  go run "$OASDIFF" breaking "$1/openapi.yaml" "$2/openapi.yaml" --format json \
+    --err-ignore services/server/api/breaking-ignore.txt |
+    jq -r '.[] | select(.level == 3) | [.operation, .path, .id, .text] | join(" ")' | sort -u
 }
 
 if [[ -n $target ]]; then
   sha=$(git rev-parse --short "$target^{commit}")
   contract_at "$sha" target
   # A value added to a response enum breaks only a client that decodes the field as an enum.
-  enum_added='^v[12] [A-Z]+ [^ ]+ response-[a-z-]*enum-value-added '
+  enum_added='^[A-Z]+ [^ ]+ response-[a-z-]*enum-value-added '
   status=0
   for app in $apps; do
     var=MIN_$(tr '[:lower:]' '[:upper:]' <<<"$app")_BUILD

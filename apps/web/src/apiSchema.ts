@@ -4080,7 +4080,6 @@ export interface components {
         LayerViews: {
             normal: components["schemas"]["LayerView"];
             fog: components["schemas"]["LayerView"];
-            heatmap: components["schemas"]["LayerView"];
         };
         /** @description What a client reads from a layer beside MapLibre. */
         LayerMetadata: {

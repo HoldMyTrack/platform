@@ -169,16 +169,6 @@ export function buildLayers({ flavor, dark, tileVersion, lang, words = { region:
   };
 }
 
-/**
- * `doc` as the server serves it (build-style.mjs): each set of views also carries `heatmap`,
- * Normal's, which Android builds below `MIN_ANDROID_BUILD` still switch to (services/server/api
- * `LayerViews`).
- */
-export function withInstalledAndroidViews(doc: MapLayers): MapLayers {
-  const legacy = (views: Record<MapMode, LayerView>) => ({ ...views, heatmap: views.normal });
-  return { ...doc, views: { plain: legacy(doc.views.plain), satellite: legacy(doc.views.satellite) } };
-}
-
 /** The view to apply for `mode`, over imagery or not. */
 export function viewFor(doc: MapLayers, mode: MapMode, satellite: boolean): LayerView {
   return doc.views[satellite ? 'satellite' : 'plain'][mode];

@@ -22,17 +22,13 @@ import (
 	"github.com/getkin/kin-openapi/routers/legacy"
 )
 
-// The API contract, api/v2/openapi.yaml with the paths/ and components/ files it refers to, is
+// The API contract, api/openapi.yaml with the paths/ and components/ files it refers to, is
 // enforced here rather than by generating handlers from it: dbTest.do, dbTest.send and
 // serveChecked check every exchange a test makes on a path it describes, so a handler whose real
 // JSON stops matching the contract fails its own tests, and TestContractCoversEveryRoute keeps
-// every route described. An exchange on /v1 is checked against the frozen /v1 contract instead,
-// which proves v1_edge.go still serves it.
+// every route described.
 
-const (
-	contractPath   = "../../api/v2/openapi.yaml"
-	v1ContractPath = "../../api/openapi.yaml"
-)
+const contractPath = "../../api/openapi.yaml"
 
 // newContractLoader reads the contract across its files: openapi.yaml's paths and their shared
 // components live in files of their own.
@@ -79,17 +75,15 @@ func loadContract(path string) (routers.Router, error) {
 	return c.router, c.err
 }
 
-// TestContractIsValid fails on a malformed contract, /v2's or /v1's, with or without a database.
+// TestContractIsValid fails on a malformed contract, with or without a database.
 func TestContractIsValid(t *testing.T) {
-	for _, path := range []string{contractPath, v1ContractPath} {
-		if _, err := loadContract(path); err != nil {
-			t.Errorf("%s: %v", path, err)
-		}
+	if _, err := loadContract(contractPath); err != nil {
+		t.Errorf("%s: %v", contractPath, err)
 	}
 }
 
 // TestContractCoversEveryRoute fails when a route the server registers isn't in
-// api/v2/openapi.yaml, or the file describes one it doesn't register: an undescribed route would
+// api/openapi.yaml, or the file describes one it doesn't register: an undescribed route would
 // otherwise go unchecked without anyone noticing. The routes are read from the package's
 // source, every route(method, path) call, so each needs literal arguments.
 func TestContractCoversEveryRoute(t *testing.T) {
@@ -175,17 +169,13 @@ func serveChecked(t *testing.T, h http.HandlerFunc, req *http.Request) *httptest
 // contract violation.
 func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptest.ResponseRecorder) {
 	t.Helper()
-	contract := contractPath
 	path, ok := strings.CutPrefix(req.URL.Path, apiPrefix+"/")
 	if !ok {
-		if path, ok = strings.CutPrefix(req.URL.Path, v1Prefix+"/"); !ok {
-			return
-		}
-		contract = v1ContractPath
+		return
 	}
-	router, err := loadContract(contract)
+	router, err := loadContract(contractPath)
 	if err != nil {
-		t.Fatalf("load %s: %v", contract, err)
+		t.Fatalf("load %s: %v", contractPath, err)
 	}
 	probe := req.Clone(context.Background())
 	probe.URL.Path = "/" + path
@@ -203,13 +193,11 @@ func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptes
 		IncludeResponseStatus: true,
 		MultiError:            true,
 	}
-	if contract == contractPath {
-		recordContractHit(req.Method, route.Path, rec.Code)
-	}
+	recordContractHit(req.Method, route.Path, rec.Code)
 	in := &openapi3filter.RequestValidationInput{Request: probe, PathParams: params, Route: route, Options: opts}
 	if rec.Code < 400 {
 		if err := openapi3filter.ValidateRequest(context.Background(), in); err != nil {
-			t.Errorf("contract: request %s %s doesn't match %s:\n%v", req.Method, req.URL.Path, contract, err)
+			t.Errorf("contract: request %s %s doesn't match %s:\n%v", req.Method, req.URL.Path, contractPath, err)
 		}
 	}
 	out := &openapi3filter.ResponseValidationInput{
@@ -221,7 +209,7 @@ func checkContract(t *testing.T, req *http.Request, reqBody []byte, rec *httptes
 	out.SetBodyBytes(rec.Body.Bytes())
 	if err := openapi3filter.ValidateResponse(context.Background(), out); err != nil {
 		t.Errorf("contract: %d response to %s %s doesn't match %s:\n%v\nbody: %s",
-			rec.Code, req.Method, req.URL.Path, contract, err, strings.TrimSpace(rec.Body.String()))
+			rec.Code, req.Method, req.URL.Path, contractPath, err, strings.TrimSpace(rec.Body.String()))
 	}
 }
 

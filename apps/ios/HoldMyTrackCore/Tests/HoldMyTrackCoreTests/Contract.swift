@@ -4,13 +4,13 @@ import Yams
 /// A schema from the contract: a plain tree of dictionaries, arrays and scalars.
 typealias Schema = [String: Any]
 
-/// The API contract, read from services/server/api/v2 with every `$ref` inlined — followed relative
+/// The API contract, read from services/server/api with every `$ref` inlined — followed relative
 /// to the file it's written in — and each `allOf` merged into one schema, so a schema here is a
 /// plain tree. The contract has no recursive schemas, so inlining ends.
 final class Contract {
     let root: URL
     private var files: [URL: Schema] = [:]
-    private var index: URL { root.appending(path: "services/server/api/v2/openapi.yaml") }
+    private var index: URL { root.appending(path: "services/server/api/openapi.yaml") }
 
     /// The contract of the checkout this file is in.
     init(file: String = #filePath) {

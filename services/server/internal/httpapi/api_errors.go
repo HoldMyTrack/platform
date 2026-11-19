@@ -81,5 +81,5 @@ func statusErrorCode(status int) string {
 
 // isAPIPath reports a path whose errors take this shape rather than a page's.
 func isAPIPath(path string) bool {
-	return strings.HasPrefix(path, apiPrefix+"/") || strings.HasPrefix(path, v1Prefix+"/") || strings.HasPrefix(path, tilesPrefix+"/")
+	return strings.HasPrefix(path, apiPrefix+"/") || strings.HasPrefix(path, retiredAPIPrefix+"/") || strings.HasPrefix(path, tilesPrefix+"/")
 }

@@ -26,14 +26,14 @@ FilterTo:
 FilterTypes:
   name: types
   in: query
-  description: Comma-separated activity types.
+  description: Comma-separated track types.
   schema: { type: string }
-FilterStory:
-  name: story
+FilterTrip:
+  name: trip
   in: query
-  description: One Story's activities only.
+  description: One Trip's tracks only.
   schema: { type: string, format: uuid }
-ActivityID:
+TrackID:
   name: id
   in: path
   required: true
@@ -51,13 +51,13 @@ SpotID:
   required: true
   # Not an integer — a malformed id is a 404 from the handler, not a request error.
   schema: { type: string }
-StoryID:
+TripID:
   name: id
   in: path
   required: true
   # Not format: uuid — a malformed id is a 404 from the handler, not a request error.
   schema: { type: string }
-StorySendID:
+TripSendID:
   name: id
   in: path
   required: true

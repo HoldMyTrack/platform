@@ -3,7 +3,7 @@ import Testing
 
 @testable import HoldMyTrackCore
 
-/// Holds every type in Wire.swift to the API contract, services/server/api/v2: each response type to
+/// Holds every type in Wire.swift to the API contract, services/server/api: each response type to
 /// the response it decodes, each request type to the body it sends. A field the server renames,
 /// drops or makes nullable fails here, in CI, rather than in a decode on a phone.
 struct WireContractTests {

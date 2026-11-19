@@ -7,15 +7,15 @@ Error:
     error:
       type: string
       description: >-
-        A stable code: a failure's own (photo_no_track), or its status's generic one
+        A stable code: a failure's own (photo_no_route), or its status's generic one
         (invalid_request, unauthenticated, forbidden, not_found, conflict, gone, payload_too_large,
         unsupported_type, unprocessable, rate_limited, unavailable, internal).
     message:
       type: string
       description: For a person, in the request's language when the server has it translated.
-ActivityRow:
+TrackRow:
   type: object
-  required: [id, started_at, timezone, activity_type, name, distance_meters, duration_seconds, moving_seconds, description, bbox, pending, edited, private, split, stories]
+  required: [id, started_at, timezone, track_type, name, distance_meters, duration_seconds, moving_seconds, description, bbox, pending, edited, private, split, trips]
   additionalProperties: false
   properties:
     id: { type: string, format: uuid }
@@ -23,29 +23,29 @@ ActivityRow:
     timezone:
       type: string
       description: The IANA zone it was recorded in; a client shows its times in it.
-    activity_type: { type: string }
+    track_type: { type: string }
     name: { type: string, nullable: true }
     distance_meters: { type: number, nullable: true }
     duration_seconds: { type: integer, nullable: true }
     moving_seconds:
       type: integer
       nullable: true
-      description: The time a client shows for the activity, as Stories and Trends sum it; elapsed time where the source gave no moving time.
+      description: The time a client shows for the track, as Trips and Trends sum it; elapsed time where the source gave no moving time.
     description: { type: string, nullable: true }
     bbox:
       type: array
       nullable: true
-      description: "[minLon, minLat, maxLon, maxLat], or null when the activity has no track."
+      description: "[minLon, minLat, maxLon, maxLat], or null when the track has no route."
       minItems: 4
       maxItems: 4
       items: { type: number }
     pending: { type: boolean }
     edited: { type: boolean }
     private: { type: boolean }
-    track_edit:
+    route_edit:
       type: string
       enum: [pending, private, no_original, bad_times]
-      description: Why Edit track can't open for this activity (docs/SPEC.md FR-5.7); absent when it can.
+      description: Why Edit route can't open for this track (docs/SPEC.md FR-5.7); absent when it can.
     photos:
       type: string
       enum: [private]
@@ -59,7 +59,7 @@ ActivityRow:
         group: { type: string, format: uuid }
         from: { type: integer, format: int64, nullable: true }
         to: { type: integer, format: int64, nullable: true }
-    stories:
+    trips:
       type: array
       items:
         type: object
@@ -68,16 +68,16 @@ ActivityRow:
         properties:
           id: { type: string, format: uuid }
           name: { type: string }
-AreaActivityRow:
+AreaTrackRow:
   type: object
-  description: An activity as a list row shows it; GET /activities/{id} has the rest.
-  required: [id, started_at, timezone, activity_type, name, distance_meters, moving_seconds, bbox, pending, private, stories]
+  description: A track as a list row shows it; GET /tracks/{id} has the rest.
+  required: [id, started_at, timezone, track_type, name, distance_meters, moving_seconds, bbox, pending, private, trips]
   additionalProperties: false
   properties:
     id: { type: string, format: uuid }
     started_at: { type: string, format: date-time }
     timezone: { type: string }
-    activity_type: { type: string }
+    track_type: { type: string }
     name: { type: string, nullable: true }
     distance_meters: { type: number, nullable: true }
     moving_seconds: { type: integer, nullable: true }
@@ -89,7 +89,7 @@ AreaActivityRow:
       items: { type: number }
     pending: { type: boolean }
     private: { type: boolean }
-    stories:
+    trips:
       type: array
       items:
         type: object
@@ -98,9 +98,9 @@ AreaActivityRow:
         properties:
           id: { type: string, format: uuid }
           name: { type: string }
-ActivityTypes:
+TrackTypes:
   type: object
-  description: What a client shows for each activity type, keyed by the type as stored (docs/SPEC.md FR-5.1).
+  description: What a client shows for each track type, keyed by the type as stored (docs/SPEC.md FR-5.1).
   additionalProperties:
     type: object
     required: [kind, label]
@@ -137,7 +137,7 @@ PrivateLocation:
     lon: { type: number }
     lat: { type: number }
     radius_m: { type: integer }
-StoryInput:
+TripInput:
   type: object
   required: [name]
   additionalProperties: false
@@ -149,36 +149,36 @@ StoryInput:
     description:
       type: string
       maxLength: 2000
-      description: Trimmed; missing or empty leaves the Story without one.
-StoryCreateInput:
+      description: Trimmed; missing or empty leaves the Trip without one.
+TripCreateInput:
   type: object
   required: [name]
   additionalProperties: false
-  description: StoryInput, and the Story's first activities.
+  description: TripInput, and the Trip's first tracks.
   properties:
-    name: { $ref: "#/StoryInput/properties/name" }
-    description: { $ref: "#/StoryInput/properties/description" }
-    activity_ids: { $ref: "#/ActivityIDs" }
-ActivityIDs:
+    name: { $ref: "#/TripInput/properties/name" }
+    description: { $ref: "#/TripInput/properties/description" }
+    track_ids: { $ref: "#/TrackIDs" }
+TrackIDs:
   type: array
   nullable: true
   maxItems: 10000
   description: Duplicates are ignored; missing or null adds none.
   items: { type: string, format: uuid }
-StoryActivitiesInput:
+TripTracksInput:
   type: object
-  required: [activity_ids]
+  required: [track_ids]
   additionalProperties: false
   properties:
-    activity_ids:
+    track_ids:
       type: array
       minItems: 1
       maxItems: 10000
       description: Duplicates are ignored.
       items: { type: string, format: uuid }
-Story:
+Trip:
   type: object
-  required: [id, name, description, created_at, updated_at, from, activity_ids, stats]
+  required: [id, name, description, created_at, updated_at, from, track_ids, stats]
   additionalProperties: false
   properties:
     id: { type: string, format: uuid }
@@ -189,10 +189,10 @@ Story:
     from:
       type: string
       nullable: true
-      description: Who sent the copy this Story came from, while the Story it was copied from still exists; null for the account's own.
-    activity_ids:
+      description: Who sent the copy this Trip came from, while the Trip it was copied from still exists; null for the account's own.
+    track_ids:
       type: array
-      description: Every member, oldest activity first.
+      description: Every member, oldest track first.
       items: { type: string, format: uuid }
     stats:
       type: object
@@ -206,13 +206,13 @@ Story:
         elapsed_seconds: { type: integer }
         by_type:
           type: array
-          description: The same per activity type, most frequent first.
+          description: The same per track type, most frequent first.
           items:
             type: object
-            required: [activity_type, label, count, distance_meters, moving_seconds, elapsed_seconds]
+            required: [track_type, label, count, distance_meters, moving_seconds, elapsed_seconds]
             additionalProperties: false
             properties:
-              activity_type: { type: string }
+              track_type: { type: string }
               label:
                 type: string
                 description: The type's name in the request's language.
@@ -230,7 +230,7 @@ UploadResult:
       type: string
       description: The file's SHA-256, what GET /uploads/{external_id} takes.
     filename: { type: string }
-ActivityStatsBlock:
+TrackStatsBlock:
   type: object
   required: [count, distance_meters, active_days, longest_streak_days]
   additionalProperties: false
@@ -239,7 +239,7 @@ ActivityStatsBlock:
     distance_meters: { type: number }
     active_days: { type: integer }
     longest_streak_days: { type: integer }
-TrackEdit:
+RouteEdit:
   type: object
   description: Points are addressed by their timestamp, in unix milliseconds.
   additionalProperties: false
@@ -272,11 +272,11 @@ TrackEdit:
         items: { type: number }
 Photo:
   type: object
-  required: [id, activity_id, taken_at, route_at, timezone, lon, lat, caption, width, height, url, thumb_url]
+  required: [id, track_id, taken_at, route_at, timezone, lon, lat, caption, width, height, url, thumb_url]
   additionalProperties: false
   properties:
     id: { type: string, format: uuid }
-    activity_id: { type: string, format: uuid }
+    track_id: { type: string, format: uuid }
     taken_at:
       type: string
       format: date-time
@@ -285,14 +285,14 @@ Photo:
     route_at:
       type: string
       format: date-time
-      description: Its moment on the track, which places it there.
+      description: Its moment on the route, which places it there.
     timezone:
       type: string
-      description: The activity's IANA zone; a client shows the photo's times in it.
+      description: The track's IANA zone; a client shows the photo's times in it.
     lon:
       type: number
       nullable: true
-      description: Its position on the track at route_at; null when the activity has no track.
+      description: Its position on the route at route_at; null when the track has no route.
     lat: { type: number, nullable: true }
     caption: { type: string, nullable: true }
     width: { type: integer }
@@ -418,7 +418,7 @@ SyncSource:
 SyncExternalID:
   type: string
   pattern: "^[A-Za-z0-9_-][A-Za-z0-9._-]{0,199}$"
-  description: The source's own id for the activity.
+  description: The source's own id for the track.
 Spot:
   type: object
   required: [id, category, lon, lat]
@@ -611,12 +611,11 @@ LayerMetadata:
           ink: { type: string }
 LayerViews:
   type: object
-  required: [normal, fog, heatmap]
+  required: [normal, fog]
   additionalProperties: false
   properties:
     normal: { $ref: "#/LayerView" }
     fog: { $ref: "#/LayerView" }
-    heatmap: { $ref: "#/LayerView" }
 LayerView:
   type: object
   required: [layout, paint]

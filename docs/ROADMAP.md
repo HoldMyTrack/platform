@@ -16,17 +16,9 @@ Can land alongside any other work (`IMPLEMENTATION.md` §5.7).
 
 - [ ] Serve the basemap as `/{z}/{x}/{y}` tiles Cloudflare can cache, with `pmtiles serve` on the droplet first: every range read reaches R2, since the free plan caches files only up to 512 MB (`IMPLEMENTATION.md` §5.4). Worth it once traffic grows: about 97,000 basemap requests in the 30 days to 2026-10-14 were under 1% of R2's free reads. The web style (`apps/web/src/map/style.ts`) and the server-built Android style (`mapstyle.go`) move from `pmtiles://` to the tile URL.
 
-### Heatmap's leftovers
-
-- [ ] When `MIN_ANDROID_BUILD` next rises, drop the Heatmap stubs kept for older builds (`IMPLEMENTATION.md` §4.33).
-
-### Retiring `/v1`
-
-- [ ] When `MIN_ANDROID_BUILD` reaches the build of the first Android release from 0.34.3 on (its `android/<versionCode>` tag) and `MIN_IOS_BUILD` that of release 0.2.4 (its `ios/<build>` tag), no supported build calls `/v1` (`IMPLEMENTATION.md` §4.31): delete `v1_edge.go`, the frozen contract, the tracks tile's `story` alias and the View on map link's `activity`, make `api/v2/` the contract, and move the OAuth callbacks to `/v2` after registering them with each provider.
-
 ### Verification by code
 
-- [ ] When `MIN_ANDROID_BUILD` reaches a build whose "check your email" screen takes the code, make the email code-only: drop its link, the `/verify` page and its Confirm button, the Facebook round trip from that page, and `POST /v1/auth/verify-email` (`IMPLEMENTATION.md` §4.9).
+- [ ] When `MIN_ANDROID_BUILD` reaches a build whose "check your email" screen takes the code, make the email code-only: drop its link, the `/verify` page and its Confirm button, the Facebook round trip from that page, and `POST /v2/auth/verify-email` (`IMPLEMENTATION.md` §4.9).
 
 ### After launch
 
@@ -44,7 +36,7 @@ Public pages, followers and the rest (`VISION.md` §5.1, §5.2). No steps: the f
 
 ## Ongoing
 
-- [x] Describe every `/v1` endpoint in the API contract, `services/server/api/` (`IMPLEMENTATION.md` §4.31).
+- [x] Describe every endpoint in the API contract, `services/server/api/` (`IMPLEMENTATION.md` §4.31).
 - [x] One error shape for the JSON API (`SPEC.md` §1.4), described in the contract.
 - [x] Generate the web client's types from the contract (`apps/web/src/apiSchema.ts`).
 - [x] Typed Android wire classes (`net/Wire.kt`) checked against the contract (`WireContractTest`).

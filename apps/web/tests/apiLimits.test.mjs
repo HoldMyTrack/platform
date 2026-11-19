@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import * as yaml from 'js-yaml';
 import * as limits from '../src/limits.ts';
 
-const api = fileURLToPath(new URL('../../../services/server/api/v2/', import.meta.url));
+const api = fileURLToPath(new URL('../../../services/server/api/', import.meta.url));
 const load = (file) => yaml.load(readFileSync(api + file, 'utf8'));
 const paths = (file) => load(`paths/${file}.yaml`);
 const schemas = load('components/schemas.yaml');

@@ -34,10 +34,10 @@ private-locations:
             schema: { $ref: "../components/schemas.yaml#/Error" }
 private-locations_hidden:
   get:
-    summary: How many of the account's activities its Private locations hide entirely
+    summary: How many of the account's tracks its Private locations hide entirely
     responses:
       "200":
-        description: The count, of the activities the list marks private
+        description: The count, of the tracks the list marks private
         content:
           application/json:
             schema:

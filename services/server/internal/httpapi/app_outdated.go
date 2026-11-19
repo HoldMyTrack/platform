@@ -7,8 +7,13 @@ import (
 )
 
 // An app build older than its platform's minimum (MIN_ANDROID_BUILD, MIN_IOS_BUILD) is refused
-// on /v1/ and /v2/ with 426 app_outdated, which the app answers with its Update screen
-// (apps/android/docs/SPEC.md FR-1.8, docs/IMPLEMENTATION.md §4.33).
+// on /v2/ with 426 app_outdated, which the app answers with its Update screen
+// (apps/android/docs/SPEC.md FR-1.8, docs/IMPLEMENTATION.md §4.33). Every request under
+// retiredAPIPrefix gets the same answer: only builds the minimum turns away still call it, and a
+// 404 there would leave them without the Update screen.
+
+// retiredAPIPrefix is the API before Tracks and Trips, which no supported build calls.
+const retiredAPIPrefix = "/v1"
 
 // The apps' User-Agents start with these, then the release number and, in brackets, the commit
 // and the build: "HoldMyTrack-Android/0.13 (62da50b; 812)", "HoldMyTrack-iOS/0.1 (62da50b; 1400)".
@@ -68,10 +73,12 @@ func appOutdated(userAgent string, minAndroid, minIOS int) bool {
 	return false
 }
 
-// refuseOutdatedApp answers 426 to a /v1/ or /v2/ request from a build below the minimum, and reports
-// whether it did.
+// refuseOutdatedApp answers 426 to a /v2/ request from a build below the minimum, or to any
+// request under retiredAPIPrefix, and reports whether it did.
 func (s *Server) refuseOutdatedApp(w http.ResponseWriter, r *http.Request) bool {
-	if !strings.HasPrefix(r.URL.Path, apiPrefix+"/") || !appOutdated(r.UserAgent(), s.minAndroidBuild, s.minIOSBuild) {
+	retired := strings.HasPrefix(r.URL.Path, retiredAPIPrefix+"/")
+	outdated := strings.HasPrefix(r.URL.Path, apiPrefix+"/") && appOutdated(r.UserAgent(), s.minAndroidBuild, s.minIOSBuild)
+	if !retired && !outdated {
 		return false
 	}
 	httpErrorT(w, r, http.StatusUpgradeRequired, "error.app_outdated")

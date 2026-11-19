@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: HoldMyTrack API
-  version: v1
+  version: v2
   description: >-
     The JSON contract between the Go server and its clients: this file indexes every path, each
     area's operations are in paths/, and the shapes they share in components/. The httpapi
@@ -11,7 +11,7 @@ info:
     runs, and so is an Android build older than the deployment's minimum, with a 426
     app_outdated; the operations don't repeat either.
 servers:
-  - url: /v1
+  - url: /v2
 security:
   - session: []
 paths:
@@ -71,36 +71,36 @@ paths:
     $ref: "paths/account.yaml#/account_export"
   /account/exports/{id}/parts/{n}:
     $ref: "paths/account.yaml#/account_exports_id_parts_n"
-  /activities:
-    $ref: "paths/activities.yaml#/activities"
-  /activity-types:
-    $ref: "paths/activities.yaml#/activity_types"
-  /activities/upload:
-    $ref: "paths/activities.yaml#/activities_upload"
-  /activities/area:
-    $ref: "paths/activities.yaml#/activities_area"
-  /activities/{id}:
-    $ref: "paths/activities.yaml#/activities_id"
-  /activities/overlaps:
-    $ref: "paths/activities.yaml#/activities_overlaps"
-  /activities/stats-card:
-    $ref: "paths/activities.yaml#/activities_stats-card"
-  /activities/pending:
-    $ref: "paths/activities.yaml#/activities_pending"
-  /activities/summary:
-    $ref: "paths/activities.yaml#/activities_summary"
-  /activities/histogram:
-    $ref: "paths/activities.yaml#/activities_histogram"
-  /activities/graph-stats:
-    $ref: "paths/activities.yaml#/activities_graph-stats"
-  /activities/trends:
-    $ref: "paths/activities.yaml#/activities_trends"
-  /activities/{id}/track-metrics:
-    $ref: "paths/activities.yaml#/activities_id_track-metrics"
-  /activities/{id}/track-points:
-    $ref: "paths/activities.yaml#/activities_id_track-points"
-  /activities/{id}/track-edit:
-    $ref: "paths/activities.yaml#/activities_id_track-edit"
+  /tracks:
+    $ref: "paths/tracks.yaml#/tracks"
+  /track-types:
+    $ref: "paths/tracks.yaml#/track_types"
+  /tracks/upload:
+    $ref: "paths/tracks.yaml#/tracks_upload"
+  /tracks/area:
+    $ref: "paths/tracks.yaml#/tracks_area"
+  /tracks/{id}:
+    $ref: "paths/tracks.yaml#/tracks_id"
+  /tracks/overlaps:
+    $ref: "paths/tracks.yaml#/tracks_overlaps"
+  /tracks/stats-card:
+    $ref: "paths/tracks.yaml#/tracks_stats-card"
+  /tracks/pending:
+    $ref: "paths/tracks.yaml#/tracks_pending"
+  /tracks/summary:
+    $ref: "paths/tracks.yaml#/tracks_summary"
+  /tracks/histogram:
+    $ref: "paths/tracks.yaml#/tracks_histogram"
+  /tracks/graph-stats:
+    $ref: "paths/tracks.yaml#/tracks_graph-stats"
+  /tracks/trends:
+    $ref: "paths/tracks.yaml#/tracks_trends"
+  /tracks/{id}/route-metrics:
+    $ref: "paths/tracks.yaml#/tracks_id_route-metrics"
+  /tracks/{id}/route-points:
+    $ref: "paths/tracks.yaml#/tracks_id_route-points"
+  /tracks/{id}/route-edit:
+    $ref: "paths/tracks.yaml#/tracks_id_route-edit"
   /map/style/{flavor}:
     $ref: "paths/map.yaml#/map_style_flavor"
   /map/imagery:
@@ -121,20 +121,20 @@ paths:
     $ref: "paths/private-locations.yaml#/private-locations_hidden"
   /private-locations/{id}:
     $ref: "paths/private-locations.yaml#/private-locations_id"
-  /stories:
-    $ref: "paths/stories.yaml#/stories"
-  /stories/{id}:
-    $ref: "paths/stories.yaml#/stories_id"
-  /stories/{id}/activities:
-    $ref: "paths/stories.yaml#/stories_id_activities"
-  /stories/{id}/send:
-    $ref: "paths/stories.yaml#/stories_id_send"
-  /story-sends:
-    $ref: "paths/stories.yaml#/story-sends"
-  /story-sends/{id}/accept:
-    $ref: "paths/stories.yaml#/story-sends_id_accept"
-  /story-sends/{id}:
-    $ref: "paths/stories.yaml#/story-sends_id"
+  /trips:
+    $ref: "paths/trips.yaml#/trips"
+  /trips/{id}:
+    $ref: "paths/trips.yaml#/trips_id"
+  /trips/{id}/tracks:
+    $ref: "paths/trips.yaml#/trips_id_tracks"
+  /trips/{id}/send:
+    $ref: "paths/trips.yaml#/trips_id_send"
+  /trip-sends:
+    $ref: "paths/trips.yaml#/trip-sends"
+  /trip-sends/{id}/accept:
+    $ref: "paths/trips.yaml#/trip-sends_id_accept"
+  /trip-sends/{id}:
+    $ref: "paths/trips.yaml#/trip-sends_id"
   /uploads:
     $ref: "paths/uploads.yaml#/uploads"
   /uploads/active:
@@ -143,8 +143,8 @@ paths:
     $ref: "paths/uploads.yaml#/uploads_external_id"
   /coverage/status:
     $ref: "paths/map.yaml#/coverage_status"
-  /sync/activities:
-    $ref: "paths/sync.yaml#/sync_activities"
+  /sync/tracks:
+    $ref: "paths/sync.yaml#/sync_tracks"
   /sync/known:
     $ref: "paths/sync.yaml#/sync_known"
   /spots:

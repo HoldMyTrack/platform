@@ -39,7 +39,7 @@ func TestSyncPage(t *testing.T) {
 		t.Fatalf("GET /sync: %d", rec.Code)
 	}
 	body := rec.Body.String()
-	for _, want := range []string{"morning-walk.gpx", "broken.gpx", `href="/?activity=` + track + `&amp;day=2026-05-02&amp;track=` + track + `"`} {
+	for _, want := range []string{"morning-walk.gpx", "broken.gpx", `href="/?day=2026-05-02&amp;track=` + track + `"`} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page is missing %q", want)
 		}

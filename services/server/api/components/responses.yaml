@@ -47,7 +47,7 @@ Redirect:
     Location:
       schema: { type: string }
 PhotoNeedsPlace:
-  description: Nothing places the photo on the track; ask the user where and send route_at
+  description: Nothing places the photo on the route; ask the user where and send route_at
   content:
     application/json:
       schema:
@@ -63,7 +63,7 @@ PhotoImage:
     image/webp:
       schema: { type: string, format: binary }
 OverLimit:
-  description: The account is at its activity or storage limit
+  description: The account is at its track or storage limit
   content:
     application/json:
       schema:
