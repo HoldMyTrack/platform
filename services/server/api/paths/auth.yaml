@@ -269,6 +269,7 @@ auth_google_nonce:
               properties:
                 nonce: { type: string }
       "404": { $ref: "../components/responses.yaml#/Error" }
+      "429": { $ref: "../components/responses.yaml#/Error" }
 auth_google_token:
   post:
     summary: Sign in with a Google id_token a native app got from the platform

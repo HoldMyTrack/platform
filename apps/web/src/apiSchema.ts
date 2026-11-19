@@ -694,6 +694,7 @@ export interface paths {
                     };
                 };
                 404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
             };
         };
         delete?: never;

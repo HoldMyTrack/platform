@@ -5,3 +5,5 @@ CREATE TABLE google_nonces (
     nonce_hash bytea PRIMARY KEY,
     expires_at timestamptz NOT NULL
 );
+
+CREATE INDEX idx_google_nonces_expiry ON google_nonces (expires_at);

@@ -98,4 +98,10 @@ func TestGoogleTokenSpendsNonce(t *testing.T) {
 	if code := post(signedIDToken(t, key, map[string]string{"alg": "RS256", "kid": "k1"}, claims)); code != http.StatusUnauthorized {
 		t.Errorf("a nonce never issued: status %d, want 401", code)
 	}
+
+	d.srv.googleNonceLimiter = newFixedWindowLimiter(1, time.Hour)
+	d.do(account{}, "POST", "/v2/auth/google/nonce", nil)
+	if rec := d.do(account{}, "POST", "/v2/auth/google/nonce", nil); rec.Code != http.StatusTooManyRequests {
+		t.Errorf("past the address's limit: status %d, want 429", rec.Code)
+	}
 }

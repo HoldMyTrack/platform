@@ -98,6 +98,7 @@ type Server struct {
 	statsCardLimiter   *fixedWindowLimiter
 	syncTrackLimiter   *fixedWindowLimiter
 	signupLimiter      *fixedWindowLimiter
+	googleNonceLimiter *fixedWindowLimiter
 	budget             *budget.Gate
 	minAndroidBuild    int
 	minIOSBuild        int
@@ -127,6 +128,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		statsCardLimiter:      newFixedWindowLimiter(statsCardsPerHour, time.Hour),
 		syncTrackLimiter:      newFixedWindowLimiter(syncTracksPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
+		googleNonceLimiter:    newFixedWindowLimiter(googleNoncesPerHour, time.Hour),
 	}
 	local := config.IsLocal(appBaseURL)
 	if local {

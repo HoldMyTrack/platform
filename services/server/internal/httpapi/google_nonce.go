@@ -18,11 +18,15 @@ import (
 // picker and Google's consent.
 const googleNonceTTL = 10 * time.Minute
 
-// POST /v2/auth/google/nonce — a fresh nonce. Expired ones nobody spent are purged here, so the
-// table needs no sweeper.
+// POST /v2/auth/google/nonce — a fresh nonce, googleNoncesPerHour an address. Expired ones
+// nobody spent are purged here, so the table needs no sweeper.
 func (s *Server) handleGoogleNonce(w http.ResponseWriter, r *http.Request) {
 	if !s.google.enabled() {
 		writeAPIError(w, "not found", http.StatusNotFound)
+		return
+	}
+	if !s.googleNonceLimiter.allow(rateLimitAddress(r)) {
+		httpErrorT(w, r, http.StatusTooManyRequests, "error.rate_limited")
 		return
 	}
 	ctx := r.Context()
