@@ -6,6 +6,8 @@ import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import dev.holdmytrack.android.net.Session
+import dev.holdmytrack.android.recording.RecordedPoint
+import java.time.Instant
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -18,7 +20,7 @@ import kotlinx.coroutines.withContext
  * `FusedLocationProviderClient`, plain `OkHttp` over Retrofit).
  */
 internal class RecordingDbHelper(context: Context) :
-    SQLiteOpenHelper(context.applicationContext, "holdmytrack-recordings.db", null, 6) {
+    SQLiteOpenHelper(context.applicationContext, "holdmytrack-recordings.db", null, 7) {
 
     init {
         // `LiveRecordingJournal` writes on every GPS fix while other screens read the finished
@@ -46,6 +48,48 @@ internal class RecordingDbHelper(context: Context) :
             """.trimIndent(),
         )
         createJournal(db)
+        createPoints(db)
+    }
+
+    /** A finished recording's points, one row each, as the journal keeps them: a single
+     *  `points_json` value must fit one `CursorWindow` (2 MB), which about 18 hours of fixes
+     *  outgrow, and then the row can't be read back at all. */
+    private fun createPoints(db: SQLiteDatabase) {
+        db.execSQL(
+            """
+            CREATE TABLE $POINTS_TABLE (
+                recording_id TEXT NOT NULL,
+                seq INTEGER NOT NULL,
+                lat REAL NOT NULL,
+                lon REAL NOT NULL,
+                elevation_m REAL,
+                time_ms INTEGER NOT NULL,
+                PRIMARY KEY (recording_id, seq)
+            )
+            """.trimIndent(),
+        )
+    }
+
+    /** Version 7's move of every row's `points_json` into [POINTS_TABLE]. Read in pieces with
+     *  `substr`, since a value past the `CursorWindow` limit is exactly what can't be read whole,
+     *  and left as `[]`: the column stays, so an older build opening this file still finds it. */
+    private fun movePointsOut(db: SQLiteDatabase) {
+        val lengths = db.rawQuery("SELECT id, length(points_json) FROM $TABLE", null).use { cursor ->
+            buildList { while (cursor.moveToNext()) add(cursor.getString(0) to cursor.getLong(1)) }
+        }
+        for ((id, length) in lengths) {
+            val json = StringBuilder()
+            var from = 1L
+            while (from <= length) {
+                db.rawQuery("SELECT substr(points_json, ?, ?) FROM $TABLE WHERE id = ?", arrayOf(from.toString(), CHUNK.toString(), id)).use {
+                    if (it.moveToFirst()) json.append(it.getString(0))
+                }
+                from += CHUNK
+            }
+            val points = runCatching { json.toString().toRecordedPoints() }.getOrDefault(emptyList())
+            writePoints(db, id, points)
+            db.execSQL("UPDATE $TABLE SET points_json = '[]' WHERE id = ?", arrayOf(id))
+        }
     }
 
     /** `LiveRecordingJournal`'s two tables: the recording in progress, and its points one row
@@ -83,6 +127,7 @@ internal class RecordingDbHelper(context: Context) :
     // `synced` status, so upgrading clears the rows that status left behind — and keeps the
     // unsynced ones, which exist nowhere else. Version 4 added the journal's tables. Version 5
     // dropped `sync_status`. Version 6 added `sent_at_ms`: a sent row stays until its ingest lands.
+    // Version 7 moved the points into their own table ([createPoints]).
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 2) {
             db.execSQL("DROP TABLE IF EXISTS $TABLE")
@@ -93,18 +138,71 @@ internal class RecordingDbHelper(context: Context) :
         if (oldVersion < 4) createJournal(db)
         if (oldVersion < 5) db.execSQL("ALTER TABLE $TABLE DROP COLUMN sync_status")
         if (oldVersion < 6) db.execSQL("ALTER TABLE $TABLE ADD COLUMN sent_at_ms INTEGER")
+        if (oldVersion < 7) {
+            createPoints(db)
+            movePointsOut(db)
+        }
     }
 
     // An older build opening a newer database (a Play rollback, a sideloaded APK) keeps every
     // row: the default throws, and every open would crash with the only copy of each unsynced
     // recording inside. Columns are read by name, so ones a newer version added are left
     // alone, which holds only while a new version adds columns and never renames or drops one.
+    // Since version 7 such a build finds every recording's points empty: they're in a table it
+    // doesn't know.
     override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
     companion object {
         const val TABLE = "recorded_activities"
         const val LIVE_TABLE = "live_recording"
         const val LIVE_POINTS_TABLE = "live_points"
+        const val POINTS_TABLE = "recorded_points"
+
+        /** Characters read at a time from an old `points_json`, well inside a `CursorWindow`. */
+        private const val CHUNK = 500_000L
+
+        /** Writes recording [id]'s header under [account] and its points, in the caller's
+         *  transaction. */
+        fun writeRecord(db: SQLiteDatabase, record: RecordedTrackRecord, account: String) {
+            db.insertOrThrow(TABLE, null, record.toContentValues(account))
+            writePoints(db, record.id, record.points)
+        }
+
+        private fun writePoints(db: SQLiteDatabase, id: String, points: List<RecordedPoint>) {
+            db.delete(POINTS_TABLE, "recording_id = ?", arrayOf(id))
+            val values = ContentValues()
+            points.forEachIndexed { seq, point ->
+                values.clear()
+                values.put("recording_id", id)
+                values.put("seq", seq)
+                values.put("lat", point.lat)
+                values.put("lon", point.lon)
+                point.elevationM?.let { values.put("elevation_m", it) }
+                values.put("time_ms", point.time.toEpochMilli())
+                db.insertOrThrow(POINTS_TABLE, null, values)
+            }
+        }
+
+        /** Recording [id]'s points, in order. */
+        fun readPoints(db: SQLiteDatabase, id: String): List<RecordedPoint> =
+            db.query(POINTS_TABLE, null, "recording_id = ?", arrayOf(id), null, null, "seq").use { cursor ->
+                val lat = cursor.getColumnIndexOrThrow("lat")
+                val lon = cursor.getColumnIndexOrThrow("lon")
+                val elevation = cursor.getColumnIndexOrThrow("elevation_m")
+                val time = cursor.getColumnIndexOrThrow("time_ms")
+                buildList {
+                    while (cursor.moveToNext()) {
+                        add(
+                            RecordedPoint(
+                                lat = cursor.getDouble(lat),
+                                lon = cursor.getDouble(lon),
+                                elevationM = if (cursor.isNull(elevation)) null else cursor.getFloat(elevation),
+                                time = Instant.ofEpochMilli(cursor.getLong(time)),
+                            ),
+                        )
+                    }
+                }
+            }
     }
 }
 
@@ -132,17 +230,18 @@ class RecordedTrackStore(context: Context) {
     private fun account() = Session.email
 
     suspend fun insert(record: RecordedTrackRecord) = withContext(Dispatchers.IO) {
-        helper.writableDatabase.insertOrThrow(RecordingDbHelper.TABLE, null, record.toContentValues(account()))
-        Unit
+        transaction { RecordingDbHelper.writeRecord(it, record, account()) }
     }
 
-    /** Full-row replace, matching `handleUpdateActivity`'s own convention
-     *  (`services/server/internal/httpapi/activities.go`) for the server-side equivalent —
-     *  one Save commits every field at once. */
+    /** The Save screen's fields, all at once, matching `handleUpdateActivity`'s own convention
+     *  (`services/server/internal/httpapi/activities.go`); the points aren't edited here. */
     suspend fun update(record: RecordedTrackRecord) = withContext(Dispatchers.IO) {
-        helper.writableDatabase.update(
-            RecordingDbHelper.TABLE, record.toContentValues(account()), "id = ? AND account = ?", arrayOf(record.id, account()),
-        )
+        val values = ContentValues().apply {
+            put("name", record.name)
+            put("description", record.description)
+            put("activity_type", record.trackType)
+        }
+        helper.writableDatabase.update(RecordingDbHelper.TABLE, values, "id = ? AND account = ?", arrayOf(record.id, account()))
         Unit
     }
 
@@ -150,6 +249,17 @@ class RecordedTrackStore(context: Context) {
         helper.readableDatabase.query(
             RecordingDbHelper.TABLE, null, "id = ? AND account = ?", arrayOf(id, account()), null, null, null,
         ).use { if (it.moveToFirst()) it.toRecord() else null }
+    }
+
+    private fun transaction(block: (SQLiteDatabase) -> Unit) {
+        val db = helper.writableDatabase
+        db.beginTransaction()
+        try {
+            block(db)
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
     }
 
     /** The recordings waiting to be sent, newest first. */
@@ -180,15 +290,24 @@ class RecordedTrackStore(context: Context) {
      *  (`settings/AccountDeletion`), so nothing of it should wait here to be synced into a new one
      *  made with the same email. */
     suspend fun deleteAll() = withContext(Dispatchers.IO) {
-        helper.writableDatabase.delete(RecordingDbHelper.TABLE, "account = ?", arrayOf(account()))
-        Unit
+        transaction { db ->
+            db.delete(
+                RecordingDbHelper.POINTS_TABLE,
+                "recording_id IN (SELECT id FROM ${RecordingDbHelper.TABLE} WHERE account = ?)",
+                arrayOf(account()),
+            )
+            db.delete(RecordingDbHelper.TABLE, "account = ?", arrayOf(account()))
+        }
     }
 
     /** Removes a row — the user's Delete on the Sync tab, or `SyncProgress` once its ingest has
      *  landed and the track lives on the server instead. */
     suspend fun delete(id: String) = withContext(Dispatchers.IO) {
-        helper.writableDatabase.delete(RecordingDbHelper.TABLE, "id = ? AND account = ?", arrayOf(id, account()))
-        Unit
+        transaction { db ->
+            if (db.delete(RecordingDbHelper.TABLE, "id = ? AND account = ?", arrayOf(id, account())) > 0) {
+                db.delete(RecordingDbHelper.POINTS_TABLE, "recording_id = ?", arrayOf(id))
+            }
+        }
     }
 
     private fun Cursor.toRecord() = RecordedTrackRecord(
@@ -199,7 +318,7 @@ class RecordedTrackStore(context: Context) {
         startedAtMs = getLong(getColumnIndexOrThrow("started_at_ms")),
         distanceMeters = getDouble(getColumnIndexOrThrow("distance_meters")),
         durationSeconds = getLong(getColumnIndexOrThrow("duration_seconds")),
-        points = getString(getColumnIndexOrThrow("points_json")).toRecordedPoints(),
+        points = RecordingDbHelper.readPoints(helper.readableDatabase, getString(getColumnIndexOrThrow("id"))),
         createdAtMs = getLong(getColumnIndexOrThrow("created_at_ms")),
     )
 }
@@ -215,6 +334,8 @@ internal fun RecordedTrackRecord.toContentValues(account: String) = ContentValue
     put("started_at_ms", startedAtMs)
     put("distance_meters", distanceMeters)
     put("duration_seconds", durationSeconds)
-    put("points_json", points.toJson())
+    // The points are in their own table (RecordingDbHelper.writeRecord); the column stays for
+    // an older build opening this file.
+    put("points_json", "[]")
     put("created_at_ms", createdAtMs)
 }

@@ -116,7 +116,7 @@ class LiveRecordingJournal(context: Context) {
         val db = helper.writableDatabase
         db.beginTransaction()
         try {
-            record?.let { db.insertOrThrow(RecordingDbHelper.TABLE, null, it.toContentValues(account)) }
+            record?.let { RecordingDbHelper.writeRecord(db, it, account) }
             db.delete(RecordingDbHelper.LIVE_POINTS_TABLE, "recording_id = ?", arrayOf(id))
             db.delete(RecordingDbHelper.LIVE_TABLE, "id = ?", arrayOf(id))
             db.setTransactionSuccessful()

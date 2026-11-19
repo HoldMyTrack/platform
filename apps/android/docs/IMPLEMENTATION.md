@@ -191,7 +191,7 @@ A foreground service survives the screen going away, not the process. So each fi
 
 ### 5.3 The store
 
-`recording/db/RecordedTrackStore` (its KDoc says why not Room) scopes rows per account (§2.3). Upgrades drop and recreate except tables holding unsynced recordings, the only copy anywhere.
+`recording/db/RecordedTrackStore` (its KDoc says why not Room) scopes rows per account (§2.3). Upgrades drop and recreate except tables holding unsynced recordings, the only copy anywhere. A saved recording's points are a row each in their own table, as the journal's are: a row must fit one `CursorWindow` (2 MB), which a single JSON value of about 18 hours of fixes outgrows, and the recording then can't be read back.
 
 ## 6. Build traps
 
