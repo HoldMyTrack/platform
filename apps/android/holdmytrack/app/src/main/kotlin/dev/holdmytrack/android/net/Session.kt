@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.webkit.CookieManager
 import androidx.core.content.edit
 import java.util.concurrent.CopyOnWriteArrayList
@@ -41,17 +42,23 @@ object Session {
     private const val KEY_TIMEZONE = "timezone"
     private const val KEY_TILE_VERSION = "tile_version"
 
+    private const val TAG = "HoldMyTrack"
+
     private lateinit var prefs: SharedPreferences
 
+    /** The application, from [init], for [onClear]'s hooks. */
+    private lateinit var app: Context
+
     /** What [clear] runs: see [onClear]. */
-    private val clearHooks = CopyOnWriteArrayList<() -> Unit>()
+    private val clearHooks = CopyOnWriteArrayList<(Context) -> Unit>()
 
     /**
-     * Runs [hook] on the main thread each time the session ends, so the account's state kept
-     * outside it (the map's, the upload queue's) goes too and the next account starts clean.
-     * Each holder registers from its own `init`: one never touched holds nothing to clear.
+     * Runs [hook] with the application on the main thread each time the session ends, so the
+     * account's state kept outside it (the map's, the upload queue's) goes too and the next
+     * account starts clean. Each holder registers from its own `init`: one never touched holds
+     * nothing to clear. A hook that throws is logged and the rest still run.
      */
-    fun onClear(hook: () -> Unit) {
+    fun onClear(hook: (Context) -> Unit) {
         clearHooks += hook
     }
 
@@ -71,7 +78,8 @@ object Session {
         private set
 
     fun init(context: Context) {
-        prefs = context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        app = context.applicationContext
+        prefs = app.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         cachedToken = prefs.getString(KEY_TOKEN, null)
     }
 
@@ -167,7 +175,10 @@ object Session {
         cachedToken = null
         verified = false
         HoldMyTrackApi.clearImageCache()
-        val hooks = Runnable { clearHooks.forEach { it() } }
+        // On the main thread, where every caller but a test is: the hooks have run when this returns.
+        val hooks = Runnable {
+            for (hook in clearHooks) runCatching { hook(app) }.onFailure { Log.w(TAG, "a sign-out hook failed", it) }
+        }
         if (Looper.myLooper() == Looper.getMainLooper()) hooks.run() else Handler(Looper.getMainLooper()).post(hooks)
         prefs.edit {
             remove(KEY_TOKEN)

@@ -449,9 +449,12 @@ object HoldMyTrackApi {
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) = finish()
             override fun onResponse(call: Call, response: Response) = response.use { finish() }
+            // On the main thread, so the account's state is gone before the next screen opens.
             private fun finish() {
-                Session.clear()
-                main.post(onDone)
+                main.post {
+                    Session.clear()
+                    onDone()
+                }
             }
         })
     }

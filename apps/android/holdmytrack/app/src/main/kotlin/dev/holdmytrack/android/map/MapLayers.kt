@@ -49,14 +49,21 @@ object MapLayers {
         val queries: Map<String, String> = emptyMap(),
         /** The Fog level the control locked ([FogLevels]), drawn at every zoom; null follows the zoom. */
         val fogLevel: String? = null,
-    )
+    ) {
+        /** What the next account starts from: the device's choices (mode, satellite, switches,
+         *  Places categories) without the last account's tracks, captures, Fog pick and lock. */
+        fun withoutAccount(): State = copy(vars = vars - ACCOUNT_VARS, hiddenGroups = emptyMap(), queries = emptyMap(), fogLevel = null)
+    }
+
+    /** The vars holding the account's own ids ([MapOverlays.setTrackCap], [MapOverlays.setTrackFilter],
+     *  [MapSpots], [FogPlaces]). */
+    private val ACCOUNT_VARS = setOf("capped", "listed", "hidden", "focused", "captured", "captureTarget", FogPlaces.VAR)
 
     var state = State()
         private set
 
     init {
-        // Fog's locked level and picked place are the account's: the next account starts with neither.
-        Session.onClear { update(null) { it.copy(fogLevel = null, vars = it.vars - FogPlaces.VAR) } }
+        Session.onClear { update(null, State::withoutAccount) }
     }
 
     private class Applied(val doc: MapLayersDoc.Doc, val excluded: Set<String>) {

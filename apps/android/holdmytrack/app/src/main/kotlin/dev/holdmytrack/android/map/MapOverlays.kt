@@ -79,7 +79,7 @@ object MapOverlays {
 
     init {
         // The next account's map sets each again as it attaches.
-        Session.onClear {
+        Session.onClear { _ ->
             trackTrip = null
             editingRoute = false
             syncing = false

@@ -67,12 +67,9 @@ object FileImports {
 
     private val listeners = mutableSetOf<() -> Unit>()
 
-    /** The application, from the first [enqueue], for [forAccount] as the session ends. */
-    private var app: Context? = null
-
     init {
         // The copies of the account's files go as it signs out, not when the next one queues.
-        Session.onClear { app?.let { forAccount(it, null) } }
+        Session.onClear { forAccount(it, null) }
     }
 
     fun addListener(listener: () -> Unit) {
@@ -92,7 +89,6 @@ object FileImports {
      */
     fun enqueue(context: Context, uris: List<Uri>) {
         val app = context.applicationContext
-        this.app = app
         val res = app.resources
         forAccount(app, Session.email)
         owner = Session.email
@@ -158,6 +154,7 @@ object FileImports {
         running = true
         val res = context.resources
         val transfer = next.transfer
+        val sentFor = owner
         transfer.sent = 0
         changed()
         scope.launch {
@@ -173,11 +170,15 @@ object FileImports {
                         changed()
                     }
                 }
-                sentCount++
-                if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
+                if (ImportsAccount.reports(sentFor, owner)) {
+                    sentCount++
+                    if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
+                }
             } catch (e: Exception) {
-                val reason = FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))
-                _notes += Note(res.getString(R.string.upload_failed_transfer, transfer.name, reason), error = true)
+                if (ImportsAccount.reports(sentFor, owner)) {
+                    val reason = FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))
+                    _notes += Note(res.getString(R.string.upload_failed_transfer, transfer.name, reason), error = true)
+                }
             } finally {
                 next.copy.delete()
                 _transfers -= transfer

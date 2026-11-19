@@ -23,10 +23,12 @@ object PhotoImages {
 
     init {
         // The account's photos stay with it.
-        Session.onClear {
+        Session.onClear { _ ->
             generation++
             cache.evictAll()
+            val left = waiting.values.flatten()
             waiting.clear()
+            left.forEach { it(null) }
         }
     }
 

@@ -94,7 +94,7 @@ object MapSpots {
     init {
         // The next account's captures load as its map attaches; until then, and should that
         // fail, it shows none rather than these.
-        Session.onClear {
+        Session.onClear { _ ->
             captured = emptyMap()
             target = null
             guide = FeatureCollection.fromFeatures(emptyList())
