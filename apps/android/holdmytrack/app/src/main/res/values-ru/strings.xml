@@ -394,6 +394,7 @@
     <string name="upload_already">%1$s уже был загружен раньше.</string>
     <string name="upload_failed_transfer">%1$s: %2$s</string>
     <string name="upload_network_error">Ошибка сети</string>
+    <string name="upload_unreadable">не удалось прочитать файл</string>
 
     <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->
     <string name="panel_label">Панель треков</string>

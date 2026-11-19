@@ -297,6 +297,7 @@ The web's upload (`docs/SPEC.md` FR-3.1, FR-3.2) as a screen, for a verified, no
 - Files come from Android's picker, or are opened or shared from another app (§9). Files from another app are listed and sent only on Upload.
 - The web's limits apply: `.gpx`, `.fit` or `.tcx`, up to 16 MiB each, 20 at a time (more are refused whole) and 100 an hour; a `.zip` is refused by name.
 - Files go one at a time and carry on when the screen is left. Finished imports are in Sync history.
+- Files still queued at a sign-out are dropped, never sent from another account.
 
 ## 6. FR-4 — Sync History
 
