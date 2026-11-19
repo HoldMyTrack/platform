@@ -99,8 +99,7 @@ class VerifyEmailActivity : AppCompatActivity() {
             }.onFailure { failure ->
                 if (failure is ApiException && failure.code == 401) {
                     Session.clear()
-                    SignInActivity.open(applicationContext)
-                    finish()
+                    openSignIn()
                 } else if (!isDestroyed) {
                     show(failure.message.orEmpty(), failed = true)
                 }
@@ -108,13 +107,21 @@ class VerifyEmailActivity : AppCompatActivity() {
         }
     }
 
-    /** From the application's context, so an answer that lands after a rotation still opens
-     *  the map: it starts a new task either way. */
+    /** Not from a destroyed screen: the session is already updated, and the recreated screen's
+     *  check on resume moves on from it, so only one answer opens the map. */
     private fun openMap() {
-        applicationContext.startActivity(
-            Intent(applicationContext, MainActivity::class.java)
+        if (isDestroyed) return
+        startActivity(
+            Intent(this, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
         )
+        finish()
+    }
+
+    /** The session is gone; not from a destroyed screen, for [openMap]'s reason. */
+    private fun openSignIn() {
+        if (isDestroyed) return
+        SignInActivity.open(this)
         finish()
     }
 
@@ -140,8 +147,7 @@ class VerifyEmailActivity : AppCompatActivity() {
             }.onFailure { failure ->
                 if (failure is ApiException && failure.code == 401) {
                     Session.clear()
-                    SignInActivity.open(applicationContext)
-                    finish()
+                    openSignIn()
                 } else if (userAsked && !isDestroyed) {
                     show(getString(R.string.verify_email_check_failed, failure.message.orEmpty()), failed = true)
                 }

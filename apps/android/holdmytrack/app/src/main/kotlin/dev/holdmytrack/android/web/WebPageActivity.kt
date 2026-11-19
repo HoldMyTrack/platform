@@ -132,7 +132,11 @@ class WebPageActivity : AppCompatActivity() {
         if (page.refreshOnReturn && !failed) web.reload()
     }
 
+    /** Destroyed by a rotation, as against left by the user ([route]'s first-run save). */
+    private var recreated = false
+
     override fun onDestroy() {
+        recreated = isChangingConfigurations
         if (::web.isInitialized) web.destroy()
         super.onDestroy()
     }
@@ -195,9 +199,10 @@ class WebPageActivity : AppCompatActivity() {
             WebRoute.Route.Onboarded -> {
                 leaving = true
                 // From the application's context: the answer can land after a rotation, and the
-                // map starts a new task either way.
+                // map starts a new task either way. After the user left, nothing opens.
                 HoldMyTrackApi.verifySession { result ->
                     result.onSuccess { Session.update(it) }
+                    if (isDestroyed && !recreated) return@verifySession
                     applicationContext.startActivity(
                         Intent(applicationContext, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
                     )
