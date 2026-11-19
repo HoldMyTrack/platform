@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.lifecycle.Lifecycle
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.ExportPart
 import dev.holdmytrack.android.net.ExportStatus
@@ -61,13 +62,14 @@ class DataExportActivity : AppCompatActivity() {
 
     private fun load() {
         status.removeCallbacks(poll)
-        HoldMyTrackApi.exportStatus { result -> result.onSuccess { show(it) } }
+        HoldMyTrackApi.exportStatus { result -> if (!isDestroyed) result.onSuccess { show(it) } }
     }
 
     private fun requestExport() {
         request.isEnabled = false
         error.visibility = View.GONE
         HoldMyTrackApi.requestExport { result ->
+            if (isDestroyed) return@requestExport
             request.isEnabled = true
             result.onSuccess { show(it) }.onFailure {
                 error.text = it.message.orEmpty()
@@ -88,7 +90,9 @@ class DataExportActivity : AppCompatActivity() {
             "preparing" -> {
                 status.text = getString(R.string.settings_export_preparing, Session.email)
                 request.visibility = View.GONE
-                status.postDelayed(poll, POLL_MS)
+                // Only while the screen is in front: an answer that lands after onPause would
+                // otherwise start the poll again behind it.
+                if (lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) status.postDelayed(poll, POLL_MS)
             }
             "ready" -> {
                 val until = export.expiresAt?.atZone(ZoneId.systemDefault())

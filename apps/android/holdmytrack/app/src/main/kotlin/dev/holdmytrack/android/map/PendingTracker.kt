@@ -87,7 +87,10 @@ class PendingTracker(
     /** A read failed: polling goes on while rows were Pending. */
     fun readFailed() = schedule()
 
+    /** The map left the screen: no more checks, and the answer of one in flight is dropped,
+     *  since it would schedule the next. The next list read starts polling again. */
     fun stop() {
+        generation++
         host()?.removeCallbacks(poll)
     }
 

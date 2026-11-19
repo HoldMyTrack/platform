@@ -925,6 +925,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         // Health Connect's routes can't be read in the background (`docs/IMPLEMENTATION.md` §4.0).
         if (::panel.isInitialized) panel.syncTab.pause()
         area.pending.stop()
+        // Resumed by onResume's tile version check while the account is still rendering.
+        coverage.stop()
         SyncProgress.removeListener(syncProgressListener)
         recording.stop()
         basemap.stop()

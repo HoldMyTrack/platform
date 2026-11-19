@@ -111,7 +111,7 @@ The style is `GET /v2/map/style/{flavor}?lang=`, unmodified, fetched beside `GET
 
 ### 3.2 Tile versions
 
-Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The status is read only once attached, so a `304` hands back the kept document even at another stored version. Routes also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed.
+Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The status is read only once attached, so a `304` hands back the kept document even at another stored version. Routes also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed. It stops when the map leaves the screen, and that resume check picks it up again.
 
 ### 3.3 Logic ported from the web
 
