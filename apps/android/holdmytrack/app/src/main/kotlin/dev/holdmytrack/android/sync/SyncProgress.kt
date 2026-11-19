@@ -101,7 +101,7 @@ object SyncProgress {
      *  process was tracking. */
     fun resume(context: Context) {
         val email = Session.email
-        if (email == null || resumedFor == email) return
+        if (resumedFor == email) return
         resumedFor = email
         val store = RecordedTrackStore(context.applicationContext)
         scope.launch {
