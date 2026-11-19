@@ -358,6 +358,7 @@ class ClientRulesTest {
                 link.string("scheme"), link.string("authority"), link.string("path"), link.string("track"), link.string("day"),
                 base.string("scheme"), base.string("authority"), input.string("page")!!,
                 input["leaving"]?.jsonPrimitive?.booleanOrNull == true, input["onboarding"]?.jsonPrimitive?.booleanOrNull == true,
+                input["post"]?.jsonPrimitive?.booleanOrNull == true,
             )
             when (route) {
                 WebRoute.Route.Stay -> JsonPrimitive("stay")

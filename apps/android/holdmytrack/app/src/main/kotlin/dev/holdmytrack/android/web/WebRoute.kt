@@ -8,7 +8,7 @@ package dev.holdmytrack.android.web
 object WebRoute {
 
     sealed interface Route {
-        /** The page's own path: the WebView loads it. */
+        /** The page's own path, or a form's POST to its origin: the WebView loads it. */
         data object Stay : Route
 
         /** Another origin, or another page of the site: a browser tab, or the app for its scheme. */
@@ -30,7 +30,9 @@ object WebRoute {
     /**
      * The route for a link of [scheme], [authority] and [path], with the map's [track] and [day]
      * query parameters, against the API's [baseScheme] and [baseAuthority], on the screen showing
-     * [page]. [leaving] is whether an earlier navigation already sent the user elsewhere.
+     * [page]. [leaving] is whether an earlier navigation already sent the user elsewhere; [post]
+     * is whether the navigation is a form's POST, which stays, since the server answers it with
+     * a page or a redirect that is routed in turn.
      */
     fun of(
         scheme: String?,
@@ -43,11 +45,13 @@ object WebRoute {
         page: String,
         leaving: Boolean,
         onboarding: Boolean,
+        post: Boolean,
     ): Route {
         if (scheme != baseScheme || authority != baseAuthority) return Route.Outside
         val at = path.orEmpty().ifEmpty { "/" }
         if (at == page) return Route.Stay
         if (leaving) return Route.Ignore
+        if (post) return Route.Stay
         return when (at) {
             "/signin", "/verify-pending" -> Route.Close
             "/" -> when {

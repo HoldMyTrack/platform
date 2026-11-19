@@ -9,7 +9,8 @@ import WebKit
 /// the session as the cookie a browser would hold (apps/ios/docs/IMPLEMENTATION.md §1.4).
 ///
 /// Where a link goes is the shared webPageRoute rule (WebPageSession.route): the page's own path
-/// stays, the map closes the page onto the native map, anything else opens in Safari. A failed
+/// and a form's POST to the site stay, the map closes the page onto the native map, anything else
+/// opens in Safari. A failed
 /// load shows an error with Try again, never a blank page. The page follows the app's theme: a
 /// web view answers `prefers-color-scheme` from its own trait collection.
 final class WebPageViewController: UIViewController, WKNavigationDelegate {
@@ -129,9 +130,10 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
 
     // MARK: Where links go
 
-    /// Acts on where a navigation to url goes; true when this screen took it from the web view.
-    private func route(_ url: URL) -> Bool {
-        let route = WebPageSession.route(url, base: flow.api.app.apiBaseURL, page: page, leaving: leaving, onboarding: onboarding)
+    /// Acts on where a navigation to url goes, post when it is a form's POST; true when this
+    /// screen took it from the web view.
+    private func route(_ url: URL, post: Bool = false) -> Bool {
+        let route = WebPageSession.route(url, base: flow.api.app.apiBaseURL, page: page, leaving: leaving, onboarding: onboarding, post: post)
         switch route {
         case .stay: return false
         case .ignore: break
@@ -181,7 +183,7 @@ final class WebPageViewController: UIViewController, WKNavigationDelegate {
             openOutside(url)
             return .cancel
         }
-        return route(url) ? .cancel : .allow
+        return route(url, post: action.request.httpMethod == "POST") ? .cancel : .allow
     }
 
     /// A form's redirect, Settings' first-run save going on to `/`, is checked here too.
