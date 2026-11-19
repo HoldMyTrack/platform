@@ -77,7 +77,7 @@ class SyncRunner(
         for (ticked in sessions) {
             val candidate = withRoute(ticked) ?: continue
             if (SyncBatcher.tooLarge(candidate.pointCount)) {
-                val refusal = res.getString(R.string.sync_refusal_too_many_points, candidate.pointCount)
+                val refusal = res.getQuantityString(R.plurals.sync_refusal_too_many_points, candidate.pointCount, candidate.pointCount)
                 rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, refusal)
                 continue
             }

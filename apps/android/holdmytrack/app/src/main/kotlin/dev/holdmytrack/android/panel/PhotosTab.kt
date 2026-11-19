@@ -201,7 +201,7 @@ class PhotosTab(
     /** Why Save can't go ahead with the photos, or null. */
     fun invalid(): String? = when {
         draft.waiting.isNotEmpty() -> res.getString(R.string.photos_place_first)
-        draft.captions.any { it.trim().length > MAX_CAPTION } -> res.getString(R.string.photos_caption_too_long, MAX_CAPTION)
+        draft.captions.any { it.trim().length > MAX_CAPTION } -> res.getQuantityString(R.plurals.photos_caption_too_long, MAX_CAPTION, MAX_CAPTION)
         else -> null
     }
 

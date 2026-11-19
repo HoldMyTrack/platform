@@ -298,9 +298,9 @@ class EditTrackWindow(
         val description = descriptionField.text?.toString().orEmpty()
         val invalid = when {
             type.isEmpty() && !mixedTypes -> res.getString(R.string.edit_type_required)
-            type.length > MAX_TYPE -> res.getString(R.string.edit_type_too_long, MAX_TYPE)
-            name.length > MAX_NAME -> res.getString(R.string.edit_name_too_long, MAX_NAME)
-            description.length > MAX_DESCRIPTION -> res.getString(R.string.edit_description_too_long, MAX_DESCRIPTION)
+            type.length > MAX_TYPE -> res.getQuantityString(R.plurals.edit_type_too_long, MAX_TYPE, MAX_TYPE)
+            name.length > MAX_NAME -> res.getQuantityString(R.plurals.edit_name_too_long, MAX_NAME, MAX_NAME)
+            description.length > MAX_DESCRIPTION -> res.getQuantityString(R.plurals.edit_description_too_long, MAX_DESCRIPTION, MAX_DESCRIPTION)
             else -> null
         }
         if (invalid != null) {

@@ -434,7 +434,7 @@ class SyncTab(
         val sendingKeys = sending.map { it.key }.toSet()
         val doubled = sending.count { c -> similar[c.key].orEmpty().any { it.key in sendingKeys } }
         tickedLine.text = if (doubled > 0) {
-            res.getString(R.string.sync_ticked_similar, sending.size, tickable.size, doubled)
+            res.getQuantityString(R.plurals.sync_ticked_similar, doubled, sending.size, tickable.size, doubled)
         } else {
             res.getString(
                 R.string.sync_ticked,

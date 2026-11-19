@@ -268,7 +268,10 @@
     <string name="sync_failed">Sync failed.</string>
     <string name="sync_rejected_row">Rejected: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Stopped early. %1$s</string>
-    <string name="sync_refusal_too_many_points">the route has %1$d points, more than one sync request accepts</string>
+    <plurals name="sync_refusal_too_many_points">
+        <item quantity="one">the route has %1$d point, more than one sync request accepts</item>
+        <item quantity="other">the route has %1$d points, more than one sync request accepts</item>
+    </plurals>
     <string name="sync_request_failed">the sync request failed</string>
     <string name="sync_no_report">the server did not report on this track (status %1$s)</string>
     <string name="sync_subtext">What\'s on this phone and not on your map yet. Tick what to add — nothing else is sent.</string>
@@ -289,7 +292,10 @@
     <string name="sync_unhidden">Back on the list</string>
     <string name="sync_undo">Undo</string>
     <string name="sync_ticked">%1$d of %2$d ticked · %3$s</string>
-    <string name="sync_ticked_similar">%1$d of %2$d ticked · %3$d are similar</string>
+    <plurals name="sync_ticked_similar">
+        <item quantity="one">%1$d of %2$d ticked · %3$d is similar</item>
+        <item quantity="other">%1$d of %2$d ticked · %3$d are similar</item>
+    </plurals>
     <string name="sync_send">Sync %1$d</string>
     <string name="sync_progress">Sent %1$d of %2$d…</string>
     <plurals name="sync_summary">
@@ -505,9 +511,18 @@
     <string name="edit_description_placeholder">Add a note — e.g. \"Roadtrip to California with kids\"</string>
     <string name="edit_type_mixed">Mixed types — pick one to set it for all</string>
     <string name="edit_type_required">Type is required.</string>
-    <string name="edit_type_too_long">Type must be %1$d characters or fewer.</string>
-    <string name="edit_name_too_long">Name must be %1$d characters or fewer.</string>
-    <string name="edit_description_too_long">Description must be %1$d characters or fewer.</string>
+    <plurals name="edit_type_too_long">
+        <item quantity="one">Type must be %1$d character or fewer.</item>
+        <item quantity="other">Type must be %1$d characters or fewer.</item>
+    </plurals>
+    <plurals name="edit_name_too_long">
+        <item quantity="one">Name must be %1$d character or fewer.</item>
+        <item quantity="other">Name must be %1$d characters or fewer.</item>
+    </plurals>
+    <plurals name="edit_description_too_long">
+        <item quantity="one">Description must be %1$d character or fewer.</item>
+        <item quantity="other">Description must be %1$d characters or fewer.</item>
+    </plurals>
     <string name="edit_save_failed">Could not save the track</string>
     <string name="edit_save">Save</string>
     <string name="edit_saving">Saving…</string>
@@ -547,7 +562,10 @@
     <string name="photos_undo_delete">Keep this photo</string>
     <string name="photos_caption">Caption</string>
     <string name="photos_caption_placeholder">Add a caption</string>
-    <string name="photos_caption_too_long">Caption must be %1$d characters or fewer.</string>
+    <plurals name="photos_caption_too_long">
+        <item quantity="one">Caption must be %1$d character or fewer.</item>
+        <item quantity="other">Caption must be %1$d characters or fewer.</item>
+    </plurals>
     <string name="photos_done">Done</string>
     <string name="photos_place_first">Place every new photo on the route before saving.</string>
     <string name="photos_saving_n">Saving photos %1$d of %2$d…</string>

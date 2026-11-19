@@ -270,7 +270,12 @@
     <string name="sync_failed">Ошибка синхронизации.</string>
     <string name="sync_rejected_row">Отклонено: %1$s %2$s — %3$s</string>
     <string name="sync_stopped">Остановлено досрочно. %1$s</string>
-    <string name="sync_refusal_too_many_points">в маршруте %1$d точек — больше, чем принимает один запрос синхронизации</string>
+    <plurals name="sync_refusal_too_many_points">
+        <item quantity="one">в маршруте %1$d точка — больше, чем принимает один запрос синхронизации</item>
+        <item quantity="few">в маршруте %1$d точки — больше, чем принимает один запрос синхронизации</item>
+        <item quantity="many">в маршруте %1$d точек — больше, чем принимает один запрос синхронизации</item>
+        <item quantity="other">в маршруте %1$d точки — больше, чем принимает один запрос синхронизации</item>
+    </plurals>
     <string name="sync_request_failed">запрос синхронизации не удался</string>
     <string name="sync_no_report">сервер ничего не сообщил об этом треке (статус %1$s)</string>
     <string name="sync_subtext">То, что есть на этом телефоне, но ещё не на вашей карте. Отметьте, что добавить, — больше ничего не отправляется.</string>
@@ -293,7 +298,12 @@
     <string name="sync_unhidden">Снова в списке</string>
     <string name="sync_undo">Отменить</string>
     <string name="sync_ticked">Отмечено %1$d из %2$d · %3$s</string>
-    <string name="sync_ticked_similar">Отмечено %1$d из %2$d · похожих: %3$d</string>
+    <plurals name="sync_ticked_similar">
+        <item quantity="one">Отмечено %1$d из %2$d · похожих: %3$d</item>
+        <item quantity="few">Отмечено %1$d из %2$d · похожих: %3$d</item>
+        <item quantity="many">Отмечено %1$d из %2$d · похожих: %3$d</item>
+        <item quantity="other">Отмечено %1$d из %2$d · похожих: %3$d</item>
+    </plurals>
     <string name="sync_send">Отправить %1$d</string>
     <string name="sync_progress">Отправлено %1$d из %2$d…</string>
     <plurals name="sync_summary">
@@ -521,9 +531,24 @@
     <string name="edit_description_placeholder">Добавьте заметку — например, «Поездка к морю с детьми»</string>
     <string name="edit_type_mixed">Разные типы — выберите один, чтобы задать его всем</string>
     <string name="edit_type_required">Укажите тип.</string>
-    <string name="edit_type_too_long">Тип должен быть не длиннее %1$d символов.</string>
-    <string name="edit_name_too_long">Название должно быть не длиннее %1$d символов.</string>
-    <string name="edit_description_too_long">Описание должно быть не длиннее %1$d символов.</string>
+    <plurals name="edit_type_too_long">
+        <item quantity="one">Тип должен быть не длиннее %1$d символа.</item>
+        <item quantity="few">Тип должен быть не длиннее %1$d символов.</item>
+        <item quantity="many">Тип должен быть не длиннее %1$d символов.</item>
+        <item quantity="other">Тип должен быть не длиннее %1$d символов.</item>
+    </plurals>
+    <plurals name="edit_name_too_long">
+        <item quantity="one">Название должно быть не длиннее %1$d символа.</item>
+        <item quantity="few">Название должно быть не длиннее %1$d символов.</item>
+        <item quantity="many">Название должно быть не длиннее %1$d символов.</item>
+        <item quantity="other">Название должно быть не длиннее %1$d символов.</item>
+    </plurals>
+    <plurals name="edit_description_too_long">
+        <item quantity="one">Описание должно быть не длиннее %1$d символа.</item>
+        <item quantity="few">Описание должно быть не длиннее %1$d символов.</item>
+        <item quantity="many">Описание должно быть не длиннее %1$d символов.</item>
+        <item quantity="other">Описание должно быть не длиннее %1$d символов.</item>
+    </plurals>
     <string name="edit_save_failed">Не удалось сохранить трек</string>
     <string name="edit_save">Сохранить</string>
     <string name="edit_saving">Сохранение…</string>
@@ -567,7 +592,12 @@
     <string name="photos_undo_delete">Оставить фотографию</string>
     <string name="photos_caption">Подпись</string>
     <string name="photos_caption_placeholder">Добавить подпись</string>
-    <string name="photos_caption_too_long">Подпись должна быть не длиннее %1$d символов.</string>
+    <plurals name="photos_caption_too_long">
+        <item quantity="one">Подпись должна быть не длиннее %1$d символа.</item>
+        <item quantity="few">Подпись должна быть не длиннее %1$d символов.</item>
+        <item quantity="many">Подпись должна быть не длиннее %1$d символов.</item>
+        <item quantity="other">Подпись должна быть не длиннее %1$d символов.</item>
+    </plurals>
     <string name="photos_done">Готово</string>
     <string name="photos_place_first">Перед сохранением поставьте каждую новую фотографию на маршрут.</string>
     <string name="photos_saving_n">Сохранение фото %1$d из %2$d…</string>
