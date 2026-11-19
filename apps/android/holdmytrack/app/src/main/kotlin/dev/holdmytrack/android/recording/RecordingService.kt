@@ -162,6 +162,14 @@ class RecordingService : Service() {
     override fun onDestroy() {
         locationManager?.removeUpdates(locationListener)
         locationManager = null
+        // The moving time since the last fix, as a pause keeps it, so the leftover resumes from
+        // where this stopped.
+        if (state == RecordingState.RECORDING) {
+            val id = recordingId
+            val movingMs = currentStats().elapsedMs
+            val distance = tally.meters
+            journalWrite { it.updateTotals(id, movingMs, distance) }
+        }
         super.onDestroy()
     }
 
