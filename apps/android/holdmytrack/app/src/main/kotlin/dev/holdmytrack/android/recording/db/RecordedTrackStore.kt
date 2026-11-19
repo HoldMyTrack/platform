@@ -19,7 +19,7 @@ import kotlinx.coroutines.withContext
  * already prefers where a platform API covers the need (`LocationManager` over Play Services'
  * `FusedLocationProviderClient`, plain `OkHttp` over Retrofit).
  */
-internal class RecordingDbHelper(context: Context) :
+internal class RecordingDbHelper private constructor(context: Context) :
     SQLiteOpenHelper(context.applicationContext, "holdmytrack-recordings.db", null, 7) {
 
     init {
@@ -160,6 +160,13 @@ internal class RecordingDbHelper(context: Context) :
     override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
     companion object {
+        @Volatile private var instance: RecordingDbHelper? = null
+
+        /** The process's one helper for this file, so the stores and the journal share one
+         *  connection pool rather than each holding its own until the collector finds it. */
+        fun of(context: Context): RecordingDbHelper =
+            instance ?: synchronized(this) { instance ?: RecordingDbHelper(context.applicationContext).also { instance = it } }
+
         const val TABLE = "recorded_activities"
         const val LIVE_TABLE = "live_recording"
         const val LIVE_POINTS_TABLE = "live_points"
@@ -218,8 +225,8 @@ internal class RecordingDbHelper(context: Context) :
  * listed, edited and sent from the Sync tab (`panel/SyncTab`, `sync/SyncRunner`). A sent row is
  * marked rather than deleted, and deleted once its ingest lands (`sync/SyncProgress`): until then
  * the phone holds the only copy, which a failed ingest has to be able to give back, even after
- * the app was killed. One instance per caller is fine; `SQLiteOpenHelper` itself keeps the
- * single underlying connection.
+ * the app was killed. One instance per caller is fine: every one shares the process's
+ * helper ([RecordingDbHelper.of]).
  *
  * **Every read and write is scoped to the currently signed-in account.** Recording works
  * whether or not anyone is signed in, and the app supports switching accounts on one device
@@ -232,7 +239,7 @@ internal class RecordingDbHelper(context: Context) :
  */
 class RecordedTrackStore(context: Context) {
 
-    private val helper = RecordingDbHelper(context)
+    private val helper = RecordingDbHelper.of(context)
 
     private fun account() = Session.email
 

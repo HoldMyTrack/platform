@@ -14,7 +14,7 @@ import kotlinx.coroutines.withContext
 
 /** The tables [WaitingStore] keeps, a plain `SQLiteOpenHelper` like the recordings'
  *  (`recording/db/RecordedTrackStore`, which says why not Room). */
-internal class WaitingDbHelper(context: Context) :
+internal class WaitingDbHelper private constructor(context: Context) :
     SQLiteOpenHelper(context.applicationContext, "holdmytrack-sync.db", null, 1) {
 
     override fun onCreate(db: SQLiteDatabase) {
@@ -57,6 +57,12 @@ internal class WaitingDbHelper(context: Context) :
     }
 
     companion object {
+        @Volatile private var instance: WaitingDbHelper? = null
+
+        /** The process's one helper for this file, for `RecordingDbHelper.of`'s reason. */
+        fun of(context: Context): WaitingDbHelper =
+            instance ?: synchronized(this) { instance ?: WaitingDbHelper(context.applicationContext).also { instance = it } }
+
         const val TABLE = "waiting"
         const val CHECKED_TABLE = "waiting_checked"
     }
@@ -77,7 +83,7 @@ internal class WaitingDbHelper(context: Context) :
  */
 class WaitingStore(context: Context) {
 
-    private val helper = WaitingDbHelper(context)
+    private val helper = WaitingDbHelper.of(context)
 
     private fun account() = Session.email
 
