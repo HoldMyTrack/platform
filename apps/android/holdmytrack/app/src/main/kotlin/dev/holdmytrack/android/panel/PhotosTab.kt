@@ -131,8 +131,9 @@ class PhotosTab(
     private val localThumbs = HashMap<String, Bitmap>()
 
     /** Where picked photos wait, resized, until Save ([PhotoPrep.prepare]); emptied when the
-     *  window closes, and when it opens on a track, which also sweeps a killed process's. */
-    private val drafts = File(context.cacheDir, "photo-drafts")
+     *  window closes, and when it opens on a track, which also sweeps a killed process's. Not the
+     *  cache directory, which Android may empty while a draft is open. */
+    private val drafts = File(context.noBackupFilesDir, "photo-drafts")
 
     private fun clearDrafts() {
         drafts.listFiles()?.forEach { it.delete() }
@@ -227,13 +228,21 @@ class PhotosTab(
             val name = PhotoPrep.displayName(resolver, uri)
             val prepared = runCatching { PhotoPrep.prepare(resolver, uri, drafts) }
             main.post {
-                if (gen != generation) return@post
+                if (gen != generation) {
+                    // The window closed, or opened on another track, while this one was resized.
+                    prepared.onSuccess { it.file.delete(); it.thumb.delete() }
+                    return@post
+                }
                 prepared.onFailure { failure ->
                     fail(name, failure)
                     prepareNext(trackId, uris, index + 1, previous, gen)
                 }.onSuccess { photo ->
                     HoldMyTrackApi.checkPhotoPlace(trackId, photo.exif) { placed ->
-                        if (gen != generation) return@checkPhotoPlace
+                        if (gen != generation) {
+                            photo.file.delete()
+                            photo.thumb.delete()
+                            return@checkPhotoPlace
+                        }
                         val key = "new-${System.currentTimeMillis()}-$index"
                         placed.onSuccess { at ->
                             addNew(key, name, photo, at.epochSecond)

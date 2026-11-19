@@ -64,7 +64,14 @@ object PhotoPrep {
                 (bitmap.height * thumbScale).roundToInt().coerceAtLeast(1),
                 true,
             )
-            val prepared = PreparedPhoto(encode(bitmap, dir), encode(thumb, dir), exif)
+            val full = encode(bitmap, dir)
+            val small = try {
+                encode(thumb, dir)
+            } catch (e: Exception) {
+                full.delete()
+                throw e
+            }
+            val prepared = PreparedPhoto(full, small, exif)
             if (thumb !== bitmap) thumb.recycle()
             return prepared
         } finally {
@@ -75,7 +82,12 @@ object PhotoPrep {
     private fun encode(bitmap: Bitmap, dir: File): PhotoImage {
         dir.mkdirs()
         val file = File(dir, "${UUID.randomUUID()}.webp")
-        val written = file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, QUALITY, it) }
+        val written = try {
+            file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, QUALITY, it) }
+        } catch (e: Exception) {
+            file.delete()
+            throw e
+        }
         if (!written) {
             file.delete()
             throw UnreadablePhotoException()
