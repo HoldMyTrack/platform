@@ -273,7 +273,7 @@ data class PrivateLocation(val id: String, val name: String, val lon: Double, va
 data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVersion: String, val explored: Explored?)
 
 /** How many places of each Fog level the account has been in, as the map clears them
- *  (`docs/SPEC.md` FR-4.2): the level control's counts ([dev.holdmytrack.android.map.FogLevels]). */
+ *  (`docs/SPEC.md` FR-4.2): the level control's counts (`map/FogLevels`). */
 data class Explored(val countries: Int, val regions: Int, val counties: Int, val cities: Int)
 
 /**

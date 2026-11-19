@@ -8,7 +8,7 @@
 
 ### 1.1 Process start
 
-`HoldMyTrackApplication.onCreate` runs in a fixed order: `Session.init` before anything reads the token, `MapLibre.getInstance` before any `MapView` exists, then `HttpRequestUtil.setOkHttpClient(HoldMyTrackApi.client)`. The last call must happen in the `Application`: MapLibre may request as soon as a `MapView` exists, and anything sent before the swap goes out through its own client, without the token. The You tab's Theme is applied here as AppCompat's night mode, which also picks the map's style flavor.
+`HoldMyTrackApplication.onCreate` runs in a fixed order: `Session.init` before anything reads the token, `MapLibre.getInstance` before any `MapView` exists, then `HttpRequestUtil.setOkHttpClient(HoldMyTrackApi.client)`. `AppOutdated.init` and `TrackTypes.init` set `net`'s hooks (§2.1) here too, before any request: until then a refused build opens nothing and a response's track types go unheard. The last call must happen in the `Application`: MapLibre may request as soon as a `MapView` exists, and anything sent before the swap goes out through its own client, without the token. The You tab's Theme is applied here as AppCompat's night mode, which also picks the map's style flavor.
 
 ### 1.2 Which screen a session reaches
 
