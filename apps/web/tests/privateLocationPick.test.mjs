@@ -36,6 +36,6 @@ test('the editor draft is highlighted over the focused location', () => {
 });
 
 test('the Privacy tab opens on the location added last', () => {
-  assert.deepEqual(openingLocation([{ id: 'a' }, { id: 'b' }]), { id: 'b' });
+  assert.deepEqual(openingLocation([{ id: 'b' }, { id: 'a' }]), { id: 'b' });
   assert.equal(openingLocation([]), null);
 });

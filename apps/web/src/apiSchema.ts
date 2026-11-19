@@ -2617,7 +2617,7 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** The signed-in account's Private locations, oldest first */
+        /** The signed-in account's Private locations, newest first */
         get: {
             parameters: {
                 query?: never;

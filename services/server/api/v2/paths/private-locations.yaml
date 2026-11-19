@@ -1,6 +1,6 @@
 private-locations:
   get:
-    summary: The signed-in account's Private locations, oldest first
+    summary: The signed-in account's Private locations, newest first
     responses:
       "200":
         description: The Private locations

@@ -294,7 +294,7 @@ extension MapViewController {
             features += [circle, center]
         }
         let draft = editing.draft
-        for l in editing.locations ?? [] where l.id != draft?.id {
+        for l in PrivateLocationEditing.drawOrder(editing.locations ?? [], editing: draft?.id) {
             add(id: l.id, lon: l.lon, lat: l.lat, radiusM: l.radiusM, selected: false)
         }
         if let draft { add(id: draft.id ?? "", lon: draft.lon, lat: draft.lat, radiusM: draft.radiusM, selected: true) }

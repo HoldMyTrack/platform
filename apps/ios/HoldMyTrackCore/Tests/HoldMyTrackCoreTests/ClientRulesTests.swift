@@ -81,6 +81,10 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
         return ["started": .bool(change.started), "finished": .bool(change.finished), "left": .ids(change.left), "landed": .ids(change.landed), "awaiting": .ids(change.awaiting), "pending": .ids(change.pending)]
     },
     "deleteDone": { input in .bool(DeleteOutcome.done(status: input.int("status"))) },
+    "privateDrawOrder": { input in
+        let saved = input.strings("saved").map { PrivateLocation(id: $0, name: "", lon: 0, lat: 0, radiusM: 200) }
+        return .list(PrivateLocationEditing.drawOrder(saved, editing: input["editing"].string).map(\.id))
+    },
     "verifyAction": { input in
         switch VerifyAction.of(input["typed"].string!) {
         case .check: .string("check")

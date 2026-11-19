@@ -1,0 +1,10 @@
+{
+  "rule": "privateDrawOrder",
+  "description": "The order saved Private location circles are drawn in, each over the one before, from the list as the API gives it (newest first): oldest first, so the newest is on top. The one being edited is left out; it is drawn last, from the draft. Expected: the ids in drawing order.",
+  "cases": [
+    { "name": "none", "input": { "saved": [], "editing": null }, "expected": [] },
+    { "name": "newest on top", "input": { "saved": ["c", "b", "a"], "editing": null }, "expected": ["a", "b", "c"] },
+    { "name": "the one being edited is left out", "input": { "saved": ["c", "b", "a"], "editing": "b" }, "expected": ["a", "c"] },
+    { "name": "a new one being drawn leaves every saved one in", "input": { "saved": ["b", "a"], "editing": null }, "expected": ["a", "b"] }
+  ]
+}

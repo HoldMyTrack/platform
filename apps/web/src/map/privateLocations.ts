@@ -2,6 +2,7 @@ import { TRACKS_MIN_ZOOM } from './config.ts';
 import { EARTH_RADIUS_M } from '../geo.ts';
 import type { ExpressionSpecification, GeoJSONSource, LngLat, Map as MapLibreMap, MapLayerMouseEvent, MapLayerTouchEvent } from 'maplibre-gl';
 import { overlayInPlace } from './overlayOrder.ts';
+import { drawOrder } from '../ui/privateLocationPick.ts';
 
 /**
  * The Private locations overlay (FR-7.1): every saved circle, the one being edited, and its
@@ -110,13 +111,12 @@ export function ensurePrivateLocationsLayer(map: MapLibreMap, beforeId: string |
   if (!overlayInPlace(map.getLayersOrder(), ids, beforeId)) for (const id of ids) map.moveLayer(id, beforeId);
 }
 
-/** Redraws every circle; `selected` (saved or not) is highlighted, with a drag handle when `draggable`. */
+/** Redraws every circle, newest on top (`drawOrder`); `selected` (saved or not) is highlighted, with a drag handle when `draggable`. */
 export function setPrivateLocationsData(map: MapLibreMap, circles: readonly Circle[], selected: Circle | null, draggable: boolean): void {
   const source = map.getSource(PRIVATE_LOCATIONS_SOURCE_ID) as GeoJSONSource | undefined;
   if (!source) return;
   const features: Feature[] = [];
-  for (const c of circles) {
-    if (selected && c.id !== undefined && c.id === selected.id) continue; // drawn from the draft below
+  for (const c of drawOrder(circles, selected)) {
     features.push(
       { type: 'Feature', properties: { role: 'circle', id: c.id ?? '', selected: false }, geometry: { type: 'Polygon', coordinates: [circlePolygon(c)] } },
       { type: 'Feature', properties: { role: 'center', id: c.id ?? '', selected: false }, geometry: { type: 'Point', coordinates: [c.lon, c.lat] } },
