@@ -112,6 +112,7 @@ class DataExportActivity : AppCompatActivity() {
     private fun download(part: ExportPart, button: Button) {
         button.isEnabled = false
         error.visibility = View.GONE
+        notice.visibility = View.GONE
         HoldMyTrackApi.exportPartLink(part) { result ->
             if (isDestroyed) return@exportPartLink
             button.isEnabled = true

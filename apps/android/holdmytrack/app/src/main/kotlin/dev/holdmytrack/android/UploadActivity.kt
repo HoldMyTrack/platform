@@ -74,20 +74,21 @@ class UploadActivity : AppCompatActivity() {
         }
         findViewById<Button>(R.id.upload_shared_cancel).setOnClickListener { setShared(emptyList()) }
 
-        // Read again from the intent on a recreation, since the read grant comes with it, unless
-        // the user already answered.
-        if (savedInstanceState?.getBoolean(KEY_SHARED_ANSWERED) != true) setShared(sharedFiles(intent))
+        // A recreation keeps the list as it stood, the files of a later share included; the read
+        // grants stay with the activity.
+        setShared(savedInstanceState?.getParcelableArrayList(KEY_SHARED, Uri::class.java) ?: sharedFiles(intent))
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        setShared(sharedFiles(intent))
+        // Added to what is still waiting: a second share doesn't drop the first.
+        setShared((shared + sharedFiles(intent)).distinct())
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
-        outState.putBoolean(KEY_SHARED_ANSWERED, shared.isEmpty())
+        outState.putParcelableArrayList(KEY_SHARED, ArrayList(shared))
     }
 
     override fun onStart() {
@@ -172,6 +173,6 @@ class UploadActivity : AppCompatActivity() {
     }
 
     private companion object {
-        const val KEY_SHARED_ANSWERED = "shared_answered"
+        const val KEY_SHARED = "shared"
     }
 }
