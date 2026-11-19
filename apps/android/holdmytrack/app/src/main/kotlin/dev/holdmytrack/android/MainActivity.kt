@@ -105,9 +105,15 @@ class MainActivity : AppCompatActivity() {
         // In place of Material's own, which pads the bar by the keyboard too: risen over it, the bar
         // would squeeze the map, and the Tracks list would follow the shorter view (`docs/SPEC.md`
         // FR-5.11). The keyboard covers the window instead (`windowSoftInputMode`).
-        val navPaddingBottom = nav.paddingBottom
+        // Its sides clear a landscape phone's navigation bar or camera cutout, as Material's did.
+        val navPadding = Insets.of(nav.paddingLeft, nav.paddingTop, nav.paddingRight, nav.paddingBottom)
         ViewCompat.setOnApplyWindowInsetsListener(nav) { bar, insets ->
-            bar.updatePadding(bottom = navPaddingBottom + insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom)
+            val sides = insets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.displayCutout())
+            bar.updatePadding(
+                left = navPadding.left + sides.left,
+                right = navPadding.right + sides.right,
+                bottom = navPadding.bottom + insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom,
+            )
             insets
         }
         onBackPressedDispatcher.addCallback(this, backToMap)

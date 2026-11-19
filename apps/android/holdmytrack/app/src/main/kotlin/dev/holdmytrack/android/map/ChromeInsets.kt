@@ -7,6 +7,7 @@ import android.view.WindowInsets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+import com.google.android.material.card.MaterialCardView
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.panel.MaxHeightScrollView
 import dev.holdmytrack.android.panel.TracksPanel
@@ -32,9 +33,14 @@ class ChromeInsets(
     private val map: () -> MapLibreMap?,
 ) {
     /** The Edit window and the Private location editor, along the bottom of the map. */
-    private val editors: List<View> = listOf(root.findViewById(R.id.edit_window), root.findViewById(R.id.private_editor))
-    private val editBar: View = root.findViewById(R.id.edit_bar)
+    private val editWindow: MaterialCardView = root.findViewById(R.id.edit_window)
+    private val privateEditor: View = root.findViewById(R.id.private_editor)
+    private val editors: List<View> = listOf(editWindow, privateEditor)
     private val editScroll: MaxHeightScrollView = root.findViewById(R.id.edit_scroll)
+
+    /** The keyboard's height, from the insets the map receives. The gesture bar's comes from the
+     *  window's own: MainActivity hands its tabs the insets with that one taken out. */
+    private var keyboard = 0
 
     /** The status bar's height. The inset and the map instance arrive in either order, so both
      *  paths call [applyCompassMargin]. */
@@ -62,7 +68,8 @@ class ChromeInsets(
             systemBarInsetTop = bars.top
             applyCompassMargin()
             // The keyboard rising or falling moves the editors with it.
-            placeEditors(WindowInsetsCompat.toWindowInsetsCompat(insets, root))
+            keyboard = WindowInsetsCompat.toWindowInsetsCompat(insets, root).getInsets(WindowInsetsCompat.Type.ime()).bottom
+            placeEditors()
             insets
         }
         // The attribution sits above an editor, whose height is only known once it's laid out.
@@ -152,26 +159,40 @@ class ChromeInsets(
     }
 
     /** The editors sit at the screen's bottom edge (the bottom bar hides meanwhile), so their
-     *  margin clears the gesture bar, or the keyboard over it ([EditorPlacement]), and the Edit
-     *  window scrolls within what's left under the edit bar. */
-    fun placeEditors(insets: WindowInsetsCompat? = ViewCompat.getRootWindowInsets(root)) {
+     *  margin clears the gesture bar, or the keyboard over it ([EditorPlacement]): the Edit
+     *  window scrolls within what's left under the edit bar, and the Private location editor
+     *  rises only as far as keeps its top on screen. Only while one is open: each runs this as it
+     *  opens. */
+    fun placeEditors() {
+        if (editors.none { it.isVisible }) return
         val res = root.resources
         val space = res.getDimensionPixelSize(R.dimen.hmt_space_10)
-        val bottom = EditorPlacement.bottom(
-            space,
-            gesture = insets?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0,
-            keyboard = insets?.getInsets(WindowInsetsCompat.Type.ime())?.bottom ?: 0,
+        val gesture = ViewCompat.getRootWindowInsets(root)?.getInsets(WindowInsetsCompat.Type.navigationBars())?.bottom ?: 0
+        val bottom = EditorPlacement.bottom(space, gesture, keyboard)
+        val screen = root.height.takeIf { it > 0 } ?: res.displayMetrics.heightPixels
+        // The top row's bottom, the edit bar's while editing, in the map's own coordinates.
+        val top = maxOf(bottomIn(topBar), systemBarInsetTop) + space
+        setBottomMargin(editWindow, bottom)
+        setBottomMargin(privateEditor, EditorPlacement.fitted(bottom, space + gesture, screen, privateEditor.height, top))
+        editScroll.maxHeight = EditorPlacement.scrollCap(
+            res.displayMetrics.heightPixels,
+            room = screen - bottom - top,
+            padding = editWindow.contentPaddingTop + editWindow.contentPaddingBottom,
         )
-        for (card in editors) {
-            val params = card.layoutParams as MarginLayoutParams
-            if (params.bottomMargin != bottom) {
-                params.bottomMargin = bottom
-                card.layoutParams = params
-            }
-        }
-        val screen = res.displayMetrics.heightPixels
-        val room = (root.height.takeIf { it > 0 } ?: screen) - bottom - maxOf(editBar.bottom, systemBarInsetTop) - space
-        editScroll.maxHeight = EditorPlacement.scrollCap(screen, room, 2 * res.getDimensionPixelSize(R.dimen.hmt_space_16))
+    }
+
+    private fun setBottomMargin(card: View, bottom: Int) {
+        val params = card.layoutParams as MarginLayoutParams
+        if (params.bottomMargin == bottom) return
+        params.bottomMargin = bottom
+        card.layoutParams = params
+    }
+
+    /** [view]'s bottom edge, measured from the top of [root]. */
+    private fun bottomIn(view: View): Int {
+        val at = IntArray(2).also(view::getLocationInWindow)
+        val origin = IntArray(2).also(root::getLocationInWindow)
+        return at[1] - origin[1] + view.height
     }
 
     fun save(out: Bundle) {

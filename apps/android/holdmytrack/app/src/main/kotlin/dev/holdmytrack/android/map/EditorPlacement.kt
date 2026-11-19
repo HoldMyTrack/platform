@@ -13,6 +13,13 @@ object EditorPlacement {
      *  taller. */
     fun bottom(space: Int, gesture: Int, keyboard: Int): Int = space + maxOf(gesture, keyboard)
 
+    /** A card that can't scroll, the Private location editor: lifted to [bottom], or less when
+     *  its [card] height would then reach above [top] (the top row's bottom), so its own top, and
+     *  the name field there, stay on screen and the keyboard covers its buttons instead; never
+     *  below [floor], clear of the gesture bar. [card] 0 is a card not laid out yet. */
+    fun fitted(bottom: Int, floor: Int, screen: Int, card: Int, top: Int): Int =
+        if (card == 0) bottom else minOf(bottom, screen - card - top).coerceAtLeast(floor)
+
     /** The Edit window's scroll cap: [MAX_HEIGHT_FRACTION] of [screen], or less when only [room]
      *  is left between the edit bar and the editors' bottom margin, the card's own [padding] taken
      *  off; never below 0. */
