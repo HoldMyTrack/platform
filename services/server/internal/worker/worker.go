@@ -547,12 +547,6 @@ func runJob(ctx context.Context, pool *pgxpool.Pool, store *storage.Store, log *
 		return tripcopy.Process(ctx, pool, store, sj)
 	case "export":
 		return runExport(ctx, pool, store, log, j.id, j.payload)
-	case "rewrite_sync_payload":
-		var rj ingest.RewriteSyncPayloadJob
-		if err := json.Unmarshal(j.payload, &rj); err != nil {
-			return fmt.Errorf("unmarshal rewrite_sync_payload job: %w", err)
-		}
-		return ingest.RewriteSyncPayload(ctx, pool, store, rj)
 	default:
 		return fmt.Errorf("unhandled job kind %q", j.kind)
 	}
