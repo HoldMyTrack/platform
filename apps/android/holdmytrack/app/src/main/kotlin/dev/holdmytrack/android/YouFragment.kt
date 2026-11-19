@@ -105,14 +105,20 @@ class YouFragment : Fragment(R.layout.fragment_you) {
 
     override fun onResume() {
         super.onResume()
-        // Back from Settings, Profile or Privacy is a resume; a hidden tab reads when it shows.
-        if (!isHidden) load(resumed = true)
+        // Back from Settings, Profile or Privacy is a resume; a hidden tab reads when it next
+        // shows, as a return.
+        if (isHidden) resumedHidden = true else load(resumed = true)
     }
 
     override fun onHiddenChanged(hidden: Boolean) {
         super.onHiddenChanged(hidden)
-        if (!hidden) load(resumed = false)
+        if (hidden) return
+        load(resumed = resumedHidden)
+        resumedHidden = false
     }
+
+    /** The app came back while another tab showed: the next show counts as a return. */
+    private var resumedHidden = false
 
     /** When the numbers were last read, and when the account was. */
     private var numbersRead: YouRefresh.Mark? = null

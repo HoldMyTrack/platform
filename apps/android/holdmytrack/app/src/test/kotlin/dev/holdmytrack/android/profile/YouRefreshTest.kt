@@ -24,8 +24,8 @@ class YouRefreshTest {
     }
 
     @Test
-    fun `a return from Settings reads the account, not the numbers`() {
-        assertEquals(Reads(true, false), YouRefresh.of(last, last.atMs, later(60_000), resumed = true))
+    fun `a return to the app reads both`() {
+        assertEquals(Reads(true, true), YouRefresh.of(last, last.atMs, later(60_000), resumed = true))
     }
 
     @Test
