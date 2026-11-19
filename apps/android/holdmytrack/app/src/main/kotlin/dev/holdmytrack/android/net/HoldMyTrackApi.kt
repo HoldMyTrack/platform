@@ -18,6 +18,7 @@ import java.io.IOException
 import java.time.Duration
 import java.time.Instant
 import java.time.OffsetDateTime
+import java.util.concurrent.Executors
 import okhttp3.Cache
 import okhttp3.Call
 import okhttp3.Callback
@@ -558,10 +559,28 @@ object HoldMyTrackApi {
         client.newBuilder().cache(Cache(dir, IMAGE_CACHE_BYTES)).build()
     }
 
+    /** Where the image cache is emptied or trimmed: off the main thread, since it walks and
+     *  deletes files. */
+    private val imageCacheIo = Executors.newSingleThreadExecutor()
+
     /** The account's images go with its session (`Session.clear`): the avatar's path is the
-     *  same for every account. */
+     *  same for every account. Files left by an earlier process go too. */
     fun clearImageCache() {
-        runCatching { imageClient.cache?.evictAll() }
+        imageCacheIo.execute { runCatching { imageClient.cache?.evictAll() } }
+    }
+
+    /** Photo [id]'s image and thumbnail leave the cache once it's deleted. */
+    private fun forgetPhoto(id: String) {
+        val photo = v2("photos", id).toString()
+        imageCacheIo.execute {
+            runCatching {
+                val urls = imageClient.cache?.urls() ?: return@runCatching
+                while (urls.hasNext()) {
+                    val url = urls.next()
+                    if (url == photo || url.startsWith("$photo/") || url.startsWith("$photo?")) urls.remove()
+                }
+            }
+        }
     }
 
     private const val IMAGE_CACHE_BYTES = 64L shl 20
@@ -988,7 +1007,11 @@ object HoldMyTrackApi {
     /** `DELETE /v2/photos/{id}` (FR-15.5) — the photo and both its images. */
     fun deletePhoto(id: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder().url(v2("photos", id)).delete().build()
-        call(request, { }) { onResult(deleteDone(it)) }
+        call(request, { }) { result ->
+            val done = deleteDone(result)
+            if (done.isSuccess) forgetPhoto(id)
+            onResult(done)
+        }
     }
 
     /** `photo_needs_place` as its own exception, so the Photos tab can tell it from a failure. */
