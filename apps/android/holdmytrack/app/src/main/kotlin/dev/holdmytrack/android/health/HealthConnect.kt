@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import kotlinx.coroutines.CancellationException
 
 /**
  * What the app needs from Health Connect, and the state machine the user has to walk through
@@ -98,8 +99,12 @@ object HealthConnect {
             HealthConnectClient.SDK_UNAVAILABLE_PROVIDER_UPDATE_REQUIRED -> return Access(Readiness.UPDATE_REQUIRED, emptySet())
         }
         val client = clientOrNull(context) ?: return Access(Readiness.UNAVAILABLE, emptySet())
+        // A read cancelled with its screen is no answer about permissions: it ends the caller too.
         val granted = runCatching { client.permissionController.getGrantedPermissions() }
-            .getOrElse { return Access(Readiness.NEEDS_EXERCISE_PERMISSION, emptySet()) }
+            .getOrElse {
+                if (it is CancellationException) throw it
+                return Access(Readiness.NEEDS_EXERCISE_PERMISSION, emptySet())
+            }
         return Access(readinessOf(granted), granted)
     }
 
