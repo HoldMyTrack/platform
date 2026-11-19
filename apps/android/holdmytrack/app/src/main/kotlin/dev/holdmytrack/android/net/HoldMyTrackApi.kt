@@ -9,8 +9,6 @@ import android.os.Handler
 import android.os.LocaleList
 import android.os.Looper
 import dev.holdmytrack.android.BuildConfig
-import dev.holdmytrack.android.panel.TrackKind
-import dev.holdmytrack.android.panel.TrackTypes
 import java.io.File
 import java.io.IOException
 import java.time.Duration
@@ -61,6 +59,18 @@ object HoldMyTrackApi {
     const val SOURCE_RECORDED = "recorded"
     private val JSON = "application/json; charset=utf-8".toMediaType()
     private val main = Handler(Looper.getMainLooper())
+
+    /**
+     * Hears what a response said about its track types, on the main thread and before that
+     * response's own callback: the track lists and a Trip's stats carry them alongside their
+     * rows. `panel/TrackTypes` sets it at start.
+     */
+    @Volatile
+    var onTrackTypes: (Map<String, TrackTypeInfo>) -> Unit = {}
+
+    private fun heard(types: Map<String, TrackTypeInfo>) {
+        if (types.isNotEmpty()) main.post { onTrackTypes(types) }
+    }
 
     /** Opening a connection to the server or a tile host, TLS included. */
     private val CONNECT_TIMEOUT = Duration.ofSeconds(10)
@@ -671,7 +681,7 @@ object HoldMyTrackApi {
             .build()
         call(Request.Builder().url(url).build(), { body ->
             val decoded = decode<TracksJson>(body)
-            TrackTypes.merge(decoded.types.described())
+            heard(decoded.types.described())
             decoded.tracks.map { it.toTrack() }
         }, onResult)
     }
@@ -691,7 +701,7 @@ object HoldMyTrackApi {
             .build()
         call(Request.Builder().url(url).build(), { body ->
             val decoded = decode<AreaTracksJson>(body)
-            TrackTypes.merge(decoded.types.described())
+            heard(decoded.types.described())
             AreaPage(decoded.tracks.map { it.toTrack() }, decoded.total)
         }, onResult)
     }
@@ -711,15 +721,15 @@ object HoldMyTrackApi {
     }
 
     /** `GET /v2/track-types`: what to show for the catalog's types and [types] (`panel/TrackTypes`). */
-    fun trackTypes(types: List<String>, onResult: (Result<Map<String, TrackTypes.Info>>) -> Unit) {
+    fun trackTypes(types: List<String>, onResult: (Result<Map<String, TrackTypeInfo>>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V2 + "/track-types").toHttpUrl().newBuilder()
             .apply { if (types.isNotEmpty()) addQueryParameter("types", types.joinToString(",")) }
             .build()
         call(Request.Builder().url(url).build(), { body -> decode<TrackTypesJson>(body).types.described() }, onResult)
     }
 
-    private fun Map<String, TrackTypeJson>.described(): Map<String, TrackTypes.Info> =
-        mapValues { TrackTypes.Info(TrackKind.fromWire(it.value.kind), it.value.label) }
+    private fun Map<String, TrackTypeJson>.described(): Map<String, TrackTypeInfo> =
+        mapValues { TrackTypeInfo(it.value.kind, it.value.label) }
 
     /**
      * `PATCH /v2/tracks/{id}` — a full replace of the three fields a person can set
@@ -1163,7 +1173,7 @@ object HoldMyTrackApi {
     }
 
     private fun TripJson.toTrip(): Trip {
-        TrackTypes.merge(stats.byType.filter { it.label.isNotEmpty() }.associate { it.trackType to TrackTypes.Info(null, it.label) })
+        heard(stats.byType.filter { it.label.isNotEmpty() }.associate { it.trackType to TrackTypeInfo(null, it.label) })
         return toTripOnly()
     }
 
@@ -1263,7 +1273,7 @@ object HoldMyTrackApi {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks").build()
         call(request, { body ->
             val decoded = decode<TracksJson>(body)
-            TrackTypes.merge(decoded.types.described())
+            heard(decoded.types.described())
             buildMap {
                 for (row in decoded.tracks) {
                     if (row.trackType.isNotEmpty()) merge(row.trackType, 1, Int::plus)
