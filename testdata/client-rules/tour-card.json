@@ -1,6 +1,6 @@
 {
   "rule": "tourCard",
-  "clients": ["web", "android"],
+  "clients": ["web", "android", "ios"],
   "description": "The first-time card a user's own pick earns (docs/SPEC.md FR-4.14): \"fog\" for Fog, \"trips\" for the Trips tab; null for Normal, any other tab, a card already seen (seen.cards), or while the tour runs (touring), whose steps say the same.",
   "cases": [
     { "name": "Fog", "input": { "event": { "kind": "mode", "mode": "fog" }, "seen": { "tour": false, "cards": [] }, "touring": false }, "expected": "fog" },

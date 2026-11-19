@@ -7,7 +7,7 @@ final class MapTests: XCTestCase {
     func testTheDemoOpensOnTheMapAndSwitchesModes() throws {
         try LaunchTests.requireDevStack(self)
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         let demo = app.buttons["demo"]
         XCTAssertTrue(demo.waitForExistence(timeout: 10))
@@ -52,7 +52,7 @@ final class MapTests: XCTestCase {
     func testAPickedCategoryShowsItsPlacesInTheArea() throws {
         try LaunchTests.requireDevStack(self)
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         app.buttons["demo"].tap()
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
@@ -76,7 +76,7 @@ final class MapTests: XCTestCase {
     func testFogsLevelMenuLocksALevelAndATapNamesAPlace() throws {
         try LaunchTests.requireDevStack(self)
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         app.buttons["demo"].tap()
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))

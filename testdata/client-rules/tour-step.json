@@ -1,6 +1,6 @@
 {
   "rule": "tourStep",
-  "clients": ["web", "android"],
+  "clients": ["web", "android", "ios"],
   "description": "What a tour step changes, or the tour's end (step null) puts back (docs/SPEC.md FR-4.14): from now (the map's mode and the panel's or bottom bar's tab), the step's mode, tab and card, and restore (the user's mode and tab from before the tour). mode and tab are what to change to, null where they already are; card is the step's card, seen by showing the step, null at the end.",
   "cases": [
     { "name": "a step on the map as it is changes nothing", "input": { "now": { "mode": "normal", "tab": "tracks" }, "step": { "mode": "normal", "tab": "tracks", "card": null }, "restore": { "mode": "normal", "tab": "tracks" } }, "expected": { "mode": null, "tab": null, "card": null } },

@@ -20,6 +20,7 @@ extension MapViewController {
                 return
             }
             Self.framed.insert(accountKey)
+            onHistoryKnown?(!newest.tracks.isEmpty)
             let boxes = newest.tracks.filter { !$0.pending }.compactMap(\.bbox)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {
                 hideNotice(.empty)

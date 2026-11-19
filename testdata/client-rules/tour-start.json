@@ -1,6 +1,6 @@
 {
   "rule": "tourStart",
-  "clients": ["web", "android"],
+  "clients": ["web", "android", "ios"],
   "description": "What the map does about the tour when it opens (docs/SPEC.md FR-4.14): \"wait\" until the account's history is known (hasTracks null), then \"start\" when asked for (the web's /?tour or Take a tour), \"none\" once the tour was started or its offer answered on this browser or phone (seen.tour), \"start\" for a demo, \"offer\" to an account with tracks and \"none\" to one without.",
   "cases": [
     { "name": "waits for the history", "input": { "requested": false, "isDemo": false, "hasTracks": null, "seen": { "tour": false, "cards": [] } }, "expected": "wait" },

@@ -14,7 +14,7 @@ final class YouTests: XCTestCase {
         try account.sample("west-side.gpx").write(to: file)
 
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut", "-hmtUpload", file.path]
+        app.launchArguments = ["-hmtSignedOut", "-hmtUpload", file.path, "-hmtTourSeen"]
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.buttons["chooseFiles"].waitForExistence(timeout: 15), "Upload opens with the file")
@@ -28,7 +28,7 @@ final class YouTests: XCTestCase {
         let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
@@ -50,7 +50,7 @@ final class YouTests: XCTestCase {
         let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: [])
         defer { account.delete() }
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))

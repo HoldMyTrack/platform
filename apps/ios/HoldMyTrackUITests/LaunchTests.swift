@@ -5,7 +5,7 @@ import XCTest
 final class LaunchTests: XCTestCase {
     private func launchSignedOut() -> XCUIApplication {
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         return app
     }
@@ -29,7 +29,7 @@ final class LaunchTests: XCTestCase {
 
         // A relaunch keeps the session and confirms it before showing the account.
         app.terminate()
-        app.launchArguments = []
+        app.launchArguments = ["-hmtTourSeen"]
         app.launch()
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
         app.tabBars.buttons.element(boundBy: 3).tap()

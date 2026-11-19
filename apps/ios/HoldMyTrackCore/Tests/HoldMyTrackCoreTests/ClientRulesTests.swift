@@ -326,7 +326,49 @@ let rules: [String: @Sendable (RuleJSON) throws -> RuleJSON] = [
             "counts": .array(label.counts.map { ["key": .string($0.key), "explored": .num($0.explored), "total": .num($0.total)] }),
         ]
     },
+    "tourStart": { input in
+        .string(TourRules.start(requested: input["requested"].bool!, isDemo: input["isDemo"].bool!, hasTracks: input["hasTracks"].bool, seen: tourSeen(input["seen"])).rawValue)
+    },
+    "tourCard": { input in
+        let event = input["event"]
+        let picked: TourEvent = event["kind"].string == "mode" ? .mode(MapMode(rawValue: event["mode"].string!)!) : .tab(tourTab(event["tab"].string!))
+        return .opt(TourRules.card(picked, seen: tourSeen(input["seen"]), touring: input["touring"].bool!)?.rawValue)
+    },
+    "tourNextStep": { input in
+        TourRules.nextStep(shown: input["shown"].list!.map { $0.bool! }, from: input.int("from"), dir: input.int("dir")).map { .num($0) } ?? .null
+    },
+    "tourStep": { input in
+        let now = input["now"], restore = input["restore"], step = input["step"]
+        let picked = step.isNull ? nil : TourStep("case", nil, tab: tourTab(step["tab"].string!), mode: MapMode(rawValue: step["mode"].string!)!,
+                                                 card: step["card"].string.flatMap(TourCard.init(rawValue:)))
+        let changes = TourRules.changes(mode: MapMode(rawValue: now["mode"].string!)!, tab: tourTab(now["tab"].string!), step: picked,
+                                        restoreMode: MapMode(rawValue: restore["mode"].string!)!, restoreTab: tourTab(restore["tab"].string!))
+        return ["mode": .opt(changes.mode?.rawValue), "tab": .opt(changes.tab.map(tourTabName)), "card": .opt(changes.card?.rawValue)]
+    },
+    "tourCamera": { input in
+        func view(_ json: RuleJSON) -> TourView? { json.isNull ? nil : TourView(lon: json.number("lon"), lat: json.number("lat"), zoom: json.number("zoom")) }
+        func json(_ view: TourView?) -> RuleJSON { view.map { ["lon": .number($0.lon), "lat": .number($0.lat), "zoom": .number($0.zoom)] } ?? .null }
+        let camera = TourCamera(start: view(input["start"]), shown: view(input["shown"]))
+        let step = input["step"]
+        if step.isNull { return ["start": .null, "shown": .null, "move": json(TourRules.cameraEnd(camera))] }
+        let next = TourRules.camera(camera, view: view(step["view"]), tab: tourTab(step["tab"].string!), current: view(input["current"])!)
+        return ["start": json(next.camera.start), "shown": json(next.camera.shown), "move": json(next.move)]
+    },
 ]
+
+/// The rules' tabs: the web's panel tabs, tracks being the Map tab's.
+func tourTab(_ name: String) -> TourTab { name == "trips" ? .trips : .map }
+
+func tourTabName(_ tab: TourTab) -> String {
+    switch tab {
+    case .map: "tracks"
+    case .trips: "trips"
+    case .sync: "sync"
+    case .you: "you"
+    }
+}
+
+func tourSeen(_ json: RuleJSON) -> TourSeen { TourSeen(tour: json["tour"].bool!, cards: TourRules.seenCards(json.strings("cards"))) }
 
 func jsonValue(_ json: RuleJSON) -> JSONValue {
     switch json {

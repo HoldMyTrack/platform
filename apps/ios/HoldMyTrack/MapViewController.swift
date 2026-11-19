@@ -18,7 +18,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     /// into a quarter of the screen after it grows.
     var mapView: MLNMapView!
     let modes = UISegmentedControl()
-    private let layersButton = UIButton(type: .system)
+    let layersButton = UIButton(type: .system)
     /// The chip, the Layers badge and Satellite's watch (MapViewController+Chrome).
     lazy var chrome = MapChromeViews { [weak self] in self?.onImagery($0) }
     private let locateButton = UIButton(type: .system)
@@ -80,6 +80,12 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var onWaiting: ((Int) -> Void)?
     /// A row's Trip badge on the Tracks tab: the tab bar moves to Trips.
     var onWantsTrips: ((String) -> Void)?
+    /// The user picked a mode on the toggle, which may earn Fog's first-time card (TourController).
+    var onModePicked: ((MapMode) -> Void)?
+    /// The first framing found whether the account has any track: the tour starts or is offered.
+    var onHistoryKnown: ((Bool) -> Void)?
+    /// Counts the tour's camera moves, so a move's end only continues the latest (MapViewController+Tour).
+    var tourMoves = 0
 
     var state = MapState()
     var pair: MapDocuments.Pair?
@@ -462,7 +468,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Notices
 
-    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped }
+    enum Notice: Int { case mapFailed, basemap, satellite, coverage, empty, location, pending, capped, tour }
 
     /// Shows kind's notice, or changes its text. onClose gives it a close button, which takes it
     /// down and then calls onClose.
@@ -510,7 +516,10 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
             case .normal: String(localized: "Normal")
             case .fog: String(localized: "Fog")
             }
-            modes.insertSegment(action: UIAction(title: title) { [weak self] _ in self?.pickMode(mode) }, at: index, animated: false)
+            modes.insertSegment(action: UIAction(title: title) { [weak self] _ in
+                self?.pickMode(mode)
+                self?.onModePicked?(mode)
+            }, at: index, animated: false)
         }
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: state.mode) ?? 0
         modes.backgroundColor = UIColor(resource: .surface)
