@@ -3,6 +3,7 @@ package dev.holdmytrack.android.net
 import android.content.Context
 import android.content.SharedPreferences
 import android.webkit.CookieManager
+import androidx.core.content.edit
 import dev.holdmytrack.android.map.FogPlaces
 import dev.holdmytrack.android.map.MapLayers
 
@@ -114,17 +115,17 @@ object Session {
     var tileVersion: String
         get() = prefs.getString(KEY_TILE_VERSION, "").orEmpty()
         set(value) {
-            prefs.edit().putString(KEY_TILE_VERSION, value).apply()
+            prefs.edit { putString(KEY_TILE_VERSION, value) }
         }
 
     fun start(token: String, profile: Profile) {
         cachedToken = token
         verified = true
-        prefs.edit()
-            .putString(KEY_TOKEN, token)
-            .putString(KEY_EMAIL, profile.email)
-            .also { store(it, profile) }
-            .apply()
+        prefs.edit {
+            putString(KEY_TOKEN, token)
+            putString(KEY_EMAIL, profile.email)
+            store(this, profile)
+        }
     }
 
     /** What `GET /v2/auth/me` just confirmed: the token is live, and the account as it is now. */
@@ -135,7 +136,7 @@ object Session {
 
     /** Takes in a profile the server just returned — a Settings save, an avatar change. */
     fun update(profile: Profile) {
-        prefs.edit().also { store(it, profile) }.apply()
+        prefs.edit { store(this, profile) }
     }
 
     private fun store(editor: SharedPreferences.Editor, profile: Profile) {
@@ -155,15 +156,15 @@ object Session {
         HoldMyTrackApi.clearImageCache()
         // Fog's locked level and picked place are the account's: the next account starts with neither.
         MapLayers.update(null) { it.copy(fogLevel = null, vars = it.vars - FogPlaces.VAR) }
-        prefs.edit()
-            .remove(KEY_TOKEN)
-            .remove(KEY_EMAIL)
-            .remove(KEY_EMAIL_VERIFIED)
-            .remove(KEY_COUNTRY)
-            .remove(KEY_IMPERIAL)
-            .remove(KEY_LOCALE)
-            .remove(KEY_TIMEZONE)
-            .remove(KEY_TILE_VERSION)
-            .apply()
+        prefs.edit {
+            remove(KEY_TOKEN)
+            remove(KEY_EMAIL)
+            remove(KEY_EMAIL_VERIFIED)
+            remove(KEY_COUNTRY)
+            remove(KEY_IMPERIAL)
+            remove(KEY_LOCALE)
+            remove(KEY_TIMEZONE)
+            remove(KEY_TILE_VERSION)
+        }
     }
 }

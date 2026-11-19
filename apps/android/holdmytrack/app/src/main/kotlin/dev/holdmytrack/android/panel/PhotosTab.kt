@@ -22,6 +22,7 @@ import com.google.android.material.textfield.TextInputEditText
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.PhotoMarkerItem
 import dev.holdmytrack.android.map.PhotoMarkerOverlay
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Photo
 import dev.holdmytrack.android.net.PhotoNeedsPlaceException
@@ -179,7 +180,7 @@ class PhotosTab(
                 } else {
                     route = PhotoRoute(metrics.points.map { TimedPoint(it.lon, it.lat, it.timeS) })
                 }
-            }.onFailure { trackError = it.message?.takeIf { m -> m.isNotBlank() } ?: res.getString(R.string.edit_save_failed) }
+            }.onFailure { trackError = FailureText.of(it, res.getString(R.string.edit_save_failed)) }
             render()
         }
         render()
@@ -200,7 +201,7 @@ class PhotosTab(
     /** Why Save can't go ahead with the photos, or null. */
     fun invalid(): String? = when {
         draft.waiting.isNotEmpty() -> res.getString(R.string.photos_place_first)
-        draft.captions.any { it.trim().length > MAX_CAPTION } -> res.getString(R.string.photos_caption_too_long, MAX_CAPTION)
+        draft.captions.any { it.trim().length > MAX_CAPTION } -> res.getQuantityString(R.plurals.photos_caption_too_long, MAX_CAPTION, MAX_CAPTION)
         else -> null
     }
 
@@ -272,7 +273,7 @@ class PhotosTab(
         val message = if (failure is UnreadablePhotoException) {
             res.getString(R.string.photos_unreadable)
         } else {
-            failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.edit_save_failed)
+            FailureText.of(failure, res.getString(R.string.edit_save_failed))
         }
         failures += res.getString(R.string.photos_upload_failed, name, message)
         render()

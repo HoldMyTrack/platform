@@ -2,6 +2,7 @@ package dev.holdmytrack.android.settings
 
 import android.content.Context
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.content.edit
 
 /**
  * The app's light/dark theme (Settings' Theme toggle, `docs/SPEC.md` FR-4.8): the phone's own
@@ -36,7 +37,7 @@ object AppTheme {
     /** Saves [choice] and applies it at once; does nothing when it already is the choice. */
     fun set(context: Context, choice: Choice) {
         if (choice == current(context)) return
-        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY, choice.key).apply()
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit { putString(KEY, choice.key) }
         AppCompatDelegate.setDefaultNightMode(choice.nightMode)
     }
 }

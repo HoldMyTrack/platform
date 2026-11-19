@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.recording
 
 import android.content.Context
+import androidx.core.content.edit
 import dev.holdmytrack.android.net.Session
 
 /**
@@ -37,12 +38,12 @@ object RecordingTypes {
      *  "unknown" is a correction to one row, not a new preference. */
     fun rememberLastUsed(context: Context, type: String) {
         if (type == DEFAULT) return
-        prefs(context).edit().putString(KEY_LAST_TYPE_PREFIX + Session.email, type).apply()
+        prefs(context).edit { putString(KEY_LAST_TYPE_PREFIX + Session.email, type) }
     }
 
     /** Forgets [account]'s last-used type: the account was deleted (`settings/AccountDeletion`). */
     fun forget(context: Context, account: String) {
-        prefs(context).edit().remove(KEY_LAST_TYPE_PREFIX + account).apply()
+        prefs(context).edit { remove(KEY_LAST_TYPE_PREFIX + account) }
     }
 
     private fun prefs(context: Context) =

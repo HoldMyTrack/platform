@@ -28,6 +28,7 @@ import com.google.android.material.checkbox.MaterialCheckBox
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.slider.RangeSlider
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
@@ -745,7 +746,7 @@ class TracksPanel(
                     confirm.isEnabled = true
                     cancel.isEnabled = true
                     confirm.setText(R.string.panel_delete_confirm)
-                    dialog.setMessage(res.getString(R.string.panel_delete_failed, failure.message.orEmpty()))
+                    dialog.setMessage(res.getString(R.string.panel_delete_failed, FailureText.of(failure, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))))
                     confirm.setOnClickListener { deleteNext(dialog, ids, index) }
                 }
         }

@@ -3,6 +3,7 @@ package dev.holdmytrack.android.export
 import android.graphics.Bitmap
 import android.os.Handler
 import android.os.Looper
+import dev.holdmytrack.android.net.FailureText
 
 /**
  * The stats card the server draws for the viewfinder's current [ExportStatsRules.Request]: asked
@@ -14,6 +15,10 @@ class ExportStatsCard(
     private val fetch: (ExportStatsRules.Request, (Result<Bitmap?>) -> Unit) -> Unit,
     /** The card, [ready] or [error] changed. */
     private val onChange: () -> Unit,
+    /** [error] for a failure the server didn't word ([FailureText]). */
+    private val failed: String,
+    /** [error] for a failed connection. */
+    private val offline: String,
 ) {
     private val main = Handler(Looper.getMainLooper())
     private var wanted: ExportStatsRules.Request? = null
@@ -49,7 +54,7 @@ class ExportStatsCard(
                 // An answer for a request no longer wanted is dropped.
                 if (wanted?.key != request.key) return@fetch
                 card = result.getOrNull()
-                error = result.exceptionOrNull()?.let { it.message?.takeIf(String::isNotBlank) ?: it.javaClass.simpleName }
+                error = result.exceptionOrNull()?.let { FailureText.of(it, failed, offline) }
                 settled = request.key
                 onChange()
             }

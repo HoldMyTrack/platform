@@ -75,17 +75,6 @@ object HoldMyTrackApi {
     /** [uploadClient]'s read timeout: the wait for the answer once the file has gone out. */
     private val UPLOAD_READ_TIMEOUT = Duration.ofMinutes(10)
 
-    /**
-     * One client for the app's own calls *and* for MapLibre Native's tile fetching — handed to
-     * the map SDK by `HoldMyTrackApplication` via `HttpRequestUtil.setOkHttpClient`. Sharing one
-     * instance is what makes the interceptor below a single place: a second client for the map
-     * would be a second place the token could go missing from.
-     *
-     * The dispatcher mirrors what MapLibre's own default client configures (20 requests per
-     * host, up from OkHttp's default 5) — a map fetches tiles in bursts from one origin, and
-     * inheriting OkHttp's default here would throttle the map relative to the SDK's own
-     * behaviour for no reason.
-     */
     /** This build: the release number and the commit, "1.2.3 (62da50b)" — what the You tab shows
      *  and the User-Agent carries. */
     val appVersion: String = "${BuildConfig.VERSION_NAME} (${BuildConfig.GIT_SHA})"
@@ -99,6 +88,17 @@ object HoldMyTrackApi {
     /** Whether [url] is a request to HoldMyTrack's own API ([ApiOrigin]). */
     private fun isApi(url: HttpUrl): Boolean = ApiOrigin.isApi(url, apiBase)
 
+    /**
+     * One client for the app's own calls *and* for MapLibre Native's tile fetching — handed to
+     * the map SDK by `HoldMyTrackApplication` via `HttpRequestUtil.setOkHttpClient`. Sharing one
+     * instance is what makes the interceptors below a single place: a second client for the map
+     * would be a second place the token could go missing from.
+     *
+     * The dispatcher mirrors what MapLibre's own default client configures (20 requests per
+     * host, up from OkHttp's default 5) — a map fetches tiles in bursts from one origin, and
+     * inheriting OkHttp's default here would throttle the map relative to the SDK's own
+     * behaviour for no reason.
+     */
     val client: OkHttpClient = OkHttpClient.Builder()
         .dispatcher(Dispatcher().apply { maxRequestsPerHost = 20 })
         .connectTimeout(CONNECT_TIMEOUT)

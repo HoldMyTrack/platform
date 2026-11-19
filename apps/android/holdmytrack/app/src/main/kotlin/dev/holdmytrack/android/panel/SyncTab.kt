@@ -24,6 +24,7 @@ import dev.holdmytrack.android.R
 import dev.holdmytrack.android.SyncActivity
 import dev.holdmytrack.android.UploadActivity
 import dev.holdmytrack.android.health.HealthConnect
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.TrackOverlap
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.OverlapSpan
@@ -433,7 +434,7 @@ class SyncTab(
         val sendingKeys = sending.map { it.key }.toSet()
         val doubled = sending.count { c -> similar[c.key].orEmpty().any { it.key in sendingKeys } }
         tickedLine.text = if (doubled > 0) {
-            res.getString(R.string.sync_ticked_similar, sending.size, tickable.size, doubled)
+            res.getQuantityString(R.plurals.sync_ticked_similar, doubled, sending.size, tickable.size, doubled)
         } else {
             res.getString(
                 R.string.sync_ticked,
@@ -568,7 +569,7 @@ class SyncTab(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                showProblems(listOf(res.getString(R.string.sync_failed, e.message.orEmpty())))
+                showProblems(listOf(res.getString(R.string.sync_failed, FailureText.of(e, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error)))))
             } finally {
                 runJob = null
                 render()

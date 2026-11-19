@@ -5,6 +5,7 @@ import android.util.Log
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.records.ExerciseRoute
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.SyncTrackJson
 import dev.holdmytrack.android.net.SyncPointJson
@@ -76,7 +77,7 @@ class SyncRunner(
         for (ticked in sessions) {
             val candidate = withRoute(ticked) ?: continue
             if (SyncBatcher.tooLarge(candidate.pointCount)) {
-                val refusal = res.getString(R.string.sync_refusal_too_many_points, candidate.pointCount)
+                val refusal = res.getQuantityString(R.plurals.sync_refusal_too_many_points, candidate.pointCount, candidate.pointCount)
                 rejected += Rejection(candidate.key, candidate.startedAt, candidate.trackType, refusal)
                 continue
             }
@@ -127,7 +128,7 @@ class SyncRunner(
             HoldMyTrackApi.syncTracks(batch.map { prepare(it) }, source)
         } catch (e: IOException) {
             Log.w(TAG, "sync batch failed", e)
-            return e.message ?: res.getString(R.string.sync_request_failed)
+            return FailureText.of(e, res.getString(R.string.sync_request_failed))
         }
         val verdicts = SyncVerdicts.of(batch, results)
         synced += verdicts.enqueued.size

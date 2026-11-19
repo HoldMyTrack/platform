@@ -1,8 +1,10 @@
 package dev.holdmytrack.android.sync
 
 import android.content.Context
+import android.util.Log
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.health.HealthConnect
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.sync.HealthConnectCard.Companion.isReadable
@@ -66,7 +68,13 @@ class WaitingLoader(private val context: Context) {
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Result.Failed(context.getString(R.string.sync_read_failed, e.message.orEmpty()))
+            Log.w(TAG, "waiting list failed", e)
+            // Health Connect's read and the server's syncKnown alike.
+            Result.Failed(FailureText.of(e, context.getString(R.string.sync_read_failed), context.getString(R.string.network_error)))
         }
+    }
+
+    private companion object {
+        const val TAG = "HoldMyTrackSync"
     }
 }

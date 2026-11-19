@@ -25,6 +25,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.ApiException
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Trip
@@ -135,7 +136,7 @@ class TripsTab(
                 trips = next
                 ready = true
                 openNewest()
-            }.onFailure { error = it.message?.takeIf { m -> m.isNotBlank() } ?: res.getString(R.string.trip_load_failed) }
+            }.onFailure { error = FailureText.of(it, res.getString(R.string.trip_load_failed)) }
             render()
         }
     }
@@ -175,7 +176,7 @@ class TripsTab(
         HoldMyTrackApi.answerTripSend(send.id, accept) { result ->
             answering = false
             result.onFailure { failure ->
-                answerError = failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.trip_save_failed)
+                answerError = FailureText.of(failure, res.getString(R.string.trip_save_failed))
             }
             render()
             loadInbox()
@@ -209,7 +210,7 @@ class TripsTab(
                 openError = if (failure is ApiException && failure.code == 404) {
                     res.getString(R.string.trip_not_found)
                 } else {
-                    failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.trip_load_failed)
+                    FailureText.of(failure, res.getString(R.string.trip_load_failed))
                 }
             }
             render()
@@ -340,7 +341,7 @@ class TripsTab(
                 confirm.isEnabled = true
                 cancel.isEnabled = true
                 confirm.setText(R.string.trip_delete_button)
-                dialog.setMessage(res.getString(R.string.trip_delete_failed, failure.message.orEmpty()))
+                dialog.setMessage(res.getString(R.string.trip_delete_failed, FailureText.of(failure, res.getString(R.string.something_went_wrong), res.getString(R.string.network_error))))
             }
         }
     }
@@ -369,7 +370,7 @@ class TripsTab(
                 if (trip.id == openId) openTrip = trip
                 onTrackRemoved(trackId)
             }.onFailure { failure ->
-                removeError = failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.trip_save_failed)
+                removeError = FailureText.of(failure, res.getString(R.string.trip_save_failed))
             }
             render()
         }

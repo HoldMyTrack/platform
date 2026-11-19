@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.browser.customtabs.CustomTabsIntent
 import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.PrivateLocation
 import dev.holdmytrack.android.net.Session
@@ -67,7 +68,7 @@ class PrivacyActivity : AppCompatActivity() {
                 render(it)
                 if (it.isNotEmpty()) showHidden()
             }.onFailure {
-                showNote(it.message?.takeIf { m -> m.isNotBlank() } ?: getString(R.string.map_unreachable), failed = true)
+                showNote(FailureText.of(it, getString(R.string.map_unreachable)), failed = true)
             }
         }
     }

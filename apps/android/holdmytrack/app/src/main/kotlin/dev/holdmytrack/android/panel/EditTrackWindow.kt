@@ -11,6 +11,7 @@ import androidx.appcompat.widget.TooltipCompat
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.map.EditPreview
 import dev.holdmytrack.android.map.PhotoMarkerOverlay
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.Track
 import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.HoldMyTrackApi
@@ -297,9 +298,9 @@ class EditTrackWindow(
         val description = descriptionField.text?.toString().orEmpty()
         val invalid = when {
             type.isEmpty() && !mixedTypes -> res.getString(R.string.edit_type_required)
-            type.length > MAX_TYPE -> res.getString(R.string.edit_type_too_long, MAX_TYPE)
-            name.length > MAX_NAME -> res.getString(R.string.edit_name_too_long, MAX_NAME)
-            description.length > MAX_DESCRIPTION -> res.getString(R.string.edit_description_too_long, MAX_DESCRIPTION)
+            type.length > MAX_TYPE -> res.getQuantityString(R.plurals.edit_type_too_long, MAX_TYPE, MAX_TYPE)
+            name.length > MAX_NAME -> res.getQuantityString(R.plurals.edit_name_too_long, MAX_NAME, MAX_NAME)
+            description.length > MAX_DESCRIPTION -> res.getQuantityString(R.plurals.edit_description_too_long, MAX_DESCRIPTION, MAX_DESCRIPTION)
             else -> null
         }
         if (invalid != null) {
@@ -352,7 +353,7 @@ class EditTrackWindow(
                     // close shows which.
                     if (index > 0) fieldsSaved = true
                     renderBusy()
-                    showError(failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.edit_save_failed))
+                    showError(FailureText.of(failure, res.getString(R.string.edit_save_failed)))
                 }
         }
     }
@@ -379,7 +380,7 @@ class EditTrackWindow(
             }
             saving = false
             renderBusy()
-            showError(failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.edit_save_failed))
+            showError(FailureText.of(failure, res.getString(R.string.edit_save_failed)))
         }
     }
 
@@ -408,7 +409,7 @@ class EditTrackWindow(
                         confirmHiddenSplit(id, failure.message.orEmpty())
                         return@onFailure
                     }
-                    showError(failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.edit_save_failed))
+                    showError(FailureText.of(failure, res.getString(R.string.edit_save_failed)))
                 }
         }
     }

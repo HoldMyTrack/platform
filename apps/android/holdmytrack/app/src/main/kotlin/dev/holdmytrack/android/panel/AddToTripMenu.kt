@@ -11,6 +11,7 @@ import android.widget.ScrollView
 import android.widget.TextView
 import com.google.android.material.checkbox.MaterialCheckBox
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Trip
 
@@ -77,7 +78,7 @@ class AddToTripMenu(
                                 onTripsChanged()
                             }.onFailure { failure ->
                                 count.text = PanelFormat.count(res, trip.trackIds.size)
-                                showNote(failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.trip_save_failed), failed = true)
+                                showNote(FailureText.of(failure, res.getString(R.string.trip_save_failed)), failed = true)
                             }
                         }
                     }
@@ -91,7 +92,7 @@ class AddToTripMenu(
                     height = if (rows.measuredHeight > max) max else ViewGroup.LayoutParams.WRAP_CONTENT
                 }
             }.onFailure { failure ->
-                showNote(failure.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.trip_load_failed), failed = true)
+                showNote(FailureText.of(failure, res.getString(R.string.trip_load_failed)), failed = true)
             }
         }
         popup.elevation = res.getDimension(R.dimen.hmt_space_8)

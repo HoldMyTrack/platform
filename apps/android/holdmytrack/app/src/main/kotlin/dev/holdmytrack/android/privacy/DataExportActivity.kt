@@ -13,6 +13,7 @@ import androidx.lifecycle.Lifecycle
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.ExportPart
 import dev.holdmytrack.android.net.ExportStatus
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import java.time.ZoneId
@@ -72,7 +73,7 @@ class DataExportActivity : AppCompatActivity() {
             if (isDestroyed) return@requestExport
             request.isEnabled = true
             result.onSuccess { show(it) }.onFailure {
-                error.text = it.message.orEmpty()
+                error.text = FailureText.of(it, getString(R.string.something_went_wrong), getString(R.string.network_error))
                 error.visibility = View.VISIBLE
             }
         }
@@ -130,7 +131,7 @@ class DataExportActivity : AppCompatActivity() {
                 notice.setText(R.string.settings_export_downloading)
                 notice.visibility = View.VISIBLE
             }.onFailure {
-                error.text = it.message.orEmpty()
+                error.text = FailureText.of(it, getString(R.string.something_went_wrong), getString(R.string.network_error))
                 error.visibility = View.VISIBLE
             }
         }

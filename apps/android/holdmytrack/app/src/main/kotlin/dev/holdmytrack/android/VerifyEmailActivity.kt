@@ -14,6 +14,7 @@ import android.widget.EditText
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import dev.holdmytrack.android.net.ApiException
+import dev.holdmytrack.android.net.FailureText
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 
@@ -101,7 +102,7 @@ class VerifyEmailActivity : AppCompatActivity() {
                     Session.clear()
                     openSignIn()
                 } else if (!isDestroyed) {
-                    show(failure.message.orEmpty(), failed = true)
+                    show(FailureText.of(failure, getString(R.string.something_went_wrong), getString(R.string.verify_email_check_failed)), failed = true)
                 }
             }
         }
@@ -149,7 +150,7 @@ class VerifyEmailActivity : AppCompatActivity() {
                     Session.clear()
                     openSignIn()
                 } else if (userAsked && !isDestroyed) {
-                    show(getString(R.string.verify_email_check_failed, failure.message.orEmpty()), failed = true)
+                    show(FailureText.of(failure, getString(R.string.something_went_wrong), getString(R.string.verify_email_check_failed)), failed = true)
                 }
             }
         }
@@ -162,7 +163,7 @@ class VerifyEmailActivity : AppCompatActivity() {
             if (isDestroyed) return@resendVerification
             setBusy(false)
             result.onSuccess { text -> show(text, failed = false) }
-                .onFailure { failure -> show(failure.message.orEmpty(), failed = true) }
+                .onFailure { failure -> show(FailureText.of(failure, getString(R.string.something_went_wrong), getString(R.string.verify_email_check_failed)), failed = true) }
         }
     }
 
