@@ -105,11 +105,11 @@ The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` 
 
 ### CI
 
-`.github/workflows/ci.yml` runs every check on each push to `main` and each pull request. Its basemap extract is cached on `apps/web/scripts/build-basemap.sh` and cut on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script. A `govulncheck` failure on a pull request that changes no dependency means a new advisory: bump the module or Go itself.
+`.github/workflows/ci.yml` runs on each push to `main` and each pull request; on a pull request its `changes` job skips the Go, web, Android, map verification and ops-config jobs when nothing they read changed, Markdown excluded, and a push to `main` runs every job, so a read outside a job's folder that its filter misses fails on merge; add that read to the filter. Run workflow on a branch (Actions, CI or iOS) runs every job before merging; its results count toward the pull request's required checks. Its basemap extract is cached on `apps/web/scripts/build-basemap.sh` and cut on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script. A `govulncheck` failure on a pull request that changes no dependency means a new advisory: bump the module or Go itself.
 
 `.github/workflows/contract.yml` fails a pull request touching `services/server/api/` on a change an installed client can't follow, such as a response field removed: against the base branch (`scripts/check-contract-break.sh`), and against each release tag `android/<versionCode>` or `ios/<build>` from the minimum production's `/healthz` reports for that app, counting only breaks the pull request adds (`scripts/check-contract-release.sh`). An intended break carries the `contract-break` label and ships with a raised `MIN_ANDROID_BUILD` (`DEPLOY.md` §10). A change oasdiff calls breaking that no client can feel, such as declaring a limit the server already enforced, goes in `services/server/api/breaking-ignore.txt` with why.
 
-`.github/workflows/ios.yml` runs the iOS tests on a macOS runner only for a push or pull request touching `apps/ios/`, `testdata/client-rules/` or `services/server/api/`; it is its own workflow so that path filter keeps the macOS runner off every other pull request.
+`.github/workflows/ios.yml` runs the iOS tests on a macOS runner only for a push or pull request touching a file other than Markdown under `apps/ios/`, `testdata/client-rules/`, `services/server/api/` or the design sources `scripts/make-design.py` reads; it is its own workflow so that path filter keeps the macOS runner off every other pull request, and a nightly run on `main` runs everything, UI tests included.
 
 ## Writing a migration
 

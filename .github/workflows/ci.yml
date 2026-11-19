@@ -1,12 +1,16 @@
 # Runs the checks that already exist (docs/DEVELOPMENT.md's verification checklist) on every
-# push and pull request. CI only: nothing here deploys. Auto-deploy is deliberately gated on
-# backups existing first (docs/ROADMAP.md, "CI on push/PR").
+# push and pull request; on a pull request the `changes` job skips a suite when nothing it reads
+# changed, and main runs every suite, so a filter that misses a dependency fails on merge.
+# CI only: nothing here deploys. Auto-deploy is deliberately gated on backups existing first
+# (docs/ROADMAP.md, "CI on push/PR").
 name: CI
 
 on:
   push:
     branches: [main]
   pull_request:
+  # Actions → CI → Run workflow: every job, whatever changed.
+  workflow_dispatch:
 
 # The token reads the repository and nothing else; no job here writes to it.
 permissions:
@@ -18,6 +22,47 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # One output per gated job: on a pull request, true when it touches a file that job reads;
+  # always true on main and on a manual run.
+  # A job skipped by its `if` reports success, so the ruleset's required checks still pass.
+  # Each filter is a brace list of what the job reads, with Markdown taken out (every pattern
+  # must match). A new cross-folder read, like guides_test.go's sitemap, goes in here.
+  changes:
+    name: Changed paths
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      go: ${{ github.event_name != 'pull_request' || steps.filter.outputs.go }}
+      web: ${{ github.event_name != 'pull_request' || steps.filter.outputs.web }}
+      android: ${{ github.event_name != 'pull_request' || steps.filter.outputs.android }}
+      e2e: ${{ github.event_name != 'pull_request' || steps.filter.outputs.e2e }}
+      ops: ${{ github.event_name != 'pull_request' || steps.filter.outputs.ops }}
+    steps:
+      # Reads a pull request's changed files from the API, so it needs no checkout.
+      - if: github.event_name == 'pull_request'
+        uses: dorny/paths-filter@ceb8a2b8f2d89434be7ff52d3de7ec3738c5cc9d # v4.0.3
+        id: filter
+        with:
+          predicate-quantifier: every
+          filters: |
+            go:
+              - '{services/server/**,testdata/**,apps/web/public/sitemap.xml,.github/workflows/ci.yml}'
+              - '!**/*.md'
+            web:
+              - '{apps/web/**,services/server/api/**,services/server/internal/mapstyle/**,testdata/**,.github/workflows/ci.yml}'
+              - '!**/*.md'
+            android:
+              - '{apps/android/**,services/server/api/**,services/server/internal/mapstyle/**,testdata/**,.github/workflows/ci.yml}'
+              - '!**/*.md'
+            e2e:
+              - '{apps/web/**,services/server/**,testdata/**,compose.yaml,compose.override.yaml,Makefile,.github/workflows/ci.yml}'
+              - '!**/*.md'
+            ops:
+              - '{scripts/**,apps/ios/scripts/**,compose.prod.yml,.env.prod.example,apps/web/**,.github/workflows/ci.yml}'
+              - '!**/*.md'
+
   doc-refs:
     name: Document citations and style
     runs-on: ubuntu-latest
@@ -63,6 +108,8 @@ jobs:
   # production compose file that doesn't parse, a web image that doesn't build.
   ops-config:
     name: Shell scripts, Caddyfile, production compose, web image
+    needs: changes
+    if: needs.changes.outputs.ops == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -78,6 +125,8 @@ jobs:
 
   go:
     name: Go tests
+    needs: changes
+    if: needs.changes.outputs.go == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -117,6 +166,8 @@ jobs:
 
   web:
     name: Web typecheck and unit tests
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -147,6 +198,8 @@ jobs:
 
   android:
     name: Android unit tests
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -173,6 +226,8 @@ jobs:
   # Chromium, exactly as it runs locally.
   e2e:
     name: Map verification (make verify, verify-build)
+    needs: changes
+    if: needs.changes.outputs.e2e == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     # A stand-in imagery host, so tests/smoke.mjs's step 9 checks satellite mode rather than

@@ -28,7 +28,7 @@ holdmytrack/
 ├── compose.prod.yml             # minimal single-VPS production deployment
 ├── Makefile                     # thin wrapper over compose; `make help`, `make test`
 ├── codecov.yml                  # Go, TypeScript, Kotlin and Swift coverage reporting; informational, never a merge gate
-├── .github/workflows/ci.yml     # every test suite on push and PR (docs/DEVELOPMENT.md, "CI")
+├── .github/workflows/ci.yml     # each test suite on push and PR when its files change (docs/DEVELOPMENT.md, "CI")
 ├── .github/workflows/contract.yml # fails a PR whose API contract change breaks installed clients
 ├── ops/alloy/config.alloy       # the alloy service's log and metrics shipping to Grafana Cloud (docs/DEPLOY.md §13)
 ├── ops/grafana/                 # alert rules (apply.py) and dashboard pushed to the Grafana stack (docs/DEPLOY.md §13)

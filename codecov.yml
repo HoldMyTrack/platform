@@ -13,9 +13,15 @@ coverage:
       default:
         informational: true
 
-# ios.yml runs only on changes under its paths, so a commit it skips keeps the last Swift
-# report instead of reading as no coverage.
+# ios.yml, and ci.yml's go, web and android jobs, run only on changes to what they read, so a
+# commit one skips keeps that flag's last report instead of reading as no coverage.
 flags:
+  go:
+    carryforward: true
+  kotlin:
+    carryforward: true
+  typescript:
+    carryforward: true
   swift:
     carryforward: true
 
