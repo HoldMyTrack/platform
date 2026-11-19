@@ -98,6 +98,7 @@ The web's `/profile` page, the track graph and Trends (`docs/SPEC.md` FR-6, FR-8
 When any `/v2` request answers `426` `app_outdated` (`docs/SPEC.md` §1.4), signed in or not, the Update screen opens over whatever showed.
 
 - Several refusals at once open it once; a refused request's own screen says nothing.
+- A refusal met while the app is in the background opens it when the app next comes to the front.
 - Update opens the app's Play listing.
 - Back closes the app, and it opens on the Update screen for as long as the server refuses the build.
 - Nothing on the phone changes: what waits on the Sync tab stays to be sent from the updated app, and a recording under way carries on.

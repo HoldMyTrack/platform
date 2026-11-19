@@ -49,8 +49,9 @@ class HoldMyTrackApplication : Application() {
             }
             override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) = Unit
             override fun onActivityStarted(activity: Activity) = Unit
-            override fun onActivityResumed(activity: Activity) = Unit
-            override fun onActivityPaused(activity: Activity) = Unit
+            // The Update screen waits for a screen in front (AppOutdated).
+            override fun onActivityResumed(activity: Activity) = AppOutdated.resumed(activity)
+            override fun onActivityPaused(activity: Activity) = AppOutdated.paused()
             override fun onActivityStopped(activity: Activity) = Unit
             override fun onActivitySaveInstanceState(activity: Activity, outState: Bundle) = Unit
             override fun onActivityDestroyed(activity: Activity) = Unit

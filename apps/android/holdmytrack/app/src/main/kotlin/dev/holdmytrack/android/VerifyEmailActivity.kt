@@ -92,27 +92,36 @@ class VerifyEmailActivity : AppCompatActivity() {
     private fun submit(typed: String) {
         setBusy(true)
         HoldMyTrackApi.verifyCode(typed) { result ->
-            setBusy(false)
+            if (!isDestroyed) setBusy(false)
             result.onSuccess { profile ->
                 Session.markVerified(profile)
                 openMap()
             }.onFailure { failure ->
                 if (failure is ApiException && failure.code == 401) {
                     Session.clear()
-                    SignInActivity.open(this)
-                    finish()
-                } else {
+                    openSignIn()
+                } else if (!isDestroyed) {
                     show(failure.message.orEmpty(), failed = true)
                 }
             }
         }
     }
 
+    /** Not from a destroyed screen: the session is already updated, and the recreated screen's
+     *  check on resume moves on from it, so only one answer opens the map. */
     private fun openMap() {
+        if (isDestroyed) return
         startActivity(
             Intent(this, MainActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
         )
+        finish()
+    }
+
+    /** The session is gone; not from a destroyed screen, for [openMap]'s reason. */
+    private fun openSignIn() {
+        if (isDestroyed) return
+        SignInActivity.open(this)
         finish()
     }
 
@@ -127,20 +136,19 @@ class VerifyEmailActivity : AppCompatActivity() {
         if (userAsked) setBusy(true)
         HoldMyTrackApi.verifySession { result ->
             checking = false
-            setBusy(false)
+            if (!isDestroyed) setBusy(false)
             result.onSuccess { profile ->
                 Session.markVerified(profile)
                 if (profile.emailVerified) {
                     openMap()
-                } else if (userAsked) {
+                } else if (userAsked && !isDestroyed) {
                     show(getString(R.string.verify_email_not_yet), failed = false)
                 }
             }.onFailure { failure ->
                 if (failure is ApiException && failure.code == 401) {
                     Session.clear()
-                    SignInActivity.open(this)
-                    finish()
-                } else if (userAsked) {
+                    openSignIn()
+                } else if (userAsked && !isDestroyed) {
                     show(getString(R.string.verify_email_check_failed, failure.message.orEmpty()), failed = true)
                 }
             }
@@ -151,6 +159,7 @@ class VerifyEmailActivity : AppCompatActivity() {
     private fun resend() {
         setBusy(true)
         HoldMyTrackApi.resendVerification { result ->
+            if (isDestroyed) return@resendVerification
             setBusy(false)
             result.onSuccess { text -> show(text, failed = false) }
                 .onFailure { failure -> show(failure.message.orEmpty(), failed = true) }

@@ -820,6 +820,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
      *  with a notice pointing at Sync, re-checked on every resume until closed
      *  ([MapChromeRules.emptyNoticeShown]). */
     private fun onEmptyChecked(empty: Boolean) {
+        // The answer can land after the activity was recreated, on a fragment no longer attached.
+        if (!isAdded || view == null) return
         host?.tour?.historyKnown(!empty)
         val dismissal = EmptyNoticeDismissal(requireContext(), Session.email)
         if (!MapChromeRules.emptyNoticeShown(empty, Session.isDemo, dismissal.closed())) {
@@ -885,6 +887,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         imagery.start()
         SyncProgress.addListener(syncProgressListener)
         SyncProgress.resume(requireContext())
+        area.pending.start()
+        coverage.resume()
         recording.start()
     }
 
@@ -925,6 +929,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         // Health Connect's routes can't be read in the background (`docs/IMPLEMENTATION.md` §4.0).
         if (::panel.isInitialized) panel.syncTab.pause()
         area.pending.stop()
+        coverage.stop()
         SyncProgress.removeListener(syncProgressListener)
         recording.stop()
         basemap.stop()

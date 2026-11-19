@@ -19,6 +19,10 @@ import dev.holdmytrack.android.net.Session
  * every 10, a failed read included, until one finds nothing left: a big import can keep the
  * server's worker busy far longer than three minutes, and only that last read refetches.
  * [onRendering] gets every read's `rendering`, for the map's "still being updated" notice.
+ *
+ * [stop] pauses a watch while the map is off screen and [resume] carries it on, so a render that
+ * finished meanwhile still clears the notice, refetches and runs its `onDone`; a [watch] asked
+ * for while stopped waits for [resume] too.
  */
 class CoverageWatch(private val onRendering: (Boolean) -> Unit, private val onRefetch: () -> Unit) {
 
@@ -34,8 +38,16 @@ class CoverageWatch(private val onRendering: (Boolean) -> Unit, private val onRe
      *  of telling when the server is done. A later [watch] without one keeps it. */
     private var onDone: (() -> Unit)? = null
 
+    /** A watch is under way: started and not yet seen finishing. */
+    private var running = false
+
+    /** The map is off screen: nothing is polled until [resume]. */
+    private var stopped = false
+
     fun watch(onDone: (() -> Unit)? = null) {
         if (onDone != null) this.onDone = onDone
+        running = true
+        if (stopped) return
         generation += 1
         polls = 0
         handler.removeCallbacksAndMessages(null)
@@ -43,8 +55,16 @@ class CoverageWatch(private val onRendering: (Boolean) -> Unit, private val onRe
     }
 
     fun stop() {
+        stopped = true
         generation += 1
         handler.removeCallbacksAndMessages(null)
+    }
+
+    /** The map is back: a watch that was under way, or asked for meanwhile, carries on. */
+    fun resume() {
+        if (!stopped) return
+        stopped = false
+        if (running) watch()
     }
 
     private fun check(watching: Int) {
@@ -71,6 +91,7 @@ class CoverageWatch(private val onRendering: (Boolean) -> Unit, private val onRe
             }
             shownVersion = status.version
             Session.tileVersion = status.tileVersion
+            running = false
             onRefetch()
             val done = onDone
             onDone = null

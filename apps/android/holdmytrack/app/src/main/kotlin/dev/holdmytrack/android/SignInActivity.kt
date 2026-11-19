@@ -256,23 +256,37 @@ class SignInActivity : AppCompatActivity() {
         request(address, secret, ::onResult)
     }
 
+    /** Destroyed by a rotation, as against left by the user: an answer landing after it still
+     *  moves on, since the recreated screen knows nothing of the request. */
+    private var recreated = false
+
+    override fun onDestroy() {
+        recreated = isChangingConfigurations
+        super.onDestroy()
+    }
+
+    /** An answer that lands after a rotation still signs in and moves on, from the
+     *  application's context, since both next screens start a new task; only this screen's
+     *  views are left alone, as the recreated screen has its own. One that lands after the user
+     *  left keeps the session and opens nothing. */
     private fun onResult(result: Result<Account>) {
-        setBusy(false)
+        if (!isDestroyed) setBusy(false)
         result.onSuccess { account ->
             Session.start(account.token, account.profile)
             // The account's own language, if it has chosen one — before the next screen opens.
             AppLanguage.followAccount(applicationContext, account.profile.locale)
+            if (isDestroyed && !recreated) return@onSuccess
             if (account.profile.emailVerified) {
-                startActivity(
-                    Intent(this, MainActivity::class.java)
+                applicationContext.startActivity(
+                    Intent(applicationContext, MainActivity::class.java)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
                 )
             } else {
-                VerifyEmailActivity.open(this)
+                VerifyEmailActivity.open(applicationContext)
             }
             finish()
         }.onFailure { failure ->
-            showError(failure.message ?: getString(R.string.sign_in_failed))
+            if (!isDestroyed) showError(failure.message ?: getString(R.string.sign_in_failed))
         }
     }
 

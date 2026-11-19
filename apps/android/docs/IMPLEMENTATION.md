@@ -76,7 +76,7 @@ The shared client's interceptors apply to the map's requests too:
 - **User-Agent**, carrying the version and commit (§6) the server's minimum-build check reads.
 - **Outdated** (`net/AppOutdated`): a `426 app_outdated` on any call opens the Update screen, so no screen checks for it.
 
-**The Update screen opens over the app.** The interceptor runs before the refused call's callback, and clearing the task first would hand that callback a destroyed fragment, so Back calls `finishAffinity` instead. A refused call's callback is never delivered (`HoldMyTrackApi.refusedBuild`), since Back can tear the screens down while another refused call is in flight; suspending callers get their exception, and their scopes end with their screens.
+**The Update screen opens over the app.** The interceptor runs before the refused call's callback, and clearing the task first would hand that callback a destroyed fragment, so Back calls `finishAffinity` instead. A refused call's callback is never delivered (`HoldMyTrackApi.refusedBuild`), since Back can tear the screens down while another refused call is in flight; suspending callers get their exception, and their scopes end with their screens. Android drops an activity started from the background, so `AppOutdated` counts the screens in front through the application's activity callbacks and holds a refusal met with none until one comes back (`OutdatedScreen`).
 
 ### 2.2 The wire
 
@@ -111,7 +111,7 @@ The style is `GET /v2/map/style/{flavor}?lang=`, unmodified, fetched beside `GET
 
 ### 3.2 Tile versions
 
-Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The status is read only once attached, so a `304` hands back the kept document even at another stored version. Routes also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed.
+Tiles are cached by URL, so refreshing means a new URL (root `docs/IMPLEMENTATION.md` §4.2.6). The tile version and the last layers document are kept on disk: a cold start attaches at them, then the status is read on attach and every resume; a moved version refetches the document, replacing changed sources. The status is read only once attached, so a `304` hands back the kept document even at another stored version. Routes also carry an app-side `v` for an edit the server's version doesn't reflect yet. `map/CoverageWatch` follows a render to its end, also when a resume finds the account rendering, so an import made on the web is followed. It pauses while the map is off screen and carries on when the map comes back, so a render that finished meanwhile still clears the notice and runs what waited on it; the Pending check likewise schedules nothing while the map is off screen.
 
 ### 3.3 Logic ported from the web
 

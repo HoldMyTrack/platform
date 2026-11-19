@@ -33,7 +33,11 @@ class CoverageController(
     /** Watches the account's re-render until it's done, then refetches Fog and runs [onDone]. */
     fun watch(onDone: (() -> Unit)? = null) = coverage.watch(onDone)
 
+    /** The map left the screen: the watch pauses ([CoverageWatch.stop]). */
     fun stop() = coverage.stop()
+
+    /** The map is back: a paused watch carries on. */
+    fun resume() = coverage.resume()
 
     /**
      * The overlays attach at the stored tile version ([Session.tileVersion]) and its kept layers
