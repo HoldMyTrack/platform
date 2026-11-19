@@ -150,14 +150,26 @@ class WaitingStore(context: Context) {
 
     /** Back on the list: a session the server took and then failed to add. */
     suspend fun put(sessions: List<Candidate>) = withContext(Dispatchers.IO) {
-        val db = helper.writableDatabase
-        for (session in sessions) insert(db, session)
+        inTransaction { db -> for (session in sessions) insert(db, session) }
     }
 
     /** Off the list: sent, and the account has it now. */
     suspend fun remove(keys: Collection<String>) = withContext(Dispatchers.IO) {
+        inTransaction { db ->
+            for (key in keys) db.delete(WaitingDbHelper.TABLE, "account = ? AND key = ?", arrayOf(account(), key))
+        }
+    }
+
+    /** One commit for a whole batch, rather than one per row. */
+    private fun inTransaction(block: (SQLiteDatabase) -> Unit) {
         val db = helper.writableDatabase
-        for (key in keys) db.delete(WaitingDbHelper.TABLE, "account = ? AND key = ?", arrayOf(account(), key))
+        db.beginTransaction()
+        try {
+            block(db)
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
     }
 
     /** Everything kept for the signed-in account: Health Connect switched off, or the account
