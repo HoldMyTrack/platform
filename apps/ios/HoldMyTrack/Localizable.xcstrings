@@ -1761,17 +1761,6 @@
         }
       }
     },
-    "Map" : {
-      "comment" : "Tab bar: the map.",
-      "localizations" : {
-        "ru" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Карта"
-          }
-        }
-      }
-    },
     "Mesmerizing view" : {
       "comment" : "Spot popup: a place's category.",
       "localizations" : {
@@ -3583,6 +3572,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "График и тренды"
+          }
+        }
+      }
+    },
+    "Tracks" : {
+      "comment" : "Tab bar: the map with every track and its Tracks sheet.",
+      "localizations" : {
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Треки"
           }
         }
       }

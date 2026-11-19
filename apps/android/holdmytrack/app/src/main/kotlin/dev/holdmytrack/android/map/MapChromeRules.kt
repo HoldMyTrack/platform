@@ -14,12 +14,12 @@ object MapChromeRules {
     fun normalMode(sessionReady: Boolean, mode: MapMode, recording: Boolean): Boolean =
         sessionReady && mode == MapMode.NORMAL && !recording
 
-    /** The mode toggle: the Map tab's, hidden while recording, editing or checking rows. */
+    /** The mode toggle: the Tracks tab's, hidden while recording, editing or checking rows. */
     fun modeBarShown(recording: Boolean, editOpen: Boolean, selectionShown: Boolean, tab: PanelTab): Boolean =
         tab == PanelTab.TRACKS && !recording && !editOpen && !selectionShown
 
-    /** The mode the map shows: the one picked on the Map tab there, Normal on Trips and Sync,
-     *  whose sheet and tracks are Normal mode's; back on Map, the pick comes back. */
+    /** The mode the map shows: the one picked on the Tracks tab there, Normal on Trips and Sync,
+     *  whose sheet and tracks are Normal mode's; back on Tracks, the pick comes back. */
     fun tabMode(picked: MapMode, tab: PanelTab): MapMode = if (tab == PanelTab.TRACKS) picked else MapMode.NORMAL
 
     /** The mode carried through a recreation, by name; Normal for none or one this build lacks. */

@@ -24,7 +24,7 @@ data class TourView(val lon: Double, val lat: Double, val zoom: Double, val pan:
 data class TourStep(
     val id: String,
     val target: TourTarget?,
-    val tab: MainActivity.Tab = MainActivity.Tab.MAP,
+    val tab: MainActivity.Tab = MainActivity.Tab.TRACKS,
     val mode: MapMode = MapMode.NORMAL,
     val sheet: Boolean = false,
     val layers: Boolean = false,

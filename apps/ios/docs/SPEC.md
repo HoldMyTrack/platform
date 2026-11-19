@@ -63,17 +63,17 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 
 ### FR-2.7 Tracks panel
 
-- Leaving the Map tab drops the Private location editor's draft: iOS has no Back.
+- Leaving the Tracks tab drops the Private location editor's draft: iOS has no Back.
 - While any track is Pending, a notice over the map says so, including one the list no longer shows.
 
 ### FR-2.8 Spots
 
 - With only approximate location allowed, Capture asks through iOS's one-time prompt for precise location; refused, nothing starts.
-- Leaving the Map tab ends a capture: iOS has no Back.
+- Leaving the Tracks tab ends a capture: iOS has no Back.
 
 ### FR-2.9 The bottom bar
 
-- Map, Trips, Sync and You, with no record button yet. Sync is Sync history (FR-4.1).
+- Tracks, Trips, Sync and You, with no record button yet. Sync is Sync history (FR-4.1).
 - You leads to Settings, Track graph & trends, Upload, Privacy, Theme, Language, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
 

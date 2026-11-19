@@ -118,7 +118,7 @@ The web's two exclusive modes (`docs/SPEC.md` FR-4.1–FR-4.3), from the same ti
 - Normal's routes follow Dates (FR-2.6) through the tile request, and past the list's cap only the listed ones are drawn (`docs/SPEC.md` FR-5.11). The panel's filters, hidden tracks and Pending rows are applied on the phone. Fog is never filtered.
 - The map reads only the server. It never reads Health Connect, and a track appears only once synced and ingested.
 - The mode survives a theme or language change.
-- The mode toggle is the Map tab's. Trips and Sync show the map in Normal, since their sheets and routes are Normal mode's, and back on Map the mode picked there returns. Unlike the web, whose panel stays beside Fog (`docs/SPEC.md` FR-13.6).
+- The mode toggle is the Tracks tab's. Trips and Sync show the map in Normal, since their sheets and routes are Normal mode's, and back on Tracks the mode picked there returns. Unlike the web, whose panel stays beside Fog (`docs/SPEC.md` FR-13.6).
 - While recording (FR-5.1) the mode toggle goes and no mode's layers are drawn, only the recording; the mode comes back when it stops.
 - The Layers menu (`docs/SPEC.md` FR-4.9) holds Show layers, Satellite only when the style carries imagery (`docs/SPEC.md` FR-4.10), Roads (`docs/SPEC.md` FR-4.13) and the bike, shared and mountain-bike paths; the Places menu holds Show places and the Spot categories (FR-2.8). Each switch hides its own picks and keeps them. Every choice is kept on the phone, not the account, and all picks but Roads start off. Both menus stay while recording.
 - Fog says when coverage is still being updated (`docs/SPEC.md` FR-4.2), checked on every opening of the map, and refresh when the server is done.
@@ -181,10 +181,10 @@ The web's points of interest (`docs/SPEC.md` FR-14.2–FR-14.4) on the same tile
 
 ### FR-2.9 The bottom bar
 
-Map, Trips, the record button (FR-5.1), Sync and You.
+Tracks, Trips, the record button (FR-5.1), Sync and You.
 
-- Each tab keeps its state: the map's camera, mode, range, focus, checked group and a recording are as they were on coming back. Back from another tab goes to Map, and from Map leaves the app.
-- Trips counts copies waiting to be answered. Starting a recording from another tab moves to Map.
+- Each tab keeps its state: the map's camera, mode, range, focus, checked group and a recording are as they were on coming back. Back from another tab goes to Tracks, and from Tracks leaves the app.
+- Trips counts copies waiting to be answered. Starting a recording from another tab moves to the map.
 - The You tab leads to Settings (FR-1.5), Track graph & trends (FR-1.6), Settings › Sync (FR-3.1) and Privacy (FR-1.7), and shows the app's version and commit.
 - Theme belongs to the phone, not the account (`docs/SPEC.md` FR-4.8), so the demo account can change it. Language (FR-1.5) does nothing for the demo account.
 - About opens in the app (`docs/SPEC.md` FR-9.6); Help and Contacts in a browser tab, in the browser's language. The app has no Donate: Play doesn't allow pointing to payment outside its billing.

@@ -149,7 +149,7 @@
     <string name="edit_open_failed">Не удалось открыть трек: %1$s</string>
     <string name="area_zoom_in">Приблизьте карту, чтобы увидеть свои треки.</string>
     <string name="locate_needs_location">HoldMyTrack нужен доступ к местоположению, чтобы показать, где вы.</string>
-    <string name="nav_map">Карта</string>
+    <string name="nav_tracks">Треки</string>
     <string name="nav_trips">Путешествия</string>
     <string name="nav_sync">Синхр.</string>
     <string name="nav_you">Вы</string>

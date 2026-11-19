@@ -19,7 +19,7 @@ import org.maplibre.geojson.Point
 /**
  * The Sync tab's candidates on the map (`docs/SPEC.md` FR-3.4): every track listed there,
  * drawn dashed from the phone's own data — none of it is on the server yet — and the one picked
- * on the list or the map as the Map tab draws a selected track: solid and wider over a dark
+ * on the list or the map as the Tracks tab draws a selected track: solid and wider over a dark
  * halo, coloured by pace ([Candidate.metrics], [RouteBands]). One GeoJSON source
  * whose layers filter on a `role` property, and one for the bands, all under the basemap's
  * labels, as [RouteEditOverlay] is. The lines are the candidates' simplified ones ([Candidate.line]).

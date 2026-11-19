@@ -32,7 +32,7 @@ class MapChromeRulesTest {
     }
 
     @Test
-    fun `Trips and Sync show Normal with no toggle, and the Map tab gets its pick back`() {
+    fun `Trips and Sync show Normal with no toggle, and the Tracks tab gets its pick back`() {
         for (tab in listOf(PanelTab.TRIPS, PanelTab.SYNC)) {
             assertEquals(MapMode.NORMAL, MapChromeRules.tabMode(MapMode.FOG, tab))
             assertFalse(MapChromeRules.modeBarShown(recording = false, editOpen = false, selectionShown = false, tab))

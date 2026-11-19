@@ -2,7 +2,7 @@ import HoldMyTrackCore
 import MapLibre
 import UIKit
 
-/// The sheet's tabs: the tab bar's Map shows Tracks, its Trips the Trips tab.
+/// The sheet's tabs: the tab bar's Tracks shows Tracks, its Trips the Trips tab.
 enum PanelTab { case tracks, trips }
 
 /// The sheet over the map (apps/android/docs/SPEC.md FR-2.7): the list for the range or the open
@@ -54,7 +54,7 @@ extension MapViewController {
 
     // MARK: Tabs
 
-    /// The tab bar's Map or Trips brought the map forward.
+    /// The tab bar's Tracks or Trips brought the map forward.
     func show(_ next: PanelTab, trip: String? = nil) {
         loadViewIfNeeded()
         if next == panelTab {
@@ -493,7 +493,7 @@ extension MapViewController {
     }
 }
 
-/// The tab bar's Map or Trips: both are the one map screen, moved into whichever of the two
+/// The tab bar's Tracks or Trips: both are the one map screen, moved into whichever of the two
 /// shows, so the camera, range and selection are as they were (apps/android/docs/SPEC.md FR-2.9).
 final class MapHostViewController: UIViewController {
     private let map: MapViewController
