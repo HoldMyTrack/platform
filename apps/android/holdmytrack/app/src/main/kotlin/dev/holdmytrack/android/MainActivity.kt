@@ -128,7 +128,7 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // The notification's Stop and a View on map are both about the map.
-        val forMap = intent.action == RecordingService.ACTION_STOP || intent.hasExtra(EXTRA_VIEW_ACTIVITY)
+        val forMap = intent.action == RecordingService.ACTION_STOP || intent.hasExtra(EXTRA_VIEW_TRACK)
         if (forMap) showMap()
         tabFor(intent)?.let(::showTab)
         map()?.onNewIntent(intent)
@@ -306,7 +306,7 @@ class MainActivity : AppCompatActivity() {
         private val TAGS = listOf(TAG_MAP, TAG_YOU)
         private const val STATE_TAB = "tab"
         private const val EXTRA_TAB = "dev.holdmytrack.android.TAB"
-        internal const val EXTRA_VIEW_ACTIVITY = "dev.holdmytrack.android.VIEW_ACTIVITY"
+        internal const val EXTRA_VIEW_TRACK = "dev.holdmytrack.android.VIEW_TRACK"
         internal const val EXTRA_VIEW_DAY = "dev.holdmytrack.android.VIEW_DAY"
         private const val EXTRA_PRIVATE_LOCATION = "dev.holdmytrack.android.PRIVATE_LOCATION"
 
@@ -336,7 +336,7 @@ class MainActivity : AppCompatActivity() {
         fun viewOnMap(context: Context, trackId: String, day: String) {
             context.startActivity(
                 Intent(context, MainActivity::class.java)
-                    .putExtra(EXTRA_VIEW_ACTIVITY, trackId)
+                    .putExtra(EXTRA_VIEW_TRACK, trackId)
                     .putExtra(EXTRA_VIEW_DAY, day)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             )
