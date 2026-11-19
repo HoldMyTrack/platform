@@ -19,46 +19,56 @@ import androidx.test.uiautomator.UiObject2
 import androidx.test.uiautomator.Until
 import dev.holdmytrack.android.MainActivity
 import dev.holdmytrack.android.net.Session
+import dev.holdmytrack.android.tour.TourStore
 import org.junit.AfterClass
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.BeforeClass
 import org.junit.FixMethodOrder
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.MethodSorters
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import kotlin.concurrent.thread
 
 /**
  * End-to-end flows over the map's state rules, on an emulator against the dev stack the app was
- * built for (`docs/DEVELOPMENT.md`, "Android verification"): a new date range clearing the
- * selection, a Trip opened from the Trips tab and closed by Back, and a recording reaching the
- * Sync sheet. One fresh account ([TestAccount]) serves the class, in method-name order.
+ * built for (`docs/DEVELOPMENT.md`, "Android verification"): new Dates keeping Checked and Hidden
+ * on the tracks still listed, a Trip opened from the Trips tab and closed by Back, and a recording
+ * reaching the Sync sheet. One fresh account ([TestAccount]) serves the class, in method-name order.
  */
 @RunWith(AndroidJUnit4::class)
 @FixMethodOrder(MethodSorters.NAME_ASCENDING)
 class MapFlowsTest {
 
+    /** `docs/SPEC.md` FR-5.8: a list reloaded for new Dates keeps Checked and Hidden on the tracks
+     *  still listed. */
     @Test
-    fun a_newRangeClearsTheCheckedGroupAndHiddenTracks() {
+    fun a_newDatesKeepCheckedAndHiddenOnTheTracksStillListed() {
         signIn()
         expandSheet()
+        // The opening view lists the newest two: Mill Creek Falls (Oct 6), then Evening Loop (Oct 5).
         atLeast(id("track_tile_target"), 2)
         for (row in 0..1) {
             tapUntil({ device.findObjects(id("track_tile_target"))[row] }) { checkedRows() > row }
         }
         need(id("selection_bar"))
         need(id("panel_visibility")).click()
-        assertTrue("two rows hidden", device.wait(Until.findObjects(id("track_hidden")), TIMEOUT_MS).orEmpty().size == 2)
+        expect("two rows hidden", count(id("track_hidden"), 2))
 
-        need(id("date_range_shift_earlier")).click()
-        assertTrue("selection bar gone", device.wait(Until.gone(id("selection_bar")), TIMEOUT_MS))
-        assertFalse("no row hidden", device.hasObject(id("track_hidden")))
-        assertFalse("no row checked", checkedRows() > 0)
+        // From Oct 6, by each track's local day in New York: Mill Creek Falls stays listed, Evening
+        // Loop goes, and the camera flies onto Mill Creek Falls.
+        pickFrom(LocalDate.of(2026, 10, 6))
+        expandSheet()
+        expect("only Mill Creek Falls listed", count(id("track_text"), 1))
+        expect("Mill Creek Falls still hidden", count(id("track_hidden"), 1))
+        expect("Mill Creek Falls still checked", count(checkedTiles(), 1))
+        need(id("selection_bar"))
     }
 
     @Test
-    fun b_theTripsTabOpensTheNewestTripAndBackReturnsToTheRange() {
+    fun b_theTripsTabOpensTheNewestTripAndBackReturnsToTheArea() {
         signIn()
         val members = listOf(account.idsByDay.getValue("2026-10-01"), account.idsByDay.getValue("2026-10-06"))
         account.createTrip(TRIP, members)
@@ -69,7 +79,6 @@ class MapFlowsTest {
 
         device.pressBack()
         assertTrue("Trip closed", device.wait(Until.gone(By.text(TRIP)), TIMEOUT_MS))
-        need(id("date_range_label"))
         // Back to the map collapses the sheet; until it has, the handle still offers Collapse.
         need(id("panel_handle").descStartsWith("Expand"))
         expandSheet()
@@ -121,7 +130,7 @@ class MapFlowsTest {
             walker.join()
             runCatching { locations.removeTestProvider(LocationManager.GPS_PROVIDER) }
         }
-        need(id("date_range_label"))
+        need(id("panel_handle"))
         // The tap can land while the Save screen's track is still leaving; tap until the sheet answers.
         tapUntil({ need(id("nav_sync")) }) { device.hasObject(id("panel_handle")) }
         expandSheet()
@@ -149,18 +158,59 @@ class MapFlowsTest {
         throw AssertionError(message)
     }
 
-    /** At least [count] of [selector] on screen. */
-    private fun atLeast(selector: BySelector, count: Int): List<UiObject2> {
+    /** Fails, saving the screen, unless [holds]. */
+    private fun expect(message: String, holds: Boolean) {
+        if (!holds) fail(message)
+    }
+
+    /** Whether [holds] comes true within the timeout, asked every quarter second. */
+    private fun waitUntil(holds: () -> Boolean): Boolean {
         val deadline = SystemClock.uptimeMillis() + TIMEOUT_MS
         while (true) {
-            val found = device.findObjects(selector)
-            if (found.size >= count) return found
-            if (SystemClock.uptimeMillis() > deadline) throw AssertionError("fewer than $count on screen: $selector")
+            if (holds()) return true
+            if (SystemClock.uptimeMillis() > deadline) return false
             Thread.sleep(250)
         }
     }
 
-    private fun checkedRows(): Int = device.findObjects(By.descStartsWith("Remove ")).size
+    /** At least [n] of [selector] on screen. */
+    private fun atLeast(selector: BySelector, n: Int) =
+        expect("fewer than $n on screen: $selector", waitUntil { device.findObjects(selector).size >= n })
+
+    /** Exactly [n] of [selector] on screen, within the timeout. */
+    private fun count(selector: BySelector, n: Int): Boolean = waitUntil { device.findObjects(selector).size == n }
+
+    /** Rows whose check target offers to uncheck them (`panel_row_uncheck`). */
+    private fun checkedTiles(): BySelector = id("track_tile_target").descStartsWith("Uncheck ")
+
+    private fun checkedRows(): Int = device.findObjects(checkedTiles()).size
+
+    /** Sets Dates' From to [day] through its dialog and the picker's calendar, then Done. Not by
+     *  typing it: the keyboard shortens the map, and the list follows the smaller view. */
+    private fun pickFrom(day: LocalDate) {
+        need(id("panel_dates")).click()
+        need(id("dates_after")).click()
+        // The picker opens on the first track's month, so the day is forward of it.
+        val month = day.format(DateTimeFormatter.ofPattern("MMMM yyyy", Locale.getDefault()))
+        fun shown(): String {
+            var text = ""
+            retrying { text = need(id("month_navigation_fragment_toggle")).text }
+            return text
+        }
+        var pages = 0
+        while (shown() != month && pages++ < MONTHS) {
+            retrying { need(id("month_navigation_next")).click() }
+            device.waitForIdle()
+        }
+        expect("the picker shows $month", shown() == month)
+        // By its label, which names the month: the calendar keeps the months either side laid out too.
+        val label = day.format(DateTimeFormatter.ofPattern("MMMM d", Locale.getDefault()))
+        // The header names the selection, "Oct 6, 2026".
+        val picked = Regex("""\b${day.format(DateTimeFormatter.ofPattern("MMM", Locale.getDefault()))}\w*\.? ${day.dayOfMonth}\b""")
+        tapUntil({ need(By.descContains(label)) }) { picked.containsMatchIn(need(id("mtrl_picker_header_selection_text")).text) }
+        tapUntil({ need(id("confirm_button")) }) { !device.hasObject(id("confirm_button")) }
+        need(By.res("android", "button1")).click()
+    }
 
     /** Taps what [target] finds until [done] holds, for taps the app can drop while it settles. */
     private fun tapUntil(target: () -> UiObject2, done: () -> Boolean) {
@@ -197,6 +247,9 @@ class MapFlowsTest {
     /** Opens the app signed in to the test account, on the map, whoever it was left signed in as. */
     private fun signIn() {
         Session.clear()
+        // The tour's offer would cover the map. The phone keeps whether it was offered, not the
+        // account (TourStore), so the flows mark it seen.
+        TourStore(context).let { it.save(it.load().copy(tour = true)) }
         context.startActivity(
             Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK),
         )
@@ -207,7 +260,7 @@ class MapFlowsTest {
             retrying { device.findObject(id("submit"))?.click() }
             if (device.wait(Until.gone(id("submit")), SIGN_IN_MS)) break
         }
-        need(id("date_range_label"))
+        need(id("panel_handle"))
     }
 
     private companion object {
@@ -216,6 +269,8 @@ class MapFlowsTest {
         const val TIMEOUT_MS = 60_000L
         const val SHORT_MS = 5_000L
         const val SCROLLS = 3
+        /** Months the picker may page forward to reach a day: Dates' bounds span the account. */
+        const val MONTHS = 24
         /** About a second per swipe: a fling would snap the sheet back. */
         const val SWIPE_STEPS = 200
         const val SIGN_IN_MS = 15_000L

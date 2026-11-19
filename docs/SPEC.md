@@ -415,7 +415,7 @@ stateDiagram-v2
     Deleted --> [*]
     state "Visibility, this tab only" as Visibility {
         Shown --> Hidden: hide
-        Hidden --> Shown: show, new range, or no longer listed
+        Hidden --> Shown: show, a Trip opened or closed, or no longer listed
     }
 ```
 
