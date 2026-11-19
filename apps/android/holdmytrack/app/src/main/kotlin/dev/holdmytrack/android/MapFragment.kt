@@ -589,7 +589,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun takeViewOnMap(intent: Intent) {
         // A relaunch from recents replays the intent; it has been handled.
         if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
-        val id = intent.getStringExtra(MainActivity.EXTRA_VIEW_ACTIVITY) ?: return
+        val id = intent.getStringExtra(MainActivity.EXTRA_VIEW_TRACK) ?: return
         val day = intent.getStringExtra(MainActivity.EXTRA_VIEW_DAY) ?: return
         viewOnMapRequest = id to day
         if (::camera.isInitialized) camera.framed = true
