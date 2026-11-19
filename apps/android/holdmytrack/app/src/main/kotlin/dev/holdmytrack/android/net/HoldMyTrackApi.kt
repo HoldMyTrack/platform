@@ -10,7 +10,6 @@ import android.os.LocaleList
 import android.os.Looper
 import dev.holdmytrack.android.BuildConfig
 import dev.holdmytrack.android.map.DateFilter
-import dev.holdmytrack.android.map.GeoPoint
 import dev.holdmytrack.android.panel.TrackKind
 import dev.holdmytrack.android.panel.TrackTypes
 import java.io.File
