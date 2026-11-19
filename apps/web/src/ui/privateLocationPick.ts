@@ -30,9 +30,16 @@ export function highlightedCircle<T extends { id?: string }>(locations: readonly
   if (focusedId === null) return null;
   return locations?.find((l) => l.id === focusedId) ?? null;
 }
-/** The location the Privacy tab opens on: the one added last, as the Trips tab opens on the
- *  newest Trip, so the map shows a circle rather than whatever was in view. `locations` come
- *  oldest first, as the API lists them. */
+/** The saved circles in the order they're drawn, each over the one before: oldest first, so the
+ *  newest is on top. `selected` is left out, drawn last from the draft. `locations` come newest
+ *  first, as the API lists them. */
+export function drawOrder<T extends { id?: string }>(locations: readonly T[], selected: { id?: string } | null): T[] {
+  return locations.filter((l) => !(selected && l.id !== undefined && l.id === selected.id)).reverse();
+}
+
+/** The location the Privacy tab opens on: the one added last, at the top, as the Trips tab
+ *  opens on the newest Trip, so the map shows a circle rather than whatever was in view.
+ *  `locations` come newest first, as the API lists them. */
 export function openingLocation<T>(locations: readonly T[]): T | null {
-  return locations[locations.length - 1] ?? null;
+  return locations[0] ?? null;
 }

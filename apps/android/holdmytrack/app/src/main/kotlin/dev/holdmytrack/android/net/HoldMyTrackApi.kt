@@ -963,7 +963,7 @@ object HoldMyTrackApi {
         timezone = timezone,
     )
 
-    /** `GET /v2/private-locations` — every one, oldest first. */
+    /** `GET /v2/private-locations` — every one, newest first. */
     fun privateLocations(onResult: (Result<List<PrivateLocation>>) -> Unit) {
         val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/private-locations").build()
         call(request, { text -> decode<List<PrivateLocationJson>>(text).map { it.toPrivateLocation() } }, onResult)

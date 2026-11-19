@@ -85,9 +85,10 @@ func scanPrivateLocation(row pgx.Row) (privateLocation, error) {
 	return l, err
 }
 
-// handleListPrivateLocations serves `GET /v2/private-locations`, oldest first.
+// handleListPrivateLocations serves `GET /v2/private-locations`, newest first, as
+// Trips are listed.
 func (s *Server) handleListPrivateLocations(w http.ResponseWriter, r *http.Request) {
-	rows, err := s.pool.Query(r.Context(), selectPrivateLocation+` WHERE user_id = $1 ORDER BY created_at, id`,
+	rows, err := s.pool.Query(r.Context(), selectPrivateLocation+` WHERE user_id = $1 ORDER BY created_at DESC, id DESC`,
 		userIDFromContext(r.Context()))
 	if err != nil {
 		if clientGone(w, r) {

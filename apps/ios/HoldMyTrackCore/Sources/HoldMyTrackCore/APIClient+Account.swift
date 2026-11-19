@@ -48,7 +48,7 @@ extension APIClient {
         return try await perform(request)
     }
 
-    /// `GET /v2/private-locations`, oldest first.
+    /// `GET /v2/private-locations`, newest first.
     public func privateLocations() async throws -> [PrivateLocation] {
         let json: [PrivateLocationJSON] = try decode(try await send("GET", "v2/private-locations"))
         return json.map(PrivateLocation.init)

@@ -63,6 +63,13 @@ public enum PrivateLocationEditing {
             || draft.lon != s.lon || draft.lat != s.lat || draft.radiusM != s.radiusM
     }
 
+    /// The saved circles in the order they're drawn, each over the one before: oldest first, so
+    /// the newest is on top, the web's `drawOrder`. The one being edited (`editing`) is left out,
+    /// drawn last from the draft. `saved` comes newest first, as the API lists it.
+    public static func drawOrder(_ saved: [PrivateLocation], editing: String?) -> [PrivateLocation] {
+        saved.filter { $0.id != editing }.reversed()
+    }
+
     /// What a tap on the circles hit.
     public enum Hit: Equatable, Sendable { case selected, saved(String), empty }
 
