@@ -19,9 +19,6 @@ import kotlin.math.sinh
  * `areaLoad.ts`; both run `testdata/client-rules/area-load.json`.
  */
 object AreaLoad {
-    /** The most tracks one area lists, and so its map draws (the server's areaTracksLimit). */
-    const val LIMIT = 1000
-
     /** Where tracks start being drawn, and the list with them ([MapOverlays.TRACKS_MIN_ZOOM]). */
     const val MIN_ZOOM = 4.0
 
