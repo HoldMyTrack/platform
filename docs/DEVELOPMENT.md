@@ -103,7 +103,7 @@ Every request `internal/httpapi`'s tests send through `dbTest.do`, `dbTest.send`
 
 The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and UI Automator flows over the map (`connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:8081`, on an emulator); there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
 
-CI also runs `./gradlew :app:lintDebug :app:minifyReleaseWithR8`. Lint fails on any warning `app/lint-baseline.xml` doesn't list: fix a new one, and run `:app:updateLintBaseline` only to drop entries a fix removed. The release is compiled through R8 and resource shrinking but not packaged, since packaging needs the upload key.
+CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:optimizeReleaseResources`. Lint fails on any warning `app/lint-baseline.xml` doesn't list: fix a new one, and run `:app:updateLintBaseline` only to drop entries a fix removed. `app/lint.xml` ignores what the baseline can't hold. The release is compiled through R8 and resource shrinking but not packaged, since packaging needs the upload key.
 
 ### CI
 
