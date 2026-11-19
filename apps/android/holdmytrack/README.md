@@ -64,7 +64,7 @@ Without the properties, `bundleRelease` stops at `validateSigningRelease` ("Keys
 Both buttons appear only when the API the app points at has them configured (`GET /v2/auth/providers`).
 
 - **Google** needs an Android OAuth client for your signing key in the same Google Cloud project as the server's web client (`docs/DEPLOY.md`, Sign in with Google, step 4). For a debug build, that's the SHA-1 of your debug key: `keytool -list -v -keystore ~/.android/debug.keystore -alias androiddebugkey -storepass android -keypass android | grep SHA1`. Without it the account picker fails and the app logs `google sign-in failed` under the `SignInActivity` tag.
-- **Facebook** runs in a browser tab against the server's own callback URL. Against a local stack, forward the API's port (`adb reverse tcp:8081 tcp:8081`) so the tab's `http://localhost:8081/v1/auth/facebook/callback` reaches it, and use a Facebook account with a role on the Meta app while it's in Development mode.
+- **Facebook** runs in a browser tab against the server's own callback URL. Against a local stack, forward the API's port (`adb reverse tcp:8081 tcp:8081`) so the tab's `http://localhost:8081/v2/auth/facebook/callback` reaches it, and use a Facebook account with a role on the Meta app while it's in Development mode.
 
 ## Layout
 

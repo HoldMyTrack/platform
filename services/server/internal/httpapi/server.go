@@ -244,7 +244,6 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.tile("/regions/{z}/{x}/{y}", s.handleRegionFogTile)
 	s.tile("/counties/{z}/{x}/{y}", s.handleCountyFogTile)
 	s.tile("/cities/{z}/{x}/{y}", s.handleCityFogTile)
-	// An empty tile for installed Android builds, until MIN_ANDROID_BUILD next goes up.
 	// Deliberately not behind requireAuth, unlike every API route above it. The style
 	// document is derived entirely from the public Protomaps basemap and contains no
 	// per-user data — only layer definitions and the asset URLs a client would need

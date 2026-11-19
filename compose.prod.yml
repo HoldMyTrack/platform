@@ -101,7 +101,7 @@ services:
       # non-Secure one it's suspicious of over HTTPS in some browsers) rather than erroring
       # loudly, so it's worth double-checking in .env.prod before first run.
       APP_BASE_URL: ${APP_BASE_URL}
-      # The origin the style document GET /v1/map/style/{flavor} hands native clients
+      # The origin the style document GET /v2/map/style/{flavor} hands native clients
       # resolves the basemap against — the same value the web bundle bakes in, so both
       # clients read one archive. Empty falls back to APP_BASE_URL (config.go).
       BASEMAP_ORIGIN: ${VITE_BASEMAP_ORIGIN:-}
@@ -124,18 +124,18 @@ services:
       SIGNUPS_PER_HOUR: ${SIGNUPS_PER_HOUR:-5}
       # Daily R2 budget in US dollars, read by api and worker (docs/DEPLOY.md §4).
       R2_DAILY_BUDGET_USD: ${R2_DAILY_BUDGET_USD:-2}
-      # The oldest Android versionCode /v1/ answers, empty for every build (docs/DEPLOY.md §4).
+      # The oldest Android versionCode /v2/ answers, empty for every build (docs/DEPLOY.md §4).
       MIN_ANDROID_BUILD: ${MIN_ANDROID_BUILD:-}
-      # The oldest iOS build number /v1/ answers, empty for every build (docs/DEPLOY.md §4).
+      # The oldest iOS build number /v2/ answers, empty for every build (docs/DEPLOY.md §4).
       MIN_IOS_BUILD: ${MIN_IOS_BUILD:-}
       # Sign in with Google (docs/SPEC.md FR-1.9, docs/DEPLOY.md) — optional; empty turns it
-      # off. The redirect URL defaults to APP_BASE_URL + /v1/auth/google/callback (config.go),
+      # off. The redirect URL defaults to APP_BASE_URL + /v2/auth/google/callback (config.go),
       # which is right here because Caddy serves the app and the API from one origin.
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
       GOOGLE_REDIRECT_URL: ${GOOGLE_REDIRECT_URL:-}
       # Sign in with Facebook (docs/SPEC.md FR-1.10, docs/DEPLOY.md) — the same, keyed on
-      # FACEBOOK_APP_ID; its redirect URL defaults to APP_BASE_URL + /v1/auth/facebook/callback.
+      # FACEBOOK_APP_ID; its redirect URL defaults to APP_BASE_URL + /v2/auth/facebook/callback.
       FACEBOOK_APP_ID: ${FACEBOOK_APP_ID:-}
       FACEBOOK_APP_SECRET: ${FACEBOOK_APP_SECRET:-}
       FACEBOOK_REDIRECT_URL: ${FACEBOOK_REDIRECT_URL:-}
@@ -144,7 +144,7 @@ services:
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       # Sign in with Apple (docs/SPEC.md FR-1.11, docs/DEPLOY.md) — keyed on APPLE_SERVICES_ID;
-      # its redirect URL defaults to APP_BASE_URL + /v1/auth/apple/callback.
+      # its redirect URL defaults to APP_BASE_URL + /v2/auth/apple/callback.
       APPLE_SERVICES_ID: ${APPLE_SERVICES_ID:-}
       APPLE_BUNDLE_ID: ${APPLE_BUNDLE_ID:-}
       APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}

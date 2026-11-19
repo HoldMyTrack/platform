@@ -77,7 +77,8 @@ func appOutdated(userAgent string, minAndroid, minIOS int) bool {
 // request under retiredAPIPrefix, and reports whether it did.
 func (s *Server) refuseOutdatedApp(w http.ResponseWriter, r *http.Request) bool {
 	retired := strings.HasPrefix(r.URL.Path, retiredAPIPrefix+"/")
-	if !retired && (!strings.HasPrefix(r.URL.Path, apiPrefix+"/") || !appOutdated(r.UserAgent(), s.minAndroidBuild, s.minIOSBuild)) {
+	outdated := strings.HasPrefix(r.URL.Path, apiPrefix+"/") && appOutdated(r.UserAgent(), s.minAndroidBuild, s.minIOSBuild)
+	if !retired && !outdated {
 		return false
 	}
 	httpErrorT(w, r, http.StatusUpgradeRequired, "error.app_outdated")
