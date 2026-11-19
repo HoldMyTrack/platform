@@ -169,11 +169,16 @@ object HoldMyTrackApi {
     private fun refusedBuild(response: Response): Boolean =
         AppBuild.isRefusal(response.request.url, apiBase, response.code)
 
-    /** Hands the server's refusal of this build to [AppOutdated], whichever call met it. */
+    /** Hears the server's refusal of this build, whichever call met it, on OkHttp's thread and
+     *  before that call's callback. `AppOutdated` sets it at start to open the Update screen. */
+    @Volatile
+    var onRefusedBuild: () -> Unit = {}
+
+    /** Hands the server's refusal of this build to [onRefusedBuild]. */
     private object OutdatedInterceptor : Interceptor {
         override fun intercept(chain: Interceptor.Chain): Response {
             val response = chain.proceed(chain.request())
-            if (refusedBuild(response)) AppOutdated.refused()
+            if (refusedBuild(response)) onRefusedBuild()
             return response
         }
     }
