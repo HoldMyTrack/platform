@@ -10,7 +10,7 @@ import okhttp3.Response
  */
 internal fun readBody(response: Response): Result<String> =
     try {
-        Result.success(response.use { it.body?.string().orEmpty() })
+        Result.success(response.use { it.body.string() })
     } catch (e: Exception) {
         Result.failure(e)
     }

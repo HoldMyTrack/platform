@@ -307,54 +307,6 @@
         <item name="android:color">@color/hmt_accent_container</item>
     </style>
 
-    <!-- A row of the You tab (fragment_you.xml): one line, a 56dp target, the platform's press
-         ripple. -->
-    <style name="Widget.HoldMyTrack.ListRow" parent="">
-        <item name="android:minHeight">56dp</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:paddingStart">@dimen/hmt_space_4</item>
-        <item name="android:paddingEnd">@dimen/hmt_space_4</item>
-        <item name="android:background">?attr/selectableItemBackground</item>
-        <item name="android:textAppearance">@style/TextAppearance.HoldMyTrack.BodyLarge</item>
-        <item name="android:textColor">@color/hmt_ink</item>
-    </style>
-
-    <!-- ‹ › beside the date range in the Tracks sheet (include_tracks_sheet): a 44dp round
-         icon button on the tinted surface, a faint outline when it can't move the range. The
-         tints are state lists: a plain colour here would override Material's disabled look and
-         leave a disabled button looking pressable. -->
-    <style name="Widget.HoldMyTrack.Button.SheetShift" parent="Widget.Material3.Button.IconButton.Filled.Tonal">
-        <item name="android:minWidth">48dp</item>
-        <item name="android:minHeight">48dp</item>
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">0dp</item>
-        <item name="backgroundTint">@color/sheet_shift_bg</item>
-        <item name="iconTint">@color/sheet_shift_icon</item>
-        <item name="strokeColor">@color/sheet_shift_stroke</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="iconSize">20dp</item>
-    </style>
-
-    <!-- The date slider's « » beside the scrubber: 22 × 40 drawn, 48dp tall to touch, tinted while
-         the window can move that way, faint while it can't. -->
-    <style name="Widget.HoldMyTrack.Button.SheetPage" parent="Widget.Material3.Button.IconButton.Outlined">
-        <item name="android:minWidth">0dp</item>
-        <item name="android:minHeight">48dp</item>
-        <!-- Drawn level with the scrubber's 40dp track area; the touch target runs on below it. -->
-        <item name="android:insetTop">0dp</item>
-        <item name="android:insetBottom">8dp</item>
-        <item name="android:paddingStart">0dp</item>
-        <item name="android:paddingEnd">0dp</item>
-        <item name="backgroundTint">@color/sheet_page_bg</item>
-        <item name="iconTint">@color/sheet_shift_icon</item>
-        <item name="iconGravity">textStart</item>
-        <item name="iconPadding">0dp</item>
-        <item name="strokeColor">@color/hmt_border</item>
-        <item name="strokeWidth">1dp</item>
-        <item name="iconSize">14dp</item>
-        <item name="cornerRadius">6dp</item>
-    </style>
-
     <!-- One of the selected track's numbers (include_track_card): a tinted box, its label
          over its value. -->
     <style name="Widget.HoldMyTrack.CardStat" parent="">
