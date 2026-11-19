@@ -43,7 +43,7 @@ fragment = "1.8.9"
 junit = "4.13.2"
 # `kotlin` is the app's Kotlin compiler, not only the serialization plugin's version: the plugin
 # puts the Kotlin Gradle plugin at this version on the build classpath, where it outranks AGP's
-# built-in one (2.2.10 in AGP 9.4). Change it on purpose, never as a plugin bump in passing.
+# built-in one (2.2.10 in AGP 9.5). Change it on purpose, never as a plugin bump in passing.
 # The serialization runtime (net/Wire.kt's bodies) and googleId need a compiler at least as new
 # as the Kotlin they were built with.
 kotlin = "2.4.21"
