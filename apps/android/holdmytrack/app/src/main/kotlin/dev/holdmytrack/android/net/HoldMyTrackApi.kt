@@ -223,7 +223,7 @@ object HoldMyTrackApi {
                 .url(BuildConfig.API_BASE_URL + API_V2 + "/sync/tracks")
                 .post(jsonBody(SyncTracksRequestJson(source, tracks)))
                 .build()
-            val response = client.newCall(request).await()
+            val response = waitingClient.newCall(request).await()
             val text = response.use { it.body?.string().orEmpty() }
             if (!response.isSuccessful) throw ApiException.from(response.code, text)
             decode<SyncResultsJson>(text).results.map { SyncResult(it.externalId, it.status, it.error) }
@@ -245,7 +245,7 @@ object HoldMyTrackApi {
                     .url(BuildConfig.API_BASE_URL + API_V2 + "/sync/known")
                     .post(jsonBody(SyncKnownRequestJson(source, chunk)))
                     .build()
-                val response = client.newCall(request).await()
+                val response = waitingClient.newCall(request).await()
                 val text = response.use { it.body?.string().orEmpty() }
                 if (!response.isSuccessful) throw ApiException.from(response.code, text)
                 val json = decode<SyncKnownJson>(text)
@@ -270,7 +270,7 @@ object HoldMyTrackApi {
                     .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/overlaps")
                     .post(jsonBody(OverlapsRequestJson(spansJson)))
                     .build()
-                val response = client.newCall(request).await()
+                val response = waitingClient.newCall(request).await()
                 val text = response.use { it.body?.string().orEmpty() }
                 if (!response.isSuccessful) throw ApiException.from(response.code, text)
                 for (row in decode<OverlapsJson>(text).overlaps) {
@@ -279,6 +279,14 @@ object HoldMyTrackApi {
             }
             found
         }
+
+    /**
+     * The client the suspending calls ([syncTracks], [syncKnown], [trackOverlaps], and uploads
+     * through [uploadClient]) send through: [client] with a dispatcher of its own, so a batch
+     * doesn't queue behind a burst of the map's tiles for the API host's 20 slots, nor an upload
+     * hold one of them for minutes. The same connections and interceptors otherwise.
+     */
+    private val waitingClient: OkHttpClient by lazy { client.newBuilder().dispatcher(Dispatcher()).build() }
 
     /** The server's `maxKnownIDs`: one `POST /v2/sync/known` asks about at most this many. */
     private const val MAX_KNOWN_IDS = 5000
@@ -289,7 +297,7 @@ object HoldMyTrackApi {
      * The same client otherwise, so the same interceptors.
      */
     private val uploadClient: OkHttpClient by lazy {
-        client.newBuilder()
+        waitingClient.newBuilder()
             .writeTimeout(UPLOAD_WRITE_TIMEOUT)
             .readTimeout(UPLOAD_READ_TIMEOUT)
             .build()

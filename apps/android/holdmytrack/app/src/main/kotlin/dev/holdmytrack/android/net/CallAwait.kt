@@ -8,9 +8,10 @@ import okhttp3.Response
 
 /**
  * Sends the call on OkHttp's dispatcher and suspends until it answers. Cancelling the coroutine
- * cancels the call, so leaving the Sync tab or the Upload screen stops a request still being
- * sent, and a loop of requests stops between them; a request the server has already taken in
- * whole is still processed there. An answer that arrives after the cancellation is closed.
+ * cancels the call, so leaving the Sync tab stops a request still being sent, and a loop of
+ * requests stops between them; a request the server has already taken in whole is still
+ * processed there. An answer that arrives after the cancellation is closed. Uploads run in
+ * `FileImports`' own scope, so they carry on when the Upload screen is left.
  */
 suspend fun Call.await(): Response = suspendCancellableCoroutine { continuation ->
     continuation.invokeOnCancellation { cancel() }
