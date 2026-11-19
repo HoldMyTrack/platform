@@ -209,9 +209,8 @@ object HoldMyTrackApi {
      *
      * Suspending rather than callback-based like everything above it, because its only caller
      * is the sync run, which is a coroutine from end to end (Health Connect's read API leaves
-     * no choice). The blocking `execute()` is confined to `Dispatchers.IO` here rather than
-     * wrapped in `enqueue`, since the caller genuinely wants to wait: the next batch must not
-     * be sent until this one is answered.
+     * no choice), and it waits for each answer: the next batch must not be sent until this one
+     * is answered. [await] cancels the request with the run.
      *
      * Returns the server's per-track verdicts rather than a single pass/fail — a batch is
      * not all-or-nothing there, and the caller needs to know which ones landed before it takes
@@ -224,7 +223,7 @@ object HoldMyTrackApi {
                 .url(BuildConfig.API_BASE_URL + API_V2 + "/sync/tracks")
                 .post(jsonBody(SyncTracksRequestJson(source, tracks)))
                 .build()
-            val response = client.newCall(request).execute()
+            val response = client.newCall(request).await()
             val text = response.use { it.body?.string().orEmpty() }
             if (!response.isSuccessful) throw ApiException.from(response.code, text)
             decode<SyncResultsJson>(text).results.map { SyncResult(it.externalId, it.status, it.error) }
@@ -246,7 +245,7 @@ object HoldMyTrackApi {
                     .url(BuildConfig.API_BASE_URL + API_V2 + "/sync/known")
                     .post(jsonBody(SyncKnownRequestJson(source, chunk)))
                     .build()
-                val response = client.newCall(request).execute()
+                val response = client.newCall(request).await()
                 val text = response.use { it.body?.string().orEmpty() }
                 if (!response.isSuccessful) throw ApiException.from(response.code, text)
                 val json = decode<SyncKnownJson>(text)
@@ -271,7 +270,7 @@ object HoldMyTrackApi {
                     .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/overlaps")
                     .post(jsonBody(OverlapsRequestJson(spansJson)))
                     .build()
-                val response = client.newCall(request).execute()
+                val response = client.newCall(request).await()
                 val text = response.use { it.body?.string().orEmpty() }
                 if (!response.isSuccessful) throw ApiException.from(response.code, text)
                 for (row in decode<OverlapsJson>(text).overlaps) {
@@ -318,7 +317,7 @@ object HoldMyTrackApi {
             .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/upload")
             .post(body)
             .build()
-        val response = uploadClient.newCall(request).execute()
+        val response = uploadClient.newCall(request).await()
         val text = response.use { it.body?.string().orEmpty() }
         if (!response.isSuccessful) throw ApiException.from(response.code, text)
         UploadOutcome(status = decode<UploadResultJson>(text).status)
