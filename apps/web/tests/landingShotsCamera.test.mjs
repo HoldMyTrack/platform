@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cameraFromHash, panOffset, wheelDelta } from '../scripts/landing-shots/camera.mjs';
+import { MIN_DRAG, cameraFromHash, dragSplit, panOffset, wheelDelta } from '../scripts/landing-shots/camera.mjs';
 
 test('cameraFromHash reads zoom, lat and lon, theme or not', () => {
   assert.deepEqual(cameraFromHash('#map=10.98/41.44751/-81.64018'), { zoom: 10.98, lat: 41.44751, lon: -81.64018 });
@@ -30,4 +30,19 @@ test('panOffset doubles with each zoom level', () => {
   const a = panOffset({ zoom: 10, lat: 41.4, lon: -81.6 }, target);
   const b = panOffset({ zoom: 11, lat: 41.4, lon: -81.6 }, target);
   assert.ok(Math.abs(b.x - 2 * a.x) < 1e-9 && Math.abs(b.y - 2 * a.y) < 1e-9);
+});
+
+test('dragSplit makes two drags that sum to the offset, neither short enough to be a click', () => {
+  for (const [x, y] of [[0, 0], [80, 80], [79.6, 80.3], [-80, 80], [500, -20], [0.4, -0.3], [-1200, 900]]) {
+    const drags = dragSplit(x, y);
+    assert.equal(drags.length, 2);
+    const [sx, sy] = drags.reduce(([ax, ay], [dx, dy]) => [ax + dx, ay + dy], [0, 0]);
+    assert.ok(Math.abs(sx + x) < 1e-9 && Math.abs(sy + y) < 1e-9, `sums to (${-x}, ${-y})`);
+    for (const [dx, dy] of drags) assert.ok(Math.hypot(dx, dy) >= MIN_DRAG, `(${x}, ${y}): a drag of ${Math.hypot(dx, dy)} px`);
+  }
+});
+
+test("dragSplit keeps a long pan's first drag no longer than it needs", () => {
+  const [[fx, fy]] = dragSplit(0, -400);
+  assert.ok(Math.hypot(fx, fy) < 400, `first drag ${Math.hypot(fx, fy)} px for a 400 px pan`);
 });
