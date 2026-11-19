@@ -19,7 +19,8 @@
     "verify:build": "node --test tests/build.mjs",
     "test:unit": "node --test \"tests/*.test.mjs\"",
     "test:coverage": "c8 npm run test:unit",
-    "gen:rule-cases": "node scripts/generate-rule-cases.mjs"
+    "gen:rule-cases": "node scripts/generate-rule-cases.mjs",
+    "shots:landing": "node scripts/landing-shots.mjs"
   },
   "dependencies": {
     "@protomaps/basemaps": "5.7.2",
