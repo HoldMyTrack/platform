@@ -24,9 +24,9 @@ import java.util.zip.ZipInputStream
 
 /**
  * A fresh account on the dev stack the app was built against (`BuildConfig.API_BASE_URL`),
- * with the sample tracks under `/static/testing/`: three in October 2026 and three from the sample
- * zip's Italy days in August, six track days in all, so the default range (the five most
- * recent) leaves one out and can move earlier. Deleted at the end of the run.
+ * with the sample tracks under `/static/testing/`: three around Cleveland in October 2026 and three
+ * from the sample zip's Italy days in August, so the opening view lists the newest two and Dates
+ * can split them by day. Deleted at the end of the run.
  */
 class TestAccount private constructor(val email: String, val password: String, private val client: OkHttpClient) {
 
