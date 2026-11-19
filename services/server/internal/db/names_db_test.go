@@ -46,8 +46,9 @@ func TestSchemaHasNoOldNames(t *testing.T) {
 	}
 }
 
-// 0057 and 0058 rewrite what the release before them left: a Trip copy's source, the queue's kinds
-// and payload keys, a pending sync's bytes, a job per stored sync payload, and the daily stats' keys.
+// 0057 to 0059 rewrite what the release before them left: a Trip copy's source, the queue's kinds
+// and payload keys, a pending sync's bytes and the daily stats' keys; the payload rewrites 0057
+// queues, which no worker handles, are gone.
 func TestMigrationRenamesStoredValues(t *testing.T) {
 	ctx := context.Background()
 	pool, err := pgxpool.NewWithConfig(ctx, scratchDatabase(t))
@@ -139,8 +140,6 @@ func TestMigrationRenamesStoredValues(t *testing.T) {
 		`ingest {"source": "recorded", "raw_bytes": 36, "track_type": "walking", "raw_payload_key": "raw/u/recorded/r2.json"} {"track_type":"walking","points":[]}`,
 		`ingest {"source": "recorded", "raw_payload_key": "raw/u/recorded/r3.json"}`,
 		`ingest {"source": "upload", "raw_payload_key": "raw/u/f.fit"} 0e10ff`,
-		`rewrite_sync_payload {"key": "raw/u/recorded/r1.json"}`,
-		`rewrite_sync_payload {"key": "raw/u/recorded/r3.json"}`,
 	}
 	for _, w := range want {
 		found := false
