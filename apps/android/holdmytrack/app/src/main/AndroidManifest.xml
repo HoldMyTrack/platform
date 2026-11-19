@@ -1,9 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- The map is served, not bundled: both the style document and every basemap tile come
-         from the API. -->
+         from the API. MapLibre reads whether a network is up. -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Merged in by libraries and used by nothing the app runs: MapLibre's Wi-Fi state, and
+         androidx.biometric's, which Credential Manager brings for credential providers. This
+         file, after these removals, is the whole list that ships, apart from androidx's own
+         signature permission for receivers it registers unexported. -->
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" tools:node="remove" />
+    <uses-permission android:name="android.permission.USE_BIOMETRIC" tools:node="remove" />
+    <uses-permission android:name="android.permission.USE_FINGERPRINT" tools:node="remove" />
 
     <!--
       Exactly two Health Connect data types, exercise sessions and their routes, and no more.
@@ -43,9 +53,12 @@
       already keeps GPS running while the screen is off without it — background location is
       for access with *no* running foreground component, which this never is while recording.
       FOREGROUND_SERVICE_LOCATION (Android 14+) and POST_NOTIFICATIONS (Android 13+) are both
-      required unconditionally at this app's minSdk 34, not optionally.
+      required unconditionally at this app's minSdk 34, not optionally. ACCESS_COARSE_LOCATION
+      is asked for with the fine one, as Android requires, so a user who grants only an
+      approximate location still gets Locate; a Spot's Capture needs the fine one.
     -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -53,6 +66,7 @@
     <application
         android:name=".HoldMyTrackApplication"
         android:allowBackup="false"
+        android:dataExtractionRules="@xml/data_extraction_rules"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -72,6 +86,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Not exported: how the app opens MainActivity with something to act on (a tab, View
+             on map, a Private location, the recording's Stop). MainActivity is exported for the
+             launcher, so it ignores those from any other launch (MainEntry). -->
+        <activity-alias
+            android:name=".MainFromApp"
+            android:exported="false"
+            android:targetActivity=".MainActivity" />
 
         <!-- Not exported: the web's own pages shown in the app — the You tab's Settings, Activity
              graph & trends and About, Sync history, and a new account's first run. -->
@@ -154,8 +176,8 @@
             android:exported="true"
             android:label="@string/upload_title"
             android:theme="@style/Theme.HoldMyTrack">
-            <!-- A track file another app opens or shares with HoldMyTrack —
-                 uploaded as if picked here (imports/FileImports). A .fit has no type of its own
+            <!-- A track file another app opens or shares with HoldMyTrack — listed, and
+                 uploaded only on the user's Upload (imports/SharedFiles). A .fit has no type of its own
                  most apps agree on, and most hand a .gpx over as a generic binary, which isn't
                  claimed, so those are picked in the screen. -->
             <intent-filter>

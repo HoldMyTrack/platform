@@ -77,6 +77,9 @@ internal data class SettingsOptionsJson(
 internal data class ExportPartJson(val n: Int, val size: Long, val name: String, val url: String)
 
 @Serializable
+internal data class ExportLinkJson(val url: String)
+
+@Serializable
 internal data class ExportStatusJson(
     val state: String,
     @SerialName("expires_at") val expiresAt: String? = null,
@@ -89,6 +92,9 @@ internal data class CredentialsJson(val email: String, val password: String)
 
 @Serializable
 internal data class GoogleTokenJson(@SerialName("id_token") val idToken: String, val tz: String)
+
+@Serializable
+internal data class GoogleNonceJson(val nonce: String)
 
 @Serializable
 internal data class HandoffJson(val code: String, val verifier: String)

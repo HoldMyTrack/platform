@@ -137,13 +137,22 @@ class SignInActivity : AppCompatActivity() {
 
     /**
      * Credential Manager's account picker, asked for an ID token for the server's web client
-     * (the audience the server checks). Closing the picker is not an error, so it shows none.
+     * (the audience the server checks), carrying a nonce the server issued and spends on the
+     * sign-in. Closing the picker is not an error, so it shows none.
      */
     private fun signInWithGoogle() {
         val clientId = providers?.googleClientId?.takeIf { it.isNotEmpty() } ?: return
         setBusy(true)
+        HoldMyTrackApi.googleNonce { result ->
+            if (isDestroyed) return@googleNonce
+            result.onSuccess { nonce -> pickGoogleAccount(clientId, nonce) }
+                .onFailure { googleFailed(it as? Exception ?: IllegalStateException(it)) }
+        }
+    }
+
+    private fun pickGoogleAccount(clientId: String, nonce: String) {
         val request = GetCredentialRequest.Builder()
-            .addCredentialOption(GetSignInWithGoogleOption.Builder(clientId).build())
+            .addCredentialOption(GetSignInWithGoogleOption.Builder(clientId).setNonce(nonce).build())
             .build()
         lifecycleScope.launch {
             try {
@@ -178,16 +187,15 @@ class SignInActivity : AppCompatActivity() {
 
     /**
      * One of the server's own pages that end in a handoff — the web's sign-up, or its Facebook
-     * flow — in a browser tab, started with the S256 challenge of a fresh verifier. The verifier
-     * and [flow] are kept on disk rather than in fields, since the process can be killed while
-     * the tab is in front; [handleRedirect] reads them back when the tab returns.
+     * flow — in a browser tab, started with the S256 challenge of a fresh verifier, kept with [flow]
+     * by [BrowserHandoff] for [handleRedirect] to read back when the tab returns.
      */
     private fun openBrowserRoundTrip(flow: BrowserFlow, start: (challenge: String) -> Uri) {
         val verifier = Base64.getUrlEncoder().withoutPadding()
             .encodeToString(ByteArray(32).also { SecureRandom().nextBytes(it) })
         val challenge = Base64.getUrlEncoder().withoutPadding()
             .encodeToString(MessageDigest.getInstance("SHA-256").digest(verifier.toByteArray(Charsets.US_ASCII)))
-        handoffPrefs().edit().putString(KEY_VERIFIER, verifier).putString(KEY_FLOW, flow.name).apply()
+        BrowserHandoff.save(this, verifier, flow, System.currentTimeMillis())
         setBusy(true)
         awaitingBrowser = true
         CustomTabsIntent.Builder().build().launchUrl(this, start(challenge))
@@ -202,26 +210,22 @@ class SignInActivity : AppCompatActivity() {
     private fun handleRedirect(intent: Intent?) {
         val uri = intent?.data ?: return
         if (uri.scheme != OAuthRedirectActivity.SCHEME || uri.host != OAuthRedirectActivity.HOST) return
-        val prefs = handoffPrefs()
-        val verifier = prefs.getString(KEY_VERIFIER, null)
-        when (val rule = OAuthRedirectRule.of(uri.getQueryParameter("code"), uri.getQueryParameter("error"), verifier != null)) {
+        val pending = BrowserHandoff.pending(this, System.currentTimeMillis())
+        when (val rule = OAuthRedirectRule.of(uri.getQueryParameter("code"), uri.getQueryParameter("error"), pending != null)) {
             OAuthRedirectRule.Ignore -> return
             is OAuthRedirectRule.ShowError -> {
                 awaitingBrowser = false
                 setBusy(false)
-                val flow = prefs.getString(KEY_FLOW, null)?.let { name -> BrowserFlow.entries.firstOrNull { it.name == name } }
-                showError(getString(browserErrorMessage(BrowserFailure.of(flow, rule.error))))
+                showError(getString(browserErrorMessage(BrowserFailure.of(pending?.flow, rule.error))))
             }
             is OAuthRedirectRule.Exchange -> {
                 awaitingBrowser = false
-                prefs.edit().remove(KEY_VERIFIER).remove(KEY_FLOW).apply()
+                BrowserHandoff.clear(this)
                 setBusy(true)
-                HoldMyTrackApi.exchangeHandoff(rule.code, verifier!!, ::onResult)
+                HoldMyTrackApi.exchangeHandoff(rule.code, pending!!.verifier, ::onResult)
             }
         }
     }
-
-    private fun handoffPrefs() = getSharedPreferences(HANDOFF_PREFS, Context.MODE_PRIVATE)
 
     /** The web's own wording for the same codes (`/signin?error=…`). */
     private fun browserErrorMessage(failure: BrowserFailure): Int = when (failure) {
@@ -284,9 +288,6 @@ class SignInActivity : AppCompatActivity() {
 
     companion object {
         private const val TAG = "SignInActivity"
-        private const val HANDOFF_PREFS = "sign_in_handoff"
-        private const val KEY_VERIFIER = "verifier"
-        private const val KEY_FLOW = "flow"
 
         /** Replaces the whole back stack with this screen — used on a cold start with no
          *  session, when a stored token turns out to be revoked, and on sign-out (from Profile

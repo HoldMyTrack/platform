@@ -21,4 +21,16 @@ class RecordTapRulesTest {
         assertFalse(RecordTapRules.stopIntentApplies(isStopAction = true, launchedFromHistory = true))
         assertFalse(RecordTapRules.stopIntentApplies(isStopAction = false, launchedFromHistory = false))
     }
+
+    @Test
+    fun `precise location is asked for with approximate`() {
+        val fine = android.Manifest.permission.ACCESS_FINE_LOCATION
+        val coarse = android.Manifest.permission.ACCESS_COARSE_LOCATION
+        val notifications = android.Manifest.permission.POST_NOTIFICATIONS
+        assertEquals(
+            RecordTap.AskPermissions(listOf(fine, coarse, notifications)),
+            RecordTapRules.tap(RecordingState.IDLE, listOf(fine, notifications)),
+        )
+        assertEquals(listOf(notifications), RecordTapRules.request(listOf(notifications)))
+    }
 }

@@ -47,9 +47,9 @@ Each slide in `SLIDES` is a start URL and a `run(page)` that sets its state:
 ## Traps
 
 - **Focusing a track flies the camera to it.** The URL hash can't hold the view through a focus, so `steer` sets it afterwards: it scrolls the wheel to the zoom, then drags to the centre, reading `#map=` back after each move until it is within a pixel.
-- **A short drag is a click.** A drag inside MapLibre's click tolerance reads as a click on the map and clears the focused track, so `steer` pans with two long drags that sum to the offset.
-- **The hash has no bearing.** The track slide is turned with a right-drag of −57 px (0.8° per pixel); the photo click after it depends on that turn.
-- **First-use cards and the tour** appear for a fresh browser. Sign-in skips the tour; the Trips slide closes its card with "Got it" when it shows.
+- **A short drag is a click.** A drag inside MapLibre's click tolerance reads as a click on the map and clears the focused track, so `steer` pans with two drags of at least 80 px that sum to the offset (`dragSplit`).
+- **The hash has no bearing.** The track slide is turned with a right-drag of −57 px (0.8° per pixel); the photo click after it depends on that turn. The run fails when no photo marker is at `TUNNEL_PHOTO` or no popup opens, rather than click the map and lose the focus.
+- **First-use cards and the tour** appear for a fresh browser. Sign-in skips the tour; the Trips slide closes its card when it shows. Those clicks pass over a prompt that isn't there, so before each shot the run fails if the tour, its offer, a first-use card or the demo bar is still on screen.
 - **A fresh browser has no Places categories picked**, so every map slide picks them; the count beside Places would read 0 otherwise.
 
 ## Changing or adding a slide

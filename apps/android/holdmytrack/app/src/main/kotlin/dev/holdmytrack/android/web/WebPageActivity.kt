@@ -113,6 +113,8 @@ class WebPageActivity : AppCompatActivity() {
         // The pages' own scripts: Settings' searchable pickers and avatar upload, Profile's taps.
         web.settings.javaScriptEnabled = true
         web.settings.domStorageEnabled = true
+        // No content:// reads from a page: the avatar picker hands its file over itself.
+        web.settings.allowContentAccess = false
         web.webViewClient = Client()
         web.webChromeClient = object : WebChromeClient() {
             override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {

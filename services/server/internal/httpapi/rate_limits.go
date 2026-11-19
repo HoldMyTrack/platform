@@ -38,6 +38,10 @@ const syncRequestsPerHour = 60
 // syncing again, which costs a render each time and stores nothing (IMPLEMENTATION.md §5.7).
 const syncTracksPerHour = 1000
 
+// googleNoncesPerHour bounds `POST /v2/auth/google/nonce` per address: it needs no session and
+// stores a row each time, and a person asks for one per Google sign-in.
+const googleNoncesPerHour = 30
+
 // defaultSignupsPerHour bounds the accounts one address creates with an email and password in
 // an hour. Each sends a verification email to whatever address was typed, and every
 // per-account limit counts one account. Only an account created counts, so a mistyped

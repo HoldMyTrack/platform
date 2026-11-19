@@ -3,6 +3,7 @@ package dev.holdmytrack.android
 import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
+import dev.holdmytrack.android.net.Session
 
 /**
  * Where a browser-tab sign-in comes back to the app: the server's callback redirects to
@@ -11,19 +12,23 @@ import android.os.Bundle
  *
  * It shows nothing and forwards the URI straight to [SignInActivity] with CLEAR_TOP, which
  * brings the existing sign-in screen back to the front and, in doing so, removes the Custom Tab
- * that was open on top of it. Any other app can send this URI too; that's harmless, since a
- * code is only redeemable with the verifier [SignInActivity] generated and kept to itself
- * (`docs/IMPLEMENTATION.md` §4.9).
+ * that was open on top of it. Any other app can send this URI too: a code is only redeemable with
+ * the verifier [SignInActivity] generated and kept to itself (`docs/IMPLEMENTATION.md` §4.9), and
+ * with no round trip in flight, or a session held, the link is dropped
+ * ([OAuthRedirectRule.forwards]).
  */
 class OAuthRedirectActivity : Activity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        startActivity(
-            Intent(this, SignInActivity::class.java)
-                .setData(intent.data)
-                .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
-        )
+        val inFlight = BrowserHandoff.pending(this, System.currentTimeMillis()) != null
+        if (OAuthRedirectRule.forwards(Session.isSignedIn, inFlight)) {
+            startActivity(
+                Intent(this, SignInActivity::class.java)
+                    .setData(intent.data)
+                    .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+            )
+        }
         finish()
     }
 

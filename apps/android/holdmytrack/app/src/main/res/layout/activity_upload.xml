@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- Upload: the web's Upload menu (services/server/internal/web/static/upload.js) as a screen.
-     What can be imported, the two step-by-step export guides, Choose files…, then each file
+     What can be imported, the files another app handed over waiting for Upload, Choose files…, then each file
      queued or uploading, what the uploads had to say, and the way to the history on Sync.
      Filled by UploadActivity.render from imports/FileImports. Laid out like the Sync screen:
      16dp padding and gap, notes in a notice, what went wrong in the error box. -->
@@ -39,6 +39,42 @@
                 android:layout_height="wrap_content"
                 android:lineHeight="20sp"
                 android:text="@string/upload_hint" />
+        </LinearLayout>
+
+        <!-- Files another app opened or shared with HoldMyTrack: listed, and sent only on Upload. -->
+        <LinearLayout
+            android:id="@+id/upload_shared"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:divider="@drawable/gap_8"
+            android:orientation="vertical"
+            android:showDividers="middle"
+            android:visibility="gone">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/upload_shared_title"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/upload_shared_names"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:lineHeight="20sp" />
+
+            <Button
+                android:id="@+id/upload_shared_send"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/upload_shared_send" />
+
+            <Button
+                android:id="@+id/upload_shared_cancel"
+                style="@style/Widget.HoldMyTrack.Button.Outlined"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/upload_shared_cancel" />
         </LinearLayout>
 
         <Button

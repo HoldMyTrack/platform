@@ -49,6 +49,8 @@ paths:
     $ref: "paths/auth.yaml#/auth_apple_callback"
   /auth/apple/notifications:
     $ref: "paths/auth.yaml#/auth_apple_notifications"
+  /auth/google/nonce:
+    $ref: "paths/auth.yaml#/auth_google_nonce"
   /auth/google/token:
     $ref: "paths/auth.yaml#/auth_google_token"
   /auth/apple/token:
@@ -71,6 +73,10 @@ paths:
     $ref: "paths/account.yaml#/account_export"
   /account/exports/{id}/parts/{n}:
     $ref: "paths/account.yaml#/account_exports_id_parts_n"
+  /account/exports/{id}/parts/{n}/link:
+    $ref: "paths/account.yaml#/account_exports_id_parts_n_link"
+  /export-downloads/{token}:
+    $ref: "paths/account.yaml#/export_downloads_token"
   /tracks:
     $ref: "paths/tracks.yaml#/tracks"
   /track-types:

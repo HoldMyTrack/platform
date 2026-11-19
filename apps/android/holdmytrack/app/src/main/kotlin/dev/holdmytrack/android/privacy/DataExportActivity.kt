@@ -97,7 +97,7 @@ class DataExportActivity : AppCompatActivity() {
                 for (part in export.parts) {
                     val button = layoutInflater.inflate(R.layout.item_export_part, parts, false) as Button
                     button.text = getString(R.string.settings_export_download, part.n, export.parts.size, Formatter.formatShortFileSize(this, part.size))
-                    button.setOnClickListener { download(part) }
+                    button.setOnClickListener { download(part, button) }
                     parts.addView(button)
                 }
             }
@@ -107,18 +107,29 @@ class DataExportActivity : AppCompatActivity() {
     }
 
     /** One archive, to Downloads, by DownloadManager: it shows its own progress notification,
-     *  keeps going if this screen closes, and resumes a dropped connection. The session's
-     *  token goes as the header, as with every other API request. */
-    private fun download(part: ExportPart) {
-        val request = DownloadManager.Request(HoldMyTrackApi.exportPartUri(part))
-            .addRequestHeader("Authorization", "Bearer ${Session.token}")
-            .setTitle(part.name)
-            .setMimeType("application/zip")
-            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-            .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, part.name)
-        getSystemService(DownloadManager::class.java).enqueue(request)
-        notice.setText(R.string.settings_export_downloading)
-        notice.visibility = View.VISIBLE
+     *  keeps going if this screen closes, and resumes a dropped connection. It is handed a link
+     *  that needs no session, never the session's token ([HoldMyTrackApi.exportPartLink]). */
+    private fun download(part: ExportPart, button: Button) {
+        button.isEnabled = false
+        error.visibility = View.GONE
+        notice.visibility = View.GONE
+        HoldMyTrackApi.exportPartLink(part) { result ->
+            if (isDestroyed) return@exportPartLink
+            button.isEnabled = true
+            result.onSuccess { link ->
+                val request = DownloadManager.Request(link)
+                    .setTitle(part.name)
+                    .setMimeType("application/zip")
+                    .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
+                    .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, part.name)
+                getSystemService(DownloadManager::class.java).enqueue(request)
+                notice.setText(R.string.settings_export_downloading)
+                notice.visibility = View.VISIBLE
+            }.onFailure {
+                error.text = it.message.orEmpty()
+                error.visibility = View.VISIBLE
+            }
+        }
     }
 
     private companion object {

@@ -130,7 +130,7 @@ object FileImports {
     }
 
     /** The file's own name, as the picker or the app that shared it gives it. */
-    private fun nameOf(context: Context, uri: Uri): String =
+    fun nameOf(context: Context, uri: Uri): String =
         query(context, uri, OpenableColumns.DISPLAY_NAME) { it.getString(0) } ?: uri.lastPathSegment.orEmpty()
 
     /** Its size, or -1 when the provider doesn't say (the upload is then sent without a length). */

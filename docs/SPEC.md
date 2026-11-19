@@ -147,7 +147,7 @@ Every provider: a provider-only account has no password and can set one through 
 - For a real, verified account. One copy is prepared at a time; a new request ends the earlier one's downloads.
 - Once every 7 days from when the last was ready; a failed copy doesn't count. A refusal says when the next is allowed, in the account's timezone.
 - When ready, an email in the request's language links to Settings, which needs signing in.
-- Archives of about 2 GB, downloadable only by the account, resumable. Together: `README.txt`; `originals/`, every original as it arrived, before Private locations; `tracks/`, every track as GPX as the map shows it; `photos/`, the stored copies; `account.json`, the account, settings, track details, Trips, Private locations and captured places.
+- Archives of about 2 GB, resumable, downloadable only by the account or by a link it makes for one archive, which lasts a day at most. Together: `README.txt`; `originals/`, every original as it arrived, before Private locations; `tracks/`, every track as GPX as the map shows it; `photos/`, the stored copies; `account.json`, the account, settings, track details, Trips, Private locations and captured places.
 - Downloadable for 7 days, then deleted; deleted with the account.
 
 ### FR-1.14 Account limits
