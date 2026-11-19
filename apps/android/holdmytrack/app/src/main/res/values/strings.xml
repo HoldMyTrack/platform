@@ -382,6 +382,7 @@
     <string name="upload_already">%1$s was already uploaded before.</string>
     <string name="upload_failed_transfer">%1$s: %2$s</string>
     <string name="upload_network_error">Network error</string>
+    <string name="upload_unreadable">the file couldn\'t be read</string>
 
     <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->
     <string name="panel_label">Tracks panel</string>
