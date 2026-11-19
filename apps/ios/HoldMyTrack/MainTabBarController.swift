@@ -1,8 +1,8 @@
 import HoldMyTrackCore
 import UIKit
 
-/// The signed-in app: Map, Trips, Sync and You (apps/android/docs/SPEC.md FR-2.9), each keeping
-/// its state across a switch. Map and Trips are one map screen with its sheet on the Tracks
+/// The signed-in app: Tracks, Trips, Sync and You (apps/android/docs/SPEC.md FR-2.9), each keeping
+/// its state across a switch. Tracks and Trips are one map screen with its sheet on the Tracks
 /// or the Trips tab (MapHostViewController); Trips counts copies waiting to be answered. The
 /// record button comes with recording (ROADMAP.md, 7d). The tour runs over all four
 /// (TourController).
@@ -18,8 +18,8 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         super.init(nibName: nil, bundle: nil)
         delegate = self
         let mapHost = MapHostViewController(map: map, tab: .tracks)
-        mapHost.tabBarItem = UITabBarItem(title: String(localized: "Map"), image: UIImage(resource: .map), tag: 0)
-        mapHost.tabBarItem.accessibilityIdentifier = "tabMap"
+        mapHost.tabBarItem = UITabBarItem(title: String(localized: "Tracks"), image: UIImage(resource: .map), tag: 0)
+        mapHost.tabBarItem.accessibilityIdentifier = "tabTracks"
         let trips = MapHostViewController(map: map, tab: .trips)
         trips.tabBarItem = UITabBarItem(title: String(localized: "Trips"), image: UIImage(resource: .bookOpen), tag: 1)
         trips.tabBarItem.accessibilityIdentifier = "tabTrips"

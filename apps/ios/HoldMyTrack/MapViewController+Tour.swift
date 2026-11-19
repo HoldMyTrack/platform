@@ -16,7 +16,7 @@ extension MapViewController {
         if sheet.detent != detent { sheet.setDetent(detent, animated: true) }
     }
 
-    /// A step's mode, shown on the Map tab without becoming the user's pick, which the tour's
+    /// A step's mode, shown on the Tracks tab without becoming the user's pick, which the tour's
     /// end puts back.
     func showTourMode(_ mode: MapMode) {
         pickedMode = mode

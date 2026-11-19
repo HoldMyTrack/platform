@@ -45,10 +45,6 @@ class PhotoPopup(private val view: View, private val top: () -> Int, private val
     private var generation = 0
     private var viewer: PhotoViewer? = null
 
-    /** The photos open, in route order; empty when closed. */
-    val openIds: List<String>
-        get() = photos.map { it.id }
-
     /** The one showing, or null. */
     val showingId: String?
         get() = photos.getOrNull(index)?.id

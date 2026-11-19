@@ -94,7 +94,9 @@ class CaptureMode(
         override fun onSensorChanged(event: SensorEvent) {
             SensorManager.getRotationMatrixFromVector(matrix, event.values)
             SensorManager.getOrientation(matrix, orientation)
-            val azimuth = Math.toDegrees(orientation[0].toDouble()).toFloat() + screenRotation()
+            // No display, before the activity has one or after it's gone: no heading to turn.
+            val rotation = screenRotation() ?: return
+            val azimuth = Math.toDegrees(orientation[0].toDouble()).toFloat() + rotation
             // Smoothed a little, taking the short way round, so the arrow doesn't jitter.
             val last = heading
             heading = if (last == null) azimuth else last + 0.2f * (((azimuth - last + 540) % 360) - 180)
@@ -349,8 +351,8 @@ class CaptureMode(
         }
     }
 
-    @Suppress("DEPRECATION") // activity.display needs API 30; the window manager's works on all.
-    private fun screenRotation(): Float = when (activity.windowManager.defaultDisplay.rotation) {
+    /** The screen's rotation in degrees, or null while the activity has no display. */
+    private fun screenRotation(): Float? = when (activity.display?.rotation ?: return null) {
         Surface.ROTATION_90 -> 90f
         Surface.ROTATION_180 -> 180f
         Surface.ROTATION_270 -> 270f

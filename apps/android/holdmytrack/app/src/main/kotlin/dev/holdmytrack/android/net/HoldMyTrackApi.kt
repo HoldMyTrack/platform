@@ -229,7 +229,7 @@ object HoldMyTrackApi {
                 .post(jsonBody(SyncTracksRequestJson(source, tracks)))
                 .build()
             val response = waitingClient.newCall(request).await()
-            val text = response.use { it.body?.string().orEmpty() }
+            val text = response.use { it.body.string() }
             if (!response.isSuccessful) throw ApiException.from(response.code, text)
             decode<SyncResultsJson>(text).results.map { SyncResult(it.externalId, it.status, it.error) }
         }
@@ -251,7 +251,7 @@ object HoldMyTrackApi {
                     .post(jsonBody(SyncKnownRequestJson(source, chunk)))
                     .build()
                 val response = waitingClient.newCall(request).await()
-                val text = response.use { it.body?.string().orEmpty() }
+                val text = response.use { it.body.string() }
                 if (!response.isSuccessful) throw ApiException.from(response.code, text)
                 val json = decode<SyncKnownJson>(text)
                 known += json.known
@@ -276,7 +276,7 @@ object HoldMyTrackApi {
                     .post(jsonBody(OverlapsRequestJson(spansJson)))
                     .build()
                 val response = waitingClient.newCall(request).await()
-                val text = response.use { it.body?.string().orEmpty() }
+                val text = response.use { it.body.string() }
                 if (!response.isSuccessful) throw ApiException.from(response.code, text)
                 for (row in decode<OverlapsJson>(text).overlaps) {
                     found[row.key] = TrackOverlap(row.trackId, row.name, row.trackType, row.startedAt, row.timezone)
@@ -331,7 +331,7 @@ object HoldMyTrackApi {
             .post(body)
             .build()
         val response = uploadClient.newCall(request).await()
-        val text = response.use { it.body?.string().orEmpty() }
+        val text = response.use { it.body.string() }
         if (!response.isSuccessful) throw ApiException.from(response.code, text)
         UploadOutcome(status = decode<UploadResultJson>(text).status)
     }
@@ -621,7 +621,7 @@ object HoldMyTrackApi {
     /** [response]'s image, decoded at a reduction still at least [maxSide] on its long side. */
     private fun decodeImage(response: Response, maxSide: Int?): Result<Bitmap> = response.use {
         if (!it.isSuccessful) return@use Result.failure(ApiException(it.code, ""))
-        val bytes = it.body?.bytes() ?: ByteArray(0)
+        val bytes = it.body.bytes()
         val options = BitmapFactory.Options()
         if (maxSide != null) {
             options.inJustDecodeBounds = true
@@ -751,8 +751,8 @@ object HoldMyTrackApi {
                     runCatching {
                         when {
                             it.code == 204 -> null
-                            !it.isSuccessful -> throw ApiException.from(it.code, it.body?.string().orEmpty())
-                            else -> it.body?.bytes()?.let { bytes -> BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }
+                            !it.isSuccessful -> throw ApiException.from(it.code, it.body.string())
+                            else -> it.body.bytes().let { bytes -> BitmapFactory.decodeByteArray(bytes, 0, bytes.size) }
                                 ?: throw IOException("not an image")
                         }
                     }

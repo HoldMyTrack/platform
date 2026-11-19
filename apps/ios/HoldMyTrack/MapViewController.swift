@@ -7,7 +7,7 @@ import UIKit
 /// document combined into one style (MapStyle), Normal and Fog of War, the Layers menu,
 /// the first framing, Find my location, the notices for an unreachable basemap, coverage still
 /// updating and an empty account, and the sheet with the Tracks and Trips tabs, shared by
-/// the Map and Trips tabs of the tab bar (MapHostViewController). The date range is
+/// the Tracks and Trips tabs of the tab bar (MapHostViewController). The date range is
 /// MapViewController+Range, the sheet's wiring MapViewController+Panel.
 final class MapViewController: UIViewController, @preconcurrency MLNMapViewDelegate, @preconcurrency CLLocationManagerDelegate {
     unowned let flow: AppFlow
@@ -176,7 +176,7 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
         coverageTask?.cancel()
         countSatelliteWait(onScreen: false)
         // Leaving the map ends a capture and drops the Private location editor's draft: iOS has
-        // no Back, and the Map tab is where they show.
+        // no Back, and the Tracks tab is where they show.
         capturing.stop()
         closePrivateEditor()
     }
@@ -258,24 +258,24 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
 
     // MARK: Modes and the Layers menu
 
-    /// The mode picked on the Map tab, which state.mode shows there and comes back to after
+    /// The mode picked on the Tracks tab, which state.mode shows there and comes back to after
     /// Trips (TabMode).
     var pickedMode = MapMode.normal
 
-    /// The user's pick, shown at once on the Map tab.
+    /// The user's pick, shown at once on the Tracks tab.
     func pickMode(_ mode: MapMode) {
         pickedMode = mode
         MapPreferences.save(state, mode: pickedMode)
         applyTabMode()
     }
 
-    /// The mode for the tab showing, and the toggle, which is only the Map tab's.
+    /// The mode for the tab showing, and the toggle, which is only the Tracks tab's.
     func applyTabMode() {
-        let onMap = panelTab == .tracks
-        // The editor is the Map tab's, in Normal.
-        if !onMap || pickedMode != .normal { closePrivateEditor() }
-        modes.isHidden = !TabMode.toggleShown(onMapTab: onMap)
-        let shown = TabMode.shown(picked: pickedMode, onMapTab: onMap)
+        let onTracks = panelTab == .tracks
+        // The editor is the Tracks tab's, in Normal.
+        if !onTracks || pickedMode != .normal { closePrivateEditor() }
+        modes.isHidden = !TabMode.toggleShown(onTracksTab: onTracks)
+        let shown = TabMode.shown(picked: pickedMode, onTracksTab: onTracks)
         modes.selectedSegmentIndex = MapMode.allCases.firstIndex(of: pickedMode) ?? 0
         renderLevel()
         guard shown != state.mode else { return }
@@ -647,7 +647,7 @@ enum MapPreferences {
         state.toggles = defaults.dictionary(forKey: "map.toggles") as? [String: Bool] ?? [:]
     }
 
-    /// mode is the Map tab's pick, which the map may not be showing on another tab.
+    /// mode is the Tracks tab's pick, which the map may not be showing on another tab.
     static func save(_ state: MapState, mode picked: MapMode) {
         mode = picked
         fogLevel = state.fogLevel

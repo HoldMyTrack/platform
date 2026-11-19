@@ -150,10 +150,10 @@ class MapFragment : Fragment(R.layout.fragment_map) {
 
     private var map: MapLibreMap? = null
     private var style: Style? = null
-    /** The mode the map shows ([MapChromeRules.tabMode]): [pickedMode] on the Map tab, else Normal. */
+    /** The mode the map shows ([MapChromeRules.tabMode]): [pickedMode] on the Tracks tab, else Normal. */
     private var mode = MapMode.NORMAL
 
-    /** The mode picked on the Map tab, which comes back there after Trips or Sync. */
+    /** The mode picked on the Tracks tab, which comes back there after Trips or Sync. */
     private var pickedMode = MapMode.NORMAL
 
     /** The chrome's and MapLibre's controls' margins against the system bars and the panels. */
@@ -245,7 +245,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         edit.privacy.onStyleReady()
     }
 
-    /** The bottom bar's Map: the panel's Tracks tab, collapsed. */
+    /** The bottom bar's Tracks: the panel's Tracks tab, collapsed. */
     fun showTracks() {
         if (::panel.isInitialized) panel.showTracks()
     }
@@ -370,7 +370,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
             onTabChanged = { tab ->
                 // Leaving the Trips tab closes its Trip.
                 if (tab != PanelTab.TRIPS && tripId != null) area.exitTrip()
-                // Trips and Sync are Normal mode's; the Map tab gets its pick back.
+                // Trips and Sync are Normal mode's; the Tracks tab gets its pick back.
                 applyTabMode()
                 // The summary is the Tracks tab's; renderSheet renders Privacy too.
                 renderSheet()
@@ -779,13 +779,13 @@ class MapFragment : Fragment(R.layout.fragment_map) {
         MapOverlays.updateLiveTrack(loaded, points)
     }
 
-    /** The user's, or the tour's, pick for the Map tab, shown there at once. */
+    /** The user's, or the tour's, pick for the Tracks tab, shown there at once. */
     private fun pickMode(next: MapMode) {
         pickedMode = next
         applyTabMode()
     }
 
-    /** The mode for the tab showing, and the toggle that's only the Map tab's. */
+    /** The mode for the tab showing, and the toggle that's only the Tracks tab's. */
     private fun applyTabMode() {
         val shown = MapChromeRules.tabMode(pickedMode, if (::panel.isInitialized) panel.tab else PanelTab.TRACKS)
         if (shown != mode) setMode(shown)

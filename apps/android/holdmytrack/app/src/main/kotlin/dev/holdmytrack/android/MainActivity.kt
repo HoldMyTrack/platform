@@ -25,8 +25,8 @@ import dev.holdmytrack.android.tour.TourMenu
 import dev.holdmytrack.android.tour.TourTarget
 
 /**
- * The app's main window: the bottom bar — Map, Trips, Record, Sync, You — and the tab above it
- * (`apps/android/docs/IMPLEMENTATION.md` §1.3). Map, Trips
+ * The app's main window: the bottom bar — Tracks, Trips, Record, Sync, You — and the tab above it
+ * (`apps/android/docs/IMPLEMENTATION.md` §1.3). Tracks, Trips
  * and Sync are all the map ([MapFragment]): Trips and Sync are its panel's Trips and Sync
  * tabs, Sync's list drawn on the map it covers. You is [YouFragment]. Tabs are shown and hidden
  * rather than replaced, so the map — its camera, its layers, a recording on it — is just as it
@@ -42,10 +42,17 @@ import dev.holdmytrack.android.tour.TourTarget
 class MainActivity : AppCompatActivity() {
 
     /** The bottom bar's tabs, Record aside — a button rather than a tab. */
-    enum class Tab { MAP, TRIPS, SYNC, YOU }
+    enum class Tab {
+        TRACKS, TRIPS, SYNC, YOU;
+
+        companion object {
+            /** The tab a saved state or an intent names, or null for a name no tab has, such as an older build's. */
+            fun named(name: String): Tab? = entries.firstOrNull { it.name == name }
+        }
+    }
 
     private lateinit var nav: BottomNavigationView
-    private var tab = Tab.MAP
+    private var tab = Tab.TRACKS
 
     /** The tour, its offer and its first-time cards (`apps/android/docs/SPEC.md` FR-2.12). */
     lateinit var tour: TourController
@@ -54,9 +61,9 @@ class MainActivity : AppCompatActivity() {
     /** Set while the bar's selection is moved in code, so its listener doesn't act on it. */
     private var selectingInCode = false
 
-    /** Back from any tab but Map goes to Map, and only then leaves the app. */
-    private val backToMap = object : OnBackPressedCallback(false) {
-        override fun handleOnBackPressed() = showTab(Tab.MAP)
+    /** Back from any tab but Tracks goes to Tracks, and only then leaves the app. */
+    private val backToTracks = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() = showTab(Tab.TRACKS)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,16 +124,16 @@ class MainActivity : AppCompatActivity() {
             )
             insets
         }
-        onBackPressedDispatcher.addCallback(this, backToMap)
+        onBackPressedDispatcher.addCallback(this, backToTracks)
 
         // A recreation (rotation, theme, language) restores the tabs' fragments, which tab was
         // showing and each one's own state.
         if (savedInstanceState == null) {
-            showTab(Tab.MAP)
+            showTab(Tab.TRACKS)
             tabFor(intent)?.let(::showTab)
             editPrivateLocation(intent)
         } else {
-            tab = savedInstanceState.getString(STATE_TAB)?.let(Tab::valueOf) ?: Tab.MAP
+            tab = savedInstanceState.getString(STATE_TAB)?.let(Tab::named) ?: Tab.TRACKS
             markTab(tab)
             // The map's panel comes back on its Tracks tab; Trips and Sync put it back on
             // their own once the map's view is up.
@@ -158,9 +165,9 @@ class MainActivity : AppCompatActivity() {
     }
 
     /**
-     * Shows [next]'s fragment and hides the others, adding it the first time. Map, Trips and
-     * Sync are the same fragment: moving between them moves its panel between Tracks, Trips
-     * and Sync, and Map takes it off Private locations too.
+     * Shows [next]'s fragment and hides the others, adding it the first time. Tracks, Trips
+     * and Sync are the same fragment: moving between them moves its panel between them, and
+     * Tracks takes it off Private locations too.
      */
     fun showTab(next: Tab) {
         val tag = tagOf(next)
@@ -180,7 +187,7 @@ class MainActivity : AppCompatActivity() {
         when (next) {
             Tab.TRIPS -> map()?.showTrips()
             Tab.SYNC -> map()?.showSync()
-            Tab.MAP -> if (map()?.panelTab.let { it != null && it != PanelTab.TRACKS }) map()?.showTracks()
+            Tab.TRACKS -> if (map()?.panelTab.let { it != null && it != PanelTab.TRACKS }) map()?.showTracks()
             else -> Unit
         }
         markTab(next)
@@ -189,7 +196,7 @@ class MainActivity : AppCompatActivity() {
     /** The map, when a start of a recording, a View on map or the notification's Stop needs it
      *  — left on Trips if that's where it is, since that's the map too. */
     fun showMap() {
-        if (tab == Tab.SYNC || tab == Tab.YOU) showTab(Tab.MAP)
+        if (tab == Tab.SYNC || tab == Tab.YOU) showTab(Tab.TRACKS)
     }
 
     /** The Trips tab's badge: the copies of Trips others sent, waiting to be accepted or
@@ -223,7 +230,7 @@ class MainActivity : AppCompatActivity() {
     /** The Privacy screen's Add a location on the map, or a row: the map, the editor on it. */
     private fun editPrivateLocation(intent: Intent?) {
         val id = intent?.getStringExtra(EXTRA_PRIVATE_LOCATION) ?: return
-        showTab(Tab.MAP)
+        showTab(Tab.TRACKS)
         map()?.editPrivateLocation(id)
     }
 
@@ -234,7 +241,7 @@ class MainActivity : AppCompatActivity() {
             when (panelTab) {
                 PanelTab.TRIPS -> Tab.TRIPS
                 PanelTab.SYNC -> Tab.SYNC
-                PanelTab.TRACKS -> Tab.MAP
+                PanelTab.TRACKS -> Tab.TRACKS
             },
         )
     }
@@ -244,7 +251,7 @@ class MainActivity : AppCompatActivity() {
         selectingInCode = true
         nav.selectedItemId = itemOf(shown)
         selectingInCode = false
-        backToMap.isEnabled = shown != Tab.MAP
+        backToTracks.isEnabled = shown != Tab.TRACKS
     }
 
     private fun map() = supportFragmentManager.findFragmentByTag(TAG_MAP) as? MapFragment
@@ -291,7 +298,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun tagOf(tab: Tab) = when (tab) {
-        Tab.MAP, Tab.TRIPS, Tab.SYNC -> TAG_MAP
+        Tab.TRACKS, Tab.TRIPS, Tab.SYNC -> TAG_MAP
         Tab.YOU -> TAG_YOU
     }
 
@@ -301,14 +308,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun itemOf(tab: Tab) = when (tab) {
-        Tab.MAP -> R.id.nav_map
+        Tab.TRACKS -> R.id.nav_tracks
         Tab.TRIPS -> R.id.nav_trips
         Tab.SYNC -> R.id.nav_sync
         Tab.YOU -> R.id.nav_you
     }
 
     private fun tabOf(itemId: Int) = when (itemId) {
-        R.id.nav_map -> Tab.MAP
+        R.id.nav_tracks -> Tab.TRACKS
         R.id.nav_trips -> Tab.TRIPS
         R.id.nav_sync -> Tab.SYNC
         R.id.nav_you -> Tab.YOU
@@ -320,7 +327,7 @@ class MainActivity : AppCompatActivity() {
     private fun fromApp(intent: Intent): Intent =
         if (MainEntry.fromApp(intent.component?.className)) intent else Intent(intent).setAction(Intent.ACTION_MAIN).replaceExtras(Bundle())
 
-    private fun tabFor(intent: Intent?) = intent?.getStringExtra(EXTRA_TAB)?.let { name -> Tab.entries.firstOrNull { it.name == name } }
+    private fun tabFor(intent: Intent?) = intent?.getStringExtra(EXTRA_TAB)?.let(Tab::named)
 
     companion object {
         private const val TAG_MAP = "map"

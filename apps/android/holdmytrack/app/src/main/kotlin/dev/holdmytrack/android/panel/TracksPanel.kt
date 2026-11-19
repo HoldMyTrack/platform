@@ -328,7 +328,7 @@ class TracksPanel(
         setExpanded(true)
     }
 
-    /** The Tracks tab, collapsed — the bottom bar's Map, or a View on map. */
+    /** The Tracks tab, collapsed — the bottom bar's Tracks, or a View on map. */
     fun showTracks() {
         showTab(PanelTab.TRACKS)
         setExpanded(false)

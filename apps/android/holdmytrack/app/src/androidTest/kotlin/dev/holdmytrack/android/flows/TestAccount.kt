@@ -55,7 +55,7 @@ class TestAccount private constructor(val email: String, val password: String, p
     private fun download(path: String): ByteArray =
         client.newCall(Request.Builder().url("$BASE$path").build()).execute().use { response ->
             check(response.isSuccessful) { "GET $path: ${response.code}" }
-            response.body!!.bytes()
+            response.body.bytes()
         }
 
     /** Waits until the uploads are parsed: [count] tracks, none pending. */
@@ -81,7 +81,7 @@ class TestAccount private constructor(val email: String, val password: String, p
     }
 
     private fun send(request: Request): String = client.newCall(request).execute().use { response ->
-        val text = response.body?.string().orEmpty()
+        val text = response.body.string()
         check(response.isSuccessful) { "${request.method} ${request.url}: ${response.code} $text" }
         text
     }

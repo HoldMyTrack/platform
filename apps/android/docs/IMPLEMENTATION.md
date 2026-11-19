@@ -48,7 +48,7 @@ stateDiagram-v2
 
 ### 1.3 Tabs
 
-Map, Trips and Sync are one `MapFragment` whose panel switches tabs; You is `YouFragment`. `MainActivity` shows and hides them, never replaces them, so the `MapView`, its camera, its layers and a recording survive a trip to You.
+Tracks, Trips and Sync are one `MapFragment` whose panel switches tabs; You is `YouFragment`. `MainActivity` shows and hides them, never replaces them, so the `MapView`, its camera, its layers and a recording survive a trip to You.
 
 **An intent that asks `MainActivity` for something goes through `MainActivity.fromApp`**, the unexported alias: the activity is exported for the launcher, so it drops the action and extras of any launch addressed to it directly (`MainEntry`).
 

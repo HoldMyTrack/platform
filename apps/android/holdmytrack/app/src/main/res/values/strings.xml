@@ -148,7 +148,7 @@
     <string name="edit_open_failed">The track couldn\'t be opened: %1$s</string>
     <string name="area_zoom_in">Zoom in to see your tracks.</string>
     <string name="locate_needs_location">HoldMyTrack needs location access to show where you are.</string>
-    <string name="nav_map">Map</string>
+    <string name="nav_tracks">Tracks</string>
     <string name="nav_trips">Trips</string>
     <string name="nav_sync">Sync</string>
     <string name="nav_you">You</string>
@@ -386,7 +386,6 @@
 
     <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->
     <string name="panel_label">Tracks panel</string>
-    <string name="panel_tab_tracks">Tracks</string>
     <string name="panel_unit_m">m</string>
     <string name="panel_unit_ft">ft</string>
     <string name="panel_loading">Loading…</string>
@@ -401,7 +400,6 @@
     <string name="panel_filter_by_type">Filter by type</string>
     <string name="panel_type_empty">No tracks to filter yet.</string>
     <string name="panel_distance">Distance</string>
-    <string name="panel_any_distance">any distance</string>
     <string name="panel_any_distance_chip">Any distance</string>
     <string name="panel_distance_range">%1$s – %2$s %3$s</string>
     <string name="panel_check_all">Check all tracks</string>

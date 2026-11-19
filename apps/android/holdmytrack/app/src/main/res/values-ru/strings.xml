@@ -149,7 +149,7 @@
     <string name="edit_open_failed">Не удалось открыть трек: %1$s</string>
     <string name="area_zoom_in">Приблизьте карту, чтобы увидеть свои треки.</string>
     <string name="locate_needs_location">HoldMyTrack нужен доступ к местоположению, чтобы показать, где вы.</string>
-    <string name="nav_map">Карта</string>
+    <string name="nav_tracks">Треки</string>
     <string name="nav_trips">Путешествия</string>
     <string name="nav_sync">Синхр.</string>
     <string name="nav_you">Вы</string>
@@ -398,7 +398,6 @@
 
     <!-- The map's Tracks panel (panel/TracksPanel.kt), after the web's tracks.* and filters.* messages. -->
     <string name="panel_label">Панель треков</string>
-    <string name="panel_tab_tracks">Треки</string>
     <string name="panel_unit_m">м</string>
     <string name="panel_unit_ft">фт</string>
     <string name="panel_loading">Загрузка…</string>
@@ -413,7 +412,6 @@
     <string name="panel_filter_by_type">Фильтр по типу</string>
     <string name="panel_type_empty">Пока нечего фильтровать.</string>
     <string name="panel_distance">Расстояние</string>
-    <string name="panel_any_distance">любое расстояние</string>
     <string name="panel_any_distance_chip">Любое расстояние</string>
     <string name="panel_distance_range">%1$s – %2$s %3$s</string>
     <string name="panel_check_all">Отметить все треки</string>

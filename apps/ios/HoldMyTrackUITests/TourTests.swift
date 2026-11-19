@@ -3,7 +3,7 @@ import XCTest
 /// The tour, its offer and the first-time cards (apps/ios/docs/SPEC.md FR-2.12), from a phone that
 /// has shown none of them (-hmtTourReset).
 final class TourTests: XCTestCase {
-    /// The demo gets the tour unasked: every step to Done, which puts the Map tab and Normal back;
+    /// The demo gets the tour unasked: every step to Done, which puts the Tracks tab and Normal back;
     /// Take a tour on the You tab starts it again, and Skip ends it.
     @MainActor
     func testTheDemoTakesTheWholeTourAndCanTakeItAgain() throws {
@@ -24,7 +24,7 @@ final class TourTests: XCTestCase {
         XCTAssertTrue(app.cells["youTour"].exists, "the last step is on the You tab")
         next.tap()
         XCTAssertTrue(app.otherElements["tourCard"].waitForNonExistence(timeout: 5))
-        XCTAssertTrue(app.tabBars.buttons.element(boundBy: 0).isSelected, "the Map tab comes back")
+        XCTAssertTrue(app.tabBars.buttons.element(boundBy: 0).isSelected, "the Tracks tab comes back")
         XCTAssertTrue(app.segmentedControls["modes"].buttons.element(boundBy: 0).isSelected, "Normal comes back")
 
         app.tabBars.buttons.element(boundBy: 3).tap()

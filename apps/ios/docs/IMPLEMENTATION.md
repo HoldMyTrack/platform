@@ -11,7 +11,7 @@ Settings, Track graph & trends, Sync history and About are the server's pages in
 - **Signed in by cookie, in a store of its own.** A `WKWebView`'s requests never pass through `APIClient`, so the session, the `hmt_app` marker and the app's language (`WebPageSession.cookies`) go into the page's cookie store before its first load. Each page gets a non-persistent `WKWebsiteDataStore`, gone with the page, so sign-out has nothing to clear and no cookie reaches another account.
 - **`route` acts on where a navigation goes**, decided by the shared `webPageRoute` rule (`WebPageSession.route` reads a URL into its parts, the port in the authority). It runs in `decidePolicyFor`, told whether the navigation is a POST, and again on a server redirect. A form the server refuses, answering with the page at the form's path, stays in the page; first-run Settings' save, redirecting to `/`, reaches `AppFlow.check` and so the map.
 - **Closing a page reads the account again** (`AppFlow.refreshAccount`), since Settings can change the units, name or Country; the map and the You tab hear `AppFlow.accountChanged`. The app's language is iOS's per-app setting (`ARCHITECTURE.md` §1, D11), which the page doesn't change.
-- **View on map** is a link to `/` with the track's id and day: the tab bar moves to Map and `MapViewController.viewOnMap` focuses the track once the next list holds it, applying its day as the range first when it's outside it.
+- **View on map** is a link to `/` with the track's id and day: the tab bar moves to Tracks and `MapViewController.viewOnMap` focuses the track once the next list holds it, applying its day as the range first when it's outside it.
 
 ## 2. Session and auth
 
@@ -73,7 +73,7 @@ stateDiagram-v2
 
 The split is Android's: `MapSession` holds the range or Trip shown and the camera's next flight, `PanelState` the focus, checked group, hidden set and filters, both in `HoldMyTrackCore`. `TracksPanel` and `TripsPanel` draw them and report taps as events, which `MapViewController+Panel` applies, then binds `highlighted` and `mapHidden` into the layers document's `focused` and `hidden` vars, which `MapPatcher` sets as filters without a reload.
 
-- **One map screen for two tabs**: the tab bar's Map and Trips are each a `MapHostViewController` that adopts the one `MapViewController` as its child when it appears, so the camera, range and selection carry across, and the sheet switches tab.
+- **One map screen for two tabs**: the tab bar's Tracks and Trips are each a `MapHostViewController` that adopts the one `MapViewController` as its child when it appears, so the camera, range and selection carry across, and the sheet switches tab.
 - **The sheet is hand-made** (`PanelSheetView`): a presented `UISheetPresentationController` would cover the tab bar and leave with the tab. Collapsed, its content is held at zero height and the sheet takes its head's laid-out height; the content's bottom is pinned below required, so it is clipped, never squeezing the head.
 - **A tap on the map** asks MapLibre for features within `TrackTap.radius` on the tracks group's line layers; the map's own double-tap must fail first, or every zoom would also focus.
 - **The list drives the camera**: a picked range or an opened Trip sets `flyRequest`, and the next list read flies onto its tracks; tracks changed under the same query (a finished reprocess, a delete, a Trip copy arriving) bump a `v=` counter on the tiles' query so MapLibre fetches them again.

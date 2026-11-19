@@ -23,7 +23,7 @@ import java.time.format.FormatStyle
  * `dialog_similar_tracks`: a Sync row's ⓘ. What else covers the same time as [of] — rows
  * waiting on this phone ([Similar.waiting]), each picked out on the map when tapped ([onPick]),
  * and the account's track it overlaps the most (`HoldMyTrackApi.trackOverlaps`), opened on
- * the Map tab ([onOpen]). It says what sending both does and chooses nothing.
+ * the Tracks tab ([onOpen]). It says what sending both does and chooses nothing.
  */
 object SimilarTracksDialog {
 

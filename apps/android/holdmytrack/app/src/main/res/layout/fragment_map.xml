@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The map tab (MapFragment). A CoordinatorLayout so the Tracks sheet at the bottom
+<!-- The map under the Tracks, Trips and Sync tabs (MapFragment). A CoordinatorLayout so the Tracks sheet at the bottom
      (include_tracks_sheet) can be dragged between its heights; everything else is laid over
      the map as in a FrameLayout. -->
 <androidx.coordinatorlayout.widget.CoordinatorLayout xmlns:android="http://schemas.android.com/apk/res/android"

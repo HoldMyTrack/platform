@@ -107,8 +107,8 @@ class ClientRulesTest {
     private fun enumName(name: String) = name.uppercase()
     private fun caseName(enumName: String) = enumName.lowercase()
 
-    /** A case's tab: the web's panel tabs, Android's bottom bar, whose Map shows the Tracks tab. */
-    private fun tourTab(name: String) = if (name == "tracks") MainActivity.Tab.MAP else MainActivity.Tab.valueOf(enumName(name))
+    /** A case's tab: the web's panel tabs, which Android's bottom bar names alike. */
+    private fun tourTab(name: String) = MainActivity.Tab.valueOf(enumName(name))
 
     private fun tourSeen(seen: JsonObject) = TourSeen(seen.bool("tour"), seen.strings("cards").map { TourCard.valueOf(enumName(it)) }.toSet())
 
@@ -153,7 +153,7 @@ class ClientRulesTest {
             )
             buildJsonObject {
                 put("mode", changes.mode?.name?.lowercase())
-                put("tab", changes.tab?.let { if (it == MainActivity.Tab.MAP) "tracks" else caseName(it.name) })
+                put("tab", changes.tab?.name?.let(::caseName))
                 put("card", changes.card?.name?.let(::caseName))
             }
         },

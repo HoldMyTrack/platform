@@ -6,7 +6,7 @@ import UIKit
 /// apps/android/docs/SPEC.md FR-2.7), opened from Privacy: the map switches to Normal, the sheet steps aside for the card,
 /// and every Private location is drawn, the one being edited stronger with a handle at its centre
 /// to drag it by. A new one is 200 m at the middle of the map left showing, flying in first from
-/// too far out; a tap on another circle opens that one. Cancel, a mode change or leaving the Map
+/// too far out; a tap on another circle opens that one. Cancel, a mode change or leaving the Tracks
 /// tab drops the draft. The circles are the app's own source and layers, added on every style
 /// load as the route editor's are, and drawn only while the editor is open: they point straight
 /// at the places they hide.
