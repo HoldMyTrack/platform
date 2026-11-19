@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.Insets
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.updatePadding
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import dev.holdmytrack.android.map.MapMode
@@ -87,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         }
         tour = TourController(this, tourHost)
         // The bar pads itself clear of the gesture bar, so the tabs above it get no bottom inset
-        // — the map's own chrome adds the one it's given (`MapFragment.insetSystemBars`). At the
+        // — the map's own chrome adds the one it's given (`ChromeInsets.install`). At the
         // sides — a landscape phone's navigation bar or its camera cutout — the tabs are padded
         // in here, once for all of them, and see no side inset of their own.
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_content)) { content, insets ->
@@ -100,6 +101,20 @@ class MainActivity : AppCompatActivity() {
                 .setInsets(WindowInsetsCompat.Type.navigationBars(), Insets.of(0, navigation.top, 0, 0))
                 .setInsets(WindowInsetsCompat.Type.displayCutout(), Insets.of(0, cutout.top, 0, cutout.bottom))
                 .build()
+        }
+        // In place of Material's own, which pads the bar by the keyboard too: risen over it, the bar
+        // would squeeze the map, and the Tracks list would follow the shorter view (`docs/SPEC.md`
+        // FR-5.11). The keyboard covers the window instead (`windowSoftInputMode`).
+        // Its sides clear a landscape phone's navigation bar or camera cutout, as Material's did.
+        val navPadding = Insets.of(nav.paddingLeft, nav.paddingTop, nav.paddingRight, nav.paddingBottom)
+        ViewCompat.setOnApplyWindowInsetsListener(nav) { bar, insets ->
+            val sides = insets.getInsets(WindowInsetsCompat.Type.navigationBars() or WindowInsetsCompat.Type.displayCutout())
+            bar.updatePadding(
+                left = navPadding.left + sides.left,
+                right = navPadding.right + sides.right,
+                bottom = navPadding.bottom + insets.getInsets(WindowInsetsCompat.Type.navigationBars()).bottom,
+            )
+            insets
         }
         onBackPressedDispatcher.addCallback(this, backToMap)
 
@@ -128,7 +143,7 @@ class MainActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         // The notification's Stop and a View on map are both about the map.
-        val forMap = intent.action == RecordingService.ACTION_STOP || intent.hasExtra(EXTRA_VIEW_ACTIVITY)
+        val forMap = intent.action == RecordingService.ACTION_STOP || intent.hasExtra(EXTRA_VIEW_TRACK)
         if (forMap) showMap()
         tabFor(intent)?.let(::showTab)
         map()?.onNewIntent(intent)
@@ -306,7 +321,7 @@ class MainActivity : AppCompatActivity() {
         private val TAGS = listOf(TAG_MAP, TAG_YOU)
         private const val STATE_TAB = "tab"
         private const val EXTRA_TAB = "dev.holdmytrack.android.TAB"
-        internal const val EXTRA_VIEW_ACTIVITY = "dev.holdmytrack.android.VIEW_ACTIVITY"
+        internal const val EXTRA_VIEW_TRACK = "dev.holdmytrack.android.VIEW_TRACK"
         internal const val EXTRA_VIEW_DAY = "dev.holdmytrack.android.VIEW_DAY"
         private const val EXTRA_PRIVATE_LOCATION = "dev.holdmytrack.android.PRIVATE_LOCATION"
 
@@ -336,7 +351,7 @@ class MainActivity : AppCompatActivity() {
         fun viewOnMap(context: Context, trackId: String, day: String) {
             context.startActivity(
                 Intent(context, MainActivity::class.java)
-                    .putExtra(EXTRA_VIEW_ACTIVITY, trackId)
+                    .putExtra(EXTRA_VIEW_TRACK, trackId)
                     .putExtra(EXTRA_VIEW_DAY, day)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             )

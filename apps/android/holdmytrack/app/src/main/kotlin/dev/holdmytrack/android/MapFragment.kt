@@ -589,7 +589,7 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun takeViewOnMap(intent: Intent) {
         // A relaunch from recents replays the intent; it has been handled.
         if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
-        val id = intent.getStringExtra(MainActivity.EXTRA_VIEW_ACTIVITY) ?: return
+        val id = intent.getStringExtra(MainActivity.EXTRA_VIEW_TRACK) ?: return
         val day = intent.getStringExtra(MainActivity.EXTRA_VIEW_DAY) ?: return
         viewOnMapRequest = id to day
         if (::camera.isInitialized) camera.framed = true
@@ -652,8 +652,8 @@ class MapFragment : Fragment(R.layout.fragment_map) {
     private fun openEditWindow(group: List<Track>) = edit.open(group)
 
     /** The Edit window opened or closed: the chrome steps aside for it or comes back. */
-    private fun onEditWindowChanged(open: Boolean) {
-        if (open) chrome.placeEditors()
+    private fun onEditWindowChanged(@Suppress("UNUSED_PARAMETER") open: Boolean) {
+        chrome.placeEditors()
         renderSheet()
         renderBottomBar()
         sheetChrome.renderSelectionBar()

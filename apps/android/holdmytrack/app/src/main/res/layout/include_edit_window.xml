@@ -5,8 +5,8 @@
      dialog, so its Route and Photos tabs can edit on the map. The Track, Route and Photos tabs
      — Type, Name and Description on the first, the route editor (panel/RouteEditor) on the
      second, the photos (panel/PhotosTab) on the third — then an error line. It scrolls past most
-     of the screen's height, and its bottom margin clears the gesture bar (MapFragment
-     .placeEditWindow). Clickable, so a touch on it never reaches the map. -->
+     of the screen's height, and its bottom margin clears the gesture bar or the keyboard (map/ChromeInsets
+     .placeEditors). Clickable, so a touch on it never reaches the map. -->
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
