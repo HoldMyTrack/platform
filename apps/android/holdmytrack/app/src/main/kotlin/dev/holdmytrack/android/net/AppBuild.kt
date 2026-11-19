@@ -1,5 +1,7 @@
 package dev.holdmytrack.android.net
 
+import okhttp3.HttpUrl
+
 /**
  * What the app and the server say to each other about which build this is, as plain values:
  * the User-Agent naming it, the server's refusal of one too old (root `docs/IMPLEMENTATION.md`
@@ -14,9 +16,9 @@ object AppBuild {
         "HoldMyTrack-Android/$versionName ($gitSha; $versionCode)"
 
     /** Whether a response to [url] with [code] is the server turning this build away: only
-     *  its own `/v2/`, since nothing else answers 426 for that reason. */
-    fun isRefusal(url: String, apiBaseUrl: String, code: Int): Boolean =
-        code == 426 && url.startsWith("$apiBaseUrl/v2/")
+     *  its own `/v2/`, since nothing else answers 426 for that reason ([ApiOrigin]). */
+    fun isRefusal(url: HttpUrl, apiBase: HttpUrl, code: Int): Boolean =
+        code == 426 && ApiOrigin.isApi(url, ApiPath.v2(apiBase))
 
     /** Where Update leads: the app's Play listing, the only way the app is handed out. */
     fun updateLink(packageName: String): String =

@@ -369,6 +369,9 @@
     <string name="upload_see_sync">See them in Sync history</string>
     <string name="upload_hint">.gpx, .fit or .tcx files, up to 20 at a time.</string>
     <string name="upload_choose">Choose files…</string>
+    <string name="upload_shared_title">Upload these files to your account?</string>
+    <string name="upload_shared_send">Upload</string>
+    <string name="upload_shared_cancel">Cancel</string>
     <string name="upload_queued">Queued</string>
     <string name="upload_uploading">Uploading %1$d%%</string>
     <string name="upload_uploading_mb">Uploading %1$d MB</string>

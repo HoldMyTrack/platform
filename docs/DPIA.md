@@ -58,7 +58,7 @@ HoldMyTrack keeps the outdoor tracks a user chooses to bring in and draws them a
 | Photos, resized and stripped of EXIF | User | Cloudflare R2 | Until deleted |
 | Spot captures (place and time, not position) | Android app | Database | Until deleted |
 | Import records | System | Database | 90 days after the import finishes |
-| Sessions and emailed links, with a pending address | System | Database | Until expiry: 30 days, links 1 day |
+| Sessions, data download links, and emailed links with a pending address | System | Database | Until expiry: 30 days, links 1 day |
 | The day an account last used the service, the website and each app, and the app's version | System | Database | Until the account is deleted |
 | Server logs with account ids, no routes or emails | System | Server, then Grafana Cloud (US) | Rotated on the server; 14 days at Grafana |
 | Daily service statistics: counts, sums and percentiles across all accounts, never one account's; country groups under 5 accounts folded into one, itself of at least 5 or left out | System | Database; the newest day also at Grafana Cloud (US) | Indefinitely; 14 days at Grafana |
@@ -135,7 +135,7 @@ R8 stays medium until the actions in section 7 are done. R2 and R9 stay medium b
 | --- | --- | --- | --- |
 | R1 | Private locations applied at ingest, before routes or tiles are stored (ADR-0002). TLS everywhere through Caddy. Separate R2 token for backups, with no access to the app bucket. No public profiles, so there is nothing to scrape. | Encryption at rest of the VPS disk, which holds the database and the newest dumps (section 7) | Low |
 | R2 | Originals sit in a private R2 bucket, never publicly addressable. Exports and Trip copies are built from clipped routes, never from originals. | A decision on how long originals are kept, after launch (`docs/ROADMAP.md`, "After launch") | Medium |
-| R3 | The tile and API endpoints take the user from the session, never from a parameter. Server tests check handlers against the API contract. | A test that one account cannot read another's tracks, tiles or photos, if none exists | Low |
+| R3 | The tile and API endpoints take the user from the session, never from a parameter; a data download link's random token stands for one part of one archive. Server tests check handlers against the API contract. | A test that one account cannot read another's tracks, tiles or photos, if none exists | Low |
 | R4 | bcrypt password hashes. HttpOnly, SameSite=Lax session cookie for up to 30 days. Sign-in rate limits. Email verification. | Optional second factor; not needed for launch | Low |
 | R5 | The admin panel never shows routes (section 2). Admin rights can be set only from the server's own command line. The daily statistics hold only aggregates (section 2). | An audit log, needed once an admin can see or change a route | Low |
 | R6 | Exports leave out Private locations and draw only clipped routes, whose ends stop a secret, random distance past each circle so many routes together don't outline it. A Trip copy needs the recipient to accept it and carries the sender's Private locations. The policy warns that a copy is the recipient's. | — | Low |

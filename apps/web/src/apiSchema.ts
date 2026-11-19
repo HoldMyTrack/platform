@@ -660,6 +660,49 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/google/nonce": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A nonce for the id_token a native app is about to ask Google for
+         * @description Spent by the token that carries it, so a copy of that token signs nobody in. Lasts 10 minutes.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The nonce */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            nonce: string;
+                        };
+                    };
+                };
+                404: components["responses"]["Error"];
+                429: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/google/token": {
         parameters: {
             query?: never;
@@ -1209,6 +1252,107 @@ export interface paths {
                 };
                 401: components["responses"]["Unauthenticated"];
                 403: components["responses"]["NotVerified"];
+                404: components["responses"]["Error"];
+                503: components["responses"]["DailyCapacity"];
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/account/exports/{id}/parts/{n}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                /** @description The part, from 1. */
+                n: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * A link to one part of a ready download that works without a session
+         * @description For a download manager outside the app, which would otherwise keep the session's token. It lasts a day at most, and ends with the download or when a new one is asked for.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    /** @description The part, from 1. */
+                    n: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The link */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["ExportLink"];
+                    };
+                };
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["NotVerified"];
+                404: components["responses"]["Error"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/export-downloads/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        /** The part an export link names, as a zip; Range requests are honoured */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description The part */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/zip": string;
+                    };
+                };
+                /** @description The requested range of it */
+                206: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/zip": string;
+                    };
+                };
                 404: components["responses"]["Error"];
                 503: components["responses"]["DailyCapacity"];
             };
@@ -3906,6 +4050,12 @@ export interface components {
                 /** @description Relative to the site. */
                 url: string;
             }[];
+        };
+        ExportLink: {
+            /** @description Relative to the site. */
+            url: string;
+            /** Format: date-time */
+            expires_at: string;
         };
         TrackRow: {
             /** Format: uuid */

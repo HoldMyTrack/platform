@@ -392,7 +392,7 @@ class RecordingService : Service() {
             .setContentIntent(
                 PendingIntent.getActivity(
                     this, 0,
-                    Intent(this, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
+                    MainActivity.fromApp(this).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
                     PendingIntent.FLAG_IMMUTABLE,
                 ),
             )
@@ -409,7 +409,7 @@ class RecordingService : Service() {
                     getString(R.string.recording_stop),
                     PendingIntent.getActivity(
                         this, ACTION_STOP.hashCode(),
-                        Intent(this, MainActivity::class.java)
+                        MainActivity.fromApp(this)
                             .setAction(ACTION_STOP)
                             .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
                         PendingIntent.FLAG_IMMUTABLE,

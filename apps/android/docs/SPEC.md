@@ -293,7 +293,7 @@ The bottom bar's Sync is the map in Normal mode with the sheet on its Sync tab, 
 
 The web's upload (`docs/SPEC.md` FR-3.1, FR-3.2) as a screen, for a verified, non-demo account.
 
-- Files come from Android's picker, or are opened or shared from another app (§9).
+- Files come from Android's picker, or are opened or shared from another app (§9). Files from another app are listed and sent only on Upload.
 - The web's limits apply: `.gpx`, `.fit` or `.tcx`, up to 16 MiB each, 20 at a time (more are refused whole) and 100 an hour; a `.zip` is refused by name.
 - Files go one at a time and carry on when the screen is left. Finished imports are in Sync history.
 
@@ -359,6 +359,8 @@ Recordings are candidates on the Sync tab (FR-3.2), sent only when ticked.
 ### FR-5.3 Local storage is scoped per signed-in account
 
 Recordings belong to the account signed in when they began (the demo account has a key of its own). Hidden Sync rows, the Health Connect switch and the last Load are kept the same way. One account never sees, or sends, another's recordings on a shared phone.
+
+Nothing the app keeps on the phone goes into a backup or moves to a new phone: unsent recordings are sent from the phone they were made on, and the new phone signs in again.
 
 ## 8. Non-Functional Requirements (summary)
 

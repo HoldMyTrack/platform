@@ -106,9 +106,9 @@ Same shape as `password_resets`. `email` is the address the link confirms; a cha
 
 Google, Facebook and Apple links (ADR-0009), keyed by the provider's stable `subject`, never the email. `UNIQUE (user_id, provider)` allows one identity per provider. An Apple link also keeps its `refresh_token` and the `client_id` it was issued to, the only way to revoke it when the account is deleted (§4.9).
 
-### 3.18 `auth_handoffs`
+### 3.18 `auth_handoffs` / `google_nonces`
 
-One-time codes for a native app's browser sign-in (§4.9), hashed like `sessions`. Redeeming deletes the row in the statement that reads it; expired rows are purged on the next insert, so there is no sweeper.
+One-time codes for a native app's browser sign-in, and nonces for Android's Google id_token (§4.9), hashed like `sessions`. Redeeming deletes the row in the statement that reads it; expired rows are purged on the next insert, so there is no sweeper.
 
 ### 3.19 `trips` / `trip_tracks`
 
@@ -126,9 +126,9 @@ The primary key keeps the first capture, and no row is ever updated (§4.25).
 
 Several rows can name one image: a Trip copy's photo keeps the original's `image_key`, so the files go only with the last row naming them. No position column: `route_at` is a moment on the trajectory's M axis, located on every read, so route edits and Private locations apply to the photo (§4.27).
 
-### 3.23 `exports`
+### 3.23 `exports` / `export_links`
 
-No state column: until `ready_at` is set, a request's state is its job's. Parts live at `exports/{user_id}/{id}/{n}.zip` until `expires_at` (§4.29).
+No state column: until `ready_at` is set, a request's state is its job's. Parts live at `exports/{user_id}/{id}/{n}.zip` until `expires_at` (§4.29). An export link is hashed like `sessions` and goes with its export and with the account's sign-ins (`endSignIns`, `CloseAccounts`); expired links are purged on the next insert, so there is no sweeper.
 
 ### 3.24 `tz_parts`
 
@@ -419,7 +419,7 @@ sequenceDiagram
 
 **The web flow** (`oauth.go`, shared by `google_auth.go` and `facebook_auth.go`) is the authorization-code flow run server-side with no provider script or library (ADR-0009); in a browser the callback sets the session cookie instead of the handoff. Round-trip state is one `SameSite=Lax` cookie. Every failure shows one generic message, the cause only in the log.
 
-**Google** adds PKCE, and is linked by verified email: `resolveVerifiedUser`, shared with Apple, says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v2/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`); iOS runs the browser flow with the handoff, as for Facebook, so it needs no Google SDK.
+**Google** adds PKCE, and is linked by verified email: `resolveVerifiedUser`, shared with Apple, says how linking an unverified account closes pre-account takeover. Android posts a Credential Manager ID token to `POST /v2/auth/google/token`, whose signature is checked since a client sent it (`google_idtoken.go`), and whose nonce, asked for first from `POST /v2/auth/google/nonce`, the post spends, so a copied token signs nobody in; iOS runs the browser flow with the handoff, as for Facebook, so it needs no Google SDK.
 
 **Facebook** is **never linked by email**, since Facebook doesn't say the email is verified: an email already in use is refused and a new account starts unverified. A Facebook link made under a victim's address doesn't survive the victim taking the account over: Google's and Apple's unverified branch drops it, so does a password reset of an unverified account (`resetPassword`), and a first verification from a browser not signed in to the account is refused with `verify_needs_facebook`, the token kept. The page's Continue with Facebook carries the token through the round trip as the oauth cookie's fifth part; `finishFacebookVerify` signs in only the token's own account and only with its linked Facebook, and sends the browser back to the link either way, so another Facebook account makes no stray account. Both takeovers end sessions, app handoffs and reset links in their transaction (`endSignIns`). In an app the redirect carries a code, not a session (RFC 8252), because any app can register `holdmytrack://`: without the verifier a code is worthless, and a wrong guess burns it. Meta's SDK was rejected for its default event logging and advertising-ID collection. `resolveFacebookUser`'s new-account path has no automated test.
 
@@ -581,7 +581,7 @@ The routes are under `/v2/photos` because the mux rejects `/v2/tracks/{id}/photo
 
 ### 4.29 Downloading your data (FR-1.13)
 
-A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each route is written from `DisplayedPoints` and each raw payload once. The archive is never reachable by a link alone: the email links to Settings, and a part is served only to its account, through `http.ServeContent` so a Range request resumes it. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
+A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each route is written from `DisplayedPoints` and each raw payload once. The email links to Settings, never to the archive. A part is served through `http.ServeContent`, so a Range request resumes it, to its account or to the holder of an export link: the Android app makes one per part for the system download manager, which would otherwise keep the session's token in a database outside the app. A link names one part and lasts a day, or until its export ends or the account's sign-ins are ended. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
 
 ### 4.30 Each track's own timezone (FR-3.8)
 

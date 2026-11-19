@@ -98,6 +98,7 @@ type Server struct {
 	statsCardLimiter   *fixedWindowLimiter
 	syncTrackLimiter   *fixedWindowLimiter
 	signupLimiter      *fixedWindowLimiter
+	googleNonceLimiter *fixedWindowLimiter
 	budget             *budget.Gate
 	minAndroidBuild    int
 	minIOSBuild        int
@@ -127,6 +128,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 		statsCardLimiter:      newFixedWindowLimiter(statsCardsPerHour, time.Hour),
 		syncTrackLimiter:      newFixedWindowLimiter(syncTracksPerHour, time.Hour),
 		signupLimiter:         newFixedWindowLimiter(defaultSignupsPerHour, time.Hour),
+		googleNonceLimiter:    newFixedWindowLimiter(googleNoncesPerHour, time.Hour),
 	}
 	local := config.IsLocal(appBaseURL)
 	if local {
@@ -159,6 +161,7 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/auth/apple/notifications"), s.handleAppleNotifications)
 	// Native clients (docs/IMPLEMENTATION.md §4.9): an id_token from Android's Credential
 	// Manager, and the one-time code a browser-tab round trip above ends with for an app.
+	s.mux.HandleFunc(route("POST", "/auth/google/nonce"), s.handleGoogleNonce)
 	s.mux.HandleFunc(route("POST", "/auth/google/token"), s.handleGoogleToken)
 	s.mux.HandleFunc(route("POST", "/auth/apple/token"), s.handleAppleToken)
 	s.mux.HandleFunc(route("POST", "/auth/handoff"), s.handleAuthHandoff)
@@ -182,6 +185,9 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/account/export"), s.requireNotDemo(s.handleRequestExport))
 	s.mux.HandleFunc(route("GET", "/account/export"), s.requireVerified(s.handleGetExport))
 	s.mux.HandleFunc(route("GET", "/account/exports/{id}/parts/{n}"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleDownloadExportPart)))
+	s.mux.HandleFunc(route("POST", "/account/exports/{id}/parts/{n}/link"), s.requireVerified(s.handleCreateExportLink))
+	// No session: the link's token is the credential (handleCreateExportLink).
+	s.mux.HandleFunc(route("GET", "/export-downloads/{token}"), s.budgeted(budget.ReadsPaused, s.handleDownloadExportLink))
 	s.mux.HandleFunc(route("POST", "/tracks/upload"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUpload)))
 	s.mux.HandleFunc(route("GET", "/tracks"), s.requireVerified(s.handleListTracks))
 	s.mux.HandleFunc(route("GET", "/tracks/area"), s.requireVerified(s.handleListArea))

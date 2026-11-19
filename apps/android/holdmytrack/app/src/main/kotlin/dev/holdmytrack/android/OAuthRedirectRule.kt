@@ -21,6 +21,10 @@ sealed interface OAuthRedirectRule {
             code != null -> Exchange(code)
             else -> ShowError(error)
         }
+
+        /** Whether [OAuthRedirectActivity] opens the sign-in screen at all: only for a round trip
+         *  in flight, so another app can't put the screen over a signed-in app. */
+        fun forwards(signedIn: Boolean, hasVerifier: Boolean): Boolean = !signedIn && hasVerifier
     }
 }
 /** Which page a browser-tab round trip started on, kept with its verifier. */

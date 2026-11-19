@@ -76,6 +76,9 @@ func TestBudgetStages(t *testing.T) {
 	if rec := d.do(me, "GET", "/tiles/v1/fog-vector/14/8800/5370.mvt", nil); rec.Code != http.StatusServiceUnavailable {
 		t.Errorf("Fog tile: %d, want 503", rec.Code)
 	}
+	if rec := d.do(account{}, "GET", "/v2/export-downloads/00000000-0000-4000-8000-000000000000", nil); rec.Code != http.StatusServiceUnavailable {
+		t.Errorf("data download by link: %d, want 503", rec.Code)
+	}
 	if rec := d.do(me, "GET", "/tiles/v1/tracks/14/8800/5370", nil); rec.Code == http.StatusServiceUnavailable {
 		t.Error("track tile refused: it reads only the database")
 	}

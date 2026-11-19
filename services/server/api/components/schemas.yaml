@@ -412,6 +412,15 @@ ExportStatus:
           url:
             type: string
             description: Relative to the site.
+ExportLink:
+  type: object
+  required: [url, expires_at]
+  additionalProperties: false
+  properties:
+    url:
+      type: string
+      description: Relative to the site.
+    expires_at: { type: string, format: date-time }
 SyncSource:
   type: string
   enum: [healthconnect, healthkit, recorded]
