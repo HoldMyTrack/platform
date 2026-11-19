@@ -2,7 +2,6 @@ package dev.holdmytrack.android.settings
 
 import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
@@ -11,10 +10,15 @@ import dev.holdmytrack.android.SignInActivity
 import dev.holdmytrack.android.map.EmptyNoticeDismissal
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
+import dev.holdmytrack.android.recording.RecordingService
+import dev.holdmytrack.android.recording.RecordingTypes
 import dev.holdmytrack.android.recording.db.RecordedTrackStore
 import dev.holdmytrack.android.sync.HiddenCandidates
 import dev.holdmytrack.android.sync.SyncSources
 import dev.holdmytrack.android.sync.WaitingStore
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 /**
@@ -54,23 +58,30 @@ object AccountDeletion {
         }
     }
 
+    /** Outlives the screen: the server has deleted the account by now, and a rotation must
+     *  not cut the device's half short. */
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+
     /**
-     * What this device keeps for the deleted account goes too: its unsynced recordings, the
-     * rows it hid on the Sync tab, its Health Connect switch and what Load last read —
-     * all keyed by the email, which a new account can take again — then the session, and on to
-     * the sign-in screen, which says the account was deleted.
+     * What this device keeps for the deleted account goes too: its unsynced recordings and any
+     * recording left in the journal, the last recording type, the rows it hid on the Sync tab,
+     * its Health Connect switch and what Load last read — all keyed by the email, which a new
+     * account can take again — then the session, and on to the sign-in screen, which says the
+     * account was deleted.
      */
     private fun forget(activity: AppCompatActivity) {
         val email = Session.email
         val context = activity.applicationContext
-        activity.lifecycleScope.launch {
+        scope.launch {
             RecordedTrackStore(context).deleteAll()
+            RecordingService.forgetAccount(context, email)
+            RecordingTypes.forget(context, email)
             HiddenCandidates(context, email).clear()
             SyncSources(context, email).clear()
             EmptyNoticeDismissal(context, email).clear()
             WaitingStore(context).clear()
             Session.clear()
-            SignInActivity.open(activity, R.string.account_deleted)
+            SignInActivity.open(context, R.string.account_deleted)
         }
     }
 }

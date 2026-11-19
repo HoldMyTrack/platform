@@ -468,6 +468,12 @@ class RecordingService : Service() {
         private fun journal(context: Context): LiveRecordingJournal =
             journalInstance ?: LiveRecordingJournal(context).also { journalInstance = it }
 
+        /** Drops [account]'s leftover from the journal, queued behind its pending writes. */
+        fun forgetAccount(context: Context, account: String) {
+            val journal = journal(context.applicationContext)
+            journalScope.launch { journal.clear(account) }
+        }
+
         /** The row Stop saves — blank name and description, the account's last-used type
          *  ([RecordingTypes.lastUsed]) — or null for one too short to keep. */
         private fun recordOf(
