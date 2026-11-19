@@ -88,6 +88,9 @@ object HoldMyTrackApi {
     /** The API's own base URL, parsed once for [isApi]. */
     private val apiBase: HttpUrl by lazy { BuildConfig.API_BASE_URL.toHttpUrl() }
 
+    /** `/v2/` and [segments] on the API ([ApiPath]). */
+    private fun v2(vararg segments: String): HttpUrl = ApiPath.v2(apiBase, *segments)
+
     /** Whether [url] is a request to HoldMyTrack's own API ([ApiOrigin]). */
     private fun isApi(url: HttpUrl): Boolean = ApiOrigin.isApi(url, apiBase)
 
@@ -623,7 +626,7 @@ object HoldMyTrackApi {
 
     /** `GET /v2/tracks/{id}`: one track in full, for the Edit window. */
     fun track(id: String, onResult: (Result<Track>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + Uri.encode(id)).build()
+        val request = Request.Builder().url(v2("tracks", id)).build()
         call(request, { body -> decode<TracksJson>(body).tracks.first().toTrack() }, onResult)
     }
 
@@ -654,7 +657,7 @@ object HoldMyTrackApi {
      */
     fun updateTrack(id: String, trackType: String, name: String, description: String, onResult: (Result<Track>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id)
+            .url(v2("tracks", id))
             .patch(jsonBody(TrackPatchJson(trackType, name, description)))
             .build()
         call(request, { text -> decode<TrackRowJson>(text).toTrack() }, onResult)
@@ -695,7 +698,7 @@ object HoldMyTrackApi {
     /** `DELETE /v2/tracks/{id}` (`docs/IMPLEMENTATION.md` §4.7.5) — the track, its
      *  track and its share of Fog coverage, for good. */
     fun deleteTrack(id: String, onResult: (Result<Unit>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id).delete().build()
+        val request = Request.Builder().url(v2("tracks", id)).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
@@ -761,7 +764,7 @@ object HoldMyTrackApi {
 
     /** `GET /v2/spots/{id}` (`docs/IMPLEMENTATION.md` §4.25) — see [SpotDetail]. */
     fun spotDetail(id: Long, onResult: (Result<SpotDetail>) -> Unit) {
-        call(Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/spots/" + id).build(), { text ->
+        call(Request.Builder().url(v2("spots", id.toString())).build(), { text ->
             val json = decode<SpotDetailJson>(text)
             SpotDetail(
                 spot = Spot(json.id, json.category, json.name, json.address, json.description, json.inscription, json.memorial, json.startDate, json.wikipedia, json.lon, json.lat),
@@ -784,7 +787,7 @@ object HoldMyTrackApi {
      *  capture. Outside the area is an [ApiException] with code 422. */
     fun captureSpot(id: Long, lat: Double, lon: Double, onResult: (Result<SpotCapture>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V2 + "/spots/" + id + "/captures")
+            .url(v2("spots", id.toString(), "captures"))
             .post(jsonBody(SpotCaptureRequestJson(lat, lon)))
             .build()
         call(request, { text -> decode<SpotCaptureJson>(text).toSpotCapture() }, onResult)
@@ -799,7 +802,7 @@ object HoldMyTrackApi {
     /** `GET /v2/tracks/{id}/route-metrics` (`docs/IMPLEMENTATION.md` §4.3.1) — see
      *  [RouteMetrics]. */
     fun trackMetrics(id: String, onResult: (Result<RouteMetrics>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id + "/route-metrics").build()
+        val request = Request.Builder().url(v2("tracks", id, "route-metrics")).build()
         call(request, { text ->
             val json = decode<RouteMetricsJson>(text)
             RouteMetrics(
@@ -814,7 +817,7 @@ object HoldMyTrackApi {
      *  Private location already clipped off, and the saved edit. A refusal (`409`: no
      *  recording kept, points without times) is the server's own wording. */
     fun trackPoints(id: String, onResult: (Result<RoutePoints>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id + "/route-points").build()
+        val request = Request.Builder().url(v2("tracks", id, "route-points")).build()
         call(request, { text ->
             val json = decode<RoutePointsJson>(text)
             RoutePoints(json.points.map { RoutePoint(it[0], it[1], it[2].toLong()) }, json.edit?.toRouteEdit())
@@ -832,7 +835,7 @@ object HoldMyTrackApi {
     fun routeEdit(id: String, edit: RouteEdit?, splitAt: Long? = null, allowHidden: Boolean = false, onResult: (Result<Unit>) -> Unit) {
         val body = RouteEditRequestJson(edit?.toJson(), splitAt, allowHidden = splitAt != null && allowHidden)
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V2 + "/tracks/" + id + "/route-edit")
+            .url(v2("tracks", id, "route-edit"))
             .post(jsonBody(body))
             .build()
         call(request, { }, onResult)
@@ -928,7 +931,7 @@ object HoldMyTrackApi {
      *  [routeAt] the photo's new moment on its track, which the server clamps to the track. */
     fun updatePhoto(id: String, caption: String?, routeAt: Instant?, onResult: (Result<Photo>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V2 + "/photos/" + id)
+            .url(v2("photos", id))
             .patch(jsonBody(PhotoPatchJson(caption, routeAt?.toString())))
             .build()
         call(request, { text -> decode<PhotoJson>(text).toPhoto() }, onResult)
@@ -936,7 +939,7 @@ object HoldMyTrackApi {
 
     /** `DELETE /v2/photos/{id}` (FR-15.5) — the photo and both its images. */
     fun deletePhoto(id: String, onResult: (Result<Unit>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/photos/" + id).delete().build()
+        val request = Request.Builder().url(v2("photos", id)).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
@@ -990,14 +993,14 @@ object HoldMyTrackApi {
         onResult: (Result<PrivateLocation>) -> Unit,
     ) {
         val body = jsonBody(PrivateLocationInputJson(name, lon, lat, radiusM))
-        val url = BuildConfig.API_BASE_URL + API_V2 + "/private-locations" + (id?.let { "/$it" } ?: "")
+        val url = if (id == null) v2("private-locations") else v2("private-locations", id)
         val request = Request.Builder().url(url).apply { if (id == null) post(body) else patch(body) }.build()
         call(request, { text -> decode<PrivateLocationJson>(text).toPrivateLocation() }, onResult)
     }
 
     /** `DELETE /v2/private-locations/{id}`. */
     fun deletePrivateLocation(id: String, onResult: (Result<Unit>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/private-locations/" + id).delete().build()
+        val request = Request.Builder().url(v2("private-locations", id)).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
@@ -1012,7 +1015,7 @@ object HoldMyTrackApi {
     /** `GET /v2/trips/{id}` — one Trip. A `404` ([ApiException]) is one that doesn't exist
      *  or isn't this account's, which the server doesn't tell apart (FR-13.5). */
     fun trip(id: String, onResult: (Result<Trip>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id).build()
+        val request = Request.Builder().url(v2("trips", id)).build()
         call(request, { text -> decode<TripJson>(text).toTrip() }, onResult)
     }
 
@@ -1029,7 +1032,7 @@ object HoldMyTrackApi {
     /** `PATCH /v2/trips/{id}` — both fields every time: an empty [description] clears it. */
     fun updateTrip(id: String, name: String, description: String, onResult: (Result<Trip>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id)
+            .url(v2("trips", id))
             .patch(jsonBody(TripInputJson(name, description)))
             .build()
         call(request, { text -> decode<TripJson>(text).toTrip() }, onResult)
@@ -1037,7 +1040,7 @@ object HoldMyTrackApi {
 
     /** `DELETE /v2/trips/{id}` — the Trip alone; its tracks stay. */
     fun deleteTrip(id: String, onResult: (Result<Unit>) -> Unit) {
-        val request = Request.Builder().url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id).delete().build()
+        val request = Request.Builder().url(v2("trips", id)).delete().build()
         call(request, { }) { onResult(deleteDone(it)) }
     }
 
@@ -1046,7 +1049,7 @@ object HoldMyTrackApi {
     fun changeTripTracks(id: String, trackIds: Collection<String>, add: Boolean, onResult: (Result<Trip>) -> Unit) {
         val body = jsonBody(TripTracksJson(trackIds.toList()))
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id + "/tracks")
+            .url(v2("trips", id, "tracks"))
             .apply { if (add) post(body) else delete(body) }
             .build()
         call(request, { text -> decode<TripJson>(text).toTrip() }, onResult)
@@ -1056,7 +1059,7 @@ object HoldMyTrackApi {
      *  whether or not the address has an account: the server never says. */
     fun sendTrip(id: String, email: String, onResult: (Result<Unit>) -> Unit) {
         val request = Request.Builder()
-            .url(BuildConfig.API_BASE_URL + API_V2 + "/trips/" + id + "/send")
+            .url(v2("trips", id, "send"))
             .post(jsonBody(EmailJson(email)))
             .build()
         call(request, { }, onResult)
@@ -1076,7 +1079,7 @@ object HoldMyTrackApi {
 
     /** `POST /v2/trip-sends/{id}/accept` ([accept]) or `DELETE /v2/trip-sends/{id}` (decline). */
     fun answerTripSend(id: String, accept: Boolean, onResult: (Result<Unit>) -> Unit) {
-        val url = BuildConfig.API_BASE_URL + API_V2 + "/trip-sends/" + id + if (accept) "/accept" else ""
+        val url = if (accept) v2("trip-sends", id, "accept") else v2("trip-sends", id)
         val request = Request.Builder().url(url)
             .apply { if (accept) post(EMPTY_BODY) else delete() }
             .build()
