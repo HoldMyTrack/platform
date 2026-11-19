@@ -381,6 +381,9 @@
     <string name="upload_see_sync">Смотреть в истории синхронизации</string>
     <string name="upload_hint">Файлы .gpx, .fit или .tcx, до 20 за раз.</string>
     <string name="upload_choose">Выбрать файлы…</string>
+    <string name="upload_shared_title">Загрузить эти файлы в аккаунт?</string>
+    <string name="upload_shared_send">Загрузить</string>
+    <string name="upload_shared_cancel">Отмена</string>
     <string name="upload_queued">В очереди</string>
     <string name="upload_uploading">Загрузка %1$d%%</string>
     <string name="upload_uploading_mb">Загрузка %1$d МБ</string>

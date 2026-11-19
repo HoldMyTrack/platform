@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import dev.holdmytrack.android.imports.FileImports
+import dev.holdmytrack.android.imports.SharedFiles
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.web.WebPageActivity
 
@@ -21,8 +22,8 @@ import dev.holdmytrack.android.web.WebPageActivity
  * usually once. The uploads themselves are [FileImports]'s, so they carry on when this screen
  * goes; once one has gone, its tracks are followed in Sync history ([WebPageActivity]).
  *
- * Another app's `.gpx` or `.tcx` handed to this app to open or share lands here, and is
- * uploaded as if picked.
+ * Another app's `.gpx` or `.tcx` handed to this app to open or share lands here, listed, and
+ * goes only on the user's Upload ([SharedFiles]).
  */
 class UploadActivity : AppCompatActivity() {
 
@@ -33,6 +34,11 @@ class UploadActivity : AppCompatActivity() {
     private lateinit var notes: TextView
     private lateinit var errors: TextView
     private lateinit var seeSync: Button
+    private lateinit var sharedSection: View
+    private lateinit var sharedNames: TextView
+
+    /** Files another app handed over, waiting for Upload or Cancel. */
+    private var shared: List<Uri> = emptyList()
 
     private val listener: () -> Unit = { render() }
 
@@ -52,6 +58,8 @@ class UploadActivity : AppCompatActivity() {
         notes = findViewById(R.id.upload_notes)
         errors = findViewById(R.id.upload_errors)
         seeSync = findViewById(R.id.upload_see_sync)
+        sharedSection = findViewById(R.id.upload_shared)
+        sharedNames = findViewById(R.id.upload_shared_names)
 
         choose.setOnClickListener { picker.launch(arrayOf("*/*")) }
         seeSync.setOnClickListener {
@@ -59,13 +67,27 @@ class UploadActivity : AppCompatActivity() {
             finish()
         }
 
-        if (savedInstanceState == null) importShared(intent)
+        findViewById<Button>(R.id.upload_shared_send).setOnClickListener {
+            val uris = shared
+            setShared(emptyList())
+            importFiles(uris)
+        }
+        findViewById<Button>(R.id.upload_shared_cancel).setOnClickListener { setShared(emptyList()) }
+
+        // Read again from the intent on a recreation, since the read grant comes with it, unless
+        // the user already answered.
+        if (savedInstanceState?.getBoolean(KEY_SHARED_ANSWERED) != true) setShared(sharedFiles(intent))
     }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        importShared(intent)
+        setShared(sharedFiles(intent))
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBoolean(KEY_SHARED_ANSWERED, shared.isEmpty())
     }
 
     override fun onStart() {
@@ -82,16 +104,20 @@ class UploadActivity : AppCompatActivity() {
     /** The server refuses a demo account's uploads (`requireNotDemo`) and an unconfirmed one's. */
     private fun canUpload() = Session.isSignedIn && Session.emailVerified && !Session.isDemo
 
-    /** Files another app handed this one to open or share: uploaded as if picked here, when
-     *  this account can (the notice says why not otherwise). */
-    private fun importShared(intent: Intent?) {
-        val uris = when (intent?.action) {
-            Intent.ACTION_VIEW -> listOfNotNull(intent.data)
+    /** Files another app handed this one to open or share. */
+    private fun sharedFiles(intent: Intent?): List<Uri> {
+        val streams = when (intent?.action) {
             Intent.ACTION_SEND -> listOfNotNull(intent.getParcelableExtra(Intent.EXTRA_STREAM, Uri::class.java))
             Intent.ACTION_SEND_MULTIPLE -> intent.getParcelableArrayListExtra(Intent.EXTRA_STREAM, Uri::class.java).orEmpty()
             else -> emptyList()
         }
-        if (uris.isNotEmpty() && canUpload()) importFiles(uris)
+        return SharedFiles.of(intent?.action, intent?.data, streams) { it.scheme }
+    }
+
+    private fun setShared(uris: List<Uri>) {
+        shared = uris
+        sharedNames.text = uris.joinToString("\n") { FileImports.nameOf(this, it) }
+        render()
     }
 
     /** Picked or shared files to [FileImports]. */
@@ -111,10 +137,11 @@ class UploadActivity : AppCompatActivity() {
                 },
             )
             accountNotice.visibility = View.VISIBLE
-            for (view in listOf(section, choose, transfers, notes, errors, seeSync)) view.visibility = View.GONE
+            for (view in listOf(section, sharedSection, choose, transfers, notes, errors, seeSync)) view.visibility = View.GONE
             return
         }
         accountNotice.visibility = View.GONE
+        sharedSection.visibility = if (shared.isEmpty()) View.GONE else View.VISIBLE
 
         transfers.removeAllViews()
         for (transfer in FileImports.transfers) {
@@ -142,5 +169,9 @@ class UploadActivity : AppCompatActivity() {
         errors.text = bad.joinToString("\n") { it.text }
         errors.visibility = if (bad.isEmpty()) View.GONE else View.VISIBLE
         seeSync.visibility = if (FileImports.sentCount > 0) View.VISIBLE else View.GONE
+    }
+
+    private companion object {
+        const val KEY_SHARED_ANSWERED = "shared_answered"
     }
 }
