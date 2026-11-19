@@ -87,6 +87,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Not exported: how the app opens MainActivity with something to act on (a tab, View
+             on map, a Private location, the recording's Stop). MainActivity is exported for the
+             launcher, so it ignores those from any other launch (MainEntry). -->
+        <activity-alias
+            android:name=".MainFromApp"
+            android:exported="false"
+            android:targetActivity=".MainActivity" />
+
         <!-- Not exported: the web's own pages shown in the app — the You tab's Settings, Activity
              graph & trends and About, Sync history, and a new account's first run. -->
         <activity

@@ -61,6 +61,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        intent = fromApp(intent)
         if (!Session.isSignedIn) {
             SignInActivity.open(this)
             finish()
@@ -141,13 +142,14 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onNewIntent(intent: Intent) {
-        super.onNewIntent(intent)
+        val sent = fromApp(intent)
+        super.onNewIntent(sent)
         // The notification's Stop and a View on map are both about the map.
-        val forMap = intent.action == RecordingService.ACTION_STOP || intent.hasExtra(EXTRA_VIEW_TRACK)
+        val forMap = sent.action == RecordingService.ACTION_STOP || sent.hasExtra(EXTRA_VIEW_TRACK)
         if (forMap) showMap()
-        tabFor(intent)?.let(::showTab)
-        map()?.onNewIntent(intent)
-        editPrivateLocation(intent)
+        tabFor(sent)?.let(::showTab)
+        map()?.onNewIntent(sent)
+        editPrivateLocation(sent)
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -313,6 +315,11 @@ class MainActivity : AppCompatActivity() {
         else -> null
     }
 
+    /** [intent] as sent by this app, or, from another app, a plain launch with nothing to act on
+     *  ([MainEntry]). */
+    private fun fromApp(intent: Intent): Intent =
+        if (MainEntry.fromApp(intent.component?.className)) intent else Intent(intent).setAction(Intent.ACTION_MAIN).replaceExtras(Bundle())
+
     private fun tabFor(intent: Intent?) = intent?.getStringExtra(EXTRA_TAB)?.let { name -> Tab.entries.firstOrNull { it.name == name } }
 
     companion object {
@@ -325,11 +332,15 @@ class MainActivity : AppCompatActivity() {
         internal const val EXTRA_VIEW_DAY = "dev.holdmytrack.android.VIEW_DAY"
         private const val EXTRA_PRIVATE_LOCATION = "dev.holdmytrack.android.PRIVATE_LOCATION"
 
+        /** A launch of this activity that keeps what it carries: through the unexported alias,
+         *  which only this app can address ([MainEntry]). */
+        fun fromApp(context: Context): Intent = Intent().setClassName(context, MainEntry.ALIAS)
+
         /** Opens the main window on [tab] — `SyncActivity`'s Choose what to sync. Clears whatever is over an
          *  existing one. */
         fun openTab(context: Context, tab: Tab) {
             context.startActivity(
-                Intent(context, MainActivity::class.java)
+                fromApp(context)
                     .putExtra(EXTRA_TAB, tab.name)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             )
@@ -339,7 +350,7 @@ class MainActivity : AppCompatActivity() {
          *  `PrivateLocationEditor.NEW` — the Privacy screen's. Clears whatever is over the map. */
         fun editPrivateLocation(context: Context, id: String) {
             context.startActivity(
-                Intent(context, MainActivity::class.java)
+                fromApp(context)
                     .putExtra(EXTRA_PRIVATE_LOCATION, id)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
             )
@@ -350,7 +361,7 @@ class MainActivity : AppCompatActivity() {
          *  which then selects it. */
         fun viewOnMap(context: Context, trackId: String, day: String) {
             context.startActivity(
-                Intent(context, MainActivity::class.java)
+                fromApp(context)
                     .putExtra(EXTRA_VIEW_TRACK, trackId)
                     .putExtra(EXTRA_VIEW_DAY, day)
                     .addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP),
