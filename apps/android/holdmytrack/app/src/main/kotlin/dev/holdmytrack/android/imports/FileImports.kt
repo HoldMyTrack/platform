@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.provider.OpenableColumns
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.ApiException
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import java.io.File
@@ -59,7 +60,8 @@ object FileImports {
     private val _notes = mutableListOf<Note>()
     val notes: List<Note> get() = _notes
 
-    /** Bumped each time a file has gone, so the Upload screen knows to point to Sync's history. */
+    /** Bumped each time a file has reached the server, so the Upload screen knows to point to
+     *  Sync's history. */
     var sentCount = 0
         private set
 
@@ -162,14 +164,15 @@ object FileImports {
                         changed()
                     }
                 }
+                sentCount++
                 if (outcome.status == "already_processed") _notes += Note(res.getString(R.string.upload_already, transfer.name), error = false)
             } catch (e: Exception) {
-                val reason = e.message?.takeIf { it.isNotBlank() } ?: res.getString(R.string.upload_network_error)
+                // The server's wording for its refusals; a dropped connection in the app's own.
+                val reason = (e as? ApiException)?.message ?: res.getString(R.string.upload_network_error)
                 _notes += Note(res.getString(R.string.upload_failed_transfer, transfer.name, reason), error = true)
             } finally {
                 next.copy.delete()
                 _transfers -= transfer
-                sentCount++
                 changed()
                 sendNext(context)
             }
