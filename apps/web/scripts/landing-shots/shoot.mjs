@@ -4,15 +4,20 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { firefox } from 'playwright';
-import { MAX_WHEEL_STEP, cameraFromHash, panOffset, wheelDelta } from './camera.mjs';
+import { MAX_WHEEL_STEP, cameraFromHash, dragSplit, panOffset, wheelDelta } from './camera.mjs';
 
 const SITE = 'https://holdmytrack.com';
-const OUT = new URL('../../../../services/server/internal/web/static/landing/', import.meta.url).pathname;
+const OUT = fileURLToPath(new URL('../../../../services/server/internal/web/static/landing/', import.meta.url));
 const VIEWPORT = { width: 1728, height: 974 };
 const SIZE = ['1760', '992'];
 const QUALITY = '80';
 const PLACES = ['Mesmerizing views', 'Waterfalls', 'Historic sites'];
+/** What a slide must never show: the tour, its offer and first-use cards, and the demo bar. */
+const OVERLAYS = ['tour', 'tour-offer', 'tour-card', 'demo-bar'];
+/** Where the tunnel photo's marker sits on the track slide, once steered and turned. */
+const TUNNEL_PHOTO = { x: 1381, y: 587 };
 
 /** Each slide: the URL it opens and what it does there before the shot. */
 const SLIDES = {
@@ -36,7 +41,8 @@ const SLIDES = {
       await page.locator('[data-testid=map-places] input[type=checkbox]').uncheck();
       await page.getByRole('tab', { name: 'Trips' }).click();
       await page.waitForTimeout(2500);
-      await page.getByRole('button', { name: 'Got it', exact: true }).click({ timeout: 3000 }).catch(() => {});
+      // The Trips tab's first-use card, when this browser hasn't closed it yet.
+      await page.getByTestId('tour-card-close').click({ timeout: 3000 }).catch(() => {});
       await steer(page, { zoom: 10.84, lat: 41.4238, lon: -81.6337 });
     },
   },
@@ -49,7 +55,7 @@ const SLIDES = {
       await page.waitForTimeout(3000);
       await steer(page, { zoom: 14.48, lat: 41.36756, lon: -81.83282 });
       await rotate(page, -57); // about 45° counterclockwise; the hash does not carry the bearing
-      await page.mouse.click(1381, 587); // the tunnel photo
+      await openPhotoAt(page, TUNNEL_PHOTO);
     },
   },
   profile: {
@@ -72,6 +78,26 @@ async function pickPlaces(page) {
   await page.waitForTimeout(1000);
 }
 
+/** Clicks the photo marker at point, failing when there is none, or a group's is there instead: a
+ *  click on the map would clear the focused track and still be shot. */
+async function openPhotoAt(page, point) {
+  const found = await page.evaluate(({ x, y }) => {
+    const marker = document.elementFromPoint(x, y)?.closest('.photo-marker');
+    return !!marker && !marker.classList.contains('photo-marker--group');
+  }, point);
+  if (!found) throw new Error(`no photo marker at ${point.x},${point.y}; set TUNNEL_PHOTO from a trial shot`);
+  await page.mouse.click(point.x, point.y);
+  await page.getByTestId('photo-popup').waitFor({ timeout: 5000 });
+}
+
+/** Fails when an overlay a slide must not show is on screen: the clicks that close them pass
+ *  over a prompt that isn't there, so a renamed or moved one would otherwise be shot. */
+async function assertNoOverlay(page) {
+  for (const id of OVERLAYS) {
+    if (await page.getByTestId(id).isVisible()) throw new Error(`${id} is on screen`);
+  }
+}
+
 async function mapCentre(page) {
   const box = await page.locator('.maplibregl-canvas').boundingBox();
   return { x: box.x + box.width / 2, y: box.y + box.height / 2 };
@@ -91,9 +117,7 @@ async function steer(page, target) {
     }
     const { x, y } = panOffset(now, target);
     if (Math.abs(x) < 1 && Math.abs(y) < 1) return;
-    // Two long drags that sum to the offset: a drag inside MapLibre's click tolerance reads as a
-    // click on the map, which clears the focused track.
-    for (const [mx, my] of [[-x + 80, -y + 80], [-80, -80]]) await drag(page, c, mx, my);
+    for (const [mx, my] of dragSplit(x, y)) await drag(page, c, mx, my);
   }
   throw new Error(`camera did not reach ${JSON.stringify(target)}`);
 }
@@ -113,13 +137,15 @@ async function rotate(page, dx) {
 }
 
 async function signIn(browser, statePath) {
-  const ctx = await browser.newContext({ viewport: VIEWPORT });
+  // English, as the shots are: /about and the tour follow the browser's language.
+  const ctx = await browser.newContext({ viewport: VIEWPORT, locale: 'en-US', timezoneId: 'America/New_York' });
   const page = await ctx.newPage();
   await page.goto(`${SITE}/about`);
   await Promise.all([page.waitForURL((u) => !u.pathname.startsWith('/about')), page.locator('form[action="/demo"] button').first().click()]);
   if (new URL(page.url()).pathname !== '/') throw new Error(`demo sign-in failed at ${page.url()} (5 an hour per address)`);
-  await page.getByRole('button', { name: 'Skip tour' }).click({ timeout: 15000 }).catch(() => {});
+  await page.getByTestId('tour-skip').click({ timeout: 15000 }).catch(() => {});
   await page.locator('.demo-bar__hide').click({ timeout: 5000 }).catch(() => {});
+  await assertNoOverlay(page);
   await ctx.storageState({ path: statePath });
   await ctx.close();
 }
@@ -139,6 +165,7 @@ async function shoot(browser, statePath, name, theme, png) {
   await page.waitForTimeout(3000);
   await slide.run(page);
   await page.waitForTimeout(4000); // tiles and photos
+  await assertNoOverlay(page);
   await page.screenshot({ path: png });
   await ctx.close();
 }
