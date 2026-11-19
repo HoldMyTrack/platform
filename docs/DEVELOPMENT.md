@@ -103,6 +103,8 @@ Every request `internal/httpapi`'s tests send through `dbTest.do`, `dbTest.send`
 
 The app has JUnit tests over its pure logic (`./gradlew :app:testDebugUnitTest` in `apps/android/holdmytrack`) and UI Automator flows over the map (`connectedDebugAndroidTest -Pholdmytrack.apiBaseUrl=http://10.0.2.2:8081`, on an emulator); there is no Health Connect test double. An emulator recording needs a moving location (Extended controls › Location › Routes, or `adb emu geo fix` in a loop), or Stop drops it. After a change to the sync code, re-check on a physical device with real Health Connect data: a run cut off midway, a route not handed over, a reinstall (synced sessions must not come back) and a track deleted on the web (its session must). Only one device and one provider (Fitbit) have been tested; Samsung's missing routes rest on Samsung's documentation.
 
+CI also runs `./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:optimizeReleaseResources`. Lint fails on any warning `app/lint-baseline.xml` doesn't list: fix a new one, and run `:app:updateLintBaseline` only to drop entries a fix removed. `app/lint.xml` ignores what the baseline can't hold. The release is compiled through R8 and resource shrinking but not packaged, since packaging needs the upload key.
+
 ### CI
 
 `.github/workflows/ci.yml` runs on each push to `main` and each pull request; on a pull request its `changes` job skips the Go, web, Android, map verification and ops-config jobs when nothing they read changed, Markdown excluded, and a push to `main` runs every job, so a read outside a job's folder that its filter misses fails on merge; add that read to the filter. Run workflow on a branch (Actions, CI or iOS) runs every job before merging; its results count toward the pull request's required checks. Its basemap extract is cached on `apps/web/scripts/build-basemap.sh` and cut on a miss, which 404s once the pinned Protomaps build ages out (about a week): bump `BUILD` in the script. A `govulncheck` failure on a pull request that changes no dependency means a new advisory: bump the module or Go itself.
@@ -145,6 +147,7 @@ scripts/check-file-size.sh                                        # soft size wa
 cd apps/web && npm run gen:api-types                              # after a contract change
 cd apps/web && npm run build:style                                # after a change under src/map that a served document carries
 cd apps/android/holdmytrack && ./gradlew :app:testDebugUnitTest   # Android JUnit tests
+cd apps/android/holdmytrack && ./gradlew :app:lintDebug           # Android lint, against its baseline
 ```
 
 On the host, `npm run build` must precede `verify:build`, and `npm run basemap` needs `pmtiles` on `PATH`.

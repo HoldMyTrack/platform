@@ -222,6 +222,32 @@ jobs:
           flags: kotlin
           token: ${{ secrets.CODECOV_TOKEN }}
 
+  # Lint, failing on any warning lint-baseline.xml doesn't list, and the release compiled
+  # through R8 and resource shrinking, as Play gets it: a keep rule or shrinker break shows here,
+  # not when a release is cut. Up to R8 only, since packaging needs the upload key CI doesn't hold.
+  android-build:
+    name: Android lint and release build
+    needs: changes
+    if: needs.changes.outputs.android == 'true'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/android/holdmytrack
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 17
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+      # --continue: a lint failure still lets the release compile, so one run reports both.
+      - run: ./gradlew --continue :app:lintDebug :app:minifyReleaseWithR8 :app:optimizeReleaseResources
+      - if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: android-lint-report
+          path: apps/android/holdmytrack/app/build/reports/lint-results-debug.html
+
   # `make verify verify-build`: the whole dev stack (db, rustfs, migrate, api) plus headless
   # Chromium, exactly as it runs locally.
   e2e:

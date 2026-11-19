@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- lifecycle 2.9.4's checks won't load on this lint (`UnsafeLifecycleWhenUsage`,
+         `RepeatOnLifecycleWrongUsage` don't run). Its report names a path in the Gradle cache,
+         different on every machine, so it can't sit in lint-baseline.xml; matched by the
+         registry's name instead. Another library's checks failing to load still fails lint. -->
+    <issue id="ObsoleteLintCustomCheck">
+        <ignore regexp="androidx\.lifecycle\.lint\." />
+    </issue>
+</lint>
