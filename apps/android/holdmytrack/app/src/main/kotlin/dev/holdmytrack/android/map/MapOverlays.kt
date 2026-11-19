@@ -2,6 +2,7 @@ package dev.holdmytrack.android.map
 
 import android.net.Uri
 import dev.holdmytrack.android.net.PaceBand
+import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.TrackMetricPoint
 import dev.holdmytrack.android.net.RouteMetrics
 import dev.holdmytrack.android.recording.RecordedPoint
@@ -75,6 +76,16 @@ object MapOverlays {
 
     /** A recording is in progress ([setRecording]). */
     private var recording = false
+
+    init {
+        // The next account's map sets each again as it attaches.
+        Session.onClear {
+            trackTrip = null
+            editingRoute = false
+            syncing = false
+            recording = false
+        }
+    }
 
     private const val LIVE_TRACK_SOURCE_ID = "live-track"
     private const val LIVE_TRACK_LAYER_ID = "live-track-line"

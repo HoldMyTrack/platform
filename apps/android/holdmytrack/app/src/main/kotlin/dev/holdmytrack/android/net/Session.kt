@@ -2,10 +2,11 @@ package dev.holdmytrack.android.net
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Handler
+import android.os.Looper
 import android.webkit.CookieManager
 import androidx.core.content.edit
-import dev.holdmytrack.android.map.FogPlaces
-import dev.holdmytrack.android.map.MapLayers
+import java.util.concurrent.CopyOnWriteArrayList
 
 /**
  * The credential the app holds for the API: an opaque `sessions` row id the server minted at
@@ -41,6 +42,18 @@ object Session {
     private const val KEY_TILE_VERSION = "tile_version"
 
     private lateinit var prefs: SharedPreferences
+
+    /** What [clear] runs: see [onClear]. */
+    private val clearHooks = CopyOnWriteArrayList<() -> Unit>()
+
+    /**
+     * Runs [hook] on the main thread each time the session ends, so the account's state kept
+     * outside it (the map's, the upload queue's) goes too and the next account starts clean.
+     * Each holder registers from its own `init`: one never touched holds nothing to clear.
+     */
+    fun onClear(hook: () -> Unit) {
+        clearHooks += hook
+    }
 
     @Volatile
     private var cachedToken: String? = null
@@ -154,8 +167,8 @@ object Session {
         cachedToken = null
         verified = false
         HoldMyTrackApi.clearImageCache()
-        // Fog's locked level and picked place are the account's: the next account starts with neither.
-        MapLayers.update(null) { it.copy(fogLevel = null, vars = it.vars - FogPlaces.VAR) }
+        val hooks = Runnable { clearHooks.forEach { it() } }
+        if (Looper.myLooper() == Looper.getMainLooper()) hooks.run() else Handler(Looper.getMainLooper()).post(hooks)
         prefs.edit {
             remove(KEY_TOKEN)
             remove(KEY_EMAIL)

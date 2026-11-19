@@ -1,6 +1,7 @@
 package dev.holdmytrack.android.map
 
 import dev.holdmytrack.android.BuildConfig
+import dev.holdmytrack.android.net.Session
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 import org.maplibre.android.maps.Style
@@ -52,6 +53,11 @@ object MapLayers {
 
     var state = State()
         private set
+
+    init {
+        // Fog's locked level and picked place are the account's: the next account starts with neither.
+        Session.onClear { update(null) { it.copy(fogLevel = null, vars = it.vars - FogPlaces.VAR) } }
+    }
 
     private class Applied(val doc: MapLayersDoc.Doc, val excluded: Set<String>) {
         val urls = mutableMapOf<String, String>()

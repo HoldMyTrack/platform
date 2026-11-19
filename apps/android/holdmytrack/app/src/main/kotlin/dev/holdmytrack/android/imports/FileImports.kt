@@ -67,6 +67,14 @@ object FileImports {
 
     private val listeners = mutableSetOf<() -> Unit>()
 
+    /** The application, from the first [enqueue], for [forAccount] as the session ends. */
+    private var app: Context? = null
+
+    init {
+        // The copies of the account's files go as it signs out, not when the next one queues.
+        Session.onClear { app?.let { forAccount(it, null) } }
+    }
+
     fun addListener(listener: () -> Unit) {
         listeners += listener
     }
@@ -84,6 +92,7 @@ object FileImports {
      */
     fun enqueue(context: Context, uris: List<Uri>) {
         val app = context.applicationContext
+        this.app = app
         val res = app.resources
         forAccount(app, Session.email)
         owner = Session.email
@@ -123,7 +132,7 @@ object FileImports {
     }
 
     /**
-     * Drops what another account left: its queue, its notes and its count. Called on queueing,
+     * Drops what another account left: its queue, its notes and its count. Called on queueing, as the session ends,
      * before each file is sent and when the Upload screen shows, so a phone signed in with
      * someone else never sends or shows the last account's files.
      */
