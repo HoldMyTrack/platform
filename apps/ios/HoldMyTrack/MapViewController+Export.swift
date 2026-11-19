@@ -4,9 +4,9 @@ import OSLog
 import Photos
 import UIKit
 
-/// The map image export (apps/ios/docs/SPEC.md FR-2.11, IMPLEMENTATION.md §3.5): the camera
-/// button opens the viewfinder over the map, whose chrome steps aside while it shows, since it
-/// would sit inside the picture. Capture draws the window with ExportRenderer, adds the photo
+/// The map image export (apps/ios/docs/SPEC.md FR-2.11, apps/ios/docs/IMPLEMENTATION.md §3.5): the
+/// camera button opens the viewfinder over the map, whose chrome steps aside while it shows, since
+/// it would sit inside the picture. Capture draws the window with ExportRenderer, adds the photo
 /// markers, the stats card and the marks (ExportImage), saves it to Photos and opens the share
 /// sheet. The geometry is Viewfinder's, the stats card's request ExportStats'.
 extension MapViewController {
