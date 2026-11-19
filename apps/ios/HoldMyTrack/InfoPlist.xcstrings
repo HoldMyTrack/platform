@@ -37,6 +37,24 @@
         }
       }
     },
+    "NSPhotoLibraryAddUsageDescription" : {
+      "comment" : "The prompt for adding to Photos, shown when a map image export is first saved.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack only adds the map images you export to your photos; it never reads them."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HoldMyTrack только добавляет в «Фото» картинки карты, которые вы экспортируете, и никогда их не читает."
+          }
+        }
+      }
+    },
     "SpotCapture" : {
       "comment" : "The precise location prompt when capturing a place with only approximate location on.",
       "extractionState" : "manual",

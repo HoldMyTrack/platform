@@ -19,6 +19,9 @@ enum TourText {
         case "layers": (
             String(localized: "tour.layers.title", defaultValue: "Layers", comment: "The tour: the Layers menu."),
             String(localized: "tour.layers.body", defaultValue: "Tick the roads, paths and points of interest you want on the map, and tap a point of interest to see what it is. Show layers turns them all on or off at once.", comment: "The tour: the Layers menu, which holds the points of interest too."))
+        case "export": (
+            String(localized: "tour.export.title", defaultValue: "Export", comment: "The tour: the map image export."),
+            String(localized: "tour.export.body", defaultValue: "Save what's on the map as an image. Tick tracks in the list first to make them bold, and Show stats adds a card with their distance and time.", comment: "The tour: the map image export."))
         case "fog": (
             String(localized: "tour.fog.title", defaultValue: "Fog of War", comment: "The tour and Fog's first-time card."),
             String(localized: "tour.fog.body", defaultValue: "Everywhere you've ever been, for all time: Dates and the filters don't apply here. Fog clears whole places, from countries down to towns, and zoomed in, exactly along your routes. Auto picks the level from the zoom. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes.", comment: "The tour and Fog's first-time card."))

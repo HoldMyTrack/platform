@@ -337,6 +337,18 @@ struct OverlapSpanJSON: Codable, Sendable, Equatable {
     let end: String
 }
 
+struct StatsCardRequestJSON: Codable, Sendable, Equatable {
+    let trackIDs: [String]
+    let width: Int
+    let height: Int
+    let theme: String
+
+    enum CodingKeys: String, CodingKey {
+        case trackIDs = "track_ids"
+        case width, height, theme
+    }
+}
+
 struct OverlapsRequestJSON: Codable, Sendable, Equatable {
     let spans: [OverlapSpanJSON]
 }

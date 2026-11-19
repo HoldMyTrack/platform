@@ -317,7 +317,7 @@ A GeoJSON layer over the routes for the focused track, since a vector tile can't
 
 #### 4.3.3 Map image export
 
-Client-side (§5.5); Android follows the same design (`apps/android/docs/IMPLEMENTATION.md` §3.5). The largest size offered is the smaller of the GPU's render-buffer limit and MapLibre's 4096 px canvas cap (`maxExportSide`), since past either MapLibre silently draws smaller.
+Client-side (§5.5); Android and iOS follow the same design (`apps/android/docs/IMPLEMENTATION.md` §3.5, `apps/ios/docs/IMPLEMENTATION.md` §3.5). The largest size offered is the smaller of the GPU's render-buffer limit and MapLibre's 4096 px canvas cap (`maxExportSide`), since past either MapLibre silently draws smaller.
 
 **Capture renders a second, hidden map** at the window's CSS size and the live camera, with the resolution from `pixelRatio`, so labels and lines keep their on-screen proportions. It applies the same layers document without Spots, with the live map's hidden and bold ids and bands, so **a change to how the live map attaches layers reaches the export too**.
 

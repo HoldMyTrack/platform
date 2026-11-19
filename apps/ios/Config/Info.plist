@@ -97,6 +97,8 @@
 	</array>
 	<key>HMTAPIBaseURL</key>
 	<string>$(HMT_API_BASE_URL)</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>HoldMyTrack only adds the map images you export to your photos; it never reads them.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>HoldMyTrack uses the camera only when you take a photo for your avatar in Settings.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>

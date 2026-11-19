@@ -52,6 +52,7 @@ struct WireContractTests {
         try response(RoutePointsJSON.self, "/tracks/{id}/route-points", "get")
         try request(RouteEditRequestJSON.self, "/tracks/{id}/route-edit", "post")
         try request(OverlapsRequestJSON.self, "/tracks/overlaps", "post")
+        try request(StatsCardRequestJSON.self, "/tracks/stats-card", "post")
         try response(OverlapsJSON.self, "/tracks/overlaps", "post")
         try response(UploadResultJSON.self, "/tracks/upload", "post", 202)
         try response(UploadResultJSON.self, "/tracks/upload", "post", 200)

@@ -12,7 +12,7 @@ import UIKit
 /// of them, each with its own image, which a style would need as an icon after every style load.
 /// The layer lets every touch but a marker's through to the map.
 final class PhotoMarkersView: UIView {
-    private let images: PhotoImages
+    let images: PhotoImages
     private let onOpen: ([String]) -> Void
     private var items: [PhotoMarkerItem] = []
     private var activeID: String?
@@ -87,6 +87,10 @@ final class PhotoMarkersView: UIView {
         }
     }
 
+    /// What the markers show, for an exported image (ExportImage): the items, the one open and the
+    /// one moving.
+    var shown: (items: [PhotoMarkerItem], activeID: String?, loneID: String?) { (items, activeID, loneID) }
+
     func clear() {
         markers.values.forEach { $0.removeFromSuperview() }
         markers = [:]
@@ -113,6 +117,64 @@ struct PhotoMarkerLook {
     static let small = PhotoMarkerLook(border: 1.5, activeBorder: 2, stack: 2, countHeight: 14, countFont: 10, countPad: 3, countTop: 7, countRight: 9)
 }
 
+/// How a marker is drawn, at unit points or pixels per point, into the current UIKit context: the
+/// marker views draw it at 1, and an exported image at its own scale (ExportImage), with the
+/// shadow the views get from their layer.
+enum PhotoMarkerPainter {
+    static func draw(at c: CGPoint, diameter: CGFloat, count: Int, image: UIImage?, active: Bool, small: Bool, unit: CGFloat, shadow: Bool) {
+        let look = small ? PhotoMarkerLook.small : PhotoMarkerLook.full
+        let r = diameter * unit / 2
+        let circle = { (center: CGPoint, radius: CGFloat) in
+            UIBezierPath(ovalIn: CGRect(x: center.x - radius, y: center.y - radius, width: 2 * radius, height: 2 * radius))
+        }
+        let context = UIGraphicsGetCurrentContext()
+        if count > 1 {
+            // Two cards behind, up and to the right, as the web's stacked box-shadows.
+            for step in [2.0, 1.0] {
+                let d = look.stack * step * unit
+                let card = circle(CGPoint(x: c.x + d, y: c.y - d), r)
+                UIColor(resource: .surface).setFill()
+                card.fill()
+                UIColor(resource: .borderStrong).setStroke()
+                card.lineWidth = unit
+                card.stroke()
+            }
+        }
+        let ringWidth = (active ? look.activeBorder : look.border) * unit
+        context?.saveGState()
+        if shadow { context?.setShadow(offset: CGSize(width: 0, height: 2 * unit), blur: 8 * unit, color: UIColor.black.withAlphaComponent(0.22).cgColor) }
+        UIColor(resource: .surfaceTintStrong).setFill()
+        circle(c, r).fill()
+        context?.restoreGState()
+        if let image, let context {
+            let inner = r - ringWidth
+            context.saveGState()
+            circle(c, inner).addClip()
+            let scale = 2 * inner / min(image.size.width, image.size.height)
+            let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+            image.draw(in: CGRect(x: c.x - size.width / 2, y: c.y - size.height / 2, width: size.width, height: size.height))
+            context.restoreGState()
+        }
+        let ring = circle(c, r - ringWidth / 2)
+        ring.lineWidth = ringWidth
+        UIColor(resource: active ? .accent : .surface).setStroke()
+        ring.stroke()
+        if count > 1 {
+            let text = NSAttributedString(string: "\(count)", attributes: [
+                .font: UIFont.systemFont(ofSize: look.countFont * unit, weight: .bold),
+                .foregroundColor: UIColor(resource: .onAccent),
+            ])
+            let h = look.countHeight * unit
+            let w = max(h, text.size().width + 2 * look.countPad * unit)
+            let right = c.x + r + look.countRight * unit, top = c.y - r - look.countTop * unit
+            UIColor(resource: .accent).setFill()
+            UIBezierPath(roundedRect: CGRect(x: right - w, y: top, width: w, height: h), cornerRadius: h / 2).fill()
+            let size = text.size()
+            text.draw(at: CGPoint(x: right - w / 2 - size.width / 2, y: top + h / 2 - size.height / 2))
+        }
+    }
+}
+
 /// One marker: the thumbnail cropped into a circle in a ring, the surface's color or the
 /// accent's while open, and for a group two cards' edges behind it and the count on its corner.
 /// The view is square, with room around the circle for the stack and the count, and never under a
@@ -124,7 +186,6 @@ private final class PhotoMarkerView: UIControl {
     private var small = false
     private var image: UIImage?
 
-    private var look: PhotoMarkerLook { small ? .small : .full }
     private var diameter: CGFloat {
         let d = PhotoMarkers.look[small ? .small : .full]!
         return active ? d.activeDiameter : d.diameter
@@ -173,52 +234,7 @@ private final class PhotoMarkerView: UIControl {
     }
 
     override func draw(_ rect: CGRect) {
-        let look = look
-        let c = CGPoint(x: bounds.midX, y: bounds.midY)
-        let r = diameter / 2
-        let circle = { (center: CGPoint, radius: CGFloat) in
-            UIBezierPath(ovalIn: CGRect(x: center.x - radius, y: center.y - radius, width: 2 * radius, height: 2 * radius))
-        }
-        if ids.count > 1 {
-            // Two cards behind, up and to the right, as the web's stacked box-shadows.
-            for step in [2.0, 1.0] {
-                let d = look.stack * step
-                let card = circle(CGPoint(x: c.x + d, y: c.y - d), r)
-                UIColor(resource: .surface).setFill()
-                card.fill()
-                UIColor(resource: .borderStrong).setStroke()
-                card.lineWidth = 1
-                card.stroke()
-            }
-        }
-        let ringWidth = active ? look.activeBorder : look.border
-        UIColor(resource: .surfaceTintStrong).setFill()
-        circle(c, r).fill()
-        if let image, let context = UIGraphicsGetCurrentContext() {
-            let inner = r - ringWidth
-            context.saveGState()
-            circle(c, inner).addClip()
-            let scale = 2 * inner / min(image.size.width, image.size.height)
-            let size = CGSize(width: image.size.width * scale, height: image.size.height * scale)
-            image.draw(in: CGRect(x: c.x - size.width / 2, y: c.y - size.height / 2, width: size.width, height: size.height))
-            context.restoreGState()
-        }
-        let ring = circle(c, r - ringWidth / 2)
-        ring.lineWidth = ringWidth
-        UIColor(resource: active ? .accent : .surface).setStroke()
-        ring.stroke()
-        if ids.count > 1 {
-            let text = NSAttributedString(string: "\(ids.count)", attributes: [
-                .font: UIFont.systemFont(ofSize: look.countFont, weight: .bold),
-                .foregroundColor: UIColor(resource: .onAccent),
-            ])
-            let h = look.countHeight
-            let w = max(h, text.size().width + 2 * look.countPad)
-            let right = c.x + r + look.countRight, top = c.y - r - look.countTop
-            UIColor(resource: .accent).setFill()
-            UIBezierPath(roundedRect: CGRect(x: right - w, y: top, width: w, height: h), cornerRadius: h / 2).fill()
-            let size = text.size()
-            text.draw(at: CGPoint(x: right - w / 2 - size.width / 2, y: top + h / 2 - size.height / 2))
-        }
+        PhotoMarkerPainter.draw(at: CGPoint(x: bounds.midX, y: bounds.midY), diameter: diameter, count: ids.count, image: image,
+                                active: active, small: small, unit: 1, shadow: false)
     }
 }

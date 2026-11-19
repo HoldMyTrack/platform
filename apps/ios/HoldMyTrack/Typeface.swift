@@ -21,13 +21,21 @@ enum Typeface {
         font(family: AppLanguage.headingFamily(language), size: size, weight: weight, style: style)
     }
 
+    /// family at exactly size, unscaled by Dynamic Type: text drawn into an image.
+    static func unscaled(_ family: String, _ size: CGFloat, weight: CGFloat) -> UIFont {
+        UIFont(descriptor: descriptor(family: family, size: size, weight: weight), size: size)
+    }
+
     private static func font(family: String, size: CGFloat, weight: CGFloat, style: UIFont.TextStyle) -> UIFont {
+        UIFontMetrics(forTextStyle: style).scaledFont(for: UIFont(descriptor: descriptor(family: family, size: size, weight: weight), size: size))
+    }
+
+    private static func descriptor(family: String, size: CGFloat, weight: CGFloat) -> UIFontDescriptor {
         let wght = 0x7767_6874 // "wght"
         let opsz = 0x6F70_737A // "opsz"; a font without the axis ignores it
-        let descriptor = UIFontDescriptor(fontAttributes: [
+        return UIFontDescriptor(fontAttributes: [
             .family: family,
             UIFontDescriptor.AttributeName(rawValue: kCTFontVariationAttribute as String): [wght: weight, opsz: size],
         ])
-        return UIFontMetrics(forTextStyle: style).scaledFont(for: UIFont(descriptor: descriptor, size: size))
     }
 }
