@@ -194,11 +194,9 @@ flowchart LR
 
 #### 4.0.3 `POST /v2/sync/tracks`
 
-Path 2's endpoint (`sync_tracks.go`); each track gets its own result. It is idempotent on the caller's record id, not a content hash, since a retry may serialize the JSON differently, and the raw key is scoped by source (`raw/{user}/{source}/{id}`) because that id is unique only within its source. `external_id` is pattern-checked because it goes into an object key, and type, name and description are held to the track edit's bounds, so a bad value is refused here instead of failing in the worker. `parse.ParseJSON` decodes the body into the same structs the file parsers produce, so the pipeline has no Path 2 branch.
+Path 2's endpoint (`sync_tracks.go`); each track gets its own result. It is idempotent on the caller's record id, not a content hash, since a retry may serialize the JSON differently, and the raw key is scoped by source (`raw/{user}/{source}/{id}`) because that id is unique only within its source. `external_id` is pattern-checked because it goes into an object key, and type, name and description are held to the track edit's bounds, so a bad value is refused here instead of failing in the worker. `parse.ParseJSON` decodes the body into the same structs the file parsers produce, so the pipeline has no Path 2 branch. A stored payload names the type `track_type`; one that still says `activity_type`, stored before migration 0057 on a database that never ran its rewrite, reads as type "unknown".
 
 `POST /v2/sync/known` makes the server the one record of what was sent: an id is known if a `tracks` row or a `pending` job carries it, so a reinstall or a second phone agrees, and a deleted track is offered again.
-
-The stored payload (`parse.JSONTrack`) names the type `track_type`. Payloads stored before migration 0057 said `activity_type`: the migration queues a `rewrite_sync_payload` job for each, and `parse` reads the old name meanwhile, since a job queued before the deploy can reprocess a track before its payload's rewrite runs. Both go once production holds no `.json` payload naming `activity_type` (`ROADMAP.md`).
 
 #### 4.0.4 In-app GPS recording (Android)
 
