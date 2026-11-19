@@ -57,7 +57,7 @@ internal class RecordingDbHelper(context: Context) :
     private fun createPoints(db: SQLiteDatabase) {
         db.execSQL(
             """
-            CREATE TABLE $POINTS_TABLE (
+            CREATE TABLE IF NOT EXISTS $POINTS_TABLE (
                 recording_id TEXT NOT NULL,
                 seq INTEGER NOT NULL,
                 lat REAL NOT NULL,
@@ -70,10 +70,16 @@ internal class RecordingDbHelper(context: Context) :
         )
     }
 
-    /** Version 7's move of every row's `points_json` into [POINTS_TABLE]. Read in pieces with
-     *  `substr`, since a value past the `CursorWindow` limit is exactly what can't be read whole,
-     *  and left as `[]`: the column stays, so an older build opening this file still finds it. */
+    /**
+     * Version 7's move of every row's `points_json` into [POINTS_TABLE]. Read in pieces with
+     * `substr`, since a value past the `CursorWindow` limit is exactly what can't be read whole,
+     * and set to `[]` once moved: the column stays, so an older build opening this file still
+     * finds it. A value that doesn't parse is left as it is ([LegacyPoints]). Run again after a
+     * rollback to an older build: rows already moved are skipped, and the points of rows that
+     * build deleted go.
+     */
     private fun movePointsOut(db: SQLiteDatabase) {
+        db.execSQL("DELETE FROM $POINTS_TABLE WHERE recording_id NOT IN (SELECT id FROM $TABLE)")
         val lengths = db.rawQuery("SELECT id, length(points_json) FROM $TABLE", null).use { cursor ->
             buildList { while (cursor.moveToNext()) add(cursor.getString(0) to cursor.getLong(1)) }
         }
@@ -86,9 +92,9 @@ internal class RecordingDbHelper(context: Context) :
                 }
                 from += CHUNK
             }
-            val points = runCatching { json.toString().toRecordedPoints() }.getOrDefault(emptyList())
+            val points = LegacyPoints.parse(json.toString()) ?: continue
             writePoints(db, id, points)
-            db.execSQL("UPDATE $TABLE SET points_json = '[]' WHERE id = ?", arrayOf(id))
+            db.execSQL("UPDATE $TABLE SET points_json = ? WHERE id = ?", arrayOf(LegacyPoints.MOVED, id))
         }
     }
 
@@ -149,7 +155,8 @@ internal class RecordingDbHelper(context: Context) :
     // recording inside. Columns are read by name, so ones a newer version added are left
     // alone, which holds only while a new version adds columns and never renames or drops one.
     // Since version 7 such a build finds every recording's points empty: they're in a table it
-    // doesn't know.
+    // doesn't know. Upgrading again runs version 7's move a second time, which skips what moved
+    // and keeps what that build recorded meanwhile (movePointsOut).
     override fun onDowngrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) = Unit
 
     companion object {
@@ -336,6 +343,6 @@ internal fun RecordedTrackRecord.toContentValues(account: String) = ContentValue
     put("duration_seconds", durationSeconds)
     // The points are in their own table (RecordingDbHelper.writeRecord); the column stays for
     // an older build opening this file.
-    put("points_json", "[]")
+    put("points_json", LegacyPoints.MOVED)
     put("created_at_ms", createdAtMs)
 }
