@@ -9,7 +9,6 @@ import android.os.Handler
 import android.os.LocaleList
 import android.os.Looper
 import dev.holdmytrack.android.BuildConfig
-import dev.holdmytrack.android.map.DateFilter
 import dev.holdmytrack.android.panel.TrackKind
 import dev.holdmytrack.android.panel.TrackTypes
 import java.io.File
@@ -679,14 +678,15 @@ object HoldMyTrackApi {
 
     /**
      * `GET /v2/tracks/area`: the newest tracks, at most [limit], whose track crosses [box]
-     * (`[west, south, east, north]`), all of them without one, under [dates] (`docs/SPEC.md`
-     * FR-5.11). Its rows are slim: the Edit window reads [track] for the rest.
+     * (`[west, south, east, north]`), all of them without one, recorded on [from] or after and on
+     * [to] or before, `YYYY-MM-DD` and either null (`docs/SPEC.md` FR-5.11). Its rows are slim:
+     * the Edit window reads [track] for the rest.
      */
-    fun areaTracks(box: List<Double>?, dates: DateFilter, limit: Int? = null, onResult: (Result<AreaPage>) -> Unit) {
+    fun areaTracks(box: List<Double>?, from: String?, to: String?, limit: Int? = null, onResult: (Result<AreaPage>) -> Unit) {
         val url = (BuildConfig.API_BASE_URL + API_V2 + "/tracks/area").toHttpUrl().newBuilder()
             .apply { if (box != null) addQueryParameter("bbox", box.joinToString(",")) }
-            .apply { dates.after?.let { addQueryParameter("from", it) } }
-            .apply { dates.before?.let { addQueryParameter("to", it) } }
+            .apply { from?.let { addQueryParameter("from", it) } }
+            .apply { to?.let { addQueryParameter("to", it) } }
             .apply { if (limit != null) addQueryParameter("limit", limit.toString()) }
             .build()
         call(Request.Builder().url(url).build(), { body ->

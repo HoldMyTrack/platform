@@ -131,7 +131,7 @@ class AreaController(
         if (trip != null) {
             HoldMyTrackApi.tripTracks(trip) { result -> result.onSuccess { landed(it, null) }.onFailure(failed) }
         } else {
-            HoldMyTrackApi.areaTracks(area, session.dates) { result -> result.onSuccess { landed(it.tracks, it.total) }.onFailure(failed) }
+            HoldMyTrackApi.areaTracks(area, session.dates.after, session.dates.before) { result -> result.onSuccess { landed(it.tracks, it.total) }.onFailure(failed) }
         }
     }
 
@@ -238,7 +238,7 @@ class AreaController(
      *  Nothing matched leaves the camera. */
     private fun datesFlight() {
         val dates = session.dates
-        HoldMyTrackApi.areaTracks(null, dates) { result ->
+        HoldMyTrackApi.areaTracks(null, dates.after, dates.before) { result ->
             if (dates != session.dates) return@areaTracks
             val box = BoxUnion.of(result.getOrNull()?.tracks.orEmpty().filter { !it.pending }.mapNotNull { it.bbox })
             if (box == null) {
