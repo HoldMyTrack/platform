@@ -7,6 +7,7 @@ import android.os.Looper
 import android.provider.OpenableColumns
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.net.Session
 import java.io.File
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
@@ -26,7 +27,7 @@ import kotlinx.coroutines.withContext
  * another app; `UploadActivity` only draws [transfers] and [notes] and listens for changes. Each
  * file is copied into the app's cache as it's queued, off the main thread: the read grant on a
  * picked or shared file ends with the screen that received it, and the queue outlives the
- * screen. The server takes
+ * screen. The queue belongs to the account that filled it ([ImportsAccount]). The server takes
  * it from there: once a file has gone, its jobs are in Sync's history, which polls while they
  * process.
  */
@@ -48,6 +49,9 @@ object FileImports {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val queue = ArrayDeque<Pending>()
     private var running = false
+
+    /** The account whose files these are: [Session.email] when they were queued. */
+    private var owner: String? = null
 
     private val _transfers = mutableListOf<Transfer>()
     val transfers: List<Transfer> get() = _transfers
@@ -79,6 +83,8 @@ object FileImports {
     fun enqueue(context: Context, uris: List<Uri>) {
         val app = context.applicationContext
         val res = app.resources
+        forAccount(app, Session.email)
+        owner = Session.email
         scope.launch {
             if (!running && queue.isEmpty()) clearCopies(app)
             val picked = withContext(Dispatchers.IO) { uris.map { UploadPlan.Picked(nameOf(app, it), sizeOf(app, it)) } }
@@ -114,7 +120,25 @@ object FileImports {
         }
     }
 
+    /**
+     * Drops what another account left: its queue, its notes and its count. Called on queueing,
+     * before each file is sent and when the Upload screen shows, so a phone signed in with
+     * someone else never sends or shows the last account's files.
+     */
+    fun forAccount(context: Context, email: String?) {
+        if (ImportsAccount.keeps(owner, email)) return
+        owner = null
+        queue.forEach { it.copy.delete() }
+        queue.clear()
+        _transfers.removeAll { it.sent < 0 }
+        _notes.clear()
+        sentCount = 0
+        if (!running) clearCopies(context)
+        changed()
+    }
+
     private fun sendNext(context: Context) {
+        forAccount(context, Session.email.takeIf { Session.isSignedIn })
         val next = queue.removeFirstOrNull()
         if (next == null) {
             running = false
@@ -163,7 +187,7 @@ object FileImports {
 
     private fun copies(context: Context) = File(context.cacheDir, COPIES).apply { mkdirs() }
 
-    /** Copies a killed process left behind. */
+    /** Copies a killed process left behind, or a dropped queue's. */
     private fun clearCopies(context: Context) {
         copies(context).listFiles()?.forEach { it.delete() }
     }

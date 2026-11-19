@@ -93,6 +93,8 @@ class UploadActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Another account's queue and notes go before this one sees them.
+        FileImports.forAccount(this, Session.email.takeIf { Session.isSignedIn })
         FileImports.addListener(listener)
         render()
     }
