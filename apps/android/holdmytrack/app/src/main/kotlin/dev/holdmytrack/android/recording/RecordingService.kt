@@ -147,9 +147,30 @@ class RecordingService : Service() {
             ACTION_START -> if (state == RecordingState.IDLE) start() else startForeground()
             ACTION_TOGGLE -> toggle()
             ACTION_STOP -> stop()
+            ACTION_DISCARD -> discard(intent.getStringExtra(EXTRA_ACCOUNT))
         }
         if (state == RecordingState.IDLE) stopSelf(startId)
         return START_NOT_STICKY
+    }
+
+    /**
+     * Destroyed while still recording, which nothing in the app does: the listener goes with it
+     * rather than outliving the service, and the recording stays in the journal, offered back
+     * as a leftover the next time the map binds to an idle service
+     * (`apps/android/docs/IMPLEMENTATION.md` §5.2).
+     */
+    override fun onDestroy() {
+        locationManager?.removeUpdates(locationListener)
+        locationManager = null
+        // The moving time since the last fix, as a pause keeps it, so the leftover resumes from
+        // where this stopped.
+        if (state == RecordingState.RECORDING) {
+            val id = recordingId
+            val movingMs = currentStats().elapsedMs
+            val distance = tally.meters
+            journalWrite { it.updateTotals(id, movingMs, distance) }
+        }
+        super.onDestroy()
     }
 
     /** A copy, not the live list — it keeps growing on the main thread while the caller
@@ -158,7 +179,9 @@ class RecordingService : Service() {
 
     /** `MapFragment` has already confirmed `ACCESS_FINE_LOCATION` before sending
      *  [ACTION_START] — a foreground service with a location type throws at `startForeground`
-     *  without it. Re-checked here only so a stray start can't crash the process. */
+     *  without it. Re-checked here only so a stray start can't crash the process. Returning
+     *  without `startForeground` after `startForegroundService` would itself be a violation, but
+     *  can't follow the caller's check: revoking a runtime permission kills the app's process. */
     private fun start() {
         if (!hasLocationPermission()) return
         recordingId = UUID.randomUUID().toString()
@@ -262,6 +285,19 @@ class RecordingService : Service() {
             RecordingState.IDLE -> return
         }
         publish()
+    }
+
+    /** Ends a recording made under [owner] without saving it: the account was deleted
+     *  ([forgetAccount]), so its recording mustn't be saved under an email a new account can take. */
+    private fun discard(owner: String?) {
+        if (state == RecordingState.IDLE || owner == null || account != owner) return
+        state = RecordingState.IDLE
+        locationManager?.removeUpdates(locationListener)
+        locationManager = null
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        recorded.clear()
+        publish()
+        journalWrite { it.clear(owner) }
     }
 
     private fun stop() {
@@ -440,6 +476,8 @@ class RecordingService : Service() {
         const val ACTION_START = "dev.holdmytrack.android.recording.START"
         const val ACTION_TOGGLE = "dev.holdmytrack.android.recording.TOGGLE"
         const val ACTION_STOP = "dev.holdmytrack.android.recording.STOP"
+        private const val ACTION_DISCARD = "dev.holdmytrack.android.recording.DISCARD"
+        private const val EXTRA_ACCOUNT = "account"
 
         fun intent(context: Context, action: String): Intent =
             Intent(context, RecordingService::class.java).setAction(action)
@@ -467,6 +505,15 @@ class RecordingService : Service() {
 
         private fun journal(context: Context): LiveRecordingJournal =
             journalInstance ?: LiveRecordingJournal(context).also { journalInstance = it }
+
+        /** Drops [account]'s recording: one under way is ended unsaved ([discard]), and a
+         *  leftover leaves the journal, queued behind its pending writes. */
+        fun forgetAccount(context: Context, account: String) {
+            // From the You tab, so in front; a start refused in the background has nothing to end.
+            runCatching { context.startService(intent(context, ACTION_DISCARD).putExtra(EXTRA_ACCOUNT, account)) }
+            val journal = journal(context.applicationContext)
+            journalScope.launch { journal.clear(account) }
+        }
 
         /** The row Stop saves — blank name and description, the account's last-used type
          *  ([RecordingTypes.lastUsed]) — or null for one too short to keep. */

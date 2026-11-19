@@ -3,9 +3,6 @@ package dev.holdmytrack.android.recording.db
 import dev.holdmytrack.android.net.SyncTrackJson
 import dev.holdmytrack.android.net.SyncPointJson
 import dev.holdmytrack.android.recording.RecordedPoint
-import java.time.Instant
-import org.json.JSONArray
-import org.json.JSONObject
 
 /**
  * One GPS recording, persisted locally by `RecordingService` the moment it stops rather than
@@ -65,32 +62,3 @@ fun RecordedTrackRecord.toGpx(): String = buildString {
 
 private fun xmlEscape(text: String): String =
     text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
-
-/** `points_json`'s format on disk — an array of `{lat, lon, elevation_m?, time}`, the same
- *  fields as the points [toSyncTrack] sends, so persisting and submitting never disagree
- *  about what a point is. */
-internal fun List<RecordedPoint>.toJson(): String {
-    val array = JSONArray()
-    for (point in this) {
-        val json = JSONObject()
-            .put("lat", point.lat)
-            .put("lon", point.lon)
-            .put("time", point.time.toString())
-        point.elevationM?.let { json.put("elevation_m", it) }
-        array.put(json)
-    }
-    return array.toString()
-}
-
-internal fun String.toRecordedPoints(): List<RecordedPoint> {
-    val array = JSONArray(this)
-    return List(array.length()) { i ->
-        val json = array.getJSONObject(i)
-        RecordedPoint(
-            lat = json.getDouble("lat"),
-            lon = json.getDouble("lon"),
-            elevationM = if (json.has("elevation_m")) json.getDouble("elevation_m").toFloat() else null,
-            time = Instant.parse(json.getString("time")),
-        )
-    }
-}

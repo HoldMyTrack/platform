@@ -41,6 +41,11 @@ object RecordingTypes {
         prefs(context).edit().putString(KEY_LAST_TYPE_PREFIX + Session.email, type).apply()
     }
 
+    /** Forgets [account]'s last-used type: the account was deleted (`settings/AccountDeletion`). */
+    fun forget(context: Context, account: String) {
+        prefs(context).edit().remove(KEY_LAST_TYPE_PREFIX + account).apply()
+    }
+
     private fun prefs(context: Context) =
         context.applicationContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
