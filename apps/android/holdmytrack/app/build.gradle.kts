@@ -141,6 +141,7 @@ dependencies {
     implementation(libs.credentials.play.services)
     implementation(libs.google.id)
     implementation(libs.browser)
+    implementation(libs.exifinterface)
     implementation(libs.recyclerview)
     implementation(libs.fragment)
     implementation(libs.serialization.json)

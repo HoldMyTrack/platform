@@ -3,9 +3,9 @@ package dev.holdmytrack.android.photos
 import android.content.ContentResolver
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
-import android.media.ExifInterface
 import android.net.Uri
 import android.provider.OpenableColumns
+import androidx.exifinterface.media.ExifInterface
 import dev.holdmytrack.android.net.PhotoExif
 import dev.holdmytrack.android.net.PhotoImage
 import java.io.File
@@ -97,15 +97,13 @@ object PhotoPrep {
 
     private fun readExif(resolver: ContentResolver, uri: Uri): PhotoExif {
         val exif = resolver.openInputStream(uri)?.use { ExifInterface(it) } ?: return PhotoExif()
-        // A float pair: under half a metre of precision, well within the 500 m the server
-        // snaps a position by.
-        val latLong = FloatArray(2).takeIf { exif.getLatLong(it) }
+        val latLong = exif.latLong
         return PhotoExifFields.resolve(
             dateTimeOriginal = exif.getAttribute(ExifInterface.TAG_DATETIME_ORIGINAL),
             dateTime = exif.getAttribute(ExifInterface.TAG_DATETIME),
             offsetTimeOriginal = exif.getAttribute(ExifInterface.TAG_OFFSET_TIME_ORIGINAL),
-            lat = latLong?.get(0)?.toDouble(),
-            lon = latLong?.get(1)?.toDouble(),
+            lat = latLong?.get(0),
+            lon = latLong?.get(1),
             gpsDate = exif.getAttribute(ExifInterface.TAG_GPS_DATESTAMP),
             gpsTime = exif.getAttribute(ExifInterface.TAG_GPS_TIMESTAMP),
         )

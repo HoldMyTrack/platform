@@ -31,6 +31,9 @@ googleId = "1.2.1"
 # Custom Tabs, for Sign in with Facebook through the server's own web flow in a browser tab —
 # instead of Meta's SDK (docs/IMPLEMENTATION.md §4.9).
 browser = "1.10.0"
+# A picked photo's date and place (photos/PhotoPrep.kt): AndroidX's reader takes fixes the
+# platform's gets only with an OS update, and reads the same tags on every Android version.
+exifinterface = "1.4.2"
 # The map's Tracks panel list (panel/TracksPanel.kt), declared rather than borrowed from
 # Material's own dependency on it, which is older.
 recyclerview = "1.4.0"
@@ -69,6 +72,7 @@ credentials = { module = "androidx.credentials:credentials", version.ref = "cred
 credentials-play-services = { module = "androidx.credentials:credentials-play-services-auth", version.ref = "credentials" }
 google-id = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleId" }
 browser = { module = "androidx.browser:browser", version.ref = "browser" }
+exifinterface = { module = "androidx.exifinterface:exifinterface", version.ref = "exifinterface" }
 recyclerview = { module = "androidx.recyclerview:recyclerview", version.ref = "recyclerview" }
 fragment = { module = "androidx.fragment:fragment", version.ref = "fragment" }
 junit = { module = "junit:junit", version.ref = "junit" }
