@@ -173,7 +173,7 @@ The flow is the sequence diagram in `apps/android/docs/SPEC.md` FR-3. Health Con
 
 ## 5. Recording and crash recovery
 
-The lifecycle is the state diagram in `apps/android/docs/SPEC.md` FR-5, and the wire contract root `docs/IMPLEMENTATION.md` §4.0.4. `recording/RecordingService`, a foreground location service, holds the recording; the map binds to it only to watch, which is also how reopening the app mid-recording redraws the route so far. The record button and the notification send intents.
+The lifecycle is the state diagram in `apps/android/docs/SPEC.md` FR-5, and the wire contract root `docs/IMPLEMENTATION.md` §4.0.4. `recording/RecordingService`, a foreground location service, holds the recording; the map binds to it only to watch, which is also how reopening the app mid-recording redraws the route so far. The record button and the notification send intents. Every fix the GPS gives is recorded, whatever its accuracy: the phone decides what a fix is, and a stray point is fixed in the route editor, never dropped by a rule on the user's behalf (ADR-0039).
 
 ### 5.1 Stop
 
@@ -191,7 +191,7 @@ A foreground service survives the screen going away, not the process. So each fi
 
 ### 5.3 The store
 
-`recording/db/RecordedTrackStore` (its KDoc says why not Room) scopes rows per account (§2.3). Upgrades drop and recreate except tables holding unsynced recordings, the only copy anywhere.
+`recording/db/RecordedTrackStore` (its KDoc says why not Room) scopes rows per account (§2.3). Upgrades drop and recreate except tables holding unsynced recordings, the only copy anywhere. A saved recording's points are a row each in their own table, as the journal's are: a row must fit one `CursorWindow` (2 MB), which a single JSON value of about 18 hours of fixes outgrows, and the recording then can't be read back.
 
 ## 6. Build traps
 

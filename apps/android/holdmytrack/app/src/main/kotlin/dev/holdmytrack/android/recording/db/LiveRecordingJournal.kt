@@ -110,13 +110,32 @@ class LiveRecordingJournal(context: Context) {
         return head.copy(points = points)
     }
 
+    /** Drops [account]'s recording from the journal: the account was deleted
+     *  (`settings/AccountDeletion`), so nothing of it is offered to resume into a new one made
+     *  with the same email. */
+    fun clear(account: String) {
+        val db = helper.writableDatabase
+        db.beginTransaction()
+        try {
+            db.delete(
+                RecordingDbHelper.LIVE_POINTS_TABLE,
+                "recording_id IN (SELECT id FROM ${RecordingDbHelper.LIVE_TABLE} WHERE account = ?)",
+                arrayOf(account),
+            )
+            db.delete(RecordingDbHelper.LIVE_TABLE, "account = ?", arrayOf(account))
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
     /** Ends recording [id]: saves [record] under [account] when there is one (a recording too
      *  short to keep has none) and clears the journal, both in one transaction. */
     fun finish(id: String, record: RecordedTrackRecord?, account: String) {
         val db = helper.writableDatabase
         db.beginTransaction()
         try {
-            record?.let { db.insertOrThrow(RecordingDbHelper.TABLE, null, it.toContentValues(account)) }
+            record?.let { RecordingDbHelper.writeRecord(db, it, account) }
             db.delete(RecordingDbHelper.LIVE_POINTS_TABLE, "recording_id = ?", arrayOf(id))
             db.delete(RecordingDbHelper.LIVE_TABLE, "id = ?", arrayOf(id))
             db.setTransactionSuccessful()
