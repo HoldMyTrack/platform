@@ -259,10 +259,22 @@ class RecordedTrackStore(context: Context) {
         Unit
     }
 
-    suspend fun get(id: String): RecordedTrackRecord? = withContext(Dispatchers.IO) {
+    suspend fun get(id: String): RecordedTrackRecord? = withContext(Dispatchers.IO) { row(id, withPoints = true) }
+
+    /** [id] without its points (an empty list): what the Save screen shows and edits, which
+     *  never needs a multi-hour recording's every fix. */
+    suspend fun header(id: String): RecordedTrackRecord? = withContext(Dispatchers.IO) { row(id, withPoints = false) }
+
+    private fun row(id: String, withPoints: Boolean): RecordedTrackRecord? =
         helper.readableDatabase.query(
             RecordingDbHelper.TABLE, null, "id = ? AND account = ?", arrayOf(id, account()), null, null, null,
-        ).use { if (it.moveToFirst()) it.toRecord() else null }
+        ).use { if (it.moveToFirst()) it.toRecord(withPoints) else null }
+
+    /** The type of each recording waiting to be sent, for the Type picker's counts. */
+    suspend fun waitingTypes(): List<String> = withContext(Dispatchers.IO) {
+        helper.readableDatabase.query(
+            RecordingDbHelper.TABLE, arrayOf("activity_type"), "account = ? AND sent_at_ms IS NULL", arrayOf(account()), null, null, null,
+        ).use { cursor -> buildList { while (cursor.moveToNext()) add(cursor.getString(0)) } }
     }
 
     private fun transaction(block: (SQLiteDatabase) -> Unit) {
@@ -324,7 +336,7 @@ class RecordedTrackStore(context: Context) {
         }
     }
 
-    private fun Cursor.toRecord() = RecordedTrackRecord(
+    private fun Cursor.toRecord(withPoints: Boolean = true) = RecordedTrackRecord(
         id = getString(getColumnIndexOrThrow("id")),
         name = getString(getColumnIndexOrThrow("name")),
         description = getString(getColumnIndexOrThrow("description")),
@@ -332,7 +344,7 @@ class RecordedTrackStore(context: Context) {
         startedAtMs = getLong(getColumnIndexOrThrow("started_at_ms")),
         distanceMeters = getDouble(getColumnIndexOrThrow("distance_meters")),
         durationSeconds = getLong(getColumnIndexOrThrow("duration_seconds")),
-        points = RecordingDbHelper.readPoints(helper.readableDatabase, getString(getColumnIndexOrThrow("id"))),
+        points = if (withPoints) RecordingDbHelper.readPoints(helper.readableDatabase, getString(getColumnIndexOrThrow("id"))) else emptyList(),
         createdAtMs = getLong(getColumnIndexOrThrow("created_at_ms")),
     )
 }

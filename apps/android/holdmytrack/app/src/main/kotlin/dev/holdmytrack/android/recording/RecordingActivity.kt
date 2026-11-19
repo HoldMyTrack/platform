@@ -92,7 +92,7 @@ class RecordingActivity : AppCompatActivity() {
         HoldMyTrackApi.trackTypeCounts { result -> result.onSuccess { serverTypeCounts = it } }
 
         lifecycleScope.launch {
-            val record = store.get(editingId) ?: run { finish(); return@launch }
+            val record = store.header(editingId) ?: run { finish(); return@launch }
             nameField.setText(record.name)
             setType(record.trackType)
             descriptionField.setText(record.description)
@@ -108,14 +108,14 @@ class RecordingActivity : AppCompatActivity() {
 
     private fun openTypePicker() {
         lifecycleScope.launch {
-            val known = RecordingTypes.known(serverTypeCounts, store.all())
+            val known = RecordingTypes.known(serverTypeCounts, store.waitingTypes())
             TrackTypePicker.show(this@RecordingActivity, selectedType, known, ::setType)
         }
     }
 
     private fun onSave() {
         lifecycleScope.launch {
-            val record = store.get(editingId) ?: return@launch
+            val record = store.header(editingId) ?: return@launch
             val newType = selectedType
             store.update(
                 record.copy(
@@ -148,7 +148,7 @@ class RecordingActivity : AppCompatActivity() {
 
     private fun onDownload() {
         lifecycleScope.launch {
-            val record = store.get(editingId) ?: return@launch
+            val record = store.header(editingId) ?: return@launch
             val base = record.name.ifBlank { "holdmytrack-${record.id.take(8)}" }
             downloadLauncher.launch("${base.replace(UNSAFE_FILENAME, "_")}.gpx")
         }
