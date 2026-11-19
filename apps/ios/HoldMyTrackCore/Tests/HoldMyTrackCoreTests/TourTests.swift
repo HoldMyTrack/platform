@@ -31,12 +31,12 @@ struct TourTests {
         #expect(tabs.contains(.trips) && tabs.contains(.sync) && tabs.last == .you)
     }
 
-    @Test func theSheetIsTheStepsOrAtTheEndTheUsers() {
-        let tracks = TourSteps.of(isDemo: false)[1]
-        #expect(TourSteps.sheet(tracks, restore: false))
-        #expect(!TourSteps.sheet(TourSteps.of(isDemo: false)[0], restore: true))
-        #expect(TourSteps.sheet(nil, restore: true))
-        #expect(!TourSteps.sheet(nil, restore: false))
+    @Test func theSheetIsTheStepsOrAtTheEndExactlyTheUsers() {
+        let steps = TourSteps.of(isDemo: false)
+        #expect(TourSteps.sheet(steps[1], restore: .expanded) == .half)
+        #expect(TourSteps.sheet(steps[0], restore: .expanded) == .collapsed)
+        #expect(TourSteps.sheet(nil, restore: .expanded) == .expanded)
+        #expect(TourSteps.sheet(nil, restore: .collapsed) == .collapsed)
     }
 
     @Test func aCardSitsOverItsTargetWhenThereIsRoom() {

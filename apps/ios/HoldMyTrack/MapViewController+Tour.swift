@@ -9,12 +9,18 @@ extension MapViewController {
     /// The Edit window or the Private location editor has the map, which the tour leaves alone.
     var tourBlocked: Bool { editOpen || privateLocations.open }
 
-    var tourSheetOpen: Bool { sheet.detent != .collapsed }
+    var tourSheetDetent: SheetDetent { sheet.detent }
 
-    func setTourSheet(open: Bool) {
+    func setTourSheet(_ detent: SheetDetent) {
         loadViewIfNeeded()
-        let next: SheetDetent = open ? .half : .collapsed
-        if sheet.detent != next { sheet.setDetent(next, animated: true) }
+        if sheet.detent != detent { sheet.setDetent(detent, animated: true) }
+    }
+
+    /// A step's mode, shown on the Map tab without becoming the user's pick, which the tour's
+    /// end puts back.
+    func showTourMode(_ mode: MapMode) {
+        pickedMode = mode
+        applyTabMode()
     }
 
     /// The views a step on the map points at. Fog's level button shows only once the layers

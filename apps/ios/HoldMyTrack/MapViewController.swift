@@ -56,7 +56,9 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var pendingTask: Task<Void, Never>?
     /// Bumped whenever tracks change under the same query, so their tiles are fetched again.
     var tracksVersion = 0
-    var editOpen = false
+    var editOpen = false {
+        didSet { if oldValue && !tourBlocked { onMapFreed?() } }
+    }
     /// The focused track's pace bands (MapViewController+Bands).
     var bands = BandsState()
     /// Points of interest (MapViewController+Spots).
@@ -84,6 +86,11 @@ final class MapViewController: UIViewController, @preconcurrency MLNMapViewDeleg
     var onModePicked: ((MapMode) -> Void)?
     /// The first framing found whether the account has any track: the tour starts or is offered.
     var onHistoryKnown: ((Bool) -> Void)?
+    /// The Edit window or the Private location editor gave the map back (tourBlocked).
+    var onMapFreed: (() -> Void)?
+    /// Whether each account (AccountKey) has any track, as its first framing found, for a later
+    /// signed-in screen in the same app session, which doesn't frame again.
+    static var hasTracks: [String: Bool] = [:]
     /// Counts the tour's camera moves, so a move's end only continues the latest (MapViewController+Tour).
     var tourMoves = 0
 

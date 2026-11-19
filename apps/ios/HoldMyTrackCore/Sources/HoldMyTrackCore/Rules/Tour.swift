@@ -162,9 +162,10 @@ public struct TourStep: Equatable, Sendable {
     }
 }
 
-/// The iOS tour's steps (apps/ios/docs/SPEC.md FR-2.12): Android's, less what iOS doesn't have
-/// yet (export, Record), with Places folded into Layers, whose menu holds both, and the menus
-/// pointed at rather than held open, since UIKit can't open a button's menu for the app.
+/// The iOS tour's steps (apps/ios/docs/SPEC.md FR-2.12): Android's, less export and Record, with
+/// Places folded into Layers, whose menu holds both. A step about a menu (Layers, Fog's level)
+/// points at its button and leaves the menu closed, since UIKit can't open a button's menu for
+/// the app.
 public enum TourSteps {
     /// The demo's views over its fixed history (`services/server/internal/httpapi/demo_data`), the
     /// web's `DEMO_VIEWS`, one per Fog level: Brecksville Reservation's tracks, exact coverage
@@ -199,8 +200,12 @@ public enum TourSteps {
         ]
     }
 
-    /// Whether the sheet is open for step, or at the end (nil) as the user had it.
-    public static func sheet(_ step: TourStep?, restore: Bool) -> Bool { step?.sheet ?? restore }
+    /// The sheet for step: half open for one that opens it, else closed; at the end (nil), as the
+    /// user had it.
+    public static func sheet(_ step: TourStep?, restore: SheetDetent) -> SheetDetent {
+        guard let step else { return restore }
+        return step.sheet ? .half : .collapsed
+    }
 
     /// A first-time card's text and what it points at.
     public static func card(_ card: TourCard) -> (text: String, target: TourTarget) {

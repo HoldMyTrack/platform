@@ -49,10 +49,14 @@ final class TourTests: XCTestCase {
         let title = app.staticTexts["tourTitle"]
         XCTAssertTrue(title.waitForExistence(timeout: 20), "the offer")
         XCTAssertEqual(title.label, "New here?")
+        // A pick meanwhile leaves the offer up until it's answered.
+        let fog = app.segmentedControls["modes"].buttons.element(boundBy: 1)
+        fog.tap()
+        XCTAssertEqual(title.label, "New here?")
         app.buttons["tourSkip"].tap()
         XCTAssertTrue(title.waitForNonExistence(timeout: 5))
 
-        let fog = app.segmentedControls["modes"].buttons.element(boundBy: 1)
+        app.segmentedControls["modes"].buttons.element(boundBy: 0).tap()
         fog.tap()
         XCTAssertTrue(title.waitForExistence(timeout: 5), "Fog's card")
         XCTAssertEqual(title.label, "Fog of War")

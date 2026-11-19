@@ -7,7 +7,8 @@ import UIKit
 protocol TourHost: AnyObject {
     var isDemo: Bool { get }
     var tourTab: TourTab { get }
-    func showTourTab(_ tab: TourTab)
+    /// root: back to the tab's first page, for a step that points at it.
+    func showTourTab(_ tab: TourTab, root: Bool)
     var map: MapViewController { get }
     /// The views target points at on whichever tab shows it.
     func tourViews(_ target: TourTarget) -> [UIView]
@@ -31,9 +32,9 @@ final class TourController {
         var index = -1
         let mode: MapMode
         let tab: TourTab
-        let sheet: Bool
+        let sheet: SheetDetent
 
-        init(steps: [TourStep], mode: MapMode, tab: TourTab, sheet: Bool) {
+        init(steps: [TourStep], mode: MapMode, tab: TourTab, sheet: SheetDetent) {
             self.steps = steps
             self.mode = mode
             self.tab = tab
@@ -44,6 +45,11 @@ final class TourController {
     private var running: Running?
     private var overlay: TourOverlay?
     private var card: TourOverlay?
+    /// The card showing is the offer, which only its own buttons answer.
+    private var offering = false
+    /// A start the Edit window or the Private location editor held back, made when it gives the
+    /// map back (mapFreed).
+    private var pendingStart = false
     private var dir = 1
     private var camera = TourCamera()
 
@@ -71,13 +77,31 @@ final class TourController {
         // Asked before the map has looked: an unknown history doesn't hold the tour back.
         if hasTracks == nil { hasTracks = false }
         decide()
+        // Held back by an editor: the map shows it, and the tour starts once it's closed.
+        if pendingStart { host.showTourTab(.map, root: false) }
+    }
+
+    /// The map's editor closed: a start it held back is made now.
+    func mapFreed() {
+        guard pendingStart else { return }
+        pendingStart = false
+        begin()
+    }
+
+    /// Starts the tour, or holds the start while an editor has the map.
+    private func begin() {
+        if host.map.tourBlocked {
+            pendingStart = true
+            return
+        }
+        start()
     }
 
     private func decide() {
         guard !decided else { return }
         switch TourRules.start(requested: requested, isDemo: host.isDemo, hasTracks: hasTracks, seen: seen) {
         case .wait: return
-        case .start: start()
+        case .start: begin()
         case .offer: offer()
         case .none: break
         }
@@ -90,11 +114,11 @@ final class TourController {
         TourStore.save(next)
     }
 
-    func start() {
-        guard running == nil, !host.map.tourBlocked else { return }
+    private func start() {
+        guard running == nil else { return }
         closeCard()
         save(TourSeen(tour: true, cards: seen.cards))
-        let run = Running(steps: TourSteps.of(isDemo: host.isDemo), mode: host.map.pickedMode, tab: host.tourTab, sheet: host.map.tourSheetOpen)
+        let run = Running(steps: TourSteps.of(isDemo: host.isDemo), mode: host.map.pickedMode, tab: host.tourTab, sheet: host.map.tourSheetDetent)
         running = run
         let view = TourOverlay(dim: true)
         view.skipButton.configuration?.title = String(localized: "tour.skip", defaultValue: "Skip", comment: "The tour: leave it.")
@@ -124,9 +148,10 @@ final class TourController {
     private func go(_ run: Running, _ index: Int?) {
         let step = index.map { run.steps[$0] }
         let changes = TourRules.changes(mode: host.map.pickedMode, tab: host.tourTab, step: step, restoreMode: run.mode, restoreTab: run.tab)
-        if let tab = changes.tab { host.showTourTab(tab) }
-        if let mode = changes.mode { host.map.pickMode(mode) }
-        host.map.setTourSheet(open: TourSteps.sheet(step, restore: run.sheet))
+        // Only the You step needs its tab's first page; the end leaves the user's pages as they were.
+        if let tab = changes.tab { host.showTourTab(tab, root: step?.target == .youTour) }
+        if let mode = changes.mode { host.map.showTourMode(mode) }
+        host.map.setTourSheet(TourSteps.sheet(step, restore: run.sheet))
         if let card = changes.card { save(TourSeen(tour: seen.tour, cards: seen.cards.union([card]))) }
         guard let step, let index else {
             endCamera()
@@ -153,7 +178,6 @@ final class TourController {
             guard let self else { return }
             self.move(self.dir)
         })
-        UIAccessibility.post(notification: .screenChanged, argument: view.title)
     }
 
     private func add(_ view: TourOverlay) {
@@ -175,8 +199,9 @@ final class TourController {
                 self.save(TourSeen(tour: true, cards: self.seen.cards))
                 self.tip()
             }),
-            primary: (String(localized: "tour.offer.take", defaultValue: "Take the tour", comment: "The tour's offer: start it."), { [weak self] in self?.start() }),
+            primary: (String(localized: "tour.offer.take", defaultValue: "Take the tour", comment: "The tour's offer: start it."), { [weak self] in self?.begin() }),
             closesOutside: false)
+        offering = true
     }
 
     /// Where the tour is from now on, said once after Not now.
@@ -190,8 +215,10 @@ final class TourController {
         }
     }
 
-    /// A mode or tab the user picked, which may earn its card.
+    /// A mode or tab the user picked, which may earn its card. The offer stays until it's answered,
+    /// and a card earned meanwhile waits for the next pick.
     func notice(_ event: TourEvent) {
+        if offering { return }
         let earned = TourRules.card(event, seen: seen, touring: touring)
         closeCard()
         guard let earned else { return }
@@ -200,7 +227,7 @@ final class TourController {
         let text = TourText.of(key)
         showCard(
             title: text.title, body: text.body, target: target,
-            secondary: (String(localized: "tour.card.full", defaultValue: "Take the full tour", comment: "A first-time card: start the tour."), { [weak self] in self?.start() }),
+            secondary: (String(localized: "tour.card.full", defaultValue: "Take the full tour", comment: "A first-time card: start the tour."), { [weak self] in self?.begin() }),
             primary: (String(localized: "tour.card.ok", defaultValue: "Got it", comment: "A first-time card: close it."), {}),
             closesOutside: true)
     }
@@ -226,12 +253,12 @@ final class TourController {
         add(view)
         card = view
         view.point(at: { [weak self] in target.flatMap { self?.host.tourViews($0) } ?? [] }, onMissing: nil)
-        UIAccessibility.post(notification: .screenChanged, argument: view.title)
     }
 
     private func closeCard() {
         card?.removeFromSuperview()
         card = nil
+        offering = false
     }
 
     // MARK: The camera

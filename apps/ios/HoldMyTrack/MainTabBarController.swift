@@ -43,6 +43,7 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
         home.onTour = { [weak self] in self?.tour.request() }
         map.onHistoryKnown = { [weak self] any in self?.tour.historyKnown(any) }
         map.onModePicked = { [weak self] mode in self?.tour.notice(.mode(mode)) }
+        map.onMapFreed = { [weak self] in self?.tour.mapFreed() }
         map.onWaiting = { [weak trips] count in trips?.tabBarItem.badgeValue = count > 0 ? "\(count)" : nil }
         map.onWantsTrips = { [weak self, weak trips] id in
             guard let self, let trips else { return }
@@ -67,9 +68,9 @@ final class MainTabBarController: UITabBarController, UITabBarControllerDelegate
 
     var tourTab: TourTab { Self.tourTabs[min(selectedIndex, Self.tourTabs.count - 1)] }
 
-    func showTourTab(_ tab: TourTab) {
+    func showTourTab(_ tab: TourTab, root: Bool) {
         guard let index = Self.tourTabs.firstIndex(of: tab), let next = viewControllers?[index] else { return }
-        (next as? UINavigationController)?.popToRootViewController(animated: false)
+        if root { (next as? UINavigationController)?.popToRootViewController(animated: false) }
         selectedViewController = next
     }
 

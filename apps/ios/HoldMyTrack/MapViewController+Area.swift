@@ -13,13 +13,17 @@ extension MapViewController {
     /// then the list asked about wherever the camera is. An account with nothing on the map gets a
     /// pointer, the demo never; a flight already asked for (View on map) keeps its camera.
     func openOnce() {
-        guard !Self.framed.contains(accountKey) else { return }
+        guard !Self.framed.contains(accountKey) else {
+            if let known = Self.hasTracks[accountKey] { onHistoryKnown?(known) }
+            return
+        }
         Task {
             guard let newest = try? await flow.api.areaList(box: nil, dates: .allTime, limit: OpeningView.tracks) else {
                 followArea()
                 return
             }
             Self.framed.insert(accountKey)
+            Self.hasTracks[accountKey] = !newest.tracks.isEmpty
             onHistoryKnown?(!newest.tracks.isEmpty)
             let boxes = newest.tracks.filter { !$0.pending }.compactMap(\.bbox)
             if let view = OpeningView.of(boxes, width: mapView.bounds.width, height: mapView.bounds.height) {

@@ -10,7 +10,8 @@ import UIKit
 ///   it passing through to the app, the first of them closing it.
 ///
 /// The views are read every frame, since the sheet slides and the tab bar switches tabs; a step
-/// whose views haven't shown within missingFrames calls onMissing once.
+/// whose views haven't shown within missingWait seconds calls onMissing once. VoiceOver moves to
+/// the card each time it's placed for a new step or card.
 final class TourOverlay: UIView {
     let card = UIView()
     let title = Controls.label("", font: Typeface.serif(DesignTokens.Text.xxl), color: UIColor(resource: .ink))
@@ -27,14 +28,15 @@ final class TourOverlay: UIView {
     private var targets: () -> [UIView] = { [] }
     private var onMissing: (() -> Void)?
     private var holes: [CGRect] = []
-    private var absent = 0
+    /// When the step's views were first found missing, by the display link's clock.
+    private var absentSince: CFTimeInterval?
     private var link: CADisplayLink?
     private let scrim = CAShapeLayer()
     private let ring = CAShapeLayer()
     private var top: NSLayoutConstraint!
     private var bottom: NSLayoutConstraint!
 
-    private static let missingFrames = 30
+    private static let missingWait: CFTimeInterval = 0.5
     private static let pad: CGFloat = DesignTokens.Space.s6
     private static let gap: CGFloat = DesignTokens.Space.s12
 
@@ -101,7 +103,7 @@ final class TourOverlay: UIView {
     func point(at targets: @escaping () -> [UIView], onMissing: (() -> Void)?) {
         self.targets = targets
         self.onMissing = onMissing
-        absent = 0
+        absentSince = nil
         holes = []
         // Hidden until placed, so neither a tap nor VoiceOver finds it where it isn't yet.
         card.isHidden = true
@@ -124,15 +126,21 @@ final class TourOverlay: UIView {
         let wanted = targets()
         let rects = wanted.compactMap(rect(of:))
         if !wanted.isEmpty && rects.isEmpty {
-            absent += 1
-            if absent == Self.missingFrames { onMissing?() }
+            let since = absentSince ?? link.timestamp
+            absentSince = since
+            if link.timestamp - since >= Self.missingWait, let missing = onMissing {
+                onMissing = nil
+                missing()
+            }
             return
         }
-        absent = 0
+        absentSince = nil
         guard rects != holes || card.isHidden else { return }
+        let placing = card.isHidden
         holes = rects
         place()
         draw()
+        if placing { UIAccessibility.post(notification: .screenChanged, argument: title) }
     }
 
     /// view's frame in this view's space, nil while it isn't on screen.
@@ -188,12 +196,13 @@ final class TourOverlay: UIView {
         draw()
     }
 
-    /// A step takes every touch; a card lets those outside it through, the first closing it.
+    /// A step takes every touch; a card lets those outside it through, the first touch closing it.
+    /// Only a touch closes it: UIKit also hit-tests for a pointer's hover and for accessibility.
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         let hit = super.hitTest(point, with: event)
         if dim { return hit ?? self }
         if card.frame.contains(point) { return hit }
-        if let onOutside {
+        if event?.type == .touches, let onOutside {
             self.onOutside = nil
             DispatchQueue.main.async { onOutside() }
         }

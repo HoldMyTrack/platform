@@ -83,9 +83,8 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10 and FR-2.12),
 
 ### FR-2.12 Tour
 
-- Its steps are Android's less export and Record, which iOS doesn't have yet; Places is part of the Layers step, as the points of interest are part of the Layers menu.
-- A step about a menu points at its button and leaves the menu closed: Layers, and Fog's level menu on Fog's last step.
-- The Sync step shows the Sync history page, which lists the files sent and their imports.
+- Its steps are Android's without export and Record, with Places part of the Layers step.
+- The Sync step is about Sync history (FR-4.1).
 
 ## 5. FR-3 — Sync and Imports
 
