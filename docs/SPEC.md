@@ -492,7 +492,7 @@ Circles a user marks so routes don't reveal where they start and end. The part o
 - Distance, duration, elevation gain, pace, coverage and the places it clears come from the visible part.
 - A track left with fewer than two points is kept with no geometry and a Private badge (FR-5.1), and the Privacy tab counts them; moving or deleting the location brings it back.
 - Every change is retroactive: tracks whose route comes within twice the radius of the old or new center go Pending until reprocessed from their originals, retried on failure. Locations that overlap clip as one shape, so for them the reach is each one's radius plus the largest among them. An upload being processed when a location is saved is clipped with it too. A route that started at its first recorded point past the edge (a recording with no point in the first radius) can end beyond that reach, and then stays clipped after its location is moved or deleted until something else reprocesses it.
-- Circles are drawn only on the Privacy tab, from zoom 4, never in an export. On the web, opening the tab highlights the location added last and moves the map onto it.
+- Circles are drawn only on the Privacy tab, from zoom 4, never in an export. The tab lists them newest first; on the web, opening it highlights the top one and moves the map onto it.
 - Originals stay unclipped and are in the data download (FR-1.13). A Trip copy carries the sender's clipped route (FR-13.8).
 - A track ingested before Private locations existed keeps its fixed 100 m endpoint trim until reprocessed.
 

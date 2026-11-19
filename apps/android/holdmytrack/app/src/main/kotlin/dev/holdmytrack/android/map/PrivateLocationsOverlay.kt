@@ -116,7 +116,14 @@ object PrivateLocationsOverlay {
         )
     }
 
-    /** Draws [circles], with [selected] — the draft — in place of its saved copy. */
+    /** The saved [circles] in the order they're drawn, each over the one before: oldest first, so
+     *  the newest is on top. [selected] is left out, drawn last from the draft. [circles] come
+     *  newest first, as the API lists them. */
+    fun drawOrder(circles: List<Circle>, selected: Circle?): List<Circle> =
+        circles.filter { selected == null || it.id == null || it.id != selected.id }.asReversed()
+
+    /** Draws [circles], newest on top ([drawOrder]), with [selected] — the draft — in place of its
+     *  saved copy. */
     fun set(style: Style, circles: List<Circle>, selected: Circle?) {
         ensure(style)
         val source = style.getSourceAs<GeoJsonSource>(SOURCE_ID) ?: return
@@ -134,7 +141,7 @@ object PrivateLocationsOverlay {
                 addBooleanProperty("selected", isSelected)
             }
         }
-        for (c in circles) if (selected == null || c.id == null || c.id != selected.id) add(c, isSelected = false)
+        for (c in drawOrder(circles, selected)) add(c, isSelected = false)
         selected?.let { add(it, isSelected = true) }
         source.setGeoJson(FeatureCollection.fromFeatures(features))
     }

@@ -214,10 +214,11 @@ func TestListPrivateLocations(t *testing.T) {
 		t.Fatalf("new account has %d, want none", len(none))
 	}
 	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Home", "lon": 10.0, "lat": 50.0, "radius_m": 200}), http.StatusCreated, nil)
+	d.decode(d.do(me, "POST", "/v2/private-locations", map[string]any{"name": "Cabin", "lon": 11.0, "lat": 50.0, "radius_m": 200}), http.StatusCreated, nil)
 	var got []privateLocation
 	d.decode(d.do(me, "GET", "/v2/private-locations", nil), http.StatusOK, &got)
-	if len(got) != 1 || got[0].Name != "Home" {
-		t.Fatalf("got %+v, want Home", got)
+	if len(got) != 2 || got[0].Name != "Cabin" || got[1].Name != "Home" {
+		t.Fatalf("got %+v, want Cabin then Home, newest first", got)
 	}
 }
 

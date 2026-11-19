@@ -13,6 +13,7 @@ import { applyEdit, chopOp, cumulativeDistances, cutOp, foldEdit, moveOp, splitI
 import { insertionPoint, needsLift } from '../src/map/mapLayers.ts';
 import { pendingAnswer, pendingBatches, pendingChange, pendingWatched } from '../src/map/pending.ts';
 import { deleteDone } from '../src/apiError.ts';
+import { drawOrder } from '../src/ui/privateLocationPick.ts';
 import { clusterPoints, photoMarkerLayout, photoMarkerSize } from '../src/map/photoClusters.ts';
 import { photoGroupAction, photoScopeFor } from '../src/map/photoMarkerItems.ts';
 import { distanceParts, durationParts, totalDistanceParts } from '../src/ui/formatParts.ts';
@@ -62,6 +63,7 @@ export const rules = {
   },
   pendingBatches: ({ ids, size }) => pendingBatches(ids, size),
   deleteDone: ({ status }) => deleteDone(status),
+  privateDrawOrder: ({ saved, editing }) => drawOrder(saved.map((id) => ({ id })), editing ? { id: editing } : null).map((l) => l.id),
   pendingChange: ({ previous, now, awaiting, listed }) => {
     const change = pendingChange(new Set(previous), now, new Set(awaiting), new Set(listed));
     return { started: change.started, finished: change.finished, left: sorted(change.left), landed: sorted(change.landed), awaiting: sorted(change.awaiting), pending: sorted(change.pending) };

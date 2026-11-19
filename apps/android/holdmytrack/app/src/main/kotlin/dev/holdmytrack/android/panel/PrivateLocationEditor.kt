@@ -287,7 +287,7 @@ class PrivateLocationEditor(
             busy = false
             result.onSuccess { savedLocation ->
                 val list = locations.orEmpty()
-                locations = if (current.id == null) list + savedLocation else list.map { if (it.id == savedLocation.id) savedLocation else it }
+                locations = if (current.id == null) listOf(savedLocation) + list else list.map { if (it.id == savedLocation.id) savedLocation else it }
                 draft = null
                 onChanged()
                 hideEditor()

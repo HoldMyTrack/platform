@@ -24,6 +24,8 @@ import dev.holdmytrack.android.panel.DistanceRange
 import dev.holdmytrack.android.panel.DistanceParts
 import dev.holdmytrack.android.panel.DurationParts
 import dev.holdmytrack.android.panel.EditOp
+import dev.holdmytrack.android.map.Circle
+import dev.holdmytrack.android.map.PrivateLocationsOverlay
 import dev.holdmytrack.android.panel.EditRouteOps
 import dev.holdmytrack.android.panel.FormatParts
 import dev.holdmytrack.android.panel.PanelRules
@@ -171,6 +173,10 @@ class ClientRulesTest {
         },
         "boldTracks" to { input -> ids(PanelRules.boldIds(input.strings("checked").toSet(), input.string("focused"))) },
         "deleteDone" to { input -> JsonPrimitive(deleteDone(input.int("status"))) },
+        "privateDrawOrder" to { input ->
+            val circle = { id: String -> Circle(id, 0.0, 0.0, 200) }
+            ids(PrivateLocationsOverlay.drawOrder(input.strings("saved").map(circle), input.string("editing")?.let(circle)).map { it.id!! }, sort = false)
+        },
         "verifyAction" to { input ->
             when (val action = VerifyAction.of(input.string("typed")!!)) {
                 VerifyAction.Check -> JsonPrimitive("check")

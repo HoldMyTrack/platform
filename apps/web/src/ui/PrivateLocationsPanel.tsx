@@ -209,7 +209,7 @@ export function PrivateLocationsPanel({ map, readOnly, onChanged, onEditorOpen }
         draft.id,
       );
       setLocations((prev) =>
-        draft.id === undefined ? [...(prev ?? []), result] : (prev ?? []).map((l) => (l.id === result.id ? result : l)),
+        draft.id === undefined ? [result, ...(prev ?? [])] : (prev ?? []).map((l) => (l.id === result.id ? result : l)),
       );
       setDraft(null);
       setFocusedId(result.id);
