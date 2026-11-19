@@ -74,7 +74,7 @@ holdmytrack/
 │       ├── Dockerfile  .dockerignore  docker/entrypoint.sh
 │       ├── package.json  tsconfig.json  vite.config.ts
 │       ├── scripts/build-basemap.sh
-│       ├── scripts/landing-shots.mjs # retakes the About page's screenshots on production, light and dark: `npm run shots:landing`
+│       ├── scripts/landing-shots/ # retakes the About page's screenshots on production, light and dark; its README.md says how
 │       ├── public/basemap/      # .pmtiles gitignored; fonts + sprites committed
 │       ├── src/
 │       └── tests/

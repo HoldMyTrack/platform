@@ -1,4 +1,4 @@
-// The camera arithmetic landing-shots.mjs steers the map with: what to scroll and drag to reach a
+// The camera arithmetic shoot.mjs steers the map with: what to scroll and drag to reach a
 // view, from the view the URL hash reports.
 
 /** The camera in a `#map=<zoom>/<lat>/<lon>` hash (src/map/viewState.ts), or null without one. */

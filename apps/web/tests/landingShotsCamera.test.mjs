@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { cameraFromHash, panOffset, wheelDelta } from '../scripts/landingShotCamera.mjs';
+import { cameraFromHash, panOffset, wheelDelta } from '../scripts/landing-shots/camera.mjs';
 
 test('cameraFromHash reads zoom, lat and lon, theme or not', () => {
   assert.deepEqual(cameraFromHash('#map=10.98/41.44751/-81.64018'), { zoom: 10.98, lat: 41.44751, lon: -81.64018 });

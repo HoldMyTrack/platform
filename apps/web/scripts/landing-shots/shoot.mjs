@@ -1,22 +1,14 @@
-// Retakes the About page's screenshots (services/server/internal/web/static/landing/) on production
-// as the demo user, light and dark, at the view and state each slide had before, so a retake
-// changes only what the app itself changed. Run by hand: `npm run shots:landing [-- map trip …]`.
-// It needs Playwright's Firefox (`npx playwright install firefox`) and cwebp (`brew install webp`).
-//
-// The shots are Firefox full screen on a 1728×1117-point MacBook: a 1728×974 CSS viewport at 2×,
-// scaled to 1760×992 and encoded at WebP quality 80. The fog slides are not scripted yet.
-//
-// Production allows 5 demo sessions an hour from one address, so the script signs in once and
-// every shot reuses that session.
+// Retakes the About page's screenshots on production; README.md says how to run it and why it
+// works the way it does.
 import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { firefox } from 'playwright';
-import { MAX_WHEEL_STEP, cameraFromHash, panOffset, wheelDelta } from './landingShotCamera.mjs';
+import { MAX_WHEEL_STEP, cameraFromHash, panOffset, wheelDelta } from './camera.mjs';
 
 const SITE = 'https://holdmytrack.com';
-const OUT = new URL('../../../services/server/internal/web/static/landing/', import.meta.url).pathname;
+const OUT = new URL('../../../../services/server/internal/web/static/landing/', import.meta.url).pathname;
 const VIEWPORT = { width: 1728, height: 974 };
 const SIZE = ['1760', '992'];
 const QUALITY = '80';
