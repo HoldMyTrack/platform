@@ -173,23 +173,41 @@ func (s *Server) handleGetExport(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, st)
 }
 
-// GET /v2/account/exports/{id}/parts/{n} — one part, while its export is ready and the
-// caller's. Served with http.ServeContent, so a dropped download resumes with a Range request.
-func (s *Server) handleDownloadExportPart(w http.ResponseWriter, r *http.Request) {
-	ctx := r.Context()
-	userID := userIDFromContext(ctx)
-	exportID := r.PathValue("id")
+// exportLinkTTL bounds an export link (handleCreateExportLink): long enough for a download
+// manager to finish and resume a 2 GB part over a poor connection, short enough that a copy of
+// the link is soon worthless.
+const exportLinkTTL = 24 * time.Hour
+
+// exportPartPath reads the {id} and {n} of an export part's path, ok false when malformed.
+func exportPartPath(r *http.Request) (exportID string, n int, ok bool) {
+	exportID = r.PathValue("id")
 	n, err := strconv.Atoi(r.PathValue("n"))
-	if !uuidPattern.MatchString(exportID) || err != nil || n < 1 {
-		writeAPIError(w, "not found", http.StatusNotFound)
-		return
-	}
+	return exportID, n, uuidPattern.MatchString(exportID) && err == nil && n >= 1
+}
+
+// readyExport is when userID's export exportID was requested and its part sizes, while it is
+// ready, or pgx.ErrNoRows.
+func (s *Server) readyExport(ctx context.Context, userID, exportID string) (time.Time, []int64, error) {
 	var requested time.Time
 	var sizes []int64
-	err = s.pool.QueryRow(ctx, `
+	err := s.pool.QueryRow(ctx, `
 		SELECT requested_at, part_sizes FROM exports
 		WHERE id = $1 AND user_id = $2 AND ready_at IS NOT NULL AND expires_at > NOW()`, exportID, userID,
 	).Scan(&requested, &sizes)
+	return requested, sizes, err
+}
+
+// GET /v2/account/exports/{id}/parts/{n} — one part, while its export is ready and the
+// caller's.
+func (s *Server) handleDownloadExportPart(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := userIDFromContext(ctx)
+	exportID, n, ok := exportPartPath(r)
+	if !ok {
+		writeAPIError(w, "not found", http.StatusNotFound)
+		return
+	}
+	requested, sizes, err := s.readyExport(ctx, userID, exportID)
 	if errors.Is(err, pgx.ErrNoRows) || (err == nil && n > len(sizes)) {
 		writeAPIError(w, "not found", http.StatusNotFound)
 		return
@@ -199,6 +217,97 @@ func (s *Server) handleDownloadExportPart(w http.ResponseWriter, r *http.Request
 		writeAPIError(w, "internal error", http.StatusInternalServerError)
 		return
 	}
+	s.serveExportPart(w, r, userID, exportID, n, requested, len(sizes))
+}
+
+// exportLink is POST /v2/account/exports/{id}/parts/{n}/link's answer.
+type exportLink struct {
+	URL       string    `json:"url"` // relative to the site
+	ExpiresAt time.Time `json:"expires_at"`
+}
+
+// POST /v2/account/exports/{id}/parts/{n}/link — a link to one part that works without a
+// session, for a phone's download manager: given the session's token as a header, it would
+// keep a credential to the whole account in a database outside the app. The link lasts
+// exportLinkTTL, or until the export expires or is replaced. Expired links are purged here, so
+// the table needs no sweeper.
+func (s *Server) handleCreateExportLink(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := userIDFromContext(ctx)
+	exportID, n, ok := exportPartPath(r)
+	if !ok {
+		writeAPIError(w, "not found", http.StatusNotFound)
+		return
+	}
+	_, sizes, err := s.readyExport(ctx, userID, exportID)
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && n > len(sizes)) {
+		writeAPIError(w, "not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		s.log.Error("export link lookup failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	link, err := s.createExportLink(ctx, exportID, n)
+	if err != nil {
+		s.log.Error("export link failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, http.StatusCreated, link)
+}
+
+// createExportLink stores a link to part n of a ready export and returns it.
+func (s *Server) createExportLink(ctx context.Context, exportID string, n int) (exportLink, error) {
+	if _, err := s.pool.Exec(ctx, `DELETE FROM export_links WHERE expires_at < NOW()`); err != nil {
+		return exportLink{}, fmt.Errorf("purge: %w", err)
+	}
+	token, hash := newToken()
+	link := exportLink{URL: apiPrefix + "/export-downloads/" + token}
+	err := s.pool.QueryRow(ctx, `
+		INSERT INTO export_links (token_hash, export_id, part, expires_at)
+		SELECT $1, id, $2, LEAST(expires_at, NOW() + make_interval(secs => $3)) FROM exports WHERE id = $4
+		RETURNING expires_at`, hash, n, exportLinkTTL.Seconds(), exportID,
+	).Scan(&link.ExpiresAt)
+	return link, err
+}
+
+// GET /v2/export-downloads/{token} — the part an export link names, with no session, while
+// the link and its export last.
+func (s *Server) handleDownloadExportLink(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	token := r.PathValue("token")
+	if !uuidPattern.MatchString(token) {
+		writeAPIError(w, "not found", http.StatusNotFound)
+		return
+	}
+	var userID, exportID string
+	var n int
+	var requested time.Time
+	var sizes []int64
+	err := s.pool.QueryRow(ctx, `
+		SELECT e.user_id, e.id, l.part, e.requested_at, e.part_sizes
+		FROM export_links l JOIN exports e ON e.id = l.export_id
+		WHERE l.token_hash = $1 AND l.expires_at > NOW() AND e.ready_at IS NOT NULL AND e.expires_at > NOW()`,
+		tokenHash(token),
+	).Scan(&userID, &exportID, &n, &requested, &sizes)
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && n > len(sizes)) {
+		writeAPIError(w, "not found", http.StatusNotFound)
+		return
+	}
+	if err != nil {
+		s.log.Error("export link lookup failed", "err", err)
+		writeAPIError(w, "internal error", http.StatusInternalServerError)
+		return
+	}
+	s.serveExportPart(w, r, userID, exportID, n, requested, len(sizes))
+}
+
+// serveExportPart serves part n of parts with http.ServeContent, so a dropped download resumes
+// with a Range request.
+func (s *Server) serveExportPart(w http.ResponseWriter, r *http.Request, userID, exportID string, n int, requested time.Time, parts int) {
+	ctx := r.Context()
 	obj, err := s.store.Open(ctx, export.PartKey(userID, exportID, n))
 	if err != nil {
 		s.log.Error("export download open failed", "export_id", exportID, "err", err)
@@ -207,7 +316,7 @@ func (s *Server) handleDownloadExportPart(w http.ResponseWriter, r *http.Request
 	}
 	defer obj.Close()
 	w.Header().Set("Content-Type", "application/zip")
-	w.Header().Set("Content-Disposition", `attachment; filename="`+export.FileName(requested, n, len(sizes))+`"`)
+	w.Header().Set("Content-Disposition", `attachment; filename="`+export.FileName(requested, n, parts)+`"`)
 	w.Header().Set("Cache-Control", "private, no-store")
 	http.ServeContent(w, r, "", requested, obj)
 }

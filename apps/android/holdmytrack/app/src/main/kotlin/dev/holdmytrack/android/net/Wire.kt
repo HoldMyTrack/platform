@@ -77,6 +77,9 @@ internal data class SettingsOptionsJson(
 internal data class ExportPartJson(val n: Int, val size: Long, val name: String, val url: String)
 
 @Serializable
+internal data class ExportLinkJson(val url: String)
+
+@Serializable
 internal data class ExportStatusJson(
     val state: String,
     @SerialName("expires_at") val expiresAt: String? = null,

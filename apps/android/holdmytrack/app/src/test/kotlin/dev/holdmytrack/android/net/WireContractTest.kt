@@ -44,6 +44,7 @@ class WireContractTest {
         response(SettingsOptionsJson.serializer().descriptor, "/account/settings/options", "get")
         response(ExportStatusJson.serializer().descriptor, "/account/export", "get")
         response(ExportStatusJson.serializer().descriptor, "/account/export", "post", 202)
+        response(ExportLinkJson.serializer().descriptor, "/account/exports/{id}/parts/{n}/link", "post", 201)
         request(CredentialsJson.serializer().descriptor, "/auth/login", "post")
         request(GoogleTokenJson.serializer().descriptor, "/auth/google/token", "post")
         request(HandoffJson.serializer().descriptor, "/auth/handoff", "post")

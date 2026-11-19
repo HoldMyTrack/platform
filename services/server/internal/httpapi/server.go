@@ -182,6 +182,9 @@ func New(pool *pgxpool.Pool, store *storage.Store, log *slog.Logger, mailer mail
 	s.mux.HandleFunc(route("POST", "/account/export"), s.requireNotDemo(s.handleRequestExport))
 	s.mux.HandleFunc(route("GET", "/account/export"), s.requireVerified(s.handleGetExport))
 	s.mux.HandleFunc(route("GET", "/account/exports/{id}/parts/{n}"), s.requireVerified(s.budgeted(budget.ReadsPaused, s.handleDownloadExportPart)))
+	s.mux.HandleFunc(route("POST", "/account/exports/{id}/parts/{n}/link"), s.requireVerified(s.handleCreateExportLink))
+	// No session: the link's token is the credential (handleCreateExportLink).
+	s.mux.HandleFunc(route("GET", "/export-downloads/{token}"), s.budgeted(budget.ReadsPaused, s.handleDownloadExportLink))
 	s.mux.HandleFunc(route("POST", "/tracks/upload"), s.requireNotDemo(s.budgeted(budget.AddingPaused, s.handleUpload)))
 	s.mux.HandleFunc(route("GET", "/tracks"), s.requireVerified(s.handleListTracks))
 	s.mux.HandleFunc(route("GET", "/tracks/area"), s.requireVerified(s.handleListArea))

@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/HoldMyTrack/platform/services/server/internal/export"
 )
@@ -112,5 +113,72 @@ func TestSettingsExportForm(t *testing.T) {
 	}
 	if body := page("GET", "/settings").Body.String(); !strings.Contains(body, "Preparing your archive") {
 		t.Error("Settings doesn't say the archive is being prepared")
+	}
+}
+
+func TestExportLink(t *testing.T) {
+	s3 := newMemS3()
+	d := newDBTestWithS3(t, s3)
+	ctx := context.Background()
+	a, other := d.newAccount(false), d.newAccount(false)
+
+	var st exportStatus
+	d.decode(d.do(a, "POST", "/v2/account/export", nil), http.StatusAccepted, &st)
+	sizes, err := export.Build(ctx, d.pool, d.srv.store, a.id, st.ID, "en")
+	if err != nil {
+		t.Fatal(err)
+	}
+	linkPath := exportPartURL(st.ID, 1) + "/link"
+	if rec := d.do(a, "POST", linkPath, nil); rec.Code != http.StatusNotFound {
+		t.Fatalf("before ready: status %d", rec.Code)
+	}
+	if _, err := d.pool.Exec(ctx, `UPDATE exports SET ready_at = NOW(), expires_at = NOW() + interval '7 days', part_sizes = $2 WHERE id = $1`, st.ID, sizes); err != nil {
+		t.Fatal(err)
+	}
+
+	var link exportLink
+	d.decode(d.do(a, "POST", linkPath, nil), http.StatusCreated, &link)
+	if until := time.Until(link.ExpiresAt); until > exportLinkTTL+time.Minute || until < exportLinkTTL-time.Minute {
+		t.Errorf("link lasts %v", until)
+	}
+	want, _ := s3.Object(export.PartKey(a.id, st.ID, 1))
+	// No session: the link is the credential, Range requests included.
+	rec := d.do(account{}, "GET", link.URL, nil)
+	if rec.Code != http.StatusOK || rec.Body.String() != string(want) {
+		t.Fatalf("download: status %d, %d bytes", rec.Code, rec.Body.Len())
+	}
+	req := httptest.NewRequest("GET", link.URL, nil)
+	req.Header.Set("Range", "bytes=10-")
+	ranged := httptest.NewRecorder()
+	d.srv.ServeHTTP(ranged, req)
+	checkContract(t, req, nil, ranged)
+	if ranged.Code != http.StatusPartialContent || ranged.Body.String() != string(want[10:]) {
+		t.Errorf("range: status %d", ranged.Code)
+	}
+
+	if rec := d.do(other, "POST", linkPath, nil); rec.Code != http.StatusNotFound {
+		t.Errorf("someone else's export: status %d", rec.Code)
+	}
+	if rec := d.do(a, "POST", exportPartURL(st.ID, 2)+"/link", nil); rec.Code != http.StatusNotFound {
+		t.Errorf("a part past the last: status %d", rec.Code)
+	}
+	if rec := d.do(account{}, "GET", "/v2/export-downloads/"+st.ID, nil); rec.Code != http.StatusNotFound {
+		t.Errorf("an unknown token: status %d", rec.Code)
+	}
+
+	// The link goes with its own lifetime, and with the export's.
+	var stale exportLink
+	d.decode(d.do(a, "POST", linkPath, nil), http.StatusCreated, &stale)
+	if _, err := d.pool.Exec(ctx, `UPDATE export_links SET expires_at = NOW() - interval '1 second' WHERE token_hash = $1`, tokenHash(stale.URL[len("/v2/export-downloads/"):])); err != nil {
+		t.Fatal(err)
+	}
+	if rec := d.do(account{}, "GET", stale.URL, nil); rec.Code != http.StatusNotFound {
+		t.Errorf("an expired link: status %d", rec.Code)
+	}
+	if _, err := d.pool.Exec(ctx, `UPDATE exports SET expires_at = NOW() WHERE id = $1`, st.ID); err != nil {
+		t.Fatal(err)
+	}
+	if rec := d.do(account{}, "GET", link.URL, nil); rec.Code != http.StatusNotFound {
+		t.Errorf("a link to an expired export: status %d", rec.Code)
 	}
 }

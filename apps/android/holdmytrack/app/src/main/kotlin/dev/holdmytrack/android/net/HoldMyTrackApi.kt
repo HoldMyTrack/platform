@@ -513,8 +513,13 @@ object HoldMyTrackApi {
         call(request, { body -> decode<ExportStatusJson>(body).toExportStatus() }, onResult)
     }
 
-    /** An export part's download URL, absolute — for Android's DownloadManager. */
-    fun exportPartUri(part: ExportPart): Uri = Uri.parse(BuildConfig.API_BASE_URL + part.url)
+    /** `POST /v2/account/exports/{id}/parts/{n}/link` — an absolute URL to [part] that needs no
+     *  session, for Android's DownloadManager, which keeps its requests' headers in a database
+     *  outside the app. It lasts a day at most. */
+    fun exportPartLink(part: ExportPart, onResult: (Result<Uri>) -> Unit) {
+        val request = Request.Builder().url(BuildConfig.API_BASE_URL + part.url + "/link").post(EMPTY_BODY).build()
+        call(request, { body -> Uri.parse(BuildConfig.API_BASE_URL + decode<ExportLinkJson>(body).url) }, onResult)
+    }
 
     /** The avatar at [path] (a [Profile.avatarUrl], relative to the API) — see [image]. */
     fun avatar(path: String, onResult: (Result<Bitmap>) -> Unit) = image(path, maxSide = null, onResult)

@@ -126,9 +126,9 @@ The primary key keeps the first capture, and no row is ever updated (§4.25).
 
 Several rows can name one image: a Trip copy's photo keeps the original's `image_key`, so the files go only with the last row naming them. No position column: `route_at` is a moment on the trajectory's M axis, located on every read, so route edits and Private locations apply to the photo (§4.27).
 
-### 3.23 `exports`
+### 3.23 `exports` / `export_links`
 
-No state column: until `ready_at` is set, a request's state is its job's. Parts live at `exports/{user_id}/{id}/{n}.zip` until `expires_at` (§4.29).
+No state column: until `ready_at` is set, a request's state is its job's. Parts live at `exports/{user_id}/{id}/{n}.zip` until `expires_at` (§4.29). An export link is hashed like `sessions` and goes with its export; expired links are purged on the next insert, so there is no sweeper.
 
 ### 3.24 `tz_parts`
 
@@ -581,7 +581,7 @@ The routes are under `/v2/photos` because the mux rejects `/v2/tracks/{id}/photo
 
 ### 4.29 Downloading your data (FR-1.13)
 
-A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each route is written from `DisplayedPoints` and each raw payload once. The archive is never reachable by a link alone: the email links to Settings, and a part is served only to its account, through `http.ServeContent` so a Range request resumes it. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
+A request is an `exports` row and an `export` job, made under a lock on the `users` row, so repeated taps return the one being prepared. The worker's long lane builds it (§4.1). Each route is written from `DisplayedPoints` and each raw payload once. The email links to Settings, never to the archive. A part is served through `http.ServeContent`, so a Range request resumes it, to its account or to the holder of an export link: the Android app makes one per part for the system download manager, which would otherwise keep the session's token in a database outside the app. A link names one part and lasts a day, or until its export ends. The weekly limit counts from `users.last_export_ready_at`, stamped in the statement that marks an export ready, because a new request expires the earlier row and the sweep deletes it.
 
 ### 4.30 Each track's own timezone (FR-3.8)
 

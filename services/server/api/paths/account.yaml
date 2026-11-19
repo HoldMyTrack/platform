@@ -193,3 +193,48 @@ account_exports_id_parts_n:
       "403": { $ref: "../components/responses.yaml#/NotVerified" }
       "404": { $ref: "../components/responses.yaml#/Error" }
       "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
+account_exports_id_parts_n_link:
+  parameters:
+    - name: id
+      in: path
+      required: true
+      schema: { type: string }
+    - name: n
+      in: path
+      required: true
+      description: The part, from 1.
+      schema: { type: string }
+  post:
+    summary: A link to one part of a ready download that works without a session
+    description: For a download manager outside the app, which would otherwise keep the session's token. It lasts a day at most, and ends with the download or when a new one is asked for.
+    responses:
+      "201":
+        description: The link
+        content:
+          application/json:
+            schema: { $ref: "../components/schemas.yaml#/ExportLink" }
+      "401": { $ref: "../components/responses.yaml#/Unauthenticated" }
+      "403": { $ref: "../components/responses.yaml#/NotVerified" }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+export_downloads_token:
+  parameters:
+    - name: token
+      in: path
+      required: true
+      schema: { type: string }
+  get:
+    summary: The part an export link names, as a zip; Range requests are honoured
+    security: []
+    responses:
+      "200":
+        description: The part
+        content:
+          application/zip:
+            schema: { type: string, format: binary }
+      "206":
+        description: The requested range of it
+        content:
+          application/zip:
+            schema: { type: string, format: binary }
+      "404": { $ref: "../components/responses.yaml#/Error" }
+      "503": { $ref: "../components/responses.yaml#/DailyCapacity" }
