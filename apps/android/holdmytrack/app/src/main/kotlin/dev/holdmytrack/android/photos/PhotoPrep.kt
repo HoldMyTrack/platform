@@ -8,8 +8,9 @@ import android.net.Uri
 import android.provider.OpenableColumns
 import dev.holdmytrack.android.net.PhotoExif
 import dev.holdmytrack.android.net.PhotoImage
-import java.io.ByteArrayOutputStream
+import java.io.File
 import java.io.IOException
+import java.util.UUID
 import kotlin.math.max
 import kotlin.math.roundToInt
 
@@ -34,7 +35,8 @@ object PhotoPrep {
     const val THUMB_SIDE = 320
     private const val QUALITY = 85
 
-    fun prepare(resolver: ContentResolver, uri: Uri): PreparedPhoto {
+    /** [uri] resized into two files in [dir], the photo and its thumbnail. */
+    fun prepare(resolver: ContentResolver, uri: Uri, dir: File): PreparedPhoto {
         val exif = runCatching { readExif(resolver, uri) }.getOrDefault(PhotoExif())
         val bitmap = try {
             ImageDecoder.decodeBitmap(ImageDecoder.createSource(resolver, uri)) { decoder, info, _ ->
@@ -62,7 +64,7 @@ object PhotoPrep {
                 (bitmap.height * thumbScale).roundToInt().coerceAtLeast(1),
                 true,
             )
-            val prepared = PreparedPhoto(encode(bitmap), encode(thumb), exif)
+            val prepared = PreparedPhoto(encode(bitmap, dir), encode(thumb, dir), exif)
             if (thumb !== bitmap) thumb.recycle()
             return prepared
         } finally {
@@ -70,10 +72,15 @@ object PhotoPrep {
         }
     }
 
-    private fun encode(bitmap: Bitmap): PhotoImage {
-        val out = ByteArrayOutputStream()
-        if (!bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, QUALITY, out)) throw UnreadablePhotoException()
-        return PhotoImage(out.toByteArray(), "image/webp")
+    private fun encode(bitmap: Bitmap, dir: File): PhotoImage {
+        dir.mkdirs()
+        val file = File(dir, "${UUID.randomUUID()}.webp")
+        val written = file.outputStream().use { bitmap.compress(Bitmap.CompressFormat.WEBP_LOSSY, QUALITY, it) }
+        if (!written) {
+            file.delete()
+            throw UnreadablePhotoException()
+        }
+        return PhotoImage(file, "image/webp")
     }
 
     private fun readExif(resolver: ContentResolver, uri: Uri): PhotoExif {

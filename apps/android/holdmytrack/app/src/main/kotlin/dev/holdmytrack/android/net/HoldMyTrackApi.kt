@@ -30,6 +30,7 @@ import okhttp3.MultipartBody
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import kotlinx.coroutines.Dispatchers
@@ -955,8 +956,8 @@ object HoldMyTrackApi {
         val body = MultipartBody.Builder()
             .setType(MultipartBody.FORM)
             .addFormDataPart("track_id", trackId)
-            .addFormDataPart("file", "photo", file.bytes.toRequestBody(file.contentType.toMediaType()))
-            .addFormDataPart("thumb", "thumb", thumb.bytes.toRequestBody(thumb.contentType.toMediaType()))
+            .addFormDataPart("file", "photo", file.file.asRequestBody(file.contentType.toMediaType()))
+            .addFormDataPart("thumb", "thumb", thumb.file.asRequestBody(thumb.contentType.toMediaType()))
             .apply {
                 if (exif.takenAt != null) addFormDataPart("taken_at", exif.takenAt.toString())
                 else exif.takenLocal?.let { addFormDataPart("taken_local", it) }

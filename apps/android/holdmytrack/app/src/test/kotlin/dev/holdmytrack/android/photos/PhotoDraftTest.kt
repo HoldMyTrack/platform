@@ -7,6 +7,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.io.File
 import java.time.Instant
 
 /** The Photos tab's unsaved changes (`apps/android/docs/SPEC.md` FR-2.10). */
@@ -26,7 +27,7 @@ class PhotoDraftTest {
         thumbUrl = "/v2/photos/$id/thumb",
     )
 
-    private val image = PhotoImage(ByteArray(0), "image/webp")
+    private val image = PhotoImage(File("photo.webp"), "image/webp")
     private fun new(key: String, routeAt: Long?) = NewPhoto(key, "$key.jpg", PreparedPhoto(image, image, PhotoExif()), routeAt)
 
     private val photos = listOf(saved("p1", 100, "Start"), saved("p2", 300))
