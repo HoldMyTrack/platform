@@ -152,13 +152,27 @@ class RecordingService : Service() {
         return START_NOT_STICKY
     }
 
+    /**
+     * Destroyed while still recording, which nothing in the app does: the listener goes with it
+     * rather than outliving the service, and the recording stays in the journal, offered back
+     * as a leftover the next time the map binds to an idle service
+     * (`apps/android/docs/IMPLEMENTATION.md` §5.2).
+     */
+    override fun onDestroy() {
+        locationManager?.removeUpdates(locationListener)
+        locationManager = null
+        super.onDestroy()
+    }
+
     /** A copy, not the live list — it keeps growing on the main thread while the caller
      *  draws it. */
     fun points(): List<RecordedPoint> = recorded.toList()
 
     /** `MapFragment` has already confirmed `ACCESS_FINE_LOCATION` before sending
      *  [ACTION_START] — a foreground service with a location type throws at `startForeground`
-     *  without it. Re-checked here only so a stray start can't crash the process. */
+     *  without it. Re-checked here only so a stray start can't crash the process. Returning
+     *  without `startForeground` after `startForegroundService` would itself be a violation, but
+     *  can't follow the caller's check: revoking a runtime permission kills the app's process. */
     private fun start() {
         if (!hasLocationPermission()) return
         recordingId = UUID.randomUUID().toString()
