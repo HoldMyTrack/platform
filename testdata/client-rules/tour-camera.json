@@ -1,6 +1,6 @@
 {
   "rule": "tourCamera",
-  "clients": ["web", "android"],
+  "clients": ["web", "android", "ios"],
   "description": "Where the tour's camera goes (docs/SPEC.md FR-4.14): for a step (null for the tour's end), from the camera's state, start (the view before the tour's first move) and shown (the view it last moved to, null where the map took it somewhere unknown), and current, the map's view now. The first step with its own view or on the Trips tab keeps current as start; the Trips tab frames its Trip itself, so after it the camera is unknown. A step flies to its own view, else back to start, unless the camera is already there; the end goes back to start the same way and forgets both. move is null for no move. Views compare by lon, lat and zoom.",
   "cases": [
     {"name": "a step without a view moves nothing before the first move", "input": {"start": null, "shown": null, "current": {"lon": -81.8, "lat": 41.4, "zoom": 13}, "step": {"view": null, "tab": "tracks"}}, "expected": {"start": null, "shown": null, "move": null}},

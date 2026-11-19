@@ -10,7 +10,7 @@ final class RouteEditTests: XCTestCase {
         let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))
@@ -52,7 +52,7 @@ final class RouteEditTests: XCTestCase {
         let account = try TestAccount(base: try XCTUnwrap(TestAccount.base()), samples: ["west-side.gpx"])
         defer { account.delete() }
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))

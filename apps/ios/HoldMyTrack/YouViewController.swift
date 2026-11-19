@@ -42,14 +42,16 @@ final class YouViewController: UITableViewController {
     private unowned let flow: AppFlow
     private var account: Account
     private var avatar: UIImage?
+    /// Take a tour (TourController.request).
+    var onTour: (() -> Void)?
 
-    private enum Row { case settings, profile, upload, privacy, theme, language, about, help, contacts, delete, signOut }
+    private enum Row { case settings, profile, upload, privacy, theme, language, tour, about, help, contacts, delete, signOut }
     private var sections: [[Row]] {
         let real = !account.isDemo
         return [
             [.settings, .profile] + (real ? [.upload] : []) + [.privacy],
             [.theme, .language],
-            [.about, .help, .contacts],
+            [.tour, .about, .help, .contacts],
             (real ? [.delete] : []) + [.signOut],
         ]
     }
@@ -92,6 +94,22 @@ final class YouViewController: UITableViewController {
                 if view === tableView.tableHeaderView { tableView.tableHeaderView = view } else { tableView.tableFooterView = view }
             }
         }
+    }
+
+    /// Take a tour's row, scrolled into view, for the tour's last step to point at.
+    func revealTour() {
+        guard let path = tourPath else { return }
+        tableView.scrollToRow(at: path, at: .middle, animated: false)
+    }
+
+    var tourCell: UITableViewCell? { tourPath.flatMap(tableView.cellForRow(at:)) }
+
+    private var tourPath: IndexPath? {
+        guard isViewLoaded else { return nil }
+        for (section, rows) in sections.enumerated() {
+            if let row = rows.firstIndex(of: .tour) { return IndexPath(row: row, section: section) }
+        }
+        return nil
     }
 
     // MARK: Header and footer
@@ -203,6 +221,7 @@ final class YouViewController: UITableViewController {
         case .language:
             (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Language"), UIImage(resource: .globe), "youLanguage")
             config.secondaryText = Locale.current.localizedString(forLanguageCode: AppLanguage.current)?.localizedCapitalized
+        case .tour: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "you.tour", defaultValue: "Take a tour", comment: "The You tab: start the tour again."), UIImage(resource: .navigation), "youTour")
         case .about: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "About"), UIImage(resource: .info), "youAbout")
         case .help: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Help"), UIImage(resource: .circleHelp), "youHelp")
         case .contacts: (config.text, config.image, cell.accessibilityIdentifier) = (String(localized: "Contacts"), UIImage(resource: .mail), "youContacts")
@@ -229,6 +248,7 @@ final class YouViewController: UITableViewController {
         case .theme: pickTheme(at: indexPath)
         // D11: the app's language is iOS's per-app setting, in the system's Settings.
         case .language: UIApplication.shared.open(URL(string: UIApplication.openSettingsURLString)!)
+        case .tour: onTour?()
         case .about: navigationController?.pushViewController(WebPageViewController(flow: flow, page: .about), animated: true)
         case .help: UIApplication.shared.open(page("/help"))
         case .contacts: UIApplication.shared.open(page("/contacts"))

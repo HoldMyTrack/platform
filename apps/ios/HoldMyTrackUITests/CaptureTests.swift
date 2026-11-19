@@ -21,7 +21,7 @@ final class CaptureTests: XCTestCase {
         move(to: place.inside)
 
         let app = XCUIApplication()
-        app.launchArguments = ["-hmtSignedOut"]
+        app.launchArguments = ["-hmtSignedOut", "-hmtTourSeen"]
         app.launch()
         account.signIn(app)
         XCTAssertTrue(app.otherElements["map"].waitForExistence(timeout: 15))

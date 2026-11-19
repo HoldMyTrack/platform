@@ -46,7 +46,7 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-1.1–FR-1.8), except as be
 
 ## 4. FR-2 — Map Visualization
 
-As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as below.
+As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10 and FR-2.12), except as below.
 
 ### FR-2.2 Two map modes: Normal and Fog of War
 
@@ -74,12 +74,17 @@ As the Android app's (`apps/android/docs/SPEC.md` FR-2.1–FR-2.10), except as b
 ### FR-2.9 The bottom bar
 
 - Tracks, Trips, Sync and You, with no record button yet. Sync is Sync history (FR-4.1).
-- You leads to Settings, Track graph & trends, Upload, Privacy, Theme, Language, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
+- You leads to Settings, Track graph & trends, Upload, Privacy, Theme, Language, Take a tour, About, Help and Contacts, Delete account and Sign out. Language opens the app's page in the system's Settings (`ARCHITECTURE.md` §1, D11). There is no Settings › Sync until HealthKit sync (`ROADMAP.md`, 7c).
 - Delete account, for a real account, is confirmed by typing the email. On success the phone forgets what it kept for that account and signs out.
 
 ### FR-2.10 Photos
 
 - Added photos come from iOS's photo picker, which hands over a photo's location with its time, unlike Android's, so the placement check can place a photo by where it was taken (`docs/SPEC.md` FR-15.1).
+
+### FR-2.12 Tour
+
+- Its steps are Android's without export and Record, with Places part of the Layers step.
+- The Sync step is about Sync history (FR-4.1).
 
 ## 5. FR-3 — Sync and Imports
 

@@ -31,7 +31,7 @@ final class TracksPanel: NSObject, UITableViewDataSource, UITableViewDelegate {
     private let typeButton = UIButton(type: .system)
     private let distanceButton = UIButton(type: .system)
     /// The Dates filter (root docs/SPEC.md FR-5.12), its sheet the map's (DatesViewController).
-    private let datesButton = UIButton(type: .system)
+    let datesButton = UIButton(type: .system)
     private let resetButton = Controls.textButton(String(localized: "Reset filters"), id: "resetFilters")
     private let selectionBar = UIStackView()
     private let checkAllButton = UIButton(type: .system)

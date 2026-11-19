@@ -63,6 +63,7 @@ extension MapViewController {
         editing.editor.close()
         drawPrivateLocations()
         renderPanel()
+        if !tourBlocked { onMapFreed?() }
     }
 
     private func openDraft(_ draft: PrivateLocationEditing.Draft) {

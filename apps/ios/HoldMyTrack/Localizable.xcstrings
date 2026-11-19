@@ -8486,6 +8486,690 @@
         }
       }
     },
+    "tour.back" : {
+      "comment" : "The tour: the previous step.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Назад"
+          }
+        }
+      }
+    },
+    "tour.card.full" : {
+      "comment" : "A first-time card: start the tour.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take the full tour"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пройти весь тур"
+          }
+        }
+      }
+    },
+    "tour.card.ok" : {
+      "comment" : "A first-time card: close it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Got it"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Понятно"
+          }
+        }
+      }
+    },
+    "tour.done.body" : {
+      "comment" : "The tour's last step, on the You tab's Take a tour.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take it again any time from Take a tour, here on the You tab."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пройти его снова можно в любой момент — «Пройти тур» здесь, на вкладке «Вы»."
+          }
+        }
+      }
+    },
+    "tour.done.title" : {
+      "comment" : "The tour's last step.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "That's the tour"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Вот и весь тур"
+          }
+        }
+      }
+    },
+    "tour.finish" : {
+      "comment" : "The tour's last step: close it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Done"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Готово"
+          }
+        }
+      }
+    },
+    "tour.fog.body" : {
+      "comment" : "The tour and Fog's first-time card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everywhere you've ever been, for all time: Dates and the filters don't apply here. Fog clears whole places, from countries down to towns, and zoomed in, exactly along your routes. Auto picks the level from the zoom. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все места, где вы когда-либо были, за всё время: даты и фильтры здесь не действуют. Туман открывает места целиком, от стран до городов, а вблизи — точно вдоль ваших маршрутов. «Авто» выбирает уровень по масштабу. Выберите уровень, чтобы оставить его на любом масштабе, или «Точно», чтобы туман рассеивался только вдоль маршрутов."
+          }
+        }
+      }
+    },
+    "tour.fog.title" : {
+      "comment" : "The tour and Fog's first-time card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fog of War"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Туман"
+          }
+        }
+      }
+    },
+    "tour.fog_cities.body" : {
+      "comment" : "The demo's tour: Fog's town level.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Zoomed out, a whole town clears once any track is in it. Tap a place to see its name and how much of it you've explored."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "При отдалении целый город открывается, как только в нём есть хоть один трек. Коснитесь места, чтобы увидеть его название и сколько в нём исследовано."
+          }
+        }
+      }
+    },
+    "tour.fog_cities.title" : {
+      "comment" : "The demo's tour: Fog's town level.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fog of War: towns"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Туман: города"
+          }
+        }
+      }
+    },
+    "tour.fog_counties.body" : {
+      "comment" : "The demo's tour: Fog's county level.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Further out, a whole county clears."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ещё дальше открывается целый округ."
+          }
+        }
+      }
+    },
+    "tour.fog_counties.title" : {
+      "comment" : "The demo's tour: Fog's county level.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fog of War: counties"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Туман: округа"
+          }
+        }
+      }
+    },
+    "tour.fog_countries.body" : {
+      "comment" : "The demo's tour: Fog's country level.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "And a whole country. Auto follows the zoom, as you just saw. Pick a level to keep it at every zoom, or Exact to clear the fog only along your routes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "И целая страна. «Авто» следует за масштабом, как вы только что видели. Выберите уровень, чтобы оставить его на любом масштабе, или «Точно», чтобы туман рассеивался только вдоль маршрутов."
+          }
+        }
+      }
+    },
+    "tour.fog_countries.title" : {
+      "comment" : "The demo's tour: Fog's country level.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fog of War: countries"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Туман: страны"
+          }
+        }
+      }
+    },
+    "tour.fog_exact.body" : {
+      "comment" : "The demo's tour: Fog at exact coverage.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Everywhere you've ever been, for all time: Dates and the filters don't apply here. Zoomed in, the fog lifts exactly along your routes."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все места, где вы когда-либо были, за всё время: даты и фильтры здесь не действуют. Туман рассеивается вдоль ваших маршрутов."
+          }
+        }
+      }
+    },
+    "tour.fog_regions.body" : {
+      "comment" : "The demo's tour: Fog's region level.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Then a whole state or region. Every fogged one is a place you haven't been yet."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Затем целый штат или регион. Каждый затуманенный — место, где вы ещё не были."
+          }
+        }
+      }
+    },
+    "tour.fog_regions.title" : {
+      "comment" : "The demo's tour: Fog's region level.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Fog of War: states and regions"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Туман: штаты и регионы"
+          }
+        }
+      }
+    },
+    "tour.layers.body" : {
+      "comment" : "The tour: the Layers menu, which holds the points of interest too.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tick the roads, paths and points of interest you want on the map, and tap a point of interest to see what it is. Show layers turns them all on or off at once."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Отметьте дороги, тропы и интересные места, которые хотите видеть на карте, и нажмите на место, чтобы узнать, что это. «Показывать слои» включает или выключает их все сразу."
+          }
+        }
+      }
+    },
+    "tour.layers.title" : {
+      "comment" : "The tour: the Layers menu.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Layers"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Слои"
+          }
+        }
+      }
+    },
+    "tour.next" : {
+      "comment" : "The tour: the next step.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Next"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Далее"
+          }
+        }
+      }
+    },
+    "tour.offer.body" : {
+      "comment" : "The tour's offer to an account with tracks.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "See what HoldMyTrack can do in a one-minute tour."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Посмотрите, что умеет HoldMyTrack, — тур на одну минуту."
+          }
+        }
+      }
+    },
+    "tour.offer.later" : {
+      "comment" : "The tour's offer: decline it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Not now"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Не сейчас"
+          }
+        }
+      }
+    },
+    "tour.offer.take" : {
+      "comment" : "The tour's offer: start it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take the tour"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пройти тур"
+          }
+        }
+      }
+    },
+    "tour.offer.title" : {
+      "comment" : "The tour's offer to an account with tracks.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New here?"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Впервые здесь?"
+          }
+        }
+      }
+    },
+    "tour.progress" : {
+      "comment" : "The tour: the step shown and how many there are.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld of %lld"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld из %lld"
+          }
+        }
+      }
+    },
+    "tour.range.body" : {
+      "comment" : "The tour: the Dates filter.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "All time, unless you set From or To. Picking a date moves the map onto the tracks it matches."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "За всё время, пока не заданы «С» или «По». Выбранная дата переносит карту к подходящим трекам."
+          }
+        }
+      }
+    },
+    "tour.range.title" : {
+      "comment" : "The tour: the Dates filter.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dates"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Даты"
+          }
+        }
+      }
+    },
+    "tour.skip" : {
+      "comment" : "The tour: leave it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Skip"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пропустить"
+          }
+        }
+      }
+    },
+    "tour.sync.body" : {
+      "comment" : "The tour: the Sync tab, which lists imports.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every file you've sent, and how its import went. Upload GPX, FIT and TCX files from the You tab."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все отправленные вами файлы и как прошёл их импорт. Загружайте файлы GPX, FIT и TCX на вкладке «Вы»."
+          }
+        }
+      }
+    },
+    "tour.sync.title" : {
+      "comment" : "The tour: the Sync tab.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sync"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Синхронизация"
+          }
+        }
+      }
+    },
+    "tour.sync_demo.body" : {
+      "comment" : "The demo's tour: the Sync tab.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In your own account, the files you upload are listed here. The demo can't upload: sign out and create an account to start yours."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "В своём аккаунте здесь видны загруженные вами файлы. Демо не может загружать: выйдите и создайте аккаунт, чтобы начать свой."
+          }
+        }
+      }
+    },
+    "tour.tip" : {
+      "comment" : "After the tour's offer is declined.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The tour is always on the You tab."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Тур всегда на вкладке «Вы»."
+          }
+        }
+      }
+    },
+    "tour.tracks.body" : {
+      "comment" : "The tour: the list of tracks.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Every track on the map, newest first: the list follows the map as you move it. Tap one to fly to it. Tick several to edit or hide them together."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Все треки на карте, сначала новые: список следует за картой, когда вы её двигаете. Нажмите на трек, чтобы перейти к нему на карте. Отметьте несколько, чтобы изменить или скрыть их вместе."
+          }
+        }
+      }
+    },
+    "tour.tracks.title" : {
+      "comment" : "The tour: the list of tracks.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your tracks"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ваши треки"
+          }
+        }
+      }
+    },
+    "tour.trips.body" : {
+      "comment" : "The tour and the Trips tab's first-time card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Group your tracks into Trips: a holiday, a multi-day hike, a race weekend. A Trip shows only its own tracks, and you can send someone a copy."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Объединяйте треки в путешествия: отпуск, многодневный поход, выходные на соревнованиях. Путешествие показывает только свои треки, а его копию можно отправить другому человеку."
+          }
+        }
+      }
+    },
+    "tour.trips.title" : {
+      "comment" : "The tour and the Trips tab's first-time card.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Trips"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Путешествия"
+          }
+        }
+      }
+    },
+    "tour.welcome.body" : {
+      "comment" : "The tour's first step.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "It keeps the journeys you choose and turns them into maps. This tour shows where everything is."
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Здесь хранятся треки, которые вы выбрали, и из них получаются карты. Тур покажет, что где находится."
+          }
+        }
+      }
+    },
+    "tour.welcome.title" : {
+      "comment" : "The tour's first step.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Welcome to HoldMyTrack"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Добро пожаловать в HoldMyTrack"
+          }
+        }
+      }
+    },
     "unreachable" : {
       "comment" : "The first screen: no answer from the API.",
       "localizations" : {
@@ -8493,6 +9177,24 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "недоступен"
+          }
+        }
+      }
+    },
+    "you.tour" : {
+      "comment" : "The You tab: start the tour again.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Take a tour"
+          }
+        },
+        "ru" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Пройти тур"
           }
         }
       }
