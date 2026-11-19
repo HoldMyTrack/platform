@@ -44,14 +44,19 @@ object MapLayersSource {
 
     private fun etagFile(context: Context, flavor: String) = File(File(context.cacheDir, DIR), "$flavor.etag")
 
+    /** The flavor the map last asked for: [warm] keeps both, and [lastAny] wants the map's. */
+    @Volatile private var asked: String? = null
+
     /** The last document for [flavor], if it's at the stored tile version. */
     fun last(context: Context, flavor: String): MapLayersDoc.Doc? {
+        asked = flavor
         val entry = kept[flavor] ?: read(context, flavor)?.also { kept[flavor] = it }
         return entry?.doc?.takeIf { it.tileVersion.isNotEmpty() && it.tileVersion == Session.tileVersion }
     }
 
-    /** Any document this process has read, at whatever tile version: for colors only. */
-    fun lastAny(): MapLayersDoc.Doc? = kept.values.firstOrNull()?.doc
+    /** The document of the flavor the map last asked for, else any this process has read, at
+     *  whatever tile version: for colors only. */
+    fun lastAny(): MapLayersDoc.Doc? = (asked?.let { kept[it] } ?: kept.values.firstOrNull())?.doc
 
     /** What a fetch hands the map. */
     sealed interface Outcome {
@@ -80,6 +85,7 @@ object MapLayersSource {
      *  nothing on a failure, which leaves the map with what it has. */
     fun fetch(context: Context, flavor: String, onDoc: (MapLayersDoc.Doc) -> Unit) {
         val app = context.applicationContext
+        asked = flavor
         val previous = kept[flavor]
         HoldMyTrackApi.mapLayers(flavor, previous?.etag) { result ->
             result.onFailure { Log.w(TAG, "map layers: ${it.message}") }
