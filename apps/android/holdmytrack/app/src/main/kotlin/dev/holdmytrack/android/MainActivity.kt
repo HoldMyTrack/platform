@@ -88,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         }
         tour = TourController(this, tourHost)
         // The bar pads itself clear of the gesture bar, so the tabs above it get no bottom inset
-        // — the map's own chrome adds the one it's given (`MapFragment.insetSystemBars`). At the
+        // — the map's own chrome adds the one it's given (`ChromeInsets.install`). At the
         // sides — a landscape phone's navigation bar or its camera cutout — the tabs are padded
         // in here, once for all of them, and see no side inset of their own.
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main_content)) { content, insets ->

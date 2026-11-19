@@ -23,9 +23,10 @@ class EditorPlacementTest {
     }
 
     @Test
-    fun `the Edit window scrolls past part of the screen, or what the keyboard leaves`() {
-        assertEquals(1320, EditorPlacement.scrollCap(screen = 2400, room = 2000, padding = 96))
-        assertEquals(1000 - 96, EditorPlacement.scrollCap(screen = 2400, room = 1000, padding = 96))
-        assertEquals(0, EditorPlacement.scrollCap(screen = 2400, room = 50, padding = 96))
+    fun `the Edit window scrolls past part of the screen, or what the keyboard leaves, down to one field`() {
+        assertEquals(1320, EditorPlacement.scrollCap(screen = 2400, room = 2000, padding = 96, min = 252))
+        assertEquals(1000 - 96, EditorPlacement.scrollCap(screen = 2400, room = 1000, padding = 96, min = 252))
+        // A short screen with the keyboard up, or a large font: one field still shows.
+        assertEquals(252, EditorPlacement.scrollCap(screen = 2400, room = 50, padding = 96, min = 252))
     }
 }

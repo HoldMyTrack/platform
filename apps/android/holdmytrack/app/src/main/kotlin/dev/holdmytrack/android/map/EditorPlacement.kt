@@ -9,6 +9,10 @@ object EditorPlacement {
     /** The Edit window scrolls past this much of the screen, so the map keeps a band to edit on. */
     const val MAX_HEIGHT_FRACTION = 0.55f
 
+    /** The least the Edit window scrolls within, about one field: the field being typed into
+     *  stays in sight, even if the card then reaches under the edit bar (ChromeInsets.placeEditors). */
+    const val MIN_SCROLL_DP = 96
+
     /** The editors' bottom margin: [space] above the gesture bar or the keyboard, whichever is
      *  taller. */
     fun bottom(space: Int, gesture: Int, keyboard: Int): Int = space + maxOf(gesture, keyboard)
@@ -22,7 +26,7 @@ object EditorPlacement {
 
     /** The Edit window's scroll cap: [MAX_HEIGHT_FRACTION] of [screen], or less when only [room]
      *  is left between the edit bar and the editors' bottom margin, the card's own [padding] taken
-     *  off; never below 0. */
-    fun scrollCap(screen: Int, room: Int, padding: Int): Int =
-        minOf((screen * MAX_HEIGHT_FRACTION).toInt(), room - padding).coerceAtLeast(0)
+     *  off; never below [min]. */
+    fun scrollCap(screen: Int, room: Int, padding: Int, min: Int): Int =
+        minOf((screen * MAX_HEIGHT_FRACTION).toInt(), room - padding).coerceAtLeast(min)
 }
