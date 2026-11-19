@@ -1,6 +1,5 @@
 package dev.holdmytrack.android.net
 
-import dev.holdmytrack.android.map.SpotArea
 import java.io.File
 import java.io.IOException
 import java.time.Instant
@@ -274,7 +273,7 @@ data class PrivateLocation(val id: String, val name: String, val lon: Double, va
 data class CoverageStatus(val rendering: Boolean, val version: Long, val tileVersion: String, val explored: Explored?)
 
 /** How many places of each Fog level the account has been in, as the map clears them
- *  (`docs/SPEC.md` FR-4.2): the level control's counts ([dev.holdmytrack.android.map.FogLevels]). */
+ *  (`docs/SPEC.md` FR-4.2): the level control's counts (`map/FogLevels`). */
 data class Explored(val countries: Int, val regions: Int, val counties: Int, val cities: Int)
 
 /**
@@ -342,3 +341,7 @@ class ApiException(val code: Int, message: String, val errorCode: String? = null
         }
     }
 }
+
+/** What the server said about one track type, as it said it: [kind] its wire value
+ *  (`panel/TrackKind`), either part missing when a response leaves it out. */
+data class TrackTypeInfo(val kind: String?, val label: String?)

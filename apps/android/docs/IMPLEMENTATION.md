@@ -8,7 +8,7 @@
 
 ### 1.1 Process start
 
-`HoldMyTrackApplication.onCreate` runs in a fixed order: `Session.init` before anything reads the token, `MapLibre.getInstance` before any `MapView` exists, then `HttpRequestUtil.setOkHttpClient(HoldMyTrackApi.client)`. The last call must happen in the `Application`: MapLibre may request as soon as a `MapView` exists, and anything sent before the swap goes out through its own client, without the token. The You tab's Theme is applied here as AppCompat's night mode, which also picks the map's style flavor.
+`HoldMyTrackApplication.onCreate` runs in a fixed order: `Session.init` before anything reads the token, `MapLibre.getInstance` before any `MapView` exists, then `HttpRequestUtil.setOkHttpClient(HoldMyTrackApi.client)`. `AppOutdated.init` and `TrackTypes.init` set `net`'s hooks (§2.1) here too, before any request: until then a refused build opens nothing and a response's track types go unheard. The last call must happen in the `Application`: MapLibre may request as soon as a `MapView` exists, and anything sent before the swap goes out through its own client, without the token. The You tab's Theme is applied here as AppCompat's night mode, which also picks the map's style flavor.
 
 ### 1.2 Which screen a session reaches
 
@@ -74,11 +74,13 @@ The shared client's interceptors apply to the map's requests too:
 - **Bearer**, per request, so sign-in, sign-out and expiry apply to the next tile; only to the API's origin, since the basemap is on a domain HoldMyTrack doesn't own. The origin is compared parsed (`net/ApiOrigin`): a string prefix of the base URL also matches `holdmytrack.app.evil.tld`.
 - **Origin**, the API's, on every request leaving it. The basemap's edge rule refuses a request without one and the satellite key accepts only the deployment's origin (root `docs/IMPLEMENTATION.md` §5.4), so without it the map draws nothing.
 - **User-Agent**, carrying the version and commit (§6) the server's minimum-build check reads.
-- **Outdated** (`net/AppOutdated`): a `426 app_outdated` on any call opens the Update screen, so no screen checks for it.
+- **Outdated** (`AppOutdated`, through `HoldMyTrackApi.onRefusedBuild`): a `426 app_outdated` on any call opens the Update screen, so no screen checks for it.
 
 **Images alone are cached on disk**, through a copy of that client (`HoldMyTrackApi.image`): photos are served immutable and the avatar's URL carries its version, while MapLibre keeps its own tile cache. The cache is emptied by `Session.clear`, since the avatar's path is the same for every account.
 
-**Account state outside `Session` registers to go with it.** A process-wide `object` that holds something of the account's (captures, thumbnails, the upload queue, the map's open Trip and Fog pick) calls `Session.onClear` from its own `init`, and `Session.clear`, main thread only, runs every hook before it returns. A new holder does the same; `net` names none of them. A request that writes such state records `Session.generation` as it starts and drops an answer that lands after a sign-out, which would otherwise write the last account's back.
+**Account state outside `Session` registers to go with it.** A process-wide `object` that holds something of the account's (captures, thumbnails, the upload queue, the map's open Trip and Fog pick) calls `Session.onClear` from its own `init`, and `Session.clear`, main thread only, runs every hook before it returns. A new holder does the same. A request that writes such state records `Session.generation` as it starts and drops an answer that lands after a sign-out, which would otherwise write the last account's back.
+
+**`net` depends on nothing else of the app.** The map, the panels and the screens depend on it, so what a response means for them reaches them through a hook they set at start: `HoldMyTrackApi.onTrackTypes` and `onRefusedBuild`, `Session.onClear`. `NetLayerTest` fails on an import that crosses.
 
 **The Update screen opens over the app.** The interceptor runs before the refused call's callback, and clearing the task first would hand that callback a destroyed fragment, so Back calls `finishAffinity` instead. A refused call's callback is never delivered (`HoldMyTrackApi.refusedBuild`), since Back can tear the screens down while another refused call is in flight; suspending callers get their exception, and their scopes end with their screens. Android drops an activity started from the background, so `AppOutdated` counts the screens in front through the application's activity callbacks and holds a refusal met with none until one comes back (`OutdatedScreen`).
 

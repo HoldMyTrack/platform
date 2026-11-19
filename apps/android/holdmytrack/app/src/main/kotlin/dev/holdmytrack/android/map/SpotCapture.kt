@@ -1,5 +1,8 @@
 package dev.holdmytrack.android.map
 
+import dev.holdmytrack.android.net.GeoPoint
+import dev.holdmytrack.android.net.SpotArea
+
 /**
  * Capture mode's count (`apps/android/docs/SPEC.md` FR-2.8): fed the phone's
  * location fixes, it says whether the user is still on the way to the spot, holding inside it,

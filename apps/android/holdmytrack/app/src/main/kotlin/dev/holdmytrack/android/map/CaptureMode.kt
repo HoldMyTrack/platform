@@ -22,6 +22,7 @@ import androidx.core.view.isVisible
 import com.google.android.material.progressindicator.LinearProgressIndicator
 import dev.holdmytrack.android.R
 import dev.holdmytrack.android.net.ApiException
+import dev.holdmytrack.android.net.GeoPoint
 import dev.holdmytrack.android.net.HoldMyTrackApi
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Spot

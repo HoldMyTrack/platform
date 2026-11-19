@@ -1,18 +1,12 @@
 package dev.holdmytrack.android.map
 
+import dev.holdmytrack.android.net.GeoPoint
+import dev.holdmytrack.android.net.SpotArea
 import kotlin.math.PI
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.hypot
 import kotlin.math.sin
-
-/** A position in degrees. MapLibre's own `LatLng` is an Android class; this one keeps the
- *  geometry below testable on the JVM. */
-data class GeoPoint(val lat: Double, val lon: Double)
-
-/** A spot's area as `GET /v2/spots/{id}` sends it: polygons, each an outer ring then its holes,
- *  each ring closed (first point repeated last). */
-typealias SpotArea = List<List<List<GeoPoint>>>
 
 /**
  * What capture mode measures a position against (`apps/android/docs/SPEC.md` FR-2.8):

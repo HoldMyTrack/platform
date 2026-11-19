@@ -1,4 +1,4 @@
-package dev.holdmytrack.android.net
+package dev.holdmytrack.android.map
 
 /** Where the map's session check sends the user ([SessionGate]), as a value. */
 enum class SessionRoute {

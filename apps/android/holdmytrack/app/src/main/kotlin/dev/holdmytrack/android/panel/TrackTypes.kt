@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.LocaleList
 import androidx.core.content.edit
 import dev.holdmytrack.android.net.HoldMyTrackApi
+import dev.holdmytrack.android.net.TrackTypeInfo
 import org.json.JSONObject
 import java.lang.ref.WeakReference
 import java.util.concurrent.ConcurrentHashMap
@@ -21,7 +22,11 @@ import java.util.concurrent.CopyOnWriteArrayList
 object TrackTypes {
 
     /** What the server said about one type; either part may be missing. */
-    data class Info(val kind: TrackKind?, val label: String?)
+    data class Info(val kind: TrackKind?, val label: String?) {
+        companion object {
+            fun of(wire: TrackTypeInfo): Info = Info(wire.kind?.let(TrackKind::fromWire), wire.label)
+        }
+    }
 
     private const val PREFS = "holdmytrack.track_types"
     // The same cache under its name before the rename, carried over at start (carryOver).
@@ -39,6 +44,7 @@ object TrackTypes {
      *  screen shows. */
     fun init(appContext: Context) {
         context = appContext.applicationContext
+        HoldMyTrackApi.onTrackTypes = { merge(it.mapValues { (_, wire) -> Info.of(wire) }) }
         carryOver(appContext)
         val prefs = prefs() ?: return
         if (prefs.getString(KEY_LANGUAGE, null) != language()) return
@@ -73,7 +79,7 @@ object TrackTypes {
         listeners.forEach { it.get()?.invoke() }
     }
 
-    /** [listener] runs after a merge changed something, on the thread that merged. Held weakly:
+    /** [listener] runs after a merge changed something, on the main thread. Held weakly:
      *  the caller keeps it for as long as it wants to hear. */
     fun addListener(listener: () -> Unit) {
         listeners.removeAll { it.get() == null }
@@ -88,7 +94,7 @@ object TrackTypes {
         HoldMyTrackApi.trackTypes(missing) { result ->
             result.getOrNull()?.let {
                 catalogRead = true
-                merge(it)
+                merge(it.mapValues { (_, wire) -> Info.of(wire) })
             }
         }
     }

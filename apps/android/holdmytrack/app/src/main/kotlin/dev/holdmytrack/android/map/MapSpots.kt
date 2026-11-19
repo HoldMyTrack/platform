@@ -12,6 +12,7 @@ import androidx.core.content.edit
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.toColorInt
 import dev.holdmytrack.android.R
+import dev.holdmytrack.android.net.GeoPoint
 import dev.holdmytrack.android.net.Session
 import dev.holdmytrack.android.net.Spot
 import kotlinx.serialization.json.JsonArray

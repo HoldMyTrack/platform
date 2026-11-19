@@ -5,7 +5,7 @@ import okhttp3.HttpUrl
 /**
  * What the app and the server say to each other about which build this is, as plain values:
  * the User-Agent naming it, the server's refusal of one too old (root `docs/IMPLEMENTATION.md`
- * §4.33) and where an update comes from. [AppOutdated] acts on them.
+ * §4.33) and where an update comes from. `AppOutdated` acts on them.
  */
 object AppBuild {
 

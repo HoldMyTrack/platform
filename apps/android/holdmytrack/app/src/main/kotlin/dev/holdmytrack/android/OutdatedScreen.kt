@@ -1,4 +1,4 @@
-package dev.holdmytrack.android.net
+package dev.holdmytrack.android
 
 /**
  * When the Update screen opens ([AppOutdated]), as values. Android drops an activity started

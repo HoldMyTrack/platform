@@ -123,7 +123,7 @@
             android:label="@string/sign_in_title"
             android:theme="@style/Theme.HoldMyTrack.NoActionBar" />
 
-        <!-- Opened over everything when the server refuses this build (net/AppOutdated.kt). -->
+        <!-- Opened over everything when the server refuses this build (AppOutdated.kt). -->
         <activity
             android:name=".UpdateAppActivity"
             android:exported="false"

@@ -1,5 +1,6 @@
 package dev.holdmytrack.android.panel
 
+import dev.holdmytrack.android.net.TrackTypeInfo
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -37,5 +38,12 @@ class TrackTypesTest {
         TrackTypes.merge(mapOf("listened_test" to TrackTypes.Info(TrackKind.FOOT, "Listened")))
         TrackTypes.merge(mapOf("listened_test" to TrackTypes.Info(TrackKind.FOOT, "Listened")))
         assertTrue(heard == 1)
+    }
+
+    @Test
+    fun `the wire's kind becomes the app's, and a missing part stays missing`() {
+        assertEquals(TrackTypes.Info(TrackKind.WHEELS, "Gravel"), TrackTypes.Info.of(TrackTypeInfo(TrackKind.WHEELS.wire, "Gravel")))
+        assertEquals(TrackTypes.Info(null, "Вечерняя поездка"), TrackTypes.Info.of(TrackTypeInfo(null, "Вечерняя поездка")))
+        assertEquals(TrackTypes.Info(TrackKind.OTHER, null), TrackTypes.Info.of(TrackTypeInfo("unheard_of", null)))
     }
 }

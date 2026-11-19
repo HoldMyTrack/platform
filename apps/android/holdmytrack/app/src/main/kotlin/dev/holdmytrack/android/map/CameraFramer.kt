@@ -48,7 +48,7 @@ class CameraFramer(
     fun open(onOpened: () -> Unit) {
         if (framed) return onOpened()
         framed = true
-        HoldMyTrackApi.areaTracks(null, DateFilter.ALL_TIME, OpeningView.TRACKS) { result ->
+        HoldMyTrackApi.areaTracks(null, from = null, to = null, limit = OpeningView.TRACKS) { result ->
             val page = result.getOrNull()
             if (page == null) return@areaTracks onOpened()
             val boxes = page.tracks.filter { !it.pending }.mapNotNull { it.bbox }

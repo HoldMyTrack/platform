@@ -1,5 +1,7 @@
 package dev.holdmytrack.android.map
 
+import dev.holdmytrack.android.net.GeoPoint
+import dev.holdmytrack.android.net.SpotArea
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test

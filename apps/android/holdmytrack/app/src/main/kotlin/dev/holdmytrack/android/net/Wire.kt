@@ -171,7 +171,7 @@ internal data class AreaTracksJson(
 @Serializable
 internal data class PendingJson(val pending: List<String>)
 
-/** What a client shows for one track type (`panel/TrackTypes`). */
+/** What a client shows for one track type ([TrackTypeInfo]). */
 @Serializable
 internal data class TrackTypeJson(val kind: String, val label: String)
 
