@@ -98,6 +98,7 @@ class AreaController(
         val trip = session.tripId
         val area = session.area
         val id = ++request
+        val asked = Session.generation
         if (trip == null) {
             // Not until the opening view has asked about an area.
             area ?: return
@@ -113,7 +114,7 @@ class AreaController(
         }
         panel.setLoading()
         val landed = { tracks: List<Track>, total: Int? ->
-            if (id == request) {
+            if (id == request && Session.isCurrent(asked)) {
                 this.total = total
                 listed(tracks)
             }

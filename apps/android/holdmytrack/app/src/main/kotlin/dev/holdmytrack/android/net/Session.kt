@@ -2,7 +2,6 @@ package dev.holdmytrack.android.net
 
 import android.content.Context
 import android.content.SharedPreferences
-import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.webkit.CookieManager
@@ -49,11 +48,21 @@ object Session {
     /** The application, from [init], for [onClear]'s hooks. */
     private lateinit var app: Context
 
+    /**
+     * Bumped by [clear]. A request records it as it starts, and an answer that lands under
+     * another number ([isCurrent] false) is the last account's, dropped rather than drawn.
+     */
+    @Volatile
+    var generation = 0
+        private set
+
+    fun isCurrent(asked: Int): Boolean = asked == generation
+
     /** What [clear] runs: see [onClear]. */
     private val clearHooks = CopyOnWriteArrayList<(Context) -> Unit>()
 
     /**
-     * Runs [hook] with the application on the main thread each time the session ends, so the
+     * Runs [hook] with the application each time the session ends, before [clear] returns, so the
      * account's state kept outside it (the map's, the upload queue's) goes too and the next
      * account starts clean. Each holder registers from its own `init`: one never touched holds
      * nothing to clear. A hook that throws is logged and the rest still run.
@@ -170,16 +179,15 @@ object Session {
     }
 
     fun clear() {
-        // The session cookie WebPageActivity gave its WebView goes with the session.
-        runCatching { CookieManager.getInstance().removeAllCookies(null) }
+        check(Looper.myLooper() == Looper.getMainLooper()) { "Session.clear off the main thread" }
+        // The session cookie WebPageActivity gave its WebView goes with the session. Off the main
+        // thread, since the first CookieManager call loads WebView.
+        Thread { runCatching { CookieManager.getInstance().removeAllCookies(null) } }.start()
+        generation++
         cachedToken = null
         verified = false
         HoldMyTrackApi.clearImageCache()
-        // On the main thread, where every caller but a test is: the hooks have run when this returns.
-        val hooks = Runnable {
-            for (hook in clearHooks) runCatching { hook(app) }.onFailure { Log.w(TAG, "a sign-out hook failed", it) }
-        }
-        if (Looper.myLooper() == Looper.getMainLooper()) hooks.run() else Handler(Looper.getMainLooper()).post(hooks)
+        for (hook in clearHooks) runCatching { hook(app) }.onFailure { Log.w(TAG, "a sign-out hook failed", it) }
         prefs.edit {
             remove(KEY_TOKEN)
             remove(KEY_EMAIL)

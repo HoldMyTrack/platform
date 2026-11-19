@@ -18,13 +18,9 @@ object PhotoImages {
     }
     private val waiting = HashMap<String, MutableList<(Bitmap?) -> Unit>>()
 
-    /** Bumped as the session ends, so a fetch the last account started isn't kept. */
-    private var generation = 0
-
     init {
         // The account's photos stay with it.
         Session.onClear { _ ->
-            generation++
             cache.evictAll()
             val left = waiting.values.flatten()
             waiting.clear()
@@ -46,9 +42,10 @@ object PhotoImages {
             return
         }
         waiting[path] = mutableListOf(onLoaded)
-        val asked = generation
+        // A fetch the last account started isn't kept.
+        val asked = Session.generation
         HoldMyTrackApi.image(path, maxSide = null) { result ->
-            if (asked != generation) return@image
+            if (!Session.isCurrent(asked)) return@image
             val bitmap = result.getOrNull()
             if (bitmap != null) cache.put(path, bitmap)
             waiting.remove(path)?.forEach { it(bitmap) }

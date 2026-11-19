@@ -137,7 +137,8 @@ object FileImports {
         owner = null
         queue.forEach { it.copy.delete() }
         queue.clear()
-        _transfers.removeAll { it.sent < 0 }
+        // The one still going, too: it reports to no one ([ImportsAccount.reports]).
+        _transfers.clear()
         _notes.clear()
         sentCount = 0
         if (!running) clearCopies(context)
@@ -166,6 +167,7 @@ object FileImports {
                     if (percent == shown) return@uploadTrackFile
                     shown = percent
                     main.post {
+                        if (!ImportsAccount.reports(sentFor, owner)) return@post
                         transfer.sent = sent
                         changed()
                     }
